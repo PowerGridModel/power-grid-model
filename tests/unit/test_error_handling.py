@@ -374,15 +374,14 @@ def test_conflicting_angle_measurement_type() -> None:
     source_input["u_ref"] = [1.0]
 
     sym_voltage_sensor_input = initialize_array("input", "sym_voltage_sensor", 1)
-    sym_voltage_sensor_input["id"] = [6]
+    sym_voltage_sensor_input["id"] = [4]
     sym_voltage_sensor_input["measured_object"] = [0]
     sym_voltage_sensor_input["u_sigma"] = [1.0]
-    sym_voltage_sensor_input["u_angle_sigma"] = [1.0]
     sym_voltage_sensor_input["u_measured"] = [1.0]
     sym_voltage_sensor_input["u_angle_measured"] = [0.0]
 
     sym_current_sensor_input = initialize_array("input", "sym_current_sensor", 2)
-    sym_current_sensor_input["id"] = [4, 5]
+    sym_current_sensor_input["id"] = [5, 6]
     sym_current_sensor_input["measured_object"] = [2, 2]
     sym_current_sensor_input["measured_terminal_type"] = [
         MeasuredTerminalType.branch_from,
@@ -433,7 +432,7 @@ def test_global_current_measurement_without_voltage_angle() -> None:
     sym_voltage_sensor_input["u_sigma"] = [1.0]
     sym_voltage_sensor_input["u_measured"] = [0.0]
 
-    sym_current_sensor_input = initialize_array("input", "sym_current_sensor", 2)
+    sym_current_sensor_input = initialize_array("input", "sym_current_sensor", 1)
     sym_current_sensor_input["id"] = [5]
     sym_current_sensor_input["measured_object"] = [2]
     sym_current_sensor_input["measured_terminal_type"] = [
@@ -442,8 +441,8 @@ def test_global_current_measurement_without_voltage_angle() -> None:
     sym_current_sensor_input["angle_measurement_type"] = [
         AngleMeasurementType.global_angle,
     ]
-    sym_current_sensor_input["i_sigma"] = [1.0, 1.0]
-    sym_current_sensor_input["i_measured"] = [0.0, 0.0]
+    sym_current_sensor_input["i_sigma"] = [1.0]
+    sym_current_sensor_input["i_measured"] = [0.0]
 
     model = PowerGridModel(
         input_data={
