@@ -205,12 +205,13 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
                         if (measured_value.has_shunt(obj)) {
                             // G += (-Ys)^H * (variance^-1) * (-Ys)
                             auto const& shunt_power = measured_value.shunt_power(obj);
-                            auto const shunt_current =
+                            auto const shunt_current_conj =
                                 statistics::scale(shunt_power, ComplexValue<sym>{1.0 / linearized_u[row]});
-                            block.g() += dot(
-                                hermitian_transpose(param.shunt_param[obj]),
-                                diagonal_inverse(static_cast<IndependentComplexRandVar<sym>>(shunt_current).variance),
-                                param.shunt_param[obj]);
+                            block.g() +=
+                                dot(hermitian_transpose(param.shunt_param[obj]),
+                                    diagonal_inverse(
+                                        static_cast<IndependentComplexRandVar<sym>>(shunt_current_conj).variance),
+                                    param.shunt_param[obj]);
                         }
                     }
                     // branch
@@ -227,11 +228,12 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
                                 // the current needs to be calculated with the voltage of the measured bus side
                                 // NOTE: not the current bus!
                                 Idx const measured_bus = branch_bus_idx[obj][measured_side];
-                                auto const current =
+                                auto const current_conj =
                                     statistics::scale(power, ComplexValue<sym>{1.0 / linearized_u[measured_bus]});
                                 block.g() +=
                                     dot(hermitian_transpose(param.branch_param[obj].value[measured_side * 2 + b0]),
-                                        diagonal_inverse(static_cast<IndependentComplexRandVar<sym>>(current).variance),
+                                        diagonal_inverse(
+                                            static_cast<IndependentComplexRandVar<sym>>(current_conj).variance),
                                         param.branch_param[obj].value[measured_side * 2 + b1]);
                             }
                         }
@@ -301,12 +303,13 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
                 if (type == YBusElementType::shunt) {
                     if (measured_value.has_shunt(obj)) {
                         PowerSensorCalcParam<sym> const& power = measured_value.shunt_power(obj);
-                        auto const current = statistics::scale(power, ComplexValue<sym>{1.0 / linearized_u[bus]});
-                        auto const rot_invariant_current = static_cast<IndependentComplexRandVar<sym>>(current);
+                        auto const current_conj = statistics::scale(power, ComplexValue<sym>{1.0 / linearized_u[bus]});
+                        auto const rot_invariant_current_conj =
+                            static_cast<IndependentComplexRandVar<sym>>(current_conj);
                         // eta += (-Ys)^H * (variance^-1) * i_shunt
-                        rhs_block.eta() -=
-                            dot(hermitian_transpose(param.shunt_param[obj]),
-                                diagonal_inverse(rot_invariant_current.variance), conj(rot_invariant_current.value));
+                        rhs_block.eta() -= dot(hermitian_transpose(param.shunt_param[obj]),
+                                               diagonal_inverse(rot_invariant_current_conj.variance),
+                                               conj(rot_invariant_current_conj.value));
                     }
                 }
                 // branch
@@ -323,13 +326,15 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
                             // the current needs to be calculated with the voltage of the measured bus side
                             // NOTE: not the current bus!
                             Idx const measured_bus = branch_bus_idx[obj][measured_side];
-                            auto const current =
+                            auto const current_conj =
                                 statistics::scale(power, ComplexValue<sym>{1.0 / linearized_u[measured_bus]});
-                            auto const rot_invariant_current = static_cast<IndependentComplexRandVar<sym>>(current);
+                            auto const rot_invariant_current_conj =
+                                static_cast<IndependentComplexRandVar<sym>>(current_conj);
                             // eta += Y{side, b}^H * (variance^-1) * i_branch_{f, t}
-                            rhs_block.eta() += dot(
-                                hermitian_transpose(param.branch_param[obj].value[measured_side * 2 + b]),
-                                diagonal_inverse(rot_invariant_current.variance), conj(rot_invariant_current.value));
+                            rhs_block.eta() +=
+                                dot(hermitian_transpose(param.branch_param[obj].value[measured_side * 2 + b]),
+                                    diagonal_inverse(rot_invariant_current_conj.variance),
+                                    conj(rot_invariant_current_conj.value));
                         }
                     }
                 }

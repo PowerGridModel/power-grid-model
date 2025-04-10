@@ -240,7 +240,7 @@ inline auto scale(DecomposedComplexRandVar<sym> const& var, ScaleType const& sca
 template <symmetry_tag sym, typename ScaleType>
     requires is_in_list_c<ScaleType, ComplexValue<symmetric_t>, ComplexValue<asymmetric_t>>
 inline auto scale(DecomposedComplexRandVar<sym> const& var, ScaleType const& scale_factor) {
-    auto const scaled_value = var.value() * scale_factor;
+    ComplexValue<sym> const scaled_value = var.value() * scale_factor;
     return DecomposedComplexRandVar<sym>{
         .real_component = {.value = real(scaled_value),
                            .variance = var.real_component.variance * abs2(real(scale_factor)) +
