@@ -485,8 +485,8 @@ template <symmetry_tag sym> class MeasuredValues {
         auto const params = sensors | std::views::transform([&data](Idx pos) -> auto& { return data[pos]; });
         auto const angle_measurement_type = sensors.empty() ? AngleMeasurementType::local_angle // fallback
                                                             : params.front().angle_measurement_type;
-        if (std::ranges::any_of(params, [angle_measurement_type](auto const& params) {
-                return params.angle_measurement_type != angle_measurement_type;
+        if (std::ranges::any_of(params, [angle_measurement_type](auto const& param) {
+                return param.angle_measurement_type != angle_measurement_type;
             })) {
             throw ConflictingAngleMeasurementType{
                 "Cannot mix local and global angle current measurements on the same terminal."};

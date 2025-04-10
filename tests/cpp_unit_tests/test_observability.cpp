@@ -119,6 +119,8 @@ TEST_CASE("Necessary observability check") {
         check_not_observable(topo, param, se_input);
     }
     SUBCASE("Current sensors also measure branch flow") {
+        using enum AngleMeasurementType;
+
         topo.power_sensors_per_branch_from = {from_dense, {}, 3};
         se_input.measured_branch_from_power = {};
         topo.current_sensors_per_branch_from = {from_dense, {2}, 3};
@@ -129,12 +131,12 @@ TEST_CASE("Necessary observability check") {
         SUBCASE("With voltage phasor measurement") {
             SUBCASE("Local current sensor") {
                 se_input.measured_branch_from_current = {
-                    {.angle_measurement_type = AngleMeasurementType::local_angle, .measurement = current_measurement}};
+                    {.angle_measurement_type = local_angle, .measurement = current_measurement}};
                 check_observable(topo, param, se_input);
             }
             SUBCASE("Global angle current sensor") {
                 se_input.measured_branch_from_current = {
-                    {.angle_measurement_type = AngleMeasurementType::global_angle, .measurement = current_measurement}};
+                    {.angle_measurement_type = global_angle, .measurement = current_measurement}};
                 check_observable(topo, param, se_input);
             }
         }
@@ -143,12 +145,12 @@ TEST_CASE("Necessary observability check") {
 
             SUBCASE("Local current sensor") {
                 se_input.measured_branch_from_current = {
-                    {.angle_measurement_type = AngleMeasurementType::local_angle, .measurement = current_measurement}};
+                    {.angle_measurement_type = local_angle, .measurement = current_measurement}};
                 check_not_observable(topo, param, se_input);
             }
             SUBCASE("Global angle current sensor") {
                 se_input.measured_branch_from_current = {
-                    {.angle_measurement_type = AngleMeasurementType::global_angle, .measurement = current_measurement}};
+                    {.angle_measurement_type = global_angle, .measurement = current_measurement}};
                 check_not_observable(topo, param, se_input);
             }
         }
@@ -158,14 +160,14 @@ TEST_CASE("Necessary observability check") {
 
             SUBCASE("Local current sensor") {
                 se_input.measured_branch_from_current = {
-                    {.angle_measurement_type = AngleMeasurementType::local_angle, .measurement = current_measurement},
-                    {.angle_measurement_type = AngleMeasurementType::local_angle, .measurement = current_measurement}};
+                    {.angle_measurement_type = local_angle, .measurement = current_measurement},
+                    {.angle_measurement_type = local_angle, .measurement = current_measurement}};
                 check_observable(topo, param, se_input);
             }
             SUBCASE("Global angle current sensor") {
                 se_input.measured_branch_from_current = {
-                    {.angle_measurement_type = AngleMeasurementType::global_angle, .measurement = current_measurement},
-                    {.angle_measurement_type = AngleMeasurementType::global_angle, .measurement = current_measurement}};
+                    {.angle_measurement_type = global_angle, .measurement = current_measurement},
+                    {.angle_measurement_type = global_angle, .measurement = current_measurement}};
                 check_not_observable(topo, param, se_input);
             }
         }
