@@ -41,7 +41,8 @@ using EdgeWeight = int64_t;
 using RankedTransformerGroups = std::vector<std::vector<Idx2D>>;
 
 constexpr auto infty = std::numeric_limits<Idx>::max();
-constexpr Idx2D unregulated_idx = {.group = -1, .pos = -1};
+constexpr auto last_rank = infty - 1;
+constexpr Idx2D unregulated_idx = {-1, -1};
 struct TrafoGraphVertex {
     bool is_source{};
 };
@@ -260,11 +261,12 @@ inline auto build_transformer_graph(State const& state) -> TransformerGraph {
     return trafo_graph;
 }
 
-inline void process_edges_dijkstra(Idx v, std::vector<EdgeWeight>& vertex_distances, TransformerGraph const& graph) {
+inline void process_edges_dijkstra(Idx search_start_vertex, std::vector<EdgeWeight>& vertex_distances,
+                                   TransformerGraph const& graph) {
     using TrafoGraphElement = std::pair<EdgeWeight, TrafoGraphIdx>;
     std::priority_queue<TrafoGraphElement, std::vector<TrafoGraphElement>, std::greater<>> pq;
-    vertex_distances[v] = 0;
-    pq.emplace(0, v);
+    vertex_distances[search_start_vertex] = 0;
+    pq.emplace(0, search_start_vertex);
 
     while (!pq.empty()) {
         auto [dist, u] = pq.top();
@@ -274,19 +276,14 @@ inline void process_edges_dijkstra(Idx v, std::vector<EdgeWeight>& vertex_distan
             continue;
         }
 
-        BGL_FORALL_EDGES(e, graph, TransformerGraph) {
+        BGL_FORALL_OUTEDGES(u, e, graph, TransformerGraph) {
             auto s = boost::source(e, graph);
             auto t = boost::target(e, graph);
             const EdgeWeight weight = graph[e].weight;
 
-            // We can not use BGL_FORALL_OUTEDGES here because we need information
-            // regardless of edge direction
-            if (u == s && vertex_distances[s] + weight < vertex_distances[t]) {
+            if (vertex_distances[s] + weight < vertex_distances[t]) {
                 vertex_distances[t] = vertex_distances[s] + weight;
                 pq.emplace(vertex_distances[t], t);
-            } else if (u == t && vertex_distances[t] + weight < vertex_distances[s]) {
-                vertex_distances[s] = vertex_distances[t] + weight;
-                pq.emplace(vertex_distances[s], s);
             }
         }
     }
@@ -328,11 +325,16 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgePro
         // situations can happen.
         // The logic still holds in meshed grids, albeit operating a more complex graph.
         if (!is_unreachable(edge_src_rank) || !is_unreachable(edge_tgt_rank)) {
-            if (edge_src_rank != edge_tgt_rank - 1) {
-                throw AutomaticTapInputError("The control side of a transformer regulator should be relatively further "
-                                             "away from the source than the tap side.\n");
+            if ((edge_src_rank == infty) || (edge_tgt_rank == infty)) {
+                throw AutomaticTapInputError("The transformer is being controlled from non source side towards source "
+                                             "side.\n");
+            } else if (edge_src_rank != edge_tgt_rank - 1) {
+                // Control side is also controlled by a closer regulated transformer.
+                // Make this transformer have the lowest possible priority.
+                result.emplace_back(graph[e].regulated_idx, last_rank);
+            } else {
+                result.emplace_back(graph[e].regulated_idx, edge_tgt_rank);
             }
-            result.emplace_back(graph[e].regulated_idx, edge_tgt_rank);
         }
     }
 
