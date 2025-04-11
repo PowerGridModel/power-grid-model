@@ -85,9 +85,9 @@ jobs:
             echo "All the generated files are up to date."
           fi
 
-      - name: Check if test_workflow.yml is unchaged with respect to main
+      - name: Check test_workflow.yml
         run: |
-          git fetch origin main
+          git fetch origin main:refs/remotes/origin/main
           DIFF=$(git diff origin/main -- .github/workflows/test_workflow.yml)
 
           if [ -n "$DIFF" ]; then
