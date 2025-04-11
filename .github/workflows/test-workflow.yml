@@ -17,4 +17,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Test step
-        run: echo "Let's break the code quality check!"
+        run: echo "Test workflow running"
