@@ -42,7 +42,13 @@ jobs:
       - name: Publish to TestPyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          # remove when testing is finished
+          # To test, use the TestPyPI:
+          # repository-url: https://test.pypi.org/legacy/
+          # You must also create an account and project on TestPyPI,
+          # as well as set the trusted-publisher in the project settings:
+          # https://docs.pypi.org/trusted-publishers/adding-a-publisher/
+          # To publish to the official PyPI repository, just keep
+          # the above line commented out.
           repository-url: https://test.pypi.org/legacy/
           packages-dir: assets-to-publish
           skip-existing: true
