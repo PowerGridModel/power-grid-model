@@ -91,7 +91,8 @@ jobs:
           DIFF=$(git diff origin/main -- .github/workflows/test_workflow.yml)
 
           if [ -n "$DIFF" ]; then
-            echo "The test_workflow.yml file has changed from main."
+            echo "The test-workflow.yml file has changed from main."
+            echo "Please revert test-workflow.yml to its original state after testing is completed."
             echo "$DIFF"
             exit 1
           else
