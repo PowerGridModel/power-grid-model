@@ -97,6 +97,6 @@ jobs:
             echo "$DIFF"
             exit 1
           else
-            echo "The test_workflow.yml file matches main."
+            echo "The test-workflow.yml file matches main."
           fi
           
