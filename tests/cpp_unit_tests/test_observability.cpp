@@ -11,16 +11,32 @@
 namespace power_grid_model {
 
 namespace {
-void check_not_observable(MathModelTopology const& topo, MathModelParam<symmetric_t> const& param,
-                          StateEstimationInput<symmetric_t> const& se_input) {
+void check_whether_observable(bool is_observable, MathModelTopology const& topo,
+                              MathModelParam<symmetric_t> const& param,
+                              StateEstimationInput<symmetric_t> const& se_input) {
     auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
     auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
     YBus<symmetric_t> const y_bus{topo_ptr, param_ptr};
     math_solver::MeasuredValues<symmetric_t> const measured_values{y_bus.shared_topology(), se_input};
 
-    CHECK_THROWS_AS(
-        math_solver::necessary_observability_check(measured_values, y_bus.math_topology(), y_bus.y_bus_structure()),
-        NotObservableError);
+    if (is_observable) {
+        CHECK_NOTHROW(math_solver::necessary_observability_check(measured_values, y_bus.math_topology(),
+                                                                 y_bus.y_bus_structure()));
+    } else {
+        CHECK_THROWS_AS(
+            math_solver::necessary_observability_check(measured_values, y_bus.math_topology(), y_bus.y_bus_structure()),
+            NotObservableError);
+    }
+}
+
+void check_observable(MathModelTopology const& topo, MathModelParam<symmetric_t> const& param,
+                      StateEstimationInput<symmetric_t> const& se_input) {
+    check_whether_observable(true, topo, param, se_input);
+}
+
+void check_not_observable(MathModelTopology const& topo, MathModelParam<symmetric_t> const& param,
+                          StateEstimationInput<symmetric_t> const& se_input) {
+    check_whether_observable(false, topo, param, se_input);
 }
 } // namespace
 
@@ -45,12 +61,13 @@ TEST_CASE("Necessary observability check") {
     topo.power_sensors_per_shunt = {from_sparse, {0}};
     topo.power_sensors_per_branch_from = {from_sparse, {0, 1, 1, 1}};
     topo.power_sensors_per_branch_to = {from_sparse, {0, 0, 0, 0}};
+    topo.current_sensors_per_branch_from = {from_sparse, {0, 0, 0, 0}};
+    topo.current_sensors_per_branch_to = {from_sparse, {0, 0, 0, 0}};
     topo.voltage_sensors_per_bus = {from_sparse, {0, 1, 1, 1}};
 
     MathModelParam<symmetric_t> param;
     param.source_param = {SourceCalcParam{.y1 = 10.0 - 50.0i, .y0 = 10.0 - 50.0i}};
     param.branch_param = {{1.0, -1.0, -1.0, 1.0}, {1.0, -1.0, -1.0, 1.0}, {1.0, -1.0, -1.0, 1.0}};
-    auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
 
     StateEstimationInput<symmetric_t> se_input;
     se_input.source_status = {1};
@@ -61,13 +78,7 @@ TEST_CASE("Necessary observability check") {
     se_input.measured_branch_from_power = {
         {.real_component = {.value = 1.0, .variance = 1.0}, .imag_component = {.value = 0.0, .variance = 1.0}}};
 
-    SUBCASE("Observable grid") {
-        auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
-        YBus<symmetric_t> const y_bus{topo_ptr, param_ptr};
-        math_solver::MeasuredValues<symmetric_t> const measured_values{y_bus.shared_topology(), se_input};
-        CHECK_NOTHROW(math_solver::necessary_observability_check(measured_values, y_bus.math_topology(),
-                                                                 y_bus.y_bus_structure()));
-    }
+    SUBCASE("Observable grid") { check_observable(topo, param, se_input); }
 
     SUBCASE("No voltage sensor") {
         topo.voltage_sensors_per_bus = {from_sparse, {0, 0, 0, 0}};
@@ -107,6 +118,59 @@ TEST_CASE("Necessary observability check") {
         // this will throw NotObservableError
         check_not_observable(topo, param, se_input);
     }
-}
+    SUBCASE("Current sensors also measure branch flow") {
+        using enum AngleMeasurementType;
 
+        topo.power_sensors_per_branch_from = {from_dense, {}, 3};
+        se_input.measured_branch_from_power = {};
+        topo.current_sensors_per_branch_from = {from_dense, {2}, 3};
+
+        DecomposedComplexRandVar<symmetric_t> const current_measurement{
+            .real_component = {.value = 1.0, .variance = 1.0}, .imag_component = {.value = 0.0, .variance = 1.0}};
+
+        SUBCASE("With voltage phasor measurement") {
+            SUBCASE("Local current sensor") {
+                se_input.measured_branch_from_current = {
+                    {.angle_measurement_type = local_angle, .measurement = current_measurement}};
+                check_observable(topo, param, se_input);
+            }
+            SUBCASE("Global angle current sensor") {
+                se_input.measured_branch_from_current = {
+                    {.angle_measurement_type = global_angle, .measurement = current_measurement}};
+                check_observable(topo, param, se_input);
+            }
+        }
+        SUBCASE("No voltage phasor measurement and single current sensor") {
+            se_input.measured_voltage = {{.value = {1.0, nan}, .variance = 1.0}};
+
+            SUBCASE("Local current sensor") {
+                se_input.measured_branch_from_current = {
+                    {.angle_measurement_type = local_angle, .measurement = current_measurement}};
+                check_not_observable(topo, param, se_input);
+            }
+            SUBCASE("Global angle current sensor") {
+                se_input.measured_branch_from_current = {
+                    {.angle_measurement_type = global_angle, .measurement = current_measurement}};
+                check_not_observable(topo, param, se_input);
+            }
+        }
+        SUBCASE("No voltage phasor measurement and two current sensors") {
+            se_input.measured_voltage = {{.value = {1.0, nan}, .variance = 1.0}};
+            topo.current_sensors_per_branch_from = {from_dense, {0, 2}, 3};
+
+            SUBCASE("Local current sensor") {
+                se_input.measured_branch_from_current = {
+                    {.angle_measurement_type = local_angle, .measurement = current_measurement},
+                    {.angle_measurement_type = local_angle, .measurement = current_measurement}};
+                check_observable(topo, param, se_input);
+            }
+            SUBCASE("Global angle current sensor") {
+                se_input.measured_branch_from_current = {
+                    {.angle_measurement_type = global_angle, .measurement = current_measurement},
+                    {.angle_measurement_type = global_angle, .measurement = current_measurement}};
+                check_not_observable(topo, param, se_input);
+            }
+        }
+    }
+}
 } // namespace power_grid_model

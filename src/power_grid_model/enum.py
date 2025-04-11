@@ -137,6 +137,19 @@ class MeasuredTerminalType(IntEnum):
     """
 
 
+class AngleMeasurementType(IntEnum):
+    """The type of the angle measurement for current sensors."""
+
+    local_angle = 0
+    """
+    The angle is relative to the local voltage angle
+    """
+    global_angle = 1
+    """
+    The angle is relative to the global voltage angle.
+    """
+
+
 class FaultType(IntEnum):
     """The type of fault represented by a fault component"""
 

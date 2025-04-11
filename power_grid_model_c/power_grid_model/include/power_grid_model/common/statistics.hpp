@@ -7,6 +7,8 @@
 #include "common.hpp"
 #include "three_phase_tensor.hpp"
 
+#include <ranges>
+
 /**
  * @file statistics.hpp
  * @brief This file contains various structures and functions for handling statistical representations of
@@ -204,4 +206,57 @@ template <symmetry_tag sym_type> struct PolarComplexRandVar {
                             9.0}};
     }
 };
+
+namespace statistics {
+// combine multiple random variables of one quantity using Kalman filter
+template <std::ranges::view RandVarsView>
+    requires std::same_as<std::ranges::range_value_t<RandVarsView>,
+                          UniformRealRandVar<typename std::ranges::range_value_t<RandVarsView>::sym>> ||
+             std::same_as<std::ranges::range_value_t<RandVarsView>,
+                          IndependentRealRandVar<typename std::ranges::range_value_t<RandVarsView>::sym>> ||
+             std::same_as<std::ranges::range_value_t<RandVarsView>,
+                          UniformComplexRandVar<typename std::ranges::range_value_t<RandVarsView>::sym>> ||
+             std::same_as<std::ranges::range_value_t<RandVarsView>,
+                          IndependentComplexRandVar<typename std::ranges::range_value_t<RandVarsView>::sym>>
+constexpr auto accumulate(RandVarsView rand_vars) {
+    using RandVarType = std::ranges::range_value_t<RandVarsView>;
+    using ValueType = decltype(RandVarType::value);
+    using VarianceType = decltype(RandVarType::variance);
+
+    VarianceType accumulated_inverse_variance{};
+    ValueType weighted_accumulated_value{};
+
+    std::ranges::for_each(rand_vars,
+                          [&accumulated_inverse_variance, &weighted_accumulated_value](auto const& measurement) {
+                              accumulated_inverse_variance += VarianceType{1.0} / measurement.variance;
+                              weighted_accumulated_value += measurement.value / measurement.variance;
+                          });
+
+    if (!is_normal(accumulated_inverse_variance)) {
+        return RandVarType{.value = weighted_accumulated_value,
+                           .variance = VarianceType{std::numeric_limits<double>::infinity()}};
+    }
+    return RandVarType{.value = weighted_accumulated_value / accumulated_inverse_variance,
+                       .variance = VarianceType{1.0} / accumulated_inverse_variance};
+}
+
+template <std::ranges::view RandVarsView>
+    requires std::same_as<std::ranges::range_value_t<RandVarsView>,
+                          DecomposedComplexRandVar<typename std::ranges::range_value_t<RandVarsView>::sym>>
+constexpr auto accumulate(RandVarsView rand_vars) {
+    using sym = std::ranges::range_value_t<RandVarsView>::sym;
+
+    DecomposedComplexRandVar<sym> result{
+        .real_component =
+            accumulate(rand_vars | std::views::transform([](auto const& x) -> auto& { return x.real_component; })),
+        .imag_component =
+            accumulate(rand_vars | std::views::transform([](auto const& x) -> auto& { return x.imag_component; }))};
+
+    if (!(is_normal(result.real_component.variance) && is_normal(result.imag_component.variance))) {
+        result.real_component.variance = RealValue<sym>{std::numeric_limits<double>::infinity()};
+        result.imag_component.variance = RealValue<sym>{std::numeric_limits<double>::infinity()};
+    }
+    return result;
+}
+} // namespace statistics
 } // namespace power_grid_model

@@ -12,14 +12,14 @@
     "iterative_linear": {
       "experimental_features": "enabled",
       "fail": {
-        "raises": "NotObservableError",
+        "raises": "SparseMatrixError",
         "reason": "Current sensors are not yet implemented for this calculation method"
       }
     },
     "newton_raphson": {
       "experimental_features": "enabled",
       "fail": {
-        "raises": "NotObservableError",
+        "raises": "SparseMatrixError",
         "reason": "Current sensors are not yet implemented for this calculation method"
       }
     }
