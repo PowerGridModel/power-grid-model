@@ -317,7 +317,13 @@ jobs:
 
       - name: Get tag
         id: tag
-        run: echo "tag=v$(cat PYPI_VERSION)" >> $GITHUB_OUTPUT
+        # pre-release tag is "RC-commit-hash" (release candidate)
+        run: |
+          if [ "${GITHUB_REF}" != 'refs/heads/main' ]; then
+            echo "tag=RC-$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          else
+            echo "tag=v$(cat PYPI_VERSION)" >> $GITHUB_OUTPUT
+          fi
 
       - name: Display tag
         run: echo "${{ steps.tag.outputs.tag }}"
