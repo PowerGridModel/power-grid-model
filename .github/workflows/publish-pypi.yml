@@ -50,7 +50,6 @@ jobs:
           # https://docs.pypi.org/trusted-publishers/adding-a-publisher/
           # To publish to the official PyPI repository, just keep
           # the above line commented out.
-          repository-url: https://test.pypi.org/legacy/
           packages-dir: assets-to-publish
           skip-existing: true
           print-hash: true
