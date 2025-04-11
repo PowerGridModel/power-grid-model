@@ -23,6 +23,7 @@ jobs:
         uses: robinraju/release-downloader@v1
         with:
           repository: ${{ github.repository }}
+          latest: true
           # also download assets from pre-releases
           preRelease: true
           tag: ${{ github.event.release.tag_name }}
