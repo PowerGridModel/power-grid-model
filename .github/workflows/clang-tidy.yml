@@ -65,11 +65,6 @@ jobs:
         run: |
           brew install boost eigen nlohmann-json msgpack-cxx doctest
 
-      - name: Set build target in case of push
-        if: inputs.target == null
-        run: |
-          echo "TARGET=power_grid_model_api_tests" >> $GITHUB_ENV
-
       - name: Set build target in case of workflow dispatch
         if: inputs.target != null
         run: |
@@ -78,4 +73,4 @@ jobs:
       - name: Build
         run: |
           cmake --preset ${{ env.PRESET }}
-          cmake --build --preset ${{ env.PRESET }} --target ${{ env.TARGET }}
+          cmake --build --preset ${{ env.PRESET }} --target ${{ env.TARGET }} -- -k 0
