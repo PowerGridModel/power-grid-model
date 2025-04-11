@@ -1,0 +1,28 @@
+Clear
+
+Set DefaultBaseFrequency=50
+
+! Swing or Source Bar
+New circuit.test_1 phases=3 pu=1.0 basekv=10 bus1=Node1.1.2.3.4
+
+! LineCodes
+New LineCode.LineCode1 nphases=4 C1=0.54 C0=0.32 Normamps=115.0 Units=km
+~ Rmatrix = [0.6904 |0.0495 0.6904 |0.0492 0.0495 0.6904 | 0.0495 0.0492 0.0495 0.6904]
+~ Xmatrix = [0.8316 |0.7559 0.8316 |0.7339 0.7559 0.8316 | 0.7559 0.7339 0.7559 0.8316]
+
+! Lines 
+New Line.Cable1 Phases=4 Bus1=Node1.1.2.3.4 Bus2=Node2.1.2.3.4 LineCode=LineCode1 Length=1.0 Units=km 
+New Line.SwitchA Phases=4 Bus1=Node2.1.2.3.4 Bus2=Node3.1.2.3.4 Switch=yes enabled=no 
+New Line.Cable2 Phases=4 Bus1=Node3.1.2.3.4 Bus2=Node4.1.2.3.4 LineCode=LineCode1 Length=1.0 Units=km 
+New Line.SwitchB Phases=4 Bus1=Node4.1.2.3.4 Bus2=Node5.1.2.3.4 Switch=yes enabled=yes 
+
+! Load Definitions 
+New Load.Load1_1_Ph1 Bus1=Node2.1 Phases=1 Conn=wye Model=1 kV=5.78034 kW=1 kvar=1.0
+New Load.Load1_1_Ph2 Bus1=Node2.2 Phases=1 Conn=wye Model=1 kV=5.78034 kW=2 kvar=2.0
+New Load.Load1_1_Ph3 Bus1=Node2.3 Phases=1 Conn=wye Model=1 kV=5.78034 kW=3 kvar=3.0
+
+New Load.Load2_1_Ph1 Bus1=Node5.1 Phases=1 Conn=wye Model=1 kV=5.78034 kW=1 kvar=1.0
+New Load.Load2_1_Ph2 Bus1=Node5.2 Phases=1 Conn=wye Model=1 kV=5.78034 kW=2 kvar=2.0
+New Load.Load2_1_Ph3 Bus1=Node5.3 Phases=1 Conn=wye Model=1 kV=5.78034 kW=3 kvar=3.0
+
+set algorithm=Newton
