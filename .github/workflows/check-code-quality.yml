@@ -85,10 +85,10 @@ jobs:
             echo "All the generated files are up to date."
           fi
 
-      - name: Check test_workflow.yml
+      - name: Check test-workflow.yml
         run: |
-          git fetch origin main:refs/remotes/origin/main
-          DIFF=$(git diff origin/main -- .github/workflows/test_workflow.yml)
+          git fetch origin/main
+          DIFF=$(git diff origin/main -- .github/workflows/test-workflow.yml)
 
           if [ -n "$DIFF" ]; then
             echo "The test-workflow.yml file has changed from main."
