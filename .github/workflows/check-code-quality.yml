@@ -86,8 +86,9 @@ jobs:
           fi
 
       - name: Check test-workflow.yml
+        if: success()
         run: |
-          git fetch origin/main
+          git fetch origin main
           DIFF=$(git diff origin/main -- .github/workflows/test-workflow.yml)
 
           if [ -n "$DIFF" ]; then
