@@ -18,7 +18,7 @@ from itertools import chain
 import numpy as np
 
 from power_grid_model import ComponentType, DatasetType, power_grid_meta_data
-from power_grid_model._utils import (
+from power_grid_model._core.utils import (
     compatibility_convert_row_columnar_dataset as _compatibility_convert_row_columnar_dataset,
     convert_batch_dataset_to_batch_list as _convert_batch_dataset_to_batch_list,
 )

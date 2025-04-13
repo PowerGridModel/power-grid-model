@@ -13,7 +13,7 @@ from power_grid_model._core.dataset_definitions import ComponentType as CT, Data
 from power_grid_model._core.power_grid_core import VoidPtr
 from power_grid_model._core.power_grid_dataset import CMutableDataset
 from power_grid_model._core.power_grid_meta import initialize_array, power_grid_meta_data
-from power_grid_model._utils import is_columnar
+from power_grid_model._core.utils import is_columnar
 from power_grid_model.enum import ComponentAttributeFilterOptions
 
 

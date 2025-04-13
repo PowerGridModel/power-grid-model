@@ -40,7 +40,7 @@ from typing import Any, Callable, Type, TypeVar
 import numpy as np
 
 from power_grid_model import ComponentType
-from power_grid_model._utils import get_comp_size, is_nan_or_default
+from power_grid_model._core.utils import get_comp_size, is_nan_or_default
 from power_grid_model.data_types import SingleDataset
 from power_grid_model.enum import FaultPhase, FaultType, WindingType
 from power_grid_model.validation.errors import (
