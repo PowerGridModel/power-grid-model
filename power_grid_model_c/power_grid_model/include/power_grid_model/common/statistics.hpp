@@ -275,18 +275,10 @@ constexpr auto combine_magnitude(RandVarsView rand_vars) {
     using sym = std::ranges::range_value_t<RandVarsView>::sym;
 
     assert(std::ranges::all_of(rand_vars, [](auto const& measurement) {
-        auto const check = [](auto const& value) {
-            return is_nan(imag(measurement.value)) || (real(measurement.value) > 0.0);
-        };
         if constexpr (is_symmetric_v<sym>) {
-            return check(value);
+            return (!is_nan(imag(measurement.value))) || real(measurement.value) >= 0.0;
         } else {
-            for (Idx const phase : IdxRange(3)) {
-                if (!check(measurement.value(phase))) {
-                    return false;
-                }
-            }
-            return false;
+            return (!is_nan(imag(measurement.value))) || (real(measurement.value) >= 0.0).all();
         }
     }));
 

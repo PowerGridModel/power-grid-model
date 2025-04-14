@@ -1154,14 +1154,14 @@ TEST_CASE("Test statistics - combine_magnitude") {
         CHECK(combine_magnitude(measurements | take(2)).variance == doctest::Approx(3.0 / 25.0));
 
         CHECK(combine_magnitude(measurements | take(3)).value.real() ==
-              doctest::Approx((3.0 * std::sqrt(26.0) + 5.0) / 6.0));
+              doctest::Approx((8.0 + 3.0 * std::sqrt(26.0)) / 6.0));
         CHECK(is_nan(combine_magnitude(measurements | take(3)).value.imag()));
         CHECK(combine_magnitude(measurements | take(3)).variance == doctest::Approx(1.0 / 10.0));
     }
 
     SUBCASE("UniformComplexRandVar<asymmetric_t>") {
         std::vector<UniformComplexRandVar<asymmetric_t>> const measurements{
-            {.value = {RealValue<asymmetric_t>{1.0, 2.0, -1.0}, RealValue<asymmetric_t>{5.0, nan, 7.0}},
+            {.value = {RealValue<asymmetric_t>{1.0, 2.0, -1.0}, RealValue<asymmetric_t>{5.0, 6.0, 7.0}},
              .variance = 0.2},
             {.value = {RealValue<asymmetric_t>{2.0, 4.0, 3.0}, RealValue<asymmetric_t>{nan}}, .variance = 0.3},
             {.value = {RealValue<asymmetric_t>{4.0, 5.0, 6.0}, RealValue<asymmetric_t>{nan}}, .variance = 0.6}};
@@ -1174,9 +1174,12 @@ TEST_CASE("Test statistics - combine_magnitude") {
         CHECK(is_nan(combine_magnitude(measurements | take(0)).value(0).imag()));
         CHECK(is_inf(combine_magnitude(measurements | take(0)).variance));
 
-        CHECK(combine_magnitude(measurements | take(1)).value(0).real() == cabs(measurements.front().value(0)));
-        CHECK(combine_magnitude(measurements | take(1)).value(1).real() == cabs(measurements.front().value(1)));
-        CHECK(combine_magnitude(measurements | take(1)).value(2).real() == cabs(measurements.front().value(2)));
+        CHECK(combine_magnitude(measurements | take(1)).value(0).real() ==
+              doctest::Approx(cabs(measurements.front().value(0))));
+        CHECK(combine_magnitude(measurements | take(1)).value(1).real() ==
+              doctest::Approx(cabs(measurements.front().value(1))));
+        CHECK(combine_magnitude(measurements | take(1)).value(2).real() ==
+              doctest::Approx(cabs(measurements.front().value(2))));
         CHECK(is_nan(combine_magnitude(measurements | take(1)).value(0).imag()));
         CHECK(is_nan(combine_magnitude(measurements | take(1)).value(1).imag()));
         CHECK(is_nan(combine_magnitude(measurements | take(1)).value(2).imag()));
@@ -1184,7 +1187,8 @@ TEST_CASE("Test statistics - combine_magnitude") {
 
         CHECK(combine_magnitude(measurements | take(2)).value(0).real() ==
               doctest::Approx((3.0 * std::sqrt(26.0) + 4.0) / 5.0));
-        CHECK(combine_magnitude(measurements | take(2)).value(1).real() == doctest::Approx(14.0 / 5.0));
+        CHECK(combine_magnitude(measurements | take(2)).value(1).real() ==
+              doctest::Approx((8.0 + 6.0 * std::sqrt(10.0)) / 5.0));
         CHECK(combine_magnitude(measurements | take(2)).value(2).real() ==
               doctest::Approx((6.0 + 15.0 * std::sqrt(2.0)) / 5.0));
         CHECK(is_nan(combine_magnitude(measurements | take(2)).value(0).imag()));
@@ -1193,8 +1197,9 @@ TEST_CASE("Test statistics - combine_magnitude") {
         CHECK(combine_magnitude(measurements | take(2)).variance == doctest::Approx(3.0 / 25.0));
 
         CHECK(combine_magnitude(measurements | take(3)).value(0).real() ==
-              doctest::Approx((3.0 * std::sqrt(26.0) + 5.0) / 6.0));
-        CHECK(combine_magnitude(measurements | take(3)).value(1).real() == doctest::Approx(19.0 / 6.0));
+              doctest::Approx((8.0 + 3.0 * std::sqrt(26.0)) / 6.0));
+        CHECK(combine_magnitude(measurements | take(3)).value(1).real() ==
+              doctest::Approx((13.0 + 6.0 * std::sqrt(10.0)) / 6.0));
         CHECK(combine_magnitude(measurements | take(3)).value(2).real() ==
               doctest::Approx((4.0 + 5.0 * std::sqrt(2.0)) / 2.0));
         CHECK(is_nan(combine_magnitude(measurements | take(3)).value(0).imag()));
