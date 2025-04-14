@@ -26,7 +26,6 @@ jobs:
           latest: true
           # also download assets from pre-releases
           preRelease: true
-          tag: ${{ github.event.release.tag_name }}
           fileName: "*"
           # don't download GitHub-generated source tar and zip files
           tarBall: false
@@ -48,7 +47,7 @@ jobs:
           # as well as set the trusted-publisher in the project settings:
           # https://docs.pypi.org/trusted-publishers/adding-a-publisher/
           # To publish to the official PyPI repository, just keep
-          # the above line commented out.
+          # repository-url commented out.
           packages-dir: assets-to-publish
           skip-existing: true
           print-hash: true
