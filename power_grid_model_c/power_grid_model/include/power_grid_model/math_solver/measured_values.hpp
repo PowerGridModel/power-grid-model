@@ -15,16 +15,6 @@ Collect all measured Values
 #include <memory>
 
 namespace power_grid_model::math_solver {
-
-namespace detail {
-template <symmetry_tag sym> inline RealValue<sym> cabs_or_real(ComplexValue<sym> const& value) {
-    if (is_nan(imag(value))) {
-        return real(value); // only keep real part
-    }
-    return cabs(value); // get abs of the value
-}
-} // namespace detail
-
 // processed measurement struct
 // combined all measurement of the same quantity
 // accumulate for bus injection measurement
@@ -455,19 +445,7 @@ template <symmetry_tag sym> class MeasuredValues {
                                                             IdxRange const& sensors) {
         auto complex_measurements = sensors | std::views::transform([&data](Idx pos) -> auto& { return data[pos]; });
         if constexpr (only_magnitude) {
-            auto const weighted_average_magnitude_measurement = statistics::combine(
-                complex_measurements | std::views::transform([](auto const& measurement) {
-                    return UniformRealRandVar<sym>{.value = detail::cabs_or_real<sym>(measurement.value),
-                                                   .variance = measurement.variance};
-                }));
-            return UniformComplexRandVar<sym>{.value =
-                                                  [&weighted_average_magnitude_measurement]() {
-                                                      ComplexValue<sym> abs_value =
-                                                          piecewise_complex_value<sym>(DoubleComplex{0.0, nan});
-                                                      abs_value += weighted_average_magnitude_measurement.value;
-                                                      return abs_value;
-                                                  }(),
-                                              .variance = weighted_average_magnitude_measurement.variance};
+            return statistics::combine_magnitude(complex_measurements);
         } else {
             return statistics::combine(complex_measurements);
         }

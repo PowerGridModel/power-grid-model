@@ -258,5 +258,51 @@ constexpr auto combine(RandVarsView rand_vars) {
     }
     return result;
 }
+
+namespace detail {
+template <symmetry_tag sym> inline RealValue<sym> cabs_or_real(ComplexValue<sym> const& value) {
+    if (is_nan(imag(value))) {
+        return real(value); // only keep real part
+    }
+    return cabs(value); // get abs of the value
+}
+} // namespace detail
+
+template <std::ranges::view RandVarsView>
+    requires std::same_as<std::ranges::range_value_t<RandVarsView>,
+                          UniformComplexRandVar<typename std::ranges::range_value_t<RandVarsView>::sym>>
+constexpr auto combine_magnitude(RandVarsView rand_vars) {
+    using sym = std::ranges::range_value_t<RandVarsView>::sym;
+
+    assert(std::ranges::all_of(rand_vars, [](auto const& measurement) {
+        auto const check = [](auto const& value) {
+            return is_nan(imag(measurement.value)) || (real(measurement.value) > 0.0);
+        };
+        if constexpr (is_symmetric_v<sym>) {
+            return check(value);
+        } else {
+            for (Idx const phase : IdxRange(3)) {
+                if (!check(measurement.value(phase))) {
+                    return false;
+                }
+            }
+            return false;
+        }
+    }));
+
+    auto const weighted_average_magnitude_measurement =
+        statistics::combine(rand_vars | std::views::transform([](auto const& measurement) {
+                                return UniformRealRandVar<sym>{.value = detail::cabs_or_real<sym>(measurement.value),
+                                                               .variance = measurement.variance};
+                            }));
+    return UniformComplexRandVar<sym>{.value =
+                                          [&weighted_average_magnitude_measurement]() {
+                                              ComplexValue<sym> abs_value =
+                                                  piecewise_complex_value<sym>(DoubleComplex{0.0, nan});
+                                              abs_value += weighted_average_magnitude_measurement.value;
+                                              return abs_value;
+                                          }(),
+                                      .variance = weighted_average_magnitude_measurement.variance};
+}
 } // namespace statistics
 } // namespace power_grid_model
