@@ -455,7 +455,7 @@ template <symmetry_tag sym> class MeasuredValues {
                                                             IdxRange const& sensors) {
         auto complex_measurements = sensors | std::views::transform([&data](Idx pos) -> auto& { return data[pos]; });
         if constexpr (only_magnitude) {
-            auto const weighted_average_magnitude_measurement = statistics::accumulate(
+            auto const weighted_average_magnitude_measurement = statistics::combine(
                 complex_measurements | std::views::transform([](auto const& measurement) {
                     return UniformRealRandVar<sym>{.value = detail::cabs_or_real<sym>(measurement.value),
                                                    .variance = measurement.variance};
@@ -469,14 +469,14 @@ template <symmetry_tag sym> class MeasuredValues {
                                                   }(),
                                               .variance = weighted_average_magnitude_measurement.variance};
         } else {
-            return statistics::accumulate(complex_measurements);
+            return statistics::combine(complex_measurements);
         }
     }
     template <bool only_magnitude = false>
         requires(!only_magnitude)
     static PowerSensorCalcParam<sym> combine_measurements(std::vector<PowerSensorCalcParam<sym>> const& data,
                                                           IdxRange const& sensors) {
-        return statistics::accumulate(sensors | std::views::transform([&data](Idx pos) -> auto& { return data[pos]; }));
+        return statistics::combine(sensors | std::views::transform([&data](Idx pos) -> auto& { return data[pos]; }));
     }
     template <bool only_magnitude = false>
         requires(!only_magnitude)
@@ -493,7 +493,7 @@ template <symmetry_tag sym> class MeasuredValues {
         }
 
         return {.angle_measurement_type = angle_measurement_type,
-                .measurement = statistics::accumulate(
+                .measurement = statistics::combine(
                     params | std::views::transform([](auto const& param) -> auto& { return param.measurement; }))};
     }
 
