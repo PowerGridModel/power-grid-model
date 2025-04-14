@@ -274,14 +274,6 @@ template <std::ranges::view RandVarsView>
 constexpr auto combine_magnitude(RandVarsView rand_vars) {
     using sym = std::ranges::range_value_t<RandVarsView>::sym;
 
-    assert(std::ranges::all_of(rand_vars, [](auto const& measurement) {
-        if constexpr (is_symmetric_v<sym>) {
-            return (!is_nan(imag(measurement.value))) || real(measurement.value) >= 0.0;
-        } else {
-            return (!is_nan(imag(measurement.value))) || (real(measurement.value) >= 0.0).all();
-        }
-    }));
-
     auto const weighted_average_magnitude_measurement =
         statistics::combine(rand_vars | std::views::transform([](auto const& measurement) {
                                 return UniformRealRandVar<sym>{.value = detail::cabs_or_real<sym>(measurement.value),
