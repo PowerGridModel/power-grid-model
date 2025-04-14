@@ -344,7 +344,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         CHECK(real(output.branch[0].s_f) == doctest::Approx(1.95));
     }
 
-    SUBCASE("Source and branch current (local angle)") {
+    SUBCASE("Source and branch current") {
         /*
         network, v means voltage measured, p means power measured
 
@@ -356,29 +356,53 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         topo.power_sensors_per_source = {from_sparse, {0, 1}};
         topo.current_sensors_per_branch_from = {from_sparse, {0, 1}};
 
-        se_input.measured_source_power = {
-            {.real_component = {.value = 1.93, .variance = 0.05}, .imag_component = {.value = 0.0, .variance = 0.05}}};
-        se_input.measured_branch_from_current = {{.angle_measurement_type = AngleMeasurementType::local_angle,
-                                                  .measurement = {.real_component = {.value = 1.97, .variance = 0.05},
-                                                                  .imag_component = {.value = 0.0, .variance = 0.05}}}};
-
         auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
         YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
 
         SolverType solver{y_bus_sym, topo_ptr};
 
-        output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, info);
+        SUBCASE("Local angle current sensor") {
+            se_input.measured_source_power = {{.real_component = {.value = 1.93, .variance = 0.05},
+                                               .imag_component = {.value = 0.0, .variance = 0.05}}};
+            se_input.measured_branch_from_current = {
+                {.angle_measurement_type = AngleMeasurementType::local_angle,
+                 .measurement = {.real_component = {.value = 1.97, .variance = 0.05},
+                                 .imag_component = {.value = 0.0, .variance = 0.05}}}};
 
-        if (SolverType::has_current_sensor_implemented) { // TODO(mgovers): for testing purposes; remove if
-                                                          // statement after NRSE has current sensor implemented
-            CHECK(real(output.bus_injection[0]) == doctest::Approx(1.95));
-            CHECK(real(output.source[0].s) == doctest::Approx(1.95));
-            CHECK(real(output.branch[0].s_f) == doctest::Approx(1.95));
-        } else {
-            CHECK_FALSE(real(output.bus_injection[0]) == doctest::Approx(1.95));
-            CHECK_FALSE(real(output.source[0].s) == doctest::Approx(1.95));
-            CHECK_FALSE(real(output.branch[0].s_f) == doctest::Approx(1.95));
+            output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, info);
+
+            if (SolverType::has_current_sensor_implemented) { // TODO(mgovers): for testing purposes; remove if
+                                                              // statement after NRSE has current sensor implemented
+                CHECK(real(output.bus_injection[0]) == doctest::Approx(1.95));
+                CHECK(real(output.source[0].s) == doctest::Approx(1.95));
+                CHECK(real(output.branch[0].s_f) == doctest::Approx(1.95));
+            } else {
+                CHECK_FALSE(real(output.bus_injection[0]) == doctest::Approx(1.95));
+                CHECK_FALSE(real(output.source[0].s) == doctest::Approx(1.95));
+                CHECK_FALSE(real(output.branch[0].s_f) == doctest::Approx(1.95));
+            }
+        }
+        SUBCASE("Global angle current sensor") {
+            se_input.measured_source_power = {{.real_component = {.value = 1.93, .variance = 0.05},
+                                               .imag_component = {.value = 0.0, .variance = 0.05}}};
+            se_input.measured_branch_from_current = {
+                {.angle_measurement_type = AngleMeasurementType::global_angle,
+                 .measurement = {.real_component = {.value = 1.97, .variance = 0.05},
+                                 .imag_component = {.value = 0.0, .variance = 0.05}}}};
+
+            output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, info);
+
+            if (SolverType::has_current_sensor_implemented) { // TODO(mgovers): for testing purposes; remove if
+                                                              // statement after NRSE has current sensor implemented
+                CHECK(real(output.bus_injection[0]) == doctest::Approx(1.95));
+                CHECK(real(output.source[0].s) == doctest::Approx(1.95));
+                CHECK(real(output.branch[0].s_f) == doctest::Approx(1.95));
+            } else {
+                CHECK_FALSE(real(output.bus_injection[0]) == doctest::Approx(1.95));
+                CHECK_FALSE(real(output.source[0].s) == doctest::Approx(1.95));
+                CHECK_FALSE(real(output.branch[0].s_f) == doctest::Approx(1.95));
+            }
         }
     }
 
