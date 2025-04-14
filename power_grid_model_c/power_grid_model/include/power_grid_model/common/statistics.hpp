@@ -218,43 +218,75 @@ template <std::ranges::view RandVarsView>
                           UniformComplexRandVar<typename std::ranges::range_value_t<RandVarsView>::sym>> ||
              std::same_as<std::ranges::range_value_t<RandVarsView>,
                           IndependentComplexRandVar<typename std::ranges::range_value_t<RandVarsView>::sym>>
-constexpr auto accumulate(RandVarsView rand_vars) {
+constexpr auto combine(RandVarsView rand_vars) {
     using RandVarType = std::ranges::range_value_t<RandVarsView>;
     using ValueType = decltype(RandVarType::value);
     using VarianceType = decltype(RandVarType::variance);
 
     VarianceType accumulated_inverse_variance{};
-    ValueType accumulated_value{};
+    ValueType weighted_accumulated_value{};
 
-    std::ranges::for_each(rand_vars, [&accumulated_inverse_variance, &accumulated_value](auto const& measurement) {
-        accumulated_inverse_variance += VarianceType{1.0} / measurement.variance;
-        accumulated_value += measurement.value / measurement.variance;
-    });
+    std::ranges::for_each(rand_vars,
+                          [&accumulated_inverse_variance, &weighted_accumulated_value](auto const& measurement) {
+                              accumulated_inverse_variance += VarianceType{1.0} / measurement.variance;
+                              weighted_accumulated_value += measurement.value / measurement.variance;
+                          });
 
-    if (is_normal(accumulated_inverse_variance)) {
-        return RandVarType{.value = accumulated_value / accumulated_inverse_variance,
-                           .variance = VarianceType{1.0} / accumulated_inverse_variance};
+    if (!is_normal(accumulated_inverse_variance)) {
+        return RandVarType{.value = weighted_accumulated_value,
+                           .variance = VarianceType{std::numeric_limits<double>::infinity()}};
     }
-    return RandVarType{.value = accumulated_value, .variance = VarianceType{std::numeric_limits<double>::infinity()}};
+    return RandVarType{.value = weighted_accumulated_value / accumulated_inverse_variance,
+                       .variance = VarianceType{1.0} / accumulated_inverse_variance};
 }
 
 template <std::ranges::view RandVarsView>
     requires std::same_as<std::ranges::range_value_t<RandVarsView>,
                           DecomposedComplexRandVar<typename std::ranges::range_value_t<RandVarsView>::sym>>
-constexpr auto accumulate(RandVarsView rand_vars) {
+constexpr auto combine(RandVarsView rand_vars) {
     using sym = std::ranges::range_value_t<RandVarsView>::sym;
 
     DecomposedComplexRandVar<sym> result{
         .real_component =
-            accumulate(rand_vars | std::views::transform([](auto const& x) -> auto& { return x.real_component; })),
+            combine(rand_vars | std::views::transform([](auto const& x) -> auto& { return x.real_component; })),
         .imag_component =
-            accumulate(rand_vars | std::views::transform([](auto const& x) -> auto& { return x.imag_component; }))};
+            combine(rand_vars | std::views::transform([](auto const& x) -> auto& { return x.imag_component; }))};
 
     if (!(is_normal(result.real_component.variance) && is_normal(result.imag_component.variance))) {
         result.real_component.variance = RealValue<sym>{std::numeric_limits<double>::infinity()};
         result.imag_component.variance = RealValue<sym>{std::numeric_limits<double>::infinity()};
     }
     return result;
+}
+
+namespace detail {
+template <symmetry_tag sym> inline RealValue<sym> cabs_or_real(ComplexValue<sym> const& value) {
+    if (is_nan(imag(value))) {
+        return real(value); // only keep real part
+    }
+    return cabs(value); // get abs of the value
+}
+} // namespace detail
+
+template <std::ranges::view RandVarsView>
+    requires std::same_as<std::ranges::range_value_t<RandVarsView>,
+                          UniformComplexRandVar<typename std::ranges::range_value_t<RandVarsView>::sym>>
+constexpr auto combine_magnitude(RandVarsView rand_vars) {
+    using sym = std::ranges::range_value_t<RandVarsView>::sym;
+
+    auto const weighted_average_magnitude_measurement =
+        statistics::combine(rand_vars | std::views::transform([](auto const& measurement) {
+                                return UniformRealRandVar<sym>{.value = detail::cabs_or_real<sym>(measurement.value),
+                                                               .variance = measurement.variance};
+                            }));
+    return UniformComplexRandVar<sym>{.value =
+                                          [&weighted_average_magnitude_measurement]() {
+                                              ComplexValue<sym> abs_value =
+                                                  piecewise_complex_value<sym>(DoubleComplex{0.0, nan});
+                                              abs_value += weighted_average_magnitude_measurement.value;
+                                              return abs_value;
+                                          }(),
+                                      .variance = weighted_average_magnitude_measurement.variance};
 }
 } // namespace statistics
 } // namespace power_grid_model

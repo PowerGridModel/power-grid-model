@@ -15,16 +15,6 @@ Collect all measured Values
 #include <memory>
 
 namespace power_grid_model::math_solver {
-
-namespace detail {
-template <symmetry_tag sym> inline RealValue<sym> cabs_or_real(ComplexValue<sym> const& value) {
-    if (is_nan(imag(value))) {
-        return real(value); // only keep real part
-    }
-    return cabs(value); // get abs of the value
-}
-} // namespace detail
-
 // processed measurement struct
 // combined all measurement of the same quantity
 // accumulate for bus injection measurement
@@ -71,6 +61,7 @@ template <symmetry_tag sym> class MeasuredValues {
 
     constexpr bool has_angle() const { return n_voltage_angle_measurements_ > 0; }
     constexpr bool has_voltage_measurements() const { return n_voltage_measurements_ > 0; }
+    constexpr bool has_global_angle_current() const { return n_global_angle_current_measurements_ > 0; }
 
     constexpr bool has_voltage(Idx bus) const { return idx_voltage_[bus] >= 0; }
     constexpr bool has_angle_measurement(Idx bus) const { return !is_nan(imag(voltage(bus))); }
@@ -215,6 +206,7 @@ template <symmetry_tag sym> class MeasuredValues {
 
     Idx n_voltage_measurements_{};
     Idx n_voltage_angle_measurements_{};
+    Idx n_global_angle_current_measurements_{};
 
     // average angle shift of voltages with angle measurement
     // default is zero is no voltage has angle measurement
@@ -406,15 +398,15 @@ template <symmetry_tag sym> class MeasuredValues {
         connected at that side. For each branch the checker checks if the from and to side are connected by checking if
         branch_bus_idx = disconnected.
 
-        If the branch_bus_idx = disconnected, idx_branch_(to|from)_(power|current)_ is set to disconnected.
+        If the branch_bus_idx = disconnected, idx_branch_(to/from)_(power/current)_ is set to disconnected.
         If the side is connected, but there are no measurements in this branch side
-        idx_branch_(to|from)_(power|current)_ is set to disconnected.
-        Else, idx_branch_(to|from)_(power|current)_ is set to the index of the aggregated data in
+        idx_branch_(to/from)_(power/current)_ is set to disconnected.
+        Else, idx_branch_(to/from)_(power/current)_ is set to the index of the aggregated data in
         power/current_main_value_.
 
         All measurement values for a single side of a branch are combined in a weighted average, which is appended to
         power/current_main_value_. The values in power/current_main_value_ can be found using
-        idx_branch_(to|from)_(power|current)_.
+        idx_branch_(to/from)_(power/current)_.
         */
         MathModelTopology const& topo = math_topology();
         static constexpr auto branch_from_checker = [](BranchIdx x) { return x[0] != -1; };
@@ -437,12 +429,10 @@ template <symmetry_tag sym> class MeasuredValues {
                 process_one_object(branch, topo.current_sensors_per_branch_to, topo.branch_bus_idx,
                                    input.measured_branch_to_current, current_main_value_, branch_to_checker);
 
-            if ((!has_angle()) && std::ranges::any_of(current_main_value_, [](auto const& measurement) {
+            n_global_angle_current_measurements_ =
+                std::ranges::count_if(current_main_value_, [](auto const& measurement) {
                     return measurement.angle_measurement_type == AngleMeasurementType::global_angle;
-                })) {
-                throw ConflictingAngleMeasurementType{
-                    "Global angle current measurements require a voltage angle measurement in the connected subgrid."};
-            }
+                });
         }
     }
 
@@ -455,28 +445,16 @@ template <symmetry_tag sym> class MeasuredValues {
                                                             IdxRange const& sensors) {
         auto complex_measurements = sensors | std::views::transform([&data](Idx pos) -> auto& { return data[pos]; });
         if constexpr (only_magnitude) {
-            auto const combined_magnitude_measurement = statistics::accumulate(
-                complex_measurements | std::views::transform([](auto const& measurement) {
-                    return UniformRealRandVar<sym>{.value = detail::cabs_or_real<sym>(measurement.value),
-                                                   .variance = measurement.variance};
-                }));
-            return UniformComplexRandVar<sym>{.value =
-                                                  [&combined_magnitude_measurement]() {
-                                                      ComplexValue<sym> abs_value =
-                                                          piecewise_complex_value<sym>(DoubleComplex{0.0, nan});
-                                                      abs_value += combined_magnitude_measurement.value;
-                                                      return abs_value;
-                                                  }(),
-                                              .variance = combined_magnitude_measurement.variance};
+            return statistics::combine_magnitude(complex_measurements);
         } else {
-            return statistics::accumulate(complex_measurements);
+            return statistics::combine(complex_measurements);
         }
     }
     template <bool only_magnitude = false>
         requires(!only_magnitude)
     static PowerSensorCalcParam<sym> combine_measurements(std::vector<PowerSensorCalcParam<sym>> const& data,
                                                           IdxRange const& sensors) {
-        return statistics::accumulate(sensors | std::views::transform([&data](Idx pos) -> auto& { return data[pos]; }));
+        return statistics::combine(sensors | std::views::transform([&data](Idx pos) -> auto& { return data[pos]; }));
     }
     template <bool only_magnitude = false>
         requires(!only_magnitude)
@@ -485,15 +463,15 @@ template <symmetry_tag sym> class MeasuredValues {
         auto const params = sensors | std::views::transform([&data](Idx pos) -> auto& { return data[pos]; });
         auto const angle_measurement_type = sensors.empty() ? AngleMeasurementType::local_angle // fallback
                                                             : params.front().angle_measurement_type;
-        if (std::ranges::any_of(params, [angle_measurement_type](auto const& params) {
-                return params.angle_measurement_type != angle_measurement_type;
+        if (std::ranges::any_of(params, [angle_measurement_type](auto const& param) {
+                return param.angle_measurement_type != angle_measurement_type;
             })) {
             throw ConflictingAngleMeasurementType{
                 "Cannot mix local and global angle current measurements on the same terminal."};
         }
 
         return {.angle_measurement_type = angle_measurement_type,
-                .measurement = statistics::accumulate(
+                .measurement = statistics::combine(
                     params | std::views::transform([](auto const& param) -> auto& { return param.measurement; }))};
     }
 

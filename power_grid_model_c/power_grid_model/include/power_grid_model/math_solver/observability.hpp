@@ -155,6 +155,11 @@ inline ObservabilityResult necessary_observability_check(MeasuredValues<sym> con
         throw NotObservableError{};
     }
 
+    if (measured_values.has_global_angle_current() && n_voltage_phasor_sensor == 0) {
+        throw NotObservableError{
+            "Global angle current sensors require at least one voltage angle measurement as a reference point.\n"};
+    }
+
     // for radial grid without phasor measurement, try to assign injection sensor to branch sensor
     // we can then check sufficient condition for observability
     if (topo.is_radial && n_voltage_phasor_sensor == 0) {
@@ -163,8 +168,9 @@ inline ObservabilityResult necessary_observability_check(MeasuredValues<sym> con
         if (Idx const n_flow_sensor_new =
                 std::reduce(flow_sensors.cbegin(), flow_sensors.cend(), Idx{}, std::plus<Idx>{});
             n_flow_sensor_new < n_bus - 1) {
-            throw NotObservableError{"The number of power sensors appears sufficient, but they are not independent "
-                                     "enough. The system is still not observable.\n"};
+            throw NotObservableError{
+                "The number of power/current sensors appears sufficient, but they are not independent "
+                "enough. The system is still not observable.\n"};
         }
         result.is_sufficiently_observable = true;
     }
