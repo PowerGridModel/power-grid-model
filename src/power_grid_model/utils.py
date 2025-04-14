@@ -23,7 +23,7 @@ from power_grid_model._core.serialization import (  # pylint: disable=unused-imp
     msgpack_deserialize,
     msgpack_serialize,
 )
-from power_grid_model._utils import (
+from power_grid_model._core.utils import (
     _extract_data_from_component_data,
     _extract_indptr,
     get_and_verify_batch_sizes as _get_and_verify_batch_sizes,

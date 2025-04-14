@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 
 from power_grid_model import ComponentType, DatasetType, LoadGenType, initialize_array
-from power_grid_model._utils import compatibility_convert_row_columnar_dataset, is_columnar
+from power_grid_model._core.utils import compatibility_convert_row_columnar_dataset, is_columnar
 from power_grid_model.enum import ComponentAttributeFilterOptions
 from power_grid_model.validation import validate_batch_data
 from power_grid_model.validation.errors import MultiComponentNotUniqueError, NotBetweenOrAtError, NotBooleanError

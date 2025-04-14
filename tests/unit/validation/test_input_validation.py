@@ -16,7 +16,7 @@ from power_grid_model import (
     WindingType,
     initialize_array,
 )
-from power_grid_model._utils import compatibility_convert_row_columnar_dataset
+from power_grid_model._core.utils import compatibility_convert_row_columnar_dataset
 from power_grid_model.enum import CalculationType, ComponentAttributeFilterOptions, FaultPhase, FaultType
 from power_grid_model.validation import validate_input_data
 from power_grid_model.validation.errors import (

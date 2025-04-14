@@ -15,7 +15,7 @@ from power_grid_model import (
     initialize_array,
     power_grid_meta_data,
 )
-from power_grid_model._utils import compatibility_convert_row_columnar_dataset
+from power_grid_model._core.utils import compatibility_convert_row_columnar_dataset
 from power_grid_model.errors import InvalidCalculationMethod, IterationDiverge, PowerGridBatchError, PowerGridError
 from power_grid_model.utils import get_dataset_scenario
 from power_grid_model.validation import assert_valid_input_data

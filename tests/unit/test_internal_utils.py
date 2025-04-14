@@ -11,7 +11,7 @@ import pytest
 from power_grid_model import ComponentType, DatasetType, initialize_array
 from power_grid_model._core.dataset_definitions import ComponentType as CT, DatasetType as DT
 from power_grid_model._core.power_grid_meta import power_grid_meta_data
-from power_grid_model._utils import (
+from power_grid_model._core.utils import (
     compatibility_convert_row_columnar_dataset,
     convert_batch_dataset_to_batch_list,
     convert_dataset_to_python_dataset,
@@ -369,7 +369,7 @@ def test_convert_batch_dataset_to_batch_list_one_batch_dense():
     assert_list_of_dicts_of_numpy_arrays_equal(expected, actual)
 
 
-@patch("power_grid_model._utils.get_batch_size")
+@patch("power_grid_model._core.utils.get_batch_size")
 def test_convert_batch_dataset_to_batch_list_one_batch_dense_columnar(get_batch_size: MagicMock):
     get_batch_size.return_value = 1
     update_data: BatchDataset = {
@@ -422,7 +422,7 @@ def test_convert_batch_dataset_to_batch_list_two_batches_dense():
     assert_list_of_dicts_of_numpy_arrays_equal(expected, actual)
 
 
-@patch("power_grid_model._utils.get_batch_size")
+@patch("power_grid_model._core.utils.get_batch_size")
 def test_convert_batch_dataset_to_batch_list_two_batches_dense__columnar(get_batch_size: MagicMock):
     get_batch_size.return_value = 2
     update_data: BatchDataset = {
@@ -595,14 +595,14 @@ def test_convert_get_and_verify_batch_sizes_inconsistent_batch_sizes_more_than_t
         get_and_verify_batch_sizes(update_data)
 
 
-@patch("power_grid_model._utils.get_and_verify_batch_sizes")
+@patch("power_grid_model._core.utils.get_and_verify_batch_sizes")
 def test_convert_batch_dataset_to_batch_list_missing_key_sparse(_mock: MagicMock):
     update_data: BatchDataset = {"foo": {"a": np.empty(3), "data": np.empty(3)}}  # type: ignore
     with pytest.raises(KeyError, match="Invalid data for 'foo' component. Missing 'indptr' in sparse batch data. "):
         convert_batch_dataset_to_batch_list(update_data)
 
 
-@patch("power_grid_model._utils.get_and_verify_batch_sizes")
+@patch("power_grid_model._core.utils.get_and_verify_batch_sizes")
 def test_convert_batch_dataset_to_batch_list_invalid_type_sparse(_mock: MagicMock):
     update_data: BatchDataset = {"foo": "wrong type"}  # type: ignore
     with pytest.raises(
