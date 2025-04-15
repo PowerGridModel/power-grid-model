@@ -211,16 +211,16 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
                     }
                     // branch
                     else {
-                        auto const add_branch_measurement =
-                            [&block, &param, obj, type](IntS measured_side, RealValue<sym> const& current_variance) {
-                                // branch from- and to-side index at 0, and 1 position
-                                IntS const b0 = static_cast<IntS>(type) / 2;
-                                IntS const b1 = static_cast<IntS>(type) % 2;
-                                block.g() +=
-                                    dot(hermitian_transpose(param.branch_param[obj].value[measured_side * 2 + b0]),
-                                        diagonal_inverse(current_variance),
-                                        param.branch_param[obj].value[measured_side * 2 + b1]);
-                            };
+                        auto const add_branch_measurement = [&block, &param, obj,
+                                                             type](IntS measured_side,
+                                                                   RealValue<sym> const& branch_current_variance) {
+                            // branch from- and to-side index at 0, and 1 position
+                            IntS const b0 = static_cast<IntS>(type) / 2;
+                            IntS const b1 = static_cast<IntS>(type) % 2;
+                            block.g() += dot(hermitian_transpose(param.branch_param[obj].value[measured_side * 2 + b0]),
+                                             diagonal_inverse(branch_current_variance),
+                                             param.branch_param[obj].value[measured_side * 2 + b1]);
+                        };
                         // measured at from-side: 0, to-side: 1
                         for (IntS const measured_side : std::array<IntS, 2>{0, 1}) {
                             // has measurement
@@ -329,7 +329,7 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
                     // measured at from-side: 0, to-side: 1
                     for (IntS const measured_side : std::array<IntS, 2>{0, 1}) {
                         // the current needs to be calculated with the voltage of the measured bus side
-                        // NOTE: not the current bus!
+                        // NOTE: not the bus that is currently being processed!
                         Idx const measured_bus = branch_bus_idx[obj][measured_side];
 
                         // has measurement
@@ -345,12 +345,12 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
                             CurrentSensorCalcParam<sym> const m =
                                 std::invoke(branch_current_[measured_side], measured_value, obj);
                             // for local angle current sensors, the current needs to be offset with the phase offset
-                            // of the measured bus side. NOTE: not the current bus!
-                            auto global_current = static_cast<IndependentComplexRandVar<sym>>(m.measurement);
+                            // of the measured bus side. NOTE: not the bus that is currently being processed!
+                            auto measured_current = static_cast<IndependentComplexRandVar<sym>>(m.measurement);
                             if (m.angle_measurement_type == AngleMeasurementType::local_angle) {
-                                global_current.value *= phase_shift(u[measured_bus]); // offset with the phase shift
+                                measured_current.value *= phase_shift(u[measured_bus]); // offset with the phase shift
                             }
-                            add_branch_measurement(measured_side, global_current);
+                            add_branch_measurement(measured_side, measured_current);
                         }
                     }
                 }

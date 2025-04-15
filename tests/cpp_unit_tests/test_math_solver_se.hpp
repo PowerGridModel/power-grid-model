@@ -346,7 +346,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
 
     SUBCASE("Source and branch current") {
         /*
-        network, v means voltage measured, p means power measured
+        network, v means voltage measured, c means current measured
 
          bus_0(v) -(c)-branch_0-- bus_1
             |                       |
