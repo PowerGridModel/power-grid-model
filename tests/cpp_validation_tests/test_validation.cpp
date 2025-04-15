@@ -295,6 +295,8 @@ std::map<std::string, PGM_TapChangingStrategy, std::less<>> const optimizer_stra
     {"min_voltage_tap", PGM_tap_changing_strategy_min_voltage_tap},
     {"max_voltage_tap", PGM_tap_changing_strategy_max_voltage_tap},
     {"fast_any_tap", PGM_tap_changing_strategy_fast_any_tap}};
+std::map<std::string, PGM_ExperimentalFeatures, std::less<>> const experimental_features_mapping = {
+    {"disabled", PGM_experimental_features_disabled}, {"enabled", PGM_experimental_features_enabled}};
 
 // case parameters
 struct CaseParam {
@@ -304,6 +306,7 @@ struct CaseParam {
     std::string calculation_method;
     std::string short_circuit_voltage_scaling;
     std::string tap_changing_strategy;
+    std::string experimental_features;
     double err_tol = 1e-8;
     Idx max_iter = 20;
     bool sym{};
@@ -329,6 +332,7 @@ Options get_options(CaseParam const& param, Idx threading = -1) {
     options.set_threading(threading);
     options.set_short_circuit_voltage_scaling(sc_voltage_scaling_mapping.at(param.short_circuit_voltage_scaling));
     options.set_tap_changing_strategy(optimizer_strategy_mapping.at(param.tap_changing_strategy));
+    options.set_experimental_features(experimental_features_mapping.at(param.experimental_features));
     return options;
 }
 
@@ -390,6 +394,7 @@ std::optional<CaseParam> construct_case(std::filesystem::path const& case_dir, j
     }
 
     param.tap_changing_strategy = calculation_method_params.value("tap_changing_strategy", "disabled");
+    param.experimental_features = calculation_method_params.value("experimental_features", "disabled");
     param.case_name += sym ? "-sym"s : "-asym"s;
     param.case_name += "-"s + param.calculation_method;
     param.case_name += is_batch ? "_batch"s : ""s;
