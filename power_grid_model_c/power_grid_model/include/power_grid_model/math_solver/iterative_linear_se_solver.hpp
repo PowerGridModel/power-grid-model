@@ -149,7 +149,8 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
 
   private:
     // array selection function pointer
-    static constexpr std::array has_branch_{&MeasuredValues<sym>::has_branch_from, &MeasuredValues<sym>::has_branch_to};
+    static constexpr std::array has_branch_power_{&MeasuredValues<sym>::has_branch_from_power,
+                                                  &MeasuredValues<sym>::has_branch_to_power};
     static constexpr std::array branch_power_{&MeasuredValues<sym>::branch_from_power,
                                               &MeasuredValues<sym>::branch_to_power};
 
@@ -222,7 +223,7 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
                         // measured at from-side: 0, to-side: 1
                         for (IntS const measured_side : std::array<IntS, 2>{0, 1}) {
                             // has measurement
-                            if (std::invoke(has_branch_[measured_side], measured_value, obj)) {
+                            if (std::invoke(has_branch_power_[measured_side], measured_value, obj)) {
                                 // G += Y{side, b0}^H * (variance^-1) * Y{side, b1}
                                 auto const& power = std::invoke(branch_power_[measured_side], measured_value, obj);
                                 // the current needs to be calculated with the voltage of the measured bus side
@@ -320,7 +321,7 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
                     // measured at from-side: 0, to-side: 1
                     for (IntS const measured_side : std::array<IntS, 2>{0, 1}) {
                         // has measurement
-                        if (std::invoke(has_branch_[measured_side], measured_value, obj)) {
+                        if (std::invoke(has_branch_power_[measured_side], measured_value, obj)) {
                             PowerSensorCalcParam<sym> const& power =
                                 std::invoke(branch_power_[measured_side], measured_value, obj);
                             // the current needs to be calculated with the voltage of the measured bus side

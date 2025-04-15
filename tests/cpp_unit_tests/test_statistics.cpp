@@ -1058,6 +1058,400 @@ TEST_CASE("Test statistics - scale") {
     }
 }
 
+TEST_CASE("Test statistics - combine") {
+    using statistics::combine;
+    using std::views::take;
+
+    SUBCASE("UniformRealRandVar<symmetric_t> | IndependentRealRandVar<symmetric_t>") {
+        // using a template lambda to avoid code duplication and to avoid having to create a separate test case
+        auto const check = []<typename T>() {
+            std::vector<T> const measurements{
+                {.value = 1.0, .variance = 0.2}, {.value = 2.0, .variance = 0.3}, {.value = 3.0, .variance = 0.6}};
+
+            CHECK(combine(measurements | take(0)).value == 0.0);
+            CHECK(is_inf(combine(measurements | take(0)).variance));
+
+            CHECK(combine(measurements | take(1)).value == measurements.front().value);
+            CHECK(combine(measurements | take(1)).variance == measurements.front().variance);
+
+            CHECK(combine(measurements | take(2)).value == doctest::Approx(7.0 / 5.0));
+            CHECK(combine(measurements | take(2)).variance == doctest::Approx(3.0 / 25.0));
+
+            CHECK(combine(measurements | take(3)).value == doctest::Approx(5.0 / 3.0));
+            CHECK(combine(measurements | take(3)).variance == doctest::Approx(1.0 / 10.0));
+        };
+        SUBCASE("UniformRealRandVar<symmetric_t>") { check.template operator()<UniformRealRandVar<symmetric_t>>(); }
+        SUBCASE("IndependentRealRandVar<symmetric_t>") {
+            check.template operator()<IndependentRealRandVar<symmetric_t>>();
+        }
+    }
+
+    SUBCASE("UniformRealRandVar<asymmetric_t>") {
+        std::vector<UniformRealRandVar<asymmetric_t>> const measurements{{.value = {1.0, 2.0, -1.0}, .variance = 0.2},
+                                                                         {.value = {2.0, 4.0, 3.0}, .variance = 0.3},
+                                                                         {.value = {4.0, 5.0, 6.0}, .variance = 0.6}};
+
+        CHECK(combine(measurements | take(0)).value(0) == 0.0);
+        CHECK(combine(measurements | take(0)).value(1) == 0.0);
+        CHECK(combine(measurements | take(0)).value(2) == 0.0);
+        CHECK(is_inf(combine(measurements | take(0)).variance));
+
+        CHECK(combine(measurements | take(1)).value(0) == measurements.front().value(0));
+        CHECK(combine(measurements | take(1)).value(1) == measurements.front().value(1));
+        CHECK(combine(measurements | take(1)).value(2) == measurements.front().value(2));
+        CHECK(combine(measurements | take(1)).variance == measurements.front().variance);
+
+        CHECK(combine(measurements | take(2)).value(0) == doctest::Approx(7.0 / 5.0));
+        CHECK(combine(measurements | take(2)).value(1) == doctest::Approx(14.0 / 5.0));
+        CHECK(combine(measurements | take(2)).value(2) == doctest::Approx(3.0 / 5.0));
+        CHECK(combine(measurements | take(2)).variance == doctest::Approx(3.0 / 25.0));
+
+        CHECK(combine(measurements | take(3)).value(0) == doctest::Approx(11.0 / 6.0));
+        CHECK(combine(measurements | take(3)).value(1) == doctest::Approx(19.0 / 6.0));
+        CHECK(combine(measurements | take(3)).value(2) == doctest::Approx(3.0 / 2.0));
+        CHECK(combine(measurements | take(3)).variance == doctest::Approx(1.0 / 10.0));
+    }
+
+    SUBCASE("IndependentRealRandVar<asymmetric_t>") {
+        std::vector<IndependentRealRandVar<asymmetric_t>> const measurements{
+            {.value = {1.0, 2.0, -1.0}, .variance = {0.2, 0.3, 0.4}},
+            {.value = {2.0, 4.0, 3.0}, .variance = {0.3, 0.4, 0.5}},
+            {.value = {4.0, 5.0, 6.0}, .variance = {0.6, 0.7, 0.8}}};
+
+        CHECK(combine(measurements | take(0)).value(0) == 0.0);
+        CHECK(combine(measurements | take(0)).value(1) == 0.0);
+        CHECK(combine(measurements | take(0)).value(2) == 0.0);
+        CHECK(is_inf(combine(measurements | take(0)).variance(0)));
+        CHECK(is_inf(combine(measurements | take(0)).variance(1)));
+        CHECK(is_inf(combine(measurements | take(0)).variance(2)));
+
+        CHECK(combine(measurements | take(1)).value(0) == measurements.front().value(0));
+        CHECK(combine(measurements | take(1)).value(1) == measurements.front().value(1));
+        CHECK(combine(measurements | take(1)).value(2) == measurements.front().value(2));
+        CHECK(combine(measurements | take(1)).variance(0) == measurements.front().variance(0));
+        CHECK(combine(measurements | take(1)).variance(1) == measurements.front().variance(1));
+        CHECK(combine(measurements | take(1)).variance(2) == measurements.front().variance(2));
+
+        CHECK(combine(measurements | take(2)).value(0) == doctest::Approx(7.0 / 5.0));
+        CHECK(combine(measurements | take(2)).value(1) == doctest::Approx(20.0 / 7.0));
+        CHECK(combine(measurements | take(2)).value(2) == doctest::Approx(7.0 / 9.0));
+        CHECK(combine(measurements | take(2)).variance(0) == doctest::Approx(3.0 / 25.0));
+        CHECK(combine(measurements | take(2)).variance(1) == doctest::Approx(6.0 / 35.0));
+        CHECK(combine(measurements | take(2)).variance(2) == doctest::Approx(2.0 / 9.0));
+
+        CHECK(combine(measurements | take(3)).value(0) == doctest::Approx(11.0 / 6.0));
+        CHECK(combine(measurements | take(3)).value(1) == doctest::Approx(200.0 / 61.0));
+        CHECK(combine(measurements | take(3)).value(2) == doctest::Approx(44.0 / 23.0));
+        CHECK(combine(measurements | take(3)).variance(0) == doctest::Approx(1.0 / 10.0));
+        CHECK(combine(measurements | take(3)).variance(1) == doctest::Approx(42.0 / 305.0));
+        CHECK(combine(measurements | take(3)).variance(2) == doctest::Approx(4.0 / 23.0));
+    }
+
+    SUBCASE("UniformComplexRandVar<symmetric_t> | IndependentComplexRandVar<symmetric_t>") {
+        // using a template lambda to avoid code duplication and to avoid having to create a separate test case
+        auto const check = []<typename T>() {
+            std::vector<T> const measurements{T{.value = 1.0 + 5.0i, .variance = 0.2},
+                                              T{.value = 2.0 + 6.0i, .variance = 0.3},
+                                              T{.value = 4.0 + 3.0i, .variance = 0.6}};
+
+            CHECK(combine(measurements | take(0)).value.real() == 0.0);
+            CHECK(combine(measurements | take(0)).value.imag() == 0.0);
+            CHECK(is_inf(combine(measurements | take(0)).variance));
+
+            CHECK(combine(measurements | take(1)).value.real() == measurements.front().value.real());
+            CHECK(combine(measurements | take(1)).value.imag() == measurements.front().value.imag());
+            CHECK(combine(measurements | take(1)).variance == measurements.front().variance);
+
+            CHECK(combine(measurements | take(2)).value.real() == doctest::Approx(7.0 / 5.0));
+            CHECK(combine(measurements | take(2)).value.imag() == doctest::Approx(27.0 / 5.0));
+            CHECK(combine(measurements | take(2)).variance == doctest::Approx(3.0 / 25.0));
+
+            CHECK(combine(measurements | take(3)).value.real() == doctest::Approx(11.0 / 6.0));
+            CHECK(combine(measurements | take(3)).value.imag() == doctest::Approx(30.0 / 6.0));
+            CHECK(combine(measurements | take(3)).variance == doctest::Approx(1.0 / 10.0));
+        };
+        SUBCASE("UniformComplexRandVar<symmetric_t>") {
+            check.template operator()<UniformComplexRandVar<symmetric_t>>();
+        }
+        SUBCASE("IndependentComplexRandVar<symmetric_t>") {
+            check.template operator()<IndependentComplexRandVar<symmetric_t>>();
+        }
+    }
+
+    SUBCASE("UniformComplexRandVar<asymmetric_t>") {
+        std::vector<UniformComplexRandVar<asymmetric_t>> const measurements{
+            {.value = {RealValue<asymmetric_t>{1.0, 2.0, -1.0}, RealValue<asymmetric_t>{5.0, 6.0, 7.0}},
+             .variance = 0.2},
+            {.value = {RealValue<asymmetric_t>{2.0, 4.0, 3.0}, RealValue<asymmetric_t>{6.0, -7.0, 2.0}},
+             .variance = 0.3},
+            {.value = {RealValue<asymmetric_t>{4.0, 5.0, 6.0}, RealValue<asymmetric_t>{3.0, 1.0, 2.0}},
+             .variance = 0.6}};
+
+        CHECK(combine(measurements | take(0)).value(0).real() == 0.0);
+        CHECK(combine(measurements | take(0)).value(1).real() == 0.0);
+        CHECK(combine(measurements | take(0)).value(2).real() == 0.0);
+        CHECK(combine(measurements | take(0)).value(0).imag() == 0.0);
+        CHECK(combine(measurements | take(0)).value(1).imag() == 0.0);
+        CHECK(combine(measurements | take(0)).value(2).imag() == 0.0);
+        CHECK(is_inf(combine(measurements | take(0)).variance));
+
+        CHECK(combine(measurements | take(1)).value(0).real() == measurements.front().value(0).real());
+        CHECK(combine(measurements | take(1)).value(1).real() == measurements.front().value(1).real());
+        CHECK(combine(measurements | take(1)).value(2).real() == measurements.front().value(2).real());
+        CHECK(combine(measurements | take(1)).value(0).imag() == measurements.front().value(0).imag());
+        CHECK(combine(measurements | take(1)).value(1).imag() == measurements.front().value(1).imag());
+        CHECK(combine(measurements | take(1)).value(2).imag() == measurements.front().value(2).imag());
+        CHECK(combine(measurements | take(1)).variance == measurements.front().variance);
+
+        CHECK(combine(measurements | take(2)).value(0).real() == doctest::Approx(7.0 / 5.0));
+        CHECK(combine(measurements | take(2)).value(1).real() == doctest::Approx(14.0 / 5.0));
+        CHECK(combine(measurements | take(2)).value(2).real() == doctest::Approx(3.0 / 5.0));
+        CHECK(combine(measurements | take(2)).value(0).imag() == doctest::Approx(27.0 / 5.0));
+        CHECK(combine(measurements | take(2)).value(1).imag() == doctest::Approx(4.0 / 5.0));
+        CHECK(combine(measurements | take(2)).value(2).imag() == doctest::Approx(25.0 / 5.0));
+        CHECK(combine(measurements | take(2)).variance == doctest::Approx(3.0 / 25.0));
+
+        CHECK(combine(measurements | take(3)).value(0).real() == doctest::Approx(11.0 / 6.0));
+        CHECK(combine(measurements | take(3)).value(1).real() == doctest::Approx(19.0 / 6.0));
+        CHECK(combine(measurements | take(3)).value(2).real() == doctest::Approx(9.0 / 6.0));
+        CHECK(combine(measurements | take(3)).value(0).imag() == doctest::Approx(30.0 / 6.0));
+        CHECK(combine(measurements | take(3)).value(1).imag() == doctest::Approx(5.0 / 6.0));
+        CHECK(combine(measurements | take(3)).value(2).imag() == doctest::Approx(27.0 / 6.0));
+        CHECK(combine(measurements | take(3)).variance == doctest::Approx(1.0 / 10.0));
+    }
+
+    SUBCASE("IndependentComplexRandVar<asymmetric_t>") {
+        std::vector<IndependentComplexRandVar<asymmetric_t>> const measurements{
+            {.value = {RealValue<asymmetric_t>{1.0, 2.0, -1.0}, RealValue<asymmetric_t>{5.0, 6.0, 7.0}},
+             .variance = {0.2, 0.3, 0.4}},
+            {.value = {RealValue<asymmetric_t>{2.0, 4.0, 3.0}, RealValue<asymmetric_t>{6.0, -7.0, 2.0}},
+             .variance = {0.3, 0.4, 0.5}},
+            {.value = {RealValue<asymmetric_t>{4.0, 5.0, 6.0}, RealValue<asymmetric_t>{3.0, 1.0, 2.0}},
+             .variance = {0.6, 0.7, 0.8}}};
+
+        CHECK(combine(measurements | take(0)).value(0).real() == 0.0);
+        CHECK(combine(measurements | take(0)).value(1).real() == 0.0);
+        CHECK(combine(measurements | take(0)).value(2).real() == 0.0);
+        CHECK(combine(measurements | take(0)).value(0).imag() == 0.0);
+        CHECK(combine(measurements | take(0)).value(1).imag() == 0.0);
+        CHECK(combine(measurements | take(0)).value(2).imag() == 0.0);
+        CHECK(is_inf(combine(measurements | take(0)).variance(0)));
+        CHECK(is_inf(combine(measurements | take(0)).variance(1)));
+        CHECK(is_inf(combine(measurements | take(0)).variance(2)));
+
+        CHECK(combine(measurements | take(1)).value(0).real() == measurements.front().value(0).real());
+        CHECK(combine(measurements | take(1)).value(1).real() == measurements.front().value(1).real());
+        CHECK(combine(measurements | take(1)).value(2).real() == measurements.front().value(2).real());
+        CHECK(combine(measurements | take(1)).value(0).imag() == measurements.front().value(0).imag());
+        CHECK(combine(measurements | take(1)).value(1).imag() == measurements.front().value(1).imag());
+        CHECK(combine(measurements | take(1)).value(2).imag() == measurements.front().value(2).imag());
+        CHECK(combine(measurements | take(1)).variance(0) == measurements.front().variance(0));
+        CHECK(combine(measurements | take(1)).variance(1) == measurements.front().variance(1));
+        CHECK(combine(measurements | take(1)).variance(2) == measurements.front().variance(2));
+
+        CHECK(combine(measurements | take(2)).value(0).real() == doctest::Approx(7.0 / 5.0));
+        CHECK(combine(measurements | take(2)).value(1).real() == doctest::Approx(20.0 / 7.0));
+        CHECK(combine(measurements | take(2)).value(2).real() == doctest::Approx(7.0 / 9.0));
+        CHECK(combine(measurements | take(2)).value(0).imag() == doctest::Approx(27.0 / 5.0));
+        CHECK(combine(measurements | take(2)).value(1).imag() == doctest::Approx(3.0 / 7.0));
+        CHECK(combine(measurements | take(2)).value(2).imag() == doctest::Approx(43.0 / 9.0));
+        CHECK(combine(measurements | take(2)).variance(0) == doctest::Approx(3.0 / 25.0));
+        CHECK(combine(measurements | take(2)).variance(1) == doctest::Approx(6.0 / 35.0));
+        CHECK(combine(measurements | take(2)).variance(2) == doctest::Approx(2.0 / 9.0));
+
+        CHECK(combine(measurements | take(3)).value(0).real() == doctest::Approx(11.0 / 6.0));
+        CHECK(combine(measurements | take(3)).value(1).real() == doctest::Approx(200.0 / 61.0));
+        CHECK(combine(measurements | take(3)).value(2).real() == doctest::Approx(44.0 / 23.0));
+        CHECK(combine(measurements | take(3)).value(0).imag() == doctest::Approx(30.0 / 6.0));
+        CHECK(combine(measurements | take(3)).value(1).imag() == doctest::Approx(33.0 / 61.0));
+        CHECK(combine(measurements | take(3)).value(2).imag() == doctest::Approx(96.0 / 23.0));
+        CHECK(combine(measurements | take(3)).variance(0) == doctest::Approx(1.0 / 10.0));
+        CHECK(combine(measurements | take(3)).variance(1) == doctest::Approx(42.0 / 305.0));
+        CHECK(combine(measurements | take(3)).variance(2) == doctest::Approx(4.0 / 23.0));
+    }
+
+    SUBCASE("DecomposedComplexRandVar<symmetric_t>") {
+        std::vector<DecomposedComplexRandVar<symmetric_t>> const measurements{
+            DecomposedComplexRandVar<symmetric_t>{.real_component = {.value = 1.0, .variance = 0.2},
+                                                  .imag_component = {.value = 5.0, .variance = 0.1}},
+            DecomposedComplexRandVar<symmetric_t>{.real_component = {.value = 2.0, .variance = 0.3},
+                                                  .imag_component = {.value = 6.0, .variance = 0.2}},
+            DecomposedComplexRandVar<symmetric_t>{.real_component = {.value = 4.0, .variance = 0.6},
+                                                  .imag_component = {.value = 3.0, .variance = 0.3}}};
+
+        CHECK(combine(measurements | take(0)).real_component.value == 0.0);
+        CHECK(combine(measurements | take(0)).imag_component.value == 0.0);
+        CHECK(is_inf(combine(measurements | take(0)).real_component.variance));
+        CHECK(is_inf(combine(measurements | take(0)).imag_component.variance));
+
+        CHECK(combine(measurements | take(1)).real_component.value == measurements.front().real_component.value);
+        CHECK(combine(measurements | take(1)).imag_component.value == measurements.front().imag_component.value);
+        CHECK(combine(measurements | take(1)).real_component.variance == measurements.front().real_component.variance);
+        CHECK(combine(measurements | take(1)).imag_component.variance == measurements.front().imag_component.variance);
+
+        CHECK(combine(measurements | take(2)).real_component.value == doctest::Approx(7.0 / 5.0));
+        CHECK(combine(measurements | take(2)).imag_component.value == doctest::Approx(80.0 / 15.0));
+        CHECK(combine(measurements | take(2)).real_component.variance == doctest::Approx(3.0 / 25.0));
+        CHECK(combine(measurements | take(2)).imag_component.variance == doctest::Approx(1.0 / 15.0));
+
+        CHECK(combine(measurements | take(3)).real_component.value == doctest::Approx(11.0 / 6.0));
+        CHECK(combine(measurements | take(3)).imag_component.value == doctest::Approx(270.0 / 55.0));
+        CHECK(combine(measurements | take(3)).real_component.variance == doctest::Approx(1.0 / 10.0));
+        CHECK(combine(measurements | take(3)).imag_component.variance == doctest::Approx(3.0 / 55.0));
+    }
+
+    SUBCASE("DecomposedComplexRandVar<asymmetric_t>") {
+        std::vector<DecomposedComplexRandVar<asymmetric_t>> const measurements{
+            DecomposedComplexRandVar<asymmetric_t>{
+                .real_component = {.value = RealValue<asymmetric_t>{1.0, 2.0, -1.0}, .variance = {0.2, 0.3, 0.4}},
+                .imag_component = {.value = RealValue<asymmetric_t>{5.0, 6.0, 7.0}, .variance = {0.1, 0.2, 0.3}}},
+            DecomposedComplexRandVar<asymmetric_t>{
+                .real_component = {.value = RealValue<asymmetric_t>{2.0, 4.0, 3.0}, .variance = {0.3, 0.4, 0.5}},
+                .imag_component = {.value = RealValue<asymmetric_t>{6.0, -7.0, 2.0}, .variance = {0.2, 0.3, 0.4}}},
+            DecomposedComplexRandVar<asymmetric_t>{
+                .real_component = {.value = RealValue<asymmetric_t>{4.0, 5.0, 6.0}, .variance = {0.6, 0.7, 0.8}},
+                .imag_component = {.value = RealValue<asymmetric_t>{3.0, 1.0, 2.0}, .variance = {0.3, 0.4, 0.5}}}};
+
+        CHECK(combine(measurements | take(0)).real_component.value(0) == 0.0);
+        CHECK(combine(measurements | take(0)).real_component.value(2) == 0.0);
+        CHECK(combine(measurements | take(0)).real_component.value(1) == 0.0);
+        CHECK(combine(measurements | take(0)).imag_component.value(0) == 0.0);
+        CHECK(combine(measurements | take(0)).imag_component.value(2) == 0.0);
+        CHECK(combine(measurements | take(0)).imag_component.value(1) == 0.0);
+        CHECK(is_inf(combine(measurements | take(0)).real_component.variance(0)));
+        CHECK(is_inf(combine(measurements | take(0)).real_component.variance(1)));
+        CHECK(is_inf(combine(measurements | take(0)).real_component.variance(2)));
+        CHECK(is_inf(combine(measurements | take(0)).imag_component.variance(0)));
+        CHECK(is_inf(combine(measurements | take(0)).imag_component.variance(1)));
+        CHECK(is_inf(combine(measurements | take(0)).imag_component.variance(2)));
+
+        CHECK(combine(measurements | take(1)).real_component.value(0) == measurements.front().real_component.value(0));
+        CHECK(combine(measurements | take(1)).real_component.value(1) == measurements.front().real_component.value(1));
+        CHECK(combine(measurements | take(1)).real_component.value(2) == measurements.front().real_component.value(2));
+        CHECK(combine(measurements | take(1)).imag_component.value(0) == measurements.front().imag_component.value(0));
+        CHECK(combine(measurements | take(1)).imag_component.value(1) == measurements.front().imag_component.value(1));
+        CHECK(combine(measurements | take(1)).imag_component.value(2) == measurements.front().imag_component.value(2));
+        CHECK(combine(measurements | take(1)).real_component.variance(0) ==
+              measurements.front().real_component.variance(0));
+        CHECK(combine(measurements | take(1)).real_component.variance(1) ==
+              measurements.front().real_component.variance(1));
+        CHECK(combine(measurements | take(1)).real_component.variance(2) ==
+              measurements.front().real_component.variance(2));
+        CHECK(combine(measurements | take(1)).imag_component.variance(0) ==
+              measurements.front().imag_component.variance(0));
+        CHECK(combine(measurements | take(1)).imag_component.variance(1) ==
+              measurements.front().imag_component.variance(1));
+        CHECK(combine(measurements | take(1)).imag_component.variance(2) ==
+              measurements.front().imag_component.variance(2));
+
+        CHECK(combine(measurements | take(2)).real_component.value(0) == doctest::Approx(7.0 / 5.0));
+        CHECK(combine(measurements | take(2)).real_component.value(1) == doctest::Approx(20.0 / 7.0));
+        CHECK(combine(measurements | take(2)).real_component.value(2) == doctest::Approx(7.0 / 9.0));
+        CHECK(combine(measurements | take(2)).imag_component.value(0) == doctest::Approx(80.0 / 15.0));
+        CHECK(combine(measurements | take(2)).imag_component.value(1) == doctest::Approx(20 / 25.0));
+        CHECK(combine(measurements | take(2)).imag_component.value(2) == doctest::Approx(170.0 / 35.0));
+        CHECK(combine(measurements | take(2)).real_component.variance(0) == doctest::Approx(3.0 / 25.0));
+        CHECK(combine(measurements | take(2)).real_component.variance(1) == doctest::Approx(6.0 / 35.0));
+        CHECK(combine(measurements | take(2)).real_component.variance(2) == doctest::Approx(2.0 / 9.0));
+        CHECK(combine(measurements | take(2)).imag_component.variance(0) == doctest::Approx(1.0 / 15.0));
+        CHECK(combine(measurements | take(2)).imag_component.variance(1) == doctest::Approx(3.0 / 25.0));
+        CHECK(combine(measurements | take(2)).imag_component.variance(2) == doctest::Approx(6.0 / 35.0));
+
+        CHECK(combine(measurements | take(3)).real_component.value(0) == doctest::Approx(11.0 / 6.0));
+        CHECK(combine(measurements | take(3)).real_component.value(1) == doctest::Approx(200.0 / 61.0));
+        CHECK(combine(measurements | take(3)).real_component.value(2) == doctest::Approx(44.0 / 23.0));
+        CHECK(combine(measurements | take(3)).imag_component.value(0) == doctest::Approx(270.0 / 55.0));
+        CHECK(combine(measurements | take(3)).imag_component.value(1) == doctest::Approx(55.0 / 65.0));
+        CHECK(combine(measurements | take(3)).imag_component.value(2) == doctest::Approx(194.0 / 47.0));
+        CHECK(combine(measurements | take(3)).real_component.variance(0) == doctest::Approx(1.0 / 10.0));
+        CHECK(combine(measurements | take(3)).real_component.variance(1) == doctest::Approx(42.0 / 305.0));
+        CHECK(combine(measurements | take(3)).real_component.variance(2) == doctest::Approx(4.0 / 23.0));
+        CHECK(combine(measurements | take(3)).imag_component.variance(0) == doctest::Approx(3.0 / 55.0));
+        CHECK(combine(measurements | take(3)).imag_component.variance(1) == doctest::Approx(6.0 / 65));
+        CHECK(combine(measurements | take(3)).imag_component.variance(2) == doctest::Approx(6.0 / 47.0));
+    }
+}
+
+TEST_CASE("Test statistics - combine_magnitude") {
+    using statistics::combine_magnitude;
+    using std::views::take;
+
+    SUBCASE("UniformComplexRandVar<symmetric_t>") {
+        // using a template lambda to avoid code duplication and to avoid having to create a separate test case
+        std::vector<UniformComplexRandVar<symmetric_t>> const measurements{
+            {.value = ComplexValue<symmetric_t>{1.0, 5.0}, .variance = 0.2},
+            {.value = ComplexValue<symmetric_t>{2.0, nan}, .variance = 0.3},
+            {.value = ComplexValue<symmetric_t>{4.0, nan}, .variance = 0.6}};
+
+        CHECK(combine_magnitude(measurements | take(0)).value.real() == 0.0);
+        CHECK(is_nan(combine_magnitude(measurements | take(0)).value.imag()));
+        CHECK(is_inf(combine_magnitude(measurements | take(0)).variance));
+
+        CHECK(combine_magnitude(measurements | take(1)).value.real() == cabs(measurements.front().value));
+        CHECK(is_nan(combine_magnitude(measurements | take(1)).value.imag()));
+        CHECK(combine_magnitude(measurements | take(1)).variance == measurements.front().variance);
+
+        CHECK(combine_magnitude(measurements | take(2)).value.real() ==
+              doctest::Approx((3.0 * std::sqrt(26.0) + 4.0) / 5.0));
+        CHECK(is_nan(combine_magnitude(measurements | take(2)).value.imag()));
+        CHECK(combine_magnitude(measurements | take(2)).variance == doctest::Approx(3.0 / 25.0));
+
+        CHECK(combine_magnitude(measurements | take(3)).value.real() ==
+              doctest::Approx((8.0 + 3.0 * std::sqrt(26.0)) / 6.0));
+        CHECK(is_nan(combine_magnitude(measurements | take(3)).value.imag()));
+        CHECK(combine_magnitude(measurements | take(3)).variance == doctest::Approx(1.0 / 10.0));
+    }
+
+    SUBCASE("UniformComplexRandVar<asymmetric_t>") {
+        std::vector<UniformComplexRandVar<asymmetric_t>> const measurements{
+            {.value = {RealValue<asymmetric_t>{1.0, 2.0, -1.0}, RealValue<asymmetric_t>{5.0, 6.0, 7.0}},
+             .variance = 0.2},
+            {.value = {RealValue<asymmetric_t>{2.0, 4.0, 3.0}, RealValue<asymmetric_t>{nan}}, .variance = 0.3},
+            {.value = {RealValue<asymmetric_t>{4.0, 5.0, 6.0}, RealValue<asymmetric_t>{nan}}, .variance = 0.6}};
+
+        CHECK(combine_magnitude(measurements | take(0)).value(0).real() == 0.0);
+        CHECK(combine_magnitude(measurements | take(0)).value(1).real() == 0.0);
+        CHECK(combine_magnitude(measurements | take(0)).value(2).real() == 0.0);
+        CHECK(is_nan(combine_magnitude(measurements | take(0)).value(0).imag()));
+        CHECK(is_nan(combine_magnitude(measurements | take(0)).value(0).imag()));
+        CHECK(is_nan(combine_magnitude(measurements | take(0)).value(0).imag()));
+        CHECK(is_inf(combine_magnitude(measurements | take(0)).variance));
+
+        CHECK(combine_magnitude(measurements | take(1)).value(0).real() ==
+              doctest::Approx(cabs(measurements.front().value(0))));
+        CHECK(combine_magnitude(measurements | take(1)).value(1).real() ==
+              doctest::Approx(cabs(measurements.front().value(1))));
+        CHECK(combine_magnitude(measurements | take(1)).value(2).real() ==
+              doctest::Approx(cabs(measurements.front().value(2))));
+        CHECK(is_nan(combine_magnitude(measurements | take(1)).value(0).imag()));
+        CHECK(is_nan(combine_magnitude(measurements | take(1)).value(1).imag()));
+        CHECK(is_nan(combine_magnitude(measurements | take(1)).value(2).imag()));
+        CHECK(combine_magnitude(measurements | take(1)).variance == measurements.front().variance);
+
+        CHECK(combine_magnitude(measurements | take(2)).value(0).real() ==
+              doctest::Approx((3.0 * std::sqrt(26.0) + 4.0) / 5.0));
+        CHECK(combine_magnitude(measurements | take(2)).value(1).real() ==
+              doctest::Approx((8.0 + 6.0 * std::sqrt(10.0)) / 5.0));
+        CHECK(combine_magnitude(measurements | take(2)).value(2).real() ==
+              doctest::Approx((6.0 + 15.0 * std::sqrt(2.0)) / 5.0));
+        CHECK(is_nan(combine_magnitude(measurements | take(2)).value(0).imag()));
+        CHECK(is_nan(combine_magnitude(measurements | take(2)).value(1).imag()));
+        CHECK(is_nan(combine_magnitude(measurements | take(2)).value(2).imag()));
+        CHECK(combine_magnitude(measurements | take(2)).variance == doctest::Approx(3.0 / 25.0));
+
+        CHECK(combine_magnitude(measurements | take(3)).value(0).real() ==
+              doctest::Approx((8.0 + 3.0 * std::sqrt(26.0)) / 6.0));
+        CHECK(combine_magnitude(measurements | take(3)).value(1).real() ==
+              doctest::Approx((13.0 + 6.0 * std::sqrt(10.0)) / 6.0));
+        CHECK(combine_magnitude(measurements | take(3)).value(2).real() ==
+              doctest::Approx((4.0 + 5.0 * std::sqrt(2.0)) / 2.0));
+        CHECK(is_nan(combine_magnitude(measurements | take(3)).value(0).imag()));
+        CHECK(is_nan(combine_magnitude(measurements | take(3)).value(1).imag()));
+        CHECK(is_nan(combine_magnitude(measurements | take(3)).value(2).imag()));
+        CHECK(combine_magnitude(measurements | take(3)).variance == doctest::Approx(1.0 / 10.0));
+    }
+}
+
 TEST_SUITE_END();
 
 } // namespace power_grid_model

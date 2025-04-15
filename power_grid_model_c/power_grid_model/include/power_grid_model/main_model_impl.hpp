@@ -1171,6 +1171,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             se_input[i].measured_branch_from_power.resize(state.math_topology[i]->n_branch_from_power_sensor());
             se_input[i].measured_branch_to_power.resize(state.math_topology[i]->n_branch_to_power_sensor());
             se_input[i].measured_bus_injection.resize(state.math_topology[i]->n_bus_power_sensor());
+            se_input[i].measured_branch_from_current.resize(state.math_topology[i]->n_branch_from_current_sensor());
+            se_input[i].measured_branch_to_current.resize(state.math_topology[i]->n_branch_to_current_sensor());
         }
 
         prepare_input_status<sym, &StateEstimationInput<sym>::shunt_status, Shunt>(state, state.topo_comp_coup->shunt,
@@ -1216,6 +1218,22 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                       &StateEstimationInput<sym>::measured_bus_injection, GenericPowerSensor>(
             state, state.topo_comp_coup->power_sensor, se_input,
             [&state](Idx i) { return state.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::node; });
+
+        prepare_input<StateEstimationInput<sym>, CurrentSensorCalcParam<sym>,
+                      &StateEstimationInput<sym>::measured_branch_from_current, GenericCurrentSensor>(
+            state, state.topo_comp_coup->current_sensor, se_input, [&state](Idx i) {
+                using enum MeasuredTerminalType;
+                return state.comp_topo->current_sensor_terminal_type[i] == branch_from ||
+                       // all branch3 sensors are at from side in the mathematical model
+                       state.comp_topo->current_sensor_terminal_type[i] == branch3_1 ||
+                       state.comp_topo->current_sensor_terminal_type[i] == branch3_2 ||
+                       state.comp_topo->current_sensor_terminal_type[i] == branch3_3;
+            });
+        prepare_input<StateEstimationInput<sym>, CurrentSensorCalcParam<sym>,
+                      &StateEstimationInput<sym>::measured_branch_to_current, GenericCurrentSensor>(
+            state, state.topo_comp_coup->current_sensor, se_input, [&state](Idx i) {
+                return state.comp_topo->current_sensor_terminal_type[i] == MeasuredTerminalType::branch_to;
+            });
 
         return se_input;
     }
