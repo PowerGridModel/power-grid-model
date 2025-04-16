@@ -815,6 +815,104 @@ TEST_CASE("Test statistics") {
     }
 }
 
+TEST_CASE("Test statistics - conjugate") {
+    SUBCASE("UniformComplexRandVar<symmetric_t> | IndependentComplexRandVar<symmetric_t>") {
+        auto const check = [](auto const& var) {
+            auto const conjugated = conj(var);
+            CHECK(real(conjugated.value) == real(conj(var.value)));
+            CHECK(imag(conjugated.value) == imag(conj(var.value)));
+            CHECK(conjugated.variance == var.variance);
+        };
+
+        SUBCASE("UniformComplexRandVar<symmetric_t>") {
+            check(UniformComplexRandVar<symmetric_t>{.value = {1.0, 2.0}, .variance = 2.0});
+        }
+        SUBCASE("IndependentComplexRandVar<symmetric_t>") {
+            check(IndependentComplexRandVar<symmetric_t>{.value = {1.0, 2.0}, .variance = 2.0});
+        }
+    }
+    SUBCASE("UniformComplexRandVar<asymmetric_t>") {
+        auto const var = UniformComplexRandVar<asymmetric_t>{
+            .value = {RealValue<asymmetric_t>{1.0, 2.0, 3.0}, RealValue<asymmetric_t>{4.0, 5.0, 6.0}}, .variance = 2.0};
+        auto const conjugated = conj(var);
+        CHECK(real(conjugated.value(0)) == real(conj(var.value(0))));
+        CHECK(imag(conjugated.value(0)) == imag(conj(var.value(0))));
+        CHECK(real(conjugated.value(1)) == real(conj(var.value(1))));
+        CHECK(imag(conjugated.value(1)) == imag(conj(var.value(1))));
+        CHECK(real(conjugated.value(2)) == real(conj(var.value(2))));
+        CHECK(imag(conjugated.value(2)) == imag(conj(var.value(2))));
+        CHECK(conjugated.variance == var.variance);
+    }
+    SUBCASE("IndependentComplexRandVar<asymmetric_t>") {
+        auto const var = IndependentComplexRandVar<asymmetric_t>{
+            .value = {RealValue<asymmetric_t>{1.0, 2.0, 3.0}, RealValue<asymmetric_t>{4.0, 5.0, 6.0}},
+            .variance = {2.0, 3.0, 4.0}};
+        auto const conjugated = conj(var);
+        CHECK(real(conjugated.value(0)) == real(conj(var.value(0))));
+        CHECK(imag(conjugated.value(0)) == imag(conj(var.value(0))));
+        CHECK(real(conjugated.value(1)) == real(conj(var.value(1))));
+        CHECK(imag(conjugated.value(1)) == imag(conj(var.value(1))));
+        CHECK(real(conjugated.value(2)) == real(conj(var.value(2))));
+        CHECK(imag(conjugated.value(2)) == imag(conj(var.value(2))));
+        CHECK(conjugated.variance(0) == var.variance(0));
+        CHECK(conjugated.variance(1) == var.variance(1));
+        CHECK(conjugated.variance(2) == var.variance(2));
+    }
+    SUBCASE("DecomposedComplexRandVar<symmetric_t>") {
+        auto const var = DecomposedComplexRandVar<symmetric_t>{.real_component = {.value = 1.0, .variance = 2.0},
+                                                               .imag_component = {.value = 3.0, .variance = 4.0}};
+        auto const conjugated = conj(var);
+        CHECK(real(conjugated.value()) == real(conj(var.value())));
+        CHECK(imag(conjugated.value()) == imag(conj(var.value())));
+        CHECK(conjugated.real_component.variance == var.real_component.variance);
+        CHECK(conjugated.imag_component.variance == var.imag_component.variance);
+    }
+    SUBCASE("DecomposedComplexRandVar<asymmetric_t>") {
+        auto const var = DecomposedComplexRandVar<asymmetric_t>{
+            .real_component = {.value = RealValue<asymmetric_t>{1.0, 2.0, 3.0},
+                               .variance = RealValue<asymmetric_t>{2.0, 3.0, 4.0}},
+            .imag_component = {.value = RealValue<asymmetric_t>{4.0, 5.0, 6.0},
+                               .variance = RealValue<asymmetric_t>{3.0, 4.0, 5.0}}};
+        auto const conjugated = conj(var);
+        CHECK(real(conjugated.value()(0)) == real(conj(var.value())(0)));
+        CHECK(imag(conjugated.value()(0)) == imag(conj(var.value())(0)));
+        CHECK(real(conjugated.value()(1)) == real(conj(var.value())(1)));
+        CHECK(imag(conjugated.value()(1)) == imag(conj(var.value())(1)));
+        CHECK(real(conjugated.value()(2)) == real(conj(var.value())(2)));
+        CHECK(imag(conjugated.value()(2)) == imag(conj(var.value())(2)));
+        CHECK(conjugated.real_component.variance(0) == var.real_component.variance(0));
+        CHECK(conjugated.imag_component.variance(0) == var.imag_component.variance(0));
+        CHECK(conjugated.real_component.variance(1) == var.real_component.variance(1));
+        CHECK(conjugated.imag_component.variance(1) == var.imag_component.variance(1));
+        CHECK(conjugated.real_component.variance(2) == var.real_component.variance(2));
+        CHECK(conjugated.imag_component.variance(2) == var.imag_component.variance(2));
+    }
+
+    SUBCASE("PolarComplexRandVar<symmetric_t>") {
+        auto const var = PolarComplexRandVar<symmetric_t>{.magnitude = {.value = 1.0, .variance = 2.0},
+                                                          .angle = {.value = 3.0, .variance = 4.0}};
+        auto const conjugated = conj(var);
+        CHECK(real(conjugated.value()) == real(conj(var.value())));
+        CHECK(imag(conjugated.value()) == imag(conj(var.value())));
+        CHECK(conjugated.magnitude.variance == var.magnitude.variance);
+        CHECK(conjugated.angle.variance == var.angle.variance);
+    }
+    SUBCASE("PolarComplexRandVar<asymmetric_t>") {
+        auto const var = PolarComplexRandVar<asymmetric_t>{
+            .magnitude = {.value = RealValue<asymmetric_t>{1.0, 2.0, 3.0}, .variance = 2.0},
+            .angle = {.value = RealValue<asymmetric_t>{4.0, 5.0, 6.0}, .variance = 4.0}};
+        auto const conjugated = conj(var);
+        CHECK(real(conjugated.value()(0)) == real(conj(var.value()(0))));
+        CHECK(imag(conjugated.value()(0)) == imag(conj(var.value()(0))));
+        CHECK(real(conjugated.value()(1)) == real(conj(var.value()(1))));
+        CHECK(imag(conjugated.value()(1)) == imag(conj(var.value()(1))));
+        CHECK(real(conjugated.value()(2)) == real(conj(var.value()(2))));
+        CHECK(imag(conjugated.value()(2)) == imag(conj(var.value()(2))));
+        CHECK(conjugated.magnitude.variance == var.magnitude.variance);
+        CHECK(conjugated.angle.variance == var.angle.variance);
+    }
+}
+
 TEST_CASE("Test statistics - scale") {
     using statistics::scale;
 
