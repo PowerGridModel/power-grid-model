@@ -348,7 +348,8 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
                             // of the measured bus side. NOTE: not the bus that is currently being processed!
                             auto measured_current = static_cast<IndependentComplexRandVar<sym>>(m.measurement);
                             if (m.angle_measurement_type == AngleMeasurementType::local_angle) {
-                                measured_current.value *= phase_shift(u[measured_bus]); // offset with the phase shift
+                                measured_current.value = conj(measured_current.value) *
+                                                         phase_shift(u[measured_bus]); // offset with the phase shift
                             }
                             add_branch_measurement(measured_side, measured_current);
                         }
