@@ -206,6 +206,7 @@ template <symmetry_tag sym_type> struct PolarComplexRandVar {
                             9.0}};
     }
 };
+
 template <symmetry_tag sym, template <symmetry_tag> typename RandVarType>
     requires std::same_as<RandVarType<sym>, UniformComplexRandVar<sym>> ||
              std::same_as<RandVarType<sym>, IndependentComplexRandVar<sym>>
