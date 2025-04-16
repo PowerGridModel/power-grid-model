@@ -81,9 +81,11 @@ TEST_CASE("API Serialization and Deserialization") {
             Serializer msgpack_serializer{dataset, 1};
 
             SUBCASE("Round trip") {
-                std::vector<char> msgpack_data{};
+                std::vector<std::byte> msgpack_data{};
+                std::span<std::underlying_type_t<std::byte>> const msgpack_data_view{
+                    reinterpret_cast<std::underlying_type_t<std::byte>*>(msgpack_data.data()), msgpack_data.size()};
                 msgpack_serializer.get_to_binary_buffer(0, msgpack_data);
-                auto const json_document = nlohmann::ordered_json::from_msgpack(msgpack_data);
+                auto const json_document = nlohmann::ordered_json::from_msgpack(msgpack_data_view);
                 auto const json_result = json_document.dump(-1);
                 CHECK(json_result == json_data);
             }
