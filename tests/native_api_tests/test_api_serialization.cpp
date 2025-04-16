@@ -14,10 +14,16 @@
 #include <string>
 #include <vector>
 
+namespace nlohmann::detail {
+template <> struct char_traits<std::byte> : char_traits<std::underlying_type_t<std::byte>> {
+    using char_type = std::byte;
+
+    // Redefine to_int_type function
+    static int_type to_int_type(char_type c) noexcept { return static_cast<int_type>(c); }
+};
+} // namespace nlohmann::detail
 namespace power_grid_model_cpp {
-
 namespace {
-
 using namespace std::string_literals;
 
 constexpr char const* json_data =
@@ -83,9 +89,7 @@ TEST_CASE("API Serialization and Deserialization") {
             SUBCASE("Round trip") {
                 std::vector<std::byte> msgpack_data{};
                 msgpack_serializer.get_to_binary_buffer(0, msgpack_data);
-                std::span<std::underlying_type_t<std::byte>> const msgpack_data_view{
-                    reinterpret_cast<std::underlying_type_t<std::byte>*>(msgpack_data.data()), msgpack_data.size()};
-                auto const json_document = nlohmann::ordered_json::from_msgpack(msgpack_data_view);
+                auto const json_document = nlohmann::ordered_json::from_msgpack(msgpack_data);
                 auto const json_result = json_document.dump(-1);
                 CHECK(json_result == json_data);
             }
