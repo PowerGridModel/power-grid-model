@@ -215,7 +215,7 @@ inline auto conj(RandVarType<sym> var) {
 }
 
 template <symmetry_tag sym> inline auto conj(DecomposedComplexRandVar<sym> var) {
-    var.imag_component.value *= -1;
+    var.imag_component.value = -var.imag_component.value;
     return var;
 }
 
