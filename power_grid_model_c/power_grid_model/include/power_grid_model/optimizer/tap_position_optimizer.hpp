@@ -665,7 +665,7 @@ template <symmetry_tag sym> struct NodeState {
 
 class RankIteration {
   public:
-    RankIteration(std::vector<IntS> iterations_per_rank, Idx rank_index)
+    RankIteration(std::vector<uint64_t> iterations_per_rank, Idx rank_index)
         : iterations_per_rank_{std::move(iterations_per_rank)}, rank_index_{rank_index} {}
 
     // Getters
@@ -694,7 +694,7 @@ class RankIteration {
     };
 
   private:
-    std::vector<IntS> iterations_per_rank_;
+    std::vector<uint64_t> iterations_per_rank_;
     Idx rank_index_{};
 };
 
@@ -1003,7 +1003,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             strategy_ == OptimizerStrategy::global_maximum || strategy_ == OptimizerStrategy::local_maximum;
         bool tap_changed = true;
         Idx rank_index = 0;
-        RankIteration rank_iterator(std::vector<IntS>(regulator_order.size()), rank_index);
+        RankIteration rank_iterator(std::vector<uint64_t>(regulator_order.size()), rank_index);
 
         while (tap_changed) {
             tap_changed = false;
@@ -1023,8 +1023,10 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             rank_index = rank_iterator.rank_index();
 
             if (tap_changed) {
-                if (static_cast<uint64_t>(iterations_per_rank[rank_index]) > 2 * max_tap_ranges_per_rank[rank_index]) {
-                    throw MaxIterationReached{"TapPositionOptimizer::iterate"};
+                if (iterations_per_rank[rank_index] > 2 * max_tap_ranges_per_rank[rank_index]) {
+                    throw MaxIterationReached{
+                        std::format("TapPositionOptimizer::iterate {} iterations reached: {}x2 iterations in rank {}",
+                                    iterations_per_rank[rank_index], max_tap_ranges_per_rank[rank_index], rank_index)};
                 }
                 update_state(update_data);
                 result = calculate_(state, method);
