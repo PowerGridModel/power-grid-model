@@ -344,6 +344,107 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         CHECK(real(output.branch[0].s_f) == doctest::Approx(1.95));
     }
 
+    SUBCASE("Source and branch current") {
+        /*
+        network, v means voltage measured, c means current measured
+
+         bus_0(v) -(c)-branch_0-- bus_1
+            |                       |
+        source_0(p)               load_0
+
+        */
+        // to make the distinction between global and local angle current measurement
+        auto const global_shift = phase_shift(1.0 + 1.0i);
+
+        topo.power_sensors_per_source = {from_sparse, {0, 1}};
+        topo.current_sensors_per_branch_from = {from_sparse, {0, 1}};
+        se_input.measured_voltage = {{.value = 1.0 * global_shift, .variance = 0.1}};
+
+        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
+        auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
+
+        SolverType solver{y_bus_sym, topo_ptr};
+
+        SUBCASE("Local angle current sensor") {
+            SUBCASE("No phase shift") {
+                se_input.measured_source_power = {{.real_component = {.value = 1.93, .variance = 0.05},
+                                                   .imag_component = {.value = 0.0, .variance = 0.05}}};
+                se_input.measured_branch_from_current = {
+                    {.angle_measurement_type = AngleMeasurementType::local_angle,
+                     .measurement = {.real_component = {.value = 1.97, .variance = 0.05},
+                                     .imag_component = {.value = 0.0, .variance = 0.05}}}};
+
+                output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, info);
+
+                if (SolverType::has_current_sensor_implemented) { // TODO(mgovers): for testing purposes; remove if
+                                                                  // statement after NRSE has current sensor implemented
+                    CHECK(real(output.bus_injection[0]) == doctest::Approx(1.95));
+                    CHECK(real(output.source[0].s) == doctest::Approx(1.95));
+                    CHECK(real(output.branch[0].s_f) == doctest::Approx(1.95));
+                    CHECK(real(output.branch[0].i_f) == doctest::Approx(real(1.95 * global_shift)));
+                    CHECK(imag(output.branch[0].i_f) == doctest::Approx(imag(1.95 * global_shift)));
+                } else {
+                    CHECK_FALSE(real(output.bus_injection[0]) == doctest::Approx(1.95));
+                    CHECK_FALSE(real(output.source[0].s) == doctest::Approx(1.95));
+                    CHECK_FALSE(real(output.branch[0].s_f) == doctest::Approx(1.95));
+                    CHECK_FALSE(real(output.branch[0].i_f) == doctest::Approx(real(1.95 * global_shift)));
+                    CHECK_FALSE(imag(output.branch[0].i_f) == doctest::Approx(imag(1.95 * global_shift)));
+                }
+            }
+            SUBCASE("With phase shift") {
+                se_input.measured_source_power = {{.real_component = {.value = 0.0, .variance = 0.05},
+                                                   .imag_component = {.value = 1.93, .variance = 0.05}}};
+                se_input.measured_branch_from_current = {
+                    {.angle_measurement_type = AngleMeasurementType::local_angle,
+                     .measurement = {.real_component = {.value = 0.0, .variance = 0.05},
+                                     .imag_component = {.value = 1.97, .variance = 0.05}}}};
+
+                output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, info);
+
+                if (SolverType::has_current_sensor_implemented) { // TODO(mgovers): for testing purposes; remove if
+                                                                  // statement after NRSE has current sensor implemented
+                    CHECK(imag(output.bus_injection[0]) == doctest::Approx(1.95));
+                    CHECK(imag(output.source[0].s) == doctest::Approx(1.95));
+                    CHECK(imag(output.branch[0].s_f) == doctest::Approx(1.95));
+                    CHECK(real(output.branch[0].i_f) == doctest::Approx(real(1.95 * global_shift)));
+                    CHECK(imag(output.branch[0].i_f) == doctest::Approx(-imag(1.95 * global_shift)));
+                } else {
+                    CHECK_FALSE(imag(output.bus_injection[0]) == doctest::Approx(1.95));
+                    CHECK_FALSE(imag(output.source[0].s) == doctest::Approx(1.95));
+                    CHECK_FALSE(imag(output.branch[0].s_f) == doctest::Approx(1.95));
+                    CHECK_FALSE(real(output.branch[0].i_f) == doctest::Approx(real(1.95 * global_shift)));
+                    CHECK_FALSE(imag(output.branch[0].i_f) == doctest::Approx(-imag(1.95 * global_shift)));
+                }
+            }
+        }
+        SUBCASE("Global angle current sensor") {
+            se_input.measured_source_power = {{.real_component = {.value = 1.93, .variance = 0.05},
+                                               .imag_component = {.value = 0.0, .variance = 0.05}}};
+            se_input.measured_branch_from_current = {
+                {.angle_measurement_type = AngleMeasurementType::global_angle,
+                 .measurement = {.real_component = {.value = real(1.97 * global_shift), .variance = 0.05},
+                                 .imag_component = {.value = imag(1.97 * global_shift), .variance = 0.05}}}};
+
+            output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, info);
+
+            if (SolverType::has_current_sensor_implemented) { // TODO(mgovers): for testing purposes; remove if
+                                                              // statement after NRSE has current sensor implemented
+                CHECK(real(output.bus_injection[0]) == doctest::Approx(1.95));
+                CHECK(real(output.source[0].s) == doctest::Approx(1.95));
+                CHECK(real(output.branch[0].s_f) == doctest::Approx(1.95));
+                CHECK(real(output.branch[0].i_f) == doctest::Approx(real(1.95 * global_shift)));
+                CHECK(imag(output.branch[0].i_f) == doctest::Approx(imag(1.95 * global_shift)));
+            } else {
+                CHECK_FALSE(real(output.bus_injection[0]) == doctest::Approx(1.95));
+                CHECK_FALSE(real(output.source[0].s) == doctest::Approx(1.95));
+                CHECK_FALSE(real(output.branch[0].s_f) == doctest::Approx(1.95));
+                CHECK_FALSE(real(output.branch[0].i_f) == doctest::Approx(real(1.95 * global_shift)));
+                CHECK_FALSE(imag(output.branch[0].i_f) == doctest::Approx(imag(1.95 * global_shift)));
+            }
+        }
+    }
+
     SUBCASE("Load and branch") {
         /*
         network, v means voltage measured, p means power measured

@@ -203,7 +203,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // template to construct components
     // using forward interators
     // different selection based on component type
-    template <std::derived_from<Base> CompType, forward_iterator_like<typename CompType::InputType> ForwardIterator>
+    template <std::derived_from<Base> CompType, std::forward_iterator ForwardIterator>
     void add_component(ForwardIterator begin, ForwardIterator end) {
         assert(!construction_complete_);
         main_core::add_component<CompType>(state_, begin, end, system_frequency_);
@@ -224,8 +224,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // using forward interators
     // different selection based on component type
     // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
-    template <class CompType, cache_type_c CacheType,
-              forward_iterator_like<typename CompType::UpdateType> ForwardIterator>
+    template <class CompType, cache_type_c CacheType, std::forward_iterator ForwardIterator>
     void update_component(ForwardIterator begin, ForwardIterator end, std::span<Idx2D const> sequence_idx) {
         constexpr auto comp_index = main_core::utils::index_of_component<CompType, ComponentType...>;
 
@@ -333,6 +332,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         main_core::register_topology_components<GenericLoadGen>(state_, comp_topo);
         main_core::register_topology_components<GenericVoltageSensor>(state_, comp_topo);
         main_core::register_topology_components<GenericPowerSensor>(state_, comp_topo);
+        main_core::register_topology_components<GenericCurrentSensor>(state_, comp_topo);
         main_core::register_topology_components<Regulator>(state_, comp_topo);
         state_.comp_topo = std::make_shared<ComponentTopology const>(std::move(comp_topo));
     }
@@ -801,6 +801,13 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     CalculationInfo calculation_info() const { return calculation_info_; }
 
+    void check_no_experimental_features_used(Options const& options) const {
+        if (options.calculation_type == CalculationType::state_estimation &&
+            state_.components.template size<GenericCurrentSensor>() > 0) {
+            throw ExperimentalFeature{"State estimation", "current sensors"};
+        }
+    }
+
   private:
     template <typename Component, typename MathOutputType, typename ResIt>
         requires solver_output_type<typename MathOutputType::SolverOutputType::value_type>
@@ -1164,6 +1171,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             se_input[i].measured_branch_from_power.resize(state.math_topology[i]->n_branch_from_power_sensor());
             se_input[i].measured_branch_to_power.resize(state.math_topology[i]->n_branch_to_power_sensor());
             se_input[i].measured_bus_injection.resize(state.math_topology[i]->n_bus_power_sensor());
+            se_input[i].measured_branch_from_current.resize(state.math_topology[i]->n_branch_from_current_sensor());
+            se_input[i].measured_branch_to_current.resize(state.math_topology[i]->n_branch_to_current_sensor());
         }
 
         prepare_input_status<sym, &StateEstimationInput<sym>::shunt_status, Shunt>(state, state.topo_comp_coup->shunt,
@@ -1209,6 +1218,22 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                       &StateEstimationInput<sym>::measured_bus_injection, GenericPowerSensor>(
             state, state.topo_comp_coup->power_sensor, se_input,
             [&state](Idx i) { return state.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::node; });
+
+        prepare_input<StateEstimationInput<sym>, CurrentSensorCalcParam<sym>,
+                      &StateEstimationInput<sym>::measured_branch_from_current, GenericCurrentSensor>(
+            state, state.topo_comp_coup->current_sensor, se_input, [&state](Idx i) {
+                using enum MeasuredTerminalType;
+                return state.comp_topo->current_sensor_terminal_type[i] == branch_from ||
+                       // all branch3 sensors are at from side in the mathematical model
+                       state.comp_topo->current_sensor_terminal_type[i] == branch3_1 ||
+                       state.comp_topo->current_sensor_terminal_type[i] == branch3_2 ||
+                       state.comp_topo->current_sensor_terminal_type[i] == branch3_3;
+            });
+        prepare_input<StateEstimationInput<sym>, CurrentSensorCalcParam<sym>,
+                      &StateEstimationInput<sym>::measured_branch_to_current, GenericCurrentSensor>(
+            state, state.topo_comp_coup->current_sensor, se_input, [&state](Idx i) {
+                return state.comp_topo->current_sensor_terminal_type[i] == MeasuredTerminalType::branch_to;
+            });
 
         return se_input;
     }

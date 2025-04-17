@@ -6,11 +6,19 @@
 
 #include "common.hpp"
 
-#include <boost/iterator/counting_iterator.hpp>
+#include <ranges>
 
 namespace power_grid_model {
 
 // couting iterator
-using IdxCount = boost::counting_iterator<Idx>;
+struct IdxRange : public std::ranges::iota_view<Idx, Idx> {
+    using iterator = decltype(std::ranges::iota_view<Idx, Idx>{}.begin());
+
+    using std::ranges::iota_view<Idx, Idx>::iota_view;
+
+    // this overloads the iota_view constructor
+    constexpr IdxRange(Idx stop) : std::ranges::iota_view<Idx, Idx>{Idx{0}, stop} {}
+};
+using IdxCount = typename IdxRange::iterator;
 
 } // namespace power_grid_model

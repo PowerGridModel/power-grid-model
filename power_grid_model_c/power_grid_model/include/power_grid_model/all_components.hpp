@@ -9,6 +9,7 @@
 #include "common/component_list.hpp"
 // component include
 #include "component/appliance.hpp"
+#include "component/current_sensor.hpp"
 #include "component/fault.hpp"
 #include "component/generic_branch.hpp"
 #include "component/line.hpp"
@@ -29,6 +30,17 @@ namespace power_grid_model {
 using AllComponents =
     ComponentList<Node, Line, Link, GenericBranch, Transformer, ThreeWindingTransformer, Shunt, Source, SymGenerator,
                   AsymGenerator, SymLoad, AsymLoad, SymPowerSensor, AsymPowerSensor, SymVoltageSensor,
-                  AsymVoltageSensor, Fault, TransformerTapRegulator>;
+                  AsymVoltageSensor, SymCurrentSensor, AsymCurrentSensor, Fault, TransformerTapRegulator>;
+
+template <typename T>
+concept power_or_current_sensor_c =
+    std::derived_from<T, GenericPowerSensor> || std::derived_from<T, GenericCurrentSensor>;
+
+static_assert(power_or_current_sensor_c<SymPowerSensor>);
+static_assert(power_or_current_sensor_c<AsymPowerSensor>);
+static_assert(power_or_current_sensor_c<SymCurrentSensor>);
+static_assert(power_or_current_sensor_c<AsymCurrentSensor>);
+static_assert(!power_or_current_sensor_c<SymVoltageSensor>);
+static_assert(!power_or_current_sensor_c<AsymVoltageSensor>);
 
 } // namespace power_grid_model

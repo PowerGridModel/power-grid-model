@@ -1,0 +1,66 @@
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+name: CI Build
+
+# Controls when the workflow will run.
+on:
+  # run pipeline on push event of main branch
+  push:
+    branches:
+      - main
+  # run pipeline on pull request
+  pull_request:
+  # run pipeline on merge queue
+  merge_group:
+  # run this workflow manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      create_release:
+        type: boolean
+        description: Create a (pre-)release when CI passes
+        default: false
+        required: true
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-ci-build
+  cancel-in-progress: true
+
+jobs:
+  ci-started:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "ci started"
+
+  build-test-release:
+    name: build-test-release
+    uses: "./.github/workflows/build-test-release.yml"
+    permissions:
+      contents: write
+    with: 
+      # create_release becomes true if the event that triggered this workflow is "workflow_dispatch" and inputs.create_release is true
+      # create_release becomes true if the event that triggered this workflow is "push" on main
+      # otherwise create_release becomes false
+      create_release: ${{ (github.event_name == 'workflow_dispatch' && inputs.create_release) || github.event_name == 'push'}}
+    secrets:
+      PYPI_USER: ${{ secrets.PYPI_USER }}
+      PYPI_PASS: ${{ secrets.PYPI_PASS }}
+
+  check-code-quality:
+    uses: "./.github/workflows/check-code-quality.yml"
+
+  reuse-compliance:
+    uses: "./.github/workflows/reuse-compliance.yml"
+
+  clang-tidy:
+    uses: "./.github/workflows/clang-tidy.yml"
+    with:
+      target: "power_grid_model_api_tests"
+
+  ci-passed:
+    runs-on: ubuntu-latest
+    needs: [ci-started, build-test-release, check-code-quality, reuse-compliance, clang-tidy]
+
+    steps:
+      - run: echo "ci passed"

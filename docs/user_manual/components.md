@@ -143,7 +143,7 @@ if any of the faults in any of the scenarios within a batch are not three-phase 
 $$
    \begin{eqnarray}
       & Z_{\text{series}} = r + \mathrm{j}x \\
-      & Y_{\text{shunt}} = \frac{2 \pi fc}{\tan \sigma +\mathrm{j}}
+      & Y_{\text{shunt}} = \frac{2 \pi fc}{\tan \delta +\mathrm{j}}
    \end{eqnarray}
 $$
 

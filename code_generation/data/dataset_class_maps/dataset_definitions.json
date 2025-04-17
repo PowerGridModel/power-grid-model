@@ -53,6 +53,10 @@
                     "class_name": "PowerSensorInput"
                 },
                 {
+                    "names": ["sym_current_sensor", "asym_current_sensor"],
+                    "class_name": "CurrentSensorInput"
+                },
+                {
                     "names": ["fault"],
                     "class_name": "FaultInput"
                 }
@@ -89,6 +93,10 @@
                 {
                     "names": ["sym_power_sensor", "asym_power_sensor"],
                     "class_name": "PowerSensorOutput"
+                },
+                {
+                    "names": ["sym_current_sensor", "asym_current_sensor"],
+                    "class_name": "CurrentSensorOutput"
                 },
                 {
                     "names": ["fault"],
@@ -145,6 +153,10 @@
                     "class_name": "PowerSensorUpdate"
                 },
                 {
+                    "names": ["sym_current_sensor", "asym_current_sensor"],
+                    "class_name": "CurrentSensorUpdate"
+                },
+                {
                     "names": ["fault"],
                     "class_name": "FaultUpdate"
                 }
@@ -176,6 +188,10 @@
                 },
                 {
                     "names": ["sym_power_sensor", "asym_power_sensor"],
+                    "class_name": "SensorShortCircuitOutput"
+                },
+                {
+                    "names": ["sym_current_sensor", "asym_current_sensor"],
                     "class_name": "SensorShortCircuitOutput"
                 },
                 {

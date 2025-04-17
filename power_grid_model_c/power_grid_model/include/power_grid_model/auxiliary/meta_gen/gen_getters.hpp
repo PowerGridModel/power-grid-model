@@ -33,7 +33,7 @@ constexpr MetaAttribute get_meta_attribute(size_t offset, char const* attribute_
             return is_nan((reinterpret_cast<StructType const*>(buffer_ptr) + pos)->*member_ptr);
         },
         .check_all_nan = [](RawDataConstPtr buffer_ptr, Idx size) -> bool {
-            return std::all_of(IdxCount{0}, IdxCount{size}, [buffer_ptr](Idx i) {
+            return std::ranges::all_of(IdxRange{size}, [buffer_ptr](Idx i) {
                 return is_nan((reinterpret_cast<StructType const*>(buffer_ptr) + i)->*member_ptr);
             });
         },

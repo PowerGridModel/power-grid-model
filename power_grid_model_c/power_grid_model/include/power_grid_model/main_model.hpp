@@ -14,10 +14,10 @@ namespace power_grid_model {
 
 class MainModel {
   private:
-    using Impl =
-        MainModelImpl<ExtraRetrievableTypes<Base, Node, Branch, Branch3, Appliance, GenericLoadGen, GenericLoad,
-                                            GenericGenerator, GenericPowerSensor, GenericVoltageSensor, Regulator>,
-                      AllComponents>;
+    using Impl = MainModelImpl<
+        ExtraRetrievableTypes<Base, Node, Branch, Branch3, Appliance, GenericLoadGen, GenericLoad, GenericGenerator,
+                              GenericPowerSensor, GenericVoltageSensor, GenericCurrentSensor, Regulator>,
+        AllComponents>;
 
   public:
     using Options = MainModelOptions;
@@ -67,6 +67,10 @@ class MainModel {
     }
 
     CalculationInfo calculation_info() const { return impl().calculation_info(); }
+
+    void check_no_experimental_features_used(Options const& options) const {
+        impl().check_no_experimental_features_used(options);
+    }
 
   private:
     Impl& impl() {
