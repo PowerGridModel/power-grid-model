@@ -14,10 +14,16 @@
 #include <string>
 #include <vector>
 
+namespace nlohmann::detail {
+template <> struct char_traits<std::byte> : char_traits<std::underlying_type_t<std::byte>> {
+    using char_type = std::byte;
+
+    // Redefine to_int_type function
+    static int_type to_int_type(char_type c) noexcept { return static_cast<int_type>(c); }
+};
+} // namespace nlohmann::detail
 namespace power_grid_model_cpp {
-
 namespace {
-
 using namespace std::string_literals;
 
 constexpr char const* json_data =
