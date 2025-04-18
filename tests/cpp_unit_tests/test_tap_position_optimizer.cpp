@@ -422,7 +422,10 @@ TEST_CASE("Test Transformer ranking") {
 
         SUBCASE("Ranking complete the graph") {
             // The test grid 1 is not compatible with the updated logic for step up transformers
-            CHECK_THROWS_AS(pgm_tap::rank_transformers(state), AutomaticTapInputError);
+            pgm_tap::RankedTransformerGroups order = pgm_tap::rank_transformers(state);
+            pgm_tap::RankedTransformerGroups const ref_order{
+                {{Idx2D{3, 0}, Idx2D{3, 1}, Idx2D{4, 0}}, {Idx2D{3, 2}}, {Idx2D{3, 3}, Idx2D{3, 4}}}};
+            CHECK(order == ref_order);
         }
     }
 
@@ -506,6 +509,62 @@ TEST_CASE("Test Transformer ranking") {
               Idx2D{.group = 3, .pos = 4}},
              {Idx2D{.group = 3, .pos = 2}, Idx2D{.group = 3, .pos = 3}, Idx2D{.group = 3, .pos = 5}}}};
         CHECK(order == ref_order);
+    }
+
+    SUBCASE("Full grid 3 - For Meshed grid with low priority ranks") {
+        // =====Test Grid=====
+        // ________[0]________
+        //  |              |
+        //  |              |
+        //  |              [1]
+        //  |              |
+        // _|______[2]_____|__
+        //          |
+        //         [3]
+        TestState state;
+        std::vector<NodeInput> nodes{{0, 10e3}, {1, 10e3}, {2, 10e3}, {3, 10e3}};
+        main_core::add_component<Node>(state, nodes.begin(), nodes.end(), 50.0);
+
+        std::vector<TransformerInput> transformers{get_transformer(11, 0, 1, BranchSide::to),
+                                                   get_transformer(12, 1, 2, BranchSide::from),
+                                                   get_transformer(13, 2, 3, BranchSide::from)};
+        main_core::add_component<Transformer>(state, transformers.begin(), transformers.end(), 50.0);
+
+        std::vector<LineInput> lines{get_line_input(21, 0, 2)};
+        main_core::add_component<Line>(state, lines.begin(), lines.end(), 50.0);
+
+        std::vector<SourceInput> sources{{31, 0, 1, 1.0, 0, nan, nan, nan}};
+        main_core::add_component<Source>(state, sources.begin(), sources.end(), 50.0);
+
+        std::vector<TransformerTapRegulatorInput> regulators{get_regulator(41, 11, ControlSide::to),
+                                                             get_regulator(42, 12, ControlSide::to),
+                                                             get_regulator(43, 13, ControlSide::to)};
+        main_core::add_component<TransformerTapRegulator>(state, regulators.begin(), regulators.end(), 50.0);
+
+        state.components.set_construction_complete();
+
+        pgm_tap::RankedTransformerGroups order = pgm_tap::rank_transformers(state);
+        pgm_tap::RankedTransformerGroups const ref_order{{{Idx2D{3, 0}}, {Idx2D{3, 2}}}, {{Idx2D{3, 1}}}};
+        CHECK(order == ref_order);
+    }
+
+    SUBCASE("Controlling from non source to source transformer") {
+        TestState state;
+        std::vector<NodeInput> nodes{{.id = 0, .u_rated = 150e3}, {.id = 1, .u_rated = 10e3}};
+        main_core::add_component<Node>(state, nodes.begin(), nodes.end(), 50.0);
+
+        std::vector<TransformerInput> transformers{get_transformer(2, 0, 1, BranchSide::from)};
+        main_core::add_component<Transformer>(state, transformers.begin(), transformers.end(), 50.0);
+
+        std::vector<SourceInput> sources{SourceInput{.id = 3, .node = 0, .status = IntS{1}, .u_ref = 1.0}};
+        main_core::add_component<Source>(state, sources.begin(), sources.end(), 50.0);
+
+        std::vector<TransformerTapRegulatorInput> regulators{get_regulator(4, 2, ControlSide::from)};
+        main_core::add_component<TransformerTapRegulator>(state, regulators.begin(), regulators.end(), 50.0);
+
+        state.components.set_construction_complete();
+
+        CHECK_THROWS_AS(pgm_tap::rank_transformers(state), AutomaticTapInputError);
     }
 }
 
@@ -1603,7 +1662,7 @@ TEST_CASE("Test tap position optmizer I/O") {
 TEST_CASE("Test RankIterator") {
     std::vector<std::vector<IntS>> const regulator_order = {{0, 0, 0}, {0, 0, 0}};
     bool tap_changed{false};
-    std::vector<IntS> iterations_per_rank = {2, 4, 6};
+    std::vector<uint64_t> iterations_per_rank = {2, 4, 6};
     Idx rank_index{0};
     bool update{false};
     optimizer::tap_position_optimizer::RankIteration rank_iterator(iterations_per_rank, rank_index);
