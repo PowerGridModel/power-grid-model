@@ -20,7 +20,7 @@ authors = [
 ]
 description = "Python/C++ library for distribution power system analysis"
 readme = "README.md"
-license = { text = "MPL-2.0" }
+license = "MPL-2.0"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: Implementation :: CPython",
@@ -28,7 +28,6 @@ classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
     "Operating System :: Microsoft :: Windows",
     "Operating System :: POSIX :: Linux",
     "Operating System :: MacOS",
