@@ -42,7 +42,10 @@ jobs:
         uses: PowerGridModel/pgm-version-bump@main
 
       - name: Build SDist
-        run: python -m build --sdist --outdir wheelhouse .
+        run: |
+          cat PYPI_VERSION
+          pip install build
+          python -m build --sdist --outdir wheelhouse .
 
       - name: Keep version file
         uses: actions/upload-artifact@v4
