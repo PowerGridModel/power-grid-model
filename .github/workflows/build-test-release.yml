@@ -39,9 +39,7 @@ jobs:
           python-version: "3.12"
 
       - name: Set PyPI Version
-        run: |
-          pip install requests build
-          python set_pypi_version.py
+        uses: PowerGridModel/pgm-version-bump@main
 
       - name: Build SDist
         run: python -m build --sdist --outdir wheelhouse .
