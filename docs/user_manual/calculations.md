@@ -466,8 +466,35 @@ $$
     \end{eqnarray}
 $$
 
+- Branch current with global angle: Linear WLS requires a complex current phasor. The global angle current measurement captures
+the phase offset relative to the same predetermined reference phase against which the voltage angle is measured. As a result,
+at least one voltage measurement with angle measurement is required in the grid if a global angle current sensor is used.
+
+$$
+    \begin{eqnarray}
+            \underline{I} = I_i \cdot e^{j \theta_i}
+    \end{eqnarray}
+$$
+
+- Branch current with local angle: Linear WLS requires a complex current phasor. Sometimes, (accurate) voltage measurements are
+not available for a branch, which means no power measurement is possible. Using only the current amplitude is difficult.
+However, it may be possible to obtain a reasonably accurately measurement of the current amplitude and the relative phase angle
+to the voltage. In this way, we still have enough information for the state estimation. The resulting local current phasor
+$\underline{I}_{\text{local}}$ can be translated to the global current phasor (see above) for iterative linear state estimation.
+Given the measured (linearized) voltage phasor, the current phasor is calculated as follows:
+
+$$
+    \begin{equation}
+        \underline{I} = \underline{I}_{\text{local}}^{*} \frac{\underline{U}}{|\underline{U}|}
+        = \underline{I}_{\text{local}}^{*} \cdot e^{j \theta}
+    \end{equation}
+$$
+
+where $\underline{U}$ is either measured voltage magnitude at the bus or assumed unity magnitude, with the intrinsic phase shift.
+$\theta$ is the phase angle of the voltage.
+
 - Branch/shunt power flow: Linear WLS requires a complex current phasor. To make this translation, the voltage at the terminal should
-also be measured, otherwise the nominal voltage with zero angle is used as an estimation. With the measured (linearized) voltage
+also be measured, otherwise the nominal voltage with zero angle is used as an estimation. Given the measured (linearized) voltage
 phasor, the current phasor is calculated as follows:
 
 $$
@@ -506,11 +533,27 @@ be the slack bus, which is connected to the external network (source). $\underli
   - Normalize the voltage phasor angle by setting the angle of the slack bus to zero:
   - If the maximum deviation between $\underline{U}^{(k)}$ and $\underline{U}^{(k-1)}$ is smaller than the error tolerance $\epsilon$,
   stop the iteration. Otherwise, continue until the maximum number of iterations is reached.
-  
+
 In the iteration process, the phase angle of voltages at each bus is updated using the last iteration;
 the system error of the phase shift converges to zero. Because the matrix is pre-built and
 pre-factorized, the computation cost of each iteration is much smaller than for the [Newton-Raphson](#newton-raphson-state-estimation)
 method, where the Jacobian matrix needs to be constructed and factorized each time.
+
+Because the matrix depends on the variances of the linearized current measurements, pre-factorization
+requires assuming that the magnitudes of the voltages remain constant throughout the iteration process.
+This assumption is, of course, an approximation, and potentially results an inaccurate relative weighing
+of the power measurements. However, the difference between the solution and the actual grid state is
+usually small, because the error introduced by this is typically dominated by the following contributing
+factors (see also [this thread](https://github.com/PowerGridModel/power-grid-model/pull/951#issuecomment-2805154436)).
+
+- voltages in the distribution grid are usually close to 1 p.u..
+- power sensor errors are usually best-effort estimates.
+- the interpretation of power measurements as current measurements is an approximation.
+
+```{warning}
+In short, the pre-factorization may produce results that may deviate from the actual grid state.
+If higher precision is desired, please consider using [Newton-Raphson state estimation](#newton-raphson-state-estimation) instead.
+```
 
 ```{warning}
 The algorithm will assume angles to be zero by default (see the details about voltage sensors). This produces more correct outputs when the system is observable, but will prevent the calculation from raising an exception, even if it is unobservable, therefore giving faulty results.
