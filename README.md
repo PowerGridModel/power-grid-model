@@ -24,7 +24,7 @@ SPDX-License-Identifier: MPL-2.0
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8054429.svg)](https://zenodo.org/record/8054429)
 
-[![](https://github.com/PowerGridModel/.github/blob/main/artwork/svg/color.svg)](#)
+[![](https://github.com/PowerGridModel/.github/blob/main/artwork/svg/color.svg)](#) 
 
 # Power Grid Model
 
