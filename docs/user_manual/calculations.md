@@ -570,7 +570,7 @@ However, the Jacobian matrix needs to be calculated every iteration and cannot b
 
 The Newton-Raphson method considers all measurements to be independent real measurements.
 I.e., $\sigma_P$, $\sigma_Q$ and $\sigma_U$ are all independent values.
-The rationale behind to calculation is similar to that of the [Newton-Raphson for power flow](#newton-raphson-power-flow).
+The rationale behind to calculation is similar to that of the [Newton-Raphson method for power flow](#newton-raphson-power-flow).
 Consequently, the iteration process differs slightly from that of [iterative linear state estimation](#iterative-linear-state-estimation), as shown below.
 
 - Initialization: let $\boldsymbol{U}^{(k)}$ be the column vector of the estimated voltage magnitude and $\boldsymbol{\theta}^{(k)}$ the column vector of the
@@ -592,6 +592,10 @@ We initialize $\boldsymbol{U}^{(0)}$ and $\boldsymbol{\theta}^{(k)}$ as follows:
 
 As for the [iterative linear](#iterative-linear-state-estimation) approach, during iterations, phase angles of voltage at each bus are updated using ones from the previous iteration.
 The system error of the phase shift converges to zero.
+
+```{note}
+Newton-Raphson state estimation does not support current measurements at this moment. See also [this issue](https://github.com/PowerGridModel/power-grid-model/issues/765).
+```
 
 ```{warning}
 The algorithm will assume angles to be zero by default (see the details about voltage sensors). In observable systems this helps better outputting correct results. On the other hand with unobservable systems, exceptions raised from calculations due to faulty results will be prevented.
