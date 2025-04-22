@@ -633,7 +633,7 @@ $$
 
 ### Generic Power Sensor
 
-* type name: `generic_power_sensor`
+* type namcurrent`
 
 `power_sensor` is an abstract class for symmetric and asymmetric power sensor and is derived from
 {hoverxreftooltip}`user_manual/components:sensor`. It measures the active/reactive power flow of a terminal. The terminal is
@@ -718,6 +718,98 @@ $$
    \begin{eqnarray}
         & p_{\text{residual}} = p_{\text{measured}} - p_{\text{state}} \\
         & q_{\text{residual}} = q_{\text{measured}} - q_{\text{state}}
+   \end{eqnarray}
+$$
+
+### Generic Current Sensor
+
+```{warning}
+At the time of writing, this feature is still experimental and is not yet publicly available.
+```
+
+* type name: `generic_current_sensor`
+
+`current_sensor` is an abstract class for symmetric and asymmetric current sensor and is derived from
+{hoverxreftooltip}`user_manual/components:sensor`. It measures the magnitude and angle of the current flow of a terminal.
+The terminal is connecting the from/to end of a `branch` (except `link`) and a `node`.
+
+```{note}
+Due to the high admittance of a `link` it is chosen that a current sensor cannot be coupled to a `link`, even though a link is a `branch`
+```
+
+##### Input
+
+| name                     | data type                                                                     | unit       | description                                                                                                                               |              required               |  update  |                     valid values                     |
+| ------------------------ | ----------------------------------------------------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------: | :------: | :--------------------------------------------------: |
+| `measured_terminal_type` | {py:class}`MeasuredTerminalType <power_grid_model.enum.MeasuredTerminalType>` | -          | indicate the side of the `branch`                                                                                                         |              &#10004;               | &#10060; | the terminal type should match the `measured_object` |
+| `angle_measurement_type` | {py:class}`AngleMeasurementType <power_grid_model.enum.AngleMeasurementType>` | -          | indicate whether the measured angle is a global angle or a local angle                                                                    |              &#10004;               | &#10060; | the terminal type should match the `measured_object` |
+| `i_sigma`                | `double`                                                                      | ampere (A) | standard deviation of the current (`i`) measurement error. Usually this is the absolute measurement error range divided by 3.             | &#10060; see the explanation below. | &#10004; |                        `> 0`                         |
+| `i_angle_sigma`          | `double`                                                                      | rad        | standard deviation of the current (`i`) phase angle measurement error. Usually this is the absolute measurement error range divided by 3. | &#10060; see the explanation below. | &#10004; |                        `> 0`                         |
+
+#### Current Sensor Concrete Types
+
+```{warning}
+At the time of writing, this feature is still experimental and is not yet publicly available.
+```
+
+There are two concrete types of current sensor. They share similar attributes:
+the meaning of `RealValueInput` is different, as shown in the table below.
+
+| type name             | meaning of `RealValueInput` |
+| --------------------- | --------------------------- |
+| `sym_current_sensor`  | `double`                    |
+| `asym_current_sensor` | `double[3]`                 |
+
+##### Input
+
+| name               | data type        | unit       | description                               |              required              |  update  |
+| ------------------ | ---------------- | ---------- | ----------------------------------------- | :--------------------------------: | :------: |
+| `i_measured`       | `RealValueInput` | ampere (A) | measured current (`i`) magnitude          | &#10024; only for state estimation | &#10004; |
+| `i_angle_measured` | `RealValueInput` | rad        | measured phase angle of the current (`i`) | &#10024; only for state estimation | &#10004; |
+
+See the documentation on [state estimation calculation methods](calculations.md#state-estimation-algorithms) for details per method on how the variances are taken into account for both the global and local angle measurement types and for the individual phases.
+
+##### Steady state output
+
+```{note}
+A sensor only has output for state estimation. For other calculation types, sensor output is undefined.
+```
+
+| name               | data type         | unit       | description                                                                                 |
+| ------------------ | ----------------- | ---------- | ------------------------------------------------------------------------------------------- |
+| `i_residual`       | `RealValueOutput` | ampere (A) | residual value between measured current (`i`) and calculated current (`i`)                  |
+| `i_angle_residual` | `RealValueOutput` | rad        | residual value between measured phase angle and calculated phase angle of the current (`i`) |
+
+#### Electric Model
+
+`Generic Current Sensor` is modeled by following equations:
+
+$$
+   \begin{eqnarray}
+        & p_{\text{residual}} = p_{\text{measured}} - p_{\text{state}} \\
+        & q_{\text{residual}} = q_{\text{measured}} - q_{\text{state}}
+   \end{eqnarray}
+$$
+
+Internally, the current phasor measurement is decomposed into a separate real and imaginary component
+per phase, with each their own variances, which are estimated using the common linearization approximation:
+
+$$
+   \begin{eqnarray}
+      \text{let } & \vec{F}(\vec{x}) \equiv \sum_i \vec{e}_i f_i(x_j) \\
+      \text{then } & \text{Var}(f_i) \approx \sum_j \text{Var}(x_j) \|\frac{\delta f_i}{\delta{x_j}}(\vec{x})\|^2
+   \end{eqnarray}
+$$
+
+The following illustrates how this works for `sym_current_sensor`s in symmetric calculations.
+See also [the full mathematical workout](https://github.com/PowerGridModel/power-grid-model/issues/547).
+
+$$
+   \begin{eqnarray}
+        & \real\left\{I\right\}\right = I \cos\theta \\
+        & \imag\left\{I\right\}\right = I \sin\theta \\
+        & \text{Var}\left(\real\left\{I\right\}\right) = \sigma_i^2 \cos^2\theta + I^2 \sigma_{\theta}^2\sin^2\theta \\
+        & \text{Var}\left(\imag\left\{I\right\}\right) = \sigma_i^2 \sin^2\theta + I^2 \sigma_{\theta}^2\cos^2\theta \\
    \end{eqnarray}
 $$
 
