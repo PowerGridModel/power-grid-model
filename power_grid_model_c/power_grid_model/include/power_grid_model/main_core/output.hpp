@@ -284,6 +284,22 @@ constexpr auto output_result(Component const& power_or_current_sensor, MainModel
         return power_or_current_sensor.template get_null_output<sym>();
     }
 
+    auto const get_current_or_power_branch_f = [&solver_output, &obj_math_id]<power_or_current_sensor_c Sensor>() {
+        if constexpr (std::derived_from<Sensor, GenericPowerSensor>) {
+            return solver_output[obj_math_id.group].branch[obj_math_id.pos].s_f;
+        } else if constexpr (std::derived_from<Sensor, GenericCurrentSensor>) {
+            return solver_output[obj_math_id.group].branch[obj_math_id.pos].i_f;
+        }
+    };
+
+    auto const get_current_or_power_branch_t = [&solver_output, &obj_math_id]<power_or_current_sensor_c Sensor>() {
+        if constexpr (std::derived_from<Sensor, GenericPowerSensor>) {
+            return solver_output[obj_math_id.group].branch[obj_math_id.pos].s_t;
+        } else if constexpr (std::derived_from<Sensor, GenericCurrentSensor>) {
+            return solver_output[obj_math_id.group].branch[obj_math_id.pos].i_t;
+        }
+    };
+
     switch (terminal_type) {
         using enum MeasuredTerminalType;
 
@@ -296,10 +312,10 @@ constexpr auto output_result(Component const& power_or_current_sensor, MainModel
         [[fallthrough]];
     case branch3_3:
         return power_or_current_sensor.template get_output<sym>(
-            solver_output[obj_math_id.group].branch[obj_math_id.pos].s_f);
+            get_current_or_power_branch_f.template operator()<Component>());
     case branch_to:
         return power_or_current_sensor.template get_output<sym>(
-            solver_output[obj_math_id.group].branch[obj_math_id.pos].s_t);
+            get_current_or_power_branch_t.template operator()<Component>());
     case source:
         return power_or_current_sensor.template get_output<sym>(
             solver_output[obj_math_id.group].source[obj_math_id.pos].s);
@@ -405,7 +421,8 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               MathOutput<std::vector<SolverOutputType>> const& math_output, ResIt res_it) {
     return detail::produce_output<Component, Idx2D>(
         state, res_it, [&state, &math_output](Component const& component, Idx2D const math_id) {
-            return output_result<Component>(component, state, math_output.solver_output, math_id);
+            return output_result<Component>(component, state, math_output.solver_output,
+                                            math_id); // probably here is where all the math_id things are called
         });
 }
 template <std::derived_from<Base> Component, class ComponentContainer, solver_output_type SolverOutputType,
@@ -414,7 +431,8 @@ template <std::derived_from<Base> Component, class ComponentContainer, solver_ou
              requires(Component const& component, MainModelState<ComponentContainer> const& state,
                       std::vector<SolverOutputType> const& solver_output, Idx obj_seq) {
                  {
-                     output_result<Component>(component, state, solver_output, obj_seq)
+                     output_result<Component>(component, state, solver_output,
+                                              obj_seq) // probably here is where the sensors things are called
                  } -> detail::assignable_to<std::add_lvalue_reference_t<std::iter_value_t<ResIt>>>;
              }
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
