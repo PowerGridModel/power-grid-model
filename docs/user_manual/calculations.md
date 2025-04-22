@@ -57,10 +57,13 @@ Output:
 - Power flow through branches
 - Deviation between measurement values and estimated state
 
-In order to perform a state estimation, the system should be observable. If the system is not observable, the calculation will raise either a `NotObservableError` or
-a `SparseMatrixError`.
-In short, meeting the requirement of observability indicates that the system is either an overdetermined system (when the number of measurements is larger than the number of unknowns.
-For each node, there are two unknowns, `u` and `u_angle`. Due to the relative nature of `u_angle` (relevant only in systems with at least two nodes), in total the following conditions should be met:
+In order to perform a state estimation, the system should be observable. If the system is not observable,
+the calculation will raise either a `NotObservableError` or a `SparseMatrixError`.
+In short, meeting the requirement of observability indicates that the system is either an overdetermined
+system (when the number of independent measurements is larger than the number of unknowns) or an exactly
+determined system (the number of independent measurements equals the number of unknowns).
+For each node, there are two unknowns, `u` and `u_angle`. Due to the relative nature of `u_angle`
+(relevant only in systems with at least two nodes), in total the following conditions should be met:
 
 $$
     \begin{eqnarray}
@@ -82,11 +85,15 @@ The number of measurements can be found by taking the sum of the following:
 - two times the number of nodes with a voltage sensor with magnitude and angle
 - two times the number of nodes without appliances connected
 - two times the number of nodes where all connected appliances are measured by a power sensor
-- two times the number of branches with a power sensor
+- two times the number of branches with a power sensor and/or a current sensor
 
 ```{note}
 Having enough measurements does not necessarily mean that the system is observable. The location of the measurements is
-also of importance. Additionally, there should be at least one voltage measurement.
+also of importance, i.e., the measurements should be topologically independent. Additionally, there should be at least one voltage measurement.
+```
+
+```{note}
+Global angle current measurements require at least one voltage angle measurement to make sense.
 ```
 
 ```{warning}
@@ -99,9 +106,9 @@ In observable systems this helps better outputting correct results. On the other
 Based on the requirements of observability mentioned above, users need to satisfy at least the following conditions for state estimation calculation in `power-grid-model`.
 
 - `n_voltage_sensor >= 1`
-- If no voltage phasor sensors are available, then the following conditions should be satisfied:  `n_unique_power_sensor >= n_bus - 1`. Otherwise: `n_unique_power_sensor + n_voltage_sensor_with_phasor >= n_bus`
+- If no voltage phasor sensors are available, then the following conditions should be satisfied:  `n_unique_power_or_current_sensor >= n_bus - 1`. Otherwise: `n_unique_power_or_current_sensor + n_voltage_sensor_with_phasor >= n_bus`
 
-`n_unique_power_sensor` can be calculated as sum of following:
+`n_unique_power_or_current_sensor` can be calculated as sum of following:
 
 - Zero injection or zero power flow constraint if present for all nodes.
 - Complete injections for all nodes: All appliances in a node are measured or a node injection sensor is present. Either of them counts as one.
