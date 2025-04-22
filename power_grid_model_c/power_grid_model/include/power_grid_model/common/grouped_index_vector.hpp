@@ -124,10 +124,6 @@ class SparseGroupedIdxVector {
             latest_value_ = value_type{(*indptr_)[group_], (*indptr_)[group_ + 1]};
             return latest_value_;
         }
-        constexpr auto equal(GroupIterator const& other) const {
-            assert(indptr_ == other.indptr_);
-            return group_ == other.group_;
-        }
         constexpr std::strong_ordering three_way_compare(GroupIterator const& other) const {
             assert(indptr_ == other.indptr_);
             return group_ <=> other.group_;
@@ -136,8 +132,6 @@ class SparseGroupedIdxVector {
             assert(indptr_ == other.indptr_);
             return other.group_ - group_;
         }
-        constexpr void increment() { ++group_; }
-        constexpr void decrement() { --group_; }
         constexpr void advance(Idx n) { group_ += n; }
     };
 
@@ -210,7 +204,6 @@ class DenseGroupedIdxVector {
                            narrow_cast<Idx>(std::distance(std::cbegin(*dense_vector_), group_range_.end()))};
             return latest_value_;
         }
-        constexpr auto equal(GroupIterator const& other) const { return group_ == other.group_; }
         constexpr std::strong_ordering three_way_compare(GroupIterator const& other) const {
             return group_ <=> other.group_;
         }

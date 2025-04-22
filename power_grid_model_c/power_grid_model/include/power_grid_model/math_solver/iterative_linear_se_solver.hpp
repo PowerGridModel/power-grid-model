@@ -66,6 +66,8 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
     using sym = sym_type;
 
     static constexpr auto is_iterative = true;
+    static constexpr auto has_current_sensor_implemented =
+        true; // TODO(mgovers): for testing purposes; remove after NRSE has current sensor implemented
 
   private:
     // block size 2 for symmetric, 6 for asym
@@ -142,9 +144,14 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
 
   private:
     // array selection function pointer
-    static constexpr std::array has_branch_{&MeasuredValues<sym>::has_branch_from, &MeasuredValues<sym>::has_branch_to};
+    static constexpr std::array has_branch_power_{&MeasuredValues<sym>::has_branch_from_power,
+                                                  &MeasuredValues<sym>::has_branch_to_power};
     static constexpr std::array branch_power_{&MeasuredValues<sym>::branch_from_power,
                                               &MeasuredValues<sym>::branch_to_power};
+    static constexpr std::array has_branch_current_{&MeasuredValues<sym>::has_branch_from_current,
+                                                    &MeasuredValues<sym>::has_branch_to_current};
+    static constexpr std::array branch_current_{&MeasuredValues<sym>::branch_from_current,
+                                                &MeasuredValues<sym>::branch_to_current};
 
     Idx n_bus_;
     // shared topo data
@@ -196,27 +203,39 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
                         if (measured_value.has_shunt(obj)) {
                             // G += (-Ys)^H * (variance^-1) * (-Ys)
                             auto const& shunt_power = measured_value.shunt_power(obj);
-                            block.g() +=
-                                dot(hermitian_transpose(param.shunt_param[obj]),
-                                    diagonal_inverse(static_cast<IndependentComplexRandVar<sym>>(shunt_power).variance),
-                                    param.shunt_param[obj]);
+                            auto const current = power_to_global_current_measurement(shunt_power);
+                            block.g() += dot(hermitian_transpose(param.shunt_param[obj]),
+                                             diagonal_inverse(current.variance), param.shunt_param[obj]);
                         }
                     }
                     // branch
                     else {
-                        // branch from- and to-side index at 0, and 1 position
-                        IntS const b0 = static_cast<IntS>(type) / 2;
-                        IntS const b1 = static_cast<IntS>(type) % 2;
+                        auto const add_branch_measurement = [&block, &param, obj, type](
+                                                                IntS measured_side,
+                                                                IndependentComplexRandVar<sym> const& branch_current) {
+                            // branch from- and to-side index at 0, and 1 position
+                            IntS const b0 = static_cast<IntS>(type) / 2;
+                            IntS const b1 = static_cast<IntS>(type) % 2;
+
+                            // G += Y{side, b0}^H * (variance^-1) * Y{side, b1}
+                            block.g() += dot(hermitian_transpose(param.branch_param[obj].value[measured_side * 2 + b0]),
+                                             diagonal_inverse(branch_current.variance),
+                                             param.branch_param[obj].value[measured_side * 2 + b1]);
+                        };
                         // measured at from-side: 0, to-side: 1
                         for (IntS const measured_side : std::array<IntS, 2>{0, 1}) {
                             // has measurement
-                            if (std::invoke(has_branch_[measured_side], measured_value, obj)) {
-                                // G += Y{side, b0}^H * (variance^-1) * Y{side, b1}
-                                auto const& power = std::invoke(branch_power_[measured_side], measured_value, obj);
-                                block.g() +=
-                                    dot(hermitian_transpose(param.branch_param[obj].value[measured_side * 2 + b0]),
-                                        diagonal_inverse(static_cast<IndependentComplexRandVar<sym>>(power).variance),
-                                        param.branch_param[obj].value[measured_side * 2 + b1]);
+                            if (std::invoke(has_branch_power_[measured_side], measured_value, obj)) {
+                                auto const& branch_power =
+                                    std::invoke(branch_power_[measured_side], measured_value, obj);
+                                add_branch_measurement(measured_side,
+                                                       power_to_global_current_measurement(branch_power));
+                            }
+                            if (std::invoke(has_branch_current_[measured_side], measured_value, obj)) {
+                                auto const& branch_current =
+                                    std::invoke(branch_current_[measured_side], measured_value, obj);
+                                add_branch_measurement(measured_side,
+                                                       current_to_global_current_measurement(branch_current));
                             }
                         }
                     }
@@ -230,8 +249,8 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
                     if (row == col) {
                         // assign variance to diagonal of 3x3 tensor, for asym
                         auto const& injection = measured_value.bus_injection(row);
-                        block.r() = ComplexTensor<sym>{static_cast<ComplexValue<sym>>(
-                            -(static_cast<IndependentComplexRandVar<sym>>(injection).variance))};
+                        block.r() = ComplexTensor<sym>{
+                            static_cast<ComplexValue<sym>>(-power_to_global_current_measurement(injection).variance)};
                     }
                 }
                 // injection measurement not exist
@@ -285,40 +304,49 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
                 // shunt
                 if (type == YBusElementType::shunt) {
                     if (measured_value.has_shunt(obj)) {
-                        PowerSensorCalcParam<sym> const& m = measured_value.shunt_power(obj);
+                        PowerSensorCalcParam<sym> const& shunt_power = measured_value.shunt_power(obj);
+                        auto const current = power_to_global_current_measurement(shunt_power, u[bus]);
                         // eta += (-Ys)^H * (variance^-1) * i_shunt
-                        rhs_block.eta() -=
-                            dot(hermitian_transpose(param.shunt_param[obj]),
-                                diagonal_inverse(static_cast<IndependentComplexRandVar<sym>>(m).variance),
-                                conj(m.value() / u[bus]));
+                        rhs_block.eta() -= dot(hermitian_transpose(param.shunt_param[obj]),
+                                               diagonal_inverse(current.variance), current.value);
                     }
                 }
                 // branch
                 else {
-                    // branch is either ff or tt
-                    IntS const b = static_cast<IntS>(type) / 2;
-                    assert(b == static_cast<IntS>(type) % 2);
+                    auto const add_branch_measurement = [&rhs_block, &param, obj,
+                                                         type](IntS measured_side,
+                                                               IndependentComplexRandVar<sym> const& branch_current) {
+                        // branch is either ff or tt
+                        IntS const b = static_cast<IntS>(type) / 2;
+                        // eta += Y{side, b}^H * (variance^-1) * i_branch_{f, t}
+                        rhs_block.eta() +=
+                            dot(hermitian_transpose(param.branch_param[obj].value[measured_side * 2 + b]),
+                                diagonal_inverse(branch_current.variance), branch_current.value);
+                    };
                     // measured at from-side: 0, to-side: 1
                     for (IntS const measured_side : std::array<IntS, 2>{0, 1}) {
+                        // the current needs to be calculated with the voltage of the measured bus side
+                        // NOTE: not the bus that is currently being processed!
+                        Idx const measured_bus = branch_bus_idx[obj][measured_side];
+
                         // has measurement
-                        if (std::invoke(has_branch_[measured_side], measured_value, obj)) {
-                            PowerSensorCalcParam<sym> const& m =
-                                std::invoke(branch_power_[measured_side], measured_value, obj);
-                            // the current needs to be calculated with the voltage of the measured bus side
-                            // NOTE: not the current bus!
-                            Idx const measured_bus = branch_bus_idx[obj][measured_side];
-                            // eta += Y{side, b}^H * (variance^-1) * i_branch_{f, t}
-                            rhs_block.eta() +=
-                                dot(hermitian_transpose(param.branch_param[obj].value[measured_side * 2 + b]),
-                                    diagonal_inverse(static_cast<IndependentComplexRandVar<sym>>(m).variance),
-                                    conj(m.value() / u[measured_bus]));
+                        if (std::invoke(has_branch_power_[measured_side], measured_value, obj)) {
+                            auto const& branch_power = std::invoke(branch_power_[measured_side], measured_value, obj);
+                            add_branch_measurement(measured_side,
+                                                   power_to_global_current_measurement(branch_power, u[measured_bus]));
+                        }
+                        if (std::invoke(has_branch_current_[measured_side], measured_value, obj)) {
+                            auto const& branch_current =
+                                std::invoke(branch_current_[measured_side], measured_value, obj);
+                            add_branch_measurement(
+                                measured_side, current_to_global_current_measurement(branch_current, u[measured_bus]));
                         }
                     }
                 }
             }
             // fill block with injection measurement, need to convert to current
             if (measured_value.has_bus_injection(bus)) {
-                rhs_block.tau() = conj(measured_value.bus_injection(bus).value() / u[bus]);
+                rhs_block.tau() = power_to_global_current_measurement(measured_value.bus_injection(bus), u[bus]).value;
             }
         }
     }
@@ -354,8 +382,61 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
         return max_dev;
     }
 
-    auto linearize_measurements(ComplexValueVector<sym> const& current_u, MeasuredValues<sym> const& measured_values) {
+    auto linearize_measurements(ComplexValueVector<sym> const& current_u,
+                                MeasuredValues<sym> const& measured_values) const {
         return measured_values.combine_voltage_iteration_with_measurements(current_u);
+    }
+
+    // The variance is not scaled as an approximation under the assumptions of:
+    // - linearization of obtaining the current from power measurements
+    // - voltages are ~1pu
+    // - power sensor variances are often an approximation dominated by heuristics in the first place
+    // See also https://github.com/PowerGridModel/power-grid-model/pull/951#issuecomment-2805154436
+    IndependentComplexRandVar<sym>
+    power_to_global_current_measurement(PowerSensorCalcParam<sym> const& power_measurement,
+                                        ComplexValue<sym> const& voltage) const {
+        auto measurement = static_cast<IndependentComplexRandVar<sym>>(power_measurement);
+        measurement.value = conj(measurement.value / voltage);
+        return measurement;
+    }
+
+    // Overload when the voltage is not present: the value can't be determined, but the variance assumption still holds.
+    // The variance is not scaled as an approximation under the assumptions of:
+    // - linearization of obtaining the current from power measurements
+    // - voltages are ~1pu
+    // - power sensor variances are often an approximation dominated by heuristics in the first place
+    // See also https://github.com/PowerGridModel/power-grid-model/pull/951#issuecomment-2805154436
+    IndependentComplexRandVar<sym>
+    power_to_global_current_measurement(PowerSensorCalcParam<sym> const& power_measurement) const {
+        auto measurement = static_cast<IndependentComplexRandVar<sym>>(power_measurement);
+        measurement.value = ComplexValue<sym>{nan};
+        return measurement;
+    }
+
+    IndependentComplexRandVar<sym>
+    current_to_global_current_measurement(CurrentSensorCalcParam<sym> const& current_measurement,
+                                          ComplexValue<sym> const& voltage) const {
+        using statistics::scale;
+
+        auto const measurement = static_cast<IndependentComplexRandVar<sym>>(current_measurement.measurement);
+
+        switch (current_measurement.angle_measurement_type) {
+        case AngleMeasurementType::global_angle:
+            return measurement; // no offset
+        case AngleMeasurementType::local_angle:
+            return scale(conj(measurement),
+                         phase_shift(voltage)); // offset with the phase shift
+        default:
+            throw MissingCaseForEnumError{"AngleMeasurementType", current_measurement.angle_measurement_type};
+        }
+    }
+
+    // Overload when the voltage is not present: the value can't be determined, but the variance assumption still holds.
+    IndependentComplexRandVar<sym>
+    current_to_global_current_measurement(CurrentSensorCalcParam<sym> const& current_measurement) const {
+        auto measurement = static_cast<IndependentComplexRandVar<sym>>(current_measurement.measurement);
+        measurement.value = ComplexValue<sym>{nan};
+        return measurement;
     }
 };
 

@@ -140,10 +140,8 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
         constexpr auto dereference() const -> std::add_lvalue_reference_t<std::add_const_t<value_type>> {
             return current_;
         }
-        constexpr auto equal(iterator const& other) const { return current_.idx_ == other.current_.idx_; }
+        constexpr auto three_way_compare(iterator const& other) const { return current_.idx_ <=> other.current_.idx_; }
         constexpr auto distance_to(iterator const& other) const { return other.current_.idx_ - current_.idx_; }
-        constexpr void increment() { ++current_.idx_; }
-        constexpr void decrement() { --current_.idx_; }
         constexpr void advance(difference_type n) { current_.idx_ += n; }
 
         Proxy current_;

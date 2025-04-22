@@ -309,16 +309,10 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
             return container_ptr_->template get_item_by_seq<base_type>(idx_);
         }
         constexpr Gettable& dereference() { return container_ptr_->template get_item_by_seq<base_type>(idx_); }
-        constexpr bool equal(Iterator const& other) const {
-            assert(container_ptr_ == other.container_ptr_);
-            return idx_ == other.idx_;
-        }
         constexpr auto three_way_compare(Iterator const& other) const {
             assert(container_ptr_ == other.container_ptr_);
             return idx_ <=> other.idx_;
         }
-        constexpr void increment() { ++idx_; }
-        constexpr void decrement() { --idx_; }
         constexpr void advance(Idx n) { idx_ += n; }
         constexpr Idx distance_to(Iterator const& other) const {
             assert(container_ptr_ == other.container_ptr_);
