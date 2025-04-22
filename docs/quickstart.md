@@ -57,7 +57,7 @@ node['u_rated'] = [10.5e3, 10.5e3]
 The code above generates a node input array with two nodes,
 and assigns the attributes of the nodes to the array.
 Similarly, we can create input arrays for line, load, and generation.
-A dictionary of such arrays is used for `input_data` and `update_data`. 
+A dictionary of such arrays is used for `input_data` and `update_data`.
 
 ```python
 # line
@@ -112,8 +112,8 @@ model = PowerGridModel(input_data, system_frequency=50.0)
 
 ## Power Flow Calculation
 
-To run calculations, use the object methods {py:class}`power_grid_model.PowerGridModel.calculate_power_flow` 
-or {py:class}`power_grid_model.PowerGridModel.calculate_state_estimation` functions. 
+To run calculations, use the object methods {py:class}`power_grid_model.PowerGridModel.calculate_power_flow`
+or {py:class}`power_grid_model.PowerGridModel.calculate_state_estimation` functions.
 Refer [Calculations](user_manual/calculations) for more details on the many optional arguments.
 
 ```python

@@ -48,7 +48,7 @@ The type names in the hierarchy are exactly the same as the component type names
 the {py:class}`power_grid_model.power_grid_meta_data`, see [Native Data Interface](../advanced_documentation/native-data-interface.md).
 ```
 
-There are four generic component types: `node`, `branch`, `branch3` and `appliance`. 
+There are four generic component types: `node`, `branch`, `branch3` and `appliance`.
 A `node` is similar to a vertex in a graph, a `branch` is similar to an edge in a graph and a `branch3` connects three nodes
 together. An `appliance` is a component that is connected (coupled) to a node, and it is seen as a user of this node.
 
