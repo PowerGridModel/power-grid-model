@@ -64,6 +64,7 @@ jobs:
       - name: Install and run markdownlint
         run: |
           npm install -g markdownlint-cli
+          echo "Running markdownlint"
           markdownlint --fix .
 
       - name: If needed raise error
