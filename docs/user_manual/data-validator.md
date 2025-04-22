@@ -29,7 +29,7 @@ Each validation error is an object which can be converted to a compact human-rea
 It contains three member variables `component`, `field` and `ids`, which can be used to gather more specific information about the validation error,
 e.g. which object IDs are involved.
 
-```
+```py
 class ValidationError:
     
     # Component(s): e.g. "node" or ["node", "line"]

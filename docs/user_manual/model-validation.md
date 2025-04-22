@@ -193,7 +193,7 @@ one end of Line 13 in asymmetrical batch calculation.
 
 The circuit diagram is as follows:
 
-```
+```txt
                                                         asym_load(22)       sym_load(19)
                                                         |                   |
             |------trafo(17)------|-----cable(9)-----|(3)----cable(11)---|(5)----OHL(13)---(On/off)-|
@@ -209,7 +209,7 @@ This is a minimal case representing a simple transmission grid.
 
 The circuit diagram is as follows (The node 6 is same in both lines):
 
-```
+```txt
     Gen(_21)---|_1--transformer(_30)--|_3--line(_12)-----|              |---line(_14)----------|
                                                          |--line(_13)---|                      |
                        Gen(_22)---|_2--transformer(_31)--|_4            |_5-------line(_15)----|_6
