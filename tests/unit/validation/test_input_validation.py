@@ -24,7 +24,6 @@ from power_grid_model.validation.errors import (
     InvalidAssociatedEnumValueError,
     InvalidEnumValueError,
     InvalidIdError,
-    MissingValueError,
     MultiFieldValidationError,
     MultiComponentNotUniqueError,
     NotBetweenError,
@@ -58,35 +57,45 @@ def original_data() -> dict[ComponentType, np.ndarray]:
     line["x0"] = [0, 0, 50]
     line["i_n"] = [-3, 0, 50]
 
-    asym_line = initialize_array(DatasetType.input, ComponentType.asym_line, 3)
-    asym_line["id"] = [55, 56, 57]
-    asym_line["from_node"] = [0, 1, 0]
-    asym_line["to_node"] = [1, 2, 2]
-    asym_line["from_status"] = [1, 1, 1]
-    asym_line["to_status"] = [1, 1, 1]
-    asym_line["r_aa"] = [-1, 2, 2]
-    asym_line["r_ba"] = [-1, 2, 2]
-    asym_line["r_bb"] = [-1, 2, 2]
-    asym_line["r_ca"] = [-1, 2, 2]
-    asym_line["r_cb"] = [-1, 2, 2]
-    asym_line["r_cc"] = [-1, 2, 2]
-    asym_line["r_na"] = [-1, 2, 2]
-    asym_line["r_nb"] = [-1, 2, 2]
-    asym_line["r_nc"] = [-1, 2, 2]
-    asym_line["r_nn"] = [-1, np.nan, 2]
-    asym_line["x_aa"] = [-1, 2, 2]
-    asym_line["x_ba"] = [-1, 2, 2]
-    asym_line["x_bb"] = [-1, 2, 2]
-    asym_line["x_ca"] = [-1, 2, 2]
-    asym_line["x_cb"] = [-1, 2, 2]
-    asym_line["x_cc"] = [-1, 2, 2]
-    asym_line["x_na"] = [-1, 2, np.nan]
-    asym_line["x_nb"] = [-1, 2, 2]
-    asym_line["x_nc"] = [-1, 2, 2]
-    asym_line["x_nn"] = [-1, 2, 2]
-    asym_line["c0"]   = [-1, np.nan, np.nan]
-    asym_line["c1"]   = [-1, np.nan, np.nan]
-    asym_line["i_n"] =  [50, 50, 50]
+    asym_line = initialize_array(DatasetType.input, ComponentType.asym_line, 4)
+    asym_line["id"] = [55, 56, 57, 58]
+    asym_line["from_node"] = [0, 1, 0, 0]
+    asym_line["to_node"] = [1, 2, 2, 1]
+    asym_line["from_status"] = [1, 1, 1, 1]
+    asym_line["to_status"] = [1, 1, 1, 1]
+    asym_line["r_aa"] = [-1, 2, 2, 2]
+    asym_line["r_ba"] = [-1, 2, 2, 2]
+    asym_line["r_bb"] = [-1, 2, 2, 2]
+    asym_line["r_ca"] = [-1, 2, 2, 2]
+    asym_line["r_cb"] = [-1, 2, 2, 2]
+    asym_line["r_cc"] = [-1, 2, 2, 2]
+    asym_line["r_na"] = [-1, 2, 2, 2]
+    asym_line["r_nb"] = [-1, 2, 2, 2]
+    asym_line["r_nc"] = [-1, 2, 2, 2]
+    asym_line["r_nn"] = [-1, np.nan, 2, 2]
+    asym_line["x_aa"] = [-1, 2, 2, 2]
+    asym_line["x_ba"] = [-1, 2, 2, 2]
+    asym_line["x_bb"] = [-1, 2, 2, 2]
+    asym_line["x_ca"] = [-1, 2, 2, 2]
+    asym_line["x_cb"] = [-1, 2, 2, 2]
+    asym_line["x_cc"] = [-1, 2, 2, 2]
+    asym_line["x_na"] = [-1, 2, np.nan, 2]
+    asym_line["x_nb"] = [-1, 2, 2, 2]
+    asym_line["x_nc"] = [-1, 2, 2, 2]
+    asym_line["x_nn"] = [-1, 2, 2, 2]
+    asym_line["c_aa"] = [-1, np.nan, 2, np.nan]
+    asym_line["c_ba"] = [-1, np.nan, 2, np.nan]
+    asym_line["c_bb"] = [-1, np.nan, 2, np.nan]
+    asym_line["c_ca"] = [-1, np.nan, 2, np.nan]
+    asym_line["c_cb"] = [-1, np.nan, 2, np.nan]
+    asym_line["c_cc"] = [-1, np.nan, 2, 2]
+    asym_line["c_na"] = [-1, np.nan, 2, 2]
+    asym_line["c_nb"] = [-1, np.nan, 2, 2]
+    asym_line["c_nc"] = [-1, np.nan, 2, 2]
+    asym_line["c_nn"] = [-1, np.nan, 2, 2]
+    asym_line["c0"]   = [-1, np.nan, np.nan, np.nan]
+    asym_line["c1"]   = [-1, np.nan, np.nan, np.nan]
+    asym_line["i_n"] =  [50, 50, 50, 50]
 
     generic_branch = initialize_array(DatasetType.input, ComponentType.generic_branch, 1)
     generic_branch["id"] = [6]
@@ -744,9 +753,19 @@ def test_asym_line_input_data(input_data):
     assert NotGreaterThanError(ComponentType.asym_line, "x_nb", [55], 0) in validation_errors
     assert NotGreaterThanError(ComponentType.asym_line, "x_nc", [55], 0) in validation_errors
     assert NotGreaterThanError(ComponentType.asym_line, "x_nn", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "c_aa", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "c_ba", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "c_bb", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "c_ca", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "c_cb", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "c_cc", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "c_na", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "c_nb", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "c_nc", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "c_nn", [55], 0) in validation_errors
     assert NotGreaterThanError(ComponentType.asym_line, "c0", [55], 0) in validation_errors
     assert NotGreaterThanError(ComponentType.asym_line, "c1", [55], 0) in validation_errors
     assert MultiFieldValidationError(ComponentType.asym_line, ["r_na","r_nb","r_nc","r_nn"], [56]) in validation_errors
+    assert MultiFieldValidationError(ComponentType.asym_line, ["c_aa","c_ba","c_bb","c_ca","c_cb","c_cc","c0","c1"], [56]) in validation_errors
     assert MultiFieldValidationError(ComponentType.asym_line, ["x_na","x_nb","x_nc","x_nn"], [57]) in validation_errors
-    assert MissingValueError(ComponentType.asym_line, "c0", [56, 57]) in validation_errors
-    assert MissingValueError(ComponentType.asym_line, "c1", [56, 57]) in validation_errors
+    assert MultiFieldValidationError(ComponentType.asym_line, ["c_aa","c_ba","c_bb","c_ca","c_cb","c_cc"], [58]) in validation_errors

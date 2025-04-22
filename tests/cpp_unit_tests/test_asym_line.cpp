@@ -10,13 +10,14 @@ namespace power_grid_model {
 
 using namespace std::complex_literals;
 
-void execute_subcases(const AsymLineInput& input, const ComplexTensor<asymmetric_t>& y_series, const double base_i, const double base_y, const double system_frequency, const double voltage_lvl)
+void execute_subcases(const AsymLineInput& input, const ComplexTensor<asymmetric_t>& y_series, const ComplexTensor<asymmetric_t>& c_matrix, const double base_i, const double base_y, const double system_frequency, const double voltage_lvl)
 {
     CAPTURE(input.id);
     CAPTURE(y_series);
     AsymLine asym_line{input, system_frequency, voltage_lvl, voltage_lvl};
     Branch& branch = asym_line;
-    ComplexTensor<asymmetric_t> const y_shunt = 1 / base_y * (2 * pi * system_frequency * ComplexTensor<asymmetric_t>{(2.0 * input.c1 + input.c0) / 3.0, (input.c0 - input.c1) / 3.0 } * 1.0i);
+
+    ComplexTensor<asymmetric_t> const y_shunt = 1 / base_y * (2 * pi * system_frequency * c_matrix * 1.0i);
 
     DoubleComplex const y1_series = (y_series(0,0) + y_series(1,1) + y_series(2,2)) / 3.0 - (y_series(0,1) + y_series(1,2) + y_series(1,0) + y_series(1,2) + y_series(2,0) + y_series(2,1)) / 6.0;
     DoubleComplex const y1_shunt = (y_shunt(0,0) + y_shunt(1,1) + y_shunt(2,2)) / 3.0 - (y_shunt(0,1) + y_shunt(1,2) + y_shunt(1,0) + y_shunt(1,2) + y_shunt(2,0) + y_shunt(2,1)) / 6.0;
@@ -316,9 +317,11 @@ TEST_CASE("Test asym line") {
 
         ComplexTensor4 r_matrix = ComplexTensor4(input.r_aa, input.r_bb, input.r_cc, input.r_nn, input.r_ba, input.r_ca, input.r_na, input.r_cb, input.r_nb, input.r_nc);
         ComplexTensor4 x_matrix = ComplexTensor4(input.x_aa, input.x_bb, input.x_cc, input.x_nn, input.x_ba, input.x_ca, input.x_na, input.x_cb, input.x_nb, input.x_nc);
+        ComplexTensor<asymmetric_t> const c_matrix = ComplexTensor<asymmetric_t>{(2.0 * input.c1 + input.c0) / 3.0, (input.c0 - input.c1) / 3.0 };
         ComplexTensor4 z = r_matrix + 1.0i * x_matrix;
+        
         ComplexTensor<asymmetric_t> const y_series = 1 / base_y * inv(kron_reduction(z));
-        execute_subcases(input, y_series, base_i, base_y, system_frequency, voltage_lvl);
+        execute_subcases(input, y_series, c_matrix, base_i, base_y, system_frequency, voltage_lvl);
     }
 
     SUBCASE("R and X matrix, c0, c1 excluding neutral") { 
@@ -345,7 +348,87 @@ TEST_CASE("Test asym line") {
         ComplexTensor<asymmetric_t> r_matrix = ComplexTensor<asymmetric_t>(input.r_aa, input.r_bb, input.r_cc, input.r_ba, input.r_ca, input.r_cb);
         ComplexTensor<asymmetric_t> x_matrix = ComplexTensor<asymmetric_t>(input.x_aa, input.x_bb, input.x_cc, input.x_ba, input.x_ca, input.x_cb);
         ComplexTensor<asymmetric_t> const y_series = 1 / base_y * inv(r_matrix + 1.0i * x_matrix);
-        execute_subcases(input, y_series, base_i, base_y, system_frequency, voltage_lvl);
+        ComplexTensor<asymmetric_t> const c_matrix = ComplexTensor<asymmetric_t>{(2.0 * input.c1 + input.c0) / 3.0, (input.c0 - input.c1) / 3.0 };
+        execute_subcases(input, y_series, c_matrix, base_i, base_y, system_frequency, voltage_lvl);
+    }
+
+    SUBCASE("R, X and C matrix including neutral") { 
+        AsymLineInput input =  {.id = 1,
+                                .from_node = 2,
+                                .to_node = 3,
+                                .from_status = 1,
+                                .to_status = 1,
+                                .r_aa = 0.4369,
+                                .r_ba = 0.0496,
+                                .r_bb = 0.4369,
+                                .r_ca = 0.0485,
+                                .r_cb = 0.0496,
+                                .r_cc = 0.4369,
+                                .r_na = 0.0496,
+                                .r_nb = 0.0485,
+                                .r_nc = 0.0496,
+                                .r_nn = 0.4369,
+                                .x_aa = 0.8538,
+                                .x_ba = 0.7886, 
+                                .x_bb = 0.8538, 
+                                .x_ca = 0.7663, 
+                                .x_cb = 0.7886,
+                                .x_cc = 0.8538,
+                                .x_na = 0.7886, 
+                                .x_nb = 0.7663,
+                                .x_nc = 0.7886,
+                                .x_nn = 0.8538,
+                                .c_aa = 0.3200,
+                                .c_ba = 0.5400,
+                                .c_bb = 0.3200,
+                                .c_ca = 0.7600,
+                                .c_cb = 0.5400,
+                                .c_cc = 0.3200,
+                                .c_na = 0.5400,
+                                .c_nb = 0.7600,
+                                .c_nc = 0.5400,
+                                .c_nn = 0.3200,
+                                .i_n = 216.0};
+
+        ComplexTensor4 r_matrix = ComplexTensor4(input.r_aa, input.r_bb, input.r_cc, input.r_nn, input.r_ba, input.r_ca, input.r_na, input.r_cb, input.r_nb, input.r_nc);
+        ComplexTensor4 x_matrix = ComplexTensor4(input.x_aa, input.x_bb, input.x_cc, input.x_nn, input.x_ba, input.x_ca, input.x_na, input.x_cb, input.x_nb, input.x_nc);
+        ComplexTensor4 c_matrix_neutral = ComplexTensor4(input.c_aa, input.c_bb, input.c_cc, input.c_nn, input.c_ba, input.c_ca, input.c_na, input.c_cb, input.c_nb, input.c_nc);
+        ComplexTensor<asymmetric_t> c_matrix = kron_reduction(c_matrix_neutral);
+        ComplexTensor4 z = r_matrix + 1.0i * x_matrix;
+        ComplexTensor<asymmetric_t> const y_series = 1 / base_y * inv(kron_reduction(z));
+        execute_subcases(input, y_series, c_matrix, base_i, base_y, system_frequency, voltage_lvl);
+    }
+
+    SUBCASE("R, X and C matrix excluding neutral") { 
+        AsymLineInput input =  {.id = 1,
+                                .from_node = 2,
+                                .to_node = 3,
+                                .from_status = 1,
+                                .to_status = 1,
+                                .r_aa = 0.4369,
+                                .r_ba = 0.0496,
+                                .r_bb = 0.4369,
+                                .r_ca = 0.0485,
+                                .r_cb = 0.0496,
+                                .r_cc = 0.4369,
+                                .x_aa = 0.8538,
+                                .x_ba = 0.7886, 
+                                .x_bb = 0.8538, 
+                                .x_ca = 0.7663, 
+                                .x_cb = 0.7886,
+                                .x_cc = 0.8538,
+                                .c_aa = 0.3200,
+                                .c_ba = 0.5400,
+                                .c_bb = 0.3200,
+                                .c_ca = 0.7600,
+                                .c_cb = 0.5400,
+                                .c_cc = 0.3200,
+                                .i_n = 216.0};
+        ComplexTensor<asymmetric_t> r_matrix = ComplexTensor<asymmetric_t>(input.r_aa, input.r_bb, input.r_cc, input.r_ba, input.r_ca, input.r_cb);
+        ComplexTensor<asymmetric_t> x_matrix = ComplexTensor<asymmetric_t>(input.x_aa, input.x_bb, input.x_cc, input.x_ba, input.x_ca, input.x_cb);
+        ComplexTensor<asymmetric_t> const y_series = 1 / base_y * inv(r_matrix + 1.0i * x_matrix);
+        ComplexTensor<asymmetric_t> const c_matrix = ComplexTensor<asymmetric_t>(input.c_aa, input.c_bb, input.c_cc, input.c_ba, input.c_ca, input.c_cb);
+        execute_subcases(input, y_series, c_matrix, base_i, base_y, system_frequency, voltage_lvl);
     }
 }
 

@@ -298,7 +298,7 @@ def validate_required_values(
     required["branch"] = required["base"] + ["from_node", "to_node", "from_status", "to_status"]
     required["link"] = required["branch"].copy()
     required["line"] = required["branch"] + ["r1", "x1", "c1", "tan1"]
-    required["asym_line"] = required["branch"] + ["r_aa", "r_ba", "r_bb", "r_ca", "r_cb", "r_cc", "x_aa", "x_ba", "x_bb", "x_ca", "x_cb", "x_cc", "c0", "c1"]
+    required["asym_line"] = required["branch"] + ["r_aa", "r_ba", "r_bb", "r_ca", "r_cb", "r_cc", "x_aa", "x_ba", "x_bb", "x_ca", "x_cb", "x_cc"]
     required["transformer"] = required["branch"] + [
         "u1",
         "u2",
@@ -524,14 +524,20 @@ def validate_line(data: SingleDataset) -> list[ValidationError]:
 def validate_asym_line(data : SingleDataset) -> list[ValidationError]:
     errors = validate_branch(data, ComponentType.asym_line)
     errors += _all_greater_than_zero(data, ComponentType.asym_line, "i_n")
-    required_fields = ["r_aa", "r_ba", "r_bb", "r_ca", "r_cb", "r_cc", "x_aa", "x_ba", "x_bb", "x_ca", "x_cb", "x_cc", "c0", "c1"]
+    required_fields = ["r_aa", "r_ba", "r_bb", "r_ca", "r_cb", "r_cc", "x_aa", "x_ba", "x_bb", "x_ca", "x_cb", "x_cc"]
     optional_r_matrix_fields = ["r_na", "r_nb", "r_nc", "r_nn"]
     optional_x_matrix_fields = ["x_na", "x_nb", "x_nc", "x_nn"]
-    for field in required_fields + optional_r_matrix_fields + optional_x_matrix_fields:
+    required_c_matrix_fields = ["c_aa", "c_ba", "c_bb", "c_ca", "c_cb", "c_cc"]
+    optional_c_matrix_fields = ["c_na", "c_nb", "c_nc", "c_nn"]
+    c_fields = ["c0", "c1"]
+    for field in required_fields + optional_r_matrix_fields + optional_x_matrix_fields + required_c_matrix_fields + optional_c_matrix_fields + c_fields:
         errors += _all_greater_than_zero(data, ComponentType.asym_line, field)
 
     errors += _no_strict_subset_missing(data, optional_r_matrix_fields, ComponentType.asym_line)
     errors += _no_strict_subset_missing(data, optional_x_matrix_fields, ComponentType.asym_line)
+    errors += _no_strict_subset_missing(data, required_c_matrix_fields, ComponentType.asym_line)
+    errors += _no_strict_subset_missing(data, optional_c_matrix_fields, ComponentType.asym_line)
+    errors += _not_all_missing(data, required_c_matrix_fields + c_fields, ComponentType.asym_line)
 
     return errors
 

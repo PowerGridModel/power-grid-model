@@ -6,7 +6,7 @@ Set DefaultBaseFrequency=50
 New circuit.test_1 phases=3 pu=1.0 basekv=10 bus1=Node1.1.2.3 MVAsc3=1000000000 MVAsc1=1000000000.0 x1r1=0.166666 x0r0=0.166666
 
 ! LineCodes
-New LineCode.LineCode1 nphases=3 Normamps=115.0 Units=km C1=0.54 C0=0.32 
+New LineCode.LineCode1 nphases=3 Normamps=115.0 Units=km
 ~ Rmatrix = [0.6904 |0.0495 0.6904 |0.0492 0.0495 0.6904 ]
 ~ Xmatrix = [0.8316 |0.7559 0.8316 |0.7339 0.7559 0.8316 ]
 ~ Cmatrix = [0.32 | 0.54 0.32 | 0.76 0.54 0.32 ]
