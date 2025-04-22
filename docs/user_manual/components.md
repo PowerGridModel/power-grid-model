@@ -147,6 +147,89 @@ $$
    \end{eqnarray}
 $$
 
+### Asym Line
+
+* type name: `asym_line`
+
+`asym_line` is a {hoverxreftooltip}`user_manual/components:branch` with specified resistance and reactance per phase. A cable can be modelled as `line` or `asym_line`. An `asym_line` can only connect two nodes with the same rated voltage. If `i_n` is not provided, `loading` of line will be a `nan` value. The `asym_line` denotes a 3 or 4 phase line with phases `a`, `b`, `c` and optionally `n` for neutral. Whenever the neutral phase is provided the resistance and reactance matrices will first be reduced to 3 phase matrices with a kron reduction.
+
+#### Input
+
+The provided values will be converted to a matrix representing the line's properties per phase in the following form:
+
+```text
+[[aa, ba, ca, na],
+ [ba, bb, cb, nb],
+ [ca, cb, cc, nc],
+ [na, nb, nc, nn]]
+```
+
+This representation holds for all values `r_aa` - `r_nn`, `x_aa` - `x_nn` and `c_aa` - `c_cc`. If the neutral values are not provided the last row and column from the above matrix are omitted.
+
+| name   | data type | unit       | description                             |  update  |            valid values            |
+| ------ | --------- | ---------- | --------------------------------------- | :------: | :--------------------------------: |
+| `r_aa` | `double`  | ohm (Ω)    | positive-sequence serial resistance aa  | &#10060; |               `> 0`                |
+| `r_ba` | `double`  | ohm (Ω)    | positive-sequence serial resistance ba  | &#10060; |               `> 0`                |
+| `r_bb` | `double`  | ohm (Ω)    | positive-sequence serial resistance bb  | &#10060; |               `> 0`                |
+| `r_ca` | `double`  | ohm (Ω)    | positive-sequence serial resistance ca  | &#10060; |               `> 0`                |
+| `r_cb` | `double`  | ohm (Ω)    | positive-sequence serial resistance cb  | &#10060; |               `> 0`                |
+| `r_cc` | `double`  | ohm (Ω)    | positive-sequence serial resistance cc  | &#10060; |               `> 0`                |
+| `r_na` | `double`  | ohm (Ω)    | positive-sequence serial resistance na  | &#10060; |               `> 0`                |
+| `r_nb` | `double`  | ohm (Ω)    | positive-sequence serial resistance nb  | &#10060; |               `> 0`                |
+| `r_nc` | `double`  | ohm (Ω)    | positive-sequence serial resistance nc  | &#10060; |               `> 0`                |
+| `r_nn` | `double`  | ohm (Ω)    | positive-sequence serial resistance nn  | &#10060; |               `> 0`                |
+| `x_aa` | `double`  | ohm (Ω)    | positive-sequence serial reactance aa   | &#10060; |               `> 0`                |
+| `x_ba` | `double`  | ohm (Ω)    | positive-sequence serial reactance ba   | &#10060; |               `> 0`                |
+| `x_bb` | `double`  | ohm (Ω)    | positive-sequence serial reactance bb   | &#10060; |               `> 0`                |
+| `x_ca` | `double`  | ohm (Ω)    | positive-sequence serial reactance ca   | &#10060; |               `> 0`                |
+| `x_cb` | `double`  | ohm (Ω)    | positive-sequence serial reactance cb   | &#10060; |               `> 0`                |
+| `x_cc` | `double`  | ohm (Ω)    | positive-sequence serial reactance cc   | &#10060; |               `> 0`                |
+| `x_na` | `double`  | ohm (Ω)    | positive-sequence serial reactance na   | &#10060; |               `> 0`                |
+| `x_nb` | `double`  | ohm (Ω)    | positive-sequence serial reactance nb   | &#10060; |               `> 0`                |
+| `x_nc` | `double`  | ohm (Ω)    | positive-sequence serial reactance nc   | &#10060; |               `> 0`                |
+| `x_nn` | `double`  | ohm (Ω)    | positive-sequence serial reactance nn   | &#10060; |               `> 0`                |
+| `c_aa` | `double`  | farad (F)  | Shunt nodal capacitance matrix aa       | &#10060; |               `> 0`                |
+| `c_ba` | `double`  | farad (F)  | Shunt nodal capacitance matrix ba       | &#10060; |               `> 0`                |
+| `c_bb` | `double`  | farad (F)  | Shunt nodal capacitance matrix bb       | &#10060; |               `> 0`                |
+| `c_ca` | `double`  | farad (F)  | Shunt nodal capacitance matrix ca       | &#10060; |               `> 0`                |
+| `c_cb` | `double`  | farad (F)  | Shunt nodal capacitance matrix cb       | &#10060; |               `> 0`                |
+| `c_cc` | `double`  | farad (F)  | Shunt nodal capacitance matrix cc       | &#10060; |               `> 0`                |
+| `c0`   | `double`  | farad (F)  | zero-sequence shunt capacitance         | &#10060; |               `> 0`                |
+| `c1`   | `double`  | farad (F)  | positive-sequence shunt capacitance     | &#10060; |               `> 0`                |
+
+The for the r and x matrices providing values for the neutral phase is optional. To clarify which input is values are required, please consult the tables below:
+
+| r_aa - r_cc   | r_na     | r_nb     | r_nc     | r_nn     | result   | Validation Error          |
+| ------------- | -------- | -------- | -------- | -------- | -------- | ------------------------- |
+| &#10004;      | &#10004; | &#10004; | &#10004; | &#10004; | &#10004; |                           |
+| &#10004;      | &#10004; | &#10004; | &#10004; | &#10060; | &#10060; | MultiFieldValidationError |
+| &#10004;      | &#10004; | &#10004; | &#10004; | &#10060; | &#10060; | MultiFieldValidationError |
+| &#10004;      | &#10004; | &#10004; | &#10060; | &#10060; | &#10060; | MultiFieldValidationError |
+| &#10004;      | &#10004; | &#10060; | &#10060; | &#10060; | &#10060; | MultiFieldValidationError |
+| &#10004;      | &#10060; | &#10060; | &#10060; | &#10060; | &#10004; |                           |
+| &#10060;      | &#10060; | &#10060; | &#10060; | &#10060; | &#10060; | MultiFieldValidationError |
+
+| x_aa - x_cc   | x_na     | x_nb     | x_nc     | x_nn     | result   | Validation Error          |
+| ------------- | -------- | -------- | -------- | -------- | -------- | ------------------------- |
+| &#10004;      | &#10004; | &#10004; | &#10004; | &#10004; | &#10004; |                           |
+| &#10004;      | &#10004; | &#10004; | &#10004; | &#10060; | &#10060; | MultiFieldValidationError |
+| &#10004;      | &#10004; | &#10004; | &#10004; | &#10060; | &#10060; | MultiFieldValidationError |
+| &#10004;      | &#10004; | &#10004; | &#10060; | &#10060; | &#10060; | MultiFieldValidationError |
+| &#10004;      | &#10004; | &#10060; | &#10060; | &#10060; | &#10060; | MultiFieldValidationError |
+| &#10004;      | &#10060; | &#10060; | &#10060; | &#10060; | &#10004; |                           |
+| &#10060;      | &#10060; | &#10060; | &#10060; | &#10060; | &#10060; | MultiFieldValidationError |
+
+For the c-matrix values there are two options. Either provide all the required c-matrix values i.e. `c_aa` - `c_cc` or provide `c0`, `c1`. Whenver both sets are supplied the powerflow calculations will use `c0`, `c1`.
+The table below provides guidance in providing valid input.
+
+| c_aa - c_cc | c0       | c1       | result   | Validation Error          |
+| ----------- | -------- | -------- | -------- | ------------------------- |
+| &#10004;    | &#10004; | &#10004; | &#10004; |                           |
+| &#10004;    | &#10004; | &#10060; | &#10004; |                           |
+| &#10004;    | &#10060; | &#10060; | &#10004; |                           |
+| &#10060;    | &#10004; | &#10060; | &#10060; | MultiFieldValidationError |
+| &#10060;    | &#10004; | &#10004; | &#10004; |                           |
+
 ### Link
 
 * type name: `link`
