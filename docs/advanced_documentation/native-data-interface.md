@@ -115,12 +115,12 @@ The pointers are passed into C++ code so that the C++ program can write results 
 
 The basic data types used in the interface between C++ and Python are shown in the table below.
 
-| C++ type     | `numpy.dtype` | null value                                          |  usage   |
-| ---          | ---           | ---                                                 | ---      |
-| `int32_t`    | `'i4'`        | - 2^31                                              | ids of physical components |
-| `int8_t`     | `'i1'`        | - 2^7                                               | enumeration types, boolean types, and small integers (e.g. tap position of transformer) |
-| `double`     | `'f8'`        | NaN ([IEEE 754](https://en.wikipedia.org/wiki/NaN)) | physical quantities (e.g. voltage) |
-| `double[3]`  | `'(3, )f8'`   | NaN ([IEEE 754](https://en.wikipedia.org/wiki/NaN)) | three-phase asymmetric physical quantities (e.g. voltage) |
+| C++ type    | `numpy.dtype` | null value                                          | usage                                                                                   |
+| ----------- | ------------- | --------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `int32_t`   | `'i4'`        | - 2^31                                              | ids of physical components                                                              |
+| `int8_t`    | `'i1'`        | - 2^7                                               | enumeration types, boolean types, and small integers (e.g. tap position of transformer) |
+| `double`    | `'f8'`        | NaN ([IEEE 754](https://en.wikipedia.org/wiki/NaN)) | physical quantities (e.g. voltage)                                                      |
+| `double[3]` | `'(3, )f8'`   | NaN ([IEEE 754](https://en.wikipedia.org/wiki/NaN)) | three-phase asymmetric physical quantities (e.g. voltage)                               |
 
 *The [endianness](https://en.wikipedia.org/wiki/Endianness)
 of C++ and Python side is also matched. For `x86-64` platform the little endian is used, so that
