@@ -147,10 +147,15 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
     CurrentSensorOutput<sym_calc> get_generic_output(ComplexValue<sym_calc> const& i) const {
         CurrentSensorOutput<sym_calc> output{};
         output.id = id();
-        ComplexValue<sym_calc> const i_residual{process_mean_val<sym_calc>(i_measured_ - i) * base_current_};
         output.energized = 1; // current sensor is always energized
-        output.i_residual = cabs(i_residual);
-        output.i_angle_residual = arg(i_residual);
+        auto const i_calc_param = calc_param<sym_calc>();
+        auto const i_measured_complex = i_calc_param.measurement.value();
+        if (i_calc_param.angle_measurement_type == AngleMeasurementType::global_angle) {
+            output.i_residual = (cabs(i_measured_complex) - cabs(i)) * base_current_;
+            output.i_angle_residual = arg(i_measured_complex) - arg(i);
+        } else {
+            throw NotImplementedError();
+        }
         return output;
     }
 };
