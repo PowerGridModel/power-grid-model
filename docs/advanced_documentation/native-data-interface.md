@@ -170,7 +170,6 @@ and predefines all the corresponding `numpy.dtype`.
 The detailed explanation of all attributes of each component is given in
 [Graph Data model](../user_manual/data-model.md#attributes-of-components).
 
-
 One can import the `power_grid_meta_data` to get all the predefined `numpy.dtype` and create relevant arrays.
 The code below creates an array which is compatible with transformer input dataset.
 

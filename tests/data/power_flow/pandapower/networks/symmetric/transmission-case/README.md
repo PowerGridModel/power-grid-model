@@ -6,9 +6,10 @@ SPDX-License-Identifier: MPL-2.0
 
 ## Network Test Case: Transmission grid
 
-Test case representing a typical transmission grid. 
+Test case representing a typical transmission grid.
 
 The circuit diagram is as follows (The node 6 is same in both lines):
+
 ```
     Gen(_21)---|_1--transformer(_30)--|_3--line(_12)-----|              |---line(_14)----------|
                                                          |--line(_13)---|                      |

@@ -6,7 +6,7 @@ SPDX-License-Identifier: MPL-2.0
 
 # Components
 
-The attributes of components are listed below. 
+The attributes of components are listed below.
 
 ## Base
 
@@ -113,7 +113,7 @@ usually permanently connects two joints. In this case, the attribute `from_statu
 * type name: `line`
 
 `line` is a {hoverxreftooltip}`user_manual/components:branch` with specified serial impedance and shunt admittance. A cable is
-also modeled as `line`. A `line` can only connect two nodes with the same rated voltage. 
+also modeled as `line`. A `line` can only connect two nodes with the same rated voltage.
 If `i_n` is not provided, `loading` of line will be a `nan` value.
 
 #### Input
@@ -138,7 +138,7 @@ if any of the faults in any of the scenarios within a batch are not three-phase 
 
 #### Electric Model
 
-`line` is described by a $\pi$ model, where 
+`line` is described by a $\pi$ model, where
 
 $$
    \begin{eqnarray}
@@ -156,7 +156,8 @@ two busbars inside a substation. It has a very high admittance (small impedance)
 (equivalent to 10e6 siemens for 10kV network). Therefore, it is chosen by design that no sensors can be coupled to a `link`.
 There is no additional attribute for `link`.
 
-#### Electric Model: 
+#### Electric Model
+
 `link` is modeled by a constant reactance $Y_{\text{series}}$, where
 
 $$
@@ -199,17 +200,18 @@ levels. An example of usage of transformer is given in [Transformer Examples](..
 | `r_grounding_to`   | `double`                                                    | ohm (Ω)          | grounding resistance at to-side, if relevant                                                                                                                                                                                          |     &#10060; default `0`      | &#10060; |                                                                        |
 | `x_grounding_to`   | `double`                                                    | ohm (Ω)          | grounding reactance at to-side, if relevant                                                                                                                                                                                           |     &#10060; default `0`      | &#10060; |                                                                        |
 
-```{note} 
+```{note}
 It can happen that `tap_min > tap_max`. In this case the winding voltage is decreased if the tap position is
 increased.
 ```
 
 #### Electric Model
+
 `transformer` is described by a $\pi$ model, where $Z_{\text{series}}$ can be computed as
 
 $$
-    \begin{eqnarray} 
-        & |Z_{\text{series}}| = \frac{u_k}{z_{\text{base}}} \\ 
+    \begin{eqnarray}
+        & |Z_{\text{series}}| = \frac{u_k}{z_{\text{base}}} \\
         & \mathrm{Re}(Z_{\text{series}}) = \frac{p_k / s_n}{z_{\text{base}}} \\
         & \mathrm{Im}(Z_{\text{series}}) = \sqrt{|Z_{\text{series}}|^2-\mathrm{Re}(Z_{\text{series}})^2} \\
     \end{eqnarray}
@@ -218,23 +220,21 @@ $$
 and $Y_{\text{shunt}}$ can be computed as
 
 $$
-    \begin{eqnarray} 
+    \begin{eqnarray}
         & |Y_{\text{shunt}}| = \frac{i_0}{y_{\text{base}}} \\
         & \mathrm{Re}(Y_{\text{shunt}}) = \frac{s_n / p_0}{y_{\text{base}}} \\
         & \mathrm{Im}(Y_{\text{shunt}}) = -\sqrt{|Y_{\text{shunt}}|^2-\mathrm{Re}(Y_{\text{shunt}})^2} \\
    \end{eqnarray}
 $$
 
-where $z_{\text{base}} = 1 / y_{\text{base}} = {u_{\text{2, rated}}}^2 / s_{\text{base}}$. 
+where $z_{\text{base}} = 1 / y_{\text{base}} = {u_{\text{2, rated}}}^2 / s_{\text{base}}$.
 Here, $s_{\text{base}}$ is a constant value determined by the solver and $u_{\text{2, rated}}$ is rated voltage at `to_node`.
-
 
 ### Generic Branch  
 
 * type name: `generic_branch`
 
 `generic_branch` is a {hoverxreftooltip}`user_manual/components:branch` that connects two nodes, potentially at different voltage levels. Depending on the choice of parameters, it behaves either as a line or as a transformer. The advantage is that the input parameters are based directly on the electrical equivalent circuit model. The PI model can be used to avoid the need to convert parameters into transformer model data. Another use case is modeling a line when connecting two nodes with approximately the same voltage levels (in that case, the off-nominal ratio must be given to adapt the electrical parameters).
-
 
 #### Input
 
@@ -248,23 +248,25 @@ Here, $s_{\text{base}}$ is a constant value determined by the solver and $u_{\te
 | `theta` | `double`  | radian           | angle shift                   | &#10060; default `0.0` | &#10060; |                 |
 | `sn`    | `double`  | volt-ampere (VA) | rated power                   | &#10060; default `0.0` | &#10060; | `>= 0`          |
 
-```{note} 
+```{note}
 The impedance (`r1`, `x1`) and admittance (`g1`, `b1`) attributes are calculated with reference to the "to" side of the branch.
 ```
-```{note} 
+
+```{note}
 To model a three-winding transformer using the `generic_branch`, the MVA method must be applied. This means the user needs to calculate three equivalent `generic_branch` components and define an additional node to represent the common winding connection point. In rare cases, this method can result in negative electrical equivalent circuit elements. Therefore, the input parameters are not checked for negative values.
 ```
-```{warning} 
+
+```{warning}
 The parameter `k` represents the **off-nominal ratio**, not the nominal voltage ratio. This means that `k` must be explicitly provided by the user, particularly in cases involving a tap changer or a voltage transformer. The program does not automatically calculate `k` based on the nominal voltage levels of the connected nodes.
 ```
-```{warning} 
+
+```{warning}
 Asymmetric calculation is not supported for `generic_branch`.
 ```
 
-
 #### Electric Model
 
-`generic_branch` is described by a PI model, where 
+`generic_branch` is described by a PI model, where
 
 $$
    \begin{eqnarray}
@@ -382,9 +384,9 @@ increased.
 
 #### Electric Model
 
-`three_winding_transformer` is modelled as 3 transformers of `pi` model each connected together in star configuration. 
-However, there are only 2 `pi` "legs": One at `side_1` and one in the centre of star. 
-The values between windings (for e.g., `uk_12` or `pk_23`) are converted from delta to corresponding star configuration values. 
+`three_winding_transformer` is modelled as 3 transformers of `pi` model each connected together in star configuration.
+However, there are only 2 `pi` "legs": One at `side_1` and one in the centre of star.
+The values between windings (for e.g., `uk_12` or `pk_23`) are converted from delta to corresponding star configuration values.
 The calculation of series and shunt admittance from `uk`, `pk`, `i0` and `p0` is same as mentioned in {hoverxreftooltip}`user_manual/components:transformer`.
 
 ## Appliance
@@ -440,13 +442,14 @@ with an internal impedance. The impedance is specified by convention as short ci
 | `z01_ratio`   | `double`  | -                | zero-sequence to positive sequence impedance ratio |    &#10060; default `1.0`    | &#10060; |    `> 0`     |
 
 #### Electric Model
+
 `source` is modeled by an internal constant impedance $r+\mathrm{j}x$ with positive sequence and zero-sequence.
 Its value can be computed using following equations:
 
-- for positive sequence,
+* for positive sequence,
 
 $$
-   \begin{eqnarray} 
+   \begin{eqnarray}
         & z_{\text{source}} = \frac{s_{\text{base}}}{s_k} \\
         & x_1 = z_{\text{source}} \sqrt{1+ \left(\frac{r}{x}\right)^2} \\
         & r_1 = x_1 \cdot \left(\frac{r}{x}\right)
@@ -455,10 +458,10 @@ $$
 
 where $s_{\text{base}}$ is a constant value determined by the solver, and $\frac{r}{x}$ indicates `rx_ratio` as input.
 
-- for zero-sequence, 
+* for zero-sequence,
 
 $$
-   \begin{eqnarray} 
+   \begin{eqnarray}
         & z_{\text{source,0}} = z_{\text{source}} \cdot \frac{z_0}{z_1}\\
         & x_0 = z_{\text{source,0}} \sqrt{1 + \left(\frac{r}{x}\right)^2}\\
         & r_0 = x_0 \cdot \left(\frac{r}{x}\right)
@@ -497,31 +500,31 @@ However, the reference direction and meaning of `RealValueInput` is different, a
 
 ##### Electric model
 
-`generic_load_gen` is modelled by using the so-called ZIP load model in power-grid-model, 
+`generic_load_gen` is modelled by using the so-called ZIP load model in power-grid-model,
 where a load/generator is represented as a composition of constant power (P), constant current (I) and constant impedance (Z).
 
 The injection of each ZIP model type can be computed as follows:
 
-- for a constant impedance (Z) load/generator,
+* for a constant impedance (Z) load/generator,
 
 $$
-   \begin{eqnarray} 
+   \begin{eqnarray}
         S = S_{\text{specified}} \cdot \bar{u}^2
    \end{eqnarray}
 $$
 
-- for a constant current (I) load/generator,
+* for a constant current (I) load/generator,
 
 $$
-   \begin{eqnarray} 
+   \begin{eqnarray}
         S = S_{\text{specified}} \cdot \bar{u}
    \end{eqnarray}
 $$
 
-- for a constant power (P) load/generator:,
+* for a constant power (P) load/generator:,
 
 $$
-   \begin{eqnarray} 
+   \begin{eqnarray}
         S = S_{\text{specified}}
    \end{eqnarray}
 $$
@@ -552,6 +555,7 @@ if any of the faults in any of the scenarios within a batch are not three-phase 
 ```
 
 #### Electric Model
+
 `shunt` is modelled by a fixed admittance which equals to $g + \mathrm{j}b$.
 
 ## Sensor
@@ -617,10 +621,11 @@ A sensor only has output for state estimation. For other calculation types, sens
 | `u_angle_residual` | `RealValueOutput` | rad      | residual value between measured voltage angle and calculated voltage angle (only possible with phasor measurement units) |
 
 #### Electric Model
+
 `generic_voltage_sensor` is modeled by following equations:
 
 $$
-   \begin{eqnarray} 
+   \begin{eqnarray}
         & u_{\text{residual}} = u_{\text{measured}} - u_{\text{state}} \\
         & \theta_{\text{residual}} = \theta_{\text{measured}} - \theta_{\text{state}}
    \end{eqnarray}
@@ -637,7 +642,7 @@ terminal between an `appliance` and a `node`, the power {hoverxreftooltip}`user_
 measurement data is the same as the reference direction of the `appliance`. For example, if a `power_sensor` is
 measuring a `source`, a positive `p_measured` indicates that the active power flows from the source to the node.
 
-```{note} 
+```{note}
 1. Due to the high admittance of a `link` it is chosen that a power sensor cannot be coupled to a `link`, even though a link is a `branch`
 
 2. The node injection power sensor gets placed on a node. 
@@ -710,7 +715,7 @@ A sensor only has output for state estimation. For other calculation types, sens
 `Generic Power Sensor` is modeled by following equations:
 
 $$
-   \begin{eqnarray} 
+   \begin{eqnarray}
         & p_{\text{residual}} = p_{\text{measured}} - p_{\text{state}} \\
         & q_{\text{residual}} = q_{\text{measured}} - q_{\text{state}}
    \end{eqnarray}
@@ -814,9 +819,9 @@ The actual grid state is not changed after calculations are done.
 
 The following additional requirements exist on the input parameters.
 
-- Depending on the resultant voltage being transformed, the voltage band must be sufficiently large: At zero line drop compensation if the expected resultant voltages are in the proximity of the rated transformer voltages, it is recommended to have the $u_{band} >= \frac{u_2}{1+ u_1 / \text{tap}_{\text{size}}}$
-- The line drop compensation is small, in the sense that its product with the typical current through the transformer is much smaller (in absolute value) than the smallest change in voltage due to a change in tap position.
-- The `control_side` of a transformer regulator should be on the relatively further side to a source in the connected grid.
+* Depending on the resultant voltage being transformed, the voltage band must be sufficiently large: At zero line drop compensation if the expected resultant voltages are in the proximity of the rated transformer voltages, it is recommended to have the $u_{band} >= \frac{u_2}{1+ u_1 / \text{tap}_{\text{size}}}$
+* The line drop compensation is small, in the sense that its product with the typical current through the transformer is much smaller (in absolute value) than the smallest change in voltage due to a change in tap position.
+* The `control_side` of a transformer regulator should be on the relatively further side to a source in the connected grid.
 
 These requirements make sure no edge cases with undefined behavior are encountered. Typical real-world power grids already satisfy these requirements and they should therefore not cause any problems.
 

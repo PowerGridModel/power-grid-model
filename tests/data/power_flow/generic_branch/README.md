@@ -9,6 +9,7 @@ SPDX-License-Identifier: MPL-2.0
 Test case for validation of the generic_branch component for symmetrical power flow calculations.
 
 The circuit diagram is as follows:
+
 ```
 source_4--node_1--genric_branch_3--node_2--load_5                                                                              
 ```

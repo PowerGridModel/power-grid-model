@@ -1,0 +1,49 @@
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+# MD001/heading-increment : Heading levels should only increment by one level at a time : https://github.com/DavidAnson/markdownlint/blob/v0.37.4/doc/md001.md
+MD001: false
+
+# MD013/line-length : Line length : https://github.com/DavidAnson/markdownlint/blob/v0.37.4/doc/md013.md
+MD013: false
+  # # Number of characters
+  # line_length: 80
+  # # Number of characters for headings
+  # heading_line_length: 80
+  # # Number of characters for code blocks
+  # code_block_line_length: 80
+  # # Include code blocks
+  # code_blocks: true
+  # # Include tables
+  # tables: true
+  # # Include headings
+  # headings: true
+  # # Strict length checking
+  # strict: false
+  # # Stern length checking
+  # stern: false
+
+# MD024/no-duplicate-heading : Multiple headings with the same content : https://github.com/DavidAnson/markdownlint/blob/v0.37.4/doc/md024.md
+MD024: false
+
+# MD033/no-inline-html : Inline HTML : https://github.com/DavidAnson/markdownlint/blob/v0.32.1/doc/md033.md
+MD033: false
+
+# MD040/fenced-code-language : Fenced code blocks should have a language specified : https://github.com/DavidAnson/markdownlint/blob/v0.37.4/doc/md040.md
+MD040: false
+
+# MD041/first-line-heading/first-line-h1 : First line in a file should be a top-level heading : https://github.com/DavidAnson/markdownlint/blob/v0.37.4/doc/md041.md
+MD041: false
+
+# MD042/no-empty-links : No empty links : https://github.com/DavidAnson/markdownlint/blob/v0.32.1/doc/md042.md
+MD042: false
+
+# MD045/no-alt-text : Images should have alternate text (alt text) : https://github.com/DavidAnson/markdownlint/blob/v0.32.1/doc/md045.md
+MD045: false
+
+# MD051/link-fragments : Link fragments should be valid : https://github.com/DavidAnson/markdownlint/blob/v0.37.4/doc/md051.md
+MD051: false
+
+# MD056/table-column-count : Table column counts should match : https://github.com/DavidAnson/markdownlint/blob/v0.37.4/doc/md056.md
+MD056: false
