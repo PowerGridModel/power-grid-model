@@ -23,9 +23,10 @@ jobs:
         uses: robinraju/release-downloader@v1
         with:
           repository: ${{ github.repository }}
+          # download the latest release
           latest: true
-          # also download assets from pre-releases
-          preRelease: true
+          # don't donwload pre-releases
+          preRelease: false
           fileName: "*"
           # don't download GitHub-generated source tar and zip files
           tarBall: false
