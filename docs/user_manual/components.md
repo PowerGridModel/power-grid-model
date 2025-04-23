@@ -633,7 +633,7 @@ $$
 
 ### Generic Power Sensor
 
-* type name: `generic_current_sensor`
+* type name: `generic_power_sensor`
 
 `power_sensor` is an abstract class for symmetric and asymmetric power sensor and is derived from
 {hoverxreftooltip}`user_manual/components:sensor`. It measures the active/reactive power flow of a terminal. The terminal is
