@@ -739,12 +739,12 @@ Due to the high admittance of a `link` it is chosen that a current sensor cannot
 
 ##### Input
 
-| name                     | data type                                                                     | unit       | description                                                                                                                               |              required               |  update  |                     valid values                     |
-| ------------------------ | ----------------------------------------------------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------: | :------: | :--------------------------------------------------: |
-| `measured_terminal_type` | {py:class}`MeasuredTerminalType <power_grid_model.enum.MeasuredTerminalType>` | -          | indicate the side of the `branch`                                                                                                         |              &#10004;               | &#10060; | the terminal type should match the `measured_object` |
-| `angle_measurement_type` | {py:class}`AngleMeasurementType <power_grid_model.enum.AngleMeasurementType>` | -          | indicate whether the measured angle is a global angle or a local angle                                                                    |              &#10004;               | &#10060; | the terminal type should match the `measured_object` |
-| `i_sigma`                | `double`                                                                      | ampere (A) | standard deviation of the current (`i`) measurement error. Usually this is the absolute measurement error range divided by 3.             | &#10060; see the explanation below. | &#10004; |                        `> 0`                         |
-| `i_angle_sigma`          | `double`                                                                      | rad        | standard deviation of the current (`i`) phase angle measurement error. Usually this is the absolute measurement error range divided by 3. | &#10060; see the explanation below. | &#10004; |                        `> 0`                         |
+| name                     | data type                                                                     | unit       | description                                                                                                                               | required |  update  |                     valid values                     |
+| ------------------------ | ----------------------------------------------------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------- | :------: | :------: | :--------------------------------------------------: |
+| `measured_terminal_type` | {py:class}`MeasuredTerminalType <power_grid_model.enum.MeasuredTerminalType>` | -          | indicate the side of the `branch`                                                                                                         | &#10004; | &#10060; | the terminal type should match the `measured_object` |
+| `angle_measurement_type` | {py:class}`AngleMeasurementType <power_grid_model.enum.AngleMeasurementType>` | -          | indicate whether the measured angle is a global angle or a local angle                                                                    | &#10004; | &#10060; |                                                      |
+| `i_sigma`                | `double`                                                                      | ampere (A) | standard deviation of the current (`i`) measurement error. Usually this is the absolute measurement error range divided by 3.             | &#10060; | &#10004; |                        `> 0`                         |
+| `i_angle_sigma`          | `double`                                                                      | rad        | standard deviation of the current (`i`) phase angle measurement error. Usually this is the absolute measurement error range divided by 3. | &#10060; | &#10004; |                        `> 0`                         |
 
 #### Current Sensor Concrete Types
 
@@ -792,13 +792,25 @@ $$
 $$
 
 Internally, the current phasor measurement is decomposed into a separate real and imaginary component
-per phase, with each their own variances, which are estimated using the common linearization approximation:
+per phase, with each their own variances, which are estimated using the common linearization approximation.
+E.g., for a real random variable $X$, the random variable $Y = F\left(X\right)$, with $F$ sufficiently well-behaved, exists.
+The variances of $Y$ can then be estimated from the variance of $X$ using
+$\text{Var}\left(Y\right) \approx \text{Var}\left(X\right) \left\|\frac{\delta f}{\delta X}\right\|^2$
+
+This approach generalizes to extension fields and to more dimensions. Both generalizations are required for current sensors.
+The current phasor is described by a complex random variable, which can be decomposed into a real and an imaginary component, or into a magnitude and a phasor.
+Asymmetric sensors and asymmetric calculations, on the other hand, require multidimensional approaches.
+The generalization is done as follows.
+
+Let $A$ and $B$ be fields (or rings) that may be multidimensional and that may be extension fields.
+Let $\boldsymbol{X}$ be a random variable with codomain $A$ with components $X_i$.
+Let $\boldsymbol{Y} = \boldsymbol{F}\left(\boldsymbol{X}\right)$ be a random variable with codomain $B$, with $\boldsymbol{F}$ sufficiently well-behaved,
+so that its components $Y_j = F_j\left(\boldsymbol{X}\right)$ are well-behaved.
+Then the variances $\text{Var}\left(Y_i\right)$ of the components of $\boldsymbol{Y}$ can be estimated
+in terms of the variances $\text{Var}\left(X_j\right)$ of the components of $\boldsymbol{X}$ using the following function.
 
 $$
-   \begin{eqnarray}
-      \text{let } & \vec{F}(\vec{x}) \equiv \sum_i \vec{e}_i f_i(x_j) \\
-      \text{then } & \text{Var}(f_i) \approx \sum_j \text{Var}(x_j) \|\frac{\delta f_i}{\delta{x_j}}(\vec{x})\|^2
-   \end{eqnarray}
+\text{Var}\left(Y_j\right) = \text{Var}\left(F_j\left(\boldsymbol{X}\right)\right) \approx \sum_i \text{Var}\left(X_i\right) \left\|\frac{\delta F_j}{\delta x_i}\left(\boldsymbol{X}\right)\right\|^2
 $$
 
 The following illustrates how this works for `sym_current_sensor`s in symmetric calculations.

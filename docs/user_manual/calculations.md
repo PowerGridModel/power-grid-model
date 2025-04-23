@@ -106,7 +106,11 @@ In observable systems this helps better outputting correct results. On the other
 Based on the requirements of observability mentioned above, users need to satisfy at least the following conditions for state estimation calculation in `power-grid-model`.
 
 - `n_voltage_sensor >= 1`
-- If no voltage phasor sensors are available, then the following conditions should be satisfied:  `n_unique_power_or_current_sensor >= n_bus - 1`. Otherwise: `n_unique_power_or_current_sensor + n_voltage_sensor_with_phasor >= n_bus`
+- If no voltage phasor sensors are available, then the following conditions should be satisfied:
+  - There are no global angle current sensors
+  - And:
+    - Either: `n_unique_power_or_current_sensor >= n_bus - 1`.
+    - And/or: `n_unique_power_or_current_sensor + n_voltage_sensor_with_phasor >= n_bus`
 
 `n_unique_power_or_current_sensor` can be calculated as sum of following:
 
@@ -474,8 +478,10 @@ $$
 $$
 
 - Branch current with global angle: Linear WLS requires a complex current phasor. The global angle current measurement captures
-the phase offset relative to the same predetermined reference phase against which the voltage angle is measured. As a result,
-at least one voltage measurement with angle measurement is required in the grid if a global angle current sensor is used.
+the phase offset relative to the same predetermined reference phase against which the voltage angle is measured. It is not
+sufficient to use the default zero-phase reference offset, because the reference point is not uniquely determined when there
+are no voltage angle measurements, resulting in ambiguities. As a result, using any global angle current sensor in the grid
+requires at least one voltage phasor measurement (with angle).
 
 $$
     \begin{eqnarray}
