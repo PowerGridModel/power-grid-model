@@ -822,14 +822,14 @@ $$
 
 #### Input
 
-| name           | data type                                                 | unit    | description                                         |                                                  required                                                  |  update  |   valid values    |
-| -------------- | --------------------------------------------------------- | ------- | --------------------------------------------------- | :--------------------------------------------------------------------------------------------------------: | :------: | :---------------: |
-| `status`       | `int8_t`                                                  | -       | whether the fault is active                         |                                                  &#10004;                                                  | &#10004; |    `0` or `1`     |
-| `fault_type`   | {py:class}`FaultType <power_grid_model.enum.FaultType>`   | -       | the type of the fault                               |                                      &#10024; only for short circuit                                       | &#10004; |                   |
-| `fault_phase`  | {py:class}`FaultPhase <power_grid_model.enum.FaultPhase>` | -       | the phase(s) of the fault                           | &#10060; default `FaultPhase.default_value` (see [below](#fault-types-and-default-values-for-fault-phase)) | &#10004; |                   |
-| `fault_object` | `int32_t`                                                 | -       | ID of the component where the short circuit happens |                                                  &#10004;                                                  | &#10004; | A valid `node` ID |
-| `r_f`          | `double`                                                  | ohm (Ω) | short circuit resistance                            |                                           &#10060; default `0.0`                                           | &#10004; |                   |
-| `x_f`          | `double`                                                  | ohm (Ω) | short circuit reactance                             |                                           &#10060; default `0.0`                                           | &#10004; |                   |
+| name           | data type                                                 | unit    | description                                         |                                                required                                                 |  update  |   valid values    |
+| -------------- | --------------------------------------------------------- | ------- | --------------------------------------------------- | :-----------------------------------------------------------------------------------------------------: | :------: | :---------------: |
+| `status`       | `int8_t`                                                  | -       | whether the fault is active                         |                                                &#10004;                                                 | &#10004; |    `0` or `1`     |
+| `fault_type`   | {py:class}`FaultType <power_grid_model.enum.FaultType>`   | -       | the type of the fault                               |                                     &#10024; only for short circuit                                     | &#10004; |                   |
+| `fault_phase`  | {py:class}`FaultPhase <power_grid_model.enum.FaultPhase>` | -       | the phase(s) of the fault                           | &#10060; default `FaultPhase.default_value` (see [below](#fault-types-fault-phases-and-default-values)) | &#10004; |                   |
+| `fault_object` | `int32_t`                                                 | -       | ID of the component where the short circuit happens |                                                &#10004;                                                 | &#10004; | A valid `node` ID |
+| `r_f`          | `double`                                                  | ohm (Ω) | short circuit resistance                            |                                         &#10060; default `0.0`                                          | &#10004; |                   |
+| `x_f`          | `double`                                                  | ohm (Ω) | short circuit reactance                             |                                         &#10060; default `0.0`                                          | &#10004; |                   |
 
 ```{note}
 Multiple faults may exist within one calculation. Currently, all faults in one scenario are required to have the
@@ -855,13 +855,13 @@ A `fault` has no steady state output.
 
 #### Electric Model
 
-##### Fault types and default values for fault phase
+##### Fault types, fault phases and default values
 
-Four types of short circuit fault are included in power-grid-model.
+Four types of short circuit fault are included in power-grid-model, each with their own set of supported values for `fault_phase`.
+In case the `fault_phase` is not specified or is equal to `FaultPhase.default_value`, the power-grid-model assumes a `fault_type`-dependent set of fault phases.
+The supported values of `fault_phase`, as well as its default value, are listed in the table below.
 
-In case the `fault_phase` is not specified or is equal to `FaultPhase.default_value`, the power-grid-model assumes the fault phases for different values of `fault_type` as specified in the table below.
-
-| `fault_type`                       | Supported values of `FaultPhase`                  | `FaultPhase.default_value` | description                                                            |
+| `fault_type`                       | supported values of `fault_phase`                 | `FaultPhase.default_value` | description                                                            |
 | ---------------------------------- | ------------------------------------------------- | -------------------------- | ---------------------------------------------------------------------- |
 | `FaultType.three_phase`            | `FaultPhase.abc`                                  | `FaultPhase.abc`           | Three phases are connected with fault impedance.                       |
 | `FaultType.single_phase_to_ground` | `FaultPhase.a`, `FaultPhase.b`, `FaultPhase.c`    | `FaultPhase.a`             | One phase is grounded with fault impedance, and other phases are open. |
