@@ -106,11 +106,11 @@ In observable systems this helps better outputting correct results. On the other
 Based on the requirements of observability mentioned above, users need to satisfy at least the following conditions for state estimation calculation in `power-grid-model`.
 
 - `n_voltage_sensor >= 1`
-- If no voltage phasor sensors are available, then the following conditions should be satisfied:
-  - There are no global angle current sensors
-  - And:
-    - Either: `n_unique_power_or_current_sensor >= n_bus - 1`.
-    - And/or: `n_unique_power_or_current_sensor + n_voltage_sensor_with_phasor >= n_bus`
+- If no voltage phasor sensors are available, then both the following conditions shall be satisfied:
+  - There are no global angle current sensors.
+  - `n_unique_power_or_current_sensor >= n_bus - 1`.
+- Otherwise (if there are voltage phasor sensors available), the following condition shall be satisfied:
+  - `n_unique_power_or_current_sensor + n_voltage_sensor_with_phasor >= n_bus`
 
 `n_unique_power_or_current_sensor` can be calculated as sum of following:
 
