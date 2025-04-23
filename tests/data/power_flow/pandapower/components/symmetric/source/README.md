@@ -4,7 +4,7 @@ SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridm
 SPDX-License-Identifier: MPL-2.0
 -->
 
-## Component Test Case: Source
+# Component Test Case: Source
 
 Test case for validation of source component for symmetrical power flow calculations in pandapower.
 
@@ -12,6 +12,6 @@ Test case for validation of source component for symmetrical power flow calculat
 
 The circuit diagram is as follows:
 
-```
+```txt
 source_4--node_1--line_3--node_2--line_6--node_5--source_7
 ```

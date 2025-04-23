@@ -4,7 +4,7 @@ SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridm
 SPDX-License-Identifier: MPL-2.0
 -->
 
-## Network Test Case: Distribution grid
+# Network Test Case: Distribution grid
 
 Test case representing a typical distribution grid.
 The grid has 2 identical parallel transformers.
@@ -18,7 +18,7 @@ one end of Line 13 in symmetrical batch calculation.
 
 The circuit diagram is as follows:
 
-```
+```txt
                                                         Load(22)            Load(19)
                                                         |                   |
             |------trafo(17)------|-----cable(9)-----|(3)----cable(11)---|(5)----OHL(13)---(On/off)-|

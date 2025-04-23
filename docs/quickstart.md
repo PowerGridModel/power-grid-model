@@ -10,7 +10,7 @@ In this quick start a simple 10kV network as below is calculated.
 A line connects two nodes. One node has a source. The other node has a symmetric load.
 The full code for this section is provided in {{ "[quick_example.py]({}/scripts/quick_example.py)".format(gh_link_head_blob) }}.
 
-```
+```txt
 node_1 ---line_3--- node_2
  |                    |
 source_5            sym_load_4
@@ -134,7 +134,7 @@ print(pd.DataFrame(result['node']))
 
 The result data can then be viewed in tabular forms.
 
-```
+```txt
 Node Input
    id  u_rated
 0   1  10500.0

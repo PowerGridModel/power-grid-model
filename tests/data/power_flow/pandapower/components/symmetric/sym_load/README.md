@@ -4,7 +4,7 @@ SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridm
 SPDX-License-Identifier: MPL-2.0
 -->
 
-## Component Test Case: Symmetrical Load
+# Component Test Case: Symmetrical Load
 
 Test case for validation of a symmetrical load component for symmetrical power flow calculations in pandapower.
 
@@ -13,7 +13,7 @@ Test case for validation of a symmetrical load component for symmetrical power f
 
 The circuit diagram is as follows:
 
-```
+```txt
 source_4--node_1--line_3--node_2--sym_load_6    (const_power)
                           node_2--sym_load_7    (const_current)
                           node_2--sym_load_8    (const_impedance)

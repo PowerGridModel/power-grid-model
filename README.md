@@ -4,7 +4,7 @@ SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridm
 SPDX-License-Identifier: MPL-2.0
 -->
 
-[![PyPI version](https://badge.fury.io/py/power-grid-model.svg?no-cache)](https://badge.fury.io/py/power-grid-model)
+[![PyPI version](https://badge.fury.io/py/power-grid-model.svg?no-cache)](https://badge.fury.io/py/power-grid-model) <!-- markdownlint-disable-line first-line-h1 -->
 [![Anaconda-Server Badge](https://anaconda.org/conda-forge/power-grid-model/badges/version.svg?no-cache)](https://anaconda.org/conda-forge/power-grid-model)
 [![License: MPL2.0](https://img.shields.io/badge/License-MPL2.0-informational.svg)](https://github.com/PowerGridModel/power-grid-model/blob/main/LICENSE)
 [![Downloads](https://static.pepy.tech/badge/power-grid-model)](https://pepy.tech/project/power-grid-model)
@@ -24,7 +24,7 @@ SPDX-License-Identifier: MPL-2.0
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8054429.svg)](https://zenodo.org/record/8054429)
 
-[![](https://github.com/PowerGridModel/.github/blob/main/artwork/svg/color.svg)](#)
+[![Power Grid Model logo](https://github.com/PowerGridModel/.github/blob/main/artwork/svg/color.svg)](#) <!-- markdownlint-disable-line no-empty-links -->
 
 # Power Grid Model
 
@@ -50,7 +50,7 @@ Want to be updated on the latest news and releases? Subscribe to the Power Grid 
 
 You can directly install the package from PyPI.
 
-```
+```sh
 pip install power-grid-model
 ```
 
@@ -58,7 +58,7 @@ pip install power-grid-model
 
 If you are using `conda`, you can directly install the package from `conda-forge` channel.
 
-```
+```sh
 conda install -c conda-forge power-grid-model
 ```
 
