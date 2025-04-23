@@ -4,11 +4,11 @@ SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridm
 SPDX-License-Identifier: MPL-2.0
 -->
 
+# Component Type Hierarchy and Graph Data Model
+
 To represent the physical grid components and the calculation results, this library utilizes a graph data model. In this
 document, the graph data model is presented with the list of all components types, and their relevant input/output
 attributes.
-
-# Component Type Hierarchy and Graph Data Model
 
 The components types are organized in an inheritance-like hierarchy. A sub-type has all the attributes from its parent
 type. The hierarchy tree of the component types is shown below.
@@ -54,7 +54,7 @@ together. An `appliance` is a component that is connected (coupled) to a node, a
 
 The figure below shows a simple example:
 
-```
+```txt
 node_1 ---line_3 (branch)--- node_2 --------------three_winding_transformer_8 (branch3)------ node_6
  |                             |                                 |
 source_5 (appliance)       sym_load_4 (appliance)             node_7

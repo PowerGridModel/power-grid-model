@@ -4,7 +4,7 @@ SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridm
 SPDX-License-Identifier: MPL-2.0
 -->
 
-## Component Test Case: Transformer
+# Component Test Case: Transformer
 
 Test case for validation of the transformer component for asymmetrical power flow calculations in pandapower.
 
@@ -14,7 +14,7 @@ The tap changing functionality is tested using a batch calculation for various t
 
 The circuit diagram is as follows:
 
-```
+```txt
 source_7--node_1--transformer_3--node_2              (Transformer from_status=to_status=1)
 ```
 
