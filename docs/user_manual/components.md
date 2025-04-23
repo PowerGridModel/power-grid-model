@@ -818,10 +818,10 @@ See also [the full mathematical workout](https://github.com/PowerGridModel/power
 
 $$
    \begin{eqnarray}
-        & \real\left\{I\right\}\right = I \cos\theta \\
-        & \imag\left\{I\right\}\right = I \sin\theta \\
+        & \real\left\{I\right\} = I \cos\theta \\
+        & \imag\left\{I\right\} = I \sin\theta \\
         & \text{Var}\left(\real\left\{I\right\}\right) = \sigma_i^2 \cos^2\theta + I^2 \sigma_{\theta}^2\sin^2\theta \\
-        & \text{Var}\left(\imag\left\{I\right\}\right) = \sigma_i^2 \sin^2\theta + I^2 \sigma_{\theta}^2\cos^2\theta \\
+        & \text{Var}\left(\imag\left\{I\right\}\right) = \sigma_i^2 \sin^2\theta + I^2 \sigma_{\theta}^2\cos^2\theta
    \end{eqnarray}
 $$
 
