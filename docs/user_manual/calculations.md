@@ -93,7 +93,7 @@ also of importance, i.e., the measurements should be topologically independent. 
 ```
 
 ```{note}
-Global angle current measurements require at least one voltage angle measurement to make sense.
+Global angle current measurements require at least one voltage angle measurement to make sense. See also the [current sensor component documentation](./components.md#global-angle-current-sensors).
 ```
 
 ```{warning}
@@ -502,10 +502,11 @@ $$
 
 Algorithm call: {py:class}`CalculationMethod.iterative_linear <power_grid_model.enum.CalculationMethod.iterative_linear>`
 
-Linear WLS requires all measurements to be linear. This is only possible when all measurements are phasor unit measurements,
-which is not realistic in distribution grids. Therefore, traditional measurements are linearized prior to running the algorithm:
+Linear WLS requires all measurements to be linear and only handles voltage phasor measurements including a phase angle,
+as well as complex current phasor measurements. This is only possible when all measurements are phasor unit measurements,
+which is not realistic in distribution grids. Therefore, traditional measurements are linearized prior to running the algorithm.
 
-- Bus voltage: Linear WLS requires a voltage phasor including a phase angle. Given that the phase shift in the distribution grid is very small,
+- Bus voltage: Given that the phase shift in the distribution grid is very small,
   it is assumed that the angle shift is zero plus the intrinsic phase shift of transformers. For a certain bus `i`, the voltage
   magnitude measured at that bus is translated into a voltage phasor, where $\theta_i$ is the intrinsic transformer phase shift:
 
@@ -515,7 +516,7 @@ $$
     \end{eqnarray}
 $$
 
-- Branch current with global angle: Linear WLS requires a complex current phasor. The global angle current measurement captures
+- Branch current with global angle: The global angle current measurement captures
 the phase offset relative to the same predetermined reference phase against which the voltage angle is measured. It is not
 sufficient to use the default zero-phase reference offset, because the reference point is not uniquely determined when there
 are no voltage angle measurements, resulting in ambiguities. As a result, using any global angle current sensor in the grid
@@ -527,12 +528,13 @@ $$
     \end{eqnarray}
 $$
 
-- Branch current with local angle: Linear WLS requires a complex current phasor. Sometimes, (accurate) voltage measurements are
-not available for a branch, which means no power measurement is possible. Using only the current amplitude is difficult.
-However, it may be possible to obtain a reasonably accurately measurement of the current amplitude and the relative phase angle
-to the voltage. In this way, we still have enough information for the state estimation. The resulting local current phasor
-$\underline{I}_{\text{local}}$ can be translated to the global current phasor (see above) for iterative linear state estimation.
-Given the measured (linearized) voltage phasor, the current phasor is calculated as follows:
+- Branch current with local angle: Sometimes, (accurate) voltage measurements are available for a branch,
+which means no power measurement is possible. While it is not straightforward to use magnitude-only measurements of currents in
+calculations, current phasor measurements can in fact be used in cases where it is possible to obtain a reasonably accurate
+measurement of the current amplitude and the relative phase angle to the voltage. In this way, we still have enough information
+for the state estimation. The resulting local current phasor $\underline{I}_{\text{local}}$ can be translated to the global
+current phasor (see above) for iterative linear state estimation. Given the measured (linearized) voltage phasor,
+the current phasor is calculated as follows:
 
 $$
     \begin{equation}
@@ -544,7 +546,7 @@ $$
 where $\underline{U}$ is either measured voltage magnitude at the bus or assumed unity magnitude, with the intrinsic phase shift.
 $\theta$ is the phase angle of the voltage.
 
-- Branch/shunt power flow: Linear WLS requires a complex current phasor. To make this translation, the voltage at the terminal should
+- Branch/shunt power flow: To translate the power flow to a complex current phasor, the voltage at the terminal should
 also be measured, otherwise the nominal voltage with zero angle is used as an estimation. Given the measured (linearized) voltage
 phasor, the current phasor is calculated as follows:
 
@@ -554,7 +556,7 @@ $$
     \end{eqnarray}
 $$
 
-- Bus power injection: Linear WLS requires a complex current phasor. Similar as above, if the bus voltage is not measured,
+- Bus power injection: Similar as above, to translate the power flow to a complex current phasor, if the bus voltage is not measured,
 the nominal voltage with zero angle will be used as an estimation. The current phasor is calculated as follows:
 
 $$
