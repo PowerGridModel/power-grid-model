@@ -435,6 +435,8 @@ At the moment, the following state estimation algorithms are implemented.
 By default, the [iterative linear](#iterative-linear-state-estimation) method is used.
 ```
 
+#### State estimation measurement aggregation
+
 There can be multiple sensors measuring the same physical quantity. For example, there can be multiple
 voltage sensors on the same bus. The measurement data can be merged into one virtual measurement using a Kalman filter:
 
@@ -459,6 +461,42 @@ $$
 $$
 
 Where $S_k$ and $\sigma_{P,k}$ and $\sigma_{Q,k}$ are the measured value and the standard deviation of the individual appliances.
+
+#### State estimate sensor transformations
+
+Sometimes, measurements need to be transformed between coordinate spaces. For example, current measurements are in polar coordinates (magnitude and angle), but it is beneficial to transform them to separate real and imaginary components per phase, with each their own variances.
+Variances of the results of such transformations are estimated using the common linearization approximation.
+E.g., for a real random variable $X$, the random variable $Y = F\left(X\right)$, with $F$ sufficiently well-behaved, exists.
+The variances of $Y$ can then be estimated from the variance of $X$ using
+$\text{Var}\left(Y\right) \approx \text{Var}\left(X\right) \left\|\frac{\delta f}{\delta X}\right\|^2$
+
+This approach generalizes to extension fields and to more dimensions. Both generalizations are required for current sensors.
+The current phasor is described by a complex random variable, which can be decomposed into a real and an imaginary component, or into a magnitude and a phasor.
+Asymmetric sensors and asymmetric calculations, on the other hand, require multidimensional approaches.
+The generalization is done as follows.
+
+Let $A$ and $B$ be fields (or rings) that may be multidimensional and that may be extension fields.
+Let $\boldsymbol{X}$ be a random variable with codomain $A$ with components $X_i$.
+Let $\boldsymbol{Y} = \boldsymbol{F}\left(\boldsymbol{X}\right)$ be a random variable with codomain $B$, with $\boldsymbol{F}$ sufficiently well-behaved,
+so that its components $Y_j = F_j\left(\boldsymbol{X}\right)$ are well-behaved.
+Then the variances $\text{Var}\left(Y_i\right)$ of the components of $\boldsymbol{Y}$ can be estimated
+in terms of the variances $\text{Var}\left(X_j\right)$ of the components of $\boldsymbol{X}$ using the following function.
+
+$$
+\text{Var}\left(Y_j\right) = \text{Var}\left(F_j\left(\boldsymbol{X}\right)\right) \approx \sum_i \text{Var}\left(X_i\right) \left\|\frac{\delta F_j}{\delta x_i}\left(\boldsymbol{X}\right)\right\|^2
+$$
+
+The following illustrates how this works for `sym_current_sensor`s in symmetric calculations.
+See also [the full mathematical workout](https://github.com/PowerGridModel/power-grid-model/issues/547).
+
+$$
+   \begin{eqnarray}
+        & \mathrm{Re}\left\{I\right\} = I \cos\theta \\
+        & \mathrm{Im}\left\{I\right\} = I \sin\theta \\
+        & \text{Var}\left(\mathrm{Re}\left\{I\right\}\right) = \sigma_i^2 \cos^2\theta + I^2 \sigma_{\theta}^2\sin^2\theta \\
+        & \text{Var}\left(\mathrm{Im}\left\{I\right\}\right) = \sigma_i^2 \sin^2\theta + I^2 \sigma_{\theta}^2\cos^2\theta
+   \end{eqnarray}
+$$
 
 #### Iterative linear state estimation
 
