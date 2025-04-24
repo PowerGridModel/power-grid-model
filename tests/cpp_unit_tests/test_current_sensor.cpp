@@ -70,9 +70,9 @@ TEST_CASE("Test current sensor") {
             CurrentSensorCalcParam<asymmetric_t> asym_sensor_param = sym_current_sensor.calc_param<asymmetric_t>();
 
             CurrentSensorOutput<symmetric_t> const sym_sensor_output =
-                sym_current_sensor.get_output<symmetric_t>(i_sym);
+                sym_current_sensor.get_output<symmetric_t>(i_sym, ComplexValue<symmetric_t>{0.0});
             CurrentSensorOutput<asymmetric_t> sym_sensor_output_asym_param =
-                sym_current_sensor.get_output<asymmetric_t>(i_asym);
+                sym_current_sensor.get_output<asymmetric_t>(i_asym, ComplexValue<asymmetric_t>{0.0});
 
             // Check symmetric sensor output for symmetric parameters
             if constexpr (angle_measurement_type == AngleMeasurementType::global_angle) {

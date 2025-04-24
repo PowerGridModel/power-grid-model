@@ -242,14 +242,14 @@ inline auto output_result(Component const& voltage_sensor, MainModelState<Compon
 }
 
 // output power sensor
-template <power_or_current_sensor_c Component, class ComponentContainer,
+template <std::derived_from<GenericPowerSensor> Component, class ComponentContainer,
           steady_state_solver_output_type SolverOutputType>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
-constexpr auto output_result(Component const& power_or_current_sensor, MainModelState<ComponentContainer> const& state,
+constexpr auto output_result(Component const& power_sensor, MainModelState<ComponentContainer> const& state,
                              std::vector<SolverOutputType> const& solver_output, Idx const obj_seq) {
     using sym = typename SolverOutputType::sym;
 
-    auto const terminal_type = power_or_current_sensor.get_terminal_type();
+    auto const terminal_type = power_sensor.get_terminal_type();
     Idx2D const obj_math_id = [&]() {
         switch (terminal_type) {
             using enum MeasuredTerminalType;
@@ -281,24 +281,8 @@ constexpr auto output_result(Component const& power_or_current_sensor, MainModel
     }();
 
     if (obj_math_id.group == -1) {
-        return power_or_current_sensor.template get_null_output<sym>();
+        return power_sensor.template get_null_output<sym>();
     }
-
-    auto const get_current_or_power_branch_f = [&solver_output, &obj_math_id]<power_or_current_sensor_c Sensor>() {
-        if constexpr (std::derived_from<Sensor, GenericPowerSensor>) {
-            return solver_output[obj_math_id.group].branch[obj_math_id.pos].s_f;
-        } else if constexpr (std::derived_from<Sensor, GenericCurrentSensor>) {
-            return solver_output[obj_math_id.group].branch[obj_math_id.pos].i_f;
-        }
-    };
-
-    auto const get_current_or_power_branch_t = [&solver_output, &obj_math_id]<power_or_current_sensor_c Sensor>() {
-        if constexpr (std::derived_from<Sensor, GenericPowerSensor>) {
-            return solver_output[obj_math_id.group].branch[obj_math_id.pos].s_t;
-        } else if constexpr (std::derived_from<Sensor, GenericCurrentSensor>) {
-            return solver_output[obj_math_id.group].branch[obj_math_id.pos].i_t;
-        }
-    };
 
     switch (terminal_type) {
         using enum MeasuredTerminalType;
@@ -311,25 +295,78 @@ constexpr auto output_result(Component const& power_or_current_sensor, MainModel
     case branch3_2:
         [[fallthrough]];
     case branch3_3:
-        return power_or_current_sensor.template get_output<sym>(
-            get_current_or_power_branch_f.template operator()<Component>());
+        return power_sensor.template get_output<sym>(solver_output[obj_math_id.group].branch[obj_math_id.pos].s_f);
     case branch_to:
-        return power_or_current_sensor.template get_output<sym>(
-            get_current_or_power_branch_t.template operator()<Component>());
+        return power_sensor.template get_output<sym>(solver_output[obj_math_id.group].branch[obj_math_id.pos].s_t);
     case source:
-        return power_or_current_sensor.template get_output<sym>(
-            solver_output[obj_math_id.group].source[obj_math_id.pos].s);
+        return power_sensor.template get_output<sym>(solver_output[obj_math_id.group].source[obj_math_id.pos].s);
     case shunt:
-        return power_or_current_sensor.template get_output<sym>(
-            solver_output[obj_math_id.group].shunt[obj_math_id.pos].s);
+        return power_sensor.template get_output<sym>(solver_output[obj_math_id.group].shunt[obj_math_id.pos].s);
     case load:
         [[fallthrough]];
     case generator:
-        return power_or_current_sensor.template get_output<sym>(
-            solver_output[obj_math_id.group].load_gen[obj_math_id.pos].s);
+        return power_sensor.template get_output<sym>(solver_output[obj_math_id.group].load_gen[obj_math_id.pos].s);
     case node:
-        return power_or_current_sensor.template get_output<sym>(
-            solver_output[obj_math_id.group].bus_injection[obj_math_id.pos]);
+        return power_sensor.template get_output<sym>(solver_output[obj_math_id.group].bus_injection[obj_math_id.pos]);
+    default:
+        throw MissingCaseForEnumError{std::format("{} output_result()", Component::name), terminal_type};
+    }
+}
+
+// output current sensor
+template <std::derived_from<GenericCurrentSensor> Component, class ComponentContainer,
+          steady_state_solver_output_type SolverOutputType>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
+constexpr auto output_result(Component const& current_sensor, MainModelState<ComponentContainer> const& state,
+                             std::vector<SolverOutputType> const& solver_output, Idx const obj_seq) {
+    using sym = typename SolverOutputType::sym;
+
+    auto const terminal_type = current_sensor.get_terminal_type();
+    Idx2D const obj_math_id = [&]() {
+        switch (terminal_type) {
+            using enum MeasuredTerminalType;
+
+        case branch_from:
+            [[fallthrough]];
+        case branch_to:
+            return state.topo_comp_coup->branch[obj_seq];
+        // from branch3, get relevant math object branch based on the measured side
+        case branch3_1:
+            return Idx2D{state.topo_comp_coup->branch3[obj_seq].group, state.topo_comp_coup->branch3[obj_seq].pos[0]};
+        case branch3_2:
+            return Idx2D{state.topo_comp_coup->branch3[obj_seq].group, state.topo_comp_coup->branch3[obj_seq].pos[1]};
+        case branch3_3:
+            return Idx2D{state.topo_comp_coup->branch3[obj_seq].group, state.topo_comp_coup->branch3[obj_seq].pos[2]};
+        default:
+            throw MissingCaseForEnumError{std::format("{} output_result()", Component::name), terminal_type};
+        }
+    }();
+
+    if (obj_math_id.group == -1) {
+        return current_sensor.template get_null_output<sym>();
+    }
+
+    auto const topological_index = get_topology_index<Branch>(state, obj_math_id);
+    auto const branch_nodes = get_branch_nodes<Branch>(state, topological_index);
+    auto const node_from_math_id = get_math_id<Node>(state, branch_nodes[0]);
+    auto const node_to_math_id = get_math_id<Node>(state, branch_nodes[1]);
+
+    switch (terminal_type) {
+        using enum MeasuredTerminalType;
+
+    case branch_from:
+        // all power sensors in branch3 are at from side in the mathematical model
+        [[fallthrough]];
+    case branch3_1:
+        [[fallthrough]];
+    case branch3_2:
+        [[fallthrough]];
+    case branch3_3:
+        return current_sensor.template get_output<sym>(solver_output[obj_math_id.group].branch[obj_math_id.pos].i_f,
+                                                       solver_output[node_from_math_id.group].u[node_from_math_id.pos]);
+    case branch_to:
+        return current_sensor.template get_output<sym>(solver_output[obj_math_id.group].branch[obj_math_id.pos].i_t,
+                                                       solver_output[node_to_math_id.group].u[node_to_math_id.pos]);
     default:
         throw MissingCaseForEnumError{std::format("{} output_result()", Component::name), terminal_type};
     }
@@ -421,8 +458,7 @@ constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
                               MathOutput<std::vector<SolverOutputType>> const& math_output, ResIt res_it) {
     return detail::produce_output<Component, Idx2D>(
         state, res_it, [&state, &math_output](Component const& component, Idx2D const math_id) {
-            return output_result<Component>(component, state, math_output.solver_output,
-                                            math_id); // probably here is where all the math_id things are called
+            return output_result<Component>(component, state, math_output.solver_output, math_id);
         });
 }
 template <std::derived_from<Base> Component, class ComponentContainer, solver_output_type SolverOutputType,
@@ -431,8 +467,7 @@ template <std::derived_from<Base> Component, class ComponentContainer, solver_ou
              requires(Component const& component, MainModelState<ComponentContainer> const& state,
                       std::vector<SolverOutputType> const& solver_output, Idx obj_seq) {
                  {
-                     output_result<Component>(component, state, solver_output,
-                                              obj_seq) // probably here is where the sensors things are called
+                     output_result<Component>(component, state, solver_output, obj_seq)
                  } -> detail::assignable_to<std::add_lvalue_reference_t<std::iter_value_t<ResIt>>>;
              }
 constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
