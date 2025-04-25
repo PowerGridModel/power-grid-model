@@ -72,18 +72,18 @@ TEST_CASE("Test current sensor") {
                 CurrentSensorCalcParam<symmetric_t> sym_sensor_param = sym_current_sensor.calc_param<symmetric_t>();
                 CurrentSensorCalcParam<asymmetric_t> asym_sensor_param = sym_current_sensor.calc_param<asymmetric_t>();
 
-                CurrentSensorOutput<symmetric_t> const sym_sensor_output =
-                    sym_current_sensor.get_output<symmetric_t>(i_sym, ComplexValue<symmetric_t>{1.0});
-                CurrentSensorOutput<asymmetric_t> sym_sensor_output_asym_param =
-                    sym_current_sensor.get_output<asymmetric_t>(i_asym, ComplexValue<asymmetric_t>{1.0});
-
                 // These two are only to test the residuals for local angle measurements.
                 // conj(i) simulates the phase shift for local angle output residuals when the reference voltage is
                 // real.
-                CurrentSensorOutput<symmetric_t> const sym_sensor_output_local_residuals =
-                    sym_current_sensor.get_output<symmetric_t>(conj(i_sym), ComplexValue<symmetric_t>{1.0});
-                CurrentSensorOutput<asymmetric_t> sym_sensor_output_asym_param_local_residuals =
-                    sym_current_sensor.get_output<asymmetric_t>(conj(i_asym_local), ComplexValue<asymmetric_t>{1.0});
+                CurrentSensorOutput<symmetric_t> const sym_sensor_output =
+                    (angle_measurement_type == AngleMeasurementType::global_angle)
+                        ? sym_current_sensor.get_output<symmetric_t>(i_sym, ComplexValue<symmetric_t>{1.0})
+                        : sym_current_sensor.get_output<symmetric_t>(conj(i_sym), ComplexValue<symmetric_t>{1.0});
+                CurrentSensorOutput<asymmetric_t> const sym_sensor_output_asym_param =
+                    (angle_measurement_type == AngleMeasurementType::global_angle)
+                        ? sym_current_sensor.get_output<asymmetric_t>(i_asym, ComplexValue<asymmetric_t>{1.0})
+                        : sym_current_sensor.get_output<asymmetric_t>(conj(i_asym_local),
+                                                                      ComplexValue<asymmetric_t>{1.0});
 
                 // Check symmetric sensor output for symmetric parameters
                 CHECK(sym_sensor_param.angle_measurement_type == angle_measurement_type);
@@ -99,13 +99,8 @@ TEST_CASE("Test current sensor") {
 
                 CHECK(sym_sensor_output.id == 0);
                 CHECK(sym_sensor_output.energized == 1);
-                if (angle_measurement_type == AngleMeasurementType::global_angle) {
-                    CHECK(sym_sensor_output.i_residual == doctest::Approx(0.0));
-                    CHECK(sym_sensor_output.i_angle_residual == doctest::Approx(0.0));
-                } else {
-                    CHECK(sym_sensor_output_local_residuals.i_residual == doctest::Approx(0.0));
-                    CHECK(sym_sensor_output_local_residuals.i_angle_residual == doctest::Approx(0.0));
-                }
+                CHECK(sym_sensor_output.i_residual == doctest::Approx(0.0));
+                CHECK(sym_sensor_output.i_angle_residual == doctest::Approx(0.0));
 
                 // Check symmetric sensor output for asymmetric parameters
                 CHECK(asym_sensor_param.measurement.real_component.variance[0] ==
@@ -121,16 +116,9 @@ TEST_CASE("Test current sensor") {
                 CHECK(sym_sensor_output_asym_param.energized == 1);
                 for (auto phase = 0; phase < 3; ++phase) {
                     CAPTURE(phase);
-                    if (angle_measurement_type == AngleMeasurementType::global_angle) {
-                        CHECK(sym_sensor_output_asym_param.i_residual[phase] == doctest::Approx(0.0));
-                        CHECK(sym_sensor_output_asym_param.i_angle_residual[phase] == doctest::Approx(0.0));
-                    } else {
-                        CHECK(sym_sensor_output_asym_param_local_residuals.i_residual[phase] == doctest::Approx(0.0));
-                        CHECK(sym_sensor_output_asym_param_local_residuals.i_angle_residual[phase] ==
-                              doctest::Approx(0.0));
-                    }
+                    CHECK(sym_sensor_output_asym_param.i_residual[phase] == doctest::Approx(0.0));
+                    CHECK(sym_sensor_output_asym_param.i_angle_residual[phase] == doctest::Approx(0.0));
                 }
-
                 CHECK(sym_current_sensor.get_terminal_type() == terminal_type);
                 CHECK(sym_current_sensor.get_angle_measurement_type() == angle_measurement_type);
             }
