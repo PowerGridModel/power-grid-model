@@ -25,9 +25,13 @@ if "READTHEDOCS" in os.environ:
     commit_version = git.Repo(search_parent_directories=True).head.object.hexsha
     link_head_gh_blob = link_head_gh + "blob/" + commit_version
     link_head_gh_tree = link_head_gh + "tree/" + commit_version
+    pgm_project_root = "#/"
+    pgm_project_contribution = pgm_project_root + "/contributing"
 else:
     link_head_gh_blob = ""
     link_head_gh_tree = ""
+    pgm_project_root = "https://github.com/PowerGridModel/"
+    pgm_project_contribution = pgm_project_root
 
 
 # -- General configuration ---------------------------------------------------

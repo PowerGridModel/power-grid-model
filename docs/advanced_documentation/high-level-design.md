@@ -148,10 +148,10 @@ flowchart TD
 
 We seek to provide an optimal user experience, but with sheer amount of programming languages and
 features, it would be impossible to provide a full feature-rich library for every single one. We,
-being a [community-driven](#../contribution/GOVERNANCE.md) project strongly in favor of modern
-software engineering practices, therefore encourage people to create their own libraries and
-interfaces to improve their own experience. There are several possible reasons a user may want to
-create their own library or interface, e.g.:
+being a {{ "[community-driven]({}/GOVERNANCE.md)".format(pgm_project_root) }} project strongly in
+favor of modern software engineering practices, therefore encourage people to create their own
+libraries and interfaces to improve their own experience. There are several possible reasons a user
+may want to create their own library or interface, e.g.:
 
 * Support for a new programming language
 * Extending library support for a specific programming language
@@ -175,6 +175,6 @@ project website and documentation.
 When a custom library or interface becomes mature enough and the circumstances allow making it
 publicly available, please consider contributing it to the Power Grid Model organization. If you are
 considering contributing your custom library or interface, please read and follow our
-[contributing guidelines](#../contribution/CONTRIBUTING.md) and open an item on our
-[discussion board](https://github.com/orgs/PowerGridModel/discussions) on GitHub. The Power Grid
-Model organization will review your item and contact you accordingly.
+{{ "[contributing guidelines]({}/CONTRIBUTING.md)".format(pgm_project_contribution) }} and open an
+item on our [discussion board](https://github.com/orgs/PowerGridModel/discussions) on GitHub. The
+Power Grid Model organization will review your item and contact you accordingly.
