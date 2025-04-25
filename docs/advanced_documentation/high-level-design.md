@@ -16,7 +16,7 @@ opt to interface with the C API in different ways.
 For the sake of explanation, we consider the
 following layers of abstraction, in increasing order of ease-of-use and abstraction.
 
-* The raw interface layer
+* Raw system interface
   * System symbols only
   * Everything is handled by the user, including which symbols are supported
 * Exposition-only
