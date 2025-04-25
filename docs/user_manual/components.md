@@ -6,7 +6,7 @@ SPDX-License-Identifier: MPL-2.0
 
 # Components
 
-The attributes of components are listed below. 
+The attributes of components are listed below.
 
 ## Base
 
@@ -16,8 +16,8 @@ The base type for all power-grid-model components.
 
 #### Input
 
-| name | data type | unit | description                                                                                                                                                       | required |                                     update                                     |
-| ---- | --------- | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------: | :----------------------------------------------------------------------------: |
+| name | data type | unit | description                                                                                                                                                       | required |        update        |
+| ---- | --------- | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------: | :------------------: |
 | `id` | `int32_t` | -    | ID of a component. The ID should be unique across all components within the same scenario, e.g., you cannot have a node with `id=5` and another line with `id=5`. | &#10004; | &#10060; (see below) |
 
 If a component update is uniform and is updating all the elements with the same component type, IDs can be omitted or set to `nan`s. In any other case, the IDs need to be present in the update dataset, but cannot be changed.
@@ -113,7 +113,7 @@ usually permanently connects two joints. In this case, the attribute `from_statu
 * type name: `line`
 
 `line` is a {hoverxreftooltip}`user_manual/components:branch` with specified serial impedance and shunt admittance. A cable is
-also modeled as `line`. A `line` can only connect two nodes with the same rated voltage. 
+also modeled as `line`. A `line` can only connect two nodes with the same rated voltage.
 If `i_n` is not provided, `loading` of line will be a `nan` value.
 
 #### Input
@@ -138,7 +138,7 @@ if any of the faults in any of the scenarios within a batch are not three-phase 
 
 #### Electric Model
 
-`line` is described by a $\pi$ model, where 
+`line` is described by a $\pi$ model, where
 
 $$
    \begin{eqnarray}
@@ -156,7 +156,8 @@ two busbars inside a substation. It has a very high admittance (small impedance)
 (equivalent to 10e6 siemens for 10kV network). Therefore, it is chosen by design that no sensors can be coupled to a `link`.
 There is no additional attribute for `link`.
 
-#### Electric Model: 
+#### Electric Model
+
 `link` is modeled by a constant reactance $Y_{\text{series}}$, where
 
 $$
@@ -172,44 +173,45 @@ levels. An example of usage of transformer is given in [Transformer Examples](..
 
 #### Input
 
-| name               | data type                                                   | unit             | description                                                                                                                                                                                                                           |           required            |  update  |                              valid values                              |
-| ------------------ | ----------------------------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------: | :------: | :--------------------------------------------------------------------: |
-| `u1`               | `double`                                                    | volt (V)         | rated voltage at from-side                                                                                                                                                                                                            |           &#10004;            | &#10060; |                                 `> 0`                                  |
-| `u2`               | `double`                                                    | volt (V)         | rated voltage at to-side                                                                                                                                                                                                              |           &#10004;            | &#10060; |                                 `> 0`                                  |
-| `sn`               | `double`                                                    | volt-ampere (VA) | rated power                                                                                                                                                                                                                           |           &#10004;            | &#10060; |                                 `> 0`                                  |
-| `uk`               | `double`                                                    | -                | relative short circuit voltage, `0.1` means 10%                                                                                                                                                                                       |           &#10004;            | &#10060; |                    `>= pk / sn` and `> 0` and `< 1`                    |
-| `pk`               | `double`                                                    | watt (W)         | short circuit (copper) loss                                                                                                                                                                                                           |           &#10004;            | &#10060; |                                 `>= 0`                                 |
-| `i0`               | `double`                                                    | -                | relative no-load current                                                                                                                                                                                                              |           &#10004;            | &#10060; |                         `>= p0 / sn` and `< 1`                         |
-| `p0`               | `double`                                                    | watt (W)         | no-load (iron) loss                                                                                                                                                                                                                   |           &#10004;            | &#10060; |                                 `>= 0`                                 |
-| `winding_from`     | {py:class}`WindingType <power_grid_model.enum.WindingType>` | -                | from-side winding type                                                                                                                                                                                                                |           &#10004;            | &#10060; |                                                                        |
-| `winding_to`       | {py:class}`WindingType <power_grid_model.enum.WindingType>` | -                | to-side winding type                                                                                                                                                                                                                  |           &#10004;            | &#10060; |                                                                        |
-| `clock`            | `int8_t`                                                    | -                | clock number of phase shift. <br> Even number is not possible if one side is Y(N) winding and the other side is not Y(N) winding. <br> Odd number is not possible, if both sides are Y(N) winding or both sides are not Y(N) winding. |           &#10004;            | &#10060; |                           `>= 0` and `<= 12`                           |
-| `tap_side`         | {py:class}`BranchSide <power_grid_model.enum.BranchSide>`   | -                | side of tap changer                                                                                                                                                                                                                   |           &#10004;            | &#10060; |                                                                        |
-| `tap_pos`          | `int8_t`                                                    | -                | current position of tap changer                                                                                                                                                                                                       |           &#10060; default `tap_nom`, if no `tap_nom` default `0`            | &#10004; | `(tap_min <= tap_pos <= tap_max)` or `(tap_min >= tap_pos >= tap_max)` |
-| `tap_min`          | `int8_t`                                                    | -                | position of tap changer at minimum voltage                                                                                                                                                                                            |           &#10004;            | &#10060; |                                                                        |
-| `tap_max`          | `int8_t`                                                    | -                | position of tap changer at maximum voltage                                                                                                                                                                                            |           &#10004;            | &#10060; |                                                                        |
-| `tap_nom`          | `int8_t`                                                    | -                | nominal position of tap changer                                                                                                                                                                                                       |     &#10060; default `0`      | &#10060; | `(tap_min <= tap_nom <= tap_max)` or `(tap_min >= tap_nom >= tap_max)` |
-| `tap_size`         | `double`                                                    | volt (V)         | size of each tap of the tap changer                                                                                                                                                                                                   |           &#10004;            | &#10060; |                                 `>= 0`                                 |
-| `uk_min`           | `double`                                                    | -                | relative short circuit voltage at minimum tap                                                                                                                                                                                         | &#10060; default same as `uk` | &#10060; |                  `>= pk_min / sn` and `> 0` and `< 1`                  |
-| `uk_max`           | `double`                                                    | -                | relative short circuit voltage at maximum tap                                                                                                                                                                                         | &#10060; default same as `uk` | &#10060; |                  `>= pk_max / sn` and `> 0` and `< 1`                  |
-| `pk_min`           | `double`                                                    | watt (W)         | short circuit (copper) loss at minimum tap                                                                                                                                                                                            | &#10060; default same as `pk` | &#10060; |                                 `>= 0`                                 |
-| `pk_max`           | `double`                                                    | watt (W)         | short circuit (copper) loss at maximum tap                                                                                                                                                                                            | &#10060; default same as `pk` | &#10060; |                                 `>= 0`                                 |
-| `r_grounding_from` | `double`                                                    | ohm (Ω)          | grounding resistance at from-side, if relevant                                                                                                                                                                                        |     &#10060; default `0`      | &#10060; |                                                                        |
-| `x_grounding_from` | `double`                                                    | ohm (Ω)          | grounding reactance at from-side, if relevant                                                                                                                                                                                         |     &#10060; default `0`      | &#10060; |                                                                        |
-| `r_grounding_to`   | `double`                                                    | ohm (Ω)          | grounding resistance at to-side, if relevant                                                                                                                                                                                          |     &#10060; default `0`      | &#10060; |                                                                        |
-| `x_grounding_to`   | `double`                                                    | ohm (Ω)          | grounding reactance at to-side, if relevant                                                                                                                                                                                           |     &#10060; default `0`      | &#10060; |                                                                        |
+| name               | data type                                                   | unit             | description                                                                                                                                                                                                                 |                        required                         |  update  |                              valid values                              |
+| ------------------ | ----------------------------------------------------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-----------------------------------------------------: | :------: | :--------------------------------------------------------------------: |
+| `u1`               | `double`                                                    | volt (V)         | rated voltage at from-side                                                                                                                                                                                                  |                        &#10004;                         | &#10060; |                                 `> 0`                                  |
+| `u2`               | `double`                                                    | volt (V)         | rated voltage at to-side                                                                                                                                                                                                    |                        &#10004;                         | &#10060; |                                 `> 0`                                  |
+| `sn`               | `double`                                                    | volt-ampere (VA) | rated power                                                                                                                                                                                                                 |                        &#10004;                         | &#10060; |                                 `> 0`                                  |
+| `uk`               | `double`                                                    | -                | relative short circuit voltage, `0.1` means 10%                                                                                                                                                                             |                        &#10004;                         | &#10060; |                    `>= pk / sn` and `> 0` and `< 1`                    |
+| `pk`               | `double`                                                    | watt (W)         | short circuit (copper) loss                                                                                                                                                                                                 |                        &#10004;                         | &#10060; |                                 `>= 0`                                 |
+| `i0`               | `double`                                                    | -                | relative no-load current                                                                                                                                                                                                    |                        &#10004;                         | &#10060; |                         `>= p0 / sn` and `< 1`                         |
+| `p0`               | `double`                                                    | watt (W)         | no-load (iron) loss                                                                                                                                                                                                         |                        &#10004;                         | &#10060; |                                 `>= 0`                                 |
+| `winding_from`     | {py:class}`WindingType <power_grid_model.enum.WindingType>` | -                | from-side winding type                                                                                                                                                                                                      |                        &#10004;                         | &#10060; |                                                                        |
+| `winding_to`       | {py:class}`WindingType <power_grid_model.enum.WindingType>` | -                | to-side winding type                                                                                                                                                                                                        |                        &#10004;                         | &#10060; |                                                                        |
+| `clock`            | `int8_t`                                                    | -                | clock number of phase shift. Even number is not possible if one side is Y(N) winding and the other side is not Y(N) winding. Odd number is not possible, if both sides are Y(N) winding or both sides are not Y(N) winding. |                        &#10004;                         | &#10060; |                           `>= 0` and `<= 12`                           |
+| `tap_side`         | {py:class}`BranchSide <power_grid_model.enum.BranchSide>`   | -                | side of tap changer                                                                                                                                                                                                         |                        &#10004;                         | &#10060; |                                                                        |
+| `tap_pos`          | `int8_t`                                                    | -                | current position of tap changer                                                                                                                                                                                             | &#10060; default `tap_nom`, if no `tap_nom` default `0` | &#10004; | `(tap_min <= tap_pos <= tap_max)` or `(tap_min >= tap_pos >= tap_max)` |
+| `tap_min`          | `int8_t`                                                    | -                | position of tap changer at minimum voltage                                                                                                                                                                                  |                        &#10004;                         | &#10060; |                                                                        |
+| `tap_max`          | `int8_t`                                                    | -                | position of tap changer at maximum voltage                                                                                                                                                                                  |                        &#10004;                         | &#10060; |                                                                        |
+| `tap_nom`          | `int8_t`                                                    | -                | nominal position of tap changer                                                                                                                                                                                             |                  &#10060; default `0`                   | &#10060; | `(tap_min <= tap_nom <= tap_max)` or `(tap_min >= tap_nom >= tap_max)` |
+| `tap_size`         | `double`                                                    | volt (V)         | size of each tap of the tap changer                                                                                                                                                                                         |                        &#10004;                         | &#10060; |                                 `>= 0`                                 |
+| `uk_min`           | `double`                                                    | -                | relative short circuit voltage at minimum tap                                                                                                                                                                               |              &#10060; default same as `uk`              | &#10060; |                  `>= pk_min / sn` and `> 0` and `< 1`                  |
+| `uk_max`           | `double`                                                    | -                | relative short circuit voltage at maximum tap                                                                                                                                                                               |              &#10060; default same as `uk`              | &#10060; |                  `>= pk_max / sn` and `> 0` and `< 1`                  |
+| `pk_min`           | `double`                                                    | watt (W)         | short circuit (copper) loss at minimum tap                                                                                                                                                                                  |              &#10060; default same as `pk`              | &#10060; |                                 `>= 0`                                 |
+| `pk_max`           | `double`                                                    | watt (W)         | short circuit (copper) loss at maximum tap                                                                                                                                                                                  |              &#10060; default same as `pk`              | &#10060; |                                 `>= 0`                                 |
+| `r_grounding_from` | `double`                                                    | ohm (Ω)          | grounding resistance at from-side, if relevant                                                                                                                                                                              |                  &#10060; default `0`                   | &#10060; |                                                                        |
+| `x_grounding_from` | `double`                                                    | ohm (Ω)          | grounding reactance at from-side, if relevant                                                                                                                                                                               |                  &#10060; default `0`                   | &#10060; |                                                                        |
+| `r_grounding_to`   | `double`                                                    | ohm (Ω)          | grounding resistance at to-side, if relevant                                                                                                                                                                                |                  &#10060; default `0`                   | &#10060; |                                                                        |
+| `x_grounding_to`   | `double`                                                    | ohm (Ω)          | grounding reactance at to-side, if relevant                                                                                                                                                                                 |                  &#10060; default `0`                   | &#10060; |                                                                        |
 
-```{note} 
+```{note}
 It can happen that `tap_min > tap_max`. In this case the winding voltage is decreased if the tap position is
 increased.
 ```
 
 #### Electric Model
+
 `transformer` is described by a $\pi$ model, where $Z_{\text{series}}$ can be computed as
 
 $$
-    \begin{eqnarray} 
-        & |Z_{\text{series}}| = \frac{u_k}{z_{\text{base}}} \\ 
+    \begin{eqnarray}
+        & |Z_{\text{series}}| = \frac{u_k}{z_{\text{base}}} \\
         & \mathrm{Re}(Z_{\text{series}}) = \frac{p_k / s_n}{z_{\text{base}}} \\
         & \mathrm{Im}(Z_{\text{series}}) = \sqrt{|Z_{\text{series}}|^2-\mathrm{Re}(Z_{\text{series}})^2} \\
     \end{eqnarray}
@@ -218,16 +220,15 @@ $$
 and $Y_{\text{shunt}}$ can be computed as
 
 $$
-    \begin{eqnarray} 
+    \begin{eqnarray}
         & |Y_{\text{shunt}}| = \frac{i_0}{y_{\text{base}}} \\
         & \mathrm{Re}(Y_{\text{shunt}}) = \frac{s_n / p_0}{y_{\text{base}}} \\
         & \mathrm{Im}(Y_{\text{shunt}}) = -\sqrt{|Y_{\text{shunt}}|^2-\mathrm{Re}(Y_{\text{shunt}})^2} \\
    \end{eqnarray}
 $$
 
-where $z_{\text{base}} = 1 / y_{\text{base}} = {u_{\text{2, rated}}}^2 / s_{\text{base}}$. 
+where $z_{\text{base}} = 1 / y_{\text{base}} = {u_{\text{2, rated}}}^2 / s_{\text{base}}$.
 Here, $s_{\text{base}}$ is a constant value determined by the solver and $u_{\text{2, rated}}$ is rated voltage at `to_node`.
-
 
 ### Generic Branch  
 
@@ -235,36 +236,37 @@ Here, $s_{\text{base}}$ is a constant value determined by the solver and $u_{\te
 
 `generic_branch` is a {hoverxreftooltip}`user_manual/components:branch` that connects two nodes, potentially at different voltage levels. Depending on the choice of parameters, it behaves either as a line or as a transformer. The advantage is that the input parameters are based directly on the electrical equivalent circuit model. The PI model can be used to avoid the need to convert parameters into transformer model data. Another use case is modeling a line when connecting two nodes with approximately the same voltage levels (in that case, the off-nominal ratio must be given to adapt the electrical parameters).
 
-
 #### Input
 
-| name    | data type | unit             | description                   | required               | update   |  valid values   |
-| ------- | --------- | ---------------- | ----------------------------- | :--------------------: | :------: | :-------------: |
-| `r1`    | `double`  | ohm              | positive-sequence resistance  | &#10004;               | &#10060; |                 |
-| `x1`    | `double`  | ohm              | positive-sequence reactance   | &#10004;               | &#10060; |                 |
-| `g1`    | `double`  | siemens          | positive-sequence conductance | &#10004;               | &#10060; |                 |
-| `b1`    | `double`  | siemens          | positive-sequence susceptance | &#10004;               | &#10060; |                 |
-| `k`     | `double`  | -                | off-nominal ratio             | &#10060; default `1.0` | &#10060; | `> 0`           |
-| `theta` | `double`  | radian           | angle shift                   | &#10060; default `0.0` | &#10060; |                 |
-| `sn`    | `double`  | volt-ampere (VA) | rated power                   | &#10060; default `0.0` | &#10060; | `>= 0`          |
+| name    | data type | unit             | description                   |        required        |  update  | valid values |
+| ------- | --------- | ---------------- | ----------------------------- | :--------------------: | :------: | :----------: |
+| `r1`    | `double`  | ohm              | positive-sequence resistance  |        &#10004;        | &#10060; |              |
+| `x1`    | `double`  | ohm              | positive-sequence reactance   |        &#10004;        | &#10060; |              |
+| `g1`    | `double`  | siemens          | positive-sequence conductance |        &#10004;        | &#10060; |              |
+| `b1`    | `double`  | siemens          | positive-sequence susceptance |        &#10004;        | &#10060; |              |
+| `k`     | `double`  | -                | off-nominal ratio             | &#10060; default `1.0` | &#10060; |    `> 0`     |
+| `theta` | `double`  | radian           | angle shift                   | &#10060; default `0.0` | &#10060; |              |
+| `sn`    | `double`  | volt-ampere (VA) | rated power                   | &#10060; default `0.0` | &#10060; |    `>= 0`    |
 
-```{note} 
+```{note}
 The impedance (`r1`, `x1`) and admittance (`g1`, `b1`) attributes are calculated with reference to the "to" side of the branch.
 ```
-```{note} 
+
+```{note}
 To model a three-winding transformer using the `generic_branch`, the MVA method must be applied. This means the user needs to calculate three equivalent `generic_branch` components and define an additional node to represent the common winding connection point. In rare cases, this method can result in negative electrical equivalent circuit elements. Therefore, the input parameters are not checked for negative values.
 ```
-```{warning} 
+
+```{warning}
 The parameter `k` represents the **off-nominal ratio**, not the nominal voltage ratio. This means that `k` must be explicitly provided by the user, particularly in cases involving a tap changer or a voltage transformer. The program does not automatically calculate `k` based on the nominal voltage levels of the connected nodes.
 ```
-```{warning} 
+
+```{warning}
 Asymmetric calculation is not supported for `generic_branch`.
 ```
 
-
 #### Electric Model
 
-`generic_branch` is described by a PI model, where 
+`generic_branch` is described by a PI model, where
 
 $$
    \begin{eqnarray}
@@ -329,51 +331,51 @@ voltage levels. An example of usage of three-winding transformer is given in [Tr
 
 #### Input
 
-| name            | data type                                                   | unit             | description                                                                                               |             required             |  update  |                              valid values                              |
-| --------------- | ----------------------------------------------------------- | ---------------- | --------------------------------------------------------------------------------------------------------- | :------------------------------: | :------: | :--------------------------------------------------------------------: |
-| `u1`            | `double`                                                    | volt (V)         | rated voltage at side 1                                                                                   |             &#10004;             | &#10060; |                                 `> 0`                                  |
-| `u2`            | `double`                                                    | volt (V)         | rated voltage at side 2                                                                                   |             &#10004;             | &#10060; |                                 `> 0`                                  |
-| `u3`            | `double`                                                    | volt (V)         | rated voltage at side 3                                                                                   |             &#10004;             | &#10060; |                                 `> 0`                                  |
-| `sn_1`          | `double`                                                    | volt-ampere (VA) | rated power at side 1                                                                                     |             &#10004;             | &#10060; |                                 `> 0`                                  |
-| `sn_2`          | `double`                                                    | volt-ampere (VA) | rated power at side 2                                                                                     |             &#10004;             | &#10060; |                                 `> 0`                                  |
-| `sn_3`          | `double`                                                    | volt-ampere (VA) | rated power at side 3                                                                                     |             &#10004;             | &#10060; |                                 `> 0`                                  |
-| `uk_12`         | `double`                                                    | -                | relative short circuit voltage across side 1-2, `0.1` means 10%                                           |             &#10004;             | &#10060; |            `>= pk_12 / min(sn_1, sn_2)` and `> 0` and `< 1`            |
-| `uk_13`         | `double`                                                    | -                | relative short circuit voltage across side 1-3, `0.1` means 10%                                           |             &#10004;             | &#10060; |            `>= pk_13 / min(sn_1, sn_3)` and `> 0` and `< 1`            |
-| `uk_23`         | `double`                                                    | -                | relative short circuit voltage across side 2-3, `0.1` means 10%                                           |             &#10004;             | &#10060; |            `>= pk_23 / min(sn_2, sn_3)` and `> 0` and `< 1`            |
-| `pk_12`         | `double`                                                    | watt (W)         | short circuit (copper) loss across side 1-2                                                               |             &#10004;             | &#10060; |                                 `>= 0`                                 |
-| `pk_13`         | `double`                                                    | watt (W)         | short circuit (copper) loss across side 1-3                                                               |             &#10004;             | &#10060; |                                 `>= 0`                                 |
-| `pk_23`         | `double`                                                    | watt (W)         | short circuit (copper) loss across side 2-3                                                               |             &#10004;             | &#10060; |                                 `>= 0`                                 |
-| `i0`            | `double`                                                    | -                | relative no-load current with respect to side 1                                                           |             &#10004;             | &#10060; |                         `>= p0 / sn` and `< 1`                         |
-| `p0`            | `double`                                                    | watt (W)         | no-load (iron) loss                                                                                       |             &#10004;             | &#10060; |                                 `>= 0`                                 |
-| `winding_1`     | {py:class}`WindingType <power_grid_model.enum.WindingType>` | -                | side 1 winding type                                                                                       |             &#10004;             | &#10060; |                                                                        |
-| `winding_2`     | {py:class}`WindingType <power_grid_model.enum.WindingType>` | -                | side 2 winding type                                                                                       |             &#10004;             | &#10060; |                                                                        |
-| `winding_3`     | {py:class}`WindingType <power_grid_model.enum.WindingType>` | -                | side 3 winding type                                                                                       |             &#10004;             | &#10060; |                                                                        |
-| `clock_12`      | `int8_t`                                                    | -                | clock number of phase shift across side 1-2, odd number is only allowed for Dy(n) or Y(N)d configuration. |             &#10004;             | &#10060; |                           `>= 0` and `<= 12`                           |
-| `clock_13`      | `int8_t`                                                    | -                | clock number of phase shift across side 1-3, odd number is only allowed for Dy(n) or Y(N)d configuration. |             &#10004;             | &#10060; |                           `>= 0` and `<= 12`                           |
-| `tap_side`      | {py:class}`Branch3Side <power_grid_model.enum.Branch3Side>` | -                | side of tap changer                                                                                       |             &#10004;             | &#10060; |                    `side_1` or `side_2` or `side_3`                    |
-| `tap_pos`       | `int8_t`                                                    | -                | current position of tap changer                                                                           |             &#10060; default `tap_nom`, if no `tap_nom` default `0`             | &#10004; | `(tap_min <= tap_pos <= tap_max)` or `(tap_min >= tap_pos >= tap_max)` |
-| `tap_min`       | `int8_t`                                                    | -                | position of tap changer at minimum voltage                                                                |             &#10004;             | &#10060; |                                                                        |
-| `tap_max`       | `int8_t`                                                    | -                | position of tap changer at maximum voltage                                                                |             &#10004;             | &#10060; |                                                                        |
-| `tap_nom`       | `int8_t`                                                    | -                | nominal position of tap changer                                                                           |       &#10060; default `0`       | &#10060; | `(tap_min <= tap_nom <= tap_max)` or `(tap_min >= tap_nom >= tap_max)` |
-| `tap_size`      | `double`                                                    | volt (V)         | size of each tap of the tap changer                                                                       |             &#10004;             | &#10060; |                                 `> 0`                                  |
-| `uk_12_min`     | `double`                                                    | -                | relative short circuit voltage at minimum tap, across side 1-2                                            | &#10060; default same as `uk_12` | &#10060; |          `>= pk_12_min / min(sn_1, sn_2)` and `> 0` and `< 1`          |
-| `uk_12_max`     | `double`                                                    | -                | relative short circuit voltage at maximum tap, across side 1-2                                            | &#10060; default same as `uk_12` | &#10060; |          `>= pk_12_max / min(sn_1, sn_2)` and `> 0` and `< 1`          |
-| `pk_12_min`     | `double`                                                    | watt (W)         | short circuit (copper) loss at minimum tap, across side 1-2                                               | &#10060; default same as `pk_12` | &#10060; |                                 `>= 0`                                 |
-| `pk_12_max`     | `double`                                                    | watt (W)         | short circuit (copper) loss at maximum tap, across side 1-2                                               | &#10060; default same as `pk_12` | &#10060; |                                 `>= 0`                                 |
-| `uk_13_min`     | `double`                                                    | -                | relative short circuit voltage at minimum tap, across side 1-3                                            | &#10060; default same as `uk_13` | &#10060; |          `>= pk_13_min / min(sn_1, sn_3)` and `> 0` and `< 1`          |
-| `uk_13_max`     | `double`                                                    | -                | relative short circuit voltage at maximum tap, across side 1-3                                            | &#10060; default same as `uk_13` | &#10060; |          `>= pk_13_max / min(sn_1, sn_3)` and `> 0` and `< 1`          |
-| `pk_13_min`     | `double`                                                    | watt (W)         | short circuit (copper) loss at minimum tap, across side 1-3                                               | &#10060; default same as `pk_13` | &#10060; |                                 `>= 0`                                 |
-| `pk_13_max`     | `double`                                                    | watt (W)         | short circuit (copper) loss at maximum tap, across side 1-3                                               | &#10060; default same as `pk_13` | &#10060; |                                 `>= 0`                                 |
-| `uk_23_min`     | `double`                                                    | -                | relative short circuit voltage at minimum tap, across side 2-3                                            | &#10060; default same as `uk_23` | &#10060; |          `>= pk_23_min / min(sn_2, sn_3)` and `> 0` and `< 1`          |
-| `uk_23_max`     | `double`                                                    | -                | relative short circuit voltage at maximum tap, across side 2-3                                            | &#10060; default same as `uk_23` | &#10060; |          `>= pk_23_max / min(sn_2, sn_3)` and `> 0` and `< 1`          |
-| `pk_23_min`     | `double`                                                    | watt (W)         | short circuit (copper) loss at minimum tap, across side 2-3                                               | &#10060; default same as `pk_23` | &#10060; |                                 `>= 0`                                 |
-| `pk_23_max`     | `double`                                                    | watt (W)         | short circuit (copper) loss at maximum tap, across side 2-3                                               | &#10060; default same as `pk_23` | &#10060; |                                 `>= 0`                                 |
-| `r_grounding_1` | `double`                                                    | ohm (Ω)          | grounding resistance at side 1, if relevant                                                               |       &#10060; default `0`       | &#10060; |                                                                        |
-| `x_grounding_1` | `double`                                                    | ohm (Ω)          | grounding reactance at side 1, if relevant                                                                |       &#10060; default `0`       | &#10060; |                                                                        |
-| `r_grounding_2` | `double`                                                    | ohm (Ω)          | grounding resistance at side 2, if relevant                                                               |       &#10060; default `0`       | &#10060; |                                                                        |
-| `x_grounding_2` | `double`                                                    | ohm (Ω)          | grounding reactance at side 2, if relevant                                                                |       &#10060; default `0`       | &#10060; |                                                                        |
-| `r_grounding_3` | `double`                                                    | ohm (Ω)          | grounding resistance at side 3, if relevant                                                               |       &#10060; default `0`       | &#10060; |                                                                        |
-| `x_grounding_3` | `double`                                                    | ohm (Ω)          | grounding reactance at side 3, if relevant                                                                |       &#10060; default `0`       | &#10060; |
+| name            | data type                                                   | unit             | description                                                                                               |                        required                         |  update  |                              valid values                              |
+| --------------- | ----------------------------------------------------------- | ---------------- | --------------------------------------------------------------------------------------------------------- | :-----------------------------------------------------: | :------: | :--------------------------------------------------------------------: |
+| `u1`            | `double`                                                    | volt (V)         | rated voltage at side 1                                                                                   |                        &#10004;                         | &#10060; |                                 `> 0`                                  |
+| `u2`            | `double`                                                    | volt (V)         | rated voltage at side 2                                                                                   |                        &#10004;                         | &#10060; |                                 `> 0`                                  |
+| `u3`            | `double`                                                    | volt (V)         | rated voltage at side 3                                                                                   |                        &#10004;                         | &#10060; |                                 `> 0`                                  |
+| `sn_1`          | `double`                                                    | volt-ampere (VA) | rated power at side 1                                                                                     |                        &#10004;                         | &#10060; |                                 `> 0`                                  |
+| `sn_2`          | `double`                                                    | volt-ampere (VA) | rated power at side 2                                                                                     |                        &#10004;                         | &#10060; |                                 `> 0`                                  |
+| `sn_3`          | `double`                                                    | volt-ampere (VA) | rated power at side 3                                                                                     |                        &#10004;                         | &#10060; |                                 `> 0`                                  |
+| `uk_12`         | `double`                                                    | -                | relative short circuit voltage across side 1-2, `0.1` means 10%                                           |                        &#10004;                         | &#10060; |            `>= pk_12 / min(sn_1, sn_2)` and `> 0` and `< 1`            |
+| `uk_13`         | `double`                                                    | -                | relative short circuit voltage across side 1-3, `0.1` means 10%                                           |                        &#10004;                         | &#10060; |            `>= pk_13 / min(sn_1, sn_3)` and `> 0` and `< 1`            |
+| `uk_23`         | `double`                                                    | -                | relative short circuit voltage across side 2-3, `0.1` means 10%                                           |                        &#10004;                         | &#10060; |            `>= pk_23 / min(sn_2, sn_3)` and `> 0` and `< 1`            |
+| `pk_12`         | `double`                                                    | watt (W)         | short circuit (copper) loss across side 1-2                                                               |                        &#10004;                         | &#10060; |                                 `>= 0`                                 |
+| `pk_13`         | `double`                                                    | watt (W)         | short circuit (copper) loss across side 1-3                                                               |                        &#10004;                         | &#10060; |                                 `>= 0`                                 |
+| `pk_23`         | `double`                                                    | watt (W)         | short circuit (copper) loss across side 2-3                                                               |                        &#10004;                         | &#10060; |                                 `>= 0`                                 |
+| `i0`            | `double`                                                    | -                | relative no-load current with respect to side 1                                                           |                        &#10004;                         | &#10060; |                         `>= p0 / sn` and `< 1`                         |
+| `p0`            | `double`                                                    | watt (W)         | no-load (iron) loss                                                                                       |                        &#10004;                         | &#10060; |                                 `>= 0`                                 |
+| `winding_1`     | {py:class}`WindingType <power_grid_model.enum.WindingType>` | -                | side 1 winding type                                                                                       |                        &#10004;                         | &#10060; |                                                                        |
+| `winding_2`     | {py:class}`WindingType <power_grid_model.enum.WindingType>` | -                | side 2 winding type                                                                                       |                        &#10004;                         | &#10060; |                                                                        |
+| `winding_3`     | {py:class}`WindingType <power_grid_model.enum.WindingType>` | -                | side 3 winding type                                                                                       |                        &#10004;                         | &#10060; |                                                                        |
+| `clock_12`      | `int8_t`                                                    | -                | clock number of phase shift across side 1-2, odd number is only allowed for Dy(n) or Y(N)d configuration. |                        &#10004;                         | &#10060; |                           `>= 0` and `<= 12`                           |
+| `clock_13`      | `int8_t`                                                    | -                | clock number of phase shift across side 1-3, odd number is only allowed for Dy(n) or Y(N)d configuration. |                        &#10004;                         | &#10060; |                           `>= 0` and `<= 12`                           |
+| `tap_side`      | {py:class}`Branch3Side <power_grid_model.enum.Branch3Side>` | -                | side of tap changer                                                                                       |                        &#10004;                         | &#10060; |                    `side_1` or `side_2` or `side_3`                    |
+| `tap_pos`       | `int8_t`                                                    | -                | current position of tap changer                                                                           | &#10060; default `tap_nom`, if no `tap_nom` default `0` | &#10004; | `(tap_min <= tap_pos <= tap_max)` or `(tap_min >= tap_pos >= tap_max)` |
+| `tap_min`       | `int8_t`                                                    | -                | position of tap changer at minimum voltage                                                                |                        &#10004;                         | &#10060; |                                                                        |
+| `tap_max`       | `int8_t`                                                    | -                | position of tap changer at maximum voltage                                                                |                        &#10004;                         | &#10060; |                                                                        |
+| `tap_nom`       | `int8_t`                                                    | -                | nominal position of tap changer                                                                           |                  &#10060; default `0`                   | &#10060; | `(tap_min <= tap_nom <= tap_max)` or `(tap_min >= tap_nom >= tap_max)` |
+| `tap_size`      | `double`                                                    | volt (V)         | size of each tap of the tap changer                                                                       |                        &#10004;                         | &#10060; |                                 `> 0`                                  |
+| `uk_12_min`     | `double`                                                    | -                | relative short circuit voltage at minimum tap, across side 1-2                                            |            &#10060; default same as `uk_12`             | &#10060; |          `>= pk_12_min / min(sn_1, sn_2)` and `> 0` and `< 1`          |
+| `uk_12_max`     | `double`                                                    | -                | relative short circuit voltage at maximum tap, across side 1-2                                            |            &#10060; default same as `uk_12`             | &#10060; |          `>= pk_12_max / min(sn_1, sn_2)` and `> 0` and `< 1`          |
+| `pk_12_min`     | `double`                                                    | watt (W)         | short circuit (copper) loss at minimum tap, across side 1-2                                               |            &#10060; default same as `pk_12`             | &#10060; |                                 `>= 0`                                 |
+| `pk_12_max`     | `double`                                                    | watt (W)         | short circuit (copper) loss at maximum tap, across side 1-2                                               |            &#10060; default same as `pk_12`             | &#10060; |                                 `>= 0`                                 |
+| `uk_13_min`     | `double`                                                    | -                | relative short circuit voltage at minimum tap, across side 1-3                                            |            &#10060; default same as `uk_13`             | &#10060; |          `>= pk_13_min / min(sn_1, sn_3)` and `> 0` and `< 1`          |
+| `uk_13_max`     | `double`                                                    | -                | relative short circuit voltage at maximum tap, across side 1-3                                            |            &#10060; default same as `uk_13`             | &#10060; |          `>= pk_13_max / min(sn_1, sn_3)` and `> 0` and `< 1`          |
+| `pk_13_min`     | `double`                                                    | watt (W)         | short circuit (copper) loss at minimum tap, across side 1-3                                               |            &#10060; default same as `pk_13`             | &#10060; |                                 `>= 0`                                 |
+| `pk_13_max`     | `double`                                                    | watt (W)         | short circuit (copper) loss at maximum tap, across side 1-3                                               |            &#10060; default same as `pk_13`             | &#10060; |                                 `>= 0`                                 |
+| `uk_23_min`     | `double`                                                    | -                | relative short circuit voltage at minimum tap, across side 2-3                                            |            &#10060; default same as `uk_23`             | &#10060; |          `>= pk_23_min / min(sn_2, sn_3)` and `> 0` and `< 1`          |
+| `uk_23_max`     | `double`                                                    | -                | relative short circuit voltage at maximum tap, across side 2-3                                            |            &#10060; default same as `uk_23`             | &#10060; |          `>= pk_23_max / min(sn_2, sn_3)` and `> 0` and `< 1`          |
+| `pk_23_min`     | `double`                                                    | watt (W)         | short circuit (copper) loss at minimum tap, across side 2-3                                               |            &#10060; default same as `pk_23`             | &#10060; |                                 `>= 0`                                 |
+| `pk_23_max`     | `double`                                                    | watt (W)         | short circuit (copper) loss at maximum tap, across side 2-3                                               |            &#10060; default same as `pk_23`             | &#10060; |                                 `>= 0`                                 |
+| `r_grounding_1` | `double`                                                    | ohm (Ω)          | grounding resistance at side 1, if relevant                                                               |                  &#10060; default `0`                   | &#10060; |                                                                        |
+| `x_grounding_1` | `double`                                                    | ohm (Ω)          | grounding reactance at side 1, if relevant                                                                |                  &#10060; default `0`                   | &#10060; |                                                                        |
+| `r_grounding_2` | `double`                                                    | ohm (Ω)          | grounding resistance at side 2, if relevant                                                               |                  &#10060; default `0`                   | &#10060; |                                                                        |
+| `x_grounding_2` | `double`                                                    | ohm (Ω)          | grounding reactance at side 2, if relevant                                                                |                  &#10060; default `0`                   | &#10060; |                                                                        |
+| `r_grounding_3` | `double`                                                    | ohm (Ω)          | grounding resistance at side 3, if relevant                                                               |                  &#10060; default `0`                   | &#10060; |                                                                        |
+| `x_grounding_3` | `double`                                                    | ohm (Ω)          | grounding reactance at side 3, if relevant                                                                |                  &#10060; default `0`                   | &#10060; |                                                                        |
 
 ```{note}
 It can happen that `tap_min > tap_max`. In this case the winding voltage is decreased if the tap position is
@@ -382,9 +384,9 @@ increased.
 
 #### Electric Model
 
-`three_winding_transformer` is modelled as 3 transformers of `pi` model each connected together in star configuration. 
-However, there are only 2 `pi` "legs": One at `side_1` and one in the centre of star. 
-The values between windings (for e.g., `uk_12` or `pk_23`) are converted from delta to corresponding star configuration values. 
+`three_winding_transformer` is modelled as 3 transformers of `pi` model each connected together in star configuration.
+However, there are only 2 `pi` "legs": One at `side_1` and one in the centre of star.
+The values between windings (for e.g., `uk_12` or `pk_23`) are converted from delta to corresponding star configuration values.
 The calculation of series and shunt admittance from `uk`, `pk`, `i0` and `p0` is same as mentioned in {hoverxreftooltip}`user_manual/components:transformer`.
 
 ## Appliance
@@ -440,13 +442,14 @@ with an internal impedance. The impedance is specified by convention as short ci
 | `z01_ratio`   | `double`  | -                | zero-sequence to positive sequence impedance ratio |    &#10060; default `1.0`    | &#10060; |    `> 0`     |
 
 #### Electric Model
+
 `source` is modeled by an internal constant impedance $r+\mathrm{j}x$ with positive sequence and zero-sequence.
 Its value can be computed using following equations:
 
-- for positive sequence,
+* for positive sequence,
 
 $$
-   \begin{eqnarray} 
+   \begin{eqnarray}
         & z_{\text{source}} = \frac{s_{\text{base}}}{s_k} \\
         & x_1 = z_{\text{source}} \sqrt{1+ \left(\frac{r}{x}\right)^2} \\
         & r_1 = x_1 \cdot \left(\frac{r}{x}\right)
@@ -455,10 +458,10 @@ $$
 
 where $s_{\text{base}}$ is a constant value determined by the solver, and $\frac{r}{x}$ indicates `rx_ratio` as input.
 
-- for zero-sequence, 
+* for zero-sequence,
 
 $$
-   \begin{eqnarray} 
+   \begin{eqnarray}
         & z_{\text{source,0}} = z_{\text{source}} \cdot \frac{z_0}{z_1}\\
         & x_0 = z_{\text{source,0}} \sqrt{1 + \left(\frac{r}{x}\right)^2}\\
         & r_0 = x_0 \cdot \left(\frac{r}{x}\right)
@@ -497,31 +500,31 @@ However, the reference direction and meaning of `RealValueInput` is different, a
 
 ##### Electric model
 
-`generic_load_gen` is modelled by using the so-called ZIP load model in power-grid-model, 
+`generic_load_gen` is modelled by using the so-called ZIP load model in power-grid-model,
 where a load/generator is represented as a composition of constant power (P), constant current (I) and constant impedance (Z).
 
 The injection of each ZIP model type can be computed as follows:
 
-- for a constant impedance (Z) load/generator,
+* for a constant impedance (Z) load/generator,
 
 $$
-   \begin{eqnarray} 
+   \begin{eqnarray}
         S = S_{\text{specified}} \cdot \bar{u}^2
    \end{eqnarray}
 $$
 
-- for a constant current (I) load/generator,
+* for a constant current (I) load/generator,
 
 $$
-   \begin{eqnarray} 
+   \begin{eqnarray}
         S = S_{\text{specified}} \cdot \bar{u}
    \end{eqnarray}
 $$
 
-- for a constant power (P) load/generator:,
+* for a constant power (P) load/generator:,
 
 $$
-   \begin{eqnarray} 
+   \begin{eqnarray}
         S = S_{\text{specified}}
    \end{eqnarray}
 $$
@@ -552,6 +555,7 @@ if any of the faults in any of the scenarios within a batch are not three-phase 
 ```
 
 #### Electric Model
+
 `shunt` is modelled by a fixed admittance which equals to $g + \mathrm{j}b$.
 
 ## Sensor
@@ -617,10 +621,11 @@ A sensor only has output for state estimation. For other calculation types, sens
 | `u_angle_residual` | `RealValueOutput` | rad      | residual value between measured voltage angle and calculated voltage angle (only possible with phasor measurement units) |
 
 #### Electric Model
+
 `generic_voltage_sensor` is modeled by following equations:
 
 $$
-   \begin{eqnarray} 
+   \begin{eqnarray}
         & u_{\text{residual}} = u_{\text{measured}} - u_{\text{state}} \\
         & \theta_{\text{residual}} = \theta_{\text{measured}} - \theta_{\text{state}}
    \end{eqnarray}
@@ -637,7 +642,7 @@ terminal between an `appliance` and a `node`, the power {hoverxreftooltip}`user_
 measurement data is the same as the reference direction of the `appliance`. For example, if a `power_sensor` is
 measuring a `source`, a positive `p_measured` indicates that the active power flows from the source to the node.
 
-```{note} 
+```{note}
 1. Due to the high admittance of a `link` it is chosen that a power sensor cannot be coupled to a `link`, even though a link is a `branch`
 
 2. The node injection power sensor gets placed on a node. 
@@ -664,24 +669,24 @@ the meaning of `RealValueInput` is different, as shown in the table below.
 
 ##### Input
 
-| name         | data type        | unit                       | description                                                                                                                    |              required               |  update  |
-| ------------ | ---------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | :---------------------------------: | :------: |
-| `p_measured` | `RealValueInput` | watt (W)                   | measured active power                                                                                                          | &#10024; only for state estimation  | &#10004; |
-| `q_measured` | `RealValueInput` | volt-ampere-reactive (var) | measured reactive power                                                                                                        | &#10024; only for state estimation  | &#10004; |
-| `p_sigma`    | `RealValueInput` | watt (W)                   | standard deviation of the active power measurement error. Usually this is the absolute measurement error range divided by 3.   | &#10060; see the explanation below. | &#10004; | `> 0` |
-| `q_sigma`    | `RealValueInput` | volt-ampere-reactive (var) | standard deviation of the reactive power measurement error. Usually this is the absolute measurement error range divided by 3. | &#10060; see the explanation below. | &#10004; | `> 0` |
+| name         | data type        | unit                       | description                                                                                                                    |              required               |  update  | valid values |
+| ------------ | ---------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | :---------------------------------: | :------: | :----------: |
+| `p_measured` | `RealValueInput` | watt (W)                   | measured active power                                                                                                          | &#10024; only for state estimation  | &#10004; |              |
+| `q_measured` | `RealValueInput` | volt-ampere-reactive (var) | measured reactive power                                                                                                        | &#10024; only for state estimation  | &#10004; |              |
+| `p_sigma`    | `RealValueInput` | watt (W)                   | standard deviation of the active power measurement error. Usually this is the absolute measurement error range divided by 3.   | &#10060; see the explanation below. | &#10004; |    `> 0`     |
+| `q_sigma`    | `RealValueInput` | volt-ampere-reactive (var) | standard deviation of the reactive power measurement error. Usually this is the absolute measurement error range divided by 3. | &#10060; see the explanation below. | &#10004; |    `> 0`     |
 
 Valid combinations of `power_sigma`, `p_sigma` and `q_sigma` are:
 
 | `power_sigma` | `p_sigma` | `q_sigma` |  result  |
 | :-----------: | :-------: | :-------: | :------: |
-|    &#10004;   |  &#10004; |  &#10004; | &#10004; |
-|    &#10004;   |  &#10004; |           | &#10060; |
-|    &#10004;   |           |  &#10004; | &#10060; |
-|    &#10004;   |           |           | &#10004; |
-|               |  &#10004; |  &#10004; | &#10004; |
-|               |  &#10004; |           | &#10060; |
-|               |           |  &#10004; | &#10060; |
+|   &#10004;    | &#10004;  | &#10004;  | &#10004; |
+|   &#10004;    | &#10004;  |           | &#10060; |
+|   &#10004;    |           | &#10004;  | &#10060; |
+|   &#10004;    |           |           | &#10004; |
+|               | &#10004;  | &#10004;  | &#10004; |
+|               | &#10004;  |           | &#10060; |
+|               |           | &#10004;  | &#10060; |
 |               |           |           | &#10060; |
 
 ```{note}
@@ -710,7 +715,7 @@ A sensor only has output for state estimation. For other calculation types, sens
 `Generic Power Sensor` is modeled by following equations:
 
 $$
-   \begin{eqnarray} 
+   \begin{eqnarray}
         & p_{\text{residual}} = p_{\text{measured}} - p_{\text{state}} \\
         & q_{\text{residual}} = q_{\text{measured}} - q_{\text{state}}
    \end{eqnarray}
@@ -725,14 +730,14 @@ $$
 
 #### Input
 
-| name           | data type                                                 | unit    | description                                         |                                          required                                          |  update  |   valid values    |
-| -------------- | --------------------------------------------------------- | ------- | --------------------------------------------------- | :----------------------------------------------------------------------------------------: | :------: | :---------------: |
-| `status`       | `int8_t`                                                  | -       | whether the fault is active                         |                                          &#10004;                                          | &#10004; |    `0` or `1`     |
-| `fault_type`   | {py:class}`FaultType <power_grid_model.enum.FaultType>`   | -       | the type of the fault                               |                              &#10024; only for short circuit                               | &#10004; |                   |
-| `fault_phase`  | {py:class}`FaultPhase <power_grid_model.enum.FaultPhase>` | -       | the phase(s) of the fault                           | &#10060; default `FaultPhase.default_value` (see [below](#default-values-for-fault_phase)) | &#10004; |                   |
-| `fault_object` | `int32_t`                                                 | -       | ID of the component where the short circuit happens |                                          &#10004;                                          | &#10004; | A valid `node` ID |
-| `r_f`          | `double`                                                  | ohm (Ω) | short circuit resistance                            |                                   &#10060; default `0.0`                                   | &#10004; |                   |
-| `x_f`          | `double`                                                  | ohm (Ω) | short circuit reactance                             |                                   &#10060; default `0.0`                                   | &#10004; |                   |
+| name           | data type                                                 | unit    | description                                         |                                                required                                                 |  update  |   valid values    |
+| -------------- | --------------------------------------------------------- | ------- | --------------------------------------------------- | :-----------------------------------------------------------------------------------------------------: | :------: | :---------------: |
+| `status`       | `int8_t`                                                  | -       | whether the fault is active                         |                                                &#10004;                                                 | &#10004; |    `0` or `1`     |
+| `fault_type`   | {py:class}`FaultType <power_grid_model.enum.FaultType>`   | -       | the type of the fault                               |                                     &#10024; only for short circuit                                     | &#10004; |                   |
+| `fault_phase`  | {py:class}`FaultPhase <power_grid_model.enum.FaultPhase>` | -       | the phase(s) of the fault                           | &#10060; default `FaultPhase.default_value` (see [below](#fault-types-fault-phases-and-default-values)) | &#10004; |                   |
+| `fault_object` | `int32_t`                                                 | -       | ID of the component where the short circuit happens |                                                &#10004;                                                 | &#10004; | A valid `node` ID |
+| `r_f`          | `double`                                                  | ohm (Ω) | short circuit resistance                            |                                         &#10060; default `0.0`                                          | &#10004; |                   |
+| `x_f`          | `double`                                                  | ohm (Ω) | short circuit reactance                             |                                         &#10060; default `0.0`                                          | &#10004; |                   |
 
 ```{note}
 Multiple faults may exist within one calculation. Currently, all faults in one scenario are required to have the
@@ -758,16 +763,18 @@ A `fault` has no steady state output.
 
 #### Electric Model
 
-Four types of short circuit fault are included in power-grid-model.
+##### Fault types, fault phases and default values
 
-| `fault_type`                       | `fault_phase`    | description                                                            |
-| ---------------------------------- | ---------------- | ---------------------------------------------------------------------- |
-| `FaultType.three_phase`            | `FaultPhase.abc` | Three phases are connected with fault impedance.                       |
-| `FaultType.single_phase_to_ground` | `FaultPhase.a`   | One phase is grounded with fault impedance, and other phases are open. |
-| `FaultType.two_phase`              | `FaultPhase.bc`  | Two phases are connected with fault impedance.                         |
-| `FaultType.two_phase_to_ground`    | `FaultPhase.bc`  | Two phases are connected with fault impedance then grounded.           |
+Four types of short circuit fault are included in power-grid-model, each with their own set of supported values for `fault_phase`.
+In case the `fault_phase` is not specified or is equal to `FaultPhase.default_value`, the power-grid-model assumes a `fault_type`-dependent set of fault phases.
+The supported values of `fault_phase`, as well as its default value, are listed in the table below.
 
-In case the `fault_phase` is not specified or is equal to `FaultPhase.default_value`, the power-grid-model assumes the following fault phases for different values of `fault_type`.
+| `fault_type`                       | supported values of `fault_phase`                 | `FaultPhase.default_value` | description                                                            |
+| ---------------------------------- | ------------------------------------------------- | -------------------------- | ---------------------------------------------------------------------- |
+| `FaultType.three_phase`            | `FaultPhase.abc`                                  | `FaultPhase.abc`           | Three phases are connected with fault impedance.                       |
+| `FaultType.single_phase_to_ground` | `FaultPhase.a`, `FaultPhase.b`, `FaultPhase.c`    | `FaultPhase.a`             | One phase is grounded with fault impedance, and other phases are open. |
+| `FaultType.two_phase`              | `FaultPhase.bc`, `FaultPhase.ac`, `FaultPhase.ab` | `FaultPhase.bc`            | Two phases are connected with fault impedance.                         |
+| `FaultType.two_phase_to_ground`    | `FaultPhase.bc`, `FaultPhase.ac`, `FaultPhase.ab` | `FaultPhase.bc`            | Two phases are connected with fault impedance then grounded.           |
 
 ## Regulator
 
@@ -804,19 +811,19 @@ The actual grid state is not changed after calculations are done.
 
 #### Input
 
-| name                       | data type                                                                                                                                                                                                                                                                                                          | unit     | description                                                                                             |           required           |  update  |                            valid values                          |
+| name                       | data type                                                                                                                                                                                                                                                                                                          | unit     | description                                                                                             |           required           |  update  |                           valid values                           |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- | ------------------------------------------------------------------------------------------------------- | :--------------------------: | :------: | :--------------------------------------------------------------: |
 | `control_side`             | {py:class}`BranchSide <power_grid_model.enum.BranchSide>` if the regulated object is a {hoverxreftooltip}`user_manual/components:transformer` and {py:class}`Branch3Side <power_grid_model.enum.Branch3Side>` if it the regulated object is a {hoverxreftooltip}`user_manual/components:Three-Winding Transformer` | -        | the controlled side of the transformer                                                                  | &#10024; only for power flow | &#10060; | `control_side` should be the relatively further side to a source |
-| `u_set`                    | `double`                                                                                                                                                                                                                                                                                                           | volt (V) | the voltage setpoint (at the center of the band)                                                        | &#10024; only for power flow | &#10004; |                               `>= 0`                             |
-| `u_band`                   | `double`                                                                                                                                                                                                                                                                                                           | volt (V) | the width of the voltage band ($=2*\left(\Delta U\right)_{\text{acceptable}}$)                          | &#10024; only for power flow | &#10004; |                          `> 0` (see below)                       |
-| `line_drop_compensation_r` | `double`                                                                                                                                                                                                                                                                                                           | ohm (Ω)  | compensation for voltage drop due to resistance during transport (see [below](#line-drop-compensation)) |    &#10060; default `0.0`    | &#10004; |                               `>= 0`                             |
-| `line_drop_compensation_x` | `double`                                                                                                                                                                                                                                                                                                           | ohm (Ω)  | compensation for voltage drop due to reactance during transport (see [below](#line-drop-compensation))  |    &#10060; default `0.0`    | &#10004; |                               `>= 0`                             |
+| `u_set`                    | `double`                                                                                                                                                                                                                                                                                                           | volt (V) | the voltage setpoint (at the center of the band)                                                        | &#10024; only for power flow | &#10004; |                              `>= 0`                              |
+| `u_band`                   | `double`                                                                                                                                                                                                                                                                                                           | volt (V) | the width of the voltage band ($=2*\left(\Delta U\right)_{\text{acceptable}}$)                          | &#10024; only for power flow | &#10004; |                        `> 0` (see below)                         |
+| `line_drop_compensation_r` | `double`                                                                                                                                                                                                                                                                                                           | ohm (Ω)  | compensation for voltage drop due to resistance during transport (see [below](#line-drop-compensation)) |    &#10060; default `0.0`    | &#10004; |                              `>= 0`                              |
+| `line_drop_compensation_x` | `double`                                                                                                                                                                                                                                                                                                           | ohm (Ω)  | compensation for voltage drop due to reactance during transport (see [below](#line-drop-compensation))  |    &#10060; default `0.0`    | &#10004; |                              `>= 0`                              |
 
 The following additional requirements exist on the input parameters.
 
-- Depending on the resultant voltage being transformed, the voltage band must be sufficiently large: At zero line drop compensation if the expected resultant voltages are in the proximity of the rated transformer voltages, it is recommended to have the $u_{band} >= \frac{u_2}{1+ u_1 / \text{tap}_{\text{size}}}$
-- The line drop compensation is small, in the sense that its product with the typical current through the transformer is much smaller (in absolute value) than the smallest change in voltage due to a change in tap position.
-- The `control_side` of a transformer regulator should be on the relatively further side to a source in the connected grid.
+* Depending on the resultant voltage being transformed, the voltage band must be sufficiently large: At zero line drop compensation if the expected resultant voltages are in the proximity of the rated transformer voltages, it is recommended to have the $u_{band} >= \frac{u_2}{1+ u_1 / \text{tap}_{\text{size}}}$
+* The line drop compensation is small, in the sense that its product with the typical current through the transformer is much smaller (in absolute value) than the smallest change in voltage due to a change in tap position.
+* The `control_side` of a transformer regulator should be on the relatively further side to a source in the connected grid.
 
 These requirements make sure no edge cases with undefined behavior are encountered. Typical real-world power grids already satisfy these requirements and they should therefore not cause any problems.
 

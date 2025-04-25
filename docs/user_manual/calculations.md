@@ -652,7 +652,7 @@ We provide the control logic used for tap changing. For simplicity, we demonstra
   - Exploit the neighbourhood of all transformers (see {hoverxreftooltip}`user_manual/calculations:Initialization and exploitation of regulated transformers`)
     - Re-run the iteration in the above if any of the tap positions changed by the exploitation.
 
-In the case where the control side of the regulator and the tap side of the transformer are at the same side, the control logic of taps will be reverted (see `user_manual/calculations:Initialization and exploitation of regulated transformers`). 
+In the case where the control side of the regulator and the tap side of the transformer are at the same side, the control logic of taps will be reverted (see `user_manual/calculations:Initialization and exploitation of regulated transformers`).
 The exploitation of the neighbourhood ensures that the actual optimum is not accidentally missed due to feedback mechanisms in the grid.
 
 ```{note}
@@ -687,7 +687,6 @@ Internally, to achieve an optimal regulated tap position, the control algorithm 
 | ---------------------------------------------- | --------------- | --------------- | ------------ | ---------- |
 | regulator control side != transformer tap side | `tap_max`       | `tap_min`       | step up      | step down  |
 | regulator control side == transformer tap side | `tap_min`       | `tap_max`       | step down    | step up    |
-
 
 ##### Search methods used for tap changing optimization
 

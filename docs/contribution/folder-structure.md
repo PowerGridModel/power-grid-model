@@ -21,5 +21,5 @@ The repository folder structure is as follows. The `docs` and `scripts` folders 
   - `benchmark_cpp` contains a benchmark test case generator in C++.
   - `package_tests` contains an integration test CMake project that tests whether the C API package is correctly installed.
   - `unit` folder contains tests for the python code.
-  - `data` contains validation test cases designed for every component and algorithm. Some sample network types are also included. 
+  - `data` contains validation test cases designed for every component and algorithm. Some sample network types are also included.
   The validation is either against popular power system analysis software or hand calculation.

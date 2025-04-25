@@ -1,0 +1,55 @@
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+name: Publish to PyPI
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write  # Required for Trusted Publishing
+
+jobs:
+  publish:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download assets from GitHub release
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: ${{ github.repository }}
+          # download the latest release
+          latest: true
+          # don't donwload pre-releases
+          preRelease: false
+          fileName: "*"
+          # don't download GitHub-generated source tar and zip files
+          tarBall: false
+          zipBall: false
+          # create a directory to store the downloaded assets
+          out-file-path: assets-to-publish
+          # don't extract downloaded files
+          extract: false
+
+      - name: List downloaded assets
+        run: ls -la assets-to-publish
+      
+      - name: Upload assets to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          # To test, use the TestPyPI:
+          # repository-url: https://test.pypi.org/legacy/
+          # You must also create an account and project on TestPyPI,
+          # as well as set the trusted-publisher in the project settings:
+          # https://docs.pypi.org/trusted-publishers/adding-a-publisher/
+          # To publish to the official PyPI repository, just keep
+          # repository-url commented out.
+          packages-dir: assets-to-publish
+          skip-existing: true
+          print-hash: true
+          verbose: true

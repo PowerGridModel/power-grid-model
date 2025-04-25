@@ -61,8 +61,8 @@ With the introduction of columnar data input to PGM, integrating with databases 
 
 Depending on the details of the batch, a number of performance optimizations are possible:
 
-* [Topology constructions](#topology-caching), especially, may significantly impact the computation time of a scenario.
-* The way the [batch data set](#using-independent-batches) is provided to the model can also affect the performance.
+- [Topology constructions](#topology-caching), especially, may significantly impact the computation time of a scenario.
+- The way the [batch data set](#batch-data-set) is provided to the model can also affect the performance.
 
 ### Topology caching
 
