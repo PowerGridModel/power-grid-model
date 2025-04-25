@@ -528,7 +528,7 @@ $$
     \end{eqnarray}
 $$
 
-- Branch current with local angle: Sometimes, (accurate) voltage measurements are available for a branch,
+- Branch current with local angle: Sometimes, (accurate) voltage measurements are not available for a branch,
 which means no power measurement is possible. While it is not straightforward to use magnitude-only measurements of currents in
 calculations, current phasor measurements can in fact be used in cases where it is possible to obtain a reasonably accurate
 measurement of the current amplitude and the relative phase angle to the voltage. In this way, we still have enough information
