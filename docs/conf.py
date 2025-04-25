@@ -30,7 +30,7 @@ if "READTHEDOCS" in os.environ:
 else:
     link_head_gh_blob = ""
     link_head_gh_tree = ""
-    pgm_project_root = "https://github.com/PowerGridModel/"
+    pgm_project_root = "https://github.com/PowerGridModel/.github/blob/main"
     pgm_project_contribution = pgm_project_root
 
 
@@ -82,6 +82,8 @@ myst_enable_extensions = [
 myst_substitutions = {
     "gh_link_head_blob": link_head_gh_blob,
     "gh_link_head_tree": link_head_gh_tree,
+    "pgm_project_root": pgm_project_root,
+    "pgm_project_contribution": pgm_project_contribution,
 }
 
 
