@@ -86,11 +86,8 @@ TEST_CASE("Test current sensor") {
                     sym_current_sensor.get_output<asymmetric_t>(conj(i_asym_local), ComplexValue<asymmetric_t>{1.0});
 
                 // Check symmetric sensor output for symmetric parameters
-                if (angle_measurement_type == AngleMeasurementType::global_angle) {
-                    CHECK(sym_sensor_param.angle_measurement_type == AngleMeasurementType::global_angle);
-                } else {
-                    CHECK(sym_sensor_param.angle_measurement_type == AngleMeasurementType::local_angle);
-                }
+                CHECK(sym_sensor_param.angle_measurement_type == angle_measurement_type);
+
                 // Var(I_Re) ≈ Var(I) * cos^2(pi/4) + Var(θ) * I^2 * sin^2(pi/4)
                 CHECK(sym_sensor_param.measurement.real_component.variance ==
                       doctest::Approx(0.5 * (i_variance_pu + i_angle_variance_pu * i_pu * i_pu)));
@@ -135,11 +132,7 @@ TEST_CASE("Test current sensor") {
                 }
 
                 CHECK(sym_current_sensor.get_terminal_type() == terminal_type);
-                if (angle_measurement_type == AngleMeasurementType::global_angle) {
-                    CHECK(sym_current_sensor.get_angle_measurement_type() == AngleMeasurementType::global_angle);
-                } else {
-                    CHECK(sym_current_sensor.get_angle_measurement_type() == AngleMeasurementType::local_angle);
-                }
+                CHECK(sym_current_sensor.get_angle_measurement_type() == angle_measurement_type);
             }
         }
         SUBCASE("Wrong measured terminal type") {
