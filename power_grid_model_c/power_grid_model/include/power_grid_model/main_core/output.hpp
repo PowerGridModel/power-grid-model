@@ -312,6 +312,14 @@ constexpr auto output_result(Component const& power_sensor, MainModelState<Compo
         throw MissingCaseForEnumError{std::format("{} output_result()", Component::name), terminal_type};
     }
 }
+template <std::derived_from<GenericPowerSensor> Component, class ComponentContainer,
+          short_circuit_solver_output_type SolverOutputType>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
+constexpr auto output_result(Component const& power_or_current_sensor,
+                             MainModelState<ComponentContainer> const& /* state */,
+                             std::vector<SolverOutputType> const& /* solver_output */, Idx const /* obj_seq */) {
+    return power_or_current_sensor.get_null_sc_output();
+}
 
 // output current sensor
 template <std::derived_from<GenericCurrentSensor> Component, class ComponentContainer,
@@ -371,7 +379,7 @@ constexpr auto output_result(Component const& current_sensor, MainModelState<Com
         throw MissingCaseForEnumError{std::format("{} output_result()", Component::name), terminal_type};
     }
 }
-template <power_or_current_sensor_c Component, class ComponentContainer,
+template <std::derived_from<GenericCurrentSensor> Component, class ComponentContainer,
           short_circuit_solver_output_type SolverOutputType>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr auto output_result(Component const& power_or_current_sensor,

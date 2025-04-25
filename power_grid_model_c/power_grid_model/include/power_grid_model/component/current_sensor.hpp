@@ -156,8 +156,8 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
         output.energized = 1; // current sensor is always energized
         auto i_output = i;
         auto const i_calc_param = calc_param<sym_calc>();
-        auto const& angle_measurement_type = i_calc_param.angle_measurement_type;
-        auto const& i_measured_complex = i_calc_param.measurement.value();
+        auto const angle_measurement_type = i_calc_param.angle_measurement_type;
+        auto const i_measured_complex = i_calc_param.measurement.value();
         if (angle_measurement_type == AngleMeasurementType::local_angle) {
             // I_l = conj(I_g) * exp(i * u_angle)
             // Tranform back the output angle to the local angle frame of reference

@@ -10,7 +10,7 @@ In this quick start a simple 10kV network as below is calculated.
 A line connects two nodes. One node has a source. The other node has a symmetric load.
 The full code for this section is provided in {{ "[quick_example.py]({}/scripts/quick_example.py)".format(gh_link_head_blob) }}.
 
-```
+```txt
 node_1 ---line_3--- node_2
  |                    |
 source_5            sym_load_4
@@ -57,7 +57,7 @@ node['u_rated'] = [10.5e3, 10.5e3]
 The code above generates a node input array with two nodes,
 and assigns the attributes of the nodes to the array.
 Similarly, we can create input arrays for line, load, and generation.
-A dictionary of such arrays is used for `input_data` and `update_data`. 
+A dictionary of such arrays is used for `input_data` and `update_data`.
 
 ```python
 # line
@@ -112,8 +112,8 @@ model = PowerGridModel(input_data, system_frequency=50.0)
 
 ## Power Flow Calculation
 
-To run calculations, use the object methods {py:class}`power_grid_model.PowerGridModel.calculate_power_flow` 
-or {py:class}`power_grid_model.PowerGridModel.calculate_state_estimation` functions. 
+To run calculations, use the object methods {py:class}`power_grid_model.PowerGridModel.calculate_power_flow`
+or {py:class}`power_grid_model.PowerGridModel.calculate_state_estimation` functions.
 Refer [Calculations](user_manual/calculations) for more details on the many optional arguments.
 
 ```python
@@ -134,7 +134,7 @@ print(pd.DataFrame(result['node']))
 
 The result data can then be viewed in tabular forms.
 
-```
+```txt
 Node Input
    id  u_rated
 0   1  10500.0

@@ -318,7 +318,7 @@ The msgpack serialization format is a compressed version of the [JSON serializat
 
 #### msgpack schema nil (absence of value)
 
-**NOTE:** This is the [`msgpack`](#msgpack-serialization-format-specification)-specific version of [absence of value](#msgpack-schema-absence-of-value).
+**NOTE:** This is the [`msgpack`](#msgpack-serialization-format-specification)-specific version of [absence of value](#msgpack-schema-nil-absence-of-value).
 For [JSON](#json-serialization-format-specification), refer to [absence of value for JSON](#json-schema-null-absence-of-value).
 
 - [absence of value](#msgpack-schema-nil-absence-of-value): `nil` (the byte `\xc0`)
