@@ -165,7 +165,18 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
             i_output = conj(i_output) * (cos(u_angle) + 1i * sin(u_angle));
         }
         output.i_residual = (cabs(i_measured_complex) - cabs(i_output)) * base_current_;
-        output.i_angle_residual = arg(i_measured_complex) - arg(i_output);
+        // arg(e^i * u_angle) = u_angle in (-pi, pi]
+        auto const unbounded_i_angle_residual = arg(i_measured_complex) - arg(i_output);
+        if constexpr (is_symmetric_v<sym_calc>) {
+            output.i_angle_residual = arg(ComplexValue<sym_calc>{cos(unbounded_i_angle_residual), sin(unbounded_i_angle_residual)});
+        } else {
+            output.i_angle_residual = arg(
+                ComplexValue<sym_calc>{
+                    cos(unbounded_i_angle_residual(0)) + 1i * sin(unbounded_i_angle_residual(0)),
+                    cos(unbounded_i_angle_residual(1)) + 1i * sin(unbounded_i_angle_residual(1)),
+                    cos(unbounded_i_angle_residual(2)) + 1i * sin(unbounded_i_angle_residual(2)),
+                });
+        }
         return output;
     }
 };

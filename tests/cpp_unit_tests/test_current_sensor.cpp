@@ -72,9 +72,6 @@ TEST_CASE("Test current sensor") {
                 CurrentSensorCalcParam<symmetric_t> sym_sensor_param = sym_current_sensor.calc_param<symmetric_t>();
                 CurrentSensorCalcParam<asymmetric_t> asym_sensor_param = sym_current_sensor.calc_param<asymmetric_t>();
 
-                // These two are only to test the residuals for local angle measurements.
-                // conj(i) simulates the phase shift for local angle output residuals when the reference voltage is
-                // real.
                 CurrentSensorOutput<symmetric_t> const sym_sensor_output =
                     (angle_measurement_type == AngleMeasurementType::global_angle)
                         ? sym_current_sensor.get_output<symmetric_t>(i_sym, ComplexValue<symmetric_t>{1.0})
@@ -127,62 +124,86 @@ TEST_CASE("Test current sensor") {
             for (auto const terminal_type :
                  {MeasuredTerminalType::source, MeasuredTerminalType::shunt, MeasuredTerminalType::load,
                   MeasuredTerminalType::generator, MeasuredTerminalType::node}) {
-                CHECK_THROWS_AS(
-                    (CurrentSensor<symmetric_t>{
-                        {1, 1, terminal_type, AngleMeasurementType::global_angle, 1.0, 1.0, 1.0, 1.0}, 1.0}),
-                    InvalidMeasuredTerminalType);
+                for (auto const angle_measurement_type :
+                     {AngleMeasurementType::global_angle, AngleMeasurementType::local_angle}) {
+                    CAPTURE(terminal_type);
+                    CAPTURE(angle_measurement_type);
+
+                    CHECK_THROWS_AS((CurrentSensor<symmetric_t>{
+                                        {1, 1, terminal_type, angle_measurement_type, 1.0, 1.0, 1.0, 1.0}, 1.0}),
+                                    InvalidMeasuredTerminalType);
+                }
             }
         }
         SUBCASE("Symmetric calculation parameters") {
             double const u_rated = 10.0e3;
             double const base_current = base_power_3p / u_rated / sqrt3;
+            for (auto const terminal_type :
+                 {MeasuredTerminalType::branch_from, MeasuredTerminalType::branch_to, MeasuredTerminalType::branch3_1,
+                  MeasuredTerminalType::branch3_2, MeasuredTerminalType::branch3_3}) {
+                for (auto const angle_measurement_type :
+                     {AngleMeasurementType::global_angle, AngleMeasurementType::local_angle}) {
+                    CurrentSensor<symmetric_t> sym_current_sensor{{.id = 1,
+                                                                   .measured_object = 1,
+                                                                   .measured_terminal_type = terminal_type,
+                                                                   .angle_measurement_type = angle_measurement_type},
+                                                                  u_rated};
 
-            CurrentSensor<symmetric_t> sym_current_sensor{
-                {.id = 1,
-                 .measured_object = 1,
-                 .measured_terminal_type = MeasuredTerminalType::branch3_1,
-                 .angle_measurement_type = AngleMeasurementType::global_angle},
-                u_rated};
+                    SUBCASE("No phase shift") {
+                        sym_current_sensor.update({.id = 1,
+                                                   .i_sigma = 1.0,
+                                                   .i_angle_sigma = 0.2,
+                                                   .i_measured = 1.0,
+                                                   .i_angle_measured = 0.0});
+                        auto const sym_param = sym_current_sensor.calc_param<symmetric_t>();
 
-            SUBCASE("No phase shift") {
-                sym_current_sensor.update(
-                    {.id = 1, .i_sigma = 1.0, .i_angle_sigma = 0.2, .i_measured = 1.0, .i_angle_measured = 0.0});
-                auto const sym_param = sym_current_sensor.calc_param<symmetric_t>();
+                        CHECK(sym_param.angle_measurement_type == angle_measurement_type);
+                        CHECK(sym_param.measurement.real_component.variance ==
+                              doctest::Approx(pow(1.0 / base_current, 2)));
+                        CHECK(sym_param.measurement.imag_component.variance ==
+                              doctest::Approx(pow(0.2 / base_current, 2)));
+                        CHECK(real(sym_param.measurement.value()) == doctest::Approx(1.0 / base_current));
+                        CHECK(imag(sym_param.measurement.value()) == doctest::Approx(0.0 / base_current));
+                    }
 
-                CHECK(sym_param.angle_measurement_type == AngleMeasurementType::global_angle);
-                CHECK(sym_param.measurement.real_component.variance == doctest::Approx(pow(1.0 / base_current, 2)));
-                CHECK(sym_param.measurement.imag_component.variance == doctest::Approx(pow(0.2 / base_current, 2)));
-                CHECK(real(sym_param.measurement.value()) == doctest::Approx(1.0 / base_current));
-                CHECK(imag(sym_param.measurement.value()) == doctest::Approx(0.0 / base_current));
-            }
+                    SUBCASE("90deg phase shift") {
+                        sym_current_sensor.update({.id = 1,
+                                                   .i_sigma = 1.0,
+                                                   .i_angle_sigma = 0.2,
+                                                   .i_measured = 1.0,
+                                                   .i_angle_measured = pi / 2});
+                        auto const sym_param = sym_current_sensor.calc_param<symmetric_t>();
 
-            SUBCASE("90deg phase shift") {
-                sym_current_sensor.update(
-                    {.id = 1, .i_sigma = 1.0, .i_angle_sigma = 0.2, .i_measured = 1.0, .i_angle_measured = pi / 2});
-                auto const sym_param = sym_current_sensor.calc_param<symmetric_t>();
+                        CHECK(sym_param.angle_measurement_type == angle_measurement_type);
+                        CHECK(sym_param.measurement.real_component.variance ==
+                              doctest::Approx(pow(0.2 / base_current, 2)));
+                        CHECK(sym_param.measurement.imag_component.variance ==
+                              doctest::Approx(pow(1.0 / base_current, 2)));
+                        CHECK(real(sym_param.measurement.value()) == doctest::Approx(0.0 / base_current));
+                        CHECK(imag(sym_param.measurement.value()) == doctest::Approx(1.0 / base_current));
+                    }
 
-                CHECK(sym_param.angle_measurement_type == AngleMeasurementType::global_angle);
-                CHECK(sym_param.measurement.real_component.variance == doctest::Approx(pow(0.2 / base_current, 2)));
-                CHECK(sym_param.measurement.imag_component.variance == doctest::Approx(pow(1.0 / base_current, 2)));
-                CHECK(real(sym_param.measurement.value()) == doctest::Approx(0.0 / base_current));
-                CHECK(imag(sym_param.measurement.value()) == doctest::Approx(1.0 / base_current));
-            }
+                    SUBCASE("45deg phase shift") {
+                        using std::numbers::sqrt2;
+                        constexpr auto inv_sqrt2 = sqrt2 / 2;
 
-            SUBCASE("45deg phase shift") {
-                using std::numbers::sqrt2;
-                constexpr auto inv_sqrt2 = sqrt2 / 2;
+                        sym_current_sensor.update({.id = 1,
+                                                   .i_sigma = 1.0,
+                                                   .i_angle_sigma = 0.2,
+                                                   .i_measured = 1.0,
+                                                   .i_angle_measured = pi / 4});
+                        auto const sym_param = sym_current_sensor.calc_param<symmetric_t>();
 
-                sym_current_sensor.update(
-                    {.id = 1, .i_sigma = 1.0, .i_angle_sigma = 0.2, .i_measured = 1.0, .i_angle_measured = pi / 4});
-                auto const sym_param = sym_current_sensor.calc_param<symmetric_t>();
-
-                CHECK(sym_param.angle_measurement_type == AngleMeasurementType::global_angle);
-                CHECK(sym_param.measurement.real_component.variance ==
-                      doctest::Approx(1.04 / 2.0 / (base_current * base_current)));
-                CHECK(sym_param.measurement.imag_component.variance ==
-                      doctest::Approx(sym_param.measurement.real_component.variance));
-                CHECK(real(sym_param.measurement.value()) == doctest::Approx(inv_sqrt2 / base_current));
-                CHECK(imag(sym_param.measurement.value()) == doctest::Approx(real(sym_param.measurement.value())));
+                        CHECK(sym_param.angle_measurement_type == angle_measurement_type);
+                        CHECK(sym_param.measurement.real_component.variance ==
+                              doctest::Approx(1.04 / 2.0 / (base_current * base_current)));
+                        CHECK(sym_param.measurement.imag_component.variance ==
+                              doctest::Approx(sym_param.measurement.real_component.variance));
+                        CHECK(real(sym_param.measurement.value()) == doctest::Approx(inv_sqrt2 / base_current));
+                        CHECK(imag(sym_param.measurement.value()) ==
+                              doctest::Approx(real(sym_param.measurement.value())));
+                    }
+                }
             }
         }
     }
@@ -260,7 +281,6 @@ TEST_CASE("Test current sensor") {
         constexpr auto i_sigma = 3.0;
         constexpr auto i_angle_sigma = 4.0;
         constexpr auto u_rated = 10.0e3;
-        MeasuredTerminalType const measured_terminal_type = MeasuredTerminalType::branch_from;
 
         CurrentSensorUpdate<asymmetric_t> cs_update{
             .id = 1, .i_sigma = nan, .i_angle_sigma = nan, .i_measured = r_nan, .i_angle_measured = r_nan};
@@ -319,7 +339,7 @@ TEST_CASE("Test current sensor") {
 
         CurrentSensor<asymmetric_t> const current_sensor{{.id = 1,
                                                           .measured_object = 1,
-                                                          .measured_terminal_type = measured_terminal_type,
+                                                          .measured_terminal_type = MeasuredTerminalType::branch_from,
                                                           .angle_measurement_type = AngleMeasurementType::global_angle,
                                                           .i_sigma = i_sigma,
                                                           .i_angle_sigma = i_angle_sigma,
