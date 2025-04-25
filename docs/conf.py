@@ -26,7 +26,7 @@ if "READTHEDOCS" in os.environ:
     link_head_gh_blob = link_head_gh + "blob/" + commit_version
     link_head_gh_tree = link_head_gh + "tree/" + commit_version
     pgm_project_root = ""
-    pgm_project_contribution = pgm_project_root + "/contributing"
+    pgm_project_contribution = pgm_project_root + "/contribution"
 else:
     link_head_gh_blob = ""
     link_head_gh_tree = ""
