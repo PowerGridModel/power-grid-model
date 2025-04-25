@@ -20,7 +20,7 @@ following layers of abstraction, in increasing order of ease-of-use and abstract
   * System symbols only
   * Everything is handled by the user, including which symbols are supported
 * Exposition-only
-  * Exposition-only interface of the symbols in a language supported by the user
+  * Exposes the supported symbols in a language supported by the user
   * Memory management and error handling is the responsibility of the user
 * Simple wrapper
   * Wraps the interface in a language supported by the user
