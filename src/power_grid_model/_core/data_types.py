@@ -160,6 +160,13 @@ SparseBatchData = SparseBatchArray | SparseBatchColumnarData
 Sparse batch data can be a :class:`SparseBatchArray` or a :class:`SparseBatchColumnarData`.
 """
 
+SparseDataComponentType: TypeAlias = str
+"""
+A string representing the component type of sparse data structures.
+
+Must be either "data" or "indptr".
+"""
+
 BatchColumnarData = DenseBatchColumnarData | SparseBatchColumnarData
 """
 Batch columnar data is either a :class:`DenseBatchColumnarData` or a :class:`SparseBatchColumnarData`.
