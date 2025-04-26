@@ -8,10 +8,18 @@ import pytest
 
 from power_grid_model import PowerGridModel
 from power_grid_model._core.power_grid_meta import initialize_array
-from power_grid_model.enum import CalculationMethod, LoadGenType, MeasuredTerminalType, TapChangingStrategy
+from power_grid_model.enum import (
+    AngleMeasurementType,
+    CalculationMethod,
+    LoadGenType,
+    MeasuredTerminalType,
+    TapChangingStrategy,
+    _ExperimentalFeatures,
+)
 from power_grid_model.errors import (
     AutomaticTapInputError,
     ConflictID,
+    ConflictingAngleMeasurementType,
     ConflictVoltage,
     IDNotFound,
     IDWrongType,
@@ -222,7 +230,8 @@ def test_handle_id_not_found_error():
         PowerGridModel(input_data={"node": node_input, "source": source_input})
 
 
-def test_handle_invalid_measured_object_error():
+@pytest.mark.parametrize("sensor_type", ["sym_power_sensor", "sym_current_sensor"])
+def test_handle_invalid_measured_object_error(sensor_type):
     node_input = initialize_array("input", "node", 2)
     node_input["id"] = [0, 1]
     node_input["u_rated"] = [0.0, 0.0]
@@ -232,13 +241,13 @@ def test_handle_invalid_measured_object_error():
     link_input["from_node"] = [0]
     link_input["to_node"] = [1]
 
-    sym_power_sensor_input = initialize_array("input", "sym_power_sensor", 1)
-    sym_power_sensor_input["id"] = [3]
-    sym_power_sensor_input["measured_object"] = [2]
-    sym_power_sensor_input["measured_terminal_type"] = [MeasuredTerminalType.branch_from]
+    sensor_input = initialize_array("input", sensor_type, 1)
+    sensor_input["id"] = [3]
+    sensor_input["measured_object"] = [2]
+    sensor_input["measured_terminal_type"] = [MeasuredTerminalType.branch_from]
 
     with pytest.raises(InvalidMeasuredObject):
-        PowerGridModel(input_data={"node": node_input, "link": link_input, "sym_power_sensor": sym_power_sensor_input})
+        PowerGridModel(input_data={"node": node_input, "link": link_input, sensor_type: sensor_input})
 
 
 def test_handle_invalid_regulated_object_error():
@@ -347,6 +356,107 @@ def test_transformer_tap_regulator_control_side_not_closer_to_source():
 def test_automatic_tap_changing():
     model = PowerGridModel(input_data={})
     model.calculate_power_flow(tap_changing_strategy=TapChangingStrategy.min_voltage_tap)
+
+
+def test_conflicting_angle_measurement_type() -> None:
+    node_input = initialize_array("input", "node", 2)
+    node_input["id"] = [0, 1]
+    node_input["u_rated"] = [10e3, 10e3]
+
+    line_input = initialize_array("input", "line", 1)
+    line_input["id"] = [2]
+    line_input["from_node"] = [0]
+    line_input["to_node"] = [1]
+
+    source_input = initialize_array("input", "source", 1)
+    source_input["id"] = [3]
+    source_input["node"] = [0]
+    source_input["status"] = [1]
+    source_input["u_ref"] = [1.0]
+
+    sym_voltage_sensor_input = initialize_array("input", "sym_voltage_sensor", 1)
+    sym_voltage_sensor_input["id"] = [4]
+    sym_voltage_sensor_input["measured_object"] = [0]
+    sym_voltage_sensor_input["u_sigma"] = [1.0]
+    sym_voltage_sensor_input["u_measured"] = [1.0]
+    sym_voltage_sensor_input["u_angle_measured"] = [0.0]
+
+    sym_current_sensor_input = initialize_array("input", "sym_current_sensor", 2)
+    sym_current_sensor_input["id"] = [5, 6]
+    sym_current_sensor_input["measured_object"] = [2, 2]
+    sym_current_sensor_input["measured_terminal_type"] = [
+        MeasuredTerminalType.branch_from,
+        MeasuredTerminalType.branch_from,
+    ]
+    sym_current_sensor_input["angle_measurement_type"] = [
+        AngleMeasurementType.local_angle,
+        AngleMeasurementType.global_angle,
+    ]
+    sym_current_sensor_input["i_sigma"] = [1.0, 1.0]
+    sym_current_sensor_input["i_angle_sigma"] = [1.0, 1.0]
+    sym_current_sensor_input["i_measured"] = [0.0, 0.0]
+    sym_current_sensor_input["i_angle_measured"] = [0.0, 0.0]
+
+    model = PowerGridModel(
+        input_data={
+            "node": node_input,
+            "line": line_input,
+            "source": source_input,
+            "sym_voltage_sensor": sym_voltage_sensor_input,
+            "sym_current_sensor": sym_current_sensor_input,
+        }
+    )
+
+    with pytest.raises(ConflictingAngleMeasurementType):
+        model._calculate_state_estimation(decode_error=True, experimental_features=_ExperimentalFeatures.enabled)
+
+
+def test_global_current_measurement_without_voltage_angle() -> None:
+    node_input = initialize_array("input", "node", 2)
+    node_input["id"] = [0, 1]
+    node_input["u_rated"] = [10e3, 10e3]
+
+    line_input = initialize_array("input", "line", 1)
+    line_input["id"] = [2]
+    line_input["from_node"] = [0]
+    line_input["to_node"] = [1]
+
+    source_input = initialize_array("input", "source", 1)
+    source_input["id"] = [3]
+    source_input["node"] = [0]
+    source_input["status"] = [1]
+    source_input["u_ref"] = [1.0]
+
+    sym_voltage_sensor_input = initialize_array("input", "sym_voltage_sensor", 1)
+    sym_voltage_sensor_input["id"] = [4]
+    sym_voltage_sensor_input["measured_object"] = [0]
+    sym_voltage_sensor_input["u_sigma"] = [1.0]
+    sym_voltage_sensor_input["u_measured"] = [0.0]
+
+    sym_current_sensor_input = initialize_array("input", "sym_current_sensor", 1)
+    sym_current_sensor_input["id"] = [5]
+    sym_current_sensor_input["measured_object"] = [2]
+    sym_current_sensor_input["measured_terminal_type"] = [
+        MeasuredTerminalType.branch_from,
+    ]
+    sym_current_sensor_input["angle_measurement_type"] = [
+        AngleMeasurementType.global_angle,
+    ]
+    sym_current_sensor_input["i_sigma"] = [1.0]
+    sym_current_sensor_input["i_measured"] = [0.0]
+
+    model = PowerGridModel(
+        input_data={
+            "node": node_input,
+            "line": line_input,
+            "source": source_input,
+            "sym_voltage_sensor": sym_voltage_sensor_input,
+            "sym_current_sensor": sym_current_sensor_input,
+        }
+    )
+
+    with pytest.raises(NotObservableError):
+        model._calculate_state_estimation(decode_error=True, experimental_features=_ExperimentalFeatures.enabled)
 
 
 @pytest.mark.skip(reason="TODO")

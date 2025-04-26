@@ -101,6 +101,10 @@ class AutomaticTapInputError(PowerGridError):
     """Automatic tap changer has invalid configuration."""
 
 
+class ConflictingAngleMeasurementType(PowerGridError):
+    """Conflicting angle measurement types found."""
+
+
 class InvalidShortCircuitPhaseOrType(PowerGridError):
     """Invalid (combination of) short circuit types and phase(s) provided."""
 

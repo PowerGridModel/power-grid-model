@@ -39,13 +39,13 @@ class InvalidArguments : public PowerGridError {
     };
 
     template <std::same_as<TypeValuePair>... Options>
-    InvalidArguments(std::string const& method, std::string const& arguments) {
+    InvalidArguments(std::string_view method, std::string_view arguments) {
         append_msg(std::format("{} is not implemented for {}!\n", method, arguments));
     }
 
     template <class... Options>
         requires(std::same_as<std::remove_cvref_t<Options>, TypeValuePair> && ...)
-    InvalidArguments(std::string const& method, Options const&... options)
+    InvalidArguments(std::string_view method, Options const&... options)
         : InvalidArguments{method, "the following combination of options"} {
         (append_msg(std::format(" {}: {}\n", options.name, options.value)), ...);
     }
@@ -54,7 +54,7 @@ class InvalidArguments : public PowerGridError {
 class MissingCaseForEnumError : public InvalidArguments {
   public:
     template <typename T>
-    MissingCaseForEnumError(std::string const& method, T const& value)
+    MissingCaseForEnumError(std::string_view method, T const& value)
         : InvalidArguments{method,
                            std::format("{} #{}", typeid(T).name(), detail::to_string(static_cast<IntS>(value)))} {}
 };
@@ -97,7 +97,7 @@ class InvalidTransformerClock : public PowerGridError {
 
 class SparseMatrixError : public PowerGridError {
   public:
-    SparseMatrixError(Idx err, std::string const& msg = "") {
+    SparseMatrixError(Idx err, std::string_view msg = "") {
         append_msg(
             std::format("Sparse matrix error with error code #{} (possibly singular)\n", detail::to_string(err)));
         if (!msg.empty()) {
@@ -117,7 +117,7 @@ class SparseMatrixError : public PowerGridError {
 
 class NotObservableError : public PowerGridError {
   public:
-    NotObservableError(std::string const& msg = "") {
+    NotObservableError(std::string_view msg = "") {
         append_msg("Not enough measurements available for state estimation.\n");
         if (!msg.empty()) {
             append_msg(std::format("{}\n", msg));
@@ -137,7 +137,7 @@ class IterationDiverge : public PowerGridError {
 
 class MaxIterationReached : public IterationDiverge {
   public:
-    MaxIterationReached(std::string const& msg = "") {
+    MaxIterationReached(std::string_view msg = "") {
         append_msg(std::format("Maximum number of iterations reached{}\n", msg));
     }
 };
@@ -161,14 +161,14 @@ class Idx2DNotFound : public PowerGridError {
 
 class InvalidMeasuredObject : public PowerGridError {
   public:
-    InvalidMeasuredObject(std::string const& object, std::string const& sensor) {
+    InvalidMeasuredObject(std::string_view object, std::string_view sensor) {
         append_msg(std::format("{} measurement is not supported for object of type {}", sensor, object));
     }
 };
 
 class InvalidMeasuredTerminalType : public PowerGridError {
   public:
-    InvalidMeasuredTerminalType(MeasuredTerminalType const terminal_type, std::string const& sensor) {
+    InvalidMeasuredTerminalType(MeasuredTerminalType const terminal_type, std::string_view sensor) {
         append_msg(std::format("{} measurement is not supported for object of type {}", sensor,
                                detail::to_string(static_cast<IntS>(terminal_type))));
     }
@@ -176,10 +176,10 @@ class InvalidMeasuredTerminalType : public PowerGridError {
 
 class InvalidRegulatedObject : public PowerGridError {
   public:
-    InvalidRegulatedObject(std::string const& object, std::string const& regulator) {
+    InvalidRegulatedObject(std::string_view object, std::string_view regulator) {
         append_msg(std::format("{} regulator is not supported for object of type {}", regulator, object));
     }
-    InvalidRegulatedObject(ID id, std::string const& regulator) {
+    InvalidRegulatedObject(ID id, std::string_view regulator) {
         append_msg(
             std::format("{} regulator is not supported for object with ID {}", regulator, detail::to_string(id)));
     }
@@ -203,7 +203,7 @@ class AutomaticTapCalculationError : public PowerGridError {
 
 class AutomaticTapInputError : public PowerGridError {
   public:
-    AutomaticTapInputError(std::string const& msg) {
+    AutomaticTapInputError(std::string_view msg) {
         append_msg(std::format("Automatic tap changer has invalid configuration. {}", msg));
     }
 };
@@ -215,14 +215,21 @@ class IDWrongType : public PowerGridError {
     }
 };
 
+class ConflictingAngleMeasurementType : public PowerGridError {
+  public:
+    ConflictingAngleMeasurementType(std::string_view msg) {
+        append_msg(std::format("Conflicting angle measurement type. {}", msg));
+    }
+};
+
 class CalculationError : public PowerGridError {
   public:
-    explicit CalculationError(std::string const& msg) { append_msg(msg); }
+    explicit CalculationError(std::string_view msg) { append_msg(msg); }
 };
 
 class BatchCalculationError : public CalculationError {
   public:
-    BatchCalculationError(std::string const& msg, IdxVector failed_scenarios, std::vector<std::string> err_msgs)
+    BatchCalculationError(std::string_view msg, IdxVector failed_scenarios, std::vector<std::string> err_msgs)
         : CalculationError(msg), failed_scenarios_{std::move(failed_scenarios)}, err_msgs_(std::move(err_msgs)) {}
 
     IdxVector const& failed_scenarios() const { return failed_scenarios_; }
@@ -270,12 +277,12 @@ class InvalidShortCircuitPhaseOrType : public PowerGridError {
 
 class SerializationError : public PowerGridError {
   public:
-    explicit SerializationError(std::string const& msg) { append_msg(msg); }
+    explicit SerializationError(std::string_view msg) { append_msg(msg); }
 };
 
 class DatasetError : public PowerGridError {
   public:
-    explicit DatasetError(std::string const& msg) { append_msg(std::format("Dataset error: {}", msg)); }
+    explicit DatasetError(std::string_view msg) { append_msg(std::format("Dataset error: {}", msg)); }
 };
 
 class ExperimentalFeature : public InvalidArguments {
@@ -289,7 +296,7 @@ class NotImplementedError : public PowerGridError {
 
 class UnreachableHit : public PowerGridError {
   public:
-    UnreachableHit(std::string const& method, std::string const& reason_for_assumption) {
+    UnreachableHit(std::string_view method, std::string_view reason_for_assumption) {
         append_msg(std::format("Unreachable code hit when executing {}.\n The following assumption for unreachability "
                                "was not met: {}.\n This may be a bug in the library\n",
                                method, reason_for_assumption));
@@ -299,7 +306,7 @@ class UnreachableHit : public PowerGridError {
 class TapSearchStrategyIncompatibleError : public InvalidArguments {
   public:
     template <typename T1, typename T2>
-    TapSearchStrategyIncompatibleError(std::string const& method, T1 const& value1, T2 const& value2)
+    TapSearchStrategyIncompatibleError(std::string_view method, T1 const& value1, T2 const& value2)
         : InvalidArguments{method, std::format("{} #{} and {} #{}", typeid(T1).name(),
                                                detail::to_string(static_cast<IntS>(value1)), typeid(T2).name(),
                                                detail::to_string(static_cast<IntS>(value2)))} {}

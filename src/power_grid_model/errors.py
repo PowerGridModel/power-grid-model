@@ -11,6 +11,7 @@ from power_grid_model._core.errors import (  # pylint: disable=unused-import
     AutomaticTapCalculationError,
     AutomaticTapInputError,
     ConflictID,
+    ConflictingAngleMeasurementType,
     ConflictVoltage,
     IDNotFound,
     IDWrongType,

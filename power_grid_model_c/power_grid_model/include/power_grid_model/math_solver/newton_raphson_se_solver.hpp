@@ -91,6 +91,8 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
     using sym = sym_type;
 
     static constexpr auto is_iterative = true;
+    static constexpr auto has_current_sensor_implemented =
+        false; // TODO(mgovers): for testing purposes; remove after NRSE has current sensor implemented
 
   private:
     enum class Order : IntS { row_major = 0, column_major = 1 };
@@ -212,6 +214,8 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
     typename SparseLUSolver<NRSEGainBlock<sym>, NRSERhs<sym>, NRSEUnknown<sym>>::BlockPermArray perm_;
 
     void initialize_unknown(ComplexValueVector<sym>& initial_u, MeasuredValues<sym> const& measured_values) {
+        using statistics::detail::cabs_or_real;
+
         reset_unknown();
         RealValue<sym> const mean_angle_shift = measured_values.mean_angle_shift();
         for (Idx bus = 0; bus != n_bus_; ++bus) {
@@ -222,7 +226,7 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
                 if (measured_values.has_angle_measurement(bus)) {
                     estimated_result.theta() = arg(measured_values.voltage(bus));
                 }
-                estimated_result.v() = detail::cabs_or_real<sym>(measured_values.voltage(bus));
+                estimated_result.v() = cabs_or_real<sym>(measured_values.voltage(bus));
             }
             initial_u[bus] = estimated_result.v() * exp(1.0i * estimated_result.theta());
         }
@@ -304,14 +308,14 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
                         [[fallthrough]];
                     case YBusElementType::btf: {
                         auto const& y_branch = param.branch_param[obj];
-                        if (measured_values.has_branch_from(obj)) {
+                        if (measured_values.has_branch_from_power(obj)) {
                             auto const ij_voltage_order =
                                 (type == YBusElementType::bft) ? Order::row_major : Order::column_major;
                             process_branch_measurement(block, diag_block, rhs_block, y_branch.yff(), y_branch.yft(),
                                                        u_state, ij_voltage_order,
                                                        measured_values.branch_from_power(obj));
                         }
-                        if (measured_values.has_branch_to(obj)) {
+                        if (measured_values.has_branch_to_power(obj)) {
                             auto const ij_voltage_order =
                                 (type == YBusElementType::btf) ? Order::row_major : Order::column_major;
                             process_branch_measurement(block, diag_block, rhs_block, y_branch.ytt(), y_branch.ytf(),
@@ -530,6 +534,8 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
     /// @param bus bus with voltage measurement
     void process_voltage_measurements(NRSEGainBlock<sym>& block, NRSERhs<sym>& rhs_block,
                                       MeasuredValues<sym> const& measured_values, Idx const& bus) {
+        using statistics::detail::cabs_or_real;
+
         if (!measured_values.has_voltage(bus)) {
             return;
         }
@@ -537,7 +543,7 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
         // G += 1.0 / variance
         // for 3x3 tensor, fill diagonal
         auto const w_v = RealTensor<sym>{1.0 / measured_values.voltage_var(bus)};
-        auto const abs_measured_v = detail::cabs_or_real<sym>(measured_values.voltage(bus));
+        auto const abs_measured_v = cabs_or_real<sym>(measured_values.voltage(bus));
         auto const delta_v = abs_measured_v - x_[bus].v();
 
         auto const virtual_angle_measurement_bus = measured_values.has_voltage(math_topo_->slack_bus)
