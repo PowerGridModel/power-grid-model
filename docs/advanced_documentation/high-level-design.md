@@ -146,7 +146,7 @@ flowchart TD
 
 ## Creating a custom library or interface
 
-We seek to provide an optimal user experience, but with sheer amount of programming languages and
+We seek to provide an optimal user experience, but with the sheer amount of programming languages and
 features, it would be impossible to provide a full feature-rich library for every single one. We,
 being a {{ "[community-driven]({}/GOVERNANCE.md)".format(pgm_project_contribution) }} project strongly in
 favor of modern software engineering practices, therefore encourage people to create their own
