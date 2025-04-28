@@ -154,29 +154,29 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
         CurrentSensorOutput<sym_calc> output{};
         output.id = id();
         output.energized = 1; // current sensor is always energized
-        auto i_output = i;
         auto const i_calc_param = calc_param<sym_calc>();
         auto const angle_measurement_type = i_calc_param.angle_measurement_type;
         auto const i_measured_complex = i_calc_param.measurement.value();
-        if (angle_measurement_type == AngleMeasurementType::local_angle) {
-            // I_l = conj(I_g) * exp(i * u_angle)
-            // Tranform back the output angle to the local angle frame of reference
-            auto const u_angle = arg(u);
-            i_output = conj(i_output) * (cos(u_angle) + 1i * sin(u_angle));
-        }
+        ComplexValue<sym_calc> i_output = [&i, &u, &angle_measurement_type] {
+            switch (angle_measurement_type) {
+            case AngleMeasurementType::global_angle: {
+                return i;
+            }
+            case AngleMeasurementType::local_angle: {
+                // I_l = conj(I_g) * exp(i * u_angle)
+                // Tranform back the output angle to the local angle frame of reference
+                auto const u_angle = arg(u);
+                return ComplexValue<sym_calc>{conj(i) * (cos(u_angle) + 1i * sin(u_angle))};
+            }
+            default: {
+                throw MissingCaseForEnumError{"generic output angle measurement type", angle_measurement_type};
+            }
+            }
+        }();
         output.i_residual = (cabs(i_measured_complex) - cabs(i_output)) * base_current_;
         // arg(e^i * u_angle) = u_angle in (-pi, pi]
         auto const unbounded_i_angle_residual = arg(i_measured_complex) - arg(i_output);
-        if constexpr (is_symmetric_v<sym_calc>) {
-            output.i_angle_residual =
-                arg(ComplexValue<sym_calc>{cos(unbounded_i_angle_residual), sin(unbounded_i_angle_residual)});
-        } else {
-            output.i_angle_residual = arg(ComplexValue<sym_calc>{
-                cos(unbounded_i_angle_residual(0)) + 1i * sin(unbounded_i_angle_residual(0)),
-                cos(unbounded_i_angle_residual(1)) + 1i * sin(unbounded_i_angle_residual(1)),
-                cos(unbounded_i_angle_residual(2)) + 1i * sin(unbounded_i_angle_residual(2)),
-            });
-        }
+        output.i_angle_residual = arg(ComplexValue<sym_calc>{exp(1.0i * unbounded_i_angle_residual)});
         return output;
     }
 };

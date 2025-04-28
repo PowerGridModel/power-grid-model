@@ -56,16 +56,13 @@ TEST_CASE("Test current sensor") {
                 double const i_angle_sigma_pi = 0.2;
                 double const i_angle_variance_pu = i_angle_sigma_pi * i_angle_sigma_pi;
 
-                auto const i_sym =
-                    ComplexValue<symmetric_t>{(1e3 * cos(i_angle) + 1i * 1e3 * sin(i_angle)) / base_current};
-                auto const i_asym = ComplexValue<asymmetric_t>{
-                    (1e3 * cos(i_angle) + 1i * 1e3 * sin(i_angle)) / base_current,
-                    (1e3 * cos(i_angle + deg_240) + 1i * 1e3 * sin(i_angle + deg_240)) / base_current,
-                    (1e3 * cos(i_angle + deg_120) + 1i * 1e3 * sin(i_angle + deg_120)) / base_current};
-                auto const i_asym_local =
-                    ComplexValue<asymmetric_t>{(1e3 * cos(i_angle) + 1i * 1e3 * sin(i_angle)) / base_current,
-                                               (1e3 * cos(i_angle) + 1i * 1e3 * sin(i_angle)) / base_current,
-                                               (1e3 * cos(i_angle) + 1i * 1e3 * sin(i_angle)) / base_current};
+                auto const i_sym = ComplexValue<symmetric_t>{(1e3 * exp(1.0i * i_angle)) / base_current};
+                auto const i_asym = ComplexValue<asymmetric_t>{(1e3 * exp(1.0i * i_angle)) / base_current,
+                                                               (1e3 * exp(1.0i * (i_angle + deg_240))) / base_current,
+                                                               (1e3 * exp(1.0i * (i_angle + deg_120))) / base_current};
+                auto const i_asym_local = ComplexValue<asymmetric_t>{(1e3 * exp(1.0i * i_angle)) / base_current,
+                                                                     (1e3 * exp(1.0i * i_angle)) / base_current,
+                                                                     (1e3 * exp(1.0i * i_angle)) / base_current};
 
                 CurrentSensor<symmetric_t> const sym_current_sensor{sym_current_sensor_input, u_rated};
 
@@ -111,7 +108,7 @@ TEST_CASE("Test current sensor") {
 
                 CHECK(sym_sensor_output_asym_param.id == 0);
                 CHECK(sym_sensor_output_asym_param.energized == 1);
-                for (auto phase = 0; phase < 3; ++phase) {
+                for (auto phase : IdxRange{3}) {
                     CAPTURE(phase);
                     CHECK(sym_sensor_output_asym_param.i_residual[phase] == doctest::Approx(0.0));
                     CHECK(sym_sensor_output_asym_param.i_angle_residual[phase] == doctest::Approx(0.0));
