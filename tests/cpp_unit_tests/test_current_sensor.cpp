@@ -43,7 +43,7 @@ auto const terminal_and_angle_measurement_types = [] {
 
 TEST_CASE("Test current sensor") {
     SUBCASE("Symmetric Current Sensor") {
-        for (auto const [terminal_type, angle_measurement_type] : terminal_and_angle_measurement_types) {
+        for (auto const& [terminal_type, angle_measurement_type] : terminal_and_angle_measurement_types) {
             CAPTURE(terminal_type);
             CAPTURE(angle_measurement_type);
 
@@ -131,7 +131,7 @@ TEST_CASE("Test current sensor") {
             }
         }
         SUBCASE("Wrong measured terminal type") {
-            for (auto const terminal_type :
+            for (auto const& terminal_type :
                  {MeasuredTerminalType::source, MeasuredTerminalType::shunt, MeasuredTerminalType::load,
                   MeasuredTerminalType::generator, MeasuredTerminalType::node}) {
                 for (auto const angle_measurement_type :
@@ -148,7 +148,7 @@ TEST_CASE("Test current sensor") {
         SUBCASE("Symmetric calculation parameters") {
             double const u_rated = 10.0e3;
             double const base_current = base_power_3p / u_rated / sqrt3;
-            for (auto const [terminal_type, angle_measurement_type] : terminal_and_angle_measurement_types) {
+            for (auto const& [terminal_type, angle_measurement_type] : terminal_and_angle_measurement_types) {
                 CurrentSensor<symmetric_t> sym_current_sensor{{.id = 1,
                                                                .measured_object = 1,
                                                                .measured_terminal_type = terminal_type,
