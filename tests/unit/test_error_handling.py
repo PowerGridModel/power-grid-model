@@ -230,7 +230,8 @@ def test_handle_id_not_found_error():
         PowerGridModel(input_data={"node": node_input, "source": source_input})
 
 
-def test_handle_invalid_measured_object_error():
+@pytest.mark.parametrize("sensor_type", ["sym_power_sensor", "sym_current_sensor"])
+def test_handle_invalid_measured_object_error(sensor_type):
     node_input = initialize_array("input", "node", 2)
     node_input["id"] = [0, 1]
     node_input["u_rated"] = [0.0, 0.0]
@@ -240,13 +241,13 @@ def test_handle_invalid_measured_object_error():
     link_input["from_node"] = [0]
     link_input["to_node"] = [1]
 
-    sym_power_sensor_input = initialize_array("input", "sym_power_sensor", 1)
-    sym_power_sensor_input["id"] = [3]
-    sym_power_sensor_input["measured_object"] = [2]
-    sym_power_sensor_input["measured_terminal_type"] = [MeasuredTerminalType.branch_from]
+    sensor_input = initialize_array("input", sensor_type, 1)
+    sensor_input["id"] = [3]
+    sensor_input["measured_object"] = [2]
+    sensor_input["measured_terminal_type"] = [MeasuredTerminalType.branch_from]
 
     with pytest.raises(InvalidMeasuredObject):
-        PowerGridModel(input_data={"node": node_input, "link": link_input, "sym_power_sensor": sym_power_sensor_input})
+        PowerGridModel(input_data={"node": node_input, "link": link_input, sensor_type: sensor_input})
 
 
 def test_handle_invalid_regulated_object_error():
@@ -323,10 +324,22 @@ def test_transformer_tap_regulator_control_side_not_closer_to_source():
     transformer_input["to_node"] = [1]
     transformer_input["from_status"] = [1]
     transformer_input["to_status"] = [1]
+    transformer_input["u1"] = [1e4]
+    transformer_input["u2"] = [4e2]
+    transformer_input["sn"] = [1e5]
+    transformer_input["uk"] = [0.1]
+    transformer_input["pk"] = [1e3]
+    transformer_input["i0"] = [1.0e-6]
+    transformer_input["p0"] = [0.1]
     transformer_input["winding_from"] = [1]
     transformer_input["winding_to"] = [1]
     transformer_input["clock"] = [0]
     transformer_input["tap_side"] = [1]
+    transformer_input["tap_pos"] = [0]
+    transformer_input["tap_nom"] = [0]
+    transformer_input["tap_min"] = [-1]
+    transformer_input["tap_max"] = [1]
+    transformer_input["tap_size"] = [100]
 
     source_input = initialize_array("input", "source", 1)
     source_input["id"] = [3]
@@ -338,6 +351,8 @@ def test_transformer_tap_regulator_control_side_not_closer_to_source():
     transformer_tap_regulator_input["id"] = [4]
     transformer_tap_regulator_input["regulated_object"] = [2]
     transformer_tap_regulator_input["status"] = [1]
+    transformer_tap_regulator_input["u_set"] = [10]
+    transformer_tap_regulator_input["u_band"] = [200]
     transformer_tap_regulator_input["control_side"] = [0]
 
     model = PowerGridModel(

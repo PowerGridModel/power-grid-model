@@ -4,12 +4,13 @@ SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridm
 SPDX-License-Identifier: MPL-2.0
 -->
 
-## Network Test Case: Transmission grid
+# Network Test Case: Transmission grid
 
-Test case representing a typical transmission grid. 
+Test case representing a typical transmission grid.
 
 The circuit diagram is as follows (The node 6 is same in both lines):
-```
+
+```txt
     Gen(_21)---|_1--transformer(_30)--|_3--line(_12)-----|              |---line(_14)----------|
                                                          |--line(_13)---|                      |
                        Gen(_22)---|_2--transformer(_31)--|_4            |_5-------line(_15)----|_6

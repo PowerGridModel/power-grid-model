@@ -13,11 +13,6 @@ on:
         type: boolean
         description: Create a (pre-)release when CI passes
         required: true
-    secrets:
-      PYPI_USER:
-        required: true
-      PYPI_PASS:
-        required: true
   # run this workflow manually from the Actions tab
   workflow_dispatch:
     inputs:
@@ -44,12 +39,13 @@ jobs:
           python-version: "3.12"
 
       - name: Set PyPI Version
-        run: |
-          pip install requests build
-          python set_pypi_version.py
+        uses: PowerGridModel/pgm-version-bump@main
 
       - name: Build SDist
-        run: python -m build --sdist --outdir wheelhouse .
+        run: |
+          cat PYPI_VERSION
+          pip install build
+          python -m build --sdist --outdir wheelhouse .
 
       - name: Keep version file
         uses: actions/upload-artifact@v4
@@ -212,7 +208,7 @@ jobs:
           xcode-version: latest-stable
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.23.2
+        uses: pypa/cibuildwheel@v2.23.3
         # GitHub Actions specific build parameters
         env:
           # pass GitHub runner info into Linux container
@@ -283,16 +279,14 @@ jobs:
       - name: Test
         run: pytest
 
-  publish-wheels:
+  github-release:
+    name: Create and release assets to GitHub
     needs: [build-cpp-test-linux, build-cpp-test-windows, build-cpp-test-macos, build-and-test-python, build-and-test-conda]
     # always run publish job but fail at the first step if previous jobs have been failed
     if: always()
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     permissions:
       contents: write
-    env:
-      TWINE_USERNAME: ${{ secrets.PYPI_USER }}
-      TWINE_PASSWORD: ${{ secrets.PYPI_PASS }}
 
     steps:
       - name: Fail fast
@@ -329,14 +323,7 @@ jobs:
       - name: Display tag
         run: echo "${{ steps.tag.outputs.tag }}"
 
-      - name: Upload wheels
-        if: (inputs.create_release)
-        run: |
-          pip install twine
-          echo "Publish to PyPI..."
-          twine upload --verbose wheelhouse/*
-
-      - name: Release
+      - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         if: (inputs.create_release)
         with:

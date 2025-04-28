@@ -57,10 +57,13 @@ Output:
 - Power flow through branches
 - Deviation between measurement values and estimated state
 
-In order to perform a state estimation, the system should be observable. If the system is not observable, the calculation will raise either a `NotObservableError` or
-a `SparseMatrixError`.
-In short, meeting the requirement of observability indicates that the system is either an overdetermined system (when the number of measurements is larger than the number of unknowns.
-For each node, there are two unknowns, `u` and `u_angle`. Due to the relative nature of `u_angle` (relevant only in systems with at least two nodes), in total the following conditions should be met:
+In order to perform a state estimation, the system should be observable. If the system is not observable,
+the calculation will raise either a `NotObservableError` or a `SparseMatrixError`.
+In short, meeting the requirement of observability indicates that the system is either an overdetermined
+system (when the number of independent measurements is larger than the number of unknowns) or an exactly
+determined system (the number of independent measurements equals the number of unknowns).
+For each node, there are two unknowns, `u` and `u_angle`. Due to the relative nature of `u_angle`
+(relevant only in systems with at least two nodes), in total the following conditions should be met:
 
 $$
     \begin{eqnarray}
@@ -82,11 +85,15 @@ The number of measurements can be found by taking the sum of the following:
 - two times the number of nodes with a voltage sensor with magnitude and angle
 - two times the number of nodes without appliances connected
 - two times the number of nodes where all connected appliances are measured by a power sensor
-- two times the number of branches with a power sensor
+- two times the number of branches with a power sensor and/or a current sensor
 
 ```{note}
 Having enough measurements does not necessarily mean that the system is observable. The location of the measurements is
-also of importance. Additionally, there should be at least one voltage measurement.
+also of importance, i.e., the measurements should be topologically independent. Additionally, there should be at least one voltage measurement.
+```
+
+```{note}
+Global angle current measurements require at least one voltage angle measurement to make sense. See also the [current sensor component documentation](./components.md#global-angle-current-sensors).
 ```
 
 ```{warning}
@@ -99,9 +106,13 @@ In observable systems this helps better outputting correct results. On the other
 Based on the requirements of observability mentioned above, users need to satisfy at least the following conditions for state estimation calculation in `power-grid-model`.
 
 - `n_voltage_sensor >= 1`
-- If no voltage phasor sensors are available, then the following conditions should be satisfied:  `n_unique_power_sensor >= n_bus - 1`. Otherwise: `n_unique_power_sensor + n_voltage_sensor_with_phasor >= n_bus`
+- If no voltage phasor sensors are available, then both the following conditions shall be satisfied:
+  - There are no global angle current sensors.
+  - `n_unique_power_or_current_sensor >= n_bus - 1`.
+- Otherwise (if there are voltage phasor sensors available), the following condition shall be satisfied:
+  - `n_unique_power_or_current_sensor + n_voltage_sensor_with_phasor >= n_bus`
 
-`n_unique_power_sensor` can be calculated as sum of following:
+`n_unique_power_or_current_sensor` can be calculated as sum of following:
 
 - Zero injection or zero power flow constraint if present for all nodes.
 - Complete injections for all nodes: All appliances in a node are measured or a node injection sensor is present. Either of them counts as one.
@@ -424,6 +435,8 @@ At the moment, the following state estimation algorithms are implemented.
 By default, the [iterative linear](#iterative-linear-state-estimation) method is used.
 ```
 
+#### State estimation measurement aggregation
+
 There can be multiple sensors measuring the same physical quantity. For example, there can be multiple
 voltage sensors on the same bus. The measurement data can be merged into one virtual measurement using a Kalman filter:
 
@@ -449,14 +462,51 @@ $$
 
 Where $S_k$ and $\sigma_{P,k}$ and $\sigma_{Q,k}$ are the measured value and the standard deviation of the individual appliances.
 
+#### State estimate sensor transformations
+
+Sometimes, measurements need to be transformed between coordinate spaces. For example, current measurements are in polar coordinates (magnitude and angle), but it is beneficial to transform them to separate real and imaginary components per phase, with each their own variances.
+Variances of the results of such transformations are estimated using the common linearization approximation.
+E.g., for a real random variable $X$, the random variable $Y = F\left(X\right)$, with $F$ sufficiently well-behaved, exists.
+The variances of $Y$ can then be estimated from the variance of $X$ using
+$\text{Var}\left(Y\right) \approx \text{Var}\left(X\right) \left\|\frac{\delta f}{\delta X}\right\|^2$
+
+This approach generalizes to extension fields and to more dimensions. Both generalizations are required for current sensors.
+The current phasor is described by a complex random variable, which can be decomposed into a real and an imaginary component, or into a magnitude and a phasor.
+Asymmetric sensors and asymmetric calculations, on the other hand, require multidimensional approaches.
+The generalization is done as follows.
+
+Let $A$ and $B$ be fields (or rings) that may be multidimensional and that may be extension fields.
+Let $\boldsymbol{X}$ be a random variable with codomain $A$ with components $X_i$.
+Let $\boldsymbol{Y} = \boldsymbol{F}\left(\boldsymbol{X}\right)$ be a random variable with codomain $B$, with $\boldsymbol{F}$ sufficiently well-behaved,
+so that its components $Y_j = F_j\left(\boldsymbol{X}\right)$ are well-behaved.
+Then the variances $\text{Var}\left(Y_i\right)$ of the components of $\boldsymbol{Y}$ can be estimated
+in terms of the variances $\text{Var}\left(X_j\right)$ of the components of $\boldsymbol{X}$ using the following function.
+
+$$
+\text{Var}\left(Y_j\right) = \text{Var}\left(F_j\left(\boldsymbol{X}\right)\right) \approx \sum_i \text{Var}\left(X_i\right) \left\|\frac{\delta F_j}{\delta x_i}\left(\boldsymbol{X}\right)\right\|^2
+$$
+
+The following illustrates how this works for `sym_current_sensor`s in symmetric calculations.
+See also [the full mathematical workout](https://github.com/PowerGridModel/power-grid-model/issues/547).
+
+$$
+   \begin{eqnarray}
+        & \mathrm{Re}\left\{I\right\} = I \cos\theta \\
+        & \mathrm{Im}\left\{I\right\} = I \sin\theta \\
+        & \text{Var}\left(\mathrm{Re}\left\{I\right\}\right) = \sigma_i^2 \cos^2\theta + I^2 \sigma_{\theta}^2\sin^2\theta \\
+        & \text{Var}\left(\mathrm{Im}\left\{I\right\}\right) = \sigma_i^2 \sin^2\theta + I^2 \sigma_{\theta}^2\cos^2\theta
+   \end{eqnarray}
+$$
+
 #### Iterative linear state estimation
 
 Algorithm call: {py:class}`CalculationMethod.iterative_linear <power_grid_model.enum.CalculationMethod.iterative_linear>`
 
-Linear WLS requires all measurements to be linear. This is only possible when all measurements are phasor unit measurements,
-which is not realistic in distribution grids. Therefore, traditional measurements are linearized prior to running the algorithm:
+Linear WLS requires all measurements to be linear and only handles voltage phasor measurements including a phase angle,
+as well as complex current phasor measurements. This is only possible when all measurements are phasor unit measurements,
+which is not realistic in distribution grids. Therefore, traditional measurements are linearized prior to running the algorithm.
 
-- Bus voltage: Linear WLS requires a voltage phasor including a phase angle. Given that the phase shift in the distribution grid is very small,
+- Bus voltage: Given that the phase shift in the distribution grid is very small,
   it is assumed that the angle shift is zero plus the intrinsic phase shift of transformers. For a certain bus `i`, the voltage
   magnitude measured at that bus is translated into a voltage phasor, where $\theta_i$ is the intrinsic transformer phase shift:
 
@@ -466,8 +516,38 @@ $$
     \end{eqnarray}
 $$
 
-- Branch/shunt power flow: Linear WLS requires a complex current phasor. To make this translation, the voltage at the terminal should
-also be measured, otherwise the nominal voltage with zero angle is used as an estimation. With the measured (linearized) voltage
+- Branch current with global angle: The global angle current measurement captures
+the phase offset relative to the same predetermined reference phase against which the voltage angle is measured. It is not
+sufficient to use the default zero-phase reference offset, because the reference point is not uniquely determined when there
+are no voltage angle measurements, resulting in ambiguities. As a result, using any global angle current sensor in the grid
+requires at least one voltage phasor measurement (with angle).
+
+$$
+    \begin{eqnarray}
+            \underline{I} = I_i \cdot e^{j \theta_i}
+    \end{eqnarray}
+$$
+
+- Branch current with local angle: Sometimes, (accurate) voltage measurements are not available for a branch,
+which means no power measurement is possible. While it is not straightforward to use magnitude-only measurements of currents in
+calculations, current phasor measurements can in fact be used in cases where it is possible to obtain a reasonably accurate
+measurement of the current amplitude and the relative phase angle to the voltage. In this way, we still have enough information
+for the state estimation. The resulting local current phasor $\underline{I}_{\text{local}}$ can be translated to the global
+current phasor (see above) for iterative linear state estimation. Given the measured (linearized) voltage phasor,
+the current phasor is calculated as follows:
+
+$$
+    \begin{equation}
+        \underline{I} = \underline{I}_{\text{local}}^{*} \frac{\underline{U}}{|\underline{U}|}
+        = \underline{I}_{\text{local}}^{*} \cdot e^{j \theta}
+    \end{equation}
+$$
+
+where $\underline{U}$ is either measured voltage magnitude at the bus or assumed unity magnitude, with the intrinsic phase shift.
+$\theta$ is the phase angle of the voltage.
+
+- Branch/shunt power flow: To translate the power flow to a complex current phasor, the voltage at the terminal should
+also be measured, otherwise the nominal voltage with zero angle is used as an estimation. Given the measured (linearized) voltage
 phasor, the current phasor is calculated as follows:
 
 $$
@@ -476,7 +556,7 @@ $$
     \end{eqnarray}
 $$
 
-- Bus power injection: Linear WLS requires a complex current phasor. Similar as above, if the bus voltage is not measured,
+- Bus power injection: Similar as above, to translate the power flow to a complex current phasor, if the bus voltage is not measured,
 the nominal voltage with zero angle will be used as an estimation. The current phasor is calculated as follows:
 
 $$
@@ -506,11 +586,27 @@ be the slack bus, which is connected to the external network (source). $\underli
   - Normalize the voltage phasor angle by setting the angle of the slack bus to zero:
   - If the maximum deviation between $\underline{U}^{(k)}$ and $\underline{U}^{(k-1)}$ is smaller than the error tolerance $\epsilon$,
   stop the iteration. Otherwise, continue until the maximum number of iterations is reached.
-  
+
 In the iteration process, the phase angle of voltages at each bus is updated using the last iteration;
 the system error of the phase shift converges to zero. Because the matrix is pre-built and
 pre-factorized, the computation cost of each iteration is much smaller than for the [Newton-Raphson](#newton-raphson-state-estimation)
 method, where the Jacobian matrix needs to be constructed and factorized each time.
+
+Because the matrix depends on the variances of the linearized current measurements, pre-factorization
+requires assuming that the magnitudes of the voltages remain constant throughout the iteration process.
+This assumption is, of course, an approximation, and potentially results an inaccurate relative weighing
+of the power measurements. However, the difference between the solution and the actual grid state is
+usually small, because the error introduced by this is typically dominated by the following contributing
+factors (see also [this thread](https://github.com/PowerGridModel/power-grid-model/pull/951#issuecomment-2805154436)).
+
+- voltages in the distribution grid are usually close to 1 p.u..
+- power sensor errors are usually best-effort estimates.
+- the interpretation of power measurements as current measurements is an approximation.
+
+```{warning}
+In short, the pre-factorization may produce results that may deviate from the actual grid state.
+If higher precision is desired, please consider using [Newton-Raphson state estimation](#newton-raphson-state-estimation) instead.
+```
 
 ```{warning}
 The algorithm will assume angles to be zero by default (see the details about voltage sensors). This produces more correct outputs when the system is observable, but will prevent the calculation from raising an exception, even if it is unobservable, therefore giving faulty results.
@@ -527,7 +623,7 @@ However, the Jacobian matrix needs to be calculated every iteration and cannot b
 
 The Newton-Raphson method considers all measurements to be independent real measurements.
 I.e., $\sigma_P$, $\sigma_Q$ and $\sigma_U$ are all independent values.
-The rationale behind to calculation is similar to that of the [Newton-Raphson for power flow](#newton-raphson-power-flow).
+The rationale behind to calculation is similar to that of the [Newton-Raphson method for power flow](#newton-raphson-power-flow).
 Consequently, the iteration process differs slightly from that of [iterative linear state estimation](#iterative-linear-state-estimation), as shown below.
 
 - Initialization: let $\boldsymbol{U}^{(k)}$ be the column vector of the estimated voltage magnitude and $\boldsymbol{\theta}^{(k)}$ the column vector of the
@@ -549,6 +645,10 @@ We initialize $\boldsymbol{U}^{(0)}$ and $\boldsymbol{\theta}^{(k)}$ as follows:
 
 As for the [iterative linear](#iterative-linear-state-estimation) approach, during iterations, phase angles of voltage at each bus are updated using ones from the previous iteration.
 The system error of the phase shift converges to zero.
+
+```{note}
+Newton-Raphson state estimation does not support current measurements at this moment. See also [this issue](https://github.com/PowerGridModel/power-grid-model/issues/765).
+```
 
 ```{warning}
 The algorithm will assume angles to be zero by default (see the details about voltage sensors). In observable systems this helps better outputting correct results. On the other hand with unobservable systems, exceptions raised from calculations due to faulty results will be prevented.
@@ -628,7 +728,7 @@ Power flow calculations that take the behavior of these regulators into account 
 
 We provide the control logic used for tap changing. For simplicity, we demonstrate the case where the regulator control side and the transformer tap side are at different sides.
 
-- Regulated transformers are ranked according to how close they are to {hoverxreftooltip}`sources <user_manual/components:source>` in terms of the amount of regulated transformers inbetween.
+- Regulated transformers are ranked according to how close they are to {hoverxreftooltip}`sources <user_manual/components:source>` in terms of the amount of regulated transformers inbetween. In the presence of meshed grids, transformers with conflicting ranks will be ranked the last.
   - Transformers are regulated in order according to their ranks.
 - Initialize all transformers to their starting tap position (see {hoverxreftooltip}`user_manual/calculations:Initialization and exploitation of regulated transformers`)
 - Find the optimal state using the following procedure
@@ -652,7 +752,7 @@ We provide the control logic used for tap changing. For simplicity, we demonstra
   - Exploit the neighbourhood of all transformers (see {hoverxreftooltip}`user_manual/calculations:Initialization and exploitation of regulated transformers`)
     - Re-run the iteration in the above if any of the tap positions changed by the exploitation.
 
-In the case where the control side of the regulator and the tap side of the transformer are at the same side, the control logic of taps will be reverted (see `user_manual/calculations:Initialization and exploitation of regulated transformers`). 
+In the case where the control side of the regulator and the tap side of the transformer are at the same side, the control logic of taps will be reverted (see `user_manual/calculations:Initialization and exploitation of regulated transformers`).
 The exploitation of the neighbourhood ensures that the actual optimum is not accidentally missed due to feedback mechanisms in the grid.
 
 ```{note}
@@ -687,7 +787,6 @@ Internally, to achieve an optimal regulated tap position, the control algorithm 
 | ---------------------------------------------- | --------------- | --------------- | ------------ | ---------- |
 | regulator control side != transformer tap side | `tap_max`       | `tap_min`       | step up      | step down  |
 | regulator control side == transformer tap side | `tap_min`       | `tap_max`       | step down    | step up    |
-
 
 ##### Search methods used for tap changing optimization
 
