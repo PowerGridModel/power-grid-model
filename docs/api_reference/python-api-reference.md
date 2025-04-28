@@ -32,6 +32,8 @@ are internal implementations.
 ```{eval-rst}
 .. automodule:: power_grid_model.enum
    :undoc-members:
+   :imported-members:
+   :exclude-members: IntEnum
    :show-inheritance:
 ```
 
@@ -40,6 +42,7 @@ are internal implementations.
 ```{eval-rst}
 .. automodule:: power_grid_model.data_types
    :undoc-members:
+   :imported-members: +SparseBatchColumnarData, SparseBatchArray
    :show-inheritance:
    :exclude-members: BatchList,NominalValue,RealValue,AsymValue,AttributeValue,Component,ComponentList,SinglePythonDataset,BatchPythonDataset,PythonDataset
 ```
@@ -48,6 +51,7 @@ are internal implementations.
 
 ```{eval-rst}
 .. automodule:: power_grid_model.errors
+   :imported-members:
 ```
 
 ## typing

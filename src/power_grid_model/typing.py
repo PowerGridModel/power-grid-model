@@ -19,4 +19,24 @@ from power_grid_model._core.power_grid_meta import (  # pylint: disable=unused-i
     DatasetMetaData,
     PowerGridMetaData,
 )
-from power_grid_model._core.typing import ComponentAttributeMapping  # pylint: disable=unused-import
+from power_grid_model._core.typing import (  # pylint: disable=unused-import
+    ComponentAttributeMapping as _ComponentAttributeMapping,
+)
+
+ComponentAttributeMapping = _ComponentAttributeMapping
+"""
+Type hint for mapping component attributes.
+
+`ComponentAttributeMapping` can be one of the following:
+
+- A set of :class:`ComponentType` or `str`
+
+- A list of :class:`ComponentType` or `str`
+
+- A :class:`ComponentAttributeFilterOptions <power_grid_model.enum.ComponentAttributeFilterOptions>` value
+
+- `None`
+
+- A dictionary mapping :class:`ComponentType` to a set, list, `None` or
+  :class:`ComponentAttributeFilterOptions <power_grid_model.enum.ComponentAttributeFilterOptions>`
+"""
