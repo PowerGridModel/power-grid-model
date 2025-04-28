@@ -721,6 +721,117 @@ $$
    \end{eqnarray}
 $$
 
+### Generic Current Sensor
+
+```{warning}
+At the time of writing, this feature is still experimental and is not yet publicly available.
+```
+
+```{warning}
+At the time of writing, state estimation with current sensors is not supported by the Newton-Raphson calculation method.
+```
+
+* type name: `generic_current_sensor`
+
+`current_sensor` is an abstract class for symmetric and asymmetric current sensor and is derived from
+{hoverxreftooltip}`user_manual/components:sensor`. It measures the magnitude and angle of the current flow of a terminal.
+The terminal is connecting the from/to end of a `branch` (except `link`) and a `node`.
+
+```{note}
+Due to the high admittance of a `link` it is chosen that a current sensor cannot be coupled to a `link`, even though a link is a `branch`
+```
+
+##### Input
+
+| name                     | data type                                                                     | unit       | description                                                                                                                               | required |  update  |                     valid values                     |
+| ------------------------ | ----------------------------------------------------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------- | :------: | :------: | :--------------------------------------------------: |
+| `measured_terminal_type` | {py:class}`MeasuredTerminalType <power_grid_model.enum.MeasuredTerminalType>` | -          | indicate the side of the `branch`                                                                                                         | &#10004; | &#10060; | the terminal type should match the `measured_object` |
+| `angle_measurement_type` | {py:class}`AngleMeasurementType <power_grid_model.enum.AngleMeasurementType>` | -          | indicate whether the measured angle is a global angle or a local angle; (see the [electric model](#local-angle-current-sensors) below)                                                                    | &#10004; | &#10060; |                                                      |
+| `i_sigma`                | `double`                                                                      | ampere (A) | standard deviation of the current (`i`) measurement error. Usually this is the absolute measurement error range divided by 3.             | &#10004; | &#10004; |                        `> 0`                         |
+| `i_angle_sigma`          | `double`                                                                      | rad        | standard deviation of the current (`i`) phase angle measurement error. Usually this is the absolute measurement error range divided by 3. | &#10004; | &#10004; |                        `> 0`                         |
+
+#### Current Sensor Concrete Types
+
+```{warning}
+At the time of writing, this feature is still experimental and is not yet publicly available.
+```
+
+```{warning}
+At the time of writing, state estimation with current sensors is not supported by the Newton-Raphson calculation method.
+```
+
+There are two concrete types of current sensor. They share similar attributes:
+the meaning of `RealValueInput` is different, as shown in the table below.
+
+| type name             | meaning of `RealValueInput` |
+| --------------------- | --------------------------- |
+| `sym_current_sensor`  | `double`                    |
+| `asym_current_sensor` | `double[3]`                 |
+
+##### Input
+
+| name               | data type        | unit       | description                               |              required              |  update  |
+| ------------------ | ---------------- | ---------- | ----------------------------------------- | :--------------------------------: | :------: |
+| `i_measured`       | `RealValueInput` | ampere (A) | measured current (`i`) magnitude          | &#10024; only for state estimation | &#10004; |
+| `i_angle_measured` | `RealValueInput` | rad        | measured phase angle of the current (`i`; see the [electric model](#local-angle-current-sensors) below) | &#10024; only for state estimation | &#10004; |
+
+See the documentation on [state estimation calculation methods](calculations.md#state-estimation-algorithms) for details per method on how the variances are taken into account for both the global and local angle measurement types and for the individual phases.
+
+##### Steady state output
+
+```{note}
+A sensor only has output for state estimation. For other calculation types, sensor output is undefined.
+```
+
+| name               | data type         | unit       | description                                                                                 |
+| ------------------ | ----------------- | ---------- | ------------------------------------------------------------------------------------------- |
+| `i_residual`       | `RealValueOutput` | ampere (A) | residual value between measured current (`i`) and calculated current (`i`)                  |
+| `i_angle_residual` | `RealValueOutput` | rad        | residual value between measured phase angle and calculated phase angle of the current (`i`) |
+
+#### Electric Model
+
+`Generic Current Sensor` is modeled by following equations:
+
+##### Global angle current sensors
+
+Current sensors with `angle_measurement_type` equal to `AngleMeasurementType.global_angle` measure the phase of the current relative to
+some reference angle that is the same across the entire grid. This reference angle must be the same one as for [voltage phasor measurements](#generic-voltage-sensor). Because the reference point may be ambiguous in the case of current sensor measurements, the power-grid-model imposes the following requirement:
+
+```{note}
+Global angle current measurements require at least one voltage angle measurement to make sense.
+```
+
+As a sign convention, the angle is the phase shift of the current relative to the reference angle, i.e.,
+
+$$
+\underline{I} = \text{i_measured} \cdot e^{j \text{i_angle_measured}} \text{ .}
+$$
+
+##### Local angle current sensors
+
+Current sensors with `angle_measurement_type` equal to `AngleMeasurementType.local_angle` measure the phase shift between
+the voltage and the current phasor, i.e., $\text{i_angle_measured} = \text{voltage_phase} - \text{current_phase}$.
+As a result, the global current phasor depends on the local voltage phase offset and is obtained using the following formula.
+
+$$
+\underline{I} = \underline{I}_{\text{local}}^{*} \frac{\underline{U}}{|\underline{U}|} = \text{i_measured} \cdot e^{\mathrm{j} \left(\theta_{U} - \text{i_angle_measured}\right)}
+$$
+
+```{note}
+As a result, the local angle current sensors have a different sign convention from the global angle current sensors.
+```
+
+##### Residuals
+
+$$
+   \begin{eqnarray}
+        & i_{\text{residual}} = i_{\text{measured}} - i_{\text{state}} && \\
+        & i_{\text{angle},\text{residual}} = i_{\text{angle},\text{measured}} - i_{\text{angle},\text{state}} \pmod 2 \pi
+   \end{eqnarray}
+$$
+
+The $\pmod 2\pi$ is handled such that $-\pi \lt i_{\text{angle},\text{residual}} \leq \pi$.
+
 ## Fault
 
 * type name: `fault`
