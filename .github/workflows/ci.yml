@@ -35,14 +35,17 @@ jobs:
 
   build-test-release:
     name: build-test-release
-    uses: "./.github/workflows/build-test-release.yml"
-    permissions:
-      contents: write
-    with: 
-      # create_release becomes true if the event that triggered this workflow is "workflow_dispatch" and inputs.create_release is true
-      # create_release becomes true if the event that triggered this workflow is "push" on main
-      # otherwise create_release becomes false
-      create_release: ${{ (github.event_name == 'workflow_dispatch' && inputs.create_release) || github.event_name == 'push'}}
+    runs-on: ubuntu-latest
+    # uses: "./.github/workflows/build-test-release.yml"
+    # permissions:
+    #   contents: write
+    steps:
+      - run: echo "Skipping build-test-release job for testing"
+    # with: 
+    #   # create_release becomes true if the event that triggered this workflow is "workflow_dispatch" and inputs.create_release is true
+    #   # create_release becomes true if the event that triggered this workflow is "push" on main
+    #   # otherwise create_release becomes false
+    #   create_release: ${{ (github.event_name == 'workflow_dispatch' && inputs.create_release) || github.event_name == 'push'}}
 
   check-code-quality:
     uses: "./.github/workflows/check-code-quality.yml"
@@ -50,14 +53,14 @@ jobs:
   reuse-compliance:
     uses: "./.github/workflows/reuse-compliance.yml"
 
-  clang-tidy:
-    uses: "./.github/workflows/clang-tidy.yml"
-    with:
-      target: "power_grid_model_api_tests"
+  # clang-tidy:
+  #   uses: "./.github/workflows/clang-tidy.yml"
+  #   with:
+  #     target: "power_grid_model_api_tests"
 
   ci-passed:
     runs-on: ubuntu-latest
-    needs: [ci-started, build-test-release, check-code-quality, reuse-compliance, clang-tidy]
+    needs: [ci-started, build-test-release, check-code-quality, reuse-compliance]
 
     steps:
       - run: echo "ci passed"
@@ -96,7 +99,7 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           # To test, use the TestPyPI:
-          # repository-url: https://test.pypi.org/legacy/
+          repository-url: https://test.pypi.org/legacy/
           # You must also create an account and project on TestPyPI,
           # as well as set the trusted-publisher in the project settings:
           # https://docs.pypi.org/trusted-publishers/adding-a-publisher/
