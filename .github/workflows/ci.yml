@@ -75,7 +75,7 @@ jobs:
           repository: ${{ github.repository }}
           # download the latest release
           latest: true
-          # don't donwload pre-releases
+          # don't download pre-releases
           preRelease: false
           fileName: "*"
           # don't download GitHub-generated source tar and zip files
