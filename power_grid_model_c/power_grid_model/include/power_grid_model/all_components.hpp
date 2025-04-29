@@ -9,6 +9,7 @@
 #include "common/component_list.hpp"
 // component include
 #include "component/appliance.hpp"
+#include "component/asym_line.hpp"
 #include "component/current_sensor.hpp"
 #include "component/fault.hpp"
 #include "component/generic_branch.hpp"
@@ -28,7 +29,7 @@
 namespace power_grid_model {
 
 using AllComponents =
-    ComponentList<Node, Line, Link, GenericBranch, Transformer, ThreeWindingTransformer, Shunt, Source, SymGenerator,
-                  AsymGenerator, SymLoad, AsymLoad, SymPowerSensor, AsymPowerSensor, SymVoltageSensor,
+    ComponentList<Node, Line, AsymLine, Link, GenericBranch, Transformer, ThreeWindingTransformer, Shunt, Source,
+                  SymGenerator, AsymGenerator, SymLoad, AsymLoad, SymPowerSensor, AsymPowerSensor, SymVoltageSensor,
                   AsymVoltageSensor, SymCurrentSensor, AsymCurrentSensor, Fault, TransformerTapRegulator>;
 } // namespace power_grid_model

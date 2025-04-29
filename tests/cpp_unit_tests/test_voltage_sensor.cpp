@@ -363,6 +363,47 @@ TEST_CASE("Test voltage sensor") {
             CHECK(sym_voltage_sensor_asym_output.u_angle_residual[2] == doctest::Approx(-0.2));
         }
 
+        SUBCASE("Angle = ± pi ∓ 0.1") {
+            RealValue<symmetric_t> const u_measured{10.1e3};
+            RealValue<symmetric_t> const u_angle_measured{pi - 0.1};
+            double const u_sigma = 1.0;
+            double const u_rated = 10.0e3;
+
+            VoltageSensorInput<symmetric_t> voltage_sensor_input{};
+            voltage_sensor_input.id = 0;
+            voltage_sensor_input.measured_object = 1;
+            voltage_sensor_input.u_sigma = u_sigma;
+            voltage_sensor_input.u_measured = u_measured;
+            voltage_sensor_input.u_angle_measured = u_angle_measured;
+
+            VoltageSensor<symmetric_t> const voltage_sensor{voltage_sensor_input, u_rated};
+
+            ComplexValue<symmetric_t> const u_calc_sym{1.02 * exp(1i * (-pi + 0.1))};
+            VoltageSensorOutput<symmetric_t> sym_voltage_sensor_sym_output =
+                voltage_sensor.get_output<symmetric_t>(u_calc_sym);
+
+            ComplexValue<asymmetric_t> const u_calc_asym{1.02 * exp(1i * (-pi + 0.1)), 1.03 * exp(1i * (-pi + 0.2)),
+                                                         1.04 * exp(1i * (-pi + 0.3))};
+            VoltageSensorOutput<asymmetric_t> sym_voltage_sensor_asym_output =
+                voltage_sensor.get_output<asymmetric_t>(u_calc_asym);
+
+            // Check sym output
+            CHECK(sym_voltage_sensor_sym_output.id == 0);
+            CHECK(sym_voltage_sensor_sym_output.energized == 1);
+            CHECK(sym_voltage_sensor_sym_output.u_residual == doctest::Approx(-100.0));
+            CHECK(sym_voltage_sensor_sym_output.u_angle_residual == doctest::Approx(-0.2).epsilon(1e-12));
+
+            // Check asym output
+            CHECK(sym_voltage_sensor_asym_output.id == 0);
+            CHECK(sym_voltage_sensor_asym_output.energized == 1);
+            CHECK(sym_voltage_sensor_asym_output.u_residual[0] == doctest::Approx(-100.0 / sqrt3));
+            CHECK(sym_voltage_sensor_asym_output.u_residual[1] == doctest::Approx(-200.0 / sqrt3));
+            CHECK(sym_voltage_sensor_asym_output.u_residual[2] == doctest::Approx(-300.0 / sqrt3));
+            CHECK(sym_voltage_sensor_asym_output.u_angle_residual[0] == doctest::Approx(-0.2).epsilon(1e-12));
+            CHECK(sym_voltage_sensor_asym_output.u_angle_residual[1] == doctest::Approx(-0.3));
+            CHECK(sym_voltage_sensor_asym_output.u_angle_residual[2] == doctest::Approx(-0.4));
+        }
+
         SUBCASE("Angle = nan") {
             RealValue<symmetric_t> const u_measured{10.1e3};
             RealValue<symmetric_t> const u_angle_measured{nan};

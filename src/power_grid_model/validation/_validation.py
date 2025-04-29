@@ -53,7 +53,9 @@ from power_grid_model.validation._rules import (
     all_valid_fault_phases as _all_valid_fault_phases,
     all_valid_ids as _all_valid_ids,
     ids_valid_in_update_data_set as _ids_valid_in_update_data_set,
+    no_strict_subset_missing as _no_strict_subset_missing,
     none_missing as _none_missing,
+    not_all_missing as _not_all_missing,
     valid_p_q_sigma as _valid_p_q_sigma,
 )
 from power_grid_model.validation.errors import (
@@ -295,6 +297,20 @@ def validate_required_values(
     required["branch"] = required["base"] + ["from_node", "to_node", "from_status", "to_status"]
     required["link"] = required["branch"].copy()
     required["line"] = required["branch"] + ["r1", "x1", "c1", "tan1"]
+    required["asym_line"] = required["branch"] + [
+        "r_aa",
+        "r_ba",
+        "r_bb",
+        "r_ca",
+        "r_cb",
+        "r_cc",
+        "x_aa",
+        "x_ba",
+        "x_bb",
+        "x_ca",
+        "x_cb",
+        "x_cc",
+    ]
     required["transformer"] = required["branch"] + [
         "u1",
         "u2",
@@ -449,6 +465,7 @@ def validate_values(data: SingleDataset, calculation_type: CalculationType | Non
     component_validators = {
         "node": validate_node,
         "line": validate_line,
+        "asym_line": validate_asym_line,
         "link": lambda d: validate_branch(d, ComponentType.link),
         "generic_branch": validate_generic_branch,
         "transformer": validate_transformer,
@@ -513,6 +530,29 @@ def validate_line(data: SingleDataset) -> list[ValidationError]:
     errors += _all_not_two_values_zero(data, ComponentType.line, "r1", "x1")
     errors += _all_not_two_values_zero(data, ComponentType.line, "r0", "x0")
     errors += _all_greater_than_zero(data, ComponentType.line, "i_n")
+    return errors
+
+
+def validate_asym_line(data: SingleDataset) -> list[ValidationError]:
+    errors = validate_branch(data, ComponentType.asym_line)
+    errors += _all_greater_than_zero(data, ComponentType.asym_line, "i_n")
+    required_fields = ["r_aa", "r_ba", "r_bb", "r_ca", "r_cb", "r_cc", "x_aa", "x_ba", "x_bb", "x_ca", "x_cb", "x_cc"]
+    optional_r_matrix_fields = ["r_na", "r_nb", "r_nc", "r_nn"]
+    optional_x_matrix_fields = ["x_na", "x_nb", "x_nc", "x_nn"]
+    required_c_matrix_fields = ["c_aa", "c_ba", "c_bb", "c_ca", "c_cb", "c_cc"]
+    c_fields = ["c0", "c1"]
+    for field in (
+        required_fields + optional_r_matrix_fields + optional_x_matrix_fields + required_c_matrix_fields + c_fields
+    ):
+        errors += _all_greater_than_zero(data, ComponentType.asym_line, field)
+
+    errors += _no_strict_subset_missing(
+        data, optional_r_matrix_fields + optional_x_matrix_fields, ComponentType.asym_line
+    )
+    errors += _no_strict_subset_missing(data, required_c_matrix_fields, ComponentType.asym_line)
+    errors += _no_strict_subset_missing(data, c_fields, ComponentType.asym_line)
+    errors += _not_all_missing(data, required_c_matrix_fields + c_fields, ComponentType.asym_line)
+
     return errors
 
 
