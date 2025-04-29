@@ -20,9 +20,9 @@ $$
 
 where:
 
-- \( S \) is the complex power,
-- \( I_l \) is the local complex current,
-- \( V \) is the complex voltage at the adjacent node where the sensor is located,
-- \( e^{-i \theta} \) is the phase shift with respect to the voltage angle of the adjacent node,
-- \( p \) and \( q \) are the measured active and reactive powers, respectively,
-- \( \sqrt(3) \) comes from the neutral-line change of frame of reference.
+- $S$ is the complex power,
+- $I_l$ is the local complex current,
+- $V$ is the complex voltage at the adjacent node where the sensor is located,
+- $e^{-i \theta}$ is the phase shift with respect to the voltage angle of the adjacent node,
+- $p$ and $q$ are the measured active and reactive powers, respectively,
+- $\sqrt(3)$ comes from the neutral-line change of frame of reference.

@@ -20,8 +20,8 @@ $$
 
 where:
 
-- \( S \) is the complex power,
-- \( I_g \) is the global complex current,
-- \( V \) is the complex voltage at the adjacent node where the sensor is located,
-- \( p \) and \( q \) are the measured active and reactive powers, respectively,
-- \( \sqrt(3) \) comes from the neutral-line change of frame of reference.
+- $S$ is the complex power,
+- $I_g$ is the global complex current,
+- $V$ is the complex voltage at the adjacent node where the sensor is located,
+- $p$ and $q$ are the measured active and reactive powers, respectively,
+- $\sqrt(3)$ comes from the neutral-line change of frame of reference.
