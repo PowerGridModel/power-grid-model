@@ -650,6 +650,11 @@ In the state estimation result, the power from this injection is distributed equ
 Because of this distribution, at least one appliance is required to be connected to the node where an injection sensor is placed for it to function.
 ```
 
+```{note}
+It is not possible to add both a [power sensor](#generic-current-sensor) and a [current sensor](#generic-current-sensor) to the same terminal of the same component.
+It is, however, allowed to have both a power sensor and a current sensor on the same branch if they are on different terminals.
+```
+
 ##### Input
 
 | name                     | data type                                                                     | unit             | description                                                                                                                                                                                 |                                                           required                                                            |  update  |                     valid values                     |
@@ -741,6 +746,11 @@ The terminal is connecting the from/to end of a `branch` (except `link`) and a `
 Due to the high admittance of a `link` it is chosen that a current sensor cannot be coupled to a `link`, even though a link is a `branch`
 ```
 
+```{note}
+It is not possible to add both a [power sensor](#generic-current-sensor) and a [current sensor](#generic-current-sensor) to the same terminal of the same component.
+It is, however, allowed to have both a power sensor and a current sensor on the same branch if they are on different terminals.
+```
+
 ##### Input
 
 | name                     | data type                                                                     | unit       | description                                                                                                                               | required |  update  |                     valid values                     |
@@ -826,11 +836,11 @@ As a result, the local angle current sensors have a different sign convention fr
 $$
    \begin{eqnarray}
         & i_{\text{residual}} = i_{\text{measured}} - i_{\text{state}} && \\
-        & i_{\text{angle},\text{residual}} = i_{\text{angle},\text{measured}} - i_{\text{angle},\text{state}} \pmod 2 \pi
+        & i_{\text{angle},\text{residual}} = i_{\text{angle},\text{measured}} - i_{\text{angle},\text{state}} \pmod{2 \pi}
    \end{eqnarray}
 $$
 
-The $\pmod 2\pi$ is handled such that $-\pi \lt i_{\text{angle},\text{residual}} \leq \pi$.
+The $\pmod{2\pi}$ is handled such that $-\pi \lt i_{\text{angle},\text{residual}} \leq \pi$.
 
 ## Fault
 
