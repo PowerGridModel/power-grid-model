@@ -627,9 +627,11 @@ A sensor only has output for state estimation. For other calculation types, sens
 $$
    \begin{eqnarray}
         & u_{\text{residual}} = u_{\text{measured}} - u_{\text{state}} \\
-        & \theta_{\text{residual}} = \theta_{\text{measured}} - \theta_{\text{state}}
+        & \theta_{\text{residual}} = \theta_{\text{measured}} - \theta_{\text{state}} \pmod{2 \pi}
    \end{eqnarray}
 $$
+
+The $\pmod{2\pi}$ is handled such that $-\pi \lt \theta_{\text{angle},\text{residual}} \leq \pi$.
 
 ### Generic Power Sensor
 

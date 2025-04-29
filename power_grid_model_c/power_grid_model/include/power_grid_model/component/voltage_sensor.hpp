@@ -151,7 +151,7 @@ template <symmetry_tag sym> class VoltageSensor : public GenericVoltageSensor {
         } else {
             value.u_residual = (real(u1_measured) - cabs(u)) * u_rated_;
         }
-        value.u_angle_residual = arg(u1_measured) - arg(u);
+        value.u_angle_residual = arg(ComplexValue<symmetric_t>{exp(1.0i * (arg(u1_measured) - arg(u)))});
         return value;
     }
 
@@ -160,7 +160,7 @@ template <symmetry_tag sym> class VoltageSensor : public GenericVoltageSensor {
         value.id = id();
         value.energized = 1;
         value.u_residual = (u_measured_ - cabs(u)) * u_rated_ / sqrt3;
-        value.u_angle_residual = u_angle_measured_ - arg(u);
+        value.u_angle_residual = arg(ComplexValue<asymmetric_t>{exp(1.0i * (u_angle_measured_ - arg(u)))});
         return value;
     }
 };
