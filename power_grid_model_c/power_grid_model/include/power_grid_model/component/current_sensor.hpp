@@ -174,9 +174,7 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
             }
         }();
         output.i_residual = (cabs(i_measured_complex) - cabs(i_output)) * base_current_;
-        // arg(e^i * u_angle) = u_angle in (-pi, pi]
-        auto const unbounded_i_angle_residual = arg(i_measured_complex) - arg(i_output);
-        output.i_angle_residual = arg(ComplexValue<sym_calc>{exp(1.0i * unbounded_i_angle_residual)});
+        output.i_angle_residual = phase_mod_2pi(arg(i_measured_complex) - arg(i_output));
         return output;
     }
 };
