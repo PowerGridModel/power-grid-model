@@ -108,6 +108,7 @@ algorithms/lu-solver
 advanced_documentation/native-data-interface
 advanced_documentation/build-guide
 advanced_documentation/c-api
+advanced_documentation/high-level-design
 advanced_documentation/core-design
 advanced_documentation/python-wrapper-design
 ```
