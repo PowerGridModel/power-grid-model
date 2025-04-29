@@ -98,6 +98,51 @@ struct LineInput {
     operator BranchInput const&() const { return reinterpret_cast<BranchInput const&>(*this); }
 };
 
+struct AsymLineInput {
+    ID id{na_IntID};  // ID of the object
+    ID from_node{na_IntID};  // node IDs to which this branch is connected at both sides
+    ID to_node{na_IntID};  // node IDs to which this branch is connected at both sides
+    IntS from_status{na_IntS};  // whether the branch is connected at each side
+    IntS to_status{na_IntS};  // whether the branch is connected at each side
+    double r_aa{nan};  // Lower triangle matrix values for R, X and C matrices
+    double r_ba{nan};  // Lower triangle matrix values for R, X and C matrices
+    double r_bb{nan};  // Lower triangle matrix values for R, X and C matrices
+    double r_ca{nan};  // Lower triangle matrix values for R, X and C matrices
+    double r_cb{nan};  // Lower triangle matrix values for R, X and C matrices
+    double r_cc{nan};  // Lower triangle matrix values for R, X and C matrices
+    double r_na{nan};  // Lower triangle matrix values for R, X and C matrices
+    double r_nb{nan};  // Lower triangle matrix values for R, X and C matrices
+    double r_nc{nan};  // Lower triangle matrix values for R, X and C matrices
+    double r_nn{nan};  // Lower triangle matrix values for R, X and C matrices
+    double x_aa{nan};  // Lower triangle matrix values for R, X and C matrices
+    double x_ba{nan};  // Lower triangle matrix values for R, X and C matrices
+    double x_bb{nan};  // Lower triangle matrix values for R, X and C matrices
+    double x_ca{nan};  // Lower triangle matrix values for R, X and C matrices
+    double x_cb{nan};  // Lower triangle matrix values for R, X and C matrices
+    double x_cc{nan};  // Lower triangle matrix values for R, X and C matrices
+    double x_na{nan};  // Lower triangle matrix values for R, X and C matrices
+    double x_nb{nan};  // Lower triangle matrix values for R, X and C matrices
+    double x_nc{nan};  // Lower triangle matrix values for R, X and C matrices
+    double x_nn{nan};  // Lower triangle matrix values for R, X and C matrices
+    double c_aa{nan};  // Lower triangle matrix values for R, X and C matrices
+    double c_ba{nan};  // Lower triangle matrix values for R, X and C matrices
+    double c_bb{nan};  // Lower triangle matrix values for R, X and C matrices
+    double c_ca{nan};  // Lower triangle matrix values for R, X and C matrices
+    double c_cb{nan};  // Lower triangle matrix values for R, X and C matrices
+    double c_cc{nan};  // Lower triangle matrix values for R, X and C matrices
+    double c0{nan};  // Lower triangle matrix values for R, X and C matrices
+    double c1{nan};  // Lower triangle matrix values for R, X and C matrices
+    double i_n{nan};  // rated current
+
+    // implicit conversions to BaseInput
+    operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
+    operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
+
+    // implicit conversions to BranchInput
+    operator BranchInput&() { return reinterpret_cast<BranchInput&>(*this); }
+    operator BranchInput const&() const { return reinterpret_cast<BranchInput const&>(*this); }
+};
+
 struct GenericBranchInput {
     ID id{na_IntID};  // ID of the object
     ID from_node{na_IntID};  // node IDs to which this branch is connected at both sides

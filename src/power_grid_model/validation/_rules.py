@@ -53,6 +53,7 @@ from power_grid_model.validation.errors import (
     InvalidIdError,
     MissingValueError,
     MultiComponentNotUniqueError,
+    MultiFieldValidationError,
     NotBetweenError,
     NotBetweenOrAtError,
     NotBooleanError,
@@ -743,6 +744,100 @@ def all_finite(data: SingleDataset, exceptions: dict[ComponentType, list[str]] |
             if invalid.any():
                 ids = data[component]["id"][invalid].flatten().tolist()
                 errors.append(InfinityError(component, field, ids))
+    return errors
+
+
+def no_strict_subset_missing(data: SingleDataset, fields: list[str], component_type: ComponentType):
+    """
+    Helper function that generates multi field validation errors if a subset of the supplied fields is missing.
+    If for an instance of component type all fields are missing or all fields are not missing then,
+    no error is returned for that instance.
+    In any other case an error for that id is returned.
+
+    Args:
+        data: SingleDataset, pgm data
+        fields: List of fields
+        component_type: component type to check
+    """
+    errors = []
+    if component_type in data:
+        component_data = data[component_type]
+        instances_with_nan_data = np.full_like([], False, shape=(len(component_data),), dtype=bool)
+        instances_with_non_nan_data = np.full_like([], False, shape=(len(component_data),), dtype=bool)
+        for field in fields:
+            nan_value = _nan_type(component_type, field)
+            asym_axes = tuple(range(component_data.ndim, component_data[field].ndim))
+            instances_with_nan_data = np.logical_or(
+                instances_with_nan_data,
+                np.any(
+                    (
+                        np.isnan(component_data[field])
+                        if np.any(np.isnan(nan_value))
+                        else np.equal(component_data[field], nan_value)
+                    ),
+                    axis=asym_axes,
+                ),
+            )
+            instances_with_non_nan_data = np.logical_or(
+                instances_with_non_nan_data,
+                np.any(
+                    (
+                        np.logical_not(np.isnan(component_data[field]))
+                        if np.any(np.isnan(nan_value))
+                        else np.logical_not(np.equal(component_data[field], nan_value))
+                    ),
+                    axis=asym_axes,
+                ),
+            )
+
+        instances_with_invalid_data = np.logical_and(instances_with_nan_data, instances_with_non_nan_data)
+
+        ids = component_data["id"][instances_with_invalid_data]
+        if len(ids) > 0:
+            errors.append(MultiFieldValidationError(component_type, fields, ids))
+
+    return errors
+
+
+def not_all_missing(data: SingleDataset, fields: list[str], component_type: ComponentType):
+    """
+    Helper function that generates a multi field validation error if:
+    all values specified by the fields parameters are missing.
+
+    Args:
+        data: SingleDataset, pgm data
+        fields: List of fields
+        component_type: component type to check
+    """
+    if len(fields) < 2:
+        raise ValueError(
+            "The fields parameter must contain at least 2 fields. Otherwise use the none_missing function."
+        )
+
+    errors = []
+    if component_type in data:
+        component_data = data[component_type]
+        instances_with_all_nan_data = np.full_like([], True, shape=(len(component_data),), dtype=bool)
+
+        for field in fields:
+            nan_value = _nan_type(component_type, field)
+            asym_axes = tuple(range(component_data.ndim, component_data[field].ndim))
+            instances_with_all_nan_data = np.logical_and(
+                instances_with_all_nan_data,
+                np.any(
+                    (
+                        np.isnan(component_data[field])
+                        if np.any(np.isnan(nan_value))
+                        else np.equal(component_data[field], nan_value)
+                    ),
+                    axis=asym_axes,
+                ),
+            )
+
+        ids = component_data["id"][instances_with_all_nan_data].flatten().tolist()
+        if len(ids) > 0:
+            errors.append(MultiFieldValidationError(component_type, fields, ids))
+
     return errors
 
 
