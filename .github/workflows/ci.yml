@@ -53,7 +53,7 @@ jobs:
   clang-tidy:
     uses: "./.github/workflows/clang-tidy.yml"
     with:
-      target: "power_grid_model_api_tests"
+      target: "all"
 
   ci-passed:
     runs-on: ubuntu-latest
