@@ -1,0 +1,23 @@
+{
+  "calculation_method": [
+    "iterative_linear",
+    "newton_raphson"
+  ],
+  "rtol": 1e-8,
+  "atol": {
+    "default": 1e-8,
+    ".+_residual": 5e-4
+  },
+  "extra_params": {
+    "iterative_linear": {
+      "experimental_features": "enabled"
+    },
+    "newton_raphson": {
+      "experimental_features": "enabled",
+      "fail": {
+        "raises": "SparseMatrixError",
+        "reason": "Current sensors are not yet implemented for this calculation method"
+      }
+    }
+  }
+}
