@@ -324,10 +324,22 @@ def test_transformer_tap_regulator_control_side_not_closer_to_source():
     transformer_input["to_node"] = [1]
     transformer_input["from_status"] = [1]
     transformer_input["to_status"] = [1]
+    transformer_input["u1"] = [1e4]
+    transformer_input["u2"] = [4e2]
+    transformer_input["sn"] = [1e5]
+    transformer_input["uk"] = [0.1]
+    transformer_input["pk"] = [1e3]
+    transformer_input["i0"] = [1.0e-6]
+    transformer_input["p0"] = [0.1]
     transformer_input["winding_from"] = [1]
     transformer_input["winding_to"] = [1]
     transformer_input["clock"] = [0]
     transformer_input["tap_side"] = [1]
+    transformer_input["tap_pos"] = [0]
+    transformer_input["tap_nom"] = [0]
+    transformer_input["tap_min"] = [-1]
+    transformer_input["tap_max"] = [1]
+    transformer_input["tap_size"] = [100]
 
     source_input = initialize_array("input", "source", 1)
     source_input["id"] = [3]
@@ -339,6 +351,8 @@ def test_transformer_tap_regulator_control_side_not_closer_to_source():
     transformer_tap_regulator_input["id"] = [4]
     transformer_tap_regulator_input["regulated_object"] = [2]
     transformer_tap_regulator_input["status"] = [1]
+    transformer_tap_regulator_input["u_set"] = [10]
+    transformer_tap_regulator_input["u_band"] = [200]
     transformer_tap_regulator_input["control_side"] = [0]
 
     model = PowerGridModel(
