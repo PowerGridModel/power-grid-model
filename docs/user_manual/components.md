@@ -295,7 +295,7 @@ $$
    \end{bmatrix}
 $$
 
-This representation holds for all values `r_aa` - `r_nn`, `x_aa` - `x_nn` and `c_aa` - `c_cc`. If the neutral values are not provided, the last row and column from the above matrix are omitted.
+This representation holds for all values `r_aa` ... `r_nn`, `x_aa` ... `x_nn` and `c_aa` ... `c_cc`. If the neutral values are not provided, the last row and column from the above matrix are omitted.
 
 | name   | data type | unit       | description                       | required                     |  update  |            valid values            |
 | ------ | --------- | ---------- | --------------------------------- | ---------------------------- | :------: | :--------------------------------: |
@@ -330,43 +330,43 @@ This representation holds for all values `r_aa` - `r_nn`, `x_aa` - `x_nn` and `c
 
 For the r and x matrices providing values for the neutral phase is optional. To clarify which input values are required, please consult the tables below:
 
-| r_aa - r_cc   | r_na     | r_nb     | r_nc     | r_nn     | result   | Validation Error          |
-| ------------- | -------- | -------- | -------- | -------- | -------- | ------------------------- |
-| &#10004;      | &#10004; | &#10004; | &#10004; | &#10004; | &#10004; |                           |
-| &#10004;      | &#10004; | &#10004; | &#10004; | &#10060; | &#10060; | MultiFieldValidationError |
-| &#10004;      | &#10004; | &#10004; | &#10004; | &#10060; | &#10060; | MultiFieldValidationError |
-| &#10004;      | &#10004; | &#10004; | &#10060; | &#10060; | &#10060; | MultiFieldValidationError |
-| &#10004;      | &#10004; | &#10060; | &#10060; | &#10060; | &#10060; | MultiFieldValidationError |
-| &#10004;      | &#10060; | &#10060; | &#10060; | &#10060; | &#10004; |                           |
-| &#10060;      | &#10060; | &#10060; | &#10060; | &#10060; | &#10060; | MultiFieldValidationError |
+| r_aa ... r_cc   | r_na     | r_nb     | r_nc     | r_nn     | result   | Validation Error          |
+| --------------- | -------- | -------- | -------- | -------- | -------- | ------------------------- |
+| &#10004;        | &#10004; | &#10004; | &#10004; | &#10004; | &#10004; |                           |
+| &#10004;        | &#10004; | &#10004; | &#10004; | &#10060; | &#10060; | MultiFieldValidationError |
+| &#10004;        | &#10004; | &#10004; | &#10004; | &#10060; | &#10060; | MultiFieldValidationError |
+| &#10004;        | &#10004; | &#10004; | &#10060; | &#10060; | &#10060; | MultiFieldValidationError |
+| &#10004;        | &#10004; | &#10060; | &#10060; | &#10060; | &#10060; | MultiFieldValidationError |
+| &#10004;        | &#10060; | &#10060; | &#10060; | &#10060; | &#10004; |                           |
+| &#10060;        | &#10060; | &#10060; | &#10060; | &#10060; | &#10060; | MultiFieldValidationError |
 
-| x_aa - x_cc   | x_na     | x_nb     | x_nc     | x_nn     | result   | Validation Error          |
-| ------------- | -------- | -------- | -------- | -------- | -------- | ------------------------- |
-| &#10004;      | &#10004; | &#10004; | &#10004; | &#10004; | &#10004; |                           |
-| &#10004;      | &#10004; | &#10004; | &#10004; | &#10060; | &#10060; | MultiFieldValidationError |
-| &#10004;      | &#10004; | &#10004; | &#10004; | &#10060; | &#10060; | MultiFieldValidationError |
-| &#10004;      | &#10004; | &#10004; | &#10060; | &#10060; | &#10060; | MultiFieldValidationError |
-| &#10004;      | &#10004; | &#10060; | &#10060; | &#10060; | &#10060; | MultiFieldValidationError |
-| &#10004;      | &#10060; | &#10060; | &#10060; | &#10060; | &#10004; |                           |
-| &#10060;      | &#10060; | &#10060; | &#10060; | &#10060; | &#10060; | MultiFieldValidationError |
+| x_aa ... x_cc   | x_na     | x_nb     | x_nc     | x_nn     | result   | Validation Error          |
+| --------------- | -------- | -------- | -------- | -------- | -------- | ------------------------- |
+| &#10004;        | &#10004; | &#10004; | &#10004; | &#10004; | &#10004; |                           |
+| &#10004;        | &#10004; | &#10004; | &#10004; | &#10060; | &#10060; | MultiFieldValidationError |
+| &#10004;        | &#10004; | &#10004; | &#10004; | &#10060; | &#10060; | MultiFieldValidationError |
+| &#10004;        | &#10004; | &#10004; | &#10060; | &#10060; | &#10060; | MultiFieldValidationError |
+| &#10004;        | &#10004; | &#10060; | &#10060; | &#10060; | &#10060; | MultiFieldValidationError |
+| &#10004;        | &#10060; | &#10060; | &#10060; | &#10060; | &#10004; |                           |
+| &#10060;        | &#10060; | &#10060; | &#10060; | &#10060; | &#10060; | MultiFieldValidationError |
 
-For the c-matrix values there are two options. Either provide all the required c-matrix values i.e. `c_aa` - `c_cc` or provide `c0`, `c1`. Whenver both sets are supplied the powerflow calculations will use `c0`, `c1`.
+For the c-matrix values there are two options. Either provide all the required c-matrix values i.e. `c_aa` ... `c_cc` or provide `c0`, `c1`. Whenver both sets are supplied the powerflow calculations will use `c0`, `c1`.
 The table below provides guidance in providing valid input.
 
-| c_aa - c_cc | c0       | c1       | result   | Validation Error          |
-| ----------- | -------- | -------- | -------- | ------------------------- |
-| &#10004;    | &#10004; | &#10004; | &#10004; |                           |
-| &#10004;    | &#10004; | &#10060; | &#10004; |                           |
-| &#10004;    | &#10060; | &#10060; | &#10004; |                           |
-| &#10060;    | &#10004; | &#10060; | &#10060; | MultiFieldValidationError |
-| &#10060;    | &#10004; | &#10004; | &#10004; |                           |
+| c_aa ... c_cc | c0       | c1       | result   | Validation Error          |
+| ------------- | -------- | -------- | -------- | ------------------------- |
+| &#10004;      | &#10004; | &#10004; | &#10004; |                           |
+| &#10004;      | &#10004; | &#10060; | &#10004; |                           |
+| &#10004;      | &#10060; | &#10060; | &#10004; |                           |
+| &#10060;      | &#10004; | &#10060; | &#10060; | MultiFieldValidationError |
+| &#10060;      | &#10004; | &#10004; | &#10004; |                           |
 
 #### Electric Model
 
 The cable properties are described using matrices where the $Z_{\text{series}}$ matrix is computed as:
 
 $$
-   Z_{\text{series}} = R + j * X
+   Z_{\text{series}} = R + \mathrm{j} * X
 $$
 
 Where $R$ and $X$ denote the resistance and reactance matrices build from the input respectively.

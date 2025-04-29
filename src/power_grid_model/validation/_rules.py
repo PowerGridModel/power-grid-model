@@ -772,7 +772,7 @@ def no_strict_subset_missing(data: SingleDataset, fields: list[str], component_t
                 np.any(
                     (
                         np.isnan(component_data[field])
-                        if np.isnan(nan_value)
+                        if np.any(np.isnan(nan_value))
                         else np.equal(component_data[field], nan_value)
                     ),
                     axis=asym_axes,
@@ -783,7 +783,7 @@ def no_strict_subset_missing(data: SingleDataset, fields: list[str], component_t
                 np.any(
                     (
                         np.logical_not(np.isnan(component_data[field]))
-                        if np.isnan(nan_value)
+                        if np.any(np.isnan(nan_value))
                         else np.logical_not(np.equal(component_data[field], nan_value))
                     ),
                     axis=asym_axes,
@@ -827,7 +827,7 @@ def not_all_missing(data: SingleDataset, fields: list[str], component_type: Comp
                 np.any(
                     (
                         np.isnan(component_data[field])
-                        if np.isnan(nan_value)
+                        if np.any(np.isnan(nan_value))
                         else np.equal(component_data[field], nan_value)
                     ),
                     axis=asym_axes,
