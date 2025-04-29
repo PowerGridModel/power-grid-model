@@ -285,6 +285,7 @@ $$
 #### Input
 
 The provided values will be converted to a matrix representing the line's properties per phase in the following form:
+
 $$
    \begin{bmatrix}
       \text{aa} & \text{ba} & \text{ca} & \text{na}\\
