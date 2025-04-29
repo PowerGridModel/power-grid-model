@@ -276,6 +276,133 @@ $$
    \end{eqnarray}
 $$
 
+### Asym Line
+
+* type name: `asym_line`
+
+`asym_line` is a {hoverxreftooltip}`user_manual/components:branch` with specified resistance and reactance per phase. A cable can be modelled as `line` or `asym_line`. An `asym_line` can only connect two nodes with the same rated voltage. If `i_n` is not provided, `loading` of line will be a `nan` value. The `asym_line` denotes a 3 or 4 phase line with phases `a`, `b`, `c` and optionally `n` for neutral.
+
+#### Input
+
+The provided values will be converted to a matrix representing the line's properties per phase in the following form:
+
+$$
+   \begin{bmatrix}
+      \text{aa} & \text{ba} & \text{ca} & \text{na}\\
+      \text{ba} & \text{bb} & \text{cb} & \text{nb}\\
+      \text{ca} & \text{cb} & \text{cc} & \text{nc}\\
+      \text{na} & \text{nb} & \text{nc} & \text{nn}
+   \end{bmatrix}
+$$
+
+This representation holds for all values `r_aa` ... `r_nn`, `x_aa` ... `x_nn` and `c_aa` ... `c_cc`. If the neutral values are not provided, the last row and column from the above matrix are omitted.
+
+| name   | data type | unit       | description                       | required                     |  update  |            valid values            |
+| ------ | --------- | ---------- | --------------------------------- | ---------------------------- | :------: | :--------------------------------: |
+| `r_aa` | `double`  | ohm (Ω)    | Series serial resistance aa       | &#10004;                     | &#10060; |               `> 0`                |
+| `r_ba` | `double`  | ohm (Ω)    | Series serial resistance ba       | &#10004;                     | &#10060; |               `> 0`                |
+| `r_bb` | `double`  | ohm (Ω)    | Series serial resistance bb       | &#10004;                     | &#10060; |               `> 0`                |
+| `r_ca` | `double`  | ohm (Ω)    | Series serial resistance ca       | &#10004;                     | &#10060; |               `> 0`                |
+| `r_cb` | `double`  | ohm (Ω)    | Series serial resistance cb       | &#10004;                     | &#10060; |               `> 0`                |
+| `r_cc` | `double`  | ohm (Ω)    | Series serial resistance cc       | &#10004;                     | &#10060; |               `> 0`                |
+| `r_na` | `double`  | ohm (Ω)    | Series serial resistance na       | &#10024; for a neutral phase | &#10060; |               `> 0`                |
+| `r_nb` | `double`  | ohm (Ω)    | Series serial resistance nb       | &#10024; for a neutral phase | &#10060; |               `> 0`                |
+| `r_nc` | `double`  | ohm (Ω)    | Series serial resistance nc       | &#10024; for a neutral phase | &#10060; |               `> 0`                |
+| `r_nn` | `double`  | ohm (Ω)    | Series serial resistance nn       | &#10024; for a neutral phase | &#10060; |               `> 0`                |
+| `x_aa` | `double`  | ohm (Ω)    | Series serial reactance aa        | &#10004;                     | &#10060; |               `> 0`                |
+| `x_ba` | `double`  | ohm (Ω)    | Series serial reactance ba        | &#10004;                     | &#10060; |               `> 0`                |
+| `x_bb` | `double`  | ohm (Ω)    | Series serial reactance bb        | &#10004;                     | &#10060; |               `> 0`                |
+| `x_ca` | `double`  | ohm (Ω)    | Series serial reactance ca        | &#10004;                     | &#10060; |               `> 0`                |
+| `x_cb` | `double`  | ohm (Ω)    | Series serial reactance cb        | &#10004;                     | &#10060; |               `> 0`                |
+| `x_cc` | `double`  | ohm (Ω)    | Series serial reactance cc        | &#10004;                     | &#10060; |               `> 0`                |
+| `x_na` | `double`  | ohm (Ω)    | Series serial reactance na        | &#10024; for a neutral phase | &#10060; |               `> 0`                |
+| `x_nb` | `double`  | ohm (Ω)    | Series serial reactance nb        | &#10024; for a neutral phase | &#10060; |               `> 0`                |
+| `x_nc` | `double`  | ohm (Ω)    | Series serial reactance nc        | &#10024; for a neutral phase | &#10060; |               `> 0`                |
+| `x_nn` | `double`  | ohm (Ω)    | Series serial reactance nn        | &#10024; for a neutral phase | &#10060; |               `> 0`                |
+| `c_aa` | `double`  | farad (F)  | Shunt nodal capacitance matrix aa | &#10024; for a full c matrix | &#10060; |               `> 0`                |
+| `c_ba` | `double`  | farad (F)  | Shunt nodal capacitance matrix ba | &#10024; for a full c matrix | &#10060; |               `> 0`                |
+| `c_bb` | `double`  | farad (F)  | Shunt nodal capacitance matrix bb | &#10024; for a full c matrix | &#10060; |               `> 0`                |
+| `c_ca` | `double`  | farad (F)  | Shunt nodal capacitance matrix ca | &#10024; for a full c matrix | &#10060; |               `> 0`                |
+| `c_cb` | `double`  | farad (F)  | Shunt nodal capacitance matrix cb | &#10024; for a full c matrix | &#10060; |               `> 0`                |
+| `c_cc` | `double`  | farad (F)  | Shunt nodal capacitance matrix cc | &#10024; for a full c matrix | &#10060; |               `> 0`                |
+| `c0`   | `double`  | farad (F)  | zero-sequence shunt capacitance   | &#10024; without a c matrix  | &#10060; |               `> 0`                |
+| `c1`   | `double`  | farad (F)  | Series shunt capacitance          | &#10024; without a c matrix  | &#10060; |               `> 0`                |
+
+For the r and x matrices providing values for the neutral phase is optional. To clarify which input values are required, please consult the tables below:
+
+| r_aa ... r_cc   | r_na     | r_nb     | r_nc     | r_nn     | result   | Validation Error          |
+| --------------- | -------- | -------- | -------- | -------- | -------- | ------------------------- |
+| &#10004;        | &#10004; | &#10004; | &#10004; | &#10004; | &#10004; |                           |
+| &#10004;        | &#10004; | &#10004; | &#10004; | &#10060; | &#10060; | MultiFieldValidationError |
+| &#10004;        | &#10004; | &#10004; | &#10004; | &#10060; | &#10060; | MultiFieldValidationError |
+| &#10004;        | &#10004; | &#10004; | &#10060; | &#10060; | &#10060; | MultiFieldValidationError |
+| &#10004;        | &#10004; | &#10060; | &#10060; | &#10060; | &#10060; | MultiFieldValidationError |
+| &#10004;        | &#10060; | &#10060; | &#10060; | &#10060; | &#10004; |                           |
+| &#10060;        | &#10060; | &#10060; | &#10060; | &#10060; | &#10060; | MultiFieldValidationError |
+
+| x_aa ... x_cc   | x_na     | x_nb     | x_nc     | x_nn     | result   | Validation Error          |
+| --------------- | -------- | -------- | -------- | -------- | -------- | ------------------------- |
+| &#10004;        | &#10004; | &#10004; | &#10004; | &#10004; | &#10004; |                           |
+| &#10004;        | &#10004; | &#10004; | &#10004; | &#10060; | &#10060; | MultiFieldValidationError |
+| &#10004;        | &#10004; | &#10004; | &#10004; | &#10060; | &#10060; | MultiFieldValidationError |
+| &#10004;        | &#10004; | &#10004; | &#10060; | &#10060; | &#10060; | MultiFieldValidationError |
+| &#10004;        | &#10004; | &#10060; | &#10060; | &#10060; | &#10060; | MultiFieldValidationError |
+| &#10004;        | &#10060; | &#10060; | &#10060; | &#10060; | &#10004; |                           |
+| &#10060;        | &#10060; | &#10060; | &#10060; | &#10060; | &#10060; | MultiFieldValidationError |
+
+For the c-matrix values there are two options. Either provide all the required c-matrix values i.e. `c_aa` ... `c_cc` or provide `c0`, `c1`. Whenver both sets are supplied the powerflow calculations will use `c0`, `c1`.
+The table below provides guidance in providing valid input.
+
+| c_aa ... c_cc | c0       | c1       | result   | Validation Error          |
+| ------------- | -------- | -------- | -------- | ------------------------- |
+| &#10004;      | &#10004; | &#10004; | &#10004; |                           |
+| &#10004;      | &#10004; | &#10060; | &#10004; |                           |
+| &#10004;      | &#10060; | &#10060; | &#10004; |                           |
+| &#10060;      | &#10004; | &#10060; | &#10060; | MultiFieldValidationError |
+| &#10060;      | &#10004; | &#10004; | &#10004; |                           |
+
+#### Electric Model
+
+The cable properties are described using matrices where the $Z_{\text{series}}$ matrix is computed as:
+
+$$
+   Z_{\text{series}} = R + \mathrm{j} * X
+$$
+
+Where $R$ and $X$ denote the resistance and reactance matrices build from the input respectively.
+
+Whenever the neutral phase is provided in the $Z_{\text{series}}$, the $Z_{\text{series}}$ matrix will first be reduced to a 3 phase matrix $Z_{\text{reduced}}$ with a kron reduction as follows:
+
+$$
+   Z_{\text{aa}} = \begin{bmatrix}
+                     Z_{\text{0,0}} & Z_{\text{1,0}} & Z_{\text{2,0}}\\
+                     Z_{\text{1,0}} & Z_{\text{1,1}} & Z_{\text{2,1}}\\
+                     Z_{\text{2,0}} & Z_{\text{2,1}} & Z_{\text{2,2}}
+                   \end{bmatrix}
+$$
+$$
+   Z_{\text{ab}} = \begin{bmatrix}
+                     Z_{\text{0,3}} \\
+                     Z_{\text{1,3}} \\
+                     Z_{\text{2,3}}
+                   \end{bmatrix}
+$$
+$$
+   Z_{\text{ba}} = \begin{bmatrix}
+                     Z_{\text{3,0}} \\
+                     Z_{\text{3,1}} \\
+                     Z_{\text{3,2}}
+                   \end{bmatrix}
+$$
+$$
+   Z_{\text{bb}}^{-1} = \frac{1}{Z_{\text{3,3}}}
+$$
+$$
+   Z_{\text{reduced}} = Z_{\text{aa}} - Z_{\text{ba}} \otimes Z_{\text{ab}} \cdot Z_{\text{bb}}^{-1}
+$$
+
+Where $Z_{\text{i,j}}$ denotes the row and column of the $Z_{\text{series}}$ matrix.
+
 ## Branch3
 
 * type name: `branch3`
@@ -627,9 +754,11 @@ A sensor only has output for state estimation. For other calculation types, sens
 $$
    \begin{eqnarray}
         & u_{\text{residual}} = u_{\text{measured}} - u_{\text{state}} \\
-        & \theta_{\text{residual}} = \theta_{\text{measured}} - \theta_{\text{state}}
+        & \theta_{\text{residual}} = \theta_{\text{measured}} - \theta_{\text{state}} \pmod{2 \pi}
    \end{eqnarray}
 $$
+
+The $\pmod{2\pi}$ is handled such that $-\pi \lt \theta_{\text{angle},\text{residual}} \leq \pi$.
 
 ### Generic Power Sensor
 
@@ -648,6 +777,11 @@ measuring a `source`, a positive `p_measured` indicates that the active power fl
 2. The node injection power sensor gets placed on a node. 
 In the state estimation result, the power from this injection is distributed equally among the connected appliances at that node.
 Because of this distribution, at least one appliance is required to be connected to the node where an injection sensor is placed for it to function.
+```
+
+```{note}
+It is not possible to add both a [power sensor](#generic-current-sensor) and a [current sensor](#generic-current-sensor) to the same terminal of the same component.
+It is, however, allowed to have both a power sensor and a current sensor on the same branch if they are on different terminals.
 ```
 
 ##### Input
@@ -741,6 +875,11 @@ The terminal is connecting the from/to end of a `branch` (except `link`) and a `
 Due to the high admittance of a `link` it is chosen that a current sensor cannot be coupled to a `link`, even though a link is a `branch`
 ```
 
+```{note}
+It is not possible to add both a [power sensor](#generic-current-sensor) and a [current sensor](#generic-current-sensor) to the same terminal of the same component.
+It is, however, allowed to have both a power sensor and a current sensor on the same branch if they are on different terminals.
+```
+
 ##### Input
 
 | name                     | data type                                                                     | unit       | description                                                                                                                               | required |  update  |                     valid values                     |
@@ -826,11 +965,11 @@ As a result, the local angle current sensors have a different sign convention fr
 $$
    \begin{eqnarray}
         & i_{\text{residual}} = i_{\text{measured}} - i_{\text{state}} && \\
-        & i_{\text{angle},\text{residual}} = i_{\text{angle},\text{measured}} - i_{\text{angle},\text{state}} \pmod 2 \pi
+        & i_{\text{angle},\text{residual}} = i_{\text{angle},\text{measured}} - i_{\text{angle},\text{state}} \pmod{2 \pi}
    \end{eqnarray}
 $$
 
-The $\pmod 2\pi$ is handled such that $-\pi \lt i_{\text{angle},\text{residual}} \leq \pi$.
+The $\pmod{2\pi}$ is handled such that $-\pi \lt i_{\text{angle},\text{residual}} \leq \pi$.
 
 ## Fault
 

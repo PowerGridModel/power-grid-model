@@ -26,11 +26,12 @@ class GenericCurrentSensor : public Sensor {
     MeasuredTerminalType get_terminal_type() const { return terminal_type_; }
     AngleMeasurementType get_angle_measurement_type() const { return angle_measurement_type_; }
 
-    template <symmetry_tag sym> CurrentSensorOutput<sym> get_output(ComplexValue<sym> const& i) const {
+    template <symmetry_tag sym>
+    CurrentSensorOutput<sym> get_output(ComplexValue<sym> const& i, ComplexValue<sym> const& u) const {
         if constexpr (is_symmetric_v<sym>) {
-            return get_sym_output(i);
+            return get_sym_output(i, u);
         } else {
-            return get_asym_output(i);
+            return get_asym_output(i, u);
         }
     }
 
@@ -62,8 +63,10 @@ class GenericCurrentSensor : public Sensor {
     virtual CurrentSensorCalcParam<symmetric_t> sym_calc_param() const = 0;
     virtual CurrentSensorCalcParam<asymmetric_t> asym_calc_param() const = 0;
 
-    virtual CurrentSensorOutput<symmetric_t> get_sym_output(ComplexValue<symmetric_t> const& i) const = 0;
-    virtual CurrentSensorOutput<asymmetric_t> get_asym_output(ComplexValue<asymmetric_t> const& i) const = 0;
+    virtual CurrentSensorOutput<symmetric_t> get_sym_output(ComplexValue<symmetric_t> const& i,
+                                                            ComplexValue<symmetric_t> const& u) const = 0;
+    virtual CurrentSensorOutput<asymmetric_t> get_asym_output(ComplexValue<asymmetric_t> const& i,
+                                                              ComplexValue<asymmetric_t> const& u) const = 0;
 };
 
 template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public GenericCurrentSensor {
@@ -137,20 +140,41 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
         return CurrentSensorCalcParam<sym_calc>{.angle_measurement_type = angle_measurement_type(),
                                                 .measurement = DecomposedComplexRandVar<sym_calc>(i_polar)};
     }
-    CurrentSensorOutput<symmetric_t> get_sym_output(ComplexValue<symmetric_t> const& i) const final {
-        return get_generic_output<symmetric_t>(i);
+    CurrentSensorOutput<symmetric_t> get_sym_output(ComplexValue<symmetric_t> const& i,
+                                                    ComplexValue<symmetric_t> const& u) const final {
+        return get_generic_output<symmetric_t>(i, u);
     }
-    CurrentSensorOutput<asymmetric_t> get_asym_output(ComplexValue<asymmetric_t> const& i) const final {
-        return get_generic_output<asymmetric_t>(i);
+    CurrentSensorOutput<asymmetric_t> get_asym_output(ComplexValue<asymmetric_t> const& i,
+                                                      ComplexValue<asymmetric_t> const& u) const final {
+        return get_generic_output<asymmetric_t>(i, u);
     }
     template <symmetry_tag sym_calc>
-    CurrentSensorOutput<sym_calc> get_generic_output(ComplexValue<sym_calc> const& i) const {
+    CurrentSensorOutput<sym_calc> get_generic_output(ComplexValue<sym_calc> const& i,
+                                                     ComplexValue<sym_calc> const& u) const {
         CurrentSensorOutput<sym_calc> output{};
         output.id = id();
-        ComplexValue<sym_calc> const i_residual{process_mean_val<sym_calc>(i_measured_ - i) * base_current_};
         output.energized = 1; // current sensor is always energized
-        output.i_residual = cabs(i_residual);
-        output.i_angle_residual = arg(i_residual);
+        auto const i_calc_param = calc_param<sym_calc>();
+        auto const angle_measurement_type = i_calc_param.angle_measurement_type;
+        auto const i_measured_complex = i_calc_param.measurement.value();
+        ComplexValue<sym_calc> i_output = [&i, &u, &angle_measurement_type] {
+            switch (angle_measurement_type) {
+            case AngleMeasurementType::global_angle: {
+                return i;
+            }
+            case AngleMeasurementType::local_angle: {
+                // I_l = conj(I_g) * exp(i * u_angle)
+                // Tranform back the output angle to the local angle frame of reference
+                auto const u_angle = arg(u);
+                return ComplexValue<sym_calc>{conj(i) * (cos(u_angle) + 1i * sin(u_angle))};
+            }
+            default: {
+                throw MissingCaseForEnumError{"generic output angle measurement type", angle_measurement_type};
+            }
+            }
+        }();
+        output.i_residual = (cabs(i_measured_complex) - cabs(i_output)) * base_current_;
+        output.i_angle_residual = phase_mod_2pi(arg(i_measured_complex) - arg(i_output));
         return output;
     }
 };

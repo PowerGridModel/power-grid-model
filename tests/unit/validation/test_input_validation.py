@@ -25,6 +25,7 @@ from power_grid_model.validation.errors import (
     InvalidEnumValueError,
     InvalidIdError,
     MultiComponentNotUniqueError,
+    MultiFieldValidationError,
     NotBetweenError,
     NotBetweenOrAtError,
     NotBooleanError,
@@ -55,6 +56,42 @@ def original_data() -> dict[ComponentType, np.ndarray]:
     line["r0"] = [10, 0, 0]
     line["x0"] = [0, 0, 50]
     line["i_n"] = [-3, 0, 50]
+
+    asym_line = initialize_array(DatasetType.input, ComponentType.asym_line, 4)
+    asym_line["id"] = [55, 56, 57, 58]
+    asym_line["from_node"] = [0, 1, 0, 0]
+    asym_line["to_node"] = [1, 2, 2, 1]
+    asym_line["from_status"] = [1, 1, 1, 1]
+    asym_line["to_status"] = [1, 1, 1, 1]
+    asym_line["r_aa"] = [-1, 2, 2, 2]
+    asym_line["r_ba"] = [-1, 2, 2, 2]
+    asym_line["r_bb"] = [-1, 2, 2, 2]
+    asym_line["r_ca"] = [-1, 2, 2, 2]
+    asym_line["r_cb"] = [-1, 2, 2, 2]
+    asym_line["r_cc"] = [-1, 2, 2, 2]
+    asym_line["r_na"] = [-1, 2, 2, 2]
+    asym_line["r_nb"] = [-1, 2, 2, 2]
+    asym_line["r_nc"] = [-1, 2, 2, 2]
+    asym_line["r_nn"] = [-1, np.nan, 2, 2]
+    asym_line["x_aa"] = [-1, 2, 2, 2]
+    asym_line["x_ba"] = [-1, 2, 2, 2]
+    asym_line["x_bb"] = [-1, 2, 2, 2]
+    asym_line["x_ca"] = [-1, 2, 2, 2]
+    asym_line["x_cb"] = [-1, 2, 2, 2]
+    asym_line["x_cc"] = [-1, 2, 2, 2]
+    asym_line["x_na"] = [-1, 2, np.nan, 2]
+    asym_line["x_nb"] = [-1, 2, 2, 2]
+    asym_line["x_nc"] = [-1, 2, 2, 2]
+    asym_line["x_nn"] = [-1, 2, 2, 2]
+    asym_line["c_aa"] = [-1, np.nan, 2, np.nan]
+    asym_line["c_ba"] = [-1, np.nan, 2, np.nan]
+    asym_line["c_bb"] = [-1, np.nan, 2, np.nan]
+    asym_line["c_ca"] = [-1, np.nan, 2, np.nan]
+    asym_line["c_cb"] = [-1, np.nan, 2, np.nan]
+    asym_line["c_cc"] = [-1, np.nan, 2, 2]
+    asym_line["c0"] = [-1, np.nan, np.nan, np.nan]
+    asym_line["c1"] = [-1, np.nan, np.nan, np.nan]
+    asym_line["i_n"] = [50, 50, 50, 50]
 
     generic_branch = initialize_array(DatasetType.input, ComponentType.generic_branch, 1)
     generic_branch["id"] = [6]
@@ -269,10 +306,10 @@ def original_data() -> dict[ComponentType, np.ndarray]:
     fault["fault_object"] = [200, 3] + list(range(10, 28, 2)) + 9 * [0]
     fault["r_f"] = [-1.0, 0.0, 1.0] + 17 * [_nan_type("fault", "r_f")]
     fault["x_f"] = [-1.0, 0.0, 1.0] + 17 * [_nan_type("fault", "x_f")]
-
     data = {
         ComponentType.node: node,
         ComponentType.line: line,
+        ComponentType.asym_line: asym_line,
         ComponentType.generic_branch: generic_branch,
         ComponentType.link: link,
         ComponentType.transformer: transformer,
@@ -688,3 +725,51 @@ def test_generic_branch_input_data(input_data):
     validation_errors = validate_input_data(input_data, symmetric=True)
     assert NotGreaterThanError("generic_branch", "k", [6], 0) in validation_errors
     assert NotGreaterOrEqualError("generic_branch", "sn", [6], 0) in validation_errors
+
+
+def test_asym_line_input_data(input_data):
+    validation_errors = validate_input_data(input_data, symmetric=True)
+    assert NotGreaterThanError(ComponentType.asym_line, "r_aa", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "r_ba", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "r_bb", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "r_ca", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "r_cb", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "r_cc", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "r_na", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "r_nb", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "r_nc", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "r_nn", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "x_aa", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "x_ba", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "x_bb", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "x_ca", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "x_cb", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "x_cc", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "x_na", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "x_nb", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "x_nc", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "x_nn", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "c_aa", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "c_ba", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "c_bb", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "c_ca", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "c_cb", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "c_cc", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "c0", [55], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_line, "c1", [55], 0) in validation_errors
+    assert (
+        MultiFieldValidationError(
+            ComponentType.asym_line, ["r_na", "r_nb", "r_nc", "r_nn", "x_na", "x_nb", "x_nc", "x_nn"], [56, 57]
+        )
+        in validation_errors
+    )
+    assert (
+        MultiFieldValidationError(
+            ComponentType.asym_line, ["c_aa", "c_ba", "c_bb", "c_ca", "c_cb", "c_cc", "c0", "c1"], [56]
+        )
+        in validation_errors
+    )
+    assert (
+        MultiFieldValidationError(ComponentType.asym_line, ["c_aa", "c_ba", "c_bb", "c_ca", "c_cb", "c_cc"], [58])
+        in validation_errors
+    )

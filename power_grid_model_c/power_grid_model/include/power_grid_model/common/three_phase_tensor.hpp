@@ -22,6 +22,7 @@ namespace three_phase_tensor {
 
 template <class T> using Eigen3Vector = Eigen::Array<T, 3, 1>;
 template <class T> using Eigen3Tensor = Eigen::Array<T, 3, 3, Eigen::ColMajor>;
+template <class T> using Eigen4Tensor = Eigen::Array<T, 4, 4, Eigen::ColMajor>;
 template <class T> using Eigen3DiagonalTensor = Eigen::DiagonalMatrix<T, 3>;
 
 template <scalar_value T> class Vector : public Eigen3Vector<T> {
@@ -61,11 +62,39 @@ template <scalar_value T> class Tensor : public Eigen3Tensor<T> {
     // additional constructors
     explicit Tensor(T const& x) { (*this) << x, 0.0, 0.0, 0.0, x, 0.0, 0.0, 0.0, x; }
     explicit Tensor(T const& s, T const& m) { (*this) << s, m, m, m, s, m, m, m, s; }
-    explicit Tensor(Vector<T> const& v) { (*this) << v(0), 0.0, 0.0, 0.0, v(1), 0.0, 0.0, 0.0, v(2); }
+    explicit Tensor(T const& s1, T const& s2, T const& s3, T const& m12, T const& m13, T const& m23) {
+        (*this) << s1, m12, m13, m12, s2, m23, m13, m23, s3;
+    }
+    explicit Tensor(Vector<T> const& v) {
+        assert(v.size() == 3);
+        (*this) << v(0), 0.0, 0.0, 0.0, v(1), 0.0, 0.0, 0.0, v(2);
+    }
     // eigen expression
     template <typename OtherDerived> Tensor(Eigen::ArrayBase<OtherDerived> const& other) : Eigen3Tensor<T>{other} {}
     template <typename OtherDerived> Tensor& operator=(Eigen::ArrayBase<OtherDerived> const& other) {
         this->Eigen3Tensor<T>::operator=(other);
+        return *this;
+    }
+};
+
+template <scalar_value T> class Tensor4 : public Eigen4Tensor<T> {
+  public:
+    Tensor4() { (*this) = Eigen4Tensor<T>::Zero(); }
+    // additional constructors
+    explicit Tensor4(T const& x) { (*this) << x, 0.0, 0.0, 0.0, 0.0, x, 0.0, 0.0, 0.0, 0.0, x, 0.0, 0.0, 0.0, 0.0, x; }
+    explicit Tensor4(T const& s, T const& m) { (*this) << s, m, m, m, m, s, m, m, m, m, s, m, m, m, m, s; }
+    explicit Tensor4(T const& s1, T const& s2, T const& s3, T const& s4, T const& m12, T const& m13, T const& m14,
+                     T const& m23, T const& m24, T const& m34) {
+        (*this) << s1, m12, m13, m14, m12, s2, m23, m24, m13, m23, s3, m34, m14, m24, m34, s4;
+    }
+    explicit Tensor4(Vector<T> const& v) {
+        assert(v.size() == 4);
+        (*this) << v(0), 0.0, 0.0, 0.0, 0.0, v(1), 0.0, 0.0, 0.0, 0.0, v(2), 0.0, 0.0, 0.0, 0.0, v(3);
+    }
+    // eigen expression
+    template <typename OtherDerived> Tensor4(Eigen::ArrayBase<OtherDerived> const& other) : Eigen4Tensor<T>{other} {}
+    template <typename OtherDerived> Tensor4& operator=(Eigen::ArrayBase<OtherDerived> const& other) {
+        this->Eigen4Tensor<T>::operator=(other);
         return *this;
     }
 };
@@ -92,6 +121,7 @@ template <symmetry_tag sym>
 using RealTensor = std::conditional_t<is_symmetric_v<sym>, double, three_phase_tensor::Tensor<double>>;
 template <symmetry_tag sym>
 using ComplexTensor = std::conditional_t<is_symmetric_v<sym>, DoubleComplex, three_phase_tensor::Tensor<DoubleComplex>>;
+using ComplexTensor4 = three_phase_tensor::Tensor4<DoubleComplex>;
 
 template <symmetry_tag sym>
 using RealDiagonalTensor = std::conditional_t<is_symmetric_v<sym>, double, three_phase_tensor::DiagonalTensor<double>>;
@@ -174,6 +204,14 @@ inline DoubleComplex phase_shift(DoubleComplex const x) {
 }
 inline ComplexValue<asymmetric_t> phase_shift(ComplexValue<asymmetric_t> const& m) {
     return {phase_shift(m(0)), phase_shift(m(1)), phase_shift(m(2))};
+}
+
+// arg(e^(i * phase)) = phase (mod 2pi). By convention restrict to [-pi, pi].
+inline auto phase_mod_2pi(double phase) {
+    return RealValue<symmetric_t>{arg(ComplexValue<symmetric_t>{exp(1.0i * phase)})};
+}
+inline auto phase_mod_2pi(RealValue<asymmetric_t> const& phase) {
+    return RealValue<asymmetric_t>{arg(ComplexValue<asymmetric_t>{exp(1.0i * phase)})};
 }
 
 // calculate kron product of two vector

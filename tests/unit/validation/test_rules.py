@@ -32,8 +32,10 @@ from power_grid_model.validation._rules import (
     all_valid_enum_values,
     all_valid_fault_phases,
     all_valid_ids,
+    no_strict_subset_missing,
     none_match_comparison,
     none_missing,
+    not_all_missing,
 )
 from power_grid_model.validation.errors import (
     ComparisonError,
@@ -43,6 +45,7 @@ from power_grid_model.validation.errors import (
     InvalidIdError,
     MissingValueError,
     MultiComponentNotUniqueError,
+    MultiFieldValidationError,
     NotBetweenError,
     NotBetweenOrAtError,
     NotBooleanError,
@@ -563,6 +566,100 @@ def test_none_missing():
             component="foo_test",
             fields=("foo", "bar", "baz", "bla", "ok"),
         ) == none_missing(data=invalid, component="foo_test", fields=("foo", "bar", "baz", "bla", "ok"))
+
+
+def test_no_strict_subset_missing():
+    dfoo = [("id", "i4"), ("foo", "f8"), ("bar", "(3,)f8"), ("baz", "i4")]
+
+    def _mock_nan_type(component: ComponentTypeLike, field: str):
+        return {
+            "foo_test": {"id": np.iinfo("i4").min, "foo": np.nan, "bar": np.nan, "baz": np.iinfo("i4").min},
+            "bar_test": {"id": np.iinfo("i4").min, "foobar": np.nan},
+        }[component][field]
+
+    with mock.patch("power_grid_model.validation._rules._nan_type", _mock_nan_type):
+        valid = {
+            "foo_test": np.array(
+                [
+                    (1, 3.1, (4.2, 4.3, 4.4), 1),
+                    (2, np.nan, (np.nan, np.nan, np.nan), np.iinfo("i4").min),
+                    (3, 7.3, (8.4, 8.5, 8.6), 3),
+                ],
+                dtype=dfoo,
+            )
+        }
+        errors = no_strict_subset_missing(valid, ["foo", "bar", "baz"], "foo_test")
+        assert len(errors) == 0
+
+        invalid = {
+            "foo_test": np.array(
+                [
+                    (1, np.nan, (np.nan, np.nan, np.nan), np.iinfo("i4").min),
+                    (2, np.nan, (4.2, 4.3, 4.4), 3),
+                    (3, np.nan, (np.nan, np.nan, np.nan), 1),
+                ],
+                dtype=dfoo,
+            )
+        }
+
+        errors = no_strict_subset_missing(invalid, ["foo", "bar", "baz"], "foo_test")
+        assert len(errors) == 1
+        assert errors == [MultiFieldValidationError("foo_test", ["foo", "bar", "baz"], [2, 3])]
+
+        errors = no_strict_subset_missing(invalid, ["foo", "bar"], "foo_test")
+        assert len(errors) == 1
+        assert errors == [MultiFieldValidationError("foo_test", ["foo", "bar"], [2])]
+
+        errors = no_strict_subset_missing(invalid, ["bar"], "foo_test")
+        assert len(errors) == 0
+
+
+def test_not_all_missing():
+    dfoo = [("id", "i4"), ("foo", "f8"), ("bar", "(3,)f8"), ("baz", "i4")]
+
+    def _mock_nan_type(component: ComponentTypeLike, field: str):
+        return {
+            "foo_test": {"id": np.iinfo("i4").min, "foo": np.nan, "bar": np.nan, "baz": np.iinfo("i4").min},
+            "bar_test": {"id": np.iinfo("i4").min, "foobar": np.nan},
+        }[component][field]
+
+    with mock.patch("power_grid_model.validation._rules._nan_type", _mock_nan_type):
+        valid = {
+            "foo_test": np.array(
+                [
+                    (1, 3.1, (4.2, 4.3, 4.4), 1),
+                    (2, 5.2, (3.3, 3.4, 3.5), 2),
+                    (3, 7.3, (8.4, 8.5, 8.6), 3),
+                ],
+                dtype=dfoo,
+            )
+        }
+        errors = not_all_missing(valid, ["foo", "bar", "baz"], "foo_test")
+        assert len(errors) == 0
+
+        invalid = {
+            "foo_test": np.array(
+                [
+                    (1, np.nan, (np.nan, np.nan, np.nan), np.iinfo("i4").min),
+                    (2, np.nan, (4.2, 4.3, 4.4), 3),
+                    (3, np.nan, (np.nan, np.nan, np.nan), 1),
+                ],
+                dtype=dfoo,
+            )
+        }
+
+        errors = not_all_missing(invalid, ["foo", "bar", "baz"], "foo_test")
+        assert len(errors) == 1
+        assert errors == [MultiFieldValidationError("foo_test", ["foo", "bar", "baz"], [1])]
+
+        with pytest.raises(ValueError) as excinfo:
+            not_all_missing(invalid, ["bar"], "foo_test")
+
+        assert excinfo.type == ValueError
+        assert (
+            str(excinfo.value)
+            == "The fields parameter must contain at least 2 fields. Otherwise use the none_missing function."
+        )
 
 
 @pytest.mark.skip("No unit tests available for all_valid_clocks")
