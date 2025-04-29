@@ -19,6 +19,7 @@ q = \Im(S),
 $$
 
 where:
+
 - \( S \) is the complex power,
 - \( I_l \) is the local complex current,
 - \( V \) is the complex voltage at the adjacent node where the sensor is located,
