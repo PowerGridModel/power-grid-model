@@ -48,55 +48,6 @@ the raw interface.
 This can be visualized graphically as follows.
 
 ```{mermaid}
-    :title: Public interfaces
-
-flowchart TD
-    classDef user_node fill:#9f6,stroke:#333,stroke-width:2px
-    classDef public_interface fill:#69f,stroke:#333,stroke-width:2px
-    classDef experimental_interface fill:#99b,stroke:#333,stroke-width:2px
-    classDef inclusion_method fill:#ddd,stroke:#fff,stroke-width:2px
-
-    subgraph User
-        any_language_user(["Any language user"]):::user_node
-        c_user(["C user"]):::user_node
-        cpp_user(["C++ user"]):::user_node
-        python_user(["Python user"]):::user_node
-    end
-
-    dynamic_loading{ }:::inclusion_method
-    c_includes{ }:::inclusion_method
-
-    subgraph Raw interface
-        power_grid_model_c_dll("power_grid_model_c<br>(shared library)"):::public_interface
-    end
-
-    subgraph Exposition
-        power_grid_model_c("power_grid_model_c<br>(C library)"):::public_interface
-    end
-
-    subgraph Wrapper
-        power_grid_model_cpp("power_grid_model_cpp<br>(experimental,<br>C++ library)"):::experimental_interface
-    end
-
-    subgraph Feature-rich library
-        power_grid_model_python("power_grid_model<br>(Python library)"):::public_interface
-    end
-
-    any_language_user --> dynamic_loading
-    c_includes --> dynamic_loading
-    dynamic_loading -->|dynamic loading| power_grid_model_c_dll
-    c_user --> c_includes
-    cpp_user --> c_includes
-    c_includes -->|links +<br>includes| power_grid_model_c -->|dynamic linking| power_grid_model_c_dll
-    cpp_user -->|experimental<br>links +<br>includes| power_grid_model_cpp -->|links +<br>includes| power_grid_model_c
-    python_user -->|import| power_grid_model_python -->|"CDLL<br>(dynamic loading)"| power_grid_model_c_dll
-```
-
-## Full high-level design
-
-This can be visualized graphically as follows.
-
-```{mermaid}
     :title: Full design
 
 flowchart TD
@@ -160,7 +111,7 @@ may want to create their own library or interface, e.g.:
 In all cases, it is recommended that the user determines their own desired
 [layer of abstraction](#layers-of-abstraction) and then creates internal wrappers for all
 lower-level ones, following the same pattern as the power-grid-model
-[uses internally](#full-high-level-design) for the custom interfaces.
+[uses internally](#existing-library-interfaces) for the custom interfaces.
 
 ### Hosting a custom library or interface
 
