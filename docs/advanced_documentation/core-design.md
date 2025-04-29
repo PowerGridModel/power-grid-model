@@ -48,3 +48,8 @@ graph TD
 
     ComponentsOutput -->|Output| Output(Output data)
 ```
+
+## Detailed Power Grid Model core design
+
+The sheer size and complexity of the Power Grid Model core implementation makes it hard to generate an up-to-date and comprehensive graph of its design.
+For a full overview of the core, it is recommended to build and access the Power Grid Model core documentation by following the steps in the [build guide](./build-guide.md#documentation).
