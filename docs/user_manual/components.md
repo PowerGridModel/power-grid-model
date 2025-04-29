@@ -375,7 +375,7 @@ Whenever the neutral phase is provided in the $Z_{\text{series}}$, the $Z_{\text
 $$
    Z_{\text{aa}} = \begin{bmatrix}
                      Z_{\text{0,0}} & Z_{\text{1,0}} & Z_{\text{2,0}}\\
-                     Z_{\text{1,0}} & Z_{\text{2,2}} & Z_{\text{2,1}}\\
+                     Z_{\text{1,0}} & Z_{\text{1,1}} & Z_{\text{2,1}}\\
                      Z_{\text{2,0}} & Z_{\text{2,1}} & Z_{\text{2,2}}
                    \end{bmatrix}
 $$
