@@ -206,6 +206,38 @@ TEST_CASE("Three phase tensor") {
         CHECK(is_nan(vec(1)));
         CHECK(vec(2) == 6.0);
     }
+    SUBCASE("phase_mod_2pi") {
+        auto const check = [](double value) {
+            CAPTURE(value);
+            CHECK_GE(value, -pi);
+            CHECK_LE(value, pi);
+            if (value != pi && value != -pi) {
+                CHECK(phase_mod_2pi(value) == doctest::Approx(value));
+            }
+        };
+        auto const check_asym = [&check](RealValue<asymmetric_t> const& value) {
+            for (Idx i : {0, 1, 2}) {
+                CAPTURE(i);
+                check(value(i));
+            }
+        };
+        check(phase_mod_2pi(0.0));
+        check(phase_mod_2pi(2.0 * pi));
+        check(phase_mod_2pi(2.0 * pi + 1.0));
+        check(phase_mod_2pi(-1.0));
+        check(phase_mod_2pi(-pi));
+        check(phase_mod_2pi(pi));
+        check(phase_mod_2pi(-3.0 * pi));
+        check(phase_mod_2pi(3.0 * pi));
+        check(phase_mod_2pi(pi * (1.0 + std::numeric_limits<double>::epsilon())));
+        check(phase_mod_2pi(pi * (1.0 - std::numeric_limits<double>::epsilon())));
+        check(phase_mod_2pi(-pi * (1.0 + std::numeric_limits<double>::epsilon())));
+        check(phase_mod_2pi(-pi * (1.0 - std::numeric_limits<double>::epsilon())));
+
+        check_asym(phase_mod_2pi(RealValue<asymmetric_t>{0.0, 2.0 * pi, 2.0 * pi + 1.0}));
+        check_asym(phase_mod_2pi(RealValue<asymmetric_t>{0.0, 2.0 * pi, 2.0 * pi + 1.0}));
+        check_asym(phase_mod_2pi(RealValue<asymmetric_t>{0.0, 2.0 * pi, 2.0 * pi + 1.0}));
+    }
 }
 
 } // namespace power_grid_model

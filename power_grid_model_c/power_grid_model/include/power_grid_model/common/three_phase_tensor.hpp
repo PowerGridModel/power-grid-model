@@ -176,6 +176,14 @@ inline ComplexValue<asymmetric_t> phase_shift(ComplexValue<asymmetric_t> const& 
     return {phase_shift(m(0)), phase_shift(m(1)), phase_shift(m(2))};
 }
 
+// arg(e^(i * phase)) = phase (mod 2pi). By convention restrict to [-pi, pi].
+inline auto phase_mod_2pi(double phase) {
+    return RealValue<symmetric_t>{arg(ComplexValue<symmetric_t>{exp(1.0i * phase)})};
+}
+inline auto phase_mod_2pi(RealValue<asymmetric_t> const& phase) {
+    return RealValue<asymmetric_t>{arg(ComplexValue<asymmetric_t>{exp(1.0i * phase)})};
+}
+
 // calculate kron product of two vector
 inline double vector_outer_product(double x, double y) { return x * y; }
 inline DoubleComplex vector_outer_product(DoubleComplex x, DoubleComplex y) { return x * y; }
