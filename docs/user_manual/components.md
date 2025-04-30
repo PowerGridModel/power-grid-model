@@ -731,10 +731,10 @@ voltage is a line-to-line voltage. In a `asym_voltage_sensor` the measured volta
 
 ##### Input
 
-| name               | data type        | unit     | description                                                          |              required              |  update  | valid values |
-| ------------------ | ---------------- | -------- | -------------------------------------------------------------------- | :--------------------------------: | :------: | :----------: |
-| `u_measured`       | `RealValueInput` | volt (V) | measured voltage magnitude                                           | &#10024; only for state estimation | &#10004; |    `> 0`     |
-| `u_angle_measured` | `RealValueInput` | rad      | measured voltage angle (only possible with phasor measurement units) |              &#10060;              | &#10004; |              |
+| name               | data type        | unit     | description                                                          |              required                                                                                      |  update  | valid values |
+| ------------------ | ---------------- | -------- | -------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------: | :------: | :----------: |
+| `u_measured`       | `RealValueInput` | volt (V) | measured voltage magnitude                                           | &#10024; only for state estimation                                                                         | &#10004; |    `> 0`     |
+| `u_angle_measured` | `RealValueInput` | rad      | measured voltage angle (only possible with phasor measurement units) | &#10024; only for state estimation when a current sensor with `global` `angle_measurement_type` is present | &#10004; |              |
 
 ##### Steady state output
 
