@@ -734,10 +734,10 @@ voltage is a line-to-line voltage. In a `asym_voltage_sensor` the measured volta
 | name               | data type        | unit     | description                                                          |              required                                                                                      |  update  | valid values |
 | ------------------ | ---------------- | -------- | -------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------: | :------: | :----------: |
 | `u_measured`       | `RealValueInput` | volt (V) | measured voltage magnitude                                           | &#10024; only for state estimation                                                                         | &#10004; |    `> 0`     |
-| `u_angle_measured` | `RealValueInput` | rad      | measured voltage angle (only possible with phasor measurement units) | &#10024; only for state estimation when a current sensor with `global` `angle_measurement_type` is present | &#10004; |              |
+| `u_angle_measured` | `RealValueInput` | rad      | measured voltage angle (only possible with phasor measurement units) | &#10024; only for state estimation when a current sensor with `global_angle` `angle_measurement_type` is present | &#10004; |              |
 
 ```{note}
-When a current sensor with `global` `angle_measurement_type` is present there needs to be a voltage sensor with `u_angle_measured` in the grid as a reference angle (when performing a state estimation). 
+When a current sensor with `global_angle` `angle_measurement_type` is present there needs to be a voltage sensor with `u_angle_measured` in the grid as a reference angle (when performing a state estimation). 
 ```
 
 ##### Steady state output
