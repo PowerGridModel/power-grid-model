@@ -175,7 +175,7 @@ You can use any IDE to develop this project. As a popular cross-platform IDE, th
 
 ```{note}
 VSCode (as well as some other IDEs) does not set its own build environment itself. For optimal usage, open the folder
-using `cmake <project_dir>` from a terminal that has the environment set up. See above section for tips.
+using `code <project_dir>` from a terminal that has the environment set up. See above section for tips.
 ```
 
 ## Build Script for Linux/macOS
@@ -194,9 +194,9 @@ Usage: ./build.sh -p <preset> [-c] [-e] [-i] [-t]
 
 To list the available presets, run `./build.sh -h`.
 
-## Example Setup for Ubuntu 22.04 (in WSL or physical/virtual machine)
+## Example Setup for Ubuntu 24.04 (in WSL or physical/virtual machine)
 
-In this section an example is given for setup in Ubuntu 22.04. You can use this example in Windows Subsystem for Linux (
+In this section an example is given for setup in Ubuntu 24.04. You can use this example in Windows Subsystem for Linux (
 WSL), or in a physical/virtual machine.
 
 ### Environment variables
@@ -286,7 +286,7 @@ or install using
 cmake --build --preset <preset> --target install
 ```
 
-## Example Setup for Windows 10
+## Example Setup for Windows 11
 
 Define the following environment variable user-wide:
 
@@ -374,9 +374,9 @@ The IDE should be able to automatically detect the Visual Studio cmake configura
   Prompt`).
 ```
 
-## Example Setup for macOS (Big Sur)
+## Example Setup for macOS (Sequoia)
 
-In this section an example is given for setup in macOS Big Sur and Python 3.11.
+In this section an example is given for setup in macOS Sequoia and Python 3.11.
 
 ### Environment variables
 
