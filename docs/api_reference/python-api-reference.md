@@ -42,7 +42,7 @@ are internal implementations.
 ```{eval-rst}
 .. automodule:: power_grid_model.data_types
    :undoc-members:
-   :imported-members: +SparseBatchColumnarData, SparseBatchArray
+   :imported-members:
    :show-inheritance:
    :exclude-members: BatchList,NominalValue,RealValue,AsymValue,AttributeValue,Component,ComponentList,SinglePythonDataset,BatchPythonDataset,PythonDataset
 ```
