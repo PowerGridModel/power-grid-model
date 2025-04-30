@@ -427,7 +427,7 @@ As an example, go to the root folder of repo. Use the following command to build
 ./build.sh -p <preset>
 ```
 
-To list the available presets, run `./build.sh -h`.
+To list the available presets, run `cmake --list-presets`.
 
 One can run the unit tests and C API example by:
 
