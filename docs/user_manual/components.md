@@ -327,6 +327,7 @@ This representation holds for all values `r_aa` ... `r_nn`, `x_aa` ... `x_nn` an
 | `c_cc` | `double`  | farad (F)  | Shunt nodal capacitance matrix cc | &#10024; for a full c matrix | &#10060; |               `> 0`                |
 | `c0`   | `double`  | farad (F)  | zero-sequence shunt capacitance   | &#10024; without a c matrix  | &#10060; |               `> 0`                |
 | `c1`   | `double`  | farad (F)  | Series shunt capacitance          | &#10024; without a c matrix  | &#10060; |               `> 0`                |
+| `i_n`  | `double`  | ampere (A) | rated current                     | &#10060;                     | &#10060; |               `> 0`                |
 
 For the r and x matrices providing values for the neutral phase is optional. To clarify which input values are required, please consult the tables below:
 
@@ -350,7 +351,7 @@ For the r and x matrices providing values for the neutral phase is optional. To 
 | &#10004;        | &#10060; | &#10060; | &#10060; | &#10060; | &#10004; |                           |
 | &#10060;        | &#10060; | &#10060; | &#10060; | &#10060; | &#10060; | MultiFieldValidationError |
 
-For the c-matrix values there are two options. Either provide all the required c-matrix values i.e. `c_aa` ... `c_cc` or provide `c0`, `c1`. Whenver both sets are supplied the powerflow calculations will use `c0`, `c1`.
+For the c-matrix values there are two options. Either provide all the required c-matrix values i.e. `c_aa` ... `c_cc` or provide `c0`, `c1`. Whenever both sets are supplied the powerflow calculations will use `c0`, `c1`.
 The table below provides guidance in providing valid input.
 
 | c_aa ... c_cc | c0       | c1       | result   | Validation Error          |
