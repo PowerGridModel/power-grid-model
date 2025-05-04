@@ -22,6 +22,7 @@ from power_grid_model._core.power_grid_meta import (  # pylint: disable=unused-i
 from power_grid_model._core.typing import (  # pylint: disable=unused-import
     ComponentAttributeMapping as _ComponentAttributeMapping,
 )
+from power_grid_model.enum import ComponentAttributeFilterOptions  # pylint: disable=unused-import
 
 ComponentAttributeMapping = _ComponentAttributeMapping
 """
