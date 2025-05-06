@@ -12,6 +12,7 @@ from typing import Any
 
 import numpy as np
 
+from power_grid_model._core.data_types import AttributeType, DenseBatchArray, SingleArray
 from power_grid_model._core.dataset_definitions import (
     ComponentTypeLike,
     ComponentTypeVar,
@@ -21,7 +22,6 @@ from power_grid_model._core.dataset_definitions import (
     _str_to_datatype,
 )
 from power_grid_model._core.power_grid_core import AttributePtr, ComponentPtr, DatasetPtr, power_grid_core as pgc
-from power_grid_model.data_types import AttributeType, DenseBatchArray, SingleArray
 
 
 # constant enum for ctype

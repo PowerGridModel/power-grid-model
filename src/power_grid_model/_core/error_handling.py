@@ -10,9 +10,7 @@ import re
 
 import numpy as np
 
-from power_grid_model._core.index_integer import IdxNp
-from power_grid_model._core.power_grid_core import power_grid_core as pgc
-from power_grid_model.errors import (
+from power_grid_model._core.errors import (
     AutomaticTapCalculationError,
     AutomaticTapInputError,
     ConflictID,
@@ -40,6 +38,8 @@ from power_grid_model.errors import (
     PowerGridUnreachableHitError,
     SparseMatrixError,
 )
+from power_grid_model._core.index_integer import IdxNp
+from power_grid_model._core.power_grid_core import power_grid_core as pgc
 
 VALIDATOR_MSG = "\nTry validate_input_data() or validate_batch_data() to validate your data.\n"
 # error codes
