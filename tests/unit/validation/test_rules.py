@@ -9,7 +9,7 @@ import pytest
 
 from power_grid_model import ComponentType, LoadGenType, initialize_array, power_grid_meta_data
 from power_grid_model._core.dataset_definitions import ComponentTypeLike
-from power_grid_model._utils import compatibility_convert_row_columnar_dataset
+from power_grid_model._core.utils import compatibility_convert_row_columnar_dataset
 from power_grid_model.enum import Branch3Side, BranchSide, FaultPhase, FaultType
 from power_grid_model.validation._rules import (
     all_between,

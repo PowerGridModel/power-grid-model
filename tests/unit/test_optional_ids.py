@@ -14,7 +14,7 @@ from power_grid_model import (
     initialize_array,
     power_grid_meta_data,
 )
-from power_grid_model._utils import compatibility_convert_row_columnar_dataset
+from power_grid_model._core.utils import compatibility_convert_row_columnar_dataset
 from power_grid_model.enum import CalculationType, ComponentAttributeFilterOptions
 from power_grid_model.validation import assert_valid_batch_data
 

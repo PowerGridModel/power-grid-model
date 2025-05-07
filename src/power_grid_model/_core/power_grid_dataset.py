@@ -16,7 +16,17 @@ from power_grid_model._core.buffer_handling import (
     get_buffer_properties,
     get_buffer_view,
 )
+from power_grid_model._core.data_types import (
+    AttributeType,
+    ColumnarData,
+    ComponentData,
+    Dataset,
+    DenseBatchColumnarData,
+    SingleColumnarData,
+    SparseBatchColumnarData,
+)
 from power_grid_model._core.dataset_definitions import ComponentType, DatasetType, _str_to_component_type
+from power_grid_model._core.enum import ComponentAttributeFilterOptions
 from power_grid_model._core.error_handling import VALIDATOR_MSG, assert_no_error
 from power_grid_model._core.power_grid_core import (
     ConstDatasetPtr,
@@ -26,18 +36,14 @@ from power_grid_model._core.power_grid_core import (
     power_grid_core as pgc,
 )
 from power_grid_model._core.power_grid_meta import ComponentMetaData, DatasetMetaData, power_grid_meta_data
-from power_grid_model._utils import get_dataset_type, is_columnar, is_nan_or_equivalent, is_sparse, process_data_filter
-from power_grid_model.data_types import (
-    AttributeType,
-    ColumnarData,
-    ComponentData,
-    Dataset,
-    DenseBatchColumnarData,
-    SingleColumnarData,
-    SparseBatchColumnarData,
+from power_grid_model._core.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict
+from power_grid_model._core.utils import (
+    get_dataset_type,
+    is_columnar,
+    is_nan_or_equivalent,
+    is_sparse,
+    process_data_filter,
 )
-from power_grid_model.enum import ComponentAttributeFilterOptions
-from power_grid_model.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict
 
 
 class CDatasetInfo:  # pylint: disable=too-few-public-methods

@@ -19,17 +19,12 @@ from power_grid_model._core.power_grid_meta import (  # pylint: disable=unused-i
     DatasetMetaData,
     PowerGridMetaData,
 )
-from power_grid_model.enum import ComponentAttributeFilterOptions
-
-_ComponentAttributeMappingDict = dict[ComponentType, set[str] | list[str] | None | ComponentAttributeFilterOptions]
-
-ComponentAttributeMapping = (
-    set[ComponentTypeVar]
-    | list[ComponentTypeVar]
-    | ComponentAttributeFilterOptions
-    | None
-    | _ComponentAttributeMappingDict
+from power_grid_model._core.typing import (  # pylint: disable=unused-import
+    ComponentAttributeMapping as _ComponentAttributeMapping,
 )
+from power_grid_model.enum import ComponentAttributeFilterOptions  # pylint: disable=unused-import
+
+ComponentAttributeMapping = _ComponentAttributeMapping
 """
 Type hint for mapping component attributes.
 
