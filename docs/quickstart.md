@@ -95,7 +95,7 @@ input_data = {
 }
 ```
 
-Another example of how to create components can be found in [Input data](ex_input_data).
+Another example of how to create components can be found in [Input data](examples/Power%20Flow%20Example.ipynb#input-dataset).
 
 ```{note}
 The keys of the dictonary of arrays are unique and should match with the respective `type name` of the component. 

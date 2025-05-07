@@ -217,7 +217,7 @@ Install the following packages from Ubuntu.
 
 ```shell
 sudo apt update && sudo apt -y upgrade
-sudo apt install -y wget curl zip unzip tar git build-essential gcovr lcov gcc g++ clang-18 make gdb ninja-build pkg-config python3.11 python3.11-dev python3.11-venv python3-pip
+sudo apt install -y wget curl zip unzip tar git build-essential gcovr lcov gcc g++ clang-18 make gdb ninja-build pkg-config python3.12 python3.12-dev python3.12-venv python3-pip
 ```
 
 ### C++ packages
