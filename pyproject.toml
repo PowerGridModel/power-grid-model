@@ -90,7 +90,6 @@ xfail_strict = true
 max-line-length = 120
 
 [tool.ruff]
-extend-exclude = ["*.ipynb"]
 # Exclude a variety of commonly ignored directories.
 exclude = [
     ".bzr",
