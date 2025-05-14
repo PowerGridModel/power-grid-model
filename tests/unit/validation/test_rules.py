@@ -9,7 +9,6 @@ import pytest
 
 from power_grid_model import ComponentType, LoadGenType, initialize_array, power_grid_meta_data
 from power_grid_model._core.dataset_definitions import ComponentTypeLike
-from power_grid_model._core.utils import compatibility_convert_row_columnar_dataset
 from power_grid_model.enum import Branch3Side, BranchSide, FaultPhase, FaultType
 from power_grid_model.validation._rules import (
     all_between,
@@ -655,7 +654,7 @@ def test_not_all_missing():
         with pytest.raises(ValueError) as excinfo:
             not_all_missing(invalid, ["bar"], "foo_test")
 
-        assert excinfo.type == ValueError
+        assert excinfo.type is ValueError
         assert (
             str(excinfo.value)
             == "The fields parameter must contain at least 2 fields. Otherwise use the none_missing function."

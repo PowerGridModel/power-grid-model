@@ -9,7 +9,7 @@ Note: these enumeration match the C++ arithmetic core, so don't change the value
 
 """
 
-from power_grid_model._core.enum import (  # pylint: disable=unused-import
+from power_grid_model._core.enum import (  # noqa: F401
     AngleMeasurementType,
     Branch3Side,
     BranchSide,
