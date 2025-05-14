@@ -9,7 +9,8 @@ import numpy as np
 import pytest
 
 from power_grid_model._core.data_handling import create_output_data
-from power_grid_model._core.dataset_definitions import ComponentType as CT, DatasetType as DT
+from power_grid_model._core.dataset_definitions import ComponentType as CT
+from power_grid_model._core.dataset_definitions import DatasetType as DT
 from power_grid_model._core.power_grid_core import VoidPtr
 from power_grid_model._core.power_grid_dataset import CMutableDataset
 from power_grid_model._core.power_grid_meta import initialize_array, power_grid_meta_data

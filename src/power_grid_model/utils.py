@@ -26,11 +26,15 @@ from power_grid_model._core.serialization import (  # pylint: disable=unused-imp
 from power_grid_model._core.utils import (
     _extract_data_from_component_data,
     _extract_indptr,
-    get_and_verify_batch_sizes as _get_and_verify_batch_sizes,
-    get_batch_size as _get_batch_size,
     get_dataset_type,
     is_columnar,
     is_sparse,
+)
+from power_grid_model._core.utils import (
+    get_and_verify_batch_sizes as _get_and_verify_batch_sizes,
+)
+from power_grid_model._core.utils import (
+    get_batch_size as _get_batch_size,
 )
 from power_grid_model.data_types import (
     BatchComponentData,
