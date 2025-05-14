@@ -3,11 +3,6 @@
 # SPDX-License-Identifier: MPL-2.0
 
 changelog:
-  exclude:
-    labels:
-      - github-actions
-    authors:
-      - dependabot
   categories:
     - title: Features and improvements
       labels:
@@ -19,6 +14,8 @@ changelog:
     - title: Dependencies
       labels:
         - dependencies
+      authors:
+        - dependabot
     - title: Documentation
       labels:
         - documentation
