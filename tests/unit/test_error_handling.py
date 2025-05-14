@@ -23,7 +23,6 @@ from power_grid_model.errors import (
     ConflictVoltage,
     IDNotFound,
     IDWrongType,
-    InvalidArguments,
     InvalidBranch,
     InvalidBranch3,
     InvalidCalculationMethod,
@@ -33,7 +32,6 @@ from power_grid_model.errors import (
     IterationDiverge,
     MissingCaseForEnumError,
     NotObservableError,
-    PowerGridError,
 )
 
 from .utils import PowerGridModelWithExt
@@ -46,7 +44,7 @@ def test_empty_model():
     with pytest.raises(TypeError):
         model.copy()
     with pytest.raises(TypeError):
-        n = model.all_component_count
+        _n = model.all_component_count
     with pytest.raises(TypeError):
         copy(model)
 

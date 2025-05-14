@@ -9,7 +9,8 @@ import numpy as np
 import pytest
 
 from power_grid_model import ComponentType, DatasetType, initialize_array
-from power_grid_model._core.dataset_definitions import ComponentType as CT, DatasetType as DT
+from power_grid_model._core.dataset_definitions import ComponentType as CT
+from power_grid_model._core.dataset_definitions import DatasetType as DT
 from power_grid_model._core.power_grid_meta import power_grid_meta_data
 from power_grid_model._core.utils import (
     compatibility_convert_row_columnar_dataset,

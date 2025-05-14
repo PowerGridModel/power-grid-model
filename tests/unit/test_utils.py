@@ -8,11 +8,10 @@ from unittest.mock import MagicMock, mock_open, patch
 import numpy as np
 import pytest
 
-from power_grid_model import LoadGenType, initialize_array
+from power_grid_model import initialize_array
 from power_grid_model._core.power_grid_meta import power_grid_meta_data
 from power_grid_model.data_types import Dataset
 from power_grid_model.utils import (
-    export_json_data,
     get_component_batch_size,
     get_dataset_batch_size,
     get_dataset_scenario,

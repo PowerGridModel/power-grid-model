@@ -6,7 +6,7 @@
 Error classes used by the power-grid-model library.
 """
 
-from power_grid_model._core.errors import (  # pylint: disable=unused-import
+from power_grid_model._core.errors import (  # noqa: F401
     AutomaticTapCalculationError,
     AutomaticTapInputError,
     ConflictID,

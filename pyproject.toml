@@ -38,7 +38,11 @@ dependencies = ["numpy>=1.21.0"]
 dynamic = ["version"]
 
 [project.optional-dependencies]
+<<<<<<< HEAD
 dev = ["msgpack", "pre-commit", "pytest", "pytest-cov", "ruff"]
+=======
+dev = ["msgpack", "pre-commit", "pylint", "pytest", "pytest-cov", "ruff>=0.3.5"]
+>>>>>>> 7d38b760 (ruff in pyproject, pre-commit, notebooks not fixed yet. Pylint needs a small adjustment)
 doc = [
     "sphinx",
     "breathe",

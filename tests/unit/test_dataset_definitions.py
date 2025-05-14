@@ -2,8 +2,6 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-import pytest
-
 from power_grid_model import ComponentType, DatasetType, power_grid_meta_data
 
 
