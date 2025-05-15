@@ -16,6 +16,7 @@ from power_grid_model.enum import Branch3Side, BranchSide, CalculationType, Comp
 from power_grid_model.validation import assert_valid_input_data
 from power_grid_model.validation._validation import (
     assert_valid_data_structure,
+    validate_generic_current_sensor,
     validate_generic_power_sensor,
     validate_ids,
     validate_input_data,
@@ -213,6 +214,12 @@ def test_validate_required_values_sym_calculation(calculation_type, symmetric):
     asym_power_sensor["p_measured"] = [[np.nan, 2.0, 1.0]]
     asym_power_sensor["q_measured"] = [[2.0, 1.0, np.nan]]
 
+    sym_current_sensor = initialize_array("input", "sym_current_sensor", 1)
+
+    asym_current_sensor = initialize_array("input", "asym_current_sensor", 1)
+    asym_current_sensor["i_measured"] = [[np.nan, 2.0, 1.0]]
+    asym_current_sensor["i_angle_measured"] = [[2.0, 1.0, np.nan]]
+
     fault = initialize_array("input", "fault", 1)
 
     data = {
@@ -231,6 +238,8 @@ def test_validate_required_values_sym_calculation(calculation_type, symmetric):
         "asym_voltage_sensor": asym_voltage_sensor,
         "sym_power_sensor": sym_power_sensor,
         "asym_power_sensor": asym_power_sensor,
+        "sym_current_sensor": sym_current_sensor,
+        "asym_current_sensor": asym_current_sensor,
         "fault": fault,
     }
     required_values_errors = validate_required_values(data=data, calculation_type=calculation_type, symmetric=symmetric)
@@ -382,6 +391,28 @@ def test_validate_required_values_sym_calculation(calculation_type, symmetric):
     assert (MissingValueError("asym_power_sensor", "p_measured", [NaN]) in required_values_errors) == se_dependent
     assert (MissingValueError("asym_power_sensor", "q_measured", [NaN]) in required_values_errors) == se_dependent
 
+    assert MissingValueError("sym_current_sensor", "id", [NaN]) in required_values_errors
+    assert MissingValueError("sym_current_sensor", "measured_object", [NaN]) in required_values_errors
+    assert MissingValueError("sym_current_sensor", "measured_terminal_type", [NaN]) in required_values_errors
+    assert MissingValueError("sym_current_sensor", "angle_measurement_type", [NaN]) in required_values_errors
+    assert (MissingValueError("sym_current_sensor", "i_measured", [NaN]) in required_values_errors) == se_dependent
+    assert (
+        MissingValueError("sym_current_sensor", "i_angle_measured", [NaN]) in required_values_errors
+    ) == se_dependent
+    assert (MissingValueError("sym_current_sensor", "i_sigma", [NaN]) in required_values_errors) == se_dependent
+    assert (MissingValueError("sym_current_sensor", "i_angle_sigma", [NaN]) in required_values_errors) == se_dependent
+
+    assert MissingValueError("asym_current_sensor", "id", [NaN]) in required_values_errors
+    assert MissingValueError("asym_current_sensor", "measured_object", [NaN]) in required_values_errors
+    assert MissingValueError("asym_current_sensor", "measured_terminal_type", [NaN]) in required_values_errors
+    assert MissingValueError("asym_current_sensor", "angle_measurement_type", [NaN]) in required_values_errors
+    assert (MissingValueError("asym_current_sensor", "i_measured", [NaN]) in required_values_errors) == se_dependent
+    assert (
+        MissingValueError("asym_current_sensor", "i_angle_measured", [NaN]) in required_values_errors
+    ) == se_dependent
+    assert (MissingValueError("asym_current_sensor", "i_sigma", [NaN]) in required_values_errors) == se_dependent
+    assert (MissingValueError("asym_current_sensor ", "i_angle_sigma", [NaN]) in required_values_errors) == se_dependent
+
     assert MissingValueError("fault", "id", [NaN]) in required_values_errors
     assert (MissingValueError("fault", "status", [NaN]) in required_values_errors) == sc_dependent
     assert (MissingValueError("fault", "fault_type", [NaN]) in required_values_errors) == sc_dependent
@@ -464,6 +495,10 @@ def test_validate_values__calculation_types():
         ("asym_voltage_sensor", "u_sigma"),
         ("sym_power_sensor", "power_sigma"),
         ("asym_power_sensor", "power_sigma"),
+        ("sym_current_sensor", "i_sigma"),
+        ("sym_current_sensor", "i_angle_sigma"),
+        ("asym_current_sensor", "i_sigma"),
+        ("asym_current_sensor", "i_angle_sigma"),
     ],
 )
 def test_validate_values__infinite_sigmas(sensor_type, parameter):
@@ -715,6 +750,66 @@ def test_validate_generic_power_sensor__terminal_types(
     # Assert
     _all_valid_ids.assert_any_call(
         ANY, ANY, field=ANY, ref_components=ref_component, measured_terminal_type=measured_terminal_type
+    )
+
+
+@pytest.mark.parametrize(
+    "measured_terminal_type",
+    [
+        MeasuredTerminalType.branch_from,
+        MeasuredTerminalType.branch_to,
+        MeasuredTerminalType.branch3_1,
+        MeasuredTerminalType.branch3_2,
+        MeasuredTerminalType.branch3_3,
+    ],
+)
+@patch("power_grid_model.validation._validation.validate_base", new=MagicMock())
+@patch("power_grid_model.validation._validation._all_greater_than_zero", new=MagicMock())
+@patch("power_grid_model.validation._validation._all_valid_enum_values", new=MagicMock())
+@patch("power_grid_model.validation._validation._all_valid_ids")
+def test_validate_generic_current_sensor__all_terminal_types(
+    _all_valid_ids: MagicMock, measured_terminal_type: MeasuredTerminalType
+):
+    # Act
+    validate_generic_current_sensor(data={}, component="")  # type: ignore
+
+    # Assert
+    _all_valid_ids.assert_any_call(
+        ANY,
+        ANY,
+        field=ANY,
+        ref_components=ANY,
+        measured_terminal_type=measured_terminal_type,
+    )
+
+
+@pytest.mark.parametrize(
+    ("ref_component", "measured_terminal_type"),
+    [
+        (["line", "generic_branch", "transformer"], MeasuredTerminalType.branch_from),
+        (["line", "generic_branch", "transformer"], MeasuredTerminalType.branch_to),
+        ("three_winding_transformer", MeasuredTerminalType.branch3_1),
+        ("three_winding_transformer", MeasuredTerminalType.branch3_2),
+        ("three_winding_transformer", MeasuredTerminalType.branch3_3),
+    ],
+)
+@patch("power_grid_model.validation._validation.validate_base", new=MagicMock())
+@patch("power_grid_model.validation._validation._all_greater_than_zero", new=MagicMock())
+@patch("power_grid_model.validation._validation._all_valid_enum_values", new=MagicMock())
+@patch("power_grid_model.validation._validation._all_valid_ids")
+def test_validate_generic_current_sensor__terminal_types(
+    _all_valid_ids: MagicMock, ref_component: str | list[str], measured_terminal_type: MeasuredTerminalType
+):
+    # Act
+    validate_generic_current_sensor(data={}, component="")  # type: ignore
+
+    # Assert
+    _all_valid_ids.assert_any_call(
+        ANY,
+        ANY,
+        field=ANY,
+        ref_components=ref_component,
+        measured_terminal_type=measured_terminal_type,
     )
 
 
