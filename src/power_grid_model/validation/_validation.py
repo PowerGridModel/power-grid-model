@@ -199,7 +199,10 @@ def assert_valid_data_structure(data: Dataset, data_type: DatasetType) -> None:
                         f"Unexpected Numpy array ({array.dtype}) for '{component}' {data_type}_data "
                         "(should be a Numpy structured array)."
                     )
-                raise TypeError(f"Unexpected Numpy structured array; (expected = {dtype}, actual = {array.dtype}).")
+                raise TypeError(
+                    f"Unexpected Numpy structured array; (expected = {dtype}, actual = {array.dtype}). "
+                    "For component '{component}'."
+                )
         else:
             raise TypeError(
                 f"Unexpected data type {type(array).__name__} for '{component}' {data_type}_data "
@@ -875,6 +878,7 @@ def validate_generic_power_sensor(data: SingleDataset, component: ComponentType)
         ref_components=[
             ComponentType.node,
             ComponentType.line,
+            ComponentType.asym_line,
             ComponentType.generic_branch,
             ComponentType.transformer,
             ComponentType.three_winding_transformer,
@@ -890,14 +894,24 @@ def validate_generic_power_sensor(data: SingleDataset, component: ComponentType)
         data,
         component,
         field="measured_object",
-        ref_components=[ComponentType.line, ComponentType.generic_branch, ComponentType.transformer],
+        ref_components=[
+            ComponentType.line,
+            ComponentType.asym_line,
+            ComponentType.generic_branch,
+            ComponentType.transformer,
+        ],
         measured_terminal_type=MeasuredTerminalType.branch_from,
     )
     errors += _all_valid_ids(
         data,
         component,
         field="measured_object",
-        ref_components=[ComponentType.line, ComponentType.generic_branch, ComponentType.transformer],
+        ref_components=[
+            ComponentType.line,
+            ComponentType.asym_line,
+            ComponentType.generic_branch,
+            ComponentType.transformer,
+        ],
         measured_terminal_type=MeasuredTerminalType.branch_to,
     )
     errors += _all_valid_ids(
