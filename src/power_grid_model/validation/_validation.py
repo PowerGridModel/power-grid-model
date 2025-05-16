@@ -24,6 +24,7 @@ from power_grid_model._core.utils import (
 )
 from power_grid_model.data_types import BatchDataset, Dataset, SingleDataset
 from power_grid_model.enum import (
+    AngleMeasurementType,
     Branch3Side,
     BranchSide,
     CalculationType,
@@ -378,12 +379,22 @@ def validate_required_values(
     # Sensors
     required["sensor"] = required["base"] + ["measured_object"]
     required["voltage_sensor"] = required["sensor"].copy()
+    required["current_sensor"] = required["sensor"] + [
+        "measured_terminal_type",
+        "angle_measurement_type",
+        "i_sigma",
+        "i_angle_sigma",
+    ]
     required["power_sensor"] = required["sensor"] + ["measured_terminal_type"]
     if calculation_type is None or calculation_type == CalculationType.state_estimation:
         required["voltage_sensor"] += ["u_sigma", "u_measured"]
+        required["current_sensor"] += ["i_measured", "i_angle_measured"]
         required["power_sensor"] += ["power_sigma", "p_measured", "q_measured"]
     required["sym_voltage_sensor"] = required["voltage_sensor"].copy()
     required["asym_voltage_sensor"] = required["voltage_sensor"].copy()
+    required["sym_current_sensor"] = required["current_sensor"].copy()
+    required["asym_current_sensor"] = required["current_sensor"].copy()
+
     # Different requirements for individual sensors. Avoid shallow copy.
     for sensor_type in ("sym_power_sensor", "asym_power_sensor"):
         required[sensor_type] = required["power_sensor"].copy()
@@ -458,6 +469,8 @@ def validate_values(data: SingleDataset, calculation_type: CalculationType | Non
                 ComponentType.asym_power_sensor: ["power_sigma"],
                 ComponentType.sym_voltage_sensor: ["u_sigma"],
                 ComponentType.asym_voltage_sensor: ["u_sigma"],
+                ComponentType.sym_current_sensor: ["i_sigma", "i_angle_sigma"],
+                ComponentType.asym_current_sensor: ["i_sigma", "i_angle_sigma"],
             },
         )
     )
@@ -972,6 +985,7 @@ def validate_generic_current_sensor(data: SingleDataset, component: ComponentTyp
     errors += _all_greater_than_zero(data, component, "i_sigma")
     errors += _all_greater_than_zero(data, component, "i_angle_sigma")
     errors += _all_valid_enum_values(data, component, "measured_terminal_type", MeasuredTerminalType)
+    errors += _all_valid_enum_values(data, component, "angle_measurement_type", AngleMeasurementType)
     errors += _all_valid_ids(
         data,
         component,

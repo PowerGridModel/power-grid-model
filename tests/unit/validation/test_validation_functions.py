@@ -395,23 +395,23 @@ def test_validate_required_values_sym_calculation(calculation_type, symmetric):
     assert MissingValueError("sym_current_sensor", "measured_object", [NaN]) in required_values_errors
     assert MissingValueError("sym_current_sensor", "measured_terminal_type", [NaN]) in required_values_errors
     assert MissingValueError("sym_current_sensor", "angle_measurement_type", [NaN]) in required_values_errors
+    assert MissingValueError("sym_current_sensor", "i_sigma", [NaN]) in required_values_errors
+    assert MissingValueError("sym_current_sensor", "i_angle_sigma", [NaN]) in required_values_errors
     assert (MissingValueError("sym_current_sensor", "i_measured", [NaN]) in required_values_errors) == se_dependent
     assert (
         MissingValueError("sym_current_sensor", "i_angle_measured", [NaN]) in required_values_errors
     ) == se_dependent
-    assert (MissingValueError("sym_current_sensor", "i_sigma", [NaN]) in required_values_errors) == se_dependent
-    assert (MissingValueError("sym_current_sensor", "i_angle_sigma", [NaN]) in required_values_errors) == se_dependent
 
     assert MissingValueError("asym_current_sensor", "id", [NaN]) in required_values_errors
     assert MissingValueError("asym_current_sensor", "measured_object", [NaN]) in required_values_errors
     assert MissingValueError("asym_current_sensor", "measured_terminal_type", [NaN]) in required_values_errors
     assert MissingValueError("asym_current_sensor", "angle_measurement_type", [NaN]) in required_values_errors
+    assert MissingValueError("asym_current_sensor", "i_sigma", [NaN]) in required_values_errors
+    assert MissingValueError("asym_current_sensor", "i_angle_sigma", [NaN]) in required_values_errors
     assert (MissingValueError("asym_current_sensor", "i_measured", [NaN]) in required_values_errors) == se_dependent
     assert (
         MissingValueError("asym_current_sensor", "i_angle_measured", [NaN]) in required_values_errors
     ) == se_dependent
-    assert (MissingValueError("asym_current_sensor", "i_sigma", [NaN]) in required_values_errors) == se_dependent
-    assert (MissingValueError("asym_current_sensor ", "i_angle_sigma", [NaN]) in required_values_errors) == se_dependent
 
     assert MissingValueError("fault", "id", [NaN]) in required_values_errors
     assert (MissingValueError("fault", "status", [NaN]) in required_values_errors) == sc_dependent
