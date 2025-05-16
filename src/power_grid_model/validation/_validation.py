@@ -273,6 +273,7 @@ def _process_power_sigma_and_p_q_sigma(
         mask = np.logical_and(np.isnan(power_sigma), np.any(np.logical_not(np.isnan(q_sigma)), axis=asym_axes))
         power_sigma[mask] = np.nansum(q_sigma[mask], axis=asym_axes)
 
+# pylint: disable=too-many-statements
 
 def validate_required_values(
     data: SingleDataset, calculation_type: CalculationType | None = None, symmetric: bool = True
