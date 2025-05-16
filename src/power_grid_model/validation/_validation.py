@@ -201,7 +201,7 @@ def assert_valid_data_structure(data: Dataset, data_type: DatasetType) -> None:
                     )
                 raise TypeError(
                     f"Unexpected Numpy structured array; (expected = {dtype}, actual = {array.dtype}). "
-                    "For component '{component}'."
+                    f"For component '{component}'."
                 )
         else:
             raise TypeError(
