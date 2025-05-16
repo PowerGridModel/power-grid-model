@@ -801,7 +801,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     CalculationInfo calculation_info() const { return calculation_info_; }
 
-    void check_no_experimental_features_used(Options const& options) const {}
+    // This function is intentionally left empty to maintain API compatibility.
+    void check_no_experimental_features_used(Options const& /*options*/) const {}
 
   private:
     template <typename Component, typename MathOutputType, typename ResIt>
