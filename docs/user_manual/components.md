@@ -863,10 +863,6 @@ $$
 ### Generic Current Sensor
 
 ```{warning}
-At the time of writing, this feature is still experimental and is not yet publicly available.
-```
-
-```{warning}
 At the time of writing, state estimation with current sensors is not supported by the Newton-Raphson calculation method.
 ```
 
@@ -895,10 +891,6 @@ It is, however, allowed to have both a power sensor and a current sensor on the 
 | `i_angle_sigma`          | `double`                                                                      | rad        | standard deviation of the current (`i`) phase angle measurement error. Usually this is the absolute measurement error range divided by 3. | &#10004; | &#10004; |                        `> 0`                         |
 
 #### Current Sensor Concrete Types
-
-```{warning}
-At the time of writing, this feature is still experimental and is not yet publicly available.
-```
 
 ```{warning}
 At the time of writing, state estimation with current sensors is not supported by the Newton-Raphson calculation method.
