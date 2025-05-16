@@ -24,6 +24,7 @@ from power_grid_model._core.utils import (
 )
 from power_grid_model.data_types import BatchDataset, Dataset, SingleDataset
 from power_grid_model.enum import (
+    AngleMeasurementType,
     Branch3Side,
     BranchSide,
     CalculationType,
@@ -273,6 +274,9 @@ def _process_power_sigma_and_p_q_sigma(
         power_sigma[mask] = np.nansum(q_sigma[mask], axis=asym_axes)
 
 
+# pylint: disable=too-many-statements
+
+
 def validate_required_values(
     data: SingleDataset, calculation_type: CalculationType | None = None, symmetric: bool = True
 ) -> list[MissingValueError]:
@@ -378,12 +382,22 @@ def validate_required_values(
     # Sensors
     required["sensor"] = required["base"] + ["measured_object"]
     required["voltage_sensor"] = required["sensor"].copy()
+    required["current_sensor"] = required["sensor"] + [
+        "measured_terminal_type",
+        "angle_measurement_type",
+        "i_sigma",
+        "i_angle_sigma",
+    ]
     required["power_sensor"] = required["sensor"] + ["measured_terminal_type"]
     if calculation_type is None or calculation_type == CalculationType.state_estimation:
         required["voltage_sensor"] += ["u_sigma", "u_measured"]
+        required["current_sensor"] += ["i_measured", "i_angle_measured"]
         required["power_sensor"] += ["power_sigma", "p_measured", "q_measured"]
     required["sym_voltage_sensor"] = required["voltage_sensor"].copy()
     required["asym_voltage_sensor"] = required["voltage_sensor"].copy()
+    required["sym_current_sensor"] = required["current_sensor"].copy()
+    required["asym_current_sensor"] = required["current_sensor"].copy()
+
     # Different requirements for individual sensors. Avoid shallow copy.
     for sensor_type in ("sym_power_sensor", "asym_power_sensor"):
         required[sensor_type] = required["power_sensor"].copy()
@@ -458,6 +472,8 @@ def validate_values(data: SingleDataset, calculation_type: CalculationType | Non
                 ComponentType.asym_power_sensor: ["power_sigma"],
                 ComponentType.sym_voltage_sensor: ["u_sigma"],
                 ComponentType.asym_voltage_sensor: ["u_sigma"],
+                ComponentType.sym_current_sensor: ["i_sigma", "i_angle_sigma"],
+                ComponentType.asym_current_sensor: ["i_sigma", "i_angle_sigma"],
             },
         )
     )
@@ -491,6 +507,10 @@ def validate_values(data: SingleDataset, calculation_type: CalculationType | Non
             errors += validate_generic_power_sensor(data, ComponentType.sym_power_sensor)
         if "asym_power_sensor" in data:
             errors += validate_generic_power_sensor(data, ComponentType.asym_power_sensor)
+        if "sym_current_sensor" in data:
+            errors += validate_generic_current_sensor(data, ComponentType.sym_current_sensor)
+        if "asym_current_sensor" in data:
+            errors += validate_generic_current_sensor(data, ComponentType.asym_current_sensor)
 
     if calculation_type in (None, CalculationType.short_circuit) and "fault" in data:
         errors += validate_fault(data)
@@ -958,6 +978,63 @@ def validate_generic_power_sensor(data: SingleDataset, component: ComponentType)
     )
     if component in ("sym_power_sensor", "asym_power_sensor"):
         errors += _valid_p_q_sigma(data, component)
+
+    return errors
+
+
+def validate_generic_current_sensor(data: SingleDataset, component: ComponentType) -> list[ValidationError]:
+
+    errors = validate_base(data, component)
+    errors += _all_greater_than_zero(data, component, "i_sigma")
+    errors += _all_greater_than_zero(data, component, "i_angle_sigma")
+    errors += _all_valid_enum_values(data, component, "measured_terminal_type", MeasuredTerminalType)
+    errors += _all_valid_enum_values(data, component, "angle_measurement_type", AngleMeasurementType)
+    errors += _all_valid_ids(
+        data,
+        component,
+        field="measured_object",
+        ref_components=[
+            ComponentType.line,
+            ComponentType.generic_branch,
+            ComponentType.transformer,
+            ComponentType.three_winding_transformer,
+        ],
+    )
+    errors += _all_valid_ids(
+        data,
+        component,
+        field="measured_object",
+        ref_components=[ComponentType.line, ComponentType.generic_branch, ComponentType.transformer],
+        measured_terminal_type=MeasuredTerminalType.branch_from,
+    )
+    errors += _all_valid_ids(
+        data,
+        component,
+        field="measured_object",
+        ref_components=[ComponentType.line, ComponentType.generic_branch, ComponentType.transformer],
+        measured_terminal_type=MeasuredTerminalType.branch_to,
+    )
+    errors += _all_valid_ids(
+        data,
+        component,
+        field="measured_object",
+        ref_components=ComponentType.three_winding_transformer,
+        measured_terminal_type=MeasuredTerminalType.branch3_1,
+    )
+    errors += _all_valid_ids(
+        data,
+        component,
+        field="measured_object",
+        ref_components=ComponentType.three_winding_transformer,
+        measured_terminal_type=MeasuredTerminalType.branch3_2,
+    )
+    errors += _all_valid_ids(
+        data,
+        component,
+        field="measured_object",
+        ref_components=ComponentType.three_winding_transformer,
+        measured_terminal_type=MeasuredTerminalType.branch3_3,
+    )
 
     return errors
 
