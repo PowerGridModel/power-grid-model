@@ -690,8 +690,8 @@ def test_validate_generic_power_sensor__all_terminal_types(
 @pytest.mark.parametrize(
     ("ref_component", "measured_terminal_type"),
     [
-        (["line", "generic_branch", "transformer"], MeasuredTerminalType.branch_from),
-        (["line", "generic_branch", "transformer"], MeasuredTerminalType.branch_to),
+        (["line", "asym_line", "generic_branch", "transformer"], MeasuredTerminalType.branch_from),
+        (["line", "asym_line", "generic_branch", "transformer"], MeasuredTerminalType.branch_to),
         ("source", MeasuredTerminalType.source),
         ("shunt", MeasuredTerminalType.shunt),
         (["sym_load", "asym_load"], MeasuredTerminalType.load),
