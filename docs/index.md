@@ -52,7 +52,7 @@ To install the library from source, refer to the [Build Guide](advanced_document
 
 If you are using Power Grid Model in your research work, please consider citing our library using the references in [Citation](release_and_support/CITATION.md)
 
-# Contents
+## Contents
 
 Detailed contents of the documentation are structured as follows.
 
