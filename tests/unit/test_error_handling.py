@@ -14,6 +14,7 @@ from power_grid_model.enum import (
     LoadGenType,
     MeasuredTerminalType,
     TapChangingStrategy,
+    _ExperimentalFeatures,
 )
 from power_grid_model.errors import (
     AutomaticTapInputError,
@@ -421,7 +422,7 @@ def test_conflicting_angle_measurement_type() -> None:
     )
 
     with pytest.raises(ConflictingAngleMeasurementType):
-        model._calculate_state_estimation(decode_error=True)
+        model._calculate_state_estimation(decode_error=True, experimental_features=_ExperimentalFeatures.enabled)
 
 
 def test_global_current_measurement_without_voltage_angle() -> None:
@@ -469,7 +470,7 @@ def test_global_current_measurement_without_voltage_angle() -> None:
     )
 
     with pytest.raises(NotObservableError):
-        model._calculate_state_estimation(decode_error=True)
+        model._calculate_state_estimation(decode_error=True, experimental_features=_ExperimentalFeatures.enabled)
 
 
 @pytest.mark.skip(reason="TODO")
