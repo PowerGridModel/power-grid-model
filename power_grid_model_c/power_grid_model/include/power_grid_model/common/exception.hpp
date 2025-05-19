@@ -38,6 +38,10 @@ class InvalidArguments : public PowerGridError {
         std::string value;
     };
 
+    template <std::same_as<TypeValuePair>... Options> InvalidArguments(std::string_view error_msg) {
+        append_msg(error_msg);
+    }
+
     template <std::same_as<TypeValuePair>... Options>
     InvalidArguments(std::string_view method, std::string_view arguments) {
         append_msg(std::format("{} is not implemented for {}!\n", method, arguments));
