@@ -801,8 +801,15 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     CalculationInfo calculation_info() const { return calculation_info_; }
 
-    // This function is intentionally left empty to maintain API compatibility.
-    void check_no_experimental_features_used(Options const& /*options*/) const {}
+    void check_no_experimental_features_used(Options const& options) const {
+        if (options.calculation_type == CalculationType::state_estimation &&
+            state_.components.template size<GenericCurrentSensor>() > 0) {
+            if (options.calculation_method == CalculationMethod::newton_raphson) {
+                throw ExperimentalFeature{"Newton-Raphson state estimation is not implemented for current sensors"};
+            }
+            throw ExperimentalFeature{"State estimation with current sensors is experimental"};
+        }
+    }
 
   private:
     template <typename Component, typename MathOutputType, typename ResIt>
