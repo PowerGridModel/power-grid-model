@@ -107,7 +107,7 @@ In observable systems this helps better outputting correct results. On the other
 ```
 
 ```{warning}
-At the time of writing, the component [current sensor](./components.md#generic-current-sensor) is not supported in the calculation of [Newton-Raphson state estimation](#newton-raphson-state-estimation).
+At the time of writing, the component [current sensor](./components.md#generic-current-sensor) is not supported in the calculation of [Newton-Raphson state estimation](#newton-raphson-state-estimation). The support in the calculation of [Iterative Linear state estimation](#iterative-linear-state-estimation) is experimental.
 ```
 
 ##### Necessary observability condition
