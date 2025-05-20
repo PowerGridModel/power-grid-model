@@ -804,7 +804,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     void check_no_experimental_features_used(Options const& options) const {
         if (options.calculation_type == CalculationType::state_estimation &&
             state_.components.template size<GenericCurrentSensor>() > 0) {
-            throw ExperimentalFeature{"State estimation", "current sensors"};
+            if (options.calculation_method == CalculationMethod::newton_raphson) {
+                throw ExperimentalFeature{"Newton-Raphson state estimation is not implemented for current sensors"};
+            }
+            throw ExperimentalFeature{"State estimation with current sensors is experimental"};
         }
     }
 
