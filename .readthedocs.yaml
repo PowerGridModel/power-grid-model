@@ -16,10 +16,6 @@ build:
     - graphviz
   jobs:
     post_install:
-      # enable SSH interactions with GitHub using its public fingerprint. NOT a secret. See https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/githubs-ssh-key-fingerprints
-      - mkdir -p ~/.ssh
-      - echo "github.com ssh-ed25519 +DiY3wvvV6TuJJhbpZisF/zLDA0zPMSvHdkr4UvCOqU\n" > ~/.ssh/known_hosts
-
       # Build package with doc requirements from pyproject.optional-dependencies
       - pip install --verbose --editable .[doc]
 
