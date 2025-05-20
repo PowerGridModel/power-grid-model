@@ -18,16 +18,21 @@ build:
     post_install:
       # Build package with doc requirements from pyproject.optional-dependencies
       - pip install --verbose --editable .[doc]
+
       # remove API DLL define in header
       - find power_grid_model_c/power_grid_model_c/include -name *.h -exec sed -i -r "s/#define PGM.*//g" {} \;
       - find power_grid_model_c/power_grid_model_c/include -name *.h -exec sed -i -r "s/PGM_API //g" {} \;
       # build doxygen for C header
       - cd docs/doxygen && doxygen && cd ../..
+
       # build class and package diagrams
       - pyreverse --no-standalone -o dot src/power_grid_model
       - ccomps -x classes.dot | dot -Grankdir=LR -Nfontsize=13 -Efontsize=13 | gvpack -m100 -array_l1 | neato -n2 -Tsvg -o docs/_static/classes.svg
       - dot packages.dot -Grankdir=TD -Nfontsize=13 -Efontsize=13 -Tsvg -o docs/_static/packages.svg
       - rm packages.dot classes.dot
+
+      # enable SSH interactions with GitHub using its public fingerprint. NOT a secret. See https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/githubs-ssh-key-fingerprints
+      - echo "SHA256:+DiY3wvvV6TuJJhbpZisF/zLDA0zPMSvHdkr4UvCOqU" > ~/.ssh/known_hosts
       # download support and contribution
       - git clone git@github.com:PowerGridModel/.github.git --depth 1 --branch main pgm_org_github
       - mv pgm_org_github/RELEASE.md pgm_org_github/SUPPORT.md pgm_org_github/SECURITY.md pgm_org_github/CITATION.md docs/release_and_support/
