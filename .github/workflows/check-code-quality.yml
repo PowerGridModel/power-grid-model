@@ -53,7 +53,7 @@ jobs:
       - name: Install and run ruff
         run: |
           pip install ruff .
-          ruff check power_grid_model
+          ruff check .
           git restore README.md
 
       - name: Install and run clang-format
