@@ -1098,8 +1098,14 @@ TEST_CASE("API Model") {
         };
         for (auto const method : {PGM_default_method, PGM_iterative_linear, PGM_newton_raphson}) {
             CAPTURE(method);
-            CHECK_THROWS_WITH_AS(run_se_with_current_sensor(method, PGM_experimental_features_disabled),
-                                 "State estimation is not implemented for current sensors!\n", PowerGridRegularError);
+            if (method == PGM_newton_raphson) {
+                CHECK_THROWS_WITH_AS(run_se_with_current_sensor(method, PGM_experimental_features_disabled),
+                                     "Newton-Raphson state estimation is not implemented for current sensors",
+                                     PowerGridRegularError);
+            } else {
+                CHECK_THROWS_WITH_AS(run_se_with_current_sensor(method, PGM_experimental_features_disabled),
+                                     "State estimation with current sensors is experimental", PowerGridRegularError);
+            }
             CHECK_NOTHROW(run_se_with_current_sensor(method, PGM_experimental_features_enabled));
         }
     }

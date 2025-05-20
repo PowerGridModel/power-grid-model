@@ -106,6 +106,10 @@ The [iterative linear](#iterative-linear-state-estimation) and [Newton-Raphson](
 In observable systems this helps better outputting correct results. On the other hand with unobservable systems, exceptions raised from calculations due to faulty results will be prevented.
 ```
 
+```{warning}
+At the time of writing, the component [current sensor](./components.md#generic-current-sensor) is not supported in the calculation of [Newton-Raphson state estimation](#newton-raphson-state-estimation). The support in the calculation of [Iterative Linear state estimation](#iterative-linear-state-estimation) is experimental.
+```
+
 ##### Necessary observability condition
 
 Based on the requirements of observability mentioned above, users need to satisfy at least the following conditions for state estimation calculation in `power-grid-model`.
