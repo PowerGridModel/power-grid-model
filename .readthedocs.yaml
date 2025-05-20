@@ -29,7 +29,7 @@ build:
       - dot packages.dot -Grankdir=TD -Nfontsize=13 -Efontsize=13 -Tsvg -o docs/_static/packages.svg
       - rm packages.dot classes.dot
       # download support and contribution
-      - git clone https://github.com/PowerGridModel/.github --depth 1 --branch main pgm_org_github
+      - git clone git@github.com:PowerGridModel/.github.git --depth 1 --branch main pgm_org_github
       - mv RELEASE.md SUPPORT.md SECURITY.md CITATION.md docs/release_and_support/
       - mv GOVERNANCE.md CONTRIBUTING.md CODE_OF_CONDUCT.md docs/contribution/
       # fix links
