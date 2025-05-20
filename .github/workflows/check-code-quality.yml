@@ -50,10 +50,10 @@ jobs:
           pip install mypy numpy
           mypy .
 
-      - name: Install and run pylint
+      - name: Install and run ruff
         run: |
-          pip install pylint .
-          pylint power_grid_model
+          pip install ruff .
+          ruff check power_grid_model
           git restore README.md
 
       - name: Install and run clang-format
