@@ -36,7 +36,7 @@ build:
       - rm packages.dot classes.dot
 
       # download support and contribution
-      - git clone git@github.com:PowerGridModel/.github.git --depth 1 --branch main pgm_org_github
+      - git clone https://github.com/PowerGridModel/.github.git --depth 1 --branch main pgm_org_github
       - mv pgm_org_github/RELEASE.md pgm_org_github/SUPPORT.md pgm_org_github/SECURITY.md pgm_org_github/CITATION.md docs/release_and_support/
       - mv pgm_org_github/GOVERNANCE.md pgm_org_github/CONTRIBUTING.md pgm_org_github/CODE_OF_CONDUCT.md docs/contribution/
       # fix links
