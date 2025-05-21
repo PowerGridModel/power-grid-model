@@ -186,7 +186,7 @@ jobs:
             os: ubuntu-24.04-arm
             cibw_build: "*_aarch64"
           - platform: macos
-            os: macos-14
+            os: macos-15
             cibw_build: "*"
           - platform: windows
             os: windows-latest
@@ -204,7 +204,7 @@ jobs:
           path: .
 
       - name: Set up XCode
-        if: matrix.os == 'macos-14'
+        if: matrix.os == 'macos-15'
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: latest-stable
