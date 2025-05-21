@@ -126,7 +126,7 @@ musllinux-x86_64-image = "musllinux_1_2"
 
 [tool.cibuildwheel.macos]
 archs = ["x86_64", "arm64"]
-environment = { CC = "clang", CXX = "clang++", MACOSX_DEPLOYMENT_TARGET = "13.3" }
+environment = { CC = "clang", CXX = "clang++", MACOSX_DEPLOYMENT_TARGET = "13.4" }
 
 [tool.cibuildwheel.windows]
 archs = ["AMD64"]
