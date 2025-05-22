@@ -22,7 +22,6 @@ on:
         default: false
         required: true
 
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-main
   cancel-in-progress: true
