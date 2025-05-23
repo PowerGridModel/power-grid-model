@@ -3,15 +3,8 @@
 # SPDX-License-Identifier: MPL-2.0
 
 [build-system]
-requires = [
-    "setuptools",
-    "wheel",
-    "pybuild-header-dependency",
-    "msgpack-cxx",
-    "nlohmann-json",
-    "libboost-headers"
-]
-build-backend = "setuptools.build_meta"
+requires = ["py-build-cmake~=0.4.3"]
+build-backend = "py_build_cmake.build"
 
 [project]
 name = "power-grid-model"
@@ -62,15 +55,26 @@ Documentation = "https://power-grid-model.readthedocs.io/en/stable/"
 Mailing-list = "https://lists.lfenergy.org/g/powergridmodel"
 Discussion = "https://github.com/orgs/PowerGridModel/discussions"
 
-[tool.setuptools.packages.find]
-where = ["src"]
-namespaces = false
+[tool.py-build-cmake.module]
+name = "power_grid_model"
+directory = "src"
 
-[tool.setuptools.dynamic]
-version = { file = "PYPI_VERSION" }
+[tool.py-build-cmake.sdist]
+include = ["CMakeLists.txt", "power_grid_model_c/"]
 
-[tool.setuptools.package-data]
-"power_grid_model" = ["py.typed"]
+[tool.py-build-cmake.cmake]
+minimum_version = "3.23"
+build_type = "Release"
+build_args = ["-j1"]
+generator = "Ninja"
+find_python = false
+find_python3 = false
+
+[tool.py-build-cmake.wheel]
+python_tag = "py3"
+python_abi = "none"
+
+[tool.py-build-cmake.stubgen]
 
 [tool.pytest.ini_options]
 testpaths = ["tests/unit"]
