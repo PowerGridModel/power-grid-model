@@ -54,6 +54,26 @@ if(NOT WIN32)
   find_package(Threads REQUIRED)
 endif()
 
+# If cmake is invoked from py-build-cmake,
+# we set the install path of the cmake targets
+if (DEFINED PY_BUILD_CMAKE_VERSION)
+    message(STATUS "Configuring installation paths for py-build-cmake")
+    set(PGM_WHEEL_DIR "${PY_BUILD_CMAKE_PROJECT_NAME}-${PY_BUILD_CMAKE_PROJECT_VERSION}.data/data")
+
+    set(CMAKE_INSTALL_DATAROOTDIR "${PGM_WHEEL_DIR}/share")
+
+    # In Windows, the convention is to use the Library folder
+    if (WIN32)
+      set(CMAKE_INSTALL_LIBDIR "${PGM_WHEEL_DIR}/Library/lib")
+      set(CMAKE_INSTALL_INCLUDEDIR "${PGM_WHEEL_DIR}/Library/include")
+      set(CMAKE_INSTALL_BINDIR "${PGM_WHEEL_DIR}/Library/bin")
+    else()
+      set(CMAKE_INSTALL_LIBDIR "${PGM_WHEEL_DIR}/lib")
+      set(CMAKE_INSTALL_INCLUDEDIR "${PGM_WHEEL_DIR}/include")
+      set(CMAKE_INSTALL_BINDIR "${PGM_WHEEL_DIR}/bin")
+    endif()
+endif()
+
 # add C library
 add_subdirectory("power_grid_model_c")
 
