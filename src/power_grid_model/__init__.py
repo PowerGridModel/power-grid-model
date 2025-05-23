@@ -27,5 +27,3 @@ from power_grid_model.enum import (
     WindingType,
 )
 from power_grid_model.typing import ComponentAttributeMapping
-
-__verion__ = "1.11"
