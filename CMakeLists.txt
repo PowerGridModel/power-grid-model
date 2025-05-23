@@ -11,6 +11,16 @@ include("cmake/pgm_version.cmake")
 
 project (power_grid_model VERSION ${PGM_VERSION})
 
+# The following option is used to skip all the builds.
+# This is needed to run Python packaging in conda-forge.
+# We have separate cmake build and install in conda-forge.
+# So this option bypasses the build step from py-build-cmake.
+option(PGM_SKIP_BUILD "Skip all the builds" OFF)
+if (PGM_SKIP_BUILD)
+  message(STATUS "Skip all the builds")
+  return()
+endif()
+
 option(PGM_ENABLE_DEV_BUILD "Enable developer build (e.g.: tests)" OFF)
 
 set(CMAKE_CXX_STANDARD 20)
