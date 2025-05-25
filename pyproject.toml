@@ -69,6 +69,7 @@ build_args = ["-j1"]
 generator = "Ninja"
 find_python = false
 find_python3 = false
+build_path = ".py-build-cmake_cache"
 
 [tool.py-build-cmake.wheel]
 python_tag = "py3"
