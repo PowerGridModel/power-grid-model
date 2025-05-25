@@ -59,6 +59,7 @@ endif()
 if (DEFINED PY_BUILD_CMAKE_VERSION)
     message(STATUS "Configuring installation paths for py-build-cmake")
     set(PGM_WHEEL_DIR "${PY_BUILD_CMAKE_PROJECT_NAME}-${PY_BUILD_CMAKE_PROJECT_VERSION}.data/data")
+    set(PGM_SHARE_DIR "${PGM_WHEEL_DIR}/share")
 
     # In Windows, the convention is to use the Library folder
     if (WIN32)
@@ -70,6 +71,8 @@ if (DEFINED PY_BUILD_CMAKE_VERSION)
       set(CMAKE_INSTALL_INCLUDEDIR "${PGM_WHEEL_DIR}/include")
       set(CMAKE_INSTALL_BINDIR "${PGM_WHEEL_DIR}/bin")
     endif()
+else()
+    set(PGM_SHARE_DIR "share")
 endif()
 
 # add C library

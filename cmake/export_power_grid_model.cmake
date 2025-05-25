@@ -7,7 +7,7 @@ cmake_minimum_required (VERSION 3.23)
 # export the license and readme
 configure_file("${PROJECT_SOURCE_DIR}/cmake/README.md.in" "${CMAKE_CURRENT_BINARY_DIR}/README.md")
 install(FILES "LICENSE" "${CMAKE_CURRENT_BINARY_DIR}/README.md"
-  DESTINATION "share"
+  DESTINATION ${PGM_SHARE_DIR}
 )
 
 # export the power grid model targets
