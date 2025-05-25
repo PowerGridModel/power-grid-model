@@ -136,19 +136,30 @@ def _load_core() -> CDLL:
     else:
         raise NotImplementedError(f"Unsupported platform: {platform.system()}")
 
-    # determine path to the DLL
-    data_dir = Path(sysconfig.get_path("data"))
+    # determine lib path to the DLL
+    env_dir = Path(sysconfig.get_path("data"))
     if platform.system() == "Windows":
-        dll_dir = data_dir / "Library" / "bin"
+        lib_dir = env_dir / "Library" / "bin"
     else:
-        dll_dir = data_dir / "lib"
-    dll_path = dll_dir / dll_file
+        lib_dir = env_dir / "lib"
+    lib_dll_path = lib_dir / dll_file
 
-    # check if dll_path exists, if not set to relative path. The system try to find it in the PATH.
-    if not dll_path.exists():
-        dll_path = dll_file
+    # determine editable path to the DLL
+    # __file__ -> _core -> power_grid_model -> src -> repo_root -> .py-build-cmake_cache -> bin
+    editable_dir = Path(__file__).resolve().parent.parent.parent.parent / ".py-build-cmake_cache" / "bin"
+    editable_dll_path = editable_dir / dll_file
 
-    cdll = CDLL(str(dll_path))
+    # first try to load from lib_dll_path
+    # then editable_dll_path
+    # then just load dll_file, the system tries to find it in the PATH
+    if lib_dll_path.exists():
+        final_dll_path = lib_dll_path
+    elif editable_dll_path.exists():
+        final_dll_path = editable_dll_path
+    else:
+        final_dll_path = dll_file
+
+    cdll = CDLL(str(final_dll_path))
     # assign return types
     # handle
     cdll.PGM_create_handle.argtypes = []
