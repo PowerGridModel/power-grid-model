@@ -60,8 +60,6 @@ if (DEFINED PY_BUILD_CMAKE_VERSION)
     message(STATUS "Configuring installation paths for py-build-cmake")
     set(PGM_WHEEL_DIR "${PY_BUILD_CMAKE_PROJECT_NAME}-${PY_BUILD_CMAKE_PROJECT_VERSION}.data/data")
 
-    set(CMAKE_INSTALL_DATAROOTDIR "${PGM_WHEEL_DIR}/share")
-
     # In Windows, the convention is to use the Library folder
     if (WIN32)
       set(CMAKE_INSTALL_LIBDIR "${PGM_WHEEL_DIR}/Library/lib")

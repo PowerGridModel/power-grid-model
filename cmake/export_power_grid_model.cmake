@@ -12,7 +12,7 @@ install(FILES "LICENSE" "${CMAKE_CURRENT_BINARY_DIR}/README.md"
 
 # export the power grid model targets
 install(EXPORT "power_grid_modelTargets"
-  DESTINATION "lib/cmake/power_grid_model"
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/power_grid_model"
   NAMESPACE power_grid_model::
   COMPONENT power_grid_model
 )
@@ -22,7 +22,7 @@ include(CMakePackageConfigHelpers)
 
 configure_package_config_file("${PROJECT_SOURCE_DIR}/cmake/power_grid_modelConfig.cmake.in"
   "${CMAKE_CURRENT_BINARY_DIR}/power_grid_model/power_grid_modelConfig.cmake"
-  INSTALL_DESTINATION "lib/cmake/power_grid_model"
+  INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/power_grid_model"
 )
 write_basic_package_version_file(
   "${CMAKE_CURRENT_BINARY_DIR}/power_grid_model/power_grid_modelConfigVersion.cmake"
@@ -32,5 +32,5 @@ write_basic_package_version_file(
 install(FILES
   "${CMAKE_CURRENT_BINARY_DIR}/power_grid_model/power_grid_modelConfig.cmake"
   "${CMAKE_CURRENT_BINARY_DIR}/power_grid_model/power_grid_modelConfigVersion.cmake"
-  DESTINATION "lib/cmake/power_grid_model"
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/power_grid_model"
 )
