@@ -6,8 +6,8 @@
 Loader for the dynamic library
 """
 
-import os
 import platform
+import sysconfig
 from ctypes import CDLL, POINTER, c_char, c_char_p, c_double, c_size_t, c_void_p
 from inspect import signature
 from itertools import chain
@@ -126,25 +126,27 @@ def _load_core() -> CDLL:
     Returns: DLL/SO object
 
     """
-    # first try to find the DLL local
+    # determine DLL file name
     if platform.system() == "Windows":
-        dll_file = "_power_grid_core.dll"
+        dll_file = Path("power_grid_model_c.dll")
+    elif platform.system() == "Darwin":
+        dll_file = Path("libpower_grid_model_c.dylib")
+    elif platform.system() == "Linux":
+        dll_file = Path("libpower_grid_model_c.so")
     else:
-        dll_file = "_power_grid_core.so"
-    dll_path = Path(__file__).parent / dll_file
+        raise NotImplementedError(f"Unsupported platform: {platform.system()}")
 
-    # if local DLL is not found, try to find the DLL from conda environment
-    if (not dll_path.exists()) and ("CONDA_PREFIX" in os.environ):
-        if platform.system() == "Windows":
-            dll_file = "power_grid_model_c.dll"
-        elif platform.system() == "Darwin":
-            dll_file = "libpower_grid_model_c.dylib"
-        elif platform.system() == "Linux":
-            dll_file = "libpower_grid_model_c.so"
-        else:
-            raise NotImplementedError(f"Unsupported platform: {platform.system()}")
-        # the dll will be found through conda environment
-        dll_path = Path(dll_file)
+    # determine path to the DLL
+    data_dir = Path(sysconfig.get_path("data"))
+    if platform.system() == "Windows":
+        dll_dir = data_dir / "Library" / "bin"
+    else:
+        dll_dir = data_dir / "lib"
+    dll_path = dll_dir / dll_file
+
+    # check if dll_path exists, if not set to relative path. The system try to find it in the PATH.
+    if not dll_path.exists():
+        dll_path = dll_file
 
     cdll = CDLL(str(dll_path))
     # assign return types
