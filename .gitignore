@@ -521,3 +521,5 @@ docs/jupyter_execute/
 # please type
 #    git add .vscode/ --force
 .vscode/
+
+.py-build-cmake_cache/
