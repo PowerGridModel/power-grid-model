@@ -111,6 +111,9 @@ combine-as-imports = true
 # Ignore `F811` (redefinition violations) in all examples notebooks since we use redefinition.
 "docs/examples/*.ipynb" = ["F811", "E402"]
 
+[tool.ruff.lint.isort]
+combine-as-imports = true
+
 [tool.ruff.lint.per-file-ignores]
 # Ignore `F811` (redefinition violations) in all examples notebooks since we use redefinition.
 "docs/examples/*.ipynb" = ["F811"]
