@@ -997,7 +997,6 @@ def validate_generic_power_sensor(data: SingleDataset, component: ComponentType)
 
 
 def validate_generic_current_sensor(data: SingleDataset, component: ComponentType) -> list[ValidationError]:
-
     errors = validate_base(data, component)
     errors += _all_greater_than_zero(data, component, "i_sigma")
     errors += _all_greater_than_zero(data, component, "i_angle_sigma")
@@ -1009,6 +1008,7 @@ def validate_generic_current_sensor(data: SingleDataset, component: ComponentTyp
         field="measured_object",
         ref_components=[
             ComponentType.line,
+            ComponentType.asym_line,
             ComponentType.generic_branch,
             ComponentType.transformer,
             ComponentType.three_winding_transformer,
@@ -1018,14 +1018,24 @@ def validate_generic_current_sensor(data: SingleDataset, component: ComponentTyp
         data,
         component,
         field="measured_object",
-        ref_components=[ComponentType.line, ComponentType.generic_branch, ComponentType.transformer],
+        ref_components=[
+            ComponentType.line,
+            ComponentType.asym_line,
+            ComponentType.generic_branch,
+            ComponentType.transformer,
+        ],
         measured_terminal_type=MeasuredTerminalType.branch_from,
     )
     errors += _all_valid_ids(
         data,
         component,
         field="measured_object",
-        ref_components=[ComponentType.line, ComponentType.generic_branch, ComponentType.transformer],
+        ref_components=[
+            ComponentType.line,
+            ComponentType.asym_line,
+            ComponentType.generic_branch,
+            ComponentType.transformer,
+        ],
         measured_terminal_type=MeasuredTerminalType.branch_to,
     )
     errors += _all_valid_ids(
