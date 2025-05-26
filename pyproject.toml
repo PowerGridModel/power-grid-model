@@ -88,7 +88,7 @@ line-length = 120
 indent-width = 4
 show-fixes = true
 
-# Assume Python 3.11
+# Assume Python 3.12
 target-version = "py312"
 
 [tool.ruff.lint]
