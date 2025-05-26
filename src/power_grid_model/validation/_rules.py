@@ -56,6 +56,7 @@ from power_grid_model.validation.errors import (
     InvalidIdError,
     InvalidValueError,
     MissingValueError,
+    MixedCurrentAngleMeasurementTypeError,
     MultiComponentNotUniqueError,
     MultiFieldValidationError,
     NotBetweenError,
@@ -393,7 +394,7 @@ def all_identical(data: SingleDataset, component: ComponentType, field: str) -> 
 
     Args:
         data (SingleDataset): The input/update data set for all components
-        component (str): The component of interest
+        component (ComponentType): The component of interest
         field (str): The field of interest
 
     Returns:
@@ -419,7 +420,7 @@ def all_enabled_identical(
 
     Args:
         data (SingleDataset): The input/update data set for all components
-        component (str): The component of interest
+        component (ComponentType): The component of interest
         field (str): The field of interest
         status_field (str): The status field based on which to decide whether a component is enabled
 
@@ -446,7 +447,7 @@ def all_unique(data: SingleDataset, component: ComponentType, field: str) -> lis
 
     Args:
         data (SingleDataset): The input/update data set for all components
-        component (str): The component of interest
+        component (ComponentType): The component of interest
         field (str): The field of interest
 
     Returns:
@@ -976,6 +977,54 @@ def all_valid_clocks(
     return []
 
 
+def all_same_current_angle_measurement_type_on_terminal(
+    data: SingleDataset,
+    component: ComponentType,
+    measured_object_field: str,
+    measured_terminal_field: str,
+    angle_measurement_type_field: str,
+) -> list[MixedCurrentAngleMeasurementTypeError]:
+    """
+    Custom validation rule: All current angle measurement types on a terminal must be the same.
+
+    Args:
+        data (SingleDataset): The input/update data set for all components
+        component (ComponentType): The component of interest
+        measured_object_field (str): The measured object field
+        measured_terminal_field (str): The terminal field
+        angle_measurement_type_field (str): The angle measurement type field
+    Returns:
+        A list containing zero or more MixedCurrentAngleMeasurementTypeErrors; listing all the ids of
+        components where the current angle measurement type was not the same for the same terminal.
+    """
+    enabled_current_sensors = data[component][data[component]["status"] != 0]
+
+    sorted_indices = np.argsort(enabled_current_sensors[[measured_object_field, measured_terminal_field]])
+    sorted_values = enabled_current_sensors[sorted_indices]
+
+    unique_current_measurements, measurement_sorted_indices = np.unique(
+        sorted_values[[measured_object_field, measured_terminal_field, angle_measurement_type_field]],
+        return_inverse=True,
+    )
+    _, terminal_sorted_indices = np.unique(
+        unique_current_measurements[[measured_object_field, measured_terminal_field]], return_inverse=True
+    )
+
+    mixed_sorted_indices = np.setdiff1d(measurement_sorted_indices, terminal_sorted_indices)
+    mixed_terminals = np.unique(sorted_values[mixed_sorted_indices][[measured_object_field, measured_terminal_field]])
+
+    err = np.isin(enabled_current_sensors[[measured_object_field, measured_terminal_field]], mixed_terminals)
+    if err.any():
+        return [
+            MixedCurrentAngleMeasurementTypeError(
+                component=component,
+                fields=[measured_object_field, measured_terminal_field, angle_measurement_type_field],
+                ids=enabled_current_sensors["id"][err].flatten().tolist(),
+            )
+        ]
+    return []
+
+
 def all_valid_fault_phases(
     data: SingleDataset, component: ComponentType, fault_type_field: str, fault_phase_field: str
 ) -> list[FaultPhaseError]:
@@ -984,7 +1033,7 @@ def all_valid_fault_phases(
 
     Args:
         data (SingleDataset): The input/update data set for all components
-        component (str): The component of interest
+        component (ComponentType): The component of interest
         fault_type_field (str): The fault type field
         fault_phase_field (str): The fault phase field
 

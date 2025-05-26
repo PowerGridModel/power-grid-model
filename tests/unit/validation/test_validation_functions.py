@@ -30,11 +30,12 @@ from power_grid_model.validation.errors import (
     InvalidAssociatedEnumValueError,
     InvalidEnumValueError,
     InvalidIdError,
-    InvalidValueError,
     MissingValueError,
+    MixedCurrentAngleMeasurementTypeError,
     MultiComponentNotUniqueError,
     NotUniqueError,
     PQSigmaPairError,
+    UnsupportedMeasuredTerminalType,
     ValidationError,
 )
 
@@ -769,6 +770,7 @@ def test_validate_generic_power_sensor__terminal_types(
 @patch("power_grid_model.validation._validation._all_greater_than_zero", new=MagicMock())
 @patch("power_grid_model.validation._validation._all_valid_enum_values", new=MagicMock())
 @patch("power_grid_model.validation._validation._all_in_valid_values", new=MagicMock())
+@patch("power_grid_model.validation._validation._all_same_current_angle_measurement_type_on_terminal", new=MagicMock())
 @patch("power_grid_model.validation._validation._all_valid_ids")
 def test_validate_generic_current_sensor__all_terminal_types(
     _all_valid_ids: MagicMock, measured_terminal_type: MeasuredTerminalType
@@ -804,6 +806,7 @@ def test_validate_generic_current_sensor__all_terminal_types(
 )
 @patch("power_grid_model.validation._validation._all_greater_than_zero", new=MagicMock(return_value=[]))
 @patch("power_grid_model.validation._validation._all_valid_ids", new=MagicMock(return_value=[]))
+@patch("power_grid_model.validation._validation._all_same_current_angle_measurement_type_on_terminal", new=MagicMock())
 def test_validate_generic_current_sensor__only_branches_supported(
     current_sensor_type: ComponentType, measured_terminal_type: MeasuredTerminalType, supported: bool
 ):
@@ -819,7 +822,7 @@ def test_validate_generic_current_sensor__only_branches_supported(
         assert not result
     else:
         assert result == [
-            InvalidValueError(
+            UnsupportedMeasuredTerminalType(
                 current_sensor_type,
                 "measured_terminal_type",
                 [1],
@@ -848,6 +851,7 @@ def test_validate_generic_current_sensor__only_branches_supported(
 @patch("power_grid_model.validation._validation._all_greater_than_zero", new=MagicMock())
 @patch("power_grid_model.validation._validation._all_in_valid_values", new=MagicMock())
 @patch("power_grid_model.validation._validation._all_valid_enum_values", new=MagicMock())
+@patch("power_grid_model.validation._validation._all_same_current_angle_measurement_type_on_terminal", new=MagicMock())
 @patch("power_grid_model.validation._validation._all_valid_ids")
 def test_validate_generic_current_sensor__terminal_types(
     _all_valid_ids: MagicMock, ref_component: str | list[str], measured_terminal_type: MeasuredTerminalType
@@ -862,6 +866,28 @@ def test_validate_generic_current_sensor__terminal_types(
         field=ANY,
         ref_components=ref_component,
         measured_terminal_type=measured_terminal_type,
+    )
+
+
+@patch("power_grid_model.validation._validation.validate_base", new=MagicMock())
+@patch("power_grid_model.validation._validation._all_greater_than_zero", new=MagicMock())
+@patch("power_grid_model.validation._validation._all_in_valid_values", new=MagicMock())
+@patch("power_grid_model.validation._validation._all_valid_enum_values", new=MagicMock())
+@patch("power_grid_model.validation._validation._all_valid_ids", new=MagicMock())
+@patch("power_grid_model.validation._validation._all_same_current_angle_measurement_type_on_terminal")
+def test_validate_generic_current_sensor__angle_measurement_type_mixing(
+    _all_same_current_angle_measurement_type_on_terminal,
+):
+    # Act
+    validate_generic_current_sensor(data={}, component="")  # type: ignore
+
+    # Assert
+    _all_same_current_angle_measurement_type_on_terminal.assert_any_call(
+        ANY,
+        ANY,
+        measured_object_field="measured_object",
+        measured_terminal_type_field="measured_terminal_type",
+        angle_measurement_type_field="angle_measurement_type",
     )
 
 

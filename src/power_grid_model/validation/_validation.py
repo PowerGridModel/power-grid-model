@@ -48,6 +48,7 @@ from power_grid_model.validation._rules import (
     all_less_than as _all_less_than,
     all_not_two_values_equal as _all_not_two_values_equal,
     all_not_two_values_zero as _all_not_two_values_zero,
+    all_same_current_angle_measurement_type_on_terminal as _all_same_current_angle_measurement_type_on_terminal,
     all_unique as _all_unique,
     all_valid_associated_enum_values as _all_valid_associated_enum_values,
     all_valid_clocks as _all_valid_clocks,
@@ -1071,6 +1072,13 @@ def validate_generic_current_sensor(data: SingleDataset, component: ComponentTyp
         field="measured_object",
         ref_components=ComponentType.three_winding_transformer,
         measured_terminal_type=MeasuredTerminalType.branch3_3,
+    )
+    errors += _all_same_current_angle_measurement_type_on_terminal(
+        data,
+        component,
+        "measured_object",
+        "measured_terminal_type",
+        "angle_measurement_type",
     )
 
     return errors

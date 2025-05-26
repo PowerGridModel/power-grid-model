@@ -542,3 +542,25 @@ class InvalidAssociatedEnumValueError(MultiFieldValidationError):
 
     def __eq__(self, other):
         return super().__eq__(other) and self.enum == other.enum
+
+
+class UnsupportedMeasuredTerminalType(InvalidValueError):
+    """
+    The measured terminal type is not a supported value.
+
+    Supported values are in the supplied list of values.
+    """
+
+    _message = "measured_terminal_type contains unsupported values for {n} {objects}."
+
+
+class MixedCurrentAngleMeasurementTypeError(MultiFieldValidationError):
+    """
+    Mixed current angle measurement type error.
+    """
+
+    _message = (
+        "Mixture of different current angle measurement types on the same terminal for {n} {objects}. "
+        "If multiple current sensors measure the same terminal of the same object, all angle measurement types must be "
+        "the same. Mixing local_angle and global_angle current measurements on the same terminal is not supported."
+    )

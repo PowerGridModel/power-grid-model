@@ -16,6 +16,7 @@ from power_grid_model import (
     WindingType,
     initialize_array,
 )
+from power_grid_model._core.enum import AngleMeasurementType
 from power_grid_model._core.utils import compatibility_convert_row_columnar_dataset
 from power_grid_model.enum import CalculationType, ComponentAttributeFilterOptions, FaultPhase, FaultType
 from power_grid_model.validation import validate_input_data
@@ -302,6 +303,7 @@ def original_data() -> dict[ComponentType, np.ndarray]:
     sym_current_sensor["i_sigma"] = [1.0, np.nan, 0.0, -1.0]
     sym_current_sensor["i_angle_sigma"] = [1.0, np.nan, 0.0, -1.0]
     sym_current_sensor["measured_terminal_type"] = [1, 1, 10, 1]
+    sym_current_sensor["angle_measurement_type"] = [0, 1, 10, 1]
 
     asym_current_sensor = initialize_array(DatasetType.input, ComponentType.asym_current_sensor, 4)
     asym_current_sensor["id"] = [7, 8, 9, 10]
@@ -309,6 +311,7 @@ def original_data() -> dict[ComponentType, np.ndarray]:
     asym_current_sensor["i_sigma"] = [1.0, np.nan, 0.0, -1.0]
     asym_current_sensor["i_angle_sigma"] = [1.0, np.nan, 0.0, -1.0]
     asym_current_sensor["measured_terminal_type"] = [1, 1, 10, 1]
+    asym_current_sensor["angle_measurement_type"] = [0, 1, 10, 1]
 
     fault = initialize_array(DatasetType.input, ComponentType.fault, 20)
     fault["id"] = [1] + list(range(32, 51))
@@ -615,6 +618,10 @@ def test_validate_input_data_sym_calculation(input_data):
         InvalidEnumValueError("sym_current_sensor", "measured_terminal_type", [9], MeasuredTerminalType)
         in validation_errors
     )
+    assert (
+        InvalidEnumValueError("sym_current_sensor", "angle_measurement_type", [9], AngleMeasurementType)
+        in validation_errors
+    )
 
     assert (
         InvalidIdError(
@@ -645,6 +652,10 @@ def test_validate_input_data_sym_calculation(input_data):
     )
     assert (
         InvalidEnumValueError("asym_current_sensor", "measured_terminal_type", [9], MeasuredTerminalType)
+        in validation_errors
+    )
+    assert (
+        InvalidEnumValueError("asym_current_sensor", "angle_measurement_type", [9], AngleMeasurementType)
         in validation_errors
     )
 
