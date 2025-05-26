@@ -44,6 +44,7 @@ from power_grid_model.validation._rules import (
     all_greater_or_equal as _all_greater_or_equal,
     all_greater_than_or_equal_to_zero as _all_greater_than_or_equal_to_zero,
     all_greater_than_zero as _all_greater_than_zero,
+    all_in_valid_values as _all_in_valid_values,
     all_less_than as _all_less_than,
     all_not_two_values_equal as _all_not_two_values_equal,
     all_not_two_values_zero as _all_not_two_values_zero,
@@ -1002,6 +1003,18 @@ def validate_generic_current_sensor(data: SingleDataset, component: ComponentTyp
     errors += _all_greater_than_zero(data, component, "i_angle_sigma")
     errors += _all_valid_enum_values(data, component, "measured_terminal_type", MeasuredTerminalType)
     errors += _all_valid_enum_values(data, component, "angle_measurement_type", AngleMeasurementType)
+    errors += _all_in_valid_values(
+        data,
+        component,
+        "measured_terminal_type",
+        [
+            MeasuredTerminalType.branch_from,
+            MeasuredTerminalType.branch_to,
+            MeasuredTerminalType.branch3_1,
+            MeasuredTerminalType.branch3_2,
+            MeasuredTerminalType.branch3_3,
+        ],
+    )
     errors += _all_valid_ids(
         data,
         component,

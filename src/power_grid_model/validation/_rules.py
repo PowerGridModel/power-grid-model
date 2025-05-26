@@ -34,6 +34,9 @@ Output data:
         A list containing errors; in case of success, `errors` is the empty list: [].
 
 """
+
+# pylint: disable=too-many-lines
+
 from enum import Enum
 from typing import Any, Callable, Type, TypeVar
 
@@ -51,6 +54,7 @@ from power_grid_model.validation.errors import (
     InvalidAssociatedEnumValueError,
     InvalidEnumValueError,
     InvalidIdError,
+    InvalidValueError,
     MissingValueError,
     MultiComponentNotUniqueError,
     MultiFieldValidationError,
@@ -491,6 +495,33 @@ def all_cross_unique(
         fields_with_duplicated_ids = {f for f, _ in duplicate_ids}
         ids_with_duplicated_ids = {(c, i) for (c, _), i in duplicate_ids}
         return [MultiComponentNotUniqueError(list(fields_with_duplicated_ids), list(ids_with_duplicated_ids))]
+    return []
+
+
+def all_in_valid_values(
+    data: SingleDataset, component: ComponentType, field: str, values: list
+) -> list[InvalidValueError]:
+    """
+    Check that for all records of a particular type of component, the values in the 'field' column are valid values for
+    the supplied enum class. Returns an empty list on success, or a list containing a single error object on failure.
+
+    Args:
+        data (SingleDataset): The input/update data set for all components
+        component (ComponentType): The component of interest
+        field (str): The field of interest
+        values (list | tuple): The values to validate against
+
+    Returns:
+        A list containing zero or one InvalidValueError, listing all ids where the value in the field of interest
+        was not a valid value and the sequence of supported values.
+    """
+    valid = {_nan_type(component, field)}
+    valid.update(values)
+
+    invalid = np.isin(data[component][field], np.array(values), invert=True)
+    if invalid.any():
+        ids = data[component]["id"][invalid].flatten().tolist()
+        return [InvalidValueError(component, field, ids, values)]
     return []
 
 
@@ -984,10 +1015,10 @@ def all_valid_fault_phases(
         FaultType.nan: [],
     }
 
-    def _fault_phase_supported(fault_type: FaultType, fault_phase: FaultPhase):
+    def _fault_phase_unsupported(fault_type: FaultType, fault_phase: FaultPhase):
         return fault_phase not in supported_combinations.get(fault_type, [])
 
-    err = np.vectorize(_fault_phase_supported)(fault_type=fault_types, fault_phase=fault_phases)
+    err = np.vectorize(_fault_phase_unsupported)(fault_type=fault_types, fault_phase=fault_phases)
     if err.any():
         return [
             FaultPhaseError(

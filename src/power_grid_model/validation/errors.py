@@ -232,6 +232,30 @@ class MultiComponentNotUniqueError(MultiComponentValidationError):
     _message = "Fields {field} are not unique for {n} {objects}."
 
 
+class InvalidValueError(SingleFieldValidationError):
+    """
+    The value is not a valid value in the supplied list of supported values.
+    E.g. an enum value that is not supported for a specific feature.
+    """
+
+    _message = "Field {field} contains invalid values for {n} {objects}."
+    values: list
+
+    def __init__(self, component: ComponentType, field: str, ids: list[int], values: list):
+        super().__init__(component, field, ids)
+        self.values = values
+
+    @property
+    def values_str(self) -> str:
+        """
+        A string representation of the field to which this error applies.
+        """
+        return ",".join(self.values)
+
+    def __eq__(self, other):
+        return super().__eq__(other) and self.values == other.values
+
+
 class InvalidEnumValueError(SingleFieldValidationError):
     """
     The value is not a valid value in the supplied enumeration type.

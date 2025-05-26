@@ -30,10 +30,12 @@ from power_grid_model.validation.errors import (
     InvalidAssociatedEnumValueError,
     InvalidEnumValueError,
     InvalidIdError,
+    InvalidValueError,
     MissingValueError,
     MultiComponentNotUniqueError,
     NotUniqueError,
     PQSigmaPairError,
+    ValidationError,
 )
 
 NaN = power_grid_meta_data[DatasetType.input][ComponentType.node].nans["id"]
@@ -766,6 +768,7 @@ def test_validate_generic_power_sensor__terminal_types(
 @patch("power_grid_model.validation._validation.validate_base", new=MagicMock())
 @patch("power_grid_model.validation._validation._all_greater_than_zero", new=MagicMock())
 @patch("power_grid_model.validation._validation._all_valid_enum_values", new=MagicMock())
+@patch("power_grid_model.validation._validation._all_in_valid_values", new=MagicMock())
 @patch("power_grid_model.validation._validation._all_valid_ids")
 def test_validate_generic_current_sensor__all_terminal_types(
     _all_valid_ids: MagicMock, measured_terminal_type: MeasuredTerminalType
@@ -783,6 +786,54 @@ def test_validate_generic_current_sensor__all_terminal_types(
     )
 
 
+@pytest.mark.parametrize("current_sensor_type", [ComponentType.sym_current_sensor, ComponentType.asym_current_sensor])
+@pytest.mark.parametrize(
+    "measured_terminal_type,supported",
+    [
+        (MeasuredTerminalType.branch_from, True),
+        (MeasuredTerminalType.branch_to, True),
+        (MeasuredTerminalType.branch3_1, True),
+        (MeasuredTerminalType.branch3_2, True),
+        (MeasuredTerminalType.branch3_3, True),
+        (MeasuredTerminalType.source, False),
+        (MeasuredTerminalType.shunt, False),
+        (MeasuredTerminalType.load, False),
+        (MeasuredTerminalType.generator, False),
+        (MeasuredTerminalType.node, False),
+    ],
+)
+@patch("power_grid_model.validation._validation._all_greater_than_zero", new=MagicMock(return_value=[]))
+@patch("power_grid_model.validation._validation._all_valid_ids", new=MagicMock(return_value=[]))
+def test_validate_generic_current_sensor__only_branches_supported(
+    current_sensor_type: ComponentType, measured_terminal_type: MeasuredTerminalType, supported: bool
+):
+    current_sensor_data = initialize_array("input", current_sensor_type, 1)
+    current_sensor_data["id"] = 1
+    current_sensor_data["measured_terminal_type"] = measured_terminal_type
+
+    result = validate_generic_current_sensor(
+        data={current_sensor_type: current_sensor_data}, component=current_sensor_type
+    )
+
+    if supported:
+        assert not result
+    else:
+        assert result == [
+            InvalidValueError(
+                current_sensor_type,
+                "measured_terminal_type",
+                [1],
+                [
+                    MeasuredTerminalType.branch_from,
+                    MeasuredTerminalType.branch_to,
+                    MeasuredTerminalType.branch3_1,
+                    MeasuredTerminalType.branch3_2,
+                    MeasuredTerminalType.branch3_3,
+                ],
+            )
+        ]
+
+
 @pytest.mark.parametrize(
     ("ref_component", "measured_terminal_type"),
     [
@@ -795,6 +846,7 @@ def test_validate_generic_current_sensor__all_terminal_types(
 )
 @patch("power_grid_model.validation._validation.validate_base", new=MagicMock())
 @patch("power_grid_model.validation._validation._all_greater_than_zero", new=MagicMock())
+@patch("power_grid_model.validation._validation._all_in_valid_values", new=MagicMock())
 @patch("power_grid_model.validation._validation._all_valid_enum_values", new=MagicMock())
 @patch("power_grid_model.validation._validation._all_valid_ids")
 def test_validate_generic_current_sensor__terminal_types(
