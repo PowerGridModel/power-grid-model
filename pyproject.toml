@@ -89,7 +89,7 @@ indent-width = 4
 show-fixes = true
 
 # Assume Python 3.11
-target-version = "py311"
+target-version = "py312"
 
 [tool.ruff.lint]
 select = [
