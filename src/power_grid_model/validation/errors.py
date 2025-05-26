@@ -250,7 +250,7 @@ class InvalidValueError(SingleFieldValidationError):
         """
         A string representation of the field to which this error applies.
         """
-        return ",".join(self.values)
+        return ",".join(v.name if isinstance(v, Enum) else v for v in self.values)
 
     def __eq__(self, other):
         return super().__eq__(other) and self.values == other.values

@@ -1076,9 +1076,9 @@ def validate_generic_current_sensor(data: SingleDataset, component: ComponentTyp
     errors += _all_same_current_angle_measurement_type_on_terminal(
         data,
         component,
-        "measured_object",
-        "measured_terminal_type",
-        "angle_measurement_type",
+        measured_object_field="measured_object",
+        measured_terminal_type_field="measured_terminal_type",
+        angle_measurement_type_field="angle_measurement_type",
     )
 
     return errors

@@ -54,7 +54,6 @@ from power_grid_model.validation.errors import (
     InvalidAssociatedEnumValueError,
     InvalidEnumValueError,
     InvalidIdError,
-    InvalidValueError,
     MissingValueError,
     MixedCurrentAngleMeasurementTypeError,
     MultiComponentNotUniqueError,
@@ -72,6 +71,7 @@ from power_grid_model.validation.errors import (
     SameValueError,
     TransformerClockError,
     TwoValuesZeroError,
+    UnsupportedMeasuredTerminalType,
     ValidationError,
 )
 from power_grid_model.validation.utils import _eval_expression, _get_mask, _get_valid_ids, _nan_type, _set_default_value
@@ -501,7 +501,7 @@ def all_cross_unique(
 
 def all_in_valid_values(
     data: SingleDataset, component: ComponentType, field: str, values: list
-) -> list[InvalidValueError]:
+) -> list[UnsupportedMeasuredTerminalType]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are valid values for
     the supplied enum class. Returns an empty list on success, or a list containing a single error object on failure.
@@ -513,8 +513,8 @@ def all_in_valid_values(
         values (list | tuple): The values to validate against
 
     Returns:
-        A list containing zero or one InvalidValueError, listing all ids where the value in the field of interest
-        was not a valid value and the sequence of supported values.
+        A list containing zero or one UnsupportedMeasuredTerminalType, listing all ids where the value in the field of
+        interest was not a valid value and the sequence of supported values.
     """
     valid = {_nan_type(component, field)}
     valid.update(values)
@@ -522,7 +522,7 @@ def all_in_valid_values(
     invalid = np.isin(data[component][field], np.array(values), invert=True)
     if invalid.any():
         ids = data[component]["id"][invalid].flatten().tolist()
-        return [InvalidValueError(component, field, ids, values)]
+        return [UnsupportedMeasuredTerminalType(component, field, ids, values)]
     return []
 
 
@@ -665,6 +665,7 @@ def all_not_two_values_zero(
         component: The component of interest
         field_1: The first field of interest
         field_2: The second field of interest
+
     Returns:
         A list containing zero or one TwoValuesZeroError, listing all ids where the value in the two fields of interest
         were both zero.
@@ -691,6 +692,7 @@ def all_not_two_values_equal(
         component: The component of interest
         field_1: The first field of interest
         field_2: The second field of interest
+
     Returns:
         A list containing zero or one SameValueError, listing all ids where the value in the two fields of interest
         were both the same.
@@ -717,6 +719,7 @@ def ids_valid_in_update_data_set(
         ref_data: The reference (input) data set for all components
         component: The component of interest
         ref_name: The name of the reference data set, e.g. 'update_data'
+
     Returns:
         A list containing zero or one IdNotInDatasetError, listing all ids of the objects in the data set which do not
         exist in the reference data set.
@@ -981,7 +984,7 @@ def all_same_current_angle_measurement_type_on_terminal(
     data: SingleDataset,
     component: ComponentType,
     measured_object_field: str,
-    measured_terminal_field: str,
+    measured_terminal_type_field: str,
     angle_measurement_type_field: str,
 ) -> list[MixedCurrentAngleMeasurementTypeError]:
     """
@@ -991,35 +994,36 @@ def all_same_current_angle_measurement_type_on_terminal(
         data (SingleDataset): The input/update data set for all components
         component (ComponentType): The component of interest
         measured_object_field (str): The measured object field
-        measured_terminal_field (str): The terminal field
+        measured_terminal_type_field (str): The terminal field
         angle_measurement_type_field (str): The angle measurement type field
+
     Returns:
         A list containing zero or more MixedCurrentAngleMeasurementTypeErrors; listing all the ids of
         components where the current angle measurement type was not the same for the same terminal.
     """
-    enabled_current_sensors = data[component][data[component]["status"] != 0]
-
-    sorted_indices = np.argsort(enabled_current_sensors[[measured_object_field, measured_terminal_field]])
-    sorted_values = enabled_current_sensors[sorted_indices]
+    sorted_indices = np.argsort(data[component][[measured_object_field, measured_terminal_type_field]])
+    sorted_values = data[component][sorted_indices]
 
     unique_current_measurements, measurement_sorted_indices = np.unique(
-        sorted_values[[measured_object_field, measured_terminal_field, angle_measurement_type_field]],
+        sorted_values[[measured_object_field, measured_terminal_type_field, angle_measurement_type_field]],
         return_inverse=True,
     )
     _, terminal_sorted_indices = np.unique(
-        unique_current_measurements[[measured_object_field, measured_terminal_field]], return_inverse=True
+        unique_current_measurements[[measured_object_field, measured_terminal_type_field]], return_inverse=True
     )
 
     mixed_sorted_indices = np.setdiff1d(measurement_sorted_indices, terminal_sorted_indices)
-    mixed_terminals = np.unique(sorted_values[mixed_sorted_indices][[measured_object_field, measured_terminal_field]])
+    mixed_terminals = np.unique(
+        sorted_values[mixed_sorted_indices][[measured_object_field, measured_terminal_type_field]]
+    )
 
-    err = np.isin(enabled_current_sensors[[measured_object_field, measured_terminal_field]], mixed_terminals)
+    err = np.isin(data[component][[measured_object_field, measured_terminal_type_field]], mixed_terminals)
     if err.any():
         return [
             MixedCurrentAngleMeasurementTypeError(
                 component=component,
-                fields=[measured_object_field, measured_terminal_field, angle_measurement_type_field],
-                ids=enabled_current_sensors["id"][err].flatten().tolist(),
+                fields=[measured_object_field, measured_terminal_type_field, angle_measurement_type_field],
+                ids=data[component]["id"][err].flatten().tolist(),
             )
         ]
     return []

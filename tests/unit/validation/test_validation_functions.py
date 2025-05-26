@@ -806,7 +806,10 @@ def test_validate_generic_current_sensor__all_terminal_types(
 )
 @patch("power_grid_model.validation._validation._all_greater_than_zero", new=MagicMock(return_value=[]))
 @patch("power_grid_model.validation._validation._all_valid_ids", new=MagicMock(return_value=[]))
-@patch("power_grid_model.validation._validation._all_same_current_angle_measurement_type_on_terminal", new=MagicMock())
+@patch(
+    "power_grid_model.validation._validation._all_same_current_angle_measurement_type_on_terminal",
+    new=MagicMock(return_value=[]),
+)
 def test_validate_generic_current_sensor__only_branches_supported(
     current_sensor_type: ComponentType, measured_terminal_type: MeasuredTerminalType, supported: bool
 ):
