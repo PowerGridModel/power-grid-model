@@ -33,8 +33,6 @@ from power_grid_model._core.power_grid_core import (
     DatasetInfoPtr,
     MutableDatasetPtr,
     WritableDatasetPtr,
-)
-from power_grid_model._core.power_grid_core import (
     power_grid_core as pgc,
 )
 from power_grid_model._core.power_grid_meta import ComponentMetaData, DatasetMetaData, power_grid_meta_data

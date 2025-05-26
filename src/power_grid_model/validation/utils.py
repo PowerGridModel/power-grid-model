@@ -14,12 +14,10 @@ import numpy as np
 from power_grid_model import power_grid_meta_data
 from power_grid_model._core.dataset_definitions import (
     ComponentType,
+    ComponentTypeLike as _ComponentTypeLike,
     ComponentTypeVar,
     DatasetType,
     _str_to_component_type,
-)
-from power_grid_model._core.dataset_definitions import (
-    ComponentTypeLike as _ComponentTypeLike,
 )
 from power_grid_model.data_types import SingleArray, SingleComponentData, SingleDataset
 from power_grid_model.validation.errors import ValidationError

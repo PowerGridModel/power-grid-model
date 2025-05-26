@@ -20,8 +20,6 @@ from power_grid_model._core.power_grid_core import (
     DeserializerPtr,
     SerializerPtr,
     WritableDatasetPtr,
-)
-from power_grid_model._core.power_grid_core import (
     power_grid_core as pgc,
 )
 from power_grid_model._core.power_grid_dataset import CConstDataset, CWritableDataset
