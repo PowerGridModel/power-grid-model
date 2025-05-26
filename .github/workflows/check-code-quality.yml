@@ -35,16 +35,6 @@ jobs:
       - name: Upgrade pip
         run: pip install --upgrade pip
 
-      - name: Install and run isort
-        run: |
-          pip install isort
-          isort .
-
-      - name: Install and run black
-        run: |
-          pip install black[jupyter]
-          black .
-
       - name: Install and run mypy
         run: |
           pip install mypy numpy
