@@ -39,7 +39,7 @@ dynamic = ["version"]
 
 
 [project.optional-dependencies]
-dev = ["msgpack", "pre-commit", "pylint", "pytest", "pytest-cov", "ruff>=0.3.5"]
+dev = ["msgpack", "pre-commit", "pylint", "pytest", "pytest-cov", "ruff"]
 doc = [
     "sphinx",
     "breathe",
@@ -120,7 +120,7 @@ line-length = 120
 indent-width = 4
 show-fixes = true
 
-# Assume Python 3.11
+# Assume Python 3.12
 target-version = "py312"
 
 [tool.ruff.lint]
