@@ -7,10 +7,17 @@ from unittest import mock
 import numpy as np
 import pytest
 
-from power_grid_model import ComponentType, LoadGenType, initialize_array, power_grid_meta_data
+from power_grid_model import ComponentType, DatasetType, LoadGenType, initialize_array, power_grid_meta_data
 from power_grid_model._core.dataset_definitions import ComponentTypeLike
 from power_grid_model._core.utils import compatibility_convert_row_columnar_dataset
-from power_grid_model.enum import Branch3Side, BranchSide, FaultPhase, FaultType
+from power_grid_model.enum import (
+    AngleMeasurementType,
+    Branch3Side,
+    BranchSide,
+    FaultPhase,
+    FaultType,
+    MeasuredTerminalType,
+)
 from power_grid_model.validation._rules import (
     all_between,
     all_between_or_at,
@@ -27,6 +34,7 @@ from power_grid_model.validation._rules import (
     all_less_than,
     all_not_two_values_equal,
     all_not_two_values_zero,
+    all_same_current_angle_measurement_type_on_terminal,
     all_same_sensor_type_on_same_terminal,
     all_unique,
     all_valid_clocks,
@@ -45,6 +53,7 @@ from power_grid_model.validation.errors import (
     InvalidEnumValueError,
     InvalidIdError,
     MissingValueError,
+    MixedCurrentAngleMeasurementTypeError,
     MixedPowerCurrentSensorError,
     MultiComponentNotUniqueError,
     MultiFieldValidationError,
@@ -787,3 +796,65 @@ def test_all_valid_fault_phases():
     errors = all_valid_fault_phases(invalid, "fault", "foo", "bar")
     assert len(errors) == 1
     assert FaultPhaseError("fault", fields=["foo", "bar"], ids=list(range(26))) in errors
+
+
+@pytest.mark.parametrize(
+    ("current_sensor_type", "measured_terminal_type_1", "measured_terminal_type_2", "angle_measurement_type"),
+    [
+        (ComponentType.sym_current_sensor, terminal_1, terminal_2, angle)
+        for terminal_1 in [MeasuredTerminalType.branch_from, MeasuredTerminalType.branch_to]
+        for terminal_2 in [MeasuredTerminalType.branch_from, MeasuredTerminalType.branch_to]
+        for angle in AngleMeasurementType
+    ]
+    + [
+        (ComponentType.asym_current_sensor, terminal_1, terminal_2, angle)
+        for terminal_1 in [
+            MeasuredTerminalType.branch3_1,
+            MeasuredTerminalType.branch3_2,
+            MeasuredTerminalType.branch3_3,
+        ]
+        for terminal_2 in [
+            MeasuredTerminalType.branch3_1,
+            MeasuredTerminalType.branch3_2,
+            MeasuredTerminalType.branch3_3,
+        ]
+        for angle in AngleMeasurementType
+    ],
+)
+def test_all_same_current_angle_measurement_type_on_terminal(
+    current_sensor_type: ComponentType,
+    measured_terminal_type_1: MeasuredTerminalType,
+    measured_terminal_type_2: MeasuredTerminalType,
+    angle_measurement_type: AngleMeasurementType,
+):
+    current_sensor = initialize_array(DatasetType.input, current_sensor_type, 2)
+    current_sensor["id"] = [1, 2]
+    current_sensor["measured_object"] = [3, 3]
+    current_sensor["measured_terminal_type"] = [measured_terminal_type_1, measured_terminal_type_2]
+    current_sensor["angle_measurement_type"] = [AngleMeasurementType.local_angle, angle_measurement_type]
+
+    data = {current_sensor_type.value: current_sensor}
+
+    errors = all_same_current_angle_measurement_type_on_terminal(
+        data=data,
+        component=current_sensor_type,
+        measured_object_field="measured_object",
+        measured_terminal_type_field="measured_terminal_type",
+        angle_measurement_type_field="angle_measurement_type",
+    )
+
+    if (
+        measured_terminal_type_1 != measured_terminal_type_2
+        or angle_measurement_type == AngleMeasurementType.local_angle
+    ):
+        assert not errors
+    else:
+        assert len(errors) == 1
+        assert (
+            MixedCurrentAngleMeasurementTypeError(
+                component=current_sensor_type,
+                fields=["measured_object", "measured_terminal_type", "angle_measurement_type"],
+                ids=[1, 2],
+            )
+            in errors
+        )
