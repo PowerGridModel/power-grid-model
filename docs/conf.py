@@ -15,7 +15,7 @@ author = "Contributors to the Power Grid Model project <powergridmodel@lfenergy.
 
 # -- Setup
 
-import os
+import os  # noqa: E402
 
 # Fix linking in github and rtd
 link_head_gh = "https://github.com/PowerGridModel/power-grid-model/"
