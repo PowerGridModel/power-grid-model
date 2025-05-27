@@ -117,9 +117,9 @@ combine-as-imports = true
 
 [tool.ruff.lint.per-file-ignores]
 # Ignore `F811` (redefinition violations) in all examples notebooks since we use redefinition.
-"docs/examples/*.ipynb" = ["F811"]
+"docs/examples/*.ipynb" = ["F811", "E402"]
 # Ignore 'E402' (import not at the top) in all docs files.
-"docs/*" = ["E402"]
+# "docs/*" = ["E402"]
 
 [tool.mypy]
 follow_imports = "silent"
