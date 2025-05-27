@@ -3,6 +3,8 @@
 # SPDX-License-Identifier: MPL-2.0
 
 
+import itertools
+
 import numpy as np
 import pytest
 
@@ -25,6 +27,7 @@ from power_grid_model.validation.errors import (
     InvalidAssociatedEnumValueError,
     InvalidEnumValueError,
     InvalidIdError,
+    MixedPowerCurrentSensorError,
     MultiComponentNotUniqueError,
     MultiFieldValidationError,
     NotBetweenError,
@@ -658,6 +661,31 @@ def test_validate_input_data_sym_calculation(input_data):
         InvalidEnumValueError("asym_current_sensor", "angle_measurement_type", [9], AngleMeasurementType)
         in validation_errors
     )
+    for power_sensor_type, current_sensor_type in itertools.product(
+        [ComponentType.sym_power_sensor, ComponentType.asym_power_sensor],
+        [ComponentType.sym_current_sensor, ComponentType.asym_current_sensor],
+    ):
+        assert (
+            MixedPowerCurrentSensorError(
+                [
+                    (power_sensor_type, "measured_object"),
+                    (power_sensor_type, "measured_terminal_type"),
+                    (current_sensor_type, "measured_object"),
+                    (current_sensor_type, "measured_terminal_type"),
+                ],
+                [
+                    (power_sensor_type, 7),
+                    (power_sensor_type, 8),
+                    (power_sensor_type, 9),
+                    (power_sensor_type, 10),
+                    (current_sensor_type, 7),
+                    (current_sensor_type, 8),
+                    (current_sensor_type, 9),
+                    (current_sensor_type, 10),
+                ],
+            )
+            in validation_errors
+        )
 
     assert NotGreaterOrEqualError("transformer", "uk_max", [15], "uk_min") not in validation_errors
 
