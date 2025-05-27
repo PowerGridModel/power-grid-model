@@ -56,6 +56,7 @@ from power_grid_model.validation.errors import (
     InvalidIdError,
     MissingValueError,
     MixedCurrentAngleMeasurementTypeError,
+    MixedPowerCurrentSensorError,
     MultiComponentNotUniqueError,
     MultiFieldValidationError,
     NotBetweenError,
@@ -1024,6 +1025,59 @@ def all_same_current_angle_measurement_type_on_terminal(
                 component=component,
                 fields=[measured_object_field, measured_terminal_type_field, angle_measurement_type_field],
                 ids=data[component]["id"][err].flatten().tolist(),
+            )
+        ]
+    return []
+
+
+def all_same_sensor_type_on_same_terminal(
+    data: SingleDataset,
+    power_sensor_type: ComponentType,
+    current_sensor_type: ComponentType,
+    measured_object_field: str,
+    measured_terminal_type_field: str,
+) -> list[MixedPowerCurrentSensorError]:
+    """
+    Custom validation rule: All sensors on a terminal must be of the same type.
+
+    E.g. mixing sym_power_sensor and asym_power_sensor on the same terminal is allowed, but mixing
+    sym_power_sensor and sym_current_sensor is not allowed.
+
+    Args:
+        data (SingleDataset): The input/update data set for all components
+        power_sensor_type (ComponentType): The power sensor component
+        current_sensor_type (ComponentType): The current sensor component
+        measured_object_field (str): The measured object field
+        measured_terminal_type_field (str): The measured terminal type field
+
+    Returns:
+        A list containing zero or more MixedPowerCurrentSensorError; listing all the ids of
+        components that measure the same terminal of the same component in different, unsupported ways.
+    """
+    power_sensor_data = data[power_sensor_type]
+    current_sensor_data = data[current_sensor_type]
+    power_sensor_measured_terminals = power_sensor_data[[measured_object_field, measured_terminal_type_field]]
+    current_sensor_measured_terminals = current_sensor_data[[measured_object_field, measured_terminal_type_field]]
+
+    mixed_terminals = np.intersect1d(power_sensor_measured_terminals, current_sensor_measured_terminals)
+    if mixed_terminals.size != 0:
+        mixed_power_sensor_ids = power_sensor_data["id"][
+            np.isin(power_sensor_data[[measured_object_field, measured_terminal_type_field]], mixed_terminals)
+        ]
+        mixed_current_sensor_ids = current_sensor_data["id"][
+            np.isin(current_sensor_data[[measured_object_field, measured_terminal_type_field]], mixed_terminals)
+        ]
+
+        return [
+            MixedPowerCurrentSensorError(
+                fields=[
+                    (power_sensor_type, measured_object_field),
+                    (power_sensor_type, measured_terminal_type_field),
+                    (current_sensor_type, measured_object_field),
+                    (current_sensor_type, measured_terminal_type_field),
+                ],
+                ids=[(power_sensor_type, s) for s in mixed_power_sensor_ids.flatten().tolist()]
+                + [(current_sensor_type, s) for s in mixed_current_sensor_ids.flatten().tolist()],
             )
         ]
     return []

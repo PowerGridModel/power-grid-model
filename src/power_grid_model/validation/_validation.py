@@ -49,6 +49,7 @@ from power_grid_model.validation._rules import (
     all_not_two_values_equal as _all_not_two_values_equal,
     all_not_two_values_zero as _all_not_two_values_zero,
     all_same_current_angle_measurement_type_on_terminal as _all_same_current_angle_measurement_type_on_terminal,
+    all_same_sensor_type_on_same_terminal as _all_same_sensor_type_on_same_terminal,
     all_unique as _all_unique,
     all_valid_associated_enum_values as _all_valid_associated_enum_values,
     all_valid_clocks as _all_valid_clocks,
@@ -516,6 +517,8 @@ def validate_values(data: SingleDataset, calculation_type: CalculationType | Non
             errors += validate_generic_current_sensor(data, ComponentType.sym_current_sensor)
         if "asym_current_sensor" in data:
             errors += validate_generic_current_sensor(data, ComponentType.asym_current_sensor)
+
+        errors += validate_no_mixed_sensors_on_same_terminal(data)
 
     if calculation_type in (None, CalculationType.short_circuit) and "fault" in data:
         errors += validate_fault(data)
@@ -1139,4 +1142,21 @@ def validate_transformer_tap_regulator(data: SingleDataset) -> list[ValidationEr
     errors += _all_greater_than_or_equal_to_zero(
         data, ComponentType.transformer_tap_regulator, "line_drop_compensation_x", 0.0
     )
+    return errors
+
+
+def validate_no_mixed_sensors_on_same_terminal(data: SingleDataset) -> list[ValidationError]:
+    errors: list[ValidationError] = []
+
+    for power_sensor in [ComponentType.sym_power_sensor, ComponentType.asym_power_sensor]:
+        for current_sensor in [ComponentType.sym_current_sensor, ComponentType.asym_current_sensor]:
+            if power_sensor in data and current_sensor in data:
+                errors += _all_same_sensor_type_on_same_terminal(
+                    data,
+                    power_sensor_type=power_sensor,
+                    current_sensor_type=current_sensor,
+                    measured_object_field="measured_object",
+                    measured_terminal_type_field="measured_terminal_type",
+                )
+
     return errors

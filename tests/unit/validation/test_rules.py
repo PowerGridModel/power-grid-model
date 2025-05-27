@@ -27,6 +27,7 @@ from power_grid_model.validation._rules import (
     all_less_than,
     all_not_two_values_equal,
     all_not_two_values_zero,
+    all_same_sensor_type_on_same_terminal,
     all_unique,
     all_valid_clocks,
     all_valid_enum_values,
@@ -44,6 +45,7 @@ from power_grid_model.validation.errors import (
     InvalidEnumValueError,
     InvalidIdError,
     MissingValueError,
+    MixedPowerCurrentSensorError,
     MultiComponentNotUniqueError,
     MultiFieldValidationError,
     NotBetweenError,
@@ -665,6 +667,56 @@ def test_not_all_missing():
 @pytest.mark.skip("No unit tests available for all_valid_clocks")
 def test_all_valid_clocks():
     raise NotImplementedError(f"Unit test for {all_valid_clocks}")
+
+
+def test_all_same_sensor_type_on_same_terminal():
+    foo_dtype = [("id", "i4"), ("baz", "i4"), ("bla", "i4"), ("foobar", "i4")]
+    bar_dtype = [("id", "i4"), ("baz", "i4"), ("bla", "i4"), ("barbar", "i4")]
+    other_dtype = [("id", "i4"), ("baz", "i4"), ("bla", "i4"), ("otherbar", "i4")]
+
+    no_components = {
+        "foo": np.array([], dtype=foo_dtype),
+        "bar": np.array([], dtype=bar_dtype),
+        "other": np.array([(3, 100, 1, 1)], dtype=other_dtype),
+    }
+    errors = all_same_sensor_type_on_same_terminal(no_components, "foo", "bar", "baz", "bla")
+    assert not errors
+
+    same_type = {
+        "foo": np.array([(1, 100, 1, 1), (2, 100, 1, 1)], dtype=foo_dtype),
+        "bar": np.array([], dtype=bar_dtype),
+        "other": np.array([(3, 100, 1, 1)], dtype=other_dtype),
+    }
+    errors = all_same_sensor_type_on_same_terminal(same_type, "foo", "bar", "baz", "bla")
+    assert not errors
+
+    different_components = {
+        "foo": np.array([(1, 100, 1, 1), (2, 100, 1, 1)], dtype=foo_dtype),
+        "bar": np.array([(3, 101, 1, 1), (4, 101, 1, 1)], dtype=bar_dtype),
+        "other": np.array([(5, 100, 1, 1)], dtype=other_dtype),
+    }
+    errors = all_same_sensor_type_on_same_terminal(different_components, "foo", "bar", "baz", "bla")
+    assert not errors
+
+    different_terminals = {
+        "foo": np.array([(1, 100, 1, 1), (2, 100, 1, 1)], dtype=foo_dtype),
+        "bar": np.array([(3, 100, 2, 1)], dtype=bar_dtype),
+        "other": np.array([(4, 100, 1, 1)], dtype=other_dtype),
+    }
+    errors = all_same_sensor_type_on_same_terminal(different_terminals, "foo", "bar", "baz", "bla")
+    assert not errors
+
+    different_type = {
+        "foo": np.array([(1, 100, 1, 1), (2, 100, 1, 1), (3, 100, 2, 1), (4, 101, 1, 1)], dtype=foo_dtype),
+        "bar": np.array([(5, 102, 1, 1), (6, 100, 1, 1), (7, 102, 1, 1)], dtype=bar_dtype),
+        "other": np.array([(8, 100, 1, 1)], dtype=other_dtype),
+    }
+    errors = all_same_sensor_type_on_same_terminal(different_type, "foo", "bar", "baz", "bla")
+    assert errors == [
+        MixedPowerCurrentSensorError(
+            [("foo", "baz"), ("foo", "bla"), ("bar", "baz"), ("bar", "bla")], [("foo", 1), ("foo", 2), ("bar", 6)]
+        )
+    ]
 
 
 def test_all_valid_fault_phases():

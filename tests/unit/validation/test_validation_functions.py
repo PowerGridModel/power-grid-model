@@ -894,6 +894,49 @@ def test_validate_generic_current_sensor__angle_measurement_type_mixing(
     )
 
 
+@pytest.mark.parametrize("power_sensor_type", [ComponentType.sym_power_sensor, ComponentType.asym_power_sensor])
+@pytest.mark.parametrize("current_sensor_type", [ComponentType.sym_current_sensor, ComponentType.asym_current_sensor])
+@patch("power_grid_model.validation._validation._all_finite", new=MagicMock(return_value=[]))
+@patch("power_grid_model.validation._validation.validate_node", new=MagicMock(return_value=[]))
+@patch("power_grid_model.validation._validation.validate_line", new=MagicMock(return_value=[]))
+@patch("power_grid_model.validation._validation.validate_asym_line", new=MagicMock(return_value=[]))
+@patch("power_grid_model.validation._validation.validate_branch", new=MagicMock(return_value=[]))
+@patch("power_grid_model.validation._validation.validate_generic_branch", new=MagicMock(return_value=[]))
+@patch("power_grid_model.validation._validation.validate_transformer", new=MagicMock(return_value=[]))
+@patch("power_grid_model.validation._validation.validate_three_winding_transformer", new=MagicMock(return_value=[]))
+@patch("power_grid_model.validation._validation.validate_source", new=MagicMock(return_value=[]))
+@patch("power_grid_model.validation._validation.validate_generic_load_gen", new=MagicMock(return_value=[]))
+@patch("power_grid_model.validation._validation.validate_generic_load_gen", new=MagicMock(return_value=[]))
+@patch("power_grid_model.validation._validation.validate_generic_load_gen", new=MagicMock(return_value=[]))
+@patch("power_grid_model.validation._validation.validate_generic_load_gen", new=MagicMock(return_value=[]))
+@patch("power_grid_model.validation._validation.validate_shunt", new=MagicMock(return_value=[]))
+@patch("power_grid_model.validation._validation.validate_generic_voltage_sensor", new=MagicMock(return_value=[]))
+@patch("power_grid_model.validation._validation.validate_generic_voltage_sensor", new=MagicMock(return_value=[]))
+@patch("power_grid_model.validation._validation.validate_generic_power_sensor", new=MagicMock(return_value=[]))
+@patch("power_grid_model.validation._validation.validate_generic_power_sensor", new=MagicMock(return_value=[]))
+@patch("power_grid_model.validation._validation.validate_generic_current_sensor", new=MagicMock(return_value=[]))
+@patch("power_grid_model.validation._validation.validate_generic_current_sensor", new=MagicMock(return_value=[]))
+@patch("power_grid_model.validation._validation.validate_fault", new=MagicMock(return_value=[]))
+@patch("power_grid_model.validation._validation.validate_transformer_tap_regulator", new=MagicMock(return_value=[]))
+@patch("power_grid_model.validation._validation._all_same_sensor_type_on_same_terminal")
+def test_no_power_and_current_sensor_on_same_terminal(
+    _all_same_sensor_type_on_same_terminal,
+    power_sensor_type: ComponentType,
+    current_sensor_type: ComponentType,
+):
+    # Act
+    validate_values({power_sensor_type: None, current_sensor_type: None})
+
+    # Assert
+    _all_same_sensor_type_on_same_terminal.assert_any_call(
+        ANY,
+        power_sensor_type=power_sensor_type,
+        current_sensor_type=current_sensor_type,
+        measured_object_field="measured_object",
+        measured_terminal_type_field="measured_terminal_type",
+    )
+
+
 def test_power_sigma_or_p_q_sigma():
     # node
     node = initialize_array("input", "node", 2)

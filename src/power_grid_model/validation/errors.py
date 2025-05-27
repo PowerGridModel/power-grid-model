@@ -564,3 +564,14 @@ class MixedCurrentAngleMeasurementTypeError(MultiFieldValidationError):
         "If multiple current sensors measure the same terminal of the same object, all angle measurement types must be "
         "the same. Mixing local_angle and global_angle current measurements on the same terminal is not supported."
     )
+
+
+class MixedPowerCurrentSensorError(MultiComponentValidationError):
+    """
+    Mixed power and current sensor error.
+    """
+
+    _message = (
+        "Mixture of power and current sensors on the same terminal for {n} {objects}. "
+        "If multiple sensors measure the same terminal of the same object, all sensors must measure the same quantity."
+    )
