@@ -34,6 +34,7 @@ Output data:
         A list containing errors; in case of success, `errors` is the empty list: [].
 
 """
+
 from enum import Enum
 from typing import Any, Callable, Type, TypeVar
 
