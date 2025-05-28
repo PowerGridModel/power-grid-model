@@ -522,7 +522,7 @@ def all_in_valid_values(
     valid = {_nan_type(component, field)}
     valid.update(values)
 
-    invalid = np.isin(data[component][field], np.array(values), invert=True)
+    invalid = np.isin(data[component][field], np.array(list(valid)), invert=True)
     if invalid.any():
         ids = data[component]["id"][invalid].flatten().tolist()
         return [UnsupportedMeasuredTerminalType(component, field, ids, values)]
@@ -1063,11 +1063,9 @@ def all_same_sensor_type_on_same_terminal(
 
     mixed_terminals = np.intersect1d(power_sensor_measured_terminals, current_sensor_measured_terminals)
     if mixed_terminals.size != 0:
-        mixed_power_sensor_ids = power_sensor_data["id"][
-            np.isin(power_sensor_data[[measured_object_field, measured_terminal_type_field]], mixed_terminals)
-        ]
+        mixed_power_sensor_ids = power_sensor_data["id"][np.isin(power_sensor_measured_terminals, mixed_terminals)]
         mixed_current_sensor_ids = current_sensor_data["id"][
-            np.isin(current_sensor_data[[measured_object_field, measured_terminal_type_field]], mixed_terminals)
+            np.isin(current_sensor_measured_terminals, mixed_terminals)
         ]
 
         return [

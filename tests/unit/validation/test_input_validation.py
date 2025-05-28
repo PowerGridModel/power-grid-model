@@ -39,6 +39,7 @@ from power_grid_model.validation.errors import (
     NotLessThanError,
     NotUniqueError,
     TwoValuesZeroError,
+    UnsupportedMeasuredTerminalType,
 )
 from power_grid_model.validation.utils import _nan_type
 
@@ -305,16 +306,16 @@ def original_data() -> dict[ComponentType, np.ndarray]:
     sym_current_sensor["measured_object"] = [12, 3, 13, 200]
     sym_current_sensor["i_sigma"] = [1.0, np.nan, 0.0, -1.0]
     sym_current_sensor["i_angle_sigma"] = [1.0, np.nan, 0.0, -1.0]
-    sym_current_sensor["measured_terminal_type"] = [1, 1, 10, 1]
-    sym_current_sensor["angle_measurement_type"] = [0, 1, 10, 1]
+    sym_current_sensor["measured_terminal_type"] = [1, 1, 10, 2]
+    sym_current_sensor["angle_measurement_type"] = [0, 1, 10, 2]
 
     asym_current_sensor = initialize_array(DatasetType.input, ComponentType.asym_current_sensor, 4)
     asym_current_sensor["id"] = [7, 8, 9, 10]
     asym_current_sensor["measured_object"] = [12, 3, 13, 200]
     asym_current_sensor["i_sigma"] = [1.0, np.nan, 0.0, -1.0]
     asym_current_sensor["i_angle_sigma"] = [1.0, np.nan, 0.0, -1.0]
-    asym_current_sensor["measured_terminal_type"] = [1, 1, 10, 1]
-    asym_current_sensor["angle_measurement_type"] = [0, 1, 10, 1]
+    asym_current_sensor["measured_terminal_type"] = [1, 1, 10, 2]
+    asym_current_sensor["angle_measurement_type"] = [0, 1, 10, 2]
 
     fault = initialize_array(DatasetType.input, ComponentType.fault, 20)
     fault["id"] = [1] + list(range(32, 51))
@@ -611,7 +612,7 @@ def test_validate_input_data_sym_calculation(input_data):
         InvalidIdError(
             "sym_current_sensor",
             "measured_object",
-            [7, 10],
+            [7],
             ["line", "asym_line", "generic_branch", "transformer"],
             {"measured_terminal_type": MeasuredTerminalType.branch_to},
         )
@@ -622,7 +623,22 @@ def test_validate_input_data_sym_calculation(input_data):
         in validation_errors
     )
     assert (
-        InvalidEnumValueError("sym_current_sensor", "angle_measurement_type", [9], AngleMeasurementType)
+        UnsupportedMeasuredTerminalType(
+            "sym_current_sensor",
+            "measured_terminal_type",
+            [9, 10],
+            [
+                MeasuredTerminalType.branch_from,
+                MeasuredTerminalType.branch_to,
+                MeasuredTerminalType.branch3_1,
+                MeasuredTerminalType.branch3_2,
+                MeasuredTerminalType.branch3_3,
+            ],
+        )
+        in validation_errors
+    )
+    assert (
+        InvalidEnumValueError("sym_current_sensor", "angle_measurement_type", [9, 10], AngleMeasurementType)
         in validation_errors
     )
 
@@ -647,7 +663,7 @@ def test_validate_input_data_sym_calculation(input_data):
         InvalidIdError(
             "asym_current_sensor",
             "measured_object",
-            [7, 10],
+            [7],
             ["line", "asym_line", "generic_branch", "transformer"],
             {"measured_terminal_type": MeasuredTerminalType.branch_to},
         )
@@ -658,7 +674,22 @@ def test_validate_input_data_sym_calculation(input_data):
         in validation_errors
     )
     assert (
-        InvalidEnumValueError("asym_current_sensor", "angle_measurement_type", [9], AngleMeasurementType)
+        UnsupportedMeasuredTerminalType(
+            "asym_current_sensor",
+            "measured_terminal_type",
+            [9, 10],
+            [
+                MeasuredTerminalType.branch_from,
+                MeasuredTerminalType.branch_to,
+                MeasuredTerminalType.branch3_1,
+                MeasuredTerminalType.branch3_2,
+                MeasuredTerminalType.branch3_3,
+            ],
+        )
+        in validation_errors
+    )
+    assert (
+        InvalidEnumValueError("asym_current_sensor", "angle_measurement_type", [9, 10], AngleMeasurementType)
         in validation_errors
     )
     for power_sensor_type, current_sensor_type in itertools.product(
@@ -677,11 +708,9 @@ def test_validate_input_data_sym_calculation(input_data):
                     (power_sensor_type, 7),
                     (power_sensor_type, 8),
                     (power_sensor_type, 9),
-                    (power_sensor_type, 10),
                     (current_sensor_type, 7),
                     (current_sensor_type, 8),
                     (current_sensor_type, 9),
-                    (current_sensor_type, 10),
                 ],
             )
             in validation_errors

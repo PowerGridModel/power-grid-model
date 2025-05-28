@@ -391,17 +391,12 @@ def validate_required_values(
     # Sensors
     required["sensor"] = required["base"] + ["measured_object"]
     required["voltage_sensor"] = required["sensor"].copy()
-    required["current_sensor"] = required["sensor"] + [
-        "measured_terminal_type",
-        "angle_measurement_type",
-        "i_sigma",
-        "i_angle_sigma",
-    ]
     required["power_sensor"] = required["sensor"] + ["measured_terminal_type"]
+    required["current_sensor"] = required["sensor"] + ["measured_terminal_type", "angle_measurement_type"]
     if calculation_type is None or calculation_type == CalculationType.state_estimation:
         required["voltage_sensor"] += ["u_sigma", "u_measured"]
-        required["current_sensor"] += ["i_measured", "i_angle_measured"]
         required["power_sensor"] += ["power_sigma", "p_measured", "q_measured"]
+        required["current_sensor"] += ["i_sigma", "i_angle_sigma", "i_measured", "i_angle_measured"]
     required["sym_voltage_sensor"] = required["voltage_sensor"].copy()
     required["asym_voltage_sensor"] = required["voltage_sensor"].copy()
     required["sym_current_sensor"] = required["current_sensor"].copy()
@@ -475,8 +470,8 @@ def validate_values(data: SingleDataset, calculation_type: CalculationType | Non
     """
     errors: list[ValidationError] = list(
         _all_finite(
-            data,
-            {
+            data=data,
+            exceptions={
                 ComponentType.sym_power_sensor: ["power_sigma"],
                 ComponentType.asym_power_sensor: ["power_sigma"],
                 ComponentType.sym_voltage_sensor: ["u_sigma"],
