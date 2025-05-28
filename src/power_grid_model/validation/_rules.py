@@ -43,6 +43,7 @@ from typing import Any, Callable, Type, TypeVar
 import numpy as np
 
 from power_grid_model import ComponentType
+from power_grid_model._core.enum import AngleMeasurementType
 from power_grid_model._core.utils import get_comp_size, is_nan_or_default
 from power_grid_model.data_types import SingleDataset
 from power_grid_model.enum import FaultPhase, FaultType, WindingType
@@ -55,6 +56,7 @@ from power_grid_model.validation.errors import (
     InvalidEnumValueError,
     InvalidIdError,
     MissingValueError,
+    MissingVoltageAngleMeasurementError,
     MixedCurrentAngleMeasurementTypeError,
     MixedPowerCurrentSensorError,
     MultiComponentNotUniqueError,
@@ -1135,3 +1137,50 @@ def all_valid_fault_phases(
             )
         ]
     return []
+
+
+def any_voltage_angle_measurement_if_global_current_measurement(
+    data: SingleDataset,
+    component: ComponentType,
+    angle_measurement_type_filter: tuple[str, AngleMeasurementType],
+    voltage_sensor_u_angle_measured: dict[ComponentType, str],
+) -> list[MissingVoltageAngleMeasurementError]:
+    """Require a voltage angle measurement if a global angle current measurement is present.
+
+    Args:
+        data (SingleDataset): The input/update data set for all components
+        component (ComponentType): The component of interest
+        angle_measurement_type_filter (tuple[str, AngleMeasurementType]):
+            The angle measurement type field and value to check for
+        voltage_sensor_u_angle_measured (dict[ComponentType, str]):
+            The voltage angle measure field for each voltage sensor type
+
+    Returns:
+        A list containing zero or more MissingVoltageAngleMeasurementError; listing all the ids of global angle current
+        sensors that require at least one voltage angle measurement.
+    """
+    angle_measurement_type_field, angle_measurement_type = angle_measurement_type_filter
+
+    current_sensors = data[component]
+    if np.all(current_sensors[angle_measurement_type_field] != angle_measurement_type):
+        return []
+
+    for voltage_sensor_type, voltage_angle_field in voltage_sensor_u_angle_measured.items():
+        if (np.isfinite(data[voltage_sensor_type][voltage_angle_field])).any():
+            return []
+
+    voltage_and_current_sensor_ids = {sensor: data[sensor]["id"] for sensor in voltage_sensor_u_angle_measured}
+    voltage_and_current_sensor_ids[component] = current_sensors[
+        current_sensors[angle_measurement_type_field] == angle_measurement_type
+    ]["id"]
+
+    return [
+        MissingVoltageAngleMeasurementError(
+            fields=[(component, angle_measurement_type_field)] + list(voltage_sensor_u_angle_measured.items()),
+            ids=[
+                (sensor_type, id_)
+                for sensor_type, sensor_data in voltage_and_current_sensor_ids.items()
+                for id_ in sensor_data.flatten().tolist()
+            ],
+        )
+    ]

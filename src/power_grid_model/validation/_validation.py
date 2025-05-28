@@ -35,6 +35,9 @@ from power_grid_model.enum import (
     WindingType,
 )
 from power_grid_model.validation._rules import (
+    any_voltage_angle_measurement_if_global_current_measurement as _any_voltage_angle_measurement_if_global_current_measurement,  # pylint: disable=line-too-long
+)
+from power_grid_model.validation._rules import (
     all_between as _all_between,
     all_between_or_at as _all_between_or_at,
     all_boolean as _all_boolean,
@@ -1082,6 +1085,15 @@ def validate_generic_current_sensor(data: SingleDataset, component: ComponentTyp
         measured_object_field="measured_object",
         measured_terminal_type_field="measured_terminal_type",
         angle_measurement_type_field="angle_measurement_type",
+    )
+    errors += _any_voltage_angle_measurement_if_global_current_measurement(
+        data,
+        component,
+        angle_measurement_type_filter=("angle_measurement_type", AngleMeasurementType.global_angle),
+        voltage_sensor_u_angle_measured={
+            ComponentType.sym_voltage_sensor: "u_angle_measured",
+            ComponentType.asym_voltage_sensor: "u_angle_measured",
+        },
     )
 
     return errors

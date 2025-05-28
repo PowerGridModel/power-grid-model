@@ -575,3 +575,14 @@ class MixedPowerCurrentSensorError(MultiComponentValidationError):
         "Mixture of power and current sensors on the same terminal for {n} {objects}. "
         "If multiple sensors measure the same terminal of the same object, all sensors must measure the same quantity."
     )
+
+
+class MissingVoltageAngleMeasurementError(MultiComponentValidationError):
+    """
+    Missing voltage angle measurement error.
+    """
+
+    _message = (
+        "Missing voltage angle measurement for {n} {objects}. "
+        "If a voltage sensor measures the voltage of a terminal, it must also measure the voltage angle."
+    )

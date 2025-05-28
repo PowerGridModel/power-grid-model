@@ -9,7 +9,6 @@ import pytest
 
 from power_grid_model import ComponentType, DatasetType, LoadGenType, initialize_array, power_grid_meta_data
 from power_grid_model._core.dataset_definitions import ComponentTypeLike
-from power_grid_model._core.utils import compatibility_convert_row_columnar_dataset
 from power_grid_model.enum import (
     AngleMeasurementType,
     Branch3Side,
@@ -41,6 +40,7 @@ from power_grid_model.validation._rules import (
     all_valid_enum_values,
     all_valid_fault_phases,
     all_valid_ids,
+    any_voltage_angle_measurement_if_global_current_measurement,
     no_strict_subset_missing,
     none_match_comparison,
     none_missing,
@@ -53,6 +53,7 @@ from power_grid_model.validation.errors import (
     InvalidEnumValueError,
     InvalidIdError,
     MissingValueError,
+    MissingVoltageAngleMeasurementError,
     MixedCurrentAngleMeasurementTypeError,
     MixedPowerCurrentSensorError,
     MultiComponentNotUniqueError,
@@ -858,3 +859,87 @@ def test_all_same_current_angle_measurement_type_on_terminal(
             )
             in errors
         )
+
+
+def test_any_voltage_angle_measurement_if_global_current_measurement():
+    foo_dtype = [("id", "i4"), ("foofoo", "f8")]
+    bar_dtype = [("id", "i4"), ("foobar", "f8")]
+    baz_dtype = [("id", "i4"), ("foobaz", "f8")]
+
+    no_global_current = {
+        "foo": np.array([(1, 0)], dtype=foo_dtype),
+        "bar": np.array([], dtype=bar_dtype),
+        "baz": np.array([], dtype=baz_dtype),
+    }
+    errors = any_voltage_angle_measurement_if_global_current_measurement(
+        no_global_current,
+        "foo",
+        ("foofoo", 1),
+        {"bar": "foobar", "baz": "foobaz"},
+    )
+    assert not errors
+
+    global_current_no_voltage = {
+        "foo": np.array([(1, 1)], dtype=foo_dtype),
+        "bar": np.array([], dtype=bar_dtype),
+        "baz": np.array([], dtype=baz_dtype),
+    }
+    errors = any_voltage_angle_measurement_if_global_current_measurement(
+        global_current_no_voltage,
+        "foo",
+        ("foofoo", 1),
+        {"bar": "foobar", "baz": "foobaz"},
+    )
+    assert errors == [
+        MissingVoltageAngleMeasurementError(
+            fields=[("foo", "foofoo"), ("bar", "foobar"), ("baz", "foobaz")], ids=[("foo", 1)]
+        )
+    ]
+
+    global_current_without_voltage_angle = {
+        "foo": np.array([(1, 1)], dtype=foo_dtype),
+        "bar": np.array([(2, np.nan)], dtype=bar_dtype),
+        "baz": np.array([], dtype=baz_dtype),
+    }
+    errors = any_voltage_angle_measurement_if_global_current_measurement(
+        global_current_without_voltage_angle,
+        "foo",
+        ("foofoo", 1),
+        {"bar": "foobar", "baz": "foobaz"},
+    )
+    assert errors == [
+        MissingVoltageAngleMeasurementError(
+            fields=[("foo", "foofoo"), ("bar", "foobar"), ("baz", "foobaz")], ids=[("foo", 1), ("bar", 2)]
+        )
+    ]
+
+    global_current_and_multiple_voltage_measurements_no_angle = {
+        "foo": np.array([(1, 1)], dtype=foo_dtype),
+        "bar": np.array([(2, np.nan), (3, np.nan)], dtype=bar_dtype),
+        "baz": np.array([(4, np.nan), (5, np.nan)], dtype=baz_dtype),
+    }
+    errors = any_voltage_angle_measurement_if_global_current_measurement(
+        global_current_and_multiple_voltage_measurements_no_angle,
+        "foo",
+        ("foofoo", 1),
+        {"bar": "foobar", "baz": "foobaz"},
+    )
+    assert errors == [
+        MissingVoltageAngleMeasurementError(
+            fields=[("foo", "foofoo"), ("bar", "foobar"), ("baz", "foobaz")],
+            ids=[("foo", 1), ("bar", 2), ("bar", 3), ("baz", 4), ("baz", 5)],
+        )
+    ]
+
+    global_current_and_one_voltage_angle = {
+        "foo": np.array([(1, 1)], dtype=foo_dtype),
+        "bar": np.array([(2, 2)], dtype=bar_dtype),
+        "baz": np.array([(3, 3)], dtype=baz_dtype),
+    }
+    errors = any_voltage_angle_measurement_if_global_current_measurement(
+        global_current_and_one_voltage_angle,
+        "foo",
+        ("foofoo", 1),
+        {"bar": "foobar", "baz": "foobaz"},
+    )
+    assert not errors
