@@ -5,7 +5,7 @@
 [build-system]
 requires = [
     "py-build-cmake",
-    "git+https://github.com/PowerGridModel/pgm-build-dependencies.git"
+    "pgm-build-dependencies@git+https://github.com/PowerGridModel/pgm-build-dependencies.git"
 ]
 build-backend = "py_build_cmake.build"
 
