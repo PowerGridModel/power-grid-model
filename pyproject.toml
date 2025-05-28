@@ -3,7 +3,10 @@
 # SPDX-License-Identifier: MPL-2.0
 
 [build-system]
-requires = ["py-build-cmake"]
+requires = [
+    "py-build-cmake",
+    "git+https://github.com/PowerGridModel/pgm-build-dependencies.git"
+]
 build-backend = "py_build_cmake.build"
 
 [project]

@@ -44,10 +44,20 @@ if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.30.0")
 cmake_policy(SET CMP0167 OLD)  
 endif()
 
-find_package(Boost REQUIRED)
-find_package(Eigen3 CONFIG REQUIRED)
-find_package(nlohmann_json CONFIG REQUIRED)
-find_package(msgpack-cxx REQUIRED)
+# If cmake is invoked from py-build-cmake,
+# we find include path through command
+if (DEFINED PY_BUILD_CMAKE_VERSION)
+  execute_process(
+    COMMAND pgm-build-dependencies
+    OUTPUT_VARIABLE PY_BUILD_CMAKE_DEP_INCLUDE
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+else()
+  find_package(Boost REQUIRED)
+  find_package(Eigen3 CONFIG REQUIRED)
+  find_package(nlohmann_json CONFIG REQUIRED)
+  find_package(msgpack-cxx REQUIRED)
+endif()
 
 if(NOT WIN32)
   # thread

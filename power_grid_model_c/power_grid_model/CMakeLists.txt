@@ -4,9 +4,17 @@
 
 add_library(power_grid_model INTERFACE)
 
-target_link_libraries(power_grid_model INTERFACE
-  Eigen3::Eigen Boost::headers msgpack-cxx nlohmann_json::nlohmann_json
-)
+# If cmake is invoked from py-build-cmake,
+# we add include path in dependencies manually
+if (DEFINED PY_BUILD_CMAKE_VERSION)
+  target_include_directories(power_grid_model INTERFACE
+    "${PY_BUILD_CMAKE_DEP_INCLUDE}"
+  )
+else()
+  target_link_libraries(power_grid_model INTERFACE
+    Eigen3::Eigen Boost::headers msgpack-cxx nlohmann_json::nlohmann_json
+  )
+endif()
 
 if(Threads_FOUND)
   target_link_libraries(power_grid_model INTERFACE Threads::Threads)
