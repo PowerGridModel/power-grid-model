@@ -96,7 +96,7 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           # To test, use the TestPyPI:
-          # repository-url: https://test.pypi.org/legacy/
+          repository-url: https://test.pypi.org/legacy/
           # You must also create an account and project on TestPyPI,
           # as well as set the trusted-publisher in the project settings:
           # https://docs.pypi.org/trusted-publishers/adding-a-publisher/
