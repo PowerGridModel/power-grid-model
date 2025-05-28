@@ -35,8 +35,6 @@ Output data:
 
 """
 
-# pylint: disable=too-many-lines
-
 from enum import Enum
 from typing import Any, Callable, Type, TypeVar
 
