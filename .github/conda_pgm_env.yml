@@ -9,6 +9,7 @@ dependencies:
   - pip
   - wheel
   - setuptools
+  - py-build-cmake
   # build deps
   - libboost-headers
   - eigen
