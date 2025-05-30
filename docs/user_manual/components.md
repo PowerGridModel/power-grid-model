@@ -158,7 +158,7 @@ There is no additional attribute for `link`.
 
 #### Electric Model
 
-`link` is modeled by a constant reactance $Y_{\text{series}}$, where
+`link` is modeled by a constant admittance $Y_{\text{series}}$, where
 
 $$
    \begin{eqnarray}
