@@ -37,9 +37,8 @@ requires-python = ">=3.11"
 dependencies = ["numpy>=1.21.0"]
 dynamic = ["version"]
 
-
 [project.optional-dependencies]
-dev = ["msgpack", "pre-commit", "pylint", "pytest", "pytest-cov"]
+dev = ["msgpack", "pre-commit", "pytest", "pytest-cov", "ruff"]
 doc = [
     "sphinx",
     "breathe",
@@ -83,17 +82,34 @@ addopts = [
 ]
 xfail_strict = true
 
-[tool.black]
+[tool.ruff]
+# Same as Black.
 line-length = 120
-target-version = ['py311']
+indent-width = 4
+show-fixes = true
 
-[tool.isort]
-profile = "black"
-combine_as_imports = true
-line_length = 120
+# Assume Python 3.11
+target-version = "py311"
 
-[tool.pylint]
-max-line-length = 120
+[tool.ruff.lint]
+select = [
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # isort
+    "I",
+    "SIM",
+]
+ignore = ["SIM108", "SIM118", "SIM110", "SIM211", "F811", "E721", "F401", "E501", "F841", "I001", "E731", "E402"]
+
+[tool.ruff.lint.isort]
+# Imports that are imported using keyword "as" and are from the same source - are combined.
+combine-as-imports = true
+
+[tool.ruff.lint.per-file-ignores]
+# Ignore `F811` (redefinition violations) in all examples notebooks since we use redefinition.
+"docs/examples/*.ipynb" = ["F811", "E402"]
 
 [tool.mypy]
 follow_imports = "silent"

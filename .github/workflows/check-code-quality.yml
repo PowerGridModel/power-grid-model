@@ -35,25 +35,15 @@ jobs:
       - name: Upgrade pip
         run: pip install --upgrade pip
 
-      - name: Install and run isort
-        run: |
-          pip install isort
-          isort .
-
-      - name: Install and run black
-        run: |
-          pip install black[jupyter]
-          black .
-
       - name: Install and run mypy
         run: |
           pip install mypy numpy
           mypy .
 
-      - name: Install and run pylint
+      - name: Install and run ruff
         run: |
-          pip install pylint .
-          pylint power_grid_model
+          pip install ruff .
+          ruff check .
           git restore README.md
 
       - name: Install and run clang-format
@@ -75,7 +65,7 @@ jobs:
             git status --porcelain --untracked-files=no
             exit 1
           fi
-      
+
       - name: Check generated code
         if: success()
         run: |
@@ -105,4 +95,3 @@ jobs:
           else
             echo "The test-workflow.yml file matches main."
           fi
-          
