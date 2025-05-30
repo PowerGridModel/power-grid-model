@@ -667,7 +667,7 @@ def test_not_all_missing():
         with pytest.raises(ValueError) as excinfo:
             not_all_missing(invalid, ["bar"], "foo_test")
 
-        assert excinfo.type == ValueError
+        assert excinfo.type is ValueError
         assert (
             str(excinfo.value)
             == "The fields parameter must contain at least 2 fields. Otherwise use the none_missing function."

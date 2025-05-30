@@ -28,10 +28,14 @@ def test_validation_exception(errors_to_string_mock: MagicMock):
 def test_assert_valid_input_data(validate_mock: MagicMock):
     validate_mock.return_value = None
     assert_valid_input_data(
-        input_data={"foo": np.array([1])}, calculation_type=CalculationType.state_estimation, symmetric=False  # type: ignore
+        input_data={"foo": np.array([1])},
+        calculation_type=CalculationType.state_estimation,
+        symmetric=False,  # type: ignore
     )
     validate_mock.assert_called_once_with(
-        input_data={"foo": np.array([1])}, calculation_type=CalculationType.state_estimation, symmetric=False  # type: ignore
+        input_data={"foo": np.array([1])},
+        calculation_type=CalculationType.state_estimation,
+        symmetric=False,  # type: ignore
     )
 
     validate_mock.return_value = [ValidationError()]

@@ -5,6 +5,7 @@
 """
 Utilities used for validation. Only errors_to_string() is intended for end users.
 """
+
 import re
 from typing import Any, cast
 

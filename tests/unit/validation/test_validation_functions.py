@@ -13,7 +13,7 @@ from power_grid_model import CalculationType, LoadGenType, MeasuredTerminalType,
 from power_grid_model._core.dataset_definitions import ComponentType, DatasetType
 from power_grid_model._core.enum import AngleMeasurementType
 from power_grid_model._core.utils import compatibility_convert_row_columnar_dataset
-from power_grid_model.enum import Branch3Side, BranchSide, CalculationType, ComponentAttributeFilterOptions, FaultType
+from power_grid_model.enum import Branch3Side, BranchSide, ComponentAttributeFilterOptions, FaultType
 from power_grid_model.validation import assert_valid_input_data
 from power_grid_model.validation._validation import (
     assert_valid_data_structure,

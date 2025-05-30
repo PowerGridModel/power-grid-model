@@ -6,7 +6,6 @@
 This file contains error classes for library-internal use.
 """
 
-
 import numpy as np
 
 
