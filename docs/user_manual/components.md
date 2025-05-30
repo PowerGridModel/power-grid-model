@@ -785,8 +785,9 @@ Because of this distribution, at least one appliance is required to be connected
 ```
 
 ```{note}
-It is not possible to add both a [power sensor](#generic-current-sensor) and a [current sensor](#generic-current-sensor) to the same terminal of the same component.
-It is, however, allowed to have both a power sensor and a current sensor on the same branch if they are on different terminals.
+It is not possible to mix [power sensors](./components.md#generic-current-sensor) with [current sensors](#./components.mdgeneric-current-sensor) on the same terminal of the same component.
+It is also not possible to mix [current sensors with global angle measurement type](#./components.mdgeneric-current-sensor) with [current sensors with local angle measurement type](#./components.mdgeneric-current-sensor) on the same terminal of the same component.
+However, such mixing of sensor types is allowed as long as they are on different terminals.
 ```
 
 ##### Input
@@ -881,8 +882,9 @@ Due to the high admittance of a `link` it is chosen that a current sensor cannot
 ```
 
 ```{note}
-It is not possible to add both a [power sensor](#generic-current-sensor) and a [current sensor](#generic-current-sensor) to the same terminal of the same component.
-It is, however, allowed to have both a power sensor and a current sensor on the same branch if they are on different terminals.
+It is not possible to mix [power sensors](./components.md#generic-current-sensor) with [current sensors](#./components.mdgeneric-current-sensor) on the same terminal of the same component.
+It is also not possible to mix [current sensors with global angle measurement type](#./components.mdgeneric-current-sensor) with [current sensors with local angle measurement type](#./components.mdgeneric-current-sensor) on the same terminal of the same component.
+However, such mixing of sensor types is allowed as long as they are on different terminals.
 ```
 
 ##### Input
