@@ -864,10 +864,6 @@ $$
 ### Generic Current Sensor
 
 ```{warning}
-At the time of writing, this feature is still experimental and is not yet publicly available.
-```
-
-```{warning}
 At the time of writing, state estimation with current sensors is not supported by the Newton-Raphson calculation method.
 ```
 
