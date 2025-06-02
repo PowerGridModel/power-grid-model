@@ -232,6 +232,30 @@ class MultiComponentNotUniqueError(MultiComponentValidationError):
     _message = "Fields {field} are not unique for {n} {objects}."
 
 
+class InvalidValueError(SingleFieldValidationError):
+    """
+    The value is not a valid value in the supplied list of supported values.
+    E.g. an enum value that is not supported for a specific feature.
+    """
+
+    _message = "Field {field} contains invalid values for {n} {objects}."
+    values: list
+
+    def __init__(self, component: ComponentType, field: str, ids: list[int], values: list):
+        super().__init__(component, field, ids)
+        self.values = values
+
+    @property
+    def values_str(self) -> str:
+        """
+        A string representation of the field to which this error applies.
+        """
+        return ",".join(v.name if isinstance(v, Enum) else v for v in self.values)
+
+    def __eq__(self, other):
+        return super().__eq__(other) and self.values == other.values
+
+
 class InvalidEnumValueError(SingleFieldValidationError):
     """
     The value is not a valid value in the supplied enumeration type.
@@ -518,3 +542,47 @@ class InvalidAssociatedEnumValueError(MultiFieldValidationError):
 
     def __eq__(self, other):
         return super().__eq__(other) and self.enum == other.enum
+
+
+class UnsupportedMeasuredTerminalType(InvalidValueError):
+    """
+    The measured terminal type is not a supported value.
+
+    Supported values are in the supplied list of values.
+    """
+
+    _message = "measured_terminal_type contains unsupported values for {n} {objects}."
+
+
+class MixedCurrentAngleMeasurementTypeError(MultiFieldValidationError):
+    """
+    Mixed current angle measurement type error.
+    """
+
+    _message = (
+        "Mixture of different current angle measurement types on the same terminal for {n} {objects}. "
+        "If multiple current sensors measure the same terminal of the same object, all angle measurement types must be "
+        "the same. Mixing local_angle and global_angle current measurements on the same terminal is not supported."
+    )
+
+
+class MixedPowerCurrentSensorError(MultiComponentValidationError):
+    """
+    Mixed power and current sensor error.
+    """
+
+    _message = (
+        "Mixture of power and current sensors on the same terminal for {n} {objects}. "
+        "If multiple sensors measure the same terminal of the same object, all sensors must measure the same quantity."
+    )
+
+
+class MissingVoltageAngleMeasurementError(MultiComponentValidationError):
+    """
+    Missing voltage angle measurement error.
+    """
+
+    _message = (
+        "Missing voltage angle measurement for {n} {objects}. "
+        "If a voltage sensor measures the voltage of a terminal, it must also measure the voltage angle."
+    )

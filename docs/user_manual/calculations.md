@@ -97,8 +97,9 @@ Global angle current measurements require at least one voltage angle measurement
 ```
 
 ```{note}
-It is not possible to add both a [power sensor](./components.md#generic-current-sensor) and a [current sensor](#./components.mdgeneric-current-sensor) to the same terminal of the same component.
-It is, however, allowed to have both a power sensor and a current sensor on the same branch if they are on different terminals.
+It is not possible to mix [power sensors](./components.md#generic-current-sensor) with [current sensors](#./components.mdgeneric-current-sensor) on the same terminal of the same component.
+It is also not possible to mix [current sensors with global angle measurement type](#./components.mdgeneric-current-sensor) with [current sensors with local angle measurement type](#./components.mdgeneric-current-sensor) on the same terminal of the same component.
+However, such mixing of sensor types is allowed as long as they are on different terminals.
 ```
 
 ```{warning}
@@ -472,8 +473,9 @@ $$
 Where $S_k$ and $\sigma_{P,k}$ and $\sigma_{Q,k}$ are the measured value and the standard deviation of the individual appliances.
 
 ```{note}
-It is not possible to add both a [power sensor](./components.md#generic-current-sensor) and a [current sensor](#./components.mdgeneric-current-sensor) to the same terminal of the same component.
-It is, however, allowed to have both a power sensor and a current sensor on the same branch if they are on different terminals.
+It is not possible to mix [power sensors](./components.md#generic-current-sensor) with [current sensors](#./components.mdgeneric-current-sensor) on the same terminal of the same component.
+It is also not possible to mix [current sensors with global angle measurement type](#./components.mdgeneric-current-sensor) with [current sensors with local angle measurement type](#./components.mdgeneric-current-sensor) on the same terminal of the same component.
+However, such mixing of sensor types is allowed as long as they are on different terminals.
 ```
 
 #### State estimate sensor transformations

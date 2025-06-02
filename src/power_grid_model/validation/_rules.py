@@ -34,12 +34,16 @@ Output data:
         A list containing errors; in case of success, `errors` is the empty list: [].
 
 """
+
+# pylint: disable=too-many-lines
+
 from enum import Enum
 from typing import Any, Callable, Type, TypeVar
 
 import numpy as np
 
 from power_grid_model import ComponentType
+from power_grid_model._core.enum import AngleMeasurementType
 from power_grid_model._core.utils import get_comp_size, is_nan_or_default
 from power_grid_model.data_types import SingleDataset
 from power_grid_model.enum import FaultPhase, FaultType, WindingType
@@ -52,6 +56,9 @@ from power_grid_model.validation.errors import (
     InvalidEnumValueError,
     InvalidIdError,
     MissingValueError,
+    MissingVoltageAngleMeasurementError,
+    MixedCurrentAngleMeasurementTypeError,
+    MixedPowerCurrentSensorError,
     MultiComponentNotUniqueError,
     MultiFieldValidationError,
     NotBetweenError,
@@ -67,6 +74,7 @@ from power_grid_model.validation.errors import (
     SameValueError,
     TransformerClockError,
     TwoValuesZeroError,
+    UnsupportedMeasuredTerminalType,
     ValidationError,
 )
 from power_grid_model.validation.utils import _eval_expression, _get_mask, _get_valid_ids, _nan_type, _set_default_value
@@ -389,7 +397,7 @@ def all_identical(data: SingleDataset, component: ComponentType, field: str) -> 
 
     Args:
         data (SingleDataset): The input/update data set for all components
-        component (str): The component of interest
+        component (ComponentType): The component of interest
         field (str): The field of interest
 
     Returns:
@@ -415,7 +423,7 @@ def all_enabled_identical(
 
     Args:
         data (SingleDataset): The input/update data set for all components
-        component (str): The component of interest
+        component (ComponentType): The component of interest
         field (str): The field of interest
         status_field (str): The status field based on which to decide whether a component is enabled
 
@@ -442,7 +450,7 @@ def all_unique(data: SingleDataset, component: ComponentType, field: str) -> lis
 
     Args:
         data (SingleDataset): The input/update data set for all components
-        component (str): The component of interest
+        component (ComponentType): The component of interest
         field (str): The field of interest
 
     Returns:
@@ -491,6 +499,33 @@ def all_cross_unique(
         fields_with_duplicated_ids = {f for f, _ in duplicate_ids}
         ids_with_duplicated_ids = {(c, i) for (c, _), i in duplicate_ids}
         return [MultiComponentNotUniqueError(list(fields_with_duplicated_ids), list(ids_with_duplicated_ids))]
+    return []
+
+
+def all_in_valid_values(
+    data: SingleDataset, component: ComponentType, field: str, values: list
+) -> list[UnsupportedMeasuredTerminalType]:
+    """
+    Check that for all records of a particular type of component, the values in the 'field' column are valid values for
+    the supplied enum class. Returns an empty list on success, or a list containing a single error object on failure.
+
+    Args:
+        data (SingleDataset): The input/update data set for all components
+        component (ComponentType): The component of interest
+        field (str): The field of interest
+        values (list | tuple): The values to validate against
+
+    Returns:
+        A list containing zero or one UnsupportedMeasuredTerminalType, listing all ids where the value in the field of
+        interest was not a valid value and the sequence of supported values.
+    """
+    valid = {_nan_type(component, field)}
+    valid.update(values)
+
+    invalid = np.isin(data[component][field], np.array(list(valid)), invert=True)
+    if invalid.any():
+        ids = data[component]["id"][invalid].flatten().tolist()
+        return [UnsupportedMeasuredTerminalType(component, field, ids, values)]
     return []
 
 
@@ -633,6 +668,7 @@ def all_not_two_values_zero(
         component: The component of interest
         field_1: The first field of interest
         field_2: The second field of interest
+
     Returns:
         A list containing zero or one TwoValuesZeroError, listing all ids where the value in the two fields of interest
         were both zero.
@@ -659,6 +695,7 @@ def all_not_two_values_equal(
         component: The component of interest
         field_1: The first field of interest
         field_2: The second field of interest
+
     Returns:
         A list containing zero or one SameValueError, listing all ids where the value in the two fields of interest
         were both the same.
@@ -685,6 +722,7 @@ def ids_valid_in_update_data_set(
         ref_data: The reference (input) data set for all components
         component: The component of interest
         ref_name: The name of the reference data set, e.g. 'update_data'
+
     Returns:
         A list containing zero or one IdNotInDatasetError, listing all ids of the objects in the data set which do not
         exist in the reference data set.
@@ -945,6 +983,106 @@ def all_valid_clocks(
     return []
 
 
+def all_same_current_angle_measurement_type_on_terminal(
+    data: SingleDataset,
+    component: ComponentType,
+    measured_object_field: str,
+    measured_terminal_type_field: str,
+    angle_measurement_type_field: str,
+) -> list[MixedCurrentAngleMeasurementTypeError]:
+    """
+    Custom validation rule: All current angle measurement types on a terminal must be the same.
+
+    Args:
+        data (SingleDataset): The input/update data set for all components
+        component (ComponentType): The component of interest
+        measured_object_field (str): The measured object field
+        measured_terminal_type_field (str): The terminal field
+        angle_measurement_type_field (str): The angle measurement type field
+
+    Returns:
+        A list containing zero or more MixedCurrentAngleMeasurementTypeErrors; listing all the ids of
+        components where the current angle measurement type was not the same for the same terminal.
+    """
+    sorted_indices = np.argsort(data[component][[measured_object_field, measured_terminal_type_field]])
+    sorted_values = data[component][sorted_indices]
+
+    unique_current_measurements, measurement_sorted_indices = np.unique(
+        sorted_values[[measured_object_field, measured_terminal_type_field, angle_measurement_type_field]],
+        return_inverse=True,
+    )
+    _, terminal_sorted_indices = np.unique(
+        unique_current_measurements[[measured_object_field, measured_terminal_type_field]], return_inverse=True
+    )
+
+    mixed_sorted_indices = np.setdiff1d(measurement_sorted_indices, terminal_sorted_indices)
+    mixed_terminals = np.unique(
+        sorted_values[mixed_sorted_indices][[measured_object_field, measured_terminal_type_field]]
+    )
+
+    err = np.isin(data[component][[measured_object_field, measured_terminal_type_field]], mixed_terminals)
+    if err.any():
+        return [
+            MixedCurrentAngleMeasurementTypeError(
+                component=component,
+                fields=[measured_object_field, measured_terminal_type_field, angle_measurement_type_field],
+                ids=data[component]["id"][err].flatten().tolist(),
+            )
+        ]
+    return []
+
+
+def all_same_sensor_type_on_same_terminal(
+    data: SingleDataset,
+    power_sensor_type: ComponentType,
+    current_sensor_type: ComponentType,
+    measured_object_field: str,
+    measured_terminal_type_field: str,
+) -> list[MixedPowerCurrentSensorError]:
+    """
+    Custom validation rule: All sensors on a terminal must be of the same type.
+
+    E.g. mixing sym_power_sensor and asym_power_sensor on the same terminal is allowed, but mixing
+    sym_power_sensor and sym_current_sensor is not allowed.
+
+    Args:
+        data (SingleDataset): The input/update data set for all components
+        power_sensor_type (ComponentType): The power sensor component
+        current_sensor_type (ComponentType): The current sensor component
+        measured_object_field (str): The measured object field
+        measured_terminal_type_field (str): The measured terminal type field
+
+    Returns:
+        A list containing zero or more MixedPowerCurrentSensorError; listing all the ids of
+        components that measure the same terminal of the same component in different, unsupported ways.
+    """
+    power_sensor_data = data[power_sensor_type]
+    current_sensor_data = data[current_sensor_type]
+    power_sensor_measured_terminals = power_sensor_data[[measured_object_field, measured_terminal_type_field]]
+    current_sensor_measured_terminals = current_sensor_data[[measured_object_field, measured_terminal_type_field]]
+
+    mixed_terminals = np.intersect1d(power_sensor_measured_terminals, current_sensor_measured_terminals)
+    if mixed_terminals.size != 0:
+        mixed_power_sensor_ids = power_sensor_data["id"][np.isin(power_sensor_measured_terminals, mixed_terminals)]
+        mixed_current_sensor_ids = current_sensor_data["id"][
+            np.isin(current_sensor_measured_terminals, mixed_terminals)
+        ]
+
+        return [
+            MixedPowerCurrentSensorError(
+                fields=[
+                    (power_sensor_type, measured_object_field),
+                    (power_sensor_type, measured_terminal_type_field),
+                    (current_sensor_type, measured_object_field),
+                    (current_sensor_type, measured_terminal_type_field),
+                ],
+                ids=[(power_sensor_type, s) for s in mixed_power_sensor_ids.flatten().tolist()]
+                + [(current_sensor_type, s) for s in mixed_current_sensor_ids.flatten().tolist()],
+            )
+        ]
+    return []
+
+
 def all_valid_fault_phases(
     data: SingleDataset, component: ComponentType, fault_type_field: str, fault_phase_field: str
 ) -> list[FaultPhaseError]:
@@ -953,7 +1091,7 @@ def all_valid_fault_phases(
 
     Args:
         data (SingleDataset): The input/update data set for all components
-        component (str): The component of interest
+        component (ComponentType): The component of interest
         fault_type_field (str): The fault type field
         fault_phase_field (str): The fault phase field
 
@@ -984,10 +1122,10 @@ def all_valid_fault_phases(
         FaultType.nan: [],
     }
 
-    def _fault_phase_supported(fault_type: FaultType, fault_phase: FaultPhase):
+    def _fault_phase_unsupported(fault_type: FaultType, fault_phase: FaultPhase):
         return fault_phase not in supported_combinations.get(fault_type, [])
 
-    err = np.vectorize(_fault_phase_supported)(fault_type=fault_types, fault_phase=fault_phases)
+    err = np.vectorize(_fault_phase_unsupported)(fault_type=fault_types, fault_phase=fault_phases)
     if err.any():
         return [
             FaultPhaseError(
@@ -997,3 +1135,50 @@ def all_valid_fault_phases(
             )
         ]
     return []
+
+
+def any_voltage_angle_measurement_if_global_current_measurement(
+    data: SingleDataset,
+    component: ComponentType,
+    angle_measurement_type_filter: tuple[str, AngleMeasurementType],
+    voltage_sensor_u_angle_measured: dict[ComponentType, str],
+) -> list[MissingVoltageAngleMeasurementError]:
+    """Require a voltage angle measurement if a global angle current measurement is present.
+
+    Args:
+        data (SingleDataset): The input/update data set for all components
+        component (ComponentType): The component of interest
+        angle_measurement_type_filter (tuple[str, AngleMeasurementType]):
+            The angle measurement type field and value to check for
+        voltage_sensor_u_angle_measured (dict[ComponentType, str]):
+            The voltage angle measure field for each voltage sensor type
+
+    Returns:
+        A list containing zero or more MissingVoltageAngleMeasurementError; listing all the ids of global angle current
+        sensors that require at least one voltage angle measurement.
+    """
+    angle_measurement_type_field, angle_measurement_type = angle_measurement_type_filter
+
+    current_sensors = data[component]
+    if np.all(current_sensors[angle_measurement_type_field] != angle_measurement_type):
+        return []
+
+    for voltage_sensor_type, voltage_angle_field in voltage_sensor_u_angle_measured.items():
+        if (np.isfinite(data[voltage_sensor_type][voltage_angle_field])).any():
+            return []
+
+    voltage_and_current_sensor_ids = {sensor: data[sensor]["id"] for sensor in voltage_sensor_u_angle_measured}
+    voltage_and_current_sensor_ids[component] = current_sensors[
+        current_sensors[angle_measurement_type_field] == angle_measurement_type
+    ]["id"]
+
+    return [
+        MissingVoltageAngleMeasurementError(
+            fields=[(component, angle_measurement_type_field)] + list(voltage_sensor_u_angle_measured.items()),
+            ids=[
+                (sensor_type, id_)
+                for sensor_type, sensor_data in voltage_and_current_sensor_ids.items()
+                for id_ in sensor_data.flatten().tolist()
+            ],
+        )
+    ]
