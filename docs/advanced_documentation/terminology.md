@@ -27,7 +27,7 @@ found one, please report it. We will respond as soon as possible.
 Depending on the nature and impact of the bug, we will post announcements via our
 [mailing list](powergridmodel+subscribe@lists.lfenergy.org).
 
-#### Security vunerability
+#### Security vulnerability
 
 These bugs are the most severe type of bugs, as they may give attackers access to data, secrets or
 controls they would otherwise not have access to. Due to the nature of the power grid model as a
@@ -77,7 +77,7 @@ usually post announcements regarding bugs of this nature.
 
 See also [below](#undefined-behavior-ub-as-a-bug).
 
-Although the power grid model take all the care they can in preventing
+Although the power grid model takes all the care they can in preventing
 [undefined behavior](#undefined-behavior-ub-as-a-bug) like infinite loops or extreme blow-up of the
 data usage, it is still possible that such behavior exists in the code. If you find any such issues,
 please report the issue and we will fix them as soon as possible.
