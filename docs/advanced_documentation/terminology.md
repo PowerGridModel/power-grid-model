@@ -311,19 +311,19 @@ and what is the users'.
 
 #### Undefined behavior (UB) as a bug
 
-As shown before, undefined behavior can be both good and bad. The power grid model explicitly
-certain behavior as defined or undefined to make a clear boundary between what it can and cannot do.
-The [C++ standard](https://en.cppreference.com) does so as well and it is always possible that the
-power grid model uses certain features in the wrong way. Similarly, users can still trigger certain
-explicitly undefined behavior. This is a potential source for
-[security vulnerabilities](#undefined-behavior-bugs) and therefore should be avoided at any cost.
+Triggering undefined behavior is a potential source for [security vulnerabilities](#undefined-behavior-bugs)
+and should therefore be avoided. Triggering undefined behavior should always be conidered a bug,
+regardless of whether it is caused by an incorrect internal implementation of the power grid model
+or a result of incorrect usage by a user.
 
-The power grid model uses AddressSanitizer and Sonar Qube Cloud as tools to find, prevent and fix
-instances of undefined behavior. We strongly recommend all users to do the same - especially the
-ones using the C API.
+To help both users and maintainers to find incorrect usage of and bugs in the power grid model, it
+uses an error handling mechanism. It also has extended assertion checks in Debug build configuration
+used in test and development environments to prevent internal bugs.
 
-In addition, the power grid model uses exception handling to report potential user-induced bugs, as
-well as debug assertions in Debug build configuration (test environments) to prevent internal bugs.
+To prevent, find and fix harder-to-find instances of undefined behavior, the power grid model uses
+tools like AddressSanitizer and Sonar Qube Cloud. We strongly recommend all users to do the same -
+especially the ones using the C API.
 
 If you find or expect any undefined behavior, please report it and/or
-[contribute](../user_manual/model-validation.md#test-case-creation) the repro case.
+[contribute](../user_manual/model-validation.md#test-case-creation) the repro case, as doing so
+helps improving the quality and user experience of the power grid model.
