@@ -29,9 +29,9 @@ jobs:
       - name: fail-if-no-label
         if: github.event_name == 'pull_request'
         run: |
-          if [ "$(jq '.pull_request.labels | length' <<< "${{ toJson(github.event) }}")" -eq 0 ]; then
+          if [ "$(jq '.pull_request.labels | length' "$GITHUB_EVENT_PATH")" -eq 0 ]; then
             echo "This pull request has no labels. Please add at least one label."
-            exit 10
+            exit 1
           fi
       
       - name: do-not-merge
