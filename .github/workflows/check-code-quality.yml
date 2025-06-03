@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 # GitHub Action that uses
-#     isort, black, mypy and pylint to reformat the Python code in an incoming pull request.
+#     mypy and ruff to reformat the Python code in an incoming pull request.
 #     clang-format to reformat the C++ code in an incoming pull request.
 # If all code in the pull request is compliant with Black and clang-format then this Action
 # does nothing. Otherwise, it will print the files which need to be reformatted and raise an error.
