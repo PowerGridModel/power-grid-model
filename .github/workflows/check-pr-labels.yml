@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-name: Check Blocking Labels
+name: Check PR Labels
 
 on:
   # run pipeline on pull request
