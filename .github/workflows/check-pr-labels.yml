@@ -25,7 +25,15 @@ jobs:
   check-blocking-labels:
     runs-on: ubuntu-latest
     steps:
-
+      
+      - name: fail-if-no-label
+        if: github.event_name == 'pull_request'
+        run: |
+          if [ "$(jq '.pull_request.labels | length' <<< "${{ toJson(github.event) }}")" -eq 0 ]; then
+            echo "This pull request has no labels. Please add at least one label."
+            exit 10
+          fi
+      
       - name: do-not-merge
         if: contains(github.event.pull_request.labels.*.name, 'do-not-merge')
         run: |
