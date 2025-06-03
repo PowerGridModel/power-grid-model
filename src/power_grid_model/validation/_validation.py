@@ -35,9 +35,6 @@ from power_grid_model.enum import (
     WindingType,
 )
 from power_grid_model.validation._rules import (
-    any_voltage_angle_measurement_if_global_current_measurement as _any_voltage_angle_measurement_if_global_current_measurement,  # pylint: disable=line-too-long
-)
-from power_grid_model.validation._rules import (
     all_between as _all_between,
     all_between_or_at as _all_between_or_at,
     all_boolean as _all_boolean,
@@ -59,6 +56,7 @@ from power_grid_model.validation._rules import (
     all_valid_enum_values as _all_valid_enum_values,
     all_valid_fault_phases as _all_valid_fault_phases,
     all_valid_ids as _all_valid_ids,
+    any_voltage_angle_measurement_if_global_current_measurement as _any_voltage_angle_measurement_if_global_current_measurement,  # noqa: E501
     ids_valid_in_update_data_set as _ids_valid_in_update_data_set,
     no_strict_subset_missing as _no_strict_subset_missing,
     none_missing as _none_missing,
