@@ -18,11 +18,11 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-blocking-labels
+  group: ${{ github.workflow }}-${{ github.ref }}-pr-labels
   cancel-in-progress: true
 
 jobs:
-  check-blocking-labels:
+  check-pr-labels:
     runs-on: ubuntu-latest
     steps:
       
