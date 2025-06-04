@@ -44,6 +44,7 @@ jobs:
         run: |
           pip install ruff .
           ruff check .
+          ruff format .
           git restore README.md
 
       - name: Install and run clang-format
