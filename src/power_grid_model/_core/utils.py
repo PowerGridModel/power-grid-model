@@ -603,7 +603,7 @@ def _check_columnar_row(sub_data: ComponentData, err_msg_suffixed: str) -> None:
 def component_data_checks(component_data: ComponentData, component=None) -> None:
     """Checks if component_data is of ComponentData and raises ValueError if its not"""
     component_name = f"'{component}'" if component is not None else ""
-    err_msg = f"Invalid data for {component_name} component. " "{0}"
+    err_msg = f"Invalid data for {component_name} component. {{0}}"
     err_msg_suffixed = err_msg + "Expecting a 1D/2D Numpy structured array or a dictionary of such."
 
     sub_data = _check_sparse_dense(component_data, err_msg_suffixed)
