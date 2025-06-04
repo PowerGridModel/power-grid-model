@@ -6,7 +6,6 @@
 Error classes used by the power-grid-model library.
 """
 
-
 from power_grid_model._core.errors import (  # pylint: disable=unused-import
     AutomaticTapCalculationError,
     AutomaticTapInputError,
