@@ -8,4 +8,4 @@ Disclaimer!
 We do not officially support this functionality and may remove features in this library at any given time!
 """
 
-from power_grid_model._core.utils import is_nan  # pylint: disable=unused-import
+from power_grid_model._core.utils import is_nan  # noqa: F401
