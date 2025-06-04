@@ -90,9 +90,9 @@ class PowerGridModel:
             A copy of PowerGridModel
         """
         new_model = PowerGridModel.__new__(PowerGridModel)
-        new_model._model_ptr = pgc.copy_model(self._model)  # pylint: disable=W0212
+        new_model._model_ptr = pgc.copy_model(self._model)
         assert_no_error()
-        new_model._all_component_count = self._all_component_count  # pylint: disable=W0212
+        new_model._all_component_count = self._all_component_count
         return new_model
 
     def __copy__(self):
@@ -196,8 +196,7 @@ class PowerGridModel:
 
         return {ComponentType[k]: v for k, v in self.all_component_count.items() if include_type(k)}
 
-    # pylint: disable=too-many-arguments
-    def _construct_output(  # pylint: disable=too-many-positional-arguments
+    def _construct_output(
         self,
         output_component_types: ComponentAttributeMapping,
         calculation_type: CalculationType,
@@ -239,8 +238,7 @@ class PowerGridModel:
             decode_error=decode_error,
         )
 
-    # pylint: disable=too-many-arguments
-    def _calculate_impl(  # pylint: disable=too-many-positional-arguments
+    def _calculate_impl(
         self,
         calculation_type: CalculationType,
         symmetric: bool,
@@ -249,7 +247,7 @@ class PowerGridModel:
         options: Options,
         continue_on_batch_error: bool,
         decode_error: bool,
-        experimental_features: _ExperimentalFeatures | str,  # pylint: disable=too-many-arguments,unused-argument
+        experimental_features: _ExperimentalFeatures | str,
     ):
         """
         Core calculation routine

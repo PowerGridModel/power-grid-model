@@ -45,7 +45,6 @@ _FUNC_SIZE_T_RES = {"meta_class_size", "meta_class_alignment", "meta_attribute_o
 _ARGS_TYPE_MAPPING = {bytes: CharPtr, str: CStr, int: IdxC, float: c_double}
 
 # The c_void_p is extended only for type hinting and type checking; therefore no public methods are required.
-# pylint: disable=too-few-public-methods
 
 
 class HandlePtr(c_void_p):
@@ -196,7 +195,7 @@ def make_c_binding(func: Callable):
         if "destroy" in name:
             c_inputs = []
         else:
-            c_inputs = [self._handle]  # pylint: disable=protected-access
+            c_inputs = [self._handle]
         args = chain(args, (kwargs[key] for key in py_argnames[len(args) :]))
         for arg in args:
             if isinstance(arg, str):
@@ -214,9 +213,6 @@ def make_c_binding(func: Callable):
     return cbind_func
 
 
-# pylint: disable=too-many-arguments
-# pylint: disable=missing-function-docstring
-# pylint: disable=too-many-public-methods
 class PowerGridCore:
     """
     DLL caller
@@ -387,7 +383,7 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
-    def get_indexer(  # pylint: disable=too-many-positional-arguments
+    def get_indexer(
         self,
         model: ModelPtr,
         component: str,
@@ -470,7 +466,7 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
-    def dataset_mutable_add_buffer(  # type: ignore[empty-body]  # pylint: disable=too-many-positional-arguments
+    def dataset_mutable_add_buffer(  # type: ignore[empty-body]
         self,
         dataset: MutableDatasetPtr,
         component: str,

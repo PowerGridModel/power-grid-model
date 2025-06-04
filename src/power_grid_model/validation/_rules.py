@@ -241,8 +241,7 @@ def all_less_or_equal(
     return none_match_comparison(data, component, field, not_less_or_equal, ref_value, NotLessOrEqualError)
 
 
-# pylint: disable=too-many-arguments
-def all_between(  # pylint: disable=too-many-positional-arguments
+def all_between(
     data: SingleDataset,
     component: ComponentType,
     field: str,
@@ -282,8 +281,7 @@ def all_between(  # pylint: disable=too-many-positional-arguments
     )
 
 
-# pylint: disable=too-many-arguments
-def all_between_or_at(  # pylint: disable=too-many-positional-arguments
+def all_between_or_at(
     data: SingleDataset,
     component: ComponentType,
     field: str,
@@ -333,7 +331,7 @@ def all_between_or_at(  # pylint: disable=too-many-positional-arguments
     )
 
 
-def none_match_comparison(  # pylint: disable=too-many-arguments
+def none_match_comparison(
     data: SingleDataset,
     component: ComponentType,
     field: str,
@@ -343,7 +341,6 @@ def none_match_comparison(  # pylint: disable=too-many-arguments
     default_value_1: np.ndarray | int | float | None = None,
     default_value_2: np.ndarray | int | float | None = None,
 ) -> list[CompError]:
-    # pylint: disable=too-many-positional-arguments
     """
     For all records of a particular type of component, check if the value in the 'field' column match the comparison.
     Returns an empty list if none of the value match the comparison, or a list containing a single error object when at
@@ -557,8 +554,7 @@ def all_valid_enum_values(
     return []
 
 
-# pylint: disable=too-many-arguments
-def all_valid_associated_enum_values(  # pylint: disable=too-many-positional-arguments
+def all_valid_associated_enum_values(
     data: SingleDataset,
     component: ComponentType,
     field: str,

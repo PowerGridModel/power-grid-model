@@ -9,8 +9,6 @@ Although all functions are 'public', you probably only need validate_input_data(
 
 """
 
-# pylint: disable=too-many-lines
-
 import copy
 from collections.abc import Sized as ABCSized
 from itertools import chain
@@ -281,9 +279,6 @@ def _process_power_sigma_and_p_q_sigma(
         power_sigma[mask] = np.nansum(q_sigma[mask], axis=asym_axes)
 
 
-# pylint: disable=too-many-statements
-
-
 def validate_required_values(
     data: SingleDataset, calculation_type: CalculationType | None = None, symmetric: bool = True
 ) -> list[MissingValueError]:
@@ -525,9 +520,6 @@ def validate_values(data: SingleDataset, calculation_type: CalculationType | Non
     return errors
 
 
-# pylint: disable=missing-function-docstring
-
-
 def validate_base(data: SingleDataset, component: ComponentType) -> list[ValidationError]:
     errors: list[ValidationError] = list(_all_unique(data, component, "id"))
     return errors
@@ -639,7 +631,6 @@ def validate_branch3(data: SingleDataset, component: ComponentType) -> list[Vali
     return errors
 
 
-# pylint: disable=R0915
 def validate_three_winding_transformer(data: SingleDataset) -> list[ValidationError]:
     errors = validate_branch3(data, ComponentType.three_winding_transformer)
     errors += _all_greater_than_zero(data, ComponentType.three_winding_transformer, "u1")
