@@ -63,8 +63,8 @@ class Transformer : public Branch {
             throw InvalidTransformerClock{id(), clock_};
         }
 
-        // set clock to zero if it is 12
-        clock_ = static_cast<IntS>(clock_ % 12);
+        // handle periodic clock input -> in range [0, 11]
+        clock_ = static_cast<IntS>((clock_ % 12 + 12) % 12);
         // check tap bounds
         tap_pos_ = tap_limit(tap_pos_);
     }
@@ -82,6 +82,7 @@ class Transformer : public Branch {
     constexpr IntS tap_min() const { return tap_min_; }
     constexpr IntS tap_max() const { return tap_max_; }
     constexpr IntS tap_nom() const { return tap_nom_; }
+    constexpr IntS clock() const { return clock_; }
 
     // setter
     constexpr bool set_tap(IntS new_tap) {

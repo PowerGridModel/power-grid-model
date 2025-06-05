@@ -161,6 +161,23 @@ TEST_CASE("Test transformer") {
         CHECK(vec[0].tap_pos() == 9);
     }
 
+    SUBCASE("periodic clock input") {
+        input.clock = 24;
+        Transformer trafo_24(input, 150.0e3, 10.0e3);
+        input.clock = 36;
+        Transformer trafo_36(input, 150.0e3, 10.0e3);
+        input.clock = -2;
+        Transformer trafo_m2(input, 150.0e3, 10.0e3);
+        CHECK(trafo_24.clock() == 0);
+        CHECK(trafo_36.clock() == 0);
+        CHECK(trafo_m2.clock() == 10);
+
+        input.winding_to = WindingType::delta;
+        input.clock = 25;
+        Transformer trafo_25(input, 150.0e3, 10.0e3);
+        CHECK(trafo_25.clock() == 1);
+    }
+
     SUBCASE("symmetric parameters") {
         for (size_t i = 0; i < 5; i++) {
             auto changed =
