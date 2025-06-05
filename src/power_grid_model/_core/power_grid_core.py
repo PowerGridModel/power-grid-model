@@ -339,21 +339,15 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
-    def set_tap_changing_strategy(
-        self, opt: OptionsPtr, tap_changing_strategy: int
-    ) -> None:  # type: ignore[empty-body]
+    def set_tap_changing_strategy(self, opt: OptionsPtr, tap_changing_strategy: int) -> None:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding
-    def set_short_circuit_voltage_scaling(
-        self, opt: OptionsPtr, short_circuit_voltage_scaling: int
-    ) -> None:  # type: ignore[empty-body]
+    def set_short_circuit_voltage_scaling(self, opt: OptionsPtr, short_circuit_voltage_scaling: int) -> None:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding
-    def set_experimental_features(
-        self, opt: OptionsPtr, experimental_features: int
-    ) -> None:  # type: ignore[empty-body]
+    def set_experimental_features(self, opt: OptionsPtr, experimental_features: int) -> None:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding
