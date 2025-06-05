@@ -11,19 +11,26 @@ SPDX-License-Identifier: MPL-2.0
 With power-grid-model it is possible to perform three different types of calculations:
 
 - [Power flow](#power-flow-algorithms): a "what-if" scenario calculation.
-This calculation can be performed by using the {py:class}`calculate_power_flow <power_grid_model.PowerGridModel.calculate_power_flow>` method.
-An example of usage of the power-flow calculation function is given in [Power flow Example](../examples/Power%20Flow%20Example.ipynb)
-- [State estimation](#state-estimation-algorithms): a statistical method that calculates the most probabilistic state of the grid, given sensor values with an uncertainty.
-This calculation can be performed by using the {py:class}`calculate_state_estimation <power_grid_model.PowerGridModel.calculate_state_estimation>` method.
-An example of usage of the power-flow calculation function is given in [State Estimation Example](../examples/State%20Estimation%20Example.ipynb)
+  This calculation can be performed by using the
+  {py:class}`calculate_power_flow <power_grid_model.PowerGridModel.calculate_power_flow>` method.
+  An example of usage of the power-flow calculation function is given in
+  [Power flow Example](../examples/Power%20Flow%20Example.ipynb)
+- [State estimation](#state-estimation-algorithms): a statistical method that calculates the most probabilistic state of
+  the grid, given sensor values with an uncertainty.
+  This calculation can be performed by using the
+  {py:class}`calculate_state_estimation <power_grid_model.PowerGridModel.calculate_state_estimation>` method.
+  An example of usage of the power-flow calculation function is given in
+  [State Estimation Example](../examples/State%20Estimation%20Example.ipynb)
 - [Short circuit](#short-circuit-calculation-algorithms): a "what-if" scenario calculation with short circuit entries.
-This calculation can be performed by using the {py:class}`calculate_short_circuit <power_grid_model.PowerGridModel.calculate_short_circuit>` method.
+  This calculation can be performed by using the
+  {py:class}`calculate_short_circuit <power_grid_model.PowerGridModel.calculate_short_circuit>` method.
 
 ### Calculation types explained
 
 #### Power flow
 
-Power flow is a "what-if" based grid calculation that will calculate the node voltages and the power flow through the branches, based on assumed load/generation profiles.
+Power flow is a "what-if" based grid calculation that will calculate the node voltages and the power flow through the
+branches, based on assumed load/generation profiles.
 Some typical use-cases are network planning and contingency analysis.
 
 Input:
@@ -42,16 +49,18 @@ See [Power flow algorithms](#power-flow-algorithms) for detailed documentation o
 
 For most power flow calculations, the grid is fixed as the user dictates.
 However, in practice, the grid often contains regulators for certain components.
-When including those regulators in the calculations, the grid may be optimized according to the power flow results and the behaviour of the regulators.
+When including those regulators in the calculations, the grid may be optimized according to the power flow results and
+the behaviour of the regulators.
 
-See [Regulated power flow calculations](#regulated-power-flow-calculations) for detailed documentation on regulated power flow calculations.
+See [Regulated power flow calculations](#regulated-power-flow-calculations) for detailed documentation on regulated
+power flow calculations.
 
 #### State estimation
 
 State estimation is a statistical calculation method that determines the most probable state of the grid, based on
 network data and measurements.
-Here, measurements can be power flow or voltage values with certain kind of uncertainty, which were
-either measured, estimated or forecasted.
+Here, measurements can be power flow or voltage values with certain kind of uncertainty, which were either measured,
+estimated or forecasted.
 
 Input:
 
@@ -65,14 +74,13 @@ Output:
 - Deviation between measurement values and estimated state
 
 In order to perform a state estimation, the system should be observable.
-If the system is not observable,
-the calculation will raise either a `NotObservableError` or a `SparseMatrixError`.
-In short, meeting the requirement of observability indicates that the system is either an overdetermined
-system (when the number of independent measurements is larger than the number of unknowns) or an exactly
-determined system (the number of independent measurements equals the number of unknowns).
+If the system is not observable, the calculation will raise either a `NotObservableError` or a `SparseMatrixError`.
+In short, meeting the requirement of observability indicates that the system is either an overdetermined system (when
+the number of independent measurements is larger than the number of unknowns) or an exactly determined system (the
+number of independent measurements equals the number of unknowns).
 For each node, there are two unknowns, `u` and `u_angle`.
-Due to the relative nature of `u_angle`
-(relevant only in systems with at least two nodes), in total the following conditions should be met:
+Due to the relative nature of `u_angle` (relevant only in systems with at least two nodes), in total the following
+conditions should be met:
 
 $$
     \begin{eqnarray}
@@ -98,8 +106,7 @@ The number of measurements can be found by taking the sum of the following:
 
 ```{note}
 Having enough measurements does not necessarily mean that the system is observable.
-The location of the measurements is
-also of importance, i.e., the measurements should be topologically independent.
+The location of the measurements is also of importance, i.e., the measurements should be topologically independent.
 Additionally, there should be at least one voltage measurement.
 ```
 
@@ -109,24 +116,32 @@ See also the [current sensor component documentation](./components.md#global-ang
 ```
 
 ```{note}
-It is not possible to mix [power sensors](./components.md#generic-current-sensor) with [current sensors](#./components.mdgeneric-current-sensor) on the same terminal of the same component.
-It is also not possible to mix [current sensors with global angle measurement type](#./components.mdgeneric-current-sensor) with [current sensors with local angle measurement type](#./components.mdgeneric-current-sensor) on the same terminal of the same component.
+It is not possible to mix [power sensors](./components.md#generic-current-sensor) with
+[current sensors](#./components.mdgeneric-current-sensor) on the same terminal of the same component.
+It is also not possible to mix
+[current sensors with global angle measurement type](#./components.mdgeneric-current-sensor) with
+[current sensors with local angle measurement type](#./components.mdgeneric-current-sensor) on the same terminal of the
+same component.
 However, such mixing of sensor types is allowed as long as they are on different terminals.
 ```
 
 ```{warning}
-The [iterative linear](#iterative-linear-state-estimation) and [Newton-Raphson](#newton-raphson-state-estimation) state estimation algorithms will assume angles to be zero by default (see the details about voltage sensors).
+The [iterative linear](#iterative-linear-state-estimation) and [Newton-Raphson](#newton-raphson-state-estimation) state
+estimation algorithms will assume angles to be zero by default (see the details about voltage sensors).
 In observable systems this helps better outputting correct results.
-On the other hand with unobservable systems, exceptions raised from calculations due to faulty results will be prevented.
+On the other hand with unobservable systems, exceptions raised from calculations due to faulty results will be
+prevented.
 ```
 
 ```{warning}
-At the time of writing, the component [current sensor](./components.md#generic-current-sensor) is not supported in the calculation of [Newton-Raphson state estimation](#newton-raphson-state-estimation).
+At the time of writing, the component [current sensor](./components.md#generic-current-sensor) is not supported in the
+calculation of [Newton-Raphson state estimation](#newton-raphson-state-estimation).
 ```
 
 ##### Necessary observability condition
 
-Based on the requirements of observability mentioned above, users need to satisfy at least the following conditions for state estimation calculation in `power-grid-model`.
+Based on the requirements of observability mentioned above, users need to satisfy at least the following conditions for
+state estimation calculation in `power-grid-model`.
 
 - `n_voltage_sensor >= 1`
 - If no voltage phasor sensors are available, then both the following conditions shall be satisfied:
@@ -146,7 +161,8 @@ Either of them counts as one.
 ##### Sufficient observability condition
 
 The condition check above only checks the necessary condition for observability.
-When the measurements are not independent enough, the system may still be unobservable even if the necessary condition is met.
+When the measurements are not independent enough, the system may still be unobservable even if the necessary condition
+is met.
 It is rather complicated to do a full sufficient and necessary observability check in generic cases.
 However, `power-grid-model` performs the sufficient condition check when the following conditions are met:
 
@@ -160,13 +176,15 @@ If the system is not observable, the calculation will raise a `NotObservableErro
 
 Short circuit calculation is carried out to analyze the worst case scenario when a fault has occurred.
 The currents flowing through branches and node voltages are calculated.
-Some typical use-cases are selection or design of components like conductors or breakers and power system protection, e.g. relay co-ordination.
+Some typical use-cases are selection or design of components like conductors or breakers and power system protection,
+e.g. relay co-ordination.
 
 Input:
 
 - Network data: topology + component attributes
 - Fault type and impedance.
-- In the API call: choose between `minimum` and `maximum` voltage scaling to calculate the minimum or maximum short circuit currents (according to IEC 60909).
+- In the API call: choose between `minimum` and `maximum` voltage scaling to calculate the minimum or maximum short
+- circuit currents (according to IEC 60909).
 
 Output:
 
@@ -187,16 +205,19 @@ These quantities are in complex form.
 Hence, they can be constructed by PGM output attributes in the following way:
 
 - For  $\underline{U}$ of nodes, `u` is the magnitude and `u_angle` is the angle.
-Also the line to neutral voltage can be converted into line to line voltage by $ U_{LN} = U_{LL} / \sqrt{3}$.
-Check [Node Steady State Output](components.md#steady-state-output) to find out which quantity is relevant in your calculation.
+  Also the line to neutral voltage can be converted into line to line voltage by $ U_{LN} = U_{LL} / \sqrt{3}$.
+  Check [Node Steady State Output](components.md#steady-state-output) to find out which quantity is relevant in your
+  calculation.
 
 - For  $\underline{I}$ of branches, `i_side` is the magnitude.
-Its angle can be found from `p_side` and `q_side` by: $\arctan(\frac{P_{side} + j \cdot Q_{side}}{\underline{U}})^{*}$.
-The `side` here can be `from`, `to` for {hoverxreftooltip}`user_manual/components:Branch`es, `1`, `2`, `3` for {hoverxreftooltip}`user_manual/components:Branch3`s.
+  Its angle can be found from `p_side` and `q_side` by: $\arctan(\frac{P_{side} + j \cdot Q_{side}}{\underline{U}})^{*}$.
+  The `side` here can be `from`, `to` for {hoverxreftooltip}`user_manual/components:Branch`es, `1`, `2`, `3` for
+  {hoverxreftooltip}`user_manual/components:Branch3`s.
 
 ### Power flow algorithms
 
-Two types of power flow algorithms are implemented in power-grid-model; iterative algorithms (Newton-Raphson / Iterative current) and linear algorithms (Linear / Linear current).
+Two types of power flow algorithms are implemented in power-grid-model; iterative algorithms (Newton-Raphson / Iterative
+current) and linear algorithms (Linear / Linear current).
 Iterative methods are more accurate and should thus be selected when an accurate solution is required.
 Linear approximation methods are many times faster than the iterative methods, but are generally less accurate.
 They can be used where approximate solutions are acceptable.
@@ -219,7 +240,8 @@ By default, the [Newton-Raphson](#newton-raphson-power-flow) method is used.
 ```
 
 ```{note}
-When all the load/generation types are of constant impedance, the [Linear](#linear-power-flow) method will be the fastest without loss of accuracy.
+When all the load/generation types are of constant impedance, the [Linear](#linear-power-flow) method will be the
+fastest without loss of accuracy.
 Therefore power-grid-model will use this method regardless of the input provided by the user in this case.
 ```
 
@@ -232,8 +254,7 @@ $$
 $$
 
 Where $I_N$ is the $N$ vector of source currents injected into each bus and $U_N$ is the $N$ vector of bus voltages.
-The complex power
-delivered to bus $k$ is:
+The complex power delivered to bus $k$ is:
 
 $$
     \begin{eqnarray}
@@ -241,22 +262,22 @@ $$
     \end{eqnarray}
 $$
 
-Power flow equations are based on solving the nodal equations above to obtain the voltage magnitude and voltage angle at each node
-and then obtaining the real and reactive power flow through the branches.
+Power flow equations are based on solving the nodal equations above to obtain the voltage magnitude and voltage angle at
+each node and then obtaining the real and reactive power flow through the branches.
 The following bus types can be present in the system:
 
-- Slack bus: the reference bus with known voltage and angle; in power-grid-model referred to as the [source](./components.md#source).
+- Slack bus: the reference bus with known voltage and angle; in power-grid-model referred to as the
+  [source](./components.md#source).
 - Load bus: a bus with known $P$ and $Q$.
 - Voltage controlled bus: a bus with known $P$ and $U$.
-Note: this bus is not supported by power-grid-model yet.
+  Note: this bus is not supported by power-grid-model yet.
 
 #### Newton-Raphson power flow
 
 Algorithm call: {py:class}`CalculationMethod.newton_raphson <power_grid_model.enum.CalculationMethod.newton_raphson>`
 
 This is the traditional method for power flow calculations.
-This method uses a Taylor series, ignoring the higher order
-terms, to solve the nonlinear set of equations iteratively:
+This method uses a Taylor series, ignoring the higher order terms, to solve the nonlinear set of equations iteratively:
 
 $$
     \begin{eqnarray}
@@ -341,12 +362,15 @@ For each iteration the following steps are executed:
 
 #### Iterative current power flow
 
-Algorithm call: {py:class}`CalculationMethod.iterative_current <power_grid_model.enum.CalculationMethod.iterative_current>`
+Algorithm call:
+{py:class}`CalculationMethod.iterative_current <power_grid_model.enum.CalculationMethod.iterative_current>`
 
 This algorithm is a Jacobi-like method for powerflow analysis.
-It has a linear convergence rate as opposed to the quadratic convergence rate in the [Newton-Raphson](#newton-raphson-power-flow) method.
+It has a linear convergence rate as opposed to the quadratic convergence rate in the
+[Newton-Raphson](#newton-raphson-power-flow) method.
 This means that more iterations is needed to achieve similar convergence.
-Additionally, [Newton-Raphson](#newton-raphson-power-flow) will be more robust converging in case of greater meshed configurations.
+Additionally, [Newton-Raphson](#newton-raphson-power-flow) will be more robust converging in case of greater meshed
+configurations.
 Nevertheless, the iterative current algorithm will be faster most of the time.
 
 The algorithm is as follows:
@@ -367,17 +391,22 @@ The iterative current algorithm only needs to calculate injected currents before
 This is more straightforward than calculating the Jacobian, which was done in the Newton-Raphson algorithm.
 
 Factorizing the matrix of linear equation is the most computationally heavy task.
-The $Y_{bus}$ matrix here does not change across iterations which means it only needs to be factorized once to solve the linear equations in all iterations.
+The $Y_{bus}$ matrix here does not change across iterations which means it only needs to be factorized once to solve the
+linear equations in all iterations.
 The $Y_{bus}$ matrix also remains unchanged in certain batch calculations like timeseries calculations.
 
 #### Linear power flow
 
 Algorithm call: {py:class}`CalculationMethod.linear <power_grid_model.enum.CalculationMethod.linear>`
 
-This is an approximation method where we assume that all loads and generations are of constant impedance type regardless of their actual {py:class}`LoadGenType <power_grid_model.enum.LoadGenType>`.
-By doing so, we obtain huge performance benefits as the computation required is equivalent to a single iteration of the iterative methods.
-It will be more accurate when most of the load/generation types are of constant impedance or the actual node voltages are close to 1 p.u.
-When all the load/generation types are of constant impedance, the [Linear](#linear-power-flow) method will be the fastest without loss of accuracy.
+This is an approximation method where we assume that all loads and generations are of constant impedance type regardless
+of their actual {py:class}`LoadGenType <power_grid_model.enum.LoadGenType>`.
+By doing so, we obtain huge performance benefits as the computation required is equivalent to a single iteration of the
+iterative methods.
+It will be more accurate when most of the load/generation types are of constant impedance or the actual node voltages
+are close to 1 p.u.
+When all the load/generation types are of constant impedance, the [Linear](#linear-power-flow) method will be the
+fastest without loss of accuracy.
 Therefore power-grid-model will use this method regardless of the input provided by the user in this case.
 
 The algorithm is as follows:
@@ -396,13 +425,15 @@ Algorithm call: {py:class}`CalculationMethod.linear_current <power_grid_model.en
 
 This approximation method will give better results when most of the load/generation types resemble constant current.
 Similar to [iterative current](#iterative-current-power-flow), batch calculations like timeseries will also be faster.
-Same reason applies here: the $Y_{bus}$ matrix does not change across batches and as a result the same factorization could be used.
+Same reason applies here: the $Y_{bus}$ matrix does not change across batches and as a result the same factorization 
+ould be used.
 
 In practical grids most loads and generations correspond to the constant power type.
 Linear current would give a better approximation than [Linear](#linear-power-flow) in such case.
 This is because we approximate the load as current instead of impedance.
 There is a correlation in voltage error of approximation with respect to the actual voltage for all approximations.
-They are most accurate when the actual voltages are close to 1 p.u. and the error increases as we deviate from this level.
+They are most accurate when the actual voltages are close to 1 p.u. and the error increases as we deviate from this
+level.
 When we approximate the load as impedance at 1 p.u., the voltage error has quadratic relation to the actual voltage.
 When it is approximated as a current at 1 p.u., the voltage error is only linearly dependent in comparison.
 
@@ -424,8 +455,8 @@ $$
 
 Where $\underline{U}_i$ is the complex voltage phasor of the i-th bus.
 
-The goal of WLS state estimation is to evaluate the state variable with the highest likelihood given (pseudo) measurement input,
-by solving:
+The goal of WLS state estimation is to evaluate the state variable with the highest likelihood given (pseudo)
+measurement input, by solving:
 
 $$
    \begin{eqnarray}
