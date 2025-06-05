@@ -46,11 +46,8 @@ attention of the user of the power grid model - although no more than any other 
   It is the users' responsibility to provide correct input data. See also [below](#bad-input).
 * If the input data provided to the power grid model is incorrect, the power grid model cannot
   guarantee that it will be able to find and handle that correctly. The behavior is
-  [undefined](#undefined-behavior-ub-as-a-bug). This is also true for any other native interface.
-  It is the users' responsibility to provide correct input data. See also [below](#bad-input).
-* The Python wrapper contains human-readable code. Some people consider this a weakness of Python as
-  a programming language. Always make sure to treat your Python code and configuration files as
-  company secrets.
+  [undefined](#undefined-behavior-ub-as-a-bug). This is also true for any other interface, including native data interfaces.
+  [It is the users' responsibility](https://en.wikipedia.org/wiki/Garbage_in,_garbage_out) to provide correct input data. See also [below](#bad-input).
 
 #### Incorrect results
 
@@ -77,7 +74,7 @@ usually post announcements regarding bugs of this nature.
 
 See also [below](#undefined-behavior-ub-as-a-bug).
 
-Although the power grid model takes all the care they can in preventing
+Although the power grid model takes all the care it can in preventing
 [undefined behavior](#undefined-behavior-ub-as-a-bug) like infinite loops or extreme blow-up of the
 data usage, it is still possible that such behavior exists in the code. If you find any such issues,
 please report the issue and we will fix them as soon as possible.
@@ -85,7 +82,7 @@ please report the issue and we will fix them as soon as possible.
 #### Incorrect exceptions
 
 Sometimes, exceptions are raised when they should not be. For example, a `NotObservableError` that
-is raised, even though the scenario actually contains an observable grid, would be a bug. They can
+is raised when the current scenario actually contains an observable grid, would be a bug. They can
 be a headache to users, because it is difficult to know whether the exception was caused by
 [bad data](#bad-input) or by a power grid model bug, even for the power grid model maintainers.
 
@@ -113,11 +110,11 @@ The power grid model explicitly forbids certain (combinations of) values. For ex
 `u_rated` on a node is not allowed. Unsupported input will always be documented in the
 power grid model documentation.
 
-Checking every single combination of input parameters would come at a significant performance cost
+Checking every single combination of input parameters would come at a significant performance cost.
 In addition, for most use cases, incorrect input data happens mostly during the development phase of
 a user workflow. In production environments, when performance is usually important, the data is
 usually already sanitized and can be assumed to be correct. Because of this, assuring the
-correctness is the users' responsibility.
+[correctness of the input data is the users' responsibility](https://en.wikipedia.org/wiki/Garbage_in,_garbage_out).
 
 However, most data errors of this kind can be found using the
 [data validator](../user_manual/data-validator.md).
@@ -180,10 +177,12 @@ change slightly. Examples include the following.
 
 In non-spurious edge cases, the current behavior of the power grid model is actually correct.
 
-Many edge cases are inherent to the problem statement, like the amount of iterations it takes before
-a solution is found in an iterative calculation method, are not problematic. Even if you encounter
-`IterationDiverge` errors, in many cases, increasing the error tolerance and/or maximum number of
-iterations may fix your problem.
+Many edge cases are inherent to the problem statement are not necessarily bugs.
+For instance, if it takes a large number of iterations before a solution is found in an iterative
+calculation method, that is probably annoying and something that can be improved on, but not it is
+not necessarily directly a real issue with the implementation.
+Even if you encounter `IterationDiverge` errors, in many cases, increasing the error tolerance
+and/or maximum number of iterations may fix your problem.
 
 Some edge cases may be input data errors. Please always double-check that the data is valid before
 reporting an issue, e.g., by running our [data validator](../user_manual/data-validator.md). Please
@@ -205,8 +204,9 @@ between ICT for industy and power grid model.
 
 If you encounter any edge case, please double-check your data quality, e.g., by running our
 [data validator](../user_manual/data-validator.md) and verifying that the source of your data is
-up-to-date and correct. Please also try things like increasing the error tolerance to see if that
-solves your issue. If it doesn't, the problem you found may be a bug in the power grid model.
+up-to-date and correct. Please also try things like increasing the error tolerance or the number of
+iterations (when applicable) to see if that solves your issue. If it doesn't, the problem you found
+may be a bug in the power grid model.
 
 If you encounter such edge cases and are sure that the current behavior is [incorrect](#spurious-edge-cases), please
 consider [contributing your findings](../user_manual/model-validation.md#test-case-creation) to help
@@ -270,13 +270,14 @@ that the behavior was already correctly implemented, before they found out that 
 
 ##### Undefined behavior (subclass)
 
-Undefined behavior is also a subclass of undefined behavior that is defined as follows:
+Undefined behavior is also a particular subclass of the superset of all undefined behavior that is
+defined as follows:
 
 > There are no restrictions on the behavior of the program.
 
 Examples include if a C API user provides an invalid pointer to the power grid model C API. While
 the C API can still compare and handle null-pointer (`nullptr`/`NULL`/`0`) values, it has no way of
-knowing what will happen if the user provides a pointer to the wrong memory location.
+knowing what will happen if the user provides a non-null pointer to the wrong memory location.
 
 Encountering undefined behavior (subclass) may result in crashes (but not necessarily),
 [security vulnerabilities](#undefined-behavior-bugs), or anything else. It is a common misconception
@@ -321,9 +322,9 @@ uses an error handling mechanism. It also has extended assertion checks in Debug
 used in test and development environments to prevent internal bugs.
 
 To prevent, find and fix harder-to-find instances of undefined behavior, the power grid model uses
-tools like AddressSanitizer and Sonar Qube Cloud. We strongly recommend all users to do the same -
+tools like AddressSanitizer and SonarQube Cloud. We strongly recommend all users to do the same -
 especially the ones using the C API.
 
 If you find or expect any undefined behavior, please report it and/or
-[contribute](../user_manual/model-validation.md#test-case-creation) the repro case, as doing so
-helps improving the quality and user experience of the power grid model.
+[contribute](../user_manual/model-validation.md#test-case-creation) with a reproducible case, as\
+doing so helps improving the quality and user experience of the power grid model.
