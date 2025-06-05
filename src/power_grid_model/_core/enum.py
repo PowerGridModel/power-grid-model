@@ -12,7 +12,6 @@ Note: these enumeration match the C++ arithmetic core, so don't change the value
 from enum import IntEnum
 
 # Value names are defined in lower case instead of upper case
-# pylint: disable=invalid-name
 
 
 class CalculationType(IntEnum):

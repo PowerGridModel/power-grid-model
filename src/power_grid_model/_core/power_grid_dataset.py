@@ -46,7 +46,7 @@ from power_grid_model._core.utils import (
 )
 
 
-class CDatasetInfo:  # pylint: disable=too-few-public-methods
+class CDatasetInfo:
     """
     Raw Power Grid Model dataset info.
     """

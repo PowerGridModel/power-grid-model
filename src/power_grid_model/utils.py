@@ -17,7 +17,7 @@ import numpy as np
 
 from power_grid_model import CalculationMethod, PowerGridModel
 from power_grid_model._core.dataset_definitions import DatasetType, _map_to_component_types
-from power_grid_model._core.serialization import (  # pylint: disable=unused-import
+from power_grid_model._core.serialization import (
     json_deserialize,
     json_serialize,
     msgpack_deserialize,
