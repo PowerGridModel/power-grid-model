@@ -6,16 +6,15 @@ SPDX-License-Identifier: MPL-2.0
 
 # High-level design
 
-The power-grid-model follows a typical dynamic/shared library approach, in which the user
-interface is separated from the core implementation using a strict system boundary.
-Depending
-on the use case and programming language used by the user to call the interface, the user can
-opt to interface with the C API in different ways.
+The power-grid-model follows a typical dynamic/shared library approach, in which the user interface is separated from
+the core implementation using a strict system boundary.
+Depending on the use case and programming language used by the user to call the interface, the user can opt to interface
+with the C API in different ways.
 
 ## Layers of abstraction
 
-For the sake of explanation, we consider the
-following layers of abstraction, in increasing order of ease-of-use and abstraction.
+For the sake of explanation, we consider the following layers of abstraction, in increasing order of ease-of-use and
+abstraction.
 
 * Raw system interface
   * System symbols only
@@ -42,9 +41,8 @@ The following library interfaces are currently included in the power-grid-model.
 | C++ headers    | Experimental | Wrapper            | Handles memory management and basic error handling              | C++                                                 |
 | Python library | Stable       | Feature-rich layer | Library with useful functions, conversions and extensive checks | Python                                              |
 
-Note that the Python library in turn also follows the pattern of a feature-rich library that uses a
-module-internal wrapper layer core module, that wraps the exposition-only core module, that exposes
-the raw interface.
+Note that the Python library in turn also follows the pattern of a feature-rich library that uses a module-internal
+wrapper layer core module, that wraps the exposition-only core module, that exposes the raw interface.
 
 This can be visualized graphically as follows.
 
@@ -98,41 +96,34 @@ flowchart TD
 
 ## Creating a custom library or interface
 
-We seek to provide an optimal user experience, but with the sheer amount of programming languages and
-features, it would be impossible to provide a full feature-rich library for every single one.
-We,
-being a {{ "[community-driven]({}/GOVERNANCE.md)".format(pgm_project_contribution) }} project strongly in
-favor of modern software engineering practices, therefore encourage people to create their own
-libraries and interfaces to improve their own experience.
-There are several possible reasons a user
-may want to create their own library or interface, e.g.:
+We seek to provide an optimal user experience, but with the sheer amount of programming languages and features, it would
+be impossible to provide a full feature-rich library for every single one.
+We, being a {{ "[community-driven]({}/GOVERNANCE.md)".format(pgm_project_contribution) }} project strongly in favor of
+modern software engineering practices, therefore encourage people to create their own libraries and interfaces to
+improve their own experience.
+There are several possible reasons a user may want to create their own library or interface, e.g.:
 
 * Support for a new programming language
 * Extending library support for a specific programming language
 * A custom wrapper that provides extra features or useful commands for specific custom requirements
 
 In all cases, it is recommended that the user determines their own desired
-[layer of abstraction](#layers-of-abstraction) and then creates internal wrappers for all
-lower-level ones, following the same pattern as the power-grid-model
-[uses internally](#existing-library-interfaces) for the custom interfaces.
+[layer of abstraction](#layers-of-abstraction) and then creates internal wrappers for all lower-level ones, following
+the same pattern as the power-grid-model [uses internally](#existing-library-interfaces) for the custom interfaces.
 
 ### Hosting a custom library or interface
 
-The Power Grid Model organization supports people creating and hosting custom libraries and
-interfaces.
+The Power Grid Model organization supports people creating and hosting custom libraries and interfaces.
 If you are doing so and are willing to notify us, please create an item on our
 [discussion board](https://github.com/orgs/PowerGridModel/discussions) on GitHub.
-The Power Grid
-Model organization will review your item and we may decide to mention your custom library on our
-project website and documentation.
+The Power Grid Model organization will review your item and we may decide to mention your custom library on our project
+website and documentation.
 
 ### Contributing a custom library or interface
 
-When a custom library or interface becomes mature enough and the circumstances allow making it
-publicly available, please consider contributing it to the Power Grid Model organization.
-If you are
-considering contributing your custom library or interface, please read and follow our
-{{ "[contributing guidelines]({}/CONTRIBUTING.md)".format(pgm_project_contribution) }} and open an
-item on our [discussion board](https://github.com/orgs/PowerGridModel/discussions) on GitHub.
-The
-Power Grid Model organization will review your item and contact you accordingly.
+When a custom library or interface becomes mature enough and the circumstances allow making it publicly available,
+please consider contributing it to the Power Grid Model organization.
+If you are considering contributing your custom library or interface, please read and follow our
+{{ "[contributing guidelines]({}/CONTRIBUTING.md)".format(pgm_project_contribution) }} and open an item on our
+[discussion board](https://github.com/orgs/PowerGridModel/discussions) on GitHub.
+The Power Grid Model organization will review your item and contact you accordingly.

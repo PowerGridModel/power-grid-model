@@ -6,7 +6,8 @@ SPDX-License-Identifier: MPL-2.0
 
 # Design of the Python Wrapper Package
 
-The structure of the `power_grid_model` Python package is shown here below by means of the corresponding class and package diagrams.
+The structure of the `power_grid_model` Python package is shown here below by means of the corresponding class and
+package diagrams.
 
 ## Class Graph Diagram
 
