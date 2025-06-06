@@ -116,7 +116,7 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCur
         parameters_changed_ = false;
     }
 
-    // Prepare matrix calculates injected current ie. RHS of solver for each iteration.
+    // Prepare matrix calculates injected current, i.e., RHS of solver for each iteration.
     void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                 ComplexValueVector<sym> const& u) {
         std::vector<LoadGenType> const& load_gen_type = *this->load_gen_type_;

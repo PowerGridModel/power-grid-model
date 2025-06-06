@@ -390,7 +390,7 @@ The algorithm is as follows:
    $
 4. Solve linear equation: $YU_N^i = I_N^i$
 5. Check convergence: If maximum voltage deviation from the previous iteration is greater than the tolerance setting
-   (ie. $u^{(i-1)}_\sigma > u_\epsilon$), then go back to step 3.
+   (i.e., $u^{(i-1)}_\sigma > u_\epsilon$), then go back to step 3.
 
 The iterative current algorithm only needs to calculate injected currents before solving linear equations.
 This is more straightforward than calculating the Jacobian, which was done in the Newton-Raphson algorithm.
@@ -915,7 +915,7 @@ sides.
 
 In the case where the control side of the regulator and the tap side of the transformer are at the same side, the
 control logic of taps will be reverted (see
-`user_manual/calculations:Initialization and exploitation of regulated transformers`).
+{hoverxreftooltip}`user_manual/calculations:Initialization and exploitation of regulated transformers`).
 The exploitation of the neighbourhood ensures that the actual optimum is not accidentally missed due to feedback
 mechanisms in the grid.
 

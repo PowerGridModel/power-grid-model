@@ -434,7 +434,7 @@ brew install ninja cmake boost eigen nlohmann-json msgpack-cxx doctest
 
 It is recommended to create a virtual environment.
 Clone repository, create and activate virtual environment, and install the build dependency.
-go to a root folder you prefer to save the repositories.
+Go to a root folder of your choice to save the repositories.
 
 ```shell
 git clone https://github.com/PowerGridModel/power-grid-model.git 
