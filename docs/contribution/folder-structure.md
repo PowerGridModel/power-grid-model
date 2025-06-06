@@ -9,7 +9,7 @@ SPDX-License-Identifier: MPL-2.0
 The repository folder structure is as follows. The `docs` and `scripts` folders are self-explanatory.
 
 - The C++ calculation core is inside
-  {{ "[power_grid_model_c/power_grid_model/include/power_grid_model]({}/power_grid_model_c/power_grid_model/include/power_grid_model)".format(gh_link_head_tree) }}.  <!-- markdownlint-disable-line MD013 -->
+  {{ "[power_grid_model_c/power_grid_model/include/power_grid_model]({}/power_grid_model_c/power_grid_model/include/power_grid_model)".format(gh_link_head_tree) }}.  <!-- markdownlint-disable-line line-length -->
 - The C API is inside
   {{ "[power_grid_model_c/power_grid_model_c]({}/power_grid_model_c/power_grid_model_c)".format(gh_link_head_tree) }}.
 - The C program example to use the C API is inside

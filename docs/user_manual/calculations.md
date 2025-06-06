@@ -768,7 +768,7 @@ Consequently, the iteration process differs slightly from that of
     $\widetilde{\boldsymbol{U}}^{(k)}$ and $\widetilde{\boldsymbol{\theta}}^{(k)}$, using the prefactorized matrix.
     See also [Matrix-prefactorization](./performance-guide.md#matrix-prefactorization)
   - Normalize the result voltage phasor angle by setting angle of slack bus to zero:
-    $\underline{U}_i^{(k)} = \widetilde{\underline{U}}_i^{(k)} \times |\widetilde{\underline{U}}_s^{(k)}| / \widetilde{\underline{U}}_s^{(k)}$. <!-- markdownlint-disable-line MD013 -->
+    $\underline{U}_i^{(k)} = \widetilde{\underline{U}}_i^{(k)} \times |\widetilde{\underline{U}}_s^{(k)}| / \widetilde{\underline{U}}_s^{(k)}$. <!-- markdownlint-disable-line line-length -->
   - If the maximum deviation between $\underline{\boldsymbol{U}}^{(k)}$ and $\underline{\boldsymbol{U}}^{(k-1)}$ is
     smaller than the tolerance $\epsilon$, stop the iteration, otherwise continue until the maximum number of iterations
     is reached.
