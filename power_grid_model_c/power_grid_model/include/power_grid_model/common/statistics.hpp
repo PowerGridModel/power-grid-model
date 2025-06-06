@@ -22,8 +22,8 @@
  * A random variable in PGM can have following characteristics:
  *  - Uniform: Single total variance for all phases
  *  - Independent: all phases are independent from each other
- *  - Scalar: Named as `Real` in this file, a scalar value `RealValue`, eg. real axis: RealValue (* 1), imaginary axis:
- * RealValue (* i).
+ *  - Scalar: Named as `Real` in this file, a scalar value `RealValue`, e.g., real axis: RealValue (* 1), imaginary
+ * axis: RealValue (* i).
  *  - Complex: a complex value with real and imaginary parts.
  *
  * Based on these, we use combined variables in Decomposed/Polar forms:

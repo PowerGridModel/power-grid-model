@@ -70,8 +70,8 @@ graph TD
 ```
 
 - **{py:class}`Dataset <power_grid_model.data_types.Dataset>`:** Either a single or a batch dataset.
-  It is a dictionary with keys as the component types (eg. `line`, `node`, etc) and values as **ComponentData**
-  - **{py:class}`SingleDataset <power_grid_model.data_types.SingleDataset>`:** A data type storing input data (i.e. all
+  It is a dictionary with keys as the component types (e.g., `line`, `node`, etc.) and values as **ComponentData**
+  - **{py:class}`SingleDataset <power_grid_model.data_types.SingleDataset>`:** A data type storing input data (i.e., all
     elements of all components) for a single scenario.
   - **{py:class}`BatchDataset <power_grid_model.data_types.BatchDataset>`:** A data type storing update and or output
     data for one or more scenarios.
@@ -158,7 +158,7 @@ Exemplary datasets attributes are given in a dataset containing a `line` compone
 
 - **Attribute:** The definition of `id`, `energized`, `p`, etc. of any component.
 
-- **Value:** The value under an attribute, ie. id, energized, p, etc.
+- **Value:** The value under an attribute, i.e., id, energized, p, etc.
 
 - **Array:** All elements of one specific component, for one or more scenarios.
   I.e. a node array or line array.
@@ -166,7 +166,7 @@ Exemplary datasets attributes are given in a dataset containing a `line` compone
   (containing all elements of a single component for multiple scenarios), or it can be a sparse array, which is
   essentially a dictionary with a data buffer and an index pointer.
 
-`power-grid-model` can process many scenarios (e.g. time steps, switch states, etc.) at once, which we call a batch.
+`power-grid-model` can process many scenarios (e.g., time steps, switch states, etc.) at once, which we call a batch.
 The batch size is the number of scenarios.
 
 - **Scenario:** A single time step / switch state topology.
