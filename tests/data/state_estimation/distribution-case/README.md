@@ -13,8 +13,8 @@ They power a series of overhead lines and cables which supply different loads.
 Symmetrical voltage sensors are installed on all nodes and power sensors are installed at both ends of lines and
 transformers.
 
-The case is validated for ring and radial configuration by open/close position of
-one end of Line 13 in symmetrical batch calculation.
+The case is validated for ring and radial configuration by open/close position of one end of Line 13 in symmetrical
+batch calculation.
 
 The circuit diagram is as follows:
 

@@ -14,7 +14,7 @@ MD013:
   # # Number of characters for code blocks
   # code_block_line_length: 80
   # # Include code blocks
-  code_blocks: false
+  code_blocks: true
   # # Include tables
   tables: false
   # # Include headings
