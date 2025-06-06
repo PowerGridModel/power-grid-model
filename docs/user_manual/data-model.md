@@ -6,12 +6,15 @@ SPDX-License-Identifier: MPL-2.0
 
 # Component Type Hierarchy and Graph Data Model
 
-To represent the physical grid components and the calculation results, this library utilizes a graph data model. In this
+To represent the physical grid components and the calculation results, this library utilizes a graph data model.
+In this
 document, the graph data model is presented with the list of all components types, and their relevant input/output
 attributes.
 
-The components types are organized in an inheritance-like hierarchy. A sub-type has all the attributes from its parent
-type. The hierarchy tree of the component types is shown below.
+The components types are organized in an inheritance-like hierarchy.
+A sub-type has all the attributes from its parent
+type.
+The hierarchy tree of the component types is shown below.
 
 ```{mermaid}
 graph LR
@@ -50,7 +53,8 @@ the {py:class}`power_grid_model.power_grid_meta_data`, see [Native Data Interfac
 
 There are four generic component types: `node`, `branch`, `branch3` and `appliance`.
 A `node` is similar to a vertex in a graph, a `branch` is similar to an edge in a graph and a `branch3` connects three nodes
-together. An `appliance` is a component that is connected (coupled) to a node, and it is seen as a user of this node.
+together.
+An `appliance` is a component that is connected (coupled) to a node, and it is seen as a user of this node.
 
 The figure below shows a simple example:
 
@@ -63,7 +67,8 @@ source_5 (appliance)       sym_load_4 (appliance)             node_7
 * There are four nodes (points/vertices) in the graph of this simple grid.
 * `node_1` and `node_2` are connected by `line_3` which is a branch (edge).
 * `node_2`, `node_6`, and `node_7` are connected by `three_winding_transformer_8`, which is a `branch3`.
-* There are two appliances in the grid. `source_5` is coupled to `node_1` and `sym_load_4` is coupled
+* There are two appliances in the grid.
+  `source_5` is coupled to `node_1` and `sym_load_4` is coupled
   to `node_2`.
 
 ## Symmetry of Components and Calculation

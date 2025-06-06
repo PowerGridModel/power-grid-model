@@ -25,7 +25,8 @@ For conversions from various data format to the power-grid-model, refer to the [
 For an extended python interface to the the power-grid-model, refer to the [power-grid-model-ds](https://github.com/PowerGridModel/power-grid-model-ds) repository.
 
 ```{note}
-Do you wish to be updated on the latest news and releases? Subscribe to the Power Grid Model mailing list by sending an (empty) email to: powergridmodel+subscribe@lists.lfenergy.org
+Do you wish to be updated on the latest news and releases?
+Subscribe to the Power Grid Model mailing list by sending an (empty) email to: [powergridmodel+subscribe@lists.lfenergy.org](powergridmodel+subscribe@lists.lfenergy.org)
 ```
 
 ## Install from PyPI
@@ -50,7 +51,7 @@ To install the library from source, refer to the [Build Guide](advanced_document
 
 ## Citations
 
-If you are using Power Grid Model in your research work, please consider citing our library using the references in [Citation](release_and_support/CITATION.md)
+If you are using Power Grid Model in your research work, please consider citing our library using the references in [Citation](release_and_support/CITATION.md).
 
 ## Contents
 

@@ -26,7 +26,8 @@ In this documentation, the main design choices and concepts of the C API are pre
 
 ## Finding and linking the package
 
-The package can be loaded using the Config mode of the `find_package` CMake command. An
+The package can be loaded using the Config mode of the `find_package` CMake command.
+An
 {{ "[example project]({}/tests/package_tests/CMakeLists.txt)".format(gh_link_head_blob) }} is provided by the
 {{ "[Git project]({})".format(gh_link_head_tree) }}, which is also used for testing the package.
 
@@ -64,7 +65,9 @@ However, due to the lack of default argument in C,
 this would mean that the C API has a breaking change everytime we add a new option,
 which happends very often.
 
-To solve this issue, we use another opaque object `PGM_Options`. The user creates an object with default options by `PGM_create_options`. You can then specify individual options by `PGM_set_*`.
+To solve this issue, we use another opaque object `PGM_Options`.
+The user creates an object with default options by `PGM_create_options`.
+You can then specify individual options by `PGM_set_*`.
 In the `PGM_calculate` function you need to pass a pointer to `PGM_Options`.
 In this way, we can ensure the API backwards compatibility.
 If we add a new option, it will get a default value in the `PGM_create_options` function.
@@ -80,7 +83,8 @@ We define the following concepts in the data hierarchy:
 * Dataset: a collection of data buffers for a given purpose.
   At this moment, we have four dataset types: `input`, `update`, `sym_output`, `asym_output`.
 * Component: a data buffer with the representation of all attributes of a physical grid component in our [data model](../user_manual/components.md), e.g., `node`.
-* Attribute: a property of given component. For example, `u_rated` attribute of `node` is the rated voltage of the node.
+* Attribute: a property of given component.
+  For example, `u_rated` attribute of `node` is the rated voltage of the node.
 
 Additionally, at this time, we distinguish two buffer types: [component buffers](#component-buffers) and [attribute buffers](#attribute-buffers).
 
@@ -122,7 +126,8 @@ iiiift  iiiift  iiiift     <-- data: 6 bytes per line: 4 bytes for the ID, 1 for
 
 #### Create and destroy buffer
 
-Data buffers are almost always allocated and freed in the heap. We provide two ways of doing so.
+Data buffers are almost always allocated and freed in the heap.
+We provide two ways of doing so.
 
 * You can use the function `PGM_create_buffer` and `PGM_destroy_buffer` to create and destroy buffer.
   In this way, the library is handling the memory (de-)allocation.
@@ -137,7 +142,8 @@ You cannot use `PGM_destroy_buffer` to release a buffer created in your own code
 
 #### Set and get attribute
 
-Once you have the data buffer, you need to set or get attributes. We provide two ways of doing so.
+Once you have the data buffer, you need to set or get attributes.
+We provide two ways of doing so.
 
 * You can use the function `PGM_buffer_set_value` and `PGM_buffer_get_value` to get and set values.
 * You can do pointer cast directly on the buffer pointer, by shifting the pointer to proper offset
@@ -145,7 +151,8 @@ Once you have the data buffer, you need to set or get attributes. We provide two
   You need to first call `PGM_meta_*` functions to retrieve the correct offset.
 
 Pointer cast is generally more efficient and flexible because you are not calling into the
-dynamic library everytime. But it requires the user to retrieve the offset information first.
+dynamic library everytime.
+But it requires the user to retrieve the offset information first.
 Using the buffer helper function is more convenient but with some overhead.
 
 #### Set NaN function
@@ -183,7 +190,8 @@ A combination of attribute buffers with the same amount of elements has the powe
 The type (implying the size) of each attribute can be found using the `PGM_meta_attribute_ctype`.
 
 Since all attributes consist of primitive types, operations are straightforward.
-We therefore do not provide explicit interface functionality to create an attribute buffer. Instead, you should use `PGM_dataset_const_add_buffer` or `PGM_dataset_mutable_add_buffer` with empty data (`NULL`) to set a component buffer for data in columnar-format, and use the functions `PGM_dataset_const_add_attribute_buffer` and `PGM_dataset_mutable_add_attribute_buffer` to add the attribute buffers directly to a dataset.
+We therefore do not provide explicit interface functionality to create an attribute buffer.
+Instead, you should use `PGM_dataset_const_add_buffer` or `PGM_dataset_mutable_add_buffer` with empty data (`NULL`) to set a component buffer for data in columnar-format, and use the functions `PGM_dataset_const_add_attribute_buffer` and `PGM_dataset_mutable_add_attribute_buffer` to add the attribute buffers directly to a dataset.
 
 ## Dataset views
 

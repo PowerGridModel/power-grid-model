@@ -7,7 +7,9 @@ SPDX-License-Identifier: MPL-2.0
 # Quick Start
 
 In this quick start a simple 10kV network as below is calculated.
-A line connects two nodes. One node has a source. The other node has a symmetric load.
+A line connects two nodes.
+One node has a source.
+The other node has a symmetric load.
 The full code for this section is provided in {{ "[quick_example.py]({}/scripts/quick_example.py)".format(gh_link_head_blob) }}.
 
 ```txt
@@ -98,13 +100,13 @@ input_data = {
 Another example of how to create components can be found in [Input data](examples/Power%20Flow%20Example.ipynb#input-dataset).
 
 ```{note}
-The keys of the dictonary of arrays are unique and should match with the respective `type name` of the component. 
+The keys of the dictonary of arrays are unique and should match with the respective `type name` of the component.
 See, e.g., that type name of {hoverxref}`user_manual/components:node` is `node`.
 ```
 
 ## Instantiate Model
 
-We can instantiate the model by calling the constructor of {py:class}`power_grid_model.PowerGridModel`
+We can instantiate the model by calling the constructor of {py:class}`power_grid_model.PowerGridModel`:
 
 ```python
 model = PowerGridModel(input_data, system_frequency=50.0)
@@ -147,7 +149,8 @@ Node Result
 
 ## Validation
 
-To validate the `input_data` and `update_data` for valid values, use {py:class}`power_grid_model.validation.validate_input_data` and {py:class}`power_grid_model.validation.validate_batch_data`. Refer to [Data Validator](user_manual/data-validator) for more details
+To validate the `input_data` and `update_data` for valid values, use {py:class}`power_grid_model.validation.validate_input_data` and {py:class}`power_grid_model.validation.validate_batch_data`.
+Refer to [Data Validator](user_manual/data-validator) for more details
 
 ## Batch Data
 

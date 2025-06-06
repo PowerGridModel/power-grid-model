@@ -71,7 +71,7 @@ A transformer can be 4 states, closed on both ends, open on both ends and open o
 The tap changing functionality is tested using a batch calculation for various tap positions.
 
 ```{note}
-- Asymmetrical calculations are possible only for grounded network transformer in pandapower. 
+- Asymmetrical calculations are possible only for grounded network transformer in pandapower.
 Hence open cases are not evaluated.
 - Relaxed tolerance parameters are used in asymmetric calculation 
 because only 'T' transformer model is available in pandapower while power-grid-model uses 'pi' model.
@@ -119,7 +119,8 @@ While source is present in all cases, this case tests two sources being used tog
 
 ### Symmetrical Load
 
-A symmetrical load can be in open or closed state. It can be of 3 types: constant power, constant impedance and constant current.
+A symmetrical load can be in open or closed state.
+It can be of 3 types: constant power, constant impedance and constant current.
 
 ```{tikz}
 :alt: sym_load
@@ -135,7 +136,8 @@ A symmetrical load can be in open or closed state. It can be of 3 types: constan
 
 ### Symmetrical generator
 
-A symmetrical generator can be in open or closed state. It can be of 3 types: constant power, constant impedance and constant current.
+A symmetrical generator can be in open or closed state.
+It can be of 3 types: constant power, constant impedance and constant current.
 
 ```{tikz}
 :alt: sym_gen
@@ -150,7 +152,7 @@ A symmetrical generator can be in open or closed state. It can be of 3 types: co
 ```
 
 ```{note}
-Only constant power implementation is possible in pandapower for asymmetrical calculations. 
+Only constant power implementation is possible in pandapower for asymmetrical calculations.
 All the Z, I and P loads are already validated for symmetrical calculation.
 ```
 
@@ -275,11 +277,13 @@ The test grid is as follows:
 
 There are 4 cases for the 4 types of fault: three_phase, single_phase_ground, two_phase, two_phase_ground.
 Each case is tested for `minimum` and `maximum` voltage scaling.
-Each case has multiple scenarios. They are combinations of following situations:
+Each case has multiple scenarios.
+They are combinations of following situations:
 
 - Valid phase combinations: abc, a, b, c, ab, bc, ac
 - Source switched on or off (highlighted in green)
-- A shunt with only `b0` value modelled to be a grounding transformer switched on or off. (highlighted in blue)
+- A shunt with only `b0` value modelled to be a grounding transformer switched on or off.
+  (highlighted in blue)
 - Fault locations (highlighted in red)
 - Fault impedance: hard ground or with impedance.
 

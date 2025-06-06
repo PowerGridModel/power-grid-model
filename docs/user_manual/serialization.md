@@ -47,7 +47,8 @@ For example, for an `"update"` dataset that contains only updates to the `"from_
 
 #### JSON schema component
 
-A [`Component`](#json-schema-component) string contains the component name (see also the [Components](components.md) reference). E.g.: `"node"`
+A [`Component`](#json-schema-component) string contains the component name (see also the [Components](components.md) reference).
+E.g.: `"node"`
 
 - [`Component`](#json-schema-component): `string`
 
@@ -60,7 +61,8 @@ A [`ComponentAttributes`](#json-schema-component-attributes) array contains the 
 
 #### JSON schema attribute
 
-A [`Attribute`](#json-schema-attribute) string contains the name of an attribute of a component (see also the [Components](components.md) reference). E.g.: `"id"`.
+A [`Attribute`](#json-schema-attribute) string contains the name of an attribute of a component (see also the [Components](components.md) reference).
+E.g.: `"id"`.
 
 - [`Attribute`](#json-schema-attribute): `string`
 
@@ -120,7 +122,8 @@ Contrary to the [`HomogeneousComponentData`](#json-schema-homogeneous-component-
 
 #### JSON schema attribute value
 
-The [`AttributeValue`](#json-schema-attribute-value) contains the actual value of an attribute. The value can be any of [`null`](#json-schema-null-absence-of-value) if it is not provided, or any of [`int32_t`](#json-schema-int32_t), [`int8_t`](#json-schema-int8_t), [`double`](#json-schema-double), [`RealValueInput`](#json-schema-realvalueinput) or [`RealValueOutput`](#json-schema-realvalueoutput).
+The [`AttributeValue`](#json-schema-attribute-value) contains the actual value of an attribute.
+The value can be any of [`null`](#json-schema-null-absence-of-value) if it is not provided, or any of [`int32_t`](#json-schema-int32_t), [`int8_t`](#json-schema-int8_t), [`double`](#json-schema-double), [`RealValueInput`](#json-schema-realvalueinput) or [`RealValueOutput`](#json-schema-realvalueoutput).
 The type is listed for each attribute in [Components](components.md).
 
 - [`AttributeValue`](#json-schema-attribute-value): [`null`](#json-schema-null-absence-of-value) | [`int32_t`](#json-schema-int32_t) | [`int8_t`](#json-schema-int8_t) | [`double`](#json-schema-double) | [`RealValueInput`](#json-schema-realvalueinput) | [`RealValueOutput`](#json-schema-realvalueoutput)
@@ -136,7 +139,8 @@ For [`msgpack`](#msgpack-serialization-format-specification), refer to [absence 
 
 #### JSON schema int32_t
 
-An [`int32_t`](#json-schema-int32_t) is an integer `number` value usually representing an ID. It may be in the inclusive range $\left[-2^{31},+2^{31} - 1\right]$.
+An [`int32_t`](#json-schema-int32_t) is an integer `number` value usually representing an ID.
+It may be in the inclusive range $\left[-2^{31},+2^{31} - 1\right]$.
 The type is listed for each attribute in [Components](components.md).
 
 - [`int32_t`](#json-schema-int32_t): `number`
@@ -145,7 +149,8 @@ The type is listed for each attribute in [Components](components.md).
 
 #### JSON schema int8_t
 
-An [`int8_t`](#json-schema-int8_t) integer `number` value usually representing an enumeration value or a discrete setting. It may be in the inclusive range $\left[-2^{7},+2^{7} - 1\right]$.
+An [`int8_t`](#json-schema-int8_t) integer `number` value usually representing an enumeration value or a discrete setting.
+It may be in the inclusive range $\left[-2^{7},+2^{7} - 1\right]$.
 The type is listed for each attribute in [Components](components.md).
 
 - [`int8_t`](#json-schema-int8_t): `number`
