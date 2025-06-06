@@ -36,7 +36,7 @@ Building the library in `IA-32` might be working, but is not tested.
 
 The source code is written with the mindset of ISO standard C++ only, i.e. avoid compiler-extension or platform-specific
 features as much as possible.
-In this way the effort to port the library to other platform/architecture might be minimum.
+In this way, minimum effort should be necessary to port the library to other platform/architecture.
 
 ### Compiler Support
 
