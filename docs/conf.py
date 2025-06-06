@@ -46,7 +46,6 @@ extensions = [
     "sphinx.ext.napoleon",
     "hoverxref.extension",
     "myst_nb",
-    "sphinxcontrib.email",
     "sphinxcontrib.mermaid",
     "sphinxcontrib.tikz",
 ]
