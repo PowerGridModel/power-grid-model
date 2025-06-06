@@ -46,6 +46,7 @@ doc = [
     "sphinx_rtd_theme",
     "readthedocs-sphinx-search",
     "sphinx-hoverxref",
+    "sphinxcontrib-email",
     "sphinxcontrib-mermaid>=1.0.0",
     "sphinxcontrib-tikz",
     "numpydoc",

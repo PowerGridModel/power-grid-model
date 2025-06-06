@@ -29,7 +29,7 @@ For an extended python interface to the the power-grid-model, refer to the
 ```{note}
 Do you wish to be updated on the latest news and releases?
 Subscribe to the Power Grid Model mailing list by sending an (empty) email to:
-[powergridmodel+subscribe@lists.lfenergy.org](powergridmodel+subscribe@lists.lfenergy.org)
+{email}`powergridmodel+subscribe@lists.lfenergy.org`
 ```
 
 ## Install from PyPI
