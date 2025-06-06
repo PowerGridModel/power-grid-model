@@ -10,7 +10,8 @@ Test case for validation of the three winding transformer component for symmetri
 The implementation of both the libraries are similar.
 Three 2-winding transformers are used in star connection for creating a 3 winding transformer.
 
-- A three transformer can have multiple states from the node end status being open or closed. However only the all working status is being tested here for the sake of simplicity.
+- A three transformer can have multiple states from the node end status being open or closed.
+  However only the all working status is being tested here for the sake of simplicity.
 
 The circuit diagram is as follows:
 
