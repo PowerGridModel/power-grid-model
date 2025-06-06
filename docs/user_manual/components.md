@@ -20,11 +20,14 @@ The base type for all power-grid-model components.
 | ---- | --------- | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------: | :------------------: |
 | `id` | `int32_t` | -    | ID of a component. The ID should be unique across all components within the same scenario, e.g., you cannot have a node with `id=5` and another line with `id=5`. | &#10004; | &#10060; (see below) |
 
-If a component update is uniform and is updating all the elements with the same component type, IDs can be omitted or set to `nan`s.
+If a component update is uniform and is updating all the elements with the same component type, IDs can be omitted or
+set to `nan`s.
 In any other case, the IDs need to be present in the update dataset, but cannot be changed.
 
 Uniform component updates are ones that update the same number of component of the same type across scenarios.
-By definition, a dense update is always uniform, hence the IDs can always be optional; whereas for a sparse update, the IDs can only be optional if the index pointer is given as an arithmetic sequence of all elements (i.e. a sparse representation of a dense buffer).
+By definition, a dense update is always uniform, hence the IDs can always be optional; whereas for a sparse update, the
+IDs can only be optional if the index pointer is given as an arithmetic sequence of all elements (i.e. a sparse
+representation of a dense buffer).
 An example of the usage of optional IDs is given in [Power Flow Example](./Power%20Flow%20Example.ipynb)
 
 #### Steady state output and Short circuit output
@@ -77,11 +80,9 @@ The `p` and `q` output of injection follows the `generator` reference direction 
 * base: {hoverxreftooltip}`user_manual/components:base`
 
 `branch` is the abstract base type for the component which connects two *different* nodes.
-For each branch two switches
-are always defined at from- and to-side of the branch.
+For each branch two switches are always defined at from- and to-side of the branch.
 In reality such switches may not exist.
-For example, a cable
-usually permanently connects two joints.
+For example, a cable usually permanently connects two joints.
 In this case, the attribute `from_status` and `to_status` is always 1.
 
 #### Input
@@ -121,8 +122,7 @@ In this case, the attribute `from_status` and `to_status` is always 1.
 * type name: `line`
 
 `line` is a {hoverxreftooltip}`user_manual/components:branch` with specified serial impedance and shunt admittance.
-A cable is
-also modeled as `line`.
+A cable is also modeled as `line`.
 A `line` can only connect two nodes with the same rated voltage.
 If `i_n` is not provided, `loading` of line will be a `nan` value.
 
@@ -141,9 +141,8 @@ If `i_n` is not provided, `loading` of line will be a `nan` value.
 | `i_n`  | `double`  | ampere (A) | rated current                              |                 &#10060;                  | &#10060; |               `> 0`                |
 
 ```{note}
-In case of short circuit calculations, the zero-sequence parameters are required only
-if any of the faults in any of the scenarios within a batch are not three-phase faults
-(i.e. `fault_type` is not `FaultType.three_phase`).
+In case of short circuit calculations, the zero-sequence parameters are required only if any of the faults in any of the
+scenarios within a batch are not three-phase faults (i.e. `fault_type` is not `FaultType.three_phase`).
 ```
 
 #### Electric Model
@@ -161,10 +160,10 @@ $$
 
 * type name: `link`
 
-`link` is a {hoverxreftooltip}`user_manual/components:branch` which usually represents a short internal cable/connection between
-two busbars inside a substation.
-It has a very high admittance (small impedance) which is set to a fixed per-unit value
-(equivalent to 10e6 siemens for 10kV network).
+`link` is a {hoverxreftooltip}`user_manual/components:branch` which usually represents a short internal cable/connection
+between two busbars inside a substation.
+It has a very high admittance (small impedance) which is set to a fixed per-unit value (equivalent to 10e6 siemens for
+10kV network).
 Therefore, it is chosen by design that no sensors can be coupled to a `link`.
 There is no additional attribute for `link`.
 
@@ -180,8 +179,8 @@ $$
 
 ### Transformer
 
-`transformer` is a {hoverxreftooltip}`user_manual/components:branch` which connects two nodes with possibly different voltage
-levels.
+`transformer` is a {hoverxreftooltip}`user_manual/components:branch` which connects two nodes with possibly different
+voltage levels.
 An example of usage of transformer is given in [Transformer Examples](../examples/Transformer%20Examples.ipynb)
 
 #### Input
@@ -215,8 +214,7 @@ An example of usage of transformer is given in [Transformer Examples](../example
 
 ```{note}
 It can happen that `tap_min > tap_max`.
-In this case the winding voltage is decreased if the tap position is
-increased.
+In this case the winding voltage is decreased if the tap position is increased.
 ```
 
 #### Electric Model
@@ -242,17 +240,20 @@ $$
 $$
 
 where $z_{\text{base}} = 1 / y_{\text{base}} = {u_{\text{2, rated}}}^2 / s_{\text{base}}$.
-Here, $s_{\text{base}}$ is a constant value determined by the solver and $u_{\text{2, rated}}$ is rated voltage at `to_node`.
+Here, $s_{\text{base}}$ is a constant value determined by the solver and $u_{\text{2, rated}}$ is rated voltage at
+`to_node`.
 
 ### Generic Branch  
 
 * type name: `generic_branch`
 
-`generic_branch` is a {hoverxreftooltip}`user_manual/components:branch` that connects two nodes, potentially at different voltage levels.
+`generic_branch` is a {hoverxreftooltip}`user_manual/components:branch` that connects two nodes, potentially at
+different voltage levels.
 Depending on the choice of parameters, it behaves either as a line or as a transformer.
 The advantage is that the input parameters are based directly on the electrical equivalent circuit model.
 The PI model can be used to avoid the need to convert parameters into transformer model data.
-Another use case is modeling a line when connecting two nodes with approximately the same voltage levels (in that case, the off-nominal ratio must be given to adapt the electrical parameters).
+Another use case is modeling a line when connecting two nodes with approximately the same voltage levels (in that case,
+the off-nominal ratio must be given to adapt the electrical parameters).
 
 #### Input
 
@@ -267,19 +268,22 @@ Another use case is modeling a line when connecting two nodes with approximately
 | `sn`    | `double`  | volt-ampere (VA) | rated power                   | &#10060; default `0.0` | &#10060; |    `>= 0`    |
 
 ```{note}
-The impedance (`r1`, `x1`) and admittance (`g1`, `b1`) attributes are calculated with reference to the "to" side of the branch.
+The impedance (`r1`, `x1`) and admittance (`g1`, `b1`) attributes are calculated with reference to the "to" side of the
+branch.
 ```
 
 ```{note}
 To model a three-winding transformer using the `generic_branch`, the MVA method must be applied.
-This means the user needs to calculate three equivalent `generic_branch` components and define an additional node to represent the common winding connection point.
+This means the user needs to calculate three equivalent `generic_branch` components and define an additional node to
+represent the common winding connection point.
 In rare cases, this method can result in negative electrical equivalent circuit elements.
 Therefore, the input parameters are not checked for negative values.
 ```
 
 ```{warning}
 The parameter `k` represents the **off-nominal ratio**, not the nominal voltage ratio.
-This means that `k` must be explicitly provided by the user, particularly in cases involving a tap changer or a voltage transformer.
+This means that `k` must be explicitly provided by the user, particularly in cases involving a tap changer or a voltage
+transformer.
 The program does not automatically calculate `k` based on the nominal voltage levels of the connected nodes.
 ```
 
@@ -402,7 +406,8 @@ $$
 
 Where $R$ and $X$ denote the resistance and reactance matrices build from the input respectively.
 
-Whenever the neutral phase is provided in the $Z_{\text{series}}$, the $Z_{\text{series}}$ matrix will first be reduced to a 3 phase matrix $Z_{\text{reduced}}$ with a kron reduction as follows:
+Whenever the neutral phase is provided in the $Z_{\text{series}}$, the $Z_{\text{series}}$ matrix will first be reduced
+to a 3 phase matrix $Z_{\text{reduced}}$ with a kron reduction as follows:
 
 $$
    Z_{\text{aa}} = \begin{bmatrix}
@@ -440,8 +445,7 @@ Where $Z_{\text{i,j}}$ denotes the row and column of the $Z_{\text{series}}$ mat
 * base: {hoverxreftooltip}`user_manual/components:base`
 
 `branch3` is the abstract base type for the component which connects three *different* nodes.
-For each branch3 three
-switches are always defined at side 1, 2, or 3 of the branch.
+For each branch3 three switches are always defined at side 1, 2, or 3 of the branch.
 In reality such switches may not exist.
 
 #### Input
@@ -486,8 +490,10 @@ In reality such switches may not exist.
 
 ### Three-Winding Transformer
 
-`three_winding_transformer` is a {hoverxreftooltip}`user_manual/components:branch3` connects three nodes with possibly different
-voltage levels. An example of usage of three-winding transformer is given in [Transformer Examples](../examples/Transformer%20Examples.ipynb).
+`three_winding_transformer` is a {hoverxreftooltip}`user_manual/components:branch3` connects three nodes with possibly
+different voltage levels.
+An example of usage of three-winding transformer is given in
+[Transformer Examples](../examples/Transformer%20Examples.ipynb).
 
 #### Input
 
@@ -539,16 +545,17 @@ voltage levels. An example of usage of three-winding transformer is given in [Tr
 
 ```{note}
 It can happen that `tap_min > tap_max`.
-In this case the winding voltage is decreased if the tap position is
-increased.
+In this case the winding voltage is decreased if the tap position is increased.
 ```
 
 #### Electric Model
 
 `three_winding_transformer` is modelled as 3 transformers of `pi` model each connected together in star configuration.
 However, there are only 2 `pi` "legs": One at `side_1` and one in the centre of star.
-The values between windings (for e.g., `uk_12` or `pk_23`) are converted from delta to corresponding star configuration values.
-The calculation of series and shunt admittance from `uk`, `pk`, `i0` and `p0` is same as mentioned in {hoverxreftooltip}`user_manual/components:transformer`.
+The values between windings (for e.g., `uk_12` or `pk_23`) are converted from delta to corresponding star configuration
+values.
+The calculation of series and shunt admittance from `uk`, `pk`, `i0` and `p0` is same as mentioned in
+{hoverxreftooltip}`user_manual/components:transformer`.
 
 ## Appliance
 
@@ -556,10 +563,8 @@ The calculation of series and shunt admittance from `uk`, `pk`, `i0` and `p0` is
 * base: {hoverxreftooltip}`user_manual/components:base`
 
 `appliance` is an abstract user which is coupled to a `node`.
-For each `appliance`, a switch is defined between
-the `appliance` and the `node`.
-The reference direction for power flows is mentioned in
-{hoverxreftooltip}`user_manual/data-model:Reference Direction`.
+For each `appliance`, a switch is defined between the `appliance` and the `node`.
+The reference direction for power flows is mentioned in {hoverxreftooltip}`user_manual/data-model:Reference Direction`.
 
 #### Input
 
@@ -592,8 +597,7 @@ The reference direction for power flows is mentioned in
 
 `source` is an {hoverxreftooltip}`user_manual/components:appliance` representing the external network with a
 [Thévenin's equivalence](https://en.wikipedia.org/wiki/Th%C3%A9venin%27s_theorem).
-It has an infinite voltage source
-with an internal impedance.
+It has an infinite voltage source with an internal impedance.
 The impedance is specified by convention as short circuit power.
 
 #### Input
@@ -637,8 +641,8 @@ $$
 
 * type name: `generic_load_gen`
 
-`generic_load_gen` is an abstract load/generation {hoverxreftooltip}`user_manual/components:appliance` which contains only the
-type of the load/generation with response to voltage.
+`generic_load_gen` is an abstract load/generation {hoverxreftooltip}`user_manual/components:appliance` which contains
+only the type of the load/generation with response to voltage.
 
 | name   | data type                                                   | unit | description                                     | required |  update  |
 | ------ | ----------------------------------------------------------- | ---- | ----------------------------------------------- | :------: | :------: |
@@ -666,8 +670,8 @@ However, the reference direction and meaning of `RealValueInput` is different, a
 
 ##### Electric model
 
-`generic_load_gen` is modelled by using the so-called ZIP load model in power-grid-model,
-where a load/generator is represented as a composition of constant power (P), constant current (I) and constant impedance (Z).
+`generic_load_gen` is modelled by using the so-called ZIP load model in power-grid-model, where a load/generator is
+represented as a composition of constant power (P), constant current (I) and constant impedance (Z).
 
 The injection of each ZIP model type can be computed as follows:
 
@@ -703,8 +707,7 @@ where $\bar{u}$ is the calculated node voltage.
 * {hoverxreftooltip}`user_manual/data-model:Reference Direction`: load
 
 `shunt` is an {hoverxreftooltip}`user_manual/components:appliance` with a fixed admittance (impedance).
-It behaves similar to a
-load/generator with type `const_impedance`.
+It behaves similar to a load/generator with type `const_impedance`.
 
 #### Input
 
@@ -716,9 +719,8 @@ load/generator with type `const_impedance`.
 | `b0` | `double`  | siemens (S) | zero-sequence shunt susceptance     | &#10024; only for asymmetric calculation | &#10004; |
 
 ```{note}
-In case of short circuit calculations, the zero-sequence parameters are required only
-if any of the faults in any of the scenarios within a batch are not three-phase faults
-(i.e. `fault_type` is not `FaultType.three_phase`).
+In case of short circuit calculations, the zero-sequence parameters are required only if any of the faults in any of the
+scenarios within a batch are not three-phase faults (i.e. `fault_type` is not `FaultType.three_phase`).
 ```
 
 #### Electric Model
@@ -732,10 +734,8 @@ if any of the faults in any of the scenarios within a batch are not three-phase 
 
 `sensor` is an abstract type for all the sensor types.
 A sensor does not have any physical meaning.
-Rather, it provides
-measurement data for the state estimation algorithm.
-The state estimator uses the data to evaluate the state of the grid
-with the highest probability.
+Rather, it provides measurement data for the state estimation algorithm.
+The state estimator uses the data to evaluate the state of the grid with the highest probability.
 
 #### Input
 
@@ -754,8 +754,7 @@ For other calculation types, sensor output is undefined.
 
 `generic_voltage_sensor` is an abstract class for symmetric and asymmetric voltage sensor and derived from
 {hoverxreftooltip}`user_manual/components:sensor`.
-It measures the magnitude and (optionally) the angle of the voltage of
-a `node`.
+It measures the magnitude and (optionally) the angle of the voltage of a `node`.
 
 #### Input
 
@@ -766,10 +765,8 @@ a `node`.
 #### Voltage Sensor Concrete Types
 
 There are two concrete types of voltage sensor.
-They share similar attributes:
-the meaning of `RealValueInput` is different, as shown in the table below.
-In a `sym_voltage_sensor` the measured
-voltage is a line-to-line voltage.
+They share similar attributes: the meaning of `RealValueInput` is different, as shown in the table below.
+In a `sym_voltage_sensor` the measured voltage is a line-to-line voltage.
 In a `asym_voltage_sensor` the measured voltage is a 3-phase line-to-ground voltage.
 
 | type name             | meaning of `RealValueInput` |
@@ -785,7 +782,8 @@ In a `asym_voltage_sensor` the measured voltage is a 3-phase line-to-ground volt
 | `u_angle_measured` | `RealValueInput` | rad      | measured voltage angle (only possible with phasor measurement units) | &#10024; only for state estimation when a current sensor with `global_angle` `angle_measurement_type` is present | &#10004; |              |
 
 ```{note}
-When a current sensor with `global_angle` `angle_measurement_type` is present there needs to be a voltage sensor with `u_angle_measured` in the grid as a reference angle (when performing a state estimation).
+When a current sensor with `global_angle` `angle_measurement_type` is present there needs to be a voltage sensor with
+`u_angle_measured` in the grid as a reference angle (when performing a state estimation).
 ```
 
 ##### Steady state output
@@ -820,25 +818,32 @@ The $\pmod{2\pi}$ is handled such that $-\pi \lt \theta_{\text{angle},\text{resi
 `power_sensor` is an abstract class for symmetric and asymmetric power sensor and is derived from
 {hoverxreftooltip}`user_manual/components:sensor`.
 It measures the active/reactive power flow of a terminal.
-The terminal is
-either connecting an `appliance` and a `node`, or connecting the from/to end of a `branch` (except `link`) and a `node`.
-In case of a
-terminal between an `appliance` and a `node`, the power {hoverxreftooltip}`user_manual/data-model:Reference Direction` in the
-measurement data is the same as the reference direction of the `appliance`.
-For example, if a `power_sensor` is
-measuring a `source`, a positive `p_measured` indicates that the active power flows from the source to the node.
+The terminal is either connecting an `appliance` and a `node`, or connecting the from/to end of a `branch` (except
+`link`) and a `node`.
+In case of a terminal between an `appliance` and a `node`, the power
+{hoverxreftooltip}`user_manual/data-model:Reference Direction` in the measurement data is the same as the reference
+direction of the `appliance`.
+For example, if a `power_sensor` is measuring a `source`, a positive `p_measured` indicates that the active power flows
+from the source to the node.
 
 ```{note}
-1. Due to the high admittance of a `link` it is chosen that a power sensor cannot be coupled to a `link`, even though a link is a `branch`
+1. Due to the high admittance of a `link` it is chosen that a power sensor cannot be coupled to a `link`, even though a
+link is a `branch`
 
 2. The node injection power sensor gets placed on a node.
-In the state estimation result, the power from this injection is distributed equally among the connected appliances at that node.
-Because of this distribution, at least one appliance is required to be connected to the node where an injection sensor is placed for it to function.
+In the state estimation result, the power from this injection is distributed equally among the connected appliances at
+that node.
+Because of this distribution, at least one appliance is required to be connected to the node where an injection sensor
+is placed for it to function.
 ```
 
 ```{note}
-It is not possible to mix [power sensors](./components.md#generic-current-sensor) with [current sensors](#./components.mdgeneric-current-sensor) on the same terminal of the same component.
-It is also not possible to mix [current sensors with global angle measurement type](#./components.mdgeneric-current-sensor) with [current sensors with local angle measurement type](#./components.mdgeneric-current-sensor) on the same terminal of the same component.
+It is not possible to mix [power sensors](./components.md#generic-current-sensor) with
+[current sensors](#./components.mdgeneric-current-sensor) on the same terminal of the same component.
+It is also not possible to mix
+[current sensors with global angle measurement type](#./components.mdgeneric-current-sensor) with
+[current sensors with local angle measurement type](#./components.mdgeneric-current-sensor) on the same terminal of the
+same component.
 However, such mixing of sensor types is allowed as long as they are on different terminals.
 ```
 
@@ -852,8 +857,7 @@ However, such mixing of sensor types is allowed as long as they are on different
 #### Power Sensor Concrete Types
 
 There are two concrete types of power sensor.
-They share similar attributes:
-the meaning of `RealValueInput` is different, as shown in the table below.
+They share similar attributes: the meaning of `RealValueInput` is different, as shown in the table below.
 
 | type name           | meaning of `RealValueInput` |
 | ------------------- | --------------------------- |
@@ -883,14 +887,18 @@ Valid combinations of `power_sigma`, `p_sigma` and `q_sigma` are:
 |               |           |           | &#10060; |
 
 ```{note}
-1. If both `p_sigma` and `q_sigma` are provided, they represent the standard deviation of the active and reactive power, respectively, and the value of `power_sigma` is ignored. Any infinite component invalidates the entire measurement.
+1. If both `p_sigma` and `q_sigma` are provided, they represent the standard deviation of the active and reactive power,
+respectively, and the value of `power_sigma` is ignored. Any infinite component invalidates the entire measurement.
 
-2. If neither `p_sigma` nor `q_sigma` are provided, `power_sigma` represents the standard deviation of the apparent power.
+2. If neither `p_sigma` nor `q_sigma` are provided, `power_sigma` represents the standard deviation of the apparent
+power.
 
 3. Providing only one of `p_sigma` and `q_sigma` results in undefined behaviour.
 ```
 
-See the documentation on [state estimation calculation methods](calculations.md#state-estimation-algorithms) for details per method on how the variances are taken into account for both the active and reactive power and for the individual phases.
+See the documentation on [state estimation calculation methods](calculations.md#state-estimation-algorithms) for details
+per method on how the variances are taken into account for both the active and reactive power and for the individual
+phases.
 
 ##### Steady state output
 
@@ -929,12 +937,17 @@ It measures the magnitude and angle of the current flow of a terminal.
 The terminal is connecting the from/to end of a `branch` (except `link`) and a `node`.
 
 ```{note}
-Due to the high admittance of a `link` it is chosen that a current sensor cannot be coupled to a `link`, even though a link is a `branch`
+Due to the high admittance of a `link` it is chosen that a current sensor cannot be coupled to a `link`, even though a
+link is a `branch`.
 ```
 
 ```{note}
-It is not possible to mix [power sensors](./components.md#generic-current-sensor) with [current sensors](#./components.mdgeneric-current-sensor) on the same terminal of the same component.
-It is also not possible to mix [current sensors with global angle measurement type](#./components.mdgeneric-current-sensor) with [current sensors with local angle measurement type](#./components.mdgeneric-current-sensor) on the same terminal of the same component.
+It is not possible to mix [power sensors](./components.md#generic-current-sensor) with
+[current sensors](#./components.mdgeneric-current-sensor) on the same terminal of the same component.
+It is also not possible to mix
+[current sensors with global angle measurement type](#./components.mdgeneric-current-sensor) with
+[current sensors with local angle measurement type](#./components.mdgeneric-current-sensor) on the same terminal of the
+same component.
 However, such mixing of sensor types is allowed as long as they are on different terminals.
 ```
 
@@ -954,8 +967,7 @@ At the time of writing, state estimation with current sensors is not supported b
 ```
 
 There are two concrete types of current sensor.
-They share similar attributes:
-the meaning of `RealValueInput` is different, as shown in the table below.
+They share similar attributes: the meaning of `RealValueInput` is different, as shown in the table below.
 
 | type name             | meaning of `RealValueInput` |
 | --------------------- | --------------------------- |
@@ -969,7 +981,9 @@ the meaning of `RealValueInput` is different, as shown in the table below.
 | `i_measured`       | `RealValueInput` | ampere (A) | measured current (`i`) magnitude          | &#10024; only for state estimation | &#10004; |
 | `i_angle_measured` | `RealValueInput` | rad        | measured phase angle of the current (`i`; see the [electric model](#local-angle-current-sensors) below) | &#10024; only for state estimation | &#10004; |
 
-See the documentation on [state estimation calculation methods](calculations.md#state-estimation-algorithms) for details per method on how the variances are taken into account for both the global and local angle measurement types and for the individual phases.
+See the documentation on [state estimation calculation methods](calculations.md#state-estimation-algorithms) for details
+per method on how the variances are taken into account for both the global and local angle measurement types and for the
+individual phases.
 
 ##### Steady state output
 
@@ -989,10 +1003,11 @@ For other calculation types, sensor output is undefined.
 
 ##### Global angle current sensors
 
-Current sensors with `angle_measurement_type` equal to `AngleMeasurementType.global_angle` measure the phase of the current relative to
-some reference angle that is the same across the entire grid.
+Current sensors with `angle_measurement_type` equal to `AngleMeasurementType.global_angle` measure the phase of the
+current relative to some reference angle that is the same across the entire grid.
 This reference angle must be the same one as for [voltage phasor measurements](#generic-voltage-sensor).
-Because the reference point may be ambiguous in the case of current sensor measurements, the power-grid-model imposes the following requirement:
+Because the reference point may be ambiguous in the case of current sensor measurements, the power-grid-model imposes
+the following requirement:
 
 ```{note}
 Global angle current measurements require at least one voltage angle measurement to make sense.
@@ -1006,12 +1021,15 @@ $$
 
 ##### Local angle current sensors
 
-Current sensors with `angle_measurement_type` equal to `AngleMeasurementType.local_angle` measure the phase shift between
-the voltage and the current phasor, i.e., $\text{i_angle_measured} = \text{voltage_phase} - \text{current_phase}$.
-As a result, the global current phasor depends on the local voltage phase offset and is obtained using the following formula.
+Current sensors with `angle_measurement_type` equal to `AngleMeasurementType.local_angle` measure the phase shift
+between the voltage and the current phasor, i.e.,
+$\text{i_angle_measured} = \text{voltage_phase} - \text{current_phase}$.
+As a result, the global current phasor depends on the local voltage phase offset and is obtained using the following
+formula.
 
 $$
-\underline{I} = \underline{I}_{\text{local}}^{*} \frac{\underline{U}}{|\underline{U}|} = \text{i_measured} \cdot e^{\mathrm{j} \left(\theta_{U} - \text{i_angle_measured}\right)}
+\underline{I} = \underline{I}_{\text{local}}^{*} \frac{\underline{U}}{|\underline{U}|}
+              = \text{i_measured} \cdot e^{\mathrm{j} \left(\theta_{U} - \text{i_angle_measured}\right)}
 $$
 
 ```{note}
@@ -1022,8 +1040,10 @@ As a result, the local angle current sensors have a different sign convention fr
 
 $$
    \begin{eqnarray}
-        & i_{\text{residual}} = i_{\text{measured}} - i_{\text{state}} && \\
-        & i_{\text{angle},\text{residual}} = i_{\text{angle},\text{measured}} - i_{\text{angle},\text{state}} \pmod{2 \pi}
+        & i_{\text{residual}}
+               = i_{\text{measured}} - i_{\text{state}} && \\
+        & i_{\text{angle},\text{residual}}
+               = i_{\text{angle},\text{measured}} - i_{\text{angle},\text{state}} \pmod{2 \pi}
    \end{eqnarray}
 $$
 
@@ -1050,15 +1070,13 @@ A fault can only happen at a `node`.
 
 ```{note}
 Multiple faults may exist within one calculation.
-Currently, all faults in one scenario are required to have the
-same `fault_type` and `fault_phase`.
+Currently, all faults in one scenario are required to have the same `fault_type` and `fault_phase`.
 Across scenarios in a batch, the `fault_type` and `fault_phase` may differ.
 ```
 
 ```{note}
-If any of the faults in any of the scenarios within a batch are not `three_phase`
-(i.e. `fault_type` is not `FaultType.three_phase`),
-the calculation is treated as asymmetric.
+If any of the faults in any of the scenarios within a batch are not `three_phase` (i.e. `fault_type` is not
+`FaultType.three_phase`), the calculation is treated as asymmetric.
 ```
 
 #### Steady state output
@@ -1076,8 +1094,10 @@ A `fault` has no steady state output.
 
 ##### Fault types, fault phases and default values
 
-Four types of short circuit fault are included in power-grid-model, each with their own set of supported values for `fault_phase`.
-In case the `fault_phase` is not specified or is equal to `FaultPhase.default_value`, the power-grid-model assumes a `fault_type`-dependent set of fault phases.
+Four types of short circuit fault are included in power-grid-model, each with their own set of supported values for
+`fault_phase`.
+In case the `fault_phase` is not specified or is equal to `FaultPhase.default_value`, the power-grid-model assumes a
+`fault_type`-dependent set of fault phases.
 The supported values of `fault_phase`, as well as its default value, are listed in the table below.
 
 | `fault_type`                       | supported values of `fault_phase`                 | `FaultPhase.default_value` | description                                                            |
@@ -1092,8 +1112,8 @@ The supported values of `fault_phase`, as well as its default value, are listed 
 * type name: `regulator`
 * base: {hoverxreftooltip}`user_manual/components:base`
 
-`regulator` is an abstract regulator that is coupled to a given `regulated_object`. For each `regulator`, a switch is defined between
-the `regulator` and the `regulated_object`.
+`regulator` is an abstract regulator that is coupled to a given `regulated_object`. For each `regulator`, a switch is
+defined between the `regulator` and the `regulated_object`.
 Which object types are supported as `regulated_object` is regulator type-dependent.
 
 #### Input
@@ -1109,11 +1129,15 @@ Which object types are supported as `regulated_object` is regulator type-depende
 * base: {hoverxreftooltip}`user_manual/components:regulator`
 
 `transformer_tap_regulator` defines a regulator for transformers in the grid.
-A transformer tap regulator regulates a component that is either a {hoverxreftooltip}`user_manual/components:transformer` or a {hoverxreftooltip}`user_manual/components:Three-Winding Transformer`.
+A transformer tap regulator regulates a component that is either a
+{hoverxreftooltip}`user_manual/components:transformer` or a
+{hoverxreftooltip}`user_manual/components:Three-Winding Transformer`.
 
-The transformer tap regulator changes the `tap_pos` of the transformer it regulates in the range set by the user via `tap_min` and `tap_max` (i.e., `(tap_min <= tap_pos <= tap_max)` or `(tap_min >= tap_pos >= tap_max)`).
+The transformer tap regulator changes the `tap_pos` of the transformer it regulates in the range set by the user via
+`tap_min` and `tap_max` (i.e., `(tap_min <= tap_pos <= tap_max)` or `(tap_min >= tap_pos >= tap_max)`).
 It regulates the tap position so that the voltage on the control side is in the chosen voltage band.
-Other points further into the grid on the control side, away from the transformer, can also be regulated by providing the cumulative impedance across branches to that point as an additional line drop compensation.
+Other points further into the grid on the control side, away from the transformer, can also be regulated by providing
+the cumulative impedance across branches to that point as an additional line drop compensation.
 This line drop compensation only affects the controlled voltage and does not have any impact on the actual grid.
 It may therefore be treated as a virtual impedance in the grid.
 
@@ -1134,9 +1158,13 @@ The actual grid state is not changed after calculations are done.
 
 The following additional requirements exist on the input parameters.
 
-* Depending on the resultant voltage being transformed, the voltage band must be sufficiently large: At zero line drop compensation if the expected resultant voltages are in the proximity of the rated transformer voltages, it is recommended to have the $u_{band} >= \frac{u_2}{1+ u_1 / \text{tap}_{\text{size}}}$
-* The line drop compensation is small, in the sense that its product with the typical current through the transformer is much smaller (in absolute value) than the smallest change in voltage due to a change in tap position.
-* The `control_side` of a transformer regulator should be on the relatively further side to a source in the connected grid.
+* Depending on the resultant voltage being transformed, the voltage band must be sufficiently large: At zero line drop
+  compensation if the expected resultant voltages are in the proximity of the rated transformer voltages, it is
+  recommended to have the $u_{band} >= \frac{u_2}{1+ u_1 / \text{tap}_{\text{size}}}$
+* The line drop compensation is small, in the sense that its product with the typical current through the transformer is
+  much smaller (in absolute value) than the smallest change in voltage due to a change in tap position.
+* The `control_side` of a transformer regulator should be on the relatively further side to a source in the connected
+  grid.
 
 These requirements make sure no edge cases with undefined behavior are encountered.
 Typical real-world power grids already satisfy these requirements and they should therefore not cause any problems.
@@ -1154,17 +1182,20 @@ A `transformer_tap_regulator` has no short circuit output.
 #### Electric Model
 
 The transformer tap regulator itself does not have a direct contribution to the grid state.
-Instead, it regulates the tap position of the regulated object until the voltage at the control side is in the specified voltage band:
+Instead, it regulates the tap position of the regulated object until the voltage at the control side is in the specified
+voltage band:
 
 $$
    \begin{eqnarray}
-      U_{\text{control}} \in \left[U_{\text{set}} - \frac{U_{\text{band}}}{2}, U_{\text{set}} + \frac{U_{\text{band}}}{2}\right]
+      U_{\text{control}} \in
+         \left[U_{\text{set}} - \frac{U_{\text{band}}}{2}, U_{\text{set}} + \frac{U_{\text{band}}}{2}\right]
    \end{eqnarray}
 $$
 
 ##### Line drop compensation
 
-The transformer tap regulator tries to regulate the voltage in a specified virtual location in the grid, according to the folowing model.
+The transformer tap regulator tries to regulate the voltage in a specified virtual location in the grid, according to
+the folowing model.
 
 ```txt
 tap_side   control_side                         part of grid where voltage is to be regulated
@@ -1174,19 +1205,26 @@ tap_side   control_side                         part of grid where voltage is to
      regulator <=======================================/
 ```
 
-The control voltage is the voltage at the node, compensated with the voltage drop corresponding to the specified line drop compensation.
+The control voltage is the voltage at the node, compensated with the voltage drop corresponding to the specified line
+drop compensation.
 
 $$
    \begin{eqnarray}
       & Z_{\text{compensation}} = r_{\text{compensation}} + \mathrm{j} x_{\text{compensation}} \\
-      & U_{\text{control}} = \left|\underline{U}_{\text{node}} - \underline{I}_{\text{transformer,out}} \cdot \underline{Z}_{\text{compensation}}\right| = \left|\underline{U}_{\text{node}} + \underline{I}_{\text{transformer}} \cdot \underline{Z}_{\text{compensation}}\right|
+      & U_{\text{control}} = \left|\underline{U}_{\text{node}} - \underline{I}_{\text{transformer,out}}
+                                 \cdot \underline{Z}_{\text{compensation}}\right|
+                           = \left|\underline{U}_{\text{node}} + \underline{I}_{\text{transformer}}
+                                 \cdot \underline{Z}_{\text{compensation}}\right|
    \end{eqnarray}
 $$
 
-where $\underline{U}_{\text{node}}$ and $\underline{I}_{\text{transformer}}$ are the calculated voltage and current phasors at the control side and may be obtained from a regular power flow calculation.
-The plus sign in the last equality follows from canceling minus signs from the current direction convention and the compensation direction.
+where $\underline{U}_{\text{node}}$ and $\underline{I}_{\text{transformer}}$ are the calculated voltage and current
+phasors at the control side and may be obtained from a regular power flow calculation.
+The plus sign in the last equality follows from canceling minus signs from the current direction convention and the
+compensation direction.
 
-For example, if we want to regulate the voltage at `load_7` in the following grid, the line drop compensation impedance is the approximate impedance of `line_5`.
+For example, if we want to regulate the voltage at `load_7` in the following grid, the line drop compensation impedance
+is the approximate impedance of `line_5`.
 
 ```txt
 node_1 --- transformer_4 --- node_2 --- line_5 --- node_3

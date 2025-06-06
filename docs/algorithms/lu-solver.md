@@ -327,7 +327,7 @@ $\mathbf{M}\left[0:3, j\right]$.
       2. $\mathbf{M}_p\left[0:N_p,0\right] \leftrightarrow \mathbf{M}\left[0:N_p,j_p\right]$
    6. Apply Gaussian elimination for the current pivot element:
       1. $\mathbf{M}_p\left[0,0:N_p\right] \gets \frac{1}{\mathbf{M}_p[0,0]}\mathbf{M}_p\left[0,0:N_p\right]$
-      2. $\mathbf{M}_p\left[1:N_p,0:N_p\right] \gets \mathbf{M}_p\left[1:N_p,0:N_p\right] - \mathbf{M}_p\left[1:N_p,0\right] \otimes \mathbf{M}_p\left[0,0:N_p\right]$
+      2. $\mathbf{M}_p\left[1:N_p,0:N_p\right] \gets \mathbf{M}_p\left[1:N_p,0:N_p\right] - \mathbf{M}_p\left[1:N_p,0\right] \otimes \mathbf{M}_p\left[0,0:N_p\right]$  <!-- markdownlint-disable-line MD013 -->
    7. Accumulate the permutation matrices:
       1. In $\mathbf{P}$: swap $p \leftrightarrow p + i_p$
       2. In $\mathbf{Q}$: swap $p \leftrightarrow p + j_p$
@@ -378,8 +378,14 @@ The matrices constructed with [LU decomposition](https://en.wikipedia.org/wiki/L
 
 $$
 \begin{align*}
-\mathbf{L}_p &= \begin{bmatrix} \mathbf{1} && \mathbf{0}^T \\ \overrightarrow{\mathbf{m}_p^{-1}\mathbf{q}_p} && \mathbf{1}_p\end{bmatrix} \\
-\mathbf{U}_p &= \begin{bmatrix} \mathbf{m}_p && \mathbf{r}_p^T \\ \mathbf{0} && \mathbf{1}_p \end{bmatrix} \\
+\mathbf{L}_p &= \begin{bmatrix}
+    \mathbf{1} && \mathbf{0}^T \\
+    \overrightarrow{\mathbf{m}_p^{-1}\mathbf{q}_p} && \mathbf{1}_p
+\end{bmatrix} \\
+\mathbf{U}_p &= \begin{bmatrix}
+    \mathbf{m}_p && \mathbf{r}_p^T \\
+    \mathbf{0} && \mathbf{1}_p
+\end{bmatrix} \\
 \mathbf{M}_{p+1} &= \hat{\mathbf{M}}_p - \widehat{\mathbf{m}_p^{-1}\mathbf{q}_p \mathbf{r}_p^T}
 \end{align*}
 $$
@@ -431,9 +437,16 @@ Partial Gaussian elimination constructs the following matrices.
 
 $$
 \begin{align*}
-\mathbf{L}_p &= \begin{bmatrix} \mathbf{l}_p && \mathbf{0}^T \\ \overrightarrow{\mathbf{q}_p\mathbf{q}_p\mathbf{u}_p^{-1}} && \mathbf{1}_p\end{bmatrix} \\
-\mathbf{U}_p &= \begin{bmatrix} \mathbf{u}_p && \overrightarrow{\mathbf{l}_p\mathbf{p}_p\mathbf{r}_p}^T \\ \mathbf{0} && \mathbf{1}_p \end{bmatrix} \\
-\mathbf{M}_{p+1} &= \hat{\mathbf{M}}_p - \widehat{\mathbf{q}_p\mathbf{q}_p\mathbf{u}_p^{-1}\mathbf{l}_p^{-1}\mathbf{p}_p\mathbf{r}_p^T}
+\mathbf{L}_p &= \begin{bmatrix}
+    \mathbf{l}_p && \mathbf{0}^T \\
+    \overrightarrow{\mathbf{q}_p\mathbf{q}_p\mathbf{u}_p^{-1}} && \mathbf{1}_p
+\end{bmatrix} \\
+\mathbf{U}_p &= \begin{bmatrix}
+    \mathbf{u}_p && \overrightarrow{\mathbf{l}_p\mathbf{p}_p\mathbf{r}_p}^T \\
+    \mathbf{0} && \mathbf{1}_p
+\end{bmatrix} \\
+\mathbf{M}_{p+1} &=
+    \hat{\mathbf{M}}_p - \widehat{\mathbf{q}_p\mathbf{q}_p\mathbf{u}_p^{-1}\mathbf{l}_p^{-1}\mathbf{p}_p\mathbf{r}_p^T}
 \end{align*}
 $$
 
@@ -460,9 +473,18 @@ c_{21} && c_{22} && d_{21} && d_{22}
 & \mapsto
 \begin{bmatrix}
 a_{11} && a_{12} && b_{11} && b_{12} \\
-\frac{a_{21}}{a_{11}} && a_{22} - a_{12} \frac{a_{21}}{a_{11}} && b_{21} - b_{11}\frac{a_{21}}{a_{11}} && b_{22} - b_{12}\frac{a_{21}}{a_{11}} \\
-\frac{c_{11}}{a_{11}} && c_{12} - a_{12} \frac{c_{11}}{a_{11}} && d_{11} - b_{11}\frac{c_{11}}{a_{11}} && d_{12} - b_{12}\frac{c_{11}}{a_{11}} \\
-\frac{c_{21}}{a_{11}} && c_{22} - a_{12} \frac{c_{21}}{a_{11}} && d_{21} - b_{11}\frac{c_{21}}{a_{11}} && d_{22} - b_{12}\frac{c_{21}}{a_{11}}
+\frac{a_{21}}{a_{11}} &&
+    a_{22} - a_{12} \frac{a_{21}}{a_{11}} &&
+    b_{21} - b_{11}\frac{a_{21}}{a_{11}} &&
+    b_{22} - b_{12}\frac{a_{21}}{a_{11}} \\
+\frac{c_{11}}{a_{11}} &&
+    c_{12} - a_{12} \frac{c_{11}}{a_{11}} &&
+    d_{11} - b_{11}\frac{c_{11}}{a_{11}} &&
+    d_{12} - b_{12}\frac{c_{11}}{a_{11}} \\
+\frac{c_{21}}{a_{11}} &&
+    c_{22} - a_{12} \frac{c_{21}}{a_{11}} &&
+    d_{21} - b_{11}\frac{c_{21}}{a_{11}} &&
+    d_{22} - b_{12}\frac{c_{21}}{a_{11}}
 \end{bmatrix} \\
 & \mapsto
 \begin{bmatrix}
@@ -473,12 +495,20 @@ a_{11} && a_{12} && b_{11} && b_{12} \\
     b_{22} - b_{12}\frac{a_{21}}{a_{11}} \\
 \frac{c_{11}}{a_{11}} &&
     \frac{c_{12} - a_{12} \frac{c_{11}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} &&
-    d_{11} - b_{11}\frac{c_{11}}{a_{11}} - \left(b_{21} - b_{11}\frac{a_{21}}{a_{11}}\right) \frac{c_{12} - a_{12} \frac{c_{11}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} &&
-    d_{12} - b_{12}\frac{c_{11}}{a_{11}} - \left(b_{22} - b_{12}\frac{a_{21}}{a_{11}}\right) \frac{c_{12} - a_{12} \frac{c_{11}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}}  \\
+    d_{11} - b_{11}\frac{c_{11}}{a_{11}}
+        - \left(b_{21} - b_{11}\frac{a_{21}}{a_{11}}\right)
+            \frac{c_{12} - a_{12} \frac{c_{11}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} &&
+    d_{12} - b_{12}\frac{c_{11}}{a_{11}}
+        - \left(b_{22} - b_{12}\frac{a_{21}}{a_{11}}\right)
+            \frac{c_{12} - a_{12} \frac{c_{11}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}}  \\
 \frac{c_{21}}{a_{11}} &&
     \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} &&
-    d_{21} - b_{11}\frac{c_{21}}{a_{11}} - \left(b_{21} - b_{11}\frac{a_{21}}{a_{11}}\right) \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} &&
-    d_{22} - b_{12}\frac{c_{21}}{a_{11}} - \left(b_{22} - b_{12}\frac{a_{21}}{a_{11}}\right) \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}}
+    d_{21} - b_{11}\frac{c_{21}}{a_{11}}
+        - \left(b_{21} - b_{11}\frac{a_{21}}{a_{11}}\right)
+            \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} &&
+    d_{22} - b_{12}\frac{c_{21}}{a_{11}}
+        - \left(b_{22} - b_{12}\frac{a_{21}}{a_{11}}\right)
+            \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}}
 \end{bmatrix}
 \end{align*}
 $$
@@ -505,10 +535,18 @@ $$
     b_{21} - b_{11}\frac{a_{21}}{a_{11}} && b_{22} - b_{12}\frac{a_{21}}{a_{11}}
 \end{bmatrix} \\
 \mathbf{l}_d\mathbf{u}_d &= \begin{bmatrix}
-    d_{11} - b_{11}\frac{c_{11}}{a_{11}} - \left(b_{21} - b_{11}\frac{a_{21}}{a_{11}}\right) \frac{c_{12} - a_{12} \frac{c_{11}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} &&
-        d_{12} - b_{12}\frac{c_{11}}{a_{11}} - \left(b_{22} - b_{12}\frac{a_{21}}{a_{11}}\right) \frac{c_{12} - a_{12} \frac{c_{11}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}}  \\
-    d_{21} - b_{11}\frac{c_{21}}{a_{11}} - \left(b_{21} - b_{11}\frac{a_{21}}{a_{11}}\right) \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} &&
-        d_{22} - b_{12}\frac{c_{21}}{a_{11}} - \left(b_{22} - b_{12}\frac{a_{21}}{a_{11}}\right) \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}}
+    d_{11} - b_{11}\frac{c_{11}}{a_{11}}
+        - \left(b_{21} - b_{11}\frac{a_{21}}{a_{11}}\right)
+            \frac{c_{12} - a_{12} \frac{c_{11}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} &&
+    d_{12} - b_{12}\frac{c_{11}}{a_{11}}
+        - \left(b_{22} - b_{12}\frac{a_{21}}{a_{11}}\right)
+            \frac{c_{12} - a_{12} \frac{c_{11}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}}  \\
+    d_{21} - b_{11}\frac{c_{21}}{a_{11}}
+        - \left(b_{21} - b_{11}\frac{a_{21}}{a_{11}}\right)
+            \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} &&
+     d_{22} - b_{12}\frac{c_{21}}{a_{11}}
+         - \left(b_{22} - b_{12}\frac{a_{21}}{a_{11}}\right)
+             \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}}
 \end{bmatrix}
 \end{align*}
 $$
@@ -556,8 +594,14 @@ $$
     0 && a_{22} - a_{12} \frac{a_{21}}{a_{11}}
 \end{bmatrix} \\
 &= \begin{bmatrix}
-    a_{11} \frac{c_{11}}{a_{11}} && a_{12} \frac{c_{11}}{a_{11}} + \left(a_{22} - a_{12} \frac{a_{21}}{a_{11}}\right)\frac{c_{12} - a_{12} \frac{c_{11}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} \\
-    a_{11} \frac{c_{21}}{a_{11}} && a_{12} \frac{c_{21}}{a_{11}} + \left(a_{22} - a_{12} \frac{a_{21}}{a_{11}}\right)\frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}}
+    a_{11} \frac{c_{11}}{a_{11}} &&
+    a_{12} \frac{c_{11}}{a_{11}}
+        + \left(a_{22} - a_{12} \frac{a_{21}}{a_{11}}\right)
+            \frac{c_{12} - a_{12} \frac{c_{11}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} \\
+    a_{11} \frac{c_{21}}{a_{11}} &&
+    a_{12} \frac{c_{21}}{a_{11}}
+        + \left(a_{22} - a_{12} \frac{a_{21}}{a_{11}}\right)
+            \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}}
 \end{bmatrix} \\
 &= \begin{bmatrix}
     c_{11} && c_{11} + \left(c_{12} - c_{11}\right) \\
@@ -577,8 +621,10 @@ $$
     b_{21} - b_{11}\frac{a_{21}}{a_{11}} && b_{22} - b_{12}\frac{a_{21}}{a_{11}}
 \end{bmatrix} \\
 &= \begin{bmatrix}
-    b_{11}                                                               && b_{12} \\
-    b_{11} \frac{a_{21}}{a_{11}} + b_{21} - b_{11} \frac{a_{21}}{a_{11}} && b_{12} \frac{a_{21}}{a_{11}} + b_{22} - b_{12}\frac{a_{21}}{a_{11}}
+    b_{11} &&
+    b_{12} \\
+    b_{11} \frac{a_{21}}{a_{11}} + b_{21} - b_{11} \frac{a_{21}}{a_{11}} &&
+    b_{12} \frac{a_{21}}{a_{11}} + b_{22} - b_{12}\frac{a_{21}}{a_{11}}
 \end{bmatrix} \\
 &= \begin{bmatrix}
     b_{11} && b_{12} \\
@@ -595,10 +641,18 @@ $$
     b_{21} - b_{11}\frac{a_{21}}{a_{11}} && b_{22} - b_{12}\frac{a_{21}}{a_{11}}
 \end{bmatrix} \\
 &= \begin{bmatrix}
-    d_{11} - b_{11}\frac{c_{11}}{a_{11}} - \left(b_{21} - b_{11}\frac{a_{21}}{a_{11}}\right) \frac{c_{12} - a_{12} \frac{c_{11}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} &&
-        d_{12} - b_{12}\frac{c_{11}}{a_{11}} - \left(b_{22} - b_{12}\frac{a_{21}}{a_{11}}\right) \frac{c_{12} - a_{12} \frac{c_{11}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} \\
-    d{21} - b_{11}\frac{c_{21}}{a_{11}} - \left(b_{21} - b_{11}\frac{a_{21}}{a_{11}}\right) \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} &&
-        d_{22} - b_{12}\frac{c_{21}}{a_{11}} - \left(b_{22} - b_{12}\frac{a_{21}}{a_{11}}\right) \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}}
+    d_{11} - b_{11}\frac{c_{11}}{a_{11}}
+        - \left(b_{21} - b_{11}\frac{a_{21}}{a_{11}}\right)
+            \frac{c_{12} - a_{12} \frac{c_{11}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} &&
+    d_{12} - b_{12}\frac{c_{11}}{a_{11}}
+        - \left(b_{22} - b_{12}\frac{a_{21}}{a_{11}}\right)
+            \frac{c_{12} - a_{12} \frac{c_{11}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} \\
+    d{21} - b_{11}\frac{c_{21}}{a_{11}}
+        - \left(b_{21} - b_{11}\frac{a_{21}}{a_{11}}\right)
+            \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}} &&
+    d_{22} - b_{12}\frac{c_{21}}{a_{11}}
+        - \left(b_{22} - b_{12}\frac{a_{21}}{a_{11}}\right)
+            \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}}
 \end{bmatrix} \\
 &= \mathbf{l}_d\mathbf{u}_d
 \end{align*}
@@ -666,14 +720,33 @@ $$
 \mathbf{M}_{3,0} &&         && \mathbf{M}_{3,2} && \mathbf{M}_{3,3}
 \end{bmatrix} &\equiv
 \begin{bmatrix}
-\mathbf{M}_{0,0} && \mathbf{M}_{0,3} && \mathbf{M}_{1,1} && \mathbf{M}_{1,2} && \mathbf{M}_{2,1} && \mathbf{M}_{2,2} && \mathbf{M}_{2,3} && \mathbf{M}_{3,0} && \mathbf{M}_{3,2} && \mathbf{M}_{3,3} \\
-[[0 && 3] && [1 && 2] && [1 && 2 && 3] && [0 && 2 && 3]] \\
+    \mathbf{M}_{0,0} &&
+        \mathbf{M}_{0,3} &&
+        \mathbf{M}_{1,1} &&
+        \mathbf{M}_{1,2} &&
+        \mathbf{M}_{2,1} &&
+        \mathbf{M}_{2,2} &&
+        \mathbf{M}_{2,3} &&
+        \mathbf{M}_{3,0} &&
+        \mathbf{M}_{3,2} &&
+        \mathbf{M}_{3,3} \\
+    [[0 && 3] && [1 && 2] && [1 && 2 && 3] && [0 && 2 && 3]] \\
 \end{bmatrix} \\
 &\equiv
 \begin{bmatrix}
-\mathbf{M}_{0,0} && \mathbf{M}_{0,3} && \mathbf{M}_{1,1} && \mathbf{M}_{1,2} && \mathbf{M}_{2,1} && \mathbf{M}_{2,2} && \mathbf{M}_{2,3} && \mathbf{M}_{3,0} && \mathbf{M}_{3,2} && \mathbf{M}_{3,3} && \\
-[0 && 3 && 1 && 2 && 1 && 2 && 3 && 0 && 2 && 3] && \\
-[0 && && 2 && && 4 && && && 7 && && && && 10]
+    \mathbf{M}_{0,0} &&
+        \mathbf{M}_{0,3} &&
+        \mathbf{M}_{1,1} &&
+        \mathbf{M}_{1,2} &&
+        \mathbf{M}_{2,1} &&
+        \mathbf{M}_{2,2} &&
+        \mathbf{M}_{2,3} &&
+        \mathbf{M}_{3,0} &&
+        \mathbf{M}_{3,2} &&
+        \mathbf{M}_{3,3} &&
+        \\
+    [0 && 3 && 1 && 2 && 1 && 2 && 3 && 0 && 2 && 3] && \\
+    [0 && && 2 && && 4 && && && 7 && && && && 10]
 \end{bmatrix}
 \end{align*}
 $$
@@ -729,7 +802,7 @@ The equation $\mathbf{L}\boldsymbol{y} = \mathbf{P}\boldsymbol{b}$ is solved as 
 
 1. Loop over all block-rows: $i=0..(N-1)$:
    1. Loop over all lower-triangle off-diagonal columns (beware of sparsity): $j=0..(i-1)$:
-      1. $\boldsymbol{b}\left[i\right] \gets \boldsymbol{b}\left[i\right] - \mathbf{L}\left[i,j\right] \cdot \boldsymbol{b}\left[j\right]$.
+      1. $\boldsymbol{b}\left[i\right] \gets \boldsymbol{b}\left[i\right] - \mathbf{L}\left[i,j\right] \cdot \boldsymbol{b}\left[j\right]$.  <!-- markdownlint-disable-line MD013 -->
       2. Continue with next block-column.
    2. If the matrix is a block matrix:
       1. Follow the same steps within the block.
@@ -743,7 +816,7 @@ The equation $Uz = y$ is solved as follows.
 
 1. Loop over all block-rows in reverse order: $i=(N-1)..0$:
    1. Loop over all upper-triangle off-diagonal columns (beware of sparsity): $j=(i+1)..0$:
-      1. $\boldsymbol{b}\left[i\right] \gets \boldsymbol{b}\left[i\right] - \mathbf{U}\left[i,j\right] \cdot \boldsymbol{b}\left[j\right]$.
+      1. $\boldsymbol{b}\left[i\right] \gets \boldsymbol{b}\left[i\right] - \mathbf{U}\left[i,j\right] \cdot \boldsymbol{b}\left[j\right]$.  <!-- markdownlint-disable-line MD013 -->
       2. Continue with next block-column.
    2. Handle the diagonal element:
       1. If the matrix is a block matrix:
@@ -896,14 +969,16 @@ with a few modifications described [below](#improved-backward-error-calculation)
 
 $$
 \begin{align*}
-D_{\text{max}} &= \max_i\left\{\left(\left|\mathbf{M}\right|\cdot\left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i\right\} \\
+D_{\text{max}} &= \max_i\left\{
+    \left(\left|\mathbf{M}\right|\cdot\left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i
+\right\} \\
 \text{backward_error} &= \max_i \left\{
-   \frac{\left|\boldsymbol{r}\right|_i}{
-      \max\left\{
-         \left(\left|\mathbf{M}\right|\cdot\left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i,
-         \epsilon_{\text{backward_error}} D_{\text{max}}
-      \right\}
-   }
+    \frac{\left|\boldsymbol{r}\right|_i}{
+        \max\left\{
+            \left(\left|\mathbf{M}\right|\cdot\left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i,
+            \epsilon_{\text{backward_error}} D_{\text{max}}
+        \right\}
+    }
 \right\}
 \end{align*}
 $$
@@ -960,9 +1035,22 @@ uses the following backward error in the
 
 $$
 \begin{align*}
-\text{backward_error}_{\text{Li}} &= \max_i \frac{\left|\boldsymbol{r}_i\right|}{\sum_j \left|\mathbf{M}_{i,j}\right| \left|\boldsymbol{x}_j\right| + \left|\boldsymbol{b}_i\right|} \\
-&= \max_i \frac{\left|\boldsymbol{b}_i - \sum_j \mathbf{M}_{i,j} \boldsymbol{x}_j\right|}{\sum_j \left|\mathbf{M}_{i,j}\right| \left|\boldsymbol{x}_j\right| + \left|\boldsymbol{b}_i\right|} \\
-&= \max_i \frac{\left|\boldsymbol{r}_i\right|}{\left(\left|\mathbf{M}\right| \cdot \left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i}
+\text{backward_error}_{\text{Li}}
+   &= \max_i \frac{
+         \left|\boldsymbol{r}_i\right|
+      }{
+         \sum_j \left|\mathbf{M}_{i,j}\right| \left|\boldsymbol{x}_j\right| + \left|\boldsymbol{b}_i\right|
+      } \\
+   &= \max_i \frac{
+         \left|\boldsymbol{b}_i - \sum_j \mathbf{M}_{i,j} \boldsymbol{x}_j\right|
+      }{
+         \sum_j \left|\mathbf{M}_{i,j}\right| \left|\boldsymbol{x}_j\right| + \left|\boldsymbol{b}_i\right|
+      } \\
+   &= \max_i \frac{
+         \left|\boldsymbol{r}_i\right|
+      }{
+         \left(\left|\mathbf{M}\right| \cdot \left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i
+      }
 \end{align*}
 $$
 
@@ -979,7 +1067,9 @@ determined by the maximum across all denominators:
 
 $$
 \begin{align*}
-D_{\text{max}} &= \max_i\left\{\left(\left|\mathbf{M}\right|\cdot\left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i\right\} \\
+D_{\text{max}} &= \max_i\left\{
+   \left(\left|\mathbf{M}\right|\cdot\left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i
+\right\} \\
 \text{backward_error} &= \max_i \left\{
    \frac{\left|\boldsymbol{r}\right|_i}{
       \max\left\{
@@ -1099,6 +1189,7 @@ $$
 
 * The regular $L_{\infty}$-norm is $\max\left\{1+3, 3, 5, \frac{1}{2}, 1, 1\right\} = 5$.
 * The block-wise off-diagonal infinity $L_{\infty ,\text{bwod}}$-norm is
+  <!-- markdownlint-disable-next-line MD013 -->
   $\max\left\{\max\left\{1, 3\right\}+\max\left\{3, 0\right\},\max\left\{5, 0\right\} + \max\left\{0, \frac{1}{2}\right\}, 1\right\} = \max\left\{3+3, 5+\frac{1}{2}, 1, 1\right\} = 6$.
 
 The two norms clearly differ and even the elements that contribute most to the norm are different.
@@ -1126,6 +1217,7 @@ $$
 
 * The regular $L_{\infty}$-norm is $\max\left\{20+20+2+2,30+3,100,3+1\right\} = \max\left\{44,33,100,4\right\} = 100$.
 * The block-wise infinity norm with diagonals would be
+  <!-- markdownlint-disable-next-line MD013 -->
   $\max\left\{\max\left\{20+20, 30\right\}+\max\left\{2+2, 3\right\},\max\left\{0,3\right\} + \max\left\{100, 1\right\}\right\} = \max\left\{40+4, 3+100\right\} = \max\left\{44, 103\right\} = 103$.
 * The $L_{\infty ,\text{bwod}}$-norm is
   $\max\left\{\max\left\{2+2, 3\right\},\max\left\{0,3\right\}\right\} = \max\left\{4, 3\right\} = 4$.
