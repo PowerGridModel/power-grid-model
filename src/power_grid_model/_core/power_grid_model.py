@@ -247,7 +247,7 @@ class PowerGridModel:
         options: Options,
         continue_on_batch_error: bool,
         decode_error: bool,
-        experimental_features: _ExperimentalFeatures | str,
+        experimental_features: _ExperimentalFeatures | str,  # NOSONAR
     ):
         """
         Core calculation routine
