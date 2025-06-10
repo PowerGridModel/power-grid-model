@@ -58,8 +58,10 @@ jobs:
   ci-passed:
     runs-on: ubuntu-latest
     needs: [ci-started, build-test-release, check-code-quality, reuse-compliance, clang-tidy]
+    if: always()
 
     steps:
+      - run: echo '${{ toJSON(needs) }}' | jq -e 'to_entries | all(.value.result == "success")'
       - run: echo "ci passed"
 
   publish:
