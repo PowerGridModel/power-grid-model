@@ -100,6 +100,19 @@ select = [
     # isort
     "I",
     "SIM",
+    "YTT",
+    "BLE",
+    "PERF",
+    "Q",
+    "ICN",
+    "ISC",
+    "G",
+    "LOG",
+    "EXE",
+    "FA",
+    "FURB",
+    "FLY",
+    "SLOT",
 ]
 ignore = ["SIM108", "SIM118", "SIM110", "SIM211"]
 
