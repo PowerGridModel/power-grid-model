@@ -69,11 +69,13 @@ def _eval_field_expression(data: np.ndarray, expression: str) -> np.ndarray:
         'foo/bar' -> data['foo'] / data['bar']
 
     """
-
     # Validate the expression
     match = re.fullmatch(r"[a-z][a-z0-9_]*(\s*/\s*[a-z][a-z0-9_]*)?", expression)
     if not match:
         raise ValueError(f"Invalid field expression '{expression}'")
+
+    if data.dtype.names is None:
+        raise ValueError("No attributes available in meta")
 
     # Find all field names and check if they exist in the dataset
     fields = [f.strip() for f in expression.split("/")]
@@ -124,6 +126,9 @@ def _update_component_array_data(
     Update the data in a numpy array, with another numpy array,
     indexed on the "id" field and only non-NaN values are overwritten.
     """
+    if update_data.dtype.names is None:
+        raise ValueError("Invalid data format")
+
     optional_ids_active = (
         "id" in update_data.dtype.names
         and np.all(update_data["id"] == np.iinfo(update_data["id"].dtype).min)
