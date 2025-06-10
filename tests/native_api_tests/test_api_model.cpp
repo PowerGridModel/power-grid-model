@@ -1063,7 +1063,7 @@ TEST_CASE("API Model") {
         }
     }
 
-    SUBCASE("Current sensor is experimental") {
+    SUBCASE("Current sensor for NRSE is experimental: not implemented") {
         auto const input_data_se_json = R"json({
   "version": "1.0",
   "type": "input",
@@ -1103,8 +1103,7 @@ TEST_CASE("API Model") {
                                      "Newton-Raphson state estimation is not implemented for current sensors",
                                      PowerGridRegularError);
             } else {
-                CHECK_THROWS_WITH_AS(run_se_with_current_sensor(method, PGM_experimental_features_disabled),
-                                     "State estimation with current sensors is experimental", PowerGridRegularError);
+                CHECK_NOTHROW(run_se_with_current_sensor(method, PGM_experimental_features_disabled));
             }
             CHECK_NOTHROW(run_se_with_current_sensor(method, PGM_experimental_features_enabled));
         }

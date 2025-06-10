@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-name: Check Blocking Labels
+name: Check PR Labels
 
 on:
   # run pipeline on pull request
@@ -18,14 +18,22 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-blocking-labels
+  group: ${{ github.workflow }}-${{ github.ref }}-pr-labels
   cancel-in-progress: true
 
 jobs:
-  check-blocking-labels:
+  check-pr-labels:
     runs-on: ubuntu-latest
     steps:
-
+      
+      - name: fail-if-no-label
+        if: github.event_name == 'pull_request'
+        run: |
+          if [ "$(jq '.pull_request.labels | length' "$GITHUB_EVENT_PATH")" -eq 0 ]; then
+            echo "This pull request has no labels. Please add at least one label."
+            exit 1
+          fi
+      
       - name: do-not-merge
         if: contains(github.event.pull_request.labels.*.name, 'do-not-merge')
         run: |

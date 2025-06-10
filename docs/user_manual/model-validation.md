@@ -6,9 +6,11 @@ SPDX-License-Identifier: MPL-2.0
 
 # Model validation
 
-The implementation of power-grid-model is validated using multiple test cases present in {{ "[tests/data]({}/tests/data)".format(gh_link_head_tree) }} folder.
+The implementation of power-grid-model is validated using multiple test cases present in
+{{ "[tests/data]({}/tests/data)".format(gh_link_head_tree) }} folder.
 There are 2 simple grid test case examples of power-grid-model validated using Vision and GAIA.
-A thorough validation is done using minimal test cases of each component and 2 test networks described in the following sections.
+A thorough validation is done using minimal test cases of each component and 2 test networks described in the following
+sections.
 
 ## Minimal test cases in pandapower
 
@@ -16,13 +18,15 @@ Their results are validated against the [pandapower](http://www.pandapower.org/)
 
 The cases of a differences in modelling between both the libraries are handled by theoretical workarounds.
 For example in power-grid-model, source impedance is included for all component sequences.
-In pandapower, source impedance is present only in positive sequence network whereas it considered in all sequence components in power-grid-model.
+In pandapower, source impedance is present only in positive sequence network whereas it considered in all sequence
+components in power-grid-model.
 Source impedance is then set to a low value to match this modelling difference.
 Hence, the result of source component here should be ignored.
 The output result attributes of power-grid-model are validated at a tolerance value of $\pm10^{-5}$ of respective unit.
 Both the iterative algorithms: Newton Raphson and Iterative current are validated.
 
-All the test cases can be found in {{ "[/tests/data/power_flow/pandapower]({}/tests/data/power_flow/pandapower)".format(gh_link_head_tree) }}.
+All the test cases can be found in
+{{ "[/tests/data/power_flow/pandapower]({}/tests/data/power_flow/pandapower)".format(gh_link_head_tree) }}.
 
 ### Node
 
@@ -71,10 +75,10 @@ A transformer can be 4 states, closed on both ends, open on both ends and open o
 The tap changing functionality is tested using a batch calculation for various tap positions.
 
 ```{note}
-- Asymmetrical calculations are possible only for grounded network transformer in pandapower. 
-Hence open cases are not evaluated.
-- Relaxed tolerance parameters are used in asymmetric calculation 
-because only 'T' transformer model is available in pandapower while power-grid-model uses 'pi' model.
+- Asymmetrical calculations are possible only for grounded network transformer in pandapower.
+  Hence open cases are not evaluated.
+- Relaxed tolerance parameters are used in asymmetric calculation because only 'T' transformer model is available in
+  pandapower while power-grid-model uses 'pi' model.
 ```
 
 ```{tikz}
@@ -119,7 +123,8 @@ While source is present in all cases, this case tests two sources being used tog
 
 ### Symmetrical Load
 
-A symmetrical load can be in open or closed state. It can be of 3 types: constant power, constant impedance and constant current.
+A symmetrical load can be in open or closed state.
+It can be of 3 types: constant power, constant impedance and constant current.
 
 ```{tikz}
 :alt: sym_load
@@ -135,7 +140,8 @@ A symmetrical load can be in open or closed state. It can be of 3 types: constan
 
 ### Symmetrical generator
 
-A symmetrical generator can be in open or closed state. It can be of 3 types: constant power, constant impedance and constant current.
+A symmetrical generator can be in open or closed state.
+It can be of 3 types: constant power, constant impedance and constant current.
 
 ```{tikz}
 :alt: sym_gen
@@ -150,7 +156,7 @@ A symmetrical generator can be in open or closed state. It can be of 3 types: co
 ```
 
 ```{note}
-Only constant power implementation is possible in pandapower for asymmetrical calculations. 
+Only constant power implementation is possible in pandapower for asymmetrical calculations.
 All the Z, I and P loads are already validated for symmetrical calculation.
 ```
 
@@ -225,7 +231,8 @@ The circuit diagram is as follows (The node 6 is same in both lines):
 
 ## Vision validation case
 
-There are 2 test grid cases included for validation against vision: A minimal example and a network containing all components supported by power-grid-model-io
+There are 2 test grid cases included for validation against vision: A minimal example and a network containing all
+components supported by power-grid-model-io.
 Their Vision files are included as well.
 
 ### Simple example
@@ -234,19 +241,24 @@ The `vision-example` is a minimal case with only node, source, cable and load.
 
 ### Network case
 
-The Vision files were exported to excel which was then converted to power-grid-model input using [power-grid-model-io](https://github.com/PowerGridModel/power-grid-model-io).
+The Vision files were exported to excel which was then converted to power-grid-model input using
+[power-grid-model-io](https://github.com/PowerGridModel/power-grid-model-io).
 The `vision-network` case has the following characteristics:
 
 - It contains 26 nodes (plus 20 from transformer load secondary node).
 - The voltage level of grid input is at 110kV from which it is stepped down to 10.5kV level.
-- On the 10.5kV level, one minimal distribution grid containing transformer loads, wind and PV generation and one additional reactance coil.
-- All the remaining supported components for which conversion to power-grid-model is supported are also connected to this level.
+- On the 10.5kV level, one minimal distribution grid containing transformer loads, wind and PV generation and one
+  additional reactance coil.
+- All the remaining supported components for which conversion to power-grid-model is supported are also connected to
+  this level.
   They include: line, reactance, special transformer, load, synchronous generator, shunt and zig-zag transformer.
 
-The cases are built taking into consideration the modelling differences between Vision and power-grid-model mentioned in the [power-grid-model-io documentation](https://power-grid-model-io.readthedocs.io/).
+The cases are built taking into consideration the modelling differences between Vision and power-grid-model mentioned in
+the [power-grid-model-io documentation](https://power-grid-model-io.readthedocs.io/).
 The node voltages and branch power flows are validated for symmetrical calculation.
-For asymmetrical output only the result attributes being validated are the ones which can be exported to excel. (ie. node voltages and branch currents)
-The absolute tolerances here are set to the least count of the Vision result export: till ie. till V and kW level.
+For asymmetrical output only the result attributes being validated are the ones which can be exported to excel. (i.e.,
+node voltages and branch currents)
+The absolute tolerances here are set to the least count of the Vision result export: i.e., till V and kW level.
 
 ## Short Circuit Calculation cases
 
@@ -275,11 +287,13 @@ The test grid is as follows:
 
 There are 4 cases for the 4 types of fault: three_phase, single_phase_ground, two_phase, two_phase_ground.
 Each case is tested for `minimum` and `maximum` voltage scaling.
-Each case has multiple scenarios. They are combinations of following situations:
+Each case has multiple scenarios.
+They are combinations of following situations:
 
 - Valid phase combinations: abc, a, b, c, ab, bc, ac
 - Source switched on or off (highlighted in green)
-- A shunt with only `b0` value modelled to be a grounding transformer switched on or off. (highlighted in blue)
+- A shunt with only `b0` value modelled to be a grounding transformer switched on or off.
+  (highlighted in blue)
 - Fault locations (highlighted in red)
 - Fault impedance: hard ground or with impedance.
 
