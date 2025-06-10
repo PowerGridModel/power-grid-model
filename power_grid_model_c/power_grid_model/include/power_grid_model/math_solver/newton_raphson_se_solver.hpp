@@ -413,7 +413,7 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
     }
 
     /// @brief Adds contribution of branch measurements to the G(r, r), G(r, c) and eta_r blocks,
-    ///  given the iteration passes through (r, c) ie. row, col
+    ///  given the iteration passes through (r, c), i.e., row, col
     ///
     /// When iterating via (row, col), have 4 cases regarding branch measurements:
     ///      if y_type == yft
@@ -528,7 +528,7 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
     /// angle measurement of zero. w_theta = w_k by default for all measurements
     ///    angle_error = u_error / u_rated (1.0) = w_k
     ///
-    /// @param block LHS(row, col), ie. LHS(row, row)
+    /// @param block LHS(row, col), i.e., LHS(row, row)
     /// @param rhs_block RHS(row)
     /// @param measured_values
     /// @param bus bus with voltage measurement
