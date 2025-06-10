@@ -394,7 +394,8 @@ def serialized_data(request):
     ]
 )
 def data_filters(request):
-    """Data filers for deserialization. Note: List / set is not supported for testing since it can be replicated using dict."""
+    """Data filers for deserialization.
+    Note: List / set is not supported for testing since it can be replicated using dict."""
     return request.param
 
 

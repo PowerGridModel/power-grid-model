@@ -9,8 +9,6 @@ Although all functions are 'public', you probably only need validate_input_data(
 
 """
 
-# pylint: disable=too-many-lines
-
 import copy
 from collections.abc import Sized as ABCSized
 from itertools import chain
@@ -35,9 +33,6 @@ from power_grid_model.enum import (
     WindingType,
 )
 from power_grid_model.validation._rules import (
-    any_voltage_angle_measurement_if_global_current_measurement as _any_voltage_angle_measurement_if_global_current_measurement,  # pylint: disable=line-too-long
-)
-from power_grid_model.validation._rules import (
     all_between as _all_between,
     all_between_or_at as _all_between_or_at,
     all_boolean as _all_boolean,
@@ -59,6 +54,7 @@ from power_grid_model.validation._rules import (
     all_valid_enum_values as _all_valid_enum_values,
     all_valid_fault_phases as _all_valid_fault_phases,
     all_valid_ids as _all_valid_ids,
+    any_voltage_angle_measurement_if_global_current_measurement as _any_voltage_angle_measurement_if_global_current_measurement,  # noqa: E501
     ids_valid_in_update_data_set as _ids_valid_in_update_data_set,
     no_strict_subset_missing as _no_strict_subset_missing,
     none_missing as _none_missing,
@@ -281,9 +277,6 @@ def _process_power_sigma_and_p_q_sigma(
 
         mask = np.logical_and(np.isnan(power_sigma), np.any(np.logical_not(np.isnan(q_sigma)), axis=asym_axes))
         power_sigma[mask] = np.nansum(q_sigma[mask], axis=asym_axes)
-
-
-# pylint: disable=too-many-statements
 
 
 def validate_required_values(
@@ -527,9 +520,6 @@ def validate_values(data: SingleDataset, calculation_type: CalculationType | Non
     return errors
 
 
-# pylint: disable=missing-function-docstring
-
-
 def validate_base(data: SingleDataset, component: ComponentType) -> list[ValidationError]:
     errors: list[ValidationError] = list(_all_unique(data, component, "id"))
     return errors
@@ -641,7 +631,6 @@ def validate_branch3(data: SingleDataset, component: ComponentType) -> list[Vali
     return errors
 
 
-# pylint: disable=R0915
 def validate_three_winding_transformer(data: SingleDataset) -> list[ValidationError]:
     errors = validate_branch3(data, ComponentType.three_winding_transformer)
     errors += _all_greater_than_zero(data, ComponentType.three_winding_transformer, "u1")
