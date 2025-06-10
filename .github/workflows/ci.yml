@@ -61,6 +61,7 @@ jobs:
     if: always()
 
     steps:
+      # this explicit check is needed cfr. https://github.com/orgs/community/discussions/75568
       - run: echo '${{ toJSON(needs) }}' | jq -e 'to_entries | all(.value.result == "success")'
       - run: echo "ci passed"
 
