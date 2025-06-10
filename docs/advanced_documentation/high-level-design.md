@@ -7,7 +7,8 @@ SPDX-License-Identifier: MPL-2.0
 # High-level design
 
 The power-grid-model follows a typical dynamic/shared library approach, in which the user
-interface is separated from the core implementation using a strict system boundary. Depending
+interface is separated from the core implementation using a strict system boundary.
+Depending
 on the use case and programming language used by the user to call the interface, the user can
 opt to interface with the C API in different ways.
 
@@ -98,10 +99,12 @@ flowchart TD
 ## Creating a custom library or interface
 
 We seek to provide an optimal user experience, but with the sheer amount of programming languages and
-features, it would be impossible to provide a full feature-rich library for every single one. We,
+features, it would be impossible to provide a full feature-rich library for every single one.
+We,
 being a {{ "[community-driven]({}/GOVERNANCE.md)".format(pgm_project_contribution) }} project strongly in
 favor of modern software engineering practices, therefore encourage people to create their own
-libraries and interfaces to improve their own experience. There are several possible reasons a user
+libraries and interfaces to improve their own experience.
+There are several possible reasons a user
 may want to create their own library or interface, e.g.:
 
 * Support for a new programming language
@@ -116,16 +119,20 @@ lower-level ones, following the same pattern as the power-grid-model
 ### Hosting a custom library or interface
 
 The Power Grid Model organization supports people creating and hosting custom libraries and
-interfaces. If you are doing so and are willing to notify us, please create an item on our
-[discussion board](https://github.com/orgs/PowerGridModel/discussions) on GitHub. The Power Grid
+interfaces.
+If you are doing so and are willing to notify us, please create an item on our
+[discussion board](https://github.com/orgs/PowerGridModel/discussions) on GitHub.
+The Power Grid
 Model organization will review your item and we may decide to mention your custom library on our
 project website and documentation.
 
 ### Contributing a custom library or interface
 
 When a custom library or interface becomes mature enough and the circumstances allow making it
-publicly available, please consider contributing it to the Power Grid Model organization. If you are
+publicly available, please consider contributing it to the Power Grid Model organization.
+If you are
 considering contributing your custom library or interface, please read and follow our
 {{ "[contributing guidelines]({}/CONTRIBUTING.md)".format(pgm_project_contribution) }} and open an
-item on our [discussion board](https://github.com/orgs/PowerGridModel/discussions) on GitHub. The
+item on our [discussion board](https://github.com/orgs/PowerGridModel/discussions) on GitHub.
+The
 Power Grid Model organization will review your item and contact you accordingly.

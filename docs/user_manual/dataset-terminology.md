@@ -6,7 +6,8 @@ SPDX-License-Identifier: MPL-2.0
 
 # Dataset Terminology
 
-Some terms regarding the data structures are explained here, including the definition of dataset, component, and attribute. For detailed data types used throughout `power-grid-model`, please refer to [Python API Reference](../api_reference/python-api-reference.md).
+Some terms regarding the data structures are explained here, including the definition of dataset, component, and attribute.
+For detailed data types used throughout `power-grid-model`, please refer to [Python API Reference](../api_reference/python-api-reference.md).
 
 ## Data structures
 
@@ -66,12 +67,15 @@ graph TD
 
 ```
 
-- **{py:class}`Dataset <power_grid_model.data_types.Dataset>`:** Either a single or a batch dataset. it is a dictionary with keys as the component types (eg. `line`, `node`, etc) and values as **ComponentData**
+- **{py:class}`Dataset <power_grid_model.data_types.Dataset>`:** Either a single or a batch dataset.
+  It is a dictionary with keys as the component types (eg. `line`, `node`, etc) and values as **ComponentData**
   - **{py:class}`SingleDataset <power_grid_model.data_types.SingleDataset>`:** A data type storing input data (i.e. all elements of all components) for a single scenario.
-  - **{py:class}`BatchDataset <power_grid_model.data_types.BatchDataset>`:** A data type storing update and or output data for one or more scenarios. A batch dataset can contain sparse or dense data, depending on the component.
+  - **{py:class}`BatchDataset <power_grid_model.data_types.BatchDataset>`:** A data type storing update and or output data for one or more scenarios.
+    A batch dataset can contain sparse or dense data, depending on the component.
 
 - **{py:class}`ComponentData <power_grid_model.data_types.ComponentData>`:** The data corresponding to the component.
-  - **{py:class}`DataArray <power_grid_model.data_types.DataArray>`:** A data array can be a single or a batch array. It is a numpy structured array.
+  - **{py:class}`DataArray <power_grid_model.data_types.DataArray>`:** A data array can be a single or a batch array.
+    It is a numpy structured array.
     - **{py:class}`SingleArray <power_grid_model.data_types.SingleArray>`:** A 1D numpy structured array corresponding to a single dataset.
     - **{py:class}`BatchArray <power_grid_model.data_types.BatchArray>`:** Multiple batches of data can be represented in sparse or dense forms.
       - **{py:class}`DenseBatchArray <power_grid_model.data_types.DenseBatchArray>`:** A 2D structured numpy array containing a list of components of the same type for each scenario.
@@ -82,7 +86,9 @@ graph TD
       - **{py:class}`DenseBatchColumnarData <power_grid_model.data_types.DenseBatchColumnarData>`:** A dictionary of attributes as keys and 2D/3D numpy array of `BatchColumn` type as values in a single dataset.
       - **{py:class}`SparseBatchColumnarData <power_grid_model.data_types.SparseBatchColumnarData>`:** A typed dictionary with a 1D numpy array of `Indexpointer` type under `indptr` key and `SingleColumn` under `data` which is all components flattened over all batches.
 
-- **{py:class}`IndexPointer <power_grid_model.data_types.IndexPointer>`:** A 1D numpy array of int64 type used to specify sparse batches. It indicates the range of components within a scenario. For example, an Index pointer  of [0, 1, 3, 3] indicates 4 batches with element indexed with 0 in 1st batch, [1, 2, 3] in 2nd batch and no elements in 3rd batch.
+- **{py:class}`IndexPointer <power_grid_model.data_types.IndexPointer>`:** A 1D numpy array of int64 type used to specify sparse batches.
+  It indicates the range of components within a scenario.
+  For example, an Index pointer  of [0, 1, 3, 3] indicates 4 batches with element indexed with 0 in 1st batch, [1, 2, 3] in 2nd batch and no elements in 3rd batch.
 - **{py:class}`SingleColumn <power_grid_model.data_types.SingleColumn>`:** A 1D/2D numpy array of values corresponding to a specific attribute.
 - **{py:class}`BatchColumn <power_grid_model.data_types.BatchColumn>`:** A 2D/3D numpy array of values corresponding to a specific attribute.
 
@@ -103,7 +109,8 @@ The dimensions of numpy arrays and the interpretation of each dimension is as fo
 
 ### Type of Dataset
 
-The types of `Dataset` include the following: `input`, `update`, `sym_output`, `asym_output`, and `sc_output`. They are included under the enum {py:class}`DatasetType <power_grid_model.typing.DatasetType>`.
+The types of `Dataset` include the following: `input`, `update`, `sym_output`, `asym_output`, and `sc_output`.
+They are included under the enum {py:class}`DatasetType <power_grid_model.typing.DatasetType>`.
 Exemplary datasets attributes are given in a dataset containing a `line` component.
 
 - **input:** Contains attributes relevant to configuration of grid.
@@ -112,14 +119,17 @@ Exemplary datasets attributes are given in a dataset containing a `line` compone
   - Example: `from_status`,`to_status`
 - **sym_output:** Contains attributes relevant to symmetrical steady state output of power flow or state estimation calculation.
   - Example: `p_from`, `p_to`
-- **asym_output:** Contains attributes relevant to asymmetrical steady state output of power flow or state estimation calculation. Attributes are similar to `sym_output` except some values of the asymmetrical dataset will contain detailed data for all 3 phases individually.
+- **asym_output:** Contains attributes relevant to asymmetrical steady state output of power flow or state estimation calculation.
+  Attributes are similar to `sym_output` except some values of the asymmetrical dataset will contain detailed data for all 3 phases individually.
   - Example: `p_from`, `p_to`
-- **sc_output:** Contains attributes relevant to symmetrical short circuit calculation output. Like for the `asym_output`, detailed data for all 3 phases will be provided where relevant.
+- **sc_output:** Contains attributes relevant to symmetrical short circuit calculation output.
+  Like for the `asym_output`, detailed data for all 3 phases will be provided where relevant.
   - Example: `i_from`, `i_from_angle`
 
 ## Terminologies related to data structures
 
-- **Component:** The definition of a part of a grid: e.g., `node`, `source`, `line`, etc. Check highlighted section of graph in [Component Hierarchy](./data-model.md#component-type-hierarchy-and-graph-data-model)
+- **Component:** The definition of a part of a grid: e.g., `node`, `source`, `line`, etc.
+  Check highlighted section of graph in [Component Hierarchy](./data-model.md#component-type-hierarchy-and-graph-data-model)
 
 - **Element:** A single instance of a node, source, line etc.
 
@@ -127,21 +137,29 @@ Exemplary datasets attributes are given in a dataset containing a `line` compone
 
 - **Value:** The value under an attribute, ie. id, energized, p, etc.
 
-- **Array:** All elements of one specific component, for one or more scenarios. I.e. a node array or line array. An array can be one dimensional (containing all elements of a single component for one scenario), two-dimensional (containing all elements of a single component for multiple scenarios), or it can be a sparse array, which is essentially a dictionary with a data buffer and an index pointer.
+- **Array:** All elements of one specific component, for one or more scenarios.
+  I.e. a node array or line array.
+  An array can be one dimensional (containing all elements of a single component for one scenario), two-dimensional (containing all elements of a single component for multiple scenarios), or it can be a sparse array, which is essentially a dictionary with a data buffer and an index pointer.
 
-`power-grid-model` can process many scenarios (e.g. time steps, switch states, etc.) at once, which we call a batch. The batch size is the number of scenarios.
+`power-grid-model` can process many scenarios (e.g. time steps, switch states, etc.) at once, which we call a batch.
+The batch size is the number of scenarios.
 
 - **Scenario:** A single time step / switch state topology.
 
-- **Batch:** The set of scenarios. (there is only one batch)
+- **Batch:** The set of scenarios.
+  (there is only one batch)
 
 - **Batch size:** The total number of scenarios in the batch.
 
-- **n_scenarios:** The total number of scenarios in the batch. (Same as Batch Size)
+- **n_scenarios:** The total number of scenarios in the batch.
+  (Same as Batch Size)
 
-- **n_component_elements_per_scenario:** The number of elements of a specific component for each scenario. This can be an integer (for dense batches), or a list of integers for sparse batches, where each integer in the list represents the number of elements of a specific component for the scenario corresponding to the index of the integer.
+- **n_component_elements_per_scenario:** The number of elements of a specific component for each scenario.
+  This can be an integer (for dense batches), or a list of integers for sparse batches, where each integer in the list represents the number of elements of a specific component for the scenario corresponding to the index of the integer.
 
-- **Sub-batch:** When computing in parallel, all scenarios in batch calculation are distributed over threads. Each thread handles a subset of the `Batch`, called a `Sub-batch`. This is only used internally in the C++ code.
+- **Sub-batch:** When computing in parallel, all scenarios in batch calculation are distributed over threads.
+  Each thread handles a subset of the `Batch`, called a `Sub-batch`.
+  This is only used internally in the C++ code.
 
 ## Attributes of Components
 

@@ -6,7 +6,8 @@ SPDX-License-Identifier: MPL-2.0
 
 # Build Guide
 
-This document explains how you can build this library from source, including some examples of build environment. In this
+This document explains how you can build this library from source, including some examples of build environment.
+In this
 repository there are three builds:
 
 * A `power-grid-model` [pip](https://pypi.org/project/power-grid-model/) Python package with C++ extension as the calculation core.
@@ -22,22 +23,27 @@ repository there are three builds:
 
 ## Build Requirements
 
-To build the library from source, you need to first prepare the compiler toolchains and the build dependencies. In this
-section a list of general requirements are given. After this section there are examples of setup in Linux (Ubuntu 22.04),
+To build the library from source, you need to first prepare the compiler toolchains and the build dependencies.
+In this
+section a list of general requirements are given.
+After this section there are examples of setup in Linux (Ubuntu 22.04),
 Windows 10, and macOS (Big Sur).
 
 ### Architecture Support
 
-This library is written and tested on `x86_64` and `arm64` architecture. Building the library in `IA-32` might be working, but is
+This library is written and tested on `x86_64` and `arm64` architecture.
+Building the library in `IA-32` might be working, but is
 not tested.
 
 The source code is written with the mindset of ISO standard C++ only, i.e. avoid compiler-extension or platform-specific
-features as much as possible. In this way the effort to port the library to other platform/architecture might be
+features as much as possible.
+In this way the effort to port the library to other platform/architecture might be
 minimum.
 
 ### Compiler Support
 
-You need a C++ compiler with C++20 support. Below is a list of tested compilers:
+You need a C++ compiler with C++20 support.
+Below is a list of tested compilers:
 
 #### Linux
 
@@ -110,7 +116,8 @@ Then you can run the tests.
 pytest
 ```
 
-A basic `self_test` function is provided to check if the installation was successful and ensures there are no build errors, segmentation violations, undefined symbols, etc. It performs multiple C API calls, runs through the main data flow, and verifies the integrity of serialization and deserialization.
+A basic `self_test` function is provided to check if the installation was successful and ensures there are no build errors, segmentation violations, undefined symbols, etc.
+It performs multiple C API calls, runs through the main data flow, and verifies the integrity of serialization and deserialization.
 
 ```python
 from power_grid_model.utils import self_test
@@ -151,7 +158,8 @@ cmake --install build/ --config Release --prefix install/
 ### Developer build
 
 If you opt for a developer build of Power Grid Model,
-you can use the pre-defined CMake presets to enable developer build, including all the tests, warnings, examples, and benchmark. In the presets the [Ninja](https://ninja-build.org/) generator is used.
+you can use the pre-defined CMake presets to enable developer build, including all the tests, warnings, examples, and benchmark.
+In the presets the [Ninja](https://ninja-build.org/) generator is used.
 In principle, you can use any C++ IDE with cmake and ninja support to develop the C++ project.
 It is also possible to use the bare CMake CLI to set up the project.
 Supported presets for your development platform can be listed using `cmake --list-presets`.
@@ -165,23 +173,32 @@ In the developer build the following build targets (directories) are enabled:
 * `tests/benchmark_cpp`: the C++ benchmark target for performance measure.
 * `power_grid_model_c_example`: an example C program to call the dynamic library
 
-On Linux/macOS, the presets will use command `clang`/`clang++` or `gcc`/`g++` to find the relevant `clang` or `gcc` compiler. It is the developer's reponsiblity to properly define symbolic links (which should be discoverable through `PATH` environment variable) of `clang` or `gcc` compiler in your system. If you want to build with `clang-tidy`, you also need to define symbolic link of `clang-tidy` to point to the actual `clang-tidy` executable of your system.
+On Linux/macOS, the presets will use command `clang`/`clang++` or `gcc`/`g++` to find the relevant `clang` or `gcc` compiler.
+It is the developer's reponsiblity to properly define symbolic links (which should be discoverable through `PATH` environment variable) of `clang` or `gcc` compiler in your system.
+If you want to build with `clang-tidy`, you also need to define symbolic link of `clang-tidy` to point to the actual `clang-tidy` executable of your system.
 
-Similar also applies to Windows: the presets will use command `cl.exe` or `clang-cl.exe` to find the compiler. Developer needs to make sure the they are discoverable in `PATH`. For x64 Windows native development using MSVC or Clang CL, please use the `x64 Native Command Prompt`, which uses `vcvarsall.bat` to set up the appropriate build environment.
+Similar also applies to Windows: the presets will use command `cl.exe` or `clang-cl.exe` to find the compiler.
+Developer needs to make sure the they are discoverable in `PATH`.
+For x64 Windows native development using MSVC or Clang CL, please use the `x64 Native Command Prompt`, which uses `vcvarsall.bat` to set up the appropriate build environment.
 
 ## Visual Studio Code Support
 
-You can use any IDE to develop this project. As a popular cross-platform IDE, the settings for Visual Studio Code is preconfigured in the folder `.vscode`. You can open the repository folder with VSCode and the configuration will be loaded automatically.
+You can use any IDE to develop this project.
+As a popular cross-platform IDE, the settings for Visual Studio Code is preconfigured in the folder `.vscode`.
+You can open the repository folder with VSCode and the configuration will be loaded automatically.
 
 ```{note}
-VSCode (as well as some other IDEs) does not set its own build environment itself. For optimal usage, open the folder
-using `code <project_dir>` from a terminal that has the environment set up. See above section for tips.
+VSCode (as well as some other IDEs) does not set its own build environment itself.
+For optimal usage, open the folder
+using `code <project_dir>` from a terminal that has the environment set up.
+See above section for tips.
 ```
 
 ## Build Script for Linux/macOS
 
 There is a convenient shell script to build the cmake project in Linux or macOS:
-{{ "[`build.sh`]({}/build.sh)".format(gh_link_head_blob) }}. You can study the file and write your own build script.
+{{ "[`build.sh`]({}/build.sh)".format(gh_link_head_blob) }}.
+You can study the file and write your own build script.
 The following options are supported in the build script.
 
 ```shell
@@ -196,8 +213,8 @@ To list the available presets, run `./build.sh -h`.
 
 ## Example Setup for Ubuntu 24.04 (in WSL or physical/virtual machine)
 
-In this section an example is given for setup in Ubuntu 24.04. You can use this example in Windows Subsystem for Linux (
-WSL), or in a physical/virtual machine.
+In this section an example is given for setup in Ubuntu 24.04.
+You can use this example in Windows Subsystem for Linux (WSL), or in a physical/virtual machine.
 
 ### Environment variables
 
@@ -258,7 +275,8 @@ pytest
 
 There is a convenient shell script to build the cmake project: {{ "[`build.sh`]({}/build.sh)".format(gh_link_head_blob) }}.
 
-As an example, go to the root folder of repo. Use the following command to build the project in release mode:
+As an example, go to the root folder of repo.
+Use the following command to build the project in release mode:
 
 ```shell
 ./build.sh -p <preset>
@@ -296,11 +314,13 @@ Define the following environment variable user-wide:
 
 ### Software Toolchains
 
-You need to install the MSVC compiler. You can either install the whole Visual Studio IDE or just the build tools.
+You need to install the MSVC compiler.
+You can either install the whole Visual Studio IDE or just the build tools.
 
 * [Visual Studio Build Tools](https://aka.ms/vs/17/release/vs_BuildTools.exe) (free)
   * Select C++ build tools
-* Full [Visual Studio](https://visualstudio.microsoft.com/vs/) (All three versions are suitable. Check the license!)
+* Full [Visual Studio](https://visualstudio.microsoft.com/vs/) (All three versions are suitable.
+  Check the license!)
   * Select Desktop Development with C++
     * [Optional] Select `C++ Clang tools for Windows`
 
@@ -310,7 +330,8 @@ Other toolchains:
 * [Git](https://git-scm.com/downloads)
 
 ```{note}
-It is also possible to use any other `conda` provider like [Miniconda](https://docs.conda.io/en/latest/miniconda.html). However, we recommend using [Miniforge](https://github.com/conda-forge/miniforge), because it is published under BSD License and by default does not have any references to commercially licensed software.
+It is also possible to use any other `conda` provider like [Miniconda](https://docs.conda.io/en/latest/miniconda.html).
+However, we recommend using [Miniforge](https://github.com/conda-forge/miniforge), because it is published under BSD License and by default does not have any references to commercially licensed software.
 ```
 
 ```{note}
@@ -320,7 +341,8 @@ It is possible to enable long paths in Windows by following the steps in the [Mi
 
 ### C++ packages
 
-The recommended way to get C++ package is via `conda`. Open a miniconda console.
+The recommended way to get C++ package is via `conda`.
+Open a miniconda console.
 
 ```shell
 conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge libboost-headers eigen nlohmann_json msgpack-cxx doctest
@@ -359,7 +381,9 @@ It is possible to enable long paths in Windows by following the steps in the [Mi
 
 If you have installed Visual Studio 2019/2022 (not the build tools), you can open the repo folder as a cmake project.
 The IDE should be able to automatically detect the Visual Studio cmake configuration file
-`CMakePresets.json`. Several configurations are pre-defined. It includes debug and release builds.
+`CMakePresets.json`.
+Several configurations are pre-defined.
+It includes debug and release builds.
 
 * `msvc-debug`, displayed as `Debug (MSVC)`
 * `msvc-release`, displayed as `Release (MSVC)`.
@@ -398,8 +422,10 @@ brew install ninja cmake boost eigen nlohmann-json msgpack-cxx doctest
 
 ### Build Python Library from Source
 
-It is recommended to create a virtual environment. Clone repository, create and activate virtual environment, and
-install the build dependency. go to a root folder you prefer to save the repositories.
+It is recommended to create a virtual environment.
+Clone repository, create and activate virtual environment, and
+install the build dependency.
+go to a root folder you prefer to save the repositories.
 
 ```shell
 git clone https://github.com/PowerGridModel/power-grid-model.git 
@@ -421,7 +447,8 @@ There is a convenient shell script to build the cmake project: {{ "[`build.sh`](
 
 **Note: the test coverage option is not supported in macOS.**
 
-As an example, go to the root folder of repo. Use the following command to build the project in release mode:
+As an example, go to the root folder of repo.
+Use the following command to build the project in release mode:
 
 ```shell
 ./build.sh -p <preset>
@@ -455,17 +482,23 @@ The {{ "[package tests]({}/tests/package_tests)".format(gh_link_head_blob) }} pr
 project contained in {{ "[`tests/package_tests`]({}/tests/package_tests)".format(gh_link_head_blob) }}.
 
 This project is designed to test and illustrate finding and linking to the installed package from the Power Grid Model
-project. Setup of this project is done the same way as the setup of the main project mentioned in the above, but with
+project.
+Setup of this project is done the same way as the setup of the main project mentioned in the above, but with
 the {{ "[`tests/package_tests`]({}/tests/package_tests)".format(gh_link_head_blob) }} directory as its root folder.
 
 ```{note}
-This project has the main project as a required dependency. Configuration will fail if the main project has not been
+This project has the main project as a required dependency.
+Configuration will fail if the main project has not been
 built and installed, e.g. using `cmake --build --preset <preset> --target install` for the current preset.
 ```
 
 ## Documentation
 
-The documentation is built in [Sphinx](https://github.com/sphinx-doc/sphinx). It can be built locally in a Python environment. The packages required for building it can be found under the `[doc]` optional dependencies. In addition, the `power-grid-model` Python package needs to be built by following the steps mentioned [above](#build-python-package). After that, the documentation specific packages can be installed via:
+The documentation is built in [Sphinx](https://github.com/sphinx-doc/sphinx).
+It can be built locally in a Python environment.
+The packages required for building it can be found under the `[doc]` optional dependencies.
+In addition, the `power-grid-model` Python package needs to be built by following the steps mentioned [above](#build-python-package).
+After that, the documentation specific packages can be installed via:
 
 ```shell
 pip install -e .[doc]
@@ -475,7 +508,8 @@ pip install -e .[doc]
 The `pip install .` part of the command installs the complete package from scratch.
 ```
 
-The C API documentation is generated using [Doxygen](https://www.doxygen.nl). If you do not have Doxygen installed, it can also be temporarily bypassed by commenting out the `breathe` settings in  `docs/conf.py`.
+The C API documentation is generated using [Doxygen](https://www.doxygen.nl).
+If you do not have Doxygen installed, it can also be temporarily bypassed by commenting out the `breathe` settings in  `docs/conf.py`.
 
 The documentation can be built with the following commands, resulting in HTML files of the webpages which can be found in `docs/_build/html` directory.
 

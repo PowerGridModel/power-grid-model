@@ -33,5 +33,11 @@
         "projectKey": "PowerGridModel_power-grid-model"
     },
     "C_Cpp.formatting": "clangFormat",
-    "C_Cpp.clang_format_fallbackStyle": "LLVM"
+    "C_Cpp.clang_format_fallbackStyle": "LLVM",
+    "[markdown]": {
+        "editor.defaultFormatter": "DavidAnson.vscode-markdownlint",
+        "editor.rulers": [
+            120
+        ]
+    }
 }

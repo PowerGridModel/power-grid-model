@@ -64,7 +64,9 @@ node['u_rated'] = [150e3, 10e3]
 ## Columnar data format
 
 Additionally, we can represent the contents mentioned `NodeInput` struct in [Structured Array](#structured-array) for only specific attributes.
-This is especially useful when the component in question, e.g., a transformer, has many default attributes. In that case, the user can save significantly on memory usage. Hence, we can term it into `NodeInputURated` which is of `double` type.
+This is especially useful when the component in question, e.g., a transformer, has many default attributes.
+In that case, the user can save significantly on memory usage.
+Hence, we can term it into `NodeInputURated` which is of `double` type.
 (note again, its representation in C++ core might be different than that of `NodeInputURated`).
 
 One can create a `std::vector<NodeInputURated>` to hold input for multiple nodes.
@@ -123,7 +125,8 @@ The basic data types used in the interface between C++ and Python are shown in t
 | `double[3]` | `'(3, )f8'`   | NaN ([IEEE 754](https://en.wikipedia.org/wiki/NaN)) | three-phase asymmetric physical quantities (e.g. voltage)                               |
 
 *The [endianness](https://en.wikipedia.org/wiki/Endianness)
-of C++ and Python side is also matched. For `x86-64` platform the little endian is used, so that
+of C++ and Python side is also matched.
+For `x86-64` platform the little endian is used, so that
 the `numpy.dtype` is `'<i4'` for `int32_t` in C++.*
 
 In the input and update dataset there are some optional attributes.
@@ -192,7 +195,8 @@ and initialize all the values to null value as above.
 So you only have to assign meaningful values into the array.
 See [Python API Reference](../api_reference/python-api-reference.md) for detailed documentation.
 
-In the code below, a line update dataset is created. It sets the `from_status` of all the lines to `1`,
+In the code below, a line update dataset is created.
+It sets the `from_status` of all the lines to `1`,
 but leave the `to_status` unchanged (it will have the null value `-128`).
 
 ```python
