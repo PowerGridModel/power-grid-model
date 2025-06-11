@@ -117,6 +117,7 @@ advanced_documentation/c-api
 advanced_documentation/high-level-design
 advanced_documentation/core-design
 advanced_documentation/python-wrapper-design
+advanced_documentation/terminology
 ```
 
 ```{toctree}
