@@ -651,10 +651,8 @@ def _extract_columnar_data(
     """
     not_columnar_data_message = "Expected columnar data"
 
-    if is_batch is not None:
-        allowed_dims = [2, 3] if is_batch else [1, 2]
-    else:
-        allowed_dims = [1, 2, 3]
+    if_is_batch = [2, 3] if is_batch else [1, 2]
+    allowed_dims = (if_is_batch) if is_batch is not None else [1, 2, 3]
 
     sub_data = data["data"] if is_sparse(data) else data
 
@@ -683,10 +681,8 @@ def _extract_row_based_data(
     Returns:
         SingleArray | DenseBatchArray: the contents of row based data
     """
-    if is_batch is not None:
-        allowed_dims = [2] if is_batch else [1]
-    else:
-        allowed_dims = [1, 2]
+    if_is_batch = [2] if is_batch else [1]
+    allowed_dims = if_is_batch if is_batch is not None else [1, 2]
 
     sub_data = data["data"] if is_sparse(data) else data
 

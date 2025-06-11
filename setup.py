@@ -76,10 +76,7 @@ class bdist_wheel_abi_none(bdist_wheel):
 class MyBuildExt(build_ext):
     def build_extensions(self):
         if not if_win:
-            if "CXX" in os.environ:
-                cxx = os.environ["CXX"]
-            else:
-                cxx = self.compiler.compiler_cxx[0]
+            cxx = os.environ["CXX"] if "CXX" in os.environ else self.compiler.compiler_cxx[0]
             # check setuptools has an update change in the version 72.2 about cxx compiler options
             # to be compatible with both version, we check if compiler_so_cxx exists
             if not hasattr(self.compiler, "compiler_so_cxx"):
@@ -93,10 +90,7 @@ class MyBuildExt(build_ext):
             linker_so_cxx[0] = cxx
             self.compiler.compiler_cxx = [cxx]
             # add link time optimization
-            if "clang" in cxx:
-                lto_flag = "-flto=thin"
-            else:
-                lto_flag = "-flto"
+            lto_flag = "-flto=thin" if "clang" in cxx else "-flto"
             compiler_so_cxx += [lto_flag]
             linker_so_cxx += [lto_flag]
             # remove debug and optimization flags
