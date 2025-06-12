@@ -241,7 +241,8 @@ template <class MainModel, class... ComponentType> class BatchDispatch {
         for (Idx batch = 0; batch < static_cast<Idx>(exceptions.size()); ++batch) {
             // append exception if it is not empty
             if (!exceptions[batch].empty()) {
-                combined_error_message += "Error in batch #" + std::to_string(batch) + ": " + exceptions[batch];
+                combined_error_message =
+                    std::format("{}Error in batch #{}: {}\n", combined_error_message, batch, exceptions[batch]);
                 failed_scenarios.push_back(batch);
                 err_msgs.push_back(exceptions[batch]);
             }
