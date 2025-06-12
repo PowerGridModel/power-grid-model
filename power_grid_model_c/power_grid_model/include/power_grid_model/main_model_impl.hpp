@@ -155,7 +155,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         BatchDispatch<MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentList<ComponentType...>>,
                       ComponentType...>;
 
-    static constexpr Idx ignore_output{BatchDispatcher::sequential};
+    static constexpr Idx ignore_output{BatchDispatcher::ignore_output};
     static constexpr Idx isolated_component{-1};
     static constexpr Idx not_connected{-1};
     static constexpr Idx sequential{BatchDispatcher::sequential};
