@@ -2,16 +2,19 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+import json
 from pathlib import Path
 from unittest.mock import MagicMock, mock_open, patch
 
 import numpy as np
 import pytest
 
-from power_grid_model import initialize_array
+from power_grid_model import DatasetType, initialize_array
 from power_grid_model._core.power_grid_meta import power_grid_meta_data
 from power_grid_model.data_types import Dataset
 from power_grid_model.utils import (
+    LICENSE_TEXT,
+    _make_test_case,
     get_component_batch_size,
     get_dataset_batch_size,
     get_dataset_scenario,
@@ -164,3 +167,49 @@ def test_msgpack_serialize(serialize_mock: MagicMock, open_mock: MagicMock):
 
 def test_self_test():
     self_test()
+
+
+@pytest.mark.parametrize(
+    ("output_dataset_type", "output_file_name", "update_data"),
+    (
+        (DatasetType.sym_output, "sym_output_batch.json", {"version": "1.0", "data": "update_data"}),
+        (DatasetType.sym_output, "sym_output.json", None),
+        (DatasetType.asym_output, "asym_output_batch.json", {"version": "1.0", "data": "update_data"}),
+        (DatasetType.asym_output, "asym_output.json", None),
+        (DatasetType.sc_output, "sc_output_batch.json", {"version": "1.0", "data": "update_data"}),
+        (DatasetType.sc_output, "sc_output.json", None),
+    ),
+)
+@patch.object(Path, "write_text", autospec=True)
+@patch("power_grid_model.utils.json_serialize_to_file")
+def test__make_test_case(
+    serialize_to_file_mock: MagicMock, write_text_mock: MagicMock, output_dataset_type, output_file_name, update_data
+):
+    input_data: Dataset = {"version": "1.0", "data": "input_data"}
+    output_data: Dataset = {"version": "1.0", "data": "output_data"}
+    save_path = Path("test_path")
+    params = {"param1": "value1", "param2": "value2"}
+
+    _make_test_case(
+        save_path=save_path,
+        input_data=input_data,
+        output_data=output_data,
+        params=params,
+        output_dataset_type=output_dataset_type,
+        update_data=update_data,
+    )
+
+    serialize_to_file_mock.assert_any_call(
+        file_path=save_path / "input.json", data=input_data, dataset_type=DatasetType.input
+    )
+    serialize_to_file_mock.assert_any_call(
+        file_path=save_path / output_file_name, data=output_data, dataset_type=output_dataset_type
+    )
+    write_text_mock.assert_any_call(save_path / "params.json", data=json.dumps(params, indent=2), encoding="utf-8")
+    for file_name in ["input.json.license", f"{output_file_name}.license", "params.json.license"]:
+        write_text_mock.assert_any_call(save_path / file_name, data=LICENSE_TEXT, encoding="utf-8")
+    if update_data is not None:
+        write_text_mock.assert_any_call(save_path / "update_batch.json.license", data=LICENSE_TEXT, encoding="utf-8")
+        serialize_to_file_mock.assert_any_call(
+            file_path=save_path / "update_batch.json", data=update_data, dataset_type=DatasetType.update
+        )
