@@ -50,7 +50,8 @@ _DEPRECATED_JSON_SERIALIZATION_MSG = f"{_DEPRECATED_FUNCTION_MSG} Please use jso
 
 LICENSE_TEXT = (
     "SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>\n\n"
-    "SPDX-License-Identifier: MPL-2.0\n"
+    "SPDX-License-Identifier: MPL-2.0"
+    "\n"
 )
 
 
