@@ -502,10 +502,18 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&, MutableDataset const&, Idx>
     BatchParameter batch_calculation_(Calculate&& calculation_fn, MutableDataset const& result_data,
                                       ConstDataset const& update_data, Idx threading = sequential) {
+        return batch_calculation_(*this, calculation_info_, std::forward<Calculate>(calculation_fn), result_data,
+                                  update_data, threading);
+    }
+    template <typename Calculate>
+        requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&, MutableDataset const&, Idx>
+    static BatchParameter batch_calculation_(MainModelImpl& model, CalculationInfo& calculation_info,
+                                             Calculate&& calculation_fn, MutableDataset const& result_data,
+                                             ConstDataset const& update_data, Idx threading = sequential) {
         // if the update dataset is empty without any component
         // execute one power flow in the current instance, no batch calculation is needed
         if (update_data.empty()) {
-            std::forward<Calculate>(calculation_fn)(*this, result_data, 0);
+            std::forward<Calculate>(calculation_fn)(model, result_data, 0);
             return BatchParameter{};
         }
 
@@ -520,12 +528,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
         // calculate once to cache topology, ignore results, all math solvers are initialized
         try {
-            calculation_fn(*this,
+            calculation_fn(model,
                            {
                                false,
                                1,
                                "sym_output",
-                               *meta_data_,
+                               *model.meta_data_,
                            },
                            ignore_output);
         } catch (SparseMatrixError const&) { // NOLINT(bugprone-empty-catch) // NOSONAR
@@ -540,33 +548,30 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
         // lambda for sub batch calculation
         main_core::utils::SequenceIdx<ComponentType...> all_scenarios_sequence;
-        auto sub_batch = sub_batch_calculation_(std::forward<Calculate>(calculation_fn), result_data, update_data,
-                                                all_scenarios_sequence, exceptions, infos);
+        auto sub_batch = sub_batch_calculation_(model, std::forward<Calculate>(calculation_fn), result_data,
+                                                update_data, all_scenarios_sequence, exceptions, infos);
 
         batch_dispatch(sub_batch, n_scenarios, threading);
 
         handle_batch_exceptions(exceptions);
-        calculation_info_ = main_core::merge_calculation_info(infos);
+        calculation_info = main_core::merge_calculation_info(infos);
 
         return BatchParameter{};
     }
 
     template <typename Calculate>
         requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&, MutableDataset const&, Idx>
-    auto sub_batch_calculation_(Calculate&& calculation_fn, MutableDataset const& result_data,
-                                ConstDataset const& update_data,
-                                main_core::utils::SequenceIdx<ComponentType...>& all_scenarios_sequence,
-                                std::vector<std::string>& exceptions, std::vector<CalculationInfo>& infos) {
-        // const ref of current instance
-        MainModelImpl const& base_model = *this;
-
+    static auto sub_batch_calculation_(MainModelImpl const& base_model, Calculate&& calculation_fn,
+                                       MutableDataset const& result_data, ConstDataset const& update_data,
+                                       main_core::utils::SequenceIdx<ComponentType...>& all_scenarios_sequence,
+                                       std::vector<std::string>& exceptions, std::vector<CalculationInfo>& infos) {
         // cache component update order where possible.
         // the order for a cacheable (independent) component by definition is the same across all scenarios
-        auto const components_to_update = get_components_to_update(update_data);
-        auto const update_independence =
-            main_core::update::independence::check_update_independence<ComponentType...>(state_, update_data);
+        auto const components_to_update = base_model.get_components_to_update(update_data);
+        auto const update_independence = main_core::update::independence::check_update_independence<ComponentType...>(
+            base_model.state_, update_data);
         all_scenarios_sequence = main_core::update::get_all_sequence_idx_map<ComponentType...>(
-            state_, update_data, 0, components_to_update, update_independence, false);
+            base_model.state_, update_data, 0, components_to_update, update_independence, false);
 
         return [&base_model, &exceptions, &infos, calculation_fn_ = std::forward<Calculate>(calculation_fn),
                 &result_data, &update_data, &all_scenarios_sequence_ = std::as_const(all_scenarios_sequence),
