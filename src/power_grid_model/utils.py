@@ -438,11 +438,7 @@ def _make_test_case(
         Writes JSON files for input, update (if provided), output, and parameters,
         all relevant license files, to save_path.
     """
-    output_file_stem: str | None = {
-        DatasetType.sym_output: "sym_output",
-        DatasetType.asym_output: "asym_output",
-        DatasetType.sc_output: "sc_output",
-    }.get(output_dataset_type)
+    output_file_stem = str(output_dataset_type) if isinstance(output_dataset_type, DatasetType) else None
     if output_file_stem is None:
         raise ValueError(
             f"Invalid output dataset type: {output_dataset_type}. Expected one of: sym_output, asym_output, sc_output."
