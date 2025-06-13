@@ -13,7 +13,6 @@ from power_grid_model import (
     DatasetType,
     PowerGridModel,
     initialize_array,
-    power_grid_meta_data,
 )
 from power_grid_model._core.utils import compatibility_convert_row_columnar_dataset
 from power_grid_model.errors import InvalidCalculationMethod, IterationDiverge, PowerGridBatchError, PowerGridError
@@ -360,7 +359,7 @@ def test_update_id_mixed(minimal_input):
         ComponentType.source: {"indptr": update_source_indptr, "data": update_source},
     }
 
-    output_data = PowerGridModel(minimal_input).calculate_power_flow(update_data=update_batch)
+    _output_data = PowerGridModel(minimal_input).calculate_power_flow(update_data=update_batch)
 
 
 @pytest.mark.parametrize(

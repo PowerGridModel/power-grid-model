@@ -11,8 +11,6 @@ from typing import Any, Mapping, TypeAlias, TypeVar
 
 # fmt: off
 
-# pylint: disable=invalid-name
-
 class _MetaEnum(EnumMeta):
     def __contains__(cls, member):
         """
@@ -76,8 +74,6 @@ class ComponentType(str, Enum, metaclass=_MetaEnum):
     asym_current_sensor = "asym_current_sensor"
     fault = "fault"
 
-
-# pylint: enable=invalid-name
 
 DatasetTypeLike: TypeAlias = DatasetType | str
 DatasetTypeVar = TypeVar("DatasetTypeVar", bound=DatasetTypeLike)  # helper used for type deduction

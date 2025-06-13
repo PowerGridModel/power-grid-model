@@ -394,7 +394,8 @@ def serialized_data(request):
     ]
 )
 def data_filters(request):
-    """Data filers for deserialization. Note: List / set is not supported for testing since it can be replicated using dict."""
+    """Data filers for deserialization.
+    Note: List / set is not supported for testing since it can be replicated using dict."""
     return request.param
 
 
@@ -455,6 +456,7 @@ def assert_almost_equal(value: np.ndarray, reference: Any):
             assert_almost_equal(v, r)
     elif isinstance(reference, dict):
         assert len(value) == len(reference)
+        assert value.dtype.names is not None
         for attribute in value.dtype.names:
             if attribute in reference:
                 assert_almost_equal(value[attribute], reference[attribute])

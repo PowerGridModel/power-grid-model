@@ -607,7 +607,7 @@ def test_convert_batch_dataset_to_batch_list_invalid_type_sparse(_mock: MagicMoc
     update_data: BatchDataset = {"foo": "wrong type"}  # type: ignore
     with pytest.raises(
         TypeError,
-        match="Invalid data for 'foo' component. " "Expecting a 1D/2D Numpy structured array or a dictionary of such.",
+        match="Invalid data for 'foo' component. Expecting a 1D/2D Numpy structured array or a dictionary of such.",
     ):
         convert_batch_dataset_to_batch_list(update_data)
 

@@ -22,6 +22,6 @@ source_7--node_1--transformer_3--node_2              (Transformer from_status=to
 
 - Source impedance is set too low. Result of source component here should be ignored
 - Asymmetrical calculations are possible only for grounded network transformer in pandapower.
-Hence open cases are not evaluated.
-- Relaxed tolerance parameters are used in asymmetric calculation
-because only 'T' transformer model is available in pandapower while power-grid-model uses 'pi' model.
+  Hence open cases are not evaluated.
+- Relaxed tolerance parameters are used in asymmetric calculation because only 'T' transformer model is available in
+  pandapower while power-grid-model uses 'pi' model.

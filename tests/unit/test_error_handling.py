@@ -14,7 +14,6 @@ from power_grid_model.enum import (
     LoadGenType,
     MeasuredTerminalType,
     TapChangingStrategy,
-    _ExperimentalFeatures,
 )
 from power_grid_model.errors import (
     AutomaticTapInputError,
@@ -23,7 +22,6 @@ from power_grid_model.errors import (
     ConflictVoltage,
     IDNotFound,
     IDWrongType,
-    InvalidArguments,
     InvalidBranch,
     InvalidBranch3,
     InvalidCalculationMethod,
@@ -33,7 +31,6 @@ from power_grid_model.errors import (
     IterationDiverge,
     MissingCaseForEnumError,
     NotObservableError,
-    PowerGridError,
 )
 
 from .utils import PowerGridModelWithExt
@@ -46,7 +43,7 @@ def test_empty_model():
     with pytest.raises(TypeError):
         model.copy()
     with pytest.raises(TypeError):
-        n = model.all_component_count
+        _n = model.all_component_count
     with pytest.raises(TypeError):
         copy(model)
 
@@ -422,7 +419,7 @@ def test_conflicting_angle_measurement_type() -> None:
     )
 
     with pytest.raises(ConflictingAngleMeasurementType):
-        model._calculate_state_estimation(decode_error=True, experimental_features=_ExperimentalFeatures.enabled)
+        model._calculate_state_estimation(decode_error=True)
 
 
 def test_global_current_measurement_without_voltage_angle() -> None:
@@ -470,7 +467,7 @@ def test_global_current_measurement_without_voltage_angle() -> None:
     )
 
     with pytest.raises(NotObservableError):
-        model._calculate_state_estimation(decode_error=True, experimental_features=_ExperimentalFeatures.enabled)
+        model._calculate_state_estimation(decode_error=True)
 
 
 @pytest.mark.skip(reason="TODO")

@@ -364,7 +364,7 @@ def convert_single_dataset_to_python_single_dataset(
     # For example: {"node": [{"id": 0, ...}, {"id": 1, ...}], "line": [{"id": 2, ...}]}
     def _convert_component(objects: SingleComponentData):
         # This should be a single data set
-        if not isinstance(objects, np.ndarray) or objects.ndim != 1:
+        if not isinstance(objects, np.ndarray) or objects.ndim != 1 or objects.dtype.names is None:
             raise ValueError("Invalid data format")
 
         return [
@@ -441,6 +441,8 @@ def _convert_data_to_row_or_columnar(
         return {}
     if isinstance(attrs, ComponentAttributeFilterOptions):
         names = cast(SingleArray, data).dtype.names if not is_columnar(data) else cast(SingleColumnarData, data).keys()
+        if names is None:
+            raise ValueError("No attributes available in meta")
         return {attr: deepcopy(data[attr]) for attr in names}
     return {attr: deepcopy(data[attr]) for attr in attrs}
 
@@ -603,7 +605,7 @@ def _check_columnar_row(sub_data: ComponentData, err_msg_suffixed: str) -> None:
 def component_data_checks(component_data: ComponentData, component=None) -> None:
     """Checks if component_data is of ComponentData and raises ValueError if its not"""
     component_name = f"'{component}'" if component is not None else ""
-    err_msg = f"Invalid data for {component_name} component. " "{0}"
+    err_msg = f"Invalid data for {component_name} component. {{0}}"
     err_msg_suffixed = err_msg + "Expecting a 1D/2D Numpy structured array or a dictionary of such."
 
     sub_data = _check_sparse_dense(component_data, err_msg_suffixed)
