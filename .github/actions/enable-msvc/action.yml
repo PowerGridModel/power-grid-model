@@ -7,9 +7,9 @@ description: 'Sets up Microsoft Visual C++ Build Tools on the runner'
 
 runs:
   using: "composite"
-  shell: pwsh
   steps:
     - name: Setup MSVC Build Tools
+      shell: pwsh
       run: |
         $vsPath = &(Join-Path ${env:ProgramFiles(x86)} '\Microsoft Visual Studio\Installer\vswhere.exe') -property installationpath
         Import-Module (Join-Path $vsPath 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
