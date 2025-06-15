@@ -125,6 +125,7 @@ jobs:
           conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge libboost-headers eigen nlohmann_json msgpack-cxx doctest
  
       - uses: ./.github/actions/enable-msvc
+        if: runner.os == 'Windows'
     
       - name: Build and test
         run: |
@@ -202,6 +203,7 @@ jobs:
           path: .
 
       - uses: ./.github/actions/enable-msvc
+        if: runner.os == 'Windows'
 
       - name: Set up XCode
         if: matrix.os == 'macos-15'
@@ -259,6 +261,7 @@ jobs:
           conda list
 
       - uses: ./.github/actions/enable-msvc
+        if: runner.os == 'Windows'
 
       - name: Build and install cmake target for Windows
         if: matrix.os == 'windows'

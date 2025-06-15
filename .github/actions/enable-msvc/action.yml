@@ -7,7 +7,6 @@ description: 'Sets up Microsoft Visual C++ Build Tools on the runner'
 
 runs:
   using: "composite"
-  if: runner.os == 'Windows'
   shell: pwsh
   steps:
     - name: Setup MSVC Build Tools
