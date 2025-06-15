@@ -29,7 +29,13 @@ def get_pgm_dll_path() -> Path:
     lib_dll_path = lib_dir / dll_file
 
     # determine editable path to the DLL
-    # __file__ -> power_grid_model_c -> power_grid_model -> src -> repo_root -> build -> bin
+    # __file__
+    #   -> power_grid_model_c (..)
+    #     -> power_grid_model (..)
+    #       -> src (..)
+    #         -> repo_root (..)
+    #           -> build
+    #             -> bin
     editable_dir = Path(__file__).resolve().parent.parent.parent.parent / "build" / "bin"
     editable_dll_path = editable_dir / dll_file
 
@@ -42,6 +48,5 @@ def get_pgm_dll_path() -> Path:
         final_dll_path = editable_dll_path
     else:
         final_dll_path = dll_file
-
 
     return final_dll_path
