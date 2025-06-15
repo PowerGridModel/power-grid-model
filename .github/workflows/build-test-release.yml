@@ -44,7 +44,8 @@ jobs:
 
       - name: Build SDist
         run: |
-          cat PYPI_VERSION
+          cp PYPI_VERSION VERSION
+          cat VERSION
           pip install build
           python -m build --sdist --outdir wheelhouse .
 
@@ -52,7 +53,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: version
-          path: PYPI_VERSION
+          path: VERSION
 
       - name: Keep SDist
         uses: actions/upload-artifact@v4
@@ -319,7 +320,7 @@ jobs:
 
       - name: Get tag
         id: tag
-        run: echo "tag=v$(cat PYPI_VERSION)" >> $GITHUB_OUTPUT
+        run: echo "tag=v$(cat VERSION)" >> $GITHUB_OUTPUT
 
       - name: Display tag
         run: echo "${{ steps.tag.outputs.tag }}"
