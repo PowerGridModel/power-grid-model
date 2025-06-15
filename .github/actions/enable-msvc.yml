@@ -7,7 +7,7 @@ description: 'Sets up Microsoft Visual C++ Build Tools on the runner'
 
 runs:
   using: "composite"
-  if: runner.os == 'windows'
+  if: runner.os == 'Windows'
   shell: pwsh
   steps:
     - name: Setup MSVC Build Tools
@@ -21,3 +21,4 @@ runs:
         Add-Content $env:GITHUB_ENV "INCLUDE=$env:INCLUDE"
         Add-Content $env:GITHUB_ENV "LIB=$env:LIB"
         Add-Content $env:GITHUB_ENV "LIBPATH=$env:LIBPATH"
+ 
