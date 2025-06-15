@@ -66,6 +66,8 @@ logging.level = "INFO"
 cmake.version = ">=3.23"
 cmake.build-type = "Release"
 cmake.args = ["-GNinja"]
+
+build-dir = "build"
 build.tool-args = ["-j1"]
 
 search.site-packages = false
