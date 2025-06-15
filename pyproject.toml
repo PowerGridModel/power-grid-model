@@ -58,7 +58,6 @@ Mailing-list = "https://lists.lfenergy.org/g/powergridmodel"
 Discussion = "https://github.com/orgs/PowerGridModel/discussions"
 
 [tool.scikit-build]
-build.verbose = true
 logging.level = "INFO"
 
 cmake.version = ">=3.23"
