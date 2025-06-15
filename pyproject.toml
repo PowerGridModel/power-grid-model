@@ -4,14 +4,10 @@
 
 [build-system]
 requires = [
-    "setuptools",
-    "wheel",
-    "pybuild-header-dependency",
-    "msgpack-cxx",
-    "nlohmann-json",
-    "libboost-headers"
+    "scikit-build-core",
+    "pgm-build-dependencies@git+https://github.com/PowerGridModel/pgm-build-dependencies.git"
 ]
-build-backend = "setuptools.build_meta"
+build-backend = "scikit_build_core.build"
 
 [project]
 name = "power-grid-model"
@@ -60,16 +56,6 @@ GitHub = "https://github.com/PowerGridModel/power-grid-model"
 Documentation = "https://power-grid-model.readthedocs.io/en/stable/"
 Mailing-list = "https://lists.lfenergy.org/g/powergridmodel"
 Discussion = "https://github.com/orgs/PowerGridModel/discussions"
-
-[tool.setuptools.packages.find]
-where = ["src"]
-namespaces = false
-
-[tool.setuptools.dynamic]
-version = { file = "PYPI_VERSION" }
-
-[tool.setuptools.package-data]
-"power_grid_model" = ["py.typed"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests/unit"]
