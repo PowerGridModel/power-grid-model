@@ -4,14 +4,10 @@
 
 [build-system]
 requires = [
-    "setuptools",
-    "wheel",
-    "pybuild-header-dependency",
-    "msgpack-cxx",
-    "nlohmann-json",
-    "libboost-headers"
+    "scikit-build-core",
+    "pgm-build-dependencies@git+https://github.com/PowerGridModel/pgm-build-dependencies.git"
 ]
-build-backend = "setuptools.build_meta"
+build-backend = "scikit_build_core.build"
 
 [project]
 name = "power-grid-model"
@@ -61,15 +57,35 @@ Documentation = "https://power-grid-model.readthedocs.io/en/stable/"
 Mailing-list = "https://lists.lfenergy.org/g/powergridmodel"
 Discussion = "https://github.com/orgs/PowerGridModel/discussions"
 
-[tool.setuptools.packages.find]
-where = ["src"]
-namespaces = false
+[project.entry-points."cmake.root"]
+power_grid_model = "power_grid_model.power_grid_model_c"
 
-[tool.setuptools.dynamic]
-version = { file = "PYPI_VERSION" }
+[tool.scikit-build]
+logging.level = "INFO"
 
-[tool.setuptools.package-data]
-"power_grid_model" = ["py.typed"]
+cmake.version = ">=3.23"
+cmake.build-type = "Release"
+cmake.args = ["-GNinja"]
+
+build-dir = "build"
+build.tool-args = ["-j1"]
+
+search.site-packages = false
+
+ninja.version = ">=1.10"
+ninja.make-fallback = false
+
+sdist.include = ["CMakeLists.txt", "power_grid_model_c/", "cmake/", "VERSION"]
+
+wheel.install-dir = "power_grid_model/power_grid_model_c"
+wheel.py-api = "py3"
+
+[tool.scikit-build.metadata.version]
+provider = "scikit_build_core.metadata.regex"
+input = "VERSION"
+regex = "^\\s*(?P<version>[^\\s]+)\\s*$"
+result = "{version}"
+
 
 [tool.pytest.ini_options]
 testpaths = ["tests/unit"]

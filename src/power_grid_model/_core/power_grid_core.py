@@ -6,15 +6,13 @@
 Loader for the dynamic library
 """
 
-import os
-import platform
 from ctypes import CDLL, POINTER, c_char, c_char_p, c_double, c_size_t, c_void_p
 from inspect import signature
 from itertools import chain
-from pathlib import Path
 from typing import Callable
 
 from power_grid_model._core.index_integer import IdC, IdxC
+from power_grid_model.power_grid_model_c import get_pgm_dll_path
 
 # integer index
 IdxPtr = POINTER(IdxC)
@@ -125,25 +123,7 @@ def _load_core() -> CDLL:
     Returns: DLL/SO object
 
     """
-    # first try to find the DLL local
-    if platform.system() == "Windows":
-        dll_file = "_power_grid_core.dll"
-    else:
-        dll_file = "_power_grid_core.so"
-    dll_path = Path(__file__).parent / dll_file
-
-    # if local DLL is not found, try to find the DLL from conda environment
-    if (not dll_path.exists()) and ("CONDA_PREFIX" in os.environ):
-        if platform.system() == "Windows":
-            dll_file = "power_grid_model_c.dll"
-        elif platform.system() == "Darwin":
-            dll_file = "libpower_grid_model_c.dylib"
-        elif platform.system() == "Linux":
-            dll_file = "libpower_grid_model_c.so"
-        else:
-            raise NotImplementedError(f"Unsupported platform: {platform.system()}")
-        # the dll will be found through conda environment
-        dll_path = Path(dll_file)
+    dll_path = get_pgm_dll_path()
 
     cdll = CDLL(str(dll_path))
     # assign return types
