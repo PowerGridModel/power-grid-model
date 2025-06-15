@@ -57,6 +57,32 @@ Documentation = "https://power-grid-model.readthedocs.io/en/stable/"
 Mailing-list = "https://lists.lfenergy.org/g/powergridmodel"
 Discussion = "https://github.com/orgs/PowerGridModel/discussions"
 
+[tool.scikit-build]
+build.verbose = true
+logging.level = "INFO"
+
+cmake.version = ">=3.23"
+cmake.build-type = "Release"
+cmake.args = ["-GNinja"]
+build.tool-args = ["-j1"]
+
+search.site-packages = false
+
+ninja.version = ">=1.10"
+ninja.make-fallback = false
+
+sdist.include = ["CMakeLists.txt", "power_grid_model_c/", "cmake/", "VERSION"]
+
+wheel.install-dir = "power_grid_model/power_grid_model_c"
+wheel.py-api = "py3"
+
+[tool.scikit-build.metadata.version]
+provider = "scikit_build_core.metadata.regex"
+input = "VERSION"
+regex = "^\\s*(?P<version>[^\\s]+)\\s*$"
+result = "{version}"
+
+
 [tool.pytest.ini_options]
 testpaths = ["tests/unit"]
 addopts = [
