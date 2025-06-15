@@ -57,6 +57,9 @@ Documentation = "https://power-grid-model.readthedocs.io/en/stable/"
 Mailing-list = "https://lists.lfenergy.org/g/powergridmodel"
 Discussion = "https://github.com/orgs/PowerGridModel/discussions"
 
+[project.entry-points."cmake.root"]
+power_grid_model = "power_grid_model.power_grid_model_c"
+
 [tool.scikit-build]
 logging.level = "INFO"
 
