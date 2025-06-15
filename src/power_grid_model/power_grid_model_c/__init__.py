@@ -16,6 +16,7 @@ def get_pgm_dll_path() -> Path:
         lib_dir = package_dir / "bin"
     else:
         lib_dir = package_dir / "lib"
+
     # determine DLL file name
     if platform.system() == "Windows":
         dll_file = Path("power_grid_model_c.dll")
@@ -27,11 +28,20 @@ def get_pgm_dll_path() -> Path:
         raise NotImplementedError(f"Unsupported platform: {platform.system()}")
     lib_dll_path = lib_dir / dll_file
 
+    # determine editable path to the DLL
+    # __file__ -> power_grid_model_c -> power_grid_model -> src -> repo_root -> build -> bin
+    editable_dir = Path(__file__).resolve().parent.parent.parent.parent / "build" / "bin"
+    editable_dll_path = editable_dir / dll_file
+
     # first try to load from lib_dll_path
+    # then editable_dll_path
     # then just load dll_file, the system tries to find it in the PATH
     if lib_dll_path.exists():
         final_dll_path = lib_dll_path
+    elif editable_dll_path.exists():
+        final_dll_path = editable_dll_path
     else:
         final_dll_path = dll_file
+
 
     return final_dll_path
