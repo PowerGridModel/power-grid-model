@@ -11,7 +11,7 @@ def get_pgm_dll_path() -> Path:
     """
     Returns the path to PGM dynamic library.
     """
-    package_dir = files(__package__)
+    package_dir = Path(str(files(__package__)))
     if platform.system() == "Windows":
         lib_dir = package_dir / "bin"
     else:
