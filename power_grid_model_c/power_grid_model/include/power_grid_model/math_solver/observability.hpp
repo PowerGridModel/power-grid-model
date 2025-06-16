@@ -12,19 +12,22 @@
 namespace power_grid_model::math_solver {
 
 namespace detail {
-// count flow sensors into integer matrix with ybus structure
-// lower triangle part is always zero
-// for diagonal part, it will be one if there is bus injection
-// for upper triangle part, it will be one if there is branch flow sensor and the branch is fully connected
-// return a pair of
+// count flow and voltage phasor sensors for the observability check
+// use the ybus structure
+// the lower triangular part is always zero
+// the diagonal part will be one if there is bus injection or a voltage phasor sensor
+// the upper triangle part will be one if there is branch flow sensor and the branch is fully connected
+// return a tuple of
 //      a vector of flow sensor count
+//      a vector of voltage phasor sensor count
 //      a boolean indicating if the system is possibly ill-conditioned
 template <symmetry_tag sym>
-auto find_observability_sensors(MeasuredValues<sym> const& measured_values, MathModelTopology const& topo,
-                                YBusStructure const& y_bus_structure) {
+std::tuple<std::vector<int8_t>, std::vector<int8_t>, bool>
+count_observability_sensors(MeasuredValues<sym> const& measured_values, MathModelTopology const& topo,
+                            YBusStructure const& y_bus_structure) {
     Idx const n_bus{topo.n_bus()};
-    auto voltage_phasor_sensors = std::vector<int8_t>(n_bus, false);
-    auto flow_sensors = std::vector<int8_t>(y_bus_structure.row_indptr.back(), false);
+    auto voltage_phasor_sensors = std::vector<int8_t>(n_bus, 0);
+    auto flow_sensors = std::vector<int8_t>(y_bus_structure.row_indptr.back(), 0);
     auto possibly_ill_conditioned = false;
     for (Idx row = 0; row != n_bus; ++row) {
         bool has_at_least_one_sensor{false};
@@ -56,7 +59,7 @@ auto find_observability_sensors(MeasuredValues<sym> const& measured_values, Math
                 }
             }
         }
-        // check for voltage phasor sensors
+        // diagonal for voltage phasor sensors
         if (measured_values.has_voltage(row) && measured_values.has_angle_measurement(row)) {
             has_at_least_one_sensor = true;
             voltage_phasor_sensors[row] = 1;
@@ -74,8 +77,9 @@ auto find_observability_sensors(MeasuredValues<sym> const& measured_values, Math
 // all the branch should be measured if the system is observable
 // this is a sufficient condition check
 // if the grid is not radial, the behavior is undefined.
-inline void assign_injection_sensor_radial(YBusStructure const& y_bus_structure, std::vector<int8_t>& flow_sensors) {
-    Idx const n_bus = std::ssize(y_bus_structure.row_indptr) - 1;
+inline void assign_independent_sensors_radial(YBusStructure const& y_bus_structure, std::vector<int8_t>& flow_sensors,
+                                              std::vector<int8_t>& voltage_phasor_sensors) {
+    Idx const n_bus{std::ssize(y_bus_structure.row_indptr) - 1};
     // loop the row without the last bus
     for (Idx row = 0; row != n_bus - 1; ++row) {
         Idx const current_bus = row;
@@ -84,20 +88,28 @@ inline void assign_injection_sensor_radial(YBusStructure const& y_bus_structure,
         // there should be only one upstream branch in the upper diagonal
         // so the next of branch_entry_upstream is already the next row
         // because the grid is radial
+        // parallel branches (same from and to nodes) are considered as one
+        // branch for observability purposes
         assert(y_bus_structure.row_indptr[current_bus + 1] == branch_entry_upstream + 1);
         Idx const upstream_bus = y_bus_structure.col_indices[branch_entry_upstream];
         Idx const bus_entry_upstream = y_bus_structure.bus_entry[upstream_bus];
         // if the upstream branch is not measured
         if (flow_sensors[branch_entry_upstream] == 0) {
             if (flow_sensors[bus_entry_current] == 1) {
-                // try to steal from current bus
+                // try to steal injection sensor from current bus
                 std::swap(flow_sensors[branch_entry_upstream], flow_sensors[bus_entry_current]);
             } else if (flow_sensors[bus_entry_upstream] == 1) {
-                // if not possible, steal from upstream bus
+                // if not possible, try to steal injection sensor from upstream bus
                 std::swap(flow_sensors[branch_entry_upstream], flow_sensors[bus_entry_upstream]);
+            } else if (voltage_phasor_sensors[current_bus] == 1) {
+                // if not possible, try to steal voltage phasor sensor from current bus
+                std::swap(flow_sensors[branch_entry_upstream], voltage_phasor_sensors[current_bus]);
+            } else if (voltage_phasor_sensors[current_bus + 1] == 1) {
+                // if not possible, try to steal voltage phasor sensor from upstream bus
+                std::swap(flow_sensors[branch_entry_upstream], voltage_phasor_sensors[current_bus + 1]);
             }
         }
-        // remove the current bus injection regardless of the original state
+        // remove the current bus injection sensors regardless of the original state
         flow_sensors[bus_entry_current] = 0;
     }
     // set last bus injection to zero
@@ -124,39 +136,49 @@ inline ObservabilityResult necessary_observability_check(MeasuredValues<sym> con
     }
 
     auto [flow_sensors, voltage_phasor_sensors, is_possibly_ill_conditioned] =
-        detail::find_observability_sensors(measured_values, topo, y_bus_structure);
+        detail::count_observability_sensors(measured_values, topo, y_bus_structure);
     result.is_possibly_ill_conditioned = is_possibly_ill_conditioned;
 
     // count flow and phasor voltage sensors, note we manually specify the intial value type to avoid overflow
-    Idx const n_flow_sensor = std::reduce(flow_sensors.cbegin(), flow_sensors.cend(), Idx{}, std::plus<Idx>{});
-    Idx const n_voltage_phasor_sensor = std::reduce(voltage_phasor_sensors.cbegin(), voltage_phasor_sensors.cend(),
-                                                    Idx{}, std::plus<Idx>{}); // this is not enough
+    Idx const n_flow_sensors = std::reduce(flow_sensors.cbegin(), flow_sensors.cend(), Idx{}, std::plus<Idx>{});
+    Idx const n_voltage_phasor_sensors =
+        std::reduce(voltage_phasor_sensors.cbegin(), voltage_phasor_sensors.cend(), Idx{}, std::plus<Idx>{});
 
-    // check nessessary condition for observability
-    if (n_voltage_phasor_sensor == 0 && n_flow_sensor < n_bus - 1) {
+    // check necessary condition for observability
+    if (n_voltage_phasor_sensors == 0 && n_flow_sensors < n_bus - 1) {
         throw NotObservableError{};
     }
-    if (n_voltage_phasor_sensor > 0 && n_flow_sensor + n_voltage_phasor_sensor < n_bus) {
+    if (n_voltage_phasor_sensors > 0 && n_flow_sensors + n_voltage_phasor_sensors < n_bus) {
         throw NotObservableError{};
     }
 
-    if (measured_values.has_global_angle_current() && n_voltage_phasor_sensor == 0) {
+    if (measured_values.has_global_angle_current() && n_voltage_phasor_sensors == 0) {
         throw NotObservableError{
             "Global angle current sensors require at least one voltage angle measurement as a reference point.\n"};
     }
 
-    // for radial grid without phasor measurement, try to assign injection sensor to branch sensor
-    // we can then check sufficient condition for observability
-    if (topo.is_radial && n_voltage_phasor_sensor == 0) {
-        detail::assign_injection_sensor_radial(y_bus_structure, flow_sensors);
-        // count flow sensors again
-        if (Idx const n_flow_sensor_new =
+    // for a radial grid, try to assign injection or phasor voltage sensors to unmeasured branches
+    // we can then check the sufficient condition for observability
+    if (topo.is_radial) { // TODO (figueroa1395): Check if there is a test that fails when there is a phasor voltage
+                          // sensor and change it
+        detail::assign_independent_sensors_radial(y_bus_structure, flow_sensors, voltage_phasor_sensors);
+        // count independent flow sensors
+        if (Idx const n_independent_flow_sensors =
                 std::reduce(flow_sensors.cbegin(), flow_sensors.cend(), Idx{}, std::plus<Idx>{});
-            n_flow_sensor_new < n_bus - 1) {
-            throw NotObservableError{
-                "The number of power/current sensors appears sufficient, but they are not independent "
-                "enough. The system is still not observable.\n"};
+            n_independent_flow_sensors < n_bus - 1) {
+            throw NotObservableError{"The number of power, current, and voltage phasor sensors appears sufficient, but "
+                                     "they are not independent "
+                                     "enough. The system is still not observable.\n"};
+        } // the message probably needs to be changed to reflect the phasor voltage sensors
+
+        if (Idx const n_remaining_voltage_phasor_sensors =
+                std::reduce(voltage_phasor_sensors.cbegin(), voltage_phasor_sensors.cend(), Idx{}, std::plus<Idx>{});
+            n_voltage_phasor_sensors > 0 && n_remaining_voltage_phasor_sensors < 1) {
+            throw NotObservableError{"The number of power, current, and voltage phasor sensors appears sufficient, but "
+                                     "they are not independent "
+                                     "enough. The system is still not observable.\n"};
         }
+
         result.is_sufficiently_observable = true;
     }
 

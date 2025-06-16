@@ -48,6 +48,7 @@ TEST_CASE("Necessary observability check") {
     */
     MathModelTopology topo;
     topo.slack_bus = 0;
+    // parallel branches are considered radial for observability purposes only
     topo.is_radial = true;
     topo.phase_shift = {0.0, 0.0, 0.0};
     topo.branch_bus_idx = {{0, 1}, {1, 2}, {1, 2}};
@@ -90,18 +91,20 @@ TEST_CASE("Necessary observability check") {
         topo.power_sensors_per_bus = {from_sparse, {0, 0, 0, 0}};
         se_input.measured_bus_injection = {};
 
-        SUBCASE("voltage phasor unavailable condition for unobservable grid") {
+        SUBCASE("Voltage phasor unavailable condition for unobservable grid") {
             // setting only real part of measurement makes it magnitude sensor
             se_input.measured_voltage = {{.value = {1.0, nan}, .variance = 1.0}};
             check_not_observable(topo, param, se_input);
         }
 
-        SUBCASE("voltage phasor available condition for unobservable grid") {
+        SUBCASE("Voltage phasor available condition for unobservable grid") {
             check_not_observable(topo, param, se_input);
         }
 
-        SUBCASE("Parallel branch get counted as one sensor") {
-            // Add sensor on branch 3 to side. Hence 2 parallel sensors
+        SUBCASE("Power sensors on parallel branches gets counted as one sensor") {
+            // add sensor on branch 2 to-side
+            // m ove sensor on branch 0 to-side to branch 1 to side
+            // hence 2 parallel sensors
             topo.power_sensors_per_branch_from = {from_sparse, {0, 0, 1, 1}};
             topo.power_sensors_per_branch_to = {from_sparse, {0, 0, 0, 1}};
             se_input.measured_branch_to_power = {
@@ -123,7 +126,7 @@ TEST_CASE("Necessary observability check") {
 
         topo.power_sensors_per_branch_from = {from_dense, {}, 3};
         se_input.measured_branch_from_power = {};
-        topo.current_sensors_per_branch_from = {from_dense, {2}, 3};
+        topo.current_sensors_per_branch_from = {from_dense, {0}, 3};
 
         DecomposedComplexRandVar<symmetric_t> const current_measurement{
             .real_component = {.value = 1.0, .variance = 1.0}, .imag_component = {.value = 0.0, .variance = 1.0}};
@@ -146,7 +149,7 @@ TEST_CASE("Necessary observability check") {
             SUBCASE("Local current sensor") {
                 se_input.measured_branch_from_current = {
                     {.angle_measurement_type = local_angle, .measurement = current_measurement}};
-                check_not_observable(topo, param, se_input);
+                check_observable(topo, param, se_input);
             }
             SUBCASE("Global angle current sensor") {
                 se_input.measured_branch_from_current = {
