@@ -187,11 +187,11 @@ def test__make_test_case(
 ):
     input_data: Dataset = {"version": "1.0", "data": "input_data"}
     output_data: Dataset = {"version": "1.0", "data": "output_data"}
-    save_path = Path("test_path")
+    output_path = Path("test_path")
     params = {"param1": "value1", "param2": "value2"}
 
     _make_test_case(
-        save_path=save_path,
+        output_path=output_path,
         input_data=input_data,
         output_data=output_data,
         params=params,
@@ -200,16 +200,21 @@ def test__make_test_case(
     )
 
     serialize_to_file_mock.assert_any_call(
-        file_path=save_path / "input.json", data=input_data, dataset_type=DatasetType.input
+        file_path=output_path / "input.json", data=input_data, dataset_type=DatasetType.input
     )
     serialize_to_file_mock.assert_any_call(
-        file_path=save_path / output_file_name, data=output_data, dataset_type=output_dataset_type
+        file_path=output_path / output_file_name, data=output_data, dataset_type=output_dataset_type
     )
-    write_text_mock.assert_any_call(save_path / "params.json", data=json.dumps(params, indent=2), encoding="utf-8")
+    write_text_mock.assert_any_call(output_path / "params.json", data=json.dumps(params, indent=2), encoding="utf-8")
     for file_name in ["input.json.license", f"{output_file_name}.license", "params.json.license"]:
-        write_text_mock.assert_any_call(save_path / file_name, data=LICENSE_TEXT, encoding="utf-8")
+        write_text_mock.assert_any_call(output_path / file_name, data=LICENSE_TEXT, encoding="utf-8")
     if update_data is not None:
-        write_text_mock.assert_any_call(save_path / "update_batch.json.license", data=LICENSE_TEXT, encoding="utf-8")
+        write_text_mock.assert_any_call(output_path / "update_batch.json.license", data=LICENSE_TEXT, encoding="utf-8")
         serialize_to_file_mock.assert_any_call(
-            file_path=save_path / "update_batch.json", data=update_data, dataset_type=DatasetType.update
+            file_path=output_path / "update_batch.json", data=update_data, dataset_type=DatasetType.update
         )
+        assert write_text_mock.call_count == 5
+        assert serialize_to_file_mock.call_count == 3
+    else:
+        assert write_text_mock.call_count == 4
+        assert serialize_to_file_mock.call_count == 2

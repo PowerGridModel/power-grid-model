@@ -407,7 +407,8 @@ def self_test():
 
 
 def _make_test_case(
-    save_path: Path,
+    *,
+    output_path: Path,
     input_data: SingleDataset,
     params: dict,
     output_data: Dataset,
@@ -438,27 +439,27 @@ def _make_test_case(
         Writes JSON files for input, update (if provided), output, and parameters,
         all relevant license files, to save_path.
     """
-    output_file_stem = str(output_dataset_type.name) if isinstance(output_dataset_type, DatasetType) else None
+    output_file_stem = output_dataset_type.name if isinstance(output_dataset_type, DatasetType) else None
     if output_dataset_type in [DatasetType.input, DatasetType.update] or output_file_stem is None:
         raise ValueError(
             f"Invalid output dataset type: {output_dataset_type}. Expected one of: sym_output, asym_output, sc_output."
         )
 
-    save_path.mkdir(parents=True, exist_ok=True)
-    json_serialize_to_file(file_path=save_path / "input.json", data=input_data, dataset_type=DatasetType.input)
-    (save_path / "input.json.license").write_text(data=LICENSE_TEXT, encoding="utf-8")
+    output_path.mkdir(parents=True, exist_ok=True)
+    json_serialize_to_file(file_path=output_path / "input.json", data=input_data, dataset_type=DatasetType.input)
+    (output_path / "input.json.license").write_text(data=LICENSE_TEXT, encoding="utf-8")
 
     if update_data is not None:
         json_serialize_to_file(
-            file_path=save_path / "update_batch.json", data=update_data, dataset_type=DatasetType.update
+            file_path=output_path / "update_batch.json", data=update_data, dataset_type=DatasetType.update
         )
-        (save_path / "update_batch.json.license").write_text(data=LICENSE_TEXT, encoding="utf-8")
+        (output_path / "update_batch.json.license").write_text(data=LICENSE_TEXT, encoding="utf-8")
         output_file_stem += "_batch"
     json_serialize_to_file(
-        file_path=save_path / f"{output_file_stem}.json", data=output_data, dataset_type=output_dataset_type
+        file_path=output_path / f"{output_file_stem}.json", data=output_data, dataset_type=output_dataset_type
     )
-    (save_path / f"{output_file_stem}.json.license").write_text(data=LICENSE_TEXT, encoding="utf-8")
+    (output_path / f"{output_file_stem}.json.license").write_text(data=LICENSE_TEXT, encoding="utf-8")
 
     params_json = json.dumps(params, indent=2)
-    (save_path / "params.json").write_text(data=params_json, encoding="utf-8")
-    (save_path / "params.json.license").write_text(data=LICENSE_TEXT, encoding="utf-8")
+    (output_path / "params.json").write_text(data=params_json, encoding="utf-8")
+    (output_path / "params.json.license").write_text(data=LICENSE_TEXT, encoding="utf-8")
