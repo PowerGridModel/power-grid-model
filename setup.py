@@ -76,7 +76,7 @@ class bdist_wheel_abi_none(bdist_wheel):
 class MyBuildExt(build_ext):
     def build_extensions(self):
         if not if_win:
-            cxx = os.environ["CXX"] if "CXX" in os.environ else self.compiler.compiler_cxx[0]
+            cxx = os.environ.get("CXX", self.compiler.compiler_cxx[0])
             # check setuptools has an update change in the version 72.2 about cxx compiler options
             # to be compatible with both version, we check if compiler_so_cxx exists
             if not hasattr(self.compiler, "compiler_so_cxx"):
