@@ -651,8 +651,12 @@ def _extract_columnar_data(
     """
     not_columnar_data_message = "Expected columnar data"
 
-    if_is_batch = [2, 3] if is_batch else [1, 2]
-    allowed_dims = (if_is_batch) if is_batch is not None else [1, 2, 3]
+    if is_batch is None:
+        allowed_dims = [1, 2, 3]
+    elif is_batch:
+        allowed_dims = [2, 3]
+    else:
+        allowed_dims = [1, 2]
 
     sub_data = data["data"] if is_sparse(data) else data
 
@@ -683,6 +687,13 @@ def _extract_row_based_data(
     """
     if_is_batch = [2] if is_batch else [1]
     allowed_dims = if_is_batch if is_batch is not None else [1, 2]
+
+    if is_batch is None:
+        allowed_dims = [1, 2]
+    elif is_batch:
+        allowed_dims = [2]
+    else:
+        allowed_dims = [1]
 
     sub_data = data["data"] if is_sparse(data) else data
 
