@@ -12,7 +12,7 @@ from itertools import chain
 from typing import Callable
 
 from power_grid_model._core.index_integer import IdC, IdxC
-from power_grid_model.power_grid_model_c import get_pgm_dll_path
+from power_grid_model.power_grid_model_c.get_pgm_dll_path import get_pgm_dll_path
 
 # integer index
 IdxPtr = POINTER(IdxC)
