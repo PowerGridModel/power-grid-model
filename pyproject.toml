@@ -51,11 +51,11 @@ doc = [
 ]
 
 [project.urls]
-Home-page = "https://lfenergy.org/projects/power-grid-model/"
-GitHub = "https://github.com/PowerGridModel/power-grid-model"
-Documentation = "https://power-grid-model.readthedocs.io/en/stable/"
-Mailing-list = "https://lists.lfenergy.org/g/powergridmodel"
-Discussion = "https://github.com/orgs/PowerGridModel/discussions"
+homepage = "https://lfenergy.org/projects/power-grid-model/"
+github = "https://github.com/PowerGridModel/power-grid-model"
+documentation = "https://power-grid-model.readthedocs.io/en/stable/"
+mailing-list = "https://lists.lfenergy.org/g/powergridmodel"
+discussion = "https://github.com/orgs/PowerGridModel/discussions"
 
 [project.entry-points."cmake.root"]
 power_grid_model = "power_grid_model.power_grid_model_c"
