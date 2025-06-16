@@ -685,9 +685,6 @@ def _extract_row_based_data(
     Returns:
         SingleArray | DenseBatchArray: the contents of row based data
     """
-    if_is_batch = [2] if is_batch else [1]
-    allowed_dims = if_is_batch if is_batch is not None else [1, 2]
-
     if is_batch is None:
         allowed_dims = [1, 2]
     elif is_batch:
