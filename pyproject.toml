@@ -113,6 +113,7 @@ select = [
     "FURB",
     "FLY",
     "SLOT",
+    "NPY",
 ]
 
 [tool.ruff.lint.isort]
