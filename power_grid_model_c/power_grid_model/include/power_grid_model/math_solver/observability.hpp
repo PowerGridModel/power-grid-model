@@ -12,22 +12,6 @@
 namespace power_grid_model::math_solver {
 
 namespace detail {
-
-template <symmetry_tag sym>
-std::tuple<Idx, Idx> count_voltage_sensors(Idx const n_bus, MeasuredValues<sym> const& measured_values) {
-    Idx n_voltage_sensor{};
-    Idx n_voltage_phasor_sensor{};
-    for (Idx bus = 0; bus != n_bus; ++bus) {
-        if (measured_values.has_voltage(bus)) {
-            n_voltage_sensor++;
-            if (measured_values.has_angle_measurement(bus)) {
-                n_voltage_phasor_sensor++;
-            }
-        }
-    }
-    return std::make_tuple(n_voltage_sensor, n_voltage_phasor_sensor);
-}
-
 // count flow sensors into integer matrix with ybus structure
 // lower triangle part is always zero
 // for diagonal part, it will be one if there is bus injection
@@ -36,14 +20,12 @@ std::tuple<Idx, Idx> count_voltage_sensors(Idx const n_bus, MeasuredValues<sym> 
 //      a vector of flow sensor count
 //      a boolean indicating if the system is possibly ill-conditioned
 template <symmetry_tag sym>
-std::pair<std::vector<int8_t>, bool> count_flow_sensors(MeasuredValues<sym> const& measured_values,
-                                                        MathModelTopology const& topo,
-                                                        YBusStructure const& y_bus_structure) {
+auto find_observability_sensors(MeasuredValues<sym> const& measured_values, MathModelTopology const& topo,
+                                YBusStructure const& y_bus_structure) {
     Idx const n_bus{topo.n_bus()};
-    std::pair<std::vector<int8_t>, bool> result{};
-    auto& [flow_sensors, possibly_ill_conditioned] = result;
-    flow_sensors.resize(y_bus_structure.row_indptr.back(), 0); // initialize all to zero
-    possibly_ill_conditioned = false;
+    auto voltage_phasor_sensors = std::vector<int8_t>(n_bus, false);
+    auto flow_sensors = std::vector<int8_t>(y_bus_structure.row_indptr.back(), false);
+    auto possibly_ill_conditioned = false;
     for (Idx row = 0; row != n_bus; ++row) {
         bool has_at_least_one_sensor{false};
         // lower triangle is ignored and kept as zero
@@ -74,16 +56,17 @@ std::pair<std::vector<int8_t>, bool> count_flow_sensors(MeasuredValues<sym> cons
                 }
             }
         }
-        // check voltage sensor
+        // check for voltage phasor sensors
         if (measured_values.has_voltage(row) && measured_values.has_angle_measurement(row)) {
             has_at_least_one_sensor = true;
+            voltage_phasor_sensors[row] = 1;
         }
         // the system could be ill-conditioned if there is no flow sensor for one bus, except the last bus
         if (!has_at_least_one_sensor && row != n_bus - 1) {
             possibly_ill_conditioned = true;
         }
     }
-    return result;
+    return std::make_tuple(std::move(flow_sensors), std::move(voltage_phasor_sensors), possibly_ill_conditioned);
 }
 
 // re-organize the flow sensor for radial grid without phasor measurement
@@ -136,16 +119,18 @@ inline ObservabilityResult necessary_observability_check(MeasuredValues<sym> con
     Idx const n_bus{topo.n_bus()};
     ObservabilityResult result{};
 
-    auto const [n_voltage_sensor, n_voltage_phasor_sensor] = detail::count_voltage_sensors(n_bus, measured_values);
-    if (n_voltage_sensor < 1) {
+    if (!measured_values.has_voltage_measurements()) {
         throw NotObservableError{"No voltage sensor found!\n"};
     }
 
-    std::vector<int8_t> flow_sensors;
-    std::tie(flow_sensors, result.is_possibly_ill_conditioned) =
-        detail::count_flow_sensors(measured_values, topo, y_bus_structure);
-    // count flow sensors, note we manually specify the intial value type to avoid overflow
+    auto [flow_sensors, voltage_phasor_sensors, is_possibly_ill_conditioned] =
+        detail::find_observability_sensors(measured_values, topo, y_bus_structure);
+    result.is_possibly_ill_conditioned = is_possibly_ill_conditioned;
+
+    // count flow and phasor voltage sensors, note we manually specify the intial value type to avoid overflow
     Idx const n_flow_sensor = std::reduce(flow_sensors.cbegin(), flow_sensors.cend(), Idx{}, std::plus<Idx>{});
+    Idx const n_voltage_phasor_sensor = std::reduce(voltage_phasor_sensors.cbegin(), voltage_phasor_sensors.cend(),
+                                                    Idx{}, std::plus<Idx>{}); // this is not enough
 
     // check nessessary condition for observability
     if (n_voltage_phasor_sensor == 0 && n_flow_sensor < n_bus - 1) {
