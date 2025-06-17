@@ -122,7 +122,8 @@ def test_single_validation(
     # test get indexer
     for component_name, input_array in case_data["input"].items():
         ids_array = input_array["id"].copy()
-        np.random.shuffle(ids_array)
+        rng = np.random.default_rng(3)
+        rng.shuffle(ids_array)
         indexer_array = model.get_indexer(component_name, ids_array)
         # check
         assert np.all(input_array["id"][indexer_array] == ids_array)

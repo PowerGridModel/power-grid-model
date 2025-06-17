@@ -180,10 +180,7 @@ def _add_cases(case_dir: Path, calculation_type: str, **kwargs):
 
 
 def pytest_cases(get_batch_cases: bool = False, data_dir: str | None = None, test_cases: list[str] | None = None):
-    if data_dir is not None:
-        relevant_calculations = [data_dir]
-    else:
-        relevant_calculations = ["power_flow", "state_estimation", "short_circuit"]
+    relevant_calculations = [data_dir] if data_dir is not None else ["power_flow", "state_estimation", "short_circuit"]
 
     for calculation_type in relevant_calculations:
         test_case_paths = get_test_case_paths(calculation_type=calculation_type, test_cases=test_cases)
