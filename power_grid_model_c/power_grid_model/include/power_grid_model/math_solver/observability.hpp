@@ -78,8 +78,7 @@ count_observability_sensors(MeasuredValues<sym> const& measured_values, MathMode
 // this is a sufficient condition check
 // if the grid is not radial, the behavior is undefined.
 inline void assign_independent_sensors_radial(YBusStructure const& y_bus_structure, std::vector<int8_t>& flow_sensors,
-                                              std::vector<int8_t>& voltage_phasor_sensors) {
-    Idx const n_bus{std::ssize(y_bus_structure.row_indptr) - 1};
+                                              std::vector<int8_t>& voltage_phasor_sensors, Idx const n_bus) {
     // loop the row without the last bus
     for (Idx row = 0; row != n_bus - 1; ++row) {
         Idx const current_bus = row;
@@ -116,6 +115,42 @@ inline void assign_independent_sensors_radial(YBusStructure const& y_bus_structu
     flow_sensors[y_bus_structure.bus_entry[n_bus - 1]] = 0;
 }
 
+inline void necessary_observability_condition(Idx const n_voltage_phasor_sensors, Idx const n_flow_sensors,
+                                              Idx const n_bus, bool const has_global_angle_current) {
+    if (n_voltage_phasor_sensors == 0 && n_flow_sensors < n_bus - 1) {
+        throw NotObservableError{};
+    }
+    if (n_voltage_phasor_sensors > 0 && n_flow_sensors + n_voltage_phasor_sensors < n_bus) {
+        throw NotObservableError{};
+    }
+
+    if (has_global_angle_current && n_voltage_phasor_sensors == 0) {
+        throw NotObservableError{
+            "Global angle current sensors require at least one voltage angle measurement as a reference point.\n"};
+    }
+}
+
+inline bool sufficient_observability_condition(YBusStructure const& y_bus_structure, std::vector<int8_t>& flow_sensors,
+                                               std::vector<int8_t>& voltage_phasor_sensors,
+                                               Idx const n_voltage_phasor_sensors, Idx const n_bus) {
+    // for a radial grid, try to assign injection or phasor voltage sensors to unmeasured branches
+    assign_independent_sensors_radial(y_bus_structure, flow_sensors, voltage_phasor_sensors, n_bus);
+
+    // count independent flow sensors and remaining voltage phasor sensors
+    Idx const n_independent_flow_sensors =
+        std::reduce(flow_sensors.cbegin(), flow_sensors.cend(), Idx{}, std::plus<Idx>{});
+    Idx const n_remaining_voltage_phasor_sensors =
+        std::reduce(voltage_phasor_sensors.cbegin(), voltage_phasor_sensors.cend(), Idx{}, std::plus<Idx>{});
+
+    if ((n_independent_flow_sensors < n_bus - 1) ||
+        (n_voltage_phasor_sensors > 0 && n_remaining_voltage_phasor_sensors < 1)) {
+        throw NotObservableError{"The number of power, current, and voltage phasor sensors appears sufficient, but "
+                                 "they are not independent "
+                                 "enough. The system is still not observable.\n"};
+    }
+    return true;
+}
+
 } // namespace detail
 
 struct ObservabilityResult {
@@ -125,9 +160,8 @@ struct ObservabilityResult {
 };
 
 template <symmetry_tag sym>
-inline ObservabilityResult necessary_observability_check(MeasuredValues<sym> const& measured_values,
-                                                         MathModelTopology const& topo,
-                                                         YBusStructure const& y_bus_structure) {
+inline ObservabilityResult observability_check(MeasuredValues<sym> const& measured_values,
+                                               MathModelTopology const& topo, YBusStructure const& y_bus_structure) {
     Idx const n_bus{topo.n_bus()};
     ObservabilityResult result{};
 
@@ -145,43 +179,15 @@ inline ObservabilityResult necessary_observability_check(MeasuredValues<sym> con
         std::reduce(voltage_phasor_sensors.cbegin(), voltage_phasor_sensors.cend(), Idx{}, std::plus<Idx>{});
 
     // check necessary condition for observability
-    if (n_voltage_phasor_sensors == 0 && n_flow_sensors < n_bus - 1) {
-        throw NotObservableError{};
+    detail::necessary_observability_condition(n_voltage_phasor_sensors, n_flow_sensors, n_bus,
+                                              measured_values.has_global_angle_current());
+
+    // check the sufficient condition for observability
+    // the check is currently only implemented for radial grids
+    if (topo.is_radial) {
+        result.is_sufficiently_observable = detail::sufficient_observability_condition(
+            y_bus_structure, flow_sensors, voltage_phasor_sensors, n_voltage_phasor_sensors, n_bus);
     }
-    if (n_voltage_phasor_sensors > 0 && n_flow_sensors + n_voltage_phasor_sensors < n_bus) {
-        throw NotObservableError{};
-    }
-
-    if (measured_values.has_global_angle_current() && n_voltage_phasor_sensors == 0) {
-        throw NotObservableError{
-            "Global angle current sensors require at least one voltage angle measurement as a reference point.\n"};
-    }
-
-    // for a radial grid, try to assign injection or phasor voltage sensors to unmeasured branches
-    // we can then check the sufficient condition for observability
-    if (topo.is_radial) { // TODO (figueroa1395): Check if there is a test that fails when there is a phasor voltage
-                          // sensor and change it
-        detail::assign_independent_sensors_radial(y_bus_structure, flow_sensors, voltage_phasor_sensors);
-        // count independent flow sensors
-        if (Idx const n_independent_flow_sensors =
-                std::reduce(flow_sensors.cbegin(), flow_sensors.cend(), Idx{}, std::plus<Idx>{});
-            n_independent_flow_sensors < n_bus - 1) {
-            throw NotObservableError{"The number of power, current, and voltage phasor sensors appears sufficient, but "
-                                     "they are not independent "
-                                     "enough. The system is still not observable.\n"};
-        } // the message probably needs to be changed to reflect the phasor voltage sensors
-
-        if (Idx const n_remaining_voltage_phasor_sensors =
-                std::reduce(voltage_phasor_sensors.cbegin(), voltage_phasor_sensors.cend(), Idx{}, std::plus<Idx>{});
-            n_voltage_phasor_sensors > 0 && n_remaining_voltage_phasor_sensors < 1) {
-            throw NotObservableError{"The number of power, current, and voltage phasor sensors appears sufficient, but "
-                                     "they are not independent "
-                                     "enough. The system is still not observable.\n"};
-        }
-
-        result.is_sufficiently_observable = true;
-    }
-
     return result;
 }
 
