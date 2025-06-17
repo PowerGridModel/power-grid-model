@@ -79,7 +79,14 @@ TEST_CASE("Necessary observability check") {
     se_input.measured_branch_from_power = {
         {.real_component = {.value = 1.0, .variance = 1.0}, .imag_component = {.value = 0.0, .variance = 1.0}}};
 
-    SUBCASE("Observable grid") { check_observable(topo, param, se_input); }
+    SUBCASE("Observable grid") {
+        SUBCASE("Voltage phasor sensor only") { check_observable(topo, param, se_input); }
+        SUBCASE("Voltage magnitude sensor only") {
+            // setting only real part of measurement makes it magnitude sensor
+            se_input.measured_voltage = {{.value = {1.0, nan}, .variance = 1.0}};
+            check_observable(topo, param, se_input);
+        }
+    }
 
     SUBCASE("No voltage sensor") {
         topo.voltage_sensors_per_bus = {from_sparse, {0, 0, 0, 0}};
@@ -92,7 +99,6 @@ TEST_CASE("Necessary observability check") {
         se_input.measured_bus_injection = {};
 
         SUBCASE("Voltage phasor unavailable condition for unobservable grid") {
-            // setting only real part of measurement makes it magnitude sensor
             se_input.measured_voltage = {{.value = {1.0, nan}, .variance = 1.0}};
             check_not_observable(topo, param, se_input);
         }
@@ -157,6 +163,22 @@ TEST_CASE("Necessary observability check") {
                 check_not_observable(topo, param, se_input);
             }
         }
+        SUBCASE("With voltage phasor measurement and two current sensors") {
+            topo.current_sensors_per_branch_from = {from_dense, {0, 2}, 3};
+
+            SUBCASE("Local current sensor") {
+                se_input.measured_branch_from_current = {
+                    {.angle_measurement_type = local_angle, .measurement = current_measurement},
+                    {.angle_measurement_type = local_angle, .measurement = current_measurement}};
+                check_observable(topo, param, se_input);
+            }
+            SUBCASE("Global angle current sensor") {
+                se_input.measured_branch_from_current = {
+                    {.angle_measurement_type = global_angle, .measurement = current_measurement},
+                    {.angle_measurement_type = global_angle, .measurement = current_measurement}};
+                check_observable(topo, param, se_input);
+            }
+        }
         SUBCASE("No voltage phasor measurement and two current sensors") {
             se_input.measured_voltage = {{.value = {1.0, nan}, .variance = 1.0}};
             topo.current_sensors_per_branch_from = {from_dense, {0, 2}, 3};
@@ -172,6 +194,95 @@ TEST_CASE("Necessary observability check") {
                     {.angle_measurement_type = global_angle, .measurement = current_measurement},
                     {.angle_measurement_type = global_angle, .measurement = current_measurement}};
                 check_not_observable(topo, param, se_input);
+            }
+        }
+    }
+    SUBCASE("Voltage phasor sensors also measure branch flow") {
+        SUBCASE("Only voltage phasor sensors as branch flow sensors") {
+            // remove all power sensors
+            topo.power_sensors_per_bus = {from_sparse, {0, 0, 0, 0}};
+            topo.power_sensors_per_branch_from = {from_sparse, {0, 0, 0, 0}};
+            se_input.measured_bus_injection = {};
+            se_input.measured_branch_from_power = {};
+            SUBCASE("Without a reference voltage phasor sensor") {
+                // sensor at the source is a magnitude voltage one
+                topo.voltage_sensors_per_bus = {from_sparse, {0, 1, 2, 3}};
+                se_input.measured_voltage = {{.value = {1.0, nan}, .variance = 1.0},
+                                             {.value = 2.0 + 2.0i, .variance = 2.0},
+                                             {.value = 3.0 + 3.0i, .variance = 3.0}};
+                check_not_observable(topo, param, se_input);
+            }
+            SUBCASE("With a reference voltage phasor sensor") {
+                // sensor at the source is a phasor voltage one
+                topo.voltage_sensors_per_bus = {from_sparse, {0, 1, 2, 3}};
+                se_input.measured_voltage = {{.value = 1.0 + 1.0i, .variance = 1.0},
+                                             {.value = 2.0 + 2.0i, .variance = 2.0},
+                                             {.value = 3.0 + 3.0i, .variance = 3.0}};
+                check_observable(topo, param, se_input);
+            }
+        }
+        SUBCASE("Voltage phasor and power sensors as branch flow sensors") {
+            // keep branch power sensors only
+            topo.power_sensors_per_bus = {from_sparse, {0, 0, 0, 0}};
+            se_input.measured_bus_injection = {};
+            SUBCASE("Without a reference voltage phasor sensor") {
+                // sensor at the source is a magnitude voltage one
+                topo.voltage_sensors_per_bus = {from_sparse, {0, 1, 2, 2}};
+                se_input.measured_voltage = {{.value = {1.0, nan}, .variance = 1.0},
+                                             {.value = 2.0 + 2.0i, .variance = 2.0}};
+                check_not_observable(topo, param, se_input);
+            }
+            SUBCASE("With a reference voltage phasor sensor") {
+                // sensor at the source is a phasor voltage one
+                topo.voltage_sensors_per_bus = {from_sparse, {0, 1, 2, 2}};
+                se_input.measured_voltage = {{.value = 1.0 + 1.0i, .variance = 1.0},
+                                             {.value = 2.0 + 2.0i, .variance = 2.0}};
+                check_observable(topo, param, se_input);
+            }
+        }
+        SUBCASE("Voltage phasor and current sensors as branch flow sensors") {
+            // add current sensors
+            using enum AngleMeasurementType;
+            topo.current_sensors_per_branch_to = {from_sparse, {0, 1, 1, 1}};
+            DecomposedComplexRandVar<symmetric_t> const current_measurement{
+                .real_component = {.value = 1.0, .variance = 1.0}, .imag_component = {.value = 0.0, .variance = 1.0}};
+
+            // remove all power sensors
+            topo.power_sensors_per_bus = {from_sparse, {0, 0, 0, 0}};
+            topo.power_sensors_per_branch_from = {from_sparse, {0, 0, 0, 0}};
+            se_input.measured_bus_injection = {};
+            se_input.measured_branch_from_power = {};
+            SUBCASE("Without a reference voltage phasor sensor") {
+                // sensor at the source is a magnitude voltage one
+                topo.voltage_sensors_per_bus = {from_sparse, {0, 1, 2, 2}};
+                se_input.measured_voltage = {{.value = {1.0, nan}, .variance = 1.0},
+                                             {.value = 2.0 + 2.0i, .variance = 2.0}};
+                SUBCASE("Local current sensor") {
+                    se_input.measured_branch_to_current = {
+                        {.angle_measurement_type = local_angle, .measurement = current_measurement}};
+                    check_not_observable(topo, param, se_input);
+                }
+                SUBCASE("Global current sensor") {
+                    se_input.measured_branch_to_current = {
+                        {.angle_measurement_type = global_angle, .measurement = current_measurement}};
+                    check_not_observable(topo, param, se_input);
+                }
+            }
+            SUBCASE("With a reference voltage phasor sensor") {
+                // sensor at the source is a phasor voltage one
+                topo.voltage_sensors_per_bus = {from_sparse, {0, 1, 2, 2}};
+                se_input.measured_voltage = {{.value = 1.0 + 1.0i, .variance = 1.0},
+                                             {.value = 2.0 + 2.0i, .variance = 2.0}};
+                SUBCASE("Local current sensor") {
+                    se_input.measured_branch_to_current = {
+                        {.angle_measurement_type = local_angle, .measurement = current_measurement}};
+                    check_observable(topo, param, se_input);
+                }
+                SUBCASE("Global current sensor") {
+                    se_input.measured_branch_to_current = {
+                        {.angle_measurement_type = global_angle, .measurement = current_measurement}};
+                    check_observable(topo, param, se_input);
+                }
             }
         }
     }
