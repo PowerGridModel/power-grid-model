@@ -101,7 +101,7 @@ def _update_input_data(input_data: SingleDataset, update_data: SingleDataset):
     """
 
     merged_data = {component: array.copy() for component, array in input_data.items()}
-    for component in update_data.keys():
+    for component in update_data:
         _update_component_data(component, merged_data[component], update_data[component])
     return merged_data
 
@@ -140,10 +140,7 @@ def _update_component_array_data(
         if field == "id":
             continue
         nan = _nan_type(component, field, DatasetType.update)
-        if np.isnan(nan):
-            mask = ~np.isnan(update_data[field])
-        else:
-            mask = np.not_equal(update_data[field], nan)
+        mask = ~np.isnan(update_data[field]) if np.isnan(nan) else np.not_equal(update_data[field], nan)
 
         if mask.ndim == 2:
             for phase in range(mask.shape[1]):

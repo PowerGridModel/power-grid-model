@@ -512,7 +512,7 @@ def assert_individual_data_entry(serialized_dataset, data_filter, component, ser
                     if is_attribute_filtered_out(data_filter, component, attr):
                         assert attr not in deserialized_output
                         continue
-                    assert attr in deserialized_output.keys()
+                    assert attr in deserialized_output
                     assert_almost_equal(
                         deserialized_output[attr][comp_idx],
                         serialized_input[comp_idx][attr],
@@ -530,7 +530,7 @@ def assert_individual_data_entry(serialized_dataset, data_filter, component, ser
                     if is_attribute_filtered_out(data_filter, component, attr):
                         assert attr not in deserialized_output
                         continue
-                    assert attr in deserialized_output.keys()
+                    assert attr in deserialized_output
                     assert_almost_equal(
                         deserialized_output[attr][comp_idx],
                         serialized_input[comp_idx][attr_idx],

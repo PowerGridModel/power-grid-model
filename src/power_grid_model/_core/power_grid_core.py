@@ -124,7 +124,6 @@ def _load_core() -> CDLL:
 
     """
     dll_path = get_pgm_dll_path()
-
     cdll = CDLL(str(dll_path))
     # assign return types
     # handle
@@ -172,10 +171,7 @@ def make_c_binding(func: Callable):
 
     # binding function
     def cbind_func(self, *args, **kwargs):
-        if "destroy" in name:
-            c_inputs = []
-        else:
-            c_inputs = [self._handle]
+        c_inputs = [] if "destroy" in name else [self._handle]
         args = chain(args, (kwargs[key] for key in py_argnames[len(args) :]))
         for arg in args:
             if isinstance(arg, str):
