@@ -68,7 +68,6 @@ cmake.build-type = "Release"
 cmake.args = ["-GNinja"]
 
 build-dir = "build"
-build.tool-args = ["-j1"]
 
 search.site-packages = false
 
@@ -86,6 +85,12 @@ input = "VERSION"
 regex = "^\\s*(?P<version>[^\\s]+)\\s*$"
 result = "{version}"
 
+# when build in CI, force single thread to avoid out of memory errors
+[[tool.scikit-build.overrides]]
+if.any.env.CIBUILDWHEEL = true
+if.any.env.GITHUB_ACTIONS = true
+if.any.env.READTHEDOCS = true
+build.tool-args = ["-j1"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests/unit"]
