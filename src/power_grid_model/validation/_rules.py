@@ -241,7 +241,7 @@ def all_less_or_equal(
     return none_match_comparison(data, component, field, not_less_or_equal, ref_value, NotLessOrEqualError)
 
 
-def all_between(
+def all_between(  # noqa: PLR0913
     data: SingleDataset,
     component: ComponentType,
     field: str,
@@ -281,7 +281,7 @@ def all_between(
     )
 
 
-def all_between_or_at(
+def all_between_or_at(  # noqa: PLR0913
     data: SingleDataset,
     component: ComponentType,
     field: str,
@@ -331,7 +331,7 @@ def all_between_or_at(
     )
 
 
-def none_match_comparison(
+def none_match_comparison(  # noqa: PLR0913
     data: SingleDataset,
     component: ComponentType,
     field: str,
@@ -554,7 +554,7 @@ def all_valid_enum_values(
     return []
 
 
-def all_valid_associated_enum_values(
+def all_valid_associated_enum_values(  # noqa: PLR0913
     data: SingleDataset,
     component: ComponentType,
     field: str,

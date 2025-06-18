@@ -279,7 +279,7 @@ def _process_power_sigma_and_p_q_sigma(
         power_sigma[mask] = np.nansum(q_sigma[mask], axis=asym_axes)
 
 
-def validate_required_values(
+def validate_required_values(  # noqa: PLR0915
     data: SingleDataset, calculation_type: CalculationType | None = None, symmetric: bool = True
 ) -> list[MissingValueError]:
     """
@@ -631,7 +631,7 @@ def validate_branch3(data: SingleDataset, component: ComponentType) -> list[Vali
     return errors
 
 
-def validate_three_winding_transformer(data: SingleDataset) -> list[ValidationError]:
+def validate_three_winding_transformer(data: SingleDataset) -> list[ValidationError]:  # noqa: PLR0915
     errors = validate_branch3(data, ComponentType.three_winding_transformer)
     errors += _all_greater_than_zero(data, ComponentType.three_winding_transformer, "u1")
     errors += _all_greater_than_zero(data, ComponentType.three_winding_transformer, "u2")
