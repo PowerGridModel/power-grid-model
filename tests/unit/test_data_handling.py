@@ -123,7 +123,7 @@ def test_create_output_data(output_component_types, expected_fns, batch_size):
         output_component_types=output_component_types,
         output_type=DT.sym_output,
         all_component_count=all_component_count,
-        is_batch=False if batch_size == 1 else True,
+        is_batch=batch_size != 1,
         batch_size=batch_size,
     )
 

@@ -126,10 +126,7 @@ def _load_core() -> CDLL:
 
     """
     # first try to find the DLL local
-    if platform.system() == "Windows":
-        dll_file = "_power_grid_core.dll"
-    else:
-        dll_file = "_power_grid_core.so"
+    dll_file = "_power_grid_core.dll" if platform.system() == "Windows" else "_power_grid_core.so"
     dll_path = Path(__file__).parent / dll_file
 
     # if local DLL is not found, try to find the DLL from conda environment
@@ -192,10 +189,7 @@ def make_c_binding(func: Callable):
 
     # binding function
     def cbind_func(self, *args, **kwargs):
-        if "destroy" in name:
-            c_inputs = []
-        else:
-            c_inputs = [self._handle]
+        c_inputs = [] if "destroy" in name else [self._handle]
         args = chain(args, (kwargs[key] for key in py_argnames[len(args) :]))
         for arg in args:
             if isinstance(arg, str):

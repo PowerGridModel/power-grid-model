@@ -113,9 +113,10 @@ select = [
     "FURB",
     "FLY",
     "SLOT",
-    "PL"
+    "PL",
+    "NPY",
 ]
-ignore = ["SIM108", "SIM118", "SIM110", "SIM211", "PLR2004"]
+ignore = ["PLR2004"]
 
 [tool.ruff.lint.isort]
 # Imports that are imported using keyword "as" and are from the same source - are combined.

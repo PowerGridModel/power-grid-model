@@ -892,10 +892,7 @@ def none_missing(data: SingleDataset, component: ComponentType, fields: str | li
         fields = [fields]
     for field in fields:
         nan = _nan_type(component, field)
-        if np.isnan(nan):
-            invalid = np.isnan(data[component][field])
-        else:
-            invalid = np.equal(data[component][field], nan)
+        invalid = np.isnan(data[component][field]) if np.isnan(nan) else np.equal(data[component][field], nan)
 
         if invalid.any():
             # handle both symmetric and asymmetric values

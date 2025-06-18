@@ -189,10 +189,7 @@ class PowerGridModel:
         }.get(calculation_type, [])
 
         def include_type(component_type: ComponentType):
-            for exclude_type in exclude_types:
-                if exclude_type.value in component_type.value:
-                    return False
-            return True
+            return all(exclude_type.value not in component_type.value for exclude_type in exclude_types)
 
         return {ComponentType[k]: v for k, v in self.all_component_count.items() if include_type(k)}
 
