@@ -109,7 +109,7 @@ TEST_CASE("Necessary observability check") {
 
         SUBCASE("Power sensors on parallel branches gets counted as one sensor") {
             // add sensor on branch 2 to-side
-            // m ove sensor on branch 0 to-side to branch 1 to side
+            // move sensor on branch 0 to-side to branch 1 to side
             // hence 2 parallel sensors
             topo.power_sensors_per_branch_from = {from_sparse, {0, 0, 1, 1}};
             topo.power_sensors_per_branch_to = {from_sparse, {0, 0, 0, 1}};
