@@ -180,9 +180,9 @@ inline bool sufficient_observability_condition(YBusStructure const& y_bus_struct
 } // namespace detail
 
 struct ObservabilityResult {
-    bool is_sufficiently_observable{false};
+    bool is_observable{false};
     bool is_possibly_ill_conditioned{false};
-    constexpr bool use_perturbation() const { return is_possibly_ill_conditioned && is_sufficiently_observable; }
+    constexpr bool use_perturbation() const { return is_possibly_ill_conditioned && is_observable; }
 };
 
 template <symmetry_tag sym>
@@ -204,7 +204,7 @@ inline ObservabilityResult observability_check(MeasuredValues<sym> const& measur
     // check the sufficient condition for observability
     // the check is currently only implemented for radial grids
     if (topo.is_radial) {
-        return ObservabilityResult{.is_sufficiently_observable = detail::sufficient_observability_condition(
+        return ObservabilityResult{.is_observable = detail::sufficient_observability_condition(
                                        y_bus_structure, observability_sensors, n_voltage_phasor_sensors),
                                    .is_possibly_ill_conditioned = observability_sensors.is_possibly_ill_conditioned};
     }
