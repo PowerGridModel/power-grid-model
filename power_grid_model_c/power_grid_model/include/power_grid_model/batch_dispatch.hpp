@@ -37,7 +37,7 @@ template <class MainModel, class... ComponentType> class BatchDispatch {
         Idx const n_scenarios = update_data.batch_size();
 
         // if the batch_size is zero, it is a special case without doing any calculations at all
-        // we consider in this case the batch set is independent and but not topology cachable
+        // we consider in this case the batch set is independent but not topology cacheable
         if (n_scenarios == 0) {
             return BatchParameter{};
         }
