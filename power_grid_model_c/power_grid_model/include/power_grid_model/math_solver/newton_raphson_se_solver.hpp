@@ -162,7 +162,7 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
         sub_timer = Timer(calculation_info, 2221, "Pre-process measured value");
         MeasuredValues<sym> const measured_values{y_bus.shared_topology(), input};
         auto const observability_result =
-            necessary_observability_check(measured_values, y_bus.math_topology(), y_bus.y_bus_structure());
+            observability_check(measured_values, y_bus.math_topology(), y_bus.y_bus_structure());
 
         // initialize voltage with initial angle
         sub_timer = Timer(calculation_info, 2223, "Initialize voltages");
