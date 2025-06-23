@@ -91,6 +91,9 @@ inline void assign_independent_sensors_radial(YBusStructure const& y_bus_structu
     // loop the row without the last bus
     for (Idx row = 0; row != n_bus - 1; ++row) {
         Idx const current_bus = row;
+        // upstream_bus_diagonal, concerns only the voltage phasor sensors as they are only on
+        // the buses (diagonal entries)
+        Idx const upstream_bus_diagonal = current_bus + 1;
         Idx const bus_entry_current = y_bus_structure.bus_entry[current_bus];
         Idx const branch_entry_upstream = bus_entry_current + 1;
         // there should be only one upstream branch in the upper diagonal
@@ -112,9 +115,9 @@ inline void assign_independent_sensors_radial(YBusStructure const& y_bus_structu
             } else if (voltage_phasor_sensors[current_bus] == 1) {
                 // if not possible, try to steal voltage phasor sensor from current bus
                 std::swap(flow_sensors[branch_entry_upstream], voltage_phasor_sensors[current_bus]);
-            } else if (voltage_phasor_sensors[current_bus + 1] == 1) {
+            } else if (voltage_phasor_sensors[upstream_bus_diagonal] == 1) {
                 // if not possible, try to steal voltage phasor sensor from upstream bus
-                std::swap(flow_sensors[branch_entry_upstream], voltage_phasor_sensors[current_bus + 1]);
+                std::swap(flow_sensors[branch_entry_upstream], voltage_phasor_sensors[upstream_bus_diagonal]);
             }
         }
         // remove the current bus injection sensors regardless of the original state
@@ -124,14 +127,14 @@ inline void assign_independent_sensors_radial(YBusStructure const& y_bus_structu
     flow_sensors[y_bus_structure.bus_entry[n_bus - 1]] = 0;
 }
 
-inline Idx necessary_observability_condition(ObservabilitySensorsResult const& observability_sensors, Idx const n_bus,
-                                             bool has_global_angle_current) {
+inline bool necessary_observability_condition(ObservabilitySensorsResult const& observability_sensors, Idx const n_bus,
+                                              Idx& n_voltage_phasor_sensors, bool has_global_angle_current) {
     auto const flow_sensors = std::span<const int8_t>{observability_sensors.flow_sensors};
     auto const voltage_phasor_sensors = std::span<const int8_t>{observability_sensors.voltage_phasor_sensors};
     // count total flow sensors and phasor voltage sensors, note we manually specify the intial value type to avoid
     // overflow
     Idx const n_flow_sensors = std::reduce(flow_sensors.begin(), flow_sensors.end(), Idx{}, std::plus<Idx>{});
-    Idx const n_voltage_phasor_sensors =
+    n_voltage_phasor_sensors =
         std::reduce(voltage_phasor_sensors.begin(), voltage_phasor_sensors.end(), Idx{}, std::plus<Idx>{});
 
     if (n_voltage_phasor_sensors == 0 && n_flow_sensors < n_bus - 1) {
@@ -147,7 +150,7 @@ inline Idx necessary_observability_condition(ObservabilitySensorsResult const& o
             "Global angle current sensors require at least one voltage angle measurement as a reference point.\n"};
     }
 
-    return n_voltage_phasor_sensors;
+    return true;
 }
 
 inline bool sufficient_observability_condition(YBusStructure const& y_bus_structure,
@@ -188,6 +191,8 @@ struct ObservabilityResult {
 template <symmetry_tag sym>
 inline ObservabilityResult observability_check(MeasuredValues<sym> const& measured_values,
                                                MathModelTopology const& topo, YBusStructure const& y_bus_structure) {
+    bool is_necessary_condition_met{false};
+    bool is_sufficient_condition_met{false};
     Idx const n_bus{topo.n_bus()};
     assert(n_bus == std::ssize(y_bus_structure.row_indptr) - 1);
 
@@ -196,19 +201,20 @@ inline ObservabilityResult observability_check(MeasuredValues<sym> const& measur
     }
 
     auto observability_sensors = detail::count_observability_sensors(measured_values, topo, y_bus_structure);
+    Idx n_voltage_phasor_sensors{};
 
     // check necessary condition for observability
-    Idx const n_voltage_phasor_sensors = detail::necessary_observability_condition(
-        observability_sensors, n_bus, measured_values.has_global_angle_current());
+    is_necessary_condition_met = detail::necessary_observability_condition(
+        observability_sensors, n_bus, n_voltage_phasor_sensors, measured_values.has_global_angle_current());
 
     // check the sufficient condition for observability
     // the check is currently only implemented for radial grids
     if (topo.is_radial) {
-        return ObservabilityResult{.is_observable = detail::sufficient_observability_condition(
-                                       y_bus_structure, observability_sensors, n_voltage_phasor_sensors),
-                                   .is_possibly_ill_conditioned = observability_sensors.is_possibly_ill_conditioned};
+        is_sufficient_condition_met = detail::sufficient_observability_condition(y_bus_structure, observability_sensors,
+                                                                                 n_voltage_phasor_sensors);
     }
-    return ObservabilityResult{.is_possibly_ill_conditioned = observability_sensors.is_possibly_ill_conditioned};
+    return ObservabilityResult{.is_observable = is_necessary_condition_met && is_sufficient_condition_met,
+                               .is_possibly_ill_conditioned = observability_sensors.is_possibly_ill_conditioned};
 }
 
 } // namespace power_grid_model::math_solver
