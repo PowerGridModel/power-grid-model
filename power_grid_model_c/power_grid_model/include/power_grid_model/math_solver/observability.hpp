@@ -23,7 +23,7 @@ struct ObservabilitySensorsResult {
 // the lower triangular part is always zero
 // the diagonal part will be one if there is a complete bus injection sensor or a voltage phasor sensor
 // the upper triangular part will be one when there exist branch flow sensors and the branch is fully connected
-// return a tuple of
+// return a ObservabilitySensorsResult struct with
 //      a vector of flow sensor count
 //      a vector of voltage phasor sensor count
 //      a boolean indicating if the system is possibly ill-conditioned
@@ -32,14 +32,25 @@ ObservabilitySensorsResult count_observability_sensors(MeasuredValues<sym> const
                                                        MathModelTopology const& topo,
                                                        YBusStructure const& y_bus_structure) {
     Idx const n_bus{topo.n_bus()};
-    ObservabilitySensorsResult result{.flow_sensors = std::vector<int8_t>(y_bus_structure.row_indptr.back(), 0),
-                                      .voltage_phasor_sensors = std::vector<int8_t>(n_bus, 0)};
+    auto voltage_phasor_sensors = std::vector<int8_t>(n_bus, 0);
+    auto flow_sensors = std::vector<int8_t>(y_bus_structure.row_indptr.back(), 0);
+    bool is_possibly_ill_conditioned{false};
+
+    auto has_flow_sensor = [&measured_values](Idx branch) {
+        return measured_values.has_branch_from_power(branch) || measured_values.has_branch_to_power(branch) ||
+               measured_values.has_branch_from_current(branch) || measured_values.has_branch_to_current(branch);
+    };
+
+    auto is_branch_connected = [&topo](Idx branch) {
+        return topo.branch_bus_idx[branch][0] != -1 && topo.branch_bus_idx[branch][1] != -1;
+    };
+
     for (Idx row = 0; row != n_bus; ++row) {
         bool has_at_least_one_sensor{false};
         // lower triangle is ignored and kept as zero
         // diagonal for bus injection measurement
         if (measured_values.has_bus_injection(row)) {
-            result.flow_sensors[y_bus_structure.bus_entry[row]] = 1;
+            flow_sensors[y_bus_structure.bus_entry[row]] = 1;
             has_at_least_one_sensor = true;
         }
         // upper triangle for branch flow measurement
@@ -55,11 +66,8 @@ ObservabilitySensorsResult count_observability_sensors(MeasuredValues<sym> const
                 // if the branch is fully connected and measured, we consider it as a valid flow sensor
                 // we only need one flow sensor, so the loop will break
                 Idx const branch = element.idx;
-                if ((measured_values.has_branch_from_power(branch) || measured_values.has_branch_to_power(branch) ||
-                     measured_values.has_branch_from_current(branch) ||
-                     measured_values.has_branch_to_current(branch)) &&
-                    topo.branch_bus_idx[branch][0] != -1 && topo.branch_bus_idx[branch][1] != -1) {
-                    result.flow_sensors[ybus_index] = 1;
+                if (has_flow_sensor(branch) && is_branch_connected(branch)) {
+                    flow_sensors[ybus_index] = 1;
                     has_at_least_one_sensor = true;
                     break;
                 }
@@ -68,14 +76,14 @@ ObservabilitySensorsResult count_observability_sensors(MeasuredValues<sym> const
         // diagonal for voltage phasor sensors
         if (measured_values.has_voltage(row) && measured_values.has_angle_measurement(row)) {
             has_at_least_one_sensor = true;
-            result.voltage_phasor_sensors[row] = 1;
+            voltage_phasor_sensors[row] = 1;
         }
         // the system could be ill-conditioned if there is no flow sensor for one bus, except the last bus
         if (!has_at_least_one_sensor && row != n_bus - 1) {
-            result.is_possibly_ill_conditioned = true;
+            is_possibly_ill_conditioned = true;
         }
     }
-    return result;
+    return ObservabilitySensorsResult{flow_sensors, voltage_phasor_sensors, is_possibly_ill_conditioned};
 }
 
 // re-organize the flow and voltage phasor sensors for a radial grid
