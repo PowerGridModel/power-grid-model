@@ -164,10 +164,7 @@ The condition check above only checks the necessary condition for observability.
 When the measurements are not independent enough, the system may still be unobservable even if the necessary condition
 is met.
 It is rather complicated to do a full sufficient and necessary observability check in generic cases.
-However, `power-grid-model` performs the sufficient condition check when the following conditions are met:
-
-1. The system is a radial network.
-2. The system does not have voltage phasor measurements.
+However, `power-grid-model` performs the sufficient condition check when the underlying grid is radial.
 
 In this case, the validation of the independent measurements is rather straightforward.
 If the system is not observable, the calculation will raise a `NotObservableError` instead of `SparseMatrixError`.
