@@ -8,6 +8,7 @@
 
 // main include
 #include "batch_dispatch.hpp"
+#include "batch_dispatch_interface.hpp"
 #include "batch_parameter.hpp"
 #include "calculation_parameters.hpp"
 #include "container.hpp"
@@ -1155,6 +1156,19 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         is_parameter_up_to_date<sym>() = true;
         std::ranges::for_each(parameter_changed_components_, [](auto& comps) { comps.clear(); });
         last_updated_calculation_symmetry_mode_ = is_symmetric_v<sym>;
+    }
+
+  private:
+    class BatchDispatchAdapter : BatchDispatchInterface<BatchDispatchAdapter> {
+      public:
+        BatchDispatchAdapter(MainModelImpl& model) : model(model) {}
+
+      private:
+        friend class BatchDispatchInterface;
+
+        auto calculate_impl(
+
+        MainModelImpl& model;
     }
 };
 
