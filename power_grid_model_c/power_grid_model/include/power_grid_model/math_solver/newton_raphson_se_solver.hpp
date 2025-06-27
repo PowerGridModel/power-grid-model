@@ -91,8 +91,8 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
     using sym = sym_type;
 
     static constexpr auto is_iterative = true;
-    static constexpr auto has_current_sensor_implemented =
-        false; // TODO(mgovers): for testing purposes; remove after NRSE has current sensor implemented
+    // TODO(figueroa1395): for testing purposes; remove after NRSE has global current sensor implemented
+    static constexpr auto has_current_sensor_implemented = false;
 
   private:
     enum class Order : IntS { row_major = 0, column_major = 1 };
@@ -321,6 +321,20 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
                             process_branch_measurement(block, diag_block, rhs_block, y_branch.ytt(), y_branch.ytf(),
                                                        u_state, ij_voltage_order, measured_values.branch_to_power(obj));
                         }
+                        if (measured_values.has_branch_from_current(obj)) {
+                            auto const ij_voltage_order =
+                                (type == YBusElementType::bft) ? Order::row_major : Order::column_major;
+                            process_branch_measurement(block, diag_block, rhs_block, y_branch.yff(), y_branch.yft(),
+                                                       u_state, ij_voltage_order,
+                                                       measured_values.branch_from_current(obj));
+                        }
+                        if (measured_values.has_branch_to_current(obj)) {
+                            auto const ij_voltage_order =
+                                (type == YBusElementType::btf) ? Order::row_major : Order::column_major;
+                            process_branch_measurement(block, diag_block, rhs_block, y_branch.ytt(), y_branch.ytf(),
+                                                       u_state, ij_voltage_order,
+                                                       measured_values.branch_to_current(obj));
+                        }
                         break;
                     }
                     default:
@@ -438,40 +452,60 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
     /// @param y_xi_mu admittance from the branch measurement to other bus
     /// @param u_state Voltage state of iteration voltage state vector
     /// @param order Order enum to determine if (chi, psi) = (row, col) or (col, row)
-    /// @param measured_power
+    /// @param measured_flow measured power or current
     void process_branch_measurement(NRSEGainBlock<sym>& block, NRSEGainBlock<sym>& diag_block, NRSERhs<sym>& rhs_block,
                                     auto const& y_xi_xi, auto const& y_xi_mu, auto const& u_state, Order const order,
-                                    auto const& measured_power) {
-        auto const hm_u_chi_u_chi_y_xi_xi = hm_complex_form(y_xi_xi, u_state.u_chi_u_chi_conj(order));
+                                    auto const& measured_flow) {
+        auto hm_u_i_u_j_y_ab = [](auto const& y_ab, auto const& u_i_u_j_conj, auto const& abs_u_i_inv) {
+            if constexpr (std::is_same_v<std::remove_cvref_t<decltype(measured_flow)>, PowerSensorCalcParam<sym>>) {
+                return hm_complex_form(y_ab, u_i_u_j_conj);
+            } else {
+                // CurrentSensorCalcParam<sym>
+                // this is the first implementation 1-to-1 with the math workout, optimization will come after
+                // for the optimization, i can potentially overload hm_complex_form to multiply by a vector
+                // on the right with u_chi only, or just manually do the multiplication
+                return dot(abs_u_i_inv, hm_complex_form(y_ab, u_i_u_j_conj));
+            }
+        };
+        auto const hm_u_chi_u_chi_y_xi_xi =
+            hm_u_i_u_j_y_ab(y_xi_xi, u_state.u_chi_u_chi_conj(order), u_state.abs_u_chi_inv(order));
         auto const nl_u_chi_u_chi_y_xi_xi = dot(hm_u_chi_u_chi_y_xi_xi, u_state.abs_u_chi_inv(order));
 
-        auto const hm_u_chi_u_psi_y_xi_mu = hm_complex_form(y_xi_mu, u_state.u_chi_u_psi_conj(order));
+        auto const hm_u_chi_u_psi_y_xi_mu =
+            hm_u_i_u_j_y_ab(y_xi_mu, u_state.u_chi_u_psi_conj(order), u_state.abs_u_chi_inv(order));
         auto const nl_u_chi_u_psi_y_xi_mu = dot(hm_u_chi_u_psi_y_xi_mu, u_state.abs_u_psi_inv(order));
 
         auto const f_x_complex = sum_row(hm_u_chi_u_chi_y_xi_xi + hm_u_chi_u_psi_y_xi_mu);
-        auto const f_x_complex_u_chi_inv = dot(u_state.abs_u_chi_inv(order), f_x_complex);
+        auto const f_x_complex_u_chi_inv = [](auto const& f_x, auto const& abs_u_chi_inv) {
+            if constexpr (std::is_same_v<std::remove_cvref_t<decltype(measured_flow)>, CurrentSensorCalcParam<sym>>) {
+                // the diagonal elements of dRe{I}/dV and dIm{I}/dV are zero, contrary to the elements for the power
+                return ComplexValue<sym>{0.0};
+            } else {
+                return dot(abs_u_chi_inv, f_x);
+            }
+        }(f_x_complex, u_state.abs_u_chi_inv(order));
 
         auto block_rr_or_cc = calculate_jacobian(hm_u_chi_u_chi_y_xi_xi, nl_u_chi_u_chi_y_xi_xi);
         block_rr_or_cc += jacobian_diagonal_component(f_x_complex_u_chi_inv, f_x_complex);
         auto const block_rc_or_cr = calculate_jacobian(hm_u_chi_u_psi_y_xi_mu, nl_u_chi_u_psi_y_xi_mu);
 
         if (order == Order::row_major) {
-            multiply_add_branch_blocks(block, diag_block, rhs_block, block_rr_or_cc, block_rc_or_cr, measured_power,
+            multiply_add_branch_blocks(block, diag_block, rhs_block, block_rr_or_cc, block_rc_or_cr, measured_flow,
                                        f_x_complex);
         } else {
-            multiply_add_branch_blocks(block, diag_block, rhs_block, block_rc_or_cr, block_rr_or_cc, measured_power,
+            multiply_add_branch_blocks(block, diag_block, rhs_block, block_rc_or_cr, block_rr_or_cc, measured_flow,
                                        f_x_complex);
         }
     }
 
     void multiply_add_branch_blocks(NRSEGainBlock<sym>& block, NRSEGainBlock<sym>& diag_block, NRSERhs<sym>& rhs_block,
-                                    auto& left_block, auto const& right_block, auto const& measured_power,
+                                    auto& left_block, auto const& right_block, auto const& measured_flow,
                                     auto const& f_x_complex) {
-        auto const& block_F_T_k_w = transpose_multiply_weight(left_block, measured_power);
+        auto const& block_F_T_k_w = transpose_multiply_weight(left_block, measured_flow);
 
         multiply_add_jacobian_blocks_lhs(diag_block, block_F_T_k_w, left_block);
         multiply_add_jacobian_blocks_lhs(block, block_F_T_k_w, right_block);
-        multiply_add_jacobian_blocks_rhs(rhs_block, block_F_T_k_w, measured_power, f_x_complex);
+        multiply_add_jacobian_blocks_rhs(rhs_block, block_F_T_k_w, measured_flow, f_x_complex);
     }
 
     /// @brief Fill Q^T(j,i) of LHS(i, j) from the Q(j, i) of LHS(j, i).
@@ -588,10 +622,17 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
     /// @param jac_block F_k(u1, u2, y12)
     /// @param power_sensor object with members p_variance and q_variance
     /// @return  F_k(u1, u2, y12)^T . W
-    NRSEJacobian transpose_multiply_weight(NRSEJacobian const& jac_block,
-                                           PowerSensorCalcParam<sym> const& power_sensor) {
-        auto const w_p = diagonal_inverse(power_sensor.real_component.variance);
-        auto const w_q = diagonal_inverse(power_sensor.imag_component.variance);
+    NRSEJacobian transpose_multiply_weight(NRSEJacobian const& jac_block, auto const& measured_flow) {
+        auto const measurement = [&measured_flow]() {
+            if constexpr (std::is_same_v<std::remove_cvref_t<decltype(measured_flow)>, PowerSensorCalcParam<sym>>) {
+                return measured_flow;
+            } else {
+                // CurrentSensorCalcParam<sym>
+                return measured_flow.measurement;
+            }
+        }();
+        auto const w_p = diagonal_inverse(measurement.real_component.variance);
+        auto const w_q = diagonal_inverse(measurement.imag_component.variance);
 
         NRSEJacobian product{};
         product.dP_dt = dot(w_p, jac_block.dP_dt);
@@ -620,12 +661,19 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
     ///
     /// @param rhs_block RHS(row)
     /// @param f_T_k_w F_{k,1}^T . w_k
-    /// @param power_sensor measurement
+    /// @param power_sensor power or current measurement
     /// @param f_x_complex calculated power
     static void multiply_add_jacobian_blocks_rhs(NRSERhs<sym>& rhs_block, NRSEJacobian const& f_T_k_w,
-                                                 PowerSensorCalcParam<sym> const& power_sensor,
-                                                 ComplexValue<sym> const& f_x_complex) {
-        ComplexValue<sym> const delta_power = power_sensor.value() - f_x_complex;
+                                                 auto const& measured_flow, ComplexValue<sym> const& f_x_complex) {
+        auto const measurement_value = [&measured_flow]() {
+            if constexpr (std::is_same_v<std::remove_cvref_t<decltype(measured_flow)>, PowerSensorCalcParam<sym>>) {
+                return measured_flow.value();
+            } else {
+                // CurrentSensorCalcParam<sym>
+                return measured_flow.measurement.value();
+            }
+        }();
+        ComplexValue<sym> const delta_power = measurement_value - f_x_complex;
         rhs_block.eta_theta() += dot(f_T_k_w.dP_dt, real(delta_power)) + dot(f_T_k_w.dP_dv, imag(delta_power));
         rhs_block.eta_v() += dot(f_T_k_w.dQ_dt, real(delta_power)) + dot(f_T_k_w.dQ_dv, imag(delta_power));
     }
