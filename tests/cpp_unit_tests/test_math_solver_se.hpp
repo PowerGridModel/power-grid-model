@@ -73,6 +73,19 @@ template <symmetry_tag sym_type> struct SESolverTestGrid : public SteadyStateSol
                 {.real_component = {.value = real(output_reference.branch[1].s_t), .variance = 0.5},
                  .imag_component = {.value = imag(output_reference.branch[1].s_t), .variance = 0.5}},
             };
+            result.measured_branch_from_current = {
+                {.angle_measurement_type = AngleMeasurementType::local_angle,
+                 .measurement = {.real_component = {.value = real(cabs(output_reference.branch[1].i_f) *
+                                                                  ComplexValue<symmetric_t>{exp(
+                                                                      1.0i * (arg(output_reference.u[1]) -
+                                                                              arg(output_reference.branch[1].i_f)))}),
+                                                    .variance = 0.5},
+                                 .imag_component = {.value = imag(cabs(output_reference.branch[1].i_f) *
+                                                                  ComplexValue<symmetric_t>{exp(
+                                                                      1.0i * (arg(output_reference.u[1]) -
+                                                                              arg(output_reference.branch[1].i_f)))}),
+                                                    .variance = 0.5}}},
+            };
         } else {
             result.shunt_status = {1};
             result.load_gen_status = {1, 1, 1, 1, 1, 1, 0};
@@ -138,6 +151,22 @@ template <symmetry_tag sym_type> struct SESolverTestGrid : public SteadyStateSol
                                     .variance = RealValue<asymmetric_t>{0.5}},
                  .imag_component = {.value = imag(output_reference.branch[1].s_t * RealValue<asymmetric_t>{1.0}),
                                     .variance = RealValue<asymmetric_t>{0.5}}},
+            };
+            result.measured_branch_from_current = {
+                {.angle_measurement_type = AngleMeasurementType::local_angle,
+                 .measurement = {.real_component = {.value = real(cabs(output_reference.branch[1].i_f) *
+                                                                  RealValue<asymmetric_t>{1.0} *
+                                                                  ComplexValue<asymmetric_t>{exp(
+                                                                      1.0i * (arg(output_reference.u[1]) -
+                                                                              arg(output_reference.branch[1].i_f)))}),
+                                                    .variance = RealValue<asymmetric_t>{0.5}},
+                                 .imag_component = {.value =
+                                                        imag(cabs(output_reference.branch[1].i_f) *
+                                                             RealValue<asymmetric_t>{1.0} *
+                                                             ComplexValue<asymmetric_t>{
+                                                                 exp(1.0i * (arg(output_reference.u[1]) -
+                                                                             arg(output_reference.branch[1].i_f)))}),
+                                                    .variance = RealValue<asymmetric_t>{0.5}}}},
             };
         }
         return result;

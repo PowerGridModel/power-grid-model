@@ -61,11 +61,12 @@ inline void assert_output(SolverOutput<sym> const& output, SolverOutput<sym> con
 
 template <symmetry_tag sym_type> struct SteadyStateSolverTestGrid {
     /*
-    network, v means voltage measured, p means power measured, pp means double measured
+    network, v means voltage measured, p means power measured, pp means double measured,
+    cl means local current measured
     variance always 1.0
                                                           shunt0 (ys) (p)
      (pp)                     (y0, ys0)           (y1)         |
-    source --yref-- bus0(vp) -p-branch0-pp- bus1 --branch1-p-  bus2(vv)
+    source --yref-- bus0(vp) -p-branch0-pp- bus1 -cl-branch1-p-  bus2(vv)
                      |                      |                   |
                   load012                load345 (p)          load6 (not connected) (p, rubbish value)
                                           for const z,
@@ -102,6 +103,7 @@ template <symmetry_tag sym_type> struct SteadyStateSolverTestGrid {
         result.power_sensors_per_shunt = {from_sparse, {0, 1}};
         result.power_sensors_per_branch_from = {from_sparse, {0, 1, 1}};
         result.power_sensors_per_branch_to = {from_sparse, {0, 2, 3}};
+        result.current_sensors_per_branch_from = {from_sparse, {0, 0, 1}};
         return result;
     };
 
