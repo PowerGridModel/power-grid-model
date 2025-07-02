@@ -93,8 +93,9 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
     using sym = sym_type;
 
     static constexpr auto is_iterative = true;
-    // TODO(figueroa1395): for testing purposes; remove after NRSE has global current sensor implemented
-    static constexpr auto has_current_sensor_implemented = false;
+    static constexpr auto has_global_current_sensor_implemented =
+        false; // TODO(figueroa1395): for testing purposes; remove after NRSE has global current sensor implemented
+    static constexpr auto is_NRSE_solver = true; // for testing purposes only
 
   private:
     enum class Order : IntS { row_major = 0, column_major = 1 };

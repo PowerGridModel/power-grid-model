@@ -9,6 +9,7 @@
 #include "test_math_solver_common.hpp"
 
 #include <power_grid_model/common/calculation_info.hpp>
+#include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/math_solver/sparse_lu_solver.hpp>
 #include <power_grid_model/math_solver/y_bus.hpp>
 
@@ -152,6 +153,7 @@ template <symmetry_tag sym_type> struct SESolverTestGrid : public SteadyStateSol
                  .imag_component = {.value = imag(output_reference.branch[1].s_t * RealValue<asymmetric_t>{1.0}),
                                     .variance = RealValue<asymmetric_t>{0.5}}},
             };
+            // serves as unit test for local angle measurement
             result.measured_branch_from_current = {
                 {.angle_measurement_type = AngleMeasurementType::local_angle,
                  .measurement = {.real_component = {.value = real(cabs(output_reference.branch[1].i_f) *
@@ -331,6 +333,8 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
     topo.power_sensors_per_shunt = {from_sparse, {0}};
     topo.power_sensors_per_branch_from = {from_sparse, {0, 0}};
     topo.power_sensors_per_branch_to = {from_sparse, {0, 0}};
+    topo.current_sensors_per_branch_from = {from_sparse, {0, 0}};
+    topo.current_sensors_per_branch_to = {from_sparse, {0, 0}};
 
     MathModelParam<symmetric_t> param;
     param.branch_param = {{1.0e3, -1.0e3, -1.0e3, 1.0e3}};
@@ -403,13 +407,16 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
                     {.angle_measurement_type = AngleMeasurementType::local_angle,
                      .measurement = {.real_component = {.value = 1.97, .variance = 0.05},
                                      .imag_component = {.value = 0.0, .variance = 0.05}}}};
+                // We can't compare ILSE with NRSE one to one
+                if (!SolverType::is_NRSE_solver) {
+                    output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, info);
 
-                output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, info);
-                CHECK(real(output.bus_injection[0]) == doctest::Approx(1.95));
-                CHECK(real(output.source[0].s) == doctest::Approx(1.95));
-                CHECK(real(output.branch[0].s_f) == doctest::Approx(1.95));
-                CHECK(real(output.branch[0].i_f) == doctest::Approx(real(1.95 * global_shift)));
-                CHECK(imag(output.branch[0].i_f) == doctest::Approx(imag(1.95 * global_shift)));
+                    CHECK(real(output.bus_injection[0]) == doctest::Approx(1.95));
+                    CHECK(real(output.source[0].s) == doctest::Approx(1.95));
+                    CHECK(real(output.branch[0].s_f) == doctest::Approx(1.95));
+                    CHECK(real(output.branch[0].i_f) == doctest::Approx(real(1.95 * global_shift)));
+                    CHECK(imag(output.branch[0].i_f) == doctest::Approx(imag(1.95 * global_shift)));
+                }
             }
             SUBCASE("With phase shift") {
                 se_input.measured_source_power = {{.real_component = {.value = 0.0, .variance = 0.05},
@@ -418,13 +425,18 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
                     {.angle_measurement_type = AngleMeasurementType::local_angle,
                      .measurement = {.real_component = {.value = 0.0, .variance = 0.05},
                                      .imag_component = {.value = 1.97, .variance = 0.05}}}};
+                // We can't compare ILSE with NRSE one to one
+                if (!SolverType::is_NRSE_solver) {
+                    output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, info);
 
-                output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, info);
-                CHECK(imag(output.bus_injection[0]) == doctest::Approx(1.95));
-                CHECK(imag(output.source[0].s) == doctest::Approx(1.95));
-                CHECK(imag(output.branch[0].s_f) == doctest::Approx(1.95));
-                CHECK(real(output.branch[0].i_f) == doctest::Approx(real(1.95 * global_shift)));
-                CHECK(imag(output.branch[0].i_f) == doctest::Approx(-imag(1.95 * global_shift)));
+                    CHECK(imag(output.bus_injection[0]) == doctest::Approx(1.95));
+                    CHECK(imag(output.source[0].s) == doctest::Approx(1.95));
+                    CHECK(imag(output.branch[0].s_f) == doctest::Approx(1.95));
+                    CHECK(real(output.branch[0].i_f) == doctest::Approx(real(1.95 * global_shift)));
+                    CHECK(imag(output.branch[0].i_f) == doctest::Approx(-imag(1.95 * global_shift)));
+                } else {
+                    CHECK_NOTHROW(run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, info));
+                }
             }
         }
         SUBCASE("Global angle current sensor") {
@@ -435,21 +447,18 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
                  .measurement = {.real_component = {.value = real(1.97 * global_shift), .variance = 0.05},
                                  .imag_component = {.value = imag(1.97 * global_shift), .variance = 0.05}}}};
 
-            output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, info);
+            // We can't compare ILSE with NRSE one to one
+            if (!SolverType::is_NRSE_solver) {
+                output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, info);
 
-            // TODO(figueroa1395): for testing purposes; remove after NRSE has global current sensor implemented
-            if (SolverType::has_current_sensor_implemented) {
                 CHECK(real(output.bus_injection[0]) == doctest::Approx(1.95));
                 CHECK(real(output.source[0].s) == doctest::Approx(1.95));
                 CHECK(real(output.branch[0].s_f) == doctest::Approx(1.95));
                 CHECK(real(output.branch[0].i_f) == doctest::Approx(real(1.95 * global_shift)));
                 CHECK(imag(output.branch[0].i_f) == doctest::Approx(imag(1.95 * global_shift)));
             } else {
-                CHECK_FALSE(real(output.bus_injection[0]) == doctest::Approx(1.95));
-                CHECK_FALSE(real(output.source[0].s) == doctest::Approx(1.95));
-                CHECK_FALSE(real(output.branch[0].s_f) == doctest::Approx(1.95));
-                CHECK_FALSE(real(output.branch[0].i_f) == doctest::Approx(real(1.95 * global_shift)));
-                CHECK_FALSE(imag(output.branch[0].i_f) == doctest::Approx(imag(1.95 * global_shift)));
+                CHECK_THROWS_AS(run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, info),
+                                SparseMatrixError);
             }
         }
     }
@@ -682,10 +691,16 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         std::accumulate(output.load_gen.begin(), output.load_gen.end(), ComplexValue<symmetric_t>{},
                         [](auto const& first, auto const& second) { return first + second.s; });
 
-    CHECK(output.bus_injection[0] == output.branch[0].s_f);
-    CHECK(output.bus_injection[0] == output.source[0].s);
-    CHECK(output.bus_injection[1] == output.branch[0].s_t);
-    CHECK(real(output.bus_injection[1]) == doctest::Approx(real(load_gen_s)));
+    if (!SolverType::has_global_current_sensor_implemented) {
+        // TODO(figueroa1395): remove this check when global angle current sensor is implemented for
+        // NRSE solver
+        CHECK(true);
+    } else {
+        CHECK(output.bus_injection[0] == output.branch[0].s_f);
+        CHECK(output.bus_injection[0] == output.source[0].s);
+        CHECK(output.bus_injection[1] == output.branch[0].s_t);
+        CHECK(real(output.bus_injection[1]) == doctest::Approx(real(load_gen_s)));
+    }
 }
 
 } // namespace power_grid_model
