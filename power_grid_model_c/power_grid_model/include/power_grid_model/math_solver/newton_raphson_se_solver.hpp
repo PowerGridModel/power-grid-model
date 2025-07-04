@@ -511,12 +511,12 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
                                                   NRSERhs<sym>& rhs_block, auto const& y_xi_xi, auto const& y_xi_mu,
                                                   auto const& u_state, Order const order,
                                                   CurrentSensorCalcParam<sym> const& current_sensor) {
-        auto const hm_hat_u_chi_u_chi_y_xi_xi =
-            dot(hm_complex_form(y_xi_xi, u_state.u_chi_u_chi_conj(order)), u_state.abs_u_chi_inv(order));
+        auto const hm_u_chi_u_chi_y_xi_xi = hm_complex_form(y_xi_xi, u_state.u_chi_u_chi_conj(order));
+        auto const hm_hat_u_chi_u_chi_y_xi_xi = dot(hm_u_chi_u_chi_y_xi_xi, u_state.abs_u_chi_inv(order));
         auto const nl_hat_u_chi_u_chi_y_xi_xi = dot(hm_hat_u_chi_u_chi_y_xi_xi, u_state.abs_u_chi_inv(order));
 
-        auto const hm_hat_u_chi_u_psi_y_xi_mu =
-            dot(hm_complex_form(y_xi_mu, u_state.u_chi_u_psi_conj(order)), u_state.abs_u_chi_inv(order));
+        auto const hm_u_chi_u_psi_y_xi_mu = hm_complex_form(y_xi_mu, u_state.u_chi_u_psi_conj(order));
+        auto const hm_hat_u_chi_u_psi_y_xi_mu = dot(hm_u_chi_u_psi_y_xi_mu, u_state.abs_u_chi_inv(order));
         auto const nl_hat_u_chi_u_psi_y_xi_mu = dot(hm_hat_u_chi_u_psi_y_xi_mu, u_state.abs_u_psi_inv(order));
 
         auto const f_x_complex = sum_row(hm_hat_u_chi_u_chi_y_xi_xi + hm_hat_u_chi_u_psi_y_xi_mu);
