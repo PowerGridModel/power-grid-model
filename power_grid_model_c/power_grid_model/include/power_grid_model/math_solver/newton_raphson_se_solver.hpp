@@ -251,6 +251,14 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
         IdxVector const& col_indices = y_bus.col_indices_lu();
         IdxVector const& lu_diag = y_bus.lu_diag();
 
+        std::vector<NRSEVoltageState> u_states(n_bus_);
+        for (Idx row = 0; row != n_bus_; ++row) {
+            u_states[row].ui = current_u[row];
+            u_states[row].abs_ui_inv = diagonal_inverse(x_[row].v());
+            u_states[row].ui_ui_conj = vector_outer_product(u_states[row].ui, conj(u_states[row].ui));
+            // rest of the state is initialized and modified multiple times as per col in the loop below
+        }
+
         // loop data index, all rows and columns
         for (Idx row = 0; row != n_bus_; ++row) {
             NRSERhs<sym>& rhs_block = delta_x_rhs_[row];
@@ -259,10 +267,7 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
             rhs_block.clear();
             diag_block.clear();
 
-            NRSEVoltageState u_state{};
-            u_state.ui = current_u[row];
-            u_state.abs_ui_inv = diagonal_inverse(x_[row].v());
-            u_state.ui_ui_conj = vector_outer_product(u_state.ui, conj(u_state.ui));
+            NRSEVoltageState& u_state = u_states[row];
 
             for (Idx data_idx_lu = row_indptr[row]; data_idx_lu != row_indptr[row + 1]; ++data_idx_lu) {
                 // get data idx of y bus,
@@ -284,11 +289,12 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
                     continue;
                 }
 
-                u_state.uj = current_u[col];
-                u_state.abs_uj_inv = diagonal_inverse(x_[col].v());
-                u_state.uj_uj_conj = vector_outer_product(u_state.uj, conj(u_state.uj));
+                u_state.uj = u_states[col].ui;
+                u_state.abs_uj_inv = u_states[col].abs_ui_inv;
+                u_state.uj_uj_conj = u_states[col].ui_ui_conj;
+
                 u_state.ui_uj_conj = vector_outer_product(u_state.ui, conj(u_state.uj));
-                u_state.uj_ui_conj = vector_outer_product(u_state.uj, conj(u_state.ui));
+                u_state.uj_ui_conj = hermitian_transpose(u_state.ui_uj_conj);
 
                 // fill block with branch, shunt measurement
                 for (Idx element_idx = y_bus.y_bus_entry_indptr()[data_idx];
