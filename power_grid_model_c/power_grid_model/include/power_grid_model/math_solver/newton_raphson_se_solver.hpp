@@ -105,10 +105,6 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
         ComplexTensor<sym> uj_uj_conj;
         ComplexTensor<sym> ui_uj_conj;
         ComplexTensor<sym> uj_ui_conj;
-        ComplexTensor<sym> phase_ui_ui_conj;
-        ComplexTensor<sym> phase_uj_uj_conj;
-        ComplexTensor<sym> phase_ui_uj_conj;
-        ComplexTensor<sym> phase_uj_ui_conj;
         ComplexValue<sym> ui;
         ComplexValue<sym> uj;
         RealDiagonalTensor<sym> abs_ui_inv;
@@ -119,12 +115,6 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
         }
         auto const& u_chi_u_psi_conj(Order ij_voltage_order) const {
             return ij_voltage_order == Order::row_major ? ui_uj_conj : uj_ui_conj;
-        }
-        auto const& phase_u_chi_u_chi_conj(Order ij_voltage_order) const {
-            return ij_voltage_order == Order::row_major ? phase_ui_ui_conj : phase_uj_uj_conj;
-        }
-        auto const& phase_u_chi_u_psi_conj(Order ij_voltage_order) const {
-            return ij_voltage_order == Order::row_major ? phase_ui_uj_conj : phase_uj_ui_conj;
         }
         auto const& abs_u_chi_inv(Order ij_voltage_order) const {
             return ij_voltage_order == Order::row_major ? abs_ui_inv : abs_uj_inv;
@@ -302,11 +292,6 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
                 u_state.uj_uj_conj = vector_outer_product(u_state.uj, conj(u_state.uj));
                 u_state.ui_uj_conj = vector_outer_product(u_state.ui, conj(u_state.uj));
                 u_state.uj_ui_conj = vector_outer_product(u_state.uj, conj(u_state.ui));
-                // after implementation, check whether all these are needed
-                u_state.phase_ui_ui_conj = vector_outer_product(phase_shift(u_state.ui), conj(u_state.ui));
-                u_state.phase_uj_uj_conj = vector_outer_product(phase_shift(u_state.uj), conj(u_state.uj));
-                u_state.phase_ui_uj_conj = vector_outer_product(phase_shift(u_state.ui), conj(u_state.uj));
-                u_state.phase_uj_ui_conj = vector_outer_product(phase_shift(u_state.uj), conj(u_state.ui));
 
                 // fill block with branch, shunt measurement
                 for (Idx element_idx = y_bus.y_bus_entry_indptr()[data_idx];
@@ -329,29 +314,52 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
                         if (measured_values.has_branch_from_power(obj)) {
                             auto const ij_voltage_order =
                                 (type == YBusElementType::bft) ? Order::row_major : Order::column_major;
-                            process_branch_measurement(block, diag_block, rhs_block, y_branch.yff(), y_branch.yft(),
-                                                       u_state, ij_voltage_order,
-                                                       measured_values.branch_from_power(obj));
+                            process_branch_power_measurement(block, diag_block, rhs_block, y_branch.yff(),
+                                                             y_branch.yft(), u_state, ij_voltage_order,
+                                                             measured_values.branch_from_power(obj));
                         }
                         if (measured_values.has_branch_to_power(obj)) {
                             auto const ij_voltage_order =
                                 (type == YBusElementType::btf) ? Order::row_major : Order::column_major;
-                            process_branch_measurement(block, diag_block, rhs_block, y_branch.ytt(), y_branch.ytf(),
-                                                       u_state, ij_voltage_order, measured_values.branch_to_power(obj));
+                            process_branch_power_measurement(block, diag_block, rhs_block, y_branch.ytt(),
+                                                             y_branch.ytf(), u_state, ij_voltage_order,
+                                                             measured_values.branch_to_power(obj));
                         }
                         if (measured_values.has_branch_from_current(obj)) {
                             auto const ij_voltage_order =
                                 (type == YBusElementType::bft) ? Order::row_major : Order::column_major;
-                            process_branch_measurement(block, diag_block, rhs_block, y_branch.yff(), y_branch.yft(),
-                                                       u_state, ij_voltage_order,
-                                                       measured_values.branch_from_current(obj));
+                            auto const& measurement = measured_values.branch_from_current(obj);
+                            switch (measurement.angle_measurement_type) {
+                            case AngleMeasurementType::local_angle:
+                                process_branch_local_current_measurement(block, diag_block, rhs_block, y_branch.yff(),
+                                                                         y_branch.yft(), u_state, ij_voltage_order,
+                                                                         measurement);
+                                break;
+                            case AngleMeasurementType::global_angle:
+                                throw SparseMatrixError{};
+                                break;
+                            default:
+                                assert(measurement.angle_measurement_type == AngleMeasurementType::local_angle ||
+                                       measurement.angle_measurement_type == AngleMeasurementType::global_angle);
+                            }
                         }
                         if (measured_values.has_branch_to_current(obj)) {
                             auto const ij_voltage_order =
                                 (type == YBusElementType::btf) ? Order::row_major : Order::column_major;
-                            process_branch_measurement(block, diag_block, rhs_block, y_branch.ytt(), y_branch.ytf(),
-                                                       u_state, ij_voltage_order,
-                                                       measured_values.branch_to_current(obj));
+                            auto const& measurement = measured_values.branch_to_current(obj);
+                            switch (measurement.angle_measurement_type) {
+                            case AngleMeasurementType::local_angle:
+                                process_branch_local_current_measurement(block, diag_block, rhs_block, y_branch.ytt(),
+                                                                         y_branch.ytf(), u_state, ij_voltage_order,
+                                                                         measurement);
+                                break;
+                            case AngleMeasurementType::global_angle:
+                                throw SparseMatrixError{};
+                                break;
+                            default:
+                                assert(measurement.angle_measurement_type == AngleMeasurementType::local_angle ||
+                                       measurement.angle_measurement_type == AngleMeasurementType::global_angle);
+                            }
                         }
                         break;
                     }
@@ -471,9 +479,10 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
     /// @param u_state Voltage state of iteration voltage state vector
     /// @param order Order enum to determine if (chi, psi) = (row, col) or (col, row)
     /// @param power_sensor measurement
-    void process_branch_measurement(NRSEGainBlock<sym>& block, NRSEGainBlock<sym>& diag_block, NRSERhs<sym>& rhs_block,
-                                    auto const& y_xi_xi, auto const& y_xi_mu, auto const& u_state, Order const order,
-                                    PowerSensorCalcParam<sym> const& power_sensor) {
+    void process_branch_power_measurement(NRSEGainBlock<sym>& block, NRSEGainBlock<sym>& diag_block,
+                                          NRSERhs<sym>& rhs_block, auto const& y_xi_xi, auto const& y_xi_mu,
+                                          auto const& u_state, Order const order,
+                                          PowerSensorCalcParam<sym> const& power_sensor) {
         auto const hm_u_chi_u_chi_y_xi_xi = hm_complex_form(y_xi_xi, u_state.u_chi_u_chi_conj(order));
         auto const nl_u_chi_u_chi_y_xi_xi = dot(hm_u_chi_u_chi_y_xi_xi, u_state.abs_u_chi_inv(order));
 
@@ -496,54 +505,26 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
         }
     }
 
-    /// @brief Adds contribution of branch current measurements to the G(r, r), G(r, c) and eta_r blocks,
-    ///  given the iteration passes through (r, c), i.e., row, col
-    ///
-    /// When iterating via (row, col), have 4 cases regarding branch measurements:
-    ///      if y_type == yft
-    ///          if from_measurement,
-    ///              xi = f, mu = t, chi = row, psi = col
-    ///          if to_measurement,
-    ///              xi = t, mu = f, chi = col, psi = row
-    ///      if y_type == ytf &
-    ///          if from_measurement,
-    ///              xi = f, mu = t, chi = col, psi = row
-    ///          if to_measurement,
-    ///              xi = t, mu = f, chi = row, psi = col
-    ///
-    /// f_Re(I)_(x) = -M^(U_chi, U_chi, Y_xi_xi) - M^(U_chi, U_psi, Y_xi_mu)
-    /// f_Im(I)_(x) = H^(U_chi, U_chi, Y_xi_xi) + H^(U_chi, U_psi, Y_xi_mu)
-    ///
-    ///
-    /// @param block G(r, c)
-    /// @param diag_block G(r, r)
-    /// @param rhs_block RHS(r)
-    /// @param y_xi_xi shunt admittance near to branch measurement
-    /// @param y_xi_mu admittance from the branch measurement to other bus
-    /// @param u_state Voltage state of iteration voltage state vector
-    /// @param order Order enum to determine if (chi, psi) = (row, col) or (col, row)
-    /// @param current_sensor object with measurement
-    void process_branch_measurement(NRSEGainBlock<sym>& block, NRSEGainBlock<sym>& diag_block, NRSERhs<sym>& rhs_block,
-                                    auto const& y_xi_xi, auto const& y_xi_mu, auto const& u_state, Order const order,
-                                    CurrentSensorCalcParam<sym> const& current_sensor) {
-        if (current_sensor.angle_measurement_type == AngleMeasurementType::global_angle) {
-            // global angle measurement is not implemented for current sensors yet.
-            // this is a temporary fix for consistency.
-            throw SparseMatrixError{};
-        }
-        auto const hm_u_chi_u_chi_y_xi_xi = hm_complex_form(y_xi_xi, u_state.phase_u_chi_u_chi_conj(order));
-        auto const nl_u_chi_u_chi_y_xi_xi = dot(hm_u_chi_u_chi_y_xi_xi, u_state.abs_u_chi_inv(order));
+    /// @brief Adds contribution of branch current measurements. Logic is similar to powermeasurements, but with an
+    /// additional voltage division as per mathematical workout.
+    void process_branch_local_current_measurement(NRSEGainBlock<sym>& block, NRSEGainBlock<sym>& diag_block,
+                                                  NRSERhs<sym>& rhs_block, auto const& y_xi_xi, auto const& y_xi_mu,
+                                                  auto const& u_state, Order const order,
+                                                  CurrentSensorCalcParam<sym> const& current_sensor) {
+        auto const hm_hat_u_chi_u_chi_y_xi_xi =
+            dot(hm_complex_form(y_xi_xi, u_state.u_chi_u_chi_conj(order)), u_state.abs_u_chi_inv(order));
+        auto const nl_hat_u_chi_u_chi_y_xi_xi = dot(hm_hat_u_chi_u_chi_y_xi_xi, u_state.abs_u_chi_inv(order));
 
-        auto const hm_u_chi_u_psi_y_xi_mu = hm_complex_form(y_xi_mu, u_state.phase_u_chi_u_psi_conj(order));
-        auto const nl_u_chi_u_psi_y_xi_mu = dot(hm_u_chi_u_psi_y_xi_mu, u_state.abs_u_psi_inv(order));
+        auto const hm_hat_u_chi_u_psi_y_xi_mu =
+            dot(hm_complex_form(y_xi_mu, u_state.u_chi_u_psi_conj(order)), u_state.abs_u_chi_inv(order));
+        auto const nl_hat_u_chi_u_psi_y_xi_mu = dot(hm_hat_u_chi_u_psi_y_xi_mu, u_state.abs_u_psi_inv(order));
 
-        auto const f_x_complex = sum_row(hm_u_chi_u_chi_y_xi_xi + hm_u_chi_u_psi_y_xi_mu);
-        // the diagonal elements of dRe{I}/dV and dIm{I}/dV are zero
-        auto const f_x_complex_u_chi_inv = ComplexValue<sym>{0.0};
+        auto const f_x_complex = sum_row(hm_hat_u_chi_u_chi_y_xi_xi + hm_hat_u_chi_u_psi_y_xi_mu);
 
-        auto block_rr_or_cc = calculate_jacobian(hm_u_chi_u_chi_y_xi_xi, nl_u_chi_u_chi_y_xi_xi);
-        block_rr_or_cc += jacobian_diagonal_component(f_x_complex_u_chi_inv, f_x_complex);
-        auto const block_rc_or_cr = calculate_jacobian(hm_u_chi_u_psi_y_xi_mu, nl_u_chi_u_psi_y_xi_mu);
+        auto block_rr_or_cc = calculate_jacobian(hm_hat_u_chi_u_chi_y_xi_xi, nl_hat_u_chi_u_chi_y_xi_xi);
+        block_rr_or_cc.dP_dt += RealTensor<sym>{RealValue<sym>{-imag(f_x_complex)}};
+        block_rr_or_cc.dQ_dt += RealTensor<sym>{RealValue<sym>{real(f_x_complex)}};
+        auto const block_rc_or_cr = calculate_jacobian(hm_hat_u_chi_u_psi_y_xi_mu, nl_hat_u_chi_u_psi_y_xi_mu);
 
         if (order == Order::row_major) {
             multiply_add_branch_blocks(block, diag_block, rhs_block, block_rr_or_cc, block_rc_or_cr,
