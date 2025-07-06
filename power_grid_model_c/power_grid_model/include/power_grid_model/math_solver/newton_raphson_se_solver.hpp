@@ -122,6 +122,8 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
         auto const& abs_u_psi_inv(Order ij_voltage_order) const {
             return ij_voltage_order == Order::row_major ? abs_uj_inv : abs_ui_inv;
         }
+        auto const& u_chi(Order ij_voltage_order) const { return ij_voltage_order == Order::row_major ? ui : uj; }
+        auto const& u_psi(Order ij_voltage_order) const { return ij_voltage_order == Order::row_major ? uj : ui; }
     };
 
     struct NRSEJacobian {
@@ -336,7 +338,9 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
                                                                          measurement);
                                 break;
                             case AngleMeasurementType::global_angle:
-                                throw SparseMatrixError{};
+                                process_branch_global_current_measurement(block, diag_block, rhs_block, y_branch.yff(),
+                                                                          y_branch.yft(), u_state, ij_voltage_order,
+                                                                          measurement);
                                 break;
                             default:
                                 assert(measurement.angle_measurement_type == AngleMeasurementType::local_angle ||
@@ -354,7 +358,9 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
                                                                          measurement);
                                 break;
                             case AngleMeasurementType::global_angle:
-                                throw SparseMatrixError{};
+                                process_branch_global_current_measurement(block, diag_block, rhs_block, y_branch.ytt(),
+                                                                          y_branch.ytf(), u_state, ij_voltage_order,
+                                                                          measurement);
                                 break;
                             default:
                                 assert(measurement.angle_measurement_type == AngleMeasurementType::local_angle ||
@@ -525,6 +531,35 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
         block_rr_or_cc.dP_dt += RealTensor<sym>{RealValue<sym>{-imag(f_x_complex)}};
         block_rr_or_cc.dQ_dt += RealTensor<sym>{RealValue<sym>{real(f_x_complex)}};
         auto const block_rc_or_cr = calculate_jacobian(hm_hat_u_chi_u_psi_y_xi_mu, nl_hat_u_chi_u_psi_y_xi_mu);
+
+        if (order == Order::row_major) {
+            multiply_add_branch_blocks(block, diag_block, rhs_block, block_rr_or_cc, block_rc_or_cr,
+                                       current_sensor.measurement, f_x_complex);
+        } else {
+            multiply_add_branch_blocks(block, diag_block, rhs_block, block_rc_or_cr, block_rr_or_cc,
+                                       current_sensor.measurement, f_x_complex);
+        }
+    }
+
+    void process_branch_global_current_measurement(NRSEGainBlock<sym>& block, NRSEGainBlock<sym>& diag_block,
+                                                   NRSERhs<sym>& rhs_block, auto const& y_xi_xi, auto const& y_xi_mu,
+                                                   auto const& u_state, Order const order,
+                                                   CurrentSensorCalcParam<sym> const& current_sensor) {
+        ComplexTensor<sym> const current_chi_chi = dot(y_xi_xi, ComplexDiagonalTensor<sym>{u_state.u_chi(order)});
+        ComplexTensor<sym> const current_chi_psi = dot(y_xi_mu, ComplexDiagonalTensor<sym>{u_state.u_psi(order)});
+        ComplexValue<sym> const f_x_complex = sum_row(current_chi_chi + current_chi_psi);
+
+        NRSEJacobian block_rr_or_cc{};
+        block_rr_or_cc.dP_dt += -imag(current_chi_chi);
+        block_rr_or_cc.dQ_dt += real(current_chi_chi);
+        block_rr_or_cc.dP_dv += real(current_chi_chi);
+        block_rr_or_cc.dQ_dv += imag(current_chi_chi);
+
+        NRSEJacobian block_rc_or_cr{};
+        block_rc_or_cr.dP_dt += -imag(current_chi_psi);
+        block_rc_or_cr.dQ_dt += real(current_chi_psi);
+        block_rc_or_cr.dP_dv += real(current_chi_psi);
+        block_rc_or_cr.dQ_dv += imag(current_chi_psi);
 
         if (order == Order::row_major) {
             multiply_add_branch_blocks(block, diag_block, rhs_block, block_rr_or_cc, block_rc_or_cr,
