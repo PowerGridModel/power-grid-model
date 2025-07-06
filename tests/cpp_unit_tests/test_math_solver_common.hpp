@@ -96,14 +96,7 @@ template <symmetry_tag sym_type> struct SteadyStateSolverTestGrid {
             const_pq, const_i, const_y, const_pq, const_i, const_y,
             const_pq // not connected
         };
-        result.voltage_sensors_per_bus = {from_sparse, {0, 1, 1, 3}};
-        result.power_sensors_per_bus = {from_sparse, {0, 1, 1, 1}};
-        result.power_sensors_per_source = {from_sparse, {0, 2}};
-        result.power_sensors_per_load_gen = {from_sparse, {0, 0, 0, 0, 1, 2, 3, 4}};
-        result.power_sensors_per_shunt = {from_sparse, {0, 1}};
-        result.power_sensors_per_branch_from = {from_sparse, {0, 1, 1}};
-        result.power_sensors_per_branch_to = {from_sparse, {0, 2, 3}};
-        result.current_sensors_per_branch_from = {from_sparse, {0, 0, 1}};
+        // sensors for se tests connected later only for se tests
         return result;
     };
 

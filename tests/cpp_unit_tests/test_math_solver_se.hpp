@@ -27,7 +27,7 @@ template <symmetry_tag sym_type> struct SESolverTestGrid : public SteadyStateSol
 
     // state estimation input
     // symmetric, with u angle
-    auto se_input_angle() const {
+    auto se_input_angle_without_flow_sensors() const {
         auto const output_reference = this->output_ref();
 
         StateEstimationInput<sym> result;
@@ -62,31 +62,6 @@ template <symmetry_tag sym_type> struct SESolverTestGrid : public SteadyStateSol
                  .imag_component = {.value = imag(output_reference.shunt[0].s), .variance = 0.5}},
             };
 
-            result.measured_branch_from_power = {
-                {.real_component = {.value = real(output_reference.branch[0].s_f), .variance = 0.5},
-                 .imag_component = {.value = imag(output_reference.branch[0].s_f), .variance = 0.5}},
-            };
-            result.measured_branch_to_power = {
-                {.real_component = {.value = real(output_reference.branch[0].s_t), .variance = 0.5},
-                 .imag_component = {.value = imag(output_reference.branch[0].s_t), .variance = 0.5}},
-                {.real_component = {.value = real(output_reference.branch[0].s_t), .variance = 0.5},
-                 .imag_component = {.value = imag(output_reference.branch[0].s_t), .variance = 0.5}},
-                {.real_component = {.value = real(output_reference.branch[1].s_t), .variance = 0.5},
-                 .imag_component = {.value = imag(output_reference.branch[1].s_t), .variance = 0.5}},
-            };
-            result.measured_branch_from_current = {
-                {.angle_measurement_type = AngleMeasurementType::local_angle,
-                 .measurement = {.real_component = {.value = real(cabs(output_reference.branch[1].i_f) *
-                                                                  ComplexValue<symmetric_t>{exp(
-                                                                      1.0i * (arg(output_reference.u[1]) -
-                                                                              arg(output_reference.branch[1].i_f)))}),
-                                                    .variance = 0.5},
-                                 .imag_component = {.value = imag(cabs(output_reference.branch[1].i_f) *
-                                                                  ComplexValue<symmetric_t>{exp(
-                                                                      1.0i * (arg(output_reference.u[1]) -
-                                                                              arg(output_reference.branch[1].i_f)))}),
-                                                    .variance = 0.5}}},
-            };
         } else {
             result.shunt_status = {1};
             result.load_gen_status = {1, 1, 1, 1, 1, 1, 0};
@@ -132,7 +107,29 @@ template <symmetry_tag sym_type> struct SESolverTestGrid : public SteadyStateSol
                  .imag_component = {.value = imag(output_reference.shunt[0].s * RealValue<asymmetric_t>{1.0}),
                                     .variance = RealValue<asymmetric_t>{0.5}}},
             };
+        }
+        return result;
+    };
 
+    auto se_input_angle() const {
+        auto const output_reference = this->output_ref();
+
+        StateEstimationInput<sym> result = se_input_angle_without_flow_sensors();
+
+        if constexpr (is_symmetric_v<sym>) {
+            result.measured_branch_from_power = {
+                {.real_component = {.value = real(output_reference.branch[0].s_f), .variance = 0.5},
+                 .imag_component = {.value = imag(output_reference.branch[0].s_f), .variance = 0.5}},
+            };
+            result.measured_branch_to_power = {
+                {.real_component = {.value = real(output_reference.branch[0].s_t), .variance = 0.5},
+                 .imag_component = {.value = imag(output_reference.branch[0].s_t), .variance = 0.5}},
+                {.real_component = {.value = real(output_reference.branch[0].s_t), .variance = 0.5},
+                 .imag_component = {.value = imag(output_reference.branch[0].s_t), .variance = 0.5}},
+                {.real_component = {.value = real(output_reference.branch[1].s_t), .variance = 0.5},
+                 .imag_component = {.value = imag(output_reference.branch[1].s_t), .variance = 0.5}},
+            };
+        } else {
             result.measured_branch_from_power = {
                 {.real_component = {.value = real(output_reference.branch[0].s_f * RealValue<asymmetric_t>{1.0}),
                                     .variance = RealValue<asymmetric_t>{0.5}},
@@ -152,23 +149,6 @@ template <symmetry_tag sym_type> struct SESolverTestGrid : public SteadyStateSol
                                     .variance = RealValue<asymmetric_t>{0.5}},
                  .imag_component = {.value = imag(output_reference.branch[1].s_t * RealValue<asymmetric_t>{1.0}),
                                     .variance = RealValue<asymmetric_t>{0.5}}},
-            };
-            // serves as unit test for local angle measurement
-            result.measured_branch_from_current = {
-                {.angle_measurement_type = AngleMeasurementType::local_angle,
-                 .measurement = {.real_component = {.value = real(cabs(output_reference.branch[1].i_f) *
-                                                                  RealValue<asymmetric_t>{1.0} *
-                                                                  ComplexValue<asymmetric_t>{exp(
-                                                                      1.0i * (arg(output_reference.u[1]) -
-                                                                              arg(output_reference.branch[1].i_f)))}),
-                                                    .variance = RealValue<asymmetric_t>{0.5}},
-                                 .imag_component = {.value =
-                                                        imag(cabs(output_reference.branch[1].i_f) *
-                                                             RealValue<asymmetric_t>{1.0} *
-                                                             ComplexValue<asymmetric_t>{
-                                                                 exp(1.0i * (arg(output_reference.u[1]) -
-                                                                             arg(output_reference.branch[1].i_f)))}),
-                                                    .variance = RealValue<asymmetric_t>{0.5}}}},
             };
         }
         return result;
@@ -195,6 +175,93 @@ template <symmetry_tag sym_type> struct SESolverTestGrid : public SteadyStateSol
         result.measured_load_gen_power[2].imag_component.value *= 3.0;
         return result;
     };
+
+    auto se_input_angle_local_current_sensors() const {
+        auto const output_reference = this->output_ref();
+
+        StateEstimationInput<sym> result = se_input_angle_without_flow_sensors();
+
+        auto const branch_from_local_current =
+            output_reference.branch |
+            std::ranges::views::transform([](auto const& b) { return cabs(b.i_f) * exp(1.0i * arg(b.s_f)); });
+        auto const branch_to_local_current = output_reference.branch | std::ranges::views::transform([](auto const& b) {
+                                                 return cabs(b.i_t) * exp(1.0i * arg(b.s_t));
+                                             });
+
+        if constexpr (is_symmetric_v<sym>) {
+            result.measured_branch_from_current = {
+                {.angle_measurement_type = AngleMeasurementType::local_angle,
+                 .measurement = {.real_component = {.value = real(branch_from_local_current[0]), .variance = 0.5},
+                                 .imag_component = {.value = imag(branch_from_local_current[0]), .variance = 0.5}}},
+            };
+            result.measured_branch_to_current = {
+                {.angle_measurement_type = AngleMeasurementType::local_angle,
+                 .measurement = {.real_component = {.value = real(branch_to_local_current[0]), .variance = 0.5},
+                                 .imag_component = {.value = imag(branch_to_local_current[0]), .variance = 0.5}}},
+                {.angle_measurement_type = AngleMeasurementType::local_angle,
+                 .measurement = {.real_component = {.value = real(branch_to_local_current[0]), .variance = 0.5},
+                                 .imag_component = {.value = imag(branch_to_local_current[0]), .variance = 0.5}}},
+                {.angle_measurement_type = AngleMeasurementType::local_angle,
+                 .measurement = {.real_component = {.value = real(branch_to_local_current[1]), .variance = 0.5},
+                                 .imag_component = {.value = imag(branch_to_local_current[1]), .variance = 0.5}}}};
+        } else {
+            result.measured_branch_from_current = {
+                {.angle_measurement_type = AngleMeasurementType::local_angle,
+                 .measurement =
+                     {.real_component = {.value = real(branch_from_local_current[0] * RealValue<asymmetric_t>{1.0}),
+                                         .variance = RealValue<asymmetric_t>{0.5}},
+                      .imag_component = {.value = imag(branch_from_local_current[0] * RealValue<asymmetric_t>{1.0}),
+                                         .variance = RealValue<asymmetric_t>{0.5}}}},
+            };
+            result.measured_branch_to_current = {
+                {.angle_measurement_type = AngleMeasurementType::local_angle,
+                 .measurement = {.real_component = {.value =
+                                                        real(branch_to_local_current[0] * RealValue<asymmetric_t>{1.0}),
+                                                    .variance = RealValue<asymmetric_t>{0.5}},
+                                 .imag_component = {.value =
+                                                        imag(branch_to_local_current[0] * RealValue<asymmetric_t>{1.0}),
+                                                    .variance = RealValue<asymmetric_t>{0.5}}}},
+                {.angle_measurement_type = AngleMeasurementType::local_angle,
+                 .measurement = {.real_component = {.value =
+                                                        real(branch_to_local_current[0] * RealValue<asymmetric_t>{1.0}),
+                                                    .variance = RealValue<asymmetric_t>{0.5}},
+                                 .imag_component = {.value =
+                                                        imag(branch_to_local_current[0] * RealValue<asymmetric_t>{1.0}),
+                                                    .variance = RealValue<asymmetric_t>{0.5}}}},
+                {.angle_measurement_type = AngleMeasurementType::local_angle,
+                 .measurement = {
+                     .real_component = {.value = real(branch_to_local_current[1] * RealValue<asymmetric_t>{1.0}),
+                                        .variance = RealValue<asymmetric_t>{0.5}},
+                     .imag_component = {.value = imag(branch_to_local_current[1] * RealValue<asymmetric_t>{1.0}),
+                                        .variance = RealValue<asymmetric_t>{0.5}}}}};
+        }
+        return result;
+    }
+
+    auto se_topo_power_sensors() const {
+        MathModelTopology topo = this->topo();
+        topo.voltage_sensors_per_bus = {from_sparse, {0, 1, 1, 3}};
+        topo.power_sensors_per_bus = {from_sparse, {0, 1, 1, 1}};
+        topo.power_sensors_per_source = {from_sparse, {0, 2}};
+        topo.power_sensors_per_load_gen = {from_sparse, {0, 0, 0, 0, 1, 2, 3, 4}};
+        topo.power_sensors_per_shunt = {from_sparse, {0, 1}};
+        topo.power_sensors_per_branch_from = {from_sparse, {0, 1, 1}};
+        topo.power_sensors_per_branch_to = {from_sparse, {0, 2, 3}};
+        return topo;
+    }
+
+    auto se_topo_current_sensors() const {
+        // this is the topology of the
+        MathModelTopology topo = this->topo();
+        topo.voltage_sensors_per_bus = {from_sparse, {0, 1, 1, 3}};
+        topo.power_sensors_per_bus = {from_sparse, {0, 1, 1, 1}};
+        topo.power_sensors_per_source = {from_sparse, {0, 2}};
+        topo.power_sensors_per_load_gen = {from_sparse, {0, 0, 0, 0, 1, 2, 3, 4}};
+        topo.power_sensors_per_shunt = {from_sparse, {0, 1}};
+        topo.current_sensors_per_branch_from = {from_sparse, {0, 1, 1}};
+        topo.current_sensors_per_branch_to = {from_sparse, {0, 2, 3}};
+        return topo;
+    }
 };
 
 TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE", SolverType, test_math_solver_se_id) {
@@ -207,51 +274,68 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE", SolverType, test_math_solver_
 
     // topo and param ptr
     auto param_ptr = std::make_shared<MathModelParam<sym> const>(grid.param());
-    auto topo_ptr = std::make_shared<MathModelTopology const>(grid.topo());
-    YBus<sym> const y_bus{topo_ptr, param_ptr};
 
-    SUBCASE("Test se with angle") {
-        SolverType solver{y_bus, topo_ptr};
-        CalculationInfo info;
-        SolverOutput<sym> output;
+    SUBCASE("Test se with pwoer sensors") {
+        auto topo_ptr = std::make_shared<MathModelTopology const>(grid.se_topo_power_sensors());
+        YBus<sym> const y_bus{topo_ptr, param_ptr};
 
-        auto const se_input = grid.se_input_angle();
-        output = run_state_estimation(solver, y_bus, se_input, error_tolerance, num_iter, info);
-        assert_output(output, grid.output_ref());
+        SUBCASE("Test se with angle") {
+            SolverType solver{y_bus, topo_ptr};
+            CalculationInfo info;
+            SolverOutput<sym> output;
+
+            auto const se_input = grid.se_input_angle();
+            output = run_state_estimation(solver, y_bus, se_input, error_tolerance, num_iter, info);
+            assert_output(output, grid.output_ref());
+        }
+
+        SUBCASE("Test se without angle") {
+            SolverType solver{y_bus, topo_ptr};
+            CalculationInfo info;
+            SolverOutput<sym> output;
+
+            auto const se_input = grid.se_input_no_angle();
+            output = run_state_estimation(solver, y_bus, se_input, error_tolerance, num_iter, info);
+            assert_output(output, grid.output_ref(), true);
+        }
+
+        SUBCASE("Test se with angle, const z") {
+            SolverType solver{y_bus, topo_ptr};
+            CalculationInfo info;
+            SolverOutput<sym> output;
+
+            auto const se_input = grid.se_input_angle_const_z();
+            output = run_state_estimation(solver, y_bus, se_input, error_tolerance, num_iter, info);
+            assert_output(output, grid.output_ref_z());
+        }
+
+        SUBCASE("Test se with angle and different power variances") {
+            SolverType solver{y_bus, topo_ptr};
+            CalculationInfo info;
+
+            auto se_input = grid.se_input_angle();
+            auto& branch_from_power = se_input.measured_branch_from_power.front();
+            branch_from_power.real_component.variance = RealValue<sym>{0.25};
+            branch_from_power.imag_component.variance = RealValue<sym>{0.75};
+            SolverOutput<sym> output;
+
+            output = run_state_estimation(solver, y_bus, se_input, error_tolerance, num_iter, info);
+            assert_output(output, grid.output_ref());
+        }
     }
 
-    SUBCASE("Test se without angle") {
-        SolverType solver{y_bus, topo_ptr};
-        CalculationInfo info;
-        SolverOutput<sym> output;
+    SUBCASE("se input angle with current sensors") {
+        auto topo_ptr = std::make_shared<MathModelTopology const>(grid.se_topo_current_sensors());
+        YBus<sym> const y_bus{topo_ptr, param_ptr};
+        SUBCASE("Test se with local angle current sensors") {
+            SolverType solver{y_bus, topo_ptr};
+            CalculationInfo info;
+            SolverOutput<sym> output;
 
-        auto const se_input = grid.se_input_no_angle();
-        output = run_state_estimation(solver, y_bus, se_input, error_tolerance, num_iter, info);
-        assert_output(output, grid.output_ref(), true);
-    }
-
-    SUBCASE("Test se with angle, const z") {
-        SolverType solver{y_bus, topo_ptr};
-        CalculationInfo info;
-        SolverOutput<sym> output;
-
-        auto const se_input = grid.se_input_angle_const_z();
-        output = run_state_estimation(solver, y_bus, se_input, error_tolerance, num_iter, info);
-        assert_output(output, grid.output_ref_z());
-    }
-
-    SUBCASE("Test se with angle and different power variances") {
-        SolverType solver{y_bus, topo_ptr};
-        CalculationInfo info;
-
-        auto se_input = grid.se_input_angle();
-        auto& branch_from_power = se_input.measured_branch_from_power.front();
-        branch_from_power.real_component.variance = RealValue<sym>{0.25};
-        branch_from_power.imag_component.variance = RealValue<sym>{0.75};
-        SolverOutput<sym> output;
-
-        output = run_state_estimation(solver, y_bus, se_input, error_tolerance, num_iter, info);
-        assert_output(output, grid.output_ref());
+            auto const se_input = grid.se_input_angle_local_current_sensors();
+            output = run_state_estimation(solver, y_bus, se_input, error_tolerance, num_iter, info);
+            assert_output(output, grid.output_ref());
+        }
     }
 }
 
