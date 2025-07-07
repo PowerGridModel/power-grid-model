@@ -25,7 +25,7 @@ template <std::derived_from<Base> Component, class ComponentContainer, std::rang
 inline void add_component(MainModelState<ComponentContainer>& state, ComponentInputs component_inputs,
                           double system_frequency) {
     using ComponentView = std::conditional_t<
-        std::same_as<decltype(*std::ranges::begin(component_inputs)), typename Component::InputType const&>,
+        std::same_as<std::ranges::range_reference_t<ComponentInputs>, typename Component::InputType const&>,
         typename Component::InputType const&, typename Component::InputType>;
 
     reserve_component<Component>(state, std::ranges::size(component_inputs));
@@ -33,9 +33,9 @@ inline void add_component(MainModelState<ComponentContainer>& state, ComponentIn
     std::vector<Idx2D> regulated_objects;
     // loop to add component
 
-    // we need to use an iterator here because of the ambiguity of the input type
-    for (auto it = std::ranges::begin(component_inputs); it != std::ranges::end(component_inputs); ++it) {
-        ComponentView const input = *it;
+    for (auto const& input_proxy : component_inputs) {
+        ComponentView const input = [&input_proxy]() -> ComponentView { return input_proxy; }();
+
         ID const id = input.id;
         // construct based on type of component
         if constexpr (std::derived_from<Component, Node>) {
