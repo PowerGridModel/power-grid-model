@@ -225,6 +225,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // different selection based on component type
     // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
     template <class CompType, cache_type_c CacheType, std::forward_iterator ForwardIterator>
+    // NOLINTNEXTLINE(performance-unnecessary-value-param) // see https://github.com/llvm/llvm-project/issues/113210
     void update_component(ForwardIterator begin, ForwardIterator end, std::span<Idx2D const> sequence_idx) {
         constexpr auto comp_index = main_core::utils::index_of_component<CompType, ComponentType...>;
 

@@ -67,8 +67,4 @@ WarningsAsErrors: '*'
 HeaderFilterRegex: '.*'
 
 FormatStyle: file
-
-CheckOptions:
-  - key: performance-unnecessary-value-param.AllowedTypes
-  - value: 'ForwardIterator'
 ...

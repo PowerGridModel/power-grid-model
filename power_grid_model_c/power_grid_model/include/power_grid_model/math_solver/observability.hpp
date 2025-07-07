@@ -32,9 +32,10 @@ ObservabilitySensorsResult count_observability_sensors(MeasuredValues<sym> const
                                                        MathModelTopology const& topo,
                                                        YBusStructure const& y_bus_structure) {
     Idx const n_bus{topo.n_bus()};
-    auto voltage_phasor_sensors = std::vector<int8_t>(n_bus, 0);
-    auto flow_sensors = std::vector<int8_t>(y_bus_structure.row_indptr.back(), 0);
-    bool is_possibly_ill_conditioned{false};
+
+    ObservabilitySensorsResult result{.flow_sensors = std::vector<int8_t>(y_bus_structure.row_indptr.back(), 0),
+                                      .voltage_phasor_sensors = std::vector<int8_t>(n_bus, 0),
+                                      .is_possibly_ill_conditioned = false};
 
     auto has_flow_sensor = [&measured_values](Idx branch) {
         return measured_values.has_branch_from_power(branch) || measured_values.has_branch_to_power(branch) ||
@@ -50,7 +51,7 @@ ObservabilitySensorsResult count_observability_sensors(MeasuredValues<sym> const
         // lower triangle is ignored and kept as zero
         // diagonal for bus injection measurement
         if (measured_values.has_bus_injection(row)) {
-            flow_sensors[y_bus_structure.bus_entry[row]] = 1;
+            result.flow_sensors[y_bus_structure.bus_entry[row]] = 1;
             has_at_least_one_sensor = true;
         }
         // upper triangle for branch flow measurement
@@ -67,7 +68,7 @@ ObservabilitySensorsResult count_observability_sensors(MeasuredValues<sym> const
                 // we only need one flow sensor, so the loop will break
                 Idx const branch = element.idx;
                 if (has_flow_sensor(branch) && is_branch_connected(branch)) {
-                    flow_sensors[ybus_index] = 1;
+                    result.flow_sensors[ybus_index] = 1;
                     has_at_least_one_sensor = true;
                     break;
                 }
@@ -76,14 +77,14 @@ ObservabilitySensorsResult count_observability_sensors(MeasuredValues<sym> const
         // diagonal for voltage phasor sensors
         if (measured_values.has_voltage(row) && measured_values.has_angle_measurement(row)) {
             has_at_least_one_sensor = true;
-            voltage_phasor_sensors[row] = 1;
+            result.voltage_phasor_sensors[row] = 1;
         }
         // the system could be ill-conditioned if there is no flow sensor for one bus, except the last bus
         if (!has_at_least_one_sensor && row != n_bus - 1) {
-            is_possibly_ill_conditioned = true;
+            result.is_possibly_ill_conditioned = true;
         }
     }
-    return ObservabilitySensorsResult{flow_sensors, voltage_phasor_sensors, is_possibly_ill_conditioned};
+    return result;
 }
 
 // re-organize the flow and voltage phasor sensors for a radial grid

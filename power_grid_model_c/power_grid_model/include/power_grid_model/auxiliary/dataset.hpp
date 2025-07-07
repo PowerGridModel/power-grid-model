@@ -73,6 +73,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
         Proxy(Idx idx, std::span<AttributeBuffer<Data> const> attribute_buffers)
             : idx_{idx}, attribute_buffers_{std::move(attribute_buffers)} {}
 
+        // NOLINTNEXTLINE(cppcoreguidelines-c-copy-assignment-signature,misc-unconventional-assign-operator)
         Proxy const& operator=(value_type const& value) const
             requires is_data_mutable_v<dataset_type>
         {

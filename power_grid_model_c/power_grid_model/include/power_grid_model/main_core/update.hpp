@@ -18,6 +18,7 @@ namespace power_grid_model::main_core::update {
 namespace detail {
 template <component_c Component, std::forward_iterator ForwardIterator, typename Func>
     requires std::invocable<std::remove_cvref_t<Func>, typename Component::UpdateType, Idx2D const&>
+// NOLINTNEXTLINE(performance-unnecessary-value-param) // see https://github.com/llvm/llvm-project/issues/113210
 inline void iterate_component_sequence(Func func, ForwardIterator begin, ForwardIterator end,
                                        std::span<Idx2D const> sequence_idx) {
     assert(std::distance(begin, end) >= static_cast<ptrdiff_t>(sequence_idx.size()));
