@@ -841,7 +841,8 @@ def not_all_missing(data: SingleDataset, fields: list[str], component_type: Comp
         fields: List of fields
         component_type: component type to check
     """
-    if len(fields) < 2:
+    min_fields = 2
+    if len(fields) < min_fields:
         raise ValueError(
             "The fields parameter must contain at least 2 fields. Otherwise use the none_missing function."
         )
