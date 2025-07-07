@@ -117,7 +117,8 @@ def _get_raw_attribute_data_view(data: np.ndarray, schema: ComponentMetaData, at
     Returns:
         a raw view on the data set.
     """
-    if schema.dtype[attribute].shape == (3,) and data.shape[-1] != 3:
+    three_dimensions = 3
+    if schema.dtype[attribute].shape == (three_dimensions,) and data.shape[-1] != three_dimensions:
         raise ValueError("Given data has a different schema than supported.")
     return _get_raw_data_view(data, dtype=schema.dtype[attribute].base)
 
@@ -185,7 +186,9 @@ def _get_dense_buffer_properties(
     if actual_ndim not in (1, 2):
         raise ValueError(f"Array can only be 1D or 2D. {VALIDATOR_MSG}")
 
-    actual_is_batch = actual_ndim == 2
+    two_dimensions = 2
+
+    actual_is_batch = actual_ndim == two_dimensions
     actual_batch_size = shape[0] if actual_is_batch else 1
     n_elements_per_scenario = shape[-1]
     n_total_elements = actual_batch_size * n_elements_per_scenario
