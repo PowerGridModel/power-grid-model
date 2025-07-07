@@ -48,6 +48,12 @@ _DEPRECATED_FUNCTION_MSG = "This function is deprecated."
 _DEPRECATED_JSON_DESERIALIZATION_MSG = f"{_DEPRECATED_FUNCTION_MSG} Please use json_deserialize_to_file instead."
 _DEPRECATED_JSON_SERIALIZATION_MSG = f"{_DEPRECATED_FUNCTION_MSG} Please use json_serialize_from_file instead."
 
+LICENSE_TEXT = (
+    "SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>\n\n"
+    "SPDX-License-Identifier: MPL-2.0"
+    "\n"
+)
+
 
 def get_dataset_scenario(dataset: BatchDataset, scenario: int) -> SingleDataset:
     """
@@ -398,3 +404,62 @@ def self_test():
             print("Self test finished.")
         except Exception as e:
             raise PowerGridError from e
+
+
+def _make_test_case(
+    *,
+    output_path: Path,
+    input_data: SingleDataset,
+    params: dict,
+    output_data: Dataset,
+    output_dataset_type: DatasetType,
+    update_data: Dataset | None = None,
+):
+    """
+    Create and save a validation test case dataset, including input, update (optional), output, and parameters.
+
+    Args:
+        save_path: Directory path where the test case files will be saved.
+        input_data: Input dataset for the test case.
+        params: Dictionary of parameters used for the test case. It may include calculation method, tolerances, etc.
+            An example of parameters could be:
+            params = {
+                "calculation_method": "newton_raphson",
+                "rtol": 1e-6,
+                "atol": 1e-6,
+            }
+        output_data: Output dataset for the test case.
+        output_dataset_type: The type of the output dataset (e.g., sym_output, asym_output, sc_output).
+        update_data: Optional batch update dataset.
+
+    Raises:
+        ValueError: If the output_dataset_type is not recognized.
+
+    Side Effects:
+        Writes JSON files for input, update (if provided), output, and parameters,
+        all relevant license files, to save_path.
+    """
+    output_file_stem = output_dataset_type.name if isinstance(output_dataset_type, DatasetType) else None
+    if output_dataset_type in [DatasetType.input, DatasetType.update] or output_file_stem is None:
+        raise ValueError(
+            f"Invalid output dataset type: {output_dataset_type}. Expected one of: sym_output, asym_output, sc_output."
+        )
+
+    output_path.mkdir(parents=True, exist_ok=True)
+    json_serialize_to_file(file_path=output_path / "input.json", data=input_data, dataset_type=DatasetType.input)
+    (output_path / "input.json.license").write_text(data=LICENSE_TEXT, encoding="utf-8")
+
+    if update_data is not None:
+        json_serialize_to_file(
+            file_path=output_path / "update_batch.json", data=update_data, dataset_type=DatasetType.update
+        )
+        (output_path / "update_batch.json.license").write_text(data=LICENSE_TEXT, encoding="utf-8")
+        output_file_stem += "_batch"
+    json_serialize_to_file(
+        file_path=output_path / f"{output_file_stem}.json", data=output_data, dataset_type=output_dataset_type
+    )
+    (output_path / f"{output_file_stem}.json.license").write_text(data=LICENSE_TEXT, encoding="utf-8")
+
+    params_json = json.dumps(params, indent=2)
+    (output_path / "params.json").write_text(data=params_json, encoding="utf-8")
+    (output_path / "params.json.license").write_text(data=LICENSE_TEXT, encoding="utf-8")
