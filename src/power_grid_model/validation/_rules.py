@@ -774,7 +774,7 @@ def all_finite(data: SingleDataset, exceptions: dict[ComponentType, list[str]] |
 
             invalid = np.isinf(array[field])
             if invalid.any():
-                ids = data[component]["id"][invalid].flatten().tolist()
+                ids = array["id"][invalid].flatten().tolist()
                 errors.append(InfinityError(component, field, ids))
     return errors
 
