@@ -336,7 +336,7 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
                                                                          measurement);
                                 break;
                             case AngleMeasurementType::global_angle:
-                                throw NotImplementedError{};
+                                throw SparseMatrixError{};
                                 break;
                             default:
                                 assert(measurement.angle_measurement_type == AngleMeasurementType::local_angle ||
@@ -354,7 +354,7 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
                                                                          measurement);
                                 break;
                             case AngleMeasurementType::global_angle:
-                                throw NotImplementedError{};
+                                throw SparseMatrixError{};
                                 break;
                             default:
                                 assert(measurement.angle_measurement_type == AngleMeasurementType::local_angle ||
