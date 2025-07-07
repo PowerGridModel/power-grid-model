@@ -121,7 +121,7 @@ inline void add_component(MainModelState<ComponentContainer>& state, ForwardIter
                 case branch3_2:
                     return get_component<Branch3>(state, measured_object).node(side_2);
                 case branch3_3:
-                    return get_component<Branch3>(state, measured_object).node(side_2);
+                    return get_component<Branch3>(state, measured_object).node(side_3);
                 default:
                     throw MissingCaseForEnumError{std::format("{} item retrieval", GenericCurrentSensor::name),
                                                   measured_terminal_type};
