@@ -61,16 +61,13 @@ inline void assert_output(SolverOutput<sym> const& output, SolverOutput<sym> con
 
 template <symmetry_tag sym_type> struct SteadyStateSolverTestGrid {
     /*
-    network, v means voltage measured, p means power measured, pp means double measured,
-    cl means local current measured
-    variance always 1.0
-                                                          shunt0 (ys) (p)
-     (pp)                     (y0, ys0)           (y1)         |
-    source --yref-- bus0(vp) -p-branch0-pp- bus1 -cl-branch1-p-  bus2(vv)
-                     |                      |                   |
-                  load012                load345 (p)          load6 (not connected) (p, rubbish value)
-                                          for const z,
-                                       rubbish value for load3/4
+    network
+    
+                                                     shunt0 (ys)
+                          (y0, ys0)           (y1)       |
+    source --yref-- bus0 --branch0-- bus1 --branch1--  bus2
+                     |                |                  |
+                  load012          load345          load6 (not connected)
 
     uref = 1.10
     u0 = 1.08 -1deg

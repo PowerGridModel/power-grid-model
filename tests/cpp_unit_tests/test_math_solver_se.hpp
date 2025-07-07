@@ -213,27 +213,26 @@ template <symmetry_tag sym_type> struct SESolverTestGrid : public SteadyStateSol
                       .imag_component = {.value = imag(branch_from_local_current[0] * RealValue<asymmetric_t>{1.0}),
                                          .variance = RealValue<asymmetric_t>{0.5}}}},
             };
-            result.measured_branch_to_current = {
-                {.angle_measurement_type = AngleMeasurementType::local_angle,
-                 .measurement = {.real_component = {.value =
-                                                        real(branch_to_local_current[0] * RealValue<asymmetric_t>{1.0}),
-                                                    .variance = RealValue<asymmetric_t>{0.5}},
-                                 .imag_component = {.value =
-                                                        imag(branch_to_local_current[0] * RealValue<asymmetric_t>{1.0}),
-                                                    .variance = RealValue<asymmetric_t>{0.5}}}},
-                {.angle_measurement_type = AngleMeasurementType::local_angle,
-                 .measurement = {.real_component = {.value =
-                                                        real(branch_to_local_current[0] * RealValue<asymmetric_t>{1.0}),
-                                                    .variance = RealValue<asymmetric_t>{0.5}},
-                                 .imag_component = {.value =
-                                                        imag(branch_to_local_current[0] * RealValue<asymmetric_t>{1.0}),
-                                                    .variance = RealValue<asymmetric_t>{0.5}}}},
-                {.angle_measurement_type = AngleMeasurementType::local_angle,
-                 .measurement = {
-                     .real_component = {.value = real(branch_to_local_current[1] * RealValue<asymmetric_t>{1.0}),
-                                        .variance = RealValue<asymmetric_t>{0.5}},
-                     .imag_component = {.value = imag(branch_to_local_current[1] * RealValue<asymmetric_t>{1.0}),
-                                        .variance = RealValue<asymmetric_t>{0.5}}}}};
+            result.measured_branch_to_current =
+                {{.angle_measurement_type = AngleMeasurementType::local_angle,
+                  .measurement =
+                      {.real_component = {.value = real(branch_to_local_current[0] * RealValue<asymmetric_t>{1.0}),
+                                          .variance = RealValue<asymmetric_t>{0.5}},
+                       .imag_component = {.value = imag(branch_to_local_current[0] * RealValue<asymmetric_t>{1.0}),
+                                          .variance = RealValue<asymmetric_t>{0.5}}}},
+                 {.angle_measurement_type = AngleMeasurementType::local_angle,
+                  .measurement =
+                      {.real_component = {.value = real(branch_to_local_current[0] * RealValue<asymmetric_t>{1.0}),
+                                          .variance = RealValue<asymmetric_t>{0.5}},
+                       .imag_component = {.value = imag(branch_to_local_current[0] * RealValue<asymmetric_t>{1.0}),
+                                          .variance = RealValue<asymmetric_t>{0.5}}}},
+                 {.angle_measurement_type = AngleMeasurementType::local_angle,
+                  .measurement =
+                      {.real_component = {.value = real(branch_to_local_current[1] * RealValue<asymmetric_t>{1.0}),
+                                          .variance = RealValue<asymmetric_t>{0.5}},
+                       .imag_component = {.value = imag(branch_to_local_current[1] * RealValue<asymmetric_t>{1.0}),
+                                          .variance = RealValue<asymmetric_t>{0.5}}}}},
+            ;
         }
         return result;
     }
@@ -293,6 +292,20 @@ template <symmetry_tag sym_type> struct SESolverTestGrid : public SteadyStateSol
     }
 
     auto se_topo_power_sensors() const {
+        /*
+        All components except sensors are same as the common test grid.
+
+        v means voltage measured, p means power measured, pp means double measured
+
+        variance always 1.0
+                                                               shunt0 (ys) (p)
+        (pp)                     (y0, ys0)               (y1)         |
+        source --yref-- bus0(vp) -p-branch0-pp- bus1 --branch1-p-  bus2(vv)
+                        |                         |                   |
+                    load012                   load345 (p)          load6 (not connected) (p, rubbish value)
+                                               for const z,
+                                           rubbish value for load3/4
+        */
         MathModelTopology topo = this->topo();
         topo.voltage_sensors_per_bus = {from_sparse, {0, 1, 1, 3}};
         topo.power_sensors_per_bus = {from_sparse, {0, 1, 1, 1}};
@@ -305,7 +318,21 @@ template <symmetry_tag sym_type> struct SESolverTestGrid : public SteadyStateSol
     }
 
     auto se_topo_current_sensors() const {
-        // this is the topology of the
+        /*
+        All components except sensors are same as the common test grid.
+
+        v means voltage measured, p means power measured, pp means double measured,
+        c means power measured, cc means double measured
+
+        variance always 1.0
+                                                               shunt0 (ys) (p)
+        (pp)                     (y0, ys0)               (y1)         |
+        source --yref-- bus0(vp) -c-branch0-cc- bus1 --branch1-c-  bus2(vv)
+                        |                         |                   |
+                    load012                   load345 (p)          load6 (not connected) (p, rubbish value)
+                                               for const z,
+                                           rubbish value for load3/4
+        */
         MathModelTopology topo = this->topo();
         topo.voltage_sensors_per_bus = {from_sparse, {0, 1, 1, 3}};
         topo.power_sensors_per_bus = {from_sparse, {0, 1, 1, 1}};
