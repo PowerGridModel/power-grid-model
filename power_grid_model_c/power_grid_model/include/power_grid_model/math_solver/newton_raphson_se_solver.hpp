@@ -336,7 +336,7 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
                                                                          measurement);
                                 break;
                             case AngleMeasurementType::global_angle:
-                                throw SparseMatrixError{};
+                                throw NotImplementedError{};
                                 break;
                             default:
                                 assert(measurement.angle_measurement_type == AngleMeasurementType::local_angle ||
@@ -354,7 +354,7 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
                                                                          measurement);
                                 break;
                             case AngleMeasurementType::global_angle:
-                                throw SparseMatrixError{};
+                                throw NotImplementedError{};
                                 break;
                             default:
                                 assert(measurement.angle_measurement_type == AngleMeasurementType::local_angle ||
@@ -536,7 +536,7 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
     }
 
     void multiply_add_branch_blocks(NRSEGainBlock<sym>& block, NRSEGainBlock<sym>& diag_block, NRSERhs<sym>& rhs_block,
-                                    auto& left_block, auto const& right_block, auto const& measured_flow,
+                                    auto& left_block, auto const& right_block, DecomposedComplexRandVar<sym> const& measured_flow,
                                     auto const& f_x_complex) {
         auto const& block_F_T_k_w = transpose_multiply_weight(left_block, measured_flow);
 
@@ -659,7 +659,7 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
     /// @param jac_block F_k(u1, u2, y12)
     /// @param measured_flow object with members p_variance and q_variance
     /// @return  F_k(u1, u2, y12)^T . W
-    NRSEJacobian transpose_multiply_weight(NRSEJacobian const& jac_block, auto const& measured_flow) {
+    NRSEJacobian transpose_multiply_weight(NRSEJacobian const& jac_block, DecomposedComplexRandVar<sym> const& measured_flow) {
         auto const w_p = diagonal_inverse(measured_flow.real_component.variance);
         auto const w_q = diagonal_inverse(measured_flow.imag_component.variance);
 
@@ -693,7 +693,7 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
     /// @param measured_flow power or current sensor measurement
     /// @param f_x_complex calculated power
     static void multiply_add_jacobian_blocks_rhs(NRSERhs<sym>& rhs_block, NRSEJacobian const& f_T_k_w,
-                                                 auto const& measured_flow, ComplexValue<sym> const& f_x_complex) {
+                                                 DecomposedComplexRandVar<sym> const& measured_flow, ComplexValue<sym> const& f_x_complex) {
         ComplexValue<sym> const delta_power = measured_flow.value() - f_x_complex;
         rhs_block.eta_theta() += dot(f_T_k_w.dP_dt, real(delta_power)) + dot(f_T_k_w.dP_dv, imag(delta_power));
         rhs_block.eta_v() += dot(f_T_k_w.dQ_dt, real(delta_power)) + dot(f_T_k_w.dQ_dv, imag(delta_power));

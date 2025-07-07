@@ -213,26 +213,29 @@ template <symmetry_tag sym_type> struct SESolverTestGrid : public SteadyStateSol
                       .imag_component = {.value = imag(branch_from_local_current[0] * RealValue<asymmetric_t>{1.0}),
                                          .variance = RealValue<asymmetric_t>{0.5}}}},
             };
-            result.measured_branch_to_current =
-                {{.angle_measurement_type = AngleMeasurementType::local_angle,
-                  .measurement =
-                      {.real_component = {.value = real(branch_to_local_current[0] * RealValue<asymmetric_t>{1.0}),
-                                          .variance = RealValue<asymmetric_t>{0.5}},
-                       .imag_component = {.value = imag(branch_to_local_current[0] * RealValue<asymmetric_t>{1.0}),
-                                          .variance = RealValue<asymmetric_t>{0.5}}}},
-                 {.angle_measurement_type = AngleMeasurementType::local_angle,
-                  .measurement =
-                      {.real_component = {.value = real(branch_to_local_current[0] * RealValue<asymmetric_t>{1.0}),
-                                          .variance = RealValue<asymmetric_t>{0.5}},
-                       .imag_component = {.value = imag(branch_to_local_current[0] * RealValue<asymmetric_t>{1.0}),
-                                          .variance = RealValue<asymmetric_t>{0.5}}}},
-                 {.angle_measurement_type = AngleMeasurementType::local_angle,
-                  .measurement =
-                      {.real_component = {.value = real(branch_to_local_current[1] * RealValue<asymmetric_t>{1.0}),
-                                          .variance = RealValue<asymmetric_t>{0.5}},
-                       .imag_component = {.value = imag(branch_to_local_current[1] * RealValue<asymmetric_t>{1.0}),
-                                          .variance = RealValue<asymmetric_t>{0.5}}}}},
-            ;
+            result.measured_branch_to_current = {
+                {.angle_measurement_type = AngleMeasurementType::local_angle,
+                 .measurement = {.real_component = {.value =
+                                                        real(branch_to_local_current[0] * RealValue<asymmetric_t>{1.0}),
+                                                    .variance = RealValue<asymmetric_t>{0.5}},
+                                 .imag_component = {.value =
+                                                        imag(branch_to_local_current[0] * RealValue<asymmetric_t>{1.0}),
+                                                    .variance = RealValue<asymmetric_t>{0.5}}}},
+                {.angle_measurement_type = AngleMeasurementType::local_angle,
+                 .measurement = {.real_component = {.value =
+                                                        real(branch_to_local_current[0] * RealValue<asymmetric_t>{1.0}),
+                                                    .variance = RealValue<asymmetric_t>{0.5}},
+                                 .imag_component = {.value =
+                                                        imag(branch_to_local_current[0] * RealValue<asymmetric_t>{1.0}),
+                                                    .variance = RealValue<asymmetric_t>{0.5}}}},
+                {.angle_measurement_type = AngleMeasurementType::local_angle,
+                 .measurement = {.real_component = {.value =
+                                                        real(branch_to_local_current[1] * RealValue<asymmetric_t>{1.0}),
+                                                    .variance = RealValue<asymmetric_t>{0.5}},
+                                 .imag_component = {.value =
+                                                        imag(branch_to_local_current[1] * RealValue<asymmetric_t>{1.0}),
+                                                    .variance = RealValue<asymmetric_t>{0.5}}}},
+            };
         }
         return result;
     }
@@ -569,7 +572,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
                 CHECK(imag(output.branch[0].i_f) == doctest::Approx(imag(1.95 * global_shift)));
             } else {
                 CHECK_THROWS_AS(run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, info),
-                                SparseMatrixError);
+                                NotImplementedError);
             }
         }
     }
