@@ -59,7 +59,8 @@ template <class Data> struct AttributeBuffer {
     Idx stride{1};
 };
 
-template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRange {
+template <typename T, dataset_type_tag dataset_type>
+class ColumnarAttributeRange : public std::ranges::view_interface<ColumnarAttributeRange<T, dataset_type>> {
   public:
     using Data = std::conditional_t<is_data_mutable_v<dataset_type>, void, void const>;
 
@@ -159,10 +160,8 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
     }
 
     constexpr Idx size() const { return size_; }
-    constexpr bool empty() const { return size_ == 0; }
     iterator begin() const { return get(0); }
     iterator end() const { return get(size_); }
-    auto iter() const { return std::ranges::subrange{begin(), end()}; }
     auto operator[](Idx idx) const { return *get(idx); }
 
   private:

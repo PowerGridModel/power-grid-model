@@ -20,18 +20,21 @@ constexpr std::array<Branch3Side, 3> const branch3_sides = {Branch3Side::side_1,
 // template to construct components
 // using forward interators
 // different selection based on component type
-template <std::derived_from<Base> Component, class ComponentContainer, std::forward_iterator ForwardIterator>
+template <std::derived_from<Base> Component, class ComponentContainer, std::ranges::forward_range ComponentInputs>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
-inline void add_component(MainModelState<ComponentContainer>& state, ForwardIterator begin, ForwardIterator end,
+inline void add_component(MainModelState<ComponentContainer>& state, ComponentInputs component_inputs,
                           double system_frequency) {
-    using ComponentView = std::conditional_t<std::same_as<decltype(*begin), typename Component::InputType const&>,
-                                             typename Component::InputType const&, typename Component::InputType>;
+    using ComponentView = std::conditional_t<
+        std::same_as<decltype(*std::ranges::begin(component_inputs)), typename Component::InputType const&>,
+        typename Component::InputType const&, typename Component::InputType>;
 
-    reserve_component<Component>(state, std::distance(begin, end));
+    reserve_component<Component>(state, std::ranges::size(component_inputs));
     // do sanity check on the transformer tap regulator
     std::vector<Idx2D> regulated_objects;
     // loop to add component
-    for (auto it = begin; it != end; ++it) {
+
+    // we need to use an iterator here because of the ambiguity of the input type
+    for (auto it = std::ranges::begin(component_inputs); it != std::ranges::end(component_inputs); ++it) {
         ComponentView const input = *it;
         ID const id = input.id;
         // construct based on type of component
