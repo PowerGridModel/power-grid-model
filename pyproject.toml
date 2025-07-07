@@ -116,7 +116,7 @@ select = [
     "PL",
     "NPY",
 ]
-ignore = ["PLR2004"]
+ignore = ["PLR2004", "PLW1641"]
 
 [tool.ruff.lint.isort]
 # Imports that are imported using keyword "as" and are from the same source - are combined.
