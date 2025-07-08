@@ -63,7 +63,7 @@ jobs:
 
       - name: Verify clang-tidy configuration
         run: |
-          clang-tidy.exe --verify-config
+          clang-tidy --verify-config
 
       - name: Install C++ dependencies
         run: |
