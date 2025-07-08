@@ -36,7 +36,7 @@ class PowerGridSerializationError : public PowerGridError {
 class PowerGridBatchError : public PowerGridError {
   public:
     struct FailedScenario {
-        Idx scenario;
+        Idx scenario{};
         std::string error_message;
     };
 
