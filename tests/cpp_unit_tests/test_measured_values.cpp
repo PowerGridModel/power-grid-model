@@ -177,7 +177,7 @@ TEST_CASE_TEMPLATE("Measured Values - Accumulate branch flow sensors", sym, symm
     }();
 
     auto const check_accumulated = [](DecomposedComplexRandVar<sym> const& value) {
-        auto const expected_value = 2.0 + (73.0i / 70.0);
+        auto const expected_value = 2.0 + (73.0i / 70.0); // NOLINT(readability-uppercase-literal-suffix)
         auto const expected_real_variance = 7.0 / 25.0;
         auto const expected_imag_variance = 18.0 / 25.0;
         if constexpr (is_symmetric_v<sym>) {
@@ -185,7 +185,7 @@ TEST_CASE_TEMPLATE("Measured Values - Accumulate branch flow sensors", sym, symm
             check_close(value.real_component.variance, expected_real_variance);
             check_close(value.imag_component.variance, expected_imag_variance);
         } else {
-            for (Idx phase : IdxRange(3)) {
+            for (Idx const phase : IdxRange(3)) {
                 // eigen index-based element access
                 check_close(value.value()(phase), expected_value);
                 check_close(value.real_component.variance(phase), expected_real_variance);

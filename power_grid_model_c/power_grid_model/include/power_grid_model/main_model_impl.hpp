@@ -216,7 +216,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         constexpr auto comp_index = main_core::utils::index_of_component<CompType, ComponentType...>;
 
         assert(construction_complete_);
-        assert(sequence_idx.size() == std::ranges::size(updates));
+        assert(std::ranges::ssize(sequence_idx) == std::ranges::ssize(updates));
 
         if constexpr (CacheType::value) {
             main_core::update::update_inverse<CompType>(

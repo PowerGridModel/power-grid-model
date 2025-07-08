@@ -1064,7 +1064,7 @@ TEST_CASE("API Model") {
     }
 
     SUBCASE("Current sensor for NRSE is experimental: not implemented") {
-        auto const input_data_se_json = R"json({
+        auto const* const input_data_se_json = R"json({
   "version": "1.0",
   "type": "input",
   "is_batch": false,

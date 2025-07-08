@@ -20,7 +20,7 @@ template <component_c Component, std::ranges::view Elements, typename Func>
     requires std::invocable<std::remove_cvref_t<Func>, typename Component::UpdateType, Idx2D const&> &&
              std::ranges::forward_range<Elements>
 inline void iterate_component_sequence(Func func, Elements elements, std::span<Idx2D const> sequence_idx) {
-    assert(std::ranges::size(elements) == sequence_idx.size());
+    assert(std::ranges::ssize(elements) == std::ranges::ssize(sequence_idx));
 
     Idx seq = 0;
 
@@ -175,7 +175,7 @@ inline void get_component_sequence_impl(MainModelState<ComponentContainer> const
             return get_component_idx_by_id<Component>(state, update.id);
         });
     } else {
-        assert(std::ranges::size(elements) <= n_comp_elements);
+        assert(std::ranges::ssize(elements) <= n_comp_elements);
         std::ranges::transform(
             elements, destination,
             [group = get_component_group_idx<Component>(state), index = 0](auto const& /*update*/) mutable {
