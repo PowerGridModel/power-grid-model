@@ -160,6 +160,7 @@ class ColumnarAttributeRange : public std::ranges::view_interface<ColumnarAttrib
     }
 
     constexpr Idx size() const { return size_; }
+    constexpr bool empty() const { return size_ == 0; }
     iterator begin() const { return get(0); }
     iterator end() const { return get(size_); }
     auto operator[](Idx idx) const { return *get(idx); }
