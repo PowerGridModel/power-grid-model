@@ -75,7 +75,7 @@ TEST_CASE("Test voltage sensor") {
         vs_update.u_angle_measured = 2.0;
         vs_update.u_sigma = 3.0;
 
-        UpdateChange update = voltage_sensor.update(vs_update);
+        UpdateChange const update = voltage_sensor.update(vs_update);
 
         CHECK(update.param == false);
         CHECK(update.topo == false);
