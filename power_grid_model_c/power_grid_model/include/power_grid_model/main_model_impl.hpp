@@ -191,9 +191,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // template to construct components
     // using forward interators
     // different selection based on component type
-    template <std::derived_from<Base> CompType> void add_component(std::ranges::viewable_range auto&& components) {
+    template <std::derived_from<Base> CompType, std::ranges::viewable_range Inputs>
+    void add_component(Inputs&& components) {
         assert(!construction_complete_);
-        main_core::add_component<CompType>(state_, components, system_frequency_);
+        main_core::add_component<CompType>(state_, std::forward<Inputs>(components), system_frequency_);
     }
 
     void add_components(ConstDataset const& input_data, Idx pos = 0) {
@@ -211,8 +212,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // using forward interators
     // different selection based on component type
     // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
-    template <class CompType, cache_type_c CacheType>
-    void update_component(std::ranges::viewable_range auto&& updates, std::span<Idx2D const> sequence_idx) {
+    template <class CompType, cache_type_c CacheType, std::ranges::viewable_range Updates>
+    void update_component(Updates&& updates, std::span<Idx2D const> sequence_idx) {
         constexpr auto comp_index = main_core::utils::index_of_component<CompType, ComponentType...>;
 
         assert(construction_complete_);
@@ -224,7 +225,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
 
         UpdateChange const changed = main_core::update::update_component<CompType>(
-            state_, updates, std::back_inserter(std::get<comp_index>(parameter_changed_components_)), sequence_idx);
+            state_, std::forward<Updates>(updates),
+            std::back_inserter(std::get<comp_index>(parameter_changed_components_)), sequence_idx);
 
         // update, get changed variable
         update_state(changed);

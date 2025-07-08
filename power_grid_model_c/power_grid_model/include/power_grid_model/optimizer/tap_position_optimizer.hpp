@@ -462,7 +462,7 @@ template <transformer_c... TransformerTypes> class TransformerWrapper {
 };
 
 template <transformer_c... TransformerTypes> struct TapRegulatorRef {
-    std::reference_wrapper<const TransformerTapRegulator> regulator;
+    std::reference_wrapper<const TransformerTapRegulator> regulator{};
     TransformerWrapper<TransformerTypes...> transformer;
 
     bool control_at_tap_side() const {

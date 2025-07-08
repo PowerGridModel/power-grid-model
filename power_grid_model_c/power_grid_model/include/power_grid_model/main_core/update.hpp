@@ -163,35 +163,35 @@ UpdateIndependence<ComponentTypes...> check_update_independence(MainModelState<C
 
 namespace detail {
 
-template <component_c Component, class ComponentContainer, std::output_iterator<Idx2D> OutputIterator>
+template <component_c Component, class ComponentContainer, std::ranges::viewable_range Elements,
+          std::output_iterator<Idx2D> OutputIterator>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
-inline void get_component_sequence_impl(MainModelState<ComponentContainer> const& state,
-                                        std::ranges::viewable_range auto&& elements, OutputIterator destination,
-                                        Idx n_comp_elements) {
+inline void get_component_sequence_impl(MainModelState<ComponentContainer> const& state, Elements&& elements,
+                                        OutputIterator destination, Idx n_comp_elements) {
     using UpdateType = typename Component::UpdateType;
 
     if (n_comp_elements < 0) {
-        std::ranges::transform(elements, destination, [&state](UpdateType const& update) {
+        std::ranges::transform(std::forward<Elements>(elements), destination, [&state](UpdateType const& update) {
             return get_component_idx_by_id<Component>(state, update.id);
         });
     } else {
         assert(std::ranges::ssize(elements) <= n_comp_elements);
         std::ranges::transform(
-            elements, destination,
+            std::forward<Elements>(elements), destination,
             [group = get_component_group_idx<Component>(state), index = 0](auto const& /*update*/) mutable {
                 return Idx2D{group, index++}; // NOSONAR
             });
     }
 }
 
-template <component_c Component, class ComponentContainer>
+template <component_c Component, class ComponentContainer, std::ranges::viewable_range Elements>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 inline std::vector<Idx2D> get_component_sequence_by_iter(MainModelState<ComponentContainer> const& state,
-                                                         std::ranges::viewable_range auto&& elements,
-                                                         Idx n_comp_elements = na_Idx) {
+                                                         Elements&& elements, Idx n_comp_elements = na_Idx) {
     std::vector<Idx2D> result;
     result.reserve(std::ranges::size(elements));
-    get_component_sequence_impl<Component>(state, elements, std::back_inserter(result), n_comp_elements);
+    get_component_sequence_impl<Component>(state, std::forward<Elements>(elements), std::back_inserter(result),
+                                           n_comp_elements);
     return result;
 }
 
@@ -240,11 +240,11 @@ get_all_sequence_idx_map(MainModelState<ComponentContainer> const& state, ConstD
 // using forward interators
 // different selection based on component type
 // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
-template <component_c Component, class ComponentContainer, std::output_iterator<Idx2D> OutputIterator>
+template <component_c Component, class ComponentContainer, std::ranges::viewable_range Updates,
+          std::output_iterator<Idx2D> OutputIterator>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
-inline UpdateChange update_component(MainModelState<ComponentContainer>& state,
-                                     std::ranges::viewable_range auto&& component_updates, OutputIterator changed_it,
-                                     std::span<Idx2D const> sequence_idx) {
+inline UpdateChange update_component(MainModelState<ComponentContainer>& state, Updates&& component_updates,
+                                     OutputIterator changed_it, std::span<Idx2D const> sequence_idx) {
     using UpdateType = typename Component::UpdateType;
 
     UpdateChange state_changed;
@@ -260,7 +260,7 @@ inline UpdateChange update_component(MainModelState<ComponentContainer>& state,
                 *changed_it++ = sequence_single;
             }
         },
-        std::views::all(component_updates), sequence_idx);
+        std::views::all(std::forward<Updates>(component_updates)), sequence_idx);
 
     return state_changed;
 }
@@ -277,10 +277,10 @@ inline UpdateChange update_component(MainModelState<ComponentContainer>& state, 
 // using forward interators
 // different selection based on component type
 // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
-template <component_c Component, class ComponentContainer,
+template <component_c Component, class ComponentContainer, std::ranges::viewable_range Updates,
           std::output_iterator<typename Component::UpdateType> OutputIterator>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
-inline void update_inverse(MainModelState<ComponentContainer> const& state, std::ranges::viewable_range auto&& updates,
+inline void update_inverse(MainModelState<ComponentContainer> const& state, Updates&& updates,
                            OutputIterator destination, std::span<Idx2D const> sequence_idx) {
     using UpdateType = typename Component::UpdateType;
 
@@ -289,15 +289,16 @@ inline void update_inverse(MainModelState<ComponentContainer> const& state, std:
             auto const& comp = get_component<Component>(state, sequence_single);
             *destination++ = comp.inverse(update_data);
         },
-        updates, sequence_idx);
+        std::forward<Updates>(updates), sequence_idx);
 }
-template <component_c Component, class ComponentContainer,
+template <component_c Component, class ComponentContainer, std::ranges::viewable_range Updates,
           std::output_iterator<typename Component::UpdateType> OutputIterator>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
-inline void update_inverse(MainModelState<ComponentContainer> const& state, std::ranges::view auto updates,
+inline void update_inverse(MainModelState<ComponentContainer> const& state, Updates&& updates,
                            OutputIterator destination) {
-    return update_inverse<Component>(state, updates, destination,
-                                     detail::get_component_sequence_by_iter<Component>(state, updates));
+    return update_inverse<Component>(
+        state, updates, destination,
+        detail::get_component_sequence_by_iter<Component>(state, std::forward<Updates>(updates)));
 }
 
 } // namespace power_grid_model::main_core::update

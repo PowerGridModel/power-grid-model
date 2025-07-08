@@ -20,20 +20,20 @@ constexpr std::array<Branch3Side, 3> const branch3_sides = {Branch3Side::side_1,
 // template to construct components
 // using forward interators
 // different selection based on component type
-template <std::derived_from<Base> Component, class ComponentContainer>
+template <std::derived_from<Base> Component, class ComponentContainer, std::ranges::viewable_range Inputs>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
-inline void add_component(MainModelState<ComponentContainer>& state,
-                          std::ranges::viewable_range auto&& component_inputs, double system_frequency) {
-    using ComponentView = std::conditional_t<
-        std::same_as<std::ranges::range_reference_t<decltype(component_inputs)>, typename Component::InputType const&>,
-        typename Component::InputType const&, typename Component::InputType>;
+inline void add_component(MainModelState<ComponentContainer>& state, Inputs&& component_inputs,
+                          double system_frequency) {
+    using ComponentView =
+        std::conditional_t<std::same_as<std::ranges::range_reference_t<Inputs>, typename Component::InputType const&>,
+                           typename Component::InputType const&, typename Component::InputType>;
 
     reserve_component<Component>(state, std::ranges::size(component_inputs));
     // do sanity check on the transformer tap regulator
     std::vector<Idx2D> regulated_objects;
     // loop to add component
 
-    for (auto const& input_proxy : component_inputs) {
+    for (auto const& input_proxy : std::views::all(std::forward<Inputs>(component_inputs))) {
         ComponentView const input = [&input_proxy]() -> ComponentView { return input_proxy; }();
 
         ID const id = input.id;
