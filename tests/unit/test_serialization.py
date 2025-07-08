@@ -515,13 +515,13 @@ def assert_individual_data_entry(serialized_dataset, data_filter, component, ser
                     assert attr in deserialized_output
                     assert_almost_equal(
                         deserialized_output[attr][comp_idx],
-                        serialized_input[comp_idx][attr],
+                        input_entry[attr],
                     )
                 else:
                     assert attr in deserialized_output[comp_idx].dtype.names
                     assert_almost_equal(
                         deserialized_output[comp_idx][attr],
-                        serialized_input[comp_idx][attr],
+                        input_entry[attr],
                     )
         else:
             assert component in serialized_dataset["attributes"]
@@ -533,13 +533,13 @@ def assert_individual_data_entry(serialized_dataset, data_filter, component, ser
                     assert attr in deserialized_output
                     assert_almost_equal(
                         deserialized_output[attr][comp_idx],
-                        serialized_input[comp_idx][attr_idx],
+                        input_entry[attr_idx],
                     )
                 else:
                     assert attr in deserialized_output[comp_idx].dtype.names
                     assert_almost_equal(
                         deserialized_output[comp_idx][attr],
-                        serialized_input[comp_idx][attr_idx],
+                        input_entry[attr_idx],
                     )
 
 
