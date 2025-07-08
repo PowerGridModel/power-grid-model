@@ -220,8 +220,8 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
   private:
     std::tuple<std::vector<StorageableTypes>...> vectors_;
     std::unordered_map<ID, Idx2D> map_;
-    std::array<Idx, num_gettable> size_;
-    std::array<std::array<Idx, num_storageable + 1>, num_gettable> cum_size_;
+    std::array<Idx, num_gettable> size_{};
+    std::array<std::array<Idx, num_storageable + 1>, num_gettable> cum_size_{};
 
 #ifndef NDEBUG
     // set construction_complete is used for debug assertions only
