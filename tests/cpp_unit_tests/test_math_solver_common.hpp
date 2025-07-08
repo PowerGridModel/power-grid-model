@@ -62,7 +62,7 @@ inline void assert_output(SolverOutput<sym> const& output, SolverOutput<sym> con
 template <symmetry_tag sym_type> struct SteadyStateSolverTestGrid {
     /*
     network
-    
+
                                                      shunt0 (ys)
                           (y0, ys0)           (y1)       |
     source --yref-- bus0 --branch0-- bus1 --branch1--  bus2
