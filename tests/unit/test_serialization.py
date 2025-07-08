@@ -581,17 +581,16 @@ def assert_batch_dataset_structure(
                 assert isinstance(component_data, np.ndarray)
                 assert component_data.ndim == 1
                 assert len(component_data) == component_indptr[-1]
+        elif is_columnar_filter(data_filter, component):
+            for attr, attr_value in component_values.items():
+                assert isinstance(attr, str)
+                assert isinstance(attr_value, np.ndarray)
+                assert len(attr_value.shape) in [2, 3]
+                assert len(attr_value) == len(serialized_dataset["data"])
         else:
-            if is_columnar_filter(data_filter, component):
-                for attr, attr_value in component_values.items():
-                    assert isinstance(attr, str)
-                    assert isinstance(attr_value, np.ndarray)
-                    assert len(attr_value.shape) in [2, 3]
-                    assert len(attr_value) == len(serialized_dataset["data"])
-            else:
-                assert isinstance(component_values, np.ndarray)
-                assert len(component_values.shape) == 2
-                assert len(component_values) == len(serialized_dataset["data"])
+            assert isinstance(component_values, np.ndarray)
+            assert len(component_values.shape) == 2
+            assert len(component_values) == len(serialized_dataset["data"])
 
 
 def assert_serialization_correct(deserialized_dataset: Dataset, serialized_dataset: Mapping[str, Any], data_filter):
