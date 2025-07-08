@@ -132,10 +132,10 @@ def test_is_nan():
 
 def test_convert_json_to_numpy(two_nodes_one_line, two_nodes_two_lines):
     pgm_data = convert_python_to_numpy(two_nodes_one_line, "input")
-    assert len(pgm_data) == 2
-    assert len(pgm_data["node"]) == 2
-    assert pgm_data["node"][0]["id"] == 11
-    assert pgm_data["node"][0]["u_rated"] == 10.5e3
+    assert len(pgm_data) == len(two_nodes_one_line)
+    assert len(pgm_data["node"]) == len(two_nodes_one_line["node"])
+    assert pgm_data["node"][0]["id"] == two_nodes_one_line["node"][0]["id"]
+    assert pgm_data["node"][0]["u_rated"] == two_nodes_one_line["node"][0]["u_rated"]
     assert len(pgm_data["line"]) == 1
 
     json_list = [two_nodes_one_line, two_nodes_two_lines, two_nodes_one_line]

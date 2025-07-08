@@ -562,6 +562,7 @@ def assert_batch_dataset_structure(
 ):
     """Checks if the structure of the batch dataset is correct.
     Then splits into individual scenario's dataset and checks if all of them are correct."""
+    batch_ndim = 2
 
     # Check structure of the whole BatchDataset
     assert isinstance(serialized_dataset["data"], list)
@@ -589,7 +590,7 @@ def assert_batch_dataset_structure(
                 assert len(attr_value) == len(serialized_dataset["data"])
         else:
             assert isinstance(component_values, np.ndarray)
-            assert len(component_values.shape) == 2
+            assert len(component_values.shape) == batch_ndim
             assert len(component_values) == len(serialized_dataset["data"])
 
 
