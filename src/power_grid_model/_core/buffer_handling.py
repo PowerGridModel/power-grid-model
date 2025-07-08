@@ -117,8 +117,8 @@ def _get_raw_attribute_data_view(data: np.ndarray, schema: ComponentMetaData, at
     Returns:
         a raw view on the data set.
     """
-    unsupported_dim = 3
-    if schema.dtype[attribute].shape == (unsupported_dim,) and data.shape[-1] != unsupported_dim:
+    supported_dim = 3
+    if schema.dtype[attribute].shape == (supported_dim,) and data.shape[-1] != supported_dim:
         raise ValueError("Given data has a different schema than supported.")
     return _get_raw_data_view(data, dtype=schema.dtype[attribute].base)
 
