@@ -10,7 +10,9 @@ namespace power_grid_model {
 
 using namespace std::complex_literals;
 
-// NOLINTNEXTLINE(readability-function-size,google-readability-function-size) // exceeds the 800 statement threshold
+namespace {
+// this function exceeds the reasonable threshold of 800 statements
+// NOLINTNEXTLINE(readability-function-size,google-readability-function-size,hicpp-function-size)
 void execute_subcases(const AsymLineInput& input, const ComplexTensor<asymmetric_t>& y_series,
                       const ComplexTensor<asymmetric_t>& c_matrix, const double base_i, const double base_y,
                       const double system_frequency, const double voltage_lvl) {
@@ -250,7 +252,7 @@ void execute_subcases(const AsymLineInput& input, const ComplexTensor<asymmetric
     }
 
     SUBCASE("Update inverse") {
-        BranchUpdate branch_update{1, na_IntS, na_IntS};
+        BranchUpdate branch_update{.id = 1, .from_status = na_IntS, .to_status = na_IntS};
         auto expected = branch_update;
 
         SUBCASE("Identical") {
@@ -283,6 +285,7 @@ void execute_subcases(const AsymLineInput& input, const ComplexTensor<asymmetric
         CHECK(inv.to_status == expected.to_status);
     }
 }
+} // namespace
 
 TEST_CASE("Test asym line") {
     double const system_frequency = 50.0;
