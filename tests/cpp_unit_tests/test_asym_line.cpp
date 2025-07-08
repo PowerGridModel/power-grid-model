@@ -10,8 +10,7 @@ namespace power_grid_model {
 
 using namespace std::complex_literals;
 
-// NOLINTNEXTLINE(readability-function-size,google-readability-function-size) // exceeds even the 800 statement
-// threshold
+// NOLINTNEXTLINE(readability-function-size,google-readability-function-size) // exceeds the 800 statement threshold
 void execute_subcases(const AsymLineInput& input, const ComplexTensor<asymmetric_t>& y_series,
                       const ComplexTensor<asymmetric_t>& c_matrix, const double base_i, const double base_y,
                       const double system_frequency, const double voltage_lvl) {
