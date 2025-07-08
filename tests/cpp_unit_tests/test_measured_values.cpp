@@ -177,7 +177,7 @@ TEST_CASE_TEMPLATE("Measured Values - Accumulate branch flow sensors", sym, symm
     }();
 
     auto const check_accumulated = [](DecomposedComplexRandVar<sym> const& value) {
-        auto const expected_value = 2.0 + (73.0i / 70.0); // NOLINT(readability-uppercase-literal-suffix)
+        auto const expected_value = 2.0 + (73.0i / 70.0);
         auto const expected_real_variance = 7.0 / 25.0;
         auto const expected_imag_variance = 18.0 / 25.0;
         if constexpr (is_symmetric_v<sym>) {

@@ -58,6 +58,7 @@ readability-*,
 -readability-magic-numbers,
 -readability-math-missing-parentheses,
 -readability-redundant-member-init,
+-readability-uppercase-literal-suffix,
 -bugprone-unchecked-optional-access,
 '
 

@@ -354,7 +354,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
 
         */
         // to make the distinction between global and local angle current measurement
-        auto const global_shift = phase_shift(1.0 + 1.0i); // NOLINT(readability-uppercase-literal-suffix)
+        auto const global_shift = phase_shift(1.0 + 1.0i);
 
         topo.power_sensors_per_source = {from_sparse, {0, 1}};
         topo.current_sensors_per_branch_from = {from_sparse, {0, 1}};
