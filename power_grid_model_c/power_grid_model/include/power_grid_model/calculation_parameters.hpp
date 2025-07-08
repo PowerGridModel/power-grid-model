@@ -402,7 +402,7 @@ struct Idx2DBranch3 {
     // 0: node 0 -> internal node
     // 1: node 1 -> internal node
     // 2: node 2 -> internal node
-    std::array<Idx, 3> pos;
+    std::array<Idx, 3> pos{};
 
     friend constexpr bool operator==(Idx2DBranch3 const& x, Idx2DBranch3 const& y) = default;
 };
