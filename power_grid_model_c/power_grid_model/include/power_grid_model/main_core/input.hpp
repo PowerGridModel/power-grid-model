@@ -20,13 +20,12 @@ constexpr std::array<Branch3Side, 3> const branch3_sides = {Branch3Side::side_1,
 // template to construct components
 // using forward interators
 // different selection based on component type
-template <std::derived_from<Base> Component, class ComponentContainer, std::ranges::viewable_range ComponentInputs>
-    requires model_component_state_c<MainModelState, ComponentContainer, Component> &&
-             std::ranges::forward_range<ComponentInputs>
-inline void add_component(MainModelState<ComponentContainer>& state, ComponentInputs&& component_inputs,
-                          double system_frequency) {
+template <std::derived_from<Base> Component, class ComponentContainer>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
+inline void add_component(MainModelState<ComponentContainer>& state,
+                          std::ranges::viewable_range auto&& component_inputs, double system_frequency) {
     using ComponentView = std::conditional_t<
-        std::same_as<std::ranges::range_reference_t<ComponentInputs>, typename Component::InputType const&>,
+        std::same_as<std::ranges::range_reference_t<decltype(component_inputs)>, typename Component::InputType const&>,
         typename Component::InputType const&, typename Component::InputType>;
 
     reserve_component<Component>(state, std::ranges::size(component_inputs));

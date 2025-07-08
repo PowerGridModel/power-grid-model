@@ -134,7 +134,7 @@ TEST_CASE("Test line") {
     }
 
     SUBCASE("Symmetric results") {
-        BranchOutput<symmetric_t> output = branch.get_output<symmetric_t>(1.0, 0.9);
+        BranchOutput<symmetric_t> const output = branch.get_output<symmetric_t>(1.0, 0.9);
         CHECK(output.id == 1);
         CHECK(output.energized);
         CHECK(output.loading == doctest::Approx(loading));

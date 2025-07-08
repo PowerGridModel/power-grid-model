@@ -53,13 +53,13 @@ TEST_CASE("Test voltage sensor") {
         double const u_rated = 10.0e3;
         VoltageSensor<symmetric_t> const voltage_sensor{voltage_sensor_input, u_rated};
 
-        VoltageSensorOutput<symmetric_t> vs_output = voltage_sensor.get_null_output<symmetric_t>();
+        VoltageSensorOutput<symmetric_t> const vs_output = voltage_sensor.get_null_output<symmetric_t>();
         CHECK(vs_output.id == 12);
         CHECK(vs_output.energized == 0);
         CHECK(vs_output.u_residual == doctest::Approx(0.0));
         CHECK(vs_output.u_angle_residual == doctest::Approx(0.0));
 
-        SensorShortCircuitOutput vs_sc_output = voltage_sensor.get_null_sc_output();
+        SensorShortCircuitOutput const vs_sc_output = voltage_sensor.get_null_sc_output();
         CHECK(vs_sc_output.id == 12);
         CHECK(vs_sc_output.energized == 0);
     }
@@ -297,7 +297,7 @@ TEST_CASE("Test voltage sensor") {
             VoltageSensor<symmetric_t> const voltage_sensor{voltage_sensor_input, u_rated};
 
             ComplexValue<symmetric_t> const u_calc_sym{1.02 * exp(1i * 0.2)};
-            VoltageSensorOutput<symmetric_t> sym_voltage_sensor_sym_output =
+            VoltageSensorOutput<symmetric_t> const sym_voltage_sensor_sym_output =
                 voltage_sensor.get_output<symmetric_t>(u_calc_sym);
 
             ComplexValue<asymmetric_t> const u_calc_asym{1.02 * exp(1i * 0.2), 1.03 * exp(1i * 0.3),
@@ -338,7 +338,7 @@ TEST_CASE("Test voltage sensor") {
             VoltageSensor<symmetric_t> const voltage_sensor{voltage_sensor_input, u_rated};
 
             ComplexValue<symmetric_t> const u_calc_sym{1.02 * exp(1i * 0.2)};
-            VoltageSensorOutput<symmetric_t> sym_voltage_sensor_sym_output =
+            VoltageSensorOutput<symmetric_t> const sym_voltage_sensor_sym_output =
                 voltage_sensor.get_output<symmetric_t>(u_calc_sym);
 
             ComplexValue<asymmetric_t> const u_calc_asym{1.02 * exp(1i * 0.2), 1.03 * exp(1i * 0.3),
@@ -379,7 +379,7 @@ TEST_CASE("Test voltage sensor") {
             VoltageSensor<symmetric_t> const voltage_sensor{voltage_sensor_input, u_rated};
 
             ComplexValue<symmetric_t> const u_calc_sym{1.02 * exp(1i * (-pi + 0.1))};
-            VoltageSensorOutput<symmetric_t> sym_voltage_sensor_sym_output =
+            VoltageSensorOutput<symmetric_t> const sym_voltage_sensor_sym_output =
                 voltage_sensor.get_output<symmetric_t>(u_calc_sym);
 
             ComplexValue<asymmetric_t> const u_calc_asym{1.02 * exp(1i * (-pi + 0.1)), 1.03 * exp(1i * (-pi + 0.2)),
@@ -420,12 +420,12 @@ TEST_CASE("Test voltage sensor") {
             VoltageSensor<symmetric_t> const voltage_sensor{voltage_sensor_input, u_rated};
 
             ComplexValue<symmetric_t> const u_calc_sym{1.02 * exp(1i * 0.2)};
-            VoltageSensorOutput<symmetric_t> sym_voltage_sensor_sym_output =
+            VoltageSensorOutput<symmetric_t> const sym_voltage_sensor_sym_output =
                 voltage_sensor.get_output<symmetric_t>(u_calc_sym);
 
             ComplexValue<asymmetric_t> const u_calc_asym{1.02 * exp(1i * 0.2), 1.03 * exp(1i * 0.3),
                                                          1.04 * exp(1i * 0.4)};
-            VoltageSensorOutput<asymmetric_t> sym_voltage_sensor_asym_output =
+            VoltageSensorOutput<asymmetric_t> const sym_voltage_sensor_asym_output =
                 voltage_sensor.get_output<asymmetric_t>(u_calc_asym);
 
             // Check sym output
@@ -465,7 +465,7 @@ TEST_CASE("Test voltage sensor") {
             VoltageSensor<asymmetric_t> const voltage_sensor{voltage_sensor_input, u_rated};
 
             ComplexValue<symmetric_t> const u_calc_sym{1.02 * exp(1i * 0.2)};
-            VoltageSensorOutput<symmetric_t> asym_voltage_sensor_sym_output =
+            VoltageSensorOutput<symmetric_t> const asym_voltage_sensor_sym_output =
                 voltage_sensor.get_output<symmetric_t>(u_calc_sym);
             DoubleComplex const u1_measured = voltage_sensor.calc_param<symmetric_t>().value;
 
@@ -510,7 +510,7 @@ TEST_CASE("Test voltage sensor") {
             VoltageSensor<asymmetric_t> const voltage_sensor{voltage_sensor_input, u_rated};
 
             ComplexValue<symmetric_t> const u_calc_sym{1.02 * exp(1i * 0.2)};
-            VoltageSensorOutput<symmetric_t> asym_voltage_sensor_sym_output =
+            VoltageSensorOutput<symmetric_t> const asym_voltage_sensor_sym_output =
                 voltage_sensor.get_output<symmetric_t>(u_calc_sym);
 
             ComplexValue<asymmetric_t> const u_calc_asym{1.02 * exp(1i * 0.2), 1.04 * exp(1i * 0.4),

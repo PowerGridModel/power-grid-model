@@ -148,7 +148,7 @@ void execute_subcases(const AsymLineInput& input, const ComplexTensor<asymmetric
     }
 
     SUBCASE("Symmetric results") {
-        BranchOutput<symmetric_t> output = branch.get_output<symmetric_t>(1.0, 0.9);
+        BranchOutput<symmetric_t> const output = branch.get_output<symmetric_t>(1.0, 0.9);
         CHECK(output.id == 1);
         CHECK(output.energized);
         CHECK(output.loading == doctest::Approx(loading_sym));
@@ -168,7 +168,7 @@ void execute_subcases(const AsymLineInput& input, const ComplexTensor<asymmetric
         branch_solver_output.i_t = 2.0 - 1.0i;
         branch_solver_output.s_f = 1.0 - 1.5i;
         branch_solver_output.s_t = 1.5 - 1.5i;
-        BranchOutput<symmetric_t> output = branch.get_output<symmetric_t>(branch_solver_output);
+        BranchOutput<symmetric_t> const output = branch.get_output<symmetric_t>(branch_solver_output);
         CHECK(output.id == 1);
         CHECK(output.energized);
         CHECK(output.loading == doctest::Approx(cabs(2.0 - 1.0i) * base_i / input.i_n));
@@ -183,7 +183,7 @@ void execute_subcases(const AsymLineInput& input, const ComplexTensor<asymmetric
     }
 
     SUBCASE("No source results") {
-        BranchOutput<asymmetric_t> output = branch.get_null_output<asymmetric_t>();
+        BranchOutput<asymmetric_t> const output = branch.get_null_output<asymmetric_t>();
         CHECK(output.id == 1);
         CHECK(!output.energized);
         CHECK(output.loading == 0.0);
@@ -198,7 +198,7 @@ void execute_subcases(const AsymLineInput& input, const ComplexTensor<asymmetric
     }
 
     SUBCASE("No source short circuit results") {
-        BranchShortCircuitOutput output = branch.get_null_sc_output();
+        BranchShortCircuitOutput const output = branch.get_null_sc_output();
         CHECK(output.id == 1);
         CHECK(!output.energized);
         CHECK(output.i_from(0) == 0.0);
@@ -208,7 +208,7 @@ void execute_subcases(const AsymLineInput& input, const ComplexTensor<asymmetric
     }
 
     SUBCASE("Asymmetric results") {
-        BranchOutput<asymmetric_t> output = branch.get_output<asymmetric_t>(uaf, uat);
+        BranchOutput<asymmetric_t> const output = branch.get_output<asymmetric_t>(uaf, uat);
         CHECK(output.id == 1);
         CHECK(output.energized);
         CHECK(output.loading == doctest::Approx(loading_asym));
@@ -221,7 +221,7 @@ void execute_subcases(const AsymLineInput& input, const ComplexTensor<asymmetric
     }
 
     SUBCASE("Asym short circuit results") {
-        BranchShortCircuitOutput asym_output = branch.get_sc_output(if_sc_asym, it_sc_asym);
+        BranchShortCircuitOutput const asym_output = branch.get_sc_output(if_sc_asym, it_sc_asym);
         CHECK(asym_output.id == 1);
         CHECK(asym_output.energized);
         CHECK(asym_output.i_from(1) == doctest::Approx(cabs(if_sc) * base_i));
@@ -236,8 +236,8 @@ void execute_subcases(const AsymLineInput& input, const ComplexTensor<asymmetric
     }
 
     SUBCASE("Sym short circuit results") {
-        BranchShortCircuitOutput sym_output = branch.get_sc_output(if_sc, it_sc);
-        BranchShortCircuitOutput asym_output = branch.get_sc_output(if_sc_asym, it_sc_asym);
+        BranchShortCircuitOutput const sym_output = branch.get_sc_output(if_sc, it_sc);
+        BranchShortCircuitOutput const asym_output = branch.get_sc_output(if_sc_asym, it_sc_asym);
         CHECK(sym_output.energized == asym_output.energized);
         CHECK(sym_output.i_from(1) == doctest::Approx(asym_output.i_from(1)));
         CHECK(sym_output.i_from(2) == doctest::Approx(asym_output.i_from(2)));

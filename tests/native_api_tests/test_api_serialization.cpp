@@ -61,7 +61,7 @@ TEST_CASE("API Serialization and Deserialization") {
             Serializer json_serializer{dataset, 0};
 
             SUBCASE("To zero-terminated string") {
-                std::string json_result = json_serializer.get_to_zero_terminated_string(0, -1);
+                std::string const json_result = json_serializer.get_to_zero_terminated_string(0, -1);
                 CHECK(json_result == json_data);
             }
 

@@ -422,7 +422,7 @@ TEST_CASE("Test Transformer ranking") {
 
         SUBCASE("Ranking complete the graph") {
             // The test grid 1 is not compatible with the updated logic for step up transformers
-            pgm_tap::RankedTransformerGroups order = pgm_tap::rank_transformers(state);
+            pgm_tap::RankedTransformerGroups const order = pgm_tap::rank_transformers(state);
             pgm_tap::RankedTransformerGroups const ref_order{
                 {{Idx2D{3, 0}, Idx2D{3, 1}, Idx2D{4, 0}}, {Idx2D{3, 2}}, {Idx2D{3, 3}, Idx2D{3, 4}}}};
             CHECK(order == ref_order);
