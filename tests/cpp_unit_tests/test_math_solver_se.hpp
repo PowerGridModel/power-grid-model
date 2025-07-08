@@ -572,7 +572,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
                 CHECK(imag(output.branch[0].i_f) == doctest::Approx(imag(1.95 * global_shift)));
             } else {
                 CHECK_THROWS_AS(run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, info),
-                                NotImplementedError);
+                                SparseMatrixError);
             }
         }
     }
