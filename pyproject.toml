@@ -126,6 +126,7 @@ combine-as-imports = true
 "docs/examples/*.ipynb" = ["F811", "E402"]
 # Pylint was only run in src directory before moving to Ruff
 "tests/*" = ["PL"]
+#"tests/*" = ["PLR0915", "PLR0912", "PLR0913"]
 "setup.py" = ["PL"]
 
 [tool.mypy]

@@ -129,15 +129,15 @@ def test_create_output_data(output_component_types, expected_fns, batch_size):
 
     expected = {comp: fn(batch_size_tuple=(batch_size,)) for comp, fn in expected_fns.items()}
     assert actual.keys() == expected.keys()
-    for comp in expected:
-        if not is_columnar(expected[comp]):
-            assert actual[comp].dtype == expected[comp].dtype
-        elif expected[comp] == dict():
+    for comp, fn in expected.items():
+        if not is_columnar(fn):
+            assert actual[comp].dtype == fn.dtype
+        elif fn == dict():
             # Empty attributes columnar
-            assert actual[comp] == expected[comp]
+            assert actual[comp] == fn
         else:
-            assert actual[comp].keys() == expected[comp].keys()
-            assert all(actual[comp][attr].dtype == expected[comp][attr].dtype for attr in expected[comp])
+            assert actual[comp].keys() == fn.keys()
+            assert all(actual[comp][attr].dtype == fn[attr].dtype for attr in fn)
 
 
 def test_dtype_compatibility_check_normal():
