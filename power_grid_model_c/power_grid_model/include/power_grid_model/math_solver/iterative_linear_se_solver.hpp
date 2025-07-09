@@ -419,7 +419,7 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
                                           ComplexValue<sym> const& voltage) const {
         using statistics::scale;
 
-        auto const measurement = static_cast<IndependentComplexRandVar<sym>>(current_measurement.measurement);
+        auto measurement = static_cast<IndependentComplexRandVar<sym>>(current_measurement.measurement);
 
         switch (current_measurement.angle_measurement_type) {
         case AngleMeasurementType::global_angle:

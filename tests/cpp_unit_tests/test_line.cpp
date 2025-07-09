@@ -134,7 +134,7 @@ TEST_CASE("Test line") {
     }
 
     SUBCASE("Symmetric results") {
-        BranchOutput<symmetric_t> output = branch.get_output<symmetric_t>(1.0, 0.9);
+        BranchOutput<symmetric_t> const output = branch.get_output<symmetric_t>(1.0, 0.9);
         CHECK(output.id == 1);
         CHECK(output.energized);
         CHECK(output.loading == doctest::Approx(loading));
@@ -154,7 +154,7 @@ TEST_CASE("Test line") {
         branch_solver_output.i_t = 2.0 - 1.0i;
         branch_solver_output.s_f = 1.0 - 1.5i;
         branch_solver_output.s_t = 1.5 - 1.5i;
-        BranchOutput<symmetric_t> output = branch.get_output<symmetric_t>(branch_solver_output);
+        BranchOutput<symmetric_t> const output = branch.get_output<symmetric_t>(branch_solver_output);
         CHECK(output.id == 1);
         CHECK(output.energized);
         CHECK(output.loading == doctest::Approx(cabs(2.0 - 1.0i) * base_i / input.i_n));

@@ -28,7 +28,10 @@ cppcoreguidelines-*,
 -cppcoreguidelines-pro-bounds-pointer-arithmetic,
 -cppcoreguidelines-pro-type-reinterpret-cast,
 darwin-*,
-hiccp-*,
+hicpp-*,
+-hicpp-explicit-conversions,
+-hicpp-member-init,
+-hicpp-uppercase-literal-suffix,
 llvm-*,
 -llvm-else-after-return,
 -llvm-header-guard,
@@ -58,6 +61,7 @@ readability-*,
 -readability-magic-numbers,
 -readability-math-missing-parentheses,
 -readability-redundant-member-init,
+-readability-uppercase-literal-suffix,
 -bugprone-unchecked-optional-access,
 '
 
@@ -67,8 +71,4 @@ WarningsAsErrors: '*'
 HeaderFilterRegex: '.*'
 
 FormatStyle: file
-
-CheckOptions:
-  - key: performance-unnecessary-value-param.AllowedTypes
-  - value: 'ForwardIterator'
 ...
