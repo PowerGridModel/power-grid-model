@@ -189,7 +189,7 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         std::array<Idx, num_storageable + 1> const& cum_size = cum_size_[get_cls_pos_v<Gettable, GettableTypes...>];
         auto const found = std::upper_bound(cum_size.begin(), cum_size.end(), seq);
         assert(found != cum_size.end());
-        auto group = static_cast<Idx>(std::distance(cum_size.cbegin(), found) - 1);
+        auto const group = static_cast<Idx>(std::distance(cum_size.cbegin(), found) - 1);
         return Idx2D{.group = group, .pos = seq - cum_size[group]};
     }
 
