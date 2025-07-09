@@ -42,7 +42,7 @@ using RankedTransformerGroups = std::vector<std::vector<Idx2D>>;
 
 constexpr auto infty = std::numeric_limits<Idx>::max();
 constexpr auto last_rank = infty - 1;
-constexpr Idx2D unregulated_idx = {-1, -1};
+constexpr Idx2D unregulated_idx{.group = -1, .pos = -1};
 struct TrafoGraphVertex {
     bool is_source{};
 };
@@ -328,7 +328,8 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgePro
             if ((edge_src_rank == infty) || (edge_tgt_rank == infty)) {
                 throw AutomaticTapInputError("The transformer is being controlled from non source side towards source "
                                              "side.\n");
-            } else if (edge_src_rank != edge_tgt_rank - 1) {
+            }
+            if (edge_src_rank != edge_tgt_rank - 1) {
                 // Control side is also controlled by a closer regulated transformer.
                 // Make this transformer have the lowest possible priority.
                 result.emplace_back(graph[e].regulated_idx, last_rank);

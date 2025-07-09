@@ -855,7 +855,7 @@ def row_data(request):
 def compare_row_data(actual_row_data, desired_row_data):
     assert actual_row_data.keys() == desired_row_data.keys()
 
-    for comp_name in actual_row_data.keys():
+    for comp_name in actual_row_data:
         actual_component = actual_row_data[comp_name]
         desired_component = desired_row_data[comp_name]
         if is_sparse(actual_component):

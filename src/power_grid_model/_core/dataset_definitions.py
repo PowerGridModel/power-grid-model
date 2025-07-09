@@ -22,7 +22,7 @@ class _MetaEnum(EnumMeta):
         Returns:
             bool: True if the member is part of the Enum, False otherwise.
         """
-        return member in cls.__members__.keys()
+        return member in cls.__members__
 
 
 class DatasetType(str, Enum, metaclass=_MetaEnum):

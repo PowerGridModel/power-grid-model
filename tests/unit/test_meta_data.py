@@ -59,15 +59,9 @@ def test_sensor_meta_data():
             assert "id" in attr_names
             # check specific attributes
             if "voltage" in sensor:
-                if "output" in meta_type:
-                    expected_attrs = output_voltage
-                else:
-                    expected_attrs = input_voltage
+                expected_attrs = output_voltage if "output" in meta_type else input_voltage
             else:
-                if "output" in meta_type:
-                    expected_attrs = output_power
-                else:
-                    expected_attrs = input_power
+                expected_attrs = output_power if "output" in meta_type else input_power
 
             for name in expected_attrs:
                 assert name in attr_names

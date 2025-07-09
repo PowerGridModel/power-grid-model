@@ -24,10 +24,10 @@ class Timer {
     Clock::time_point start_;
 
   public:
-    Timer() : info_(nullptr){};
+    Timer() : info_(nullptr), code_{-1} {};
 
     Timer(CalculationInfo& info, int code, std::string name)
-        : info_(&info), code_(code), name_(std::move(name)), start_(Clock::now()) {}
+        : info_{&info}, code_{code}, name_{std::move(name)}, start_{Clock::now()} {}
 
     Timer(Timer const&) = delete;
     Timer(Timer&&) = default;
