@@ -926,7 +926,8 @@ $$
 ### Generic Current Sensor
 
 ```{warning}
-At the time of writing, state estimation with current sensors is not supported by the Newton-Raphson calculation method.
+At the time of writing, state estimation with current sensors with `global_angle` `angle_measurement_type` is not
+supported by the Newton-Raphson calculation method.
 ```
 
 * type name: `generic_current_sensor`
@@ -963,7 +964,8 @@ However, such mixing of sensor types is allowed as long as they are on different
 #### Current Sensor Concrete Types
 
 ```{warning}
-At the time of writing, state estimation with current sensors is not supported by the Newton-Raphson calculation method.
+At the time of writing, state estimation with current sensors with `global_angle` `angle_measurement_type` is not
+supported by the Newton-Raphson calculation method.
 ```
 
 There are two concrete types of current sensor.
@@ -1018,6 +1020,11 @@ As a sign convention, the angle is the phase shift of the current relative to th
 $$
 \underline{I} = \text{i_measured} \cdot e^{j \text{i_angle_measured}} \text{ .}
 $$
+
+```{warning}
+At the time of writing, state estimation with global angle current sensors is not supported by the Newton-Raphson 
+calculation method.
+```
 
 ##### Local angle current sensors
 

@@ -134,8 +134,8 @@ prevented.
 ```
 
 ```{warning}
-At the time of writing, the component [current sensor](./components.md#generic-current-sensor) is not supported in the
-calculation of [Newton-Raphson state estimation](#newton-raphson-state-estimation).
+At the time of writing, the component [global angle current sensor](./components.md#global-angle-current-sensors)
+is not supported in the calculation of [Newton-Raphson state estimation](#newton-raphson-state-estimation).
 ```
 
 ##### Necessary observability condition
@@ -548,9 +548,9 @@ appliances.
 It is not possible to mix [power sensors](./components.md#generic-current-sensor) with
 [current sensors](#./components.mdgeneric-current-sensor) on the same terminal of the same component.
 It is also not possible to mix
-[current sensors with global angle measurement type](#./components.mdgeneric-current-sensor) with
-[current sensors with local angle measurement type](#./components.mdgeneric-current-sensor) on the same terminal of the
-same component.
+[current sensors with global angle measurement type](./components.md#global-angle-current-sensors) with
+[current sensors with local angle measurement type](./components.md#local-angle-current-sensors) on the same terminal 
+of the same component.
 However, such mixing of sensor types is allowed as long as they are on different terminals.
 ```
 
@@ -776,14 +776,15 @@ at each bus are updated using ones from the previous iteration.
 The system error of the phase shift converges to zero.
 
 ```{note}
-Newton-Raphson state estimation does not support current measurements at this moment.
-See also [this issue](https://github.com/PowerGridModel/power-grid-model/issues/765).
+Newton-Raphson state estimation does not support current sensors with `global_angle` `angle_measurement_type` at this
+moment. See also [this issue](https://github.com/PowerGridModel/power-grid-model/issues/967).
 ```
 
 ```{warning}
 The algorithm will assume angles to be zero by default (see the details about voltage sensors).
 In observable systems this helps better outputting correct results.
-On the other hand with unobservable systems, exceptions raised from calculations due to faulty results will be prevented.
+On the other hand with unobservable systems, exceptions raised from calculations due to faulty results will be 
+prevented.
 ```
 
 ### Short circuit calculation algorithms

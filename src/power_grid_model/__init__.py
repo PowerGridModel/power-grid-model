@@ -13,6 +13,7 @@ from power_grid_model._core.power_grid_meta import (
 )
 from power_grid_model._core.power_grid_model import PowerGridModel
 from power_grid_model.enum import (
+    AngleMeasurementType,
     Branch3Side,
     BranchSide,
     CalculationMethod,
@@ -31,6 +32,7 @@ from power_grid_model.typing import ComponentAttributeMapping
 __all__ = [
     "attribute_dtype",
     "attribute_empty_value",
+    "AngleMeasurementType",
     "Branch3Side",
     "BranchSide",
     "CalculationMethod",
