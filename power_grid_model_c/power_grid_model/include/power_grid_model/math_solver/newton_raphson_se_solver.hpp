@@ -265,17 +265,16 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
         for (Idx row = 0; row != n_bus_; ++row) {
             u_state.all_abs_u_inv[row] = diagonal_inverse(x_[row].v());
             for (Idx data_idx_lu = row_indptr[row]; data_idx_lu != row_indptr[row + 1]; ++data_idx_lu) {
-                Idx const data_idx = y_bus.map_lu_y_bus()[data_idx_lu];
                 Idx const col = col_indices[data_idx_lu];
-                if (data_idx == -1 || row > col) {
-                    continue; // skip fill in or transpose entry
+                if (col > row) {
+                    continue; // skip one off diagonal as it is already filled
                 }
-                u_state.all_u_conjs[data_idx] = vector_outer_product(current_u[row], conj(current_u[col]));
+                u_state.all_u_conjs[data_idx_lu] = vector_outer_product(current_u[row], conj(current_u[col]));
                 if (row == col) {
                     continue; // skip diagonal entry, already filled
                 }
-                Idx const data_idx_transpose = transpose_entry[data_idx];
-                u_state.all_u_conjs[data_idx_transpose] = hermitian_transpose(u_state.all_u_conjs[data_idx]);
+                Idx const data_idx_lu_transpose = transpose_entry[data_idx_lu];
+                u_state.all_u_conjs[data_idx_lu_transpose] = hermitian_transpose(u_state.all_u_conjs[data_idx_lu]);
             }
         }
 
@@ -295,6 +294,11 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
                 Idx const data_idx = y_bus.map_lu_y_bus()[data_idx_lu];
                 Idx const col = col_indices[data_idx_lu];
 
+                u_state.col_idx = col;
+                u_state.data_idx_ij = data_idx_lu;
+                u_state.data_idx_ji = transpose_entry[data_idx_lu];
+                u_state.data_idx_jj = lu_diag[col];
+
                 // get a reference and reset block to zero
                 NRSEGainBlock<sym>& block = data_gain_[data_idx_lu];
                 if (row == col) {
@@ -309,11 +313,6 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
                 if (data_idx == -1) {
                     continue;
                 }
-
-                u_state.col_idx = col;
-                u_state.data_idx_ij = data_idx;
-                u_state.data_idx_ji = transpose_entry[data_idx];
-                u_state.data_idx_jj = lu_diag[col];
 
                 // fill block with branch, shunt measurement
                 for (Idx element_idx = y_bus.y_bus_entry_indptr()[data_idx];
