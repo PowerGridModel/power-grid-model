@@ -42,6 +42,9 @@ from power_grid_model._core.errors import PowerGridError
 from power_grid_model._core.power_grid_meta import initialize_array, power_grid_meta_data
 from power_grid_model._core.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict
 
+batch_ndim = 2
+unsupported_dim = 3
+
 
 def is_nan(data) -> bool:
     """
@@ -168,13 +171,13 @@ def get_batch_size(
                 break
             if array.ndim == 1:
                 raise TypeError("Incorrect dimension present in batch data.")
-            if array.ndim == 2:
+            if array.ndim == batch_ndim:
                 return 1
             return array.shape[0]
         sym_array = next(iter(batch_data.values()))
 
     sym_array = cast(DenseBatchArray | BatchColumn, sym_array)
-    if sym_array.ndim == 3:
+    if sym_array.ndim == unsupported_dim:
         raise TypeError("Incorrect dimension present in batch data.")
     if sym_array.ndim == 1:
         return 1
@@ -325,7 +328,7 @@ def convert_dataset_to_python_dataset(data: Dataset) -> PythonDataset:
     # It is batch dataset if it is 2D array or a indptr/data structure
     is_batch: bool | None = None
     for component, array in data.items():
-        is_dense_batch = isinstance(array, np.ndarray) and array.ndim == 2
+        is_dense_batch = isinstance(array, np.ndarray) and array.ndim == batch_ndim
         is_sparse_batch = isinstance(array, dict) and "indptr" in array and "data" in array
         if is_batch is not None and is_batch != (is_dense_batch or is_sparse_batch):
             raise ValueError(

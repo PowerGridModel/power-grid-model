@@ -113,6 +113,7 @@ select = [
     "FURB",
     "FLY",
     "SLOT",
+    "PL",
     "NPY",
 ]
 
@@ -123,6 +124,9 @@ combine-as-imports = true
 [tool.ruff.lint.per-file-ignores]
 # Ignore `F811` (redefinition violations) in all examples notebooks since we use redefinition.
 "docs/examples/*.ipynb" = ["F811", "E402"]
+# Pylint was only run in src directory before moving to Ruff
+"tests/*" = ["PLR0915", "PLR0912", "PLR0913"]
+"setup.py" = ["PL"]
 
 [tool.mypy]
 follow_imports = "silent"

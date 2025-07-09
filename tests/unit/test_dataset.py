@@ -129,7 +129,7 @@ def test_const_dataset__sparse_batch_data(dataset_type):
     assert info.dataset_type() == dataset_type
 
     assert info.is_batch()
-    assert info.batch_size() == 3
+    assert info.batch_size() == batch_size
     assert info.n_components() == len(components)
     assert info.components() == list(components)
     assert info.elements_per_scenario() == {

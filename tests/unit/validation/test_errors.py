@@ -122,7 +122,8 @@ def test_comparison_error():
 def test_error_context():
     error = ComparisonError(component=ComponentType.node, field="tango", ids=[1, 2, 3], ref_value=0)
     context = error.get_context()
-    assert len(context) == 4
+    expected_context_keys = 4
+    assert len(context) == expected_context_keys
     assert context["component"] == "node"
     assert context["field"] == "'tango'"
     assert context["ids"] == [1, 2, 3]

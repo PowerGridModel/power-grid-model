@@ -13,6 +13,10 @@ from power_grid_model._core.buffer_handling import _get_dense_buffer_properties,
 from power_grid_model._core.dataset_definitions import ComponentType, DatasetType
 from power_grid_model._core.power_grid_meta import initialize_array, power_grid_meta_data
 
+batch_ndim = 2
+scenario_total_elements = 4
+batch_total_elements = 8
+
 
 def load_data(component_type, is_batch, is_sparse, is_columnar):
     """Creates load data of different formats for testing"""
@@ -51,8 +55,8 @@ def test__get_dense_buffer_properties(component_type, is_batch, is_columnar):
     assert not properties.is_sparse
     assert properties.is_batch == is_batch
     assert properties.batch_size == (2 if is_batch else 1)
-    assert properties.n_elements_per_scenario == 4
-    assert properties.n_total_elements == 8 if is_batch else 4
+    assert properties.n_elements_per_scenario == scenario_total_elements
+    assert properties.n_total_elements == batch_total_elements if is_batch else 4
     if is_columnar:
         assert properties.columns == list(data.keys())
     else:
@@ -76,9 +80,9 @@ def test__get_sparse_buffer_properties(component_type, is_columnar):
 
     assert properties.is_sparse
     assert properties.is_batch
-    assert properties.batch_size == 2
+    assert properties.batch_size == batch_ndim
     assert properties.n_elements_per_scenario == -1
-    assert properties.n_total_elements == 8
+    assert properties.n_total_elements == batch_total_elements
     if is_columnar:
         assert properties.columns == list(data["data"].keys())
     else:

@@ -13,6 +13,9 @@ from typing import Any, Iterable, Type
 
 from power_grid_model import ComponentType
 
+min_fields = 2
+min_components = 2
+
 
 class ValidationError(ABC):
     """
@@ -53,6 +56,8 @@ class ValidationError(ABC):
     _message: str = "An unknown validation error occurred."
 
     _delimiter: str = " and "
+
+    __hash__ = None  # type: ignore[assignment]
 
     @property
     def component_str(self) -> str:
@@ -165,7 +170,7 @@ class MultiFieldValidationError(ValidationError):
         self.field = sorted(fields)
         self.ids = sorted(ids)
 
-        if len(self.field) < 2:
+        if len(self.field) < min_fields:
             raise ValueError(f"{type(self).__name__} expects at least two fields: {self.field}")
 
 
@@ -191,9 +196,9 @@ class MultiComponentValidationError(ValidationError):
         self.field = sorted(fields)
         self.ids = sorted(ids)
 
-        if len(self.field) < 2:
+        if len(self.field) < min_fields:
             raise ValueError(f"{type(self).__name__} expects at least two fields: {self.field}")
-        if len(self.component) < 2:
+        if len(self.component) < min_components:
             raise ValueError(f"{type(self).__name__} expects at least two components: {self.component}")
 
 
@@ -241,6 +246,7 @@ class InvalidValueError(SingleFieldValidationError):
 
     _message = "Field {field} contains invalid values for {n} {objects}."
     values: list
+    __hash__ = None  # type: ignore[assignment]
 
     def __init__(self, component: ComponentType, field: str, ids: list[int], values: list):
         super().__init__(component, field, ids)
@@ -265,6 +271,7 @@ class InvalidEnumValueError(SingleFieldValidationError):
 
     _message = "Field {field} contains invalid {enum} values for {n} {objects}."
     enum: Type[Enum] | list[Type[Enum]]
+    __hash__ = None  # type: ignore[assignment]
 
     def __init__(self, component: ComponentType, field: str, ids: list[int], enum: Type[Enum] | list[Type[Enum]]):
         super().__init__(component, field, ids)
@@ -318,6 +325,7 @@ class IdNotInDatasetError(SingleFieldValidationError):
 
     _message = "ID does not exist in {ref_dataset} for {n} {objects}."
     ref_dataset: str
+    __hash__ = None  # type: ignore[assignment]
 
     def __init__(self, component: ComponentType, ids: list[int], ref_dataset: str):
         super().__init__(component=component, field="id", ids=ids)
@@ -345,6 +353,7 @@ class InvalidIdError(SingleFieldValidationError):
 
     _message = "Field {field} does not contain a valid {ref_components} id for {n} {objects}. {filters}"
     ref_components: list[ComponentType]
+    __hash__ = None  # type: ignore[assignment]
 
     def __init__(
         self,
@@ -398,6 +407,8 @@ class ComparisonError(SingleFieldValidationError):
     _message = "Invalid {field}, compared to {ref_value} for {n} {objects}."
 
     RefType = int | float | str | tuple[int | float | str, ...]
+
+    __hash__ = None  # type: ignore[assignment]
 
     def __init__(self, component: ComponentType, field: str, ids: list[int], ref_value: "ComparisonError.RefType"):
         super().__init__(component, field, ids)
@@ -512,6 +523,7 @@ class InvalidAssociatedEnumValueError(MultiFieldValidationError):
 
     _message = "The combination of fields {field} results in invalid {enum} values for {n} {objects}."
     enum: Type[Enum] | list[Type[Enum]]
+    __hash__ = None  # type: ignore[assignment]
 
     def __init__(
         self,
