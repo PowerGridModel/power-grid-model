@@ -98,34 +98,39 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
     enum class Order : IntS { row_major = 0, column_major = 1 };
 
     struct NRSEVoltageState {
-        ComplexTensor<sym> ui_ui_conj;
-        ComplexTensor<sym> uj_uj_conj;
-        ComplexTensor<sym> ui_uj_conj;
-        ComplexTensor<sym> uj_ui_conj;
-        ComplexValue<sym> ui;
-        ComplexValue<sym> uj;
-        RealDiagonalTensor<sym> abs_ui_inv;
-        RealDiagonalTensor<sym> abs_uj_inv;
+        ComplexValueVector<sym> current_u;
+        std::vector<RealDiagonalTensor<sym>> all_abs_u_inv;
+        std::vector<ComplexTensor<sym>> all_u_conjs;
+        Idx data_idx_ij{};
+        Idx data_idx_ji{};
+        Idx data_idx_ii{};
+        Idx data_idx_jj{};
+        Idx row_idx{};
+        Idx col_idx{};
 
         auto const& u_chi_u_chi_conj(Order ij_voltage_order) const {
-            return ij_voltage_order == Order::row_major ? ui_ui_conj : uj_uj_conj;
+            return ij_voltage_order == Order::row_major ? all_u_conjs[data_idx_ii] : all_u_conjs[data_idx_jj];
         }
         auto const& u_chi_u_psi_conj(Order ij_voltage_order) const {
-            return ij_voltage_order == Order::row_major ? ui_uj_conj : uj_ui_conj;
+            return ij_voltage_order == Order::row_major ? all_u_conjs[data_idx_ij] : all_u_conjs[data_idx_ji];
         }
         auto const& abs_u_chi_inv(Order ij_voltage_order) const {
-            return ij_voltage_order == Order::row_major ? abs_ui_inv : abs_uj_inv;
+            return ij_voltage_order == Order::row_major ? all_abs_u_inv[row_idx] : all_abs_u_inv[col_idx];
         }
         auto const& abs_u_psi_inv(Order ij_voltage_order) const {
-            return ij_voltage_order == Order::row_major ? abs_uj_inv : abs_ui_inv;
+            return ij_voltage_order == Order::row_major ? all_abs_u_inv[col_idx] : all_abs_u_inv[row_idx];
         }
+        auto const& ui_ui_conj() const { return all_u_conjs[data_idx_ii]; }
+        auto const& ui_uj_conj() const { return all_u_conjs[data_idx_ij]; }
+        auto const& abs_ui_inv() const { return all_abs_u_inv[row_idx]; }
+        auto const& abs_uj_inv() const { return all_abs_u_inv[col_idx]; }
     };
 
     struct NRSEJacobian {
-        RealTensor<sym> dP_dt;
-        RealTensor<sym> dP_dv;
-        RealTensor<sym> dQ_dt;
-        RealTensor<sym> dQ_dv;
+        RealTensor<sym> dP_dt; // or can be d_Re_I_dt
+        RealTensor<sym> dP_dv; // d_Im_I_dv
+        RealTensor<sym> dQ_dt; // d_Re_I_dt
+        RealTensor<sym> dQ_dv; // d_Im_I_dv
 
         NRSEJacobian& operator+=(NRSEJacobian const& other) {
             this->dP_dt += other.dP_dt;
@@ -250,13 +255,28 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
         IdxVector const& row_indptr = y_bus.row_indptr_lu();
         IdxVector const& col_indices = y_bus.col_indices_lu();
         IdxVector const& lu_diag = y_bus.lu_diag();
+        IdxVector const& transpose_entry = y_bus.lu_transpose_entry();
 
-        std::vector<NRSEVoltageState> u_states(n_bus_);
+        NRSEVoltageState u_state;
+        u_state.current_u = current_u;
+
+        u_state.all_abs_u_inv.resize(n_bus_);
+        u_state.all_u_conjs.resize(y_bus.nnz_lu());
         for (Idx row = 0; row != n_bus_; ++row) {
-            u_states[row].ui = current_u[row];
-            u_states[row].abs_ui_inv = diagonal_inverse(x_[row].v());
-            u_states[row].ui_ui_conj = vector_outer_product(u_states[row].ui, conj(u_states[row].ui));
-            // rest of the state is initialized and modified multiple times as per col in the loop below
+            u_state.all_abs_u_inv[row] = diagonal_inverse(x_[row].v());
+            for (Idx data_idx_lu = row_indptr[row]; data_idx_lu != row_indptr[row + 1]; ++data_idx_lu) {
+                Idx const data_idx = y_bus.map_lu_y_bus()[data_idx_lu];
+                Idx const col = col_indices[data_idx_lu];
+                if (data_idx == -1 || row > col) {
+                    continue; // skip fill in or transpose entry
+                }
+                u_state.all_u_conjs[data_idx] = vector_outer_product(current_u[row], conj(current_u[col]));
+                if (row == col) {
+                    continue; // skip diagonal entry, already filled
+                }
+                Idx const data_idx_transpose = transpose_entry[data_idx];
+                u_state.all_u_conjs[data_idx_transpose] = hermitian_transpose(u_state.all_u_conjs[data_idx]);
+            }
         }
 
         // loop data index, all rows and columns
@@ -267,7 +287,8 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
             rhs_block.clear();
             diag_block.clear();
 
-            NRSEVoltageState& u_state = u_states[row];
+            u_state.row_idx = row;
+            u_state.data_idx_ii = lu_diag[row];
 
             for (Idx data_idx_lu = row_indptr[row]; data_idx_lu != row_indptr[row + 1]; ++data_idx_lu) {
                 // get data idx of y bus,
@@ -289,12 +310,10 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
                     continue;
                 }
 
-                u_state.uj = u_states[col].ui;
-                u_state.abs_uj_inv = u_states[col].abs_ui_inv;
-                u_state.uj_uj_conj = u_states[col].ui_ui_conj;
-
-                u_state.ui_uj_conj = vector_outer_product(u_state.ui, conj(u_state.uj));
-                u_state.uj_ui_conj = hermitian_transpose(u_state.ui_uj_conj);
+                u_state.col_idx = col;
+                u_state.data_idx_ij = data_idx;
+                u_state.data_idx_ji = transpose_entry[data_idx];
+                u_state.data_idx_jj = lu_diag[col];
 
                 // fill block with branch, shunt measurement
                 for (Idx element_idx = y_bus.y_bus_entry_indptr()[data_idx];
@@ -382,14 +401,14 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
     /// @param u_state Voltage state of iteration
     void process_injection_row(NRSEGainBlock<sym>& block, NRSEGainBlock<sym>& diag_block, NRSERhs<sym>& rhs_block,
                                auto const& yij, auto const& u_state) const {
-        auto const hm_ui_uj_yij = hm_complex_form(yij, u_state.ui_uj_conj);
-        auto const nl_ui_uj_yij = dot(hm_ui_uj_yij, u_state.abs_uj_inv);
+        auto const hm_ui_uj_yij = hm_complex_form(yij, u_state.ui_uj_conj());
+        auto const nl_ui_uj_yij = dot(hm_ui_uj_yij, u_state.abs_uj_inv());
         auto const injection_jac = calculate_jacobian(hm_ui_uj_yij, nl_ui_uj_yij);
         add_injection_jacobian(block, injection_jac);
 
         // add paritial sum to the diagonal block and subtract from rhs for current row
         auto const f_x_complex_row = sum_row(hm_ui_uj_yij);
-        auto const f_x_complex_abs_ui_inv_row = dot(u_state.abs_ui_inv, f_x_complex_row);
+        auto const f_x_complex_abs_ui_inv_row = dot(u_state.abs_ui_inv(), f_x_complex_row);
         auto const injection_jac_diagonal = jacobian_diagonal_component(f_x_complex_abs_ui_inv_row, f_x_complex_row);
         add_injection_jacobian(diag_block, injection_jac_diagonal);
         rhs_block.tau_p() -= real(f_x_complex_row);
@@ -406,8 +425,8 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
     /// @param measured_power measured shunt power
     void process_shunt_measurement(NRSEGainBlock<sym>& block, NRSERhs<sym>& rhs_block, auto const& ys,
                                    auto const& u_state, auto const& measured_power) {
-        auto const hm_ui_ui_ys = hm_complex_form(-ys, u_state.ui_ui_conj);
-        auto const nl_ui_ui_ys = dot(hm_ui_ui_ys, u_state.abs_ui_inv);
+        auto const hm_ui_ui_ys = hm_complex_form(-ys, u_state.ui_ui_conj());
+        auto const nl_ui_ui_ys = dot(hm_ui_ui_ys, u_state.abs_ui_inv());
         auto const f_x_complex = sum_row(hm_ui_ui_ys);
         auto const f_x_complex_abs_ui_inv = sum_row(nl_ui_ui_ys);
 
