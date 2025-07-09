@@ -74,8 +74,7 @@ class ColumnarAttributeRange : public std::ranges::view_interface<ColumnarAttrib
         Proxy(Idx idx, std::span<AttributeBuffer<Data> const> attribute_buffers)
             : idx_{idx}, attribute_buffers_{std::move(attribute_buffers)} {}
 
-        // NOLINTNEXTLINE(cppcoreguidelines-c-copy-assignment-signature,misc-unconventional-assign-operator)
-        Proxy const& operator=(value_type const& value) const
+        Proxy& operator=(value_type const& value)
             requires is_data_mutable_v<dataset_type>
         {
             for (auto const& attribute_buffer : attribute_buffers_) {
@@ -89,12 +88,6 @@ class ColumnarAttributeRange : public std::ranges::view_interface<ColumnarAttrib
                         *buffer_ptr = attribute_ref;
                     });
             }
-            return *this;
-        }
-        Proxy& operator=(value_type const& value)
-            requires is_data_mutable_v<dataset_type>
-        {
-            static_cast<Proxy const&>(*this) = value;
             return *this;
         }
         operator value_type() const { return get(); }
