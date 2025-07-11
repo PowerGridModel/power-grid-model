@@ -23,29 +23,22 @@ template <class MainModel, class... ComponentType> class BatchDispatch {
     static constexpr Idx ignore_output{-1};
     static constexpr Idx sequential{-1};
 
-    // here model is just used for model.calculate, in the interface, i should just create one overload of calculate_fn
-    // thing and then in the adaptor, make it such that we implement each, that should remove  here at least the
-    // dependency on main model and keep only calculation_fn as entry point. with this, result data can probably be
-    // removed as well, mabe even update data too, and perhaps calculation_info but this one needs to be explored.
-    // ideally, only threading and some calculation_fn_proxy should stay alive and perhaps the calculation_info
-    // depending on how it is used. probably just focus on getting read of main model and putting all together in the
-    // calculation_fn_proxy
-    template <typename Calculate, typename BatchDispatchInterfaceT>
+    // goal: remove model, from signature and deal with them in the adapter
+    // posibly add a fake (using) tag to Adapter interface to add concept here
+    // at last, explore if calculation_fn can also be removed from here, if not, see if it is possible to
+    // add concepts to it some way without elluding to model.
+    template <typename Calculate, typename Adapter>
     static BatchParameter batch_calculation_(MainModel& model, CalculationInfo& calculation_info,
                                              Calculate&& calculation_fn, MutableDataset const& result_data,
-                                             ConstDataset const& update_data, BatchDispatchInterfaceT& adapter,
+                                             ConstDataset const& update_data, Adapter& adapter,
                                              Idx threading = sequential) {
-        // if the update dataset is empty without any component
-        // execute one power flow in the current instance, no batch calculation is needed
         if (update_data.empty()) {
-            adapter.calculate_1(std::forward<Calculate>(calculation_fn), result_data);
-            // std::forward<Calculate>(calculation_fn)(model, result_data,
-            //                                         0); // calculation_fn_1: model, target data, pos
+            adapter.calculate(std::forward<Calculate>(calculation_fn), result_data);
             return BatchParameter{};
-        } // calculate function that takes the model as parameter
+        }
 
         // get batch size
-        Idx const n_scenarios = update_data.batch_size(); // this may need to be also proxied
+        Idx const n_scenarios = update_data.batch_size();
 
         // if the batch_size is zero, it is a special case without doing any calculations at all
         // we consider in this case the batch set is independent but not topology cacheable
@@ -54,15 +47,8 @@ template <class MainModel, class... ComponentType> class BatchDispatch {
         }
 
         // calculate once to cache topology, ignore results, all math solvers are initialized
-        try {                     // same as above, but this time topology is cached
-            calculation_fn(model, // calculation_fn_2
-                           {
-                               false,
-                               1,
-                               "sym_output",
-                               model.meta_data(),
-                           },
-                           ignore_output);   // think about this ignore output thingies
+        try { // same as above, but this time topology is cached
+            adapter.cache_calculate(std::forward<Calculate>(calculation_fn));
         } catch (SparseMatrixError const&) { // NOLINT(bugprone-empty-catch) // NOSONAR
             // missing entries are provided in the update data
         } catch (NotObservableError const&) { // NOLINT(bugprone-empty-catch) // NOSONAR

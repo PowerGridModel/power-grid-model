@@ -882,7 +882,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
      * 	    The default lambda `include_all` always returns `true`.
      */
     template <calculation_input_type CalcStructOut, typename CalcParamOut,
-              std::vector<CalcParamOut>(CalcStructOut::*comp_vect), class ComponentIn,
+              std::vector<CalcParamOut>(CalcStructOut::* comp_vect), class ComponentIn,
               std::invocable<Idx> PredicateIn = IncludeAll>
         requires std::convertible_to<std::invoke_result_t<PredicateIn, Idx>, bool>
     static void prepare_input(MainModelState const& state, std::vector<Idx2D> const& components,
@@ -901,7 +901,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     template <calculation_input_type CalcStructOut, typename CalcParamOut,
-              std::vector<CalcParamOut>(CalcStructOut::*comp_vect), class ComponentIn,
+              std::vector<CalcParamOut>(CalcStructOut::* comp_vect), class ComponentIn,
               std::invocable<Idx> PredicateIn = IncludeAll>
         requires std::convertible_to<std::invoke_result_t<PredicateIn, Idx>, bool>
     static void prepare_input(MainModelState const& state, std::vector<Idx2D> const& components,
@@ -921,7 +921,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
     }
 
-    template <symmetry_tag sym, IntSVector(StateEstimationInput<sym>::*component), class Component>
+    template <symmetry_tag sym, IntSVector(StateEstimationInput<sym>::* component), class Component>
     static void prepare_input_status(MainModelState const& state, std::vector<Idx2D> const& objects,
                                      std::vector<StateEstimationInput<sym>>& input) {
         for (Idx i = 0, n = narrow_cast<Idx>(objects.size()); i != n; ++i) {
@@ -1166,10 +1166,24 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
       private:
         friend class BatchDispatchInterface<BatchDispatchAdapter>;
         std::reference_wrapper<MainModelImpl> model_;
+
+            template <typename Calculate>
+            requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&, MutableDataset const&, Idx>
+        void calculate_impl(Calculate&& calculation_fn, MutableDataset const& result_data, Idx pos) {
+            return std::forward<Calculate>(calculation_fn)(model_.get(), result_data, pos);
+        }
+
         template <typename Calculate>
             requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&, MutableDataset const&, Idx>
-        void calculate_1_impl(Calculate&& calculation_fn, MutableDataset const& result_data) {
-            return std::forward<Calculate>(calculation_fn)(model_.get(), result_data, 0);
+        void cache_calculate_impl(Calculate&& calculation_fn) {
+            return std::forward<Calculate>(calculation_fn)(model_.get(),
+                                                           {
+                                                               false,
+                                                               1,
+                                                               "sym_output",
+                                                               model_.get().meta_data(),
+                                                           },
+                                                           ignore_output);
         }
     };
 
