@@ -512,7 +512,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     BatchParameter batch_calculation_(Calculate&& calculation_fn, MutableDataset const& result_data,
                                       ConstDataset const& update_data, Idx threading = sequential) {
         return BatchDispatcher::batch_calculation_(*this, calculation_info_, std::forward<Calculate>(calculation_fn),
-                                                   result_data, update_data, threading);
+                                                   result_data, update_data, batch_dispatch_adapter, threading);
     }
 
     // Calculate with optimization, e.g., automatic tap changer
@@ -1158,18 +1158,22 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         last_updated_calculation_symmetry_mode_ = is_symmetric_v<sym>;
     }
 
-  private:
-    class BatchDispatchAdapter : BatchDispatchInterface<BatchDispatchAdapter> {
+  public: // this would be moved to its own file, so public for now
+    class BatchDispatchAdapter : public BatchDispatchInterface<BatchDispatchAdapter> {
       public:
-        BatchDispatchAdapter(MainModelImpl& model) : model(model) {}
+        BatchDispatchAdapter(std::reference_wrapper<MainModelImpl> model) : model_(std::move(model)) {}
 
       private:
-        friend class BatchDispatchInterface;
+        friend class BatchDispatchInterface<BatchDispatchAdapter>;
+        std::reference_wrapper<MainModelImpl> model_;
+        template <typename Calculate>
+            requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&, MutableDataset const&, Idx>
+        void calculate_1_impl(Calculate&& calculation_fn, MutableDataset const& result_data) {
+            return std::forward<Calculate>(calculation_fn)(model_.get(), result_data, 0);
+        }
+    };
 
-        auto calculate_impl(
-
-        MainModelImpl& model;
-    }
+    BatchDispatchAdapter batch_dispatch_adapter{*this};
 };
 
 } // namespace power_grid_model

@@ -9,6 +9,8 @@
 #include "main_core/calculation_info.hpp"
 #include "main_core/update.hpp"
 
+#include "batch_dispatch_interface.hpp"
+
 #include <thread>
 
 namespace power_grid_model {
@@ -28,16 +30,17 @@ template <class MainModel, class... ComponentType> class BatchDispatch {
     // ideally, only threading and some calculation_fn_proxy should stay alive and perhaps the calculation_info
     // depending on how it is used. probably just focus on getting read of main model and putting all together in the
     // calculation_fn_proxy
-    template <typename Calculate>
-        requires std::invocable<std::remove_cvref_t<Calculate>, MainModel&, MutableDataset const&, Idx>
+    template <typename Calculate, typename BatchDispatchInterfaceT>
     static BatchParameter batch_calculation_(MainModel& model, CalculationInfo& calculation_info,
                                              Calculate&& calculation_fn, MutableDataset const& result_data,
-                                             ConstDataset const& update_data, Idx threading = sequential) {
+                                             ConstDataset const& update_data, BatchDispatchInterfaceT& adapter,
+                                             Idx threading = sequential) {
         // if the update dataset is empty without any component
         // execute one power flow in the current instance, no batch calculation is needed
         if (update_data.empty()) {
-            std::forward<Calculate>(calculation_fn)(model, result_data,
-                                                    0); // calculation_fn_1: model, target data, pos
+            adapter.calculate_1(std::forward<Calculate>(calculation_fn), result_data);
+            // std::forward<Calculate>(calculation_fn)(model, result_data,
+            //                                         0); // calculation_fn_1: model, target data, pos
             return BatchParameter{};
         } // calculate function that takes the model as parameter
 
