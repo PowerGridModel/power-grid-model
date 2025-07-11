@@ -119,6 +119,8 @@ class ThreeWindingTransformer : public Branch3 {
     constexpr IntS tap_min() const { return tap_min_; }
     constexpr IntS tap_max() const { return tap_max_; }
     constexpr IntS tap_nom() const { return tap_nom_; }
+    constexpr IntS clock_12() const { return clock_12_; }
+    constexpr IntS clock_13() const { return clock_13_; }
 
     // setter
     constexpr bool set_tap(IntS new_tap) {
