@@ -10,6 +10,8 @@ from power_grid_model._core.power_grid_dataset import CConstDataset
 from power_grid_model._core.power_grid_meta import power_grid_meta_data
 from power_grid_model.errors import PowerGridError
 
+SINGULAR_NDIM = 1
+
 
 def input_dataset_types():
     return [DatasetType.input]
@@ -40,7 +42,7 @@ def test_const_dataset__empty_dataset(dataset_type):
     assert info.dataset_type() == dataset_type
 
     assert not info.is_batch()
-    assert info.batch_size() == 1
+    assert info.batch_size() == SINGULAR_NDIM
     assert info.n_components() == 0
     assert info.components() == []
     assert info.elements_per_scenario() == {}
@@ -74,7 +76,7 @@ def test_const_dataset__single_data(dataset_type):
     assert info.dataset_type() == dataset_type
 
     assert not info.is_batch()
-    assert info.batch_size() == 1
+    assert info.batch_size() == SINGULAR_NDIM
     assert info.n_components() == len(components)
     assert info.components() == list(components)
     assert info.elements_per_scenario() == components

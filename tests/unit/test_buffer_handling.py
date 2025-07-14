@@ -13,6 +13,7 @@ from power_grid_model._core.buffer_handling import _get_dense_buffer_properties,
 from power_grid_model._core.dataset_definitions import ComponentType, DatasetType
 from power_grid_model._core.power_grid_meta import initialize_array, power_grid_meta_data
 
+SINGULAR_NDIM = 1
 BATCH_NDIM = 2
 SCENARIO_TOTAL_ELEMENTS = 4
 BATCH_TOTAL_ELEMENTS = 8
@@ -54,7 +55,7 @@ def test__get_dense_buffer_properties(component_type, is_batch, is_columnar):
 
     assert not properties.is_sparse
     assert properties.is_batch == is_batch
-    assert properties.batch_size == (BATCH_NDIM if is_batch else 1)
+    assert properties.batch_size == (BATCH_NDIM if is_batch else SINGULAR_NDIM)
     assert properties.n_elements_per_scenario == SCENARIO_TOTAL_ELEMENTS
     assert properties.n_total_elements == BATCH_TOTAL_ELEMENTS if is_batch else 4
     if is_columnar:
