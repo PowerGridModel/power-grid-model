@@ -494,27 +494,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 });
         };
     }
-
-    /*
-    run the calculation function in batch on the provided update data.
-
-    The calculation function should be able to run standalone.
-    It should output to the provided result_data if the trailing argument is not ignore_output.
-
-    threading
-        < 0 sequential
-        = 0 parallel, use number of hardware threads
-        > 0 specify number of parallel threads
-    raise a BatchCalculationError if any of the calculations in the batch raised an exception
-    */
-    template <typename Calculate>
-        requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&, MutableDataset const&, Idx>
-    BatchParameter batch_calculation_(Calculate&& calculation_fn, MutableDataset const& result_data,
-                                      ConstDataset const& update_data, Idx threading = sequential) {
-        return BatchDispatcher::batch_calculation_(*this, std::forward<Calculate>(calculation_fn), result_data,
-                                                   update_data, batch_dispatch_adapter, threading);
-    }
-
     // Calculate with optimization, e.g., automatic tap changer
     template <calculation_type_tag calculation_type, symmetry_tag sym> auto calculate(Options const& options) {
         auto const calculator = [this, &options] {
@@ -570,10 +549,25 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
   public:
-    // Batch calculation, propagating the results to result_data
+    /*
+    Batch calculation, propagating the results to result_data
+
+    run the calculation function in batch on the provided update data.
+
+    The calculation function should be able to run standalone.
+    It should output to the provided result_data if the trailing argument is not ignore_output.
+
+    threading
+        < 0 sequential
+        = 0 parallel, use number of hardware threads
+        > 0 specify number of parallel threads
+    raise a BatchCalculationError if any of the calculations in the batch raised an exception
+    */
     BatchParameter calculate(Options const& options, MutableDataset const& result_data,
                              ConstDataset const& update_data) {
-        return batch_calculation_(
+        BatchDispatchAdapter<MainModelImpl> adapter{std::ref(*this)};
+        return BatchDispatcher::batch_calculation_(
+            *this, // TODO(mgovers): relace this with the adapter
             [&options](MainModelImpl& model, MutableDataset const& target_data, Idx pos) {
                 auto sub_opt = options; // copy
                 sub_opt.err_tol = pos != ignore_output ? options.err_tol : std::numeric_limits<double>::max();
@@ -581,7 +575,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
                 model.calculate(sub_opt, target_data, pos);
             },
-            result_data, update_data, options.threading);
+            result_data, update_data, adapter, options.threading);
     }
 
     CalculationInfo calculation_info() const { return calculation_info_; }
@@ -883,7 +877,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
      * 	    The default lambda `include_all` always returns `true`.
      */
     template <calculation_input_type CalcStructOut, typename CalcParamOut,
-              std::vector<CalcParamOut>(CalcStructOut::*comp_vect), class ComponentIn,
+              std::vector<CalcParamOut>(CalcStructOut::* comp_vect), class ComponentIn,
               std::invocable<Idx> PredicateIn = IncludeAll>
         requires std::convertible_to<std::invoke_result_t<PredicateIn, Idx>, bool>
     static void prepare_input(MainModelState const& state, std::vector<Idx2D> const& components,
@@ -902,7 +896,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     template <calculation_input_type CalcStructOut, typename CalcParamOut,
-              std::vector<CalcParamOut>(CalcStructOut::*comp_vect), class ComponentIn,
+              std::vector<CalcParamOut>(CalcStructOut::* comp_vect), class ComponentIn,
               std::invocable<Idx> PredicateIn = IncludeAll>
         requires std::convertible_to<std::invoke_result_t<PredicateIn, Idx>, bool>
     static void prepare_input(MainModelState const& state, std::vector<Idx2D> const& components,
@@ -922,7 +916,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
     }
 
-    template <symmetry_tag sym, IntSVector(StateEstimationInput<sym>::*component), class Component>
+    template <symmetry_tag sym, IntSVector(StateEstimationInput<sym>::* component), class Component>
     static void prepare_input_status(MainModelState const& state, std::vector<Idx2D> const& objects,
                                      std::vector<StateEstimationInput<sym>>& input) {
         for (Idx i = 0, n = narrow_cast<Idx>(objects.size()); i != n; ++i) {
@@ -1158,9 +1152,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         std::ranges::for_each(parameter_changed_components_, [](auto& comps) { comps.clear(); });
         last_updated_calculation_symmetry_mode_ = is_symmetric_v<sym>;
     }
-
-  public:
-    BatchDispatchAdapter<MainModelImpl> batch_dispatch_adapter{static_cast<MainModelImpl&>(*this)};
 };
 
 } // namespace power_grid_model
