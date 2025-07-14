@@ -13,8 +13,8 @@ from typing import Any, Iterable, Type
 
 from power_grid_model import ComponentType
 
-min_fields = 2
-min_components = 2
+MIN_FIELDS = 2
+MIN_COMPONENTS = 2
 
 
 class ValidationError(ABC):
@@ -170,7 +170,7 @@ class MultiFieldValidationError(ValidationError):
         self.field = sorted(fields)
         self.ids = sorted(ids)
 
-        if len(self.field) < min_fields:
+        if len(self.field) < MIN_FIELDS:
             raise ValueError(f"{type(self).__name__} expects at least two fields: {self.field}")
 
 
@@ -196,9 +196,9 @@ class MultiComponentValidationError(ValidationError):
         self.field = sorted(fields)
         self.ids = sorted(ids)
 
-        if len(self.field) < min_fields:
+        if len(self.field) < MIN_FIELDS:
             raise ValueError(f"{type(self).__name__} expects at least two fields: {self.field}")
-        if len(self.component) < min_components:
+        if len(self.component) < MIN_COMPONENTS:
             raise ValueError(f"{type(self).__name__} expects at least two components: {self.component}")
 
 
