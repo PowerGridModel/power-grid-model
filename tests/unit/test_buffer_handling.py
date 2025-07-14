@@ -16,9 +16,6 @@ from power_grid_model._core.power_grid_meta import initialize_array, power_grid_
 BATCH_NDIM = 2
 SCENARIO_TOTAL_ELEMENTS = 4
 BATCH_TOTAL_ELEMENTS = 8
-batch_ndim = 2
-scenario_total_elements = 4
-batch_total_elements = 8
 
 
 def load_data(component_type, is_batch, is_sparse, is_columnar):
