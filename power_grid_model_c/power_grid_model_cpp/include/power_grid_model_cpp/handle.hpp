@@ -36,7 +36,7 @@ class PowerGridSerializationError : public PowerGridError {
 class PowerGridBatchError : public PowerGridError {
   public:
     struct FailedScenario {
-        Idx scenario;
+        Idx scenario{};
         std::string error_message;
     };
 
@@ -72,7 +72,8 @@ class Handle {
             auto const* const failed_scenario_messages = PGM_batch_errors(handle_ptr);
             for (Idx i = 0; i < n_failed_scenarios; ++i) {
                 failed_scenarios[i] =
-                    PowerGridBatchError::FailedScenario{failed_scenario_seqs[i], failed_scenario_messages[i]};
+                    PowerGridBatchError::FailedScenario{// NOLINT(modernize-use-designated-initializers)
+                                                        failed_scenario_seqs[i], failed_scenario_messages[i]};
             }
             clear_error();
             throw PowerGridBatchError{error_message, std::move(failed_scenarios)};

@@ -188,25 +188,13 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             });
     }
 
-    // helper function to add vectors of components
-    template <class CompType> void add_component(std::vector<typename CompType::InputType> const& components) {
-        add_component<CompType>(components.begin(), components.end());
-    }
-    template <class CompType> void add_component(std::span<typename CompType::InputType const> components) {
-        add_component<CompType>(components.begin(), components.end());
-    }
-    template <class CompType>
-    void add_component(ConstDataset::RangeObject<typename CompType::InputType const> components) {
-        add_component<CompType>(components.begin(), components.end());
-    }
-
     // template to construct components
     // using forward interators
     // different selection based on component type
-    template <std::derived_from<Base> CompType, std::forward_iterator ForwardIterator>
-    void add_component(ForwardIterator begin, ForwardIterator end) {
+    template <std::derived_from<Base> CompType, std::ranges::viewable_range Inputs>
+    void add_component(Inputs&& components) {
         assert(!construction_complete_);
-        main_core::add_component<CompType>(state_, begin, end, system_frequency_);
+        main_core::add_component<CompType>(state_, std::forward<Inputs>(components), system_frequency_);
     }
 
     void add_components(ConstDataset const& input_data, Idx pos = 0) {
@@ -224,49 +212,26 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // using forward interators
     // different selection based on component type
     // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
-    template <class CompType, cache_type_c CacheType, std::forward_iterator ForwardIterator>
-    void update_component(ForwardIterator begin, ForwardIterator end, std::span<Idx2D const> sequence_idx) {
+    template <class CompType, cache_type_c CacheType, std::ranges::viewable_range Updates>
+    void update_component(Updates&& updates, std::span<Idx2D const> sequence_idx) {
         constexpr auto comp_index = main_core::utils::index_of_component<CompType, ComponentType...>;
 
         assert(construction_complete_);
-        assert(static_cast<ptrdiff_t>(sequence_idx.size()) == std::distance(begin, end));
+        assert(std::ranges::ssize(sequence_idx) == std::ranges::ssize(updates));
 
         if constexpr (CacheType::value) {
             main_core::update::update_inverse<CompType>(
-                state_, begin, end, std::back_inserter(std::get<comp_index>(cached_inverse_update_)), sequence_idx);
+                state_, updates, std::back_inserter(std::get<comp_index>(cached_inverse_update_)), sequence_idx);
         }
 
         UpdateChange const changed = main_core::update::update_component<CompType>(
-            state_, begin, end, std::back_inserter(std::get<comp_index>(parameter_changed_components_)), sequence_idx);
+            state_, std::forward<Updates>(updates),
+            std::back_inserter(std::get<comp_index>(parameter_changed_components_)), sequence_idx);
 
         // update, get changed variable
         update_state(changed);
         if constexpr (CacheType::value) {
             cached_state_changes_ = cached_state_changes_ || changed;
-        }
-    }
-
-    // ovearloads to update all components of a single type across all scenarios
-    template <class CompType, cache_type_c CacheType>
-    void update_component(std::vector<typename CompType::UpdateType> const& components,
-                          std::span<Idx2D const> sequence_idx) {
-        if (!components.empty()) {
-            update_component<CompType, CacheType>(components.begin(), components.end(), sequence_idx);
-        }
-    }
-    template <class CompType, cache_type_c CacheType>
-    void update_component(std::span<typename CompType::UpdateType const> components,
-                          std::span<Idx2D const> sequence_idx) {
-        if (!components.empty()) {
-            update_component<CompType, CacheType>(components.begin(), components.end(), sequence_idx);
-        }
-    }
-
-    template <class CompType, cache_type_c CacheType>
-    void update_component(ConstDataset::RangeObject<typename CompType::UpdateType const> components,
-                          std::span<Idx2D const> sequence_idx) {
-        if (!components.empty()) {
-            update_component<CompType, CacheType>(components.begin(), components.end(), sequence_idx);
         }
     }
 

@@ -47,7 +47,7 @@ TEST_CASE("Test shunt") {
     }
 
     SUBCASE("test results; u as input") {
-        ApplianceOutput<symmetric_t> sym_result = shunt.get_output<symmetric_t>(u);
+        ApplianceOutput<symmetric_t> const sym_result = shunt.get_output<symmetric_t>(u);
         CHECK(sym_result.id == 1);
         CHECK(sym_result.energized);
         CHECK(sym_result.p == doctest::Approx(p));
@@ -67,7 +67,7 @@ TEST_CASE("Test shunt") {
         ApplianceSolverOutput<symmetric_t> appliance_solver_output_sym;
         appliance_solver_output_sym.i = 1.0 + 2.0i;
         appliance_solver_output_sym.s = 3.0 + 4.0i;
-        ApplianceOutput<symmetric_t> sym_result = shunt.get_output<symmetric_t>(appliance_solver_output_sym);
+        ApplianceOutput<symmetric_t> const sym_result = shunt.get_output<symmetric_t>(appliance_solver_output_sym);
         CHECK(sym_result.id == 1);
         CHECK(sym_result.energized);
         CHECK(sym_result.p == doctest::Approx(-3.0 * base_power<symmetric_t>));

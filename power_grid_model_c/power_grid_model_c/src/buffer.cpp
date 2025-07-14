@@ -33,9 +33,9 @@ RawDataPtr PGM_create_buffer(PGM_Handle* /* handle */, PGM_MetaComponent const* 
 }
 void PGM_destroy_buffer(RawDataPtr ptr) {
 #ifdef _WIN32
-    _aligned_free(ptr);
+    _aligned_free(ptr); // NOLINT(hicpp-no-malloc)
 #else
-    std::free(ptr);
+    std::free(ptr); // NOLINT(hicpp-no-malloc)
 #endif
 }
 void PGM_buffer_set_nan(PGM_Handle* /* handle */, PGM_MetaComponent const* component, void* ptr, PGM_Idx buffer_offset,
