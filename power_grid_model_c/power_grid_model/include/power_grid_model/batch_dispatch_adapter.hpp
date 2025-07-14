@@ -14,28 +14,27 @@ namespace power_grid_model {
 
 template <class MainModel> class BatchDispatchAdapter : public BatchDispatchInterface<BatchDispatchAdapter<MainModel>> {
   public:
-    BatchDispatchAdapter(std::reference_wrapper<MainModel> model)
-        : model_{std::move(model)} {} // , owns_model_copy_{false} {}
+    BatchDispatchAdapter(std::reference_wrapper<MainModel> model) : model_{std::move(model)} {} //, owns_model_copy_{false} {}
 
-    // BatchDispatchAdapter(BatchDispatchAdapter const& other)
-    //     : model_copy_{other.model_.get()}, model_{model_copy_}, owns_model_copy_{true} {}
+    BatchDispatchAdapter(BatchDispatchAdapter const& other)
+        : model_copy_{new MainModel{other.model_.get()}}, model_{std::ref(*model_copy_)}, owns_model_copy_{true} {}
 
-    // BatchDispatchAdapter& operator=(BatchDispatchAdapter const& other) {
-    //     if (this != &other) {
-    //         model_copy_ = MainModel{other.model_.get()};
-    //         model_ = model_copy_;
-    //         owns_model_copy_ = true;
-    //     }
-    //     return *this;
-    // }
+    BatchDispatchAdapter& operator=(BatchDispatchAdapter const& other) {
+        if (this != &other) {
+            model_copy_ = std::make_unique<MainModel>(other.model_.get());
+            model_ = std::ref(*model_copy_);
+            owns_model_copy_ = true;
+        }
+        return *this;
+    }
 
   private:
     static constexpr Idx ignore_output{-1};
 
     friend class BatchDispatchInterface<BatchDispatchAdapter>;
+    std::unique_ptr<MainModel> model_copy_;
     std::reference_wrapper<MainModel> model_;
-    // MainModel model_copy_;
-    // bool owns_model_copy_{false};
+    bool owns_model_copy_{false};
 
     template <typename Calculate>
         requires std::invocable<std::remove_cvref_t<Calculate>, MainModel&, MutableDataset const&, Idx>
