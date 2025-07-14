@@ -4,28 +4,36 @@
 
 #pragma once
 
+// batch dispatch interface class
+
 #include <concepts>
 #include <type_traits>
 #include <utility>
 
 namespace power_grid_model {
-template <typename Derived> class BatchDispatchInterface {
+template <typename Adapter> class BatchDispatchInterface {
   public:
     // a concept for ResultDataset can be added if needed or MutableDataset can be used directly
     template <typename Calculate, typename ResultDataset>
-        requires requires(Derived& adapter, Calculate&& calculation_fn, ResultDataset const& result_data, Idx pos) {
+        requires requires(Adapter& adapter, Calculate&& calculation_fn, ResultDataset const& result_data, Idx pos) {
             { adapter.calculate_impl(std::forward<Calculate>(calculation_fn), result_data, pos) } -> std::same_as<void>;
         }
     void calculate(Calculate&& calculation_fn, ResultDataset const& result_data, Idx pos = 0) {
-        return static_cast<Derived*>(this)->calculate_impl(std::forward<Calculate>(calculation_fn), result_data, pos);
+        return static_cast<Adapter*>(this)->calculate_impl(std::forward<Calculate>(calculation_fn), result_data, pos);
     }
 
     template <typename Calculate>
-        requires requires(Derived& adapter, Calculate&& calculation_fn) {
+        requires requires(Adapter& adapter, Calculate&& calculation_fn) {
             { adapter.cache_calculate_impl(std::forward<Calculate>(calculation_fn)) } -> std::same_as<void>;
         }
     void cache_calculate(Calculate&& calculation_fn) {
-        return static_cast<Derived*>(this)->cache_calculate_impl(std::forward<Calculate>(calculation_fn));
+        return static_cast<Adapter*>(this)->cache_calculate_impl(std::forward<Calculate>(calculation_fn));
+    }
+
+    CalculationInfo get_calculation_info() const { return static_cast<Adapter*>(this)->get_calculation_info_impl(); }
+
+    void set_calculation_info(CalculationInfo const& info) {
+        static_cast<Adapter*>(this)->set_calculation_info_impl(info);
     }
 };
 

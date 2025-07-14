@@ -8,7 +8,7 @@
 
 // main include
 #include "batch_dispatch.hpp"
-#include "batch_dispatch_interface.hpp"
+#include "batch_dispatch_adapter.hpp"
 #include "batch_parameter.hpp"
 #include "calculation_parameters.hpp"
 #include "container.hpp"
@@ -511,8 +511,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&, MutableDataset const&, Idx>
     BatchParameter batch_calculation_(Calculate&& calculation_fn, MutableDataset const& result_data,
                                       ConstDataset const& update_data, Idx threading = sequential) {
-        return BatchDispatcher::batch_calculation_(*this, calculation_info_, std::forward<Calculate>(calculation_fn),
-                                                   result_data, update_data, batch_dispatch_adapter, threading);
+        return BatchDispatcher::batch_calculation_(*this, std::forward<Calculate>(calculation_fn), result_data,
+                                                   update_data, batch_dispatch_adapter, threading);
     }
 
     // Calculate with optimization, e.g., automatic tap changer
@@ -585,6 +585,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     CalculationInfo calculation_info() const { return calculation_info_; }
+    void set_calculation_info(CalculationInfo const& info) { calculation_info_ = info; }
     auto const& state() const {
         assert(construction_complete_);
         return state_;
@@ -882,7 +883,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
      * 	    The default lambda `include_all` always returns `true`.
      */
     template <calculation_input_type CalcStructOut, typename CalcParamOut,
-              std::vector<CalcParamOut>(CalcStructOut::* comp_vect), class ComponentIn,
+              std::vector<CalcParamOut>(CalcStructOut::*comp_vect), class ComponentIn,
               std::invocable<Idx> PredicateIn = IncludeAll>
         requires std::convertible_to<std::invoke_result_t<PredicateIn, Idx>, bool>
     static void prepare_input(MainModelState const& state, std::vector<Idx2D> const& components,
@@ -901,7 +902,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     template <calculation_input_type CalcStructOut, typename CalcParamOut,
-              std::vector<CalcParamOut>(CalcStructOut::* comp_vect), class ComponentIn,
+              std::vector<CalcParamOut>(CalcStructOut::*comp_vect), class ComponentIn,
               std::invocable<Idx> PredicateIn = IncludeAll>
         requires std::convertible_to<std::invoke_result_t<PredicateIn, Idx>, bool>
     static void prepare_input(MainModelState const& state, std::vector<Idx2D> const& components,
@@ -921,7 +922,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
     }
 
-    template <symmetry_tag sym, IntSVector(StateEstimationInput<sym>::* component), class Component>
+    template <symmetry_tag sym, IntSVector(StateEstimationInput<sym>::*component), class Component>
     static void prepare_input_status(MainModelState const& state, std::vector<Idx2D> const& objects,
                                      std::vector<StateEstimationInput<sym>>& input) {
         for (Idx i = 0, n = narrow_cast<Idx>(objects.size()); i != n; ++i) {
@@ -1158,36 +1159,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         last_updated_calculation_symmetry_mode_ = is_symmetric_v<sym>;
     }
 
-  public: // this would be moved to its own file, so public for now
-    class BatchDispatchAdapter : public BatchDispatchInterface<BatchDispatchAdapter> {
-      public:
-        BatchDispatchAdapter(std::reference_wrapper<MainModelImpl> model) : model_(std::move(model)) {}
-
-      private:
-        friend class BatchDispatchInterface<BatchDispatchAdapter>;
-        std::reference_wrapper<MainModelImpl> model_;
-
-            template <typename Calculate>
-            requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&, MutableDataset const&, Idx>
-        void calculate_impl(Calculate&& calculation_fn, MutableDataset const& result_data, Idx pos) {
-            return std::forward<Calculate>(calculation_fn)(model_.get(), result_data, pos);
-        }
-
-        template <typename Calculate>
-            requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&, MutableDataset const&, Idx>
-        void cache_calculate_impl(Calculate&& calculation_fn) {
-            return std::forward<Calculate>(calculation_fn)(model_.get(),
-                                                           {
-                                                               false,
-                                                               1,
-                                                               "sym_output",
-                                                               model_.get().meta_data(),
-                                                           },
-                                                           ignore_output);
-        }
-    };
-
-    BatchDispatchAdapter batch_dispatch_adapter{*this};
+  public:
+    BatchDispatchAdapter<MainModelImpl> batch_dispatch_adapter{static_cast<MainModelImpl&>(*this)};
 };
 
 } // namespace power_grid_model
