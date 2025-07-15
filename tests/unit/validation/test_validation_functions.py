@@ -1318,7 +1318,9 @@ def test_validate_values__tap_regulator_control_side():
 
     assert len(all_errors) == 3
     assert (
-        InvalidEnumValueError(ComponentType.transformer_tap_regulator, "control_side", [10, 13], [BranchSide, Branch3Side])
+        InvalidEnumValueError(
+            ComponentType.transformer_tap_regulator, "control_side", [10, 13], [BranchSide, Branch3Side]
+        )
         in all_errors
     )
     assert (

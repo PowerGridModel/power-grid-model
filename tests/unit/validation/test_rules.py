@@ -375,13 +375,22 @@ def test_all_valid_enum_values():
     errors = all_valid_enum_values(valid, "sym_load", "type", LoadGenType)
     assert not errors
 
-    valid = {ComponentType.transformer_tap_regulator: initialize_array(DatasetType.input, ComponentType.transformer_tap_regulator, 5)}
+    valid = {
+        ComponentType.transformer_tap_regulator: initialize_array(
+            DatasetType.input, ComponentType.transformer_tap_regulator, 5
+        )
+    }
     valid[ComponentType.transformer_tap_regulator]["id"] = np.arange(5)
     valid[ComponentType.transformer_tap_regulator]["control_side"] = np.arange(-1, 4)
-    errors = all_valid_enum_values(valid, ComponentType.transformer_tap_regulator, "control_side", [BranchSide, Branch3Side])
+    errors = all_valid_enum_values(
+        valid, ComponentType.transformer_tap_regulator, "control_side", [BranchSide, Branch3Side]
+    )
     assert len(errors) == 1
     assert (
-        InvalidEnumValueError(ComponentType.transformer_tap_regulator, "control_side", [0, 4], [BranchSide, Branch3Side]) in errors
+        InvalidEnumValueError(
+            ComponentType.transformer_tap_regulator, "control_side", [0, 4], [BranchSide, Branch3Side]
+        )
+        in errors
     )
 
 

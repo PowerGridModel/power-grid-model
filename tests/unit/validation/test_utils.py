@@ -71,7 +71,9 @@ def test_update_input_data():
     update_test["id"] = [6, 5, 2, 3]
     update_test["q_specified"] = [np.nan, 5.2, np.nan, 3.2]
 
-    merged = _update_input_data(input_data={ComponentType.sym_load: input_test}, update_data={ComponentType.sym_load: update_test})
+    merged = _update_input_data(
+        input_data={ComponentType.sym_load: input_test}, update_data={ComponentType.sym_load: update_test}
+    )
     np.testing.assert_array_equal(merged[ComponentType.sym_load]["id"], [4, 5, 6, 1, 2, 3])
     np.testing.assert_array_equal(merged[ComponentType.sym_load]["p_specified"], [4.0, 5.0, 6.0, 1.0, 2.0, 3.0])
     np.testing.assert_array_equal(merged[ComponentType.sym_load]["q_specified"], [4.1, 5.2, 6.1, np.nan, np.nan, 3.2])
@@ -86,10 +88,14 @@ def test_update_input_data__without_ids():
     update_test = initialize_array(DatasetType.update, ComponentType.sym_load, 6)
     input_test["q_specified"] = [4.1, 5.2, np.nan, np.nan, np.nan, 3.2]
 
-    merged = _update_input_data(input_data={ComponentType.sym_load: input_test}, update_data={ComponentType.sym_load: update_test})
+    merged = _update_input_data(
+        input_data={ComponentType.sym_load: input_test}, update_data={ComponentType.sym_load: update_test}
+    )
     np.testing.assert_array_equal(merged[ComponentType.sym_load]["id"], [4, 5, 6, 1, 2, 3])
     np.testing.assert_array_equal(merged[ComponentType.sym_load]["p_specified"], [4.0, 5.0, 6.0, 1.0, 2.0, 3.0])
-    np.testing.assert_array_equal(merged[ComponentType.sym_load]["q_specified"], [4.1, 5.2, np.nan, np.nan, np.nan, 3.2])
+    np.testing.assert_array_equal(
+        merged[ComponentType.sym_load]["q_specified"], [4.1, 5.2, np.nan, np.nan, np.nan, 3.2]
+    )
 
 
 def test_update_input_data_int_nan():
@@ -101,7 +107,9 @@ def test_update_input_data_int_nan():
     update_line["id"] = [1, 3]
     update_line["from_status"] = [-128, 1]
 
-    merged = _update_input_data(input_data={ComponentType.line: input_line}, update_data={ComponentType.line: update_line})
+    merged = _update_input_data(
+        input_data={ComponentType.line: input_line}, update_data={ComponentType.line: update_line}
+    )
 
     np.testing.assert_array_equal(merged["line"]["from_status"], [0, -128, 1])
 
@@ -115,7 +123,9 @@ def test_update_input_data_asym_nans():
     update_load["id"] = [1, 2, 3]
     update_load["p_specified"] = [[np.nan, np.nan, np.nan], [np.nan, np.nan, 5.3], [6.1, 6.2, 6.3]]
 
-    merged = _update_input_data(input_data={ComponentType.asym_load: input_load}, update_data={ComponentType.asym_load: update_load})
+    merged = _update_input_data(
+        input_data={ComponentType.asym_load: input_load}, update_data={ComponentType.asym_load: update_load}
+    )
 
     np.testing.assert_array_equal(
         merged[ComponentType.asym_load]["p_specified"], [[1.1, 1.2, 1.3], [2.1, np.nan, 5.3], [6.1, 6.2, 6.3]]
@@ -162,7 +172,10 @@ def test_errors_to_string_list_1_details():
 
 
 def test_errors_to_string_list_2_no_details():
-    errors = [NotGreaterThanError(ComponentType.node, "u_rated", [1], 0), NotGreaterThanError(ComponentType.line, "p_from", [2], 0)]
+    errors = [
+        NotGreaterThanError(ComponentType.node, "u_rated", [1], 0),
+        NotGreaterThanError(ComponentType.line, "p_from", [2], 0),
+    ]
     error_string = errors_to_string(errors=errors, name="input_data")
     assert (
         error_string == "There are 2 validation errors in input_data:\n"
@@ -172,7 +185,10 @@ def test_errors_to_string_list_2_no_details():
 
 
 def test_errors_to_string_dict_2_no_details():
-    errors = {1: [NotGreaterThanError(ComponentType.node, "u_rated", [1], 0)], 2: [NotGreaterThanError(ComponentType.line, "p_from", [2], 0)]}
+    errors = {
+        1: [NotGreaterThanError(ComponentType.node, "u_rated", [1], 0)],
+        2: [NotGreaterThanError(ComponentType.line, "p_from", [2], 0)],
+    }
     error_string = errors_to_string(errors=errors, name="input_data")
     assert (
         error_string == "There is a validation error in input_data, batch #1:\n\tField 'u_rated' is not greater "

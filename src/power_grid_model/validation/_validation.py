@@ -245,7 +245,8 @@ def validate_ids(update_data: SingleDataset, input_data: SingleDataset) -> list[
 
     """
     errors = (
-        _ids_valid_in_update_data_set(update_data, input_data, component, DatasetType.update) for component in update_data
+        _ids_valid_in_update_data_set(update_data, input_data, component, DatasetType.update)
+        for component in update_data
     )
     return list(chain(*errors))
 

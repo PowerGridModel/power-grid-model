@@ -134,7 +134,12 @@ def test_handle_invalid_branch3_error():
     three_winding_transformer_input["node_3"] = [0]
 
     with pytest.raises(InvalidBranch3):
-        PowerGridModel(input_data={ComponentType.node: node_input, ComponentType.three_winding_transformer: three_winding_transformer_input})
+        PowerGridModel(
+            input_data={
+                ComponentType.node: node_input,
+                ComponentType.three_winding_transformer: three_winding_transformer_input,
+            }
+        )
 
 
 def test_handle_invalid_transformer_clock_error():
@@ -173,7 +178,13 @@ def test_handle_not_observable_error():
     sym_load_input["status"] = [1]
     sym_load_input["type"] = [LoadGenType.const_power]
 
-    model = PowerGridModel(input_data={ComponentType.node: node_input, ComponentType.source: source_input, ComponentType.sym_load: sym_load_input})
+    model = PowerGridModel(
+        input_data={
+            ComponentType.node: node_input,
+            ComponentType.source: source_input,
+            ComponentType.sym_load: sym_load_input,
+        }
+    )
     with pytest.raises(NotObservableError):
         model.calculate_state_estimation(calculation_method=CalculationMethod.iterative_linear)
 
@@ -199,7 +210,13 @@ def test_handle_iteration_diverge_error():
     sym_load_input["p_specified"] = [0.0]
     sym_load_input["q_specified"] = [500.0]
 
-    model = PowerGridModel(input_data={ComponentType.node: node_input, ComponentType.source: source_input, ComponentType.sym_load: sym_load_input})
+    model = PowerGridModel(
+        input_data={
+            ComponentType.node: node_input,
+            ComponentType.source: source_input,
+            ComponentType.sym_load: sym_load_input,
+        }
+    )
     with pytest.raises(IterationDiverge):
         model.calculate_power_flow(max_iterations=1, error_tolerance=1.0e-100)
 
@@ -245,7 +262,9 @@ def test_handle_invalid_measured_object_error(sensor_type):
     sensor_input["measured_terminal_type"] = [MeasuredTerminalType.branch_from]
 
     with pytest.raises(InvalidMeasuredObject):
-        PowerGridModel(input_data={ComponentType.node: node_input, ComponentType.link: link_input, sensor_type: sensor_input})
+        PowerGridModel(
+            input_data={ComponentType.node: node_input, ComponentType.link: link_input, sensor_type: sensor_input}
+        )
 
 
 def test_handle_invalid_regulated_object_error():
@@ -306,7 +325,13 @@ def test_handle_invalid_calculation_method_error():
     sym_load_input["p_specified"] = [10.0e3]
     sym_load_input["q_specified"] = [1.0e3]
 
-    model = PowerGridModel(input_data={ComponentType.node: node_input, ComponentType.source: source_input, ComponentType.sym_load: sym_load_input})
+    model = PowerGridModel(
+        input_data={
+            ComponentType.node: node_input,
+            ComponentType.source: source_input,
+            ComponentType.sym_load: sym_load_input,
+        }
+    )
     with pytest.raises(InvalidCalculationMethod):
         model.calculate_power_flow(calculation_method=CalculationMethod.iec60909)
 
