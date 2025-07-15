@@ -134,12 +134,6 @@ prevented.
 ```
 
 ```{warning}
-At the time of writing, the component [local angle current sensor](./components.md#local-angle-current-sensors) is only
-supported in the calculation of [Newton-Raphson state estimation](#newton-raphson-state-estimation) as an experimental
-feature.
-```
-
-```{warning}
 At the time of writing, the component [global angle current sensor](./components.md#global-angle-current-sensors)
 is not supported in the calculation of [Newton-Raphson state estimation](#newton-raphson-state-estimation).
 ```
