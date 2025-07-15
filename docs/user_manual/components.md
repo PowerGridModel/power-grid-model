@@ -926,6 +926,11 @@ $$
 ### Generic Current Sensor
 
 ```{warning}
+At the time of writing, state estimation with current sensors with `local_angle` `angle_measurement_type` is only
+supported by the Newton-Raphson calculation method as an experimental feature.
+```
+
+```{warning}
 At the time of writing, state estimation with current sensors with `global_angle` `angle_measurement_type` is not
 supported by the Newton-Raphson calculation method.
 ```
@@ -962,6 +967,11 @@ However, such mixing of sensor types is allowed as long as they are on different
 | `i_angle_sigma`          | `double`                                                                      | rad        | standard deviation of the current (`i`) phase angle measurement error. Usually this is the absolute measurement error range divided by 3. | &#10024; only for state estimation | &#10004; |                        `> 0`                         |
 
 #### Current Sensor Concrete Types
+
+```{warning}
+At the time of writing, state estimation with current sensors with `local_angle` `angle_measurement_type` is only
+supported by the Newton-Raphson calculation method as an experimental feature.
+```
 
 ```{warning}
 At the time of writing, state estimation with current sensors with `global_angle` `angle_measurement_type` is not
@@ -1041,6 +1051,11 @@ $$
 
 ```{note}
 As a result, the local angle current sensors have a different sign convention from the global angle current sensors.
+```
+
+```{warning}
+At the time of writing, state estimation with current sensors with `local_angle` `angle_measurement_type` is only
+supported by the Newton-Raphson calculation method as an experimental feature.
 ```
 
 ##### Residuals

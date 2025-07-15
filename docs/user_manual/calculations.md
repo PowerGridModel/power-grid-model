@@ -134,6 +134,12 @@ prevented.
 ```
 
 ```{warning}
+At the time of writing, the component [local angle current sensor](./components.md#local-angle-current-sensors) is only
+supported in the calculation of [Newton-Raphson state estimation](#newton-raphson-state-estimation) as an experimental
+feature.
+```
+
+```{warning}
 At the time of writing, the component [global angle current sensor](./components.md#global-angle-current-sensors)
 is not supported in the calculation of [Newton-Raphson state estimation](#newton-raphson-state-estimation).
 ```
@@ -774,6 +780,12 @@ Consequently, the iteration process differs slightly from that of
 As for the [iterative linear](#iterative-linear-state-estimation) approach, during iterations, phase angles of voltage
 at each bus are updated using ones from the previous iteration.
 The system error of the phase shift converges to zero.
+
+```{note}
+Newton-Raphson state estimation only supports current sensors with `local_angle` `angle_measurement_type` as an
+experimental feature at this moment. See also
+[this issue](https://github.com/PowerGridModel/power-grid-model/issues/967).
+```
 
 ```{note}
 Newton-Raphson state estimation does not support current sensors with `global_angle` `angle_measurement_type` at this
