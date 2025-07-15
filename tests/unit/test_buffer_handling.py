@@ -92,7 +92,7 @@ def test__get_sparse_buffer_properties(component_type, is_columnar):
 @pytest.mark.parametrize(
     "component, is_batch, is_columnar, is_sparse",
     [
-        pytest.param(ComponentType.sym_load, False, False, False, id="sym_load"),
+        pytest.param(ComponentType.sym_load, True, True, False, id="sym_load"),
         pytest.param(ComponentType.asym_load, True, True, False, id="asym_load-columnar"),
     ],
 )
