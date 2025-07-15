@@ -134,20 +134,20 @@ template <symmetry_tag sym>
 using ComplexValue = std::conditional_t<is_symmetric_v<sym>, DoubleComplex, three_phase_tensor::Vector<DoubleComplex>>;
 
 // asserts to ensure alignment
-static_assert(sizeof(RealTensor<asymmetric_t>) == sizeof(double[9]));
-static_assert(alignof(RealTensor<asymmetric_t>) == alignof(double[9]));
+static_assert(sizeof(RealTensor<asymmetric_t>) == sizeof(double[9]));   // NOLINT(hicpp-avoid-c-arrays)
+static_assert(alignof(RealTensor<asymmetric_t>) == alignof(double[9])); // NOLINT(hicpp-avoid-c-arrays)
 static_assert(std::is_standard_layout_v<RealTensor<asymmetric_t>>);
 static_assert(std::is_trivially_destructible_v<RealTensor<asymmetric_t>>);
-static_assert(sizeof(ComplexTensor<asymmetric_t>) == sizeof(double[18]));
-static_assert(alignof(ComplexTensor<asymmetric_t>) >= alignof(double[18]));
+static_assert(sizeof(ComplexTensor<asymmetric_t>) == sizeof(double[18]));   // NOLINT(hicpp-avoid-c-arrays)
+static_assert(alignof(ComplexTensor<asymmetric_t>) >= alignof(double[18])); // NOLINT(hicpp-avoid-c-arrays)
 static_assert(std::is_standard_layout_v<ComplexTensor<asymmetric_t>>);
 static_assert(std::is_trivially_destructible_v<ComplexTensor<asymmetric_t>>);
-static_assert(sizeof(RealValue<asymmetric_t>) == sizeof(double[3]));
-static_assert(alignof(RealValue<asymmetric_t>) == alignof(double[3]));
+static_assert(sizeof(RealValue<asymmetric_t>) == sizeof(double[3]));   // NOLINT(hicpp-avoid-c-arrays)
+static_assert(alignof(RealValue<asymmetric_t>) == alignof(double[3])); // NOLINT(hicpp-avoid-c-arrays)
 static_assert(std::is_standard_layout_v<RealValue<asymmetric_t>>);
 static_assert(std::is_trivially_destructible_v<RealValue<asymmetric_t>>);
-static_assert(sizeof(ComplexValue<asymmetric_t>) == sizeof(double[6]));
-static_assert(alignof(ComplexValue<asymmetric_t>) >= alignof(double[6]));
+static_assert(sizeof(ComplexValue<asymmetric_t>) == sizeof(double[6]));   // NOLINT(hicpp-avoid-c-arrays)
+static_assert(alignof(ComplexValue<asymmetric_t>) >= alignof(double[6])); // NOLINT(hicpp-avoid-c-arrays)
 static_assert(std::is_standard_layout_v<ComplexValue<asymmetric_t>>);
 static_assert(std::is_trivially_destructible_v<ComplexValue<asymmetric_t>>);
 

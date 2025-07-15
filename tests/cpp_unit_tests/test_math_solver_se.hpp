@@ -359,7 +359,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE", SolverType, test_math_solver_
     // topo and param ptr
     auto param_ptr = std::make_shared<MathModelParam<sym> const>(grid.param());
 
-    SUBCASE("Test se with pwoer sensors") {
+    SUBCASE("Test se with power sensors") {
         auto topo_ptr = std::make_shared<MathModelTopology const>(grid.se_topo_power_sensors());
         YBus<sym> const y_bus{topo_ptr, param_ptr};
 

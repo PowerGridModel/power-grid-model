@@ -84,6 +84,9 @@ template <class Impl, typename ValueType, std::integral DifferenceType> class It
     constexpr auto operator[](difference_type idx) const -> value_type const& { return *(*this + idx); }
 
   private:
+    IteratorFacade() = default; // default constructor is private to prevent non-CRTP instantiation
+    friend Impl;                // allow Impl to access private members; this is necessary for CRTP
+
     // overloads for public bidirectional exposure (difference between MSVC and ClangCL)
     constexpr std::strong_ordering three_way_compare(IteratorFacade const& other) const {
         return static_cast<std::add_lvalue_reference_t<const_iterator>>(*this).three_way_compare(
