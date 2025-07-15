@@ -9,6 +9,8 @@
 #include "main_core/calculation_info.hpp"
 #include "main_core/update.hpp"
 
+#include "batch_dispatch_interface.hpp"
+
 #include <thread>
 
 namespace power_grid_model {
@@ -21,15 +23,17 @@ template <class MainModel, class... ComponentType> class BatchDispatch {
     static constexpr Idx ignore_output{-1};
     static constexpr Idx sequential{-1};
 
-    template <typename Calculate>
-        requires std::invocable<std::remove_cvref_t<Calculate>, MainModel&, MutableDataset const&, Idx>
-    static BatchParameter batch_calculation_(MainModel& model, CalculationInfo& calculation_info,
-                                             Calculate&& calculation_fn, MutableDataset const& result_data,
-                                             ConstDataset const& update_data, Idx threading = sequential) {
-        // if the update dataset is empty without any component
-        // execute one power flow in the current instance, no batch calculation is needed
+    // goal: remove model, from signature and deal with them in the adapter
+    // posibly add a fake (using) tag to Adapter interface to add concept here
+    // it might be a good idea just to keep concepts at the interface and adaptor level, for easier decoupling
+    // at last, explore if calculation_fn can also be removed from here, if not, see if it is possible to
+    // add concepts to it some way without elluding to main model.
+    template <typename Calculate, typename Adapter>
+    static BatchParameter batch_calculation_(MainModel& model, Calculate&& calculation_fn,
+                                             MutableDataset const& result_data, ConstDataset const& update_data,
+                                             Adapter& adapter, Idx threading = sequential) {
         if (update_data.empty()) {
-            std::forward<Calculate>(calculation_fn)(model, result_data, 0);
+            adapter.calculate(std::forward<Calculate>(calculation_fn), result_data);
             return BatchParameter{};
         }
 
@@ -43,15 +47,8 @@ template <class MainModel, class... ComponentType> class BatchDispatch {
         }
 
         // calculate once to cache topology, ignore results, all math solvers are initialized
-        try {
-            calculation_fn(model,
-                           {
-                               false,
-                               1,
-                               "sym_output",
-                               model.meta_data(),
-                           },
-                           ignore_output);
+        try { // same as above, but this time topology is cached
+            adapter.cache_calculate(std::forward<Calculate>(calculation_fn));
         } catch (SparseMatrixError const&) { // NOLINT(bugprone-empty-catch) // NOSONAR
             // missing entries are provided in the update data
         } catch (NotObservableError const&) { // NOLINT(bugprone-empty-catch) // NOSONAR
@@ -70,11 +67,17 @@ template <class MainModel, class... ComponentType> class BatchDispatch {
         batch_dispatch(sub_batch, n_scenarios, threading);
 
         handle_batch_exceptions(exceptions);
-        calculation_info = main_core::merge_calculation_info(infos);
+        adapter.set_calculation_info(main_core::merge_calculation_info(infos));
 
         return BatchParameter{};
     }
 
+    // this is the actual problem, sub batch calculation knows about main model a lot.
+    // main_model used for:
+    //  get_components_to_update(update_data)
+    //  state()
+    //  base model constructor
+    //  then the copyy from above constructor is used for calculation function and many others
     template <typename Calculate>
         requires std::invocable<std::remove_cvref_t<Calculate>, MainModel&, MutableDataset const&, Idx>
     static auto sub_batch_calculation_(MainModel const& base_model, Calculate&& calculation_fn,
@@ -83,11 +86,13 @@ template <class MainModel, class... ComponentType> class BatchDispatch {
                                        std::vector<std::string>& exceptions, std::vector<CalculationInfo>& infos) {
         // cache component update order where possible.
         // the order for a cacheable (independent) component by definition is the same across all scenarios
-        auto const components_to_update = base_model.get_components_to_update(update_data);
+        auto const components_to_update =
+            base_model.get_components_to_update(update_data); // helper function inside scenario_update_restore
         auto const update_independence = main_core::update::independence::check_update_independence<ComponentType...>(
-            base_model.state(), update_data);
+            base_model.state(), update_data); // helper function inside scenario_update_restore
         all_scenarios_sequence = main_core::update::get_all_sequence_idx_map<ComponentType...>(
-            base_model.state(), update_data, 0, components_to_update, update_independence, false);
+            base_model.state(), update_data, 0, components_to_update, update_independence,
+            false); // helper function inside scenario_update_restore
 
         return [&base_model, &exceptions, &infos, calculation_fn_ = std::forward<Calculate>(calculation_fn),
                 &result_data, &update_data, &all_scenarios_sequence_ = std::as_const(all_scenarios_sequence),
@@ -97,6 +102,7 @@ template <class MainModel, class... ComponentType> class BatchDispatch {
 
             Timer const t_total(infos[start], 0000, "Total in thread");
 
+            // possibly another another helper call from adapter
             auto const copy_model_functor = [&base_model, &infos](Idx scenario_idx) {
                 Timer const t_copy_model_functor(infos[scenario_idx], 1100, "Copy model");
                 return MainModel{base_model};
@@ -104,16 +110,18 @@ template <class MainModel, class... ComponentType> class BatchDispatch {
             auto model = copy_model_functor(start);
 
             auto current_scenario_sequence_cache = main_core::utils::SequenceIdx<ComponentType...>{};
-            auto [setup, winddown] =
-                scenario_update_restore(model, update_data, components_to_update, update_independence,
-                                        all_scenarios_sequence_, current_scenario_sequence_cache, infos);
+            auto [setup, winddown] = scenario_update_restore( // this is the main problem
+                model, update_data, components_to_update, update_independence, all_scenarios_sequence_, // model
+                current_scenario_sequence_cache, infos);
 
             auto calculate_scenario = BatchDispatch::call_with<Idx>(
-                [&model, &calculation_fn_, &result_data, &infos](Idx scenario_idx) {
-                    calculation_fn_(model, result_data, scenario_idx);
-                    infos[scenario_idx].merge(model.calculation_info());
+                [&model, &calculation_fn_, &result_data, &infos](Idx scenario_idx) { // model
+                    calculation_fn_(model, result_data, scenario_idx);   // just use calculate function in adapter
+                    infos[scenario_idx].merge(model.calculation_info()); // this can just be replaced with a function
+                                                                         // and forget about main model
                 },
-                std::move(setup), std::move(winddown), scenario_exception_handler(model, exceptions, infos),
+                std::move(setup), std::move(winddown),
+                scenario_exception_handler(model.calculation_info(), exceptions, infos), // model.calculation_info(),
                 [&model, &copy_model_functor](Idx scenario_idx) { model = copy_model_functor(scenario_idx); });
 
             for (Idx scenario_idx = start; scenario_idx < n_scenarios; scenario_idx += stride) {
@@ -151,6 +159,8 @@ template <class MainModel, class... ComponentType> class BatchDispatch {
         }
     }
 
+    // maybe this one is okayy as well, as it does use model stuff, but indirectly. well implemented.
+    // also affected by the mutable introduction... probably needs to be addressed.
     template <typename... Args, typename RunFn, typename SetupFn, typename WinddownFn, typename HandleExceptionFn,
               typename RecoverFromBadFn>
         requires std::invocable<std::remove_cvref_t<RunFn>, Args const&...> &&
@@ -162,7 +172,7 @@ template <class MainModel, class... ComponentType> class BatchDispatch {
                           RecoverFromBadFn recover_from_bad) {
         return [setup_ = std::move(setup), run_ = std::move(run), winddown_ = std::move(winddown),
                 handle_exception_ = std::move(handle_exception),
-                recover_from_bad_ = std::move(recover_from_bad)](Args const&... args) {
+                recover_from_bad_ = std::move(recover_from_bad)](Args const&... args) mutable {
             try {
                 setup_(args...);
                 run_(args...);
@@ -178,6 +188,8 @@ template <class MainModel, class... ComponentType> class BatchDispatch {
         };
     }
 
+    // this will be hard.
+    // model: state(), update_components(), restore_components()
     static auto scenario_update_restore(
         MainModel& model, ConstDataset const& update_data,
         main_core::utils::ComponentFlags<ComponentType...> const& components_to_store,
@@ -205,23 +217,27 @@ template <class MainModel, class... ComponentType> class BatchDispatch {
              do_update_cache_ = std::move(do_update_cache), &infos](Idx scenario_idx) {
                 Timer const t_update_model(infos[scenario_idx], 1200, "Update model");
                 current_scenario_sequence_cache = main_core::update::get_all_sequence_idx_map<ComponentType...>(
-                    model.state(), update_data, scenario_idx, components_to_store, do_update_cache_, true);
+                    model.state(), update_data, scenario_idx, components_to_store, do_update_cache_,
+                    true); // model.state
 
-                model.template update_components<cached_update_t>(update_data, scenario_idx, scenario_sequence());
+                model.template update_components<cached_update_t>(update_data, scenario_idx,
+                                                                  scenario_sequence()); // model.update_components
             },
             [&model, scenario_sequence, &current_scenario_sequence_cache, &infos](Idx scenario_idx) {
                 Timer const t_update_model(infos[scenario_idx], 1201, "Restore model");
 
-                model.restore_components(scenario_sequence());
+                model.restore_components(scenario_sequence()); // model.restore_components
                 std::ranges::for_each(current_scenario_sequence_cache,
                                       [](auto& comp_seq_idx) { comp_seq_idx.clear(); });
             });
     }
 
+    // passing now info_single_scenario introduced the many mutables because of std::map::merge, so probably
+    // there is a better way to do this. But keeping it as first attempt for the proof of concept.
     // Lippincott pattern
-    static auto scenario_exception_handler(MainModel& model, std::vector<std::string>& messages,
+    static auto scenario_exception_handler(CalculationInfo info_single_scenario, std::vector<std::string>& messages,
                                            std::vector<CalculationInfo>& infos) {
-        return [&model, &messages, &infos](Idx scenario_idx) {
+        return [info_single_scenario, &messages, &infos](Idx scenario_idx) mutable {
             std::exception_ptr const ex_ptr = std::current_exception();
             try {
                 std::rethrow_exception(ex_ptr);
@@ -230,7 +246,7 @@ template <class MainModel, class... ComponentType> class BatchDispatch {
             } catch (...) {
                 messages[scenario_idx] = "unknown exception";
             }
-            infos[scenario_idx].merge(model.calculation_info());
+            infos[scenario_idx].merge(std::move(info_single_scenario));
         };
     }
 
