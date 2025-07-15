@@ -41,6 +41,7 @@ from typing import Any, Callable, Type, TypeVar
 import numpy as np
 
 from power_grid_model import ComponentType
+from power_grid_model._core.dataset_definitions import DatasetType
 from power_grid_model._core.enum import AngleMeasurementType
 from power_grid_model._core.utils import get_comp_size, is_nan_or_default
 from power_grid_model.data_types import SingleDataset
@@ -704,7 +705,7 @@ def all_not_two_values_equal(
 
 
 def ids_valid_in_update_data_set(
-    update_data: SingleDataset, ref_data: SingleDataset, component: ComponentType, ref_name: str
+    update_data: SingleDataset, ref_data: SingleDataset, component: ComponentType, ref_name: DatasetType
 ) -> list[IdNotInDatasetError | InvalidIdError]:
     """
     Check that for all records of a particular type of component, whether the ids:
@@ -715,7 +716,7 @@ def ids_valid_in_update_data_set(
         update_data: The update data set for all components
         ref_data: The reference (input) data set for all components
         component: The component of interest
-        ref_name: The name of the reference data set, e.g. 'update_data'
+        ref_name: The name of the reference data set type
 
     Returns:
         A list containing zero or one IdNotInDatasetError, listing all ids of the objects in the data set which do not

@@ -162,7 +162,7 @@ def test_all_between_or_at():
     assert NotBetweenOrAtError("test", "value", [1, 4, 5, 6], (0.2, -0.2)) in errors
 
     nan_value = power_grid_meta_data["input"]["transformer"].nans["tap_pos"]
-    transformer_array = initialize_array("input", "transformer", 3)
+    transformer_array = initialize_array(DatasetType.input, "transformer", 3)
     transformer_array["id"] = [1, 2, 3]
     transformer_array["tap_pos"] = [nan_value, 1, nan_value]
     transformer_array["tap_nom"] = [2, 1, nan_value]
@@ -249,7 +249,7 @@ def test_none_match_comparison():
     assert ComparisonError("test", "value", [2], 0.2) in errors
 
     nan_value = power_grid_meta_data["input"]["transformer"].nans["tap_pos"]
-    transformer_array = initialize_array("input", "transformer", 3)
+    transformer_array = initialize_array(DatasetType.input, "transformer", 3)
     transformer_array["id"] = [1, 2, 3]
     transformer_array["tap_pos"] = [nan_value, 0, nan_value]
     transformer_array["tap_nom"] = [1, 1, nan_value]
@@ -354,14 +354,14 @@ def test_all_cross_unique(cross_only):
 
 
 def test_all_valid_enum_values():
-    valid_load = initialize_array("input", "sym_load", 2)
+    valid_load = initialize_array(DatasetType.input, "sym_load", 2)
     valid_load["id"] = [1, 2]
     valid_load["type"] = LoadGenType.const_power
     valid = {"sym_load": valid_load}
     errors = all_valid_enum_values(valid, "sym_load", "type", LoadGenType)
     assert not errors
 
-    invalid_load = initialize_array("input", "sym_load", 2)
+    invalid_load = initialize_array(DatasetType.input, "sym_load", 2)
     invalid_load["id"] = [1, 2]
     invalid_load["type"] = [LoadGenType.const_power, 5]
     invalid = {"sym_load": invalid_load}
@@ -369,30 +369,30 @@ def test_all_valid_enum_values():
     assert len(errors) == 1
     assert InvalidEnumValueError("sym_load", "type", [2], LoadGenType) in errors
 
-    valid = {"sym_load": initialize_array("input", "sym_load", 20)}
+    valid = {"sym_load": initialize_array(DatasetType.input, "sym_load", 20)}
     valid["sym_load"]["id"] = np.arange(20)
     valid["sym_load"]["type"] = 0
     errors = all_valid_enum_values(valid, "sym_load", "type", LoadGenType)
     assert not errors
 
-    valid = {"transformer_tap_regulator": initialize_array("input", "transformer_tap_regulator", 5)}
-    valid["transformer_tap_regulator"]["id"] = np.arange(5)
-    valid["transformer_tap_regulator"]["control_side"] = np.arange(-1, 4)
-    errors = all_valid_enum_values(valid, "transformer_tap_regulator", "control_side", [BranchSide, Branch3Side])
+    valid = {ComponentType.transformer_tap_regulator: initialize_array(DatasetType.input, ComponentType.transformer_tap_regulator, 5)}
+    valid[ComponentType.transformer_tap_regulator]["id"] = np.arange(5)
+    valid[ComponentType.transformer_tap_regulator]["control_side"] = np.arange(-1, 4)
+    errors = all_valid_enum_values(valid, ComponentType.transformer_tap_regulator, "control_side", [BranchSide, Branch3Side])
     assert len(errors) == 1
     assert (
-        InvalidEnumValueError("transformer_tap_regulator", "control_side", [0, 4], [BranchSide, Branch3Side]) in errors
+        InvalidEnumValueError(ComponentType.transformer_tap_regulator, "control_side", [0, 4], [BranchSide, Branch3Side]) in errors
     )
 
 
 def test_all_valid_ids():
     # This data is for testing purpuse
     # The values in the data do not make sense for a real grid
-    node = initialize_array("input", "node", 3)
+    node = initialize_array(DatasetType.input, "node", 3)
     node["id"] = [1, 2, 3]
-    source = initialize_array("input", "source", 3)
+    source = initialize_array(DatasetType.input, "source", 3)
     source["id"] = [4, 5, 6]
-    line = initialize_array("input", "line", 3)
+    line = initialize_array(DatasetType.input, "line", 3)
     line["id"] = [7, 8, 9]
     line["from_node"] = [1, 2, 6]
     line["to_node"] = [0, 0, 1]

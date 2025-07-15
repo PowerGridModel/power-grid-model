@@ -375,6 +375,7 @@ def input_data(request):
 def test_validate_input_data_sym_calculation(input_data):
     validation_errors = validate_input_data(input_data, symmetric=True)
 
+    assert validation_errors is not None
     assert (
         MultiComponentNotUniqueError(
             [
@@ -437,151 +438,160 @@ def test_validate_input_data_sym_calculation(input_data):
         in validation_errors
     )
 
-    assert NotGreaterThanError("node", "u_rated", [1], 0) in validation_errors
-    assert NotUniqueError("node", "id", [2, 2]) in validation_errors
+    assert NotGreaterThanError(ComponentType.node, "u_rated", [1], 0) in validation_errors
+    assert NotUniqueError(ComponentType.node, "id", [2, 2]) in validation_errors
 
-    assert NotBooleanError("line", "from_status", [5]) in validation_errors
-    assert NotBooleanError("line", "to_status", [4]) in validation_errors
-    assert InvalidIdError("line", "from_node", [4], "node") in validation_errors
-    assert InvalidIdError("line", "to_node", [5], "node") in validation_errors
-    assert TwoValuesZeroError("line", ["r1", "x1"], [3]) in validation_errors
-    assert TwoValuesZeroError("line", ["r0", "x0"], [4]) in validation_errors
-    assert NotGreaterThanError("line", "i_n", [3, 4], 0) in validation_errors
+    assert NotBooleanError(ComponentType.line, "from_status", [5]) in validation_errors
+    assert NotBooleanError(ComponentType.line, "to_status", [4]) in validation_errors
+    assert InvalidIdError(ComponentType.line, "from_node", [4], "node") in validation_errors
+    assert InvalidIdError(ComponentType.line, "to_node", [5], "node") in validation_errors
+    assert TwoValuesZeroError(ComponentType.line, ["r1", "x1"], [3]) in validation_errors
+    assert TwoValuesZeroError(ComponentType.line, ["r0", "x0"], [4]) in validation_errors
+    assert NotGreaterThanError(ComponentType.line, "i_n", [3, 4], 0) in validation_errors
 
-    assert NotBooleanError("link", "from_status", [12]) in validation_errors
-    assert NotBooleanError("link", "to_status", [13]) in validation_errors
-    assert InvalidIdError("link", "from_node", [13], "node") in validation_errors
-    assert InvalidIdError("link", "to_node", [12], "node") in validation_errors
+    assert NotBooleanError(ComponentType.link, "from_status", [12]) in validation_errors
+    assert NotBooleanError(ComponentType.link, "to_status", [13]) in validation_errors
+    assert InvalidIdError(ComponentType.link, "from_node", [13], "node") in validation_errors
+    assert InvalidIdError(ComponentType.link, "to_node", [12], "node") in validation_errors
 
-    assert NotBooleanError("transformer", "from_status", [15]) in validation_errors
-    assert NotBooleanError("transformer", "to_status", [1]) in validation_errors
-    assert InvalidIdError("transformer", "from_node", [14], "node") in validation_errors
-    assert InvalidIdError("transformer", "to_node", [14], "node") in validation_errors
-    assert NotGreaterThanError("transformer", "u1", [14, 15], 0) in validation_errors
-    assert NotGreaterThanError("transformer", "u2", [14, 15], 0) in validation_errors
-    assert NotGreaterThanError("transformer", "sn", [14, 15], 0) in validation_errors
-    assert NotGreaterOrEqualError("transformer", "uk", [1], "pk/sn") in validation_errors
-    assert NotBetweenError("transformer", "uk", [1, 14], (0, 1)) in validation_errors
-    assert NotGreaterOrEqualError("transformer", "pk", [15], 0) in validation_errors
-    assert NotGreaterOrEqualError("transformer", "i0", [1], "p0/sn") in validation_errors
-    assert NotLessThanError("transformer", "i0", [14], 1) in validation_errors
-    assert NotGreaterOrEqualError("transformer", "p0", [15], 0) in validation_errors
-    assert NotBetweenOrAtError("transformer", "clock", [1, 14], (0, 12)) in validation_errors
-    assert NotBetweenOrAtError("transformer", "tap_pos", [14, 15], ("tap_min", "tap_max")) in validation_errors
-    assert NotBetweenOrAtError("transformer", "tap_nom", [1, 15], ("tap_min", "tap_max")) in validation_errors
-    assert NotGreaterOrEqualError("transformer", "tap_size", [15], 0) in validation_errors
-    assert NotGreaterOrEqualError("transformer", "uk_min", [1], "pk_min/sn") in validation_errors
-    assert NotBetweenError("transformer", "uk_min", [14], (0, 1)) in validation_errors
-    assert NotGreaterOrEqualError("transformer", "uk_max", [1], "pk_max/sn") in validation_errors
-    assert NotBetweenError("transformer", "uk_max", [14], (0, 1)) in validation_errors
-    assert NotGreaterOrEqualError("transformer", "pk_min", [15], 0) in validation_errors
-    assert NotGreaterOrEqualError("transformer", "pk_max", [14, 15], 0) in validation_errors
-    assert InvalidEnumValueError("transformer", "winding_from", [1], WindingType) in validation_errors
-    assert InvalidEnumValueError("transformer", "winding_to", [1], WindingType) in validation_errors
-    assert InvalidEnumValueError("transformer", "tap_side", [1], BranchSide) in validation_errors
+    assert NotBooleanError(ComponentType.transformer, "from_status", [15]) in validation_errors
+    assert NotBooleanError(ComponentType.transformer, "to_status", [1]) in validation_errors
+    assert InvalidIdError(ComponentType.transformer, "from_node", [14], "node") in validation_errors
+    assert InvalidIdError(ComponentType.transformer, "to_node", [14], "node") in validation_errors
+    assert NotGreaterThanError(ComponentType.transformer, "u1", [14, 15], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.transformer, "u2", [14, 15], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.transformer, "sn", [14, 15], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.transformer, "uk", [1], "pk/sn") in validation_errors
+    assert NotBetweenError(ComponentType.transformer, "uk", [1, 14], (0, 1)) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.transformer, "pk", [15], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.transformer, "i0", [1], "p0/sn") in validation_errors
+    assert NotLessThanError(ComponentType.transformer, "i0", [14], 1) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.transformer, "p0", [15], 0) in validation_errors
+    assert NotBetweenOrAtError(ComponentType.transformer, "clock", [1, 14], (0, 12)) in validation_errors
+    assert (
+        NotBetweenOrAtError(ComponentType.transformer, "tap_pos", [14, 15], ("tap_min", "tap_max")) in validation_errors
+    )
+    assert (
+        NotBetweenOrAtError(ComponentType.transformer, "tap_nom", [1, 15], ("tap_min", "tap_max")) in validation_errors
+    )
+    assert NotGreaterOrEqualError(ComponentType.transformer, "tap_size", [15], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.transformer, "uk_min", [1], "pk_min/sn") in validation_errors
+    assert NotBetweenError(ComponentType.transformer, "uk_min", [14], (0, 1)) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.transformer, "uk_max", [1], "pk_max/sn") in validation_errors
+    assert NotBetweenError(ComponentType.transformer, "uk_max", [14], (0, 1)) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.transformer, "pk_min", [15], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.transformer, "pk_max", [14, 15], 0) in validation_errors
+    assert InvalidEnumValueError(ComponentType.transformer, "winding_from", [1], WindingType) in validation_errors
+    assert InvalidEnumValueError(ComponentType.transformer, "winding_to", [1], WindingType) in validation_errors
+    assert InvalidEnumValueError(ComponentType.transformer, "tap_side", [1], BranchSide) in validation_errors
 
-    assert InvalidIdError("source", "node", [16], "node") in validation_errors
-    assert NotBooleanError("source", "status", [17, 1]) in validation_errors
-    assert NotGreaterThanError("source", "u_ref", [16, 17], 0) in validation_errors
-    assert NotGreaterThanError("source", "sk", [16, 1], 0) in validation_errors
-    assert NotGreaterOrEqualError("source", "rx_ratio", [17], 0) in validation_errors
-    assert NotGreaterThanError("source", "z01_ratio", [16, 17], 0) in validation_errors
+    assert InvalidIdError(ComponentType.source, "node", [16], "node") in validation_errors
+    assert NotBooleanError(ComponentType.source, "status", [17, 1]) in validation_errors
+    assert NotGreaterThanError(ComponentType.source, "u_ref", [16, 17], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.source, "sk", [16, 1], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.source, "rx_ratio", [17], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.source, "z01_ratio", [16, 17], 0) in validation_errors
 
-    assert InvalidIdError("shunt", "node", [18], "node") in validation_errors
-    assert NotBooleanError("shunt", "status", [19, 1]) in validation_errors
+    assert InvalidIdError(ComponentType.shunt, "node", [18], "node") in validation_errors
+    assert NotBooleanError(ComponentType.shunt, "status", [19, 1]) in validation_errors
 
-    assert InvalidIdError("sym_load", "node", [1], "node") in validation_errors
-    assert NotBooleanError("sym_load", "status", [20, 21]) in validation_errors
-    assert InvalidEnumValueError("sym_load", "type", [21], LoadGenType) in validation_errors
+    assert InvalidIdError(ComponentType.sym_load, "node", [1], "node") in validation_errors
+    assert NotBooleanError(ComponentType.sym_load, "status", [20, 21]) in validation_errors
+    assert InvalidEnumValueError(ComponentType.sym_load, "type", [21], LoadGenType) in validation_errors
 
-    assert InvalidIdError("sym_gen", "node", [1], "node") in validation_errors
-    assert NotBooleanError("sym_gen", "status", [22, 23]) in validation_errors
-    assert InvalidEnumValueError("sym_gen", "type", [22], LoadGenType) in validation_errors
+    assert InvalidIdError(ComponentType.sym_gen, "node", [1], "node") in validation_errors
+    assert NotBooleanError(ComponentType.sym_gen, "status", [22, 23]) in validation_errors
+    assert InvalidEnumValueError(ComponentType.sym_gen, "type", [22], LoadGenType) in validation_errors
 
-    assert InvalidIdError("asym_load", "node", [1], "node") in validation_errors
-    assert NotBooleanError("asym_load", "status", [24, 25]) in validation_errors
-    assert InvalidEnumValueError("asym_load", "type", [1], LoadGenType) in validation_errors
+    assert InvalidIdError(ComponentType.asym_load, "node", [1], "node") in validation_errors
+    assert NotBooleanError(ComponentType.asym_load, "status", [24, 25]) in validation_errors
+    assert InvalidEnumValueError(ComponentType.asym_load, "type", [1], LoadGenType) in validation_errors
 
-    assert InvalidIdError("asym_gen", "node", [1], "node") in validation_errors
-    assert NotBooleanError("asym_gen", "status", [26, 27]) in validation_errors
-    assert InvalidEnumValueError("asym_gen", "type", [1, 26], LoadGenType) in validation_errors
+    assert InvalidIdError(ComponentType.asym_gen, "node", [1], "node") in validation_errors
+    assert NotBooleanError(ComponentType.asym_gen, "status", [26, 27]) in validation_errors
+    assert InvalidEnumValueError(ComponentType.asym_gen, "type", [1, 26], LoadGenType) in validation_errors
 
-    assert InvalidIdError("sym_voltage_sensor", "measured_object", [8, 10], "node") in validation_errors
-    assert NotGreaterThanError("sym_voltage_sensor", "u_measured", [7, 10], 0) in validation_errors
-    assert NotGreaterThanError("sym_voltage_sensor", "u_sigma", [9, 10], 0) in validation_errors
+    assert InvalidIdError(ComponentType.sym_voltage_sensor, "measured_object", [8, 10], "node") in validation_errors
+    assert NotGreaterThanError(ComponentType.sym_voltage_sensor, "u_measured", [7, 10], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.sym_voltage_sensor, "u_sigma", [9, 10], 0) in validation_errors
     # TODO check if u_sigma = np.nan is detected with missing values
 
-    assert InvalidIdError("asym_voltage_sensor", "measured_object", [8, 10], "node") in validation_errors
-    assert NotGreaterThanError("asym_voltage_sensor", "u_measured", [9, 10], 0) in validation_errors
-    assert NotGreaterThanError("asym_voltage_sensor", "u_sigma", [9, 10], 0) in validation_errors
+    assert InvalidIdError(ComponentType.asym_voltage_sensor, "measured_object", [8, 10], "node") in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_voltage_sensor, "u_measured", [9, 10], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_voltage_sensor, "u_sigma", [9, 10], 0) in validation_errors
 
     assert (
         InvalidIdError(
-            "sym_power_sensor",
+            ComponentType.sym_power_sensor,
             "measured_object",
             [7, 9, 10],
             [
-                "node",
-                "line",
-                "asym_line",
-                "generic_branch",
-                "transformer",
-                "three_winding_transformer",
-                "source",
-                "shunt",
-                "sym_load",
-                "asym_load",
-                "sym_gen",
-                "asym_gen",
+                ComponentType.node,
+                ComponentType.line,
+                ComponentType.asym_line,
+                ComponentType.generic_branch,
+                ComponentType.transformer,
+                ComponentType.three_winding_transformer,
+                ComponentType.source,
+                ComponentType.shunt,
+                ComponentType.sym_load,
+                ComponentType.asym_load,
+                ComponentType.sym_gen,
+                ComponentType.asym_gen,
             ],
         )
         in validation_errors
     )
-    assert NotGreaterThanError("sym_power_sensor", "power_sigma", [9, 10], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.sym_power_sensor, "power_sigma", [9, 10], 0) in validation_errors
     assert (
         InvalidIdError(
-            "sym_power_sensor",
+            ComponentType.sym_power_sensor,
             "measured_object",
             [7, 10],
-            ["line", "asym_line", "generic_branch", "transformer"],
+            [
+                ComponentType.line,
+                ComponentType.asym_line,
+                ComponentType.generic_branch,
+                ComponentType.transformer,
+            ],
             {"measured_terminal_type": MeasuredTerminalType.branch_to},
         )
         in validation_errors
     )
     assert (
-        InvalidEnumValueError("sym_power_sensor", "measured_terminal_type", [9], MeasuredTerminalType)
+        InvalidEnumValueError(ComponentType.sym_power_sensor, "measured_terminal_type", [9], MeasuredTerminalType)
         in validation_errors
     )
 
     assert (
         InvalidIdError(
-            "asym_power_sensor",
+            ComponentType.asym_power_sensor,
             "measured_object",
             [7, 9, 10],
             [
-                "node",
-                "line",
-                "asym_line",
-                "generic_branch",
-                "transformer",
-                "three_winding_transformer",
-                "source",
-                "shunt",
-                "sym_load",
-                "asym_load",
-                "sym_gen",
-                "asym_gen",
+                ComponentType.node,
+                ComponentType.line,
+                ComponentType.asym_line,
+                ComponentType.generic_branch,
+                ComponentType.transformer,
+                ComponentType.three_winding_transformer,
+                ComponentType.source,
+                ComponentType.shunt,
+                ComponentType.sym_load,
+                ComponentType.asym_load,
+                ComponentType.sym_gen,
+                ComponentType.asym_gen,
             ],
         )
         in validation_errors
     )
-    assert NotGreaterThanError("asym_power_sensor", "power_sigma", [9, 10], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_power_sensor, "power_sigma", [9, 10], 0) in validation_errors
     assert (
         InvalidIdError(
-            "asym_power_sensor",
+            ComponentType.asym_power_sensor,
             "measured_object",
             [7, 10],
-            ["line", "asym_line", "generic_branch", "transformer"],
+            [ComponentType.line, ComponentType.asym_line, ComponentType.generic_branch, ComponentType.transformer],
             {"measured_terminal_type": MeasuredTerminalType.branch_to},
         )
         in validation_errors
@@ -593,38 +603,38 @@ def test_validate_input_data_sym_calculation(input_data):
 
     assert (
         InvalidIdError(
-            "sym_current_sensor",
+            ComponentType.sym_current_sensor,
             "measured_object",
             [7, 9, 10],
             [
-                "line",
-                "asym_line",
-                "generic_branch",
-                "transformer",
-                "three_winding_transformer",
+                ComponentType.line,
+                ComponentType.asym_line,
+                ComponentType.generic_branch,
+                ComponentType.transformer,
+                ComponentType.three_winding_transformer,
             ],
         )
         in validation_errors
     )
-    assert NotGreaterThanError("sym_current_sensor", "i_sigma", [9, 10], 0) in validation_errors
-    assert NotGreaterThanError("sym_current_sensor", "i_angle_sigma", [9, 10], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.sym_current_sensor, "i_sigma", [9, 10], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.sym_current_sensor, "i_angle_sigma", [9, 10], 0) in validation_errors
     assert (
         InvalidIdError(
-            "sym_current_sensor",
+            ComponentType.sym_current_sensor,
             "measured_object",
             [7],
-            ["line", "asym_line", "generic_branch", "transformer"],
+            [ComponentType.line, ComponentType.asym_line, ComponentType.generic_branch, ComponentType.transformer],
             {"measured_terminal_type": MeasuredTerminalType.branch_to},
         )
         in validation_errors
     )
     assert (
-        InvalidEnumValueError("sym_current_sensor", "measured_terminal_type", [9], MeasuredTerminalType)
+        InvalidEnumValueError(ComponentType.sym_current_sensor, "measured_terminal_type", [9], MeasuredTerminalType)
         in validation_errors
     )
     assert (
         UnsupportedMeasuredTerminalType(
-            "sym_current_sensor",
+            ComponentType.sym_current_sensor,
             "measured_terminal_type",
             [9, 10],
             [
@@ -638,44 +648,44 @@ def test_validate_input_data_sym_calculation(input_data):
         in validation_errors
     )
     assert (
-        InvalidEnumValueError("sym_current_sensor", "angle_measurement_type", [9, 10], AngleMeasurementType)
+        InvalidEnumValueError(ComponentType.sym_current_sensor, "angle_measurement_type", [9, 10], AngleMeasurementType)
         in validation_errors
     )
 
     assert (
         InvalidIdError(
-            "asym_current_sensor",
+            ComponentType.asym_current_sensor,
             "measured_object",
             [7, 9, 10],
             [
-                "line",
-                "asym_line",
-                "generic_branch",
-                "transformer",
-                "three_winding_transformer",
+                ComponentType.line,
+                ComponentType.asym_line,
+                ComponentType.generic_branch,
+                ComponentType.transformer,
+                ComponentType.three_winding_transformer,
             ],
         )
         in validation_errors
     )
-    assert NotGreaterThanError("asym_current_sensor", "i_sigma", [9, 10], 0) in validation_errors
-    assert NotGreaterThanError("asym_current_sensor", "i_angle_sigma", [9, 10], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_current_sensor, "i_sigma", [9, 10], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_current_sensor, "i_angle_sigma", [9, 10], 0) in validation_errors
     assert (
         InvalidIdError(
-            "asym_current_sensor",
+            ComponentType.asym_current_sensor,
             "measured_object",
             [7],
-            ["line", "asym_line", "generic_branch", "transformer"],
+            [ComponentType.line, ComponentType.asym_line, ComponentType.generic_branch, ComponentType.transformer],
             {"measured_terminal_type": MeasuredTerminalType.branch_to},
         )
         in validation_errors
     )
     assert (
-        InvalidEnumValueError("asym_current_sensor", "measured_terminal_type", [9], MeasuredTerminalType)
+        InvalidEnumValueError(ComponentType.asym_current_sensor, "measured_terminal_type", [9], MeasuredTerminalType)
         in validation_errors
     )
     assert (
         UnsupportedMeasuredTerminalType(
-            "asym_current_sensor",
+            ComponentType.asym_current_sensor,
             "measured_terminal_type",
             [9, 10],
             [
@@ -689,7 +699,9 @@ def test_validate_input_data_sym_calculation(input_data):
         in validation_errors
     )
     assert (
-        InvalidEnumValueError("asym_current_sensor", "angle_measurement_type", [9, 10], AngleMeasurementType)
+        InvalidEnumValueError(
+            ComponentType.asym_current_sensor, "angle_measurement_type", [9, 10], AngleMeasurementType
+        )
         in validation_errors
     )
     for power_sensor_type, current_sensor_type in itertools.product(
@@ -716,135 +728,200 @@ def test_validate_input_data_sym_calculation(input_data):
             in validation_errors
         )
 
-    assert NotGreaterOrEqualError("transformer", "uk_max", [15], "uk_min") not in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.transformer, "uk_max", [15], "uk_min") not in validation_errors
 
-    assert NotBooleanError("fault", "status", [32, 33]) in validation_errors
-    assert InvalidIdError("fault", "fault_object", [1] + list(range(32, 42)), ["node"]) in validation_errors
+    assert NotBooleanError(ComponentType.fault, "status", [32, 33]) in validation_errors
+    assert InvalidIdError(ComponentType.fault, "fault_object", [1] + list(range(32, 42)), ["node"]) in validation_errors
 
 
 def test_validate_three_winding_transformer(input_data):
     validation_errors = validate_input_data(input_data, symmetric=True)
-    assert NotBooleanError("three_winding_transformer", "status_1", [28]) in validation_errors
-    assert NotBooleanError("three_winding_transformer", "status_2", [1]) in validation_errors
-    assert NotBooleanError("three_winding_transformer", "status_3", [29]) in validation_errors
-    assert InvalidIdError("three_winding_transformer", "node_1", [29], "node") in validation_errors
-    assert InvalidIdError("three_winding_transformer", "node_2", [28], "node") in validation_errors
-    assert InvalidIdError("three_winding_transformer", "node_3", [29], "node") in validation_errors
-    assert NotGreaterThanError("three_winding_transformer", "u1", [1, 28], 0) in validation_errors
-    assert NotGreaterThanError("three_winding_transformer", "u2", [1, 28], 0) in validation_errors
-    assert NotGreaterThanError("three_winding_transformer", "u3", [1, 28], 0) in validation_errors
-    assert NotGreaterThanError("three_winding_transformer", "sn_1", [1, 28], 0) in validation_errors
-    assert NotGreaterThanError("three_winding_transformer", "sn_2", [1, 28], 0) in validation_errors
-    assert NotGreaterThanError("three_winding_transformer", "sn_3", [1, 28], 0) in validation_errors
-    assert NotGreaterOrEqualError("three_winding_transformer", "uk_12", [29, 30], "pk_12/sn_1") in validation_errors
-    assert NotGreaterOrEqualError("three_winding_transformer", "uk_12", [1, 30], "pk_12/sn_2") in validation_errors
-    assert NotGreaterOrEqualError("three_winding_transformer", "uk_13", [29], "pk_13/sn_1") in validation_errors
-    assert NotGreaterOrEqualError("three_winding_transformer", "uk_13", [30], "pk_13/sn_3") in validation_errors
-    assert NotGreaterOrEqualError("three_winding_transformer", "uk_23", [1, 29], "pk_23/sn_2") in validation_errors
-    assert NotGreaterOrEqualError("three_winding_transformer", "uk_23", [30], "pk_23/sn_3") in validation_errors
-    assert NotBetweenError("three_winding_transformer", "uk_12", [1, 28], (0, 1)) in validation_errors
-    assert NotBetweenError("three_winding_transformer", "uk_13", [1, 28], (0, 1)) in validation_errors
-    assert NotBetweenError("three_winding_transformer", "uk_23", [1, 28], (0, 1)) in validation_errors
-    assert NotGreaterOrEqualError("three_winding_transformer", "pk_12", [1], 0) in validation_errors
-    assert NotGreaterOrEqualError("three_winding_transformer", "pk_13", [1], 0) in validation_errors
-    assert NotGreaterOrEqualError("three_winding_transformer", "pk_23", [1], 0) in validation_errors
-    assert NotGreaterOrEqualError("three_winding_transformer", "i0", [29], "p0/sn_1") in validation_errors
-    assert NotLessThanError("three_winding_transformer", "i0", [28], 1) in validation_errors
-    assert NotGreaterOrEqualError("three_winding_transformer", "p0", [1], 0) in validation_errors
-    assert NotBetweenOrAtError("three_winding_transformer", "clock_12", [1, 28], (0, 12)) in validation_errors
-    assert NotBetweenOrAtError("three_winding_transformer", "clock_13", [1, 28], (0, 12)) in validation_errors
+    assert validation_errors is not None
+    assert NotBooleanError(ComponentType.three_winding_transformer, "status_1", [28]) in validation_errors
+    assert NotBooleanError(ComponentType.three_winding_transformer, "status_2", [1]) in validation_errors
+    assert NotBooleanError(ComponentType.three_winding_transformer, "status_3", [29]) in validation_errors
+    assert InvalidIdError(ComponentType.three_winding_transformer, "node_1", [29], "node") in validation_errors
+    assert InvalidIdError(ComponentType.three_winding_transformer, "node_2", [28], "node") in validation_errors
+    assert InvalidIdError(ComponentType.three_winding_transformer, "node_3", [29], "node") in validation_errors
+    assert NotGreaterThanError(ComponentType.three_winding_transformer, "u1", [1, 28], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.three_winding_transformer, "u2", [1, 28], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.three_winding_transformer, "u3", [1, 28], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.three_winding_transformer, "sn_1", [1, 28], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.three_winding_transformer, "sn_2", [1, 28], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.three_winding_transformer, "sn_3", [1, 28], 0) in validation_errors
     assert (
-        NotBetweenOrAtError("three_winding_transformer", "tap_pos", [1, 28], ("tap_min", "tap_max"))
+        NotGreaterOrEqualError(ComponentType.three_winding_transformer, "uk_12", [29, 30], "pk_12/sn_1")
         in validation_errors
     )
     assert (
-        NotBetweenOrAtError("three_winding_transformer", "tap_nom", [1, 28], ("tap_min", "tap_max"))
+        NotGreaterOrEqualError(ComponentType.three_winding_transformer, "uk_12", [1, 30], "pk_12/sn_2")
         in validation_errors
     )
-    assert NotGreaterOrEqualError("three_winding_transformer", "tap_size", [1], 0) in validation_errors
-    assert InvalidEnumValueError("three_winding_transformer", "winding_1", [1, 28], WindingType) in validation_errors
-    assert InvalidEnumValueError("three_winding_transformer", "winding_2", [1, 28], WindingType) in validation_errors
-    assert InvalidEnumValueError("three_winding_transformer", "winding_3", [1, 28], WindingType) in validation_errors
-    assert InvalidEnumValueError("three_winding_transformer", "tap_side", [1, 28], Branch3Side) in validation_errors
+    assert (
+        NotGreaterOrEqualError(ComponentType.three_winding_transformer, "uk_13", [29], "pk_13/sn_1")
+        in validation_errors
+    )
+    assert (
+        NotGreaterOrEqualError(ComponentType.three_winding_transformer, "uk_13", [30], "pk_13/sn_3")
+        in validation_errors
+    )
+    assert (
+        NotGreaterOrEqualError(ComponentType.three_winding_transformer, "uk_23", [1, 29], "pk_23/sn_2")
+        in validation_errors
+    )
+    assert (
+        NotGreaterOrEqualError(ComponentType.three_winding_transformer, "uk_23", [30], "pk_23/sn_3")
+        in validation_errors
+    )
+    assert NotBetweenError(ComponentType.three_winding_transformer, "uk_12", [1, 28], (0, 1)) in validation_errors
+    assert NotBetweenError(ComponentType.three_winding_transformer, "uk_13", [1, 28], (0, 1)) in validation_errors
+    assert NotBetweenError(ComponentType.three_winding_transformer, "uk_23", [1, 28], (0, 1)) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.three_winding_transformer, "pk_12", [1], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.three_winding_transformer, "pk_13", [1], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.three_winding_transformer, "pk_23", [1], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.three_winding_transformer, "i0", [29], "p0/sn_1") in validation_errors
+    assert NotLessThanError(ComponentType.three_winding_transformer, "i0", [28], 1) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.three_winding_transformer, "p0", [1], 0) in validation_errors
+    assert (
+        NotBetweenOrAtError(ComponentType.three_winding_transformer, "clock_12", [1, 28], (0, 12)) in validation_errors
+    )
+    assert (
+        NotBetweenOrAtError(ComponentType.three_winding_transformer, "clock_13", [1, 28], (0, 12)) in validation_errors
+    )
+    assert (
+        NotBetweenOrAtError(ComponentType.three_winding_transformer, "tap_pos", [1, 28], ("tap_min", "tap_max"))
+        in validation_errors
+    )
+    assert (
+        NotBetweenOrAtError(ComponentType.three_winding_transformer, "tap_nom", [1, 28], ("tap_min", "tap_max"))
+        in validation_errors
+    )
+    assert NotGreaterOrEqualError(ComponentType.three_winding_transformer, "tap_size", [1], 0) in validation_errors
+    assert (
+        InvalidEnumValueError(ComponentType.three_winding_transformer, "winding_1", [1, 28], WindingType)
+        in validation_errors
+    )
+    assert (
+        InvalidEnumValueError(ComponentType.three_winding_transformer, "winding_2", [1, 28], WindingType)
+        in validation_errors
+    )
+    assert (
+        InvalidEnumValueError(ComponentType.three_winding_transformer, "winding_3", [1, 28], WindingType)
+        in validation_errors
+    )
+    assert (
+        InvalidEnumValueError(ComponentType.three_winding_transformer, "tap_side", [1, 28], Branch3Side)
+        in validation_errors
+    )
 
 
 def test_validate_three_winding_transformer_ukpkminmax(input_data):
     validation_errors = validate_input_data(input_data, symmetric=False)
+    assert validation_errors is not None
     assert (
-        NotGreaterOrEqualError("three_winding_transformer", "uk_12_min", [29, 30], "pk_12_min/sn_1")
+        NotGreaterOrEqualError(ComponentType.three_winding_transformer, "uk_12_min", [29, 30], "pk_12_min/sn_1")
         in validation_errors
     )
     assert (
-        NotGreaterOrEqualError("three_winding_transformer", "uk_12_min", [1, 30], "pk_12_min/sn_2") in validation_errors
-    )
-    assert NotGreaterOrEqualError("three_winding_transformer", "uk_13_min", [29], "pk_13_min/sn_1") in validation_errors
-    assert NotGreaterOrEqualError("three_winding_transformer", "uk_13_min", [30], "pk_13_min/sn_3") in validation_errors
-    assert (
-        NotGreaterOrEqualError("three_winding_transformer", "uk_23_min", [1, 29], "pk_23_min/sn_2") in validation_errors
-    )
-    assert NotGreaterOrEqualError("three_winding_transformer", "uk_23_min", [30], "pk_23_min/sn_3") in validation_errors
-    assert NotBetweenError("three_winding_transformer", "uk_12_min", [1, 28], (0, 1)) in validation_errors
-    assert NotBetweenError("three_winding_transformer", "uk_13_min", [1, 28], (0, 1)) in validation_errors
-    assert NotBetweenError("three_winding_transformer", "uk_23_min", [1, 28], (0, 1)) in validation_errors
-    assert (
-        NotGreaterOrEqualError("three_winding_transformer", "uk_12_max", [29, 30], "pk_12_max/sn_1")
+        NotGreaterOrEqualError(ComponentType.three_winding_transformer, "uk_12_min", [1, 30], "pk_12_min/sn_2")
         in validation_errors
     )
     assert (
-        NotGreaterOrEqualError("three_winding_transformer", "uk_12_max", [1, 30], "pk_12_max/sn_2") in validation_errors
+        NotGreaterOrEqualError(ComponentType.three_winding_transformer, "uk_13_min", [29], "pk_13_min/sn_1")
+        in validation_errors
     )
-    assert NotGreaterOrEqualError("three_winding_transformer", "uk_13_max", [29], "pk_13_max/sn_1") in validation_errors
-    assert NotGreaterOrEqualError("three_winding_transformer", "uk_13_max", [30], "pk_13_max/sn_3") in validation_errors
     assert (
-        NotGreaterOrEqualError("three_winding_transformer", "uk_23_max", [1, 29], "pk_23_max/sn_2") in validation_errors
+        NotGreaterOrEqualError(ComponentType.three_winding_transformer, "uk_13_min", [30], "pk_13_min/sn_3")
+        in validation_errors
     )
-    assert NotGreaterOrEqualError("three_winding_transformer", "uk_23_max", [30], "pk_23_max/sn_3") in validation_errors
-    assert NotBetweenError("three_winding_transformer", "uk_12_max", [1, 28], (0, 1)) in validation_errors
-    assert NotBetweenError("three_winding_transformer", "uk_13_max", [1, 28], (0, 1)) in validation_errors
-    assert NotBetweenError("three_winding_transformer", "uk_23_max", [1, 28], (0, 1)) in validation_errors
-    assert NotGreaterOrEqualError("three_winding_transformer", "pk_12_min", [1], 0) in validation_errors
-    assert NotGreaterOrEqualError("three_winding_transformer", "pk_13_min", [1], 0) in validation_errors
-    assert NotGreaterOrEqualError("three_winding_transformer", "pk_23_min", [1], 0) in validation_errors
-    assert NotGreaterOrEqualError("three_winding_transformer", "pk_12_max", [1], 0) in validation_errors
-    assert NotGreaterOrEqualError("three_winding_transformer", "pk_13_max", [1], 0) in validation_errors
-    assert NotGreaterOrEqualError("three_winding_transformer", "pk_23_max", [1], 0) in validation_errors
+    assert (
+        NotGreaterOrEqualError(ComponentType.three_winding_transformer, "uk_23_min", [1, 29], "pk_23_min/sn_2")
+        in validation_errors
+    )
+    assert (
+        NotGreaterOrEqualError(ComponentType.three_winding_transformer, "uk_23_min", [30], "pk_23_min/sn_3")
+        in validation_errors
+    )
+    assert NotBetweenError(ComponentType.three_winding_transformer, "uk_12_min", [1, 28], (0, 1)) in validation_errors
+    assert NotBetweenError(ComponentType.three_winding_transformer, "uk_13_min", [1, 28], (0, 1)) in validation_errors
+    assert NotBetweenError(ComponentType.three_winding_transformer, "uk_23_min", [1, 28], (0, 1)) in validation_errors
+    assert (
+        NotGreaterOrEqualError(ComponentType.three_winding_transformer, "uk_12_max", [29, 30], "pk_12_max/sn_1")
+        in validation_errors
+    )
+    assert (
+        NotGreaterOrEqualError(ComponentType.three_winding_transformer, "uk_12_max", [1, 30], "pk_12_max/sn_2")
+        in validation_errors
+    )
+    assert (
+        NotGreaterOrEqualError(ComponentType.three_winding_transformer, "uk_13_max", [29], "pk_13_max/sn_1")
+        in validation_errors
+    )
+    assert (
+        NotGreaterOrEqualError(ComponentType.three_winding_transformer, "uk_13_max", [30], "pk_13_max/sn_3")
+        in validation_errors
+    )
+    assert (
+        NotGreaterOrEqualError(ComponentType.three_winding_transformer, "uk_23_max", [1, 29], "pk_23_max/sn_2")
+        in validation_errors
+    )
+    assert (
+        NotGreaterOrEqualError(ComponentType.three_winding_transformer, "uk_23_max", [30], "pk_23_max/sn_3")
+        in validation_errors
+    )
+    assert NotBetweenError(ComponentType.three_winding_transformer, "uk_12_max", [1, 28], (0, 1)) in validation_errors
+    assert NotBetweenError(ComponentType.three_winding_transformer, "uk_13_max", [1, 28], (0, 1)) in validation_errors
+    assert NotBetweenError(ComponentType.three_winding_transformer, "uk_23_max", [1, 28], (0, 1)) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.three_winding_transformer, "pk_12_min", [1], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.three_winding_transformer, "pk_13_min", [1], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.three_winding_transformer, "pk_23_min", [1], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.three_winding_transformer, "pk_12_max", [1], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.three_winding_transformer, "pk_13_max", [1], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.three_winding_transformer, "pk_23_max", [1], 0) in validation_errors
 
 
 def test_validate_input_data_transformer_tap_regulator(input_data):
     validation_errors = validate_input_data(input_data, calculation_type=CalculationType.power_flow)
-    assert NotBooleanError("transformer_tap_regulator", "status", [52, 1, 53]) in validation_errors
+    assert validation_errors is not None
+    assert NotBooleanError(ComponentType.transformer_tap_regulator, "status", [52, 1, 53]) in validation_errors
     assert (
         InvalidIdError(
-            "transformer_tap_regulator", "regulated_object", [1], ["transformer", "three_winding_transformer"]
+            ComponentType.transformer_tap_regulator,
+            "regulated_object",
+            [1],
+            ["transformer", "three_winding_transformer"],
         )
         in validation_errors
     )
     assert (
-        InvalidEnumValueError("transformer_tap_regulator", "control_side", [1], [BranchSide, Branch3Side])
+        InvalidEnumValueError(ComponentType.transformer_tap_regulator, "control_side", [1], [BranchSide, Branch3Side])
         in validation_errors
     )
     assert (
         InvalidAssociatedEnumValueError(
-            "transformer_tap_regulator", ["control_side", "regulated_object"], [52], [BranchSide]
+            ComponentType.transformer_tap_regulator, ["control_side", "regulated_object"], [52], [BranchSide]
         )
         in validation_errors
     )
-    assert NotGreaterOrEqualError("transformer_tap_regulator", "u_set", [52], 0.0) in validation_errors
-    assert NotGreaterThanError("transformer_tap_regulator", "u_band", [52, 1], 0.0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.transformer_tap_regulator, "u_set", [52], 0.0) in validation_errors
+    assert NotGreaterThanError(ComponentType.transformer_tap_regulator, "u_band", [52, 1], 0.0) in validation_errors
     assert (
-        NotGreaterOrEqualError("transformer_tap_regulator", "line_drop_compensation_r", [52], 0.0) in validation_errors
+        NotGreaterOrEqualError(ComponentType.transformer_tap_regulator, "line_drop_compensation_r", [52], 0.0)
+        in validation_errors
     )
     assert (
-        NotGreaterOrEqualError("transformer_tap_regulator", "line_drop_compensation_x", [1], 0.0) in validation_errors
+        NotGreaterOrEqualError(ComponentType.transformer_tap_regulator, "line_drop_compensation_x", [1], 0.0)
+        in validation_errors
     )
-    assert NotUniqueError("transformer_tap_regulator", "regulated_object", [51, 54]) in validation_errors
+    assert NotUniqueError(ComponentType.transformer_tap_regulator, "regulated_object", [51, 54]) in validation_errors
 
 
 def test_fault(input_data):
     validation_errors = validate_input_data(input_data, calculation_type=CalculationType.short_circuit)
+    assert validation_errors is not None
     assert InvalidEnumValueError(ComponentType.fault, "fault_type", [50], FaultType) in validation_errors
     assert InvalidEnumValueError(ComponentType.fault, "fault_phase", [50], FaultPhase) in validation_errors
-    assert FaultPhaseError(ComponentType.fault, ("fault_type", "fault_phase"), [1] + list(range(32, 51)))
+    assert FaultPhaseError(ComponentType.fault, ["fault_type", "fault_phase"], [1] + list(range(32, 51)))
     assert NotGreaterOrEqualError(ComponentType.fault, "r_f", [1], 0) in validation_errors
     assert (
         NotIdenticalError(
@@ -868,27 +945,30 @@ def test_fault(input_data):
 
 def test_validate_input_data_asym_calculation(input_data):
     validation_errors = validate_input_data(input_data, symmetric=False)
-    assert NotGreaterThanError("node", "u_rated", [1], 0) in validation_errors
-    assert NotUniqueError("node", "id", [2, 2]) in validation_errors
-    assert NotBooleanError("line", "from_status", [5]) in validation_errors
-    assert NotBooleanError("line", "to_status", [4]) in validation_errors
-    assert InvalidIdError("line", "from_node", [4], "node") in validation_errors
-    assert InvalidIdError("line", "to_node", [5], "node") in validation_errors
+    assert validation_errors is not None
+    assert NotGreaterThanError(ComponentType.node, "u_rated", [1], 0) in validation_errors
+    assert NotUniqueError(ComponentType.node, "id", [2, 2]) in validation_errors
+    assert NotBooleanError(ComponentType.line, "from_status", [5]) in validation_errors
+    assert NotBooleanError(ComponentType.line, "to_status", [4]) in validation_errors
+    assert InvalidIdError(ComponentType.line, "from_node", [4], "node") in validation_errors
+    assert InvalidIdError(ComponentType.line, "to_node", [5], "node") in validation_errors
 
 
 def test_validate_input_data_invalid_structure():
     with pytest.raises(TypeError, match=r"should be a Numpy structured array"):
-        validate_input_data({"node": np.array([[1, 10500.0], [2, 10500.0]])}, symmetric=True)
+        validate_input_data({ComponentType.node: np.array([[1, 10500.0], [2, 10500.0]])}, symmetric=True)
 
 
 def test_generic_branch_input_data(input_data):
     validation_errors = validate_input_data(input_data, symmetric=True)
-    assert NotGreaterThanError("generic_branch", "k", [6], 0) in validation_errors
-    assert NotGreaterOrEqualError("generic_branch", "sn", [6], 0) in validation_errors
+    assert validation_errors is not None
+    assert NotGreaterThanError(ComponentType.generic_branch, "k", [6], 0) in validation_errors
+    assert NotGreaterOrEqualError(ComponentType.generic_branch, "sn", [6], 0) in validation_errors
 
 
 def test_asym_line_input_data(input_data):
     validation_errors = validate_input_data(input_data, symmetric=True)
+    assert validation_errors is not None
     assert NotGreaterThanError(ComponentType.asym_line, "r_aa", [55], 0) in validation_errors
     assert NotGreaterThanError(ComponentType.asym_line, "r_ba", [55], 0) in validation_errors
     assert NotGreaterThanError(ComponentType.asym_line, "r_bb", [55], 0) in validation_errors

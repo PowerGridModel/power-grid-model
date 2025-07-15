@@ -191,7 +191,7 @@ def assert_valid_data_structure(data: Dataset, data_type: DatasetType) -> None:
     for component, array in data.items():
         # Check if component name is valid
         if component not in component_dtype:
-            raise KeyError(f"Unknown component '{component}' in {data_type}_data.")
+            raise KeyError(f"Unknown component '{component}' in {data_type} data.")
 
         # Check if component definition is as expected
         dtype = component_dtype[component]
@@ -199,7 +199,7 @@ def assert_valid_data_structure(data: Dataset, data_type: DatasetType) -> None:
             if array.dtype != dtype:
                 if not hasattr(array.dtype, "names") or not array.dtype.names:
                     raise TypeError(
-                        f"Unexpected Numpy array ({array.dtype}) for '{component}' {data_type}_data "
+                        f"Unexpected Numpy array ({array.dtype}) for '{component}' {data_type} data "
                         "(should be a Numpy structured array)."
                     )
                 raise TypeError(
@@ -208,7 +208,7 @@ def assert_valid_data_structure(data: Dataset, data_type: DatasetType) -> None:
                 )
         else:
             raise TypeError(
-                f"Unexpected data type {type(array).__name__} for '{component}' {data_type}_data "
+                f"Unexpected data type {type(array).__name__} for '{component}' {data_type} data "
                 "(should be a Numpy structured array)."
             )
 
@@ -245,7 +245,7 @@ def validate_ids(update_data: SingleDataset, input_data: SingleDataset) -> list[
 
     """
     errors = (
-        _ids_valid_in_update_data_set(update_data, input_data, component, "update_data") for component in update_data
+        _ids_valid_in_update_data_set(update_data, input_data, component, DatasetType.update) for component in update_data
     )
     return list(chain(*errors))
 
@@ -297,13 +297,13 @@ def validate_required_values(
     required: dict[ComponentType | str, list[str]] = {"base": ["id"]}
 
     # Nodes
-    required["node"] = required["base"] + ["u_rated"]
+    required[ComponentType.node] = required["base"] + ["u_rated"]
 
     # Branches
     required["branch"] = required["base"] + ["from_node", "to_node", "from_status", "to_status"]
-    required["link"] = required["branch"].copy()
-    required["line"] = required["branch"] + ["r1", "x1", "c1", "tan1"]
-    required["asym_line"] = required["branch"] + [
+    required[ComponentType.link] = required["branch"].copy()
+    required[ComponentType.line] = required["branch"] + ["r1", "x1", "c1", "tan1"]
+    required[ComponentType.asym_line] = required["branch"] + [
         "r_aa",
         "r_ba",
         "r_bb",
@@ -317,7 +317,7 @@ def validate_required_values(
         "x_cb",
         "x_cc",
     ]
-    required["transformer"] = required["branch"] + [
+    required[ComponentType.transformer] = required["branch"] + [
         "u1",
         "u2",
         "sn",
@@ -335,7 +335,7 @@ def validate_required_values(
     ]
     # Branch3
     required["branch3"] = required["base"] + ["node_1", "node_2", "node_3", "status_1", "status_2", "status_3"]
-    required["three_winding_transformer"] = required["branch3"] + [
+    required[ComponentType.three_winding_transformer] = required["branch3"] + [
         "u1",
         "u2",
         "u3",
@@ -363,23 +363,23 @@ def validate_required_values(
 
     # Regulators
     required["regulator"] = required["base"] + ["regulated_object", "status"]
-    required["transformer_tap_regulator"] = required["regulator"]
+    required[ComponentType.transformer_tap_regulator] = required["regulator"]
     if calculation_type is None or calculation_type == CalculationType.power_flow:
-        required["transformer_tap_regulator"] += ["control_side", "u_set", "u_band"]
+        required[ComponentType.transformer_tap_regulator] += ["control_side", "u_set", "u_band"]
 
     # Appliances
     required["appliance"] = required["base"] + ["node", "status"]
-    required["source"] = required["appliance"].copy()
+    required[ComponentType.source] = required["appliance"].copy()
     if calculation_type is None or calculation_type == CalculationType.power_flow:
         required["source"] += ["u_ref"]
-    required["shunt"] = required["appliance"] + ["g1", "b1"]
+    required[ComponentType.shunt] = required["appliance"] + ["g1", "b1"]
     required["generic_load_gen"] = required["appliance"] + ["type"]
     if calculation_type is None or calculation_type == CalculationType.power_flow:
         required["generic_load_gen"] += ["p_specified", "q_specified"]
-    required["sym_load"] = required["generic_load_gen"].copy()
-    required["asym_load"] = required["generic_load_gen"].copy()
-    required["sym_gen"] = required["generic_load_gen"].copy()
-    required["asym_gen"] = required["generic_load_gen"].copy()
+    required[ComponentType.sym_load] = required["generic_load_gen"].copy()
+    required[ComponentType.asym_load] = required["generic_load_gen"].copy()
+    required[ComponentType.sym_gen] = required["generic_load_gen"].copy()
+    required[ComponentType.asym_gen] = required["generic_load_gen"].copy()
 
     # Sensors
     required["sensor"] = required["base"] + ["measured_object"]
@@ -390,29 +390,29 @@ def validate_required_values(
         required["voltage_sensor"] += ["u_sigma", "u_measured"]
         required["power_sensor"] += ["power_sigma", "p_measured", "q_measured"]
         required["current_sensor"] += ["i_sigma", "i_angle_sigma", "i_measured", "i_angle_measured"]
-    required["sym_voltage_sensor"] = required["voltage_sensor"].copy()
-    required["asym_voltage_sensor"] = required["voltage_sensor"].copy()
-    required["sym_current_sensor"] = required["current_sensor"].copy()
-    required["asym_current_sensor"] = required["current_sensor"].copy()
+    required[ComponentType.sym_voltage_sensor] = required["voltage_sensor"].copy()
+    required[ComponentType.asym_voltage_sensor] = required["voltage_sensor"].copy()
+    required[ComponentType.sym_current_sensor] = required["current_sensor"].copy()
+    required[ComponentType.asym_current_sensor] = required["current_sensor"].copy()
 
     # Different requirements for individual sensors. Avoid shallow copy.
     for sensor_type in ("sym_power_sensor", "asym_power_sensor"):
         required[sensor_type] = required["power_sensor"].copy()
 
     # Faults
-    required["fault"] = required["base"] + ["fault_object"]
+    required[ComponentType.fault] = required["base"] + ["fault_object"]
     asym_sc = False
     if calculation_type is None or calculation_type == CalculationType.short_circuit:
-        required["fault"] += ["status", "fault_type"]
-        if "fault" in data:
+        required[ComponentType.fault] += ["status", "fault_type"]
+        if ComponentType.fault in data:
             for elem in data[ComponentType.fault]["fault_type"]:
                 if elem not in (FaultType.three_phase, FaultType.nan):
                     asym_sc = True
                     break
 
     if not symmetric or asym_sc:
-        required["line"] += ["r0", "x0", "c0", "tan0"]
-        required["shunt"] += ["g0", "b0"]
+        required[ComponentType.line] += ["r0", "x0", "c0", "tan0"]
+        required[ComponentType.shunt] += ["g0", "b0"]
 
     _process_power_sigma_and_p_q_sigma(data, ComponentType.sym_power_sensor)
     _process_power_sigma_and_p_q_sigma(data, ComponentType.asym_power_sensor)
@@ -476,19 +476,19 @@ def validate_values(data: SingleDataset, calculation_type: CalculationType | Non
     )
 
     component_validators = {
-        "node": validate_node,
-        "line": validate_line,
-        "asym_line": validate_asym_line,
-        "link": lambda d: validate_branch(d, ComponentType.link),
-        "generic_branch": validate_generic_branch,
-        "transformer": validate_transformer,
-        "three_winding_transformer": validate_three_winding_transformer,
-        "source": validate_source,
-        "sym_load": lambda d: validate_generic_load_gen(d, ComponentType.sym_load),
-        "sym_gen": lambda d: validate_generic_load_gen(d, ComponentType.sym_gen),
-        "asym_load": lambda d: validate_generic_load_gen(d, ComponentType.asym_load),
-        "asym_gen": lambda d: validate_generic_load_gen(d, ComponentType.asym_gen),
-        "shunt": validate_shunt,
+        ComponentType.node: validate_node,
+        ComponentType.line: validate_line,
+        ComponentType.asym_line: validate_asym_line,
+        ComponentType.link: lambda d: validate_branch(d, ComponentType.link),
+        ComponentType.generic_branch: validate_generic_branch,
+        ComponentType.transformer: validate_transformer,
+        ComponentType.three_winding_transformer: validate_three_winding_transformer,
+        ComponentType.source: validate_source,
+        ComponentType.sym_load: lambda d: validate_generic_load_gen(d, ComponentType.sym_load),
+        ComponentType.sym_gen: lambda d: validate_generic_load_gen(d, ComponentType.sym_gen),
+        ComponentType.asym_load: lambda d: validate_generic_load_gen(d, ComponentType.asym_load),
+        ComponentType.asym_gen: lambda d: validate_generic_load_gen(d, ComponentType.asym_gen),
+        ComponentType.shunt: validate_shunt,
     }
 
     for component, validator in component_validators.items():
@@ -511,10 +511,10 @@ def validate_values(data: SingleDataset, calculation_type: CalculationType | Non
 
         errors += validate_no_mixed_sensors_on_same_terminal(data)
 
-    if calculation_type in (None, CalculationType.short_circuit) and "fault" in data:
+    if calculation_type in (None, CalculationType.short_circuit) and ComponentType.fault in data:
         errors += validate_fault(data)
 
-    if calculation_type in (None, CalculationType.power_flow) and "transformer_tap_regulator" in data:
+    if calculation_type in (None, CalculationType.power_flow) and ComponentType.transformer_tap_regulator in data:
         errors += validate_transformer_tap_regulator(data)
 
     return errors
@@ -982,7 +982,7 @@ def validate_generic_power_sensor(data: SingleDataset, component: ComponentType)
         ref_components=ComponentType.node,
         measured_terminal_type=MeasuredTerminalType.node,
     )
-    if component in ("sym_power_sensor", "asym_power_sensor"):
+    if component in (ComponentType.sym_power_sensor, ComponentType.asym_power_sensor):
         errors += _valid_p_q_sigma(data, component)
 
     return errors
