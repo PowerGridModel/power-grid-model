@@ -83,7 +83,7 @@ def original_batch_data() -> dict[str, np.ndarray]:
     asym_load = initialize_array(DatasetType.update, ComponentType.asym_load, (3, 2))
     asym_load["id"] = [[9, 10], [9, 10], [9, 10]]
 
-    return {"line": line, "asym_load": asym_load}
+    return {ComponentType.line: line, ComponentType.asym_load: asym_load}
 
 
 @pytest.fixture

@@ -372,7 +372,7 @@ def validate_required_values(
     required["appliance"] = required["base"] + ["node", "status"]
     required[ComponentType.source] = required["appliance"].copy()
     if calculation_type is None or calculation_type == CalculationType.power_flow:
-        required["source"] += ["u_ref"]
+        required[ComponentType.source] += ["u_ref"]
     required[ComponentType.shunt] = required["appliance"] + ["g1", "b1"]
     required["generic_load_gen"] = required["appliance"] + ["type"]
     if calculation_type is None or calculation_type == CalculationType.power_flow:
@@ -397,7 +397,7 @@ def validate_required_values(
     required[ComponentType.asym_current_sensor] = required["current_sensor"].copy()
 
     # Different requirements for individual sensors. Avoid shallow copy.
-    for sensor_type in ("sym_power_sensor", "asym_power_sensor"):
+    for sensor_type in (ComponentType.sym_power_sensor, ComponentType.asym_power_sensor):
         required[sensor_type] = required["power_sensor"].copy()
 
     # Faults
@@ -497,17 +497,17 @@ def validate_values(data: SingleDataset, calculation_type: CalculationType | Non
             errors += validator(data)
 
     if calculation_type in (None, CalculationType.state_estimation):
-        if "sym_voltage_sensor" in data:
+        if ComponentType.sym_voltage_sensor in data:
             errors += validate_generic_voltage_sensor(data, ComponentType.sym_voltage_sensor)
-        if "asym_voltage_sensor" in data:
+        if ComponentType.asym_voltage_sensor in data:
             errors += validate_generic_voltage_sensor(data, ComponentType.asym_voltage_sensor)
-        if "sym_power_sensor" in data:
+        if ComponentType.sym_power_sensor in data:
             errors += validate_generic_power_sensor(data, ComponentType.sym_power_sensor)
-        if "asym_power_sensor" in data:
+        if ComponentType.asym_power_sensor in data:
             errors += validate_generic_power_sensor(data, ComponentType.asym_power_sensor)
-        if "sym_current_sensor" in data:
+        if ComponentType.sym_current_sensor in data:
             errors += validate_generic_current_sensor(data, ComponentType.sym_current_sensor)
-        if "asym_current_sensor" in data:
+        if ComponentType.asym_current_sensor in data:
             errors += validate_generic_current_sensor(data, ComponentType.asym_current_sensor)
 
         errors += validate_no_mixed_sensors_on_same_terminal(data)

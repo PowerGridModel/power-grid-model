@@ -139,12 +139,12 @@ def original_data() -> dict[ComponentType, np.ndarray]:
     transformer["tap_pos"] = [-1, 6, -4]
     transformer["tap_min"] = [-2, 4, 3]
     transformer["tap_max"] = [2, -4, -3]
-    transformer["tap_nom"] = [-3, _nan_type("transformer", "tap_nom"), 4]
+    transformer["tap_nom"] = [-3, _nan_type(ComponentType.transformer, "tap_nom"), 4]
     transformer["tap_size"] = [262.5, 0.0, -10.0]
-    transformer["uk_min"] = [0.0000000005, _nan_type("transformer", "uk_min"), 0.9]
-    transformer["uk_max"] = [0.0000000005, _nan_type("transformer", "uk_max"), 0.8]
-    transformer["pk_min"] = [300.0, 0.0, _nan_type("transformer", "pk_min")]
-    transformer["pk_max"] = [400.0, -0.1, _nan_type("transformer", "pk_max")]
+    transformer["uk_min"] = [0.0000000005, _nan_type(ComponentType.transformer, "uk_min"), 0.9]
+    transformer["uk_max"] = [0.0000000005, _nan_type(ComponentType.transformer, "uk_max"), 0.8]
+    transformer["pk_min"] = [300.0, 0.0, _nan_type(ComponentType.transformer, "pk_min")]
+    transformer["pk_max"] = [400.0, -0.1, _nan_type(ComponentType.transformer, "pk_max")]
 
     three_winding_transformer = initialize_array(DatasetType.input, ComponentType.three_winding_transformer, 4)
     three_winding_transformer["id"] = [1, 28, 29, 30]
@@ -178,49 +178,79 @@ def original_data() -> dict[ComponentType, np.ndarray]:
     three_winding_transformer["tap_min"] = [-10, -10, -10, -10]
     three_winding_transformer["tap_max"] = [10, 10, 10, 10]
     three_winding_transformer["tap_size"] = [-12, 0, 3, 130]
-    three_winding_transformer["tap_nom"] = [-12, 41, _nan_type("three_winding_transformer", "tap_nom"), 0]
+    three_winding_transformer["tap_nom"] = [-12, 41, _nan_type(ComponentType.three_winding_transformer, "tap_nom"), 0]
     three_winding_transformer["uk_12_min"] = [
-        _nan_type("three_winding_transformer", "uk_12_min"),
+        _nan_type(ComponentType.three_winding_transformer, "uk_12_min"),
         1.1,
         0.05,
-        _nan_type("three_winding_transformer", "uk_12_min"),
+        _nan_type(ComponentType.three_winding_transformer, "uk_12_min"),
     ]
     three_winding_transformer["uk_13_min"] = [
-        _nan_type("three_winding_transformer", "uk_13_min"),
+        _nan_type(ComponentType.three_winding_transformer, "uk_13_min"),
         1.2,
         0.3,
-        _nan_type("three_winding_transformer", "uk_13_min"),
+        _nan_type(ComponentType.three_winding_transformer, "uk_13_min"),
     ]
     three_winding_transformer["uk_23_min"] = [
-        _nan_type("three_winding_transformer", "uk_23_min"),
+        _nan_type(ComponentType.three_winding_transformer, "uk_23_min"),
         1,
         0.15,
-        _nan_type("three_winding_transformer", "uk_23_min"),
+        _nan_type(ComponentType.three_winding_transformer, "uk_23_min"),
     ]
-    three_winding_transformer["pk_12_min"] = [-450, _nan_type("three_winding_transformer", "pk_12_min"), 10, 40]
-    three_winding_transformer["pk_13_min"] = [-40, _nan_type("three_winding_transformer", "pk_13_min"), 40, 50]
-    three_winding_transformer["pk_23_min"] = [-120, _nan_type("three_winding_transformer", "pk_23_min"), 40, 30]
+    three_winding_transformer["pk_12_min"] = [
+        -450,
+        _nan_type(ComponentType.three_winding_transformer, "pk_12_min"),
+        10,
+        40,
+    ]
+    three_winding_transformer["pk_13_min"] = [
+        -40,
+        _nan_type(ComponentType.three_winding_transformer, "pk_13_min"),
+        40,
+        50,
+    ]
+    three_winding_transformer["pk_23_min"] = [
+        -120,
+        _nan_type(ComponentType.three_winding_transformer, "pk_23_min"),
+        40,
+        30,
+    ]
     three_winding_transformer["uk_12_max"] = [
-        _nan_type("three_winding_transformer", "uk_12_max"),
+        _nan_type(ComponentType.three_winding_transformer, "uk_12_max"),
         1.1,
         0.05,
-        _nan_type("three_winding_transformer", "uk_12_max"),
+        _nan_type(ComponentType.three_winding_transformer, "uk_12_max"),
     ]
     three_winding_transformer["uk_13_max"] = [
-        _nan_type("three_winding_transformer", "uk_13_max"),
+        _nan_type(ComponentType.three_winding_transformer, "uk_13_max"),
         1.2,
         0.3,
-        _nan_type("three_winding_transformer", "uk_13_max"),
+        _nan_type(ComponentType.three_winding_transformer, "uk_13_max"),
     ]
     three_winding_transformer["uk_23_max"] = [
-        _nan_type("three_winding_transformer", "uk_23_max"),
+        _nan_type(ComponentType.three_winding_transformer, "uk_23_max"),
         1,
         0.15,
-        _nan_type("three_winding_transformer", "uk_23_max"),
+        _nan_type(ComponentType.three_winding_transformer, "uk_23_max"),
     ]
-    three_winding_transformer["pk_12_max"] = [-450, _nan_type("three_winding_transformer", "pk_12_max"), 10, 40]
-    three_winding_transformer["pk_13_max"] = [-40, _nan_type("three_winding_transformer", "pk_12_max"), 40, 50]
-    three_winding_transformer["pk_23_max"] = [-120, _nan_type("three_winding_transformer", "pk_12_max"), 40, 30]
+    three_winding_transformer["pk_12_max"] = [
+        -450,
+        _nan_type(ComponentType.three_winding_transformer, "pk_12_max"),
+        10,
+        40,
+    ]
+    three_winding_transformer["pk_13_max"] = [
+        -40,
+        _nan_type(ComponentType.three_winding_transformer, "pk_12_max"),
+        40,
+        50,
+    ]
+    three_winding_transformer["pk_23_max"] = [
+        -120,
+        _nan_type(ComponentType.three_winding_transformer, "pk_12_max"),
+        40,
+        30,
+    ]
 
     transformer_tap_regulator = initialize_array(DatasetType.input, ComponentType.transformer_tap_regulator, 5)
     transformer_tap_regulator["id"] = [51, 52, 53, 54, 1]
@@ -320,13 +350,13 @@ def original_data() -> dict[ComponentType, np.ndarray]:
     fault = initialize_array(DatasetType.input, ComponentType.fault, 20)
     fault["id"] = [1] + list(range(32, 51))
     fault["status"] = [0, -1, 2] + 17 * [1]
-    fault["fault_type"] = 6 * [0] + 4 * [1] + 4 * [2] + 4 * [3] + [_nan_type("fault", "fault_type"), 4]
+    fault["fault_type"] = 6 * [0] + 4 * [1] + 4 * [2] + 4 * [3] + [_nan_type(ComponentType.fault, "fault_type"), 4]
     fault["fault_phase"] = (
-        list(range(1, 7)) + [0, 4, 5, 6] + 2 * list(range(4)) + [_nan_type("fault", "fault_phase"), 7]
+        list(range(1, 7)) + [0, 4, 5, 6] + 2 * list(range(4)) + [_nan_type(ComponentType.fault, "fault_phase"), 7]
     )
     fault["fault_object"] = [200, 3] + list(range(10, 28, 2)) + 9 * [0]
-    fault["r_f"] = [-1.0, 0.0, 1.0] + 17 * [_nan_type("fault", "r_f")]
-    fault["x_f"] = [-1.0, 0.0, 1.0] + 17 * [_nan_type("fault", "x_f")]
+    fault["r_f"] = [-1.0, 0.0, 1.0] + 17 * [_nan_type(ComponentType.fault, "r_f")]
+    fault["x_f"] = [-1.0, 0.0, 1.0] + 17 * [_nan_type(ComponentType.fault, "x_f")]
     data = {
         ComponentType.node: node,
         ComponentType.line: line,
@@ -443,21 +473,21 @@ def test_validate_input_data_sym_calculation(input_data):
 
     assert NotBooleanError(ComponentType.line, "from_status", [5]) in validation_errors
     assert NotBooleanError(ComponentType.line, "to_status", [4]) in validation_errors
-    assert InvalidIdError(ComponentType.line, "from_node", [4], "node") in validation_errors
-    assert InvalidIdError(ComponentType.line, "to_node", [5], "node") in validation_errors
+    assert InvalidIdError(ComponentType.line, "from_node", [4], ComponentType.node) in validation_errors
+    assert InvalidIdError(ComponentType.line, "to_node", [5], ComponentType.node) in validation_errors
     assert TwoValuesZeroError(ComponentType.line, ["r1", "x1"], [3]) in validation_errors
     assert TwoValuesZeroError(ComponentType.line, ["r0", "x0"], [4]) in validation_errors
     assert NotGreaterThanError(ComponentType.line, "i_n", [3, 4], 0) in validation_errors
 
     assert NotBooleanError(ComponentType.link, "from_status", [12]) in validation_errors
     assert NotBooleanError(ComponentType.link, "to_status", [13]) in validation_errors
-    assert InvalidIdError(ComponentType.link, "from_node", [13], "node") in validation_errors
-    assert InvalidIdError(ComponentType.link, "to_node", [12], "node") in validation_errors
+    assert InvalidIdError(ComponentType.link, "from_node", [13], ComponentType.node) in validation_errors
+    assert InvalidIdError(ComponentType.link, "to_node", [12], ComponentType.node) in validation_errors
 
     assert NotBooleanError(ComponentType.transformer, "from_status", [15]) in validation_errors
     assert NotBooleanError(ComponentType.transformer, "to_status", [1]) in validation_errors
-    assert InvalidIdError(ComponentType.transformer, "from_node", [14], "node") in validation_errors
-    assert InvalidIdError(ComponentType.transformer, "to_node", [14], "node") in validation_errors
+    assert InvalidIdError(ComponentType.transformer, "from_node", [14], ComponentType.node) in validation_errors
+    assert InvalidIdError(ComponentType.transformer, "to_node", [14], ComponentType.node) in validation_errors
     assert NotGreaterThanError(ComponentType.transformer, "u1", [14, 15], 0) in validation_errors
     assert NotGreaterThanError(ComponentType.transformer, "u2", [14, 15], 0) in validation_errors
     assert NotGreaterThanError(ComponentType.transformer, "sn", [14, 15], 0) in validation_errors
@@ -485,38 +515,44 @@ def test_validate_input_data_sym_calculation(input_data):
     assert InvalidEnumValueError(ComponentType.transformer, "winding_to", [1], WindingType) in validation_errors
     assert InvalidEnumValueError(ComponentType.transformer, "tap_side", [1], BranchSide) in validation_errors
 
-    assert InvalidIdError(ComponentType.source, "node", [16], "node") in validation_errors
+    assert InvalidIdError(ComponentType.source, "node", [16], ComponentType.node) in validation_errors
     assert NotBooleanError(ComponentType.source, "status", [17, 1]) in validation_errors
     assert NotGreaterThanError(ComponentType.source, "u_ref", [16, 17], 0) in validation_errors
     assert NotGreaterThanError(ComponentType.source, "sk", [16, 1], 0) in validation_errors
     assert NotGreaterOrEqualError(ComponentType.source, "rx_ratio", [17], 0) in validation_errors
     assert NotGreaterThanError(ComponentType.source, "z01_ratio", [16, 17], 0) in validation_errors
 
-    assert InvalidIdError(ComponentType.shunt, "node", [18], "node") in validation_errors
+    assert InvalidIdError(ComponentType.shunt, "node", [18], ComponentType.node) in validation_errors
     assert NotBooleanError(ComponentType.shunt, "status", [19, 1]) in validation_errors
 
-    assert InvalidIdError(ComponentType.sym_load, "node", [1], "node") in validation_errors
+    assert InvalidIdError(ComponentType.sym_load, "node", [1], ComponentType.node) in validation_errors
     assert NotBooleanError(ComponentType.sym_load, "status", [20, 21]) in validation_errors
     assert InvalidEnumValueError(ComponentType.sym_load, "type", [21], LoadGenType) in validation_errors
 
-    assert InvalidIdError(ComponentType.sym_gen, "node", [1], "node") in validation_errors
+    assert InvalidIdError(ComponentType.sym_gen, "node", [1], ComponentType.node) in validation_errors
     assert NotBooleanError(ComponentType.sym_gen, "status", [22, 23]) in validation_errors
     assert InvalidEnumValueError(ComponentType.sym_gen, "type", [22], LoadGenType) in validation_errors
 
-    assert InvalidIdError(ComponentType.asym_load, "node", [1], "node") in validation_errors
+    assert InvalidIdError(ComponentType.asym_load, "node", [1], ComponentType.node) in validation_errors
     assert NotBooleanError(ComponentType.asym_load, "status", [24, 25]) in validation_errors
     assert InvalidEnumValueError(ComponentType.asym_load, "type", [1], LoadGenType) in validation_errors
 
-    assert InvalidIdError(ComponentType.asym_gen, "node", [1], "node") in validation_errors
+    assert InvalidIdError(ComponentType.asym_gen, "node", [1], ComponentType.node) in validation_errors
     assert NotBooleanError(ComponentType.asym_gen, "status", [26, 27]) in validation_errors
     assert InvalidEnumValueError(ComponentType.asym_gen, "type", [1, 26], LoadGenType) in validation_errors
 
-    assert InvalidIdError(ComponentType.sym_voltage_sensor, "measured_object", [8, 10], "node") in validation_errors
+    assert (
+        InvalidIdError(ComponentType.sym_voltage_sensor, "measured_object", [8, 10], ComponentType.node)
+        in validation_errors
+    )
     assert NotGreaterThanError(ComponentType.sym_voltage_sensor, "u_measured", [7, 10], 0) in validation_errors
     assert NotGreaterThanError(ComponentType.sym_voltage_sensor, "u_sigma", [9, 10], 0) in validation_errors
     # TODO check if u_sigma = np.nan is detected with missing values
 
-    assert InvalidIdError(ComponentType.asym_voltage_sensor, "measured_object", [8, 10], "node") in validation_errors
+    assert (
+        InvalidIdError(ComponentType.asym_voltage_sensor, "measured_object", [8, 10], ComponentType.node)
+        in validation_errors
+    )
     assert NotGreaterThanError(ComponentType.asym_voltage_sensor, "u_measured", [9, 10], 0) in validation_errors
     assert NotGreaterThanError(ComponentType.asym_voltage_sensor, "u_sigma", [9, 10], 0) in validation_errors
 
@@ -597,7 +633,7 @@ def test_validate_input_data_sym_calculation(input_data):
         in validation_errors
     )
     assert (
-        InvalidEnumValueError("asym_power_sensor", "measured_terminal_type", [9], MeasuredTerminalType)
+        InvalidEnumValueError(ComponentType.asym_power_sensor, "measured_terminal_type", [9], MeasuredTerminalType)
         in validation_errors
     )
 
@@ -731,7 +767,10 @@ def test_validate_input_data_sym_calculation(input_data):
     assert NotGreaterOrEqualError(ComponentType.transformer, "uk_max", [15], "uk_min") not in validation_errors
 
     assert NotBooleanError(ComponentType.fault, "status", [32, 33]) in validation_errors
-    assert InvalidIdError(ComponentType.fault, "fault_object", [1] + list(range(32, 42)), ["node"]) in validation_errors
+    assert (
+        InvalidIdError(ComponentType.fault, "fault_object", [1] + list(range(32, 42)), [ComponentType.node])
+        in validation_errors
+    )
 
 
 def test_validate_three_winding_transformer(input_data):
@@ -740,9 +779,15 @@ def test_validate_three_winding_transformer(input_data):
     assert NotBooleanError(ComponentType.three_winding_transformer, "status_1", [28]) in validation_errors
     assert NotBooleanError(ComponentType.three_winding_transformer, "status_2", [1]) in validation_errors
     assert NotBooleanError(ComponentType.three_winding_transformer, "status_3", [29]) in validation_errors
-    assert InvalidIdError(ComponentType.three_winding_transformer, "node_1", [29], "node") in validation_errors
-    assert InvalidIdError(ComponentType.three_winding_transformer, "node_2", [28], "node") in validation_errors
-    assert InvalidIdError(ComponentType.three_winding_transformer, "node_3", [29], "node") in validation_errors
+    assert (
+        InvalidIdError(ComponentType.three_winding_transformer, "node_1", [29], ComponentType.node) in validation_errors
+    )
+    assert (
+        InvalidIdError(ComponentType.three_winding_transformer, "node_2", [28], ComponentType.node) in validation_errors
+    )
+    assert (
+        InvalidIdError(ComponentType.three_winding_transformer, "node_3", [29], ComponentType.node) in validation_errors
+    )
     assert NotGreaterThanError(ComponentType.three_winding_transformer, "u1", [1, 28], 0) in validation_errors
     assert NotGreaterThanError(ComponentType.three_winding_transformer, "u2", [1, 28], 0) in validation_errors
     assert NotGreaterThanError(ComponentType.three_winding_transformer, "u3", [1, 28], 0) in validation_errors
@@ -889,7 +934,7 @@ def test_validate_input_data_transformer_tap_regulator(input_data):
             ComponentType.transformer_tap_regulator,
             "regulated_object",
             [1],
-            ["transformer", "three_winding_transformer"],
+            [ComponentType.transformer, ComponentType.three_winding_transformer],
         )
         in validation_errors
     )
@@ -928,7 +973,7 @@ def test_fault(input_data):
             ComponentType.fault,
             "fault_type",
             list(range(32, 51)),
-            5 * [0] + 4 * [1] + 4 * [2] + 4 * [3] + [_nan_type("fault", "fault_type"), 4],
+            5 * [0] + 4 * [1] + 4 * [2] + 4 * [3] + [_nan_type(ComponentType.fault, "fault_type"), 4],
         )
         in validation_errors
     )
@@ -937,7 +982,7 @@ def test_fault(input_data):
             ComponentType.fault,
             "fault_phase",
             list(range(32, 51)),
-            list(range(2, 7)) + [0, 4, 5, 6] + 2 * list(range(4)) + [_nan_type("fault", "fault_phase"), 7],
+            list(range(2, 7)) + [0, 4, 5, 6] + 2 * list(range(4)) + [_nan_type(ComponentType.fault, "fault_phase"), 7],
         )
         in validation_errors
     )
@@ -950,8 +995,8 @@ def test_validate_input_data_asym_calculation(input_data):
     assert NotUniqueError(ComponentType.node, "id", [2, 2]) in validation_errors
     assert NotBooleanError(ComponentType.line, "from_status", [5]) in validation_errors
     assert NotBooleanError(ComponentType.line, "to_status", [4]) in validation_errors
-    assert InvalidIdError(ComponentType.line, "from_node", [4], "node") in validation_errors
-    assert InvalidIdError(ComponentType.line, "to_node", [5], "node") in validation_errors
+    assert InvalidIdError(ComponentType.line, "from_node", [4], ComponentType.node) in validation_errors
+    assert InvalidIdError(ComponentType.line, "to_node", [5], ComponentType.node) in validation_errors
 
 
 def test_validate_input_data_invalid_structure():

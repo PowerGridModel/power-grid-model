@@ -337,7 +337,7 @@ def single_asym_output_dataset():
 
 
 def single_sc_output_dataset():
-    result = empty_dataset("sc_output")
+    result = empty_dataset(DatasetType.sc_output)
     result["attributes"] = {"fault": ["id", "i_f"]}
     result["data"] = {
         "node": [

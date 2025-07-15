@@ -778,11 +778,11 @@ def test_validate_generic_power_sensor__all_terminal_types(
     ("ref_component", "measured_terminal_type"),
     [
         (
-            [ComponentType.line, "asym_line", "generic_branch", ComponentType.transformer],
+            [ComponentType.line, ComponentType.asym_line, ComponentType.generic_branch, ComponentType.transformer],
             MeasuredTerminalType.branch_from,
         ),
         (
-            [ComponentType.line, "asym_line", "generic_branch", ComponentType.transformer],
+            [ComponentType.line, ComponentType.asym_line, ComponentType.generic_branch, ComponentType.transformer],
             MeasuredTerminalType.branch_to,
         ),
         (ComponentType.source, MeasuredTerminalType.source),
@@ -800,7 +800,9 @@ def test_validate_generic_power_sensor__all_terminal_types(
 @patch("power_grid_model.validation._validation._all_valid_enum_values", new=MagicMock())
 @patch("power_grid_model.validation._validation._all_valid_ids")
 def test_validate_generic_power_sensor__terminal_types(
-    _all_valid_ids: MagicMock, ref_component: str | list[str], measured_terminal_type: MeasuredTerminalType
+    _all_valid_ids: MagicMock,
+    ref_component: ComponentType | list[ComponentType],
+    measured_terminal_type: MeasuredTerminalType,
 ):
     # Act
     validate_generic_power_sensor(data={}, component="")  # type: ignore
@@ -911,11 +913,11 @@ def test_validate_generic_current_sensor__only_branches_supported(
     ("ref_component", "measured_terminal_type"),
     [
         (
-            [ComponentType.line, "asym_line", "generic_branch", ComponentType.transformer],
+            [ComponentType.line, ComponentType.asym_line, ComponentType.generic_branch, ComponentType.transformer],
             MeasuredTerminalType.branch_from,
         ),
         (
-            [ComponentType.line, "asym_line", "generic_branch", ComponentType.transformer],
+            [ComponentType.line, ComponentType.asym_line, ComponentType.generic_branch, ComponentType.transformer],
             MeasuredTerminalType.branch_to,
         ),
         (ComponentType.three_winding_transformer, MeasuredTerminalType.branch3_1),
@@ -934,7 +936,9 @@ def test_validate_generic_current_sensor__only_branches_supported(
 )
 @patch("power_grid_model.validation._validation._all_valid_ids")
 def test_validate_generic_current_sensor__terminal_types(
-    _all_valid_ids: MagicMock, ref_component: str | list[str], measured_terminal_type: MeasuredTerminalType
+    _all_valid_ids: MagicMock,
+    ref_component: ComponentType | list[ComponentType],
+    measured_terminal_type: MeasuredTerminalType,
 ):
     # Act
     validate_generic_current_sensor(data={}, component="")  # type: ignore

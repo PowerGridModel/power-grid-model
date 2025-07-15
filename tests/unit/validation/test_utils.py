@@ -111,7 +111,7 @@ def test_update_input_data_int_nan():
         input_data={ComponentType.line: input_line}, update_data={ComponentType.line: update_line}
     )
 
-    np.testing.assert_array_equal(merged["line"]["from_status"], [0, -128, 1])
+    np.testing.assert_array_equal(merged[ComponentType.line]["from_status"], [0, -128, 1])
 
 
 def test_update_input_data_asym_nans():
