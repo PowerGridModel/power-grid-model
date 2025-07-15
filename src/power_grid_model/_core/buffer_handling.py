@@ -118,13 +118,12 @@ def _get_raw_attribute_data_view(data: np.ndarray, schema: ComponentMetaData, at
         a raw view on the data set.
     """
     dense_batch_ndim = 2
-    dense_batch_asym_attr_ndim = dense_batch_ndim + 1
-    n_asym_values = 3
-    shape = schema.dtype[attribute].shape
 
-    true_shape = shape[0] if shape else 1
-
-    if true_shape <= dense_batch_ndim or (true_shape == dense_batch_asym_attr_ndim and data.shape[-1] == n_asym_values):
+    attr_schema = schema.dtype[attribute]
+    attr_shape_start = data.ndim - attr_schema.ndim
+    dataset_shape = data.shape[:attr_shape_start]
+    attr_shape = data.shape[attr_shape_start:]
+    if len(dataset_shape) <= dense_batch_ndim and attr_shape == attr_schema.shape:
         return _get_raw_data_view(data, dtype=schema.dtype[attribute].base)
     raise ValueError("Given data has a different schema than supported.")
 
