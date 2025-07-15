@@ -102,10 +102,7 @@ class CodeGenerator:
         # create list
         all_map = {}
         for dataset in dataset_meta_data:
-            if dataset.is_template:
-                prefixes = ["sym_", "asym_"]
-            else:
-                prefixes = [""]
+            prefixes = ["sym_", "asym_"] if dataset.is_template else [""]
             for prefix in prefixes:
                 all_components = {}
                 for component in dataset.components:

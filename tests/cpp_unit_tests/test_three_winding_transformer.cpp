@@ -326,7 +326,7 @@ TEST_CASE("Test three winding transformer") {
         BranchSolverOutput<symmetric_t> const b3_output{
             .s_f = (3.0 + 1.0i), .s_t = (1.0 + 1.0i), .i_f = (1.5 - 2.5i), .i_t = (1.5 + 2.0i)};
 
-        Branch3Output<symmetric_t> sym_output = vec[0].get_output(b1_output, b2_output, b3_output);
+        Branch3Output<symmetric_t> const sym_output = vec[0].get_output(b1_output, b2_output, b3_output);
 
         double const out_p_1 = base_power<symmetric_t> * 1;
         double const out_q_1 = base_power<symmetric_t> * (-2);

@@ -59,7 +59,8 @@ template <class Data> struct AttributeBuffer {
     Idx stride{1};
 };
 
-template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRange {
+template <typename T, dataset_type_tag dataset_type>
+class ColumnarAttributeRange : public std::ranges::view_interface<ColumnarAttributeRange<T, dataset_type>> {
   public:
     using Data = std::conditional_t<is_data_mutable_v<dataset_type>, void, void const>;
 
@@ -73,7 +74,7 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
         Proxy(Idx idx, std::span<AttributeBuffer<Data> const> attribute_buffers)
             : idx_{idx}, attribute_buffers_{std::move(attribute_buffers)} {}
 
-        Proxy const& operator=(value_type const& value) const
+        Proxy& operator=(value_type const& value)
             requires is_data_mutable_v<dataset_type>
         {
             for (auto const& attribute_buffer : attribute_buffers_) {
@@ -87,12 +88,6 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
                         *buffer_ptr = attribute_ref;
                     });
             }
-            return *this;
-        }
-        Proxy& operator=(value_type const& value)
-            requires is_data_mutable_v<dataset_type>
-        {
-            static_cast<Proxy const&>(*this) = value;
             return *this;
         }
         operator value_type() const { return get(); }
@@ -161,7 +156,6 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
     constexpr bool empty() const { return size_ == 0; }
     iterator begin() const { return get(0); }
     iterator end() const { return get(size_); }
-    auto iter() const { return std::ranges::subrange{begin(), end()}; }
     auto operator[](Idx idx) const { return *get(idx); }
 
   private:

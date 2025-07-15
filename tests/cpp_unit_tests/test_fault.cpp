@@ -57,7 +57,7 @@ TEST_CASE("Test fault") {
                                    .fault_object = 4,
                                    .r_f = nan,
                                    .x_f = nan}};
-        FaultCalcParam param = fault_nan_imp.calc_param(u_rated);
+        FaultCalcParam const param = fault_nan_imp.calc_param(u_rated);
         CHECK(std::isinf(param.y_fault.real()));
         CHECK(std::isinf(param.y_fault.imag()));
         CHECK(param.fault_type == FaultType::two_phase_to_ground);
@@ -72,7 +72,7 @@ TEST_CASE("Test fault") {
                                    .fault_object = 4,
                                    .r_f = nan,
                                    .x_f = nan}};
-        FaultCalcParam param = fault_nan_imp.calc_param(u_rated);
+        FaultCalcParam const param = fault_nan_imp.calc_param(u_rated);
         CHECK(std::isinf(param.y_fault.real()));
         CHECK(std::isinf(param.y_fault.imag()));
         CHECK(param.fault_type == FaultType::three_phase);
@@ -91,7 +91,7 @@ TEST_CASE("Test fault") {
     }
 
     SUBCASE("Test get_null_output") {
-        FaultOutput output = fault.get_null_output();
+        FaultOutput const output = fault.get_null_output();
         CHECK(output.id == 1);
         CHECK(!output.energized);
     }
@@ -109,7 +109,7 @@ TEST_CASE("Test fault") {
     }
 
     SUBCASE("Test get_output") {
-        FaultOutput output = fault.get_output();
+        FaultOutput const output = fault.get_output();
         CHECK(output.id == 1);
         CHECK(!output.energized);
     }
@@ -117,7 +117,7 @@ TEST_CASE("Test fault") {
     SUBCASE("Test get_short_circuit_output sym") {
         ComplexValue<symmetric_t> const i_f_pu = 1.0 + 1.0i;
         ComplexValue<asymmetric_t> const i_f_res{i_f_pu};
-        FaultShortCircuitOutput output = fault.get_sc_output(i_f_pu, u_rated);
+        FaultShortCircuitOutput const output = fault.get_sc_output(i_f_pu, u_rated);
         CHECK(output.id == 1);
         CHECK(output.energized);
         CHECK((output.i_f - cabs(i_f_res) * base_i < numerical_tolerance).all());
@@ -127,7 +127,7 @@ TEST_CASE("Test fault") {
     SUBCASE("Test get_short_circuit_output asym") {
         ComplexValue<asymmetric_t> i_f_pu{};
         i_f_pu << DoubleComplex(1.0, 1.0), DoubleComplex(0.0, 1.0), DoubleComplex(1.0, 0.0);
-        FaultShortCircuitOutput output = fault.get_sc_output(i_f_pu, u_rated);
+        FaultShortCircuitOutput const output = fault.get_sc_output(i_f_pu, u_rated);
         CHECK(output.id == 1);
         CHECK(output.energized);
         CHECK((output.i_f - cabs(i_f_pu) * base_i < numerical_tolerance).all());
