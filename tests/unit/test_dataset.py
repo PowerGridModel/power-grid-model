@@ -54,10 +54,8 @@ def test_const_dataset__conflicting_data():
     with pytest.raises(PowerGridError):
         CConstDataset(
             data={
-                ComponentType.node: np.zeros(1, dtype=power_grid_meta_data[DatasetType.input][ComponentType.node]),
-                ComponentType.sym_load: np.zeros(
-                    1, dtype=power_grid_meta_data[DatasetType.update][ComponentType.sym_load]
-                ),
+                ComponentType.node: np.zeros(1, dtype=power_grid_meta_data["input"][ComponentType.node]),
+                "sym_load": np.zeros(1, dtype=power_grid_meta_data["update"]["sym_load"]),
             }
         )
 
@@ -114,16 +112,14 @@ def test_const_dataset__sparse_batch_data(dataset_type):
             "indptr": np.array([0, 2, 3, 3]),
         },
         ComponentType.sym_load: {
-            "data": np.zeros(shape=2, dtype=power_grid_meta_data[dataset_type][ComponentType.sym_load]),
+            "data": np.zeros(shape=2, dtype=power_grid_meta_data[dataset_type]["sym_load"]),
             "indptr": np.array([0, 0, 1, 2]),
         },
         ComponentType.asym_load: {
-            "data": np.zeros(shape=4, dtype=power_grid_meta_data[dataset_type][ComponentType.asym_load]),
+            "data": np.zeros(shape=4, dtype=power_grid_meta_data[dataset_type]["asym_load"]),
             "indptr": np.array([0, 2, 3, 4]),
         },
-        ComponentType.link: np.zeros(
-            shape=(batch_size, 4), dtype=power_grid_meta_data[dataset_type][ComponentType.link]
-        ),
+        ComponentType.link: np.zeros(shape=(batch_size, 4), dtype=power_grid_meta_data[dataset_type]["link"]),
     }
 
     dataset = CConstDataset(data, dataset_type)

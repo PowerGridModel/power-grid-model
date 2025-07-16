@@ -370,7 +370,9 @@ def self_test():
             "data": {
                 ComponentType.node: [{"id": 1, "u_rated": 10000}],
                 ComponentType.source: [{"id": 2, "node": 1, "u_ref": 1, "sk": 1e20}],
-                "sym_load": [{"id": 3, "node": 1, "status": 1, "type": 0, "p_specified": 0, "q_specified": 0}],
+                ComponentType.sym_load: [
+                    {"id": 3, "node": 1, "status": 1, "type": 0, "p_specified": 0, "q_specified": 0}
+                ],
             },
         }
 
