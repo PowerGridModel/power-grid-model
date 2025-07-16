@@ -1022,8 +1022,8 @@ $$
 $$
 
 ```{warning}
-At the time of writing, state estimation with global angle current sensors is not supported by the Newton-Raphson 
-calculation method.
+At the time of writing, state estimation with current sensors with `global_angle` `angle_measurement_type` is not
+supported by the Newton-Raphson calculation method.
 ```
 
 ##### Local angle current sensors
