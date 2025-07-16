@@ -12,6 +12,7 @@ Although all functions are 'public', you probably only need validate_input_data(
 import copy
 from collections.abc import Sized as ABCSized
 from itertools import chain
+from typing import Literal
 
 import numpy as np
 
@@ -425,19 +426,19 @@ def _validate_required_in_data(data: SingleDataset, required: dict[ComponentType
 
 def _validate_required_power_sigma_or_p_q_sigma(
     data: SingleDataset,
-    sensor: ComponentType,
+    power_sensor: Literal[ComponentType.sym_power_sensor, ComponentType.asym_power_sensor],
 ) -> list[MissingValueError]:
     """
     Check that either `p_sigma` and `q_sigma` are all provided, or that `power_sigma` is provided.
 
     Args:
         data: SingleDataset, pgm data
-        sensor: ComponentType, only of types ComponentType.sym_power_sensor or ComponentType.asym_power_sensor
+        sensor: the power sensor type, either ComponentType.sym_power_sensor or ComponentType.asym_power_sensor
     """
     result: list[MissingValueError] = []
 
-    if sensor in data:
-        sensor_data = data[sensor]
+    if power_sensor in data:
+        sensor_data = data[power_sensor]
         p_sigma = sensor_data["p_sigma"]
         q_sigma = sensor_data["q_sigma"]
 
@@ -447,10 +448,10 @@ def _validate_required_power_sigma_or_p_q_sigma(
         )
 
         result += _validate_required_in_data(
-            {sensor: sensor_data[all_pq_sigma_missing_mask]}, required={sensor: ["power_sigma"]}
+            {power_sensor: sensor_data[all_pq_sigma_missing_mask]}, required={power_sensor: ["power_sigma"]}
         )
         result += _validate_required_in_data(
-            {sensor: sensor_data[~all_pq_sigma_missing_mask]}, required={sensor: ["p_sigma", "q_sigma"]}
+            {power_sensor: sensor_data[~all_pq_sigma_missing_mask]}, required={power_sensor: ["p_sigma", "q_sigma"]}
         )
 
     return result
