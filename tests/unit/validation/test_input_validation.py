@@ -300,52 +300,69 @@ def original_data() -> dict[ComponentType, np.ndarray]:
     asym_gen["node"] = [10, 1, 2]
     asym_gen["status"] = [0, -1, 2]
 
-    sym_voltage_sensor = initialize_array(DatasetType.input, ComponentType.sym_voltage_sensor, 4)
-    sym_voltage_sensor["id"] = [7, 8, 9, 10]
-    sym_voltage_sensor["measured_object"] = [2, 3, 1, 200]
-    sym_voltage_sensor["u_measured"] = [0.0, 10.4e3, 10.6e3, -20.0]
-    sym_voltage_sensor["u_sigma"] = [1.0, np.nan, 0.0, -1.0]
+    sym_voltage_sensor = initialize_array(DatasetType.input, ComponentType.sym_voltage_sensor, 5)
+    sym_voltage_sensor["id"] = range(107, 107 + 5)
+    sym_voltage_sensor["measured_object"] = [2, 3, 1, 200, 2]
+    sym_voltage_sensor["u_measured"] = [0.0, 10.4e3, 10.6e3, -20.0, 1e4]
+    sym_voltage_sensor["u_sigma"] = [1.0, np.nan, 0.0, -1.0, np.inf]
 
-    asym_voltage_sensor = initialize_array(DatasetType.input, ComponentType.asym_voltage_sensor, 4)
-    asym_voltage_sensor["id"] = [7, 8, 9, 10]
-    asym_voltage_sensor["measured_object"] = [2, 3, 1, 200]
+    asym_voltage_sensor = initialize_array(DatasetType.input, ComponentType.asym_voltage_sensor, 5)
+    asym_voltage_sensor["id"] = range(107, 107 + 5)
+    asym_voltage_sensor["measured_object"] = [2, 3, 1, 200, 2]
     asym_voltage_sensor["u_measured"] = np.array(
         [
             [10.5e3, 10.4e3, 10.6e3],
             [np.nan, np.nan, np.nan],
             [0, 0, 0],
             [-1e4, 1e4, 1e4],
+            [1.0e4, 1.0e4, 1.0e4],
         ]
     )
-    asym_voltage_sensor["u_sigma"] = [1.0, np.nan, 0.0, -1.0]
+    asym_voltage_sensor["u_sigma"] = [1.0, np.nan, 0.0, -1.0, np.inf]
 
-    sym_power_sensor = initialize_array(DatasetType.input, ComponentType.sym_power_sensor, 4)
-    sym_power_sensor["id"] = [7, 8, 9, 10]
-    sym_power_sensor["measured_object"] = [12, 3, 13, 200]
-    sym_power_sensor["power_sigma"] = [1.0, np.nan, 0.0, -1.0]
-    sym_power_sensor["measured_terminal_type"] = [1, 1, 10, 1]
+    sym_power_sensor = initialize_array(DatasetType.input, ComponentType.sym_power_sensor, 15)
+    sym_power_sensor["id"] = range(107, 107 + 15)
+    sym_power_sensor["measured_object"] = [12, 3, 13, 200, 3] + [3] * 10
+    sym_power_sensor["power_sigma"] = [1.0, np.nan, 0.0, -1.0, np.inf] * 2 + [np.nan] * 5
+    sym_power_sensor["measured_terminal_type"] = [1, 1, 10, 1, 1] + [1] * 10
+    sym_power_sensor["p_sigma"] = [np.nan] * 5 + [1.0, 1.0, 0.0, -1.0, np.inf] * 2
+    sym_power_sensor["q_sigma"] = [np.nan] * 5 + [1.0, np.inf, 0.0, -1.0, np.inf] * 2
 
-    asym_power_sensor = initialize_array(DatasetType.input, ComponentType.asym_power_sensor, 4)
-    asym_power_sensor["id"] = [7, 8, 9, 10]
-    asym_power_sensor["measured_object"] = [12, 3, 13, 200]
-    asym_power_sensor["power_sigma"] = [1.0, np.nan, 0.0, -1.0]
-    asym_power_sensor["measured_terminal_type"] = [1, 1, 10, 1]
+    asym_power_sensor = initialize_array(DatasetType.input, ComponentType.asym_power_sensor, 15)
+    asym_power_sensor["id"] = range(107, 107 + 15)
+    asym_power_sensor["measured_object"] = [12, 3, 13, 200, 3] + [3] * 10
+    asym_power_sensor["power_sigma"] = [1.0, np.nan, 0.0, -1.0, np.inf] * 2 + [np.nan] * 5
+    asym_power_sensor["measured_terminal_type"] = [1, 1, 10, 1, 1] + [1] * 10
+    asym_power_sensor["p_sigma"] = [[np.nan] * 3] * 5 + [
+        [1.0, 1.0, 1.0],
+        [np.inf, np.inf, np.inf],
+        [1.0, np.nan, 1.0],
+        [1.0, 1.0, -1.0],
+        [np.inf, 1.0, 1.0],
+    ] * 2
+    asym_power_sensor["q_sigma"] = [[np.nan] * 3] * 5 + [
+        [1.0, 1.0, 1.0],
+        [np.inf, np.inf, np.inf],
+        [np.inf, np.nan, 1.0],
+        [1.0, 1.0, -1.0],
+        [np.inf, 1.0, 1.0],
+    ] * 2
 
-    sym_current_sensor = initialize_array(DatasetType.input, ComponentType.sym_current_sensor, 4)
-    sym_current_sensor["id"] = [7, 8, 9, 10]
-    sym_current_sensor["measured_object"] = [12, 3, 13, 200]
-    sym_current_sensor["i_sigma"] = [1.0, np.nan, 0.0, -1.0]
-    sym_current_sensor["i_angle_sigma"] = [1.0, np.nan, 0.0, -1.0]
-    sym_current_sensor["measured_terminal_type"] = [1, 1, 10, 2]
-    sym_current_sensor["angle_measurement_type"] = [0, 1, 10, 2]
+    sym_current_sensor = initialize_array(DatasetType.input, ComponentType.sym_current_sensor, 5)
+    sym_current_sensor["id"] = range(107, 107 + 5)
+    sym_current_sensor["measured_object"] = [12, 3, 13, 200, 3]
+    sym_current_sensor["i_sigma"] = [1.0, np.nan, 0.0, -1.0, np.inf]
+    sym_current_sensor["i_angle_sigma"] = [1.0, np.nan, 0.0, -1.0, np.inf]
+    sym_current_sensor["measured_terminal_type"] = [1, 1, 10, 2, 1]
+    sym_current_sensor["angle_measurement_type"] = [0, 1, 10, 2, 0]
 
-    asym_current_sensor = initialize_array(DatasetType.input, ComponentType.asym_current_sensor, 4)
-    asym_current_sensor["id"] = [7, 8, 9, 10]
-    asym_current_sensor["measured_object"] = [12, 3, 13, 200]
-    asym_current_sensor["i_sigma"] = [1.0, np.nan, 0.0, -1.0]
-    asym_current_sensor["i_angle_sigma"] = [1.0, np.nan, 0.0, -1.0]
-    asym_current_sensor["measured_terminal_type"] = [1, 1, 10, 2]
-    asym_current_sensor["angle_measurement_type"] = [0, 1, 10, 2]
+    asym_current_sensor = initialize_array(DatasetType.input, ComponentType.asym_current_sensor, 5)
+    asym_current_sensor["id"] = range(107, 107 + 5)
+    asym_current_sensor["measured_object"] = [12, 3, 13, 200, 3]
+    asym_current_sensor["i_sigma"] = [1.0, np.nan, 0.0, -1.0, np.inf]
+    asym_current_sensor["i_angle_sigma"] = [1.0, np.nan, 0.0, -1.0, np.inf]
+    asym_current_sensor["measured_terminal_type"] = [1, 1, 10, 2, 1]
+    asym_current_sensor["angle_measurement_type"] = [0, 1, 10, 2, 0]
 
     fault = initialize_array(DatasetType.input, ComponentType.fault, 20)
     fault["id"] = [1] + list(range(32, 51))
@@ -430,35 +447,17 @@ def test_validate_input_data_sym_calculation(input_data):
             [
                 (ComponentType.asym_gen, 1),
                 (ComponentType.asym_load, 1),
-                (ComponentType.asym_current_sensor, 7),
-                (ComponentType.asym_current_sensor, 8),
-                (ComponentType.asym_current_sensor, 9),
-                (ComponentType.asym_current_sensor, 10),
-                (ComponentType.asym_power_sensor, 7),
-                (ComponentType.asym_power_sensor, 8),
-                (ComponentType.asym_power_sensor, 9),
-                (ComponentType.asym_power_sensor, 10),
-                (ComponentType.asym_voltage_sensor, 7),
-                (ComponentType.asym_voltage_sensor, 8),
-                (ComponentType.asym_voltage_sensor, 9),
-                (ComponentType.asym_voltage_sensor, 10),
+                *[(ComponentType.asym_current_sensor, i) for i in range(107, 107 + 5)],
+                *[(ComponentType.asym_power_sensor, i) for i in range(107, 107 + 15)],
+                *[(ComponentType.asym_voltage_sensor, i) for i in range(107, 107 + 5)],
                 (ComponentType.node, 1),
                 (ComponentType.shunt, 1),
                 (ComponentType.source, 1),
                 (ComponentType.sym_gen, 1),
                 (ComponentType.sym_load, 1),
-                (ComponentType.sym_current_sensor, 7),
-                (ComponentType.sym_current_sensor, 8),
-                (ComponentType.sym_current_sensor, 9),
-                (ComponentType.sym_current_sensor, 10),
-                (ComponentType.sym_power_sensor, 7),
-                (ComponentType.sym_power_sensor, 8),
-                (ComponentType.sym_power_sensor, 9),
-                (ComponentType.sym_power_sensor, 10),
-                (ComponentType.sym_voltage_sensor, 7),
-                (ComponentType.sym_voltage_sensor, 8),
-                (ComponentType.sym_voltage_sensor, 9),
-                (ComponentType.sym_voltage_sensor, 10),
+                *[(ComponentType.sym_current_sensor, i) for i in range(107, 107 + 5)],
+                *[(ComponentType.sym_power_sensor, i) for i in range(107, 107 + 15)],
+                *[(ComponentType.sym_voltage_sensor, i) for i in range(107, 107 + 5)],
                 (ComponentType.transformer, 1),
                 (ComponentType.three_winding_transformer, 1),
                 (ComponentType.fault, 1),
@@ -541,26 +540,20 @@ def test_validate_input_data_sym_calculation(input_data):
     assert NotBooleanError(ComponentType.asym_gen, "status", [26, 27]) in validation_errors
     assert InvalidEnumValueError(ComponentType.asym_gen, "type", [1, 26], LoadGenType) in validation_errors
 
-    assert (
-        InvalidIdError(ComponentType.sym_voltage_sensor, "measured_object", [8, 10], ComponentType.node)
-        in validation_errors
-    )
-    assert NotGreaterThanError(ComponentType.sym_voltage_sensor, "u_measured", [7, 10], 0) in validation_errors
-    assert NotGreaterThanError(ComponentType.sym_voltage_sensor, "u_sigma", [9, 10], 0) in validation_errors
+    assert InvalidIdError(ComponentType.sym_voltage_sensor, "measured_object", [108, 110], "node") in validation_errors
+    assert NotGreaterThanError(ComponentType.sym_voltage_sensor, "u_measured", [107, 110], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.sym_voltage_sensor, "u_sigma", [109, 110], 0) in validation_errors
     # TODO check if u_sigma = np.nan is detected with missing values
 
-    assert (
-        InvalidIdError(ComponentType.asym_voltage_sensor, "measured_object", [8, 10], ComponentType.node)
-        in validation_errors
-    )
-    assert NotGreaterThanError(ComponentType.asym_voltage_sensor, "u_measured", [9, 10], 0) in validation_errors
-    assert NotGreaterThanError(ComponentType.asym_voltage_sensor, "u_sigma", [9, 10], 0) in validation_errors
+    assert InvalidIdError(ComponentType.asym_voltage_sensor, "measured_object", [108, 110], "node") in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_voltage_sensor, "u_measured", [109, 110], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_voltage_sensor, "u_sigma", [109, 110], 0) in validation_errors
 
     assert (
         InvalidIdError(
             ComponentType.sym_power_sensor,
             "measured_object",
-            [7, 9, 10],
+            [107, 109, 110],
             [
                 ComponentType.node,
                 ComponentType.line,
@@ -578,24 +571,21 @@ def test_validate_input_data_sym_calculation(input_data):
         )
         in validation_errors
     )
-    assert NotGreaterThanError(ComponentType.sym_power_sensor, "power_sigma", [9, 10], 0) in validation_errors
+    assert (
+        NotGreaterThanError(ComponentType.sym_power_sensor, "power_sigma", [109, 110, 114, 115], 0) in validation_errors
+    )
     assert (
         InvalidIdError(
             ComponentType.sym_power_sensor,
             "measured_object",
-            [7, 10],
-            [
-                ComponentType.line,
-                ComponentType.asym_line,
-                ComponentType.generic_branch,
-                ComponentType.transformer,
-            ],
+            [107, 110],
+            [ComponentType.line, ComponentType.asym_line, ComponentType.generic_branch, ComponentType.transformer],
             {"measured_terminal_type": MeasuredTerminalType.branch_to},
         )
         in validation_errors
     )
     assert (
-        InvalidEnumValueError(ComponentType.sym_power_sensor, "measured_terminal_type", [9], MeasuredTerminalType)
+        InvalidEnumValueError(ComponentType.sym_power_sensor, "measured_terminal_type", [109], MeasuredTerminalType)
         in validation_errors
     )
 
@@ -603,7 +593,7 @@ def test_validate_input_data_sym_calculation(input_data):
         InvalidIdError(
             ComponentType.asym_power_sensor,
             "measured_object",
-            [7, 9, 10],
+            [107, 109, 110],
             [
                 ComponentType.node,
                 ComponentType.line,
@@ -621,19 +611,22 @@ def test_validate_input_data_sym_calculation(input_data):
         )
         in validation_errors
     )
-    assert NotGreaterThanError(ComponentType.asym_power_sensor, "power_sigma", [9, 10], 0) in validation_errors
+    assert (
+        NotGreaterThanError(ComponentType.asym_power_sensor, "power_sigma", [109, 110, 114, 115], 0)
+        in validation_errors
+    )
     assert (
         InvalidIdError(
             ComponentType.asym_power_sensor,
             "measured_object",
-            [7, 10],
+            [107, 110],
             [ComponentType.line, ComponentType.asym_line, ComponentType.generic_branch, ComponentType.transformer],
             {"measured_terminal_type": MeasuredTerminalType.branch_to},
         )
         in validation_errors
     )
     assert (
-        InvalidEnumValueError(ComponentType.asym_power_sensor, "measured_terminal_type", [9], MeasuredTerminalType)
+        InvalidEnumValueError(ComponentType.asym_power_sensor, "measured_terminal_type", [109], MeasuredTerminalType)
         in validation_errors
     )
 
@@ -641,7 +634,7 @@ def test_validate_input_data_sym_calculation(input_data):
         InvalidIdError(
             ComponentType.sym_current_sensor,
             "measured_object",
-            [7, 9, 10],
+            [107, 109, 110],
             [
                 ComponentType.line,
                 ComponentType.asym_line,
@@ -652,78 +645,27 @@ def test_validate_input_data_sym_calculation(input_data):
         )
         in validation_errors
     )
-    assert NotGreaterThanError(ComponentType.sym_current_sensor, "i_sigma", [9, 10], 0) in validation_errors
-    assert NotGreaterThanError(ComponentType.sym_current_sensor, "i_angle_sigma", [9, 10], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.sym_current_sensor, "i_sigma", [109, 110], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.sym_current_sensor, "i_angle_sigma", [109, 110], 0) in validation_errors
     assert (
         InvalidIdError(
             ComponentType.sym_current_sensor,
             "measured_object",
-            [7],
+            [107],
             [ComponentType.line, ComponentType.asym_line, ComponentType.generic_branch, ComponentType.transformer],
             {"measured_terminal_type": MeasuredTerminalType.branch_to},
         )
         in validation_errors
     )
     assert (
-        InvalidEnumValueError(ComponentType.sym_current_sensor, "measured_terminal_type", [9], MeasuredTerminalType)
+        InvalidEnumValueError(ComponentType.sym_current_sensor, "measured_terminal_type", [109], MeasuredTerminalType)
         in validation_errors
     )
     assert (
         UnsupportedMeasuredTerminalType(
             ComponentType.sym_current_sensor,
             "measured_terminal_type",
-            [9, 10],
-            [
-                MeasuredTerminalType.branch_from,
-                MeasuredTerminalType.branch_to,
-                MeasuredTerminalType.branch3_1,
-                MeasuredTerminalType.branch3_2,
-                MeasuredTerminalType.branch3_3,
-            ],
-        )
-        in validation_errors
-    )
-    assert (
-        InvalidEnumValueError(ComponentType.sym_current_sensor, "angle_measurement_type", [9, 10], AngleMeasurementType)
-        in validation_errors
-    )
-
-    assert (
-        InvalidIdError(
-            ComponentType.asym_current_sensor,
-            "measured_object",
-            [7, 9, 10],
-            [
-                ComponentType.line,
-                ComponentType.asym_line,
-                ComponentType.generic_branch,
-                ComponentType.transformer,
-                ComponentType.three_winding_transformer,
-            ],
-        )
-        in validation_errors
-    )
-    assert NotGreaterThanError(ComponentType.asym_current_sensor, "i_sigma", [9, 10], 0) in validation_errors
-    assert NotGreaterThanError(ComponentType.asym_current_sensor, "i_angle_sigma", [9, 10], 0) in validation_errors
-    assert (
-        InvalidIdError(
-            ComponentType.asym_current_sensor,
-            "measured_object",
-            [7],
-            [ComponentType.line, ComponentType.asym_line, ComponentType.generic_branch, ComponentType.transformer],
-            {"measured_terminal_type": MeasuredTerminalType.branch_to},
-        )
-        in validation_errors
-    )
-    assert (
-        InvalidEnumValueError(ComponentType.asym_current_sensor, "measured_terminal_type", [9], MeasuredTerminalType)
-        in validation_errors
-    )
-    assert (
-        UnsupportedMeasuredTerminalType(
-            ComponentType.asym_current_sensor,
-            "measured_terminal_type",
-            [9, 10],
+            [109, 110],
             [
                 MeasuredTerminalType.branch_from,
                 MeasuredTerminalType.branch_to,
@@ -736,7 +678,60 @@ def test_validate_input_data_sym_calculation(input_data):
     )
     assert (
         InvalidEnumValueError(
-            ComponentType.asym_current_sensor, "angle_measurement_type", [9, 10], AngleMeasurementType
+            ComponentType.sym_current_sensor, "angle_measurement_type", [109, 110], AngleMeasurementType
+        )
+        in validation_errors
+    )
+
+    assert (
+        InvalidIdError(
+            ComponentType.asym_current_sensor,
+            "measured_object",
+            [107, 109, 110],
+            [
+                ComponentType.line,
+                ComponentType.asym_line,
+                ComponentType.generic_branch,
+                ComponentType.transformer,
+                ComponentType.three_winding_transformer,
+            ],
+        )
+        in validation_errors
+    )
+    assert NotGreaterThanError(ComponentType.asym_current_sensor, "i_sigma", [109, 110], 0) in validation_errors
+    assert NotGreaterThanError(ComponentType.asym_current_sensor, "i_angle_sigma", [109, 110], 0) in validation_errors
+    assert (
+        InvalidIdError(
+            ComponentType.asym_current_sensor,
+            "measured_object",
+            [107],
+            [ComponentType.line, ComponentType.asym_line, ComponentType.generic_branch, ComponentType.transformer],
+            {"measured_terminal_type": MeasuredTerminalType.branch_to},
+        )
+        in validation_errors
+    )
+    assert (
+        InvalidEnumValueError(ComponentType.asym_current_sensor, "measured_terminal_type", [109], MeasuredTerminalType)
+        in validation_errors
+    )
+    assert (
+        UnsupportedMeasuredTerminalType(
+            ComponentType.asym_current_sensor,
+            "measured_terminal_type",
+            [109, 110],
+            [
+                MeasuredTerminalType.branch_from,
+                MeasuredTerminalType.branch_to,
+                MeasuredTerminalType.branch3_1,
+                MeasuredTerminalType.branch3_2,
+                MeasuredTerminalType.branch3_3,
+            ],
+        )
+        in validation_errors
+    )
+    assert (
+        InvalidEnumValueError(
+            ComponentType.asym_current_sensor, "angle_measurement_type", [109, 110], AngleMeasurementType
         )
         in validation_errors
     )
@@ -753,12 +748,12 @@ def test_validate_input_data_sym_calculation(input_data):
                     (current_sensor_type, "measured_terminal_type"),
                 ],
                 [
-                    (power_sensor_type, 7),
-                    (power_sensor_type, 8),
-                    (power_sensor_type, 9),
-                    (current_sensor_type, 7),
-                    (current_sensor_type, 8),
-                    (current_sensor_type, 9),
+                    *[(power_sensor_type, i) for i in range(107, 107 + 3)],
+                    # 110 is skipped because it points to an invalid measured terminal type
+                    *[(power_sensor_type, i) for i in range(111, 111 + 11)],
+                    *[(current_sensor_type, i) for i in range(107, 107 + 3)],
+                    # 110 is skipped because it points to an invalid measured terminal type
+                    (current_sensor_type, 111),
                 ],
             )
             in validation_errors
