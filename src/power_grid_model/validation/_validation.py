@@ -16,6 +16,7 @@ from itertools import chain
 import numpy as np
 
 from power_grid_model import ComponentType, DatasetType, power_grid_meta_data
+from power_grid_model._core.dataset_definitions import _map_to_component_types
 from power_grid_model._core.utils import (
     compatibility_convert_row_columnar_dataset as _compatibility_convert_row_columnar_dataset,
     convert_batch_dataset_to_batch_list as _convert_batch_dataset_to_batch_list,
@@ -93,6 +94,8 @@ def validate_input_data(
     Raises:
         Error: KeyError | TypeError | ValueError: if the data structure is invalid.
     """
+    input_data = _map_to_component_types(input_data)
+
     # Convert to row based if in columnar or mixed format format
     row_input_data = _compatibility_convert_row_columnar_dataset(input_data, None, DatasetType.input)
 
@@ -141,6 +144,9 @@ def validate_batch_data(
     Raises:
         Error: KeyError | TypeError | ValueError: if the data structure is invalid.
     """
+    input_data = _map_to_component_types(input_data)
+    update_data = _map_to_component_types(update_data)
+
     # Convert to row based if in columnar or mixed format
     row_input_data = _compatibility_convert_row_columnar_dataset(input_data, None, DatasetType.input)
 
