@@ -142,7 +142,7 @@ def simple_asym_input_dataset():
 
 
 def full_input_dataset():
-    result = empty_dataset("input")
+    result = empty_dataset(DatasetType.input)
     result["attributes"] = {
         "node": ["id", "u_rated"],
         "sym_load": ["id", "node", "status", "type", "p_specified", "q_specified"],
@@ -194,7 +194,7 @@ def full_input_dataset():
 
 
 def single_update_dataset():
-    result = empty_dataset("update")
+    result = empty_dataset(DatasetType.update)
     result["attributes"] = {
         "sym_load": ["status", "p_specified", "q_specified"],
         "source": ["status"],
@@ -267,7 +267,7 @@ def sparse_batch_update_dataset():
 
 
 def single_sym_output_dataset():
-    result = empty_dataset("sym_output")
+    result = empty_dataset(DatasetType.sym_output)
     result["data"] = {
         "node": [
             {
@@ -285,7 +285,7 @@ def single_sym_output_dataset():
 
 
 def batch_sym_output_dataset():
-    result = empty_dataset("sym_output")
+    result = empty_dataset(DatasetType.sym_output)
     result["is_batch"] = True
     result["data"] = [
         {
@@ -319,7 +319,7 @@ def batch_sym_output_dataset():
 
 
 def single_asym_output_dataset():
-    result = empty_dataset("asym_output")
+    result = empty_dataset(DatasetType.asym_output)
     result["data"] = {
         "node": [
             {
@@ -337,7 +337,7 @@ def single_asym_output_dataset():
 
 
 def single_sc_output_dataset():
-    result = empty_dataset("sc_output")
+    result = empty_dataset(DatasetType.sc_output)
     result["attributes"] = {"fault": ["id", "i_f"]}
     result["data"] = {
         "node": [
@@ -613,7 +613,7 @@ def assert_serialization_correct(deserialized_dataset: Dataset, serialized_datas
         assert_single_dataset_structure(deserialized_dataset, data_filter)
 
         assert_single_dataset_entries(
-            deserialized_dataset,  # type: ignore[arg-type]
+            deserialized_dataset,
             serialized_dataset,
             data_filter=data_filter,
         )
