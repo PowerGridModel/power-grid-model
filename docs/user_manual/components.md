@@ -100,11 +100,11 @@ In this case, the attribute `from_status` and `to_status` is always 1.
 | --------- | ----------------- | -------------------------- | -------------------------------------------------------- |
 | `p_from`  | `RealValueOutput` | watt (W)                   | active power flowing into the branch at from-side        |
 | `q_from`  | `RealValueOutput` | volt-ampere-reactive (var) | reactive power flowing into the branch at from-side      |
-| `i_from`  | `RealValueOutput` | ampere (A)                 | current at from-side                                     |
+| `i_from`  | `RealValueOutput` | ampere (A)                 | magnitude of current at from-side                                      |
 | `s_from`  | `RealValueOutput` | volt-ampere (VA)           | apparent power flowing at from-side                      |
 | `p_to`    | `RealValueOutput` | watt (W)                   | active power flowing into the branch at to-side          |
 | `q_to`    | `RealValueOutput` | volt-ampere-reactive (var) | reactive power flowing into the branch at to-side        |
-| `i_to`    | `RealValueOutput` | ampere (A)                 | current at to-side                                       |
+| `i_to`    | `RealValueOutput` | ampere (A)                 | magnitude of current at to-side                                       |
 | `s_to`    | `RealValueOutput` | volt-ampere (VA)           | apparent power flowing at to-side                        |
 | `loading` | `double`          | -                          | relative loading of the line, `1.0` meaning 100% loaded. |
 
@@ -112,9 +112,9 @@ In this case, the attribute `from_status` and `to_status` is always 1.
 
 | name           | data type         | unit       | description                |
 | -------------- | ----------------- | ---------- | -------------------------- |
-| `i_from`       | `RealValueOutput` | ampere (A) | current at from-side       |
+| `i_from`       | `RealValueOutput` | ampere (A) | magnitude of current at from-side       |
 | `i_from_angle` | `RealValueOutput` | rad        | current angle at from-side |
-| `i_to`         | `RealValueOutput` | ampere (A) | current at to-side         |
+| `i_to`         | `RealValueOutput` | ampere (A) | magnitude of current at to-side         |
 | `i_to_angle`   | `RealValueOutput` | rad        | current angle at to-side   |
 
 ### Line
