@@ -100,22 +100,22 @@ In this case, the attribute `from_status` and `to_status` is always 1.
 | --------- | ----------------- | -------------------------- | -------------------------------------------------------- |
 | `p_from`  | `RealValueOutput` | watt (W)                   | active power flowing into the branch at from-side        |
 | `q_from`  | `RealValueOutput` | volt-ampere-reactive (var) | reactive power flowing into the branch at from-side      |
-| `i_from`  | `RealValueOutput` | ampere (A)                 | magnitude of current at from-side                                      |
+| `i_from`  | `RealValueOutput` | ampere (A)                 | magnitude of current at from-side                        |
 | `s_from`  | `RealValueOutput` | volt-ampere (VA)           | apparent power flowing at from-side                      |
 | `p_to`    | `RealValueOutput` | watt (W)                   | active power flowing into the branch at to-side          |
 | `q_to`    | `RealValueOutput` | volt-ampere-reactive (var) | reactive power flowing into the branch at to-side        |
-| `i_to`    | `RealValueOutput` | ampere (A)                 | magnitude of current at to-side                                       |
+| `i_to`    | `RealValueOutput` | ampere (A)                 | magnitude of current at to-side                          |
 | `s_to`    | `RealValueOutput` | volt-ampere (VA)           | apparent power flowing at to-side                        |
 | `loading` | `double`          | -                          | relative loading of the line, `1.0` meaning 100% loaded. |
 
 #### Short circuit output
 
-| name           | data type         | unit       | description                |
-| -------------- | ----------------- | ---------- | -------------------------- |
-| `i_from`       | `RealValueOutput` | ampere (A) | magnitude of current at from-side       |
-| `i_from_angle` | `RealValueOutput` | rad        | current angle at from-side |
-| `i_to`         | `RealValueOutput` | ampere (A) | magnitude of current at to-side         |
-| `i_to_angle`   | `RealValueOutput` | rad        | current angle at to-side   |
+| name           | data type         | unit       | description                       |
+| -------------- | ----------------- | ---------- | --------------------------------- |
+| `i_from`       | `RealValueOutput` | ampere (A) | magnitude of current at from-side |
+| `i_from_angle` | `RealValueOutput` | rad        | current angle at from-side        |
+| `i_to`         | `RealValueOutput` | ampere (A) | magnitude of current at to-side   |
+| `i_to_angle`   | `RealValueOutput` | rad        | current angle at to-side          |
 
 ### Line
 
@@ -328,60 +328,60 @@ $$
 This representation holds for all values `r_aa` ... `r_nn`, `x_aa` ... `x_nn` and `c_aa` ... `c_cc`.
 If the neutral values are not provided, the last row and column from the above matrix are omitted.
 
-| name   | data type | unit       | description                       | required                     |  update  |            valid values            |
-| ------ | --------- | ---------- | --------------------------------- | ---------------------------- | :------: | :--------------------------------: |
-| `r_aa` | `double`  | ohm (Ω)    | Series serial resistance aa       | &#10004;                     | &#10060; |               `> 0`                |
-| `r_ba` | `double`  | ohm (Ω)    | Series serial resistance ba       | &#10004;                     | &#10060; |               `> 0`                |
-| `r_bb` | `double`  | ohm (Ω)    | Series serial resistance bb       | &#10004;                     | &#10060; |               `> 0`                |
-| `r_ca` | `double`  | ohm (Ω)    | Series serial resistance ca       | &#10004;                     | &#10060; |               `> 0`                |
-| `r_cb` | `double`  | ohm (Ω)    | Series serial resistance cb       | &#10004;                     | &#10060; |               `> 0`                |
-| `r_cc` | `double`  | ohm (Ω)    | Series serial resistance cc       | &#10004;                     | &#10060; |               `> 0`                |
-| `r_na` | `double`  | ohm (Ω)    | Series serial resistance na       | &#10024; for a neutral phase | &#10060; |               `> 0`                |
-| `r_nb` | `double`  | ohm (Ω)    | Series serial resistance nb       | &#10024; for a neutral phase | &#10060; |               `> 0`                |
-| `r_nc` | `double`  | ohm (Ω)    | Series serial resistance nc       | &#10024; for a neutral phase | &#10060; |               `> 0`                |
-| `r_nn` | `double`  | ohm (Ω)    | Series serial resistance nn       | &#10024; for a neutral phase | &#10060; |               `> 0`                |
-| `x_aa` | `double`  | ohm (Ω)    | Series serial reactance aa        | &#10004;                     | &#10060; |               `> 0`                |
-| `x_ba` | `double`  | ohm (Ω)    | Series serial reactance ba        | &#10004;                     | &#10060; |               `> 0`                |
-| `x_bb` | `double`  | ohm (Ω)    | Series serial reactance bb        | &#10004;                     | &#10060; |               `> 0`                |
-| `x_ca` | `double`  | ohm (Ω)    | Series serial reactance ca        | &#10004;                     | &#10060; |               `> 0`                |
-| `x_cb` | `double`  | ohm (Ω)    | Series serial reactance cb        | &#10004;                     | &#10060; |               `> 0`                |
-| `x_cc` | `double`  | ohm (Ω)    | Series serial reactance cc        | &#10004;                     | &#10060; |               `> 0`                |
-| `x_na` | `double`  | ohm (Ω)    | Series serial reactance na        | &#10024; for a neutral phase | &#10060; |               `> 0`                |
-| `x_nb` | `double`  | ohm (Ω)    | Series serial reactance nb        | &#10024; for a neutral phase | &#10060; |               `> 0`                |
-| `x_nc` | `double`  | ohm (Ω)    | Series serial reactance nc        | &#10024; for a neutral phase | &#10060; |               `> 0`                |
-| `x_nn` | `double`  | ohm (Ω)    | Series serial reactance nn        | &#10024; for a neutral phase | &#10060; |               `> 0`                |
-| `c_aa` | `double`  | farad (F)  | Shunt nodal capacitance matrix aa | &#10024; for a full c matrix | &#10060; |               `> 0`                |
-| `c_ba` | `double`  | farad (F)  | Shunt nodal capacitance matrix ba | &#10024; for a full c matrix | &#10060; |               `> 0`                |
-| `c_bb` | `double`  | farad (F)  | Shunt nodal capacitance matrix bb | &#10024; for a full c matrix | &#10060; |               `> 0`                |
-| `c_ca` | `double`  | farad (F)  | Shunt nodal capacitance matrix ca | &#10024; for a full c matrix | &#10060; |               `> 0`                |
-| `c_cb` | `double`  | farad (F)  | Shunt nodal capacitance matrix cb | &#10024; for a full c matrix | &#10060; |               `> 0`                |
-| `c_cc` | `double`  | farad (F)  | Shunt nodal capacitance matrix cc | &#10024; for a full c matrix | &#10060; |               `> 0`                |
-| `c0`   | `double`  | farad (F)  | zero-sequence shunt capacitance   | &#10024; without a c matrix  | &#10060; |               `> 0`                |
-| `c1`   | `double`  | farad (F)  | Series shunt capacitance          | &#10024; without a c matrix  | &#10060; |               `> 0`                |
-| `i_n`  | `double`  | ampere (A) | rated current                     | &#10060;                     | &#10060; |               `> 0`                |
+| name   | data type | unit       | description                       | required                     |  update  | valid values |
+| ------ | --------- | ---------- | --------------------------------- | ---------------------------- | :------: | :----------: |
+| `r_aa` | `double`  | ohm (Ω)    | Series serial resistance aa       | &#10004;                     | &#10060; |    `> 0`     |
+| `r_ba` | `double`  | ohm (Ω)    | Series serial resistance ba       | &#10004;                     | &#10060; |    `> 0`     |
+| `r_bb` | `double`  | ohm (Ω)    | Series serial resistance bb       | &#10004;                     | &#10060; |    `> 0`     |
+| `r_ca` | `double`  | ohm (Ω)    | Series serial resistance ca       | &#10004;                     | &#10060; |    `> 0`     |
+| `r_cb` | `double`  | ohm (Ω)    | Series serial resistance cb       | &#10004;                     | &#10060; |    `> 0`     |
+| `r_cc` | `double`  | ohm (Ω)    | Series serial resistance cc       | &#10004;                     | &#10060; |    `> 0`     |
+| `r_na` | `double`  | ohm (Ω)    | Series serial resistance na       | &#10024; for a neutral phase | &#10060; |    `> 0`     |
+| `r_nb` | `double`  | ohm (Ω)    | Series serial resistance nb       | &#10024; for a neutral phase | &#10060; |    `> 0`     |
+| `r_nc` | `double`  | ohm (Ω)    | Series serial resistance nc       | &#10024; for a neutral phase | &#10060; |    `> 0`     |
+| `r_nn` | `double`  | ohm (Ω)    | Series serial resistance nn       | &#10024; for a neutral phase | &#10060; |    `> 0`     |
+| `x_aa` | `double`  | ohm (Ω)    | Series serial reactance aa        | &#10004;                     | &#10060; |    `> 0`     |
+| `x_ba` | `double`  | ohm (Ω)    | Series serial reactance ba        | &#10004;                     | &#10060; |    `> 0`     |
+| `x_bb` | `double`  | ohm (Ω)    | Series serial reactance bb        | &#10004;                     | &#10060; |    `> 0`     |
+| `x_ca` | `double`  | ohm (Ω)    | Series serial reactance ca        | &#10004;                     | &#10060; |    `> 0`     |
+| `x_cb` | `double`  | ohm (Ω)    | Series serial reactance cb        | &#10004;                     | &#10060; |    `> 0`     |
+| `x_cc` | `double`  | ohm (Ω)    | Series serial reactance cc        | &#10004;                     | &#10060; |    `> 0`     |
+| `x_na` | `double`  | ohm (Ω)    | Series serial reactance na        | &#10024; for a neutral phase | &#10060; |    `> 0`     |
+| `x_nb` | `double`  | ohm (Ω)    | Series serial reactance nb        | &#10024; for a neutral phase | &#10060; |    `> 0`     |
+| `x_nc` | `double`  | ohm (Ω)    | Series serial reactance nc        | &#10024; for a neutral phase | &#10060; |    `> 0`     |
+| `x_nn` | `double`  | ohm (Ω)    | Series serial reactance nn        | &#10024; for a neutral phase | &#10060; |    `> 0`     |
+| `c_aa` | `double`  | farad (F)  | Shunt nodal capacitance matrix aa | &#10024; for a full c matrix | &#10060; |    `> 0`     |
+| `c_ba` | `double`  | farad (F)  | Shunt nodal capacitance matrix ba | &#10024; for a full c matrix | &#10060; |    `> 0`     |
+| `c_bb` | `double`  | farad (F)  | Shunt nodal capacitance matrix bb | &#10024; for a full c matrix | &#10060; |    `> 0`     |
+| `c_ca` | `double`  | farad (F)  | Shunt nodal capacitance matrix ca | &#10024; for a full c matrix | &#10060; |    `> 0`     |
+| `c_cb` | `double`  | farad (F)  | Shunt nodal capacitance matrix cb | &#10024; for a full c matrix | &#10060; |    `> 0`     |
+| `c_cc` | `double`  | farad (F)  | Shunt nodal capacitance matrix cc | &#10024; for a full c matrix | &#10060; |    `> 0`     |
+| `c0`   | `double`  | farad (F)  | zero-sequence shunt capacitance   | &#10024; without a c matrix  | &#10060; |    `> 0`     |
+| `c1`   | `double`  | farad (F)  | Series shunt capacitance          | &#10024; without a c matrix  | &#10060; |    `> 0`     |
+| `i_n`  | `double`  | ampere (A) | rated current                     | &#10060;                     | &#10060; |    `> 0`     |
 
 For the r and x matrices providing values for the neutral phase is optional.
 To clarify which input values are required, please consult the tables below:
 
-| r_aa ... r_cc   | r_na     | r_nb     | r_nc     | r_nn     | result   | Validation Error          |
-| --------------- | -------- | -------- | -------- | -------- | -------- | ------------------------- |
-| &#10004;        | &#10004; | &#10004; | &#10004; | &#10004; | &#10004; |                           |
-| &#10004;        | &#10004; | &#10004; | &#10004; | &#10060; | &#10060; | MultiFieldValidationError |
-| &#10004;        | &#10004; | &#10004; | &#10004; | &#10060; | &#10060; | MultiFieldValidationError |
-| &#10004;        | &#10004; | &#10004; | &#10060; | &#10060; | &#10060; | MultiFieldValidationError |
-| &#10004;        | &#10004; | &#10060; | &#10060; | &#10060; | &#10060; | MultiFieldValidationError |
-| &#10004;        | &#10060; | &#10060; | &#10060; | &#10060; | &#10004; |                           |
-| &#10060;        | &#10060; | &#10060; | &#10060; | &#10060; | &#10060; | MultiFieldValidationError |
+| r_aa ... r_cc | r_na     | r_nb     | r_nc     | r_nn     | result   | Validation Error          |
+| ------------- | -------- | -------- | -------- | -------- | -------- | ------------------------- |
+| &#10004;      | &#10004; | &#10004; | &#10004; | &#10004; | &#10004; |                           |
+| &#10004;      | &#10004; | &#10004; | &#10004; | &#10060; | &#10060; | MultiFieldValidationError |
+| &#10004;      | &#10004; | &#10004; | &#10004; | &#10060; | &#10060; | MultiFieldValidationError |
+| &#10004;      | &#10004; | &#10004; | &#10060; | &#10060; | &#10060; | MultiFieldValidationError |
+| &#10004;      | &#10004; | &#10060; | &#10060; | &#10060; | &#10060; | MultiFieldValidationError |
+| &#10004;      | &#10060; | &#10060; | &#10060; | &#10060; | &#10004; |                           |
+| &#10060;      | &#10060; | &#10060; | &#10060; | &#10060; | &#10060; | MultiFieldValidationError |
 
-| x_aa ... x_cc   | x_na     | x_nb     | x_nc     | x_nn     | result   | Validation Error          |
-| --------------- | -------- | -------- | -------- | -------- | -------- | ------------------------- |
-| &#10004;        | &#10004; | &#10004; | &#10004; | &#10004; | &#10004; |                           |
-| &#10004;        | &#10004; | &#10004; | &#10004; | &#10060; | &#10060; | MultiFieldValidationError |
-| &#10004;        | &#10004; | &#10004; | &#10004; | &#10060; | &#10060; | MultiFieldValidationError |
-| &#10004;        | &#10004; | &#10004; | &#10060; | &#10060; | &#10060; | MultiFieldValidationError |
-| &#10004;        | &#10004; | &#10060; | &#10060; | &#10060; | &#10060; | MultiFieldValidationError |
-| &#10004;        | &#10060; | &#10060; | &#10060; | &#10060; | &#10004; |                           |
-| &#10060;        | &#10060; | &#10060; | &#10060; | &#10060; | &#10060; | MultiFieldValidationError |
+| x_aa ... x_cc | x_na     | x_nb     | x_nc     | x_nn     | result   | Validation Error          |
+| ------------- | -------- | -------- | -------- | -------- | -------- | ------------------------- |
+| &#10004;      | &#10004; | &#10004; | &#10004; | &#10004; | &#10004; |                           |
+| &#10004;      | &#10004; | &#10004; | &#10004; | &#10060; | &#10060; | MultiFieldValidationError |
+| &#10004;      | &#10004; | &#10004; | &#10004; | &#10060; | &#10060; | MultiFieldValidationError |
+| &#10004;      | &#10004; | &#10004; | &#10060; | &#10060; | &#10060; | MultiFieldValidationError |
+| &#10004;      | &#10004; | &#10060; | &#10060; | &#10060; | &#10060; | MultiFieldValidationError |
+| &#10004;      | &#10060; | &#10060; | &#10060; | &#10060; | &#10004; |                           |
+| &#10060;      | &#10060; | &#10060; | &#10060; | &#10060; | &#10060; | MultiFieldValidationError |
 
 For the c-matrix values there are two options.
 Either provide all the required c-matrix values i.e. `c_aa` ... `c_cc` or provide `c0`, `c1`.
@@ -776,9 +776,9 @@ In a `asym_voltage_sensor` the measured voltage is a 3-phase line-to-ground volt
 
 ##### Input
 
-| name               | data type        | unit     | description                                                          |              required                                                                                      |  update  | valid values |
-| ------------------ | ---------------- | -------- | -------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------: | :------: | :----------: |
-| `u_measured`       | `RealValueInput` | volt (V) | measured voltage magnitude                                           | &#10024; only for state estimation                                                                         | &#10004; |    `> 0`     |
+| name               | data type        | unit     | description                                                          |                                                     required                                                     |  update  | valid values |
+| ------------------ | ---------------- | -------- | -------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------: | :------: | :----------: |
+| `u_measured`       | `RealValueInput` | volt (V) | measured voltage magnitude                                           |                                        &#10024; only for state estimation                                        | &#10004; |    `> 0`     |
 | `u_angle_measured` | `RealValueInput` | rad      | measured voltage angle (only possible with phasor measurement units) | &#10024; only for state estimation when a current sensor with `global_angle` `angle_measurement_type` is present | &#10004; |              |
 
 ```{note}
@@ -953,10 +953,10 @@ However, such mixing of sensor types is allowed as long as they are on different
 
 ##### Input
 
-| name                     | data type                                                                     | unit       | description                                                                                                                               | required                           |  update  |                     valid values                     |
+| name                     | data type                                                                     | unit       | description                                                                                                                               |              required              |  update  |                     valid values                     |
 | ------------------------ | ----------------------------------------------------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------: | :------: | :--------------------------------------------------: |
-| `measured_terminal_type` | {py:class}`MeasuredTerminalType <power_grid_model.enum.MeasuredTerminalType>` | -          | indicate the side of the `branch`                                                                                                         | &#10004;                           | &#10060; | the terminal type should match the `measured_object` |
-| `angle_measurement_type` | {py:class}`AngleMeasurementType <power_grid_model.enum.AngleMeasurementType>` | -          | indicate whether the measured angle is a global angle or a local angle; (see the [electric model](#local-angle-current-sensors) below)                                                                    | &#10004; | &#10060; |                                                      |
+| `measured_terminal_type` | {py:class}`MeasuredTerminalType <power_grid_model.enum.MeasuredTerminalType>` | -          | indicate the side of the `branch`                                                                                                         |              &#10004;              | &#10060; | the terminal type should match the `measured_object` |
+| `angle_measurement_type` | {py:class}`AngleMeasurementType <power_grid_model.enum.AngleMeasurementType>` | -          | indicate whether the measured angle is a global angle or a local angle; (see the [electric model](#local-angle-current-sensors) below)    |              &#10004;              | &#10060; |                                                      |
 | `i_sigma`                | `double`                                                                      | ampere (A) | standard deviation of the current (`i`) measurement error. Usually this is the absolute measurement error range divided by 3.             | &#10024; only for state estimation | &#10004; |                        `> 0`                         |
 | `i_angle_sigma`          | `double`                                                                      | rad        | standard deviation of the current (`i`) phase angle measurement error. Usually this is the absolute measurement error range divided by 3. | &#10024; only for state estimation | &#10004; |                        `> 0`                         |
 
@@ -976,9 +976,9 @@ They share similar attributes: the meaning of `RealValueInput` is different, as 
 
 ##### Input
 
-| name               | data type        | unit       | description                               |              required              |  update  |
-| ------------------ | ---------------- | ---------- | ----------------------------------------- | :--------------------------------: | :------: |
-| `i_measured`       | `RealValueInput` | ampere (A) | measured current (`i`) magnitude          | &#10024; only for state estimation | &#10004; |
+| name               | data type        | unit       | description                                                                                             |              required              |  update  |
+| ------------------ | ---------------- | ---------- | ------------------------------------------------------------------------------------------------------- | :--------------------------------: | :------: |
+| `i_measured`       | `RealValueInput` | ampere (A) | measured current (`i`) magnitude                                                                        | &#10024; only for state estimation | &#10004; |
 | `i_angle_measured` | `RealValueInput` | rad        | measured phase angle of the current (`i`; see the [electric model](#local-angle-current-sensors) below) | &#10024; only for state estimation | &#10004; |
 
 See the documentation on [state estimation calculation methods](calculations.md#state-estimation-algorithms) for details
