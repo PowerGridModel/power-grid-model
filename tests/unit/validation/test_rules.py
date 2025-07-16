@@ -8,7 +8,6 @@ import numpy as np
 import pytest
 
 from power_grid_model import ComponentType, DatasetType, LoadGenType, initialize_array, power_grid_meta_data
-from power_grid_model._core.dataset_definitions import ComponentTypeLike
 from power_grid_model.enum import (
     AngleMeasurementType,
     Branch3Side,
@@ -500,7 +499,7 @@ def test_none_missing():
     dfoo = [("id", "i4"), ("foo", "f8"), ("bar", "(3,)f8"), ("baz", "i4"), ("bla", "i1"), ("ok", "i1")]
     dbar = [("id", "i4"), ("foobar", "f8")]
 
-    def _mock_nan_type(component: ComponentTypeLike, field: str):
+    def _mock_nan_type(component: ComponentType, field: str):
         return {
             "foo_test": {
                 "id": np.iinfo("i4").min,
@@ -592,7 +591,7 @@ def test_none_missing():
 def test_no_strict_subset_missing():
     dfoo = [("id", "i4"), ("foo", "f8"), ("bar", "(3,)f8"), ("baz", "i4")]
 
-    def _mock_nan_type(component: ComponentTypeLike, field: str):
+    def _mock_nan_type(component: ComponentType, field: str):
         return {
             "foo_test": {"id": np.iinfo("i4").min, "foo": np.nan, "bar": np.nan, "baz": np.iinfo("i4").min},
             "bar_test": {"id": np.iinfo("i4").min, "foobar": np.nan},
@@ -638,7 +637,7 @@ def test_no_strict_subset_missing():
 def test_not_all_missing():
     dfoo = [("id", "i4"), ("foo", "f8"), ("bar", "(3,)f8"), ("baz", "i4")]
 
-    def _mock_nan_type(component: ComponentTypeLike, field: str):
+    def _mock_nan_type(component: ComponentType, field: str):
         return {
             "foo_test": {"id": np.iinfo("i4").min, "foo": np.nan, "bar": np.nan, "baz": np.iinfo("i4").min},
             "bar_test": {"id": np.iinfo("i4").min, "foobar": np.nan},
