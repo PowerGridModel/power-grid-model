@@ -42,6 +42,10 @@ from power_grid_model._core.errors import PowerGridError
 from power_grid_model._core.power_grid_meta import initialize_array, power_grid_meta_data
 from power_grid_model._core.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict
 
+SINGULAR_NDIM = 1
+BATCH_NDIM = 2
+UNSUPPORTED_NDIM = 3
+
 
 def is_nan(data) -> bool:
     """
@@ -166,17 +170,17 @@ def get_batch_size(
         for attribute, array in batch_data.items():
             if attribute in sym_attributes:
                 break
-            if array.ndim == 1:
+            if array.ndim == SINGULAR_NDIM:
                 raise TypeError("Incorrect dimension present in batch data.")
-            if array.ndim == 2:
+            if array.ndim == BATCH_NDIM:
                 return 1
             return array.shape[0]
         sym_array = next(iter(batch_data.values()))
 
     sym_array = cast(DenseBatchArray | BatchColumn, sym_array)
-    if sym_array.ndim == 3:
+    if sym_array.ndim == UNSUPPORTED_NDIM:
         raise TypeError("Incorrect dimension present in batch data.")
-    if sym_array.ndim == 1:
+    if sym_array.ndim == SINGULAR_NDIM:
         return 1
     return sym_array.shape[0]
 
@@ -222,7 +226,7 @@ def _split_numpy_array_in_batches(
     Returns:
         A list with a single numpy structured array per batch
     """
-    if data.ndim == 1:
+    if data.ndim == SINGULAR_NDIM:
         return [data]
     if data.ndim in [2, 3]:
         return [data[i, ...] for i in range(data.shape[0])]
@@ -325,7 +329,7 @@ def convert_dataset_to_python_dataset(data: Dataset) -> PythonDataset:
     # It is batch dataset if it is 2D array or a indptr/data structure
     is_batch: bool | None = None
     for component, array in data.items():
-        is_dense_batch = isinstance(array, np.ndarray) and array.ndim == 2
+        is_dense_batch = isinstance(array, np.ndarray) and array.ndim == BATCH_NDIM
         is_sparse_batch = isinstance(array, dict) and "indptr" in array and "data" in array
         if is_batch is not None and is_batch != (is_dense_batch or is_sparse_batch):
             raise ValueError(

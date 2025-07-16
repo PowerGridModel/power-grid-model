@@ -241,7 +241,7 @@ def all_less_or_equal(
     return none_match_comparison(data, component, field, not_less_or_equal, ref_value, NotLessOrEqualError)
 
 
-def all_between(
+def all_between(  # noqa: PLR0913
     data: SingleDataset,
     component: ComponentType,
     field: str,
@@ -281,7 +281,7 @@ def all_between(
     )
 
 
-def all_between_or_at(
+def all_between_or_at(  # noqa: PLR0913
     data: SingleDataset,
     component: ComponentType,
     field: str,
@@ -331,7 +331,7 @@ def all_between_or_at(
     )
 
 
-def none_match_comparison(
+def none_match_comparison(  # noqa: PLR0913
     data: SingleDataset,
     component: ComponentType,
     field: str,
@@ -554,7 +554,7 @@ def all_valid_enum_values(
     return []
 
 
-def all_valid_associated_enum_values(
+def all_valid_associated_enum_values(  # noqa: PLR0913
     data: SingleDataset,
     component: ComponentType,
     field: str,
@@ -774,7 +774,7 @@ def all_finite(data: SingleDataset, exceptions: dict[ComponentType, list[str]] |
 
             invalid = np.isinf(array[field])
             if invalid.any():
-                ids = data[component]["id"][invalid].flatten().tolist()
+                ids = array["id"][invalid].flatten().tolist()
                 errors.append(InfinityError(component, field, ids))
     return errors
 
@@ -841,7 +841,8 @@ def not_all_missing(data: SingleDataset, fields: list[str], component_type: Comp
         fields: List of fields
         component_type: component type to check
     """
-    if len(fields) < 2:
+    min_fields = 2
+    if len(fields) < min_fields:
         raise ValueError(
             "The fields parameter must contain at least 2 fields. Otherwise use the none_missing function."
         )
