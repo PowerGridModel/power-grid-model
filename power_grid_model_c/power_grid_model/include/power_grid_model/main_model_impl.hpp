@@ -768,9 +768,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     void check_no_experimental_features_used(Options const& options) const {
         if (options.calculation_type == CalculationType::state_estimation &&
+            options.calculation_method == CalculationMethod::newton_raphson &&
             state_.components.template size<GenericCurrentSensor>() > 0 &&
-            options.calculation_method == CalculationMethod::newton_raphson) {
-            throw ExperimentalFeature{"Newton-Raphson state estimation is not implemented for current sensors"};
+            std::ranges::any_of(
+                state_.components.template citer<GenericCurrentSensor>(), [](auto const& current_sensor) {
+                    return current_sensor.get_angle_measurement_type() == AngleMeasurementType::global_angle;
+                })) {
+            throw ExperimentalFeature{
+                "Newton-Raphson state estimation is not implemented for global angle current sensors"};
         }
     }
 
