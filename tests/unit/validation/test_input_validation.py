@@ -704,23 +704,11 @@ def test_validate_input_data_sym_calculation(input_data):
                     (current_sensor_type, "measured_terminal_type"),
                 ],
                 [
-                    (power_sensor_type, 107),
-                    (power_sensor_type, 108),
-                    (power_sensor_type, 109),
-                    (power_sensor_type, 111),
-                    (power_sensor_type, 112),
-                    (power_sensor_type, 113),
-                    (power_sensor_type, 114),
-                    (power_sensor_type, 115),
-                    (power_sensor_type, 116),
-                    (power_sensor_type, 117),
-                    (power_sensor_type, 118),
-                    (power_sensor_type, 119),
-                    (power_sensor_type, 120),
-                    (power_sensor_type, 121),
-                    (current_sensor_type, 107),
-                    (current_sensor_type, 108),
-                    (current_sensor_type, 109),
+                    *[(power_sensor_type, i) for i in range(107, 107 + 3)],
+                    # 110 is skipped because it points to an invalid measured terminal type
+                    *[(power_sensor_type, i) for i in range(111, 111 + 11)],
+                    *[(current_sensor_type, i) for i in range(107, 107 + 3)],
+                    # 110 is skipped because it points to an invalid measured terminal type
                     (current_sensor_type, 111),
                 ],
             )

@@ -432,7 +432,7 @@ def _validate_required_power_sigma_or_p_q_sigma(
 
     Args:
         data: SingleDataset, pgm data
-        sensor: only of types ComponentType.sym_power_sensor or ComponentType.asym_power_sensor
+        sensor: ComponentType, only of types ComponentType.sym_power_sensor or ComponentType.asym_power_sensor
     """
     result: list[MissingValueError] = []
 
