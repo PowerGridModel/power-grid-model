@@ -10,6 +10,7 @@ import numpy as np
 import pytest
 
 from power_grid_model import DatasetType
+from power_grid_model._core.dataset_definitions import ComponentType
 from power_grid_model._core.utils import get_dataset_type, is_columnar, is_sparse
 from power_grid_model.data_types import BatchDataset, Dataset, DenseBatchData, SingleComponentData, SingleDataset
 from power_grid_model.enum import ComponentAttributeFilterOptions
@@ -379,12 +380,12 @@ def serialized_data(request):
         pytest.param(None, id="All row filter"),
         pytest.param(ComponentAttributeFilterOptions.everything, id="All columnar filter"),
         pytest.param(ComponentAttributeFilterOptions.relevant, id="All relevant columnar filter"),
-        pytest.param({"node": ["id"], "sym_load": ["id"]}, id="columnar filter"),
-        pytest.param({"node": ["id"], "sym_load": None}, id="mixed columnar/row filter"),
-        pytest.param({"node": ["id"], "shunt": None}, id="unused component filter"),
+        pytest.param({ComponentType.node: ["id"], "sym_load": ["id"]}, id="columnar filter"),
+        pytest.param({ComponentType.node: ["id"], "sym_load": None}, id="mixed columnar/row filter"),
+        pytest.param({ComponentType.node: ["id"], "shunt": None}, id="unused component filter"),
         pytest.param(
             {
-                "node": ["id"],
+                ComponentType.node: ["id"],
                 "line": ComponentAttributeFilterOptions.everything,
                 "sym_load": None,
                 "asym_load": ComponentAttributeFilterOptions.relevant,

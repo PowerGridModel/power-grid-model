@@ -242,7 +242,7 @@ def test_handle_id_not_found_error():
     source_input["u_ref"] = [0.0]
 
     with pytest.raises(IDNotFound):
-        PowerGridModel(input_data={ComponentType.node: node_input, "source": source_input})
+        PowerGridModel(input_data={ComponentType.node: node_input, ComponentType.source: source_input})
 
 
 @pytest.mark.parametrize("sensor_type", [ComponentType.sym_power_sensor, ComponentType.sym_current_sensor])
@@ -303,7 +303,9 @@ def test_handle_id_wrong_type_error():
     sym_power_sensor_input["measured_terminal_type"] = [MeasuredTerminalType.branch_from]
 
     with pytest.raises(IDWrongType):
-        PowerGridModel(input_data={ComponentType.node: node_input, "sym_power_sensor": sym_power_sensor_input})
+        PowerGridModel(
+            input_data={ComponentType.node: node_input, ComponentType.sym_power_sensor: sym_power_sensor_input}
+        )
 
 
 def test_handle_invalid_calculation_method_error():
