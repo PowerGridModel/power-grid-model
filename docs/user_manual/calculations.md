@@ -776,12 +776,6 @@ at each bus are updated using ones from the previous iteration.
 The system error of the phase shift converges to zero.
 
 ```{note}
-Newton-Raphson state estimation only supports current sensors with `local_angle` `angle_measurement_type` as an
-experimental feature at this moment. See also
-[this issue](https://github.com/PowerGridModel/power-grid-model/issues/967).
-```
-
-```{note}
 Newton-Raphson state estimation does not support current sensors with `global_angle` `angle_measurement_type` at this
 moment. See also [this issue](https://github.com/PowerGridModel/power-grid-model/issues/967).
 ```
