@@ -62,7 +62,9 @@ TEST_CASE("Exceptions") {
               "Conflicting voltage for line 0\n voltage at from node 1 is 1.5\n voltage at to node 2 is -1.5\n");
         CHECK(std::string{ConflictVoltage{ID{0}, ID{1}, ID{2}, 1.0e5f, -1.0e5f}.what()} ==
               "Conflicting voltage for line 0\n voltage at from node 1 is 1e+05\n voltage at to node 2 is -1e+05\n");
-        CHECK(std::string{ConflictVoltage{ID{na_IntID}, ID{na_IntID}, ID{na_IntID}, nan, -nan}.what()} ==
+        CHECK(std::string{ConflictVoltage{ID{0}, ID{1}, ID{2}, 1.0e3f, 1.0e8f}.what()} ==
+              "Conflicting voltage for line 0\n voltage at from node 1 is 1000\n voltage at to node 2 is 1e+08\n");
+        CHECK(std::string{ConflictVoltage{na_IntID, na_IntID, na_IntID, nan, -nan}.what()} ==
               "Conflicting voltage for line -2147483648\n voltage at from node -2147483648 is nan\n voltage at to node "
               "-2147483648 is -nan\n");
         CHECK(std::string{ConflictVoltage{ID{0}, ID{0}, ID{0}, std::numeric_limits<double>::infinity(),
@@ -70,9 +72,28 @@ TEST_CASE("Exceptions") {
                               .what()} ==
               "Conflicting voltage for line 0\n voltage at from node 0 is inf\n voltage at to node 0 is -inf\n");
     }
+    SUBCASE("InvalidBranch") {
+        CHECK(std::string{InvalidBranch{ID{0}, ID{1}}.what()} ==
+              "Branch 0 has the same from- and to-node 1,\n This is not allowed!\n");
+        CHECK(std::string{InvalidBranch{na_IntID, na_IntID}.what()} ==
+              "Branch -2147483648 has the same from- and to-node -2147483648,\n This is not allowed!\n");
+    }
+    SUBCASE("InvalidBranch3") {
+        CHECK(std::string{InvalidBranch3{ID{0}, ID{4}, ID{5}, ID{6}}.what()} ==
+              "Branch3 0 is connected to the same node at least twice. Node 1/2/3: 4/5/6,\n This is not allowed!\n");
+        CHECK(std::string{InvalidBranch3{na_IntID, na_IntID, na_IntID, na_IntID}.what()} ==
+              "Branch3 -2147483648 is connected to the same node at least twice. Node 1/2/3: "
+              "-2147483648/-2147483648/-2147483648,\n This is not allowed!\n");
+    }
+    SUBCASE("InvalidTransformerClock") {
+        CHECK(std::string{InvalidTransformerClock{ID{0}, IntS{1}}.what()} ==
+              "Invalid clock for transformer 0, clock 1\n");
+        CHECK(std::string{InvalidTransformerClock{na_IntID, na_IntS}.what()} ==
+              "Invalid clock for transformer -2147483648, clock -128\n");
+    }
     SUBCASE("IterationDiverge") {
-        REQUIRE(std::string{IterationDiverge{20, 1.0e20, 1.0e-8}.what()} ==
-                "Iteration failed to converge after 20 iterations! Max deviation: 1e+20, error tolerance: 1e-08.\n");
+        CHECK(std::string{IterationDiverge{20, 1.0e20, 1.0e-8}.what()} ==
+              "Iteration failed to converge after 20 iterations! Max deviation: 1e+20, error tolerance: 1e-08.\n");
     }
 }
 } // namespace

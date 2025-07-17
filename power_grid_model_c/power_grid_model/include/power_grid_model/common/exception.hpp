@@ -70,8 +70,8 @@ class ConflictVoltage : public PowerGridError {
 class InvalidBranch : public PowerGridError {
   public:
     InvalidBranch(ID branch_id, ID node_id) {
-        append_msg(std::format("Branch {} has the same from- and to-node {},\n This is not allowed!\n",
-                               detail::to_string(branch_id), detail::to_string(node_id)));
+        append_msg(
+            std::format("Branch {} has the same from- and to-node {},\n This is not allowed!\n", branch_id, node_id));
     }
 };
 
@@ -80,16 +80,14 @@ class InvalidBranch3 : public PowerGridError {
     InvalidBranch3(ID branch3_id, ID node_1_id, ID node_2_id, ID node_3_id) {
         append_msg(std::format(
             "Branch3 {} is connected to the same node at least twice. Node 1/2/3: {}/{}/{},\n This is not allowed!\n",
-            detail::to_string(branch3_id), detail::to_string(node_1_id), detail::to_string(node_2_id),
-            detail::to_string(node_3_id)));
+            branch3_id, node_1_id, node_2_id, node_3_id));
     }
 };
 
 class InvalidTransformerClock : public PowerGridError {
   public:
     InvalidTransformerClock(ID id, IntS clock) {
-        append_msg(std::format("Invalid clock for transformer {}, clock {}\n", detail::to_string(id),
-                               detail::to_string(clock)));
+        append_msg(std::format("Invalid clock for transformer {}, clock {}\n", id, clock));
     }
 };
 
@@ -129,7 +127,7 @@ class IterationDiverge : public PowerGridError {
     IterationDiverge(Idx num_iter, double max_dev, double err_tol) {
         append_msg(
             std::format("Iteration failed to converge after {} iterations! Max deviation: {}, error tolerance: {}.\n",
-                        detail::to_string(num_iter), detail::to_string(max_dev), detail::to_string(err_tol)));
+                        num_iter, max_dev, err_tol));
     }
 };
 
