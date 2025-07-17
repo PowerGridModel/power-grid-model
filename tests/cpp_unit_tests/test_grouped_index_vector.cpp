@@ -15,29 +15,24 @@ using detail::sparse_encode;
 
 struct from_natural_t {};
 
-template <grouped_idx_vector_type IdxVectorType, std::same_as<from_dense_t> ConstructFromTag,
-          std::ranges::viewable_range ElementGroups>
-constexpr auto construct_from(ElementGroups&& element_groups, Idx num_groups) {
-    return IdxVectorType{from_dense, std::views::all(std::forward<ElementGroups>(element_groups)), num_groups};
+template <grouped_idx_vector_type IdxVectorType, std::same_as<from_dense_t> ConstructFromTag>
+auto construct_from(IdxVector const& element_groups, Idx num_groups) {
+    return IdxVectorType{from_dense, element_groups, num_groups};
 }
 
-template <grouped_idx_vector_type IdxVectorType, std::same_as<from_sparse_t> ConstructFromTag,
-          std::ranges::viewable_range ElementGroups>
-constexpr auto construct_from(ElementGroups&& element_groups, Idx num_groups) {
-    return IdxVectorType{from_sparse,
-                         sparse_encode(std::views::all(std::forward<ElementGroups>(element_groups)), num_groups)};
+template <grouped_idx_vector_type IdxVectorType, std::same_as<from_sparse_t> ConstructFromTag>
+auto construct_from(IdxVector const& element_groups, Idx num_groups) {
+    return IdxVectorType{from_sparse, sparse_encode(element_groups, num_groups)};
 }
 
-template <std::same_as<DenseGroupedIdxVector> IdxVectorType, std::same_as<from_natural_t> ConstructFromTag,
-          std::ranges::viewable_range ElementGroups>
-constexpr auto construct_from(ElementGroups&& element_groups, Idx num_groups) {
-    return IdxVectorType{std::views::all(std::forward<ElementGroups>(element_groups)), num_groups};
+template <std::same_as<DenseGroupedIdxVector> IdxVectorType, std::same_as<from_natural_t> ConstructFromTag>
+auto construct_from(IdxVector const& element_groups, Idx num_groups) {
+    return IdxVectorType{element_groups, num_groups};
 }
 
-template <std::same_as<SparseGroupedIdxVector> IdxVectorType, std::same_as<from_natural_t> ConstructFromTag,
-          std::ranges::viewable_range ElementGroups>
-constexpr auto construct_from(ElementGroups&& element_groups, Idx num_groups) {
-    return IdxVectorType{sparse_encode(std::views::all(std::forward<ElementGroups>(element_groups)), num_groups)};
+template <std::same_as<SparseGroupedIdxVector> IdxVectorType, std::same_as<from_natural_t> ConstructFromTag>
+auto construct_from(IdxVector const& element_groups, Idx num_groups) {
+    return IdxVectorType{sparse_encode(element_groups, num_groups)};
 }
 
 } // namespace
@@ -82,77 +77,57 @@ TEST_CASE_TEMPLATE("Grouped idx data structure", IdxVectorConstructor, TypePair<
     using IdxVectorType = typename IdxVectorConstructor::A;
     using ConstructFromTag = typename IdxVectorConstructor::B;
 
-    constexpr auto evaluate = [] {
-        IdxVector const groups{1, 1, 1, 3, 3, 3, 4};
-        Idx const num_groups{6};
-        IdxRanges const expected_ranges{IdxRange{0, 0}, IdxRange{0, 3}, IdxRange{3, 3},
-                                        IdxRange{3, 6}, IdxRange{6, 7}, IdxRange{7, 7}};
-        std::vector<Idx> const expected_elements{0, 1, 2, 3, 4, 5, 6};
+    IdxVector const groups{1, 1, 1, 3, 3, 3, 4};
+    Idx const num_groups{6};
+    IdxRanges expected_ranges{IdxRange{0, 0}, IdxRange{0, 3}, IdxRange{3, 3},
+                              IdxRange{3, 6}, IdxRange{6, 7}, IdxRange{7, 7}};
+    std::vector<Idx> const expected_elements{0, 1, 2, 3, 4, 5, 6};
 
-        auto const idx_vector = construct_from<IdxVectorType, ConstructFromTag>(groups, num_groups);
+    auto const idx_vector = construct_from<IdxVectorType, ConstructFromTag>(groups, num_groups);
 
-        //"Empty grouped idx vector - no explicit initialization"
-        {
-            constexpr auto indices = [] { return IdxVectorType{}; }();
-            static_assert(indices.element_size() == 0);
-            static_assert(indices.size() == 0);
+    SUBCASE("Empty grouped idx vector - no explicit initialization") {
+        IdxVectorType const indices;
+        CHECK(indices.element_size() == 0);
+        CHECK(indices.size() == 0);
+    }
+
+    SUBCASE("Empty grouped idx vector - explicit initialization") {
+        IdxVectorType const indices{};
+        CHECK(indices.element_size() == 0);
+        CHECK(indices.size() == 0);
+    }
+
+    SUBCASE("Element range") {
+        std::vector<Idx> const actual_idx_counts{};
+        for (size_t group_number = 0; group_number < num_groups; group_number++) {
+            CHECK(std::ranges::equal(idx_vector.get_element_range(group_number), expected_ranges[group_number]));
         }
+    }
 
-        //"Empty grouped idx vector - explicit initialization"
-        {
-            constexpr auto indices = [] { return IdxVectorType{}; }();
-            static_assert(indices.element_size() == 0);
-            static_assert(indices.size() == 0);
+    SUBCASE("get_group") {
+        for (size_t element = 0; element < groups.size(); element++) {
+            CHECK(idx_vector.get_group(element) == groups[element]);
         }
+    }
 
-        //"Element range"
-        {
-            for (size_t group_number = 0; group_number < num_groups; group_number++) {
-                static_assert(
-                    std::ranges::equal(idx_vector.get_element_range(group_number), expected_ranges[group_number]));
+    SUBCASE("sizes") {
+        CHECK(idx_vector.size() == num_groups);
+        CHECK(idx_vector.element_size() == expected_elements.size());
+    }
+
+    SUBCASE("iteration") {
+        std::vector<Idx> actual_elements{};
+        IdxRanges actual_ranges{};
+        for (auto const& element_range : idx_vector) {
+            actual_ranges.emplace_back(element_range.begin(), element_range.end());
+            for (auto element : element_range) {
+                actual_elements.emplace_back(element);
             }
         }
-
-        //"get_group"
-        {
-            for (size_t element = 0; element < groups.size(); element++) {
-                static_assert(idx_vector.get_group(element) == groups[element]);
-            }
-        }
-
-        //"sizes"
-        {
-            static_assert(idx_vector.size() == num_groups);
-            static_assert(idx_vector.element_size() == expected_elements.size());
-        }
-
-        //"iteration"
-        {
-            constexpr auto actual_elements = [&idx_vector] {
-                std::vector<Idx> actual_elements_{};
-                for (auto const& element_range : idx_vector) {
-                    for (auto element : element_range) {
-                        actual_elements_.emplace_back(element);
-                    }
-                }
-                return actual_elements_;
-            }();
-            constexpr auto actual_ranges = [&idx_vector] {
-                IdxRanges actual_ranges_{};
-                for (auto const& element_range : idx_vector) {
-                    actual_ranges_.emplace_back(element_range.begin(), element_range.end());
-                }
-                return actual_ranges_;
-            }();
-            static_assert(actual_elements == expected_elements);
-            static_assert(std::ranges::equal(actual_ranges, expected_ranges, [](auto const& lhs, auto const& rhs) {
-                return std::ranges::equal(lhs, rhs);
-            }));
-        }
-
-        return true;
-    };
-    static_assert(evaluate());
+        CHECK(actual_elements == expected_elements);
+        CHECK(std::ranges::equal(actual_ranges, expected_ranges,
+                                 [](auto const& lhs, auto const& rhs) { return std::ranges::equal(lhs, rhs); }));
+    }
 }
 
 TEST_CASE_TEMPLATE("Enumerated zip iterator for grouped index data structures", IdxVectorTypes,

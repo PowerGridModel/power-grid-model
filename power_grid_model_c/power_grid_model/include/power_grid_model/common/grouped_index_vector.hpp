@@ -107,7 +107,7 @@ class SparseGroupedIdxVector {
         using difference_type = typename Base::difference_type;
         using reference = typename Base::reference;
 
-        constexpr GroupIterator() = default;
+        GroupIterator() = default;
         explicit constexpr GroupIterator(IdxVector const& indptr, Idx group) : indptr_{&indptr}, group_{group} {}
 
       private:
@@ -163,10 +163,8 @@ class SparseGroupedIdxVector {
     }
     constexpr SparseGroupedIdxVector(from_sparse_t /* tag */, IdxVector sparse_group_elements)
         : SparseGroupedIdxVector{std::move(sparse_group_elements)} {}
-    template <std::ranges::viewable_range DenseGroupElements>
-    constexpr SparseGroupedIdxVector(from_dense_t /* tag */, DenseGroupElements&& dense_group_elements, Idx num_groups)
-        : SparseGroupedIdxVector{
-              detail::sparse_encode(std::forward<DenseGroupElements>(dense_group_elements), num_groups)} {}
+    constexpr SparseGroupedIdxVector(from_dense_t /* tag */, IdxVector const& dense_group_elements, Idx num_groups)
+        : SparseGroupedIdxVector{detail::sparse_encode(dense_group_elements, num_groups)} {}
 
   private:
     IdxVector indptr_;
@@ -183,8 +181,8 @@ class DenseGroupedIdxVector {
         using difference_type = typename Base::difference_type;
         using reference = typename Base::reference;
 
-        constexpr GroupIterator() = default;
-        explicit constexpr GroupIterator(IdxVector const& dense_vector, Idx group)
+        GroupIterator() = default;
+        explicit GroupIterator(IdxVector const& dense_vector, Idx group)
             : dense_vector_{&dense_vector},
               group_{group},
               group_range_{std::ranges::equal_range(*dense_vector_, group)} {}
@@ -235,7 +233,7 @@ class DenseGroupedIdxVector {
         }
     };
 
-    constexpr auto group_iterator(Idx group) const { return GroupIterator{dense_vector_, group}; }
+    auto group_iterator(Idx group) const { return GroupIterator{dense_vector_, group}; }
 
   public:
     using iterator = GroupIterator;
@@ -249,17 +247,16 @@ class DenseGroupedIdxVector {
     constexpr auto get_element_range(Idx group) const { return *group_iterator(group); }
 
     DenseGroupedIdxVector() = default;
-    explicit constexpr DenseGroupedIdxVector(IdxVector dense_vector, Idx num_groups)
+    constexpr explicit DenseGroupedIdxVector(IdxVector dense_vector, Idx num_groups)
         : num_groups_{num_groups}, dense_vector_{std::move(dense_vector)} {
         assert(size() >= 0);
         assert(element_size() >= 0);
         assert(std::ranges::is_sorted(dense_vector_));
         assert(num_groups_ >= (dense_vector_.empty() ? 0 : dense_vector_.back()));
     }
-    template <std::ranges::viewable_range SparseGroupElements>
-    constexpr DenseGroupedIdxVector(from_sparse_t /* tag */, SparseGroupElements&& sparse_group_elements)
+    constexpr DenseGroupedIdxVector(from_sparse_t /* tag */, IdxVector const& sparse_group_elements)
         : DenseGroupedIdxVector{detail::sparse_decode(sparse_group_elements),
-                                std::ranges::ssize(std::forward<SparseGroupElements>(sparse_group_elements)) - 1} {}
+                                std::ranges::ssize(sparse_group_elements) - 1} {}
     constexpr DenseGroupedIdxVector(from_dense_t /* tag */, IdxVector dense_group_elements, Idx num_groups)
         : DenseGroupedIdxVector{std::move(dense_group_elements), num_groups} {}
 
