@@ -59,8 +59,7 @@ class MissingCaseForEnumError : public InvalidArguments {
   public:
     template <typename T>
     MissingCaseForEnumError(std::string_view method, T const& value)
-        : InvalidArguments{method,
-                           std::format("{} #{}", typeid(T).name(), detail::to_string(static_cast<IntS>(value)))} {}
+        : InvalidArguments{method, std::format("{} #{:d}", typeid(T).name(), static_cast<IntS>(value))} {}
 };
 
 class ConflictVoltage : public PowerGridError {
