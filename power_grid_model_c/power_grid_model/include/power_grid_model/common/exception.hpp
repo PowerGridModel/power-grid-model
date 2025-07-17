@@ -14,12 +14,8 @@
 
 namespace power_grid_model {
 namespace detail {
-inline auto to_string(std::floating_point auto x) {
-    std::ostringstream sstr{}; // NOLINT(misc-const-correctness) // https://github.com/llvm/llvm-project/issues/57297
-    sstr << x;
-    return sstr.str();
-}
-inline auto to_string(std::integral auto x) { return std::to_string(x); }
+inline auto to_string(std::floating_point auto x) { return std::format("{}", x); }
+inline auto to_string(std::integral auto x) { return std::format("{}", x); }
 } // namespace detail
 
 class PowerGridError : public std::exception {
@@ -66,9 +62,8 @@ class ConflictVoltage : public PowerGridError {
   public:
     ConflictVoltage(ID id, ID id1, ID id2, double u1, double u2) {
         append_msg(std::format(
-            "Conflicting voltage for line {}\n voltage at from node {} is {}\n voltage at to node {} is {}\n",
-            detail::to_string(id), detail::to_string(id1), detail::to_string(u1), detail::to_string(id2),
-            detail::to_string(u2)));
+            "Conflicting voltage for line {}\n voltage at from node {} is {}\n voltage at to node {} is {}\n", id, id1,
+            u1, id2, u2));
     }
 };
 
