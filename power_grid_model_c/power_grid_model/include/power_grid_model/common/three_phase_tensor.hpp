@@ -215,8 +215,8 @@ inline auto phase_mod_2pi(RealValue<asymmetric_t> const& phase) {
 }
 
 // calculate kron product of two vector
-inline double vector_outer_product(double x, double y) { return x * y; }
-inline DoubleComplex vector_outer_product(DoubleComplex x, DoubleComplex y) { return x * y; }
+constexpr double vector_outer_product(double x, double y) { return x * y; }
+constexpr DoubleComplex vector_outer_product(DoubleComplex x, DoubleComplex y) { return x * y; }
 template <column_vector DerivedA, column_vector DerivedB>
 inline auto vector_outer_product(Eigen::ArrayBase<DerivedA> const& x, Eigen::ArrayBase<DerivedB> const& y) {
     return (x.matrix() * y.matrix().transpose()).array();
@@ -235,10 +235,10 @@ template <column_vector_or_tensor Derived> inline auto dot_prepare(Eigen::ArrayB
 } // namespace detail
 
 // calculate matrix multiply, dot
-inline double dot(double x, double y) { return x * y; }
-inline DoubleComplex dot(DoubleComplex const& x, DoubleComplex const& y) { return x * y; }
+constexpr double dot(double x, double y) { return x * y; }
+constexpr DoubleComplex dot(DoubleComplex const& x, DoubleComplex const& y) { return x * y; }
 
-template <scalar_value... T> inline auto dot(T const&... x) { return (... * x); }
+template <scalar_value... T> constexpr auto dot(T const&... x) { return (... * x); }
 
 template <column_vector_or_tensor... Derived> inline auto dot(Derived const&... x) {
     using detail::dot_prepare;
@@ -252,7 +252,7 @@ inline auto dot(Derived const&... x) {
 }
 
 // max of a vector
-inline double max_val(double val) { return val; }
+constexpr double max_val(double val) { return val; }
 template <column_vector DerivedA> inline double max_val(Eigen::ArrayBase<DerivedA> const& val) {
     return val.maxCoeff();
 }
@@ -261,20 +261,20 @@ template <column_vector DerivedA> inline double max_val(Eigen::ArrayBase<Derived
 template <rk2_tensor DerivedA> inline auto sum_row(Eigen::ArrayBase<DerivedA> const& m) { return m.rowwise().sum(); }
 template <typename T>
     requires std::floating_point<T> || std::same_as<T, DoubleComplex>
-inline T sum_row(T d) {
+constexpr T sum_row(T d) {
     return d;
 }
 
 // function to sum vector
 template <column_vector DerivedA> inline auto sum_val(Eigen::ArrayBase<DerivedA> const& m) { return m.sum(); }
 // overload for double and complex
-inline double sum_val(double d) { return d; }
-inline DoubleComplex sum_val(DoubleComplex const& z) { return z; }
+constexpr double sum_val(double d) { return d; }
+constexpr DoubleComplex sum_val(DoubleComplex const& z) { return z; }
 
 // function to mean vector
 template <column_vector DerivedA> inline auto mean_val(Eigen::ArrayBase<DerivedA> const& m) { return m.mean(); }
-inline DoubleComplex mean_val(DoubleComplex const& z) { return z; }
-inline double mean_val(double z) { return z; }
+constexpr DoubleComplex mean_val(DoubleComplex const& z) { return z; }
+constexpr double mean_val(double z) { return z; }
 
 template <symmetry_tag sym, class T> inline auto process_mean_val(T const& m) {
     if constexpr (is_symmetric_v<sym>) {
@@ -287,7 +287,7 @@ template <symmetry_tag sym, class T> inline auto process_mean_val(T const& m) {
 template <column_vector Derived> inline auto as_diag(Eigen::ArrayBase<Derived> const& x) {
     return x.matrix().asDiagonal();
 }
-inline auto as_diag(double x) { return x; }
+constexpr auto as_diag(double x) { return x; }
 
 // diagonal multiply
 template <column_vector DerivedA, rk2_tensor DerivedB, column_vector DerivedC>
@@ -296,23 +296,23 @@ inline auto diag_mult(Eigen::ArrayBase<DerivedA> const& x, Eigen::ArrayBase<Deri
     return (as_diag(x) * y.matrix() * as_diag(z)).array();
 }
 // double overload
-inline auto diag_mult(double x, double y, double z) { return x * y * z; }
+constexpr auto diag_mult(double x, double y, double z) { return x * y * z; }
 
 // calculate positive sequence
 template <column_vector Derived> inline DoubleComplex pos_seq(Eigen::ArrayBase<Derived> const& val) {
     return (val(0) + a * val(1) + a2 * val(2)) / 3.0;
 }
 
-inline auto pos_seq(DoubleComplex const& val) { return val; }
+constexpr auto pos_seq(DoubleComplex const& val) { return val; }
 
 // inverse of tensor
-inline auto inv(double val) { return 1.0 / val; }
-inline auto inv(DoubleComplex const& val) { return 1.0 / val; }
+template <std::floating_point Float> constexpr auto inv(Float val) { return Float{1.0} / val; }
+constexpr auto inv(DoubleComplex const& val) { return 1.0 / val; }
 inline auto inv(ComplexTensor<asymmetric_t> const& val) { return val.matrix().inverse().array(); }
 
 // add_diag
-inline void add_diag(double& x, double y) { x += y; }
-inline void add_diag(DoubleComplex& x, DoubleComplex const& y) { x += y; }
+constexpr void add_diag(double& x, double y) { x += y; }
+constexpr void add_diag(DoubleComplex& x, DoubleComplex const& y) { x += y; }
 template <rk2_tensor DerivedA, column_vector DerivedB>
 inline void add_diag(Eigen::ArrayBase<DerivedA>& x, Eigen::ArrayBase<DerivedB> const& y) {
     x.matrix().diagonal() += y.matrix();
@@ -326,7 +326,7 @@ inline void add_diag(Eigen::ArrayBase<DerivedA>&& x, Eigen::ArrayBase<DerivedB> 
 template <symmetry_tag sym> inline const ComplexTensor<sym> zero_tensor = ComplexTensor<sym>{0.0};
 
 // inverse symmetric param
-inline std::pair<DoubleComplex, DoubleComplex> inv_sym_param(DoubleComplex const& s, DoubleComplex const& m) {
+constexpr std::pair<DoubleComplex, DoubleComplex> inv_sym_param(DoubleComplex const& s, DoubleComplex const& m) {
     DoubleComplex const det_1 = 1.0 / (s * s + s * m - 2.0 * m * m);
     return {(s + m) * det_1, -m * det_1};
 }
@@ -337,14 +337,14 @@ inline bool is_nan(std::floating_point auto x) { return std::isnan(x); }
 template <std::floating_point T> inline bool is_nan(std::complex<T> const& x) {
     return is_nan(x.real()) || is_nan(x.imag());
 }
-inline bool is_nan(ID x) { return x == na_IntID; }
-inline bool is_nan(IntS x) { return x == na_IntS; }
+constexpr bool is_nan(ID x) { return x == na_IntID; }
+constexpr bool is_nan(IntS x) { return x == na_IntS; }
 template <class Enum>
     requires std::same_as<std::underlying_type_t<Enum>, IntS>
-inline bool is_nan(Enum x) {
+constexpr bool is_nan(Enum x) {
     return static_cast<IntS>(x) == na_IntS;
 }
-inline bool is_nan(Idx x) { return x == na_Idx; }
+constexpr bool is_nan(Idx x) { return x == na_Idx; }
 
 // is normal
 inline auto is_normal(std::floating_point auto value) { return std::isnormal(value); }
@@ -368,11 +368,11 @@ inline auto is_inf(RealValue<asymmetric_t> const& value) {
 }
 
 // any_zero
-inline auto any_zero(std::floating_point auto value) { return value == 0.0; }
+constexpr auto any_zero(std::floating_point auto value) { return value == 0.0; }
 inline auto any_zero(RealValue<asymmetric_t> const& value) { return (value == RealValue<asymmetric_t>{0.0}).any(); }
 
 // all_zero
-inline auto all_zero(std::floating_point auto value) { return value == 0.0; }
+constexpr auto all_zero(std::floating_point auto value) { return value == 0.0; }
 inline auto all_zero(RealValue<asymmetric_t> const& value) { return (value == RealValue<asymmetric_t>{0.0}).all(); }
 
 // update real values
@@ -432,7 +432,7 @@ inline ComplexTensor<asymmetric_t> get_sym_matrix_inv() {
 
 // conjugate (hermitian) transpose
 inline DoubleComplex hermitian_transpose(DoubleComplex const& z) { return conj(z); }
-inline double hermitian_transpose(double x) { return x; }
+constexpr double hermitian_transpose(double x) { return x; }
 template <rk2_tensor Derived> inline auto hermitian_transpose(Eigen::ArrayBase<Derived> const& x) {
     return x.matrix().adjoint().array();
 }
