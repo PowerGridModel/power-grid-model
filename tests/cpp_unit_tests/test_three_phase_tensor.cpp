@@ -44,8 +44,8 @@ TEST_CASE("Three phase tensor") {
         CHECK(cabs(vec7(0) - 1.0) < 1e-8);
         CHECK(cabs(vec7(1) - a2) < 1e-8);
         CHECK(cabs(vec7(2) - a) < 1e-8);
-        CHECK(RealValue<symmetric_t>{1.0} == 1.0);
-        CHECK(ComplexValue<symmetric_t>{1.0} == 1.0);
+        static_assert(RealValue<symmetric_t>{1.0} == 1.0);
+        static_assert(ComplexValue<symmetric_t>{1.0} == 1.0);
         CHECK(real(vec7)(0) == 1.0);
     }
 
@@ -96,22 +96,26 @@ TEST_CASE("Three phase tensor") {
         ComplexTensor<asymmetric_t> mat2;
         mat2 << (1.0 + 1.0i), 0.0, 0.0, 0.0, (1.0 + 1.0i), 0.0, 0.0, 0.0, (1.0 + 1.0i);
         CHECK((mat == mat2).all());
-        CHECK(ComplexTensor<symmetric_t>{1.0 + 1.0i} == (1.0 + 1.0i));
+        static_assert(ComplexTensor<symmetric_t>{1.0 + 1.0i} == (1.0 + 1.0i));
         ComplexTensor<asymmetric_t> mat3 = inv(mat2);
         CHECK(cabs(mat3(0, 0) - 1.0 / (1.0 + 1.0i)) < 1e-8);
         CHECK(cabs(inv((1.0 + 1.0i)) - 1.0 / (1.0 + 1.0i)) < 1e-8);
     }
 
     SUBCASE("Test value initialization") {
-        NodeOutput<symmetric_t> const sym{};
-        CHECK(sym.id == na_IntID);
-        CHECK(sym.energized == na_IntS);
+        constexpr NodeOutput<symmetric_t> sym{};
+        static_assert(sym.id == na_IntID);
+        static_assert(sym.energized == na_IntS);
+        static_assert(is_nan(sym.id));
+        static_assert(is_nan(sym.energized));
         CHECK(is_nan(sym.u_pu));
         CHECK(is_nan(sym.u));
         CHECK(is_nan(sym.u_angle));
         NodeOutput<asymmetric_t> const asym{};
         CHECK(asym.id == na_IntID);
         CHECK(asym.energized == na_IntS);
+        CHECK(is_nan(asym.id));
+        CHECK(is_nan(asym.energized));
         CHECK(is_nan(asym.u_pu(0)));
         CHECK(is_nan(asym.u(1)));
         CHECK(is_nan(asym.u_angle(2)));
@@ -140,32 +144,34 @@ TEST_CASE("Three phase tensor") {
         RealTensor<asymmetric_t> mat2;
         mat2 << -3, 2, 3, 4, -5, 6, 7, 8, -9;
         CHECK((mat1 == mat2).all());
-        double x = 5;
-        double const y = 10;
-        add_diag(x, -y);
-        CHECK(x == -5);
+        static_assert([] {
+            double x = 5;
+            double const y = 10;
+            add_diag(x, -y);
+            return x;
+        }() == -5);
     }
 
     SUBCASE("Test Hermitian transpose") {
-        double const x = 1.0;
-        DoubleComplex const y{1.0, 5.0};
+        constexpr double x = 1.0;
+        constexpr DoubleComplex y{1.0, 5.0};
         RealTensor<asymmetric_t> const z1{1.0, 2.0};
         ComplexTensor<asymmetric_t> z2;
         z2 << 1.0 + 5.0i, 3.0 - 4.0i, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
         ComplexTensor<asymmetric_t> z2ht;
         z2ht << 1.0 - 5.0i, 0.0, 0.0, 3.0 + 4.0i, 0.0, 0.0, 0.0, 0.0, 0.0;
 
-        CHECK(hermitian_transpose(x) == 1.0);
-        CHECK(hermitian_transpose(y) == (1.0 - 5.0i));
+        static_assert(hermitian_transpose(x) == 1.0);
+        static_assert(hermitian_transpose(y) == (1.0 - 5.0i));
         CHECK((hermitian_transpose(z1) == z1).all());
         CHECK((hermitian_transpose(z2) == z2ht).all());
     }
 
     SUBCASE("Test average of nan") {
-        DoubleComplex const x{1.0, nan};
-        DoubleComplex const y{2.0, 2.0};
-        DoubleComplex const z{3.0, 5.0};
-        DoubleComplex const avg = (x + y + z) / 3.0;
+        constexpr DoubleComplex x{1.0, nan};
+        constexpr DoubleComplex y{2.0, 2.0};
+        constexpr DoubleComplex z{3.0, 5.0};
+        DoubleComplex const avg{(x + y + z) / 3.0};
         CHECK(real(avg) == 2.0);
         CHECK(is_nan(imag(avg)));
 
@@ -178,10 +184,12 @@ TEST_CASE("Three phase tensor") {
     }
 
     SUBCASE("Test RealValue update - sym") {
+        constexpr RealValue<symmetric_t> update_1 = nan;
+        constexpr RealValue<symmetric_t> update_2 = 2.0;
+        constexpr double scalar = 3.0;
+
         RealValue<symmetric_t> value = 1.0;
-        RealValue<symmetric_t> const update_1 = nan;
-        RealValue<symmetric_t> const update_2 = 2.0;
-        double const scalar = 3.0;
+        CHECK(value == 1.0);
 
         update_real_value<symmetric_t>(update_1, value, scalar);
         CHECK(value == 1.0);
@@ -191,10 +199,14 @@ TEST_CASE("Three phase tensor") {
     }
 
     SUBCASE("Test RealValue update - asym") {
-        RealValue<asymmetric_t> vec{1.0, nan, nan};
         RealValue<asymmetric_t> const vec_update_1{nan, nan, nan};
         RealValue<asymmetric_t> const vec_update_2{nan, nan, 2.0};
-        double const scalar = 3.0;
+        constexpr double scalar = 3.0;
+
+        RealValue<asymmetric_t> vec{1.0, nan, nan};
+        CHECK(vec(0) == 1.0);
+        CHECK(is_nan(vec(1)));
+        CHECK(is_nan(vec(2)));
 
         update_real_value<asymmetric_t>(vec_update_1, vec, scalar);
         CHECK(vec(0) == 1.0);

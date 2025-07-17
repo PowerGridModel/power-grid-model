@@ -431,7 +431,7 @@ inline ComplexTensor<asymmetric_t> get_sym_matrix_inv() {
 }
 
 // conjugate (hermitian) transpose
-inline DoubleComplex hermitian_transpose(DoubleComplex const& z) { return conj(z); }
+constexpr DoubleComplex hermitian_transpose(DoubleComplex const& z) { return conj(z); }
 constexpr double hermitian_transpose(double x) { return x; }
 template <rk2_tensor Derived> inline auto hermitian_transpose(Eigen::ArrayBase<Derived> const& x) {
     return x.matrix().adjoint().array();
