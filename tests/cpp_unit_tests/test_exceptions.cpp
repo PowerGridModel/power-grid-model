@@ -8,7 +8,7 @@
 
 namespace power_grid_model {
 namespace {
-enum TestEnum {
+enum TestEnum { // NOLINT(performance-enum-size)
     TestEnum_foo = 0,
     TestEnum_bar = 1,
     TestEnum_baz = -1,
@@ -223,9 +223,9 @@ TEST_CASE("Exceptions") {
     }
     SUBCASE("CalculationError") { CHECK(std::string{CalculationError{"foo"}.what()} == "foo"); }
     SUBCASE("BatchCalculationError") {
-        IdxVector failed_scenarios{1, 2, 3, na_Idx};
-        std::vector<std::string> err_msgs{"Error 1", "Error 2", "Error 3", "Error 4"};
-        BatchCalculationError error{"Batch error", failed_scenarios, err_msgs};
+        IdxVector const failed_scenarios{1, 2, 3, na_Idx};
+        std::vector<std::string> const err_msgs{"Error 1", "Error 2", "Error 3", "Error 4"};
+        BatchCalculationError const error{"Batch error", failed_scenarios, err_msgs};
         CHECK(std::string{error.what()} == "Batch error");
         CHECK(error.failed_scenarios() == failed_scenarios);
         CHECK(error.err_msgs() == err_msgs);

@@ -96,7 +96,7 @@ TEST_CASE("Three phase tensor") {
         ComplexTensor<asymmetric_t> mat2;
         mat2 << (1.0 + 1.0i), 0.0, 0.0, 0.0, (1.0 + 1.0i), 0.0, 0.0, 0.0, (1.0 + 1.0i);
         CHECK((mat == mat2).all());
-        static_assert(ComplexTensor<symmetric_t>{1.0 + 1.0i} == (1.0 + 1.0i));
+        static_assert(ComplexTensor<symmetric_t>{DoubleComplex{1.0, 1.0}} == DoubleComplex{1.0, 1.0});
         ComplexTensor<asymmetric_t> mat3 = inv(mat2);
         CHECK(cabs(mat3(0, 0) - 1.0 / (1.0 + 1.0i)) < 1e-8);
         CHECK(cabs(inv((1.0 + 1.0i)) - 1.0 / (1.0 + 1.0i)) < 1e-8);
@@ -162,7 +162,7 @@ TEST_CASE("Three phase tensor") {
         z2ht << 1.0 - 5.0i, 0.0, 0.0, 3.0 + 4.0i, 0.0, 0.0, 0.0, 0.0, 0.0;
 
         static_assert(hermitian_transpose(x) == 1.0);
-        static_assert(hermitian_transpose(y) == (1.0 - 5.0i));
+        static_assert(hermitian_transpose(y) == DoubleComplex{1.0, -5.0});
         CHECK((hermitian_transpose(z1) == z1).all());
         CHECK((hermitian_transpose(z2) == z2ht).all());
     }
