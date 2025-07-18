@@ -134,7 +134,7 @@ TEST_CASE("Exceptions") {
               "Not enough measurements available for state estimation.\nTest error message\n");
     }
     SUBCASE("IterationDiverge") {
-        CHECK(std::string{IterationDiverge{}.what()} == "");
+        CHECK(std::string{IterationDiverge{"Test error message"}.what()} == "Test error message");
         CHECK(std::string{IterationDiverge{20, 1.0e20, 1.0e-8}.what()} ==
               "Iteration failed to converge after 20 iterations! Max deviation: 1e+20, error tolerance: 1e-08.\n");
     }
