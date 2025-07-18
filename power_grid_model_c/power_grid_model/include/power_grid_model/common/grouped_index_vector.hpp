@@ -182,7 +182,7 @@ class DenseGroupedIdxVector {
         using reference = typename Base::reference;
 
         GroupIterator() = default;
-        explicit GroupIterator(IdxVector const& dense_vector, Idx group)
+        explicit constexpr GroupIterator(IdxVector const& dense_vector, Idx group)
             : dense_vector_{&dense_vector},
               group_{group},
               group_range_{std::ranges::equal_range(*dense_vector_, group)} {}
@@ -233,7 +233,7 @@ class DenseGroupedIdxVector {
         }
     };
 
-    auto group_iterator(Idx group) const { return GroupIterator{dense_vector_, group}; }
+    constexpr auto group_iterator(Idx group) const { return GroupIterator{dense_vector_, group}; }
 
   public:
     using iterator = GroupIterator;
