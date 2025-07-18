@@ -83,7 +83,7 @@ def original_batch_data() -> dict[str, np.ndarray]:
     asym_load = initialize_array(DatasetType.update, ComponentType.asym_load, (3, 2))
     asym_load["id"] = [[9, 10], [9, 10], [9, 10]]
 
-    return {"line": line, "asym_load": asym_load}
+    return {ComponentType.line: line, ComponentType.asym_load: asym_load}
 
 
 @pytest.fixture
@@ -121,28 +121,45 @@ def test_validate_batch_data(input_data, batch_data):
 
 
 def test_validate_batch_data_input_error(input_data, batch_data):
-    if is_columnar(input_data["node"]):
-        input_data["node"]["id"][-1] = 123
-        input_data["line"]["id"][-1] = 123
+    if is_columnar(input_data[ComponentType.node]):
+        input_data[ComponentType.node]["id"][-1] = 123
+        input_data[ComponentType.line]["id"][-1] = 123
     else:
-        input_data["node"][-1]["id"] = 123
-        input_data["line"][-1]["id"] = 123
+        input_data[ComponentType.node][-1]["id"] = 123
+        input_data[ComponentType.line][-1]["id"] = 123
     errors = validate_batch_data(input_data, batch_data)
+    assert errors is not None
     assert len(errors) == 3
-    assert [MultiComponentNotUniqueError([("line", "id"), ("node", "id")], [("line", 123), ("node", 123)])] == errors[0]
-    assert [MultiComponentNotUniqueError([("line", "id"), ("node", "id")], [("line", 123), ("node", 123)])] == errors[1]
-    assert [MultiComponentNotUniqueError([("line", "id"), ("node", "id")], [("line", 123), ("node", 123)])] == errors[2]
+    assert [
+        MultiComponentNotUniqueError(
+            [(ComponentType.line, "id"), (ComponentType.node, "id")],
+            [(ComponentType.line, 123), (ComponentType.node, 123)],
+        )
+    ] == errors[0]
+    assert [
+        MultiComponentNotUniqueError(
+            [(ComponentType.line, "id"), (ComponentType.node, "id")],
+            [(ComponentType.line, 123), (ComponentType.node, 123)],
+        )
+    ] == errors[1]
+    assert [
+        MultiComponentNotUniqueError(
+            [(ComponentType.line, "id"), (ComponentType.node, "id")],
+            [(ComponentType.line, 123), (ComponentType.node, 123)],
+        )
+    ] == errors[2]
 
 
 def test_validate_batch_data_update_error(input_data, batch_data):
-    batch_data["line"]["from_status"] = np.array([[12, 34], [0, -128], [56, 78]])
+    batch_data[ComponentType.line]["from_status"] = np.array([[12, 34], [0, -128], [56, 78]])
     errors = validate_batch_data(input_data, batch_data)
+    assert errors is not None
     assert len(errors) == 2
     assert 1 not in errors
     assert len(errors[0]) == 1
     assert len(errors[2]) == 1
-    assert errors[0] == [NotBooleanError("line", "from_status", [5, 6])]
-    assert errors[2] == [NotBooleanError("line", "from_status", [5, 7])]
+    assert errors[0] == [NotBooleanError(ComponentType.line, "from_status", [5, 6])]
+    assert errors[2] == [NotBooleanError(ComponentType.line, "from_status", [5, 7])]
 
 
 def test_validate_batch_data_transformer_tap_nom():

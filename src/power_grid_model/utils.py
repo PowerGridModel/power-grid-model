@@ -16,7 +16,7 @@ from typing import cast as cast_type
 import numpy as np
 
 from power_grid_model import CalculationMethod, PowerGridModel
-from power_grid_model._core.dataset_definitions import DatasetType, _map_to_component_types
+from power_grid_model._core.dataset_definitions import ComponentType, DatasetType, _map_to_component_types
 from power_grid_model._core.serialization import (
     json_deserialize,
     json_serialize,
@@ -368,9 +368,11 @@ def self_test():
             "is_batch": False,
             "attributes": {},
             "data": {
-                "node": [{"id": 1, "u_rated": 10000}],
-                "source": [{"id": 2, "node": 1, "u_ref": 1, "sk": 1e20}],
-                "sym_load": [{"id": 3, "node": 1, "status": 1, "type": 0, "p_specified": 0, "q_specified": 0}],
+                ComponentType.node: [{"id": 1, "u_rated": 10000}],
+                ComponentType.source: [{"id": 2, "node": 1, "u_ref": 1, "sk": 1e20}],
+                ComponentType.sym_load: [
+                    {"id": 3, "node": 1, "status": 1, "type": 0, "p_specified": 0, "q_specified": 0}
+                ],
             },
         }
 
@@ -398,7 +400,9 @@ def self_test():
 
             assert output_data is not None
             assert math.isclose(
-                output_data["data"]["node"][0]["u"], input_data["data"]["node"][0]["u_rated"], abs_tol=1e-9
+                output_data["data"][ComponentType.node][0]["u"],
+                input_data["data"][ComponentType.node][0]["u_rated"],
+                abs_tol=1e-9,
             )
 
             print("Self test finished.")
