@@ -7,10 +7,10 @@
 // main model class
 
 // main include
-#include "batch_dispatch.hpp"
 #include "batch_parameter.hpp"
 #include "calculation_parameters.hpp"
 #include "container.hpp"
+#include "job_dispatch.hpp"
 #include "main_model_fwd.hpp"
 #include "topology.hpp"
 
@@ -151,14 +151,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     using SequenceIdxView = std::array<std::span<Idx2D const>, main_core::utils::n_types<ComponentType...>>;
     using OwnedUpdateDataset = std::tuple<std::vector<typename ComponentType::UpdateType>...>;
 
-    using BatchDispatcher =
-        BatchDispatch<MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentList<ComponentType...>>,
-                      ComponentType...>;
+    using JobDispatcher =
+        JobDispatch<MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentList<ComponentType...>>,
+                    ComponentType...>;
 
-    static constexpr Idx ignore_output{BatchDispatcher::ignore_output};
+    static constexpr Idx ignore_output{JobDispatcher::ignore_output};
     static constexpr Idx isolated_component{-1};
     static constexpr Idx not_connected{-1};
-    static constexpr Idx sequential{BatchDispatcher::sequential};
+    static constexpr Idx sequential{JobDispatcher::sequential};
 
   public:
     using Options = MainModelOptions;
@@ -475,8 +475,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&, MutableDataset const&, Idx>
     BatchParameter batch_calculation_(Calculate&& calculation_fn, MutableDataset const& result_data,
                                       ConstDataset const& update_data, Idx threading = sequential) {
-        return BatchDispatcher::batch_calculation_(*this, calculation_info_, std::forward<Calculate>(calculation_fn),
-                                                   result_data, update_data, threading);
+        return JobDispatcher::batch_calculation_(*this, calculation_info_, std::forward<Calculate>(calculation_fn),
+                                                 result_data, update_data, threading);
     }
 
     // Calculate with optimization, e.g., automatic tap changer

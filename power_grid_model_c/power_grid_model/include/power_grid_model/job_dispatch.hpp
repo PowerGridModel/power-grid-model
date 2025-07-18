@@ -13,7 +13,7 @@
 
 namespace power_grid_model {
 
-template <class MainModel, class... ComponentType> class BatchDispatch {
+template <class MainModel, class... ComponentType> class JobDispatch {
   private:
     using SequenceIdxView = std::array<std::span<Idx2D const>, main_core::utils::n_types<ComponentType...>>;
 
@@ -67,7 +67,7 @@ template <class MainModel, class... ComponentType> class BatchDispatch {
         auto sub_batch = sub_batch_calculation_(model, std::forward<Calculate>(calculation_fn), result_data,
                                                 update_data, all_scenarios_sequence, exceptions, infos);
 
-        batch_dispatch(sub_batch, n_scenarios, threading);
+        job_dispatch(sub_batch, n_scenarios, threading);
 
         handle_batch_exceptions(exceptions);
         calculation_info = main_core::merge_calculation_info(infos);
@@ -108,7 +108,7 @@ template <class MainModel, class... ComponentType> class BatchDispatch {
                 scenario_update_restore(model, update_data, components_to_update, update_independence,
                                         all_scenarios_sequence_, current_scenario_sequence_cache, infos);
 
-            auto calculate_scenario = BatchDispatch::call_with<Idx>(
+            auto calculate_scenario = JobDispatch::call_with<Idx>(
                 [&model, &calculation_fn_, &result_data, &infos](Idx scenario_idx) {
                     calculation_fn_(model, result_data, scenario_idx);
                     infos[scenario_idx].merge(model.calculation_info());
@@ -130,7 +130,7 @@ template <class MainModel, class... ComponentType> class BatchDispatch {
     //    specified threading = 1
     template <typename RunSubBatchFn>
         requires std::invocable<std::remove_cvref_t<RunSubBatchFn>, Idx /*start*/, Idx /*stride*/, Idx /*n_scenarios*/>
-    static void batch_dispatch(RunSubBatchFn sub_batch, Idx n_scenarios, Idx threading) {
+    static void job_dispatch(RunSubBatchFn sub_batch, Idx n_scenarios, Idx threading) {
         // run batches sequential or parallel
         auto const hardware_thread = static_cast<Idx>(std::thread::hardware_concurrency());
         if (threading < 0 || threading == 1 || (threading == 0 && hardware_thread < 2)) {
