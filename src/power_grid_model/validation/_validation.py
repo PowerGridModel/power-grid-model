@@ -16,8 +16,8 @@ from typing import Literal
 
 import numpy as np
 
-from power_grid_model import ComponentType, DatasetType, power_grid_meta_data
-from power_grid_model._core.dataset_definitions import _map_to_component_types
+from power_grid_model._core.dataset_definitions import ComponentType, DatasetType, _map_to_component_types
+from power_grid_model._core.power_grid_meta import power_grid_meta_data
 from power_grid_model._core.utils import (
     compatibility_convert_row_columnar_dataset as _compatibility_convert_row_columnar_dataset,
     convert_batch_dataset_to_batch_list as _convert_batch_dataset_to_batch_list,
