@@ -12,6 +12,7 @@ Although all functions are 'public', you probably only need validate_input_data(
 import copy
 from collections.abc import Sized as ABCSized
 from itertools import chain
+from typing import Literal
 
 import numpy as np
 
@@ -250,35 +251,6 @@ def validate_ids(update_data: SingleDataset, input_data: SingleDataset) -> list[
     return list(chain(*errors))
 
 
-def _process_power_sigma_and_p_q_sigma(
-    data: SingleDataset,
-    sensor: ComponentType,
-) -> None:
-    """
-    Helper function to process the required list when both `p_sigma` and `q_sigma` exist
-    and valid but `power_sigma` is missing. The field `power_sigma` is set to the norm of
-    `p_sigma` and `q_sigma` in this case. Happens only on proxy data (not the original data).
-    However, note that this value is eventually not used in the calculation.
-
-    Args:
-        data: SingleDataset, pgm data
-        sensor: only of types ComponentType.sym_power_sensor or ComponentType.asym_power_sensor
-    """
-    if sensor in data:
-        sensor_data = data[sensor]
-        power_sigma = sensor_data["power_sigma"]
-        p_sigma = sensor_data["p_sigma"]
-        q_sigma = sensor_data["q_sigma"]
-
-        # virtual patch to handle missing power_sigma
-        asym_axes = tuple(range(sensor_data.ndim, p_sigma.ndim))
-        mask = np.logical_and(np.isnan(power_sigma), np.any(np.logical_not(np.isnan(p_sigma)), axis=asym_axes))
-        power_sigma[mask] = np.nansum(p_sigma[mask], axis=asym_axes)
-
-        mask = np.logical_and(np.isnan(power_sigma), np.any(np.logical_not(np.isnan(q_sigma)), axis=asym_axes))
-        power_sigma[mask] = np.nansum(q_sigma[mask], axis=asym_axes)
-
-
 def validate_required_values(
     data: SingleDataset, calculation_type: CalculationType | None = None, symmetric: bool = True
 ) -> list[MissingValueError]:
@@ -388,7 +360,7 @@ def validate_required_values(
     required["current_sensor"] = required["sensor"] + ["measured_terminal_type", "angle_measurement_type"]
     if calculation_type is None or calculation_type == CalculationType.state_estimation:
         required["voltage_sensor"] += ["u_sigma", "u_measured"]
-        required["power_sensor"] += ["power_sigma", "p_measured", "q_measured"]
+        required["power_sensor"] += ["p_measured", "q_measured"]  # power_sigma, p_sigma and q_sigma are checked later
         required["current_sensor"] += ["i_sigma", "i_angle_sigma", "i_measured", "i_angle_measured"]
     required["sym_voltage_sensor"] = required["voltage_sensor"].copy()
     required["asym_voltage_sensor"] = required["voltage_sensor"].copy()
@@ -414,10 +386,13 @@ def validate_required_values(
         required["line"] += ["r0", "x0", "c0", "tan0"]
         required["shunt"] += ["g0", "b0"]
 
-    _process_power_sigma_and_p_q_sigma(data, ComponentType.sym_power_sensor)
-    _process_power_sigma_and_p_q_sigma(data, ComponentType.asym_power_sensor)
+    errors = _validate_required_in_data(data, required)
 
-    return _validate_required_in_data(data, required)
+    if calculation_type is None or calculation_type == CalculationType.state_estimation:
+        errors += _validate_required_power_sigma_or_p_q_sigma(data, ComponentType.sym_power_sensor)
+        errors += _validate_required_power_sigma_or_p_q_sigma(data, ComponentType.asym_power_sensor)
+
+    return errors
 
 
 def _validate_required_in_data(data: SingleDataset, required: dict[ComponentType | str, list[str]]):
@@ -449,6 +424,39 @@ def _validate_required_in_data(data: SingleDataset, required: dict[ComponentType
     return results
 
 
+def _validate_required_power_sigma_or_p_q_sigma(
+    data: SingleDataset,
+    power_sensor: Literal[ComponentType.sym_power_sensor, ComponentType.asym_power_sensor],
+) -> list[MissingValueError]:
+    """
+    Check that either `p_sigma` and `q_sigma` are all provided, or that `power_sigma` is provided.
+
+    Args:
+        data: SingleDataset, pgm data
+        sensor: the power sensor type, either ComponentType.sym_power_sensor or ComponentType.asym_power_sensor
+    """
+    result: list[MissingValueError] = []
+
+    if power_sensor in data:
+        sensor_data = data[power_sensor]
+        p_sigma = sensor_data["p_sigma"]
+        q_sigma = sensor_data["q_sigma"]
+
+        asym_axes = tuple(range(sensor_data.ndim, p_sigma.ndim))
+        all_pq_sigma_missing_mask = np.all(np.isnan(p_sigma), axis=asym_axes) & np.all(
+            np.isnan(q_sigma), axis=asym_axes
+        )
+
+        result += _validate_required_in_data(
+            {power_sensor: sensor_data[all_pq_sigma_missing_mask]}, required={power_sensor: ["power_sigma"]}
+        )
+        result += _validate_required_in_data(
+            {power_sensor: sensor_data[~all_pq_sigma_missing_mask]}, required={power_sensor: ["p_sigma", "q_sigma"]}
+        )
+
+    return result
+
+
 def validate_values(data: SingleDataset, calculation_type: CalculationType | None = None) -> list[ValidationError]:
     """
     For each component supplied in the data, call the appropriate validation function
@@ -465,8 +473,8 @@ def validate_values(data: SingleDataset, calculation_type: CalculationType | Non
         _all_finite(
             data=data,
             exceptions={
-                ComponentType.sym_power_sensor: ["power_sigma"],
-                ComponentType.asym_power_sensor: ["power_sigma"],
+                ComponentType.sym_power_sensor: ["power_sigma", "p_sigma", "q_sigma"],
+                ComponentType.asym_power_sensor: ["power_sigma", "p_sigma", "q_sigma"],
                 ComponentType.sym_voltage_sensor: ["u_sigma"],
                 ComponentType.asym_voltage_sensor: ["u_sigma"],
                 ComponentType.sym_current_sensor: ["i_sigma", "i_angle_sigma"],
