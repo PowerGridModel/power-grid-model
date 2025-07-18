@@ -101,8 +101,12 @@ BatchDataset = _BatchDataset
 """
 A batch dataset is a dictionary where the keys are the component types and the values are :class:`BatchComponentData`
 
-- Example: {"node": :class:`DenseBatchArray`, "line": :class:`SparseBatchArray`,
-            "link": :class:`DenseBatchColumnarData`, "transformer": :class:`SparseBatchColumnarData`}
+- Example: {
+    ComponentType.node: :class:`DenseBatchArray`,
+    ComponentType.line: :class:`SparseBatchArray`,
+    ComponentType.link: :class:`DenseBatchColumnarData`,
+    ComponentType.transformer: :class:`SparseBatchColumnarData`
+  }
 """
 
 BatchList = _BatchList
@@ -110,7 +114,7 @@ BatchList = _BatchList
 A batch list is an alternative representation of a batch. It is a list of single datasets, where each single dataset
 is actually a batch. The batch list is intended as an intermediate data type, during conversions.
 
-- Example: [:class:`SingleDataset`, {"node": :class:`SingleDataset`}]
+- Example: [:class:`SingleDataset`, {ComponentType.node: :class:`SingleDataset`}]
 """
 
 BatchPythonDataset = _BatchPythonDataset
@@ -121,8 +125,8 @@ BatchDataset, but in a native python format, without using numpy. Actually it lo
 
 - Example:
 
-  [{"line": [{"id": 3, "from_status": 0, "to_status": 0, ...}],},
-   {"line": [{"id": 3, "from_status": 1, "to_status": 1, ...}],}]
+  [{ComponentType.line: [{"id": 3, "from_status": 0, "to_status": 0, ...}],},
+   {ComponentType.line: [{"id": 3, "from_status": 1, "to_status": 1, ...}],}]
 """
 
 ColumnarData = _ColumnarData
@@ -162,10 +166,14 @@ A general data set can be a :class:`SingleDataset` or a :class:`BatchDataset`.
 
 - Examples:
 
-    - single: {"node": :class:`SingleArray`, "line": :class:`SingleColumnarData`}
+    - single: {ComponentType.node: :class:`SingleArray`, ComponentType.line: :class:`SingleColumnarData`}
 
-    - batch: {"node": :class:`DenseBatchArray`, "line": :class:`SparseBatchArray`,
-             "link": :class:`DenseBatchColumnarData`, "transformer": :class:`SparseBatchColumnarData`}
+    - batch: {
+        ComponentType.node: :class:`DenseBatchArray`,
+        ComponentType.line: :class:`SparseBatchArray`,
+        ComponentType.link: :class:`DenseBatchColumnarData`,
+        ComponentType.transformer: :class:`SparseBatchColumnarData`
+      }
 
 """
 
@@ -216,14 +224,14 @@ A general python data set can be a single or a batch python dataset.
   - single:
 
     {
-      "node": [{"id": 1, "u_rated": 10500.0}, {"id": 2, "u_rated": 10500.0}],
-      "line": [{"id": 3, "from_node": 1, "to_node": 2, ...}],
+      ComponentType.node: [{"id": 1, "u_rated": 10500.0}, {"id": 2, "u_rated": 10500.0}],
+      ComponentType.line: [{"id": 3, "from_node": 1, "to_node": 2, ...}],
     }
 
   - batch:
 
-    [{"line": [{"id": 3, "from_status": 0, "to_status": 0, ...}],},
-     {"line": [{"id": 3, "from_status": 1, "to_status": 1, ...}],}]
+    [{ComponentType.line: [{"id": 3, "from_status": 0, "to_status": 0, ...}],},
+     {ComponentType.line: [{"id": 3, "from_status": 1, "to_status": 1, ...}],}]
 """
 
 RealValue = _RealValue
@@ -240,7 +248,10 @@ A single array is a one-dimensional structured numpy array containing a list of 
 - Examples:
 
     - structure: <1d-array>
-    - concrete: array([(0, 10500.0), (0, 10500.0)], dtype=power_grid_meta_data["input"]["node"].dtype)
+    - concrete: array(
+        [(0, 10500.0), (0, 10500.0)],
+        dtype=power_grid_meta_data[DatasetType.input][ComponentType.node].dtype
+      )
 """
 
 SingleColumn = _SingleColumn
@@ -253,8 +264,11 @@ multiple components of the same type.
     - structure: <1d-array>
     - concrete:
 
-        - array([0, 1], dtype=power_grid_meta_data["input"]["node"].dtype.fields["id"][0])
-        - array([10500.0, 10500.0], dtype=power_grid_meta_data["input"]["node"].dtype.fields["u_rated"][0])
+        - array([0, 1], dtype=power_grid_meta_data[DatasetType.input][ComponentType.node].dtype.fields["id"][0])
+        - array(
+            [10500.0, 10500.0],
+            dtype=power_grid_meta_data[DatasetType.input][ComponentType.node].dtype.fields["u_rated"][0]
+          )
 """
 
 
@@ -277,7 +291,7 @@ SingleDataset = _SingleDataset
 A single dataset is a dictionary where the keys are the component types and the values are
 :class:`ComponentData`
 
-- Example: {"node": :class:`SingleArray`, "line": :class:`SingleColumnarData`}
+- Example: {ComponentType.node: :class:`SingleArray`, ComponentType.line: :class:`SingleColumnarData`}
 """
 
 SinglePythonDataset = _SinglePythonDataset
@@ -289,8 +303,8 @@ SingleDataset, but in a native python format, without using numpy.
 - Example:
 
   {
-    "node": [{"id": 1, "u_rated": 10500.0}, {"id": 2, "u_rated": 10500.0}], 
-    "line": [{"id": 3, "from_node": 1, "to_node": 2, ...}],
+    ComponentType.node: [{"id": 1, "u_rated": 10500.0}, {"id": 2, "u_rated": 10500.0}],
+    ComponentType.line: [{"id": 3, "from_node": 1, "to_node": 2, ...}],
   }
 """
 

@@ -10,6 +10,7 @@ import numpy as np
 import pytest
 
 from power_grid_model import DatasetType
+from power_grid_model._core.dataset_definitions import ComponentType
 from power_grid_model._core.utils import get_dataset_type, is_columnar, is_sparse
 from power_grid_model.data_types import BatchDataset, Dataset, DenseBatchData, SingleComponentData, SingleDataset
 from power_grid_model.enum import ComponentAttributeFilterOptions
@@ -142,7 +143,7 @@ def simple_asym_input_dataset():
 
 
 def full_input_dataset():
-    result = empty_dataset("input")
+    result = empty_dataset(DatasetType.input)
     result["attributes"] = {
         "node": ["id", "u_rated"],
         "sym_load": ["id", "node", "status", "type", "p_specified", "q_specified"],
@@ -194,7 +195,7 @@ def full_input_dataset():
 
 
 def single_update_dataset():
-    result = empty_dataset("update")
+    result = empty_dataset(DatasetType.update)
     result["attributes"] = {
         "sym_load": ["status", "p_specified", "q_specified"],
         "source": ["status"],
@@ -267,7 +268,7 @@ def sparse_batch_update_dataset():
 
 
 def single_sym_output_dataset():
-    result = empty_dataset("sym_output")
+    result = empty_dataset(DatasetType.sym_output)
     result["data"] = {
         "node": [
             {
@@ -285,7 +286,7 @@ def single_sym_output_dataset():
 
 
 def batch_sym_output_dataset():
-    result = empty_dataset("sym_output")
+    result = empty_dataset(DatasetType.sym_output)
     result["is_batch"] = True
     result["data"] = [
         {
@@ -319,7 +320,7 @@ def batch_sym_output_dataset():
 
 
 def single_asym_output_dataset():
-    result = empty_dataset("asym_output")
+    result = empty_dataset(DatasetType.asym_output)
     result["data"] = {
         "node": [
             {
@@ -337,7 +338,7 @@ def single_asym_output_dataset():
 
 
 def single_sc_output_dataset():
-    result = empty_dataset("sc_output")
+    result = empty_dataset(DatasetType.sc_output)
     result["attributes"] = {"fault": ["id", "i_f"]}
     result["data"] = {
         "node": [
@@ -379,12 +380,12 @@ def serialized_data(request):
         pytest.param(None, id="All row filter"),
         pytest.param(ComponentAttributeFilterOptions.everything, id="All columnar filter"),
         pytest.param(ComponentAttributeFilterOptions.relevant, id="All relevant columnar filter"),
-        pytest.param({"node": ["id"], "sym_load": ["id"]}, id="columnar filter"),
-        pytest.param({"node": ["id"], "sym_load": None}, id="mixed columnar/row filter"),
-        pytest.param({"node": ["id"], "shunt": None}, id="unused component filter"),
+        pytest.param({ComponentType.node: ["id"], "sym_load": ["id"]}, id="columnar filter"),
+        pytest.param({ComponentType.node: ["id"], "sym_load": None}, id="mixed columnar/row filter"),
+        pytest.param({ComponentType.node: ["id"], "shunt": None}, id="unused component filter"),
         pytest.param(
             {
-                "node": ["id"],
+                ComponentType.node: ["id"],
                 "line": ComponentAttributeFilterOptions.everything,
                 "sym_load": None,
                 "asym_load": ComponentAttributeFilterOptions.relevant,
@@ -613,7 +614,7 @@ def assert_serialization_correct(deserialized_dataset: Dataset, serialized_datas
         assert_single_dataset_structure(deserialized_dataset, data_filter)
 
         assert_single_dataset_entries(
-            deserialized_dataset,  # type: ignore[arg-type]
+            deserialized_dataset,
             serialized_dataset,
             data_filter=data_filter,
         )
