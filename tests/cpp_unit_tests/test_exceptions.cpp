@@ -34,10 +34,8 @@ static_assert(static_cast<Idx>(TestEnumClass::nan) == na_IntS);
 
 TEST_CASE("Exceptions") {
     SUBCASE("PowerGridError") {
-        PowerGridError error;
-        CHECK(std::string{error.what()}.empty());
-        error.append_msg("Test message");
-        CHECK(std::string{error.what()} == "Test message");
+        CHECK(std::string{PowerGridError{}.what()}.empty());
+        CHECK(std::string{PowerGridError{"Test message"}.what()} == "Test message");
     }
     SUBCASE("InvalidArguments") {
         CHECK(std::string{InvalidArguments{"foo"}.what()} == "foo");

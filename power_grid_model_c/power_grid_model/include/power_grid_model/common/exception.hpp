@@ -13,18 +13,15 @@
 #include <string>
 
 namespace power_grid_model {
-namespace detail {
-inline auto to_string(std::floating_point auto x) { return std::format("{}", x); }
-inline auto to_string(std::integral auto x) { return std::format("{}", x); }
-} // namespace detail
-
 class PowerGridError : public std::exception {
   public:
     PowerGridError() = default;
     PowerGridError(std::string msg) : msg_{std::move(msg)} {}
 
-    void append_msg(std::string_view msg) { msg_ = std::format("{}{}", msg_, msg); }
     char const* what() const noexcept final { return msg_.c_str(); }
+
+  protected:
+    void append_msg(std::string_view msg) { msg_ = std::format("{}{}", msg_, msg); }
 
   private:
     std::string msg_;
@@ -90,14 +87,11 @@ class InvalidTransformerClock : public PowerGridError {
 
 class SparseMatrixError : public PowerGridError {
   public:
-    SparseMatrixError(Idx err, std::string_view msg = "") {
-        append_msg(std::format("Sparse matrix error with error code #{} (possibly singular)\n", err));
-        if (!msg.empty()) {
-            append_msg(std::format("{}\n", msg));
-        }
-        append_msg("If you get this error from state estimation, ");
-        append_msg("it usually means the system is not fully observable, i.e. not enough measurements.");
-    }
+    SparseMatrixError(Idx err, std::string_view msg = "")
+        : PowerGridError{std::format(
+              "Sparse matrix error with error code #{} (possibly singular)\n{}If you get this error from state "
+              "estimation, it usually means the system is not fully observable, i.e. not enough measurements.",
+              err, msg.empty() ? "" : std::format("{}\n", msg))} {}
     SparseMatrixError()
         : PowerGridError{"Sparse matrix error, possibly singular matrix!\n"
                          "If you get this error from state estimation, "
@@ -108,12 +102,9 @@ class SparseMatrixError : public PowerGridError {
 
 class NotObservableError : public PowerGridError {
   public:
-    NotObservableError(std::string_view msg = "")
-        : PowerGridError{"Not enough measurements available for state estimation.\n"} {
-        if (!msg.empty()) {
-            append_msg(std::format("{}\n", msg));
-        }
-    }
+    NotObservableError() : PowerGridError{"Not enough measurements available for state estimation.\n"} {}
+    NotObservableError(std::string_view msg)
+        : PowerGridError{std::format("Not enough measurements available for state estimation.\n{}\n", msg)} {}
 };
 
 class IterationDiverge : public PowerGridError {
