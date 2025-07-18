@@ -8,29 +8,29 @@
 
 namespace power_grid_model {
 namespace {
-enum TestEnum { // NOLINT(performance-enum-size)
-    TestEnum_foo = 0,
-    TestEnum_bar = 1,
-    TestEnum_baz = -1,
-    TestEnum_nan = na_IntS,
+enum TestCStyleEnum { // NOLINT(performance-enum-size)
+    TestCStyleEnum_foo = 0,
+    TestCStyleEnum_bar = 1,
+    TestCStyleEnum_baz = -1,
+    TestCStyleEnum_nan = na_IntS,
 };
 
-static_assert(static_cast<Idx>(TestEnum_foo) == 0);
-static_assert(static_cast<Idx>(TestEnum_bar) == 1);
-static_assert(static_cast<Idx>(TestEnum_baz) == -1);
-static_assert(static_cast<Idx>(TestEnum_nan) == na_IntS);
+static_assert(static_cast<Idx>(TestCStyleEnum_foo) == 0);
+static_assert(static_cast<Idx>(TestCStyleEnum_bar) == 1);
+static_assert(static_cast<Idx>(TestCStyleEnum_baz) == -1);
+static_assert(static_cast<Idx>(TestCStyleEnum_nan) == na_IntS);
 
-enum class TestEnumClass : IntS {
+enum class TestCppStyleEnumClass : IntS {
     foo = 0,
     bar = 1,
     baz = -1,
     nan = na_IntS,
 };
 
-static_assert(static_cast<Idx>(TestEnumClass::foo) == 0);
-static_assert(static_cast<Idx>(TestEnumClass::bar) == 1);
-static_assert(static_cast<Idx>(TestEnumClass::baz) == -1);
-static_assert(static_cast<Idx>(TestEnumClass::nan) == na_IntS);
+static_assert(static_cast<Idx>(TestCppStyleEnumClass::foo) == 0);
+static_assert(static_cast<Idx>(TestCppStyleEnumClass::bar) == 1);
+static_assert(static_cast<Idx>(TestCppStyleEnumClass::baz) == -1);
+static_assert(static_cast<Idx>(TestCppStyleEnumClass::nan) == na_IntS);
 
 TEST_CASE("Exceptions") {
     SUBCASE("PowerGridError") {
@@ -54,24 +54,37 @@ TEST_CASE("Exceptions") {
     }
     SUBCASE("MissingCaseForEnumError") {
         SUBCASE("C-style enum") {
-            CHECK(MissingCaseForEnumError{"test_foo", TestEnum_foo}.what() ==
+            CHECK(MissingCaseForEnumError{"test_foo", TestCStyleEnum_foo}.what() ==
                   doctest::Contains("test_foo is not implemented for "));
-            CHECK(MissingCaseForEnumError{"test_foo", TestEnum_foo}.what() == doctest::Contains{"TestEnum #0"});
-            CHECK(MissingCaseForEnumError{"test_bar", TestEnum_bar}.what() == doctest::Contains{"TestEnum #1"});
-            CHECK(MissingCaseForEnumError{"test_baz", TestEnum_baz}.what() == doctest::Contains{"TestEnum #-1"});
-            CHECK(MissingCaseForEnumError{"test_nan", TestEnum_nan}.what() == doctest::Contains{"TestEnum #-128"});
+            CHECK(MissingCaseForEnumError{"test_foo", TestCStyleEnum_foo}.what() ==
+                  doctest::Contains{"TestCStyleEnum"});
+            CHECK(MissingCaseForEnumError{"test_foo", TestCStyleEnum_foo}.what() == doctest::Contains{" #0"});
+            CHECK(MissingCaseForEnumError{"test_bar", TestCStyleEnum_bar}.what() ==
+                  doctest::Contains{"TestCStyleEnum"});
+            CHECK(MissingCaseForEnumError{"test_bar", TestCStyleEnum_bar}.what() == doctest::Contains{" #1"});
+            CHECK(MissingCaseForEnumError{"test_baz", TestCStyleEnum_baz}.what() ==
+                  doctest::Contains{"TestCStyleEnum"});
+            CHECK(MissingCaseForEnumError{"test_baz", TestCStyleEnum_baz}.what() == doctest::Contains{" #-1"});
+            CHECK(MissingCaseForEnumError{"test_nan", TestCStyleEnum_nan}.what() ==
+                  doctest::Contains{"TestCStyleEnum"});
+            CHECK(MissingCaseForEnumError{"test_nan", TestCStyleEnum_nan}.what() == doctest::Contains{" #-128"});
         }
         SUBCASE("C++-style enum class") {
-            CHECK(MissingCaseForEnumError{"test_foo", TestEnumClass::foo}.what() ==
+            CHECK(MissingCaseForEnumError{"test_foo", TestCppStyleEnumClass::foo}.what() ==
                   doctest::Contains{"test_foo is not implemented for "});
-            CHECK(MissingCaseForEnumError{"test_foo", TestEnumClass::foo}.what() ==
-                  doctest::Contains{"TestEnumClass #0"});
-            CHECK(MissingCaseForEnumError{"test_bar", TestEnumClass::bar}.what() ==
-                  doctest::Contains{"TestEnumClass #1"});
-            CHECK(MissingCaseForEnumError{"test_baz", TestEnumClass::baz}.what() ==
-                  doctest::Contains{"TestEnumClass #-1"});
-            CHECK(MissingCaseForEnumError{"test_nan", TestEnumClass::nan}.what() ==
-                  doctest::Contains{"TestEnumClass #-128"});
+            CHECK(MissingCaseForEnumError{"test_foo", TestCppStyleEnumClass::foo}.what() ==
+                  doctest::Contains{"TestCppStyleEnumClass"});
+            CHECK(MissingCaseForEnumError{"test_foo", TestCppStyleEnumClass::foo}.what() == doctest::Contains{" #0"});
+            CHECK(MissingCaseForEnumError{"test_bar", TestCppStyleEnumClass::bar}.what() ==
+                  doctest::Contains{"TestCppStyleEnumClass"});
+            CHECK(MissingCaseForEnumError{"test_bar", TestCppStyleEnumClass::bar}.what() == doctest::Contains{" #1"});
+            CHECK(MissingCaseForEnumError{"test_baz", TestCppStyleEnumClass::baz}.what() ==
+                  doctest::Contains{"TestCppStyleEnumClass"});
+            CHECK(MissingCaseForEnumError{"test_baz", TestCppStyleEnumClass::baz}.what() == doctest::Contains{" #-1"});
+            CHECK(MissingCaseForEnumError{"test_nan", TestCppStyleEnumClass::nan}.what() ==
+                  doctest::Contains{"TestCppStyleEnumClass"});
+            CHECK(MissingCaseForEnumError{"test_nan", TestCppStyleEnumClass::nan}.what() ==
+                  doctest::Contains{" #-128"});
         }
     }
     SUBCASE("ConflictVoltage") {
@@ -308,20 +321,26 @@ TEST_CASE("Exceptions") {
               "was not met: bar.\n This may be a bug in the library\n");
     }
     SUBCASE("TapSearchStrategyIncompatibleError") {
-        auto const foo_error = TapSearchStrategyIncompatibleError{"foo_error", TestEnumClass::foo, TestEnumClass::foo};
+        auto const foo_error =
+            TapSearchStrategyIncompatibleError{"foo_error", TestCppStyleEnumClass::foo, TestCppStyleEnumClass::foo};
         CHECK(foo_error.what() == doctest::Contains("foo_error is not implemented for "));
-        CHECK(foo_error.what() == doctest::Contains("TestEnumClass #0 and "));
-        CHECK(foo_error.what() == doctest::Contains("TestEnumClass #0!\n"));
+        CHECK(foo_error.what() == doctest::Contains("TestCppStyleEnumClass"));
+        CHECK(foo_error.what() == doctest::Contains(" #0 and "));
+        CHECK(foo_error.what() == doctest::Contains(" #0!\n"));
 
-        auto const bar_error = TapSearchStrategyIncompatibleError{"bar_error", TestEnumClass::bar, TestEnum_foo};
+        auto const bar_error =
+            TapSearchStrategyIncompatibleError{"bar_error", TestCppStyleEnumClass::bar, TestCStyleEnum_foo};
         CHECK(bar_error.what() == doctest::Contains("bar_error is not implemented for "));
-        CHECK(bar_error.what() == doctest::Contains("TestEnumClass #1 and "));
-        CHECK(bar_error.what() == doctest::Contains("TestEnum #0!\n"));
+        CHECK(bar_error.what() == doctest::Contains("TestCppStyleEnumClass"));
+        CHECK(bar_error.what() == doctest::Contains(" #1 and "));
+        CHECK(bar_error.what() == doctest::Contains("TestCStyleEnum"));
+        CHECK(bar_error.what() == doctest::Contains(" #0!\n"));
 
-        auto const baz_error = TapSearchStrategyIncompatibleError{"baz_error", TestEnum_bar, TestEnum_bar};
+        auto const baz_error = TapSearchStrategyIncompatibleError{"baz_error", TestCStyleEnum_bar, TestCStyleEnum_bar};
         CHECK(baz_error.what() == doctest::Contains("baz_error is not implemented for "));
-        CHECK(baz_error.what() == doctest::Contains("TestEnum #1 and "));
-        CHECK(baz_error.what() == doctest::Contains("TestEnum #1!\n"));
+        CHECK(baz_error.what() == doctest::Contains("TestCStyleEnum"));
+        CHECK(baz_error.what() == doctest::Contains(" #1 and "));
+        CHECK(baz_error.what() == doctest::Contains(" #1!\n"));
     }
 }
 } // namespace
