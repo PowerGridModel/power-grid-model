@@ -89,7 +89,7 @@ class JobDispatchAdapter : public JobDispatchInterface<JobDispatchAdapter<MainMo
     void setup_impl(ConstDataset const& update_data, Idx scenario_idx) {
         assert(components_to_update_ != nullptr);
         assert(update_independence_ != nullptr);
-        current_scenario_sequence_cache_ = main_core::update::get_all_sequence_idx_map<ComponentType...>(
+        current_scenario_sequence_cache_ = main_core::update::get_all_sequence_idx_map<ComponentType...>( // something wrong here
             model_.get().state(), update_data, scenario_idx, *components_to_update_, *update_independence_, true);
         model_.get().template update_components<cached_update_t>(update_data, scenario_idx,
                                                                  get_current_scenario_sequence_view_());
