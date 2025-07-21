@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "main_model_fwd.hpp"
+#include "job_dispatch_interface.hpp"
 
 #include "main_core/calculation_info.hpp"
 #include "main_core/update.hpp"
@@ -13,23 +13,20 @@
 
 namespace power_grid_model {
 
-template <class MainModel, class... ComponentType> class JobDispatch {
-  private:
-    using SequenceIdxView = std::array<std::span<Idx2D const>, main_core::utils::n_types<ComponentType...>>;
-
+class JobDispatch {
   public:
     static constexpr Idx ignore_output{-1};
     static constexpr Idx sequential{-1};
 
-    template <typename Calculate>
-        requires std::invocable<std::remove_cvref_t<Calculate>, MainModel&, MutableDataset const&, Idx>
-    static BatchParameter batch_calculation_(MainModel& model, CalculationInfo& calculation_info,
-                                             Calculate&& calculation_fn, MutableDataset const& result_data,
-                                             ConstDataset const& update_data, Idx threading = sequential) {
-        // if the update dataset is empty without any component
-        // execute one power flow in the current instance, no batch calculation is needed
+    // TODO(figueroa1395): remove calculation_fn dependency
+    // TODO(figueroa1395): add concept to Adapter template parameter
+    // TODO(figueroa1395): add generic template parameters for update_data and result_data
+    template <typename Adapter, typename Calculate>
+    static BatchParameter batch_calculation(Adapter& adapter, Calculate&& calculation_fn,
+                                            MutableDataset const& result_data, ConstDataset const& update_data,
+                                            Idx threading = sequential) {
         if (update_data.empty()) {
-            std::forward<Calculate>(calculation_fn)(model, result_data, 0);
+            adapter.calculate(std::forward<Calculate>(calculation_fn), result_data);
             return BatchParameter{};
         }
 
@@ -44,14 +41,7 @@ template <class MainModel, class... ComponentType> class JobDispatch {
 
         // calculate once to cache topology, ignore results, all math solvers are initialized
         try {
-            calculation_fn(model,
-                           {
-                               false,
-                               1,
-                               "sym_output",
-                               model.meta_data(),
-                           },
-                           ignore_output);
+            adapter.cache_calculate(std::forward<Calculate>(calculation_fn));
         } catch (SparseMatrixError const&) { // NOLINT(bugprone-empty-catch) // NOSONAR
             // missing entries are provided in the update data
         } catch (NotObservableError const&) { // NOLINT(bugprone-empty-catch) // NOSONAR
@@ -62,59 +52,53 @@ template <class MainModel, class... ComponentType> class JobDispatch {
         std::vector<std::string> exceptions(n_scenarios, "");
         std::vector<CalculationInfo> infos(n_scenarios);
 
-        // lambda for sub batch calculation
-        main_core::utils::SequenceIdx<ComponentType...> all_scenarios_sequence;
-        auto sub_batch = sub_batch_calculation_(model, std::forward<Calculate>(calculation_fn), result_data,
-                                                update_data, all_scenarios_sequence, exceptions, infos);
+        auto sub_batch = sub_batch_calculation_(adapter, std::forward<Calculate>(calculation_fn), result_data,
+                                                update_data, exceptions, infos);
 
         job_dispatch(sub_batch, n_scenarios, threading);
 
         handle_batch_exceptions(exceptions);
-        calculation_info = main_core::merge_calculation_info(infos);
+        adapter.merge_calculation_infos(infos);
 
         return BatchParameter{};
     }
 
-    template <typename Calculate>
-        requires std::invocable<std::remove_cvref_t<Calculate>, MainModel&, MutableDataset const&, Idx>
-    static auto sub_batch_calculation_(MainModel const& base_model, Calculate&& calculation_fn,
+  private:
+    template <typename Adapter, typename Calculate>
+    static auto sub_batch_calculation_(Adapter& base_adapter, Calculate&& calculation_fn,
                                        MutableDataset const& result_data, ConstDataset const& update_data,
-                                       main_core::utils::SequenceIdx<ComponentType...>& all_scenarios_sequence,
                                        std::vector<std::string>& exceptions, std::vector<CalculationInfo>& infos) {
-        // cache component update order where possible.
-        // the order for a cacheable (independent) component by definition is the same across all scenarios
-        auto const components_to_update = base_model.get_components_to_update(update_data);
-        auto const update_independence = main_core::update::independence::check_update_independence<ComponentType...>(
-            base_model.state(), update_data);
-        all_scenarios_sequence = main_core::update::get_all_sequence_idx_map<ComponentType...>(
-            base_model.state(), update_data, 0, components_to_update, update_independence, false);
-
-        return [&base_model, &exceptions, &infos, calculation_fn_ = std::forward<Calculate>(calculation_fn),
-                &result_data, &update_data, &all_scenarios_sequence_ = std::as_const(all_scenarios_sequence),
-                components_to_update, update_independence](Idx start, Idx stride, Idx n_scenarios) {
+        base_adapter.prepare_sub_batch_calculation(update_data);
+        return [&base_adapter, &exceptions, &infos, calculation_fn_ = std::forward<Calculate>(calculation_fn),
+                &result_data, &update_data](Idx start, Idx stride, Idx n_scenarios) {
             assert(n_scenarios <= narrow_cast<Idx>(exceptions.size()));
             assert(n_scenarios <= narrow_cast<Idx>(infos.size()));
 
             Timer const t_total(infos[start], 0000, "Total in thread");
 
-            auto const copy_model_functor = [&base_model, &infos](Idx scenario_idx) {
-                Timer const t_copy_model_functor(infos[scenario_idx], 1100, "Copy model");
-                return MainModel{base_model};
+            auto const copy_adapter_functor = [&base_adapter, &infos](Idx scenario_idx) {
+                Timer const t_copy_adapter_functor(infos[scenario_idx], 1100, "Copy model");
+                return Adapter{base_adapter};
             };
-            auto model = copy_model_functor(start);
+            auto adapter = copy_adapter_functor(start);
 
-            auto current_scenario_sequence_cache = main_core::utils::SequenceIdx<ComponentType...>{};
-            auto [setup, winddown] =
-                scenario_update_restore(model, update_data, components_to_update, update_independence,
-                                        all_scenarios_sequence_, current_scenario_sequence_cache, infos);
+            auto setup = [&adapter, &update_data, &infos](Idx scenario_idx) {
+                Timer const t_update_model(infos[scenario_idx], 1200, "Update model");
+                adapter.setup(update_data, scenario_idx);
+            };
+
+            auto winddown = [&adapter, &infos](Idx scenario_idx) {
+                Timer const t_update_model(infos[scenario_idx], 1201, "Restore model");
+                adapter.winddown();
+            };
 
             auto calculate_scenario = JobDispatch::call_with<Idx>(
-                [&model, &calculation_fn_, &result_data, &infos](Idx scenario_idx) {
-                    calculation_fn_(model, result_data, scenario_idx);
-                    infos[scenario_idx].merge(model.calculation_info());
+                [&adapter, &calculation_fn_, &result_data, &infos](Idx scenario_idx) {
+                    adapter.calculate(calculation_fn_, result_data, scenario_idx);
+                    infos[scenario_idx].merge(adapter.get_calculation_info());
                 },
-                std::move(setup), std::move(winddown), scenario_exception_handler(model, exceptions, infos),
-                [&model, &copy_model_functor](Idx scenario_idx) { model = copy_model_functor(scenario_idx); });
+                std::move(setup), std::move(winddown), scenario_exception_handler(adapter, exceptions, infos),
+                [&adapter, &copy_adapter_functor](Idx scenario_idx) { adapter = copy_adapter_functor(scenario_idx); });
 
             for (Idx scenario_idx = start; scenario_idx < n_scenarios; scenario_idx += stride) {
                 Timer const t_total_single(infos[scenario_idx], 0100, "Total single calculation in thread");
@@ -178,50 +162,11 @@ template <class MainModel, class... ComponentType> class JobDispatch {
         };
     }
 
-    static auto scenario_update_restore(
-        MainModel& model, ConstDataset const& update_data,
-        main_core::utils::ComponentFlags<ComponentType...> const& components_to_store,
-        main_core::update::independence::UpdateIndependence<ComponentType...> const& do_update_cache,
-        main_core::utils::SequenceIdx<ComponentType...> const& all_scenario_sequence,
-        main_core::utils::SequenceIdx<ComponentType...>& current_scenario_sequence_cache,
-        std::vector<CalculationInfo>& infos) noexcept {
-        main_core::utils::ComponentFlags<ComponentType...> independence_flags{};
-        std::ranges::transform(do_update_cache, independence_flags.begin(),
-                               [](auto const& comp) { return comp.is_independent(); });
-        auto const scenario_sequence = [&all_scenario_sequence, &current_scenario_sequence_cache,
-                                        independence_flags_ = std::move(independence_flags)]() -> SequenceIdxView {
-            return main_core::utils::run_functor_with_all_types_return_array<ComponentType...>(
-                [&all_scenario_sequence, &current_scenario_sequence_cache, &independence_flags_]<typename CT>() {
-                    constexpr auto comp_idx = main_core::utils::index_of_component<CT, ComponentType...>;
-                    if (std::get<comp_idx>(independence_flags_)) {
-                        return std::span<Idx2D const>{std::get<comp_idx>(all_scenario_sequence)};
-                    }
-                    return std::span<Idx2D const>{std::get<comp_idx>(current_scenario_sequence_cache)};
-                });
-        };
-
-        return std::make_pair(
-            [&model, &update_data, scenario_sequence, &current_scenario_sequence_cache, &components_to_store,
-             do_update_cache_ = std::move(do_update_cache), &infos](Idx scenario_idx) {
-                Timer const t_update_model(infos[scenario_idx], 1200, "Update model");
-                current_scenario_sequence_cache = main_core::update::get_all_sequence_idx_map<ComponentType...>(
-                    model.state(), update_data, scenario_idx, components_to_store, do_update_cache_, true);
-
-                model.template update_components<cached_update_t>(update_data, scenario_idx, scenario_sequence());
-            },
-            [&model, scenario_sequence, &current_scenario_sequence_cache, &infos](Idx scenario_idx) {
-                Timer const t_update_model(infos[scenario_idx], 1201, "Restore model");
-
-                model.restore_components(scenario_sequence());
-                std::ranges::for_each(current_scenario_sequence_cache,
-                                      [](auto& comp_seq_idx) { comp_seq_idx.clear(); });
-            });
-    }
-
     // Lippincott pattern
-    static auto scenario_exception_handler(MainModel& model, std::vector<std::string>& messages,
+    template <typename Adapter>
+    static auto scenario_exception_handler(Adapter& adapter, std::vector<std::string>& messages,
                                            std::vector<CalculationInfo>& infos) {
-        return [&model, &messages, &infos](Idx scenario_idx) {
+        return [&adapter, &messages, &infos](Idx scenario_idx) {
             std::exception_ptr const ex_ptr = std::current_exception();
             try {
                 std::rethrow_exception(ex_ptr);
@@ -230,7 +175,7 @@ template <class MainModel, class... ComponentType> class JobDispatch {
             } catch (...) {
                 messages[scenario_idx] = "unknown exception";
             }
-            infos[scenario_idx].merge(model.calculation_info());
+            infos[scenario_idx].merge(adapter.get_calculation_info());
         };
     }
 
