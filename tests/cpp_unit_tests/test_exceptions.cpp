@@ -8,7 +8,7 @@
 
 namespace power_grid_model {
 namespace {
-enum TestCStyleEnum { // NOLINT(performance-enum-size)
+enum TestCStyleEnum { // NOLINT(performance-enum-size) // NOSONAR // for testing C-style enum
     TestCStyleEnum_foo = 0,
     TestCStyleEnum_bar = 1,
     TestCStyleEnum_baz = -1,
