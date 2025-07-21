@@ -7,11 +7,11 @@
 // main model class
 
 // main include
-#include "batch_dispatch.hpp"
-#include "batch_dispatch_adapter.hpp"
 #include "batch_parameter.hpp"
 #include "calculation_parameters.hpp"
 #include "container.hpp"
+#include "job_dispatch.hpp"
+#include "job_dispatch_adapter.hpp"
 #include "main_model_fwd.hpp"
 #include "topology.hpp"
 
@@ -152,14 +152,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     using SequenceIdxView = std::array<std::span<Idx2D const>, main_core::utils::n_types<ComponentType...>>;
     using OwnedUpdateDataset = std::tuple<std::vector<typename ComponentType::UpdateType>...>;
 
-    using BatchDispatcher =
-        BatchDispatch<MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentList<ComponentType...>>,
-                      ComponentType...>;
-
-    static constexpr Idx ignore_output{BatchDispatcher::ignore_output};
+    static constexpr Idx ignore_output{JobDispatch::ignore_output};
     static constexpr Idx isolated_component{-1};
     static constexpr Idx not_connected{-1};
-    static constexpr Idx sequential{BatchDispatcher::sequential};
+    static constexpr Idx sequential{JobDispatch::sequential};
 
   public:
     using Options = MainModelOptions;
@@ -459,6 +455,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 });
         };
     }
+
     // Calculate with optimization, e.g., automatic tap changer
     template <calculation_type_tag calculation_type, symmetry_tag sym> auto calculate(Options const& options) {
         auto const calculator = [this, &options] {
@@ -517,7 +514,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     /*
     Batch calculation, propagating the results to result_data
 
-    run the calculation function in batch on the provided update data.
+    Run the calculation function in batch on the provided update data.
 
     The calculation function should be able to run standalone.
     It should output to the provided result_data if the trailing argument is not ignore_output.
@@ -530,9 +527,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     */
     BatchParameter calculate(Options const& options, MutableDataset const& result_data,
                              ConstDataset const& update_data) {
-        BatchDispatchAdapter<MainModelImpl> adapter{std::ref(*this)};
-        return BatchDispatcher::batch_calculation_(
-            *this, // TODO(mgovers): relace this with the adapter
+        JobDispatchAdapter<
+            MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentList<ComponentType...>>,
+            ComponentType...>
+            adapter{std::ref(*this)};
+        return JobDispatch::batch_calculation(
+            adapter,
             [&options](MainModelImpl& model, MutableDataset const& target_data, Idx pos) {
                 auto sub_opt = options; // copy
                 sub_opt.err_tol = pos != ignore_output ? options.err_tol : std::numeric_limits<double>::max();
@@ -544,7 +544,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     CalculationInfo calculation_info() const { return calculation_info_; }
-    void set_calculation_info(CalculationInfo const& info) { calculation_info_ = info; }
+    void set_calculation_info(CalculationInfo const& info) {
+        assert(construction_complete_);
+        calculation_info_ = info;
+    }
     auto const& state() const {
         assert(construction_complete_);
         return state_;
@@ -842,7 +845,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
      * 	    The default lambda `include_all` always returns `true`.
      */
     template <calculation_input_type CalcStructOut, typename CalcParamOut,
-              std::vector<CalcParamOut>(CalcStructOut::* comp_vect), class ComponentIn,
+              std::vector<CalcParamOut>(CalcStructOut::*comp_vect), class ComponentIn,
               std::invocable<Idx> PredicateIn = IncludeAll>
         requires std::convertible_to<std::invoke_result_t<PredicateIn, Idx>, bool>
     static void prepare_input(MainModelState const& state, std::vector<Idx2D> const& components,
@@ -861,7 +864,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     template <calculation_input_type CalcStructOut, typename CalcParamOut,
-              std::vector<CalcParamOut>(CalcStructOut::* comp_vect), class ComponentIn,
+              std::vector<CalcParamOut>(CalcStructOut::*comp_vect), class ComponentIn,
               std::invocable<Idx> PredicateIn = IncludeAll>
         requires std::convertible_to<std::invoke_result_t<PredicateIn, Idx>, bool>
     static void prepare_input(MainModelState const& state, std::vector<Idx2D> const& components,
@@ -881,7 +884,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
     }
 
-    template <symmetry_tag sym, IntSVector(StateEstimationInput<sym>::* component), class Component>
+    template <symmetry_tag sym, IntSVector(StateEstimationInput<sym>::*component), class Component>
     static void prepare_input_status(MainModelState const& state, std::vector<Idx2D> const& objects,
                                      std::vector<StateEstimationInput<sym>>& input) {
         for (Idx i = 0, n = narrow_cast<Idx>(objects.size()); i != n; ++i) {
