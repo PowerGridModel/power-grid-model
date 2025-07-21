@@ -9,6 +9,7 @@ from typing import Callable
 import numpy as np
 import pytest
 
+from power_grid_model._core.dataset_definitions import ComponentType
 from power_grid_model._core.utils import convert_batch_dataset_to_batch_list
 from power_grid_model.enum import TapChangingStrategy
 
@@ -129,12 +130,12 @@ def test_single_validation(
         assert np.all(input_array["id"][indexer_array] == ids_array)
 
     # test calculate with only node and source result
-    kwargs = dict(base_kwargs, **{"output_component_types": ["node", "source"]})
+    kwargs = dict(base_kwargs, **{"output_component_types": [ComponentType.node, ComponentType.source]})
     result = calculation_function(model, **supported_kwargs(kwargs=kwargs, supported=calculation_args))
-    assert set(result.keys()) == {"node", "source"}
-    kwargs = dict(base_kwargs, **{"output_component_types": {"node", "source"}})
+    assert set(result.keys()) == {ComponentType.node, ComponentType.source}
+    kwargs = dict(base_kwargs, **{"output_component_types": {ComponentType.node, ComponentType.source}})
     result = calculation_function(model, **supported_kwargs(kwargs=kwargs, supported=calculation_args))
-    assert set(result.keys()) == {"node", "source"}
+    assert set(result.keys()) == {ComponentType.node, ComponentType.source}
 
 
 @pytest.mark.parametrize(
