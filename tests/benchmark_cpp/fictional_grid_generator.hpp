@@ -13,16 +13,20 @@
 namespace power_grid_model::benchmark {
 
 struct Option {
-    Idx n_node_total_specified; // rough specification of total nodes
-    Idx n_mv_feeder;            // n mv feeder will be changed it is too small
-    Idx n_node_per_mv_feeder;
-    Idx n_lv_feeder;
-    Idx n_connection_per_lv_feeder;   // per connection: one node for connection joint, one node for actual house
-    Idx n_parallel_hv_mv_transformer; // will be calculated
-    Idx n_lv_grid;                    // will be calculated
-    double ratio_lv_grid;             // ratio when lv grid will be generated
-    bool has_mv_ring;
-    bool has_lv_ring;
+    Idx n_node_total_specified{}; // rough specification of total nodes
+    Idx n_mv_feeder{};            // n mv feeder will be changed it is too small
+    Idx n_node_per_mv_feeder{};
+    Idx n_lv_feeder{};
+    Idx n_connection_per_lv_feeder{};   // per connection: one node for connection joint, one node for actual house
+    Idx n_parallel_hv_mv_transformer{}; // will be calculated
+    Idx n_lv_grid{};                    // will be calculated
+    double ratio_lv_grid{};             // ratio when lv grid will be generated
+    bool has_mv_ring{};
+    bool has_lv_ring{};
+    bool has_tap_changer{};
+    bool has_measurements{};
+    bool has_fault{};
+    bool has_tap_regulator{};
 };
 
 struct InputData {
@@ -33,6 +37,12 @@ struct InputData {
     std::vector<SymLoadGenInput> sym_load;
     std::vector<AsymLoadGenInput> asym_load;
     std::vector<ShuntInput> shunt;
+    std::vector<SymVoltageSensorInput> sym_voltage_sensor;
+    std::vector<AsymVoltageSensorInput> asym_voltage_sensor;
+    std::vector<SymPowerSensorInput> sym_power_sensor;
+    std::vector<AsymPowerSensorInput> asym_power_sensor;
+    std::vector<FaultInput> fault;
+    std::vector<TransformerTapRegulatorInput> transformer_tap_regulator;
 
     ConstDataset get_dataset() const {
         ConstDataset dataset{false, 1, "input", meta_data::meta_data_gen::meta_data};
@@ -43,6 +53,18 @@ struct InputData {
         dataset.add_buffer("sym_load", sym_load.size(), sym_load.size(), nullptr, sym_load.data());
         dataset.add_buffer("asym_load", asym_load.size(), asym_load.size(), nullptr, asym_load.data());
         dataset.add_buffer("shunt", shunt.size(), shunt.size(), nullptr, shunt.data());
+        dataset.add_buffer("sym_voltage_sensor", sym_voltage_sensor.size(), sym_voltage_sensor.size(), nullptr,
+                           sym_voltage_sensor.data());
+        dataset.add_buffer("asym_voltage_sensor", asym_voltage_sensor.size(), asym_voltage_sensor.size(), nullptr,
+                           asym_voltage_sensor.data());
+        dataset.add_buffer("sym_power_sensor", sym_power_sensor.size(), sym_power_sensor.size(), nullptr,
+                           sym_power_sensor.data());
+        dataset.add_buffer("asym_power_sensor", asym_power_sensor.size(), asym_power_sensor.size(), nullptr,
+                           asym_power_sensor.data());
+        dataset.add_buffer("fault", fault.size(), fault.size(), nullptr, fault.data());
+        dataset.add_buffer("transformer_tap_regulator", transformer_tap_regulator.size(),
+                           transformer_tap_regulator.size(), nullptr, transformer_tap_regulator.data());
+
         return dataset;
     }
 };
@@ -75,6 +97,9 @@ template <symmetry_tag sym> struct OutputData {
 struct BatchData {
     std::vector<SymLoadGenUpdate> sym_load;
     std::vector<AsymLoadGenUpdate> asym_load;
+    std::vector<SymPowerSensorUpdate> sym_power_sensor;
+    std::vector<AsymPowerSensorUpdate> asym_power_sensor;
+
     Idx batch_size{0};
 
     ConstDataset get_dataset() const {
@@ -84,6 +109,10 @@ struct BatchData {
         }
         dataset.add_buffer("sym_load", sym_load.size() / batch_size, sym_load.size(), nullptr, sym_load.data());
         dataset.add_buffer("asym_load", asym_load.size() / batch_size, asym_load.size(), nullptr, asym_load.data());
+        dataset.add_buffer("sym_power_sensor", sym_power_sensor.size() / batch_size, sym_power_sensor.size(), nullptr,
+                           sym_power_sensor.data());
+        dataset.add_buffer("asym_power_sensor", asym_power_sensor.size() / batch_size, asym_power_sensor.size(),
+                           nullptr, asym_power_sensor.data());
         return dataset;
     }
 };
@@ -151,6 +180,8 @@ class FictionalGridGenerator {
         batch_data.batch_size = batch_size;
         generate_load_series(input_.sym_load, batch_data.sym_load, batch_size);
         generate_load_series(input_.asym_load, batch_data.asym_load, batch_size);
+        generate_power_sensor_series(input_.sym_power_sensor, batch_data.sym_power_sensor, batch_size);
+        generate_power_sensor_series(input_.asym_power_sensor, batch_data.asym_power_sensor, batch_size);
         return batch_data;
     }
 
@@ -459,6 +490,56 @@ class FictionalGridGenerator {
         }
     }
 
+    void generate_sensors() {
+        // voltage sensors
+        auto const& source = input_.source.front();
+        auto const& source_node = input_.node[source.node];
+
+        auto const base_source_voltage = source.u_ref * source_node.u_rated;
+        auto const voltage_sigma = 0.01 * base_source_voltage; // 1% of base voltage
+        std::normal_distribution<double> source_scaling{base_source_voltage, voltage_sigma};
+
+        input_.sym_voltage_sensor.emplace_back(SymVoltageSensorInput{.id = id_gen_++,
+                                                                     .measured_object = source.node,
+                                                                     .u_sigma = voltage_sigma,
+                                                                     .u_measured = source_scaling(gen_),
+                                                                     .u_angle_measured = nan});
+        input_.asym_voltage_sensor.emplace_back(
+            AsymVoltageSensorInput{.id = id_gen_++,
+                                   .measured_object = source.node,
+                                   .u_sigma = voltage_sigma,
+                                   .u_measured = {source_scaling(gen_), source_scaling(gen_), source_scaling(gen_)},
+                                   .u_angle_measured = RealValue<asymmetric_t>{nan}});
+
+        // appliance power sensors
+        std::ranges::transform(input_.source, std::back_inserter(input_.sym_power_sensor),
+                               [this](ApplianceInput const& appliance) {
+                                   return SymPowerSensorInput{.id = id_gen_++,
+                                                              .measured_object = appliance.id,
+                                                              .measured_terminal_type = MeasuredTerminalType::source};
+                               });
+        std::ranges::transform(input_.shunt, std::back_inserter(input_.sym_power_sensor),
+                               [this](ApplianceInput const& appliance) {
+                                   return SymPowerSensorInput{.id = id_gen_++,
+                                                              .measured_object = appliance.id,
+                                                              .measured_terminal_type = MeasuredTerminalType::shunt};
+                               });
+        std::ranges::transform(input_.sym_load, std::back_inserter(input_.sym_power_sensor),
+                               [this](ApplianceInput const& appliance) {
+                                   return SymPowerSensorInput{.id = id_gen_++,
+                                                              .measured_object = appliance.id,
+                                                              .measured_terminal_type = MeasuredTerminalType::load};
+                               });
+        std::ranges::transform(input_.asym_load, std::back_inserter(input_.asym_power_sensor),
+                               [this](ApplianceInput const& appliance) {
+                                   return AsymPowerSensorInput{.id = id_gen_++,
+                                                               .measured_object = appliance.id,
+                                                               .measured_terminal_type = MeasuredTerminalType::load};
+                               });
+
+        // branch sensor update data is difficult to generate, so we skip adding branch flow sensors
+    }
+
     static void scale_cable(LineInput& line, double cable_ratio) {
         line.r1 *= cable_ratio;
         line.x1 *= cable_ratio;
@@ -472,15 +553,43 @@ class FictionalGridGenerator {
     void generate_load_series(std::vector<T> const& input, std::vector<U>& load_series, Idx batch_size) {
         std::uniform_real_distribution<double> load_scaling_gen{0.0, 1.0};
         load_series.resize(input.size() * batch_size);
-        auto const n_object = static_cast<ptrdiff_t>(input.size());
-        for (ptrdiff_t batch = 0; batch < batch_size; ++batch) {
-            for (ptrdiff_t object = 0; object < n_object; ++object) {
+        auto const n_object = std::ssize(input);
+        for (Idx batch : IdxRange{batch_size}) {
+            for (Idx object : IdxRange{n_object}) {
                 T const& input_obj = input[object];
                 U& update_obj = load_series[batch * n_object + object];
                 update_obj.id = input_obj.id;
                 update_obj.status = na_IntS;
                 update_obj.p_specified *= load_scaling_gen(gen_);
                 update_obj.q_specified *= load_scaling_gen(gen_);
+            }
+        }
+    }
+
+    template <class T, class U>
+    void generate_power_sensor_series(std::vector<T> const& input, std::vector<U>& sensor_series, Idx batch_size) {
+        using sym = T::sym;
+
+        std::uniform_real_distribution<double> load_scaling_gen{0.0, 1.0};
+
+        auto const& loads = [this] {
+            if constexpr (is_symmetric_v<sym>) {
+                return input_.sym_load;
+            } else {
+                return input_.asym_load;
+            }
+        }();
+
+        sensor_series.resize(input.size() * batch_size);
+        auto const n_object = std::ssize(input);
+        for (Idx object : IdxRange{n_object}) {
+            T const& input_obj = input[object];
+
+            for (Idx batch : IdxRange{batch_size}) {
+                U& update_obj = sensor_series[batch * n_object + object];
+                update_obj.id = input_obj.id;
+                update_obj.p_measured *= load_scaling_gen(gen_);
+                update_obj.q_measured *= load_scaling_gen(gen_);
             }
         }
     }

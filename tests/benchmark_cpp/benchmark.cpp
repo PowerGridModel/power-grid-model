@@ -20,13 +20,43 @@ MathSolverDispatcher const& get_math_solver_dispatcher() {
     return math_solver_dispatcher;
 }
 
+auto const get_benchmark_run_title(Option const& option, MainModelOptions const& model_options, Idx batch_size) {
+    auto const mv_ring_type = option.has_mv_ring ? "meshed grid, " : "radial grid, ";
+    auto const sym_type =
+        model_options.calculation_symmetry == CalculationSymmetry::symmetric ? "symmetric, " : "asymmetric, ";
+    auto const method = [calculation_method = model_options.calculation_method] {
+        using enum CalculationMethod;
+
+        switch (calculation_method) {
+        case newton_raphson:
+            return "Newton-Raphson method";
+        case linear:
+            return "Linear method";
+        case linear_current:
+            return "Linear current method";
+        case iterative_current:
+            return "Iterative current method";
+        case iterative_linear:
+            return "Iterative linear method";
+        case iec60909:
+            return "IEC 60909 method";
+        default:
+            throw MissingCaseForEnumError{"get_benchmark_run_title", calculation_method};
+        }
+    }();
+
+    return std::format("============= Benchmark case: {}, {}, {} =============\n", mv_ring_type, sym_type, method);
+}
+
 struct PowerGridBenchmark {
+    static constexpr auto single_scenario = -1;
+
     PowerGridBenchmark()
         : main_model{
               std::make_unique<MainModel>(50.0, meta_data::meta_data_gen::meta_data, get_math_solver_dispatcher())} {}
 
     template <symmetry_tag sym>
-    void run_pf(CalculationMethod calculation_method, CalculationInfo& info, Idx batch_size = -1, Idx threading = -1) {
+    void run_calculation(MainModelOptions model_options, Idx batch_size, CalculationInfo& info) noexcept {
         if (!main_model) {
             std::cout << "\nNo main model available: skipping benchmark.\n";
             return;
@@ -35,42 +65,37 @@ struct PowerGridBenchmark {
         OutputData<sym> output = generator.generate_output_data<sym>(batch_size);
         BatchData const batch_data = generator.generate_batch_input(batch_size, 0);
         std::cout << "Number of nodes: " << generator.input_data().node.size() << '\n';
-        Idx const max_iter = (calculation_method == CalculationMethod::iterative_current) ? 100 : 20;
+
         try {
             // calculate
-            main_model->calculate({.calculation_type = CalculationType::power_flow,
-                                   .calculation_symmetry = is_symmetric_v<sym> ? CalculationSymmetry::symmetric
-                                                                               : CalculationSymmetry::asymmetric,
-                                   .calculation_method = calculation_method,
-                                   .err_tol = 1e-8,
-                                   .max_iter = max_iter,
-                                   .threading = threading},
-                                  output.get_dataset(), batch_data.get_dataset());
+            main_model->calculate(model_options, output.get_dataset(), batch_data.get_dataset());
             CalculationInfo info_extra = main_model->calculation_info();
             info.merge(info_extra);
         } catch (std::exception const& e) {
-            std::cout << "\nAn exception was raised during execution: " << e.what() << '\n';
+            std::cout << std::format("\nAn exception was raised during execution: {}\n", e.what());
         }
     }
 
-    template <symmetry_tag sym>
-    void run_benchmark(Option const& option, CalculationMethod calculation_method, Idx batch_size = -1,
-                       Idx threading = -1) {
+    void run_benchmark(Option const& option, MainModelOptions const& model_options, Idx batch_size = single_scenario) {
+        using enum CalculationType;
+        using enum CalculationMethod;
+
         CalculationInfo info;
         generator.generate_grid(option, 0);
         InputData const& input = generator.input_data();
 
-        std::string title = "Benchmark case: ";
-        title += option.has_mv_ring ? "meshed grid, " : "radial grid, ";
-        title += is_symmetric_v<sym> ? "symmetric, " : "asymmetric, ";
-        if (calculation_method == CalculationMethod::newton_raphson) {
-            title += "Newton-Raphson method";
-        } else if (calculation_method == CalculationMethod::linear) {
-            title += "Linear method";
-        } else {
-            title += "Iterative current method";
-        }
-        std::cout << "=============" << title << "=============\n";
+        std::cout << get_benchmark_run_title(option, model_options, batch_size) << '\n';
+
+        auto const run = [this, &model_options, &info, batch_size](Idx batch_size_) {
+            switch (model_options.calculation_symmetry) {
+            case CalculationSymmetry::symmetric:
+                return run_calculation<symmetric_t>(model_options, batch_size_, info);
+            case CalculationSymmetry::asymmetric:
+                return run_calculation<asymmetric_t>(model_options, batch_size_, info);
+            default:
+                throw MissingCaseForEnumError{"run_benchmark", model_options.calculation_symmetry};
+            }
+        };
 
         {
             std::cout << "*****Run with initialization*****\n";
@@ -79,14 +104,14 @@ struct PowerGridBenchmark {
                 Timer const t_build(info, 1000, "Build model");
                 main_model = std::make_unique<MainModel>(50.0, input.get_dataset(), get_math_solver_dispatcher());
             }
-            run_pf<sym>(calculation_method, info);
+            run(single_scenario);
         }
         print(info);
         info.clear();
         {
             std::cout << "\n*****Run without initialization*****\n";
             Timer const t_total(info, 0000, "Total");
-            run_pf<sym>(calculation_method, info);
+            run(single_scenario);
         }
         print(info);
 
@@ -94,7 +119,7 @@ struct PowerGridBenchmark {
             info.clear();
             std::cout << "\n*****Run with batch calculation*****\n";
             Timer const t_total(info, 0000, "Total");
-            run_pf<sym>(calculation_method, info, batch_size, threading);
+            run(batch_size);
         }
         print(info);
 
@@ -119,7 +144,9 @@ using power_grid_model::symmetric_t;
 } // namespace
 
 int main(int /* argc */, char** /* argv */) {
+    using enum power_grid_model::CalculationType;
     using enum power_grid_model::CalculationMethod;
+    using enum power_grid_model::CalculationSymmetry;
 
     power_grid_model::benchmark::PowerGridBenchmark benchmarker{};
     power_grid_model::benchmark::Option option{};
@@ -140,25 +167,128 @@ int main(int /* argc */, char** /* argv */) {
     power_grid_model::Idx constexpr batch_size = 1000;
 #endif
 
+    std::cout << "\n\n##### BENCHMARK POWER FLOW #####\n\n";
+    option.has_measurements = false;
+    option.has_fault = false;
+    option.has_tap_changer = false;
+
     // radial
     option.has_mv_ring = false;
     option.has_lv_ring = false;
-    benchmarker.run_benchmark<symmetric_t>(option, newton_raphson, batch_size);
-    benchmarker.run_benchmark<symmetric_t>(option, newton_raphson, batch_size, 6);
-    benchmarker.run_benchmark<symmetric_t>(option, linear);
-    benchmarker.run_benchmark<symmetric_t>(option, iterative_current);
-    benchmarker.run_benchmark<asymmetric_t>(option, newton_raphson);
-    benchmarker.run_benchmark<asymmetric_t>(option, linear);
-    // benchmarker.run_benchmark<asymmetric_t>(option, iterative_current);
+    benchmarker.run_benchmark(
+        option,
+        {.calculation_type = power_flow, .calculation_symmetry = symmetric, .calculation_method = newton_raphson},
+        batch_size);
+    benchmarker.run_benchmark(option,
+                              {.calculation_type = power_flow,
+                               .calculation_symmetry = symmetric,
+                               .calculation_method = newton_raphson,
+                               .threading = 6},
+                              batch_size);
+    benchmarker.run_benchmark(
+        option, {.calculation_type = power_flow, .calculation_symmetry = symmetric, .calculation_method = linear});
+    benchmarker.run_benchmark(option, {.calculation_type = power_flow,
+                                       .calculation_symmetry = symmetric,
+                                       .calculation_method = iterative_current,
+                                       .max_iter = 100});
+    benchmarker.run_benchmark(
+        option,
+        {.calculation_type = power_flow, .calculation_symmetry = asymmetric, .calculation_method = newton_raphson});
+    benchmarker.run_benchmark(
+        option, {.calculation_type = power_flow, .calculation_symmetry = asymmetric, .calculation_method = linear});
+    // benchmarker.run_benchmark<asymmetric_t>(option, {.calculation_type = power_flow,
+    //                                                  .calculation_symmetry = asymmetric,
+    //                                                  .calculation_method = iterative_current,
+    //                                                  .max_iter = 100});
 
     // with meshed ring
     option.has_mv_ring = true;
     option.has_lv_ring = true;
-    benchmarker.run_benchmark<symmetric_t>(option, newton_raphson);
-    benchmarker.run_benchmark<symmetric_t>(option, linear);
-    benchmarker.run_benchmark<symmetric_t>(option, iterative_current);
-    benchmarker.run_benchmark<asymmetric_t>(option, newton_raphson);
-    benchmarker.run_benchmark<asymmetric_t>(option, linear);
-    // benchmarker.run_benchmark<asymmetric_t>(option, iterative_current);
+    benchmarker.run_benchmark(
+        option,
+        {.calculation_type = power_flow, .calculation_symmetry = symmetric, .calculation_method = newton_raphson});
+    benchmarker.run_benchmark(
+        option, {.calculation_type = power_flow, .calculation_symmetry = symmetric, .calculation_method = linear});
+    benchmarker.run_benchmark(option, {.calculation_type = power_flow,
+                                       .calculation_symmetry = symmetric,
+                                       .calculation_method = iterative_current,
+                                       .max_iter = 100});
+    benchmarker.run_benchmark(
+        option,
+        {.calculation_type = power_flow, .calculation_symmetry = asymmetric, .calculation_method = newton_raphson});
+    benchmarker.run_benchmark(
+        option, {.calculation_type = power_flow, .calculation_symmetry = asymmetric, .calculation_method = linear});
+    // benchmarker.run_benchmark(option, {.calculation_type = power_flow,
+    //                                    .calculation_symmetry = asymmetric,
+    //                                    .calculation_method = iterative_current,
+    //                                    .max_iter = 100});
+
+    // std::cout << "\n\n##### BENCHMARK POWER FLOW WITH AUTOMATIC TAP CHANGER #####\n\n";
+    // option.has_measurements = false;
+    // option.has_fault = false;
+    // option.has_tap_changer = true;
+
+    // // radial
+    // option.has_mv_ring = false;
+    // option.has_lv_ring = false;
+    // benchmarker.run_benchmark<symmetric_t>(option, power_flow, newton_raphson, batch_size);
+    // benchmarker.run_benchmark<symmetric_t>(option, power_flow, linear);
+    // benchmarker.run_benchmark<asymmetric_t>(option, power_flow, linear);
+    // // benchmarker.run_benchmark<asymmetric_t>(option, power_flow, iterative_current);
+
+    // // with meshed ring
+    // option.has_mv_ring = true;
+    // option.has_lv_ring = true;
+    // benchmarker.run_benchmark<symmetric_t>(option, power_flow, newton_raphson);
+    // benchmarker.run_benchmark<symmetric_t>(option, power_flow, linear);
+    // benchmarker.run_benchmark<asymmetric_t>(option, power_flow, linear);
+    // // benchmarker.run_benchmark<asymmetric_t>(option, iterative_current);
+
+    // std::cout << "\n\n##### BENCHMARK STATE ESTIMATION #####\n\n";
+    // option.has_measurements = true;
+    // option.has_fault = false;
+    // option.has_tap_changer = false;
+
+    // // radial
+    // option.has_mv_ring = false;
+    // option.has_lv_ring = false;
+    // benchmarker.run_benchmark<symmetric_t>(option, state_estimation, newton_raphson, batch_size);
+    // benchmarker.run_benchmark<symmetric_t>(option, state_estimation, newton_raphson, batch_size, 6);
+    // benchmarker.run_benchmark<symmetric_t>(option, state_estimation, iterative_linear);
+    // benchmarker.run_benchmark<asymmetric_t>(option, state_estimation, newton_raphson);
+    // benchmarker.run_benchmark<asymmetric_t>(option, state_estimation, iterative_linear);
+
+    // // with meshed ring
+    // option.has_mv_ring = true;
+    // option.has_lv_ring = true;
+    // benchmarker.run_benchmark<symmetric_t>(option, state_estimation, newton_raphson);
+    // benchmarker.run_benchmark<symmetric_t>(option, state_estimation, iterative_linear);
+    // benchmarker.run_benchmark<asymmetric_t>(option, state_estimation, newton_raphson);
+    // benchmarker.run_benchmark<asymmetric_t>(option, state_estimation, iterative_linear);
+    // // benchmarker.run_benchmark<asymmetric_t>(option, iterative_current);
+
+    // std::cout << "\n\n##### BENCHMARK SHORT CIRCUIT #####\n\n";
+    // option.has_measurements = false;
+    // option.has_fault = true;
+    // option.has_tap_changer = false;
+
+    // // radial
+    // option.has_mv_ring = false;
+    // option.has_lv_ring = false;
+    // benchmarker.run_benchmark<symmetric_t>(option, state_estimation, iec60909, batch_size);
+    // benchmarker.run_benchmark<symmetric_t>(option, state_estimation, iec60909, batch_size, 6);
+    // benchmarker.run_benchmark<symmetric_t>(option, state_estimation, iterative_linear);
+    // benchmarker.run_benchmark<asymmetric_t>(option, state_estimation, newton_raphson);
+    // benchmarker.run_benchmark<asymmetric_t>(option, state_estimation, iterative_linear);
+
+    // // with meshed ring
+    // option.has_mv_ring = true;
+    // option.has_lv_ring = true;
+    // benchmarker.run_benchmark<symmetric_t>(option, state_estimation, newton_raphson);
+    // benchmarker.run_benchmark<symmetric_t>(option, state_estimation, iterative_linear);
+    // benchmarker.run_benchmark<asymmetric_t>(option, state_estimation, newton_raphson);
+    // benchmarker.run_benchmark<asymmetric_t>(option, state_estimation, iterative_linear);
+    // // benchmarker.run_benchmark<asymmetric_t>(option, iterative_current);
+
     return 0;
 }
