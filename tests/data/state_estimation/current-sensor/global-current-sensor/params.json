@@ -10,11 +10,7 @@
   },
   "extra_params": {
     "newton_raphson": {
-      "experimental_features": "enabled",
-      "fail": {
-        "raises": "SparseMatrixError",
-        "reason": "Current sensors are not yet implemented for this calculation method"
-      }
+      "experimental_features": "enabled"
     }
   }
 }
