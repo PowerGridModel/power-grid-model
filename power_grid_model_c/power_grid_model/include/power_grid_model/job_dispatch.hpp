@@ -9,8 +9,6 @@
 #include "main_core/calculation_info.hpp"
 #include "main_core/update.hpp"
 
-#include "batch_dispatch_interface.hpp"
-
 #include <thread>
 
 namespace power_grid_model {

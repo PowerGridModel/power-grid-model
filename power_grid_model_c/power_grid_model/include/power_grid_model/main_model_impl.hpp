@@ -540,7 +540,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
                 model.calculate(sub_opt, target_data, pos);
             },
-            result_data, update_data, adapter, options.threading);
+            result_data, update_data, options.threading);
     }
 
     CalculationInfo calculation_info() const { return calculation_info_; }
