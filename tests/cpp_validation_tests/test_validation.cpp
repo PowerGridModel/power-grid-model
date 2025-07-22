@@ -388,7 +388,7 @@ std::optional<CaseParam> construct_case(std::filesystem::path const& case_dir, j
         }
     }
 
-    param.fail = calculation_method_params.contains("fail");
+    param.fail = calculation_method_params.contains("xfail") || calculation_method_params.contains("raises");
     if (calculation_type == "short_circuit") {
         calculation_method_params.at("short_circuit_voltage_scaling").get_to(param.short_circuit_voltage_scaling);
     }
