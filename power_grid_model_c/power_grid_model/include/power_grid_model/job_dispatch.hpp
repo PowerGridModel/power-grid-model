@@ -55,7 +55,6 @@ class JobDispatch {
         auto sub_batch = sub_batch_calculation_(adapter, std::forward<Calculate>(calculation_fn), result_data,
                                                 update_data, exceptions, infos);
 
-
         job_dispatch(sub_batch, n_scenarios, threading);
 
         handle_batch_exceptions(exceptions);
