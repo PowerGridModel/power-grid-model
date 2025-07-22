@@ -55,7 +55,8 @@ class JobDispatch {
         auto sub_batch = sub_batch_calculation_(adapter, std::forward<Calculate>(calculation_fn), result_data,
                                                 update_data, exceptions, infos);
 
-        batch_dispatch(sub_batch, n_scenarios, threading);
+
+        job_dispatch(sub_batch, n_scenarios, threading);
 
         handle_batch_exceptions(exceptions);
         adapter.merge_calculation_infos(infos);
@@ -114,7 +115,7 @@ class JobDispatch {
     //    specified threading = 1
     template <typename RunSubBatchFn>
         requires std::invocable<std::remove_cvref_t<RunSubBatchFn>, Idx /*start*/, Idx /*stride*/, Idx /*n_scenarios*/>
-    static void batch_dispatch(RunSubBatchFn sub_batch, Idx n_scenarios, Idx threading) {
+    static void job_dispatch(RunSubBatchFn sub_batch, Idx n_scenarios, Idx threading) {
         // run batches sequential or parallel
         auto const hardware_thread = static_cast<Idx>(std::thread::hardware_concurrency());
         if (threading < 0 || threading == 1 || (threading == 0 && hardware_thread < 2)) {
@@ -135,8 +136,6 @@ class JobDispatch {
         }
     }
 
-    // maybe this one is okayy as well, as it does use model stuff, but indirectly. well implemented.
-    // also affected by the mutable introduction... probably needs to be addressed.
     template <typename... Args, typename RunFn, typename SetupFn, typename WinddownFn, typename HandleExceptionFn,
               typename RecoverFromBadFn>
         requires std::invocable<std::remove_cvref_t<RunFn>, Args const&...> &&
@@ -148,7 +147,7 @@ class JobDispatch {
                           RecoverFromBadFn recover_from_bad) {
         return [setup_ = std::move(setup), run_ = std::move(run), winddown_ = std::move(winddown),
                 handle_exception_ = std::move(handle_exception),
-                recover_from_bad_ = std::move(recover_from_bad)](Args const&... args) mutable {
+                recover_from_bad_ = std::move(recover_from_bad)](Args const&... args) {
             try {
                 setup_(args...);
                 run_(args...);
@@ -164,8 +163,6 @@ class JobDispatch {
         };
     }
 
-    // passing now info_single_scenario introduced the many mutables because of std::map::merge, so probably
-    // there is a better way to do this. But keeping it as first attempt for the proof of concept.
     // Lippincott pattern
     template <typename Adapter>
     static auto scenario_exception_handler(Adapter& adapter, std::vector<std::string>& messages,

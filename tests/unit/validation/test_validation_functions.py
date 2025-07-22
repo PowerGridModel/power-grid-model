@@ -496,7 +496,11 @@ def test_validate_values__calculation_types():
         ("sym_voltage_sensor", "u_sigma"),
         ("asym_voltage_sensor", "u_sigma"),
         ("sym_power_sensor", "power_sigma"),
+        ("sym_power_sensor", "p_sigma"),
+        ("sym_power_sensor", "q_sigma"),
         ("asym_power_sensor", "power_sigma"),
+        ("asym_power_sensor", "p_sigma"),
+        ("asym_power_sensor", "q_sigma"),
         ("sym_current_sensor", "i_sigma"),
         ("sym_current_sensor", "i_angle_sigma"),
         ("asym_current_sensor", "i_sigma"),
@@ -1085,9 +1089,11 @@ def test_power_sigma_or_p_q_sigma():
     bad_sym_power_sensor["p_sigma"] = [np.nan, np.nan, 1e4]
     bad_sym_power_sensor["q_sigma"] = [np.nan, 1e9, np.nan]
     errors = validate_input_data(input_data=bad_input_data, calculation_type=CalculationType.state_estimation)
-    assert len(errors) == 2
+    assert len(errors) == 4
     assert errors == [
         MissingValueError("sym_power_sensor", "power_sigma", [6]),
+        MissingValueError("sym_power_sensor", "p_sigma", [7]),
+        MissingValueError("sym_power_sensor", "q_sigma", [8]),
         PQSigmaPairError("sym_power_sensor", ("p_sigma", "q_sigma"), [7, 8]),
     ]
 
@@ -1112,9 +1118,11 @@ def test_power_sigma_or_p_q_sigma():
         [np.nan, 1e4, 1e4],
     ]
     errors = validate_input_data(input_data=bad_input_data, calculation_type=CalculationType.state_estimation)
-    assert len(errors) == 2
+    assert len(errors) == 4
     assert errors == [
         MissingValueError("asym_power_sensor", "power_sigma", [66]),
+        MissingValueError("asym_power_sensor", "p_sigma", [77, 88, 99]),
+        MissingValueError("asym_power_sensor", "q_sigma", [88, 99]),
         PQSigmaPairError("asym_power_sensor", ("p_sigma", "q_sigma"), [77, 88, 99]),
     ]
 
