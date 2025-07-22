@@ -23,20 +23,23 @@
       {"id":11, "from_node": 3, "to_node": 4, "from_status": 1, "to_status": 1, "r1": 1.0, "x1": 0.0, "c1": 0.0, "tan1": 0.0, "i_n": 500},
       {"id":12, "from_node": 5, "to_node": 6, "from_status": 1, "to_status": 1, "r1": 1.0, "x1": 0.0, "c1": 0.0, "tan1": 0.0, "i_n": 500}
     ],
-    "sym_load": [
-      {"id": 13, "node": 3, "status": 1, "type": 0, "p_specified": 9, "q_specified": 0},
-      {"id": 14, "node": 6, "status": 1, "type": 0, "p_specified": 9, "q_specified": 0}
-    ],
     "sym_power_sensor": [
-      {"id": 15, "measured_object": 0, "measured_terminal_type": 2, "power_sigma": 1, "p_measured": 0, "q_measured": 0},
-      {"id": 16, "measured_object": 9, "measured_terminal_type": 0, "power_sigma": 1, "p_measured": 0, "q_measured": 0}
+      {"id": 13, "measured_object": 0, "measured_terminal_type": 2, "power_sigma": 1, "p_measured": 0, "q_measured": 0},
+      {"id": 14, "measured_object": 9, "measured_terminal_type": 0, "power_sigma": 1, "p_measured": 0, "q_measured": 0}
     ],
     "sym_current_sensor": [
-      {"id": 17, "measured_object": 10, "measured_terminal_type": 2, "i_sigma": 1, "i_measured": 0}
+      {"id": 15, "measured_object": 12, "measured_terminal_type": 2, "i_sigma": 1, "i_measured": 0}
     ],
     "sym_voltage_sensor": [
-      {"id": 18, "measured_object": 3, "u_sigma": 1, "u_measured": 10, "u_angle_measured": 0},
-      {"id": 19, "measured_object": 5, "u_sigma": 1, "u_measured": 10, "u_angle_measured": 0}
+      {"id": 16, "measured_object": 3, "u_sigma": 1, "u_measured": 10, "u_angle_measured": null},
+      {"id": 17, "measured_object": 6, "u_sigma": 1, "u_measured": 10, "u_angle_measured": null}
+    ],
+    "sym_load": [
+      {"id": 18, "node": 2, "status": 1, "type": 0, "p_specified": 9, "q_specified": 0},
+      {"id": 19, "node": 3, "status": 1, "type": 0, "p_specified": 9, "q_specified": 0},
+      {"id": 20, "node": 4, "status": 1, "type": 0, "p_specified": 9, "q_specified": 0},
+      {"id": 21, "node": 5, "status": 1, "type": 0, "p_specified": 9, "q_specified": 0},
+      {"id": 22, "node": 6, "status": 1, "type": 0, "p_specified": 9, "q_specified": 0}
     ]
   }
 }
