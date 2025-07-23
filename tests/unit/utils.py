@@ -35,9 +35,21 @@ from power_grid_model.errors import (
 )
 from power_grid_model.utils import json_deserialize, json_deserialize_from_file, json_serialize_to_file
 
+try:
+    from _pytest.outcomes import Failed as _Failed  # pylint: disable=import-outside-toplevel
+except ImportError:
+    import warnings  # pylint: disable=import-outside-toplevel
+
+    warnings.warn(
+        """Failed exception is not available in the current pytest version.Some validation cases tests marked """
+        """ as {"xfail": {"raises": "Failed"}} may report as xfail even though they are actual problems."""
+    )
+    _Failed = None
+
+
 BASE_PATH = Path(__file__).parent.parent
 DATA_PATH = BASE_PATH / "data"
-OUPUT_PATH = BASE_PATH / "output"
+OUTPUT_PATH = BASE_PATH / "output"
 EXPORT_OUTPUT = ("POWER_GRID_MODEL_VALIDATION_TEST_EXPORT" in os.environ) and (
     os.environ["POWER_GRID_MODEL_VALIDATION_TEST_EXPORT"] == "ON"
 )
@@ -66,6 +78,7 @@ KNOWN_EXCEPTIONS = {
         MaxIterationReached,
     )
 }
+KNOWN_EXCEPTIONS["Failed"] = _Failed
 
 
 class PowerGridModelWithExt(PowerGridModel):
@@ -222,8 +235,8 @@ def import_case_data(data_path: Path, calculation_type: str, sym: bool):
 
 
 def save_json_data(json_file: str, data: Dataset):
-    OUPUT_PATH.mkdir(parents=True, exist_ok=True)
-    data_file = OUPUT_PATH / json_file
+    OUTPUT_PATH.mkdir(parents=True, exist_ok=True)
+    data_file = OUTPUT_PATH / json_file
     data_file.parent.mkdir(parents=True, exist_ok=True)
     json_serialize_to_file(data_file, data)
 
