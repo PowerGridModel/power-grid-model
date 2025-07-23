@@ -596,6 +596,7 @@ class FictionalGridGenerator {
                                 power_tol * cabs(load.q_specified(2))}};
             });
 
+        // branch power sensors
         std::ranges::transform(input_.line, std::back_inserter(input_.sym_power_sensor), [this](LineInput const& line) {
             return SymPowerSensorInput{.id = id_gen_++,
                                        .measured_object = line.id,

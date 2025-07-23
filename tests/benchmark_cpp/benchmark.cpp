@@ -199,6 +199,9 @@ int main(int /* argc */, char** /* argv */) {
                               batch_size);
     benchmarker.run_benchmark(
         option, {.calculation_type = power_flow, .calculation_symmetry = symmetric, .calculation_method = linear});
+    benchmarker.run_benchmark(
+        option,
+        {.calculation_type = power_flow, .calculation_symmetry = symmetric, .calculation_method = linear_current});
     benchmarker.run_benchmark(option, {.calculation_type = power_flow,
                                        .calculation_symmetry = symmetric,
                                        .calculation_method = iterative_current,
@@ -208,6 +211,9 @@ int main(int /* argc */, char** /* argv */) {
         {.calculation_type = power_flow, .calculation_symmetry = asymmetric, .calculation_method = newton_raphson});
     benchmarker.run_benchmark(
         option, {.calculation_type = power_flow, .calculation_symmetry = asymmetric, .calculation_method = linear});
+    benchmarker.run_benchmark(
+        option,
+        {.calculation_type = power_flow, .calculation_symmetry = asymmetric, .calculation_method = linear_current});
     // benchmarker.run_benchmark<asymmetric_t>(option, {.calculation_type = power_flow,
     //                                                  .calculation_symmetry = asymmetric,
     //                                                  .calculation_method = iterative_current,
@@ -221,6 +227,9 @@ int main(int /* argc */, char** /* argv */) {
         {.calculation_type = power_flow, .calculation_symmetry = symmetric, .calculation_method = newton_raphson});
     benchmarker.run_benchmark(
         option, {.calculation_type = power_flow, .calculation_symmetry = symmetric, .calculation_method = linear});
+    benchmarker.run_benchmark(
+        option,
+        {.calculation_type = power_flow, .calculation_symmetry = symmetric, .calculation_method = linear_current});
     benchmarker.run_benchmark(option, {.calculation_type = power_flow,
                                        .calculation_symmetry = symmetric,
                                        .calculation_method = iterative_current,
@@ -230,6 +239,9 @@ int main(int /* argc */, char** /* argv */) {
         {.calculation_type = power_flow, .calculation_symmetry = asymmetric, .calculation_method = newton_raphson});
     benchmarker.run_benchmark(
         option, {.calculation_type = power_flow, .calculation_symmetry = asymmetric, .calculation_method = linear});
+    benchmarker.run_benchmark(
+        option,
+        {.calculation_type = power_flow, .calculation_symmetry = asymmetric, .calculation_method = linear_current});
     // benchmarker.run_benchmark(option, {.calculation_type = power_flow,
     //                                    .calculation_symmetry = asymmetric,
     //                                    .calculation_method = iterative_current,
