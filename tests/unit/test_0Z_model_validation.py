@@ -216,14 +216,3 @@ def test_batch_validation(
             result_list = convert_batch_dataset_to_batch_list(result_batch)
             for result, reference_result in zip(result_list, reference_output_list):
                 compare_result(result, reference_result, rtol, atol)
-
-
-# @pytest.mark.xfail(reason="This test is expected to fail", raises=RuntimeError)
-# def test_passing_behavior():
-#     pass
-
-
-@pytest.mark.xfail(reason="This test is expected to fail")
-def test_raising_behavior():
-    with pytest.raises(AssertionError):
-        raise RuntimeError()
