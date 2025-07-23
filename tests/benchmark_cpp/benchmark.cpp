@@ -214,10 +214,10 @@ int main(int /* argc */, char** /* argv */) {
     benchmarker.run_benchmark(
         option,
         {.calculation_type = power_flow, .calculation_symmetry = asymmetric, .calculation_method = linear_current});
-    // benchmarker.run_benchmark<asymmetric_t>(option, {.calculation_type = power_flow,
-    //                                                  .calculation_symmetry = asymmetric,
-    //                                                  .calculation_method = iterative_current,
-    //                                                  .max_iter = 100});
+    // benchmarker.run_benchmark(option, {.calculation_type = power_flow,
+    //                                    .calculation_symmetry = asymmetric,
+    //                                    .calculation_method = iterative_current,
+    //                                    .max_iter = 100});
 
     // with meshed ring
     option.has_mv_ring = true;
