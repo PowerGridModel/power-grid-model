@@ -29,8 +29,8 @@ template <typename Adapter> class JobDispatchInterface {
         return static_cast<Adapter*>(this)->cache_calculate_impl(std::forward<Calculate>(calculation_fn));
     }
 
-    template <typename UpdateDataset> void prepare_sub_batch_calculation(UpdateDataset const& update_data) {
-        return static_cast<Adapter*>(this)->prepare_sub_batch_calculation_impl(update_data);
+    template <typename UpdateDataset> void prepare_job(UpdateDataset const& update_data) {
+        return static_cast<Adapter*>(this)->prepare_job_impl(update_data);
     }
 
     template <typename UpdateDataset> void setup(UpdateDataset const& update_data, Idx scenario_idx) {

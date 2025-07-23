@@ -39,21 +39,15 @@ class JobDispatch {
             return BatchParameter{};
         }
 
-        // calculate once to cache topology, ignore results, all math solvers are initialized
-        try {
-            adapter.cache_calculate(std::forward<Calculate>(calculation_fn));
-        } catch (SparseMatrixError const&) { // NOLINT(bugprone-empty-catch) // NOSONAR
-            // missing entries are provided in the update data
-        } catch (NotObservableError const&) { // NOLINT(bugprone-empty-catch) // NOSONAR
-            // missing entries are provided in the update data
-        }
+        // calculate once to cache, ignore results
+        adapter.cache_calculate(std::forward<Calculate>(calculation_fn));
 
         // error messages
         std::vector<std::string> exceptions(n_scenarios, "");
         std::vector<CalculationInfo> infos(n_scenarios);
 
-        auto sub_batch = sub_batch_calculation_(adapter, std::forward<Calculate>(calculation_fn), result_data,
-                                                update_data, exceptions, infos);
+        auto sub_batch = single_threaded_job(adapter, std::forward<Calculate>(calculation_fn), result_data, update_data,
+                                             exceptions, infos);
 
         job_dispatch(sub_batch, n_scenarios, threading);
 
@@ -65,10 +59,10 @@ class JobDispatch {
 
   private:
     template <typename Adapter, typename Calculate>
-    static auto sub_batch_calculation_(Adapter& base_adapter, Calculate&& calculation_fn,
-                                       MutableDataset const& result_data, ConstDataset const& update_data,
-                                       std::vector<std::string>& exceptions, std::vector<CalculationInfo>& infos) {
-        base_adapter.prepare_sub_batch_calculation(update_data);
+    static auto single_threaded_job(Adapter& base_adapter, Calculate&& calculation_fn,
+                                    MutableDataset const& result_data, ConstDataset const& update_data,
+                                    std::vector<std::string>& exceptions, std::vector<CalculationInfo>& infos) {
+        base_adapter.prepare_job(update_data);
         return [&base_adapter, &exceptions, &infos, calculation_fn_ = std::forward<Calculate>(calculation_fn),
                 &result_data, &update_data](Idx start, Idx stride, Idx n_scenarios) {
             assert(n_scenarios <= narrow_cast<Idx>(exceptions.size()));

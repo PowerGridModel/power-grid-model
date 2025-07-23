@@ -19,10 +19,8 @@ template <class MainModel, class... ComponentType>
 class JobDispatchAdapter : public JobDispatchInterface<JobDispatchAdapter<MainModel, ComponentType...>> {
   public:
     JobDispatchAdapter(std::reference_wrapper<MainModel> model) : model_{std::move(model)} {}
-
     JobDispatchAdapter(JobDispatchAdapter const& other)
         : model_copy_{std::make_unique<MainModel>(other.model_.get())}, model_{std::ref(*model_copy_)} {}
-
     JobDispatchAdapter& operator=(JobDispatchAdapter const& other) {
         if (this != &other) {
             model_copy_ = std::make_unique<MainModel>(other.model_.get());
@@ -30,11 +28,14 @@ class JobDispatchAdapter : public JobDispatchInterface<JobDispatchAdapter<MainMo
         }
         return *this;
     }
+    JobDispatchAdapter(JobDispatchAdapter&& other) = default;
+    ~JobDispatchAdapter() = default;
 
   private:
+    friend class JobDispatchInterface<JobDispatchAdapter>; // CRTP
+
     static constexpr Idx ignore_output{-1};
 
-    friend class JobDispatchInterface<JobDispatchAdapter>;
     std::unique_ptr<MainModel> model_copy_;
     std::reference_wrapper<MainModel> model_;
 
@@ -50,23 +51,30 @@ class JobDispatchAdapter : public JobDispatchInterface<JobDispatchAdapter<MainMo
     template <typename Calculate>
         requires std::invocable<std::remove_cvref_t<Calculate>, MainModel&, MutableDataset const&, Idx>
     void calculate_impl(Calculate&& calculation_fn, MutableDataset const& result_data, Idx scenario_idx) const {
-        return std::forward<Calculate>(calculation_fn)(model_.get(), result_data, scenario_idx);
+        std::forward<Calculate>(calculation_fn)(model_.get(), result_data, scenario_idx);
     }
 
     template <typename Calculate>
         requires std::invocable<std::remove_cvref_t<Calculate>, MainModel&, MutableDataset const&, Idx>
     void cache_calculate_impl(Calculate&& calculation_fn) const {
-        return std::forward<Calculate>(calculation_fn)(model_.get(),
-                                                       {
-                                                           false,
-                                                           1,
-                                                           "sym_output",
-                                                           model_.get().meta_data(),
-                                                       },
-                                                       ignore_output);
+        // calculate once to cache topology, ignore results, all math solvers are initialized
+        try {
+            std::forward<Calculate>(calculation_fn)(model_.get(),
+                                                    {
+                                                        false,
+                                                        1,
+                                                        "sym_output",
+                                                        model_.get().meta_data(),
+                                                    },
+                                                    ignore_output);
+        } catch (SparseMatrixError const&) { // NOLINT(bugprone-empty-catch) // NOSONAR
+            // missing entries are provided in the update data
+        } catch (NotObservableError const&) { // NOLINT(bugprone-empty-catch) // NOSONAR
+            // missing entries are provided in the update data
+        }
     }
 
-    void prepare_sub_batch_calculation_impl(ConstDataset const& update_data) {
+    void prepare_job_impl(ConstDataset const& update_data) {
         // cache component update order where possible.
         // the order for a cacheable (independent) component by definition is the same across all scenarios
         components_to_update_ =
@@ -89,9 +97,8 @@ class JobDispatchAdapter : public JobDispatchInterface<JobDispatchAdapter<MainMo
     void setup_impl(ConstDataset const& update_data, Idx scenario_idx) {
         assert(components_to_update_ != nullptr);
         assert(update_independence_ != nullptr);
-        current_scenario_sequence_cache_ =
-            main_core::update::get_all_sequence_idx_map<ComponentType...>( // something wrong here
-                model_.get().state(), update_data, scenario_idx, *components_to_update_, *update_independence_, true);
+        current_scenario_sequence_cache_ = main_core::update::get_all_sequence_idx_map<ComponentType...>(
+            model_.get().state(), update_data, scenario_idx, *components_to_update_, *update_independence_, true);
         model_.get().template update_components<cached_update_t>(update_data, scenario_idx,
                                                                  get_current_scenario_sequence_view_());
     }
