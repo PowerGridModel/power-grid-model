@@ -21,7 +21,7 @@ class PowerGridError : public std::exception {
     char const* what() const noexcept final { return msg_.c_str(); }
 
   protected:
-    void append_msg(std::string_view msg) { msg_ = std::format("{}{}", msg_, msg); }
+    void append_msg(std::string_view msg) { msg_ = std::format("{} {}", msg_, msg); }
 
   private:
     std::string msg_;
@@ -45,7 +45,7 @@ class InvalidArguments : public PowerGridError {
         requires((std::same_as<std::remove_cvref_t<Options>, TypeValuePair> && ...) && sizeof...(Options) > 0)
     InvalidArguments(std::string_view method, Options const&... options)
         : InvalidArguments{method, "the following combination of options"} {
-        (append_msg(std::format(" {}: {}\n", options.name, options.value)), ...);
+        (append_msg(std::format("{}: {}\n", options.name, options.value)), ...);
     }
 };
 
