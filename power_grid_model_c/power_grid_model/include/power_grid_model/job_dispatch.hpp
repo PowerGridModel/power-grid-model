@@ -46,10 +46,10 @@ class JobDispatch {
         std::vector<std::string> exceptions(n_scenarios, "");
         std::vector<CalculationInfo> infos(n_scenarios);
 
-        auto sub_batch = single_threaded_job(adapter, std::forward<Calculate>(calculation_fn), result_data, update_data,
-                                             exceptions, infos);
+        auto single_job = single_thread_job(adapter, std::forward<Calculate>(calculation_fn), result_data, update_data,
+                                            exceptions, infos);
 
-        job_dispatch(sub_batch, n_scenarios, threading);
+        job_dispatch(single_job, n_scenarios, threading);
 
         handle_batch_exceptions(exceptions);
         adapter.merge_calculation_infos(infos);
@@ -59,9 +59,9 @@ class JobDispatch {
 
   private:
     template <typename Adapter, typename Calculate>
-    static auto single_threaded_job(Adapter& base_adapter, Calculate&& calculation_fn,
-                                    MutableDataset const& result_data, ConstDataset const& update_data,
-                                    std::vector<std::string>& exceptions, std::vector<CalculationInfo>& infos) {
+    static auto single_thread_job(Adapter& base_adapter, Calculate&& calculation_fn, MutableDataset const& result_data,
+                                  ConstDataset const& update_data, std::vector<std::string>& exceptions,
+                                  std::vector<CalculationInfo>& infos) {
         base_adapter.prepare_job(update_data);
         return [&base_adapter, &exceptions, &infos, calculation_fn_ = std::forward<Calculate>(calculation_fn),
                 &result_data, &update_data](Idx start, Idx stride, Idx n_scenarios) {
@@ -106,22 +106,22 @@ class JobDispatch {
     //    specified threading < 0
     //    use hardware threads, but it is either unknown (0) or only has one thread (1)
     //    specified threading = 1
-    template <typename RunSubBatchFn>
-        requires std::invocable<std::remove_cvref_t<RunSubBatchFn>, Idx /*start*/, Idx /*stride*/, Idx /*n_scenarios*/>
-    static void job_dispatch(RunSubBatchFn sub_batch, Idx n_scenarios, Idx threading) {
+    template <typename RunSingleJobFn>
+        requires std::invocable<std::remove_cvref_t<RunSingleJobFn>, Idx /*start*/, Idx /*stride*/, Idx /*n_scenarios*/>
+    static void job_dispatch(RunSingleJobFn single_thread_job, Idx n_scenarios, Idx threading) {
         // run batches sequential or parallel
         auto const hardware_thread = static_cast<Idx>(std::thread::hardware_concurrency());
         if (threading < 0 || threading == 1 || (threading == 0 && hardware_thread < 2)) {
             // run all in sequential
-            sub_batch(0, 1, n_scenarios);
+            single_thread_job(0, 1, n_scenarios);
         } else {
             // create parallel threads
             Idx const n_thread = std::min(threading == 0 ? hardware_thread : threading, n_scenarios);
             std::vector<std::thread> threads;
             threads.reserve(n_thread);
             for (Idx thread_number = 0; thread_number < n_thread; ++thread_number) {
-                // compute each sub batch with stride
-                threads.emplace_back(sub_batch, thread_number, n_thread, n_scenarios);
+                // compute each single thread job with stride
+                threads.emplace_back(single_thread_job, thread_number, n_thread, n_scenarios);
             }
             for (auto& thread : threads) {
                 thread.join();
