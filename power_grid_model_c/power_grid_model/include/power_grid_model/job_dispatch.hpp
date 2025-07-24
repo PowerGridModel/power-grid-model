@@ -62,7 +62,6 @@ class JobDispatch {
     static auto single_thread_job(Adapter& base_adapter, Calculate&& calculation_fn, MutableDataset const& result_data,
                                   ConstDataset const& update_data, std::vector<std::string>& exceptions,
                                   std::vector<CalculationInfo>& infos) {
-        base_adapter.prepare_job(update_data);
         return [&base_adapter, &exceptions, &infos, calculation_fn_ = std::forward<Calculate>(calculation_fn),
                 &result_data, &update_data](Idx start, Idx stride, Idx n_scenarios) {
             assert(n_scenarios <= narrow_cast<Idx>(exceptions.size()));
@@ -76,6 +75,7 @@ class JobDispatch {
             };
             auto adapter = copy_adapter_functor(start);
 
+            adapter.prepare_job(update_data);
             auto setup = [&adapter, &update_data, &infos](Idx scenario_idx) {
                 Timer const t_update_model(infos[scenario_idx], 1200, "Update model");
                 adapter.setup(update_data, scenario_idx);
