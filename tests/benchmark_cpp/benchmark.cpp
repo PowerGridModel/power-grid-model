@@ -273,6 +273,48 @@ int main(int /* argc */, char** /* argv */) {
                                .calculation_method = linear,
                                .optimizer_type = automatic_tap_adjustment},
                               batch_size);
+    benchmarker.run_benchmark(option,
+                              {.calculation_type = power_flow,
+                               .calculation_symmetry = symmetric,
+                               .calculation_method = newton_raphson,
+                               .optimizer_type = automatic_tap_adjustment,
+                               .optimizer_strategy = power_grid_model::OptimizerStrategy::any},
+                              batch_size);
+    benchmarker.run_benchmark(option,
+                              {.calculation_type = power_flow,
+                               .calculation_symmetry = symmetric,
+                               .calculation_method = newton_raphson,
+                               .optimizer_type = automatic_tap_adjustment,
+                               .optimizer_strategy = power_grid_model::OptimizerStrategy::fast_any},
+                              batch_size);
+    benchmarker.run_benchmark(option,
+                              {.calculation_type = power_flow,
+                               .calculation_symmetry = symmetric,
+                               .calculation_method = newton_raphson,
+                               .optimizer_type = automatic_tap_adjustment,
+                               .optimizer_strategy = power_grid_model::OptimizerStrategy::global_minimum},
+                              batch_size);
+    benchmarker.run_benchmark(option,
+                              {.calculation_type = power_flow,
+                               .calculation_symmetry = symmetric,
+                               .calculation_method = newton_raphson,
+                               .optimizer_type = automatic_tap_adjustment,
+                               .optimizer_strategy = power_grid_model::OptimizerStrategy::global_maximum},
+                              batch_size);
+    benchmarker.run_benchmark(option,
+                              {.calculation_type = power_flow,
+                               .calculation_symmetry = symmetric,
+                               .calculation_method = newton_raphson,
+                               .optimizer_type = automatic_tap_adjustment,
+                               .optimizer_strategy = power_grid_model::OptimizerStrategy::local_minimum},
+                              batch_size);
+    benchmarker.run_benchmark(option,
+                              {.calculation_type = power_flow,
+                               .calculation_symmetry = symmetric,
+                               .calculation_method = newton_raphson,
+                               .optimizer_type = automatic_tap_adjustment,
+                               .optimizer_strategy = power_grid_model::OptimizerStrategy::local_maximum},
+                              batch_size);
 
     // with meshed ring
     option.has_mv_ring = true;
