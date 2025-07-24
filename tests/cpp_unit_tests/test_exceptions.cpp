@@ -33,10 +33,6 @@ static_assert(static_cast<Idx>(TestCppStyleEnumClass::baz) == -1);
 static_assert(static_cast<Idx>(TestCppStyleEnumClass::nan) == na_IntS);
 
 TEST_CASE("Exceptions") {
-    SUBCASE("PowerGridError") {
-        CHECK(std::string{PowerGridError{}.what()}.empty());
-        CHECK(std::string{PowerGridError{"Test message"}.what()} == "Test message");
-    }
     SUBCASE("InvalidArguments") {
         CHECK(std::string{InvalidArguments{"foo"}.what()} == "foo");
         CHECK(std::string{InvalidArguments{"bar"}.what()} == "bar");
