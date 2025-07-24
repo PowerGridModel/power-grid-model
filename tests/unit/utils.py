@@ -37,12 +37,15 @@ from power_grid_model.utils import json_deserialize, json_deserialize_from_file,
 
 try:
     from _pytest.outcomes import Failed as _Failed  # pylint: disable=import-outside-toplevel
+
+    raise ImportError()
 except ImportError:
     import warnings  # pylint: disable=import-outside-toplevel
 
     warnings.warn(
-        """Failed exception is not available in the current pytest version.Some validation cases tests marked """
-        """ as {"xfail": {"raises": "Failed"}} may report as xfail even though they are actual problems."""
+        """Failed to import _pytest.outcomes.Failed."""
+        """ Some validation cases tests marked as {"xfail": {"raises": "Failed"}} may report as xfail"""
+        """ even though they are actual problems."""
     )
     _Failed = None
 
