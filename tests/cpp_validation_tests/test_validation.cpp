@@ -14,6 +14,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
+#include <format>
 #include <fstream>
 #include <iostream>
 #include <limits>
@@ -28,11 +29,7 @@ namespace {
 class UnsupportedValidationCase : public PowerGridError {
   public:
     UnsupportedValidationCase(std::string const& calculation_type, bool sym)
-        : PowerGridError{[&]() {
-              using namespace std::string_literals;
-              auto const sym_str = sym ? "sym"s : "asym"s;
-              return "Unsupported validation case: "s + sym_str + " "s + calculation_type;
-          }()} {}
+        : PowerGridError{std::format("Unsupported validation case: {} {}", sym ? "sym" : "asym", calculation_type)} {}
 };
 
 using nlohmann::json;
