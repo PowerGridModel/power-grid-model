@@ -86,7 +86,7 @@ struct PowerGridBenchmark {
 
         std::cout << get_benchmark_run_title(option, model_options, batch_size) << '\n';
 
-        auto const run = [this, &model_options, &info, batch_size](Idx batch_size_) {
+        auto const run = [this, &model_options, &info](Idx batch_size_) {
             switch (model_options.calculation_type) {
             case short_circuit:
                 return run_calculation<ShortCircuitOutputData>(model_options, batch_size_, info);
