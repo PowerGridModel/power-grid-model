@@ -57,7 +57,7 @@ EXPORT_OUTPUT = ("POWER_GRID_MODEL_VALIDATION_TEST_EXPORT" in os.environ) and (
     os.environ["POWER_GRID_MODEL_VALIDATION_TEST_EXPORT"] == "ON"
 )
 
-KNOWN_EXCEPTIONS = {
+KNOWN_EXCEPTIONS: dict[str, type[BaseException] | None] = {
     ex.__name__: ex
     for ex in (
         PowerGridBatchError,
@@ -81,7 +81,7 @@ KNOWN_EXCEPTIONS = {
         MaxIterationReached,
     )
 }
-KNOWN_EXCEPTIONS["Failed"] = _Failed  # type: ignore[assignment] # only in the fallback case
+KNOWN_EXCEPTIONS["Failed"] = _Failed
 
 
 class PowerGridModelWithExt(PowerGridModel):
