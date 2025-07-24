@@ -15,12 +15,12 @@
 namespace power_grid_model {
 class PowerGridError : public std::exception {
   public:
-    PowerGridError() = default;
-    PowerGridError(std::string msg) : msg_{std::move(msg)} {}
-
     char const* what() const noexcept final { return msg_.c_str(); }
 
   protected:
+    PowerGridError() = default;
+    PowerGridError(std::string msg) : msg_{std::move(msg)} {}
+
     void append_msg(std::string_view msg) { msg_ = std::format("{} {}", msg_, msg); }
 
   private:
