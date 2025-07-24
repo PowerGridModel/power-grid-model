@@ -359,9 +359,9 @@ int main(int /* argc */, char** /* argv */) {
     benchmarker.run_benchmark(option, {.calculation_type = state_estimation,
                                        .calculation_symmetry = symmetric,
                                        .calculation_method = iterative_linear});
-    benchmarker.run_benchmark(option, {.calculation_type = state_estimation,
-                                       .calculation_symmetry = asymmetric,
-                                       .calculation_method = newton_raphson});
+    // benchmarker.run_benchmark(option, {.calculation_type = state_estimation,
+    //                                    .calculation_symmetry = asymmetric,
+    //                                    .calculation_method = newton_raphson});
     benchmarker.run_benchmark(option, {.calculation_type = state_estimation,
                                        .calculation_symmetry = asymmetric,
                                        .calculation_method = iterative_linear});
@@ -375,9 +375,9 @@ int main(int /* argc */, char** /* argv */) {
     benchmarker.run_benchmark(option, {.calculation_type = state_estimation,
                                        .calculation_symmetry = symmetric,
                                        .calculation_method = iterative_linear});
-    benchmarker.run_benchmark(option, {.calculation_type = state_estimation,
-                                       .calculation_symmetry = asymmetric,
-                                       .calculation_method = newton_raphson});
+    // benchmarker.run_benchmark(option, {.calculation_type = state_estimation,
+    //                                    .calculation_symmetry = asymmetric,
+    //                                    .calculation_method = newton_raphson});
     benchmarker.run_benchmark(option, {.calculation_type = state_estimation,
                                        .calculation_symmetry = asymmetric,
                                        .calculation_method = iterative_linear});

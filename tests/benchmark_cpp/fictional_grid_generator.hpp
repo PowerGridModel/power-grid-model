@@ -523,8 +523,8 @@ class FictionalGridGenerator {
     }
 
     void generate_sensors() {
-        constexpr double voltage_tol = 0.01;
-        constexpr double power_tol = 0.05;
+        constexpr double voltage_tol = 0.1;
+        constexpr double power_tol = 0.1;
 
         // voltage sensors
         std::ranges::transform(input_.source, std::back_inserter(input_.sym_voltage_sensor),
@@ -611,7 +611,7 @@ class FictionalGridGenerator {
         input_.fault.emplace_back(FaultInput{.id = id_gen_++,
                                              .status = 1,
                                              .fault_type = FaultType::three_phase,
-                                             .fault_object = input_.node.front().id});
+                                             .fault_object = input_.node.back().id});
     }
 
     void generate_tap_changer() {
