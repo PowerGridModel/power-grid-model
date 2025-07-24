@@ -81,7 +81,7 @@ KNOWN_EXCEPTIONS = {
         MaxIterationReached,
     )
 }
-KNOWN_EXCEPTIONS["Failed"] = _Failed
+KNOWN_EXCEPTIONS["Failed"] = _Failed  # type: ignore[assignment] # only in the fallback case
 
 
 class PowerGridModelWithExt(PowerGridModel):
