@@ -182,6 +182,7 @@ inline ComplexValue<asymmetric_t> piecewise_complex_value(ComplexValue<asymmetri
 
 // abs
 template <std::floating_point Float> inline Float cabs(Float x) { return std::abs(x); }
+template <std::floating_point Float> inline Float abs2(Float x) { return x * x; }
 template <std::floating_point Float> inline Float cabs(std::complex<Float> const& x) { return std::sqrt(std::norm(x)); }
 template <std::floating_point Float> inline Float abs2(std::complex<Float> const& x) { return std::norm(x); }
 
