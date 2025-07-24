@@ -5,8 +5,12 @@
     "default": 1e-8,
     ".+_residual": 5e-4
   },
-  "fail": {
-    "raises": "NotImplementedError",
-    "reason": "Observability check for meshed network is not implemented yet."
+  "raises": {
+    "raises": "NotObservableError",
+    "reason": "Some clear reason as to why this grid is not observable."
+  },
+  "xfail": {
+    "raises": "SparseMatrixError",
+    "reason": "A sufficient observability check for meshed grids is not yet implemented. See also https://github.com/PowerGridModel/power-grid-model/issues/864."
   }
 }
