@@ -608,10 +608,8 @@ class FictionalGridGenerator {
     }
 
     void generate_fault() {
-        input_.fault.emplace_back(FaultInput{.id = id_gen_++,
-                                             .status = 1,
-                                             .fault_type = FaultType::three_phase,
-                                             .fault_object = input_.node.back().id});
+        input_.fault.emplace_back(FaultInput{
+            .id = id_gen_++, .status = 1, .fault_type = FaultType::three_phase, .fault_object = input_.node.back().id});
     }
 
     void generate_tap_changer() {
