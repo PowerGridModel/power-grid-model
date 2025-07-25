@@ -45,7 +45,7 @@ template <symmetry_tag sym_type> struct UniformRealRandVar {
     {
         return {.value = RealValue<asymmetric_t>{std::piecewise_construct, value}, .variance = variance};
     }
-    explicit operator UniformRealRandVar<symmetric_t>() const
+    constexpr explicit operator UniformRealRandVar<symmetric_t>() const
         requires(is_asymmetric_v<sym>)
     {
         return {.value = mean_val(value), .variance = variance / 3.0};
@@ -58,7 +58,7 @@ template <symmetry_tag sym_type> struct IndependentRealRandVar {
     RealValue<sym> value{};
     RealValue<sym> variance{}; // variance (sigma^2) of the error range
 
-    explicit operator UniformRealRandVar<symmetric_t>() const {
+    constexpr explicit operator UniformRealRandVar<symmetric_t>() const {
         constexpr auto scale = is_asymmetric_v<sym> ? 3.0 : 1.0;
         return {.value = mean_val(value), .variance = mean_val(variance) / scale};
     }
@@ -71,7 +71,7 @@ template <symmetry_tag sym_type> struct IndependentRealRandVar {
         return {.value = RealValue<asymmetric_t>{std::piecewise_construct, value},
                 .variance = RealValue<asymmetric_t>{std::piecewise_construct, variance}};
     }
-    explicit operator IndependentRealRandVar<symmetric_t>() const
+    constexpr explicit operator IndependentRealRandVar<symmetric_t>() const
         requires(is_asymmetric_v<sym>)
     {
         return {.value = mean_val(value), .variance = mean_val(variance) / 3.0};
