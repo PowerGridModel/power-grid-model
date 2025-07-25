@@ -3,7 +3,7 @@
   "tap_changing_strategy": "any_valid_tap",
   "rtol": 1e-05,
   "atol": 1e-05,
-  "fail": {
+  "raises": {
     "raises": "MaxIterationReached",
     "reason": "TapPositionOptimizer::iterate"
   }
