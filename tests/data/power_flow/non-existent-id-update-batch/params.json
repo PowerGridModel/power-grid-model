@@ -3,7 +3,7 @@
   "rtol": 1e-5,
   "atol": 1e-5,
   "raises": {
-    "raises": "PowerGridError",
+    "raises": "IDNotFound",
     "reason": "Same invalid ID in update data set"
   }
 }

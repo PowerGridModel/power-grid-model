@@ -37,6 +37,7 @@ from power_grid_model._core.errors import (
     PowerGridSerializationError,
     PowerGridUnreachableHitError,
     SparseMatrixError,
+    TapSearchStrategyIncompatibleError,
 )
 from power_grid_model._core.index_integer import IdxNp
 from power_grid_model._core.power_grid_core import power_grid_core as pgc
@@ -79,9 +80,9 @@ _ID_WRONG_TYPE_RE = re.compile(r"Wrong type for object with id (-?\d+)\n")
 _CONFLICTING_ANGLE_MEASUREMENT_TYPE_RE = re.compile(r"Conflicting angle measurement type")
 _INVALID_CALCULATION_METHOD_RE = re.compile(r"The calculation method is invalid for this calculation!")
 _INVALID_SHORT_CIRCUIT_PHASE_OR_TYPE_RE = re.compile(r"short circuit type")  # multiple different flavors
+_TAP_STRATEGY_SEARCH_OPT_INCMPT_RE = re.compile(r"Search method is incompatible with optimization strategy: ")
 _POWER_GRID_DATASET_ERROR_RE = re.compile(r"Dataset error: ")  # multiple different flavors
 _POWER_GRID_UNREACHABLE_HIT_RE = re.compile(r"Unreachable code hit when executing ")  # multiple different flavors
-_POWER_GRID_SEARCH_OPT_INCMPT_RE = re.compile(r"Search method is incompatible with optimization strategy: ")
 _POWER_GRID_NOT_IMPLEMENTED_ERROR_RE = re.compile(r"The functionality is either not supported or not yet implemented!")
 
 _ERROR_MESSAGE_PATTERNS = {
@@ -105,9 +106,9 @@ _ERROR_MESSAGE_PATTERNS = {
     _CONFLICTING_ANGLE_MEASUREMENT_TYPE_RE: ConflictingAngleMeasurementType,
     _INVALID_CALCULATION_METHOD_RE: InvalidCalculationMethod,
     _INVALID_SHORT_CIRCUIT_PHASE_OR_TYPE_RE: InvalidShortCircuitPhaseOrType,
+    _TAP_STRATEGY_SEARCH_OPT_INCMPT_RE: TapSearchStrategyIncompatibleError,
     _POWER_GRID_DATASET_ERROR_RE: PowerGridDatasetError,
     _POWER_GRID_UNREACHABLE_HIT_RE: PowerGridUnreachableHitError,
-    _POWER_GRID_SEARCH_OPT_INCMPT_RE: PowerGridUnreachableHitError,
     _POWER_GRID_NOT_IMPLEMENTED_ERROR_RE: PowerGridNotImplementedError,
 }
 
