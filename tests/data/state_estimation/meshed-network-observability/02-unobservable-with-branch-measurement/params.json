@@ -1,0 +1,15 @@
+{
+  "calculation_method": ["newton_raphson", "iterative_linear"],
+  "rtol": 1e-8,
+  "atol": {
+    "default": 1e-8,
+    ".+_residual": 5e-4
+  },
+  "raises": {
+    "raises": "NotObservableError",
+    "reason": "Some clear reason as to why this grid is not observable."
+  },
+  "xpass": {
+    "reason": "Full observability check for meshed grids is not yet implemented. See also https://github.com/PowerGridModel/power-grid-model/issues/864."
+  }
+}
