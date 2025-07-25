@@ -29,6 +29,7 @@ class JobDispatchAdapter : public JobDispatchInterface<JobDispatchAdapter<MainMo
         return *this;
     }
     JobDispatchAdapter(JobDispatchAdapter&& other) = default;
+    JobDispatchAdapter& operator=(JobDispatchAdapter&& other) = default;
     ~JobDispatchAdapter() = default;
 
   private:
