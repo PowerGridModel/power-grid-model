@@ -620,7 +620,7 @@ Its value can be computed using following equations:
 $$
    \begin{eqnarray}
         & z_{\text{source}} = \frac{s_{\text{base}}}{s_k} \\
-        & x_1 = z_{\text{source}} \sqrt{1+ \left(\frac{r}{x}\right)^2} \\
+        & x_1 = \frac{z_{\text{source}}}{\sqrt{1+ \left(\frac{r}{x}\right)^2}} \\
         & r_1 = x_1 \cdot \left(\frac{r}{x}\right)
    \end{eqnarray}
 $$
@@ -631,8 +631,8 @@ where $s_{\text{base}}$ is a constant value determined by the solver, and $\frac
 
 $$
    \begin{eqnarray}
-        & z_{\text{source,0}} = z_{\text{source}} \cdot \frac{z_0}{z_1}\\
-        & x_0 = z_{\text{source,0}} \sqrt{1 + \left(\frac{r}{x}\right)^2}\\
+        & z_{\text{source,0}} = z_{\text{source}} \cdot \frac{z_0}{z_1} \\
+        & x_0 = \frac{z_{\text{source,0}}}{\sqrt{1 + \left(\frac{r}{x}\right)^2}} \\
         & r_0 = x_0 \cdot \left(\frac{r}{x}\right)
    \end{eqnarray}
 $$
