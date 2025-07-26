@@ -2,7 +2,7 @@
   "calculation_method": "linear",
   "rtol": 1e-5,
   "atol": 1e-5,
-  "fail": {
+  "raises": {
     "raises": "PowerGridError",
     "reason": "Same invalid ID in update data set"
   }

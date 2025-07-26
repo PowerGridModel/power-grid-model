@@ -112,15 +112,15 @@ struct MetaAttribute {
 // meta component
 struct MetaComponent {
     // meta data
-    char const* name;
-    size_t size;
-    size_t alignment;
+    char const* name{nullptr};
+    size_t size{};
+    size_t alignment{};
     std::span<MetaAttribute const> attributes;
 
     // function pointers
-    std::add_pointer_t<void(RawDataPtr, Idx, Idx)> set_nan;
-    std::add_pointer_t<RawDataPtr(Idx)> create_buffer;
-    std::add_pointer_t<void(RawDataConstPtr)> destroy_buffer;
+    std::add_pointer_t<void(RawDataPtr, Idx, Idx)> set_nan{nullptr};
+    std::add_pointer_t<RawDataPtr(Idx)> create_buffer{nullptr};
+    std::add_pointer_t<void(RawDataConstPtr)> destroy_buffer{nullptr};
 
     Idx n_attributes() const { return static_cast<Idx>(attributes.size()); }
 
@@ -153,7 +153,7 @@ struct MetaComponent {
 
 // meta dataset
 struct MetaDataset {
-    char const* name;
+    char const* name{nullptr};
     std::span<MetaComponent const> components;
 
     Idx n_components() const { return static_cast<Idx>(components.size()); }

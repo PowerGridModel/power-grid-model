@@ -103,13 +103,13 @@ TEST_CASE("Three phase tensor") {
     }
 
     SUBCASE("Test value initialization") {
-        NodeOutput<symmetric_t> sym{};
+        NodeOutput<symmetric_t> const sym{};
         CHECK(sym.id == na_IntID);
         CHECK(sym.energized == na_IntS);
         CHECK(is_nan(sym.u_pu));
         CHECK(is_nan(sym.u));
         CHECK(is_nan(sym.u_angle));
-        NodeOutput<asymmetric_t> asym{};
+        NodeOutput<asymmetric_t> const asym{};
         CHECK(asym.id == na_IntID);
         CHECK(asym.energized == na_IntS);
         CHECK(is_nan(asym.u_pu(0)));

@@ -72,7 +72,8 @@ TEST_CASE("Test current sensor") {
 
             SUBCASE("Output for symmetric parameters") {
                 auto const i_sym = ComplexValue<symmetric_t>{(1e3 * exp(1.0i * i_angle)) / base_current};
-                CurrentSensorCalcParam<symmetric_t> sym_sensor_param = sym_current_sensor.calc_param<symmetric_t>();
+                CurrentSensorCalcParam<symmetric_t> const sym_sensor_param =
+                    sym_current_sensor.calc_param<symmetric_t>();
                 CurrentSensorOutput<symmetric_t> const sym_sensor_output =
                     (angle_measurement_type == AngleMeasurementType::global_angle)
                         ? sym_current_sensor.get_output<symmetric_t>(i_sym, ComplexValue<symmetric_t>{1.0})
