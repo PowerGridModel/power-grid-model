@@ -23,7 +23,6 @@
 #include <regex>
 #include <stdexcept>
 #include <type_traits>
-#include <variant>
 
 namespace power_grid_model_cpp {
 namespace {
