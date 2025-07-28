@@ -154,7 +154,7 @@ def test__get_raw_attribute_data_view_fail(component, attribute):
         pytest.param(ComponentType.asym_load, True, True, False, id="asym_load-columnar"),
     ],
 )
-def test__get_raw_attribute_data_view_directly(component, is_batch, is_columnar, is_sparse):
+def test__get_raw_attribute_data_view_direct(component, is_batch, is_columnar, is_sparse):
     attribute = "p_specified"
     schema = power_grid_meta_data[DatasetType.update][component]
 
@@ -187,7 +187,7 @@ def test__get_raw_attribute_data_view_directly(component, is_batch, is_columnar,
         pytest.param(ComponentType.asym_load, (3, 3), "q_specified", id="asym_load-columnar"),
     ],
 )
-def test__get_raw_attribute_data_view_directly2(component, attr_data_shape, attribute):
+def test__get_raw_attribute_data_view_directly(component, attr_data_shape, attribute):
     arr = np.zeros(attr_data_shape)
     schema = power_grid_meta_data[DatasetType.update][component]
 
