@@ -240,8 +240,6 @@ $$
 $$
 
 where $z_{\text{base,transformer}} = 1 / y_{\text{base,transformer}} = {u_{\text{2}}}^2 / s_{\text{n}}$.
-Here, $s_{\text{n}}$ is the rated power of the transformer and $u_{\text{2}}$ is rated voltage at
-`to_node`.
 
 ### Generic Branch  
 
