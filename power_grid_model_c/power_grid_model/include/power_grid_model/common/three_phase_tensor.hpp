@@ -315,7 +315,7 @@ constexpr auto pos_seq(DoubleComplex const& val) { return val; }
 
 // inverse of tensor
 template <std::floating_point Float> constexpr auto inv(Float val) { return Float{1.0} / val; }
-template <std::floating_point Float> constexpr auto inv(std::complex<Float> const& val) { return 1.0 / val; }
+template <std::floating_point Float> constexpr auto inv(std::complex<Float> const& val) { return Float{1.0} / val; }
 inline auto inv(ComplexTensor<asymmetric_t> const& val) { return val.matrix().inverse().array(); }
 
 // add_diag
