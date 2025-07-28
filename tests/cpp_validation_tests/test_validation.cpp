@@ -175,7 +175,7 @@ class Subcase {
         };
     }
 
-    bool match_exception(std::exception const& e, std::string_view message) const {
+    static bool match_exception(std::exception const& e, std::string_view message) {
         // error mapping; similar to src/power_grid_model/_core/error_handling.py
         std::map<std::string, std::regex, std::less<>> const error_mapping = {
             {"MissingCaseForEnumError", std::regex{" is not implemented for (.+) #(-?\\d+)!\n"}},
