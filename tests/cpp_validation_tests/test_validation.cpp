@@ -147,7 +147,7 @@ class Subcase {
                 throw RaisesFailed{std::format(
                     "Test case marked as raises with message '{}' but no exception was thrown", raises_.value())};
             } catch (std::exception const& e) {
-                if (subcase.match_exception(e, raises_.value())) {
+                if (match_exception(e, raises_.value())) {
                     // correct exception raised => pass
                     subcase.fail_count = 0; // reset fail count
                 } else {
@@ -168,7 +168,7 @@ class Subcase {
                 statement_(subcase);
                 CHECK_MESSAGE(subcase.fail_count > 0, "XPASS");
             } catch (std::exception const& e) {
-                subcase.check_message(subcase.match_exception(e, xfail_raises_.value()),
+                subcase.check_message(match_exception(e, xfail_raises_.value()),
                                       std::format("Test case marked as xfail with message '{}' but got exception: {}",
                                                   xfail_raises_.value(), e.what()));
             }
@@ -645,7 +645,7 @@ void execute_test(CaseParam const& param, T&& func) noexcept {
 }
 
 void validate_single_case(CaseParam const& param) {
-    execute_test(param, [&](Subcase& subcase) {
+    execute_test(param, [&param](Subcase& subcase) {
         auto const output_prefix = get_output_type(param.calculation_type, param.sym);
         auto const validation_case = create_validation_case(param, output_prefix);
         auto const result = create_result_dataset(validation_case.output.value(), output_prefix);
