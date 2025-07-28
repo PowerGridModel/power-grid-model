@@ -223,8 +223,8 @@ In this case the winding voltage is decreased if the tap position is increased.
 
 $$
     \begin{eqnarray}
-        & |Z_{\text{series}}| = \frac{u_k}{z_{\text{base}}} \\
-        & \mathrm{Re}(Z_{\text{series}}) = \frac{p_k / s_n}{z_{\text{base}}} \\
+        & |Z_{\text{series}}| = u_k*z_{\text{base,transformer}} \\
+        & \mathrm{Re}(Z_{\text{series}}) = \frac{p_k}{s_n}*z_{\text{base,transformer}} \\
         & \mathrm{Im}(Z_{\text{series}}) = \sqrt{|Z_{\text{series}}|^2-\mathrm{Re}(Z_{\text{series}})^2} \\
     \end{eqnarray}
 $$
@@ -233,15 +233,13 @@ and $Y_{\text{shunt}}$ can be computed as
 
 $$
     \begin{eqnarray}
-        & |Y_{\text{shunt}}| = \frac{i_0}{y_{\text{base}}} \\
-        & \mathrm{Re}(Y_{\text{shunt}}) = \frac{s_n / p_0}{y_{\text{base}}} \\
+        & |Y_{\text{shunt}}| = i_0*y_{\text{base,transformer}} \\
+        & \mathrm{Re}(Y_{\text{shunt}}) = \frac{s_n}{p_0}*y_{\text{base,transformer}} \\
         & \mathrm{Im}(Y_{\text{shunt}}) = -\sqrt{|Y_{\text{shunt}}|^2-\mathrm{Re}(Y_{\text{shunt}})^2} \\
    \end{eqnarray}
 $$
 
-where $z_{\text{base}} = 1 / y_{\text{base}} = {u_{\text{2, rated}}}^2 / s_{\text{base}}$.
-Here, $s_{\text{base}}$ is a constant value determined by the solver and $u_{\text{2, rated}}$ is rated voltage at
-`to_node`.
+where $z_{\text{base,transformer}} = 1 / y_{\text{base,transformer}} = {u_{\text{2}}}^2 / s_{\text{n}}$.
 
 ### Generic Branch  
 
@@ -620,7 +618,7 @@ Its value can be computed using following equations:
 $$
    \begin{eqnarray}
         & z_{\text{source}} = \frac{s_{\text{base}}}{s_k} \\
-        & x_1 = z_{\text{source}} \sqrt{1+ \left(\frac{r}{x}\right)^2} \\
+        & x_1 = \frac{z_{\text{source}}}{\sqrt{1+ \left(\frac{r}{x}\right)^2}} \\
         & r_1 = x_1 \cdot \left(\frac{r}{x}\right)
    \end{eqnarray}
 $$
@@ -631,8 +629,8 @@ where $s_{\text{base}}$ is a constant value determined by the solver, and $\frac
 
 $$
    \begin{eqnarray}
-        & z_{\text{source,0}} = z_{\text{source}} \cdot \frac{z_0}{z_1}\\
-        & x_0 = z_{\text{source,0}} \sqrt{1 + \left(\frac{r}{x}\right)^2}\\
+        & z_{\text{source,0}} = z_{\text{source}} \cdot \frac{z_0}{z_1} \\
+        & x_0 = \frac{z_{\text{source,0}}}{\sqrt{1 + \left(\frac{r}{x}\right)^2}} \\
         & r_0 = x_0 \cdot \left(\frac{r}{x}\right)
    \end{eqnarray}
 $$

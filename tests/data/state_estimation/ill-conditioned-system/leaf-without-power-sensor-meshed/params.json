@@ -5,7 +5,7 @@
     "default": 1e-8,
     ".+_residual": 5e-4
   },
-  "fail": {
+  "xfail": {
     "raises": "SparseMatrixError",
     "reason": "Bug in Sparse LU solver found in #864"
   }
