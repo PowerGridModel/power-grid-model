@@ -109,11 +109,15 @@ def test__get_raw_attribute_data_view(component, is_batch, is_columnar, is_spars
     if component == ComponentType.asym_load:
         assert data["p_specified"].shape[-1] == 3
 
-    get_buffer_view(
+    buffer_view = get_buffer_view(
         data,
         schema=schema,
         is_batch=is_batch,
     )
+    assert buffer_view is not None
+    assert buffer_view.batch_size == 2
+    assert buffer_view.n_elements_per_scenario == 4
+    assert buffer_view.total_elements == 8
 
 
 @pytest.mark.parametrize(
