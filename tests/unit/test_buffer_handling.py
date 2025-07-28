@@ -171,35 +171,42 @@ def test__get_raw_attribute_data_view_directly(component, is_batch, is_columnar,
 
 
 @pytest.mark.parametrize(
-    "component, attr_data_shape",
+    "component, attr_data_shape, attribute",
     [
-        pytest.param(ComponentType.asym_load, (2, 4, 3), id="asym_load-columnar"),
-        pytest.param(ComponentType.asym_load, (1, 4, 3), id="asym_load-columnar"),
-        pytest.param(ComponentType.asym_load, (2, 5, 3), id="asym_load-columnar"),
-        pytest.param(ComponentType.asym_load, (2, 6, 3), id="asym_load-columnar"),
-        pytest.param(ComponentType.asym_load, 3, id="asym_load-columnar"),
-        pytest.param(ComponentType.asym_load, (3, 3), id="asym_load-columnar"),
+        pytest.param(ComponentType.asym_load, (2, 4, 3), "p_specified", id="asym_load-columnar"),
+        pytest.param(ComponentType.asym_load, (1, 4, 3), "p_specified", id="asym_load-columnar"),
+        pytest.param(ComponentType.asym_load, (2, 5, 3), "p_specified", id="asym_load-columnar"),
+        pytest.param(ComponentType.asym_load, (2, 6, 3), "p_specified", id="asym_load-columnar"),
+        pytest.param(ComponentType.asym_load, 3, "p_specified", id="asym_load-columnar"),
+        pytest.param(ComponentType.asym_load, (3, 3), "p_specified", id="asym_load-columnar"),
+        pytest.param(ComponentType.asym_load, (2, 4, 3), "q_specified", id="asym_load-columnar"),
+        pytest.param(ComponentType.asym_load, (1, 4, 3), "q_specified", id="asym_load-columnar"),
+        pytest.param(ComponentType.asym_load, (2, 5, 3), "q_specified", id="asym_load-columnar"),
+        pytest.param(ComponentType.asym_load, (2, 6, 3), "q_specified", id="asym_load-columnar"),
+        pytest.param(ComponentType.asym_load, 3, "q_specified", id="asym_load-columnar"),
+        pytest.param(ComponentType.asym_load, (3, 3), "q_specified", id="asym_load-columnar"),
     ],
 )
-def test__get_raw_attribute_data_view_directly2(component, attr_data_shape):
+def test__get_raw_attribute_data_view_directly2(component, attr_data_shape, attribute):
     arr = np.zeros(attr_data_shape)
-    attribute = "p_specified"
     schema = power_grid_meta_data[DatasetType.update][component]
 
     _get_raw_attribute_data_view(arr, schema, attribute)
 
 
 @pytest.mark.parametrize(
-    "component, attr_data_shape",
+    "component, attr_data_shape, attribute",
     [
-        pytest.param(ComponentType.asym_load, (2, 4, 4), id="asym_load-columnar"),
-        pytest.param(ComponentType.asym_load, (2, 6, 4), id="asym_load-columnar"),
-        pytest.param(ComponentType.asym_load, 0, id="asym_load-columnar"),
+        pytest.param(ComponentType.asym_load, (2, 4, 4), "p_specified", id="asym_load-columnar"),
+        pytest.param(ComponentType.asym_load, (2, 6, 4), "p_specified", id="asym_load-columnar"),
+        pytest.param(ComponentType.asym_load, 0, "p_specified", id="asym_load-columnar"),
+        pytest.param(ComponentType.asym_load, (2, 4, 4), "q_specified", id="asym_load-columnar"),
+        pytest.param(ComponentType.asym_load, (2, 6, 4), "q_specified", id="asym_load-columnar"),
+        pytest.param(ComponentType.asym_load, 0, "q_specified", id="asym_load-columnar"),
     ],
 )
-def test__get_raw_attribute_data_view_directly_fail(component, attr_data_shape):
+def test__get_raw_attribute_data_view_directly_fail(component, attr_data_shape, attribute):
     arr = np.zeros(attr_data_shape)
-    attribute = "p_specified"
     schema = power_grid_meta_data[DatasetType.update][component]
 
     with pytest.raises(ValueError, match="Given data has a different schema than supported."):
