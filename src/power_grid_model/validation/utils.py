@@ -127,7 +127,7 @@ def _update_component_array_data(
     Update the data in a numpy array, with another numpy array,
     indexed on the "id" field and only non-NaN values are overwritten.
     """
-    batch_ndim = 2
+    batch_dataset_ndim = 2
     if update_data.dtype.names is None:
         raise ValueError("Invalid data format")
 
@@ -144,7 +144,7 @@ def _update_component_array_data(
         nan = _nan_type(component, field, DatasetType.update)
         mask = ~np.isnan(update_data[field]) if np.isnan(nan) else np.not_equal(update_data[field], nan)
 
-        if mask.ndim == batch_ndim:
+        if mask.ndim == batch_dataset_ndim:
             for phase in range(mask.shape[1]):
                 # find indexers of to-be-updated object
                 sub_mask = mask[:, phase]
