@@ -147,7 +147,7 @@ state estimation calculation in `power-grid-model`.
 - If no voltage phasor sensors are available, then both the following conditions shall be satisfied:
   - There are no global angle current sensors.
   - `n_unique_power_or_current_sensor >= n_bus - 1`.
-- Otherwise (if there are voltage phasor sensors available, deducting one that can not be used),
+- Otherwise (if there are voltage phasor sensors available, one will be reserved as reference),
 the following condition shall be satisfied:
   - `n_unique_power_or_current_sensor + n_voltage_sensor_with_phasor - 1 >= n_bus - 1`
 
