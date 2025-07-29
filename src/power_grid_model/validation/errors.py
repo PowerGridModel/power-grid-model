@@ -172,7 +172,7 @@ class MultiFieldValidationError(ValidationError):
         self.ids = sorted(ids)
 
         if len(self.field) < _MIN_FIELDS:
-            raise ValueError(f"{type(self).__name__} expects at least two fields: {self.field}")
+            raise ValueError(f"{type(self).__name__} expects at least 2 fields: {self.field}")
 
 
 class MultiComponentValidationError(ValidationError):
