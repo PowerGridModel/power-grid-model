@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+import os
 import platform
 from importlib.resources import files
 from pathlib import Path
@@ -44,14 +45,17 @@ def get_pgm_dll_path() -> Path:
 
     # first try to load from lib_dll_path
     # then editable_dll_path
-    # then just load dll_file, the system tries to find it in the PATH
+    # then if it is inside conda, just load dll_file, the system tries to find it in the PATH
+    # then for anything else, raise an error
     if lib_dll_path_1.exists():
         final_dll_path = lib_dll_path_1
     elif lib_dll_path_2.exists():
         final_dll_path = lib_dll_path_2
     elif editable_dll_path.exists():
         final_dll_path = editable_dll_path
-    else:
+    elif os.environ.get("CONDA_PREFIX"):
         final_dll_path = dll_file
+    else:
+        raise ImportError(f"Could not find shared library: {dll_file}. Your PGM installation may be broken.")
 
     return final_dll_path
