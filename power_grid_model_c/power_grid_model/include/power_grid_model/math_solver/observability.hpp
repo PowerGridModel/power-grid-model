@@ -150,7 +150,7 @@ inline bool necessary_observability_condition(ObservabilitySensorsResult const& 
         throw NotObservableError{
             "The total number of independent power sensors is not enough to make the grid observable."};
     }
-    // If there are any voltage phasor sensor, one will not be used:
+    // If there are any voltage phasor sensor, one will be reserved as reference and not be used:
     //      n_flow_sensors + n_voltage_phasor_sensors - 1 < n_bus - 1
     if (n_voltage_phasor_sensors > 0 && n_flow_sensors + n_voltage_phasor_sensors < n_bus) {
         throw NotObservableError{"The total number of independent power sensors and voltage phasor sensors is not "
