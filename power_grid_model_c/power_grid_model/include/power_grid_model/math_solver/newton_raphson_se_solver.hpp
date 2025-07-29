@@ -511,8 +511,8 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
         }
     }
 
-    /// @brief Adds contribution of branch current measurements. Logic is similar to powermeasurements, but with an
-    /// additional voltage division as per mathematical workout.
+    /// @brief Adds contribution of local angle branch current measurements. Logic is similar to power measurements, but
+    /// with an additional voltage division as per mathematical workout.
     void process_branch_local_current_measurement(NRSEGainBlock<sym>& block, NRSEGainBlock<sym>& diag_block,
                                                   NRSERhs<sym>& rhs_block, auto const& y_xi_xi, auto const& y_xi_mu,
                                                   auto const& u_state, Order const order,
@@ -541,6 +541,8 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
         }
     }
 
+    /// @brief Adds contribution of global angle branch current measurements. Logic is similar to power measurements,
+    /// but with an additional voltage division as per mathematical workout.
     void process_branch_global_current_measurement(NRSEGainBlock<sym>& block, NRSEGainBlock<sym>& diag_block,
                                                    NRSERhs<sym>& rhs_block, auto const& y_xi_xi, auto const& y_xi_mu,
                                                    auto const& u_state, Order const order,
@@ -549,17 +551,8 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
         ComplexTensor<sym> const current_chi_psi = dot(y_xi_mu, ComplexDiagonalTensor<sym>{u_state.u_psi(order)});
         ComplexValue<sym> const f_x_complex = sum_row(current_chi_chi + current_chi_psi);
 
-        NRSEJacobian block_rr_or_cc{};
-        block_rr_or_cc.dP_dt += -imag(current_chi_chi);
-        block_rr_or_cc.dQ_dt += real(current_chi_chi);
-        block_rr_or_cc.dP_dv += real(current_chi_chi);
-        block_rr_or_cc.dQ_dv += imag(current_chi_chi);
-
-        NRSEJacobian block_rc_or_cr{};
-        block_rc_or_cr.dP_dt += -imag(current_chi_psi);
-        block_rc_or_cr.dQ_dt += real(current_chi_psi);
-        block_rc_or_cr.dP_dv += real(current_chi_psi);
-        block_rc_or_cr.dQ_dv += imag(current_chi_psi);
+        auto const block_rr_or_cc = calculate_jacobian_global_current(current_chi_chi);
+        auto const block_rc_or_cr = calculate_jacobian_global_current(current_chi_psi);
 
         if (order == Order::row_major) {
             multiply_add_branch_blocks(block, diag_block, rhs_block, block_rr_or_cc, block_rc_or_cr,
@@ -741,6 +734,15 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
         block.q_P_v() += jacobian_block.dP_dv;
         block.q_Q_theta() += jacobian_block.dQ_dt;
         block.q_Q_v() += jacobian_block.dQ_dv;
+    }
+
+    static NRSEJacobian calculate_jacobian_global_current(ComplexTensor<sym> const& current) {
+        NRSEJacobian jacobian{};
+        jacobian.dP_dt = -imag(current);
+        jacobian.dP_dv = real(current);
+        jacobian.dQ_dt = real(current);
+        jacobian.dQ_dv = imag(current);
+        return jacobian;
     }
 
     /// @brief Construct the F_k(u1, u2, y12) block using helper function of hnml complex form
