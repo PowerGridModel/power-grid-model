@@ -14,8 +14,8 @@ from typing import Any, Iterable, Type
 from power_grid_model import ComponentType
 from power_grid_model._core.dataset_definitions import DatasetType
 
-MIN_FIELDS = 2
-MIN_COMPONENTS = 2
+_MIN_FIELDS = 2
+_MIN_COMPONENTS = 2
 
 
 class ValidationError(ABC):
