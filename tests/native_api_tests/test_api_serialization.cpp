@@ -61,7 +61,7 @@ TEST_CASE("API Serialization and Deserialization") {
             Serializer json_serializer{dataset, 0};
 
             SUBCASE("To zero-terminated string") {
-                std::string json_result = json_serializer.get_to_zero_terminated_string(0, -1);
+                std::string const json_result = json_serializer.get_to_zero_terminated_string(0, -1);
                 CHECK(json_result == json_data);
             }
 
@@ -81,8 +81,8 @@ TEST_CASE("API Serialization and Deserialization") {
             SUBCASE("Round trip") {
                 std::vector<std::byte> msgpack_data{};
                 msgpack_serializer.get_to_binary_buffer(0, msgpack_data);
-                auto const char_start = reinterpret_cast<unsigned char const*>(msgpack_data.data());
-                auto const char_end = char_start + msgpack_data.size();
+                auto const* const char_start = reinterpret_cast<unsigned char const*>(msgpack_data.data());
+                auto const* const char_end = char_start + msgpack_data.size();
                 auto const json_document = nlohmann::ordered_json::from_msgpack(char_start, char_end);
                 auto const json_result = json_document.dump(-1);
                 CHECK(json_result == json_data);

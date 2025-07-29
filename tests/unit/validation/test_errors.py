@@ -40,7 +40,7 @@ def test_multi_field_validation_error():
     assert error.field_str == "'delta' and 'echo'"
     assert str(error) == "Combination of fields 'delta' and 'echo' is not valid for 6 nodes."
 
-    with pytest.raises(ValueError, match="at least two fields"):
+    with pytest.raises(ValueError, match="at least 2 fields"):
         MultiFieldValidationError(component=ComponentType.node, fields=["delta"], ids=[])
 
 
@@ -60,10 +60,10 @@ def test_multi_component_validation_error():
     assert error.field_str == "line.india and node.golf"
     assert str(error) == "Fields line.india and node.golf are not valid for 6 lines/nodes."
 
-    with pytest.raises(ValueError, match="at least two fields"):
+    with pytest.raises(ValueError, match="at least 2 fields"):
         MultiComponentValidationError(fields=[(ComponentType.node, "golf")], ids=[])
 
-    with pytest.raises(ValueError, match="at least two components"):
+    with pytest.raises(ValueError, match="at least 2 components"):
         MultiComponentValidationError(fields=[(ComponentType.node, "golf"), (ComponentType.node, "india")], ids=[])
 
 
@@ -72,7 +72,7 @@ def test_invalid_enum_value_error():
         pass
 
     error = InvalidEnumValueError(component=ComponentType.node, field="lima", ids=[1, 2, 3], enum=CustomType)
-    assert error.component == "node"
+    assert error.component == ComponentType.node
     assert error.field == "lima"
     assert error.ids == [1, 2, 3]
     assert error.enum is CustomType
@@ -81,7 +81,7 @@ def test_invalid_enum_value_error():
 
 def test_invalid_id_error():
     error = InvalidIdError(ComponentType.node, field="november", ids=[1, 2, 3], ref_components=["oscar", "papa"])
-    assert error.component == "node"
+    assert error.component == ComponentType.node
     assert error.field == "november"
     assert error.ids == [1, 2, 3]
     assert error.ref_components == ["oscar", "papa"]
@@ -96,7 +96,7 @@ def test_invalid_id_error_with_filters():
         ref_components=["oscar", "papa"],
         filters={"foo": "bar", "baz": ComponentType.node},
     )
-    assert error.component == "node"
+    assert error.component == ComponentType.node
     assert error.field == "november"
     assert error.ids == [1, 2, 3]
     assert error.ref_components == ["oscar", "papa"]
@@ -106,7 +106,7 @@ def test_invalid_id_error_with_filters():
 
 def test_comparison_error():
     error = ComparisonError(component=ComponentType.node, field="romeo", ids=[1, 2, 3], ref_value=0)
-    assert error.component == "node"
+    assert error.component == ComponentType.node
     assert error.field == "romeo"
     assert error.ids == [1, 2, 3]
     assert error.ref_value == 0
@@ -122,8 +122,9 @@ def test_comparison_error():
 def test_error_context():
     error = ComparisonError(component=ComponentType.node, field="tango", ids=[1, 2, 3], ref_value=0)
     context = error.get_context()
-    assert len(context) == 4
-    assert context["component"] == "node"
+    expected_context_keys = 4
+    assert len(context) == expected_context_keys
+    assert context["component"] == ComponentType.node
     assert context["field"] == "'tango'"
     assert context["ids"] == [1, 2, 3]
     assert context["ref_value"] == "zero"
@@ -150,7 +151,7 @@ def test_invalid_associated_enum_value_error():
     error = InvalidAssociatedEnumValueError(
         component=ComponentType.node, fields=["bar", "baz"], ids=[1, 2], enum=[CustomType]
     )
-    assert error.component == "node"
+    assert error.component == ComponentType.node
     assert error.field == ["bar", "baz"]
     assert error.ids == [1, 2]
     assert len(error.enum) == 1

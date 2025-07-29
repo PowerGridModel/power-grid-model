@@ -10,6 +10,7 @@ import numpy as np
 import pytest
 
 from power_grid_model import DatasetType
+from power_grid_model._core.dataset_definitions import ComponentType
 from power_grid_model._core.utils import get_dataset_type, is_columnar, is_sparse
 from power_grid_model.data_types import BatchDataset, Dataset, DenseBatchData, SingleComponentData, SingleDataset
 from power_grid_model.enum import ComponentAttributeFilterOptions
@@ -142,7 +143,7 @@ def simple_asym_input_dataset():
 
 
 def full_input_dataset():
-    result = empty_dataset("input")
+    result = empty_dataset(DatasetType.input)
     result["attributes"] = {
         "node": ["id", "u_rated"],
         "sym_load": ["id", "node", "status", "type", "p_specified", "q_specified"],
@@ -194,7 +195,7 @@ def full_input_dataset():
 
 
 def single_update_dataset():
-    result = empty_dataset("update")
+    result = empty_dataset(DatasetType.update)
     result["attributes"] = {
         "sym_load": ["status", "p_specified", "q_specified"],
         "source": ["status"],
@@ -267,7 +268,7 @@ def sparse_batch_update_dataset():
 
 
 def single_sym_output_dataset():
-    result = empty_dataset("sym_output")
+    result = empty_dataset(DatasetType.sym_output)
     result["data"] = {
         "node": [
             {
@@ -285,7 +286,7 @@ def single_sym_output_dataset():
 
 
 def batch_sym_output_dataset():
-    result = empty_dataset("sym_output")
+    result = empty_dataset(DatasetType.sym_output)
     result["is_batch"] = True
     result["data"] = [
         {
@@ -319,7 +320,7 @@ def batch_sym_output_dataset():
 
 
 def single_asym_output_dataset():
-    result = empty_dataset("asym_output")
+    result = empty_dataset(DatasetType.asym_output)
     result["data"] = {
         "node": [
             {
@@ -337,7 +338,7 @@ def single_asym_output_dataset():
 
 
 def single_sc_output_dataset():
-    result = empty_dataset("sc_output")
+    result = empty_dataset(DatasetType.sc_output)
     result["attributes"] = {"fault": ["id", "i_f"]}
     result["data"] = {
         "node": [
@@ -379,12 +380,12 @@ def serialized_data(request):
         pytest.param(None, id="All row filter"),
         pytest.param(ComponentAttributeFilterOptions.everything, id="All columnar filter"),
         pytest.param(ComponentAttributeFilterOptions.relevant, id="All relevant columnar filter"),
-        pytest.param({"node": ["id"], "sym_load": ["id"]}, id="columnar filter"),
-        pytest.param({"node": ["id"], "sym_load": None}, id="mixed columnar/row filter"),
-        pytest.param({"node": ["id"], "shunt": None}, id="unused component filter"),
+        pytest.param({ComponentType.node: ["id"], "sym_load": ["id"]}, id="columnar filter"),
+        pytest.param({ComponentType.node: ["id"], "sym_load": None}, id="mixed columnar/row filter"),
+        pytest.param({ComponentType.node: ["id"], "shunt": None}, id="unused component filter"),
         pytest.param(
             {
-                "node": ["id"],
+                ComponentType.node: ["id"],
                 "line": ComponentAttributeFilterOptions.everything,
                 "sym_load": None,
                 "asym_load": ComponentAttributeFilterOptions.relevant,
@@ -515,13 +516,13 @@ def assert_individual_data_entry(serialized_dataset, data_filter, component, ser
                     assert attr in deserialized_output
                     assert_almost_equal(
                         deserialized_output[attr][comp_idx],
-                        serialized_input[comp_idx][attr],
+                        input_entry[attr],
                     )
                 else:
                     assert attr in deserialized_output[comp_idx].dtype.names
                     assert_almost_equal(
                         deserialized_output[comp_idx][attr],
-                        serialized_input[comp_idx][attr],
+                        input_entry[attr],
                     )
         else:
             assert component in serialized_dataset["attributes"]
@@ -533,13 +534,13 @@ def assert_individual_data_entry(serialized_dataset, data_filter, component, ser
                     assert attr in deserialized_output
                     assert_almost_equal(
                         deserialized_output[attr][comp_idx],
-                        serialized_input[comp_idx][attr_idx],
+                        input_entry[attr_idx],
                     )
                 else:
                     assert attr in deserialized_output[comp_idx].dtype.names
                     assert_almost_equal(
                         deserialized_output[comp_idx][attr],
-                        serialized_input[comp_idx][attr_idx],
+                        input_entry[attr_idx],
                     )
 
 
@@ -562,6 +563,7 @@ def assert_batch_dataset_structure(
 ):
     """Checks if the structure of the batch dataset is correct.
     Then splits into individual scenario's dataset and checks if all of them are correct."""
+    batch_dataset_ndim = 2
 
     # Check structure of the whole BatchDataset
     assert isinstance(serialized_dataset["data"], list)
@@ -581,17 +583,16 @@ def assert_batch_dataset_structure(
                 assert isinstance(component_data, np.ndarray)
                 assert component_data.ndim == 1
                 assert len(component_data) == component_indptr[-1]
+        elif is_columnar_filter(data_filter, component):
+            for attr, attr_value in component_values.items():
+                assert isinstance(attr, str)
+                assert isinstance(attr_value, np.ndarray)
+                assert len(attr_value.shape) in [2, 3]
+                assert len(attr_value) == len(serialized_dataset["data"])
         else:
-            if is_columnar_filter(data_filter, component):
-                for attr, attr_value in component_values.items():
-                    assert isinstance(attr, str)
-                    assert isinstance(attr_value, np.ndarray)
-                    assert len(attr_value.shape) in [2, 3]
-                    assert len(attr_value) == len(serialized_dataset["data"])
-            else:
-                assert isinstance(component_values, np.ndarray)
-                assert len(component_values.shape) == 2
-                assert len(component_values) == len(serialized_dataset["data"])
+            assert isinstance(component_values, np.ndarray)
+            assert len(component_values.shape) == batch_dataset_ndim
+            assert len(component_values) == len(serialized_dataset["data"])
 
 
 def assert_serialization_correct(deserialized_dataset: Dataset, serialized_dataset: Mapping[str, Any], data_filter):
@@ -613,7 +614,7 @@ def assert_serialization_correct(deserialized_dataset: Dataset, serialized_datas
         assert_single_dataset_structure(deserialized_dataset, data_filter)
 
         assert_single_dataset_entries(
-            deserialized_dataset,  # type: ignore[arg-type]
+            deserialized_dataset,
             serialized_dataset,
             data_filter=data_filter,
         )

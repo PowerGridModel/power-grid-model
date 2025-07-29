@@ -157,7 +157,7 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
         auto const i_calc_param = calc_param<sym_calc>();
         auto const angle_measurement_type = i_calc_param.angle_measurement_type;
         auto const i_measured_complex = i_calc_param.measurement.value();
-        ComplexValue<sym_calc> i_output = [&i, &u, &angle_measurement_type] {
+        ComplexValue<sym_calc> const i_output = [&i, &u, &angle_measurement_type] {
             switch (angle_measurement_type) {
             case AngleMeasurementType::global_angle: {
                 return i;

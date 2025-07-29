@@ -393,9 +393,9 @@ class Deserializer {
 
     struct ComponentByteMeta {
         std::string_view component;
-        Idx size;
-        size_t offset;
-        bool has_map;
+        Idx size{};
+        size_t offset{};
+        bool has_map{};
     };
     using DataByteMeta = std::vector<std::vector<ComponentByteMeta>>;
     using AttributeByteMeta = std::vector<std::pair<std::string_view, std::vector<std::string_view>>>;

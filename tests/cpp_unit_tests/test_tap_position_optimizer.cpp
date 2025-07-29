@@ -158,17 +158,17 @@ TEST_CASE("Test Transformer ranking") {
         auto const get_state = [](ID source, ID node_a, ID node_b, ID trafo, ID regulator) {
             TestState state;
 
-            std::vector<NodeInput> nodes{{.id = node_a, .u_rated = 10e3}, {.id = node_b, .u_rated = 400}};
-            main_core::add_component<Node>(state, nodes.begin(), nodes.end(), 50.0);
+            std::vector<NodeInput> const nodes{{.id = node_a, .u_rated = 10e3}, {.id = node_b, .u_rated = 400}};
+            main_core::add_component<Node>(state, nodes, 50.0);
 
             std::vector const sources{SourceInput{.id = source, .node = node_a, .status = IntS{1}, .u_ref = 1.0}};
-            main_core::add_component<Source>(state, sources.begin(), sources.end(), 50.0);
+            main_core::add_component<Source>(state, sources, 50.0);
 
             std::vector const transformers{get_transformer(trafo, node_a, node_b, BranchSide::from)};
-            main_core::add_component<Transformer>(state, transformers.begin(), transformers.end(), 50.0);
+            main_core::add_component<Transformer>(state, transformers, 50.0);
 
             std::vector const regulators{get_regulator(regulator, trafo, ControlSide::to)};
-            main_core::add_component<TransformerTapRegulator>(state, regulators.begin(), regulators.end(), 50.0);
+            main_core::add_component<TransformerTapRegulator>(state, regulators, 50.0);
 
             state.components.set_construction_complete();
 
@@ -190,7 +190,8 @@ TEST_CASE("Test Transformer ranking") {
 
         // Dummy graph
         pgm_tap::TrafoGraphEdges const edge_array = {{0, 1}, {0, 2}, {2, 3}};
-        pgm_tap::TrafoGraphEdgeProperties const edge_prop{{{0, 1}, 1}, {{-1, -1}, 0}, {{2, 3}, 1}};
+        pgm_tap::TrafoGraphEdgeProperties const edge_prop{
+            {{.group = 0, .pos = 1}, 1}, {{.group = -1, .pos = -1}, 0}, {{.group = 2, .pos = 3}, 1}};
         std::vector<pgm_tap::TrafoGraphVertex> vertex_props{{true}, {false}, {false}, {false}};
 
         pgm_tap::TransformerGraph g{boost::edges_are_unsorted_multi_pass, edge_array.cbegin(), edge_array.cend(),
@@ -204,15 +205,20 @@ TEST_CASE("Test Transformer ranking") {
         }
 
         pgm_tap::TrafoGraphEdgeProperties const regulated_edge_weights = get_edge_weights(g);
-        pgm_tap::TrafoGraphEdgeProperties const ref_regulated_edge_weights{{{0, 1}, 1}, {{2, 3}, 1}};
+        pgm_tap::TrafoGraphEdgeProperties const ref_regulated_edge_weights{{{.group = 0, .pos = 1}, 1},
+                                                                           {{.group = 2, .pos = 3}, 1}};
         CHECK(regulated_edge_weights == ref_regulated_edge_weights);
     }
 
     SUBCASE("Sorting transformer edges") {
-        pgm_tap::TrafoGraphEdgeProperties const trafoList{
-            {Idx2D{1, 1}, pgm_tap::infty}, {Idx2D{1, 2}, 5}, {Idx2D{1, 3}, 4}, {Idx2D{2, 1}, 4}};
+        pgm_tap::TrafoGraphEdgeProperties const trafoList{{Idx2D{.group = 1, .pos = 1}, pgm_tap::infty},
+                                                          {Idx2D{.group = 1, .pos = 2}, 5},
+                                                          {Idx2D{.group = 1, .pos = 3}, 4},
+                                                          {Idx2D{.group = 2, .pos = 1}, 4}};
 
-        pgm_tap::RankedTransformerGroups const referenceList{{Idx2D{1, 3}, Idx2D{2, 1}}, {Idx2D{1, 2}}, {Idx2D{1, 1}}};
+        pgm_tap::RankedTransformerGroups const referenceList{{Idx2D{.group = 1, .pos = 3}, Idx2D{.group = 2, .pos = 1}},
+                                                             {Idx2D{.group = 1, .pos = 2}},
+                                                             {Idx2D{.group = 1, .pos = 1}}};
 
         pgm_tap::RankedTransformerGroups const sortedTrafoList = pgm_tap::rank_transformers(trafoList);
         REQUIRE(sortedTrafoList.size() == referenceList.size());
@@ -227,7 +233,10 @@ TEST_CASE("Test Transformer ranking") {
 
         // Grid with multiple sources and symetric graph
         pgm_tap::TrafoGraphEdges const edge_array = {{0, 1}, {1, 2}, {3, 2}, {4, 3}};
-        pgm_tap::TrafoGraphEdgeProperties const edge_prop{{{0, 1}, 1}, {{1, 2}, 1}, {{2, 3}, 1}, {{3, 4}, 1}};
+        pgm_tap::TrafoGraphEdgeProperties const edge_prop{{{.group = 0, .pos = 1}, 1},
+                                                          {{.group = 1, .pos = 2}, 1},
+                                                          {{.group = 2, .pos = 3}, 1},
+                                                          {{.group = 3, .pos = 4}, 1}};
         std::vector<pgm_tap::TrafoGraphVertex> vertex_props{{true}, {false}, {false}, {false}, {true}};
 
         pgm_tap::TransformerGraph g{boost::edges_are_unsorted_multi_pass, edge_array.cbegin(), edge_array.cend(),
@@ -241,8 +250,10 @@ TEST_CASE("Test Transformer ranking") {
         }
 
         pgm_tap::TrafoGraphEdgeProperties const regulated_edge_weights = get_edge_weights(g);
-        pgm_tap::TrafoGraphEdgeProperties const ref_regulated_edge_weights{
-            {{0, 1}, 1}, {{1, 2}, 2}, {{2, 3}, 2}, {{3, 4}, 1}};
+        pgm_tap::TrafoGraphEdgeProperties const ref_regulated_edge_weights{{{.group = 0, .pos = 1}, 1},
+                                                                           {{.group = 1, .pos = 2}, 2},
+                                                                           {{.group = 2, .pos = 3}, 2},
+                                                                           {{.group = 3, .pos = 4}, 1}};
         CHECK(regulated_edge_weights == ref_regulated_edge_weights);
     }
 
@@ -261,49 +272,49 @@ TEST_CASE("Test Transformer ranking") {
         // [101] ---- [102]
 
         TestState state;
-        std::vector<NodeInput> nodes{
+        std::vector<NodeInput> const nodes{
             {.id = 0, .u_rated = 150e3}, {.id = 1, .u_rated = 10e3},   {.id = 2, .u_rated = 10e3},
             {.id = 3, .u_rated = 10e3},  {.id = 4, .u_rated = 10e3},   {.id = 5, .u_rated = 50e3},
             {.id = 6, .u_rated = 10e3},  {.id = 7, .u_rated = 10e3},   {.id = 8, .u_rated = 10e3},
             {.id = 9, .u_rated = 10e3},  {.id = 100, .u_rated = 10e3}, {.id = 101, .u_rated = 10e3},
             {.id = 102, .u_rated = 10e3}};
-        main_core::add_component<Node>(state, nodes.begin(), nodes.end(), 50.0);
+        main_core::add_component<Node>(state, nodes, 50.0);
 
-        std::vector<TransformerInput> transformers{
+        std::vector<TransformerInput> const transformers{
             get_transformer(11, 0, 1, BranchSide::from),     get_transformer(12, 0, 1, BranchSide::from),
             get_transformer(13, 5, 7, BranchSide::from),     get_transformer(14, 2, 3, BranchSide::from),
             get_transformer(15, 8, 9, BranchSide::from),     get_transformer(103, 9, 100, BranchSide::from, na_IntS, 0),
             get_transformer(104, 101, 102, BranchSide::from)};
-        main_core::add_component<Transformer>(state, transformers.begin(), transformers.end(), 50.0);
+        main_core::add_component<Transformer>(state, transformers, 50.0);
 
-        std::vector<ThreeWindingTransformerInput> transformers3w{
+        std::vector<ThreeWindingTransformerInput> const transformers3w{
             get_transformer3w(16, 0, 4, 5, Branch3Side::side_1, 0)};
-        main_core::add_component<ThreeWindingTransformer>(state, transformers3w.begin(), transformers3w.end(), 50.0);
+        main_core::add_component<ThreeWindingTransformer>(state, transformers3w, 50.0);
 
-        std::vector<LineInput> lines{get_line_input(17, 3, 6), get_line_input(18, 3, 9)};
-        main_core::add_component<Line>(state, lines.begin(), lines.end(), 50.0);
+        std::vector<LineInput> const lines{get_line_input(17, 3, 6), get_line_input(18, 3, 9)};
+        main_core::add_component<Line>(state, lines, 50.0);
 
-        std::vector<LinkInput> links{{.id = 19, .from_node = 2, .to_node = 1, .from_status = 1, .to_status = 1},
-                                     {.id = 20, .from_node = 6, .to_node = 4, .from_status = 1, .to_status = 1},
-                                     {.id = 21, .from_node = 8, .to_node = 7, .from_status = 1, .to_status = 1}};
-        main_core::add_component<Link>(state, links.begin(), links.end(), 50.0);
+        std::vector<LinkInput> const links{{.id = 19, .from_node = 2, .to_node = 1, .from_status = 1, .to_status = 1},
+                                           {.id = 20, .from_node = 6, .to_node = 4, .from_status = 1, .to_status = 1},
+                                           {.id = 21, .from_node = 8, .to_node = 7, .from_status = 1, .to_status = 1}};
+        main_core::add_component<Link>(state, links, 50.0);
 
-        std::vector<SourceInput> sources{{.id = 22,
-                                          .node = 0,
-                                          .status = 1,
-                                          .u_ref = 1.0,
-                                          .u_ref_angle = 0,
-                                          .sk = nan,
-                                          .rx_ratio = nan,
-                                          .z01_ratio = nan}};
-        main_core::add_component<Source>(state, sources.begin(), sources.end(), 50.0);
+        std::vector<SourceInput> const sources{{.id = 22,
+                                                .node = 0,
+                                                .status = 1,
+                                                .u_ref = 1.0,
+                                                .u_ref_angle = 0,
+                                                .sk = nan,
+                                                .rx_ratio = nan,
+                                                .z01_ratio = nan}};
+        main_core::add_component<Source>(state, sources, 50.0);
 
-        std::vector<TransformerTapRegulatorInput> regulators{
+        std::vector<TransformerTapRegulatorInput> const regulators{
             get_regulator(23, 11, ControlSide::to),     get_regulator(24, 12, ControlSide::to),
             get_regulator(25, 13, ControlSide::to),     get_regulator(26, 14, ControlSide::to),
             get_regulator(27, 15, ControlSide::to),     get_regulator(28, 16, ControlSide::side_2),
             get_regulator(105, 103, ControlSide::from), get_regulator(106, 104, ControlSide::from)};
-        main_core::add_component<TransformerTapRegulator>(state, regulators.begin(), regulators.end(), 50.0);
+        main_core::add_component<TransformerTapRegulator>(state, regulators, 50.0);
 
         state.components.set_construction_complete();
 
@@ -422,9 +433,11 @@ TEST_CASE("Test Transformer ranking") {
 
         SUBCASE("Ranking complete the graph") {
             // The test grid 1 is not compatible with the updated logic for step up transformers
-            pgm_tap::RankedTransformerGroups order = pgm_tap::rank_transformers(state);
+            pgm_tap::RankedTransformerGroups const order = pgm_tap::rank_transformers(state);
             pgm_tap::RankedTransformerGroups const ref_order{
-                {{Idx2D{3, 0}, Idx2D{3, 1}, Idx2D{4, 0}}, {Idx2D{3, 2}}, {Idx2D{3, 3}, Idx2D{3, 4}}}};
+                {{Idx2D{.group = 3, .pos = 0}, Idx2D{.group = 3, .pos = 1}, Idx2D{.group = 4, .pos = 0}},
+                 {Idx2D{.group = 3, .pos = 2}},
+                 {Idx2D{.group = 3, .pos = 3}, Idx2D{.group = 3, .pos = 4}}}};
             CHECK(order == ref_order);
         }
     }
@@ -444,66 +457,58 @@ TEST_CASE("Test Transformer ranking") {
         //
         // [101] ---- [102]
         TestState state;
-        std::vector<NodeInput> nodes{{.id = 0, .u_rated = 150e3},
-                                     {.id = 1, .u_rated = 10e3},
-                                     {.id = 2, .u_rated = 10e3},
-                                     {.id = 3, .u_rated = 10e3},
-                                     {4, 10e3},
-                                     {.id = 5, .u_rated = 50e3},
-                                     {.id = 6, .u_rated = 10e3},
-                                     {.id = 7, .u_rated = 10e3},
-                                     {.id = 8, .u_rated = 10e3},
-                                     {9, 10e3},
-                                     {.id = 10, .u_rated = 10e3},
-                                     {.id = 100, .u_rated = 10e3},
-                                     {.id = 101, .u_rated = 10e3},
-                                     {.id = 102, .u_rated = 10e3}};
+        std::vector<NodeInput> const nodes{
+            {.id = 0, .u_rated = 150e3},  {.id = 1, .u_rated = 10e3},  {.id = 2, .u_rated = 10e3},
+            {.id = 3, .u_rated = 10e3},   {.id = 4, .u_rated = 10e3},  {.id = 5, .u_rated = 50e3},
+            {.id = 6, .u_rated = 10e3},   {.id = 7, .u_rated = 10e3},  {.id = 8, .u_rated = 10e3},
+            {.id = 9, .u_rated = 10e3},   {.id = 10, .u_rated = 10e3}, {.id = 100, .u_rated = 10e3},
+            {.id = 101, .u_rated = 10e3}, {.id = 102, .u_rated = 10e3}};
 
-        main_core::add_component<Node>(state, nodes.begin(), nodes.end(), 50.0);
+        main_core::add_component<Node>(state, nodes, 50.0);
 
-        std::vector<TransformerInput> transformers{get_transformer(11, 0, 1, BranchSide::to),
-                                                   get_transformer(12, 0, 1, BranchSide::from),
-                                                   get_transformer(13, 2, 3, BranchSide::from),
-                                                   get_transformer(14, 6, 7, BranchSide::from),
-                                                   get_transformer(15, 5, 8, BranchSide::from),
-                                                   get_transformer(16, 9, 10, BranchSide::from),
-                                                   get_transformer(103, 9, 100, BranchSide::from, na_IntS, 0),
-                                                   get_transformer(104, 101, 102, BranchSide::from)};
-        main_core::add_component<Transformer>(state, transformers.begin(), transformers.end(), 50.0);
+        std::vector<TransformerInput> const transformers{get_transformer(11, 0, 1, BranchSide::to),
+                                                         get_transformer(12, 0, 1, BranchSide::from),
+                                                         get_transformer(13, 2, 3, BranchSide::from),
+                                                         get_transformer(14, 6, 7, BranchSide::from),
+                                                         get_transformer(15, 5, 8, BranchSide::from),
+                                                         get_transformer(16, 9, 10, BranchSide::from),
+                                                         get_transformer(103, 9, 100, BranchSide::from, na_IntS, 0),
+                                                         get_transformer(104, 101, 102, BranchSide::from)};
+        main_core::add_component<Transformer>(state, transformers, 50.0);
 
-        std::vector<ThreeWindingTransformerInput> transformers3w{
+        std::vector<ThreeWindingTransformerInput> const transformers3w{
             get_transformer3w(17, 0, 4, 5, Branch3Side::side_2, 0)};
-        main_core::add_component<ThreeWindingTransformer>(state, transformers3w.begin(), transformers3w.end(), 50.0);
+        main_core::add_component<ThreeWindingTransformer>(state, transformers3w, 50.0);
 
-        std::vector<LineInput> lines{get_line_input(18, 4, 6), get_line_input(19, 3, 10)};
-        main_core::add_component<Line>(state, lines.begin(), lines.end(), 50.0);
+        std::vector<LineInput> const lines{get_line_input(18, 4, 6), get_line_input(19, 3, 10)};
+        main_core::add_component<Line>(state, lines, 50.0);
 
-        std::vector<LinkInput> links{{.id = 20, .from_node = 1, .to_node = 2, .from_status = 1, .to_status = 1},
-                                     {.id = 21, .from_node = 3, .to_node = 7, .from_status = 1, .to_status = 1},
-                                     {.id = 22, .from_node = 8, .to_node = 9, .from_status = 1, .to_status = 1}};
-        main_core::add_component<Link>(state, links.begin(), links.end(), 50.0);
+        std::vector<LinkInput> const links{{.id = 20, .from_node = 1, .to_node = 2, .from_status = 1, .to_status = 1},
+                                           {.id = 21, .from_node = 3, .to_node = 7, .from_status = 1, .to_status = 1},
+                                           {.id = 22, .from_node = 8, .to_node = 9, .from_status = 1, .to_status = 1}};
+        main_core::add_component<Link>(state, links, 50.0);
 
-        std::vector<SourceInput> sources{{.id = 23,
-                                          .node = 0,
-                                          .status = 1,
-                                          .u_ref = 1.0,
-                                          .u_ref_angle = 0,
-                                          .sk = nan,
-                                          .rx_ratio = nan,
-                                          .z01_ratio = nan}};
-        main_core::add_component<Source>(state, sources.begin(), sources.end(), 50.0);
+        std::vector<SourceInput> const sources{{.id = 23,
+                                                .node = 0,
+                                                .status = 1,
+                                                .u_ref = 1.0,
+                                                .u_ref_angle = 0,
+                                                .sk = nan,
+                                                .rx_ratio = nan,
+                                                .z01_ratio = nan}};
+        main_core::add_component<Source>(state, sources, 50.0);
 
-        std::vector<TransformerTapRegulatorInput> regulators{
+        std::vector<TransformerTapRegulatorInput> const regulators{
             get_regulator(24, 11, ControlSide::to),     get_regulator(25, 12, ControlSide::to),
             get_regulator(26, 13, ControlSide::to),     get_regulator(27, 14, ControlSide::to),
             get_regulator(28, 15, ControlSide::to),     get_regulator(29, 16, ControlSide::to),
             get_regulator(30, 17, ControlSide::side_2), get_regulator(105, 103, ControlSide::from),
             get_regulator(106, 104, ControlSide::from)};
-        main_core::add_component<TransformerTapRegulator>(state, regulators.begin(), regulators.end(), 50.0);
+        main_core::add_component<TransformerTapRegulator>(state, regulators, 50.0);
 
         state.components.set_construction_complete();
 
-        pgm_tap::RankedTransformerGroups order = pgm_tap::rank_transformers(state);
+        pgm_tap::RankedTransformerGroups const order = pgm_tap::rank_transformers(state);
         pgm_tap::RankedTransformerGroups const ref_order{
             {{Idx2D{.group = 3, .pos = 0}, Idx2D{.group = 3, .pos = 1}, Idx2D{.group = 4, .pos = 0},
               Idx2D{.group = 3, .pos = 4}},
@@ -522,45 +527,56 @@ TEST_CASE("Test Transformer ranking") {
         //          |
         //         [3]
         TestState state;
-        std::vector<NodeInput> nodes{{0, 10e3}, {1, 10e3}, {2, 10e3}, {3, 10e3}};
-        main_core::add_component<Node>(state, nodes.begin(), nodes.end(), 50.0);
+        std::vector<NodeInput> const nodes{{.id = 0, .u_rated = 10e3},
+                                           {.id = 1, .u_rated = 10e3},
+                                           {.id = 2, .u_rated = 10e3},
+                                           {.id = 3, .u_rated = 10e3}};
+        main_core::add_component<Node>(state, nodes, 50.0);
 
-        std::vector<TransformerInput> transformers{get_transformer(11, 0, 1, BranchSide::to),
-                                                   get_transformer(12, 1, 2, BranchSide::from),
-                                                   get_transformer(13, 2, 3, BranchSide::from)};
-        main_core::add_component<Transformer>(state, transformers.begin(), transformers.end(), 50.0);
+        std::vector<TransformerInput> const transformers{get_transformer(11, 0, 1, BranchSide::to),
+                                                         get_transformer(12, 1, 2, BranchSide::from),
+                                                         get_transformer(13, 2, 3, BranchSide::from)};
+        main_core::add_component<Transformer>(state, transformers, 50.0);
 
-        std::vector<LineInput> lines{get_line_input(21, 0, 2)};
-        main_core::add_component<Line>(state, lines.begin(), lines.end(), 50.0);
+        std::vector<LineInput> const lines{get_line_input(21, 0, 2)};
+        main_core::add_component<Line>(state, lines, 50.0);
 
-        std::vector<SourceInput> sources{{31, 0, 1, 1.0, 0, nan, nan, nan}};
-        main_core::add_component<Source>(state, sources.begin(), sources.end(), 50.0);
+        std::vector<SourceInput> const sources{{.id = 31,
+                                                .node = 0,
+                                                .status = 1,
+                                                .u_ref = 1.0,
+                                                .u_ref_angle = 0,
+                                                .sk = nan,
+                                                .rx_ratio = nan,
+                                                .z01_ratio = nan}};
+        main_core::add_component<Source>(state, sources, 50.0);
 
-        std::vector<TransformerTapRegulatorInput> regulators{get_regulator(41, 11, ControlSide::to),
-                                                             get_regulator(42, 12, ControlSide::to),
-                                                             get_regulator(43, 13, ControlSide::to)};
-        main_core::add_component<TransformerTapRegulator>(state, regulators.begin(), regulators.end(), 50.0);
+        std::vector<TransformerTapRegulatorInput> const regulators{get_regulator(41, 11, ControlSide::to),
+                                                                   get_regulator(42, 12, ControlSide::to),
+                                                                   get_regulator(43, 13, ControlSide::to)};
+        main_core::add_component<TransformerTapRegulator>(state, regulators, 50.0);
 
         state.components.set_construction_complete();
 
-        pgm_tap::RankedTransformerGroups order = pgm_tap::rank_transformers(state);
-        pgm_tap::RankedTransformerGroups const ref_order{{{Idx2D{3, 0}}, {Idx2D{3, 2}}}, {{Idx2D{3, 1}}}};
+        pgm_tap::RankedTransformerGroups const order = pgm_tap::rank_transformers(state);
+        pgm_tap::RankedTransformerGroups const ref_order{{{Idx2D{.group = 3, .pos = 0}}, {Idx2D{.group = 3, .pos = 2}}},
+                                                         {{Idx2D{.group = 3, .pos = 1}}}};
         CHECK(order == ref_order);
     }
 
     SUBCASE("Controlling from non source to source transformer") {
         TestState state;
-        std::vector<NodeInput> nodes{{.id = 0, .u_rated = 150e3}, {.id = 1, .u_rated = 10e3}};
-        main_core::add_component<Node>(state, nodes.begin(), nodes.end(), 50.0);
+        std::vector<NodeInput> const nodes{{.id = 0, .u_rated = 150e3}, {.id = 1, .u_rated = 10e3}};
+        main_core::add_component<Node>(state, nodes, 50.0);
 
-        std::vector<TransformerInput> transformers{get_transformer(2, 0, 1, BranchSide::from)};
-        main_core::add_component<Transformer>(state, transformers.begin(), transformers.end(), 50.0);
+        std::vector<TransformerInput> const transformers{get_transformer(2, 0, 1, BranchSide::from)};
+        main_core::add_component<Transformer>(state, transformers, 50.0);
 
-        std::vector<SourceInput> sources{SourceInput{.id = 3, .node = 0, .status = IntS{1}, .u_ref = 1.0}};
-        main_core::add_component<Source>(state, sources.begin(), sources.end(), 50.0);
+        std::vector<SourceInput> const sources{SourceInput{.id = 3, .node = 0, .status = IntS{1}, .u_ref = 1.0}};
+        main_core::add_component<Source>(state, sources, 50.0);
 
-        std::vector<TransformerTapRegulatorInput> regulators{get_regulator(4, 2, ControlSide::from)};
-        main_core::add_component<TransformerTapRegulator>(state, regulators.begin(), regulators.end(), 50.0);
+        std::vector<TransformerTapRegulatorInput> const regulators{get_regulator(4, 2, ControlSide::from)};
+        main_core::add_component<TransformerTapRegulator>(state, regulators, 50.0);
 
         state.components.set_construction_complete();
 
@@ -1042,8 +1058,8 @@ TEST_CASE("Test Tap position optimizer") {
         auto const& transformers_dataset =
             update_dataset.get_buffer_span<meta_data::update_getter_s, MockTransformer>();
         auto changed_components = std::vector<Idx2D>{};
-        main_core::update::update_component<MockTransformer>(
-            state, transformers_dataset.begin(), transformers_dataset.end(), std::back_inserter(changed_components));
+        main_core::update::update_component<MockTransformer>(state, transformers_dataset,
+                                                             std::back_inserter(changed_components));
     };
 
     auto twoStatesEqual = [](MockState const& state1, MockState const& state2) {
@@ -1615,18 +1631,18 @@ TEST_CASE("Test Tap position optimizer") {
 TEST_CASE("Test tap position optmizer I/O") {
     SUBCASE("transformer duplicatively regulated") {
         test::TestState state_mini;
-        std::vector<NodeInput> nodes{{.id = 0, .u_rated = 150e3},
-                                     {.id = 1, .u_rated = 10e3},
-                                     {.id = 2, .u_rated = 10e3},
-                                     {.id = 3, .u_rated = 10e3}};
-        main_core::add_component<Node>(state_mini, nodes.begin(), nodes.end(), 50.0);
+        std::vector<NodeInput> const nodes{{.id = 0, .u_rated = 150e3},
+                                           {.id = 1, .u_rated = 10e3},
+                                           {.id = 2, .u_rated = 10e3},
+                                           {.id = 3, .u_rated = 10e3}};
+        main_core::add_component<Node>(state_mini, nodes, 50.0);
 
-        std::vector<TransformerInput> transformers{test::get_transformer(4, 0, 1, BranchSide::from, 0),
-                                                   test::get_transformer(5, 1, 2, BranchSide::from, -1),
-                                                   test::get_transformer(6, 2, 3, BranchSide::from, 1)};
-        main_core::add_component<Transformer>(state_mini, transformers.begin(), transformers.end(), 50.0);
+        std::vector<TransformerInput> const transformers{test::get_transformer(4, 0, 1, BranchSide::from, 0),
+                                                         test::get_transformer(5, 1, 2, BranchSide::from, -1),
+                                                         test::get_transformer(6, 2, 3, BranchSide::from, 1)};
+        main_core::add_component<Transformer>(state_mini, transformers, 50.0);
 
-        std::vector<TransformerTapRegulatorInput> bad_regulators{
+        std::vector<TransformerTapRegulatorInput> const bad_regulators{
             TransformerTapRegulatorInput{.id = 7,
                                          .regulated_object = 4,
                                          .status = 1,
@@ -1653,8 +1669,7 @@ TEST_CASE("Test tap position optmizer I/O") {
                                          .line_drop_compensation_x = 0.0},
         };
 
-        CHECK_THROWS_AS(main_core::add_component<TransformerTapRegulator>(state_mini, bad_regulators.begin(),
-                                                                          bad_regulators.end(), 50.0),
+        CHECK_THROWS_AS(main_core::add_component<TransformerTapRegulator>(state_mini, bad_regulators, 50.0),
                         DuplicativelyRegulatedObject);
     }
 }
