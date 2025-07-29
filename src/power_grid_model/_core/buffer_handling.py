@@ -117,10 +117,15 @@ def _get_raw_attribute_data_view(data: np.ndarray, schema: ComponentMetaData, at
     Returns:
         a raw view on the data set.
     """
-    supported_dim = 3
-    if schema.dtype[attribute].shape == (supported_dim,) and data.shape[-1] != supported_dim:
-        raise ValueError("Given data has a different schema than supported.")
-    return _get_raw_data_view(data, dtype=schema.dtype[attribute].base)
+    dense_batch_ndim = 2
+
+    attr_schema = schema.dtype[attribute]
+    attr_shape_start = data.ndim - attr_schema.ndim
+    dataset_shape = data.shape[:attr_shape_start]
+    attr_shape = data.shape[attr_shape_start:]
+    if len(dataset_shape) <= dense_batch_ndim and attr_shape == attr_schema.shape:
+        return _get_raw_data_view(data, dtype=schema.dtype[attribute].base)
+    raise ValueError("Given data has a different schema than supported.")
 
 
 def _get_indptr_view(indptr: np.ndarray) -> IdxPtr:  # type: ignore[valid-type]
