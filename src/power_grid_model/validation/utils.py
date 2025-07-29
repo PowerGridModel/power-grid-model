@@ -80,7 +80,8 @@ def _eval_field_expression(data: np.ndarray, expression: str) -> np.ndarray:
     if len(fields) == 1:
         return data[fields[0]]
 
-    assert len(fields) == 2
+    max_num_fields = 2
+    assert len(fields) == max_num_fields
     zero_div = np.logical_or(np.equal(data[fields[1]], 0.0), np.logical_not(np.isfinite(data[fields[1]])))
     if np.any(zero_div):
         result = np.full_like(data[fields[0]], np.nan)
@@ -118,6 +119,7 @@ def _update_component_array_data(component: ComponentType, input_data: SingleArr
     Update the data in a numpy array, with another numpy array,
     indexed on the "id" field and only non-NaN values are overwritten.
     """
+    batch_dataset_ndim = 2
     if update_data.dtype.names is None:
         raise ValueError("Invalid data format")
 
@@ -134,7 +136,7 @@ def _update_component_array_data(component: ComponentType, input_data: SingleArr
         nan = _nan_type(component, field, DatasetType.update)
         mask = ~np.isnan(update_data[field]) if np.isnan(nan) else np.not_equal(update_data[field], nan)
 
-        if mask.ndim == 2:
+        if mask.ndim == batch_dataset_ndim:
             for phase in range(mask.shape[1]):
                 # find indexers of to-be-updated object
                 sub_mask = mask[:, phase]

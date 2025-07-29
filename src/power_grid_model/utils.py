@@ -410,7 +410,7 @@ def self_test():
             raise PowerGridError from e
 
 
-def _make_test_case(
+def _make_test_case(  # noqa: PLR0913
     *,
     output_path: Path,
     input_data: SingleDataset,

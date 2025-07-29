@@ -235,7 +235,7 @@ class PowerGridModel:
             decode_error=decode_error,
         )
 
-    def _calculate_impl(
+    def _calculate_impl(  # noqa: PLR0913
         self,
         calculation_type: CalculationType,
         symmetric: bool,
@@ -300,7 +300,7 @@ class PowerGridModel:
 
         return output_data
 
-    def _calculate_power_flow(
+    def _calculate_power_flow(  # noqa: PLR0913
         self,
         *,
         symmetric: bool = True,
@@ -337,7 +337,7 @@ class PowerGridModel:
             experimental_features=experimental_features,
         )
 
-    def _calculate_state_estimation(
+    def _calculate_state_estimation(  # noqa: PLR0913
         self,
         *,
         symmetric: bool = True,
@@ -372,7 +372,7 @@ class PowerGridModel:
             experimental_features=experimental_features,
         )
 
-    def _calculate_short_circuit(
+    def _calculate_short_circuit(  # noqa: PLR0913
         self,
         *,
         calculation_method: CalculationMethod | str = CalculationMethod.iec60909,
@@ -406,7 +406,7 @@ class PowerGridModel:
             experimental_features=experimental_features,
         )
 
-    def calculate_power_flow(
+    def calculate_power_flow(  # noqa: PLR0913
         self,
         *,
         symmetric: bool = True,
@@ -505,7 +505,7 @@ class PowerGridModel:
             tap_changing_strategy=tap_changing_strategy,
         )
 
-    def calculate_state_estimation(
+    def calculate_state_estimation(  # noqa: PLR0913
         self,
         *,
         symmetric: bool = True,
@@ -599,7 +599,7 @@ class PowerGridModel:
             decode_error=decode_error,
         )
 
-    def calculate_short_circuit(
+    def calculate_short_circuit(  # noqa: PLR0913
         self,
         *,
         calculation_method: CalculationMethod | str = CalculationMethod.iec60909,

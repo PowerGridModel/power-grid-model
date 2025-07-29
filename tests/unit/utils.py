@@ -243,6 +243,7 @@ def save_json_data(json_file: str, data: Dataset):
 
 
 def compare_result(actual: SingleDataset, expected: SingleDataset, rtol: float, atol: float | dict[str, float]):
+    actual_col_ndim = 2
     for key, expected_data in expected.items():
         if not isinstance(expected_data, np.ndarray):
             raise NotImplementedError("Validation tests are not implemented for columnar data")
@@ -261,7 +262,7 @@ def compare_result(actual: SingleDataset, expected: SingleDataset, rtol: float, 
 
             if not expect_all_nan:
                 # permute expected_col if needed
-                if expected_col.ndim == 1 and actual_col.ndim == 2:
+                if expected_col.ndim == 1 and actual_col.ndim == actual_col_ndim:
                     if col_name == "u_angle":
                         # should be 120 and 240 degree lagging
                         expected_col = np.stack(

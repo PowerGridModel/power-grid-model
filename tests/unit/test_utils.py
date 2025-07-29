@@ -59,7 +59,9 @@ def test_get_data_set_batch_size():
 
     batch_data = {ComponentType.line: line, ComponentType.asym_load: asym_load}
 
-    assert get_dataset_batch_size(batch_data) == 3
+    n_batch_size = 3
+
+    assert get_dataset_batch_size(batch_data) == n_batch_size
 
 
 def test_get_dataset_batch_size_sparse():
@@ -78,7 +80,9 @@ def test_get_dataset_batch_size_sparse():
         },
     }
 
-    assert get_dataset_batch_size(data) == 3
+    n_batch_size = 3
+
+    assert get_dataset_batch_size(data) == n_batch_size
 
 
 def test_get_dataset_batch_size_mixed():
@@ -118,8 +122,11 @@ def test_get_component_batch_size():
         "data": np.zeros(shape=2, dtype=power_grid_meta_data[DatasetType.input][ComponentType.sym_load]),
         "indptr": np.array([0, 0, 1, 2]),
     }
-    assert get_component_batch_size(asym_load) == 3
-    assert get_component_batch_size(sym_load) == 3
+
+    asym_load_batch_size = 3
+    sym_load_batch_size = 3
+    assert get_component_batch_size(asym_load) == asym_load_batch_size
+    assert get_component_batch_size(sym_load) == sym_load_batch_size
 
 
 @patch("builtins.open", new_callable=mock_open)
@@ -190,6 +197,10 @@ def test__make_test_case(
     output_data: Dataset = {"version": "1.0", "data": "output_data"}
     output_path = Path("test_path")
     params = {"param1": "value1", "param2": "value2"}
+    write_update_call_count = 5
+    serialize_update_call_count = 3
+    write_call_count = 4
+    serialize_call_count = 2
 
     _make_test_case(
         output_path=output_path,
@@ -214,8 +225,8 @@ def test__make_test_case(
         serialize_to_file_mock.assert_any_call(
             file_path=output_path / "update_batch.json", data=update_data, dataset_type=DatasetType.update
         )
-        assert write_text_mock.call_count == 5
-        assert serialize_to_file_mock.call_count == 3
+        assert write_text_mock.call_count == write_update_call_count
+        assert serialize_to_file_mock.call_count == serialize_update_call_count
     else:
-        assert write_text_mock.call_count == 4
-        assert serialize_to_file_mock.call_count == 2
+        assert write_text_mock.call_count == write_call_count
+        assert serialize_to_file_mock.call_count == serialize_call_count

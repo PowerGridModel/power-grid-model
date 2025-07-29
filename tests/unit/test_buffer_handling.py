@@ -18,6 +18,11 @@ from power_grid_model._core.buffer_handling import (
 from power_grid_model._core.dataset_definitions import ComponentType, DatasetType
 from power_grid_model._core.power_grid_meta import initialize_array, power_grid_meta_data
 
+SINGLE_DATASET_NDIM = 1
+BATCH_DATASET_NDIM = 2
+SCENARIO_TOTAL_ELEMENTS = 4
+BATCH_TOTAL_ELEMENTS = 8
+
 
 def load_data(component_type, is_batch, is_sparse, is_columnar):
     """Creates load data of different formats for testing"""
@@ -50,14 +55,14 @@ def load_data(component_type, is_batch, is_sparse, is_columnar):
 def test__get_dense_buffer_properties(component_type, is_batch, is_columnar):
     data = load_data(component_type, is_batch=is_batch, is_columnar=is_columnar, is_sparse=False)
     schema = power_grid_meta_data[DatasetType.update][component_type]
-    batch_size = 2 if is_batch else None
+    batch_size = BATCH_DATASET_NDIM if is_batch else None
     properties = _get_dense_buffer_properties(data, schema=schema, is_batch=is_batch, batch_size=batch_size)
 
     assert not properties.is_sparse
     assert properties.is_batch == is_batch
-    assert properties.batch_size == (2 if is_batch else 1)
-    assert properties.n_elements_per_scenario == 4
-    assert properties.n_total_elements == 8 if is_batch else 4
+    assert properties.batch_size == (BATCH_DATASET_NDIM if is_batch else SINGLE_DATASET_NDIM)
+    assert properties.n_elements_per_scenario == SCENARIO_TOTAL_ELEMENTS
+    assert properties.n_total_elements == BATCH_TOTAL_ELEMENTS if is_batch else 4
     if is_columnar:
         assert properties.columns == list(data.keys())
     else:
@@ -81,9 +86,9 @@ def test__get_sparse_buffer_properties(component_type, is_columnar):
 
     assert properties.is_sparse
     assert properties.is_batch
-    assert properties.batch_size == 2
+    assert properties.batch_size == BATCH_DATASET_NDIM
     assert properties.n_elements_per_scenario == -1
-    assert properties.n_total_elements == 8
+    assert properties.n_total_elements == BATCH_TOTAL_ELEMENTS
     if is_columnar:
         assert properties.columns == list(data["data"].keys())
     else:
@@ -93,7 +98,7 @@ def test__get_sparse_buffer_properties(component_type, is_columnar):
 @pytest.mark.parametrize(
     "component, is_batch, is_columnar, is_sparse",
     [
-        pytest.param(ComponentType.sym_load, True, True, False, id="sym_load_columnar"),
+        pytest.param(ComponentType.sym_load, True, True, False, id="sym_load-columnar"),
         pytest.param(ComponentType.asym_load, True, True, False, id="asym_load-columnar"),
     ],
 )
@@ -106,8 +111,9 @@ def test__get_raw_attribute_data_view(component, is_batch, is_columnar, is_spars
         is_columnar=is_columnar,
         is_sparse=is_sparse,
     )
+    asym_dense_batch_last_dim = 3
     if component == ComponentType.asym_load:
-        assert data["p_specified"].shape[-1] == 3
+        assert data["p_specified"].shape[-1] == asym_dense_batch_last_dim
 
     buffer_view = get_buffer_view(
         data,
@@ -115,9 +121,9 @@ def test__get_raw_attribute_data_view(component, is_batch, is_columnar, is_spars
         is_batch=is_batch,
     )
     assert buffer_view is not None
-    assert buffer_view.batch_size == 2
-    assert buffer_view.n_elements_per_scenario == 4
-    assert buffer_view.total_elements == 8
+    assert buffer_view.batch_size == BATCH_DATASET_NDIM
+    assert buffer_view.n_elements_per_scenario == SCENARIO_TOTAL_ELEMENTS
+    assert buffer_view.total_elements == BATCH_TOTAL_ELEMENTS
 
 
 @pytest.mark.parametrize(
@@ -142,10 +148,12 @@ def test__get_raw_attribute_data_view_fail(component, attribute):
     new_shape[-1] = 2
     data[attribute] = np.zeros(new_shape, dtype=data[attribute].dtype)
 
+    asym_dense_batch_last_dim = 3
+    unsupported_asym_dense_batch_last_dim = 2
     updated_shape = data[attribute].shape
     assert old_shape != updated_shape
-    assert old_shape[-1] == 3
-    assert updated_shape[-1] == 2
+    assert old_shape[-1] == asym_dense_batch_last_dim
+    assert updated_shape[-1] == unsupported_asym_dense_batch_last_dim
 
     with pytest.raises(ValueError, match="Given data has a different schema than supported."):
         get_buffer_view(data, schema=schema, is_batch=True)
