@@ -65,7 +65,7 @@ You can define the environment variable `CXX` to for example `clang++` to specif
 #### macOS
 
 * Clang >= 17.0
-  * Latest release tested in CI
+  * Latest XCode release tested in CI
 
 ### Build System for CMake Project
 
