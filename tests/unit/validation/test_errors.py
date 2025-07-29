@@ -40,7 +40,7 @@ def test_multi_field_validation_error():
     assert error.field_str == "'delta' and 'echo'"
     assert str(error) == "Combination of fields 'delta' and 'echo' is not valid for 6 nodes."
 
-    with pytest.raises(ValueError, match="at least two fields"):
+    with pytest.raises(ValueError, match="at least 2 fields"):
         MultiFieldValidationError(component=ComponentType.node, fields=["delta"], ids=[])
 
 
@@ -60,10 +60,10 @@ def test_multi_component_validation_error():
     assert error.field_str == "line.india and node.golf"
     assert str(error) == "Fields line.india and node.golf are not valid for 6 lines/nodes."
 
-    with pytest.raises(ValueError, match="at least two fields"):
+    with pytest.raises(ValueError, match="at least 2 fields"):
         MultiComponentValidationError(fields=[(ComponentType.node, "golf")], ids=[])
 
-    with pytest.raises(ValueError, match="at least two components"):
+    with pytest.raises(ValueError, match="at least 2 components"):
         MultiComponentValidationError(fields=[(ComponentType.node, "golf"), (ComponentType.node, "india")], ids=[])
 
 
