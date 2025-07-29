@@ -12,6 +12,7 @@ from enum import Enum
 from typing import Any, Iterable, Type
 
 from power_grid_model import ComponentType
+from power_grid_model._core.dataset_definitions import DatasetType
 
 MIN_FIELDS = 2
 MIN_COMPONENTS = 2
@@ -324,10 +325,10 @@ class IdNotInDatasetError(SingleFieldValidationError):
     """
 
     _message = "ID does not exist in {ref_dataset} for {n} {objects}."
-    ref_dataset: str
+    ref_dataset: DatasetType
     __hash__ = None  # type: ignore[assignment]
 
-    def __init__(self, component: ComponentType, ids: list[int], ref_dataset: str):
+    def __init__(self, component: ComponentType, ids: list[int], ref_dataset: DatasetType):
         super().__init__(component=component, field="id", ids=ids)
         self.ref_dataset = ref_dataset
 

@@ -131,26 +131,26 @@ def test_is_nan():
 
 
 def test_convert_json_to_numpy(two_nodes_one_line, two_nodes_two_lines):
-    pgm_data = convert_python_to_numpy(two_nodes_one_line, "input")
+    pgm_data = convert_python_to_numpy(two_nodes_one_line, DatasetType.input)
     assert len(pgm_data) == len(two_nodes_one_line)
-    assert len(pgm_data["node"]) == len(two_nodes_one_line["node"])
-    assert pgm_data["node"][0]["id"] == two_nodes_one_line["node"][0]["id"]
-    assert pgm_data["node"][0]["u_rated"] == two_nodes_one_line["node"][0]["u_rated"]
-    assert len(pgm_data["line"]) == 1
+    assert len(pgm_data[ComponentType.node]) == len(two_nodes_one_line[ComponentType.node])
+    assert pgm_data[ComponentType.node][0]["id"] == two_nodes_one_line[ComponentType.node][0]["id"]
+    assert pgm_data[ComponentType.node][0]["u_rated"] == two_nodes_one_line[ComponentType.node][0]["u_rated"]
+    assert np.isclose(pgm_data[ComponentType.node][0]["u_rated"], 10.5e3, rtol=1e-09, atol=1e-09)
 
     json_list = [two_nodes_one_line, two_nodes_two_lines, two_nodes_one_line]
-    pgm_data_batch = convert_python_to_numpy(json_list, "input")
-    assert pgm_data_batch["node"].shape == (3, 2)
-    assert np.allclose(pgm_data_batch["line"]["indptr"], [0, 1, 3, 4])
+    pgm_data_batch = convert_python_to_numpy(json_list, DatasetType.input)
+    assert pgm_data_batch[ComponentType.node].shape == (3, 2)
+    assert np.allclose(pgm_data_batch[ComponentType.line]["indptr"], [0, 1, 3, 4])
 
 
 def test_round_trip_json_numpy_json(two_nodes_one_line, two_nodes_two_lines):
-    pgm_data = convert_python_to_numpy(two_nodes_one_line, "input")
+    pgm_data = convert_python_to_numpy(two_nodes_one_line, DatasetType.input)
     json_dict = convert_dataset_to_python_dataset(pgm_data)
     assert json_dict == two_nodes_one_line
 
     json_list = [two_nodes_one_line, two_nodes_two_lines, two_nodes_one_line]
-    pgm_data_list = convert_python_to_numpy(json_list, "input")
+    pgm_data_list = convert_python_to_numpy(json_list, DatasetType.input)
     json_return_list = convert_dataset_to_python_dataset(pgm_data_list)
     assert json_return_list == json_list
 
@@ -780,8 +780,8 @@ def test_get_dataset_type(dataset_type):
     assert (
         get_dataset_type(
             data={
-                CT.node: np.zeros(1, dtype=power_grid_meta_data[dataset_type]["node"]),
-                CT.sym_load: np.zeros(1, dtype=power_grid_meta_data[dataset_type]["sym_load"]),
+                CT.node: np.zeros(1, dtype=power_grid_meta_data[dataset_type][ComponentType.node]),
+                "sym_load": np.zeros(1, dtype=power_grid_meta_data[dataset_type]["sym_load"]),
             }
         )
         == dataset_type
@@ -799,7 +799,7 @@ def test_get_dataset_type__conflicting_data():
         [DT.input, DT.update, DT.sym_output, DT.asym_output, DT.sc_output],
     ):
         data = {
-            "node": np.zeros(1, dtype=power_grid_meta_data[first]["node"]),
+            ComponentType.node: np.zeros(1, dtype=power_grid_meta_data[first][ComponentType.node]),
             "sym_load": np.zeros(1, dtype=power_grid_meta_data[second]["sym_load"]),
         }
         if first == second:

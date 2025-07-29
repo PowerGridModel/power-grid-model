@@ -11,7 +11,7 @@
   "extra_params": {
     "newton_raphson": {
       "experimental_features": "enabled",
-      "fail": {
+      "xfail": {
         "raises": "SparseMatrixError",
         "reason": "Current sensors are not yet implemented for this calculation method"
       }

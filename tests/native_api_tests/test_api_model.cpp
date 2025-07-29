@@ -1063,7 +1063,7 @@ TEST_CASE("API Model") {
         }
     }
 
-    SUBCASE("Current sensor for NRSE is experimental: not implemented") {
+    SUBCASE("Global angle current sensor for NRSE is experimental: not implemented") {
         auto const* const input_data_se_json = R"json({
   "version": "1.0",
   "type": "input",
@@ -1078,7 +1078,8 @@ TEST_CASE("API Model") {
       {"id": 3, "from_node": 1, "to_node": 2, "from_status": 0, "to_status": 0, "r1": 0.000416, "x1": 0.000136, "c1": 1e-09, "tan1": 0}
     ],
     "sym_current_sensor": [
-      {"id": 4, "measured_object": 3, "measured_terminal_type": 0, "angle_measurement_type": 0, "i_sigma": 1, "i_angle_sigma": 0.05, "i_measured": 10, "i_angle_measured": 0.3}
+      {"id": 4, "measured_object": 3, "measured_terminal_type": 0, "angle_measurement_type": 0, "i_sigma": 1, "i_angle_sigma": 0.05, "i_measured": 10, "i_angle_measured": 0.3},
+      {"id": 5, "measured_object": 3, "measured_terminal_type": 1, "angle_measurement_type": 1, "i_sigma": 1, "i_angle_sigma": 0.05, "i_measured": 10, "i_angle_measured": 0.3}
     ]
   }
 })json";
@@ -1099,9 +1100,10 @@ TEST_CASE("API Model") {
         for (auto const method : {PGM_default_method, PGM_iterative_linear, PGM_newton_raphson}) {
             CAPTURE(method);
             if (method == PGM_newton_raphson) {
-                CHECK_THROWS_WITH_AS(run_se_with_current_sensor(method, PGM_experimental_features_disabled),
-                                     "Newton-Raphson state estimation is not implemented for current sensors",
-                                     PowerGridRegularError);
+                CHECK_THROWS_WITH_AS(
+                    run_se_with_current_sensor(method, PGM_experimental_features_disabled),
+                    "Newton-Raphson state estimation is not implemented for global angle current sensors",
+                    PowerGridRegularError);
             } else {
                 CHECK_NOTHROW(run_se_with_current_sensor(method, PGM_experimental_features_disabled));
             }
