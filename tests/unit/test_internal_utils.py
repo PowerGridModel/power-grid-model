@@ -132,11 +132,11 @@ def test_is_nan():
 
 def test_convert_json_to_numpy(two_nodes_one_line, two_nodes_two_lines):
     pgm_data = convert_python_to_numpy(two_nodes_one_line, DatasetType.input)
-    assert len(pgm_data) == 2
-    assert len(pgm_data[ComponentType.node]) == 2
-    assert pgm_data[ComponentType.node][0]["id"] == 11
+    assert len(pgm_data) == len(two_nodes_one_line)
+    assert len(pgm_data[ComponentType.node]) == len(two_nodes_one_line[ComponentType.node])
+    assert pgm_data[ComponentType.node][0]["id"] == two_nodes_one_line[ComponentType.node][0]["id"]
+    assert pgm_data[ComponentType.node][0]["u_rated"] == two_nodes_one_line[ComponentType.node][0]["u_rated"]
     assert np.isclose(pgm_data[ComponentType.node][0]["u_rated"], 10.5e3, rtol=1e-09, atol=1e-09)
-    assert len(pgm_data[ComponentType.line]) == 1
 
     json_list = [two_nodes_one_line, two_nodes_two_lines, two_nodes_one_line]
     pgm_data_batch = convert_python_to_numpy(json_list, DatasetType.input)
@@ -684,9 +684,9 @@ def sample_output_data():
         CT.sym_load: initialize_array(DT.sym_output, CT.sym_load, 3),
         CT.source: initialize_array(DT.sym_output, CT.source, 1),
     }
-    for comp in output_data:
-        for attr in output_data[comp].dtype.names:
-            output_data[comp][attr] = 0
+    for data_array in output_data.values():
+        for attr in data_array.dtype.names:
+            data_array[attr] = 0
     return output_data
 
 

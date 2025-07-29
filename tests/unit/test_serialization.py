@@ -516,13 +516,13 @@ def assert_individual_data_entry(serialized_dataset, data_filter, component, ser
                     assert attr in deserialized_output
                     assert_almost_equal(
                         deserialized_output[attr][comp_idx],
-                        serialized_input[comp_idx][attr],
+                        input_entry[attr],
                     )
                 else:
                     assert attr in deserialized_output[comp_idx].dtype.names
                     assert_almost_equal(
                         deserialized_output[comp_idx][attr],
-                        serialized_input[comp_idx][attr],
+                        input_entry[attr],
                     )
         else:
             assert component in serialized_dataset["attributes"]
@@ -534,13 +534,13 @@ def assert_individual_data_entry(serialized_dataset, data_filter, component, ser
                     assert attr in deserialized_output
                     assert_almost_equal(
                         deserialized_output[attr][comp_idx],
-                        serialized_input[comp_idx][attr_idx],
+                        input_entry[attr_idx],
                     )
                 else:
                     assert attr in deserialized_output[comp_idx].dtype.names
                     assert_almost_equal(
                         deserialized_output[comp_idx][attr],
-                        serialized_input[comp_idx][attr_idx],
+                        input_entry[attr_idx],
                     )
 
 
@@ -563,6 +563,7 @@ def assert_batch_dataset_structure(
 ):
     """Checks if the structure of the batch dataset is correct.
     Then splits into individual scenario's dataset and checks if all of them are correct."""
+    batch_dataset_ndim = 2
 
     # Check structure of the whole BatchDataset
     assert isinstance(serialized_dataset["data"], list)
@@ -582,17 +583,16 @@ def assert_batch_dataset_structure(
                 assert isinstance(component_data, np.ndarray)
                 assert component_data.ndim == 1
                 assert len(component_data) == component_indptr[-1]
+        elif is_columnar_filter(data_filter, component):
+            for attr, attr_value in component_values.items():
+                assert isinstance(attr, str)
+                assert isinstance(attr_value, np.ndarray)
+                assert len(attr_value.shape) in [2, 3]
+                assert len(attr_value) == len(serialized_dataset["data"])
         else:
-            if is_columnar_filter(data_filter, component):
-                for attr, attr_value in component_values.items():
-                    assert isinstance(attr, str)
-                    assert isinstance(attr_value, np.ndarray)
-                    assert len(attr_value.shape) in [2, 3]
-                    assert len(attr_value) == len(serialized_dataset["data"])
-            else:
-                assert isinstance(component_values, np.ndarray)
-                assert len(component_values.shape) == 2
-                assert len(component_values) == len(serialized_dataset["data"])
+            assert isinstance(component_values, np.ndarray)
+            assert len(component_values.shape) == batch_dataset_ndim
+            assert len(component_values) == len(serialized_dataset["data"])
 
 
 def assert_serialization_correct(deserialized_dataset: Dataset, serialized_dataset: Mapping[str, Any], data_filter):

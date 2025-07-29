@@ -442,7 +442,7 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
-    def dataset_mutable_add_buffer(  # type: ignore[empty-body]
+    def dataset_mutable_add_buffer(  # type: ignore[empty-body]  # noqa: PLR0913
         self,
         dataset: MutableDatasetPtr,
         component: str,

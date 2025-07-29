@@ -486,7 +486,8 @@ def test_all_finite():
         "bar_test": np.array([(4, 0.4), (5, 0.5), (6, -np.inf)], dtype=dbar),
     }
     errors = all_finite(invalid)
-    assert len(errors) == 2
+    n_infinity_errors = 2
+    assert len(errors) == n_infinity_errors
     assert InfinityError("foo_test", "foo", [2]) in errors
     assert InfinityError("bar_test", "bar", [6]) in errors
     errors = all_finite(invalid, {"foo_test": ["foo"]})

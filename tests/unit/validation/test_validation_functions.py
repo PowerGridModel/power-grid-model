@@ -125,7 +125,8 @@ def test_validate_unique_ids_across_components():
         )
         in unique_id_errors
     )
-    assert len(unique_id_errors[0].ids) == 4
+    n_non_unique_ids = 4
+    assert len(unique_id_errors[0].ids) == n_non_unique_ids
 
 
 def test_validate_ids():
@@ -176,7 +177,8 @@ def test_validate_ids():
         dataset_type=DatasetType.update,
     )
     invalid_ids = validate_ids(update_data_col_less_no_id, input_data)
-    assert len(invalid_ids) == 2
+    n_invalid_ids_update_source_without_id = 2
+    assert len(invalid_ids) == n_invalid_ids_update_source_without_id
     assert IdNotInDatasetError(ComponentType.sym_load, [7], DatasetType.update) in invalid_ids
 
     source_update_part_nan_id = initialize_array(DatasetType.update, ComponentType.source, 3)
@@ -189,7 +191,8 @@ def test_validate_ids():
         dataset_type=DatasetType.update,
     )
     invalid_ids = validate_ids(update_data_col_part_nan_id, input_data)
-    assert len(invalid_ids) == 2
+    n_invalid_ids_source_update = 2
+    assert len(invalid_ids) == n_invalid_ids_source_update
     assert IdNotInDatasetError(ComponentType.sym_load, [7], DatasetType.update) in invalid_ids
 
 
@@ -758,7 +761,7 @@ def test_validate_values__bad_p_q_sigma_single_component_twice():
     for error in all_errors:
         assert any(isinstance(error, error_type) for error_type in [InvalidIdError, PQSigmaPairError])
         if isinstance(error, PQSigmaPairError):
-            assert error.ids[0] == 789
+            assert error.ids[0] == data["sym_power_sensor"]["id"][1]
 
 
 @pytest.mark.parametrize("measured_terminal_type", MeasuredTerminalType)
@@ -1155,7 +1158,8 @@ def test_power_sigma_or_p_q_sigma():
     bad_sym_power_sensor["p_sigma"] = [np.nan, np.nan, 1e4]
     bad_sym_power_sensor["q_sigma"] = [np.nan, 1e9, np.nan]
     errors = validate_input_data(input_data=bad_input_data, calculation_type=CalculationType.state_estimation)
-    assert len(errors) == 4
+    n_sym_input_validation_errors = 4
+    assert len(errors) == n_sym_input_validation_errors
     assert errors == [
         MissingValueError(ComponentType.sym_power_sensor, "power_sigma", [6]),
         MissingValueError(ComponentType.sym_power_sensor, "p_sigma", [7]),
@@ -1184,7 +1188,8 @@ def test_power_sigma_or_p_q_sigma():
         [np.nan, 1e4, 1e4],
     ]
     errors = validate_input_data(input_data=bad_input_data, calculation_type=CalculationType.state_estimation)
-    assert len(errors) == 4
+    n_asym_input_validation_errors = 4
+    assert len(errors) == n_asym_input_validation_errors
     assert errors == [
         MissingValueError(ComponentType.asym_power_sensor, "power_sigma", [66]),
         MissingValueError(ComponentType.asym_power_sensor, "p_sigma", [77, 88, 99]),
@@ -1327,7 +1332,9 @@ def test_validate_values__tap_regulator_control_side():
     assert power_flow_errors == all_errors
     assert not state_estimation_errors
 
-    assert len(all_errors) == 3
+    n_input_validation_errors = 3
+
+    assert len(all_errors) == n_input_validation_errors
     assert (
         InvalidEnumValueError(
             ComponentType.transformer_tap_regulator, "control_side", [10, 13], [BranchSide, Branch3Side]

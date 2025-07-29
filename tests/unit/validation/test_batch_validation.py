@@ -128,8 +128,10 @@ def test_validate_batch_data_input_error(input_data, batch_data):
         input_data[ComponentType.node][-1]["id"] = 123
         input_data[ComponentType.line][-1]["id"] = 123
     errors = validate_batch_data(input_data, batch_data)
+
+    n_input_validation_errors = 3
     assert errors is not None
-    assert len(errors) == 3
+    assert len(errors) == n_input_validation_errors
     assert [
         MultiComponentNotUniqueError(
             [(ComponentType.line, "id"), (ComponentType.node, "id")],
@@ -153,8 +155,9 @@ def test_validate_batch_data_input_error(input_data, batch_data):
 def test_validate_batch_data_update_error(input_data, batch_data):
     batch_data[ComponentType.line]["from_status"] = np.array([[12, 34], [0, -128], [56, 78]])
     errors = validate_batch_data(input_data, batch_data)
+    n_update_validation_errors = 2
     assert errors is not None
-    assert len(errors) == 2
+    assert len(errors) == n_update_validation_errors
     assert 1 not in errors
     assert len(errors[0]) == 1
     assert len(errors[2]) == 1

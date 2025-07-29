@@ -191,8 +191,11 @@ def _get_dense_buffer_properties(
     if actual_ndim not in (1, 2):
         raise ValueError(f"Array can only be 1D or 2D. {VALIDATOR_MSG}")
 
-    actual_is_batch = actual_ndim == 2
-    actual_batch_size = shape[0] if actual_is_batch else 1
+    single_dataset_ndim = 1
+    batch_dataset_ndim = 2
+
+    actual_is_batch = actual_ndim == batch_dataset_ndim
+    actual_batch_size = shape[0] if actual_is_batch else single_dataset_ndim
     n_elements_per_scenario = shape[-1]
     n_total_elements = actual_batch_size * n_elements_per_scenario
 

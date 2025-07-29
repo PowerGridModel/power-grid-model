@@ -258,7 +258,7 @@ def validate_ids(update_data: SingleDataset, input_data: SingleDataset) -> list[
     return list(chain(*errors))
 
 
-def validate_required_values(
+def validate_required_values(  # noqa: PLR0915
     data: SingleDataset, calculation_type: CalculationType | None = None, symmetric: bool = True
 ) -> list[MissingValueError]:
     """
@@ -646,7 +646,7 @@ def validate_branch3(data: SingleDataset, component: ComponentType) -> list[Vali
     return errors
 
 
-def validate_three_winding_transformer(data: SingleDataset) -> list[ValidationError]:
+def validate_three_winding_transformer(data: SingleDataset) -> list[ValidationError]:  # noqa: PLR0915
     errors = validate_branch3(data, ComponentType.three_winding_transformer)
     errors += _all_greater_than_zero(data, ComponentType.three_winding_transformer, "u1")
     errors += _all_greater_than_zero(data, ComponentType.three_winding_transformer, "u2")
