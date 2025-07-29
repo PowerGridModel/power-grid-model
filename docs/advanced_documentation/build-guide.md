@@ -45,11 +45,11 @@ Below is a list of tested compilers:
 
 #### Linux
 
-* gcc >= 13.0
+* gcc >= 14.0
   * Version 14.x tested using the version in the `manylinux_2_28` container.
   * Version 14.x tested using the musllinux build with custom compiler
-  * Version 13.x tested in CI
-* Clang >= 17.0
+  * Version 14.x tested in CI
+* Clang >= 18.0
   * Version 18.x tested in CI
   * Version 18.x tested in CI with code quality checks
 
@@ -57,15 +57,15 @@ You can define the environment variable `CXX` to for example `clang++` to specif
 
 #### Windows
 
-* MSVC >= 17.5
+* MSVC >= 19.0
   * Latest release tested in CI (e.g. Visual Studio 2022, IDE or build tools)
-* Clang CL >= 17.0
+* Clang CL >= 19.0
   * Latest release tested in CI (e.g. Visual Studio 2022, IDE or build tools)
 
 #### macOS
 
-* Clang >= 15.0
-  * Latest release tested in CI
+* Clang >= 17.0
+  * Latest XCode release tested in CI
 
 ### Build System for CMake Project
 
@@ -225,8 +225,8 @@ You can use this example in Windows Subsystem for Linux (WSL), or in a physical/
 Append the following lines into the file `${HOME}/.bashrc`.
 
 ```shell
-export CXX=clang++-18            # or g++-13
-export CC=clang-18               # gcc-13
+export CXX=clang++-18            # or g++-14
+export CC=clang-18               # or gcc-14
 export CMAKE_PREFIX_PATH=/home/linuxbrew/.linuxbrew
 export LLVM_COV=llvm-cov-18
 export CLANG_TIDY=clang-tidy-18  # only if you want to use one of the clang-tidy presets
