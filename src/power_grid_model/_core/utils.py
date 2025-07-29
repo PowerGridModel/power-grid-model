@@ -44,7 +44,6 @@ from power_grid_model._core.typing import ComponentAttributeMapping, _ComponentA
 
 SINGLE_DATASET_NDIM = 1
 BATCH_DATASET_NDIM = 2
-UNSUPPORTED_NDIM = 3
 
 
 def is_nan(data) -> bool:
@@ -178,7 +177,7 @@ def get_batch_size(
         sym_array = next(iter(batch_data.values()))
 
     sym_array = cast(DenseBatchArray | BatchColumn, sym_array)
-    if sym_array.ndim == UNSUPPORTED_NDIM:
+    if sym_array.ndim not in (SINGLE_DATASET_NDIM, BATCH_DATASET_NDIM):
         raise TypeError("Incorrect dimension present in batch data.")
     if sym_array.ndim == SINGLE_DATASET_NDIM:
         return 1
