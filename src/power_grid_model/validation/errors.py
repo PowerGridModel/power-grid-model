@@ -171,7 +171,7 @@ class MultiFieldValidationError(ValidationError):
         self.field = sorted(fields)
         self.ids = sorted(ids)
 
-        if len(self.field) < MIN_FIELDS:
+        if len(self.field) < _MIN_FIELDS:
             raise ValueError(f"{type(self).__name__} expects at least two fields: {self.field}")
 
 
@@ -197,10 +197,10 @@ class MultiComponentValidationError(ValidationError):
         self.field = sorted(fields)
         self.ids = sorted(ids)
 
-        if len(self.field) < MIN_FIELDS:
-            raise ValueError(f"{type(self).__name__} expects at least two fields: {self.field}")
-        if len(self.component) < MIN_COMPONENTS:
-            raise ValueError(f"{type(self).__name__} expects at least two components: {self.component}")
+        if len(self.field) < _MIN_FIELDS:
+            raise ValueError(f"{type(self).__name__} expects at least {_MIN_FIELDS} fields: {self.field}")
+        if len(self.component) < _MIN_COMPONENTS:
+            raise ValueError(f"{type(self).__name__} expects at least {_MIN_COMPONENTS} components: {self.component}")
 
 
 class NotIdenticalError(SingleFieldValidationError):
