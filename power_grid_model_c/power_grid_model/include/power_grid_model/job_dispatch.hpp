@@ -217,7 +217,7 @@ template <class MainModel, class... ComponentType> class JobDispatch {
 
                 model.template update_components<cached_update_t>(update_data, scenario_idx, scenario_sequence());
             },
-            [&model, scenario_sequence, &current_scenario_sequence_cache, &info](Idx scenario_idx) {
+            [&model, scenario_sequence, &current_scenario_sequence_cache, &info](Idx /*scenario_idx*/) {
                 Timer const t_update_model(info, 1201, "Restore model");
 
                 model.restore_components(scenario_sequence());
