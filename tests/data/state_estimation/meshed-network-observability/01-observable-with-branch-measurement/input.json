@@ -35,8 +35,10 @@
       {"id": 17, "measured_object": 3, "u_sigma": 1e3, "u_measured": 10000, "u_angle_measured": 0}
     ],
     "sym_load": [
-      {"id": 18, "node": 5, "status": 1, "type": 0},
-      {"id": 19, "node": 6, "status": 1, "type": 0}
+      {"id": 18, "node": 2, "status": 1, "type": 0},
+      {"id": 19, "node": 4, "status": 1, "type": 0},
+      {"id": 20, "node": 5, "status": 1, "type": 0},
+      {"id": 21, "node": 6, "status": 1, "type": 0}
     ]
   }
 }
