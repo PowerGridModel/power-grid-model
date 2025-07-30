@@ -11,6 +11,12 @@
 
 namespace power_grid_model {
 
-using CalculationInfo = std::map<std::string, double, std::less<>>;
+#if defined(__cpp_lib_hardware_interference_size)
+constexpr size_t cache_line_size = std::hardware_destructive_interference_size;
+#else
+constexpr size_t cache_line_size = 64;
+#endif
+
+class alignas(cache_line_size) CalculationInfo : public std::map<std::string, double, std::less<>> {};
 
 } // namespace power_grid_model
