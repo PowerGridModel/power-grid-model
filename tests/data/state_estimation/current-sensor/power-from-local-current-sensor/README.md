@@ -6,7 +6,13 @@ SPDX-License-Identifier: MPL-2.0
 
 # Power sensor from Local Current Sensor test case
 
-This test case is used to validate the output values from the local current sensor. To verify the correctness of the results, the input from the local current sensor is transformed into power sensor input. At the time of writing, the power sensor component has already been validated. However, keep in mind that for state estimation using the iterative linear method, there may be small discrepancies between the results obtained from the current sensor and those from the power sensor due to the approximate nature of the calculation method.
+This test case is used to validate the output values from the local current sensor.
+To verify the correctness of the results, the input from the local current sensor is transformed into power sensor
+input.
+At the time of writing, the power sensor component has already been validated.
+However, keep in mind that for state estimation using the iterative linear method, there may be small discrepancies
+between the results obtained from the current sensor and those from the power sensor due to the approximate nature of
+the calculation method.
 
 ## Conversion from Local Current Sensor to Power Sensor
 

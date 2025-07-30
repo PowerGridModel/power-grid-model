@@ -66,8 +66,9 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
     using sym = sym_type;
 
     static constexpr auto is_iterative = true;
-    static constexpr auto has_current_sensor_implemented =
-        true; // TODO(mgovers): for testing purposes; remove after NRSE has current sensor implemented
+    static constexpr auto has_global_current_sensor_implemented =
+        true; // TODO(figueroa1395): for testing purposes; remove after NRSE has global current sensor implemented
+    static constexpr auto is_NRSE_solver = false; // for testing purposes only
 
   private:
     // block size 2 for symmetric, 6 for asym
@@ -98,7 +99,7 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
         sub_timer = Timer(calculation_info, 2221, "Pre-process measured value");
         MeasuredValues<sym> const measured_values{y_bus.shared_topology(), input};
         auto const observability_result =
-            necessary_observability_check(measured_values, y_bus.math_topology(), y_bus.y_bus_structure());
+            observability_check(measured_values, y_bus.math_topology(), y_bus.y_bus_structure());
 
         // prepare matrix
         sub_timer = Timer(calculation_info, 2222, "Prepare matrix, including pre-factorization");
@@ -418,7 +419,7 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
                                           ComplexValue<sym> const& voltage) const {
         using statistics::scale;
 
-        auto const measurement = static_cast<IndependentComplexRandVar<sym>>(current_measurement.measurement);
+        auto measurement = static_cast<IndependentComplexRandVar<sym>>(current_measurement.measurement);
 
         switch (current_measurement.angle_measurement_type) {
         case AngleMeasurementType::global_angle:

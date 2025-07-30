@@ -25,7 +25,6 @@ from power_grid_model._core.power_grid_core import AttributePtr, ComponentPtr, D
 
 
 # constant enum for ctype
-# pylint: disable=invalid-name
 class PGMCType(IntEnum):
     """enumeration for ctype"""
 

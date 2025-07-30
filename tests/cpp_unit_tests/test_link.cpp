@@ -64,7 +64,7 @@ TEST_CASE("Test link") {
     }
 
     SUBCASE("Symmetric results") {
-        BranchOutput<symmetric_t> output = branch.get_output<symmetric_t>(1.0, 0.9);
+        BranchOutput<symmetric_t> const output = branch.get_output<symmetric_t>(1.0, 0.9);
         CHECK(output.id == 1);
         CHECK(output.energized);
         CHECK(output.loading == 0.0);
@@ -79,7 +79,7 @@ TEST_CASE("Test link") {
     }
 
     SUBCASE("Asymmetric results") {
-        BranchOutput<asymmetric_t> output = branch.get_output<asymmetric_t>(uaf, uat);
+        BranchOutput<asymmetric_t> const output = branch.get_output<asymmetric_t>(uaf, uat);
         CHECK(output.id == 1);
         CHECK(output.energized);
         CHECK(output.loading == 0.0);
@@ -94,7 +94,7 @@ TEST_CASE("Test link") {
     }
 
     SUBCASE("Short circuit asym results") {
-        BranchShortCircuitOutput asym_output = branch.get_sc_output(if_sc_asym, it_sc_asym);
+        BranchShortCircuitOutput const asym_output = branch.get_sc_output(if_sc_asym, it_sc_asym);
         CHECK(asym_output.id == 1);
         CHECK(asym_output.energized);
         CHECK(asym_output.i_from(0) == doctest::Approx(cabs(if_sc) * base_i_from));
@@ -104,8 +104,8 @@ TEST_CASE("Test link") {
     }
 
     SUBCASE("Short circuit sym results") {
-        BranchShortCircuitOutput sym_output = branch.get_sc_output(if_sc, it_sc);
-        BranchShortCircuitOutput asym_output = branch.get_sc_output(if_sc_asym, it_sc_asym);
+        BranchShortCircuitOutput const sym_output = branch.get_sc_output(if_sc, it_sc);
+        BranchShortCircuitOutput const asym_output = branch.get_sc_output(if_sc_asym, it_sc_asym);
         CHECK(sym_output.id == asym_output.id);
         CHECK(sym_output.energized == asym_output.energized);
         CHECK(sym_output.i_from(0) == doctest::Approx(asym_output.i_from(0)));

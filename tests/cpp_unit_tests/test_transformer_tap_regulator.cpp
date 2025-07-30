@@ -55,7 +55,7 @@ TEST_CASE("Test transformer tap regulator") {
     }
 
     SUBCASE("Test short circuit output") {
-        RegulatorShortCircuitOutput sc_output = transformer_tap_regulator.get_null_sc_output();
+        RegulatorShortCircuitOutput const sc_output = transformer_tap_regulator.get_null_sc_output();
         CHECK(sc_output.id == 1);
         CHECK(sc_output.energized == 0);
     }

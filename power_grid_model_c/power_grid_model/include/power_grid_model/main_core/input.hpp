@@ -20,19 +20,22 @@ constexpr std::array<Branch3Side, 3> const branch3_sides = {Branch3Side::side_1,
 // template to construct components
 // using forward interators
 // different selection based on component type
-template <std::derived_from<Base> Component, class ComponentContainer, std::forward_iterator ForwardIterator>
+template <std::derived_from<Base> Component, class ComponentContainer, std::ranges::viewable_range Inputs>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
-inline void add_component(MainModelState<ComponentContainer>& state, ForwardIterator begin, ForwardIterator end,
+inline void add_component(MainModelState<ComponentContainer>& state, Inputs&& component_inputs,
                           double system_frequency) {
-    using ComponentView = std::conditional_t<std::same_as<decltype(*begin), typename Component::InputType const&>,
-                                             typename Component::InputType const&, typename Component::InputType>;
+    using ComponentView =
+        std::conditional_t<std::same_as<std::ranges::range_reference_t<Inputs>, typename Component::InputType const&>,
+                           typename Component::InputType const&, typename Component::InputType>;
 
-    reserve_component<Component>(state, std::distance(begin, end));
+    reserve_component<Component>(state, std::ranges::size(component_inputs));
     // do sanity check on the transformer tap regulator
     std::vector<Idx2D> regulated_objects;
     // loop to add component
-    for (auto it = begin; it != end; ++it) {
-        ComponentView const input = *it;
+
+    for (auto const& input_proxy : std::views::all(std::forward<Inputs>(component_inputs))) {
+        ComponentView const input = [&input_proxy]() -> ComponentView { return input_proxy; }();
+
         ID const id = input.id;
         // construct based on type of component
         if constexpr (std::derived_from<Component, Node>) {
@@ -121,7 +124,7 @@ inline void add_component(MainModelState<ComponentContainer>& state, ForwardIter
                 case branch3_2:
                     return get_component<Branch3>(state, measured_object).node(side_2);
                 case branch3_3:
-                    return get_component<Branch3>(state, measured_object).node(side_2);
+                    return get_component<Branch3>(state, measured_object).node(side_3);
                 default:
                     throw MissingCaseForEnumError{std::format("{} item retrieval", GenericCurrentSensor::name),
                                                   measured_terminal_type};

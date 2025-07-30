@@ -42,6 +42,9 @@ from power_grid_model._core.errors import PowerGridError
 from power_grid_model._core.power_grid_meta import initialize_array, power_grid_meta_data
 from power_grid_model._core.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict
 
+SINGLE_DATASET_NDIM = 1
+BATCH_DATASET_NDIM = 2
+
 
 def is_nan(data) -> bool:
     """
@@ -166,17 +169,17 @@ def get_batch_size(
         for attribute, array in batch_data.items():
             if attribute in sym_attributes:
                 break
-            if array.ndim == 1:
+            if array.ndim == SINGLE_DATASET_NDIM:
                 raise TypeError("Incorrect dimension present in batch data.")
-            if array.ndim == 2:
+            if array.ndim == BATCH_DATASET_NDIM:
                 return 1
             return array.shape[0]
         sym_array = next(iter(batch_data.values()))
 
     sym_array = cast(DenseBatchArray | BatchColumn, sym_array)
-    if sym_array.ndim == 3:
+    if sym_array.ndim not in (SINGLE_DATASET_NDIM, BATCH_DATASET_NDIM):
         raise TypeError("Incorrect dimension present in batch data.")
-    if sym_array.ndim == 1:
+    if sym_array.ndim == SINGLE_DATASET_NDIM:
         return 1
     return sym_array.shape[0]
 
@@ -222,7 +225,7 @@ def _split_numpy_array_in_batches(
     Returns:
         A list with a single numpy structured array per batch
     """
-    if data.ndim == 1:
+    if data.ndim == SINGLE_DATASET_NDIM:
         return [data]
     if data.ndim in [2, 3]:
         return [data[i, ...] for i in range(data.shape[0])]
@@ -325,7 +328,7 @@ def convert_dataset_to_python_dataset(data: Dataset) -> PythonDataset:
     # It is batch dataset if it is 2D array or a indptr/data structure
     is_batch: bool | None = None
     for component, array in data.items():
-        is_dense_batch = isinstance(array, np.ndarray) and array.ndim == 2
+        is_dense_batch = isinstance(array, np.ndarray) and array.ndim == BATCH_DATASET_NDIM
         is_sparse_batch = isinstance(array, dict) and "indptr" in array and "data" in array
         if is_batch is not None and is_batch != (is_dense_batch or is_sparse_batch):
             raise ValueError(
@@ -364,7 +367,7 @@ def convert_single_dataset_to_python_single_dataset(
     # For example: {"node": [{"id": 0, ...}, {"id": 1, ...}], "line": [{"id": 2, ...}]}
     def _convert_component(objects: SingleComponentData):
         # This should be a single data set
-        if not isinstance(objects, np.ndarray) or objects.ndim != 1:
+        if not isinstance(objects, np.ndarray) or objects.ndim != 1 or objects.dtype.names is None:
             raise ValueError("Invalid data format")
 
         return [
@@ -441,6 +444,8 @@ def _convert_data_to_row_or_columnar(
         return {}
     if isinstance(attrs, ComponentAttributeFilterOptions):
         names = cast(SingleArray, data).dtype.names if not is_columnar(data) else cast(SingleColumnarData, data).keys()
+        if names is None:
+            raise ValueError("No attributes available in meta")
         return {attr: deepcopy(data[attr]) for attr in names}
     return {attr: deepcopy(data[attr]) for attr in attrs}
 
@@ -649,10 +654,12 @@ def _extract_columnar_data(
     """
     not_columnar_data_message = "Expected columnar data"
 
-    if is_batch is not None:
-        allowed_dims = [2, 3] if is_batch else [1, 2]
-    else:
+    if is_batch is None:
         allowed_dims = [1, 2, 3]
+    elif is_batch:
+        allowed_dims = [2, 3]
+    else:
+        allowed_dims = [1, 2]
 
     sub_data = data["data"] if is_sparse(data) else data
 
@@ -681,10 +688,12 @@ def _extract_row_based_data(
     Returns:
         SingleArray | DenseBatchArray: the contents of row based data
     """
-    if is_batch is not None:
-        allowed_dims = [2] if is_batch else [1]
-    else:
+    if is_batch is None:
         allowed_dims = [1, 2]
+    elif is_batch:
+        allowed_dims = [2]
+    else:
+        allowed_dims = [1]
 
     sub_data = data["data"] if is_sparse(data) else data
 

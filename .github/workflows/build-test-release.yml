@@ -79,11 +79,11 @@ jobs:
       - name: Install packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build gcc-13 g++-13 clang-18
+          sudo apt-get install -y ninja-build gcc-14 g++-14 clang-18
           sudo ln -s /usr/bin/clang-18 /usr/local/bin/clang
           sudo ln -s /usr/bin/clang++-18 /usr/local/bin/clang++
-          sudo ln -s /usr/bin/gcc-13 /usr/local/bin/gcc
-          sudo ln -s /usr/bin/g++-13 /usr/local/bin/g++
+          sudo ln -s /usr/bin/gcc-14 /usr/local/bin/gcc
+          sudo ln -s /usr/bin/g++-14 /usr/local/bin/g++
 
       - name: Enable brew
         run: |
@@ -150,7 +150,7 @@ jobs:
           install\${{ env.PRESET }}\bin\power_grid_model_package_test; if(!$?) { Exit $LASTEXITCODE }
 
   build-cpp-test-macos:
-    runs-on: macos-14
+    runs-on: macos-15
     strategy:
       matrix:
         build-option: [ debug, release ]
@@ -209,7 +209,7 @@ jobs:
           xcode-version: latest-stable
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.23.3
+        uses: pypa/cibuildwheel@v3.1.1
         # GitHub Actions specific build parameters
         env:
           # pass GitHub runner info into Linux container

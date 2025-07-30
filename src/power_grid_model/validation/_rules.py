@@ -35,18 +35,15 @@ Output data:
 
 """
 
-# pylint: disable=too-many-lines
-
 from enum import Enum
 from typing import Any, Callable, Type, TypeVar
 
 import numpy as np
 
-from power_grid_model import ComponentType
-from power_grid_model._core.enum import AngleMeasurementType
+from power_grid_model._core.dataset_definitions import ComponentType, DatasetType
+from power_grid_model._core.enum import AngleMeasurementType, FaultPhase, FaultType, WindingType
 from power_grid_model._core.utils import get_comp_size, is_nan_or_default
 from power_grid_model.data_types import SingleDataset
-from power_grid_model.enum import FaultPhase, FaultType, WindingType
 from power_grid_model.validation.errors import (
     ComparisonError,
     FaultPhaseError,
@@ -243,8 +240,7 @@ def all_less_or_equal(
     return none_match_comparison(data, component, field, not_less_or_equal, ref_value, NotLessOrEqualError)
 
 
-# pylint: disable=too-many-arguments
-def all_between(  # pylint: disable=too-many-positional-arguments
+def all_between(  # noqa: PLR0913
     data: SingleDataset,
     component: ComponentType,
     field: str,
@@ -284,8 +280,7 @@ def all_between(  # pylint: disable=too-many-positional-arguments
     )
 
 
-# pylint: disable=too-many-arguments
-def all_between_or_at(  # pylint: disable=too-many-positional-arguments
+def all_between_or_at(  # noqa: PLR0913
     data: SingleDataset,
     component: ComponentType,
     field: str,
@@ -335,7 +330,7 @@ def all_between_or_at(  # pylint: disable=too-many-positional-arguments
     )
 
 
-def none_match_comparison(  # pylint: disable=too-many-arguments
+def none_match_comparison(  # noqa: PLR0913
     data: SingleDataset,
     component: ComponentType,
     field: str,
@@ -345,7 +340,6 @@ def none_match_comparison(  # pylint: disable=too-many-arguments
     default_value_1: np.ndarray | int | float | None = None,
     default_value_2: np.ndarray | int | float | None = None,
 ) -> list[CompError]:
-    # pylint: disable=too-many-positional-arguments
     """
     For all records of a particular type of component, check if the value in the 'field' column match the comparison.
     Returns an empty list if none of the value match the comparison, or a list containing a single error object when at
@@ -559,8 +553,7 @@ def all_valid_enum_values(
     return []
 
 
-# pylint: disable=too-many-arguments
-def all_valid_associated_enum_values(  # pylint: disable=too-many-positional-arguments
+def all_valid_associated_enum_values(  # noqa: PLR0913
     data: SingleDataset,
     component: ComponentType,
     field: str,
@@ -710,7 +703,7 @@ def all_not_two_values_equal(
 
 
 def ids_valid_in_update_data_set(
-    update_data: SingleDataset, ref_data: SingleDataset, component: ComponentType, ref_name: str
+    update_data: SingleDataset, ref_data: SingleDataset, component: ComponentType, ref_name: DatasetType
 ) -> list[IdNotInDatasetError | InvalidIdError]:
     """
     Check that for all records of a particular type of component, whether the ids:
@@ -721,7 +714,7 @@ def ids_valid_in_update_data_set(
         update_data: The update data set for all components
         ref_data: The reference (input) data set for all components
         component: The component of interest
-        ref_name: The name of the reference data set, e.g. 'update_data'
+        ref_name: The name of the reference data set type
 
     Returns:
         A list containing zero or one IdNotInDatasetError, listing all ids of the objects in the data set which do not
@@ -780,7 +773,7 @@ def all_finite(data: SingleDataset, exceptions: dict[ComponentType, list[str]] |
 
             invalid = np.isinf(array[field])
             if invalid.any():
-                ids = data[component]["id"][invalid].flatten().tolist()
+                ids = array["id"][invalid].flatten().tolist()
                 errors.append(InfinityError(component, field, ids))
     return errors
 
@@ -847,7 +840,8 @@ def not_all_missing(data: SingleDataset, fields: list[str], component_type: Comp
         fields: List of fields
         component_type: component type to check
     """
-    if len(fields) < 2:
+    min_fields = 2
+    if len(fields) < min_fields:
         raise ValueError(
             "The fields parameter must contain at least 2 fields. Otherwise use the none_missing function."
         )
@@ -898,10 +892,7 @@ def none_missing(data: SingleDataset, component: ComponentType, fields: str | li
         fields = [fields]
     for field in fields:
         nan = _nan_type(component, field)
-        if np.isnan(nan):
-            invalid = np.isnan(data[component][field])
-        else:
-            invalid = np.equal(data[component][field], nan)
+        invalid = np.isnan(data[component][field]) if np.isnan(nan) else np.equal(data[component][field], nan)
 
         if invalid.any():
             # handle both symmetric and asymmetric values

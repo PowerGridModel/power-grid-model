@@ -117,9 +117,15 @@ def _get_raw_attribute_data_view(data: np.ndarray, schema: ComponentMetaData, at
     Returns:
         a raw view on the data set.
     """
-    if schema.dtype[attribute].shape == (3,) and data.shape[-1] != 3:
-        raise ValueError("Given data has a different schema than supported.")
-    return _get_raw_data_view(data, dtype=schema.dtype[attribute].base)
+    dense_batch_ndim = 2
+
+    attr_schema = schema.dtype[attribute]
+    attr_shape_start = data.ndim - attr_schema.ndim
+    dataset_shape = data.shape[:attr_shape_start]
+    attr_shape = data.shape[attr_shape_start:]
+    if len(dataset_shape) <= dense_batch_ndim and attr_shape == attr_schema.shape:
+        return _get_raw_data_view(data, dtype=schema.dtype[attribute].base)
+    raise ValueError("Given data has a different schema than supported.")
 
 
 def _get_indptr_view(indptr: np.ndarray) -> IdxPtr:  # type: ignore[valid-type]
@@ -185,8 +191,11 @@ def _get_dense_buffer_properties(
     if actual_ndim not in (1, 2):
         raise ValueError(f"Array can only be 1D or 2D. {VALIDATOR_MSG}")
 
-    actual_is_batch = actual_ndim == 2
-    actual_batch_size = shape[0] if actual_is_batch else 1
+    single_dataset_ndim = 1
+    batch_dataset_ndim = 2
+
+    actual_is_batch = actual_ndim == batch_dataset_ndim
+    actual_batch_size = shape[0] if actual_is_batch else single_dataset_ndim
     n_elements_per_scenario = shape[-1]
     n_total_elements = actual_batch_size * n_elements_per_scenario
 
