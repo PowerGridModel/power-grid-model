@@ -9,6 +9,7 @@
 #include "main_core/calculation_info.hpp"
 #include "main_core/update.hpp"
 
+#include <mutex>
 #include <thread>
 
 namespace power_grid_model {
@@ -60,27 +61,35 @@ template <class MainModel, class... ComponentType> class JobDispatch {
 
         // error messages
         std::vector<std::string> exceptions(n_scenarios, "");
-        std::vector<CalculationInfo> infos(n_threads(n_scenarios, threading), CalculationInfo{});
+
+        // thread-safe handling of calculation info
+        std::mutex calculation_info_mutex;
+        auto const thread_safe_add_calculation_info = [&calculation_info,
+                                                       &calculation_info_mutex](CalculationInfo const& info) {
+            std::lock_guard lock{calculation_info_mutex};
+            main_core::merge_into(calculation_info, info);
+        };
 
         // lambda for sub batch calculation
         main_core::utils::SequenceIdx<ComponentType...> all_scenarios_sequence;
-        auto sub_batch = sub_batch_calculation_(model, std::forward<Calculate>(calculation_fn), result_data,
-                                                update_data, all_scenarios_sequence, exceptions, infos);
+        auto sub_batch =
+            sub_batch_calculation_(model, std::forward<Calculate>(calculation_fn), result_data, update_data,
+                                   all_scenarios_sequence, exceptions, thread_safe_add_calculation_info);
 
         job_dispatch(sub_batch, n_scenarios, threading);
 
         handle_batch_exceptions(exceptions);
-        calculation_info = main_core::merge_calculation_info(infos);
 
         return BatchParameter{};
     }
 
-    template <typename Calculate>
+    template <typename Calculate, typename AddCalculationInfo>
         requires std::invocable<std::remove_cvref_t<Calculate>, MainModel&, MutableDataset const&, Idx>
     static auto sub_batch_calculation_(MainModel const& base_model, Calculate&& calculation_fn,
                                        MutableDataset const& result_data, ConstDataset const& update_data,
                                        main_core::utils::SequenceIdx<ComponentType...>& all_scenarios_sequence,
-                                       std::vector<std::string>& exceptions, std::vector<CalculationInfo>& infos) {
+                                       std::vector<std::string>& exceptions,
+                                       AddCalculationInfo&& thread_safe_add_calculation_info) {
         // cache component update order where possible.
         // the order for a cacheable (independent) component by definition is the same across all scenarios
         auto const components_to_update = base_model.get_components_to_update(update_data);
@@ -89,13 +98,14 @@ template <class MainModel, class... ComponentType> class JobDispatch {
         all_scenarios_sequence = main_core::update::get_all_sequence_idx_map<ComponentType...>(
             base_model.state(), update_data, 0, components_to_update, update_independence, false);
 
-        return [&base_model, &exceptions, &infos, calculation_fn_ = std::forward<Calculate>(calculation_fn),
-                &result_data, &update_data, &all_scenarios_sequence_ = std::as_const(all_scenarios_sequence),
-                components_to_update, update_independence](Idx start, Idx stride, Idx n_scenarios) {
+        return [&base_model, &exceptions, &thread_safe_add_calculation_info,
+                calculation_fn_ = std::forward<Calculate>(calculation_fn), &result_data, &update_data,
+                &all_scenarios_sequence_ = std::as_const(all_scenarios_sequence), components_to_update,
+                update_independence](Idx start, Idx stride, Idx n_scenarios) {
             assert(n_scenarios <= narrow_cast<Idx>(exceptions.size()));
-            assert(0 <= start && start < narrow_cast<Idx>(infos.size()));
 
-            auto& thread_info = infos[start];
+            CalculationInfo thread_info;
+
             Timer const t_total(thread_info, 0000, "Total in thread");
 
             auto const copy_model_functor = [&base_model, &thread_info] {
@@ -112,16 +122,17 @@ template <class MainModel, class... ComponentType> class JobDispatch {
             auto calculate_scenario = JobDispatch::call_with<Idx>(
                 [&model, &calculation_fn_, &result_data, &thread_info](Idx scenario_idx) {
                     calculation_fn_(model, result_data, scenario_idx);
-                    thread_info.merge(model.calculation_info());
+                    main_core::merge_into(thread_info, model.calculation_info());
                 },
                 std::move(setup), std::move(winddown), scenario_exception_handler(model, exceptions, thread_info),
                 [&model, &copy_model_functor](Idx /*scenario_idx*/) { model = copy_model_functor(); });
 
             for (Idx scenario_idx = start; scenario_idx < n_scenarios; scenario_idx += stride) {
                 Timer const t_total_single(thread_info, 0100, "Total single calculation in thread");
-
                 calculate_scenario(scenario_idx);
             }
+
+            thread_safe_add_calculation_info(thread_info);
         };
     }
 

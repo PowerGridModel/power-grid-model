@@ -10,21 +10,16 @@
 
 namespace power_grid_model::main_core {
 
-inline CalculationInfo merge_calculation_info(std::vector<CalculationInfo> const& infos) {
-    CalculationInfo result;
-
-    auto const key = Timer::make_key(2226, "Max number of iterations");
-    for (auto const& info : infos) {
-        for (auto const& [k, v] : info) {
-            if (k == key) {
-                result[k] = std::max(result[k], v);
-            } else {
-                result[k] += v;
-            }
+inline CalculationInfo& merge_into(CalculationInfo& dest, CalculationInfo const& src) {
+    static auto const key = Timer::make_key(2226, "Max number of iterations");
+    for (auto const& [k, v] : src) {
+        if (k == key) {
+            dest[k] = std::max(dest[k], v);
+        } else {
+            dest[k] += v;
         }
     }
-
-    return result;
+    return dest;
 }
 
 } // namespace power_grid_model::main_core
