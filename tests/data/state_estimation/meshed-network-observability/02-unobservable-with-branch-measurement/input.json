@@ -25,7 +25,7 @@
     ],
     "sym_power_sensor": [
       {"id": 13, "measured_object": 0, "measured_terminal_type": 2, "p_sigma": 1e6, "q_sigma": 1e6, "p_measured": 0, "q_measured": 0},
-      {"id": 14, "measured_object": 8, "measured_terminal_type": 1, "p_sigma": 1e6, "q_sigma": 1e6, "p_measured": 0, "q_measured": 0}
+      {"id": 14, "measured_object": 3, "measured_terminal_type": 9, "p_sigma": 1e6, "q_sigma": 1e6, "p_measured": 0, "q_measured": 0}
     ],
     "sym_current_sensor": [
       {"id": 15, "measured_object": 9, "measured_terminal_type": 0, "angle_measurement_type": 0, "i_sigma": 1.0, "i_measured": 1.0, "i_angle_sigma": 1.0, "i_angle_measured": 1.0},
