@@ -11,11 +11,11 @@
 
 namespace power_grid_model {
 
-#if defined(__cpp_lib_hardware_interference_size)
-constexpr size_t cache_line_size = std::hardware_destructive_interference_size;
-#else
+// We would prefer to use std::hardware_destructive_interference_size, but as explained in
+// https://discourse.llvm.org/t/rfc-c-17-hardware-constructive-destructive-interference-size/48674/7
+// and https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Winterference-size, there is no
+// good way to determine the size of the cache line in a portable way at compile-time.
 constexpr size_t cache_line_size = 64;
-#endif
 
 class alignas(cache_line_size) CalculationInfo : public std::map<std::string, double, std::less<>> {};
 
