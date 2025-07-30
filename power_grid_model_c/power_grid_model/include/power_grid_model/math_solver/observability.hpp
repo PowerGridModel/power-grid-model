@@ -37,12 +37,12 @@ ObservabilitySensorsResult count_observability_sensors(MeasuredValues<sym> const
                                       .voltage_phasor_sensors = std::vector<int8_t>(n_bus, 0),
                                       .is_possibly_ill_conditioned = false};
 
-    auto has_flow_sensor = [&measured_values](Idx branch) {
+    auto has_flow_sensor = [&measured_values](Idx branch) -> bool {
         return measured_values.has_branch_from_power(branch) || measured_values.has_branch_to_power(branch) ||
                measured_values.has_branch_from_current(branch) || measured_values.has_branch_to_current(branch);
     };
 
-    auto is_branch_connected = [&topo](Idx branch) {
+    auto is_branch_connected = [&topo](Idx branch) -> bool {
         return topo.branch_bus_idx[branch][0] != -1 && topo.branch_bus_idx[branch][1] != -1;
     };
 
@@ -167,8 +167,8 @@ inline bool necessary_observability_condition(ObservabilitySensorsResult const& 
 inline bool sufficient_observability_condition(YBusStructure const& y_bus_structure,
                                                ObservabilitySensorsResult& observability_sensors,
                                                Idx const n_voltage_phasor_sensors) {
-    auto& flow_sensors = observability_sensors.flow_sensors;
-    auto& voltage_phasor_sensors = observability_sensors.voltage_phasor_sensors;
+    std::vector<int8_t>& flow_sensors = observability_sensors.flow_sensors;
+    std::vector<int8_t>& voltage_phasor_sensors = observability_sensors.voltage_phasor_sensors;
     Idx const n_bus{std::ssize(y_bus_structure.row_indptr) - 1};
 
     // for a radial grid, try to assign injection or phasor voltage sensors to unmeasured branches
@@ -211,7 +211,8 @@ inline ObservabilityResult observability_check(MeasuredValues<sym> const& measur
         throw NotObservableError{"No voltage sensor found!\n"};
     }
 
-    auto observability_sensors = detail::count_observability_sensors(measured_values, topo, y_bus_structure);
+    detail::ObservabilitySensorsResult observability_sensors =
+        detail::count_observability_sensors(measured_values, topo, y_bus_structure);
     Idx n_voltage_phasor_sensors{};
 
     // check necessary condition for observability
@@ -227,8 +228,8 @@ inline ObservabilityResult observability_check(MeasuredValues<sym> const& measur
                                    .is_possibly_ill_conditioned = observability_sensors.is_possibly_ill_conditioned};
     }
     // This is a temporary path for meshed grids
-    return ObservabilityResult{.is_observable = true,
-                               .is_possibly_ill_conditioned = observability_sensors.is_possibly_ill_conditioned};
+    // pos_ill_condition should be passed via observability_sensors but python side on ubuntu has trouble with defaults
+    return ObservabilityResult{.is_observable = true, .is_possibly_ill_conditioned = false};
 }
 
 } // namespace power_grid_model::math_solver
