@@ -37,9 +37,8 @@
     "sym_load": [
       {"id": 18, "node": 2, "status": 1, "type": 0, "p_specified": 9, "q_specified": 0},
       {"id": 19, "node": 3, "status": 1, "type": 0, "p_specified": 9, "q_specified": 0},
-      {"id": 20, "node": 4, "status": 1, "type": 0, "p_specified": 9, "q_specified": 0},
-      {"id": 21, "node": 5, "status": 1, "type": 0, "p_specified": 9, "q_specified": 0},
-      {"id": 22, "node": 6, "status": 1, "type": 0, "p_specified": 9, "q_specified": 0}
+      {"id": 20, "node": 5, "status": 1, "type": 0, "p_specified": 9, "q_specified": 0},
+      {"id": 21, "node": 6, "status": 1, "type": 0, "p_specified": 9, "q_specified": 0}
     ]
   }
 }
