@@ -223,11 +223,11 @@ inline ObservabilityResult observability_check(MeasuredValues<sym> const& measur
     if (topo.is_radial) {
         is_sufficient_condition_met = detail::sufficient_observability_condition(y_bus_structure, observability_sensors,
                                                                                  n_voltage_phasor_sensors);
-    } else {
-        // This is a temporary path for meshed grids
-        return ObservabilityResult{.is_observable = true, .is_possibly_ill_conditioned = false};
+        return ObservabilityResult{.is_observable = is_necessary_condition_met && is_sufficient_condition_met,
+                                   .is_possibly_ill_conditioned = observability_sensors.is_possibly_ill_conditioned};
     }
-    return ObservabilityResult{.is_observable = is_necessary_condition_met && is_sufficient_condition_met,
+    // This is a temporary path for meshed grids
+    return ObservabilityResult{.is_observable = true,
                                .is_possibly_ill_conditioned = observability_sensors.is_possibly_ill_conditioned};
 }
 
