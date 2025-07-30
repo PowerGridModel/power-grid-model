@@ -93,9 +93,9 @@ class ThreeWindingTransformer : public Branch3 {
             throw InvalidTransformerClock{id(), clock_13_};
         }
 
-        // set clock to zero if it is 12
-        clock_12_ = static_cast<IntS>(clock_12_ % 12);
-        clock_13_ = static_cast<IntS>(clock_13_ % 12);
+        // handle periodic clock input -> in range [0, 11]
+        clock_12_ = static_cast<IntS>((clock_12_ % 12 + 12) % 12);
+        clock_13_ = static_cast<IntS>((clock_13_ % 12 + 12) % 12);
         // check tap bounds
         tap_pos_ = tap_limit(tap_pos_);
     }
