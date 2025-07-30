@@ -549,10 +549,12 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
                                                    CurrentSensorCalcParam<sym> const& current_sensor) {
         ComplexTensor<sym> const current_chi_chi = dot(y_xi_xi, ComplexDiagonalTensor<sym>{u_state.u_chi(order)});
         ComplexTensor<sym> const current_chi_psi = dot(y_xi_mu, ComplexDiagonalTensor<sym>{u_state.u_psi(order)});
+        ComplexTensor<sym> const current_chi_chi_v_inv = dot(current_chi_chi, u_state.abs_u_chi_inv(order));
+        ComplexTensor<sym> const current_chi_psi_v_inv = dot(current_chi_psi, u_state.abs_u_psi_inv(order));
         ComplexValue<sym> const f_x_complex = sum_row(current_chi_chi + current_chi_psi);
 
-        auto const block_rr_or_cc = calculate_jacobian_global_current(current_chi_chi);
-        auto const block_rc_or_cr = calculate_jacobian_global_current(current_chi_psi);
+        auto const block_rr_or_cc = calculate_jacobian(-current_chi_chi, current_chi_chi_v_inv);
+        auto const block_rc_or_cr = calculate_jacobian(-current_chi_psi, current_chi_psi_v_inv);
 
         if (order == Order::row_major) {
             multiply_add_branch_blocks(block, diag_block, rhs_block, block_rr_or_cc, block_rc_or_cr,
@@ -736,17 +738,12 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
         block.q_Q_v() += jacobian_block.dQ_dv;
     }
 
-    static NRSEJacobian calculate_jacobian_global_current(ComplexTensor<sym> const& current) {
-        NRSEJacobian jacobian{};
-        jacobian.dP_dt = -imag(current);
-        jacobian.dP_dv = real(current);
-        jacobian.dQ_dt = real(current);
-        jacobian.dQ_dv = imag(current);
-        return jacobian;
-    }
-
     /// @brief Construct the F_k(u1, u2, y12) block using helper function of hnml complex form
     /// The 4 members are H, N, M, L in the order.
+    ///
+    /// Function is also reused for global current sensor. 
+    /// The notation in that case is as per current and current * V^-1 instead of HNML.
+    ///
     ///
     /// @param hm_complex hm_complex
     /// @param nl_complex hm_complex / abs(u2)
