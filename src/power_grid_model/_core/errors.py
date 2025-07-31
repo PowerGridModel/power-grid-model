@@ -108,6 +108,10 @@ class InvalidShortCircuitPhaseOrType(PowerGridError):
     """Invalid (combination of) short circuit types and phase(s) provided."""
 
 
+class TapSearchStrategyIncompatibleError(InvalidArguments):
+    """Search method is incompatible with optimization strategy."""
+
+
 class PowerGridSerializationError(PowerGridError):
     """Error occurs during (de-)serialization."""
 
