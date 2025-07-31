@@ -229,7 +229,8 @@ inline ObservabilityResult observability_check(MeasuredValues<sym> const& measur
     }
     // This is a temporary path for meshed grids
     // pos_ill_condition should be passed via observability_sensors but python side on ubuntu has trouble with defaults
-    return ObservabilityResult{.is_observable = true,
+    //  ToDo(JGuo): the `is_possibly_ill_conditioned` is set to false for now to avoid perturbation
+    return ObservabilityResult{.is_observable = is_necessary_condition_met && is_sufficient_condition_met,
                                .is_possibly_ill_conditioned = observability_sensors.is_possibly_ill_conditioned};
 }
 
