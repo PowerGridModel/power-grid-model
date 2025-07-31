@@ -5,7 +5,7 @@
 [build-system]
 requires = [
     "scikit-build-core",
-    "pgm-build-dependencies@git+https://github.com/PowerGridModel/pgm-build-dependencies.git"
+    "pgm-build-dependencies@https://github.com/PowerGridModel/pgm-build-dependencies/releases/latest/download/pgm_build_dependencies-0.1.0-py3-none-any.whl"
 ]
 build-backend = "scikit_build_core.build"
 
