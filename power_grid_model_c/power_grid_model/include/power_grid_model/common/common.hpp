@@ -121,9 +121,8 @@ template <typename T> constexpr T map_to_cyclic_range(T value, T period) {
                 (quotient >= T{0}) ? static_cast<long long>(quotient) : static_cast<long long>(quotient) - 1;
             T result = value - static_cast<T>(floored_quotient) * period;
             return result;
-        } else {
-            return std::fmod(std::fmod(value, period) + period, period);
         }
+        return std::fmod(std::fmod(value, period) + period, period);
     }
 }
 
