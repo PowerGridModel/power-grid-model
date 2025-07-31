@@ -37,12 +37,12 @@ ObservabilitySensorsResult count_observability_sensors(MeasuredValues<sym> const
                                       .voltage_phasor_sensors = std::vector<int8_t>(n_bus, 0),
                                       .is_possibly_ill_conditioned = false};
 
-    auto has_flow_sensor = [&measured_values](Idx branch) -> bool {
+    auto has_flow_sensor = [&measured_values](Idx branch) {
         return measured_values.has_branch_from_power(branch) || measured_values.has_branch_to_power(branch) ||
                measured_values.has_branch_from_current(branch) || measured_values.has_branch_to_current(branch);
     };
 
-    auto is_branch_connected = [&topo](Idx branch) -> bool {
+    auto is_branch_connected = [&topo](Idx branch) {
         return topo.branch_bus_idx[branch][0] != -1 && topo.branch_bus_idx[branch][1] != -1;
     };
 
