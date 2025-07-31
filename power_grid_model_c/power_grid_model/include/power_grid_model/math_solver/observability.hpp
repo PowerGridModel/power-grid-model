@@ -224,12 +224,10 @@ inline ObservabilityResult observability_check(MeasuredValues<sym> const& measur
     if (topo.is_radial) {
         is_sufficient_condition_met = detail::sufficient_observability_condition(y_bus_structure, observability_sensors,
                                                                                  n_voltage_phasor_sensors);
-        return ObservabilityResult{.is_observable = is_necessary_condition_met && is_sufficient_condition_met,
-                                   .is_possibly_ill_conditioned = observability_sensors.is_possibly_ill_conditioned};
     }
     // This is a temporary path for meshed grids
     // pos_ill_condition should be passed via observability_sensors but python side on ubuntu has trouble with defaults
-    //  ToDo(JGuo): the `is_possibly_ill_conditioned` is set to false for now to avoid perturbation
+    //  ToDo(JGuo): meshed network will require a different treatment
     return ObservabilityResult{.is_observable = is_necessary_condition_met && is_sufficient_condition_met,
                                .is_possibly_ill_conditioned = observability_sensors.is_possibly_ill_conditioned};
 }
