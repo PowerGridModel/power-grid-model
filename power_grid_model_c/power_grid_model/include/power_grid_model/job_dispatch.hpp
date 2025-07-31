@@ -66,7 +66,7 @@ template <class MainModel, class... ComponentType> class JobDispatch {
         std::mutex calculation_info_mutex;
         auto const thread_safe_add_calculation_info = [&calculation_info,
                                                        &calculation_info_mutex](CalculationInfo const& info) {
-            std::lock_guard lock{calculation_info_mutex};
+            std::lock_guard const lock{calculation_info_mutex};
             main_core::merge_into(calculation_info, info);
         };
 
