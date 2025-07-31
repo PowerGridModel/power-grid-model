@@ -106,7 +106,7 @@ template <class MainModel, class... ComponentType> class JobDispatch {
 
             CalculationInfo thread_info;
 
-            Timer const t_total(thread_info, 0000, "Total in thread");
+            Timer t_total(thread_info, 0000, "Total in thread");
 
             auto const copy_model_functor = [&base_model, &thread_info] {
                 Timer const t_copy_model_functor(thread_info, 1100, "Copy model");
@@ -132,6 +132,7 @@ template <class MainModel, class... ComponentType> class JobDispatch {
                 calculate_scenario(scenario_idx);
             }
 
+            t_total.stop();
             thread_safe_add_calculation_info(thread_info);
         };
     }
