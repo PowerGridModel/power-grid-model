@@ -229,7 +229,8 @@ inline ObservabilityResult observability_check(MeasuredValues<sym> const& measur
     }
     // This is a temporary path for meshed grids
     // pos_ill_condition should be passed via observability_sensors but python side on ubuntu has trouble with defaults
-    return ObservabilityResult{.is_observable = true, .is_possibly_ill_conditioned = false};
+    return ObservabilityResult{.is_observable = true,
+                               .is_possibly_ill_conditioned = observability_sensors.is_possibly_ill_conditioned};
 }
 
 } // namespace power_grid_model::math_solver
