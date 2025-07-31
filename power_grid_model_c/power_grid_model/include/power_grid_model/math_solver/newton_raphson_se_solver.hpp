@@ -741,7 +741,7 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
     /// @brief Construct the F_k(u1, u2, y12) block using helper function of hnml complex form
     /// The 4 members are H, N, M, L in the order.
     ///
-    /// Function is also reused for global current sensor. 
+    /// Function is also reused for global current sensor.
     /// The notation in that case is as per current and current * V^-1 instead of HNML.
     ///
     ///
