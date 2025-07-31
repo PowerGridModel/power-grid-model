@@ -114,7 +114,7 @@ class Subcase {
             CHECK_MESSAGE(statement, message);
         } else {
             // delay the check to the end
-            ++fail_count;
+            has_failing_assertion = true;
             CHECK_MESSAGE(!statement, std::format("xfailed assertion: {}", message));
         }
     }
@@ -132,7 +132,7 @@ class Subcase {
   private:
     std::optional<std::string> raises_{};
     std::optional<std::string> xfail_raises_{};
-    int fail_count{};
+    bool has_failing_assertion{};
 
     template <typename T>
         requires std::invocable<std::remove_cvref_t<T>, Subcase&>
@@ -148,7 +148,7 @@ class Subcase {
             } catch (std::exception const& e) {
                 if (match_exception(e, raises_.value())) {
                     // correct exception raised => pass
-                    subcase.fail_count = 0; // reset fail count
+                    subcase.has_failing_assertion = false; // assertions may fail when an exception is raised
                 } else {
                     throw;
                 }
@@ -165,7 +165,8 @@ class Subcase {
             }
             try {
                 statement_(subcase);
-                CHECK_MESSAGE(subcase.fail_count > 0, "XPASS");
+                bool const xfailed = subcase.has_failing_assertion;
+                CHECK_MESSAGE(xfailed, "XPASS");
             } catch (std::exception const& e) {
                 subcase.check_message(match_exception(e, xfail_raises_.value()),
                                       std::format("Test case marked as xfail with message '{}' but got exception: {}",
