@@ -43,12 +43,10 @@ constexpr double tap_adjust_impedance(double tap_pos, double tap_min, double tap
 }
 
 constexpr bool is_valid_clock(IntS clock, WindingType winding_from, WindingType winding_to) {
-    using enum WindingType;
-
     bool const clock_is_even = (clock % 2) == 0;
 
-    bool const is_from_wye = winding_from == wye || winding_from == wye_n;
-    bool const is_to_wye = winding_to == wye || winding_to == wye_n;
+    bool const is_from_wye = winding_from == WindingType::wye || winding_from == WindingType::wye_n;
+    bool const is_to_wye = winding_to == WindingType::wye || winding_to == WindingType::wye_n;
 
     // even clock number is only possible when both sides are wye winding or both sides aren't
     // and conversely for odd clock number

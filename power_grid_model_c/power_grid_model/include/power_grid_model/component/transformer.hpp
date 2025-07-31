@@ -64,7 +64,7 @@ class Transformer : public Branch {
         }
 
         // handle periodic clock input -> in range [0, 11]
-        clock_ = static_cast<IntS>((clock_ % 12 + 12) % 12);
+        clock_ = map_to_cyclic_range(clock_, IntS{12});
         // check tap bounds
         tap_pos_ = tap_limit(tap_pos_);
     }

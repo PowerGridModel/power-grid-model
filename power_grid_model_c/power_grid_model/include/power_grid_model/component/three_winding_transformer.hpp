@@ -94,8 +94,8 @@ class ThreeWindingTransformer : public Branch3 {
         }
 
         // handle periodic clock input -> in range [0, 11]
-        clock_12_ = static_cast<IntS>((clock_12_ % 12 + 12) % 12);
-        clock_13_ = static_cast<IntS>((clock_13_ % 12 + 12) % 12);
+        clock_12_ = map_to_cyclic_range(clock_12_, IntS{12});
+        clock_13_ = map_to_cyclic_range(clock_13_, IntS{12});
         // check tap bounds
         tap_pos_ = tap_limit(tap_pos_);
     }
