@@ -225,8 +225,6 @@ inline ObservabilityResult observability_check(MeasuredValues<sym> const& measur
         is_sufficient_condition_met = detail::sufficient_observability_condition(y_bus_structure, observability_sensors,
                                                                                  n_voltage_phasor_sensors);
     }
-    // This is a temporary path for meshed grids
-    // pos_ill_condition should be passed via observability_sensors but python side on ubuntu has trouble with defaults
     //  ToDo(JGuo): meshed network will require a different treatment
     return ObservabilityResult{.is_observable = is_necessary_condition_met && is_sufficient_condition_met,
                                .is_possibly_ill_conditioned = observability_sensors.is_possibly_ill_conditioned};
