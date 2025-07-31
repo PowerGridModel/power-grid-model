@@ -181,7 +181,7 @@ template <symmetry_tag sym_type> struct SESolverTestGrid : public SteadyStateSol
 
         StateEstimationInput<sym> result = se_input_angle_without_flow_sensors();
 
-        auto const branch_from_local_current =
+        auto const branch_from_current =
             output_reference.branch | std::ranges::views::transform([angle_measurement_type](auto const& b) {
                 if (angle_measurement_type == AngleMeasurementType::local_angle) {
                     return static_cast<ComplexValue<sym>>(cabs(b.i_f) * exp(1.0i * arg(b.s_f)));
@@ -189,7 +189,7 @@ template <symmetry_tag sym_type> struct SESolverTestGrid : public SteadyStateSol
                 return b.i_f;
             });
 
-        auto const branch_to_local_current =
+        auto const branch_to_current =
             output_reference.branch | std::ranges::views::transform([angle_measurement_type](auto const& b) {
                 if (angle_measurement_type == AngleMeasurementType::local_angle) {
                     return static_cast<ComplexValue<sym>>(cabs(b.i_t) * exp(1.0i * arg(b.s_t)));
@@ -200,49 +200,44 @@ template <symmetry_tag sym_type> struct SESolverTestGrid : public SteadyStateSol
         if constexpr (is_symmetric_v<sym>) {
             result.measured_branch_from_current = {
                 {.angle_measurement_type = angle_measurement_type,
-                 .measurement = {.real_component = {.value = real(branch_from_local_current[0]), .variance = 0.5},
-                                 .imag_component = {.value = imag(branch_from_local_current[0]), .variance = 0.5}}},
+                 .measurement = {.real_component = {.value = real(branch_from_current[0]), .variance = 0.5},
+                                 .imag_component = {.value = imag(branch_from_current[0]), .variance = 0.5}}},
             };
             result.measured_branch_to_current = {
                 {.angle_measurement_type = angle_measurement_type,
-                 .measurement = {.real_component = {.value = real(branch_to_local_current[0]), .variance = 0.5},
-                                 .imag_component = {.value = imag(branch_to_local_current[0]), .variance = 0.5}}},
+                 .measurement = {.real_component = {.value = real(branch_to_current[0]), .variance = 0.5},
+                                 .imag_component = {.value = imag(branch_to_current[0]), .variance = 0.5}}},
                 {.angle_measurement_type = angle_measurement_type,
-                 .measurement = {.real_component = {.value = real(branch_to_local_current[0]), .variance = 0.5},
-                                 .imag_component = {.value = imag(branch_to_local_current[0]), .variance = 0.5}}},
+                 .measurement = {.real_component = {.value = real(branch_to_current[0]), .variance = 0.5},
+                                 .imag_component = {.value = imag(branch_to_current[0]), .variance = 0.5}}},
                 {.angle_measurement_type = angle_measurement_type,
-                 .measurement = {.real_component = {.value = real(branch_to_local_current[1]), .variance = 0.5},
-                                 .imag_component = {.value = imag(branch_to_local_current[1]), .variance = 0.5}}}};
+                 .measurement = {.real_component = {.value = real(branch_to_current[1]), .variance = 0.5},
+                                 .imag_component = {.value = imag(branch_to_current[1]), .variance = 0.5}}}};
         } else {
             result.measured_branch_from_current = {
                 {.angle_measurement_type = angle_measurement_type,
-                 .measurement =
-                     {.real_component = {.value = real(branch_from_local_current[0] * RealValue<asymmetric_t>{1.0}),
-                                         .variance = RealValue<asymmetric_t>{0.5}},
-                      .imag_component = {.value = imag(branch_from_local_current[0] * RealValue<asymmetric_t>{1.0}),
-                                         .variance = RealValue<asymmetric_t>{0.5}}}},
+                 .measurement = {.real_component = {.value =
+                                                        real(branch_from_current[0] * RealValue<asymmetric_t>{1.0}),
+                                                    .variance = RealValue<asymmetric_t>{0.5}},
+                                 .imag_component = {.value =
+                                                        imag(branch_from_current[0] * RealValue<asymmetric_t>{1.0}),
+                                                    .variance = RealValue<asymmetric_t>{0.5}}}},
             };
             result.measured_branch_to_current = {
                 {.angle_measurement_type = angle_measurement_type,
-                 .measurement = {.real_component = {.value =
-                                                        real(branch_to_local_current[0] * RealValue<asymmetric_t>{1.0}),
+                 .measurement = {.real_component = {.value = real(branch_to_current[0] * RealValue<asymmetric_t>{1.0}),
                                                     .variance = RealValue<asymmetric_t>{0.5}},
-                                 .imag_component = {.value =
-                                                        imag(branch_to_local_current[0] * RealValue<asymmetric_t>{1.0}),
+                                 .imag_component = {.value = imag(branch_to_current[0] * RealValue<asymmetric_t>{1.0}),
                                                     .variance = RealValue<asymmetric_t>{0.5}}}},
                 {.angle_measurement_type = angle_measurement_type,
-                 .measurement = {.real_component = {.value =
-                                                        real(branch_to_local_current[0] * RealValue<asymmetric_t>{1.0}),
+                 .measurement = {.real_component = {.value = real(branch_to_current[0] * RealValue<asymmetric_t>{1.0}),
                                                     .variance = RealValue<asymmetric_t>{0.5}},
-                                 .imag_component = {.value =
-                                                        imag(branch_to_local_current[0] * RealValue<asymmetric_t>{1.0}),
+                                 .imag_component = {.value = imag(branch_to_current[0] * RealValue<asymmetric_t>{1.0}),
                                                     .variance = RealValue<asymmetric_t>{0.5}}}},
                 {.angle_measurement_type = angle_measurement_type,
-                 .measurement = {.real_component = {.value =
-                                                        real(branch_to_local_current[1] * RealValue<asymmetric_t>{1.0}),
+                 .measurement = {.real_component = {.value = real(branch_to_current[1] * RealValue<asymmetric_t>{1.0}),
                                                     .variance = RealValue<asymmetric_t>{0.5}},
-                                 .imag_component = {.value =
-                                                        imag(branch_to_local_current[1] * RealValue<asymmetric_t>{1.0}),
+                                 .imag_component = {.value = imag(branch_to_current[1] * RealValue<asymmetric_t>{1.0}),
                                                     .variance = RealValue<asymmetric_t>{0.5}}}},
             };
         }

@@ -541,8 +541,7 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
         }
     }
 
-    /// @brief Adds contribution of global angle branch current measurements. Logic is similar to power measurements,
-    /// but with an additional voltage division as per mathematical workout.
+    /// @brief Adds contribution of global angle branch current measurements.
     void process_branch_global_current_measurement(NRSEGainBlock<sym>& block, NRSEGainBlock<sym>& diag_block,
                                                    NRSERhs<sym>& rhs_block, auto const& y_xi_xi, auto const& y_xi_mu,
                                                    auto const& u_state, Order const order,
