@@ -9,6 +9,7 @@
 #include "main_core/calculation_info.hpp"
 #include "main_core/update.hpp"
 
+#include <mutex>
 #include <thread>
 
 namespace power_grid_model {
@@ -44,79 +45,82 @@ class JobDispatch {
 
         // error messages
         std::vector<std::string> exceptions(n_scenarios, "");
-        std::vector<CalculationInfo> infos(n_scenarios);
+
+        // thread-safe handling of calculation info
+        std::mutex calculation_info_mutex;
+        auto const thread_safe_add_calculation_info = [&calculation_info,
+                                                       &calculation_info_mutex](CalculationInfo const& info) {
+            std::lock_guard const lock{calculation_info_mutex};
+            main_core::merge_into(calculation_info, info);
+        };
 
         auto single_job = single_thread_job(adapter, std::forward<Calculate>(calculation_fn), result_data, update_data,
-                                            exceptions, infos);
+                                            exceptions, thread_safe_add_calculation_info);
 
         job_dispatch(single_job, n_scenarios, threading);
 
         handle_batch_exceptions(exceptions);
-        adapter.merge_calculation_infos(infos);
 
         return BatchParameter{};
     }
 
   private:
-    template <typename Adapter, typename Calculate>
+    template <typename Adapter, typename AddCalculationInfo>
     static auto single_thread_job(Adapter& base_adapter, Calculate&& calculation_fn, MutableDataset const& result_data,
                                   ConstDataset const& update_data, std::vector<std::string>& exceptions,
-                                  std::vector<CalculationInfo>& infos) {
-        return [&base_adapter, &exceptions, &infos, calculation_fn_ = std::forward<Calculate>(calculation_fn),
-                &result_data, &update_data](Idx start, Idx stride, Idx n_scenarios) {
+                                  AddCalculationInfo&& thread_safe_add_calculation_info) {
+        return [&base_adapter, &exceptions, &thread_safe_add_calculation_info,
+                calculation_fn_ = std::forward<Calculate>(calculation_fn), &result_data,
+                &update_data](Idx start, Idx stride, Idx n_scenarios) {
             assert(n_scenarios <= narrow_cast<Idx>(exceptions.size()));
-            assert(n_scenarios <= narrow_cast<Idx>(infos.size()));
 
-            Timer const t_total(infos[start], 0000, "Total in thread");
+            CalculationInfo thread_info;
 
-            auto const copy_adapter_functor = [&base_adapter, &infos](Idx scenario_idx) {
-                Timer const t_copy_adapter_functor(infos[scenario_idx], 1100, "Copy model");
+            auto const copy_adapter_functor = [&base_adapter, &thread_info](Idx scenario_idx) {
+                Timer const t_copy_adapter_functor(thread_info, 1100, "Copy model");
                 return Adapter{base_adapter};
             };
             auto adapter = copy_adapter_functor(start);
 
             adapter.prepare_job(update_data);
-            auto setup = [&adapter, &update_data, &infos](Idx scenario_idx) {
-                Timer const t_update_model(infos[scenario_idx], 1200, "Update model");
+            auto setup = [&adapter, &update_data, &thread_info](Idx scenario_idx) {
+                Timer const t_update_model(thread_info, 1200, "Update model");
                 adapter.setup(update_data, scenario_idx);
             };
 
-            auto winddown = [&adapter, &infos](Idx scenario_idx) {
-                Timer const t_update_model(infos[scenario_idx], 1201, "Restore model");
+            auto winddown = [&adapter, &thread_info](Idx scenario_idx) {
+                Timer const t_update_model(thread_info, 1201, "Restore model");
                 adapter.winddown();
             };
 
             auto calculate_scenario = JobDispatch::call_with<Idx>(
-                [&adapter, &calculation_fn_, &result_data, &infos](Idx scenario_idx) {
+                [&adapter, &calculation_fn_, &result_data, &thread_info](Idx scenario_idx) {
                     adapter.calculate(calculation_fn_, result_data, scenario_idx);
-                    infos[scenario_idx].merge(adapter.get_calculation_info());
+                    thread_info.merge(adapter.get_calculation_info());
                 },
-                std::move(setup), std::move(winddown), scenario_exception_handler(adapter, exceptions, infos),
+                std::move(setup), std::move(winddown), scenario_exception_handler(adapter, exceptions, thread_info),
                 [&adapter, &copy_adapter_functor](Idx scenario_idx) { adapter = copy_adapter_functor(scenario_idx); });
 
             for (Idx scenario_idx = start; scenario_idx < n_scenarios; scenario_idx += stride) {
-                Timer const t_total_single(infos[scenario_idx], 0100, "Total single calculation in thread");
-
+                Timer const t_total_single(thread_info, 0100, "Total single calculation in thread");
                 calculate_scenario(scenario_idx);
             }
+
+            t_total.stop();
+            thread_safe_add_calculation_info(thread_info);
         };
     }
 
-    // run sequential if
-    //    specified threading < 0
-    //    use hardware threads, but it is either unknown (0) or only has one thread (1)
-    //    specified threading = 1
-    template <typename RunSingleJobFn>
-        requires std::invocable<std::remove_cvref_t<RunSingleJobFn>, Idx /*start*/, Idx /*stride*/, Idx /*n_scenarios*/>
-    static void job_dispatch(RunSingleJobFn single_thread_job, Idx n_scenarios, Idx threading) {
+    template <typename RunSubBatchFn>
+        requires std::invocable<std::remove_cvref_t<RunSubBatchFn>, Idx /*start*/, Idx /*stride*/, Idx /*n_scenarios*/>
+    static void job_dispatch(RunSubBatchFn sub_batch, Idx n_scenarios, Idx threading) {
         // run batches sequential or parallel
-        auto const hardware_thread = static_cast<Idx>(std::thread::hardware_concurrency());
-        if (threading < 0 || threading == 1 || (threading == 0 && hardware_thread < 2)) {
+        auto const n_thread = n_threads(n_scenarios, threading);
+        if (n_thread == 1) {
             // run all in sequential
             single_thread_job(0, 1, n_scenarios);
         } else {
             // create parallel threads
-            Idx const n_thread = std::min(threading == 0 ? hardware_thread : threading, n_scenarios);
             std::vector<std::thread> threads;
             threads.reserve(n_thread);
             for (Idx thread_number = 0; thread_number < n_thread; ++thread_number) {
@@ -127,6 +131,18 @@ class JobDispatch {
                 thread.join();
             }
         }
+    }
+
+    // run sequential if
+    //    specified threading < 0
+    //    use hardware threads, but it is either unknown (0) or only has one thread (1)
+    //    specified threading = 1
+    static Idx n_threads(Idx n_scenarios, Idx threading) {
+        auto const hardware_thread = static_cast<Idx>(std::thread::hardware_concurrency());
+        if (threading < 0 || threading == 1 || (threading == 0 && hardware_thread < 2)) {
+            return 1; // sequential
+        }
+        return std::min(threading == 0 ? hardware_thread : threading, n_scenarios);
     }
 
     template <typename... Args, typename RunFn, typename SetupFn, typename WinddownFn, typename HandleExceptionFn,
@@ -159,8 +175,8 @@ class JobDispatch {
     // Lippincott pattern
     template <typename Adapter>
     static auto scenario_exception_handler(Adapter& adapter, std::vector<std::string>& messages,
-                                           std::vector<CalculationInfo>& infos) {
-        return [&adapter, &messages, &infos](Idx scenario_idx) {
+                                           CalculationInfo& info) {
+        return [&adapter, &messages, &info](Idx scenario_idx) {
             std::exception_ptr const ex_ptr = std::current_exception();
             try {
                 std::rethrow_exception(ex_ptr);
@@ -169,7 +185,7 @@ class JobDispatch {
             } catch (...) {
                 messages[scenario_idx] = "unknown exception";
             }
-            infos[scenario_idx].merge(adapter.get_calculation_info());
+            info.merge(adapter.get_calculation_info());
         };
     }
 
