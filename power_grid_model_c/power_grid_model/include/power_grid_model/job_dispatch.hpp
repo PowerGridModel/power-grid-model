@@ -75,7 +75,6 @@ class JobDispatch {
             };
 
             auto adapter = copy_adapter_functor(start);
-            adapter.prepare_scenarios(update_data);
 
             auto setup = [&adapter, &update_data, &thread_info](Idx scenario_idx) {
                 Timer const t_update_model(thread_info, 1200, "Update model");

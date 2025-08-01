@@ -24,7 +24,8 @@ class JobDispatchAdapter : public JobDispatchInterface<JobDispatchAdapter<MainMo
           model_{std::ref(*model_copy_)},
           components_to_update_{other.components_to_update_},
           update_independence_{other.update_independence_},
-          independence_flags_{other.independence_flags_} {}
+          independence_flags_{other.independence_flags_},
+          all_scenarios_sequence_{other.all_scenarios_sequence_} {}
     JobDispatchAdapter& operator=(JobDispatchAdapter const& other) {
         if (this != &other) {
             model_copy_ = std::make_unique<MainModel>(other.model_.get());
@@ -32,6 +33,7 @@ class JobDispatchAdapter : public JobDispatchInterface<JobDispatchAdapter<MainMo
             components_to_update_ = other.components_to_update_;
             update_independence_ = other.update_independence_;
             independence_flags_ = other.independence_flags_;
+            all_scenarios_sequence_ = other.all_scenarios_sequence_;
         }
         return *this;
     }
@@ -40,7 +42,8 @@ class JobDispatchAdapter : public JobDispatchInterface<JobDispatchAdapter<MainMo
           model_{model_copy_ ? std::ref(*model_copy_) : std::move(other.model_)},
           components_to_update_{std::move(other.components_to_update_)},
           update_independence_{std::move(other.update_independence_)},
-          independence_flags_{std::move(other.independence_flags_)} {}
+          independence_flags_{std::move(other.independence_flags_)},
+          all_scenarios_sequence_{std::move(other.all_scenarios_sequence_)} {}
     JobDispatchAdapter& operator=(JobDispatchAdapter&& other) noexcept {
         if (this != &other) {
             model_copy_ = std::move(other.model_copy_);
@@ -48,19 +51,11 @@ class JobDispatchAdapter : public JobDispatchInterface<JobDispatchAdapter<MainMo
             components_to_update_ = std::move(other.components_to_update_);
             update_independence_ = std::move(other.update_independence_);
             independence_flags_ = std::move(other.independence_flags_);
+            all_scenarios_sequence_ = std::move(other.all_scenarios_sequence_);
         }
         return *this;
     }
     ~JobDispatchAdapter() = default;
-
-    // MainModel(MainModel&& other) noexcept : impl_{std::move(other.impl_)} {}
-    // MainModel& operator=(MainModel&& other) noexcept {
-    //     if (this != &other) {
-    //         impl_ = std::move(other.impl_);
-    //     }
-    //     return *this;
-    // };
-    // ~MainModel() { impl_.reset(); }
 
   private:
     friend class JobDispatchInterface<JobDispatchAdapter>; // CRTP
@@ -73,12 +68,8 @@ class JobDispatchAdapter : public JobDispatchInterface<JobDispatchAdapter<MainMo
     power_grid_model::main_core::utils::ComponentFlags<ComponentType...> components_to_update_{};
     power_grid_model::main_core::update::independence::UpdateIndependence<ComponentType...> update_independence_{};
     main_core::utils::ComponentFlags<ComponentType...> independence_flags_{};
-
-    // These are expensive to copy and easier to calculate from scratch
-    // They are explicitly left out of the constructors for these reason
-    // TODO(figueroa1395): Can all_scenarios_sequence_ be a shared pointer or similar and its
-    // calculation be included in prepare_job_dispatch_impl?
-    main_core::utils::SequenceIdx<ComponentType...> all_scenarios_sequence_{};
+    std::shared_ptr<main_core::utils::SequenceIdx<ComponentType...>> all_scenarios_sequence_;
+    // current_scenario_sequence_cache_ is calculated per scenario, so it is excluded from the constructors.
     main_core::utils::SequenceIdx<ComponentType...> current_scenario_sequence_cache_{};
 
     std::mutex calculation_info_mutex_;
@@ -116,15 +107,11 @@ class JobDispatchAdapter : public JobDispatchInterface<JobDispatchAdapter<MainMo
         components_to_update_ = model_.get().get_components_to_update(update_data);
         update_independence_ = main_core::update::independence::check_update_independence<ComponentType...>(
             model_.get().state(), update_data);
-        // all_scenarios_sequence_ = main_core::update::get_all_sequence_idx_map<ComponentType...>(
-        //     model_.get().state(), update_data, 0, components_to_update_, update_independence_, false);
         std::ranges::transform(update_independence_, independence_flags_.begin(),
                                [](auto const& comp) { return comp.is_independent(); });
-    }
-
-    void prepare_scenarios_impl(ConstDataset const& update_data) {
-        all_scenarios_sequence_ = main_core::update::get_all_sequence_idx_map<ComponentType...>(
-            model_.get().state(), update_data, 0, components_to_update_, update_independence_, false);
+        all_scenarios_sequence_ = std::make_shared<main_core::utils::SequenceIdx<ComponentType...>>(
+            main_core::update::get_all_sequence_idx_map<ComponentType...>(
+                model_.get().state(), update_data, 0, components_to_update_, update_independence_, false));
     }
 
     void setup_impl(ConstDataset const& update_data, Idx scenario_idx) {
@@ -152,7 +139,7 @@ class JobDispatchAdapter : public JobDispatchInterface<JobDispatchAdapter<MainMo
         return main_core::utils::run_functor_with_all_types_return_array<ComponentType...>([this]<typename CT>() {
             constexpr auto comp_idx = main_core::utils::index_of_component<CT, ComponentType...>;
             if (std::get<comp_idx>(independence_flags_)) {
-                return std::span<Idx2D const>{std::get<comp_idx>(all_scenarios_sequence_)};
+                return std::span<Idx2D const>{std::get<comp_idx>(*all_scenarios_sequence_)};
             }
             return std::span<Idx2D const>{std::get<comp_idx>(current_scenario_sequence_cache_)};
         });
