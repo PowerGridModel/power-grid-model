@@ -46,6 +46,7 @@ class JobDispatch {
         // error messages
         std::vector<std::string> exceptions(n_scenarios, "");
 
+        adapter.prepare_job_dispatch(update_data);
         auto single_job =
             single_thread_job(adapter, std::forward<Calculate>(calculation_fn), result_data, update_data, exceptions);
 
@@ -72,9 +73,10 @@ class JobDispatch {
                 Timer const t_copy_adapter_functor(thread_info, 1100, "Copy model");
                 return Adapter{base_adapter};
             };
-            auto adapter = copy_adapter_functor(start);
 
-            adapter.prepare_job(update_data);
+            auto adapter = copy_adapter_functor(start);
+            adapter.prepare_scenarios(update_data);
+
             auto setup = [&adapter, &update_data, &thread_info](Idx scenario_idx) {
                 Timer const t_update_model(thread_info, 1200, "Update model");
                 adapter.setup(update_data, scenario_idx);
