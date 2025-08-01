@@ -80,7 +80,7 @@ class JobDispatch {
                 adapter.setup(update_data, scenario_idx);
             };
 
-            auto winddown = [&adapter, &thread_info](Idx scenario_idx) {
+            auto winddown = [&adapter, &thread_info](Idx /*scenario_idx*/) {
                 Timer const t_update_model(thread_info, 1201, "Restore model");
                 adapter.winddown();
             };
