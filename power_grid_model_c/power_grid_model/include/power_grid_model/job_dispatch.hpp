@@ -68,7 +68,7 @@ class JobDispatch {
 
             Timer t_total(thread_info, 1000, "Total batch calculation in thread");
 
-            auto const copy_adapter_functor = [&base_adapter, &thread_info](Idx scenario_idx) {
+            auto const copy_adapter_functor = [&base_adapter, &thread_info](Idx /*scenario_idx*/) {
                 Timer const t_copy_adapter_functor(thread_info, 1100, "Copy model");
                 return Adapter{base_adapter};
             };
