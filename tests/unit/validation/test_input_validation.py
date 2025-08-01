@@ -134,7 +134,7 @@ def original_data() -> dict[ComponentType, np.ndarray]:
     transformer["p0"] = [63000.0, 0.0, -10.0]
     transformer["winding_from"] = [8, 0, 2]
     transformer["winding_to"] = [5, 1, 2]
-    transformer["clock"] = [13, -1, 7]
+    transformer["clock"] = [13, -13, 7]
     transformer["tap_side"] = [-1, 0, 1]
     transformer["tap_pos"] = [-1, 6, -4]
     transformer["tap_min"] = [-2, 4, 3]
