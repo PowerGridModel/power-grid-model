@@ -496,6 +496,7 @@ def test_validate_input_data_sym_calculation(input_data):
     assert NotGreaterOrEqualError(ComponentType.transformer, "i0", [1], "p0/sn") in validation_errors
     assert NotLessThanError(ComponentType.transformer, "i0", [14], 1) in validation_errors
     assert NotGreaterOrEqualError(ComponentType.transformer, "p0", [15], 0) in validation_errors
+    assert NotBetweenOrAtError(ComponentType.transformer, "clock", [1, 14], (-12, 12)) in validation_errors
     assert (
         NotBetweenOrAtError(ComponentType.transformer, "tap_pos", [14, 15], ("tap_min", "tap_max")) in validation_errors
     )
