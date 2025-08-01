@@ -117,8 +117,7 @@ template <typename T> constexpr T map_to_cyclic_range(T value, T period) {
     } else {
         if (std::is_constant_evaluated()) {
             T quotient = value / period;
-            long long floored_quotient =
-                (quotient >= T{0}) ? static_cast<long long>(quotient) : static_cast<long long>(quotient) - 1;
+            Idx floored_quotient = (quotient >= T{0}) ? static_cast<Idx>(quotient) : static_cast<Idx>(quotient) - 1;
             T result = value - static_cast<T>(floored_quotient) * period;
             return result;
         }
