@@ -46,6 +46,8 @@ class JobDispatchAdapter : public JobDispatchInterface<JobDispatchAdapter<MainMo
     main_core::utils::SequenceIdx<ComponentType...> all_scenarios_sequence_{};
     main_core::utils::ComponentFlags<ComponentType...> independence_flags_{};
 
+    std::mutex calculation_info_mutex_;
+
     // TODO(figueroa1395): Keep calculation_fn at the adapter level only
     template <typename Calculate>
         requires std::invocable<std::remove_cvref_t<Calculate>, MainModel&, MutableDataset const&, Idx>
@@ -100,8 +102,11 @@ class JobDispatchAdapter : public JobDispatchInterface<JobDispatchAdapter<MainMo
 
     CalculationInfo get_calculation_info_impl() const { return model_.get().calculation_info(); }
 
-    void merge_calculation_infos_impl(std::vector<CalculationInfo> const& infos) {
-        model_.get().set_calculation_info(main_core::merge_calculation_info(infos));
+    void add_calculation_info_impl(CalculationInfo const& info) { model_.get().merge_calculation_info(info); }
+
+    void thread_safe_add_calculation_info_impl(CalculationInfo const& info) {
+        std::lock_guard const lock{calculation_info_mutex_};
+        add_calculation_info_impl(info);
     }
 
     auto get_current_scenario_sequence_view_() const {

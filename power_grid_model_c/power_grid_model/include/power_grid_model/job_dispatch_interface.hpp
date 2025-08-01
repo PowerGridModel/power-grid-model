@@ -6,6 +6,9 @@
 
 // batch dispatch interface class
 
+#include "common/calculation_info.hpp"
+#include "common/common.hpp"
+
 #include <concepts>
 #include <type_traits>
 #include <utility>
@@ -43,8 +46,8 @@ template <typename Adapter> class JobDispatchInterface {
         return static_cast<const Adapter*>(this)->get_calculation_info_impl();
     }
 
-    void merge_calculation_infos(std::vector<CalculationInfo> const& info) {
-        static_cast<Adapter*>(this)->merge_calculation_infos_impl(info);
+    void thread_safe_add_calculation_info(CalculationInfo const& info) {
+        static_cast<Adapter*>(this)->thread_safe_add_calculation_info_impl(info);
     }
 };
 

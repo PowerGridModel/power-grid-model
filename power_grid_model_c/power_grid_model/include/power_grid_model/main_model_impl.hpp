@@ -544,9 +544,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     CalculationInfo calculation_info() const { return calculation_info_; }
-    void set_calculation_info(CalculationInfo const& info) {
+    void merge_calculation_info(CalculationInfo const& info) {
         assert(construction_complete_);
-        calculation_info_ = info;
+        main_core::merge_into(calculation_info_, info);
     }
     auto const& state() const {
         assert(construction_complete_);

@@ -46,16 +46,8 @@ class JobDispatch {
         // error messages
         std::vector<std::string> exceptions(n_scenarios, "");
 
-        // thread-safe handling of calculation info
-        std::mutex calculation_info_mutex;
-        auto const thread_safe_add_calculation_info = [&calculation_info,
-                                                       &calculation_info_mutex](CalculationInfo const& info) {
-            std::lock_guard const lock{calculation_info_mutex};
-            main_core::merge_into(calculation_info, info);
-        };
-
-        auto single_job = single_thread_job(adapter, std::forward<Calculate>(calculation_fn), result_data, update_data,
-                                            exceptions, thread_safe_add_calculation_info);
+        auto single_job =
+            single_thread_job(adapter, std::forward<Calculate>(calculation_fn), result_data, update_data, exceptions);
 
         job_dispatch(single_job, n_scenarios, threading);
 
@@ -65,16 +57,16 @@ class JobDispatch {
     }
 
   private:
-    template <typename Adapter, typename AddCalculationInfo>
+    template <typename Adapter, typename Calculate>
     static auto single_thread_job(Adapter& base_adapter, Calculate&& calculation_fn, MutableDataset const& result_data,
-                                  ConstDataset const& update_data, std::vector<std::string>& exceptions,
-                                  AddCalculationInfo&& thread_safe_add_calculation_info) {
-        return [&base_adapter, &exceptions, &thread_safe_add_calculation_info,
-                calculation_fn_ = std::forward<Calculate>(calculation_fn), &result_data,
+                                  ConstDataset const& update_data, std::vector<std::string>& exceptions) {
+        return [&base_adapter, &exceptions, calculation_fn_ = std::forward<Calculate>(calculation_fn), &result_data,
                 &update_data](Idx start, Idx stride, Idx n_scenarios) {
             assert(n_scenarios <= narrow_cast<Idx>(exceptions.size()));
 
             CalculationInfo thread_info;
+
+            Timer t_total(thread_info, 1000, "Total batch calculation in thread");
 
             auto const copy_adapter_functor = [&base_adapter, &thread_info](Idx scenario_idx) {
                 Timer const t_copy_adapter_functor(thread_info, 1100, "Copy model");
@@ -107,13 +99,13 @@ class JobDispatch {
             }
 
             t_total.stop();
-            thread_safe_add_calculation_info(thread_info);
+            base_adapter.thread_safe_add_calculation_info(thread_info);
         };
     }
 
-    template <typename RunSubBatchFn>
-        requires std::invocable<std::remove_cvref_t<RunSubBatchFn>, Idx /*start*/, Idx /*stride*/, Idx /*n_scenarios*/>
-    static void job_dispatch(RunSubBatchFn sub_batch, Idx n_scenarios, Idx threading) {
+    template <typename RunSingleJobFn>
+        requires std::invocable<std::remove_cvref_t<RunSingleJobFn>, Idx /*start*/, Idx /*stride*/, Idx /*n_scenarios*/>
+    static void job_dispatch(RunSingleJobFn single_thread_job, Idx n_scenarios, Idx threading) {
         // run batches sequential or parallel
         auto const n_thread = n_threads(n_scenarios, threading);
         if (n_thread == 1) {
