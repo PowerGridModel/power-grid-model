@@ -6,6 +6,7 @@
 
 #include "../common/calculation_info.hpp"
 #include "../common/common.hpp"
+#include "../common/timer.hpp"
 
 namespace power_grid_model::main_core {
 

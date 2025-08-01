@@ -19,6 +19,7 @@ from power_grid_model.errors import (
     AutomaticTapInputError,
     ConflictID,
     ConflictVoltage,
+    IDNotFound,
     IDWrongType,
     InvalidBranch,
     InvalidBranch3,
@@ -35,20 +36,34 @@ from power_grid_model.errors import (
 )
 from power_grid_model.utils import json_deserialize, json_deserialize_from_file, json_serialize_to_file
 
+try:
+    from _pytest.outcomes import Failed as _Failed  # pylint: disable=import-outside-toplevel
+except ImportError:
+    import warnings  # pylint: disable=import-outside-toplevel
+
+    warnings.warn(
+        """Failed to import _pytest.outcomes.Failed."""
+        """ Some validation cases tests marked as {"xfail": {"raises": "Failed"}} may report as xfail"""
+        """ even though they are actual problems."""
+    )
+    _Failed = None
+
+
 BASE_PATH = Path(__file__).parent.parent
 DATA_PATH = BASE_PATH / "data"
-OUPUT_PATH = BASE_PATH / "output"
+OUTPUT_PATH = BASE_PATH / "output"
 EXPORT_OUTPUT = ("POWER_GRID_MODEL_VALIDATION_TEST_EXPORT" in os.environ) and (
     os.environ["POWER_GRID_MODEL_VALIDATION_TEST_EXPORT"] == "ON"
 )
 
-KNOWN_EXCEPTIONS = {
+KNOWN_EXCEPTIONS: dict[str, type[BaseException] | None] = {
     ex.__name__: ex
     for ex in (
         PowerGridBatchError,
         PowerGridError,
         ConflictID,
         ConflictVoltage,
+        IDNotFound,
         IDWrongType,
         InvalidBranch,
         InvalidBranch3,
@@ -66,6 +81,7 @@ KNOWN_EXCEPTIONS = {
         MaxIterationReached,
     )
 }
+KNOWN_EXCEPTIONS["Failed"] = _Failed
 
 
 class PowerGridModelWithExt(PowerGridModel):
@@ -146,11 +162,12 @@ def add_case(
             calculation_method_params,
         ]
         kwargs = {}
-        if "fail" in calculation_method_params:
-            xfail = calculation_method_params["fail"]
+        if "xfail" in calculation_method_params:
+            xfail = calculation_method_params["xfail"]
             kwargs["marks"] = pytest.mark.xfail(
                 reason=xfail["reason"], raises=KNOWN_EXCEPTIONS[xfail.get("raises", "AssertionError")]
             )
+
         yield pytest.param(*pytest_param, **kwargs, id=case_id)
 
 
@@ -221,13 +238,14 @@ def import_case_data(data_path: Path, calculation_type: str, sym: bool):
 
 
 def save_json_data(json_file: str, data: Dataset):
-    OUPUT_PATH.mkdir(parents=True, exist_ok=True)
-    data_file = OUPUT_PATH / json_file
+    OUTPUT_PATH.mkdir(parents=True, exist_ok=True)
+    data_file = OUTPUT_PATH / json_file
     data_file.parent.mkdir(parents=True, exist_ok=True)
     json_serialize_to_file(data_file, data)
 
 
 def compare_result(actual: SingleDataset, expected: SingleDataset, rtol: float, atol: float | dict[str, float]):
+    actual_col_ndim = 2
     for key, expected_data in expected.items():
         if not isinstance(expected_data, np.ndarray):
             raise NotImplementedError("Validation tests are not implemented for columnar data")
@@ -246,7 +264,7 @@ def compare_result(actual: SingleDataset, expected: SingleDataset, rtol: float, 
 
             if not expect_all_nan:
                 # permute expected_col if needed
-                if expected_col.ndim == 1 and actual_col.ndim == 2:
+                if expected_col.ndim == 1 and actual_col.ndim == actual_col_ndim:
                     if col_name == "u_angle":
                         # should be 120 and 240 degree lagging
                         expected_col = np.stack(

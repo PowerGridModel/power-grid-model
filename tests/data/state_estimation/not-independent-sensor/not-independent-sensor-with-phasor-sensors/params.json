@@ -5,7 +5,7 @@
     "default": 1e-8,
     ".+_residual": 5e-4
   },
-  "fail": {
+  "raises": {
     "raises": "NotObservableError",
     "reason": "Voltage phasor, power and current sensor's measurements are not independent"
   }

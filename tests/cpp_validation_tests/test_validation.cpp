@@ -14,6 +14,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
+#include <format>
 #include <fstream>
 #include <iostream>
 #include <limits>
@@ -28,11 +29,7 @@ namespace {
 class UnsupportedValidationCase : public PowerGridError {
   public:
     UnsupportedValidationCase(std::string const& calculation_type, bool sym)
-        : PowerGridError{[&]() {
-              using namespace std::string_literals;
-              auto const sym_str = sym ? "sym"s : "asym"s;
-              return "Unsupported validation case: "s + sym_str + " "s + calculation_type;
-          }()} {}
+        : PowerGridError{std::format("Unsupported validation case: {} {}", sym ? "sym" : "asym", calculation_type)} {}
 };
 
 using nlohmann::json;
@@ -102,6 +99,129 @@ template <typename T> std::string get_as_string(T const& attribute_value) {
     return sstr.str();
 }
 
+class Subcase {
+    class RaisesFailed : public PowerGridError {
+      public:
+        RaisesFailed(std::string_view message) : PowerGridError{std::format("Failed raises check: {}", message)} {}
+    };
+
+  public:
+    Subcase(std::optional<std::string> raises, std::optional<std::string> xfail)
+        : raises_{std::move(raises)}, xfail_raises_{std::move(xfail)} {}
+
+    void check_message(bool statement, std::string_view message) {
+        if (statement || xfail_raises_ != "AssertionError") {
+            CHECK_MESSAGE(statement, message);
+        } else {
+            // delay the check to the end
+            has_failing_assertion = true;
+            CHECK_MESSAGE(!statement, std::format("xfailed assertion: {}", message));
+        }
+    }
+
+    // This is the entrypoint for executing a case.
+    // It was opted to go for a more Pythonic way to implement this, rather than a C++-style way.
+    // This was done to keep the similarity between the Python and C++ validation tests.
+    // The structure of this function is similar to how pytest.raises and pytest.mark.xfail work.
+    template <typename T>
+        requires std::invocable<std::remove_cvref_t<T>, Subcase&>
+    void execute_case(T&& statement) noexcept {
+        CHECK_NOTHROW(maybe_mark_xfail(maybe_with_raises(std::forward<T>(statement)))(*this));
+    }
+
+  private:
+    std::optional<std::string> raises_{};
+    std::optional<std::string> xfail_raises_{};
+    bool has_failing_assertion{};
+
+    template <typename T>
+        requires std::invocable<std::remove_cvref_t<T>, Subcase&>
+    auto maybe_with_raises(T&& statement) noexcept {
+        return [this, statement_ = std::forward<T>(statement)](Subcase& subcase) {
+            if (!raises_) {
+                return statement_(subcase);
+            }
+            try {
+                statement_(subcase);
+                throw RaisesFailed{std::format(
+                    "Test case marked as raises with message '{}' but no exception was thrown", raises_.value())};
+            } catch (std::exception const& e) {
+                if (match_exception(e, raises_.value())) {
+                    // correct exception raised => pass
+                    subcase.has_failing_assertion = false; // assertions may fail when an exception is raised
+                } else {
+                    throw;
+                }
+            }
+        };
+    }
+
+    template <typename T>
+        requires std::invocable<std::remove_cvref_t<T>, Subcase&>
+    auto maybe_mark_xfail(T&& statement) noexcept {
+        return [this, statement_ = std::forward<T>(statement)](Subcase& subcase) {
+            if (!xfail_raises_) {
+                return statement_(subcase);
+            }
+            try {
+                statement_(subcase);
+                bool const xfailed = subcase.has_failing_assertion;
+                CHECK_MESSAGE(xfailed, "XPASS");
+            } catch (std::exception const& e) {
+                subcase.check_message(match_exception(e, xfail_raises_.value()),
+                                      std::format("Test case marked as xfail with message '{}' but got exception: {}",
+                                                  xfail_raises_.value(), e.what()));
+            }
+        };
+    }
+
+    static bool match_exception(std::exception const& e, std::string_view message) {
+        // error mapping; similar to src/power_grid_model/_core/error_handling.py
+        std::map<std::string, std::regex, std::less<>> const error_mapping = {
+            {"MissingCaseForEnumError", std::regex{" is not implemented for (.+) #(-?\\d+)!\n"}},
+            {"InvalidArguments", std::regex{" is not implemented for "}}, // multiple different flavors
+            {"ConflictVoltage",
+             std::regex{"Conflicting voltage for line (-?\\d+)\n voltage at from node (-?\\d+) is (.*)\n "
+                        "voltage at to node (-?\\d+) is (.*)\n"}},
+            {"InvalidBranch",
+             std::regex{"Branch (-?\\d+) has the same from- and to-node (-?\\d+),\n This is not allowed!\n"}},
+            {"InvalidBranch3",
+             std::regex{"Branch3 (-?\\d+) is connected to the same node at least twice. Node 1\\/2\\/3: "
+                        "(-?\\d+)\\/(-?\\d+)\\/(-?\\d+),\n This is not allowed!\n"}},
+            {"InvalidTransformerClock", std::regex{"Invalid clock for transformer (-?\\d+), clock (-?\\d+)\n"}},
+            {"SparseMatrixError", std::regex{"Sparse matrix error"}}, // multiple different flavors
+            {"NotObservableError", std::regex{"Not enough measurements available for state estimation.\n"}},
+            {"IterationDiverge", std::regex{"Iteration failed to converge"}}, // potentially multiple different flavors
+            {"MaxIterationReached", std::regex{"Maximum number of iterations reached"}},
+            {"ConflictID", std::regex{"Conflicting id detected: (-?\\d+)\n"}},
+            {"IDNotFound", std::regex{"The id cannot be found: (-?\\d+)\n"}},
+            {"InvalidMeasuredObject", std::regex{"(\\w+) measurement is not supported for object of type (\\w+)"}},
+            {"InvalidRegulatedObject",
+             std::regex{"(\\w+) regulator is not supported for object "}}, // potentially multiple different flavors
+            {"AutomaticTapCalculationError",
+             std::regex{
+                 "Automatic tap changing regulator with tap_side at LV side is not supported. Found at id (-?\\d+)\n"}},
+            {"AutomaticTapInputError", std::regex{"Automatic tap changer has invalid configuration"}},
+            {"IDWrongType", std::regex{"Wrong type for object with id (-?\\d+)\n"}},
+            {"ConflictingAngleMeasurementType", std::regex{"Conflicting angle measurement type"}},
+            {"InvalidCalculationMethod", std::regex{"The calculation method is invalid for this calculation!"}},
+            {"InvalidShortCircuitPhaseOrType", std::regex{"short circuit type"}}, // multiple different flavors
+            {"TapStrategySearchIncompatible", std::regex{"Search method is incompatible with optimization strategy: "}},
+            {"PowerGridDatasetError", std::regex{"Dataset error: "}}, // multiple different flavors
+            {"PowerGridUnreachableHit",
+             std::regex{"Unreachable code hit when executing "}}, // multiple different flavors
+            {"PowerGridNotImplementedError",
+             std::regex{"The functionality is either not supported or not yet implemented!"}},
+            {"Failed", std::regex{"Failed raises check: (.*)"}} // for xfail cases
+        };
+
+        if (auto const it = error_mapping.find(message); it != error_mapping.end()) {
+            return regex_search(e.what(), it->second);
+        }
+        return false;
+    }
+};
+
 template <typename T>
 bool check_angle_and_magnitude(T const& ref_angle, T const& angle, T const& ref_magnitude, T const& magnitude,
                                double atol, double rtol) {
@@ -145,7 +265,7 @@ template <typename T>
 void check_results(T const& ref_attribute_value, T const& attribute_value, T const& ref_possible_attribute_value,
                    T const& possible_attribute_value, bool const& is_angle, Idx scenario_idx, Idx obj,
                    std::string const& component_name, std::string const& attribute_name, double const& dynamic_atol,
-                   double const& rtol) {
+                   double const& rtol, Subcase& subcase) {
     bool const match =
         is_angle
             ? check_angle_and_magnitude<decltype(ref_attribute_value)>(ref_attribute_value, attribute_value,
@@ -153,12 +273,11 @@ void check_results(T const& ref_attribute_value, T const& attribute_value, T con
                                                                        possible_attribute_value, dynamic_atol, rtol)
             : compare_value<decltype(ref_attribute_value)>(ref_attribute_value, attribute_value, dynamic_atol, rtol);
     if (!match) {
-        std::stringstream case_sstr;
-        case_sstr << "dataset scenario: #" << scenario_idx << ", Component: " << component_name << " #" << obj
-                  << ", attribute: " << attribute_name
-                  << ": actual = " << get_as_string<decltype(attribute_value)>(attribute_value) + " vs. expected = "
-                  << get_as_string<decltype(ref_attribute_value)>(ref_attribute_value);
-        CHECK_MESSAGE(match, case_sstr.str());
+        auto const case_str = std::format(
+            "Dataset scenario: #{} Component: {} #{} attribute: {}: actual = {} vs. expected = {}", scenario_idx,
+            component_name, obj, attribute_name, get_as_string<decltype(attribute_value)>(attribute_value),
+            get_as_string<decltype(ref_attribute_value)>(ref_attribute_value));
+        subcase.check_message(match, case_str);
     }
 }
 
@@ -173,7 +292,8 @@ void check_individual_attribute(Buffer const& buffer, Buffer const& ref_buffer,
                                 MetaAttribute const* const attribute_meta,
                                 MetaAttribute const* const possible_attr_meta, bool const& is_angle,
                                 Idx elements_per_scenario, Idx scenario_idx, Idx obj, std::string const& component_name,
-                                std::string const& attribute_name, double const& dynamic_atol, double const& rtol) {
+                                std::string const& attribute_name, double const& dynamic_atol, double const& rtol,
+                                Subcase& subcase) {
     Idx idx = (elements_per_scenario * scenario_idx) + obj;
     // get attribute values to check
     T ref_attribute_value{};
@@ -196,12 +316,12 @@ void check_individual_attribute(Buffer const& buffer, Buffer const& ref_buffer,
 
     if (!skip_check(ref_attribute_value, is_angle, ref_possible_attribute_value)) {
         check_results(ref_attribute_value, attribute_value, ref_possible_attribute_value, possible_attribute_value,
-                      is_angle, scenario_idx, obj, component_name, attribute_name, dynamic_atol, rtol);
+                      is_angle, scenario_idx, obj, component_name, attribute_name, dynamic_atol, rtol, subcase);
     }
 }
 
 void assert_result(OwningDataset const& owning_result, OwningDataset const& owning_reference_result,
-                   std::map<std::string, double, std::less<>> atol, double rtol) {
+                   std::map<std::string, double, std::less<>> atol, double rtol, Subcase& subcase) {
     using namespace std::string_literals;
 
     DatasetConst const result{owning_result.dataset};
@@ -214,7 +334,9 @@ void assert_result(OwningDataset const& owning_result, OwningDataset const& owni
     auto const& reference_result_info = reference_result.get_info();
     auto const& reference_result_name = reference_result_info.name();
     auto const& reference_storage = owning_reference_result.storage;
-    CHECK(storage.buffers.size() == reference_storage.buffers.size());
+    subcase.check_message(storage.buffers.size() == reference_storage.buffers.size(),
+                          std::format("Buffer size mismatch: actual {}, expected {}", storage.buffers.size(),
+                                      reference_storage.buffers.size()));
 
     // loop through all scenarios
     for (Idx scenario_idx{}; scenario_idx < result_batch_size; ++scenario_idx) {
@@ -226,7 +348,8 @@ void assert_result(OwningDataset const& owning_result, OwningDataset const& owni
             auto const& ref_buffer = reference_storage.buffers.at(component_idx);
             auto const& buffer = storage.buffers.at(component_idx);
             Idx const elements_per_scenario = reference_result_info.component_elements_per_scenario(component_idx);
-            CHECK(elements_per_scenario >= 0);
+            subcase.check_message(elements_per_scenario >= 0,
+                                  std::format("elements_per_scenario < 0: actual {}", elements_per_scenario));
             // loop through all attributes
             for (Idx attribute_idx{}; attribute_idx < MetaData::n_attributes(component_meta); ++attribute_idx) {
                 auto const* const attribute_meta = MetaData::get_attribute_by_idx(component_meta, attribute_idx);
@@ -256,10 +379,10 @@ void assert_result(OwningDataset const& owning_result, OwningDataset const& owni
                 for (Idx obj{}; obj < elements_per_scenario; ++obj) {
                     auto callable_wrapper = [&buffer, &ref_buffer, &attribute_meta, &possible_attr_meta, is_angle,
                                              elements_per_scenario, scenario_idx, obj, &component_name, &attribute_name,
-                                             dynamic_atol, rtol]<typename T>() {
+                                             dynamic_atol, rtol, &subcase]<typename T>() {
                         check_individual_attribute<T>(buffer, ref_buffer, attribute_meta, possible_attr_meta, is_angle,
                                                       elements_per_scenario, scenario_idx, obj, component_name,
-                                                      attribute_name, dynamic_atol, rtol);
+                                                      attribute_name, dynamic_atol, rtol, subcase);
                     };
 
                     pgm_type_func_selector(attribute_type, callable_wrapper);
@@ -312,7 +435,8 @@ struct CaseParam {
     bool sym{};
     bool is_batch{};
     double rtol{};
-    bool fail{};
+    std::optional<std::string> raises{};
+    std::optional<std::string> xfail{};
     std::map<std::string, double, std::less<>> atol;
 
     static std::string replace_backslash(std::string const& str) {
@@ -388,7 +512,16 @@ std::optional<CaseParam> construct_case(std::filesystem::path const& case_dir, j
         }
     }
 
-    param.fail = calculation_method_params.contains("fail");
+    if (calculation_method_params.contains("raises")) {
+        if (json const& raises = calculation_method_params.at("raises"); raises.contains("raises")) {
+            param.raises = raises.at("raises").get<std::string>();
+        }
+    }
+    if (calculation_method_params.contains("xfail")) {
+        if (json const& xfail = calculation_method_params.at("xfail"); xfail.contains("raises")) {
+            param.xfail = xfail.at("raises").get<std::string>();
+        }
+    }
     if (calculation_type == "short_circuit") {
         calculation_method_params.at("short_circuit_voltage_scaling").get_to(param.short_circuit_voltage_scaling);
     }
@@ -495,23 +628,24 @@ TEST_CASE("Check existence of validation data path") {
 }
 
 namespace {
-constexpr bool should_skip_test(CaseParam const& param) { return param.fail; }
+constexpr bool should_skip_test(CaseParam const& /*param*/) { return false; }
 
 template <typename T>
-    requires std::invocable<std::remove_cvref_t<T>>
-void execute_test(CaseParam const& param, T&& func) {
-    std::cout << "Validation test: " << param.case_name;
-
-    if (should_skip_test(param)) {
-        std::cout << " [skipped]" << '\n';
-    } else {
-        std::cout << '\n';
-        std::forward<T>(func)();
+    requires std::invocable<std::remove_cvref_t<T>, Subcase&>
+void execute_test(CaseParam const& param, T&& func) noexcept {
+    Subcase subcase{param.raises, param.xfail};
+    bool const skip = should_skip_test(param);
+    std::cout << std::format("Validation test: {}{}{}\n", param.case_name, skip ? " [skipped]" : "",
+                             param.xfail ? " [xfail]" : "");
+    if (skip) {
+        return;
     }
+
+    subcase.execute_case(std::forward<T>(func));
 }
 
 void validate_single_case(CaseParam const& param) {
-    execute_test(param, [&]() {
+    execute_test(param, [&param](Subcase& subcase) {
         auto const output_prefix = get_output_type(param.calculation_type, param.sym);
         auto const validation_case = create_validation_case(param, output_prefix);
         auto const result = create_result_dataset(validation_case.output.value(), output_prefix);
@@ -522,12 +656,12 @@ void validate_single_case(CaseParam const& param) {
         model.calculate(options, result.dataset);
 
         // check results
-        assert_result(result, validation_case.output.value(), param.atol, param.rtol);
+        assert_result(result, validation_case.output.value(), param.atol, param.rtol, subcase);
     });
 }
 
 void validate_batch_case(CaseParam const& param) {
-    execute_test(param, [&]() {
+    execute_test(param, [&](Subcase& subcase) {
         auto const output_prefix = get_output_type(param.calculation_type, param.sym);
         auto const validation_case = create_validation_case(param, output_prefix);
         auto const& info = validation_case.update_batch.value().dataset.get_info();
@@ -546,7 +680,7 @@ void validate_batch_case(CaseParam const& param) {
             model.calculate(options, batch_result.dataset, validation_case.update_batch.value().dataset);
 
             // check results
-            assert_result(batch_result, validation_case.output_batch.value(), param.atol, param.rtol);
+            assert_result(batch_result, validation_case.output_batch.value(), param.atol, param.rtol, subcase);
         }
     });
 }
@@ -556,16 +690,7 @@ void validate_batch_case(CaseParam const& param) {
 TEST_CASE("Validation test single") {
     std::vector<CaseParam> const& all_cases = get_all_single_cases();
     for (CaseParam const& param : all_cases) {
-        SUBCASE(param.case_name.c_str()) {
-            try {
-                validate_single_case(param);
-            } catch (std::exception& e) {
-                using namespace std::string_literals;
-
-                auto const msg = "Unexpected exception with message: "s + e.what();
-                FAIL_CHECK(msg);
-            }
-        }
+        SUBCASE(param.case_name.c_str()) { validate_single_case(param); }
     }
 }
 
@@ -573,16 +698,7 @@ TEST_CASE("Validation test batch") {
     std::vector<CaseParam> const& all_cases = get_all_batch_cases();
 
     for (CaseParam const& param : all_cases) {
-        SUBCASE(param.case_name.c_str()) {
-            try {
-                validate_batch_case(param);
-            } catch (std::exception& e) {
-                using namespace std::string_literals;
-
-                auto const msg = "Unexpected exception with message: "s + e.what();
-                FAIL_CHECK(msg);
-            }
-        }
+        SUBCASE(param.case_name.c_str()) { validate_batch_case(param); }
     }
 }
 

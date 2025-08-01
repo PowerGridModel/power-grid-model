@@ -10,6 +10,7 @@ import numpy as np
 import pytest
 
 from power_grid_model import DatasetType, initialize_array
+from power_grid_model._core.dataset_definitions import ComponentType
 from power_grid_model._core.power_grid_meta import power_grid_meta_data
 from power_grid_model.data_types import Dataset
 from power_grid_model.utils import (
@@ -49,57 +50,61 @@ def test_get_dataset_scenario():
 
 
 def test_get_data_set_batch_size():
-    line = initialize_array("update", "line", (3, 2))
+    line = initialize_array(DatasetType.update, ComponentType.line, (3, 2))
     line["id"] = [[5, 6], [6, 7], [7, 5]]
     line["from_status"] = [[1, 1], [1, 1], [1, 1]]
 
-    asym_load = initialize_array("update", "asym_load", (3, 2))
+    asym_load = initialize_array(DatasetType.update, ComponentType.asym_load, (3, 2))
     asym_load["id"] = [[9, 10], [9, 10], [9, 10]]
 
-    batch_data = {"line": line, "asym_load": asym_load}
+    batch_data = {ComponentType.line: line, ComponentType.asym_load: asym_load}
 
-    assert get_dataset_batch_size(batch_data) == 3
+    n_batch_size = 3
+
+    assert get_dataset_batch_size(batch_data) == n_batch_size
 
 
 def test_get_dataset_batch_size_sparse():
     data = {
-        "node": {
-            "data": np.zeros(shape=3, dtype=power_grid_meta_data["input"]["node"]),
+        ComponentType.node: {
+            "data": np.zeros(shape=3, dtype=power_grid_meta_data[DatasetType.input][ComponentType.node]),
             "indptr": np.array([0, 2, 3, 3]),
         },
-        "sym_load": {
-            "data": np.zeros(shape=2, dtype=power_grid_meta_data["input"]["sym_load"]),
+        ComponentType.sym_load: {
+            "data": np.zeros(shape=2, dtype=power_grid_meta_data[DatasetType.input][ComponentType.sym_load]),
             "indptr": np.array([0, 0, 1, 2]),
         },
-        "asym_load": {
-            "data": np.zeros(shape=4, dtype=power_grid_meta_data["input"]["asym_load"]),
+        ComponentType.asym_load: {
+            "data": np.zeros(shape=4, dtype=power_grid_meta_data[DatasetType.input][ComponentType.asym_load]),
             "indptr": np.array([0, 2, 3, 4]),
         },
     }
 
-    assert get_dataset_batch_size(data) == 3
+    n_batch_size = 3
+
+    assert get_dataset_batch_size(data) == n_batch_size
 
 
 def test_get_dataset_batch_size_mixed():
-    line = initialize_array("update", "line", (3, 2))
+    line = initialize_array(DatasetType.update, ComponentType.line, (3, 2))
     line["id"] = [[5, 6], [6, 7], [7, 5]]
     line["from_status"] = [[1, 1], [1, 1], [1, 1]]
 
-    asym_load = initialize_array("update", "asym_load", (2, 2))
+    asym_load = initialize_array(DatasetType.update, ComponentType.asym_load, (2, 2))
     asym_load["id"] = [[9, 10], [9, 10]]
 
-    data_dense = {"line": line, "asym_load": asym_load}
+    data_dense = {ComponentType.line: line, ComponentType.asym_load: asym_load}
     data_sparse = {
-        "node": {
-            "data": np.zeros(shape=3, dtype=power_grid_meta_data["input"]["node"]),
+        ComponentType.node: {
+            "data": np.zeros(shape=3, dtype=power_grid_meta_data[DatasetType.input][ComponentType.node]),
             "indptr": np.array([0, 2, 3, 3, 5]),
         },
-        "sym_load": {
-            "data": np.zeros(shape=2, dtype=power_grid_meta_data["input"]["sym_load"]),
+        ComponentType.sym_load: {
+            "data": np.zeros(shape=2, dtype=power_grid_meta_data[DatasetType.input][ComponentType.sym_load]),
             "indptr": np.array([0, 0, 1, 2]),
         },
-        "asym_load": {
-            "data": np.zeros(shape=4, dtype=power_grid_meta_data["input"]["asym_load"]),
+        ComponentType.asym_load: {
+            "data": np.zeros(shape=4, dtype=power_grid_meta_data[DatasetType.input][ComponentType.asym_load]),
             "indptr": np.array([0, 2, 3]),
         },
     }
@@ -110,15 +115,18 @@ def test_get_dataset_batch_size_mixed():
 
 
 def test_get_component_batch_size():
-    asym_load = initialize_array("update", "asym_load", (3, 2))
+    asym_load = initialize_array(DatasetType.update, ComponentType.asym_load, (3, 2))
     asym_load["id"] = [[9, 10], [9, 10], [9, 10]]
 
     sym_load = {
-        "data": np.zeros(shape=2, dtype=power_grid_meta_data["input"]["sym_load"]),
+        "data": np.zeros(shape=2, dtype=power_grid_meta_data[DatasetType.input][ComponentType.sym_load]),
         "indptr": np.array([0, 0, 1, 2]),
     }
-    assert get_component_batch_size(asym_load) == 3
-    assert get_component_batch_size(sym_load) == 3
+
+    asym_load_batch_size = 3
+    sym_load_batch_size = 3
+    assert get_component_batch_size(asym_load) == asym_load_batch_size
+    assert get_component_batch_size(sym_load) == sym_load_batch_size
 
 
 @patch("builtins.open", new_callable=mock_open)
@@ -126,7 +134,7 @@ def test_get_component_batch_size():
 def test_json_deserialize_from_file(deserialize_mock: MagicMock, open_mock: MagicMock):
     handle = open_mock()
     handle.read.return_value = '{"version": "1.0", "data": {"foo": [{"val": 123}]}, "bar": {"baz": 456}}'
-    deserialize_mock.return_value = {"foo": [{"val": 123}]}  # type: ignore
+    deserialize_mock.return_value = {"foo": [{"val": 123}]}
     assert json_deserialize_from_file(file_path=Path("output.json")) == deserialize_mock.return_value
     handle.read.assert_called_once()
     deserialize_mock.assert_called_once_with(handle.read.return_value, data_filter=None)
@@ -136,7 +144,7 @@ def test_json_deserialize_from_file(deserialize_mock: MagicMock, open_mock: Magi
 @patch("power_grid_model.utils.json_serialize")
 def test_json_serialize(serialize_mock: MagicMock, open_mock: MagicMock):
     serialize_mock.return_value = '{"version": "1.0", "data": {"foo": [{"val": 123}]}, "bar": {"baz": 456}}'
-    data: Dataset = {}  # type: ignore
+    data: Dataset = {}
     json_serialize_to_file(file_path=Path("output.json"), data=data, use_compact_list=False, indent=2)
     serialize_mock.assert_called_once_with(data=data, dataset_type=None, use_compact_list=False, indent=2)
     handle = open_mock()
@@ -148,7 +156,7 @@ def test_json_serialize(serialize_mock: MagicMock, open_mock: MagicMock):
 def test_msgpack_deserialize_from_file(deserialize_mock: MagicMock, open_mock: MagicMock):
     handle = open_mock()
     handle.read.return_value = b'{"version": "1.0", "data": {"foo": [{"val": 123}]}, "bar": {"baz": 456}}'
-    deserialize_mock.return_value = {"foo": [{"val": 123}]}  # type: ignore
+    deserialize_mock.return_value = {"foo": [{"val": 123}]}
     assert msgpack_deserialize_from_file(file_path=Path("output.msgpack")) == deserialize_mock.return_value
     handle.read.assert_called_once()
     deserialize_mock.assert_called_once_with(handle.read.return_value, data_filter=None)
@@ -158,7 +166,7 @@ def test_msgpack_deserialize_from_file(deserialize_mock: MagicMock, open_mock: M
 @patch("power_grid_model.utils.msgpack_serialize")
 def test_msgpack_serialize(serialize_mock: MagicMock, open_mock: MagicMock):
     serialize_mock.return_value = b'{"version": "1.0", "data": {"foo": [{"val": 123}]}, "bar": {"baz": 456}}'
-    data: Dataset = {}  # type: ignore
+    data: Dataset = {}
     msgpack_serialize_to_file(file_path=Path("output.msgpack"), data=data, use_compact_list=False)
     serialize_mock.assert_called_once_with(data=data, dataset_type=None, use_compact_list=False)
     handle = open_mock()
@@ -189,6 +197,10 @@ def test__make_test_case(
     output_data: Dataset = {"version": "1.0", "data": "output_data"}
     output_path = Path("test_path")
     params = {"param1": "value1", "param2": "value2"}
+    write_update_call_count = 5
+    serialize_update_call_count = 3
+    write_call_count = 4
+    serialize_call_count = 2
 
     _make_test_case(
         output_path=output_path,
@@ -213,8 +225,8 @@ def test__make_test_case(
         serialize_to_file_mock.assert_any_call(
             file_path=output_path / "update_batch.json", data=update_data, dataset_type=DatasetType.update
         )
-        assert write_text_mock.call_count == 5
-        assert serialize_to_file_mock.call_count == 3
+        assert write_text_mock.call_count == write_update_call_count
+        assert serialize_to_file_mock.call_count == serialize_update_call_count
     else:
-        assert write_text_mock.call_count == 4
-        assert serialize_to_file_mock.call_count == 2
+        assert write_text_mock.call_count == write_call_count
+        assert serialize_to_file_mock.call_count == serialize_call_count

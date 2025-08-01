@@ -11,14 +11,8 @@ from typing import Any, cast
 
 import numpy as np
 
-from power_grid_model import power_grid_meta_data
-from power_grid_model._core.dataset_definitions import (
-    ComponentType,
-    ComponentTypeLike as _ComponentTypeLike,
-    ComponentTypeVar,
-    DatasetType,
-    _str_to_component_type,
-)
+from power_grid_model._core.dataset_definitions import ComponentType, DatasetType
+from power_grid_model._core.power_grid_meta import power_grid_meta_data
 from power_grid_model.data_types import SingleArray, SingleComponentData, SingleDataset
 from power_grid_model.validation.errors import ValidationError
 
@@ -86,7 +80,8 @@ def _eval_field_expression(data: np.ndarray, expression: str) -> np.ndarray:
     if len(fields) == 1:
         return data[fields[0]]
 
-    assert len(fields) == 2
+    max_num_fields = 2
+    assert len(fields) == max_num_fields
     zero_div = np.logical_or(np.equal(data[fields[1]], 0.0), np.logical_not(np.isfinite(data[fields[1]])))
     if np.any(zero_div):
         result = np.full_like(data[fields[0]], np.nan)
@@ -107,7 +102,7 @@ def _update_input_data(input_data: SingleDataset, update_data: SingleDataset):
 
 
 def _update_component_data(
-    component: _ComponentTypeLike, input_data: SingleComponentData, update_data: SingleComponentData
+    component: ComponentType, input_data: SingleComponentData, update_data: SingleComponentData
 ) -> None:
     """
     Update the data in a single component data set, with another single component data set,
@@ -119,13 +114,12 @@ def _update_component_data(
     raise NotImplementedError()  # TODO(mgovers): add support for columnar data
 
 
-def _update_component_array_data(
-    component: _ComponentTypeLike, input_data: SingleArray, update_data: SingleArray
-) -> None:
+def _update_component_array_data(component: ComponentType, input_data: SingleArray, update_data: SingleArray) -> None:
     """
     Update the data in a numpy array, with another numpy array,
     indexed on the "id" field and only non-NaN values are overwritten.
     """
+    batch_dataset_ndim = 2
     if update_data.dtype.names is None:
         raise ValueError("Invalid data format")
 
@@ -142,7 +136,7 @@ def _update_component_array_data(
         nan = _nan_type(component, field, DatasetType.update)
         mask = ~np.isnan(update_data[field]) if np.isnan(nan) else np.not_equal(update_data[field], nan)
 
-        if mask.ndim == 2:
+        if mask.ndim == batch_dataset_ndim:
             for phase in range(mask.shape[1]):
                 # find indexers of to-be-updated object
                 sub_mask = mask[:, phase]
@@ -193,11 +187,10 @@ def errors_to_string(
     return msg
 
 
-def _nan_type(component: _ComponentTypeLike, field: str, data_type: DatasetType = DatasetType.input):
+def _nan_type(component: ComponentType, field: str, data_type: DatasetType = DatasetType.input):
     """
     Helper function to retrieve the nan value for a certain field as defined in the power_grid_meta_data.
     """
-    component = _str_to_component_type(component)
     return power_grid_meta_data[data_type][component].nans[field]
 
 
@@ -242,7 +235,7 @@ def _get_indexer(source: np.ndarray, target: np.ndarray, default_value: int | No
 
 
 def _set_default_value(
-    data: SingleDataset, component: _ComponentTypeLike, field: str, default_value: int | float | np.ndarray
+    data: SingleDataset, component: ComponentType, field: str, default_value: int | float | np.ndarray
 ):
     """
     This function sets the default value in the data that is to be validated, so the default values are included in the
@@ -269,7 +262,7 @@ def _set_default_value(
         data[component][field][mask] = default_value
 
 
-def _get_valid_ids(data: SingleDataset, ref_components: _ComponentTypeLike | list[ComponentTypeVar]) -> list[int]:
+def _get_valid_ids(data: SingleDataset, ref_components: ComponentType | list[ComponentType]) -> list[int]:
     """
     This function returns the valid IDs specified by all ref_components
 
@@ -283,7 +276,7 @@ def _get_valid_ids(data: SingleDataset, ref_components: _ComponentTypeLike | lis
     # For convenience, ref_component may be a string and we'll convert it to a 'list' containing that string as it's
     # single element.
     if isinstance(ref_components, (str, ComponentType)):
-        ref_components = cast(list[ComponentTypeVar], [ref_components])
+        ref_components = cast(list[ComponentType], [ref_components])
 
     # Create a set of ids by chaining the ids of all ref_components
     valid_ids = set()
@@ -299,7 +292,7 @@ def _get_valid_ids(data: SingleDataset, ref_components: _ComponentTypeLike | lis
     return list(valid_ids)
 
 
-def _get_mask(data: SingleDataset, component: _ComponentTypeLike, field: str, **filters: Any) -> np.ndarray:
+def _get_mask(data: SingleDataset, component: ComponentType, field: str, **filters: Any) -> np.ndarray:
     """
     Get a mask based on the specified filters. E.g. measured_terminal_type=MeasuredTerminalType.source.
 

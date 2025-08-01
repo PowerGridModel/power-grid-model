@@ -10,6 +10,8 @@ from power_grid_model._core.power_grid_dataset import CConstDataset
 from power_grid_model._core.power_grid_meta import power_grid_meta_data
 from power_grid_model.errors import PowerGridError
 
+SINGLE_DATASET_NDIM = 1
+
 
 def input_dataset_types():
     return [DatasetType.input]
@@ -40,7 +42,7 @@ def test_const_dataset__empty_dataset(dataset_type):
     assert info.dataset_type() == dataset_type
 
     assert not info.is_batch()
-    assert info.batch_size() == 1
+    assert info.batch_size() == SINGLE_DATASET_NDIM
     assert info.n_components() == 0
     assert info.components() == []
     assert info.elements_per_scenario() == {}
@@ -54,8 +56,10 @@ def test_const_dataset__conflicting_data():
     with pytest.raises(PowerGridError):
         CConstDataset(
             data={
-                ComponentType.node: np.zeros(1, dtype=power_grid_meta_data["input"][ComponentType.node]),
-                "sym_load": np.zeros(1, dtype=power_grid_meta_data["update"]["sym_load"]),
+                ComponentType.node: np.zeros(1, dtype=power_grid_meta_data[DatasetType.input][ComponentType.node]),
+                ComponentType.sym_load: np.zeros(
+                    1, dtype=power_grid_meta_data[DatasetType.update][ComponentType.sym_load]
+                ),
             }
         )
 
@@ -74,7 +78,7 @@ def test_const_dataset__single_data(dataset_type):
     assert info.dataset_type() == dataset_type
 
     assert not info.is_batch()
-    assert info.batch_size() == 1
+    assert info.batch_size() == SINGLE_DATASET_NDIM
     assert info.n_components() == len(components)
     assert info.components() == list(components)
     assert info.elements_per_scenario() == components
@@ -112,14 +116,16 @@ def test_const_dataset__sparse_batch_data(dataset_type):
             "indptr": np.array([0, 2, 3, 3]),
         },
         ComponentType.sym_load: {
-            "data": np.zeros(shape=2, dtype=power_grid_meta_data[dataset_type]["sym_load"]),
+            "data": np.zeros(shape=2, dtype=power_grid_meta_data[dataset_type][ComponentType.sym_load]),
             "indptr": np.array([0, 0, 1, 2]),
         },
         ComponentType.asym_load: {
-            "data": np.zeros(shape=4, dtype=power_grid_meta_data[dataset_type]["asym_load"]),
+            "data": np.zeros(shape=4, dtype=power_grid_meta_data[dataset_type][ComponentType.asym_load]),
             "indptr": np.array([0, 2, 3, 4]),
         },
-        ComponentType.link: np.zeros(shape=(batch_size, 4), dtype=power_grid_meta_data[dataset_type]["link"]),
+        ComponentType.link: np.zeros(
+            shape=(batch_size, 4), dtype=power_grid_meta_data[dataset_type][ComponentType.link]
+        ),
     }
 
     dataset = CConstDataset(data, dataset_type)
@@ -129,7 +135,7 @@ def test_const_dataset__sparse_batch_data(dataset_type):
     assert info.dataset_type() == dataset_type
 
     assert info.is_batch()
-    assert info.batch_size() == 3
+    assert info.batch_size() == batch_size
     assert info.n_components() == len(components)
     assert info.components() == list(components)
     assert info.elements_per_scenario() == {
