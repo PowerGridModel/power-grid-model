@@ -1021,7 +1021,7 @@ As a sign convention, the angle is the phase shift of the current relative to th
 
 $$
    \begin{eqnarray}
-      \underline{I} = \text{i_\text{measured}} \cdot e^{j \text{i_\text{angle,measured}}} \text{ .}
+      \underline{I} = \text{i_{\text{measured}}} \cdot e^{j \text{i_{\text{angle,measured}}}} \text{ .}
    \end{eqnarray}
 $$
 
@@ -1039,10 +1039,8 @@ As a result, the global current phasor depends on the local voltage phase offset
 formula.
 
 $$
-\begin{eqnarray}
    \underline{I} = \underline{I}_{\text{local}}^{*} \frac{\underline{U}}{|\underline{U}|}
-               = \text{i_\text{measured}} \cdot e^{\mathrm{j} \left(\theta_{U} - \text{i_\text{angle,measured}}\right)}
-\end{eqnarray}
+               = \text{i_{\text{measured}}} \cdot e^{\mathrm{j} \left(\theta_{U} - \text{i_{\text{angle,measured}}}\right)}
 $$
 
 ```{note}
