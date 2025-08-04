@@ -89,7 +89,7 @@ class JobDispatch {
             auto calculate_scenario = JobDispatch::call_with<Idx>(
                 [&adapter, &calculation_fn_, &result_data, &thread_info](Idx scenario_idx) {
                     adapter.calculate(calculation_fn_, result_data, scenario_idx);
-                    thread_info.merge(adapter.get_calculation_info());
+                    main_core::merge_into(thread_info, adapter.get_calculation_info());
                 },
                 std::move(setup), std::move(winddown), scenario_exception_handler(adapter, exceptions, thread_info),
                 [&adapter, &copy_adapter_functor](Idx scenario_idx) { adapter = copy_adapter_functor(scenario_idx); });
