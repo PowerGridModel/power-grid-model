@@ -59,9 +59,9 @@ using std::numbers::sqrt3;
 
 constexpr DoubleComplex a2{-0.5, -sqrt3 / 2.0};
 constexpr DoubleComplex a{-0.5, sqrt3 / 2.0};
-constexpr double deg_30 = 1.0 / 6.0 * pi;
-constexpr double deg_120 = 2.0 / 3.0 * pi;
-constexpr double deg_240 = 4.0 / 3.0 * pi;
+constexpr double deg_30 = (1.0 / 6.0) * pi;
+constexpr double deg_120 = (2.0 / 3.0) * pi;
+constexpr double deg_240 = (4.0 / 3.0) * pi;
 constexpr double numerical_tolerance = 1e-8;
 constexpr double nan = std::numeric_limits<double>::quiet_NaN();
 constexpr IntS na_IntS = std::numeric_limits<IntS>::min();
