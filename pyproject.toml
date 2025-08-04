@@ -122,7 +122,8 @@ select = [
     "TID",
     "ARG",
     "RET",
-    "PIE"
+    "PIE",
+    "SLF"
 ]
 
 [tool.ruff.lint.isort]
@@ -134,6 +135,9 @@ combine-as-imports = true
 "docs/examples/*.ipynb" = ["F811", "E402"]
 # Pylint was only run in src directory before moving to Ruff
 "tests/*" = ["PLR0915", "PLR0912", "PLR0913"]
+# Ignore private member access: _model_ptr, _all_component_count...
+"src/power_grid_model/_core/*.py" = ["SLF001"]
+"tests/unit/test_error_handling.py" = ["SLF001"]
 "setup.py" = ["PL"]
 
 [tool.mypy]
