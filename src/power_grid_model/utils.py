@@ -141,7 +141,7 @@ def json_deserialize_from_file(
     Returns:
         The deserialized dataset in Power grid model input format.
     """
-    with open(file_path, encoding="utf-8") as file_pointer:
+    with file_path.open(encoding="utf-8") as file_pointer:
         return json_deserialize(file_pointer.read(), data_filter=data_filter)
 
 
@@ -169,7 +169,7 @@ def json_serialize_to_file(
         data=data, dataset_type=dataset_type, use_compact_list=use_compact_list, indent=-1 if indent is None else indent
     )
 
-    with open(file_path, mode="w", encoding="utf-8") as file_pointer:
+    with file_path.open(mode="w", encoding="utf-8") as file_pointer:
         file_pointer.write(result)
 
 
@@ -190,7 +190,7 @@ def msgpack_deserialize_from_file(
     Returns:
         The deserialized dataset in Power grid model input format.
     """
-    with open(file_path, mode="rb") as file_pointer:
+    with file_path.open(mode="rb") as file_pointer:
         return msgpack_deserialize(file_pointer.read(), data_filter=data_filter)
 
 
@@ -212,7 +212,7 @@ def msgpack_serialize_to_file(
     data = _map_to_component_types(data)
     result = msgpack_serialize(data=data, dataset_type=dataset_type, use_compact_list=use_compact_list)
 
-    with open(file_path, mode="wb") as file_pointer:
+    with file_path.open(mode="wb") as file_pointer:
         file_pointer.write(result)
 
 
@@ -278,7 +278,7 @@ def _compatibility_deprecated_export_json_data(
 ):
     serialized_data = json_serialize(data=data, use_compact_list=compact, indent=-1 if indent is None else indent)
     old_format_serialized_data = json.dumps(json.loads(serialized_data)["data"])
-    with open(json_file, mode="w", encoding="utf-8") as file_pointer:
+    with json_file.open(mode="w", encoding="utf-8") as file_pointer:
         file_pointer.write(old_format_serialized_data)
 
 
@@ -327,7 +327,7 @@ def import_update_data(json_file: Path) -> BatchDataset:
 
 
 def _compatibility_deprecated_import_json_data(json_file: Path, data_type: DatasetType):
-    with open(json_file, mode="r", encoding="utf-8") as file_pointer:
+    with Path(json_file).open(mode="r", encoding="utf-8") as file_pointer:
         data = json.load(file_pointer)
 
     if "version" not in data:  # convert old format to version 1.0
@@ -395,7 +395,7 @@ def self_test():
             json_serialize_to_file(output_file_path, output_data)
 
             # Verify that the written output is correct
-            with open(output_file_path, "r", encoding="utf-8") as output_file:
+            with Path(output_file_path).open("r", encoding="utf-8") as output_file:
                 output_data = json.load(output_file)
 
             assert output_data is not None

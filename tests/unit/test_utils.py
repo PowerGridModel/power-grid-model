@@ -129,7 +129,7 @@ def test_get_component_batch_size():
     assert get_component_batch_size(sym_load) == sym_load_batch_size
 
 
-@patch("builtins.open", new_callable=mock_open)
+@patch("pathlib.Path.open", new_callable=mock_open)
 @patch("power_grid_model.utils.json_deserialize")
 def test_json_deserialize_from_file(deserialize_mock: MagicMock, open_mock: MagicMock):
     handle = open_mock()
@@ -140,7 +140,7 @@ def test_json_deserialize_from_file(deserialize_mock: MagicMock, open_mock: Magi
     deserialize_mock.assert_called_once_with(handle.read.return_value, data_filter=None)
 
 
-@patch("builtins.open", new_callable=mock_open)
+@patch("pathlib.Path.open", new_callable=mock_open)
 @patch("power_grid_model.utils.json_serialize")
 def test_json_serialize(serialize_mock: MagicMock, open_mock: MagicMock):
     serialize_mock.return_value = '{"version": "1.0", "data": {"foo": [{"val": 123}]}, "bar": {"baz": 456}}'
@@ -151,7 +151,7 @@ def test_json_serialize(serialize_mock: MagicMock, open_mock: MagicMock):
     handle.write.assert_called_once_with(serialize_mock.return_value)
 
 
-@patch("builtins.open", new_callable=mock_open)
+@patch("pathlib.Path.open", new_callable=mock_open)
 @patch("power_grid_model.utils.msgpack_deserialize")
 def test_msgpack_deserialize_from_file(deserialize_mock: MagicMock, open_mock: MagicMock):
     handle = open_mock()
@@ -162,7 +162,7 @@ def test_msgpack_deserialize_from_file(deserialize_mock: MagicMock, open_mock: M
     deserialize_mock.assert_called_once_with(handle.read.return_value, data_filter=None)
 
 
-@patch("builtins.open", new_callable=mock_open)
+@patch("pathlib.Path.open", new_callable=mock_open)
 @patch("power_grid_model.utils.msgpack_serialize")
 def test_msgpack_serialize(serialize_mock: MagicMock, open_mock: MagicMock):
     serialize_mock.return_value = b'{"version": "1.0", "data": {"foo": [{"val": 123}]}, "bar": {"baz": 456}}'

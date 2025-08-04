@@ -154,10 +154,10 @@ def test_single_validation(
             assert np.all(input_array["id"][indexer_array] == ids_array)
 
         # test calculate with only node and source result
-        kwargs = dict(base_kwargs, **{"output_component_types": [ComponentType.node, ComponentType.source]})
+        kwargs = dict(base_kwargs, output_component_types=[ComponentType.node, ComponentType.source])
         result = calculation_function(model, **supported_kwargs(kwargs=kwargs, supported=calculation_args))
         assert set(result.keys()) == {ComponentType.node, ComponentType.source}
-        kwargs = dict(base_kwargs, **{"output_component_types": {ComponentType.node, ComponentType.source}})
+        kwargs = dict(base_kwargs, output_component_types={ComponentType.node, ComponentType.source})
         result = calculation_function(model, **supported_kwargs(kwargs=kwargs, supported=calculation_args))
         assert set(result.keys()) == {ComponentType.node, ComponentType.source}
 
