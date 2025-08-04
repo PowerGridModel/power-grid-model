@@ -93,9 +93,9 @@ class ThreeWindingTransformer : public Branch3 {
             throw InvalidTransformerClock{id(), clock_13_};
         }
 
-        // set clock to zero if it is 12
-        clock_12_ = static_cast<IntS>(clock_12_ % 12);
-        clock_13_ = static_cast<IntS>(clock_13_ % 12);
+        // handle periodic clock input -> in range [0, 11]
+        clock_12_ = map_to_cyclic_range(clock_12_, IntS{12});
+        clock_13_ = map_to_cyclic_range(clock_13_, IntS{12});
         // check tap bounds
         tap_pos_ = tap_limit(tap_pos_);
     }
@@ -119,6 +119,8 @@ class ThreeWindingTransformer : public Branch3 {
     constexpr IntS tap_min() const { return tap_min_; }
     constexpr IntS tap_max() const { return tap_max_; }
     constexpr IntS tap_nom() const { return tap_nom_; }
+    constexpr IntS clock_12() const { return clock_12_; }
+    constexpr IntS clock_13() const { return clock_13_; }
 
     // setter
     constexpr bool set_tap(IntS new_tap) {
