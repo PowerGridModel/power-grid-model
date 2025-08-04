@@ -986,7 +986,8 @@ per method on how the variances are taken into account for both the global and l
 individual phases.
 
 ```{note}
-Because of the calculations presented in [State estimate sensor transformations](calculations.md#state-estimate-sensor-transformations), `i_measured=0` and `i_angle_measured=n&#960/2` is an invalid measurement.
+The combination of `i_measured=0` and `i_angle_measured=n&#960/2` renders the current sensor invalid for PGM. 
+See [State estimate sensor transformations](calculations.md#state-estimate-sensor-transformations).
 ```
 
 ##### Steady state output
