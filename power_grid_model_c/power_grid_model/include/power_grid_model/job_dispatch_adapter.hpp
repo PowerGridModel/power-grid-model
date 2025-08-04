@@ -55,7 +55,7 @@ class JobDispatchAdapter : public JobDispatchInterface<JobDispatchAdapter<MainMo
         }
         return *this;
     }
-    ~JobDispatchAdapter() = default;
+    ~JobDispatchAdapter() { model_copy_.reset(); }
 
   private:
     friend class JobDispatchInterface<JobDispatchAdapter>; // CRTP
@@ -128,11 +128,9 @@ class JobDispatchAdapter : public JobDispatchInterface<JobDispatchAdapter<MainMo
 
     CalculationInfo get_calculation_info_impl() const { return model_.get().calculation_info(); }
 
-    void add_calculation_info_impl(CalculationInfo const& info) { model_.get().merge_calculation_info(info); }
-
     void thread_safe_add_calculation_info_impl(CalculationInfo const& info) {
         std::lock_guard const lock{calculation_info_mutex_};
-        add_calculation_info_impl(info);
+        model_.get().merge_calculation_info(info);
     }
 
     auto get_current_scenario_sequence_view_() const {
