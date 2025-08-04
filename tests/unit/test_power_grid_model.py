@@ -204,7 +204,7 @@ def test_single_calculation_error(model: PowerGridModel):
             model.calculate_short_circuit(calculation_method=calculation_method)
 
 
-def test_batch_calculation_error(model: PowerGridModel, update_batch, input):
+def test_batch_calculation_error(model: PowerGridModel, update_batch):
     # wrong id
     update_batch[ComponentType.sym_load]["data"]["id"][1] = 5
     # with error

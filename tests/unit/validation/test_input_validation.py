@@ -397,7 +397,7 @@ def original_data() -> dict[ComponentType, np.ndarray]:
         ComponentType.asym_current_sensor: asym_current_sensor,
         ComponentType.fault: fault,
     }
-    return data
+    return data  # noqa: RET504
 
 
 @pytest.fixture

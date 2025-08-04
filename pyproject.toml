@@ -91,6 +91,8 @@ show-fixes = true
 # Assume Python 3.11
 target-version = "py311"
 
+extend-exclude = ["setup.py"]
+
 [tool.ruff.lint]
 select = [
     # pycodestyle
@@ -115,6 +117,12 @@ select = [
     "SLOT",
     "PL",
     "NPY",
+    "W",
+    "PTH",
+    "TID",
+    "ARG",
+    "RET",
+    "PIE"
 ]
 
 [tool.ruff.lint.isort]

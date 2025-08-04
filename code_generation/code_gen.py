@@ -18,12 +18,11 @@ JINJA_ENV = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
 def _data_type_nan(data_type: str):
     if data_type == "ID":
         return "na_IntID"
-    elif data_type == "double" or "RealValue" in data_type:
+    if data_type == "double" or "RealValue" in data_type:
         return "nan"
-    elif data_type == "IntS":
+    if data_type == "IntS":
         return "na_IntS"
-    else:
-        return f"static_cast<{data_type}>(na_IntS)"
+    return f"static_cast<{data_type}>(na_IntS)"
 
 
 class CodeGenerator:
@@ -45,7 +44,7 @@ class CodeGenerator:
             output_file.write(output)
 
     def render_attribute_classes(self, template_path: Path, data_path: Path, output_path: Path):
-        with open(data_path) as data_file:
+        with data_path.open() as data_file:
             json_data = data_file.read()
         dataset_meta_data: DatasetMetaData = DatasetMetaData.schema().loads(json_data)
         # flatten attribute list
@@ -95,7 +94,7 @@ class CodeGenerator:
         )
 
     def render_dataset_class_maps(self, template_path: Path, data_path: Path, output_path: Path):
-        with open(data_path) as data_file:
+        with data_path.open() as data_file:
             json_data = data_file.read()
         dataset_meta_data: list[DatasetMapData] = AllDatasetMapData.schema().loads(json_data).all_datasets
 
