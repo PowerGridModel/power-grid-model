@@ -607,7 +607,7 @@ def validate_transformer(data: SingleDataset) -> list[ValidationError]:
     errors += _all_greater_than_or_equal_to_zero(data, ComponentType.transformer, "p0")
     errors += _all_valid_enum_values(data, ComponentType.transformer, "winding_from", WindingType)
     errors += _all_valid_enum_values(data, ComponentType.transformer, "winding_to", WindingType)
-    errors += _all_between_or_at(data, ComponentType.transformer, "clock", 0, 12)
+    errors += _all_between_or_at(data, ComponentType.transformer, "clock", -12, 12)
     errors += _all_valid_clocks(data, ComponentType.transformer, "clock", "winding_from", "winding_to")
     errors += _all_valid_enum_values(data, ComponentType.transformer, "tap_side", BranchSide)
     errors += _all_between_or_at(
