@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <cmath>
 #include <complex>
 #include <cstddef>
 #include <cstdint>
@@ -107,5 +108,22 @@ struct IncludeAll {
     }
 };
 constexpr IncludeAll include_all{};
+
+// function to handle periodic mapping
+template <typename T> constexpr T map_to_cyclic_range(T value, T period) {
+    static_assert(std::is_arithmetic_v<T>, "T must be an arithmetic type (integral or floating-point)");
+    if constexpr (std::is_integral_v<T>) {
+        return static_cast<T>((value % period + period) % period);
+    } else {
+        if (std::is_constant_evaluated()) {
+            T quotient = value / period;
+            Idx const floored_quotient =
+                (quotient >= T{0}) ? static_cast<Idx>(quotient) : static_cast<Idx>(quotient) - 1;
+            T result = value - static_cast<T>(floored_quotient) * period;
+            return result;
+        }
+        return std::fmod(std::fmod(value, period) + period, period);
+    }
+}
 
 } // namespace power_grid_model
