@@ -13,7 +13,8 @@ def get_pgm_dll_path() -> Path:
     Returns the path to PGM dynamic library.
     """
     package_dir = Path(str(files(__package__)))
-    if platform.system() == "Windows":
+    platform_name = platform.system()
+    if platform_name == "Windows":
         lib_dir_1 = package_dir / "bin"
         lib_dir_2 = package_dir / "bin"
     else:
@@ -21,14 +22,14 @@ def get_pgm_dll_path() -> Path:
         lib_dir_2 = package_dir / "lib64"
 
     # determine DLL file name
-    if platform.system() == "Windows":
+    if platform_name == "Windows":
         dll_file = Path("power_grid_model_c.dll")
-    elif platform.system() == "Darwin":
+    elif platform_name == "Darwin":
         dll_file = Path("libpower_grid_model_c.dylib")
     elif platform.system() == "Linux":
         dll_file = Path("libpower_grid_model_c.so")
     else:
-        raise NotImplementedError(f"Unsupported platform: {platform.system()}")
+        raise NotImplementedError(f"Unsupported platform: {platform_name}")
     lib_dll_path_1 = lib_dir_1 / dll_file
     lib_dll_path_2 = lib_dir_2 / dll_file
 
