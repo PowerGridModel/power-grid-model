@@ -58,7 +58,7 @@ Mailing-list = "https://lists.lfenergy.org/g/powergridmodel"
 Discussion = "https://github.com/orgs/PowerGridModel/discussions"
 
 [project.entry-points."cmake.root"]
-power_grid_model = "power_grid_model.power_grid_model_c"
+power_grid_model = "power_grid_model._core.power_grid_model_c"
 
 [tool.scikit-build]
 logging.level = "INFO"
@@ -74,7 +74,7 @@ search.site-packages = false
 ninja.version = ">=1.10"
 ninja.make-fallback = false
 
-wheel.install-dir = "power_grid_model/power_grid_model_c"
+wheel.install-dir = "power_grid_model/_core/power_grid_model_c"
 wheel.py-api = "py3"
 
 [tool.scikit-build.metadata.version]
