@@ -20,18 +20,18 @@ concept scalar_value = std::same_as<T, double> || std::same_as<T, DoubleComplex>
 
 namespace three_phase_tensor {
 
-template <class T> using Eigen3Vector = Eigen::Array<T, 3, 1>;
-template <class T> using Eigen3Tensor = Eigen::Array<T, 3, 3, Eigen::ColMajor>;
-template <class T> using Eigen4Tensor = Eigen::Array<T, 4, 4, Eigen::ColMajor>;
-template <class T> using Eigen3DiagonalTensor = Eigen::DiagonalMatrix<T, 3>;
+template <class T> using EigenVector3 = Eigen::Array<T, 3, 1>;
+template <class T> using EigenTensor3 = Eigen::Array<T, 3, 3, Eigen::ColMajor>;
+template <class T> using EigenTensor4 = Eigen::Array<T, 4, 4, Eigen::ColMajor>;
+template <class T> using EigenDiagonalTensor3 = Eigen::DiagonalMatrix<T, 3>;
 
-template <scalar_value T> class Vector : public Eigen3Vector<T> {
+template <scalar_value T> class Vector : public EigenVector3<T> {
   public:
-    Vector() { (*this) = Eigen3Vector<T>::Zero(); };
+    Vector() { (*this) = EigenVector3<T>::Zero(); };
     // eigen expression
-    template <typename OtherDerived> Vector(Eigen::ArrayBase<OtherDerived> const& other) : Eigen3Vector<T>{other} {}
+    template <typename OtherDerived> Vector(Eigen::ArrayBase<OtherDerived> const& other) : EigenVector3<T>{other} {}
     template <typename OtherDerived> Vector& operator=(Eigen::ArrayBase<OtherDerived> const& other) {
-        this->Eigen3Vector<T>::operator=(other);
+        this->EigenVector3<T>::operator=(other);
         return *this;
     }
     // constructor of single value
@@ -56,9 +56,9 @@ template <scalar_value T> class Vector : public Eigen3Vector<T> {
         : Vector{{real_part(0), imag_part(0)}, {real_part(1), imag_part(1)}, {real_part(2), imag_part(2)}} {}
 };
 
-template <scalar_value T> class Tensor : public Eigen3Tensor<T> {
+template <scalar_value T> class Tensor : public EigenTensor3<T> {
   public:
-    Tensor() { (*this) = Eigen3Tensor<T>::Zero(); }
+    Tensor() { (*this) = EigenTensor3<T>::Zero(); }
     // additional constructors
     explicit Tensor(T const& x) { (*this) << x, T{0}, T{0}, T{0}, x, T{0}, T{0}, T{0}, x; }
     explicit Tensor(T const& s, T const& m) { (*this) << s, m, m, m, s, m, m, m, s; }
@@ -70,16 +70,16 @@ template <scalar_value T> class Tensor : public Eigen3Tensor<T> {
         (*this) << v(0), T{0}, T{0}, T{0}, v(1), T{0}, T{0}, T{0}, v(2);
     }
     // eigen expression
-    template <typename OtherDerived> Tensor(Eigen::ArrayBase<OtherDerived> const& other) : Eigen3Tensor<T>{other} {}
+    template <typename OtherDerived> Tensor(Eigen::ArrayBase<OtherDerived> const& other) : EigenTensor3<T>{other} {}
     template <typename OtherDerived> Tensor& operator=(Eigen::ArrayBase<OtherDerived> const& other) {
-        this->Eigen3Tensor<T>::operator=(other);
+        this->EigenTensor3<T>::operator=(other);
         return *this;
     }
 };
 
-template <scalar_value T> class Tensor4 : public Eigen4Tensor<T> {
+template <scalar_value T> class Tensor4 : public EigenTensor4<T> {
   public:
-    Tensor4() { (*this) = Eigen4Tensor<T>::Zero(); }
+    Tensor4() { (*this) = EigenTensor4<T>::Zero(); }
     // additional constructors
     explicit Tensor4(T const& x) {
         (*this) << x, T{0}, T{0}, T{0}, T{0}, x, T{0}, T{0}, T{0}, T{0}, x, T{0}, T{0}, T{0}, T{0}, x;
@@ -94,25 +94,25 @@ template <scalar_value T> class Tensor4 : public Eigen4Tensor<T> {
         (*this) << v(0), T{0}, T{0}, T{0}, T{0}, v(1), T{0}, T{0}, T{0}, T{0}, v(2), T{0}, T{0}, T{0}, T{0}, v(3);
     }
     // eigen expression
-    template <typename OtherDerived> Tensor4(Eigen::ArrayBase<OtherDerived> const& other) : Eigen4Tensor<T>{other} {}
+    template <typename OtherDerived> Tensor4(Eigen::ArrayBase<OtherDerived> const& other) : EigenTensor4<T>{other} {}
     template <typename OtherDerived> Tensor4& operator=(Eigen::ArrayBase<OtherDerived> const& other) {
-        this->Eigen4Tensor<T>::operator=(other);
+        this->EigenTensor4<T>::operator=(other);
         return *this;
     }
 };
 
-template <scalar_value T> class DiagonalTensor : public Eigen3DiagonalTensor<T> {
+template <scalar_value T> class DiagonalTensor : public EigenDiagonalTensor3<T> {
   public:
     DiagonalTensor() { (*this).setZero(); }
     // additional constructors
-    explicit DiagonalTensor(T const& x) : Eigen3DiagonalTensor<T>{x, x, x} {}
-    explicit DiagonalTensor(Vector<T> const& v) : Eigen3DiagonalTensor<T>{v(0), v(1), v(2)} {}
+    explicit DiagonalTensor(T const& x) : EigenDiagonalTensor3<T>{x, x, x} {}
+    explicit DiagonalTensor(Vector<T> const& v) : EigenDiagonalTensor3<T>{v(0), v(1), v(2)} {}
     // eigen expression
     template <typename OtherDerived>
-    DiagonalTensor(Eigen::ArrayBase<OtherDerived> const& other) : Eigen3DiagonalTensor<T>{other} {}
+    DiagonalTensor(Eigen::ArrayBase<OtherDerived> const& other) : EigenDiagonalTensor3<T>{other} {}
 
     template <typename OtherDerived> DiagonalTensor& operator=(Eigen::ArrayBase<OtherDerived> const& other) {
-        this->Eigen3DiagonalTensor<T>::operator=(other);
+        this->EigenDiagonalTensor3<T>::operator=(other);
         return *this;
     }
 };
