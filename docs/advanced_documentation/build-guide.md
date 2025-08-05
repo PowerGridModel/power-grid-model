@@ -357,6 +357,13 @@ Open a miniconda console.
 conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge libboost-headers eigen nlohmann_json msgpack-cxx doctest
 ```
 
+```{note}
+Long paths for (dependencies in) the installation environment might exceed the `maximum path length limitation` set by
+Windows, causing the installation to fail.
+It is possible to enable long paths in Windows by following the steps in the
+[Microsoft documentation](https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=registry)
+```
+
 ### Build Python Library from Source
 
 It is recommended to create a virtual environment.
