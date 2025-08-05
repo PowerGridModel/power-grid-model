@@ -371,7 +371,7 @@ def none_match_comparison(  # noqa: PLR0913
         _set_default_value(data=data, component=component, field=field, default_value=default_value_2)
     component_data = data[component]
     if not isinstance(component_data, np.ndarray):
-        raise NotImplementedError()  # TODO(mgovers): add support for columnar data
+        raise NotImplementedError  # TODO(mgovers): add support for columnar data
 
     if isinstance(ref_value, tuple):
         ref = tuple(_eval_expression(component_data, v) for v in ref_value)
@@ -763,7 +763,7 @@ def all_finite(data: SingleDataset, exceptions: dict[ComponentType, list[str]] |
     errors = []
     for component, array in data.items():
         if not isinstance(array, np.ndarray):
-            raise NotImplementedError()  # TODO(mgovers): add support for columnar data
+            raise NotImplementedError  # TODO(mgovers): add support for columnar data
 
         for field, (dtype, _) in array.dtype.fields.items():
             if not np.issubdtype(dtype, np.floating):

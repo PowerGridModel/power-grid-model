@@ -111,7 +111,7 @@ def _update_component_data(
     if isinstance(input_data, np.ndarray) and isinstance(update_data, np.ndarray):
         return _update_component_array_data(component=component, input_data=input_data, update_data=update_data)
 
-    raise NotImplementedError()  # TODO(mgovers): add support for columnar data
+    raise NotImplementedError  # TODO(mgovers): add support for columnar data
 
 
 def _update_component_array_data(component: ComponentType, input_data: SingleArray, update_data: SingleArray) -> None:
