@@ -150,6 +150,8 @@ inline bool necessary_observability_condition(ObservabilitySensorsResult const& 
         throw NotObservableError{
             "The total number of independent power sensors is not enough to make the grid observable."};
     }
+    // If there are any voltage phasor sensor, one will be reserved as reference and not be used:
+    //      n_flow_sensors + n_voltage_phasor_sensors - 1 < n_bus - 1
     if (n_voltage_phasor_sensors > 0 && n_flow_sensors + n_voltage_phasor_sensors < n_bus) {
         throw NotObservableError{"The total number of independent power sensors and voltage phasor sensors is not "
                                  "enough to make the grid observable."};
@@ -165,8 +167,8 @@ inline bool necessary_observability_condition(ObservabilitySensorsResult const& 
 inline bool sufficient_observability_condition(YBusStructure const& y_bus_structure,
                                                ObservabilitySensorsResult& observability_sensors,
                                                Idx const n_voltage_phasor_sensors) {
-    auto& flow_sensors = observability_sensors.flow_sensors;
-    auto& voltage_phasor_sensors = observability_sensors.voltage_phasor_sensors;
+    std::vector<int8_t>& flow_sensors = observability_sensors.flow_sensors;
+    std::vector<int8_t>& voltage_phasor_sensors = observability_sensors.voltage_phasor_sensors;
     Idx const n_bus{std::ssize(y_bus_structure.row_indptr) - 1};
 
     // for a radial grid, try to assign injection or phasor voltage sensors to unmeasured branches
@@ -209,7 +211,8 @@ inline ObservabilityResult observability_check(MeasuredValues<sym> const& measur
         throw NotObservableError{"No voltage sensor found!\n"};
     }
 
-    auto observability_sensors = detail::count_observability_sensors(measured_values, topo, y_bus_structure);
+    detail::ObservabilitySensorsResult observability_sensors =
+        detail::count_observability_sensors(measured_values, topo, y_bus_structure);
     Idx n_voltage_phasor_sensors{};
 
     // check necessary condition for observability
@@ -222,6 +225,7 @@ inline ObservabilityResult observability_check(MeasuredValues<sym> const& measur
         is_sufficient_condition_met = detail::sufficient_observability_condition(y_bus_structure, observability_sensors,
                                                                                  n_voltage_phasor_sensors);
     }
+    //  ToDo(JGuo): meshed network will require a different treatment
     return ObservabilityResult{.is_observable = is_necessary_condition_met && is_sufficient_condition_met,
                                .is_possibly_ill_conditioned = observability_sensors.is_possibly_ill_conditioned};
 }
