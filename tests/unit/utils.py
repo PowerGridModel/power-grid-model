@@ -172,7 +172,7 @@ def add_case(
 
 
 def _add_cases(case_dir: Path, calculation_type: str, **kwargs):
-    with open(case_dir / "params.json") as f:
+    with (case_dir / "params.json").open() as f:
         params = json.load(f)
 
     # retrieve calculation method, can be a string or list of strings

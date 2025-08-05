@@ -11,7 +11,7 @@ from power_grid_model.data_types import Dataset
 from power_grid_model.utils import export_json_data
 
 
-@patch("builtins.open", new_callable=mock_open)
+@patch("pathlib.Path.open", new_callable=mock_open)
 @patch("power_grid_model.utils.json_serialize")
 def test_export_json_data_format_version_1_0(convert_mock: MagicMock, open_mock: MagicMock):
     convert_mock.return_value = '{"version": "1.0", "data": {"foo": [{"val": 123}]}, "bar": {"baz": 456}}'
@@ -25,7 +25,7 @@ def test_export_json_data_format_version_1_0(convert_mock: MagicMock, open_mock:
     handle.write.assert_called_once_with(convert_mock.return_value)
 
 
-@patch("builtins.open", new_callable=mock_open)
+@patch("pathlib.Path.open", new_callable=mock_open)
 @patch("power_grid_model.utils.json_serialize")
 def test_export_json_data__deprecated_format(convert_mock: MagicMock, open_mock: MagicMock):
     convert_mock.return_value = '{"version": "1.0", "data": {"foo": [{"val": 123}]}, "bar": {"baz": 456}}'

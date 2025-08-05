@@ -4,14 +4,10 @@
 
 [build-system]
 requires = [
-    "setuptools",
-    "wheel",
-    "pybuild-header-dependency",
-    "msgpack-cxx",
-    "nlohmann-json",
-    "libboost-headers"
+    "scikit-build-core",
+    "pgm-build-dependencies@https://github.com/PowerGridModel/pgm-build-dependencies/releases/latest/download/pgm_build_dependencies-0.1.0-py3-none-any.whl"
 ]
-build-backend = "setuptools.build_meta"
+build-backend = "scikit_build_core.build"
 
 [project]
 name = "power-grid-model"
@@ -61,15 +57,38 @@ Documentation = "https://power-grid-model.readthedocs.io/en/stable/"
 Mailing-list = "https://lists.lfenergy.org/g/powergridmodel"
 Discussion = "https://github.com/orgs/PowerGridModel/discussions"
 
-[tool.setuptools.packages.find]
-where = ["src"]
-namespaces = false
+[project.entry-points."cmake.root"]
+power_grid_model = "power_grid_model._core.power_grid_model_c"
 
-[tool.setuptools.dynamic]
-version = { file = "PYPI_VERSION" }
+[tool.scikit-build]
+logging.level = "INFO"
 
-[tool.setuptools.package-data]
-"power_grid_model" = ["py.typed"]
+cmake.version = ">=3.23"
+cmake.build-type = "Release"
+cmake.args = ["-GNinja"]
+
+build-dir = "build"
+
+search.site-packages = false
+
+ninja.version = ">=1.10"
+ninja.make-fallback = false
+
+wheel.install-dir = "power_grid_model/_core/power_grid_model_c"
+wheel.py-api = "py3"
+
+[tool.scikit-build.metadata.version]
+provider = "scikit_build_core.metadata.regex"
+input = "VERSION"
+regex = "^\\s*(?P<version>[^\\s]+)\\s*$"
+result = "{version}"
+
+# when build in CI, force single thread to avoid out of memory errors
+[[tool.scikit-build.overrides]]
+if.any.env.CIBUILDWHEEL = true
+if.any.env.GITHUB_ACTIONS = true
+if.any.env.READTHEDOCS = true
+build.tool-args = ["-j1"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests/unit"]
@@ -90,6 +109,8 @@ show-fixes = true
 
 # Assume Python 3.11
 target-version = "py311"
+
+extend-exclude = ["setup.py"]
 
 [tool.ruff.lint]
 select = [
@@ -115,6 +136,13 @@ select = [
     "SLOT",
     "PL",
     "NPY",
+    "W",
+    "PTH",
+    "TID",
+    "ARG",
+    "RET",
+    "PIE",
+    "SLF"
 ]
 
 [tool.ruff.lint.isort]
@@ -126,6 +154,9 @@ combine-as-imports = true
 "docs/examples/*.ipynb" = ["F811", "E402"]
 # Pylint was only run in src directory before moving to Ruff
 "tests/*" = ["PLR0915", "PLR0912", "PLR0913"]
+# Ignore private member access: _model_ptr, _all_component_count...
+"src/power_grid_model/_core/*.py" = ["SLF001"]
+"tests/unit/test_error_handling.py" = ["SLF001"]
 "setup.py" = ["PL"]
 
 [tool.mypy]
@@ -145,7 +176,8 @@ test-command = "pytest {package}/tests"
 # we do not support 
 #    PyPy
 #    musllinux in aarch64
-skip = ["pp*", "*-musllinux_aarch64"]
+#    disable Python 3.14 for now until it is released
+skip = ["pp*", "*-musllinux_aarch64", "cp314*"]
 
 [tool.cibuildwheel.linux]
 archs = ["x86_64", "aarch64"]
