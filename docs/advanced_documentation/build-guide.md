@@ -89,13 +89,13 @@ The table below shows the C++ build dependencies
 
 The table below shows the Python dependencies
 
-| Library name                                                                            | Remark                   | License                                                                                    |
-| --------------------------------------------------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------ |
-| [numpy](https://numpy.org/)                                                             | runtime dependency | [BSD-3](https://github.com/numpy/numpy/blob/main/LICENSE.txt)                              |
-| [scikit-build-core](https://github.com/scikit-build/scikit-build-core)                                                  | build dependency         | [Apache](https://github.com/scikit-build/scikit-build-core/blob/main/LICENSE)                                 |
-| [pytest](https://github.com/pytest-dev/pytest)                                          | Development dependency   | [MIT](https://github.com/pytest-dev/pytest/blob/main/LICENSE)                              |
-| [pytest-cov](https://github.com/pytest-dev/pytest-cov)                                  | Development dependency   | [MIT](https://github.com/pytest-dev/pytest-cov/blob/master/LICENSE)                        |
-| [msgpack-python](https://github.com/msgpack/msgpack-python)                             | Development dependency   | [Apache License, Version 2.0](https://github.com/msgpack/msgpack-python/blob/main/COPYING) |
+| Library name                                                           | Remark                 | License                                                                                    |
+| ---------------------------------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------ |
+| [numpy](https://numpy.org/)                                            | runtime dependency     | [BSD-3](https://github.com/numpy/numpy/blob/main/LICENSE.txt)                              |
+| [scikit-build-core](https://github.com/scikit-build/scikit-build-core) | build dependency       | [Apache](https://github.com/scikit-build/scikit-build-core/blob/main/LICENSE)              |
+| [pytest](https://github.com/pytest-dev/pytest)                         | Development dependency | [MIT](https://github.com/pytest-dev/pytest/blob/main/LICENSE)                              |
+| [pytest-cov](https://github.com/pytest-dev/pytest-cov)                 | Development dependency | [MIT](https://github.com/pytest-dev/pytest-cov/blob/master/LICENSE)                        |
+| [msgpack-python](https://github.com/msgpack/msgpack-python)            | Development dependency | [Apache License, Version 2.0](https://github.com/msgpack/msgpack-python/blob/main/COPYING) |
 
 ## Build Python Package
 
