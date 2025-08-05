@@ -8,8 +8,9 @@ Error classes
 
 import re
 from abc import ABC
+from collections.abc import Iterable
 from enum import Enum
-from typing import Any, Iterable, Type
+from typing import Any
 
 from power_grid_model import ComponentType
 from power_grid_model._core.dataset_definitions import DatasetType
@@ -271,10 +272,10 @@ class InvalidEnumValueError(SingleFieldValidationError):
     """
 
     _message = "Field {field} contains invalid {enum} values for {n} {objects}."
-    enum: Type[Enum] | list[Type[Enum]]
+    enum: type[Enum] | list[type[Enum]]
     __hash__ = None  # type: ignore[assignment]
 
-    def __init__(self, component: ComponentType, field: str, ids: list[int], enum: Type[Enum] | list[Type[Enum]]):
+    def __init__(self, component: ComponentType, field: str, ids: list[int], enum: type[Enum] | list[type[Enum]]):
         super().__init__(component, field, ids)
         self.enum = enum
 
@@ -523,7 +524,7 @@ class InvalidAssociatedEnumValueError(MultiFieldValidationError):
     """
 
     _message = "The combination of fields {field} results in invalid {enum} values for {n} {objects}."
-    enum: Type[Enum] | list[Type[Enum]]
+    enum: type[Enum] | list[type[Enum]]
     __hash__ = None  # type: ignore[assignment]
 
     def __init__(
@@ -531,7 +532,7 @@ class InvalidAssociatedEnumValueError(MultiFieldValidationError):
         component: ComponentType,
         fields: list[str],
         ids: list[int],
-        enum: Type[Enum] | list[Type[Enum]],
+        enum: type[Enum] | list[type[Enum]],
     ):
         """
         Args:

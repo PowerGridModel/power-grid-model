@@ -8,11 +8,11 @@ Loader for the dynamic library
 
 import os
 import platform
+from collections.abc import Callable
 from ctypes import CDLL, POINTER, c_char, c_char_p, c_double, c_size_t, c_void_p
 from inspect import signature
 from itertools import chain
 from pathlib import Path
-from typing import Callable
 
 from power_grid_model._core.index_integer import IdC, IdxC
 
