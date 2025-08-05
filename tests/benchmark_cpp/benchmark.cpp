@@ -20,7 +20,7 @@ MathSolverDispatcher const& get_math_solver_dispatcher() {
     return math_solver_dispatcher;
 }
 
-auto const get_benchmark_run_title(Option const& option, MainModelOptions const& model_options, Idx batch_size) {
+auto get_benchmark_run_title(Option const& option, MainModelOptions const& model_options) {
     auto const mv_ring_type = option.has_mv_ring ? "meshed grid" : "radial grid";
     auto const sym_type =
         model_options.calculation_symmetry == CalculationSymmetry::symmetric ? "symmetric" : "asymmetric";
@@ -84,7 +84,7 @@ struct PowerGridBenchmark {
         generator.generate_grid(option, 0);
         InputData const& input = generator.input_data();
 
-        std::cout << get_benchmark_run_title(option, model_options, batch_size) << '\n';
+        std::cout << get_benchmark_run_title(option, model_options) << '\n';
 
         auto const run = [this, &model_options, &info](Idx batch_size_) {
             switch (model_options.calculation_type) {
