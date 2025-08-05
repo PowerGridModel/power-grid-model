@@ -559,10 +559,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return *meta_data_;
     }
 
-    void check_no_experimental_features_used(Options const& /*options*/) const {
-        // No experimental features currently
-        return;
-    }
+    void check_no_experimental_features_used(Options const& /*options*/) const {}
 
   private:
     template <typename Component, typename MathOutputType, typename ResIt>
