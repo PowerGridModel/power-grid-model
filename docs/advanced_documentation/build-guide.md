@@ -359,20 +359,19 @@ conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge libboost-headers eig
 
 ### Build Python Library from Source
 
-It is recommended to create a `conda` environment.
-Clone repository, create and activate `conda` environment.
+It is recommended to create a virtual environment.
+Clone repository, create and activate virtual environment.
 Go to a root folder you prefer to save the repositories, open a Git Bash Console.
 
 ```shell
 git clone https://github.com/PowerGridModel/power-grid-model.git
 ```
 
-Then open a Miniforge PowerShell Prompt (or equivalent if you use a different `conda` provider), go to the repository
-folder.
+Go to the repository folder.
 
 ```shell
-conda create -n power-grid-env python=3.11
-conda activate power-grid-env
+python -m venv .venv
+.venv\Script\activate
 ```
 
 Install from source in develop mode, and run `pytest`.
@@ -380,13 +379,6 @@ Install from source in develop mode, and run `pytest`.
 ```shell
 pip install -e .[dev]
 pytest
-```
-
-```{note}
-Long paths for (dependencies in) the conda installation environment might exceed the `maximum path length limitation`
-set by Windows, causing the installation to fail.
-It is possible to enable long paths in Windows by following the steps in the
-[Microsoft documentation](https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=registry)
 ```
 
 ### Build CMake Project
