@@ -19,7 +19,7 @@ from power_grid_model._core.power_grid_meta import (  # noqa: F401
     DatasetMetaData,
     PowerGridMetaData,
 )
-from power_grid_model._core.typing import (  # noqa: F401
+from power_grid_model._core.typing import (
     ComponentAttributeMapping as _ComponentAttributeMapping,
 )
 from power_grid_model.enum import ComponentAttributeFilterOptions  # noqa: F401
