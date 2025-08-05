@@ -10,8 +10,6 @@
 #include "batch_parameter.hpp"
 #include "calculation_parameters.hpp"
 #include "container.hpp"
-#include "job_dispatch.hpp"
-#include "job_dispatch_adapter.hpp"
 #include "main_model_fwd.hpp"
 #include "topology.hpp"
 
@@ -511,36 +509,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
   public:
-    /*
-    Batch calculation, propagating the results to result_data
+    static auto calculator(Options options) {
+        return [options = std::move(options)](MainModelImpl& model, MutableDataset const& target_data, Idx pos) {
+            auto sub_opt = options; // copy
+            sub_opt.err_tol = pos != ignore_output ? options.err_tol : std::numeric_limits<double>::max();
+            sub_opt.max_iter = pos != ignore_output ? options.max_iter : 1;
 
-    Run the calculation function in batch on the provided update data.
-
-    The calculation function should be able to run standalone.
-    It should output to the provided result_data if the trailing argument is not ignore_output.
-
-    threading
-        < 0 sequential
-        = 0 parallel, use number of hardware threads
-        > 0 specify number of parallel threads
-    raise a BatchCalculationError if any of the calculations in the batch raised an exception
-    */
-    BatchParameter calculate(Options const& options, MutableDataset const& result_data,
-                             ConstDataset const& update_data) {
-        JobDispatchAdapter<
-            MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentList<ComponentType...>>,
-            ComponentType...>
-            adapter{std::ref(*this)};
-        return JobDispatch::batch_calculation(
-            adapter,
-            [&options](MainModelImpl& model, MutableDataset const& target_data, Idx pos) {
-                auto sub_opt = options; // copy
-                sub_opt.err_tol = pos != ignore_output ? options.err_tol : std::numeric_limits<double>::max();
-                sub_opt.max_iter = pos != ignore_output ? options.max_iter : 1;
-
-                model.calculate(sub_opt, target_data, pos);
-            },
-            result_data, update_data, options.threading);
+            model.calculate(sub_opt, target_data, pos);
+        };
     }
 
     CalculationInfo calculation_info() const { return calculation_info_; }
