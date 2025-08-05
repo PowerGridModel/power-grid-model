@@ -179,7 +179,7 @@ A general data set can be a :class:`SingleDataset` or a :class:`BatchDataset`.
 
 DenseBatchArray = _DenseBatchArray
 """
-A dense batch array is a two-dimensional structured numpy array containing a list of components of 
+A dense batch array is a two-dimensional structured numpy array containing a list of components of
 the same type for each scenario. Otherwise similar to :class:`SingleArray`.
 """
 

@@ -1,0 +1,22 @@
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+name: 'Enable MSVC'
+description: 'Sets up Microsoft Visual C++ Build Tools on the runner'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup MSVC Build Tools
+      shell: pwsh
+      run: |
+        $vsPath = &(Join-Path ${env:ProgramFiles(x86)} '\Microsoft Visual Studio\Installer\vswhere.exe') -property installationpath
+        Import-Module (Join-Path $vsPath 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
+        Enter-VsDevShell -VsInstallPath $vsPath -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64'
+
+        Add-Content $env:GITHUB_ENV "VCINSTALLDIR=$env:VCINSTALLDIR"
+        Add-Content $env:GITHUB_ENV "PATH=$env:PATH"
+        Add-Content $env:GITHUB_ENV "INCLUDE=$env:INCLUDE"
+        Add-Content $env:GITHUB_ENV "LIB=$env:LIB"
+        Add-Content $env:GITHUB_ENV "LIBPATH=$env:LIBPATH"
