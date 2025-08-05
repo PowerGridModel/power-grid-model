@@ -1166,7 +1166,7 @@ def any_voltage_angle_measurement_if_global_current_measurement(
 
     return [
         MissingVoltageAngleMeasurementError(
-            fields=[(component, angle_measurement_type_field)] + list(voltage_sensor_u_angle_measured.items()),
+            fields=[(component, angle_measurement_type_field), *list(voltage_sensor_u_angle_measured.items())],
             ids=[
                 (sensor_type, id_)
                 for sensor_type, sensor_data in voltage_and_current_sensor_ids.items()

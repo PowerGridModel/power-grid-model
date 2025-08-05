@@ -184,7 +184,7 @@ def make_c_binding(func: Callable):
     if is_destroy_func:
         getattr(_CDLL, f"PGM_{name}").argtypes = c_argtypes
     else:
-        getattr(_CDLL, f"PGM_{name}").argtypes = [HandlePtr] + c_argtypes
+        getattr(_CDLL, f"PGM_{name}").argtypes = [HandlePtr, *c_argtypes]
     getattr(_CDLL, f"PGM_{name}").restype = c_restype
 
     # binding function

@@ -125,7 +125,8 @@ select = [
     "PIE",
     "SLF",
     "UP",
-    "RSE"
+    "RSE",
+    "RUF"
 ]
 # the rule is deprecated, https://docs.astral.sh/ruff/rules/non-pep604-isinstance/#deprecation
 ignore = ["UP038"]
