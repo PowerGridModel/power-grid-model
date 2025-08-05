@@ -1041,7 +1041,7 @@ formula.
 
 $$
    \underline{I} = \underline{I}_{\text{local}}^{*} \frac{\underline{U}}{|\underline{U}|}
-               = \text{i_{\text{measured}}} \cdot e^{\mathrm{j} \left(\theta_{U} - \text{i_{\text{angle,measured}}}\right)}
+      = \text{i_{\text{measured}}} \cdot e^{\mathrm{j} \left(\theta_{U} - \text{i_{\text{angle,measured}}}\right)}
 $$
 
 ```{note}
