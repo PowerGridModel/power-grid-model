@@ -986,7 +986,7 @@ per method on how the variances are taken into account for both the global and l
 individual phases.
 
 ```{note}
-The combination of `i_measured=0` and `i_angle_measured=n&#960/2` renders the current sensor invalid for PGM. 
+The combination of `i_measured=0` and `i_angle_measured=nπ/2` renders the current sensor invalid for PGM. 
 See [State estimate sensor transformations](calculations.md#state-estimate-sensor-transformations).
 ```
 
@@ -1022,7 +1022,7 @@ As a sign convention, the angle is the phase shift of the current relative to th
 
 $$
    \begin{eqnarray}
-      \underline{I} = \text{i_{\text{measured}}} \cdot e^{j \text{i_{\text{angle,measured}}}} \text{ .}
+      \underline{I} = \text{i}_{\text{measured}} \cdot e^{j \text{i}_{\text{angle,measured}}} \text{ .}
    \end{eqnarray}
 $$
 
@@ -1041,7 +1041,7 @@ formula.
 
 $$
    \underline{I} = \underline{I}_{\text{local}}^{*} \frac{\underline{U}}{|\underline{U}|}
-      = \text{i_{\text{measured}}} \cdot e^{\mathrm{j} \left(\theta_{U} - \text{i_{\text{angle,measured}}}\right)}
+      = \text{i}_{\text{measured}} \cdot e^{\mathrm{j} \left(\theta_{U} - \text{i}_{\text{angle,measured}}\right)}
 $$
 
 ```{note}
