@@ -882,8 +882,7 @@ def validate_generic_load_gen(data: SingleDataset, component: ComponentType) -> 
 
 
 def validate_shunt(data: SingleDataset) -> list[ValidationError]:
-    errors = validate_appliance(data, ComponentType.shunt)
-    return errors
+    return validate_appliance(data, ComponentType.shunt)
 
 
 def validate_generic_voltage_sensor(data: SingleDataset, component: ComponentType) -> list[ValidationError]:
