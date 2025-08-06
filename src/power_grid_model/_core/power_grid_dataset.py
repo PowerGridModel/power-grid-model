@@ -6,7 +6,8 @@
 Power grid model raw dataset handler
 """
 
-from typing import Any, Mapping, cast
+from collections.abc import Mapping
+from typing import Any, cast
 
 from power_grid_model._core.buffer_handling import (
     BufferProperties,

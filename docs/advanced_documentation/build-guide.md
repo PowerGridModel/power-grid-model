@@ -89,14 +89,13 @@ The table below shows the C++ build dependencies
 
 The table below shows the Python dependencies
 
-| Library name                                                                            | Remark                   | License                                                                                    |
-| --------------------------------------------------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------ |
-| [pybuild-header-dependency](https://github.com/TonyXiang8787/pybuild-header-dependency) | build dependency         | [BSD-3](https://github.com/TonyXiang8787/pybuild-header-dependency/blob/main/LICENSE)      |
-| [numpy](https://numpy.org/)                                                             | build/runtime dependency | [BSD-3](https://github.com/numpy/numpy/blob/main/LICENSE.txt)                              |
-| [wheel](https://github.com/pypa/wheel)                                                  | build dependency         | [MIT](https://github.com/pypa/wheel/blob/main/LICENSE.txt)                                 |
-| [pytest](https://github.com/pytest-dev/pytest)                                          | Development dependency   | [MIT](https://github.com/pytest-dev/pytest/blob/main/LICENSE)                              |
-| [pytest-cov](https://github.com/pytest-dev/pytest-cov)                                  | Development dependency   | [MIT](https://github.com/pytest-dev/pytest-cov/blob/master/LICENSE)                        |
-| [msgpack-python](https://github.com/msgpack/msgpack-python)                             | Development dependency   | [Apache License, Version 2.0](https://github.com/msgpack/msgpack-python/blob/main/COPYING) |
+| Library name                                                           | Remark                 | License                                                                                    |
+| ---------------------------------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------ |
+| [numpy](https://numpy.org/)                                            | runtime dependency     | [BSD-3](https://github.com/numpy/numpy/blob/main/LICENSE.txt)                              |
+| [scikit-build-core](https://github.com/scikit-build/scikit-build-core) | build dependency       | [Apache](https://github.com/scikit-build/scikit-build-core/blob/main/LICENSE)              |
+| [pytest](https://github.com/pytest-dev/pytest)                         | Development dependency | [MIT](https://github.com/pytest-dev/pytest/blob/main/LICENSE)                              |
+| [pytest-cov](https://github.com/pytest-dev/pytest-cov)                 | Development dependency | [MIT](https://github.com/pytest-dev/pytest-cov/blob/master/LICENSE)                        |
+| [msgpack-python](https://github.com/msgpack/msgpack-python)            | Development dependency | [Apache License, Version 2.0](https://github.com/msgpack/msgpack-python/blob/main/COPYING) |
 
 ## Build Python Package
 
@@ -357,22 +356,28 @@ Open a miniconda console.
 conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge libboost-headers eigen nlohmann_json msgpack-cxx doctest
 ```
 
+```{note}
+Long paths for (dependencies in) the installation environment might exceed the `maximum path length limitation` set by
+Windows, causing the installation to fail.
+It is possible to enable long paths in Windows by following the steps in the
+[Microsoft documentation](https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=registry)
+```
+
 ### Build Python Library from Source
 
-It is recommended to create a `conda` environment.
-Clone repository, create and activate `conda` environment.
+It is recommended to create a virtual environment.
+Clone repository, create and activate virtual environment.
 Go to a root folder you prefer to save the repositories, open a Git Bash Console.
 
 ```shell
 git clone https://github.com/PowerGridModel/power-grid-model.git
 ```
 
-Then open a Miniforge PowerShell Prompt (or equivalent if you use a different `conda` provider), go to the repository
-folder.
+Go to the repository folder.
 
 ```shell
-conda create -n power-grid-env python=3.11
-conda activate power-grid-env
+python -m venv .venv
+.venv\Script\activate
 ```
 
 Install from source in develop mode, and run `pytest`.
@@ -380,13 +385,6 @@ Install from source in develop mode, and run `pytest`.
 ```shell
 pip install -e .[dev]
 pytest
-```
-
-```{note}
-Long paths for (dependencies in) the conda installation environment might exceed the `maximum path length limitation`
-set by Windows, causing the installation to fail.
-It is possible to enable long paths in Windows by following the steps in the
-[Microsoft documentation](https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=registry)
 ```
 
 ### Build CMake Project
