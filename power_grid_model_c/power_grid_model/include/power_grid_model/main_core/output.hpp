@@ -439,93 +439,93 @@ output_result(Component const& transformer_tap_regulator, MainModelState<Compone
 
 // output base component
 template <std::derived_from<Base> Component, class ComponentContainer, solver_output_type SolverOutputType,
-          typename ResIt>
+          std::ranges::viewable_range ComponentOutput>
     requires model_component_state_c<MainModelState, ComponentContainer, Component> &&
              requires(Component const& component, std::vector<SolverOutputType> const& solver_output, Idx2D math_id) {
                  {
                      output_result<Component>(component, solver_output, math_id)
-                 } -> detail::assignable_to<std::add_lvalue_reference_t<std::iter_value_t<ResIt>>>;
+                 } -> detail::assignable_to<std::ranges::range_reference_t<ComponentOutput>>;
              }
-constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
-                              MathOutput<std::vector<SolverOutputType>> const& math_output, ResIt res_it) {
-    return detail::produce_output<Component, Idx2D>(
-        state, res_it, [&math_output](Component const& component, Idx2D math_id) {
+constexpr void output_result(MainModelState<ComponentContainer> const& state,
+                             MathOutput<std::vector<SolverOutputType>> const& math_output, ComponentOutput&& output) {
+    detail::produce_output<Component, Idx2D>(
+        state, output.begin(), [&math_output](Component const& component, Idx2D math_id) {
             return output_result<Component>(component, math_output.solver_output, math_id);
         });
 }
 template <std::derived_from<Base> Component, class ComponentContainer, solver_output_type SolverOutputType,
-          typename ResIt>
+          std::ranges::viewable_range ComponentOutput>
     requires model_component_state_c<MainModelState, ComponentContainer, Component> &&
              requires(Component const& component, MainModelState<ComponentContainer> const& state,
                       std::vector<SolverOutputType> const& solver_output, Idx2D math_id) {
                  {
                      output_result<Component>(component, state, solver_output, math_id)
-                 } -> detail::assignable_to<std::add_lvalue_reference_t<std::iter_value_t<ResIt>>>;
+                 } -> detail::assignable_to<std::ranges::range_reference_t<ComponentOutput>>;
              }
-constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
-                              MathOutput<std::vector<SolverOutputType>> const& math_output, ResIt res_it) {
-    return detail::produce_output<Component, Idx2D>(
-        state, res_it, [&state, &math_output](Component const& component, Idx2D const math_id) {
+constexpr void output_result(MainModelState<ComponentContainer> const& state,
+                             MathOutput<std::vector<SolverOutputType>> const& math_output, ComponentOutput&& output) {
+    detail::produce_output<Component, Idx2D>(
+        state, output.begin(), [&state, &math_output](Component const& component, Idx2D const math_id) {
             return output_result<Component>(component, state, math_output.solver_output, math_id);
         });
 }
 template <std::derived_from<Base> Component, class ComponentContainer, solver_output_type SolverOutputType,
-          typename ResIt>
+          std::ranges::viewable_range ComponentOutput>
     requires model_component_state_c<MainModelState, ComponentContainer, Component> &&
              requires(Component const& component, MainModelState<ComponentContainer> const& state,
                       std::vector<SolverOutputType> const& solver_output, Idx obj_seq) {
                  {
                      output_result<Component>(component, state, solver_output, obj_seq)
-                 } -> detail::assignable_to<std::add_lvalue_reference_t<std::iter_value_t<ResIt>>>;
+                 } -> detail::assignable_to<std::ranges::range_reference_t<ComponentOutput>>;
              }
-constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
-                              MathOutput<std::vector<SolverOutputType>> const& math_output, ResIt res_it) {
-    return detail::produce_output<Component, Idx>(
-        state, res_it, [&state, &math_output](Component const& component, Idx const obj_seq) {
+constexpr void output_result(MainModelState<ComponentContainer> const& state,
+                             MathOutput<std::vector<SolverOutputType>> const& math_output, ComponentOutput&& output) {
+    detail::produce_output<Component, Idx>(
+        state, output.begin(), [&state, &math_output](Component const& component, Idx const obj_seq) {
             return output_result<Component, ComponentContainer>(component, state, math_output.solver_output, obj_seq);
         });
 }
 template <std::derived_from<Base> Component, class ComponentContainer, solver_output_type SolverOutputType,
-          typename ResIt>
+          std::ranges::viewable_range ComponentOutput>
     requires model_component_state_c<MainModelState, ComponentContainer, Component> &&
              requires(Component const& component, std::vector<SolverOutputType> const& solver_output,
                       Idx2DBranch3 const& math_id) {
                  {
                      output_result<Component>(component, solver_output, math_id)
-                 } -> detail::assignable_to<std::add_lvalue_reference_t<std::iter_value_t<ResIt>>>;
+                 } -> detail::assignable_to<std::ranges::range_reference_t<ComponentOutput>>;
              }
-constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
-                              MathOutput<std::vector<SolverOutputType>> const& math_output, ResIt res_it) {
-    return detail::produce_output<Component, Idx2DBranch3>(
-        state, res_it, [&math_output](Component const& component, Idx2DBranch3 const& math_id) {
+constexpr void output_result(MainModelState<ComponentContainer> const& state,
+                             MathOutput<std::vector<SolverOutputType>> const& math_output, ComponentOutput&& output) {
+    detail::produce_output<Component, Idx2DBranch3>(
+        state, output.begin(), [&math_output](Component const& component, Idx2DBranch3 const& math_id) {
             return output_result<Component>(component, math_output.solver_output, math_id);
         });
 }
-template <std::derived_from<Base> Component, class ComponentContainer, typename SolverOutputType, typename ResIt>
+template <std::derived_from<Base> Component, class ComponentContainer, typename SolverOutputType,
+          std::ranges::viewable_range ComponentOutput>
     requires model_component_state_c<MainModelState, ComponentContainer, Component> &&
              requires(Component const& component, MainModelState<ComponentContainer> const& state,
                       MathOutput<SolverOutputType> const& math_output, Idx const obj_seq) {
                  {
                      output_result<Component>(component, state, math_output, obj_seq)
-                 } -> detail::assignable_to<std::add_lvalue_reference_t<std::iter_value_t<ResIt>>>;
+                 } -> detail::assignable_to<std::ranges::range_reference_t<ComponentOutput>>;
              }
-constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
-                              MathOutput<SolverOutputType> const& math_output, ResIt res_it) {
-    return detail::produce_output<Component, Idx>(
-        state, std::move(res_it), [&state, &math_output](Component const& component, Idx const obj_seq) {
+constexpr void output_result(MainModelState<ComponentContainer> const& state,
+                             MathOutput<SolverOutputType> const& math_output, ComponentOutput&& output) {
+    detail::produce_output<Component, Idx>(
+        state, output.begin(), [&state, &math_output](Component const& component, Idx const obj_seq) {
             return output_result<Component, ComponentContainer>(component, state, math_output, obj_seq);
         });
 }
 
 // output source, load_gen, shunt individually
 template <std::same_as<Appliance> Component, class ComponentContainer, solver_output_type SolverOutputType,
-          typename ResIt>
+          std::ranges::viewable_range ComponentOutput>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
-constexpr ResIt output_result(MainModelState<ComponentContainer> const& state,
-                              MathOutput<std::vector<SolverOutputType>> const& math_output, ResIt res_it) {
-    res_it = output_result<Source>(state, math_output, res_it);
-    res_it = output_result<GenericLoadGen>(state, math_output, res_it);
-    res_it = output_result<Shunt>(state, math_output, res_it);
-    return res_it;
+constexpr void output_result(MainModelState<ComponentContainer> const& state,
+                             MathOutput<std::vector<SolverOutputType>> const& math_output, ComponentOutput&& output) {
+    output_result<Source>(state, math_output, output);
+    output_result<GenericLoadGen>(state, math_output, output);
+    output_result<Shunt>(state, math_output, output);
 }
 } // namespace power_grid_model::main_core

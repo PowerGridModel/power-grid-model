@@ -78,7 +78,8 @@ class JobDispatchAdapter : public JobDispatchInterface<JobDispatchAdapter<MainMo
     template <typename Calculate>
         requires std::invocable<std::remove_cvref_t<Calculate>, MainModel&, MutableDataset const&, Idx>
     void calculate_impl(Calculate&& calculation_fn, MutableDataset const& result_data, Idx scenario_idx) const {
-        std::forward<Calculate>(calculation_fn)(model_.get(), result_data, scenario_idx);
+        std::forward<Calculate>(calculation_fn)(model_.get(), result_data.get_individual_scenario(scenario_idx),
+                                                scenario_idx);
     }
 
     template <typename Calculate>
