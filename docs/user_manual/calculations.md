@@ -373,7 +373,7 @@ The algorithm is as follows:
 1. Build $Y_{bus}$ matrix
 2. Initialization of $U_N^0$ to $1$ plus the intrinsic phase shift of transformers
 3. Calculate injected currents: $I_N^i$ for $i^{th}$ iteration.
-   The injected currents are calculated as per ZIP model of loads and generation using $U_N$.
+   The injected currents are calculated as per ZIP model of loads and generation using $U_N$:
    $I_N = \overline{S_{Z}} \cdot U_{N} + \overline{(\frac{S_{I}}{U_{N}})} \cdot |U_{N}| +\overline{(\frac{S_{P}}{U_N})}$
 4. Solve linear equation: $YU_N^i = I_N^i$
 5. Check convergence: If maximum voltage deviation from the previous iteration is greater than the tolerance setting
