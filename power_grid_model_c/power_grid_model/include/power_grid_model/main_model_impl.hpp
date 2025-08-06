@@ -530,10 +530,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             adapter{std::ref(*this)};
         return JobDispatch::batch_calculation(
             adapter,
-            [&options](MainModelImpl& model, MutableDataset const& target_data, Idx pos) {
+            [&options](MainModelImpl& model, MutableDataset const& target_data, bool pilot_run) {
                 auto sub_opt = options; // copy
-                sub_opt.err_tol = pos != ignore_output ? options.err_tol : std::numeric_limits<double>::max();
-                sub_opt.max_iter = pos != ignore_output ? options.max_iter : 1;
+                sub_opt.err_tol = pilot_run ? std::numeric_limits<double>::max() : options.err_tol;
+                sub_opt.max_iter = pilot_run ? 1 : options.max_iter;
 
                 model.calculate(sub_opt, target_data);
             },
