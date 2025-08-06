@@ -836,7 +836,7 @@ is placed for it to function.
 ```
 
 ```{note}
-It is not possible to mix [power sensors](./components.md#generic-current-sensor) with
+It is not possible to mix [power sensors](./components.md#generic-power-sensor) with
 [current sensors](./components.md#generic-current-sensor) on the same terminal of the same component.
 It is also not possible to mix
 [current sensors with global angle measurement type](./components.md#generic-current-sensor) with
@@ -936,7 +936,7 @@ link is a `branch`.
 ```
 
 ```{note}
-It is not possible to mix [power sensors](./components.md#generic-current-sensor) with
+It is not possible to mix [power sensors](./components.md#generic-power-sensor) with
 [current sensors](./components.md#generic-current-sensor) on the same terminal of the same component.
 It is also not possible to mix
 [current sensors with global angle measurement type](./components.md#generic-current-sensor) with
