@@ -535,7 +535,7 @@ Where $S_k$ and $\sigma_{P,k}$ and $\sigma_{Q,k}$ are the measured value and the
 appliances.
 
 ```{note}
-It is not possible to mix [power sensors](./components.md#generic-current-sensor) with
+It is not possible to mix [power sensors](./components.md#generic-power-sensor) with
 [current sensors](./components.md#generic-current-sensor) on the same terminal of the same component.
 It is also not possible to mix
 [current sensors with global angle measurement type](./components.md#global-angle-current-sensors) with
