@@ -17,14 +17,17 @@ namespace power_grid_model {
 
 template <class MainModel, typename... ComponentType> class JobDispatchAdapter;
 
+// TODO(figueroa1395): add concept to MainModel template parameter
 template <class MainModel, class... ComponentType>
 class JobDispatchAdapter<MainModel, ComponentList<ComponentType...>>
     : public JobDispatchInterface<JobDispatchAdapter<MainModel, ComponentList<ComponentType...>>> {
   public:
-    JobDispatchAdapter(std::reference_wrapper<MainModel> model) : model_{std::move(model)} {}
+    JobDispatchAdapter(std::reference_wrapper<MainModel> model, std::reference_wrapper<MainModelOptions const> options)
+        : model_{std::move(model)}, options_{std::move(options)} {}
     JobDispatchAdapter(JobDispatchAdapter const& other)
         : model_copy_{std::make_unique<MainModel>(other.model_.get())},
           model_{std::ref(*model_copy_)},
+          options_{std::ref(other.options_)},
           components_to_update_{other.components_to_update_},
           update_independence_{other.update_independence_},
           independence_flags_{other.independence_flags_},
@@ -33,6 +36,7 @@ class JobDispatchAdapter<MainModel, ComponentList<ComponentType...>>
         if (this != &other) {
             model_copy_ = std::make_unique<MainModel>(other.model_.get());
             model_ = std::ref(*model_copy_);
+            options_ = std::ref(other.options_);
             components_to_update_ = other.components_to_update_;
             update_independence_ = other.update_independence_;
             independence_flags_ = other.independence_flags_;
@@ -43,6 +47,7 @@ class JobDispatchAdapter<MainModel, ComponentList<ComponentType...>>
     JobDispatchAdapter(JobDispatchAdapter&& other) noexcept
         : model_copy_{std::move(other.model_copy_)},
           model_{model_copy_ ? std::ref(*model_copy_) : std::move(other.model_)},
+          options_{std::move(other.options_)},
           components_to_update_{std::move(other.components_to_update_)},
           update_independence_{std::move(other.update_independence_)},
           independence_flags_{std::move(other.independence_flags_)},
@@ -51,6 +56,7 @@ class JobDispatchAdapter<MainModel, ComponentList<ComponentType...>>
         if (this != &other) {
             model_copy_ = std::move(other.model_copy_);
             model_ = model_copy_ ? std::ref(*model_copy_) : std::move(other.model_);
+            options_ = std::move(other.options_);
             components_to_update_ = std::move(other.components_to_update_);
             update_independence_ = std::move(other.update_independence_);
             independence_flags_ = std::move(other.independence_flags_);
@@ -67,6 +73,7 @@ class JobDispatchAdapter<MainModel, ComponentList<ComponentType...>>
 
     std::unique_ptr<MainModel> model_copy_;
     std::reference_wrapper<MainModel> model_;
+    std::reference_wrapper<MainModelOptions const> options_;
 
     power_grid_model::main_core::utils::ComponentFlags<ComponentType...> components_to_update_{};
     power_grid_model::main_core::update::independence::UpdateIndependence<ComponentType...> update_independence_{};
@@ -77,26 +84,21 @@ class JobDispatchAdapter<MainModel, ComponentList<ComponentType...>>
 
     std::mutex calculation_info_mutex_;
 
-    // TODO(figueroa1395): Keep calculation_fn at the adapter level only
-    template <typename Calculate>
-        requires std::invocable<std::remove_cvref_t<Calculate>, MainModel&, MutableDataset const&, Idx>
-    void calculate_impl(Calculate&& calculation_fn, MutableDataset const& result_data, Idx scenario_idx) const {
-        std::forward<Calculate>(calculation_fn)(model_.get(), result_data, scenario_idx);
+    void calculate_impl(MutableDataset const& result_data, Idx scenario_idx) const {
+        MainModel::calculator(options_.get(), model_.get(), result_data, scenario_idx);
     }
 
-    template <typename Calculate>
-        requires std::invocable<std::remove_cvref_t<Calculate>, MainModel&, MutableDataset const&, Idx>
-    void cache_calculate_impl(Calculate&& calculation_fn) const {
+    void cache_calculate_impl() const {
         // calculate once to cache topology, ignore results, all math solvers are initialized
         try {
-            std::forward<Calculate>(calculation_fn)(model_.get(),
-                                                    {
-                                                        false,
-                                                        1,
-                                                        "sym_output",
-                                                        model_.get().meta_data(),
-                                                    },
-                                                    ignore_output);
+            MainModel::calculator(options_.get(), model_.get(),
+                                  {
+                                      false,
+                                      1,
+                                      "sym_output",
+                                      model_.get().meta_data(),
+                                  },
+                                  ignore_output);
         } catch (SparseMatrixError const&) { // NOLINT(bugprone-empty-catch) // NOSONAR
             // missing entries are provided in the update data
         } catch (NotObservableError const&) { // NOLINT(bugprone-empty-catch) // NOSONAR

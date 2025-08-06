@@ -79,9 +79,8 @@ class MainModel {
     */
     BatchParameter calculate(Options const& options, MutableDataset const& result_data,
                              ConstDataset const& update_data) {
-        JobDispatchAdapter<Impl, AllComponents> adapter{std::ref(impl())};
-        return JobDispatch::batch_calculation(adapter, Impl::calculator(options), result_data, update_data,
-                                              options.threading);
+        JobDispatchAdapter<Impl, AllComponents> adapter{std::ref(impl()), std::ref(options)};
+        return JobDispatch::batch_calculation(adapter, result_data, update_data, options.threading);
     }
 
     CalculationInfo calculation_info() const { return impl().calculation_info(); }

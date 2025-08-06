@@ -19,15 +19,13 @@ class JobDispatch {
     static constexpr Idx ignore_output{-1};
     static constexpr Idx sequential{-1};
 
-    // TODO(figueroa1395): remove calculation_fn dependency
     // TODO(figueroa1395): add concept to Adapter template parameter
     // TODO(figueroa1395): add generic template parameters for update_data and result_data
-    template <typename Adapter, typename Calculate>
-    static BatchParameter batch_calculation(Adapter& adapter, Calculate&& calculation_fn,
-                                            MutableDataset const& result_data, ConstDataset const& update_data,
-                                            Idx threading = sequential) {
+    template <typename Adapter>
+    static BatchParameter batch_calculation(Adapter& adapter, MutableDataset const& result_data,
+                                            ConstDataset const& update_data, Idx threading = sequential) {
         if (update_data.empty()) {
-            adapter.calculate(std::forward<Calculate>(calculation_fn), result_data);
+            adapter.calculate(result_data);
             return BatchParameter{};
         }
 
@@ -41,14 +39,13 @@ class JobDispatch {
         }
 
         // calculate once to cache, ignore results
-        adapter.cache_calculate(std::forward<Calculate>(calculation_fn));
+        adapter.cache_calculate();
 
         // error messages
         std::vector<std::string> exceptions(n_scenarios, "");
 
         adapter.prepare_job_dispatch(update_data);
-        auto single_job =
-            single_thread_job(adapter, std::forward<Calculate>(calculation_fn), result_data, update_data, exceptions);
+        auto single_job = single_thread_job(adapter, result_data, update_data, exceptions);
 
         job_dispatch(single_job, n_scenarios, threading);
 
@@ -58,11 +55,10 @@ class JobDispatch {
     }
 
   private:
-    template <typename Adapter, typename Calculate>
-    static auto single_thread_job(Adapter& base_adapter, Calculate&& calculation_fn, MutableDataset const& result_data,
+    template <typename Adapter>
+    static auto single_thread_job(Adapter& base_adapter, MutableDataset const& result_data,
                                   ConstDataset const& update_data, std::vector<std::string>& exceptions) {
-        return [&base_adapter, &exceptions, calculation_fn_ = std::forward<Calculate>(calculation_fn), &result_data,
-                &update_data](Idx start, Idx stride, Idx n_scenarios) {
+        return [&base_adapter, &exceptions, &result_data, &update_data](Idx start, Idx stride, Idx n_scenarios) {
             assert(n_scenarios <= narrow_cast<Idx>(exceptions.size()));
 
             CalculationInfo thread_info;
@@ -87,8 +83,8 @@ class JobDispatch {
             };
 
             auto calculate_scenario = JobDispatch::call_with<Idx>(
-                [&adapter, &calculation_fn_, &result_data, &thread_info](Idx scenario_idx) {
-                    adapter.calculate(calculation_fn_, result_data, scenario_idx);
+                [&adapter, &result_data, &thread_info](Idx scenario_idx) {
+                    adapter.calculate(result_data, scenario_idx);
                     main_core::merge_into(thread_info, adapter.get_calculation_info());
                 },
                 std::move(setup), std::move(winddown), scenario_exception_handler(adapter, exceptions, thread_info),

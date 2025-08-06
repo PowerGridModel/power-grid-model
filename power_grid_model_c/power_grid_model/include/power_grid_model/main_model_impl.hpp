@@ -509,14 +509,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
   public:
-    static auto calculator(Options options) {
-        return [options](MainModelImpl& model, MutableDataset const& target_data, Idx pos) {
-            auto sub_opt = options; // copy
-            sub_opt.err_tol = pos != ignore_output ? options.err_tol : std::numeric_limits<double>::max();
-            sub_opt.max_iter = pos != ignore_output ? options.max_iter : 1;
+    static inline auto calculator(Options options, MainModelImpl& model, MutableDataset const& target_data, Idx pos) {
+        auto sub_opt = options; // copy
+        sub_opt.err_tol = pos != ignore_output ? options.err_tol : std::numeric_limits<double>::max();
+        sub_opt.max_iter = pos != ignore_output ? options.max_iter : 1;
 
-            model.calculate(sub_opt, target_data, pos);
-        };
+        model.calculate(sub_opt, target_data, pos);
     }
 
     CalculationInfo calculation_info() const { return calculation_info_; }
