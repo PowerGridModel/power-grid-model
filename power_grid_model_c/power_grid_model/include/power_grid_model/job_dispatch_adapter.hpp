@@ -17,7 +17,6 @@ namespace power_grid_model {
 
 template <class MainModel, typename... ComponentType> class JobDispatchAdapter;
 
-// TODO(figueroa1395): add concept to MainModel template parameter
 template <class MainModel, class... ComponentType>
 class JobDispatchAdapter<MainModel, ComponentList<ComponentType...>>
     : public JobDispatchInterface<JobDispatchAdapter<MainModel, ComponentList<ComponentType...>>> {

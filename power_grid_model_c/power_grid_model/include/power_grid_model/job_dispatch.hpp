@@ -7,7 +7,6 @@
 #include "job_dispatch_interface.hpp"
 
 #include "main_core/calculation_info.hpp"
-#include "main_core/update.hpp"
 
 #include <mutex>
 #include <thread>
@@ -19,11 +18,11 @@ class JobDispatch {
     static constexpr Idx ignore_output{-1};
     static constexpr Idx sequential{-1};
 
-    // TODO(figueroa1395): add concept to Adapter template parameter
     // TODO(figueroa1395): add generic template parameters for update_data and result_data
-    template <typename Adapter>
-    static BatchParameter batch_calculation(Adapter& adapter, MutableDataset const& result_data,
-                                            ConstDataset const& update_data, Idx threading = sequential) {
+    template <typename Adapter, typename ResultDataset, typename UpdateDataset>
+        requires std::is_base_of_v<JobDispatchInterface<Adapter>, Adapter>
+    static BatchParameter batch_calculation(Adapter& adapter, ResultDataset const& result_data,
+                                            UpdateDataset const& update_data, Idx threading = sequential) {
         if (update_data.empty()) {
             adapter.calculate(result_data);
             return BatchParameter{};
@@ -55,9 +54,9 @@ class JobDispatch {
     }
 
   private:
-    template <typename Adapter>
-    static auto single_thread_job(Adapter& base_adapter, MutableDataset const& result_data,
-                                  ConstDataset const& update_data, std::vector<std::string>& exceptions) {
+    template <typename Adapter, typename ResultDataset, typename UpdateDataset>
+    static auto single_thread_job(Adapter& base_adapter, ResultDataset const& result_data,
+                                  UpdateDataset const& update_data, std::vector<std::string>& exceptions) {
         return [&base_adapter, &exceptions, &result_data, &update_data](Idx start, Idx stride, Idx n_scenarios) {
             assert(n_scenarios <= narrow_cast<Idx>(exceptions.size()));
 
