@@ -38,7 +38,7 @@ def get_output_type(*, calculation_type: CalculationType, symmetric: bool) -> Da
     if calculation_type == CalculationType.short_circuit:
         return DatasetType.sc_output
 
-    raise NotImplementedError()
+    raise NotImplementedError
 
 
 def prepare_input_view(input_data: SingleDataset) -> CConstDataset:

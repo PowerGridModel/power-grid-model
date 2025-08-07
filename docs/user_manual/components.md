@@ -836,11 +836,11 @@ is placed for it to function.
 ```
 
 ```{note}
-It is not possible to mix [power sensors](./components.md#generic-current-sensor) with
-[current sensors](#./components.mdgeneric-current-sensor) on the same terminal of the same component.
+It is not possible to mix [power sensors](./components.md#generic-power-sensor) with
+[current sensors](./components.md#generic-current-sensor) on the same terminal of the same component.
 It is also not possible to mix
-[current sensors with global angle measurement type](#./components.mdgeneric-current-sensor) with
-[current sensors with local angle measurement type](#./components.mdgeneric-current-sensor) on the same terminal of the
+[current sensors with global angle measurement type](./components.md#generic-current-sensor) with
+[current sensors with local angle measurement type](./components.md#generic-current-sensor) on the same terminal of the
 same component.
 However, such mixing of sensor types is allowed as long as they are on different terminals.
 ```
@@ -923,11 +923,6 @@ $$
 
 ### Generic Current Sensor
 
-```{warning}
-At the time of writing, state estimation with current sensors with `global_angle` `angle_measurement_type` is not
-supported by the Newton-Raphson calculation method.
-```
-
 * type name: `generic_current_sensor`
 
 `current_sensor` is an abstract class for symmetric and asymmetric current sensor and is derived from
@@ -941,11 +936,11 @@ link is a `branch`.
 ```
 
 ```{note}
-It is not possible to mix [power sensors](./components.md#generic-current-sensor) with
-[current sensors](#./components.mdgeneric-current-sensor) on the same terminal of the same component.
+It is not possible to mix [power sensors](./components.md#generic-power-sensor) with
+[current sensors](./components.md#generic-current-sensor) on the same terminal of the same component.
 It is also not possible to mix
-[current sensors with global angle measurement type](#./components.mdgeneric-current-sensor) with
-[current sensors with local angle measurement type](#./components.mdgeneric-current-sensor) on the same terminal of the
+[current sensors with global angle measurement type](./components.md#generic-current-sensor) with
+[current sensors with local angle measurement type](./components.md#generic-current-sensor) on the same terminal of the
 same component.
 However, such mixing of sensor types is allowed as long as they are on different terminals.
 ```
@@ -960,11 +955,6 @@ However, such mixing of sensor types is allowed as long as they are on different
 | `i_angle_sigma`          | `double`                                                                      | rad        | standard deviation of the current (`i`) phase angle measurement error. Usually this is the absolute measurement error range divided by 3. | &#10024; only for state estimation | &#10004; |                        `> 0`                         |
 
 #### Current Sensor Concrete Types
-
-```{warning}
-At the time of writing, state estimation with current sensors with `global_angle` `angle_measurement_type` is not
-supported by the Newton-Raphson calculation method.
-```
 
 There are two concrete types of current sensor.
 They share similar attributes: the meaning of `RealValueInput` is different, as shown in the table below.
@@ -1025,11 +1015,6 @@ $$
       \underline{I} = \text{i}_{\text{measured}} \cdot e^{j \text{i}_{\text{angle,measured}}} \text{ .}
    \end{eqnarray}
 $$
-
-```{warning}
-At the time of writing, state estimation with current sensors with `global_angle` `angle_measurement_type` is not
-supported by the Newton-Raphson calculation method.
-```
 
 ##### Local angle current sensors
 

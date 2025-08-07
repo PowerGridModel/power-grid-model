@@ -75,7 +75,7 @@ class CodeGenerator:
             attribute_class.attributes = new_attribute_list
             # get full attribute
             if attribute_class.base is not None:
-                base_class = list(filter(lambda x: x.name == attribute_class.base, dataset_meta_data.classes))[0]
+                base_class = next(filter(lambda x: x.name == attribute_class.base, dataset_meta_data.classes))
                 attribute_class.full_attributes = base_class.full_attributes + attribute_class.attributes
                 attribute_class.base_attributes = base_class.base_attributes.copy()
                 attribute_class.base_attributes[base_class.name] = base_class.full_attributes

@@ -35,8 +35,9 @@ Output data:
 
 """
 
+from collections.abc import Callable
 from enum import Enum
-from typing import Any, Callable, Type, TypeVar
+from typing import Any, TypeVar
 
 import numpy as np
 
@@ -336,7 +337,7 @@ def none_match_comparison(  # noqa: PLR0913
     field: str,
     compare_fn: Callable,
     ref_value: ComparisonError.RefType,
-    error: Type[CompError] = ComparisonError,  # type: ignore
+    error: type[CompError] = ComparisonError,  # type: ignore
     default_value_1: np.ndarray | int | float | None = None,
     default_value_2: np.ndarray | int | float | None = None,
 ) -> list[CompError]:
@@ -370,7 +371,7 @@ def none_match_comparison(  # noqa: PLR0913
         _set_default_value(data=data, component=component, field=field, default_value=default_value_2)
     component_data = data[component]
     if not isinstance(component_data, np.ndarray):
-        raise NotImplementedError()  # TODO(mgovers): add support for columnar data
+        raise NotImplementedError  # TODO(mgovers): add support for columnar data
 
     if isinstance(ref_value, tuple):
         ref = tuple(_eval_expression(component_data, v) for v in ref_value)
@@ -524,7 +525,7 @@ def all_in_valid_values(
 
 
 def all_valid_enum_values(
-    data: SingleDataset, component: ComponentType, field: str, enum: Type[Enum] | list[Type[Enum]]
+    data: SingleDataset, component: ComponentType, field: str, enum: type[Enum] | list[type[Enum]]
 ) -> list[InvalidEnumValueError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are valid values for
@@ -540,7 +541,7 @@ def all_valid_enum_values(
         A list containing zero or one InvalidEnumValueError, listing all ids where the value in the field of interest
         was not a valid value in the supplied enum type.
     """
-    enums: list[Type[Enum]] = enum if isinstance(enum, list) else [enum]
+    enums: list[type[Enum]] = enum if isinstance(enum, list) else [enum]
 
     valid = {_nan_type(component, field)}
     for enum_type in enums:
@@ -559,7 +560,7 @@ def all_valid_associated_enum_values(  # noqa: PLR0913
     field: str,
     ref_object_id_field: str,
     ref_components: list[ComponentType],
-    enum: Type[Enum] | list[Type[Enum]],
+    enum: type[Enum] | list[type[Enum]],
     **filters: Any,
 ) -> list[InvalidAssociatedEnumValueError]:
     """
@@ -576,7 +577,7 @@ def all_valid_associated_enum_values(  # noqa: PLR0913
         A list containing zero or one InvalidAssociatedEnumValueError, listing all ids where the value in the field
         of interest was not a valid value in the supplied enum type.
     """
-    enums: list[Type[Enum]] = enum if isinstance(enum, list) else [enum]
+    enums: list[type[Enum]] = enum if isinstance(enum, list) else [enum]
 
     valid_ids = _get_valid_ids(data=data, ref_components=ref_components)
     mask = np.logical_and(
@@ -762,7 +763,7 @@ def all_finite(data: SingleDataset, exceptions: dict[ComponentType, list[str]] |
     errors = []
     for component, array in data.items():
         if not isinstance(array, np.ndarray):
-            raise NotImplementedError()  # TODO(mgovers): add support for columnar data
+            raise NotImplementedError  # TODO(mgovers): add support for columnar data
 
         for field, (dtype, _) in array.dtype.fields.items():
             if not np.issubdtype(dtype, np.floating):
@@ -1165,7 +1166,7 @@ def any_voltage_angle_measurement_if_global_current_measurement(
 
     return [
         MissingVoltageAngleMeasurementError(
-            fields=[(component, angle_measurement_type_field)] + list(voltage_sensor_u_angle_measured.items()),
+            fields=[(component, angle_measurement_type_field), *list(voltage_sensor_u_angle_measured.items())],
             ids=[
                 (sensor_type, id_)
                 for sensor_type, sensor_data in voltage_and_current_sensor_ids.items()

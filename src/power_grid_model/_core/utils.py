@@ -10,8 +10,9 @@ Disclaimer!
 We do not officially support this functionality and may remove features in this library at any given time!
 """
 
+from collections.abc import Sequence
 from copy import deepcopy
-from typing import Sequence, cast
+from typing import cast
 
 import numpy as np
 
