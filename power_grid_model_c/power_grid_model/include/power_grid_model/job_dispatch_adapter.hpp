@@ -75,8 +75,8 @@ class JobDispatchAdapter<MainModel, ComponentList<ComponentType...>>
     std::reference_wrapper<MainModel> model_;
     std::reference_wrapper<MainModelOptions const> options_;
 
-    power_grid_model::main_core::utils::ComponentFlags<ComponentType...> components_to_update_{};
-    power_grid_model::main_core::update::independence::UpdateIndependence<ComponentType...> update_independence_{};
+    main_core::utils::ComponentFlags<ComponentType...> components_to_update_{};
+    main_core::update::independence::UpdateIndependence<ComponentType...> update_independence_{};
     main_core::utils::ComponentFlags<ComponentType...> independence_flags_{};
     std::shared_ptr<main_core::utils::SequenceIdx<ComponentType...>> all_scenarios_sequence_;
     // current_scenario_sequence_cache_ is calculated per scenario, so it is excluded from the constructors.

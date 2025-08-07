@@ -6,10 +6,10 @@
 Loader for the dynamic library
 """
 
+from collections.abc import Callable
 from ctypes import CDLL, POINTER, c_char, c_char_p, c_double, c_size_t, c_void_p
 from inspect import signature
 from itertools import chain
-from typing import Callable
 
 from power_grid_model._core.index_integer import IdC, IdxC
 from power_grid_model._core.power_grid_model_c.get_pgm_dll_path import get_pgm_dll_path
@@ -166,7 +166,7 @@ def make_c_binding(func: Callable):
     if is_destroy_func:
         getattr(_CDLL, f"PGM_{name}").argtypes = c_argtypes
     else:
-        getattr(_CDLL, f"PGM_{name}").argtypes = [HandlePtr] + c_argtypes
+        getattr(_CDLL, f"PGM_{name}").argtypes = [HandlePtr, *c_argtypes]
     getattr(_CDLL, f"PGM_{name}").restype = c_restype
 
     # binding function

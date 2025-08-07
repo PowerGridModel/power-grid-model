@@ -116,11 +116,11 @@ See also the [current sensor component documentation](./components.md#global-ang
 ```
 
 ```{note}
-It is not possible to mix [power sensors](./components.md#generic-current-sensor) with
-[current sensors](#./components.mdgeneric-current-sensor) on the same terminal of the same component.
+It is not possible to mix [power sensors](./components.md#generic-power-sensor) with
+[current sensors](./components.md#generic-current-sensor) on the same terminal of the same component.
 It is also not possible to mix
-[current sensors with global angle measurement type](#./components.mdgeneric-current-sensor) with
-[current sensors with local angle measurement type](#./components.mdgeneric-current-sensor) on the same terminal of the
+[current sensors with global angle measurement type](./components.md#generic-current-sensor) with
+[current sensors with local angle measurement type](./components.md#generic-current-sensor) on the same terminal of the
 same component.
 However, such mixing of sensor types is allowed as long as they are on different terminals.
 ```
@@ -131,11 +131,6 @@ estimation algorithms will assume angles to be zero by default (see the details 
 In observable systems this helps better outputting correct results.
 On the other hand with unobservable systems, exceptions raised from calculations due to faulty results will be
 prevented.
-```
-
-```{warning}
-At the time of writing, the component [global angle current sensor](./components.md#global-angle-current-sensors)
-is not supported in the calculation of [Newton-Raphson state estimation](#newton-raphson-state-estimation).
 ```
 
 ##### Necessary observability condition
@@ -378,14 +373,8 @@ The algorithm is as follows:
 1. Build $Y_{bus}$ matrix
 2. Initialization of $U_N^0$ to $1$ plus the intrinsic phase shift of transformers
 3. Calculate injected currents: $I_N^i$ for $i^{th}$ iteration.
-   The injected currents are calculated as per ZIP model of loads and generation using $U_N$.
-   $
-     \begin{eqnarray}
-       I_N = \overline{S_{Z}} \cdot U_{N}
-             + \overline{(\frac{S_{I}}{U_{N}})} \cdot |U_{N}|
-             + \overline{(\frac{S_{P}}{U_N})}
-     \end{eqnarray}
-   $
+   The injected currents are calculated as per ZIP model of loads and generation using $U_N$:
+   $I_N = \overline{S_{Z}} \cdot U_{N} + \overline{(\frac{S_{I}}{U_{N}})} \cdot |U_{N}| +\overline{(\frac{S_{P}}{U_N})}$
 4. Solve linear equation: $YU_N^i = I_N^i$
 5. Check convergence: If maximum voltage deviation from the previous iteration is greater than the tolerance setting
    (i.e., $u^{(i-1)}_\sigma > u_\epsilon$), then go back to step 3.
@@ -546,8 +535,8 @@ Where $S_k$ and $\sigma_{P,k}$ and $\sigma_{Q,k}$ are the measured value and the
 appliances.
 
 ```{note}
-It is not possible to mix [power sensors](./components.md#generic-current-sensor) with
-[current sensors](#./components.mdgeneric-current-sensor) on the same terminal of the same component.
+It is not possible to mix [power sensors](./components.md#generic-power-sensor) with
+[current sensors](./components.md#generic-current-sensor) on the same terminal of the same component.
 It is also not possible to mix
 [current sensors with global angle measurement type](./components.md#global-angle-current-sensors) with
 [current sensors with local angle measurement type](./components.md#local-angle-current-sensors) on the same terminal 
@@ -775,11 +764,6 @@ Consequently, the iteration process differs slightly from that of
 As for the [iterative linear](#iterative-linear-state-estimation) approach, during iterations, phase angles of voltage
 at each bus are updated using ones from the previous iteration.
 The system error of the phase shift converges to zero.
-
-```{note}
-Newton-Raphson state estimation does not support current sensors with `global_angle` `angle_measurement_type` at this
-moment. See also [this issue](https://github.com/PowerGridModel/power-grid-model/issues/967).
-```
 
 ```{warning}
 The algorithm will assume angles to be zero by default (see the details about voltage sensors).

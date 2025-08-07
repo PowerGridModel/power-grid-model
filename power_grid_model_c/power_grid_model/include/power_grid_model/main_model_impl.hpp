@@ -509,10 +509,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
   public:
-    static inline auto calculator(Options options, MainModelImpl& model, MutableDataset const& target_data, Idx pos) {
+    static auto calculator(Options options, MainModelImpl& model, MutableDataset const& target_data, Idx pos) {
         auto sub_opt = options; // copy
         sub_opt.err_tol = pos != ignore_output ? options.err_tol : std::numeric_limits<double>::max();
         sub_opt.max_iter = pos != ignore_output ? options.max_iter : 1;
+
 
         model.calculate(sub_opt, target_data, pos);
     }
@@ -532,18 +533,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return *meta_data_;
     }
 
-    void check_no_experimental_features_used(Options const& options) const {
-        if (options.calculation_type == CalculationType::state_estimation &&
-            options.calculation_method == CalculationMethod::newton_raphson &&
-            state_.components.template size<GenericCurrentSensor>() > 0 &&
-            std::ranges::any_of(
-                state_.components.template citer<GenericCurrentSensor>(), [](auto const& current_sensor) {
-                    return current_sensor.get_angle_measurement_type() == AngleMeasurementType::global_angle;
-                })) {
-            throw ExperimentalFeature{
-                "Newton-Raphson state estimation is not implemented for global angle current sensors"};
-        }
-    }
+    void check_no_experimental_features_used(Options const& /*options*/) const {}
 
   private:
     template <typename Component, typename MathOutputType, typename ResIt>
