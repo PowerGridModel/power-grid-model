@@ -1057,7 +1057,7 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                 auto a_buffer = std::vector<A::InputType>(a_elements_per_scenario * batch_size);
                 auto b_buffer = std::vector<A::InputType>(3);
                 auto b_indptr = std::vector<Idx>{0, 0, narrow_cast<Idx>(b_buffer.size())};
-                std::ranges::transform(IdxRange(0, a_buffer.size()), a_buffer.begin(), [](Idx idx) {
+                std::ranges::transform(IdxRange(0, a_buffer.ssize()), a_buffer.begin(), [](Idx idx) {
                     return A::InputType{.id = static_cast<ID>(idx), .a1 = static_cast<double>(idx)};
                 });
                 add_homogeneous_buffer(dataset, A::name, a_elements_per_scenario, static_cast<void*>(a_buffer.data()));
