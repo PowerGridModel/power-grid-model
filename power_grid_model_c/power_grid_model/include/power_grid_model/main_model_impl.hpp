@@ -514,7 +514,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         sub_opt.err_tol = pos != ignore_output ? options.err_tol : std::numeric_limits<double>::max();
         sub_opt.max_iter = pos != ignore_output ? options.max_iter : 1;
 
-
         model.calculate(sub_opt, target_data, pos);
     }
 

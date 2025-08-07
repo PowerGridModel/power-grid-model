@@ -23,7 +23,7 @@ class JobDispatchAdapter<MainModel, ComponentList<ComponentType...>>
     : public JobDispatchInterface<JobDispatchAdapter<MainModel, ComponentList<ComponentType...>>> {
   public:
     JobDispatchAdapter(std::reference_wrapper<MainModel> model, std::reference_wrapper<MainModelOptions const> options)
-        : model_{std::move(model)}, options_{std::move(options)} {}
+        : model_{std::move(model)}, options_{options} {}
     JobDispatchAdapter(JobDispatchAdapter const& other)
         : model_copy_{std::make_unique<MainModel>(other.model_.get())},
           model_{std::ref(*model_copy_)},
