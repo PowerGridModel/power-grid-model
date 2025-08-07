@@ -7,7 +7,6 @@ Main power grid model class
 """
 
 from enum import IntEnum
-from typing import Type
 
 import numpy as np
 
@@ -212,7 +211,7 @@ class PowerGridModel:
 
     @staticmethod
     def _options(**kwargs) -> Options:
-        def as_enum_value(key_enum: str, type_: Type[IntEnum]):
+        def as_enum_value(key_enum: str, type_: type[IntEnum]):
             if key_enum in kwargs:
                 value_enum = kwargs[key_enum]
                 if isinstance(value_enum, str):

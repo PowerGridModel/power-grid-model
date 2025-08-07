@@ -23,12 +23,12 @@ def columnar_array(component_type, n_components, attributes=None, batch_size_tup
         set(component_dtype.names) & set(attributes) if attributes is not None else component_dtype.names
     )
     return {
-        attr: np.empty((n_components,) + batch_size_tuple, dtype=component_dtype[attr]) for attr in required_attributes
+        attr: np.empty((n_components, *batch_size_tuple), dtype=component_dtype[attr]) for attr in required_attributes
     }
 
 
 def row_array(component_type, n_components, batch_size_tuple=()):
-    return initialize_array(DT.sym_output, component_type, (n_components,) + batch_size_tuple)
+    return initialize_array(DT.sym_output, component_type, (n_components, *batch_size_tuple))
 
 
 @pytest.fixture(params=[1, 15])

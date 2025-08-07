@@ -9,8 +9,9 @@
 {%- set dataset_types = all_map.keys() %}
 {%- set components = all_map['input'].keys() %}
 
+from collections.abc import Mapping
 from enum import Enum, EnumMeta
-from typing import Any, Mapping, TypeAlias, TypeVar
+from typing import Any, TypeAlias, TypeVar
 
 # fmt: off
 

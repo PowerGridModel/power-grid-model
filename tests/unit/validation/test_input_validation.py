@@ -365,7 +365,7 @@ def original_data() -> dict[ComponentType, np.ndarray]:
     asym_current_sensor["angle_measurement_type"] = [0, 1, 10, 2, 0]
 
     fault = initialize_array(DatasetType.input, ComponentType.fault, 20)
-    fault["id"] = [1] + list(range(32, 51))
+    fault["id"] = [1, *list(range(32, 51))]
     fault["status"] = [0, -1, 2] + 17 * [1]
     fault["fault_type"] = 6 * [0] + 4 * [1] + 4 * [2] + 4 * [3] + [_nan_type(ComponentType.fault, "fault_type"), 4]
     fault["fault_phase"] = (
@@ -763,7 +763,7 @@ def test_validate_input_data_sym_calculation(input_data):
 
     assert NotBooleanError(ComponentType.fault, "status", [32, 33]) in validation_errors
     assert (
-        InvalidIdError(ComponentType.fault, "fault_object", [1] + list(range(32, 42)), [ComponentType.node])
+        InvalidIdError(ComponentType.fault, "fault_object", [1, *list(range(32, 42))], [ComponentType.node])
         in validation_errors
     )
 
@@ -955,7 +955,7 @@ def test_fault(input_data):
     assert validation_errors is not None
     assert InvalidEnumValueError(ComponentType.fault, "fault_type", [50], FaultType) in validation_errors
     assert InvalidEnumValueError(ComponentType.fault, "fault_phase", [50], FaultPhase) in validation_errors
-    assert FaultPhaseError(ComponentType.fault, ["fault_type", "fault_phase"], [1] + list(range(32, 51)))
+    assert FaultPhaseError(ComponentType.fault, ["fault_type", "fault_phase"], [1, *list(range(32, 51))])
     assert NotGreaterOrEqualError(ComponentType.fault, "r_f", [1], 0) in validation_errors
     assert (
         NotIdenticalError(

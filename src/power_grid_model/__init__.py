@@ -30,8 +30,6 @@ from power_grid_model.enum import (
 from power_grid_model.typing import ComponentAttributeMapping
 
 __all__ = [
-    "attribute_dtype",
-    "attribute_empty_value",
     "AngleMeasurementType",
     "Branch3Side",
     "BranchSide",
@@ -43,12 +41,14 @@ __all__ = [
     "DatasetType",
     "FaultPhase",
     "FaultType",
-    "initialize_array",
     "LoadGenType",
     "MeasuredTerminalType",
     "PowerGridModel",
-    "power_grid_meta_data",
     "ShortCircuitVoltageScaling",
     "TapChangingStrategy",
     "WindingType",
+    "attribute_dtype",
+    "attribute_empty_value",
+    "initialize_array",
+    "power_grid_meta_data",
 ]
