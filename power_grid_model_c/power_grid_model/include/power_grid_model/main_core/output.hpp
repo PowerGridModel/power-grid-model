@@ -85,18 +85,25 @@ constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> cons
     return state.comp_topo->regulated_object_idx.cbegin() + get_component_sequence_offset<Regulator, Component>(state);
 }
 
+template <std::derived_from<Base> Component, class ComponentContainer>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
+constexpr auto comp_base_sequence(MainModelState<ComponentContainer> const& state) {
+    auto const start = comp_base_sequence_cbegin<Component>(state);
+    return std::ranges::subrange{start, start + get_component_size<Component>(state)};
+}
+
 template <typename Component, typename IndexType, class ComponentContainer, std::ranges::viewable_range ComponentOutput,
           typename ResFunc>
     requires model_component_state_c<MainModelState, ComponentContainer, Component> &&
              std::invocable<std::remove_cvref_t<ResFunc>, Component const&, IndexType> &&
              assignable_to<std::invoke_result_t<ResFunc, Component const&, IndexType>,
                            std::ranges::range_reference_t<ComponentOutput>> &&
-             std::convertible_to<IndexType,
-                                 decltype(*comp_base_sequence_cbegin<Component>(MainModelState<ComponentContainer>{}))>
+             std::convertible_to<IndexType, std::ranges::range_value_t<decltype(comp_base_sequence<Component>(
+                                                MainModelState<ComponentContainer>{}))>>
 constexpr void produce_output(MainModelState<ComponentContainer> const& state, ComponentOutput&& output,
                               ResFunc&& func) {
-    std::transform(get_component_citer<Component>(state).begin(), get_component_citer<Component>(state).end(),
-                   comp_base_sequence_cbegin<Component>(state), output.begin(), std::forward<ResFunc>(func));
+    std::ranges::transform(get_component_citer<Component>(state), comp_base_sequence<Component>(state), output.begin(),
+                           std::forward<ResFunc>(func));
 }
 
 } // namespace detail
