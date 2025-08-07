@@ -37,7 +37,6 @@ target_link_libraries(power_grid_model_unit_tests_auxiliary
     PRIVATE
         power_grid_model
         doctest::doctest
-        nlohmann_json nlohmann_json::nlohmann_json
 )
 
 doctest_discover_tests(power_grid_model_unit_tests_auxiliary)
