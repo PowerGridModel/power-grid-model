@@ -152,7 +152,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     using SequenceIdxView = std::array<std::span<Idx2D const>, main_core::utils::n_types<ComponentType...>>;
     using OwnedUpdateDataset = std::tuple<std::vector<typename ComponentType::UpdateType>...>;
 
-    static constexpr Idx ignore_output{JobDispatch::ignore_output};
     static constexpr Idx isolated_component{-1};
     static constexpr Idx not_connected{-1};
     static constexpr Idx sequential{JobDispatch::sequential};
@@ -530,10 +529,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             adapter{std::ref(*this)};
         return JobDispatch::batch_calculation(
             adapter,
-            [&options](MainModelImpl& model, MutableDataset const& target_data, bool pilot_run) {
+            [&options](MainModelImpl& model, MutableDataset const& target_data, bool cache_run) {
                 auto sub_opt = options; // copy
-                sub_opt.err_tol = pilot_run ? std::numeric_limits<double>::max() : options.err_tol;
-                sub_opt.max_iter = pilot_run ? 1 : options.max_iter;
+                sub_opt.err_tol = cache_run ? std::numeric_limits<double>::max() : options.err_tol;
+                sub_opt.max_iter = cache_run ? 1 : options.max_iter;
 
                 model.calculate(sub_opt, target_data);
             },
