@@ -142,8 +142,13 @@ select = [
     "ARG",
     "RET",
     "PIE",
-    "SLF"
+    "SLF",
+    "UP",
+    "RSE",
+    "RUF"
 ]
+# the rule is deprecated, https://docs.astral.sh/ruff/rules/non-pep604-isinstance/#deprecation
+ignore = ["UP038"]
 
 [tool.ruff.lint.isort]
 # Imports that are imported using keyword "as" and are from the same source - are combined.
