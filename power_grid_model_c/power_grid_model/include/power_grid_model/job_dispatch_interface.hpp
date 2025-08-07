@@ -18,7 +18,7 @@ template <typename Adapter> class JobDispatchInterface {
   public:
     template <typename ResultDataset>
     void calculate(ResultDataset const& result_data, Idx pos = 0)
-        requires requires(Adapter& adapter, ResultDataset const& result_data, Idx pos) {
+        requires requires(Adapter& adapter) {
             { adapter.calculate_impl(result_data, pos) } -> std::same_as<void>;
         }
     {
@@ -35,7 +35,7 @@ template <typename Adapter> class JobDispatchInterface {
 
     template <typename UpdateDataset>
     void prepare_job_dispatch(UpdateDataset const& update_data)
-        requires requires(Adapter& adapter, UpdateDataset const& update_data) {
+        requires requires(Adapter& adapter) {
             { adapter.prepare_job_dispatch_impl(update_data) } -> std::same_as<void>;
         }
     {
@@ -44,7 +44,7 @@ template <typename Adapter> class JobDispatchInterface {
 
     template <typename UpdateDataset>
     void setup(UpdateDataset const& update_data, Idx scenario_idx)
-        requires requires(Adapter& adapter, UpdateDataset const& update_data, Idx scenario_idx) {
+        requires requires(Adapter& adapter) {
             { adapter.setup_impl(update_data, scenario_idx) } -> std::same_as<void>;
         }
     {
@@ -68,7 +68,7 @@ template <typename Adapter> class JobDispatchInterface {
     }
 
     void thread_safe_add_calculation_info(CalculationInfo const& info)
-        requires requires(Adapter& adapter, CalculationInfo const& info) {
+        requires requires(Adapter& adapter) {
             { adapter.thread_safe_add_calculation_info_impl(info) } -> std::same_as<void>;
         }
     {

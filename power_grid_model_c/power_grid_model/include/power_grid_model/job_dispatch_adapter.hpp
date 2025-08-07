@@ -47,7 +47,7 @@ class JobDispatchAdapter<MainModel, ComponentList<ComponentType...>>
     JobDispatchAdapter(JobDispatchAdapter&& other) noexcept
         : model_copy_{std::move(other.model_copy_)},
           model_{model_copy_ ? std::ref(*model_copy_) : std::move(other.model_)},
-          options_{std::move(other.options_)},
+          options_{other.options_},
           components_to_update_{std::move(other.components_to_update_)},
           update_independence_{std::move(other.update_independence_)},
           independence_flags_{std::move(other.independence_flags_)},
@@ -56,7 +56,7 @@ class JobDispatchAdapter<MainModel, ComponentList<ComponentType...>>
         if (this != &other) {
             model_copy_ = std::move(other.model_copy_);
             model_ = model_copy_ ? std::ref(*model_copy_) : std::move(other.model_);
-            options_ = std::move(other.options_);
+            options_ = other.options_;
             components_to_update_ = std::move(other.components_to_update_);
             update_independence_ = std::move(other.update_independence_);
             independence_flags_ = std::move(other.independence_flags_);
