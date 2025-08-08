@@ -67,7 +67,7 @@ class JobDispatch {
 
             CalculationInfo thread_info;
 
-            Timer t_total(thread_info, 1000, "Total batch calculation in thread");
+            Timer t_total(thread_info, 0200, "Total batch calculation in thread");
 
             auto const copy_adapter_functor = [&base_adapter, &thread_info](Idx /*scenario_idx*/) {
                 Timer const t_copy_adapter_functor(thread_info, 1100, "Copy model");
@@ -82,7 +82,7 @@ class JobDispatch {
             };
 
             auto winddown = [&adapter, &thread_info](Idx /*scenario_idx*/) {
-                Timer const t_update_model(thread_info, 1201, "Restore model");
+                Timer const t_restore_model(thread_info, 1201, "Restore model");
                 adapter.winddown();
             };
 

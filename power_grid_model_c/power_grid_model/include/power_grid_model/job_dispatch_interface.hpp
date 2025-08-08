@@ -49,6 +49,14 @@ template <typename Adapter> class JobDispatchInterface {
     void thread_safe_add_calculation_info(CalculationInfo const& info) {
         static_cast<Adapter*>(this)->thread_safe_add_calculation_info_impl(info);
     }
+
+  protected:
+    JobDispatchInterface() = default;
+    JobDispatchInterface(const JobDispatchInterface& /*other*/) = default;
+    JobDispatchInterface(JobDispatchInterface&& /*other*/) = default;
+    JobDispatchInterface& operator=(const JobDispatchInterface& /*other*/) = default;
+    JobDispatchInterface& operator=(JobDispatchInterface&& /*other*/) = default;
+    ~JobDispatchInterface() = default;
 };
 
 } // namespace power_grid_model
