@@ -20,30 +20,38 @@ class JobDispatchAdapter : public JobDispatchInterface<JobDispatchAdapter<MainMo
   public:
     JobDispatchAdapter(std::reference_wrapper<MainModel> model) : model_{std::move(model)} {}
     JobDispatchAdapter(JobDispatchAdapter const& other)
-        : model_copy_{std::make_unique<MainModel>(other.model_.get())}, model_{std::ref(*model_copy_)} {
-        copy_construction_remaining_members(other);
-    }
-
+        : model_copy_{std::make_unique<MainModel>(other.model_.get())},
+          model_{std::ref(*model_copy_)},
+          components_to_update_{other.components_to_update_},
+          update_independence_{other.update_independence_},
+          independence_flags_{other.independence_flags_},
+          all_scenarios_sequence_{other.all_scenarios_sequence_} {}
     JobDispatchAdapter& operator=(JobDispatchAdapter const& other) {
         if (this != &other) {
             model_copy_ = std::make_unique<MainModel>(other.model_.get());
             model_ = std::ref(*model_copy_);
-            copy_construction_remaining_members(other);
+            components_to_update_ = other.components_to_update_;
+            update_independence_ = other.update_independence_;
+            independence_flags_ = other.independence_flags_;
+            all_scenarios_sequence_ = other.all_scenarios_sequence_;
         }
         return *this;
     }
     JobDispatchAdapter(JobDispatchAdapter&& other) noexcept
         : model_copy_{std::move(other.model_copy_)},
-          model_{model_copy_ ? std::ref(*model_copy_) : std::move(other.model_)} {
-        move_construction_remaining_members(std::move(other));
-        other.model_copy_.reset();
-    }
+          model_{model_copy_ ? std::ref(*model_copy_) : std::move(other.model_)},
+          components_to_update_{std::move(other.components_to_update_)},
+          update_independence_{std::move(other.update_independence_)},
+          independence_flags_{std::move(other.independence_flags_)},
+          all_scenarios_sequence_{std::move(other.all_scenarios_sequence_)} {}
     JobDispatchAdapter& operator=(JobDispatchAdapter&& other) noexcept {
         if (this != &other) {
             model_copy_ = std::move(other.model_copy_);
             model_ = model_copy_ ? std::ref(*model_copy_) : std::move(other.model_);
-            move_construction_remaining_members(std::move(other));
-            other.model_copy_.reset();
+            components_to_update_ = std::move(other.components_to_update_);
+            update_independence_ = std::move(other.update_independence_);
+            independence_flags_ = std::move(other.independence_flags_);
+            all_scenarios_sequence_ = std::move(other.all_scenarios_sequence_);
         }
         return *this;
     }
@@ -65,19 +73,6 @@ class JobDispatchAdapter : public JobDispatchInterface<JobDispatchAdapter<MainMo
     main_core::utils::SequenceIdx<ComponentType...> current_scenario_sequence_cache_{};
 
     std::mutex calculation_info_mutex_;
-
-    void copy_construction_remaining_members(JobDispatchAdapter const& other) {
-        components_to_update_ = other.components_to_update_;
-        update_independence_ = other.update_independence_;
-        independence_flags_ = other.independence_flags_;
-        all_scenarios_sequence_ = other.all_scenarios_sequence_;
-    }
-    void move_construction_remaining_members(JobDispatchAdapter&& other) noexcept {
-        components_to_update_ = std::move(other.components_to_update_);
-        update_independence_ = std::move(other.update_independence_);
-        independence_flags_ = std::move(other.independence_flags_);
-        all_scenarios_sequence_ = std::move(other.all_scenarios_sequence_);
-    }
 
     // TODO(figueroa1395): Keep calculation_fn at the adapter level only
     template <typename Calculate>
