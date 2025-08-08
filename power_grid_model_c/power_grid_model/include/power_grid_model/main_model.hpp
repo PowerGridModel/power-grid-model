@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "job_dispatch.hpp"
+#include "job_dispatch_adapter.hpp"
 #include "main_model_impl.hpp"
 
 #include <memory>
@@ -61,9 +63,25 @@ class MainModel {
         impl().update_components<CacheType>(update_data.get_individual_scenario(0));
     }
 
+    /*
+    Batch calculation, propagating the results to result_data
+
+    Run the calculation function in batch on the provided update data.
+
+    The calculation function should be able to run standalone.
+    It should output to the provided result_data if the trailing argument is not ignore_output.
+
+    threading
+        < 0 sequential
+        = 0 parallel, use number of hardware threads
+        > 0 specify number of parallel threads
+    raise a BatchCalculationError if any of the calculations in the batch raised an exception
+    */
     BatchParameter calculate(Options const& options, MutableDataset const& result_data,
                              ConstDataset const& update_data) {
-        return impl().calculate(options, result_data, update_data);
+        JobDispatchAdapter<Impl, AllComponents> adapter{std::ref(impl())};
+        return JobDispatch::batch_calculation(adapter, Impl::calculator(options), result_data, update_data,
+                                              options.threading);
     }
 
     CalculationInfo calculation_info() const { return impl().calculation_info(); }
