@@ -33,7 +33,6 @@ inline auto calculate_param(auto const& c, auto const&... extra_args)
 {
     return c.template calc_param<typename CalcInputType::sym>(extra_args...);
 }
-} // namespace detail
 
 /** This is a heavily templated member function because it operates on many different variables of many
  *different types, but the essence is ever the same: filling one member (vector) of the calculation calc_input
@@ -137,9 +136,12 @@ void prepare_input_status(main_model_state_c auto const& state, std::vector<Idx2
             main_core::get_component_by_sequence<Component>(state, i).status();
     }
 }
+} // namespace detail
 
 template <symmetry_tag sym>
 std::vector<PowerFlowInput<sym>> prepare_power_flow_input(main_model_state_c auto const& state, Idx n_math_solvers) {
+    using detail::prepare_input;
+
     std::vector<PowerFlowInput<sym>> pf_input(n_math_solvers);
     for (Idx i = 0; i != n_math_solvers; ++i) {
         pf_input[i].s_injection.resize(state.math_topology[i]->n_load_gen());
@@ -157,6 +159,9 @@ std::vector<PowerFlowInput<sym>> prepare_power_flow_input(main_model_state_c aut
 template <symmetry_tag sym>
 std::vector<StateEstimationInput<sym>> prepare_state_estimation_input(main_model_state_c auto const& state,
                                                                       Idx n_math_solvers) {
+    using detail::prepare_input;
+    using detail::prepare_input_status;
+
     std::vector<StateEstimationInput<sym>> se_input(n_math_solvers);
 
     for (Idx i = 0; i != n_math_solvers; ++i) {
@@ -239,6 +244,8 @@ template <symmetry_tag sym>
 std::vector<ShortCircuitInput> prepare_short_circuit_input(main_model_state_c auto const& state,
                                                            ComponentToMathCoupling& comp_coup, Idx n_math_solvers,
                                                            ShortCircuitVoltageScaling voltage_scaling) {
+    using detail::prepare_input;
+
     // TODO(mgovers) split component mapping from actual preparing
     std::vector<IdxVector> topo_fault_indices(state.math_topology.size());
     std::vector<IdxVector> topo_bus_indices(state.math_topology.size());
