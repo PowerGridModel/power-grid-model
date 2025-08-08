@@ -79,8 +79,8 @@ template <typename Adapter> class JobDispatchInterface {
     JobDispatchInterface() = default;
     JobDispatchInterface(const JobDispatchInterface& /*other*/) = default;
     JobDispatchInterface(JobDispatchInterface&& /*other*/) = default;
-    JobDispatchInterface& operator=(const JobDispatchInterface& /*other*/) = default;
-    JobDispatchInterface& operator=(JobDispatchInterface&& /*other*/) = default;
+    JobDispatchInterface& operator=(const JobDispatchInterface& /*other*/) noexcept = default;
+    JobDispatchInterface& operator=(JobDispatchInterface&& /*other*/) noexcept = default;
     ~JobDispatchInterface() = default;
 };
 
