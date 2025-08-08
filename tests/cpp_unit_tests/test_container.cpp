@@ -75,6 +75,19 @@ TEST_CASE("Test component container") {
     }
 
     SUBCASE("Test iteration") {
+        static_assert(!std::ranges::input_range<decltype(container.iter<C>())>);
+        static_assert(std::ranges::input_range<decltype(container.citer<C>())>);
+        static_assert(std::ranges::input_range<decltype(container.iter<C const>())>);
+        static_assert(std::ranges::input_range<decltype(const_container.iter<C>())>);
+        static_assert(!std::ranges::input_range<decltype(container.iter<C1>())>);
+        static_assert(std::ranges::input_range<decltype(container.citer<C1>())>);
+        static_assert(std::ranges::input_range<decltype(container.iter<C1 const>())>);
+        static_assert(std::ranges::input_range<decltype(const_container.iter<C1>())>);
+        static_assert(!std::ranges::input_range<decltype(container.iter<C2>())>);
+        static_assert(std::ranges::input_range<decltype(container.citer<C2>())>);
+        static_assert(std::ranges::input_range<decltype(container.iter<C2 const>())>);
+        static_assert(std::ranges::input_range<decltype(const_container.iter<C2>())>);
+
         Idx i = 0;
         for (C& c : container.iter<C>()) {
             c.a = i;

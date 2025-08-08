@@ -490,7 +490,8 @@ template <dataset_type_tag dataset_type_> class Dataset {
                 result.add_buffer(component_info.component->name, size, size, nullptr, nullptr);
                 for (auto const& attribute_buffer : buffer.attributes) {
                     result.add_attribute_buffer(component_info.component->name, attribute_buffer.meta_attribute->name,
-                                                static_cast<Data*>(static_cast<AdvanceablePtr>(attribute_buffer.data)));
+                                                static_cast<Data*>(static_cast<AdvanceablePtr>(attribute_buffer.data) +
+                                                                   attribute_buffer.meta_attribute->size * offset));
                 }
             } else {
                 Data* data = component_info.component->advance_ptr(buffer.data, offset);
