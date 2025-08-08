@@ -4,7 +4,7 @@
 
 #pragma once
 
-// batch dispatch adapter class
+// Adapter that connects the JobDispatch to the MainModelImpl
 
 #include "auxiliary/dataset.hpp"
 #include "job_dispatch_interface.hpp"
