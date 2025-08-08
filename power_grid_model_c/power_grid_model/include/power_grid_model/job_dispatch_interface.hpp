@@ -16,11 +16,12 @@
 namespace power_grid_model {
 template <typename Adapter> class JobDispatchInterface {
   public:
+    // the multiple  NOSONARs are used to avoid the complaints about the unnamed concepts
     template <typename ResultDataset>
     void calculate(ResultDataset const& result_data, Idx pos = 0)
         requires requires(Adapter& adapter) {
             { adapter.calculate_impl(result_data, pos) } -> std::same_as<void>;
-        }
+        } // NOSONAR
     {
         return static_cast<Adapter*>(this)->calculate_impl(result_data, pos);
     }
@@ -28,7 +29,7 @@ template <typename Adapter> class JobDispatchInterface {
     void cache_calculate()
         requires requires(Adapter& adapter) {
             { adapter.cache_calculate_impl() } -> std::same_as<void>;
-        }
+        } // NOSONAR
     {
         return static_cast<Adapter*>(this)->cache_calculate_impl();
     }
@@ -37,7 +38,7 @@ template <typename Adapter> class JobDispatchInterface {
     void prepare_job_dispatch(UpdateDataset const& update_data)
         requires requires(Adapter& adapter) {
             { adapter.prepare_job_dispatch_impl(update_data) } -> std::same_as<void>;
-        }
+        } // NOSONAR
     {
         return static_cast<Adapter*>(this)->prepare_job_dispatch_impl(update_data);
     }
@@ -46,7 +47,7 @@ template <typename Adapter> class JobDispatchInterface {
     void setup(UpdateDataset const& update_data, Idx scenario_idx)
         requires requires(Adapter& adapter) {
             { adapter.setup_impl(update_data, scenario_idx) } -> std::same_as<void>;
-        }
+        } // NOSONAR
     {
         return static_cast<Adapter*>(this)->setup_impl(update_data, scenario_idx);
     }
@@ -54,7 +55,7 @@ template <typename Adapter> class JobDispatchInterface {
     void winddown()
         requires requires(Adapter& adapter) {
             { adapter.winddown_impl() } -> std::same_as<void>;
-        }
+        } // NOSONAR
     {
         return static_cast<Adapter*>(this)->winddown_impl();
     }
@@ -62,7 +63,7 @@ template <typename Adapter> class JobDispatchInterface {
     CalculationInfo get_calculation_info() const
         requires requires(Adapter& adapter) {
             { adapter.get_calculation_info_impl() } -> std::same_as<CalculationInfo>;
-        }
+        } // NOSONAR
     {
         return static_cast<const Adapter*>(this)->get_calculation_info_impl();
     }
@@ -70,7 +71,7 @@ template <typename Adapter> class JobDispatchInterface {
     void thread_safe_add_calculation_info(CalculationInfo const& info)
         requires requires(Adapter& adapter) {
             { adapter.thread_safe_add_calculation_info_impl(info) } -> std::same_as<void>;
-        }
+        } // NOSONAR
     {
         static_cast<Adapter*>(this)->thread_safe_add_calculation_info_impl(info);
     }
