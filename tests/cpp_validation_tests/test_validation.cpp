@@ -687,18 +687,60 @@ void validate_batch_case(CaseParam const& param) {
 
 } // namespace
 
-TEST_CASE("Validation test single") {
+TEST_CASE("Validation test single - power flow") {
     std::vector<CaseParam> const& all_cases = get_all_single_cases();
     for (CaseParam const& param : all_cases) {
-        SUBCASE(param.case_name.c_str()) { validate_single_case(param); }
+        if (param.calculation_type == "power_flow") {
+            SUBCASE(param.case_name.c_str()) { validate_single_case(param); }
+        }
     }
 }
 
-TEST_CASE("Validation test batch") {
+TEST_CASE("Validation test single - state estimation") {
+    std::vector<CaseParam> const& all_cases = get_all_single_cases();
+    for (CaseParam const& param : all_cases) {
+        if (param.calculation_type == "state_estimation") {
+            SUBCASE(param.case_name.c_str()) { validate_single_case(param); }
+        }
+    }
+}
+
+TEST_CASE("Validation test single - short circuit") {
+    std::vector<CaseParam> const& all_cases = get_all_single_cases();
+    for (CaseParam const& param : all_cases) {
+        if (param.calculation_type == "short_circuit") {
+            SUBCASE(param.case_name.c_str()) { validate_single_case(param); }
+        }
+    }
+}
+
+TEST_CASE("Validation test batch - power flow") {
     std::vector<CaseParam> const& all_cases = get_all_batch_cases();
 
     for (CaseParam const& param : all_cases) {
-        SUBCASE(param.case_name.c_str()) { validate_batch_case(param); }
+        if (param.calculation_type == "power_flow") {
+            SUBCASE(param.case_name.c_str()) { validate_batch_case(param); }
+        }
+    }
+}
+
+TEST_CASE("Validation test batch - state estimation") {
+    std::vector<CaseParam> const& all_cases = get_all_batch_cases();
+
+    for (CaseParam const& param : all_cases) {
+        if (param.calculation_type == "state_estimation") {
+            SUBCASE(param.case_name.c_str()) { validate_batch_case(param); }
+        }
+    }
+}
+
+TEST_CASE("Validation test batch - short circuit") {
+    std::vector<CaseParam> const& all_cases = get_all_batch_cases();
+
+    for (CaseParam const& param : all_cases) {
+        if (param.calculation_type == "short_circuit") {
+            SUBCASE(param.case_name.c_str()) { validate_batch_case(param); }
+        }
     }
 }
 
