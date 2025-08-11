@@ -777,7 +777,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return math_param_increment;
     }
 
-    template <symmetry_tag sym> void prepare_y_bus() {
+    static template <symmetry_tag sym> void prepare_y_bus(Idx n_math_solvers) {
         std::vector<YBus<sym>>& y_bus_vec = get_y_bus<sym>();
         // also get the vector of other Y_bus (sym -> asym, or asym -> sym)
         std::vector<YBus<other_symmetry_t<sym>>>& other_y_bus_vec = get_y_bus<other_symmetry_t<sym>>();
@@ -795,7 +795,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             constexpr auto shunt_param_in_seq_map =
                 std::array{main_core::utils::index_of_component<Shunt, ComponentType...>};
 
-            for (Idx i = 0; i != n_math_solvers_; ++i) {
+            for (Idx i = 0; i != n_math_solvers; ++i) {
                 // construct from existing Y_bus structure if possible
                 if (other_y_bus_exist) {
                     y_bus_vec.emplace_back(state_.math_topology[i],
