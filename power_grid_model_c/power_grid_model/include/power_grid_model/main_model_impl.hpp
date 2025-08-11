@@ -10,6 +10,7 @@
 #include "batch_parameter.hpp"
 #include "calculation_parameters.hpp"
 #include "container.hpp"
+#include "job_adapter.hpp"
 #include "job_dispatch.hpp"
 #include "main_model_fwd.hpp"
 #include "topology.hpp"
@@ -151,14 +152,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     using SequenceIdxView = std::array<std::span<Idx2D const>, main_core::utils::n_types<ComponentType...>>;
     using OwnedUpdateDataset = std::tuple<std::vector<typename ComponentType::UpdateType>...>;
 
-    using JobDispatcher =
-        JobDispatch<MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentList<ComponentType...>>,
-                    ComponentType...>;
-
-    static constexpr Idx ignore_output{JobDispatcher::ignore_output};
+    static constexpr Idx ignore_output{JobDispatch::ignore_output};
     static constexpr Idx isolated_component{-1};
     static constexpr Idx not_connected{-1};
-    static constexpr Idx sequential{JobDispatcher::sequential};
+    static constexpr Idx sequential{JobDispatch::sequential};
 
   public:
     using Options = MainModelOptions;
@@ -459,26 +456,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         };
     }
 
-    /*
-    run the calculation function in batch on the provided update data.
-
-    The calculation function should be able to run standalone.
-    It should output to the provided result_data if the trailing argument is not ignore_output.
-
-    threading
-        < 0 sequential
-        = 0 parallel, use number of hardware threads
-        > 0 specify number of parallel threads
-    raise a BatchCalculationError if any of the calculations in the batch raised an exception
-    */
-    template <typename Calculate>
-        requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&, MutableDataset const&, Idx>
-    BatchParameter batch_calculation_(Calculate&& calculation_fn, MutableDataset const& result_data,
-                                      ConstDataset const& update_data, Idx threading = sequential) {
-        return JobDispatcher::batch_calculation_(*this, calculation_info_, std::forward<Calculate>(calculation_fn),
-                                                 result_data, update_data, threading);
-    }
-
     // Calculate with optimization, e.g., automatic tap changer
     template <calculation_type_tag calculation_type, symmetry_tag sym> auto calculate(Options const& options) {
         auto const calculator = [this, &options] {
@@ -534,10 +511,28 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
   public:
-    // Batch calculation, propagating the results to result_data
+    /*
+    Batch calculation, propagating the results to result_data
+
+    Run the calculation function in batch on the provided update data.
+
+    The calculation function should be able to run standalone.
+    It should output to the provided result_data if the trailing argument is not ignore_output.
+
+    threading
+        < 0 sequential
+        = 0 parallel, use number of hardware threads
+        > 0 specify number of parallel threads
+    raise a BatchCalculationError if any of the calculations in the batch raised an exception
+    */
     BatchParameter calculate(Options const& options, MutableDataset const& result_data,
                              ConstDataset const& update_data) {
-        return batch_calculation_(
+        JobDispatchAdapter<
+            MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentList<ComponentType...>>,
+            ComponentType...>
+            adapter{std::ref(*this)};
+        return JobDispatch::batch_calculation(
+            adapter,
             [&options](MainModelImpl& model, MutableDataset const& target_data, Idx pos) {
                 auto sub_opt = options; // copy
                 sub_opt.err_tol = pos != ignore_output ? options.err_tol : std::numeric_limits<double>::max();
@@ -549,6 +544,10 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     CalculationInfo calculation_info() const { return calculation_info_; }
+    void merge_calculation_info(CalculationInfo const& info) {
+        assert(construction_complete_);
+        main_core::merge_into(calculation_info_, info);
+    }
     auto const& state() const {
         assert(construction_complete_);
         return state_;
