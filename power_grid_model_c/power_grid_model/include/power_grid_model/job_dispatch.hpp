@@ -122,10 +122,12 @@ template <class MainModel, class... ComponentType> class JobDispatch {
             auto calculate_scenario = JobDispatch::call_with<Idx>(
                 [&model, &calculation_fn_, &result_data, &thread_info](Idx scenario_idx) {
                     calculation_fn_(model, result_data, scenario_idx);
-                    main_core::merge_into(thread_info, model.calculation_info());
                 },
                 std::move(setup), std::move(winddown), scenario_exception_handler(model, exceptions, thread_info),
-                [&model, &copy_model_functor](Idx /*scenario_idx*/) { model = copy_model_functor(); });
+                [&model, &copy_model_functor, &thread_info](Idx /*scenario_idx*/) {
+                    main_core::merge_into(thread_info, model.calculation_info());
+                    model = copy_model_functor();
+                });
 
             for (Idx scenario_idx = start; scenario_idx < n_scenarios; scenario_idx += stride) {
                 Timer const t_total_single(thread_info, 0100, "Total single calculation in thread");
@@ -133,6 +135,7 @@ template <class MainModel, class... ComponentType> class JobDispatch {
             }
 
             t_total.stop();
+            main_core::merge_into(thread_info, model.calculation_info());
             thread_safe_add_calculation_info(thread_info);
         };
     }
