@@ -198,8 +198,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
           parameter_changed_components_{other.parameter_changed_components_} {
 #ifndef NDEBUG
         // construction_complete is used for debug assertions only
-        construction_complete_ = other.construction_complete_;
-#endif // !NDEBUG
+        construction_complete_ = other.construction_complete_; // NOSONAR
+#endif                                                         // !NDEBUG
     }
     MainModelImpl& operator=(MainModelImpl const& other) {
         calculation_info_ = {}; // calculation info should be reset, because it may result in race conditions
@@ -224,7 +224,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
     MainModelImpl(MainModelImpl&& /*other*/) noexcept = default;
     MainModelImpl& operator=(MainModelImpl&& /*other*/) noexcept = default;
-    ~MainModelImpl() = default;
+    ~MainModelImpl() = default; // NOSONAR
 
     // helper function to get what components are present in the update data
     std::array<bool, main_core::utils::n_types<ComponentType...>>
