@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "job_dispatch_interface.hpp"
+#include "job_interface.hpp"
 
 #include "main_core/calculation_info.hpp"
 #include "main_core/update.hpp"
@@ -69,7 +69,6 @@ class JobDispatch {
 
             Timer t_total(thread_info, 0200, "Total batch calculation in thread");
 
-            // Can we remove this Idx?
             auto const copy_adapter_functor = [&base_adapter, &thread_info]() {
                 Timer const t_copy_adapter_functor(thread_info, 1100, "Copy model");
                 return Adapter{base_adapter};

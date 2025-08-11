@@ -51,6 +51,7 @@ template <typename Adapter> class JobDispatchInterface {
     }
 
   protected:
+    // Protected & defaulted special members — CRTP: only the derived can create/copy/move this base
     JobDispatchInterface() = default;
     JobDispatchInterface(const JobDispatchInterface& /*other*/) = default;
     JobDispatchInterface(JobDispatchInterface&& /*other*/) = default;

@@ -10,8 +10,8 @@
 #include "batch_parameter.hpp"
 #include "calculation_parameters.hpp"
 #include "container.hpp"
+#include "job_adapter.hpp"
 #include "job_dispatch.hpp"
-#include "job_dispatch_adapter.hpp"
 #include "main_model_fwd.hpp"
 #include "topology.hpp"
 
