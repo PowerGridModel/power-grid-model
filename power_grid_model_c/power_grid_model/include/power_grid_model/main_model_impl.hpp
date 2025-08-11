@@ -180,6 +180,52 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
           meta_data_{&meta_data},
           math_solver_dispatcher_{&math_solver_dispatcher} {}
 
+    MainModelImpl(MainModelImpl const& other)
+        : calculation_info_{}, // calculation info should not be copied, because it may result in race conditions
+          system_frequency_{other.system_frequency_},
+          meta_data_{other.meta_data_},
+          math_solver_dispatcher_{other.math_solver_dispatcher_},
+          state_{other.state_},
+          math_state_{other.math_state_},
+          n_math_solvers_{other.n_math_solvers_},
+          is_topology_up_to_date_{other.is_topology_up_to_date_},
+          is_sym_parameter_up_to_date_{other.is_sym_parameter_up_to_date_},
+          is_asym_parameter_up_to_date_{other.is_asym_parameter_up_to_date_},
+          is_accumulated_component_updated_{other.is_accumulated_component_updated_},
+          last_updated_calculation_symmetry_mode_{other.last_updated_calculation_symmetry_mode_},
+          cached_inverse_update_{other.cached_inverse_update_},
+          cached_state_changes_{other.cached_state_changes_},
+          parameter_changed_components_{other.parameter_changed_components_} {
+#ifndef NDEBUG
+        // construction_complete is used for debug assertions only
+        construction_complete_ = other.construction_complete_;
+#endif // !NDEBUG
+    }
+    MainModelImpl& operator=(MainModelImpl const& other) {
+        calculation_info_ = {}; // calculation info should be reset, because it may result in race conditions
+        system_frequency_ = other.system_frequency_;
+        meta_data_ = other.meta_data_;
+        math_solver_dispatcher_ = other.math_solver_dispatcher_;
+        state_ = other.state_;
+        math_state_ = other.math_state_;
+        n_math_solvers_ = other.n_math_solvers_;
+        is_topology_up_to_date_ = other.is_topology_up_to_date_;
+        is_sym_parameter_up_to_date_ = other.is_sym_parameter_up_to_date_;
+        is_asym_parameter_up_to_date_ = other.is_asym_parameter_up_to_date_;
+        is_accumulated_component_updated_ = other.is_accumulated_component_updated_;
+        last_updated_calculation_symmetry_mode_ = other.last_updated_calculation_symmetry_mode_;
+        cached_inverse_update_ = other.cached_inverse_update_;
+        cached_state_changes_ = other.cached_state_changes_;
+        parameter_changed_components_ = other.parameter_changed_components_;
+#ifndef NDEBUG
+        // construction_complete is used for debug assertions only
+        construction_complete_ = other.construction_complete_;
+#endif // !NDEBUG
+    }
+    MainModelImpl(MainModelImpl&& /*other*/) noexcept = default;
+    MainModelImpl& operator=(MainModelImpl&& /*other*/) noexcept = default;
+    ~MainModelImpl() = default;
+
     // helper function to get what components are present in the update data
     std::array<bool, main_core::utils::n_types<ComponentType...>>
     get_components_to_update(ConstDataset const& update_data) const {
