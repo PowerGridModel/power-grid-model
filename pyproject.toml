@@ -177,7 +177,7 @@ disable_error_code = ["call-overload"]  # mypy 1.14.0 does not like PGM's data_t
 build-frontend = "build"
 build-verbosity = 1
 test-extras = ["dev"]
-test-command = "pytest {package}/tests"
+test-command = "pytest {package}/tests -v"
 # we do not support 
 #    PyPy
 #    musllinux in aarch64
