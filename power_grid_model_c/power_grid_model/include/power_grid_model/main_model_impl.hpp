@@ -224,7 +224,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
     MainModelImpl(MainModelImpl&& /*other*/) noexcept = default;
     MainModelImpl& operator=(MainModelImpl&& /*other*/) noexcept = default;
-    ~MainModelImpl() = default; // NOSONAR
+    ~MainModelImpl() = default;
 
     // helper function to get what components are present in the update data
     std::array<bool, main_core::utils::n_types<ComponentType...>>
