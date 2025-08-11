@@ -9,7 +9,6 @@
 #include "main_core/calculation_info.hpp"
 #include "main_core/update.hpp"
 
-#include <mutex>
 #include <thread>
 
 namespace power_grid_model {
