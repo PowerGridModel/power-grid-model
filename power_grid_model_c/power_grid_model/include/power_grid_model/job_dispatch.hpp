@@ -86,8 +86,8 @@ class JobDispatch {
             };
 
             auto recover_from_bad = [&adapter, &copy_adapter_functor, &thread_info]() {
-                adapter = copy_adapter_functor();
                 main_core::merge_into(thread_info, adapter.get_calculation_info());
+                adapter = copy_adapter_functor();
             };
 
             auto run = [&adapter, &calculation_fn_, &result_data](Idx scenario_idx) {
