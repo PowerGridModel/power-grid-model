@@ -10,6 +10,7 @@
 #include "common/common.hpp"
 
 #include <concepts>
+#include <mutex>
 #include <type_traits>
 #include <utility>
 
@@ -77,10 +78,11 @@ template <typename Adapter> class JobDispatchInterface {
     }
 
   protected:
+    // Protected & defaulted special members — CRTP: only the derived can create/copy/move this base
     JobDispatchInterface() = default;
     JobDispatchInterface(const JobDispatchInterface& /*other*/) = default;
-    JobDispatchInterface(JobDispatchInterface&& /*other*/) = default;
-    JobDispatchInterface& operator=(const JobDispatchInterface& /*other*/) noexcept = default;
+    JobDispatchInterface& operator=(const JobDispatchInterface& /*other*/) = default;
+    JobDispatchInterface(JobDispatchInterface&& /*other*/) noexcept = default;
     JobDispatchInterface& operator=(JobDispatchInterface&& /*other*/) noexcept = default;
     ~JobDispatchInterface() = default;
 };

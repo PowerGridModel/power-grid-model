@@ -4,8 +4,8 @@
 
 #pragma once
 
+#include "job_adapter.hpp"
 #include "job_dispatch.hpp"
-#include "job_dispatch_adapter.hpp"
 #include "main_model_impl.hpp"
 
 #include <memory>
