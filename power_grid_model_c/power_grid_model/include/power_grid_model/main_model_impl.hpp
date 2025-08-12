@@ -195,11 +195,13 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
           last_updated_calculation_symmetry_mode_{other.last_updated_calculation_symmetry_mode_},
           cached_inverse_update_{other.cached_inverse_update_},
           cached_state_changes_{other.cached_state_changes_},
-          parameter_changed_components_{other.parameter_changed_components_} {
+          parameter_changed_components_{other.parameter_changed_components_}
 #ifndef NDEBUG
-        // construction_complete is used for debug assertions only
-        construction_complete_ = other.construction_complete_; // NOSONAR
-#endif                                                         // !NDEBUG
+          ,
+          // construction_complete is used for debug assertions only
+          construction_complete_{other.construction_complete_}
+#endif // !NDEBUG
+    {
     }
     MainModelImpl& operator=(MainModelImpl const& other) {
         if (this != &other) {
