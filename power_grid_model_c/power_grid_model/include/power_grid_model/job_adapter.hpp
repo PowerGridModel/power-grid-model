@@ -7,7 +7,7 @@
 // Adapter that connects the JobDispatch to the MainModelImpl
 
 #include "auxiliary/dataset.hpp"
-#include "job_dispatch_interface.hpp"
+#include "job_interface.hpp"
 #include "main_model_fwd.hpp"
 
 #include "main_core/calculation_info.hpp"
@@ -61,7 +61,10 @@ class JobDispatchAdapter<MainModel, ComponentList<ComponentType...>>
     ~JobDispatchAdapter() { model_copy_.reset(); }
 
   private:
-    friend class JobDispatchInterface<JobDispatchAdapter>; // CRTP
+    // Grant the CRTP base (JobDispatchInterface<JobDispatchAdapter>) access to
+    // JobDispatchAdapter's private members. This allows the base class template
+    // to call derived-class implementation details as part of the CRTP pattern.
+    friend class JobDispatchInterface<JobDispatchAdapter>;
 
     static constexpr Idx ignore_output{-1};
 

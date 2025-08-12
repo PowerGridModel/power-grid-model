@@ -4,12 +4,11 @@
 
 #pragma once
 
-#include "job_dispatch_interface.hpp"
+#include "job_interface.hpp"
 
 #include "main_core/calculation_info.hpp"
 #include "main_core/update.hpp"
 
-#include <mutex>
 #include <thread>
 
 namespace power_grid_model {
@@ -69,7 +68,6 @@ class JobDispatch {
 
             Timer t_total(thread_info, 0200, "Total batch calculation in thread");
 
-            // Can we remove this Idx?
             auto const copy_adapter_functor = [&base_adapter, &thread_info]() {
                 Timer const t_copy_adapter_functor(thread_info, 1100, "Copy model");
                 return Adapter{base_adapter};
@@ -87,11 +85,13 @@ class JobDispatch {
                 adapter.winddown();
             };
 
-            auto recover_from_bad = [&adapter, &copy_adapter_functor]() { adapter = copy_adapter_functor(); };
-
-            auto run = [&adapter, &calculation_fn_, &result_data, &thread_info](Idx scenario_idx) {
-                adapter.calculate(calculation_fn_, result_data, scenario_idx);
+            auto recover_from_bad = [&adapter, &copy_adapter_functor, &thread_info]() {
                 main_core::merge_into(thread_info, adapter.get_calculation_info());
+                adapter = copy_adapter_functor();
+            };
+
+            auto run = [&adapter, &calculation_fn_, &result_data](Idx scenario_idx) {
+                adapter.calculate(calculation_fn_, result_data, scenario_idx);
             };
 
             auto calculate_scenario = JobDispatch::call_with<Idx>(
@@ -104,6 +104,7 @@ class JobDispatch {
             }
 
             t_total.stop();
+            main_core::merge_into(thread_info, adapter.get_calculation_info());
             base_adapter.thread_safe_add_calculation_info(thread_info);
         };
     }
