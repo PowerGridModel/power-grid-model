@@ -15,8 +15,11 @@
 
 namespace power_grid_model {
 
+template <class MainModel, typename... ComponentType> class JobDispatchAdapter;
+
 template <class MainModel, class... ComponentType>
-class JobDispatchAdapter : public JobDispatchInterface<JobDispatchAdapter<MainModel, ComponentType...>> {
+class JobDispatchAdapter<MainModel, ComponentList<ComponentType...>>
+    : public JobDispatchInterface<JobDispatchAdapter<MainModel, ComponentList<ComponentType...>>> {
   public:
     JobDispatchAdapter(std::reference_wrapper<MainModel> model) : model_{std::move(model)} {}
     JobDispatchAdapter(JobDispatchAdapter const& other)
