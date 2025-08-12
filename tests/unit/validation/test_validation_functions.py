@@ -858,7 +858,7 @@ def test_validate_generic_current_sensor__all_terminal_types(
 
 @pytest.mark.parametrize("current_sensor_type", [ComponentType.sym_current_sensor, ComponentType.asym_current_sensor])
 @pytest.mark.parametrize(
-    "measured_terminal_type, supported",
+    ("measured_terminal_type", "supported"),
     [
         (MeasuredTerminalType.branch_from, True),
         (MeasuredTerminalType.branch_to, True),

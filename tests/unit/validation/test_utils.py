@@ -18,25 +18,25 @@ def test_eval_field_expression():
     np.testing.assert_array_equal(_eval_field_expression(data, "a / b2"), np.array([0.5, 0.5]))
     np.testing.assert_array_equal(_eval_field_expression(data, "a / c_3"), np.array([0.25, np.nan]))
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Invalid field expression"):
         _eval_field_expression(data, "a / 1")
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Invalid field expression"):
         _eval_field_expression(data, "a + 100")
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Invalid field expression"):
         _eval_field_expression(data, "a + 100.123")
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Invalid field expression"):
         _eval_field_expression(data, "a + b2")
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Invalid field expression"):
         _eval_field_expression(data, "a - b2")
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Invalid field expression"):
         _eval_field_expression(data, "a * b2")
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Invalid field expression"):
         _eval_field_expression(data, "a * -b2")
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Invalid field expression"):
         _eval_field_expression(data, "a + b2 + c_3")
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Invalid field expression"):
         _eval_field_expression(data, "max(a, b2)")
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Invalid field expression"):
         _eval_field_expression(data, "(a + b2) / c_3")
 
     with pytest.raises(KeyError):

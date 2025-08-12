@@ -110,7 +110,8 @@ show-fixes = true
 # Assume Python 3.11
 target-version = "py311"
 
-extend-exclude = ["setup.py"]
+[tool.ruff.lint.pydocstyle]
+convention = "google"
 
 [tool.ruff.lint]
 select = [
@@ -145,10 +146,12 @@ select = [
     "SLF",
     "UP",
     "RSE",
-    "RUF"
+    "RUF",
+    "S",
 ]
-# the rule is deprecated, https://docs.astral.sh/ruff/rules/non-pep604-isinstance/#deprecation
-ignore = ["UP038"]
+# UP038 is deprecated, https://docs.astral.sh/ruff/rules/non-pep604-isinstance/#deprecation
+# S701 can't be supported, autoescape=True generates the files incorrectly.
+ignore = ["UP038", "S701"]
 
 [tool.ruff.lint.isort]
 # Imports that are imported using keyword "as" and are from the same source - are combined.
@@ -158,11 +161,10 @@ combine-as-imports = true
 # Ignore `F811` (redefinition violations) in all examples notebooks since we use redefinition.
 "docs/examples/*.ipynb" = ["F811", "E402"]
 # Pylint was only run in src directory before moving to Ruff
-"tests/*" = ["PLR0915", "PLR0912", "PLR0913"]
+"tests/*" = ["PLR0915", "PLR0912", "PLR0913", "S"]
 # Ignore private member access: _model_ptr, _all_component_count...
 "src/power_grid_model/_core/*.py" = ["SLF001"]
 "tests/unit/test_error_handling.py" = ["SLF001"]
-"setup.py" = ["PL"]
 
 [tool.mypy]
 follow_imports = "silent"

@@ -643,7 +643,7 @@ def assert_deserialization_filtering_correct(deserialized_dataset: Dataset, data
     return True
 
 
-@pytest.mark.parametrize("raw_buffer", (True, False))
+@pytest.mark.parametrize("raw_buffer", [True, False])
 def test_json_deserialize_data(serialized_data, data_filters, raw_buffer: bool):
     data = to_json(serialized_data, raw_buffer=raw_buffer)
     result = json_deserialize(data, data_filter=data_filters)
@@ -670,17 +670,17 @@ def test_msgpack_deserialize_data(serialized_data, data_filters):
 
 @pytest.mark.parametrize(
     "dataset_type",
-    (
+    [
         DatasetType.input,
         DatasetType.update,
         DatasetType.sym_output,
         DatasetType.asym_output,
         DatasetType.sc_output,
-    ),
+    ],
 )
 @pytest.mark.parametrize(
     "use_compact_list",
-    (pytest.param(True, id="compact_list"), pytest.param(False, id="non-compact_list")),
+    [pytest.param(True, id="compact_list"), pytest.param(False, id="non-compact_list")],
 )
 def test_json_serialize_empty_dataset(dataset_type, use_compact_list: bool):
     for indent in (-1, 0, 2, 4):
@@ -697,17 +697,17 @@ def test_json_serialize_empty_dataset(dataset_type, use_compact_list: bool):
 
 @pytest.mark.parametrize(
     "dataset_type",
-    (
+    [
         DatasetType.input,
         DatasetType.update,
         DatasetType.sym_output,
         DatasetType.asym_output,
         DatasetType.sc_output,
-    ),
+    ],
 )
 @pytest.mark.parametrize(
     "use_compact_list",
-    (pytest.param(True, id="compact_list"), pytest.param(False, id="non-compact_list")),
+    [pytest.param(True, id="compact_list"), pytest.param(False, id="non-compact_list")],
 )
 def test_msgpack_serialize_empty_dataset(dataset_type, use_compact_list):
     reference = empty_dataset(dataset_type)
@@ -719,10 +719,10 @@ def test_msgpack_serialize_empty_dataset(dataset_type, use_compact_list):
 
 @pytest.mark.parametrize(
     ("deserialize", "serialize", "pack"),
-    (
+    [
         pytest.param(json_deserialize, json_serialize, to_json, id="json"),
         pytest.param(msgpack_deserialize, msgpack_serialize, to_msgpack, id="msgpack"),
-    ),
+    ],
 )
 def test_serialize_deserialize_type_deduction(deserialize, serialize, serialized_data, data_filters, pack):
     deserialized_data = deserialize(pack(serialized_data), data_filter=data_filters)
@@ -737,10 +737,10 @@ def test_serialize_deserialize_type_deduction(deserialize, serialize, serialized
 
 @pytest.mark.parametrize(
     ("deserialize", "serialize", "pack"),
-    (
+    [
         pytest.param(json_deserialize, json_serialize, to_json, id="json"),
         pytest.param(msgpack_deserialize, msgpack_serialize, to_msgpack, id="msgpack"),
-    ),
+    ],
 )
 def test_serialize_deserialize_double_round_trip(deserialize, serialize, serialized_data, data_filters, pack):
     """

@@ -40,7 +40,7 @@ def load_data(component_type, is_batch, is_sparse, is_columnar):
 
 
 @pytest.mark.parametrize(
-    "component_type, is_batch, is_columnar",
+    ("component_type", "is_batch", "is_columnar"),
     [
         pytest.param(ComponentType.sym_load, True, True, id="sym_load-batch-columnar"),
         pytest.param(ComponentType.sym_load, True, False, id="sym_load-batch-row_based"),
@@ -70,7 +70,7 @@ def test__get_dense_buffer_properties(component_type, is_batch, is_columnar):
 
 
 @pytest.mark.parametrize(
-    "component_type, is_columnar",
+    ("component_type", "is_columnar"),
     [
         pytest.param(ComponentType.sym_load, True, id="sym_load-columnar"),
         pytest.param(ComponentType.sym_load, False, id="sym_load-row_based"),
@@ -96,7 +96,7 @@ def test__get_sparse_buffer_properties(component_type, is_columnar):
 
 
 @pytest.mark.parametrize(
-    "component, is_batch, is_columnar, is_sparse",
+    ("component", "is_batch", "is_columnar", "is_sparse"),
     [
         pytest.param(ComponentType.sym_load, True, True, False, id="sym_load-columnar"),
         pytest.param(ComponentType.asym_load, True, True, False, id="asym_load-columnar"),
@@ -127,7 +127,7 @@ def test__get_raw_attribute_data_view(component, is_batch, is_columnar, is_spars
 
 
 @pytest.mark.parametrize(
-    "component, attribute",
+    ("component", "attribute"),
     [
         pytest.param(ComponentType.asym_load, "p_specified", id="asym_load-shape_missmatch"),
     ],
@@ -160,7 +160,7 @@ def test__get_raw_attribute_data_view_fail(component, attribute):
 
 
 @pytest.mark.parametrize(
-    "component, is_batch, is_columnar, is_sparse",
+    ("component", "is_batch", "is_columnar", "is_sparse"),
     [
         pytest.param(ComponentType.sym_load, True, True, False, id="sym_load"),
         pytest.param(ComponentType.asym_load, True, True, False, id="asym_load-columnar"),
@@ -183,7 +183,7 @@ def test__get_raw_attribute_data_view_direct(component, is_batch, is_columnar, i
 
 
 @pytest.mark.parametrize(
-    "component, attr_data_shape, attribute",
+    ("component", "attr_data_shape", "attribute"),
     [
         pytest.param(ComponentType.asym_load, (2, 4, 3), "p_specified", id="asym_load-columnar"),
         pytest.param(ComponentType.asym_load, (1, 4, 3), "p_specified", id="asym_load-columnar"),
@@ -219,7 +219,7 @@ def test__get_raw_attribute_data_view_directly(component, attr_data_shape, attri
 
 
 @pytest.mark.parametrize(
-    "component, attr_data_shape, attribute",
+    ("component", "attr_data_shape", "attribute"),
     [
         pytest.param(ComponentType.asym_load, (2, 4, 4), "p_specified", id="asym_load-columnar"),
         pytest.param(ComponentType.asym_load, (2, 6, 4), "p_specified", id="asym_load-columnar"),

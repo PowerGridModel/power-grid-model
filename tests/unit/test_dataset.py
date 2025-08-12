@@ -85,7 +85,7 @@ def test_const_dataset__single_data(dataset_type):
     assert info.total_elements() == components
 
 
-@pytest.mark.parametrize("batch_size", (0, 1, 3))
+@pytest.mark.parametrize("batch_size", [0, 1, 3])
 def test_const_dataset__uniform_batch_data(dataset_type, batch_size):
     components = {ComponentType.node: 3, ComponentType.sym_load: 2, ComponentType.asym_load: 4}
     data = {
@@ -161,7 +161,7 @@ def test_const_dataset__mixed_batch_size(dataset_type):
         CConstDataset(data, dataset_type)
 
 
-@pytest.mark.parametrize("bad_indptr", (np.ndarray([0, 1]), np.ndarray([0, 3, 2]), np.ndarray([0, 1, 2, 3, 4])))
+@pytest.mark.parametrize("bad_indptr", [np.ndarray([0, 1]), np.ndarray([0, 3, 2]), np.ndarray([0, 1, 2, 3, 4])])
 def test_const_dataset__bad_sparse_data(dataset_type, bad_indptr):
     data = {
         ComponentType.node: {
