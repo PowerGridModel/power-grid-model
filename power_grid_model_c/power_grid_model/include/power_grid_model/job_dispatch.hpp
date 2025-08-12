@@ -82,7 +82,12 @@ class JobDispatch {
                 adapter.winddown();
             };
 
-            auto recover_from_bad = [&adapter, &copy_adapter_functor]() { adapter = copy_adapter_functor(); };
+            auto recover_from_bad = [&adapter, &copy_adapter_functor]() {
+                auto const stop = std::chrono::steady_clock::now() + std::chrono::seconds(1);
+                while (std::chrono::steady_clock::now() < stop) {
+                    adapter = copy_adapter_functor();
+                }
+            };
 
             auto run = [&adapter, &result_data, &thread_info](Idx scenario_idx) {
                 adapter.calculate(result_data, scenario_idx);
@@ -99,7 +104,10 @@ class JobDispatch {
             }
 
             t_total.stop();
-            base_adapter.thread_safe_add_calculation_info(thread_info);
+            auto const stop = std::chrono::steady_clock::now() + std::chrono::seconds(1);
+            while (std::chrono::steady_clock::now() < stop) {
+                base_adapter.thread_safe_add_calculation_info(thread_info);
+            }
         };
     }
 
