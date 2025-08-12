@@ -634,7 +634,7 @@ def test_validate_values__infinite_sigmas(sensor_type, parameter):
                 [[np.nan, 0.1, np.nan], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]],
             ],
             [InvalidIdError, NotUniqueError, PQSigmaPairError],
-            id="mixed nans for some sensor - asym_power_sensor"
+            id="mixed nans for some sensor - asym_power_sensor",
         ),
         pytest.param(
             ComponentType.asym_power_sensor,
@@ -644,31 +644,31 @@ def test_validate_values__infinite_sigmas(sensor_type, parameter):
                 [[np.inf, 0.1, np.inf], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]],
             ],
             [InvalidIdError, NotUniqueError],
-            id="mixed infs for some sensor - asym_power_sensor"
+            id="mixed infs for some sensor - asym_power_sensor",
         ),
         pytest.param(
             ComponentType.asym_power_sensor,
             [[], [[0.1, np.nan, np.nan]] * 3, [[np.nan, np.nan, np.nan]] * 3],
             [InvalidIdError, NotUniqueError, PQSigmaPairError],
-            id="all nan except one phase p_sigma - asym_power_sensor"
+            id="all nan except one phase p_sigma - asym_power_sensor",
         ),
         pytest.param(
             ComponentType.asym_power_sensor,
             [[], [[0.1, np.inf, np.inf]] * 3, [[np.inf, np.inf, np.inf]] * 3],
             [InvalidIdError, NotUniqueError],
-            id="all inf except one phase p_sigma - asym_power_sensor"
+            id="all inf except one phase p_sigma - asym_power_sensor",
         ),
         pytest.param(
             ComponentType.asym_power_sensor,
             [[], [[np.nan, np.nan, np.nan]] * 3, [[0.1, np.nan, np.nan]] * 3],
             [InvalidIdError, NotUniqueError, PQSigmaPairError],
-            id="all nan except one phase q_sigma - asym_power_sensor"
+            id="all nan except one phase q_sigma - asym_power_sensor",
         ),
         pytest.param(
             ComponentType.asym_power_sensor,
             [[], [[np.inf, np.inf, np.inf]] * 3, [[0.1, np.inf, np.inf]] * 3],
             [InvalidIdError, NotUniqueError],
-            id="all inf except one phase q_sigma - asym_power_sensor"
+            id="all inf except one phase q_sigma - asym_power_sensor",
         ),
         pytest.param(
             ComponentType.asym_power_sensor,
@@ -678,7 +678,7 @@ def test_validate_values__infinite_sigmas(sensor_type, parameter):
                 [[np.nan, np.nan, 0.1], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]],
             ],
             [InvalidIdError, NotUniqueError, PQSigmaPairError],
-            id="one sensor mixed nans - asym_power_sensor"
+            id="one sensor mixed nans - asym_power_sensor",
         ),
         pytest.param(
             ComponentType.asym_power_sensor,
@@ -688,7 +688,7 @@ def test_validate_values__infinite_sigmas(sensor_type, parameter):
                 [[np.inf, np.inf, 0.1], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]],
             ],
             [InvalidIdError, NotUniqueError],
-            id="one sensor mixed infs - asym_power_sensor"
+            id="one sensor mixed infs - asym_power_sensor",
         ),
         pytest.param(
             ComponentType.asym_power_sensor,
@@ -698,7 +698,7 @@ def test_validate_values__infinite_sigmas(sensor_type, parameter):
                 [[np.nan, np.nan, np.nan], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]],
             ],
             [InvalidIdError, NotUniqueError, PQSigmaPairError],
-            id="q_sigma of one sensor nan - asym_power_sensor"
+            id="q_sigma of one sensor nan - asym_power_sensor",
         ),
         pytest.param(
             ComponentType.asym_power_sensor,
@@ -708,7 +708,7 @@ def test_validate_values__infinite_sigmas(sensor_type, parameter):
                 [[np.inf, np.inf, np.inf], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]],
             ],
             [InvalidIdError, NotUniqueError],
-            id="q_sigma of one sensor inf - asym_power_sensor"
+            id="q_sigma of one sensor inf - asym_power_sensor",
         ),
         pytest.param(
             ComponentType.asym_power_sensor,
@@ -718,7 +718,7 @@ def test_validate_values__infinite_sigmas(sensor_type, parameter):
                 [[0.1, 0.1, 0.1], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]],
             ],
             [InvalidIdError, NotUniqueError, PQSigmaPairError],
-            id="p_sigma of one sensor nan - asym_power_sensor"
+            id="p_sigma of one sensor nan - asym_power_sensor",
         ),
         pytest.param(
             ComponentType.asym_power_sensor,
@@ -728,7 +728,7 @@ def test_validate_values__infinite_sigmas(sensor_type, parameter):
                 [[0.1, 0.1, 0.1], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]],
             ],
             [InvalidIdError, NotUniqueError],
-            id="p_sigma of one sensor inf - asym_power_sensor"
+            id="p_sigma of one sensor inf - asym_power_sensor",
         ),
         pytest.param(
             ComponentType.asym_power_sensor,
@@ -738,7 +738,7 @@ def test_validate_values__infinite_sigmas(sensor_type, parameter):
                 [[0.1, np.nan, np.nan], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]],
             ],
             [InvalidIdError, NotUniqueError, PQSigmaPairError],
-            id="all nan except one attribute for one phase for one sensor - asym_power_sensor"
+            id="all nan except one attribute for one phase for one sensor - asym_power_sensor",
         ),
         pytest.param(
             ComponentType.asym_power_sensor,
@@ -748,7 +748,7 @@ def test_validate_values__infinite_sigmas(sensor_type, parameter):
                 [[0.1, np.inf, np.inf], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]],
             ],
             [InvalidIdError, NotUniqueError],
-            id="all inf except one attribute for one phase for one sensor - asym_power_sensor"
+            id="all inf except one attribute for one phase for one sensor - asym_power_sensor",
         ),
         pytest.param(
             ComponentType.asym_power_sensor,
@@ -758,7 +758,7 @@ def test_validate_values__infinite_sigmas(sensor_type, parameter):
                 [[0.1, np.nan, np.nan], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]],
             ],
             [InvalidIdError, NotUniqueError, PQSigmaPairError],
-            id="all nan except one phase for one sensor - asym_power_sensor"
+            id="all nan except one phase for one sensor - asym_power_sensor",
         ),
         pytest.param(
             ComponentType.asym_power_sensor,
@@ -768,7 +768,7 @@ def test_validate_values__infinite_sigmas(sensor_type, parameter):
                 [[0.1, np.inf, np.inf], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]],
             ],
             [InvalidIdError, NotUniqueError],
-            id="all inf except one phase for one sensor - asym_power_sensor"
+            id="all inf except one phase for one sensor - asym_power_sensor",
         ),
         pytest.param(
             ComponentType.asym_power_sensor,
