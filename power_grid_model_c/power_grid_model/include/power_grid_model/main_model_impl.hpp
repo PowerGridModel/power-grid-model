@@ -32,7 +32,7 @@
 
 // main model implementation
 #include "main_core/calculation_info.hpp"
-#include "main_core/calculation_preparation.hpp"
+#include "main_core/calculation_input_preparation.hpp"
 #include "main_core/core_utils.hpp"
 #include "main_core/input.hpp"
 #include "main_core/math_state.hpp"
