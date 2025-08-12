@@ -4,12 +4,11 @@
 
 #pragma once
 
-#include "job_dispatch_interface.hpp"
+#include "job_interface.hpp"
 
 #include "main_core/calculation_info.hpp"
 #include "main_core/update.hpp"
 
-#include <mutex>
 #include <thread>
 
 namespace power_grid_model {
@@ -67,32 +66,37 @@ class JobDispatch {
 
             CalculationInfo thread_info;
 
-            Timer t_total(thread_info, 1000, "Total batch calculation in thread");
+            Timer t_total(thread_info, 0200, "Total batch calculation in thread");
 
-            auto const copy_adapter_functor = [&base_adapter, &thread_info](Idx /*scenario_idx*/) {
+            auto const copy_adapter_functor = [&base_adapter, &thread_info]() {
                 Timer const t_copy_adapter_functor(thread_info, 1100, "Copy model");
                 return Adapter{base_adapter};
             };
 
-            auto adapter = copy_adapter_functor(start);
+            auto adapter = copy_adapter_functor();
 
             auto setup = [&adapter, &update_data, &thread_info](Idx scenario_idx) {
                 Timer const t_update_model(thread_info, 1200, "Update model");
                 adapter.setup(update_data, scenario_idx);
             };
 
-            auto winddown = [&adapter, &thread_info](Idx /*scenario_idx*/) {
-                Timer const t_update_model(thread_info, 1201, "Restore model");
+            auto winddown = [&adapter, &thread_info]() {
+                Timer const t_restore_model(thread_info, 1201, "Restore model");
                 adapter.winddown();
             };
 
+            auto recover_from_bad = [&adapter, &copy_adapter_functor, &thread_info]() {
+                main_core::merge_into(thread_info, adapter.get_calculation_info());
+                adapter = copy_adapter_functor();
+            };
+
+            auto run = [&adapter, &calculation_fn_, &result_data](Idx scenario_idx) {
+                adapter.calculate(calculation_fn_, result_data, scenario_idx);
+            };
+
             auto calculate_scenario = JobDispatch::call_with<Idx>(
-                [&adapter, &calculation_fn_, &result_data, &thread_info](Idx scenario_idx) {
-                    adapter.calculate(calculation_fn_, result_data, scenario_idx);
-                    main_core::merge_into(thread_info, adapter.get_calculation_info());
-                },
-                std::move(setup), std::move(winddown), scenario_exception_handler(adapter, exceptions, thread_info),
-                [&adapter, &copy_adapter_functor](Idx scenario_idx) { adapter = copy_adapter_functor(scenario_idx); });
+                std::move(run), std::move(setup), std::move(winddown),
+                scenario_exception_handler(adapter, exceptions, thread_info), std::move(recover_from_bad));
 
             for (Idx scenario_idx = start; scenario_idx < n_scenarios; scenario_idx += stride) {
                 Timer const t_total_single(thread_info, 0100, "Total single calculation in thread");
@@ -100,6 +104,7 @@ class JobDispatch {
             }
 
             t_total.stop();
+            main_core::merge_into(thread_info, adapter.get_calculation_info());
             base_adapter.thread_safe_add_calculation_info(thread_info);
         };
     }
@@ -142,9 +147,9 @@ class JobDispatch {
               typename RecoverFromBadFn>
         requires std::invocable<std::remove_cvref_t<RunFn>, Args const&...> &&
                  std::invocable<std::remove_cvref_t<SetupFn>, Args const&...> &&
-                 std::invocable<std::remove_cvref_t<WinddownFn>, Args const&...> &&
+                 std::invocable<std::remove_cvref_t<WinddownFn>> &&
                  std::invocable<std::remove_cvref_t<HandleExceptionFn>, Args const&...> &&
-                 std::invocable<std::remove_cvref_t<RecoverFromBadFn>, Args const&...>
+                 std::invocable<std::remove_cvref_t<RecoverFromBadFn>>
     static auto call_with(RunFn run, SetupFn setup, WinddownFn winddown, HandleExceptionFn handle_exception,
                           RecoverFromBadFn recover_from_bad) {
         return [setup_ = std::move(setup), run_ = std::move(run), winddown_ = std::move(winddown),
@@ -153,13 +158,13 @@ class JobDispatch {
             try {
                 setup_(args...);
                 run_(args...);
-                winddown_(args...);
+                winddown_();
             } catch (...) {
                 handle_exception_(args...);
                 try {
-                    winddown_(args...);
+                    winddown_();
                 } catch (...) {
-                    recover_from_bad_(args...);
+                    recover_from_bad_();
                 }
             }
         };
