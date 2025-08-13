@@ -69,7 +69,6 @@ class MainModel {
     Run the calculation function in batch on the provided update data.
 
     The calculation function should be able to run standalone.
-    It should output to the provided result_data if the trailing argument is not ignore_output.
 
     threading
         < 0 sequential

@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "batch_parameter.hpp"
 #include "job_interface.hpp"
 
 #include "main_core/calculation_info.hpp"
@@ -14,7 +15,6 @@ namespace power_grid_model {
 
 class JobDispatch {
   public:
-    static constexpr Idx ignore_output{-1};
     static constexpr Idx sequential{-1};
 
     // TODO(figueroa1395): add generic template parameters for update_data and result_data
@@ -80,12 +80,16 @@ class JobDispatch {
                 adapter.winddown();
             };
 
-            auto recover_from_bad = [&adapter, &copy_adapter_functor, &thread_info]() {
-                main_core::merge_into(thread_info, adapter.get_calculation_info());
+            auto recover_from_bad = [&adapter, &copy_adapter_functor]() {
+                // TODO(figueroa1395): Time this step
+                // how do we want to deal with exceptions and timing?
                 adapter = copy_adapter_functor();
             };
 
-            auto run = [&adapter, &result_data](Idx scenario_idx) { adapter.calculate(result_data, scenario_idx); };
+            auto run = [&adapter, &result_data, &thread_info](Idx scenario_idx) {
+                adapter.calculate(result_data, scenario_idx);
+                main_core::merge_into(thread_info, adapter.get_calculation_info());
+            };
 
             auto calculate_scenario = JobDispatch::call_with<Idx>(
                 std::move(run), std::move(setup), std::move(winddown),
@@ -97,7 +101,6 @@ class JobDispatch {
             }
 
             t_total.stop();
-            main_core::merge_into(thread_info, adapter.get_calculation_info());
             base_adapter.thread_safe_add_calculation_info(thread_info);
         };
     }

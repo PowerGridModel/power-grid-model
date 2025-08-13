@@ -67,8 +67,6 @@ class JobDispatchAdapter<MainModel, ComponentList<ComponentType...>>
     // to call derived-class implementation details as part of the CRTP pattern.
     friend class JobDispatchInterface<JobDispatchAdapter>;
 
-    static constexpr Idx ignore_output{-1};
-
     std::unique_ptr<MainModel> model_;
     std::reference_wrapper<MainModelOptions const> options_;
 
@@ -82,7 +80,7 @@ class JobDispatchAdapter<MainModel, ComponentList<ComponentType...>>
     std::mutex calculation_info_mutex_;
 
     void calculate_impl(MutableDataset const& result_data, Idx scenario_idx) const {
-        MainModel::calculator(options_.get(), *model_, result_data, scenario_idx);
+        MainModel::calculator(options_.get(), *model_, result_data.get_individual_scenario(scenario_idx), false);
     }
 
     void cache_calculate_impl() const {
@@ -95,7 +93,7 @@ class JobDispatchAdapter<MainModel, ComponentList<ComponentType...>>
                                       "sym_output",
                                       model_->meta_data(),
                                   },
-                                  ignore_output);
+                                  true);
         } catch (SparseMatrixError const&) { // NOLINT(bugprone-empty-catch) // NOSONAR
             // missing entries are provided in the update data
         } catch (NotObservableError const&) { // NOLINT(bugprone-empty-catch) // NOSONAR
