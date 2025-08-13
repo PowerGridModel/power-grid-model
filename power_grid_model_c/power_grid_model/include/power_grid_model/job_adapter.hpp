@@ -82,9 +82,9 @@ class JobDispatchAdapter<MainModel, ComponentList<ComponentType...>>
 
     // TODO(figueroa1395): Keep calculation_fn at the adapter level only
     template <typename Calculate>
-        requires std::invocable<std::remove_cvref_t<Calculate>, MainModel&, MutableDataset const&, Idx>
+        requires std::invocable<std::remove_cvref_t<Calculate>, MainModel&, MutableDataset const&, bool>
     void calculate_impl(Calculate&& calculation_fn, MutableDataset const& result_data, Idx scenario_idx) const {
-        std::forward<Calculate>(calculation_fn)(model_.get(), result_data, scenario_idx);
+        std::forward<Calculate>(calculation_fn)(model_.get(), result_data.get_individual_scenario(scenario_idx), false);
     }
 
     template <typename Calculate>
@@ -99,7 +99,7 @@ class JobDispatchAdapter<MainModel, ComponentList<ComponentType...>>
                                                         "sym_output",
                                                         model_.get().meta_data(),
                                                     },
-                                                    ignore_output);
+                                                    true);
         } catch (SparseMatrixError const&) { // NOLINT(bugprone-empty-catch) // NOSONAR
             // missing entries are provided in the update data
         } catch (NotObservableError const&) { // NOLINT(bugprone-empty-catch) // NOSONAR
