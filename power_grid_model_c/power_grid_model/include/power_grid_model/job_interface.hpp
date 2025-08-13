@@ -18,11 +18,15 @@ namespace power_grid_model {
 template <typename Adapter> class JobDispatchInterface {
   public:
     template <typename Calculate, typename ResultDataset>
-        requires requires(Adapter& adapter, Calculate&& calculation_fn, ResultDataset const& result_data, Idx pos) {
-            { adapter.calculate_impl(std::forward<Calculate>(calculation_fn), result_data, pos) } -> std::same_as<void>;
+        requires requires(Adapter& adapter, Calculate&& calculation_fn, ResultDataset const& result_data,
+                          Idx scenario_idx) {
+            {
+                adapter.calculate_impl(std::forward<Calculate>(calculation_fn), result_data, scenario_idx)
+            } -> std::same_as<void>;
         }
-    void calculate(Calculate&& calculation_fn, ResultDataset const& result_data, Idx pos = 0) {
-        return static_cast<Adapter*>(this)->calculate_impl(std::forward<Calculate>(calculation_fn), result_data, pos);
+    void calculate(Calculate&& calculation_fn, ResultDataset const& result_data, Idx scenario_idx = 0) {
+        return static_cast<Adapter*>(this)->calculate_impl(std::forward<Calculate>(calculation_fn), result_data,
+                                                           scenario_idx);
     }
 
     template <typename Calculate>
