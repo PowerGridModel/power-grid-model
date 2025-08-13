@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "batch_parameter.hpp"
 #include "job_interface.hpp"
 
 #include "main_core/calculation_info.hpp"
@@ -40,7 +41,7 @@ class JobDispatch {
         }
 
         // calculate once to cache, ignore results
-        adapter.cache_calculate(std::forward<Calculate>(calculation_fn));
+        adapter.cache_calculate(std::forward<Calculate>(calculation_fn)); // TODO(figueroa1395): Time this step
 
         // error messages
         std::vector<std::string> exceptions(n_scenarios, "");
@@ -85,13 +86,15 @@ class JobDispatch {
                 adapter.winddown();
             };
 
-            auto recover_from_bad = [&adapter, &copy_adapter_functor, &thread_info]() {
-                main_core::merge_into(thread_info, adapter.get_calculation_info());
+            auto recover_from_bad = [&adapter, &copy_adapter_functor]() {
+                // TODO(figueroa1395): Time this step
+                // how do we want to deal with exceptions and timing?
                 adapter = copy_adapter_functor();
             };
 
-            auto run = [&adapter, &calculation_fn_, &result_data](Idx scenario_idx) {
+            auto run = [&adapter, &calculation_fn_, &result_data, &thread_info](Idx scenario_idx) {
                 adapter.calculate(calculation_fn_, result_data, scenario_idx);
+                main_core::merge_into(thread_info, adapter.get_calculation_info());
             };
 
             auto calculate_scenario = JobDispatch::call_with<Idx>(
@@ -104,7 +107,6 @@ class JobDispatch {
             }
 
             t_total.stop();
-            main_core::merge_into(thread_info, adapter.get_calculation_info());
             base_adapter.thread_safe_add_calculation_info(thread_info);
         };
     }
