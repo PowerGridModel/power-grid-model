@@ -130,7 +130,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     using SequenceIdxView = std::array<std::span<Idx2D const>, main_core::utils::n_types<ComponentType...>>;
     using OwnedUpdateDataset = std::tuple<std::vector<typename ComponentType::UpdateType>...>;
 
-    static constexpr Idx ignore_output{JobDispatch::ignore_output};
     static constexpr Idx isolated_component{main_core::isolated_component};
     static constexpr Idx not_connected{main_core::not_connected};
     static constexpr Idx sequential{JobDispatch::sequential};
@@ -523,7 +522,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // Single calculation, propagating the results to result_data
-    void calculate(Options options, MutableDataset const& result_data, Idx pos = 0) {
+    void calculate(Options options, MutableDataset const& result_data) {
         assert(construction_complete_);
 
         if (options.calculation_type == CalculationType::short_circuit) {
@@ -537,24 +536,21 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         calculation_type_symmetry_func_selector(
             options.calculation_type, options.calculation_symmetry,
             []<calculation_type_tag calculation_type, symmetry_tag sym>(
-                MainModelImpl& main_model_, Options const& options_, MutableDataset const& result_data_, Idx pos_) {
+                MainModelImpl& main_model_, Options const& options_, MutableDataset const& result_data_) {
                 auto const math_output = main_model_.calculate<calculation_type, sym>(options_);
-
-                if (pos_ != ignore_output) {
-                    main_model_.output_result(math_output, result_data_, pos_);
-                }
+                main_model_.output_result(math_output, result_data_);
             },
-            *this, options, result_data, pos);
+            *this, options, result_data);
     }
 
   public:
     static auto calculator(Options const& options) {
-        return [options](MainModelImpl& model, MutableDataset const& target_data, Idx pos) {
+        return [options](MainModelImpl& model, MutableDataset const& target_data, bool cache_run) {
             auto sub_opt = options; // copy
-            sub_opt.err_tol = pos != ignore_output ? options.err_tol : std::numeric_limits<double>::max();
-            sub_opt.max_iter = pos != ignore_output ? options.max_iter : 1;
+            sub_opt.err_tol = cache_run ? std::numeric_limits<double>::max() : options.err_tol;
+            sub_opt.max_iter = cache_run ? 1 : options.max_iter;
 
-            model.calculate(sub_opt, target_data, pos);
+            model.calculate(sub_opt, target_data);
         };
     }
 
@@ -576,31 +572,26 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     void check_no_experimental_features_used(Options const& /*options*/) const {}
 
   private:
-    template <typename Component, typename MathOutputType, typename ResIt>
-        requires solver_output_type<typename MathOutputType::SolverOutputType::value_type>
-    ResIt output_result(MathOutputType const& math_output, ResIt res_it) const {
-        assert(construction_complete_);
-        return main_core::output_result<Component, ComponentContainer>(state_, math_output, res_it);
-    }
-
     template <solver_output_type SolverOutputType>
-    void output_result(MathOutput<std::vector<SolverOutputType>> const& math_output, MutableDataset const& result_data,
-                       Idx pos = 0) const {
-        auto const output_func = [this, &math_output, &result_data, pos]<typename CT>() {
+    void output_result(MathOutput<std::vector<SolverOutputType>> const& math_output,
+                       MutableDataset const& result_data) const {
+        assert(!result_data.is_batch());
+
+        auto const output_func = [this, &math_output, &result_data]<typename CT>() {
             auto process_output_span = [this, &math_output](auto const& span) {
                 if (std::empty(span)) {
                     return;
                 }
-                this->output_result<CT>(math_output, std::begin(span));
+                main_core::output_result<CT>(state_, math_output, span);
             };
 
             if (result_data.is_columnar(CT::name)) {
                 auto const span =
-                    result_data.get_columnar_buffer_span<typename output_type_getter<SolverOutputType>::type, CT>(pos);
+                    result_data.get_columnar_buffer_span<typename output_type_getter<SolverOutputType>::type, CT>();
                 process_output_span(span);
             } else {
                 auto const span =
-                    result_data.get_buffer_span<typename output_type_getter<SolverOutputType>::type, CT>(pos);
+                    result_data.get_buffer_span<typename output_type_getter<SolverOutputType>::type, CT>();
                 process_output_span(span);
             }
         };
