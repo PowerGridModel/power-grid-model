@@ -5,6 +5,7 @@
 #include <power_grid_model/batch_parameter.hpp>
 #include <power_grid_model/common/calculation_info.hpp>
 #include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/job_dispatch.hpp>
 #include <power_grid_model/job_interface.hpp>
 
@@ -107,6 +108,18 @@ TEST_CASE("Test job dispatch logic") {
             CHECK(info.at("default") == 0.0);
         }
     }
-    SUBCASE("handle_batch_exceptions") {}
+    SUBCASE("handle_batch_exceptions") {
+        SUBCASE("No exceptions") {
+            std::vector<std::string> const empty_exceptions{};
+            CHECK_NOTHROW(JobDispatch::handle_batch_exceptions(empty_exceptions));
+        }
+        SUBCASE("With exceptions") {
+            Idx n_scenarios = 5; // arbitrary non-zero value
+            std::vector<std::string> exceptions(n_scenarios, "");
+            exceptions[0] = "Error in scenario 0";
+            exceptions[3] = "Error in scenario 3";
+            CHECK_THROWS_AS(JobDispatch::handle_batch_exceptions(exceptions), BatchCalculationError);
+        }
+    }
 }
 } // namespace power_grid_model
