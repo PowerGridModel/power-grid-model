@@ -38,7 +38,7 @@ class JobAdapterMock : public JobInterface<JobAdapterMock> {
     void prepare_job_dispatch_impl(MockUpdateDataset const& /*update_data*/) {}
     void setup_impl(MockUpdateDataset const& /*update_data*/, Idx /*scenario_idx*/) {}
     void winddown_impl() {}
-    CalculationInfo get_calculation_info_impl() const { return CalculationInfo{}; }
+    CalculationInfo get_calculation_info_impl() const { return CalculationInfo{{"default", 0.0}}; }
     void thread_safe_add_calculation_info_impl(CalculationInfo const& /*info*/) {}
     auto get_current_scenario_sequence_view_() const {}
 };
@@ -55,7 +55,7 @@ TEST_CASE("Test job dispatch logic") {
         auto const expected_result = BatchParameter{};
         SUBCASE("No update data") {
             has_data = false;
-            n_scenarios = 999; // arbitrary non-zero value
+            n_scenarios = 9; // arbitrary non-zero value
             auto const update_data = MockUpdateDataset(has_data, n_scenarios);
             auto const actual_result = JobDispatch::batch_calculation(adapter, result_data, update_data);
             CHECK(expected_result == actual_result);
@@ -69,7 +69,7 @@ TEST_CASE("Test job dispatch logic") {
         }
         SUBCASE("With scenarios and update data") {
             has_data = true;
-            n_scenarios = 999; // arbitrary non-zero value
+            n_scenarios = 7; // arbitrary non-zero value
             auto const update_data = MockUpdateDataset(has_data, n_scenarios);
             auto const actual_result = JobDispatch::batch_calculation(adapter, result_data, update_data);
             CHECK(expected_result == actual_result);
@@ -79,7 +79,34 @@ TEST_CASE("Test job dispatch logic") {
     SUBCASE("job_dispatch") {}
     SUBCASE("n_threads") {}
     SUBCASE("call_with") {}
-    SUBCASE("scenario_exception_handler") {}
+    SUBCASE("scenario_exception_handler") {
+        auto adapter = JobAdapterMock{};
+        n_scenarios = 11; // arbitrary non-zero value
+        auto messages = std::vector<std::string>(n_scenarios, "");
+        auto info = CalculationInfo{};
+        auto handler = JobDispatch::scenario_exception_handler(adapter, messages, info);
+        SUBCASE("Known exception") {
+            std::string const expected_message = "Test exception";
+            Idx const scenario_idx = 7; // arbitrary index
+            try {
+                throw std::runtime_error(expected_message);
+            } catch (...) {
+                handler(scenario_idx);
+            }
+            CHECK(messages[scenario_idx] == expected_message);
+            CHECK(info.at("default") == 0.0);
+        }
+        SUBCASE("Unknown exception") {
+            Idx const scenario_idx = 3; // arbitrary index
+            try {
+                throw 4; // arbitrary non-exception type
+            } catch (...) {
+                handler(scenario_idx); // simulate handling for scenario index 0
+            }
+            CHECK(messages[scenario_idx] == "unknown exception");
+            CHECK(info.at("default") == 0.0);
+        }
+    }
     SUBCASE("handle_batch_exceptions") {}
 }
 } // namespace power_grid_model
