@@ -69,7 +69,6 @@ class MainModel {
     Run the calculation function in batch on the provided update data.
 
     The calculation function should be able to run standalone.
-    It should output to the provided result_data if the trailing argument is not ignore_output.
 
     threading
         < 0 sequential
@@ -79,9 +78,8 @@ class MainModel {
     */
     BatchParameter calculate(Options const& options, MutableDataset const& result_data,
                              ConstDataset const& update_data) {
-        JobDispatchAdapter<Impl, AllComponents> adapter{std::ref(impl())};
-        return JobDispatch::batch_calculation(adapter, Impl::calculator(options), result_data, update_data,
-                                              options.threading);
+        JobDispatchAdapter<Impl, AllComponents> adapter{std::ref(impl()), std::ref(options)};
+        return JobDispatch::batch_calculation(adapter, result_data, update_data, options.threading);
     }
 
     CalculationInfo calculation_info() const { return impl().calculation_info(); }

@@ -17,41 +17,63 @@
 namespace power_grid_model {
 template <typename Adapter> class JobDispatchInterface {
   public:
-    template <typename Calculate, typename ResultDataset>
-        requires requires(Adapter& adapter, Calculate&& calculation_fn, ResultDataset const& result_data,
-                          Idx scenario_idx) {
-            {
-                adapter.calculate_impl(std::forward<Calculate>(calculation_fn), result_data, scenario_idx)
-            } -> std::same_as<void>;
+    // the multiple  NOSONARs are used to avoid the complaints about the unnamed concepts
+    template <typename ResultDataset>
+    void calculate(ResultDataset const& result_data, Idx pos = 0)
+        requires requires(Adapter& adapter) { // NOSONAR
+            { adapter.calculate_impl(result_data, pos) } -> std::same_as<void>;
         }
-    void calculate(Calculate&& calculation_fn, ResultDataset const& result_data, Idx scenario_idx = 0) {
-        return static_cast<Adapter*>(this)->calculate_impl(std::forward<Calculate>(calculation_fn), result_data,
-                                                           scenario_idx);
+    {
+        return static_cast<Adapter*>(this)->calculate_impl(result_data, pos);
     }
 
-    template <typename Calculate>
-        requires requires(Adapter& adapter, Calculate&& calculation_fn) {
-            { adapter.cache_calculate_impl(std::forward<Calculate>(calculation_fn)) } -> std::same_as<void>;
+    void cache_calculate()
+        requires requires(Adapter& adapter) { // NOSONAR
+            { adapter.cache_calculate_impl() } -> std::same_as<void>;
         }
-    void cache_calculate(Calculate&& calculation_fn) {
-        return static_cast<Adapter*>(this)->cache_calculate_impl(std::forward<Calculate>(calculation_fn));
+    {
+        return static_cast<Adapter*>(this)->cache_calculate_impl();
     }
 
-    template <typename UpdateDataset> void prepare_job_dispatch(UpdateDataset const& update_data) {
+    template <typename UpdateDataset>
+    void prepare_job_dispatch(UpdateDataset const& update_data)
+        requires requires(Adapter& adapter) { // NOSONAR
+            { adapter.prepare_job_dispatch_impl(update_data) } -> std::same_as<void>;
+        }
+    {
         return static_cast<Adapter*>(this)->prepare_job_dispatch_impl(update_data);
     }
 
-    template <typename UpdateDataset> void setup(UpdateDataset const& update_data, Idx scenario_idx) {
+    template <typename UpdateDataset>
+    void setup(UpdateDataset const& update_data, Idx scenario_idx)
+        requires requires(Adapter& adapter) { // NOSONAR
+            { adapter.setup_impl(update_data, scenario_idx) } -> std::same_as<void>;
+        }
+    {
         return static_cast<Adapter*>(this)->setup_impl(update_data, scenario_idx);
     }
 
-    void winddown() { return static_cast<Adapter*>(this)->winddown_impl(); }
+    void winddown()
+        requires requires(Adapter& adapter) { // NOSONAR
+            { adapter.winddown_impl() } -> std::same_as<void>;
+        }
+    {
+        return static_cast<Adapter*>(this)->winddown_impl();
+    }
 
-    CalculationInfo get_calculation_info() const {
+    CalculationInfo get_calculation_info() const
+        requires requires(Adapter& adapter) { // NOSONAR
+            { adapter.get_calculation_info_impl() } -> std::same_as<CalculationInfo>;
+        }
+    {
         return static_cast<const Adapter*>(this)->get_calculation_info_impl();
     }
 
-    void thread_safe_add_calculation_info(CalculationInfo const& info) {
+    void thread_safe_add_calculation_info(CalculationInfo const& info)
+        requires requires(Adapter& adapter) { // NOSONAR
+            { adapter.thread_safe_add_calculation_info_impl(info) } -> std::same_as<void>;
+        }
+    {
         static_cast<Adapter*>(this)->thread_safe_add_calculation_info_impl(info);
     }
 

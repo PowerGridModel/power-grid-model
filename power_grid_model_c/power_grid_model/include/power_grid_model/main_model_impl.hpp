@@ -544,14 +544,13 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
   public:
-    static auto calculator(Options const& options) {
-        return [options](MainModelImpl& model, MutableDataset const& target_data, bool cache_run) {
-            auto sub_opt = options; // copy
-            sub_opt.err_tol = cache_run ? std::numeric_limits<double>::max() : options.err_tol;
-            sub_opt.max_iter = cache_run ? 1 : options.max_iter;
+    static auto calculator(Options const& options, MainModelImpl& model, MutableDataset const& target_data,
+                           bool cache_run) {
+        auto sub_opt = options; // copy
+        sub_opt.err_tol = cache_run ? std::numeric_limits<double>::max() : options.err_tol;
+        sub_opt.max_iter = cache_run ? 1 : options.max_iter;
 
-            model.calculate(sub_opt, target_data);
-        };
+        model.calculate(sub_opt, target_data);
     }
 
     CalculationInfo calculation_info() const { return calculation_info_; }
