@@ -79,7 +79,58 @@ TEST_CASE("Test job dispatch logic") {
     SUBCASE("single_thread_job") {}
     SUBCASE("job_dispatch") {}
     SUBCASE("n_threads") {}
-    SUBCASE("call_with") {}
+    SUBCASE("call_with") {
+        auto setup_called = 0;
+        auto run_called = 0;
+        auto winddown_called = 0;
+        auto handle_exception_called = 0;
+        auto recover_from_bad_called = 0;
+
+        auto setup_fn = [&setup_called](int) { setup_called++; };
+        auto run_fn_no_throw = [&run_called](int) { run_called++; };
+        auto run_fn_throw = [&run_called](int) {
+            run_called++;
+            throw std::runtime_error("Run error");
+        };
+        auto winddown_fn_no_throw = [&winddown_called]() { winddown_called++; };
+        auto winddown_fn_throw = [&winddown_called]() {
+            winddown_called++;
+            throw std::runtime_error("Winddown error");
+        };
+        auto handle_exception_fn = [&handle_exception_called](int) { handle_exception_called++; };
+        auto recover_from_bad_fn = [&recover_from_bad_called]() { recover_from_bad_called++; };
+
+        SUBCASE("No exceptions") {
+            auto call_with = JobDispatch::call_with<int>(run_fn_no_throw, setup_fn, winddown_fn_no_throw,
+                                                         handle_exception_fn, recover_from_bad_fn);
+            call_with(1);
+            CHECK(setup_called == 1);
+            CHECK(run_called == 1);
+            CHECK(winddown_called == 1);
+            CHECK(handle_exception_called == 0);
+            CHECK(recover_from_bad_called == 0);
+        }
+        SUBCASE("With run exception") {
+            auto call_with = JobDispatch::call_with<int>(run_fn_throw, setup_fn, winddown_fn_no_throw,
+                                                         handle_exception_fn, recover_from_bad_fn);
+            call_with(2);
+            CHECK(setup_called == 1);
+            CHECK(run_called == 1);
+            CHECK(winddown_called == 1);
+            CHECK(handle_exception_called == 1);
+            CHECK(recover_from_bad_called == 0);
+        }
+        SUBCASE("With winddown exception") {
+            auto call_with = JobDispatch::call_with<int>(run_fn_no_throw, setup_fn, winddown_fn_throw,
+                                                         handle_exception_fn, recover_from_bad_fn);
+            call_with(3);
+            CHECK(setup_called == 1);
+            CHECK(run_called == 1);
+            CHECK(winddown_called == 2);
+            CHECK(handle_exception_called == 1);
+            CHECK(recover_from_bad_called == 1);
+        }
+    }
     SUBCASE("scenario_exception_handler") {
         auto adapter = JobAdapterMock{};
         n_scenarios = 11; // arbitrary non-zero value
