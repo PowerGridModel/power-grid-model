@@ -53,7 +53,6 @@ class JobDispatch {
         return BatchParameter{};
     }
 
-  private:
     template <typename Adapter, typename ResultDataset, typename UpdateDataset>
     static auto single_thread_job(Adapter& base_adapter, ResultDataset const& result_data,
                                   UpdateDataset const& update_data, std::vector<std::string>& exceptions) {
