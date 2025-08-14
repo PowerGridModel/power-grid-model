@@ -5,6 +5,8 @@
 #pragma once
 
 #include "batch_parameter.hpp"
+#include "common/exception.hpp"
+#include "common/typing.hpp"
 #include "job_interface.hpp"
 
 #include "main_core/calculation_info.hpp"
@@ -17,7 +19,6 @@ class JobDispatch {
   public:
     static constexpr Idx sequential{-1};
 
-    // TODO(figueroa1395): add generic template parameters for update_data and result_data
     template <typename Adapter, typename ResultDataset, typename UpdateDataset>
         requires std::is_base_of_v<JobInterface<Adapter>, Adapter>
     static BatchParameter batch_calculation(Adapter& adapter, ResultDataset const& result_data,
@@ -58,7 +59,6 @@ class JobDispatch {
                                   UpdateDataset const& update_data, std::vector<std::string>& exceptions) {
         return [&base_adapter, &exceptions, &result_data, &update_data](Idx start, Idx stride, Idx n_scenarios) {
             assert(n_scenarios <= narrow_cast<Idx>(exceptions.size()));
-
             CalculationInfo thread_info;
 
             Timer t_total(thread_info, 0200, "Total batch calculation in thread");

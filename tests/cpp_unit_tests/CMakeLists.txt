@@ -124,6 +124,7 @@ add_executable(power_grid_model_unit_tests
     "test_sparse_ordering.cpp"
     "test_container.cpp"
     "test_index_mapping.cpp"
+    "test_job_dispatch.cpp"
 )
 
 target_link_libraries(power_grid_model_unit_tests
