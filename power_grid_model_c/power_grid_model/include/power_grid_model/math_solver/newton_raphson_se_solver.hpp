@@ -197,8 +197,7 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
         sub_timer.stop();
         main_timer.stop();
 
-        auto const key = Timer::make_key(2228, "Max number of iterations");
-        calculation_info[key] = std::max(calculation_info[key], static_cast<double>(num_iter));
+        calculation_info.log(LoggingTag::nrse_max_num_iter, num_iter);
 
         return output;
     }

@@ -4,11 +4,10 @@
 
 #pragma once
 
-#include "calculation_info.hpp"
+#include "calculation_info.hpp" // TODO(mgovers): remove this dependency from Timer
 #include "common.hpp"
 
 #include <chrono>
-#include <iomanip>
 #include <sstream>
 
 namespace power_grid_model {
@@ -19,15 +18,15 @@ using Duration = std::chrono::duration<double>;
 class Timer {
   private:
     CalculationInfo* info_;
-    int code_;
-    std::string name_;
+    LoggingTag code_;
     Clock::time_point start_;
 
   public:
-    Timer() : info_(nullptr), code_{-1} {};
+    Timer() : info_(nullptr), code_{LoggingTag::unknown} {};
 
-    Timer(CalculationInfo& info, int code, std::string name)
-        : info_{&info}, code_{code}, name_{std::move(name)}, start_{Clock::now()} {}
+    explicit Timer(CalculationInfo& info, int code, std::string /*name*/) // TODO(mgovers): remove
+        : Timer(info, static_cast<LoggingTag>(code)) {}
+    Timer(CalculationInfo& info, LoggingTag code) : info_{&info}, code_{code}, start_{Clock::now()} {}
 
     Timer(Timer const&) = delete;
     Timer(Timer&&) = default;
@@ -40,7 +39,6 @@ class Timer {
         // Copy/move members
         info_ = timer.info_;
         code_ = timer.code_;
-        name_ = std::move(timer.name_);
         start_ = timer.start_;
 
         // Disable original timer
@@ -60,23 +58,9 @@ class Timer {
         if (info_ != nullptr) {
             auto const now = Clock::now();
             auto const duration = Duration(now - start_);
-            info_->operator[](Timer::make_key(code_, name_)) += (double)duration.count();
+            info_->log(code_, static_cast<double>(duration.count()));
             info_ = nullptr;
         }
-    }
-
-    static std::string make_key(int code, std::string_view name) {
-        std::stringstream ss;
-        ss << std::setw(4) << std::setfill('0') << code << ".";
-        auto key = ss.str();
-        for (size_t i = 0, n = key.length() - 1; i < n; ++i) {
-            if (key[i] == '0') {
-                break;
-            }
-            key += "\t";
-        }
-        key += name;
-        return key;
     }
 };
 
