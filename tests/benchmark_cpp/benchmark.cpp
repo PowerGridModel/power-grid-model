@@ -110,9 +110,9 @@ struct PowerGridBenchmark {
 
         {
             std::cout << "*****Run with initialization*****\n";
-            Timer const t_total(info, 0000, "Total");
+            Timer const t_total{info, LoggingTag::total};
             {
-                Timer const t_build(info, 1000, "Build model");
+                Timer const t_build{info, LoggingTag::build_model};
                 main_model = std::make_unique<MainModel>(50.0, input.get_dataset(), get_math_solver_dispatcher());
             }
             run(single_scenario);
@@ -121,7 +121,7 @@ struct PowerGridBenchmark {
         info.clear();
         {
             std::cout << "\n*****Run without initialization*****\n";
-            Timer const t_total(info, 0000, "Total");
+            Timer const t_total{info, LoggingTag::total};
             run(single_scenario);
         }
         print(info);
@@ -129,7 +129,7 @@ struct PowerGridBenchmark {
         if (batch_size > 0) {
             info.clear();
             std::cout << "\n*****Run with batch calculation*****\n";
-            Timer const t_total(info, 0000, "Total");
+            Timer const t_total{info, LoggingTag::total};
             run(batch_size);
         }
         print(info);

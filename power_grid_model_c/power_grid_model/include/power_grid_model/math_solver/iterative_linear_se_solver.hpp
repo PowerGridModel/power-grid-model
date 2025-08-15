@@ -93,22 +93,22 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
         output.bus_injection.resize(n_bus_);
         double max_dev = std::numeric_limits<double>::max();
 
-        main_timer = Timer(calculation_info, 2220, "Math solver");
+        main_timer = Timer{calculation_info, LoggingTag::math_solver};
 
         // preprocess measured value
-        sub_timer = Timer(calculation_info, 2221, "Pre-process measured value");
+        sub_timer = Timer{calculation_info, LoggingTag::preprocess_measured_value};
         MeasuredValues<sym> const measured_values{y_bus.shared_topology(), input};
         auto const observability_result =
             observability_check(measured_values, y_bus.math_topology(), y_bus.y_bus_structure());
 
         // prepare matrix
-        sub_timer = Timer(calculation_info, 2222, "Prepare matrix, including pre-factorization");
+        sub_timer = Timer{calculation_info, LoggingTag::prepare_matrix_including_prefactorization};
         prepare_matrix(y_bus, measured_values);
         // prefactorize
         sparse_solver_.prefactorize(data_gain_, perm_, observability_result.use_perturbation());
 
         // initialize voltage with initial angle
-        sub_timer = Timer(calculation_info, 2223, "Initialize voltages");
+        sub_timer = Timer{calculation_info, LoggingTag::initialize_voltages}; // TODO(mgovers): make scoped subtimers
         RealValue<sym> const mean_angle_shift = measured_values.mean_angle_shift();
         for (Idx bus = 0; bus != n_bus_; ++bus) {
             output.u[bus] = exp(1.0i * (mean_angle_shift + math_topo_->phase_shift[bus]));
@@ -120,24 +120,24 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
             if (num_iter++ == max_iter) {
                 throw IterationDiverge{max_iter, max_dev, err_tol};
             }
-            sub_timer = Timer(calculation_info, 2224, "Calculate rhs");
+            sub_timer = Timer{calculation_info, LoggingTag::calculate_rhs};
             prepare_rhs(y_bus, measured_values, output.u);
             // solve with prefactorization
-            sub_timer = Timer(calculation_info, 2225, "Solve sparse linear equation (pre-factorized)");
+            sub_timer = Timer{calculation_info, LoggingTag::solve_sparse_linear_equation_prefactorized};
             sparse_solver_.solve_with_prefactorized_matrix(data_gain_, perm_, x_rhs_, x_rhs_);
-            sub_timer = Timer(calculation_info, 2226, "Iterate unknown");
+            sub_timer = Timer{calculation_info, LoggingTag::iterate_unknown};
             max_dev = iterate_unknown(output.u, measured_values.has_angle());
         };
 
         // calculate math result
-        sub_timer = Timer(calculation_info, 2227, "Calculate math result");
+        sub_timer = Timer{calculation_info, LoggingTag::calculate_math_result};
         detail::calculate_se_result<sym>(y_bus, measured_values, output);
 
         // Manually stop timers to avoid "Max number of iterations" to be included in the timing.
         sub_timer.stop();
         main_timer.stop();
 
-        auto const key = Timer::make_key(LoggingTag::ilse_max_num_iter);
+        auto const key = Timer::make_key(LoggingTag::max_num_iter);
         calculation_info[key] = std::max(calculation_info[key], static_cast<double>(num_iter));
 
         return output;
