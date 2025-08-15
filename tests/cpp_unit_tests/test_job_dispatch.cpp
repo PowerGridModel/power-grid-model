@@ -11,7 +11,7 @@
 
 #include <doctest/doctest.h>
 
-#include <mutex>
+#include <atomic>
 namespace power_grid_model {
 namespace {
 struct MockUpdateDataset {
@@ -24,42 +24,53 @@ struct MockUpdateDataset {
 
 struct MockResultDataset {};
 
-// global counters for the mock calls
-// we only count the underlying calls, not the explicit ones
-Idx global_calculate_calls{};
-Idx global_cache_calculate_calls{};
-Idx global_setup_calls{};
-Idx global_winddown_calls{};
-Idx global_thread_safe_add_calculation_info_calls{};
+struct CallCounter {
+    std::atomic<Idx> calculate_calls{};
+    std::atomic<Idx> cache_calculate_calls{};
+    std::atomic<Idx> setup_calls{};
+    std::atomic<Idx> winddown_calls{};
+    std::atomic<Idx> thread_safe_add_calculation_info_calls{};
 
-void reset_global_counters() {
-    global_calculate_calls = 0;
-    global_cache_calculate_calls = 0;
-    global_setup_calls = 0;
-    global_winddown_calls = 0;
-    global_thread_safe_add_calculation_info_calls = 0;
-}
+    void reset_counters() {
+        calculate_calls = 0;
+        cache_calculate_calls = 0;
+        setup_calls = 0;
+        winddown_calls = 0;
+        thread_safe_add_calculation_info_calls = 0;
+    }
+};
 
 class JobAdapterMock : public JobInterface<JobAdapterMock> {
   public:
-    JobAdapterMock() = default;
+    JobAdapterMock(std::shared_ptr<CallCounter> counter) : counter_{std::move(counter)} {}
     JobAdapterMock(JobAdapterMock const&) = default;
     JobAdapterMock& operator=(JobAdapterMock const&) = default;
     JobAdapterMock(JobAdapterMock&&) noexcept = default;
     JobAdapterMock& operator=(JobAdapterMock&&) noexcept = default;
     ~JobAdapterMock() = default;
 
+    void reset_counters() { counter_->reset_counters(); }
+    Idx get_calculate_counter() const { return counter_->calculate_calls; }
+    Idx get_cache_calculate_counter() const { return counter_->cache_calculate_calls; }
+    Idx get_setup_counter() const { return counter_->setup_calls; }
+    Idx get_winddown_counter() const { return counter_->winddown_calls; }
+    Idx get_thread_safe_add_calculation_info_counter() const {
+        return counter_->thread_safe_add_calculation_info_calls;
+    }
+
   private:
     friend class JobInterface<JobAdapterMock>;
 
-    void calculate_impl(MockResultDataset const& /*result_data*/, Idx /*scenario_idx*/) { global_calculate_calls++; }
-    void cache_calculate_impl() { global_cache_calculate_calls++; }
+    std::shared_ptr<CallCounter> counter_;
+
+    void calculate_impl(MockResultDataset const& /*result_data*/, Idx /*scenario_idx*/) { counter_->calculate_calls++; }
+    void cache_calculate_impl() { counter_->cache_calculate_calls++; }
     void prepare_job_dispatch_impl(MockUpdateDataset const& /*update_data*/) {}
-    void setup_impl(MockUpdateDataset const& /*update_data*/, Idx /*scenario_idx*/) { global_setup_calls++; }
-    void winddown_impl() { global_winddown_calls++; }
+    void setup_impl(MockUpdateDataset const& /*update_data*/, Idx /*scenario_idx*/) { counter_->setup_calls++; }
+    void winddown_impl() { counter_->winddown_calls++; }
     CalculationInfo get_calculation_info_impl() const { return CalculationInfo{{"default", 0.0}}; }
     void thread_safe_add_calculation_info_impl(CalculationInfo const& /*info*/) {
-        global_thread_safe_add_calculation_info_calls++;
+        counter_->thread_safe_add_calculation_info_calls++;
     }
     auto get_current_scenario_sequence_view_() {}
 };
@@ -70,7 +81,8 @@ TEST_CASE("Test job dispatch logic") {
     std::vector<std::string> exceptions(n_scenarios, "");
 
     SUBCASE("Test batch_calculation") {
-        auto adapter = JobAdapterMock{};
+        auto counter = std::make_shared<CallCounter>();
+        auto adapter = JobAdapterMock{counter};
         auto result_data = MockResultDataset{};
         auto const expected_result = BatchParameter{};
         bool has_data{};
@@ -78,38 +90,39 @@ TEST_CASE("Test job dispatch logic") {
             has_data = false;
             n_scenarios = 9; // arbitrary non-zero value
             auto const update_data = MockUpdateDataset(has_data, n_scenarios);
-            reset_global_counters();
+            adapter.reset_counters();
             auto const actual_result = JobDispatch::batch_calculation(adapter, result_data, update_data);
             CHECK(expected_result == actual_result);
-            CHECK(global_calculate_calls == 1);
-            CHECK(global_cache_calculate_calls == 0); // no cache calculation in this case
+            CHECK(adapter.get_calculate_counter() == 1);
+            CHECK(adapter.get_cache_calculate_counter() == 0); // no cache calculation in this case
         }
         SUBCASE("No scenarios") {
             has_data = true;
             n_scenarios = 0;
             auto const update_data = MockUpdateDataset(has_data, n_scenarios);
-            reset_global_counters();
+            adapter.reset_counters();
             auto const actual_result = JobDispatch::batch_calculation(adapter, result_data, update_data);
             CHECK(expected_result == actual_result);
             // no calculations should be done
-            CHECK(global_calculate_calls == 0);
-            CHECK(global_cache_calculate_calls == 0);
+            CHECK(adapter.get_calculate_counter() == 0);
+            CHECK(adapter.get_cache_calculate_counter() == 0);
         }
         SUBCASE("With scenarios and update data") {
             has_data = true;
             n_scenarios = 7; // arbitrary non-zero value
             auto const update_data = MockUpdateDataset(has_data, n_scenarios);
-            reset_global_counters();
+            adapter.reset_counters();
             auto const actual_result =
                 JobDispatch::batch_calculation(adapter, result_data, update_data, JobDispatch::sequential);
             CHECK(expected_result == actual_result);
             // n_scenarios calculations should be done as we run sequentially
-            CHECK(global_calculate_calls == n_scenarios);
-            CHECK(global_cache_calculate_calls == 1); // cache calculation is done
+            CHECK(adapter.get_calculate_counter() == n_scenarios);
+            CHECK(adapter.get_cache_calculate_counter() == 1); // cache calculation is done
         }
     }
-    SUBCASE("single_thread_job") {
-        auto adapter = JobAdapterMock{};
+    SUBCASE("Test single_thread_job") {
+        auto counter = std::make_shared<CallCounter>();
+        auto adapter = JobAdapterMock{counter};
         auto result_data = MockResultDataset{};
         bool has_data{false};
         n_scenarios = 9; // arbitrary non-zero value
@@ -126,41 +139,41 @@ TEST_CASE("Test job dispatch logic") {
             return (n_scenarios - start + stride - 1) / stride;
         };
 
-        auto check_call_numbers = [](Idx expected_calls) {
-            CHECK(global_setup_calls == expected_calls);
-            CHECK(global_winddown_calls == expected_calls);
-            CHECK(global_calculate_calls == expected_calls);
-            CHECK(global_thread_safe_add_calculation_info_calls == 1); // always called once
+        auto check_call_numbers = [](JobAdapterMock& adapter, Idx expected_calls) {
+            CHECK(adapter.get_setup_counter() == expected_calls);
+            CHECK(adapter.get_winddown_counter() == expected_calls);
+            CHECK(adapter.get_calculate_counter() == expected_calls);
+            CHECK(adapter.get_thread_safe_add_calculation_info_counter() == 1); // always called once
         };
 
         adapter.prepare_job_dispatch(update_data); // replicate preparation step from batch_calculation
         auto single_job = JobDispatch::single_thread_job(adapter, result_data, update_data, exceptions);
 
-        reset_global_counters();
+        adapter.reset_counters();
         start = 0;
         stride = 1;
         call_number = get_call_number(start, stride, n_scenarios);
         CAPTURE(call_number);
         CHECK_NOTHROW(single_job(start, stride, n_scenarios));
-        check_call_numbers(call_number);
+        check_call_numbers(adapter, call_number);
 
-        reset_global_counters();
+        adapter.reset_counters();
         start = 0;
         stride = 4;
         call_number = get_call_number(start, stride, n_scenarios);
         CAPTURE(call_number);
         CHECK_NOTHROW(single_job(start, stride, n_scenarios));
-        check_call_numbers(call_number);
+        check_call_numbers(adapter, call_number);
 
-        reset_global_counters();
+        adapter.reset_counters();
         start = 3;
         stride = 2;
         call_number = get_call_number(start, stride, n_scenarios);
         CAPTURE(call_number);
         CHECK_NOTHROW(single_job(start, stride, n_scenarios));
-        check_call_numbers(call_number);
+        check_call_numbers(adapter, call_number);
     }
-    SUBCASE("job_dispatch") {
+    SUBCASE("Test job_dispatch") {
         Idx threading{};
         std::vector<Idx> calls;
         std::mutex calls_mutex;
@@ -195,7 +208,7 @@ TEST_CASE("Test job dispatch logic") {
             CHECK(calls.size() == n_scenarios);
         }
     }
-    SUBCASE("n_threads") {
+    SUBCASE("Test n_threads") {
         auto const hardware_thread = static_cast<Idx>(std::thread::hardware_concurrency());
         CAPTURE(hardware_thread);
         n_scenarios = 14; // arbitrary non-zero value
@@ -225,7 +238,7 @@ TEST_CASE("Test job dispatch logic") {
             CHECK(JobDispatch::n_threads(n_scenarios, threading) == n_scenarios);
         }
     }
-    SUBCASE("call_with") {
+    SUBCASE("Test call_with") {
         // These call counters are local as are unrelated to the adapter mock
         // and are only used to test the call_with functionality
         Idx setup_called{0};
@@ -279,8 +292,9 @@ TEST_CASE("Test job dispatch logic") {
             CHECK(recover_from_bad_called == 1);
         }
     }
-    SUBCASE("scenario_exception_handler") {
-        auto adapter = JobAdapterMock{};
+    SUBCASE("Test scenario_exception_handler") {
+        auto counter = std::make_shared<CallCounter>();
+        auto adapter = JobAdapterMock{counter};
         n_scenarios = 11; // arbitrary non-zero value
         auto messages = std::vector<std::string>(n_scenarios, "");
         auto info = CalculationInfo{};
@@ -307,7 +321,7 @@ TEST_CASE("Test job dispatch logic") {
             CHECK(info.at("default") == 0.0);
         }
     }
-    SUBCASE("handle_batch_exceptions") {
+    SUBCASE("Test handle_batch_exceptions") {
         n_scenarios = 5; // arbitrary non-zero value
         exceptions.resize(n_scenarios);
         SUBCASE("No exceptions") { CHECK_NOTHROW(JobDispatch::handle_batch_exceptions(exceptions)); }
