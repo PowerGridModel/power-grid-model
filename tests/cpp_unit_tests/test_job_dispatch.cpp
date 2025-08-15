@@ -10,6 +10,8 @@
 #include <power_grid_model/job_interface.hpp>
 
 #include <doctest/doctest.h>
+
+#include <mutex>
 namespace power_grid_model {
 namespace {
 struct MockUpdateDataset {
@@ -158,7 +160,41 @@ TEST_CASE("Test job dispatch logic") {
         CHECK_NOTHROW(single_job(start, stride, n_scenarios));
         check_call_numbers(call_number);
     }
-    SUBCASE("job_dispatch") {}
+    SUBCASE("job_dispatch") {
+        Idx threading{};
+        std::vector<Idx> calls;
+        std::mutex calls_mutex;
+        auto single_job = [&calls, &calls_mutex](Idx /*start*/, Idx /*stride*/, Idx /*n_scenarios*/) {
+            std::lock_guard<std::mutex> lock(calls_mutex);
+            calls.emplace_back(0);
+        };
+
+        SUBCASE("Sequential") {
+            n_scenarios = 10; // arbitrary non-zero value
+            threading = JobDispatch::sequential;
+            calls.clear();
+            JobDispatch::job_dispatch(single_job, n_scenarios, threading);
+            CHECK(calls.size() == 1);
+        }
+
+        SUBCASE("Multi-threaded") {
+            auto const hardware_thread = static_cast<Idx>(std::thread::hardware_concurrency());
+            n_scenarios = hardware_thread + 1; // larger than hardware threads
+            threading = 0;
+            calls.clear();
+            CAPTURE(hardware_thread);
+            CHECK(hardware_thread == JobDispatch::n_threads(n_scenarios, threading));
+            JobDispatch::job_dispatch(single_job, n_scenarios, threading);
+            CHECK(calls.size() == hardware_thread);
+
+            n_scenarios = hardware_thread - 1; // smaller than hardware threads
+            calls.clear();
+            CAPTURE(hardware_thread);
+            CHECK(n_scenarios == JobDispatch::n_threads(n_scenarios, threading));
+            JobDispatch::job_dispatch(single_job, n_scenarios, threading);
+            CHECK(calls.size() == n_scenarios);
+        }
+    }
     SUBCASE("n_threads") {
         auto const hardware_thread = static_cast<Idx>(std::thread::hardware_concurrency());
         CAPTURE(hardware_thread);
