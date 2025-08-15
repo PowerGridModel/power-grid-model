@@ -6,6 +6,7 @@
 
 #include "calculation_info.hpp" // TODO(mgovers): remove this dependency from Timer
 #include "common.hpp"
+#include "logging.hpp"
 
 #include <chrono>
 #include <sstream>
