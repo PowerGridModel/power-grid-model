@@ -197,8 +197,8 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
         sub_timer.stop();
         main_timer.stop();
 
-        auto const key = Timer::make_key(LoggingTag::max_num_iter);
-        calculation_info[key] = std::max(calculation_info[key], static_cast<double>(num_iter));
+        calculation_info[LoggingTag::max_num_iter] =
+            std::max(calculation_info[LoggingTag::max_num_iter], static_cast<double>(num_iter));
 
         return output;
     }

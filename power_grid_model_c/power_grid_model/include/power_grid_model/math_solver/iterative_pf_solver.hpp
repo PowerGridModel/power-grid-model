@@ -75,8 +75,8 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
         // Manually stop timers to avoid "Max number of iterations" to be included in the timing.
         main_timer.stop();
 
-        auto const key = Timer::make_key(LoggingTag::iterative_pf_solver_max_num_iter);
-        calculation_info[key] = std::max(calculation_info[key], static_cast<double>(num_iter));
+        calculation_info[LoggingTag::iterative_pf_solver_max_num_iter] =
+            std::max(calculation_info[LoggingTag::iterative_pf_solver_max_num_iter], static_cast<double>(num_iter));
 
         return output;
     }

@@ -60,23 +60,9 @@ class Timer {
         if (info_ != nullptr) {
             auto const now = Clock::now();
             auto const duration = Duration(now - start_);
-            info_->operator[](Timer::make_key(code_)) += (double)duration.count();
+            info_->operator[](code_) += (double)duration.count();
             info_ = nullptr;
         }
-    }
-
-    static std::string make_key(LoggingTag code) {
-        std::stringstream ss;
-        ss << std::setw(4) << std::setfill('0') << static_cast<std::underlying_type_t<LoggingTag>>(code) << ".";
-        auto key = ss.str();
-        for (size_t i = 0, n = key.length() - 1; i < n; ++i) {
-            if (key[i] == '0') {
-                break;
-            }
-            key += "\t";
-        }
-        key += common::logging::to_string(code);
-        return key;
     }
 };
 
