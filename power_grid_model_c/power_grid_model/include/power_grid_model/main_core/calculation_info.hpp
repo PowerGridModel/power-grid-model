@@ -11,7 +11,7 @@
 namespace power_grid_model::main_core {
 
 inline CalculationInfo& merge_into(CalculationInfo& destination, CalculationInfo const& source) {
-    static auto const key = Timer::make_key(2226, "Max number of iterations");
+    static auto const key = Timer::make_key(LoggingTag::iterative_pf_solver_max_num_iter);
     for (auto const& [k, v] : source) {
         if (k == key) {
             destination[k] = std::max(destination[k], v);
