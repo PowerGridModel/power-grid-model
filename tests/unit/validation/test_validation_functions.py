@@ -1380,7 +1380,7 @@ def test_all_default_values():
     three_winding_transformer["winding_2"] = [1]
     three_winding_transformer["winding_3"] = [1]
     three_winding_transformer["clock_12"] = [5]
-    three_winding_transformer["clock_13"] = [5]
+    three_winding_transformer["clock_13"] = [-7]  # supports periodic clock input
     three_winding_transformer["tap_side"] = [0]
     three_winding_transformer["tap_min"] = [-10]
     three_winding_transformer["tap_max"] = [10]

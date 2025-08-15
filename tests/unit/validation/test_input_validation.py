@@ -823,6 +823,10 @@ def test_validate_three_winding_transformer(input_data):
     assert NotLessThanError(ComponentType.three_winding_transformer, "i0", [28], 1) in validation_errors
     assert NotGreaterOrEqualError(ComponentType.three_winding_transformer, "p0", [1], 0) in validation_errors
     assert (
+        NotBetweenOrAtError(ComponentType.three_winding_transformer, "clock_13", [1, 28], (-12, 12))
+        in validation_errors
+    )
+    assert (
         NotBetweenOrAtError(ComponentType.three_winding_transformer, "tap_pos", [1, 28], ("tap_min", "tap_max"))
         in validation_errors
     )
