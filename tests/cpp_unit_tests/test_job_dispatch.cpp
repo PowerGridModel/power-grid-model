@@ -78,17 +78,46 @@ TEST_CASE("Test job dispatch logic") {
     }
     SUBCASE("single_thread_job") {}
     SUBCASE("job_dispatch") {}
-    SUBCASE("n_threads") {}
-    SUBCASE("call_with") {
-        auto setup_called = 0;
-        auto run_called = 0;
-        auto winddown_called = 0;
-        auto handle_exception_called = 0;
-        auto recover_from_bad_called = 0;
+    SUBCASE("n_threads") {
+        auto const hardware_thread = static_cast<Idx>(std::thread::hardware_concurrency());
+        CAPTURE(hardware_thread);
+        n_scenarios = 14; // arbitrary non-zero value
+        Idx threading{};
+        SUBCASE("Sequential threading") {
+            threading = JobDispatch::sequential;
+            CHECK(JobDispatch::n_threads(n_scenarios, threading) == 1);
 
-        auto setup_fn = [&setup_called](int) { setup_called++; };
-        auto run_fn_no_throw = [&run_called](int) { run_called++; };
-        auto run_fn_throw = [&run_called](int) {
+            threading = 1;
+            CHECK(JobDispatch::n_threads(n_scenarios, threading) == 1);
+
+            if (hardware_thread < 2) {
+                threading = 0;
+                CHECK(JobDispatch::n_threads(n_scenarios, threading) == 1);
+            }
+        }
+        SUBCASE("Parallel threading") {
+            if (hardware_thread >= 2) {
+                threading = 0; // use hardware threads
+                CHECK(JobDispatch::n_threads(n_scenarios, threading) == hardware_thread);
+
+                threading = n_scenarios - 1; // use specified threading
+                CHECK(JobDispatch::n_threads(n_scenarios, threading) == threading);
+
+                threading = n_scenarios + 1; // use n_scenarios as threading
+                CHECK(JobDispatch::n_threads(n_scenarios, threading) == n_scenarios);
+            }
+        }
+    }
+    SUBCASE("call_with") {
+        auto setup_called = Idx{0};
+        auto run_called = Idx{0};
+        auto winddown_called = Idx{0};
+        auto handle_exception_called = Idx{0};
+        auto recover_from_bad_called = Idx{0};
+
+        auto setup_fn = [&setup_called](Idx) { setup_called++; };
+        auto run_fn_no_throw = [&run_called](Idx) { run_called++; };
+        auto run_fn_throw = [&run_called](Idx) {
             run_called++;
             throw std::runtime_error("Run error");
         };
@@ -97,11 +126,11 @@ TEST_CASE("Test job dispatch logic") {
             winddown_called++;
             throw std::runtime_error("Winddown error");
         };
-        auto handle_exception_fn = [&handle_exception_called](int) { handle_exception_called++; };
+        auto handle_exception_fn = [&handle_exception_called](Idx) { handle_exception_called++; };
         auto recover_from_bad_fn = [&recover_from_bad_called]() { recover_from_bad_called++; };
 
         SUBCASE("No exceptions") {
-            auto call_with = JobDispatch::call_with<int>(run_fn_no_throw, setup_fn, winddown_fn_no_throw,
+            auto call_with = JobDispatch::call_with<Idx>(run_fn_no_throw, setup_fn, winddown_fn_no_throw,
                                                          handle_exception_fn, recover_from_bad_fn);
             call_with(1);
             CHECK(setup_called == 1);
@@ -111,7 +140,7 @@ TEST_CASE("Test job dispatch logic") {
             CHECK(recover_from_bad_called == 0);
         }
         SUBCASE("With run exception") {
-            auto call_with = JobDispatch::call_with<int>(run_fn_throw, setup_fn, winddown_fn_no_throw,
+            auto call_with = JobDispatch::call_with<Idx>(run_fn_throw, setup_fn, winddown_fn_no_throw,
                                                          handle_exception_fn, recover_from_bad_fn);
             call_with(2);
             CHECK(setup_called == 1);
@@ -121,7 +150,7 @@ TEST_CASE("Test job dispatch logic") {
             CHECK(recover_from_bad_called == 0);
         }
         SUBCASE("With winddown exception") {
-            auto call_with = JobDispatch::call_with<int>(run_fn_no_throw, setup_fn, winddown_fn_throw,
+            auto call_with = JobDispatch::call_with<Idx>(run_fn_no_throw, setup_fn, winddown_fn_throw,
                                                          handle_exception_fn, recover_from_bad_fn);
             call_with(3);
             CHECK(setup_called == 1);
@@ -153,7 +182,7 @@ TEST_CASE("Test job dispatch logic") {
             try {
                 throw 4; // arbitrary non-exception type
             } catch (...) {
-                handler(scenario_idx); // simulate handling for scenario index 0
+                handler(scenario_idx);
             }
             CHECK(messages[scenario_idx] == "unknown exception");
             CHECK(info.at("default") == 0.0);
