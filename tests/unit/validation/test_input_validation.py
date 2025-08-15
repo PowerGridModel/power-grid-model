@@ -134,7 +134,7 @@ def original_data() -> dict[ComponentType, np.ndarray]:
     transformer["p0"] = [63000.0, 0.0, -10.0]
     transformer["winding_from"] = [8, 0, 2]
     transformer["winding_to"] = [5, 1, 2]
-    transformer["clock"] = [13, -1, 7]
+    transformer["clock"] = [13, -13, 7]
     transformer["tap_side"] = [-1, 0, 1]
     transformer["tap_pos"] = [-1, 6, -4]
     transformer["tap_min"] = [-2, 4, 3]
@@ -365,7 +365,7 @@ def original_data() -> dict[ComponentType, np.ndarray]:
     asym_current_sensor["angle_measurement_type"] = [0, 1, 10, 2, 0]
 
     fault = initialize_array(DatasetType.input, ComponentType.fault, 20)
-    fault["id"] = [1] + list(range(32, 51))
+    fault["id"] = [1, *list(range(32, 51))]
     fault["status"] = [0, -1, 2] + 17 * [1]
     fault["fault_type"] = 6 * [0] + 4 * [1] + 4 * [2] + 4 * [3] + [_nan_type(ComponentType.fault, "fault_type"), 4]
     fault["fault_phase"] = (
@@ -397,7 +397,7 @@ def original_data() -> dict[ComponentType, np.ndarray]:
         ComponentType.asym_current_sensor: asym_current_sensor,
         ComponentType.fault: fault,
     }
-    return data
+    return data  # noqa: RET504
 
 
 @pytest.fixture
@@ -496,7 +496,7 @@ def test_validate_input_data_sym_calculation(input_data):
     assert NotGreaterOrEqualError(ComponentType.transformer, "i0", [1], "p0/sn") in validation_errors
     assert NotLessThanError(ComponentType.transformer, "i0", [14], 1) in validation_errors
     assert NotGreaterOrEqualError(ComponentType.transformer, "p0", [15], 0) in validation_errors
-    assert NotBetweenOrAtError(ComponentType.transformer, "clock", [1, 14], (0, 12)) in validation_errors
+    assert NotBetweenOrAtError(ComponentType.transformer, "clock", [1, 14], (-12, 12)) in validation_errors
     assert (
         NotBetweenOrAtError(ComponentType.transformer, "tap_pos", [14, 15], ("tap_min", "tap_max")) in validation_errors
     )
@@ -763,7 +763,7 @@ def test_validate_input_data_sym_calculation(input_data):
 
     assert NotBooleanError(ComponentType.fault, "status", [32, 33]) in validation_errors
     assert (
-        InvalidIdError(ComponentType.fault, "fault_object", [1] + list(range(32, 42)), [ComponentType.node])
+        InvalidIdError(ComponentType.fault, "fault_object", [1, *list(range(32, 42))], [ComponentType.node])
         in validation_errors
     )
 
@@ -822,12 +822,6 @@ def test_validate_three_winding_transformer(input_data):
     assert NotGreaterOrEqualError(ComponentType.three_winding_transformer, "i0", [29], "p0/sn_1") in validation_errors
     assert NotLessThanError(ComponentType.three_winding_transformer, "i0", [28], 1) in validation_errors
     assert NotGreaterOrEqualError(ComponentType.three_winding_transformer, "p0", [1], 0) in validation_errors
-    assert (
-        NotBetweenOrAtError(ComponentType.three_winding_transformer, "clock_12", [1, 28], (0, 12)) in validation_errors
-    )
-    assert (
-        NotBetweenOrAtError(ComponentType.three_winding_transformer, "clock_13", [1, 28], (0, 12)) in validation_errors
-    )
     assert (
         NotBetweenOrAtError(ComponentType.three_winding_transformer, "tap_pos", [1, 28], ("tap_min", "tap_max"))
         in validation_errors
@@ -961,7 +955,7 @@ def test_fault(input_data):
     assert validation_errors is not None
     assert InvalidEnumValueError(ComponentType.fault, "fault_type", [50], FaultType) in validation_errors
     assert InvalidEnumValueError(ComponentType.fault, "fault_phase", [50], FaultPhase) in validation_errors
-    assert FaultPhaseError(ComponentType.fault, ["fault_type", "fault_phase"], [1] + list(range(32, 51)))
+    assert FaultPhaseError(ComponentType.fault, ["fault_type", "fault_phase"], [1, *list(range(32, 51))])
     assert NotGreaterOrEqualError(ComponentType.fault, "r_f", [1], 0) in validation_errors
     assert (
         NotIdenticalError(

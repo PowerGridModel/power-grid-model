@@ -10,7 +10,6 @@
 #include "batch_parameter.hpp"
 #include "calculation_parameters.hpp"
 #include "container.hpp"
-#include "job_dispatch.hpp"
 #include "main_model_fwd.hpp"
 #include "topology.hpp"
 
@@ -32,6 +31,7 @@
 
 // main model implementation
 #include "main_core/calculation_info.hpp"
+#include "main_core/calculation_input_preparation.hpp"
 #include "main_core/core_utils.hpp"
 #include "main_core/input.hpp"
 #include "main_core/math_state.hpp"
@@ -44,27 +44,6 @@
 #include <span>
 
 namespace power_grid_model {
-
-namespace detail {
-template <calculation_input_type CalcInputType>
-inline auto calculate_param(auto const& c, auto const&... extra_args)
-    requires requires {
-        { c.calc_param(extra_args...) };
-    }
-{
-    return c.calc_param(extra_args...);
-}
-
-template <calculation_input_type CalcInputType>
-inline auto calculate_param(auto const& c, auto const&... extra_args)
-    requires requires {
-        { c.template calc_param<typename CalcInputType::sym>(extra_args...) };
-    }
-{
-    return c.template calc_param<typename CalcInputType::sym>(extra_args...);
-}
-} // namespace detail
-
 // solver output type to output type getter meta function
 
 template <solver_output_type SolverOutputType> struct output_type_getter;
@@ -151,14 +130,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     using SequenceIdxView = std::array<std::span<Idx2D const>, main_core::utils::n_types<ComponentType...>>;
     using OwnedUpdateDataset = std::tuple<std::vector<typename ComponentType::UpdateType>...>;
 
-    using JobDispatcher =
-        JobDispatch<MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentList<ComponentType...>>,
-                    ComponentType...>;
-
-    static constexpr Idx ignore_output{JobDispatcher::ignore_output};
-    static constexpr Idx isolated_component{-1};
-    static constexpr Idx not_connected{-1};
-    static constexpr Idx sequential{JobDispatcher::sequential};
+    static constexpr Idx isolated_component{main_core::isolated_component};
+    static constexpr Idx not_connected{main_core::not_connected};
+    static constexpr Idx sequential{JobDispatch::sequential};
 
   public:
     using Options = MainModelOptions;
@@ -182,6 +156,57 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         : system_frequency_{system_frequency},
           meta_data_{&meta_data},
           math_solver_dispatcher_{&math_solver_dispatcher} {}
+
+    MainModelImpl(MainModelImpl const& other)
+        : calculation_info_{}, // calculation info should not be copied, because it may result in race conditions
+          system_frequency_{other.system_frequency_},
+          meta_data_{other.meta_data_},
+          math_solver_dispatcher_{other.math_solver_dispatcher_},
+          state_{other.state_},
+          math_state_{other.math_state_},
+          n_math_solvers_{other.n_math_solvers_},
+          is_topology_up_to_date_{other.is_topology_up_to_date_},
+          is_sym_parameter_up_to_date_{other.is_sym_parameter_up_to_date_},
+          is_asym_parameter_up_to_date_{other.is_asym_parameter_up_to_date_},
+          is_accumulated_component_updated_{other.is_accumulated_component_updated_},
+          last_updated_calculation_symmetry_mode_{other.last_updated_calculation_symmetry_mode_},
+          cached_inverse_update_{other.cached_inverse_update_},
+          cached_state_changes_{other.cached_state_changes_},
+          parameter_changed_components_{other.parameter_changed_components_}
+#ifndef NDEBUG
+          ,
+          // construction_complete is used for debug assertions only
+          construction_complete_{other.construction_complete_}
+#endif // !NDEBUG
+    {
+    }
+    MainModelImpl& operator=(MainModelImpl const& other) {
+        if (this != &other) {
+            calculation_info_ = {}; // calculation info should be reset, because it may result in race conditions
+            system_frequency_ = other.system_frequency_;
+            meta_data_ = other.meta_data_;
+            math_solver_dispatcher_ = other.math_solver_dispatcher_;
+            state_ = other.state_;
+            math_state_ = other.math_state_;
+            n_math_solvers_ = other.n_math_solvers_;
+            is_topology_up_to_date_ = other.is_topology_up_to_date_;
+            is_sym_parameter_up_to_date_ = other.is_sym_parameter_up_to_date_;
+            is_asym_parameter_up_to_date_ = other.is_asym_parameter_up_to_date_;
+            is_accumulated_component_updated_ = other.is_accumulated_component_updated_;
+            last_updated_calculation_symmetry_mode_ = other.last_updated_calculation_symmetry_mode_;
+            cached_inverse_update_ = other.cached_inverse_update_;
+            cached_state_changes_ = other.cached_state_changes_;
+            parameter_changed_components_ = other.parameter_changed_components_;
+#ifndef NDEBUG
+            // construction_complete is used for debug assertions only
+            construction_complete_ = other.construction_complete_;
+#endif // !NDEBUG
+        }
+        return *this;
+    }
+    MainModelImpl(MainModelImpl&& /*other*/) noexcept = default;
+    MainModelImpl& operator=(MainModelImpl&& /*other*/) noexcept = default;
+    ~MainModelImpl() = default;
 
     // helper function to get what components are present in the update data
     std::array<bool, main_core::utils::n_types<ComponentType...>>
@@ -421,7 +446,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return [this, err_tol, max_iter](MainModelState const& state,
                                          CalculationMethod calculation_method) -> std::vector<SolverOutput<sym>> {
             return calculate_<SolverOutput<sym>, MathSolverProxy<sym>, YBus<sym>, PowerFlowInput<sym>>(
-                [&state](Idx n_math_solvers) { return prepare_power_flow_input<sym>(state, n_math_solvers); },
+                [&state](Idx n_math_solvers) {
+                    return main_core::prepare_power_flow_input<sym>(state, n_math_solvers);
+                },
                 [this, err_tol, max_iter, calculation_method](MathSolverProxy<sym>& solver, YBus<sym> const& y_bus,
                                                               PowerFlowInput<sym> const& input) {
                     return solver.get().run_power_flow(input, err_tol, max_iter, calculation_info_, calculation_method,
@@ -434,7 +461,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return [this, err_tol, max_iter](MainModelState const& state,
                                          CalculationMethod calculation_method) -> std::vector<SolverOutput<sym>> {
             return calculate_<SolverOutput<sym>, MathSolverProxy<sym>, YBus<sym>, StateEstimationInput<sym>>(
-                [&state](Idx n_math_solvers) { return prepare_state_estimation_input<sym>(state, n_math_solvers); },
+                [&state](Idx n_math_solvers) {
+                    return main_core::prepare_state_estimation_input<sym>(state, n_math_solvers);
+                },
                 [this, err_tol, max_iter, calculation_method](MathSolverProxy<sym>& solver, YBus<sym> const& y_bus,
                                                               StateEstimationInput<sym> const& input) {
                     return solver.get().run_state_estimation(input, err_tol, max_iter, calculation_info_,
@@ -445,38 +474,22 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     template <symmetry_tag sym> auto calculate_short_circuit_(ShortCircuitVoltageScaling voltage_scaling) {
         return [this,
-                voltage_scaling](MainModelState const& /*state*/,
+                voltage_scaling](MainModelState const& state,
                                  CalculationMethod calculation_method) -> std::vector<ShortCircuitSolverOutput<sym>> {
+            (void)state; // to avoid unused-lambda-capture when in Release build
+            assert(&state == &state_);
+
             return calculate_<ShortCircuitSolverOutput<sym>, MathSolverProxy<sym>, YBus<sym>, ShortCircuitInput>(
-                [this, voltage_scaling](Idx /* n_math_solvers */) {
+                [this, voltage_scaling](Idx n_math_solvers) {
                     assert(is_topology_up_to_date_ && is_parameter_up_to_date<sym>());
-                    return prepare_short_circuit_input<sym>(voltage_scaling);
+                    return main_core::prepare_short_circuit_input<sym>(state_, state_.comp_coup, n_math_solvers,
+                                                                       voltage_scaling);
                 },
                 [this, calculation_method](MathSolverProxy<sym>& solver, YBus<sym> const& y_bus,
                                            ShortCircuitInput const& input) {
                     return solver.get().run_short_circuit(input, calculation_info_, calculation_method, y_bus);
                 });
         };
-    }
-
-    /*
-    run the calculation function in batch on the provided update data.
-
-    The calculation function should be able to run standalone.
-    It should output to the provided result_data if the trailing argument is not ignore_output.
-
-    threading
-        < 0 sequential
-        = 0 parallel, use number of hardware threads
-        > 0 specify number of parallel threads
-    raise a BatchCalculationError if any of the calculations in the batch raised an exception
-    */
-    template <typename Calculate>
-        requires std::invocable<std::remove_cvref_t<Calculate>, MainModelImpl&, MutableDataset const&, Idx>
-    BatchParameter batch_calculation_(Calculate&& calculation_fn, MutableDataset const& result_data,
-                                      ConstDataset const& update_data, Idx threading = sequential) {
-        return JobDispatcher::batch_calculation_(*this, calculation_info_, std::forward<Calculate>(calculation_fn),
-                                                 result_data, update_data, threading);
     }
 
     // Calculate with optimization, e.g., automatic tap changer
@@ -509,7 +522,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // Single calculation, propagating the results to result_data
-    void calculate(Options options, MutableDataset const& result_data, Idx pos = 0) {
+    void calculate(Options options, MutableDataset const& result_data) {
         assert(construction_complete_);
 
         if (options.calculation_type == CalculationType::short_circuit) {
@@ -523,32 +536,28 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         calculation_type_symmetry_func_selector(
             options.calculation_type, options.calculation_symmetry,
             []<calculation_type_tag calculation_type, symmetry_tag sym>(
-                MainModelImpl& main_model_, Options const& options_, MutableDataset const& result_data_, Idx pos_) {
+                MainModelImpl& main_model_, Options const& options_, MutableDataset const& result_data_) {
                 auto const math_output = main_model_.calculate<calculation_type, sym>(options_);
-
-                if (pos_ != ignore_output) {
-                    main_model_.output_result(math_output, result_data_, pos_);
-                }
+                main_model_.output_result(math_output, result_data_);
             },
-            *this, options, result_data, pos);
+            *this, options, result_data);
     }
 
   public:
-    // Batch calculation, propagating the results to result_data
-    BatchParameter calculate(Options const& options, MutableDataset const& result_data,
-                             ConstDataset const& update_data) {
-        return batch_calculation_(
-            [&options](MainModelImpl& model, MutableDataset const& target_data, Idx pos) {
-                auto sub_opt = options; // copy
-                sub_opt.err_tol = pos != ignore_output ? options.err_tol : std::numeric_limits<double>::max();
-                sub_opt.max_iter = pos != ignore_output ? options.max_iter : 1;
+    static auto calculator(Options const& options, MainModelImpl& model, MutableDataset const& target_data,
+                           bool cache_run) {
+        auto sub_opt = options; // copy
+        sub_opt.err_tol = cache_run ? std::numeric_limits<double>::max() : options.err_tol;
+        sub_opt.max_iter = cache_run ? 1 : options.max_iter;
 
-                model.calculate(sub_opt, target_data, pos);
-            },
-            result_data, update_data, options.threading);
+        model.calculate(sub_opt, target_data);
     }
 
     CalculationInfo calculation_info() const { return calculation_info_; }
+    void merge_calculation_info(CalculationInfo const& info) {
+        assert(construction_complete_);
+        main_core::merge_into(calculation_info_, info);
+    }
     auto const& state() const {
         assert(construction_complete_);
         return state_;
@@ -559,45 +568,29 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return *meta_data_;
     }
 
-    void check_no_experimental_features_used(Options const& options) const {
-        if (options.calculation_type == CalculationType::state_estimation &&
-            options.calculation_method == CalculationMethod::newton_raphson &&
-            state_.components.template size<GenericCurrentSensor>() > 0 &&
-            std::ranges::any_of(
-                state_.components.template citer<GenericCurrentSensor>(), [](auto const& current_sensor) {
-                    return current_sensor.get_angle_measurement_type() == AngleMeasurementType::global_angle;
-                })) {
-            throw ExperimentalFeature{
-                "Newton-Raphson state estimation is not implemented for global angle current sensors"};
-        }
-    }
+    void check_no_experimental_features_used(Options const& /*options*/) const {}
 
   private:
-    template <typename Component, typename MathOutputType, typename ResIt>
-        requires solver_output_type<typename MathOutputType::SolverOutputType::value_type>
-    ResIt output_result(MathOutputType const& math_output, ResIt res_it) const {
-        assert(construction_complete_);
-        return main_core::output_result<Component, ComponentContainer>(state_, math_output, res_it);
-    }
-
     template <solver_output_type SolverOutputType>
-    void output_result(MathOutput<std::vector<SolverOutputType>> const& math_output, MutableDataset const& result_data,
-                       Idx pos = 0) const {
-        auto const output_func = [this, &math_output, &result_data, pos]<typename CT>() {
+    void output_result(MathOutput<std::vector<SolverOutputType>> const& math_output,
+                       MutableDataset const& result_data) const {
+        assert(!result_data.is_batch());
+
+        auto const output_func = [this, &math_output, &result_data]<typename CT>() {
             auto process_output_span = [this, &math_output](auto const& span) {
                 if (std::empty(span)) {
                     return;
                 }
-                this->output_result<CT>(math_output, std::begin(span));
+                main_core::output_result<CT>(state_, math_output, span);
             };
 
             if (result_data.is_columnar(CT::name)) {
                 auto const span =
-                    result_data.get_columnar_buffer_span<typename output_type_getter<SolverOutputType>::type, CT>(pos);
+                    result_data.get_columnar_buffer_span<typename output_type_getter<SolverOutputType>::type, CT>();
                 process_output_span(span);
             } else {
                 auto const span =
-                    result_data.get_buffer_span<typename output_type_getter<SolverOutputType>::type, CT>(pos);
+                    result_data.get_buffer_span<typename output_type_getter<SolverOutputType>::type, CT>();
                 process_output_span(span);
             }
         };
@@ -798,257 +791,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
 
         return math_param_increment;
-    }
-
-    /** This is a heavily templated member function because it operates on many different variables of many
-     *different types, but the essence is ever the same: filling one member (vector) of the calculation calc_input
-     *struct (soa) with the right calculation symmetric or asymmetric calculation parameters, in the same order as
-     *the corresponding component are stored in the component topology. There is one such struct for each sub graph
-     * / math model and all of them are filled within the same function call (i.e. Notice that calc_input is a
-     *vector).
-     *
-     *  1. For each component, check if it should be included.
-     *     By default, all component are included, except for some cases, like power sensors. For power sensors, the
-     *     list of component contains all power sensors, but the preparation should only be done for one type of
-     *power sensors at a time. Therefore, `included` will be a lambda function, such as:
-     *
-     *       [this](Idx i) { return state_.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::source;
-     *}
-     *
-     *  2. Find the original component in the topology and retrieve its calculation parameters.
-     *
-     *  3. Fill the calculation parameters of the right math model.
-     *
-     *  @tparam CalcStructOut
-     *      The calculation input type (soa) for the desired calculation (e.g. PowerFlowInput<sym> or
-     *StateEstimationInput<sym>).
-     *
-     * @tparam CalcParamOut
-     *      The data type for the desired calculation for the given ComponentIn (e.g. SourceCalcParam<sym> or
-     *      VoltageSensorCalcParam<sym>).
-     *
-     * @tparam comp_vect
-     *      The (pre-allocated and resized) vector of CalcParamOuts which shall be filled with component specific
-     *      calculation parameters. Note that this is a pointer to member
-     *
-     * @tparam ComponentIn
-     * 	    The component type for which we are collecting calculation parameters
-     *
-     * @tparam PredicateIn
-     * 	    The lambda function type. The actual type depends on the captured variables, and will be
-     *automatically deduced.
-     *
-     * @param component[in]
-     *      The vector of component math indices to consider (e.g. state_.topo_comp_coup->source).
-     *      When idx.group = -1, the original component is not assigned to a math model, so we can skip it.
-     *
-     * @param calc_input[out]
-     *		Although this variable is called `input`, it is actually the output of this function, it stored
-     *the calculation parameters for each math model, for each component of type ComponentIn.
-     *
-     * @param include
-     *      A lambda function (Idx i -> bool) which returns true if the component at Idx i should be included.
-     * 	    The default lambda `include_all` always returns `true`.
-     */
-    template <calculation_input_type CalcStructOut, typename CalcParamOut,
-              std::vector<CalcParamOut>(CalcStructOut::*comp_vect), class ComponentIn,
-              std::invocable<Idx> PredicateIn = IncludeAll>
-        requires std::convertible_to<std::invoke_result_t<PredicateIn, Idx>, bool>
-    static void prepare_input(MainModelState const& state, std::vector<Idx2D> const& components,
-                              std::vector<CalcStructOut>& calc_input, PredicateIn include = include_all) {
-        for (Idx i = 0, n = narrow_cast<Idx>(components.size()); i != n; ++i) {
-            if (include(i)) {
-                Idx2D const math_idx = components[i];
-                if (math_idx.group != isolated_component) {
-                    auto const& component = get_component_by_sequence<ComponentIn>(state, i);
-                    CalcStructOut& math_model_input = calc_input[math_idx.group];
-                    std::vector<CalcParamOut>& math_model_input_vect = math_model_input.*comp_vect;
-                    math_model_input_vect[math_idx.pos] = detail::calculate_param<CalcStructOut>(component);
-                }
-            }
-        }
-    }
-
-    template <calculation_input_type CalcStructOut, typename CalcParamOut,
-              std::vector<CalcParamOut>(CalcStructOut::*comp_vect), class ComponentIn,
-              std::invocable<Idx> PredicateIn = IncludeAll>
-        requires std::convertible_to<std::invoke_result_t<PredicateIn, Idx>, bool>
-    static void prepare_input(MainModelState const& state, std::vector<Idx2D> const& components,
-                              std::vector<CalcStructOut>& calc_input,
-                              std::invocable<ComponentIn const&> auto extra_args, PredicateIn include = include_all) {
-        for (Idx i = 0, n = narrow_cast<Idx>(components.size()); i != n; ++i) {
-            if (include(i)) {
-                Idx2D const math_idx = components[i];
-                if (math_idx.group != isolated_component) {
-                    auto const& component = get_component_by_sequence<ComponentIn>(state, i);
-                    CalcStructOut& math_model_input = calc_input[math_idx.group];
-                    std::vector<CalcParamOut>& math_model_input_vect = math_model_input.*comp_vect;
-                    math_model_input_vect[math_idx.pos] =
-                        detail::calculate_param<CalcStructOut>(component, extra_args(component));
-                }
-            }
-        }
-    }
-
-    template <symmetry_tag sym, IntSVector(StateEstimationInput<sym>::*component), class Component>
-    static void prepare_input_status(MainModelState const& state, std::vector<Idx2D> const& objects,
-                                     std::vector<StateEstimationInput<sym>>& input) {
-        for (Idx i = 0, n = narrow_cast<Idx>(objects.size()); i != n; ++i) {
-            Idx2D const math_idx = objects[i];
-            if (math_idx.group == isolated_component) {
-                continue;
-            }
-            (input[math_idx.group].*component)[math_idx.pos] =
-                main_core::get_component_by_sequence<Component>(state, i).status();
-        }
-    }
-
-    template <symmetry_tag sym>
-    static std::vector<PowerFlowInput<sym>> prepare_power_flow_input(MainModelState const& state, Idx n_math_solvers) {
-        std::vector<PowerFlowInput<sym>> pf_input(n_math_solvers);
-        for (Idx i = 0; i != n_math_solvers; ++i) {
-            pf_input[i].s_injection.resize(state.math_topology[i]->n_load_gen());
-            pf_input[i].source.resize(state.math_topology[i]->n_source());
-        }
-        prepare_input<PowerFlowInput<sym>, DoubleComplex, &PowerFlowInput<sym>::source, Source>(
-            state, state.topo_comp_coup->source, pf_input);
-
-        prepare_input<PowerFlowInput<sym>, ComplexValue<sym>, &PowerFlowInput<sym>::s_injection, GenericLoadGen>(
-            state, state.topo_comp_coup->load_gen, pf_input);
-
-        return pf_input;
-    }
-
-    template <symmetry_tag sym>
-    static std::vector<StateEstimationInput<sym>> prepare_state_estimation_input(MainModelState const& state,
-                                                                                 Idx n_math_solvers) {
-        std::vector<StateEstimationInput<sym>> se_input(n_math_solvers);
-
-        for (Idx i = 0; i != n_math_solvers; ++i) {
-            se_input[i].shunt_status.resize(state.math_topology[i]->n_shunt());
-            se_input[i].load_gen_status.resize(state.math_topology[i]->n_load_gen());
-            se_input[i].source_status.resize(state.math_topology[i]->n_source());
-            se_input[i].measured_voltage.resize(state.math_topology[i]->n_voltage_sensor());
-            se_input[i].measured_source_power.resize(state.math_topology[i]->n_source_power_sensor());
-            se_input[i].measured_load_gen_power.resize(state.math_topology[i]->n_load_gen_power_sensor());
-            se_input[i].measured_shunt_power.resize(state.math_topology[i]->n_shunt_power_power_sensor());
-            se_input[i].measured_branch_from_power.resize(state.math_topology[i]->n_branch_from_power_sensor());
-            se_input[i].measured_branch_to_power.resize(state.math_topology[i]->n_branch_to_power_sensor());
-            se_input[i].measured_bus_injection.resize(state.math_topology[i]->n_bus_power_sensor());
-            se_input[i].measured_branch_from_current.resize(state.math_topology[i]->n_branch_from_current_sensor());
-            se_input[i].measured_branch_to_current.resize(state.math_topology[i]->n_branch_to_current_sensor());
-        }
-
-        prepare_input_status<sym, &StateEstimationInput<sym>::shunt_status, Shunt>(state, state.topo_comp_coup->shunt,
-                                                                                   se_input);
-        prepare_input_status<sym, &StateEstimationInput<sym>::load_gen_status, GenericLoadGen>(
-            state, state.topo_comp_coup->load_gen, se_input);
-        prepare_input_status<sym, &StateEstimationInput<sym>::source_status, Source>(
-            state, state.topo_comp_coup->source, se_input);
-
-        prepare_input<StateEstimationInput<sym>, VoltageSensorCalcParam<sym>,
-                      &StateEstimationInput<sym>::measured_voltage, GenericVoltageSensor>(
-            state, state.topo_comp_coup->voltage_sensor, se_input);
-        prepare_input<StateEstimationInput<sym>, PowerSensorCalcParam<sym>,
-                      &StateEstimationInput<sym>::measured_source_power, GenericPowerSensor>(
-            state, state.topo_comp_coup->power_sensor, se_input,
-            [&state](Idx i) { return state.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::source; });
-        prepare_input<StateEstimationInput<sym>, PowerSensorCalcParam<sym>,
-                      &StateEstimationInput<sym>::measured_load_gen_power, GenericPowerSensor>(
-            state, state.topo_comp_coup->power_sensor, se_input, [&state](Idx i) {
-                return state.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::load ||
-                       state.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::generator;
-            });
-        prepare_input<StateEstimationInput<sym>, PowerSensorCalcParam<sym>,
-                      &StateEstimationInput<sym>::measured_shunt_power, GenericPowerSensor>(
-            state, state.topo_comp_coup->power_sensor, se_input,
-            [&state](Idx i) { return state.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::shunt; });
-        prepare_input<StateEstimationInput<sym>, PowerSensorCalcParam<sym>,
-                      &StateEstimationInput<sym>::measured_branch_from_power, GenericPowerSensor>(
-            state, state.topo_comp_coup->power_sensor, se_input, [&state](Idx i) {
-                using enum MeasuredTerminalType;
-                return state.comp_topo->power_sensor_terminal_type[i] == branch_from ||
-                       // all branch3 sensors are at from side in the mathematical model
-                       state.comp_topo->power_sensor_terminal_type[i] == branch3_1 ||
-                       state.comp_topo->power_sensor_terminal_type[i] == branch3_2 ||
-                       state.comp_topo->power_sensor_terminal_type[i] == branch3_3;
-            });
-        prepare_input<StateEstimationInput<sym>, PowerSensorCalcParam<sym>,
-                      &StateEstimationInput<sym>::measured_branch_to_power, GenericPowerSensor>(
-            state, state.topo_comp_coup->power_sensor, se_input, [&state](Idx i) {
-                return state.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::branch_to;
-            });
-        prepare_input<StateEstimationInput<sym>, PowerSensorCalcParam<sym>,
-                      &StateEstimationInput<sym>::measured_bus_injection, GenericPowerSensor>(
-            state, state.topo_comp_coup->power_sensor, se_input,
-            [&state](Idx i) { return state.comp_topo->power_sensor_terminal_type[i] == MeasuredTerminalType::node; });
-
-        prepare_input<StateEstimationInput<sym>, CurrentSensorCalcParam<sym>,
-                      &StateEstimationInput<sym>::measured_branch_from_current, GenericCurrentSensor>(
-            state, state.topo_comp_coup->current_sensor, se_input, [&state](Idx i) {
-                using enum MeasuredTerminalType;
-                return state.comp_topo->current_sensor_terminal_type[i] == branch_from ||
-                       // all branch3 sensors are at from side in the mathematical model
-                       state.comp_topo->current_sensor_terminal_type[i] == branch3_1 ||
-                       state.comp_topo->current_sensor_terminal_type[i] == branch3_2 ||
-                       state.comp_topo->current_sensor_terminal_type[i] == branch3_3;
-            });
-        prepare_input<StateEstimationInput<sym>, CurrentSensorCalcParam<sym>,
-                      &StateEstimationInput<sym>::measured_branch_to_current, GenericCurrentSensor>(
-            state, state.topo_comp_coup->current_sensor, se_input, [&state](Idx i) {
-                return state.comp_topo->current_sensor_terminal_type[i] == MeasuredTerminalType::branch_to;
-            });
-
-        return se_input;
-    }
-
-    template <symmetry_tag sym>
-    std::vector<ShortCircuitInput> prepare_short_circuit_input(ShortCircuitVoltageScaling voltage_scaling) {
-        // TODO(mgovers) split component mapping from actual preparing
-        std::vector<IdxVector> topo_fault_indices(state_.math_topology.size());
-        std::vector<IdxVector> topo_bus_indices(state_.math_topology.size());
-
-        for (Idx fault_idx{0}; fault_idx < state_.components.template size<Fault>(); ++fault_idx) {
-            auto const& fault = state_.components.template get_item_by_seq<Fault>(fault_idx);
-            if (fault.status()) {
-                auto const node_idx = state_.components.template get_seq<Node>(fault.get_fault_object());
-                auto const topo_bus_idx = state_.topo_comp_coup->node[node_idx];
-
-                if (topo_bus_idx.group >= 0) { // Consider non-isolated objects only
-                    topo_fault_indices[topo_bus_idx.group].push_back(fault_idx);
-                    topo_bus_indices[topo_bus_idx.group].push_back(topo_bus_idx.pos);
-                }
-            }
-        }
-
-        auto fault_coup = std::vector<Idx2D>(state_.components.template size<Fault>(),
-                                             Idx2D{.group = isolated_component, .pos = not_connected});
-        std::vector<ShortCircuitInput> sc_input(n_math_solvers_);
-
-        for (Idx i = 0; i != n_math_solvers_; ++i) {
-            auto map = build_dense_mapping(topo_bus_indices[i], state_.math_topology[i]->n_bus());
-
-            for (Idx reordered_idx{0}; reordered_idx < static_cast<Idx>(map.reorder.size()); ++reordered_idx) {
-                fault_coup[topo_fault_indices[i][map.reorder[reordered_idx]]] = Idx2D{.group = i, .pos = reordered_idx};
-            }
-
-            sc_input[i].fault_buses = {from_dense, std::move(map.indvector), state_.math_topology[i]->n_bus()};
-            sc_input[i].faults.resize(state_.components.template size<Fault>());
-            sc_input[i].source.resize(state_.math_topology[i]->n_source());
-        }
-
-        state_.comp_coup = ComponentToMathCoupling{.fault = std::move(fault_coup)};
-
-        prepare_input<ShortCircuitInput, FaultCalcParam, &ShortCircuitInput::faults, Fault>(
-            state_, state_.comp_coup.fault, sc_input, [this](Fault const& fault) {
-                return state_.components.template get_item<Node>(fault.get_fault_object()).u_rated();
-            });
-        prepare_input<ShortCircuitInput, DoubleComplex, &ShortCircuitInput::source, Source>(
-            state_, state_.topo_comp_coup->source, sc_input, [this, voltage_scaling](Source const& source) {
-                return std::pair{state_.components.template get_item<Node>(source.node()).u_rated(), voltage_scaling};
-            });
-
-        return sc_input;
     }
 
     template <symmetry_tag sym> void prepare_y_bus() {

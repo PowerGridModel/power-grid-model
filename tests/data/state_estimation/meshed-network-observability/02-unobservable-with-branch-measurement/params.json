@@ -1,0 +1,15 @@
+{
+  "calculation_method": ["newton_raphson", "iterative_linear"],
+  "rtol": 1e-8,
+  "atol": {
+    "default": 1e-8,
+    ".+_residual": 5e-4
+  },
+  "raises": {
+    "raises": "SparseMatrixError",
+    "reason": "One nodal measurement can not be made use of."
+  },
+  "xpass": {
+    "reason": "Full observability check for meshed grids is not yet implemented. See also https://github.com/PowerGridModel/power-grid-model/issues/864."
+  }
+}

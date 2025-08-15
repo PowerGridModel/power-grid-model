@@ -196,7 +196,7 @@ An example of usage of transformer is given in [Transformer Examples](../example
 | `p0`               | `double`                                                    | watt (W)         | no-load (iron) loss                                                                                                                                                                                                         |                        &#10004;                         | &#10060; |                                 `>= 0`                                 |
 | `winding_from`     | {py:class}`WindingType <power_grid_model.enum.WindingType>` | -                | from-side winding type                                                                                                                                                                                                      |                        &#10004;                         | &#10060; |                                                                        |
 | `winding_to`       | {py:class}`WindingType <power_grid_model.enum.WindingType>` | -                | to-side winding type                                                                                                                                                                                                        |                        &#10004;                         | &#10060; |                                                                        |
-| `clock`            | `int8_t`                                                    | -                | clock number of phase shift. Even number is not possible if one side is Y(N) winding and the other side is not Y(N) winding. Odd number is not possible, if both sides are Y(N) winding or both sides are not Y(N) winding. |                        &#10004;                         | &#10060; |                           `>= 0` and `<= 12`                           |
+| `clock`            | `int8_t`                                                    | -                | clock number of phase shift. Even number is not possible if one side is Y(N) winding and the other side is not Y(N) winding. Odd number is not possible, if both sides are Y(N) winding or both sides are not Y(N) winding. |                        &#10004;                         | &#10060; |                         `>= -12` and `<= 12`                           |
 | `tap_side`         | {py:class}`BranchSide <power_grid_model.enum.BranchSide>`   | -                | side of tap changer                                                                                                                                                                                                         |                        &#10004;                         | &#10060; |                                                                        |
 | `tap_pos`          | `int8_t`                                                    | -                | current position of tap changer                                                                                                                                                                                             | &#10060; default `tap_nom`, if no `tap_nom` default `0` | &#10004; | `(tap_min <= tap_pos <= tap_max)` or `(tap_min >= tap_pos >= tap_max)` |
 | `tap_min`          | `int8_t`                                                    | -                | position of tap changer at minimum voltage                                                                                                                                                                                  |                        &#10004;                         | &#10060; |                                                                        |
@@ -514,8 +514,8 @@ An example of usage of three-winding transformer is given in
 | `winding_1`     | {py:class}`WindingType <power_grid_model.enum.WindingType>` | -                | side 1 winding type                                                                                       |                        &#10004;                         | &#10060; |                                                                        |
 | `winding_2`     | {py:class}`WindingType <power_grid_model.enum.WindingType>` | -                | side 2 winding type                                                                                       |                        &#10004;                         | &#10060; |                                                                        |
 | `winding_3`     | {py:class}`WindingType <power_grid_model.enum.WindingType>` | -                | side 3 winding type                                                                                       |                        &#10004;                         | &#10060; |                                                                        |
-| `clock_12`      | `int8_t`                                                    | -                | clock number of phase shift across side 1-2, odd number is only allowed for Dy(n) or Y(N)d configuration. |                        &#10004;                         | &#10060; |                           `>= 0` and `<= 12`                           |
-| `clock_13`      | `int8_t`                                                    | -                | clock number of phase shift across side 1-3, odd number is only allowed for Dy(n) or Y(N)d configuration. |                        &#10004;                         | &#10060; |                           `>= 0` and `<= 12`                           |
+| `clock_12`      | `int8_t`                                                    | -                | clock number of phase shift across side 1-2, odd number is only allowed for Dy(n) or Y(N)d configuration. |                        &#10004;                         | &#10060; |                         `>= -12` and `<= 12`                           |
+| `clock_13`      | `int8_t`                                                    | -                | clock number of phase shift across side 1-3, odd number is only allowed for Dy(n) or Y(N)d configuration. |                        &#10004;                         | &#10060; |                         `>= -12` and `<= 12`                           |
 | `tap_side`      | {py:class}`Branch3Side <power_grid_model.enum.Branch3Side>` | -                | side of tap changer                                                                                       |                        &#10004;                         | &#10060; |                    `side_1` or `side_2` or `side_3`                    |
 | `tap_pos`       | `int8_t`                                                    | -                | current position of tap changer                                                                           | &#10060; default `tap_nom`, if no `tap_nom` default `0` | &#10004; | `(tap_min <= tap_pos <= tap_max)` or `(tap_min >= tap_pos >= tap_max)` |
 | `tap_min`       | `int8_t`                                                    | -                | position of tap changer at minimum voltage                                                                |                        &#10004;                         | &#10060; |                                                                        |
@@ -836,11 +836,11 @@ is placed for it to function.
 ```
 
 ```{note}
-It is not possible to mix [power sensors](./components.md#generic-current-sensor) with
-[current sensors](#./components.mdgeneric-current-sensor) on the same terminal of the same component.
+It is not possible to mix [power sensors](./components.md#generic-power-sensor) with
+[current sensors](./components.md#generic-current-sensor) on the same terminal of the same component.
 It is also not possible to mix
-[current sensors with global angle measurement type](#./components.mdgeneric-current-sensor) with
-[current sensors with local angle measurement type](#./components.mdgeneric-current-sensor) on the same terminal of the
+[current sensors with global angle measurement type](./components.md#generic-current-sensor) with
+[current sensors with local angle measurement type](./components.md#generic-current-sensor) on the same terminal of the
 same component.
 However, such mixing of sensor types is allowed as long as they are on different terminals.
 ```
@@ -885,11 +885,12 @@ Valid combinations of `power_sigma`, `p_sigma` and `q_sigma` are:
 |               |           |           | &#10060; |
 
 ```{note}
-1. If both `p_sigma` and `q_sigma` are provided, they represent the standard deviation of the active and reactive power,
-respectively, and the value of `power_sigma` is ignored. Any infinite component invalidates the entire measurement.
+1. If both `p_sigma` and `q_sigma` are provided (i.e., not NaN), they represent the standard deviation of the active and
+reactive power, respectively, and the value of `power_sigma` is ignored. Any infinite component disables the entire
+measurement.
 
 2. If neither `p_sigma` nor `q_sigma` are provided, `power_sigma` represents the standard deviation of the apparent
-power.
+power. In this case, infinite value of `power_sigma` disables the entire measurement.
 
 3. Providing only one of `p_sigma` and `q_sigma` results in undefined behaviour.
 ```
@@ -923,11 +924,6 @@ $$
 
 ### Generic Current Sensor
 
-```{warning}
-At the time of writing, state estimation with current sensors with `global_angle` `angle_measurement_type` is not
-supported by the Newton-Raphson calculation method.
-```
-
 * type name: `generic_current_sensor`
 
 `current_sensor` is an abstract class for symmetric and asymmetric current sensor and is derived from
@@ -941,11 +937,11 @@ link is a `branch`.
 ```
 
 ```{note}
-It is not possible to mix [power sensors](./components.md#generic-current-sensor) with
-[current sensors](#./components.mdgeneric-current-sensor) on the same terminal of the same component.
+It is not possible to mix [power sensors](./components.md#generic-power-sensor) with
+[current sensors](./components.md#generic-current-sensor) on the same terminal of the same component.
 It is also not possible to mix
-[current sensors with global angle measurement type](#./components.mdgeneric-current-sensor) with
-[current sensors with local angle measurement type](#./components.mdgeneric-current-sensor) on the same terminal of the
+[current sensors with global angle measurement type](./components.md#generic-current-sensor) with
+[current sensors with local angle measurement type](./components.md#generic-current-sensor) on the same terminal of the
 same component.
 However, such mixing of sensor types is allowed as long as they are on different terminals.
 ```
@@ -960,11 +956,6 @@ However, such mixing of sensor types is allowed as long as they are on different
 | `i_angle_sigma`          | `double`                                                                      | rad        | standard deviation of the current (`i`) phase angle measurement error. Usually this is the absolute measurement error range divided by 3. | &#10024; only for state estimation | &#10004; |                        `> 0`                         |
 
 #### Current Sensor Concrete Types
-
-```{warning}
-At the time of writing, state estimation with current sensors with `global_angle` `angle_measurement_type` is not
-supported by the Newton-Raphson calculation method.
-```
 
 There are two concrete types of current sensor.
 They share similar attributes: the meaning of `RealValueInput` is different, as shown in the table below.
@@ -984,6 +975,11 @@ They share similar attributes: the meaning of `RealValueInput` is different, as 
 See the documentation on [state estimation calculation methods](calculations.md#state-estimation-algorithms) for details
 per method on how the variances are taken into account for both the global and local angle measurement types and for the
 individual phases.
+
+```{note}
+The combination of `i_measured=0` and `i_angle_measured=nπ/2` renders the current sensor invalid for PGM. 
+See [State estimate sensor transformations](calculations.md#state-estimate-sensor-transformations).
+```
 
 ##### Steady state output
 
@@ -1016,13 +1012,10 @@ Global angle current measurements require at least one voltage angle measurement
 As a sign convention, the angle is the phase shift of the current relative to the reference angle, i.e.,
 
 $$
-\underline{I} = \text{i_measured} \cdot e^{j \text{i_angle_measured}} \text{ .}
+   \begin{eqnarray}
+      \underline{I} = \text{i}_{\text{measured}} \cdot e^{j \text{i}_{\text{angle,measured}}} \text{ .}
+   \end{eqnarray}
 $$
-
-```{warning}
-At the time of writing, state estimation with current sensors with `global_angle` `angle_measurement_type` is not
-supported by the Newton-Raphson calculation method.
-```
 
 ##### Local angle current sensors
 
@@ -1033,8 +1026,8 @@ As a result, the global current phasor depends on the local voltage phase offset
 formula.
 
 $$
-\underline{I} = \underline{I}_{\text{local}}^{*} \frac{\underline{U}}{|\underline{U}|}
-              = \text{i_measured} \cdot e^{\mathrm{j} \left(\theta_{U} - \text{i_angle_measured}\right)}
+   \underline{I} = \underline{I}_{\text{local}}^{*} \frac{\underline{U}}{|\underline{U}|}
+      = \text{i}_{\text{measured}} \cdot e^{\mathrm{j} \left(\theta_{U} - \text{i}_{\text{angle,measured}}\right)}
 $$
 
 ```{note}

@@ -124,7 +124,7 @@ TEST_CASE("Exceptions") {
               "Sparse matrix error, possibly singular matrix!\n"
               "If you get this error from state estimation, it might mean the system is not fully observable, i.e. not "
               "enough measurements.\n"
-              "It might also mean that you are running into a corner case where PGM cannot resolve yet."
+              "It might also mean that you are running into a corner case where PGM cannot resolve yet.\n"
               "See https://github.com/PowerGridModel/power-grid-model/issues/864.");
         CHECK(std::string{SparseMatrixError{1}.what()} ==
               "Sparse matrix error with error code #1 (possibly singular)\n"

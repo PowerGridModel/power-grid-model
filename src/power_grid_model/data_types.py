@@ -11,7 +11,7 @@ are defined/exposed and explained.
 
 # Import non class symbols as private to reassign and provide a docstring.
 # Not necessary for class, as sphinx autodoc finds their docstrings
-from power_grid_model._core.data_types import (  # noqa: F401, I001
+from power_grid_model._core.data_types import (  # noqa: F401
     AsymValue as _AsymValue,
     AttributeType as _AttributeType,
     AttributeValue as _AttributeValue,
@@ -179,7 +179,7 @@ A general data set can be a :class:`SingleDataset` or a :class:`BatchDataset`.
 
 DenseBatchArray = _DenseBatchArray
 """
-A dense batch array is a two-dimensional structured numpy array containing a list of components of 
+A dense batch array is a two-dimensional structured numpy array containing a list of components of
 the same type for each scenario. Otherwise similar to :class:`SingleArray`.
 """
 

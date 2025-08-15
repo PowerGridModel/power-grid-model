@@ -7,7 +7,6 @@ Main power grid model class
 """
 
 from enum import IntEnum
-from typing import Type
 
 import numpy as np
 
@@ -212,7 +211,7 @@ class PowerGridModel:
 
     @staticmethod
     def _options(**kwargs) -> Options:
-        def as_enum_value(key_enum: str, type_: Type[IntEnum]):
+        def as_enum_value(key_enum: str, type_: type[IntEnum]):
             if key_enum in kwargs:
                 value_enum = kwargs[key_enum]
                 if isinstance(value_enum, str):
@@ -244,7 +243,7 @@ class PowerGridModel:
         options: Options,
         continue_on_batch_error: bool,
         decode_error: bool,
-        experimental_features: _ExperimentalFeatures | str,  # NOSONAR
+        experimental_features: _ExperimentalFeatures | str,  # NOSONAR # noqa: ARG002
     ):
         """
         Core calculation routine

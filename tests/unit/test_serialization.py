@@ -3,7 +3,8 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import json
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 import msgpack
 import numpy as np
