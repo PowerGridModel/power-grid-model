@@ -68,20 +68,20 @@ template <symmetry_tag sym_type> class LinearPFSolver {
         SolverOutput<sym> output;
         output.u.resize(n_bus_);
 
-        Timer const main_timer(calculation_info, 2220, "Math solver");
+        Timer const main_timer{calculation_info, LoggingTag::math_solver};
 
         // prepare matrix
-        Timer sub_timer(calculation_info, 2221, "Prepare matrix");
+        Timer sub_timer{calculation_info, LoggingTag::prepare_matrix};
         detail::copy_y_bus<sym>(y_bus, mat_data_);
         prepare_matrix_and_rhs(y_bus, input, output);
 
         // solve
         // u vector will have I_injection for slack bus for now
-        sub_timer = Timer(calculation_info, 2222, "Solve sparse linear equation");
+        sub_timer = Timer{calculation_info, LoggingTag::solve_sparse_linear_equation};
         sparse_solver_.prefactorize_and_solve(mat_data_, perm_, output.u, output.u);
 
         // calculate math result
-        sub_timer = Timer(calculation_info, 2223, "Calculate math result");
+        sub_timer = Timer{calculation_info, LoggingTag::calculate_math_result};
         calculate_result(y_bus, input, output);
 
         // output

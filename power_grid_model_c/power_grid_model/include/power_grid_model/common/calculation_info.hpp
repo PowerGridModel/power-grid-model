@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "logging.hpp"
+
 #include <cstddef>
 #include <functional>
 #include <map>
@@ -11,6 +13,6 @@
 
 namespace power_grid_model {
 
-using CalculationInfo = std::map<std::string, double, std::less<>>;
+using CalculationInfo = std::map<LoggingTag, double>;
 
 } // namespace power_grid_model

@@ -20,6 +20,20 @@ MathSolverDispatcher const& get_math_solver_dispatcher() {
     return math_solver_dispatcher;
 }
 
+std::string make_key(LoggingTag code) {
+    std::stringstream ss;
+    ss << std::setw(4) << std::setfill('0') << static_cast<std::underlying_type_t<LoggingTag>>(code) << ".";
+    auto key = ss.str();
+    for (size_t i = 0, n = key.length() - 1; i < n; ++i) {
+        if (key[i] == '0') {
+            break;
+        }
+        key += "\t";
+    }
+    key += common::logging::to_string(code);
+    return key;
+}
+
 auto get_benchmark_run_title(Option const& option, MainModelOptions const& model_options) {
     auto const mv_ring_type = option.has_mv_ring ? "meshed grid" : "radial grid";
     auto const sym_type =
@@ -110,9 +124,9 @@ struct PowerGridBenchmark {
 
         {
             std::cout << "*****Run with initialization*****\n";
-            Timer const t_total(info, 0000, "Total");
+            Timer const t_total{info, LoggingTag::total};
             {
-                Timer const t_build(info, 1000, "Build model");
+                Timer const t_build{info, LoggingTag::build_model};
                 main_model = std::make_unique<MainModel>(50.0, input.get_dataset(), get_math_solver_dispatcher());
             }
             run(single_scenario);
@@ -121,7 +135,7 @@ struct PowerGridBenchmark {
         info.clear();
         {
             std::cout << "\n*****Run without initialization*****\n";
-            Timer const t_total(info, 0000, "Total");
+            Timer const t_total{info, LoggingTag::total};
             run(single_scenario);
         }
         print(info);
@@ -129,7 +143,7 @@ struct PowerGridBenchmark {
         if (batch_size > 0) {
             info.clear();
             std::cout << "\n*****Run with batch calculation*****\n";
-            Timer const t_total(info, 0000, "Total");
+            Timer const t_total{info, LoggingTag::total};
             run(batch_size);
         }
         print(info);
@@ -139,7 +153,7 @@ struct PowerGridBenchmark {
 
     static void print(CalculationInfo const& info) {
         for (auto const& [key, val] : info) {
-            std::cout << key << ": " << val << '\n';
+            std::cout << make_key(key) << ": " << val << '\n';
         }
     }
 

@@ -61,22 +61,22 @@ class JobDispatch {
 
             CalculationInfo thread_info;
 
-            Timer t_total(thread_info, 0200, "Total batch calculation in thread");
+            Timer t_total{thread_info, LoggingTag::total_batch_calculation_in_thread};
 
             auto const copy_adapter_functor = [&base_adapter, &thread_info]() {
-                Timer const t_copy_adapter_functor(thread_info, 1100, "Copy model");
+                Timer const t_copy_adapter_functor{thread_info, LoggingTag::copy_model};
                 return Adapter{base_adapter};
             };
 
             auto adapter = copy_adapter_functor();
 
             auto setup = [&adapter, &update_data, &thread_info](Idx scenario_idx) {
-                Timer const t_update_model(thread_info, 1200, "Update model");
+                Timer const t_update_model{thread_info, LoggingTag::update_model};
                 adapter.setup(update_data, scenario_idx);
             };
 
             auto winddown = [&adapter, &thread_info]() {
-                Timer const t_restore_model(thread_info, 1201, "Restore model");
+                Timer const t_restore_model{thread_info, LoggingTag::restore_model};
                 adapter.winddown();
             };
 
@@ -96,7 +96,7 @@ class JobDispatch {
                 scenario_exception_handler(adapter, exceptions, thread_info), std::move(recover_from_bad));
 
             for (Idx scenario_idx = start; scenario_idx < n_scenarios; scenario_idx += stride) {
-                Timer const t_total_single(thread_info, 0100, "Total single calculation in thread");
+                Timer const t_total_single{thread_info, LoggingTag::total_single_calculation_in_thread};
                 calculate_scenario(scenario_idx);
             }
 
