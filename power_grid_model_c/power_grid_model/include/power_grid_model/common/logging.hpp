@@ -54,6 +54,10 @@ constexpr auto to_string(LoggingTag tag) {
         return "log"s;
     case timer:
         return "timer"s;
+    case total:
+        return "Total"s;
+    case build_model:
+        return "Build model"s;
     case total_single_calculation_in_thread:
         return "Total single calculation in thread"s;
     case total_batch_calculation_in_thread:
@@ -73,7 +77,7 @@ constexpr auto to_string(LoggingTag tag) {
     case create_math_solver:
         return "Create math solver"s;
     case math_calculation:
-        return "Math calculation"s;
+        return "Math Calculation"s; // TODO(mgovers): make capitalization consistent
     case math_solver:
         return "Math solver"s;
     case initialize_calculation:

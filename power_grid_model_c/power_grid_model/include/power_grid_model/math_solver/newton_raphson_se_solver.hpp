@@ -182,7 +182,7 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
             sub_timer = Timer{calculation_info, LoggingTag::prepare_lhs_rhs};
             prepare_matrix_and_rhs(y_bus, measured_values, output.u);
             // solve with prefactorization
-            sub_timer = Timer{calculation_info, LoggingTag::solve_sparse_linear_equation_prefactorized};
+            sub_timer = Timer{calculation_info, LoggingTag::solve_sparse_linear_equation};
             sparse_solver_.prefactorize_and_solve(data_gain_, perm_, delta_x_rhs_, delta_x_rhs_,
                                                   observability_result.use_perturbation());
             sub_timer = Timer{calculation_info, LoggingTag::iterate_unknown};
