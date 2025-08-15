@@ -22,6 +22,22 @@ struct MockUpdateDataset {
 
 struct MockResultDataset {};
 
+// global counters for the mock calls
+// we only count the underlying calls, not the explicit ones
+Idx global_calculate_calls{};
+Idx global_cache_calculate_calls{};
+Idx global_setup_calls{};
+Idx global_winddown_calls{};
+Idx global_thread_safe_add_calculation_info_calls{};
+
+void reset_global_counters() {
+    global_calculate_calls = 0;
+    global_cache_calculate_calls = 0;
+    global_setup_calls = 0;
+    global_winddown_calls = 0;
+    global_thread_safe_add_calculation_info_calls = 0;
+}
+
 class JobAdapterMock : public JobInterface<JobAdapterMock> {
   public:
     JobAdapterMock() = default;
@@ -34,19 +50,20 @@ class JobAdapterMock : public JobInterface<JobAdapterMock> {
   private:
     friend class JobInterface<JobAdapterMock>;
 
-    void calculate_impl(MockResultDataset const& /*result_data*/, Idx /*scenario_idx*/) const {}
-    void cache_calculate_impl() const {}
+    void calculate_impl(MockResultDataset const& /*result_data*/, Idx /*scenario_idx*/) { global_calculate_calls++; }
+    void cache_calculate_impl() { global_cache_calculate_calls++; }
     void prepare_job_dispatch_impl(MockUpdateDataset const& /*update_data*/) {}
-    void setup_impl(MockUpdateDataset const& /*update_data*/, Idx /*scenario_idx*/) {}
-    void winddown_impl() {}
+    void setup_impl(MockUpdateDataset const& /*update_data*/, Idx /*scenario_idx*/) { global_setup_calls++; }
+    void winddown_impl() { global_winddown_calls++; }
     CalculationInfo get_calculation_info_impl() const { return CalculationInfo{{"default", 0.0}}; }
-    void thread_safe_add_calculation_info_impl(CalculationInfo const& /*info*/) {}
-    auto get_current_scenario_sequence_view_() const {}
+    void thread_safe_add_calculation_info_impl(CalculationInfo const& /*info*/) {
+        global_thread_safe_add_calculation_info_calls++;
+    }
+    auto get_current_scenario_sequence_view_() {}
 };
 } // namespace
 
 TEST_CASE("Test job dispatch logic") {
-    bool has_data{};
     Idx n_scenarios{};
     std::vector<std::string> exceptions(n_scenarios, "");
 
@@ -54,29 +71,93 @@ TEST_CASE("Test job dispatch logic") {
         auto adapter = JobAdapterMock{};
         auto result_data = MockResultDataset{};
         auto const expected_result = BatchParameter{};
+        bool has_data{};
         SUBCASE("No update data") {
             has_data = false;
             n_scenarios = 9; // arbitrary non-zero value
             auto const update_data = MockUpdateDataset(has_data, n_scenarios);
+            reset_global_counters();
             auto const actual_result = JobDispatch::batch_calculation(adapter, result_data, update_data);
             CHECK(expected_result == actual_result);
+            CHECK(global_calculate_calls == 1);
+            CHECK(global_cache_calculate_calls == 0); // no cache calculation in this case
         }
         SUBCASE("No scenarios") {
             has_data = true;
             n_scenarios = 0;
             auto const update_data = MockUpdateDataset(has_data, n_scenarios);
+            reset_global_counters();
             auto const actual_result = JobDispatch::batch_calculation(adapter, result_data, update_data);
             CHECK(expected_result == actual_result);
+            // no calculations should be done
+            CHECK(global_calculate_calls == 0);
+            CHECK(global_cache_calculate_calls == 0);
         }
         SUBCASE("With scenarios and update data") {
             has_data = true;
             n_scenarios = 7; // arbitrary non-zero value
             auto const update_data = MockUpdateDataset(has_data, n_scenarios);
-            auto const actual_result = JobDispatch::batch_calculation(adapter, result_data, update_data);
+            reset_global_counters();
+            auto const actual_result =
+                JobDispatch::batch_calculation(adapter, result_data, update_data, JobDispatch::sequential);
             CHECK(expected_result == actual_result);
+            // n_scenarios calculations should be done as we run sequentially
+            CHECK(global_calculate_calls == n_scenarios);
+            CHECK(global_cache_calculate_calls == 1); // cache calculation is done
         }
     }
-    SUBCASE("single_thread_job") {}
+    SUBCASE("single_thread_job") {
+        auto adapter = JobAdapterMock{};
+        auto result_data = MockResultDataset{};
+        bool has_data{false};
+        n_scenarios = 9; // arbitrary non-zero value
+        auto const update_data = MockUpdateDataset(has_data, n_scenarios);
+        exceptions.resize(n_scenarios);
+        Idx start{};
+        Idx stride{};
+        Idx call_number{};
+
+        auto get_call_number = [](Idx start, Idx stride, Idx n_scenarios) {
+            if (stride == 0) {
+                FAIL("Can't have stride of zero");
+            }
+            return (n_scenarios - start + stride - 1) / stride;
+        };
+
+        auto check_call_numbers = [](Idx expected_calls) {
+            CHECK(global_setup_calls == expected_calls);
+            CHECK(global_winddown_calls == expected_calls);
+            CHECK(global_calculate_calls == expected_calls);
+            CHECK(global_thread_safe_add_calculation_info_calls == 1); // always called once
+        };
+
+        adapter.prepare_job_dispatch(update_data); // replicate preparation step from batch_calculation
+        auto single_job = JobDispatch::single_thread_job(adapter, result_data, update_data, exceptions);
+
+        reset_global_counters();
+        start = 0;
+        stride = 1;
+        call_number = get_call_number(start, stride, n_scenarios);
+        CAPTURE(call_number);
+        CHECK_NOTHROW(single_job(start, stride, n_scenarios));
+        check_call_numbers(call_number);
+
+        reset_global_counters();
+        start = 0;
+        stride = 4;
+        call_number = get_call_number(start, stride, n_scenarios);
+        CAPTURE(call_number);
+        CHECK_NOTHROW(single_job(start, stride, n_scenarios));
+        check_call_numbers(call_number);
+
+        reset_global_counters();
+        start = 3;
+        stride = 2;
+        call_number = get_call_number(start, stride, n_scenarios);
+        CAPTURE(call_number);
+        CHECK_NOTHROW(single_job(start, stride, n_scenarios));
+        check_call_numbers(call_number);
+    }
     SUBCASE("job_dispatch") {}
     SUBCASE("n_threads") {
         auto const hardware_thread = static_cast<Idx>(std::thread::hardware_concurrency());
@@ -99,21 +180,23 @@ TEST_CASE("Test job dispatch logic") {
             if (hardware_thread >= 2) {
                 threading = 0; // use hardware threads
                 CHECK(JobDispatch::n_threads(n_scenarios, threading) == hardware_thread);
-
-                threading = n_scenarios - 1; // use specified threading
-                CHECK(JobDispatch::n_threads(n_scenarios, threading) == threading);
-
-                threading = n_scenarios + 1; // use n_scenarios as threading
-                CHECK(JobDispatch::n_threads(n_scenarios, threading) == n_scenarios);
             }
+
+            threading = n_scenarios - 1; // use specified threading
+            CHECK(JobDispatch::n_threads(n_scenarios, threading) == threading);
+
+            threading = n_scenarios + 1; // use n_scenarios as threading
+            CHECK(JobDispatch::n_threads(n_scenarios, threading) == n_scenarios);
         }
     }
     SUBCASE("call_with") {
-        auto setup_called = Idx{0};
-        auto run_called = Idx{0};
-        auto winddown_called = Idx{0};
-        auto handle_exception_called = Idx{0};
-        auto recover_from_bad_called = Idx{0};
+        // These call counters are local as are unrelated to the adapter mock
+        // and are only used to test the call_with functionality
+        Idx setup_called{0};
+        Idx run_called{0};
+        Idx winddown_called{0};
+        Idx handle_exception_called{0};
+        Idx recover_from_bad_called{0};
 
         auto setup_fn = [&setup_called](Idx) { setup_called++; };
         auto run_fn_no_throw = [&run_called](Idx) { run_called++; };
@@ -189,13 +272,10 @@ TEST_CASE("Test job dispatch logic") {
         }
     }
     SUBCASE("handle_batch_exceptions") {
-        SUBCASE("No exceptions") {
-            std::vector<std::string> const empty_exceptions{};
-            CHECK_NOTHROW(JobDispatch::handle_batch_exceptions(empty_exceptions));
-        }
+        n_scenarios = 5; // arbitrary non-zero value
+        exceptions.resize(n_scenarios);
+        SUBCASE("No exceptions") { CHECK_NOTHROW(JobDispatch::handle_batch_exceptions(exceptions)); }
         SUBCASE("With exceptions") {
-            Idx n_scenarios = 5; // arbitrary non-zero value
-            std::vector<std::string> exceptions(n_scenarios, "");
             exceptions[0] = "Error in scenario 0";
             exceptions[3] = "Error in scenario 3";
             CHECK_THROWS_AS(JobDispatch::handle_batch_exceptions(exceptions), BatchCalculationError);
