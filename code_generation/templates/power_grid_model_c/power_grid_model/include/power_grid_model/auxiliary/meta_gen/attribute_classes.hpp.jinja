@@ -16,7 +16,7 @@
 
 #include "../{{ name }}.hpp" // NOLINT
 
-
+{% autoescape false %}
 namespace power_grid_model::meta_data {
 
 // template specialization to get list of attributes in the value field
@@ -43,5 +43,5 @@ struct get_attributes_list<{{ attribute_class.name }}> {
 
 
 } // namespace power_grid_model::meta_data
-
+{% endautoescape %}
 // clang-format on

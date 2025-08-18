@@ -12,7 +12,7 @@ DATA_DIR = Path(__file__).parent / "data"
 TEMPLATE_DIR = Path(__file__).parent / "templates"
 OUTPUT_PATH = Path(__file__).parents[1]
 
-JINJA_ENV = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
+JINJA_ENV = Environment(loader=FileSystemLoader(TEMPLATE_DIR), autoescape=True)
 
 
 def _data_type_nan(data_type: str):

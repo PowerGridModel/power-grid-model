@@ -155,7 +155,7 @@ select = [
 
 ignore = [
     "UP038", # deprecated, https://docs.astral.sh/ruff/rules/non-pep604-isinstance/#deprecation
-    "S701", # can't be supported, autoescape=True generates the files incorrectly.
+    # "S701", # can't be supported, autoescape=True generates the files incorrectly.
     "PT019" # flags false positives
     ]
 
