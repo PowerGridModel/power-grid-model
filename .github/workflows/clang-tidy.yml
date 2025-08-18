@@ -47,7 +47,7 @@ jobs:
       TARGET: nonexistent  # will be overwritten later in this action
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install packages
         run: |
