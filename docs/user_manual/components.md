@@ -885,11 +885,12 @@ Valid combinations of `power_sigma`, `p_sigma` and `q_sigma` are:
 |               |           |           | &#10060; |
 
 ```{note}
-1. If both `p_sigma` and `q_sigma` are provided, they represent the standard deviation of the active and reactive power,
-respectively, and the value of `power_sigma` is ignored. Any infinite component invalidates the entire measurement.
+1. If both `p_sigma` and `q_sigma` are provided (i.e., not NaN), they represent the standard deviation of the active and
+reactive power, respectively, and the value of `power_sigma` is ignored. Any infinite component disables the entire
+measurement.
 
 2. If neither `p_sigma` nor `q_sigma` are provided, `power_sigma` represents the standard deviation of the apparent
-power.
+power. In this case, infinite value of `power_sigma` disables the entire measurement.
 
 3. Providing only one of `p_sigma` and `q_sigma` results in undefined behaviour.
 ```
