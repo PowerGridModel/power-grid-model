@@ -156,7 +156,7 @@ select = [
 ignore = [
     "UP038", # deprecated, https://docs.astral.sh/ruff/rules/non-pep604-isinstance/#deprecation
     "PT019" # flags false positives
-    ]
+]
 
 [tool.ruff.lint.isort]
 # Imports that are imported using keyword "as" and are from the same source - are combined.
