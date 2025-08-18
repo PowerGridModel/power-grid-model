@@ -25,9 +25,6 @@ class Timer {
 
   public:
     Timer() : info_(nullptr), code_{LoggingTag::unknown} {};
-
-    explicit Timer(CalculationInfo& info, int code, std::string /*name*/) // TODO(mgovers): remove
-        : Timer(info, static_cast<LoggingTag>(code)) {}
     Timer(CalculationInfo& info, LoggingTag code) : info_{&info}, code_{code}, start_{Clock::now()} {}
 
     Timer(Timer const&) = delete;

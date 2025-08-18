@@ -11,7 +11,7 @@
 namespace power_grid_model {
 namespace common::logging {
 
-enum class LoggingTag : Idx {
+enum class LoggingTag : int32_t {
     unknown = -1,
     log = 0,
     total = 100000,       // TODO(mgovers): find other error code?
@@ -107,7 +107,8 @@ constexpr auto to_string(LoggingTag tag) {
     case produce_output:
         return "Produce output"s;
     case iterative_pf_solver_max_num_iter:
-        return "Max number of iterations"s; // TODO(mgovers): different messages?
+        // return "Max number of iterations"s; // TODO(mgovers): different messages?
+        [[fallthrough]];
     case max_num_iter:
         return "Max number of iterations"s; // TODO(mgovers): different messages?
     default:
