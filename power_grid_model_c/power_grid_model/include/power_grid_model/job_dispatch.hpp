@@ -5,10 +5,10 @@
 #pragma once
 
 #include "batch_parameter.hpp"
-#include "common/exception.hpp"
-#include "common/typing.hpp"
 #include "job_interface.hpp"
 
+#include "common/exception.hpp"
+#include "common/typing.hpp"
 #include "main_core/calculation_info.hpp"
 
 #include <thread>
