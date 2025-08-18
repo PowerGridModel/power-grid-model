@@ -45,7 +45,7 @@ enum class LoggingTag : int32_t {
     max_num_iter = 1002228,                     // TODO(mgovers): find other error code
 };
 
-constexpr auto to_string(LoggingTag tag) {
+constexpr std::string to_string(LoggingTag tag) {
     using enum LoggingTag;
     using namespace std::string_literals;
 
