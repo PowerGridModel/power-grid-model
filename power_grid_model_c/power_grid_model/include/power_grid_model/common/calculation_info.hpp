@@ -13,6 +13,6 @@
 
 namespace power_grid_model {
 
-using CalculationInfo = std::map<LoggingTag, double>;
+using CalculationInfo = std::map<LogEvent, double>;
 
 } // namespace power_grid_model

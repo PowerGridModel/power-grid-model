@@ -12,8 +12,8 @@ namespace power_grid_model::main_core {
 
 inline CalculationInfo& merge_into(CalculationInfo& destination, CalculationInfo const& source) {
     static constexpr auto key =
-        LoggingTag::iterative_pf_solver_max_num_iter; // TODO(mgovers) also add LoggingTag::max_num_iter; this is a bug
-                                                      // in main
+        LogEvent::iterative_pf_solver_max_num_iter; // TODO(mgovers) also add LogEvent::max_num_iter; this is a bug
+                                                    // in main
     for (auto const& [k, v] : source) {
         if (k == key) {
             destination[k] = std::max(destination[k], v);

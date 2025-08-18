@@ -11,7 +11,7 @@
 namespace power_grid_model {
 namespace common::logging {
 
-enum class LoggingTag : int32_t {
+enum class LogEvent : int32_t {
     unknown = -1,
     log = 0,
     total = 100000,       // TODO(mgovers): find other error code?
@@ -45,8 +45,8 @@ enum class LoggingTag : int32_t {
     max_num_iter = 1002228,                     // TODO(mgovers): find other error code
 };
 
-constexpr std::string to_string(LoggingTag tag) {
-    using enum LoggingTag;
+constexpr std::string to_string(LogEvent tag) {
+    using enum LogEvent;
     using namespace std::string_literals;
 
     switch (tag) {
@@ -118,6 +118,6 @@ constexpr std::string to_string(LoggingTag tag) {
 
 } // namespace common::logging
 
-using common::logging::LoggingTag;
+using common::logging::LogEvent;
 
 } // namespace power_grid_model

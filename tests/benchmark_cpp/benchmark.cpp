@@ -20,9 +20,9 @@ MathSolverDispatcher const& get_math_solver_dispatcher() {
     return math_solver_dispatcher;
 }
 
-std::string make_key(LoggingTag code) {
+std::string make_key(LogEvent code) {
     std::stringstream ss;
-    ss << std::setw(4) << std::setfill('0') << static_cast<std::underlying_type_t<LoggingTag>>(code) << ".";
+    ss << std::setw(4) << std::setfill('0') << static_cast<std::underlying_type_t<LogEvent>>(code) << ".";
     auto key = ss.str();
     for (size_t i = 0, n = key.length() - 1; i < n; ++i) {
         if (key[i] == '0') {
@@ -124,34 +124,34 @@ struct PowerGridBenchmark {
 
         {
             std::cout << "*****Run with initialization*****\n";
-            Timer const t_total{info, LoggingTag::total};
+            Timer const t_total{info, LogEvent::total};
             {
-                Timer const t_build{info, LoggingTag::build_model};
+                Timer const t_build{info, LogEvent::build_model};
                 main_model = std::make_unique<MainModel>(50.0, input.get_dataset(), get_math_solver_dispatcher());
             }
             run(single_scenario);
         }
-        print(info);
+        print_info(info);
         info.clear();
         {
             std::cout << "\n*****Run without initialization*****\n";
-            Timer const t_total{info, LoggingTag::total};
+            Timer const t_total{info, LogEvent::total};
             run(single_scenario);
         }
-        print(info);
+        print_info(info);
 
         if (batch_size > 0) {
             info.clear();
             std::cout << "\n*****Run with batch calculation*****\n";
-            Timer const t_total{info, LoggingTag::total};
+            Timer const t_total{info, LogEvent::total};
             run(batch_size);
         }
-        print(info);
+        print_info(info);
 
         std::cout << "\n\n";
     }
 
-    static void print(CalculationInfo const& info) {
+    static void print_info(CalculationInfo const& info) {
         for (auto const& [key, val] : info) {
             std::cout << make_key(key) << ": " << val << '\n';
         }

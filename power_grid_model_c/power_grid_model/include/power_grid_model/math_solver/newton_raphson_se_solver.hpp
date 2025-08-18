@@ -161,16 +161,16 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
         output.bus_injection.resize(n_bus_);
         double max_dev = std::numeric_limits<double>::max();
 
-        main_timer = Timer{calculation_info, LoggingTag::math_solver};
+        main_timer = Timer{calculation_info, LogEvent::math_solver};
 
         // preprocess measured value
-        sub_timer = Timer{calculation_info, LoggingTag::preprocess_measured_value};
+        sub_timer = Timer{calculation_info, LogEvent::preprocess_measured_value};
         MeasuredValues<sym> const measured_values{y_bus.shared_topology(), input};
         auto const observability_result =
             observability_check(measured_values, y_bus.math_topology(), y_bus.y_bus_structure());
 
         // initialize voltage with initial angle
-        sub_timer = Timer{calculation_info, LoggingTag::initialize_voltages};
+        sub_timer = Timer{calculation_info, LogEvent::initialize_voltages};
         initialize_unknown(output.u, measured_values);
 
         // loop to iterate
@@ -179,26 +179,26 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
             if (num_iter++ == max_iter) {
                 throw IterationDiverge{max_iter, max_dev, err_tol};
             }
-            sub_timer = Timer{calculation_info, LoggingTag::prepare_lhs_rhs};
+            sub_timer = Timer{calculation_info, LogEvent::prepare_lhs_rhs};
             prepare_matrix_and_rhs(y_bus, measured_values, output.u);
             // solve with prefactorization
-            sub_timer = Timer{calculation_info, LoggingTag::solve_sparse_linear_equation};
+            sub_timer = Timer{calculation_info, LogEvent::solve_sparse_linear_equation};
             sparse_solver_.prefactorize_and_solve(data_gain_, perm_, delta_x_rhs_, delta_x_rhs_,
                                                   observability_result.use_perturbation());
-            sub_timer = Timer{calculation_info, LoggingTag::iterate_unknown};
+            sub_timer = Timer{calculation_info, LogEvent::iterate_unknown};
             max_dev = iterate_unknown(output.u, measured_values);
         };
 
         // calculate math result
-        sub_timer = Timer{calculation_info, LoggingTag::calculate_math_result};
+        sub_timer = Timer{calculation_info, LogEvent::calculate_math_result};
         detail::calculate_se_result<sym>(y_bus, measured_values, output);
 
         // Manually stop timers to avoid "Max number of iterations" to be included in the timing.
         sub_timer.stop();
         main_timer.stop();
 
-        calculation_info[LoggingTag::max_num_iter] =
-            std::max(calculation_info[LoggingTag::max_num_iter], static_cast<double>(num_iter));
+        calculation_info[LogEvent::max_num_iter] =
+            std::max(calculation_info[LogEvent::max_num_iter], static_cast<double>(num_iter));
 
         return output;
     }
