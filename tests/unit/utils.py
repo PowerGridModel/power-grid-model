@@ -260,7 +260,7 @@ def compare_result(actual: SingleDataset, expected: SingleDataset, rtol: float, 
             elif expected_col.dtype == np.int32:
                 expect_all_nan = np.all(expected_col == np.iinfo("i4").min)
             else:
-                raise Exception(f"Unknown data type {expected_col.dtype}!")
+                raise Exception(f"Unknown data type {expected_col.dtype}!")  # noqa: TRY002
 
             if not expect_all_nan:
                 # permute expected_col if needed

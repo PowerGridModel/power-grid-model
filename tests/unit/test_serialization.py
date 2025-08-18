@@ -691,7 +691,7 @@ def test_json_serialize_empty_dataset(dataset_type, use_compact_list: bool):
         assert isinstance(result, str)
         assert result == reference
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="At least one component should have row based data."):
             json_serialize({}, use_compact_list=use_compact_list, indent=indent)
 
 
@@ -713,7 +713,7 @@ def test_msgpack_serialize_empty_dataset(dataset_type, use_compact_list):
     reference = empty_dataset(dataset_type)
     assert from_msgpack(msgpack_serialize({}, dataset_type, use_compact_list=use_compact_list)) == reference
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="At least one component should have row based data."):
         json_serialize({}, use_compact_list=use_compact_list)
 
 
@@ -731,7 +731,7 @@ def test_serialize_deserialize_type_deduction(deserialize, serialize, serialized
     if is_serialized_data_type_deducible(serialized_data, data_filter=data_filters):
         assert serialize(deserialized_data) == full_result
     else:
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="The dataset type could not be deduced"):
             serialize(deserialized_data)
 
 

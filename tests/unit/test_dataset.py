@@ -48,7 +48,7 @@ def test_const_dataset__empty_dataset(dataset_type):
     assert info.elements_per_scenario() == {}
     assert info.total_elements() == {}
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="The dataset type could not be deduced."):
         CConstDataset(data={})
 
 
@@ -157,7 +157,7 @@ def test_const_dataset__mixed_batch_size(dataset_type):
         ComponentType.node: np.zeros(shape=(2, 3), dtype=power_grid_meta_data[dataset_type][ComponentType.node]),
         ComponentType.line: np.zeros(shape=(3, 3), dtype=power_grid_meta_data[dataset_type][ComponentType.line]),
     }
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Provided 'batch size' is incorrect for the provided data."):
         CConstDataset(data, dataset_type)
 
 
@@ -193,5 +193,5 @@ def test_const_dataset__different_dtype(dataset_type, dtype, supported):
         result = CConstDataset(data, dataset_type)
         assert result.get_info().total_elements() == {ComponentType.node: 3}
     else:
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Data type does not match schema."):
             CConstDataset(data, dataset_type)
