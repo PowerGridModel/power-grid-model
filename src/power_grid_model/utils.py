@@ -282,7 +282,7 @@ def _compatibility_deprecated_export_json_data(
         file_pointer.write(old_format_serialized_data)
 
 
-def import_input_data(json_file: Path) -> SingleDataset:
+def import_input_data(json_file: Path) -> SingleDataset:  # pragma: no cover
     """
     [deprecated] Import input json data.
 
@@ -400,13 +400,13 @@ def self_test():
             with Path(output_file_path).open("r", encoding="utf-8") as output_file:
                 output_data = json.load(output_file)
 
-            if output_data is None:
+            if output_data is None:  # pragma: no cover
                 raise ValueError("Output data should not be None")
             if not math.isclose(
                 output_data["data"][ComponentType.node][0]["u"],
                 input_data["data"][ComponentType.node][0]["u_rated"],
                 abs_tol=1e-9,
-            ):
+            ):  # pragma: no cover
                 raise ValueError("The difference between the input and output data is too big.")
 
             print("Self test finished.")
