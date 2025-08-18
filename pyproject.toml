@@ -152,10 +152,12 @@ select = [
     "TRY002",
     "PT"
 ]
-# UP038 is deprecated, https://docs.astral.sh/ruff/rules/non-pep604-isinstance/#deprecation
-# S701 can't be supported, autoescape=True generates the files incorrectly.
-# PT019 flags false positives
-ignore = ["UP038", "S701", "PT019"]
+
+ignore = [
+    "UP038", # UP038 is deprecated, https://docs.astral.sh/ruff/rules/non-pep604-isinstance/#deprecation
+    "S701", # S701 can't be supported, autoescape=True generates the files incorrectly.
+    "PT019" # PT019 flags false positives
+    ]
 
 [tool.ruff.lint.isort]
 # Imports that are imported using keyword "as" and are from the same source - are combined.
