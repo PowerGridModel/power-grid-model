@@ -63,14 +63,14 @@ class JobAdapterMock : public JobInterface<JobAdapterMock> {
 
     std::shared_ptr<CallCounter> counter_;
 
-    void calculate_impl(MockResultDataset const& /*result_data*/, Idx /*scenario_idx*/) { counter_->calculate_calls++; }
-    void cache_calculate_impl() { counter_->cache_calculate_calls++; }
+    void calculate_impl(MockResultDataset const& /*result_data*/, Idx /*scenario_idx*/) { ++counter_->calculate_calls; }
+    void cache_calculate_impl() { ++counter_->cache_calculate_calls; }
     void prepare_job_dispatch_impl(MockUpdateDataset const& /*update_data*/) {}
-    void setup_impl(MockUpdateDataset const& /*update_data*/, Idx /*scenario_idx*/) { counter_->setup_calls++; }
-    void winddown_impl() { counter_->winddown_calls++; }
+    void setup_impl(MockUpdateDataset const& /*update_data*/, Idx /*scenario_idx*/) { ++counter_->setup_calls; }
+    void winddown_impl() { ++counter_->winddown_calls; }
     CalculationInfo get_calculation_info_impl() const { return CalculationInfo{{"default", 0.0}}; }
     void thread_safe_add_calculation_info_impl(CalculationInfo const& /*info*/) {
-        counter_->thread_safe_add_calculation_info_calls++;
+        ++counter_->thread_safe_add_calculation_info_calls;
     }
     auto get_current_scenario_sequence_view_() {}
 };
