@@ -4,25 +4,22 @@
 
 #pragma once
 
+#include "../common/calculation_info.hpp"
 #include "../common/common.hpp"
+#include "../common/timer.hpp"
 
 namespace power_grid_model::main_core {
 
-inline CalculationInfo merge_calculation_info(std::vector<CalculationInfo> const& infos) {
-    CalculationInfo result;
-
-    auto const key = Timer::make_key(2226, "Max number of iterations");
-    for (auto const& info : infos) {
-        for (auto const& [k, v] : info) {
-            if (k == key) {
-                result[k] = std::max(result[k], v);
-            } else {
-                result[k] += v;
-            }
+inline CalculationInfo& merge_into(CalculationInfo& destination, CalculationInfo const& source) {
+    static auto const key = Timer::make_key(2226, "Max number of iterations");
+    for (auto const& [k, v] : source) {
+        if (k == key) {
+            destination[k] = std::max(destination[k], v);
+        } else {
+            destination[k] += v;
         }
     }
-
-    return result;
+    return destination;
 }
 
 } // namespace power_grid_model::main_core

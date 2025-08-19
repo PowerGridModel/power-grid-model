@@ -10,7 +10,7 @@
 #include "forward_declarations.hpp"
 #include "power_grid_model_c/dataset_definitions.h"
 #include "power_grid_model_c/meta_data.h"
-
+{% autoescape false %}
 {% for dataset, components in all_map.items() -%}
 // dataset {{ dataset }}
 PGM_MetaDataset const* const PGM_def_{{ dataset }} = PGM_meta_get_dataset_by_name(nullptr, "{{ dataset }}");
@@ -26,6 +26,6 @@ PGM_MetaAttribute const* const PGM_def_{{ dataset }}_{{ component }}_{{ attribut
 {% endfor -%}
 
 //
-
+{% endautoescape %}
 // clang-format on
 

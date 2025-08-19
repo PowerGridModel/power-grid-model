@@ -27,7 +27,7 @@ jobs:
       CMAKE_PREFIX_PATH: /home/linuxbrew/.linuxbrew
       LLVM_COV: llvm-cov-18
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
       - name: Install packages
@@ -46,8 +46,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install sonar-scanner and build-wrapper
-        uses: SonarSource/sonarcloud-github-c-cpp@v3
+      - name: Install build-wrapper
+        uses: SonarSource/sonarqube-scan-action/install-build-wrapper@v5
         
       - name: Python test and coverage
         run: |
@@ -70,11 +70,13 @@ jobs:
           # remove branch hits count, since it does not make sense in heavy C++ templates
           sed -i -r "s/\s*branchesToCover\s*=\s*\"[0-9]+\"\s+coveredBranches\s*=\s*\"[0-9]+\"//g" cpp_coverage.xml
 
-      - name: Run sonar-scanner
+      - name: SonarQube Scan
         # only run sonar server in push event or pull request event from own repo
-        if: ${{ (github.event_name == 'push') || (github.event.pull_request.head.repo.owner.login == 'PowerGridModel') }} 
+        if: ${{ (github.event_name == 'push') || (github.event.pull_request.head.repo.owner.login == 'PowerGridModel') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          sonar-scanner --define sonar.cfamily.compile-commands="${{ env.BUILD_WRAPPER_OUT_DIR }}/compile_commands.json"
+        uses: SonarSource/sonarqube-scan-action@v5
+        with:
+          args: >
+            --define sonar.cfamily.compile-commands="${{ env.BUILD_WRAPPER_OUT_DIR }}/compile_commands.json"

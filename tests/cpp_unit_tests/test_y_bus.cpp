@@ -74,13 +74,13 @@ TEST_CASE("Test y bus") {
                              0, 1, 0, 1, 2, 1, 2, 3, 2, 3};
     Idx nnz = 10; // Number of non-zero elements in Y bus
     IdxVector bus_entry = {0, 3, 6, 9};
-    IdxVector lu_transpose_entry = {// Flip the id's of non-diagonal elements
-                                    0, 2, 1, 3, 5, 4, 6, 8, 7, 9};
-    IdxVector y_bus_entry_indptr = {0,  3,      // 0, 1, 2 belong to element [0,0] in Ybus /  3,4 to element [0,1]
-                                    5,  7,  10, // 5,6 to [1,0] / 7, 8, 9 to [1,1] / 10 to [1,2]
-                                    11, 12, 16, // 11 to [2,1] / 12, 13, 14, 15 to [2,2] / 16, 17 to [2,3]
-                                    18, 20,     // 18, 19 to [3,2] / 20, 21, 22  to [3,3]
-                                    23};
+    IdxVector const lu_transpose_entry = {// Flip the id's of non-diagonal elements
+                                          0, 2, 1, 3, 5, 4, 6, 8, 7, 9};
+    IdxVector const y_bus_entry_indptr = {0,  3,      // 0, 1, 2 belong to element [0,0] in Ybus /  3,4 to element [0,1]
+                                          5,  7,  10, // 5,6 to [1,0] / 7, 8, 9 to [1,1] / 10 to [1,2]
+                                          11, 12, 16, // 11 to [2,1] / 12, 13, 14, 15 to [2,2] / 16, 17 to [2,3]
+                                          18, 20,     // 18, 19 to [3,2] / 20, 21, 22  to [3,3]
+                                          23};
     IdxVector map_lu_y_bus = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     ComplexTensorVector<symmetric_t> admittance_sym = {
         17.0 + 104.0i,  // 0, 0 -> {1, 0}tt + {0, 1}ff + shunt(0) = 4.0i + 17.0 + 100.0i
@@ -210,12 +210,12 @@ TEST_CASE("Test one bus system") {
     topo.shunts_per_bus = {from_sparse, {0, 0}};
 
     // output
-    IdxVector indptr = {0, 1};
-    IdxVector col_indices = {0};
+    IdxVector const indptr = {0, 1};
+    IdxVector const col_indices = {0};
     Idx nnz = 1;
-    IdxVector bus_entry = {0};
-    IdxVector lu_transpose_entry = {0};
-    IdxVector y_bus_entry_indptr = {0, 0};
+    IdxVector const bus_entry = {0};
+    IdxVector const lu_transpose_entry = {0};
+    IdxVector const y_bus_entry_indptr = {0, 0};
 
     YBus<symmetric_t> const ybus{std::make_shared<MathModelTopology const>(topo),
                                  std::make_shared<MathModelParam<symmetric_t> const>(param)};
@@ -247,19 +247,19 @@ TEST_CASE("Test fill-in y bus") {
     topo.shunts_per_bus = {from_sparse, {0, 0, 0, 0}};
     topo.fill_in = {{1, 2}};
 
-    IdxVector row_indptr = {0, 3, 5, 7};
-    IdxVector col_indices = {0, 1, 2, 0, 1, 0, 2};
-    IdxVector bus_entry = {0, 4, 6};
-    IdxVector lu_transpose_entry = {0, 3, 6, 1, 4, 7, 2, 5, 8};
-    IdxVector y_bus_entry_indptr = {0, 2,              // 0, 1 belong to element [0,0] in Ybus
-                                    3, 4, 5, 6, 7, 8}; // everything else has only one entry
+    IdxVector const row_indptr = {0, 3, 5, 7};
+    IdxVector const col_indices = {0, 1, 2, 0, 1, 0, 2};
+    IdxVector const bus_entry = {0, 4, 6};
+    IdxVector const lu_transpose_entry = {0, 3, 6, 1, 4, 7, 2, 5, 8};
+    IdxVector const y_bus_entry_indptr = {0, 2,              // 0, 1 belong to element [0,0] in Ybus
+                                          3, 4, 5, 6, 7, 8}; // everything else has only one entry
     // lu matrix
-    IdxVector row_indptr_lu = {0, 3, 6, 9};
-    IdxVector col_indices_lu = {0, 1, 2, 0, 1, 2, 0, 1, 2};
-    IdxVector map_lu_y_bus = {0, 1, 2, 3, 4, -1, 5, -1, 6};
-    IdxVector diag_lu = {0, 4, 8};
+    IdxVector const row_indptr_lu = {0, 3, 6, 9};
+    IdxVector const col_indices_lu = {0, 1, 2, 0, 1, 2, 0, 1, 2};
+    IdxVector const map_lu_y_bus = {0, 1, 2, 3, 4, -1, 5, -1, 6};
+    IdxVector const diag_lu = {0, 4, 8};
 
-    YBusStructure ybus{topo};
+    YBusStructure const ybus{topo};
 
     CHECK(row_indptr == ybus.row_indptr);
     CHECK(col_indices == ybus.col_indices);
@@ -403,24 +403,24 @@ TEST_CASE("Incremental update y-bus") {
         verify_admittance(ybus.admittance(), admittance_sym);
 
         auto branch_param_to_change_views =
-            boost::irange(0, static_cast<int>(param_sym_update.branch_param.size())) |
-            boost::adaptors::filtered([&param_sym_update](Idx i) {
+            IdxRange{static_cast<int>(param_sym_update.branch_param.size())} |
+            std::views::filter([&param_sym_update](Idx i) {
                 return param_sym_update.branch_param[i].yff() != ComplexTensor<symmetric_t>{0.0} ||
                        param_sym_update.branch_param[i].yft() != ComplexTensor<symmetric_t>{0.0} ||
                        param_sym_update.branch_param[i].ytf() != ComplexTensor<symmetric_t>{0.0} ||
                        param_sym_update.branch_param[i].ytt() != ComplexTensor<symmetric_t>{0.0};
             });
         auto shunt_param_to_change_views =
-            boost::irange(0, static_cast<int>(param_sym_update.shunt_param.size())) |
-            boost::adaptors::filtered([&param_sym_update](Idx i) {
+            IdxRange{static_cast<int>(param_sym_update.shunt_param.size())} |
+            std::views::filter([&param_sym_update](Idx i) {
                 return param_sym_update.shunt_param[i] != ComplexTensor<symmetric_t>{0.0};
             });
 
         MathModelParamIncrement math_model_param_incrmt;
-        math_model_param_incrmt.branch_param_to_change = {branch_param_to_change_views.begin(),
-                                                          branch_param_to_change_views.end()};
-        math_model_param_incrmt.shunt_param_to_change = {shunt_param_to_change_views.begin(),
-                                                         shunt_param_to_change_views.end()};
+        std::ranges::copy(branch_param_to_change_views,
+                          std::back_inserter(math_model_param_incrmt.branch_param_to_change));
+        std::ranges::copy(shunt_param_to_change_views,
+                          std::back_inserter(math_model_param_incrmt.shunt_param_to_change));
 
         auto param_update_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param_sym_update);
 

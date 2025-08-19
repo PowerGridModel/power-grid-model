@@ -5,7 +5,9 @@
 """
 Option class
 """
-from typing import Any, Callable
+
+from collections.abc import Callable
+from typing import Any
 
 from power_grid_model._core.power_grid_core import OptionsPtr, power_grid_core as pgc
 

@@ -703,8 +703,8 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                     std::ranges::fill(id_buffer, 1);
                     check_all_spans();
 
-                    std::transform(boost::counting_iterator<ID>{0}, boost::counting_iterator<ID>{total_elements},
-                                   id_buffer.begin(), [](ID value) { return value * 2; });
+                    std::ranges::transform(std::ranges::iota_view{ID{0}, total_elements}, id_buffer.begin(),
+                                           [](ID value) { return value * 2; });
 
                     check_all_spans();
                     std::ranges::transform(id_buffer, a1_buffer.begin(),
@@ -775,9 +775,8 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                                 std::ranges::fill(id_buffer, 1);
                                 check_all_spans(scenario);
 
-                                std::transform(boost::counting_iterator<ID>{0},
-                                               boost::counting_iterator<ID>{total_elements}, id_buffer.begin(),
-                                               [](ID value) { return value * 2; });
+                                std::ranges::transform(std::ranges::iota_view{ID{0}, total_elements}, id_buffer.begin(),
+                                                       [](ID value) { return value * 2; });
                                 check_all_spans(scenario);
 
                                 std::ranges::transform(id_buffer, a1_buffer.begin(),
@@ -844,8 +843,8 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                     std::ranges::fill(id_buffer, 1);
                     check_all_spans();
 
-                    std::transform(boost::counting_iterator<ID>{0}, boost::counting_iterator<ID>{total_elements},
-                                   id_buffer.begin(), [](ID value) { return value * 2; });
+                    std::ranges::transform(std::ranges::iota_view{ID{0}, total_elements}, id_buffer.begin(),
+                                           [](ID value) { return value * 2; });
                     check_all_spans();
 
                     std::ranges::transform(id_buffer, a1_buffer.begin(),
@@ -929,9 +928,8 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                             std::ranges::fill(id_buffer, 1);
                             check_all_spans.template operator()<DatasetType>(dataset, scenario);
 
-                            std::transform(boost::counting_iterator<ID>{0},
-                                           boost::counting_iterator<ID>{static_cast<ID>(total_elements)},
-                                           id_buffer.begin(), [](ID value) { return value * 2; });
+                            std::ranges::transform(std::ranges::iota_view{ID{0}, static_cast<ID>(total_elements)},
+                                                   id_buffer.begin(), [](ID value) { return value * 2; });
                             check_all_spans.template operator()<DatasetType>(dataset, scenario);
 
                             std::ranges::transform(id_buffer, a1_buffer.begin(),
@@ -1060,6 +1058,9 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                 auto a_buffer = std::vector<A::InputType>(a_elements_per_scenario * batch_size);
                 auto b_buffer = std::vector<A::InputType>(3);
                 auto b_indptr = std::vector<Idx>{0, 0, narrow_cast<Idx>(b_buffer.size())};
+                std::ranges::transform(IdxRange(0, std::ssize(a_buffer)), a_buffer.begin(), [](Idx idx) {
+                    return A::InputType{.id = static_cast<ID>(idx), .a1 = static_cast<double>(idx)};
+                });
                 add_homogeneous_buffer(dataset, A::name, a_elements_per_scenario, static_cast<void*>(a_buffer.data()));
                 add_inhomogeneous_buffer(dataset, B::name, b_buffer.size(), b_indptr.data(),
                                          static_cast<void*>(b_buffer.data()));
@@ -1070,6 +1071,9 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                 auto a_id_buffer = std::vector<ID>(a_elements_per_scenario * batch_size);
                 auto a_a1_buffer = std::vector<double>(a_elements_per_scenario * batch_size);
                 auto b_indptr = std::vector<Idx>{0, 0, 3};
+
+                std::iota(a_id_buffer.begin(), a_id_buffer.end(), ID{0});
+                std::iota(a_a1_buffer.begin(), a_a1_buffer.end(), 0.0);
 
                 add_homogeneous_buffer(dataset, A::name, a_elements_per_scenario, nullptr);
                 add_attribute_buffer(dataset, A::name, "id", static_cast<void*>(a_id_buffer.data()));

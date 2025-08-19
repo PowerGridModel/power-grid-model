@@ -11,7 +11,7 @@ include("cmake/pgm_version.cmake")
 
 project (power_grid_model VERSION ${PGM_VERSION})
 
-option(PGM_ENABLE_TESTS "Enable tests" OFF)
+option(PGM_ENABLE_DEV_BUILD "Enable developer build (e.g.: tests)" OFF)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

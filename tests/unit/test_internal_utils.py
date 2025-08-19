@@ -11,7 +11,7 @@ import pytest
 from power_grid_model import ComponentType, DatasetType, initialize_array
 from power_grid_model._core.dataset_definitions import ComponentType as CT, DatasetType as DT
 from power_grid_model._core.power_grid_meta import power_grid_meta_data
-from power_grid_model._utils import (
+from power_grid_model._core.utils import (
     compatibility_convert_row_columnar_dataset,
     convert_batch_dataset_to_batch_list,
     convert_dataset_to_python_dataset,
@@ -131,26 +131,26 @@ def test_is_nan():
 
 
 def test_convert_json_to_numpy(two_nodes_one_line, two_nodes_two_lines):
-    pgm_data = convert_python_to_numpy(two_nodes_one_line, "input")
-    assert len(pgm_data) == 2
-    assert len(pgm_data["node"]) == 2
-    assert pgm_data["node"][0]["id"] == 11
-    assert pgm_data["node"][0]["u_rated"] == 10.5e3
-    assert len(pgm_data["line"]) == 1
+    pgm_data = convert_python_to_numpy(two_nodes_one_line, DatasetType.input)
+    assert len(pgm_data) == len(two_nodes_one_line)
+    assert len(pgm_data[ComponentType.node]) == len(two_nodes_one_line[ComponentType.node])
+    assert pgm_data[ComponentType.node][0]["id"] == two_nodes_one_line[ComponentType.node][0]["id"]
+    assert pgm_data[ComponentType.node][0]["u_rated"] == two_nodes_one_line[ComponentType.node][0]["u_rated"]
+    assert np.isclose(pgm_data[ComponentType.node][0]["u_rated"], 10.5e3, rtol=1e-09, atol=1e-09)
 
     json_list = [two_nodes_one_line, two_nodes_two_lines, two_nodes_one_line]
-    pgm_data_batch = convert_python_to_numpy(json_list, "input")
-    assert pgm_data_batch["node"].shape == (3, 2)
-    assert np.allclose(pgm_data_batch["line"]["indptr"], [0, 1, 3, 4])
+    pgm_data_batch = convert_python_to_numpy(json_list, DatasetType.input)
+    assert pgm_data_batch[ComponentType.node].shape == (3, 2)
+    assert np.allclose(pgm_data_batch[ComponentType.line]["indptr"], [0, 1, 3, 4])
 
 
 def test_round_trip_json_numpy_json(two_nodes_one_line, two_nodes_two_lines):
-    pgm_data = convert_python_to_numpy(two_nodes_one_line, "input")
+    pgm_data = convert_python_to_numpy(two_nodes_one_line, DatasetType.input)
     json_dict = convert_dataset_to_python_dataset(pgm_data)
     assert json_dict == two_nodes_one_line
 
     json_list = [two_nodes_one_line, two_nodes_two_lines, two_nodes_one_line]
-    pgm_data_list = convert_python_to_numpy(json_list, "input")
+    pgm_data_list = convert_python_to_numpy(json_list, DatasetType.input)
     json_return_list = convert_dataset_to_python_dataset(pgm_data_list)
     assert json_return_list == json_list
 
@@ -369,7 +369,7 @@ def test_convert_batch_dataset_to_batch_list_one_batch_dense():
     assert_list_of_dicts_of_numpy_arrays_equal(expected, actual)
 
 
-@patch("power_grid_model._utils.get_batch_size")
+@patch("power_grid_model._core.utils.get_batch_size")
 def test_convert_batch_dataset_to_batch_list_one_batch_dense_columnar(get_batch_size: MagicMock):
     get_batch_size.return_value = 1
     update_data: BatchDataset = {
@@ -422,7 +422,7 @@ def test_convert_batch_dataset_to_batch_list_two_batches_dense():
     assert_list_of_dicts_of_numpy_arrays_equal(expected, actual)
 
 
-@patch("power_grid_model._utils.get_batch_size")
+@patch("power_grid_model._core.utils.get_batch_size")
 def test_convert_batch_dataset_to_batch_list_two_batches_dense__columnar(get_batch_size: MagicMock):
     get_batch_size.return_value = 2
     update_data: BatchDataset = {
@@ -595,19 +595,19 @@ def test_convert_get_and_verify_batch_sizes_inconsistent_batch_sizes_more_than_t
         get_and_verify_batch_sizes(update_data)
 
 
-@patch("power_grid_model._utils.get_and_verify_batch_sizes")
+@patch("power_grid_model._core.utils.get_and_verify_batch_sizes")
 def test_convert_batch_dataset_to_batch_list_missing_key_sparse(_mock: MagicMock):
     update_data: BatchDataset = {"foo": {"a": np.empty(3), "data": np.empty(3)}}  # type: ignore
     with pytest.raises(KeyError, match="Invalid data for 'foo' component. Missing 'indptr' in sparse batch data. "):
         convert_batch_dataset_to_batch_list(update_data)
 
 
-@patch("power_grid_model._utils.get_and_verify_batch_sizes")
+@patch("power_grid_model._core.utils.get_and_verify_batch_sizes")
 def test_convert_batch_dataset_to_batch_list_invalid_type_sparse(_mock: MagicMock):
     update_data: BatchDataset = {"foo": "wrong type"}  # type: ignore
     with pytest.raises(
         TypeError,
-        match="Invalid data for 'foo' component. " "Expecting a 1D/2D Numpy structured array or a dictionary of such.",
+        match="Invalid data for 'foo' component. Expecting a 1D/2D Numpy structured array or a dictionary of such.",
     ):
         convert_batch_dataset_to_batch_list(update_data)
 
@@ -684,9 +684,9 @@ def sample_output_data():
         CT.sym_load: initialize_array(DT.sym_output, CT.sym_load, 3),
         CT.source: initialize_array(DT.sym_output, CT.source, 1),
     }
-    for comp in output_data:
-        for attr in output_data[comp].dtype.names:
-            output_data[comp][attr] = 0
+    for data_array in output_data.values():
+        for attr in data_array.dtype.names:
+            data_array[attr] = 0
     return output_data
 
 
@@ -780,8 +780,8 @@ def test_get_dataset_type(dataset_type):
     assert (
         get_dataset_type(
             data={
-                CT.node: np.zeros(1, dtype=power_grid_meta_data[dataset_type]["node"]),
-                CT.sym_load: np.zeros(1, dtype=power_grid_meta_data[dataset_type]["sym_load"]),
+                CT.node: np.zeros(1, dtype=power_grid_meta_data[dataset_type][ComponentType.node]),
+                "sym_load": np.zeros(1, dtype=power_grid_meta_data[dataset_type]["sym_load"]),
             }
         )
         == dataset_type
@@ -789,7 +789,7 @@ def test_get_dataset_type(dataset_type):
 
 
 def test_get_dataset_type__empty_data():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="At least one component should have row based data."):
         get_dataset_type(data={})
 
 
@@ -799,7 +799,7 @@ def test_get_dataset_type__conflicting_data():
         [DT.input, DT.update, DT.sym_output, DT.asym_output, DT.sc_output],
     ):
         data = {
-            "node": np.zeros(1, dtype=power_grid_meta_data[first]["node"]),
+            ComponentType.node: np.zeros(1, dtype=power_grid_meta_data[first][ComponentType.node]),
             "sym_load": np.zeros(1, dtype=power_grid_meta_data[second]["sym_load"]),
         }
         if first == second:
@@ -855,7 +855,7 @@ def row_data(request):
 def compare_row_data(actual_row_data, desired_row_data):
     assert actual_row_data.keys() == desired_row_data.keys()
 
-    for comp_name in actual_row_data.keys():
+    for comp_name in actual_row_data:
         actual_component = actual_row_data[comp_name]
         desired_component = desired_row_data[comp_name]
         if is_sparse(actual_component):

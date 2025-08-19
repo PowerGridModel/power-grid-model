@@ -7,7 +7,6 @@ Main power grid model class
 """
 
 from enum import IntEnum
-from typing import Type
 
 import numpy as np
 
@@ -18,25 +17,25 @@ from power_grid_model._core.data_handling import (
     prepare_output_view,
     prepare_update_view,
 )
+from power_grid_model._core.data_types import Dataset, SingleDataset
 from power_grid_model._core.dataset_definitions import (
     ComponentType,
     ComponentTypeLike,
     _map_to_component_types,
     _str_to_component_type,
 )
-from power_grid_model._core.error_handling import PowerGridBatchError, assert_no_error, handle_errors
-from power_grid_model._core.index_integer import IdNp, IdxNp
-from power_grid_model._core.options import Options
-from power_grid_model._core.power_grid_core import ConstDatasetPtr, IDPtr, IdxPtr, ModelPtr, power_grid_core as pgc
-from power_grid_model.data_types import Dataset, SingleDataset
-from power_grid_model.enum import (
+from power_grid_model._core.enum import (
     CalculationMethod,
     CalculationType,
     ShortCircuitVoltageScaling,
     TapChangingStrategy,
     _ExperimentalFeatures,
 )
-from power_grid_model.typing import ComponentAttributeMapping
+from power_grid_model._core.error_handling import PowerGridBatchError, assert_no_error, handle_errors
+from power_grid_model._core.index_integer import IdNp, IdxNp
+from power_grid_model._core.options import Options
+from power_grid_model._core.power_grid_core import ConstDatasetPtr, IDPtr, IdxPtr, ModelPtr, power_grid_core as pgc
+from power_grid_model._core.typing import ComponentAttributeMapping
 
 
 class PowerGridModel:
@@ -90,9 +89,9 @@ class PowerGridModel:
             A copy of PowerGridModel
         """
         new_model = PowerGridModel.__new__(PowerGridModel)
-        new_model._model_ptr = pgc.copy_model(self._model)  # pylint: disable=W0212
+        new_model._model_ptr = pgc.copy_model(self._model)
         assert_no_error()
-        new_model._all_component_count = self._all_component_count  # pylint: disable=W0212
+        new_model._all_component_count = self._all_component_count
         return new_model
 
     def __copy__(self):
@@ -189,15 +188,11 @@ class PowerGridModel:
         }.get(calculation_type, [])
 
         def include_type(component_type: ComponentType):
-            for exclude_type in exclude_types:
-                if exclude_type.value in component_type.value:
-                    return False
-            return True
+            return all(exclude_type.value not in component_type.value for exclude_type in exclude_types)
 
         return {ComponentType[k]: v for k, v in self.all_component_count.items() if include_type(k)}
 
-    # pylint: disable=too-many-arguments
-    def _construct_output(  # pylint: disable=too-many-positional-arguments
+    def _construct_output(
         self,
         output_component_types: ComponentAttributeMapping,
         calculation_type: CalculationType,
@@ -216,7 +211,7 @@ class PowerGridModel:
 
     @staticmethod
     def _options(**kwargs) -> Options:
-        def as_enum_value(key_enum: str, type_: Type[IntEnum]):
+        def as_enum_value(key_enum: str, type_: type[IntEnum]):
             if key_enum in kwargs:
                 value_enum = kwargs[key_enum]
                 if isinstance(value_enum, str):
@@ -239,8 +234,7 @@ class PowerGridModel:
             decode_error=decode_error,
         )
 
-    # pylint: disable=too-many-arguments
-    def _calculate_impl(  # pylint: disable=too-many-positional-arguments
+    def _calculate_impl(  # noqa: PLR0913
         self,
         calculation_type: CalculationType,
         symmetric: bool,
@@ -249,7 +243,7 @@ class PowerGridModel:
         options: Options,
         continue_on_batch_error: bool,
         decode_error: bool,
-        experimental_features: _ExperimentalFeatures | str,  # pylint: disable=too-many-arguments,unused-argument
+        experimental_features: _ExperimentalFeatures | str,  # NOSONAR # noqa: ARG002
     ):
         """
         Core calculation routine
@@ -305,7 +299,7 @@ class PowerGridModel:
 
         return output_data
 
-    def _calculate_power_flow(
+    def _calculate_power_flow(  # noqa: PLR0913
         self,
         *,
         symmetric: bool = True,
@@ -342,7 +336,7 @@ class PowerGridModel:
             experimental_features=experimental_features,
         )
 
-    def _calculate_state_estimation(
+    def _calculate_state_estimation(  # noqa: PLR0913
         self,
         *,
         symmetric: bool = True,
@@ -377,7 +371,7 @@ class PowerGridModel:
             experimental_features=experimental_features,
         )
 
-    def _calculate_short_circuit(
+    def _calculate_short_circuit(  # noqa: PLR0913
         self,
         *,
         calculation_method: CalculationMethod | str = CalculationMethod.iec60909,
@@ -411,7 +405,7 @@ class PowerGridModel:
             experimental_features=experimental_features,
         )
 
-    def calculate_power_flow(
+    def calculate_power_flow(  # noqa: PLR0913
         self,
         *,
         symmetric: bool = True,
@@ -510,7 +504,7 @@ class PowerGridModel:
             tap_changing_strategy=tap_changing_strategy,
         )
 
-    def calculate_state_estimation(
+    def calculate_state_estimation(  # noqa: PLR0913
         self,
         *,
         symmetric: bool = True,
@@ -604,7 +598,7 @@ class PowerGridModel:
             decode_error=decode_error,
         )
 
-    def calculate_short_circuit(
+    def calculate_short_circuit(  # noqa: PLR0913
         self,
         *,
         calculation_method: CalculationMethod | str = CalculationMethod.iec60909,

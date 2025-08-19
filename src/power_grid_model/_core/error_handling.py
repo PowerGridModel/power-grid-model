@@ -10,12 +10,11 @@ import re
 
 import numpy as np
 
-from power_grid_model._core.index_integer import IdxNp
-from power_grid_model._core.power_grid_core import power_grid_core as pgc
-from power_grid_model.errors import (
+from power_grid_model._core.errors import (
     AutomaticTapCalculationError,
     AutomaticTapInputError,
     ConflictID,
+    ConflictingAngleMeasurementType,
     ConflictVoltage,
     IDNotFound,
     IDWrongType,
@@ -38,7 +37,10 @@ from power_grid_model.errors import (
     PowerGridSerializationError,
     PowerGridUnreachableHitError,
     SparseMatrixError,
+    TapSearchStrategyIncompatibleError,
 )
+from power_grid_model._core.index_integer import IdxNp
+from power_grid_model._core.power_grid_core import power_grid_core as pgc
 
 VALIDATOR_MSG = "\nTry validate_input_data() or validate_batch_data() to validate your data.\n"
 # error codes
@@ -75,11 +77,12 @@ _AUTOMATIC_TAP_CALCULATION_ERROR_RE = re.compile(
 _AUTOMATIC_TAP_INPUT_ERROR_RE = re.compile(r"Automatic tap changer has invalid configuration")
 
 _ID_WRONG_TYPE_RE = re.compile(r"Wrong type for object with id (-?\d+)\n")
+_CONFLICTING_ANGLE_MEASUREMENT_TYPE_RE = re.compile(r"Conflicting angle measurement type")
 _INVALID_CALCULATION_METHOD_RE = re.compile(r"The calculation method is invalid for this calculation!")
 _INVALID_SHORT_CIRCUIT_PHASE_OR_TYPE_RE = re.compile(r"short circuit type")  # multiple different flavors
+_TAP_STRATEGY_SEARCH_OPT_INCMPT_RE = re.compile(r"Search method is incompatible with optimization strategy: ")
 _POWER_GRID_DATASET_ERROR_RE = re.compile(r"Dataset error: ")  # multiple different flavors
 _POWER_GRID_UNREACHABLE_HIT_RE = re.compile(r"Unreachable code hit when executing ")  # multiple different flavors
-_POWER_GRID_SEARCH_OPT_INCMPT_RE = re.compile(r"Search method is incompatible with optimization strategy: ")
 _POWER_GRID_NOT_IMPLEMENTED_ERROR_RE = re.compile(r"The functionality is either not supported or not yet implemented!")
 
 _ERROR_MESSAGE_PATTERNS = {
@@ -100,11 +103,12 @@ _ERROR_MESSAGE_PATTERNS = {
     _AUTOMATIC_TAP_CALCULATION_ERROR_RE: AutomaticTapCalculationError,
     _AUTOMATIC_TAP_INPUT_ERROR_RE: AutomaticTapInputError,
     _ID_WRONG_TYPE_RE: IDWrongType,
+    _CONFLICTING_ANGLE_MEASUREMENT_TYPE_RE: ConflictingAngleMeasurementType,
     _INVALID_CALCULATION_METHOD_RE: InvalidCalculationMethod,
     _INVALID_SHORT_CIRCUIT_PHASE_OR_TYPE_RE: InvalidShortCircuitPhaseOrType,
+    _TAP_STRATEGY_SEARCH_OPT_INCMPT_RE: TapSearchStrategyIncompatibleError,
     _POWER_GRID_DATASET_ERROR_RE: PowerGridDatasetError,
     _POWER_GRID_UNREACHABLE_HIT_RE: PowerGridUnreachableHitError,
-    _POWER_GRID_SEARCH_OPT_INCMPT_RE: PowerGridUnreachableHitError,
     _POWER_GRID_NOT_IMPLEMENTED_ERROR_RE: PowerGridNotImplementedError,
 }
 

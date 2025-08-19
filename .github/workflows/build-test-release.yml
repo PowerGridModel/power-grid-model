@@ -1,0 +1,339 @@
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+name: Build and Test C++ and Python
+
+# Controls when the workflow will run
+on:
+  # run pipeline from another workflow
+  workflow_call:
+    inputs:
+      create_release:
+        type: boolean
+        description: Create a (pre-)release when CI passes
+        required: true
+  # run this workflow manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      create_release:
+        type: boolean
+        description: Create a (pre-)release when CI passes
+        default: false
+        required: true
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-main
+  cancel-in-progress: true
+
+jobs:
+  acquire-python-version-build-sdist:
+    name: Build sdist and set version
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Set PyPI Version
+        uses: PowerGridModel/pgm-version-bump@main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build SDist
+        run: |
+          cp PYPI_VERSION VERSION
+          cat VERSION
+          pip install build
+          python -m build --sdist --outdir wheelhouse .
+
+      - name: Keep version file
+        uses: actions/upload-artifact@v4
+        with:
+          name: version
+          path: VERSION
+
+      - name: Keep SDist
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheelhouse
+          path: ./wheelhouse/*.tar.gz
+
+  build-cpp-test-linux:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        build-option: [ debug, release ]
+        compiler: [gcc, clang]
+        include:
+          - compiler: gcc
+          - compiler: clang
+
+    env:
+      CMAKE_PREFIX_PATH: /home/linuxbrew/.linuxbrew
+      PRESET: ci-${{ matrix.compiler }}-${{ matrix.build-option }}
+
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build gcc-14 g++-14 clang-18
+          sudo ln -s /usr/bin/clang-18 /usr/local/bin/clang
+          sudo ln -s /usr/bin/clang++-18 /usr/local/bin/clang++
+          sudo ln -s /usr/bin/gcc-14 /usr/local/bin/gcc
+          sudo ln -s /usr/bin/g++-14 /usr/local/bin/g++
+
+      - name: Enable brew
+        run: |
+          echo "/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
+      - name: Install C++ dependencies
+        run: |
+          brew install boost eigen nlohmann-json msgpack-cxx doctest
+      - name: Build and test
+        run: ./build.sh -p ${{ env.PRESET }} -e -i -t
+
+  build-cpp-test-windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        build-option: [ debug, release ]
+        compiler: [msvc, clang-cl]
+
+    env:
+      PRESET: ${{ matrix.compiler }}-${{ matrix.build-option }}
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Activate conda
+        uses: conda-incubator/setup-miniconda@v3  # install miniforge instead
+        with:
+          miniforge-version: latest
+          channels: conda-forge
+          conda-remove-defaults: "true"
+      
+      - name: List conda
+        run: |
+          conda info
+          conda list
+
+      - name: Install conda environment
+        run: |
+          conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge libboost-headers eigen nlohmann_json msgpack-cxx doctest
+ 
+      - uses: ./.github/actions/enable-msvc
+        if: runner.os == 'Windows'
+    
+      - name: Build and test
+        run: |
+          # Resolve dirty PATH environment
+          # TODO(mgovers): Remove after https://github.com/actions/runner-images/issues/10001 is resolved
+          $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -ne 'C:\Program Files\LLVM\bin' }) -join ';'
+
+          # generate cmake cache
+          cmake --preset ${{ env.PRESET }} -DCMAKE_PREFIX_PATH=C:\conda_envs\cpp_pkgs\Library; if(!$?) { Exit $LASTEXITCODE }
+          # build
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1; if(!$?) { Exit $LASTEXITCODE }
+          # test
+          ctest --preset ${{ env.PRESET }} --output-on-failure; if(!$?) { Exit $LASTEXITCODE }
+          # install
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install; if(!$?) { Exit $LASTEXITCODE }
+
+          # build and run integration test
+          cd tests/package_tests; if(!$?) { Exit $LASTEXITCODE }
+          cmake --preset ${{ env.PRESET }}; if(!$?) { Exit $LASTEXITCODE }
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1; if(!$?) { Exit $LASTEXITCODE }
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install; if(!$?) { Exit $LASTEXITCODE }
+          install\${{ env.PRESET }}\bin\power_grid_model_package_test; if(!$?) { Exit $LASTEXITCODE }
+
+  build-cpp-test-macos:
+    runs-on: macos-15
+    strategy:
+      matrix:
+        build-option: [ debug, release ]
+    env:
+      CMAKE_PREFIX_PATH: /usr/local
+      PRESET: ci-clang-${{ matrix.build-option }}
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up XCode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Install cpp dependencies
+        run: |
+          brew install ninja boost eigen nlohmann-json msgpack-cxx doctest
+
+      - name: Build and test
+        run: ./build.sh -p ${{ env.PRESET }} -e -i -t
+
+  build-and-test-python:
+    strategy:
+      matrix:
+        platform: [ linux-x64, linux-aarch64, macos, windows ]
+        include:
+          - platform: linux-x64
+            os: ubuntu-24.04
+            cibw_build: "*_x86_64"
+          - platform: linux-aarch64
+            os: ubuntu-24.04-arm
+            cibw_build: "*_aarch64"
+          - platform: macos
+            os: macos-15
+            cibw_build: "*"
+          - platform: windows
+            os: windows-latest
+            cibw_build: "*"
+
+    runs-on: ${{ matrix.os }}
+    needs: [acquire-python-version-build-sdist]
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/download-artifact@v5
+        with:
+          name: version
+          path: .
+
+      - uses: ./.github/actions/enable-msvc
+        if: runner.os == 'Windows'
+
+      - name: Set up XCode
+        if: matrix.os == 'macos-15'
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v3.1.3
+        # GitHub Actions specific build parameters
+        env:
+          # pass GitHub runner info into Linux container
+          CIBW_ENVIRONMENT_PASS_LINUX: GITHUB_SHA GITHUB_REF GITHUB_RUN_NUMBER
+          CIBW_BUILD: ${{ matrix.cibw_build }}
+
+      - name: Keep wheel files
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheelhouse-${{ matrix.platform }}
+          path: ./wheelhouse/*.whl
+
+  build-and-test-conda:
+    name: Build and test in Conda
+
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      matrix:
+        os: ["ubuntu", "windows"] # We do not test conda for MacOS
+        include:
+          - os: ubuntu
+            shell: bash -el {0}
+          - os: windows
+            shell: powershell
+    env:
+      POWER_GRID_MODEL_NO_BINARY_BUILD: 1
+
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniforge-version: latest  # use miniforge instead of miniconda
+          activate-environment: conda-pgm-env
+          environment-file: .github/conda_pgm_env.yml
+          auto-activate-base: false
+          channels: conda-forge
+          conda-remove-defaults: "true"
+      
+      - name: List conda
+        run: |
+          conda info
+          conda list
+
+      - uses: ./.github/actions/enable-msvc
+        if: runner.os == 'Windows'
+
+      - name: Build and install cmake target for Windows
+        if: matrix.os == 'windows'
+        run: |          
+          cmake -GNinja -DCMAKE_BUILD_TYPE=Release -B build/ -S .
+          cmake --build build/ --verbose -j1
+          cmake --install build/ --prefix ${env:CONDA_PREFIX}/Library
+
+      - name: Build and install cmake target for Linux
+        if: matrix.os == 'ubuntu'
+        run: |
+          cmake -GNinja -DCMAKE_BUILD_TYPE=Release -B build/ -S . -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_PREFIX_PATH=$CONDA_PREFIX
+          cmake --build build/ --verbose -j1
+          cmake --install build/
+
+      - name: Build python
+        run: python -m pip install . --no-build-isolation --no-deps -C wheel.cmake=false
+
+      - name: Test
+        run: pytest
+
+  github-release:
+    name: Create and release assets to GitHub
+    needs: [build-cpp-test-linux, build-cpp-test-windows, build-cpp-test-macos, build-and-test-python, build-and-test-conda]
+    # always run publish job but fail at the first step if previous jobs have been failed
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Fail fast
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: |
+          echo "Previous jobs have failures!"
+          exit 1
+
+      - uses: actions/checkout@v5
+
+      - name: Setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          architecture: x64
+
+      - uses: actions/download-artifact@v5
+
+      - uses: actions/download-artifact@v5
+        with:
+          name: version
+          path: .
+
+      - name: Combine wheelhouses
+        run: mv wheelhouse-*/* wheelhouse
+
+      - name: List assets
+        run: ls ./wheelhouse/ -al
+
+      - name: Get tag
+        id: tag
+        run: echo "tag=v$(cat VERSION)" >> $GITHUB_OUTPUT
+
+      - name: Display tag
+        run: echo "${{ steps.tag.outputs.tag }}"
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        if: (inputs.create_release)
+        with:
+          files: |
+            ./wheelhouse/*
+          tag_name: ${{ steps.tag.outputs.tag }}
+          prerelease: ${{ github.ref != 'refs/heads/main'}}
+          generate_release_notes: true
+          target_commitish: ${{ github.sha }}

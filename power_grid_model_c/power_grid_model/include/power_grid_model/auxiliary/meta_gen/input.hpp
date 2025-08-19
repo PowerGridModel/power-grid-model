@@ -112,6 +112,48 @@ struct get_attributes_list<LineInput> {
 };
 
 template<>
+struct get_attributes_list<AsymLineInput> {
+    static constexpr std::array<MetaAttribute, 34> value{
+            // all attributes including base class
+            
+            meta_data_gen::get_meta_attribute<&AsymLineInput::id>(offsetof(AsymLineInput, id), "id"),
+            meta_data_gen::get_meta_attribute<&AsymLineInput::from_node>(offsetof(AsymLineInput, from_node), "from_node"),
+            meta_data_gen::get_meta_attribute<&AsymLineInput::to_node>(offsetof(AsymLineInput, to_node), "to_node"),
+            meta_data_gen::get_meta_attribute<&AsymLineInput::from_status>(offsetof(AsymLineInput, from_status), "from_status"),
+            meta_data_gen::get_meta_attribute<&AsymLineInput::to_status>(offsetof(AsymLineInput, to_status), "to_status"),
+            meta_data_gen::get_meta_attribute<&AsymLineInput::r_aa>(offsetof(AsymLineInput, r_aa), "r_aa"),
+            meta_data_gen::get_meta_attribute<&AsymLineInput::r_ba>(offsetof(AsymLineInput, r_ba), "r_ba"),
+            meta_data_gen::get_meta_attribute<&AsymLineInput::r_bb>(offsetof(AsymLineInput, r_bb), "r_bb"),
+            meta_data_gen::get_meta_attribute<&AsymLineInput::r_ca>(offsetof(AsymLineInput, r_ca), "r_ca"),
+            meta_data_gen::get_meta_attribute<&AsymLineInput::r_cb>(offsetof(AsymLineInput, r_cb), "r_cb"),
+            meta_data_gen::get_meta_attribute<&AsymLineInput::r_cc>(offsetof(AsymLineInput, r_cc), "r_cc"),
+            meta_data_gen::get_meta_attribute<&AsymLineInput::r_na>(offsetof(AsymLineInput, r_na), "r_na"),
+            meta_data_gen::get_meta_attribute<&AsymLineInput::r_nb>(offsetof(AsymLineInput, r_nb), "r_nb"),
+            meta_data_gen::get_meta_attribute<&AsymLineInput::r_nc>(offsetof(AsymLineInput, r_nc), "r_nc"),
+            meta_data_gen::get_meta_attribute<&AsymLineInput::r_nn>(offsetof(AsymLineInput, r_nn), "r_nn"),
+            meta_data_gen::get_meta_attribute<&AsymLineInput::x_aa>(offsetof(AsymLineInput, x_aa), "x_aa"),
+            meta_data_gen::get_meta_attribute<&AsymLineInput::x_ba>(offsetof(AsymLineInput, x_ba), "x_ba"),
+            meta_data_gen::get_meta_attribute<&AsymLineInput::x_bb>(offsetof(AsymLineInput, x_bb), "x_bb"),
+            meta_data_gen::get_meta_attribute<&AsymLineInput::x_ca>(offsetof(AsymLineInput, x_ca), "x_ca"),
+            meta_data_gen::get_meta_attribute<&AsymLineInput::x_cb>(offsetof(AsymLineInput, x_cb), "x_cb"),
+            meta_data_gen::get_meta_attribute<&AsymLineInput::x_cc>(offsetof(AsymLineInput, x_cc), "x_cc"),
+            meta_data_gen::get_meta_attribute<&AsymLineInput::x_na>(offsetof(AsymLineInput, x_na), "x_na"),
+            meta_data_gen::get_meta_attribute<&AsymLineInput::x_nb>(offsetof(AsymLineInput, x_nb), "x_nb"),
+            meta_data_gen::get_meta_attribute<&AsymLineInput::x_nc>(offsetof(AsymLineInput, x_nc), "x_nc"),
+            meta_data_gen::get_meta_attribute<&AsymLineInput::x_nn>(offsetof(AsymLineInput, x_nn), "x_nn"),
+            meta_data_gen::get_meta_attribute<&AsymLineInput::c_aa>(offsetof(AsymLineInput, c_aa), "c_aa"),
+            meta_data_gen::get_meta_attribute<&AsymLineInput::c_ba>(offsetof(AsymLineInput, c_ba), "c_ba"),
+            meta_data_gen::get_meta_attribute<&AsymLineInput::c_bb>(offsetof(AsymLineInput, c_bb), "c_bb"),
+            meta_data_gen::get_meta_attribute<&AsymLineInput::c_ca>(offsetof(AsymLineInput, c_ca), "c_ca"),
+            meta_data_gen::get_meta_attribute<&AsymLineInput::c_cb>(offsetof(AsymLineInput, c_cb), "c_cb"),
+            meta_data_gen::get_meta_attribute<&AsymLineInput::c_cc>(offsetof(AsymLineInput, c_cc), "c_cc"),
+            meta_data_gen::get_meta_attribute<&AsymLineInput::c0>(offsetof(AsymLineInput, c0), "c0"),
+            meta_data_gen::get_meta_attribute<&AsymLineInput::c1>(offsetof(AsymLineInput, c1), "c1"),
+            meta_data_gen::get_meta_attribute<&AsymLineInput::i_n>(offsetof(AsymLineInput, i_n), "i_n"),
+    };
+};
+
+template<>
 struct get_attributes_list<GenericBranchInput> {
     static constexpr std::array<MetaAttribute, 12> value{
             // all attributes including base class

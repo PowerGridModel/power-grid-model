@@ -8,28 +8,23 @@ Type hints for the power-grid-model library.
 This includes all miscellaneous type hints not under dataset or categories.
 """
 
-from power_grid_model._core.dataset_definitions import (  # pylint: disable=unused-import
+from power_grid_model._core.dataset_definitions import (  # noqa: F401
     ComponentType,
     ComponentTypeVar,
     DatasetType,
     DatasetTypeVar,
 )
-from power_grid_model._core.power_grid_meta import (  # pylint: disable=unused-import
+from power_grid_model._core.power_grid_meta import (  # noqa: F401
     ComponentMetaData,
     DatasetMetaData,
     PowerGridMetaData,
 )
-from power_grid_model.enum import ComponentAttributeFilterOptions
-
-_ComponentAttributeMappingDict = dict[ComponentType, set[str] | list[str] | None | ComponentAttributeFilterOptions]
-
-ComponentAttributeMapping = (
-    set[ComponentTypeVar]
-    | list[ComponentTypeVar]
-    | ComponentAttributeFilterOptions
-    | None
-    | _ComponentAttributeMappingDict
+from power_grid_model._core.typing import (
+    ComponentAttributeMapping as _ComponentAttributeMapping,
 )
+from power_grid_model.enum import ComponentAttributeFilterOptions  # noqa: F401
+
+ComponentAttributeMapping = _ComponentAttributeMapping
 """
 Type hint for mapping component attributes.
 

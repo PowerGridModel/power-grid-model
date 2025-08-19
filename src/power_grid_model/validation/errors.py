@@ -5,12 +5,18 @@
 """
 Error classes
 """
+
 import re
 from abc import ABC
+from collections.abc import Iterable
 from enum import Enum
-from typing import Any, Iterable, Type
+from typing import Any
 
 from power_grid_model import ComponentType
+from power_grid_model._core.dataset_definitions import DatasetType
+
+_MIN_FIELDS = 2
+_MIN_COMPONENTS = 2
 
 
 class ValidationError(ABC):
@@ -52,6 +58,8 @@ class ValidationError(ABC):
     _message: str = "An unknown validation error occurred."
 
     _delimiter: str = " and "
+
+    __hash__ = None  # type: ignore[assignment]
 
     @property
     def component_str(self) -> str:
@@ -164,8 +172,8 @@ class MultiFieldValidationError(ValidationError):
         self.field = sorted(fields)
         self.ids = sorted(ids)
 
-        if len(self.field) < 2:
-            raise ValueError(f"{type(self).__name__} expects at least two fields: {self.field}")
+        if len(self.field) < _MIN_FIELDS:
+            raise ValueError(f"{type(self).__name__} expects at least 2 fields: {self.field}")
 
 
 class MultiComponentValidationError(ValidationError):
@@ -190,10 +198,10 @@ class MultiComponentValidationError(ValidationError):
         self.field = sorted(fields)
         self.ids = sorted(ids)
 
-        if len(self.field) < 2:
-            raise ValueError(f"{type(self).__name__} expects at least two fields: {self.field}")
-        if len(self.component) < 2:
-            raise ValueError(f"{type(self).__name__} expects at least two components: {self.component}")
+        if len(self.field) < _MIN_FIELDS:
+            raise ValueError(f"{type(self).__name__} expects at least {_MIN_FIELDS} fields: {self.field}")
+        if len(self.component) < _MIN_COMPONENTS:
+            raise ValueError(f"{type(self).__name__} expects at least {_MIN_COMPONENTS} components: {self.component}")
 
 
 class NotIdenticalError(SingleFieldValidationError):
@@ -232,6 +240,31 @@ class MultiComponentNotUniqueError(MultiComponentValidationError):
     _message = "Fields {field} are not unique for {n} {objects}."
 
 
+class InvalidValueError(SingleFieldValidationError):
+    """
+    The value is not a valid value in the supplied list of supported values.
+    E.g. an enum value that is not supported for a specific feature.
+    """
+
+    _message = "Field {field} contains invalid values for {n} {objects}."
+    values: list
+    __hash__ = None  # type: ignore[assignment]
+
+    def __init__(self, component: ComponentType, field: str, ids: list[int], values: list):
+        super().__init__(component, field, ids)
+        self.values = values
+
+    @property
+    def values_str(self) -> str:
+        """
+        A string representation of the field to which this error applies.
+        """
+        return ",".join(v.name if isinstance(v, Enum) else v for v in self.values)
+
+    def __eq__(self, other):
+        return super().__eq__(other) and self.values == other.values
+
+
 class InvalidEnumValueError(SingleFieldValidationError):
     """
     The value is not a valid value in the supplied enumeration type.
@@ -239,9 +272,10 @@ class InvalidEnumValueError(SingleFieldValidationError):
     """
 
     _message = "Field {field} contains invalid {enum} values for {n} {objects}."
-    enum: Type[Enum] | list[Type[Enum]]
+    enum: type[Enum] | list[type[Enum]]
+    __hash__ = None  # type: ignore[assignment]
 
-    def __init__(self, component: ComponentType, field: str, ids: list[int], enum: Type[Enum] | list[Type[Enum]]):
+    def __init__(self, component: ComponentType, field: str, ids: list[int], enum: type[Enum] | list[type[Enum]]):
         super().__init__(component, field, ids)
         self.enum = enum
 
@@ -292,9 +326,10 @@ class IdNotInDatasetError(SingleFieldValidationError):
     """
 
     _message = "ID does not exist in {ref_dataset} for {n} {objects}."
-    ref_dataset: str
+    ref_dataset: DatasetType
+    __hash__ = None  # type: ignore[assignment]
 
-    def __init__(self, component: ComponentType, ids: list[int], ref_dataset: str):
+    def __init__(self, component: ComponentType, ids: list[int], ref_dataset: DatasetType):
         super().__init__(component=component, field="id", ids=ids)
         self.ref_dataset = ref_dataset
 
@@ -320,8 +355,9 @@ class InvalidIdError(SingleFieldValidationError):
 
     _message = "Field {field} does not contain a valid {ref_components} id for {n} {objects}. {filters}"
     ref_components: list[ComponentType]
+    __hash__ = None  # type: ignore[assignment]
 
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(
         self,
         component: ComponentType,
         field: str,
@@ -329,7 +365,6 @@ class InvalidIdError(SingleFieldValidationError):
         ref_components: ComponentType | list[ComponentType] | None = None,
         filters: dict[str, Any] | None = None,
     ):
-        # pylint: disable=too-many-positional-arguments
         super().__init__(component=component, field=field, ids=ids)
         ref_components = ref_components if ref_components is not None else []
         self.ref_components = [ref_components] if isinstance(ref_components, (str, ComponentType)) else ref_components
@@ -374,6 +409,8 @@ class ComparisonError(SingleFieldValidationError):
     _message = "Invalid {field}, compared to {ref_value} for {n} {objects}."
 
     RefType = int | float | str | tuple[int | float | str, ...]
+
+    __hash__ = None  # type: ignore[assignment]
 
     def __init__(self, component: ComponentType, field: str, ids: list[int], ref_value: "ComparisonError.RefType"):
         super().__init__(component, field, ids)
@@ -487,14 +524,15 @@ class InvalidAssociatedEnumValueError(MultiFieldValidationError):
     """
 
     _message = "The combination of fields {field} results in invalid {enum} values for {n} {objects}."
-    enum: Type[Enum] | list[Type[Enum]]
+    enum: type[Enum] | list[type[Enum]]
+    __hash__ = None  # type: ignore[assignment]
 
     def __init__(
         self,
         component: ComponentType,
         fields: list[str],
         ids: list[int],
-        enum: Type[Enum] | list[Type[Enum]],
+        enum: type[Enum] | list[type[Enum]],
     ):
         """
         Args:
@@ -518,3 +556,47 @@ class InvalidAssociatedEnumValueError(MultiFieldValidationError):
 
     def __eq__(self, other):
         return super().__eq__(other) and self.enum == other.enum
+
+
+class UnsupportedMeasuredTerminalType(InvalidValueError):
+    """
+    The measured terminal type is not a supported value.
+
+    Supported values are in the supplied list of values.
+    """
+
+    _message = "measured_terminal_type contains unsupported values for {n} {objects}."
+
+
+class MixedCurrentAngleMeasurementTypeError(MultiFieldValidationError):
+    """
+    Mixed current angle measurement type error.
+    """
+
+    _message = (
+        "Mixture of different current angle measurement types on the same terminal for {n} {objects}. "
+        "If multiple current sensors measure the same terminal of the same object, all angle measurement types must be "
+        "the same. Mixing local_angle and global_angle current measurements on the same terminal is not supported."
+    )
+
+
+class MixedPowerCurrentSensorError(MultiComponentValidationError):
+    """
+    Mixed power and current sensor error.
+    """
+
+    _message = (
+        "Mixture of power and current sensors on the same terminal for {n} {objects}. "
+        "If multiple sensors measure the same terminal of the same object, all sensors must measure the same quantity."
+    )
+
+
+class MissingVoltageAngleMeasurementError(MultiComponentValidationError):
+    """
+    Missing voltage angle measurement error.
+    """
+
+    _message = (
+        "Missing voltage angle measurement for {n} {objects}. "
+        "If a voltage sensor measures the voltage of a terminal, it must also measure the voltage angle."
+    )

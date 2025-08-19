@@ -7,8 +7,7 @@ dependencies:
   # build env
   - python=3.12
   - pip
-  - wheel
-  - setuptools
+  - scikit-build-core
   # build deps
   - libboost-headers
   - eigen

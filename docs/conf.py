@@ -15,7 +15,7 @@ author = "Contributors to the Power Grid Model project <powergridmodel@lfenergy.
 
 # -- Setup
 
-import os
+import os  # noqa: E402
 
 # Fix linking in github and rtd
 link_head_gh = "https://github.com/PowerGridModel/power-grid-model/"
@@ -25,9 +25,13 @@ if "READTHEDOCS" in os.environ:
     commit_version = git.Repo(search_parent_directories=True).head.object.hexsha
     link_head_gh_blob = link_head_gh + "blob/" + commit_version
     link_head_gh_tree = link_head_gh + "tree/" + commit_version
+    pgm_project_root = ""
+    pgm_project_contribution = pgm_project_root + "/contribution"
 else:
     link_head_gh_blob = ""
     link_head_gh_tree = ""
+    pgm_project_root = "https://github.com/PowerGridModel/.github/blob/main"
+    pgm_project_contribution = pgm_project_root
 
 
 # -- General configuration ---------------------------------------------------
@@ -78,6 +82,8 @@ myst_enable_extensions = [
 myst_substitutions = {
     "gh_link_head_blob": link_head_gh_blob,
     "gh_link_head_tree": link_head_gh_tree,
+    "pgm_project_root": pgm_project_root,
+    "pgm_project_contribution": pgm_project_contribution,
 }
 
 

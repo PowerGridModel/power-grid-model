@@ -3,14 +3,16 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import json
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 import msgpack
 import numpy as np
 import pytest
 
 from power_grid_model import DatasetType
-from power_grid_model._utils import get_dataset_type, is_columnar, is_sparse
+from power_grid_model._core.dataset_definitions import ComponentType
+from power_grid_model._core.utils import get_dataset_type, is_columnar, is_sparse
 from power_grid_model.data_types import BatchDataset, Dataset, DenseBatchData, SingleComponentData, SingleDataset
 from power_grid_model.enum import ComponentAttributeFilterOptions
 from power_grid_model.utils import json_deserialize, json_serialize, msgpack_deserialize, msgpack_serialize
@@ -142,7 +144,7 @@ def simple_asym_input_dataset():
 
 
 def full_input_dataset():
-    result = empty_dataset("input")
+    result = empty_dataset(DatasetType.input)
     result["attributes"] = {
         "node": ["id", "u_rated"],
         "sym_load": ["id", "node", "status", "type", "p_specified", "q_specified"],
@@ -194,7 +196,7 @@ def full_input_dataset():
 
 
 def single_update_dataset():
-    result = empty_dataset("update")
+    result = empty_dataset(DatasetType.update)
     result["attributes"] = {
         "sym_load": ["status", "p_specified", "q_specified"],
         "source": ["status"],
@@ -267,7 +269,7 @@ def sparse_batch_update_dataset():
 
 
 def single_sym_output_dataset():
-    result = empty_dataset("sym_output")
+    result = empty_dataset(DatasetType.sym_output)
     result["data"] = {
         "node": [
             {
@@ -285,7 +287,7 @@ def single_sym_output_dataset():
 
 
 def batch_sym_output_dataset():
-    result = empty_dataset("sym_output")
+    result = empty_dataset(DatasetType.sym_output)
     result["is_batch"] = True
     result["data"] = [
         {
@@ -319,7 +321,7 @@ def batch_sym_output_dataset():
 
 
 def single_asym_output_dataset():
-    result = empty_dataset("asym_output")
+    result = empty_dataset(DatasetType.asym_output)
     result["data"] = {
         "node": [
             {
@@ -337,7 +339,7 @@ def single_asym_output_dataset():
 
 
 def single_sc_output_dataset():
-    result = empty_dataset("sc_output")
+    result = empty_dataset(DatasetType.sc_output)
     result["attributes"] = {"fault": ["id", "i_f"]}
     result["data"] = {
         "node": [
@@ -379,12 +381,12 @@ def serialized_data(request):
         pytest.param(None, id="All row filter"),
         pytest.param(ComponentAttributeFilterOptions.everything, id="All columnar filter"),
         pytest.param(ComponentAttributeFilterOptions.relevant, id="All relevant columnar filter"),
-        pytest.param({"node": ["id"], "sym_load": ["id"]}, id="columnar filter"),
-        pytest.param({"node": ["id"], "sym_load": None}, id="mixed columnar/row filter"),
-        pytest.param({"node": ["id"], "shunt": None}, id="unused component filter"),
+        pytest.param({ComponentType.node: ["id"], "sym_load": ["id"]}, id="columnar filter"),
+        pytest.param({ComponentType.node: ["id"], "sym_load": None}, id="mixed columnar/row filter"),
+        pytest.param({ComponentType.node: ["id"], "shunt": None}, id="unused component filter"),
         pytest.param(
             {
-                "node": ["id"],
+                ComponentType.node: ["id"],
                 "line": ComponentAttributeFilterOptions.everything,
                 "sym_load": None,
                 "asym_load": ComponentAttributeFilterOptions.relevant,
@@ -394,7 +396,8 @@ def serialized_data(request):
     ]
 )
 def data_filters(request):
-    """Data filers for deserialization. Note: List / set is not supported for testing since it can be replicated using dict."""
+    """Data filers for deserialization.
+    Note: List / set is not supported for testing since it can be replicated using dict."""
     return request.param
 
 
@@ -455,6 +458,7 @@ def assert_almost_equal(value: np.ndarray, reference: Any):
             assert_almost_equal(v, r)
     elif isinstance(reference, dict):
         assert len(value) == len(reference)
+        assert value.dtype.names is not None
         for attribute in value.dtype.names:
             if attribute in reference:
                 assert_almost_equal(value[attribute], reference[attribute])
@@ -510,16 +514,16 @@ def assert_individual_data_entry(serialized_dataset, data_filter, component, ser
                     if is_attribute_filtered_out(data_filter, component, attr):
                         assert attr not in deserialized_output
                         continue
-                    assert attr in deserialized_output.keys()
+                    assert attr in deserialized_output
                     assert_almost_equal(
                         deserialized_output[attr][comp_idx],
-                        serialized_input[comp_idx][attr],
+                        input_entry[attr],
                     )
                 else:
                     assert attr in deserialized_output[comp_idx].dtype.names
                     assert_almost_equal(
                         deserialized_output[comp_idx][attr],
-                        serialized_input[comp_idx][attr],
+                        input_entry[attr],
                     )
         else:
             assert component in serialized_dataset["attributes"]
@@ -528,16 +532,16 @@ def assert_individual_data_entry(serialized_dataset, data_filter, component, ser
                     if is_attribute_filtered_out(data_filter, component, attr):
                         assert attr not in deserialized_output
                         continue
-                    assert attr in deserialized_output.keys()
+                    assert attr in deserialized_output
                     assert_almost_equal(
                         deserialized_output[attr][comp_idx],
-                        serialized_input[comp_idx][attr_idx],
+                        input_entry[attr_idx],
                     )
                 else:
                     assert attr in deserialized_output[comp_idx].dtype.names
                     assert_almost_equal(
                         deserialized_output[comp_idx][attr],
-                        serialized_input[comp_idx][attr_idx],
+                        input_entry[attr_idx],
                     )
 
 
@@ -560,6 +564,7 @@ def assert_batch_dataset_structure(
 ):
     """Checks if the structure of the batch dataset is correct.
     Then splits into individual scenario's dataset and checks if all of them are correct."""
+    batch_dataset_ndim = 2
 
     # Check structure of the whole BatchDataset
     assert isinstance(serialized_dataset["data"], list)
@@ -579,17 +584,16 @@ def assert_batch_dataset_structure(
                 assert isinstance(component_data, np.ndarray)
                 assert component_data.ndim == 1
                 assert len(component_data) == component_indptr[-1]
+        elif is_columnar_filter(data_filter, component):
+            for attr, attr_value in component_values.items():
+                assert isinstance(attr, str)
+                assert isinstance(attr_value, np.ndarray)
+                assert len(attr_value.shape) in [2, 3]
+                assert len(attr_value) == len(serialized_dataset["data"])
         else:
-            if is_columnar_filter(data_filter, component):
-                for attr, attr_value in component_values.items():
-                    assert isinstance(attr, str)
-                    assert isinstance(attr_value, np.ndarray)
-                    assert len(attr_value.shape) in [2, 3]
-                    assert len(attr_value) == len(serialized_dataset["data"])
-            else:
-                assert isinstance(component_values, np.ndarray)
-                assert len(component_values.shape) == 2
-                assert len(component_values) == len(serialized_dataset["data"])
+            assert isinstance(component_values, np.ndarray)
+            assert len(component_values.shape) == batch_dataset_ndim
+            assert len(component_values) == len(serialized_dataset["data"])
 
 
 def assert_serialization_correct(deserialized_dataset: Dataset, serialized_dataset: Mapping[str, Any], data_filter):
@@ -611,7 +615,7 @@ def assert_serialization_correct(deserialized_dataset: Dataset, serialized_datas
         assert_single_dataset_structure(deserialized_dataset, data_filter)
 
         assert_single_dataset_entries(
-            deserialized_dataset,  # type: ignore[arg-type]
+            deserialized_dataset,
             serialized_dataset,
             data_filter=data_filter,
         )
@@ -639,7 +643,7 @@ def assert_deserialization_filtering_correct(deserialized_dataset: Dataset, data
     return True
 
 
-@pytest.mark.parametrize("raw_buffer", (True, False))
+@pytest.mark.parametrize("raw_buffer", [True, False])
 def test_json_deserialize_data(serialized_data, data_filters, raw_buffer: bool):
     data = to_json(serialized_data, raw_buffer=raw_buffer)
     result = json_deserialize(data, data_filter=data_filters)
@@ -666,17 +670,17 @@ def test_msgpack_deserialize_data(serialized_data, data_filters):
 
 @pytest.mark.parametrize(
     "dataset_type",
-    (
+    [
         DatasetType.input,
         DatasetType.update,
         DatasetType.sym_output,
         DatasetType.asym_output,
         DatasetType.sc_output,
-    ),
+    ],
 )
 @pytest.mark.parametrize(
     "use_compact_list",
-    (pytest.param(True, id="compact_list"), pytest.param(False, id="non-compact_list")),
+    [pytest.param(True, id="compact_list"), pytest.param(False, id="non-compact_list")],
 )
 def test_json_serialize_empty_dataset(dataset_type, use_compact_list: bool):
     for indent in (-1, 0, 2, 4):
@@ -687,38 +691,38 @@ def test_json_serialize_empty_dataset(dataset_type, use_compact_list: bool):
         assert isinstance(result, str)
         assert result == reference
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="At least one component should have row based data."):
             json_serialize({}, use_compact_list=use_compact_list, indent=indent)
 
 
 @pytest.mark.parametrize(
     "dataset_type",
-    (
+    [
         DatasetType.input,
         DatasetType.update,
         DatasetType.sym_output,
         DatasetType.asym_output,
         DatasetType.sc_output,
-    ),
+    ],
 )
 @pytest.mark.parametrize(
     "use_compact_list",
-    (pytest.param(True, id="compact_list"), pytest.param(False, id="non-compact_list")),
+    [pytest.param(True, id="compact_list"), pytest.param(False, id="non-compact_list")],
 )
 def test_msgpack_serialize_empty_dataset(dataset_type, use_compact_list):
     reference = empty_dataset(dataset_type)
     assert from_msgpack(msgpack_serialize({}, dataset_type, use_compact_list=use_compact_list)) == reference
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="At least one component should have row based data."):
         json_serialize({}, use_compact_list=use_compact_list)
 
 
 @pytest.mark.parametrize(
     ("deserialize", "serialize", "pack"),
-    (
+    [
         pytest.param(json_deserialize, json_serialize, to_json, id="json"),
         pytest.param(msgpack_deserialize, msgpack_serialize, to_msgpack, id="msgpack"),
-    ),
+    ],
 )
 def test_serialize_deserialize_type_deduction(deserialize, serialize, serialized_data, data_filters, pack):
     deserialized_data = deserialize(pack(serialized_data), data_filter=data_filters)
@@ -727,16 +731,16 @@ def test_serialize_deserialize_type_deduction(deserialize, serialize, serialized
     if is_serialized_data_type_deducible(serialized_data, data_filter=data_filters):
         assert serialize(deserialized_data) == full_result
     else:
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="The dataset type could not be deduced"):
             serialize(deserialized_data)
 
 
 @pytest.mark.parametrize(
     ("deserialize", "serialize", "pack"),
-    (
+    [
         pytest.param(json_deserialize, json_serialize, to_json, id="json"),
         pytest.param(msgpack_deserialize, msgpack_serialize, to_msgpack, id="msgpack"),
-    ),
+    ],
 )
 def test_serialize_deserialize_double_round_trip(deserialize, serialize, serialized_data, data_filters, pack):
     """

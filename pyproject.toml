@@ -4,14 +4,10 @@
 
 [build-system]
 requires = [
-    "setuptools",
-    "wheel",
-    "pybuild-header-dependency",
-    "msgpack-cxx",
-    "nlohmann-json",
-    "libboost-headers"
+    "scikit-build-core",
+    "pgm-build-dependencies@https://github.com/PowerGridModel/pgm-build-dependencies/releases/latest/download/pgm_build_dependencies-0.1.0-py3-none-any.whl"
 ]
-build-backend = "setuptools.build_meta"
+build-backend = "scikit_build_core.build"
 
 [project]
 name = "power-grid-model"
@@ -20,7 +16,7 @@ authors = [
 ]
 description = "Python/C++ library for distribution power system analysis"
 readme = "README.md"
-license = { text = "MPL-2.0" }
+license = "MPL-2.0"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: Implementation :: CPython",
@@ -28,7 +24,6 @@ classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
     "Operating System :: Microsoft :: Windows",
     "Operating System :: POSIX :: Linux",
     "Operating System :: MacOS",
@@ -38,9 +33,8 @@ requires-python = ">=3.11"
 dependencies = ["numpy>=1.21.0"]
 dynamic = ["version"]
 
-
 [project.optional-dependencies]
-dev = ["msgpack", "pre-commit", "pylint", "pytest", "pytest-cov"]
+dev = ["msgpack", "pre-commit", "pytest", "pytest-cov", "ruff"]
 doc = [
     "sphinx",
     "breathe",
@@ -63,41 +57,119 @@ Documentation = "https://power-grid-model.readthedocs.io/en/stable/"
 Mailing-list = "https://lists.lfenergy.org/g/powergridmodel"
 Discussion = "https://github.com/orgs/PowerGridModel/discussions"
 
-[tool.setuptools.packages.find]
-where = ["src"]
-namespaces = false
+[project.entry-points."cmake.root"]
+power_grid_model = "power_grid_model._core.power_grid_model_c"
 
-[tool.setuptools.dynamic]
-version = { file = "PYPI_VERSION" }
+[tool.scikit-build]
+logging.level = "INFO"
 
-[tool.setuptools.package-data]
-"power_grid_model" = ["py.typed"]
+cmake.version = ">=3.23"
+cmake.build-type = "Release"
+cmake.args = ["-GNinja"]
+
+build-dir = "build"
+
+search.site-packages = false
+
+ninja.version = ">=1.10"
+ninja.make-fallback = false
+
+wheel.install-dir = "power_grid_model/_core/power_grid_model_c"
+wheel.py-api = "py3"
+
+[tool.scikit-build.metadata.version]
+provider = "scikit_build_core.metadata.regex"
+input = "VERSION"
+regex = "^\\s*(?P<version>[^\\s]+)\\s*$"
+result = "{version}"
+
+# when build in CI, force single thread to avoid out of memory errors
+[[tool.scikit-build.overrides]]
+if.any.env.CIBUILDWHEEL = true
+if.any.env.GITHUB_ACTIONS = true
+if.any.env.READTHEDOCS = true
+build.tool-args = ["-j1"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests/unit"]
 addopts = [
     "--cov=power_grid_model",
-    "--cov-report",
-    "term",
-    "--cov-report",
-    "html:python_cov_html",
-    "--cov-report",
-    "xml:python_coverage.xml",
+    "--cov-report=term",
+    "--cov-report=html:python_cov_html",
+    "--cov-report=xml:python_coverage.xml",
     "--cov-fail-under=95",
 ]
 xfail_strict = true
 
-[tool.black]
+[tool.ruff]
+# Same as Black.
 line-length = 120
-target-version = ['py311']
+indent-width = 4
+show-fixes = true
 
-[tool.isort]
-profile = "black"
-combine_as_imports = true
-line_length = 120
+# Assume Python 3.11
+target-version = "py311"
 
-[tool.pylint]
-max-line-length = 120
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint]
+select = [
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # isort
+    "I",
+    "SIM",
+    "YTT",
+    "BLE",
+    "PERF",
+    "Q",
+    "ICN",
+    "ISC",
+    "G",
+    "LOG",
+    "EXE",
+    "FA",
+    "FURB",
+    "FLY",
+    "SLOT",
+    "PL",
+    "NPY",
+    "W",
+    "PTH",
+    "TID",
+    "ARG",
+    "RET",
+    "PIE",
+    "SLF",
+    "UP",
+    "RSE",
+    "RUF",
+    "S",
+    "FBT003",
+    "TRY002",
+    "PT"
+]
+
+ignore = [
+    "UP038", # deprecated, https://docs.astral.sh/ruff/rules/non-pep604-isinstance/#deprecation
+    "PT019" # flags false positives
+]
+
+[tool.ruff.lint.isort]
+# Imports that are imported using keyword "as" and are from the same source - are combined.
+combine-as-imports = true
+
+[tool.ruff.lint.per-file-ignores]
+# Ignore `F811` (redefinition violations) in all examples notebooks since we use redefinition.
+"docs/examples/*.ipynb" = ["F811", "E402"]
+# Pylint was only run in src directory before moving to Ruff
+"tests/*" = ["PLR0915", "PLR0912", "PLR0913", "S"]
+# Ignore private member access: _model_ptr, _all_component_count...
+"src/power_grid_model/_core/*.py" = ["SLF001"]
+"tests/unit/test_error_handling.py" = ["SLF001"]
 
 [tool.mypy]
 follow_imports = "silent"
@@ -116,7 +188,8 @@ test-command = "pytest {package}/tests"
 # we do not support 
 #    PyPy
 #    musllinux in aarch64
-skip = ["pp*", "*-musllinux_aarch64"]
+#    disable Python 3.14 for now until it is released
+skip = ["pp*", "*-musllinux_aarch64", "cp314*"]
 
 [tool.cibuildwheel.linux]
 archs = ["x86_64", "aarch64"]
@@ -127,7 +200,7 @@ musllinux-x86_64-image = "musllinux_1_2"
 
 [tool.cibuildwheel.macos]
 archs = ["x86_64", "arm64"]
-environment = { CC = "clang", CXX = "clang++", MACOSX_DEPLOYMENT_TARGET = "13.3" }
+environment = { CC = "clang", CXX = "clang++", MACOSX_DEPLOYMENT_TARGET = "13.4" }
 
 [tool.cibuildwheel.windows]
 archs = ["AMD64"]

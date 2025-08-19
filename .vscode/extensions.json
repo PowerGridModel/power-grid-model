@@ -4,8 +4,7 @@
 	// List of extensions which should be recommended for users of this workspace.
 	"recommendations": [
 		"tamasfe.even-better-toml",
-		"ms-python.black-formatter",
-		"ms-python.isort",
+		"charliermarsh.ruff",
 		"ms-python.python",
 		"ms-python.vscode-pylance",
 		"ms-toolsai.jupyter",
@@ -24,6 +23,7 @@
 		"matepek.vscode-catch2-test-adapter",
 		"cschlosser.doxdocgen",
 		"fredericbonnet.cmake-test-adapter",
-		"sonarsource.sonarlint-vscode"
+		"sonarsource.sonarlint-vscode",
+		"davidanson.vscode-markdownlint"
 	]
 }

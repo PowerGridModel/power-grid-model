@@ -16,14 +16,14 @@ from typing import cast as cast_type
 import numpy as np
 
 from power_grid_model import CalculationMethod, PowerGridModel
-from power_grid_model._core.dataset_definitions import DatasetType, _map_to_component_types
-from power_grid_model._core.serialization import (  # pylint: disable=unused-import
+from power_grid_model._core.dataset_definitions import ComponentType, DatasetType, _map_to_component_types
+from power_grid_model._core.serialization import (
     json_deserialize,
     json_serialize,
     msgpack_deserialize,
     msgpack_serialize,
 )
-from power_grid_model._utils import (
+from power_grid_model._core.utils import (
     _extract_data_from_component_data,
     _extract_indptr,
     get_and_verify_batch_sizes as _get_and_verify_batch_sizes,
@@ -47,6 +47,12 @@ from power_grid_model.typing import ComponentAttributeMapping
 _DEPRECATED_FUNCTION_MSG = "This function is deprecated."
 _DEPRECATED_JSON_DESERIALIZATION_MSG = f"{_DEPRECATED_FUNCTION_MSG} Please use json_deserialize_to_file instead."
 _DEPRECATED_JSON_SERIALIZATION_MSG = f"{_DEPRECATED_FUNCTION_MSG} Please use json_serialize_from_file instead."
+
+LICENSE_TEXT = (
+    "SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>\n\n"
+    "SPDX-License-Identifier: MPL-2.0"
+    "\n"
+)
 
 
 def get_dataset_scenario(dataset: BatchDataset, scenario: int) -> SingleDataset:
@@ -135,7 +141,7 @@ def json_deserialize_from_file(
     Returns:
         The deserialized dataset in Power grid model input format.
     """
-    with open(file_path, encoding="utf-8") as file_pointer:
+    with file_path.open(encoding="utf-8") as file_pointer:
         return json_deserialize(file_pointer.read(), data_filter=data_filter)
 
 
@@ -163,7 +169,7 @@ def json_serialize_to_file(
         data=data, dataset_type=dataset_type, use_compact_list=use_compact_list, indent=-1 if indent is None else indent
     )
 
-    with open(file_path, mode="w", encoding="utf-8") as file_pointer:
+    with file_path.open(mode="w", encoding="utf-8") as file_pointer:
         file_pointer.write(result)
 
 
@@ -184,7 +190,7 @@ def msgpack_deserialize_from_file(
     Returns:
         The deserialized dataset in Power grid model input format.
     """
-    with open(file_path, mode="rb") as file_pointer:
+    with file_path.open(mode="rb") as file_pointer:
         return msgpack_deserialize(file_pointer.read(), data_filter=data_filter)
 
 
@@ -206,7 +212,7 @@ def msgpack_serialize_to_file(
     data = _map_to_component_types(data)
     result = msgpack_serialize(data=data, dataset_type=dataset_type, use_compact_list=use_compact_list)
 
-    with open(file_path, mode="wb") as file_pointer:
+    with file_path.open(mode="wb") as file_pointer:
         file_pointer.write(result)
 
 
@@ -272,11 +278,11 @@ def _compatibility_deprecated_export_json_data(
 ):
     serialized_data = json_serialize(data=data, use_compact_list=compact, indent=-1 if indent is None else indent)
     old_format_serialized_data = json.dumps(json.loads(serialized_data)["data"])
-    with open(json_file, mode="w", encoding="utf-8") as file_pointer:
+    with json_file.open(mode="w", encoding="utf-8") as file_pointer:
         file_pointer.write(old_format_serialized_data)
 
 
-def import_input_data(json_file: Path) -> SingleDataset:
+def import_input_data(json_file: Path) -> SingleDataset:  # pragma: no cover
     """
     [deprecated] Import input json data.
 
@@ -293,8 +299,10 @@ def import_input_data(json_file: Path) -> SingleDataset:
     warnings.warn(_DEPRECATED_JSON_DESERIALIZATION_MSG, DeprecationWarning)
 
     data = _compatibility_deprecated_import_json_data(json_file=json_file, data_type=DatasetType.input)
-    assert isinstance(data, dict)
-    assert all(isinstance(component, np.ndarray) and component.ndim == 1 for component in data.values())
+    if not isinstance(data, dict):
+        raise TypeError(f"Expected data to be dict, got {type(data)}")
+    if not all(isinstance(component, np.ndarray) and component.ndim == 1 for component in data.values()):
+        raise TypeError("All components must be 1D numpy arrays")
     return cast_type(SingleDataset, data)
 
 
@@ -321,7 +329,7 @@ def import_update_data(json_file: Path) -> BatchDataset:
 
 
 def _compatibility_deprecated_import_json_data(json_file: Path, data_type: DatasetType):
-    with open(json_file, mode="r", encoding="utf-8") as file_pointer:
+    with Path(json_file).open(mode="r", encoding="utf-8") as file_pointer:
         data = json.load(file_pointer)
 
     if "version" not in data:  # convert old format to version 1.0
@@ -362,9 +370,11 @@ def self_test():
             "is_batch": False,
             "attributes": {},
             "data": {
-                "node": [{"id": 1, "u_rated": 10000}],
-                "source": [{"id": 2, "node": 1, "u_ref": 1, "sk": 1e20}],
-                "sym_load": [{"id": 3, "node": 1, "status": 1, "type": 0, "p_specified": 0, "q_specified": 0}],
+                ComponentType.node: [{"id": 1, "u_rated": 10000}],
+                ComponentType.source: [{"id": 2, "node": 1, "u_ref": 1, "sk": 1e20}],
+                ComponentType.sym_load: [
+                    {"id": 3, "node": 1, "status": 1, "type": 0, "p_specified": 0, "q_specified": 0}
+                ],
             },
         }
 
@@ -387,14 +397,77 @@ def self_test():
             json_serialize_to_file(output_file_path, output_data)
 
             # Verify that the written output is correct
-            with open(output_file_path, "r", encoding="utf-8") as output_file:
+            with Path(output_file_path).open("r", encoding="utf-8") as output_file:
                 output_data = json.load(output_file)
 
-            assert output_data is not None
-            assert math.isclose(
-                output_data["data"]["node"][0]["u"], input_data["data"]["node"][0]["u_rated"], abs_tol=1e-9
-            )
+            if output_data is None:  # pragma: no cover
+                raise ValueError("Output data should not be None")
+            if not math.isclose(
+                output_data["data"][ComponentType.node][0]["u"],
+                input_data["data"][ComponentType.node][0]["u_rated"],
+                abs_tol=1e-9,
+            ):  # pragma: no cover
+                raise ValueError("The difference between the input and output data is too big.")
 
             print("Self test finished.")
         except Exception as e:
             raise PowerGridError from e
+
+
+def _make_test_case(  # noqa: PLR0913
+    *,
+    output_path: Path,
+    input_data: SingleDataset,
+    params: dict,
+    output_data: Dataset,
+    output_dataset_type: DatasetType,
+    update_data: Dataset | None = None,
+):
+    """
+    Create and save a validation test case dataset, including input, update (optional), output, and parameters.
+
+    Args:
+        save_path: Directory path where the test case files will be saved.
+        input_data: Input dataset for the test case.
+        params: Dictionary of parameters used for the test case. It may include calculation method, tolerances, etc.
+            An example of parameters could be:
+            params = {
+                "calculation_method": "newton_raphson",
+                "rtol": 1e-6,
+                "atol": 1e-6,
+            }
+        output_data: Output dataset for the test case.
+        output_dataset_type: The type of the output dataset (e.g., sym_output, asym_output, sc_output).
+        update_data: Optional batch update dataset.
+
+    Raises:
+        ValueError: If the output_dataset_type is not recognized.
+
+    Side Effects:
+        Writes JSON files for input, update (if provided), output, and parameters,
+        all relevant license files, to save_path.
+    """
+    output_file_stem = output_dataset_type.name if isinstance(output_dataset_type, DatasetType) else None
+    if output_dataset_type in [DatasetType.input, DatasetType.update] or output_file_stem is None:
+        raise ValueError(
+            f"Invalid output dataset type: {output_dataset_type}. Expected one of: sym_output, asym_output, sc_output."
+        )
+
+    output_path.mkdir(parents=True, exist_ok=True)
+    json_serialize_to_file(file_path=output_path / "input.json", data=input_data, dataset_type=DatasetType.input)
+    (output_path / "input.json.license").write_text(data=LICENSE_TEXT, encoding="utf-8")
+
+    if update_data is not None:
+        json_serialize_to_file(
+            file_path=output_path / "update_batch.json", data=update_data, dataset_type=DatasetType.update
+        )
+        (output_path / "update_batch.json.license").write_text(data=LICENSE_TEXT, encoding="utf-8")
+        output_file_stem += "_batch"
+    json_serialize_to_file(
+        file_path=output_path / f"{output_file_stem}.json", data=output_data, dataset_type=output_dataset_type
+    )
+    (output_path / f"{output_file_stem}.json.license").write_text(data=LICENSE_TEXT, encoding="utf-8")
+
+    params_json = json.dumps(params, indent=2)
+    (output_path / "params.json").write_text(data=params_json, encoding="utf-8")
+    (output_path / "params.json.license").write_text(data=LICENSE_TEXT, encoding="utf-8")

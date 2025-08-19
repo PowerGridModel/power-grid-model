@@ -116,7 +116,7 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCur
         parameters_changed_ = false;
     }
 
-    // Prepare matrix calculates injected current ie. RHS of solver for each iteration.
+    // Prepare matrix calculates injected current, i.e., RHS of solver for each iteration.
     void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                 ComplexValueVector<sym> const& u) {
         std::vector<LoadGenType> const& load_gen_type = *this->load_gen_type_;
@@ -161,7 +161,7 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCur
     std::shared_ptr<BlockPermArray const> perm_;
     bool parameters_changed_ = true;
 
-    void add_loads(boost::iterator_range<IdxCount> const& load_gens, Idx bus_number, PowerFlowInput<sym> const& input,
+    void add_loads(IdxRange const& load_gens, Idx bus_number, PowerFlowInput<sym> const& input,
                    std::vector<LoadGenType> const& load_gen_type, ComplexValueVector<sym> const& u) {
         for (Idx const load_number : load_gens) {
             // load type
@@ -187,7 +187,7 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCur
         }
     }
 
-    void add_sources(boost::iterator_range<IdxCount> const& sources, Idx bus_number, YBus<sym> const& y_bus,
+    void add_sources(IdxRange const& sources, Idx bus_number, YBus<sym> const& y_bus,
                      PowerFlowInput<sym> const& input) {
         for (Idx const source_number : sources) {
             // I_inj_i += Y_source_j * U_ref_j

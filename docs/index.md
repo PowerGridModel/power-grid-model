@@ -21,11 +21,15 @@ Currently, it supports both symmetric and asymmetric calculations for the follow
 * State Estimation
 * Short Circuit
 
-For conversions from various data format to the power-grid-model, refer to the [power-grid-model-io](https://github.com/PowerGridModel/power-grid-model-io) repository.
-For an extended python interface to the the power-grid-model, refer to the [power-grid-model-ds](https://github.com/PowerGridModel/power-grid-model-ds) repository.
+For conversions from various data format to the power-grid-model, refer to the
+[power-grid-model-io](https://github.com/PowerGridModel/power-grid-model-io) repository.
+For an extended python interface to the the power-grid-model, refer to the
+[power-grid-model-ds](https://github.com/PowerGridModel/power-grid-model-ds) repository.
 
 ```{note}
-Do you wish to be updated on the latest news and releases? Subscribe to the Power Grid Model mailing list by sending an (empty) email to: powergridmodel+subscribe@lists.lfenergy.org
+Do you wish to be updated on the latest news and releases?
+Subscribe to the Power Grid Model mailing list by sending an (empty) email to:
+<a href="mailto:powergridmodel+subscribe@lists.lfenergy.org">powergridmodel+subscribe@lists.lfenergy.org</a>
 ```
 
 ## Install from PyPI
@@ -50,9 +54,10 @@ To install the library from source, refer to the [Build Guide](advanced_document
 
 ## Citations
 
-If you are using Power Grid Model in your research work, please consider citing our library using the references in [Citation](release_and_support/CITATION.md)
+If you are using Power Grid Model in your research work, please consider citing our library using the references in
+[Citation](release_and_support/CITATION.md).
 
-# Contents
+## Contents
 
 Detailed contents of the documentation are structured as follows.
 
@@ -94,6 +99,7 @@ examples/Make Test Dataset.ipynb
 examples/Asymmetric Calculation Example.ipynb
 examples/Transformer Examples.ipynb
 examples/Generic Branch Example.ipynb
+examples/Asymmetric Line.ipynb
 ```
 
 ```{toctree}
@@ -108,8 +114,10 @@ algorithms/lu-solver
 advanced_documentation/native-data-interface
 advanced_documentation/build-guide
 advanced_documentation/c-api
+advanced_documentation/high-level-design
 advanced_documentation/core-design
 advanced_documentation/python-wrapper-design
+advanced_documentation/terminology
 ```
 
 ```{toctree}

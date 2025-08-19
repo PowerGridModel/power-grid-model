@@ -326,7 +326,7 @@ TEST_CASE("Test three winding transformer") {
         BranchSolverOutput<symmetric_t> const b3_output{
             .s_f = (3.0 + 1.0i), .s_t = (1.0 + 1.0i), .i_f = (1.5 - 2.5i), .i_t = (1.5 + 2.0i)};
 
-        Branch3Output<symmetric_t> sym_output = vec[0].get_output(b1_output, b2_output, b3_output);
+        Branch3Output<symmetric_t> const sym_output = vec[0].get_output(b1_output, b2_output, b3_output);
 
         double const out_p_1 = base_power<symmetric_t> * 1;
         double const out_q_1 = base_power<symmetric_t> * (-2);
@@ -482,6 +482,28 @@ TEST_CASE("Test three winding transformer") {
         input.node_2 = 2;
         CHECK_THROWS_AS(ThreeWindingTransformer(input, 138e3, 69e3, 13.8e3), InvalidBranch3);
         input.node_2 = 3;
+    }
+
+    SUBCASE("Periodic clock input") {
+        input.clock_12 = 24;
+        input.clock_13 = 37;
+        ThreeWindingTransformer const trafo_24_36(input, 138e3, 69e3, 13.8e3);
+        CHECK(trafo_24_36.clock_12() == 0);
+        CHECK(trafo_24_36.clock_13() == 1);
+
+        input.clock_12 = -2;
+        input.clock_13 = -13;
+        ThreeWindingTransformer const trafo_m2_m13(input, 138e3, 69e3, 13.8e3);
+        CHECK(trafo_m2_m13.clock_12() == 10);
+        CHECK(trafo_m2_m13.clock_13() == 11);
+
+        input.winding_2 = WindingType::delta;
+        input.winding_3 = WindingType::delta;
+        input.clock_12 = 25;
+        input.clock_13 = 13;
+        ThreeWindingTransformer const trafo_25_13(input, 138e3, 69e3, 13.8e3);
+        CHECK(trafo_25_13.clock_12() == 1);
+        CHECK(trafo_25_13.clock_13() == 1);
     }
 
     SUBCASE("Test i base") {

@@ -8,14 +8,15 @@
 
 #include "common/common.hpp"
 #include "common/exception.hpp"
+#include "common/iterator_facade.hpp"
 
-#include <boost/iterator/iterator_facade.hpp>
 #include <boost/range.hpp>
 
 #include <array>
 #include <functional>
 #include <memory>
 #include <numeric>
+#include <span>
 #include <unordered_map>
 
 namespace power_grid_model {
@@ -188,10 +189,8 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         std::array<Idx, num_storageable + 1> const& cum_size = cum_size_[get_cls_pos_v<Gettable, GettableTypes...>];
         auto const found = std::upper_bound(cum_size.begin(), cum_size.end(), seq);
         assert(found != cum_size.end());
-        Idx2D res;
-        res.group = static_cast<Idx>(std::distance(cum_size.cbegin(), found) - 1);
-        res.pos = seq - cum_size[res.group];
-        return res;
+        auto const group = static_cast<Idx>(std::distance(cum_size.cbegin(), found) - 1);
+        return Idx2D{.group = group, .pos = seq - cum_size[group]};
     }
 
     // get start idx based on two classes
@@ -221,8 +220,8 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
   private:
     std::tuple<std::vector<StorageableTypes>...> vectors_;
     std::unordered_map<ID, Idx2D> map_;
-    std::array<Idx, num_gettable> size_;
-    std::array<std::array<Idx, num_storageable + 1>, num_gettable> cum_size_;
+    std::array<Idx, num_gettable> size_{};
+    std::array<std::array<Idx, num_storageable + 1>, num_gettable> cum_size_{};
 
 #ifndef NDEBUG
     // set construction_complete is used for debug assertions only
@@ -289,8 +288,7 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
 
     // define iterator
     template <supported_type_c<GettableTypes...> Gettable>
-    class Iterator : public boost::iterator_facade<Iterator<Gettable>, Gettable, boost::random_access_traversal_tag,
-                                                   Gettable&, Idx> {
+    class Iterator : public IteratorFacade<Iterator<Gettable>, Gettable, Idx> {
       public:
         static constexpr bool is_const = std::is_const_v<Gettable>;
         using base_type = std::remove_cv_t<Gettable>;
@@ -306,20 +304,22 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         }
 
       private:
-        friend class boost::iterator_core_access;
+        friend class IteratorFacade<Iterator<Gettable>, Gettable, Idx>;
 
-        Gettable& dereference() const { return container_ptr_->template get_item_by_seq<base_type>(idx_); }
-        bool equal(Iterator const& other) const {
-            assert(container_ptr_ == other.container_ptr_);
-            return idx_ == other.idx_;
+        constexpr Gettable const& dereference() const {
+            return container_ptr_->template get_item_by_seq<base_type>(idx_);
         }
-        void increment() { ++idx_; }
-        void decrement() { --idx_; }
-        void advance(Idx n) { idx_ += n; }
-        Idx distance_to(Iterator const& other) const {
+        constexpr Gettable& dereference() { return container_ptr_->template get_item_by_seq<base_type>(idx_); }
+        constexpr auto three_way_compare(Iterator const& other) const {
+            assert(container_ptr_ == other.container_ptr_);
+            return idx_ <=> other.idx_;
+        }
+        constexpr void advance(Idx n) { idx_ += n; }
+        constexpr Idx distance_to(Iterator const& other) const {
             assert(container_ptr_ == other.container_ptr_);
             return other.idx_ - idx_;
         }
+
         // store container pointer
         // and idx
         container_type* container_ptr_;
@@ -328,13 +328,12 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
 
   public:
     template <supported_type_c<GettableTypes...> Gettable> auto iter() {
-        return boost::make_iterator_range(Iterator<Gettable>{this, 0},
-                                          Iterator<Gettable>{this, this->template size<std::remove_cv_t<Gettable>>()});
+        return std::ranges::subrange{Iterator<Gettable>{this, 0},
+                                     Iterator<Gettable>{this, this->template size<std::remove_cv_t<Gettable>>()}};
     }
     template <supported_type_c<GettableTypes...> Gettable> auto iter() const {
-        return boost::make_iterator_range(
-            Iterator<Gettable const>{this, 0},
-            Iterator<Gettable const>{this, this->template size<std::remove_cv_t<Gettable>>()});
+        return std::ranges::subrange{Iterator<Gettable const>{this, 0},
+                                     Iterator<Gettable const>{this, this->template size<std::remove_cv_t<Gettable>>()}};
     }
     template <supported_type_c<GettableTypes...> Gettable> auto citer() const { return iter<Gettable>(); }
 };

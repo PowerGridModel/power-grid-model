@@ -7,20 +7,23 @@ SPDX-License-Identifier: MPL-2.0
 # Quick Start
 
 In this quick start a simple 10kV network as below is calculated.
-A line connects two nodes. One node has a source. The other node has a symmetric load.
-The full code for this section is provided in {{ "[quick_example.py]({}/scripts/quick_example.py)".format(gh_link_head_blob) }}.
+A line connects two nodes.
+One node has a source.
+The other node has a symmetric load.
+The full code for this section is provided in
+{{ "[quick_example.py]({}/scripts/quick_example.py)".format(gh_link_head_blob) }}.
 
-```
+```txt
 node_1 ---line_3--- node_2
  |                    |
 source_5            sym_load_4
 ```
 
-The library uses a graph data model to represent the physical components and their attributes,
-see [Graph Data Model](user_manual/data-model).
+The library uses a graph data model to represent the physical components and their attributes, see
+[Graph Data Model](user_manual/data-model).
 
-Before we start working on the network, we need first import the main model class
-as well as some helper functions for enumerations and meta data.
+Before we start working on the network, we need first import the main model class as well as some helper functions for
+enumerations and meta data.
 
 ```python
 from power_grid_model import LoadGenType
@@ -40,12 +43,12 @@ self_test()
 ## Input Data
 
 The library uses dictionaries of
-[numpy structured arrays](https://numpy.org/doc/stable/user/basics.rec.html)
-as the main (input and output) data exchange format between Python interface and C++ core.
+[numpy structured arrays](https://numpy.org/doc/stable/user/basics.rec.html) as the main (input and output) data
+exchange format between Python interface and C++ core.
 Detailed design of data interface can be found in [Native Data Interface](advanced_documentation/native-data-interface).
 
-The helper function {py:class}`power_grid_model.initialize_array` can be used to
-easily generate an array of the correct format.
+The helper function {py:class}`power_grid_model.initialize_array` can be used to easily generate an array of the correct
+format.
 
 ```python
 # node
@@ -54,10 +57,9 @@ node['id'] = [1, 2]
 node['u_rated'] = [10.5e3, 10.5e3]
 ```
 
-The code above generates a node input array with two nodes,
-and assigns the attributes of the nodes to the array.
+The code above generates a node input array with two nodes, and assigns the attributes of the nodes to the array.
 Similarly, we can create input arrays for line, load, and generation.
-A dictionary of such arrays is used for `input_data` and `update_data`. 
+A dictionary of such arrays is used for `input_data` and `update_data`.
 
 ```python
 # line
@@ -95,16 +97,17 @@ input_data = {
 }
 ```
 
-Another example of how to create components can be found in [Input data](ex_input_data).
+Another example of how to create components can be found in
+[Input data](examples/Power%20Flow%20Example.ipynb#input-dataset).
 
 ```{note}
-The keys of the dictonary of arrays are unique and should match with the respective `type name` of the component. 
+The keys of the dictonary of arrays are unique and should match with the respective `type name` of the component.
 See, e.g., that type name of {hoverxref}`user_manual/components:node` is `node`.
 ```
 
 ## Instantiate Model
 
-We can instantiate the model by calling the constructor of {py:class}`power_grid_model.PowerGridModel`
+We can instantiate the model by calling the constructor of {py:class}`power_grid_model.PowerGridModel`:
 
 ```python
 model = PowerGridModel(input_data, system_frequency=50.0)
@@ -112,8 +115,8 @@ model = PowerGridModel(input_data, system_frequency=50.0)
 
 ## Power Flow Calculation
 
-To run calculations, use the object methods {py:class}`power_grid_model.PowerGridModel.calculate_power_flow` 
-or {py:class}`power_grid_model.PowerGridModel.calculate_state_estimation` functions. 
+To run calculations, use the object methods {py:class}`power_grid_model.PowerGridModel.calculate_power_flow` or
+{py:class}`power_grid_model.PowerGridModel.calculate_state_estimation` functions.
 Refer [Calculations](user_manual/calculations) for more details on the many optional arguments.
 
 ```python
@@ -134,7 +137,7 @@ print(pd.DataFrame(result['node']))
 
 The result data can then be viewed in tabular forms.
 
-```
+```txt
 Node Input
    id  u_rated
 0   1  10500.0
@@ -147,11 +150,15 @@ Node Result
 
 ## Validation
 
-To validate the `input_data` and `update_data` for valid values, use {py:class}`power_grid_model.validation.validate_input_data` and {py:class}`power_grid_model.validation.validate_batch_data`. Refer to [Data Validator](user_manual/data-validator) for more details
+To validate the `input_data` and `update_data` for valid values, use
+{py:class}`power_grid_model.validation.validate_input_data` and
+{py:class}`power_grid_model.validation.validate_batch_data`.
+Refer to [Data Validator](user_manual/data-validator) for more details.
 
 ## Batch Data
 
 You can calculate a (large) number of scenarios using one command and even in parallel threading.
 This is what makes Power Grid Model a powerful calculation engine.
 You need to create a batch update dataset and put it in the `update_data` argument of `calculate_power_flow`.
-Please refer to [Power Flow Example](examples/Power%20Flow%20Example.ipynb) for a detailed tutorial about how to execute batch calculations.
+Please refer to [Power Flow Example](examples/Power%20Flow%20Example.ipynb) for a detailed tutorial about how to execute
+batch calculations.

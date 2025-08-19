@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <cmath>
 #include <complex>
 #include <cstddef>
 #include <cstdint>
@@ -34,7 +35,7 @@ struct Idx2DHash {
     std::size_t operator()(Idx2D const& idx) const {
         size_t const h1 = std::hash<Idx>{}(idx.group);
         size_t const h2 = std::hash<Idx>{}(idx.pos);
-        return h1 ^ (h2 << 1);
+        return h1 ^ (h2 << 1U);
     }
 };
 
@@ -59,9 +60,9 @@ using std::numbers::sqrt3;
 
 constexpr DoubleComplex a2{-0.5, -sqrt3 / 2.0};
 constexpr DoubleComplex a{-0.5, sqrt3 / 2.0};
-constexpr double deg_30 = 1.0 / 6.0 * pi;
-constexpr double deg_120 = 2.0 / 3.0 * pi;
-constexpr double deg_240 = 4.0 / 3.0 * pi;
+constexpr double deg_30 = (1.0 / 6.0) * pi;
+constexpr double deg_120 = (2.0 / 3.0) * pi;
+constexpr double deg_240 = (4.0 / 3.0) * pi;
 constexpr double numerical_tolerance = 1e-8;
 constexpr double nan = std::numeric_limits<double>::quiet_NaN();
 constexpr IntS na_IntS = std::numeric_limits<IntS>::min();
@@ -107,5 +108,22 @@ struct IncludeAll {
     }
 };
 constexpr IncludeAll include_all{};
+
+// function to handle periodic mapping
+template <typename T> constexpr T map_to_cyclic_range(T value, T period) {
+    static_assert(std::is_arithmetic_v<T>, "T must be an arithmetic type (integral or floating-point)");
+    if constexpr (std::is_integral_v<T>) {
+        return static_cast<T>((value % period + period) % period);
+    } else {
+        if (std::is_constant_evaluated()) {
+            T quotient = value / period;
+            Idx const floored_quotient =
+                (quotient >= T{0}) ? static_cast<Idx>(quotient) : static_cast<Idx>(quotient) - 1;
+            T result = value - static_cast<T>(floored_quotient) * period;
+            return result;
+        }
+        return std::fmod(std::fmod(value, period) + period, period);
+    }
+}
 
 } // namespace power_grid_model

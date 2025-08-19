@@ -20,24 +20,25 @@ concept scalar_value = std::same_as<T, double> || std::same_as<T, DoubleComplex>
 
 namespace three_phase_tensor {
 
-template <class T> using Eigen3Vector = Eigen::Array<T, 3, 1>;
-template <class T> using Eigen3Tensor = Eigen::Array<T, 3, 3, Eigen::ColMajor>;
-template <class T> using Eigen3DiagonalTensor = Eigen::DiagonalMatrix<T, 3>;
+template <class T> using EigenVector3 = Eigen::Array<T, 3, 1>;
+template <class T> using EigenTensor3 = Eigen::Array<T, 3, 3, Eigen::ColMajor>;
+template <class T> using EigenTensor4 = Eigen::Array<T, 4, 4, Eigen::ColMajor>;
+template <class T> using EigenDiagonalTensor3 = Eigen::DiagonalMatrix<T, 3>;
 
-template <scalar_value T> class Vector : public Eigen3Vector<T> {
+template <scalar_value T> class Vector : public EigenVector3<T> {
   public:
-    Vector() { (*this) = Eigen3Vector<T>::Zero(); };
+    Vector() { (*this) = EigenVector3<T>::Zero(); };
     // eigen expression
-    template <typename OtherDerived> Vector(Eigen::ArrayBase<OtherDerived> const& other) : Eigen3Vector<T>{other} {}
+    template <typename OtherDerived> Vector(Eigen::ArrayBase<OtherDerived> const& other) : EigenVector3<T>{other} {}
     template <typename OtherDerived> Vector& operator=(Eigen::ArrayBase<OtherDerived> const& other) {
-        this->Eigen3Vector<T>::operator=(other);
+        this->EigenVector3<T>::operator=(other);
         return *this;
     }
     // constructor of single value
     // for complex number, rotate the single value by 120 and 240 degrees for 1st and 2nd entry
     // this will create a symmetric phasor based on one phasor
     explicit Vector(T const& x) {
-        if constexpr (std::same_as<T, double>) {
+        if constexpr (std::floating_point<T>) {
             (*this) << x, x, x;
         } else {
             (*this) << x, (x * a2), (x * a);
@@ -55,33 +56,63 @@ template <scalar_value T> class Vector : public Eigen3Vector<T> {
         : Vector{{real_part(0), imag_part(0)}, {real_part(1), imag_part(1)}, {real_part(2), imag_part(2)}} {}
 };
 
-template <scalar_value T> class Tensor : public Eigen3Tensor<T> {
+template <scalar_value T> class Tensor : public EigenTensor3<T> {
   public:
-    Tensor() { (*this) = Eigen3Tensor<T>::Zero(); }
+    Tensor() { (*this) = EigenTensor3<T>::Zero(); }
     // additional constructors
-    explicit Tensor(T const& x) { (*this) << x, 0.0, 0.0, 0.0, x, 0.0, 0.0, 0.0, x; }
+    explicit Tensor(T const& x) { (*this) << x, T{0}, T{0}, T{0}, x, T{0}, T{0}, T{0}, x; }
     explicit Tensor(T const& s, T const& m) { (*this) << s, m, m, m, s, m, m, m, s; }
-    explicit Tensor(Vector<T> const& v) { (*this) << v(0), 0.0, 0.0, 0.0, v(1), 0.0, 0.0, 0.0, v(2); }
+    explicit Tensor(T const& s1, T const& s2, T const& s3, T const& m12, T const& m13, T const& m23) {
+        (*this) << s1, m12, m13, m12, s2, m23, m13, m23, s3;
+    }
+    explicit Tensor(Vector<T> const& v) {
+        assert(v.size() == 3);
+        (*this) << v(0), T{0}, T{0}, T{0}, v(1), T{0}, T{0}, T{0}, v(2);
+    }
     // eigen expression
-    template <typename OtherDerived> Tensor(Eigen::ArrayBase<OtherDerived> const& other) : Eigen3Tensor<T>{other} {}
+    template <typename OtherDerived> Tensor(Eigen::ArrayBase<OtherDerived> const& other) : EigenTensor3<T>{other} {}
     template <typename OtherDerived> Tensor& operator=(Eigen::ArrayBase<OtherDerived> const& other) {
-        this->Eigen3Tensor<T>::operator=(other);
+        this->EigenTensor3<T>::operator=(other);
         return *this;
     }
 };
 
-template <scalar_value T> class DiagonalTensor : public Eigen3DiagonalTensor<T> {
+template <scalar_value T> class Tensor4 : public EigenTensor4<T> {
+  public:
+    Tensor4() { (*this) = EigenTensor4<T>::Zero(); }
+    // additional constructors
+    explicit Tensor4(T const& x) {
+        (*this) << x, T{0}, T{0}, T{0}, T{0}, x, T{0}, T{0}, T{0}, T{0}, x, T{0}, T{0}, T{0}, T{0}, x;
+    }
+    explicit Tensor4(T const& s, T const& m) { (*this) << s, m, m, m, m, s, m, m, m, m, s, m, m, m, m, s; }
+    explicit Tensor4(T const& s1, T const& s2, T const& s3, T const& s4, T const& m12, T const& m13, T const& m14,
+                     T const& m23, T const& m24, T const& m34) {
+        (*this) << s1, m12, m13, m14, m12, s2, m23, m24, m13, m23, s3, m34, m14, m24, m34, s4;
+    }
+    explicit Tensor4(Vector<T> const& v) {
+        assert(v.size() == 4);
+        (*this) << v(0), T{0}, T{0}, T{0}, T{0}, v(1), T{0}, T{0}, T{0}, T{0}, v(2), T{0}, T{0}, T{0}, T{0}, v(3);
+    }
+    // eigen expression
+    template <typename OtherDerived> Tensor4(Eigen::ArrayBase<OtherDerived> const& other) : EigenTensor4<T>{other} {}
+    template <typename OtherDerived> Tensor4& operator=(Eigen::ArrayBase<OtherDerived> const& other) {
+        this->EigenTensor4<T>::operator=(other);
+        return *this;
+    }
+};
+
+template <scalar_value T> class DiagonalTensor : public EigenDiagonalTensor3<T> {
   public:
     DiagonalTensor() { (*this).setZero(); }
     // additional constructors
-    explicit DiagonalTensor(T const& x) : Eigen3DiagonalTensor<T>{x, x, x} {}
-    explicit DiagonalTensor(Vector<T> const& v) : Eigen3DiagonalTensor<T>{v(0), v(1), v(2)} {}
+    explicit DiagonalTensor(T const& x) : EigenDiagonalTensor3<T>{x, x, x} {}
+    explicit DiagonalTensor(Vector<T> const& v) : EigenDiagonalTensor3<T>{v(0), v(1), v(2)} {}
     // eigen expression
     template <typename OtherDerived>
-    DiagonalTensor(Eigen::ArrayBase<OtherDerived> const& other) : Eigen3DiagonalTensor<T>{other} {}
+    DiagonalTensor(Eigen::ArrayBase<OtherDerived> const& other) : EigenDiagonalTensor3<T>{other} {}
 
     template <typename OtherDerived> DiagonalTensor& operator=(Eigen::ArrayBase<OtherDerived> const& other) {
-        this->Eigen3DiagonalTensor<T>::operator=(other);
+        this->EigenDiagonalTensor3<T>::operator=(other);
         return *this;
     }
 };
@@ -92,6 +123,7 @@ template <symmetry_tag sym>
 using RealTensor = std::conditional_t<is_symmetric_v<sym>, double, three_phase_tensor::Tensor<double>>;
 template <symmetry_tag sym>
 using ComplexTensor = std::conditional_t<is_symmetric_v<sym>, DoubleComplex, three_phase_tensor::Tensor<DoubleComplex>>;
+using ComplexTensor4 = three_phase_tensor::Tensor4<DoubleComplex>;
 
 template <symmetry_tag sym>
 using RealDiagonalTensor = std::conditional_t<is_symmetric_v<sym>, double, three_phase_tensor::DiagonalTensor<double>>;
@@ -104,20 +136,20 @@ template <symmetry_tag sym>
 using ComplexValue = std::conditional_t<is_symmetric_v<sym>, DoubleComplex, three_phase_tensor::Vector<DoubleComplex>>;
 
 // asserts to ensure alignment
-static_assert(sizeof(RealTensor<asymmetric_t>) == sizeof(double[9]));
-static_assert(alignof(RealTensor<asymmetric_t>) == alignof(double[9]));
+static_assert(sizeof(RealTensor<asymmetric_t>) == sizeof(double[9]));   // NOLINT(hicpp-avoid-c-arrays)
+static_assert(alignof(RealTensor<asymmetric_t>) == alignof(double[9])); // NOLINT(hicpp-avoid-c-arrays)
 static_assert(std::is_standard_layout_v<RealTensor<asymmetric_t>>);
 static_assert(std::is_trivially_destructible_v<RealTensor<asymmetric_t>>);
-static_assert(sizeof(ComplexTensor<asymmetric_t>) == sizeof(double[18]));
-static_assert(alignof(ComplexTensor<asymmetric_t>) >= alignof(double[18]));
+static_assert(sizeof(ComplexTensor<asymmetric_t>) == sizeof(double[18]));   // NOLINT(hicpp-avoid-c-arrays)
+static_assert(alignof(ComplexTensor<asymmetric_t>) >= alignof(double[18])); // NOLINT(hicpp-avoid-c-arrays)
 static_assert(std::is_standard_layout_v<ComplexTensor<asymmetric_t>>);
 static_assert(std::is_trivially_destructible_v<ComplexTensor<asymmetric_t>>);
-static_assert(sizeof(RealValue<asymmetric_t>) == sizeof(double[3]));
-static_assert(alignof(RealValue<asymmetric_t>) == alignof(double[3]));
+static_assert(sizeof(RealValue<asymmetric_t>) == sizeof(double[3]));   // NOLINT(hicpp-avoid-c-arrays)
+static_assert(alignof(RealValue<asymmetric_t>) == alignof(double[3])); // NOLINT(hicpp-avoid-c-arrays)
 static_assert(std::is_standard_layout_v<RealValue<asymmetric_t>>);
 static_assert(std::is_trivially_destructible_v<RealValue<asymmetric_t>>);
-static_assert(sizeof(ComplexValue<asymmetric_t>) == sizeof(double[6]));
-static_assert(alignof(ComplexValue<asymmetric_t>) >= alignof(double[6]));
+static_assert(sizeof(ComplexValue<asymmetric_t>) == sizeof(double[6]));   // NOLINT(hicpp-avoid-c-arrays)
+static_assert(alignof(ComplexValue<asymmetric_t>) >= alignof(double[6])); // NOLINT(hicpp-avoid-c-arrays)
 static_assert(std::is_standard_layout_v<ComplexValue<asymmetric_t>>);
 static_assert(std::is_trivially_destructible_v<ComplexValue<asymmetric_t>>);
 
@@ -149,9 +181,11 @@ inline ComplexValue<asymmetric_t> piecewise_complex_value(T<Derived> const& x) {
 inline ComplexValue<asymmetric_t> piecewise_complex_value(ComplexValue<asymmetric_t> const& x) { return x; }
 
 // abs
-inline double cabs(double x) { return std::abs(x); }
-inline double cabs(DoubleComplex const& x) { return std::sqrt(std::norm(x)); }
-inline double abs2(DoubleComplex const& x) { return std::norm(x); }
+template <std::floating_point Float> inline Float cabs(Float x) { return std::abs(x); }
+template <std::floating_point Float> inline Float abs2(Float x) { return x * x; }
+template <std::floating_point Float> inline Float cabs(std::complex<Float> const& x) { return std::sqrt(std::norm(x)); }
+template <std::floating_point Float> inline Float abs2(std::complex<Float> const& x) { return std::norm(x); }
+
 template <column_vector_or_tensor DerivedA>
 inline auto cabs(Eigen::ArrayBase<DerivedA> const& m)
     requires(std::same_as<typename DerivedA::Scalar, DoubleComplex>)
@@ -160,25 +194,36 @@ inline auto cabs(Eigen::ArrayBase<DerivedA> const& m)
 }
 template <column_vector_or_tensor DerivedA>
 inline auto cabs(Eigen::ArrayBase<DerivedA> const& m)
-    requires(std::same_as<typename DerivedA::Scalar, double>)
+    requires(std::floating_point<typename DerivedA::Scalar>)
 {
     return m.abs();
 }
 
 // phase_shift(x) = e^{i arg(x)} = x / |x|
-inline DoubleComplex phase_shift(DoubleComplex const x) {
+template <std::floating_point Float> inline std::complex<Float> phase_shift(std::complex<Float> const x) {
     if (auto const abs_x = cabs(x); abs_x > 0.0) {
         return x / abs_x;
     }
-    return DoubleComplex{1.0};
+    return std::complex<Float>{1.0};
 }
 inline ComplexValue<asymmetric_t> phase_shift(ComplexValue<asymmetric_t> const& m) {
     return {phase_shift(m(0)), phase_shift(m(1)), phase_shift(m(2))};
 }
 
+// arg(e^(i * phase)) = phase (mod 2pi). By convention restrict to [-pi, pi].
+template <std::floating_point Float> inline auto phase_mod_2pi(Float phase) {
+    return RealValue<symmetric_t>{arg(std::complex<Float>{exp(std::complex<Float>{Float{0.0}, phase})})};
+}
+inline auto phase_mod_2pi(RealValue<asymmetric_t> const& phase) {
+    return RealValue<asymmetric_t>{arg(ComplexValue<asymmetric_t>{exp(1.0i * phase)})};
+}
+
 // calculate kron product of two vector
-inline double vector_outer_product(double x, double y) { return x * y; }
-inline DoubleComplex vector_outer_product(DoubleComplex x, DoubleComplex y) { return x * y; }
+template <std::floating_point Float> constexpr Float vector_outer_product(Float x, Float y) { return x * y; }
+template <std::floating_point Float>
+constexpr std::complex<Float> vector_outer_product(std::complex<Float> x, std::complex<Float> y) {
+    return x * y;
+}
 template <column_vector DerivedA, column_vector DerivedB>
 inline auto vector_outer_product(Eigen::ArrayBase<DerivedA> const& x, Eigen::ArrayBase<DerivedB> const& y) {
     return (x.matrix() * y.matrix().transpose()).array();
@@ -197,10 +242,13 @@ template <column_vector_or_tensor Derived> inline auto dot_prepare(Eigen::ArrayB
 } // namespace detail
 
 // calculate matrix multiply, dot
-inline double dot(double x, double y) { return x * y; }
-inline DoubleComplex dot(DoubleComplex const& x, DoubleComplex const& y) { return x * y; }
+template <std::floating_point Float> constexpr Float dot(Float x, Float y) { return x * y; }
+template <std::floating_point Float>
+constexpr std::complex<Float> dot(std::complex<Float> const& x, std::complex<Float> const& y) {
+    return x * y;
+}
 
-template <scalar_value... T> inline auto dot(T const&... x) { return (... * x); }
+template <scalar_value... T> constexpr auto dot(T const&... x) { return (... * x); }
 
 template <column_vector_or_tensor... Derived> inline auto dot(Derived const&... x) {
     using detail::dot_prepare;
@@ -214,29 +262,27 @@ inline auto dot(Derived const&... x) {
 }
 
 // max of a vector
-inline double max_val(double val) { return val; }
-template <column_vector DerivedA> inline double max_val(Eigen::ArrayBase<DerivedA> const& val) {
-    return val.maxCoeff();
-}
+template <std::floating_point Float> constexpr Float max_val(Float val) { return val; }
+template <column_vector DerivedA> inline auto max_val(Eigen::ArrayBase<DerivedA> const& val) { return val.maxCoeff(); }
 
 // function to sum rows of tensor
 template <rk2_tensor DerivedA> inline auto sum_row(Eigen::ArrayBase<DerivedA> const& m) { return m.rowwise().sum(); }
 template <typename T>
     requires std::floating_point<T> || std::same_as<T, DoubleComplex>
-inline T sum_row(T d) {
+constexpr T sum_row(T d) {
     return d;
 }
 
 // function to sum vector
 template <column_vector DerivedA> inline auto sum_val(Eigen::ArrayBase<DerivedA> const& m) { return m.sum(); }
-// overload for double and complex
-inline double sum_val(double d) { return d; }
-inline DoubleComplex sum_val(DoubleComplex const& z) { return z; }
+// overload for floating-point and complex
+template <std::floating_point Float> constexpr Float sum_val(Float d) { return d; }
+template <std::floating_point Float> constexpr std::complex<Float> sum_val(std::complex<Float> const& z) { return z; }
 
 // function to mean vector
 template <column_vector DerivedA> inline auto mean_val(Eigen::ArrayBase<DerivedA> const& m) { return m.mean(); }
-inline DoubleComplex mean_val(DoubleComplex const& z) { return z; }
-inline double mean_val(double z) { return z; }
+template <std::floating_point Float> constexpr std::complex<Float> mean_val(std::complex<Float> const& z) { return z; }
+template <std::floating_point Float> constexpr Float mean_val(Float z) { return z; }
 
 template <symmetry_tag sym, class T> inline auto process_mean_val(T const& m) {
     if constexpr (is_symmetric_v<sym>) {
@@ -249,7 +295,7 @@ template <symmetry_tag sym, class T> inline auto process_mean_val(T const& m) {
 template <column_vector Derived> inline auto as_diag(Eigen::ArrayBase<Derived> const& x) {
     return x.matrix().asDiagonal();
 }
-inline auto as_diag(double x) { return x; }
+constexpr auto as_diag(std::floating_point auto x) { return x; }
 
 // diagonal multiply
 template <column_vector DerivedA, rk2_tensor DerivedB, column_vector DerivedC>
@@ -257,24 +303,26 @@ inline auto diag_mult(Eigen::ArrayBase<DerivedA> const& x, Eigen::ArrayBase<Deri
                       Eigen::ArrayBase<DerivedC> const& z) {
     return (as_diag(x) * y.matrix() * as_diag(z)).array();
 }
-// double overload
-inline auto diag_mult(double x, double y, double z) { return x * y * z; }
+// floating-point overload
+template <std::floating_point Float> constexpr auto diag_mult(Float x, Float y, Float z) { return x * y * z; }
 
 // calculate positive sequence
 template <column_vector Derived> inline DoubleComplex pos_seq(Eigen::ArrayBase<Derived> const& val) {
     return (val(0) + a * val(1) + a2 * val(2)) / 3.0;
 }
 
-inline auto pos_seq(DoubleComplex const& val) { return val; }
+constexpr auto pos_seq(DoubleComplex const& val) { return val; }
 
 // inverse of tensor
-inline auto inv(double val) { return 1.0 / val; }
-inline auto inv(DoubleComplex const& val) { return 1.0 / val; }
+template <std::floating_point Float> constexpr auto inv(Float val) { return Float{1.0} / val; }
+template <std::floating_point Float> constexpr auto inv(std::complex<Float> const& val) { return Float{1.0} / val; }
 inline auto inv(ComplexTensor<asymmetric_t> const& val) { return val.matrix().inverse().array(); }
 
 // add_diag
-inline void add_diag(double& x, double y) { x += y; }
-inline void add_diag(DoubleComplex& x, DoubleComplex const& y) { x += y; }
+template <std::floating_point Float> constexpr void add_diag(Float& x, Float y) { x += y; }
+template <std::floating_point Float> constexpr void add_diag(std::complex<Float>& x, std::complex<Float> const& y) {
+    x += y;
+}
 template <rk2_tensor DerivedA, column_vector DerivedB>
 inline void add_diag(Eigen::ArrayBase<DerivedA>& x, Eigen::ArrayBase<DerivedB> const& y) {
     x.matrix().diagonal() += y.matrix();
@@ -288,33 +336,35 @@ inline void add_diag(Eigen::ArrayBase<DerivedA>&& x, Eigen::ArrayBase<DerivedB> 
 template <symmetry_tag sym> inline const ComplexTensor<sym> zero_tensor = ComplexTensor<sym>{0.0};
 
 // inverse symmetric param
-inline std::pair<DoubleComplex, DoubleComplex> inv_sym_param(DoubleComplex const& s, DoubleComplex const& m) {
-    DoubleComplex const det_1 = 1.0 / (s * s + s * m - 2.0 * m * m);
+template <std::floating_point Float>
+constexpr std::pair<std::complex<Float>, std::complex<Float>> inv_sym_param(std::complex<Float> const& s,
+                                                                            std::complex<Float> const& m) {
+    std::complex<Float> const det_1 = Float{1} / (s * s + s * m - Float{2} * m * m);
     return {(s + m) * det_1, -m * det_1};
 }
 
 // is nan
 template <class Derived> inline bool is_nan(Eigen::ArrayBase<Derived> const& x) { return x.isNaN().all(); }
 inline bool is_nan(std::floating_point auto x) { return std::isnan(x); }
-template <std::floating_point T> inline bool is_nan(std::complex<T> const& x) {
+template <std::floating_point Float> inline bool is_nan(std::complex<Float> const& x) {
     return is_nan(x.real()) || is_nan(x.imag());
 }
-inline bool is_nan(ID x) { return x == na_IntID; }
-inline bool is_nan(IntS x) { return x == na_IntS; }
+constexpr bool is_nan(ID x) { return x == na_IntID; }
+constexpr bool is_nan(IntS x) { return x == na_IntS; }
 template <class Enum>
     requires std::same_as<std::underlying_type_t<Enum>, IntS>
-inline bool is_nan(Enum x) {
+constexpr bool is_nan(Enum x) {
     return static_cast<IntS>(x) == na_IntS;
 }
-inline bool is_nan(Idx x) { return x == na_Idx; }
+constexpr bool is_nan(Idx x) { return x == na_Idx; }
 
 // is normal
 inline auto is_normal(std::floating_point auto value) { return std::isnormal(value); }
-template <std::floating_point T> inline auto is_normal(std::complex<T> const& value) {
-    if (value.real() == T{0}) {
+template <std::floating_point Float> inline auto is_normal(std::complex<Float> const& value) {
+    if (value.real() == Float{0}) {
         return is_normal(value.imag());
     }
-    if (value.imag() == T{0}) {
+    if (value.imag() == Float{0}) {
         return is_normal(value.real());
     }
     return is_normal(value.real()) && is_normal(value.imag());
@@ -330,11 +380,11 @@ inline auto is_inf(RealValue<asymmetric_t> const& value) {
 }
 
 // any_zero
-inline auto any_zero(std::floating_point auto value) { return value == 0.0; }
+template <std::floating_point Float> constexpr auto any_zero(Float value) { return value == Float{0}; }
 inline auto any_zero(RealValue<asymmetric_t> const& value) { return (value == RealValue<asymmetric_t>{0.0}).any(); }
 
 // all_zero
-inline auto all_zero(std::floating_point auto value) { return value == 0.0; }
+template <std::floating_point Float> constexpr auto all_zero(Float value) { return value == Float{0}; }
 inline auto all_zero(RealValue<asymmetric_t> const& value) { return (value == RealValue<asymmetric_t>{0.0}).all(); }
 
 // update real values
@@ -348,7 +398,7 @@ inline auto all_zero(RealValue<asymmetric_t> const& value) { return (value == Re
 //
 // The function assumes that the current value is normalized and new value should be normalized with scalar
 template <symmetry_tag sym, class Proxy>
-inline void update_real_value(RealValue<sym> const& new_value, Proxy&& current_value, double scalar) {
+inline void update_real_value(RealValue<sym> const& new_value, Proxy&& current_value, RealValue<symmetric_t> scalar) {
     if constexpr (is_symmetric_v<sym>) {
         if (!is_nan(new_value)) {
             std::forward<Proxy>(current_value) = scalar * new_value;
@@ -393,8 +443,10 @@ inline ComplexTensor<asymmetric_t> get_sym_matrix_inv() {
 }
 
 // conjugate (hermitian) transpose
-inline DoubleComplex hermitian_transpose(DoubleComplex const& z) { return conj(z); }
-inline double hermitian_transpose(double x) { return x; }
+template <std::floating_point Float> constexpr std::complex<Float> hermitian_transpose(std::complex<Float> const& z) {
+    return conj(z);
+}
+template <std::floating_point Float> constexpr Float hermitian_transpose(Float x) { return x; }
 template <rk2_tensor Derived> inline auto hermitian_transpose(Eigen::ArrayBase<Derived> const& x) {
     return x.matrix().adjoint().array();
 }

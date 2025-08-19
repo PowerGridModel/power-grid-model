@@ -13,9 +13,8 @@ from power_grid_model import (
     DatasetType,
     PowerGridModel,
     initialize_array,
-    power_grid_meta_data,
 )
-from power_grid_model._utils import compatibility_convert_row_columnar_dataset
+from power_grid_model._core.utils import compatibility_convert_row_columnar_dataset
 from power_grid_model.errors import InvalidCalculationMethod, IterationDiverge, PowerGridBatchError, PowerGridError
 from power_grid_model.utils import get_dataset_scenario
 from power_grid_model.validation import assert_valid_input_data
@@ -205,7 +204,7 @@ def test_single_calculation_error(model: PowerGridModel):
             model.calculate_short_circuit(calculation_method=calculation_method)
 
 
-def test_batch_calculation_error(model: PowerGridModel, update_batch, input):
+def test_batch_calculation_error(model: PowerGridModel, update_batch):
     # wrong id
     update_batch[ComponentType.sym_load]["data"]["id"][1] = 5
     # with error
@@ -360,7 +359,7 @@ def test_update_id_mixed(minimal_input):
         ComponentType.source: {"indptr": update_source_indptr, "data": update_source},
     }
 
-    output_data = PowerGridModel(minimal_input).calculate_power_flow(update_data=update_batch)
+    _output_data = PowerGridModel(minimal_input).calculate_power_flow(update_data=update_batch)
 
 
 @pytest.mark.parametrize(

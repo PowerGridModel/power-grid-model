@@ -6,15 +6,13 @@
 Loader for the dynamic library
 """
 
-import os
-import platform
+from collections.abc import Callable
 from ctypes import CDLL, POINTER, c_char, c_char_p, c_double, c_size_t, c_void_p
 from inspect import signature
 from itertools import chain
-from pathlib import Path
-from typing import Callable
 
 from power_grid_model._core.index_integer import IdC, IdxC
+from power_grid_model._core.power_grid_model_c.get_pgm_dll_path import get_pgm_dll_path
 
 # integer index
 IdxPtr = POINTER(IdxC)
@@ -45,7 +43,6 @@ _FUNC_SIZE_T_RES = {"meta_class_size", "meta_class_alignment", "meta_attribute_o
 _ARGS_TYPE_MAPPING = {bytes: CharPtr, str: CStr, int: IdxC, float: c_double}
 
 # The c_void_p is extended only for type hinting and type checking; therefore no public methods are required.
-# pylint: disable=too-few-public-methods
 
 
 class HandlePtr(c_void_p):
@@ -126,26 +123,7 @@ def _load_core() -> CDLL:
     Returns: DLL/SO object
 
     """
-    # first try to find the DLL local
-    if platform.system() == "Windows":
-        dll_file = "_power_grid_core.dll"
-    else:
-        dll_file = "_power_grid_core.so"
-    dll_path = Path(__file__).parent / dll_file
-
-    # if local DLL is not found, try to find the DLL from conda environment
-    if (not dll_path.exists()) and ("CONDA_PREFIX" in os.environ):
-        if platform.system() == "Windows":
-            dll_file = "power_grid_model_c.dll"
-        elif platform.system() == "Darwin":
-            dll_file = "libpower_grid_model_c.dylib"
-        elif platform.system() == "Linux":
-            dll_file = "libpower_grid_model_c.so"
-        else:
-            raise NotImplementedError(f"Unsupported platform: {platform.system()}")
-        # the dll will be found through conda environment
-        dll_path = Path(dll_file)
-
+    dll_path = get_pgm_dll_path()
     cdll = CDLL(str(dll_path))
     # assign return types
     # handle
@@ -188,15 +166,12 @@ def make_c_binding(func: Callable):
     if is_destroy_func:
         getattr(_CDLL, f"PGM_{name}").argtypes = c_argtypes
     else:
-        getattr(_CDLL, f"PGM_{name}").argtypes = [HandlePtr] + c_argtypes
+        getattr(_CDLL, f"PGM_{name}").argtypes = [HandlePtr, *c_argtypes]
     getattr(_CDLL, f"PGM_{name}").restype = c_restype
 
     # binding function
     def cbind_func(self, *args, **kwargs):
-        if "destroy" in name:
-            c_inputs = []
-        else:
-            c_inputs = [self._handle]  # pylint: disable=protected-access
+        c_inputs = [] if "destroy" in name else [self._handle]
         args = chain(args, (kwargs[key] for key in py_argnames[len(args) :]))
         for arg in args:
             if isinstance(arg, str):
@@ -214,9 +189,6 @@ def make_c_binding(func: Callable):
     return cbind_func
 
 
-# pylint: disable=too-many-arguments
-# pylint: disable=missing-function-docstring
-# pylint: disable=too-many-public-methods
 class PowerGridCore:
     """
     DLL caller
@@ -339,21 +311,15 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
-    def set_tap_changing_strategy(
-        self, opt: OptionsPtr, tap_changing_strategy: int
-    ) -> None:  # type: ignore[empty-body]
+    def set_tap_changing_strategy(self, opt: OptionsPtr, tap_changing_strategy: int) -> None:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding
-    def set_short_circuit_voltage_scaling(
-        self, opt: OptionsPtr, short_circuit_voltage_scaling: int
-    ) -> None:  # type: ignore[empty-body]
+    def set_short_circuit_voltage_scaling(self, opt: OptionsPtr, short_circuit_voltage_scaling: int) -> None:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding
-    def set_experimental_features(
-        self, opt: OptionsPtr, experimental_features: int
-    ) -> None:  # type: ignore[empty-body]
+    def set_experimental_features(self, opt: OptionsPtr, experimental_features: int) -> None:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding
@@ -393,7 +359,7 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
-    def get_indexer(  # pylint: disable=too-many-positional-arguments
+    def get_indexer(
         self,
         model: ModelPtr,
         component: str,
@@ -476,7 +442,7 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
-    def dataset_mutable_add_buffer(  # type: ignore[empty-body]  # pylint: disable=too-many-positional-arguments
+    def dataset_mutable_add_buffer(  # type: ignore[empty-body]  # noqa: PLR0913
         self,
         dataset: MutableDatasetPtr,
         component: str,

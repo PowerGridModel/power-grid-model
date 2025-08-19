@@ -9,10 +9,9 @@
 #include "../common/common.hpp"
 #include "../common/counting_iterator.hpp"
 #include "../common/exception.hpp"
+#include "../common/iterator_facade.hpp"
 #include "dataset_fwd.hpp"
 #include "meta_data.hpp"
-
-#include <boost/range.hpp>
 
 #include <span>
 #include <string_view>
@@ -60,7 +59,8 @@ template <class Data> struct AttributeBuffer {
     Idx stride{1};
 };
 
-template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRange {
+template <typename T, dataset_type_tag dataset_type>
+class ColumnarAttributeRange : public std::ranges::view_interface<ColumnarAttributeRange<T, dataset_type>> {
   public:
     using Data = std::conditional_t<is_data_mutable_v<dataset_type>, void, void const>;
 
@@ -116,23 +116,28 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
         std::span<AttributeBuffer<Data> const> attribute_buffers_{};
     };
 
-    class iterator : public boost::iterator_facade<iterator, T, boost::random_access_traversal_tag, Proxy, Idx> {
+    class iterator
+        : public IteratorFacade<iterator, std::conditional_t<is_data_mutable_v<dataset_type>, Proxy, Proxy const>,
+                                Idx> {
       public:
         using value_type = Proxy;
+        using difference_type = Idx;
 
         iterator() = default;
-        iterator(Idx idx, std::span<AttributeBuffer<Data> const> attribute_buffers)
+        iterator(difference_type idx, std::span<AttributeBuffer<Data> const> attribute_buffers)
             : current_{idx, attribute_buffers} {}
 
       private:
-        friend class boost::iterator_core_access;
+        friend class IteratorFacade<iterator, std::conditional_t<is_data_mutable_v<dataset_type>, Proxy, Proxy const>,
+                                    Idx>;
 
-        constexpr auto dereference() const { return current_; }
-        constexpr auto equal(iterator const& other) const { return current_.idx_ == other.current_.idx_; }
+        constexpr auto dereference() -> value_type& { return current_; }
+        constexpr auto dereference() const -> std::add_lvalue_reference_t<std::add_const_t<value_type>> {
+            return current_;
+        }
+        constexpr auto three_way_compare(iterator const& other) const { return current_.idx_ <=> other.current_.idx_; }
         constexpr auto distance_to(iterator const& other) const { return other.current_.idx_ - current_.idx_; }
-        constexpr void increment() { ++current_.idx_; }
-        constexpr void decrement() { --current_.idx_; }
-        constexpr void advance(Idx n) { current_.idx_ += n; }
+        constexpr void advance(difference_type n) { current_.idx_ += n; }
 
         Proxy current_;
     };
@@ -151,7 +156,6 @@ template <typename T, dataset_type_tag dataset_type> class ColumnarAttributeRang
     constexpr bool empty() const { return size_ == 0; }
     iterator begin() const { return get(0); }
     iterator end() const { return get(size_); }
-    auto iter() const { return boost::make_iterator_range(begin(), end()); }
     auto operator[](Idx idx) const { return *get(idx); }
 
   private:
@@ -486,7 +490,8 @@ template <dataset_type_tag dataset_type_> class Dataset {
                 result.add_buffer(component_info.component->name, size, size, nullptr, nullptr);
                 for (auto const& attribute_buffer : buffer.attributes) {
                     result.add_attribute_buffer(component_info.component->name, attribute_buffer.meta_attribute->name,
-                                                static_cast<Data*>(static_cast<AdvanceablePtr>(attribute_buffer.data)));
+                                                static_cast<Data*>(static_cast<AdvanceablePtr>(attribute_buffer.data) +
+                                                                   attribute_buffer.meta_attribute->size * offset));
                 }
             } else {
                 Data* data = component_info.component->advance_ptr(buffer.data, offset);

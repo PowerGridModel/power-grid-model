@@ -15,8 +15,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  main:
-    uses: "./.github/workflows/main.yml"
+  build-test-release:
+    uses: "./.github/workflows/build-test-release.yml"
     permissions:
       contents: write
     with:
@@ -31,7 +31,7 @@ jobs:
   clang-tidy:
     uses: "./.github/workflows/clang-tidy.yml"
     with:
-      target: "all power_grid_model_benchmark_cpp"
+      target: "all"
 
   citations:
     uses: "./.github/workflows/citations.yml"

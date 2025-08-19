@@ -1,0 +1,112 @@
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+name: CI Build
+
+# Controls when the workflow will run.
+on:
+  # run pipeline on push event of main branch
+  push:
+    branches:
+      - main
+  # run pipeline on pull request
+  pull_request:
+  # run pipeline on merge queue
+  merge_group:
+  # run this workflow manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      create_release:
+        type: boolean
+        description: Create a (pre-)release when CI passes
+        default: false
+        required: true
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-ci-build
+  cancel-in-progress: true
+
+jobs:
+  ci-started:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "ci started"
+
+  build-test-release:
+    name: build-test-release
+    uses: "./.github/workflows/build-test-release.yml"
+    permissions:
+      contents: write
+    with: 
+      # create_release becomes true if the event that triggered this workflow is "workflow_dispatch" and inputs.create_release is true
+      # create_release becomes true if the event that triggered this workflow is "push" on main
+      # otherwise create_release becomes false
+      create_release: ${{ (github.event_name == 'workflow_dispatch' && inputs.create_release) || github.event_name == 'push'}}
+
+  check-code-quality:
+    uses: "./.github/workflows/check-code-quality.yml"
+
+  reuse-compliance:
+    uses: "./.github/workflows/reuse-compliance.yml"
+
+  clang-tidy:
+    uses: "./.github/workflows/clang-tidy.yml"
+    with:
+      target: "all"
+
+  ci-passed:
+    runs-on: ubuntu-latest
+    needs: [ci-started, build-test-release, check-code-quality, reuse-compliance, clang-tidy]
+    if: always()
+
+    steps:
+      # this explicit check is needed cfr. https://github.com/orgs/community/discussions/75568
+      - name: "Check whether all jobs passed"
+        run: echo '${{ toJSON(needs) }}' | jq -e 'to_entries | all(.value.result == "success")'
+      - run: echo "ci passed"
+
+  publish:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write  # Required for Trusted Publishing
+    needs: build-test-release
+    if: (github.event_name == 'workflow_dispatch') || github.event_name == 'push'
+
+    steps:
+      - name: Download assets from GitHub release
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: ${{ github.repository }}
+          # download the latest release
+          latest: true
+          # don't download pre-releases
+          preRelease: false
+          fileName: "*"
+          # don't download GitHub-generated source tar and zip files
+          tarBall: false
+          zipBall: false
+          # create a directory to store the downloaded assets
+          out-file-path: assets-to-publish
+          # don't extract downloaded files
+          extract: false
+
+      - name: List downloaded assets
+        run: ls -la assets-to-publish
+      
+      - name: Upload assets to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          # To test, use the TestPyPI:
+          # repository-url: https://test.pypi.org/legacy/
+          # You must also create an account and project on TestPyPI,
+          # as well as set the trusted-publisher in the project settings:
+          # https://docs.pypi.org/trusted-publishers/adding-a-publisher/
+          # To publish to the official PyPI repository, just keep
+          # repository-url commented out.
+          packages-dir: assets-to-publish
+          skip-existing: true
+          print-hash: true
+          verbose: true

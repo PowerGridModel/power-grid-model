@@ -13,6 +13,10 @@
                     "class_name": "LineInput"
                 },
                 {
+                    "names": ["asym_line"],
+                    "class_name": "AsymLineInput"
+                },
+                {
                     "names": ["link"],
                     "class_name": "LinkInput"
                 },
@@ -53,6 +57,10 @@
                     "class_name": "PowerSensorInput"
                 },
                 {
+                    "names": ["sym_current_sensor", "asym_current_sensor"],
+                    "class_name": "CurrentSensorInput"
+                },
+                {
                     "names": ["fault"],
                     "class_name": "FaultInput"
                 }
@@ -67,7 +75,7 @@
                     "class_name": "NodeOutput"
                 },
                 {
-                    "names": ["line", "link", "transformer", "generic_branch"],
+                    "names": ["line", "link", "transformer", "generic_branch", "asym_line"],
                     "class_name": "BranchOutput"
                 },
                 {
@@ -91,6 +99,10 @@
                     "class_name": "PowerSensorOutput"
                 },
                 {
+                    "names": ["sym_current_sensor", "asym_current_sensor"],
+                    "class_name": "CurrentSensorOutput"
+                },
+                {
                     "names": ["fault"],
                     "class_name": "FaultOutput"
                 }
@@ -106,6 +118,10 @@
                 },
                 {
                     "names": ["line"],
+                    "class_name": "BranchUpdate"
+                },
+                {
+                    "names": ["asym_line"],
                     "class_name": "BranchUpdate"
                 },
                 {
@@ -145,6 +161,10 @@
                     "class_name": "PowerSensorUpdate"
                 },
                 {
+                    "names": ["sym_current_sensor", "asym_current_sensor"],
+                    "class_name": "CurrentSensorUpdate"
+                },
+                {
                     "names": ["fault"],
                     "class_name": "FaultUpdate"
                 }
@@ -159,7 +179,7 @@
                     "class_name": "NodeShortCircuitOutput"
                 },
                 {
-                    "names": ["line", "link", "transformer"],
+                    "names": ["line", "link", "transformer", "asym_line"],
                     "class_name": "BranchShortCircuitOutput"
                 },
                 {
@@ -176,6 +196,10 @@
                 },
                 {
                     "names": ["sym_power_sensor", "asym_power_sensor"],
+                    "class_name": "SensorShortCircuitOutput"
+                },
+                {
+                    "names": ["sym_current_sensor", "asym_current_sensor"],
                     "class_name": "SensorShortCircuitOutput"
                 },
                 {

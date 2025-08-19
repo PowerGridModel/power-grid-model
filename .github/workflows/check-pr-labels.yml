@@ -1,0 +1,54 @@
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+name: Check PR Labels
+
+on:
+  # run pipeline on pull request
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - labeled
+      - unlabeled
+  # run pipeline on merge queue
+  merge_group:
+  # run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-pr-labels
+  cancel-in-progress: true
+
+jobs:
+  check-pr-labels:
+    runs-on: ubuntu-latest
+    steps:
+      
+      - name: fail-if-no-label
+        if: github.event_name == 'pull_request'
+        run: |
+          if [ "$(jq '.pull_request.labels | length' "$GITHUB_EVENT_PATH")" -eq 0 ]; then
+            echo "This pull request has no labels. Please add at least one label."
+            exit 1
+          fi
+      
+      - name: do-not-merge
+        if: contains(github.event.pull_request.labels.*.name, 'do-not-merge')
+        run: |
+          echo "This pull request should not be merged (do-not-merge)"
+          exit 1
+
+      - name: merge-target-first
+        if: contains(github.event.pull_request.labels.*.name, 'merge-target-first')
+        run: |
+          echo "The target branch of this PR should be merged first (merge-target-first)"
+          exit 2
+
+      - name: needs-unit-tests
+        if: contains(github.event.pull_request.labels.*.name, 'needs-unit-tests')
+        run: |
+          echo "This pull request needs (more) unit tests before it may be merged (needs-unit-tests)"
+          exit 3
+          

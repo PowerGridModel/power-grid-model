@@ -7,8 +7,10 @@ SPDX-License-Identifier: MPL-2.0
 # Design of the Power Grid Model core
 
 The Power Grid Model at its core is a header-only C++ interface library, wrapped by a dynamic/shared C API library.
-The core itself is an engine called the `MainModel` that provides the C++ interface and exhibits logic for the various aspects that play a role in power grid calculations.
-The `MainModel` itself can be deconstructed into an API part, a dispatch part, the grid model and the actual [calculation logic](#calculation-logic-and-data-flow).
+The core itself is an engine called the `MainModel` that provides the C++ interface and exhibits logic for the various
+aspects that play a role in power grid calculations.
+The `MainModel` itself can be deconstructed into an API part, a dispatch part, the grid model and the actual
+[calculation logic](#calculation-logic-and-data-flow).
 
 ## Calculation logic and data flow
 
@@ -24,7 +26,8 @@ Coincidentally, those phases also translate to fields of expertise, which enable
 | Solving                                            | Abstract solution to the system of equations                                                                      | Mathematics            |
 
 ```{note}
-Software Engineering obviously also plays a role in the general design, but that general design does not involve the logic/control flow and therefore is not listed in this table.
+Software Engineering obviously also plays a role in the general design, but that general design does not involve the
+logic/control flow and therefore is not listed in this table.
 ```
 
 The data flow can be visualized as such:
@@ -48,3 +51,10 @@ graph TD
 
     ComponentsOutput -->|Output| Output(Output data)
 ```
+
+## Detailed Power Grid Model core design
+
+The sheer size and complexity of the Power Grid Model core implementation makes it hard to generate an up-to-date and
+comprehensive graph of its design.
+For a full overview of the core, it is recommended to build and access the Power Grid Model core documentation by
+following the steps in the [build guide](./build-guide.md#documentation).

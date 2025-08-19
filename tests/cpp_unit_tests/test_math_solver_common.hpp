@@ -61,15 +61,13 @@ inline void assert_output(SolverOutput<sym> const& output, SolverOutput<sym> con
 
 template <symmetry_tag sym_type> struct SteadyStateSolverTestGrid {
     /*
-    network, v means voltage measured, p means power measured, pp means double measured
-    variance always 1.0
-                                                          shunt0 (ys) (p)
-     (pp)                     (y0, ys0)           (y1)         |
-    source --yref-- bus0(vp) -p-branch0-pp- bus1 --branch1-p-  bus2(vv)
-                     |                      |                   |
-                  load012                load345 (p)          load6 (not connected) (p, rubbish value)
-                                          for const z,
-                                       rubbish value for load3/4
+    network
+
+                                                     shunt0 (ys)
+                          (y0, ys0)           (y1)       |
+    source --yref-- bus0 --branch0-- bus1 --branch1--  bus2
+                     |                |                  |
+                  load012          load345          load6 (not connected)
 
     uref = 1.10
     u0 = 1.08 -1deg
@@ -95,13 +93,7 @@ template <symmetry_tag sym_type> struct SteadyStateSolverTestGrid {
             const_pq, const_i, const_y, const_pq, const_i, const_y,
             const_pq // not connected
         };
-        result.voltage_sensors_per_bus = {from_sparse, {0, 1, 1, 3}};
-        result.power_sensors_per_bus = {from_sparse, {0, 1, 1, 1}};
-        result.power_sensors_per_source = {from_sparse, {0, 2}};
-        result.power_sensors_per_load_gen = {from_sparse, {0, 0, 0, 0, 1, 2, 3, 4}};
-        result.power_sensors_per_shunt = {from_sparse, {0, 1}};
-        result.power_sensors_per_branch_from = {from_sparse, {0, 1, 1}};
-        result.power_sensors_per_branch_to = {from_sparse, {0, 2, 3}};
+        // sensors for se tests connected later only for se tests
         return result;
     };
 

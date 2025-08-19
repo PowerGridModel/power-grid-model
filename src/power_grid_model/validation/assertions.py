@@ -6,8 +6,9 @@
 Helper functions to assert valid data. They basically call validate_input_data or validate_batch_data and raise a
 ValidationException if the validation results in one or more errors.
 """
+
+from power_grid_model._core.enum import CalculationType
 from power_grid_model.data_types import BatchDataset, SingleDataset
-from power_grid_model.enum import CalculationType
 from power_grid_model.validation._validation import validate_batch_data, validate_input_data
 from power_grid_model.validation.errors import ValidationError
 from power_grid_model.validation.utils import errors_to_string

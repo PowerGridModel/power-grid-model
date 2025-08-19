@@ -10,8 +10,10 @@ from abc import ABC, abstractmethod
 from ctypes import byref
 from enum import IntEnum
 
+from power_grid_model._core.data_types import Dataset
 from power_grid_model._core.dataset_definitions import DatasetType, _map_to_component_types, _str_to_datatype
 from power_grid_model._core.error_handling import assert_no_error
+from power_grid_model._core.errors import PowerGridSerializationError
 from power_grid_model._core.index_integer import IdxC
 from power_grid_model._core.power_grid_core import (
     CharPtr,
@@ -21,9 +23,7 @@ from power_grid_model._core.power_grid_core import (
     power_grid_core as pgc,
 )
 from power_grid_model._core.power_grid_dataset import CConstDataset, CWritableDataset
-from power_grid_model.data_types import Dataset
-from power_grid_model.errors import PowerGridSerializationError
-from power_grid_model.typing import ComponentAttributeMapping
+from power_grid_model._core.typing import ComponentAttributeMapping
 
 
 class SerializationType(IntEnum):
@@ -137,8 +137,8 @@ class Serializer(ABC):
         Returns:
             The raw bytes of the serialization of the datast.
         """
-        raw_data = CharPtr()  # pylint: disable(not-callable)
-        size = IdxC()  # pylint: disable(not-callable)
+        raw_data = CharPtr()
+        size = IdxC()
         pgc.serializer_get_to_binary_buffer(self._serializer, int(use_compact_list), byref(raw_data), byref(size))
         assert_no_error()
 
@@ -174,7 +174,7 @@ class _StringSerializer(Serializer):
     dump = Serializer.dump_str
 
 
-class JsonDeserializer(Deserializer):  # pylint: disable=too-few-public-methods
+class JsonDeserializer(Deserializer):
     """
     JSON deserializer for the Power grid model
     """
@@ -183,7 +183,7 @@ class JsonDeserializer(Deserializer):  # pylint: disable=too-few-public-methods
         return super().__new__(cls, data, SerializationType.JSON, data_filter=data_filter)
 
 
-class MsgpackDeserializer(Deserializer):  # pylint: disable=too-few-public-methods
+class MsgpackDeserializer(Deserializer):
     """
     msgpack deserializer for the Power grid model
     """
@@ -192,7 +192,7 @@ class MsgpackDeserializer(Deserializer):  # pylint: disable=too-few-public-metho
         return super().__new__(cls, data, SerializationType.MSGPACK, data_filter=data_filter)
 
 
-class JsonSerializer(_StringSerializer):  # pylint: disable=too-few-public-methods
+class JsonSerializer(_StringSerializer):
     """
     JSON deserializer for the Power grid model
     """
@@ -201,7 +201,7 @@ class JsonSerializer(_StringSerializer):  # pylint: disable=too-few-public-metho
         return super().__new__(cls, data, SerializationType.JSON, dataset_type=dataset_type)
 
 
-class MsgpackSerializer(_BytesSerializer):  # pylint: disable=too-few-public-methods
+class MsgpackSerializer(_BytesSerializer):
     """
     msgpack deserializer for the Power grid model
     """

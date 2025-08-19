@@ -19,6 +19,7 @@ from power_grid_model.errors import (
     AutomaticTapInputError,
     ConflictID,
     ConflictVoltage,
+    IDNotFound,
     IDWrongType,
     InvalidBranch,
     InvalidBranch3,
@@ -35,20 +36,34 @@ from power_grid_model.errors import (
 )
 from power_grid_model.utils import json_deserialize, json_deserialize_from_file, json_serialize_to_file
 
+try:
+    from _pytest.outcomes import Failed as _Failed  # pylint: disable=import-outside-toplevel
+except ImportError:
+    import warnings  # pylint: disable=import-outside-toplevel
+
+    warnings.warn(
+        """Failed to import _pytest.outcomes.Failed."""
+        """ Some validation cases tests marked as {"xfail": {"raises": "Failed"}} may report as xfail"""
+        """ even though they are actual problems."""
+    )
+    _Failed = None
+
+
 BASE_PATH = Path(__file__).parent.parent
 DATA_PATH = BASE_PATH / "data"
-OUPUT_PATH = BASE_PATH / "output"
+OUTPUT_PATH = BASE_PATH / "output"
 EXPORT_OUTPUT = ("POWER_GRID_MODEL_VALIDATION_TEST_EXPORT" in os.environ) and (
     os.environ["POWER_GRID_MODEL_VALIDATION_TEST_EXPORT"] == "ON"
 )
 
-KNOWN_EXCEPTIONS = {
+KNOWN_EXCEPTIONS: dict[str, type[BaseException] | None] = {
     ex.__name__: ex
     for ex in (
         PowerGridBatchError,
         PowerGridError,
         ConflictID,
         ConflictVoltage,
+        IDNotFound,
         IDWrongType,
         InvalidBranch,
         InvalidBranch3,
@@ -66,6 +81,11 @@ KNOWN_EXCEPTIONS = {
         MaxIterationReached,
     )
 }
+KNOWN_EXCEPTIONS["Failed"] = _Failed
+
+
+class UnknownDataType(Exception):
+    """Raised when an unknown data type is encountered"""
 
 
 class PowerGridModelWithExt(PowerGridModel):
@@ -146,16 +166,17 @@ def add_case(
             calculation_method_params,
         ]
         kwargs = {}
-        if "fail" in calculation_method_params:
-            xfail = calculation_method_params["fail"]
+        if "xfail" in calculation_method_params:
+            xfail = calculation_method_params["xfail"]
             kwargs["marks"] = pytest.mark.xfail(
                 reason=xfail["reason"], raises=KNOWN_EXCEPTIONS[xfail.get("raises", "AssertionError")]
             )
+
         yield pytest.param(*pytest_param, **kwargs, id=case_id)
 
 
 def _add_cases(case_dir: Path, calculation_type: str, **kwargs):
-    with open(case_dir / "params.json") as f:
+    with (case_dir / "params.json").open() as f:
         params = json.load(f)
 
     # retrieve calculation method, can be a string or list of strings
@@ -180,10 +201,7 @@ def _add_cases(case_dir: Path, calculation_type: str, **kwargs):
 
 
 def pytest_cases(get_batch_cases: bool = False, data_dir: str | None = None, test_cases: list[str] | None = None):
-    if data_dir is not None:
-        relevant_calculations = [data_dir]
-    else:
-        relevant_calculations = ["power_flow", "state_estimation", "short_circuit"]
+    relevant_calculations = [data_dir] if data_dir is not None else ["power_flow", "state_estimation", "short_circuit"]
 
     for calculation_type in relevant_calculations:
         test_case_paths = get_test_case_paths(calculation_type=calculation_type, test_cases=test_cases)
@@ -224,13 +242,14 @@ def import_case_data(data_path: Path, calculation_type: str, sym: bool):
 
 
 def save_json_data(json_file: str, data: Dataset):
-    OUPUT_PATH.mkdir(parents=True, exist_ok=True)
-    data_file = OUPUT_PATH / json_file
+    OUTPUT_PATH.mkdir(parents=True, exist_ok=True)
+    data_file = OUTPUT_PATH / json_file
     data_file.parent.mkdir(parents=True, exist_ok=True)
     json_serialize_to_file(data_file, data)
 
 
 def compare_result(actual: SingleDataset, expected: SingleDataset, rtol: float, atol: float | dict[str, float]):
+    actual_col_ndim = 2
     for key, expected_data in expected.items():
         if not isinstance(expected_data, np.ndarray):
             raise NotImplementedError("Validation tests are not implemented for columnar data")
@@ -245,11 +264,11 @@ def compare_result(actual: SingleDataset, expected: SingleDataset, rtol: float, 
             elif expected_col.dtype == np.int32:
                 expect_all_nan = np.all(expected_col == np.iinfo("i4").min)
             else:
-                raise Exception(f"Unknown data type {expected_col.dtype}!")
+                raise UnknownDataType(f"Unknown data type {expected_col.dtype}!")
 
             if not expect_all_nan:
                 # permute expected_col if needed
-                if expected_col.ndim == 1 and actual_col.ndim == 2:
+                if expected_col.ndim == 1 and actual_col.ndim == actual_col_ndim:
                     if col_name == "u_angle":
                         # should be 120 and 240 degree lagging
                         expected_col = np.stack(
