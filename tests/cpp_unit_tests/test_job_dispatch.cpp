@@ -48,7 +48,7 @@ class JobAdapterMock : public JobInterface<JobAdapterMock> {
     JobAdapterMock(std::shared_ptr<CallCounter> counter) : counter_{std::move(counter)} {}
     JobAdapterMock(JobAdapterMock const&) = default;
     JobAdapterMock& operator=(JobAdapterMock const&) = default;
-    JobAdapterMock(JobAdapterMock&&) noexcept = delete;
+    JobAdapterMock(JobAdapterMock&&) noexcept = default; // NOSONAR
     JobAdapterMock& operator=(JobAdapterMock&&) noexcept = default;
     ~JobAdapterMock() = default;
 
