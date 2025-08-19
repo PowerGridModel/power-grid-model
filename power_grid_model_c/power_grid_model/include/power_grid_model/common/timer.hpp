@@ -19,15 +19,12 @@ using Duration = std::chrono::duration<double>;
 class Timer {
   private:
     CalculationInfo* info_;
-    LoggingTag code_;
+    LogEvent code_;
     Clock::time_point start_;
 
   public:
-    Timer() : info_(nullptr), code_{LoggingTag::unknown} {};
-
-    explicit Timer(CalculationInfo& info, int code, std::string /*name*/) // TODO(mgovers): remove
-        : Timer(info, static_cast<LoggingTag>(code)) {}
-    Timer(CalculationInfo& info, LoggingTag code) : info_{&info}, code_{code}, start_{Clock::now()} {}
+    Timer() : info_(nullptr), code_{LogEvent::unknown} {};
+    Timer(CalculationInfo& info, LogEvent code) : info_{&info}, code_{code}, start_{Clock::now()} {}
 
     Timer(Timer const&) = delete;
     Timer(Timer&&) = default;

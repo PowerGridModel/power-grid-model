@@ -423,14 +423,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         calculation_info_ = CalculationInfo{};
         // prepare
         auto const& input = [this, prepare_input_ = std::forward<PrepareInputFn>(prepare_input)] {
-            Timer const timer{calculation_info_, LoggingTag::prepare};
+            Timer const timer{calculation_info_, LogEvent::prepare};
             prepare_solvers<sym>();
             assert(is_topology_up_to_date_ && is_parameter_up_to_date<sym>());
             return prepare_input_(n_math_solvers_);
         }();
         // calculate
         return [this, &input, solve_ = std::forward<SolveFn>(solve)] {
-            Timer const timer{calculation_info_, LoggingTag::math_calculation};
+            Timer const timer{calculation_info_, LogEvent::math_calculation};
             auto& solvers = get_solvers<sym>();
             auto& y_bus_vec = get_y_bus<sym>();
             std::vector<SolverOutputType> solver_output;
@@ -595,7 +595,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             }
         };
 
-        Timer const t_output{calculation_info_, LoggingTag::produce_output};
+        Timer const t_output{calculation_info_, LogEvent::produce_output};
         main_core::utils::run_functor_with_all_types_return_void<ComponentType...>(output_func);
     }
 

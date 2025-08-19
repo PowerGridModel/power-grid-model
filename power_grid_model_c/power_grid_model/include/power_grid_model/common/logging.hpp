@@ -11,10 +11,10 @@
 namespace power_grid_model {
 namespace common::logging {
 
-enum class LoggingTag : Idx {
+enum class LogEvent : int16_t {
     unknown = -1,
-    log = 0,
-    timer = 1,
+    total = 0000,       // TODO(mgovers): find other error code?
+    build_model = 1000, // TODO(mgovers): find other error code?
     total_single_calculation_in_thread = 0100,
     total_batch_calculation_in_thread = 0200,
     copy_model = 1100,
@@ -23,60 +23,30 @@ enum class LoggingTag : Idx {
     scenario_exception = 1300,
     recover_from_bad = 1400,
     prepare = 2100,
+    create_math_solver = 2210,
     math_calculation = 2200,
-    iterative_pf_solver_max_num_iter = 2226,
-    ilse_max_num_iter = 2228,
-    nrse_max_num_iter = 2229, // used to be duplicate number
+    math_solver = 2220,
+    initialize_calculation = 2221,
+    preprocess_measured_value = 2231, // TODO(mgovers): find other error code + make plural?
+    prepare_matrix = 2222,
+    prepare_matrix_including_prefactorization = 2232, // TODO(mgovers): find other error code
+    prepare_matrices = 2242,                          // TODO(mgovers): find other error code
+    initialize_voltages = 2223,
+    calculate_rhs = 2224,
+    prepare_lhs_rhs = 2244, // TODO(mgovers): find other error code
+    solve_sparse_linear_equation = 2225,
+    solve_sparse_linear_equation_prefactorized = 2235, // TODO(mgovers): find other error code
+    iterate_unknown = 2226,
+    calculate_math_result = 2227,
     produce_output = 3000,
+    iterative_pf_solver_max_num_iter = 2246, // TODO(mgovers): find other error code
+    max_num_iter = 2248,                     // TODO(mgovers): find other error code
 };
 
-constexpr auto to_string(LoggingTag tag) {
-    using enum LoggingTag;
-    using namespace std::string_literals;
-
-    switch (tag) {
-    case log:
-        return "log"s;
-    case timer:
-        return "timer"s;
-    case total_single_calculation_in_thread:
-        return "Total single calculation in thread"s;
-    case total_batch_calculation_in_thread:
-        return "Total batch calculation in thread"s;
-    case copy_model:
-        return "Copy model"s;
-    case update_model:
-        return "Update model"s;
-    case restore_model:
-        return "Restore model"s;
-    case scenario_exception:
-        return "Scenario exception"s;
-    case recover_from_bad:
-        return "Recover from bad"s;
-    case prepare:
-        return "Prepare"s;
-    case math_calculation:
-        return "Math calculation"s;
-    case iterative_pf_solver_max_num_iter:
-        // return "Iterative PF solver max num iter"s;
-        return "Max number of iterations"s;
-    case ilse_max_num_iter:
-        // return "ILSE max num iter"s;
-        return "Max number of iterations"s;
-    case nrse_max_num_iter:
-        // return "NRSE max num iter"s;
-        return "Max number of iterations"s;
-    case produce_output:
-        return "Produce output"s;
-    default:
-        return "unknown"s;
-    }
-}
-
 struct Logger {
-    virtual void log(LoggingTag tag, std::string_view message) = 0;
-    virtual void log(LoggingTag tag, double value) = 0;
-    virtual void log(LoggingTag tag, Idx value) = 0;
+    virtual void log(LogEvent tag, std::string_view message) = 0;
+    virtual void log(LogEvent tag, double value) = 0;
+    virtual void log(LogEvent tag, Idx value) = 0;
 
     virtual ~Logger() = default;
 };
@@ -88,6 +58,6 @@ struct LogDispatch : public Logger {
 
 } // namespace common::logging
 
-using common::logging::LoggingTag;
+using common::logging::LogEvent;
 
 } // namespace power_grid_model
