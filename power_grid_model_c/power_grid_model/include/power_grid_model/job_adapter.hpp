@@ -15,16 +15,16 @@
 
 namespace power_grid_model {
 
-template <class MainModel, typename... ComponentType> class JobDispatchAdapter;
+template <class MainModel, typename... ComponentType> class JobAdapter;
 
 template <class MainModel, class... ComponentType>
-class JobDispatchAdapter<MainModel, ComponentList<ComponentType...>>
-    : public JobDispatchInterface<JobDispatchAdapter<MainModel, ComponentList<ComponentType...>>> {
+class JobAdapter<MainModel, ComponentList<ComponentType...>>
+    : public JobInterface<JobAdapter<MainModel, ComponentList<ComponentType...>>> {
   public:
-    JobDispatchAdapter(std::reference_wrapper<MainModel> model_reference,
-                       std::reference_wrapper<MainModelOptions const> options)
+    JobAdapter(std::reference_wrapper<MainModel> model_reference,
+               std::reference_wrapper<MainModelOptions const> options)
         : model_reference_{model_reference}, options_{options} {}
-    JobDispatchAdapter(JobDispatchAdapter const& other)
+    JobAdapter(JobAdapter const& other)
         : model_copy_{std::make_unique<MainModel>(other.model_reference_.get())},
           model_reference_{std::ref(*model_copy_)},
           options_{std::ref(other.options_)},
@@ -32,7 +32,7 @@ class JobDispatchAdapter<MainModel, ComponentList<ComponentType...>>
           update_independence_{other.update_independence_},
           independence_flags_{other.independence_flags_},
           all_scenarios_sequence_{other.all_scenarios_sequence_} {}
-    JobDispatchAdapter& operator=(JobDispatchAdapter const& other) {
+    JobAdapter& operator=(JobAdapter const& other) {
         if (this != &other) {
             model_copy_ = std::make_unique<MainModel>(other.model_reference_.get());
             model_reference_ = std::ref(*model_copy_);
@@ -44,7 +44,7 @@ class JobDispatchAdapter<MainModel, ComponentList<ComponentType...>>
         }
         return *this;
     }
-    JobDispatchAdapter(JobDispatchAdapter&& other) noexcept
+    JobAdapter(JobAdapter&& other) noexcept
         : model_copy_{std::move(other.model_copy_)},
           model_reference_{model_copy_ ? std::ref(*model_copy_) : std::move(other.model_reference_)},
           options_{other.options_},
@@ -52,7 +52,7 @@ class JobDispatchAdapter<MainModel, ComponentList<ComponentType...>>
           update_independence_{std::move(other.update_independence_)},
           independence_flags_{std::move(other.independence_flags_)},
           all_scenarios_sequence_{std::move(other.all_scenarios_sequence_)} {}
-    JobDispatchAdapter& operator=(JobDispatchAdapter&& other) noexcept {
+    JobAdapter& operator=(JobAdapter&& other) noexcept {
         if (this != &other) {
             model_copy_ = std::move(other.model_copy_);
             model_reference_ = model_copy_ ? std::ref(*model_copy_) : std::move(other.model_reference_);
@@ -64,13 +64,13 @@ class JobDispatchAdapter<MainModel, ComponentList<ComponentType...>>
         }
         return *this;
     }
-    ~JobDispatchAdapter() { model_copy_.reset(); }
+    ~JobAdapter() { model_copy_.reset(); }
 
   private:
-    // Grant the CRTP base (JobDispatchInterface<JobDispatchAdapter>) access to
-    // JobDispatchAdapter's private members. This allows the base class template
+    // Grant the CRTP base (JobInterface<JobAdapter>) access to
+    // JobAdapter's private members. This allows the base class template
     // to call derived-class implementation details as part of the CRTP pattern.
-    friend class JobDispatchInterface<JobDispatchAdapter>;
+    friend class JobInterface<JobAdapter>;
 
     std::unique_ptr<MainModel> model_copy_;
     std::reference_wrapper<MainModel> model_reference_;

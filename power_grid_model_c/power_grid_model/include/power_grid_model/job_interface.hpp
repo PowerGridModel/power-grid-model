@@ -15,7 +15,7 @@
 #include <utility>
 
 namespace power_grid_model {
-template <typename Adapter> class JobDispatchInterface {
+template <typename Adapter> class JobInterface {
   public:
     // the multiple  NOSONARs are used to avoid the complaints about the unnamed concepts
     template <typename ResultDataset>
@@ -79,12 +79,12 @@ template <typename Adapter> class JobDispatchInterface {
 
   protected:
     // Protected & defaulted special members — CRTP: only the derived can create/copy/move this base
-    JobDispatchInterface() = default;
-    JobDispatchInterface(const JobDispatchInterface& /*other*/) = default;
-    JobDispatchInterface& operator=(const JobDispatchInterface& /*other*/) = default;
-    JobDispatchInterface(JobDispatchInterface&& /*other*/) noexcept = default;
-    JobDispatchInterface& operator=(JobDispatchInterface&& /*other*/) noexcept = default;
-    ~JobDispatchInterface() = default;
+    JobInterface() = default;
+    JobInterface(const JobInterface& /*other*/) = default;
+    JobInterface& operator=(const JobInterface& /*other*/) = default;
+    JobInterface(JobInterface&& /*other*/) noexcept = default;
+    JobInterface& operator=(JobInterface&& /*other*/) noexcept = default;
+    ~JobInterface() = default;
 };
 
 } // namespace power_grid_model
