@@ -9,6 +9,23 @@
 #include "../all_components.hpp"
 
 namespace power_grid_model::main_core {
+
+// using only components and not state
+
+template <typename ComponentType, class ComponentContainer>
+    requires extended_component_container_c<ComponentContainer, ComponentType>
+constexpr auto get_component_size(ComponentContainer const& components) {
+    return components.template size<ComponentType>();
+}
+
+template <typename ComponentType, class ComponentContainer>
+    requires extended_component_container_c<ComponentContainer, ComponentType>
+inline Idx get_component_sequence_idx(ComponentContainer const& components, auto const& id_or_index) {
+    return components.template get_seq<ComponentType>(id_or_index);
+}
+
+// existing implementation
+
 template <typename ComponentType, class ComponentContainer>
     requires model_component_state_c<MainModelState, ComponentContainer, ComponentType>
 inline Idx get_component_type_index(MainModelState<ComponentContainer> const& state) {

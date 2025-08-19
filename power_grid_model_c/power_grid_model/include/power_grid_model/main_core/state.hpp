@@ -37,6 +37,13 @@ concept component_container_c = requires(ContainerType const& c, ID id) {
     { c.template get_item<ComponentType>(id) } -> std::convertible_to<ComponentType const&>;
 };
 
+template <typename ContainerType, typename ComponentType>
+concept extended_component_container_c =
+    component_container_c<ContainerType, ComponentType> && requires(ContainerType const& c, Idx2D const& idx2d) {
+        { c.template size<ComponentType>() } -> std::same_as<Idx>;
+        { c.template get_seq<ComponentType>(idx2d) } -> std::same_as<Idx>;
+    };
+
 template <template <typename T> class StateType, typename ContainerType, typename ComponentType>
 concept model_component_state_c =
     component_container_c<typename StateType<ContainerType>::ComponentContainer, ComponentType> &&
