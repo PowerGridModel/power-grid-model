@@ -7,6 +7,8 @@
 namespace power_grid_model {
 
 // batch parameter
-struct BatchParameter {};
+struct BatchParameter {
+    bool operator==(const BatchParameter&) const = default;
+};
 
 } // namespace power_grid_model
