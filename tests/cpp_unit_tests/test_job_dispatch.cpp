@@ -68,7 +68,7 @@ class JobAdapterMock : public JobInterface<JobAdapterMock> {
     void prepare_job_dispatch_impl(MockUpdateDataset const& /*update_data*/) {}
     void setup_impl(MockUpdateDataset const& /*update_data*/, Idx /*scenario_idx*/) { ++counter_->setup_calls; }
     void winddown_impl() { ++counter_->winddown_calls; }
-    CalculationInfo get_calculation_info_impl() const { return CalculationInfo{{"default", 0.0}}; }
+    static CalculationInfo get_calculation_info_impl() { return CalculationInfo{{"default", 0.0}}; }
     void thread_safe_add_calculation_info_impl(CalculationInfo const& /*info*/) {
         ++counter_->thread_safe_add_calculation_info_calls;
     }
@@ -77,18 +77,16 @@ class JobAdapterMock : public JobInterface<JobAdapterMock> {
 } // namespace
 
 TEST_CASE("Test job dispatch logic") {
-    Idx n_scenarios{};
-    std::vector<std::string> exceptions(n_scenarios, "");
+    std::vector<std::string> exceptions(0, "");
 
     SUBCASE("Test batch_calculation") {
         auto counter = std::make_shared<CallCounter>();
         auto adapter = JobAdapterMock{counter};
         auto result_data = MockResultDataset{};
         auto const expected_result = BatchParameter{};
-        bool has_data{};
         SUBCASE("No update data") {
-            has_data = false;
-            n_scenarios = 9; // arbitrary non-zero value
+            bool const has_data = false;
+            Idx const n_scenarios = 9; // arbitrary non-zero value
             auto const update_data = MockUpdateDataset(has_data, n_scenarios);
             adapter.reset_counters();
             auto const actual_result = JobDispatch::batch_calculation(adapter, result_data, update_data);
@@ -97,8 +95,8 @@ TEST_CASE("Test job dispatch logic") {
             CHECK(adapter.get_cache_calculate_counter() == 0); // no cache calculation in this case
         }
         SUBCASE("No scenarios") {
-            has_data = true;
-            n_scenarios = 0;
+            bool const has_data = true;
+            Idx const n_scenarios = 0;
             auto const update_data = MockUpdateDataset(has_data, n_scenarios);
             adapter.reset_counters();
             auto const actual_result = JobDispatch::batch_calculation(adapter, result_data, update_data);
@@ -108,8 +106,8 @@ TEST_CASE("Test job dispatch logic") {
             CHECK(adapter.get_cache_calculate_counter() == 0);
         }
         SUBCASE("With scenarios and update data") {
-            has_data = true;
-            n_scenarios = 7; // arbitrary non-zero value
+            bool const has_data = true;
+            Idx const n_scenarios = 7; // arbitrary non-zero value
             auto const update_data = MockUpdateDataset(has_data, n_scenarios);
             adapter.reset_counters();
             auto const actual_result =
@@ -124,8 +122,8 @@ TEST_CASE("Test job dispatch logic") {
         auto counter = std::make_shared<CallCounter>();
         auto adapter = JobAdapterMock{counter};
         auto result_data = MockResultDataset{};
-        bool has_data{false};
-        n_scenarios = 9; // arbitrary non-zero value
+        bool const has_data{false};
+        Idx const n_scenarios = 9; // arbitrary non-zero value
         auto const update_data = MockUpdateDataset(has_data, n_scenarios);
         exceptions.resize(n_scenarios);
         Idx start{};
@@ -174,68 +172,75 @@ TEST_CASE("Test job dispatch logic") {
         check_call_numbers(adapter, call_number);
     }
     SUBCASE("Test job_dispatch") {
-        Idx threading{};
         std::vector<Idx> calls;
         std::mutex calls_mutex;
         auto single_job = [&calls, &calls_mutex](Idx /*start*/, Idx /*stride*/, Idx /*n_scenarios*/) {
-            std::lock_guard<std::mutex> lock(calls_mutex);
+            std::lock_guard<std::mutex> const lock(calls_mutex);
             calls.emplace_back(0);
         };
 
         SUBCASE("Sequential") {
-            n_scenarios = 10; // arbitrary non-zero value
-            threading = JobDispatch::sequential;
+            Idx const n_scenarios = 10; // arbitrary non-zero value
+            Idx const threading = JobDispatch::sequential;
             calls.clear();
             JobDispatch::job_dispatch(single_job, n_scenarios, threading);
             CHECK(calls.size() == 1);
         }
 
         SUBCASE("Multi-threaded") {
-            auto const hardware_thread = static_cast<Idx>(std::thread::hardware_concurrency());
-            n_scenarios = hardware_thread + 1; // larger than hardware threads
-            threading = 0;
-            calls.clear();
-            CAPTURE(hardware_thread);
-            CHECK(hardware_thread == JobDispatch::n_threads(n_scenarios, threading));
-            JobDispatch::job_dispatch(single_job, n_scenarios, threading);
-            CHECK(calls.size() == hardware_thread);
+            static_assert(std::is_unsigned_v<decltype(std::thread::hardware_concurrency())>);
 
-            n_scenarios = hardware_thread - 1; // smaller than hardware threads
-            calls.clear();
-            CAPTURE(hardware_thread);
-            CHECK(n_scenarios == JobDispatch::n_threads(n_scenarios, threading));
-            JobDispatch::job_dispatch(single_job, n_scenarios, threading);
-            CHECK(calls.size() == n_scenarios);
+            auto const hardware_thread = static_cast<Idx>(std::thread::hardware_concurrency());
+            Idx const threading = 0;
+
+            SUBCASE("More scenarios than hardware threads") {
+                Idx const n_scenarios = hardware_thread + 1; // larger than hardware threads
+                calls.clear();
+                CAPTURE(hardware_thread);
+                CHECK(hardware_thread == JobDispatch::n_threads(n_scenarios, threading));
+                JobDispatch::job_dispatch(single_job, n_scenarios, threading);
+                CHECK(calls.size() == hardware_thread);
+            }
+            SUBCASE("Less scenarios than hardware threads") {
+                Idx const n_scenarios = std::max(Idx{0}, hardware_thread - 1);
+                CAPTURE(n_scenarios);
+                calls.clear();
+                CAPTURE(hardware_thread);
+                CHECK(n_scenarios == JobDispatch::n_threads(n_scenarios, threading));
+                JobDispatch::job_dispatch(single_job, n_scenarios, threading);
+                CHECK(calls.size() == n_scenarios);
+            }
         }
     }
     SUBCASE("Test n_threads") {
+        static_assert(std::is_unsigned_v<decltype(std::thread::hardware_concurrency())>);
+
         auto const hardware_thread = static_cast<Idx>(std::thread::hardware_concurrency());
         CAPTURE(hardware_thread);
-        n_scenarios = 14; // arbitrary non-zero value
-        Idx threading{};
+        Idx const n_scenarios = 14; // arbitrary non-zero value
+
         SUBCASE("Sequential threading") {
-            threading = JobDispatch::sequential;
-            CHECK(JobDispatch::n_threads(n_scenarios, threading) == 1);
-
-            threading = 1;
-            CHECK(JobDispatch::n_threads(n_scenarios, threading) == 1);
-
-            if (hardware_thread < 2) {
-                threading = 0;
-                CHECK(JobDispatch::n_threads(n_scenarios, threading) == 1);
-            }
+            CHECK(JobDispatch::n_threads(n_scenarios, JobDispatch::sequential) == 1);
+            CHECK(JobDispatch::n_threads(n_scenarios, 1) == 1);
         }
         SUBCASE("Parallel threading") {
-            if (hardware_thread >= 2) {
-                threading = 0; // use hardware threads
-                CHECK(JobDispatch::n_threads(n_scenarios, threading) == hardware_thread);
+            SUBCASE("Use specified threading when less than num scenarios") {
+                Idx const threading = n_scenarios - 1;
+                CHECK(JobDispatch::n_threads(n_scenarios, threading) == threading);
             }
-
-            threading = n_scenarios - 1; // use specified threading
-            CHECK(JobDispatch::n_threads(n_scenarios, threading) == threading);
-
-            threading = n_scenarios + 1; // use n_scenarios as threading
-            CHECK(JobDispatch::n_threads(n_scenarios, threading) == n_scenarios);
+            SUBCASE("Use num scenarios threading when requesting more threads") {
+                Idx const threading = n_scenarios + 1;
+                CHECK(JobDispatch::n_threads(n_scenarios, threading) == n_scenarios);
+            }
+        }
+        SUBCASE("Hardware threading") {
+            if (hardware_thread < 2) {
+                CHECK(JobDispatch::n_threads(n_scenarios, 0) == 1);
+            } else if (hardware_thread <= n_scenarios) {
+                CHECK(JobDispatch::n_threads(n_scenarios, 0) == hardware_thread);
+            } else {
+                CHECK(JobDispatch::n_threads(n_scenarios, 0) == n_scenarios);
+            }
         }
     }
     SUBCASE("Test call_with") {
@@ -295,7 +300,7 @@ TEST_CASE("Test job dispatch logic") {
     SUBCASE("Test scenario_exception_handler") {
         auto counter = std::make_shared<CallCounter>();
         auto adapter = JobAdapterMock{counter};
-        n_scenarios = 11; // arbitrary non-zero value
+        Idx const n_scenarios = 11; // arbitrary non-zero value
         auto messages = std::vector<std::string>(n_scenarios, "");
         auto info = CalculationInfo{};
         auto handler = JobDispatch::scenario_exception_handler(adapter, messages, info);
@@ -313,7 +318,7 @@ TEST_CASE("Test job dispatch logic") {
         SUBCASE("Unknown exception") {
             Idx const scenario_idx = 3; // arbitrary index
             try {
-                throw 4; // arbitrary non-exception type
+                throw 4; // arbitrary non-exception type  // NOLINT(hicpp-exception-baseclass)
             } catch (...) {
                 handler(scenario_idx);
             }
@@ -322,7 +327,7 @@ TEST_CASE("Test job dispatch logic") {
         }
     }
     SUBCASE("Test handle_batch_exceptions") {
-        n_scenarios = 5; // arbitrary non-zero value
+        Idx const n_scenarios = 5; // arbitrary non-zero value
         exceptions.resize(n_scenarios);
         SUBCASE("No exceptions") { CHECK_NOTHROW(JobDispatch::handle_batch_exceptions(exceptions)); }
         SUBCASE("With exceptions") {
