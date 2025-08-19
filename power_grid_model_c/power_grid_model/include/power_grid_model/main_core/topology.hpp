@@ -191,4 +191,46 @@ constexpr void register_topology_components(MainModelState<ComponentContainer> c
     });
 }
 
+ComponentTopology construct_topology(main_model_state_c auto const& state) {
+    ComponentTopology comp_topo;
+    register_topology_components<Node>(state, comp_topo);
+    register_topology_components<Branch>(state, comp_topo);
+    register_topology_components<Branch3>(state, comp_topo);
+    register_topology_components<Source>(state, comp_topo);
+    register_topology_components<Shunt>(state, comp_topo);
+    register_topology_components<GenericLoadGen>(state, comp_topo);
+    register_topology_components<GenericVoltageSensor>(state, comp_topo);
+    register_topology_components<GenericPowerSensor>(state, comp_topo);
+    register_topology_components<GenericCurrentSensor>(state, comp_topo);
+    register_topology_components<Regulator>(state, comp_topo);
+    return comp_topo;
+}
+
+ComponentConnections construct_components_connections(main_model_state_c auto const& state) {
+    ComponentConnections comp_conn;
+    comp_conn.branch_connected.resize(state.comp_topo->branch_node_idx.size());
+    comp_conn.branch_phase_shift.resize(state.comp_topo->branch_node_idx.size());
+    comp_conn.branch3_connected.resize(state.comp_topo->branch3_node_idx.size());
+    comp_conn.branch3_phase_shift.resize(state.comp_topo->branch3_node_idx.size());
+    comp_conn.source_connected.resize(state.comp_topo->source_node_idx.size());
+    std::transform(state.components.template citer<Branch>().begin(), state.components.template citer<Branch>().end(),
+                   comp_conn.branch_connected.begin(), [](Branch const& branch) {
+                       return BranchConnected{static_cast<IntS>(branch.from_status()),
+                                              static_cast<IntS>(branch.to_status())};
+                   });
+    std::transform(state.components.template citer<Branch>().begin(), state.components.template citer<Branch>().end(),
+                   comp_conn.branch_phase_shift.begin(), [](Branch const& branch) { return branch.phase_shift(); });
+    std::transform(state.components.template citer<Branch3>().begin(), state.components.template citer<Branch3>().end(),
+                   comp_conn.branch3_connected.begin(), [](Branch3 const& branch3) {
+                       return Branch3Connected{static_cast<IntS>(branch3.status_1()),
+                                               static_cast<IntS>(branch3.status_2()),
+                                               static_cast<IntS>(branch3.status_3())};
+                   });
+    std::transform(state.components.template citer<Branch3>().begin(), state.components.template citer<Branch3>().end(),
+                   comp_conn.branch3_phase_shift.begin(), [](Branch3 const& branch3) { return branch3.phase_shift(); });
+    std::transform(state.components.template citer<Source>().begin(), state.components.template citer<Source>().end(),
+                   comp_conn.source_connected.begin(), [](Source const& source) { return source.status(); });
+    return comp_conn;
+}
+
 } // namespace power_grid_model::main_core

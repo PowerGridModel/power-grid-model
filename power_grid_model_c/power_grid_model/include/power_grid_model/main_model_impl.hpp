@@ -314,22 +314,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         construction_complete_ = true;
 #endif // !NDEBUG
         state_.components.set_construction_complete();
-        construct_topology();
-    }
-
-    void construct_topology() {
-        ComponentTopology comp_topo;
-        main_core::register_topology_components<Node>(state_, comp_topo);
-        main_core::register_topology_components<Branch>(state_, comp_topo);
-        main_core::register_topology_components<Branch3>(state_, comp_topo);
-        main_core::register_topology_components<Source>(state_, comp_topo);
-        main_core::register_topology_components<Shunt>(state_, comp_topo);
-        main_core::register_topology_components<GenericLoadGen>(state_, comp_topo);
-        main_core::register_topology_components<GenericVoltageSensor>(state_, comp_topo);
-        main_core::register_topology_components<GenericPowerSensor>(state_, comp_topo);
-        main_core::register_topology_components<GenericCurrentSensor>(state_, comp_topo);
-        main_core::register_topology_components<Regulator>(state_, comp_topo);
-        state_.comp_topo = std::make_shared<ComponentTopology const>(std::move(comp_topo));
+        state_.comp_topo = std::make_shared<ComponentTopology const>(main_core::construct_topology(state_));
     }
 
     void reset_solvers() {
@@ -652,33 +637,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         assert(construction_complete_);
         // clear old solvers
         reset_solvers();
-        // get connection info
-        ComponentConnections comp_conn;
-        comp_conn.branch_connected.resize(state_.comp_topo->branch_node_idx.size());
-        comp_conn.branch_phase_shift.resize(state_.comp_topo->branch_node_idx.size());
-        comp_conn.branch3_connected.resize(state_.comp_topo->branch3_node_idx.size());
-        comp_conn.branch3_phase_shift.resize(state_.comp_topo->branch3_node_idx.size());
-        comp_conn.source_connected.resize(state_.comp_topo->source_node_idx.size());
-        std::transform(
-            state_.components.template citer<Branch>().begin(), state_.components.template citer<Branch>().end(),
-            comp_conn.branch_connected.begin(), [](Branch const& branch) {
-                return BranchConnected{static_cast<IntS>(branch.from_status()), static_cast<IntS>(branch.to_status())};
-            });
-        std::transform(state_.components.template citer<Branch>().begin(),
-                       state_.components.template citer<Branch>().end(), comp_conn.branch_phase_shift.begin(),
-                       [](Branch const& branch) { return branch.phase_shift(); });
-        std::transform(
-            state_.components.template citer<Branch3>().begin(), state_.components.template citer<Branch3>().end(),
-            comp_conn.branch3_connected.begin(), [](Branch3 const& branch3) {
-                return Branch3Connected{static_cast<IntS>(branch3.status_1()), static_cast<IntS>(branch3.status_2()),
-                                        static_cast<IntS>(branch3.status_3())};
-            });
-        std::transform(state_.components.template citer<Branch3>().begin(),
-                       state_.components.template citer<Branch3>().end(), comp_conn.branch3_phase_shift.begin(),
-                       [](Branch3 const& branch3) { return branch3.phase_shift(); });
-        std::transform(state_.components.template citer<Source>().begin(),
-                       state_.components.template citer<Source>().end(), comp_conn.source_connected.begin(),
-                       [](Source const& source) { return source.status(); });
+        ComponentConnections comp_conn = main_core::construct_components_connections(state_);
         // re build
         Topology topology{*state_.comp_topo, comp_conn};
         std::tie(state_.math_topology, state_.topo_comp_coup) = topology.build_topology();
