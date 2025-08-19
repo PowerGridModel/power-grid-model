@@ -71,7 +71,11 @@ class CalculationInfo : public DefaultLogger {
         }
     }
     void accumulate_log(LogEvent tag, double value) { data_[tag] += value; }
-    void maximize_log(LogEvent tag, double value) { data_[tag] = std::max(data_[tag], value); }
+    void maximize_log(LogEvent tag, double value) {
+        if (auto& stored_value = data_[tag]; value > stored_value) {
+            stored_value = value;
+        }
+    }
 
   public:
     auto begin() { return std::ranges::begin(data_); }
