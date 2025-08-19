@@ -31,7 +31,7 @@ jobs:
     name: Build sdist and set version
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: actions/setup-python@v5
         with:
@@ -76,7 +76,7 @@ jobs:
       PRESET: ci-${{ matrix.compiler }}-${{ matrix.build-option }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install packages
         run: |
           sudo apt-get update
@@ -106,7 +106,7 @@ jobs:
       PRESET: ${{ matrix.compiler }}-${{ matrix.build-option }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Activate conda
         uses: conda-incubator/setup-miniconda@v3  # install miniforge instead
@@ -159,7 +159,7 @@ jobs:
       PRESET: ci-clang-${{ matrix.build-option }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up XCode
         uses: maxim-lobanov/setup-xcode@v1
@@ -195,7 +195,7 @@ jobs:
     needs: [acquire-python-version-build-sdist]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: actions/download-artifact@v5
         with:
@@ -244,7 +244,7 @@ jobs:
       run:
         shell: ${{ matrix.shell }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: conda-incubator/setup-miniconda@v3
         with:
@@ -299,7 +299,7 @@ jobs:
           echo "Previous jobs have failures!"
           exit 1
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Setup python
         uses: actions/setup-python@v5

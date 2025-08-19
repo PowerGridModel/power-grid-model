@@ -794,8 +794,8 @@ def no_strict_subset_missing(data: SingleDataset, fields: list[str], component_t
     errors = []
     if component_type in data:
         component_data = data[component_type]
-        instances_with_nan_data = np.full_like([], False, shape=(len(component_data),), dtype=bool)
-        instances_with_non_nan_data = np.full_like([], False, shape=(len(component_data),), dtype=bool)
+        instances_with_nan_data = np.full_like([], fill_value=False, shape=(len(component_data),), dtype=bool)
+        instances_with_non_nan_data = np.full_like([], fill_value=False, shape=(len(component_data),), dtype=bool)
         for field in fields:
             nan_value = _nan_type(component_type, field)
             asym_axes = tuple(range(component_data.ndim, component_data[field].ndim))
@@ -850,7 +850,7 @@ def not_all_missing(data: SingleDataset, fields: list[str], component_type: Comp
     errors = []
     if component_type in data:
         component_data = data[component_type]
-        instances_with_all_nan_data = np.full_like([], True, shape=(len(component_data),), dtype=bool)
+        instances_with_all_nan_data = np.full_like([], fill_value=True, shape=(len(component_data),), dtype=bool)
 
         for field in fields:
             nan_value = _nan_type(component_type, field)

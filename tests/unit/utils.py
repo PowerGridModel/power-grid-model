@@ -84,6 +84,10 @@ KNOWN_EXCEPTIONS: dict[str, type[BaseException] | None] = {
 KNOWN_EXCEPTIONS["Failed"] = _Failed
 
 
+class UnknownDataType(Exception):
+    """Raised when an unknown data type is encountered"""
+
+
 class PowerGridModelWithExt(PowerGridModel):
     """Wrapper class around the power grid model to expose extended features."""
 
@@ -260,7 +264,7 @@ def compare_result(actual: SingleDataset, expected: SingleDataset, rtol: float, 
             elif expected_col.dtype == np.int32:
                 expect_all_nan = np.all(expected_col == np.iinfo("i4").min)
             else:
-                raise Exception(f"Unknown data type {expected_col.dtype}!")
+                raise UnknownDataType(f"Unknown data type {expected_col.dtype}!")
 
             if not expect_all_nan:
                 # permute expected_col if needed

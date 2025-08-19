@@ -10,7 +10,7 @@
 #include "../{{ name }}.hpp" // NOLINT
 
 #include <cstddef>
-
+{% autoescape false %}
 namespace power_grid_model::test {
 
 {% for attribute_class in classes -%}
@@ -32,5 +32,5 @@ static_assert(offsetof({{ specification }}, {{ attribute.names }}) == offsetof({
 {% endfor %}
 
 } // namespace power_grid_model::test
-
+{% endautoescape %}
 // clang-format on

@@ -19,7 +19,7 @@ class JobDispatch {
 
     // TODO(figueroa1395): add generic template parameters for update_data and result_data
     template <typename Adapter, typename ResultDataset, typename UpdateDataset>
-        requires std::is_base_of_v<JobDispatchInterface<Adapter>, Adapter>
+        requires std::is_base_of_v<JobInterface<Adapter>, Adapter>
     static BatchParameter batch_calculation(Adapter& adapter, ResultDataset const& result_data,
                                             UpdateDataset const& update_data, Idx threading = sequential) {
         if (update_data.empty()) {
