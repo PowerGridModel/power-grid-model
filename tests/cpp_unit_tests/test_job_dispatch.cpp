@@ -11,7 +11,10 @@
 
 #include <doctest/doctest.h>
 
+#include <algorithm>
 #include <atomic>
+#include <ranges>
+
 namespace power_grid_model {
 namespace {
 struct MockUpdateDataset {
@@ -172,11 +175,16 @@ TEST_CASE("Test job dispatch logic") {
         check_call_numbers(adapter, call_number);
     }
     SUBCASE("Test job_dispatch") {
-        std::vector<Idx> calls;
+        struct JobArguments {
+            Idx start;
+            Idx stride;
+            Idx n_scenarios;
+        };
+        std::vector<JobArguments> calls;
         std::mutex calls_mutex;
-        auto single_job = [&calls, &calls_mutex](Idx /*start*/, Idx /*stride*/, Idx /*n_scenarios*/) {
+        auto single_job = [&calls, &calls_mutex](Idx start, Idx stride, Idx n_scenarios) {
             std::lock_guard<std::mutex> const lock(calls_mutex);
-            calls.emplace_back(0);
+            calls.emplace_back(start, stride, n_scenarios);
         };
 
         SUBCASE("Sequential") {
@@ -185,6 +193,9 @@ TEST_CASE("Test job dispatch logic") {
             calls.clear();
             JobDispatch::job_dispatch(single_job, n_scenarios, threading);
             CHECK(calls.size() == 1);
+            CHECK(calls.front().start == 0);
+            CHECK(calls.front().stride == 1);
+            CHECK(calls.front().n_scenarios == 10);
         }
 
         SUBCASE("Multi-threaded") {
@@ -200,6 +211,14 @@ TEST_CASE("Test job dispatch logic") {
                 CHECK(hardware_thread == JobDispatch::n_threads(n_scenarios, threading));
                 JobDispatch::job_dispatch(single_job, n_scenarios, threading);
                 CHECK(calls.size() == hardware_thread);
+                auto const n_threads = static_cast<Idx>(calls.size());
+                CHECK(std::ranges::all_of(std::views::iota(Idx{0}, n_threads), [&calls](Idx i) {
+                    return std::ranges::any_of(calls, [i](JobArguments const& call) { return call.start == i; });
+                }));
+                CHECK(std::ranges::all_of(calls,
+                                          [n_threads](JobArguments const& call) { return call.stride == n_threads; }));
+                CHECK(std::ranges::all_of(
+                    calls, [n_scenarios](JobArguments const& call) { return call.n_scenarios == n_scenarios; }));
             }
             SUBCASE("Less scenarios than hardware threads") {
                 Idx const n_scenarios = std::max(Idx{0}, hardware_thread - 1);
@@ -209,6 +228,14 @@ TEST_CASE("Test job dispatch logic") {
                 CHECK(n_scenarios == JobDispatch::n_threads(n_scenarios, threading));
                 JobDispatch::job_dispatch(single_job, n_scenarios, threading);
                 CHECK(calls.size() == n_scenarios);
+                auto const n_threads = static_cast<Idx>(calls.size());
+                CHECK(std::ranges::all_of(std::views::iota(0, n_threads), [&calls](Idx i) {
+                    return std::ranges::any_of(calls, [i](JobArguments const& call) { return call.start == i; });
+                }));
+                CHECK(std::ranges::all_of(calls,
+                                          [n_threads](JobArguments const& call) { return call.stride == n_threads; }));
+                CHECK(std::ranges::all_of(
+                    calls, [n_scenarios](JobArguments const& call) { return call.n_scenarios == n_scenarios; }));
             }
         }
     }
