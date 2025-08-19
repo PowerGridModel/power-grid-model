@@ -139,17 +139,17 @@ TEST_CASE("Test job dispatch logic") {
         Idx stride{};
         Idx call_number{};
 
-        auto get_call_number = [](Idx start, Idx stride, Idx n_scenarios) {
+        auto get_call_number = [](Idx start_, Idx stride_, Idx n_scenarios_) {
             REQUIRE_MESSAGE(
-                stride > 0,
+                stride_ > 0,
                 "Can't have stride of (less than) zero; this should be caught by a different job dispatch handling");
-            return (n_scenarios - start + stride - 1) / stride;
+            return (n_scenarios_ - start_ + stride_ - 1) / stride_;
         };
 
-        auto check_call_numbers = [](JobAdapterMock const& adapter_, Idx expected_calls_) {
-            CHECK(adapter_.get_setup_counter() == expected_calls_);
-            CHECK(adapter_.get_winddown_counter() == expected_calls_);
-            CHECK(adapter_.get_calculate_counter() == expected_calls_);
+        auto check_call_numbers = [](JobAdapterMock const& adapter_, Idx expected_calls) {
+            CHECK(adapter_.get_setup_counter() == expected_calls);
+            CHECK(adapter_.get_winddown_counter() == expected_calls);
+            CHECK(adapter_.get_calculate_counter() == expected_calls);
             CHECK(adapter_.get_thread_safe_add_calculation_info_counter() == 1); // always called once
         };
 
