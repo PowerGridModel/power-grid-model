@@ -13,10 +13,8 @@ namespace common::logging {
 
 enum class LogEvent : int32_t {
     unknown = -1,
-    log = 0,
-    total = 100000,       // TODO(mgovers): find other error code?
-    build_model = 101000, // TODO(mgovers): find other error code?
-    timer = 1,
+    total = 0000,       // TODO(mgovers): find other error code?
+    build_model = 1000, // TODO(mgovers): find other error code?
     total_single_calculation_in_thread = 0100,
     total_batch_calculation_in_thread = 0200,
     copy_model = 1100,
@@ -29,20 +27,20 @@ enum class LogEvent : int32_t {
     math_calculation = 2200,
     math_solver = 2220,
     initialize_calculation = 2221,
-    preprocess_measured_value = 102221, // TODO(mgovers): find other error code + make plural?
+    preprocess_measured_value = 2231, // TODO(mgovers): find other error code + make plural?
     prepare_matrix = 2222,
-    prepare_matrix_including_prefactorization = 102222, // TODO(mgovers): find other error code
-    prepare_matrices = 1002222,                         // TODO(mgovers): find other error code
+    prepare_matrix_including_prefactorization = 2232, // TODO(mgovers): find other error code
+    prepare_matrices = 2242,                          // TODO(mgovers): find other error code
     initialize_voltages = 2223,
     calculate_rhs = 2224,
-    prepare_lhs_rhs = 102224, // TODO(mgovers): find other error code
+    prepare_lhs_rhs = 2244, // TODO(mgovers): find other error code
     solve_sparse_linear_equation = 2225,
-    solve_sparse_linear_equation_prefactorized = 102225, // TODO(mgovers): find other error code
+    solve_sparse_linear_equation_prefactorized = 2235, // TODO(mgovers): find other error code
     iterate_unknown = 2226,
     calculate_math_result = 2227,
     produce_output = 3000,
-    iterative_pf_solver_max_num_iter = 1002226, // TODO(mgovers): find other error code
-    max_num_iter = 1002228,                     // TODO(mgovers): find other error code
+    iterative_pf_solver_max_num_iter = 2246, // TODO(mgovers): find other error code
+    max_num_iter = 2248,                     // TODO(mgovers): find other error code
 };
 
 constexpr std::string to_string(LogEvent tag) {
@@ -50,10 +48,6 @@ constexpr std::string to_string(LogEvent tag) {
     using namespace std::string_literals;
 
     switch (tag) {
-    case log:
-        return "log"s;
-    case timer:
-        return "timer"s;
     case total:
         return "Total"s;
     case build_model:
@@ -111,6 +105,8 @@ constexpr std::string to_string(LogEvent tag) {
         [[fallthrough]];
     case max_num_iter:
         return "Max number of iterations"s; // TODO(mgovers): different messages?
+    case unknown:
+        [[fallthrough]];
     default:
         return "unknown"s;
     }
