@@ -134,9 +134,9 @@ TEST_CASE("Test job dispatch logic") {
         Idx call_number{};
 
         auto get_call_number = [](Idx start, Idx stride, Idx n_scenarios) {
-            if (stride == 0) {
-                FAIL("Can't have stride of zero");
-            }
+            REQUIRE_MESSAGE(
+                stride > 0,
+                "Can't have stride of (less than) zero; this should be caught by a different job dispatch handling");
             return (n_scenarios - start + stride - 1) / stride;
         };
 
