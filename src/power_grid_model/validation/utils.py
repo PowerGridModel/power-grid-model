@@ -81,7 +81,8 @@ def _eval_field_expression(data: np.ndarray, expression: str) -> np.ndarray:
         return data[fields[0]]
 
     max_num_fields = 2
-    assert len(fields) == max_num_fields
+    if len(fields) != max_num_fields:
+        raise ValueError(f"There should be exactly {max_num_fields} fields, got {len(fields)} fields")
     zero_div = np.logical_or(np.equal(data[fields[1]], 0.0), np.logical_not(np.isfinite(data[fields[1]])))
     if np.any(zero_div):
         result = np.full_like(data[fields[0]], np.nan)
@@ -188,9 +189,7 @@ def errors_to_string(
 
 
 def _nan_type(component: ComponentType, field: str, data_type: DatasetType = DatasetType.input):
-    """
-    Helper function to retrieve the nan value for a certain field as defined in the power_grid_meta_data.
-    """
+    """Helper function to retrieve the nan value for a certain field as defined in the power_grid_meta_data."""
     return power_grid_meta_data[data_type][component].nans[field]
 
 
@@ -264,7 +263,7 @@ def _set_default_value(
 
 def _get_valid_ids(data: SingleDataset, ref_components: ComponentType | list[ComponentType]) -> list[int]:
     """
-    This function returns the valid IDs specified by all ref_components
+    This function returns the valid IDs specified by all ref_components.
 
     Args:
         data: The input/update data set for all components

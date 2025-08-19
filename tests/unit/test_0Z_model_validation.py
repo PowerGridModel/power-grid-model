@@ -110,7 +110,7 @@ def maybe_raises(params: dict):
 
 
 @pytest.mark.parametrize(
-    ["case_id", "case_path", "sym", "calculation_type", "calculation_method", "rtol", "atol", "params"],
+    ("case_id", "case_path", "sym", "calculation_type", "calculation_method", "rtol", "atol", "params"),
     pytest_cases(get_batch_cases=False),
 )
 def test_single_validation(
@@ -163,7 +163,7 @@ def test_single_validation(
 
 
 @pytest.mark.parametrize(
-    ["case_id", "case_path", "sym", "calculation_type", "calculation_method", "rtol", "atol", "params"],
+    ("case_id", "case_path", "sym", "calculation_type", "calculation_method", "rtol", "atol", "params"),
     pytest_cases(get_batch_cases=True),
 )
 def test_batch_validation(

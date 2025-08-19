@@ -12,7 +12,7 @@ from power_grid_model.utils import import_json_data
 from tests.unit.utils import compare_result
 
 
-@pytest.fixture()
+@pytest.fixture
 def deprecated_format_test_case():
     return Path(__file__).parent / "data/dummy-test-batch-dependent-not-cacheable"
 

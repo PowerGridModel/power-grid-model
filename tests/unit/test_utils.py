@@ -108,9 +108,9 @@ def test_get_dataset_batch_size_mixed():
             "indptr": np.array([0, 2, 3]),
         },
     }
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Inconsistent number of batches in batch data."):
         get_dataset_batch_size(data_dense)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Inconsistent number of batches in batch data."):
         get_dataset_batch_size(data_sparse)
 
 
@@ -179,14 +179,14 @@ def test_self_test():
 
 @pytest.mark.parametrize(
     ("output_dataset_type", "output_file_name", "update_data"),
-    (
+    [
         (DatasetType.sym_output, "sym_output_batch.json", {"version": "1.0", "data": "update_data"}),
         (DatasetType.sym_output, "sym_output.json", None),
         (DatasetType.asym_output, "asym_output_batch.json", {"version": "1.0", "data": "update_data"}),
         (DatasetType.asym_output, "asym_output.json", None),
         (DatasetType.sc_output, "sc_output_batch.json", {"version": "1.0", "data": "update_data"}),
         (DatasetType.sc_output, "sc_output.json", None),
-    ),
+    ],
 )
 @patch.object(Path, "write_text", autospec=True)
 @patch("power_grid_model.utils.json_serialize_to_file")
