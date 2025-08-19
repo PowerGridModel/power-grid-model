@@ -366,7 +366,20 @@ TEST_CASE("Test job dispatch logic") {
         SUBCASE("With exceptions") {
             exceptions[0] = "Error in scenario 0";
             exceptions[3] = "Error in scenario 3";
-            CHECK_THROWS_AS(JobDispatch::handle_batch_exceptions(exceptions), BatchCalculationError);
+            CHECK_THROWS_WITH_AS(
+                [&exceptions] {
+                    try {
+                        JobDispatch::handle_batch_exceptions(exceptions);
+                        FAIL("should have thrown here");
+                    } catch (BatchCalculationError const& e) {
+                        REQUIRE(e.err_msgs().size() == 2);
+                        CHECK(e.err_msgs()[0] == "Error in scenario 0");
+                        CHECK(e.err_msgs()[1] == "Error in scenario 3");
+                        throw;
+                    }
+                }(),
+                "Error in batch #0: Error in scenario 0\nError in batch #3: Error in scenario 3\n",
+                BatchCalculationError);
         }
     }
 }
