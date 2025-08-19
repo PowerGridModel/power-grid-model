@@ -282,7 +282,7 @@ def _compatibility_deprecated_export_json_data(
         file_pointer.write(old_format_serialized_data)
 
 
-def import_input_data(json_file: Path) -> SingleDataset:
+def import_input_data(json_file: Path) -> SingleDataset:  # pragma: no cover
     """
     [deprecated] Import input json data.
 
@@ -299,8 +299,10 @@ def import_input_data(json_file: Path) -> SingleDataset:
     warnings.warn(_DEPRECATED_JSON_DESERIALIZATION_MSG, DeprecationWarning)
 
     data = _compatibility_deprecated_import_json_data(json_file=json_file, data_type=DatasetType.input)
-    assert isinstance(data, dict)
-    assert all(isinstance(component, np.ndarray) and component.ndim == 1 for component in data.values())
+    if not isinstance(data, dict):
+        raise TypeError(f"Expected data to be dict, got {type(data)}")
+    if not all(isinstance(component, np.ndarray) and component.ndim == 1 for component in data.values()):
+        raise TypeError("All components must be 1D numpy arrays")
     return cast_type(SingleDataset, data)
 
 
@@ -398,12 +400,14 @@ def self_test():
             with Path(output_file_path).open("r", encoding="utf-8") as output_file:
                 output_data = json.load(output_file)
 
-            assert output_data is not None
-            assert math.isclose(
+            if output_data is None:  # pragma: no cover
+                raise ValueError("Output data should not be None")
+            if not math.isclose(
                 output_data["data"][ComponentType.node][0]["u"],
                 input_data["data"][ComponentType.node][0]["u_rated"],
                 abs_tol=1e-9,
-            )
+            ):  # pragma: no cover
+                raise ValueError("The difference between the input and output data is too big.")
 
             print("Self test finished.")
         except Exception as e:
