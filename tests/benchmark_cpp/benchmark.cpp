@@ -20,6 +20,75 @@ MathSolverDispatcher const& get_math_solver_dispatcher() {
     return math_solver_dispatcher;
 }
 
+constexpr std::string to_string(LogEvent tag) {
+    using enum LogEvent;
+    using namespace std::string_literals;
+
+    switch (tag) {
+    case total:
+        return "Total"s;
+    case build_model:
+        return "Build model"s;
+    case total_single_calculation_in_thread:
+        return "Total single calculation in thread"s;
+    case total_batch_calculation_in_thread:
+        return "Total batch calculation in thread"s;
+    case copy_model:
+        return "Copy model"s;
+    case update_model:
+        return "Update model"s;
+    case restore_model:
+        return "Restore model"s;
+    case scenario_exception:
+        return "Scenario exception"s;
+    case recover_from_bad:
+        return "Recover from bad"s;
+    case prepare:
+        return "Prepare"s;
+    case create_math_solver:
+        return "Create math solver"s;
+    case math_calculation:
+        return "Math Calculation"s; // TODO(mgovers): make capitalization consistent
+    case math_solver:
+        return "Math solver"s;
+    case initialize_calculation:
+        return "Initialize calculation"s;
+    case preprocess_measured_value:
+        return "Pre-process measured value"s; // TODO(mgovers): make plural
+    case prepare_matrix:
+        return "Prepare matrix"s;
+    case prepare_matrix_including_prefactorization:
+        return "Prepare matrix, including pre-factorization"s;
+    case prepare_matrices:
+        return "Prepare the matrices"s; // TODO(mgovers): combine or properly split up?
+    case initialize_voltages:
+        return "Initialize voltages"s;
+    case calculate_rhs:
+        return "Calculate rhs"s; // TODO(mgovers): capitalize?
+    case prepare_lhs_rhs:
+        return "Prepare LHS rhs"s;
+    case solve_sparse_linear_equation:
+        return "Solve sparse linear equation"s;
+    case solve_sparse_linear_equation_prefactorized:
+        return "Solve sparse linear equation (pre-factorized)"s;
+    case iterate_unknown:
+        return "Iterate unknown"s;
+    case calculate_math_result:
+        return "Calculate math result"s;
+    case produce_output:
+        return "Produce output"s;
+    case iterative_pf_solver_max_num_iter:
+        // return "Max number of iterations"s; // TODO(mgovers): different messages?
+        [[fallthrough]];
+    case max_num_iter:
+        return "Max number of iterations"s; // TODO(mgovers): different messages?
+    case unknown:
+        [[fallthrough]];
+    default:
+        return "unknown"s;
+    }
+}
+
 std::string make_key(LogEvent code) {
     std::stringstream ss;
     ss << std::setw(4) << std::setfill('0') << static_cast<std::underlying_type_t<LogEvent>>(code) << ".";
