@@ -146,10 +146,10 @@ TEST_CASE("Test job dispatch logic") {
             return (n_scenarios - start + stride - 1) / stride;
         };
 
-        auto check_call_numbers = [](JobAdapterMock& adapter_, Idx expected_calls) {
-            CHECK(adapter_.get_setup_counter() == expected_calls);
-            CHECK(adapter_.get_winddown_counter() == expected_calls);
-            CHECK(adapter_.get_calculate_counter() == expected_calls);
+        auto check_call_numbers = [](JobAdapterMock const& adapter_, Idx expected_calls_) {
+            CHECK(adapter_.get_setup_counter() == expected_calls_);
+            CHECK(adapter_.get_winddown_counter() == expected_calls_);
+            CHECK(adapter_.get_calculate_counter() == expected_calls_);
             CHECK(adapter_.get_thread_safe_add_calculation_info_counter() == 1); // always called once
         };
 
