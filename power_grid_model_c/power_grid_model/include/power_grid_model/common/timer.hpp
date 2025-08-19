@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "calculation_info.hpp" // TODO(mgovers): remove this dependency from Timer
 #include "common.hpp"
 #include "logging.hpp"
 
@@ -18,13 +17,13 @@ using Duration = std::chrono::duration<double>;
 
 class Timer {
   private:
-    CalculationInfo* info_;
+    Logger* info_;
     LogEvent code_;
     Clock::time_point start_;
 
   public:
     Timer() : info_(nullptr), code_{LogEvent::unknown} {};
-    Timer(CalculationInfo& info, LogEvent code) : info_{&info}, code_{code}, start_{Clock::now()} {}
+    Timer(Logger& info, LogEvent code) : info_{&info}, code_{code}, start_{Clock::now()} {}
 
     Timer(Timer const&) = delete;
     Timer(Timer&&) = default;
