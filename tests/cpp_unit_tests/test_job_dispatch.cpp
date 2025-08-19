@@ -48,11 +48,11 @@ class JobAdapterMock : public JobInterface<JobAdapterMock> {
     JobAdapterMock(std::shared_ptr<CallCounter> counter) : counter_{std::move(counter)} {}
     JobAdapterMock(JobAdapterMock const&) = default;
     JobAdapterMock& operator=(JobAdapterMock const&) = default;
-    JobAdapterMock(JobAdapterMock&&) noexcept = default;
+    JobAdapterMock(JobAdapterMock&&) noexcept = delete;
     JobAdapterMock& operator=(JobAdapterMock&&) noexcept = default;
     ~JobAdapterMock() = default;
 
-    void reset_counters() { counter_->reset_counters(); }
+    void reset_counters() const { counter_->reset_counters(); }
     Idx get_calculate_counter() const { return counter_->calculate_calls; }
     Idx get_cache_calculate_counter() const { return counter_->cache_calculate_calls; }
     Idx get_setup_counter() const { return counter_->setup_calls; }
@@ -66,16 +66,22 @@ class JobAdapterMock : public JobInterface<JobAdapterMock> {
 
     std::shared_ptr<CallCounter> counter_;
 
-    void calculate_impl(MockResultDataset const& /*result_data*/, Idx /*scenario_idx*/) { ++counter_->calculate_calls; }
-    void cache_calculate_impl() { ++counter_->cache_calculate_calls; }
-    void prepare_job_dispatch_impl(MockUpdateDataset const& /*update_data*/) {}
-    void setup_impl(MockUpdateDataset const& /*update_data*/, Idx /*scenario_idx*/) { ++counter_->setup_calls; }
-    void winddown_impl() { ++counter_->winddown_calls; }
-    static CalculationInfo get_calculation_info_impl() { return CalculationInfo{{"default", 0.0}}; }
-    void thread_safe_add_calculation_info_impl(CalculationInfo const& /*info*/) {
-        ++counter_->thread_safe_add_calculation_info_calls;
+    void calculate_impl(MockResultDataset const& /*result_data*/, Idx /*scenario_idx*/) const {
+        ++(counter_->calculate_calls);
     }
-    auto get_current_scenario_sequence_view_() {}
+    void cache_calculate_impl() const { ++(counter_->cache_calculate_calls); }
+    void prepare_job_dispatch_impl(MockUpdateDataset const& /*update_data*/) const { /* patch base class function */ }
+    void setup_impl(MockUpdateDataset const& /*update_data*/, Idx /*scenario_idx*/) const { ++(counter_->setup_calls); }
+    void winddown_impl() const { ++(counter_->winddown_calls); }
+    static CalculationInfo get_calculation_info_impl() { return CalculationInfo{{"default", 0.0}}; }
+    void thread_safe_add_calculation_info_impl(CalculationInfo const& /*info*/) const {
+        ++(counter_->thread_safe_add_calculation_info_calls);
+    }
+};
+
+class SomeTestException : public std::runtime_error {
+  public:
+    using std::runtime_error::runtime_error;
 };
 } // namespace
 
@@ -140,11 +146,11 @@ TEST_CASE("Test job dispatch logic") {
             return (n_scenarios - start + stride - 1) / stride;
         };
 
-        auto check_call_numbers = [](JobAdapterMock& adapter, Idx expected_calls) {
-            CHECK(adapter.get_setup_counter() == expected_calls);
-            CHECK(adapter.get_winddown_counter() == expected_calls);
-            CHECK(adapter.get_calculate_counter() == expected_calls);
-            CHECK(adapter.get_thread_safe_add_calculation_info_counter() == 1); // always called once
+        auto check_call_numbers = [](JobAdapterMock& adapter_, Idx expected_calls) {
+            CHECK(adapter_.get_setup_counter() == expected_calls);
+            CHECK(adapter_.get_winddown_counter() == expected_calls);
+            CHECK(adapter_.get_calculate_counter() == expected_calls);
+            CHECK(adapter_.get_thread_safe_add_calculation_info_counter() == 1); // always called once
         };
 
         adapter.prepare_job_dispatch(update_data); // replicate preparation step from batch_calculation
@@ -283,12 +289,12 @@ TEST_CASE("Test job dispatch logic") {
         auto run_fn_no_throw = [&run_called](Idx) { run_called++; };
         auto run_fn_throw = [&run_called](Idx) {
             run_called++;
-            throw std::runtime_error("Run error");
+            throw SomeTestException{"Run error"};
         };
         auto winddown_fn_no_throw = [&winddown_called]() { winddown_called++; };
         auto winddown_fn_throw = [&winddown_called]() {
             winddown_called++;
-            throw std::runtime_error("Winddown error");
+            throw SomeTestException{"Winddown error"};
         };
         auto handle_exception_fn = [&handle_exception_called](Idx) { handle_exception_called++; };
         auto recover_from_bad_fn = [&recover_from_bad_called]() { recover_from_bad_called++; };
@@ -335,8 +341,8 @@ TEST_CASE("Test job dispatch logic") {
             std::string const expected_message = "Test exception";
             Idx const scenario_idx = 7; // arbitrary index
             try {
-                throw std::runtime_error(expected_message);
-            } catch (...) {
+                throw SomeTestException{expected_message};
+            } catch (...) { // NOSONAR // the handler should work with arbitrary exception types
                 handler(scenario_idx);
             }
             CHECK(messages[scenario_idx] == expected_message);
@@ -345,8 +351,8 @@ TEST_CASE("Test job dispatch logic") {
         SUBCASE("Unknown exception") {
             Idx const scenario_idx = 3; // arbitrary index
             try {
-                throw 4; // arbitrary non-exception type  // NOLINT(hicpp-exception-baseclass)
-            } catch (...) {
+                throw 4;    // arbitrary non-exception type  // NOLINT(hicpp-exception-baseclass)
+            } catch (...) { // NOSONAR // the handler should work with arbitrary exception types
                 handler(scenario_idx);
             }
             CHECK(messages[scenario_idx] == "unknown exception");
