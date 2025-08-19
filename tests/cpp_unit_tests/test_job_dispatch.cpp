@@ -372,9 +372,11 @@ TEST_CASE("Test job dispatch logic") {
                         JobDispatch::handle_batch_exceptions(exceptions);
                         FAIL("should have thrown here");
                     } catch (BatchCalculationError const& e) {
+                        using namespace std::string_literals;
                         REQUIRE(e.err_msgs().size() == 2);
-                        CHECK(e.err_msgs()[0] == "Error in scenario 0");
-                        CHECK(e.err_msgs()[1] == "Error in scenario 3");
+                        CHECK(e.err_msgs() == std::vector{"Error in scenario 0"s, "Error in scenario 3"s});
+                        REQUIRE(e.failed_scenarios().size() == 2);
+                        REQUIRE(e.failed_scenarios() == std::vector{Idx{0}, Idx{3}});
                         throw;
                     }
                 }(),
