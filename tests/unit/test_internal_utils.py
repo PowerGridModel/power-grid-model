@@ -789,7 +789,7 @@ def test_get_dataset_type(dataset_type):
 
 
 def test_get_dataset_type__empty_data():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="At least one component should have row based data."):
         get_dataset_type(data={})
 
 

@@ -17,7 +17,7 @@
 #define POWER_GRID_MODEL_C_DATASET_DEFINITIONS_H
 
 #include "basics.h"
-
+{% autoescape false %}
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -44,4 +44,4 @@ PGM_API extern PGM_MetaAttribute const* const PGM_def_{{ dataset }}_{{ component
 
 #endif
 // clang-format on
-
+{% endautoescape %}

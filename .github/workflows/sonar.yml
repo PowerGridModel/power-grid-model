@@ -27,7 +27,7 @@ jobs:
       CMAKE_PREFIX_PATH: /home/linuxbrew/.linuxbrew
       LLVM_COV: llvm-cov-18
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
       - name: Install packages
