@@ -10,18 +10,18 @@
 
 namespace power_grid_model {
 
-template <typename ContainerType, typename ComponentType>
+template <typename ContainerType, typename RetrievableType>
 concept component_container_c = requires(ContainerType const& c, ID id, Idx2D idx2d) {
-    { c.template citer<ComponentType>().begin() } -> std::forward_iterator;
-    { c.template citer<ComponentType>().end() } -> std::forward_iterator;
-    { *(c.template citer<ComponentType>().begin()) } -> std::same_as<ComponentType const&>;
-    { *(c.template citer<ComponentType>().end()) } -> std::same_as<ComponentType const&>;
-    { c.template get_item<ComponentType>(id) } -> std::convertible_to<ComponentType const&>;
-    { c.template size<ComponentType>() } -> std::same_as<Idx>;
-    { c.template get_seq<ComponentType>(idx2d) } -> std::same_as<Idx>;
+    { c.template citer<RetrievableType>().begin() } -> std::forward_iterator;
+    { c.template citer<RetrievableType>().end() } -> std::forward_iterator;
+    { *(c.template citer<RetrievableType>().begin()) } -> std::same_as<RetrievableType const&>;
+    { *(c.template citer<RetrievableType>().end()) } -> std::same_as<RetrievableType const&>;
+    { c.template get_item<RetrievableType>(id) } -> std::convertible_to<RetrievableType const&>;
+    { c.template size<RetrievableType>() } -> std::same_as<Idx>;
+    { c.template get_seq<RetrievableType>(idx2d) } -> std::same_as<Idx>;
 };
 
-template <typename ContainerType, typename... ComponentType>
-concept multi_component_container_c = (component_container_c<ContainerType, ComponentType> && ...);
+template <typename ContainerType, typename... RetrievableType>
+concept multi_component_container_c = (component_container_c<ContainerType, RetrievableType> && ...);
 
 } // namespace power_grid_model
