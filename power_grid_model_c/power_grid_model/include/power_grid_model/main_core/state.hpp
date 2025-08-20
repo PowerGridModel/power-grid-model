@@ -44,6 +44,9 @@ concept extended_component_container_c =
         { c.template get_seq<ComponentType>(idx2d) } -> std::same_as<Idx>;
     };
 
+template <typename ContainerType, typename... ComponentType>
+concept multi_extended_component_container_c = (extended_component_container_c<ContainerType, ComponentType> && ...);
+
 template <template <typename T> class StateType, typename ContainerType, typename ComponentType>
 concept model_component_state_c =
     component_container_c<typename StateType<ContainerType>::ComponentContainer, ComponentType> &&
