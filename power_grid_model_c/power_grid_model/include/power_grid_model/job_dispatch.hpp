@@ -178,7 +178,7 @@ class JobDispatch {
             } catch (...) {
                 messages[scenario_idx] = "unknown exception";
             }
-            info.merge(adapter.get_calculation_info());
+            main_core::merge_into(info, adapter.get_calculation_info());
         };
     }
 

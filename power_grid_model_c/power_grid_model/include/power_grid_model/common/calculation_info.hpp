@@ -16,9 +16,9 @@
 namespace power_grid_model {
 namespace common::logging {
 class CalculationInfo : public NoLogger {
-    using Data = std::map<LogEvent, double>;
 
   public:
+    using Data = std::map<LogEvent, double>;
     using const_iterator = Data::const_iterator;
 
     void log(LogEvent tag, double value) override { log_impl(tag, value); }
@@ -73,6 +73,7 @@ class CalculationInfo : public NoLogger {
     }
 
   public:
+    Data const& report() const { return data_; }
     auto begin() { return std::ranges::begin(data_); }
     auto begin() const { return std::ranges::begin(data_); }
     auto end() { return std::ranges::end(data_); }

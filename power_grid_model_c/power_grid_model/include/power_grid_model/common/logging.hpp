@@ -6,6 +6,7 @@
 
 #include "common.hpp"
 
+#include <memory>
 #include <string_view>
 
 namespace power_grid_model {
