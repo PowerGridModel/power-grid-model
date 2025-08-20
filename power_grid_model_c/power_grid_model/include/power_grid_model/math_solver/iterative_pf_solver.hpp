@@ -34,11 +34,11 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
         output.u.resize(n_bus_);
         double max_dev = std::numeric_limits<double>::infinity();
 
-        Timer main_timer{calculation_info, 2220, "Math solver"};
+        Timer main_timer{calculation_info, LogEvent::math_solver};
 
         // initialize
         {
-            Timer const sub_timer{calculation_info, 2221, "Initialize calculation"};
+            Timer const sub_timer{calculation_info, LogEvent::initialize_calculation};
             // Further initialization specific to the derived solver
             derived_solver.initialize_derived_solver(y_bus, input, output);
         }
@@ -52,31 +52,31 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
             }
             {
                 // Prepare the matrices of linear equations to be solved
-                Timer const sub_timer{calculation_info, 2222, "Prepare the matrices"};
+                Timer const sub_timer{calculation_info, LogEvent::prepare_matrices};
                 derived_solver.prepare_matrix_and_rhs(y_bus, input, output.u);
             }
             {
                 // Solve the linear equations
-                Timer const sub_timer{calculation_info, 2223, "Solve sparse linear equation"};
+                Timer const sub_timer{calculation_info, LogEvent::solve_sparse_linear_equation};
                 derived_solver.solve_matrix();
             }
             {
                 // Calculate maximum deviation of voltage at any bus
-                Timer const sub_timer{calculation_info, 2224, "Iterate unknown"};
+                Timer const sub_timer{calculation_info, LogEvent::iterate_unknown};
                 max_dev = derived_solver.iterate_unknown(output.u);
             }
         }
 
         // calculate math result
         {
-            Timer const sub_timer{calculation_info, 2225, "Calculate math result"};
+            Timer const sub_timer{calculation_info, LogEvent::calculate_math_result};
             calculate_result(y_bus, input, output);
         }
         // Manually stop timers to avoid "Max number of iterations" to be included in the timing.
         main_timer.stop();
 
-        auto const key = Timer::make_key(2226, "Max number of iterations");
-        calculation_info[key] = std::max(calculation_info[key], static_cast<double>(num_iter));
+        calculation_info[LogEvent::iterative_pf_solver_max_num_iter] =
+            std::max(calculation_info[LogEvent::iterative_pf_solver_max_num_iter], static_cast<double>(num_iter));
 
         return output;
     }
