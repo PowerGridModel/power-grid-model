@@ -16,8 +16,7 @@ template <typename Component, class ComponentContainer, typename ResType, typena
     requires component_container_c<ComponentContainer, Component> &&
              std::invocable<std::remove_cvref_t<ResFunc>, Component const&> &&
              std::convertible_to<std::invoke_result_t<ResFunc, Component const&>, ResType>
-constexpr void register_topo_components(ComponentContainer const& components, std::vector<ResType>& target,
-                                        ResFunc&& func) {
+constexpr void apply_registration(ComponentContainer const& components, std::vector<ResType>& target, ResFunc&& func) {
     auto const begin = components.template citer<Component>().begin();
     auto const end = components.template citer<Component>().end();
 
@@ -36,17 +35,16 @@ constexpr void register_topology_components(ComponentContainer const& components
 template <std::same_as<Branch> Component, class ComponentContainer>
     requires multi_extended_component_container_c<ComponentContainer, Component, Node>
 constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
-    detail::register_topo_components<Component>(
-        components, comp_topo.branch_node_idx, [&components](Branch const& branch) {
-            return BranchIdx{get_component_sequence_idx<Node>(components, branch.from_node()),
-                             get_component_sequence_idx<Node>(components, branch.to_node())};
-        });
+    detail::apply_registration<Component>(components, comp_topo.branch_node_idx, [&components](Branch const& branch) {
+        return BranchIdx{get_component_sequence_idx<Node>(components, branch.from_node()),
+                         get_component_sequence_idx<Node>(components, branch.to_node())};
+    });
 }
 
 template <std::same_as<Branch3> Component, class ComponentContainer>
     requires multi_extended_component_container_c<ComponentContainer, Component, Node>
 constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
-    detail::register_topo_components<Component>(
+    detail::apply_registration<Component>(
         components, comp_topo.branch3_node_idx, [&components](Branch3 const& branch3) {
             return Branch3Idx{get_component_sequence_idx<Node>(components, branch3.node_1()),
                               get_component_sequence_idx<Node>(components, branch3.node_2()),
@@ -57,35 +55,35 @@ constexpr void register_topology_components(ComponentContainer const& components
 template <std::same_as<Source> Component, class ComponentContainer>
     requires multi_extended_component_container_c<ComponentContainer, Component, Node>
 constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
-    detail::register_topo_components<Component>(
-        components, comp_topo.source_node_idx,
-        [&components](Source const& source) { return get_component_sequence_idx<Node>(components, source.node()); });
+    detail::apply_registration<Component>(components, comp_topo.source_node_idx, [&components](Source const& source) {
+        return get_component_sequence_idx<Node>(components, source.node());
+    });
 }
 
 template <std::same_as<Shunt> Component, class ComponentContainer>
     requires multi_extended_component_container_c<ComponentContainer, Component, Node>
 constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
-    detail::register_topo_components<Component>(
-        components, comp_topo.shunt_node_idx,
-        [&components](Shunt const& shunt) { return get_component_sequence_idx<Node>(components, shunt.node()); });
+    detail::apply_registration<Component>(components, comp_topo.shunt_node_idx, [&components](Shunt const& shunt) {
+        return get_component_sequence_idx<Node>(components, shunt.node());
+    });
 }
 
 template <std::same_as<GenericLoadGen> Component, class ComponentContainer>
     requires multi_extended_component_container_c<ComponentContainer, Component, Node>
 constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
-    detail::register_topo_components<Component>(
-        components, comp_topo.load_gen_node_idx, [&components](GenericLoadGen const& load_gen) {
-            return get_component_sequence_idx<Node>(components, load_gen.node());
-        });
+    detail::apply_registration<Component>(components, comp_topo.load_gen_node_idx,
+                                          [&components](GenericLoadGen const& load_gen) {
+                                              return get_component_sequence_idx<Node>(components, load_gen.node());
+                                          });
 
-    detail::register_topo_components<Component>(components, comp_topo.load_gen_type,
-                                                [](GenericLoadGen const& load_gen) { return load_gen.type(); });
+    detail::apply_registration<Component>(components, comp_topo.load_gen_type,
+                                          [](GenericLoadGen const& load_gen) { return load_gen.type(); });
 }
 
 template <std::same_as<GenericVoltageSensor> Component, class ComponentContainer>
     requires multi_extended_component_container_c<ComponentContainer, Component, Node>
 constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
-    detail::register_topo_components<Component>(
+    detail::apply_registration<Component>(
         components, comp_topo.voltage_sensor_node_idx, [&components](GenericVoltageSensor const& voltage_sensor) {
             return get_component_sequence_idx<Node>(components, voltage_sensor.measured_object());
         });
@@ -95,7 +93,7 @@ template <std::same_as<GenericPowerSensor> Component, class ComponentContainer>
     requires multi_extended_component_container_c<ComponentContainer, Component, Branch, Source, Shunt, GenericLoadGen,
                                                   Branch3, Node>
 constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
-    detail::register_topo_components<Component>(
+    detail::apply_registration<Component>(
         components, comp_topo.power_sensor_object_idx, [&components](GenericPowerSensor const& power_sensor) {
             using enum MeasuredTerminalType;
 
@@ -128,7 +126,7 @@ constexpr void register_topology_components(ComponentContainer const& components
             }
         });
 
-    detail::register_topo_components<Component>(
+    detail::apply_registration<Component>(
         components, comp_topo.power_sensor_terminal_type,
         [](GenericPowerSensor const& power_sensor) { return power_sensor.get_terminal_type(); });
 }
@@ -136,7 +134,7 @@ constexpr void register_topology_components(ComponentContainer const& components
 template <std::same_as<GenericCurrentSensor> Component, class ComponentContainer>
     requires multi_extended_component_container_c<ComponentContainer, Component, Branch, Branch3>
 constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
-    detail::register_topo_components<Component>(
+    detail::apply_registration<Component>(
         components, comp_topo.current_sensor_object_idx, [&components](GenericCurrentSensor const& current_sensor) {
             using enum MeasuredTerminalType;
 
@@ -159,7 +157,7 @@ constexpr void register_topology_components(ComponentContainer const& components
             }
         });
 
-    detail::register_topo_components<Component>(
+    detail::apply_registration<Component>(
         components, comp_topo.current_sensor_terminal_type,
         [](GenericCurrentSensor const& current_sensor) { return current_sensor.get_terminal_type(); });
 }
@@ -167,7 +165,7 @@ constexpr void register_topology_components(ComponentContainer const& components
 template <std::derived_from<Regulator> Component, class ComponentContainer>
     requires multi_extended_component_container_c<ComponentContainer, Component, Branch, Branch3>
 constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
-    detail::register_topo_components<Component>(
+    detail::apply_registration<Component>(
         components, comp_topo.regulated_object_idx, [&components](Regulator const& regulator) {
             switch (regulator.regulated_object_type()) {
             case ComponentType::branch:
@@ -179,37 +177,36 @@ constexpr void register_topology_components(ComponentContainer const& components
             }
         });
 
-    detail::register_topo_components<Component>(
-        components, comp_topo.regulated_object_type,
-        [](Regulator const& regulator) { return regulator.regulated_object_type(); });
+    detail::apply_registration<Component>(components, comp_topo.regulated_object_type,
+                                          [](Regulator const& regulator) { return regulator.regulated_object_type(); });
 }
 
 // TODO Rename register_topo_components if this is combined
 template <std::same_as<Branch> Component, class ComponentContainer>
     requires component_container_c<ComponentContainer, Component>
 constexpr void register_connections_components(ComponentContainer components, ComponentConnections& comp_conn) {
-    detail::register_topo_components<Component>(components, comp_conn.branch_connected, [](Branch const& branch) {
+    detail::apply_registration<Component>(components, comp_conn.branch_connected, [](Branch const& branch) {
         return BranchConnected{static_cast<IntS>(branch.from_status()), static_cast<IntS>(branch.to_status())};
     });
-    detail::register_topo_components<Component>(components, comp_conn.branch_phase_shift,
-                                                [](Branch const& branch) { return branch.phase_shift(); });
+    detail::apply_registration<Component>(components, comp_conn.branch_phase_shift,
+                                          [](Branch const& branch) { return branch.phase_shift(); });
 }
 template <std::same_as<Branch3> Component, class ComponentContainer>
     requires component_container_c<ComponentContainer, Component>
 constexpr void register_connections_components(ComponentContainer components, ComponentConnections& comp_conn) {
-    detail::register_topo_components<Component>(components, comp_conn.branch3_connected, [](Branch3 const& branch3) {
+    detail::apply_registration<Component>(components, comp_conn.branch3_connected, [](Branch3 const& branch3) {
         return Branch3Connected{static_cast<IntS>(branch3.status_1()), static_cast<IntS>(branch3.status_2()),
                                 static_cast<IntS>(branch3.status_3())};
     });
-    detail::register_topo_components<Component>(components, comp_conn.branch3_phase_shift,
-                                                [](Branch3 const& branch3) { return branch3.phase_shift(); });
+    detail::apply_registration<Component>(components, comp_conn.branch3_phase_shift,
+                                          [](Branch3 const& branch3) { return branch3.phase_shift(); });
 }
 
 template <std::same_as<Source> Component, class ComponentContainer>
     requires component_container_c<ComponentContainer, Component>
 constexpr void register_connections_components(ComponentContainer components, ComponentConnections& comp_conn) {
-    detail::register_topo_components<Component>(components, comp_conn.source_connected,
-                                                [](Source const& source) { return source.status(); });
+    detail::apply_registration<Component>(components, comp_conn.source_connected,
+                                          [](Source const& source) { return source.status(); });
 }
 
 template <typename ComponentContainer>
