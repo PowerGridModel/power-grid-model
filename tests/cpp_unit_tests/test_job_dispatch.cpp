@@ -33,6 +33,7 @@ struct CallCounter {
     std::atomic<Idx> setup_calls{};
     std::atomic<Idx> winddown_calls{};
     std::atomic<Idx> thread_safe_add_calculation_info_calls{};
+    std::atomic<Idx> reset_calculation_info_calls{};
 
     void reset_counters() {
         calculate_calls = 0;
@@ -40,6 +41,7 @@ struct CallCounter {
         setup_calls = 0;
         winddown_calls = 0;
         thread_safe_add_calculation_info_calls = 0;
+        reset_calculation_info_calls = 0;
     }
 };
 
@@ -60,6 +62,7 @@ class JobAdapterMock : public JobInterface<JobAdapterMock> {
     Idx get_thread_safe_add_calculation_info_counter() const {
         return counter_->thread_safe_add_calculation_info_calls;
     }
+    Idx get_reset_calculation_info_counter() const { return counter_->reset_calculation_info_calls; }
 
   private:
     friend class JobInterface<JobAdapterMock>;
@@ -77,6 +80,7 @@ class JobAdapterMock : public JobInterface<JobAdapterMock> {
     void thread_safe_add_calculation_info_impl(CalculationInfo const& /*info*/) const {
         ++(counter_->thread_safe_add_calculation_info_calls);
     }
+    void reset_calculation_info_impl() const { ++(counter_->reset_calculation_info_calls); }
 };
 
 class SomeTestException : public std::runtime_error {
@@ -102,6 +106,8 @@ TEST_CASE("Test job dispatch logic") {
             CHECK(expected_result == actual_result);
             CHECK(adapter.get_calculate_counter() == 1);
             CHECK(adapter.get_cache_calculate_counter() == 0); // no cache calculation in this case
+            CHECK(adapter.get_reset_calculation_info_counter() ==
+                  adapter.get_calculate_counter() + adapter.get_cache_calculate_counter());
         }
         SUBCASE("No scenarios") {
             bool const has_data = true;
@@ -113,6 +119,8 @@ TEST_CASE("Test job dispatch logic") {
             // no calculations should be done
             CHECK(adapter.get_calculate_counter() == 0);
             CHECK(adapter.get_cache_calculate_counter() == 0);
+            CHECK(adapter.get_reset_calculation_info_counter() ==
+                  adapter.get_calculate_counter() + adapter.get_cache_calculate_counter());
         }
         SUBCASE("With scenarios and update data") {
             bool const has_data = true;
@@ -125,6 +133,8 @@ TEST_CASE("Test job dispatch logic") {
             // n_scenarios calculations should be done as we run sequentially
             CHECK(adapter.get_calculate_counter() == n_scenarios);
             CHECK(adapter.get_cache_calculate_counter() == 1); // cache calculation is done
+            CHECK(adapter.get_reset_calculation_info_counter() ==
+                  adapter.get_calculate_counter() + adapter.get_cache_calculate_counter());
         }
     }
     SUBCASE("Test single_thread_job") {
@@ -151,6 +161,8 @@ TEST_CASE("Test job dispatch logic") {
             CHECK(adapter_.get_winddown_counter() == expected_calls);
             CHECK(adapter_.get_calculate_counter() == expected_calls);
             CHECK(adapter_.get_thread_safe_add_calculation_info_counter() == 1); // always called once
+            CHECK(adapter_.get_reset_calculation_info_counter() ==
+                  adapter_.get_calculate_counter() + adapter_.get_cache_calculate_counter());
         };
 
         adapter.prepare_job_dispatch(update_data); // replicate preparation step from batch_calculation
