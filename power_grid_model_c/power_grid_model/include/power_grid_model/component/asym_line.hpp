@@ -4,10 +4,8 @@
 
 #pragma once
 
-#include <numeric>
-
 #include "branch.hpp"
-#include <iostream>
+#include "line_utils.hpp"
 
 #include "../auxiliary/input.hpp"
 #include "../auxiliary/output.hpp"
@@ -16,7 +14,9 @@
 #include "../common/common.hpp"
 #include "../common/matrix_utils.hpp"
 #include "../common/three_phase_tensor.hpp"
-#include "line_utils.hpp"
+
+#include <iostream>
+#include <numeric>
 
 namespace power_grid_model {
 
