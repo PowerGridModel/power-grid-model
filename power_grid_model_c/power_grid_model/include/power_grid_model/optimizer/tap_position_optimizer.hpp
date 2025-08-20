@@ -471,7 +471,7 @@ template <transformer_c... TransformerTypes> struct TapRegulatorRef {
 };
 
 template <typename State>
-    requires main_core::component_container_c<typename State::ComponentContainer, TransformerTapRegulator>
+    requires component_container_c<typename State::ComponentContainer, TransformerTapRegulator>
 TransformerTapRegulator const& find_regulator(State const& state, ID regulated_object) {
     auto const regulators = get_component_citer<TransformerTapRegulator>(state);
 
@@ -503,7 +503,7 @@ template <typename... Ts> struct transformer_types_s<std::tuple<std::tuple<Ts...
 template <typename... Ts> using transformer_types_t = typename transformer_types_s<std::tuple<Ts...>>::type;
 
 template <transformer_c... TransformerTypes, typename State>
-    requires(main_core::component_container_c<typename State::ComponentContainer, TransformerTypes> && ...)
+    requires(component_container_c<typename State::ComponentContainer, TransformerTypes> && ...)
 inline TapRegulatorRef<TransformerTypes...> regulator_mapping(State const& state, Idx2D const& transformer_index) {
     using ResultType = TapRegulatorRef<TransformerTypes...>;
     using IsType = bool (*)(Idx2D const&);
@@ -536,7 +536,7 @@ inline TapRegulatorRef<TransformerTypes...> regulator_mapping(State const& state
 }
 
 template <transformer_c... TransformerTypes, typename State>
-    requires(main_core::component_container_c<typename State::ComponentContainer, TransformerTypes> && ...)
+    requires(component_container_c<typename State::ComponentContainer, TransformerTypes> && ...)
 inline auto regulator_mapping(State const& state, std::vector<Idx2D> const& order) {
     std::vector<TapRegulatorRef<TransformerTypes...>> result;
     result.reserve(order.size());
@@ -549,7 +549,7 @@ inline auto regulator_mapping(State const& state, std::vector<Idx2D> const& orde
 }
 
 template <transformer_c... TransformerTypes, typename State>
-    requires(main_core::component_container_c<typename State::ComponentContainer, TransformerTypes> && ...)
+    requires(component_container_c<typename State::ComponentContainer, TransformerTypes> && ...)
 inline auto regulator_mapping(State const& state, RankedTransformerGroups const& order) {
     std::vector<std::vector<TapRegulatorRef<TransformerTypes...>>> result;
     result.reserve(order.size());
@@ -598,7 +598,7 @@ inline auto i_pu(std::vector<SolverOutputType> const& solver_output, Idx2DBranch
 
 template <component_c ComponentType, typename... RegulatedTypes, typename State,
           steady_state_solver_output_type SolverOutputType>
-    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
+    requires component_container_c<typename State::ComponentContainer, ComponentType>
 inline auto i_pu_controlled_node(TapRegulatorRef<RegulatedTypes...> const& regulator, State const& state,
                                  std::vector<SolverOutputType> const& solver_output) {
     auto const& branch_math_id = get_math_id<ComponentType>(state, regulator.transformer.topology_index());
@@ -606,7 +606,7 @@ inline auto i_pu_controlled_node(TapRegulatorRef<RegulatedTypes...> const& regul
 }
 
 template <transformer_c ComponentType, typename State, steady_state_solver_output_type SolverOutputType>
-    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType> &&
+    requires component_container_c<typename State::ComponentContainer, ComponentType> &&
              requires(State const& state, Idx const i) {
                  { get_branch_nodes<ComponentType>(state, i)[i] } -> std::convertible_to<Idx>;
              }
@@ -619,7 +619,7 @@ inline auto u_pu(State const& state, std::vector<SolverOutputType> const& solver
 
 template <component_c ComponentType, typename... RegulatedTypes, typename State,
           steady_state_solver_output_type SolverOutputType>
-    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
+    requires component_container_c<typename State::ComponentContainer, ComponentType>
 inline auto u_pu_controlled_node(TapRegulatorRef<RegulatedTypes...> const& regulator, State const& state,
                                  std::vector<SolverOutputType> const& solver_output) {
     return u_pu<ComponentType>(state, solver_output, regulator.transformer.topology_index(),
@@ -627,7 +627,7 @@ inline auto u_pu_controlled_node(TapRegulatorRef<RegulatedTypes...> const& regul
 }
 
 template <component_c ComponentType, typename... RegulatedTypes, typename State>
-    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
+    requires component_container_c<typename State::ComponentContainer, ComponentType>
 inline bool is_regulated_transformer_connected(TapRegulatorRef<RegulatedTypes...> const& regulator,
                                                State const& state) {
     auto const controlled_node_idx = get_topo_node<ComponentType>(state, regulator.transformer.topology_index(),
@@ -702,7 +702,7 @@ class RankIteration {
 template <typename... T> class TapPositionOptimizerImpl;
 template <transformer_c... TransformerTypes, typename StateCalculator, typename StateUpdater_, typename State_,
           typename TransformerRanker_>
-    requires(main_core::component_container_c<typename State_::ComponentContainer, TransformerTypes> && ...) &&
+    requires(component_container_c<typename State_::ComponentContainer, TransformerTypes> && ...) &&
             detail::steady_state_calculator_c<StateCalculator, State_> &&
             std::invocable<std::remove_cvref_t<StateUpdater_>, ConstDataset const&> &&
             requires(TransformerRanker_ const& ranker, State_ const& state) {

@@ -28,25 +28,6 @@ template <class CompContainer> struct MainModelState {
 template <class StateType>
 concept main_model_state_c = std::same_as<StateType, MainModelState<typename StateType::ComponentContainer>>;
 
-template <typename ContainerType, typename ComponentType>
-concept component_container_c = requires(ContainerType const& c, ID id) {
-    { c.template citer<ComponentType>().begin() } -> std::forward_iterator;
-    { c.template citer<ComponentType>().end() } -> std::forward_iterator;
-    { *(c.template citer<ComponentType>().begin()) } -> std::same_as<ComponentType const&>;
-    { *(c.template citer<ComponentType>().end()) } -> std::same_as<ComponentType const&>;
-    { c.template get_item<ComponentType>(id) } -> std::convertible_to<ComponentType const&>;
-};
-
-template <typename ContainerType, typename ComponentType>
-concept extended_component_container_c =
-    component_container_c<ContainerType, ComponentType> && requires(ContainerType const& c, Idx2D const& idx2d) {
-        { c.template size<ComponentType>() } -> std::same_as<Idx>;
-        { c.template get_seq<ComponentType>(idx2d) } -> std::same_as<Idx>;
-    };
-
-template <typename ContainerType, typename... ComponentType>
-concept multi_extended_component_container_c = (extended_component_container_c<ContainerType, ComponentType> && ...);
-
 template <template <typename T> class StateType, typename ContainerType, typename ComponentType>
 concept model_component_state_c =
     component_container_c<typename StateType<ContainerType>::ComponentContainer, ComponentType> &&
