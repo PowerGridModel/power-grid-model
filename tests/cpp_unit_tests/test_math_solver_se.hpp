@@ -22,7 +22,7 @@ inline auto run_state_estimation(SolverType& solver, YBus<typename SolverType::s
     return solver.run_state_estimation(y_bus, input, err_tol, max_iter, log);
 };
 
-inline auto get_logger() { return common::logging::DefaultLogger{}; }
+inline auto get_logger() { return common::logging::NoLogger{}; }
 
 template <symmetry_tag sym_type> struct SESolverTestGrid : public SteadyStateSolverTestGrid<sym_type> {
     using sym = sym_type;

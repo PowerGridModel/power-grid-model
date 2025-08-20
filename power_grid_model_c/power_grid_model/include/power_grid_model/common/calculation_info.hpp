@@ -15,7 +15,7 @@
 
 namespace power_grid_model {
 namespace common::logging {
-class CalculationInfo : public DefaultLogger {
+class CalculationInfo : public NoLogger {
     using Data = std::map<LogEvent, double>;
 
   public:
@@ -23,11 +23,6 @@ class CalculationInfo : public DefaultLogger {
 
     void log(LogEvent tag, double value) override { log_impl(tag, value); }
     void log(LogEvent tag, Idx value) override { log_impl(tag, static_cast<double>(value)); }
-    void merge(const CalculationInfo& other) {
-        for (const auto& [tag, value] : other.data_) {
-            log(tag, value);
-        }
-    }
 
   private:
     Data data_;

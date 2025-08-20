@@ -10,7 +10,6 @@
 
 namespace power_grid_model {
 namespace common::logging {
-
 enum class LogEvent : int16_t {
     unknown = -1,
     total = 0000,       // TODO(mgovers): find other error code?

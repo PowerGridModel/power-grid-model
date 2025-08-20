@@ -10,11 +10,13 @@
 #include <vector>
 
 namespace power_grid_model::common::logging {
-class DefaultLogger : public Logger {
+class NoLogger : public Logger {
+    LoggerType logger_type() const override { return LoggerType::no_logger; }
+
     void log(LogEvent /*tag*/, std::string_view /*message*/) override {}
     void log(LogEvent /*tag*/, double /*value*/) override {}
     void log(LogEvent /*tag*/, Idx /*value*/) override {}
-    std::unique_ptr<Logger> clone() const override { return std::make_unique<DefaultLogger>(); }
+    std::unique_ptr<Logger> clone() const override { return std::make_unique<NoLogger>(); }
 };
 
 class LogDispatcher : public LogDispatch {

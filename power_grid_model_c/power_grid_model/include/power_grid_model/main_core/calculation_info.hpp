@@ -10,8 +10,10 @@
 
 namespace power_grid_model::main_core {
 
-inline CalculationInfo& merge_into(CalculationInfo& destination, CalculationInfo const& source) {
-    destination.merge(source);
+inline Logger& merge_into(Logger& destination, CalculationInfo const& source) {
+    for (const auto& [tag, value] : source) {
+        destination.log(tag, value);
+    }
     return destination;
 }
 
