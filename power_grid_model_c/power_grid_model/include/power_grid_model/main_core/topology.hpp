@@ -202,11 +202,11 @@ ComponentTopology construct_topology(main_model_state_c auto const& state) {
 
 ComponentConnections construct_components_connections(main_model_state_c auto const& state) {
     ComponentConnections comp_conn;
-    comp_conn.branch_connected.resize(state.comp_topo->branch_node_idx.size());
-    comp_conn.branch_phase_shift.resize(state.comp_topo->branch_node_idx.size());
-    comp_conn.branch3_connected.resize(state.comp_topo->branch3_node_idx.size());
-    comp_conn.branch3_phase_shift.resize(state.comp_topo->branch3_node_idx.size());
-    comp_conn.source_connected.resize(state.comp_topo->source_node_idx.size());
+    comp_conn.branch_connected.resize(get_component_size<Branch>(state.components));
+    comp_conn.branch_phase_shift.resize(get_component_size<Branch>(state.components));
+    comp_conn.branch3_connected.resize(get_component_size<Branch3>(state.components));
+    comp_conn.branch3_phase_shift.resize(get_component_size<Branch3>(state.components));
+    comp_conn.source_connected.resize(get_component_size<Source>(state.components));
     std::ranges::transform(
         state.components.template citer<Branch>(), comp_conn.branch_connected.begin(), [](Branch const& branch) {
             return BranchConnected{static_cast<IntS>(branch.from_status()), static_cast<IntS>(branch.to_status())};
