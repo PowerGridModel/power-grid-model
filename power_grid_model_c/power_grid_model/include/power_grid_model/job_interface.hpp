@@ -68,12 +68,12 @@ template <typename Adapter> class JobInterface {
     {
         return static_cast<const Adapter*>(this)->get_calculation_info_impl();
     }
-    CalculationInfo reset_calculation_info()
+    void reset_calculation_info()
         requires requires(Adapter& adapter) { // NOSONAR
-            { adapter.reset_calculation_info_impl() } -> std::same_as<CalculationInfo>;
+            { adapter.reset_calculation_info_impl() } -> std::same_as<void>;
         }
     {
-        return static_cast<Adapter*>(this)->reset_calculation_info_impl();
+        static_cast<Adapter*>(this)->reset_calculation_info_impl();
     }
 
     void thread_safe_add_calculation_info(CalculationInfo const& info)

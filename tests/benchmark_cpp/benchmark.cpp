@@ -99,7 +99,7 @@ std::string make_key(LogEvent code) {
         }
         key += "\t";
     }
-    key += common::logging::to_string(code);
+    key += to_string(code);
     return key;
 }
 
