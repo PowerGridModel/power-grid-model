@@ -6,12 +6,7 @@
 
 #include "logging_impl.hpp"
 
-#include <cstddef>
-#include <functional>
-#include <iomanip>
 #include <map>
-#include <sstream>
-#include <string>
 
 namespace power_grid_model {
 namespace common::logging {
