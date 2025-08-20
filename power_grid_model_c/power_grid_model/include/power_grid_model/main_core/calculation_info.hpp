@@ -11,7 +11,7 @@
 namespace power_grid_model::main_core {
 
 inline Logger& merge_into(Logger& destination, CalculationInfo const& source) {
-    for (const auto& [tag, value] : source) {
+    for (const auto& [tag, value] : source.report()) {
         destination.log(tag, value);
     }
     return destination;

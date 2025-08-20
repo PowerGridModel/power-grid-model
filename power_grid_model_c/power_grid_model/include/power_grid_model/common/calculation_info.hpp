@@ -16,15 +16,17 @@
 namespace power_grid_model {
 namespace common::logging {
 class CalculationInfo : public NoLogger {
+    using Data = std::map<LogEvent, double>;
+
   public:
-    using Report = std::map<LogEvent, double>;
-    using const_iterator = Report::const_iterator;
+    using Report = std::add_lvalue_reference_t<std::add_const_t<Data>>;
+    static_assert(std::same_as<Report, Data const&>);
 
     void log(LogEvent tag, double value) override { log_impl(tag, value); }
     void log(LogEvent tag, Idx value) override { log_impl(tag, static_cast<double>(value)); }
 
   private:
-    Report data_;
+    Data data_;
 
     void log_impl(LogEvent tag, double value) {
         using enum LogEvent;
@@ -72,7 +74,7 @@ class CalculationInfo : public NoLogger {
     }
 
   public:
-    Report const& report() const { return data_; }
+    Report report() const { return data_; }
 };
 } // namespace common::logging
 

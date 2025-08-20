@@ -350,7 +350,7 @@ TEST_CASE("Test job dispatch logic") {
                 handler(scenario_idx);
             }
             CHECK(messages[scenario_idx] == expected_message);
-            REQUIRE(info.report() == CalculationInfo::Data{{LogEvent::total, 0.0}});
+            REQUIRE(info.report() == CalculationInfo::Report{{LogEvent::total, 0.0}});
         }
         SUBCASE("Unknown exception") {
             Idx const scenario_idx = 3; // arbitrary index
@@ -360,7 +360,7 @@ TEST_CASE("Test job dispatch logic") {
                 handler(scenario_idx);
             }
             CHECK(messages[scenario_idx] == "unknown exception");
-            REQUIRE(info.report() == CalculationInfo::Data{{LogEvent::total, 0.0}});
+            REQUIRE(info.report() == CalculationInfo::Report{{LogEvent::total, 0.0}});
         }
     }
     SUBCASE("Test handle_batch_exceptions") {
