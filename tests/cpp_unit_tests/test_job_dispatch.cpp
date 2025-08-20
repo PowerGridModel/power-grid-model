@@ -73,7 +73,7 @@ class JobAdapterMock : public JobInterface<JobAdapterMock> {
     void prepare_job_dispatch_impl(MockUpdateDataset const& /*update_data*/) const { /* patch base class function */ }
     void setup_impl(MockUpdateDataset const& /*update_data*/, Idx /*scenario_idx*/) const { ++(counter_->setup_calls); }
     void winddown_impl() const { ++(counter_->winddown_calls); }
-    static CalculationInfo get_calculation_info_impl() { return CalculationInfo{{"default", 0.0}}; }
+    static CalculationInfo get_calculation_info_impl() { return CalculationInfo{{LogEvent::unknown, 0.0}}; }
     void thread_safe_add_calculation_info_impl(CalculationInfo const& /*info*/) const {
         ++(counter_->thread_safe_add_calculation_info_calls);
     }
@@ -346,7 +346,7 @@ TEST_CASE("Test job dispatch logic") {
                 handler(scenario_idx);
             }
             CHECK(messages[scenario_idx] == expected_message);
-            CHECK(info.at("default") == 0.0);
+            CHECK(info.at(LogEvent::unknown) == 0.0);
         }
         SUBCASE("Unknown exception") {
             Idx const scenario_idx = 3; // arbitrary index
@@ -356,7 +356,7 @@ TEST_CASE("Test job dispatch logic") {
                 handler(scenario_idx);
             }
             CHECK(messages[scenario_idx] == "unknown exception");
-            CHECK(info.at("default") == 0.0);
+            CHECK(info.at(LogEvent::unknown) == 0.0);
         }
     }
     SUBCASE("Test handle_batch_exceptions") {
