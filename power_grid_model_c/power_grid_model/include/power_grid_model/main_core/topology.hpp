@@ -5,7 +5,6 @@
 #pragma once
 
 #include "container_queries.hpp"
-#include "state.hpp"
 
 #include "../all_components.hpp"
 
@@ -185,46 +184,52 @@ constexpr void register_topology_components(ComponentContainer const& components
         [](Regulator const& regulator) { return regulator.regulated_object_type(); });
 }
 
-ComponentTopology construct_topology(main_model_state_c auto const& state) {
+template <typename ComponentContainer>
+    requires multi_extended_component_container_c<ComponentContainer, Branch, Branch3, Source, Shunt, GenericLoadGen,
+                                                  GenericVoltageSensor, GenericPowerSensor, GenericCurrentSensor,
+                                                  Regulator>
+ComponentTopology construct_topology(ComponentContainer const& components) {
     ComponentTopology comp_topo;
-    register_topology_components<Node>(state.components, comp_topo);
-    register_topology_components<Branch>(state.components, comp_topo);
-    register_topology_components<Branch3>(state.components, comp_topo);
-    register_topology_components<Source>(state.components, comp_topo);
-    register_topology_components<Shunt>(state.components, comp_topo);
-    register_topology_components<GenericLoadGen>(state.components, comp_topo);
-    register_topology_components<GenericVoltageSensor>(state.components, comp_topo);
-    register_topology_components<GenericPowerSensor>(state.components, comp_topo);
-    register_topology_components<GenericCurrentSensor>(state.components, comp_topo);
-    register_topology_components<Regulator>(state.components, comp_topo);
+    register_topology_components<Node>(components, comp_topo);
+    register_topology_components<Branch>(components, comp_topo);
+    register_topology_components<Branch3>(components, comp_topo);
+    register_topology_components<Source>(components, comp_topo);
+    register_topology_components<Shunt>(components, comp_topo);
+    register_topology_components<GenericLoadGen>(components, comp_topo);
+    register_topology_components<GenericVoltageSensor>(components, comp_topo);
+    register_topology_components<GenericPowerSensor>(components, comp_topo);
+    register_topology_components<GenericCurrentSensor>(components, comp_topo);
+    register_topology_components<Regulator>(components, comp_topo);
     return comp_topo;
 }
 
-ComponentConnections construct_components_connections(main_model_state_c auto const& state) {
+template <typename ComponentContainer>
+    requires multi_extended_component_container_c<ComponentContainer, Branch, Branch3, Source>
+ComponentConnections construct_components_connections(ComponentContainer const& components) {
     ComponentConnections comp_conn;
-    comp_conn.branch_connected.resize(get_component_size<Branch>(state.components));
-    comp_conn.branch_phase_shift.resize(get_component_size<Branch>(state.components));
-    comp_conn.branch3_connected.resize(get_component_size<Branch3>(state.components));
-    comp_conn.branch3_phase_shift.resize(get_component_size<Branch3>(state.components));
-    comp_conn.source_connected.resize(get_component_size<Source>(state.components));
+    comp_conn.branch_connected.resize(get_component_size<Branch>(components));
+    comp_conn.branch_phase_shift.resize(get_component_size<Branch>(components));
+    comp_conn.branch3_connected.resize(get_component_size<Branch3>(components));
+    comp_conn.branch3_phase_shift.resize(get_component_size<Branch3>(components));
+    comp_conn.source_connected.resize(get_component_size<Source>(components));
     std::ranges::transform(
-        state.components.template citer<Branch>(), comp_conn.branch_connected.begin(), [](Branch const& branch) {
+        components.template citer<Branch>(), comp_conn.branch_connected.begin(), [](Branch const& branch) {
             return BranchConnected{static_cast<IntS>(branch.from_status()), static_cast<IntS>(branch.to_status())};
         });
 
-    std::ranges::transform(state.components.template citer<Branch>(), comp_conn.branch_phase_shift.begin(),
+    std::ranges::transform(components.template citer<Branch>(), comp_conn.branch_phase_shift.begin(),
                            [](Branch const& branch) { return branch.phase_shift(); });
 
     std::ranges::transform(
-        state.components.template citer<Branch3>(), comp_conn.branch3_connected.begin(), [](Branch3 const& branch3) {
+        components.template citer<Branch3>(), comp_conn.branch3_connected.begin(), [](Branch3 const& branch3) {
             return Branch3Connected{static_cast<IntS>(branch3.status_1()), static_cast<IntS>(branch3.status_2()),
                                     static_cast<IntS>(branch3.status_3())};
         });
 
-    std::ranges::transform(state.components.template citer<Branch3>(), comp_conn.branch3_phase_shift.begin(),
+    std::ranges::transform(components.template citer<Branch3>(), comp_conn.branch3_phase_shift.begin(),
                            [](Branch3 const& branch3) { return branch3.phase_shift(); });
 
-    std::ranges::transform(state.components.template citer<Source>(), comp_conn.source_connected.begin(),
+    std::ranges::transform(components.template citer<Source>(), comp_conn.source_connected.begin(),
                            [](Source const& source) { return source.status(); });
     return comp_conn;
 }

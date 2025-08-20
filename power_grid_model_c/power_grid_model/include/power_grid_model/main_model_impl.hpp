@@ -314,7 +314,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         construction_complete_ = true;
 #endif // !NDEBUG
         state_.components.set_construction_complete();
-        state_.comp_topo = std::make_shared<ComponentTopology const>(main_core::construct_topology(state_));
+        state_.comp_topo = std::make_shared<ComponentTopology const>(main_core::construct_topology(state_.components));
     }
 
     void reset_solvers() {
@@ -637,7 +637,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         assert(construction_complete_);
         // clear old solvers
         reset_solvers();
-        ComponentConnections const comp_conn = main_core::construct_components_connections(state_);
+        ComponentConnections const comp_conn = main_core::construct_components_connections(state_.components);
         // re build
         Topology topology{*state_.comp_topo, comp_conn};
         std::tie(state_.math_topology, state_.topo_comp_coup) = topology.build_topology();
