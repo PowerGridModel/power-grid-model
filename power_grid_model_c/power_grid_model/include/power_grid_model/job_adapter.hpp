@@ -86,6 +86,7 @@ class JobAdapter<MainModel, ComponentList<ComponentType...>>
     std::mutex calculation_info_mutex_;
 
     void calculate_impl(MutableDataset const& result_data, Idx scenario_idx) const {
+        model_reference_.get().reset_calculation_info();
         MainModel::calculator(options_.get(), model_reference_.get(), result_data.get_individual_scenario(scenario_idx),
                               false);
     }
@@ -93,6 +94,7 @@ class JobAdapter<MainModel, ComponentList<ComponentType...>>
     void cache_calculate_impl() const {
         // calculate once to cache topology, ignore results, all math solvers are initialized
         try {
+            model_reference_.get().reset_calculation_info();
             MainModel::calculator(options_.get(), model_reference_.get(),
                                   {
                                       false,
