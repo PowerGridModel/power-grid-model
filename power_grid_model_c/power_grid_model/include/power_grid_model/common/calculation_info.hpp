@@ -74,10 +74,6 @@ class CalculationInfo : public NoLogger {
 
   public:
     Data const& report() const { return data_; }
-    auto begin() { return std::ranges::begin(data_); }
-    auto begin() const { return std::ranges::begin(data_); }
-    auto end() { return std::ranges::end(data_); }
-    auto end() const { return std::ranges::end(data_); }
 };
 } // namespace common::logging
 

@@ -220,7 +220,7 @@ struct PowerGridBenchmark {
     }
 
     static void print_info(CalculationInfo const& info) {
-        for (auto const& [key, val] : info) {
+        for (auto const& [key, val] : info.report()) {
             std::cout << make_key(key) << ": " << val << '\n';
         }
     }
