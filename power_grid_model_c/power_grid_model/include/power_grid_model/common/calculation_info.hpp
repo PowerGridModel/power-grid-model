@@ -70,6 +70,7 @@ class CalculationInfo : public NoLogger {
 
   public:
     Report report() const { return data_; }
+    void clear() { data_.clear(); }
 };
 } // namespace common::logging
 
