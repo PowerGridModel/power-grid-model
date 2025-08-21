@@ -136,6 +136,7 @@ class JobAdapter<MainModel, ComponentList<ComponentType...>>
     }
 
     CalculationInfo get_calculation_info_impl() const { return model_reference_.get().calculation_info(); }
+    void reset_calculation_info_impl() { model_reference_.get().reset_calculation_info(); }
 
     void thread_safe_add_calculation_info_impl(CalculationInfo const& info) {
         std::lock_guard const lock{calculation_info_mutex_};

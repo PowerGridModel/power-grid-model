@@ -24,6 +24,7 @@ class JobDispatch {
     static BatchParameter batch_calculation(Adapter& adapter, ResultDataset const& result_data,
                                             UpdateDataset const& update_data, Idx threading = sequential) {
         if (update_data.empty()) {
+            adapter.reset_calculation_info();
             adapter.calculate(result_data);
             return BatchParameter{};
         }
@@ -38,6 +39,7 @@ class JobDispatch {
         }
 
         // calculate once to cache, ignore results
+        adapter.reset_calculation_info();
         adapter.cache_calculate();
 
         // error messages
@@ -86,6 +88,7 @@ class JobDispatch {
             };
 
             auto run = [&adapter, &result_data, &thread_info](Idx scenario_idx) {
+                adapter.reset_calculation_info();
                 adapter.calculate(result_data, scenario_idx);
                 main_core::merge_into(thread_info, adapter.get_calculation_info());
             };
