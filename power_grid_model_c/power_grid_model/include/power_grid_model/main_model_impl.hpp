@@ -420,7 +420,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         using sym = typename SolverOutputType::sym;
 
         assert(construction_complete_);
-        calculation_info_ = CalculationInfo{};
         // prepare
         auto const& input = [this, prepare_input_ = std::forward<PrepareInputFn>(prepare_input)] {
             Timer const timer{calculation_info_, LogEvent::prepare};
@@ -558,6 +557,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         assert(construction_complete_);
         main_core::merge_into(calculation_info_, info);
     }
+    void reset_calculation_info() { calculation_info_ = CalculationInfo{}; }
+
     auto const& state() const {
         assert(construction_complete_);
         return state_;
