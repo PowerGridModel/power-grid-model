@@ -31,7 +31,7 @@ constexpr void register_topology_components(ComponentContainer const& components
 }
 
 template <std::same_as<Branch> Component, class ComponentContainer>
-    requires common::multi_component_container_c<ComponentContainer, Component, Node>
+    requires common::component_container_c<ComponentContainer, Component, Node>
 constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
     apply_registration<Component>(components, comp_topo.branch_node_idx, [&components](Branch const& branch) {
         return BranchIdx{get_component_sequence_idx<Node>(components, branch.from_node()),
@@ -40,7 +40,7 @@ constexpr void register_topology_components(ComponentContainer const& components
 }
 
 template <std::same_as<Branch3> Component, class ComponentContainer>
-    requires common::multi_component_container_c<ComponentContainer, Component, Node>
+    requires common::component_container_c<ComponentContainer, Component, Node>
 constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
     apply_registration<Component>(components, comp_topo.branch3_node_idx, [&components](Branch3 const& branch3) {
         return Branch3Idx{get_component_sequence_idx<Node>(components, branch3.node_1()),
@@ -50,7 +50,7 @@ constexpr void register_topology_components(ComponentContainer const& components
 }
 
 template <std::same_as<Source> Component, class ComponentContainer>
-    requires common::multi_component_container_c<ComponentContainer, Component, Node>
+    requires common::component_container_c<ComponentContainer, Component, Node>
 constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
     apply_registration<Component>(components, comp_topo.source_node_idx, [&components](Source const& source) {
         return get_component_sequence_idx<Node>(components, source.node());
@@ -58,7 +58,7 @@ constexpr void register_topology_components(ComponentContainer const& components
 }
 
 template <std::same_as<Shunt> Component, class ComponentContainer>
-    requires common::multi_component_container_c<ComponentContainer, Component, Node>
+    requires common::component_container_c<ComponentContainer, Component, Node>
 constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
     apply_registration<Component>(components, comp_topo.shunt_node_idx, [&components](Shunt const& shunt) {
         return get_component_sequence_idx<Node>(components, shunt.node());
@@ -66,7 +66,7 @@ constexpr void register_topology_components(ComponentContainer const& components
 }
 
 template <std::same_as<GenericLoadGen> Component, class ComponentContainer>
-    requires common::multi_component_container_c<ComponentContainer, Component, Node>
+    requires common::component_container_c<ComponentContainer, Component, Node>
 constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
     apply_registration<Component>(components, comp_topo.load_gen_node_idx,
                                   [&components](GenericLoadGen const& load_gen) {
@@ -78,7 +78,7 @@ constexpr void register_topology_components(ComponentContainer const& components
 }
 
 template <std::same_as<GenericVoltageSensor> Component, class ComponentContainer>
-    requires common::multi_component_container_c<ComponentContainer, Component, Node>
+    requires common::component_container_c<ComponentContainer, Component, Node>
 constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
     apply_registration<Component>(
         components, comp_topo.voltage_sensor_node_idx, [&components](GenericVoltageSensor const& voltage_sensor) {
@@ -87,8 +87,8 @@ constexpr void register_topology_components(ComponentContainer const& components
 }
 
 template <std::same_as<GenericPowerSensor> Component, class ComponentContainer>
-    requires common::multi_component_container_c<ComponentContainer, Component, Branch, Source, Shunt, GenericLoadGen,
-                                                 Branch3, Node>
+    requires common::component_container_c<ComponentContainer, Component, Branch, Source, Shunt, GenericLoadGen,
+                                           Branch3, Node>
 constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
     apply_registration<Component>(
         components, comp_topo.power_sensor_object_idx, [&components](GenericPowerSensor const& power_sensor) {
@@ -129,7 +129,7 @@ constexpr void register_topology_components(ComponentContainer const& components
 }
 
 template <std::same_as<GenericCurrentSensor> Component, class ComponentContainer>
-    requires common::multi_component_container_c<ComponentContainer, Component, Branch, Branch3>
+    requires common::component_container_c<ComponentContainer, Component, Branch, Branch3>
 constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
     apply_registration<Component>(components, comp_topo.current_sensor_object_idx,
                                   [&components](GenericCurrentSensor const& current_sensor) {
@@ -160,7 +160,7 @@ constexpr void register_topology_components(ComponentContainer const& components
 }
 
 template <std::derived_from<Regulator> Component, class ComponentContainer>
-    requires common::multi_component_container_c<ComponentContainer, Component, Branch, Branch3>
+    requires common::component_container_c<ComponentContainer, Component, Branch, Branch3>
 constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
     apply_registration<Component>(
         components, comp_topo.regulated_object_idx, [&components](Regulator const& regulator) {
@@ -208,9 +208,8 @@ constexpr void register_connections_components(ComponentContainer components, Co
 } // namespace detail
 
 template <typename ComponentContainer>
-    requires common::multi_component_container_c<ComponentContainer, Branch, Branch3, Source, Shunt, GenericLoadGen,
-                                                 GenericVoltageSensor, GenericPowerSensor, GenericCurrentSensor,
-                                                 Regulator>
+    requires common::component_container_c<ComponentContainer, Branch, Branch3, Source, Shunt, GenericLoadGen,
+                                           GenericVoltageSensor, GenericPowerSensor, GenericCurrentSensor, Regulator>
 ComponentTopology construct_topology(ComponentContainer const& components) {
     ComponentTopology comp_topo;
     detail::register_topology_components<Node>(components, comp_topo);
@@ -227,7 +226,7 @@ ComponentTopology construct_topology(ComponentContainer const& components) {
 }
 
 template <typename ComponentContainer>
-    requires common::multi_component_container_c<ComponentContainer, Branch, Branch3, Source>
+    requires common::component_container_c<ComponentContainer, Branch, Branch3, Source>
 ComponentConnections construct_components_connections(ComponentContainer const& components) {
     ComponentConnections comp_conn;
     detail::register_connections_components<Branch>(components, comp_conn);

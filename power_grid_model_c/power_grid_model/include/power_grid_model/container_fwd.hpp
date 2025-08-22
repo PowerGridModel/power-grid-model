@@ -10,8 +10,8 @@
 
 namespace power_grid_model::common {
 
-template <typename ContainerType, typename RetrievableType>
-concept component_container_c = requires(ContainerType const& c, ID id, Idx2D idx2d) {
+template <typename ContainerType, typename... RetrievableType>
+concept component_container_c = (requires(ContainerType const& c, ID id, Idx2D idx2d) {
     { c.template citer<RetrievableType>().begin() } -> std::forward_iterator;
     { c.template citer<RetrievableType>().end() } -> std::forward_iterator;
     { *(c.template citer<RetrievableType>().begin()) } -> std::same_as<RetrievableType const&>;
@@ -19,9 +19,6 @@ concept component_container_c = requires(ContainerType const& c, ID id, Idx2D id
     { c.template get_item<RetrievableType>(id) } -> std::convertible_to<RetrievableType const&>;
     { c.template size<RetrievableType>() } -> std::same_as<Idx>;
     { c.template get_seq<RetrievableType>(idx2d) } -> std::same_as<Idx>;
-};
-
-template <typename ContainerType, typename... RetrievableType>
-concept multi_component_container_c = (component_container_c<ContainerType, RetrievableType> && ...);
+} && ...);
 
 } // namespace power_grid_model::common
