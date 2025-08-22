@@ -11,6 +11,7 @@
 
 namespace power_grid_model::common::logging {
 class NoLogger : public Logger {
+    void log(LogEvent /*tag*/) override {}
     void log(LogEvent /*tag*/, std::string_view /*message*/) override {}
     void log(LogEvent /*tag*/, double /*value*/) override {}
     void log(LogEvent /*tag*/, Idx /*value*/) override {}
@@ -19,6 +20,7 @@ class NoLogger : public Logger {
 
 class LogDispatcher : public LogDispatch {
   public:
+    void log(LogEvent tag) override { log_impl(tag); }
     void log(LogEvent tag, std::string_view message) override { log_impl(tag, message); }
     void log(LogEvent tag, double value) override { log_impl(tag, value); }
     void log(LogEvent tag, Idx value) override { log_impl(tag, value); }
@@ -39,13 +41,21 @@ class LogDispatcher : public LogDispatch {
   private:
     std::vector<Logger*> loggers_;
 
-    template <typename T>
-        requires std::same_as<T, std::string_view> || std::same_as<T, double> || std::same_as<T, Idx>
-    void log_impl(LogEvent tag, T value) {
-        for (auto& logger : loggers_) {
-            if (logger) {
-                logger->log(tag, value);
+    template <typename... T>
+    constexpr void log_impl(LogEvent tag, T&&... values)
+        requires requires(Logger log_) {
+            { log_.log(tag, values...) };
+        }
+    {
+        if (loggers_.size() == 1 && loggers_.front() != nullptr) { // allows perfect forwarding to log messages
+            loggers_.front()->log(tag, std::forward<T>(values)...);
+        } else {
+            for (auto& logger : loggers_) {
+                if (logger) {
+                    logger->log(tag, values...);
+                }
             }
+            capturing::into_the_void(std::forward<T>(values)...);
         }
     }
 };

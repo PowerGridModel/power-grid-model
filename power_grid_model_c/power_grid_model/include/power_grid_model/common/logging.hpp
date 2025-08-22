@@ -44,6 +44,7 @@ enum class LogEvent : int16_t {
 };
 
 struct Logger {
+    virtual void log(LogEvent tag) = 0;
     virtual void log(LogEvent tag, std::string_view message) = 0;
     virtual void log(LogEvent tag, double value) = 0;
     virtual void log(LogEvent tag, Idx value) = 0;
