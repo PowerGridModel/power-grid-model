@@ -1032,5 +1032,4 @@ PGM_MetaAttribute const* const PGM_def_sc_output_fault_energized = PGM_meta_get_
 PGM_MetaAttribute const* const PGM_def_sc_output_fault_i_f = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "fault", "i_f");
 PGM_MetaAttribute const* const PGM_def_sc_output_fault_i_f_angle = PGM_meta_get_attribute_by_name(nullptr, "sc_output", "fault", "i_f_angle");
 //
-
 // clang-format on
