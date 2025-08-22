@@ -225,18 +225,18 @@ TEST_CASE("Test component container") {
 #endif // NDEBUG
 
     SUBCASE("Component Container concept") {
-        static_assert(component_container_c<CompContainer, C>);
-        static_assert(component_container_c<CompContainer, C1>);
-        static_assert(component_container_c<CompContainer, C2>);
-        static_assert(component_container_c<CompContainer2, C>);
-        static_assert(component_container_c<CompContainer2, C1>);
-        static_assert(component_container_c<CompContainer2, C2>);
-        static_assert(multi_component_container_c<CompContainer, C, C1>);
-        static_assert(multi_component_container_c<CompContainer, C1, C2>);
-        static_assert(multi_component_container_c<CompContainer, C, C1, C2>);
-        static_assert(multi_component_container_c<CompContainer2, C, C1>);
-        static_assert(multi_component_container_c<CompContainer2, C1, C2>);
-        static_assert(multi_component_container_c<CompContainer2, C, C1, C2>);
+        static_assert(common::component_container_c<CompContainer, C>);
+        static_assert(common::component_container_c<CompContainer, C1>);
+        static_assert(common::component_container_c<CompContainer, C2>);
+        static_assert(common::component_container_c<CompContainer2, C>);
+        static_assert(common::component_container_c<CompContainer2, C1>);
+        static_assert(common::component_container_c<CompContainer2, C2>);
+        static_assert(common::multi_component_container_c<CompContainer, C, C1>);
+        static_assert(common::multi_component_container_c<CompContainer, C1, C2>);
+        static_assert(common::multi_component_container_c<CompContainer, C, C1, C2>);
+        static_assert(common::multi_component_container_c<CompContainer2, C, C1>);
+        static_assert(common::multi_component_container_c<CompContainer2, C1, C2>);
+        static_assert(common::multi_component_container_c<CompContainer2, C, C1, C2>);
     }
 }
 

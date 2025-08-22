@@ -30,7 +30,7 @@ concept main_model_state_c = std::same_as<StateType, MainModelState<typename Sta
 
 template <template <typename T> class StateType, typename ContainerType, typename ComponentType>
 concept model_component_state_c =
-    component_container_c<typename StateType<ContainerType>::ComponentContainer, ComponentType> &&
+    common::component_container_c<typename StateType<ContainerType>::ComponentContainer, ComponentType> &&
     std::same_as<StateType<ContainerType>, MainModelState<ContainerType>>;
 
 } // namespace power_grid_model::main_core

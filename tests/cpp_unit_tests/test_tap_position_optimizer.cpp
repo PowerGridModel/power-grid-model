@@ -624,7 +624,7 @@ class MockSolverOutput : public SolverOutput<symmetric_t> {
     template <typename... T> struct AddTapPositions;
     template <typename T> struct AddTapPositions<T> {
         void operator()(main_core::MainModelState<ContainerType> const& state, std::map<ID, IntS>& target) {
-            if constexpr (transformer_c<T> && component_container_c<ContainerType, T>) {
+            if constexpr (transformer_c<T> && common::component_container_c<ContainerType, T>) {
                 for (auto const& component : state.components.template citer<T>()) {
                     target[component.id()] = component.tap_pos();
                 }
@@ -732,14 +732,14 @@ struct MockTransformer {
 static_assert(transformer_c<MockTransformer>);
 
 template <std::derived_from<MockTransformer> ComponentType, typename State>
-    requires component_container_c<typename State::ComponentContainer, ComponentType>
+    requires common::component_container_c<typename State::ComponentContainer, ComponentType>
 constexpr auto get_topology_index(State const& state, auto const& id_or_index) {
     auto const& transformer = main_core::get_component<ComponentType>(state, id_or_index);
     return transformer.state.math_id.pos;
 }
 
 template <std::derived_from<MockTransformer> ComponentType, typename State>
-    requires component_container_c<typename State::ComponentContainer, ComponentType>
+    requires common::component_container_c<typename State::ComponentContainer, ComponentType>
 constexpr auto get_math_id(State const& state, Idx topology_index) {
     return main_core::get_component_by_sequence<MockTransformer>(state, topology_index).state.math_id;
 }
@@ -763,7 +763,7 @@ inline DoubleComplex i_pu(std::vector<MockSolverOutput<ContainerType>> const& so
 
 template <std::derived_from<MockTransformer> ComponentType, typename State,
           steady_state_solver_output_type SolverOutputType>
-    requires component_container_c<typename State::ComponentContainer, ComponentType>
+    requires common::component_container_c<typename State::ComponentContainer, ComponentType>
 inline auto u_pu(State const& state, std::vector<SolverOutputType> const& /* solver_output */, Idx topology_index,
                  ControlSide side) {
     return main_core::get_component_by_sequence<MockTransformer>(state, topology_index).state.u_pu(side);

@@ -8,7 +8,7 @@
 
 #include <concepts>
 
-namespace power_grid_model {
+namespace power_grid_model::common {
 
 template <typename ContainerType, typename RetrievableType>
 concept component_container_c = requires(ContainerType const& c, ID id, Idx2D idx2d) {
@@ -24,4 +24,4 @@ concept component_container_c = requires(ContainerType const& c, ID id, Idx2D id
 template <typename ContainerType, typename... RetrievableType>
 concept multi_component_container_c = (component_container_c<ContainerType, RetrievableType> && ...);
 
-} // namespace power_grid_model
+} // namespace power_grid_model::common
