@@ -38,6 +38,7 @@
 #include "main_core/output.hpp"
 #include "main_core/topology.hpp"
 #include "main_core/update.hpp"
+#include "main_core/y_bus.hpp"
 
 // stl library
 #include <memory>
@@ -127,6 +128,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     using ComponentContainer = Container<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentType...>;
     using MainModelState = main_core::MainModelState<ComponentContainer>;
 
+    // TODO replace all with n_component_types
+    static constexpr size_t n_component_types = main_core::utils::n_types<ComponentType...>;
     using SequenceIdxView = std::array<std::span<Idx2D const>, main_core::utils::n_types<ComponentType...>>;
     using OwnedUpdateDataset = std::tuple<std::vector<typename ComponentType::UpdateType>...>;
 
@@ -415,8 +418,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         // calculate
         return [this, &input, solve_ = std::forward<SolveFn>(solve)] {
             Timer const timer{calculation_info_, LogEvent::math_calculation};
-            auto& solvers = get_solvers<sym>();
-            auto& y_bus_vec = get_y_bus<sym>();
+            auto& solvers = main_core::get_solvers<sym>(math_state_);
+            auto& y_bus_vec = main_core::get_y_bus<sym>(math_state_);
             std::vector<SolverOutputType> solver_output;
             solver_output.reserve(n_math_solvers_);
             for (Idx i = 0; i != n_math_solvers_; ++i) {
@@ -618,22 +621,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
     }
 
-    template <symmetry_tag sym> std::vector<MathSolverProxy<sym>>& get_solvers() {
-        if constexpr (is_symmetric_v<sym>) {
-            return math_state_.math_solvers_sym;
-        } else {
-            return math_state_.math_solvers_asym;
-        }
-    }
-
-    template <symmetry_tag sym> std::vector<YBus<sym>>& get_y_bus() {
-        if constexpr (is_symmetric_v<sym>) {
-            return math_state_.y_bus_vec_sym;
-        } else {
-            return math_state_.y_bus_vec_asym;
-        }
-    }
-
     void rebuild_topology() {
         assert(construction_complete_);
         // clear old solvers
@@ -648,7 +635,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         is_asym_parameter_up_to_date_ = false;
     }
 
-    template <symmetry_tag sym> std::vector<MathModelParam<sym>> get_math_param() {
+    template <symmetry_tag sym> std::vector<MathModelParam<sym>> get_math_param_old() {
         std::vector<MathModelParam<sym>> math_param(n_math_solvers_);
         for (Idx i = 0; i != n_math_solvers_; ++i) {
             math_param[i].branch_param.resize(state_.math_topology[i]->n_branch());
@@ -700,7 +687,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
         return math_param;
     }
-    template <symmetry_tag sym> std::vector<MathModelParamIncrement> get_math_param_increment() {
+    template <symmetry_tag sym> std::vector<MathModelParamIncrement> get_math_param_increment_old() {
         using AddToIncrement = void (*)(std::vector<MathModelParamIncrement>&, MainModelState const&, Idx2D const&);
 
         static constexpr std::array<AddToIncrement, main_core::utils::n_types<ComponentType...>> add_to_increments{
@@ -753,15 +740,16 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return math_param_increment;
     }
 
-    template <symmetry_tag sym> void prepare_y_bus() {
-        std::vector<YBus<sym>>& y_bus_vec = get_y_bus<sym>();
+    template <symmetry_tag sym> void prepare_y_bus_old() {
+        std::vector<YBus<sym>>& y_bus_vec = main_core::get_y_bus<sym>(math_state_);
         // also get the vector of other Y_bus (sym -> asym, or asym -> sym)
-        std::vector<YBus<other_symmetry_t<sym>>>& other_y_bus_vec = get_y_bus<other_symmetry_t<sym>>();
+        std::vector<YBus<other_symmetry_t<sym>>>& other_y_bus_vec =
+            main_core::get_y_bus<other_symmetry_t<sym>>(math_state_);
         // If no Ybus exists, build them
         if (y_bus_vec.empty()) {
             bool const other_y_bus_exist = (!other_y_bus_vec.empty());
             y_bus_vec.reserve(n_math_solvers_);
-            auto math_params = get_math_param<sym>();
+            auto math_params = main_core::get_math_param<sym>(state_, n_math_solvers_);
 
             // Check the branch and shunt indices
             constexpr auto branch_param_in_seq_map =
@@ -791,17 +779,17 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     template <symmetry_tag sym> void prepare_solvers() {
-        std::vector<MathSolverProxy<sym>>& solvers = get_solvers<sym>();
+        std::vector<MathSolverProxy<sym>>& solvers = main_core::get_solvers<sym>(math_state_);
         // rebuild topology if needed
         if (!is_topology_up_to_date_) {
             rebuild_topology();
         }
-        prepare_y_bus<sym>();
+        main_core::prepare_y_bus<sym, ComponentContainer, ComponentType...>(state_, n_math_solvers_, math_state_);
 
         if (n_math_solvers_ != static_cast<Idx>(solvers.size())) {
             assert(solvers.empty());
             assert(n_math_solvers_ == static_cast<Idx>(state_.math_topology.size()));
-            assert(n_math_solvers_ == static_cast<Idx>(get_y_bus<sym>().size()));
+            assert(n_math_solvers_ == static_cast<Idx>(main_core::get_y_bus<sym>(math_state_).size()));
 
             solvers.clear();
             solvers.reserve(n_math_solvers_);
@@ -809,14 +797,17 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 return MathSolverProxy<sym>{math_solver_dispatcher_, math_topo};
             });
             for (Idx idx = 0; idx < n_math_solvers_; ++idx) {
-                get_y_bus<sym>()[idx].register_parameters_changed_callback(
+                main_core::get_y_bus<sym>(math_state_)[idx].register_parameters_changed_callback(
                     [solver = std::ref(solvers[idx])](bool changed) {
                         solver.get().get().parameters_changed(changed);
                     });
             }
         } else if (!is_parameter_up_to_date<sym>()) {
-            std::vector<MathModelParam<sym>> const math_params = get_math_param<sym>();
-            std::vector<MathModelParamIncrement> const math_param_increments = get_math_param_increment<sym>();
+            std::vector<MathModelParam<sym>> const math_params =
+                main_core::get_math_param<sym>(state_, n_math_solvers_);
+            std::vector<MathModelParamIncrement> const math_param_increments =
+                main_core::get_math_param_increment<sym, ComponentContainer, ComponentType...>(
+                    state_, n_math_solvers_, parameter_changed_components_);
             if (last_updated_calculation_symmetry_mode_ == is_symmetric_v<sym>) {
                 main_core::update_y_bus(math_state_, math_params, math_param_increments);
             } else {
