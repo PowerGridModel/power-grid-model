@@ -9,6 +9,7 @@
 #include "common/common.hpp"
 #include "common/exception.hpp"
 #include "common/iterator_facade.hpp"
+#include "container_fwd.hpp"
 
 #include <boost/range.hpp>
 

@@ -1,0 +1,24 @@
+// SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+//
+// SPDX-License-Identifier: MPL-2.0
+
+#pragma once
+
+#include "common/common.hpp"
+
+#include <concepts>
+
+namespace power_grid_model::common {
+
+template <typename ContainerType, typename... RetrievableType>
+concept component_container_c = (requires(ContainerType const& c, ID id, Idx2D idx2d) {
+    { c.template citer<RetrievableType>().begin() } -> std::forward_iterator;
+    { c.template citer<RetrievableType>().end() } -> std::forward_iterator;
+    { *(c.template citer<RetrievableType>().begin()) } -> std::same_as<RetrievableType const&>;
+    { *(c.template citer<RetrievableType>().end()) } -> std::same_as<RetrievableType const&>;
+    { c.template get_item<RetrievableType>(id) } -> std::convertible_to<RetrievableType const&>;
+    { c.template size<RetrievableType>() } -> std::same_as<Idx>;
+    { c.template get_seq<RetrievableType>(idx2d) } -> std::same_as<Idx>;
+} && ...);
+
+} // namespace power_grid_model::common

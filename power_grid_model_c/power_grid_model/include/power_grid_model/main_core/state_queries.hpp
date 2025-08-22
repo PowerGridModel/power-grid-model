@@ -9,6 +9,7 @@
 #include "../all_components.hpp"
 
 namespace power_grid_model::main_core {
+
 template <typename ComponentType, class ComponentContainer>
     requires model_component_state_c<MainModelState, ComponentContainer, ComponentType>
 inline Idx get_component_type_index(MainModelState<ComponentContainer> const& state) {
