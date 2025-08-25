@@ -6,12 +6,13 @@
 
 // handle dataset and buffer related stuff
 
+#include "dataset_fwd.hpp"
+#include "meta_data.hpp"
+
 #include "../common/common.hpp"
 #include "../common/counting_iterator.hpp"
 #include "../common/exception.hpp"
 #include "../common/iterator_facade.hpp"
-#include "dataset_fwd.hpp"
-#include "meta_data.hpp"
 
 #include <span>
 #include <string_view>
