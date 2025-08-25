@@ -23,7 +23,7 @@ class CalculationInfo : public NoLogger {
   private:
     Data data_;
 
-    auto log_impl(LogEvent tag, double value) {
+    void log_impl(LogEvent tag, double value) {
         using enum LogEvent;
 
         switch (tag) {
@@ -53,10 +53,12 @@ class CalculationInfo : public NoLogger {
         case iterate_unknown:
         case calculate_math_result:
         case produce_output:
-            return accumulate_log(tag, value);
+            accumulate_log(tag, value);
+            return;
         case iterative_pf_solver_max_num_iter:
         case max_num_iter:
-            return maximize_log(tag, value);
+            maximize_log(tag, value);
+            return;
         default:
             return;
         }
