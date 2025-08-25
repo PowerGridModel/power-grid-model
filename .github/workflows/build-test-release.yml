@@ -212,7 +212,7 @@ jobs:
           xcode-version: latest-stable
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v3
+        uses: pypa/cibuildwheel@v3.1
         # GitHub Actions specific build parameters
         env:
           # pass GitHub runner info into Linux container
