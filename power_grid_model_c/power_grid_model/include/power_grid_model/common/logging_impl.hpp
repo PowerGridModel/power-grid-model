@@ -36,6 +36,7 @@ class LogDispatcher final : public LogDispatch {
     }
     std::unique_ptr<Logger> clone() const override { return std::make_unique<LogDispatcher>(); }
 
+    LogDispatcher() = default;
     LogDispatcher(const LogDispatcher&) = delete;
     LogDispatcher& operator=(const LogDispatcher&) = delete;
     LogDispatcher(LogDispatcher&&) = default;
