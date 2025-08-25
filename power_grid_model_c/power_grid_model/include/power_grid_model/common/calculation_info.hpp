@@ -23,7 +23,7 @@ class CalculationInfo : public NoLogger {
   private:
     Data data_;
 
-    void log_impl(LogEvent tag, double value) {
+    auto log_impl(LogEvent tag, double value) {
         using enum LogEvent;
 
         switch (tag) {

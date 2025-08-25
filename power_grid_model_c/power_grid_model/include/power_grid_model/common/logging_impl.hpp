@@ -18,24 +18,28 @@ class NoLogger : public Logger {
     std::unique_ptr<Logger> clone() const override { return std::make_unique<NoLogger>(); }
 };
 
-class LogDispatcher : public LogDispatch {
+class LogDispatcher final : public LogDispatch {
   public:
     void log(LogEvent tag) override { log_impl(tag); }
     void log(LogEvent tag, std::string_view message) override { log_impl(tag, message); }
     void log(LogEvent tag, double value) override { log_impl(tag, value); }
     void log(LogEvent tag, Idx value) override { log_impl(tag, value); }
     void registrar(Logger* logger) override {
-        if (logger && std::ranges::find(loggers_, logger) == loggers_.end()) {
+        if (logger != nullptr && std::ranges::find(loggers_, logger) == loggers_.end()) {
             loggers_.push_back(logger);
         }
     }
     void deregistrar(Logger* logger) override {
-        if (logger) {
+        if (logger != nullptr) {
             std::erase(loggers_, logger);
         }
     }
     std::unique_ptr<Logger> clone() const override { return std::make_unique<LogDispatcher>(); }
 
+    LogDispatcher(const LogDispatcher&) = delete;
+    LogDispatcher& operator=(const LogDispatcher&) = delete;
+    LogDispatcher(LogDispatcher&&) = default;
+    LogDispatcher& operator=(LogDispatcher&&) = default;
     ~LogDispatcher() override = default;
 
   private:
@@ -51,7 +55,7 @@ class LogDispatcher : public LogDispatch {
             loggers_.front()->log(tag, std::forward<T>(values)...);
         } else {
             for (auto& logger : loggers_) {
-                if (logger) {
+                if (logger != nullptr) {
                     logger->log(tag, values...);
                 }
             }
