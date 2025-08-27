@@ -10,7 +10,7 @@
 
 namespace power_grid_model {
 namespace common::logging {
-class CalculationInfo : public Logger {
+class CalculationInfo final: public Logger {
     using Data = std::map<LogEvent, double>;
 
   public:
@@ -22,7 +22,7 @@ class CalculationInfo : public Logger {
     CalculationInfo(CalculationInfo&&) noexcept = default;
     CalculationInfo& operator=(CalculationInfo const&) = default;
     CalculationInfo& operator=(CalculationInfo&&) noexcept = default;
-    ~CalculationInfo() = default;
+    ~CalculationInfo() override = default;
 
     void log(LogEvent /*tag*/) override {
         // ignore all such events for now
