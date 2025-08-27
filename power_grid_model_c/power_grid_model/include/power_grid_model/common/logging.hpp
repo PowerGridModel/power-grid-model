@@ -43,13 +43,19 @@ enum class LogEvent : int16_t {
     max_num_iter = 2248,                     // TODO(mgovers): find other error code
 };
 
-struct Logger {
+class Logger {
+  public:
     virtual void log(LogEvent tag) = 0;
     virtual void log(LogEvent tag, std::string_view message) = 0;
     virtual void log(LogEvent tag, double value) = 0;
     virtual void log(LogEvent tag, Idx value) = 0;
+    virtual ~Logger() = 0;
 
-    virtual ~Logger() = default;
+  protected:
+    Logger(Logger const&) = default;
+    Logger(Logger&&) = default;
+    Logger& operator=(Logger const&) = default;
+    Logger& operator=(Logger&&) = default;
 };
 
 } // namespace common::logging

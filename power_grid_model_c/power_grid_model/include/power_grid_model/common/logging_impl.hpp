@@ -23,6 +23,11 @@ class NoLogger : public Logger {
     void log(LogEvent /*tag*/, Idx /*value*/) override {
         // no logging
     }
+    NoLogger(NoLogger const&) = default;
+    NoLogger(NoLogger&&) = default;
+    NoLogger& operator=(NoLogger const&) = default;
+    NoLogger& operator=(NoLogger&&) = default;
+    ~NoLogger() override = default;
 };
 
 } // namespace power_grid_model::common::logging
