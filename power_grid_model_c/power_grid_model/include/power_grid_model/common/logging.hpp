@@ -49,9 +49,6 @@ struct Logger {
     virtual void log(LogEvent tag, double value) = 0;
     virtual void log(LogEvent tag, Idx value) = 0;
 
-    // creates a new logger of the same type as the current one
-    virtual std::unique_ptr<Logger> clone() const = 0;
-
     virtual ~Logger() = default;
 };
 

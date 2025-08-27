@@ -11,11 +11,10 @@
 
 namespace power_grid_model::common::logging {
 class NoLogger : public Logger {
-    void log(LogEvent /*tag*/) override {}
-    void log(LogEvent /*tag*/, std::string_view /*message*/) override {}
-    void log(LogEvent /*tag*/, double /*value*/) override {}
-    void log(LogEvent /*tag*/, Idx /*value*/) override {}
-    std::unique_ptr<Logger> clone() const override { return std::make_unique<NoLogger>(); }
+    virtual void log(LogEvent /*tag*/) override { /* no logging */ }
+    virtual void log(LogEvent /*tag*/, std::string_view /*message*/) override { /* no logging */ }
+    virtual void log(LogEvent /*tag*/, double /*value*/) override { /* no logging */ }
+    virtual void log(LogEvent /*tag*/, Idx /*value*/) override { /* no logging */ }
 };
 
 } // namespace power_grid_model::common::logging
