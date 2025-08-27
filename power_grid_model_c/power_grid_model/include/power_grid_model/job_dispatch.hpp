@@ -22,7 +22,7 @@ class JobDispatch {
     template <typename Adapter, typename ResultDataset, typename UpdateDataset>
         requires std::is_base_of_v<JobInterface<Adapter>, Adapter>
     static BatchParameter batch_calculation(Adapter& adapter, ResultDataset const& result_data,
-                                            UpdateDataset const& update_data, Idx threading = sequential) {
+                                            UpdateDataset const& update_data, Idx threading, Logger& log) {
         if (update_data.empty()) {
             adapter.reset_calculation_info();
             adapter.calculate(result_data);
@@ -52,7 +52,23 @@ class JobDispatch {
 
         handle_batch_exceptions(exceptions);
 
+        main_core::merge_into(log, adapter.get_calculation_info());
+
         return BatchParameter{};
+    }
+    template <typename Adapter, typename ResultDataset, typename UpdateDataset>
+        requires std::is_base_of_v<JobInterface<Adapter>, Adapter>
+    static BatchParameter batch_calculation(Adapter& adapter, ResultDataset const& result_data,
+                                            UpdateDataset const& update_data, Idx threading) {
+        common::logging::NoLogger no_log{};
+        return batch_calculation(adapter, result_data, update_data, threading, static_cast<Logger&>(no_log));
+    }
+    template <typename Adapter, typename ResultDataset, typename UpdateDataset>
+        requires std::is_base_of_v<JobInterface<Adapter>, Adapter>
+    static BatchParameter batch_calculation(Adapter& adapter, ResultDataset const& result_data,
+                                            UpdateDataset const& update_data) {
+        common::logging::NoLogger no_log{};
+        return batch_calculation(adapter, result_data, update_data, sequential, static_cast<Logger&>(no_log));
     }
 
     template <typename Adapter, typename ResultDataset, typename UpdateDataset>

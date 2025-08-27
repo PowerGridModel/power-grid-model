@@ -10,7 +10,6 @@
 #include "common/common.hpp"
 
 #include <concepts>
-#include <mutex>
 #include <type_traits>
 #include <utility>
 

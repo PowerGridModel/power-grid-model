@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <mutex>
 #include <ranges>
 
 namespace power_grid_model {
