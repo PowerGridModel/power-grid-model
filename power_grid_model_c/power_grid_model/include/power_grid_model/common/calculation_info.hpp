@@ -19,6 +19,11 @@ class CalculationInfo : public NoLogger {
 
     void log(LogEvent tag, double value) override { log_impl(tag, value); }
     void log(LogEvent tag, Idx value) override { log_impl(tag, static_cast<double>(value)); }
+    
+    CalculationInfo(CalculationInfo const&) = default;
+    CalculationInfo(CalculationInfo&&) noexcept = default;
+    CalculationInfo& operator=(CalculationInfo const&) = default;
+    CalculationInfo& operator=(CalculationInfo&&) noexcept = default;
 
   private:
     Data data_;

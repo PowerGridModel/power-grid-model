@@ -24,9 +24,9 @@ class NoLogger : public Logger {
         // no logging
     }
     NoLogger(NoLogger const&) = default;
-    NoLogger(NoLogger&&) = default;
+    NoLogger(NoLogger&&) noexcept = default;
     NoLogger& operator=(NoLogger const&) = default;
-    NoLogger& operator=(NoLogger&&) = default;
+    NoLogger& operator=(NoLogger&&) noexcept = default;
     ~NoLogger() override = default;
 };
 

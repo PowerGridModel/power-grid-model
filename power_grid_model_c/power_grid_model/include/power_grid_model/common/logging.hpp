@@ -53,9 +53,9 @@ class Logger {
 
   protected:
     Logger(Logger const&) = default;
-    Logger(Logger&&) = default;
+    Logger(Logger&&) noexcept = default;
     Logger& operator=(Logger const&) = default;
-    Logger& operator=(Logger&&) = default;
+    Logger& operator=(Logger&&) noexcept = default;
 };
 
 } // namespace common::logging
