@@ -55,11 +55,6 @@ struct Logger {
     virtual ~Logger() = default;
 };
 
-struct LogDispatch : public Logger {
-    virtual void registrar(Logger* logger) = 0;
-    virtual void deregistrar(Logger* logger) = 0;
-};
-
 } // namespace common::logging
 
 using common::logging::LogEvent;
