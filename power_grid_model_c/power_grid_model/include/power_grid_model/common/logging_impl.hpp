@@ -11,10 +11,18 @@
 
 namespace power_grid_model::common::logging {
 class NoLogger : public Logger {
-    virtual void log(LogEvent /*tag*/) override { /* no logging */ }
-    virtual void log(LogEvent /*tag*/, std::string_view /*message*/) override { /* no logging */ }
-    virtual void log(LogEvent /*tag*/, double /*value*/) override { /* no logging */ }
-    virtual void log(LogEvent /*tag*/, Idx /*value*/) override { /* no logging */ }
+    void log(LogEvent /*tag*/) override {
+        // no logging
+    }
+    void log(LogEvent /*tag*/, std::string_view /*message*/) override {
+        // no logging
+    }
+    void log(LogEvent /*tag*/, double /*value*/) override {
+        // no logging
+    }
+    void log(LogEvent /*tag*/, Idx /*value*/) override {
+        // no logging
+    }
 };
 
 } // namespace power_grid_model::common::logging

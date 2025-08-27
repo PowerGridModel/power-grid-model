@@ -17,8 +17,8 @@ class CalculationInfo : public NoLogger {
     using Report = std::add_lvalue_reference_t<std::add_const_t<Data>>;
     static_assert(std::same_as<Report, Data const&>);
 
-    void log(LogEvent tag, double value) override { log_impl(tag, value); }
-    void log(LogEvent tag, Idx value) override { log_impl(tag, static_cast<double>(value)); }
+    virtual void log(LogEvent tag, double value) override { log_impl(tag, value); }
+    virtual void log(LogEvent tag, Idx value) override { log_impl(tag, static_cast<double>(value)); }
 
   private:
     Data data_;
