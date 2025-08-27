@@ -49,13 +49,15 @@ class Logger {
     virtual void log(LogEvent tag, std::string_view message) = 0;
     virtual void log(LogEvent tag, double value) = 0;
     virtual void log(LogEvent tag, Idx value) = 0;
-    virtual ~Logger() = 0;
+
+    Logger(Logger&&) noexcept = default;
+    Logger& operator=(Logger&&) noexcept = default;
 
   protected:
+    Logger() = default;
     Logger(Logger const&) = default;
-    Logger(Logger&&) noexcept = default;
     Logger& operator=(Logger const&) = default;
-    Logger& operator=(Logger&&) noexcept = default;
+    virtual ~Logger() = default;
 };
 
 } // namespace common::logging
