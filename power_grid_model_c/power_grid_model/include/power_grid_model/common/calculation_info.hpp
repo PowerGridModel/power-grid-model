@@ -24,10 +24,10 @@ class CalculationInfo : public Logger {
     CalculationInfo& operator=(CalculationInfo&&) noexcept = default;
     ~CalculationInfo() = default;
 
-    void log(LogEvent tag) override {
+    void log(LogEvent /*tag*/) override {
         // ignore all such events for now
     }
-    void log(LogEvent tag, std::string_view /*message*/) override {
+    void log(LogEvent /*tag*/, std::string_view /*message*/) override {
         // ignore all such events for now
     }
     void log(LogEvent tag, double value) override { log_impl(tag, value); }
