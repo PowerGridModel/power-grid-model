@@ -22,7 +22,7 @@ class Timer {
     Clock::time_point start_;
 
   public:
-    Timer() : info_(nullptr), code_{LogEvent::unknown} {};
+    Timer() : info_{nullptr}, code_{LogEvent::unknown} {};
     Timer(Logger& info, LogEvent code) : info_{&info}, code_{code}, start_{Clock::now()} {}
 
     Timer(Timer const&) = delete;
