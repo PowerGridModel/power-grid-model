@@ -11,6 +11,7 @@
 
 namespace power_grid_model::common::logging {
 class NoLogger : public Logger {
+  public:
     void log(LogEvent /*tag*/) override {
         // no logging
     }
