@@ -7,9 +7,6 @@
 
 #include <doctest/doctest.h>
 
-#include <boost/range/adaptors.hpp>
-#include <boost/range/irange.hpp>
-
 #include <ranges>
 
 namespace power_grid_model {
