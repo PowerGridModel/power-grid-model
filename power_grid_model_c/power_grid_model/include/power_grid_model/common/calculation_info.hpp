@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "logging_impl.hpp"
+#include "multi_threaded_logging.hpp"
 
 #include <map>
 
@@ -17,6 +17,12 @@ class CalculationInfo : public NoLogger {
     using Report = std::add_lvalue_reference_t<std::add_const_t<Data>>;
     static_assert(std::same_as<Report, Data const&>);
 
+    virtual void log(LogEvent /*tag*/) override {
+        // do nothing
+    }
+    virtual void log(LogEvent /*tag*/, std::string_view /*message*/) override {
+        // do nothing
+    }
     virtual void log(LogEvent tag, double value) override { log_impl(tag, value); }
     virtual void log(LogEvent tag, Idx value) override { log_impl(tag, static_cast<double>(value)); }
 
@@ -74,7 +80,17 @@ class CalculationInfo : public NoLogger {
     Report report() const { return data_; }
     void clear() { data_.clear(); }
 };
+
+class MultiThreadedCalculationInfo : public MultiThreadedLoggerImpl<CalculationInfo> {
+  public:
+    using MultiThreadedLoggerImpl<CalculationInfo>::MultiThreadedLoggerImpl;
+    using Report = CalculationInfo::Report;
+
+    Report report() const { return get().report(); }
+    void clear() { get().clear(); }
+};
 } // namespace common::logging
 
 using common::logging::CalculationInfo;
+using common::logging::MultiThreadedCalculationInfo;
 } // namespace power_grid_model

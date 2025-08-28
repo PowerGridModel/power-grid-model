@@ -60,27 +60,19 @@ template <typename Adapter> class JobInterface {
         return static_cast<Adapter*>(this)->winddown_impl();
     }
 
-    CalculationInfo get_calculation_info() const
+    void reset_logger()
         requires requires(Adapter& adapter) { // NOSONAR
-            { adapter.get_calculation_info_impl() } -> std::same_as<CalculationInfo>;
+            { adapter.reset_logger_impl() } -> std::same_as<void>;
         }
     {
-        return static_cast<const Adapter*>(this)->get_calculation_info_impl();
+        static_cast<Adapter*>(this)->reset_logger_impl();
     }
-    void reset_calculation_info()
+    void reset_logger(Logger& log)
         requires requires(Adapter& adapter) { // NOSONAR
-            { adapter.reset_calculation_info_impl() } -> std::same_as<void>;
+            { adapter.reset_logger_impl(log) } -> std::same_as<void>;
         }
     {
-        static_cast<Adapter*>(this)->reset_calculation_info_impl();
-    }
-
-    void thread_safe_add_calculation_info(CalculationInfo const& info)
-        requires requires(Adapter& adapter) { // NOSONAR
-            { adapter.thread_safe_add_calculation_info_impl(info) } -> std::same_as<void>;
-        }
-    {
-        static_cast<Adapter*>(this)->thread_safe_add_calculation_info_impl(info);
+        static_cast<Adapter*>(this)->reset_logger_impl(log);
     }
 
   protected:

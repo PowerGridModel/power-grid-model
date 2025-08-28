@@ -22,9 +22,11 @@ class JobDispatch {
     template <typename Adapter, typename ResultDataset, typename UpdateDataset>
         requires std::is_base_of_v<JobInterface<Adapter>, Adapter>
     static BatchParameter batch_calculation(Adapter& adapter, ResultDataset const& result_data,
-                                            UpdateDataset const& update_data, Idx threading, Logger& log) {
+                                            UpdateDataset const& update_data, Idx threading,
+                                            common::logging::MultiThreadedLogger& log) {
+        adapter.reset_logger(log);
+
         if (update_data.empty()) {
-            adapter.reset_calculation_info();
             adapter.calculate(result_data);
             return BatchParameter{};
         }
@@ -39,7 +41,6 @@ class JobDispatch {
         }
 
         // calculate once to cache, ignore results
-        adapter.reset_calculation_info();
         adapter.cache_calculate();
 
         // error messages
@@ -52,23 +53,21 @@ class JobDispatch {
 
         handle_batch_exceptions(exceptions);
 
-        main_core::merge_into(log, adapter.get_calculation_info());
-
         return BatchParameter{};
     }
     template <typename Adapter, typename ResultDataset, typename UpdateDataset>
         requires std::is_base_of_v<JobInterface<Adapter>, Adapter>
     static BatchParameter batch_calculation(Adapter& adapter, ResultDataset const& result_data,
                                             UpdateDataset const& update_data, Idx threading) {
-        common::logging::NoLogger no_log{};
-        return batch_calculation(adapter, result_data, update_data, threading, static_cast<Logger&>(no_log));
+        common::logging::NoMultiThreadedLogger no_log{};
+        return batch_calculation(adapter, result_data, update_data, threading,
+                                 static_cast<common::logging::MultiThreadedLogger&>(no_log));
     }
     template <typename Adapter, typename ResultDataset, typename UpdateDataset>
         requires std::is_base_of_v<JobInterface<Adapter>, Adapter>
     static BatchParameter batch_calculation(Adapter& adapter, ResultDataset const& result_data,
                                             UpdateDataset const& update_data) {
-        common::logging::NoLogger no_log{};
-        return batch_calculation(adapter, result_data, update_data, sequential, static_cast<Logger&>(no_log));
+        return batch_calculation(adapter, result_data, update_data, sequential);
     }
 
     template <typename Adapter, typename ResultDataset, typename UpdateDataset>
@@ -82,7 +81,9 @@ class JobDispatch {
 
             auto const copy_adapter_functor = [&base_adapter, &thread_info]() {
                 Timer const t_copy_adapter_functor{thread_info, LogEvent::copy_model};
-                return Adapter{base_adapter};
+                auto result = Adapter{base_adapter};
+                result.reset_logger(thread_info);
+                return result;
             };
 
             auto adapter = copy_adapter_functor();
@@ -104,9 +105,7 @@ class JobDispatch {
             };
 
             auto run = [&adapter, &result_data, &thread_info](Idx scenario_idx) {
-                adapter.reset_calculation_info();
                 adapter.calculate(result_data, scenario_idx);
-                main_core::merge_into(thread_info, adapter.get_calculation_info());
             };
 
             auto calculate_scenario = JobDispatch::call_with<Idx>(
@@ -119,7 +118,7 @@ class JobDispatch {
             }
 
             t_total.stop();
-            base_adapter.thread_safe_add_calculation_info(thread_info);
+            // base_adapter.thread_safe_add_calculation_info(thread_info);
         };
     }
 
@@ -187,8 +186,8 @@ class JobDispatch {
     // Lippincott pattern
     template <typename Adapter>
     static auto scenario_exception_handler(Adapter& adapter, std::vector<std::string>& messages,
-                                           CalculationInfo& info) {
-        return [&adapter, &messages, &info](Idx scenario_idx) {
+                                           CalculationInfo& /*info*/) {
+        return [&adapter, &messages](Idx scenario_idx) {
             std::exception_ptr const ex_ptr = std::current_exception();
             try {
                 std::rethrow_exception(ex_ptr);
@@ -197,7 +196,6 @@ class JobDispatch {
             } catch (...) {
                 messages[scenario_idx] = "unknown exception";
             }
-            main_core::merge_into(info, adapter.get_calculation_info());
         };
     }
 

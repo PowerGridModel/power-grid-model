@@ -64,6 +64,8 @@ class JobAdapterMock : public JobInterface<JobAdapterMock> {
         return counter_->thread_safe_add_calculation_info_calls;
     }
     Idx get_reset_calculation_info_counter() const { return counter_->reset_calculation_info_calls; }
+    void reset_logger_impl() {}
+    void reset_logger_impl(Logger& /*logger*/) {}
 
   private:
     friend class JobInterface<JobAdapterMock>;

@@ -11,6 +11,7 @@
 
 namespace power_grid_model::common::logging {
 class NoLogger : public Logger {
+  public:
     void log(LogEvent /*tag*/) override {
         // no logging
     }
@@ -24,5 +25,7 @@ class NoLogger : public Logger {
         // no logging
     }
 };
+
+inline Logger& merge_into(Logger& destination, NoLogger const& /*source*/) { return destination; }
 
 } // namespace power_grid_model::common::logging

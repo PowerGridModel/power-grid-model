@@ -52,6 +52,10 @@ struct Logger {
     virtual ~Logger() = default;
 };
 
+struct MultiThreadedLogger : public Logger {
+    virtual std::unique_ptr<Logger> create_child() = 0;
+};
+
 } // namespace common::logging
 
 using common::logging::LogEvent;

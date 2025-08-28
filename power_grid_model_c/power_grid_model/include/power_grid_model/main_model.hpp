@@ -82,7 +82,7 @@ class MainModel {
         return JobDispatch::batch_calculation(adapter, result_data, update_data, options.threading, info_);
     }
 
-    CalculationInfo calculation_info() const { return info_; }
+    CalculationInfo calculation_info() const { return info_.get(); }
 
     void check_no_experimental_features_used(Options const& options) const {
         impl().check_no_experimental_features_used(options);
@@ -99,7 +99,7 @@ class MainModel {
     }
 
     std::unique_ptr<Impl> impl_;
-    CalculationInfo info_;
+    MultiThreadedCalculationInfo info_;
 };
 
 } // namespace power_grid_model

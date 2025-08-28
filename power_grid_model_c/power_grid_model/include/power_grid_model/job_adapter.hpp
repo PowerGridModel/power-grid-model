@@ -26,7 +26,7 @@ class JobAdapter<MainModel, ComponentList<ComponentType...>>
     JobAdapter(std::reference_wrapper<MainModel> model_reference,
                std::reference_wrapper<MainModelOptions const> options)
         : model_reference_{model_reference}, options_{options} {
-        model_reference_.get().reset_logger(info_);
+        reset_logger_impl();
     }
     JobAdapter(JobAdapter const& other)
         : model_copy_{std::make_unique<MainModel>(other.model_reference_.get())},
@@ -36,7 +36,7 @@ class JobAdapter<MainModel, ComponentList<ComponentType...>>
           update_independence_{other.update_independence_},
           independence_flags_{other.independence_flags_},
           all_scenarios_sequence_{other.all_scenarios_sequence_} {
-        model_reference_.get().reset_logger(info_);
+        reset_logger_impl();
     }
     JobAdapter& operator=(JobAdapter const& other) {
         if (this != &other) {
@@ -48,7 +48,7 @@ class JobAdapter<MainModel, ComponentList<ComponentType...>>
             independence_flags_ = other.independence_flags_;
             all_scenarios_sequence_ = other.all_scenarios_sequence_;
 
-            model_reference_.get().reset_logger(info_);
+            reset_logger_impl();
         }
         return *this;
     }
@@ -60,7 +60,7 @@ class JobAdapter<MainModel, ComponentList<ComponentType...>>
           update_independence_{std::move(other.update_independence_)},
           independence_flags_{std::move(other.independence_flags_)},
           all_scenarios_sequence_{std::move(other.all_scenarios_sequence_)} {
-        model_reference_.get().reset_logger(info_);
+        reset_logger_impl();
     }
     JobAdapter& operator=(JobAdapter&& other) noexcept {
         if (this != &other) {
@@ -72,14 +72,11 @@ class JobAdapter<MainModel, ComponentList<ComponentType...>>
             independence_flags_ = std::move(other.independence_flags_);
             all_scenarios_sequence_ = std::move(other.all_scenarios_sequence_);
 
-            model_reference_.get().reset_logger(info_);
+            reset_logger_impl();
         }
         return *this;
     }
-    ~JobAdapter() {
-        model_reference_.get().reset_logger();
-        model_copy_.reset();
-    }
+    ~JobAdapter() { model_copy_.reset(); }
 
   private:
     // Grant the CRTP base (JobInterface<JobAdapter>) access to
@@ -98,7 +95,7 @@ class JobAdapter<MainModel, ComponentList<ComponentType...>>
     // current_scenario_sequence_cache_ is calculated per scenario, so it is excluded from the constructors.
     main_core::utils::SequenceIdx<ComponentType...> current_scenario_sequence_cache_{};
 
-    CalculationInfo info_;
+    Logger* log_{nullptr};
 
     std::mutex calculation_info_mutex_;
 
@@ -152,14 +149,6 @@ class JobAdapter<MainModel, ComponentList<ComponentType...>>
         std::ranges::for_each(current_scenario_sequence_cache_, [](auto& comp_seq_idx) { comp_seq_idx.clear(); });
     }
 
-    CalculationInfo get_calculation_info_impl() const { return info_; }
-    void reset_calculation_info_impl() { info_ = {}; }
-
-    void thread_safe_add_calculation_info_impl(CalculationInfo const& info) {
-        std::lock_guard const lock{calculation_info_mutex_};
-        main_core::merge_into(info_, info);
-    }
-
     auto get_current_scenario_sequence_view_() const {
         return main_core::utils::run_functor_with_all_types_return_array<ComponentType...>([this]<typename CT>() {
             constexpr auto comp_idx = main_core::utils::index_of_component<CT, ComponentType...>;
@@ -168,6 +157,15 @@ class JobAdapter<MainModel, ComponentList<ComponentType...>>
             }
             return std::span<Idx2D const>{std::get<comp_idx>(current_scenario_sequence_cache_)};
         });
+    }
+
+    void reset_logger_impl() {
+        log_ = nullptr;
+        model_reference_.get().reset_logger();
+    }
+    void reset_logger_impl(Logger& log) {
+        log_ = &log;
+        model_reference_.get().reset_logger(*log_);
     }
 };
 } // namespace power_grid_model
