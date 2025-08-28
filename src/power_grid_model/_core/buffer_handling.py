@@ -200,9 +200,15 @@ def _get_dense_buffer_properties(
     n_total_elements = actual_batch_size * n_elements_per_scenario
 
     if is_batch is not None and is_batch != actual_is_batch:
-        raise ValueError(f"Provided 'is batch' is incorrect for the provided data. {VALIDATOR_MSG}")
+        raise ValueError(
+            f"Incorrect/inconsistent data provided: {'batch' if actual_is_batch else 'single'} "
+            f"data provided but {'batch' if is_batch else 'single'} data expected. {VALIDATOR_MSG}"
+        )
     if batch_size is not None and batch_size != actual_batch_size:
-        raise ValueError(f"Provided 'batch size' is incorrect for the provided data. {VALIDATOR_MSG}")
+        raise ValueError(
+            f"Incorrect/inconsistent batch size provided: {actual_batch_size} scenarios provided "
+            f"but {batch_size} scenarios expected. {VALIDATOR_MSG}"
+        )
 
     return BufferProperties(
         is_sparse=is_sparse_property,
