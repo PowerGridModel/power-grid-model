@@ -11,6 +11,7 @@
 #include "common/iterator_facade.hpp"
 #include "container_fwd.hpp"
 
+#include <algorithm>
 #include <array>
 #include <cassert>
 #include <functional>
