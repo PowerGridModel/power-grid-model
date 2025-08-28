@@ -11,9 +11,8 @@
 #include "common/iterator_facade.hpp"
 #include "container_fwd.hpp"
 
-#include <boost/range.hpp>
-
 #include <array>
+#include <cassert>
 #include <functional>
 #include <memory>
 #include <numeric>
