@@ -10,7 +10,7 @@
 
 namespace power_grid_model {
 namespace common::logging {
-class CalculationInfo final: public Logger {
+class CalculationInfo final : public Logger {
     using Data = std::map<LogEvent, double>;
 
   public:
@@ -78,9 +78,8 @@ class CalculationInfo final: public Logger {
     }
     void accumulate_log(LogEvent tag, double value) { data_[tag] += value; }
     void maximize_log(LogEvent tag, double value) {
-        if (auto& stored_value = data_[tag]; value > stored_value) {
-            stored_value = value;
-        }
+        auto& stored_value = data_[tag];
+        stored_value = std::max(value, stored_value);
     }
 
   public:

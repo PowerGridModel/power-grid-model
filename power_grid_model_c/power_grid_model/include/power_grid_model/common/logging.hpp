@@ -52,12 +52,12 @@ class Logger {
 
     Logger(Logger&&) noexcept = default;
     Logger& operator=(Logger&&) noexcept = default;
+    virtual ~Logger() = default;
 
   protected:
     Logger() = default;
     Logger(Logger const&) = default;
     Logger& operator=(Logger const&) = default;
-    virtual ~Logger() = default;
 };
 
 } // namespace common::logging
