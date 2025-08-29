@@ -728,8 +728,13 @@ def check_indptr_consistency(indptr: IndexPointer, batch_size: int | None, conte
         raise ValueError(f"indptr should start from zero and end at size of data array. {VALIDATOR_MSG}")
     if np.any(np.diff(indptr) < 0):
         raise ValueError(f"indptr should be increasing. {VALIDATOR_MSG}")
-    if batch_size is not None and batch_size != indptr.size - 1:
-        raise ValueError(f"Provided batch size must be equal to actual batch size. {VALIDATOR_MSG}")
+
+    actual_batch_size = indptr.size - 1
+    if batch_size is not None and batch_size != actual_batch_size:
+        raise ValueError(
+            f"Incorrect/inconsistent batch size provided: {actual_batch_size} scenarios provided "
+            f"but {batch_size} scenarios expected. {VALIDATOR_MSG}"
+        )
 
 
 def get_dataset_type(data: Dataset) -> DatasetType:

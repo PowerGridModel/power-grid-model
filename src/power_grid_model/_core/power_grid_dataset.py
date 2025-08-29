@@ -240,7 +240,7 @@ class CMutableDataset:
             data: the data.
 
         Raises:
-            ValueError: if the component is unknown and allow_unknown is False.
+            ValueError: if the component is unknown.
             ValueError: if the data is inconsistent with the rest of the dataset.
             PowerGridError: if there was an internal error.
         """
@@ -294,7 +294,7 @@ class CMutableDataset:
         assert_no_error()
 
     def _validate_properties(self, data: ComponentData, schema: ComponentMetaData):
-        properties = get_buffer_properties(data, schema=schema, is_batch=self._is_batch, batch_size=self._batch_size)
+        properties = get_buffer_properties(data, schema=schema, is_batch=None, batch_size=None)
         if properties.is_batch != self._is_batch:
             raise ValueError(
                 f"Dataset type (single or batch) must be consistent across all components. {VALIDATOR_MSG}"
