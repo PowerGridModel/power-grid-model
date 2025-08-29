@@ -30,13 +30,12 @@ template <symmetry_tag sym> class MathSolverBase {
     virtual MathSolverBase<sym>* clone() const = 0;
 
     virtual SolverOutput<sym> run_power_flow(PowerFlowInput<sym> const& input, double err_tol, Idx max_iter,
-                                             CalculationInfo& calculation_info, CalculationMethod calculation_method,
+                                             Logger& log, CalculationMethod calculation_method,
                                              YBus<sym> const& y_bus) = 0;
     virtual SolverOutput<sym> run_state_estimation(StateEstimationInput<sym> const& input, double err_tol, Idx max_iter,
-                                                   CalculationInfo& calculation_info,
-                                                   CalculationMethod calculation_method, YBus<sym> const& y_bus) = 0;
-    virtual ShortCircuitSolverOutput<sym> run_short_circuit(ShortCircuitInput const& input,
-                                                            CalculationInfo& calculation_info,
+                                                   Logger& log, CalculationMethod calculation_method,
+                                                   YBus<sym> const& y_bus) = 0;
+    virtual ShortCircuitSolverOutput<sym> run_short_circuit(ShortCircuitInput const& input, Logger& log,
                                                             CalculationMethod calculation_method,
                                                             YBus<sym> const& y_bus) = 0;
     virtual void clear_solver() = 0;

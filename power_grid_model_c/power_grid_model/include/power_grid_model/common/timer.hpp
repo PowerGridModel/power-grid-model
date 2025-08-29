@@ -4,12 +4,10 @@
 
 #pragma once
 
-#include "calculation_info.hpp"
 #include "common.hpp"
 #include "logging.hpp"
 
 #include <chrono>
-#include <iomanip>
 #include <sstream>
 
 namespace power_grid_model {
@@ -19,13 +17,13 @@ using Duration = std::chrono::duration<double>;
 
 class Timer {
   private:
-    CalculationInfo* info_;
+    Logger* info_;
     LogEvent code_;
     Clock::time_point start_;
 
   public:
-    Timer() : info_(nullptr), code_{LogEvent::unknown} {};
-    Timer(CalculationInfo& info, LogEvent code) : info_{&info}, code_{code}, start_{Clock::now()} {}
+    Timer() : info_{nullptr}, code_{LogEvent::unknown} {};
+    Timer(Logger& info, LogEvent code) : info_{&info}, code_{code}, start_{Clock::now()} {}
 
     Timer(Timer const&) = delete;
     Timer(Timer&&) = default;
@@ -57,7 +55,7 @@ class Timer {
         if (info_ != nullptr) {
             auto const now = Clock::now();
             auto const duration = Duration(now - start_);
-            info_->operator[](code_) += static_cast<double>(duration.count());
+            info_->log(code_, duration.count());
             info_ = nullptr;
         }
     }
