@@ -23,15 +23,25 @@ inline void clear(MathState& math_state) {
     math_state.y_bus_vec_asym.clear();
 }
 
+template <symmetry_tag sym> std::vector<MathSolverProxy<sym>>& get_solvers(MathState& math_state) {
+    if constexpr (is_symmetric_v<sym>) {
+        return math_state.math_solvers_sym;
+    } else {
+        return math_state.math_solvers_asym;
+    }
+}
+
+template <symmetry_tag sym> inline auto& get_y_bus(MathState& math_state) {
+    if constexpr (is_symmetric_v<sym>) {
+        return math_state.y_bus_vec_sym;
+    } else {
+        return math_state.y_bus_vec_asym;
+    }
+}
+
 template <symmetry_tag sym>
 inline void update_y_bus(MathState& math_state, std::vector<MathModelParam<sym>> const& math_model_params) {
-    auto& y_bus_vec = [&math_state]() -> auto& {
-        if constexpr (is_symmetric_v<sym>) {
-            return math_state.y_bus_vec_sym;
-        } else {
-            return math_state.y_bus_vec_asym;
-        }
-    }();
+    auto& y_bus_vec = get_y_bus<sym>(math_state);
 
     assert(y_bus_vec.size() == math_model_params.size());
 
@@ -43,13 +53,7 @@ inline void update_y_bus(MathState& math_state, std::vector<MathModelParam<sym>>
 template <symmetry_tag sym>
 inline void update_y_bus(MathState& math_state, std::vector<MathModelParam<sym>> const& math_model_params,
                          std::vector<MathModelParamIncrement> const& math_model_param_increments) {
-    auto& y_bus_vec = [&math_state]() -> auto& {
-        if constexpr (is_symmetric_v<sym>) {
-            return math_state.y_bus_vec_sym;
-        } else {
-            return math_state.y_bus_vec_asym;
-        }
-    }();
+    auto& y_bus_vec = get_y_bus<sym>(math_state);
 
     assert(y_bus_vec.size() == math_model_params.size());
 
