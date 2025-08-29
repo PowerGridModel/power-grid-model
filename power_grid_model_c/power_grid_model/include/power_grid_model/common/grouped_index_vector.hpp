@@ -9,11 +9,7 @@
 #include "iterator_facade.hpp"
 #include "typing.hpp"
 
-#include <boost/iterator/zip_iterator.hpp>
-#include <boost/range.hpp>
-#include <boost/range/adaptor/indexed.hpp>
-#include <boost/range/counting_range.hpp>
-
+#include <algorithm>
 #include <ranges>
 
 /*
@@ -272,13 +268,8 @@ inline auto enumerated_zip_sequence(grouped_idx_vector_type auto const& first,
                                     grouped_idx_vector_type auto const&... rest) {
     assert(((first.size() == rest.size()) && ...));
 
-    auto const indices = boost::counting_range(Idx{}, first.size());
-
-    auto const zip_begin =
-        boost::make_zip_iterator(boost::make_tuple(std::cbegin(indices), std::cbegin(first), std::cbegin(rest)...));
-    auto const zip_end =
-        boost::make_zip_iterator(boost::make_tuple(std::cend(indices), std::cend(first), std::cend(rest)...));
-    return boost::make_iterator_range(zip_begin, zip_end);
+    auto const indices = IdxRange{first.size()};
+    return std::views::zip(indices, first, rest...);
 }
 
 } // namespace power_grid_model
