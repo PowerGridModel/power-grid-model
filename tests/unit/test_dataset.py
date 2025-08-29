@@ -157,18 +157,14 @@ def test_const_dataset__mixed_batch_type(dataset_type):
         ComponentType.node: np.zeros(shape=3, dtype=power_grid_meta_data[dataset_type][ComponentType.node]),
         ComponentType.line: np.zeros(shape=(2, 3), dtype=power_grid_meta_data[dataset_type][ComponentType.line]),
     }
-    with pytest.raises(
-        ValueError, match="Incorrect/inconsistent data provided: batch data provided but single data expected."
-    ):
+    with pytest.raises(ValueError, match=r"Dataset type \(single or batch\) must be consistent across all components."):
         CConstDataset(data, dataset_type)
 
     data = {
         ComponentType.node: np.zeros(shape=(2, 3), dtype=power_grid_meta_data[dataset_type][ComponentType.node]),
         ComponentType.line: np.zeros(shape=3, dtype=power_grid_meta_data[dataset_type][ComponentType.line]),
     }
-    with pytest.raises(
-        ValueError, match="Incorrect/inconsistent data provided: single data provided but batch data expected."
-    ):
+    with pytest.raises(ValueError, match=r"Dataset type \(single or batch\) must be consistent across all components."):
         CConstDataset(data, dataset_type)
 
 
@@ -177,9 +173,7 @@ def test_const_dataset__mixed_batch_size(dataset_type):
         ComponentType.node: np.zeros(shape=(2, 3), dtype=power_grid_meta_data[dataset_type][ComponentType.node]),
         ComponentType.line: np.zeros(shape=(3, 3), dtype=power_grid_meta_data[dataset_type][ComponentType.line]),
     }
-    with pytest.raises(
-        ValueError, match="Incorrect/inconsistent batch size provided: 3 scenarios provided but 2 scenarios expected."
-    ):
+    with pytest.raises(ValueError, match="Dataset must have a consistent batch size across all components."):
         CConstDataset(data, dataset_type)
 
 
