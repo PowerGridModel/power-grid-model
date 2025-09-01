@@ -125,7 +125,7 @@ class JobDispatch {
             }
 
             t_total.stop();
-            // base_adapter.thread_safe_add_calculation_info(thread_info);
+            // base_adapter.thread_safe_add_calculation_info(thread_info);  // TODO(mgovers): remove
         };
     }
 
