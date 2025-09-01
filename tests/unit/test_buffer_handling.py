@@ -25,16 +25,19 @@ BATCH_TOTAL_ELEMENTS = 8
 
 def load_data(component_type, is_batch, is_sparse, is_columnar):
     """Creates load data of different formats for testing"""
-    shape = (2, 4) if is_batch else (4,)
+    shape = (BATCH_DATASET_NDIM, SCENARIO_TOTAL_ELEMENTS) if is_batch else (SCENARIO_TOTAL_ELEMENTS,)
     load = initialize_array(DatasetType.update, component_type, shape)
     columnar_names = ["p_specified", "q_specified"]
 
     if is_columnar:
         if is_sparse:
-            return {"indptr": np.array([0, 5, 8]), "data": {k: load.reshape(-1)[k] for k in columnar_names}}
+            return {
+                "indptr": np.array([0, 5, BATCH_TOTAL_ELEMENTS]),
+                "data": {k: load.reshape(-1)[k] for k in columnar_names},
+            }
         return {k: load[k] for k in columnar_names}
     if is_sparse:
-        return {"indptr": np.array([0, 5, 8]), "data": load.reshape(-1)}
+        return {"indptr": np.array([0, 5, BATCH_TOTAL_ELEMENTS]), "data": load.reshape(-1)}
     return load
 
 
