@@ -76,7 +76,10 @@ class JobAdapter<MainModel, ComponentList<ComponentType...>>
         }
         return *this;
     }
-    ~JobAdapter() { model_copy_.reset(); }
+    ~JobAdapter() {
+        reset_logger_impl();
+        model_copy_.reset();
+    }
 
   private:
     // Grant the CRTP base (JobInterface<JobAdapter>) access to
@@ -163,9 +166,9 @@ class JobAdapter<MainModel, ComponentList<ComponentType...>>
         log_ = nullptr;
         model_reference_.get().reset_logger();
     }
-    void reset_logger_impl(Logger& log) {
+    void set_logger_impl(Logger& log) {
         log_ = &log;
-        model_reference_.get().reset_logger(*log_);
+        model_reference_.get().set_logger(*log_);
     }
 };
 } // namespace power_grid_model

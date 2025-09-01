@@ -552,7 +552,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     void reset_logger() { log_ = nullptr; }
-    void reset_logger(Logger& logger) { log_ = &logger; }
+    void set_logger(Logger& logger) { log_ = &logger; }
 
     auto const& state() const {
         assert(construction_complete_);

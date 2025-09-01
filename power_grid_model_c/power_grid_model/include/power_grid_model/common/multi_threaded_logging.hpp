@@ -26,7 +26,6 @@ class MultiThreadedLoggerImpl : public MultiThreadedLogger {
 
       private:
         MultiThreadedLoggerImpl* parent_;
-        friend class MultiThreadedLoggerImpl;
     };
 
     virtual std::unique_ptr<Logger> create_child() override { return std::make_unique<ThreadLogger>(*this); }

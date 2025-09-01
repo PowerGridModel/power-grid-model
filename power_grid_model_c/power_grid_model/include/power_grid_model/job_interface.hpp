@@ -67,12 +67,12 @@ template <typename Adapter> class JobInterface {
     {
         static_cast<Adapter*>(this)->reset_logger_impl();
     }
-    void reset_logger(Logger& log)
+    void set_logger(Logger& log)
         requires requires(Adapter& adapter) { // NOSONAR
-            { adapter.reset_logger_impl(log) } -> std::same_as<void>;
+            { adapter.set_logger_impl(log) } -> std::same_as<void>;
         }
     {
-        static_cast<Adapter*>(this)->reset_logger_impl(log);
+        static_cast<Adapter*>(this)->set_logger_impl(log);
     }
 
   protected:
