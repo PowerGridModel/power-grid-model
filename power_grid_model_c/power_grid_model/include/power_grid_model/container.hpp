@@ -9,10 +9,11 @@
 #include "common/common.hpp"
 #include "common/exception.hpp"
 #include "common/iterator_facade.hpp"
+#include "container_fwd.hpp"
 
-#include <boost/range.hpp>
-
+#include <algorithm>
 #include <array>
+#include <cassert>
 #include <functional>
 #include <memory>
 #include <numeric>
@@ -187,7 +188,7 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         assert(construction_complete_);
         assert(seq >= 0);
         std::array<Idx, num_storageable + 1> const& cum_size = cum_size_[get_cls_pos_v<Gettable, GettableTypes...>];
-        auto const found = std::upper_bound(cum_size.begin(), cum_size.end(), seq);
+        auto const found = std::ranges::upper_bound(cum_size, seq);
         assert(found != cum_size.end());
         auto const group = static_cast<Idx>(std::distance(cum_size.cbegin(), found) - 1);
         return Idx2D{.group = group, .pos = seq - cum_size[group]};

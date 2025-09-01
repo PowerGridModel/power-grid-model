@@ -10,21 +10,28 @@
 
 namespace power_grid_model {
 namespace common::logging {
-class CalculationInfo : public NoLogger {
+class CalculationInfo final : public Logger {
     using Data = std::map<LogEvent, double>;
 
   public:
     using Report = std::add_lvalue_reference_t<std::add_const_t<Data>>;
     static_assert(std::same_as<Report, Data const&>);
 
-    virtual void log(LogEvent /*tag*/) override {
-        // do nothing
+    CalculationInfo() = default;
+    CalculationInfo(CalculationInfo const&) = default;
+    CalculationInfo(CalculationInfo&&) noexcept = default;
+    CalculationInfo& operator=(CalculationInfo const&) = default;
+    CalculationInfo& operator=(CalculationInfo&&) noexcept = default;
+    ~CalculationInfo() override = default;
+
+    void log(LogEvent /*tag*/) override {
+        // ignore all such events for now
     }
-    virtual void log(LogEvent /*tag*/, std::string_view /*message*/) override {
-        // do nothing
+    void log(LogEvent /*tag*/, std::string_view /*message*/) override {
+        // ignore all such events for now
     }
-    virtual void log(LogEvent tag, double value) override { log_impl(tag, value); }
-    virtual void log(LogEvent tag, Idx value) override { log_impl(tag, static_cast<double>(value)); }
+    void log(LogEvent tag, double value) override { log_impl(tag, value); }
+    void log(LogEvent tag, Idx value) override { log_impl(tag, static_cast<double>(value)); }
 
   private:
     Data data_;
@@ -71,9 +78,8 @@ class CalculationInfo : public NoLogger {
     }
     void accumulate_log(LogEvent tag, double value) { data_[tag] += value; }
     void maximize_log(LogEvent tag, double value) {
-        if (auto& stored_value = data_[tag]; value > stored_value) {
-            stored_value = value;
-        }
+        auto& stored_value = data_[tag];
+        stored_value = std::max(value, stored_value);
     }
 
   public:

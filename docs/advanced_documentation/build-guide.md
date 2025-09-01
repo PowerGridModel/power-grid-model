@@ -40,7 +40,7 @@ In this way, minimum effort should be necessary to port the library to other pla
 
 ### Compiler Support
 
-You need a C++ compiler with C++20 support.
+You need a C++ compiler with C++23 support.
 Below is a list of tested compilers:
 
 #### Linux
