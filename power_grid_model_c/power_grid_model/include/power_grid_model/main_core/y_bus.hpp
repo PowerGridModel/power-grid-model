@@ -4,11 +4,6 @@
 
 #pragma once
 
-// #include "container_queries.hpp"
-// #include "state_queries.hpp"
-// #include "state.hpp"
-#include "../all_components.hpp"
-
 namespace power_grid_model::main_core {
 
 template <symmetry_tag sym, typename ComponentContainer, typename... ComponentType>
