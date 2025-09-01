@@ -25,7 +25,7 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
   public:
     friend DerivedSolver;
     SolverOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
-                                     Idx max_iter, CalculationInfo& calculation_info) {
+                                     Idx max_iter, Logger& log) {
         // get derived reference for derived solver class
         auto derived_solver = static_cast<DerivedSolver&>(*this);
 
@@ -34,11 +34,11 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
         output.u.resize(n_bus_);
         double max_dev = std::numeric_limits<double>::infinity();
 
-        Timer main_timer{calculation_info, LogEvent::math_solver};
+        Timer main_timer{log, LogEvent::math_solver};
 
         // initialize
         {
-            Timer const sub_timer{calculation_info, LogEvent::initialize_calculation};
+            Timer const sub_timer{log, LogEvent::initialize_calculation};
             // Further initialization specific to the derived solver
             derived_solver.initialize_derived_solver(y_bus, input, output);
         }
@@ -52,31 +52,30 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
             }
             {
                 // Prepare the matrices of linear equations to be solved
-                Timer const sub_timer{calculation_info, LogEvent::prepare_matrices};
+                Timer const sub_timer{log, LogEvent::prepare_matrices};
                 derived_solver.prepare_matrix_and_rhs(y_bus, input, output.u);
             }
             {
                 // Solve the linear equations
-                Timer const sub_timer{calculation_info, LogEvent::solve_sparse_linear_equation};
+                Timer const sub_timer{log, LogEvent::solve_sparse_linear_equation};
                 derived_solver.solve_matrix();
             }
             {
                 // Calculate maximum deviation of voltage at any bus
-                Timer const sub_timer{calculation_info, LogEvent::iterate_unknown};
+                Timer const sub_timer{log, LogEvent::iterate_unknown};
                 max_dev = derived_solver.iterate_unknown(output.u);
             }
         }
 
         // calculate math result
         {
-            Timer const sub_timer{calculation_info, LogEvent::calculate_math_result};
+            Timer const sub_timer{log, LogEvent::calculate_math_result};
             calculate_result(y_bus, input, output);
         }
         // Manually stop timers to avoid "Max number of iterations" to be included in the timing.
         main_timer.stop();
 
-        calculation_info[LogEvent::iterative_pf_solver_max_num_iter] =
-            std::max(calculation_info[LogEvent::iterative_pf_solver_max_num_iter], static_cast<double>(num_iter));
+        log.log(LogEvent::iterative_pf_solver_max_num_iter, num_iter);
 
         return output;
     }

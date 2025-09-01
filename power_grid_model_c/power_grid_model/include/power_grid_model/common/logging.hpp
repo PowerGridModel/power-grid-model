@@ -6,11 +6,11 @@
 
 #include "common.hpp"
 
+#include <memory>
 #include <string_view>
 
 namespace power_grid_model {
 namespace common::logging {
-
 enum class LogEvent : int16_t {
     unknown = -1,
     total = 0000,       // TODO(mgovers): find other error code?
@@ -43,8 +43,26 @@ enum class LogEvent : int16_t {
     max_num_iter = 2248,                     // TODO(mgovers): find other error code
 };
 
+class Logger {
+  public:
+    virtual void log(LogEvent tag) = 0;
+    virtual void log(LogEvent tag, std::string_view message) = 0;
+    virtual void log(LogEvent tag, double value) = 0;
+    virtual void log(LogEvent tag, Idx value) = 0;
+
+    Logger(Logger&&) noexcept = default;
+    Logger& operator=(Logger&&) noexcept = default;
+    virtual ~Logger() = default;
+
+  protected:
+    Logger() = default;
+    Logger(Logger const&) = default;
+    Logger& operator=(Logger const&) = default;
+};
+
 } // namespace common::logging
 
 using common::logging::LogEvent;
+using common::logging::Logger;
 
 } // namespace power_grid_model

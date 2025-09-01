@@ -10,16 +10,9 @@
 
 namespace power_grid_model::main_core {
 
-inline CalculationInfo& merge_into(CalculationInfo& destination, CalculationInfo const& source) {
-    static constexpr auto key =
-        LogEvent::iterative_pf_solver_max_num_iter; // TODO(mgovers) also add LogEvent::max_num_iter; this is a bug
-                                                    // in main
-    for (auto const& [k, v] : source) {
-        if (k == key) {
-            destination[k] = std::max(destination[k], v);
-        } else {
-            destination[k] += v;
-        }
+inline Logger& merge_into(Logger& destination, CalculationInfo const& source) {
+    for (const auto& [tag, value] : source.report()) {
+        destination.log(tag, value);
     }
     return destination;
 }
