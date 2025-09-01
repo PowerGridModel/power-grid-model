@@ -72,8 +72,6 @@ static std::vector<MathModelParamIncrement> get_math_param_increment(
                     return;
                 }
                 // assign parameters, branch3 param consists of three branch parameters
-                // auto const branch3_param =
-                //   get_component<Branch3>(state, changed_component_idx).template calc_param<sym>();
                 for (size_t branch2 = 0; branch2 < 3; ++branch2) {
                     increments[math_idx.group].branch_param_to_change.push_back(math_idx.pos[branch2]);
                 }
