@@ -15,10 +15,8 @@ template <std::derived_from<Logger> LoggerType>
         { merge_into(destination, source) };
     }
 class MultiThreadedLoggerImpl : public MultiThreadedLogger {
-    using SubThreadLogger = LoggerType;
-
   public:
-    class ThreadLogger : public SubThreadLogger {
+    class ThreadLogger : public LoggerType {
       public:
         ThreadLogger(MultiThreadedLoggerImpl& parent) : parent_{&parent} {}
         ThreadLogger(ThreadLogger const&) = default;
@@ -49,7 +47,7 @@ class MultiThreadedLoggerImpl : public MultiThreadedLogger {
 
     void sync(ThreadLogger const& logger) {
         std::lock_guard const lock{mutex_};
-        merge_into(log_, static_cast<SubThreadLogger const&>(logger));
+        merge_into(log_, static_cast<LoggerType const&>(logger));
     }
 };
 
