@@ -37,6 +37,7 @@
 #include "main_core/output.hpp"
 #include "main_core/topology.hpp"
 #include "main_core/update.hpp"
+#include "main_core/y_bus.hpp"
 
 // stl library
 #include <memory>
@@ -414,8 +415,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         // calculate
         return [this, &input, solve_ = std::forward<SolveFn>(solve)] {
             Timer const timer{logger(), LogEvent::math_calculation};
-            auto& solvers = get_solvers<sym>();
-            auto& y_bus_vec = get_y_bus<sym>();
+            auto& solvers = main_core::get_solvers<sym>(math_state_);
+            auto& y_bus_vec = main_core::get_y_bus<sym>(math_state_);
             std::vector<SolverOutputType> solver_output;
             solver_output.reserve(n_math_solvers_);
             for (Idx i = 0; i != n_math_solvers_; ++i) {
@@ -617,22 +618,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }
     }
 
-    template <symmetry_tag sym> std::vector<MathSolverProxy<sym>>& get_solvers() {
-        if constexpr (is_symmetric_v<sym>) {
-            return math_state_.math_solvers_sym;
-        } else {
-            return math_state_.math_solvers_asym;
-        }
-    }
-
-    template <symmetry_tag sym> std::vector<YBus<sym>>& get_y_bus() {
-        if constexpr (is_symmetric_v<sym>) {
-            return math_state_.y_bus_vec_sym;
-        } else {
-            return math_state_.y_bus_vec_asym;
-        }
-    }
-
     void rebuild_topology() {
         assert(construction_complete_);
         // clear old solvers
@@ -647,160 +632,18 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         is_asym_parameter_up_to_date_ = false;
     }
 
-    template <symmetry_tag sym> std::vector<MathModelParam<sym>> get_math_param() {
-        std::vector<MathModelParam<sym>> math_param(n_math_solvers_);
-        for (Idx i = 0; i != n_math_solvers_; ++i) {
-            math_param[i].branch_param.resize(state_.math_topology[i]->n_branch());
-            math_param[i].shunt_param.resize(state_.math_topology[i]->n_shunt());
-            math_param[i].source_param.resize(state_.math_topology[i]->n_source());
-        }
-        // loop all branch
-        for (Idx i = 0; i != static_cast<Idx>(state_.comp_topo->branch_node_idx.size()); ++i) {
-            Idx2D const math_idx = state_.topo_comp_coup->branch[i];
-            if (math_idx.group == isolated_component) {
-                continue;
-            }
-            // assign parameters
-            math_param[math_idx.group].branch_param[math_idx.pos] =
-                state_.components.template get_item_by_seq<Branch>(i).template calc_param<sym>();
-        }
-        // loop all branch3
-        for (Idx i = 0; i != static_cast<Idx>(state_.comp_topo->branch3_node_idx.size()); ++i) {
-            Idx2DBranch3 const math_idx = state_.topo_comp_coup->branch3[i];
-            if (math_idx.group == isolated_component) {
-                continue;
-            }
-            // assign parameters, branch3 param consists of three branch parameters
-            auto const branch3_param =
-                state_.components.template get_item_by_seq<Branch3>(i).template calc_param<sym>();
-            for (size_t branch2 = 0; branch2 < 3; ++branch2) {
-                math_param[math_idx.group].branch_param[math_idx.pos[branch2]] = branch3_param[branch2];
-            }
-        }
-        // loop all shunt
-        for (Idx i = 0; i != static_cast<Idx>(state_.comp_topo->shunt_node_idx.size()); ++i) {
-            Idx2D const math_idx = state_.topo_comp_coup->shunt[i];
-            if (math_idx.group == isolated_component) {
-                continue;
-            }
-            // assign parameters
-            math_param[math_idx.group].shunt_param[math_idx.pos] =
-                state_.components.template get_item_by_seq<Shunt>(i).template calc_param<sym>();
-        }
-        // loop all source
-        for (Idx i = 0; i != static_cast<Idx>(state_.comp_topo->source_node_idx.size()); ++i) {
-            Idx2D const math_idx = state_.topo_comp_coup->source[i];
-            if (math_idx.group == isolated_component) {
-                continue;
-            }
-            // assign parameters
-            math_param[math_idx.group].source_param[math_idx.pos] =
-                state_.components.template get_item_by_seq<Source>(i).template math_param<sym>();
-        }
-        return math_param;
-    }
-    template <symmetry_tag sym> std::vector<MathModelParamIncrement> get_math_param_increment() {
-        using AddToIncrement = void (*)(std::vector<MathModelParamIncrement>&, MainModelState const&, Idx2D const&);
-
-        static constexpr std::array<AddToIncrement, main_core::utils::n_types<ComponentType...>> add_to_increments{
-            [](std::vector<MathModelParamIncrement>& increments, MainModelState const& state,
-               Idx2D const& changed_component_idx) {
-                if constexpr (std::derived_from<ComponentType, Branch>) {
-                    Idx2D const math_idx =
-                        state.topo_comp_coup
-                            ->branch[main_core::get_component_sequence_idx<Branch>(state, changed_component_idx)];
-                    if (math_idx.group == isolated_component) {
-                        return;
-                    }
-                    // assign parameters
-                    increments[math_idx.group].branch_param_to_change.push_back(math_idx.pos);
-                } else if constexpr (std::derived_from<ComponentType, Branch3>) {
-                    Idx2DBranch3 const math_idx =
-                        state.topo_comp_coup
-                            ->branch3[main_core::get_component_sequence_idx<Branch3>(state, changed_component_idx)];
-                    if (math_idx.group == isolated_component) {
-                        return;
-                    }
-                    // assign parameters, branch3 param consists of three branch parameters
-                    // auto const branch3_param =
-                    //   get_component<Branch3>(state, changed_component_idx).template calc_param<sym>();
-                    for (size_t branch2 = 0; branch2 < 3; ++branch2) {
-                        increments[math_idx.group].branch_param_to_change.push_back(math_idx.pos[branch2]);
-                    }
-                } else if constexpr (std::same_as<ComponentType, Shunt>) {
-                    Idx2D const math_idx =
-                        state.topo_comp_coup
-                            ->shunt[main_core::get_component_sequence_idx<Shunt>(state, changed_component_idx)];
-                    if (math_idx.group == isolated_component) {
-                        return;
-                    }
-                    // assign parameters
-                    increments[math_idx.group].shunt_param_to_change.push_back(math_idx.pos);
-                }
-            }...};
-
-        std::vector<MathModelParamIncrement> math_param_increment(n_math_solvers_);
-
-        for (size_t i = 0; i < main_core::utils::n_types<ComponentType...>; ++i) {
-            auto const& changed_type_components = parameter_changed_components_[i];
-            auto const& add_type_to_increment = add_to_increments[i];
-            for (auto const& changed_component : changed_type_components) {
-                add_type_to_increment(math_param_increment, state_, changed_component);
-            }
-        }
-
-        return math_param_increment;
-    }
-
-    template <symmetry_tag sym> void prepare_y_bus() {
-        std::vector<YBus<sym>>& y_bus_vec = get_y_bus<sym>();
-        // also get the vector of other Y_bus (sym -> asym, or asym -> sym)
-        std::vector<YBus<other_symmetry_t<sym>>>& other_y_bus_vec = get_y_bus<other_symmetry_t<sym>>();
-        // If no Ybus exists, build them
-        if (y_bus_vec.empty()) {
-            bool const other_y_bus_exist = (!other_y_bus_vec.empty());
-            y_bus_vec.reserve(n_math_solvers_);
-            auto math_params = get_math_param<sym>();
-
-            // Check the branch and shunt indices
-            constexpr auto branch_param_in_seq_map =
-                std::array{main_core::utils::index_of_component<Line, ComponentType...>,
-                           main_core::utils::index_of_component<Link, ComponentType...>,
-                           main_core::utils::index_of_component<Transformer, ComponentType...>};
-            constexpr auto shunt_param_in_seq_map =
-                std::array{main_core::utils::index_of_component<Shunt, ComponentType...>};
-
-            for (Idx i = 0; i != n_math_solvers_; ++i) {
-                // construct from existing Y_bus structure if possible
-                if (other_y_bus_exist) {
-                    y_bus_vec.emplace_back(state_.math_topology[i],
-                                           std::make_shared<MathModelParam<sym> const>(std::move(math_params[i])),
-                                           other_y_bus_vec[i].get_y_bus_structure());
-                } else {
-                    y_bus_vec.emplace_back(state_.math_topology[i],
-                                           std::make_shared<MathModelParam<sym> const>(std::move(math_params[i])));
-                }
-
-                y_bus_vec.back().set_branch_param_idx(
-                    IdxVector{branch_param_in_seq_map.begin(), branch_param_in_seq_map.end()});
-                y_bus_vec.back().set_shunt_param_idx(
-                    IdxVector{shunt_param_in_seq_map.begin(), shunt_param_in_seq_map.end()});
-            }
-        }
-    }
-
     template <symmetry_tag sym> void prepare_solvers() {
-        std::vector<MathSolverProxy<sym>>& solvers = get_solvers<sym>();
+        std::vector<MathSolverProxy<sym>>& solvers = main_core::get_solvers<sym>(math_state_);
         // rebuild topology if needed
         if (!is_topology_up_to_date_) {
             rebuild_topology();
         }
-        prepare_y_bus<sym>();
+        main_core::prepare_y_bus<sym, ComponentContainer, ComponentType...>(state_, n_math_solvers_, math_state_);
 
         if (n_math_solvers_ != static_cast<Idx>(solvers.size())) {
             assert(solvers.empty());
             assert(n_math_solvers_ == static_cast<Idx>(state_.math_topology.size()));
-            assert(n_math_solvers_ == static_cast<Idx>(get_y_bus<sym>().size()));
+            assert(n_math_solvers_ == static_cast<Idx>(main_core::get_y_bus<sym>(math_state_).size()));
 
             solvers.clear();
             solvers.reserve(n_math_solvers_);
@@ -808,14 +651,17 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 return MathSolverProxy<sym>{math_solver_dispatcher_, math_topo};
             });
             for (Idx idx = 0; idx < n_math_solvers_; ++idx) {
-                get_y_bus<sym>()[idx].register_parameters_changed_callback(
+                main_core::get_y_bus<sym>(math_state_)[idx].register_parameters_changed_callback(
                     [solver = std::ref(solvers[idx])](bool changed) {
                         solver.get().get().parameters_changed(changed);
                     });
             }
         } else if (!is_parameter_up_to_date<sym>()) {
-            std::vector<MathModelParam<sym>> const math_params = get_math_param<sym>();
-            std::vector<MathModelParamIncrement> const math_param_increments = get_math_param_increment<sym>();
+            std::vector<MathModelParam<sym>> const math_params =
+                main_core::get_math_param<sym>(state_, n_math_solvers_);
+            std::vector<MathModelParamIncrement> const math_param_increments =
+                main_core::get_math_param_increment<sym, ComponentContainer, ComponentType...>(
+                    state_, n_math_solvers_, parameter_changed_components_);
             if (last_updated_calculation_symmetry_mode_ == is_symmetric_v<sym>) {
                 main_core::update_y_bus(math_state_, math_params, math_param_increments);
             } else {
