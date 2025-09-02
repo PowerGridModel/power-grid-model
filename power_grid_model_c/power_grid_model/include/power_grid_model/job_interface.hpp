@@ -6,8 +6,8 @@
 
 // batch dispatch interface class
 
-#include "common/calculation_info.hpp"
 #include "common/common.hpp"
+#include "common/logging.hpp"
 
 #include <concepts>
 #include <type_traits>

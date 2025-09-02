@@ -156,6 +156,13 @@ class MultiThreadedTestLogger : public common::logging::MultiThreadedLoggerImpl<
 
     Data const& report() const { return get().report(); }
 };
+
+using common::logging::MultiThreadedLogger;
+
+MultiThreadedLogger& no_logger() {
+    static common::logging::NoMultiThreadedLogger instance;
+    return instance;
+}
 } // namespace
 
 TEST_CASE("Test job dispatch logic") {
@@ -166,13 +173,13 @@ TEST_CASE("Test job dispatch logic") {
         auto adapter = JobAdapterMock{counter};
         auto result_data = MockResultDataset{};
         auto const expected_result = BatchParameter{};
-        auto const logger = MultiThreadedTestLogger{};
         SUBCASE("No update data") {
             bool const has_data = false;
             Idx const n_scenarios = 9; // arbitrary non-zero value
             auto const update_data = MockUpdateDataset(has_data, n_scenarios);
             adapter.reset_counters();
-            auto const actual_result = JobDispatch::batch_calculation(adapter, result_data, update_data);
+            auto const actual_result =
+                JobDispatch::batch_calculation(adapter, result_data, update_data, JobDispatch::sequential, no_logger());
             CHECK(expected_result == actual_result);
             CHECK(adapter.get_calculate_counter() == 1);
             CHECK(adapter.get_cache_calculate_counter() == 0); // no cache calculation in this case
@@ -184,7 +191,8 @@ TEST_CASE("Test job dispatch logic") {
             Idx const n_scenarios = 0;
             auto const update_data = MockUpdateDataset(has_data, n_scenarios);
             adapter.reset_counters();
-            auto const actual_result = JobDispatch::batch_calculation(adapter, result_data, update_data);
+            auto const actual_result =
+                JobDispatch::batch_calculation(adapter, result_data, update_data, JobDispatch::sequential, no_logger());
             CHECK(expected_result == actual_result);
             // no calculations should be done
             CHECK(adapter.get_calculate_counter() == 0);
@@ -198,7 +206,7 @@ TEST_CASE("Test job dispatch logic") {
             auto const update_data = MockUpdateDataset(has_data, n_scenarios);
             adapter.reset_counters();
             auto const actual_result =
-                JobDispatch::batch_calculation(adapter, result_data, update_data, JobDispatch::sequential);
+                JobDispatch::batch_calculation(adapter, result_data, update_data, JobDispatch::sequential, no_logger());
             CHECK(expected_result == actual_result);
             // n_scenarios calculations should be done as we run sequentially
             CHECK(adapter.get_calculate_counter() == n_scenarios);

@@ -15,6 +15,7 @@
 
 // common
 #include "common/common.hpp"
+#include "common/dummy_logging.hpp"
 #include "common/exception.hpp"
 #include "common/timer.hpp"
 

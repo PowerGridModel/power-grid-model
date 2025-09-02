@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "logging_impl.hpp"
+#include "dummy_logging.hpp"
 
 #include <mutex>
 

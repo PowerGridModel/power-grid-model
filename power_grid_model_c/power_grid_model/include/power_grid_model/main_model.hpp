@@ -8,6 +8,8 @@
 #include "job_dispatch.hpp"
 #include "main_model_impl.hpp"
 
+#include "common/calculation_info.hpp"
+
 #include <memory>
 
 namespace power_grid_model {

@@ -59,20 +59,6 @@ class JobDispatch {
 
         return BatchParameter{};
     }
-    template <typename Adapter, typename ResultDataset, typename UpdateDataset>
-        requires std::is_base_of_v<JobInterface<Adapter>, Adapter>
-    static BatchParameter batch_calculation(Adapter& adapter, ResultDataset const& result_data,
-                                            UpdateDataset const& update_data, Idx threading) {
-        common::logging::NoMultiThreadedLogger no_log{};
-        return batch_calculation(adapter, result_data, update_data, threading,
-                                 static_cast<common::logging::MultiThreadedLogger&>(no_log));
-    }
-    template <typename Adapter, typename ResultDataset, typename UpdateDataset>
-        requires std::is_base_of_v<JobInterface<Adapter>, Adapter>
-    static BatchParameter batch_calculation(Adapter& adapter, ResultDataset const& result_data,
-                                            UpdateDataset const& update_data) {
-        return batch_calculation(adapter, result_data, update_data, sequential);
-    }
 
     // Lippincott pattern
     static auto scenario_exception_handler(std::vector<std::string>& messages) {
@@ -98,27 +84,27 @@ class JobDispatch {
         return [&base_adapter, &exceptions, &result_data, &update_data, &base_log](Idx start, Idx stride,
                                                                                    Idx n_scenarios) {
             assert(n_scenarios <= narrow_cast<Idx>(exceptions.size()));
-            auto thread_info_ptr = base_log.create_child();
-            Logger& thread_info = *thread_info_ptr;
+            auto thread_log_ptr = base_log.create_child();
+            Logger& thread_log = *thread_log_ptr;
 
-            Timer t_total{thread_info, LogEvent::total_batch_calculation_in_thread};
+            Timer t_total{thread_log, LogEvent::total_batch_calculation_in_thread};
 
-            auto const copy_adapter_functor = [&base_adapter, &thread_info]() {
-                Timer const t_copy_adapter_functor{thread_info, LogEvent::copy_model};
+            auto const copy_adapter_functor = [&base_adapter, &thread_log]() {
+                Timer const t_copy_adapter_functor{thread_log, LogEvent::copy_model};
                 auto result = Adapter{base_adapter};
-                result.set_logger(thread_info);
+                result.set_logger(thread_log);
                 return result;
             };
 
             auto adapter = copy_adapter_functor();
 
-            auto setup = [&adapter, &update_data, &thread_info](Idx scenario_idx) {
-                Timer const t_update_model{thread_info, LogEvent::update_model};
+            auto setup = [&adapter, &update_data, &thread_log](Idx scenario_idx) {
+                Timer const t_update_model{thread_log, LogEvent::update_model};
                 adapter.setup(update_data, scenario_idx);
             };
 
-            auto winddown = [&adapter, &thread_info]() {
-                Timer const t_restore_model{thread_info, LogEvent::restore_model};
+            auto winddown = [&adapter, &thread_log]() {
+                Timer const t_restore_model{thread_log, LogEvent::restore_model};
                 adapter.winddown();
             };
 
@@ -135,7 +121,7 @@ class JobDispatch {
                                                                   std::move(recover_from_bad));
 
             for (Idx scenario_idx = start; scenario_idx < n_scenarios; scenario_idx += stride) {
-                Timer const t_total_single{thread_info, LogEvent::total_single_calculation_in_thread};
+                Timer const t_total_single{thread_log, LogEvent::total_single_calculation_in_thread};
                 calculate_scenario(scenario_idx);
             }
 
