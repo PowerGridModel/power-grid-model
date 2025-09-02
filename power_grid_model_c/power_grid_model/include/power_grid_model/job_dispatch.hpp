@@ -78,7 +78,7 @@ class JobDispatch {
     static auto scenario_exception_handler(std::vector<std::string>& messages) {
         return [&messages](Idx scenario_idx) -> void {
             assert(0 <= scenario_idx);
-            assert(scenario_idx < messages.size());
+            assert(scenario_idx < messages.ssize());
 
             std::exception_ptr const ex_ptr = std::current_exception();
             try {
