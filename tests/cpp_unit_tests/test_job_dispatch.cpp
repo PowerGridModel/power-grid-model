@@ -60,7 +60,7 @@ class JobAdapterMock : public JobInterface<JobAdapterMock> {
         }
         return *this;
     };
-    JobAdapterMock(JobAdapterMock&& other) noexcept : counter_{std::move(other.counter_)}, logger_{other.logger_} {}
+    JobAdapterMock(JobAdapterMock&& other) noexcept : logger_{other.logger_}, counter_{std::move(other.counter_)} {}
     JobAdapterMock& operator=(JobAdapterMock&& other) noexcept {
         if (this != &other) {
             counter_ = std::move(other.counter_);
