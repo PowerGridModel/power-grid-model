@@ -423,10 +423,9 @@ TEST_CASE("Test job dispatch logic") {
     }
     SUBCASE("Test scenario_exception_handler") {
         auto counter = std::make_shared<CallCounter>();
-        auto adapter = JobAdapterMock{counter};
         Idx const n_scenarios = 11; // arbitrary non-zero value
         auto messages = std::vector<std::string>(n_scenarios, "");
-        auto handler = JobDispatch::scenario_exception_handler(adapter, messages);
+        auto handler = JobDispatch::scenario_exception_handler(messages);
         SUBCASE("Known exception") {
             std::string const expected_message = "Test exception";
             Idx const scenario_idx = 7; // arbitrary index

@@ -113,9 +113,9 @@ class JobDispatch {
 
             auto run = [&adapter, &result_data](Idx scenario_idx) { adapter.calculate(result_data, scenario_idx); };
 
-            auto calculate_scenario = JobDispatch::call_with<Idx>(std::move(run), std::move(setup), std::move(winddown),
-                                                                  scenario_exception_handler(adapter, exceptions),
-                                                                  std::move(recover_from_bad));
+            auto calculate_scenario =
+                JobDispatch::call_with<Idx>(std::move(run), std::move(setup), std::move(winddown),
+                                            scenario_exception_handler(exceptions), std::move(recover_from_bad));
 
             for (Idx scenario_idx = start; scenario_idx < n_scenarios; scenario_idx += stride) {
                 Timer const t_total_single{thread_info, LogEvent::total_single_calculation_in_thread};
@@ -188,9 +188,8 @@ class JobDispatch {
     }
 
     // Lippincott pattern
-    template <typename Adapter>
-    static auto scenario_exception_handler(Adapter& adapter, std::vector<std::string>& messages) {
-        return [&adapter, &messages](Idx scenario_idx) {
+    static auto scenario_exception_handler(std::vector<std::string>& messages) {
+        return [&messages](Idx scenario_idx) {
             std::exception_ptr const ex_ptr = std::current_exception();
             try {
                 std::rethrow_exception(ex_ptr);
