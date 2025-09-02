@@ -75,8 +75,8 @@ template <typename Adapter> class JobInterface {
         static_cast<Adapter*>(this)->set_logger_impl(log);
     }
 
-  protected:
-    // Protected & defaulted special members — CRTP: only the derived can create/copy/move this base
+  private:
+    friend Adapter; // CRTP compliance
     JobInterface() = default;
     JobInterface(const JobInterface& /*other*/) = default;
     JobInterface& operator=(const JobInterface& /*other*/) = default;

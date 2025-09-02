@@ -52,7 +52,7 @@ class JobAdapterMock : public JobInterface<JobAdapterMock> {
     JobAdapterMock(std::shared_ptr<CallCounter> counter) : counter_{std::move(counter)} {
         REQUIRE_MESSAGE(counter_ != nullptr, "Counter must not be null or all getters will fail later on");
     }
-    JobAdapterMock(JobAdapterMock const& other) : counter_{other.counter_}, logger_{nullptr} {}
+    JobAdapterMock(JobAdapterMock const& other) : counter_{other.counter_} {}
     JobAdapterMock& operator=(JobAdapterMock const& other) {
         if (this != &other) {
             counter_ = other.counter_;
@@ -60,12 +60,7 @@ class JobAdapterMock : public JobInterface<JobAdapterMock> {
         }
         return *this;
     };
-    JobAdapterMock(JobAdapterMock&& other) noexcept {
-        counter_ = std::move(other.counter_);
-        other.counter_ = nullptr;
-        logger_ = other.logger_;
-        other.logger_ = nullptr;
-    };
+    JobAdapterMock(JobAdapterMock&& other) noexcept : counter_{std::move(other.counter_)}, logger_{other.logger_} {}
     JobAdapterMock& operator=(JobAdapterMock&& other) noexcept {
         if (this != &other) {
             counter_ = std::move(other.counter_);

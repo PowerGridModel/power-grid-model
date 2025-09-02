@@ -49,7 +49,7 @@ class JobDispatch {
         std::vector<std::string> exceptions(n_scenarios, "");
 
         adapter.prepare_job_dispatch(update_data);
-        auto single_job = single_thread_job(adapter, result_data, update_data, exceptions, log);
+        auto single_job = JobDispatch::single_thread_job(adapter, result_data, update_data, exceptions, log);
 
         job_dispatch(single_job, n_scenarios, threading);
 
@@ -72,6 +72,23 @@ class JobDispatch {
     static BatchParameter batch_calculation(Adapter& adapter, ResultDataset const& result_data,
                                             UpdateDataset const& update_data) {
         return batch_calculation(adapter, result_data, update_data, sequential);
+    }
+
+    // Lippincott pattern
+    static auto scenario_exception_handler(std::vector<std::string>& messages) {
+        return [&messages](Idx scenario_idx) -> void {
+            assert(0 <= scenario_idx);
+            assert(scenario_idx < messages.size());
+
+            std::exception_ptr const ex_ptr = std::current_exception();
+            try {
+                std::rethrow_exception(ex_ptr);
+            } catch (std::exception const& ex) {
+                messages[scenario_idx] = ex.what();
+            } catch (...) {
+                messages[scenario_idx] = "unknown exception";
+            }
+        };
     }
 
     template <typename Adapter, typename ResultDataset, typename UpdateDataset>
@@ -113,9 +130,9 @@ class JobDispatch {
 
             auto run = [&adapter, &result_data](Idx scenario_idx) { adapter.calculate(result_data, scenario_idx); };
 
-            auto calculate_scenario =
-                JobDispatch::call_with<Idx>(std::move(run), std::move(setup), std::move(winddown),
-                                            scenario_exception_handler(exceptions), std::move(recover_from_bad));
+            auto calculate_scenario = JobDispatch::call_with<Idx>(std::move(run), std::move(setup), std::move(winddown),
+                                                                  JobDispatch::scenario_exception_handler(exceptions),
+                                                                  std::move(recover_from_bad));
 
             for (Idx scenario_idx = start; scenario_idx < n_scenarios; scenario_idx += stride) {
                 Timer const t_total_single{thread_info, LogEvent::total_single_calculation_in_thread};
@@ -183,20 +200,6 @@ class JobDispatch {
                 } catch (...) {
                     recover_from_bad_();
                 }
-            }
-        };
-    }
-
-    // Lippincott pattern
-    static auto scenario_exception_handler(std::vector<std::string>& messages) {
-        return [&messages](Idx scenario_idx) {
-            std::exception_ptr const ex_ptr = std::current_exception();
-            try {
-                std::rethrow_exception(ex_ptr);
-            } catch (std::exception const& ex) {
-                messages[scenario_idx] = ex.what();
-            } catch (...) {
-                messages[scenario_idx] = "unknown exception";
             }
         };
     }

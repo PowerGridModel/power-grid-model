@@ -21,6 +21,10 @@ class MultiThreadedLoggerImpl : public MultiThreadedLogger {
     class ThreadLogger : public SubThreadLogger {
       public:
         ThreadLogger(MultiThreadedLoggerImpl& parent) : parent_{&parent} {}
+        ThreadLogger(ThreadLogger const&) = default;
+        ThreadLogger& operator=(ThreadLogger const&) = default;
+        ThreadLogger(ThreadLogger&&) noexcept = default;
+        ThreadLogger& operator=(ThreadLogger&&) noexcept = default;
         ~ThreadLogger() override { sync(); }
         void sync() const { parent_->sync(*this); }
 
@@ -28,7 +32,7 @@ class MultiThreadedLoggerImpl : public MultiThreadedLogger {
         MultiThreadedLoggerImpl* parent_;
     };
 
-    virtual std::unique_ptr<Logger> create_child() override { return std::make_unique<ThreadLogger>(*this); }
+    std::unique_ptr<Logger> create_child() override { return std::make_unique<ThreadLogger>(*this); }
     LoggerType& get() { return log_; }
     LoggerType const& get() const { return log_; }
 
@@ -44,7 +48,7 @@ class MultiThreadedLoggerImpl : public MultiThreadedLogger {
     std::mutex mutex_;
 
     void sync(ThreadLogger const& logger) {
-        std::lock_guard lock{mutex_};
+        std::lock_guard const lock{mutex_};
         merge_into(log_, static_cast<SubThreadLogger const&>(logger));
     }
 };
