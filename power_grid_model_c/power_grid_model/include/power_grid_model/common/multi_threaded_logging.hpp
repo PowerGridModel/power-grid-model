@@ -45,7 +45,7 @@ class MultiThreadedLoggerImpl : public MultiThreadedLogger {
 
     void sync(ThreadLogger const& logger) {
         std::lock_guard lock{mutex_};
-        merge_into(log_, static_cast<SubThreadLogger>(logger));
+        merge_into(log_, static_cast<SubThreadLogger const&>(logger));
     }
 };
 
