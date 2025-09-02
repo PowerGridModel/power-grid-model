@@ -8,8 +8,8 @@
 #include "job_interface.hpp"
 
 #include "common/exception.hpp"
+#include "common/timer.hpp"
 #include "common/typing.hpp"
-#include "main_core/calculation_info.hpp"
 
 #include <thread>
 

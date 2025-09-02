@@ -10,10 +10,7 @@
 #include "job_interface.hpp"
 #include "main_model_fwd.hpp"
 
-#include "main_core/calculation_info.hpp"
 #include "main_core/update.hpp"
-
-#include <mutex>
 
 namespace power_grid_model {
 
@@ -99,8 +96,6 @@ class JobAdapter<MainModel, ComponentList<ComponentType...>>
     main_core::utils::SequenceIdx<ComponentType...> current_scenario_sequence_cache_{};
 
     Logger* log_{nullptr};
-
-    std::mutex calculation_info_mutex_;
 
     void calculate_impl(MutableDataset const& result_data, Idx scenario_idx) const {
         MainModel::calculator(options_.get(), model_reference_.get(), result_data.get_individual_scenario(scenario_idx),

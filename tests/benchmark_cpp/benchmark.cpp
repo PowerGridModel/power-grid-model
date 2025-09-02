@@ -152,7 +152,7 @@ struct PowerGridBenchmark {
         try {
             // calculate
             main_model->calculate(model_options, output.get_dataset(), batch_data.get_dataset());
-            main_core::merge_into(info, main_model->calculation_info());
+            common::logging::merge_into(info, main_model->calculation_info());
         } catch (std::exception const& e) {
             std::cout << std::format("\nAn exception was raised during execution: {}\n", e.what());
         }

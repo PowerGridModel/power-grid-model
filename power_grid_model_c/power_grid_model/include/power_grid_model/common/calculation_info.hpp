@@ -10,7 +10,7 @@
 
 namespace power_grid_model {
 namespace common::logging {
-class CalculationInfo final : public Logger {
+class CalculationInfo : public Logger {
     using Data = std::map<LogEvent, double>;
 
   public:
@@ -86,6 +86,13 @@ class CalculationInfo final : public Logger {
     Report report() const { return data_; }
     void clear() { data_.clear(); }
 };
+
+inline Logger& merge_into(Logger& destination, CalculationInfo const& source) {
+    for (const auto& [tag, value] : source.report()) {
+        destination.log(tag, value);
+    }
+    return destination;
+}
 
 class MultiThreadedCalculationInfo : public MultiThreadedLoggerImpl<CalculationInfo> {
   public:
