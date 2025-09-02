@@ -159,7 +159,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
           math_solver_dispatcher_{&math_solver_dispatcher} {}
 
     MainModelImpl(MainModelImpl const& other)
-        : log_{nullptr}, // calculation info should not be copied, because it may result in race conditions
+        : log_{nullptr}, // logger should not be copied, because it may result in race conditions
           system_frequency_{other.system_frequency_},
           meta_data_{other.meta_data_},
           math_solver_dispatcher_{other.math_solver_dispatcher_},
@@ -183,7 +183,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
     MainModelImpl& operator=(MainModelImpl const& other) {
         if (this != &other) {
-            log_ = nullptr; // calculation info should be reset, because it may result in race conditions
+            log_ = nullptr; // logger should be reset, because it may result in race conditions
             system_frequency_ = other.system_frequency_;
             meta_data_ = other.meta_data_;
             math_solver_dispatcher_ = other.math_solver_dispatcher_;
