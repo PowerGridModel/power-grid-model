@@ -51,7 +51,7 @@ template <class T, class U> struct MainModelType;
 template <class... ExtraRetrievableType, class... ComponentType>
 struct MainModelType<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentList<ComponentType...>> {
 
-    // using ComponentContainer = Container<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentType...>;
+    using ComponentContainer = Container<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentType...>;
     // using MainModelState = main_core::MainModelState<ComponentContainer>;
     using ComponentTypesTuple = std::tuple<std::type_identity<ComponentType>...>;
 
