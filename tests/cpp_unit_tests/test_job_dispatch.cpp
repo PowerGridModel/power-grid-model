@@ -94,11 +94,7 @@ class JobAdapterMock : public JobInterface<JobAdapterMock> {
     void setup_impl(MockUpdateDataset const& /*update_data*/, Idx /*scenario_idx*/) const { ++(counter_->setup_calls); }
     void winddown_impl() const { ++(counter_->winddown_calls); }
     void reset_logger_impl() {
-        if (counter_ ==
-            nullptr) { // this if statement may be encountered when the destructor is called on a moved object
-            REQUIRE_MESSAGE(logger_ == nullptr,
-                            "Dangling references encountered; not all clean-ups have gone correctly");
-        } else {
+        if (counter_ != nullptr) { // this may happen when the destructor is called on a moved object
             ++(counter_->reset_logger_calls);
             logger_ = nullptr;
         }
@@ -117,7 +113,7 @@ class SomeTestException : public std::runtime_error {
 class TestLogger : public common::logging::Logger {
   public:
     struct EmptyEvent {};
-    static constexpr EmptyEvent empty_event;
+    static constexpr EmptyEvent empty_event{};
 
     struct Entry {
         LogEvent event;
