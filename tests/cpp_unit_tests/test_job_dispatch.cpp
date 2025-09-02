@@ -96,8 +96,8 @@ class JobAdapterMock : public JobInterface<JobAdapterMock> {
     void reset_logger_impl() {
         if (counter_ != nullptr) { // this may happen when the destructor is called on a moved object
             ++(counter_->reset_logger_calls);
-            logger_ = nullptr;
         }
+        logger_ = nullptr;
     }
     void set_logger_impl(Logger& logger) {
         ++(counter_->set_logger_calls);
