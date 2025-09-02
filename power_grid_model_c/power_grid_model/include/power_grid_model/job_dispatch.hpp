@@ -111,9 +111,7 @@ class JobDispatch {
                 adapter = copy_adapter_functor();
             };
 
-            auto run = [&adapter, &result_data, &thread_info](Idx scenario_idx) {
-                adapter.calculate(result_data, scenario_idx);
-            };
+            auto run = [&adapter, &result_data](Idx scenario_idx) { adapter.calculate(result_data, scenario_idx); };
 
             auto calculate_scenario = JobDispatch::call_with<Idx>(std::move(run), std::move(setup), std::move(winddown),
                                                                   scenario_exception_handler(adapter, exceptions),
@@ -125,7 +123,6 @@ class JobDispatch {
             }
 
             t_total.stop();
-            
         };
     }
 
