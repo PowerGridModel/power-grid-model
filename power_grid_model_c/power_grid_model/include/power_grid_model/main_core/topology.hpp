@@ -205,23 +205,24 @@ constexpr void register_connections_components(ComponentContainer components, Co
                                   [](Source const& source) { return source.status(); });
 }
 
+template <typename Tuple, std::size_t... Is>
+void register_all_components_impl(auto const& components, ComponentTopology& comp_topo, std::index_sequence<Is...>) {
+    (detail::register_topology_components<std::tuple_element_t<Is, Tuple>>(components, comp_topo), ...);
+}
+
+template <typename Tuple> void register_all_components(auto const& components, ComponentTopology& comp_topo) {
+    register_all_components_impl<Tuple>(components, comp_topo, std::make_index_sequence<std::tuple_size_v<Tuple>>{});
+}
+
 } // namespace detail
 
-template <typename ComponentContainer>
-    requires common::component_container_c<ComponentContainer, Branch, Branch3, Source, Shunt, GenericLoadGen,
-                                           GenericVoltageSensor, GenericPowerSensor, GenericCurrentSensor, Regulator>
-ComponentTopology construct_topology(ComponentContainer const& components) {
+template <typename MainModelType>
+    requires common::component_container_c<typename MainModelType::ComponentContainer, Branch, Branch3, Source, Shunt,
+                                           GenericLoadGen, GenericVoltageSensor, GenericPowerSensor,
+                                           GenericCurrentSensor, Regulator>
+ComponentTopology construct_topology(typename MainModelType::ComponentContainer const& components) {
     ComponentTopology comp_topo;
-    detail::register_topology_components<Node>(components, comp_topo);
-    detail::register_topology_components<Branch>(components, comp_topo);
-    detail::register_topology_components<Branch3>(components, comp_topo);
-    detail::register_topology_components<Source>(components, comp_topo);
-    detail::register_topology_components<Shunt>(components, comp_topo);
-    detail::register_topology_components<GenericLoadGen>(components, comp_topo);
-    detail::register_topology_components<GenericVoltageSensor>(components, comp_topo);
-    detail::register_topology_components<GenericPowerSensor>(components, comp_topo);
-    detail::register_topology_components<GenericCurrentSensor>(components, comp_topo);
-    detail::register_topology_components<Regulator>(components, comp_topo);
+    detail::register_all_components<typename MainModelType::topology_sequence>(components, comp_topo);
     return comp_topo;
 }
 
