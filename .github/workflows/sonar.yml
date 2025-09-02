@@ -58,6 +58,10 @@ jobs:
         run: |
           cmake --preset ci-sonar
           VERBOSE=1 build-wrapper-linux-x86-64 --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} cmake --build --preset ci-sonar
+          echo "here"
+          ls .
+          ls ${BUILD_WRAPPER_OUT_DIR}
+          ls ${BUILD_WRAPPER_OUT_DIR}/build_wrapper_output_directory
 
       - name: C++ test and coverage
         env:
