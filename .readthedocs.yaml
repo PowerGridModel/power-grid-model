@@ -15,8 +15,13 @@ build:
   apt_packages:
     - graphviz
     - gcc-14
+    - g++-14
   jobs:
     post_install:
+      # select compiler
+      - export CC=gcc-14
+      - export CXX=g++-14
+
       # Build package with doc requirements from pyproject.optional-dependencies
       - pip install --verbose --editable .[doc]
 
