@@ -84,8 +84,8 @@ template <typename Adapter> class JobInterface {
         static_cast<Adapter*>(this)->thread_safe_add_calculation_info_impl(info);
     }
 
-  protected:
-    // Protected & defaulted special members — CRTP: only the derived can create/copy/move this base
+  private:
+    friend Adapter;
     JobInterface() = default;
     JobInterface(const JobInterface& /*other*/) = default;
     JobInterface& operator=(const JobInterface& /*other*/) = default;
