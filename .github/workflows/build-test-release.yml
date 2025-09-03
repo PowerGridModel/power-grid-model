@@ -265,6 +265,7 @@ jobs:
         if: runner.os == 'Windows'
 
       - name: Enable gcc/g++
+        if: runner.os == 'ubuntu'
         run: |
           sudo apt-get update
           sudo apt-get install -y ninja-build gcc-14 g++-14
