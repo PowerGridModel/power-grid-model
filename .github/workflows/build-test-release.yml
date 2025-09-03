@@ -260,8 +260,16 @@ jobs:
           conda info
           conda list
 
-      - uses: ./.github/actions/enable-msvc
+      - name: Enable MSVC
+        uses: ./.github/actions/enable-msvc
         if: runner.os == 'Windows'
+
+      - name: Enable gcc/g++
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build gcc-14 g++-14
+          sudo ln -s /usr/bin/gcc-14 /usr/local/bin/gcc
+          sudo ln -s /usr/bin/g++-14 /usr/local/bin/g++
 
       - name: Build and install cmake target for Windows
         if: matrix.os == 'windows'
