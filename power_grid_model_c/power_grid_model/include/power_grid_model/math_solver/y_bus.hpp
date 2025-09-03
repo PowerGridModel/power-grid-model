@@ -264,7 +264,7 @@ struct YBusStructure {
         // construct transpose entry
         lu_transpose_entry.resize(nnz_counter_lu);
         // default transpose_entry[i] = i
-        std::iota(lu_transpose_entry.begin(), lu_transpose_entry.end(), 0);
+        std::ranges::iota(lu_transpose_entry, 0);
         // fill off-diagonal, loop all the branches
         for (auto const [entry_1, entry_2] : off_diag_map) {
             // for each branch entry tf and ft, they are transpose to each other
