@@ -259,6 +259,10 @@ jobs:
         run: |
           conda info
           conda list
+          echo $CC
+          echo $CXX
+          gcc --version
+          g++ --version
 
       - uses: ./.github/actions/enable-msvc
         if: runner.os == 'Windows'
