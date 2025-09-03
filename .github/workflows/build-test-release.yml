@@ -246,6 +246,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Export conda build
+        run: echo "CONDA_BUILD=1" >> $GITHUB_ENV
+
       - uses: conda-incubator/setup-miniconda@v3
         with:
           miniforge-version: latest  # use miniforge instead of miniconda
