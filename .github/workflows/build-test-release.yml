@@ -267,10 +267,7 @@ jobs:
       - name: Enable gcc/g++
         if: matrix.os == 'ubuntu'
         run: |
-          sudo apt-get update
-          sudo apt-get install -y ninja-build gcc-14 g++-14
-          sudo ln -s /usr/bin/gcc-14 /usr/local/bin/gcc
-          sudo ln -s /usr/bin/g++-14 /usr/local/bin/g++
+          conda install -y gcc_linux-64 gxx_linux-64
 
       - name: Build and install cmake target for Windows
         if: matrix.os == 'windows'
