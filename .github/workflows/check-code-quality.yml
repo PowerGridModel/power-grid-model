@@ -27,6 +27,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build gcc-14 g++-14
+          sudo ln -s /usr/bin/gcc-14 /usr/local/bin/gcc
+          sudo ln -s /usr/bin/g++-14 /usr/local/bin/g++
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
