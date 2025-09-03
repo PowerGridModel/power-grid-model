@@ -18,7 +18,7 @@ build:
     - g++-14
   jobs:
     post_install:
-      # select compiler
+      # Build package with doc requirements from pyproject.optional-dependencies
       - CC=gcc-14 CXX=g++-14 pip install --verbose --editable .[doc]
 
       # remove API DLL define in header
