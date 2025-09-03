@@ -3,9 +3,9 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #include <power_grid_model/batch_parameter.hpp>
-#include <power_grid_model/common/multi_threaded_logging.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/exception.hpp>
+#include <power_grid_model/common/multi_threaded_logging.hpp>
 #include <power_grid_model/job_dispatch.hpp>
 #include <power_grid_model/job_interface.hpp>
 
@@ -133,7 +133,7 @@ class TestLogger : public common::logging::Logger {
     Data log_;
 };
 
-Logger& merge_into(Logger& destination, TestLogger const& source) {
+inline Logger& merge_into(Logger& destination, TestLogger const& source) {
     for (const auto& entry : source.report()) {
         std::visit(
             [&destination, event = entry.event](auto&& arg) {
