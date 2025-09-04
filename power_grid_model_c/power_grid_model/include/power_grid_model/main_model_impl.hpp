@@ -399,7 +399,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     [&state](Idx n_math_solvers) {
                         return main_core::prepare_state_estimation_input<sym>(state, n_math_solvers);
                     },
-                    [this, err_tol, max_iter, calculation_method, &logger](
+                    [err_tol, max_iter, calculation_method, &logger](
                         MathSolverProxy<sym>& solver, YBus<sym> const& y_bus, StateEstimationInput<sym> const& input) {
                         return solver.get().run_state_estimation(input, err_tol, max_iter, logger, calculation_method,
                                                                  y_bus);
@@ -422,8 +422,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     return main_core::prepare_short_circuit_input<sym>(state_, state_.comp_coup, n_math_solvers,
                                                                        voltage_scaling);
                 },
-                [this, calculation_method, &logger](MathSolverProxy<sym>& solver, YBus<sym> const& y_bus,
-                                                    ShortCircuitInput const& input) {
+                [calculation_method, &logger](MathSolverProxy<sym>& solver, YBus<sym> const& y_bus,
+                                              ShortCircuitInput const& input) {
                     return solver.get().run_short_circuit(input, logger, calculation_method, y_bus);
                 },
                 logger);
