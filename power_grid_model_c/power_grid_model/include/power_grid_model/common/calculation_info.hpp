@@ -85,14 +85,17 @@ class CalculationInfo : public Logger {
   public:
     Report report() const { return data_; }
     void clear() { data_.clear(); }
-};
 
-inline Logger& merge_into(Logger& destination, CalculationInfo const& source) {
-    for (const auto& [tag, value] : source.report()) {
-        destination.log(tag, value);
+    template <std::derived_from<Logger> T> T& merge_into(T& destination) const {
+        if (&destination == this) {
+            return destination; // nothing to do
+        }
+        for (const auto& [tag, value] : report()) {
+            destination.log(tag, value);
+        }
+        return destination;
     }
-    return destination;
-}
+};
 
 class MultiThreadedCalculationInfo : public MultiThreadedLoggerImpl<CalculationInfo> {
   public:

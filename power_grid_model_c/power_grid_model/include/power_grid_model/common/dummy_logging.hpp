@@ -24,8 +24,8 @@ class NoLogger : public Logger {
     void log(LogEvent /*tag*/, Idx /*value*/) override {
         // no logging
     }
-};
 
-inline Logger& merge_into(Logger& destination, NoLogger const& /*source*/) { return destination; }
+    template <std::derived_from<Logger> T> T& merge_into(T& destination) const { return destination; }
+};
 
 } // namespace power_grid_model::common::logging

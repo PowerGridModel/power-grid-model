@@ -6,13 +6,14 @@
 
 #include "dummy_logging.hpp"
 
+#include <cassert>
 #include <mutex>
 
 namespace power_grid_model::common::logging {
 
 template <std::derived_from<Logger> LoggerType>
     requires requires(LoggerType& destination, LoggerType const& source) {
-        { merge_into(destination, source) };
+        { source.merge_into(destination) };
     }
 class MultiThreadedLoggerImpl : public MultiThreadedLogger {
   public:
@@ -46,8 +47,10 @@ class MultiThreadedLoggerImpl : public MultiThreadedLogger {
     std::mutex mutex_;
 
     void sync(ThreadLogger const& logger) {
+        assert(&logger != &log_);
+
         std::lock_guard const lock{mutex_};
-        merge_into(log_, static_cast<LoggerType const&>(logger));
+        logger.merge_into(log_);
     }
 };
 

@@ -129,25 +129,28 @@ class TestLogger : public common::logging::Logger {
 
     Data const& report() const { return log_; }
 
+    template <std::derived_from<Logger> T> T& merge_into(T& destination) const {
+        if (&destination == this) {
+            return destination; // nothing to do
+        }
+        for (const auto& entry : report()) {
+            std::visit(
+                [&destination, event = entry.event](auto&& arg) {
+                    using U = std::decay_t<decltype(arg)>;
+                    if constexpr (std::same_as<U, TestLogger::EmptyEvent>) {
+                        destination.log(event);
+                    } else {
+                        destination.log(event, arg);
+                    }
+                },
+                entry.data);
+        }
+        return destination;
+    }
+
   private:
     Data log_;
 };
-
-inline Logger& merge_into(Logger& destination, TestLogger const& source) {
-    for (const auto& entry : source.report()) {
-        std::visit(
-            [&destination, event = entry.event](auto&& arg) {
-                using T = std::decay_t<decltype(arg)>;
-                if constexpr (std::same_as<T, TestLogger::EmptyEvent>) {
-                    destination.log(event);
-                } else {
-                    destination.log(event, arg);
-                }
-            },
-            entry.data);
-    }
-    return destination;
-}
 
 class MultiThreadedTestLogger : public common::logging::MultiThreadedLoggerImpl<TestLogger> {
   public:
