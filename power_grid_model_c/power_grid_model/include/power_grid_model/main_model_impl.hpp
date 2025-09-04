@@ -15,6 +15,7 @@
 
 // common
 #include "common/common.hpp"
+#include "common/dummy_logging.hpp"
 #include "common/exception.hpp"
 #include "common/timer.hpp"
 
@@ -30,7 +31,6 @@
 #include "optimizer/optimizer.hpp"
 
 // main model implementation
-#include "main_core/calculation_info.hpp"
 #include "main_core/calculation_input_preparation.hpp"
 #include "main_core/core_utils.hpp"
 #include "main_core/input.hpp"
@@ -159,7 +159,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
           math_solver_dispatcher_{&math_solver_dispatcher} {}
 
     MainModelImpl(MainModelImpl const& other)
-        : calculation_info_{}, // calculation info should not be copied, because it may result in race conditions
+        : log_{nullptr}, // logger should not be copied, because it may result in race conditions
           system_frequency_{other.system_frequency_},
           meta_data_{other.meta_data_},
           math_solver_dispatcher_{other.math_solver_dispatcher_},
@@ -183,7 +183,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
     MainModelImpl& operator=(MainModelImpl const& other) {
         if (this != &other) {
-            calculation_info_ = {}; // calculation info should be reset, because it may result in race conditions
+            log_ = nullptr; // logger should be reset, because it may result in race conditions
             system_frequency_ = other.system_frequency_;
             meta_data_ = other.meta_data_;
             math_solver_dispatcher_ = other.math_solver_dispatcher_;
@@ -408,14 +408,14 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         assert(construction_complete_);
         // prepare
         auto const& input = [this, prepare_input_ = std::forward<PrepareInputFn>(prepare_input)] {
-            Timer const timer{calculation_info_, LogEvent::prepare};
+            Timer const timer{logger(), LogEvent::prepare};
             prepare_solvers<sym>();
             assert(is_topology_up_to_date_ && is_parameter_up_to_date<sym>());
             return prepare_input_(n_math_solvers_);
         }();
         // calculate
         return [this, &input, solve_ = std::forward<SolveFn>(solve)] {
-            Timer const timer{calculation_info_, LogEvent::math_calculation};
+            Timer const timer{logger(), LogEvent::math_calculation};
             auto& solvers = main_core::get_solvers<sym>(math_state_);
             auto& y_bus_vec = main_core::get_y_bus<sym>(math_state_);
             std::vector<SolverOutputType> solver_output;
@@ -436,8 +436,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 },
                 [this, err_tol, max_iter, calculation_method](MathSolverProxy<sym>& solver, YBus<sym> const& y_bus,
                                                               PowerFlowInput<sym> const& input) {
-                    return solver.get().run_power_flow(input, err_tol, max_iter, calculation_info_, calculation_method,
-                                                       y_bus);
+                    return solver.get().run_power_flow(input, err_tol, max_iter, logger(), calculation_method, y_bus);
                 });
         };
     }
@@ -451,8 +450,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 },
                 [this, err_tol, max_iter, calculation_method](MathSolverProxy<sym>& solver, YBus<sym> const& y_bus,
                                                               StateEstimationInput<sym> const& input) {
-                    return solver.get().run_state_estimation(input, err_tol, max_iter, calculation_info_,
-                                                             calculation_method, y_bus);
+                    return solver.get().run_state_estimation(input, err_tol, max_iter, logger(), calculation_method,
+                                                             y_bus);
                 });
         };
     }
@@ -472,7 +471,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 },
                 [this, calculation_method](MathSolverProxy<sym>& solver, YBus<sym> const& y_bus,
                                            ShortCircuitInput const& input) {
-                    return solver.get().run_short_circuit(input, calculation_info_, calculation_method, y_bus);
+                    return solver.get().run_short_circuit(input, logger(), calculation_method, y_bus);
                 });
         };
     }
@@ -538,12 +537,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         model.calculate(sub_opt, target_data);
     }
 
-    CalculationInfo calculation_info() const { return calculation_info_; }
-    void merge_calculation_info(CalculationInfo const& info) {
-        assert(construction_complete_);
-        main_core::merge_into(calculation_info_, info);
-    }
-    void reset_calculation_info() { calculation_info_ = CalculationInfo{}; }
+    void reset_logger() { log_ = nullptr; }
+    void set_logger(Logger& logger) { log_ = &logger; }
 
     auto const& state() const {
         assert(construction_complete_);
@@ -582,12 +577,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             }
         };
 
-        Timer const t_output{calculation_info_, LogEvent::produce_output};
+        Timer const t_output{logger(), LogEvent::produce_output};
         main_core::utils::run_functor_with_all_types_return_void<ComponentType...>(output_func);
     }
 
-    mutable CalculationInfo calculation_info_; // needs to be first due to padding override
-                                               // may be changed in const functions for metrics
+    Logger* log_; // needs to be first due to padding override
+                  // may be changed in const functions for metrics
 
     double system_frequency_;
     MetaData const* meta_data_;
@@ -610,6 +605,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // construction_complete is used for debug assertions only
     bool construction_complete_{false};
 #endif // !NDEBUG
+
+    Logger& logger() const {
+        static common::logging::NoLogger no_log{};
+        return log_ != nullptr ? *log_ : no_log;
+    }
 
     template <symmetry_tag sym> bool& is_parameter_up_to_date() {
         if constexpr (is_symmetric_v<sym>) {

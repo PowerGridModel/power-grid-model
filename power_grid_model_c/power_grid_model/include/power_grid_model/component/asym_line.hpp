@@ -15,7 +15,6 @@
 #include "../common/matrix_utils.hpp"
 #include "../common/three_phase_tensor.hpp"
 
-#include <iostream>
 #include <numeric>
 
 namespace power_grid_model {

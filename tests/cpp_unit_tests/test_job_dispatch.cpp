@@ -3,9 +3,9 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #include <power_grid_model/batch_parameter.hpp>
-#include <power_grid_model/common/calculation_info.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/exception.hpp>
+#include <power_grid_model/common/multi_threaded_logging.hpp>
 #include <power_grid_model/job_dispatch.hpp>
 #include <power_grid_model/job_interface.hpp>
 
@@ -13,7 +13,9 @@
 
 #include <algorithm>
 #include <atomic>
+#include <mutex>
 #include <ranges>
+#include <variant>
 
 namespace power_grid_model {
 namespace {
@@ -32,41 +34,56 @@ struct CallCounter {
     std::atomic<Idx> cache_calculate_calls{};
     std::atomic<Idx> setup_calls{};
     std::atomic<Idx> winddown_calls{};
-    std::atomic<Idx> thread_safe_add_calculation_info_calls{};
-    std::atomic<Idx> reset_calculation_info_calls{};
+    std::atomic<Idx> set_logger_calls{};
+    std::atomic<Idx> reset_logger_calls{};
 
     void reset_counters() {
         calculate_calls = 0;
         cache_calculate_calls = 0;
         setup_calls = 0;
         winddown_calls = 0;
-        thread_safe_add_calculation_info_calls = 0;
-        reset_calculation_info_calls = 0;
+        set_logger_calls = 0;
+        reset_logger_calls = 0;
     }
 };
 
 class JobAdapterMock : public JobInterface<JobAdapterMock> {
   public:
-    JobAdapterMock(std::shared_ptr<CallCounter> counter) : counter_{std::move(counter)} {}
-    JobAdapterMock(JobAdapterMock const&) = default;
-    JobAdapterMock& operator=(JobAdapterMock const&) = default;
-    JobAdapterMock(JobAdapterMock&&) noexcept = default; // NOSONAR
-    JobAdapterMock& operator=(JobAdapterMock&&) noexcept = default;
-    ~JobAdapterMock() = default;
+    JobAdapterMock(std::shared_ptr<CallCounter> counter) : counter_{std::move(counter)} {
+        REQUIRE_MESSAGE(counter_ != nullptr, "Counter must not be null or all getters will fail later on");
+    }
+    JobAdapterMock(JobAdapterMock const& other) : counter_{other.counter_} {}
+    JobAdapterMock& operator=(JobAdapterMock const& other) {
+        if (this != &other) {
+            counter_ = other.counter_;
+            logger_ = nullptr; // reset logger
+        }
+        return *this;
+    };
+    JobAdapterMock(JobAdapterMock&& other) noexcept : logger_{other.logger_}, counter_{std::move(other.counter_)} {}
+    JobAdapterMock& operator=(JobAdapterMock&& other) noexcept {
+        if (this != &other) {
+            counter_ = std::move(other.counter_);
+            other.counter_ = nullptr;
+            logger_ = other.logger_;
+            other.logger_ = nullptr;
+        }
+        return *this;
+    }
+    ~JobAdapterMock() { reset_logger(); };
 
     void reset_counters() const { counter_->reset_counters(); }
     Idx get_calculate_counter() const { return counter_->calculate_calls; }
     Idx get_cache_calculate_counter() const { return counter_->cache_calculate_calls; }
     Idx get_setup_counter() const { return counter_->setup_calls; }
     Idx get_winddown_counter() const { return counter_->winddown_calls; }
-    Idx get_thread_safe_add_calculation_info_counter() const {
-        return counter_->thread_safe_add_calculation_info_calls;
-    }
-    Idx get_reset_calculation_info_counter() const { return counter_->reset_calculation_info_calls; }
+    Idx get_set_logger_counter() const { return counter_->set_logger_calls; }
+    Idx get_reset_logger_counter() const { return counter_->reset_logger_calls; }
 
   private:
     friend class JobInterface<JobAdapterMock>;
 
+    Logger* logger_{};
     std::shared_ptr<CallCounter> counter_;
 
     void calculate_impl(MockResultDataset const& /*result_data*/, Idx /*scenario_idx*/) const {
@@ -76,21 +93,79 @@ class JobAdapterMock : public JobInterface<JobAdapterMock> {
     void prepare_job_dispatch_impl(MockUpdateDataset const& /*update_data*/) const { /* patch base class function */ }
     void setup_impl(MockUpdateDataset const& /*update_data*/, Idx /*scenario_idx*/) const { ++(counter_->setup_calls); }
     void winddown_impl() const { ++(counter_->winddown_calls); }
-    static CalculationInfo get_calculation_info_impl() {
-        CalculationInfo info;
-        info.log(LogEvent::total, 0.0);
-        return info;
+    void reset_logger_impl() {
+        if (counter_ != nullptr) { // this may happen when the destructor is called on a moved object
+            ++(counter_->reset_logger_calls);
+        }
+        logger_ = nullptr;
     }
-    void thread_safe_add_calculation_info_impl(CalculationInfo const& /*info*/) const {
-        ++(counter_->thread_safe_add_calculation_info_calls);
+    void set_logger_impl(Logger& logger) {
+        ++(counter_->set_logger_calls);
+        logger_ = &logger;
     }
-    void reset_calculation_info_impl() const { ++(counter_->reset_calculation_info_calls); }
 };
 
 class SomeTestException : public std::runtime_error {
   public:
     using std::runtime_error::runtime_error;
 };
+
+class TestLogger : public common::logging::Logger {
+  public:
+    struct EmptyEvent {};
+    static constexpr EmptyEvent empty_event{};
+
+    struct Entry {
+        LogEvent event;
+        std::variant<EmptyEvent, std::string, double, Idx> data;
+    };
+    using Data = std::vector<Entry>;
+
+    // Mock logger for testing
+    void log(LogEvent event) override { log_.emplace_back(event, empty_event); }
+    void log(LogEvent event, std::string_view message) override { log_.emplace_back(event, std::string{message}); }
+    void log(LogEvent event, double value) override { log_.emplace_back(event, value); }
+    void log(LogEvent event, Idx value) override { log_.emplace_back(event, value); }
+
+    Data const& report() const { return log_; }
+
+    template <std::derived_from<Logger> T> T& merge_into(T& destination) const {
+        if (&destination == this) {
+            return destination; // nothing to do
+        }
+        for (const auto& entry : report()) {
+            std::visit(
+                [&destination, event = entry.event](auto&& arg) {
+                    using U = std::decay_t<decltype(arg)>;
+                    if constexpr (std::same_as<U, TestLogger::EmptyEvent>) {
+                        destination.log(event);
+                    } else {
+                        destination.log(event, arg);
+                    }
+                },
+                entry.data);
+        }
+        return destination;
+    }
+
+  private:
+    Data log_;
+};
+
+class MultiThreadedTestLogger : public common::logging::MultiThreadedLoggerImpl<TestLogger> {
+  public:
+    using MultiThreadedLoggerImpl::MultiThreadedLoggerImpl;
+    using Data = TestLogger::Data;
+
+    Data const& report() const { return get().report(); }
+};
+
+using common::logging::MultiThreadedLogger;
+
+MultiThreadedLogger& no_logger() {
+    static common::logging::NoMultiThreadedLogger instance;
+    return instance;
+}
 } // namespace
 
 TEST_CASE("Test job dispatch logic") {
@@ -106,25 +181,27 @@ TEST_CASE("Test job dispatch logic") {
             Idx const n_scenarios = 9; // arbitrary non-zero value
             auto const update_data = MockUpdateDataset(has_data, n_scenarios);
             adapter.reset_counters();
-            auto const actual_result = JobDispatch::batch_calculation(adapter, result_data, update_data);
+            auto const actual_result =
+                JobDispatch::batch_calculation(adapter, result_data, update_data, JobDispatch::sequential, no_logger());
             CHECK(expected_result == actual_result);
             CHECK(adapter.get_calculate_counter() == 1);
             CHECK(adapter.get_cache_calculate_counter() == 0); // no cache calculation in this case
-            CHECK(adapter.get_reset_calculation_info_counter() ==
-                  adapter.get_calculate_counter() + adapter.get_cache_calculate_counter());
+            CHECK(adapter.get_set_logger_counter() == 1);
+            CHECK(adapter.get_reset_logger_counter() == 1);
         }
         SUBCASE("No scenarios") {
             bool const has_data = true;
             Idx const n_scenarios = 0;
             auto const update_data = MockUpdateDataset(has_data, n_scenarios);
             adapter.reset_counters();
-            auto const actual_result = JobDispatch::batch_calculation(adapter, result_data, update_data);
+            auto const actual_result =
+                JobDispatch::batch_calculation(adapter, result_data, update_data, JobDispatch::sequential, no_logger());
             CHECK(expected_result == actual_result);
             // no calculations should be done
             CHECK(adapter.get_calculate_counter() == 0);
             CHECK(adapter.get_cache_calculate_counter() == 0);
-            CHECK(adapter.get_reset_calculation_info_counter() ==
-                  adapter.get_calculate_counter() + adapter.get_cache_calculate_counter());
+            CHECK(adapter.get_set_logger_counter() == 1);
+            CHECK(adapter.get_reset_logger_counter() == 1);
         }
         SUBCASE("With scenarios and update data") {
             bool const has_data = true;
@@ -132,13 +209,13 @@ TEST_CASE("Test job dispatch logic") {
             auto const update_data = MockUpdateDataset(has_data, n_scenarios);
             adapter.reset_counters();
             auto const actual_result =
-                JobDispatch::batch_calculation(adapter, result_data, update_data, JobDispatch::sequential);
+                JobDispatch::batch_calculation(adapter, result_data, update_data, JobDispatch::sequential, no_logger());
             CHECK(expected_result == actual_result);
             // n_scenarios calculations should be done as we run sequentially
             CHECK(adapter.get_calculate_counter() == n_scenarios);
             CHECK(adapter.get_cache_calculate_counter() == 1); // cache calculation is done
-            CHECK(adapter.get_reset_calculation_info_counter() ==
-                  adapter.get_calculate_counter() + adapter.get_cache_calculate_counter());
+            CHECK(adapter.get_set_logger_counter() == 2);
+            CHECK(adapter.get_reset_logger_counter() == 2);
         }
     }
     SUBCASE("Test single_thread_job") {
@@ -164,13 +241,13 @@ TEST_CASE("Test job dispatch logic") {
             CHECK(adapter_.get_setup_counter() == expected_calls);
             CHECK(adapter_.get_winddown_counter() == expected_calls);
             CHECK(adapter_.get_calculate_counter() == expected_calls);
-            CHECK(adapter_.get_thread_safe_add_calculation_info_counter() == 1); // always called once
-            CHECK(adapter_.get_reset_calculation_info_counter() ==
-                  adapter_.get_calculate_counter() + adapter_.get_cache_calculate_counter());
+            CHECK(adapter_.get_set_logger_counter() == 1);
+            CHECK(adapter_.get_reset_logger_counter() == 1);
         };
 
         adapter.prepare_job_dispatch(update_data); // replicate preparation step from batch_calculation
-        auto single_job = JobDispatch::single_thread_job(adapter, result_data, update_data, exceptions);
+        common::logging::NoMultiThreadedLogger no_log;
+        auto single_job = JobDispatch::single_thread_job(adapter, result_data, update_data, exceptions, no_log);
 
         adapter.reset_counters();
         start = 0;
@@ -348,11 +425,9 @@ TEST_CASE("Test job dispatch logic") {
     }
     SUBCASE("Test scenario_exception_handler") {
         auto counter = std::make_shared<CallCounter>();
-        auto adapter = JobAdapterMock{counter};
         Idx const n_scenarios = 11; // arbitrary non-zero value
         auto messages = std::vector<std::string>(n_scenarios, "");
-        auto info = CalculationInfo{};
-        auto handler = JobDispatch::scenario_exception_handler(adapter, messages, info);
+        auto handler = JobDispatch::scenario_exception_handler(messages);
         SUBCASE("Known exception") {
             std::string const expected_message = "Test exception";
             Idx const scenario_idx = 7; // arbitrary index
@@ -362,7 +437,6 @@ TEST_CASE("Test job dispatch logic") {
                 handler(scenario_idx);
             }
             CHECK(messages[scenario_idx] == expected_message);
-            REQUIRE(info.report() == CalculationInfo::Report{{LogEvent::total, 0.0}});
         }
         SUBCASE("Unknown exception") {
             Idx const scenario_idx = 3; // arbitrary index
@@ -372,7 +446,6 @@ TEST_CASE("Test job dispatch logic") {
                 handler(scenario_idx);
             }
             CHECK(messages[scenario_idx] == "unknown exception");
-            REQUIRE(info.report() == CalculationInfo::Report{{LogEvent::total, 0.0}});
         }
     }
     SUBCASE("Test handle_batch_exceptions") {

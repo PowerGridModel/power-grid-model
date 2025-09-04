@@ -4,13 +4,13 @@
 
 #pragma once
 
-#include "logging_impl.hpp"
+#include "multi_threaded_logging.hpp"
 
 #include <map>
 
 namespace power_grid_model {
 namespace common::logging {
-class CalculationInfo final : public Logger {
+class CalculationInfo : public Logger {
     using Data = std::map<LogEvent, double>;
 
   public:
@@ -85,8 +85,28 @@ class CalculationInfo final : public Logger {
   public:
     Report report() const { return data_; }
     void clear() { data_.clear(); }
+
+    template <std::derived_from<Logger> T> T& merge_into(T& destination) const {
+        if (&destination == this) {
+            return destination; // nothing to do
+        }
+        for (const auto& [tag, value] : report()) {
+            destination.log(tag, value);
+        }
+        return destination;
+    }
+};
+
+class MultiThreadedCalculationInfo : public MultiThreadedLoggerImpl<CalculationInfo> {
+  public:
+    using MultiThreadedLoggerImpl<CalculationInfo>::MultiThreadedLoggerImpl;
+    using Report = CalculationInfo::Report;
+
+    Report report() const { return get().report(); }
+    void clear() { get().clear(); }
 };
 } // namespace common::logging
 
 using common::logging::CalculationInfo;
+using common::logging::MultiThreadedCalculationInfo;
 } // namespace power_grid_model
