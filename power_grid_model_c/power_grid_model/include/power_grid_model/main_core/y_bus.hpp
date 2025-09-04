@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "../common/common.hpp"
+
 namespace power_grid_model::main_core {
 
 template <symmetry_tag sym, typename ComponentContainer, typename... ComponentType>
@@ -47,7 +49,7 @@ void prepare_y_bus(MainModelState<ComponentContainer> const& state_, Idx n_math_
 
 template <symmetry_tag sym, typename ComponentContainer, typename... ComponentType>
 static std::vector<MathModelParamIncrement> get_math_param_increment(
-    MainModelState<ComponentContainer> received_state, Idx n_math_solvers_,
+    MainModelState<ComponentContainer>& received_state, Idx n_math_solvers_,
     std::array<std::vector<Idx2D>, main_core::utils::n_types<ComponentType...>> const& parameter_changed_components_) {
     using AddToIncrement =
         void (*)(std::vector<MathModelParamIncrement>&, MainModelState<ComponentContainer> const&, Idx2D const&);

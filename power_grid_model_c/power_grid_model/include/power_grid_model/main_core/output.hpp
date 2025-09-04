@@ -9,6 +9,8 @@
 
 #include "../all_components.hpp"
 
+#include <concepts>
+
 namespace power_grid_model::main_core {
 
 namespace detail {
@@ -103,7 +105,7 @@ template <typename Component, typename IndexType, class ComponentContainer, std:
 constexpr void produce_output(MainModelState<ComponentContainer> const& state, ComponentOutput&& output,
                               ResFunc&& func) {
     std::ranges::transform(get_component_citer<Component>(state), comp_base_sequence<Component>(state),
-                           std::ranges::begin(output), std::forward<ResFunc>(func));
+                           std::ranges::begin(std::forward<ComponentOutput>(output)), std::forward<ResFunc>(func));
 }
 
 } // namespace detail
