@@ -1071,8 +1071,10 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                 auto a_a1_buffer = std::vector<double>(a_elements_per_scenario * batch_size);
                 auto b_indptr = std::vector<Idx>{0, 0, 3};
 
-                std::iota(a_id_buffer.begin(), a_id_buffer.end(), ID{0});
-                std::iota(a_a1_buffer.begin(), a_a1_buffer.end(), 0.0);
+                std::iota( // NOLINT(modernize-use-ranges) // not yet supported by some compilers
+                    a_id_buffer.begin(), a_id_buffer.end(), ID{0});
+                std::iota( // NOLINT(modernize-use-ranges) // not yet supported by some compilers
+                    a_a1_buffer.begin(), a_a1_buffer.end(), 0.0);
 
                 add_homogeneous_buffer(dataset, A::name, a_elements_per_scenario, nullptr);
                 add_attribute_buffer(dataset, A::name, "id", static_cast<void*>(a_id_buffer.data()));

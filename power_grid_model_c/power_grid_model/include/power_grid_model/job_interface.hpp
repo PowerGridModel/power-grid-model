@@ -76,7 +76,7 @@ template <typename Adapter> class JobInterface {
     }
 
   private:
-    friend Adapter; // CRTP compliance
+    friend Adapter;
     JobInterface() = default;
     JobInterface(const JobInterface& /*other*/) = default;
     JobInterface& operator=(const JobInterface& /*other*/) = default;
