@@ -72,6 +72,7 @@ doctest_discover_tests(power_grid_model_unit_tests_component)
 add_executable(power_grid_model_unit_tests_main_core
     "test_entry_point.cpp"
     "test_main_core_output.cpp"
+    "test_core_utils.cpp"
 )
 
 target_link_libraries(power_grid_model_unit_tests_main_core

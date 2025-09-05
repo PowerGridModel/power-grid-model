@@ -128,6 +128,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     using ComponentContainer = Container<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentType...>;
     using MainModelState = main_core::MainModelState<ComponentContainer>;
 
+    using MainModelType = main_core::utils::MainModelType<ExtraRetrievableTypes<ExtraRetrievableType...>,
+                                                          ComponentList<ComponentType...>>;
+
     using SequenceIdxView = std::array<std::span<Idx2D const>, main_core::utils::n_types<ComponentType...>>;
     using OwnedUpdateDataset = std::tuple<std::vector<typename ComponentType::UpdateType>...>;
 
@@ -315,7 +318,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         construction_complete_ = true;
 #endif // !NDEBUG
         state_.components.set_construction_complete();
-        state_.comp_topo = std::make_shared<ComponentTopology const>(main_core::construct_topology(state_.components));
+        state_.comp_topo =
+            std::make_shared<ComponentTopology const>(main_core::construct_topology<MainModelType>(state_.components));
     }
 
     void reset_solvers() {
@@ -623,7 +627,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         assert(construction_complete_);
         // clear old solvers
         reset_solvers();
-        ComponentConnections const comp_conn = main_core::construct_components_connections(state_.components);
+        ComponentConnections const comp_conn =
+            main_core::construct_components_connections<MainModelType>(state_.components);
         // re build
         Topology topology{*state_.comp_topo, comp_conn};
         std::tie(state_.math_topology, state_.topo_comp_coup) = topology.build_topology();
