@@ -627,7 +627,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         assert(construction_complete_);
         // clear old solvers
         reset_solvers();
-        ComponentConnections const comp_conn = main_core::construct_components_connections(state_.components);
+        ComponentConnections const comp_conn =
+            main_core::construct_components_connections<MainModelType>(state_.components);
         // re build
         Topology topology{*state_.comp_topo, comp_conn};
         std::tie(state_.math_topology, state_.topo_comp_coup) = topology.build_topology();

@@ -206,12 +206,14 @@ constexpr void register_connections_components(ComponentContainer components, Co
 }
 
 template <typename Tuple, std::size_t... Is>
-void register_all_components_impl(auto const& components, ComponentTopology& comp_topo, std::index_sequence<Is...>) {
-    (detail::register_topology_components<std::tuple_element_t<Is, Tuple>>(components, comp_topo), ...);
+void construct_topology_impl(auto const& components, ComponentTopology& comp_topo, std::index_sequence<Is...>) {
+    (register_topology_components<std::tuple_element_t<Is, Tuple>>(components, comp_topo), ...);
 }
 
-template <typename Tuple> void register_all_components(auto const& components, ComponentTopology& comp_topo) {
-    register_all_components_impl<Tuple>(components, comp_topo, std::make_index_sequence<std::tuple_size_v<Tuple>>{});
+template <typename Tuple, std::size_t... Is>
+void construct_components_connections_impl(auto const& components, ComponentConnections& comp_conn,
+                                           std::index_sequence<Is...>) {
+    (register_connections_components<std::tuple_element_t<Is, Tuple>>(components, comp_conn), ...);
 }
 
 } // namespace detail
@@ -222,17 +224,19 @@ template <typename MainModelType>
                                            GenericCurrentSensor, Regulator>
 ComponentTopology construct_topology(typename MainModelType::ComponentContainer const& components) {
     ComponentTopology comp_topo;
-    detail::register_all_components<typename MainModelType::topology_sequence>(components, comp_topo);
+    using TopologyTypesTuple = typename MainModelType::TopologyTypesTuple;
+    detail::construct_topology_impl<TopologyTypesTuple>(
+        components, comp_topo, std::make_index_sequence<std::tuple_size_v<TopologyTypesTuple>>{});
     return comp_topo;
 }
 
-template <typename ComponentContainer>
-    requires common::component_container_c<ComponentContainer, Branch, Branch3, Source>
-ComponentConnections construct_components_connections(ComponentContainer const& components) {
+template <typename MainModelType>
+    requires common::component_container_c<typename MainModelType::ComponentContainer, Branch, Branch3, Source>
+ComponentConnections construct_components_connections(typename MainModelType::ComponentContainer const& components) {
     ComponentConnections comp_conn;
-    detail::register_connections_components<Branch>(components, comp_conn);
-    detail::register_connections_components<Branch3>(components, comp_conn);
-    detail::register_connections_components<Source>(components, comp_conn);
+    using TopologyConnectionTypesTuple = typename MainModelType::TopologyConnectionTypesTuple;
+    detail::construct_components_connections_impl<TopologyConnectionTypesTuple>(
+        components, comp_conn, std::make_index_sequence<std::tuple_size_v<TopologyConnectionTypesTuple>>{});
     return comp_conn;
 }
 
