@@ -260,8 +260,14 @@ jobs:
           conda info
           conda list
 
-      - uses: ./.github/actions/enable-msvc
+      - name: Enable MSVC
+        uses: ./.github/actions/enable-msvc
         if: runner.os == 'Windows'
+
+      - name: Enable gcc/g++
+        if: matrix.os == 'ubuntu'
+        run: |
+          conda install -y gcc_linux-64 gxx_linux-64
 
       - name: Build and install cmake target for Windows
         if: matrix.os == 'windows'

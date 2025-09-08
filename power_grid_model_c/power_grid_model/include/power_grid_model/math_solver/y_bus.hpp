@@ -261,10 +261,8 @@ struct YBusStructure {
         // end of y_bus_entry_indptr is same as size of entry
         assert(y_bus_entry_indptr.back() == static_cast<Idx>(y_bus_element.size()));
 
-        // construct transpose entry
-        lu_transpose_entry.resize(nnz_counter_lu);
-        // default transpose_entry[i] = i
-        std::iota(lu_transpose_entry.begin(), lu_transpose_entry.end(), 0);
+        lu_transpose_entry = IdxRange{nnz_counter_lu} | std::ranges::to<IdxVector>();
+
         // fill off-diagonal, loop all the branches
         for (auto const [entry_1, entry_2] : off_diag_map) {
             // for each branch entry tf and ft, they are transpose to each other
