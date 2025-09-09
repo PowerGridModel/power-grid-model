@@ -37,11 +37,6 @@ constexpr void run_functor_with_tuple_index_return_void(Functor functor, std::in
     (functor.template operator()<std::tuple_element_t<Indices, Tuple>>(), ...);
 }
 
-template <typename Tuple, class Functor, std::size_t... Indices>
-constexpr auto run_functor_with_tuple_index_return_array(Functor functor, std::index_sequence<Indices...>) {
-    return std::array { functor.template operator()<std::tuple_element_t<Indices, Tuple>>()... };
-}
-
 } // namespace detail
 
 constexpr Idx invalid_index{-1};
@@ -94,11 +89,6 @@ template <class... Types, class Functor> constexpr auto run_functor_with_all_typ
 template <typename Tuple, class Functor> constexpr void run_functor_with_tuple_return_void(Functor functor) {
     detail::run_functor_with_tuple_index_return_void<Tuple>(functor,
                                                             std::make_index_sequence<std::tuple_size_v<Tuple>>{});
-}
-
-template <typename Tuple, class Functor> constexpr auto run_functor_with_tuple_return_array(Functor functor) {
-    return detail::run_functor_with_tuple_index_return_array<Tuple>(
-        functor, std::make_index_sequence<std::tuple_size_v<Tuple>>{});
 }
 
 template <class T, class U> struct MainModelType;

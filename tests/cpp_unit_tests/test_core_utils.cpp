@@ -11,20 +11,40 @@ namespace power_grid_model::main_core::utils {
 
 namespace {
 // TODO test with a non used type
-struct AComponent {};
+struct AComponent {
+    using UpdateType = void;
+    static constexpr char const* name = "a_component";
+};
 } // namespace
 
 TEST_CASE("MainModelType") {
 
     SUBCASE("Node Source") {
         using ModelType = MainModelType<ExtraRetrievableTypes<Base, Node, Appliance>, ComponentList<Node, Source>>;
-        CHECK(true);
+
         static_assert(std::is_same_v<typename ModelType::ComponentContainer,
                                      Container<ExtraRetrievableTypes<Base, Node, Appliance>, Node, Source>>);
         static_assert(std::is_same_v<typename ModelType::ComponentTypesTuple, std::tuple<Node, Source>>);
         static_assert(std::is_same_v<typename ModelType::TopologyTypesTuple, std::tuple<Node, Source>>);
         static_assert(std::is_same_v<typename ModelType::TopologyConnectionTypesTuple, std::tuple<Source>>);
+        static_assert(ModelType::index_of_component<Node> == 0);
+        static_assert(ModelType::index_of_component<Source> == 1);
         static_assert(ModelType::n_types == 2);
+
+        CHECK(ModelType::run_functor_with_all_component_types_return_array(
+                  []<typename CompType>() { return CompType::name; }) == std::array<const char*, 2>{"node", "source"});
+
+        std::vector<const char*> calls;
+        ModelType::run_functor_with_all_component_types_return_void(
+            [&calls]<typename CompType>() { calls.push_back(CompType::name); });
+        CHECK(calls == std::vector<const char*>{"node", "source"});
+
+        calls.clear();
+        run_functor_with_tuple_return_void<typename ModelType::TopologyTypesTuple>(
+            [&calls]<typename CompType>() { calls.push_back(CompType::name); });
+        CHECK(calls == std::vector<const char*>{"node", "source"});
+
+        // static_assert(is_constructible_v<MainModelImpl<ModelType>>);
     }
     SUBCASE("Node Line Source") {
         using ModelType =
@@ -36,7 +56,24 @@ TEST_CASE("MainModelType") {
         static_assert(std::is_same_v<typename ModelType::ComponentTypesTuple, std::tuple<Node, Line, Source>>);
         static_assert(std::is_same_v<typename ModelType::TopologyTypesTuple, std::tuple<Node, Branch, Source>>);
         static_assert(std::is_same_v<typename ModelType::TopologyConnectionTypesTuple, std::tuple<Branch, Source>>);
+        static_assert(ModelType::index_of_component<Node> == 0);
+        static_assert(ModelType::index_of_component<Line> == 1);
+        static_assert(ModelType::index_of_component<Source> == 2);
         static_assert(ModelType::n_types == 3);
+
+        CHECK(ModelType::run_functor_with_all_component_types_return_array([]<typename CompType>() {
+                  return CompType::name;
+              }) == std::array<const char*, 3>{"node", "line", "source"});
+
+        std::vector<const char*> calls;
+        ModelType::run_functor_with_all_component_types_return_void(
+            [&calls]<typename CompType>() { calls.push_back(CompType::name); });
+        CHECK(calls == std::vector<const char*>{"node", "line", "source"});
+        calls.clear();
+
+        run_functor_with_tuple_return_void<typename ModelType::TopologyTypesTuple>(
+            [&calls]<typename CompType>() { calls.push_back(CompType::name); });
+        CHECK(calls == std::vector<const char*>{"node", "branch", "source"});
     }
     SUBCASE("Different component order: Line Source Node") {
         using ModelType =
@@ -48,8 +85,56 @@ TEST_CASE("MainModelType") {
         static_assert(std::is_same_v<typename ModelType::ComponentTypesTuple, std::tuple<Line, Source, Node>>);
         static_assert(std::is_same_v<typename ModelType::TopologyTypesTuple, std::tuple<Node, Branch, Source>>);
         static_assert(std::is_same_v<typename ModelType::TopologyConnectionTypesTuple, std::tuple<Branch, Source>>);
+        static_assert(ModelType::index_of_component<Line> == 0);
+        static_assert(ModelType::index_of_component<Source> == 1);
+        static_assert(ModelType::index_of_component<Node> == 2);
         static_assert(ModelType::n_types == 3);
+
+        CHECK(ModelType::run_functor_with_all_component_types_return_array([]<typename CompType>() {
+                  return CompType::name;
+              }) == std::array<const char*, 3>{"line", "source", "node"});
+
+        std::vector<const char*> calls;
+        ModelType::run_functor_with_all_component_types_return_void(
+            [&calls]<typename CompType>() { calls.push_back(CompType::name); });
+        CHECK(calls == std::vector<const char*>{"line", "source", "node"});
+        calls.clear();
+
+        run_functor_with_tuple_return_void<typename ModelType::TopologyTypesTuple>(
+            [&calls]<typename CompType>() { calls.push_back(CompType::name); });
+        CHECK(calls == std::vector<const char*>{"node", "branch", "source"});
     }
+
+    SUBCASE("Node AComponent Source") {
+        using ModelType =
+            MainModelType<ExtraRetrievableTypes<Base, Node, Appliance>, ComponentList<Node, AComponent, Source>>;
+
+        static_assert(
+            std::is_same_v<typename ModelType::ComponentContainer,
+                           Container<ExtraRetrievableTypes<Base, Node, Appliance>, Node, AComponent, Source>>);
+        static_assert(std::is_same_v<typename ModelType::ComponentTypesTuple, std::tuple<Node, AComponent, Source>>);
+        static_assert(std::is_same_v<typename ModelType::TopologyTypesTuple, std::tuple<Node, Source>>);
+        static_assert(std::is_same_v<typename ModelType::TopologyConnectionTypesTuple, std::tuple<Source>>);
+        static_assert(ModelType::index_of_component<Node> == 0);
+        static_assert(ModelType::index_of_component<AComponent> == 1);
+        static_assert(ModelType::index_of_component<Source> == 2);
+        static_assert(ModelType::n_types == 3);
+
+        CHECK(ModelType::run_functor_with_all_component_types_return_array([]<typename CompType>() {
+                  return CompType::name;
+              }) == std::array<const char*, 3>{"node", "a_component", "source"});
+
+        std::vector<const char*> calls;
+        ModelType::run_functor_with_all_component_types_return_void(
+            [&calls]<typename CompType>() { calls.push_back(CompType::name); });
+        CHECK(calls == std::vector<const char*>{"node", "a_component", "source"});
+
+        calls.clear();
+        run_functor_with_tuple_return_void<typename ModelType::TopologyTypesTuple>(
+            [&calls]<typename CompType>() { calls.push_back(CompType::name); });
+        CHECK(calls == std::vector<const char*>{"node", "source"});
+    }
+
     SUBCASE("Bad case: Line Source") {
         // TODO rewrite for checking fail instead of pass
         using ModelType = MainModelType<ExtraRetrievableTypes<Base, Branch, Appliance>, ComponentList<Line, Source>>;
