@@ -12,6 +12,38 @@
 #include <vector>
 namespace power_grid_model::main_core::utils {
 
+namespace detail {
+
+template <typename Tuple> struct tuple_type_identities_to_tuple_types;
+
+template <typename... Ts> struct tuple_type_identities_to_tuple_types<std::tuple<std::type_identity<Ts>...>> {
+    using type = std::tuple<Ts...>;
+};
+
+template <typename Tuple>
+using tuple_type_identities_to_tuple_types_t = typename tuple_type_identities_to_tuple_types<Tuple>::type;
+
+template <typename... Types, typename... SelectTypes>
+constexpr auto filter_tuple_types(std::tuple<std::type_identity<Types>...> /* types*/,
+                                  std::tuple<std::type_identity<SelectTypes>...> /* select_types*/) {
+    constexpr auto sub_type_in_type = []<typename T>() { return (std::is_same_v<T, SelectTypes> || ...); };
+
+    return std::tuple_cat(std::conditional_t<sub_type_in_type.template operator()<Types>(),
+                                             std::tuple<std::type_identity<Types>>, std::tuple<>>{}...);
+}
+
+template <typename Tuple, class Functor, std::size_t... Indices>
+constexpr void run_functor_with_tuple_index_return_void(Functor functor, std::index_sequence<Indices...>) {
+    (functor.template operator()<std::tuple_element_t<Indices, Tuple>>(), ...);
+}
+
+template <typename Tuple, class Functor, std::size_t... Indices>
+constexpr auto run_functor_with_tuple_index_return_array(Functor functor, std::index_sequence<Indices...>) {
+    return std::array { functor.template operator()<std::tuple_element_t<Indices, Tuple>>()... };
+}
+
+} // namespace detail
+
 constexpr Idx invalid_index{-1};
 
 struct UpdateCompProperties {
@@ -59,41 +91,14 @@ template <class... Types, class Functor> constexpr auto run_functor_with_all_typ
 }
 /////////////////// To remove ///////////////////
 
-template <typename Tuple> struct tuple_type_identities_to_tuple_types;
-
-template <typename... Ts> struct tuple_type_identities_to_tuple_types<std::tuple<std::type_identity<Ts>...>> {
-    using type = std::tuple<Ts...>;
-};
-
-template <typename Tuple>
-using tuple_type_identities_to_tuple_types_t = typename tuple_type_identities_to_tuple_types<Tuple>::type;
-
-template <typename... Types, typename... SelectTypes>
-constexpr auto filter_tuple_types(std::tuple<std::type_identity<Types>...>,
-                                  std::tuple<std::type_identity<SelectTypes>...>) {
-    constexpr auto sub_type_in_type = []<typename T>() { return (std::is_same_v<T, SelectTypes> || ...); };
-
-    return std::tuple_cat(std::conditional_t<sub_type_in_type.template operator()<Types>(),
-                                             std::tuple<std::type_identity<Types>>, std::tuple<>>{}...);
-}
-
-template <typename Tuple, class Functor, std::size_t... Indices>
-constexpr void run_functor_with_tuple_index_return_void(Functor functor, std::index_sequence<Indices...>) {
-    (functor.template operator()<std::tuple_element_t<Indices, Tuple>>(), ...);
-}
-
 template <typename Tuple, class Functor> constexpr void run_functor_with_tuple_return_void(Functor functor) {
-    run_functor_with_tuple_index_return_void<Tuple>(functor, std::make_index_sequence<std::tuple_size_v<Tuple>>{});
-}
-
-template <typename Tuple, class Functor, std::size_t... Indices>
-constexpr auto run_functor_with_tuple_index_return_array(Functor functor, std::index_sequence<Indices...>) {
-    return std::array { functor.template operator()<std::tuple_element_t<Indices, Tuple>>()... };
+    detail::run_functor_with_tuple_index_return_void<Tuple>(functor,
+                                                            std::make_index_sequence<std::tuple_size_v<Tuple>>{});
 }
 
 template <typename Tuple, class Functor> constexpr auto run_functor_with_tuple_return_array(Functor functor) {
-    return run_functor_with_tuple_index_return_array<Tuple>(functor,
-                                                            std::make_index_sequence<std::tuple_size_v<Tuple>>{});
+    return detail::run_functor_with_tuple_index_return_array<Tuple>(
+        functor, std::make_index_sequence<std::tuple_size_v<Tuple>>{});
 }
 
 template <class T, class U> struct MainModelType;
@@ -104,7 +109,6 @@ struct MainModelType<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLi
 
     using ComponentContainer = Container<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentType...>;
     using MainModelState = main_core::MainModelState<ComponentContainer>;
-    using ExtraRetrievableTypesTuple = std::tuple<std::type_identity<ExtraRetrievableType>...>;
     using ComponentTypesTuple = std::tuple<ComponentType...>;
 
     static constexpr size_t n_types = sizeof...(ComponentType);
@@ -112,6 +116,7 @@ struct MainModelType<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLi
     template <class CompType>
     static constexpr size_t index_of_component = container_impl::get_cls_pos_v<CompType, ComponentType...>;
 
+  private:
     static constexpr auto all_types_tuple_v_ =
         std::tuple<std::type_identity<ComponentType>..., std::type_identity<ExtraRetrievableType>...>{};
     // TODO: Would making a unique be necessary? We have Node mentioned as a ExtraRetrievableType and ComponentType so
@@ -126,10 +131,12 @@ struct MainModelType<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLi
     static constexpr auto topology_connection_types_tuple_v_ =
         std::tuple<std::type_identity<Branch>, std::type_identity<Branch3>, std::type_identity<Source>>{};
 
-    using TopologyTypesTuple = tuple_type_identities_to_tuple_types_t<decltype(filter_tuple_types(
+  public:
+    using TopologyTypesTuple = detail::tuple_type_identities_to_tuple_types_t<decltype(detail::filter_tuple_types(
         topology_types_tuple_v_, all_types_tuple_v_))>;
-    using TopologyConnectionTypesTuple = tuple_type_identities_to_tuple_types_t<decltype(filter_tuple_types(
-        topology_connection_types_tuple_v_, all_types_tuple_v_))>;
+    using TopologyConnectionTypesTuple =
+        detail::tuple_type_identities_to_tuple_types_t<decltype(detail::filter_tuple_types(
+            topology_connection_types_tuple_v_, all_types_tuple_v_))>;
 
     // Update related types
     using OwnedUpdateDataset = std::tuple<std::vector<typename ComponentType::UpdateType>...>;
