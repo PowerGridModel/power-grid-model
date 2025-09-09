@@ -205,17 +205,6 @@ constexpr void register_connections_components(ComponentContainer const& compone
                                   [](Source const& source) { return source.status(); });
 }
 
-template <typename Tuple, std::size_t... Is>
-void construct_topology_impl(auto const& components, ComponentTopology& comp_topo, std::index_sequence<Is...>) {
-    (register_topology_components<std::tuple_element_t<Is, Tuple>>(components, comp_topo), ...);
-}
-
-template <typename Tuple, std::size_t... Is>
-void construct_components_connections_impl(auto const& components, ComponentConnections& comp_conn,
-                                           std::index_sequence<Is...>) {
-    (register_connections_components<std::tuple_element_t<Is, Tuple>>(components, comp_conn), ...);
-}
-
 } // namespace detail
 
 template <typename MainModelType>
@@ -225,8 +214,10 @@ template <typename MainModelType>
 ComponentTopology construct_topology(typename MainModelType::ComponentContainer const& components) {
     ComponentTopology comp_topo;
     using TopologyTypesTuple = typename MainModelType::TopologyTypesTuple;
-    detail::construct_topology_impl<TopologyTypesTuple>(
-        components, comp_topo, std::make_index_sequence<std::tuple_size_v<TopologyTypesTuple>>{});
+    main_core::utils::run_functor_with_tuple_return_void<TopologyTypesTuple>(
+        [&components, &comp_topo]<typename CompType>() {
+            detail::register_topology_components<CompType>(components, comp_topo);
+        });
     return comp_topo;
 }
 
@@ -235,8 +226,10 @@ template <typename MainModelType>
 ComponentConnections construct_components_connections(typename MainModelType::ComponentContainer const& components) {
     ComponentConnections comp_conn;
     using TopologyConnectionTypesTuple = typename MainModelType::TopologyConnectionTypesTuple;
-    detail::construct_components_connections_impl<TopologyConnectionTypesTuple>(
-        components, comp_conn, std::make_index_sequence<std::tuple_size_v<TopologyConnectionTypesTuple>>{});
+    main_core::utils::run_functor_with_tuple_return_void<TopologyConnectionTypesTuple>(
+        [&components, &comp_conn]<typename CompType>() {
+            detail::register_connections_components<CompType>(components, comp_conn);
+        });
     return comp_conn;
 }
 
