@@ -24,7 +24,7 @@ TEST_CASE("MainModelType") {
         static_assert(std::is_same_v<typename ModelType::ComponentTypesTuple, std::tuple<Node, Source>>);
         static_assert(std::is_same_v<typename ModelType::TopologyTypesTuple, std::tuple<Node, Source>>);
         static_assert(std::is_same_v<typename ModelType::TopologyConnectionTypesTuple, std::tuple<Source>>);
-        static_assert(ModelType::n_component_types == 2);
+        static_assert(ModelType::n_types == 2);
     }
     SUBCASE("Node Line Source") {
         using ModelType =
@@ -36,7 +36,7 @@ TEST_CASE("MainModelType") {
         static_assert(std::is_same_v<typename ModelType::ComponentTypesTuple, std::tuple<Node, Line, Source>>);
         static_assert(std::is_same_v<typename ModelType::TopologyTypesTuple, std::tuple<Node, Branch, Source>>);
         static_assert(std::is_same_v<typename ModelType::TopologyConnectionTypesTuple, std::tuple<Branch, Source>>);
-        static_assert(ModelType::n_component_types == 3);
+        static_assert(ModelType::n_types == 3);
     }
     SUBCASE("Different component order: Line Source Node") {
         using ModelType =
@@ -48,7 +48,7 @@ TEST_CASE("MainModelType") {
         static_assert(std::is_same_v<typename ModelType::ComponentTypesTuple, std::tuple<Line, Source, Node>>);
         static_assert(std::is_same_v<typename ModelType::TopologyTypesTuple, std::tuple<Node, Branch, Source>>);
         static_assert(std::is_same_v<typename ModelType::TopologyConnectionTypesTuple, std::tuple<Branch, Source>>);
-        static_assert(ModelType::n_component_types == 3);
+        static_assert(ModelType::n_types == 3);
     }
     SUBCASE("Bad case: Line Source") {
         // TODO rewrite for checking fail instead of pass
@@ -59,7 +59,7 @@ TEST_CASE("MainModelType") {
         static_assert(std::is_same_v<typename ModelType::ComponentTypesTuple, std::tuple<Line, Source>>);
         static_assert(std::is_same_v<typename ModelType::TopologyTypesTuple, std::tuple<Branch, Source>>);
         static_assert(std::is_same_v<typename ModelType::TopologyConnectionTypesTuple, std::tuple<Branch, Source>>);
-        static_assert(ModelType::n_component_types == 2);
+        static_assert(ModelType::n_types == 2);
     }
 
     // TODO add static_assert(std::constructible_from<ModelType, double, meta_data::MetaData const&,

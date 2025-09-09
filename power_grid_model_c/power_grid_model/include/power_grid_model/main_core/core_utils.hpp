@@ -10,10 +10,10 @@
 
 #include <array>
 #include <vector>
-
 namespace power_grid_model::main_core::utils {
 
 constexpr Idx invalid_index{-1};
+/////////////////// To remove ///////////////////
 
 template <class... ComponentTypes> constexpr size_t n_types = sizeof...(ComponentTypes);
 template <class CompType, class... ComponentTypes>
@@ -29,6 +29,7 @@ template <class... Types, class Functor> constexpr void run_functor_with_all_typ
 template <class... Types, class Functor> constexpr auto run_functor_with_all_types_return_array(Functor functor) {
     return std::array { functor.template operator()<Types>()... };
 }
+/////////////////// To remove ///////////////////
 
 template <typename Tuple> struct tuple_type_identities_to_tuple_types;
 
@@ -45,22 +46,32 @@ constexpr auto filter_tuple_types(std::tuple<std::type_identity<Types>...>,
     constexpr auto sub_type_in_type = []<typename T>() { return (std::is_same_v<T, SelectTypes> || ...); };
 
     return std::tuple_cat(std::conditional_t<sub_type_in_type.template operator()<Types>(),
-                                             std::tuple<typename std::type_identity<Types>>, std::tuple<>>{}...);
+                                             std::tuple<std::type_identity<Types>>, std::tuple<>>{}...);
 }
 
-// concept validate_component_types_c =
-//     dependent_type_check<Source, Node, ComponentType...> && dependent_type_check<Line, Node, ComponentType...> &&
-//     dependent_type_check<ThreeWindingTransformer, Node, ComponentType...> &&
-//     dependent_type_check<Shunt, Node, ComponentType...> &&
-//     dependent_type_check<GenericLoadGen, Node, ComponentType...> &&
-//     dependent_type_check<GenericVoltageSensor, Node, ComponentType...>;
+template <typename Tuple, class Functor, std::size_t... Indices>
+constexpr void run_functor_with_tuple_index_return_void(Functor functor, std::index_sequence<Indices...>) {
+    (functor.template operator()<std::tuple_element_t<Indices, Tuple>>(), ...);
+}
 
-// main model implementation template
+template <typename Tuple, class Functor> constexpr void run_functor_with_tuple_return_void(Functor functor) {
+    run_functor_with_tuple_index_return_void<Tuple>(functor, std::make_index_sequence<std::tuple_size_v<Tuple>>{});
+}
+
+template <typename Tuple, class Functor, std::size_t... Indices>
+constexpr auto run_functor_with_tuple_index_return_array(Functor functor, std::index_sequence<Indices...>) {
+    return std::array { functor.template operator()<std::tuple_element_t<Indices, Tuple>>()... };
+}
+
+template <typename Tuple, class Functor> constexpr auto run_functor_with_tuple_return_array(Functor functor) {
+    return run_functor_with_tuple_index_return_array<Tuple>(functor,
+                                                            std::make_index_sequence<std::tuple_size_v<Tuple>>{});
+}
+
 template <class T, class U> struct MainModelType;
 
-template <class... ExtraRetrievableType, class... ComponentType>
 // TODO: discussion on checking dependent types can also be done here.
-// requires validate_component_types_c<ComponentType...>
+template <class... ExtraRetrievableType, class... ComponentType>
 struct MainModelType<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentList<ComponentType...>> {
 
     using ComponentContainer = Container<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentType...>;
@@ -68,29 +79,48 @@ struct MainModelType<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLi
     using ExtraRetrievableTypesTuple = std::tuple<std::type_identity<ExtraRetrievableType>...>;
     using ComponentTypesTuple = std::tuple<ComponentType...>;
 
-    // TODO: Clean up using-s
-    using _AllTypesTuple =
-        std::tuple<std::type_identity<ComponentType>..., std::type_identity<ExtraRetrievableType>...>;
+    static constexpr size_t n_types = sizeof...(ComponentType);
+    // TODO Should not have to go via container_impl.
+    template <class CompType>
+    static constexpr size_t index_of_component = container_impl::get_cls_pos_v<CompType, ComponentType...>;
+
+    static constexpr auto all_types_tuple_v_ =
+        std::tuple<std::type_identity<ComponentType>..., std::type_identity<ExtraRetrievableType>...>{};
     // TODO: Would making a unique be necessary? We have Node mentioned as a ExtraRetrievableType and ComponentType so
     // summing up is possible but maybe not appropriate. Would it be better to handle them both separately? using
-    // _AllTypesTupleUnique = typename tuple_type_identities_to_tuple_types<decltype(filter_tuple_types(
-    // _TopologyTypesTuple{}, _AllTypesTuple{}))>::type;
 
-    using _ComponentTypesTuple = std::tuple<std::type_identity<ComponentType>...>;
-    using _TopologyTypesTuple =
+    static constexpr auto topology_types_tuple_v_ =
         std::tuple<std::type_identity<Node>, std::type_identity<Branch>, std::type_identity<Branch3>,
                    std::type_identity<Source>, std::type_identity<Shunt>, std::type_identity<GenericLoadGen>,
                    std::type_identity<GenericVoltageSensor>, std::type_identity<GenericPowerSensor>,
-                   std::type_identity<GenericCurrentSensor>, std::type_identity<Regulator>>;
-    using _TopologyConnectionTypes =
-        std::tuple<std::type_identity<Branch>, std::type_identity<Branch3>, std::type_identity<Source>>;
+                   std::type_identity<GenericCurrentSensor>, std::type_identity<Regulator>>{};
 
-    using TopologyTypesTuple =
-        tuple_type_identities_to_tuple_types_t<decltype(filter_tuple_types(_TopologyTypesTuple{}, _AllTypesTuple{}))>;
+    static constexpr auto topology_connection_types_tuple_v_ =
+        std::tuple<std::type_identity<Branch>, std::type_identity<Branch3>, std::type_identity<Source>>{};
+
+    using TopologyTypesTuple = tuple_type_identities_to_tuple_types_t<decltype(filter_tuple_types(
+        topology_types_tuple_v_, all_types_tuple_v_))>;
     using TopologyConnectionTypesTuple = tuple_type_identities_to_tuple_types_t<decltype(filter_tuple_types(
-        _TopologyConnectionTypes{}, _AllTypesTuple{}))>;
+        topology_connection_types_tuple_v_, all_types_tuple_v_))>;
 
-    static constexpr size_t n_component_types = main_core::utils::n_types<ComponentType...>;
+    // Update related types
+    using OwnedUpdateDataset = std::tuple<std::vector<typename ComponentType::UpdateType>...>;
+    using SequenceIdxView = std::array<std::span<Idx2D const>, n_types>;
+    // using UpdateIndependence = std::array<UpdateCompProperties, n_types>;
+    using SequenceIdx = std::array<std::vector<Idx2D>, n_types>;
+    using ComponentFlags = std::array<bool, n_types>;
+
+    // Clean these 2. They are unused
+    static constexpr auto branch_param_in_seq_map =
+        std::array{index_of_component<Line>, index_of_component<Link>, index_of_component<Transformer>};
+    static constexpr auto shunt_param_in_seq_map = std::array{index_of_component<Shunt>};
+
+    template <class Functor> static constexpr void run_functor_with_all_component_types_return_void(Functor functor) {
+        (functor.template operator()<ComponentType>(), ...);
+    }
+    template <class Functor> static constexpr auto run_functor_with_all_component_types_return_array(Functor functor) {
+        return std::array { functor.template operator()<ComponentType>()... };
+    }
 };
 
 } // namespace power_grid_model::main_core::utils
