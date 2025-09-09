@@ -10,7 +10,6 @@
 #include "job_interface.hpp"
 #include "main_model_fwd.hpp"
 
-#include "main_core/calculation_info.hpp"
 #include "main_core/update.hpp"
 
 namespace power_grid_model {
@@ -23,7 +22,9 @@ template <class MainModel> class JobAdapter : public JobInterface<JobAdapter<Mai
 
     JobAdapter(std::reference_wrapper<MainModel> model_reference,
                std::reference_wrapper<MainModelOptions const> options)
-        : model_reference_{model_reference}, options_{options} {}
+        : model_reference_{model_reference}, options_{options} {
+        reset_logger_impl();
+    }
     JobAdapter(JobAdapter const& other)
         : model_copy_{std::make_unique<MainModel>(other.model_reference_.get())},
           model_reference_{std::ref(*model_copy_)},
@@ -31,7 +32,9 @@ template <class MainModel> class JobAdapter : public JobInterface<JobAdapter<Mai
           components_to_update_{other.components_to_update_},
           update_independence_{other.update_independence_},
           independence_flags_{other.independence_flags_},
-          all_scenarios_sequence_{other.all_scenarios_sequence_} {}
+          all_scenarios_sequence_{other.all_scenarios_sequence_} {
+        reset_logger_impl();
+    }
     JobAdapter& operator=(JobAdapter const& other) {
         if (this != &other) {
             model_copy_ = std::make_unique<MainModel>(other.model_reference_.get());
@@ -41,6 +44,8 @@ template <class MainModel> class JobAdapter : public JobInterface<JobAdapter<Mai
             update_independence_ = other.update_independence_;
             independence_flags_ = other.independence_flags_;
             all_scenarios_sequence_ = other.all_scenarios_sequence_;
+
+            reset_logger_impl();
         }
         return *this;
     }
@@ -51,7 +56,9 @@ template <class MainModel> class JobAdapter : public JobInterface<JobAdapter<Mai
           components_to_update_{std::move(other.components_to_update_)},
           update_independence_{std::move(other.update_independence_)},
           independence_flags_{std::move(other.independence_flags_)},
-          all_scenarios_sequence_{std::move(other.all_scenarios_sequence_)} {}
+          all_scenarios_sequence_{std::move(other.all_scenarios_sequence_)} {
+        reset_logger_impl();
+    }
     JobAdapter& operator=(JobAdapter&& other) noexcept {
         if (this != &other) {
             model_copy_ = std::move(other.model_copy_);
@@ -61,10 +68,15 @@ template <class MainModel> class JobAdapter : public JobInterface<JobAdapter<Mai
             update_independence_ = std::move(other.update_independence_);
             independence_flags_ = std::move(other.independence_flags_);
             all_scenarios_sequence_ = std::move(other.all_scenarios_sequence_);
+
+            reset_logger_impl();
         }
         return *this;
     }
-    ~JobAdapter() { model_copy_.reset(); }
+    ~JobAdapter() {
+        reset_logger_impl();
+        model_copy_.reset();
+    }
 
   private:
     // Grant the CRTP base (JobInterface<JobAdapter>) access to
@@ -83,7 +95,7 @@ template <class MainModel> class JobAdapter : public JobInterface<JobAdapter<Mai
     // current_scenario_sequence_cache_ is calculated per scenario, so it is excluded from the constructors.
     typename MainModelType::SequenceIdx current_scenario_sequence_cache_{};
 
-    std::mutex calculation_info_mutex_;
+    Logger* log_{nullptr};
 
     void calculate_impl(MutableDataset const& result_data, Idx scenario_idx) const {
         MainModel::calculator(options_.get(), model_reference_.get(), result_data.get_individual_scenario(scenario_idx),
@@ -135,14 +147,6 @@ template <class MainModel> class JobAdapter : public JobInterface<JobAdapter<Mai
         std::ranges::for_each(current_scenario_sequence_cache_, [](auto& comp_seq_idx) { comp_seq_idx.clear(); });
     }
 
-    CalculationInfo get_calculation_info_impl() const { return model_reference_.get().calculation_info(); }
-    void reset_calculation_info_impl() { model_reference_.get().reset_calculation_info(); }
-
-    void thread_safe_add_calculation_info_impl(CalculationInfo const& info) {
-        std::lock_guard const lock{calculation_info_mutex_};
-        model_reference_.get().merge_calculation_info(info);
-    }
-
     auto get_current_scenario_sequence_view_() const {
         return MainModelType::run_functor_with_all_component_types_return_array([this]<typename CT>() {
             constexpr auto comp_idx = MainModelType::template index_of_component<CT>;
@@ -151,6 +155,15 @@ template <class MainModel> class JobAdapter : public JobInterface<JobAdapter<Mai
             }
             return std::span<Idx2D const>{std::get<comp_idx>(current_scenario_sequence_cache_)};
         });
+    }
+
+    void reset_logger_impl() {
+        log_ = nullptr;
+        model_reference_.get().reset_logger();
+    }
+    void set_logger_impl(Logger& log) {
+        log_ = &log;
+        model_reference_.get().set_logger(*log_);
     }
 };
 } // namespace power_grid_model
