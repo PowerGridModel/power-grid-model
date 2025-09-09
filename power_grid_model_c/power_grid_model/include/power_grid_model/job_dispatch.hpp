@@ -8,8 +8,8 @@
 #include "job_interface.hpp"
 
 #include "common/exception.hpp"
+#include "common/timer.hpp"
 #include "common/typing.hpp"
-#include "main_core/calculation_info.hpp"
 
 #include <thread>
 
@@ -22,10 +22,13 @@ class JobDispatch {
     template <typename Adapter, typename ResultDataset, typename UpdateDataset>
         requires std::is_base_of_v<JobInterface<Adapter>, Adapter>
     static BatchParameter batch_calculation(Adapter& adapter, ResultDataset const& result_data,
-                                            UpdateDataset const& update_data, Idx threading = sequential) {
+                                            UpdateDataset const& update_data, Idx threading,
+                                            common::logging::MultiThreadedLogger& log) {
+        adapter.set_logger(log);
+
         if (update_data.empty()) {
-            adapter.reset_calculation_info();
             adapter.calculate(result_data);
+            adapter.reset_logger();
             return BatchParameter{};
         }
 
@@ -35,49 +38,73 @@ class JobDispatch {
         // if the batch_size is zero, it is a special case without doing any calculations at all
         // we consider in this case the batch set is independent but not topology cacheable
         if (n_scenarios == 0) {
+            adapter.reset_logger();
             return BatchParameter{};
         }
 
         // calculate once to cache, ignore results
-        adapter.reset_calculation_info();
         adapter.cache_calculate();
 
         // error messages
         std::vector<std::string> exceptions(n_scenarios, "");
 
         adapter.prepare_job_dispatch(update_data);
-        auto single_job = single_thread_job(adapter, result_data, update_data, exceptions);
+        auto single_job = JobDispatch::single_thread_job(adapter, result_data, update_data, exceptions, log);
 
         job_dispatch(single_job, n_scenarios, threading);
 
         handle_batch_exceptions(exceptions);
 
+        adapter.reset_logger();
+
         return BatchParameter{};
+    }
+
+    // Lippincott pattern
+    static auto scenario_exception_handler(std::vector<std::string>& messages) {
+        return [&messages](Idx scenario_idx) -> void {
+            assert(0 <= scenario_idx);
+            assert(scenario_idx < std::ssize(messages));
+
+            std::exception_ptr const ex_ptr = std::current_exception();
+            try {
+                std::rethrow_exception(ex_ptr);
+            } catch (std::exception const& ex) {
+                messages[scenario_idx] = ex.what();
+            } catch (...) {
+                messages[scenario_idx] = "unknown exception";
+            }
+        };
     }
 
     template <typename Adapter, typename ResultDataset, typename UpdateDataset>
     static auto single_thread_job(Adapter& base_adapter, ResultDataset const& result_data,
-                                  UpdateDataset const& update_data, std::vector<std::string>& exceptions) {
-        return [&base_adapter, &exceptions, &result_data, &update_data](Idx start, Idx stride, Idx n_scenarios) {
+                                  UpdateDataset const& update_data, std::vector<std::string>& exceptions,
+                                  common::logging::MultiThreadedLogger& base_log) {
+        return [&base_adapter, &exceptions, &result_data, &update_data, &base_log](Idx start, Idx stride,
+                                                                                   Idx n_scenarios) {
             assert(n_scenarios <= narrow_cast<Idx>(exceptions.size()));
-            CalculationInfo thread_info;
+            auto thread_log_ptr = base_log.create_child();
+            Logger& thread_log = *thread_log_ptr;
 
-            Timer t_total{thread_info, LogEvent::total_batch_calculation_in_thread};
+            Timer t_total{thread_log, LogEvent::total_batch_calculation_in_thread};
 
-            auto const copy_adapter_functor = [&base_adapter, &thread_info]() {
-                Timer const t_copy_adapter_functor{thread_info, LogEvent::copy_model};
-                return Adapter{base_adapter};
+            auto const copy_adapter_functor = [&base_adapter, &thread_log]() {
+                Timer const t_copy_adapter_functor{thread_log, LogEvent::copy_model};
+                auto result = Adapter{base_adapter};
+                result.set_logger(thread_log);
+                return result;
             };
 
             auto adapter = copy_adapter_functor();
 
-            auto setup = [&adapter, &update_data, &thread_info](Idx scenario_idx) {
-                Timer const t_update_model{thread_info, LogEvent::update_model};
+            auto setup = [&adapter, &update_data, &thread_log](Idx scenario_idx) {
+                Timer const t_update_model{thread_log, LogEvent::update_model};
                 adapter.setup(update_data, scenario_idx);
             };
 
-            auto winddown = [&adapter, &thread_info]() {
-                Timer const t_restore_model{thread_info, LogEvent::restore_model};
+            auto winddown = [&adapter, &thread_log]() {
+                Timer const t_restore_model{thread_log, LogEvent::restore_model};
                 adapter.winddown();
             };
 
@@ -87,23 +114,18 @@ class JobDispatch {
                 adapter = copy_adapter_functor();
             };
 
-            auto run = [&adapter, &result_data, &thread_info](Idx scenario_idx) {
-                adapter.reset_calculation_info();
-                adapter.calculate(result_data, scenario_idx);
-                main_core::merge_into(thread_info, adapter.get_calculation_info());
-            };
+            auto run = [&adapter, &result_data](Idx scenario_idx) { adapter.calculate(result_data, scenario_idx); };
 
-            auto calculate_scenario = JobDispatch::call_with<Idx>(
-                std::move(run), std::move(setup), std::move(winddown),
-                scenario_exception_handler(adapter, exceptions, thread_info), std::move(recover_from_bad));
+            auto calculate_scenario = JobDispatch::call_with<Idx>(std::move(run), std::move(setup), std::move(winddown),
+                                                                  JobDispatch::scenario_exception_handler(exceptions),
+                                                                  std::move(recover_from_bad));
 
             for (Idx scenario_idx = start; scenario_idx < n_scenarios; scenario_idx += stride) {
-                Timer const t_total_single{thread_info, LogEvent::total_single_calculation_in_thread};
+                Timer const t_total_single{thread_log, LogEvent::total_single_calculation_in_thread};
                 calculate_scenario(scenario_idx);
             }
 
             t_total.stop();
-            base_adapter.thread_safe_add_calculation_info(thread_info);
         };
     }
 
@@ -165,23 +187,6 @@ class JobDispatch {
                     recover_from_bad_();
                 }
             }
-        };
-    }
-
-    // Lippincott pattern
-    template <typename Adapter>
-    static auto scenario_exception_handler(Adapter& adapter, std::vector<std::string>& messages,
-                                           CalculationInfo& info) {
-        return [&adapter, &messages, &info](Idx scenario_idx) {
-            std::exception_ptr const ex_ptr = std::current_exception();
-            try {
-                std::rethrow_exception(ex_ptr);
-            } catch (std::exception const& ex) {
-                messages[scenario_idx] = ex.what();
-            } catch (...) {
-                messages[scenario_idx] = "unknown exception";
-            }
-            main_core::merge_into(info, adapter.get_calculation_info());
         };
     }
 
