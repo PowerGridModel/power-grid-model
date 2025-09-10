@@ -4,13 +4,13 @@
 
 #include <power_grid_model/container.hpp>
 #include <power_grid_model/main_core/core_utils.hpp>
+#include <power_grid_model/main_core/main_model_type.hpp>
 
 #include <doctest/doctest.h>
 
-namespace power_grid_model::main_core::utils {
+namespace power_grid_model::main_core {
 
 namespace {
-// TODO test with a non used type
 struct AComponent {
     using UpdateType = void;
     static constexpr char const* name = "a_component";
@@ -31,18 +31,19 @@ TEST_CASE("MainModelType") {
         static_assert(ModelType::index_of_component<Source> == 1);
         static_assert(ModelType::n_types == 2);
 
-        CHECK(ModelType::run_functor_with_all_component_types_return_array(
-                  []<typename CompType>() { return CompType::name; }) == std::array<const char*, 2>{"node", "source"});
+        CHECK(ModelType::run_functor_with_all_component_types_return_array([]<typename CompType>() {
+                  return std::string_view(CompType::name);
+              }) == std::array<std::string_view, 2>{"node", "source"});
 
-        std::vector<const char*> calls;
+        std::vector<std::string_view> calls;
         ModelType::run_functor_with_all_component_types_return_void(
-            [&calls]<typename CompType>() { calls.push_back(CompType::name); });
-        CHECK(calls == std::vector<const char*>{"node", "source"});
+            [&calls]<typename CompType>() { calls.push_back(std::string_view(CompType::name)); });
+        CHECK(calls == std::vector<std::string_view>{"node", "source"});
 
         calls.clear();
-        run_functor_with_tuple_return_void<typename ModelType::TopologyTypesTuple>(
-            [&calls]<typename CompType>() { calls.push_back(CompType::name); });
-        CHECK(calls == std::vector<const char*>{"node", "source"});
+        utils::run_functor_with_tuple_return_void<typename ModelType::TopologyTypesTuple>(
+            [&calls]<typename CompType>() { calls.push_back(std::string_view(CompType::name)); });
+        CHECK(calls == std::vector<std::string_view>{"node", "source"});
 
         // static_assert(is_constructible_v<MainModelImpl<ModelType>>);
     }
@@ -62,18 +63,18 @@ TEST_CASE("MainModelType") {
         static_assert(ModelType::n_types == 3);
 
         CHECK(ModelType::run_functor_with_all_component_types_return_array([]<typename CompType>() {
-                  return CompType::name;
-              }) == std::array<const char*, 3>{"node", "line", "source"});
+                  return std::string_view(CompType::name);
+              }) == std::array<std::string_view, 3>{"node", "line", "source"});
 
-        std::vector<const char*> calls;
+        std::vector<std::string_view> calls;
         ModelType::run_functor_with_all_component_types_return_void(
-            [&calls]<typename CompType>() { calls.push_back(CompType::name); });
-        CHECK(calls == std::vector<const char*>{"node", "line", "source"});
+            [&calls]<typename CompType>() { calls.push_back(std::string_view(CompType::name)); });
+        CHECK(calls == std::vector<std::string_view>{"node", "line", "source"});
         calls.clear();
 
-        run_functor_with_tuple_return_void<typename ModelType::TopologyTypesTuple>(
-            [&calls]<typename CompType>() { calls.push_back(CompType::name); });
-        CHECK(calls == std::vector<const char*>{"node", "branch", "source"});
+        utils::run_functor_with_tuple_return_void<typename ModelType::TopologyTypesTuple>(
+            [&calls]<typename CompType>() { calls.push_back(std::string_view(CompType::name)); });
+        CHECK(calls == std::vector<std::string_view>{"node", "branch", "source"});
     }
     SUBCASE("Different component order: Line Source Node") {
         using ModelType =
@@ -91,18 +92,18 @@ TEST_CASE("MainModelType") {
         static_assert(ModelType::n_types == 3);
 
         CHECK(ModelType::run_functor_with_all_component_types_return_array([]<typename CompType>() {
-                  return CompType::name;
-              }) == std::array<const char*, 3>{"line", "source", "node"});
+                  return std::string_view(CompType::name);
+              }) == std::array<std::string_view, 3>{"line", "source", "node"});
 
-        std::vector<const char*> calls;
+        std::vector<std::string_view> calls;
         ModelType::run_functor_with_all_component_types_return_void(
-            [&calls]<typename CompType>() { calls.push_back(CompType::name); });
-        CHECK(calls == std::vector<const char*>{"line", "source", "node"});
+            [&calls]<typename CompType>() { calls.push_back(std::string_view(CompType::name)); });
+        CHECK(calls == std::vector<std::string_view>{"line", "source", "node"});
         calls.clear();
 
-        run_functor_with_tuple_return_void<typename ModelType::TopologyTypesTuple>(
-            [&calls]<typename CompType>() { calls.push_back(CompType::name); });
-        CHECK(calls == std::vector<const char*>{"node", "branch", "source"});
+        utils::run_functor_with_tuple_return_void<typename ModelType::TopologyTypesTuple>(
+            [&calls]<typename CompType>() { calls.push_back(std::string_view(CompType::name)); });
+        CHECK(calls == std::vector<std::string_view>{"node", "branch", "source"});
     }
 
     SUBCASE("Node AComponent Source") {
@@ -121,18 +122,18 @@ TEST_CASE("MainModelType") {
         static_assert(ModelType::n_types == 3);
 
         CHECK(ModelType::run_functor_with_all_component_types_return_array([]<typename CompType>() {
-                  return CompType::name;
-              }) == std::array<const char*, 3>{"node", "a_component", "source"});
+                  return std::string_view(CompType::name);
+              }) == std::array<std::string_view, 3>{"node", "a_component", "source"});
 
-        std::vector<const char*> calls;
+        std::vector<std::string_view> calls;
         ModelType::run_functor_with_all_component_types_return_void(
-            [&calls]<typename CompType>() { calls.push_back(CompType::name); });
-        CHECK(calls == std::vector<const char*>{"node", "a_component", "source"});
+            [&calls]<typename CompType>() { calls.push_back(std::string_view(CompType::name)); });
+        CHECK(calls == std::vector<std::string_view>{"node", "a_component", "source"});
 
         calls.clear();
-        run_functor_with_tuple_return_void<typename ModelType::TopologyTypesTuple>(
-            [&calls]<typename CompType>() { calls.push_back(CompType::name); });
-        CHECK(calls == std::vector<const char*>{"node", "source"});
+        utils::run_functor_with_tuple_return_void<typename ModelType::TopologyTypesTuple>(
+            [&calls]<typename CompType>() { calls.push_back(std::string_view(CompType::name)); });
+        CHECK(calls == std::vector<std::string_view>{"node", "source"});
     }
 
     SUBCASE("Bad case: Line Source") {
@@ -151,4 +152,4 @@ TEST_CASE("MainModelType") {
     // MathSolverDispatcher const&>);
 }
 
-} // namespace power_grid_model::main_core::utils
+} // namespace power_grid_model::main_core

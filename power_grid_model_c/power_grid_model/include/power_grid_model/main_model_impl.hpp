@@ -32,8 +32,8 @@
 
 // main model implementation
 #include "main_core/calculation_input_preparation.hpp"
-#include "main_core/core_utils.hpp"
 #include "main_core/input.hpp"
+#include "main_core/main_model_type.hpp"
 #include "main_core/math_state.hpp"
 #include "main_core/output.hpp"
 #include "main_core/topology.hpp"
@@ -123,24 +123,26 @@ template <class T, class U> class MainModelImpl;
 template <class... ExtraRetrievableType, class... ComponentType>
 class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentList<ComponentType...>> {
 
-  public:
-    using MainModelType = main_core::utils::MainModelType<ExtraRetrievableTypes<ExtraRetrievableType...>,
-                                                          ComponentList<ComponentType...>>;
-
   private:
+    using ModelType =
+        main_core::MainModelType<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentList<ComponentType...>>;
     // internal type traits
     // container class
-    using ComponentContainer = typename MainModelType::ComponentContainer;
-    using MainModelState = typename MainModelType::MainModelState;
+    using ComponentContainer = typename ModelType::ComponentContainer;
+    using MainModelState = typename ModelType::MainModelState;
 
-    using SequenceIdxView = typename MainModelType::SequenceIdxView;
-    using OwnedUpdateDataset = typename MainModelType::OwnedUpdateDataset;
+    using SequenceIdx = typename ModelType::SequenceIdx;
+    using SequenceIdxRefWrappers = ModelType::SequenceIdxRefWrappers;
+    using SequenceIdxView = typename ModelType::SequenceIdxView;
+    using OwnedUpdateDataset = typename ModelType::OwnedUpdateDataset;
+    using ComponentFlags = typename ModelType::ComponentFlags;
 
     static constexpr Idx isolated_component{main_core::isolated_component};
     static constexpr Idx not_connected{main_core::not_connected};
     static constexpr Idx sequential{JobDispatch::sequential};
 
   public:
+    using ImplType = ModelType;
     using Options = MainModelOptions;
     using MathState = main_core::MathState;
     using MetaData = meta_data::MetaData;
@@ -215,8 +217,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     ~MainModelImpl() = default;
 
     // helper function to get what components are present in the update data
-    std::array<bool, MainModelType::n_types> get_components_to_update(ConstDataset const& update_data) const {
-        return MainModelType::run_functor_with_all_component_types_return_array([&update_data]<typename CompType>() {
+    ComponentFlags get_components_to_update(ConstDataset const& update_data) const {
+        return ModelType::run_functor_with_all_component_types_return_array([&update_data]<typename CompType>() {
             return (update_data.find_component(CompType::name, false) != main_core::utils::invalid_index);
         });
     }
@@ -239,7 +241,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 this->add_component<CT>(input_data.get_buffer_span<meta_data::input_getter_s, CT>(pos));
             }
         };
-        MainModelType::run_functor_with_all_component_types_return_void(add_func);
+        ModelType::run_functor_with_all_component_types_return_void(add_func);
     }
 
     // template to update components
@@ -248,7 +250,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
     template <class CompType, cache_type_c CacheType, std::ranges::viewable_range Updates>
     void update_component(Updates&& updates, std::span<Idx2D const> sequence_idx) {
-        constexpr auto comp_index = MainModelType::template index_of_component<CompType>;
+        constexpr auto comp_index = ModelType::template index_of_component<CompType>;
 
         assert(construction_complete_);
         assert(std::ranges::ssize(sequence_idx) == std::ranges::ssize(updates));
@@ -287,13 +289,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
   public:
     // overload to update all components across all scenarios
     template <cache_type_c CacheType, typename SequenceIdxMap>
-        requires(std::same_as<SequenceIdxMap, typename MainModelType::SequenceIdx> ||
-                 std::same_as<SequenceIdxMap, SequenceIdxView>)
+        requires(std::same_as<SequenceIdxMap, SequenceIdx> || std::same_as<SequenceIdxMap, SequenceIdxView>)
     void update_components(ConstDataset const& update_data, Idx pos, SequenceIdxMap const& sequence_idx_map) {
-        MainModelType::run_functor_with_all_component_types_return_void(
+        ModelType::run_functor_with_all_component_types_return_void(
             [this, pos, &update_data, &sequence_idx_map]<typename CT>() {
                 this->update_component_row_col<CT, CacheType>(
-                    update_data, pos, std::get<MainModelType::template index_of_component<CT>>(sequence_idx_map));
+                    update_data, pos, std::get<ModelType::template index_of_component<CT>>(sequence_idx_map));
             });
     }
 
@@ -301,8 +302,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <cache_type_c CacheType> void update_components(ConstDataset const& update_data) {
         auto const components_to_update = get_components_to_update(update_data);
         auto const update_independence =
-            main_core::update::independence::check_update_independence<MainModelType>(state_, update_data);
-        auto const sequence_idx_map = main_core::update::get_all_sequence_idx_map<MainModelType>(
+            main_core::update::independence::check_update_independence<ModelType>(state_, update_data);
+        auto const sequence_idx_map = main_core::update::get_all_sequence_idx_map<ModelType>(
             state_, update_data, 0, components_to_update, update_independence, false);
         update_components<CacheType>(update_data, 0, sequence_idx_map);
     }
@@ -318,7 +319,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 #endif // !NDEBUG
         state_.components.set_construction_complete();
         state_.comp_topo =
-            std::make_shared<ComponentTopology const>(main_core::construct_topology<MainModelType>(state_.components));
+            std::make_shared<ComponentTopology const>(main_core::construct_topology<ModelType>(state_.components));
     }
 
     void reset_solvers() {
@@ -345,17 +346,17 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                                [&state](ID id) { return main_core::get_component_idx_by_id<CT>(state, id).pos; });
             }
         };
-        MainModelType::run_functor_with_all_component_types_return_void(get_index_func);
+        ModelType::run_functor_with_all_component_types_return_void(get_index_func);
     }
 
   private:
     // Entry point for main_model.hpp
-    typename MainModelType::SequenceIdx get_all_sequence_idx_map(ConstDataset const& update_data) {
+    SequenceIdx get_all_sequence_idx_map(ConstDataset const& update_data) {
         auto const components_to_update = get_components_to_update(update_data);
         auto const update_independence =
-            main_core::update::independence::check_update_independence<MainModelType>(state_, update_data);
-        return main_core::update::get_all_sequence_idx_map<MainModelType>(state_, update_data, 0, components_to_update,
-                                                                          update_independence, false);
+            main_core::update::independence::check_update_independence<ModelType>(state_, update_data);
+        return main_core::update::get_all_sequence_idx_map<ModelType>(state_, update_data, 0, components_to_update,
+                                                                      update_independence, false);
     }
 
     void update_state(UpdateChange const& changes) {
@@ -367,7 +368,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     template <typename CompType> void restore_component(SequenceIdxView const& sequence_idx) {
-        constexpr auto component_index = MainModelType::template index_of_component<CompType>;
+        constexpr auto component_index = ModelType::template index_of_component<CompType>;
 
         auto& cached_inverse_update = std::get<component_index>(cached_inverse_update_);
         auto const& component_sequence = std::get<component_index>(sequence_idx);
@@ -381,7 +382,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
   public:
     // restore the initial values of all components
     void restore_components(SequenceIdxView const& sequence_idx) {
-        MainModelType::run_functor_with_all_component_types_return_void(
+        ModelType::run_functor_with_all_component_types_return_void(
             [this, &sequence_idx]<typename CompType>() { this->restore_component<CompType>(sequence_idx); });
 
         update_state(cached_state_changes_);
@@ -389,18 +390,17 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
   private:
-    void restore_components(
-        std::array<std::reference_wrapper<std::vector<Idx2D> const>, MainModelType::n_types> const& sequence_idx) {
-        MainModelType::run_functor_with_all_component_types_return_void([this, &sequence_idx]<typename CompType>() {
+    void restore_components(SequenceIdxRefWrappers const& sequence_idx) {
+        ModelType::run_functor_with_all_component_types_return_void([this, &sequence_idx]<typename CompType>() {
             this->restore_component<CompType>(std::array{std::span<Idx2D const>{
-                std::get<MainModelType::template index_of_component<CompType>>(sequence_idx).get()}});
+                std::get<ModelType::template index_of_component<CompType>>(sequence_idx).get()}});
         });
     }
 
-    void restore_components(MainModelType::SequenceIdx const& sequence_idx) {
-        MainModelType::run_functor_with_all_component_types_return_void([this, &sequence_idx]<typename CompType>() {
+    void restore_components(ModelType::SequenceIdx const& sequence_idx) {
+        ModelType::run_functor_with_all_component_types_return_void([this, &sequence_idx]<typename CompType>() {
             this->restore_component<CompType>(std::array{
-                std::span<Idx2D const>{std::get<MainModelType::template index_of_component<CompType>>(sequence_idx)}});
+                std::span<Idx2D const>{std::get<ModelType::template index_of_component<CompType>>(sequence_idx)}});
         });
     }
 
@@ -587,7 +587,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         };
 
         Timer const t_output{logger(), LogEvent::produce_output};
-        MainModelType::run_functor_with_all_component_types_return_void(output_func);
+        ModelType::run_functor_with_all_component_types_return_void(output_func);
     }
 
     Logger* log_; // needs to be first due to padding override
@@ -609,7 +609,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     OwnedUpdateDataset cached_inverse_update_{};
     UpdateChange cached_state_changes_{};
-    typename MainModelType::SequenceIdx parameter_changed_components_{};
+    SequenceIdx parameter_changed_components_{};
 #ifndef NDEBUG
     // construction_complete is used for debug assertions only
     bool construction_complete_{false};
@@ -633,7 +633,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         // clear old solvers
         reset_solvers();
         ComponentConnections const comp_conn =
-            main_core::construct_components_connections<MainModelType>(state_.components);
+            main_core::construct_components_connections<ModelType>(state_.components);
         // re build
         Topology topology{*state_.comp_topo, comp_conn};
         std::tie(state_.math_topology, state_.topo_comp_coup) = topology.build_topology();

@@ -207,13 +207,13 @@ constexpr void register_connections_components(ComponentContainer const& compone
 
 } // namespace detail
 
-template <typename MainModelType>
-    requires common::component_container_c<typename MainModelType::ComponentContainer, Branch, Branch3, Source, Shunt,
+template <typename ModelType>
+    requires common::component_container_c<typename ModelType::ComponentContainer, Branch, Branch3, Source, Shunt,
                                            GenericLoadGen, GenericVoltageSensor, GenericPowerSensor,
                                            GenericCurrentSensor, Regulator>
-ComponentTopology construct_topology(typename MainModelType::ComponentContainer const& components) {
+ComponentTopology construct_topology(typename ModelType::ComponentContainer const& components) {
     ComponentTopology comp_topo;
-    using TopologyTypesTuple = typename MainModelType::TopologyTypesTuple;
+    using TopologyTypesTuple = typename ModelType::TopologyTypesTuple;
     main_core::utils::run_functor_with_tuple_return_void<TopologyTypesTuple>(
         [&components, &comp_topo]<typename CompType>() {
             detail::register_topology_components<CompType>(components, comp_topo);
@@ -221,11 +221,11 @@ ComponentTopology construct_topology(typename MainModelType::ComponentContainer 
     return comp_topo;
 }
 
-template <typename MainModelType>
-    requires common::component_container_c<typename MainModelType::ComponentContainer, Branch, Branch3, Source>
-ComponentConnections construct_components_connections(typename MainModelType::ComponentContainer const& components) {
+template <typename ModelType>
+    requires common::component_container_c<typename ModelType::ComponentContainer, Branch, Branch3, Source>
+ComponentConnections construct_components_connections(typename ModelType::ComponentContainer const& components) {
     ComponentConnections comp_conn;
-    using TopologyConnectionTypesTuple = typename MainModelType::TopologyConnectionTypesTuple;
+    using TopologyConnectionTypesTuple = typename ModelType::TopologyConnectionTypesTuple;
     main_core::utils::run_functor_with_tuple_return_void<TopologyConnectionTypesTuple>(
         [&components, &comp_conn]<typename CompType>() {
             detail::register_connections_components<CompType>(components, comp_conn);
