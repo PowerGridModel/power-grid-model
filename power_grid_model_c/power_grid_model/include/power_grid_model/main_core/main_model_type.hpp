@@ -25,17 +25,12 @@ template <typename Tuple>
 using tuple_type_identities_to_tuple_types_t = typename tuple_type_identities_to_tuple_types<Tuple>::type;
 
 template <typename... Types, typename... SelectTypes>
-constexpr auto filter_tuple_types(std::tuple<std::type_identity<Types>...> /* types*/,
-                                  std::tuple<std::type_identity<SelectTypes>...> /* select_types*/) {
+constexpr auto filter_tuple_types(std::tuple<std::type_identity<Types>...> /*unused*/,
+                                  std::tuple<std::type_identity<SelectTypes>...> /*unused*/) {
     constexpr auto sub_type_in_type = []<typename T>() { return (std::is_same_v<T, SelectTypes> || ...); };
 
     return std::tuple_cat(std::conditional_t<sub_type_in_type.template operator()<Types>(),
                                              std::tuple<std::type_identity<Types>>, std::tuple<>>{}...);
-}
-
-template <typename Tuple, class Functor, std::size_t... Indices>
-constexpr void run_functor_with_tuple_index_return_void(Functor functor, std::index_sequence<Indices...>) {
-    (functor.template operator()<std::tuple_element_t<Indices, Tuple>>(), ...);
 }
 
 } // namespace detail
