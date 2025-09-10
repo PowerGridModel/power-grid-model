@@ -123,14 +123,13 @@ inline void validate_update_data_independence(UpdateCompProperties const& comp, 
     }
 }
 
-template <typename MainModelType>
-typename MainModelType::UpdateIndependence
-check_update_independence(typename MainModelType::MainModelState const& state, ConstDataset const& update_data) {
-    return MainModelType::run_functor_with_all_component_types_return_array(
-        [&state, &update_data]<typename CompType>() {
-            auto const n_component = state.components.template size<CompType>();
-            return check_component_independence<CompType>(update_data, n_component);
-        });
+template <typename ModelType>
+typename ModelType::UpdateIndependence check_update_independence(typename ModelType::MainModelState const& state,
+                                                                 ConstDataset const& update_data) {
+    return ModelType::run_functor_with_all_component_types_return_array([&state, &update_data]<typename CompType>() {
+        auto const n_component = state.components.template size<CompType>();
+        return check_component_independence<CompType>(update_data, n_component);
+    });
 }
 
 } // namespace independence
@@ -187,22 +186,21 @@ std::vector<Idx2D> get_component_sequence(MainModelState<ComponentContainer> con
 }
 } // namespace detail
 
-template <class MainModelType>
-typename MainModelType::SequenceIdx
-get_all_sequence_idx_map(typename MainModelType::MainModelState const& state, ConstDataset const& update_data,
-                         Idx scenario_idx, typename MainModelType::ComponentFlags const& components_to_store,
-                         typename MainModelType::UpdateIndependence const& independence, bool cached) {
-    return MainModelType::run_functor_with_all_component_types_return_array(
+template <class ModelType>
+typename ModelType::SequenceIdx
+get_all_sequence_idx_map(typename ModelType::MainModelState const& state, ConstDataset const& update_data,
+                         Idx scenario_idx, typename ModelType::ComponentFlags const& components_to_store,
+                         typename ModelType::UpdateIndependence const& independence, bool cached) {
+    return ModelType::run_functor_with_all_component_types_return_array(
         [&state, &update_data, scenario_idx, &components_to_store, &independence, cached]<typename CompType>() {
-            auto const component_properties =
-                std::get<MainModelType::template index_of_component<CompType>>(independence);
+            auto const component_properties = std::get<ModelType::template index_of_component<CompType>>(independence);
             // The sequence for the independent components is cached (true). For the remaining components, the sequence
             // cannot be cached (false), so the independence flags are inverted to not return an empty sequence when
             // this is the case.
 
             if (bool const component_independence = cached != component_properties.is_independent();
                 !component_independence ||
-                !std::get<MainModelType::template index_of_component<CompType>>(components_to_store)) {
+                !std::get<ModelType::template index_of_component<CompType>>(components_to_store)) {
                 return std::vector<Idx2D>{};
             }
             independence::validate_update_data_independence(component_properties, CompType::name);

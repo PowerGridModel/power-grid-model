@@ -133,6 +133,7 @@ struct MainModelType<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLi
     using SequenceIdxView = std::array<std::span<Idx2D const>, n_types>;
     using UpdateIndependence = std::array<UpdateCompProperties, n_types>;
     using SequenceIdx = std::array<std::vector<Idx2D>, n_types>;
+    using SequenceIdxRefWrappers = std::array<std::reference_wrapper<std::vector<Idx2D> const>, n_types>;
     using ComponentFlags = std::array<bool, n_types>;
 
     // Clean these 2. They are unused
