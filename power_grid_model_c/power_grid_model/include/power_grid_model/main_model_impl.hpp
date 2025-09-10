@@ -649,7 +649,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         if (!is_topology_up_to_date_) {
             rebuild_topology();
         }
-        main_core::prepare_y_bus<sym, MainModelType>(state_, n_math_solvers_, math_state_);
+        main_core::prepare_y_bus<sym, ModelType>(state_, n_math_solvers_, math_state_);
 
         if (n_math_solvers_ != static_cast<Idx>(solvers.size())) {
             assert(solvers.empty());
@@ -671,8 +671,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             std::vector<MathModelParam<sym>> const math_params =
                 main_core::get_math_param<sym>(state_, n_math_solvers_);
             std::vector<MathModelParamIncrement> const math_param_increments =
-                main_core::get_math_param_increment<MainModelType>(state_, n_math_solvers_,
-                                                                   parameter_changed_components_);
+                main_core::get_math_param_increment<ModelType>(state_, n_math_solvers_, parameter_changed_components_);
             if (last_updated_calculation_symmetry_mode_ == is_symmetric_v<sym>) {
                 main_core::update_y_bus(math_state_, math_params, math_param_increments);
             } else {
