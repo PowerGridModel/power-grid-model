@@ -32,8 +32,8 @@
 
 // main model implementation
 #include "main_core/calculation_input_preparation.hpp"
-#include "main_core/core_utils.hpp"
 #include "main_core/input.hpp"
+#include "main_core/main_model_type.hpp"
 #include "main_core/math_state.hpp"
 #include "main_core/output.hpp"
 #include "main_core/topology.hpp"
@@ -124,8 +124,8 @@ template <class... ExtraRetrievableType, class... ComponentType>
 class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentList<ComponentType...>> {
 
   private:
-    using ModelType = main_core::utils::MainModelType<ExtraRetrievableTypes<ExtraRetrievableType...>,
-                                                      ComponentList<ComponentType...>>;
+    using ModelType =
+        main_core::MainModelType<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentList<ComponentType...>>;
     // internal type traits
     // container class
     using ComponentContainer = typename ModelType::ComponentContainer;

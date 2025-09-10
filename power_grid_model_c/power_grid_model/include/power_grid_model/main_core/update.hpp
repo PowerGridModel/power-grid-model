@@ -46,7 +46,32 @@ template <typename T> bool check_id_na(T const& obj) {
 
 namespace independence {
 
-using UpdateCompProperties = utils::UpdateCompProperties;
+struct UpdateCompProperties {
+    bool has_any_elements{false};                    // whether the component has any elements in the update data
+    bool ids_all_na{false};                          // whether all ids are all NA
+    bool ids_part_na{false};                         // whether some ids are NA but some are not
+    bool dense{false};                               // whether the component is dense
+    bool uniform{false};                             // whether the component is uniform
+    bool is_columnar{false};                         // whether the component is columnar
+    bool update_ids_match{false};                    // whether the ids match
+    Idx elements_ps_in_update{utils::invalid_index}; // count of elements for this component per scenario in update
+    Idx elements_in_base{utils::invalid_index};      // count of elements for this component per scenario in input
+
+    constexpr bool no_id() const { return !has_any_elements || ids_all_na; }
+    constexpr bool qualify_for_optional_id() const {
+        return update_ids_match && ids_all_na && uniform && elements_ps_in_update == elements_in_base;
+    }
+    constexpr bool provided_ids_valid() const {
+        return is_empty_component() || (update_ids_match && !(ids_all_na || ids_part_na));
+    }
+    constexpr bool is_empty_component() const { return !has_any_elements; }
+    constexpr bool is_independent() const { return qualify_for_optional_id() || provided_ids_valid(); }
+    constexpr Idx get_n_elements() const {
+        assert(uniform || elements_ps_in_update == utils::invalid_index);
+
+        return qualify_for_optional_id() ? elements_ps_in_update : na_Idx;
+    }
+};
 
 template <typename CompType> void process_buffer_span(auto const& all_spans, UpdateCompProperties& properties) {
     properties.ids_all_na = std::ranges::all_of(all_spans, [](auto const& vec) {

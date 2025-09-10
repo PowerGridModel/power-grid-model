@@ -4,10 +4,11 @@
 
 #include <power_grid_model/container.hpp>
 #include <power_grid_model/main_core/core_utils.hpp>
+#include <power_grid_model/main_core/main_model_type.hpp>
 
 #include <doctest/doctest.h>
 
-namespace power_grid_model::main_core::utils {
+namespace power_grid_model::main_core {
 
 namespace {
 struct AComponent {
@@ -40,7 +41,7 @@ TEST_CASE("MainModelType") {
         CHECK(calls == std::vector<std::string_view>{"node", "source"});
 
         calls.clear();
-        run_functor_with_tuple_return_void<typename ModelType::TopologyTypesTuple>(
+        utils::run_functor_with_tuple_return_void<typename ModelType::TopologyTypesTuple>(
             [&calls]<typename CompType>() { calls.push_back(std::string_view(CompType::name)); });
         CHECK(calls == std::vector<std::string_view>{"node", "source"});
 
@@ -71,7 +72,7 @@ TEST_CASE("MainModelType") {
         CHECK(calls == std::vector<std::string_view>{"node", "line", "source"});
         calls.clear();
 
-        run_functor_with_tuple_return_void<typename ModelType::TopologyTypesTuple>(
+        utils::run_functor_with_tuple_return_void<typename ModelType::TopologyTypesTuple>(
             [&calls]<typename CompType>() { calls.push_back(std::string_view(CompType::name)); });
         CHECK(calls == std::vector<std::string_view>{"node", "branch", "source"});
     }
@@ -100,7 +101,7 @@ TEST_CASE("MainModelType") {
         CHECK(calls == std::vector<std::string_view>{"line", "source", "node"});
         calls.clear();
 
-        run_functor_with_tuple_return_void<typename ModelType::TopologyTypesTuple>(
+        utils::run_functor_with_tuple_return_void<typename ModelType::TopologyTypesTuple>(
             [&calls]<typename CompType>() { calls.push_back(std::string_view(CompType::name)); });
         CHECK(calls == std::vector<std::string_view>{"node", "branch", "source"});
     }
@@ -130,7 +131,7 @@ TEST_CASE("MainModelType") {
         CHECK(calls == std::vector<std::string_view>{"node", "a_component", "source"});
 
         calls.clear();
-        run_functor_with_tuple_return_void<typename ModelType::TopologyTypesTuple>(
+        utils::run_functor_with_tuple_return_void<typename ModelType::TopologyTypesTuple>(
             [&calls]<typename CompType>() { calls.push_back(std::string_view(CompType::name)); });
         CHECK(calls == std::vector<std::string_view>{"node", "source"});
     }
@@ -151,4 +152,4 @@ TEST_CASE("MainModelType") {
     // MathSolverDispatcher const&>);
 }
 
-} // namespace power_grid_model::main_core::utils
+} // namespace power_grid_model::main_core
