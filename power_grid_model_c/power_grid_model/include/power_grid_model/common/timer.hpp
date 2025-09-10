@@ -17,13 +17,13 @@ using Duration = std::chrono::duration<double>;
 
 class Timer {
   private:
-    Logger* info_;
+    Logger* log_;
     LogEvent code_;
     Clock::time_point start_;
 
   public:
-    Timer() : info_{nullptr}, code_{LogEvent::unknown} {};
-    Timer(Logger& info, LogEvent code) : info_{&info}, code_{code}, start_{Clock::now()} {}
+    Timer() : log_{nullptr}, code_{LogEvent::unknown} {};
+    Timer(Logger& log, LogEvent code) : log_{&log}, code_{code}, start_{Clock::now()} {}
 
     Timer(Timer const&) = delete;
     Timer(Timer&&) = default;
@@ -34,29 +34,29 @@ class Timer {
         stop();
 
         // Copy/move members
-        info_ = timer.info_;
+        log_ = timer.log_;
         code_ = timer.code_;
         start_ = timer.start_;
 
         // Disable original timer
-        timer.info_ = nullptr;
+        timer.log_ = nullptr;
 
         // Return reference
         return *this;
     }
 
     ~Timer() {
-        if (info_ != nullptr) {
+        if (log_ != nullptr) {
             stop();
         }
     }
 
     void stop() {
-        if (info_ != nullptr) {
+        if (log_ != nullptr) {
             auto const now = Clock::now();
             auto const duration = Duration(now - start_);
-            info_->log(code_, duration.count());
-            info_ = nullptr;
+            log_->log(code_, duration.count());
+            log_ = nullptr;
         }
     }
 };
