@@ -33,10 +33,6 @@ constexpr auto filter_tuple_types(std::tuple<std::type_identity<Types>...> /*unu
                                              std::tuple<std::type_identity<Types>>, std::tuple<>>{}...);
 }
 
-template <typename Tuple, class Functor, std::size_t... Indices>
-constexpr void run_functor_with_tuple_index_return_void(Functor functor, std::index_sequence<Indices...>) {
-    (functor.template operator()<std::tuple_element_t<Indices, Tuple>>(), ...);
-}
 
 template <typename List, typename T, typename... NeedsTypes>
 concept dependent_type_check = !IsInList<T, List>::value || (IsInList<NeedsTypes, List>::value && ...);
