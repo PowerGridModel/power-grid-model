@@ -15,7 +15,7 @@ namespace power_grid_model::main_core::utils {
 namespace detail {
 
 template <typename Tuple, class Functor, std::size_t... Indices>
-constexpr void run_functor_with_tuple_index_return_void(Functor functor, std::index_sequence<Indices...>) {
+constexpr void run_functor_with_tuple_index_return_void(Functor functor, std::index_sequence<Indices...> /*unused*/) {
     (functor.template operator()<std::tuple_element_t<Indices, Tuple>>(), ...);
 }
 
