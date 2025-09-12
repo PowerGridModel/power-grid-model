@@ -111,7 +111,7 @@ def test__get_buffer_properties__batch_requested_for_single_data(component_type,
     schema = power_grid_meta_data[DatasetType.update][component_type]
 
     with pytest.raises(
-        ValueError, match="Incorrect/inconsistent data provided: single data provided but batch data expected."
+        ValueError, match=r"Incorrect\/inconsistent data provided: single data provided but batch data expected"
     ):
         get_buffer_properties(data, schema=schema, is_batch=True, batch_size=BATCH_DATASET_NDIM)
 
@@ -138,7 +138,7 @@ def test__get_buffer_properties__single_requested_for_batch(component_type, is_s
             get_buffer_properties(data, schema=schema, is_batch=False, batch_size=None)
     else:
         with pytest.raises(
-            ValueError, match="Incorrect/inconsistent data provided: batch data provided but single data expected."
+            ValueError, match=r"Incorrect\/inconsistent data provided: batch data provided but single data expected"
         ):
             get_buffer_properties(data, schema=schema, is_batch=False, batch_size=None)
 
@@ -233,7 +233,7 @@ def test__get_raw_attribute_data_view_fail(component, attribute):
     assert old_shape[-1] == asym_dense_batch_last_dim
     assert updated_shape[-1] == unsupported_asym_dense_batch_last_dim
 
-    with pytest.raises(ValueError, match="Given data has a different schema than supported."):
+    with pytest.raises(ValueError, match="Given data has a different schema than supported"):
         get_buffer_view(data, schema=schema, is_batch=True)
 
 
@@ -322,5 +322,5 @@ def test__get_raw_attribute_data_view_directly_fail(component, attr_data_shape, 
     arr = np.zeros(attr_data_shape)
     schema = power_grid_meta_data[DatasetType.update][component]
 
-    with pytest.raises(ValueError, match="Given data has a different schema than supported."):
+    with pytest.raises(ValueError, match="Given data has a different schema than supported"):
         _get_raw_attribute_data_view(arr, schema, attribute)

@@ -154,7 +154,6 @@ select = [
 ]
 
 ignore = [
-    "UP038", # deprecated, https://docs.astral.sh/ruff/rules/non-pep604-isinstance/#deprecation
     "PT019" # flags false positives
 ]
 

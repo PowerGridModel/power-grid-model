@@ -575,8 +575,8 @@ def test_get_and_verify_batch_sizes_inconsistent_batch_sizes_two_components():
     update_data: BatchDataset = {"foo": np.empty(shape=(3, 3)), "bar": np.empty(shape=(2, 3))}
     with pytest.raises(
         ValueError,
-        match="Inconsistent number of batches in batch data. "
-        "Component 'bar' contains 2 batches, while 'foo' contained 3 batches.",
+        match=r"Inconsistent number of batches in batch data\. "
+        r"Component \'bar\' contains 2 batches, while \'foo\' contained 3 batches\.",
     ):
         get_and_verify_batch_sizes(update_data)
 
@@ -589,8 +589,8 @@ def test_convert_get_and_verify_batch_sizes_inconsistent_batch_sizes_more_than_t
     }
     with pytest.raises(
         ValueError,
-        match="Inconsistent number of batches in batch data. "
-        "Component 'baz' contains 2 batches, while bar/foo contained 3 batches.",
+        match=r"Inconsistent number of batches in batch data\. "
+        r"Component \'baz\' contains 2 batches, while bar\/foo contained 3 batches\.",
     ):
         get_and_verify_batch_sizes(update_data)
 
@@ -598,7 +598,7 @@ def test_convert_get_and_verify_batch_sizes_inconsistent_batch_sizes_more_than_t
 @patch("power_grid_model._core.utils.get_and_verify_batch_sizes")
 def test_convert_batch_dataset_to_batch_list_missing_key_sparse(_mock: MagicMock):
     update_data: BatchDataset = {"foo": {"a": np.empty(3), "data": np.empty(3)}}  # type: ignore
-    with pytest.raises(KeyError, match="Invalid data for 'foo' component. Missing 'indptr' in sparse batch data. "):
+    with pytest.raises(KeyError, match=r"Invalid data for \'foo\' component\. Missing \'indptr\' in sparse batch data"):
         convert_batch_dataset_to_batch_list(update_data)
 
 
@@ -607,7 +607,7 @@ def test_convert_batch_dataset_to_batch_list_invalid_type_sparse(_mock: MagicMoc
     update_data: BatchDataset = {"foo": "wrong type"}  # type: ignore
     with pytest.raises(
         TypeError,
-        match="Invalid data for 'foo' component. Expecting a 1D/2D Numpy structured array or a dictionary of such.",
+        match=r"Invalid data for \'foo\' component\. Expecting a 1D\/2D Numpy structured array or a dictionary of such",
     ):
         convert_batch_dataset_to_batch_list(update_data)
 
@@ -789,7 +789,7 @@ def test_get_dataset_type(dataset_type):
 
 
 def test_get_dataset_type__empty_data():
-    with pytest.raises(ValueError, match="At least one component should have row based data."):
+    with pytest.raises(ValueError, match="At least one component should have row based data"):
         get_dataset_type(data={})
 
 
