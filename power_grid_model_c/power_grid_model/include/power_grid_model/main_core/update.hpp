@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "container_queries.hpp"
 #include "core_utils.hpp"
 #include "state.hpp"
 
@@ -158,9 +159,9 @@ typename ModelType::UpdateIndependence check_update_independence(typename ModelT
 }
 
 } // namespace independence
-
 namespace detail {
 
+// TODO change to components
 template <component_c Component, class ComponentContainer, std::ranges::viewable_range Elements,
           std::output_iterator<Idx2D> OutputIterator>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
@@ -170,13 +171,13 @@ inline void get_component_sequence_impl(MainModelState<ComponentContainer> const
 
     if (n_comp_elements < 0) {
         std::ranges::transform(std::forward<Elements>(elements), destination, [&state](UpdateType const& update) {
-            return get_component_idx_by_id<Component>(state, update.id);
+            return get_component_idx_by_id<Component>(state.components, update.id);
         });
     } else {
         assert(std::ranges::ssize(elements) <= n_comp_elements);
         std::ranges::transform(
             std::forward<Elements>(elements), destination,
-            [group = get_component_group_idx<Component>(state), index = 0](auto const& /*update*/) mutable {
+            [group = get_component_group_idx<Component>(state.components), index = 0](auto const& /*update*/) mutable {
                 return Idx2D{group, index++}; // NOSONAR
             });
     }
@@ -248,7 +249,7 @@ inline UpdateChange update_component(MainModelState<ComponentContainer>& state, 
 
     detail::iterate_component_sequence<Component>(
         [&state_changed, &changed_it, &state](UpdateType const& update_data, Idx2D const& sequence_single) {
-            auto& comp = get_component<Component>(state, sequence_single);
+            auto& comp = get_component<Component>(state.components, sequence_single);
             assert(state.components.get_id_by_idx(sequence_single) == comp.id());
             auto const comp_changed = comp.update(update_data);
             state_changed = state_changed || comp_changed;
@@ -283,7 +284,7 @@ inline void update_inverse(MainModelState<ComponentContainer> const& state, Upda
 
     detail::iterate_component_sequence<Component>(
         [&destination, &state](UpdateType const& update_data, Idx2D const& sequence_single) {
-            auto const& comp = get_component<Component>(state, sequence_single);
+            auto const& comp = get_component<Component>(state.components, sequence_single);
             *destination++ = comp.inverse(update_data);
         },
         std::forward<Updates>(updates), sequence_idx);

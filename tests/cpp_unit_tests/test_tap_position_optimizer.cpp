@@ -731,17 +731,17 @@ struct MockTransformer {
 };
 static_assert(transformer_c<MockTransformer>);
 
-template <std::derived_from<MockTransformer> ComponentType, typename State>
-    requires common::component_container_c<typename State::ComponentContainer, ComponentType>
-constexpr auto get_topology_index(State const& state, auto const& id_or_index) {
-    auto const& transformer = main_core::get_component<ComponentType>(state, id_or_index);
+template <std::derived_from<MockTransformer> ComponentType, typename ComponentContainer>
+    requires common::component_container_c<ComponentContainer, ComponentType>
+constexpr auto get_topology_index(ComponentContainer const& components, auto const& id_or_index) {
+    auto const& transformer = main_core::get_component<ComponentType>(components, id_or_index);
     return transformer.state.math_id.pos;
 }
 
 template <std::derived_from<MockTransformer> ComponentType, typename State>
     requires common::component_container_c<typename State::ComponentContainer, ComponentType>
 constexpr auto get_math_id(State const& state, Idx topology_index) {
-    return main_core::get_component_by_sequence<MockTransformer>(state, topology_index).state.math_id;
+    return main_core::get_component_by_sequence<MockTransformer>(state.components, topology_index).state.math_id;
 }
 
 template <std::derived_from<MockTransformer> ComponentType, typename ContainerType>
@@ -755,7 +755,8 @@ inline DoubleComplex i_pu(std::vector<MockSolverOutput<ContainerType>> const& so
     auto const& state = solver_output[math_id.group].state;
     REQUIRE(state.has_value());
     if (state.has_value()) { // necessary for clang-tidy
-        return main_core::get_component_by_sequence<MockTransformer>(state.value().get(), math_id.pos).state.i_pu(side);
+        return main_core::get_component_by_sequence<MockTransformer>(state.value().get().components, math_id.pos)
+            .state.i_pu(side);
     }
     FAIL("Unreachable");
     return {};
@@ -766,7 +767,7 @@ template <std::derived_from<MockTransformer> ComponentType, typename State,
     requires common::component_container_c<typename State::ComponentContainer, ComponentType>
 inline auto u_pu(State const& state, std::vector<SolverOutputType> const& /* solver_output */, Idx topology_index,
                  ControlSide side) {
-    return main_core::get_component_by_sequence<MockTransformer>(state, topology_index).state.u_pu(side);
+    return main_core::get_component_by_sequence<MockTransformer>(state.components, topology_index).state.u_pu(side);
 }
 
 template <std::derived_from<MockTransformer> ComponentType, typename State>
@@ -793,8 +794,8 @@ template <main_core::main_model_state_c State> class MockTransformerRanker {
     template <typename ComponentType> struct Impl<ComponentType> {
         void operator()(State const& state, RankedTransformerGroups& ranking) const {
             if constexpr (std::derived_from<ComponentType, MockTransformer>) {
-                for (Idx const idx : IdxRange{main_core::get_component_size<ComponentType>(state)}) {
-                    auto const& comp = main_core::get_component_by_sequence<ComponentType>(state, idx);
+                for (Idx const idx : IdxRange{main_core::get_component_size<ComponentType>(state.components)}) {
+                    auto const& comp = main_core::get_component_by_sequence<ComponentType>(state.components, idx);
                     auto const rank = comp.state.rank;
                     if (rank == MockTransformerState::unregulated) {
                         continue;
@@ -805,7 +806,7 @@ template <main_core::main_model_state_c State> class MockTransformerRanker {
                         ranking.resize(rank + 1);
                     }
                     ranking[rank].push_back(
-                        {.group = main_core::get_component_type_index<ComponentType>(state), .pos = idx});
+                        {.group = main_core::get_component_type_index<ComponentType>(state.components), .pos = idx});
                 }
             }
         }
@@ -1094,9 +1095,9 @@ TEST_CASE("Test Tap position optimizer") {
 
     SUBCASE("Calculation method") {
         main_core::emplace_component<test::MockTransformer>(
-            state, 1, MockTransformerState{.id = 1, .math_id = {.group = 0, .pos = 0}});
+            state.components, 1, MockTransformerState{.id = 1, .math_id = {.group = 0, .pos = 0}});
         main_core::emplace_component<test::MockTransformer>(
-            state, 2, MockTransformerState{.id = 2, .math_id = {.group = 0, .pos = 1}});
+            state.components, 2, MockTransformerState{.id = 2, .math_id = {.group = 0, .pos = 1}});
         state.components.set_construction_complete();
 
         for (auto strategy_method_search : strategy_method_searches) {
@@ -1122,15 +1123,15 @@ TEST_CASE("Test Tap position optimizer") {
 
     SUBCASE("optimization") {
         main_core::emplace_component<test::MockTransformer>(
-            state, 1, MockTransformerState{.id = 1, .tap_side = ControlSide::from, .math_id = {.group = 0, .pos = 0}});
+            state.components, 1, MockTransformerState{.id = 1, .tap_side = ControlSide::from, .math_id = {.group = 0, .pos = 0}});
         main_core::emplace_component<test::MockTransformer>(
-            state, 2, MockTransformerState{.id = 2, .tap_side = ControlSide::from, .math_id = {.group = 0, .pos = 1}});
+            state.components, 2, MockTransformerState{.id = 2, .tap_side = ControlSide::from, .math_id = {.group = 0, .pos = 1}});
 
-        auto& transformer_a = main_core::get_component<MockTransformer>(state, 1);
-        auto& transformer_b = main_core::get_component<MockTransformer>(state, 2);
+        auto& transformer_a = main_core::get_component<MockTransformer>(state.components, 1);
+        auto& transformer_b = main_core::get_component<MockTransformer>(state.components, 2);
 
         main_core::emplace_component<TransformerTapRegulator>(
-            state, 3,
+            state.components, 3,
             TransformerTapRegulatorInput{.id = 3,
                                          .regulated_object = 1,
                                          .status = 1,
@@ -1141,7 +1142,7 @@ TEST_CASE("Test Tap position optimizer") {
                                          .line_drop_compensation_x = 0.0},
             transformer_a.math_model_type(), 1.0);
         main_core::emplace_component<TransformerTapRegulator>(
-            state, 4,
+            state.components, 4,
             TransformerTapRegulatorInput{.id = 4,
                                          .regulated_object = 2,
                                          .status = 1,
@@ -1152,8 +1153,8 @@ TEST_CASE("Test Tap position optimizer") {
                                          .line_drop_compensation_x = 0.0},
             transformer_b.math_model_type(), 1.0);
 
-        auto& regulator_a = main_core::get_component<TransformerTapRegulator>(state, 3);
-        auto& regulator_b = main_core::get_component<TransformerTapRegulator>(state, 4);
+        auto& regulator_a = main_core::get_component<TransformerTapRegulator>(state.components, 3);
+        auto& regulator_b = main_core::get_component<TransformerTapRegulator>(state.components, 4);
 
         state.components.set_construction_complete();
 
@@ -1172,7 +1173,8 @@ TEST_CASE("Test Tap position optimizer") {
                 check_b = [&state_b](IntS value, OptimizerStrategy /*strategy*/, bool /*control_at_tap_side*/) {
                     CHECK(value == state_b.tap_pos);
                 };
-                auto const control_side = main_core::get_component<TransformerTapRegulator>(state, 4).control_side();
+                auto const control_side =
+                    main_core::get_component<TransformerTapRegulator>(state.components, 4).control_side();
 
                 SUBCASE("not regulated") {}
 

@@ -13,7 +13,7 @@ template <std::derived_from<Branch> ComponentType, typename ComponentContainer>
 constexpr void add_to_increment(std::vector<MathModelParamIncrement>& increments,
                                 MainModelState<ComponentContainer> const& state, Idx2D const& changed_component_idx) {
     Idx2D const math_idx =
-        state.topo_comp_coup->branch[main_core::get_component_sequence_idx<Branch>(state, changed_component_idx)];
+        state.topo_comp_coup->branch[main_core::get_component_sequence_idx<Branch>(state.components, changed_component_idx)];
     if (math_idx.group == isolated_component) {
         return;
     }
@@ -25,7 +25,7 @@ template <std::derived_from<Branch3> ComponentType, typename ComponentContainer>
 constexpr void add_to_increment(std::vector<MathModelParamIncrement>& increments,
                                 MainModelState<ComponentContainer> const& state, Idx2D const& changed_component_idx) {
     Idx2DBranch3 const math_idx =
-        state.topo_comp_coup->branch3[main_core::get_component_sequence_idx<Branch3>(state, changed_component_idx)];
+        state.topo_comp_coup->branch3[main_core::get_component_sequence_idx<Branch3>(state.components, changed_component_idx)];
     if (math_idx.group == isolated_component) {
         return;
     }
@@ -39,7 +39,7 @@ template <std::same_as<Shunt> ComponentType, typename ComponentContainer>
 constexpr void add_to_increment(std::vector<MathModelParamIncrement>& increments,
                                 MainModelState<ComponentContainer> const& state, Idx2D const& changed_component_idx) {
     Idx2D const math_idx =
-        state.topo_comp_coup->shunt[main_core::get_component_sequence_idx<Shunt>(state, changed_component_idx)];
+        state.topo_comp_coup->shunt[main_core::get_component_sequence_idx<Shunt>(state.components, changed_component_idx)];
     if (math_idx.group == isolated_component) {
         return;
     }
