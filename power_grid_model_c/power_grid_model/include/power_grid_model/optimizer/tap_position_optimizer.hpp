@@ -165,7 +165,8 @@ constexpr void add_edge(main_core::MainModelState<ComponentContainer> const& sta
 
     for (auto const& transformer3w : state.components.template citer<ThreeWindingTransformer>()) {
         auto const trafo3w_is_regulated = regulated_objects.contains_trafo3w(transformer3w.id());
-        Idx2D const trafo3w_idx = main_core::get_component_idx_by_id<ThreeWindingTransformer>(state.components, transformer3w.id());
+        Idx2D const trafo3w_idx =
+            main_core::get_component_idx_by_id<ThreeWindingTransformer>(state.components, transformer3w.id());
         process_trafo3w_edge(state, transformer3w, trafo3w_is_regulated.first, trafo3w_is_regulated.second, trafo3w_idx,
                              edges, edge_props);
     }
@@ -257,7 +258,8 @@ inline auto build_transformer_graph(State const& state) -> TransformerGraph {
     // Mark sources
     for (auto const& source : state.components.template citer<Source>()) {
         // ignore disabled sources
-        trafo_graph[main_core::get_component_sequence_idx<Node>(state.components, source.node())].is_source = source.status();
+        trafo_graph[main_core::get_component_sequence_idx<Node>(state.components, source.node())].is_source =
+            source.status();
     }
 
     return trafo_graph;

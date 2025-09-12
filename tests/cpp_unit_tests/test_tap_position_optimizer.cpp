@@ -1123,9 +1123,11 @@ TEST_CASE("Test Tap position optimizer") {
 
     SUBCASE("optimization") {
         main_core::emplace_component<test::MockTransformer>(
-            state.components, 1, MockTransformerState{.id = 1, .tap_side = ControlSide::from, .math_id = {.group = 0, .pos = 0}});
+            state.components, 1,
+            MockTransformerState{.id = 1, .tap_side = ControlSide::from, .math_id = {.group = 0, .pos = 0}});
         main_core::emplace_component<test::MockTransformer>(
-            state.components, 2, MockTransformerState{.id = 2, .tap_side = ControlSide::from, .math_id = {.group = 0, .pos = 1}});
+            state.components, 2,
+            MockTransformerState{.id = 2, .tap_side = ControlSide::from, .math_id = {.group = 0, .pos = 1}});
 
         auto& transformer_a = main_core::get_component<MockTransformer>(state.components, 1);
         auto& transformer_b = main_core::get_component<MockTransformer>(state.components, 2);

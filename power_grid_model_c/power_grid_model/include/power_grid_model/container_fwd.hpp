@@ -37,20 +37,20 @@ concept storagable_single_component_container_c =
     requires(ContainerType const& c, ContainerType& nc, size_t size, ID id, Args... args) {
         { c.template get_group_idx<StoragableType>() } -> std::same_as<Idx>;
         { c.template get_type_idx<StoragableType>() } -> std::same_as<Idx>;
-        { nc.template reserve<StoragableType>(size) } -> std::same_as<void>;        
-        { nc.template emplace<StoragableType>(id, args...) } -> std::same_as<void>;        
+        { nc.template reserve<StoragableType>(size) } -> std::same_as<void>;
+        { nc.template emplace<StoragableType>(id, args...) } -> std::same_as<void>;
     };
 
 // TODO This compound function is excluded from above concepts
 // { c.template get_start_idx<GettableBaseType, StoragableType>() } -> std::same_as<Idx>;
-    
+
 } // namespace detail
 
 template <typename ContainerType, typename... RetrievableType>
 concept component_container_c = (detail::single_component_container_c<ContainerType, RetrievableType> && ...);
 
 template <typename ContainerType, typename... StoragableType>
-concept storagable_component_container_c = (detail::storagable_single_component_container_c<ContainerType, StoragableType> && ...);
-
+concept storagable_component_container_c =
+    (detail::storagable_single_component_container_c<ContainerType, StoragableType> && ...);
 
 } // namespace power_grid_model::common

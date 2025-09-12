@@ -94,19 +94,19 @@ constexpr auto get_component_citer(ComponentContainer const& components) {
 }
 
 template <std::derived_from<Branch> ComponentType, class ComponentContainer>
-requires common::component_container_c<ComponentContainer, ComponentType>
+    requires common::component_container_c<ComponentContainer, ComponentType>
 constexpr auto get_topology_index(ComponentContainer const& components, auto const& id_or_index) {
     return get_component_sequence_idx<Branch>(components, id_or_index);
 }
 
 template <std::derived_from<Branch3> ComponentType, class ComponentContainer>
-requires common::component_container_c<ComponentContainer, ComponentType>
+    requires common::component_container_c<ComponentContainer, ComponentType>
 constexpr auto get_topology_index(ComponentContainer const& components, auto const& id_or_index) {
     return get_component_sequence_idx<Branch3>(components, id_or_index);
 }
 
 template <std::derived_from<Regulator> ComponentType, class ComponentContainer>
-requires common::component_container_c<ComponentContainer, ComponentType>
+    requires common::component_container_c<ComponentContainer, ComponentType>
 constexpr auto get_topology_index(ComponentContainer const& components, auto const& id_or_index) {
     return get_component_sequence_idx<Regulator>(components, id_or_index);
 }
