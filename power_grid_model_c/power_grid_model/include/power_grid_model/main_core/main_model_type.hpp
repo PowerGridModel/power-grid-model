@@ -80,11 +80,6 @@ struct MainModelType<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLi
     using SequenceIdxRefWrappers = std::array<std::reference_wrapper<std::vector<Idx2D> const>, n_types>;
     using ComponentFlags = std::array<bool, n_types>;
 
-    // Clean these 2. They are unused
-    static constexpr auto branch_param_in_seq_map =
-        std::array{index_of_component<Line>, index_of_component<Link>, index_of_component<Transformer>};
-    static constexpr auto shunt_param_in_seq_map = std::array{index_of_component<Shunt>};
-
     template <class Functor> static constexpr void run_functor_with_all_component_types_return_void(Functor functor) {
         (functor.template operator()<ComponentType>(), ...);
     }
