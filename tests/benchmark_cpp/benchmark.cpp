@@ -104,25 +104,26 @@ std::string make_key(LogEvent code) {
 }
 
 auto get_benchmark_run_title(Option const& option, MainModelOptions const& model_options) {
-    auto const mv_ring_type = option.has_mv_ring ? "meshed grid" : "radial grid";
+    using namespace std::string_literals;
+    auto const mv_ring_type = option.has_mv_ring ? "meshed grid"s : "radial grid"s;
     auto const sym_type =
-        model_options.calculation_symmetry == CalculationSymmetry::symmetric ? "symmetric" : "asymmetric";
+        model_options.calculation_symmetry == CalculationSymmetry::symmetric ? "symmetric"s : "asymmetric"s;
     auto const method = [calculation_method = model_options.calculation_method] {
         using enum CalculationMethod;
 
         switch (calculation_method) {
         case newton_raphson:
-            return "Newton-Raphson method";
+            return "Newton-Raphson method"s;
         case linear:
-            return "Linear method";
+            return "Linear method"s;
         case linear_current:
-            return "Linear current method";
+            return "Linear current method"s;
         case iterative_current:
-            return "Iterative current method";
+            return "Iterative current method"s;
         case iterative_linear:
-            return "Iterative linear method";
+            return "Iterative linear method"s;
         case iec60909:
-            return "IEC 60909 method";
+            return "IEC 60909 method"s;
         default:
             throw MissingCaseForEnumError{"get_benchmark_run_title", calculation_method};
         }
@@ -152,7 +153,7 @@ struct PowerGridBenchmark {
         try {
             // calculate
             main_model->calculate(model_options, output.get_dataset(), batch_data.get_dataset());
-            main_core::merge_into(info, main_model->calculation_info());
+            main_model->calculation_info().merge_into(info);
         } catch (std::exception const& e) {
             std::cout << std::format("\nAn exception was raised during execution: {}\n", e.what());
         }
@@ -171,15 +172,18 @@ struct PowerGridBenchmark {
         auto const run = [this, &model_options, &info](Idx batch_size_) {
             switch (model_options.calculation_type) {
             case short_circuit:
-                return run_calculation<ShortCircuitOutputData>(model_options, batch_size_, info);
+                run_calculation<ShortCircuitOutputData>(model_options, batch_size_, info);
+                break;
             case power_flow:
                 [[fallthrough]];
             case state_estimation: {
                 switch (model_options.calculation_symmetry) {
                 case CalculationSymmetry::symmetric:
-                    return run_calculation<OutputData<symmetric_t>>(model_options, batch_size_, info);
+                    run_calculation<OutputData<symmetric_t>>(model_options, batch_size_, info);
+                    break;
                 case CalculationSymmetry::asymmetric:
-                    return run_calculation<OutputData<asymmetric_t>>(model_options, batch_size_, info);
+                    run_calculation<OutputData<asymmetric_t>>(model_options, batch_size_, info);
+                    break;
                 default:
                     throw MissingCaseForEnumError{"run_benchmark<calculation_symmetry>",
                                                   model_options.calculation_symmetry};
@@ -230,11 +234,6 @@ struct PowerGridBenchmark {
 };
 } // namespace
 } // namespace power_grid_model::benchmark
-
-namespace {
-using power_grid_model::asymmetric_t;
-using power_grid_model::symmetric_t;
-} // namespace
 
 int main(int /* argc */, char** /* argv */) {
     using enum power_grid_model::CalculationType;

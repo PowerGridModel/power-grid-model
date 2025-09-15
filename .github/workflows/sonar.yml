@@ -43,7 +43,7 @@ jobs:
         run: |
           brew install boost eigen nlohmann-json msgpack-cxx doctest
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - name: Install build-wrapper
@@ -51,7 +51,7 @@ jobs:
         
       - name: Python test and coverage
         run: |
-          pip install -e .[dev]
+          CC=clang CXX=clang++ pip install -e .[dev]
           pytest
 
       - name: Run build-wrapper for C++

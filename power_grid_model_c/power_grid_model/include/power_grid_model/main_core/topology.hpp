@@ -180,7 +180,7 @@ constexpr void register_topology_components(ComponentContainer const& components
 
 template <std::same_as<Branch> Component, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, Component>
-constexpr void register_connections_components(ComponentContainer components, ComponentConnections& comp_conn) {
+constexpr void register_connections_components(ComponentContainer const& components, ComponentConnections& comp_conn) {
     apply_registration<Component>(components, comp_conn.branch_connected, [](Branch const& branch) {
         return BranchConnected{static_cast<IntS>(branch.from_status()), static_cast<IntS>(branch.to_status())};
     });
@@ -189,7 +189,7 @@ constexpr void register_connections_components(ComponentContainer components, Co
 }
 template <std::same_as<Branch3> Component, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, Component>
-constexpr void register_connections_components(ComponentContainer components, ComponentConnections& comp_conn) {
+constexpr void register_connections_components(ComponentContainer const& components, ComponentConnections& comp_conn) {
     apply_registration<Component>(components, comp_conn.branch3_connected, [](Branch3 const& branch3) {
         return Branch3Connected{static_cast<IntS>(branch3.status_1()), static_cast<IntS>(branch3.status_2()),
                                 static_cast<IntS>(branch3.status_3())};
@@ -200,7 +200,7 @@ constexpr void register_connections_components(ComponentContainer components, Co
 
 template <std::same_as<Source> Component, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, Component>
-constexpr void register_connections_components(ComponentContainer components, ComponentConnections& comp_conn) {
+constexpr void register_connections_components(ComponentContainer const& components, ComponentConnections& comp_conn) {
     apply_registration<Component>(components, comp_conn.source_connected,
                                   [](Source const& source) { return source.status(); });
 }

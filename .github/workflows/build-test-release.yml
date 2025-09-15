@@ -33,7 +33,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
 
@@ -260,8 +260,14 @@ jobs:
           conda info
           conda list
 
-      - uses: ./.github/actions/enable-msvc
+      - name: Enable MSVC
+        uses: ./.github/actions/enable-msvc
         if: runner.os == 'Windows'
+
+      - name: Enable gcc/g++
+        if: matrix.os == 'ubuntu'
+        run: |
+          conda install -y gcc_linux-64 gxx_linux-64
 
       - name: Build and install cmake target for Windows
         if: matrix.os == 'windows'
@@ -302,7 +308,7 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Setup python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.12'
           architecture: x64
