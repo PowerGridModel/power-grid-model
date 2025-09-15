@@ -17,10 +17,12 @@ TEST_CASE("Test main core output") {
         using AsymOutput = MathOutput<std::vector<SolverOutput<asymmetric_t>>>;
 
         State state;
-        emplace_component<TransformerTapRegulator>(
-            state, 0, TransformerTapRegulatorInput{.id = 0, .regulated_object = 2}, ComponentType::test, 10e3);
-        emplace_component<TransformerTapRegulator>(
-            state, 1, TransformerTapRegulatorInput{.id = 1, .regulated_object = 3}, ComponentType::test, 10e3);
+        emplace_component<TransformerTapRegulator>(state.components, 0,
+                                                   TransformerTapRegulatorInput{.id = 0, .regulated_object = 2},
+                                                   ComponentType::test, 10e3);
+        emplace_component<TransformerTapRegulator>(state.components, 1,
+                                                   TransformerTapRegulatorInput{.id = 1, .regulated_object = 3},
+                                                   ComponentType::test, 10e3);
         state.components.set_construction_complete();
 
         auto comp_topo = std::make_shared<ComponentTopology>();

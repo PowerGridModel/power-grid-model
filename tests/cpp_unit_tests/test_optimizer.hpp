@@ -53,9 +53,9 @@ static_assert(transformer_c<StubTransformer>);
 static_assert(transformer_c<StubTransformerA>);
 static_assert(transformer_c<StubTransformerB>);
 
-template <std::derived_from<StubTransformer> ComponentType, typename State>
-    requires common::component_container_c<typename State::ComponentContainer, ComponentType>
-constexpr auto get_topology_index(State const& /* state */, auto const& /* id_or_index */) {
+template <std::derived_from<StubTransformer> ComponentType, typename ComponentContainer>
+    requires common::component_container_c<ComponentContainer, ComponentType>
+constexpr auto get_topology_index(ComponentContainer const& /* Components */, auto const& /* id_or_index */) {
     return Idx{};
 }
 
