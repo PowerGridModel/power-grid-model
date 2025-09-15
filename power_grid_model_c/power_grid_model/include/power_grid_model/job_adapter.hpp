@@ -6,10 +6,11 @@
 
 // Adapter that connects the JobDispatch to the MainModelImpl
 
-#include "auxiliary/dataset.hpp"
 #include "job_interface.hpp"
 #include "main_model_fwd.hpp"
 
+#include "auxiliary/dataset.hpp"
+#include "common/dummy_logging.hpp"
 #include "main_core/update.hpp"
 
 namespace power_grid_model {
@@ -99,7 +100,7 @@ class JobAdapter<MainModel, ComponentList<ComponentType...>>
 
     void calculate_impl(MutableDataset const& result_data, Idx scenario_idx) const {
         MainModel::calculator(options_.get(), model_reference_.get(), result_data.get_individual_scenario(scenario_idx),
-                              false);
+                              false, logger());
     }
 
     void cache_calculate_impl() const {
@@ -112,7 +113,7 @@ class JobAdapter<MainModel, ComponentList<ComponentType...>>
                                       "sym_output",
                                       model_reference_.get().meta_data(),
                                   },
-                                  true);
+                                  true, logger());
         } catch (SparseMatrixError const&) { // NOLINT(bugprone-empty-catch) // NOSONAR
             // missing entries are provided in the update data
         } catch (NotObservableError const&) { // NOLINT(bugprone-empty-catch) // NOSONAR
@@ -157,13 +158,12 @@ class JobAdapter<MainModel, ComponentList<ComponentType...>>
         });
     }
 
-    void reset_logger_impl() {
-        log_ = nullptr;
-        model_reference_.get().reset_logger();
-    }
-    void set_logger_impl(Logger& log) {
-        log_ = &log;
-        model_reference_.get().set_logger(*log_);
+    void reset_logger_impl() { log_ = nullptr; }
+    void set_logger_impl(Logger& log) { log_ = &log; }
+
+    Logger& logger() const {
+        static common::logging::NoLogger no_log{};
+        return log_ != nullptr ? *log_ : no_log;
     }
 };
 } // namespace power_grid_model
