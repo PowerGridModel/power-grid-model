@@ -230,7 +230,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <std::derived_from<Base> CompType, std::ranges::viewable_range Inputs>
     void add_component(Inputs&& components) {
         assert(!construction_complete_);
-        main_core::add_component<CompType>(state_, std::forward<Inputs>(components), system_frequency_);
+        main_core::add_component<CompType>(state_.components, std::forward<Inputs>(components), system_frequency_);
     }
 
     void add_components(ConstDataset const& input_data, Idx pos = 0) {
@@ -257,11 +257,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
         if constexpr (CacheType::value) {
             main_core::update::update_inverse<CompType>(
-                state_, updates, std::back_inserter(std::get<comp_index>(cached_inverse_update_)), sequence_idx);
+                state_.components, updates, std::back_inserter(std::get<comp_index>(cached_inverse_update_)),
+                sequence_idx);
         }
 
         UpdateChange const changed = main_core::update::update_component<CompType>(
-            state_, std::forward<Updates>(updates),
+            state_.components, std::forward<Updates>(updates),
             std::back_inserter(std::get<comp_index>(parameter_changed_components_)), sequence_idx);
 
         // update, get changed variable
@@ -302,9 +303,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <cache_type_c CacheType> void update_components(ConstDataset const& update_data) {
         auto const components_to_update = get_components_to_update(update_data);
         auto const update_independence =
-            main_core::update::independence::check_update_independence<ModelType>(state_, update_data);
+            main_core::update::independence::check_update_independence<ModelType>(state_.components, update_data);
         auto const sequence_idx_map = main_core::update::get_all_sequence_idx_map<ModelType>(
-            state_, update_data, 0, components_to_update, update_independence, false);
+            state_.components, update_data, 0, components_to_update, update_independence, false);
         update_components<CacheType>(update_data, 0, sequence_idx_map);
     }
 
@@ -356,9 +357,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     SequenceIdx get_all_sequence_idx_map(ConstDataset const& update_data) {
         auto const components_to_update = get_components_to_update(update_data);
         auto const update_independence =
-            main_core::update::independence::check_update_independence<ModelType>(state_, update_data);
-        return main_core::update::get_all_sequence_idx_map<ModelType>(state_, update_data, 0, components_to_update,
-                                                                      update_independence, false);
+            main_core::update::independence::check_update_independence<ModelType>(state_.components, update_data);
+        return main_core::update::get_all_sequence_idx_map<ModelType>(state_.components, update_data, 0,
+                                                                      components_to_update, update_independence, false);
     }
 
     void update_state(UpdateChange const& changes) {
