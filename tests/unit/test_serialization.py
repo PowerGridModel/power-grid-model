@@ -691,7 +691,7 @@ def test_json_serialize_empty_dataset(dataset_type, use_compact_list: bool):
         assert isinstance(result, str)
         assert result == reference
 
-        with pytest.raises(ValueError, match="At least one component should have row based data."):
+        with pytest.raises(ValueError, match="At least one component should have row based data"):
             json_serialize({}, use_compact_list=use_compact_list, indent=indent)
 
 
@@ -713,7 +713,7 @@ def test_msgpack_serialize_empty_dataset(dataset_type, use_compact_list):
     reference = empty_dataset(dataset_type)
     assert from_msgpack(msgpack_serialize({}, dataset_type, use_compact_list=use_compact_list)) == reference
 
-    with pytest.raises(ValueError, match="At least one component should have row based data."):
+    with pytest.raises(ValueError, match="At least one component should have row based data"):
         json_serialize({}, use_compact_list=use_compact_list)
 
 
