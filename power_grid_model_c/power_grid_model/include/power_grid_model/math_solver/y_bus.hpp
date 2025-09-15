@@ -324,11 +324,6 @@ template <symmetry_tag sym> class YBus {
 
     constexpr auto& get_y_bus_structure() const { return y_bus_struct_; }
 
-    void set_branch_param_idx(IdxVector branch_param_idx) { branch_param_idx_ = std::move(branch_param_idx); }
-    void set_shunt_param_idx(IdxVector shunt_param_idx) { shunt_param_idx_ = std::move(shunt_param_idx); }
-    IdxVector const& get_branch_param_idx() const { return branch_param_idx_; }
-    IdxVector const& get_shunt_param_idx() const { return shunt_param_idx_; }
-
     void update_admittance(std::shared_ptr<MathModelParam<sym> const> const& math_model_param) {
         // overwrite the old cached parameters
         math_model_param_ = math_model_param;
