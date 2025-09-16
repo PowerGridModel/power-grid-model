@@ -97,8 +97,9 @@ template <rk2_tensor Matrix> class DenseLUFactor {
 
             // perturb pivot if needed
             double abs_pivot = sqrt(biggest_score);
-            int8_t const possibly_ill_conditioned_pivot =
-                possibly_ill_conditioned_pivots.first ? possibly_ill_conditioned_pivots.second[block_node_idx] : 0;
+            int8_t const possibly_ill_conditioned_pivot = possibly_ill_conditioned_pivots.first
+                                                              ? possibly_ill_conditioned_pivots.second[block_node_idx]
+                                                              : int8_t{0};
             perturb_pivot_if_needed(possibly_ill_conditioned_pivot, perturb_threshold, matrix(row_biggest, col_biggest),
                                     abs_pivot, has_pivot_perturbation);
             max_pivot = std::max(max_pivot, abs_pivot);
