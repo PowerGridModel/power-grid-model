@@ -7,6 +7,8 @@
 
 #include <doctest/doctest.h>
 
+#include <bitset>
+
 namespace power_grid_model::math_solver {
 namespace {
 using lu_trait_double = math_solver::sparse_lu_entry_trait<double, double, double>;
