@@ -18,6 +18,9 @@ struct AComponent {
 };
 } // namespace
 
+template <typename T>
+concept Constructible = requires { T{}; };
+
 static_assert(detail::validate_component_types_c<AllComponents>);
 
 static_assert(detail::validate_component_types_c<ComponentList<Node, Source>>);
@@ -28,9 +31,10 @@ static_assert(detail::validate_component_types_c<ComponentList<Source, Node>>);
 static_assert(!detail::validate_component_types_c<ComponentList<Line>>);
 static_assert(!detail::validate_component_types_c<ComponentList<Source, Line>>);
 
-static_assert(!std::constructible_from<MainModelType<ExtraRetrievableTypes<Base, Branch>, ComponentList<Line>>>);
-static_assert(!std::constructible_from<
-              MainModelType<ExtraRetrievableTypes<Base, Branch, Appliance>, ComponentList<Line, Source>>>);
+static_assert(!Constructible<MainModelType<ExtraRetrievableTypes<Base, Branch>, ComponentList<Line>>>);
+static_assert(
+    !Constructible<MainModelType<ExtraRetrievableTypes<Base, Branch, Appliance>, ComponentList<Line, Source>>>);
+static_assert(Constructible<MainModelType<ExtraRetrievableTypes<Base, Branch>, ComponentList<Node, Line>>>);
 
 TEST_CASE("MainModelType") {
 
