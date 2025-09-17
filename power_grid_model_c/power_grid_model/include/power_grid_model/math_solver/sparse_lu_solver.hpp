@@ -62,7 +62,7 @@ template <rk2_tensor Matrix> class DenseLUFactor {
     static void factorize_block_in_place(Eigen::MatrixBase<Derived>&& matrix, BlockPerm& block_perm,
                                          double perturb_threshold,
                                          std::pair<bool, std::vector<int8_t>> possibly_ill_conditioned_pivots,
-                                         Idx block_node_idx, bool& has_pivot_perturbation)
+                                         Idx block_node_idx, bool& has_pivot_perturbation, double max_pivot_original)
         requires(std::same_as<typename Derived::Scalar, Scalar> && rk2_tensor<Derived> &&
                  (Derived::RowsAtCompileTime == size) && (Derived::ColsAtCompileTime == size))
     {
@@ -136,7 +136,7 @@ template <rk2_tensor Matrix> class DenseLUFactor {
 
         // throw SparseMatrixError if the matrix is ill-conditioned
         // only check condition number if pivot perturbation is not used
-        double const pivot_threshold = has_pivot_perturbation ? 0.0 : epsilon * max_pivot;
+        double const pivot_threshold = has_pivot_perturbation ? 0.0 : epsilon * max_pivot_original;
         for (int8_t pivot = 0; pivot != size; ++pivot) {
             if (cabs(matrix(pivot, pivot)) < pivot_threshold || !is_normal(matrix(pivot, pivot))) {
                 throw SparseMatrixError{}; // can not specify error code
@@ -275,7 +275,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
                     LUFactor::factorize_block_in_place(lu_matrix[pivot_idx].matrix(), block_perm_array[pivot_row_col],
                                                        perturb_threshold, possibly_ill_conditioned_pivots,
                                                        pivot_row_col, // Pass the node index
-                                                       has_pivot_perturbation_);
+                                                       has_pivot_perturbation_, max_pivot_original_);
                     return block_perm_array[pivot_row_col];
                 } else {
                     if (possibly_ill_conditioned_pivots.first) {
@@ -420,6 +420,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     // cache value for pivot perturbation for the factorize step
     bool has_pivot_perturbation_{false};
     double matrix_norm_{};
+    double max_pivot_original_{};
     std::optional<std::vector<Tensor>> original_matrix_;
     // cache value for iterative refinement for the solve step
     std::optional<std::vector<XVector>> dx_;
@@ -549,6 +550,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         // 2. sum all norms of the blocks per row, except the diagonal block
         // 3. take the maximum of all the sums
         matrix_norm_ = 0.0;
+        max_pivot_original_ = 0.0;
         auto const& row_indptr = *row_indptr_;
         // auto const& col_indices = *col_indices_;
         for (Idx row = 0; row != size_; ++row) {
@@ -557,8 +559,10 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
             for (Idx idx = row_indptr[row]; idx != row_indptr[row + 1]; ++idx) {
                 if constexpr (is_block) {
                     row_norm += cabs(data[idx]).rowwise().sum().maxCoeff();
+                    max_pivot_original_ = std::max(max_pivot_original_, cabs(data[idx]).maxCoeff());
                 } else {
                     row_norm += cabs(data[idx]);
+                    max_pivot_original_ = std::max(max_pivot_original_, cabs(data[idx]));
                 }
             }
             matrix_norm_ = std::max(matrix_norm_, row_norm);
