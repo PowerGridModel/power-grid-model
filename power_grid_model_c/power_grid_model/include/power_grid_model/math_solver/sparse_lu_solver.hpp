@@ -245,6 +245,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     void prefactorize(std::vector<Tensor>& data, BlockPermArray& block_perm_array,
                       std::pair<bool, std::vector<int8_t>> possibly_ill_conditioned_pivots = {false, {}}) {
         reset_matrix_cache();
+        calculate_max_pivot(data);
         if (possibly_ill_conditioned_pivots.first) {
             assert(static_cast<Idx>(possibly_ill_conditioned_pivots.second.size()) == size_);
             initialize_pivot_perturbation(data);
@@ -547,25 +548,35 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         // calculate the block-wise non-diagonal infinite norm of the matrix
         // that is:
         // 1. calculate the infinite norm of each individual block
-        // 2. sum all norms of the blocks per row, except the diagonal block
+        // 2. sum all norms of the blocks per row,
         // 3. take the maximum of all the sums
         matrix_norm_ = 0.0;
-        max_pivot_original_ = 0.0;
         auto const& row_indptr = *row_indptr_;
-        // auto const& col_indices = *col_indices_;
         for (Idx row = 0; row != size_; ++row) {
             // calculate the sum of the norms of the blocks in the row
             double row_norm = 0.0;
             for (Idx idx = row_indptr[row]; idx != row_indptr[row + 1]; ++idx) {
                 if constexpr (is_block) {
                     row_norm += cabs(data[idx]).rowwise().sum().maxCoeff();
-                    max_pivot_original_ = std::max(max_pivot_original_, cabs(data[idx]).maxCoeff());
                 } else {
                     row_norm += cabs(data[idx]);
-                    max_pivot_original_ = std::max(max_pivot_original_, cabs(data[idx]));
                 }
             }
             matrix_norm_ = std::max(matrix_norm_, row_norm);
+        }
+    }
+
+    void calculate_max_pivot(std::vector<Tensor> const& data) {
+        max_pivot_original_ = 0.0;
+        auto const& row_indptr = *row_indptr_;
+        for (Idx row = 0; row != size_; ++row) {
+            for (Idx idx = row_indptr[row]; idx != row_indptr[row + 1]; ++idx) {
+                if constexpr (is_block) {
+                    max_pivot_original_ = std::max(max_pivot_original_, cabs(data[idx]).maxCoeff());
+                } else {
+                    max_pivot_original_ = std::max(max_pivot_original_, cabs(data[idx]));
+                }
+            }
         }
     }
 
