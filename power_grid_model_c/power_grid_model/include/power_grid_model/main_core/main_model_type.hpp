@@ -33,7 +33,6 @@ constexpr auto filter_tuple_types(std::tuple<std::type_identity<Types>...> /*unu
                                              std::tuple<std::type_identity<Types>>, std::tuple<>>{}...);
 }
 
-
 template <typename List, typename T, typename... NeedsTypes>
 concept dependent_type_check = !IsInList<T, List>::value || (IsInList<NeedsTypes, List>::value && ...);
 
