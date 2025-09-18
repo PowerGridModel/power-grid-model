@@ -41,7 +41,7 @@ template <class... Types, class Functor> constexpr auto run_functor_with_all_typ
 }
 /////////////////// To remove ///////////////////
 
-template <typename Tuple, class Functor> constexpr void run_functor_with_tuple_return_void(Functor functor) {
+template <typename Tuple, class Functor> constexpr void run_functor_with_tuple_return_void(Functor&& functor) {
     detail::run_functor_with_tuple_index_return_void<Tuple>(functor,
                                                             std::make_index_sequence<std::tuple_size_v<Tuple>>{});
 }
