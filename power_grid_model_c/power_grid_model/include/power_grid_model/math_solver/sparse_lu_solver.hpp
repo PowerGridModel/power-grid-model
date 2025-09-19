@@ -62,7 +62,7 @@ template <rk2_tensor Matrix> class DenseLUFactor {
     static void factorize_block_in_place(Eigen::MatrixBase<Derived>&& matrix, BlockPerm& block_perm,
                                          double perturb_threshold,
                                          std::pair<bool, std::vector<int8_t>> possibly_ill_conditioned_pivots,
-                                         Idx block_node_idx, bool& has_pivot_perturbation, double max_pivot_original)
+                                         Idx block_node_idx, bool& has_pivot_perturbation, double matrix_norm)
         requires(std::same_as<typename Derived::Scalar, Scalar> && rk2_tensor<Derived> &&
                  (Derived::RowsAtCompileTime == size) && (Derived::ColsAtCompileTime == size))
     {
@@ -136,9 +136,12 @@ template <rk2_tensor Matrix> class DenseLUFactor {
 
         // throw SparseMatrixError if the matrix is ill-conditioned
         // only check condition number if pivot perturbation is not used
-        double const pivot_threshold = has_pivot_perturbation ? 0.0 : epsilon * max_pivot_original;
+        double const absolute_threshold = epsilon;
+        double const relative_threshold = has_pivot_perturbation ? 0.0 : epsilon * matrix_norm;
         for (int8_t pivot = 0; pivot != size; ++pivot) {
-            if (cabs(matrix(pivot, pivot)) < pivot_threshold || !is_normal(matrix(pivot, pivot))) {
+            auto const pivot_abs_v = cabs(matrix(pivot, pivot));
+            if (pivot_abs_v < relative_threshold || pivot_abs_v < absolute_threshold ||
+                !is_normal(matrix(pivot, pivot))) {
                 throw SparseMatrixError{}; // can not specify error code
             }
         }
@@ -245,7 +248,6 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     void prefactorize(std::vector<Tensor>& data, BlockPermArray& block_perm_array,
                       std::pair<bool, std::vector<int8_t>> possibly_ill_conditioned_pivots = {false, {}}) {
         reset_matrix_cache();
-        calculate_max_pivot(data);
         if (possibly_ill_conditioned_pivots.first) {
             assert(static_cast<Idx>(possibly_ill_conditioned_pivots.second.size()) == size_);
             initialize_pivot_perturbation(data);
@@ -276,7 +278,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
                     LUFactor::factorize_block_in_place(lu_matrix[pivot_idx].matrix(), block_perm_array[pivot_row_col],
                                                        perturb_threshold, possibly_ill_conditioned_pivots,
                                                        pivot_row_col, // Pass the node index
-                                                       has_pivot_perturbation_, max_pivot_original_);
+                                                       has_pivot_perturbation_, matrix_norm_);
                     return block_perm_array[pivot_row_col];
                 } else {
                     if (possibly_ill_conditioned_pivots.first) {
@@ -421,7 +423,6 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     // cache value for pivot perturbation for the factorize step
     bool has_pivot_perturbation_{false};
     double matrix_norm_{};
-    double max_pivot_original_{};
     std::optional<std::vector<Tensor>> original_matrix_;
     // cache value for iterative refinement for the solve step
     std::optional<std::vector<XVector>> dx_;
@@ -563,20 +564,6 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
                 }
             }
             matrix_norm_ = std::max(matrix_norm_, row_norm);
-        }
-    }
-
-    void calculate_max_pivot(std::vector<Tensor> const& data) {
-        max_pivot_original_ = 0.0;
-        auto const& row_indptr = *row_indptr_;
-        for (Idx row = 0; row != size_; ++row) {
-            for (Idx idx = row_indptr[row]; idx != row_indptr[row + 1]; ++idx) {
-                if constexpr (is_block) {
-                    max_pivot_original_ = std::max(max_pivot_original_, cabs(data[idx]).maxCoeff());
-                } else {
-                    max_pivot_original_ = std::max(max_pivot_original_, cabs(data[idx]));
-                }
-            }
         }
     }
 
