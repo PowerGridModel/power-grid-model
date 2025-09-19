@@ -11,6 +11,7 @@
 #include <format>
 #include <sstream>
 #include <string>
+#include <utility>
 
 namespace power_grid_model {
 class PowerGridError : public std::exception {
