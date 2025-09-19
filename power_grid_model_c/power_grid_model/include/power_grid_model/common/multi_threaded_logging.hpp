@@ -24,7 +24,7 @@ class MultiThreadedLoggerImpl : public MultiThreadedLogger {
         ThreadLogger& operator=(ThreadLogger const&) = default;
         ThreadLogger(ThreadLogger&&) noexcept = default;
         ThreadLogger& operator=(ThreadLogger&&) noexcept = default;
-        ~ThreadLogger() [[noexcept]] override { sync(); }
+        ~ThreadLogger() noexcept override { sync(); }
         void sync() const { parent_->sync(*this); }
 
       private:
