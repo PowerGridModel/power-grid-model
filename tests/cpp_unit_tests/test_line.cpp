@@ -246,22 +246,22 @@ TEST_CASE("Test line") {
         }
 
         SUBCASE("From status") {
-            SUBCASE("same") { branch_update.from_status = int_status(line.from_status()); }
+            SUBCASE("same") { branch_update.from_status = status_to_int(line.from_status()); }
             SUBCASE("different") { branch_update.from_status = IntS{0}; }
-            expected.from_status = int_status(line.from_status());
+            expected.from_status = status_to_int(line.from_status());
         }
 
         SUBCASE("To status") {
-            SUBCASE("same") { branch_update.to_status = int_status(line.to_status()); }
+            SUBCASE("same") { branch_update.to_status = status_to_int(line.to_status()); }
             SUBCASE("different") { branch_update.to_status = IntS{0}; }
-            expected.to_status = int_status(line.to_status());
+            expected.to_status = status_to_int(line.to_status());
         }
 
         SUBCASE("multiple") {
             branch_update.from_status = IntS{0};
             branch_update.to_status = IntS{0};
-            expected.from_status = int_status(line.from_status());
-            expected.to_status = int_status(line.to_status());
+            expected.from_status = status_to_int(line.from_status());
+            expected.to_status = status_to_int(line.to_status());
         }
 
         auto const inv = line.inverse(branch_update);
