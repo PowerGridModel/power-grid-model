@@ -53,9 +53,6 @@ class InvalidArguments : public PowerGridError {
 class MissingCaseForEnumError : public InvalidArguments {
   public:
     template <typename T>
-    MissingCaseForEnumError(std::string_view method, T const& value)
-        : InvalidArguments{method, std::format("{} #{:d}", typeid(T).name(), value)} {}
-    template <typename T>
         requires std::is_enum_v<T>
     MissingCaseForEnumError(std::string_view method, T const& value)
         : InvalidArguments{method, std::format("{} #{:d}", typeid(T).name(), std::to_underlying(value))} {}
