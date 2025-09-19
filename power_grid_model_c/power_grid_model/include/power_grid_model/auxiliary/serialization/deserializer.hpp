@@ -986,7 +986,7 @@ class Deserializer {
         default: {
             using namespace std::string_literals;
             throw SerializationError("String data input not supported for serialization format "s +
-                                     std::to_string(static_cast<IntS>(serialization_format)));
+                                     std::to_string(std::to_underlying(serialization_format)));
         }
         }
     }
@@ -1001,7 +1001,7 @@ class Deserializer {
         default: {
             using namespace std::string_literals;
             throw SerializationError("Buffer data input not supported for serialization format "s +
-                                     std::to_string(static_cast<IntS>(serialization_format)));
+                                     std::to_string(std::to_underlying(serialization_format)));
         }
         }
     }

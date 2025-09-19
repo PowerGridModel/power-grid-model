@@ -250,15 +250,15 @@ TEST_CASE("Test transformer") {
         }
 
         SUBCASE("From status") {
-            SUBCASE("same") { transformer_update.from_status = static_cast<IntS>(transformer.from_status()); }
+            SUBCASE("same") { transformer_update.from_status = status_to_int(transformer.from_status()); }
             SUBCASE("different") { transformer_update.from_status = IntS{0}; }
-            expected.from_status = static_cast<IntS>(transformer.from_status());
+            expected.from_status = status_to_int(transformer.from_status());
         }
 
         SUBCASE("To status") {
-            SUBCASE("same") { transformer_update.to_status = static_cast<IntS>(transformer.to_status()); }
+            SUBCASE("same") { transformer_update.to_status = status_to_int(transformer.to_status()); }
             SUBCASE("different") { transformer_update.to_status = IntS{0}; }
-            expected.to_status = static_cast<IntS>(transformer.to_status());
+            expected.to_status = status_to_int(transformer.to_status());
         }
 
         SUBCASE("Tap pos") {
@@ -271,8 +271,8 @@ TEST_CASE("Test transformer") {
             transformer_update.from_status = IntS{0};
             transformer_update.to_status = IntS{0};
             transformer_update.tap_pos = IntS{0};
-            expected.from_status = static_cast<IntS>(transformer.from_status());
-            expected.to_status = static_cast<IntS>(transformer.to_status());
+            expected.from_status = status_to_int(transformer.from_status());
+            expected.to_status = status_to_int(transformer.to_status());
             expected.tap_pos = transformer.tap_pos();
         }
 
