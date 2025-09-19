@@ -45,6 +45,7 @@ template <typename T> bool check_id_na(T const& obj) {
 } // namespace detail
 
 namespace independence {
+
 struct UpdateCompProperties {
     bool has_any_elements{false};                    // whether the component has any elements in the update data
     bool ids_all_na{false};                          // whether all ids are all NA
@@ -127,9 +128,6 @@ UpdateCompProperties check_component_independence(ConstDataset const& update_dat
     return properties;
 }
 
-template <class... ComponentTypes>
-using UpdateIndependence = std::array<UpdateCompProperties, utils::n_types<ComponentTypes...>>;
-
 inline void validate_update_data_independence(UpdateCompProperties const& comp, std::string const& comp_name) {
     if (comp.is_empty_component()) {
         return; // empty dataset is still supported
@@ -150,14 +148,13 @@ inline void validate_update_data_independence(UpdateCompProperties const& comp, 
     }
 }
 
-template <class... ComponentTypes, class ComponentContainer>
-UpdateIndependence<ComponentTypes...> check_update_independence(MainModelState<ComponentContainer> const& state,
-                                                                ConstDataset const& update_data) {
-    return utils::run_functor_with_all_types_return_array<ComponentTypes...>(
-        [&state, &update_data]<typename CompType>() {
-            auto const n_component = state.components.template size<CompType>();
-            return check_component_independence<CompType>(update_data, n_component);
-        });
+template <typename ModelType>
+typename ModelType::UpdateIndependence check_update_independence(typename ModelType::MainModelState const& state,
+                                                                 ConstDataset const& update_data) {
+    return ModelType::run_functor_with_all_component_types_return_array([&state, &update_data]<typename CompType>() {
+        auto const n_component = state.components.template size<CompType>();
+        return check_component_independence<CompType>(update_data, n_component);
+    });
 }
 
 } // namespace independence
@@ -214,22 +211,21 @@ std::vector<Idx2D> get_component_sequence(MainModelState<ComponentContainer> con
 }
 } // namespace detail
 
-template <class... ComponentTypes, class ComponentContainer>
-utils::SequenceIdx<ComponentTypes...>
-get_all_sequence_idx_map(MainModelState<ComponentContainer> const& state, ConstDataset const& update_data,
-                         Idx scenario_idx, utils::ComponentFlags<ComponentTypes...> const& components_to_store,
-                         independence::UpdateIndependence<ComponentTypes...> const& independence, bool cached) {
-    return utils::run_functor_with_all_types_return_array<ComponentTypes...>(
+template <class ModelType>
+typename ModelType::SequenceIdx
+get_all_sequence_idx_map(typename ModelType::MainModelState const& state, ConstDataset const& update_data,
+                         Idx scenario_idx, typename ModelType::ComponentFlags const& components_to_store,
+                         typename ModelType::UpdateIndependence const& independence, bool cached) {
+    return ModelType::run_functor_with_all_component_types_return_array(
         [&state, &update_data, scenario_idx, &components_to_store, &independence, cached]<typename CompType>() {
-            auto const component_properties =
-                std::get<utils::index_of_component<CompType, ComponentTypes...>>(independence);
+            auto const component_properties = std::get<ModelType::template index_of_component<CompType>>(independence);
             // The sequence for the independent components is cached (true). For the remaining components, the sequence
             // cannot be cached (false), so the independence flags are inverted to not return an empty sequence when
             // this is the case.
 
             if (bool const component_independence = cached != component_properties.is_independent();
                 !component_independence ||
-                !std::get<utils::index_of_component<CompType, ComponentTypes...>>(components_to_store)) {
+                !std::get<ModelType::template index_of_component<CompType>>(components_to_store)) {
                 return std::vector<Idx2D>{};
             }
             independence::validate_update_data_independence(component_properties, CompType::name);
