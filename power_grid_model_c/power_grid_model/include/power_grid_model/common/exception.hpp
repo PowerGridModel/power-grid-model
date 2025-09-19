@@ -11,6 +11,7 @@
 #include <format>
 #include <sstream>
 #include <string>
+#include <utility>
 
 namespace power_grid_model {
 class PowerGridError : public std::exception {
@@ -53,7 +54,12 @@ class MissingCaseForEnumError : public InvalidArguments {
   public:
     template <typename T>
     MissingCaseForEnumError(std::string_view method, T const& value)
-        : InvalidArguments{method, std::format("{} #{:d}", typeid(T).name(), static_cast<IntS>(value))} {}
+        : InvalidArguments{method, std::format("{} #{:d}", typeid(T).name(), value)} {}
+
+    template <typename T>
+        requires std::is_enum_v<T>
+    MissingCaseForEnumError(std::string_view method, T const& value)
+        : InvalidArguments{method, std::format("{} #{:d}", typeid(T).name(), std::to_underlying(value))} {}
 };
 
 class ConflictVoltage : public PowerGridError {
@@ -147,7 +153,7 @@ class InvalidMeasuredTerminalType : public PowerGridError {
   public:
     InvalidMeasuredTerminalType(MeasuredTerminalType const terminal_type, std::string_view sensor)
         : PowerGridError{std::format("{} measurement is not supported for object of type {}", sensor,
-                                     static_cast<IntS>(terminal_type))} {}
+                                     std::to_underlying(terminal_type))} {}
 };
 
 class InvalidRegulatedObject : public PowerGridError {
@@ -218,17 +224,18 @@ class InvalidShortCircuitType : public PowerGridError {
   public:
     explicit InvalidShortCircuitType(FaultType short_circuit_type)
         : PowerGridError{
-              std::format("The short circuit type ({}) is invalid!\n", static_cast<IntS>(short_circuit_type))} {}
+              std::format("The short circuit type ({}) is invalid!\n", std::to_underlying(short_circuit_type))} {}
     InvalidShortCircuitType(bool sym, FaultType short_circuit_type)
         : PowerGridError{std::format("The short circuit type ({}) does not match the calculation type (symmetric={})\n",
-                                     static_cast<IntS>(short_circuit_type), static_cast<int>(sym))} {}
+                                     std::to_underlying(short_circuit_type), static_cast<int>(sym))} {}
 };
 
 class InvalidShortCircuitPhases : public PowerGridError {
   public:
     InvalidShortCircuitPhases(FaultType short_circuit_type, FaultPhase short_circuit_phases)
         : PowerGridError{std::format("The short circuit phases ({}) do not match the short circuit type ({})\n",
-                                     static_cast<IntS>(short_circuit_phases), static_cast<IntS>(short_circuit_type))} {}
+                                     std::to_underlying(short_circuit_phases),
+                                     std::to_underlying(short_circuit_type))} {}
 };
 
 class InvalidShortCircuitPhaseOrType : public PowerGridError {
@@ -269,8 +276,8 @@ class TapSearchStrategyIncompatibleError : public InvalidArguments {
   public:
     template <typename T1, typename T2>
     TapSearchStrategyIncompatibleError(std::string_view method, T1 const& value1, T2 const& value2)
-        : InvalidArguments{method, std::format("{} #{} and {} #{}", typeid(T1).name(), static_cast<IntS>(value1),
-                                               typeid(T2).name(), static_cast<IntS>(value2))} {}
+        : InvalidArguments{method, std::format("{} #{} and {} #{}", typeid(T1).name(), std::to_underlying(value1),
+                                               typeid(T2).name(), std::to_underlying(value2))} {}
 };
 
 } // namespace power_grid_model

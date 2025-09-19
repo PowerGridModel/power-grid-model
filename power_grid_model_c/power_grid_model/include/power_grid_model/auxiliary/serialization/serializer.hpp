@@ -257,7 +257,7 @@ class Serializer {
         default: {
             using namespace std::string_literals;
             throw SerializationError("Unsupported serialization format: "s +
-                                     std::to_string(static_cast<IntS>(serialization_format_)));
+                                     std::to_string(std::to_underlying(serialization_format_)));
         }
         }
 
@@ -273,7 +273,7 @@ class Serializer {
         default: {
             using namespace std::string_literals;
             throw SerializationError("Serialization format "s +
-                                     std::to_string(static_cast<IntS>(serialization_format_)) +
+                                     std::to_string(std::to_underlying(serialization_format_)) +
                                      " does not support binary buffer output"s);
         }
         }
@@ -288,7 +288,7 @@ class Serializer {
         default: {
             using namespace std::string_literals;
             throw SerializationError("Serialization format "s +
-                                     std::to_string(static_cast<IntS>(serialization_format_)) +
+                                     std::to_string(std::to_underlying(serialization_format_)) +
                                      " does not support string output"s);
         }
         }
@@ -598,7 +598,7 @@ class Serializer {
     }
 
     static bool check_all_nan(AttributeBuffer<void const> const& attribute_buffer, Idx idx, Idx size) {
-        return ctype_func_selector(attribute_buffer.meta_attribute->ctype, [&]<class T> {
+        return ctype_func_selector(attribute_buffer.meta_attribute->ctype, [&attribute_buffer, idx, size]<class T> {
             return std::ranges::all_of(
                 std::span<T const>{reinterpret_cast<T const*>(attribute_buffer.data) + idx, static_cast<size_t>(size)},
                 [](auto const& x) { return is_nan(x); });
