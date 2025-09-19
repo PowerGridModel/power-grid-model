@@ -354,7 +354,7 @@ constexpr bool is_nan(IntS x) { return x == na_IntS; }
 template <class Enum>
     requires std::same_as<std::underlying_type_t<Enum>, IntS>
 constexpr bool is_nan(Enum x) {
-    return static_cast<IntS>(x) == na_IntS;
+    return std::to_underlying(x) == na_IntS;
 }
 constexpr bool is_nan(Idx x) { return x == na_Idx; }
 

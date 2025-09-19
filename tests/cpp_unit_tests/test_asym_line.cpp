@@ -260,22 +260,22 @@ void execute_subcases(const AsymLineInput& input, const ComplexTensor<asymmetric
         }
 
         SUBCASE("From status") {
-            SUBCASE("same") { branch_update.from_status = static_cast<IntS>(asym_line.from_status()); }
+            SUBCASE("same") { branch_update.from_status = int_status(asym_line.from_status()); }
             SUBCASE("different") { branch_update.from_status = IntS{0}; }
-            expected.from_status = static_cast<IntS>(asym_line.from_status());
+            expected.from_status = int_status(asym_line.from_status());
         }
 
         SUBCASE("To status") {
-            SUBCASE("same") { branch_update.to_status = static_cast<IntS>(asym_line.to_status()); }
+            SUBCASE("same") { branch_update.to_status = int_status(asym_line.to_status()); }
             SUBCASE("different") { branch_update.to_status = IntS{0}; }
-            expected.to_status = static_cast<IntS>(asym_line.to_status());
+            expected.to_status = int_status(asym_line.to_status());
         }
 
         SUBCASE("multiple") {
             branch_update.from_status = IntS{0};
             branch_update.to_status = IntS{0};
-            expected.from_status = static_cast<IntS>(asym_line.from_status());
-            expected.to_status = static_cast<IntS>(asym_line.to_status());
+            expected.from_status = int_status(asym_line.from_status());
+            expected.to_status = int_status(asym_line.to_status());
         }
 
         auto const inv = asym_line.inverse(branch_update);
