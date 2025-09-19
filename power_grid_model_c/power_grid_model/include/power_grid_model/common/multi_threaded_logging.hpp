@@ -28,7 +28,7 @@ class MultiThreadedLoggerImpl : public MultiThreadedLogger {
             try {
                 sync();
             } catch (...) {
-                // we can't sync so we need to drop
+               // NOSONAR // we can't sync so we need to drop
             }
         }
         void sync() const { parent_->sync(*this); }
