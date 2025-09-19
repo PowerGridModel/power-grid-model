@@ -266,10 +266,10 @@ static_assert(grouped_idx_vector_type<DenseGroupedIdxVector>);
 
 inline auto enumerated_zip_sequence(grouped_idx_vector_type auto const& first,
                                     grouped_idx_vector_type auto const&... rest) {
-    assert(((first.size() == rest.size()) && ...));
-
-    auto const indices = IdxRange{first.size()};
-    return std::views::zip(indices, first, rest...);
+    if constexpr (sizeof...(rest) > 0) {
+        assert(((first.size() == rest.size()) && ...));
+    }
+    return std::views::zip(IdxRange{first.size()}, first, rest...);
 }
 
 } // namespace power_grid_model
