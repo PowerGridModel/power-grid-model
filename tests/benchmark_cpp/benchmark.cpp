@@ -10,6 +10,7 @@
 #include <power_grid_model/main_model.hpp>
 #include <power_grid_model/math_solver/math_solver.hpp>
 
+#include <iomanip>
 #include <iostream>
 #include <random>
 
