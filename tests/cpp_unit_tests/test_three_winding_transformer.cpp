@@ -569,21 +569,21 @@ TEST_CASE("Test three winding transformer") {
         }
 
         SUBCASE("status_1") {
-            SUBCASE("same") { three_winding_transformer_update.status_1 = static_cast<IntS>(transformer.status_1()); }
+            SUBCASE("same") { three_winding_transformer_update.status_1 = status_to_int(transformer.status_1()); }
             SUBCASE("different") { three_winding_transformer_update.status_1 = IntS{0}; }
-            expected.status_1 = static_cast<IntS>(transformer.status_1());
+            expected.status_1 = status_to_int(transformer.status_1());
         }
 
         SUBCASE("status_2") {
-            SUBCASE("same") { three_winding_transformer_update.status_2 = static_cast<IntS>(transformer.status_2()); }
+            SUBCASE("same") { three_winding_transformer_update.status_2 = status_to_int(transformer.status_2()); }
             SUBCASE("different") { three_winding_transformer_update.status_2 = IntS{0}; }
-            expected.status_2 = static_cast<IntS>(transformer.status_2());
+            expected.status_2 = status_to_int(transformer.status_2());
         }
 
         SUBCASE("status_3") {
-            SUBCASE("same") { three_winding_transformer_update.status_3 = static_cast<IntS>(transformer.status_3()); }
+            SUBCASE("same") { three_winding_transformer_update.status_3 = status_to_int(transformer.status_3()); }
             SUBCASE("different") { three_winding_transformer_update.status_3 = IntS{0}; }
-            expected.status_3 = static_cast<IntS>(transformer.status_3());
+            expected.status_3 = status_to_int(transformer.status_3());
         }
 
         SUBCASE("Tap pos") {
@@ -597,9 +597,9 @@ TEST_CASE("Test three winding transformer") {
             three_winding_transformer_update.status_2 = IntS{0};
             three_winding_transformer_update.status_3 = IntS{0};
             three_winding_transformer_update.tap_pos = IntS{0};
-            expected.status_1 = static_cast<IntS>(transformer.status_1());
-            expected.status_2 = static_cast<IntS>(transformer.status_2());
-            expected.status_3 = static_cast<IntS>(transformer.status_3());
+            expected.status_1 = status_to_int(transformer.status_1());
+            expected.status_2 = status_to_int(transformer.status_2());
+            expected.status_3 = status_to_int(transformer.status_3());
             expected.tap_pos = IntS{2};
         }
 
