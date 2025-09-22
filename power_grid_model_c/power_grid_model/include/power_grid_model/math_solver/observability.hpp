@@ -9,6 +9,10 @@
 
 #include "../common/exception.hpp"
 
+// DEBUG
+#include <iostream>
+// DEBUG
+
 namespace power_grid_model::math_solver {
 
 namespace detail {
@@ -218,11 +222,11 @@ inline ObservabilityResult observability_check(MeasuredValues<sym> const& measur
     detail::ObservabilitySensorsResult observability_sensors =
         detail::count_observability_sensors(measured_values, topo, y_bus_structure);
 
-    // //  sufficient & necessary early out
-    // if (observability_sensors.bus_injections.back() > n_bus - 2) {
-    //     return ObservabilityResult{.is_observable = true,
-    //                                .is_possibly_ill_conditioned = observability_sensors.is_possibly_ill_conditioned};
-    // }
+    //  sufficient & necessary early out
+    if (observability_sensors.bus_injections.back() > n_bus - 2) {
+        return ObservabilityResult{.is_observable = true,
+                                   .is_possibly_ill_conditioned = observability_sensors.is_possibly_ill_conditioned};
+    }
 
     Idx n_voltage_phasor_sensors{};
 
