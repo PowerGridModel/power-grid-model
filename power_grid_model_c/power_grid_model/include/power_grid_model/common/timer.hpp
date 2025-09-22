@@ -26,7 +26,7 @@ class Timer {
     Timer(Logger& log, LogEvent code) : log_{&log}, code_{code}, start_{Clock::now()} {}
 
     Timer(Timer const&) = delete;
-    Timer(Timer&& other) noexcept : log_{other.log_}, code_{other.code_}, start_{other.start_} { other.log_ = nullptr; }
+    Timer(Timer&& other) noexcept : log_{std::exchange(other.log_, nullptr)}, code_{other.code_}, start_{other.start_} {}
     Timer& operator=(Timer const&) = delete;
 
     Timer& operator=(Timer&& timer) noexcept {
