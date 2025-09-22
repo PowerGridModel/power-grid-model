@@ -65,13 +65,14 @@ concept validate_component_types_c =
 
 } // namespace detail
 
-template <class T, class U> struct MainModelType;
+template <class T, class U> class MainModelType;
 
 // TODO: discussion on checking dependent types can also be done here.
 template <class... ExtraRetrievableType, class... ComponentType>
     requires detail::validate_component_types_c<ComponentList<ComponentType...>>
-struct MainModelType<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentList<ComponentType...>> {
+class MainModelType<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentList<ComponentType...>> {
 
+  public:
     using ComponentContainer = Container<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentType...>;
     using MainModelState = main_core::MainModelState<ComponentContainer>;
     using ComponentTypesTuple = std::tuple<ComponentType...>;
@@ -116,11 +117,12 @@ struct MainModelType<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLi
         std::array{index_of_component<Line>, index_of_component<Link>, index_of_component<Transformer>};
     static constexpr auto shunt_param_in_seq_map = std::array{index_of_component<Shunt>};
 
-    template <class Functor> static constexpr void run_functor_with_all_component_types_return_void(Functor functor) {
-        (functor.template operator()<ComponentType>(), ...);
+    template <class Functor> static constexpr void run_functor_with_all_component_types_return_void(Functor&& functor) {
+        (std::forward<Functor>(functor).template operator()<ComponentType>(), ...);
     }
-    template <class Functor> static constexpr auto run_functor_with_all_component_types_return_array(Functor functor) {
-        return std::array { functor.template operator()<ComponentType>()... };
+    template <class Functor>
+    static constexpr auto run_functor_with_all_component_types_return_array(Functor&& functor) {
+        return std::array { std::forward<Functor>(functor).template operator()<ComponentType>()... };
     }
 };
 
