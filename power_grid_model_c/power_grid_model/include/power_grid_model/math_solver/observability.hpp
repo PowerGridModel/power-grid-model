@@ -22,6 +22,25 @@ struct ObservabilitySensorsResult {
     std::vector<int8_t> bus_injections;         // bus injections, zero injection and power sensors at buses
     bool is_possibly_ill_conditioned{false};
 };
+enum class ConnectivityStatus {
+    not_connected = -1,               // not connected, redundant
+    connected_no_measurement = 0,     // connected (for branch) or node, no measurement available
+    node_measured = 0b010,            // the node has measurement and is not yet used
+    node_downstream_measured = 0b001, // branch is discovered with node measurement at from side; >>
+    node_upstream_measured = 0b100,   // branch is discovered with node measurement at to side; <<
+    branch_native_measured = 0b111,   // branch has its own measurement, unused; & 0b101
+    branch_measured_used = 0b101      // branch discovered with its own measurement, used; | 0b010
+};
+// direct connected neighbour list
+struct ObservabilityNNResult {
+    struct neighbour {
+        Idx bus;
+        ConnectivityStatus status;
+    };
+    Idx bus;
+    ConnectivityStatus status;
+    std::vector<neighbour> direct_neighbours;
+};
 
 // count flow and voltage phasor sensors for the observability check
 // use the ybus structure
@@ -33,9 +52,9 @@ struct ObservabilitySensorsResult {
 //      a vector of voltage phasor sensor count
 //      a boolean indicating if the system is possibly ill-conditioned
 template <symmetry_tag sym>
-ObservabilitySensorsResult count_sensors(MeasuredValues<sym> const& measured_values,
-                                                       MathModelTopology const& topo,
-                                                       YBusStructure const& y_bus_structure) {
+ObservabilitySensorsResult count_sensors(MeasuredValues<sym> const& measured_values, MathModelTopology const& topo,
+                                         YBusStructure const& y_bus_structure,
+                                         ObservabilityNNResult& neighbour_result) {
     Idx const n_bus{topo.n_bus()};
 
     ObservabilitySensorsResult result{.flow_sensors = std::vector<int8_t>(y_bus_structure.row_indptr.back(), 0),
@@ -54,7 +73,7 @@ ObservabilitySensorsResult count_sensors(MeasuredValues<sym> const& measured_val
 
     for (Idx row = 0; row != n_bus; ++row) {
         bool has_at_least_one_sensor{false};
-        // lower triangle is ignored and kept as zero
+        // lower triangle is ignored ~~and kept as zero~~
         // diagonal for bus injection measurement
         if (measured_values.has_bus_injection(row)) {
             result.bus_injections[row] = 1;
@@ -145,7 +164,7 @@ inline void assign_independent_sensors_radial(YBusStructure const& y_bus_structu
 }
 
 inline bool necessary_condition(ObservabilitySensorsResult const& observability_sensors, Idx const n_bus,
-                                              Idx& n_voltage_phasor_sensors, bool has_global_angle_current) {
+                                Idx& n_voltage_phasor_sensors, bool has_global_angle_current) {
     auto const flow_sensors = std::span<const int8_t>{observability_sensors.flow_sensors};
     auto const voltage_phasor_sensors = std::span<const int8_t>{observability_sensors.voltage_phasor_sensors};
     // count total flow sensors and phasor voltage sensors, note we manually specify the intial value type to avoid
@@ -173,8 +192,8 @@ inline bool necessary_condition(ObservabilitySensorsResult const& observability_
 }
 
 inline bool sufficient_condition_radial_with_voltage_phasor(YBusStructure const& y_bus_structure,
-                                                      ObservabilitySensorsResult& observability_sensors,
-                                                      Idx const n_voltage_phasor_sensors) {
+                                                            ObservabilitySensorsResult& observability_sensors,
+                                                            Idx const n_voltage_phasor_sensors) {
     std::vector<int8_t>& flow_sensors = observability_sensors.flow_sensors;
     std::vector<int8_t>& voltage_phasor_sensors = observability_sensors.voltage_phasor_sensors;
     Idx const n_bus{std::ssize(y_bus_structure.row_indptr) - 1};
@@ -199,6 +218,8 @@ inline bool sufficient_condition_radial_with_voltage_phasor(YBusStructure const&
     return true;
 }
 
+inline bool sufficient_condition_meshed_without_voltage_phasor() { return false; }
+
 } // namespace detail
 
 namespace observability {
@@ -220,8 +241,9 @@ inline ObservabilityResult observability_check(MeasuredValues<sym> const& measur
         throw NotObservableError{"No voltage sensor found!\n"};
     }
 
+    detail::ObservabilityNNResult neighbour_result{};
     detail::ObservabilitySensorsResult observability_sensors =
-        detail::count_sensors(measured_values, topo, y_bus_structure);
+        detail::count_sensors(measured_values, topo, y_bus_structure, neighbour_result);
 
     //  sufficient & necessary early out, enough nodal measurement equals observable
     if (observability_sensors.bus_injections.back() > n_bus - 2) {
@@ -232,16 +254,21 @@ inline ObservabilityResult observability_check(MeasuredValues<sym> const& measur
     Idx n_voltage_phasor_sensors{};
 
     // check necessary condition for observability
-    is_necessary_condition_met = detail::necessary_condition(
-        observability_sensors, n_bus, n_voltage_phasor_sensors, measured_values.has_global_angle_current());
+    is_necessary_condition_met = detail::necessary_condition(observability_sensors, n_bus, n_voltage_phasor_sensors,
+                                                             measured_values.has_global_angle_current());
 
     // check the sufficient condition for observability
     // the check is currently only implemented for radial grids
     if (topo.is_radial) {
+        // Temporary path, ideally this is only called when
+        // n_voltage_phasor_sensors > 0, regardless of network type
         is_sufficient_condition_met = detail::sufficient_condition_radial_with_voltage_phasor(
             y_bus_structure, observability_sensors, n_voltage_phasor_sensors);
+    } else {
+        // Temporary path, to be implemented
+        is_sufficient_condition_met = detail::sufficient_condition_meshed_without_voltage_phasor();
     }
-    
+
     // DEBUG
     if ((observability_sensors.bus_injections.back() > n_bus - 2) !=
         (is_necessary_condition_met && is_sufficient_condition_met)) {
