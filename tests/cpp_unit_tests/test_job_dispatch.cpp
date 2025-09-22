@@ -8,6 +8,7 @@
 #include <power_grid_model/common/multi_threaded_logging.hpp>
 #include <power_grid_model/job_dispatch.hpp>
 #include <power_grid_model/job_interface.hpp>
+#include <power_grid_model/main_core/core_utils.hpp>
 
 #include <doctest/doctest.h>
 
@@ -181,8 +182,8 @@ TEST_CASE("Test job dispatch logic") {
             Idx const n_scenarios = 9; // arbitrary non-zero value
             auto const update_data = MockUpdateDataset(has_data, n_scenarios);
             adapter.reset_counters();
-            auto const actual_result =
-                JobDispatch::batch_calculation(adapter, result_data, update_data, JobDispatch::sequential, no_logger());
+            auto const actual_result = JobDispatch::batch_calculation(adapter, result_data, update_data,
+                                                                      main_core::utils::sequential, no_logger());
             CHECK(expected_result == actual_result);
             CHECK(adapter.get_calculate_counter() == 1);
             CHECK(adapter.get_cache_calculate_counter() == 0); // no cache calculation in this case
@@ -194,8 +195,8 @@ TEST_CASE("Test job dispatch logic") {
             Idx const n_scenarios = 0;
             auto const update_data = MockUpdateDataset(has_data, n_scenarios);
             adapter.reset_counters();
-            auto const actual_result =
-                JobDispatch::batch_calculation(adapter, result_data, update_data, JobDispatch::sequential, no_logger());
+            auto const actual_result = JobDispatch::batch_calculation(adapter, result_data, update_data,
+                                                                      main_core::utils::sequential, no_logger());
             CHECK(expected_result == actual_result);
             // no calculations should be done
             CHECK(adapter.get_calculate_counter() == 0);
@@ -208,8 +209,8 @@ TEST_CASE("Test job dispatch logic") {
             Idx const n_scenarios = 7; // arbitrary non-zero value
             auto const update_data = MockUpdateDataset(has_data, n_scenarios);
             adapter.reset_counters();
-            auto const actual_result =
-                JobDispatch::batch_calculation(adapter, result_data, update_data, JobDispatch::sequential, no_logger());
+            auto const actual_result = JobDispatch::batch_calculation(adapter, result_data, update_data,
+                                                                      main_core::utils::sequential, no_logger());
             CHECK(expected_result == actual_result);
             // n_scenarios calculations should be done as we run sequentially
             CHECK(adapter.get_calculate_counter() == n_scenarios);
@@ -288,7 +289,7 @@ TEST_CASE("Test job dispatch logic") {
 
         SUBCASE("Sequential") {
             Idx const n_scenarios = 10; // arbitrary non-zero value
-            Idx const threading = JobDispatch::sequential;
+            Idx const threading = main_core::utils::sequential;
             calls.clear();
             JobDispatch::job_dispatch(single_job, n_scenarios, threading);
             CHECK(calls.size() == 1);
@@ -346,7 +347,7 @@ TEST_CASE("Test job dispatch logic") {
         Idx const n_scenarios = 14; // arbitrary non-zero value
 
         SUBCASE("Sequential threading") {
-            CHECK(JobDispatch::n_threads(n_scenarios, JobDispatch::sequential) == 1);
+            CHECK(JobDispatch::n_threads(n_scenarios, main_core::utils::sequential) == 1);
             CHECK(JobDispatch::n_threads(n_scenarios, 1) == 1);
         }
         SUBCASE("Parallel threading") {

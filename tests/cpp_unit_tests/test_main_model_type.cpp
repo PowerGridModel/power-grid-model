@@ -5,6 +5,8 @@
 #include <power_grid_model/container.hpp>
 #include <power_grid_model/main_core/core_utils.hpp>
 #include <power_grid_model/main_core/main_model_type.hpp>
+#include <power_grid_model/main_model_impl.hpp>
+#include <power_grid_model/math_solver/math_solver_dispatch.hpp>
 
 #include <doctest/doctest.h>
 
@@ -12,10 +14,14 @@ namespace power_grid_model::main_core {
 
 namespace {
 struct AComponent {
+    // This dependency exists because of main_core/update.hpp
     using UpdateType = void;
     static constexpr char const* name = "a_component";
 };
 } // namespace
+
+static_assert(std::constructible_from<MainModelImpl<MainModelType<AllExtraRetrievableTypes, AllComponents>>, double,
+                                      meta_data::MetaData const&, MathSolverDispatcher const&>);
 
 TEST_CASE("MainModelType") {
 
@@ -30,6 +36,8 @@ TEST_CASE("MainModelType") {
         static_assert(ModelType::index_of_component<Node> == 0);
         static_assert(ModelType::index_of_component<Source> == 1);
         static_assert(ModelType::n_types == 2);
+        static_assert(std::constructible_from<MainModelImpl<ModelType>, double, meta_data::MetaData const&,
+                                              MathSolverDispatcher const&>);
 
         CHECK(ModelType::run_functor_with_all_component_types_return_array([]<typename CompType>() {
                   return std::string_view(CompType::name);
@@ -61,6 +69,8 @@ TEST_CASE("MainModelType") {
         static_assert(ModelType::index_of_component<Line> == 1);
         static_assert(ModelType::index_of_component<Source> == 2);
         static_assert(ModelType::n_types == 3);
+        static_assert(std::constructible_from<MainModelImpl<ModelType>, double, meta_data::MetaData const&,
+                                              MathSolverDispatcher const&>);
 
         CHECK(ModelType::run_functor_with_all_component_types_return_array([]<typename CompType>() {
                   return std::string_view(CompType::name);
@@ -90,6 +100,9 @@ TEST_CASE("MainModelType") {
         static_assert(ModelType::index_of_component<Source> == 1);
         static_assert(ModelType::index_of_component<Node> == 2);
         static_assert(ModelType::n_types == 3);
+        // TODO Check what is the issue here? Why
+        static_assert(std::constructible_from<MainModelImpl<ModelType>, double, meta_data::MetaData const&,
+                                              MathSolverDispatcher const&>);
 
         CHECK(ModelType::run_functor_with_all_component_types_return_array([]<typename CompType>() {
                   return std::string_view(CompType::name);
@@ -120,6 +133,9 @@ TEST_CASE("MainModelType") {
         static_assert(ModelType::index_of_component<AComponent> == 1);
         static_assert(ModelType::index_of_component<Source> == 2);
         static_assert(ModelType::n_types == 3);
+        // TODO (nitbharambe) Why is this not destructible
+        // static_assert(std::constructible_from<MainModelImpl<ModelType>, double, meta_data::MetaData const&,
+        //                                       MathSolverDispatcher const&>);
 
         CHECK(ModelType::run_functor_with_all_component_types_return_array([]<typename CompType>() {
                   return std::string_view(CompType::name);
@@ -147,9 +163,6 @@ TEST_CASE("MainModelType") {
         static_assert(std::is_same_v<typename ModelType::TopologyConnectionTypesTuple, std::tuple<Branch, Source>>);
         static_assert(ModelType::n_types == 2);
     }
-
-    // TODO add static_assert(std::constructible_from<ModelType, double, meta_data::MetaData const&,
-    // MathSolverDispatcher const&>);
 }
 
 } // namespace power_grid_model::main_core
