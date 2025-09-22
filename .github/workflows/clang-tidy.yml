@@ -45,6 +45,7 @@ jobs:
       CMAKE_PREFIX_PATH: /home/linuxbrew/.linuxbrew
       PRESET: ci-clang-tidy-${{ matrix.build-option }}
       TARGET: nonexistent  # will be overwritten later in this action
+      HOMEBREW_FORCE_BREWED_CURL: 1
 
     steps:
       - uses: actions/checkout@v5
