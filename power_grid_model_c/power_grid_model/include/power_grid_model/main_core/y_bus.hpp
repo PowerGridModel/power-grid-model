@@ -82,7 +82,7 @@ void prepare_y_bus(typename MainModelType::MainModelState const& state_, Idx n_m
 
 template <typename MainModelType>
 static std::vector<MathModelParamIncrement>
-get_math_param_increment(typename MainModelType::MainModelState state, Idx n_math_solvers_,
+get_math_param_increment(typename MainModelType::MainModelState const& state, Idx n_math_solvers_,
                          typename MainModelType::SequenceIdx const& parameter_changed_components_) {
 
     std::vector<MathModelParamIncrement> math_param_increment(n_math_solvers_);
