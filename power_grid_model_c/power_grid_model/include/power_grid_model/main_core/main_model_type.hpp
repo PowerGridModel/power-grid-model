@@ -52,7 +52,7 @@ concept validate_component_types_c =
     dependent_type_check<CompList, AsymLoad, Node> &&                //
     dependent_type_check<CompList, SymVoltageSensor, Node> &&        //
     dependent_type_check<CompList, AsymVoltageSensor, Node> &&       //
-    dependent_type_check<CompList, SymPowerSensor, Node, Line, AsymLine, Link, GenericBranch, Transformer,
+    dependent_type_check<CompList, SymPowerSensor, Node, Line, AsymLine, GenericBranch, Transformer,
                          ThreeWindingTransformer, SymGenerator, AsymGenerator, SymLoad, AsymLoad> && //
     dependent_type_check<CompList, AsymPowerSensor, Node, Line, AsymLine, Link, GenericBranch, Transformer,
                          ThreeWindingTransformer, SymGenerator, AsymGenerator, SymLoad, AsymLoad> && //
