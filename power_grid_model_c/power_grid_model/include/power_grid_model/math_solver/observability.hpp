@@ -23,8 +23,8 @@ struct ObservabilitySensorsResult {
     bool is_possibly_ill_conditioned{false};
 };
 enum class ConnectivityStatus {
-    not_connected = -1,               // not connected, redundant
-    connected_no_measurement = 0,     // connected (for branch) or node, no measurement available
+    is_not_connected = -1,            // not connected, redundant
+    has_no_measurement = 0,           // connected branch or node, but no measurement (may have been used)
     node_measured = 0b010,            // the node has measurement and is not yet used
     node_downstream_measured = 0b001, // branch is discovered with node measurement at from side; >>
     node_upstream_measured = 0b100,   // branch is discovered with node measurement at to side; <<
@@ -34,12 +34,12 @@ enum class ConnectivityStatus {
 // direct connected neighbour list
 struct ObservabilityNNResult {
     struct neighbour {
-        Idx bus;
-        ConnectivityStatus status;
+        Idx bus;                                                         // the bus index
+        ConnectivityStatus status{ConnectivityStatus::is_not_connected}; // the neighbour connectivity status
     };
-    Idx bus;
-    ConnectivityStatus status;
-    std::vector<neighbour> direct_neighbours;
+    Idx bus;                                                           // this bus index
+    ConnectivityStatus status{ConnectivityStatus::has_no_measurement}; // this bus connectivity status
+    std::vector<neighbour> direct_neighbours;                          // list of direct connected neighbours
 };
 
 // count flow and voltage phasor sensors for the observability check
@@ -52,9 +52,9 @@ struct ObservabilityNNResult {
 //      a vector of voltage phasor sensor count
 //      a boolean indicating if the system is possibly ill-conditioned
 template <symmetry_tag sym>
-ObservabilitySensorsResult count_sensors(MeasuredValues<sym> const& measured_values, MathModelTopology const& topo,
-                                         YBusStructure const& y_bus_structure,
-                                         ObservabilityNNResult& neighbour_result) {
+ObservabilitySensorsResult scan_network_sensors(MeasuredValues<sym> const& measured_values,
+                                                MathModelTopology const& topo, YBusStructure const& y_bus_structure,
+                                                std::vector<ObservabilityNNResult>& neighbour_result) {
     Idx const n_bus{topo.n_bus()};
 
     ObservabilitySensorsResult result{.flow_sensors = std::vector<int8_t>(y_bus_structure.row_indptr.back(), 0),
@@ -73,17 +73,19 @@ ObservabilitySensorsResult count_sensors(MeasuredValues<sym> const& measured_val
 
     for (Idx row = 0; row != n_bus; ++row) {
         bool has_at_least_one_sensor{false};
+        Idx const current_bus = y_bus_structure.bus_entry[row];
+        neighbour_result[row].bus = current_bus;
         // lower triangle is ignored ~~and kept as zero~~
         // diagonal for bus injection measurement
         if (measured_values.has_bus_injection(row)) {
             result.bus_injections[row] = 1;
             result.bus_injections.back() += 1;
-            result.flow_sensors[y_bus_structure.bus_entry[row]] = 1;
+            result.flow_sensors[current_bus] = 1;
             has_at_least_one_sensor = true;
+            neighbour_result[row].status = ConnectivityStatus::node_measured; // only treat power/0 injection
         }
         // upper triangle for branch flow measurement
-        for (Idx ybus_index = y_bus_structure.bus_entry[row] + 1; ybus_index != y_bus_structure.row_indptr[row + 1];
-             ++ybus_index) {
+        for (Idx ybus_index = current_bus + 1; ybus_index != y_bus_structure.row_indptr[row + 1]; ++ybus_index) {
             for (Idx element_index = y_bus_structure.y_bus_entry_indptr[ybus_index];
                  element_index != y_bus_structure.y_bus_entry_indptr[ybus_index + 1]; ++element_index) {
                 auto const& element = y_bus_structure.y_bus_element[element_index];
@@ -94,9 +96,13 @@ ObservabilitySensorsResult count_sensors(MeasuredValues<sym> const& measured_val
                 // if the branch is fully connected and measured, we consider it as a valid flow sensor
                 // we only need one flow sensor, so the loop will break
                 Idx const branch = element.idx;
+                // Q j.guo: which one is the correct index for the branch, element_index or element.index
+                ObservabilityNNResult::neighbour neighbour_info{element_index, ConnectivityStatus::has_no_measurement};
+                neighbour_result[row].direct_neighbours.push_back(neighbour_info);
                 if (has_flow_sensor(branch) && is_branch_connected(branch)) {
                     result.flow_sensors[ybus_index] = 1;
                     has_at_least_one_sensor = true;
+                    neighbour_result[row].direct_neighbours.back().status = ConnectivityStatus::branch_native_measured;
                     break;
                 }
             }
@@ -241,9 +247,9 @@ inline ObservabilityResult observability_check(MeasuredValues<sym> const& measur
         throw NotObservableError{"No voltage sensor found!\n"};
     }
 
-    detail::ObservabilityNNResult neighbour_result{};
+    std::vector<detail::ObservabilityNNResult> neighbour_results(static_cast<std::size_t>(topo.n_bus()));
     detail::ObservabilitySensorsResult observability_sensors =
-        detail::count_sensors(measured_values, topo, y_bus_structure, neighbour_result);
+        detail::scan_network_sensors(measured_values, topo, y_bus_structure, neighbour_results);
 
     //  sufficient & necessary early out, enough nodal measurement equals observable
     if (observability_sensors.bus_injections.back() > n_bus - 2) {
