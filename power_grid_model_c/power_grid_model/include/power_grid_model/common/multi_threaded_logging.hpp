@@ -37,7 +37,13 @@ class MultiThreadedLoggerImpl : public MultiThreadedLogger {
             }
             return *this;
         };
-        ~ThreadLogger() noexcept override { sync(); }
+        ~ThreadLogger() noexcept override {
+            try {
+                sync();
+            } catch (...) { // NOLINT(bugprone-empty-catch) // NOSONAR
+                // we can't sync so we need to ignore the error
+            }
+        }
         void sync() const { parent_->sync(*this); }
 
       private:
