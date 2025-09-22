@@ -33,7 +33,7 @@ struct ObservabilitySensorsResult {
 //      a vector of voltage phasor sensor count
 //      a boolean indicating if the system is possibly ill-conditioned
 template <symmetry_tag sym>
-ObservabilitySensorsResult count_observability_sensors(MeasuredValues<sym> const& measured_values,
+ObservabilitySensorsResult count_sensors(MeasuredValues<sym> const& measured_values,
                                                        MathModelTopology const& topo,
                                                        YBusStructure const& y_bus_structure) {
     Idx const n_bus{topo.n_bus()};
@@ -144,7 +144,7 @@ inline void assign_independent_sensors_radial(YBusStructure const& y_bus_structu
     flow_sensors[y_bus_structure.bus_entry[n_bus - 1]] = 0;
 }
 
-inline bool necessary_observability_condition(ObservabilitySensorsResult const& observability_sensors, Idx const n_bus,
+inline bool necessary_condition(ObservabilitySensorsResult const& observability_sensors, Idx const n_bus,
                                               Idx& n_voltage_phasor_sensors, bool has_global_angle_current) {
     auto const flow_sensors = std::span<const int8_t>{observability_sensors.flow_sensors};
     auto const voltage_phasor_sensors = std::span<const int8_t>{observability_sensors.voltage_phasor_sensors};
@@ -172,7 +172,7 @@ inline bool necessary_observability_condition(ObservabilitySensorsResult const& 
     return true;
 }
 
-inline bool sufficient_observability_condition_radial(YBusStructure const& y_bus_structure,
+inline bool sufficient_condition_radial_with_voltage_phasor(YBusStructure const& y_bus_structure,
                                                       ObservabilitySensorsResult& observability_sensors,
                                                       Idx const n_voltage_phasor_sensors) {
     std::vector<int8_t>& flow_sensors = observability_sensors.flow_sensors;
@@ -201,6 +201,7 @@ inline bool sufficient_observability_condition_radial(YBusStructure const& y_bus
 
 } // namespace detail
 
+namespace observability {
 struct ObservabilityResult {
     bool is_observable{false};
     bool is_possibly_ill_conditioned{false};
@@ -220,9 +221,9 @@ inline ObservabilityResult observability_check(MeasuredValues<sym> const& measur
     }
 
     detail::ObservabilitySensorsResult observability_sensors =
-        detail::count_observability_sensors(measured_values, topo, y_bus_structure);
+        detail::count_sensors(measured_values, topo, y_bus_structure);
 
-    //  sufficient & necessary early out
+    //  sufficient & necessary early out, enough nodal measurement equals observable
     if (observability_sensors.bus_injections.back() > n_bus - 2) {
         return ObservabilityResult{.is_observable = true,
                                    .is_possibly_ill_conditioned = observability_sensors.is_possibly_ill_conditioned};
@@ -231,24 +232,29 @@ inline ObservabilityResult observability_check(MeasuredValues<sym> const& measur
     Idx n_voltage_phasor_sensors{};
 
     // check necessary condition for observability
-    is_necessary_condition_met = detail::necessary_observability_condition(
+    is_necessary_condition_met = detail::necessary_condition(
         observability_sensors, n_bus, n_voltage_phasor_sensors, measured_values.has_global_angle_current());
 
     // check the sufficient condition for observability
     // the check is currently only implemented for radial grids
     if (topo.is_radial) {
-        is_sufficient_condition_met = detail::sufficient_observability_condition_radial(
+        is_sufficient_condition_met = detail::sufficient_condition_radial_with_voltage_phasor(
             y_bus_structure, observability_sensors, n_voltage_phasor_sensors);
     }
+    
     // DEBUG
     if ((observability_sensors.bus_injections.back() > n_bus - 2) !=
         (is_necessary_condition_met && is_sufficient_condition_met)) {
         // Log or handle the inconsistency
         std::cerr << "Inconsistency detected in observability conditions.\n";
     }
+    // DEBUG
+
     //  ToDo(JGuo): meshed network will require a different treatment
     return ObservabilityResult{.is_observable = is_necessary_condition_met && is_sufficient_condition_met,
                                .is_possibly_ill_conditioned = observability_sensors.is_possibly_ill_conditioned};
 }
+
+} // namespace observability
 
 } // namespace power_grid_model::math_solver
