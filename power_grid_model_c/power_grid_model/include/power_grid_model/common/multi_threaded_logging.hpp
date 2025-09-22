@@ -32,10 +32,8 @@ class MultiThreadedLoggerImpl : public MultiThreadedLogger {
             : LoggerType{std::move(static_cast<LoggerType>(other))}, parent_{other.parent_} {};
         ThreadLogger& operator=(ThreadLogger&& other) noexcept {
             if (this != &other) {
-                auto* const parent = other.parent_;
-                other.parent_ = nullptr;
+                parent_ = std::exchange(other.parent_, nullptr);
                 LoggerType::operator=(std::move(other));
-                parent_ = parent;
             }
             return *this;
         };
