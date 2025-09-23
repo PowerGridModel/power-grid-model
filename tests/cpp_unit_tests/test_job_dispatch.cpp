@@ -48,7 +48,7 @@ struct CallCounter {
     }
 };
 
-class JobAdapterMock : public JobInterface<JobAdapterMock> {
+class JobAdapterMock : public JobInterface {
   public:
     JobAdapterMock(std::shared_ptr<CallCounter> counter) : counter_{std::move(counter)} {
         REQUIRE_MESSAGE(counter_ != nullptr, "Counter must not be null or all getters will fail later on");
@@ -82,7 +82,7 @@ class JobAdapterMock : public JobInterface<JobAdapterMock> {
     Idx get_reset_logger_counter() const { return counter_->reset_logger_calls; }
 
   private:
-    friend class JobInterface<JobAdapterMock>;
+    friend class JobInterface;
 
     Logger* logger_{};
     std::shared_ptr<CallCounter> counter_;

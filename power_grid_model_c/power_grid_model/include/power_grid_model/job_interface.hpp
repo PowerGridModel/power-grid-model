@@ -14,75 +14,71 @@
 #include <utility>
 
 namespace power_grid_model {
-template <typename Adapter> class JobInterface {
+class JobInterface {
   public:
     // the multiple  NOSONARs are used to avoid the complaints about the unnamed concepts
-    template <typename ResultDataset>
-    void calculate(ResultDataset const& result_data, Idx pos = 0)
-        requires requires(Adapter& adapter) { // NOSONAR
-            { adapter.calculate_impl(result_data, pos) } -> std::same_as<void>;
+    template <typename Self, typename ResultDataset>
+    void calculate(this Self&& self, ResultDataset const& result_data, Idx pos = 0)
+        requires requires(this Self&& self) { // NOSONAR
+            { self.calculate_impl(result_data, pos) } -> std::same_as<void>;
         }
     {
-        return static_cast<Adapter*>(this)->calculate_impl(result_data, pos);
+        return self.calculate_impl(result_data, pos);
     }
 
-    void cache_calculate()
-        requires requires(Adapter& adapter) { // NOSONAR
-            { adapter.cache_calculate_impl() } -> std::same_as<void>;
+    template <typename Self>
+    void cache_calculate(this Self&& self)
+        requires requires(this Self&& self) { // NOSONAR
+            { self.cache_calculate_impl() } -> std::same_as<void>;
         }
     {
-        return static_cast<Adapter*>(this)->cache_calculate_impl();
+        return self.cache_calculate_impl();
     }
 
-    template <typename UpdateDataset>
-    void prepare_job_dispatch(UpdateDataset const& update_data)
-        requires requires(Adapter& adapter) { // NOSONAR
-            { adapter.prepare_job_dispatch_impl(update_data) } -> std::same_as<void>;
+    template <typename Self, typename UpdateDataset>
+    void prepare_job_dispatch(this Self&& self, UpdateDataset const& update_data)
+        requires requires(this Self&& self) { // NOSONAR
+            { self.prepare_job_dispatch_impl(update_data) } -> std::same_as<void>;
         }
     {
-        return static_cast<Adapter*>(this)->prepare_job_dispatch_impl(update_data);
+        return self.prepare_job_dispatch_impl(update_data);
     }
 
-    template <typename UpdateDataset>
-    void setup(UpdateDataset const& update_data, Idx scenario_idx)
-        requires requires(Adapter& adapter) { // NOSONAR
-            { adapter.setup_impl(update_data, scenario_idx) } -> std::same_as<void>;
+    template <typename Self, typename UpdateDataset>
+    void setup(this Self&& self, UpdateDataset const& update_data, Idx scenario_idx)
+        requires requires(this Self&& self) { // NOSONAR
+            { self.setup_impl(update_data, scenario_idx) } -> std::same_as<void>;
         }
     {
-        return static_cast<Adapter*>(this)->setup_impl(update_data, scenario_idx);
+        return self.setup_impl(update_data, scenario_idx);
     }
 
-    void winddown()
-        requires requires(Adapter& adapter) { // NOSONAR
-            { adapter.winddown_impl() } -> std::same_as<void>;
+    template <typename Self>
+    void winddown(this Self&& self)
+        requires requires(this Self&& self) { // NOSONAR
+            { self.winddown_impl() } -> std::same_as<void>;
         }
     {
-        return static_cast<Adapter*>(this)->winddown_impl();
+        return self.winddown_impl();
     }
 
-    void reset_logger()
-        requires requires(Adapter& adapter) { // NOSONAR
-            { adapter.reset_logger_impl() } -> std::same_as<void>;
+    template <typename Self>
+    void reset_logger(this Self&& self)
+        requires requires(this Self&& self) { // NOSONAR
+            { self.reset_logger_impl() } -> std::same_as<void>;
         }
     {
-        static_cast<Adapter*>(this)->reset_logger_impl();
-    }
-    void set_logger(Logger& log)
-        requires requires(Adapter& adapter) { // NOSONAR
-            { adapter.set_logger_impl(log) } -> std::same_as<void>;
-        }
-    {
-        static_cast<Adapter*>(this)->set_logger_impl(log);
+        self.reset_logger_impl();
     }
 
-  private:
-    friend Adapter;
-    JobInterface() = default;
-    JobInterface(const JobInterface& /*other*/) = default;
-    JobInterface& operator=(const JobInterface& /*other*/) = default;
-    JobInterface(JobInterface&& /*other*/) noexcept = default;
-    JobInterface& operator=(JobInterface&& /*other*/) noexcept = default;
-    ~JobInterface() = default;
+    template <typename Self>
+    void set_logger(this Self&& self, Logger& log)
+        requires requires(this Self&& self) { // NOSONAR
+            { self.set_logger_impl(log) } -> std::same_as<void>;
+        }
+    {
+        self.set_logger_impl(log);
+    }
 };
 
 } // namespace power_grid_model
