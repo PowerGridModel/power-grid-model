@@ -49,9 +49,11 @@ constexpr void add_to_increment(std::vector<MathModelParamIncrement>& increments
 
 // default implementation for other components, does nothing
 template <typename ComponentType, typename ComponentContainer>
-constexpr void add_to_increment(std::vector<MathModelParamIncrement>& /* increments */,
+constexpr void add_to_increment(std::vector<MathModelParamIncrement> const& /* increments */,
                                 MainModelState<ComponentContainer> const& /* state */,
-                                Idx2D const& /* changed_component_idx */) {}
+                                Idx2D const& /* changed_component_idx */) {
+    // default implementation is no-op
+}
 } // namespace detail
 
 template <symmetry_tag sym, typename MainModelType>
