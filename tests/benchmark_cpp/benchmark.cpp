@@ -189,6 +189,7 @@ struct PowerGridBenchmark {
                     throw MissingCaseForEnumError{"run_benchmark<calculation_symmetry>",
                                                   model_options.calculation_symmetry};
                 }
+                break;
             }
             default:
                 throw MissingCaseForEnumError{"run_benchmark<calculation_type>", model_options.calculation_type};
