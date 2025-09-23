@@ -138,7 +138,7 @@ inline void process_trafo3w_edge(main_core::main_model_state_c auto const& state
         auto const connected_to_primary_side_regulated =
             trafo3w_is_regulated && (tap_at_first_side || (transformer3w.tap_side() == second_side));
 
-        auto const tap_at_control = static_cast<IntS>(control_side) == static_cast<IntS>(transformer3w.tap_side());
+        auto const tap_at_control = std::to_underlying(control_side) == std::to_underlying(transformer3w.tap_side());
 
         // only add weighted edge if the trafo3w meets the condition
         if (connected_to_primary_side_regulated) {
@@ -445,7 +445,7 @@ template <transformer_c... TransformerTypes> class TransformerWrapper {
         return apply([](auto const& t) { return t.tap_max(); });
     }
     IntS tap_side() const {
-        return apply([](auto const& t) { return static_cast<IntS>(t.tap_side()); });
+        return apply([](auto const& t) { return std::to_underlying(t.tap_side()); });
     }
     int64_t tap_range() const {
         return apply([](auto const& t) {
@@ -470,7 +470,7 @@ template <transformer_c... TransformerTypes> struct TapRegulatorRef {
     TransformerWrapper<TransformerTypes...> transformer;
 
     bool control_at_tap_side() const {
-        return static_cast<IntS>(regulator.get().control_side()) == transformer.tap_side();
+        return std::to_underlying(regulator.get().control_side()) == transformer.tap_side();
     }
 };
 

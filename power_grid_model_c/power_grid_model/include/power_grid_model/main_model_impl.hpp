@@ -15,7 +15,6 @@
 
 // common
 #include "common/common.hpp"
-#include "common/dummy_logging.hpp"
 #include "common/exception.hpp"
 #include "common/timer.hpp"
 
@@ -164,57 +163,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         : system_frequency_{system_frequency},
           meta_data_{&meta_data},
           math_solver_dispatcher_{&math_solver_dispatcher} {}
-
-    MainModelImpl(MainModelImpl const& other)
-        : log_{nullptr}, // logger should not be copied, because it may result in race conditions
-          system_frequency_{other.system_frequency_},
-          meta_data_{other.meta_data_},
-          math_solver_dispatcher_{other.math_solver_dispatcher_},
-          state_{other.state_},
-          math_state_{other.math_state_},
-          n_math_solvers_{other.n_math_solvers_},
-          is_topology_up_to_date_{other.is_topology_up_to_date_},
-          is_sym_parameter_up_to_date_{other.is_sym_parameter_up_to_date_},
-          is_asym_parameter_up_to_date_{other.is_asym_parameter_up_to_date_},
-          is_accumulated_component_updated_{other.is_accumulated_component_updated_},
-          last_updated_calculation_symmetry_mode_{other.last_updated_calculation_symmetry_mode_},
-          cached_inverse_update_{other.cached_inverse_update_},
-          cached_state_changes_{other.cached_state_changes_},
-          parameter_changed_components_{other.parameter_changed_components_}
-#ifndef NDEBUG
-          ,
-          // construction_complete is used for debug assertions only
-          construction_complete_{other.construction_complete_}
-#endif // !NDEBUG
-    {
-    }
-    MainModelImpl& operator=(MainModelImpl const& other) {
-        if (this != &other) {
-            log_ = nullptr; // logger should be reset, because it may result in race conditions
-            system_frequency_ = other.system_frequency_;
-            meta_data_ = other.meta_data_;
-            math_solver_dispatcher_ = other.math_solver_dispatcher_;
-            state_ = other.state_;
-            math_state_ = other.math_state_;
-            n_math_solvers_ = other.n_math_solvers_;
-            is_topology_up_to_date_ = other.is_topology_up_to_date_;
-            is_sym_parameter_up_to_date_ = other.is_sym_parameter_up_to_date_;
-            is_asym_parameter_up_to_date_ = other.is_asym_parameter_up_to_date_;
-            is_accumulated_component_updated_ = other.is_accumulated_component_updated_;
-            last_updated_calculation_symmetry_mode_ = other.last_updated_calculation_symmetry_mode_;
-            cached_inverse_update_ = other.cached_inverse_update_;
-            cached_state_changes_ = other.cached_state_changes_;
-            parameter_changed_components_ = other.parameter_changed_components_;
-#ifndef NDEBUG
-            // construction_complete is used for debug assertions only
-            construction_complete_ = other.construction_complete_;
-#endif // !NDEBUG
-        }
-        return *this;
-    }
-    MainModelImpl(MainModelImpl&& /*other*/) noexcept = default;
-    MainModelImpl& operator=(MainModelImpl&& /*other*/) noexcept = default;
-    ~MainModelImpl() = default;
 
     // helper function to get what components are present in the update data
     ComponentFlags get_components_to_update(ConstDataset const& update_data) const {
@@ -414,20 +362,20 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                  std::same_as<std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>, std::vector<InputType>> &&
                  std::same_as<std::invoke_result_t<SolveFn, MathSolverType&, YBus const&, InputType const&>,
                               SolverOutputType>
-    std::vector<SolverOutputType> calculate_(PrepareInputFn&& prepare_input, SolveFn&& solve) {
+    std::vector<SolverOutputType> calculate_(PrepareInputFn&& prepare_input, SolveFn&& solve, Logger& logger) {
         using sym = typename SolverOutputType::sym;
 
         assert(construction_complete_);
         // prepare
-        auto const& input = [this, prepare_input_ = std::forward<PrepareInputFn>(prepare_input)] {
-            Timer const timer{logger(), LogEvent::prepare};
+        auto const& input = [this, &logger, prepare_input_ = std::forward<PrepareInputFn>(prepare_input)] {
+            Timer const timer{logger, LogEvent::prepare};
             prepare_solvers<sym>();
             assert(is_topology_up_to_date_ && is_parameter_up_to_date<sym>());
             return prepare_input_(n_math_solvers_);
         }();
         // calculate
-        return [this, &input, solve_ = std::forward<SolveFn>(solve)] {
-            Timer const timer{logger(), LogEvent::math_calculation};
+        return [this, &logger, &input, solve_ = std::forward<SolveFn>(solve)] {
+            Timer const timer{logger, LogEvent::math_calculation};
             auto& solvers = main_core::get_solvers<sym>(math_state_);
             auto& y_bus_vec = main_core::get_y_bus<sym>(math_state_);
             std::vector<SolverOutputType> solver_output;
@@ -439,39 +387,44 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }();
     }
 
-    template <symmetry_tag sym> auto calculate_power_flow_(double err_tol, Idx max_iter) {
-        return [this, err_tol, max_iter](MainModelState const& state,
-                                         CalculationMethod calculation_method) -> std::vector<SolverOutput<sym>> {
-            return calculate_<SolverOutput<sym>, MathSolverProxy<sym>, YBus<sym>, PowerFlowInput<sym>>(
-                [&state](Idx n_math_solvers) {
-                    return main_core::prepare_power_flow_input<sym>(state, n_math_solvers);
-                },
-                [this, err_tol, max_iter, calculation_method](MathSolverProxy<sym>& solver, YBus<sym> const& y_bus,
-                                                              PowerFlowInput<sym> const& input) {
-                    return solver.get().run_power_flow(input, err_tol, max_iter, logger(), calculation_method, y_bus);
-                });
-        };
+    template <symmetry_tag sym> auto calculate_power_flow_(double err_tol, Idx max_iter, Logger& logger) {
+        return
+            [this, err_tol, max_iter, &logger](MainModelState const& state,
+                                               CalculationMethod calculation_method) -> std::vector<SolverOutput<sym>> {
+                return calculate_<SolverOutput<sym>, MathSolverProxy<sym>, YBus<sym>, PowerFlowInput<sym>>(
+                    [&state](Idx n_math_solvers) {
+                        return main_core::prepare_power_flow_input<sym>(state, n_math_solvers);
+                    },
+                    [err_tol, max_iter, calculation_method,
+                     &logger](MathSolverProxy<sym>& solver, YBus<sym> const& y_bus, PowerFlowInput<sym> const& input) {
+                        return solver.get().run_power_flow(input, err_tol, max_iter, logger, calculation_method, y_bus);
+                    },
+                    logger);
+            };
     }
 
-    template <symmetry_tag sym> auto calculate_state_estimation_(double err_tol, Idx max_iter) {
-        return [this, err_tol, max_iter](MainModelState const& state,
-                                         CalculationMethod calculation_method) -> std::vector<SolverOutput<sym>> {
-            return calculate_<SolverOutput<sym>, MathSolverProxy<sym>, YBus<sym>, StateEstimationInput<sym>>(
-                [&state](Idx n_math_solvers) {
-                    return main_core::prepare_state_estimation_input<sym>(state, n_math_solvers);
-                },
-                [this, err_tol, max_iter, calculation_method](MathSolverProxy<sym>& solver, YBus<sym> const& y_bus,
-                                                              StateEstimationInput<sym> const& input) {
-                    return solver.get().run_state_estimation(input, err_tol, max_iter, logger(), calculation_method,
-                                                             y_bus);
-                });
-        };
+    template <symmetry_tag sym> auto calculate_state_estimation_(double err_tol, Idx max_iter, Logger& logger) {
+        return
+            [this, err_tol, max_iter, &logger](MainModelState const& state,
+                                               CalculationMethod calculation_method) -> std::vector<SolverOutput<sym>> {
+                return calculate_<SolverOutput<sym>, MathSolverProxy<sym>, YBus<sym>, StateEstimationInput<sym>>(
+                    [&state](Idx n_math_solvers) {
+                        return main_core::prepare_state_estimation_input<sym>(state, n_math_solvers);
+                    },
+                    [err_tol, max_iter, calculation_method, &logger](
+                        MathSolverProxy<sym>& solver, YBus<sym> const& y_bus, StateEstimationInput<sym> const& input) {
+                        return solver.get().run_state_estimation(input, err_tol, max_iter, logger, calculation_method,
+                                                                 y_bus);
+                    },
+                    logger);
+            };
     }
 
-    template <symmetry_tag sym> auto calculate_short_circuit_(ShortCircuitVoltageScaling voltage_scaling) {
-        return [this,
-                voltage_scaling](MainModelState const& state,
-                                 CalculationMethod calculation_method) -> std::vector<ShortCircuitSolverOutput<sym>> {
+    template <symmetry_tag sym>
+    auto calculate_short_circuit_(ShortCircuitVoltageScaling voltage_scaling, Logger& logger) {
+        return [this, voltage_scaling,
+                &logger](MainModelState const& state,
+                         CalculationMethod calculation_method) -> std::vector<ShortCircuitSolverOutput<sym>> {
             (void)state; // to avoid unused-lambda-capture when in Release build
             assert(&state == &state_);
 
@@ -481,25 +434,27 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     return main_core::prepare_short_circuit_input<sym>(state_, state_.comp_coup, n_math_solvers,
                                                                        voltage_scaling);
                 },
-                [this, calculation_method](MathSolverProxy<sym>& solver, YBus<sym> const& y_bus,
-                                           ShortCircuitInput const& input) {
-                    return solver.get().run_short_circuit(input, logger(), calculation_method, y_bus);
-                });
+                [calculation_method, &logger](MathSolverProxy<sym>& solver, YBus<sym> const& y_bus,
+                                              ShortCircuitInput const& input) {
+                    return solver.get().run_short_circuit(input, logger, calculation_method, y_bus);
+                },
+                logger);
         };
     }
 
     // Calculate with optimization, e.g., automatic tap changer
-    template <calculation_type_tag calculation_type, symmetry_tag sym> auto calculate(Options const& options) {
-        auto const calculator = [this, &options] {
+    template <calculation_type_tag calculation_type, symmetry_tag sym>
+    auto calculate(Options const& options, Logger& logger) {
+        auto const calculator = [this, &options, &logger] {
             if constexpr (std::derived_from<calculation_type, power_flow_t>) {
-                return calculate_power_flow_<sym>(options.err_tol, options.max_iter);
+                return calculate_power_flow_<sym>(options.err_tol, options.max_iter, logger);
             }
             assert(options.optimizer_type == OptimizerType::no_optimization);
             if constexpr (std::derived_from<calculation_type, state_estimation_t>) {
-                return calculate_state_estimation_<sym>(options.err_tol, options.max_iter);
+                return calculate_state_estimation_<sym>(options.err_tol, options.max_iter, logger);
             }
             if constexpr (std::derived_from<calculation_type, short_circuit_t>) {
-                return calculate_short_circuit_<sym>(options.short_circuit_voltage_scaling);
+                return calculate_short_circuit_<sym>(options.short_circuit_voltage_scaling, logger);
             }
             throw UnreachableHit{"MainModelImpl::calculate", "Unknown calculation type"};
         }();
@@ -518,7 +473,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // Single calculation, propagating the results to result_data
-    void calculate(Options options, MutableDataset const& result_data) {
+    void calculate(Options options, MutableDataset const& result_data, Logger& logger) {
         assert(construction_complete_);
 
         if (options.calculation_type == CalculationType::short_circuit) {
@@ -532,25 +487,23 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         calculation_type_symmetry_func_selector(
             options.calculation_type, options.calculation_symmetry,
             []<calculation_type_tag calculation_type, symmetry_tag sym>(
-                MainModelImpl& main_model_, Options const& options_, MutableDataset const& result_data_) {
-                auto const math_output = main_model_.calculate<calculation_type, sym>(options_);
-                main_model_.output_result(math_output, result_data_);
+                MainModelImpl& main_model_, Options const& options_, MutableDataset const& result_data_,
+                Logger& logger) {
+                auto const math_output = main_model_.calculate<calculation_type, sym>(options_, logger);
+                main_model_.output_result(math_output, result_data_, logger);
             },
-            *this, options, result_data);
+            *this, options, result_data, logger);
     }
 
   public:
     static auto calculator(Options const& options, MainModelImpl& model, MutableDataset const& target_data,
-                           bool cache_run) {
+                           bool cache_run, Logger& logger) {
         auto sub_opt = options; // copy
         sub_opt.err_tol = cache_run ? std::numeric_limits<double>::max() : options.err_tol;
         sub_opt.max_iter = cache_run ? 1 : options.max_iter;
 
-        model.calculate(sub_opt, target_data);
+        model.calculate(sub_opt, target_data, logger);
     }
-
-    void reset_logger() { log_ = nullptr; }
-    void set_logger(Logger& logger) { log_ = &logger; }
 
     auto const& state() const {
         assert(construction_complete_);
@@ -566,8 +519,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
   private:
     template <solver_output_type SolverOutputType>
-    void output_result(MathOutput<std::vector<SolverOutputType>> const& math_output,
-                       MutableDataset const& result_data) const {
+    void output_result(MathOutput<std::vector<SolverOutputType>> const& math_output, MutableDataset const& result_data,
+                       Logger& logger) const {
         assert(!result_data.is_batch());
 
         auto const output_func = [this, &math_output, &result_data]<typename CT>() {
@@ -589,12 +542,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             }
         };
 
-        Timer const t_output{logger(), LogEvent::produce_output};
+        Timer const t_output{logger, LogEvent::produce_output};
         ModelType::run_functor_with_all_component_types_return_void(output_func);
     }
-
-    Logger* log_; // needs to be first due to padding override
-                  // may be changed in const functions for metrics
 
     double system_frequency_;
     MetaData const* meta_data_;
@@ -617,11 +567,6 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // construction_complete is used for debug assertions only
     bool construction_complete_{false};
 #endif // !NDEBUG
-
-    Logger& logger() const {
-        static common::logging::NoLogger no_log{};
-        return log_ != nullptr ? *log_ : no_log;
-    }
 
     template <symmetry_tag sym> bool& is_parameter_up_to_date() {
         if constexpr (is_symmetric_v<sym>) {
