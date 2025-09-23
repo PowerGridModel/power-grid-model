@@ -47,7 +47,7 @@ template <std::derived_from<Base> BaseComponent, std::derived_from<Base> Compone
     requires std::derived_from<Component, BaseComponent> &&
              common::component_container_c<ComponentContainer, BaseComponent> &&
              common::storagable_component_container_c<ComponentContainer, Component>
-constexpr Idx get_component_sequence_offset(ComponentContainer const& components) {
+constexpr auto get_component_sequence_offset(ComponentContainer const& components) {
     return components.template get_start_idx<BaseComponent, Component>();
 }
 

@@ -287,13 +287,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     /*
     the the sequence indexer given an input array of ID's for a given component type
     */
-    // TODO change to components
     void get_indexer(std::string_view component_type, ID const* id_begin, Idx size, Idx* indexer_begin) const {
-        auto const get_index_func = [&state = this->state_, component_type, id_begin, size,
+        auto const get_index_func = [&components = this->state_.components, component_type, id_begin, size,
                                      indexer_begin]<typename CT>() {
             if (component_type == CT::name) {
-                std::transform(id_begin, id_begin + size, indexer_begin, [&state](ID id) {
-                    return main_core::get_component_idx_by_id<CT>(state.components, id).pos;
+                std::transform(id_begin, id_begin + size, indexer_begin, [&components](ID id) {
+                    return main_core::get_component_idx_by_id<CT>(components, id).pos;
                 });
             }
         };

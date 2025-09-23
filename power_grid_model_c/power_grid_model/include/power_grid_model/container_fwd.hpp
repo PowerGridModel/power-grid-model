@@ -41,9 +41,6 @@ concept storagable_single_component_container_c =
         { nc.template emplace<StoragableType>(id, args...) } -> std::same_as<void>;
     };
 
-// TODO This compound function is excluded from above concepts
-// { c.template get_start_idx<GettableBaseType, StoragableType>() } -> std::same_as<Idx>;
-
 } // namespace detail
 
 template <typename ContainerType, typename... RetrievableType>

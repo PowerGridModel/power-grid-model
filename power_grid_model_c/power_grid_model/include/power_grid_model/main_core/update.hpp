@@ -161,7 +161,6 @@ check_update_independence(typename ModelType::ComponentContainer const& componen
 } // namespace independence
 namespace detail {
 
-// TODO change to components
 template <component_c Component, class ComponentContainer, std::ranges::viewable_range Elements,
           std::output_iterator<Idx2D> OutputIterator>
     requires common::component_container_c<ComponentContainer, Component>
