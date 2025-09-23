@@ -23,6 +23,16 @@ struct AComponent {
 static_assert(std::constructible_from<MainModelImpl<MainModelType<AllExtraRetrievableTypes, AllComponents>>, double,
                                       meta_data::MetaData const&, MathSolverDispatcher const&>);
 
+static_assert(detail::validate_component_types_c<AllComponents>);
+
+static_assert(detail::validate_component_types_c<ComponentList<Node, Source>>);
+static_assert(detail::validate_component_types_c<ComponentList<Node, Line>>);
+static_assert(detail::validate_component_types_c<ComponentList<Node, Line, AComponent>>);
+static_assert(detail::validate_component_types_c<ComponentList<Source, Node>>);
+
+static_assert(!detail::validate_component_types_c<ComponentList<Line>>);
+static_assert(!detail::validate_component_types_c<ComponentList<Source, Line>>);
+
 TEST_CASE("MainModelType") {
 
     SUBCASE("Node Source") {
@@ -52,8 +62,6 @@ TEST_CASE("MainModelType") {
         utils::run_functor_with_tuple_return_void<typename ModelType::TopologyTypesTuple>(
             [&calls]<typename CompType>() { calls.push_back(std::string_view(CompType::name)); });
         CHECK(calls == std::vector<std::string_view>{"node", "source"});
-
-        // static_assert(is_constructible_v<MainModelImpl<ModelType>>);
     }
     SUBCASE("Node Line Source") {
         using ModelType =
@@ -150,18 +158,6 @@ TEST_CASE("MainModelType") {
         utils::run_functor_with_tuple_return_void<typename ModelType::TopologyTypesTuple>(
             [&calls]<typename CompType>() { calls.push_back(std::string_view(CompType::name)); });
         CHECK(calls == std::vector<std::string_view>{"node", "source"});
-    }
-
-    SUBCASE("Bad case: Line Source") {
-        // TODO rewrite for checking fail instead of pass
-        using ModelType = MainModelType<ExtraRetrievableTypes<Base, Branch, Appliance>, ComponentList<Line, Source>>;
-
-        static_assert(std::is_same_v<typename ModelType::ComponentContainer,
-                                     Container<ExtraRetrievableTypes<Base, Branch, Appliance>, Line, Source>>);
-        static_assert(std::is_same_v<typename ModelType::ComponentTypesTuple, std::tuple<Line, Source>>);
-        static_assert(std::is_same_v<typename ModelType::TopologyTypesTuple, std::tuple<Branch, Source>>);
-        static_assert(std::is_same_v<typename ModelType::TopologyConnectionTypesTuple, std::tuple<Branch, Source>>);
-        static_assert(ModelType::n_types == 2);
     }
 }
 

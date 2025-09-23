@@ -182,7 +182,7 @@ template <std::same_as<Branch> Component, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, Component>
 constexpr void register_connections_components(ComponentContainer const& components, ComponentConnections& comp_conn) {
     apply_registration<Component>(components, comp_conn.branch_connected, [](Branch const& branch) {
-        return BranchConnected{static_cast<IntS>(branch.from_status()), static_cast<IntS>(branch.to_status())};
+        return BranchConnected{status_to_int(branch.from_status()), status_to_int(branch.to_status())};
     });
     apply_registration<Component>(components, comp_conn.branch_phase_shift,
                                   [](Branch const& branch) { return branch.phase_shift(); });
@@ -191,8 +191,8 @@ template <std::same_as<Branch3> Component, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, Component>
 constexpr void register_connections_components(ComponentContainer const& components, ComponentConnections& comp_conn) {
     apply_registration<Component>(components, comp_conn.branch3_connected, [](Branch3 const& branch3) {
-        return Branch3Connected{static_cast<IntS>(branch3.status_1()), static_cast<IntS>(branch3.status_2()),
-                                static_cast<IntS>(branch3.status_3())};
+        return Branch3Connected{status_to_int(branch3.status_1()), status_to_int(branch3.status_2()),
+                                status_to_int(branch3.status_3())};
     });
     apply_registration<Component>(components, comp_conn.branch3_phase_shift,
                                   [](Branch3 const& branch3) { return branch3.phase_shift(); });
@@ -208,7 +208,7 @@ constexpr void register_connections_components(ComponentContainer const& compone
 } // namespace detail
 
 template <typename ModelType>
-    requires common::component_container_c<typename ModelType::ComponentContainer, Branch, Branch3, Source, Shunt,
+    requires common::component_container_c<typename ModelType::ComponentContainer, Node, Branch, Branch3, Source, Shunt,
                                            GenericLoadGen, GenericVoltageSensor, GenericPowerSensor,
                                            GenericCurrentSensor, Regulator>
 ComponentTopology construct_topology(typename ModelType::ComponentContainer const& components) {
