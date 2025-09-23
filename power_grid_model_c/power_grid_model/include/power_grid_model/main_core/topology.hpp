@@ -208,7 +208,7 @@ constexpr void register_connections_components(ComponentContainer const& compone
 } // namespace detail
 
 template <typename ModelType>
-    requires common::component_container_c<typename ModelType::ComponentContainer, Branch, Branch3, Source, Shunt,
+    requires common::component_container_c<typename ModelType::ComponentContainer, Node, Branch, Branch3, Source, Shunt,
                                            GenericLoadGen, GenericVoltageSensor, GenericPowerSensor,
                                            GenericCurrentSensor, Regulator>
 ComponentTopology construct_topology(typename ModelType::ComponentContainer const& components) {

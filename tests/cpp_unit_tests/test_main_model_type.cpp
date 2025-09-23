@@ -5,6 +5,7 @@
 #include <power_grid_model/container.hpp>
 #include <power_grid_model/main_core/core_utils.hpp>
 #include <power_grid_model/main_core/main_model_type.hpp>
+#include <power_grid_model/math_solver/math_solver_dispatch.hpp>
 
 #include <doctest/doctest.h>
 
@@ -16,6 +17,16 @@ struct AComponent {
     static constexpr char const* name = "a_component";
 };
 } // namespace
+
+static_assert(detail::validate_component_types_c<AllComponents>);
+
+static_assert(detail::validate_component_types_c<ComponentList<Node, Source>>);
+static_assert(detail::validate_component_types_c<ComponentList<Node, Line>>);
+static_assert(detail::validate_component_types_c<ComponentList<Node, Line, AComponent>>);
+static_assert(detail::validate_component_types_c<ComponentList<Source, Node>>);
+
+static_assert(!detail::validate_component_types_c<ComponentList<Line>>);
+static_assert(!detail::validate_component_types_c<ComponentList<Source, Line>>);
 
 TEST_CASE("MainModelType") {
 
@@ -44,8 +55,6 @@ TEST_CASE("MainModelType") {
         utils::run_functor_with_tuple_return_void<typename ModelType::TopologyTypesTuple>(
             [&calls]<typename CompType>() { calls.push_back(std::string_view(CompType::name)); });
         CHECK(calls == std::vector<std::string_view>{"node", "source"});
-
-        // static_assert(is_constructible_v<MainModelImpl<ModelType>>);
     }
     SUBCASE("Node Line Source") {
         using ModelType =
@@ -134,18 +143,6 @@ TEST_CASE("MainModelType") {
         utils::run_functor_with_tuple_return_void<typename ModelType::TopologyTypesTuple>(
             [&calls]<typename CompType>() { calls.push_back(std::string_view(CompType::name)); });
         CHECK(calls == std::vector<std::string_view>{"node", "source"});
-    }
-
-    SUBCASE("Bad case: Line Source") {
-        // TODO rewrite for checking fail instead of pass
-        using ModelType = MainModelType<ExtraRetrievableTypes<Base, Branch, Appliance>, ComponentList<Line, Source>>;
-
-        static_assert(std::is_same_v<typename ModelType::ComponentContainer,
-                                     Container<ExtraRetrievableTypes<Base, Branch, Appliance>, Line, Source>>);
-        static_assert(std::is_same_v<typename ModelType::ComponentTypesTuple, std::tuple<Line, Source>>);
-        static_assert(std::is_same_v<typename ModelType::TopologyTypesTuple, std::tuple<Branch, Source>>);
-        static_assert(std::is_same_v<typename ModelType::TopologyConnectionTypesTuple, std::tuple<Branch, Source>>);
-        static_assert(ModelType::n_types == 2);
     }
 
     // TODO add static_assert(std::constructible_from<ModelType, double, meta_data::MetaData const&,
