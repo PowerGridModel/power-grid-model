@@ -10,6 +10,7 @@
 #include <power_grid_model/main_model.hpp>
 #include <power_grid_model/math_solver/math_solver.hpp>
 
+#include <iomanip>
 #include <iostream>
 #include <random>
 
@@ -188,6 +189,7 @@ struct PowerGridBenchmark {
                     throw MissingCaseForEnumError{"run_benchmark<calculation_symmetry>",
                                                   model_options.calculation_symmetry};
                 }
+                break;
             }
             default:
                 throw MissingCaseForEnumError{"run_benchmark<calculation_type>", model_options.calculation_type};

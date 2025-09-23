@@ -74,6 +74,7 @@ jobs:
     env:
       CMAKE_PREFIX_PATH: /home/linuxbrew/.linuxbrew
       PRESET: ci-${{ matrix.compiler }}-${{ matrix.build-option }}
+      HOMEBREW_FORCE_BREWED_CURL: 1
 
     steps:
       - uses: actions/checkout@v5

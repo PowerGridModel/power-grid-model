@@ -20,11 +20,30 @@ class MultiThreadedLoggerImpl : public MultiThreadedLogger {
     class ThreadLogger : public LoggerType {
       public:
         ThreadLogger(MultiThreadedLoggerImpl& parent) : parent_{&parent} {}
-        ThreadLogger(ThreadLogger const&) = default;
-        ThreadLogger& operator=(ThreadLogger const&) = default;
-        ThreadLogger(ThreadLogger&&) noexcept = default;
-        ThreadLogger& operator=(ThreadLogger&&) noexcept = default;
-        ~ThreadLogger() noexcept override { sync(); }
+        ThreadLogger(ThreadLogger const& other) : LoggerType{other}, parent_{other.parent_} {};
+        ThreadLogger& operator=(ThreadLogger const& other) {
+            if (this != &other) {
+                LoggerType::operator=(other);
+                parent_ = other.parent_;
+            }
+            return *this;
+        };
+        ThreadLogger(ThreadLogger&& other) noexcept
+            : LoggerType{std::move(static_cast<LoggerType>(other))}, parent_{other.parent_} {};
+        ThreadLogger& operator=(ThreadLogger&& other) noexcept {
+            if (this != &other) {
+                parent_ = std::exchange(other.parent_, nullptr);
+                LoggerType::operator=(std::move(other));
+            }
+            return *this;
+        };
+        ~ThreadLogger() noexcept override {
+            try {
+                sync();
+            } catch (...) { // NOLINT(bugprone-empty-catch) // NOSONAR
+                // we can't sync so we need to ignore the error
+            }
+        }
         void sync() const { parent_->sync(*this); }
 
       private:
