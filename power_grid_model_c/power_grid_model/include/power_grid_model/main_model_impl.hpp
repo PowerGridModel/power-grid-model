@@ -474,7 +474,7 @@ class MainModelImpl {
                 faults, [](Fault const& fault) { return fault.get_fault_type() == FaultType::three_phase; });
             options.calculation_symmetry =
                 is_three_phase ? CalculationSymmetry::symmetric : CalculationSymmetry::asymmetric;
-        };
+        }
 
         calculation_type_symmetry_func_selector(
             options.calculation_type, options.calculation_symmetry,
