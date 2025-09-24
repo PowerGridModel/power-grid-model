@@ -13,12 +13,21 @@
 namespace power_grid_model::main_core {
 
 namespace {
-struct AComponent {
+
+struct AType {};
+
+class AComponent {
+  public:
     // This dependency exists because of main_core/update.hpp
-    using UpdateType = void;
+    using UpdateType = AType;
     static constexpr char const* name = "a_component";
 };
+
 } // namespace
+
+static_assert(is_main_model_type_v<MainModelType<AllExtraRetrievableTypes, AllComponents>>);
+static_assert(!is_main_model_type_v<MainModelType<AllComponents, AllComponents>>);
+static_assert(!is_main_model_type_v<MainModelType<AType, AllComponents>>);
 
 static_assert(std::constructible_from<MainModelImpl<MainModelType<AllExtraRetrievableTypes, AllComponents>>, double,
                                       meta_data::MetaData const&, MathSolverDispatcher const&>);
@@ -46,6 +55,7 @@ TEST_CASE("MainModelType") {
         static_assert(ModelType::index_of_component<Node> == 0);
         static_assert(ModelType::index_of_component<Source> == 1);
         static_assert(ModelType::n_types == 2);
+        static_assert(is_main_model_type_v<ModelType>);
         static_assert(std::constructible_from<MainModelImpl<ModelType>, double, meta_data::MetaData const&,
                                               MathSolverDispatcher const&>);
 
@@ -77,6 +87,7 @@ TEST_CASE("MainModelType") {
         static_assert(ModelType::index_of_component<Line> == 1);
         static_assert(ModelType::index_of_component<Source> == 2);
         static_assert(ModelType::n_types == 3);
+        static_assert(is_main_model_type_v<ModelType>);
         static_assert(std::constructible_from<MainModelImpl<ModelType>, double, meta_data::MetaData const&,
                                               MathSolverDispatcher const&>);
 
@@ -108,7 +119,8 @@ TEST_CASE("MainModelType") {
         static_assert(ModelType::index_of_component<Source> == 1);
         static_assert(ModelType::index_of_component<Node> == 2);
         static_assert(ModelType::n_types == 3);
-        // TODO Check what is the issue here? Why
+        static_assert(is_main_model_type_v<ModelType>);
+
         static_assert(std::constructible_from<MainModelImpl<ModelType>, double, meta_data::MetaData const&,
                                               MathSolverDispatcher const&>);
 
@@ -141,9 +153,9 @@ TEST_CASE("MainModelType") {
         static_assert(ModelType::index_of_component<AComponent> == 1);
         static_assert(ModelType::index_of_component<Source> == 2);
         static_assert(ModelType::n_types == 3);
-        // TODO (nitbharambe) Why is this not destructible
-        // static_assert(std::constructible_from<MainModelImpl<ModelType>, double, meta_data::MetaData const&,
-        //                                       MathSolverDispatcher const&>);
+        static_assert(is_main_model_type_v<ModelType>);
+        static_assert(std::constructible_from<MainModelImpl<ModelType>, double, meta_data::MetaData const&,
+                                              MathSolverDispatcher const&>);
 
         CHECK(ModelType::run_functor_with_all_component_types_return_array([]<typename CompType>() {
                   return std::string_view(CompType::name);

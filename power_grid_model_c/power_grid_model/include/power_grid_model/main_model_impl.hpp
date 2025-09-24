@@ -116,9 +116,9 @@ decltype(auto) calculation_type_symmetry_func_selector(CalculationType calculati
         calculation_symmetry, std::forward<Functor>(f), std::forward<Args>(args)...);
 }
 
-// main model implementation template
-
-template <class ModelType> class MainModelImpl {
+template <class ModelType>
+    requires(main_core::is_main_model_type_v<ModelType>)
+class MainModelImpl {
 
   private:
     // internal type traits

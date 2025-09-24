@@ -78,15 +78,13 @@ class MainModelType<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     using ComponentTypesTuple = std::tuple<ComponentType...>;
 
     static constexpr size_t n_types = sizeof...(ComponentType);
-    // TODO Should not have to go via container_impl.
     template <class CompType>
     static constexpr size_t index_of_component = container_impl::get_cls_pos_v<CompType, ComponentType...>;
 
   private:
+    // This tuple may contain duplicate types. eg. Node.
     static constexpr auto all_types_tuple_v_ =
         std::tuple<std::type_identity<ComponentType>..., std::type_identity<ExtraRetrievableType>...>{};
-    // TODO: Would making a unique be necessary? We have Node mentioned as a ExtraRetrievableType and ComponentType so
-    // summing up is possible but maybe not appropriate. Would it be better to handle them both separately? using
 
     static constexpr auto topology_types_tuple_v_ =
         std::tuple<std::type_identity<Node>, std::type_identity<Branch>, std::type_identity<Branch3>,
@@ -120,5 +118,12 @@ class MainModelType<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         return std::array { std::forward<Functor>(functor).template operator()<ComponentType>()... };
     }
 };
+
+template <typename T> struct is_main_model_type : std::false_type {};
+
+template <typename... ETs, typename... CTs>
+struct is_main_model_type<MainModelType<ExtraRetrievableTypes<ETs...>, ComponentList<CTs...>>> : std::true_type {};
+
+template <typename T> inline constexpr bool is_main_model_type_v = is_main_model_type<T>::value;
 
 } // namespace power_grid_model::main_core
