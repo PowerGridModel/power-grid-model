@@ -224,6 +224,21 @@ inline bool sufficient_condition_radial_with_voltage_phasor(YBusStructure const&
     return true;
 }
 
+inline void expand_neighbour_list(std::vector<ObservabilityNNResult>& neighbour_result) {
+    Idx const n_bus{static_cast<Idx>(neighbour_result.size())};
+    for (Idx bus = 0; bus != n_bus; ++bus) {
+        for (auto const& neighbour : neighbour_result[bus].direct_neighbours) {
+            auto& reverse_neighbour_list = neighbour_result[neighbour.bus].direct_neighbours;
+            auto it = std::find_if(reverse_neighbour_list.begin(), reverse_neighbour_list.end(),
+                                   [&bus](auto const& x) { return x.bus == bus; });
+            if (it == reverse_neighbour_list.end()) {
+                ObservabilityNNResult::neighbour reverse_neighbour_info{bus, neighbour.status};
+                reverse_neighbour_list.push_back(reverse_neighbour_info);
+            }
+        }
+    }
+}
+
 inline bool sufficient_condition_meshed_without_voltage_phasor() { return false; }
 
 } // namespace detail
@@ -250,6 +265,9 @@ inline ObservabilityResult observability_check(MeasuredValues<sym> const& measur
     std::vector<detail::ObservabilityNNResult> neighbour_results(static_cast<std::size_t>(topo.n_bus()));
     detail::ObservabilitySensorsResult observability_sensors =
         detail::scan_network_sensors(measured_values, topo, y_bus_structure, neighbour_results);
+
+    // from unidirectional neighbour list to bidirectional
+    detail::expand_neighbour_list(neighbour_results);
 
     //  sufficient & necessary early out, enough nodal measurement equals observable
     if (observability_sensors.bus_injections.back() > n_bus - 2) {
