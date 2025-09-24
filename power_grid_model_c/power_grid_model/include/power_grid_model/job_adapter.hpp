@@ -111,18 +111,19 @@ template <class MainModel> class JobAdapter : public JobInterface<JobAdapter<Mai
         // the order for a cacheable (independent) component by definition is the same across all scenarios
         components_to_update_ = model_reference_.get().get_components_to_update(update_data);
         update_independence_ = main_core::update::independence::check_update_independence<ModelType>(
-            model_reference_.get().state(), update_data);
+            model_reference_.get().state().components, update_data);
         std::ranges::transform(update_independence_, independence_flags_.begin(),
                                [](auto const& comp) { return comp.is_independent(); });
         all_scenarios_sequence_ =
             std::make_shared<typename ModelType::SequenceIdx>(main_core::update::get_all_sequence_idx_map<ModelType>(
-                model_reference_.get().state(), update_data, 0, components_to_update_, update_independence_, false));
+                model_reference_.get().state().components, update_data, 0, components_to_update_, update_independence_,
+                false));
     }
 
     void setup_impl(ConstDataset const& update_data, Idx scenario_idx) {
         current_scenario_sequence_cache_ = main_core::update::get_all_sequence_idx_map<ModelType>(
-            model_reference_.get().state(), update_data, scenario_idx, components_to_update_, update_independence_,
-            true);
+            model_reference_.get().state().components, update_data, scenario_idx, components_to_update_,
+            update_independence_, true);
         auto const current_scenario_sequence = get_current_scenario_sequence_view_();
         model_reference_.get().template update_components<cached_update_t>(update_data, scenario_idx,
                                                                            current_scenario_sequence);

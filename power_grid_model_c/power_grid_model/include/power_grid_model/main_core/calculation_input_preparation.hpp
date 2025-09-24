@@ -94,7 +94,7 @@ void prepare_input(main_model_state_c auto const& state, std::vector<Idx2D> cons
         if (include(i)) {
             Idx2D const math_idx = components[i];
             if (math_idx.group != isolated_component) {
-                auto const& component = get_component_by_sequence<ComponentIn>(state, i);
+                auto const& component = get_component_by_sequence<ComponentIn>(state.components, i);
                 CalcStructOut& math_model_input = calc_input[math_idx.group];
                 std::vector<CalcParamOut>& math_model_input_vect = math_model_input.*comp_vect;
                 math_model_input_vect[math_idx.pos] = calculate_param<CalcStructOut>(component);
@@ -114,7 +114,7 @@ void prepare_input(main_model_state_c auto const& state, std::vector<Idx2D> cons
         if (include(i)) {
             Idx2D const math_idx = components[i];
             if (math_idx.group != isolated_component) {
-                auto const& component = get_component_by_sequence<ComponentIn>(state, i);
+                auto const& component = get_component_by_sequence<ComponentIn>(state.components, i);
                 CalcStructOut& math_model_input = calc_input[math_idx.group];
                 std::vector<CalcParamOut>& math_model_input_vect = math_model_input.*comp_vect;
                 math_model_input_vect[math_idx.pos] = calculate_param<CalcStructOut>(component, extra_args(component));
@@ -132,7 +132,7 @@ void prepare_input_status(main_model_state_c auto const& state, std::vector<Idx2
             continue;
         }
         (input[math_idx.group].*component)[math_idx.pos] =
-            main_core::get_component_by_sequence<Component>(state, i).status();
+            main_core::get_component_by_sequence<Component>(state.components, i).status();
     }
 }
 } // namespace detail
