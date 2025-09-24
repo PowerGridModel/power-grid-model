@@ -71,21 +71,21 @@ ObservabilitySensorsResult scan_network_sensors(MeasuredValues<sym> const& measu
         return topo.branch_bus_idx[branch][0] != -1 && topo.branch_bus_idx[branch][1] != -1;
     };
 
-    for (Idx row = 0; row != n_bus; ++row) {
+    for (Idx bus = 0; bus != n_bus; ++bus) {
         bool has_at_least_one_sensor{false};
-        Idx const current_bus = y_bus_structure.bus_entry[row];
-        neighbour_result[row].bus = current_bus;
+        Idx const current_bus_entry = y_bus_structure.bus_entry[bus];
+        neighbour_result[bus].bus = bus;
         // lower triangle is ignored ~~and kept as zero~~
         // diagonal for bus injection measurement
-        if (measured_values.has_bus_injection(row)) {
-            result.bus_injections[row] = 1;
+        if (measured_values.has_bus_injection(bus)) {
+            result.bus_injections[bus] = 1;
             result.bus_injections.back() += 1;
-            result.flow_sensors[current_bus] = 1;
+            result.flow_sensors[current_bus_entry] = 1;
             has_at_least_one_sensor = true;
-            neighbour_result[row].status = ConnectivityStatus::node_measured; // only treat power/0 injection
+            neighbour_result[bus].status = ConnectivityStatus::node_measured; // only treat power/0 injection
         }
         // upper triangle for branch flow measurement
-        for (Idx ybus_index = current_bus + 1; ybus_index != y_bus_structure.row_indptr[row + 1]; ++ybus_index) {
+        for (Idx ybus_index = current_bus_entry + 1; ybus_index != y_bus_structure.row_indptr[bus + 1]; ++ybus_index) {
             for (Idx element_index = y_bus_structure.y_bus_entry_indptr[ybus_index];
                  element_index != y_bus_structure.y_bus_entry_indptr[ybus_index + 1]; ++element_index) {
                 auto const& element = y_bus_structure.y_bus_element[element_index];
@@ -96,24 +96,24 @@ ObservabilitySensorsResult scan_network_sensors(MeasuredValues<sym> const& measu
                 // if the branch is fully connected and measured, we consider it as a valid flow sensor
                 // we only need one flow sensor, so the loop will break
                 Idx const branch = element.idx;
-                // Q j.guo: which one is the correct index for the branch, element_index or element.index
-                ObservabilityNNResult::neighbour neighbour_info{element_index, ConnectivityStatus::has_no_measurement};
-                neighbour_result[row].direct_neighbours.push_back(neighbour_info);
+                Idx const neighbour_bus = y_bus_structure.col_indices[ybus_index];
+                ObservabilityNNResult::neighbour neighbour_info{neighbour_bus, ConnectivityStatus::has_no_measurement};
+                neighbour_result[bus].direct_neighbours.push_back(neighbour_info);
                 if (has_flow_sensor(branch) && is_branch_connected(branch)) {
                     result.flow_sensors[ybus_index] = 1;
                     has_at_least_one_sensor = true;
-                    neighbour_result[row].direct_neighbours.back().status = ConnectivityStatus::branch_native_measured;
+                    neighbour_result[bus].direct_neighbours.back().status = ConnectivityStatus::branch_native_measured;
                     break;
                 }
             }
         }
         // diagonal for voltage phasor sensors
-        if (measured_values.has_voltage(row) && measured_values.has_angle_measurement(row)) {
+        if (measured_values.has_voltage(bus) && measured_values.has_angle_measurement(bus)) {
             has_at_least_one_sensor = true;
-            result.voltage_phasor_sensors[row] = 1;
+            result.voltage_phasor_sensors[bus] = 1;
         }
         // the system could be ill-conditioned if there is no flow sensor for one bus, except the last bus
-        if (!has_at_least_one_sensor && row != n_bus - 1) {
+        if (!has_at_least_one_sensor && bus != n_bus - 1) {
             result.is_possibly_ill_conditioned = true;
         }
     }
@@ -131,8 +131,8 @@ inline void assign_independent_sensors_radial(YBusStructure const& y_bus_structu
                                               std::vector<int8_t>& voltage_phasor_sensors) {
     Idx const n_bus{std::ssize(y_bus_structure.row_indptr) - 1};
     // loop the row without the last bus
-    for (Idx row = 0; row != n_bus - 1; ++row) {
-        Idx const current_bus = row;
+    for (Idx bus = 0; bus != n_bus - 1; ++bus) {
+        Idx const current_bus = bus;
         // upstream_bus_diagonal, concerns only the voltage phasor sensors as they are only on
         // the buses (diagonal entries)
         Idx const upstream_bus_diagonal = current_bus + 1;
