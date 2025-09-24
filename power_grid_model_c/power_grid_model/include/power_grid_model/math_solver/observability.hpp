@@ -239,7 +239,278 @@ inline void expand_neighbour_list(std::vector<ObservabilityNNResult>& neighbour_
     }
 }
 
-inline bool sufficient_condition_meshed_without_voltage_phasor() { return false; }
+inline void prepare_starting_nodes(std::vector<detail::ObservabilityNNResult> const& neighbour_list, Idx n_bus,
+                                   std::vector<Idx>& starting_candidates) {
+    // First find a list of starting points. These are nodes without measurements and all edges connecting to it has no
+    // edge measurements.
+    for (Idx bus = 0; bus < n_bus; ++bus) {
+        if (neighbour_list[bus].status == ConnectivityStatus::has_no_measurement) {
+            bool all_neighbours_no_edge_measurement = true;
+            for (const auto& neighbour : neighbour_list[bus].direct_neighbours) {
+                if (neighbour.status == ConnectivityStatus::branch_native_measured) {
+                    all_neighbours_no_edge_measurement = false;
+                    break;
+                }
+            }
+            if (all_neighbours_no_edge_measurement) {
+                starting_candidates.push_back(bus);
+            }
+        }
+    }
+
+    // If no such starting point, find nodes without measurements
+    if (starting_candidates.empty()) {
+        for (Idx bus = 0; bus < n_bus; ++bus) {
+            if (neighbour_list[bus].status == ConnectivityStatus::has_no_measurement) {
+                starting_candidates.push_back(bus);
+            }
+        }
+    }
+
+    // If no nodes without measurements, start from first node
+    // (but network should be observable, so this is just a fallback)
+    if (starting_candidates.empty()) {
+        starting_candidates.push_back(0);
+    }
+}
+
+inline bool starting_from_node(Idx start_bus, Idx n_bus,
+                               std::vector<detail::ObservabilityNNResult> const& _neighbour_list) {
+    // Make a fresh copy for this attempt
+    std::vector<detail::ObservabilityNNResult> local_neighbour_list = _neighbour_list;
+
+    // Initialize tracking structures
+    std::vector<bool> visited(n_bus, false);
+    std::vector<std::pair<Idx, Idx>> discovered_edges;
+    std::vector<std::pair<Idx, Idx>> edge_track; // for backtracking
+    bool downwind = false;                       // downwind flag
+
+    Idx current_bus = start_bus;
+    Idx const max_iterations = n_bus * n_bus; // prevent infinite loops
+    Idx iteration = 0;
+
+    // Define lambda functions for the different priorities and backtracking
+    auto try_native_edge_measurements = [&](Idx& current_bus, bool& found, bool& downwind) -> bool {
+        for (auto& neighbour : local_neighbour_list[current_bus].direct_neighbours) {
+            if (neighbour.status == ConnectivityStatus::branch_native_measured && !visited[neighbour.bus]) {
+                // Mark edge as discovered and neighbour as visited
+                discovered_edges.emplace_back(current_bus, neighbour.bus);
+                edge_track.emplace_back(current_bus, neighbour.bus);
+                visited[current_bus] = true;
+                visited[neighbour.bus] = true;
+
+                // Update status to branch_measured_used
+                neighbour.status = ConnectivityStatus::branch_measured_used;
+                // Update reverse connection
+                for (auto& reverse_neighbour : local_neighbour_list[neighbour.bus].direct_neighbours) {
+                    if (reverse_neighbour.bus == current_bus) {
+                        reverse_neighbour.status = ConnectivityStatus::branch_measured_used;
+                        break;
+                    }
+                }
+
+                downwind = true; // downwind = true
+                current_bus = neighbour.bus;
+                found = true;
+                return true;
+            }
+        }
+        return false;
+    };
+
+    auto try_downwind_measurement = [&](Idx& current_bus, bool& found, bool this_empty, bool downwind) -> bool {
+        if (!this_empty && downwind) {
+            for (auto& neighbour : local_neighbour_list[current_bus].direct_neighbours) {
+                if (neighbour.status == ConnectivityStatus::has_no_measurement && !visited[neighbour.bus]) {
+                    discovered_edges.emplace_back(current_bus, neighbour.bus);
+                    edge_track.emplace_back(current_bus, neighbour.bus);
+                    visited[current_bus] = true;
+                    visited[neighbour.bus] = true;
+
+                    // Update status to node_downstream_measured
+                    neighbour.status = ConnectivityStatus::node_downstream_measured;
+                    // Update reverse connection
+                    for (auto& reverse_neighbour : local_neighbour_list[neighbour.bus].direct_neighbours) {
+                        if (reverse_neighbour.bus == current_bus) {
+                            reverse_neighbour.status = ConnectivityStatus::node_upstream_measured;
+                            break;
+                        }
+                    }
+
+                    // Use current node's measurement
+                    local_neighbour_list[current_bus].status = ConnectivityStatus::has_no_measurement;
+                    current_bus = neighbour.bus;
+                    found = true;
+                    return true;
+                }
+            }
+        }
+        return false;
+    };
+
+    auto try_general_connection_rules = [&](Idx& current_bus, bool& found, bool& downwind, bool this_empty) -> bool {
+        // Helper lambda to handle common edge processing logic
+        auto process_edge = [&](auto& neighbour, ConnectivityStatus neighbour_status, ConnectivityStatus reverse_status,
+                                bool use_current_node, bool set_upwind = false) -> bool {
+            discovered_edges.emplace_back(current_bus, neighbour.bus);
+            edge_track.emplace_back(current_bus, neighbour.bus);
+            visited[current_bus] = true;
+            visited[neighbour.bus] = true;
+
+            // Update neighbour status
+            neighbour.status = neighbour_status;
+            // Update reverse connection
+            for (auto& reverse_neighbour : local_neighbour_list[neighbour.bus].direct_neighbours) {
+                if (reverse_neighbour.bus == current_bus) {
+                    reverse_neighbour.status = reverse_status;
+                    break;
+                }
+            }
+
+            // Use measurement from appropriate node
+            if (use_current_node) {
+                local_neighbour_list[current_bus].status = ConnectivityStatus::has_no_measurement;
+            } else {
+                local_neighbour_list[neighbour.bus].status = ConnectivityStatus::has_no_measurement;
+            }
+
+            // Set direction flag if needed
+            if (set_upwind) {
+                downwind = false; // upwind
+            }
+
+            current_bus = neighbour.bus;
+            found = true;
+            return true;
+        };
+
+        for (auto& neighbour : local_neighbour_list[current_bus].direct_neighbours) {
+            if (visited[neighbour.bus])
+                continue;
+
+            bool const next_empty =
+                local_neighbour_list[neighbour.bus].status == ConnectivityStatus::has_no_measurement;
+
+            if (!this_empty && (downwind && next_empty)) {
+                // Case: current has measurement, downwind, neighbour empty
+                return process_edge(neighbour, ConnectivityStatus::node_upstream_measured,
+                                    ConnectivityStatus::node_downstream_measured, true);
+            } else if (!this_empty && (downwind || next_empty)) {
+                // Case: current has measurement, (downwind OR neighbour empty)
+                return process_edge(neighbour, ConnectivityStatus::node_downstream_measured,
+                                    ConnectivityStatus::node_upstream_measured, true);
+            } else if (!next_empty) {
+                // Case: neighbour has measurement
+                return process_edge(neighbour, ConnectivityStatus::node_downstream_measured,
+                                    ConnectivityStatus::node_upstream_measured, false, true);
+            }
+        }
+        return false;
+    };
+
+    // Helper function to reassign nodal measurement between two connected nodes
+    auto reassign_nodal_measurement = [&](Idx from_node, Idx to_node) -> void {
+        // Restore measurement at from_node
+        local_neighbour_list[from_node].status = ConnectivityStatus::node_measured;
+
+        // Use measurement at to_node
+        local_neighbour_list[to_node].status = ConnectivityStatus::has_no_measurement;
+
+        // Update connection statuses between the two nodes
+        // Find and update the connection from from_node to to_node
+        for (auto& neighbour : local_neighbour_list[from_node].direct_neighbours) {
+            if (neighbour.bus == to_node) {
+                // Change to upstream connection (from to_node to from_node perspective)
+                neighbour.status = ConnectivityStatus::node_upstream_measured;
+                break;
+            }
+        }
+
+        // Find and update the reverse connection from to_node to from_node
+        for (auto& neighbour : local_neighbour_list[to_node].direct_neighbours) {
+            if (neighbour.bus == from_node) {
+                // Change to downstream connection (from from_node to to_node perspective)
+                neighbour.status = ConnectivityStatus::node_downstream_measured;
+                break;
+            }
+        }
+    };
+
+    auto try_backtrack = [&](Idx& current_bus, bool& found, bool downwind) -> bool {
+        if (!edge_track.empty()) {
+            // Simple backtracking - go back along the last edge
+            auto last_edge = edge_track.back();
+            edge_track.pop_back();
+
+            Idx backtrack_to_bus;
+            // Determine which node to backtrack to
+            if (last_edge.first == current_bus) {
+                backtrack_to_bus = last_edge.second;
+            } else if (last_edge.second == current_bus) {
+                backtrack_to_bus = last_edge.first;
+            } else {
+                // Find connected node
+                backtrack_to_bus = last_edge.first;
+            }
+
+            // Consider reassignment if needed (downwind and current node still has measurement unused)
+            bool reassign = downwind && local_neighbour_list[current_bus].status == ConnectivityStatus::node_measured;
+            if (reassign) {
+                // Reassign measurement from current node to the node we're backtracking to
+                reassign_nodal_measurement(current_bus, backtrack_to_bus);
+            }
+
+            current_bus = backtrack_to_bus;
+            found = true; // We made progress by backtracking
+            return true;
+        }
+        return false;
+    };
+
+    while (std::count(visited.begin(), visited.end(), true) < n_bus && iteration < max_iterations) {
+        ++iteration;
+        bool found = false;
+        bool const this_empty = local_neighbour_list[current_bus].status == ConnectivityStatus::has_no_measurement;
+
+        // First priority: Check for native edge measurements
+        if (!try_native_edge_measurements(current_bus, found, downwind)) {
+            // Second priority: If current node has measurement and we're in downwind mode
+            if (!try_downwind_measurement(current_bus, found, this_empty, downwind)) {
+                // Third priority: General connection rules
+                if (!try_general_connection_rules(current_bus, found, downwind, this_empty)) {
+                    // If no progress, try backtracking
+                    try_backtrack(current_bus, found, downwind);
+                }
+            }
+        }
+
+        if (!found) {
+            break; // No more progress possible
+        }
+    }
+
+    // Check if all nodes were visited (spanning tree found)
+    return std::count(visited.begin(), visited.end(), true) == n_bus;
+}
+
+inline bool
+sufficient_condition_meshed_without_voltage_phasor(std::vector<detail::ObservabilityNNResult> const& _neighbour_list) {
+    // make a copy of the neighbour list
+    std::vector<detail::ObservabilityNNResult> neighbour_list = _neighbour_list;
+
+    Idx const n_bus = static_cast<Idx>(neighbour_list.size());
+    std::vector<Idx> starting_candidates;
+    prepare_starting_nodes(neighbour_list, n_bus, starting_candidates);
+
+    // Try each starting candidate
+    for (Idx start_bus : starting_candidates) {
+        if (starting_from_node(start_bus, n_bus, neighbour_list)) {
+            return true;
+        }
+    }
+
+    return false; // No spanning tree found with any starting point
+}
 
 } // namespace detail
 
@@ -262,7 +533,7 @@ inline ObservabilityResult observability_check(MeasuredValues<sym> const& measur
         throw NotObservableError{"No voltage sensor found!\n"};
     }
 
-    std::vector<detail::ObservabilityNNResult> neighbour_results(static_cast<std::size_t>(topo.n_bus()));
+    std::vector<detail::ObservabilityNNResult> neighbour_results(static_cast<std::size_t>(n_bus));
     detail::ObservabilitySensorsResult observability_sensors =
         detail::scan_network_sensors(measured_values, topo, y_bus_structure, neighbour_results);
 
@@ -289,19 +560,10 @@ inline ObservabilityResult observability_check(MeasuredValues<sym> const& measur
         is_sufficient_condition_met = detail::sufficient_condition_radial_with_voltage_phasor(
             y_bus_structure, observability_sensors, n_voltage_phasor_sensors);
     } else {
-        // Temporary path, to be implemented
-        is_sufficient_condition_met = detail::sufficient_condition_meshed_without_voltage_phasor();
+        // Temporary path, to be refined later
+        is_sufficient_condition_met = detail::sufficient_condition_meshed_without_voltage_phasor(neighbour_results);
     }
 
-    // DEBUG
-    if ((observability_sensors.bus_injections.back() > n_bus - 2) !=
-        (is_necessary_condition_met && is_sufficient_condition_met)) {
-        // Log or handle the inconsistency
-        std::cerr << "Inconsistency detected in observability conditions.\n";
-    }
-    // DEBUG
-
-    //  ToDo(JGuo): meshed network will require a different treatment
     return ObservabilityResult{.is_observable = is_necessary_condition_met && is_sufficient_condition_met,
                                .is_possibly_ill_conditioned = observability_sensors.is_possibly_ill_conditioned};
 }
