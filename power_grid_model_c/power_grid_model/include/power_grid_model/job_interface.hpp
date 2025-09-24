@@ -18,8 +18,8 @@ class JobInterface {
   public:
     // the multiple  NOSONARs are used to avoid the complaints about the unnamed concepts
     template <typename Self, typename ResultDataset>
-    void calculate(this Self&& self, ResultDataset const& result_data, Idx pos = 0)
-        requires requires(this Self&& self) { // NOSONAR
+    void calculate(this Self const& self, ResultDataset const& result_data, Idx pos = 0)
+        requires requires(this Self const& self) { // NOSONAR
             { self.calculate_impl(result_data, pos) } -> std::same_as<void>;
         }
     {
@@ -27,8 +27,8 @@ class JobInterface {
     }
 
     template <typename Self>
-    void cache_calculate(this Self&& self)
-        requires requires(this Self&& self) { // NOSONAR
+    void cache_calculate(this Self const& self)
+        requires requires(this Self const& self) { // NOSONAR
             { self.cache_calculate_impl() } -> std::same_as<void>;
         }
     {
@@ -36,8 +36,8 @@ class JobInterface {
     }
 
     template <typename Self, typename UpdateDataset>
-    void prepare_job_dispatch(this Self&& self, UpdateDataset const& update_data)
-        requires requires(this Self&& self) { // NOSONAR
+    void prepare_job_dispatch(this Self& self, UpdateDataset const& update_data)
+        requires requires(this Self& self) { // NOSONAR
             { self.prepare_job_dispatch_impl(update_data) } -> std::same_as<void>;
         }
     {
@@ -45,8 +45,8 @@ class JobInterface {
     }
 
     template <typename Self, typename UpdateDataset>
-    void setup(this Self&& self, UpdateDataset const& update_data, Idx scenario_idx)
-        requires requires(this Self&& self) { // NOSONAR
+    void setup(this Self& self, UpdateDataset const& update_data, Idx scenario_idx)
+        requires requires(this Self& self) { // NOSONAR
             { self.setup_impl(update_data, scenario_idx) } -> std::same_as<void>;
         }
     {
@@ -54,8 +54,8 @@ class JobInterface {
     }
 
     template <typename Self>
-    void winddown(this Self&& self)
-        requires requires(this Self&& self) { // NOSONAR
+    void winddown(this Self& self)
+        requires requires(this Self& self) { // NOSONAR
             { self.winddown_impl() } -> std::same_as<void>;
         }
     {
@@ -63,8 +63,8 @@ class JobInterface {
     }
 
     template <typename Self>
-    void reset_logger(this Self&& self)
-        requires requires(this Self&& self) { // NOSONAR
+    void reset_logger(this Self& self)
+        requires requires(this Self& self) { // NOSONAR
             { self.reset_logger_impl() } -> std::same_as<void>;
         }
     {
@@ -72,8 +72,8 @@ class JobInterface {
     }
 
     template <typename Self>
-    void set_logger(this Self&& self, Logger& log)
-        requires requires(this Self&& self) { // NOSONAR
+    void set_logger(this Self& self, Logger& log)
+        requires requires(this Self& self) { // NOSONAR
             { self.set_logger_impl(log) } -> std::same_as<void>;
         }
     {
