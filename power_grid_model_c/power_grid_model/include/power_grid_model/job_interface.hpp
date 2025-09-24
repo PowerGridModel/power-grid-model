@@ -26,10 +26,6 @@ template <typename Adapter> class JobInterface {
     {
         static_cast<Adapter*>(this)->calculate_impl(result_data, pos, logger);
     }
-    template <typename ResultDataset> void calculate(ResultDataset const& result_data, Idx pos = 0) {
-        static constexpr NoLogger logger{};
-        calculate(result_data, pos, logger);
-    }
     template <typename ResultDataset> void calculate(ResultDataset const& result_data, Logger& logger) {
         calculate(result_data, Idx{}, logger);
     }
@@ -40,10 +36,6 @@ template <typename Adapter> class JobInterface {
         }
     {
         static_cast<Adapter*>(this)->cache_calculate_impl(logger);
-    }
-    void cache_calculate() {
-        static constexpr NoLogger logger{};
-        cache_calculate(logger);
     }
 
     template <typename UpdateDataset>
