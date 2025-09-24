@@ -82,13 +82,12 @@ template <class MainModel> class JobAdapter : public JobInterface<JobAdapter<Mai
     // current_scenario_sequence_cache_ is calculated per scenario, so it is excluded from the constructors.
     typename ModelType::SequenceIdx current_scenario_sequence_cache_{};
 
-    void calculate_impl(MutableDataset const& result_data, Idx scenario_idx,
-                        Logger& logger) const { // NOSONAR // Logger is mutable, not const
+    void calculate_impl(MutableDataset const& result_data, Idx scenario_idx, Logger& logger) const {
         MainModel::calculator(options_.get(), model_reference_.get(), result_data.get_individual_scenario(scenario_idx),
                               false, logger);
     }
 
-    void cache_calculate_impl(Logger& logger) const { // NOSONAR // Logger is mutable, not const
+    void cache_calculate_impl(Logger& logger) const {
         // calculate once to cache topology, ignore results, all math solvers are initialized
         try {
             MainModel::calculator(options_.get(), model_reference_.get(),

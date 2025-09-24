@@ -60,15 +60,14 @@ class JobAdapterMock : public JobInterface<JobAdapterMock> {
         }
         return *this;
     };
-    JobAdapterMock(JobAdapterMock&& other) noexcept : counter_{std::move(other.counter_)} {}
+    JobAdapterMock(JobAdapterMock&& other) noexcept : counter_{std::exchange(other.counter_, nullptr)} {}
     JobAdapterMock& operator=(JobAdapterMock&& other) noexcept {
         if (this != &other) {
-            counter_ = std::move(other.counter_);
-            other.counter_ = nullptr;
+            counter_ = std::exchange(other.counter_, nullptr);
         }
         return *this;
     }
-    ~JobAdapterMock() noexcept = default; // NOSONAR: shared_ptr handles cleanup automatically
+    ~JobAdapterMock() noexcept { counter_ = nullptr; }
 
     void reset_counters() const { counter_->reset_counters(); }
     Idx get_calculate_counter() const { return counter_->calculate_calls; }
@@ -81,10 +80,11 @@ class JobAdapterMock : public JobInterface<JobAdapterMock> {
 
     std::shared_ptr<CallCounter> counter_;
 
-    void calculate_impl(MockResultDataset const& /*result_data*/, Idx /*scenario_idx*/, Logger& /*logger*/) const {
+    void calculate_impl(MockResultDataset const& /*result_data*/, Idx /*scenario_idx*/,
+                        Logger const& /*logger*/) const {
         ++(counter_->calculate_calls);
     }
-    void cache_calculate_impl(Logger& /*logger*/) const { ++(counter_->cache_calculate_calls); }
+    void cache_calculate_impl(Logger const& /*logger*/) const { ++(counter_->cache_calculate_calls); }
     void prepare_job_dispatch_impl(MockUpdateDataset const& /*update_data*/) const { /* patch base class function */ }
     void setup_impl(MockUpdateDataset const& /*update_data*/, Idx /*scenario_idx*/) const { ++(counter_->setup_calls); }
     void winddown_impl() const { ++(counter_->winddown_calls); }
