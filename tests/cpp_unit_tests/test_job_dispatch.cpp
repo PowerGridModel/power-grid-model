@@ -68,7 +68,7 @@ class JobAdapterMock : public JobInterface<JobAdapterMock> {
         }
         return *this;
     }
-    ~JobAdapterMock() = default;
+    ~JobAdapterMock() noexcept = default; // NOSONAR: shared_ptr handles cleanup automatically
 
     void reset_counters() const { counter_->reset_counters(); }
     Idx get_calculate_counter() const { return counter_->calculate_calls; }
