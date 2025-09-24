@@ -7,7 +7,6 @@
 // batch dispatch interface class
 
 #include "common/common.hpp"
-#include "common/dummy_logging.hpp"
 #include "common/logging.hpp"
 
 #include <concepts>
@@ -72,8 +71,6 @@ template <typename Adapter> class JobInterface {
     JobInterface(JobInterface&& /*other*/) noexcept = default;
     JobInterface& operator=(JobInterface&& /*other*/) noexcept = default;
     ~JobInterface() = default;
-
-    using NoLogger = power_grid_model::common::logging::NoLogger;
 };
 
 } // namespace power_grid_model
