@@ -7,6 +7,7 @@
 // container for multiple components
 
 #include "common/common.hpp"
+#include "common/component_list.hpp"
 #include "common/exception.hpp"
 #include "common/iterator_facade.hpp"
 #include "container_fwd.hpp"
@@ -336,8 +337,6 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
     template <supported_type_c<GettableTypes...> Gettable> auto citer() const { return iter<Gettable>(); }
 };
 
-// type traits to instantiate container
-template <class... T> struct ExtraRetrievableTypes;
 // with no extra types, default all vector value types
 template <class... T> struct container_trait {
     using type = Container<RetrievableTypes<T...>, T...>;
@@ -348,8 +347,6 @@ template <class... TR, class... T> struct container_trait<ExtraRetrievableTypes<
 };
 
 } // namespace container_impl
-
-template <class... T> using ExtraRetrievableTypes = container_impl::ExtraRetrievableTypes<T...>;
 
 template <class... T> using Container = typename container_impl::container_trait<T...>::type;
 

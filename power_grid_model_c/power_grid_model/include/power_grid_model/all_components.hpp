@@ -32,4 +32,9 @@ using AllComponents =
     ComponentList<Node, Line, AsymLine, Link, GenericBranch, Transformer, ThreeWindingTransformer, Shunt, Source,
                   SymGenerator, AsymGenerator, SymLoad, AsymLoad, SymPowerSensor, AsymPowerSensor, SymVoltageSensor,
                   AsymVoltageSensor, SymCurrentSensor, AsymCurrentSensor, Fault, TransformerTapRegulator>;
+
+using AllExtraRetrievableTypes =
+    ExtraRetrievableTypes<Base, Node, Branch, Branch3, Appliance, GenericLoadGen, GenericLoad, GenericGenerator,
+                          GenericPowerSensor, GenericVoltageSensor, GenericCurrentSensor, Regulator>;
+
 } // namespace power_grid_model

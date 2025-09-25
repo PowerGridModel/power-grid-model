@@ -18,10 +18,7 @@ namespace power_grid_model {
 
 class MainModel {
   private:
-    using Impl = MainModelImpl<
-        ExtraRetrievableTypes<Base, Node, Branch, Branch3, Appliance, GenericLoadGen, GenericLoad, GenericGenerator,
-                              GenericPowerSensor, GenericVoltageSensor, GenericCurrentSensor, Regulator>,
-        AllComponents>;
+    using Impl = MainModelImpl<main_core::MainModelType<AllExtraRetrievableTypes, AllComponents>>;
 
   public:
     using Options = MainModelOptions;
