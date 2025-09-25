@@ -541,6 +541,11 @@ inline ObservabilityResult observability_check(MeasuredValues<sym> const& measur
     // check necessary condition for observability
     is_necessary_condition_met = detail::necessary_condition(observability_sensors, n_bus, n_voltage_phasor_sensors,
                                                              measured_values.has_global_angle_current());
+    // Early return if necessary condition is not met
+    if (!is_necessary_condition_met) {
+        return ObservabilityResult{.is_observable = false,
+                                   .is_possibly_ill_conditioned = observability_sensors.is_possibly_ill_conditioned};
+    }
 
     // check the sufficient condition for observability
     // the check is currently only implemented for radial grids
