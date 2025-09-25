@@ -9,10 +9,6 @@
 
 #include "../common/exception.hpp"
 
-// DEBUG
-#include <iostream>
-// DEBUG
-
 namespace power_grid_model::math_solver {
 
 namespace detail {
@@ -539,12 +535,6 @@ inline ObservabilityResult observability_check(MeasuredValues<sym> const& measur
 
     // from unidirectional neighbour list to bidirectional
     detail::expand_neighbour_list(neighbour_results);
-
-    //  sufficient & necessary early out, enough nodal measurement equals observable
-    if (observability_sensors.bus_injections.back() > n_bus - 2) {
-        return ObservabilityResult{.is_observable = true,
-                                   .is_possibly_ill_conditioned = observability_sensors.is_possibly_ill_conditioned};
-    }
 
     Idx n_voltage_phasor_sensors{};
 
