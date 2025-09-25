@@ -20,12 +20,12 @@ void check_whether_observable(bool is_observable, MathModelTopology const& topo,
     math_solver::MeasuredValues<symmetric_t> const measured_values{y_bus.shared_topology(), se_input};
 
     if (is_observable) {
-        CHECK_NOTHROW(
-            math_solver::observability_check(measured_values, y_bus.math_topology(), y_bus.y_bus_structure()));
+        CHECK_NOTHROW(math_solver::observability::observability_check(measured_values, y_bus.math_topology(),
+                                                                      y_bus.y_bus_structure()));
     } else {
-        CHECK_THROWS_AS(
-            math_solver::observability_check(measured_values, y_bus.math_topology(), y_bus.y_bus_structure()),
-            NotObservableError);
+        CHECK_THROWS_AS(math_solver::observability::observability_check(measured_values, y_bus.math_topology(),
+                                                                        y_bus.y_bus_structure()),
+                        NotObservableError);
     }
 }
 
