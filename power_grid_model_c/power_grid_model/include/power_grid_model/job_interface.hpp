@@ -18,20 +18,23 @@ template <typename Adapter> class JobInterface {
   public:
     // the multiple  NOSONARs are used to avoid the complaints about the unnamed concepts
     template <typename ResultDataset>
-    void calculate(ResultDataset const& result_data, Idx pos = 0)
+    void calculate(ResultDataset const& result_data, Idx pos, Logger& logger)
         requires requires(Adapter& adapter) { // NOSONAR
-            { adapter.calculate_impl(result_data, pos) } -> std::same_as<void>;
+            { adapter.calculate_impl(result_data, pos, logger) } -> std::same_as<void>;
         }
     {
-        return static_cast<Adapter*>(this)->calculate_impl(result_data, pos);
+        static_cast<Adapter*>(this)->calculate_impl(result_data, pos, logger);
+    }
+    template <typename ResultDataset> void calculate(ResultDataset const& result_data, Logger& logger) {
+        calculate(result_data, Idx{}, logger);
     }
 
-    void cache_calculate()
+    void cache_calculate(Logger& logger)
         requires requires(Adapter& adapter) { // NOSONAR
-            { adapter.cache_calculate_impl() } -> std::same_as<void>;
+            { adapter.cache_calculate_impl(logger) } -> std::same_as<void>;
         }
     {
-        return static_cast<Adapter*>(this)->cache_calculate_impl();
+        static_cast<Adapter*>(this)->cache_calculate_impl(logger);
     }
 
     template <typename UpdateDataset>
@@ -40,7 +43,7 @@ template <typename Adapter> class JobInterface {
             { adapter.prepare_job_dispatch_impl(update_data) } -> std::same_as<void>;
         }
     {
-        return static_cast<Adapter*>(this)->prepare_job_dispatch_impl(update_data);
+        static_cast<Adapter*>(this)->prepare_job_dispatch_impl(update_data);
     }
 
     template <typename UpdateDataset>
@@ -49,7 +52,7 @@ template <typename Adapter> class JobInterface {
             { adapter.setup_impl(update_data, scenario_idx) } -> std::same_as<void>;
         }
     {
-        return static_cast<Adapter*>(this)->setup_impl(update_data, scenario_idx);
+        static_cast<Adapter*>(this)->setup_impl(update_data, scenario_idx);
     }
 
     void winddown()
@@ -57,22 +60,7 @@ template <typename Adapter> class JobInterface {
             { adapter.winddown_impl() } -> std::same_as<void>;
         }
     {
-        return static_cast<Adapter*>(this)->winddown_impl();
-    }
-
-    void reset_logger()
-        requires requires(Adapter& adapter) { // NOSONAR
-            { adapter.reset_logger_impl() } -> std::same_as<void>;
-        }
-    {
-        static_cast<Adapter*>(this)->reset_logger_impl();
-    }
-    void set_logger(Logger& log)
-        requires requires(Adapter& adapter) { // NOSONAR
-            { adapter.set_logger_impl(log) } -> std::same_as<void>;
-        }
-    {
-        static_cast<Adapter*>(this)->set_logger_impl(log);
+        static_cast<Adapter*>(this)->winddown_impl();
     }
 
   private:
