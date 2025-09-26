@@ -22,7 +22,7 @@
     ],
     "sym_power_sensor": [
       {"id": 12, "energized": 1, "p_residual": 0.0054120944737497817, "q_residual": -0.00094889867275802734},
-      {"id": 15, "energized": 1, "p_residual": -1200.0054120944737, "q_residual": -119.999051101327230}
+      {"id": 15, "energized": 1, "p_residual": -1200.0054120944737, "q_residual": -119.99905110132723}
     ]
   }
 }
