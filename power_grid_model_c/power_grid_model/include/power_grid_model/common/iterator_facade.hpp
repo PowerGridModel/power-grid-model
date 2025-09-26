@@ -8,6 +8,7 @@
 
 #include <concepts>
 #include <ranges>
+#include <utility>
 
 namespace power_grid_model {
 template <class Impl, typename ValueType, std::integral DifferenceType> class IteratorFacade {
@@ -28,66 +29,110 @@ template <class Impl, typename ValueType, std::integral DifferenceType> class It
     {
         return static_cast<iterator*>(this)->dereference();
     }
-    constexpr auto operator->() const -> decltype(auto) { return &(*(*this)); }
-    constexpr auto operator->() -> decltype(auto) { return &(*(*this)); }
+    // constexpr auto operator*(this auto&& self) -> decltype(auto) {
+    //     using Self = decltype(self);
+    //     return std::forward_like<std::add_const_t<Self>>(self).dereference();
+    // }
+    // template <typename Self>
+    // constexpr auto operator*(this Self&& self) -> decltype(auto)
+    //     requires(!std::is_const_v<Self> &&
+    //              requires {
+    //                  { self.dereference() } -> std::same_as<typename Self::reference>;
+    //              })
+    // {
+    //     return std::forward<Self>(self).dereference();
+    // }
 
-    friend constexpr bool operator==(IteratorFacade const& first, IteratorFacade const& second) {
-        return (first <=> second) == std::strong_ordering::equivalent;
-    }
-    friend constexpr std::strong_ordering operator<=>(IteratorFacade const& first, IteratorFacade const& second) {
+    // constexpr auto operator->() const -> decltype(auto) { return &(*(*this)); }
+    // constexpr auto operator->() -> decltype(auto) { return &(*(*this)); }
+    constexpr auto operator->(this auto&& self) { return &(*std::forward<decltype(self)>(self)); }
+
+    // friend constexpr bool operator==(Impl const& first, Impl const& second) {
+    //     return (first <=> second) == std::strong_ordering::equivalent;
+    // }
+    friend constexpr std::strong_ordering operator<=>(Impl const& first, Impl const& second) {
         return first.three_way_compare(second);
     }
+    template <typename Self, typename Other>
+    constexpr bool operator==(this Self&& self, Other&& other)
+        requires requires {
+            { std::forward<Self>(self) <=> std::forward<Other>(other) } -> std::same_as<std::strong_ordering>;
+        }
+    {
+        return (std::forward<Self>(self) <=> std::forward<Other>(other)) == std::strong_ordering::equivalent;
+    }
+    // template <typename Self, typename Other>
+    // constexpr auto operator<=>(this Self&& self, Other&& other)
+    //     requires std::same_as<std::remove_cvref_t<Self>, std::remove_cvref_t<Other>> && requires {
+    //         { self.three_way_compare(other) } -> std::same_as<std::strong_ordering>;
+    //     }
+    // {
+    //     return (std::forward<Self>(self).three_way_compare(std::forward<Other>(other)));
+    // }
 
-    constexpr auto operator++() -> iterator& {
-        if constexpr (requires(iterator it) { it.increment(); }) {
-            static_cast<iterator*>(this)->increment();
+    constexpr auto operator++(this auto& self) -> iterator& {
+        if constexpr (requires { self.increment(); }) {
+            self.increment();
         } else {
-            static_cast<iterator*>(this)->advance(1);
+            return (self += 1);
         }
-        return *static_cast<iterator*>(this);
+        return self;
     }
-    constexpr auto operator--() -> iterator& {
-        if constexpr (requires(iterator it) { it.decrement(); }) {
-            static_cast<iterator*>(this)->decrement();
+    constexpr auto operator--(this auto& self) -> iterator& {
+        if constexpr (requires { self.decrement(); }) {
+            self.decrement();
         } else {
-            static_cast<iterator*>(this)->advance(-1);
+            return (self += -1);
         }
-        return *static_cast<iterator*>(this);
+        return self;
     }
-    constexpr auto operator++(std::integral auto /*idx*/) -> iterator {
-        iterator result{*static_cast<iterator*>(this)};
-        ++(*this);
+    constexpr auto operator++(this auto& self, std::integral auto /*idx*/) -> iterator {
+        iterator result{self};
+        ++self;
         return result;
     }
-    constexpr auto operator--(std::integral auto /*idx*/) -> iterator {
-        iterator result{*static_cast<iterator*>(this)};
-        --(*this);
+    constexpr auto operator--(this auto& self, std::integral auto /*idx*/) -> iterator {
+        iterator result{self};
+        --self;
         return result;
     }
-    constexpr auto operator+=(std::integral auto offset) -> iterator& {
-        static_cast<iterator*>(this)->advance(offset);
-        return *static_cast<iterator*>(this);
+    constexpr auto operator+=(this auto& self, std::integral auto offset) -> iterator& {
+        self.advance(offset);
+        return self;
     }
-    constexpr auto operator-=(std::integral auto idx) -> iterator& { return ((*this) += (-idx)); }
+    constexpr auto operator-=(this auto& self, std::integral auto idx) -> iterator& { return (self += (-idx)); }
 
-    friend constexpr auto operator+(iterator const& it, difference_type offset) -> iterator {
-        iterator result{it};
+    constexpr auto operator+(this auto&& self, difference_type offset) -> iterator {
+        iterator result{std::forward<decltype(self)>(self)};
         result += offset;
         return result;
     }
-    friend constexpr auto operator+(difference_type offset, iterator it) -> iterator { return (it += offset); }
-    friend constexpr auto operator-(iterator const& it, difference_type idx) -> iterator { return it + (-idx); }
-    friend constexpr auto operator-(IteratorFacade const& first, IteratorFacade const& second) -> difference_type {
-        return second.distance_to(first);
+    friend constexpr auto operator+(difference_type offset, auto&& self) -> iterator {
+        return std::forward<decltype(self)>(self) + offset;
+    }
+    constexpr auto operator-(this auto&& self, difference_type idx) -> iterator {
+        return std::forward<decltype(self)>(self) + (-idx);
+    }
+    template <typename Self, typename Other>
+        requires std::same_as<std::remove_cvref_t<Self>, std::remove_cvref_t<Other>>
+    constexpr auto operator-(this Self&& self, Other&& other) -> difference_type {
+        return std::forward<Other>(other).distance_to(std::forward<Self>(self));
     }
 
-    constexpr auto operator[](difference_type idx) const -> value_type const& { return *(*this + idx); }
+    constexpr auto operator[](this auto const& self, difference_type idx) -> decltype(auto) { return *(self + idx); }
 
   private:
     IteratorFacade() = default; // default constructor is private to prevent non-CRTP instantiation
     friend Impl;                // allow Impl to access private members; this is necessary for CRTP
 
     // overloads for public bidirectional exposure (difference between MSVC and ClangCL)
+    // template <typename Self, typename Other>
+    //     requires std::same_as<std::remove_cvref_t<Self>, std::remove_cvref_t<Other>>
+    // constexpr std::strong_ordering three_way_compare(this Self&& self, Other&& other) {
+    //     using ConstRefSelf = std::add_lvalue_reference_t<std::add_const_t<Self>>;
+    //     using ConstRefOther = std::add_lvalue_reference_t<std::add_const_t<Other>>;
+    //     return std::forward_like<ConstRefSelf>(self).three_way_compare(std::forward_like<ConstRefOther>(other));
+    // }
     constexpr std::strong_ordering three_way_compare(IteratorFacade const& other) const {
         return static_cast<std::add_lvalue_reference_t<const_iterator>>(*this).three_way_compare(
             static_cast<std::add_lvalue_reference_t<const_iterator>>(other));
