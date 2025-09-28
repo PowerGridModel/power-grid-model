@@ -547,6 +547,12 @@ inline ObservabilityResult observability_check(MeasuredValues<sym> const& measur
                                    .is_possibly_ill_conditioned = observability_sensors.is_possibly_ill_conditioned};
     }
 
+    //  Sufficient early out, enough nodal measurement equals observable
+    if (observability_sensors.bus_injections.back() > n_bus - 2) {
+        return ObservabilityResult{.is_observable = true,
+                                   .is_possibly_ill_conditioned = observability_sensors.is_possibly_ill_conditioned};
+    }
+
     // check the sufficient condition for observability
     // the check is currently only implemented for radial grids
     if (topo.is_radial) {
