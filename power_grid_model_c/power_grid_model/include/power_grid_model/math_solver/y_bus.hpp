@@ -52,8 +52,7 @@ inline void counting_sort_element(std::vector<YBusElementMap>& vec, Idx n_bus) {
         counter[i] += counter[i - 1];
     }
     for (auto it_element = vec.rbegin(); it_element != vec.rend(); ++it_element) {
-        --counter[it_element->pos.second];
-        temp_vec[counter[it_element->pos.second]] = std::move(*it_element);
+        temp_vec[--counter[it_element->pos.second]] = std::move(*it_element); // NOSONAR
     }
 
     // swap vectors to avoid copying
@@ -68,8 +67,7 @@ inline void counting_sort_element(std::vector<YBusElementMap>& vec, Idx n_bus) {
         counter[i] += counter[i - 1];
     }
     for (auto it_element = vec.rbegin(); it_element != vec.rend(); ++it_element) {
-        --counter[it_element->pos.first];
-        temp_vec[counter[it_element->pos.first]] = std::move(*it_element);
+        temp_vec[--counter[it_element->pos.first]] = std::move(*it_element); // NOSONAR
     }
 
     // final swap to get result back in vec
