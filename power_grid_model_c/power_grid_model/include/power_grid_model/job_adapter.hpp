@@ -10,7 +10,6 @@
 #include "main_model_fwd.hpp"
 
 #include "auxiliary/dataset.hpp"
-#include "common/dummy_logging.hpp"
 #include "main_core/update.hpp"
 
 namespace power_grid_model {
@@ -23,9 +22,7 @@ template <class MainModel> class JobAdapter : public JobInterface {
 
     JobAdapter(std::reference_wrapper<MainModel> model_reference,
                std::reference_wrapper<MainModelOptions const> options)
-        : model_reference_{model_reference}, options_{options} {
-        reset_logger_impl();
-    }
+        : model_reference_{model_reference}, options_{options} {}
     JobAdapter(JobAdapter const& other)
         : model_copy_{std::make_unique<MainModel>(other.model_reference_.get())},
           model_reference_{std::ref(*model_copy_)},
@@ -33,9 +30,7 @@ template <class MainModel> class JobAdapter : public JobInterface {
           components_to_update_{other.components_to_update_},
           update_independence_{other.update_independence_},
           independence_flags_{other.independence_flags_},
-          all_scenarios_sequence_{other.all_scenarios_sequence_} {
-        reset_logger_impl();
-    }
+          all_scenarios_sequence_{other.all_scenarios_sequence_} {}
     JobAdapter& operator=(JobAdapter const& other) {
         if (this != &other) {
             model_copy_ = std::make_unique<MainModel>(other.model_reference_.get());
@@ -45,8 +40,6 @@ template <class MainModel> class JobAdapter : public JobInterface {
             update_independence_ = other.update_independence_;
             independence_flags_ = other.independence_flags_;
             all_scenarios_sequence_ = other.all_scenarios_sequence_;
-
-            reset_logger_impl();
         }
         return *this;
     }
@@ -57,9 +50,7 @@ template <class MainModel> class JobAdapter : public JobInterface {
           components_to_update_{std::move(other.components_to_update_)},
           update_independence_{std::move(other.update_independence_)},
           independence_flags_{std::move(other.independence_flags_)},
-          all_scenarios_sequence_{std::move(other.all_scenarios_sequence_)} {
-        reset_logger_impl();
-    }
+          all_scenarios_sequence_{std::move(other.all_scenarios_sequence_)} {}
     JobAdapter& operator=(JobAdapter&& other) noexcept {
         if (this != &other) {
             model_copy_ = std::move(other.model_copy_);
@@ -69,15 +60,10 @@ template <class MainModel> class JobAdapter : public JobInterface {
             update_independence_ = std::move(other.update_independence_);
             independence_flags_ = std::move(other.independence_flags_);
             all_scenarios_sequence_ = std::move(other.all_scenarios_sequence_);
-
-            reset_logger_impl();
         }
         return *this;
     }
-    ~JobAdapter() {
-        reset_logger_impl();
-        model_copy_.reset();
-    }
+    ~JobAdapter() { model_copy_.reset(); }
 
   private:
     friend class JobInterface;
@@ -93,14 +79,12 @@ template <class MainModel> class JobAdapter : public JobInterface {
     // current_scenario_sequence_cache_ is calculated per scenario, so it is excluded from the constructors.
     typename ModelType::SequenceIdx current_scenario_sequence_cache_{};
 
-    Logger* log_{nullptr};
-
-    void calculate_impl(MutableDataset const& result_data, Idx scenario_idx) const {
+    void calculate_impl(MutableDataset const& result_data, Idx scenario_idx, Logger& logger) const {
         MainModel::calculator(options_.get(), model_reference_.get(), result_data.get_individual_scenario(scenario_idx),
-                              false, logger());
+                              false, logger);
     }
 
-    void cache_calculate_impl() const {
+    void cache_calculate_impl(Logger& logger) const {
         // calculate once to cache topology, ignore results, all math solvers are initialized
         try {
             MainModel::calculator(options_.get(), model_reference_.get(),
@@ -110,7 +94,7 @@ template <class MainModel> class JobAdapter : public JobInterface {
                                       "sym_output",
                                       model_reference_.get().meta_data(),
                                   },
-                                  true, logger());
+                                  true, logger);
         } catch (SparseMatrixError const&) { // NOLINT(bugprone-empty-catch) // NOSONAR
             // missing entries are provided in the update data
         } catch (NotObservableError const&) { // NOLINT(bugprone-empty-catch) // NOSONAR
@@ -123,18 +107,19 @@ template <class MainModel> class JobAdapter : public JobInterface {
         // the order for a cacheable (independent) component by definition is the same across all scenarios
         components_to_update_ = model_reference_.get().get_components_to_update(update_data);
         update_independence_ = main_core::update::independence::check_update_independence<ModelType>(
-            model_reference_.get().state(), update_data);
+            model_reference_.get().state().components, update_data);
         std::ranges::transform(update_independence_, independence_flags_.begin(),
                                [](auto const& comp) { return comp.is_independent(); });
         all_scenarios_sequence_ =
             std::make_shared<typename ModelType::SequenceIdx>(main_core::update::get_all_sequence_idx_map<ModelType>(
-                model_reference_.get().state(), update_data, 0, components_to_update_, update_independence_, false));
+                model_reference_.get().state().components, update_data, 0, components_to_update_, update_independence_,
+                false));
     }
 
     void setup_impl(ConstDataset const& update_data, Idx scenario_idx) {
         current_scenario_sequence_cache_ = main_core::update::get_all_sequence_idx_map<ModelType>(
-            model_reference_.get().state(), update_data, scenario_idx, components_to_update_, update_independence_,
-            true);
+            model_reference_.get().state().components, update_data, scenario_idx, components_to_update_,
+            update_independence_, true);
         auto const current_scenario_sequence = get_current_scenario_sequence_view_();
         model_reference_.get().template update_components<cached_update_t>(update_data, scenario_idx,
                                                                            current_scenario_sequence);
@@ -153,14 +138,6 @@ template <class MainModel> class JobAdapter : public JobInterface {
             }
             return std::span<Idx2D const>{std::get<comp_idx>(current_scenario_sequence_cache_)};
         });
-    }
-
-    void reset_logger_impl() { log_ = nullptr; }
-    void set_logger_impl(Logger& log) { log_ = &log; }
-
-    Logger& logger() const {
-        static common::logging::NoLogger no_log{};
-        return log_ != nullptr ? *log_ : no_log;
     }
 };
 } // namespace power_grid_model

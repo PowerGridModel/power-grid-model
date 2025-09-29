@@ -173,7 +173,7 @@ class MainModelImpl {
     template <std::derived_from<Base> CompType, std::ranges::viewable_range Inputs>
     void add_component(Inputs&& components) {
         assert(!construction_complete_);
-        main_core::add_component<CompType>(state_, std::forward<Inputs>(components), system_frequency_);
+        main_core::add_component<CompType>(state_.components, std::forward<Inputs>(components), system_frequency_);
     }
 
     void add_components(ConstDataset const& input_data, Idx pos = 0) {
@@ -200,11 +200,12 @@ class MainModelImpl {
 
         if constexpr (CacheType::value) {
             main_core::update::update_inverse<CompType>(
-                state_, updates, std::back_inserter(std::get<comp_index>(cached_inverse_update_)), sequence_idx);
+                state_.components, updates, std::back_inserter(std::get<comp_index>(cached_inverse_update_)),
+                sequence_idx);
         }
 
         UpdateChange const changed = main_core::update::update_component<CompType>(
-            state_, std::forward<Updates>(updates),
+            state_.components, std::forward<Updates>(updates),
             std::back_inserter(std::get<comp_index>(parameter_changed_components_)), sequence_idx);
 
         // update, get changed variable
@@ -245,9 +246,9 @@ class MainModelImpl {
     template <cache_type_c CacheType> void update_components(ConstDataset const& update_data) {
         auto const components_to_update = get_components_to_update(update_data);
         auto const update_independence =
-            main_core::update::independence::check_update_independence<ModelType>(state_, update_data);
+            main_core::update::independence::check_update_independence<ModelType>(state_.components, update_data);
         auto const sequence_idx_map = main_core::update::get_all_sequence_idx_map<ModelType>(
-            state_, update_data, 0, components_to_update, update_independence, false);
+            state_.components, update_data, 0, components_to_update, update_independence, false);
         update_components<CacheType>(update_data, 0, sequence_idx_map);
     }
 
@@ -282,11 +283,12 @@ class MainModelImpl {
     the the sequence indexer given an input array of ID's for a given component type
     */
     void get_indexer(std::string_view component_type, ID const* id_begin, Idx size, Idx* indexer_begin) const {
-        auto const get_index_func = [&state = this->state_, component_type, id_begin, size,
+        auto const get_index_func = [&components = this->state_.components, component_type, id_begin, size,
                                      indexer_begin]<typename CT>() {
             if (component_type == CT::name) {
-                std::transform(id_begin, id_begin + size, indexer_begin,
-                               [&state](ID id) { return main_core::get_component_idx_by_id<CT>(state, id).pos; });
+                std::transform(id_begin, id_begin + size, indexer_begin, [&components](ID id) {
+                    return main_core::get_component_idx_by_id<CT>(components, id).pos;
+                });
             }
         };
         ModelType::run_functor_with_all_component_types_return_void(get_index_func);
@@ -297,9 +299,9 @@ class MainModelImpl {
     SequenceIdx get_all_sequence_idx_map(ConstDataset const& update_data) {
         auto const components_to_update = get_components_to_update(update_data);
         auto const update_independence =
-            main_core::update::independence::check_update_independence<ModelType>(state_, update_data);
-        return main_core::update::get_all_sequence_idx_map<ModelType>(state_, update_data, 0, components_to_update,
-                                                                      update_independence, false);
+            main_core::update::independence::check_update_independence<ModelType>(state_.components, update_data);
+        return main_core::update::get_all_sequence_idx_map<ModelType>(state_.components, update_data, 0,
+                                                                      components_to_update, update_independence, false);
     }
 
     void update_state(UpdateChange const& changes) {

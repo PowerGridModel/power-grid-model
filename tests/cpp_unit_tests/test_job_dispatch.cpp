@@ -4,6 +4,7 @@
 
 #include <power_grid_model/batch_parameter.hpp>
 #include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/dummy_logging.hpp>
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/common/multi_threaded_logging.hpp>
 #include <power_grid_model/job_dispatch.hpp>
@@ -57,53 +58,37 @@ class JobAdapterMock : public JobInterface {
     JobAdapterMock& operator=(JobAdapterMock const& other) {
         if (this != &other) {
             counter_ = other.counter_;
-            logger_ = nullptr; // reset logger
         }
         return *this;
     };
-    JobAdapterMock(JobAdapterMock&& other) noexcept : logger_{other.logger_}, counter_{std::move(other.counter_)} {}
+    JobAdapterMock(JobAdapterMock&& other) noexcept : counter_{std::exchange(other.counter_, nullptr)} {}
     JobAdapterMock& operator=(JobAdapterMock&& other) noexcept {
         if (this != &other) {
-            counter_ = std::move(other.counter_);
-            other.counter_ = nullptr;
-            logger_ = other.logger_;
-            other.logger_ = nullptr;
+            counter_ = std::exchange(other.counter_, nullptr);
         }
         return *this;
     }
-    ~JobAdapterMock() { reset_logger(); };
+    ~JobAdapterMock() noexcept { counter_ = nullptr; }
 
     void reset_counters() const { counter_->reset_counters(); }
     Idx get_calculate_counter() const { return counter_->calculate_calls; }
     Idx get_cache_calculate_counter() const { return counter_->cache_calculate_calls; }
     Idx get_setup_counter() const { return counter_->setup_calls; }
     Idx get_winddown_counter() const { return counter_->winddown_calls; }
-    Idx get_set_logger_counter() const { return counter_->set_logger_calls; }
-    Idx get_reset_logger_counter() const { return counter_->reset_logger_calls; }
 
   private:
     friend class JobInterface;
 
-    Logger* logger_{};
     std::shared_ptr<CallCounter> counter_;
 
-    void calculate_impl(MockResultDataset const& /*result_data*/, Idx /*scenario_idx*/) const {
+    void calculate_impl(MockResultDataset const& /*result_data*/, Idx /*scenario_idx*/,
+                        Logger const& /*logger*/) const {
         ++(counter_->calculate_calls);
     }
-    void cache_calculate_impl() const { ++(counter_->cache_calculate_calls); }
+    void cache_calculate_impl(Logger const& /*logger*/) const { ++(counter_->cache_calculate_calls); }
     void prepare_job_dispatch_impl(MockUpdateDataset const& /*update_data*/) const { /* patch base class function */ }
     void setup_impl(MockUpdateDataset const& /*update_data*/, Idx /*scenario_idx*/) const { ++(counter_->setup_calls); }
     void winddown_impl() const { ++(counter_->winddown_calls); }
-    void reset_logger_impl() {
-        if (counter_ != nullptr) { // this may happen when the destructor is called on a moved object
-            ++(counter_->reset_logger_calls);
-        }
-        logger_ = nullptr;
-    }
-    void set_logger_impl(Logger& logger) {
-        ++(counter_->set_logger_calls);
-        logger_ = &logger;
-    }
 };
 
 class SomeTestException : public std::runtime_error {
@@ -187,8 +172,6 @@ TEST_CASE("Test job dispatch logic") {
             CHECK(expected_result == actual_result);
             CHECK(adapter.get_calculate_counter() == 1);
             CHECK(adapter.get_cache_calculate_counter() == 0); // no cache calculation in this case
-            CHECK(adapter.get_set_logger_counter() == 1);
-            CHECK(adapter.get_reset_logger_counter() == 1);
         }
         SUBCASE("No scenarios") {
             bool const has_data = true;
@@ -201,8 +184,6 @@ TEST_CASE("Test job dispatch logic") {
             // no calculations should be done
             CHECK(adapter.get_calculate_counter() == 0);
             CHECK(adapter.get_cache_calculate_counter() == 0);
-            CHECK(adapter.get_set_logger_counter() == 1);
-            CHECK(adapter.get_reset_logger_counter() == 1);
         }
         SUBCASE("With scenarios and update data") {
             bool const has_data = true;
@@ -215,8 +196,6 @@ TEST_CASE("Test job dispatch logic") {
             // n_scenarios calculations should be done as we run sequentially
             CHECK(adapter.get_calculate_counter() == n_scenarios);
             CHECK(adapter.get_cache_calculate_counter() == 1); // cache calculation is done
-            CHECK(adapter.get_set_logger_counter() == 2);
-            CHECK(adapter.get_reset_logger_counter() == 2);
         }
     }
     SUBCASE("Test single_thread_job") {
@@ -242,8 +221,6 @@ TEST_CASE("Test job dispatch logic") {
             CHECK(adapter_.get_setup_counter() == expected_calls);
             CHECK(adapter_.get_winddown_counter() == expected_calls);
             CHECK(adapter_.get_calculate_counter() == expected_calls);
-            CHECK(adapter_.get_set_logger_counter() == 1);
-            CHECK(adapter_.get_reset_logger_counter() == 1);
         };
 
         adapter.prepare_job_dispatch(update_data); // replicate preparation step from batch_calculation
