@@ -214,8 +214,8 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
                                                                 IntS measured_side,
                                                                 IndependentComplexRandVar<sym> const& branch_current) {
                             // branch from- and to-side index at 0, and 1 position
-                            IntS const b0 = static_cast<IntS>(type) / 2;
-                            IntS const b1 = static_cast<IntS>(type) % 2;
+                            IntS const b0 = std::to_underlying(type) / 2;
+                            IntS const b1 = std::to_underlying(type) % 2;
 
                             // G += Y{side, b0}^H * (variance^-1) * Y{side, b1}
                             block.g() += dot(hermitian_transpose(param.branch_param[obj].value[measured_side * 2 + b0]),
@@ -317,7 +317,7 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
                                                          type](IntS measured_side,
                                                                IndependentComplexRandVar<sym> const& branch_current) {
                         // branch is either ff or tt
-                        IntS const b = static_cast<IntS>(type) / 2;
+                        IntS const b = std::to_underlying(type) / 2;
                         // eta += Y{side, b}^H * (variance^-1) * i_branch_{f, t}
                         rhs_block.eta() +=
                             dot(hermitian_transpose(param.branch_param[obj].value[measured_side * 2 + b]),

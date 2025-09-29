@@ -8,8 +8,59 @@
 
 namespace power_grid_model::main_core {
 
-template <symmetry_tag sym, typename ComponentContainer, typename... ComponentType>
-void prepare_y_bus(MainModelState<ComponentContainer> const& state_, Idx n_math_solvers_, MathState& math_state_) {
+namespace detail {
+template <std::derived_from<Branch> ComponentType, typename ComponentContainer>
+constexpr void add_to_increment(std::vector<MathModelParamIncrement>& increments,
+                                MainModelState<ComponentContainer> const& state, Idx2D const& changed_component_idx) {
+    Idx2D const math_idx =
+        state.topo_comp_coup
+            ->branch[main_core::get_component_sequence_idx<Branch>(state.components, changed_component_idx)];
+    if (math_idx.group == isolated_component) {
+        return;
+    }
+    // assign parameters
+    increments[math_idx.group].branch_param_to_change.push_back(math_idx.pos);
+}
+
+template <std::derived_from<Branch3> ComponentType, typename ComponentContainer>
+constexpr void add_to_increment(std::vector<MathModelParamIncrement>& increments,
+                                MainModelState<ComponentContainer> const& state, Idx2D const& changed_component_idx) {
+    Idx2DBranch3 const math_idx =
+        state.topo_comp_coup
+            ->branch3[main_core::get_component_sequence_idx<Branch3>(state.components, changed_component_idx)];
+    if (math_idx.group == isolated_component) {
+        return;
+    }
+    // assign parameters, branch3 param consists of three branch parameters
+    for (size_t branch2 = 0; branch2 < 3; ++branch2) {
+        increments[math_idx.group].branch_param_to_change.push_back(math_idx.pos[branch2]);
+    }
+}
+
+template <std::same_as<Shunt> ComponentType, typename ComponentContainer>
+constexpr void add_to_increment(std::vector<MathModelParamIncrement>& increments,
+                                MainModelState<ComponentContainer> const& state, Idx2D const& changed_component_idx) {
+    Idx2D const math_idx =
+        state.topo_comp_coup
+            ->shunt[main_core::get_component_sequence_idx<Shunt>(state.components, changed_component_idx)];
+    if (math_idx.group == isolated_component) {
+        return;
+    }
+    // assign parameters
+    increments[math_idx.group].shunt_param_to_change.push_back(math_idx.pos);
+}
+
+// default implementation for other components, does nothing
+template <typename ComponentType, typename ComponentContainer>
+constexpr void add_to_increment(std::vector<MathModelParamIncrement> const& /* increments */,
+                                MainModelState<ComponentContainer> const& /* state */,
+                                Idx2D const& /* changed_component_idx */) {
+    // default implementation is no-op
+}
+} // namespace detail
+
+template <symmetry_tag sym, typename MainModelType>
+void prepare_y_bus(typename MainModelType::MainModelState const& state_, Idx n_math_solvers_, MathState& math_state_) {
     std::vector<YBus<sym>>& y_bus_vec = main_core::get_y_bus<sym>(math_state_);
     // also get the vector of other Y_bus (sym -> asym, or asym -> sym)
     std::vector<YBus<other_symmetry_t<sym>>>& other_y_bus_vec =
@@ -19,14 +70,6 @@ void prepare_y_bus(MainModelState<ComponentContainer> const& state_, Idx n_math_
         bool const other_y_bus_exist = (!other_y_bus_vec.empty());
         y_bus_vec.reserve(n_math_solvers_);
         auto math_params = get_math_param<sym>(state_, n_math_solvers_);
-
-        // Check the branch and shunt indices
-        constexpr auto branch_param_in_seq_map =
-            std::array{main_core::utils::index_of_component<Line, ComponentType...>,
-                       main_core::utils::index_of_component<Link, ComponentType...>,
-                       main_core::utils::index_of_component<Transformer, ComponentType...>};
-        constexpr auto shunt_param_in_seq_map =
-            std::array{main_core::utils::index_of_component<Shunt, ComponentType...>};
 
         for (Idx i = 0; i != n_math_solvers_; ++i) {
             // construct from existing Y_bus structure if possible
@@ -38,66 +81,25 @@ void prepare_y_bus(MainModelState<ComponentContainer> const& state_, Idx n_math_
                 y_bus_vec.emplace_back(state_.math_topology[i],
                                        std::make_shared<MathModelParam<sym> const>(std::move(math_params[i])));
             }
-
-            y_bus_vec.back().set_branch_param_idx(
-                IdxVector{branch_param_in_seq_map.begin(), branch_param_in_seq_map.end()});
-            y_bus_vec.back().set_shunt_param_idx(
-                IdxVector{shunt_param_in_seq_map.begin(), shunt_param_in_seq_map.end()});
         }
     }
 }
 
-template <symmetry_tag sym, typename ComponentContainer, typename... ComponentType>
-static std::vector<MathModelParamIncrement> get_math_param_increment(
-    MainModelState<ComponentContainer>& received_state, Idx n_math_solvers_,
-    std::array<std::vector<Idx2D>, main_core::utils::n_types<ComponentType...>> const& parameter_changed_components_) {
-    using AddToIncrement =
-        void (*)(std::vector<MathModelParamIncrement>&, MainModelState<ComponentContainer> const&, Idx2D const&);
-
-    static constexpr std::array<AddToIncrement, main_core::utils::n_types<ComponentType...>> add_to_increments{
-        [](std::vector<MathModelParamIncrement>& increments, MainModelState<ComponentContainer> const& state,
-           Idx2D const& changed_component_idx) {
-            if constexpr (std::derived_from<ComponentType, Branch>) {
-                Idx2D const math_idx =
-                    state.topo_comp_coup
-                        ->branch[main_core::get_component_sequence_idx<Branch>(state, changed_component_idx)];
-                if (math_idx.group == isolated_component) {
-                    return;
-                }
-                // assign parameters
-                increments[math_idx.group].branch_param_to_change.push_back(math_idx.pos);
-            } else if constexpr (std::derived_from<ComponentType, Branch3>) {
-                Idx2DBranch3 const math_idx =
-                    state.topo_comp_coup
-                        ->branch3[main_core::get_component_sequence_idx<Branch3>(state, changed_component_idx)];
-                if (math_idx.group == isolated_component) {
-                    return;
-                }
-                // assign parameters, branch3 param consists of three branch parameters
-                for (size_t branch2 = 0; branch2 < 3; ++branch2) {
-                    increments[math_idx.group].branch_param_to_change.push_back(math_idx.pos[branch2]);
-                }
-            } else if constexpr (std::same_as<ComponentType, Shunt>) {
-                Idx2D const math_idx =
-                    state.topo_comp_coup
-                        ->shunt[main_core::get_component_sequence_idx<Shunt>(state, changed_component_idx)];
-                if (math_idx.group == isolated_component) {
-                    return;
-                }
-                // assign parameters
-                increments[math_idx.group].shunt_param_to_change.push_back(math_idx.pos);
-            }
-        }...};
+template <typename MainModelType>
+static std::vector<MathModelParamIncrement>
+get_math_param_increment(typename MainModelType::MainModelState const& state, Idx n_math_solvers_,
+                         typename MainModelType::SequenceIdx const& parameter_changed_components_) {
 
     std::vector<MathModelParamIncrement> math_param_increment(n_math_solvers_);
 
-    for (size_t i = 0; i < main_core::utils::n_types<ComponentType...>; ++i) {
-        auto const& changed_type_components = parameter_changed_components_[i];
-        auto const& add_type_to_increment = add_to_increments[i];
-        for (auto const& changed_component : changed_type_components) {
-            add_type_to_increment(math_param_increment, received_state, changed_component);
-        }
-    }
+    MainModelType::run_functor_with_all_component_types_return_void(
+        [&math_param_increment, &state, &parameter_changed_components_]<typename CompType>() {
+            static constexpr auto comp_index = MainModelType::template index_of_component<CompType>;
+            for (auto const& changed_component : std::get<comp_index>(parameter_changed_components_)) {
+                detail::add_to_increment<CompType, typename MainModelType::ComponentContainer>(
+                    math_param_increment, state, changed_component);
+            }
+        });
 
     return math_param_increment;
 }

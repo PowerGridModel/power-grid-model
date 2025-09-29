@@ -215,9 +215,9 @@ class Branch3 : public Base {
     auto inverse(std::convertible_to<Branch3Update> auto update_data) const {
         assert(update_data.id == this->id() || is_nan(update_data.id));
 
-        set_if_not_nan(update_data.status_1, static_cast<IntS>(status_1_));
-        set_if_not_nan(update_data.status_2, static_cast<IntS>(status_2_));
-        set_if_not_nan(update_data.status_3, static_cast<IntS>(status_3_));
+        set_if_not_nan(update_data.status_1, status_to_int(status_1_));
+        set_if_not_nan(update_data.status_2, status_to_int(status_2_));
+        set_if_not_nan(update_data.status_3, status_to_int(status_3_));
 
         return update_data;
     }

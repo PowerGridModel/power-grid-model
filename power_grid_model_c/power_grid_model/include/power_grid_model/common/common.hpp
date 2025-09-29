@@ -6,6 +6,7 @@
 
 #include <cmath>
 #include <complex>
+#include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <limits>
@@ -115,7 +116,7 @@ template <typename T> constexpr T map_to_cyclic_range(T value, T period) {
     if constexpr (std::is_integral_v<T>) {
         return static_cast<T>((value % period + period) % period);
     } else {
-        if (std::is_constant_evaluated()) {
+        if consteval {
             T quotient = value / period;
             Idx const floored_quotient =
                 (quotient >= T{0}) ? static_cast<Idx>(quotient) : static_cast<Idx>(quotient) - 1;
