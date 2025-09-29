@@ -8,7 +8,7 @@
 #include "state.hpp"
 #include "state_queries.hpp"
 
-#include "../all_components.hpp"
+#include "../component/component.hpp"
 
 #include <concepts>
 
@@ -115,14 +115,14 @@ constexpr void produce_output(MainModelState<ComponentContainer> const& state, C
 
 // output node
 template <std::derived_from<Node> Component, steady_state_solver_output_type SolverOutputType>
-constexpr auto output_result(Node const& node, std::vector<SolverOutputType> const& solver_output, Idx2D math_id) {
+constexpr auto output_result(Component const& node, std::vector<SolverOutputType> const& solver_output, Idx2D math_id) {
     using sym = typename SolverOutputType::sym;
 
     if (math_id.group == -1) {
-        return node.get_null_output<sym>();
+        return node.template get_null_output<sym>();
     }
-    return node.get_output<sym>(solver_output[math_id.group].u[math_id.pos],
-                                solver_output[math_id.group].bus_injection[math_id.pos]);
+    return node.template get_output<sym>(solver_output[math_id.group].u[math_id.pos],
+                                         solver_output[math_id.group].bus_injection[math_id.pos]);
 }
 template <std::derived_from<Node> Component, short_circuit_solver_output_type SolverOutputType>
 inline auto output_result(Component const& node, std::vector<SolverOutputType> const& solver_output, Idx2D math_id) {

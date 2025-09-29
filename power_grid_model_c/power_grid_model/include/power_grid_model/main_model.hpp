@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "all_components.hpp"
 #include "job_adapter.hpp"
 #include "job_dispatch.hpp"
 #include "main_model_impl.hpp"

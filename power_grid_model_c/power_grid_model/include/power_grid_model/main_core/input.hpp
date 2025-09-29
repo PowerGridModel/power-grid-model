@@ -4,8 +4,11 @@
 
 #pragma once
 
-#include "../all_components.hpp"
+#include "state.hpp"
+#include "state_queries.hpp"
+
 #include "../common/iterator_facade.hpp"
+#include "../component/component.hpp"
 
 #include <unordered_set>
 

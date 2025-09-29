@@ -6,7 +6,7 @@
 
 #include "state.hpp"
 
-#include "../all_components.hpp"
+#include "../component/component.hpp"
 
 namespace power_grid_model::main_core {
 
@@ -22,7 +22,7 @@ constexpr auto get_branch_nodes(MainModelState<ComponentContainer> const& state,
     return state.comp_topo->branch3_node_idx[topology_sequence_idx];
 }
 
-template <transformer_c ComponentType, class ComponentContainer>
+template <typename ComponentType, class ComponentContainer>
     requires model_component_state_c<MainModelState, ComponentContainer, ComponentType> &&
              requires(MainModelState<ComponentContainer> const& state, Idx const i) {
                  { get_branch_nodes<ComponentType>(state, i)[i] } -> std::convertible_to<Idx>;

@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "base.hpp"
 #include "regulator.hpp"
 
 #include "../auxiliary/input.hpp"

@@ -7,10 +7,9 @@
 #include "container_queries.hpp"
 #include "core_utils.hpp"
 
-#include "../all_components.hpp"
 #include "../auxiliary/dataset.hpp"
 #include "../common/iterator_facade.hpp"
-#include "../container.hpp"
+#include "../component/component.hpp"
 
 #include <map>
 
