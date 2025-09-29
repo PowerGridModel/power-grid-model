@@ -16,7 +16,7 @@ namespace power_grid_model {
 
 template <class MainModel> class JobAdapter;
 
-template <class MainModel> class JobAdapter : public JobInterface<JobAdapter<MainModel>> {
+template <class MainModel> class JobAdapter : public JobInterface {
   public:
     using ModelType = typename MainModel::ImplType;
 
@@ -66,10 +66,7 @@ template <class MainModel> class JobAdapter : public JobInterface<JobAdapter<Mai
     ~JobAdapter() { model_copy_.reset(); }
 
   private:
-    // Grant the CRTP base (JobInterface<JobAdapter>) access to
-    // JobAdapter's private members. This allows the base class template
-    // to call derived-class implementation details as part of the CRTP pattern.
-    friend class JobInterface<JobAdapter>;
+    friend class JobInterface;
 
     std::unique_ptr<MainModel> model_copy_;
     std::reference_wrapper<MainModel> model_reference_;
