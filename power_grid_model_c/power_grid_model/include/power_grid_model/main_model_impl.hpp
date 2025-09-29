@@ -30,10 +30,9 @@
 #include "optimizer/optimizer.hpp"
 
 // main model implementation
-#include "main_core/calculation_info.hpp"
 #include "main_core/calculation_input_preparation.hpp"
-#include "main_core/core_utils.hpp"
 #include "main_core/input.hpp"
+#include "main_core/main_model_type.hpp"
 #include "main_core/math_state.hpp"
 #include "main_core/output.hpp"
 #include "main_core/topology.hpp"
@@ -122,20 +121,27 @@ template <class T, class U> class MainModelImpl;
 
 template <class... ExtraRetrievableType, class... ComponentType>
 class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentList<ComponentType...>> {
+
   private:
+    using ModelType =
+        main_core::MainModelType<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentList<ComponentType...>>;
     // internal type traits
     // container class
-    using ComponentContainer = Container<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentType...>;
-    using MainModelState = main_core::MainModelState<ComponentContainer>;
+    using ComponentContainer = typename ModelType::ComponentContainer;
+    using MainModelState = typename ModelType::MainModelState;
 
-    using SequenceIdxView = std::array<std::span<Idx2D const>, main_core::utils::n_types<ComponentType...>>;
-    using OwnedUpdateDataset = std::tuple<std::vector<typename ComponentType::UpdateType>...>;
+    using SequenceIdx = typename ModelType::SequenceIdx;
+    using SequenceIdxRefWrappers = ModelType::SequenceIdxRefWrappers;
+    using SequenceIdxView = typename ModelType::SequenceIdxView;
+    using OwnedUpdateDataset = typename ModelType::OwnedUpdateDataset;
+    using ComponentFlags = typename ModelType::ComponentFlags;
 
     static constexpr Idx isolated_component{main_core::isolated_component};
     static constexpr Idx not_connected{main_core::not_connected};
     static constexpr Idx sequential{JobDispatch::sequential};
 
   public:
+    using ImplType = ModelType;
     using Options = MainModelOptions;
     using MathState = main_core::MathState;
     using MetaData = meta_data::MetaData;
@@ -158,64 +164,11 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
           meta_data_{&meta_data},
           math_solver_dispatcher_{&math_solver_dispatcher} {}
 
-    MainModelImpl(MainModelImpl const& other)
-        : calculation_info_{}, // calculation info should not be copied, because it may result in race conditions
-          system_frequency_{other.system_frequency_},
-          meta_data_{other.meta_data_},
-          math_solver_dispatcher_{other.math_solver_dispatcher_},
-          state_{other.state_},
-          math_state_{other.math_state_},
-          n_math_solvers_{other.n_math_solvers_},
-          is_topology_up_to_date_{other.is_topology_up_to_date_},
-          is_sym_parameter_up_to_date_{other.is_sym_parameter_up_to_date_},
-          is_asym_parameter_up_to_date_{other.is_asym_parameter_up_to_date_},
-          is_accumulated_component_updated_{other.is_accumulated_component_updated_},
-          last_updated_calculation_symmetry_mode_{other.last_updated_calculation_symmetry_mode_},
-          cached_inverse_update_{other.cached_inverse_update_},
-          cached_state_changes_{other.cached_state_changes_},
-          parameter_changed_components_{other.parameter_changed_components_}
-#ifndef NDEBUG
-          ,
-          // construction_complete is used for debug assertions only
-          construction_complete_{other.construction_complete_}
-#endif // !NDEBUG
-    {
-    }
-    MainModelImpl& operator=(MainModelImpl const& other) {
-        if (this != &other) {
-            calculation_info_ = {}; // calculation info should be reset, because it may result in race conditions
-            system_frequency_ = other.system_frequency_;
-            meta_data_ = other.meta_data_;
-            math_solver_dispatcher_ = other.math_solver_dispatcher_;
-            state_ = other.state_;
-            math_state_ = other.math_state_;
-            n_math_solvers_ = other.n_math_solvers_;
-            is_topology_up_to_date_ = other.is_topology_up_to_date_;
-            is_sym_parameter_up_to_date_ = other.is_sym_parameter_up_to_date_;
-            is_asym_parameter_up_to_date_ = other.is_asym_parameter_up_to_date_;
-            is_accumulated_component_updated_ = other.is_accumulated_component_updated_;
-            last_updated_calculation_symmetry_mode_ = other.last_updated_calculation_symmetry_mode_;
-            cached_inverse_update_ = other.cached_inverse_update_;
-            cached_state_changes_ = other.cached_state_changes_;
-            parameter_changed_components_ = other.parameter_changed_components_;
-#ifndef NDEBUG
-            // construction_complete is used for debug assertions only
-            construction_complete_ = other.construction_complete_;
-#endif // !NDEBUG
-        }
-        return *this;
-    }
-    MainModelImpl(MainModelImpl&& /*other*/) noexcept = default;
-    MainModelImpl& operator=(MainModelImpl&& /*other*/) noexcept = default;
-    ~MainModelImpl() = default;
-
     // helper function to get what components are present in the update data
-    std::array<bool, main_core::utils::n_types<ComponentType...>>
-    get_components_to_update(ConstDataset const& update_data) const {
-        return main_core::utils::run_functor_with_all_types_return_array<ComponentType...>(
-            [&update_data]<typename CompType>() {
-                return (update_data.find_component(CompType::name, false) != main_core::utils::invalid_index);
-            });
+    ComponentFlags get_components_to_update(ConstDataset const& update_data) const {
+        return ModelType::run_functor_with_all_component_types_return_array([&update_data]<typename CompType>() {
+            return (update_data.find_component(CompType::name, false) != main_core::utils::invalid_index);
+        });
     }
 
   private:
@@ -225,7 +178,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <std::derived_from<Base> CompType, std::ranges::viewable_range Inputs>
     void add_component(Inputs&& components) {
         assert(!construction_complete_);
-        main_core::add_component<CompType>(state_, std::forward<Inputs>(components), system_frequency_);
+        main_core::add_component<CompType>(state_.components, std::forward<Inputs>(components), system_frequency_);
     }
 
     void add_components(ConstDataset const& input_data, Idx pos = 0) {
@@ -236,7 +189,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 this->add_component<CT>(input_data.get_buffer_span<meta_data::input_getter_s, CT>(pos));
             }
         };
-        main_core::utils::run_functor_with_all_types_return_void<ComponentType...>(add_func);
+        ModelType::run_functor_with_all_component_types_return_void(add_func);
     }
 
     // template to update components
@@ -245,18 +198,19 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
     template <class CompType, cache_type_c CacheType, std::ranges::viewable_range Updates>
     void update_component(Updates&& updates, std::span<Idx2D const> sequence_idx) {
-        constexpr auto comp_index = main_core::utils::index_of_component<CompType, ComponentType...>;
+        constexpr auto comp_index = ModelType::template index_of_component<CompType>;
 
         assert(construction_complete_);
         assert(std::ranges::ssize(sequence_idx) == std::ranges::ssize(updates));
 
         if constexpr (CacheType::value) {
             main_core::update::update_inverse<CompType>(
-                state_, updates, std::back_inserter(std::get<comp_index>(cached_inverse_update_)), sequence_idx);
+                state_.components, updates, std::back_inserter(std::get<comp_index>(cached_inverse_update_)),
+                sequence_idx);
         }
 
         UpdateChange const changed = main_core::update::update_component<CompType>(
-            state_, std::forward<Updates>(updates),
+            state_.components, std::forward<Updates>(updates),
             std::back_inserter(std::get<comp_index>(parameter_changed_components_)), sequence_idx);
 
         // update, get changed variable
@@ -284,14 +238,12 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
   public:
     // overload to update all components across all scenarios
     template <cache_type_c CacheType, typename SequenceIdxMap>
-        requires(std::same_as<SequenceIdxMap, main_core::utils::SequenceIdx<ComponentType...>> ||
-                 std::same_as<SequenceIdxMap, SequenceIdxView>)
+        requires(std::same_as<SequenceIdxMap, SequenceIdx> || std::same_as<SequenceIdxMap, SequenceIdxView>)
     void update_components(ConstDataset const& update_data, Idx pos, SequenceIdxMap const& sequence_idx_map) {
-        main_core::utils::run_functor_with_all_types_return_void<ComponentType...>(
+        ModelType::run_functor_with_all_component_types_return_void(
             [this, pos, &update_data, &sequence_idx_map]<typename CT>() {
                 this->update_component_row_col<CT, CacheType>(
-                    update_data, pos,
-                    std::get<main_core::utils::index_of_component<CT, ComponentType...>>(sequence_idx_map));
+                    update_data, pos, std::get<ModelType::template index_of_component<CT>>(sequence_idx_map));
             });
     }
 
@@ -299,9 +251,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <cache_type_c CacheType> void update_components(ConstDataset const& update_data) {
         auto const components_to_update = get_components_to_update(update_data);
         auto const update_independence =
-            main_core::update::independence::check_update_independence<ComponentType...>(state_, update_data);
-        auto const sequence_idx_map = main_core::update::get_all_sequence_idx_map<ComponentType...>(
-            state_, update_data, 0, components_to_update, update_independence, false);
+            main_core::update::independence::check_update_independence<ModelType>(state_.components, update_data);
+        auto const sequence_idx_map = main_core::update::get_all_sequence_idx_map<ModelType>(
+            state_.components, update_data, 0, components_to_update, update_independence, false);
         update_components<CacheType>(update_data, 0, sequence_idx_map);
     }
 
@@ -315,7 +267,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         construction_complete_ = true;
 #endif // !NDEBUG
         state_.components.set_construction_complete();
-        state_.comp_topo = std::make_shared<ComponentTopology const>(main_core::construct_topology(state_.components));
+        state_.comp_topo =
+            std::make_shared<ComponentTopology const>(main_core::construct_topology<ModelType>(state_.components));
     }
 
     void reset_solvers() {
@@ -335,24 +288,25 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     the the sequence indexer given an input array of ID's for a given component type
     */
     void get_indexer(std::string_view component_type, ID const* id_begin, Idx size, Idx* indexer_begin) const {
-        auto const get_index_func = [&state = this->state_, component_type, id_begin, size,
+        auto const get_index_func = [&components = this->state_.components, component_type, id_begin, size,
                                      indexer_begin]<typename CT>() {
             if (component_type == CT::name) {
-                std::transform(id_begin, id_begin + size, indexer_begin,
-                               [&state](ID id) { return main_core::get_component_idx_by_id<CT>(state, id).pos; });
+                std::transform(id_begin, id_begin + size, indexer_begin, [&components](ID id) {
+                    return main_core::get_component_idx_by_id<CT>(components, id).pos;
+                });
             }
         };
-        main_core::utils::run_functor_with_all_types_return_void<ComponentType...>(get_index_func);
+        ModelType::run_functor_with_all_component_types_return_void(get_index_func);
     }
 
   private:
     // Entry point for main_model.hpp
-    main_core::utils::SequenceIdx<ComponentType...> get_all_sequence_idx_map(ConstDataset const& update_data) {
+    SequenceIdx get_all_sequence_idx_map(ConstDataset const& update_data) {
         auto const components_to_update = get_components_to_update(update_data);
         auto const update_independence =
-            main_core::update::independence::check_update_independence<ComponentType...>(state_, update_data);
-        return main_core::update::get_all_sequence_idx_map<ComponentType...>(
-            state_, update_data, 0, components_to_update, update_independence, false);
+            main_core::update::independence::check_update_independence<ModelType>(state_.components, update_data);
+        return main_core::update::get_all_sequence_idx_map<ModelType>(state_.components, update_data, 0,
+                                                                      components_to_update, update_independence, false);
     }
 
     void update_state(UpdateChange const& changes) {
@@ -364,7 +318,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     template <typename CompType> void restore_component(SequenceIdxView const& sequence_idx) {
-        constexpr auto component_index = main_core::utils::index_of_component<CompType, ComponentType...>;
+        constexpr auto component_index = ModelType::template index_of_component<CompType>;
 
         auto& cached_inverse_update = std::get<component_index>(cached_inverse_update_);
         auto const& component_sequence = std::get<component_index>(sequence_idx);
@@ -378,21 +332,26 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
   public:
     // restore the initial values of all components
     void restore_components(SequenceIdxView const& sequence_idx) {
-        (restore_component<ComponentType>(sequence_idx), ...);
+        ModelType::run_functor_with_all_component_types_return_void(
+            [this, &sequence_idx]<typename CompType>() { this->restore_component<CompType>(sequence_idx); });
 
         update_state(cached_state_changes_);
         cached_state_changes_ = {};
     }
 
   private:
-    void restore_components(std::array<std::reference_wrapper<std::vector<Idx2D> const>,
-                                       main_core::utils::n_types<ComponentType...>> const& sequence_idx) {
-        restore_components(std::array{std::span<Idx2D const>{
-            std::get<main_core::utils::index_of_component<ComponentType, ComponentType...>>(sequence_idx).get()}...});
+    void restore_components(SequenceIdxRefWrappers const& sequence_idx) {
+        ModelType::run_functor_with_all_component_types_return_void([this, &sequence_idx]<typename CompType>() {
+            this->restore_component<CompType>(std::array{std::span<Idx2D const>{
+                std::get<ModelType::template index_of_component<CompType>>(sequence_idx).get()}});
+        });
     }
-    void restore_components(main_core::utils::SequenceIdx<ComponentType...> const& sequence_idx) {
-        restore_components(std::array{std::span<Idx2D const>{
-            std::get<main_core::utils::index_of_component<ComponentType, ComponentType...>>(sequence_idx)}...});
+
+    void restore_components(ModelType::SequenceIdx const& sequence_idx) {
+        ModelType::run_functor_with_all_component_types_return_void([this, &sequence_idx]<typename CompType>() {
+            this->restore_component<CompType>(std::array{
+                std::span<Idx2D const>{std::get<ModelType::template index_of_component<CompType>>(sequence_idx)}});
+        });
     }
 
     template <solver_output_type SolverOutputType, typename MathSolverType, typename YBus, typename InputType,
@@ -402,20 +361,20 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                  std::same_as<std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>, std::vector<InputType>> &&
                  std::same_as<std::invoke_result_t<SolveFn, MathSolverType&, YBus const&, InputType const&>,
                               SolverOutputType>
-    std::vector<SolverOutputType> calculate_(PrepareInputFn&& prepare_input, SolveFn&& solve) {
+    std::vector<SolverOutputType> calculate_(PrepareInputFn&& prepare_input, SolveFn&& solve, Logger& logger) {
         using sym = typename SolverOutputType::sym;
 
         assert(construction_complete_);
         // prepare
-        auto const& input = [this, prepare_input_ = std::forward<PrepareInputFn>(prepare_input)] {
-            Timer const timer{calculation_info_, LogEvent::prepare};
+        auto const& input = [this, &logger, prepare_input_ = std::forward<PrepareInputFn>(prepare_input)] {
+            Timer const timer{logger, LogEvent::prepare};
             prepare_solvers<sym>();
             assert(is_topology_up_to_date_ && is_parameter_up_to_date<sym>());
             return prepare_input_(n_math_solvers_);
         }();
         // calculate
-        return [this, &input, solve_ = std::forward<SolveFn>(solve)] {
-            Timer const timer{calculation_info_, LogEvent::math_calculation};
+        return [this, &logger, &input, solve_ = std::forward<SolveFn>(solve)] {
+            Timer const timer{logger, LogEvent::math_calculation};
             auto& solvers = main_core::get_solvers<sym>(math_state_);
             auto& y_bus_vec = main_core::get_y_bus<sym>(math_state_);
             std::vector<SolverOutputType> solver_output;
@@ -427,40 +386,44 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         }();
     }
 
-    template <symmetry_tag sym> auto calculate_power_flow_(double err_tol, Idx max_iter) {
-        return [this, err_tol, max_iter](MainModelState const& state,
-                                         CalculationMethod calculation_method) -> std::vector<SolverOutput<sym>> {
-            return calculate_<SolverOutput<sym>, MathSolverProxy<sym>, YBus<sym>, PowerFlowInput<sym>>(
-                [&state](Idx n_math_solvers) {
-                    return main_core::prepare_power_flow_input<sym>(state, n_math_solvers);
-                },
-                [this, err_tol, max_iter, calculation_method](MathSolverProxy<sym>& solver, YBus<sym> const& y_bus,
-                                                              PowerFlowInput<sym> const& input) {
-                    return solver.get().run_power_flow(input, err_tol, max_iter, calculation_info_, calculation_method,
-                                                       y_bus);
-                });
-        };
+    template <symmetry_tag sym> auto calculate_power_flow_(double err_tol, Idx max_iter, Logger& logger) {
+        return
+            [this, err_tol, max_iter, &logger](MainModelState const& state,
+                                               CalculationMethod calculation_method) -> std::vector<SolverOutput<sym>> {
+                return calculate_<SolverOutput<sym>, MathSolverProxy<sym>, YBus<sym>, PowerFlowInput<sym>>(
+                    [&state](Idx n_math_solvers) {
+                        return main_core::prepare_power_flow_input<sym>(state, n_math_solvers);
+                    },
+                    [err_tol, max_iter, calculation_method,
+                     &logger](MathSolverProxy<sym>& solver, YBus<sym> const& y_bus, PowerFlowInput<sym> const& input) {
+                        return solver.get().run_power_flow(input, err_tol, max_iter, logger, calculation_method, y_bus);
+                    },
+                    logger);
+            };
     }
 
-    template <symmetry_tag sym> auto calculate_state_estimation_(double err_tol, Idx max_iter) {
-        return [this, err_tol, max_iter](MainModelState const& state,
-                                         CalculationMethod calculation_method) -> std::vector<SolverOutput<sym>> {
-            return calculate_<SolverOutput<sym>, MathSolverProxy<sym>, YBus<sym>, StateEstimationInput<sym>>(
-                [&state](Idx n_math_solvers) {
-                    return main_core::prepare_state_estimation_input<sym>(state, n_math_solvers);
-                },
-                [this, err_tol, max_iter, calculation_method](MathSolverProxy<sym>& solver, YBus<sym> const& y_bus,
-                                                              StateEstimationInput<sym> const& input) {
-                    return solver.get().run_state_estimation(input, err_tol, max_iter, calculation_info_,
-                                                             calculation_method, y_bus);
-                });
-        };
+    template <symmetry_tag sym> auto calculate_state_estimation_(double err_tol, Idx max_iter, Logger& logger) {
+        return
+            [this, err_tol, max_iter, &logger](MainModelState const& state,
+                                               CalculationMethod calculation_method) -> std::vector<SolverOutput<sym>> {
+                return calculate_<SolverOutput<sym>, MathSolverProxy<sym>, YBus<sym>, StateEstimationInput<sym>>(
+                    [&state](Idx n_math_solvers) {
+                        return main_core::prepare_state_estimation_input<sym>(state, n_math_solvers);
+                    },
+                    [err_tol, max_iter, calculation_method, &logger](
+                        MathSolverProxy<sym>& solver, YBus<sym> const& y_bus, StateEstimationInput<sym> const& input) {
+                        return solver.get().run_state_estimation(input, err_tol, max_iter, logger, calculation_method,
+                                                                 y_bus);
+                    },
+                    logger);
+            };
     }
 
-    template <symmetry_tag sym> auto calculate_short_circuit_(ShortCircuitVoltageScaling voltage_scaling) {
-        return [this,
-                voltage_scaling](MainModelState const& state,
-                                 CalculationMethod calculation_method) -> std::vector<ShortCircuitSolverOutput<sym>> {
+    template <symmetry_tag sym>
+    auto calculate_short_circuit_(ShortCircuitVoltageScaling voltage_scaling, Logger& logger) {
+        return [this, voltage_scaling,
+                &logger](MainModelState const& state,
+                         CalculationMethod calculation_method) -> std::vector<ShortCircuitSolverOutput<sym>> {
             (void)state; // to avoid unused-lambda-capture when in Release build
             assert(&state == &state_);
 
@@ -470,25 +433,27 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                     return main_core::prepare_short_circuit_input<sym>(state_, state_.comp_coup, n_math_solvers,
                                                                        voltage_scaling);
                 },
-                [this, calculation_method](MathSolverProxy<sym>& solver, YBus<sym> const& y_bus,
-                                           ShortCircuitInput const& input) {
-                    return solver.get().run_short_circuit(input, calculation_info_, calculation_method, y_bus);
-                });
+                [calculation_method, &logger](MathSolverProxy<sym>& solver, YBus<sym> const& y_bus,
+                                              ShortCircuitInput const& input) {
+                    return solver.get().run_short_circuit(input, logger, calculation_method, y_bus);
+                },
+                logger);
         };
     }
 
     // Calculate with optimization, e.g., automatic tap changer
-    template <calculation_type_tag calculation_type, symmetry_tag sym> auto calculate(Options const& options) {
-        auto const calculator = [this, &options] {
+    template <calculation_type_tag calculation_type, symmetry_tag sym>
+    auto calculate(Options const& options, Logger& logger) {
+        auto const calculator = [this, &options, &logger] {
             if constexpr (std::derived_from<calculation_type, power_flow_t>) {
-                return calculate_power_flow_<sym>(options.err_tol, options.max_iter);
+                return calculate_power_flow_<sym>(options.err_tol, options.max_iter, logger);
             }
             assert(options.optimizer_type == OptimizerType::no_optimization);
             if constexpr (std::derived_from<calculation_type, state_estimation_t>) {
-                return calculate_state_estimation_<sym>(options.err_tol, options.max_iter);
+                return calculate_state_estimation_<sym>(options.err_tol, options.max_iter, logger);
             }
             if constexpr (std::derived_from<calculation_type, short_circuit_t>) {
-                return calculate_short_circuit_<sym>(options.short_circuit_voltage_scaling);
+                return calculate_short_circuit_<sym>(options.short_circuit_voltage_scaling, logger);
             }
             throw UnreachableHit{"MainModelImpl::calculate", "Unknown calculation type"};
         }();
@@ -507,7 +472,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     }
 
     // Single calculation, propagating the results to result_data
-    void calculate(Options options, MutableDataset const& result_data) {
+    void calculate(Options options, MutableDataset const& result_data, Logger& logger) {
         assert(construction_complete_);
 
         if (options.calculation_type == CalculationType::short_circuit) {
@@ -521,29 +486,23 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         calculation_type_symmetry_func_selector(
             options.calculation_type, options.calculation_symmetry,
             []<calculation_type_tag calculation_type, symmetry_tag sym>(
-                MainModelImpl& main_model_, Options const& options_, MutableDataset const& result_data_) {
-                auto const math_output = main_model_.calculate<calculation_type, sym>(options_);
-                main_model_.output_result(math_output, result_data_);
+                MainModelImpl& main_model_, Options const& options_, MutableDataset const& result_data_,
+                Logger& logger) {
+                auto const math_output = main_model_.calculate<calculation_type, sym>(options_, logger);
+                main_model_.output_result(math_output, result_data_, logger);
             },
-            *this, options, result_data);
+            *this, options, result_data, logger);
     }
 
   public:
     static auto calculator(Options const& options, MainModelImpl& model, MutableDataset const& target_data,
-                           bool cache_run) {
+                           bool cache_run, Logger& logger) {
         auto sub_opt = options; // copy
         sub_opt.err_tol = cache_run ? std::numeric_limits<double>::max() : options.err_tol;
         sub_opt.max_iter = cache_run ? 1 : options.max_iter;
 
-        model.calculate(sub_opt, target_data);
+        model.calculate(sub_opt, target_data, logger);
     }
-
-    CalculationInfo calculation_info() const { return calculation_info_; }
-    void merge_calculation_info(CalculationInfo const& info) {
-        assert(construction_complete_);
-        main_core::merge_into(calculation_info_, info);
-    }
-    void reset_calculation_info() { calculation_info_ = CalculationInfo{}; }
 
     auto const& state() const {
         assert(construction_complete_);
@@ -559,8 +518,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
   private:
     template <solver_output_type SolverOutputType>
-    void output_result(MathOutput<std::vector<SolverOutputType>> const& math_output,
-                       MutableDataset const& result_data) const {
+    void output_result(MathOutput<std::vector<SolverOutputType>> const& math_output, MutableDataset const& result_data,
+                       Logger& logger) const {
         assert(!result_data.is_batch());
 
         auto const output_func = [this, &math_output, &result_data]<typename CT>() {
@@ -582,12 +541,9 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             }
         };
 
-        Timer const t_output{calculation_info_, LogEvent::produce_output};
-        main_core::utils::run_functor_with_all_types_return_void<ComponentType...>(output_func);
+        Timer const t_output{logger, LogEvent::produce_output};
+        ModelType::run_functor_with_all_component_types_return_void(output_func);
     }
-
-    mutable CalculationInfo calculation_info_; // needs to be first due to padding override
-                                               // may be changed in const functions for metrics
 
     double system_frequency_;
     MetaData const* meta_data_;
@@ -605,7 +561,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     OwnedUpdateDataset cached_inverse_update_{};
     UpdateChange cached_state_changes_{};
-    std::array<std::vector<Idx2D>, main_core::utils::n_types<ComponentType...>> parameter_changed_components_{};
+    SequenceIdx parameter_changed_components_{};
 #ifndef NDEBUG
     // construction_complete is used for debug assertions only
     bool construction_complete_{false};
@@ -623,7 +579,8 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         assert(construction_complete_);
         // clear old solvers
         reset_solvers();
-        ComponentConnections const comp_conn = main_core::construct_components_connections(state_.components);
+        ComponentConnections const comp_conn =
+            main_core::construct_components_connections<ModelType>(state_.components);
         // re build
         Topology topology{*state_.comp_topo, comp_conn};
         std::tie(state_.math_topology, state_.topo_comp_coup) = topology.build_topology();
@@ -639,7 +596,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         if (!is_topology_up_to_date_) {
             rebuild_topology();
         }
-        main_core::prepare_y_bus<sym, ComponentContainer, ComponentType...>(state_, n_math_solvers_, math_state_);
+        main_core::prepare_y_bus<sym, ModelType>(state_, n_math_solvers_, math_state_);
 
         if (n_math_solvers_ != static_cast<Idx>(solvers.size())) {
             assert(solvers.empty());
@@ -661,8 +618,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
             std::vector<MathModelParam<sym>> const math_params =
                 main_core::get_math_param<sym>(state_, n_math_solvers_);
             std::vector<MathModelParamIncrement> const math_param_increments =
-                main_core::get_math_param_increment<sym, ComponentContainer, ComponentType...>(
-                    state_, n_math_solvers_, parameter_changed_components_);
+                main_core::get_math_param_increment<ModelType>(state_, n_math_solvers_, parameter_changed_components_);
             if (last_updated_calculation_symmetry_mode_ == is_symmetric_v<sym>) {
                 main_core::update_y_bus(math_state_, math_params, math_param_increments);
             } else {

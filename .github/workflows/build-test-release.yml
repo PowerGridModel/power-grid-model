@@ -33,7 +33,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
 
@@ -74,6 +74,7 @@ jobs:
     env:
       CMAKE_PREFIX_PATH: /home/linuxbrew/.linuxbrew
       PRESET: ci-${{ matrix.compiler }}-${{ matrix.build-option }}
+      HOMEBREW_FORCE_BREWED_CURL: 1
 
     steps:
       - uses: actions/checkout@v5
@@ -308,7 +309,7 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Setup python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.12'
           architecture: x64

@@ -13,6 +13,7 @@
 #include "../common/enum.hpp"
 
 namespace power_grid_model {
+constexpr IntS status_to_int(bool status) { return status ? IntS{1} : IntS{0}; }
 
 class Base {
   public:
@@ -28,7 +29,7 @@ class Base {
     virtual ~Base() = default;
     constexpr ID id() const noexcept { return id_; }
     constexpr BaseOutput base_output(bool is_energized) const {
-        return BaseOutput{.id = id_, .energized = static_cast<IntS>(is_energized)};
+        return BaseOutput{.id = id_, .energized = status_to_int(is_energized)};
     }
     virtual bool energized(bool is_connected_to_source) const = 0;
 

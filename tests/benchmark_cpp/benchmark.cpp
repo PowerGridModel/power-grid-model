@@ -10,6 +10,7 @@
 #include <power_grid_model/main_model.hpp>
 #include <power_grid_model/math_solver/math_solver.hpp>
 
+#include <iomanip>
 #include <iostream>
 #include <random>
 
@@ -153,7 +154,7 @@ struct PowerGridBenchmark {
         try {
             // calculate
             main_model->calculate(model_options, output.get_dataset(), batch_data.get_dataset());
-            main_core::merge_into(info, main_model->calculation_info());
+            main_model->calculation_info().merge_into(info);
         } catch (std::exception const& e) {
             std::cout << std::format("\nAn exception was raised during execution: {}\n", e.what());
         }
@@ -188,6 +189,7 @@ struct PowerGridBenchmark {
                     throw MissingCaseForEnumError{"run_benchmark<calculation_symmetry>",
                                                   model_options.calculation_symmetry};
                 }
+                break;
             }
             default:
                 throw MissingCaseForEnumError{"run_benchmark<calculation_type>", model_options.calculation_type};

@@ -12,7 +12,6 @@
 #include <doctest/doctest.h>
 
 #include <algorithm>
-#include <iostream>
 #include <limits>
 #include <numbers>
 #include <span>
