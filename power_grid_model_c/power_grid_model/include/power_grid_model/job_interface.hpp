@@ -26,6 +26,11 @@ class JobInterface {
         return std::forward<Self>(self).calculate_impl(result_data, pos, logger);
     }
 
+    template <typename Self, typename ResultDataset>
+    void calculate(this Self&& self, ResultDataset const& result_data, Logger& logger) {
+        std::forward<Self>(self).calculate(result_data, Idx{}, logger);
+    }
+
     template <typename Self>
     void cache_calculate(this Self&& self, Logger& logger)
         requires requires { // NOSONAR
