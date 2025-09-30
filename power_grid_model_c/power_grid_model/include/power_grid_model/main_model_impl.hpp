@@ -116,17 +116,12 @@ decltype(auto) calculation_type_symmetry_func_selector(CalculationType calculati
         calculation_symmetry, std::forward<Functor>(f), std::forward<Args>(args)...);
 }
 
-// main model implementation template
-template <class T, class U> class MainModelImpl;
-
-template <class... ExtraRetrievableType, class... ComponentType>
-class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentList<ComponentType...>> {
+template <class ModelType>
+    requires(main_core::is_main_model_type_v<ModelType>)
+class MainModelImpl {
 
   private:
-    using ModelType =
-        main_core::MainModelType<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentList<ComponentType...>>;
     // internal type traits
-    // container class
     using ComponentContainer = typename ModelType::ComponentContainer;
     using MainModelState = typename ModelType::MainModelState;
 
@@ -138,7 +133,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
 
     static constexpr Idx isolated_component{main_core::isolated_component};
     static constexpr Idx not_connected{main_core::not_connected};
-    static constexpr Idx sequential{JobDispatch::sequential};
+    static constexpr Idx sequential{main_core::utils::sequential};
 
   public:
     using ImplType = ModelType;
@@ -481,7 +476,7 @@ class MainModelImpl<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
                 faults, [](Fault const& fault) { return fault.get_fault_type() == FaultType::three_phase; });
             options.calculation_symmetry =
                 is_three_phase ? CalculationSymmetry::symmetric : CalculationSymmetry::asymmetric;
-        };
+        }
 
         calculation_type_symmetry_func_selector(
             options.calculation_type, options.calculation_symmetry,

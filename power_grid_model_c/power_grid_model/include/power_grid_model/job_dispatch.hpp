@@ -17,10 +17,8 @@ namespace power_grid_model {
 
 class JobDispatch {
   public:
-    static constexpr Idx sequential{-1};
-
     template <typename Adapter, typename ResultDataset, typename UpdateDataset>
-        requires std::is_base_of_v<JobInterface<Adapter>, Adapter>
+        requires std::is_base_of_v<JobInterface, Adapter>
     static BatchParameter batch_calculation(Adapter& adapter, ResultDataset const& result_data,
                                             UpdateDataset const& update_data, Idx threading,
                                             common::logging::MultiThreadedLogger& log) {
