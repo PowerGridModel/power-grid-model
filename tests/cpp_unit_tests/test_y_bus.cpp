@@ -506,8 +506,8 @@ TEST_CASE("Test counting_sort_element") {
         Idx n_bus = 10;
 
         // Add elements in reverse order to test sorting thoroughly
-        for (Idx row = n_bus - 1; row != static_cast<Idx>(-1); --row) {
-            for (Idx col = n_bus - 1; col != static_cast<Idx>(-1); --col) {
+        for (Idx row : std::ranges::reverse{IdxRange{n_bus}}) {
+            for (Idx col = std::ranges::reverse{IdxRange{n_bus}}) {
                 if ((row + col) % 3 == 0) { // Sparse pattern
                     vec.push_back({{row, col}, {bff, row * n_bus + col}});
                 }
