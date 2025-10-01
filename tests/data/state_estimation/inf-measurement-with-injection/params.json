@@ -8,11 +8,11 @@
     "default": 1e-5
   },
   "extra_params": {
-    "newton_raphson": {
-      "atol": 1e-5
-    },
     "iterative_linear": {
       "atol": 1e-2
+    },
+    "newton_raphson": {
+      "atol": 1e-5
     }
   }
 }
