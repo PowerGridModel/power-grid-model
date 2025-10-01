@@ -3,14 +3,6 @@
     "iterative_linear",
     "newton_raphson"
   ],
-  "rtol": 1e-8,
-  "atol": 1e-5,
-  "extra_params": {
-    "iterative_linear": {
-      "atol": 1e-2
-    },
-    "newton_raphson": {
-      "atol": 1e-5
-    }
-  }
+  "rtol": 1e-05,
+  "atol": 1e-05
 }
