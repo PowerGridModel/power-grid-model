@@ -525,7 +525,7 @@ template <symmetry_tag sym> class MeasuredValues {
             }
         }
 
-        result_data.push_back(combined_measurement);
+        result_data.push_back(std::move(combined_measurement));
         return static_cast<Idx>(result_data.size()) - 1;
     }
 

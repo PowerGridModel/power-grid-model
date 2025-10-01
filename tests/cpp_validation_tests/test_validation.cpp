@@ -512,15 +512,6 @@ std::optional<CaseParam> construct_case(std::filesystem::path const& case_dir, j
         }
     }
 
-    if (calculation_method_params.contains("atol")) {
-        json const& j_extra_atol = calculation_method_params.at("atol");
-        if (j_extra_atol.type() != json::value_t::object) {
-            param.atol = {{"default", j_extra_atol.get<double>()}};
-        } else {
-            j_extra_atol.get_to(param.atol);
-        }
-    }
-
     if (calculation_method_params.contains("raises")) {
         if (json const& raises = calculation_method_params.at("raises"); raises.contains("raises")) {
             param.raises = raises.at("raises").get<std::string>();
