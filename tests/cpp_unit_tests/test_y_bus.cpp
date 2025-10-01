@@ -447,7 +447,7 @@ TEST_CASE("Test counting_sort_element") {
         // (0,0), (0,1), (1,0), (1,2), (2,1), (2,1), (2,2)
         std::vector<std::pair<Idx, Idx>> expected_positions = {{0, 0}, {0, 1}, {1, 0}, {1, 2}, {2, 1}, {2, 1}, {2, 2}};
 
-        Idx n_bus = 3;
+        Idx const n_bus = 3;
         counting_sort_element(vec, n_bus);
 
         // Verify sorting
@@ -503,14 +503,14 @@ TEST_CASE("Test counting_sort_element") {
 
     SUBCASE("Test large sparse matrix scenario") {
         std::vector<YBusElementMap> vec;
-        Idx n_bus = 10;
+        Idx const n_bus = 10;
 
         // Add elements in reverse order to test sorting thoroughly
-        for (Idx row : std::ranges::reverse{IdxRange{n_bus}}) {
-            for (Idx col = std::ranges::reverse{IdxRange{n_bus}}) {
-                if ((row + col) % 3 == 0) { // Sparse pattern
-                    vec.push_back({{row, col}, {bff, row * n_bus + col}});
-                }
+        for (Idx i = n_bus * n_bus - 1; i != static_cast<Idx>(-1); --i) {
+            Idx const row = i / n_bus;
+            Idx const col = i % n_bus;
+            if ((row + col) % 3 == 0) { // Sparse pattern
+                vec.push_back({{row, col}, {bff, row * n_bus + col}});
             }
         }
 
