@@ -10,12 +10,16 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /power-grid-model
 
+# update the packages before installing, always answer with yes, do not install any recommendations by the installed packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git ca-certificates \
+  # removes the index files from apt-get update step  
   && rm -rf /var/lib/apt/lists/*
 
+# recognize the pgm directory as safe
 RUN git config --system --add safe.directory /power-grid-model
 
+# container build asks for a venv
 ENV VIRTUAL_ENV=/opt/venv
 RUN python -m venv "$VIRTUAL_ENV"
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
