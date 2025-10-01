@@ -21,7 +21,7 @@
       {"id": 17, "node": 2, "status": 1, "type": 0}
     ],
     "sym_voltage_sensor": [
-      {"id": 11, "measured_object": 1, "u_sigma": 100, "u_measured": 10000, "u_angle_measured": 0}
+      {"id": 11, "measured_object": 1, "u_sigma": 10, "u_measured": 10000, "u_angle_measured": 0}
     ],
     "sym_power_sensor": [
       {"id": 12, "measured_object": 2, "measured_terminal_type": 9, "power_sigma": 200, "p_measured": -1200, "q_measured": -120},
