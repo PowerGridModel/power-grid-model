@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git ca-certificates \
   # removes the index files from apt-get update step  
   && rm -rf /var/lib/apt/lists/*
-# test change
+
 # recognize the pgm directory as safe
 RUN git config --system --add safe.directory /power-grid-model
 
