@@ -105,7 +105,7 @@ inline auto build_dense_mapping_comparison_sort(IdxVector const& idx_B_in_A, Idx
     result.reorder.reserve(mapping_to_from.size());
 
     // Use structured bindings to avoid copying from pairs
-    for (auto&& [value, orig_idx] : mapping_to_from) {
+    for (auto [value, orig_idx] : mapping_to_from) {
         result.indvector.push_back(value);
         result.reorder.push_back(orig_idx);
     }
