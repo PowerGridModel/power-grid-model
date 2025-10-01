@@ -552,7 +552,4 @@ TEST_CASE("Test counting_sort_element") {
     }
 }
 
-// TODO:
-// - test counting_sort_element() ✓ DONE
-
 } // namespace power_grid_model
