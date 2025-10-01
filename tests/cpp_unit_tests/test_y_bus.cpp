@@ -429,17 +429,18 @@ TEST_CASE("Incremental update y-bus") {
 TEST_CASE("Test counting_sort_element") {
     using math_solver::counting_sort_element;
     using math_solver::YBusElementMap;
+    using enum power_grid_model::YBusElementType;
 
     SUBCASE("Test basic sorting") {
         // Create test data: elements at various matrix positions
         std::vector<YBusElementMap> vec = {
-            {{2, 1}, {YBusElementType::bft, 5}},   // pos (2,1)
-            {{0, 0}, {YBusElementType::bff, 0}},   // pos (0,0)
-            {{1, 2}, {YBusElementType::btf, 3}},   // pos (1,2)
-            {{0, 1}, {YBusElementType::bft, 1}},   // pos (0,1)
-            {{2, 1}, {YBusElementType::shunt, 6}}, // pos (2,1) - same position as first
-            {{1, 0}, {YBusElementType::btf, 2}},   // pos (1,0)
-            {{2, 2}, {YBusElementType::btt, 7}},   // pos (2,2)
+            {{2, 1}, {bft, 5}},   // pos (2,1)
+            {{0, 0}, {bff, 0}},   // pos (0,0)
+            {{1, 2}, {btf, 3}},   // pos (1,2)
+            {{0, 1}, {bft, 1}},   // pos (0,1)
+            {{2, 1}, {shunt, 6}}, // pos (2,1) - same position as first
+            {{1, 0}, {btf, 2}},   // pos (1,0)
+            {{2, 2}, {btt, 7}},   // pos (2,2)
         };
 
         // Expected sorted order: by row first, then by column
@@ -457,20 +458,20 @@ TEST_CASE("Test counting_sort_element") {
         }
 
         // Verify specific elements are preserved correctly
-        CHECK(vec[0].element.element_type == YBusElementType::bff);
+        CHECK(vec[0].element.element_type == bff);
         CHECK(vec[0].element.idx == 0);
-        CHECK(vec[1].element.element_type == YBusElementType::bft);
+        CHECK(vec[1].element.element_type == bft);
         CHECK(vec[1].element.idx == 1);
     }
 
     SUBCASE("Test with single bus") {
-        std::vector<YBusElementMap> vec = {{{0, 0}, {YBusElementType::shunt, 10}}};
+        std::vector<YBusElementMap> vec = {{{0, 0}, {shunt, 10}}};
 
         counting_sort_element(vec, 1);
 
         CHECK(vec.size() == 1);
         CHECK(vec[0].pos == std::make_pair(0, 0));
-        CHECK(vec[0].element.element_type == YBusElementType::shunt);
+        CHECK(vec[0].element.element_type == shunt);
         CHECK(vec[0].element.idx == 10);
     }
 
@@ -482,9 +483,9 @@ TEST_CASE("Test counting_sort_element") {
 
     SUBCASE("Test stability - elements with same position maintain relative order") {
         std::vector<YBusElementMap> vec = {
-            {{1, 1}, {YBusElementType::bff, 100}},
-            {{1, 1}, {YBusElementType::bft, 200}},
-            {{1, 1}, {YBusElementType::shunt, 300}},
+            {{1, 1}, {bff, 100}},
+            {{1, 1}, {bft, 200}},
+            {{1, 1}, {shunt, 300}},
         };
 
         counting_sort_element(vec, 2);
@@ -508,7 +509,7 @@ TEST_CASE("Test counting_sort_element") {
         for (Idx row = n_bus - 1; row != static_cast<Idx>(-1); --row) {
             for (Idx col = n_bus - 1; col != static_cast<Idx>(-1); --col) {
                 if ((row + col) % 3 == 0) { // Sparse pattern
-                    vec.push_back({{row, col}, {YBusElementType::bff, row * n_bus + col}});
+                    vec.push_back({{row, col}, {bff, row * n_bus + col}});
                 }
             }
         }
@@ -520,24 +521,22 @@ TEST_CASE("Test counting_sort_element") {
 
         // Verify sorted order
         for (size_t i = 1; i < vec.size(); ++i) {
-            auto prev_pos = vec[i - 1].pos;
-            auto curr_pos = vec[i].pos;
+            auto [prev_row, prev_col] = vec[i - 1].pos;
+            auto [curr_row, curr_col] = vec[i].pos;
 
             // Check row-major order
-            if (prev_pos.first == curr_pos.first) {
-                CHECK(prev_pos.second <= curr_pos.second); // Same row, column should be non-decreasing
+            if (prev_row == curr_row) {
+                CHECK(prev_col <= curr_col); // Same row, column should be non-decreasing
             } else {
-                CHECK(prev_pos.first < curr_pos.first); // Different row, previous row should be smaller
+                CHECK(prev_row < curr_row); // Different row, previous row should be smaller
             }
         }
     }
 
     SUBCASE("Test all YBusElementType values") {
         std::vector<YBusElementMap> vec = {
-            {{1, 1}, {YBusElementType::fill_in_tf, 6}}, {{0, 1}, {YBusElementType::bft, 1}},
-            {{1, 0}, {YBusElementType::btf, 2}},        {{0, 0}, {YBusElementType::bff, 0}},
-            {{1, 1}, {YBusElementType::btt, 3}},        {{2, 2}, {YBusElementType::shunt, 4}},
-            {{1, 2}, {YBusElementType::fill_in_ft, 5}},
+            {{1, 1}, {fill_in_tf, 6}}, {{0, 1}, {bft, 1}},   {{1, 0}, {btf, 2}},        {{0, 0}, {bff, 0}},
+            {{1, 1}, {btt, 3}},        {{2, 2}, {shunt, 4}}, {{1, 2}, {fill_in_ft, 5}},
         };
 
         counting_sort_element(vec, 3);
