@@ -426,7 +426,133 @@ TEST_CASE("Incremental update y-bus") {
     }
 }
 
+TEST_CASE("Test counting_sort_element") {
+    using math_solver::counting_sort_element;
+    using math_solver::YBusElementMap;
+
+    SUBCASE("Test basic sorting") {
+        // Create test data: elements at various matrix positions
+        std::vector<YBusElementMap> vec = {
+            {{2, 1}, {YBusElementType::bft, 5}},   // pos (2,1)
+            {{0, 0}, {YBusElementType::bff, 0}},   // pos (0,0)
+            {{1, 2}, {YBusElementType::btf, 3}},   // pos (1,2)
+            {{0, 1}, {YBusElementType::bft, 1}},   // pos (0,1)
+            {{2, 1}, {YBusElementType::shunt, 6}}, // pos (2,1) - same position as first
+            {{1, 0}, {YBusElementType::btf, 2}},   // pos (1,0)
+            {{2, 2}, {YBusElementType::btt, 7}},   // pos (2,2)
+        };
+
+        // Expected sorted order: by row first, then by column
+        // (0,0), (0,1), (1,0), (1,2), (2,1), (2,1), (2,2)
+        std::vector<std::pair<Idx, Idx>> expected_positions = {{0, 0}, {0, 1}, {1, 0}, {1, 2}, {2, 1}, {2, 1}, {2, 2}};
+
+        Idx n_bus = 3;
+        counting_sort_element(vec, n_bus);
+
+        // Verify sorting
+        CHECK(vec.size() == 7);
+        for (size_t i = 0; i < vec.size(); ++i) {
+            CHECK(vec[i].pos.first == expected_positions[i].first);
+            CHECK(vec[i].pos.second == expected_positions[i].second);
+        }
+
+        // Verify specific elements are preserved correctly
+        CHECK(vec[0].element.element_type == YBusElementType::bff);
+        CHECK(vec[0].element.idx == 0);
+        CHECK(vec[1].element.element_type == YBusElementType::bft);
+        CHECK(vec[1].element.idx == 1);
+    }
+
+    SUBCASE("Test with single bus") {
+        std::vector<YBusElementMap> vec = {{{0, 0}, {YBusElementType::shunt, 10}}};
+
+        counting_sort_element(vec, 1);
+
+        CHECK(vec.size() == 1);
+        CHECK(vec[0].pos == std::make_pair(0, 0));
+        CHECK(vec[0].element.element_type == YBusElementType::shunt);
+        CHECK(vec[0].element.idx == 10);
+    }
+
+    SUBCASE("Test with empty vector") {
+        std::vector<YBusElementMap> vec;
+        counting_sort_element(vec, 5);
+        CHECK(vec.empty());
+    }
+
+    SUBCASE("Test stability - elements with same position maintain relative order") {
+        std::vector<YBusElementMap> vec = {
+            {{1, 1}, {YBusElementType::bff, 100}},
+            {{1, 1}, {YBusElementType::bft, 200}},
+            {{1, 1}, {YBusElementType::shunt, 300}},
+        };
+
+        counting_sort_element(vec, 2);
+
+        CHECK(vec.size() == 3);
+        // All should be at position (1,1)
+        for (const auto& element : vec) {
+            CHECK(element.pos == std::make_pair(1, 1));
+        }
+        // Original relative order should be preserved (stable sort)
+        CHECK(vec[0].element.idx == 100);
+        CHECK(vec[1].element.idx == 200);
+        CHECK(vec[2].element.idx == 300);
+    }
+
+    SUBCASE("Test large sparse matrix scenario") {
+        std::vector<YBusElementMap> vec;
+        Idx n_bus = 10;
+
+        // Add elements in reverse order to test sorting thoroughly
+        for (Idx row = n_bus - 1; row != static_cast<Idx>(-1); --row) {
+            for (Idx col = n_bus - 1; col != static_cast<Idx>(-1); --col) {
+                if ((row + col) % 3 == 0) { // Sparse pattern
+                    vec.push_back({{row, col}, {YBusElementType::bff, row * n_bus + col}});
+                }
+            }
+        }
+
+        size_t original_size = vec.size();
+        counting_sort_element(vec, n_bus);
+
+        CHECK(vec.size() == original_size);
+
+        // Verify sorted order
+        for (size_t i = 1; i < vec.size(); ++i) {
+            auto prev_pos = vec[i - 1].pos;
+            auto curr_pos = vec[i].pos;
+
+            // Check row-major order
+            if (prev_pos.first == curr_pos.first) {
+                CHECK(prev_pos.second <= curr_pos.second); // Same row, column should be non-decreasing
+            } else {
+                CHECK(prev_pos.first < curr_pos.first); // Different row, previous row should be smaller
+            }
+        }
+    }
+
+    SUBCASE("Test all YBusElementType values") {
+        std::vector<YBusElementMap> vec = {
+            {{1, 1}, {YBusElementType::fill_in_tf, 6}}, {{0, 1}, {YBusElementType::bft, 1}},
+            {{1, 0}, {YBusElementType::btf, 2}},        {{0, 0}, {YBusElementType::bff, 0}},
+            {{1, 1}, {YBusElementType::btt, 3}},        {{2, 2}, {YBusElementType::shunt, 4}},
+            {{1, 2}, {YBusElementType::fill_in_ft, 5}},
+        };
+
+        counting_sort_element(vec, 3);
+
+        // Verify positions are sorted correctly
+        std::vector<std::pair<Idx, Idx>> expected_positions = {{0, 0}, {0, 1}, {1, 0}, {1, 1}, {1, 1}, {1, 2}, {2, 2}};
+
+        CHECK(vec.size() == 7);
+        for (size_t i = 0; i < vec.size(); ++i) {
+            CHECK(vec[i].pos == expected_positions[i]);
+        }
+    }
+}
+
 // TODO:
-// - test counting_sort_element()
+// - test counting_sort_element() ✓ DONE
 
 } // namespace power_grid_model
