@@ -16,4 +16,7 @@ template <typename T, typename... Ts>
     requires is_in_list_c<T, Ts...>
 struct IsInList<T, ComponentList<Ts...>> : std::true_type {};
 
+// type traits associated with the container
+template <class... T> struct ExtraRetrievableTypes {};
+
 } // namespace power_grid_model

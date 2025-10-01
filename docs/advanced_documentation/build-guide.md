@@ -27,7 +27,7 @@ In this repository there are three builds:
 
 To build the library from source, you need to first prepare the compiler toolchains and the build dependencies.
 In this section a list of general requirements are given.
-After this section there are examples of setup in Linux (Ubuntu 22.04), Windows 10, and macOS (Big Sur).
+After this section there are examples of setup in Linux (Ubuntu 24.04), Windows 11, and macOS (Sequoia).
 
 ### Architecture Support
 

@@ -17,18 +17,13 @@ namespace power_grid_model {
 
 class JobDispatch {
   public:
-    static constexpr Idx sequential{-1};
-
     template <typename Adapter, typename ResultDataset, typename UpdateDataset>
-        requires std::is_base_of_v<JobInterface<Adapter>, Adapter>
+        requires std::is_base_of_v<JobInterface, Adapter>
     static BatchParameter batch_calculation(Adapter& adapter, ResultDataset const& result_data,
                                             UpdateDataset const& update_data, Idx threading,
                                             common::logging::MultiThreadedLogger& log) {
-        adapter.set_logger(log);
-
         if (update_data.empty()) {
-            adapter.calculate(result_data);
-            adapter.reset_logger();
+            adapter.calculate(result_data, log);
             return BatchParameter{};
         }
 
@@ -38,12 +33,11 @@ class JobDispatch {
         // if the batch_size is zero, it is a special case without doing any calculations at all
         // we consider in this case the batch set is independent but not topology cacheable
         if (n_scenarios == 0) {
-            adapter.reset_logger();
             return BatchParameter{};
         }
 
         // calculate once to cache, ignore results
-        adapter.cache_calculate();
+        adapter.cache_calculate(log);
 
         // error messages
         std::vector<std::string> exceptions(n_scenarios, "");
@@ -54,8 +48,6 @@ class JobDispatch {
         job_dispatch(single_job, n_scenarios, threading);
 
         handle_batch_exceptions(exceptions);
-
-        adapter.reset_logger();
 
         return BatchParameter{};
     }
@@ -92,7 +84,6 @@ class JobDispatch {
             auto const copy_adapter_functor = [&base_adapter, &thread_log]() {
                 Timer const t_copy_adapter_functor{thread_log, LogEvent::copy_model};
                 auto result = Adapter{base_adapter};
-                result.set_logger(thread_log);
                 return result;
             };
 
@@ -114,7 +105,9 @@ class JobDispatch {
                 adapter = copy_adapter_functor();
             };
 
-            auto run = [&adapter, &result_data](Idx scenario_idx) { adapter.calculate(result_data, scenario_idx); };
+            auto run = [&adapter, &result_data, &thread_log](Idx scenario_idx) {
+                adapter.calculate(result_data, scenario_idx, thread_log);
+            };
 
             auto calculate_scenario = JobDispatch::call_with<Idx>(std::move(run), std::move(setup), std::move(winddown),
                                                                   JobDispatch::scenario_exception_handler(exceptions),

@@ -18,10 +18,7 @@ namespace power_grid_model {
 
 class MainModel {
   private:
-    using Impl = MainModelImpl<
-        ExtraRetrievableTypes<Base, Node, Branch, Branch3, Appliance, GenericLoadGen, GenericLoad, GenericGenerator,
-                              GenericPowerSensor, GenericVoltageSensor, GenericCurrentSensor, Regulator>,
-        AllComponents>;
+    using Impl = MainModelImpl<main_core::MainModelType<AllExtraRetrievableTypes, AllComponents>>;
 
   public:
     using Options = MainModelOptions;
@@ -81,7 +78,7 @@ class MainModel {
     BatchParameter calculate(Options const& options, MutableDataset const& result_data,
                              ConstDataset const& update_data) {
         info_.clear();
-        JobAdapter<Impl, AllComponents> adapter{std::ref(impl()), std::ref(options)};
+        JobAdapter<Impl> adapter{std::ref(impl()), std::ref(options)};
         return JobDispatch::batch_calculation(adapter, result_data, update_data, options.threading, info_);
     }
 

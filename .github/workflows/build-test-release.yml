@@ -74,6 +74,7 @@ jobs:
     env:
       CMAKE_PREFIX_PATH: /home/linuxbrew/.linuxbrew
       PRESET: ci-${{ matrix.compiler }}-${{ matrix.build-option }}
+      HOMEBREW_FORCE_BREWED_CURL: 1
 
     steps:
       - uses: actions/checkout@v5
@@ -212,7 +213,7 @@ jobs:
           xcode-version: latest-stable
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v3.1
+        uses: pypa/cibuildwheel@v3.2
         # GitHub Actions specific build parameters
         env:
           # pass GitHub runner info into Linux container
