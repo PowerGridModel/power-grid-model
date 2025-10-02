@@ -94,17 +94,20 @@ constexpr auto from_dense = from_dense_t{};
 
 class SparseGroupedIdxVector {
   private:
-    class GroupIterator : public IteratorFacade<GroupIterator, IdxRange const, Idx> {
-        friend class IteratorFacade<GroupIterator, IdxRange const, Idx>;
-        using Base = IteratorFacade<GroupIterator, IdxRange const, Idx>;
+    class GroupIterator : public IteratorFacade<IdxRange const, Idx> {
+        friend class IteratorFacade<IdxRange const, Idx>;
+        using Base = IteratorFacade<IdxRange const, Idx>;
 
       public:
+        using iterator = GroupIterator;
+        using const_iterator = std::add_const_t<GroupIterator>;
         using value_type = typename Base::value_type;
         using difference_type = typename Base::difference_type;
         using reference = typename Base::reference;
 
-        GroupIterator() = default;
-        explicit constexpr GroupIterator(IdxVector const& indptr, Idx group) : indptr_{&indptr}, group_{group} {}
+        GroupIterator() : Base{*this} {};
+        explicit constexpr GroupIterator(IdxVector const& indptr, Idx group)
+            : Base{*this}, indptr_{&indptr}, group_{group} {}
 
         constexpr auto operator*() const -> reference {
             assert(indptr_ != nullptr);
@@ -170,18 +173,21 @@ class SparseGroupedIdxVector {
 
 class DenseGroupedIdxVector {
   private:
-    class GroupIterator : public IteratorFacade<GroupIterator, IdxRange const, Idx> {
-        friend class IteratorFacade<GroupIterator, IdxRange const, Idx>;
-        using Base = IteratorFacade<GroupIterator, IdxRange const, Idx>;
+    class GroupIterator : public IteratorFacade<IdxRange const, Idx> {
+        friend class IteratorFacade<IdxRange const, Idx>;
+        using Base = IteratorFacade<IdxRange const, Idx>;
 
       public:
+        using iterator = GroupIterator;
+        using const_iterator = std::add_const_t<GroupIterator>;
         using value_type = typename Base::value_type;
         using difference_type = typename Base::difference_type;
         using reference = typename Base::reference;
 
-        GroupIterator() = default;
+        GroupIterator() : Base{*this} {};
         explicit constexpr GroupIterator(IdxVector const& dense_vector, Idx group)
-            : dense_vector_{&dense_vector},
+            : Base{*this},
+              dense_vector_{&dense_vector},
               group_{group},
               group_range_{std::ranges::equal_range(*dense_vector_, group)} {}
 

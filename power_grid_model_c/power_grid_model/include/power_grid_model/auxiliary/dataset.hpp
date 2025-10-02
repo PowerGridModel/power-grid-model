@@ -118,15 +118,17 @@ class ColumnarAttributeRange : public std::ranges::view_interface<ColumnarAttrib
     };
 
     class iterator
-        : public IteratorFacade<iterator, std::conditional_t<is_data_mutable_v<dataset_type>, Proxy, Proxy const>,
-                                Idx> {
+        : public IteratorFacade<std::conditional_t<is_data_mutable_v<dataset_type>, Proxy, Proxy const>, Idx> {
+        friend class IteratorFacade<std::conditional_t<is_data_mutable_v<dataset_type>, Proxy, Proxy const>, Idx>;
+        using Base = IteratorFacade<std::conditional_t<is_data_mutable_v<dataset_type>, Proxy, Proxy const>, Idx>;
+
       public:
         using value_type = std::conditional_t<is_data_mutable_v<dataset_type>, Proxy, Proxy const>;
         using difference_type = Idx;
 
-        iterator() = default;
+        iterator() : Base{*this} {};
         iterator(difference_type idx, std::span<AttributeBuffer<Data> const> attribute_buffers)
-            : current_{idx, attribute_buffers} {}
+            : Base{*this}, current_{idx, attribute_buffers} {}
 
         constexpr auto operator*() -> std::add_lvalue_reference_t<value_type> { return current_; }
         constexpr auto operator*() const -> std::add_lvalue_reference_t<std::add_const_t<value_type>> {
@@ -138,9 +140,6 @@ class ColumnarAttributeRange : public std::ranges::view_interface<ColumnarAttrib
         }
 
       private:
-        friend class IteratorFacade<iterator, std::conditional_t<is_data_mutable_v<dataset_type>, Proxy, Proxy const>,
-                                    Idx>;
-
         constexpr auto current_idx() const { return current_.idx_; }
         constexpr auto& current_idx() { return current_.idx_; }
 

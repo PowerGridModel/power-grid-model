@@ -285,15 +285,17 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
     }
 
     // define iterator
-    template <supported_type_c<GettableTypes...> Gettable>
-    class Iterator : public IteratorFacade<Iterator<Gettable>, Gettable, Idx> {
+    template <supported_type_c<GettableTypes...> Gettable> class Iterator : public IteratorFacade<Gettable, Idx> {
+        friend class IteratorFacade<Gettable, Idx>;
+        using Base = IteratorFacade<Gettable, Idx>;
+
       public:
         static constexpr bool is_const = std::is_const_v<Gettable>;
         using base_type = std::remove_cv_t<Gettable>;
         using container_type = std::conditional_t<is_const, Container const, Container>;
         // constructor including default
         explicit Iterator(container_type* container_ptr = nullptr, Idx idx = 0)
-            : container_ptr_{container_ptr}, idx_{idx} {}
+            : Base{*this}, container_ptr_{container_ptr}, idx_{idx} {}
         // conversion to const iterator
         template <class ConstGettable = Gettable>
             requires(!is_const)
@@ -312,8 +314,6 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         }
 
       private:
-        friend class IteratorFacade<Iterator<Gettable>, Gettable, Idx>;
-
         constexpr void advance(Idx n) { idx_ += n; }
         constexpr Idx distance_to(Iterator const& other) const {
             assert(container_ptr_ == other.container_ptr_);

@@ -11,10 +11,18 @@
 #include <utility>
 
 namespace power_grid_model {
-template <class Impl, typename ValueType, std::integral DifferenceType> class IteratorFacade {
+namespace detail {
+template <typename T>
+concept iterator_facadeable_c = requires(std::remove_cvref_t<T> t) {
+    { *t };
+    { t <=> t } -> std::same_as<std::strong_ordering>;
+    { t.advance(0) };
+    { t.distance_to(t) } -> std::integral;
+};
+} // namespace detail
+
+template <typename ValueType, std::integral DifferenceType> class IteratorFacade {
   public:
-    using iterator = Impl; // CRTP
-    using const_iterator = std::add_const_t<iterator>;
     using value_type = std::remove_cvref_t<ValueType>;
     using difference_type = DifferenceType;
     using iterator_category = std::random_access_iterator_tag;
@@ -29,7 +37,7 @@ template <class Impl, typename ValueType, std::integral DifferenceType> class It
         return (self <=> other) == std::strong_ordering::equivalent;
     }
 
-    constexpr auto operator++(this auto& self) -> iterator& {
+    constexpr auto operator++(this auto& self) -> std::add_lvalue_reference_t<decltype(self)> {
         if constexpr (requires { self.increment(); }) {
             self.increment();
         } else {
@@ -37,7 +45,7 @@ template <class Impl, typename ValueType, std::integral DifferenceType> class It
         }
         return self;
     }
-    constexpr auto operator--(this auto& self) -> iterator& {
+    constexpr auto operator--(this auto& self) -> std::add_lvalue_reference_t<decltype(self)> {
         if constexpr (requires { self.decrement(); }) {
             self.decrement();
         } else {
@@ -45,32 +53,44 @@ template <class Impl, typename ValueType, std::integral DifferenceType> class It
         }
         return self;
     }
-    constexpr auto operator++(this auto& self, std::integral auto /*idx*/) -> iterator {
-        iterator result{self};
+    template <typename Self>
+    constexpr auto operator++(this Self& self, std::integral auto /*idx*/) -> std::remove_cvref_t<Self> {
+        using Result = std::remove_cvref_t<Self>;
+        Result result{self};
         ++self;
         return result;
     }
-    constexpr auto operator--(this auto& self, std::integral auto /*idx*/) -> iterator {
-        iterator result{self};
+    template <typename Self>
+    constexpr auto operator--(this Self& self, std::integral auto /*idx*/) -> std::remove_cvref_t<Self> {
+        using Result = std::remove_cvref_t<Self>;
+        Result result{self};
         --self;
         return result;
     }
-    constexpr auto operator+=(this auto& self, std::integral auto offset) -> iterator& {
+    constexpr auto operator+=(this auto& self,
+                              std::integral auto offset) -> std::add_lvalue_reference_t<decltype(self)> {
         self.advance(offset);
         return self;
     }
-    constexpr auto operator-=(this auto& self, std::integral auto idx) -> iterator& { return (self += (-idx)); }
+    constexpr auto operator-=(this auto& self, std::integral auto idx) -> std::add_lvalue_reference_t<decltype(self)> {
+        return (self += (-idx));
+    }
 
-    constexpr auto operator+(this auto&& self, difference_type offset) -> iterator {
-        iterator result{std::forward<decltype(self)>(self)};
+    template <typename Self>
+    constexpr auto operator+(this Self&& self, difference_type offset) -> std::remove_cvref_t<Self> {
+        using Result = std::remove_cvref_t<Self>;
+        Result result{std::forward<decltype(self)>(self)};
         result += offset;
         return result;
     }
-    friend constexpr auto operator+(difference_type offset, auto&& self) -> iterator {
+    template <typename Self>
+        requires std::derived_from<std::remove_cvref_t<Self>, IteratorFacade> &&
+                     detail::iterator_facadeable_c<std::remove_cvref_t<Self>>
+    friend constexpr auto operator+(difference_type offset, Self&& self) -> std::remove_cvref_t<decltype(self)> {
         return std::forward<decltype(self)>(self) + offset;
     }
-    constexpr auto operator-(this auto&& self, difference_type idx) -> iterator {
-        return std::forward<decltype(self)>(self) + (-idx);
+    constexpr auto operator-(this auto&& self, difference_type idx) -> std::remove_cvref_t<decltype(self)> {
+        return (std::forward<decltype(self)>(self)) + (-idx);
     }
     template <typename Self, typename Other>
         requires std::same_as<std::remove_cvref_t<Self>, std::remove_cvref_t<Other>>
@@ -80,9 +100,13 @@ template <class Impl, typename ValueType, std::integral DifferenceType> class It
 
     constexpr auto operator[](this auto const& self, difference_type idx) -> decltype(auto) { return *(self + idx); }
 
-  private:
-    IteratorFacade() = default; // default constructor is private to prevent non-CRTP instantiation
-    friend Impl;                // allow Impl to access private members; this is necessary for CRTP
+    // delete default, constructors of non-derived types and non-iterator-facadeable types to prevent instantiation from
+    // non-derived classes
+    IteratorFacade() = delete;
+    // template <typename Self>
+    //     requires((!std::derived_from<std::remove_cvref_t<Self>, IteratorFacade>) ||
+    //              (!detail::iterator_facadeable_c<Self>))
+    // IteratorFacade(Self&& self) = delete;
 };
 
 } // namespace power_grid_model
