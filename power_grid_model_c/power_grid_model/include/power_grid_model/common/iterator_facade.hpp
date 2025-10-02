@@ -21,28 +21,6 @@ template <class Impl, typename ValueType, std::integral DifferenceType> class It
     using pointer = std::add_pointer_t<ValueType>;
     using reference = std::add_lvalue_reference_t<ValueType>;
 
-    constexpr auto operator*() const -> decltype(auto) { return static_cast<const_iterator*>(this)->dereference(); }
-    constexpr auto operator*() -> reference
-        requires requires(iterator it) {
-            { it.dereference() } -> std::same_as<reference>;
-        }
-    {
-        return static_cast<iterator*>(this)->dereference();
-    }
-    // constexpr auto operator*(this auto&& self) -> decltype(auto) {
-    //     // forward_like ensures that the return type is also const if the iterator is const
-    //     return std::forward_like<decltype(self)>(self.dereference());
-    // }
-    // template <typename Self>
-    // constexpr auto operator*(this Self&& self) -> decltype(auto)
-    //     requires(!std::is_const_v<Self> &&
-    //              requires {
-    //                  { self.dereference() } -> std::same_as<typename Self::reference>;
-    //              })
-    // {
-    //     return std::forward<Self>(self).dereference();
-    // }
-
     constexpr auto operator->(this auto&& self) -> decltype(auto) { return &(*std::forward<decltype(self)>(self)); }
 
     template <typename Self, typename Other>

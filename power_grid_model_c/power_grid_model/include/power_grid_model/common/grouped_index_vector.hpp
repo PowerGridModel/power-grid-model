@@ -106,14 +106,7 @@ class SparseGroupedIdxVector {
         GroupIterator() = default;
         explicit constexpr GroupIterator(IdxVector const& indptr, Idx group) : indptr_{&indptr}, group_{group} {}
 
-      private:
-        IdxVector const* indptr_{};
-        Idx group_{};
-        mutable value_type latest_value_{}; // making this mutable allows us to delay out-of-bounds checks until
-                                            // dereferencing instead of update methods. Note that the value will be
-                                            // invalidated at first update
-
-        constexpr auto dereference() const -> reference {
+        constexpr auto operator*() const -> reference {
             assert(indptr_ != nullptr);
             assert(0 <= group_);
             assert(group_ < static_cast<Idx>(indptr_->size() - 1));
@@ -123,6 +116,14 @@ class SparseGroupedIdxVector {
             latest_value_ = value_type{(*indptr_)[group_], (*indptr_)[group_ + 1]};
             return latest_value_;
         }
+
+      private:
+        IdxVector const* indptr_{};
+        Idx group_{};
+        mutable value_type latest_value_{}; // making this mutable allows us to delay out-of-bounds checks until
+                                            // dereferencing instead of update methods. Note that the value will be
+                                            // invalidated at first update
+
         constexpr std::strong_ordering three_way_compare(GroupIterator const& other) const {
             assert(indptr_ == other.indptr_);
             return group_ <=> other.group_;
@@ -183,6 +184,17 @@ class DenseGroupedIdxVector {
               group_{group},
               group_range_{std::ranges::equal_range(*dense_vector_, group)} {}
 
+        constexpr auto operator*() const -> reference {
+            assert(dense_vector_ != nullptr);
+
+            // delaying out-of-bounds checking until dereferencing while still returning a reference type requires
+            // setting this here
+            latest_value_ =
+                value_type{narrow_cast<Idx>(std::distance(std::cbegin(*dense_vector_), group_range_.begin())),
+                           narrow_cast<Idx>(std::distance(std::cbegin(*dense_vector_), group_range_.end()))};
+            return latest_value_;
+        }
+
       private:
         using group_iterator = IdxVector::const_iterator;
 
@@ -193,16 +205,6 @@ class DenseGroupedIdxVector {
                                             // dereferencing instead of update methods. Note that the value will be
                                             // invalidated at first update
 
-        constexpr auto dereference() const -> reference {
-            assert(dense_vector_ != nullptr);
-
-            // delaying out-of-bounds checking until dereferencing while still returning a reference type requires
-            // setting this here
-            latest_value_ =
-                value_type{narrow_cast<Idx>(std::distance(std::cbegin(*dense_vector_), group_range_.begin())),
-                           narrow_cast<Idx>(std::distance(std::cbegin(*dense_vector_), group_range_.end()))};
-            return latest_value_;
-        }
         constexpr std::strong_ordering three_way_compare(GroupIterator const& other) const {
             return group_ <=> other.group_;
         }

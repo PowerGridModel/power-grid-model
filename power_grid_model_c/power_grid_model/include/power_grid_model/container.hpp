@@ -301,13 +301,14 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
             return Iterator<ConstGettable const>{container_ptr_, idx_};
         }
 
+        constexpr Gettable const& operator*() const {
+            return container_ptr_->template get_item_by_seq<base_type>(idx_);
+        }
+        constexpr Gettable& operator*() { return container_ptr_->template get_item_by_seq<base_type>(idx_); }
+
       private:
         friend class IteratorFacade<Iterator<Gettable>, Gettable, Idx>;
 
-        constexpr Gettable const& dereference() const {
-            return container_ptr_->template get_item_by_seq<base_type>(idx_);
-        }
-        constexpr Gettable& dereference() { return container_ptr_->template get_item_by_seq<base_type>(idx_); }
         constexpr auto three_way_compare(Iterator const& other) const {
             assert(container_ptr_ == other.container_ptr_);
             return idx_ <=> other.idx_;
