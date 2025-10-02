@@ -510,7 +510,22 @@ template <symmetry_tag sym> class MeasuredValues {
         if (std::empty(sensors)) {
             return unmeasured;
         }
-        result_data.push_back(combine_measurements(input_data, sensors));
+
+        auto combined_measurement = combine_measurements(input_data, sensors);
+
+        // if the combined measurement has infinite variance it is unmeasured
+        if constexpr (std::is_same_v<CalcParam, PowerSensorCalcParam<sym>>) {
+            if (is_inf(combined_measurement.real_component.variance) ||
+                is_inf(combined_measurement.imag_component.variance)) {
+                return unmeasured;
+            }
+        } else if constexpr (std::is_same_v<CalcParam, VoltageSensorCalcParam<sym>>) {
+            if (is_inf(combined_measurement.variance)) {
+                return unmeasured;
+            }
+        }
+
+        result_data.push_back(std::move(combined_measurement));
         return static_cast<Idx>(result_data.size()) - 1;
     }
 
