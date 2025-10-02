@@ -132,7 +132,7 @@ class SparseGroupedIdxVector {
                                             // dereferencing instead of update methods. Note that the value will be
                                             // invalidated at first update
 
-        constexpr auto distance_to(GroupIterator const& other) const {
+        constexpr auto distance_to(GroupIterator const& other) const -> difference_type {
             assert(indptr_ == other.indptr_);
             return other.group_ - group_;
         }
@@ -217,7 +217,9 @@ class DenseGroupedIdxVector {
                                             // dereferencing instead of update methods. Note that the value will be
                                             // invalidated at first update
 
-        constexpr auto distance_to(GroupIterator const& other) const { return other.group_ - group_; }
+        constexpr auto distance_to(GroupIterator const& other) const -> difference_type {
+            return other.group_ - group_;
+        }
 
         constexpr void increment() {
             ++group_;

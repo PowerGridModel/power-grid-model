@@ -143,7 +143,9 @@ class ColumnarAttributeRange : public std::ranges::view_interface<ColumnarAttrib
         constexpr auto current_idx() const { return current_.idx_; }
         constexpr auto& current_idx() { return current_.idx_; }
 
-        constexpr auto distance_to(iterator const& other) const { return other.current_idx() - current_idx(); }
+        constexpr auto distance_to(iterator const& other) const -> difference_type {
+            return other.current_idx() - current_idx();
+        }
         constexpr void advance(difference_type n) { current_idx() += n; }
 
         Proxy current_;

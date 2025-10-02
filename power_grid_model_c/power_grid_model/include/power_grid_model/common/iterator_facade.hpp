@@ -103,10 +103,10 @@ template <typename ValueType, std::integral DifferenceType> class IteratorFacade
     // delete default, constructors of non-derived types and non-iterator-facadeable types to prevent instantiation from
     // non-derived classes
     IteratorFacade() = delete;
-    // template <typename Self>
-    //     requires((!std::derived_from<std::remove_cvref_t<Self>, IteratorFacade>) ||
-    //              (!detail::iterator_facadeable_c<Self>))
-    // IteratorFacade(Self&& self) = delete;
+    template <typename Self> IteratorFacade(Self&&) = delete;
+    template <typename Self>
+        requires(std::derived_from<std::remove_cvref_t<Self>, IteratorFacade> && detail::iterator_facadeable_c<Self>)
+    IteratorFacade(Self&& /*self*/){};
 };
 
 } // namespace power_grid_model
