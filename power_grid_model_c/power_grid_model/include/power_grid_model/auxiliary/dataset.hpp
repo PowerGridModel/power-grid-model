@@ -133,13 +133,19 @@ class ColumnarAttributeRange : public std::ranges::view_interface<ColumnarAttrib
             return current_;
         }
 
+        friend constexpr auto operator<=>(iterator const& first, iterator const& second) {
+            return first.current_idx() <=> second.current_idx();
+        }
+
       private:
         friend class IteratorFacade<iterator, std::conditional_t<is_data_mutable_v<dataset_type>, Proxy, Proxy const>,
                                     Idx>;
 
-        constexpr auto three_way_compare(iterator const& other) const { return current_.idx_ <=> other.current_.idx_; }
-        constexpr auto distance_to(iterator const& other) const { return other.current_.idx_ - current_.idx_; }
-        constexpr void advance(difference_type n) { current_.idx_ += n; }
+        constexpr auto current_idx() const { return current_.idx_; }
+        constexpr auto& current_idx() { return current_.idx_; }
+
+        constexpr auto distance_to(iterator const& other) const { return other.current_idx() - current_idx(); }
+        constexpr void advance(difference_type n) { current_idx() += n; }
 
         Proxy current_;
     };

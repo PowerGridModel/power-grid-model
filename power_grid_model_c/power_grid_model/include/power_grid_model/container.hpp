@@ -306,13 +306,14 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         }
         constexpr Gettable& operator*() { return container_ptr_->template get_item_by_seq<base_type>(idx_); }
 
+        friend constexpr auto operator<=>(Iterator const& first, Iterator const& second) {
+            assert(first.container_ptr_ == second.container_ptr_);
+            return first.idx_ <=> second.idx_;
+        }
+
       private:
         friend class IteratorFacade<Iterator<Gettable>, Gettable, Idx>;
 
-        constexpr auto three_way_compare(Iterator const& other) const {
-            assert(container_ptr_ == other.container_ptr_);
-            return idx_ <=> other.idx_;
-        }
         constexpr void advance(Idx n) { idx_ += n; }
         constexpr Idx distance_to(Iterator const& other) const {
             assert(container_ptr_ == other.container_ptr_);

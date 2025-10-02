@@ -117,6 +117,11 @@ class SparseGroupedIdxVector {
             return latest_value_;
         }
 
+        friend constexpr std::strong_ordering operator<=>(GroupIterator const first, GroupIterator const& second) {
+            assert(first.indptr_ == second.indptr_);
+            return first.group_ <=> second.group_;
+        }
+
       private:
         IdxVector const* indptr_{};
         Idx group_{};
@@ -124,10 +129,6 @@ class SparseGroupedIdxVector {
                                             // dereferencing instead of update methods. Note that the value will be
                                             // invalidated at first update
 
-        constexpr std::strong_ordering three_way_compare(GroupIterator const& other) const {
-            assert(indptr_ == other.indptr_);
-            return group_ <=> other.group_;
-        }
         constexpr auto distance_to(GroupIterator const& other) const {
             assert(indptr_ == other.indptr_);
             return other.group_ - group_;
@@ -195,6 +196,11 @@ class DenseGroupedIdxVector {
             return latest_value_;
         }
 
+        friend constexpr std::strong_ordering operator<=>(GroupIterator const& first, GroupIterator const& second) {
+            assert(first.dense_vector_ == second.dense_vector_);
+            return first.group_ <=> second.group_;
+        }
+
       private:
         using group_iterator = IdxVector::const_iterator;
 
@@ -205,9 +211,6 @@ class DenseGroupedIdxVector {
                                             // dereferencing instead of update methods. Note that the value will be
                                             // invalidated at first update
 
-        constexpr std::strong_ordering three_way_compare(GroupIterator const& other) const {
-            return group_ <=> other.group_;
-        }
         constexpr auto distance_to(GroupIterator const& other) const { return other.group_ - group_; }
 
         constexpr void increment() {

@@ -25,18 +25,8 @@ template <class Impl, typename ValueType, std::integral DifferenceType> class It
 
     template <typename Self, typename Other>
         requires std::same_as<std::remove_cvref_t<Self>, std::remove_cvref_t<Other>>
-    constexpr std::strong_ordering operator<=>(this Self&& self, Other&& other) {
-        using CRefSelf = std::add_lvalue_reference_t<std::add_const_t<Self>>;
-        using CRefOther = std::add_lvalue_reference_t<std::add_const_t<Other>>;
-        return std::forward_like<CRefSelf>(self).three_way_compare(std::forward_like<CRefOther>(other));
-    }
-    template <typename Self, typename Other>
-    constexpr bool operator==(this Self&& self, Other&& other)
-        requires requires {
-            { std::forward<Self>(self) <=> std::forward<Other>(other) } -> std::same_as<std::strong_ordering>;
-        }
-    {
-        return (std::forward<Self>(self) <=> std::forward<Other>(other)) == std::strong_ordering::equivalent;
+    constexpr bool operator==(this Self const& self, Other const& other) {
+        return (self <=> other) == std::strong_ordering::equivalent;
     }
 
     constexpr auto operator++(this auto& self) -> iterator& {
