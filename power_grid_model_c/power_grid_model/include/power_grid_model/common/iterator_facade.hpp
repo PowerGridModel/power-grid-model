@@ -30,8 +30,8 @@ template <class Impl, typename ValueType, std::integral DifferenceType> class It
         return static_cast<iterator*>(this)->dereference();
     }
     // constexpr auto operator*(this auto&& self) -> decltype(auto) {
-    //     using Self = decltype(self);
-    //     return std::forward_like<std::add_const_t<Self>>(self).dereference();
+    //     // forward_like ensures that the return type is also const if the iterator is const
+    //     return std::forward_like<decltype(self)>(self.dereference());
     // }
     // template <typename Self>
     // constexpr auto operator*(this Self&& self) -> decltype(auto)
@@ -43,15 +43,14 @@ template <class Impl, typename ValueType, std::integral DifferenceType> class It
     //     return std::forward<Self>(self).dereference();
     // }
 
-    // constexpr auto operator->() const -> decltype(auto) { return &(*(*this)); }
-    // constexpr auto operator->() -> decltype(auto) { return &(*(*this)); }
-    constexpr auto operator->(this auto&& self) { return &(*std::forward<decltype(self)>(self)); }
+    constexpr auto operator->(this auto&& self) -> decltype(auto) { return &(*std::forward<decltype(self)>(self)); }
 
-    // friend constexpr bool operator==(Impl const& first, Impl const& second) {
-    //     return (first <=> second) == std::strong_ordering::equivalent;
-    // }
-    friend constexpr std::strong_ordering operator<=>(Impl const& first, Impl const& second) {
-        return first.three_way_compare(second);
+    template <typename Self, typename Other>
+        requires std::same_as<std::remove_cvref_t<Self>, std::remove_cvref_t<Other>>
+    constexpr std::strong_ordering operator<=>(this Self&& self, Other&& other) {
+        using CRefSelf = std::add_lvalue_reference_t<std::add_const_t<Self>>;
+        using CRefOther = std::add_lvalue_reference_t<std::add_const_t<Other>>;
+        return std::forward_like<CRefSelf>(self).three_way_compare(std::forward_like<CRefOther>(other));
     }
     template <typename Self, typename Other>
     constexpr bool operator==(this Self&& self, Other&& other)
@@ -61,14 +60,6 @@ template <class Impl, typename ValueType, std::integral DifferenceType> class It
     {
         return (std::forward<Self>(self) <=> std::forward<Other>(other)) == std::strong_ordering::equivalent;
     }
-    // template <typename Self, typename Other>
-    // constexpr auto operator<=>(this Self&& self, Other&& other)
-    //     requires std::same_as<std::remove_cvref_t<Self>, std::remove_cvref_t<Other>> && requires {
-    //         { self.three_way_compare(other) } -> std::same_as<std::strong_ordering>;
-    //     }
-    // {
-    //     return (std::forward<Self>(self).three_way_compare(std::forward<Other>(other)));
-    // }
 
     constexpr auto operator++(this auto& self) -> iterator& {
         if constexpr (requires { self.increment(); }) {
@@ -124,23 +115,6 @@ template <class Impl, typename ValueType, std::integral DifferenceType> class It
   private:
     IteratorFacade() = default; // default constructor is private to prevent non-CRTP instantiation
     friend Impl;                // allow Impl to access private members; this is necessary for CRTP
-
-    // overloads for public bidirectional exposure (difference between MSVC and ClangCL)
-    // template <typename Self, typename Other>
-    //     requires std::same_as<std::remove_cvref_t<Self>, std::remove_cvref_t<Other>>
-    // constexpr std::strong_ordering three_way_compare(this Self&& self, Other&& other) {
-    //     using ConstRefSelf = std::add_lvalue_reference_t<std::add_const_t<Self>>;
-    //     using ConstRefOther = std::add_lvalue_reference_t<std::add_const_t<Other>>;
-    //     return std::forward_like<ConstRefSelf>(self).three_way_compare(std::forward_like<ConstRefOther>(other));
-    // }
-    constexpr std::strong_ordering three_way_compare(IteratorFacade const& other) const {
-        return static_cast<std::add_lvalue_reference_t<const_iterator>>(*this).three_way_compare(
-            static_cast<std::add_lvalue_reference_t<const_iterator>>(other));
-    }
-    constexpr auto distance_to(IteratorFacade const& other) const -> difference_type {
-        return static_cast<std::add_lvalue_reference_t<const_iterator>>(*this).distance_to(
-            static_cast<std::add_lvalue_reference_t<const_iterator>>(other));
-    }
 };
 
 } // namespace power_grid_model
