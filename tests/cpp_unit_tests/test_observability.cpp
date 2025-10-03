@@ -599,6 +599,257 @@ TEST_CASE("Test necessary_condition") {
     }
 }
 
+TEST_CASE("Test sufficient_condition_radial_with_voltage_phasor") {
+    using power_grid_model::math_solver::detail::sufficient_condition_radial_with_voltage_phasor;
+
+    SUBCASE("Observable radial network with voltage phasor sensors") {
+        // Create a simple 4-bus radial network: bus0--bus1--bus2--bus3
+        MathModelTopology topo;
+        topo.slack_bus = 0;
+        topo.is_radial = true;
+        topo.phase_shift = {0.0, 0.0, 0.0, 0.0};
+        topo.branch_bus_idx = {{0, 1}, {1, 2}, {2, 3}};
+        topo.sources_per_bus = {from_sparse, {0, 1, 1, 1, 1}};
+        topo.shunts_per_bus = {from_sparse, {0, 0, 0, 0, 0}};
+        topo.load_gens_per_bus = {from_sparse, {0, 0, 0, 0, 0}};
+        topo.power_sensors_per_bus = {from_sparse, {0, 1, 1, 2, 2}}; // Injection sensors at bus 0 and 1
+        topo.power_sensors_per_source = {from_sparse, {0, 0}};
+        topo.power_sensors_per_load_gen = {from_sparse, {0}};
+        topo.power_sensors_per_shunt = {from_sparse, {0}};
+        topo.power_sensors_per_branch_from = {from_sparse, {0, 0, 1, 1}}; // Branch sensor on branch 1
+        topo.power_sensors_per_branch_to = {from_sparse, {0, 0, 0, 0}};
+        topo.current_sensors_per_branch_from = {from_sparse, {0, 0, 0, 0}};
+        topo.current_sensors_per_branch_to = {from_sparse, {0, 0, 0, 0}};
+        topo.voltage_sensors_per_bus = {from_sparse, {0, 1, 2, 2, 2}}; // Voltage phasor sensors at bus 0 and 1
+
+        MathModelParam<symmetric_t> param;
+        param.source_param = {SourceCalcParam{.y1 = 1.0, .y0 = 1.0}};
+        param.branch_param = {{1.0, -1.0, -1.0, 1.0}, {1.0, -1.0, -1.0, 1.0}, {1.0, -1.0, -1.0, 1.0}};
+
+        StateEstimationInput<symmetric_t> se_input;
+        se_input.source_status = {1};
+        se_input.measured_voltage = {
+            {.value = 1.0 + 0.1i, .variance = 1.0},  // Bus 0 - voltage phasor sensor
+            {.value = 0.95 + 0.05i, .variance = 1.0} // Bus 1 - voltage phasor sensor
+        };
+        se_input.measured_bus_injection = {
+            {.real_component = {.value = 1.5, .variance = 1.0}, .imag_component = {.value = 0.5, .variance = 1.0}},
+            {.real_component = {.value = 1.0, .variance = 1.0}, .imag_component = {.value = 0.2, .variance = 1.0}}};
+        se_input.measured_branch_from_power = {
+            {.real_component = {.value = 0.8, .variance = 1.0}, .imag_component = {.value = 0.1, .variance = 1.0}}};
+
+        // Create YBus and scan sensors
+        auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
+        YBus<symmetric_t> const y_bus{topo_ptr, param_ptr};
+        math_solver::MeasuredValues<symmetric_t> const measured_values{y_bus.shared_topology(), se_input};
+
+        std::vector<ObservabilityNNResult> neighbour_results(4);
+        auto observability_sensors =
+            scan_network_sensors(measured_values, topo, y_bus.y_bus_structure(), neighbour_results);
+
+        // Count voltage phasor sensors
+        Idx n_voltage_phasor_sensors = std::accumulate(observability_sensors.voltage_phasor_sensors.begin(),
+                                                       observability_sensors.voltage_phasor_sensors.end(), 0);
+
+        // Test sufficient_condition_radial_with_voltage_phasor
+        CHECK_NOTHROW(sufficient_condition_radial_with_voltage_phasor(y_bus.y_bus_structure(), observability_sensors,
+                                                                      n_voltage_phasor_sensors));
+
+        // Verify that it returns true (no exception thrown means observable)
+        bool result = sufficient_condition_radial_with_voltage_phasor(y_bus.y_bus_structure(), observability_sensors,
+                                                                      n_voltage_phasor_sensors);
+        CHECK(result == true);
+
+        // Verify that sensors were reassigned properly
+        Idx const n_bus = 4;
+        Idx final_flow_sensors =
+            std::accumulate(observability_sensors.flow_sensors.begin(), observability_sensors.flow_sensors.end(), 0);
+        Idx final_voltage_sensors = std::accumulate(observability_sensors.voltage_phasor_sensors.begin(),
+                                                    observability_sensors.voltage_phasor_sensors.end(), 0);
+
+        // Should have n_bus-1 independent flow sensors for radial network
+        CHECK(final_flow_sensors >= n_bus - 1);
+        // Should retain at least 1 voltage phasor sensor as reference
+        CHECK(final_voltage_sensors >= 1);
+    }
+
+    SUBCASE("Test sensor reassignment behavior") {
+        // Create a 3-bus radial network to test sensor reassignment
+        MathModelTopology topo;
+        topo.slack_bus = 0;
+        topo.is_radial = true;
+        topo.phase_shift = {0.0, 0.0, 0.0};
+        topo.branch_bus_idx = {{0, 1}, {1, 2}};
+        topo.sources_per_bus = {from_sparse, {0, 1, 1, 1}};
+        topo.shunts_per_bus = {from_sparse, {0, 0, 0, 0}};
+        topo.load_gens_per_bus = {from_sparse, {0, 0, 0, 0}};
+        topo.power_sensors_per_bus = {from_sparse, {0, 1, 2, 2}}; // Injection sensors at bus 0 and 1
+        topo.power_sensors_per_source = {from_sparse, {0, 0}};
+        topo.power_sensors_per_load_gen = {from_sparse, {0}};
+        topo.power_sensors_per_shunt = {from_sparse, {0}};
+        topo.power_sensors_per_branch_from = {from_sparse, {0, 0, 0}}; // No branch sensors
+        topo.power_sensors_per_branch_to = {from_sparse, {0, 0, 0}};
+        topo.current_sensors_per_branch_from = {from_sparse, {0, 0, 0}};
+        topo.current_sensors_per_branch_to = {from_sparse, {0, 0, 0}};
+        topo.voltage_sensors_per_bus = {from_sparse, {0, 1, 1, 1}}; // Voltage sensor at bus 0
+
+        MathModelParam<symmetric_t> param;
+        param.source_param = {SourceCalcParam{.y1 = 1.0, .y0 = 1.0}};
+        param.branch_param = {{1.0, -1.0, -1.0, 1.0}, {1.0, -1.0, -1.0, 1.0}};
+
+        StateEstimationInput<symmetric_t> se_input;
+        se_input.source_status = {1};
+        se_input.measured_voltage = {
+            {.value = 1.0 + 0.1i, .variance = 1.0} // Voltage phasor sensor at bus 0
+        };
+        se_input.measured_bus_injection = {
+            {.real_component = {.value = 1.0, .variance = 1.0}, .imag_component = {.value = 0.0, .variance = 1.0}},
+            {.real_component = {.value = 0.8, .variance = 1.0}, .imag_component = {.value = 0.1, .variance = 1.0}}};
+
+        // Create YBus and scan sensors
+        auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
+        YBus<symmetric_t> const y_bus{topo_ptr, param_ptr};
+        math_solver::MeasuredValues<symmetric_t> const measured_values{y_bus.shared_topology(), se_input};
+
+        std::vector<ObservabilityNNResult> neighbour_results(3);
+        auto observability_sensors =
+            scan_network_sensors(measured_values, topo, y_bus.y_bus_structure(), neighbour_results);
+
+        // Store initial sensor counts
+        Idx initial_flow_sensors =
+            std::accumulate(observability_sensors.flow_sensors.begin(), observability_sensors.flow_sensors.end(), 0);
+        Idx initial_voltage_sensors = std::accumulate(observability_sensors.voltage_phasor_sensors.begin(),
+                                                      observability_sensors.voltage_phasor_sensors.end(), 0);
+
+        // Count voltage phasor sensors for the function
+        Idx n_voltage_phasor_sensors = initial_voltage_sensors;
+
+        // Test that the function works and modifies the sensor vectors
+        bool result = sufficient_condition_radial_with_voltage_phasor(y_bus.y_bus_structure(), observability_sensors,
+                                                                      n_voltage_phasor_sensors);
+        CHECK(result == true);
+
+        // Verify that sensors were modified by the internal assign_independent_sensors_radial call
+        Idx final_flow_sensors =
+            std::accumulate(observability_sensors.flow_sensors.begin(), observability_sensors.flow_sensors.end(), 0);
+        Idx final_voltage_sensors = std::accumulate(observability_sensors.voltage_phasor_sensors.begin(),
+                                                    observability_sensors.voltage_phasor_sensors.end(), 0);
+
+        // For a 3-bus radial network, should have 2 independent flow sensors
+        CHECK(final_flow_sensors >= 2);
+
+        // Should retain at least 1 voltage phasor sensor as reference if we started with any
+        if (n_voltage_phasor_sensors > 0) {
+            CHECK(final_voltage_sensors >= 1);
+        }
+    }
+
+    SUBCASE("No voltage phasor sensors but sufficient flow sensors") {
+        // Create a 3-bus radial network with sufficient flow sensors but no voltage phasor sensors
+        MathModelTopology topo;
+        topo.slack_bus = 0;
+        topo.is_radial = true;
+        topo.phase_shift = {0.0, 0.0, 0.0};
+        topo.branch_bus_idx = {{0, 1}, {1, 2}};
+        topo.sources_per_bus = {from_sparse, {0, 1, 1, 1}};
+        topo.shunts_per_bus = {from_sparse, {0, 0, 0, 0}};
+        topo.load_gens_per_bus = {from_sparse, {0, 0, 0, 0}};
+        topo.power_sensors_per_bus = {from_sparse, {0, 1, 2, 2}}; // Injection sensors at bus 0 and 1
+        topo.power_sensors_per_source = {from_sparse, {0, 0}};
+        topo.power_sensors_per_load_gen = {from_sparse, {0}};
+        topo.power_sensors_per_shunt = {from_sparse, {0}};
+        topo.power_sensors_per_branch_from = {from_sparse, {0, 0, 0}}; // No branch sensors
+        topo.power_sensors_per_branch_to = {from_sparse, {0, 0, 0}};
+        topo.current_sensors_per_branch_from = {from_sparse, {0, 0, 0}};
+        topo.current_sensors_per_branch_to = {from_sparse, {0, 0, 0}};
+        topo.voltage_sensors_per_bus = {from_sparse, {0, 1, 1, 1}}; // Only magnitude sensors
+
+        MathModelParam<symmetric_t> param;
+        param.source_param = {SourceCalcParam{.y1 = 1.0, .y0 = 1.0}};
+        param.branch_param = {{1.0, -1.0, -1.0, 1.0}, {1.0, -1.0, -1.0, 1.0}};
+
+        StateEstimationInput<symmetric_t> se_input;
+        se_input.source_status = {1};
+        se_input.measured_voltage = {
+            {.value = {1.0, nan}, .variance = 1.0} // Magnitude only (no phasor)
+        };
+        se_input.measured_bus_injection = {
+            {.real_component = {.value = 1.0, .variance = 1.0}, .imag_component = {.value = 0.0, .variance = 1.0}},
+            {.real_component = {.value = 0.8, .variance = 1.0}, .imag_component = {.value = 0.1, .variance = 1.0}}};
+
+        // Create YBus and scan sensors
+        auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
+        YBus<symmetric_t> const y_bus{topo_ptr, param_ptr};
+        math_solver::MeasuredValues<symmetric_t> const measured_values{y_bus.shared_topology(), se_input};
+
+        std::vector<ObservabilityNNResult> neighbour_results(3);
+        auto observability_sensors =
+            scan_network_sensors(measured_values, topo, y_bus.y_bus_structure(), neighbour_results);
+
+        // Count voltage phasor sensors (should be 0)
+        Idx n_voltage_phasor_sensors = std::accumulate(observability_sensors.voltage_phasor_sensors.begin(),
+                                                       observability_sensors.voltage_phasor_sensors.end(), 0);
+        CHECK(n_voltage_phasor_sensors == 0);
+
+        // Should pass with sufficient flow sensors even without voltage phasor sensors
+        bool result = sufficient_condition_radial_with_voltage_phasor(y_bus.y_bus_structure(), observability_sensors,
+                                                                      n_voltage_phasor_sensors);
+        CHECK(result == true);
+    }
+
+    SUBCASE("Single bus network - edge case") {
+        // Create a single bus network
+        MathModelTopology topo;
+        topo.slack_bus = 0;
+        topo.is_radial = true;
+        topo.phase_shift = {0.0};
+        topo.branch_bus_idx = {}; // No branches
+        topo.sources_per_bus = {from_sparse, {0, 1}};
+        topo.shunts_per_bus = {from_sparse, {0, 0}};
+        topo.load_gens_per_bus = {from_sparse, {0, 0}};
+        topo.power_sensors_per_bus = {from_sparse, {0, 0}};
+        topo.power_sensors_per_source = {from_sparse, {0, 0}};
+        topo.power_sensors_per_load_gen = {from_sparse, {0}};
+        topo.power_sensors_per_shunt = {from_sparse, {0}};
+        topo.power_sensors_per_branch_from = {from_sparse, {0}};
+        topo.power_sensors_per_branch_to = {from_sparse, {0}};
+        topo.current_sensors_per_branch_from = {from_sparse, {0}};
+        topo.current_sensors_per_branch_to = {from_sparse, {0}};
+        topo.voltage_sensors_per_bus = {from_sparse, {0, 1}};
+
+        MathModelParam<symmetric_t> param;
+        param.source_param = {SourceCalcParam{.y1 = 1.0, .y0 = 1.0}};
+
+        StateEstimationInput<symmetric_t> se_input;
+        se_input.source_status = {1};
+        se_input.measured_voltage = {
+            {.value = 1.0 + 0.0i, .variance = 1.0} // Single voltage phasor sensor
+        };
+
+        // Create YBus and scan sensors
+        auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
+        YBus<symmetric_t> const y_bus{topo_ptr, param_ptr};
+        math_solver::MeasuredValues<symmetric_t> const measured_values{y_bus.shared_topology(), se_input};
+
+        std::vector<ObservabilityNNResult> neighbour_results(1);
+        auto observability_sensors =
+            scan_network_sensors(measured_values, topo, y_bus.y_bus_structure(), neighbour_results);
+
+        // Count voltage phasor sensors
+        Idx n_voltage_phasor_sensors = std::accumulate(observability_sensors.voltage_phasor_sensors.begin(),
+                                                       observability_sensors.voltage_phasor_sensors.end(), 0);
+
+        // Single bus with voltage phasor should be observable (n_bus-1 = 0 flow sensors needed)
+        bool result = sufficient_condition_radial_with_voltage_phasor(y_bus.y_bus_structure(), observability_sensors,
+                                                                      n_voltage_phasor_sensors);
+        CHECK(result == true);
+    }
+}
+
 TEST_CASE("Basic observability structure tests") {
     SUBCASE("Basic structure initialization") {
         ObservabilitySensorsResult result;
