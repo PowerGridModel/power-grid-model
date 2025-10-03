@@ -265,6 +265,165 @@ TEST_CASE("Test scan_network_sensors") {
     }
 }
 
+TEST_CASE("Test prepare_starting_nodes") {
+    using power_grid_model::math_solver::detail::prepare_starting_nodes;
+
+    SUBCASE("Nodes without measurements - preferred starting points") {
+        // Create a simple 4-bus network with mixed measurement status
+        std::vector<ObservabilityNNResult> neighbour_list(4);
+
+        // Bus 0: has measurement
+        neighbour_list[0].bus = 0;
+        neighbour_list[0].status = ConnectivityStatus::node_measured;
+        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = ConnectivityStatus::has_no_measurement},
+                                               {.bus = 2, .status = ConnectivityStatus::branch_native_measured}};
+
+        // Bus 1: no measurement, no edge measurements on connected branches
+        neighbour_list[1].bus = 1;
+        neighbour_list[1].status = ConnectivityStatus::has_no_measurement;
+        neighbour_list[1].direct_neighbours = {{.bus = 0, .status = ConnectivityStatus::has_no_measurement},
+                                               {.bus = 3, .status = ConnectivityStatus::has_no_measurement}};
+
+        // Bus 2: has measurement
+        neighbour_list[2].bus = 2;
+        neighbour_list[2].status = ConnectivityStatus::node_measured;
+        neighbour_list[2].direct_neighbours = {{.bus = 0, .status = ConnectivityStatus::branch_native_measured}};
+
+        // Bus 3: no measurement, no edge measurements on connected branches
+        neighbour_list[3].bus = 3;
+        neighbour_list[3].status = ConnectivityStatus::has_no_measurement;
+        neighbour_list[3].direct_neighbours = {{.bus = 1, .status = ConnectivityStatus::has_no_measurement}};
+
+        std::vector<Idx> starting_candidates;
+        prepare_starting_nodes(neighbour_list, 4, starting_candidates);
+
+        // Should find buses 1 and 3 as starting candidates
+        // (nodes without measurements and all edges have no edge measurements)
+        CHECK(starting_candidates.size() == 2);
+        CHECK(std::find(starting_candidates.begin(), starting_candidates.end(), 1) != starting_candidates.end());
+        CHECK(std::find(starting_candidates.begin(), starting_candidates.end(), 3) != starting_candidates.end());
+    }
+
+    SUBCASE("Nodes without measurements but with edge measurements") {
+        // Network where unmeasured nodes have edge measurements
+        std::vector<ObservabilityNNResult> neighbour_list(3);
+
+        // Bus 0: has measurement
+        neighbour_list[0].bus = 0;
+        neighbour_list[0].status = ConnectivityStatus::node_measured;
+        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = ConnectivityStatus::branch_native_measured}};
+
+        // Bus 1: no measurement, but connected edge has measurement
+        neighbour_list[1].bus = 1;
+        neighbour_list[1].status = ConnectivityStatus::has_no_measurement;
+        neighbour_list[1].direct_neighbours = {{.bus = 0, .status = ConnectivityStatus::branch_native_measured},
+                                               {.bus = 2, .status = ConnectivityStatus::branch_native_measured}};
+
+        // Bus 2: no measurement, but connected edge has measurement
+        neighbour_list[2].bus = 2;
+        neighbour_list[2].status = ConnectivityStatus::has_no_measurement;
+        neighbour_list[2].direct_neighbours = {{.bus = 1, .status = ConnectivityStatus::branch_native_measured}};
+
+        std::vector<Idx> starting_candidates;
+        prepare_starting_nodes(neighbour_list, 3, starting_candidates);
+
+        // Should fallback to nodes without measurements (buses 1 and 2)
+        // since no "ideal" starting points exist
+        CHECK(starting_candidates.size() == 2);
+        CHECK(std::find(starting_candidates.begin(), starting_candidates.end(), 1) != starting_candidates.end());
+        CHECK(std::find(starting_candidates.begin(), starting_candidates.end(), 2) != starting_candidates.end());
+    }
+
+    SUBCASE("All nodes have measurements - fallback to first node") {
+        // Network where all nodes have measurements
+        std::vector<ObservabilityNNResult> neighbour_list(3);
+
+        // All buses have measurements
+        for (Idx i = 0; i < 3; ++i) {
+            neighbour_list[i].bus = i;
+            neighbour_list[i].status = ConnectivityStatus::node_measured;
+            if (i < 2) {
+                neighbour_list[i].direct_neighbours = {
+                    {.bus = i + 1, .status = ConnectivityStatus::has_no_measurement}};
+            }
+        }
+
+        std::vector<Idx> starting_candidates;
+        prepare_starting_nodes(neighbour_list, 3, starting_candidates);
+
+        // Should fallback to first node (bus 0)
+        CHECK(starting_candidates.size() == 1);
+        CHECK(starting_candidates[0] == 0);
+    }
+
+    SUBCASE("Single bus network") {
+        // Edge case: single bus
+        std::vector<ObservabilityNNResult> neighbour_list(1);
+
+        neighbour_list[0].bus = 0;
+        neighbour_list[0].status = ConnectivityStatus::has_no_measurement;
+        neighbour_list[0].direct_neighbours = {}; // No neighbours
+
+        std::vector<Idx> starting_candidates;
+        prepare_starting_nodes(neighbour_list, 1, starting_candidates);
+
+        // Should find the single unmeasured bus
+        CHECK(starting_candidates.size() == 1);
+        CHECK(starting_candidates[0] == 0);
+    }
+
+    SUBCASE("Empty network") {
+        // Edge case: empty network
+        std::vector<ObservabilityNNResult> neighbour_list;
+        std::vector<Idx> starting_candidates;
+
+        prepare_starting_nodes(neighbour_list, 0, starting_candidates);
+
+        // Should fallback to first node (0) even with empty network
+        CHECK(starting_candidates.size() == 1);
+        CHECK(starting_candidates[0] == 0);
+    }
+
+    SUBCASE("Mixed connectivity statuses") {
+        // Test with various connectivity statuses
+        std::vector<ObservabilityNNResult> neighbour_list(5);
+
+        // Bus 0: node measured
+        neighbour_list[0].bus = 0;
+        neighbour_list[0].status = ConnectivityStatus::node_measured;
+        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = ConnectivityStatus::has_no_measurement}};
+
+        // Bus 1: has no measurement, ideal starting point
+        neighbour_list[1].bus = 1;
+        neighbour_list[1].status = ConnectivityStatus::has_no_measurement;
+        neighbour_list[1].direct_neighbours = {{.bus = 0, .status = ConnectivityStatus::has_no_measurement},
+                                               {.bus = 2, .status = ConnectivityStatus::has_no_measurement}};
+
+        // Bus 2: downstream measured
+        neighbour_list[2].bus = 2;
+        neighbour_list[2].status = ConnectivityStatus::node_downstream_measured;
+        neighbour_list[2].direct_neighbours = {{.bus = 1, .status = ConnectivityStatus::has_no_measurement}};
+
+        // Bus 3: upstream measured
+        neighbour_list[3].bus = 3;
+        neighbour_list[3].status = ConnectivityStatus::node_upstream_measured;
+        neighbour_list[3].direct_neighbours = {{.bus = 4, .status = ConnectivityStatus::has_no_measurement}};
+
+        // Bus 4: branch measured used
+        neighbour_list[4].bus = 4;
+        neighbour_list[4].status = ConnectivityStatus::branch_measured_used;
+        neighbour_list[4].direct_neighbours = {{.bus = 3, .status = ConnectivityStatus::has_no_measurement}};
+
+        std::vector<Idx> starting_candidates;
+        prepare_starting_nodes(neighbour_list, 5, starting_candidates);
+
+        // Should find bus 1 as the ideal starting point
+        // (has_no_measurement and all connected edges have no edge measurements)
+        CHECK(starting_candidates.size() == 1);
+        CHECK(starting_candidates[0] == 1);
+    }
+}
+
 TEST_CASE("Test expand_neighbour_list") {
     SUBCASE("Basic expansion test") {
         std::vector<ObservabilityNNResult> neighbour_list(3);
