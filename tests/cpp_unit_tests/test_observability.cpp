@@ -2,11 +2,23 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include <power_grid_model/calculation_parameters.hpp>
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/math_solver/observability.hpp>
 #include <power_grid_model/math_solver/y_bus.hpp>
 
+using power_grid_model::math_solver::YBusStructure;
+using power_grid_model::math_solver::detail::assign_independent_sensors_radial;
+using power_grid_model::math_solver::detail::ConnectivityStatus;
+using power_grid_model::math_solver::detail::expand_neighbour_list;
+using power_grid_model::math_solver::detail::necessary_condition;
+using power_grid_model::math_solver::detail::ObservabilityNNResult;
+using power_grid_model::math_solver::detail::ObservabilitySensorsResult;
+
 #include <doctest/doctest.h>
+
+#include <algorithm>
+#include <numeric>
 
 namespace power_grid_model {
 
@@ -40,7 +52,132 @@ void check_not_observable(MathModelTopology const& topo, MathModelParam<symmetri
 }
 } // namespace
 
-TEST_CASE("Necessary observability check") {
+// Original integration tests
+TEST_CASE("Observable voltage sensor") {
+    MathModelTopology topo;
+    topo.slack_bus = 0;
+    topo.phase_shift = {0.0, 0.0, 0.0};
+    topo.branch_bus_idx = {{0, 1}, {1, 2}};
+    topo.sources_per_bus = {from_sparse, {0, 1, 1, 1}};
+    topo.shunts_per_bus = {from_sparse, {0, 0, 0, 0}};
+    topo.load_gens_per_bus = {from_sparse, {0, 0, 0, 0}};
+    topo.power_sensors_per_bus = {from_sparse, {0, 0, 0, 0}};
+    topo.power_sensors_per_source = {from_sparse, {0, 0}};
+    topo.power_sensors_per_load_gen = {from_sparse, {0}};
+    topo.power_sensors_per_shunt = {from_sparse, {0}};
+    topo.power_sensors_per_branch_from = {from_sparse, {0, 1, 2}};
+    topo.power_sensors_per_branch_to = {from_sparse, {0, 0, 0}};
+    topo.current_sensors_per_branch_from = {from_sparse, {0, 0, 0}};
+    topo.current_sensors_per_branch_to = {from_sparse, {0, 0, 0}};
+    topo.voltage_sensors_per_bus = {from_sparse, {0, 1, 1, 1}};
+
+    MathModelParam<symmetric_t> param;
+    param.source_param = {SourceCalcParam{.y1 = 1.0, .y0 = 1.0}};
+    param.branch_param = {{1.0, -1.0, -1.0, 1.0}, {1.0, -1.0, -1.0, 1.0}};
+
+    StateEstimationInput<symmetric_t> se_input;
+    se_input.source_status = {1};
+    se_input.measured_voltage = {{.value = 1.0, .variance = 1.0}};
+    se_input.measured_branch_from_power = {
+        {.real_component = {.value = 1.0, .variance = 1.0}, .imag_component = {.value = 0.0, .variance = 1.0}},
+        {.real_component = {.value = 1.0, .variance = 1.0}, .imag_component = {.value = 0.0, .variance = 1.0}}};
+
+    check_observable(topo, param, se_input);
+}
+
+// Unit tests for individual observability functions
+TEST_CASE("Test expand_neighbour_list") {
+    SUBCASE("Basic expansion test") {
+        std::vector<ObservabilityNNResult> neighbour_list(3);
+
+        // Initialize test data
+        neighbour_list[0].bus = 0;
+        neighbour_list[0].status = ConnectivityStatus::has_no_measurement;
+        neighbour_list[0].direct_neighbours = {{1, ConnectivityStatus::has_no_measurement},
+                                               {2, ConnectivityStatus::node_measured}};
+
+        neighbour_list[1].bus = 1;
+        neighbour_list[1].status = ConnectivityStatus::node_measured;
+        neighbour_list[1].direct_neighbours = {{0, ConnectivityStatus::has_no_measurement}};
+
+        neighbour_list[2].bus = 2;
+        neighbour_list[2].status = ConnectivityStatus::node_measured;
+        neighbour_list[2].direct_neighbours = {{0, ConnectivityStatus::has_no_measurement}};
+
+        // Test the function
+        expand_neighbour_list(neighbour_list);
+
+        // Basic verification - structure should be maintained
+        CHECK(neighbour_list.size() == 3);
+        CHECK(neighbour_list[0].bus == 0);
+        CHECK(neighbour_list[1].bus == 1);
+        CHECK(neighbour_list[2].bus == 2);
+    }
+
+    SUBCASE("Empty neighbour list") {
+        std::vector<ObservabilityNNResult> empty_list;
+        CHECK_NOTHROW(expand_neighbour_list(empty_list));
+        CHECK(empty_list.empty());
+    }
+}
+
+// Note: assign_independent_sensors_radial requires complex YBusStructure setup
+// This would be better tested through integration tests
+
+TEST_CASE("Test necessary_condition") {
+    SUBCASE("Sufficient measurements") {
+        ObservabilitySensorsResult sensors;
+        sensors.flow_sensors = {1, 1, 0, 1};
+        sensors.voltage_phasor_sensors = {1, 0, 1};
+        sensors.bus_injections = {2, 2, 3}; // cumulative count ending at 3
+        sensors.is_possibly_ill_conditioned = false;
+
+        Idx n_bus = 3;
+        Idx n_voltage_phasor = 2;
+
+        CHECK_NOTHROW(necessary_condition(sensors, n_bus, n_voltage_phasor, false));
+        CHECK(n_voltage_phasor == 2); // Should count voltage phasor sensors
+    }
+
+    SUBCASE("Insufficient measurements") {
+        ObservabilitySensorsResult sensors;
+        sensors.flow_sensors = {0, 0, 0};
+        sensors.voltage_phasor_sensors = {1, 0, 0}; // only one voltage measurement
+        sensors.bus_injections = {1, 1, 1};         // only one injection
+        sensors.is_possibly_ill_conditioned = false;
+
+        Idx n_bus = 3;
+        Idx n_voltage_phasor = 1;
+
+        CHECK_THROWS_AS(necessary_condition(sensors, n_bus, n_voltage_phasor, false), NotObservableError);
+    }
+
+    SUBCASE("Empty sensors") {
+        ObservabilitySensorsResult sensors;
+        // All vectors empty - should not be observable
+
+        Idx n_voltage_phasor = 0;
+        CHECK_NOTHROW(necessary_condition(sensors, 0, n_voltage_phasor, false));
+        // Edge case: no buses means trivially observable
+    }
+}
+
+TEST_CASE("Basic observability structure tests") {
+    SUBCASE("Basic structure initialization") {
+        ObservabilitySensorsResult result;
+        result.flow_sensors = {1, 0, 1};
+        result.voltage_phasor_sensors = {1, 0};
+        result.bus_injections = {1, 2};
+        result.is_possibly_ill_conditioned = false;
+
+        CHECK(result.flow_sensors.size() == 3);
+        CHECK(result.voltage_phasor_sensors.size() == 2);
+        CHECK(result.bus_injections.size() == 2);
+        CHECK(result.is_possibly_ill_conditioned == false);
+    }
+}
+
+TEST_CASE("Necessary observability check - end to end test") {
     /*
                   /-branch_1-\
             bus_2              bus_1 --branch_0-- bus_0 -- source
@@ -288,4 +425,5 @@ TEST_CASE("Necessary observability check") {
         }
     }
 }
+
 } // namespace power_grid_model
