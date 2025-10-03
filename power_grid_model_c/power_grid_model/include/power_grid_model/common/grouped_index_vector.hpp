@@ -94,20 +94,20 @@ constexpr auto from_dense = from_dense_t{};
 
 class SparseGroupedIdxVector {
   private:
-    class GroupIterator : public IteratorFacade<IdxRange const, Idx> {
-        friend class IteratorFacade<IdxRange const, Idx>;
-        using Base = IteratorFacade<IdxRange const, Idx>;
+    class GroupIterator : public IteratorFacade {
+        friend class IteratorFacade;
 
       public:
         using iterator = GroupIterator;
         using const_iterator = std::add_const_t<GroupIterator>;
-        using value_type = typename Base::value_type;
-        using difference_type = typename Base::difference_type;
-        using reference = typename Base::reference;
+        using value_type = IdxRange const;
+        using difference_type = Idx;
+        using pointer = std::add_pointer_t<value_type>;
+        using reference = std::add_lvalue_reference_t<value_type>;
 
-        GroupIterator() : Base{*this} {};
+        GroupIterator() : IteratorFacade{*this} {};
         explicit constexpr GroupIterator(IdxVector const& indptr, Idx group)
-            : Base{*this}, indptr_{&indptr}, group_{group} {}
+            : IteratorFacade{*this}, indptr_{&indptr}, group_{group} {}
 
         constexpr auto operator*() const -> reference {
             assert(indptr_ != nullptr);
@@ -128,9 +128,10 @@ class SparseGroupedIdxVector {
       private:
         IdxVector const* indptr_{};
         Idx group_{};
-        mutable value_type latest_value_{}; // making this mutable allows us to delay out-of-bounds checks until
-                                            // dereferencing instead of update methods. Note that the value will be
-                                            // invalidated at first update
+        mutable std::remove_const_t<value_type>
+            latest_value_{}; // making this mutable allows us to delay out-of-bounds checks until
+                             // dereferencing instead of update methods. Note that the value will be
+                             // invalidated at first update
 
         constexpr auto distance_to(GroupIterator const& other) const -> difference_type {
             assert(indptr_ == other.indptr_);
@@ -173,20 +174,20 @@ class SparseGroupedIdxVector {
 
 class DenseGroupedIdxVector {
   private:
-    class GroupIterator : public IteratorFacade<IdxRange const, Idx> {
-        friend class IteratorFacade<IdxRange const, Idx>;
-        using Base = IteratorFacade<IdxRange const, Idx>;
+    class GroupIterator : public IteratorFacade {
+        friend class IteratorFacade;
 
       public:
         using iterator = GroupIterator;
         using const_iterator = std::add_const_t<GroupIterator>;
-        using value_type = typename Base::value_type;
-        using difference_type = typename Base::difference_type;
-        using reference = typename Base::reference;
+        using value_type = IdxRange const;
+        using difference_type = Idx;
+        using pointer = std::add_pointer_t<value_type>;
+        using reference = std::add_lvalue_reference_t<value_type>;
 
-        GroupIterator() : Base{*this} {};
+        GroupIterator() : IteratorFacade{*this} {};
         explicit constexpr GroupIterator(IdxVector const& dense_vector, Idx group)
-            : Base{*this},
+            : IteratorFacade{*this},
               dense_vector_{&dense_vector},
               group_{group},
               group_range_{std::ranges::equal_range(*dense_vector_, group)} {}
@@ -213,9 +214,10 @@ class DenseGroupedIdxVector {
         IdxVector const* dense_vector_{};
         Idx group_{};
         std::ranges::subrange<group_iterator> group_range_;
-        mutable value_type latest_value_{}; // making this mutable allows us to delay out-of-bounds checks until
-                                            // dereferencing instead of update methods. Note that the value will be
-                                            // invalidated at first update
+        mutable std::remove_const_t<value_type>
+            latest_value_{}; // making this mutable allows us to delay out-of-bounds checks until
+                             // dereferencing instead of update methods. Note that the value will be
+                             // invalidated at first update
 
         constexpr auto distance_to(GroupIterator const& other) const -> difference_type {
             return other.group_ - group_;

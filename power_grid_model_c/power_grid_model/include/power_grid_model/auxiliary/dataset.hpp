@@ -117,20 +117,20 @@ class ColumnarAttributeRange : public std::ranges::view_interface<ColumnarAttrib
         std::span<AttributeBuffer<Data> const> attribute_buffers_{};
     };
 
-    class iterator
-        : public IteratorFacade<std::conditional_t<is_data_mutable_v<dataset_type>, Proxy, Proxy const>, Idx> {
-        friend class IteratorFacade<std::conditional_t<is_data_mutable_v<dataset_type>, Proxy, Proxy const>, Idx>;
-        using Base = IteratorFacade<std::conditional_t<is_data_mutable_v<dataset_type>, Proxy, Proxy const>, Idx>;
+    class iterator : public IteratorFacade {
+        friend class IteratorFacade;
 
       public:
         using value_type = std::conditional_t<is_data_mutable_v<dataset_type>, Proxy, Proxy const>;
         using difference_type = Idx;
+        using pointer = std::add_pointer_t<value_type>;
+        using reference = std::add_lvalue_reference_t<value_type>;
 
-        iterator() : Base{*this} {};
+        iterator() : IteratorFacade{*this} {};
         iterator(difference_type idx, std::span<AttributeBuffer<Data> const> attribute_buffers)
-            : Base{*this}, current_{idx, attribute_buffers} {}
+            : IteratorFacade{*this}, current_{idx, attribute_buffers} {}
 
-        constexpr auto operator*() -> std::add_lvalue_reference_t<value_type> { return current_; }
+        constexpr auto operator*() -> reference { return current_; }
         constexpr auto operator*() const -> std::add_lvalue_reference_t<std::add_const_t<value_type>> {
             return current_;
         }

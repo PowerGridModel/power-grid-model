@@ -285,17 +285,21 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
     }
 
     // define iterator
-    template <supported_type_c<GettableTypes...> Gettable> class Iterator : public IteratorFacade<Gettable, Idx> {
-        friend class IteratorFacade<Gettable, Idx>;
-        using Base = IteratorFacade<Gettable, Idx>;
+    template <supported_type_c<GettableTypes...> Gettable> class Iterator : public IteratorFacade {
+        friend class IteratorFacade;
 
       public:
+        using value_type = Gettable;
+        using difference_type = Idx;
+        using pointer = std::add_pointer_t<value_type>;
+        using reference = std::add_lvalue_reference_t<value_type>;
+
         static constexpr bool is_const = std::is_const_v<Gettable>;
         using base_type = std::remove_cv_t<Gettable>;
         using container_type = std::conditional_t<is_const, Container const, Container>;
         // constructor including default
         explicit Iterator(container_type* container_ptr = nullptr, Idx idx = 0)
-            : Base{*this}, container_ptr_{container_ptr}, idx_{idx} {}
+            : IteratorFacade{*this}, container_ptr_{container_ptr}, idx_{idx} {}
         // conversion to const iterator
         template <class ConstGettable = Gettable>
             requires(!is_const)
