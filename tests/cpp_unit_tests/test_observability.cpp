@@ -14,7 +14,9 @@ using power_grid_model::math_solver::detail::expand_neighbour_list;
 using power_grid_model::math_solver::detail::necessary_condition;
 using power_grid_model::math_solver::detail::ObservabilityNNResult;
 using power_grid_model::math_solver::detail::ObservabilitySensorsResult;
+using power_grid_model::math_solver::detail::prepare_starting_nodes;
 using power_grid_model::math_solver::detail::scan_network_sensors;
+using power_grid_model::math_solver::detail::sufficient_condition_radial_with_voltage_phasor;
 
 #include <doctest/doctest.h>
 
@@ -266,7 +268,6 @@ TEST_CASE("Test scan_network_sensors") {
 }
 
 TEST_CASE("Test prepare_starting_nodes") {
-    using power_grid_model::math_solver::detail::prepare_starting_nodes;
 
     SUBCASE("Nodes without measurements - preferred starting points") {
         // Create a simple 4-bus network with mixed measurement status
@@ -600,7 +601,6 @@ TEST_CASE("Test necessary_condition") {
 }
 
 TEST_CASE("Test sufficient_condition_radial_with_voltage_phasor") {
-    using power_grid_model::math_solver::detail::sufficient_condition_radial_with_voltage_phasor;
 
     SUBCASE("Observable radial network with voltage phasor sensors") {
         // Create a simple 4-bus radial network: bus0--bus1--bus2--bus3
