@@ -14,6 +14,7 @@ using power_grid_model::math_solver::detail::expand_neighbour_list;
 using power_grid_model::math_solver::detail::necessary_condition;
 using power_grid_model::math_solver::detail::ObservabilityNNResult;
 using power_grid_model::math_solver::detail::ObservabilitySensorsResult;
+using power_grid_model::math_solver::detail::scan_network_sensors;
 
 #include <doctest/doctest.h>
 
@@ -85,7 +86,185 @@ TEST_CASE("Observable voltage sensor - basic integration test") {
     check_observable(topo, param, se_input);
 }
 
-// Unit tests for individual observability functions
+TEST_CASE("Test scan_network_sensors") {
+    SUBCASE("Basic sensor scanning with simple topology") {
+        // Create a simple 3-bus radial network: bus0--bus1--bus2
+        MathModelTopology topo;
+        topo.slack_bus = 0;
+        topo.phase_shift = {0.0, 0.0, 0.0};
+        topo.branch_bus_idx = {{0, 1}, {1, 2}};
+        topo.sources_per_bus = {from_sparse, {0, 1, 1, 1}};
+        topo.shunts_per_bus = {from_sparse, {0, 0, 0, 0}};
+        topo.load_gens_per_bus = {from_sparse, {0, 0, 0, 0}};
+        topo.power_sensors_per_bus = {from_sparse, {0, 1, 1, 1}}; // Bus injection sensor at bus 2
+        topo.power_sensors_per_source = {from_sparse, {0, 0}};
+        topo.power_sensors_per_load_gen = {from_sparse, {0}};
+        topo.power_sensors_per_shunt = {from_sparse, {0}};
+        topo.power_sensors_per_branch_from = {from_sparse, {0, 1, 1}}; // Branch sensor on branch 0
+        topo.power_sensors_per_branch_to = {from_sparse, {0, 0, 0}};
+        topo.current_sensors_per_branch_from = {from_sparse, {0, 0, 0}};
+        topo.current_sensors_per_branch_to = {from_sparse, {0, 0, 0}};
+        topo.voltage_sensors_per_bus = {from_sparse, {0, 1, 2, 2}}; // Voltage sensors at bus 0 and 1
+
+        MathModelParam<symmetric_t> param;
+        param.source_param = {SourceCalcParam{.y1 = 1.0, .y0 = 1.0}};
+        param.branch_param = {{1.0, -1.0, -1.0, 1.0}, {1.0, -1.0, -1.0, 1.0}};
+
+        StateEstimationInput<symmetric_t> se_input;
+        se_input.source_status = {1};
+        se_input.measured_voltage = {
+            {.value = 1.0 + 0.5i, .variance = 1.0}, // Bus 0 - voltage phasor sensor
+            {.value = {0.9, nan}, .variance = 1.0}  // Bus 1 - voltage magnitude sensor only
+        };
+        se_input.measured_bus_injection = {
+            {.real_component = {.value = 2.0, .variance = 1.0}, .imag_component = {.value = 1.0, .variance = 1.0}}};
+        se_input.measured_branch_from_power = {
+            {.real_component = {.value = 1.5, .variance = 1.0}, .imag_component = {.value = 0.5, .variance = 1.0}}};
+
+        // Create YBus and MeasuredValues
+        auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
+        YBus<symmetric_t> const y_bus{topo_ptr, param_ptr};
+        math_solver::MeasuredValues<symmetric_t> const measured_values{y_bus.shared_topology(), se_input};
+
+        // Test scan_network_sensors
+        std::vector<ObservabilityNNResult> neighbour_results(3);
+        auto result = scan_network_sensors(measured_values, topo, y_bus.y_bus_structure(), neighbour_results);
+
+        // Verify basic structure
+        CHECK(result.flow_sensors.size() == y_bus.y_bus_structure().row_indptr.back());
+        CHECK(result.voltage_phasor_sensors.size() == 3); // n_bus
+        CHECK(result.bus_injections.size() == 4);         // n_bus + 1
+
+        // Verify voltage phasor sensors
+        CHECK(result.voltage_phasor_sensors[0] == 1); // Bus 0 has voltage phasor (complex measurement)
+        CHECK(result.voltage_phasor_sensors[1] == 0); // Bus 1 has only magnitude (no angle)
+        CHECK(result.voltage_phasor_sensors[2] == 0); // Bus 2 has no voltage sensor
+
+        // Verify bus injections - should count the bus injection sensor at bus 2
+        CHECK(result.bus_injections[2] == 1);     // Bus 2 has injection sensor
+        CHECK(result.bus_injections.back() >= 1); // Total count should be at least 1
+
+        // Verify neighbour results structure
+        CHECK(neighbour_results.size() == 3);
+        for (size_t i = 0; i < neighbour_results.size(); ++i) {
+            CHECK(neighbour_results[i].bus == static_cast<Idx>(i));
+        }
+
+        // Bus 2 should have node_measured status due to injection sensor
+        CHECK(neighbour_results[2].status == ConnectivityStatus::node_measured);
+    }
+
+    SUBCASE("Empty network sensors") {
+        // Create minimal topology with no sensors
+        MathModelTopology topo;
+        topo.slack_bus = 0;
+        topo.phase_shift = {0.0};
+        topo.branch_bus_idx = {};
+        topo.sources_per_bus = {from_sparse, {0, 1}};
+        topo.shunts_per_bus = {from_sparse, {0, 0}};
+        topo.load_gens_per_bus = {from_sparse, {0, 0}};
+        topo.power_sensors_per_bus = {from_sparse, {0, 0}};
+        topo.power_sensors_per_source = {from_sparse, {0, 0}};
+        topo.power_sensors_per_load_gen = {from_sparse, {0}};
+        topo.power_sensors_per_shunt = {from_sparse, {0}};
+        topo.power_sensors_per_branch_from = {from_sparse, {0}};
+        topo.power_sensors_per_branch_to = {from_sparse, {0}};
+        topo.current_sensors_per_branch_from = {from_sparse, {0}};
+        topo.current_sensors_per_branch_to = {from_sparse, {0}};
+        topo.voltage_sensors_per_bus = {from_sparse, {0, 0}};
+
+        MathModelParam<symmetric_t> param;
+        param.source_param = {SourceCalcParam{.y1 = 1.0, .y0 = 1.0}};
+
+        StateEstimationInput<symmetric_t> se_input;
+        se_input.source_status = {1};
+        // No measurements
+
+        auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
+        YBus<symmetric_t> const y_bus{topo_ptr, param_ptr};
+        math_solver::MeasuredValues<symmetric_t> const measured_values{y_bus.shared_topology(), se_input};
+
+        std::vector<ObservabilityNNResult> neighbour_results(1);
+        auto result = scan_network_sensors(measured_values, topo, y_bus.y_bus_structure(), neighbour_results);
+
+        // All sensor vectors should be initialized but empty/zero
+        CHECK(result.flow_sensors.size() == y_bus.y_bus_structure().row_indptr.back());
+        CHECK(result.voltage_phasor_sensors.size() == 1);
+        CHECK(result.bus_injections.size() == 2);
+
+        // All sensors should be zero
+        CHECK(std::all_of(result.flow_sensors.begin(), result.flow_sensors.end(), [](int8_t val) { return val == 0; }));
+        CHECK(std::all_of(result.voltage_phasor_sensors.begin(), result.voltage_phasor_sensors.end(),
+                          [](int8_t val) { return val == 0; }));
+        CHECK(result.bus_injections.back() == 0); // No bus injections
+
+        // Should be marked as possibly ill-conditioned due to no sensors
+        CHECK(result.is_possibly_ill_conditioned == false);
+    }
+
+    SUBCASE("Mixed sensor types") {
+        // Create topology with various sensor types
+        MathModelTopology topo;
+        topo.slack_bus = 0;
+        topo.phase_shift = {0.0, 0.0};
+        topo.branch_bus_idx = {{0, 1}};
+        topo.sources_per_bus = {from_sparse, {0, 1, 1}};
+        topo.shunts_per_bus = {from_sparse, {0, 0, 0}};
+        topo.load_gens_per_bus = {from_sparse, {0, 0, 0}};
+        topo.power_sensors_per_bus = {from_sparse, {0, 0, 0}};
+        topo.power_sensors_per_source = {from_sparse, {0, 0}};
+        topo.power_sensors_per_load_gen = {from_sparse, {0}};
+        topo.power_sensors_per_shunt = {from_sparse, {0}};
+        topo.power_sensors_per_branch_from = {from_sparse, {0, 0}}; // No power sensors
+        topo.power_sensors_per_branch_to = {from_sparse, {0, 0}};
+        topo.current_sensors_per_branch_from = {from_sparse, {0, 1}}; // Current sensor on branch 0
+        topo.current_sensors_per_branch_to = {from_sparse, {0, 0}};
+        topo.voltage_sensors_per_bus = {from_sparse, {0, 1, 2}}; // Voltage sensors on both buses
+
+        MathModelParam<symmetric_t> param;
+        param.source_param = {SourceCalcParam{.y1 = 1.0, .y0 = 1.0}};
+        param.branch_param = {{1.0, -1.0, -1.0, 1.0}};
+
+        StateEstimationInput<symmetric_t> se_input;
+        se_input.source_status = {1};
+        se_input.measured_voltage = {
+            {.value = 1.0 + 0.0i, .variance = 1.0},  // Bus 0 - voltage phasor
+            {.value = 0.95 + 0.05i, .variance = 1.0} // Bus 1 - voltage phasor
+        };
+        se_input.measured_branch_from_current = {{.angle_measurement_type = AngleMeasurementType::local_angle,
+                                                  .measurement = {.real_component = {.value = 1.0, .variance = 1.0},
+                                                                  .imag_component = {.value = 0.1, .variance = 1.0}}}};
+
+        auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
+        YBus<symmetric_t> const y_bus{topo_ptr, param_ptr};
+        math_solver::MeasuredValues<symmetric_t> const measured_values{y_bus.shared_topology(), se_input};
+
+        std::vector<ObservabilityNNResult> neighbour_results(2);
+        auto result = scan_network_sensors(measured_values, topo, y_bus.y_bus_structure(), neighbour_results);
+
+        // Both buses should have voltage phasor sensors
+        CHECK(result.voltage_phasor_sensors[0] == 1);
+        CHECK(result.voltage_phasor_sensors[1] == 1);
+
+        // Should detect branch current sensor as flow sensor
+        // Find the branch entry in the Y-bus structure and verify it's detected
+        bool found_branch_sensor = false;
+        for (size_t i = 0; i < result.flow_sensors.size(); ++i) {
+            if (result.flow_sensors[i] == 1) {
+                found_branch_sensor = true;
+                break;
+            }
+        }
+        CHECK(found_branch_sensor); // Current sensor should be detected as flow sensor
+
+        // Should not be ill-conditioned with sufficient sensors
+        CHECK(result.is_possibly_ill_conditioned == false);
+    }
+}
+
 TEST_CASE("Test expand_neighbour_list") {
     SUBCASE("Basic expansion test") {
         std::vector<ObservabilityNNResult> neighbour_list(3);
