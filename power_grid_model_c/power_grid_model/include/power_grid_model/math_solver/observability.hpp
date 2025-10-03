@@ -15,7 +15,7 @@ namespace detail {
 struct ObservabilitySensorsResult {
     std::vector<int8_t> flow_sensors;
     std::vector<int8_t> voltage_phasor_sensors;
-    bool is_possibly_ill_conditioned{false};
+    std::vector<int8_t> row_is_possibly_ill_conditioned;
 };
 
 // count flow and voltage phasor sensors for the observability check
@@ -26,7 +26,7 @@ struct ObservabilitySensorsResult {
 // return a ObservabilitySensorsResult struct with
 //      a vector of flow sensor count
 //      a vector of voltage phasor sensor count
-//      a boolean indicating if the system is possibly ill-conditioned
+//      a vector of boolean indicating if each row is possibly ill-conditioned
 template <symmetry_tag sym>
 ObservabilitySensorsResult count_observability_sensors(MeasuredValues<sym> const& measured_values,
                                                        MathModelTopology const& topo,
@@ -35,7 +35,7 @@ ObservabilitySensorsResult count_observability_sensors(MeasuredValues<sym> const
 
     ObservabilitySensorsResult result{.flow_sensors = std::vector<int8_t>(y_bus_structure.row_indptr.back(), 0),
                                       .voltage_phasor_sensors = std::vector<int8_t>(n_bus, 0),
-                                      .is_possibly_ill_conditioned = false};
+                                      .row_is_possibly_ill_conditioned = std::vector<int8_t>(n_bus, 0)};
 
     auto has_flow_sensor = [&measured_values](Idx branch) {
         return measured_values.has_branch_from_power(branch) || measured_values.has_branch_to_power(branch) ||
@@ -81,7 +81,7 @@ ObservabilitySensorsResult count_observability_sensors(MeasuredValues<sym> const
         }
         // the system could be ill-conditioned if there is no flow sensor for one bus, except the last bus
         if (!has_at_least_one_sensor && row != n_bus - 1) {
-            result.is_possibly_ill_conditioned = true;
+            result.row_is_possibly_ill_conditioned[row] = 1;
         }
     }
     return result;
@@ -195,8 +195,11 @@ inline bool sufficient_observability_condition(YBusStructure const& y_bus_struct
 
 struct ObservabilityResult {
     bool is_observable{false};
-    bool is_possibly_ill_conditioned{false};
-    constexpr bool use_perturbation() const { return is_possibly_ill_conditioned && is_observable; }
+    std::vector<int8_t> row_is_possibly_ill_conditioned{};
+    bool use_perturbation() const {
+        return std::ranges::any_of(row_is_possibly_ill_conditioned, [](int8_t element) { return element == 1; }) &&
+               is_observable;
+    }
 };
 
 template <symmetry_tag sym>
@@ -227,7 +230,8 @@ inline ObservabilityResult observability_check(MeasuredValues<sym> const& measur
     }
     //  ToDo(JGuo): meshed network will require a different treatment
     return ObservabilityResult{.is_observable = is_necessary_condition_met && is_sufficient_condition_met,
-                               .is_possibly_ill_conditioned = observability_sensors.is_possibly_ill_conditioned};
+                               .row_is_possibly_ill_conditioned =
+                                   observability_sensors.row_is_possibly_ill_conditioned};
 }
 
 } // namespace power_grid_model::math_solver
