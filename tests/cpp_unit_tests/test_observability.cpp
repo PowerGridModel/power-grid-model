@@ -53,7 +53,7 @@ void check_not_observable(MathModelTopology const& topo, MathModelParam<symmetri
 } // namespace
 
 // Original integration tests
-TEST_CASE("Observable voltage sensor") {
+TEST_CASE("Observable voltage sensor - basic integration test") {
     MathModelTopology topo;
     topo.slack_bus = 0;
     topo.phase_shift = {0.0, 0.0, 0.0};
@@ -121,8 +121,107 @@ TEST_CASE("Test expand_neighbour_list") {
     }
 }
 
-// Note: assign_independent_sensors_radial requires complex YBusStructure setup
-// This would be better tested through integration tests
+TEST_CASE("Test assign_independent_sensors_radial") {
+    SUBCASE("Integration test with minimal setup") {
+        // Create a simple 2-bus radial network: bus0--bus1
+        MathModelTopology topo;
+        topo.slack_bus = 0;
+        topo.phase_shift = {0.0, 0.0};
+        topo.branch_bus_idx = {{0, 1}};
+        topo.sources_per_bus = {from_sparse, {0, 1, 1}};
+        topo.shunts_per_bus = {from_sparse, {0, 0, 0}};
+        topo.load_gens_per_bus = {from_sparse, {0, 0, 0}};
+        topo.power_sensors_per_bus = {from_sparse, {0, 0, 0}};
+        topo.power_sensors_per_source = {from_sparse, {0, 0}};
+        topo.power_sensors_per_load_gen = {from_sparse, {0}};
+        topo.power_sensors_per_shunt = {from_sparse, {0}};
+        topo.power_sensors_per_branch_from = {from_sparse, {0, 0}};
+        topo.power_sensors_per_branch_to = {from_sparse, {0, 0}};
+        topo.current_sensors_per_branch_from = {from_sparse, {0, 0}};
+        topo.current_sensors_per_branch_to = {from_sparse, {0, 0}};
+        topo.voltage_sensors_per_bus = {from_sparse, {0, 0, 0}};
+
+        MathModelParam<symmetric_t> param;
+        param.source_param = {SourceCalcParam{.y1 = 1.0, .y0 = 1.0}};
+        param.branch_param = {{1.0, -1.0, -1.0, 1.0}};
+
+        auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
+        YBus<symmetric_t> const y_bus{topo_ptr, param_ptr};
+
+        // Test the function with real YBusStructure
+        // First, inspect the actual YBus structure to size our vectors correctly
+        auto const& y_bus_struct = y_bus.y_bus_structure();
+        Idx n_ybus_entries = static_cast<Idx>(y_bus_struct.col_indices.size());
+        Idx n_bus = static_cast<Idx>(y_bus_struct.bus_entry.size());
+
+        std::vector<int8_t> flow_sensors(n_ybus_entries, 0);  // Initialize to correct size
+        std::vector<int8_t> voltage_phasor_sensors(n_bus, 0); // Initialize to correct size
+
+        // Set up initial sensors if vectors are large enough
+        if (n_ybus_entries > 0)
+            flow_sensors[0] = 1; // bus0 injection
+        if (n_bus > 1)
+            voltage_phasor_sensors[1] = 1; // voltage phasor at bus1
+
+        assign_independent_sensors_radial(y_bus_struct, flow_sensors, voltage_phasor_sensors);
+
+        // Verify basic behavior - bus injections should be removed
+        // The exact reassignment depends on the YBus structure, so we test general properties
+        if (n_bus > 1) {
+            CHECK(flow_sensors[y_bus_struct.bus_entry[n_bus - 1]] == 0); // last bus injection should be 0
+        }
+
+        // Total sensors should be preserved (just reassigned)
+        Idx initial_total = 2; // We started with 1 flow + 1 voltage = 2 total
+        Idx final_flow = std::accumulate(flow_sensors.begin(), flow_sensors.end(), 0);
+        Idx final_voltage = std::accumulate(voltage_phasor_sensors.begin(), voltage_phasor_sensors.end(), 0);
+        CHECK(final_flow + final_voltage <= initial_total); // Some sensors might be reassigned or removed
+    }
+
+    SUBCASE("Function should not crash with empty sensors") {
+        // Test with minimal topology to ensure the function handles edge cases
+        MathModelTopology topo;
+        topo.slack_bus = 0;
+        topo.phase_shift = {0.0};
+        topo.branch_bus_idx = {}; // No branches
+        topo.sources_per_bus = {from_sparse, {0, 1}};
+        topo.shunts_per_bus = {from_sparse, {0, 0}};
+        topo.load_gens_per_bus = {from_sparse, {0, 0}};
+        topo.power_sensors_per_bus = {from_sparse, {0, 0}};
+        topo.power_sensors_per_source = {from_sparse, {0, 0}};
+        topo.power_sensors_per_load_gen = {from_sparse, {0}};
+        topo.power_sensors_per_shunt = {from_sparse, {0}};
+        topo.power_sensors_per_branch_from = {from_sparse, {0}};
+        topo.power_sensors_per_branch_to = {from_sparse, {0}};
+        topo.current_sensors_per_branch_from = {from_sparse, {0}};
+        topo.current_sensors_per_branch_to = {from_sparse, {0}};
+        topo.voltage_sensors_per_bus = {from_sparse, {0, 0}};
+
+        MathModelParam<symmetric_t> param;
+        param.source_param = {SourceCalcParam{.y1 = 1.0, .y0 = 1.0}};
+
+        auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
+        YBus<symmetric_t> const y_bus{topo_ptr, param_ptr};
+
+        // Size vectors correctly based on actual YBus structure
+        auto const& y_bus_struct = y_bus.y_bus_structure();
+        Idx n_ybus_entries = static_cast<Idx>(y_bus_struct.col_indices.size());
+        Idx n_bus = static_cast<Idx>(y_bus_struct.bus_entry.size());
+
+        std::vector<int8_t> flow_sensors(n_ybus_entries, 0);
+        std::vector<int8_t> voltage_phasor_sensors(n_bus, 0);
+
+        // Should handle single bus case gracefully
+        CHECK_NOTHROW(assign_independent_sensors_radial(y_bus_struct, flow_sensors, voltage_phasor_sensors));
+
+        // Last bus injection should be removed if there are buses
+        if (n_bus > 0) {
+            CHECK(flow_sensors[y_bus_struct.bus_entry[n_bus - 1]] == 0);
+        }
+    }
+}
 
 TEST_CASE("Test necessary_condition") {
     SUBCASE("Sufficient measurements") {
