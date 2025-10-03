@@ -13,17 +13,16 @@
 namespace power_grid_model {
 namespace detail {
 template <typename T>
-concept iterator_facadeable_c = true;
-//     requires(std::remove_const_t<T> t, std::add_const_t<T> ct, typename T::difference_type d) {
-//         // typename T::value_type;
-//         // std::integral<typename T::difference_type>;
-//         // std::same_as<std::is_pointer<typename T::pointer>, std::true_type>;
-//         // std::same_as<std::is_lvalue_reference<typename T::reference>, std::true_type>;
-//         { *t } -> std::same_as<typename T::reference>;
-//         { ct <=> ct } -> std::same_as<std::strong_ordering>;
-//         { t.advance(d) };
-//         { ct.distance_to(ct) } -> std::same_as<typename T::difference_type>;
-//     };
+concept iterator_facadeable_c = requires(T t, std::add_const_t<T> ct, typename T::difference_type d) {
+    typename T::value_type;
+    std::integral<typename T::difference_type>;
+    std::same_as<std::is_pointer<typename T::pointer>, std::true_type>;
+    std::same_as<std::is_lvalue_reference<typename T::reference>, std::true_type>;
+    { *t } -> std::same_as<typename T::reference>;
+    { ct <=> ct } -> std::same_as<std::strong_ordering>;
+    { t.advance(d) };
+    { ct.distance_to(ct) } -> std::same_as<typename T::difference_type>;
+};
 } // namespace detail
 
 class IteratorFacade {
@@ -105,13 +104,15 @@ class IteratorFacade {
         return *(self + idx);
     }
 
-    // delete default, constructors of non-derived types and non-iterator-facadeable types to prevent instantiation from
-    // non-derived classes
+    // prevent construction by non-derived and non-iterator-facadeable types
     IteratorFacade() = delete;
-    template <typename Self>
-        requires(
-            std::derived_from<std::remove_cvref_t<Self>, IteratorFacade>) // && detail::iterator_facadeable_c<Self>)
-    explicit IteratorFacade(Self&& /*self*/){};
+    template <typename Self> explicit IteratorFacade(Self&& /*self*/) {
+        // cannot be done using constraints because the type is not fully instantiated yet when the compiler
+        // instantiates the constructor. Note that this is different from the other methods because those are only
+        // instantiated when used.
+        static_assert(std::derived_from<std::remove_cvref_t<Self>, IteratorFacade>);
+        static_assert(detail::iterator_facadeable_c<std::remove_cvref_t<Self>>);
+    };
 };
 
 } // namespace power_grid_model
