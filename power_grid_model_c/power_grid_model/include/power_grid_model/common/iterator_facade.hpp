@@ -13,16 +13,16 @@
 namespace power_grid_model {
 namespace detail {
 template <typename T>
-concept iterator_facadeable_c =
-    std::integral<typename T::difference_type> && std::same_as<std::is_pointer<typename T::pointer>, std::true_type> &&
-    std::same_as<std::is_lvalue_reference<typename T::reference>, std::true_type> &&
-    requires(T t, std::add_const_t<T> ct, typename T::difference_type d) {
-        typename T::value_type;
-        { *t } -> std::same_as<typename T::reference>;
-        { ct <=> ct } -> std::same_as<std::strong_ordering>;
-        { t.advance(d) };
-        { ct.distance_to(ct) } -> std::same_as<typename T::difference_type>;
-    };
+concept iterator_facadeable_c = std::integral<typename T::difference_type> && std::is_pointer_v<typename T::pointer> &&
+                                std::is_lvalue_reference_v<typename T::reference> &&
+                                requires(T t, std::add_const_t<T> ct, typename T::difference_type d) {
+                                    typename T::value_type;
+                                    { *t } -> std::same_as<typename T::reference>;
+                                    { &*t } -> std::same_as<typename T::pointer>;
+                                    { ct <=> ct } -> std::same_as<std::strong_ordering>;
+                                    { t.advance(d) };
+                                    { ct.distance_to(ct) } -> std::same_as<typename T::difference_type>;
+                                };
 } // namespace detail
 
 class IteratorFacade {
