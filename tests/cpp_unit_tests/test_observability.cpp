@@ -152,6 +152,143 @@ TEST_CASE("Test Observability - scan_network_sensors") {
         CHECK(neighbour_results[2].status == ConnectivityStatus::node_measured);
     }
 
+    SUBCASE("Meshed network") {
+        // Create a 6-bus meshed network:
+        //                       bus0 (injection sensor)
+        //                         |
+        //  bus1-[branch-sensor]-bus2 -(voltage)---[branch-sensor]----- bus3
+        //                         |                                    [|] (branch sensor)
+        //                       bus4 (injection sensor) -------------- bus5
+        //
+        // Branch sensors: bus1-bus2, bus3-bus5
+        // Expected neighbour_result: {0: [2], 1: [2], 2: [3,4], 3: [5], 4: [5], 5:[]}
+
+        using power_grid_model::math_solver::detail::ObservabilityNNResult;
+
+        MathModelTopology topo;
+        topo.slack_bus = 0;
+        topo.phase_shift = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+
+        // Define branches:
+        // branch 0: bus0-bus2, branch 1: bus1-bus2, branch 2: bus2-bus3,
+        // branch 3: bus2-bus4, branch 4: bus3-bus5, branch 5: bus4-bus5
+        topo.branch_bus_idx = {{0, 2}, {1, 2}, {2, 3}, {2, 4}, {3, 5}, {4, 5}};
+
+        topo.sources_per_bus = {from_sparse, {0, 1, 1, 1, 1, 1, 1}};
+        topo.shunts_per_bus = {from_sparse, {0, 0, 0, 0, 0, 0, 0}};
+        topo.load_gens_per_bus = {from_sparse, {0, 0, 0, 0, 0, 0, 0}}; // No load_gens for simplicity
+
+        // Power sensors: bus 0, bus 4 have injection sensors (2 total sensors)
+        // Format: bus0 has sensors [0:1), bus1 has [1:1), bus2 has [1:1), bus3 has [1:1), bus4 has [1:2), bus5 has
+        // [2:2)
+        topo.power_sensors_per_bus = {from_sparse, {0, 1, 1, 1, 1, 2, 2}};
+        topo.power_sensors_per_source = {from_sparse, {0, 0}};
+        topo.power_sensors_per_load_gen = {from_sparse, {0}}; // No load_gens
+        topo.power_sensors_per_shunt = {from_sparse, {0}};
+
+        // Branch sensors: branch 1 (bus1-bus2), branch 2 (bus2-bus3), branch 4 (bus3-bus5) have power sensors
+        // 6 branches: branch0[0:0), branch1[0:1), branch2[1:2), branch3[2:2), branch4[2:3), branch5[3:3)
+        topo.power_sensors_per_branch_from = {from_sparse, {0, 0, 1, 2, 2, 3, 3}};
+        topo.power_sensors_per_branch_to = {from_sparse, {0, 0, 0, 0, 0, 0, 0}};
+        topo.current_sensors_per_branch_from = {from_sparse, {0, 0, 0, 0, 0, 0, 0}};
+        topo.current_sensors_per_branch_to = {from_sparse, {0, 0, 0, 0, 0, 0, 0}};
+
+        // Voltage sensor: bus 2 has voltage sensor
+        // bus0[0:0), bus1[0:0), bus2[0:1), bus3[1:1), bus4[1:1), bus5[1:1)
+        topo.voltage_sensors_per_bus = {from_sparse, {0, 0, 0, 1, 1, 1, 1}};
+
+        MathModelParam<symmetric_t> param;
+        param.source_param = {SourceCalcParam{.y1 = 1.0, .y0 = 1.0}};
+        param.branch_param = {{1.0, -1.0, -1.0, 1.0}, {1.0, -1.0, -1.0, 1.0}, {1.0, -1.0, -1.0, 1.0},
+                              {1.0, -1.0, -1.0, 1.0}, {1.0, -1.0, -1.0, 1.0}, {1.0, -1.0, -1.0, 1.0}};
+
+        StateEstimationInput<symmetric_t> se_input;
+        se_input.source_status = {1};
+
+        // Initialize all measurement vectors to correct sizes first
+        se_input.measured_voltage.resize(topo.voltage_sensors_per_bus.element_size());
+        se_input.measured_bus_injection.resize(topo.power_sensors_per_bus.element_size());
+        se_input.measured_branch_from_power.resize(topo.power_sensors_per_branch_from.element_size());
+        se_input.measured_branch_to_power.resize(topo.power_sensors_per_branch_to.element_size());
+        se_input.measured_branch_from_current.resize(topo.current_sensors_per_branch_from.element_size());
+        se_input.measured_branch_to_current.resize(topo.current_sensors_per_branch_to.element_size());
+        se_input.measured_shunt_power.resize(topo.power_sensors_per_shunt.element_size());
+        se_input.measured_load_gen_power.resize(topo.power_sensors_per_load_gen.element_size());
+        se_input.measured_source_power.resize(topo.power_sensors_per_source.element_size());
+
+        // Voltage measurement: bus 2 has voltage sensor (magnitude only - no phasor)
+        if (se_input.measured_voltage.size() > 0) {
+            se_input.measured_voltage[0] = {.value = {1.0, nan}, .variance = 1.0}; // Bus 2: magnitude only
+        }
+
+        // Power injection measurements: bus 0, bus 4 (2 measurements to match 2 sensors)
+        if (se_input.measured_bus_injection.size() >= 2) {
+            se_input.measured_bus_injection[0] = {.real_component = {.value = 1.0, .variance = 1.0},
+                                                  .imag_component = {.value = 1.0, .variance = 1.0}};
+            se_input.measured_bus_injection[1] = {.real_component = {.value = 1.0, .variance = 1.0},
+                                                  .imag_component = {.value = 1.0, .variance = 1.0}};
+        }
+
+        // Branch power measurements: branch 1 (bus1-bus2), branch 2 (bus2-bus3), branch 4 (bus3-bus5) (3 measurements
+        // to match 3 sensors)
+        if (se_input.measured_branch_from_power.size() >= 3) {
+            se_input.measured_branch_from_power[0] = {.real_component = {.value = 1.0, .variance = 1.0},
+                                                      .imag_component = {.value = 1.0, .variance = 1.0}};
+            se_input.measured_branch_from_power[1] = {.real_component = {.value = 1.0, .variance = 1.0},
+                                                      .imag_component = {.value = 1.0, .variance = 1.0}};
+            se_input.measured_branch_from_power[2] = {.real_component = {.value = 1.0, .variance = 1.0},
+                                                      .imag_component = {.value = 1.0, .variance = 1.0}};
+        }
+
+        // No source power measurements needed
+
+        auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
+        YBus<symmetric_t> const y_bus{topo_ptr, param_ptr};
+
+        math_solver::MeasuredValues<symmetric_t> const measured_values{y_bus.shared_topology(), se_input};
+
+        std::vector<ObservabilityNNResult> neighbour_results(6);
+        auto result = scan_network_sensors(measured_values, topo, y_bus.y_bus_structure(), neighbour_results);
+
+        // Basic size checks
+        CHECK(result.flow_sensors.size() > 0);
+        CHECK(result.voltage_phasor_sensors.size() == 6);
+        CHECK(result.bus_injections.size() == 7);
+
+        // Check that we have the expected sensor arrays
+        CHECK(result.flow_sensors.size() == y_bus.y_bus_structure().row_indptr.back());
+        CHECK(result.voltage_phasor_sensors.size() == 6); // n_bus
+        CHECK(result.bus_injections.size() == 7);         // n_bus + 1
+
+        // Check voltage sensors: bus 2 has voltage sensor (magnitude only, not phasor)
+        CHECK(result.voltage_phasor_sensors[2] == 0); // Bus 2 has magnitude only (no phasor)
+
+        // Check bus injection sensors: bus 0, 4 have injection sensors
+        CHECK(result.bus_injections[0] == 1);     // Bus 0 has injection sensor
+        CHECK(result.bus_injections[4] == 1);     // Bus 4 has injection sensor
+        CHECK(result.bus_injections.back() >= 2); // Total count should be at least 2
+
+        // Verify each bus has correct index
+        for (size_t i = 0; i < neighbour_results.size(); ++i) {
+            CHECK(neighbour_results[i].bus == static_cast<Idx>(i));
+        }
+
+        // Check connectivity status as per your specification
+        // {0: [2], 1: [2], 2: [3,4], 3: [5], 4: [5], 5:[]}
+        // Note: Buses without loads/generators get pseudo measurements (zero injection)
+        CHECK(neighbour_results[0].status == ConnectivityStatus::node_measured); // bus 0 has injection sensor
+        CHECK(neighbour_results[1].status ==
+              ConnectivityStatus::node_measured); // bus 1 has pseudo measurement (zero injection)
+        CHECK(neighbour_results[2].status == ConnectivityStatus::node_measured); // bus 2 has voltage sensor
+        CHECK(neighbour_results[2].direct_neighbours.size() == 2);               // bus 2 has 2 neighbours
+        CHECK(neighbour_results[3].status ==
+              ConnectivityStatus::node_measured); // bus 3 has pseudo measurement (zero injection)
+        CHECK(neighbour_results[4].status == ConnectivityStatus::node_measured); // bus 4 has injection sensor
+        CHECK(neighbour_results[5].status ==
+              ConnectivityStatus::node_measured); // bus 5 has pseudo measurement (zero injection)
+    }
+
     SUBCASE("Empty network sensors") {
         // Create minimal topology with no sensors
         MathModelTopology topo;
