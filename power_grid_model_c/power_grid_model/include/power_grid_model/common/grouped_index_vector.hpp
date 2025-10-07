@@ -120,7 +120,7 @@ class SparseGroupedIdxVector {
             return latest_value_;
         }
 
-        friend constexpr std::strong_ordering operator<=>(GroupIterator const first, GroupIterator const& second) {
+        friend constexpr std::strong_ordering operator<=>(GroupIterator const& first, GroupIterator const& second) {
             assert(first.indptr_ == second.indptr_);
             return first.group_ <=> second.group_;
         }
