@@ -2,8 +2,8 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include <power_grid_model/common/iterator_facade.hpp>
 #include <power_grid_model/common/counting_iterator.hpp>
+#include <power_grid_model/common/iterator_facade.hpp>
 
 #include <doctest/doctest.h>
 
@@ -25,13 +25,13 @@ template <typename UnderlyingType> class BaseTestIterator : public IteratorFacad
     using pointer = underlying::pointer;
     using reference = underlying::reference;
 
-    constexpr BaseTestIterator(underlying it) : IteratorFacade{*this}, it_{it} {}
+    constexpr BaseTestIterator(std::remove_cvref_t<underlying> it) : IteratorFacade{*this}, it_{std::move(it)} {}
 
     constexpr auto operator*() -> reference { return *it_; }
     constexpr auto operator*() const -> std::add_lvalue_reference_t<std::add_const_t<value_type>> { return *it_; }
 
-    friend constexpr auto operator<=>(BaseTestIterator const& first, BaseTestIterator const& second)
-        -> std::strong_ordering {
+    friend constexpr auto operator<=>(BaseTestIterator const& first,
+                                      BaseTestIterator const& second) -> std::strong_ordering {
         return *first.it_ <=> *second.it_;
     }
 
