@@ -106,7 +106,7 @@ class IteratorFacade {
 
     // prevent construction by non-derived and non-iterator-facadeable types
     IteratorFacade() = delete;
-    template <typename Self> explicit IteratorFacade(Self&& /*self*/) {
+    template <typename Self> constexpr explicit IteratorFacade(Self&& /*self*/) {
         // cannot be done using constraints because the type is not fully instantiated yet when the compiler
         // instantiates the constructor. Note that this is different from the other methods because those are only
         // instantiated when used.
