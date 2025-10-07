@@ -81,7 +81,9 @@ class IteratorFacade {
     }
 
     template <typename Self>
-    constexpr std::remove_cvref_t<Self> operator+(this Self&& self, std::integral auto offset) {
+        requires std::derived_from<std::remove_cvref_t<Self>, IteratorFacade> &&
+                 detail::iterator_facadeable_c<std::remove_cvref_t<Self>>
+    friend constexpr std::remove_cvref_t<Self> operator+(Self&& self, std::integral auto offset) {
         using Result = std::remove_cvref_t<Self>;
         Result result{std::forward<Self>(self)};
         result += offset;
