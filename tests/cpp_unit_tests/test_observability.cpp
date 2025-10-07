@@ -7,18 +7,7 @@
 #include <power_grid_model/math_solver/observability.hpp>
 #include <power_grid_model/math_solver/y_bus.hpp>
 
-using power_grid_model::math_solver::YBusStructure;
-using power_grid_model::math_solver::detail::assign_independent_sensors_radial;
-using power_grid_model::math_solver::detail::ConnectivityStatus;
-using power_grid_model::math_solver::detail::expand_neighbour_list;
-using power_grid_model::math_solver::detail::necessary_condition;
-using power_grid_model::math_solver::detail::ObservabilityNNResult;
-using power_grid_model::math_solver::detail::ObservabilitySensorsResult;
-using power_grid_model::math_solver::detail::prepare_starting_nodes;
-using power_grid_model::math_solver::detail::scan_network_sensors;
-using power_grid_model::math_solver::detail::starting_from_node;
-using power_grid_model::math_solver::detail::sufficient_condition_meshed_without_voltage_phasor;
-using power_grid_model::math_solver::detail::sufficient_condition_radial_with_voltage_phasor;
+#include <ranges>
 
 #include <doctest/doctest.h>
 
@@ -91,6 +80,10 @@ TEST_CASE("Observable voltage sensor - basic integration test") {
 }
 
 TEST_CASE("Test Observability - scan_network_sensors") {
+    using power_grid_model::math_solver::detail::ConnectivityStatus;
+    using power_grid_model::math_solver::detail::ObservabilityNNResult;
+    using power_grid_model::math_solver::detail::scan_network_sensors;
+
     SUBCASE("Basic sensor scanning with simple topology") {
         // Create a simple 3-bus radial network: bus0--bus1--bus2
         MathModelTopology topo;
@@ -199,9 +192,8 @@ TEST_CASE("Test Observability - scan_network_sensors") {
         CHECK(result.bus_injections.size() == 2);
 
         // All sensors should be zero
-        CHECK(std::all_of(result.flow_sensors.begin(), result.flow_sensors.end(), [](int8_t val) { return val == 0; }));
-        CHECK(std::all_of(result.voltage_phasor_sensors.begin(), result.voltage_phasor_sensors.end(),
-                          [](int8_t val) { return val == 0; }));
+        CHECK(std::ranges::all_of(result.flow_sensors, [](int8_t val) { return val == 0; }));
+        CHECK(std::ranges::all_of(result.voltage_phasor_sensors, [](int8_t val) { return val == 0; }));
         CHECK(result.bus_injections.back() == 0); // No bus injections
 
         // Should be marked as possibly ill-conditioned due to no sensors
@@ -270,6 +262,9 @@ TEST_CASE("Test Observability - scan_network_sensors") {
 }
 
 TEST_CASE("Test Observability - prepare_starting_nodes") {
+    using power_grid_model::math_solver::detail::ConnectivityStatus;
+    using power_grid_model::math_solver::detail::ObservabilityNNResult;
+    using power_grid_model::math_solver::detail::prepare_starting_nodes;
 
     SUBCASE("Nodes without measurements - preferred starting points") {
         // Create a simple 4-bus network with mixed measurement status
@@ -303,8 +298,8 @@ TEST_CASE("Test Observability - prepare_starting_nodes") {
         // Should find buses 1 and 3 as starting candidates
         // (nodes without measurements and all edges have no edge measurements)
         CHECK(starting_candidates.size() == 2);
-        CHECK(std::find(starting_candidates.begin(), starting_candidates.end(), 1) != starting_candidates.end());
-        CHECK(std::find(starting_candidates.begin(), starting_candidates.end(), 3) != starting_candidates.end());
+        CHECK(std::ranges::find(starting_candidates, 1) != starting_candidates.end());
+        CHECK(std::ranges::find(starting_candidates, 3) != starting_candidates.end());
     }
 
     SUBCASE("Nodes without measurements but with edge measurements") {
@@ -333,8 +328,8 @@ TEST_CASE("Test Observability - prepare_starting_nodes") {
         // Should fallback to nodes without measurements (buses 1 and 2)
         // since no "ideal" starting points exist
         CHECK(starting_candidates.size() == 2);
-        CHECK(std::find(starting_candidates.begin(), starting_candidates.end(), 1) != starting_candidates.end());
-        CHECK(std::find(starting_candidates.begin(), starting_candidates.end(), 2) != starting_candidates.end());
+        CHECK(std::ranges::find(starting_candidates, 1) != starting_candidates.end());
+        CHECK(std::ranges::find(starting_candidates, 2) != starting_candidates.end());
     }
 
     SUBCASE("All nodes have measurements - fallback to first node") {
@@ -428,6 +423,10 @@ TEST_CASE("Test Observability - prepare_starting_nodes") {
 }
 
 TEST_CASE("Test Observability - expand_neighbour_list") {
+    using power_grid_model::math_solver::detail::ConnectivityStatus;
+    using power_grid_model::math_solver::detail::expand_neighbour_list;
+    using power_grid_model::math_solver::detail::ObservabilityNNResult;
+
     SUBCASE("Basic expansion test") {
         std::vector<ObservabilityNNResult> neighbour_list(3);
 
@@ -463,6 +462,9 @@ TEST_CASE("Test Observability - expand_neighbour_list") {
 }
 
 TEST_CASE("Test Observability - assign_independent_sensors_radial") {
+    using power_grid_model::math_solver::YBusStructure;
+    using power_grid_model::math_solver::detail::assign_independent_sensors_radial;
+
     SUBCASE("Integration test with minimal setup") {
         // Create a simple 2-bus radial network: bus0--bus1
         MathModelTopology topo;
@@ -515,8 +517,8 @@ TEST_CASE("Test Observability - assign_independent_sensors_radial") {
 
         // Total sensors should be preserved (just reassigned)
         Idx initial_total = 2; // We started with 1 flow + 1 voltage = 2 total
-        Idx final_flow = std::accumulate(flow_sensors.begin(), flow_sensors.end(), 0);
-        Idx final_voltage = std::accumulate(voltage_phasor_sensors.begin(), voltage_phasor_sensors.end(), 0);
+        Idx final_flow = std::ranges::fold_left(flow_sensors, 0, std::plus<>{});
+        Idx final_voltage = std::ranges::fold_left(voltage_phasor_sensors, 0, std::plus<>{});
         CHECK(final_flow + final_voltage <= initial_total); // Some sensors might be reassigned or removed
     }
 
@@ -565,6 +567,9 @@ TEST_CASE("Test Observability - assign_independent_sensors_radial") {
 }
 
 TEST_CASE("Test Observability - starting_from_node") {
+    using power_grid_model::math_solver::detail::ConnectivityStatus;
+    using power_grid_model::math_solver::detail::ObservabilityNNResult;
+    using power_grid_model::math_solver::detail::starting_from_node;
 
     SUBCASE("Simple spanning tree with native edge measurements") {
         // Create a 3-bus network with native edge measurements
@@ -766,6 +771,9 @@ TEST_CASE("Test Observability - starting_from_node") {
 }
 
 TEST_CASE("Test Observability - necessary_condition") {
+    using power_grid_model::math_solver::detail::necessary_condition;
+    using power_grid_model::math_solver::detail::ObservabilitySensorsResult;
+
     SUBCASE("Sufficient measurements") {
         ObservabilitySensorsResult sensors;
         sensors.flow_sensors = {1, 1, 0, 1};
@@ -804,6 +812,9 @@ TEST_CASE("Test Observability - necessary_condition") {
 }
 
 TEST_CASE("Test Observability - sufficient_condition_radial_with_voltage_phasor") {
+    using power_grid_model::math_solver::detail::ObservabilityNNResult;
+    using power_grid_model::math_solver::detail::scan_network_sensors;
+    using power_grid_model::math_solver::detail::sufficient_condition_radial_with_voltage_phasor;
 
     SUBCASE("Observable radial network with voltage phasor sensors") {
         // Create a simple 4-bus radial network: bus0--bus1--bus2--bus3
@@ -852,8 +863,8 @@ TEST_CASE("Test Observability - sufficient_condition_radial_with_voltage_phasor"
             scan_network_sensors(measured_values, topo, y_bus.y_bus_structure(), neighbour_results);
 
         // Count voltage phasor sensors
-        Idx n_voltage_phasor_sensors = std::accumulate(observability_sensors.voltage_phasor_sensors.begin(),
-                                                       observability_sensors.voltage_phasor_sensors.end(), 0);
+        Idx n_voltage_phasor_sensors =
+            std::ranges::fold_left(observability_sensors.voltage_phasor_sensors, 0, std::plus<>{});
 
         // Test sufficient_condition_radial_with_voltage_phasor
         CHECK_NOTHROW(sufficient_condition_radial_with_voltage_phasor(y_bus.y_bus_structure(), observability_sensors,
@@ -866,10 +877,9 @@ TEST_CASE("Test Observability - sufficient_condition_radial_with_voltage_phasor"
 
         // Verify that sensors were reassigned properly
         Idx const n_bus = 4;
-        Idx final_flow_sensors =
-            std::accumulate(observability_sensors.flow_sensors.begin(), observability_sensors.flow_sensors.end(), 0);
-        Idx final_voltage_sensors = std::accumulate(observability_sensors.voltage_phasor_sensors.begin(),
-                                                    observability_sensors.voltage_phasor_sensors.end(), 0);
+        Idx final_flow_sensors = std::ranges::fold_left(observability_sensors.flow_sensors, 0, std::plus<>{});
+        Idx final_voltage_sensors =
+            std::ranges::fold_left(observability_sensors.voltage_phasor_sensors, 0, std::plus<>{});
 
         // Should have n_bus-1 independent flow sensors for radial network
         CHECK(final_flow_sensors >= n_bus - 1);
@@ -921,10 +931,9 @@ TEST_CASE("Test Observability - sufficient_condition_radial_with_voltage_phasor"
             scan_network_sensors(measured_values, topo, y_bus.y_bus_structure(), neighbour_results);
 
         // Store initial sensor counts
-        Idx initial_flow_sensors =
-            std::accumulate(observability_sensors.flow_sensors.begin(), observability_sensors.flow_sensors.end(), 0);
-        Idx initial_voltage_sensors = std::accumulate(observability_sensors.voltage_phasor_sensors.begin(),
-                                                      observability_sensors.voltage_phasor_sensors.end(), 0);
+        Idx initial_flow_sensors = std::ranges::fold_left(observability_sensors.flow_sensors, 0, std::plus<>{});
+        Idx initial_voltage_sensors =
+            std::ranges::fold_left(observability_sensors.voltage_phasor_sensors, 0, std::plus<>{});
 
         // Count voltage phasor sensors for the function
         Idx n_voltage_phasor_sensors = initial_voltage_sensors;
@@ -935,10 +944,9 @@ TEST_CASE("Test Observability - sufficient_condition_radial_with_voltage_phasor"
         CHECK(result == true);
 
         // Verify that sensors were modified by the internal assign_independent_sensors_radial call
-        Idx final_flow_sensors =
-            std::accumulate(observability_sensors.flow_sensors.begin(), observability_sensors.flow_sensors.end(), 0);
-        Idx final_voltage_sensors = std::accumulate(observability_sensors.voltage_phasor_sensors.begin(),
-                                                    observability_sensors.voltage_phasor_sensors.end(), 0);
+        Idx final_flow_sensors = std::ranges::fold_left(observability_sensors.flow_sensors, 0, std::plus<>{});
+        Idx final_voltage_sensors =
+            std::ranges::fold_left(observability_sensors.voltage_phasor_sensors, 0, std::plus<>{});
 
         // For a 3-bus radial network, should have 2 independent flow sensors
         CHECK(final_flow_sensors >= 2);
@@ -993,8 +1001,8 @@ TEST_CASE("Test Observability - sufficient_condition_radial_with_voltage_phasor"
             scan_network_sensors(measured_values, topo, y_bus.y_bus_structure(), neighbour_results);
 
         // Count voltage phasor sensors (should be 0)
-        Idx n_voltage_phasor_sensors = std::accumulate(observability_sensors.voltage_phasor_sensors.begin(),
-                                                       observability_sensors.voltage_phasor_sensors.end(), 0);
+        Idx n_voltage_phasor_sensors =
+            std::ranges::fold_left(observability_sensors.voltage_phasor_sensors, 0, std::plus<>{});
         CHECK(n_voltage_phasor_sensors == 0);
 
         // Should pass with sufficient flow sensors even without voltage phasor sensors
@@ -1043,8 +1051,8 @@ TEST_CASE("Test Observability - sufficient_condition_radial_with_voltage_phasor"
             scan_network_sensors(measured_values, topo, y_bus.y_bus_structure(), neighbour_results);
 
         // Count voltage phasor sensors
-        Idx n_voltage_phasor_sensors = std::accumulate(observability_sensors.voltage_phasor_sensors.begin(),
-                                                       observability_sensors.voltage_phasor_sensors.end(), 0);
+        Idx n_voltage_phasor_sensors =
+            std::ranges::fold_left(observability_sensors.voltage_phasor_sensors, 0, std::plus<>{});
 
         // Single bus with voltage phasor should be observable (n_bus-1 = 0 flow sensors needed)
         bool result = sufficient_condition_radial_with_voltage_phasor(y_bus.y_bus_structure(), observability_sensors,
@@ -1054,6 +1062,10 @@ TEST_CASE("Test Observability - sufficient_condition_radial_with_voltage_phasor"
 }
 
 TEST_CASE("Test Observability - sufficient_condition_meshed_without_voltage_phasor") {
+    using power_grid_model::math_solver::detail::ConnectivityStatus;
+    using power_grid_model::math_solver::detail::expand_neighbour_list;
+    using power_grid_model::math_solver::detail::ObservabilityNNResult;
+    using power_grid_model::math_solver::detail::sufficient_condition_meshed_without_voltage_phasor;
 
     SUBCASE("Simple meshed network with sufficient measurements") {
         // Create a 4-bus meshed network with loop: bus0--bus1--bus2--bus3--bus0
@@ -1366,6 +1378,8 @@ TEST_CASE("Test Observability - sufficient_condition_meshed_without_voltage_phas
 }
 
 TEST_CASE("Basic observability structure tests") {
+    using power_grid_model::math_solver::detail::ObservabilitySensorsResult;
+
     SUBCASE("Basic structure initialization") {
         ObservabilitySensorsResult result;
         result.flow_sensors = {1, 0, 1};
