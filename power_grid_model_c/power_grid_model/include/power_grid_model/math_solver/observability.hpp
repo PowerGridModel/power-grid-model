@@ -464,7 +464,8 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus,
             }
 
             // Consider reassignment if needed (downwind and current node still has measurement unused)
-            bool reassign = downwind && local_neighbour_list[current_bus].status == ConnectivityStatus::node_measured;
+            bool const reassign =
+                downwind && local_neighbour_list[current_bus].status == ConnectivityStatus::node_measured;
             if (reassign) {
                 // Reassign measurement from current node to the node we're backtracking to
                 reassign_nodal_measurement(current_bus, backtrack_to_bus);
@@ -507,20 +508,16 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus,
 inline bool
 sufficient_condition_meshed_without_voltage_phasor(std::vector<detail::BusNeighbourhoodInfo> const& _neighbour_list) {
     // make a copy of the neighbour list
-    std::vector<detail::BusNeighbourhoodInfo> neighbour_list = _neighbour_list;
+    std::vector<detail::BusNeighbourhoodInfo> const neighbour_list = _neighbour_list;
 
     Idx const n_bus = static_cast<Idx>(neighbour_list.size());
     std::vector<Idx> starting_candidates;
     prepare_starting_nodes(neighbour_list, n_bus, starting_candidates);
 
     // Try each starting candidate
-    for (Idx const start_bus : starting_candidates) {
-        if (find_spanning_tree_from_node(start_bus, n_bus, neighbour_list)) {
-            return true;
-        }
-    }
-
-    return false; // No spanning tree found with any starting point
+    return std::ranges::any_of(starting_candidates, [&](Idx const start_bus) {
+        return find_spanning_tree_from_node(start_bus, n_bus, neighbour_list);
+    });
 }
 
 } // namespace detail
