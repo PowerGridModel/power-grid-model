@@ -13,10 +13,11 @@ namespace {
 using power_grid_model::Idx;
 using power_grid_model::IdxRange;
 using power_grid_model::IdxVector;
+using power_grid_model::IntS;
 using power_grid_model::IteratorFacade;
 using power_grid_model::detail::iterator_facadeable_c;
 
-enum class IteratorFacadeableCalls : Idx {
+enum class IteratorFacadeableCalls : IntS {
     none = 0,
     dereference = 1,
     advance = 2,
@@ -49,48 +50,50 @@ template <advance_type_c advance_type_t, typename UnderlyingType> class BaseTest
                                                 ? IteratorFacadeableCalls::decrement
                                                 : IteratorFacadeableCalls::advance;
 
-    mutable std::optional<IteratorFacadeableCalls> last_call;
-
     constexpr BaseTestIterator(std::remove_cvref_t<underlying> it) : IteratorFacade{*this}, it_{std::move(it)} {}
 
     constexpr auto operator*() -> reference {
-        last_call = IteratorFacadeableCalls::dereference;
+        last_call_ = IteratorFacadeableCalls::dereference;
         return *it_;
     }
     constexpr auto operator*() const -> std::add_lvalue_reference_t<std::add_const_t<value_type>> {
-        last_call = IteratorFacadeableCalls::dereference;
+        last_call_ = IteratorFacadeableCalls::dereference;
         return *it_;
     }
 
     friend constexpr auto operator<=>(BaseTestIterator const& first,
                                       BaseTestIterator const& second) -> std::strong_ordering {
-        first.last_call = IteratorFacadeableCalls::distance_to;
+        first.last_call_ = IteratorFacadeableCalls::distance_to;
         return *first.it_ <=> *second.it_;
     }
 
     constexpr decltype(auto) operator+=(difference_type n) {
-        last_call = IteratorFacadeableCalls::advance;
+        last_call_ = IteratorFacadeableCalls::advance;
         it_ += n;
         return *this;
     }
     friend constexpr auto operator-(BaseTestIterator const& first, BaseTestIterator const& second) -> difference_type {
-        first.last_call = IteratorFacadeableCalls::distance_to;
+        first.last_call_ = IteratorFacadeableCalls::distance_to;
         return first.it_ - second.it_;
     }
 
+    constexpr std::optional<IteratorFacadeableCalls> const& last_call() const { return last_call_; }
+    constexpr void reset() { last_call_ = std::nullopt; }
+
   private:
     underlying it_;
+    mutable std::optional<IteratorFacadeableCalls> last_call_; // mutable to allow const methods to set it
 
     constexpr void increment()
         requires std::same_as<advance_type_t, with_increment_decrement_t>
     {
-        last_call = IteratorFacadeableCalls::increment;
+        last_call_ = IteratorFacadeableCalls::increment;
         ++it_;
     }
     constexpr void decrement()
         requires std::same_as<advance_type_t, with_increment_decrement_t>
     {
-        last_call = IteratorFacadeableCalls::decrement;
+        last_call_ = IteratorFacadeableCalls::decrement;
         --it_;
     }
 };
@@ -170,26 +173,29 @@ TEST_CASE_TEMPLATE("Test IteratorFacade", T, TestIdxVectorIterator, TestIdxVecto
     }
     SUBCASE("Incremented/Decremented calls") {
         auto it = TestIterator{vec.begin() + 5};
-        REQUIRE(!it.last_call.has_value());
+        REQUIRE(!it.last_call().has_value());
 
         ++it;
-        REQUIRE(it.last_call.has_value());
-        CHECK(it.last_call.value() == TestIterator::increment_style);
-        it.last_call.reset();
+        REQUIRE(it.last_call().has_value());
+        CHECK(it.last_call().value() == TestIterator::increment_style);
+        it.reset();
+        REQUIRE(!it.last_call().has_value());
 
         it++;
-        REQUIRE(it.last_call.has_value());
-        CHECK(it.last_call.value() == TestIterator::increment_style);
-        it.last_call.reset();
+        REQUIRE(it.last_call().has_value());
+        CHECK(it.last_call().value() == TestIterator::increment_style);
+        it.reset();
+        REQUIRE(!it.last_call().has_value());
 
         --it;
-        REQUIRE(it.last_call.has_value());
-        CHECK(it.last_call.value() == TestIterator::decrement_style);
-        it.last_call.reset();
+        REQUIRE(it.last_call().has_value());
+        CHECK(it.last_call().value() == TestIterator::decrement_style);
+        it.reset();
+        REQUIRE(!it.last_call().has_value());
 
         it--;
-        REQUIRE(it.last_call.has_value());
-        CHECK(it.last_call.value() == TestIterator::decrement_style);
-        it.last_call.reset();
+        REQUIRE(it.last_call().has_value());
+        CHECK(it.last_call().value() == TestIterator::decrement_style);
+        it.reset();
     }
 }

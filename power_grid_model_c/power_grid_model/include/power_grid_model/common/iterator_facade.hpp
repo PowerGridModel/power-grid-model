@@ -45,6 +45,7 @@ class IteratorFacade {
         return (self <=> other) == std::strong_ordering::equivalent;
     }
 
+    // NOLINTNEXTLINE(cert-dcl21-cpp) // pre-increment but clang-tidy incorrectly sees this as post-increment
     template <typename Self> constexpr std::add_lvalue_reference_t<Self> operator++(this Self& self) {
         if constexpr (requires { self.increment(); }) { // NOTE: IteratorFacade should be a friend class
             self.increment();
@@ -53,6 +54,7 @@ class IteratorFacade {
         }
         return self;
     }
+    // NOLINTNEXTLINE(cert-dcl21-cpp) // pre-decrement but clang-tidy incorrectly sees this as post-decrement
     template <typename Self> constexpr std::add_lvalue_reference_t<Self> operator--(this Self& self) {
         if constexpr (requires { self.decrement(); }) { // NOTE: IteratorFacade should be a friend class
             self.decrement();
@@ -62,14 +64,14 @@ class IteratorFacade {
         return self;
     }
     template <typename Self>
-    constexpr std::remove_cvref_t<Self> operator++(this Self& self, std::integral auto /*idx*/) {
+    constexpr std::add_const_t<std::remove_reference_t<Self>> operator++(this Self& self, std::integral auto /*idx*/) {
         using Result = std::remove_cvref_t<Self>;
         Result result{self};
         ++self;
         return result;
     }
     template <typename Self>
-    constexpr std::remove_cvref_t<Self> operator--(this Self& self, std::integral auto /*idx*/) {
+    constexpr std::add_const_t<std::remove_reference_t<Self>> operator--(this Self& self, std::integral auto /*idx*/) {
         using Result = std::remove_cvref_t<Self>;
         Result result{self};
         --self;
