@@ -46,7 +46,7 @@ class IteratorFacade {
     }
 
     template <typename Self> constexpr std::add_lvalue_reference_t<Self> operator++(this Self& self) {
-        if constexpr (requires { self.increment(); }) {
+        if constexpr (requires { self.increment(); }) { // NOTE: IteratorFacade should be a friend class
             self.increment();
         } else {
             return (self += 1);
@@ -54,7 +54,7 @@ class IteratorFacade {
         return self;
     }
     template <typename Self> constexpr std::add_lvalue_reference_t<Self> operator--(this Self& self) {
-        if constexpr (requires { self.decrement(); }) {
+        if constexpr (requires { self.decrement(); }) { // NOTE: IteratorFacade should be a friend class
             self.decrement();
         } else {
             return (self += -1);

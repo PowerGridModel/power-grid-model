@@ -7,6 +7,8 @@
 
 #include <doctest/doctest.h>
 
+#include <optional>
+
 namespace {
 using power_grid_model::Idx;
 using power_grid_model::IdxRange;
@@ -14,7 +16,24 @@ using power_grid_model::IdxVector;
 using power_grid_model::IteratorFacade;
 using power_grid_model::detail::iterator_facadeable_c;
 
-template <typename UnderlyingType> class BaseTestIterator : public IteratorFacade {
+enum class IteratorFacadeableCalls : Idx {
+    none = 0,
+    dereference = 1,
+    advance = 2,
+    distance_to = 3,
+    increment = 4,
+    decrement = 5,
+};
+
+struct without_increment_decrement_t {};
+struct with_increment_decrement_t {};
+
+template <typename T>
+concept advance_type_c = std::same_as<T, without_increment_decrement_t> || std::same_as<T, with_increment_decrement_t>;
+
+template <advance_type_c advance_type_t, typename UnderlyingType> class BaseTestIterator : public IteratorFacade {
+    friend class IteratorFacade;
+
   public:
     using underlying = UnderlyingType;
 
@@ -23,38 +42,84 @@ template <typename UnderlyingType> class BaseTestIterator : public IteratorFacad
     using pointer = underlying::pointer;
     using reference = underlying::reference;
 
+    static constexpr auto increment_style = std::same_as<advance_type_t, with_increment_decrement_t>
+                                                ? IteratorFacadeableCalls::increment
+                                                : IteratorFacadeableCalls::advance;
+    static constexpr auto decrement_style = std::same_as<advance_type_t, with_increment_decrement_t>
+                                                ? IteratorFacadeableCalls::decrement
+                                                : IteratorFacadeableCalls::advance;
+
+    mutable std::optional<IteratorFacadeableCalls> last_call;
+
     constexpr BaseTestIterator(std::remove_cvref_t<underlying> it) : IteratorFacade{*this}, it_{std::move(it)} {}
 
-    constexpr auto operator*() -> reference { return *it_; }
-    constexpr auto operator*() const -> std::add_lvalue_reference_t<std::add_const_t<value_type>> { return *it_; }
+    constexpr auto operator*() -> reference {
+        last_call = IteratorFacadeableCalls::dereference;
+        return *it_;
+    }
+    constexpr auto operator*() const -> std::add_lvalue_reference_t<std::add_const_t<value_type>> {
+        last_call = IteratorFacadeableCalls::dereference;
+        return *it_;
+    }
 
     friend constexpr auto operator<=>(BaseTestIterator const& first,
                                       BaseTestIterator const& second) -> std::strong_ordering {
+        first.last_call = IteratorFacadeableCalls::distance_to;
         return *first.it_ <=> *second.it_;
     }
 
-    constexpr auto operator+=(difference_type n) -> std::add_lvalue_reference_t<BaseTestIterator> {
+    constexpr decltype(auto) operator+=(difference_type n) {
+        last_call = IteratorFacadeableCalls::advance;
         it_ += n;
         return *this;
     }
     friend constexpr auto operator-(BaseTestIterator const& first, BaseTestIterator const& second) -> difference_type {
+        first.last_call = IteratorFacadeableCalls::distance_to;
         return first.it_ - second.it_;
     }
 
   private:
     underlying it_;
+
+    constexpr void increment()
+        requires std::same_as<advance_type_t, with_increment_decrement_t>
+    {
+        last_call = IteratorFacadeableCalls::increment;
+        ++it_;
+    }
+    constexpr void decrement()
+        requires std::same_as<advance_type_t, with_increment_decrement_t>
+    {
+        last_call = IteratorFacadeableCalls::decrement;
+        --it_;
+    }
 };
 
-using TestIdxVectorIterator = BaseTestIterator<typename IdxVector::iterator>;
-using TestIdxVectorConstIterator = BaseTestIterator<typename IdxVector::const_iterator>;
+using TestIdxVectorIterator = BaseTestIterator<without_increment_decrement_t, typename IdxVector::iterator>;
+using TestIdxVectorConstIterator = BaseTestIterator<without_increment_decrement_t, typename IdxVector::const_iterator>;
+using TestIdxVectorIteratorWithIncDec = BaseTestIterator<with_increment_decrement_t, typename IdxVector::iterator>;
+using TestIdxVectorConstIteratorWithIncDec =
+    BaseTestIterator<with_increment_decrement_t, typename IdxVector::const_iterator>;
 
 static_assert(iterator_facadeable_c<TestIdxVectorIterator>);
 static_assert(iterator_facadeable_c<TestIdxVectorConstIterator>);
+static_assert(iterator_facadeable_c<TestIdxVectorIteratorWithIncDec>);
+static_assert(iterator_facadeable_c<TestIdxVectorConstIteratorWithIncDec>);
+
 static_assert(std::constructible_from<IteratorFacade, TestIdxVectorIterator>);
 static_assert(std::constructible_from<IteratorFacade, TestIdxVectorConstIterator>);
+static_assert(std::constructible_from<IteratorFacade, TestIdxVectorIteratorWithIncDec>);
+static_assert(std::constructible_from<IteratorFacade, TestIdxVectorConstIteratorWithIncDec>);
+
 } // namespace
 
-TEST_CASE_TEMPLATE("Test IteratorFacade", T, TestIdxVectorIterator, TestIdxVectorConstIterator) {
+TYPE_TO_STRING_AS("TestIdxVectorIterator", TestIdxVectorIterator);
+TYPE_TO_STRING_AS("TestIdxVectorConstIterator", TestIdxVectorConstIterator);
+TYPE_TO_STRING_AS("TestIdxVectorIteratorWithIncDec", TestIdxVectorIteratorWithIncDec);
+TYPE_TO_STRING_AS("TestIdxVectorConstIteratorWithIncDec", TestIdxVectorConstIteratorWithIncDec);
+
+TEST_CASE_TEMPLATE("Test IteratorFacade", T, TestIdxVectorIterator, TestIdxVectorConstIterator,
+                   TestIdxVectorIteratorWithIncDec, TestIdxVectorConstIteratorWithIncDec) {
     using TestIterator = T;
 
     auto vec = IdxRange{40} | std::ranges::to<IdxVector>();
@@ -63,10 +128,10 @@ TEST_CASE_TEMPLATE("Test IteratorFacade", T, TestIdxVectorIterator, TestIdxVecto
         auto it = TestIterator{vec.begin() + 5};
         CHECK(*it == 5);
         CHECK(*(++it) == 6);
-        CHECK(*it++ == 6);
+        CHECK(*(it++) == 6);
         CHECK(*it == 7);
         CHECK(*(--it) == 6);
-        CHECK(*it-- == 6);
+        CHECK(*(it--) == 6);
         CHECK(*it == 5);
         it += 3;
         CHECK(*it == 8);
@@ -102,5 +167,29 @@ TEST_CASE_TEMPLATE("Test IteratorFacade", T, TestIdxVectorIterator, TestIdxVecto
             CHECK(*it == 42);
             CHECK(vec[5] == 42);
         }
+    }
+    SUBCASE("Incremented/Decremented calls") {
+        auto it = TestIterator{vec.begin() + 5};
+        REQUIRE(!it.last_call.has_value());
+
+        ++it;
+        REQUIRE(it.last_call.has_value());
+        CHECK(it.last_call.value() == TestIterator::increment_style);
+        it.last_call.reset();
+
+        it++;
+        REQUIRE(it.last_call.has_value());
+        CHECK(it.last_call.value() == TestIterator::increment_style);
+        it.last_call.reset();
+
+        --it;
+        REQUIRE(it.last_call.has_value());
+        CHECK(it.last_call.value() == TestIterator::decrement_style);
+        it.last_call.reset();
+
+        it--;
+        REQUIRE(it.last_call.has_value());
+        CHECK(it.last_call.value() == TestIterator::decrement_style);
+        it.last_call.reset();
     }
 }

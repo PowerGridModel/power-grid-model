@@ -177,6 +177,8 @@ class SparseGroupedIdxVector {
 class DenseGroupedIdxVector {
   private:
     class GroupIterator : public IteratorFacade {
+        friend class IteratorFacade; // to expose increment and decrement
+
       public:
         using iterator = GroupIterator;
         using const_iterator = std::add_const_t<GroupIterator>;
