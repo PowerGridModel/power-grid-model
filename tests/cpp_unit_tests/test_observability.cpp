@@ -1080,7 +1080,6 @@ TEST_CASE("Test Observability - sufficient_condition_radial_with_voltage_phasor"
             scan_network_sensors(measured_values, topo, y_bus.y_bus_structure(), neighbour_results);
 
         // Store initial sensor counts
-        Idx initial_flow_sensors = std::ranges::fold_left(observability_sensors.flow_sensors, 0, std::plus<>{});
         Idx initial_voltage_sensors =
             std::ranges::fold_left(observability_sensors.voltage_phasor_sensors, 0, std::plus<>{});
 
