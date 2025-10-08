@@ -95,8 +95,6 @@ constexpr auto from_dense = from_dense_t{};
 class SparseGroupedIdxVector {
   private:
     class GroupIterator : public IteratorFacade {
-        friend class IteratorFacade;
-
       public:
         using iterator = GroupIterator;
         using const_iterator = std::add_const_t<GroupIterator>;
@@ -125,6 +123,16 @@ class SparseGroupedIdxVector {
             return first.group_ <=> second.group_;
         }
 
+        constexpr auto operator+=(difference_type n) -> std::add_lvalue_reference_t<GroupIterator> {
+            group_ += n;
+            return *this;
+        }
+
+        friend auto operator-(GroupIterator const& first, GroupIterator const& second) -> difference_type {
+            assert(first.indptr_ == second.indptr_);
+            return first.group_ - second.group_;
+        }
+
       private:
         IdxVector const* indptr_{};
         Idx group_{};
@@ -132,12 +140,6 @@ class SparseGroupedIdxVector {
             latest_value_{}; // making this mutable allows us to delay out-of-bounds checks until
                              // dereferencing instead of update methods. Note that the value will be
                              // invalidated at first update
-
-        constexpr auto distance_to(GroupIterator const& other) const -> difference_type {
-            assert(indptr_ == other.indptr_);
-            return other.group_ - group_;
-        }
-        constexpr void advance(Idx n) { group_ += n; }
     };
 
     constexpr auto group_iterator(Idx group) const { return GroupIterator{indptr_, group}; }
@@ -175,8 +177,6 @@ class SparseGroupedIdxVector {
 class DenseGroupedIdxVector {
   private:
     class GroupIterator : public IteratorFacade {
-        friend class IteratorFacade;
-
       public:
         using iterator = GroupIterator;
         using const_iterator = std::add_const_t<GroupIterator>;
@@ -208,6 +208,15 @@ class DenseGroupedIdxVector {
             return first.group_ <=> second.group_;
         }
 
+        constexpr auto operator+=(difference_type n) -> std::add_lvalue_reference_t<GroupIterator> {
+            advance(n);
+            return *this;
+        }
+        friend auto operator-(GroupIterator const& first, GroupIterator const& second) -> difference_type {
+            assert(first.dense_vector_ == second.dense_vector_);
+            return first.group_ - second.group_;
+        }
+
       private:
         using group_iterator = IdxVector::const_iterator;
 
@@ -218,10 +227,6 @@ class DenseGroupedIdxVector {
             latest_value_{}; // making this mutable allows us to delay out-of-bounds checks until
                              // dereferencing instead of update methods. Note that the value will be
                              // invalidated at first update
-
-        constexpr auto distance_to(GroupIterator const& other) const -> difference_type {
-            return other.group_ - group_;
-        }
 
         constexpr void increment() {
             ++group_;
@@ -235,7 +240,7 @@ class DenseGroupedIdxVector {
                                 .base(),
                             group_range_.begin()};
         }
-        constexpr void advance(Idx n) {
+        constexpr void advance(difference_type n) {
             auto const start = n > 0 ? group_range_.end() : std::cbegin(*dense_vector_);
             auto const stop = n < 0 ? group_range_.begin() : std::cend(*dense_vector_);
 

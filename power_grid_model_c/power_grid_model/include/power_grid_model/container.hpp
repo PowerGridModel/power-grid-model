@@ -286,8 +286,6 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
 
     // define iterator
     template <supported_type_c<GettableTypes...> Gettable> class Iterator : public IteratorFacade {
-        friend class IteratorFacade;
-
       public:
         using value_type = Gettable;
         using difference_type = Idx;
@@ -312,17 +310,22 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
         }
         constexpr Gettable& operator*() { return container_ptr_->template get_item_by_seq<base_type>(idx_); }
 
-        friend constexpr auto operator<=>(Iterator const& first, Iterator const& second) {
+        constexpr auto operator+=(Idx n) -> std::add_lvalue_reference_t<Iterator> {
+            idx_ += n;
+            return *this;
+        }
+
+        friend constexpr auto operator<=>(Iterator const& first, Iterator const& second) -> std::strong_ordering {
             assert(first.container_ptr_ == second.container_ptr_);
             return first.idx_ <=> second.idx_;
+        }
+        friend constexpr auto operator-(Iterator const& first, Iterator const& second) -> difference_type {
+            assert(first.container_ptr_ == second.container_ptr_);
+            return first.idx_ - second.idx_;
         }
 
       private:
         constexpr void advance(Idx n) { idx_ += n; }
-        constexpr Idx distance_to(Iterator const& other) const {
-            assert(container_ptr_ == other.container_ptr_);
-            return other.idx_ - idx_;
-        }
 
         // store container pointer
         // and idx

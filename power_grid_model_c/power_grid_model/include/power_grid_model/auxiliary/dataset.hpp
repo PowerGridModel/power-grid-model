@@ -118,8 +118,6 @@ class ColumnarAttributeRange : public std::ranges::view_interface<ColumnarAttrib
     };
 
     class iterator : public IteratorFacade {
-        friend class IteratorFacade;
-
       public:
         using value_type = std::conditional_t<is_data_mutable_v<dataset_type>, Proxy, Proxy const>;
         using difference_type = Idx;
@@ -139,14 +137,18 @@ class ColumnarAttributeRange : public std::ranges::view_interface<ColumnarAttrib
             return first.current_idx() <=> second.current_idx();
         }
 
+        constexpr auto operator+=(difference_type n) -> std::add_lvalue_reference_t<iterator> {
+            current_idx() += n;
+            return *this;
+        }
+
+        friend constexpr auto operator-(iterator const& first, iterator const& second) -> difference_type {
+            return first.current_idx() - second.current_idx();
+        }
+
       private:
         constexpr auto current_idx() const { return current_.idx_; }
         constexpr auto& current_idx() { return current_.idx_; }
-
-        constexpr auto distance_to(iterator const& other) const -> difference_type {
-            return other.current_idx() - current_idx();
-        }
-        constexpr void advance(difference_type n) { current_idx() += n; }
 
         Proxy current_;
     };

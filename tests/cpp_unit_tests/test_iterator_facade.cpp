@@ -15,8 +15,6 @@ using power_grid_model::IteratorFacade;
 using power_grid_model::detail::iterator_facadeable_c;
 
 template <typename UnderlyingType> class BaseTestIterator : public IteratorFacade {
-    friend class IteratorFacade;
-
   public:
     using underlying = UnderlyingType;
 
@@ -35,8 +33,13 @@ template <typename UnderlyingType> class BaseTestIterator : public IteratorFacad
         return *first.it_ <=> *second.it_;
     }
 
-    constexpr auto distance_to(BaseTestIterator const& other) const -> difference_type { return other.it_ - it_; }
-    constexpr void advance(difference_type n) { it_ += n; }
+    constexpr auto operator+=(difference_type n) -> std::add_lvalue_reference_t<BaseTestIterator> {
+        it_ += n;
+        return *this;
+    }
+    friend constexpr auto operator-(BaseTestIterator const& first, BaseTestIterator const& second) -> difference_type {
+        return second.it_ - first.it_;
+    }
 
   private:
     underlying it_;
