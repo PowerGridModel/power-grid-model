@@ -38,7 +38,7 @@ template <typename UnderlyingType> class BaseTestIterator : public IteratorFacad
         return *this;
     }
     friend constexpr auto operator-(BaseTestIterator const& first, BaseTestIterator const& second) -> difference_type {
-        return second.it_ - first.it_;
+        return first.it_ - second.it_;
     }
 
   private:
@@ -92,6 +92,8 @@ TEST_CASE_TEMPLATE("Test IteratorFacade", T, TestIdxVectorIterator, TestIdxVecto
         auto const it4 = TestIterator{vec.begin() + 15};
         dist = it2 - it4;
         CHECK(dist == 10);
+        dist = it4 - it2;
+        CHECK(dist == -10);
     }
     if constexpr (std::is_same_v<TestIterator, TestIdxVectorIterator>) {
         SUBCASE("Mutate elements") {
