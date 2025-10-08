@@ -18,7 +18,7 @@ struct ObservabilitySensorsResult {
     std::vector<int8_t> bus_injections;         // bus injections, zero injection and power sensors at buses
     bool is_possibly_ill_conditioned{false};
 };
-enum class ConnectivityStatus {
+enum class ConnectivityStatus : std::int8_t {
     is_not_connected = -1,  // not connected, redundant
     has_no_measurement = 0, // connected branch or node, but no measurement (may have been used)
     node_measured = 0b010,  // the node has measurement and is not yet used
@@ -93,7 +93,8 @@ ObservabilitySensorsResult scan_network_sensors(MeasuredValues<sym> const& measu
                 // we only need one flow sensor, so the loop will break
                 Idx const branch = element.idx;
                 Idx const neighbour_bus = y_bus_structure.col_indices[ybus_index];
-                BusNeighbourhoodInfo::neighbour neighbour_info{neighbour_bus, ConnectivityStatus::has_no_measurement};
+                BusNeighbourhoodInfo::neighbour const neighbour_info{neighbour_bus,
+                                                                     ConnectivityStatus::has_no_measurement};
                 bus_neighbourhood_info[bus].direct_neighbours.push_back(neighbour_info);
                 if (has_flow_sensor(branch) && is_branch_connected(branch)) {
                     result.flow_sensors[ybus_index] = 1;
@@ -229,7 +230,7 @@ inline void complete_bidirectional_neighbourhood_info(std::vector<BusNeighbourho
             auto it = std::ranges::find_if(
                 reverse_neighbour_list, [&bus](auto const& reverse_neighbour) { return reverse_neighbour.bus == bus; });
             if (it == reverse_neighbour_list.end()) {
-                BusNeighbourhoodInfo::neighbour reverse_neighbour_info{bus, neighbour.status};
+                BusNeighbourhoodInfo::neighbour const reverse_neighbour_info{bus, neighbour.status};
                 reverse_neighbour_list.push_back(reverse_neighbour_info);
             }
         }
@@ -276,7 +277,7 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus,
     // Make a fresh copy for this attempt
     std::vector<detail::BusNeighbourhoodInfo> local_neighbour_list = _neighbour_list;
 
-    enum class BusVisited { NotVisited, Visited };
+    enum class BusVisited : std::uint8_t { NotVisited, Visited };
     // Initialize tracking structures
     std::vector<BusVisited> visited(n_bus, BusVisited::NotVisited);
     std::vector<std::pair<Idx, Idx>> discovered_edges; // not poped, only for documenting
@@ -392,21 +393,24 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus,
         };
 
         for (auto& neighbour : local_neighbour_list[current_bus].direct_neighbours) {
-            if (visited[neighbour.bus] == BusVisited::Visited)
+            if (visited[neighbour.bus] == BusVisited::Visited) {
                 continue;
+            }
 
-            bool const next_empty =
+            bool const neighbour_bus_has_no_measurement =
                 local_neighbour_list[neighbour.bus].status == ConnectivityStatus::has_no_measurement;
 
-            if (!current_bus_no_measurement && (downwind && next_empty)) {
+            if (!current_bus_no_measurement && (downwind && neighbour_bus_has_no_measurement)) {
                 // Case: current has measurement, downwind, neighbour empty
                 return process_edge(neighbour, ConnectivityStatus::branch_discovered_with_to_node_sensor,
                                     ConnectivityStatus::branch_discovered_with_from_node_sensor, true);
-            } else if (!current_bus_no_measurement && (downwind || next_empty)) {
+            }
+            if (!current_bus_no_measurement && (downwind || neighbour_bus_has_no_measurement)) {
                 // Case: current has measurement, (downwind OR neighbour empty)
                 return process_edge(neighbour, ConnectivityStatus::branch_discovered_with_from_node_sensor,
                                     ConnectivityStatus::branch_discovered_with_to_node_sensor, true);
-            } else if (!next_empty) {
+            }
+            if (!neighbour_bus_has_no_measurement) {
                 // Case: neighbour has measurement
                 return process_edge(neighbour, ConnectivityStatus::branch_discovered_with_from_node_sensor,
                                     ConnectivityStatus::branch_discovered_with_to_node_sensor, false, true);
@@ -510,7 +514,7 @@ sufficient_condition_meshed_without_voltage_phasor(std::vector<detail::BusNeighb
     prepare_starting_nodes(neighbour_list, n_bus, starting_candidates);
 
     // Try each starting candidate
-    for (Idx start_bus : starting_candidates) {
+    for (Idx const start_bus : starting_candidates) {
         if (find_spanning_tree_from_node(start_bus, n_bus, neighbour_list)) {
             return true;
         }
