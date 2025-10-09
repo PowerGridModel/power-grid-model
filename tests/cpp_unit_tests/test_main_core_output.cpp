@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include <power_grid_model/component/transformer_tap_regulator.hpp>
 #include <power_grid_model/main_core/output.hpp>
 #include <power_grid_model/main_core/state.hpp>
 #include <power_grid_model/main_core/state_queries.hpp>

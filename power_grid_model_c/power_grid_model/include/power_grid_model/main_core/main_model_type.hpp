@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "../all_components.hpp"
+#include "../component/component.hpp"
 #include "../container.hpp"
 #include "state.hpp"
 #include "update.hpp"
