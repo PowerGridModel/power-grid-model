@@ -54,7 +54,7 @@ TEST_CASE("Observable voltage sensor - basic integration test") {
     topo.branch_bus_idx = {{0, 1}, {1, 2}};
     topo.sources_per_bus = {from_sparse, {0, 1, 1, 1}};
     topo.shunts_per_bus = {from_sparse, {0, 0, 0, 0}};
-    topo.load_gens_per_bus = {from_sparse, {1, 2, 3, 4}};
+    topo.load_gens_per_bus = {from_sparse, {0, 0, 0, 0}};
     topo.power_sensors_per_bus = {from_sparse, {0, 0, 0, 0}};
     topo.power_sensors_per_source = {from_sparse, {0, 0}};
     topo.power_sensors_per_load_gen = {from_sparse, {0}};
