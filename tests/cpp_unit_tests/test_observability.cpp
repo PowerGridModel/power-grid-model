@@ -1456,11 +1456,9 @@ TEST_CASE("Test Observability - sufficient_condition_meshed_without_voltage_phas
             neighbour_list[i].direct_neighbours.clear();
 
             // Connect to all other nodes
-            for (Idx j = 0; j < 4; ++j) {
-                if (i != j) {
-                    auto edge_status = (i == 1 && j == 3) ? branch_native_measurement_unused : has_no_measurement;
-                    neighbour_list[i].direct_neighbours.push_back({.bus = j, .status = edge_status});
-                }
+            for (Idx j : std::views::iota(0, 4) | std::views::filter([i](Idx x) { return x != i; })) {
+                auto const edge_status = (i == 1 && j == 3) ? branch_native_measurement_unused : has_no_measurement;
+                neighbour_list[i].direct_neighbours.push_back({.bus = j, .status = edge_status});
             }
         }
 
