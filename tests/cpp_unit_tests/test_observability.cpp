@@ -81,7 +81,7 @@ TEST_CASE("Observable voltage sensor - basic integration test") {
 
 TEST_CASE("Test Observability - scan_network_sensors") {
     using power_grid_model::math_solver::detail::BusNeighbourhoodInfo;
-    using power_grid_model::math_solver::detail::ConnectivityStatus;
+    using enum power_grid_model::math_solver::detail::ConnectivityStatus;
     using power_grid_model::math_solver::detail::scan_network_sensors;
 
     SUBCASE("Basic sensor scanning with simple topology") {
@@ -150,8 +150,8 @@ TEST_CASE("Test Observability - scan_network_sensors") {
         }
 
         // Bus 2 should have node_measured status due to injection sensor
-        CHECK(neighbour_results[0].direct_neighbours[0].status == ConnectivityStatus::branch_native_measurement_unused);
-        CHECK(neighbour_results[2].status == ConnectivityStatus::node_measured);
+        CHECK(neighbour_results[0].direct_neighbours[0].status == branch_native_measurement_unused);
+        CHECK(neighbour_results[2].status == node_measured);
     }
 
     SUBCASE("Meshed network") {
@@ -219,7 +219,7 @@ TEST_CASE("Test Observability - scan_network_sensors") {
         se_input.measured_source_power.resize(topo.power_sensors_per_source.element_size());
 
         // Voltage measurement: bus 2 has voltage sensor (magnitude only - no phasor)
-        if (se_input.measured_voltage.size() > 0) {
+        if (se_input.measured_voltage.empty()) {
             se_input.measured_voltage[0] = {.value = {1.0, nan}, .variance = 1.0}; // Bus 2: magnitude only
         }
 
@@ -280,18 +280,15 @@ TEST_CASE("Test Observability - scan_network_sensors") {
         // Check connectivity status as per your specification
         // {0: [2], 1: [2], 2: [3,4], 3: [5], 4: [5], 5:[]}
         // Note: Buses without loads/generators get pseudo measurements (zero injection)
-        CHECK(neighbour_results[0].status == ConnectivityStatus::node_measured); // bus 0 has injection sensor
-        CHECK(neighbour_results[1].status ==
-              ConnectivityStatus::node_measured); // bus 1 has pseudo measurement (zero injection)
-        CHECK(neighbour_results[2].status == ConnectivityStatus::node_measured); // bus 2 has voltage sensor
-        CHECK(neighbour_results[2].direct_neighbours.size() == 2);               // bus 2 has 2 neighbours
+        CHECK(neighbour_results[0].status == node_measured);       // bus 0 has injection sensor
+        CHECK(neighbour_results[1].status == node_measured);       // bus 1 has pseudo measurement (zero injection)
+        CHECK(neighbour_results[2].status == node_measured);       // bus 2 has voltage sensor
+        CHECK(neighbour_results[2].direct_neighbours.size() == 2); // bus 2 has 2 neighbours
         CHECK(neighbour_results[2].direct_neighbours[1].status ==
-              ConnectivityStatus::branch_native_measurement_unused); // bus 2 and bus 4 is connected by a measured edge
-        CHECK(neighbour_results[3].status ==
-              ConnectivityStatus::node_measured); // bus 3 has pseudo measurement (zero injection)
-        CHECK(neighbour_results[4].status == ConnectivityStatus::node_measured); // bus 4 has injection sensor
-        CHECK(neighbour_results[5].status ==
-              ConnectivityStatus::node_measured); // bus 5 has pseudo measurement (zero injection)
+              branch_native_measurement_unused);             // bus 2 and bus 4 is connected by a measured edge
+        CHECK(neighbour_results[3].status == node_measured); // bus 3 has pseudo measurement (zero injection)
+        CHECK(neighbour_results[4].status == node_measured); // bus 4 has injection sensor
+        CHECK(neighbour_results[5].status == node_measured); // bus 5 has pseudo measurement (zero injection)
     }
 
     SUBCASE("Empty network sensors") {
@@ -390,12 +387,11 @@ TEST_CASE("Test Observability - scan_network_sensors") {
         // Should detect branch current sensor as flow sensor
         // Find the branch entry in the Y-bus structure and verify it's detected
         bool found_branch_sensor = false;
-        for (size_t i = 0; i < result.flow_sensors.size(); ++i) {
-            if (result.flow_sensors[i] == 1) {
+        std::ranges::for_each(result.flow_sensors, [&](int8_t val) {
+            if (val == 1) {
                 found_branch_sensor = true;
-                break;
             }
-        }
+        });
         CHECK(found_branch_sensor); // Current sensor should be detected as flow sensor
 
         // Should not be ill-conditioned with sufficient sensors
@@ -405,7 +401,7 @@ TEST_CASE("Test Observability - scan_network_sensors") {
 
 TEST_CASE("Test Observability - prepare_starting_nodes") {
     using power_grid_model::math_solver::detail::BusNeighbourhoodInfo;
-    using power_grid_model::math_solver::detail::ConnectivityStatus;
+    using enum power_grid_model::math_solver::detail::ConnectivityStatus;
     using power_grid_model::math_solver::detail::prepare_starting_nodes;
 
     SUBCASE("Nodes without measurements - preferred starting points") {
@@ -414,27 +410,25 @@ TEST_CASE("Test Observability - prepare_starting_nodes") {
 
         // Bus 0: has measurement
         neighbour_list[0].bus = 0;
-        neighbour_list[0].status = ConnectivityStatus::node_measured;
-        neighbour_list[0].direct_neighbours = {
-            {.bus = 1, .status = ConnectivityStatus::has_no_measurement},
-            {.bus = 2, .status = ConnectivityStatus::branch_native_measurement_unused}};
+        neighbour_list[0].status = node_measured;
+        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = has_no_measurement},
+                                               {.bus = 2, .status = branch_native_measurement_unused}};
 
         // Bus 1: no measurement, no edge measurements on connected branches
         neighbour_list[1].bus = 1;
-        neighbour_list[1].status = ConnectivityStatus::has_no_measurement;
-        neighbour_list[1].direct_neighbours = {{.bus = 0, .status = ConnectivityStatus::has_no_measurement},
-                                               {.bus = 3, .status = ConnectivityStatus::has_no_measurement}};
+        neighbour_list[1].status = has_no_measurement;
+        neighbour_list[1].direct_neighbours = {{.bus = 0, .status = has_no_measurement},
+                                               {.bus = 3, .status = has_no_measurement}};
 
         // Bus 2: has measurement
         neighbour_list[2].bus = 2;
-        neighbour_list[2].status = ConnectivityStatus::node_measured;
-        neighbour_list[2].direct_neighbours = {
-            {.bus = 0, .status = ConnectivityStatus::branch_native_measurement_unused}};
+        neighbour_list[2].status = node_measured;
+        neighbour_list[2].direct_neighbours = {{.bus = 0, .status = branch_native_measurement_unused}};
 
         // Bus 3: no measurement, no edge measurements on connected branches
         neighbour_list[3].bus = 3;
-        neighbour_list[3].status = ConnectivityStatus::has_no_measurement;
-        neighbour_list[3].direct_neighbours = {{.bus = 1, .status = ConnectivityStatus::has_no_measurement}};
+        neighbour_list[3].status = has_no_measurement;
+        neighbour_list[3].direct_neighbours = {{.bus = 1, .status = has_no_measurement}};
 
         std::vector<Idx> starting_candidates;
         prepare_starting_nodes(neighbour_list, 4, starting_candidates);
@@ -452,22 +446,19 @@ TEST_CASE("Test Observability - prepare_starting_nodes") {
 
         // Bus 0: has measurement
         neighbour_list[0].bus = 0;
-        neighbour_list[0].status = ConnectivityStatus::node_measured;
-        neighbour_list[0].direct_neighbours = {
-            {.bus = 1, .status = ConnectivityStatus::branch_native_measurement_unused}};
+        neighbour_list[0].status = node_measured;
+        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = branch_native_measurement_unused}};
 
         // Bus 1: no measurement, but connected edge has measurement
         neighbour_list[1].bus = 1;
-        neighbour_list[1].status = ConnectivityStatus::has_no_measurement;
-        neighbour_list[1].direct_neighbours = {
-            {.bus = 0, .status = ConnectivityStatus::branch_native_measurement_unused},
-            {.bus = 2, .status = ConnectivityStatus::branch_native_measurement_unused}};
+        neighbour_list[1].status = has_no_measurement;
+        neighbour_list[1].direct_neighbours = {{.bus = 0, .status = branch_native_measurement_unused},
+                                               {.bus = 2, .status = branch_native_measurement_unused}};
 
         // Bus 2: no measurement, but connected edge has measurement
         neighbour_list[2].bus = 2;
-        neighbour_list[2].status = ConnectivityStatus::has_no_measurement;
-        neighbour_list[2].direct_neighbours = {
-            {.bus = 1, .status = ConnectivityStatus::branch_native_measurement_unused}};
+        neighbour_list[2].status = has_no_measurement;
+        neighbour_list[2].direct_neighbours = {{.bus = 1, .status = branch_native_measurement_unused}};
 
         std::vector<Idx> starting_candidates;
         prepare_starting_nodes(neighbour_list, 3, starting_candidates);
@@ -486,10 +477,9 @@ TEST_CASE("Test Observability - prepare_starting_nodes") {
         // All buses have measurements
         for (Idx i = 0; i < 3; ++i) {
             neighbour_list[i].bus = i;
-            neighbour_list[i].status = ConnectivityStatus::node_measured;
+            neighbour_list[i].status = node_measured;
             if (i < 2) {
-                neighbour_list[i].direct_neighbours = {
-                    {.bus = i + 1, .status = ConnectivityStatus::has_no_measurement}};
+                neighbour_list[i].direct_neighbours = {{.bus = i + 1, .status = has_no_measurement}};
             }
         }
 
@@ -506,7 +496,7 @@ TEST_CASE("Test Observability - prepare_starting_nodes") {
         std::vector<BusNeighbourhoodInfo> neighbour_list(1);
 
         neighbour_list[0].bus = 0;
-        neighbour_list[0].status = ConnectivityStatus::has_no_measurement;
+        neighbour_list[0].status = has_no_measurement;
         neighbour_list[0].direct_neighbours = {}; // No neighbours
 
         std::vector<Idx> starting_candidates;
@@ -535,29 +525,29 @@ TEST_CASE("Test Observability - prepare_starting_nodes") {
 
         // Bus 0: node measured
         neighbour_list[0].bus = 0;
-        neighbour_list[0].status = ConnectivityStatus::node_measured;
-        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = ConnectivityStatus::has_no_measurement}};
+        neighbour_list[0].status = node_measured;
+        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = has_no_measurement}};
 
         // Bus 1: has no measurement, ideal starting point
         neighbour_list[1].bus = 1;
-        neighbour_list[1].status = ConnectivityStatus::has_no_measurement;
-        neighbour_list[1].direct_neighbours = {{.bus = 0, .status = ConnectivityStatus::has_no_measurement},
-                                               {.bus = 2, .status = ConnectivityStatus::has_no_measurement}};
+        neighbour_list[1].status = has_no_measurement;
+        neighbour_list[1].direct_neighbours = {{.bus = 0, .status = has_no_measurement},
+                                               {.bus = 2, .status = has_no_measurement}};
 
         // Bus 2: downstream measured
         neighbour_list[2].bus = 2;
-        neighbour_list[2].status = ConnectivityStatus::branch_discovered_with_from_node_sensor;
-        neighbour_list[2].direct_neighbours = {{.bus = 1, .status = ConnectivityStatus::has_no_measurement}};
+        neighbour_list[2].status = branch_discovered_with_from_node_sensor;
+        neighbour_list[2].direct_neighbours = {{.bus = 1, .status = has_no_measurement}};
 
         // Bus 3: upstream measured
         neighbour_list[3].bus = 3;
-        neighbour_list[3].status = ConnectivityStatus::branch_discovered_with_to_node_sensor;
-        neighbour_list[3].direct_neighbours = {{.bus = 4, .status = ConnectivityStatus::has_no_measurement}};
+        neighbour_list[3].status = branch_discovered_with_to_node_sensor;
+        neighbour_list[3].direct_neighbours = {{.bus = 4, .status = has_no_measurement}};
 
         // Bus 4: branch measured used
         neighbour_list[4].bus = 4;
-        neighbour_list[4].status = ConnectivityStatus::branch_native_measurement_consumed;
-        neighbour_list[4].direct_neighbours = {{.bus = 3, .status = ConnectivityStatus::has_no_measurement}};
+        neighbour_list[4].status = branch_native_measurement_consumed;
+        neighbour_list[4].direct_neighbours = {{.bus = 3, .status = has_no_measurement}};
 
         std::vector<Idx> starting_candidates;
         prepare_starting_nodes(neighbour_list, 5, starting_candidates);
@@ -572,24 +562,23 @@ TEST_CASE("Test Observability - prepare_starting_nodes") {
 TEST_CASE("Test Observability - complete_bidirectional_neighbourhood_info") {
     using power_grid_model::math_solver::detail::BusNeighbourhoodInfo;
     using power_grid_model::math_solver::detail::complete_bidirectional_neighbourhood_info;
-    using power_grid_model::math_solver::detail::ConnectivityStatus;
+    using enum power_grid_model::math_solver::detail::ConnectivityStatus;
 
     SUBCASE("Basic expansion test") {
         std::vector<BusNeighbourhoodInfo> neighbour_list(3);
 
         // Initialize test data
         neighbour_list[0].bus = 0;
-        neighbour_list[0].status = ConnectivityStatus::has_no_measurement;
-        neighbour_list[0].direct_neighbours = {{1, ConnectivityStatus::has_no_measurement},
-                                               {2, ConnectivityStatus::node_measured}};
+        neighbour_list[0].status = has_no_measurement;
+        neighbour_list[0].direct_neighbours = {{1, has_no_measurement}, {2, node_measured}};
 
         neighbour_list[1].bus = 1;
-        neighbour_list[1].status = ConnectivityStatus::node_measured;
-        neighbour_list[1].direct_neighbours = {{0, ConnectivityStatus::has_no_measurement}};
+        neighbour_list[1].status = node_measured;
+        neighbour_list[1].direct_neighbours = {{0, has_no_measurement}};
 
         neighbour_list[2].bus = 2;
-        neighbour_list[2].status = ConnectivityStatus::node_measured;
-        neighbour_list[2].direct_neighbours = {{0, ConnectivityStatus::has_no_measurement}};
+        neighbour_list[2].status = node_measured;
+        neighbour_list[2].direct_neighbours = {{0, has_no_measurement}};
 
         // Test the function
         complete_bidirectional_neighbourhood_info(neighbour_list);
@@ -642,8 +631,8 @@ TEST_CASE("Test Observability - assign_independent_sensors_radial") {
         // Test the function with real YBusStructure
         // First, inspect the actual YBus structure to size our vectors correctly
         auto const& y_bus_struct = y_bus.y_bus_structure();
-        Idx n_ybus_entries = static_cast<Idx>(y_bus_struct.col_indices.size());
-        Idx n_bus = static_cast<Idx>(y_bus_struct.bus_entry.size());
+        auto const n_ybus_entries = static_cast<Idx>(y_bus_struct.col_indices.size());
+        auto const n_bus = static_cast<Idx>(y_bus_struct.bus_entry.size());
 
         std::vector<int8_t> flow_sensors(n_ybus_entries, 0);  // Initialize to correct size
         std::vector<int8_t> voltage_phasor_sensors(n_bus, 0); // Initialize to correct size
@@ -697,8 +686,8 @@ TEST_CASE("Test Observability - assign_independent_sensors_radial") {
 
         // Size vectors correctly based on actual YBus structure
         auto const& y_bus_struct = y_bus.y_bus_structure();
-        Idx n_ybus_entries = static_cast<Idx>(y_bus_struct.col_indices.size());
-        Idx n_bus = static_cast<Idx>(y_bus_struct.bus_entry.size());
+        auto const n_ybus_entries = static_cast<Idx>(y_bus_struct.col_indices.size());
+        auto const n_bus = static_cast<Idx>(y_bus_struct.bus_entry.size());
 
         std::vector<int8_t> flow_sensors(n_ybus_entries, 0);
         std::vector<int8_t> voltage_phasor_sensors(n_bus, 0);
@@ -715,7 +704,7 @@ TEST_CASE("Test Observability - assign_independent_sensors_radial") {
 
 TEST_CASE("Test Observability - find_spanning_tree_from_node") {
     using power_grid_model::math_solver::detail::BusNeighbourhoodInfo;
-    using power_grid_model::math_solver::detail::ConnectivityStatus;
+    using enum power_grid_model::math_solver::detail::ConnectivityStatus;
     using power_grid_model::math_solver::detail::find_spanning_tree_from_node;
 
     SUBCASE("Simple spanning tree with native edge measurements") {
@@ -724,22 +713,19 @@ TEST_CASE("Test Observability - find_spanning_tree_from_node") {
 
         // Bus 0: no measurement, starting point
         neighbour_list[0].bus = 0;
-        neighbour_list[0].status = ConnectivityStatus::has_no_measurement;
-        neighbour_list[0].direct_neighbours = {
-            {.bus = 1, .status = ConnectivityStatus::branch_native_measurement_unused}};
+        neighbour_list[0].status = has_no_measurement;
+        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = branch_native_measurement_unused}};
 
         // Bus 1: no measurement, connected via native edge measurement
         neighbour_list[1].bus = 1;
-        neighbour_list[1].status = ConnectivityStatus::has_no_measurement;
-        neighbour_list[1].direct_neighbours = {
-            {.bus = 0, .status = ConnectivityStatus::branch_native_measurement_unused},
-            {.bus = 2, .status = ConnectivityStatus::branch_native_measurement_unused}};
+        neighbour_list[1].status = has_no_measurement;
+        neighbour_list[1].direct_neighbours = {{.bus = 0, .status = branch_native_measurement_unused},
+                                               {.bus = 2, .status = branch_native_measurement_unused}};
 
         // Bus 2: no measurement
         neighbour_list[2].bus = 2;
-        neighbour_list[2].status = ConnectivityStatus::has_no_measurement;
-        neighbour_list[2].direct_neighbours = {
-            {.bus = 1, .status = ConnectivityStatus::branch_native_measurement_unused}};
+        neighbour_list[2].status = has_no_measurement;
+        neighbour_list[2].direct_neighbours = {{.bus = 1, .status = branch_native_measurement_unused}};
 
         Idx start_bus = 0;
         Idx n_bus = 3;
@@ -756,19 +742,19 @@ TEST_CASE("Test Observability - find_spanning_tree_from_node") {
 
         // Bus 0: has node measurement, starting point
         neighbour_list[0].bus = 0;
-        neighbour_list[0].status = ConnectivityStatus::node_measured;
-        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = ConnectivityStatus::has_no_measurement}};
+        neighbour_list[0].status = node_measured;
+        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = has_no_measurement}};
 
         // Bus 1: no measurement, but connected to measured nodes
         neighbour_list[1].bus = 1;
-        neighbour_list[1].status = ConnectivityStatus::has_no_measurement;
-        neighbour_list[1].direct_neighbours = {{.bus = 0, .status = ConnectivityStatus::has_no_measurement},
-                                               {.bus = 2, .status = ConnectivityStatus::has_no_measurement}};
+        neighbour_list[1].status = has_no_measurement;
+        neighbour_list[1].direct_neighbours = {{.bus = 0, .status = has_no_measurement},
+                                               {.bus = 2, .status = has_no_measurement}};
 
         // Bus 2: has measurement
         neighbour_list[2].bus = 2;
-        neighbour_list[2].status = ConnectivityStatus::node_measured;
-        neighbour_list[2].direct_neighbours = {{.bus = 1, .status = ConnectivityStatus::has_no_measurement}};
+        neighbour_list[2].status = node_measured;
+        neighbour_list[2].direct_neighbours = {{.bus = 1, .status = has_no_measurement}};
 
         Idx start_bus = 0;
         Idx n_bus = 3;
@@ -785,27 +771,25 @@ TEST_CASE("Test Observability - find_spanning_tree_from_node") {
 
         // Bus 0: no measurement, starting point
         neighbour_list[0].bus = 0;
-        neighbour_list[0].status = ConnectivityStatus::has_no_measurement;
-        neighbour_list[0].direct_neighbours = {
-            {.bus = 1, .status = ConnectivityStatus::branch_native_measurement_unused}};
+        neighbour_list[0].status = has_no_measurement;
+        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = branch_native_measurement_unused}};
 
         // Bus 1: has measurement
         neighbour_list[1].bus = 1;
-        neighbour_list[1].status = ConnectivityStatus::node_measured;
-        neighbour_list[1].direct_neighbours = {
-            {.bus = 0, .status = ConnectivityStatus::branch_native_measurement_unused},
-            {.bus = 2, .status = ConnectivityStatus::has_no_measurement}};
+        neighbour_list[1].status = node_measured;
+        neighbour_list[1].direct_neighbours = {{.bus = 0, .status = branch_native_measurement_unused},
+                                               {.bus = 2, .status = has_no_measurement}};
 
         // Bus 2: no measurement
         neighbour_list[2].bus = 2;
-        neighbour_list[2].status = ConnectivityStatus::has_no_measurement;
-        neighbour_list[2].direct_neighbours = {{.bus = 1, .status = ConnectivityStatus::has_no_measurement},
-                                               {.bus = 3, .status = ConnectivityStatus::has_no_measurement}};
+        neighbour_list[2].status = has_no_measurement;
+        neighbour_list[2].direct_neighbours = {{.bus = 1, .status = has_no_measurement},
+                                               {.bus = 3, .status = has_no_measurement}};
 
         // Bus 3: has measurement
         neighbour_list[3].bus = 3;
-        neighbour_list[3].status = ConnectivityStatus::node_measured;
-        neighbour_list[3].direct_neighbours = {{.bus = 2, .status = ConnectivityStatus::has_no_measurement}};
+        neighbour_list[3].status = node_measured;
+        neighbour_list[3].direct_neighbours = {{.bus = 2, .status = has_no_measurement}};
 
         Idx start_bus = 0;
         Idx n_bus = 4;
@@ -822,17 +806,17 @@ TEST_CASE("Test Observability - find_spanning_tree_from_node") {
 
         // Bus 0: no measurement, starting point
         neighbour_list[0].bus = 0;
-        neighbour_list[0].status = ConnectivityStatus::has_no_measurement;
-        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = ConnectivityStatus::has_no_measurement}};
+        neighbour_list[0].status = has_no_measurement;
+        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = has_no_measurement}};
 
         // Bus 1: no measurement, no useful connections
         neighbour_list[1].bus = 1;
-        neighbour_list[1].status = ConnectivityStatus::has_no_measurement;
-        neighbour_list[1].direct_neighbours = {{.bus = 0, .status = ConnectivityStatus::has_no_measurement}};
+        neighbour_list[1].status = has_no_measurement;
+        neighbour_list[1].direct_neighbours = {{.bus = 0, .status = has_no_measurement}};
 
         // Bus 2: isolated, no measurements, no connections to 0 or 1
         neighbour_list[2].bus = 2;
-        neighbour_list[2].status = ConnectivityStatus::has_no_measurement;
+        neighbour_list[2].status = has_no_measurement;
         neighbour_list[2].direct_neighbours = {}; // Isolated
 
         Idx start_bus = 0;
@@ -849,7 +833,7 @@ TEST_CASE("Test Observability - find_spanning_tree_from_node") {
         std::vector<BusNeighbourhoodInfo> neighbour_list(1);
 
         neighbour_list[0].bus = 0;
-        neighbour_list[0].status = ConnectivityStatus::node_measured;
+        neighbour_list[0].status = node_measured;
         neighbour_list[0].direct_neighbours = {}; // No neighbours
 
         Idx start_bus = 0;
@@ -869,10 +853,9 @@ TEST_CASE("Test Observability - find_spanning_tree_from_node") {
         // All buses have measurements
         for (Idx i = 0; i < 3; ++i) {
             neighbour_list[i].bus = i;
-            neighbour_list[i].status = ConnectivityStatus::node_measured;
+            neighbour_list[i].status = node_measured;
             if (i < 2) {
-                neighbour_list[i].direct_neighbours = {
-                    {.bus = i + 1, .status = ConnectivityStatus::has_no_measurement}};
+                neighbour_list[i].direct_neighbours = {{.bus = i + 1, .status = has_no_measurement}};
             }
         }
 
@@ -891,27 +874,25 @@ TEST_CASE("Test Observability - find_spanning_tree_from_node") {
 
         // Bus 0: starting point, no measurement
         neighbour_list[0].bus = 0;
-        neighbour_list[0].status = ConnectivityStatus::has_no_measurement;
-        neighbour_list[0].direct_neighbours = {
-            {.bus = 1, .status = ConnectivityStatus::has_no_measurement},
-            {.bus = 2, .status = ConnectivityStatus::branch_native_measurement_unused}};
+        neighbour_list[0].status = has_no_measurement;
+        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = has_no_measurement},
+                                               {.bus = 2, .status = branch_native_measurement_unused}};
 
         // Bus 1: has measurement
         neighbour_list[1].bus = 1;
-        neighbour_list[1].status = ConnectivityStatus::node_measured;
-        neighbour_list[1].direct_neighbours = {{.bus = 0, .status = ConnectivityStatus::has_no_measurement},
-                                               {.bus = 3, .status = ConnectivityStatus::has_no_measurement}};
+        neighbour_list[1].status = node_measured;
+        neighbour_list[1].direct_neighbours = {{.bus = 0, .status = has_no_measurement},
+                                               {.bus = 3, .status = has_no_measurement}};
 
         // Bus 2: no measurement
         neighbour_list[2].bus = 2;
-        neighbour_list[2].status = ConnectivityStatus::has_no_measurement;
-        neighbour_list[2].direct_neighbours = {
-            {.bus = 0, .status = ConnectivityStatus::branch_native_measurement_unused}};
+        neighbour_list[2].status = has_no_measurement;
+        neighbour_list[2].direct_neighbours = {{.bus = 0, .status = branch_native_measurement_unused}};
 
         // Bus 3: no measurement
         neighbour_list[3].bus = 3;
-        neighbour_list[3].status = ConnectivityStatus::has_no_measurement;
-        neighbour_list[3].direct_neighbours = {{.bus = 1, .status = ConnectivityStatus::has_no_measurement}};
+        neighbour_list[3].status = has_no_measurement;
+        neighbour_list[3].direct_neighbours = {{.bus = 1, .status = has_no_measurement}};
 
         Idx start_bus = 0;
         Idx n_bus = 4;
@@ -1217,7 +1198,7 @@ TEST_CASE("Test Observability - sufficient_condition_radial_with_voltage_phasor"
 TEST_CASE("Test Observability - sufficient_condition_meshed_without_voltage_phasor") {
     using power_grid_model::math_solver::detail::BusNeighbourhoodInfo;
     using power_grid_model::math_solver::detail::complete_bidirectional_neighbourhood_info;
-    using power_grid_model::math_solver::detail::ConnectivityStatus;
+    using enum power_grid_model::math_solver::detail::ConnectivityStatus;
     using power_grid_model::math_solver::detail::sufficient_condition_meshed_without_voltage_phasor;
 
     SUBCASE("Simple meshed network with sufficient measurements") {
@@ -1226,29 +1207,27 @@ TEST_CASE("Test Observability - sufficient_condition_meshed_without_voltage_phas
 
         // Bus 0: has measurement
         neighbour_list[0].bus = 0;
-        neighbour_list[0].status = ConnectivityStatus::node_measured;
-        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = ConnectivityStatus::has_no_measurement},
-                                               {.bus = 3, .status = ConnectivityStatus::has_no_measurement}};
+        neighbour_list[0].status = node_measured;
+        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = has_no_measurement},
+                                               {.bus = 3, .status = has_no_measurement}};
 
         // Bus 1: no measurement, connected to measured nodes
         neighbour_list[1].bus = 1;
-        neighbour_list[1].status = ConnectivityStatus::has_no_measurement;
-        neighbour_list[1].direct_neighbours = {
-            {.bus = 0, .status = ConnectivityStatus::has_no_measurement},
-            {.bus = 2, .status = ConnectivityStatus::branch_native_measurement_unused}};
+        neighbour_list[1].status = has_no_measurement;
+        neighbour_list[1].direct_neighbours = {{.bus = 0, .status = has_no_measurement},
+                                               {.bus = 2, .status = branch_native_measurement_unused}};
 
         // Bus 2: has measurement
         neighbour_list[2].bus = 2;
-        neighbour_list[2].status = ConnectivityStatus::node_measured;
-        neighbour_list[2].direct_neighbours = {
-            {.bus = 1, .status = ConnectivityStatus::branch_native_measurement_unused},
-            {.bus = 3, .status = ConnectivityStatus::has_no_measurement}};
+        neighbour_list[2].status = node_measured;
+        neighbour_list[2].direct_neighbours = {{.bus = 1, .status = branch_native_measurement_unused},
+                                               {.bus = 3, .status = has_no_measurement}};
 
         // Bus 3: no measurement
         neighbour_list[3].bus = 3;
-        neighbour_list[3].status = ConnectivityStatus::has_no_measurement;
-        neighbour_list[3].direct_neighbours = {{.bus = 0, .status = ConnectivityStatus::has_no_measurement},
-                                               {.bus = 2, .status = ConnectivityStatus::has_no_measurement}};
+        neighbour_list[3].status = has_no_measurement;
+        neighbour_list[3].direct_neighbours = {{.bus = 0, .status = has_no_measurement},
+                                               {.bus = 2, .status = has_no_measurement}};
 
         // Expand bidirectional connections
         complete_bidirectional_neighbourhood_info(neighbour_list);
@@ -1265,24 +1244,21 @@ TEST_CASE("Test Observability - sufficient_condition_meshed_without_voltage_phas
 
         // Bus 0: no measurement, but has native edge measurement
         neighbour_list[0].bus = 0;
-        neighbour_list[0].status = ConnectivityStatus::has_no_measurement;
-        neighbour_list[0].direct_neighbours = {
-            {.bus = 1, .status = ConnectivityStatus::branch_native_measurement_unused},
-            {.bus = 2, .status = ConnectivityStatus::has_no_measurement}};
+        neighbour_list[0].status = has_no_measurement;
+        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = branch_native_measurement_unused},
+                                               {.bus = 2, .status = has_no_measurement}};
 
         // Bus 1: no measurement
         neighbour_list[1].bus = 1;
-        neighbour_list[1].status = ConnectivityStatus::has_no_measurement;
-        neighbour_list[1].direct_neighbours = {
-            {.bus = 0, .status = ConnectivityStatus::branch_native_measurement_unused},
-            {.bus = 2, .status = ConnectivityStatus::branch_native_measurement_unused}};
+        neighbour_list[1].status = has_no_measurement;
+        neighbour_list[1].direct_neighbours = {{.bus = 0, .status = branch_native_measurement_unused},
+                                               {.bus = 2, .status = branch_native_measurement_unused}};
 
         // Bus 2: no measurement
         neighbour_list[2].bus = 2;
-        neighbour_list[2].status = ConnectivityStatus::has_no_measurement;
-        neighbour_list[2].direct_neighbours = {
-            {.bus = 0, .status = ConnectivityStatus::has_no_measurement},
-            {.bus = 1, .status = ConnectivityStatus::branch_native_measurement_unused}};
+        neighbour_list[2].status = has_no_measurement;
+        neighbour_list[2].direct_neighbours = {{.bus = 0, .status = has_no_measurement},
+                                               {.bus = 1, .status = branch_native_measurement_unused}};
 
         // Expand bidirectional connections
         complete_bidirectional_neighbourhood_info(neighbour_list);
@@ -1299,40 +1275,37 @@ TEST_CASE("Test Observability - sufficient_condition_meshed_without_voltage_phas
 
         // Bus 0: has measurement, central node
         neighbour_list[0].bus = 0;
-        neighbour_list[0].status = ConnectivityStatus::node_measured;
-        neighbour_list[0].direct_neighbours = {
-            {.bus = 1, .status = ConnectivityStatus::has_no_measurement},
-            {.bus = 2, .status = ConnectivityStatus::has_no_measurement},
-            {.bus = 3, .status = ConnectivityStatus::branch_native_measurement_unused}};
+        neighbour_list[0].status = node_measured;
+        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = has_no_measurement},
+                                               {.bus = 2, .status = has_no_measurement},
+                                               {.bus = 3, .status = branch_native_measurement_unused}};
 
         // Bus 1: no measurement
         neighbour_list[1].bus = 1;
-        neighbour_list[1].status = ConnectivityStatus::has_no_measurement;
-        neighbour_list[1].direct_neighbours = {{.bus = 0, .status = ConnectivityStatus::has_no_measurement},
-                                               {.bus = 2, .status = ConnectivityStatus::has_no_measurement},
-                                               {.bus = 4, .status = ConnectivityStatus::has_no_measurement}};
+        neighbour_list[1].status = has_no_measurement;
+        neighbour_list[1].direct_neighbours = {{.bus = 0, .status = has_no_measurement},
+                                               {.bus = 2, .status = has_no_measurement},
+                                               {.bus = 4, .status = has_no_measurement}};
 
         // Bus 2: has measurement
         neighbour_list[2].bus = 2;
-        neighbour_list[2].status = ConnectivityStatus::node_measured;
-        neighbour_list[2].direct_neighbours = {{.bus = 0, .status = ConnectivityStatus::has_no_measurement},
-                                               {.bus = 1, .status = ConnectivityStatus::has_no_measurement},
-                                               {.bus = 4, .status = ConnectivityStatus::has_no_measurement}};
+        neighbour_list[2].status = node_measured;
+        neighbour_list[2].direct_neighbours = {{.bus = 0, .status = has_no_measurement},
+                                               {.bus = 1, .status = has_no_measurement},
+                                               {.bus = 4, .status = has_no_measurement}};
 
         // Bus 3: no measurement
         neighbour_list[3].bus = 3;
-        neighbour_list[3].status = ConnectivityStatus::has_no_measurement;
-        neighbour_list[3].direct_neighbours = {
-            {.bus = 0, .status = ConnectivityStatus::branch_native_measurement_unused},
-            {.bus = 4, .status = ConnectivityStatus::branch_native_measurement_unused}};
+        neighbour_list[3].status = has_no_measurement;
+        neighbour_list[3].direct_neighbours = {{.bus = 0, .status = branch_native_measurement_unused},
+                                               {.bus = 4, .status = branch_native_measurement_unused}};
 
         // Bus 4: no measurement
         neighbour_list[4].bus = 4;
-        neighbour_list[4].status = ConnectivityStatus::has_no_measurement;
-        neighbour_list[4].direct_neighbours = {
-            {.bus = 1, .status = ConnectivityStatus::has_no_measurement},
-            {.bus = 2, .status = ConnectivityStatus::has_no_measurement},
-            {.bus = 3, .status = ConnectivityStatus::branch_native_measurement_unused}};
+        neighbour_list[4].status = has_no_measurement;
+        neighbour_list[4].direct_neighbours = {{.bus = 1, .status = has_no_measurement},
+                                               {.bus = 2, .status = has_no_measurement},
+                                               {.bus = 3, .status = branch_native_measurement_unused}};
 
         // Expand bidirectional connections
         complete_bidirectional_neighbourhood_info(neighbour_list);
@@ -1349,25 +1322,25 @@ TEST_CASE("Test Observability - sufficient_condition_meshed_without_voltage_phas
 
         // Bus 0: no measurement, isolated from sufficient measurements
         neighbour_list[0].bus = 0;
-        neighbour_list[0].status = ConnectivityStatus::has_no_measurement;
-        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = ConnectivityStatus::has_no_measurement}};
+        neighbour_list[0].status = has_no_measurement;
+        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = has_no_measurement}};
 
         // Bus 1: no measurement
         neighbour_list[1].bus = 1;
-        neighbour_list[1].status = ConnectivityStatus::has_no_measurement;
-        neighbour_list[1].direct_neighbours = {{.bus = 0, .status = ConnectivityStatus::has_no_measurement},
-                                               {.bus = 2, .status = ConnectivityStatus::has_no_measurement}};
+        neighbour_list[1].status = has_no_measurement;
+        neighbour_list[1].direct_neighbours = {{.bus = 0, .status = has_no_measurement},
+                                               {.bus = 2, .status = has_no_measurement}};
 
         // Bus 2: no measurement
         neighbour_list[2].bus = 2;
-        neighbour_list[2].status = ConnectivityStatus::has_no_measurement;
-        neighbour_list[2].direct_neighbours = {{.bus = 1, .status = ConnectivityStatus::has_no_measurement},
-                                               {.bus = 3, .status = ConnectivityStatus::has_no_measurement}};
+        neighbour_list[2].status = has_no_measurement;
+        neighbour_list[2].direct_neighbours = {{.bus = 1, .status = has_no_measurement},
+                                               {.bus = 3, .status = has_no_measurement}};
 
         // Bus 3: has measurement but disconnected from the chain
         neighbour_list[3].bus = 3;
-        neighbour_list[3].status = ConnectivityStatus::node_measured;
-        neighbour_list[3].direct_neighbours = {{.bus = 2, .status = ConnectivityStatus::has_no_measurement}};
+        neighbour_list[3].status = node_measured;
+        neighbour_list[3].direct_neighbours = {{.bus = 2, .status = has_no_measurement}};
 
         // Expand bidirectional connections
         complete_bidirectional_neighbourhood_info(neighbour_list);
@@ -1383,7 +1356,7 @@ TEST_CASE("Test Observability - sufficient_condition_meshed_without_voltage_phas
         std::vector<BusNeighbourhoodInfo> neighbour_list(1);
 
         neighbour_list[0].bus = 0;
-        neighbour_list[0].status = ConnectivityStatus::node_measured;
+        neighbour_list[0].status = node_measured;
         neighbour_list[0].direct_neighbours = {}; // No neighbours
 
         bool result = sufficient_condition_meshed_without_voltage_phasor(neighbour_list);
@@ -1398,13 +1371,13 @@ TEST_CASE("Test Observability - sufficient_condition_meshed_without_voltage_phas
 
         // Bus 0: has measurement
         neighbour_list[0].bus = 0;
-        neighbour_list[0].status = ConnectivityStatus::node_measured;
-        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = ConnectivityStatus::has_no_measurement}};
+        neighbour_list[0].status = node_measured;
+        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = has_no_measurement}};
 
         // Bus 1: no measurement
         neighbour_list[1].bus = 1;
-        neighbour_list[1].status = ConnectivityStatus::has_no_measurement;
-        neighbour_list[1].direct_neighbours = {{.bus = 0, .status = ConnectivityStatus::has_no_measurement}};
+        neighbour_list[1].status = has_no_measurement;
+        neighbour_list[1].direct_neighbours = {{.bus = 0, .status = has_no_measurement}};
 
         bool result = sufficient_condition_meshed_without_voltage_phasor(neighbour_list);
 
@@ -1428,43 +1401,39 @@ TEST_CASE("Test Observability - sufficient_condition_meshed_without_voltage_phas
 
         // Bus 0: node measured
         neighbour_list[0].bus = 0;
-        neighbour_list[0].status = ConnectivityStatus::node_measured;
-        neighbour_list[0].direct_neighbours = {
-            {.bus = 1, .status = ConnectivityStatus::has_no_measurement},
-            {.bus = 5, .status = ConnectivityStatus::branch_native_measurement_unused}};
+        neighbour_list[0].status = node_measured;
+        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = has_no_measurement},
+                                               {.bus = 5, .status = branch_native_measurement_unused}};
 
         // Bus 1: downstream measured
         neighbour_list[1].bus = 1;
-        neighbour_list[1].status = ConnectivityStatus::branch_discovered_with_from_node_sensor;
-        neighbour_list[1].direct_neighbours = {{.bus = 0, .status = ConnectivityStatus::has_no_measurement},
-                                               {.bus = 2, .status = ConnectivityStatus::has_no_measurement}};
+        neighbour_list[1].status = branch_discovered_with_from_node_sensor;
+        neighbour_list[1].direct_neighbours = {{.bus = 0, .status = has_no_measurement},
+                                               {.bus = 2, .status = has_no_measurement}};
 
         // Bus 2: upstream measured
         neighbour_list[2].bus = 2;
-        neighbour_list[2].status = ConnectivityStatus::branch_discovered_with_to_node_sensor;
-        neighbour_list[2].direct_neighbours = {
-            {.bus = 1, .status = ConnectivityStatus::has_no_measurement},
-            {.bus = 3, .status = ConnectivityStatus::branch_native_measurement_unused}};
+        neighbour_list[2].status = branch_discovered_with_to_node_sensor;
+        neighbour_list[2].direct_neighbours = {{.bus = 1, .status = has_no_measurement},
+                                               {.bus = 3, .status = branch_native_measurement_unused}};
 
         // Bus 3: branch measured used
         neighbour_list[3].bus = 3;
-        neighbour_list[3].status = ConnectivityStatus::branch_native_measurement_consumed;
-        neighbour_list[3].direct_neighbours = {
-            {.bus = 2, .status = ConnectivityStatus::branch_native_measurement_unused},
-            {.bus = 4, .status = ConnectivityStatus::has_no_measurement}};
+        neighbour_list[3].status = branch_native_measurement_consumed;
+        neighbour_list[3].direct_neighbours = {{.bus = 2, .status = branch_native_measurement_unused},
+                                               {.bus = 4, .status = has_no_measurement}};
 
         // Bus 4: has no measurement
         neighbour_list[4].bus = 4;
-        neighbour_list[4].status = ConnectivityStatus::has_no_measurement;
-        neighbour_list[4].direct_neighbours = {{.bus = 3, .status = ConnectivityStatus::has_no_measurement},
-                                               {.bus = 5, .status = ConnectivityStatus::has_no_measurement}};
+        neighbour_list[4].status = has_no_measurement;
+        neighbour_list[4].direct_neighbours = {{.bus = 3, .status = has_no_measurement},
+                                               {.bus = 5, .status = has_no_measurement}};
 
         // Bus 5: has measurement
         neighbour_list[5].bus = 5;
-        neighbour_list[5].status = ConnectivityStatus::node_measured;
-        neighbour_list[5].direct_neighbours = {
-            {.bus = 0, .status = ConnectivityStatus::branch_native_measurement_unused},
-            {.bus = 4, .status = ConnectivityStatus::has_no_measurement}};
+        neighbour_list[5].status = node_measured;
+        neighbour_list[5].direct_neighbours = {{.bus = 0, .status = branch_native_measurement_unused},
+                                               {.bus = 4, .status = has_no_measurement}};
 
         // Expand bidirectional connections
         complete_bidirectional_neighbourhood_info(neighbour_list);
@@ -1481,16 +1450,13 @@ TEST_CASE("Test Observability - sufficient_condition_meshed_without_voltage_phas
 
         for (Idx i = 0; i < 4; ++i) {
             neighbour_list[i].bus = i;
-            neighbour_list[i].status =
-                (i == 0 || i == 2) ? ConnectivityStatus::node_measured : ConnectivityStatus::has_no_measurement;
+            neighbour_list[i].status = (i == 0 || i == 2) ? node_measured : has_no_measurement;
             neighbour_list[i].direct_neighbours.clear();
 
             // Connect to all other nodes
             for (Idx j = 0; j < 4; ++j) {
                 if (i != j) {
-                    ConnectivityStatus edge_status = (i == 1 && j == 3)
-                                                         ? ConnectivityStatus::branch_native_measurement_unused
-                                                         : ConnectivityStatus::has_no_measurement;
+                    auto edge_status = (i == 1 && j == 3) ? branch_native_measurement_unused : has_no_measurement;
                     neighbour_list[i].direct_neighbours.push_back({.bus = j, .status = edge_status});
                 }
             }
@@ -1510,16 +1476,14 @@ TEST_CASE("Test Observability - sufficient_condition_meshed_without_voltage_phas
         // Create a ring topology with additional cross connections
         for (Idx i = 0; i < n_bus; ++i) {
             neighbour_list[i].bus = i;
-            neighbour_list[i].status =
-                (i % 3 == 0) ? ConnectivityStatus::node_measured : ConnectivityStatus::has_no_measurement;
+            neighbour_list[i].status = (i % 3 == 0) ? node_measured : has_no_measurement;
 
             // Ring connections
             Idx next_bus = (i + 1) % n_bus;
             Idx prev_bus = (i + n_bus - 1) % n_bus;
 
-            ConnectivityStatus next_status = (i == 2) ? ConnectivityStatus::branch_native_measurement_unused
-                                                      : ConnectivityStatus::has_no_measurement;
-            ConnectivityStatus prev_status = ConnectivityStatus::has_no_measurement;
+            auto next_status = (i == 2) ? branch_native_measurement_unused : has_no_measurement;
+            auto prev_status = has_no_measurement;
 
             neighbour_list[i].direct_neighbours = {{.bus = next_bus, .status = next_status},
                                                    {.bus = prev_bus, .status = prev_status}};
@@ -1527,8 +1491,7 @@ TEST_CASE("Test Observability - sufficient_condition_meshed_without_voltage_phas
             // Add some cross connections for mesh
             if (i < n_bus / 2) {
                 Idx cross_bus = i + n_bus / 2;
-                ConnectivityStatus cross_status = (i == 1) ? ConnectivityStatus::branch_native_measurement_unused
-                                                           : ConnectivityStatus::has_no_measurement;
+                auto cross_status = (i == 1) ? branch_native_measurement_unused : has_no_measurement;
                 neighbour_list[i].direct_neighbours.push_back({.bus = cross_bus, .status = cross_status});
             }
         }
