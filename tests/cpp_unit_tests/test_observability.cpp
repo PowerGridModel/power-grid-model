@@ -54,7 +54,7 @@ TEST_CASE("Observable voltage sensor - basic integration test") {
     topo.branch_bus_idx = {{0, 1}, {1, 2}};
     topo.sources_per_bus = {from_sparse, {0, 1, 1, 1}};
     topo.shunts_per_bus = {from_sparse, {0, 0, 0, 0}};
-    topo.load_gens_per_bus = {from_sparse, {0, 0, 0, 0}};
+    topo.load_gens_per_bus = {from_sparse, {1, 2, 3, 4}};
     topo.power_sensors_per_bus = {from_sparse, {0, 0, 0, 0}};
     topo.power_sensors_per_source = {from_sparse, {0, 0}};
     topo.power_sensors_per_load_gen = {from_sparse, {0}};
@@ -140,7 +140,8 @@ TEST_CASE("Test Observability - scan_network_sensors") {
 
         // Verify bus injections - should count the bus injection sensor at bus 2
         CHECK(result.bus_injections[2] == 1);     // Bus 2 has injection sensor
-        CHECK(result.bus_injections.back() >= 1); // Total count should be at least 1
+        CHECK(result.bus_injections.back() == 3); // Total count should be at least 1
+        CHECK(result.is_possibly_ill_conditioned == false);
 
         // Verify neighbour results structure
         CHECK(neighbour_results.size() == 3);
@@ -149,15 +150,16 @@ TEST_CASE("Test Observability - scan_network_sensors") {
         }
 
         // Bus 2 should have node_measured status due to injection sensor
+        CHECK(neighbour_results[0].direct_neighbours[0].status == ConnectivityStatus::branch_native_measurement_unused);
         CHECK(neighbour_results[2].status == ConnectivityStatus::node_measured);
     }
 
     SUBCASE("Meshed network") {
         // Create a 6-bus meshed network:
         //                       bus0 (injection sensor)
-        //                         |
+        //                        [|] (branch sensor)
         //  bus1-[branch-sensor]-bus2 -(voltage)---[branch-sensor]----- bus3
-        //                         |                                    [|] (branch sensor)
+        //                        [|] (branch sensor)                   [|] (branch sensor)
         //                       bus4 (injection sensor) -------------- bus5
         //
         // Branch sensors: bus1-bus2, bus3-bus5
@@ -186,9 +188,9 @@ TEST_CASE("Test Observability - scan_network_sensors") {
         topo.power_sensors_per_load_gen = {from_sparse, {0}}; // No load_gens
         topo.power_sensors_per_shunt = {from_sparse, {0}};
 
-        // Branch sensors: branch 1 (bus1-bus2), branch 2 (bus2-bus3), branch 4 (bus3-bus5) have power sensors
-        // 6 branches: branch0[0:0), branch1[0:1), branch2[1:2), branch3[2:2), branch4[2:3), branch5[3:3)
-        topo.power_sensors_per_branch_from = {from_sparse, {0, 0, 1, 2, 2, 3, 3}};
+        // Branch sensors: branch 1 (bus1-bus2), branch 2 (bus2-bus3), branch 3 (bus2-bus4), branch 4 (bus3-bus5) have
+        // power sensors. 6 branches: branch0[0:0), branch1[0:1), branch2[1:2), branch3[2:3), branch4[3:4), branch5[4:4)
+        topo.power_sensors_per_branch_from = {from_sparse, {0, 0, 1, 2, 3, 4, 4}};
         topo.power_sensors_per_branch_to = {from_sparse, {0, 0, 0, 0, 0, 0, 0}};
         topo.current_sensors_per_branch_from = {from_sparse, {0, 0, 0, 0, 0, 0, 0}};
         topo.current_sensors_per_branch_to = {from_sparse, {0, 0, 0, 0, 0, 0, 0}};
@@ -266,8 +268,9 @@ TEST_CASE("Test Observability - scan_network_sensors") {
 
         // Check bus injection sensors: bus 0, 4 have injection sensors
         CHECK(result.bus_injections[0] == 1);     // Bus 0 has injection sensor
+        CHECK(result.bus_injections[1] == 1);     // Bus 1 has zero-injection
         CHECK(result.bus_injections[4] == 1);     // Bus 4 has injection sensor
-        CHECK(result.bus_injections.back() >= 2); // Total count should be at least 2
+        CHECK(result.bus_injections.back() == 6); // Total count should be at least 2
 
         // Verify each bus has correct index
         for (size_t i = 0; i < neighbour_results.size(); ++i) {
@@ -282,6 +285,8 @@ TEST_CASE("Test Observability - scan_network_sensors") {
               ConnectivityStatus::node_measured); // bus 1 has pseudo measurement (zero injection)
         CHECK(neighbour_results[2].status == ConnectivityStatus::node_measured); // bus 2 has voltage sensor
         CHECK(neighbour_results[2].direct_neighbours.size() == 2);               // bus 2 has 2 neighbours
+        CHECK(neighbour_results[2].direct_neighbours[1].status ==
+              ConnectivityStatus::branch_native_measurement_unused); // bus 2 and bus 4 is connected by a measured edge
         CHECK(neighbour_results[3].status ==
               ConnectivityStatus::node_measured); // bus 3 has pseudo measurement (zero injection)
         CHECK(neighbour_results[4].status == ConnectivityStatus::node_measured); // bus 4 has injection sensor
