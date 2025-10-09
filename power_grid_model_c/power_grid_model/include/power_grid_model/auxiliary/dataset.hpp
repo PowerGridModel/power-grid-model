@@ -117,28 +117,38 @@ class ColumnarAttributeRange : public std::ranges::view_interface<ColumnarAttrib
         std::span<AttributeBuffer<Data> const> attribute_buffers_{};
     };
 
-    class iterator
-        : public IteratorFacade<iterator, std::conditional_t<is_data_mutable_v<dataset_type>, Proxy, Proxy const>,
-                                Idx> {
+    class iterator : public IteratorFacade {
       public:
-        using value_type = Proxy;
+        using value_type = std::conditional_t<is_data_mutable_v<dataset_type>, Proxy, Proxy const>;
         using difference_type = Idx;
+        using pointer = std::add_pointer_t<value_type>;
+        using reference = std::add_lvalue_reference_t<value_type>;
 
-        iterator() = default;
+        iterator() : IteratorFacade{*this} {};
         iterator(difference_type idx, std::span<AttributeBuffer<Data> const> attribute_buffers)
-            : current_{idx, attribute_buffers} {}
+            : IteratorFacade{*this}, current_{idx, attribute_buffers} {}
 
-      private:
-        friend class IteratorFacade<iterator, std::conditional_t<is_data_mutable_v<dataset_type>, Proxy, Proxy const>,
-                                    Idx>;
-
-        constexpr auto dereference() -> value_type& { return current_; }
-        constexpr auto dereference() const -> std::add_lvalue_reference_t<std::add_const_t<value_type>> {
+        constexpr auto operator*() -> reference { return current_; }
+        constexpr auto operator*() const -> std::add_lvalue_reference_t<std::add_const_t<value_type>> {
             return current_;
         }
-        constexpr auto three_way_compare(iterator const& other) const { return current_.idx_ <=> other.current_.idx_; }
-        constexpr auto distance_to(iterator const& other) const { return other.current_.idx_ - current_.idx_; }
-        constexpr void advance(difference_type n) { current_.idx_ += n; }
+
+        friend constexpr auto operator<=>(iterator const& first, iterator const& second) {
+            return first.current_idx() <=> second.current_idx();
+        }
+
+        constexpr auto operator+=(difference_type n) -> std::add_lvalue_reference_t<iterator> {
+            current_idx() += n;
+            return *this;
+        }
+
+        friend constexpr auto operator-(iterator const& first, iterator const& second) -> difference_type {
+            return first.current_idx() - second.current_idx();
+        }
+
+      private:
+        constexpr auto current_idx() const { return current_.idx_; }
+        constexpr auto& current_idx() { return current_.idx_; }
 
         Proxy current_;
     };
