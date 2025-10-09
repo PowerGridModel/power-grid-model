@@ -509,7 +509,7 @@ TEST_CASE("Test Observability - prepare_starting_nodes") {
 
     SUBCASE("Empty network") {
         // Edge case: empty network
-        std::vector<BusNeighbourhoodInfo> neighbour_list;
+        std::vector<BusNeighbourhoodInfo> const neighbour_list;
         std::vector<Idx> starting_candidates;
 
         prepare_starting_nodes(neighbour_list, 0, starting_candidates);
@@ -638,10 +638,12 @@ TEST_CASE("Test Observability - assign_independent_sensors_radial") {
         std::vector<int8_t> voltage_phasor_sensors(n_bus, 0); // Initialize to correct size
 
         // Set up initial sensors if vectors are large enough
-        if (n_ybus_entries > 0)
+        if (n_ybus_entries > 0) {
             flow_sensors[0] = 1; // bus0 injection
-        if (n_bus > 1)
+        }
+        if (n_bus > 1) {
             voltage_phasor_sensors[1] = 1; // voltage phasor at bus1
+        }
 
         assign_independent_sensors_radial(y_bus_struct, flow_sensors, voltage_phasor_sensors);
 
@@ -652,9 +654,9 @@ TEST_CASE("Test Observability - assign_independent_sensors_radial") {
         }
 
         // Total sensors should be preserved (just reassigned)
-        Idx initial_total = 2; // We started with 1 flow + 1 voltage = 2 total
-        Idx final_flow = std::ranges::fold_left(flow_sensors, 0, std::plus<>{});
-        Idx final_voltage = std::ranges::fold_left(voltage_phasor_sensors, 0, std::plus<>{});
+        Idx const initial_total = 2; // We started with 1 flow + 1 voltage = 2 total
+        Idx const final_flow = std::ranges::fold_left(flow_sensors, 0, std::plus<>{});
+        Idx const final_voltage = std::ranges::fold_left(voltage_phasor_sensors, 0, std::plus<>{});
         CHECK(final_flow + final_voltage <= initial_total); // Some sensors might be reassigned or removed
     }
 
@@ -727,10 +729,10 @@ TEST_CASE("Test Observability - find_spanning_tree_from_node") {
         neighbour_list[2].status = has_no_measurement;
         neighbour_list[2].direct_neighbours = {{.bus = 1, .status = branch_native_measurement_unused}};
 
-        Idx start_bus = 0;
-        Idx n_bus = 3;
+        Idx const start_bus = 0;
+        Idx const n_bus = 3;
 
-        bool result = find_spanning_tree_from_node(start_bus, n_bus, neighbour_list);
+        bool const result = find_spanning_tree_from_node(start_bus, n_bus, neighbour_list);
 
         // Should successfully find spanning tree using native edge measurements
         CHECK(result == true);
@@ -756,10 +758,10 @@ TEST_CASE("Test Observability - find_spanning_tree_from_node") {
         neighbour_list[2].status = node_measured;
         neighbour_list[2].direct_neighbours = {{.bus = 1, .status = has_no_measurement}};
 
-        Idx start_bus = 0;
-        Idx n_bus = 3;
+        Idx const start_bus = 0;
+        Idx const n_bus = 3;
 
-        bool result = find_spanning_tree_from_node(start_bus, n_bus, neighbour_list);
+        bool const result = find_spanning_tree_from_node(start_bus, n_bus, neighbour_list);
 
         // Should work with measurements at both ends of the chain
         CHECK((result == true || result == false)); // Algorithm may not always find spanning tree
@@ -791,10 +793,10 @@ TEST_CASE("Test Observability - find_spanning_tree_from_node") {
         neighbour_list[3].status = node_measured;
         neighbour_list[3].direct_neighbours = {{.bus = 2, .status = has_no_measurement}};
 
-        Idx start_bus = 0;
-        Idx n_bus = 4;
+        Idx const start_bus = 0;
+        Idx const n_bus = 4;
 
-        bool result = find_spanning_tree_from_node(start_bus, n_bus, neighbour_list);
+        bool const result = find_spanning_tree_from_node(start_bus, n_bus, neighbour_list);
 
         // Should successfully build spanning tree using combination of edge and node measurements
         CHECK((result == true || result == false)); // Algorithm may not always find spanning tree
@@ -819,10 +821,10 @@ TEST_CASE("Test Observability - find_spanning_tree_from_node") {
         neighbour_list[2].status = has_no_measurement;
         neighbour_list[2].direct_neighbours = {}; // Isolated
 
-        Idx start_bus = 0;
-        Idx n_bus = 3;
+        Idx const start_bus = 0;
+        Idx const n_bus = 3;
 
-        bool result = find_spanning_tree_from_node(start_bus, n_bus, neighbour_list);
+        bool const result = find_spanning_tree_from_node(start_bus, n_bus, neighbour_list);
 
         // Should fail because bus 2 is isolated and cannot be reached
         CHECK(result == false);
@@ -836,11 +838,11 @@ TEST_CASE("Test Observability - find_spanning_tree_from_node") {
         neighbour_list[0].status = node_measured;
         neighbour_list[0].direct_neighbours = {}; // No neighbours
 
-        Idx start_bus = 0;
-        Idx n_bus = 1;
+        Idx const start_bus = 0;
+        Idx const n_bus = 1;
 
         // Just test that the function executes without crashing
-        bool result = find_spanning_tree_from_node(start_bus, n_bus, neighbour_list);
+        bool const result = find_spanning_tree_from_node(start_bus, n_bus, neighbour_list);
 
         // Don't make assumptions about the result - just verify it returns a boolean
         CHECK((result == true || result == false));
@@ -859,10 +861,10 @@ TEST_CASE("Test Observability - find_spanning_tree_from_node") {
             }
         }
 
-        Idx start_bus = 0;
-        Idx n_bus = 3;
+        Idx const start_bus = 0;
+        Idx const n_bus = 3;
 
-        bool result = find_spanning_tree_from_node(start_bus, n_bus, neighbour_list);
+        bool const result = find_spanning_tree_from_node(start_bus, n_bus, neighbour_list);
 
         // Should succeed easily with abundant measurements
         CHECK((result == true || result == false)); // Algorithm behavior may vary
@@ -894,11 +896,11 @@ TEST_CASE("Test Observability - find_spanning_tree_from_node") {
         neighbour_list[3].status = has_no_measurement;
         neighbour_list[3].direct_neighbours = {{.bus = 1, .status = has_no_measurement}};
 
-        Idx start_bus = 0;
-        Idx n_bus = 4;
+        Idx const start_bus = 0;
+        Idx const n_bus = 4;
 
         // Test that function executes and returns a boolean result
-        bool result = find_spanning_tree_from_node(start_bus, n_bus, neighbour_list);
+        bool const result = find_spanning_tree_from_node(start_bus, n_bus, neighbour_list);
 
         // Verify function completes and returns valid boolean
         CHECK((result == true || result == false));
@@ -916,7 +918,7 @@ TEST_CASE("Test Observability - necessary_condition") {
         sensors.bus_injections = {2, 2, 3}; // cumulative count ending at 3
         sensors.is_possibly_ill_conditioned = false;
 
-        Idx n_bus = 3;
+        Idx const n_bus = 3;
         Idx n_voltage_phasor = 2;
 
         CHECK_NOTHROW(necessary_condition(sensors, n_bus, n_voltage_phasor, false));
@@ -930,14 +932,14 @@ TEST_CASE("Test Observability - necessary_condition") {
         sensors.bus_injections = {1, 1, 1};         // only one injection
         sensors.is_possibly_ill_conditioned = false;
 
-        Idx n_bus = 3;
+        Idx const n_bus = 3;
         Idx n_voltage_phasor = 1;
 
         CHECK_THROWS_AS(necessary_condition(sensors, n_bus, n_voltage_phasor, false), NotObservableError);
     }
 
     SUBCASE("Empty sensors") {
-        ObservabilitySensorsResult sensors;
+        ObservabilitySensorsResult const sensors;
         // All vectors empty - should not be observable
 
         Idx n_voltage_phasor = 0;
@@ -998,7 +1000,7 @@ TEST_CASE("Test Observability - sufficient_condition_radial_with_voltage_phasor"
             scan_network_sensors(measured_values, topo, y_bus.y_bus_structure(), neighbour_results);
 
         // Count voltage phasor sensors
-        Idx n_voltage_phasor_sensors =
+        Idx const n_voltage_phasor_sensors =
             std::ranges::fold_left(observability_sensors.voltage_phasor_sensors, 0, std::plus<>{});
 
         // Test sufficient_condition_radial_with_voltage_phasor
@@ -1006,14 +1008,14 @@ TEST_CASE("Test Observability - sufficient_condition_radial_with_voltage_phasor"
                                                                       n_voltage_phasor_sensors));
 
         // Verify that it returns true (no exception thrown means observable)
-        bool result = sufficient_condition_radial_with_voltage_phasor(y_bus.y_bus_structure(), observability_sensors,
-                                                                      n_voltage_phasor_sensors);
+        bool const result = sufficient_condition_radial_with_voltage_phasor(
+            y_bus.y_bus_structure(), observability_sensors, n_voltage_phasor_sensors);
         CHECK(result == true);
 
         // Verify that sensors were reassigned properly
         Idx const n_bus = 4;
-        Idx final_flow_sensors = std::ranges::fold_left(observability_sensors.flow_sensors, 0, std::plus<>{});
-        Idx final_voltage_sensors =
+        Idx const final_flow_sensors = std::ranges::fold_left(observability_sensors.flow_sensors, 0, std::plus<>{});
+        Idx const final_voltage_sensors =
             std::ranges::fold_left(observability_sensors.voltage_phasor_sensors, 0, std::plus<>{});
 
         // Should have n_bus-1 independent flow sensors for radial network
@@ -1066,20 +1068,20 @@ TEST_CASE("Test Observability - sufficient_condition_radial_with_voltage_phasor"
             scan_network_sensors(measured_values, topo, y_bus.y_bus_structure(), neighbour_results);
 
         // Store initial sensor counts
-        Idx initial_voltage_sensors =
+        Idx const initial_voltage_sensors =
             std::ranges::fold_left(observability_sensors.voltage_phasor_sensors, 0, std::plus<>{});
 
         // Count voltage phasor sensors for the function
-        Idx n_voltage_phasor_sensors = initial_voltage_sensors;
+        Idx const n_voltage_phasor_sensors = initial_voltage_sensors;
 
         // Test that the function works and modifies the sensor vectors
-        bool result = sufficient_condition_radial_with_voltage_phasor(y_bus.y_bus_structure(), observability_sensors,
-                                                                      n_voltage_phasor_sensors);
+        bool const result = sufficient_condition_radial_with_voltage_phasor(
+            y_bus.y_bus_structure(), observability_sensors, n_voltage_phasor_sensors);
         CHECK(result == true);
 
         // Verify that sensors were modified by the internal assign_independent_sensors_radial call
-        Idx final_flow_sensors = std::ranges::fold_left(observability_sensors.flow_sensors, 0, std::plus<>{});
-        Idx final_voltage_sensors =
+        Idx const final_flow_sensors = std::ranges::fold_left(observability_sensors.flow_sensors, 0, std::plus<>{});
+        Idx const final_voltage_sensors =
             std::ranges::fold_left(observability_sensors.voltage_phasor_sensors, 0, std::plus<>{});
 
         // For a 3-bus radial network, should have 2 independent flow sensors
@@ -1135,13 +1137,13 @@ TEST_CASE("Test Observability - sufficient_condition_radial_with_voltage_phasor"
             scan_network_sensors(measured_values, topo, y_bus.y_bus_structure(), neighbour_results);
 
         // Count voltage phasor sensors (should be 0)
-        Idx n_voltage_phasor_sensors =
+        Idx const n_voltage_phasor_sensors =
             std::ranges::fold_left(observability_sensors.voltage_phasor_sensors, 0, std::plus<>{});
         CHECK(n_voltage_phasor_sensors == 0);
 
         // Should pass with sufficient flow sensors even without voltage phasor sensors
-        bool result = sufficient_condition_radial_with_voltage_phasor(y_bus.y_bus_structure(), observability_sensors,
-                                                                      n_voltage_phasor_sensors);
+        bool const result = sufficient_condition_radial_with_voltage_phasor(
+            y_bus.y_bus_structure(), observability_sensors, n_voltage_phasor_sensors);
         CHECK(result == true);
     }
 
@@ -1185,12 +1187,12 @@ TEST_CASE("Test Observability - sufficient_condition_radial_with_voltage_phasor"
             scan_network_sensors(measured_values, topo, y_bus.y_bus_structure(), neighbour_results);
 
         // Count voltage phasor sensors
-        Idx n_voltage_phasor_sensors =
+        Idx const n_voltage_phasor_sensors =
             std::ranges::fold_left(observability_sensors.voltage_phasor_sensors, 0, std::plus<>{});
 
         // Single bus with voltage phasor should be observable (n_bus-1 = 0 flow sensors needed)
-        bool result = sufficient_condition_radial_with_voltage_phasor(y_bus.y_bus_structure(), observability_sensors,
-                                                                      n_voltage_phasor_sensors);
+        bool const result = sufficient_condition_radial_with_voltage_phasor(
+            y_bus.y_bus_structure(), observability_sensors, n_voltage_phasor_sensors);
         CHECK(result == true);
     }
 }
@@ -1232,7 +1234,7 @@ TEST_CASE("Test Observability - sufficient_condition_meshed_without_voltage_phas
         // Expand bidirectional connections
         complete_bidirectional_neighbourhood_info(neighbour_list);
 
-        bool result = sufficient_condition_meshed_without_voltage_phasor(neighbour_list);
+        bool const result = sufficient_condition_meshed_without_voltage_phasor(neighbour_list);
 
         // Should successfully find spanning tree in meshed network with sufficient measurements
         CHECK(result == true);
@@ -1263,7 +1265,7 @@ TEST_CASE("Test Observability - sufficient_condition_meshed_without_voltage_phas
         // Expand bidirectional connections
         complete_bidirectional_neighbourhood_info(neighbour_list);
 
-        bool result = sufficient_condition_meshed_without_voltage_phasor(neighbour_list);
+        bool const result = sufficient_condition_meshed_without_voltage_phasor(neighbour_list);
 
         // Should find spanning tree using native edge measurements
         CHECK(result == true);
@@ -1310,7 +1312,7 @@ TEST_CASE("Test Observability - sufficient_condition_meshed_without_voltage_phas
         // Expand bidirectional connections
         complete_bidirectional_neighbourhood_info(neighbour_list);
 
-        bool result = sufficient_condition_meshed_without_voltage_phasor(neighbour_list);
+        bool const result = sufficient_condition_meshed_without_voltage_phasor(neighbour_list);
 
         // Should handle complex meshed network with multiple loops
         CHECK((result == true || result == false)); // Algorithm may succeed or fail depending on starting point
@@ -1345,7 +1347,7 @@ TEST_CASE("Test Observability - sufficient_condition_meshed_without_voltage_phas
         // Expand bidirectional connections
         complete_bidirectional_neighbourhood_info(neighbour_list);
 
-        bool result = sufficient_condition_meshed_without_voltage_phasor(neighbour_list);
+        bool const result = sufficient_condition_meshed_without_voltage_phasor(neighbour_list);
 
         // Should fail due to insufficient measurements
         CHECK(result == false);
@@ -1359,7 +1361,7 @@ TEST_CASE("Test Observability - sufficient_condition_meshed_without_voltage_phas
         neighbour_list[0].status = node_measured;
         neighbour_list[0].direct_neighbours = {}; // No neighbours
 
-        bool result = sufficient_condition_meshed_without_voltage_phasor(neighbour_list);
+        bool const result = sufficient_condition_meshed_without_voltage_phasor(neighbour_list);
 
         // Single bus with measurement should be trivially observable
         CHECK((result == true || result == false)); // Algorithm behavior may vary based on implementation
@@ -1379,7 +1381,7 @@ TEST_CASE("Test Observability - sufficient_condition_meshed_without_voltage_phas
         neighbour_list[1].status = has_no_measurement;
         neighbour_list[1].direct_neighbours = {{.bus = 0, .status = has_no_measurement}};
 
-        bool result = sufficient_condition_meshed_without_voltage_phasor(neighbour_list);
+        bool const result = sufficient_condition_meshed_without_voltage_phasor(neighbour_list);
 
         // Two bus network with one measurement should be observable
         CHECK(result == true);
@@ -1387,9 +1389,9 @@ TEST_CASE("Test Observability - sufficient_condition_meshed_without_voltage_phas
 
     SUBCASE("Empty network - edge case") {
         // Edge case: empty network
-        std::vector<BusNeighbourhoodInfo> neighbour_list;
+        std::vector<BusNeighbourhoodInfo> const neighbour_list;
 
-        bool result = sufficient_condition_meshed_without_voltage_phasor(neighbour_list);
+        bool const result = sufficient_condition_meshed_without_voltage_phasor(neighbour_list);
 
         // Empty network should be trivially observable
         CHECK(result == true);
@@ -1438,7 +1440,7 @@ TEST_CASE("Test Observability - sufficient_condition_meshed_without_voltage_phas
         // Expand bidirectional connections
         complete_bidirectional_neighbourhood_info(neighbour_list);
 
-        bool result = sufficient_condition_meshed_without_voltage_phasor(neighbour_list);
+        bool const result = sufficient_condition_meshed_without_voltage_phasor(neighbour_list);
 
         // Should handle various connectivity statuses without crashing
         CHECK((result == true || result == false)); // Algorithm may succeed or fail
@@ -1462,7 +1464,7 @@ TEST_CASE("Test Observability - sufficient_condition_meshed_without_voltage_phas
             }
         }
 
-        bool result = sufficient_condition_meshed_without_voltage_phasor(neighbour_list);
+        bool const result = sufficient_condition_meshed_without_voltage_phasor(neighbour_list);
 
         // Highly connected network with multiple measurements should be observable
         CHECK((result == true || result == false)); // Algorithm may succeed or fail based on starting points
@@ -1479,8 +1481,8 @@ TEST_CASE("Test Observability - sufficient_condition_meshed_without_voltage_phas
             neighbour_list[i].status = (i % 3 == 0) ? node_measured : has_no_measurement;
 
             // Ring connections
-            Idx next_bus = (i + 1) % n_bus;
-            Idx prev_bus = (i + n_bus - 1) % n_bus;
+            Idx const next_bus = (i + 1) % n_bus;
+            Idx const prev_bus = (i + n_bus - 1) % n_bus;
 
             auto next_status = (i == 2) ? branch_native_measurement_unused : has_no_measurement;
             auto prev_status = has_no_measurement;
@@ -1490,8 +1492,8 @@ TEST_CASE("Test Observability - sufficient_condition_meshed_without_voltage_phas
 
             // Add some cross connections for mesh
             if (i < n_bus / 2) {
-                Idx cross_bus = i + n_bus / 2;
-                auto cross_status = (i == 1) ? branch_native_measurement_unused : has_no_measurement;
+                Idx const cross_bus = i + n_bus / 2;
+                auto const cross_status = (i == 1) ? branch_native_measurement_unused : has_no_measurement;
                 neighbour_list[i].direct_neighbours.push_back({.bus = cross_bus, .status = cross_status});
             }
         }
@@ -1499,7 +1501,7 @@ TEST_CASE("Test Observability - sufficient_condition_meshed_without_voltage_phas
         // Expand bidirectional connections
         complete_bidirectional_neighbourhood_info(neighbour_list);
 
-        bool result = sufficient_condition_meshed_without_voltage_phasor(neighbour_list);
+        bool const result = sufficient_condition_meshed_without_voltage_phasor(neighbour_list);
 
         // Should complete in reasonable time and return a boolean
         CHECK((result == true || result == false));
