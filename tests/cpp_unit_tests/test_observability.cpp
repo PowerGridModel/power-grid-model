@@ -188,15 +188,16 @@ TEST_CASE("Test Observability - scan_network_sensors") {
         topo.power_sensors_per_load_gen = {from_sparse, {0}}; // No load_gens
         topo.power_sensors_per_shunt = {from_sparse, {0}};
 
-        // Branch sensors: branch 1 (bus1-bus2), branch 2 (bus2-bus3), branch 3 (bus2-bus4), branch 4 (bus3-bus5) have
-        // power sensors. 6 branches: branch0[0:0), branch1[0:1), branch2[1:2), branch3[2:3), branch4[3:4), branch5[4:4)
+        // Branch sensors: branch 1 (bus1-bus2), branch 2 (bus2-bus3), branch 3 (bus2-bus4), // NOSONAR
+        // branch 4 (bus3-bus5) have power sensors. 6 branches: branch0[0:0), branch1[0:1),  // NOSONAR
+        // branch2[1:2), branch3[2:3), branch4[3:4), branch5[4:4) // NOSONAR
         topo.power_sensors_per_branch_from = {from_sparse, {0, 0, 1, 2, 3, 4, 4}};
         topo.power_sensors_per_branch_to = {from_sparse, {0, 0, 0, 0, 0, 0, 0}};
         topo.current_sensors_per_branch_from = {from_sparse, {0, 0, 0, 0, 0, 0, 0}};
         topo.current_sensors_per_branch_to = {from_sparse, {0, 0, 0, 0, 0, 0, 0}};
 
-        // Voltage sensor: bus 2 has voltage sensor
-        // bus0[0:0), bus1[0:0), bus2[0:1), bus3[1:1), bus4[1:1), bus5[1:1)
+        // Voltage sensor: bus 2 has voltage sensor // NOSONAR
+        // bus0[0:0), bus1[0:0), bus2[0:1), bus3[1:1), bus4[1:1), bus5[1:1) // NOSONAR
         topo.voltage_sensors_per_bus = {from_sparse, {0, 0, 0, 1, 1, 1, 1}};
 
         MathModelParam<symmetric_t> param;
