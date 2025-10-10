@@ -1463,10 +1463,13 @@ TEST_CASE("Test Observability - sufficient_condition_meshed_without_voltage_phas
             }
         }
 
+        neighbour_list[1].direct_neighbours[1].status = branch_native_measurement_unused; // Add another measurement
+        neighbour_list[2].direct_neighbours[1].status = branch_native_measurement_unused; // otherwise not observable
+
         bool const result = sufficient_condition_meshed_without_voltage_phasor(neighbour_list);
 
         // Highly connected network with multiple measurements should be observable
-        CHECK((result == true || result == false)); // Algorithm may succeed or fail based on starting points
+        CHECK(result == true);
     }
 
     SUBCASE("Performance test with larger network") {
@@ -1496,14 +1499,19 @@ TEST_CASE("Test Observability - sufficient_condition_meshed_without_voltage_phas
                 neighbour_list[i].direct_neighbours.push_back({.bus = cross_bus, .status = cross_status});
             }
         }
+        neighbour_list[3].direct_neighbours[1].status = branch_native_measurement_unused; // part of creation
 
         // Expand bidirectional connections
         complete_bidirectional_neighbourhood_info(neighbour_list);
 
+        // Add two more measurements to ensure observability
+        neighbour_list[5].status = node_measured;
+        neighbour_list[0].direct_neighbours[2].status = branch_native_measurement_unused;
+        neighbour_list[4].direct_neighbours[2].status = branch_native_measurement_unused;
+
         bool const result = sufficient_condition_meshed_without_voltage_phasor(neighbour_list);
 
-        // Should complete in reasonable time and return a boolean
-        CHECK((result == true || result == false));
+        CHECK(result == true);
     }
 }
 
