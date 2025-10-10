@@ -584,6 +584,151 @@ TEST_CASE("Test Observability - complete_bidirectional_neighbourhood_info") {
         CHECK(neighbour_list[0].bus == 0);
         CHECK(neighbour_list[1].bus == 1);
         CHECK(neighbour_list[2].bus == 2);
+
+        // Verify bus statuses remain unchanged
+        CHECK(neighbour_list[0].status == has_no_measurement);
+        CHECK(neighbour_list[1].status == node_measured);
+        CHECK(neighbour_list[2].status == node_measured);
+
+        // Verify Bus 0 connections (should remain as originally set)
+        CHECK(neighbour_list[0].direct_neighbours.size() == 2);
+        CHECK(neighbour_list[0].direct_neighbours[0].bus == 1);
+        CHECK(neighbour_list[0].direct_neighbours[0].status == has_no_measurement);
+        CHECK(neighbour_list[0].direct_neighbours[1].bus == 2);
+        CHECK(neighbour_list[0].direct_neighbours[1].status == node_measured);
+
+        // Verify Bus 1 connections (should have reverse connection added)
+        CHECK(neighbour_list[1].direct_neighbours.size() == 1);
+        CHECK(neighbour_list[1].direct_neighbours[0].bus == 0);
+        CHECK(neighbour_list[1].direct_neighbours[0].status == has_no_measurement);
+
+        // Verify Bus 2 connections (should have reverse connection added)
+        CHECK(neighbour_list[2].direct_neighbours.size() == 1);
+        CHECK(neighbour_list[2].direct_neighbours[0].bus == 0);
+        CHECK(neighbour_list[2].direct_neighbours[0].status == node_measured);
+    }
+
+    SUBCASE("Complex network with multiple connection types") {
+        std::vector<BusNeighbourhoodInfo> neighbour_list(4);
+
+        // Initialize test data - create a partially connected network
+        // Bus 0 connects to buses 1 and 3
+        neighbour_list[0].bus = 0;
+        neighbour_list[0].status = node_measured;
+        neighbour_list[0].direct_neighbours = {{1, branch_native_measurement_unused}, {3, has_no_measurement}};
+
+        // Bus 1 connects to bus 2 (but not back to 0 yet)
+        neighbour_list[1].bus = 1;
+        neighbour_list[1].status = has_no_measurement;
+        neighbour_list[1].direct_neighbours = {{2, branch_discovered_with_from_node_sensor}};
+
+        // Bus 2 has existing connection to bus 3
+        neighbour_list[2].bus = 2;
+        neighbour_list[2].status = branch_discovered_with_to_node_sensor;
+        neighbour_list[2].direct_neighbours = {{3, branch_native_measurement_consumed}};
+
+        // Bus 3 initially has no connections
+        neighbour_list[3].bus = 3;
+        neighbour_list[3].status = node_measured;
+        neighbour_list[3].direct_neighbours = {};
+
+        // Test the function
+        complete_bidirectional_neighbourhood_info(neighbour_list);
+
+        // Verify all buses maintain their original status
+        CHECK(neighbour_list[0].status == node_measured);
+        CHECK(neighbour_list[1].status == has_no_measurement);
+        CHECK(neighbour_list[2].status == branch_discovered_with_to_node_sensor);
+        CHECK(neighbour_list[3].status == node_measured);
+
+        // Verify Bus 0 connections (original + reverse from 1 and 3)
+        CHECK(neighbour_list[0].direct_neighbours.size() == 2);
+        // Find connection to bus 1
+        auto bus0_to_bus1 =
+            std::ranges::find_if(neighbour_list[0].direct_neighbours, [](const auto& n) { return n.bus == 1; });
+        REQUIRE(bus0_to_bus1 != neighbour_list[0].direct_neighbours.end());
+        CHECK(bus0_to_bus1->status == branch_native_measurement_unused);
+        // Find connection to bus 3
+        auto bus0_to_bus3 =
+            std::ranges::find_if(neighbour_list[0].direct_neighbours, [](const auto& n) { return n.bus == 3; });
+        REQUIRE(bus0_to_bus3 != neighbour_list[0].direct_neighbours.end());
+        CHECK(bus0_to_bus3->status == has_no_measurement);
+
+        // Verify Bus 1 connections (original + reverse from 0)
+        CHECK(neighbour_list[1].direct_neighbours.size() == 2);
+        // Find connection to bus 0 (reverse added)
+        auto bus1_to_bus0 =
+            std::ranges::find_if(neighbour_list[1].direct_neighbours, [](const auto& n) { return n.bus == 0; });
+        REQUIRE(bus1_to_bus0 != neighbour_list[1].direct_neighbours.end());
+        CHECK(bus1_to_bus0->status == branch_native_measurement_unused);
+        // Find connection to bus 2 (original)
+        auto bus1_to_bus2 =
+            std::ranges::find_if(neighbour_list[1].direct_neighbours, [](const auto& n) { return n.bus == 2; });
+        REQUIRE(bus1_to_bus2 != neighbour_list[1].direct_neighbours.end());
+        CHECK(bus1_to_bus2->status == branch_discovered_with_from_node_sensor);
+
+        // Verify Bus 2 connections (original + reverse from 1)
+        CHECK(neighbour_list[2].direct_neighbours.size() == 2);
+        // Find connection to bus 1 (reverse added)
+        auto bus2_to_bus1 =
+            std::ranges::find_if(neighbour_list[2].direct_neighbours, [](const auto& n) { return n.bus == 1; });
+        REQUIRE(bus2_to_bus1 != neighbour_list[2].direct_neighbours.end());
+        CHECK(bus2_to_bus1->status == branch_discovered_with_from_node_sensor);
+        // Find connection to bus 3 (original)
+        auto bus2_to_bus3 =
+            std::ranges::find_if(neighbour_list[2].direct_neighbours, [](const auto& n) { return n.bus == 3; });
+        REQUIRE(bus2_to_bus3 != neighbour_list[2].direct_neighbours.end());
+        CHECK(bus2_to_bus3->status == branch_native_measurement_consumed);
+
+        // Verify Bus 3 connections (reverse from 0 and 2)
+        CHECK(neighbour_list[3].direct_neighbours.size() == 2);
+        // Find connection to bus 0 (reverse added)
+        auto bus3_to_bus0 =
+            std::ranges::find_if(neighbour_list[3].direct_neighbours, [](const auto& n) { return n.bus == 0; });
+        REQUIRE(bus3_to_bus0 != neighbour_list[3].direct_neighbours.end());
+        CHECK(bus3_to_bus0->status == has_no_measurement);
+        // Find connection to bus 2 (reverse added)
+        auto bus3_to_bus2 =
+            std::ranges::find_if(neighbour_list[3].direct_neighbours, [](const auto& n) { return n.bus == 2; });
+        REQUIRE(bus3_to_bus2 != neighbour_list[3].direct_neighbours.end());
+        CHECK(bus3_to_bus2->status == branch_native_measurement_consumed);
+    }
+
+    SUBCASE("Network with existing bidirectional connections") {
+        std::vector<BusNeighbourhoodInfo> neighbour_list(3);
+
+        // Initialize with some connections already bidirectional
+        neighbour_list[0].bus = 0;
+        neighbour_list[0].status = has_no_measurement;
+        neighbour_list[0].direct_neighbours = {{1, has_no_measurement}, {2, node_measured}};
+
+        neighbour_list[1].bus = 1;
+        neighbour_list[1].status = node_measured;
+        neighbour_list[1].direct_neighbours = {{0, has_no_measurement}, {2, branch_native_measurement_unused}};
+
+        neighbour_list[2].bus = 2;
+        neighbour_list[2].status = node_measured;
+        neighbour_list[2].direct_neighbours = {{1, branch_native_measurement_unused}};
+
+        // Test the function
+        complete_bidirectional_neighbourhood_info(neighbour_list);
+
+        // Verify Bus 0 connections remain the same (already complete)
+        CHECK(neighbour_list[0].direct_neighbours.size() == 2);
+
+        // Verify Bus 1 connections remain the same (already complete)
+        CHECK(neighbour_list[1].direct_neighbours.size() == 2);
+
+        // Verify Bus 2 gets the missing reverse connection to bus 0
+        CHECK(neighbour_list[2].direct_neighbours.size() == 2);
+        auto bus2_to_bus0 =
+            std::ranges::find_if(neighbour_list[2].direct_neighbours, [](const auto& n) { return n.bus == 0; });
+        REQUIRE(bus2_to_bus0 != neighbour_list[2].direct_neighbours.end());
+        CHECK(bus2_to_bus0->status == node_measured);
+        auto bus2_to_bus1 =
+            std::ranges::find_if(neighbour_list[2].direct_neighbours, [](const auto& n) { return n.bus == 1; });
+        REQUIRE(bus2_to_bus1 != neighbour_list[2].direct_neighbours.end());
+        CHECK(bus2_to_bus1->status == branch_native_measurement_unused);
     }
 
     SUBCASE("Empty neighbour list") {
