@@ -1316,7 +1316,7 @@ TEST_CASE("Test Observability - sufficient_condition_meshed_without_voltage_phas
         bool const result = sufficient_condition_meshed_without_voltage_phasor(neighbour_list);
 
         // Should handle complex meshed network with multiple loops
-        CHECK((result == true || result == false)); // Algorithm may succeed or fail depending on starting point
+        CHECK(result == true);
     }
 
     SUBCASE("Insufficient measurements in meshed network") {
@@ -1365,7 +1365,7 @@ TEST_CASE("Test Observability - sufficient_condition_meshed_without_voltage_phas
         bool const result = sufficient_condition_meshed_without_voltage_phasor(neighbour_list);
 
         // Single bus with measurement should be trivially observable
-        CHECK((result == true || result == false)); // Algorithm behavior may vary based on implementation
+        CHECK(result == true);
     }
 
     SUBCASE("Two bus network - simple case") {
@@ -1444,7 +1444,7 @@ TEST_CASE("Test Observability - sufficient_condition_meshed_without_voltage_phas
         bool const result = sufficient_condition_meshed_without_voltage_phasor(neighbour_list);
 
         // Should handle various connectivity statuses without crashing
-        CHECK((result == true || result == false)); // Algorithm may succeed or fail
+        CHECK(result == true);
     }
 
     SUBCASE("Highly connected meshed network") {
