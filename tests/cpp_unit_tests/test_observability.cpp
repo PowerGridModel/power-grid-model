@@ -759,8 +759,7 @@ TEST_CASE("Test Observability - find_spanning_tree_from_node") {
 
         bool const result = find_spanning_tree_from_node(start_bus, n_bus, neighbour_list);
 
-        // Should work with measurements at both ends of the chain
-        CHECK((result == true || result == false)); // Algorithm may not always find spanning tree
+        CHECK(result == true);
     }
 
     SUBCASE("Mixed measurement types") {
@@ -794,8 +793,7 @@ TEST_CASE("Test Observability - find_spanning_tree_from_node") {
 
         bool const result = find_spanning_tree_from_node(start_bus, n_bus, neighbour_list);
 
-        // Should successfully build spanning tree using combination of edge and node measurements
-        CHECK((result == true || result == false)); // Algorithm may not always find spanning tree
+        CHECK(result == true);
     }
 
     SUBCASE("Insufficient connectivity - should fail") {
@@ -838,10 +836,7 @@ TEST_CASE("Test Observability - find_spanning_tree_from_node") {
         Idx const n_bus = 1;
 
         // Just test that the function executes without crashing
-        bool const result = find_spanning_tree_from_node(start_bus, n_bus, neighbour_list);
-
-        // Don't make assumptions about the result - just verify it returns a boolean
-        CHECK((result == true || result == false));
+        CHECK_NOTHROW(find_spanning_tree_from_node(start_bus, n_bus, neighbour_list));
     }
 
     SUBCASE("All nodes have measurements - should succeed easily") {
@@ -862,8 +857,7 @@ TEST_CASE("Test Observability - find_spanning_tree_from_node") {
 
         bool const result = find_spanning_tree_from_node(start_bus, n_bus, neighbour_list);
 
-        // Should succeed easily with abundant measurements
-        CHECK((result == true || result == false)); // Algorithm behavior may vary
+        CHECK(result == true);
     }
 
     SUBCASE("Algorithm execution without crash - general behavior test") {
@@ -898,8 +892,7 @@ TEST_CASE("Test Observability - find_spanning_tree_from_node") {
         // Test that function executes and returns a boolean result
         bool const result = find_spanning_tree_from_node(start_bus, n_bus, neighbour_list);
 
-        // Verify function completes and returns valid boolean
-        CHECK((result == true || result == false));
+        CHECK(result == false);
     }
 }
 
