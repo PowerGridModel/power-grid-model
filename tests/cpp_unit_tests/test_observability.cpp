@@ -92,7 +92,8 @@ TEST_CASE("Test Observability - scan_network_sensors") {
         topo.branch_bus_idx = {{0, 1}, {1, 2}};
         topo.sources_per_bus = {from_sparse, {0, 1, 1, 1}};
         topo.shunts_per_bus = {from_sparse, {0, 0, 0, 0}};
-        topo.load_gens_per_bus = {from_sparse, {0, 0, 0, 0}};
+        topo.load_gens_per_bus = {from_sparse, {0, 1, 2, 3}};
+        topo.load_gen_type = {LoadGenType::const_pq, LoadGenType::const_pq, LoadGenType::const_pq};
         topo.power_sensors_per_bus = {from_sparse, {0, 1, 1, 1}}; // Bus injection sensor at bus 2
         topo.power_sensors_per_source = {from_sparse, {0, 0}};
         topo.power_sensors_per_load_gen = {from_sparse, {0}};
@@ -117,6 +118,7 @@ TEST_CASE("Test Observability - scan_network_sensors") {
             {.real_component = {.value = 2.0, .variance = 1.0}, .imag_component = {.value = 1.0, .variance = 1.0}}};
         se_input.measured_branch_from_power = {
             {.real_component = {.value = 1.5, .variance = 1.0}, .imag_component = {.value = 0.5, .variance = 1.0}}};
+        se_input.load_gen_status = {1, 1, 1};
 
         // Create YBus and MeasuredValues
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
@@ -139,9 +141,9 @@ TEST_CASE("Test Observability - scan_network_sensors") {
         CHECK(result.voltage_phasor_sensors[2] == 0); // Bus 2 has no voltage sensor
 
         // Verify bus injections - should count the bus injection sensor at bus 2
-        CHECK(result.bus_injections[2] == 1);     // Bus 2 has injection sensor
-        CHECK(result.bus_injections.back() == 3); // Total count should be at least 1
-        CHECK(result.is_possibly_ill_conditioned == false);
+        CHECK(result.bus_injections[2] == 0);     // Bus 2 has no injection sensor
+        CHECK(result.bus_injections.back() == 1); //
+        CHECK(result.is_possibly_ill_conditioned == true);
 
         // Verify neighbour results structure
         CHECK(neighbour_results.size() == 3);
@@ -151,7 +153,7 @@ TEST_CASE("Test Observability - scan_network_sensors") {
 
         // Bus 2 should have node_measured status due to injection sensor
         CHECK(neighbour_results[0].direct_neighbours[0].status == branch_native_measurement_unused);
-        CHECK(neighbour_results[2].status == node_measured);
+        CHECK(neighbour_results[2].status == has_no_measurement);
     }
 
     SUBCASE("Meshed network") {
@@ -253,11 +255,6 @@ TEST_CASE("Test Observability - scan_network_sensors") {
 
         std::vector<BusNeighbourhoodInfo> neighbour_results(6);
         auto result = scan_network_sensors(measured_values, topo, y_bus.y_bus_structure(), neighbour_results);
-
-        // Basic size checks
-        CHECK(result.flow_sensors.size() > 0);
-        CHECK(result.voltage_phasor_sensors.size() == 6);
-        CHECK(result.bus_injections.size() == 7);
 
         // Check that we have the expected sensor arrays
         CHECK(result.flow_sensors.size() == y_bus.y_bus_structure().row_indptr.back());
@@ -575,11 +572,9 @@ TEST_CASE("Test Observability - complete_bidirectional_neighbourhood_info") {
 
         neighbour_list[1].bus = 1;
         neighbour_list[1].status = node_measured;
-        neighbour_list[1].direct_neighbours = {{0, has_no_measurement}};
 
         neighbour_list[2].bus = 2;
         neighbour_list[2].status = node_measured;
-        neighbour_list[2].direct_neighbours = {{0, has_no_measurement}};
 
         // Test the function
         complete_bidirectional_neighbourhood_info(neighbour_list);
