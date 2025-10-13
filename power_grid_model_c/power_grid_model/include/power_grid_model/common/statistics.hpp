@@ -166,12 +166,13 @@ template <symmetry_tag sym_type> struct PolarComplexRandVar {
     }
 
     // For sym to sym conversion:
-    // Var(I_Re) ≈ Var(I) * cos^2(θ) + Var(θ) * I^2 * sin^2(θ)  // first order
-    //             + 1/2 * Var(θ)^2 * I^2 * sin^2(θ)  // second order
-    // Var(I_Im) ≈ Var(I) * sin^2(θ) + Var(θ) * I^2 * cos^2(θ)
+    // Var(I_Re) ≈ Var(I) * cos^2(θ) + Var(θ) * I^2 * sin^2(θ)                    // first order
+    //             + 1/2 * Var(θ)^2 * I^2 * sin^2(θ) + Var(I) * Var(θ) * cos^2(θ) // second order
+    // Var(I_Im) ≈ Var(I) * sin^2(θ) + Var(θ) * I^2 * cos^2(θ)                    // first order
+    //             + 1/2 * Var(θ)^2 * I^2 * cos^2(θ) + Var(I) * Var(θ) * sin^2(θ) // second order
     // For asym to asym conversion:
-    // Var(I_Re,p) ≈ Var(I_p) * cos^2(θ_p) + Var(θ_p) * I_p^2 * sin^2(θ_p)
-    // Var(I_Im,p) ≈ Var(I_p) * sin^2(θ_p) + Var(θ_p) * I_p^2 * cos^2(θ_p)
+    // Var(I_Re,p) ≈ Var(I_p) * cos^2(θ_p) + Var(θ_p) * I_p^2 * sin^2(θ_p) + 2nd order terms (idem)
+    // Var(I_Im,p) ≈ Var(I_p) * sin^2(θ_p) + Var(θ_p) * I_p^2 * cos^2(θ_p) + 2nd order terms (idem)
     explicit operator DecomposedComplexRandVar<sym>() const {
         auto const cos_theta = cos(angle.value);
         auto const sin_theta = sin(angle.value);
@@ -185,8 +186,8 @@ template <symmetry_tag sym_type> struct PolarComplexRandVar {
                                              .imag_component = {.value = imag_component, .variance = imag_variance}};
     }
 
-    // Var(I_Re,p) ≈ Var(I) * cos^2(θ - 2πp/3) + Var(θ) * I^2 * sin^2(θ - 2πp/3)
-    // Var(I_Im,p) ≈ Var(I) * sin^2(θ - 2πp/3) + Var(θ) * I^2 * cos^2(θ - 2πp/3)
+    // Var(I_Re,p) ≈ Var(I) * cos^2(θ - 2πp/3) + Var(θ) * I^2 * sin^2(θ - 2πp/3) + 2nd order terms
+    // Var(I_Im,p) ≈ Var(I) * sin^2(θ - 2πp/3) + Var(θ) * I^2 * cos^2(θ - 2πp/3) + 2nd order terms
     explicit operator DecomposedComplexRandVar<asymmetric_t>() const
         requires(is_symmetric_v<sym>)
     {
@@ -206,9 +207,9 @@ template <symmetry_tag sym_type> struct PolarComplexRandVar {
     }
 
     // Var(I_Re) ≈ (1 / 9) * sum_p(Var(I_p) * cos^2(theta_p + 2 * pi * p / 3) + Var(theta_p) * I_p^2 * sin^2(theta_p + 2
-    // * pi * p / 3))
+    // * pi * p / 3)) + 2nd order terms
     // Var(I_Im) ≈ (1 / 9) * sum_p(Var(I_p) * sin^2(theta_p + 2 * pi * p / 3) + Var(theta_p) * I_p^2 *
-    // cos^2(theta_p + 2 * pi * p / 3))
+    // cos^2(theta_p + 2 * pi * p / 3)) + 2nd order terms
     explicit operator DecomposedComplexRandVar<symmetric_t>() const
         requires(is_asymmetric_v<sym>)
     {
