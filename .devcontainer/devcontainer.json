@@ -31,19 +31,11 @@
         "ms-toolsai.vscode-jupyter-cell-tags",
         "ms-toolsai.vscode-jupyter-slideshow",
         "ms-toolsai.datawrangler",
-        "ms-vscode.cmake-tools",
-        "ms-vscode.cpptools",
-        "ms-vscode.cpptools-extension-pack",
-        "ms-vscode.cpptools-themes",
         "ms-vscode.test-adapter-converter",
         "njpwerner.autodocstring",
-        "jeff-hykin.better-cpp-syntax",
         "matepek.vscode-catch2-test-adapter",
         "cschlosser.doxdocgen",
-        "fredericbonnet.cmake-test-adapter",
-        "sonarsource.sonarlint-vscode",
-        "davidanson.vscode-markdownlint",
-        "ms-vscode-remote.remote-containers"
+        "davidanson.vscode-markdownlint"
       ],
       "settings": {
         "python.defaultInterpreterPath": "/usr/local/bin/python",
