@@ -167,9 +167,9 @@ template <symmetry_tag sym_type> struct PolarComplexRandVar {
 
     // For sym to sym conversion:
     // Var(I_Re) ≈ Var(I) * cos^2(θ) + Var(θ) * I^2 * sin^2(θ)                    // first order
-    //             + 1/2 * Var(θ)^2 * I^2 * sin^2(θ) + Var(I) * Var(θ) * cos^2(θ) // second order
-    // Var(I_Im) ≈ Var(I) * sin^2(θ) + Var(θ) * I^2 * cos^2(θ)                    // first order
     //             + 1/2 * Var(θ)^2 * I^2 * cos^2(θ) + Var(I) * Var(θ) * sin^2(θ) // second order
+    // Var(I_Im) ≈ Var(I) * sin^2(θ) + Var(θ) * I^2 * cos^2(θ)                    // first order
+    //             + 1/2 * Var(θ)^2 * I^2 * sin^2(θ) + Var(I) * Var(θ) * cos^2(θ) // second order
     // For asym to asym conversion:
     // Var(I_Re,p) ≈ Var(I_p) * cos^2(θ_p) + Var(θ_p) * I_p^2 * sin^2(θ_p) + 2nd order terms (idem)
     // Var(I_Im,p) ≈ Var(I_p) * sin^2(θ_p) + Var(θ_p) * I_p^2 * cos^2(θ_p) + 2nd order terms (idem)
