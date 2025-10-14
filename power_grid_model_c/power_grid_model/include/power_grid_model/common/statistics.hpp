@@ -127,15 +127,29 @@ template <symmetry_tag sym_type> struct DecomposedComplexRandVar {
 };
 
 namespace detail {
+// Var(f_i) ≈ \Sum_j Var(x_j) * ||df_i/dx_j||^2                              // first order
+//              + 1/2 * \Sum_{jk} Var(x_j) * ||d^2 f_i/dx_jdx_k||^2 Var(x_k) // second order
+//
+// Re{I} = I cos(θ)
+// Im{I} = I sin(θ)
+//
+// dRe{I}/dI = cos(θ)            dIm{I}/dI = sin(θ)
+// dRe{I}/dθ = -I sin(θ)         dIm{I}/dθ = I cos(θ)
+// d^2 Re{I}/dI^2  = 0               d^2 Im{I}/dI^2  = 0
+// d^2 Re{I}/dθ^2  = -I cos(θ)       d^2 Im{I}/dθ^2  = -I sin(θ)
+// d^2 Re{I}/dIdθ = -sin(θ)        d^2 Im{I}/dIdθ = cos(θ)
+//
+// Var(Re{I}) = Var(I cos(θ))
+//            ≈ Var(I) * cos^2(θ) + Var(θ) * I^2  * sin^2(θ)                      // first order
+//               + 1/2 * Var(θ)^2  * I^2  * cos^2(θ) + Var(I) * Var(θ) * sin^2(θ) // second order
+// Var(Im{I}) = Var(I sin(θ))
+//            ≈ Var(I) * sin^2(θ) + Var(θ) * I^2  * cos^2(θ)                      // first order
+//               + 1/2 * Var(θ)^2  * I^2  * sin^2(θ) + Var(I) * Var(θ) * cos^2(θ) // second order
 inline auto compute_decomposed_variance_from_polar(auto const& magnitude, auto const& cos_angle, auto const& sin_angle,
                                                    auto const& magnitude_variance, auto const& angle_variance) {
     auto const cos2_angle = cos_angle * cos_angle;
     auto const sin2_angle = sin_angle * sin_angle;
     auto const magnitude2 = magnitude * magnitude;
-
-    // // first order approximation
-    // return std::make_pair(magnitude_variance * cos2_angle + magnitude2 * angle_variance * sin2_angle,
-    //                       magnitude_variance * sin2_angle + magnitude2 * angle_variance * cos2_angle);
 
     // second order approximation
     return std::make_pair(magnitude_variance * cos2_angle + magnitude2 * angle_variance * sin2_angle +
@@ -248,7 +262,7 @@ template <symmetry_tag sym> inline auto conj(PolarComplexRandVar<sym> var) {
 }
 
 namespace statistics {
-// Var(s x) ≈ Var(x) * ||s||²
+// Var(s x) ≈ Var(x) * ||s||^2
 template <symmetry_tag sym, template <symmetry_tag> typename RandVarType>
     requires is_in_list_c<RandVarType<sym>, UniformRealRandVar<sym>, IndependentRealRandVar<sym>,
                           UniformComplexRandVar<sym>, IndependentComplexRandVar<sym>>
