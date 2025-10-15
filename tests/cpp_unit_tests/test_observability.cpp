@@ -989,6 +989,90 @@ TEST_CASE("Test Observability - find_spanning_tree_from_node") {
         CHECK_NOTHROW(find_spanning_tree_from_node(start_bus, n_bus, neighbour_list));
     }
 
+    SUBCASE("Restart from another candidate") {
+        // Seven node ring that requires a restart from the second candidate
+        std::vector<BusNeighbourhoodInfo> neighbour_list(7);
+
+        neighbour_list[0].bus = 0;
+        neighbour_list[0].status = has_no_measurement;
+        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = has_no_measurement},
+                                               {.bus = 6, .status = has_no_measurement}};
+        neighbour_list[1].bus = 1;
+        neighbour_list[1].status = node_measured;
+        neighbour_list[1].direct_neighbours = {{.bus = 0, .status = has_no_measurement},
+                                               {.bus = 2, .status = has_no_measurement}};
+        neighbour_list[2].bus = 2;
+        neighbour_list[2].status = node_measured;
+        neighbour_list[2].direct_neighbours = {{.bus = 1, .status = has_no_measurement},
+                                               {.bus = 3, .status = has_no_measurement},
+                                               {.bus = 4, .status = has_no_measurement}};
+        neighbour_list[3].bus = 3;
+        neighbour_list[3].status = has_no_measurement;
+        neighbour_list[3].direct_neighbours = {{.bus = 2, .status = has_no_measurement}};
+
+        neighbour_list[4].bus = 4;
+        neighbour_list[4].status = node_measured;
+        neighbour_list[4].direct_neighbours = {{.bus = 2, .status = has_no_measurement},
+                                               {.bus = 5, .status = has_no_measurement}};
+        neighbour_list[5].bus = 5;
+        neighbour_list[5].status = node_measured;
+        neighbour_list[5].direct_neighbours = {{.bus = 4, .status = has_no_measurement},
+                                               {.bus = 6, .status = branch_native_measurement_unused}};
+        neighbour_list[6].bus = 6;
+        neighbour_list[6].status = node_measured;
+        neighbour_list[6].direct_neighbours = {{.bus = 0, .status = has_no_measurement},
+                                               {.bus = 5, .status = branch_native_measurement_unused}};
+
+        // fail attempt
+        bool const first_attempt = find_spanning_tree_from_node(0, 7, neighbour_list);
+        CHECK(first_attempt == false);
+
+        // success attempt
+        bool const second_attempt = find_spanning_tree_from_node(3, 7, neighbour_list);
+        CHECK(second_attempt == true);
+    }
+
+    SUBCASE("Reassignment needed") {
+        // Seven node radial network where reassignment happens
+        std::vector<BusNeighbourhoodInfo> neighbour_list(7);
+
+        neighbour_list[0].bus = 0;
+        neighbour_list[0].status = has_no_measurement;
+        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = has_no_measurement}};
+        neighbour_list[1].bus = 1;
+        neighbour_list[1].status = node_measured;
+        neighbour_list[1].direct_neighbours = {{.bus = 0, .status = has_no_measurement},
+                                               {.bus = 2, .status = branch_native_measurement_unused}};
+        neighbour_list[2].bus = 2;
+        neighbour_list[2].status = node_measured;
+        neighbour_list[2].direct_neighbours = {{.bus = 1, .status = branch_native_measurement_unused},
+                                               {.bus = 3, .status = has_no_measurement},
+                                               {.bus = 5, .status = has_no_measurement}};
+        neighbour_list[3].bus = 3;
+        neighbour_list[3].status = node_measured;
+        neighbour_list[3].direct_neighbours = {{.bus = 2, .status = has_no_measurement},
+                                               {.bus = 4, .status = has_no_measurement}};
+        neighbour_list[4].bus = 4;
+        neighbour_list[4].status = node_measured;
+        neighbour_list[4].direct_neighbours = {{.bus = 3, .status = has_no_measurement}};
+
+        neighbour_list[5].bus = 5;
+        neighbour_list[5].status = node_measured;
+        neighbour_list[5].direct_neighbours = {{.bus = 2, .status = has_no_measurement},
+                                               {.bus = 6, .status = has_no_measurement}};
+        neighbour_list[6].bus = 6;
+        neighbour_list[6].status = has_no_measurement;
+        neighbour_list[6].direct_neighbours = {{.bus = 5, .status = has_no_measurement}};
+
+        bool const first_attempt = find_spanning_tree_from_node(0, 7, neighbour_list);
+
+        // Without reassignment, this would fail and only success starting from bus 6
+        CHECK(first_attempt == true);
+
+        bool const second_attempt = find_spanning_tree_from_node(6, 7, neighbour_list);
+        CHECK(second_attempt == true);
+    }
+
     SUBCASE("All nodes have measurements - should succeed easily") {
         // Network where every node has measurements
         std::vector<BusNeighbourhoodInfo> neighbour_list(3);
