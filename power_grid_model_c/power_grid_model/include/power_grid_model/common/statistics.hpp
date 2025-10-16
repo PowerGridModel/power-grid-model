@@ -126,6 +126,41 @@ template <symmetry_tag sym_type> struct DecomposedComplexRandVar {
     }
 };
 
+namespace detail {
+// Var(f_i) ≈ \Sum_j Var(x_j) * ||df_i/dx_j||^2                              // first order
+//              + 1/2 * \Sum_{jk} Var(x_j) * ||d^2 f_i/dx_jdx_k||^2 Var(x_k) // second order
+//
+// Re{I} = I cos(θ)
+// Im{I} = I sin(θ)
+//
+// dRe{I}/dI = cos(θ)            dIm{I}/dI = sin(θ)
+// dRe{I}/dθ = -I sin(θ)         dIm{I}/dθ = I cos(θ)
+// d^2 Re{I}/dI^2  = 0               d^2 Im{I}/dI^2  = 0
+// d^2 Re{I}/dθ^2  = -I cos(θ)       d^2 Im{I}/dθ^2  = -I sin(θ)
+// d^2 Re{I}/dIdθ = -sin(θ)        d^2 Im{I}/dIdθ = cos(θ)
+//
+// Var(Re{I}) = Var(I cos(θ))
+//            ≈ Var(I) * cos^2(θ) + Var(θ) * I^2  * sin^2(θ)                      // first order
+//               + 1/2 * Var(θ)^2  * I^2  * cos^2(θ) + Var(I) * Var(θ) * sin^2(θ) // second order
+// Var(Im{I}) = Var(I sin(θ))
+//            ≈ Var(I) * sin^2(θ) + Var(θ) * I^2  * cos^2(θ)                      // first order
+//               + 1/2 * Var(θ)^2  * I^2  * sin^2(θ) + Var(I) * Var(θ) * cos^2(θ) // second order
+inline auto compute_decomposed_variance_from_polar(auto const& magnitude, auto const& cos_angle, auto const& sin_angle,
+                                                   auto const& magnitude_variance, auto const& angle_variance) {
+    auto const cos2_angle = cos_angle * cos_angle;
+    auto const sin2_angle = sin_angle * sin_angle;
+    auto const magnitude2 = magnitude * magnitude;
+
+    // second order approximation
+    return std::make_pair(magnitude_variance * cos2_angle + magnitude2 * angle_variance * sin2_angle +
+                              0.5 * magnitude2 * angle_variance * angle_variance * cos2_angle +
+                              magnitude_variance * angle_variance * sin2_angle,
+                          magnitude_variance * sin2_angle + magnitude2 * angle_variance * cos2_angle +
+                              0.5 * magnitude2 * angle_variance * angle_variance * sin2_angle +
+                              magnitude_variance * angle_variance * cos2_angle);
+}
+} // namespace detail
+
 // Complex measured value of a sensor in polar coordinates (magnitude and angle)
 // (rotationally symmetric)
 template <symmetry_tag sym_type> struct PolarComplexRandVar {
@@ -145,45 +180,50 @@ template <symmetry_tag sym_type> struct PolarComplexRandVar {
     }
 
     // For sym to sym conversion:
-    // Var(I_Re) ≈ Var(I) * cos^2(θ) + Var(θ) * I^2 * sin^2(θ)
-    // Var(I_Im) ≈ Var(I) * sin^2(θ) + Var(θ) * I^2 * cos^2(θ)
+    // Var(I_Re) ≈ Var(I) * cos^2(θ) + Var(θ) * I^2 * sin^2(θ)                    // first order
+    //             + 1/2 * Var(θ)^2 * I^2 * cos^2(θ) + Var(I) * Var(θ) * sin^2(θ) // second order
+    // Var(I_Im) ≈ Var(I) * sin^2(θ) + Var(θ) * I^2 * cos^2(θ)                    // first order
+    //             + 1/2 * Var(θ)^2 * I^2 * sin^2(θ) + Var(I) * Var(θ) * cos^2(θ) // second order
     // For asym to asym conversion:
-    // Var(I_Re,p) ≈ Var(I_p) * cos^2(θ_p) + Var(θ_p) * I_p^2 * sin^2(θ_p)
-    // Var(I_Im,p) ≈ Var(I_p) * sin^2(θ_p) + Var(θ_p) * I_p^2 * cos^2(θ_p)
+    // Var(I_Re,p) ≈ Var(I_p) * cos^2(θ_p) + Var(θ_p) * I_p^2 * sin^2(θ_p) + 2nd order terms (idem)
+    // Var(I_Im,p) ≈ Var(I_p) * sin^2(θ_p) + Var(θ_p) * I_p^2 * cos^2(θ_p) + 2nd order terms (idem)
     explicit operator DecomposedComplexRandVar<sym>() const {
         auto const cos_theta = cos(angle.value);
         auto const sin_theta = sin(angle.value);
         auto const real_component = magnitude.value * cos_theta;
         auto const imag_component = magnitude.value * sin_theta;
-        return DecomposedComplexRandVar<sym>{
-            .real_component = {.value = real_component,
-                               .variance = magnitude.variance * cos_theta * cos_theta +
-                                           imag_component * imag_component * angle.variance},
-            .imag_component = {.value = imag_component,
-                               .variance = magnitude.variance * sin_theta * sin_theta +
-                                           real_component * real_component * angle.variance}};
+
+        auto const [real_variance, imag_variance] = detail::compute_decomposed_variance_from_polar(
+            magnitude.value, cos_theta, sin_theta, magnitude.variance, angle.variance);
+
+        return DecomposedComplexRandVar<sym>{.real_component = {.value = real_component, .variance = real_variance},
+                                             .imag_component = {.value = imag_component, .variance = imag_variance}};
     }
 
-    // Var(I_Re,p) ≈ Var(I) * cos^2(θ - 2πp/3) + Var(θ) * I^2 * sin^2(θ - 2πp/3)
-    // Var(I_Im,p) ≈ Var(I) * sin^2(θ - 2πp/3) + Var(θ) * I^2 * cos^2(θ - 2πp/3)
+    // Var(I_Re,p) ≈ Var(I) * cos^2(θ - 2πp/3) + Var(θ) * I^2 * sin^2(θ - 2πp/3) + 2nd order terms
+    // Var(I_Im,p) ≈ Var(I) * sin^2(θ - 2πp/3) + Var(θ) * I^2 * cos^2(θ - 2πp/3) + 2nd order terms
     explicit operator DecomposedComplexRandVar<asymmetric_t>() const
         requires(is_symmetric_v<sym>)
     {
-        ComplexValue<asymmetric_t> const unit_complex{exp(1.0i * angle.value)};
+        ComplexValue<asymmetric_t> const unit_complex{exp(1.0i * angle.value)}; // correctly handle phase shifts
         ComplexValue<asymmetric_t> const complex = magnitude.value * unit_complex;
+        RealValue<asymmetric_t> const cos_theta = real(unit_complex);
+        RealValue<asymmetric_t> const sin_theta = imag(unit_complex);
+        RealValue<asymmetric_t> const real_component = real(complex);
+        RealValue<asymmetric_t> const imag_component = imag(complex);
+
+        auto const [real_variance, imag_variance] = detail::compute_decomposed_variance_from_polar(
+            magnitude.value, cos_theta, sin_theta, magnitude.variance, angle.variance);
+
         return DecomposedComplexRandVar<asymmetric_t>{
-            .real_component = {.value = real(complex),
-                               .variance = magnitude.variance * real(unit_complex) * real(unit_complex) +
-                                           imag(complex) * imag(complex) * angle.variance},
-            .imag_component = {.value = imag(complex),
-                               .variance = magnitude.variance * imag(unit_complex) * imag(unit_complex) +
-                                           real(complex) * real(complex) * angle.variance}};
+            .real_component = {.value = real_component, .variance = real_variance},
+            .imag_component = {.value = imag_component, .variance = imag_variance}};
     }
 
     // Var(I_Re) ≈ (1 / 9) * sum_p(Var(I_p) * cos^2(theta_p + 2 * pi * p / 3) + Var(theta_p) * I_p^2 * sin^2(theta_p + 2
-    // * pi * p / 3))
+    // * pi * p / 3)) + 2nd order terms
     // Var(I_Im) ≈ (1 / 9) * sum_p(Var(I_p) * sin^2(theta_p + 2 * pi * p / 3) + Var(theta_p) * I_p^2 *
-    // cos^2(theta_p + 2 * pi * p / 3))
+    // cos^2(theta_p + 2 * pi * p / 3)) + 2nd order terms
     explicit operator DecomposedComplexRandVar<symmetric_t>() const
         requires(is_asymmetric_v<sym>)
     {
@@ -191,19 +231,15 @@ template <symmetry_tag sym_type> struct PolarComplexRandVar {
         ComplexValue<asymmetric_t> const unit_pos_seq_per_phase{unit_complex(0), a * unit_complex(1),
                                                                 a2 * unit_complex(2)};
         DoubleComplex const pos_seq_value = pos_seq(magnitude.value * unit_complex);
+        RealValue<asymmetric_t> const cos_theta = real(unit_pos_seq_per_phase);
+        RealValue<asymmetric_t> const sin_theta = imag(unit_pos_seq_per_phase);
+
+        auto const [real_variance, imag_variance] = detail::compute_decomposed_variance_from_polar(
+            magnitude.value, cos_theta, sin_theta, magnitude.variance, angle.variance);
+
         return DecomposedComplexRandVar<symmetric_t>{
-            .real_component = {.value = real(pos_seq_value),
-                               .variance = sum_val(magnitude.variance * real(unit_pos_seq_per_phase) *
-                                                       real(unit_pos_seq_per_phase) +
-                                                   imag(unit_pos_seq_per_phase) * imag(unit_pos_seq_per_phase) *
-                                                       magnitude.value * magnitude.value * angle.variance) /
-                                           9.0},
-            .imag_component = {
-                .value = imag(pos_seq_value),
-                .variance = sum_val(magnitude.variance * imag(unit_pos_seq_per_phase) * imag(unit_pos_seq_per_phase) +
-                                    real(unit_pos_seq_per_phase) * real(unit_pos_seq_per_phase) * magnitude.value *
-                                        magnitude.value * angle.variance) /
-                            9.0}};
+            .real_component = {.value = real(pos_seq_value), .variance = sum_val(real_variance) / 9.0},
+            .imag_component = {.value = imag(pos_seq_value), .variance = sum_val(imag_variance) / 9.0}};
     }
 };
 
@@ -226,7 +262,7 @@ template <symmetry_tag sym> inline auto conj(PolarComplexRandVar<sym> var) {
 }
 
 namespace statistics {
-// Var(s x) ≈ Var(x) * ||s||²
+// Var(s x) ≈ Var(x) * ||s||^2
 template <symmetry_tag sym, template <symmetry_tag> typename RandVarType>
     requires is_in_list_c<RandVarType<sym>, UniformRealRandVar<sym>, IndependentRealRandVar<sym>,
                           UniformComplexRandVar<sym>, IndependentComplexRandVar<sym>>

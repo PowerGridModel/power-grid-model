@@ -103,11 +103,12 @@ inline auto build_dense_mapping_comparison_sort(IdxVector const& idx_B_in_A, Idx
     DenseIndexMapping result;
     result.indvector.reserve(mapping_to_from.size());
     result.reorder.reserve(mapping_to_from.size());
-    std::ranges::transform(mapping_to_from, std::back_inserter(result.indvector),
-                           [](DenseEntry const& to_from) { return to_from.first; });
 
-    std::ranges::transform(mapping_to_from, std::back_inserter(result.reorder),
-                           [](DenseEntry const& to_from) { return to_from.second; });
+    // Use structured bindings to avoid copying from pairs
+    for (auto [value, orig_idx] : mapping_to_from) {
+        result.indvector.push_back(value);
+        result.reorder.push_back(orig_idx);
+    }
 
     return result;
 }

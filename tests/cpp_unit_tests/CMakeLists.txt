@@ -12,6 +12,7 @@ add_executable(power_grid_model_unit_tests_common
     "test_statistics.cpp"
     "test_three_phase_tensor.cpp"
     "test_typing.cpp"
+    "test_iterator_facade.cpp"
 )
 
 target_link_libraries(power_grid_model_unit_tests_common
