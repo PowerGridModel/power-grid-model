@@ -24,6 +24,21 @@ program to use this C API.
 
 In this documentation, the main design choices and concepts of the C API are presented.
 
+## Installation
+
+To install this library, please follow the steps to [build from source](./build-guide.md).
+You can also install via Homebrew:
+
+```bash
+brew install powergridmodel/pgm/power-grid-model
+```
+
+Note that you will need to satisfy the basic minimum [build requirements](./build-guide.md#build-requirements).
+
+If you are interested in having this package in [`homebrew-core`](https://github.com/Homebrew/homebrew-core), please
+consider contributing the [formula](https://github.com/PowerGridModel/homebrew-pgm), in conformance to
+[their documentation](https://docs.brew.sh/Acceptable-Formulae).
+
 ## Finding and linking the package
 
 The package can be loaded using the Config mode of the `find_package` CMake command.
