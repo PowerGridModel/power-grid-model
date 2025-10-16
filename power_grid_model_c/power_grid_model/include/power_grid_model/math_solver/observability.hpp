@@ -398,13 +398,8 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus,
             bool const neighbour_bus_has_no_measurement =
                 local_neighbour_list[neighbour.bus].status == ConnectivityStatus::has_no_measurement;
 
-            if (!current_bus_no_measurement && (downwind && neighbour_bus_has_no_measurement)) {
-                // Case: current has measurement, downwind, neighbour empty
-                return process_edge(neighbour, ConnectivityStatus::branch_discovered_with_to_node_sensor,
-                                    ConnectivityStatus::branch_discovered_with_from_node_sensor, true);
-            }
-            if (!current_bus_no_measurement && (downwind || neighbour_bus_has_no_measurement)) {
-                // Case: current has measurement, (downwind OR neighbour empty)
+            if (!current_bus_no_measurement && neighbour_bus_has_no_measurement) {
+                // Case: current has measurement, neighbour empty (not in downwind mode)
                 return process_edge(neighbour, ConnectivityStatus::branch_discovered_with_from_node_sensor,
                                     ConnectivityStatus::branch_discovered_with_to_node_sensor, true);
             }
