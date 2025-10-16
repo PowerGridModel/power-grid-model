@@ -356,8 +356,7 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus,
         // Helper lambda to handle common edge processing logic
         auto process_edge = [&local_neighbour_list, &visited, &discovered_edges, &edge_track, &current_bus, &downwind,
                              &step_success](auto& neighbour, ConnectivityStatus neighbour_status,
-                                            ConnectivityStatus reverse_status, bool use_current_node,
-                                            bool set_upwind = false) {
+                                            ConnectivityStatus reverse_status, bool use_current_node) {
             discovered_edges.emplace_back(current_bus, neighbour.bus);
             edge_track.emplace_back(current_bus, neighbour.bus);
             visited[current_bus] = BusVisited::Visited;
@@ -378,11 +377,6 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus,
                 local_neighbour_list[current_bus].status = ConnectivityStatus::has_no_measurement;
             } else {
                 local_neighbour_list[neighbour.bus].status = ConnectivityStatus::has_no_measurement;
-            }
-
-            // Set direction flag if needed
-            if (set_upwind) {
-                downwind = false; // upwind
             }
 
             current_bus = neighbour.bus;
@@ -406,7 +400,7 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus,
             if (!neighbour_bus_has_no_measurement) {
                 // Case: neighbour has measurement
                 return process_edge(neighbour, ConnectivityStatus::branch_discovered_with_from_node_sensor,
-                                    ConnectivityStatus::branch_discovered_with_to_node_sensor, false, true);
+                                    ConnectivityStatus::branch_discovered_with_to_node_sensor, false);
             }
         }
         return false;
