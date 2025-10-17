@@ -436,7 +436,7 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus,
         // Find and update the reverse connection from to_node to from_node
         for (auto& neighbour : local_neighbour_list[to_node].direct_neighbours) {
             if (neighbour.bus == from_node) {
-                // Change to downstream connection (from from_node to to_node perspective)
+                // Change from from_node to to_node perspective
                 neighbour.status = ConnectivityStatus::branch_discovered_with_from_node_sensor;
                 break;
             }
