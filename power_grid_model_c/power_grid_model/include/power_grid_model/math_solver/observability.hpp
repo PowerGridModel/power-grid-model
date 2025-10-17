@@ -351,10 +351,10 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus,
         return false;
     };
 
-    auto try_general_connection_rules = [&local_neighbour_list, &visited, &discovered_edges, &edge_track, &current_bus,
-                                         &downwind](bool& step_success, bool current_bus_no_measurement) {
+    auto try_general_connection_rules = [&local_neighbour_list, &visited, &discovered_edges, &edge_track,
+                                         &current_bus](bool& step_success, bool current_bus_no_measurement) {
         // Helper lambda to handle common edge processing logic
-        auto process_edge = [&local_neighbour_list, &visited, &discovered_edges, &edge_track, &current_bus, &downwind,
+        auto process_edge = [&local_neighbour_list, &visited, &discovered_edges, &edge_track, &current_bus,
                              &step_success](auto& neighbour, ConnectivityStatus neighbour_status,
                                             ConnectivityStatus reverse_status, bool use_current_node) {
             discovered_edges.emplace_back(current_bus, neighbour.bus);
