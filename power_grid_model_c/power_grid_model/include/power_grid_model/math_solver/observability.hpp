@@ -409,10 +409,10 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus,
     // Helper function to reassign nodal measurement between two connected nodes
     auto reassign_nodal_measurement = [&local_neighbour_list](Idx from_node, Idx to_node) {
         // no reassignment possible if reached via edge measurement
-        auto const branch_it =
-            std::ranges::find_if(local_neighbour_list[from_node].direct_neighbours,
-                                 [to_node](auto const& neighbour) { return neighbour.bus == to_node; });
-        if (branch_it != local_neighbour_list[from_node].direct_neighbours.end() &&
+        if (auto const branch_it =
+                std::ranges::find_if(local_neighbour_list[from_node].direct_neighbours,
+                                     [to_node](auto const& neighbour) { return neighbour.bus == to_node; });
+            branch_it != local_neighbour_list[from_node].direct_neighbours.end() &&
             branch_it->status == ConnectivityStatus::branch_native_measurement_consumed) {
             return;
         }
