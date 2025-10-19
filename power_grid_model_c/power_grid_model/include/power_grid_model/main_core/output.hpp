@@ -4,6 +4,18 @@
 
 #pragma once
 
+#include "../component/base.hpp"
+#include "../component/branch.hpp"
+#include "../component/branch3.hpp"
+#include "../component/current_sensor.hpp"
+#include "../component/fault.hpp"
+#include "../component/load_gen.hpp"
+#include "../component/node.hpp"
+#include "../component/power_sensor.hpp"
+#include "../component/shunt.hpp"
+#include "../component/source.hpp"
+#include "../component/transformer_tap_regulator.hpp"
+#include "../component/voltage_sensor.hpp"
 #include "container_queries.hpp"
 #include "state.hpp"
 #include "state_queries.hpp"

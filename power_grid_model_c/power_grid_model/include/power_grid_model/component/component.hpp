@@ -5,7 +5,6 @@
 #pragma once
 
 #include "../common/common.hpp"
-#include "../common/component_list.hpp"
 #include "../common/enum.hpp"
 
 #include <concepts>
@@ -48,55 +47,5 @@ static_assert(appliance_type_tag<load_appliance_t>);
 static_assert(appliance_type_tag<gen_appliance_t>);
 static_assert(!is_generator_v<load_appliance_t>);
 static_assert(is_generator_v<gen_appliance_t>);
-
-class Base;
-class Node;
-class Branch;
-class Branch3;
-class Appliance;
-class GenericLoadGen;
-class GenericLoad;
-class GenericGenerator;
-class GenericPowerSensor;
-class GenericVoltageSensor;
-class GenericCurrentSensor;
-class Regulator;
-class Line;
-class AsymLine;
-class Link;
-class GenericBranch;
-class Transformer;
-class ThreeWindingTransformer;
-class Shunt;
-class Source;
-
-template <symmetry_tag loadgen_symmetry_, appliance_type_tag appliance_type_> class LoadGen;
-using SymGenerator = LoadGen<symmetric_t, gen_appliance_t>;
-using AsymGenerator = LoadGen<asymmetric_t, gen_appliance_t>;
-using SymLoad = LoadGen<symmetric_t, load_appliance_t>;
-using AsymLoad = LoadGen<asymmetric_t, load_appliance_t>;
-
-template <symmetry_tag power_sensor_symmetry_> class PowerSensor;
-using SymPowerSensor = PowerSensor<symmetric_t>;
-using AsymPowerSensor = PowerSensor<asymmetric_t>;
-
-template <symmetry_tag sym> class VoltageSensor;
-using SymVoltageSensor = VoltageSensor<symmetric_t>;
-using AsymVoltageSensor = VoltageSensor<asymmetric_t>;
-template <symmetry_tag sym> class CurrentSensor;
-using SymCurrentSensor = CurrentSensor<symmetric_t>;
-using AsymCurrentSensor = CurrentSensor<asymmetric_t>;
-
-class Fault;
-class TransformerTapRegulator;
-
-using AllComponents =
-    ComponentList<Node, Line, AsymLine, Link, GenericBranch, Transformer, ThreeWindingTransformer, Shunt, Source,
-                  SymGenerator, AsymGenerator, SymLoad, AsymLoad, SymPowerSensor, AsymPowerSensor, SymVoltageSensor,
-                  AsymVoltageSensor, SymCurrentSensor, AsymCurrentSensor, Fault, TransformerTapRegulator>;
-
-using AllExtraRetrievableTypes =
-    ExtraRetrievableTypes<Base, Node, Branch, Branch3, Appliance, GenericLoadGen, GenericLoad, GenericGenerator,
-                          GenericPowerSensor, GenericVoltageSensor, GenericCurrentSensor, Regulator>;
 
 } // namespace power_grid_model

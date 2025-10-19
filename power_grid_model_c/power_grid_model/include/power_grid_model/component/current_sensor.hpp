@@ -179,4 +179,7 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
     }
 };
 
+using SymCurrentSensor = CurrentSensor<symmetric_t>;
+using AsymCurrentSensor = CurrentSensor<asymmetric_t>;
+
 } // namespace power_grid_model

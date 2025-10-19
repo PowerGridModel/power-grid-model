@@ -171,5 +171,9 @@ template class LoadGen<symmetric_t, load_appliance_t>;
 template class LoadGen<asymmetric_t, gen_appliance_t>;
 template class LoadGen<asymmetric_t, load_appliance_t>;
 // alias
+using SymGenerator = LoadGen<symmetric_t, gen_appliance_t>;
+using AsymGenerator = LoadGen<asymmetric_t, gen_appliance_t>;
+using SymLoad = LoadGen<symmetric_t, load_appliance_t>;
+using AsymLoad = LoadGen<asymmetric_t, load_appliance_t>;
 
 } // namespace power_grid_model

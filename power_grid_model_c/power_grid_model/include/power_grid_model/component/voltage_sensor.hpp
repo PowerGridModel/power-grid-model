@@ -165,4 +165,7 @@ template <symmetry_tag sym> class VoltageSensor : public GenericVoltageSensor {
     }
 };
 
+using SymVoltageSensor = VoltageSensor<symmetric_t>;
+using AsymVoltageSensor = VoltageSensor<asymmetric_t>;
+
 } // namespace power_grid_model

@@ -9,7 +9,7 @@
 
 #include "../auxiliary/dataset.hpp"
 #include "../common/iterator_facade.hpp"
-#include "../component/component.hpp"
+#include "component/component.hpp"
 
 #include <map>
 

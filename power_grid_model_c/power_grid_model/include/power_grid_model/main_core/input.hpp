@@ -7,6 +7,18 @@
 #include "state.hpp"
 #include "state_queries.hpp"
 
+#include "../component/appliance.hpp"
+#include "../component/base.hpp"
+#include "../component/branch.hpp"
+#include "../component/branch3.hpp"
+#include "../component/current_sensor.hpp"
+#include "../component/fault.hpp"
+#include "../component/node.hpp"
+#include "../component/power_sensor.hpp"
+#include "../component/regulator.hpp"
+#include "../component/transformer_tap_regulator.hpp"
+#include "../component/voltage_sensor.hpp"
+
 #include "../common/iterator_facade.hpp"
 #include "../component/component.hpp"
 

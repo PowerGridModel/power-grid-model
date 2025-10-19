@@ -4,7 +4,10 @@
 
 #pragma once
 
-#include "../component/component.hpp"
+#include "../component/base.hpp"
+#include "../component/branch.hpp"
+#include "../component/branch3.hpp"
+#include "../component/regulator.hpp"
 #include "../container.hpp"
 
 namespace power_grid_model::main_core {

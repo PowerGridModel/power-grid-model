@@ -183,4 +183,7 @@ template <symmetry_tag power_sensor_symmetry_> class PowerSensor : public Generi
     }
 };
 
+using SymPowerSensor = PowerSensor<symmetric_t>;
+using AsymPowerSensor = PowerSensor<asymmetric_t>;
+
 } // namespace power_grid_model
