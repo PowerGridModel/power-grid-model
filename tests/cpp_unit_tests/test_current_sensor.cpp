@@ -82,11 +82,17 @@ TEST_CASE("Test current sensor") {
                 // Check symmetric sensor output for symmetric parameters
                 CHECK(sym_sensor_param.angle_measurement_type == angle_measurement_type);
                 // Var(I_Re) ≈ Var(I) * cos^2(pi/4) + Var(θ) * I^2 * sin^2(pi/4)
+                //             + (1/2) * Var(θ)^2 * I^2 * cos^2(pi/4) + Var(I) * Var(θ) * sin^2(pi/4)
                 CHECK(sym_sensor_param.measurement.real_component.variance ==
-                      doctest::Approx(0.5 * (i_variance_pu + i_angle_variance_pu * i_pu * i_pu)));
+                      doctest::Approx(0.5 * (i_variance_pu + i_angle_variance_pu * i_pu * i_pu +
+                                             0.5 * i_angle_variance_pu * i_angle_variance_pu * i_pu * i_pu +
+                                             i_variance_pu * i_angle_variance_pu)));
                 // Var(I_Im) ≈ Var(I) * sin^2(pi/4) + Var(θ) * I^2 * cos^2(pi/4)
+                //             + (1/2) * Var(θ)^2 * I^2 * sin^2(pi/4) + Var(I) * Var(θ) * cos^2(pi/4)
                 CHECK(sym_sensor_param.measurement.imag_component.variance ==
-                      doctest::Approx(0.5 * (i_variance_pu + i_angle_variance_pu * i_pu * i_pu)));
+                      doctest::Approx(0.5 * (i_variance_pu + i_angle_variance_pu * i_pu * i_pu +
+                                             0.5 * i_angle_variance_pu * i_angle_variance_pu * i_pu * i_pu +
+                                             i_variance_pu * i_angle_variance_pu)));
                 CHECK(real(sym_sensor_param.measurement.value()) == doctest::Approx(i_pu * cos(i_angle)));
                 CHECK(imag(sym_sensor_param.measurement.value()) == doctest::Approx(i_pu * sin(i_angle)));
 
@@ -114,11 +120,17 @@ TEST_CASE("Test current sensor") {
                 CHECK(asym_sensor_param.angle_measurement_type == angle_measurement_type);
 
                 CHECK(asym_sensor_param.measurement.real_component.variance[0] ==
-                      doctest::Approx(0.5 * (i_variance_pu + i_angle_variance_pu * i_pu * i_pu)));
+                      doctest::Approx(0.5 * (i_variance_pu + i_angle_variance_pu * i_pu * i_pu +
+                                             0.5 * i_angle_variance_pu * i_angle_variance_pu * i_pu * i_pu +
+                                             i_variance_pu * i_angle_variance_pu)));
                 auto const shifted_i_angle = i_angle + deg_240;
-                CHECK(asym_sensor_param.measurement.imag_component.variance[1] ==
-                      doctest::Approx(i_variance_pu * sin(shifted_i_angle) * sin(shifted_i_angle) +
-                                      i_angle_variance_pu * i_pu * i_pu * cos(shifted_i_angle) * cos(shifted_i_angle)));
+                CHECK(
+                    asym_sensor_param.measurement.imag_component.variance[1] ==
+                    doctest::Approx(i_variance_pu * sin(shifted_i_angle) * sin(shifted_i_angle) +
+                                    i_angle_variance_pu * i_pu * i_pu * cos(shifted_i_angle) * cos(shifted_i_angle) +
+                                    0.5 * i_angle_variance_pu * i_angle_variance_pu * i_pu * i_pu *
+                                        sin(shifted_i_angle) * sin(shifted_i_angle) +
+                                    i_variance_pu * i_angle_variance_pu * cos(shifted_i_angle) * cos(shifted_i_angle)));
                 CHECK(real(asym_sensor_param.measurement.value()[0]) == doctest::Approx(i_pu * cos(i_angle)));
                 CHECK(imag(asym_sensor_param.measurement.value()[1]) == doctest::Approx(i_pu * sin(shifted_i_angle)));
 
@@ -162,8 +174,10 @@ TEST_CASE("Test current sensor") {
                     auto const sym_param = sym_current_sensor.calc_param<symmetric_t>();
 
                     CHECK(sym_param.angle_measurement_type == angle_measurement_type);
-                    CHECK(sym_param.measurement.real_component.variance == doctest::Approx(pow(1.0 / base_current, 2)));
-                    CHECK(sym_param.measurement.imag_component.variance == doctest::Approx(pow(0.2 / base_current, 2)));
+                    CHECK(sym_param.measurement.real_component.variance ==
+                          doctest::Approx(pow(1.0 / base_current, 2) * (1.0 + 0.5 * pow(0.2, 4))));
+                    CHECK(sym_param.measurement.imag_component.variance ==
+                          doctest::Approx(pow(1.0 / base_current, 2) * (pow(0.2, 2) + pow(1.0 * 0.2, 2))));
                     CHECK(real(sym_param.measurement.value()) == doctest::Approx(1.0 / base_current));
                     CHECK(imag(sym_param.measurement.value()) == doctest::Approx(0.0 / base_current));
                 }
@@ -174,8 +188,10 @@ TEST_CASE("Test current sensor") {
                     auto const sym_param = sym_current_sensor.calc_param<symmetric_t>();
 
                     CHECK(sym_param.angle_measurement_type == angle_measurement_type);
-                    CHECK(sym_param.measurement.real_component.variance == doctest::Approx(pow(0.2 / base_current, 2)));
-                    CHECK(sym_param.measurement.imag_component.variance == doctest::Approx(pow(1.0 / base_current, 2)));
+                    CHECK(sym_param.measurement.real_component.variance ==
+                          doctest::Approx(pow(1.0 / base_current, 2) * (pow(0.2, 2) + pow(0.2, 2))));
+                    CHECK(sym_param.measurement.imag_component.variance ==
+                          doctest::Approx(pow(1.0 / base_current, 2) * (1.0 + 0.5 * pow(0.2, 4))));
                     CHECK(real(sym_param.measurement.value()) == doctest::Approx(0.0 / base_current));
                     CHECK(imag(sym_param.measurement.value()) == doctest::Approx(1.0 / base_current));
                 }
