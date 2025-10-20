@@ -16,7 +16,7 @@
     "type=volume,source=dev-pip-cache,target=/root/.cache/pip"
   ],
 
-  "postCreateCommand": "bash -lc 'pre-commit install || true'",
+  "postCreateCommand": "mkdir -p src/power_grid_model/_core/power_grid_model_c/lib && ln -sf /usr/local/lib/python3.13/site-packages/power_grid_model/_core/power_grid_model_c/lib/libpower_grid_model_c.so src/power_grid_model/_core/power_grid_model_c/lib/ && pre-commit install || true",
 
   "customizations": {
     "vscode": {
@@ -33,7 +33,6 @@
         "ms-toolsai.datawrangler",
         "ms-vscode.test-adapter-converter",
         "njpwerner.autodocstring",
-        "matepek.vscode-catch2-test-adapter",
         "cschlosser.doxdocgen",
         "davidanson.vscode-markdownlint"
       ],
