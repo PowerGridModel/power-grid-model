@@ -24,8 +24,3 @@ RUN python -m pip install --upgrade pip
 COPY . .
 
 RUN python -m pip install -e .[dev]
-
-# Create a directory for the .so where we look for it, link the current .so location to the one that we look at.
-RUN mkdir -p src/power_grid_model/_core/power_grid_model_c/lib && \
-    ln -sf /usr/local/lib/python3.13/site-packages/power_grid_model/_core/power_grid_model_c/lib/libpower_grid_model_c.so \
-          src/power_grid_model/_core/power_grid_model_c/lib/
