@@ -66,6 +66,7 @@ readability-*,
 
 WarningsAsErrors: '*'
 
+IgnoreHeaders: 'Eigen/.*'
 
 HeaderFilterRegex: '.*'
 
