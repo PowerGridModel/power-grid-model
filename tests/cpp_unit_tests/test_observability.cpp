@@ -141,8 +141,8 @@ TEST_CASE("Test Observability - scan_network_sensors") {
         CHECK(result.voltage_phasor_sensors[2] == 0); // Bus 2 has no voltage sensor
 
         // Verify bus injections - should count the bus injection sensor at bus 2
-        CHECK(result.bus_injections[2] == 0);     // Bus 2 has no injection sensor
-        CHECK(result.bus_injections.back() == 1); //
+        CHECK(result.bus_injections[2] == 0); // Bus 2 has no injection sensor
+        CHECK(result.total_injections == 1);  //
         CHECK(result.is_possibly_ill_conditioned == true);
 
         // Verify neighbour results structure
@@ -265,10 +265,10 @@ TEST_CASE("Test Observability - scan_network_sensors") {
         CHECK(result.voltage_phasor_sensors[2] == 0); // Bus 2 has magnitude only (no phasor)
 
         // Check bus injection sensors: bus 0, 4 have injection sensors
-        CHECK(result.bus_injections[0] == 1);     // Bus 0 has injection sensor
-        CHECK(result.bus_injections[1] == 1);     // Bus 1 has zero-injection
-        CHECK(result.bus_injections[4] == 1);     // Bus 4 has injection sensor
-        CHECK(result.bus_injections.back() == 6); // Total count should be at least 2
+        CHECK(result.bus_injections[0] == 1); // Bus 0 has injection sensor
+        CHECK(result.bus_injections[1] == 1); // Bus 1 has zero-injection
+        CHECK(result.bus_injections[4] == 1); // Bus 4 has injection sensor
+        CHECK(result.total_injections == 6);  // Total count should be at least 2
 
         // Verify each bus has correct index
         for (size_t i = 0; i < neighbour_results.size(); ++i) {
