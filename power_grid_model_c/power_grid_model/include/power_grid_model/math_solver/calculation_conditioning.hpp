@@ -12,8 +12,7 @@
 namespace power_grid_model::math_solver {
 enum class CalculationConditioning : int8_t {
     well_conditioned = 0,
-    ill_conditioned = 1,
-    possibly_ill_conditioned = 2,
+    possibly_ill_conditioned = 1,
 };
 
 } // namespace power_grid_model::math_solver

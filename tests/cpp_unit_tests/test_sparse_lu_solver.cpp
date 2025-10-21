@@ -160,32 +160,36 @@ TEST_CASE("LU solver with ill-conditioned system") {
         Idx perm{};
 
         SUBCASE("Error without perturbation") {
-            CHECK_THROWS_AS(solver.prefactorize(data, perm, {false, {}}), SparseMatrixError);
+            CHECK_THROWS_AS(solver.prefactorize(data, perm, {}), SparseMatrixError);
         }
 
         // first row is ill conditioned, others are fine: the cases where the first row is not perturbed should fail
         SUBCASE("Error with wrong perturbation") {
-            // generate all possible combinations with 4 possibly ill conditioned rows (16 total)
-            for (int8_t combination = 0; combination < 16; ++combination) {
-                std::string binary_possibly_ill_conditioned_rows = std::bitset<4>(combination).to_string();
-                // we test combinations where the first row is not perturbed
-                if (binary_possibly_ill_conditioned_rows[0] == '1') {
-                    continue;
-                }
-                std::vector<int8_t> possibly_ill_conditioned_rows(4);
-                std::ranges::transform(binary_possibly_ill_conditioned_rows, possibly_ill_conditioned_rows.begin(),
-                                       [](char c) -> int8_t { return c == '1' ? 1 : 0; });
-                CAPTURE(combination);
+            using enum CalculationConditioning;
+
+            constexpr auto incorrectly_marked_condition = well_conditioned;
+            constexpr auto all_conditions = std::array{well_conditioned, possibly_ill_conditioned};
+
+            for (auto const& [full_matrix_condition, second_row, third_row, fourth_row] :
+                 std::views::cartesian_product(all_conditions, all_conditions, all_conditions, all_conditions)) {
+                std::vector<CalculationConditioning> const possibly_ill_conditioned_rows{
+                    incorrectly_marked_condition, second_row, third_row, fourth_row};
+
+                CAPTURE(full_matrix_condition);
                 CAPTURE(possibly_ill_conditioned_rows);
                 // first row is not perturbed: should fail
-                CHECK_THROWS_AS(solver.prefactorize(data, perm, {true, possibly_ill_conditioned_rows}),
+                CHECK_THROWS_AS(solver.prefactorize(data, perm, {full_matrix_condition, possibly_ill_conditioned_rows}),
                                 SparseMatrixError);
             }
         }
 
         SUBCASE("Success with correct perturbation") {
+            using enum CalculationConditioning;
+
             // Only the first row is ill conditioned: possibly trigger perturbation on the correct row
-            CHECK_NOTHROW(solver.prefactorize(data, perm, {true, {1, 0, 0, 0}}));
+            CHECK_NOTHROW(solver.prefactorize(data, perm,
+                                              {well_conditioned, std::array{possibly_ill_conditioned, well_conditioned,
+                                                                            well_conditioned, well_conditioned}}));
             solver.solve_with_prefactorized_matrix(data, perm, rhs, x);
             check_result(x, x_ref);
         }
@@ -209,17 +213,24 @@ TEST_CASE("LU solver with ill-conditioned system") {
         SparseLUSolver<Tensor, Array, Array> solver{row_indptr, col_indices, diag_lu};
 
         SUBCASE("Error without perturbation") {
-            CHECK_THROWS_AS(solver.prefactorize(data, block_perm, {false, {}}), SparseMatrixError);
+            CHECK_THROWS_AS(solver.prefactorize(data, block_perm, {}), SparseMatrixError);
         }
 
         SUBCASE("Error with wrong perturbation") {
             // first block is ill conditioned, second is fine: trigger perturbation on the wrong block
-            CHECK_THROWS_AS(solver.prefactorize(data, block_perm, {true, {0, 1}}), SparseMatrixError);
+            CHECK_THROWS_AS(solver.prefactorize(data, block_perm,
+                                                {CalculationConditioning::well_conditioned,
+                                                 std::array{CalculationConditioning::well_conditioned,
+                                                            CalculationConditioning::possibly_ill_conditioned}}),
+                            SparseMatrixError);
         }
 
         SUBCASE("Success with correct perturbation") {
             // first block is ill conditioned, second is fine: trigger perturbation on the correct block
-            CHECK_NOTHROW(solver.prefactorize(data, block_perm, {true, {1, 0}}));
+            CHECK_NOTHROW(solver.prefactorize(data, block_perm,
+                                              {CalculationConditioning::well_conditioned,
+                                               std::array{CalculationConditioning::possibly_ill_conditioned,
+                                                          CalculationConditioning::well_conditioned}}));
             solver.solve_with_prefactorized_matrix(data, block_perm, rhs, x);
             check_result(x, x_ref);
         }
