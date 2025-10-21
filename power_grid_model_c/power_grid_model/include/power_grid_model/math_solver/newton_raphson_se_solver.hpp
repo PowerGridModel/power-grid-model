@@ -169,8 +169,10 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
 
         auto const observability_result =
             observability_check(measured_values, y_bus.math_topology(), y_bus.y_bus_structure());
-        std::pair<bool, std::vector<int8_t>> const possibly_ill_conditioned_pivots{
-            observability_result.use_perturbation(), observability_result.row_is_possibly_ill_conditioned};
+        MatrixConditioning const matrix_conditioning{observability_result.is_observable
+                                                         ? CalculationConditioning::well_conditioned
+                                                         : CalculationConditioning::ill_conditioned,
+                                                     observability_result.row_is_possibly_ill_conditioned};
 
         // initialize voltage with initial angle
         sub_timer = Timer{log, LogEvent::initialize_voltages};
@@ -186,8 +188,7 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
             prepare_matrix_and_rhs(y_bus, measured_values, output.u);
             // solve with prefactorization
             sub_timer = Timer{log, LogEvent::solve_sparse_linear_equation};
-            sparse_solver_.prefactorize_and_solve(data_gain_, perm_, delta_x_rhs_, delta_x_rhs_,
-                                                  possibly_ill_conditioned_pivots);
+            sparse_solver_.prefactorize_and_solve(data_gain_, perm_, delta_x_rhs_, delta_x_rhs_, matrix_conditioning);
             sub_timer = Timer{log, LogEvent::iterate_unknown};
             max_dev = iterate_unknown(output.u, measured_values);
         };

@@ -100,14 +100,16 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
         MeasuredValues<sym> const measured_values{y_bus.shared_topology(), input};
         auto const observability_result =
             observability_check(measured_values, y_bus.math_topology(), y_bus.y_bus_structure());
-        std::pair<bool, std::vector<int8_t>> const possibly_ill_conditioned_pivots{
-            observability_result.use_perturbation(), observability_result.row_is_possibly_ill_conditioned};
+        MatrixConditioning const matrix_conditioning{observability_result.is_observable
+                                                         ? CalculationConditioning::well_conditioned
+                                                         : CalculationConditioning::ill_conditioned,
+                                                     observability_result.row_is_possibly_ill_conditioned};
 
         // prepare matrix
         sub_timer = Timer{log, LogEvent::prepare_matrix_including_prefactorization};
         prepare_matrix(y_bus, measured_values);
         // prefactorize
-        sparse_solver_.prefactorize(data_gain_, perm_, possibly_ill_conditioned_pivots);
+        sparse_solver_.prefactorize(data_gain_, perm_, matrix_conditioning);
 
         // initialize voltage with initial angle
         sub_timer = Timer{log, LogEvent::initialize_voltages}; // TODO(mgovers): make scoped subtimers

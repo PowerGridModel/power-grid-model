@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "calculation_conditioning.hpp"
+
 #include "../common/common.hpp"
 #include "../common/exception.hpp"
 #include "../common/three_phase_tensor.hpp"
@@ -19,14 +21,45 @@ constexpr double epsilon_perturbation = 1e-13;      // perturbation threshold
 constexpr double cap_back_error_denominator = 1e-4; // denominator for cap back error
 constexpr double epsilon_sqrt = 1.49011745e-8;      // sqrt(epsilon), sqrt does not have constexpr
 
+class MatrixConditioning {
+  public:
+    MatrixConditioning() = default;
+    constexpr MatrixConditioning(CalculationConditioning matrix_conditioning,
+                                 std::span<CalculationConditioning const> row_conditioning)
+        : matrix_conditioning_{matrix_conditioning},
+          has_ill_conditioned_rows_{has_ill_conditioned_rows(row_conditioning)},
+          row_conditioning_{std::move(row_conditioning)} {}
+
+    constexpr Idx n_row_conditionings() const { return std::ssize(row_conditioning_); }
+    constexpr CalculationConditioning row_conditioning(Idx pivot_idx) const {
+        assert(pivot_idx >= 0 && pivot_idx < n_row_conditionings());
+        return row_conditioning_[pivot_idx];
+    }
+    constexpr bool use_pivot_perturbation() const {
+        assert(has_ill_conditioned_rows_ == has_ill_conditioned_rows(row_conditioning_));
+        return matrix_conditioning_ == CalculationConditioning::well_conditioned && has_ill_conditioned_rows_;
+    }
+
+  private:
+    CalculationConditioning matrix_conditioning_{CalculationConditioning::well_conditioned};
+    bool has_ill_conditioned_rows_{false};
+    std::span<CalculationConditioning const> row_conditioning_{};
+
+    static constexpr bool has_ill_conditioned_rows(std::span<CalculationConditioning const> row_conditioning) {
+        return std::ranges::any_of(row_conditioning, [](CalculationConditioning element) {
+            return element != CalculationConditioning::well_conditioned;
+        });
+    }
+};
+
 // perturb pivot if needed
 // pass the value and abs_value by reference
 // it will get modified if perturbation happens
 // also has_pivot_perturbation will be updated if perturbation happens
 template <scalar_value Scalar>
-inline void perturb_pivot_if_needed(int8_t pertub_pivot, double perturb_threshold, Scalar& value, double& abs_value,
-                                    bool& has_pivot_perturbation) {
-    if (pertub_pivot == 1 && abs_value < perturb_threshold) {
+inline void perturb_pivot_if_needed(CalculationConditioning pertub_pivot, double perturb_threshold, Scalar& value,
+                                    double& abs_value, bool& has_pivot_perturbation) {
+    if (pertub_pivot != CalculationConditioning::well_conditioned && abs_value < perturb_threshold) {
         Scalar const scale = (abs_value == 0.0) ? Scalar{1.0} : (value / abs_value);
         value = scale * perturb_threshold;
         has_pivot_perturbation = true;
@@ -60,8 +93,7 @@ template <rk2_tensor Matrix> class DenseLUFactor {
     // put pivot perturbation in has_pivot_perturbation in place
     template <class Derived>
     static void factorize_block_in_place(Eigen::MatrixBase<Derived>&& matrix, BlockPerm& block_perm,
-                                         double perturb_threshold,
-                                         std::pair<bool, std::vector<int8_t>> possibly_ill_conditioned_pivots,
+                                         double perturb_threshold, MatrixConditioning const& matrix_conditioning,
                                          Idx block_node_idx, bool& has_pivot_perturbation, double matrix_norm)
         requires(std::same_as<typename Derived::Scalar, Scalar> && rk2_tensor<Derived> &&
                  (Derived::RowsAtCompileTime == size) && (Derived::ColsAtCompileTime == size))
@@ -85,7 +117,7 @@ template <rk2_tensor Matrix> class DenseLUFactor {
             assert(col_biggest_eigen + pivot < size);
 
             // check absolute singular matrix
-            if (biggest_score == 0.0 && !possibly_ill_conditioned_pivots.first) {
+            if (biggest_score == 0.0 && !matrix_conditioning.use_pivot_perturbation()) {
                 // pivot perturbation not possible, cannot proceed
                 // set identity permutation and break the loop
                 for (int8_t remaining_rows_cols = pivot; remaining_rows_cols != size; ++remaining_rows_cols) {
@@ -97,9 +129,9 @@ template <rk2_tensor Matrix> class DenseLUFactor {
 
             // perturb pivot if needed
             double abs_pivot = sqrt(biggest_score);
-            int8_t const possibly_ill_conditioned_pivot = possibly_ill_conditioned_pivots.first
-                                                              ? possibly_ill_conditioned_pivots.second[block_node_idx]
-                                                              : int8_t{0};
+            CalculationConditioning const possibly_ill_conditioned_pivot =
+                matrix_conditioning.use_pivot_perturbation() ? matrix_conditioning.row_conditioning(block_node_idx)
+                                                             : CalculationConditioning::well_conditioned;
             perturb_pivot_if_needed(possibly_ill_conditioned_pivot, perturb_threshold, matrix(row_biggest, col_biggest),
                                     abs_pivot, has_pivot_perturbation);
             max_pivot = std::max(max_pivot, abs_pivot);
@@ -220,11 +252,17 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     void
     prefactorize_and_solve(std::vector<Tensor>& data,        // matrix data, factorize in-place
                            BlockPermArray& block_perm_array, // pre-allocated permutation array, will be overwritten
+                           std::vector<RHSVector> const& rhs, std::vector<XVector>& x) {
+        prefactorize_and_solve(data, block_perm_array, rhs, x, {});
+    }
+    void
+    prefactorize_and_solve(std::vector<Tensor>& data,        // matrix data, factorize in-place
+                           BlockPermArray& block_perm_array, // pre-allocated permutation array, will be overwritten
                            std::vector<RHSVector> const& rhs, std::vector<XVector>& x,
-                           std::pair<bool, std::vector<int8_t>> possibly_ill_conditioned_pivots = {false, {}}) {
-        prefactorize(data, block_perm_array, possibly_ill_conditioned_pivots);
+                           MatrixConditioning const& matrix_conditioning) {
+        prefactorize(data, block_perm_array, matrix_conditioning);
         // call solve with const method
-        solve_with_prefactorized_matrix((std::vector<Tensor> const&)data, block_perm_array, rhs, x);
+        solve_with_prefactorized_matrix(static_cast<std::vector<Tensor> const&>(data), block_perm_array, rhs, x);
     }
 
     // solve with existing pre-factorization
@@ -245,11 +283,14 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     // diagonals of U have values
     // fill-ins should be pre-allocated with zero
     // block permutation array should be pre-allocated
+    void prefactorize(std::vector<Tensor>& data, BlockPermArray& block_perm_array) {
+        prefactorize(data, block_perm_array, {});
+    }
     void prefactorize(std::vector<Tensor>& data, BlockPermArray& block_perm_array,
-                      std::pair<bool, std::vector<int8_t>> possibly_ill_conditioned_pivots = {false, {}}) {
+                      MatrixConditioning const& matrix_conditioning) {
         reset_matrix_cache();
-        if (possibly_ill_conditioned_pivots.first) {
-            assert(static_cast<Idx>(possibly_ill_conditioned_pivots.second.size()) == size_);
+        if (matrix_conditioning.use_pivot_perturbation()) {
+            assert(static_cast<Idx>(matrix_conditioning.n_row_conditionings()) == size_);
             initialize_pivot_perturbation(data);
         }
         double const perturb_threshold = epsilon_perturbation * matrix_norm_;
@@ -276,18 +317,17 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
                     // use machine precision by default
                     // record block permutation
                     LUFactor::factorize_block_in_place(lu_matrix[pivot_idx].matrix(), block_perm_array[pivot_row_col],
-                                                       perturb_threshold, possibly_ill_conditioned_pivots,
+                                                       perturb_threshold, matrix_conditioning,
                                                        pivot_row_col, // Pass the node index
                                                        has_pivot_perturbation_, matrix_norm_);
                     return block_perm_array[pivot_row_col];
                 } else {
-                    if (possibly_ill_conditioned_pivots.first) {
+                    if (matrix_conditioning.use_pivot_perturbation()) {
                         // use machine precision by default
                         // record pivot perturbation
                         double abs_pivot = cabs(lu_matrix[pivot_idx]);
-                        perturb_pivot_if_needed(possibly_ill_conditioned_pivots.second[pivot_row_col],
-                                                perturb_threshold, lu_matrix[pivot_idx], abs_pivot,
-                                                has_pivot_perturbation_);
+                        perturb_pivot_if_needed(matrix_conditioning.row_conditioning(pivot_row_col), perturb_threshold,
+                                                lu_matrix[pivot_idx], abs_pivot, has_pivot_perturbation_);
                     }
                     if (!is_normal(lu_matrix[pivot_idx])) {
                         throw SparseMatrixError{};
