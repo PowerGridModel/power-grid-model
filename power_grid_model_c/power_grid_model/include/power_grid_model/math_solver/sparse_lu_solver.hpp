@@ -32,7 +32,14 @@ class MatrixConditioning {
 
     constexpr Idx n_row_conditionings() const { return std::ssize(row_conditioning_); }
     constexpr CalculationConditioning row_conditioning(Idx pivot_idx) const {
+        if (matrix_conditioning_ != CalculationConditioning::well_conditioned) {
+            return CalculationConditioning::well_conditioned; // no pivot perturbation => treat as if well conditioned
+        }
+        if (!has_ill_conditioned_rows_) {
+            return CalculationConditioning::well_conditioned; // no ill conditioned rows
+        }
         assert(pivot_idx >= 0 && pivot_idx < n_row_conditionings());
+        assert(use_pivot_perturbation());
         return row_conditioning_[pivot_idx];
     }
     constexpr bool use_pivot_perturbation() const {
@@ -57,9 +64,9 @@ class MatrixConditioning {
 // it will get modified if perturbation happens
 // also has_pivot_perturbation will be updated if perturbation happens
 template <scalar_value Scalar>
-inline void perturb_pivot_if_needed(CalculationConditioning pertub_pivot, double perturb_threshold, Scalar& value,
+inline void perturb_pivot_if_needed(CalculationConditioning pivot_conditioning, double perturb_threshold, Scalar& value,
                                     double& abs_value, bool& has_pivot_perturbation) {
-    if (pertub_pivot != CalculationConditioning::well_conditioned && abs_value < perturb_threshold) {
+    if (pivot_conditioning != CalculationConditioning::well_conditioned && abs_value < perturb_threshold) {
         Scalar const scale = (abs_value == 0.0) ? Scalar{1.0} : (value / abs_value);
         value = scale * perturb_threshold;
         has_pivot_perturbation = true;
@@ -129,11 +136,9 @@ template <rk2_tensor Matrix> class DenseLUFactor {
 
             // perturb pivot if needed
             double abs_pivot = sqrt(biggest_score);
-            CalculationConditioning const possibly_ill_conditioned_pivot =
-                matrix_conditioning.use_pivot_perturbation() ? matrix_conditioning.row_conditioning(block_node_idx)
-                                                             : CalculationConditioning::well_conditioned;
-            perturb_pivot_if_needed(possibly_ill_conditioned_pivot, perturb_threshold, matrix(row_biggest, col_biggest),
-                                    abs_pivot, has_pivot_perturbation);
+            CalculationConditioning const pivot_conditioning = matrix_conditioning.row_conditioning(block_node_idx);
+            perturb_pivot_if_needed(pivot_conditioning, perturb_threshold, matrix(row_biggest, col_biggest), abs_pivot,
+                                    has_pivot_perturbation);
             max_pivot = std::max(max_pivot, abs_pivot);
 
             // swap rows and columns
