@@ -171,7 +171,7 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
             observability_check(measured_values, y_bus.math_topology(), y_bus.y_bus_structure());
         MatrixConditioning const matrix_conditioning{observability_result.is_observable
                                                          ? CalculationConditioning::well_conditioned
-                                                         : CalculationConditioning::ill_conditioned,
+                                                         : CalculationConditioning::possibly_ill_conditioned,
                                                      observability_result.row_is_possibly_ill_conditioned};
 
         // initialize voltage with initial angle

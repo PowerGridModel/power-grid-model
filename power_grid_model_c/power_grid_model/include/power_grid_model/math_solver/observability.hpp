@@ -83,7 +83,7 @@ ObservabilitySensorsResult count_observability_sensors(MeasuredValues<sym> const
         }
         // the system could be ill-conditioned if there is no flow sensor for one bus, except the last bus
         if (!has_at_least_one_sensor && row != n_bus - 1) {
-            result.row_is_possibly_ill_conditioned[row] = CalculationConditioning::maybe_ill_conditioned;
+            result.row_is_possibly_ill_conditioned[row] = CalculationConditioning::possibly_ill_conditioned;
         }
     }
     return result;

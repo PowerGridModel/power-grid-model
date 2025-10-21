@@ -44,7 +44,7 @@ class MatrixConditioning {
     }
     constexpr bool use_pivot_perturbation() const {
         assert(has_ill_conditioned_rows_ == has_ill_conditioned_rows(row_conditioning_));
-        return matrix_conditioning_ == CalculationConditioning::well_conditioned && has_ill_conditioned_rows_;
+        return has_ill_conditioned_rows_ && matrix_conditioning_ == CalculationConditioning::well_conditioned;
     }
 
   private:
