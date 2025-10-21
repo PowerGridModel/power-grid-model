@@ -16,6 +16,7 @@ struct ObservabilitySensorsResult {
     std::vector<int8_t> flow_sensors;           // power sensor and current sensor
     std::vector<int8_t> voltage_phasor_sensors; // voltage phasor sensors
     std::vector<int8_t> bus_injections;         // bus injections, zero injection and power sensors at buses
+    int8_t total_injections{0};                 // total number of injections at buses
     bool is_possibly_ill_conditioned{false};
 };
 enum class ConnectivityStatus : std::int8_t {
@@ -75,7 +76,7 @@ ObservabilitySensorsResult scan_network_sensors(MeasuredValues<sym> const& measu
         // diagonal for bus injection measurement
         if (measured_values.has_bus_injection(bus)) {
             result.bus_injections[bus] = 1;
-            result.bus_injections.back() += 1;
+            result.total_injections += 1;
             result.flow_sensors[current_bus_entry] = 1;
             has_at_least_one_sensor = true;
             bus_neighbourhood_info[bus].status = ConnectivityStatus::node_measured; // only treat power/0 injection
@@ -498,10 +499,7 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus,
 }
 
 inline bool
-sufficient_condition_meshed_without_voltage_phasor(std::vector<detail::BusNeighbourhoodInfo> const& _neighbour_list) {
-    // make a copy of the neighbour list
-    std::vector<detail::BusNeighbourhoodInfo> const neighbour_list = _neighbour_list;
-
+sufficient_condition_meshed_without_voltage_phasor(std::vector<detail::BusNeighbourhoodInfo> const& neighbour_list) {
     auto const n_bus = static_cast<Idx>(neighbour_list.size());
     std::vector<Idx> starting_candidates;
     prepare_starting_nodes(neighbour_list, n_bus, starting_candidates);
@@ -552,7 +550,7 @@ inline ObservabilityResult observability_check(MeasuredValues<sym> const& measur
     }
 
     //  Sufficient early out, enough nodal measurement equals observable
-    if (observability_sensors.bus_injections.back() > n_bus - 2) {
+    if (observability_sensors.total_injections > n_bus - 2) {
         return ObservabilityResult{.is_observable = true,
                                    .is_possibly_ill_conditioned = observability_sensors.is_possibly_ill_conditioned};
     }
