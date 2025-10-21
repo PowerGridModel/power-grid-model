@@ -546,7 +546,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     void initialize_pivot_perturbation(std::vector<Tensor> const& data) {
         // save a copy of original matrix
         original_matrix_ = data;
-        // calculate the block-wise non-diagonal infinite norm of the matrix
+        // calculate the block-wise infinite norm of the matrix
         // that is:
         // 1. calculate the infinite norm of each individual block
         // 2. sum all norms of the blocks per row,
