@@ -538,7 +538,7 @@ inline ObservabilityResult observability_check(MeasuredValues<sym> const& measur
     // from unidirectional neighbour list to bidirectional
     detail::complete_bidirectional_neighbourhood_info(bus_neighbourhood_info);
 
-    Idx n_voltage_phasor_sensors{};
+    Idx n_voltage_phasor_sensors{0};
 
     // check necessary condition for observability
     is_necessary_condition_met = detail::necessary_condition(observability_sensors, n_bus, n_voltage_phasor_sensors,
@@ -556,14 +556,9 @@ inline ObservabilityResult observability_check(MeasuredValues<sym> const& measur
     }
 
     // check the sufficient condition for observability
-    // the check is currently only implemented for radial grids
-    if (topo.is_radial) {
-        // Temporary path, ideally this is only called when
-        // n_voltage_phasor_sensors > 0, regardless of network type
-        is_sufficient_condition_met = detail::sufficient_condition_radial_with_voltage_phasor(
-            y_bus_structure, observability_sensors, n_voltage_phasor_sensors);
-    } else {
-        // Temporary path, to be refined later
+    // the check is currently only implemented for grids without voltage phasor sensor
+    if (n_voltage_phasor_sensors == 0) {
+        // Only handle networks without voltage phasor
         is_sufficient_condition_met =
             detail::sufficient_condition_meshed_without_voltage_phasor(bus_neighbourhood_info);
     }
