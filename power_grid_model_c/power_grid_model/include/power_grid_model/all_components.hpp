@@ -5,7 +5,6 @@
 #pragma once
 
 // define all components
-#include "common/common.hpp"
 #include "common/component_list.hpp"
 // component include
 #include "component/appliance.hpp"

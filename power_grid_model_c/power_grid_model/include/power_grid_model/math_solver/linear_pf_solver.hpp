@@ -35,7 +35,6 @@ if there are sources
 #include "../calculation_parameters.hpp"
 #include "../common/common.hpp"
 #include "../common/enum.hpp"
-#include "../common/exception.hpp"
 #include "../common/three_phase_tensor.hpp"
 #include "../common/timer.hpp"
 

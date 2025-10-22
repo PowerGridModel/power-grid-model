@@ -7,6 +7,14 @@
 #include "state_queries.hpp"
 
 #include "../calculation_parameters.hpp"
+#include "../component/current_sensor.hpp"
+#include "../component/fault.hpp"
+#include "../component/load_gen.hpp"
+#include "../component/node.hpp"
+#include "../component/power_sensor.hpp"
+#include "../component/shunt.hpp"
+#include "../component/source.hpp"
+#include "../component/voltage_sensor.hpp"
 
 #include <concepts>
 #include <vector>

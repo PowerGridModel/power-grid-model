@@ -4,6 +4,9 @@
 
 #include <power_grid_model/common/common.hpp>
 
+#include <concepts>
+#include <utility>
+
 namespace power_grid_model {
 namespace {
 static_assert(symmetry_tag<symmetric_t>);
