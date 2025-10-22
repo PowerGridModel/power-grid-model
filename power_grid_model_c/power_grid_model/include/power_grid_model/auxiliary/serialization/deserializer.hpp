@@ -48,6 +48,8 @@ struct JsonMapArrayData {
 };
 
 struct JsonSAXVisitor {
+    static constexpr size_t max_error_message_token_length = 100;
+
     msgpack::packer<msgpack::sbuffer> top_packer() {
         if (data_buffers.empty()) {
             throw SerializationError{"Json root should be a map!\n"};
@@ -122,12 +124,13 @@ struct JsonSAXVisitor {
         return true;
     }
 
-    [[noreturn]] static bool parse_error(std::size_t position, std::string const& last_token,
-                                         json::exception const& ex) {
-        std::stringstream ss;
-        ss << "Parse error in JSON. Position: " << position << ", last token: " << last_token
-           << ". Exception message: " << ex.what() << '\n';
-        throw SerializationError{ss.str()};
+    [[noreturn]] static bool parse_error(std::size_t position, std::string_view last_token, json::exception const& ex) {
+        throw SerializationError{
+            std::format("Parse error in JSON. Position: {}, Last token: {}. Exception message: {}", position,
+                        last_token.size() > max_error_message_token_length
+                            ? std::format("{}...[truncated]", last_token.substr(0, max_error_message_token_length))
+                            : last_token,
+                        ex.what())};
     }
 
     std::stack<JsonMapArrayData> data_buffers;
