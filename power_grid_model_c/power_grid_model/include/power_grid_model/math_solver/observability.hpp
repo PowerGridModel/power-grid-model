@@ -557,8 +557,13 @@ inline ObservabilityResult observability_check(MeasuredValues<sym> const& measur
 
     // check the sufficient condition for observability
     // the check is currently only implemented for grids without voltage phasor sensor
-    if (n_voltage_phasor_sensors == 0) {
+    if (n_voltage_phasor_sensors != 0) {
         // Only handle networks without voltage phasor
+        is_sufficient_condition_met = false;
+    } else if (topo.is_radial) {
+        is_sufficient_condition_met = detail::sufficient_condition_radial_with_voltage_phasor(
+            y_bus_structure, observability_sensors, n_voltage_phasor_sensors);
+    } else {
         is_sufficient_condition_met =
             detail::sufficient_condition_meshed_without_voltage_phasor(bus_neighbourhood_info);
     }
