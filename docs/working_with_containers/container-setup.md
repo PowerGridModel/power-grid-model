@@ -28,6 +28,8 @@ Firstly, setup the repository by cloning it into the desired destination.
 git clone <https>
 ```
 
+Make sure that you are in the right branch, the branch should have ".devcontainer" folder in it.
+
 ### DevPod Setup
 
 Secondly, open DevPod and go into the "Providers" section. There click on "+ Add", select the docker icon, give it a
@@ -51,3 +53,9 @@ repository to.
 should be to podman.exe)
 
 Finally, click "Create Workspace"
+
+## Possible solutions to issues during setup
+
+* If you are facing issues while building the container then try and allocate more memory in Podman. Go to
+Podman -> Settings (Bottom left corner) -> Resources -> Edit.
+* Try and make a fresh clone of the repository and redo the setup on it.
