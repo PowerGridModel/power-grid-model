@@ -11,6 +11,7 @@
 #include "calculation_parameters.hpp"
 #include "container.hpp"
 #include "main_model_fwd.hpp"
+#include "prepare_solvers.hpp"
 #include "topology.hpp"
 
 // common
@@ -57,7 +58,7 @@ template <> struct output_type_getter<SolverOutput<asymmetric_t>> {
     using type = meta_data::asym_output_getter_s;
 };
 
-// down
+//////////////// down
 struct power_flow_t {};
 struct state_estimation_t {};
 struct short_circuit_t {};
@@ -116,7 +117,8 @@ decltype(auto) calculation_type_symmetry_func_selector(CalculationType calculati
         },
         calculation_symmetry, std::forward<Functor>(f), std::forward<Args>(args)...);
 }
-// up
+//////////////// up
+
 template <class ModelType>
     requires(main_core::is_main_model_type_v<ModelType>)
 class MainModelImpl {
@@ -262,18 +264,6 @@ class MainModelImpl {
             std::make_shared<ComponentTopology const>(main_core::construct_topology<ModelType>(state_.components));
     }
 
-    void reset_solvers() {
-        assert(construction_complete_);
-        is_topology_up_to_date_ = false;
-        is_sym_parameter_up_to_date_ = false;
-        is_asym_parameter_up_to_date_ = false;
-        n_math_solvers_ = 0;
-        main_core::clear(math_state_);
-        state_.math_topology.clear();
-        state_.topo_comp_coup.reset();
-        state_.comp_coup = {};
-    }
-
   public:
     /*
     the the sequence indexer given an input array of ID's for a given component type
@@ -345,6 +335,7 @@ class MainModelImpl {
         });
     }
 
+    //////////////// down
     template <solver_output_type SolverOutputType, typename MathSolverType, typename YBus, typename InputType,
               typename PrepareInputFn, typename SolveFn>
         requires std::invocable<std::remove_cvref_t<PrepareInputFn>, Idx /*n_math_solvers*/> &&
@@ -484,6 +475,7 @@ class MainModelImpl {
             },
             *this, options, result_data, logger);
     }
+    //////////////// up
 
   public:
     static auto calculator(Options const& options, MainModelImpl& model, MutableDataset const& target_data,
@@ -569,7 +561,18 @@ class MainModelImpl {
     void rebuild_topology() {
         assert(construction_complete_);
         // clear old solvers
-        reset_solvers();
+        SolverPreparationContext<ImplType> solver_preparation_context{
+            .state = state_,
+            .math_state = math_state_,
+            .n_math_solvers = n_math_solvers_,
+            .is_topology_up_to_date = is_topology_up_to_date_,
+            .is_sym_parameter_up_to_date = is_sym_parameter_up_to_date_,
+            .is_asym_parameter_up_to_date = is_asym_parameter_up_to_date_,
+            .last_updated_calculation_symmetry_mode = last_updated_calculation_symmetry_mode_,
+            .parameter_changed_components = parameter_changed_components_,
+            .math_solver_dispatcher = *math_solver_dispatcher_};
+        detail::reset_solvers(solver_preparation_context);
+
         ComponentConnections const comp_conn =
             main_core::construct_components_connections<ModelType>(state_.components);
         // re build
