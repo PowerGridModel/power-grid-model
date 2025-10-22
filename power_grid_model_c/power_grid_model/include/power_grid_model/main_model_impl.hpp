@@ -558,37 +558,21 @@ class MainModelImpl {
         }
     }
 
-    void rebuild_topology() {
-        assert(construction_complete_);
-        // clear old solvers
-        SolverPreparationContext<ImplType> solver_preparation_context{
-            .state = state_,
-            .math_state = math_state_,
-            .n_math_solvers = n_math_solvers_,
-            .is_topology_up_to_date = is_topology_up_to_date_,
-            .is_sym_parameter_up_to_date = is_sym_parameter_up_to_date_,
-            .is_asym_parameter_up_to_date = is_asym_parameter_up_to_date_,
-            .last_updated_calculation_symmetry_mode = last_updated_calculation_symmetry_mode_,
-            .parameter_changed_components = parameter_changed_components_,
-            .math_solver_dispatcher = *math_solver_dispatcher_};
-        detail::reset_solvers(solver_preparation_context);
-
-        ComponentConnections const comp_conn =
-            main_core::construct_components_connections<ModelType>(state_.components);
-        // re build
-        Topology topology{*state_.comp_topo, comp_conn};
-        std::tie(state_.math_topology, state_.topo_comp_coup) = topology.build_topology();
-        n_math_solvers_ = static_cast<Idx>(state_.math_topology.size());
-        is_topology_up_to_date_ = true;
-        is_sym_parameter_up_to_date_ = false;
-        is_asym_parameter_up_to_date_ = false;
-    }
-
     template <symmetry_tag sym> void prepare_solvers() {
         std::vector<MathSolverProxy<sym>>& solvers = main_core::get_solvers<sym>(math_state_);
         // rebuild topology if needed
         if (!is_topology_up_to_date_) {
-            rebuild_topology();
+            SolverPreparationContext<ImplType> solver_preparation_context{
+                .state = state_,
+                .math_state = math_state_,
+                .n_math_solvers = n_math_solvers_,
+                .is_topology_up_to_date = is_topology_up_to_date_,
+                .is_sym_parameter_up_to_date = is_sym_parameter_up_to_date_,
+                .is_asym_parameter_up_to_date = is_asym_parameter_up_to_date_,
+                .last_updated_calculation_symmetry_mode = last_updated_calculation_symmetry_mode_,
+                .parameter_changed_components = parameter_changed_components_,
+                .math_solver_dispatcher = *math_solver_dispatcher_};
+            detail::rebuild_topology(solver_preparation_context);
         }
         main_core::prepare_y_bus<sym, ModelType>(state_, n_math_solvers_, math_state_);
 

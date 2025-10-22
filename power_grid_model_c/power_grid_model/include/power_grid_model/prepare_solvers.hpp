@@ -4,12 +4,15 @@
 
 #pragma once
 
+#include "topology.hpp"
+
 #include "common/common.hpp"
 
 #include "math_solver/math_solver_dispatch.hpp"
 
 #include "main_core/main_model_type.hpp"
 #include "main_core/math_state.hpp"
+#include "main_core/topology.hpp"
 
 namespace power_grid_model {
 template <class ModelType>
@@ -45,6 +48,21 @@ template <class ModelType> void reset_solvers(SolverPreparationContext<ModelType
     context.state.math_topology.clear();
     context.state.topo_comp_coup.reset();
     context.state.comp_coup = {};
+}
+
+template <class ModelType> void rebuild_topology(SolverPreparationContext<ModelType>& context) {
+    // assert(construction_complete_);
+    // clear old solvers
+    reset_solvers(context);
+    ComponentConnections const comp_conn =
+        main_core::construct_components_connections<ModelType>(context.state.components);
+    // re build
+    Topology topology{*context.state.comp_topo, comp_conn};
+    std::tie(context.state.math_topology, context.state.topo_comp_coup) = topology.build_topology();
+    context.n_math_solvers = static_cast<Idx>(context.state.math_topology.size());
+    context.is_topology_up_to_date = true;
+    context.is_sym_parameter_up_to_date = false;
+    context.is_asym_parameter_up_to_date = false;
 }
 } // namespace detail
 } // namespace power_grid_model
