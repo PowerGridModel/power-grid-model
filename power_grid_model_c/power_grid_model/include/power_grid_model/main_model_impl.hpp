@@ -57,6 +57,7 @@ template <> struct output_type_getter<SolverOutput<asymmetric_t>> {
     using type = meta_data::asym_output_getter_s;
 };
 
+// down
 struct power_flow_t {};
 struct state_estimation_t {};
 struct short_circuit_t {};
@@ -115,14 +116,13 @@ decltype(auto) calculation_type_symmetry_func_selector(CalculationType calculati
         },
         calculation_symmetry, std::forward<Functor>(f), std::forward<Args>(args)...);
 }
-
+// up
 template <class ModelType>
     requires(main_core::is_main_model_type_v<ModelType>)
 class MainModelImpl {
 
   private:
     // internal type traits
-    using ComponentContainer = typename ModelType::ComponentContainer;
     using MainModelState = typename ModelType::MainModelState;
 
     using SequenceIdx = typename ModelType::SequenceIdx;
@@ -130,10 +130,6 @@ class MainModelImpl {
     using SequenceIdxView = typename ModelType::SequenceIdxView;
     using OwnedUpdateDataset = typename ModelType::OwnedUpdateDataset;
     using ComponentFlags = typename ModelType::ComponentFlags;
-
-    static constexpr Idx isolated_component{main_core::isolated_component};
-    static constexpr Idx not_connected{main_core::not_connected};
-    static constexpr Idx sequential{main_core::utils::sequential};
 
   public:
     using ImplType = ModelType;
