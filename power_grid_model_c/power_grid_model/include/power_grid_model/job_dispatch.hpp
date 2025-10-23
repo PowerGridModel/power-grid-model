@@ -184,20 +184,20 @@ class JobDispatch {
     }
 
     static void handle_batch_exceptions(std::vector<std::string> const& exceptions) {
-        std::string combined_error_message;
+        std::stringstream combined_error_message;
         IdxVector failed_scenarios;
         std::vector<std::string> err_msgs;
         for (Idx batch = 0; batch < static_cast<Idx>(exceptions.size()); ++batch) {
             // append exception if it is not empty
             if (!exceptions[batch].empty()) {
-                combined_error_message =
-                    std::format("{}Error in batch #{}: {}\n", combined_error_message, batch, exceptions[batch]);
+                combined_error_message << std::format("Error in batch #{}: {}\n", batch, exceptions[batch]);
                 failed_scenarios.push_back(batch);
                 err_msgs.push_back(exceptions[batch]);
             }
         }
-        if (!combined_error_message.empty()) {
-            throw BatchCalculationError(combined_error_message, failed_scenarios, err_msgs);
+        if (!combined_error_message.view().empty()) {
+            throw BatchCalculationError(std::move(combined_error_message).str(), std::move(failed_scenarios),
+                                        std::move(err_msgs));
         }
     }
 };
