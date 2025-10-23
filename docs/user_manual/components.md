@@ -106,7 +106,7 @@ In this case, the attribute `from_status` and `to_status` is always 1.
 | `q_to`    | `RealValueOutput` | volt-ampere-reactive (var) | reactive power flowing into the branch at to-side        |
 | `i_to`    | `RealValueOutput` | ampere (A)                 | magnitude of current at to-side                          |
 | `s_to`    | `RealValueOutput` | volt-ampere (VA)           | apparent power flowing at to-side                        |
-| `loading` | `double`          | -                          | relative loading of the line, `1.0` meaning 100% loaded. |
+| `loading` | `double`          | -                          | relative loading of the branch, `1.0` meaning 100% loaded. |
 
 #### Short circuit output
 
