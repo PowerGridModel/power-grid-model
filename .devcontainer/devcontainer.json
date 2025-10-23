@@ -1,0 +1,50 @@
+{
+  "name": "power-grid-model",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+
+  "workspaceFolder": "/power-grid-model",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/power-grid-model,type=bind",
+
+  "remoteUser": "root",
+  "overrideCommand": true,
+
+  // cache pip installs
+  "mounts": [
+    "type=volume,source=dev-pip-cache,target=/root/.cache/pip"
+  ],
+
+  "postCreateCommand": "mkdir -p src/power_grid_model/_core/power_grid_model_c/lib && ln -sf /usr/local/lib/python3.13/site-packages/power_grid_model/_core/power_grid_model_c/lib/libpower_grid_model_c.so src/power_grid_model/_core/power_grid_model_c/lib/ && pre-commit install || true",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "tamasfe.even-better-toml",
+        "charliermarsh.ruff",
+        "ms-toolsai.jupyter",
+        "ms-toolsai.jupyter-keymap",
+        "ms-toolsai.jupyter-renderers",
+        "ms-toolsai.vscode-jupyter-cell-tags",
+        "ms-toolsai.vscode-jupyter-slideshow",
+        "ms-toolsai.datawrangler",
+        "ms-vscode.test-adapter-converter",
+        "njpwerner.autodocstring",
+        "cschlosser.doxdocgen",
+        "davidanson.vscode-markdownlint"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.testing.pytestEnabled": true,
+        "python.testing.unittestEnabled": false,
+        "editor.formatOnSave": true,
+        "ruff.enable": true,
+        "ruff.organizeImports": true,
+        "python.terminal.activateEnvironment": false
+      }
+    }
+  }
+}
