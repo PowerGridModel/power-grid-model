@@ -184,7 +184,7 @@ class JobDispatch {
     }
 
     static void handle_batch_exceptions(std::vector<std::string> const& exceptions) {
-        std::stringstream combined_error_message;
+        std::ostringstream combined_error_message;
         IdxVector failed_scenarios;
         std::vector<std::string> err_msgs;
         for (Idx batch = 0; batch < static_cast<Idx>(exceptions.size()); ++batch) {
