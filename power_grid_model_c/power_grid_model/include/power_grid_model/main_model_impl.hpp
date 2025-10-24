@@ -34,14 +34,11 @@
 #include "main_core/calculation_input_preparation.hpp"
 #include "main_core/input.hpp"
 #include "main_core/main_model_type.hpp"
-#include "main_core/math_state.hpp"
 #include "main_core/output.hpp"
 #include "main_core/topology.hpp"
 #include "main_core/update.hpp"
-#include "main_core/y_bus.hpp"
 
 // stl library
-#include <cassert>
 #include <memory>
 #include <span>
 
@@ -135,7 +132,6 @@ class MainModelImpl {
   public:
     using ImplType = ModelType;
     using Options = MainModelOptions;
-    using MathState = main_core::MathState;
     using MetaData = meta_data::MetaData;
 
     // constructor with data
@@ -350,6 +346,7 @@ class MainModelImpl {
         // prepare
         auto const& input = [this, &logger, prepare_input_ = std::forward<PrepareInputFn>(prepare_input)] {
             Timer const timer{logger, LogEvent::prepare};
+            assert(construction_complete_);
             prepare_solvers<sym>(state_, solver_preparation_context_, state_status_context_);
             assert((state_status_context_.is_topology_up_to_date &&
                     is_parameter_up_to_date<sym, ImplType>(state_status_context_.is_parameter_up_to_date)));
@@ -545,8 +542,6 @@ class MainModelImpl {
     // is_asym_parameter_up_to_date
     // last_updated_calculation_symmetry_mode
     // parameter_changed_components
-
-    bool is_accumulated_component_updated_{true}; // may be deleted
 
     OwnedUpdateDataset cached_inverse_update_{};
     UpdateChange cached_state_changes_{};
