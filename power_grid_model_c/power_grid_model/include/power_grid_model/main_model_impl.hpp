@@ -11,7 +11,7 @@
 #include "calculation_parameters.hpp"
 #include "container.hpp"
 #include "main_model_fwd.hpp"
-#include "prepare_solvers.hpp"
+#include "prepare_calculate.hpp"
 #include "topology.hpp"
 
 // common
@@ -41,6 +41,7 @@
 #include "main_core/y_bus.hpp"
 
 // stl library
+#include <cassert>
 #include <memory>
 #include <span>
 
@@ -58,7 +59,6 @@ template <> struct output_type_getter<SolverOutput<asymmetric_t>> {
     using type = meta_data::asym_output_getter_s;
 };
 
-//////////////// down
 struct power_flow_t {};
 struct state_estimation_t {};
 struct short_circuit_t {};
@@ -117,7 +117,6 @@ decltype(auto) calculation_type_symmetry_func_selector(CalculationType calculati
         },
         calculation_symmetry, std::forward<Functor>(f), std::forward<Args>(args)...);
 }
-//////////////// up
 
 template <class ModelType>
     requires(main_core::is_main_model_type_v<ModelType>)
@@ -144,7 +143,7 @@ class MainModelImpl {
                            MathSolverDispatcher const& math_solver_dispatcher, Idx pos = 0)
         : system_frequency_{system_frequency},
           meta_data_{&input_data.meta_data()},
-          math_solver_dispatcher_{&math_solver_dispatcher} {
+          solver_preparation_context_{.math_solver_dispatcher = &math_solver_dispatcher} {
         assert(input_data.get_description().dataset->name == std::string_view("input"));
         add_components(input_data, pos);
         set_construction_complete();
@@ -155,7 +154,7 @@ class MainModelImpl {
                            MathSolverDispatcher const& math_solver_dispatcher)
         : system_frequency_{system_frequency},
           meta_data_{&meta_data},
-          math_solver_dispatcher_{&math_solver_dispatcher} {}
+          solver_preparation_context_{.math_solver_dispatcher = &math_solver_dispatcher} {}
 
     // helper function to get what components are present in the update data
     ComponentFlags get_components_to_update(ConstDataset const& update_data) const {
@@ -204,7 +203,7 @@ class MainModelImpl {
 
         UpdateChange const changed = main_core::update::update_component<CompType>(
             state_.components, std::forward<Updates>(updates),
-            std::back_inserter(std::get<comp_index>(parameter_changed_components_)), sequence_idx);
+            std::back_inserter(std::get<comp_index>(state_status_context_.parameter_changed_components)), sequence_idx);
 
         // update, get changed variable
         update_state(changed);
@@ -293,9 +292,11 @@ class MainModelImpl {
     void update_state(UpdateChange const& changes) {
         // if topology changed, everything is not up to date
         // if only param changed, set param to not up to date
-        is_topology_up_to_date_ = is_topology_up_to_date_ && !changes.topo;
-        is_sym_parameter_up_to_date_ = is_sym_parameter_up_to_date_ && !changes.topo && !changes.param;
-        is_asym_parameter_up_to_date_ = is_asym_parameter_up_to_date_ && !changes.topo && !changes.param;
+        state_status_context_.is_topology_up_to_date = state_status_context_.is_topology_up_to_date && !changes.topo;
+        state_status_context_.is_parameter_up_to_date.sym =
+            state_status_context_.is_parameter_up_to_date.sym && !changes.topo && !changes.param;
+        state_status_context_.is_parameter_up_to_date.asym =
+            state_status_context_.is_parameter_up_to_date.asym && !changes.topo && !changes.param;
     }
 
     template <typename CompType> void restore_component(SequenceIdxView const& sequence_idx) {
@@ -335,7 +336,6 @@ class MainModelImpl {
         });
     }
 
-    //////////////// down
     template <solver_output_type SolverOutputType, typename MathSolverType, typename YBus, typename InputType,
               typename PrepareInputFn, typename SolveFn>
         requires std::invocable<std::remove_cvref_t<PrepareInputFn>, Idx /*n_math_solvers*/> &&
@@ -350,18 +350,19 @@ class MainModelImpl {
         // prepare
         auto const& input = [this, &logger, prepare_input_ = std::forward<PrepareInputFn>(prepare_input)] {
             Timer const timer{logger, LogEvent::prepare};
-            prepare_solvers<sym>();
-            assert(is_topology_up_to_date_ && is_parameter_up_to_date<sym>());
-            return prepare_input_(n_math_solvers_);
+            prepare_solvers<sym>(state_, solver_preparation_context_, state_status_context_);
+            assert((state_status_context_.is_topology_up_to_date &&
+                    is_parameter_up_to_date<sym, ImplType>(state_status_context_.is_parameter_up_to_date)));
+            return prepare_input_(solver_preparation_context_.n_math_solvers);
         }();
         // calculate
         return [this, &logger, &input, solve_ = std::forward<SolveFn>(solve)] {
             Timer const timer{logger, LogEvent::math_calculation};
-            auto& solvers = main_core::get_solvers<sym>(math_state_);
-            auto& y_bus_vec = main_core::get_y_bus<sym>(math_state_);
+            auto& solvers = main_core::get_solvers<sym>(solver_preparation_context_.math_state);
+            auto& y_bus_vec = main_core::get_y_bus<sym>(solver_preparation_context_.math_state);
             std::vector<SolverOutputType> solver_output;
-            solver_output.reserve(n_math_solvers_);
-            for (Idx i = 0; i != n_math_solvers_; ++i) {
+            solver_output.reserve(solver_preparation_context_.n_math_solvers);
+            for (Idx i = 0; i != solver_preparation_context_.n_math_solvers; ++i) {
                 solver_output.emplace_back(solve_(solvers[i], y_bus_vec[i], input[i]));
             }
             return solver_output;
@@ -411,7 +412,8 @@ class MainModelImpl {
 
             return calculate_<ShortCircuitSolverOutput<sym>, MathSolverProxy<sym>, YBus<sym>, ShortCircuitInput>(
                 [this, voltage_scaling](Idx n_math_solvers) {
-                    assert(is_topology_up_to_date_ && is_parameter_up_to_date<sym>());
+                    assert((state_status_context_.is_topology_up_to_date &&
+                            is_parameter_up_to_date<sym, ImplType>(state_status_context_.is_parameter_up_to_date)));
                     return main_core::prepare_short_circuit_input<sym>(state_, state_.comp_coup, n_math_solvers,
                                                                        voltage_scaling);
                 },
@@ -475,7 +477,6 @@ class MainModelImpl {
             },
             *this, options, result_data, logger);
     }
-    //////////////// up
 
   public:
     static auto calculator(Options const& options, MainModelImpl& model, MutableDataset const& target_data,
@@ -530,84 +531,29 @@ class MainModelImpl {
 
     double system_frequency_;
     MetaData const* meta_data_;
-    MathSolverDispatcher const* math_solver_dispatcher_;
 
     MainModelState state_;
-    // math model
-    MathState math_state_;
-    Idx n_math_solvers_{0};
-    bool is_topology_up_to_date_{false};
-    bool is_sym_parameter_up_to_date_{false};
-    bool is_asym_parameter_up_to_date_{false};
-    bool is_accumulated_component_updated_{true};
-    bool last_updated_calculation_symmetry_mode_{false};
+
+    SolverPreparationContext solver_preparation_context_;
+    // math_state
+    // n_math_solvers
+    // math_solver_dispatcher
+
+    StatusCheckingContext<ImplType> state_status_context_{};
+    // is_topology_up_to_date
+    // is_sym_parameter_up_to_date
+    // is_asym_parameter_up_to_date
+    // last_updated_calculation_symmetry_mode
+    // parameter_changed_components
+
+    bool is_accumulated_component_updated_{true}; // may be deleted
 
     OwnedUpdateDataset cached_inverse_update_{};
     UpdateChange cached_state_changes_{};
-    SequenceIdx parameter_changed_components_{};
 #ifndef NDEBUG
     // construction_complete is used for debug assertions only
     bool construction_complete_{false};
 #endif // !NDEBUG
-
-    template <symmetry_tag sym> bool& is_parameter_up_to_date() {
-        if constexpr (is_symmetric_v<sym>) {
-            return is_sym_parameter_up_to_date_;
-        } else {
-            return is_asym_parameter_up_to_date_;
-        }
-    }
-
-    template <symmetry_tag sym> void prepare_solvers() {
-        std::vector<MathSolverProxy<sym>>& solvers = main_core::get_solvers<sym>(math_state_);
-        // rebuild topology if needed
-        if (!is_topology_up_to_date_) {
-            SolverPreparationContext<ImplType> solver_preparation_context{
-                .state = state_,
-                .math_state = math_state_,
-                .n_math_solvers = n_math_solvers_,
-                .is_topology_up_to_date = is_topology_up_to_date_,
-                .is_sym_parameter_up_to_date = is_sym_parameter_up_to_date_,
-                .is_asym_parameter_up_to_date = is_asym_parameter_up_to_date_,
-                .last_updated_calculation_symmetry_mode = last_updated_calculation_symmetry_mode_,
-                .parameter_changed_components = parameter_changed_components_,
-                .math_solver_dispatcher = *math_solver_dispatcher_};
-            detail::rebuild_topology(solver_preparation_context);
-        }
-        main_core::prepare_y_bus<sym, ModelType>(state_, n_math_solvers_, math_state_);
-
-        if (n_math_solvers_ != static_cast<Idx>(solvers.size())) {
-            assert(solvers.empty());
-            assert(n_math_solvers_ == static_cast<Idx>(state_.math_topology.size()));
-            assert(n_math_solvers_ == static_cast<Idx>(main_core::get_y_bus<sym>(math_state_).size()));
-
-            solvers.clear();
-            solvers.reserve(n_math_solvers_);
-            std::ranges::transform(state_.math_topology, std::back_inserter(solvers), [this](auto const& math_topo) {
-                return MathSolverProxy<sym>{math_solver_dispatcher_, math_topo};
-            });
-            for (Idx idx = 0; idx < n_math_solvers_; ++idx) {
-                main_core::get_y_bus<sym>(math_state_)[idx].register_parameters_changed_callback(
-                    [solver = std::ref(solvers[idx])](bool changed) {
-                        solver.get().get().parameters_changed(changed);
-                    });
-            }
-        } else if (!is_parameter_up_to_date<sym>()) {
-            std::vector<MathModelParam<sym>> const math_params =
-                main_core::get_math_param<sym>(state_, n_math_solvers_);
-            std::vector<MathModelParamIncrement> const math_param_increments =
-                main_core::get_math_param_increment<ModelType>(state_, n_math_solvers_, parameter_changed_components_);
-            if (last_updated_calculation_symmetry_mode_ == is_symmetric_v<sym>) {
-                main_core::update_y_bus(math_state_, math_params, math_param_increments);
-            } else {
-                main_core::update_y_bus(math_state_, math_params);
-            }
-        }
-        // else do nothing, set everything up to date
-        is_parameter_up_to_date<sym>() = true;
-        std::ranges::for_each(parameter_changed_components_, [](auto& comps) { comps.clear(); });
-        last_updated_calculation_symmetry_mode_ = is_symmetric_v<sym>;
-    }
 };
 
 } // namespace power_grid_model

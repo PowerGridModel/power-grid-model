@@ -12,7 +12,6 @@
 #include <vector>
 
 namespace power_grid_model::main_core {
-constexpr Idx isolated_component{-1};
 constexpr Idx not_connected{-1};
 
 namespace detail {
