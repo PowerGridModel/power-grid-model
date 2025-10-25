@@ -962,7 +962,7 @@ The failure can happen in two types of scenarios:
  This will likely cause the regulator to go back and forth between two tap positions and eventually
 reach a pre-defined limit.
 
-- The regulatad voltage at extreme tap positions still fall outside the `u_band`.
+- The regulated voltage at extreme tap positions still fall outside the `u_band`.
 
 This error is a result of the two types search method used; `linear` and `binary`:
 
