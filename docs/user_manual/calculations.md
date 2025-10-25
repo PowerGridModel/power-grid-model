@@ -952,6 +952,29 @@ along the exploitation direction.
 | linear search | Start with an initial guess and do a local search with step size 1 for each iteration step.     |
 | binary search | Start with a large search region and reduce the search region by half for every iteration step. |
 
+##### Error type `MaxIterationReached`
+
+When the regulator can not find a suitable voltage after iterations, error `MaxIterationReached` will be thrown.
+We define the maximum iterations per transformer to be twice the amount of total taps possible.
+The failure can happen in two types of scenarios:
+
+- The regulatable voltage range is (significantly) larger than the `u_band` set by the input data.
+ This will likely cause the regulator to go back and forth between two tap positions and eventually
+reach a pre-defined limit.
+
+- The regulatad voltage at extreme tap positions still fall outside the `u_band`.
+
+This error is a result of the two types search method used; `linear` and `binary`:
+
+- Linear search method, used for `any_valid_tap` strategy, will try to go one tap up or down per iteration.
+If there is no valid tap position available, linear search method will keep trying until the maximum iteration
+ for this transformer is reached.
+- Binary search method, used for the rest three strategies, will iteratively narrow down search space by half and will
+ run into a state where the searchable space is no longer viable. This is equivalent to the maximum iteration
+ reached scenario for the linear search method.
+
+In conclusion, when there is no suitable tap, error `MaxIterationReached` will be thrown.
+
 ## Batch Calculations
 
 Usually, a single power-flow or state estimation calculation would not be enough to get insights in the grid.
