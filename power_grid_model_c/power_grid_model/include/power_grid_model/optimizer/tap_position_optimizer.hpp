@@ -1147,14 +1147,15 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             current_bs.recalibrate(strategy_max);
 
             IntS const tap_pos = current_bs.repropose_tap(strategy_max, previous_down, tap_changed);
-            // The new tap pos is only valid in a cmp == equivalent situation
+            // The new same tap pos is only valid in a cmp == equivalent situation
             // in other words, a same tap pos in a non equivalent situation means
             // the binary search cannot find a valid tap position
-            if (tap_changed && cmp != 0 && !current_bs.get_end_of_bs()) {
+            // _tap_changed_ is an aggregated flag with _inevitable_run_, so we can not use it here
+            if (tap_pos == transformer.tap_pos() && cmp != 0 && !current_bs.get_end_of_bs()) {
                 current_bs.rewind(tap_pos, transformer.tap_min(), transformer.tap_max());
-                throw MaxIterationReached{
-                    std::format("TapPositionOptimizer::binary_search: no possible tap valid between tap {} and tap {}",
-                                transformer.tap_min(), transformer.tap_max())};
+                throw MaxIterationReached{std::format(
+                    "TapPositionOptimizer::binary_search: no valid tap position found between tap {} and tap {}",
+                    transformer.tap_min(), transformer.tap_max())};
             }
             add_tap_pos_update(tap_pos, transformer, update_data);
         };
