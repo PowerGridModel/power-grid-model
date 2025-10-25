@@ -5,6 +5,6 @@
   "atol": 1e-05,
   "raises": {
     "raises": "MaxIterationReached",
-    "reason": "TapPositionOptimizer::iterate"
+    "reason": "TapPositionOptimizer::binary_search"
   }
 }
