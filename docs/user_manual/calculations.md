@@ -952,17 +952,21 @@ along the exploitation direction.
 | linear search | Start with an initial guess and do a local search with step size 1 for each iteration step.     |
 | binary search | Start with a large search region and reduce the search region by half for every iteration step. |
 
+##### Regulatable voltage range outside `u_band`
+
+In the case of an unrealistically set volatage and `u_band`, the viable voltage range regulatable can fall outside
+this target band.
+This will lead the regulator returning the tap that results in the closest voltage level to the target band.
+
 ##### Error type `MaxIterationReached`
 
 When the regulator can not find a suitable voltage after iterations, error `MaxIterationReached` will be thrown.
 We define the maximum iterations per transformer to be twice the amount of total taps possible.
-The failure can happen in two types of scenarios:
+This failure happens in the following type of scenario:
 
-- The regulatable voltage range is (significantly) larger than the `u_band` set by the input data.
- This will likely cause the regulator to go back and forth between two tap positions and eventually
+- The per tap voltage step size in the regulatable voltage range is (significantly) larger than the `u_band` set by the
+ input data. This will likely cause the regulator to go back and forth between two tap positions and eventually
 reach a pre-defined limit.
-
-- The regulatad voltage at extreme tap positions still fall outside the `u_band`.
 
 This error is a result of the two types search method used; `linear` and `binary`:
 
