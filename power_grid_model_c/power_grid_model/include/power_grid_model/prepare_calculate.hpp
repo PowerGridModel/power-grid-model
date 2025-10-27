@@ -30,7 +30,8 @@ struct StatusCheckingContext {
     struct IsParameterUpToDateHelper {
         bool sym{false};
         bool asym{false};
-    } is_parameter_up_to_date{};
+    };
+    IsParameterUpToDateHelper is_parameter_up_to_date{};
 };
 
 namespace detail {

@@ -12,7 +12,6 @@
 #include "container.hpp"
 #include "main_model_fwd.hpp"
 #include "prepare_calculate.hpp"
-#include "prepare_calculate.hpp" // Include the header where n_math_solvers is defined
 #include "topology.hpp"
 
 // common
@@ -137,10 +136,10 @@ class MainModelImpl {
 
     // constructor with data
     explicit MainModelImpl(double system_frequency, ConstDataset const& input_data,
-                           MathSolverDispatcher const& math_solver_dispatcher, Idx pos = 0)
+                           SolverPreparationContext solver_preparation_context, Idx pos = 0)
         : system_frequency_{system_frequency},
           meta_data_{&input_data.meta_data()},
-          solver_preparation_context_{.math_state = {}, .math_solver_dispatcher = &math_solver_dispatcher} {
+          solver_preparation_context_{solver_preparation_context} {
         assert(input_data.get_description().dataset->name == std::string_view("input"));
         add_components(input_data, pos);
         set_construction_complete();
@@ -148,10 +147,10 @@ class MainModelImpl {
 
     // constructor with only frequency
     explicit MainModelImpl(double system_frequency, meta_data::MetaData const& meta_data,
-                           MathSolverDispatcher const& math_solver_dispatcher)
+                           SolverPreparationContext solver_preparation_context)
         : system_frequency_{system_frequency},
           meta_data_{&meta_data},
-          solver_preparation_context_{.math_state = {}, .math_solver_dispatcher = &math_solver_dispatcher} {}
+          solver_preparation_context_{solver_preparation_context} {}
 
     // helper function to get what components are present in the update data
     ComponentFlags get_components_to_update(ConstDataset const& update_data) const {
