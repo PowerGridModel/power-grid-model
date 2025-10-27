@@ -198,7 +198,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6
         with:
           name: version
           path: .
@@ -314,9 +314,9 @@ jobs:
           python-version: '3.12'
           architecture: x64
 
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6
 
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6
         with:
           name: version
           path: .
