@@ -956,7 +956,7 @@ along the exploitation direction.
 
 In the case of an unrealistically set volatage and `u_band`, the viable voltage range regulatable can fall outside
 this target band.
-This will lead the regulator returning the tap that results in the closest voltage level to the target band.
+This will lead to the regulator returning the tap that results in the closest voltage level to the target band.
 
 ##### Error type `MaxIterationReached`
 
