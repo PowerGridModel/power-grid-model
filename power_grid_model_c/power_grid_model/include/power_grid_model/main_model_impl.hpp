@@ -12,6 +12,7 @@
 #include "container.hpp"
 #include "main_model_fwd.hpp"
 #include "prepare_calculate.hpp"
+#include "prepare_calculate.hpp" // Include the header where n_math_solvers is defined
 #include "topology.hpp"
 
 // common
@@ -139,7 +140,7 @@ class MainModelImpl {
                            MathSolverDispatcher const& math_solver_dispatcher, Idx pos = 0)
         : system_frequency_{system_frequency},
           meta_data_{&input_data.meta_data()},
-          solver_preparation_context_{.math_solver_dispatcher = &math_solver_dispatcher} {
+          solver_preparation_context_{.math_state = {}, .math_solver_dispatcher = &math_solver_dispatcher} {
         assert(input_data.get_description().dataset->name == std::string_view("input"));
         add_components(input_data, pos);
         set_construction_complete();
@@ -150,7 +151,7 @@ class MainModelImpl {
                            MathSolverDispatcher const& math_solver_dispatcher)
         : system_frequency_{system_frequency},
           meta_data_{&meta_data},
-          solver_preparation_context_{.math_solver_dispatcher = &math_solver_dispatcher} {}
+          solver_preparation_context_{.math_state = {}, .math_solver_dispatcher = &math_solver_dispatcher} {}
 
     // helper function to get what components are present in the update data
     ComponentFlags get_components_to_update(ConstDataset const& update_data) const {
@@ -350,7 +351,7 @@ class MainModelImpl {
             prepare_solvers<sym>(state_, solver_preparation_context_, state_status_context_);
             assert((state_status_context_.is_topology_up_to_date &&
                     is_parameter_up_to_date<sym, ImplType>(state_status_context_.is_parameter_up_to_date)));
-            return prepare_input_(solver_preparation_context_.n_math_solvers);
+            return prepare_input_(get_n_math_solvers<ModelType>(state_));
         }();
         // calculate
         return [this, &logger, &input, solve_ = std::forward<SolveFn>(solve)] {
@@ -358,8 +359,8 @@ class MainModelImpl {
             auto& solvers = main_core::get_solvers<sym>(solver_preparation_context_.math_state);
             auto& y_bus_vec = main_core::get_y_bus<sym>(solver_preparation_context_.math_state);
             std::vector<SolverOutputType> solver_output;
-            solver_output.reserve(solver_preparation_context_.n_math_solvers);
-            for (Idx i = 0; i != solver_preparation_context_.n_math_solvers; ++i) {
+            solver_output.reserve(get_n_math_solvers<ModelType>(state_));
+            for (Idx i = 0; i != get_n_math_solvers<ModelType>(state_); ++i) {
                 solver_output.emplace_back(solve_(solvers[i], y_bus_vec[i], input[i]));
             }
             return solver_output;
@@ -532,16 +533,8 @@ class MainModelImpl {
     MainModelState state_;
 
     SolverPreparationContext solver_preparation_context_;
-    // math_state
-    // n_math_solvers
-    // math_solver_dispatcher
 
     StatusCheckingContext<ImplType> state_status_context_{};
-    // is_topology_up_to_date
-    // is_sym_parameter_up_to_date
-    // is_asym_parameter_up_to_date
-    // last_updated_calculation_symmetry_mode
-    // parameter_changed_components
 
     OwnedUpdateDataset cached_inverse_update_{};
     UpdateChange cached_state_changes_{};
