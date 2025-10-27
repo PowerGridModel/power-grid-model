@@ -960,7 +960,7 @@ This will lead to the regulator returning the tap that results in the closest vo
 
 ##### Error type `MaxIterationReached`
 
-When the regulator can not find a suitable voltage after iterations, error `MaxIterationReached` will be thrown.
+When the regulator cannot find a suitable voltage after all iterations, the MaxIterationReached error is thrown.
 We define the maximum iterations per transformer to be twice the amount of total taps possible.
 This failure happens in the following type of scenario:
 
