@@ -973,7 +973,7 @@ This error is a result of the two types search method used; `linear` and `binary
 - Linear search method, used for `any_valid_tap` strategy, will try to go one tap up or down per iteration.
 If there is no valid tap position available, linear search method will keep trying until the maximum iteration
  for this transformer is reached.
-- Binary search method, used for the rest three strategies, will iteratively narrow down search space by half and will
+- Binary search method, used for the other three strategies, will iteratively narrow down search space by half and will
  run into a state where the searchable space is no longer viable. This is equivalent to the maximum iteration
  reached scenario for the linear search method.
 
