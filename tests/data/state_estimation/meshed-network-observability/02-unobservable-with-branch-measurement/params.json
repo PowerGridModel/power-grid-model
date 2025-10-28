@@ -6,7 +6,7 @@
     ".+_residual": 5e-4
   },
   "raises": {
-    "raises": "SparseMatrixError",
+    "raises": "NotObservableError",
     "reason": "One nodal measurement can not be made use of."
   }
 }

@@ -505,9 +505,15 @@ sufficient_condition_meshed_without_voltage_phasor(std::vector<detail::BusNeighb
     prepare_starting_nodes(neighbour_list, n_bus, starting_candidates);
 
     // Try each starting candidate
-    return std::ranges::any_of(starting_candidates, [&](Idx const start_bus) {
+    bool const found_spanning_tree = std::ranges::any_of(starting_candidates, [&](Idx const start_bus) {
         return find_spanning_tree_from_node(start_bus, n_bus, neighbour_list);
     });
+
+    if (!found_spanning_tree) {
+        throw NotObservableError{"No full-spanning tree can be constructed from this meshed network. Unobservable.\n"};
+    }
+
+    return true;
 }
 
 } // namespace detail
