@@ -564,12 +564,9 @@ inline ObservabilityResult observability_check(MeasuredValues<sym> const& measur
     // check the sufficient condition for observability
     // the check is currently only implemented for radial grids
     if (topo.is_radial) {
-        // Temporary path, ideally this is only called when
-        // n_voltage_phasor_sensors > 0, regardless of network type
         is_sufficient_condition_met = detail::sufficient_condition_radial_with_voltage_phasor(
             y_bus_structure, observability_sensors, n_voltage_phasor_sensors);
     } else {
-        // Temporary path, to be refined later
         is_sufficient_condition_met =
             detail::sufficient_condition_meshed_without_voltage_phasor(bus_neighbourhood_info);
     }
