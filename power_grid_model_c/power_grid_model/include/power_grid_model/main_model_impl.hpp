@@ -139,7 +139,7 @@ class MainModelImpl {
                            SolverPreparationContext solver_preparation_context, Idx pos = 0)
         : system_frequency_{system_frequency},
           meta_data_{&input_data.meta_data()},
-          solver_preparation_context_{solver_preparation_context} {
+          solver_preparation_context_{std::move(solver_preparation_context)} {
         assert(input_data.get_description().dataset->name == std::string_view("input"));
         add_components(input_data, pos);
         set_construction_complete();
@@ -150,7 +150,7 @@ class MainModelImpl {
                            SolverPreparationContext solver_preparation_context)
         : system_frequency_{system_frequency},
           meta_data_{&meta_data},
-          solver_preparation_context_{solver_preparation_context} {}
+          solver_preparation_context_{std::move(solver_preparation_context)} {}
 
     // helper function to get what components are present in the update data
     ComponentFlags get_components_to_update(ConstDataset const& update_data) const {
