@@ -510,7 +510,7 @@ sufficient_condition_meshed_without_voltage_phasor(std::vector<detail::BusNeighb
     });
 
     if (!found_spanning_tree) {
-        throw NotObservableError{"No full-spanning tree can be constructed from this meshed network. Unobservable.\n"};
+        throw NotObservableError{"Meshed observability check fail. Network unobservable.\n"};
     }
 
     return true;
