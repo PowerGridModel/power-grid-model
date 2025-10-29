@@ -84,7 +84,7 @@ void prepare_solvers(typename ModelType::MainModelState& state, SolverPreparatio
     if (!status_context.is_topology_up_to_date) {
         detail::rebuild_topology(state, solver_context, status_context);
     }
-    Idx n_math_solvers = get_n_math_solvers<ModelType>(state);
+    Idx const n_math_solvers = get_n_math_solvers<ModelType>(state);
     main_core::prepare_y_bus<sym, ModelType>(state, n_math_solvers, solver_context.math_state);
     if (n_math_solvers != static_cast<Idx>(solvers.size())) {
         assert(solvers.empty());
