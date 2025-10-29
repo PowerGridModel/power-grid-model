@@ -1565,10 +1565,8 @@ TEST_CASE("Test Observability - sufficient_condition_meshed_without_voltage_phas
         // Expand bidirectional connections
         complete_bidirectional_neighbourhood_info(neighbour_list);
 
-        bool const result = sufficient_condition_meshed_without_voltage_phasor(neighbour_list);
-
         // Should fail due to insufficient measurements
-        CHECK(result == false);
+        CHECK_THROWS_AS(sufficient_condition_meshed_without_voltage_phasor(neighbour_list), NotObservableError);
     }
 
     SUBCASE("Single bus network - edge case") {
