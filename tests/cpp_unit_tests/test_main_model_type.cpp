@@ -7,6 +7,7 @@
 #include <power_grid_model/main_core/main_model_type.hpp>
 #include <power_grid_model/main_model_impl.hpp>
 #include <power_grid_model/math_solver/math_solver_dispatch.hpp>
+#include <power_grid_model/prepare_calculate.hpp>
 
 #include <doctest/doctest.h>
 
@@ -30,7 +31,7 @@ static_assert(!is_main_model_type_v<MainModelType<AllComponents, AllComponents>>
 static_assert(!is_main_model_type_v<MainModelType<AType, AllComponents>>);
 
 static_assert(std::constructible_from<MainModelImpl<MainModelType<AllExtraRetrievableTypes, AllComponents>>, double,
-                                      meta_data::MetaData const&, MathSolverDispatcher const&>);
+                                      meta_data::MetaData const&, SolverPreparationContext>);
 
 static_assert(detail::validate_component_types_c<AllComponents>);
 
@@ -57,7 +58,7 @@ TEST_CASE("MainModelType") {
         static_assert(ModelType::n_types == 2);
         static_assert(is_main_model_type_v<ModelType>);
         static_assert(std::constructible_from<MainModelImpl<ModelType>, double, meta_data::MetaData const&,
-                                              MathSolverDispatcher const&>);
+                                              SolverPreparationContext>);
 
         CHECK(ModelType::run_functor_with_all_component_types_return_array([]<typename CompType>() {
                   return std::string_view(CompType::name);
@@ -89,7 +90,7 @@ TEST_CASE("MainModelType") {
         static_assert(ModelType::n_types == 3);
         static_assert(is_main_model_type_v<ModelType>);
         static_assert(std::constructible_from<MainModelImpl<ModelType>, double, meta_data::MetaData const&,
-                                              MathSolverDispatcher const&>);
+                                              SolverPreparationContext>);
 
         CHECK(ModelType::run_functor_with_all_component_types_return_array([]<typename CompType>() {
                   return std::string_view(CompType::name);
@@ -122,7 +123,7 @@ TEST_CASE("MainModelType") {
         static_assert(is_main_model_type_v<ModelType>);
 
         static_assert(std::constructible_from<MainModelImpl<ModelType>, double, meta_data::MetaData const&,
-                                              MathSolverDispatcher const&>);
+                                              SolverPreparationContext>);
 
         CHECK(ModelType::run_functor_with_all_component_types_return_array([]<typename CompType>() {
                   return std::string_view(CompType::name);
@@ -155,7 +156,7 @@ TEST_CASE("MainModelType") {
         static_assert(ModelType::n_types == 3);
         static_assert(is_main_model_type_v<ModelType>);
         static_assert(std::constructible_from<MainModelImpl<ModelType>, double, meta_data::MetaData const&,
-                                              MathSolverDispatcher const&>);
+                                              SolverPreparationContext>);
 
         CHECK(ModelType::run_functor_with_all_component_types_return_array([]<typename CompType>() {
                   return std::string_view(CompType::name);
