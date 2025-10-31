@@ -8,6 +8,10 @@
 #include <doctest/doctest.h>
 
 #include <algorithm>
+#include <concepts>
+#include <cstdint>
+#include <limits>
+#include <type_traits>
 
 namespace {
 using namespace power_grid_model;
