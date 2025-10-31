@@ -1,0 +1,18 @@
+{
+  "version": "1.0",
+  "type": "input",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "node": [
+      {"id": 2, "u_rated": 10000},
+      {"id": 4, "u_rated": 100}
+    ],
+    "transformer": [
+      {"id": 3, "from_node": 2, "to_node": 4, "from_status": 1, "to_status": 1, "u1": 10000, "u2": 400, "sn": 630000, "uk": 0.047, "pk": 1470, "i0": 0, "p0": 0, "winding_from": 0, "winding_to": 1, "clock": 0, "tap_side": 0, "tap_pos": 3, "tap_min": 1, "tap_max": 5, "tap_nom": 3, "tap_size": 250, "r_grounding_from": 0, "x_grounding_from": 0, "r_grounding_to": 0, "x_grounding_to": 0}
+    ],
+    "source": [
+      {"id": 1, "node": 2, "status": 1, "u_ref": 1, "sk": 1000000000000000, "rx_ratio": 1, "z01_ratio": 1}
+    ]
+  }
+}
