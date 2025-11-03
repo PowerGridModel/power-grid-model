@@ -246,13 +246,13 @@ class Transformer : public Branch {
         }
         // ZN*
         if (winding_from_ == WindingType::zigzag_n && from_status()) {
-            DoubleComplex const z0_series = (1.0 / y_series) * 0.1 + 3.0 * z_grounding_from_ / k / k;
+            DoubleComplex const z0_series = 1.0 / (y_series * 2.0) + 3.0 * z_grounding_from_ / k / k;
             DoubleComplex const y0_series = 1.0 / z0_series;
             param0.yff() = y0_series / k / k;
         }
         // *zn
         if (winding_to_ == WindingType::zigzag_n && to_status()) {
-            DoubleComplex const z0_series = (1.0 / y_series) * 0.1 + 3.0 * z_grounding_to_;
+            DoubleComplex const z0_series = 1.0 / (y_series * 2.0) + 3.0 * z_grounding_to_;
             DoubleComplex const y0_series = 1.0 / z0_series;
             param0.ytt() = y0_series;
         }
