@@ -176,20 +176,20 @@ The data types for all dataset types and components used by the Power Grid Model
 def initialize_array(
     data_type: DatasetTypeLike,
     component_type: ComponentTypeLike,
-    shape: int,
+    shape: int | tuple[int],
     empty: bool = False,
 ) -> SingleArray: ...
 @overload
 def initialize_array(
     data_type: DatasetTypeLike,
     component_type: ComponentTypeLike,
-    shape: tuple,
+    shape: tuple[int, int],
     empty: bool = False,
 ) -> DenseBatchArray: ...
 def initialize_array(
     data_type: DatasetTypeLike,
     component_type: ComponentTypeLike,
-    shape: tuple | int,
+    shape: int | tuple[int] | tuple[int, int],
     empty: bool = False,
 ) -> SingleArray | DenseBatchArray:
     """

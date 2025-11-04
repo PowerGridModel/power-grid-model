@@ -49,7 +49,7 @@ from power_grid_model._core.error_handling import PowerGridBatchError, assert_no
 from power_grid_model._core.index_integer import IdNp, IdxNp
 from power_grid_model._core.options import Options
 from power_grid_model._core.power_grid_core import ConstDatasetPtr, IDPtr, IdxPtr, ModelPtr, power_grid_core as pgc
-from power_grid_model._core.typing import ComponentAttributeMapping
+from power_grid_model._core.typing import ComponentAttributeMapping, ComponentAttributeMappingDict
 
 
 class PowerGridModel:
@@ -473,9 +473,7 @@ class PowerGridModel:
         calculation_method: CalculationMethod | str = ...,
         update_data: None = ...,
         threading: int = ...,
-        output_component_types: dict[
-            ComponentType, set[str] | list[str] | None | ComponentAttributeFilterOptions
-        ] = ...,
+        output_component_types: ComponentAttributeMappingDict = ...,
         continue_on_batch_error: bool = ...,
         decode_error: bool = ...,
         tap_changing_strategy: TapChangingStrategy | str = ...,
@@ -520,9 +518,7 @@ class PowerGridModel:
         calculation_method: CalculationMethod | str = ...,
         update_data: BatchDataset = ...,
         threading: int = ...,
-        output_component_types: dict[
-            ComponentType, set[str] | list[str] | None | ComponentAttributeFilterOptions
-        ] = ...,
+        output_component_types: ComponentAttributeMappingDict = ...,
         continue_on_batch_error: bool = ...,
         decode_error: bool = ...,
         tap_changing_strategy: TapChangingStrategy | str = ...,
@@ -586,7 +582,7 @@ class PowerGridModel:
                 - None: Row based data for all component types.
                 - set[ComponentTypeVar] or list[ComponentTypeVar]: Row based data for the specified component types.
                 - ComponentAttributeFilterOptions: Columnar data for all component types.
-                - dict[ComponentType, set[str] | list[str] | None | ComponentAttributeFilterOptions]:
+                - ComponentAttributeMappingDict:
                     key: ComponentType
                     value:
                         - None: Row based data for the specified component types.
@@ -664,9 +660,7 @@ class PowerGridModel:
         calculation_method: CalculationMethod | str = ...,
         update_data: None = ...,
         threading: int = ...,
-        output_component_types: dict[
-            ComponentType, set[str] | list[str] | None | ComponentAttributeFilterOptions
-        ] = ...,
+        output_component_types: ComponentAttributeMappingDict = ...,
         continue_on_batch_error: bool = ...,
         decode_error: bool = ...,
     ) -> SingleOutputDataset: ...
@@ -708,9 +702,7 @@ class PowerGridModel:
         calculation_method: CalculationMethod | str = ...,
         update_data: BatchDataset = ...,
         threading: int = ...,
-        output_component_types: dict[
-            ComponentType, set[str] | list[str] | None | ComponentAttributeFilterOptions
-        ] = ...,
+        output_component_types: ComponentAttributeMappingDict = ...,
         continue_on_batch_error: bool = ...,
         decode_error: bool = ...,
     ) -> DenseBatchOutputDataset: ...
@@ -769,7 +761,7 @@ class PowerGridModel:
                 - None: Row based data for all component types.
                 - set[ComponentTypeVar] or list[ComponentTypeVar]: Row based data for the specified component types.
                 - ComponentAttributeFilterOptions: Columnar data for all component types.
-                - dict[ComponentType, set[str] | list[str] | None | ComponentAttributeFilterOptions]:
+                - ComponentAttributeMappingDict:
                     key: ComponentType
                     value:
                         - None: Row based data for the specified component types.
@@ -839,9 +831,7 @@ class PowerGridModel:
         calculation_method: CalculationMethod | str = ...,
         update_data: None = ...,
         threading: int = ...,
-        output_component_types: dict[
-            ComponentType, set[str] | list[str] | None | ComponentAttributeFilterOptions
-        ] = ...,
+        output_component_types: ComponentAttributeMappingDict = ...,
         continue_on_batch_error: bool = ...,
         decode_error: bool = ...,
         short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str,
@@ -877,9 +867,7 @@ class PowerGridModel:
         calculation_method: CalculationMethod | str = ...,
         update_data: BatchDataset = ...,
         threading: int = ...,
-        output_component_types: dict[
-            ComponentType, set[str] | list[str] | None | ComponentAttributeFilterOptions
-        ] = ...,
+        output_component_types: ComponentAttributeMappingDict = ...,
         continue_on_batch_error: bool = ...,
         decode_error: bool = ...,
         short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str,
@@ -929,7 +917,7 @@ class PowerGridModel:
                 - None: Row based data for all component types.
                 - set[ComponentTypeVar] or list[ComponentTypeVar]: Row based data for the specified component types.
                 - ComponentAttributeFilterOptions: Columnar data for all component types.
-                - dict[ComponentType, set[str] | list[str] | None | ComponentAttributeFilterOptions]:
+                - ComponentAttributeMappingDict:
                     key: ComponentType
                     value:
                         - None: Row based data for the specified component types.
