@@ -8,7 +8,7 @@ Load meta data from C core and define numpy structured array
 
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import Any
+from typing import Any, overload
 
 import numpy as np
 
@@ -172,6 +172,20 @@ The data types for all dataset types and components used by the Power Grid Model
 """
 
 
+@overload
+def initialize_array(
+    data_type: DatasetTypeLike,
+    component_type: ComponentTypeLike,
+    shape: int,
+    empty: bool = False,
+) -> SingleArray: ...
+@overload
+def initialize_array(
+    data_type: DatasetTypeLike,
+    component_type: ComponentTypeLike,
+    shape: tuple,
+    empty: bool = False,
+) -> DenseBatchArray: ...
 def initialize_array(
     data_type: DatasetTypeLike,
     component_type: ComponentTypeLike,
