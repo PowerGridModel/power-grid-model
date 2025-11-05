@@ -92,6 +92,7 @@ jobs:
           echo "/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
       - name: Install C++ dependencies
         run: |
+          brew update
           brew install boost eigen nlohmann-json msgpack-cxx doctest
       - name: Build and test
         run: ./build.sh -p ${{ env.PRESET }} -e -i -t
@@ -169,6 +170,7 @@ jobs:
 
       - name: Install cpp dependencies
         run: |
+          brew update
           brew install ninja boost eigen nlohmann-json msgpack-cxx doctest
 
       - name: Build and test

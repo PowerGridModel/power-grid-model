@@ -64,6 +64,7 @@ jobs:
 
       - name: Install C++ dependencies
         run: |
+          brew update
           brew install boost eigen nlohmann-json msgpack-cxx doctest
 
       - name: Set build target in case of workflow dispatch
