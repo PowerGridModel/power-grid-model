@@ -6,16 +6,26 @@
 Data handling
 """
 
+from typing import Literal, overload
+
 import numpy as np
 
-from power_grid_model._core.data_types import Dataset, SingleDataset
-from power_grid_model._core.dataset_definitions import ComponentType, DatasetType
+from power_grid_model._core.data_types import (
+    BatchDataset,
+    Dataset,
+    DenseBatchArray,
+    SingleArray,
+    SingleColumnarData,
+    SingleDataset,
+)
+from power_grid_model._core.dataset_definitions import ComponentType, ComponentTypeVar, DatasetType
 from power_grid_model._core.enum import CalculationType, ComponentAttributeFilterOptions
 from power_grid_model._core.errors import PowerGridUnreachableHitError
 from power_grid_model._core.power_grid_dataset import CConstDataset, CMutableDataset
 from power_grid_model._core.power_grid_meta import initialize_array, power_grid_meta_data
-from power_grid_model._core.typing import ComponentAttributeMapping
+from power_grid_model._core.typing import ComponentAttributeMapping, ComponentAttributeMappingDict
 from power_grid_model._core.utils import process_data_filter
+from power_grid_model.data_types import DenseBatchColumnarData
 
 
 def get_output_type(*, calculation_type: CalculationType, symmetric: bool) -> DatasetType:
@@ -85,6 +95,54 @@ def prepare_output_view(output_data: Dataset, output_type: DatasetType) -> CMuta
     return CMutableDataset(output_data, dataset_type=output_type)
 
 
+@overload
+def create_output_data(
+    output_component_types: None | set[ComponentTypeVar] | list[ComponentTypeVar],
+    output_type: DatasetType,
+    all_component_count: dict[ComponentType, int],
+    is_batch: Literal[False],
+    batch_size: int,
+) -> dict[ComponentType, SingleArray]: ...
+@overload
+def create_output_data(
+    output_component_types: None | set[ComponentTypeVar] | list[ComponentTypeVar],
+    output_type: DatasetType,
+    all_component_count: dict[ComponentType, int],
+    is_batch: Literal[True],
+    batch_size: int,
+) -> dict[ComponentType, DenseBatchArray]: ...
+@overload
+def create_output_data(
+    output_component_types: ComponentAttributeFilterOptions,
+    output_type: DatasetType,
+    all_component_count: dict[ComponentType, int],
+    is_batch: Literal[False],
+    batch_size: int,
+) -> dict[ComponentType, SingleColumnarData]: ...
+@overload
+def create_output_data(
+    output_component_types: ComponentAttributeFilterOptions,
+    output_type: DatasetType,
+    all_component_count: dict[ComponentType, int],
+    is_batch: Literal[True],
+    batch_size: int,
+) -> dict[ComponentType, DenseBatchColumnarData]: ...
+@overload
+def create_output_data(
+    output_component_types: ComponentAttributeMappingDict,
+    output_type: DatasetType,
+    all_component_count: dict[ComponentType, int],
+    is_batch: Literal[False],
+    batch_size: int,
+) -> SingleDataset: ...
+@overload
+def create_output_data(
+    output_component_types: ComponentAttributeMappingDict,
+    output_type: DatasetType,
+    all_component_count: dict[ComponentType, int],
+    is_batch: Literal[True],
+    batch_size: int,
+) -> BatchDataset: ...
 def create_output_data(
     output_component_types: ComponentAttributeMapping,
     output_type: DatasetType,
@@ -96,7 +154,7 @@ def create_output_data(
     Create the output dataset based on component and batch size from the model; and output attributes requested by user.
 
     Args:
-        output_component_types:
+        output_component_types (ComponentAttributeMapping):
             the output components the user seeks to extract
         output_type:
             the type of output that the user will see (as per the calculation options)
@@ -118,11 +176,7 @@ def create_output_data(
     result_dict: Dataset = {}
 
     for name, count in all_component_count.items():
-        # shape
-        if is_batch:
-            shape: tuple[int] | tuple[int, int] = (batch_size, count)
-        else:
-            shape = (count,)
+        shape: tuple[int, int] | int = (batch_size, count) if is_batch else count
 
         requested_component = processed_output_types[name]
         dtype = power_grid_meta_data[output_type][name].dtype
@@ -134,8 +188,8 @@ def create_output_data(
             ComponentAttributeFilterOptions.everything,
             ComponentAttributeFilterOptions.relevant,
         ]:
-            result_dict[name] = {attr: np.empty(shape, dtype=dtype[attr]) for attr in dtype.names}
+            result_dict[name] = {attr: np.empty(shape=shape, dtype=dtype[attr]) for attr in dtype.names}
         elif isinstance(requested_component, list | set):
-            result_dict[name] = {attr: np.empty(shape, dtype=dtype[attr]) for attr in requested_component}
+            result_dict[name] = {attr: np.empty(shape=shape, dtype=dtype[attr]) for attr in requested_component}
 
     return result_dict

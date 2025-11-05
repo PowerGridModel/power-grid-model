@@ -41,7 +41,7 @@ from power_grid_model._core.enum import ComponentAttributeFilterOptions
 from power_grid_model._core.error_handling import VALIDATOR_MSG
 from power_grid_model._core.errors import PowerGridError
 from power_grid_model._core.power_grid_meta import initialize_array, power_grid_meta_data
-from power_grid_model._core.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict
+from power_grid_model._core.typing import ComponentAttributeMapping, ComponentAttributeMappingDict
 
 SINGLE_DATASET_NDIM = 1
 BATCH_DATASET_NDIM = 2
@@ -455,7 +455,7 @@ def process_data_filter(
     dataset_type: DatasetType,
     data_filter: ComponentAttributeMapping,
     available_components: list[ComponentType],
-) -> _ComponentAttributeMappingDict:
+) -> ComponentAttributeMappingDict:
     """Checks valid type for data_filter. Also checks for any invalid component names and attribute names.
 
     Args:
@@ -464,10 +464,10 @@ def process_data_filter(
         available_components (list[ComponentType]):  all components available in model instance or data
 
     Returns:
-        _ComponentAttributeMappingDict: processed data_filter in a dictionary
+        ComponentAttributeMappingDict: processed data_filter in a dictionary
     """
     if data_filter is None:
-        processed_data_filter: _ComponentAttributeMappingDict = {ComponentType[k]: None for k in available_components}
+        processed_data_filter: ComponentAttributeMappingDict = {ComponentType[k]: None for k in available_components}
     elif isinstance(data_filter, ComponentAttributeFilterOptions):
         processed_data_filter = {ComponentType[k]: data_filter for k in available_components}
     elif isinstance(data_filter, (list, set)):
@@ -485,14 +485,14 @@ def process_data_filter(
 
 
 def validate_data_filter(
-    data_filter: _ComponentAttributeMappingDict,
+    data_filter: ComponentAttributeMappingDict,
     dataset_type: DatasetType,
     available_components: list[ComponentType],
 ) -> None:
     """Raise error if some specified components or attributes are unknown.
 
     Args:
-        data_filter (_ComponentAttributeMappingDict): Processed component to attribtue dictionary
+        data_filter (ComponentAttributeMappingDict): Processed component to attribtue dictionary
         dataset_type (DatasetType):  Type of dataset
         available_components (list[ComponentType]):  all components available in model instance or data
 
