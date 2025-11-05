@@ -15,6 +15,7 @@ from power_grid_model import (
     initialize_array,
 )
 from power_grid_model._core.utils import compatibility_convert_row_columnar_dataset
+from power_grid_model.data_types import BatchDataset
 from power_grid_model.errors import InvalidCalculationMethod, IterationDiverge, PowerGridBatchError, PowerGridError
 from power_grid_model.utils import get_dataset_scenario
 from power_grid_model.validation import assert_valid_input_data
@@ -182,7 +183,7 @@ def test_get_indexer(model: PowerGridModel):
     np.testing.assert_allclose(expected_indexer, indexer)
 
 
-def test_batch_power_flow(model: PowerGridModel, update_batch, sym_output_batch):
+def test_batch_power_flow(model: PowerGridModel, update_batch: BatchDataset, sym_output_batch):
     result = model.calculate_power_flow(update_data=update_batch)
     compare_result(result, sym_output_batch, rtol=0.0, atol=1e-8)
 
