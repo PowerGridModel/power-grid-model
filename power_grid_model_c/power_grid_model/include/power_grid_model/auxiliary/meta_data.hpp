@@ -10,6 +10,7 @@
 #include "../common/three_phase_tensor.hpp"
 
 #include <bit>
+#include <cassert>
 #include <span>
 #include <string>
 #include <string_view>
