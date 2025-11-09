@@ -485,8 +485,6 @@ template <dataset_type_tag dataset_type_> class Dataset {
     Dataset get_individual_scenario(Idx scenario) const
         requires(!is_indptr_mutable_v<dataset_type>)
     {
-        using AdvanceablePtr = std::conditional_t<is_data_mutable_v<dataset_type>, char*, char const*>;
-
         assert(0 <= scenario && scenario < batch_size());
 
         Dataset result{*this};
@@ -503,8 +501,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
             if (is_columnar(buffer)) {
                 buffer.data = nullptr;
                 for (auto& attribute_buffer : buffer.attributes) {
-                    attribute_buffer.data = static_cast<Data*>(static_cast<AdvanceablePtr>(attribute_buffer.data) +
-                                                               attribute_buffer.meta_attribute->size * offset);
+                    attribute_buffer.data = attribute_buffer.meta_attribute->advance_ptr(attribute_buffer.data, offset);
                 }
             } else {
                 buffer.data = component_info.component->advance_ptr(buffer.data, offset);
