@@ -492,9 +492,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
         Dataset result{*this};
         result.dataset_info_.is_batch = false;
         result.dataset_info_.batch_size = 1;
-        for (Idx i{}; i != n_components(); ++i) {
-            auto& buffer = result.buffers_[i];
-            auto& component_info = result.dataset_info_.component_info[i];
+        for (auto&& [buffer, component_info] : std::views::zip(result.buffers_, result.dataset_info_.component_info)) {
             Idx const size = component_info.elements_per_scenario >= 0
                                  ? component_info.elements_per_scenario
                                  : buffer.indptr[scenario + 1] - buffer.indptr[scenario];
@@ -509,8 +507,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
                                                                attribute_buffer.meta_attribute->size * offset);
                 }
             } else {
-                Data* data = component_info.component->advance_ptr(buffer.data, offset);
-                buffer.data = data;
+                buffer.data = component_info.component->advance_ptr(buffer.data, offset);
             }
         }
         return result;
