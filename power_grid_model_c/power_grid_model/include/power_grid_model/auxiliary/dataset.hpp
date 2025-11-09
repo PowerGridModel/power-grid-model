@@ -489,24 +489,28 @@ template <dataset_type_tag dataset_type_> class Dataset {
 
         assert(0 <= scenario && scenario < batch_size());
 
-        Dataset result{false, 1, dataset().name, meta_data()};
+        Dataset result{*this};
+        result.dataset_info_.is_batch = false;
+        result.dataset_info_.batch_size = 1;
         for (Idx i{}; i != n_components(); ++i) {
-            auto const& buffer = get_buffer(i);
-            auto const& component_info = get_component_info(i);
+            auto& buffer = result.buffers_[i];
+            auto& component_info = result.dataset_info_.component_info[i];
             Idx const size = component_info.elements_per_scenario >= 0
                                  ? component_info.elements_per_scenario
                                  : buffer.indptr[scenario + 1] - buffer.indptr[scenario];
             Idx const offset = component_info.elements_per_scenario >= 0 ? size * scenario : buffer.indptr[scenario];
+            component_info.total_elements = size;
+            component_info.elements_per_scenario = size;
+            buffer.indptr = {};
             if (is_columnar(buffer)) {
-                result.add_buffer(component_info.component->name, size, size, nullptr, nullptr);
-                for (auto const& attribute_buffer : buffer.attributes) {
-                    result.add_attribute_buffer(component_info.component->name, attribute_buffer.meta_attribute->name,
-                                                static_cast<Data*>(static_cast<AdvanceablePtr>(attribute_buffer.data) +
-                                                                   attribute_buffer.meta_attribute->size * offset));
+                buffer.data = nullptr;
+                for (auto& attribute_buffer : buffer.attributes) {
+                    attribute_buffer.data = static_cast<Data*>(static_cast<AdvanceablePtr>(attribute_buffer.data) +
+                                                               attribute_buffer.meta_attribute->size * offset);
                 }
             } else {
                 Data* data = component_info.component->advance_ptr(buffer.data, offset);
-                result.add_buffer(component_info.component->name, size, size, nullptr, data);
+                buffer.data = data;
             }
         }
         return result;
