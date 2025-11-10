@@ -39,6 +39,10 @@ class Options {
         handle_.call_with(PGM_set_tap_changing_strategy, get(), tap_changing_strategy);
     }
 
+    void set_batch_dimensions(Idx batch_dimensions) {
+        handle_.call_with(PGM_set_batch_dimensions, get(), batch_dimensions);
+    }
+
     void set_experimental_features(Idx experimental_features) {
         handle_.call_with(PGM_set_experimental_features, get(), experimental_features);
     }
