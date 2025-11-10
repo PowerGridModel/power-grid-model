@@ -269,6 +269,18 @@ class Transformer : public Branch {
             y012 << param0.value[i], 0.0, 0.0, 0.0, param1.value[i], 0.0, 0.0, 0.0, param2.value[i];
             param.value[i] = dot(sym_matrix, y012, sym_matrix_inv);
         }
+
+        auto const low_from_admittance = 0.5 * 1e-8;
+        auto const low_to_admittance = 0.5 * 1e-8;
+        for (size_t phase = 0; phase < 3; ++phase) {
+
+            if (from_status()) {
+                param.yff()(phase, phase) += DoubleComplex{0.0, -low_from_admittance};
+            }
+            if (to_status()) {
+                param.ytt()(phase, phase) += DoubleComplex{0.0, -low_to_admittance};
+            }
+        }
         return param;
     }
 };
