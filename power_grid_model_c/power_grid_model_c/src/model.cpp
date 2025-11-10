@@ -148,6 +148,7 @@ constexpr auto extract_calculation_options(PGM_Options const& opt) {
 
 // calculation implementation
 namespace {
+
 void calculate_impl(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options const* opt,
                     PGM_MutableDataset const* output_dataset, PGM_ConstDataset const* batch_dataset) {
     PGM_clear_error(handle);
@@ -184,6 +185,25 @@ void calculate_impl(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options c
         handle->err_msg = "Unknown error!\n";
     }
 }
+
+void merge_batch_error_msgs(PGM_Handle* handle, PGM_Handle const& local_handle, Idx scenario_offset, Idx stride_size) {
+    if (local_handle.err_code == PGM_no_error) {
+        return;
+    }
+    handle->err_code = PGM_batch_error;
+    if (local_handle.err_code == PGM_batch_error) {
+        for (auto&& [idx, err_msg] : std::views::zip(local_handle.failed_scenarios, local_handle.batch_errs)) {
+            handle->failed_scenarios.push_back(idx + scenario_offset);
+            handle->batch_errs.push_back(err_msg);
+        }
+    } else {
+        for (Idx i = 0; i < stride_size; ++i) {
+            handle->failed_scenarios.push_back(scenario_offset + i);
+            handle->batch_errs.push_back(local_handle.err_msg);
+        }
+    }
+}
+
 } // namespace
 
 // run calculation
@@ -211,10 +231,20 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
         PGM_ConstDataset const single_update_dataset = batch_dataset->get_individual_scenario(i);
         PGM_MutableDataset const sliced_output_dataset =
             output_dataset->get_slice_scenario(i * stride_size, (i + 1) * stride_size);
-        // create a model copy and apply update
-        std::unique_ptr<PGM_PowerGridModel> const local_model{PGM_copy_model(&local_handle, model)};
 
+        // create a model copy
+        std::unique_ptr<PGM_PowerGridModel> const local_model{PGM_copy_model(&local_handle, model)};
+        if (local_handle.err_code != PGM_no_error) {
+            merge_batch_error_msgs(handle, local_handle, i * stride_size, stride_size);
+            continue;
+        }
+
+        // apply the update
         PGM_update_model(&local_handle, local_model.get(), &single_update_dataset);
+        if (local_handle.err_code != PGM_no_error) {
+            merge_batch_error_msgs(handle, local_handle, i * stride_size, stride_size);
+            continue;
+        }
 
         // if the deep opt have less than 2 dimensions, call implementation directly
         if (deep_opt.batch_dimension < 2) {
@@ -223,6 +253,8 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
             // recursive call
             PGM_calculate(&local_handle, local_model.get(), &deep_opt, &sliced_output_dataset, batch_dataset + 1);
         }
+        // merge errors
+        merge_batch_error_msgs(handle, local_handle, i * stride_size, stride_size);
     }
 }
 
