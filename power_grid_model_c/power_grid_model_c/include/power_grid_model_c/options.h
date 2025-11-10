@@ -122,6 +122,15 @@ PGM_API void PGM_set_short_circuit_voltage_scaling(PGM_Handle* handle, PGM_Optio
 PGM_API void PGM_set_tap_changing_strategy(PGM_Handle* handle, PGM_Options* opt, PGM_Idx tap_changing_strategy);
 
 /**
+ * @brief Specify the batch dimension for batch calculations
+ * 
+ * @param handle 
+ * @param opt pointer to option instance
+ * @param batch_dimension dimension of the batch calculation
+ */
+PGM_API void PGM_set_batch_dimension(PGM_Handle* handle, PGM_Options* opt, PGM_Idx batch_dimension);
+
+/**
  * @brief Enable/disable experimental features.
  *
  * [Danger mode]
