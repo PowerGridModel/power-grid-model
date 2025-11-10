@@ -55,6 +55,7 @@ void PGM_get_indexer(PGM_Handle* handle, PGM_PowerGridModel const* model, char c
         PGM_regular_error);
 }
 
+// helper functions
 namespace {
 void check_no_experimental_features_used(MainModel const& model, MainModel::Options const& opt) {
     // optionally add experimental feature checks here
@@ -142,9 +143,10 @@ constexpr auto extract_calculation_options(PGM_Options const& opt) {
 }
 } // namespace
 
-// run calculation
-void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options const* opt,
-                   PGM_MutableDataset const* output_dataset, PGM_ConstDataset const* batch_dataset) {
+// calculation implementation
+namespace {
+void calculate_impl(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options const* opt,
+                        PGM_MutableDataset const* output_dataset, PGM_ConstDataset const* batch_dataset) {
     PGM_clear_error(handle);
     // check dataset integrity
     if ((batch_dataset != nullptr) && (!batch_dataset->is_batch() || !output_dataset->is_batch())) {
@@ -178,6 +180,13 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
         handle->err_code = PGM_regular_error;
         handle->err_msg = "Unknown error!\n";
     }
+}
+} // namespace
+
+// run calculation
+void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options const* opt,
+                   PGM_MutableDataset const* output_dataset, PGM_ConstDataset const* batch_dataset) {
+    calculate_impl(handle, model, opt, output_dataset, batch_dataset);
 }
 
 // destroy model
