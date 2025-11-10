@@ -287,6 +287,9 @@ template <dataset_type_tag dataset_type_> class Dataset {
     }
     constexpr bool is_dense(Idx const i) const { return is_dense(buffers_[i]); }
     constexpr bool is_dense(Buffer const& buffer) const { return buffer.indptr.empty(); }
+    constexpr bool is_dense() const {
+        return std::ranges::all_of(buffers_, [this](Buffer const& buffer) { return is_dense(buffer); });
+    }
     constexpr bool is_sparse(std::string_view component, bool with_attribute_buffers = false) const {
         Idx const idx = find_component(component, false);
         if (idx == invalid_index) {
@@ -508,6 +511,17 @@ template <dataset_type_tag dataset_type_> class Dataset {
             }
         }
         return result;
+    }
+
+    // get slice dataset from batch
+    Dataset get_slice_scenario(Idx begin, Idx end) const
+        requires(!is_indptr_mutable_v<dataset_type>)
+    {
+        assert(0 <= begin && begin < batch_size());
+        assert(0 <= end && end < batch_size());
+        assert(begin <= end);
+        assert(is_batch());
+        assert(is_dense());
     }
 
   private:
