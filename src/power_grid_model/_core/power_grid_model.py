@@ -282,6 +282,7 @@ class PowerGridModel:
             is_batch = True
         if not isinstance(update_data, list):
             update_data = [update_data]
+        options.batch_dimension = len(update_data)
 
         prepared_update = CMultiDimensionalDataset([prepare_update_view(x) for x in update_data])
         update_ptr: ConstDatasetPtr = prepared_update.get_array_ptr()
