@@ -167,7 +167,7 @@ PGM_MultiDimensionalDataset* PGM_dataset_create_multidimensional_from_const(PGM_
     return call_with_catch(
         handle,
         [const_datasets, n_datasets]() {
-            auto multidimensional_dataset = new PGM_MultiDimensionalDataset();
+            auto* multidimensional_dataset = new PGM_MultiDimensionalDataset();
             for (PGM_Idx i = 0; i < n_datasets; ++i) {
                 multidimensional_dataset->emplace_back(*const_datasets[i]);
             }

@@ -64,7 +64,7 @@ TEST_CASE("API Model Multi-Dimension") {
     for (Idx i = 0; i < size_u_ref; ++i) {
         for (Idx j = 0; j < size_p_specified; ++j) {
             for (Idx k = 0; k < size_q_specified; ++k) {
-                Idx index = i * size_p_specified * size_q_specified + j * size_q_specified + k;
+                Idx const index = i * size_p_specified * size_q_specified + j * size_q_specified + k;
                 double const s = std::abs(std::complex<double>{p_specified[j], q_specified[k]});
                 i_source_ref[index] = s / (sqrt3 * u_rated * u_ref[i]);
             }

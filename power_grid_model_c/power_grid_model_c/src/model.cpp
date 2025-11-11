@@ -211,7 +211,8 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
                    PGM_MutableDataset const* output_dataset, PGM_ConstDataset const* batch_dataset) {
     // for dimensions which are 1D batch or default (-1), call implementation directly
     if (opt->batch_dimension < 2) {
-        return calculate_impl(handle, model, opt, output_dataset, batch_dataset);
+        calculate_impl(handle, model, opt, output_dataset, batch_dataset);
+        return;
     }
 
     // get stride size of the rest of dimensions
