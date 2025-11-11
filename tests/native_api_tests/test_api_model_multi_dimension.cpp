@@ -87,19 +87,23 @@ TEST_CASE("API Model Multi-Dimension") {
     batch_q_specified.add_buffer("sym_load", 1, size_q_specified, nullptr, nullptr);
     batch_q_specified.add_attribute_buffer("sym_load", "q_specified", q_specified.data());
 
-
     // output dataset
     std::vector<double> i_source_result(total_batch_size);
     DatasetMutable batch_output_dataset{"sym_output", true, total_batch_size};
     batch_output_dataset.add_buffer("source", 1, total_batch_size, nullptr, nullptr);
-    batch_output_dataset.add_attribute_buffer("source", "i_source", i_source_result.data());
+    batch_output_dataset.add_attribute_buffer("source", "i", i_source_result.data());
 
     // options
     Options options{};
     options.set_batch_dimension(3);
 
     // calculate
-    model.calculate(options, batch_output_dataset, batch_u_ref, batch_p_specified, batch_q_specified);
+    model.calculate(options, batch_output_dataset, batch_datasets);
+
+    // check results
+    for (Idx idx = 0; idx < total_batch_size; ++idx) {
+        CHECK(i_source_result[idx] == doctest::Approx(i_source_ref[idx]));
+    }
 }
 
 } // namespace power_grid_model_cpp
