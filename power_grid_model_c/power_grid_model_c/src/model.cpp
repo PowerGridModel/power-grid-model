@@ -209,6 +209,11 @@ void merge_batch_error_msgs(PGM_Handle* handle, PGM_Handle const& local_handle, 
 // run calculation
 void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options const* opt,
                    PGM_MutableDataset const* output_dataset, PGM_ConstDataset const* batch_dataset) {
+    // if dimension is zero, no batch calculation, force pointer to NULL
+    if (opt->batch_dimension == 0) {
+        batch_dataset = nullptr;
+    }
+
     // for dimensions which are 1D batch or default (-1), call implementation directly
     if (opt->batch_dimension < 2) {
         calculate_impl(handle, model, opt, output_dataset, batch_dataset);
