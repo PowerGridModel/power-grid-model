@@ -294,7 +294,7 @@ class Transformer : public Branch {
         //     if (to_status()) {
         //         param.ytt()(phase, phase) += DoubleComplex{0.0, -low_to_admittance};
         //     }
-        }
+        // }
         return param;
     }
 };
