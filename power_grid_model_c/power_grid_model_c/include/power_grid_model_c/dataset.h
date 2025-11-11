@@ -319,7 +319,7 @@ PGM_API PGM_DatasetInfo const* PGM_dataset_mutable_get_info(PGM_Handle* handle, 
  */
 PGM_API PGM_MultiDimensionalDataset*
 PGM_dataset_create_multidimensional_from_const(PGM_Handle* handle, PGM_ConstDataset const** const_datasets,
-                                                 PGM_Idx n_datasets);
+                                               PGM_Idx n_datasets);
 
 /**
  * @brief Get the array pointer from a PGM_MultiDimensionalDataset

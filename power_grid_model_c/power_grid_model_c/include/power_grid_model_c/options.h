@@ -123,8 +123,8 @@ PGM_API void PGM_set_tap_changing_strategy(PGM_Handle* handle, PGM_Options* opt,
 
 /**
  * @brief Specify the batch dimension for batch calculations
- * 
- * @param handle 
+ *
+ * @param handle
  * @param opt pointer to option instance
  * @param batch_dimension dimension of the batch calculation
  */
