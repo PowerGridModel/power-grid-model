@@ -87,6 +87,12 @@ class WritableDatasetPtr(c_void_p):
     """
 
 
+class MultiDimensionDatasetPtr(c_void_p):
+    """
+    Pointer to multi-dimensional dataset
+    """
+
+
 class DatasetInfoPtr(c_void_p):
     """
     Pointer to dataset info
@@ -503,6 +509,28 @@ class PowerGridCore:
         attribute: str,
         data: VoidPtr,  # type: ignore[valid-type]
     ) -> None:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def dataset_create_multidimensional_from_const(  # type: ignore[empty-body]
+        self,
+        const_datasets: POINTER(ConstDatasetPtr),  # type: ignore[valid-type]
+        n_datasets: int,
+    ) -> MultiDimensionDatasetPtr:
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def get_array_pointer_from_multidimensional(  # type: ignore[empty-body]
+        self,
+        multidimensional_dataset: MultiDimensionDatasetPtr,
+    ) -> ConstDatasetPtr:  # type: ignore[valid-type]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def destroy_multidimensional_dataset(  # type: ignore[empty-body]
+        self,
+        multidimensional_dataset: MultiDimensionDatasetPtr,
+    ) -> None:
         pass  # pragma: no cover
 
     @make_c_binding
