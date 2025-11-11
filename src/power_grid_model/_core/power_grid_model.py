@@ -49,6 +49,7 @@ from power_grid_model._core.error_handling import PowerGridBatchError, assert_no
 from power_grid_model._core.index_integer import IdNp, IdxNp
 from power_grid_model._core.options import Options
 from power_grid_model._core.power_grid_core import ConstDatasetPtr, IDPtr, IdxPtr, ModelPtr, power_grid_core as pgc
+from power_grid_model._core.power_grid_dataset import CMultiDimensionalDataset
 from power_grid_model._core.typing import ComponentAttributeMapping, ComponentAttributeMappingDict
 
 
@@ -252,7 +253,7 @@ class PowerGridModel:
         self,
         calculation_type: CalculationType,
         symmetric: bool,
-        update_data: Dataset | None,
+        update_data: Dataset | None | list[Dataset],
         output_component_types: ComponentAttributeMapping,
         options: Options,
         continue_on_batch_error: bool,
@@ -274,15 +275,17 @@ class PowerGridModel:
         Returns:
         """
         self._batch_error = None
-        is_batch = update_data is not None
-
-        if update_data is not None:
-            prepared_update = prepare_update_view(update_data)
-            update_ptr = prepared_update.get_dataset_ptr()
-            batch_size = prepared_update.get_info().batch_size()
+        if update_data is None:
+            is_batch = False
+            update_data = []
         else:
-            update_ptr = ConstDatasetPtr()
-            batch_size = 1
+            is_batch = True
+        if not isinstance(update_data, list):
+            update_data = [update_data]
+
+        prepared_update = CMultiDimensionalDataset([prepare_update_view(x) for x in update_data])
+        update_ptr: ConstDatasetPtr = prepared_update.get_array_ptr()
+        batch_size = prepared_update.get_total_batch_size()
 
         output_data = self._construct_output(
             output_component_types=output_component_types,
