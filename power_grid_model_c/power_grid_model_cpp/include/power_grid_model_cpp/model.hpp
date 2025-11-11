@@ -13,7 +13,7 @@
 
 #include "power_grid_model_c/model.h"
 
-#include <span>
+#include <vector>
 
 namespace power_grid_model_cpp {
 class Model {
@@ -57,7 +57,7 @@ class Model {
     }
 
     void calculate(Options const& opt, DatasetMutable const& output_dataset,
-                   std::span<DatasetConst const> batch_datasets) {
+                   std::vector<DatasetConst> const& batch_datasets) {
         // create multidimensional dataset from the span of datasets
         std::vector<PGM_ConstDataset const*> dataset_ptrs;
         dataset_ptrs.reserve(batch_datasets.size());
@@ -70,7 +70,7 @@ class Model {
                                   static_cast<Idx>(dataset_ptrs.size()))};
         RawConstDataset const* batch_dataset_array_pointer =
             PGM_get_array_pointer_from_multidimensional(nullptr, multidimensional_dataset.get());
-        
+
         // call calculate with the multidimensional dataset
         handle_.call_with(PGM_calculate, get(), opt.get(), output_dataset.get(), batch_dataset_array_pointer);
     }
