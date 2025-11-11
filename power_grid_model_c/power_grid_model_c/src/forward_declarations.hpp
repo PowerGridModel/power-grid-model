@@ -10,6 +10,8 @@
 
 #include <power_grid_model/auxiliary/dataset_fwd.hpp>
 
+#include <vector>
+
 // forward declare all referenced struct/class in C++ core
 // alias them in the root namespace
 
@@ -36,3 +38,4 @@ using PGM_ConstDataset = power_grid_model::meta_data::Dataset<power_grid_model::
 using PGM_MutableDataset = power_grid_model::meta_data::Dataset<power_grid_model::mutable_dataset_t>;
 using PGM_WritableDataset = power_grid_model::meta_data::Dataset<power_grid_model::writable_dataset_t>;
 using PGM_DatasetInfo = power_grid_model::meta_data::DatasetInfo;
+using PGM_MultiDimensionalDataset = std::vector<PGM_ConstDataset>;

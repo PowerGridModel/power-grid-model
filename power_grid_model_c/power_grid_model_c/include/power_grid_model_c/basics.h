@@ -79,12 +79,6 @@ typedef struct PGM_Handle PGM_Handle;
  */
 typedef struct PGM_Options PGM_Options;
 
-/**
- * @brief Opaque struct for the multi dimensional dataset class.
- * 
- */
-typedef struct PGM_MultiDimensionalDataset PGM_MultiDimensionalDataset;
-
 // Only enable the opaque struct definition if this header is consumed by the C-API user.
 // If this header is included when compiling the C-API, the structs below are decleared/defined in the C++ files.
 #ifndef PGM_DLL_EXPORTS
@@ -143,6 +137,12 @@ typedef struct PGM_WritableDataset PGM_WritableDataset;
  * @brief Opaque struct for the information of the dataset.
  */
 typedef struct PGM_DatasetInfo PGM_DatasetInfo;
+
+/**
+ * @brief Opaque struct for the multi dimensional dataset class.
+ *
+ */
+typedef struct PGM_MultiDimensionalDataset PGM_MultiDimensionalDataset;
 #endif
 
 // NOLINTEND(modernize-use-using)

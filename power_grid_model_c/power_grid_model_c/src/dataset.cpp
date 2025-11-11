@@ -160,3 +160,28 @@ void PGM_dataset_mutable_add_attribute_buffer(PGM_Handle* handle, PGM_MutableDat
 PGM_DatasetInfo const* PGM_dataset_mutable_get_info(PGM_Handle* /*unused*/, PGM_MutableDataset const* dataset) {
     return &dataset->get_description();
 }
+
+PGM_MultiDimensionalDataset* PGM_dataset_create_multidimensional_from_const(PGM_Handle* handle,
+                                                                            PGM_ConstDataset const** const_datasets,
+                                                                            PGM_Idx n_datasets) {
+    return call_with_catch(
+        handle,
+        [const_datasets, n_datasets]() {
+            auto multidimensional_dataset = new PGM_MultiDimensionalDataset();
+            for (PGM_Idx i = 0; i < n_datasets; ++i) {
+                multidimensional_dataset->emplace_back(*const_datasets[i]);
+            }
+            return multidimensional_dataset;
+        },
+        PGM_regular_error);
+}
+
+PGM_ConstDataset const*
+PGM_get_array_pointer_from_multidimensional(PGM_Handle* /*unused*/,
+                                            PGM_MultiDimensionalDataset const* multidimensional_dataset) {
+    return multidimensional_dataset->data();
+}
+
+void PGM_destroy_multidimensional_dataset(PGM_MultiDimensionalDataset* multidimensional_dataset) {
+    delete multidimensional_dataset;
+}
