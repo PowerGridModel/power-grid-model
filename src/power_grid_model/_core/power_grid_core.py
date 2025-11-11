@@ -345,6 +345,10 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
+    def set_batch_dimension(self, opt: OptionsPtr, batch_dimension: int) -> None:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
     def create_model(  # type: ignore[empty-body]
         self,
         system_frequency: float,
