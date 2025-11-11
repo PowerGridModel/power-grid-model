@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-from copy import copy
+from copy import copy, deepcopy
 
 import numpy as np
 import pytest
@@ -172,6 +172,12 @@ def test_update_error(model: PowerGridModel):
 
 def test_copy_model(model: PowerGridModel, sym_output):
     model_2 = copy(model)
+    result = model_2.calculate_power_flow()
+    compare_result(result, sym_output, rtol=0.0, atol=1e-8)
+
+
+def test_deepcopy_model(model: PowerGridModel, sym_output):
+    model_2 = deepcopy(model)
     result = model_2.calculate_power_flow()
     compare_result(result, sym_output, rtol=0.0, atol=1e-8)
 
