@@ -309,6 +309,36 @@ PGM_API void PGM_dataset_mutable_add_attribute_buffer(PGM_Handle* handle, PGM_Mu
  */
 PGM_API PGM_DatasetInfo const* PGM_dataset_mutable_get_info(PGM_Handle* handle, PGM_MutableDataset const* dataset);
 
+/**
+ * @brief Create a PGM_MultiDimensionalDataset from multiple PGM_MutableDataset
+ *
+ * @param handle
+ * @param mutable_dataset
+ * @param n_datasets
+ * @return
+ */
+PGM_API PGM_MultiDimensionalDataset*
+PGM_dataset_create_multidimensional_from_mutable(PGM_Handle* handle, PGM_MutableDataset const** mutable_dataset,
+                                                 PGM_Idx n_datasets);
+
+/**
+ * @brief Get the array pointer from a PGM_MultiDimensionalDataset
+ *
+ * @param handle
+ * @param multidimensional_dataset
+ * @return
+ */
+PGM_API PGM_MutableDataset const*
+PGM_get_array_pointer_from_multidimensional(PGM_Handle* handle,
+                                            PGM_MultiDimensionalDataset const* multidimensional_dataset);
+
+/**
+ * @brief destroy the multidimensional dataset object
+ *
+ * @param multidimensional_dataset
+ */
+PGM_API void PGM_destroy_multidimensional_dataset(PGM_MultiDimensionalDataset* multidimensional_dataset);
+
 #ifdef __cplusplus
 }
 #endif
