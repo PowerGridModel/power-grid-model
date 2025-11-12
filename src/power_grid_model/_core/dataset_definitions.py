@@ -102,11 +102,8 @@ def _str_to_component_type(component: ComponentTypeLike) -> ComponentType:
     return ComponentType[component]
 
 
-def _map_to_component_types(data: Mapping[ComponentTypeVar, Any] | list[Mapping[ComponentTypeVar, Any]]
-                            ) -> dict[ComponentType, Any] | list[dict[ComponentType, Any]]:
+def _map_to_component_types(data: Mapping[ComponentTypeVar, Any]) -> dict[ComponentType, Any]:
     """Helper function to map componenttype str keys to ComponentType."""
-    if isinstance(data, list):
-        return [_map_to_component_types(item) for item in data]
     return {_str_to_component_type(key): value for key, value in data.items()}
 
 # fmt: on

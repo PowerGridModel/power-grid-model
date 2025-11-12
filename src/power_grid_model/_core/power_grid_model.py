@@ -283,6 +283,7 @@ class PowerGridModel:
         if not isinstance(update_data, list):
             update_data = [update_data]
         options.batch_dimension = len(update_data)
+        update_data = [_map_to_component_types(x) for x in update_data]
 
         prepared_update = CMultiDimensionalDataset([prepare_update_view(x) for x in update_data])
         update_ptr: ConstDatasetPtr = prepared_update.get_array_ptr()
@@ -618,7 +619,7 @@ class PowerGridModel:
             error_tolerance=error_tolerance,
             max_iterations=max_iterations,
             calculation_method=calculation_method,
-            update_data=(_map_to_component_types(update_data) if update_data is not None else None),
+            update_data=update_data,
             threading=threading,
             output_component_types=output_component_types,
             continue_on_batch_error=continue_on_batch_error,
@@ -797,7 +798,7 @@ class PowerGridModel:
             error_tolerance=error_tolerance,
             max_iterations=max_iterations,
             calculation_method=calculation_method,
-            update_data=(_map_to_component_types(update_data) if update_data is not None else None),
+            update_data=update_data,
             threading=threading,
             output_component_types=output_component_types,
             continue_on_batch_error=continue_on_batch_error,
@@ -952,7 +953,7 @@ class PowerGridModel:
         """
         return self._calculate_short_circuit(
             calculation_method=calculation_method,
-            update_data=(_map_to_component_types(update_data) if update_data is not None else None),
+            update_data=update_data,
             threading=threading,
             output_component_types=output_component_types,
             continue_on_batch_error=continue_on_batch_error,
