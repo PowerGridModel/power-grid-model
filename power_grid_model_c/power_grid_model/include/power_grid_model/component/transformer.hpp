@@ -257,8 +257,7 @@ class Transformer : public Branch {
             param0.ytt() = y0_series;
         }
 
-        auto const low_from_admittance = 0.5 * 1e-6;
-        auto const low_to_admittance = 0.5 * 1e-6;
+        auto const low_admittance = 0.5 * 1e-6 * sn_ / base_power_3p / uk_;
         bool const zero_seq_available_from =
             (winding_from_ == WindingType::wye_n && winding_to_ == WindingType::wye_n) ||
             (winding_from_ == WindingType::wye_n && winding_to_ == WindingType::delta) ||
@@ -267,10 +266,10 @@ class Transformer : public Branch {
                                            (winding_to_ == WindingType::wye_n && winding_from_ == WindingType::delta) ||
                                            winding_to_ == WindingType::zigzag_n;
         if (!zero_seq_available_from && from_status()) {
-            param0.yff() += DoubleComplex{0.0, -low_from_admittance};
+            param0.yff() += DoubleComplex{0.0, -low_admittance};
         }
         if (!zero_seq_available_to && to_status()) {
-            param0.ytt() += DoubleComplex{0.0, -low_to_admittance};
+            param0.ytt() += DoubleComplex{0.0, -low_admittance};
         }
 
         // for the rest param0 is zero
