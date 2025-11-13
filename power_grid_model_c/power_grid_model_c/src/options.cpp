@@ -33,6 +33,9 @@ void PGM_set_short_circuit_voltage_scaling(PGM_Handle* /* handle */, PGM_Options
 void PGM_set_tap_changing_strategy(PGM_Handle* /* handle */, PGM_Options* opt, PGM_Idx tap_changing_strategy) {
     opt->tap_changing_strategy = tap_changing_strategy;
 }
+void PGM_set_batch_dimension(PGM_Handle* /* handle */, PGM_Options* opt, PGM_Idx batch_dimension) {
+    opt->batch_dimension = batch_dimension;
+}
 void PGM_set_experimental_features(PGM_Handle* /* handle */, PGM_Options* opt, PGM_Idx experimental_features) {
     opt->experimental_features = experimental_features;
 }

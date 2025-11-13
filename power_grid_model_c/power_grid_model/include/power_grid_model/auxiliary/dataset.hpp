@@ -287,6 +287,9 @@ template <dataset_type_tag dataset_type_> class Dataset {
     }
     constexpr bool is_dense(Idx const i) const { return is_dense(buffers_[i]); }
     constexpr bool is_dense(Buffer const& buffer) const { return buffer.indptr.empty(); }
+    constexpr bool is_dense() const {
+        return std::ranges::all_of(buffers_, [this](Buffer const& buffer) { return is_dense(buffer); });
+    }
     constexpr bool is_sparse(std::string_view component, bool with_attribute_buffers = false) const {
         Idx const idx = find_component(component, false);
         if (idx == invalid_index) {
@@ -485,7 +488,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
     Dataset get_individual_scenario(Idx scenario) const
         requires(!is_indptr_mutable_v<dataset_type>)
     {
-        assert(0 <= scenario && scenario < batch_size());
+        assert(0 <= scenario && scenario <= batch_size());
 
         Dataset result{*this};
         result.dataset_info_.is_batch = false;
@@ -506,6 +509,27 @@ template <dataset_type_tag dataset_type_> class Dataset {
             } else {
                 buffer.data = component_info.component->advance_ptr(buffer.data, offset);
             }
+        }
+        return result;
+    }
+
+    // get slice dataset from batch
+    Dataset get_slice_scenario(Idx begin, Idx end) const
+        requires(!is_indptr_mutable_v<dataset_type>)
+    {
+        assert(begin <= end);
+        assert(0 <= begin);
+        assert(end <= batch_size());
+        assert(is_batch());
+        assert(is_dense());
+
+        Dataset result = get_individual_scenario(begin);
+        Idx const batch_size = end - begin;
+        result.dataset_info_.is_batch = true;
+        result.dataset_info_.batch_size = batch_size;
+        for (auto&& [buffer, component_info] : std::views::zip(result.buffers_, result.dataset_info_.component_info)) {
+            Idx const size = component_info.elements_per_scenario * batch_size;
+            component_info.total_elements = size;
         }
         return result;
     }
