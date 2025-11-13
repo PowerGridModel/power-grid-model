@@ -7,7 +7,7 @@ Main power grid model class
 """
 
 from enum import IntEnum
-from typing import overload
+from typing import Any, overload
 
 import numpy as np
 
@@ -108,8 +108,17 @@ class PowerGridModel:
         new_model._all_component_count = self._all_component_count
         return new_model
 
-    def __copy__(self):
+    def __copy__(self) -> "PowerGridModel":
         return self.copy()
+
+    def __deepcopy__(self, memo: dict[int, Any]) -> "PowerGridModel":
+        # PowerGridModel.copy makes already a deepcopy
+        new_model = self.copy()
+
+        # memorize that this object (self) has been deepcopied
+        memo[id(self)] = new_model
+
+        return new_model
 
     def __new__(cls, *_args, **_kwargs):
         instance = super().__new__(cls)
