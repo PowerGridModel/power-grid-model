@@ -1,0 +1,38 @@
+{
+  "version": "1.0",
+  "type": "update",
+  "is_batch": true,
+  "attributes": {},
+  "data": [
+    {
+      "fault": [
+        {"id": 11, "fault_type": 1, "fault_phase": 1, "r_f": 0, "x_f": 0}
+      ]
+    },
+    {
+      "fault": [
+        {"id": 11, "fault_type": 2, "fault_phase": 4, "r_f": 0, "x_f": 0}
+      ]
+    },
+    {
+      "fault": [
+        {"id": 11, "fault_type": 3, "fault_phase": 4, "r_f": 0, "x_f": 0}
+      ]
+    },
+    {
+      "fault": [
+        {"id": 11, "fault_type": 1, "fault_phase": 1, "r_f": 0.001, "x_f": 0.001}
+      ]
+    },
+    {
+      "fault": [
+        {"id": 11, "fault_type": 2, "fault_phase": 4, "r_f": 0.001, "x_f": 0.001}
+      ]
+    },
+    {
+      "fault": [
+        {"id": 11, "fault_type": 3, "fault_phase": 4, "r_f": 0.001, "x_f": 0.001}
+      ]
+    }
+  ]
+}
