@@ -245,6 +245,7 @@ class Transformer : public Branch {
             param0.ytt() = (y0_series + y_shunt);
         }
         // ZN*
+        // Zero sequence impedance of zigzag winding is approximately 10% of positive sequence impedance
         if (winding_from_ == WindingType::zigzag_n && from_status()) {
             DoubleComplex const z0_series = (1.0 / y_series) * 0.1 + 3.0 * z_grounding_from_ / k / k;
             DoubleComplex const y0_series = 1.0 / z0_series;

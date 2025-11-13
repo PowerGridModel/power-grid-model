@@ -10,6 +10,7 @@
 #include "../common/three_phase_tensor.hpp"
 
 #include <bit>
+#include <cassert>
 #include <span>
 #include <string>
 #include <string_view>
@@ -106,6 +107,13 @@ struct MetaAttribute {
         assert(ctype_v<std::remove_cv_t<T>> == ctype);
         using CharType = std::conditional_t<std::is_const_v<T>, char const*, char*>;
         return *reinterpret_cast<T*>(reinterpret_cast<CharType>(ptr) + offset);
+    }
+
+    RawDataPtr advance_ptr(RawDataPtr ptr, Idx difference) const {
+        return reinterpret_cast<char*>(ptr) + difference * size;
+    }
+    RawDataConstPtr advance_ptr(RawDataConstPtr ptr, Idx difference) const {
+        return reinterpret_cast<char const*>(ptr) + difference * size;
     }
 };
 

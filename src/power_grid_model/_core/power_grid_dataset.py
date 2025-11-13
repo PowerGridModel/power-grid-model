@@ -37,7 +37,7 @@ from power_grid_model._core.power_grid_core import (
     power_grid_core as pgc,
 )
 from power_grid_model._core.power_grid_meta import ComponentMetaData, DatasetMetaData, power_grid_meta_data
-from power_grid_model._core.typing import ComponentAttributeMapping, _ComponentAttributeMappingDict
+from power_grid_model._core.typing import ComponentAttributeMapping, ComponentAttributeMappingDict
 from power_grid_model._core.utils import (
     get_dataset_type,
     is_columnar,
@@ -426,11 +426,11 @@ class CWritableDataset:
         """
         return self._data[component]
 
-    def get_data_filter(self) -> _ComponentAttributeMappingDict:
+    def get_data_filter(self) -> ComponentAttributeMappingDict:
         """Gets the data filter requested
 
         Returns:
-            _ComponentAttributeMappingDict: data filter
+            ComponentAttributeMappingDict: data filter
         """
         return self._data_filter
 
