@@ -258,7 +258,7 @@ class Transformer : public Branch {
             param0.ytt() = y0_series;
         }
 
-        auto const low_admittance = 0.5 * 1e-12 * sn_ / base_power_3p / uk_;
+        auto const low_susceptance = -1e-8 * sn_ / base_power_3p / uk_;
         bool const zero_seq_available_from =
             (winding_from_ == WindingType::wye_n && winding_to_ == WindingType::wye_n) ||
             (winding_from_ == WindingType::wye_n && winding_to_ == WindingType::delta) ||
@@ -267,10 +267,10 @@ class Transformer : public Branch {
                                            (winding_to_ == WindingType::wye_n && winding_from_ == WindingType::delta) ||
                                            winding_to_ == WindingType::zigzag_n;
         if (!zero_seq_available_from && from_status()) {
-            param0.yff() += DoubleComplex{0.0, -low_admittance};
+            param0.yff() += DoubleComplex{0.0, low_susceptance};
         }
         if (!zero_seq_available_to && to_status()) {
-            param0.ytt() += DoubleComplex{0.0, -low_admittance};
+            param0.ytt() += DoubleComplex{0.0, low_susceptance};
         }
 
         // for the rest param0 is zero
@@ -285,15 +285,6 @@ class Transformer : public Branch {
             param.value[i] = dot(sym_matrix, y012, sym_matrix_inv);
         }
 
-        // for (size_t phase = 0; phase < 3; ++phase) {
-
-        //     if (from_status()) {
-        //         param.yff()(phase, phase) += DoubleComplex{0.0, -low_from_admittance};
-        //     }
-        //     if (to_status()) {
-        //         param.ytt()(phase, phase) += DoubleComplex{0.0, -low_to_admittance};
-        //     }
-        // }
         return param;
     }
 };
