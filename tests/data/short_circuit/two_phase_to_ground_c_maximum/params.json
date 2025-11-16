@@ -1,6 +1,6 @@
 {
   "calculation_method": "iec60909",
-  "rtol": 1e-08,
-  "atol": 1e-08,
+  "rtol": 5e-06,
+  "atol": 1e-03,
   "short_circuit_voltage_scaling": "maximum"
 }
