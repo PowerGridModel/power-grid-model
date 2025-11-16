@@ -92,6 +92,11 @@ TEST_CASE("Test transformer") {
     double const r_series = 100e3 * 10e3 * 10e3 / 30e6 / 30e6;
     DoubleComplex const z_series = r_series + 1.0i * std::sqrt(z_series_abs * z_series_abs - r_series * r_series);
     DoubleComplex const y = 1.0 / z_series / base_y;
+    auto const low_susceptance = -transformer_low_susceptance_ratio * input.sn / base_power_3p / input.uk;
+    DoubleComplex const low_admittance = 1.0i * low_susceptance;
+    ComplexTensor<asymmetric_t> y012;
+    y012 << low_admittance, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
+    ComplexTensor<asymmetric_t> low_admittance_asym = dot(get_a(), y012, get_a_inv());
 
     // sym
     std::vector<BranchCalcParam<symmetric_t>> vec_sym;
@@ -125,10 +130,15 @@ TEST_CASE("Test transformer") {
     vec_asym.push_back({{y1, -y1, -y1, y1}});
     // Dyn11
     vec_asym.push_back({{y2, y3t, y3, y1}});
+    vec_asym.back().yff() += low_admittance_asym;
     // Yd1
     vec_asym.push_back({{y2, y3, y3t, y2}});
+    vec_asym.back().yff() += low_admittance_asym;
+    vec_asym.back().ytt() += low_admittance_asym;
     // Yy12
     vec_asym.push_back({{y2, -y2, -y2, y2}});
+    vec_asym.back().yff() += low_admittance_asym;
+    vec_asym.back().ytt() += low_admittance_asym;
     // YNyn2
     vec_asym.push_back({{y1, y4, y4t, y1}});
 
@@ -469,8 +479,10 @@ TEST_CASE("Test Transfomer - Test grounding - Dyn11") {
 
     // Zero sequence
     DoubleComplex const z_grounding_to = (input.r_grounding_to + 1i * input.x_grounding_to) * base_y_to;
+    auto const low_susceptance = -transformer_low_susceptance_ratio * input.sn / base_power_3p / input.uk;
+    DoubleComplex const low_admittance = 1.0i * low_susceptance;
 
-    DoubleComplex const y_0_ff = 0.0;
+    DoubleComplex const y_0_ff = low_admittance;
     DoubleComplex const y_0_ft = 0.0;
     DoubleComplex const y_0_tf = 0.0;
     DoubleComplex const y_0_tt = (1.0 / (z_1_series + 3.0 * z_grounding_to)) + y_1_shunt;
@@ -578,8 +590,10 @@ TEST_CASE("Test Transfomer - Test grounding - Yzn11") {
 
     // Zero sequence
     DoubleComplex const z_grounding_to = (input.r_grounding_to + 1i * input.x_grounding_to) * base_y_to;
+    auto const low_susceptance = -transformer_low_susceptance_ratio * input.sn / base_power_3p / input.uk;
+    DoubleComplex const low_admittance = 1.0i * low_susceptance;
 
-    DoubleComplex const y_0_ff = 0.0;
+    DoubleComplex const y_0_ff = low_admittance;
     DoubleComplex const y_0_ft = 0.0;
     DoubleComplex const y_0_tf = 0.0;
     DoubleComplex const y_0_tt = (1.0 / (z_1_series * 0.1 + 3.0 * z_grounding_to));
@@ -687,8 +701,10 @@ TEST_CASE("Test Transformer - Dyn11 - tap_max and tap_min flipped") {
 
     // Zero sequence
     DoubleComplex const z_grounding_to = (input.r_grounding_to + 1i * input.x_grounding_to) * base_y_to;
+    auto const low_susceptance = -transformer_low_susceptance_ratio * input.sn / base_power_3p / input.uk;
+    DoubleComplex const low_admittance = 1.0i * low_susceptance;
 
-    DoubleComplex const y_0_ff = 0.0;
+    DoubleComplex const y_0_ff = low_admittance;
     DoubleComplex const y_0_ft = 0.0;
     DoubleComplex const y_0_tf = 0.0;
     DoubleComplex const y_0_tt = (1.0 / (z_1_series + 3.0 * z_grounding_to)) + y_1_shunt;

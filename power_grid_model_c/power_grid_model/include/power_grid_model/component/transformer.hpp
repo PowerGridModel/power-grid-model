@@ -258,7 +258,7 @@ class Transformer : public Branch {
             param0.ytt() = y0_series;
         }
 
-        auto const low_susceptance = -1e-8 * sn_ / base_power_3p / uk_;
+        auto const low_susceptance = -transformer_low_susceptance_ratio * sn_ / base_power_3p / uk_;
         bool const zero_seq_available_from =
             (winding_from_ == WindingType::wye_n && winding_to_ == WindingType::wye_n) ||
             (winding_from_ == WindingType::wye_n && winding_to_ == WindingType::delta) ||
