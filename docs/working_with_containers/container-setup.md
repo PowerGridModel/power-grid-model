@@ -11,8 +11,11 @@ the Python side.
 
 ## Setup Requirements
 
-To begin using the container there are two open-source applications that must be installed.
+To begin using the container, you have several options. First, you can use Docker together with DevPod. Alternatively,
+you can use the open-source combination of Podman and DevPod.
 
+* Docker (<https://www.docker.com/>) - a popular container platform that uses a background service (daemon) to build,
+run, and manage containerized applications.
 * Podman (<https://podman.io/>) - a container engine that lets developers build, run, and manage containers and pods
 without needing a background service.
 * DevPod (<https://devpod.sh/>) - a tool that instantiates reproducible, disposable development environments allowing
@@ -28,20 +31,46 @@ Firstly, setup the repository by cloning it into the desired destination.
 git clone <https>
 ```
 
-Make sure that you are in the right branch, the branch should have ".devcontainer" folder in it.
+Make sure that you are in the right branch, the branch should have a ".devcontainer" folder in it.
 
-### DevPod Setup
+### Docker and DevPod Setup
+
+#### Docker Setup
+
+Before you begin, install Docker Desktop and open it. It will initialize automatically when launched.
+
+#### DevPod Setup
 
 Secondly, open DevPod and go into the "Providers" section. There click on "+ Add", select the docker icon, give it a
+name and click on save. DevPod should find the PATH to the docker.exe itself, however if you think that there are issues
+within your setup you can adjust the PATH in the advanced settings by adding the path to docker.exe under Docker path.
+
+#### Initializing the container
+
+Finally, to initialize and open the container everything will be done through DevPod.
+
+* Upon opening DevPod go to "Workspaces" and click on "Create Workspace".
+* Under the "Enter Workspace Source", select the "Folder" option and navigate to the destination where you cloned the
+repository to.
+* Under the "Default IDE" select VSCode.
+* Under "Provider" select the provider that you have setup previously (it should have the docker icon)
+
+Finally, click "Create Workspace"
+
+### Podman and DevPod Setup
+
+#### DevPod Setup
+
+Open DevPod and go into the "Providers" section. There click on "+ Add", select the docker icon, give it a
 name and click on save. In the same window open advanced settings and under Docker path add the path to podman.exe (If
 you are on Windows, it likely is in Program Files\RedHat directory).
 
-### Podman Setup
+#### Podman Setup
 
-Thirdly, to initialize Podman the Podman Desktop application has to be opened and "initialize and start" button has to
+To initialize Podman the Podman Desktop application has to be opened and "initialize and start" button has to
 be pressed. If the start succeeds, there will be a keyword "RUNNING" in green displayed.
 
-### Initializing the container
+#### Initializing the container
 
 Finally, to initialize and open the container everything will be done through DevPod.
 
