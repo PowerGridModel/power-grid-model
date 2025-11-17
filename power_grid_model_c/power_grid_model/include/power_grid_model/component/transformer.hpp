@@ -259,13 +259,19 @@ class Transformer : public Branch {
         }
 
         auto const low_susceptance = -transformer_low_susceptance_ratio * sn_ / base_power_3p / uk_;
-        bool const zero_seq_available_from =
-            (winding_from_ == WindingType::wye_n && winding_to_ == WindingType::wye_n) ||
-            (winding_from_ == WindingType::wye_n && winding_to_ == WindingType::delta) ||
-            winding_from_ == WindingType::zigzag_n;
-        bool const zero_seq_available_to = (winding_to_ == WindingType::wye_n && winding_from_ == WindingType::wye_n) ||
-                                           (winding_to_ == WindingType::wye_n && winding_from_ == WindingType::delta) ||
-                                           winding_to_ == WindingType::zigzag_n;
+        auto const zero_seq_available = [](WindingType this_side, WindingType other_side) {
+            using enum WindingType;
+            switch (this_side) {
+            case wye_n:
+                return other_side == wye_n || other_side == delta;
+            case zigzag_n:
+                return true;
+            default:
+                return false;
+            }
+        };
+        bool const zero_seq_available_from = zero_seq_available(winding_from_, winding_to_);
+        bool const zero_seq_available_to = zero_seq_available(winding_to_, winding_from_);
         if (!zero_seq_available_from && from_status()) {
             param0.yff() += DoubleComplex{0.0, low_susceptance};
         }
