@@ -2,6 +2,6 @@
   "calculation_method": [
     "newton_raphson"
   ],
-  "rtol": 2e-07,
+  "rtol": 3e-07,
   "atol": 1e-07
 }

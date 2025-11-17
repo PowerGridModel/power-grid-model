@@ -96,7 +96,7 @@ TEST_CASE("Test transformer") {
     DoubleComplex const low_admittance = 1.0i * low_susceptance;
     ComplexTensor<asymmetric_t> y012;
     y012 << low_admittance, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
-    ComplexTensor<asymmetric_t> low_admittance_asym = dot(get_a(), y012, get_a_inv());
+    ComplexTensor<asymmetric_t> const low_admittance_asym = dot(get_a(), y012, get_a_inv());
 
     // sym
     std::vector<BranchCalcParam<symmetric_t>> vec_sym;
