@@ -88,3 +88,8 @@ Finally, click "Create Workspace"
 * If you are facing issues while building the container then try and allocate more memory in Podman. Go to
 Podman -> Settings (Bottom left corner) -> Resources -> Edit.
 * Try and make a fresh clone of the repository and redo the setup on it.
+
+## Support for Apple Container
+
+We have tested a container setup with Apple's container. However, currently there is not a simplistic way to open that
+container within VSCode. With future plugin developments we expect to add support for Apple's container.
