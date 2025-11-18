@@ -238,7 +238,7 @@ class PowerGridModel:
             if key_enum in kwargs:
                 value_enum = kwargs[key_enum]
                 if isinstance(value_enum, str):
-                    kwargs[key_enum] = type_[value_enum]
+                    kwargs[key_enum] = type_[value_enum]  # NOSONAR(S5864) IntEnum has __getitem__
 
         as_enum_value("calculation_method", CalculationMethod)
         as_enum_value("tap_changing_strategy", TapChangingStrategy)
