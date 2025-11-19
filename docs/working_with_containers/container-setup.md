@@ -22,7 +22,7 @@ without needing a background service.
 developers to code inside the containers with their usual editors.
 * Docker (<https://www.docker.com/>) - a popular container platform that uses a background service (daemon) to build,
 run, and manage containerized applications. (NOTE: Docker Desktop requires a subscription that is not free for
-commercial usage)
+commercial usage).
 
 ## The Recommended Setup Process
 
