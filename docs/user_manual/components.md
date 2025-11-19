@@ -128,17 +128,17 @@ If `i_n` is not provided, `loading` of line will be a `nan` value.
 
 #### Input
 
-| name   | data type | unit       | description                                |                 required                  |  update  |            valid values            |
-| ------ | --------- | ---------- | ------------------------------------------ | :---------------------------------------: | :------: | :--------------------------------: |
-| `r1`   | `double`  | ohm (Ω)    | positive-sequence serial resistance        |                 &#10004;                  | &#10060; | `r1` and `x1` cannot be both `0.0` |
-| `x1`   | `double`  | ohm (Ω)    | positive-sequence serial reactance         |                 &#10004;                  | &#10060; | `r1` and `x1` cannot be both `0.0` |
-| `c1`   | `double`  | farad (F)  | positive-sequence shunt capacitance        |                 &#10004;                  | &#10060; |                                    |
-| `tan1` | `double`  | -          | positive-sequence shunt loss factor (tan𝛿) |                 &#10004;                  | &#10060; |                                    |
-| `r0`   | `double`  | ohm (Ω)    | zero-sequence serial resistance            | &#10024; only for asymmetric calculations | &#10060; | `r0` and `x0` cannot be both `0.0` |
-| `x0`   | `double`  | ohm (Ω)    | zero-sequence serial reactance             | &#10024; only for asymmetric calculations | &#10060; | `r0` and `x0` cannot be both `0.0` |
-| `c0`   | `double`  | farad (F)  | zero-sequence shunt capacitance            | &#10024; only for asymmetric calculations | &#10060; |                                    |
-| `tan0` | `double`  | -          | zero-sequence shunt loss factor (tan𝛿)     | &#10024; only for asymmetric calculations | &#10060; |                                    |
-| `i_n`  | `double`  | ampere (A) | rated current                              |                 &#10060;                  | &#10060; |               `> 0`                |
+| name   | data type | unit       | description                                        |                 required                  |  update  |            valid values            |
+| ------ | --------- | ---------- | -------------------------------------------------- | :---------------------------------------: | :------: | :--------------------------------: |
+| `r1`   | `double`  | ohm (Ω)    | positive-sequence serial resistance                |                 &#10004;                  | &#10060; | `r1` and `x1` cannot be both `0.0` |
+| `x1`   | `double`  | ohm (Ω)    | positive-sequence serial reactance                 |                 &#10004;                  | &#10060; | `r1` and `x1` cannot be both `0.0` |
+| `c1`   | `double`  | farad (F)  | positive-sequence shunt capacitance                |                 &#10004;                  | &#10060; |                                    |
+| `tan1` | `double`  | -          | positive-sequence shunt loss factor (tan &#x03B4;) |                 &#10004;                  | &#10060; |                                    |
+| `r0`   | `double`  | ohm (Ω)    | zero-sequence serial resistance                    | &#10024; only for asymmetric calculations | &#10060; | `r0` and `x0` cannot be both `0.0` |
+| `x0`   | `double`  | ohm (Ω)    | zero-sequence serial reactance                     | &#10024; only for asymmetric calculations | &#10060; | `r0` and `x0` cannot be both `0.0` |
+| `c0`   | `double`  | farad (F)  | zero-sequence shunt capacitance                    | &#10024; only for asymmetric calculations | &#10060; |                                    |
+| `tan0` | `double`  | -          | zero-sequence shunt loss factor (tan &#x03B4;)     | &#10024; only for asymmetric calculations | &#10060; |                                    |
+| `i_n`  | `double`  | ampere (A) | rated current                                      |                 &#10060;                  | &#10060; |               `> 0`                |
 
 ```{note}
 In case of short circuit calculations, the zero-sequence parameters are required only if any of the faults in any of the
