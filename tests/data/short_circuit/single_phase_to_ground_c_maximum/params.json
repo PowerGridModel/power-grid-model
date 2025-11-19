@@ -3,7 +3,7 @@
   "rtol": 1e-7,
   "atol": {
     "default": 1e-8,
-    "i.*": 1e-3,
+    "i(_.+)?": 1e-3,
     "u_pu": 1e-7,
     "u": 1e-3,
     "u_angle": 1e-3
