@@ -94,8 +94,8 @@ ObservabilitySensorsResult scan_network_sensors(MeasuredValues<sym> const& measu
                 // we only need one flow sensor, so the loop will break
                 Idx const branch = element.idx;
                 Idx const neighbour_bus = y_bus_structure.col_indices[ybus_index];
-                BusNeighbourhoodInfo::neighbour const neighbour_info{neighbour_bus,
-                                                                     ConnectivityStatus::has_no_measurement};
+                BusNeighbourhoodInfo::neighbour const neighbour_info{.bus = neighbour_bus,
+                                                                     .status = ConnectivityStatus::has_no_measurement};
                 bus_neighbourhood_info[bus].direct_neighbours.push_back(neighbour_info);
                 if (has_flow_sensor(branch) && is_branch_connected(branch)) {
                     result.flow_sensors[ybus_index] = 1;
@@ -231,7 +231,7 @@ inline void complete_bidirectional_neighbourhood_info(std::vector<BusNeighbourho
             auto it = std::ranges::find_if(
                 reverse_neighbour_list, [&bus](auto const& reverse_neighbour) { return reverse_neighbour.bus == bus; });
             if (it == reverse_neighbour_list.end()) {
-                BusNeighbourhoodInfo::neighbour const reverse_neighbour_info{bus, neighbour.status};
+                BusNeighbourhoodInfo::neighbour const reverse_neighbour_info{.bus = bus, .status = neighbour.status};
                 reverse_neighbour_list.push_back(reverse_neighbour_info);
             }
         }
