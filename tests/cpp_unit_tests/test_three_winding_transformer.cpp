@@ -306,6 +306,8 @@ TEST_CASE("Test three winding transformer") {
             INFO("  Winding no: " << i);
             for (size_t value_no = 0; value_no < calc_params[i].value.size(); ++value_no) {
                 INFO("    Value no: " << value_no);
+                INFO("      Calc: " << calc_params[i].value[value_no]);
+                INFO("      Test: " << test_params[i].value[value_no]);
                 CHECK((cabs(calc_params[i].value[value_no] - test_params[i].value[value_no]) < numerical_tolerance)
                           .all());
             }
