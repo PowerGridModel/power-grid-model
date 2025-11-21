@@ -2,8 +2,6 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-include("${doctest_DIR}/doctest.cmake")
-
 set(PROJECT_SOURCES "test_entry_point.cpp" "test_validation.cpp")
 
 add_executable(power_grid_model_validation_tests ${PROJECT_SOURCES})

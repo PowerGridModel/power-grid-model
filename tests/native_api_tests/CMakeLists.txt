@@ -2,8 +2,6 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-include("${doctest_DIR}/doctest.cmake")
-
 set(PROJECT_SOURCES
     "test_entry_point.cpp"
     "test_api_meta_data.cpp"

@@ -2,8 +2,6 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-include("${doctest_DIR}/doctest.cmake")
-
 add_executable(
     power_grid_model_unit_tests_common
     "test_entry_point.cpp"
