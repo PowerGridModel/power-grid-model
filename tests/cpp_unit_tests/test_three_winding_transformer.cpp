@@ -298,11 +298,14 @@ TEST_CASE("Test three winding transformer") {
     for (size_t trafo = 0; trafo < trafos_vec.size(); ++trafo) {
         std::array<BranchCalcParam<asymmetric_t>, 3> calc_params = vec[trafo].calc_param<asymmetric_t>();
         std::array<BranchCalcParam<asymmetric_t>, 3> test_params = vec[trafo].calc_param<asymmetric_t>();
+        INFO("Asym 3w trafo test for trafo no: " << trafo);
         for (size_t i = 0; i < 3; ++i) {
             calc_params[i] = trafos_vec[trafo][i].calc_param<asymmetric_t>();
         }
         for (size_t i = 0; i < 3; i++) {
+            INFO("  Winding no: " << i);
             for (size_t value_no = 0; value_no < calc_params[i].value.size(); ++value_no) {
+                INFO("    Value no: " << value_no);
                 CHECK((cabs(calc_params[i].value[value_no] - test_params[i].value[value_no]) < numerical_tolerance)
                           .all());
             }
