@@ -232,17 +232,29 @@ class Transformer : public Branch {
             DoubleComplex const y0_series = 1.0 / z0_series;
             param0 = calc_param_y_sym(y0_series, y_shunt, k * std::exp(1.0i * phase_shift_0));
         }
-        // YNd
-        if (winding_from_ == WindingType::wye_n && winding_to_ == WindingType::delta && from_status()) {
-            DoubleComplex const z0_series = 1.0 / y_series + 3.0 * z_grounding_from_ / k / k;
-            DoubleComplex const y0_series = 1.0 / z0_series;
-            param0.yff() = (y0_series + y_shunt) / k / k;
+        // YN*
+        if (winding_from_ == WindingType::wye_n && from_status()) {
+            // ground path always possible via magnetization branch
+            DoubleComplex y0 = y_shunt;
+            if (winding_to_ == WindingType::delta) {
+                // additional path via zk
+                y0 += y_series;
+            }
+            DoubleComplex const z0 = 1.0 / y0 + 3.0 * z_grounding_from_ / k / k;
+            y0 = 1.0 / z0;
+            param0.yff() = y0 / k / k;
         }
-        // Dyn
-        if (winding_from_ == WindingType::delta && winding_to_ == WindingType::wye_n && to_status()) {
-            DoubleComplex const z0_series = 1.0 / y_series + 3.0 * z_grounding_to_;
-            DoubleComplex const y0_series = 1.0 / z0_series;
-            param0.ytt() = (y0_series + y_shunt);
+        // *YN
+        if (winding_to_ == WindingType::wye_n && to_status()) {
+            // ground path always possible via magnetization branch
+            DoubleComplex y0 = y_shunt;
+            if (winding_from_ == WindingType::delta) {
+                // additional path via zk
+                y0 += y_series;
+            }
+            DoubleComplex const z0 = 1.0 / y0 + 3.0 * z_grounding_to_;
+            y0 = 1.0 / z0;
+            param0.ytt() = y0;
         }
         // ZN*
         // Zero sequence impedance of zigzag winding is approximately 10% of positive sequence impedance
