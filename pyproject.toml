@@ -5,7 +5,7 @@
 [build-system]
 requires = [
     "scikit-build-core",
-    "pgm-build-dependencies@https://github.com/PowerGridModel/pgm-build-dependencies/releases/latest/download/pgm_build_dependencies-0.1.0-py3-none-any.whl"
+    "pgm-build-dependencies@https://github.com/PowerGridModel/pgm-build-dependencies/releases/latest/download/pgm_build_dependencies-0.1.0-py3-none-any.whl",
 ]
 build-backend = "scikit_build_core.build"
 
@@ -34,7 +34,15 @@ dependencies = ["numpy>=2.0.0"]
 dynamic = ["version"]
 
 [project.optional-dependencies]
-dev = ["msgpack", "pre-commit", "pytest", "pytest-cov", "ruff"]
+dev = [
+    "msgpack",
+    "pre-commit",
+    "pytest",
+    "pytest-cov",
+    "ruff",
+    "mypy",
+    "gersemi",  # CMake linter
+]
 doc = [
     "sphinx",
     "breathe",
@@ -150,11 +158,11 @@ select = [
     "S",
     "FBT003",
     "TRY002",
-    "PT"
+    "PT",
 ]
 
 ignore = [
-    "PT019" # flags false positives
+    "PT019", # flags false positives
 ]
 
 [tool.ruff.lint.isort]
@@ -176,7 +184,9 @@ ignore_missing_imports = true
 show_column_numbers = true
 non_interactive = true
 install_types = true
-disable_error_code = ["call-overload"]  # mypy 1.14.0 does not like PGM's data_types
+disable_error_code = [
+    "call-overload",
+] # mypy 1.14.0 does not like PGM's data_types
 
 # CI build options
 [tool.cibuildwheel]
