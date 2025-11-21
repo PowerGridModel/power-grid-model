@@ -240,9 +240,12 @@ class Transformer : public Branch {
                 // additional path via zk
                 y0 += y_series;
             }
-            DoubleComplex const z0 = 1.0 / y0 + 3.0 * z_grounding_from_ / k / k;
-            y0 = 1.0 / z0;
-            param0.yff() = y0 / k / k;
+            if (y0 != DoubleComplex{0.0, 0.0}) {
+                // avoid division by zero
+                DoubleComplex const z0 = 1.0 / y0 + 3.0 * z_grounding_from_ / k / k;
+                y0 = 1.0 / z0;
+                param0.yff() = y0 / k / k;
+            }
         }
         // *yn
         else if (winding_to_ == WindingType::wye_n && to_status()) {
@@ -252,9 +255,12 @@ class Transformer : public Branch {
                 // additional path via zk
                 y0 += y_series;
             }
-            DoubleComplex const z0 = 1.0 / y0 + 3.0 * z_grounding_to_;
-            y0 = 1.0 / z0;
-            param0.ytt() = y0;
+            if (y0 != DoubleComplex{0.0, 0.0}) {
+                // avoid division by zero
+                DoubleComplex const z0 = 1.0 / y0 + 3.0 * z_grounding_to_;
+                y0 = 1.0 / z0;
+                param0.ytt() = y0;
+            }
         }
         // ZN*
         // Zero sequence impedance of zigzag winding is approximately 10% of positive sequence impedance
