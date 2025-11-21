@@ -52,6 +52,11 @@ jobs:
           sudo apt-get install -y clang-format-18
           find . -regex '.*\.\(h\|c\|cpp\|hpp\|cc\|cxx\)' -exec clang-format-18 -style=file -i {} \;
 
+      - name: Install and run cmake-linter
+        run: |
+          pip install gersemi
+          gersemi -i --warnings-as-errors src/ tests/ cmake/
+
       - name: Install and run markdownlint
         run: |
           npm install -g markdownlint-cli
@@ -95,4 +100,3 @@ jobs:
           else
             echo "The test-workflow.yml file matches main."
           fi
-
