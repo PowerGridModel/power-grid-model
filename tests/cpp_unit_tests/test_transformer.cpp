@@ -485,7 +485,7 @@ TEST_CASE("Test Transfomer - Test grounding - Dyn11") {
     DoubleComplex const y_0_ff = low_admittance;
     DoubleComplex const y_0_ft = 0.0;
     DoubleComplex const y_0_tf = 0.0;
-    DoubleComplex const y_0_tt = (1.0 / (z_1_series + 3.0 * z_grounding_to)) + y_1_shunt;
+    DoubleComplex const y_0_tt = (1.0 / (1.0 / (1.0 / z_1_series + y_1_shunt) + 3.0 * z_grounding_to));
 
     // Sequence admittances -> phase addmitance
     ComplexTensor<asymmetric_t> y_ff_diagonal;
@@ -707,7 +707,7 @@ TEST_CASE("Test Transformer - Dyn11 - tap_max and tap_min flipped") {
     DoubleComplex const y_0_ff = low_admittance;
     DoubleComplex const y_0_ft = 0.0;
     DoubleComplex const y_0_tf = 0.0;
-    DoubleComplex const y_0_tt = (1.0 / (z_1_series + 3.0 * z_grounding_to)) + y_1_shunt;
+    DoubleComplex const y_0_tt = (1.0 / (1.0 / (1.0 / z_1_series + y_1_shunt) + 3.0 * z_grounding_to));
 
     // Sequence admittances -> phase addmitance
     ComplexTensor<asymmetric_t> y_ff_diagonal;
