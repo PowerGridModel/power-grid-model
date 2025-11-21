@@ -233,7 +233,7 @@ class Transformer : public Branch {
             param0 = calc_param_y_sym(y0_series, y_shunt, k * std::exp(1.0i * phase_shift_0));
         }
         // YN*
-        if (winding_from_ == WindingType::wye_n && from_status()) {
+        else if (winding_from_ == WindingType::wye_n && from_status()) {
             // ground path always possible via magnetization branch
             DoubleComplex y0 = y_shunt;
             if (winding_to_ == WindingType::delta) {
@@ -244,8 +244,8 @@ class Transformer : public Branch {
             y0 = 1.0 / z0;
             param0.yff() = y0 / k / k;
         }
-        // *YN
-        if (winding_to_ == WindingType::wye_n && to_status()) {
+        // *yn
+        else if (winding_to_ == WindingType::wye_n && to_status()) {
             // ground path always possible via magnetization branch
             DoubleComplex y0 = y_shunt;
             if (winding_from_ == WindingType::delta) {
