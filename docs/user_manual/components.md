@@ -96,16 +96,16 @@ In this case, the attribute `from_status` and `to_status` is always 1.
 
 #### Steady state output
 
-| name      | data type         | unit                       | description                                              |
-| --------- | ----------------- | -------------------------- | -------------------------------------------------------- |
-| `p_from`  | `RealValueOutput` | watt (W)                   | active power flowing into the branch at from-side        |
-| `q_from`  | `RealValueOutput` | volt-ampere-reactive (var) | reactive power flowing into the branch at from-side      |
-| `i_from`  | `RealValueOutput` | ampere (A)                 | magnitude of current at from-side                        |
-| `s_from`  | `RealValueOutput` | volt-ampere (VA)           | apparent power flowing at from-side                      |
-| `p_to`    | `RealValueOutput` | watt (W)                   | active power flowing into the branch at to-side          |
-| `q_to`    | `RealValueOutput` | volt-ampere-reactive (var) | reactive power flowing into the branch at to-side        |
-| `i_to`    | `RealValueOutput` | ampere (A)                 | magnitude of current at to-side                          |
-| `s_to`    | `RealValueOutput` | volt-ampere (VA)           | apparent power flowing at to-side                        |
+| name      | data type         | unit                       | description                                                |
+| --------- | ----------------- | -------------------------- | ---------------------------------------------------------- |
+| `p_from`  | `RealValueOutput` | watt (W)                   | active power flowing into the branch at from-side          |
+| `q_from`  | `RealValueOutput` | volt-ampere-reactive (var) | reactive power flowing into the branch at from-side        |
+| `i_from`  | `RealValueOutput` | ampere (A)                 | magnitude of current at from-side                          |
+| `s_from`  | `RealValueOutput` | volt-ampere (VA)           | apparent power flowing at from-side                        |
+| `p_to`    | `RealValueOutput` | watt (W)                   | active power flowing into the branch at to-side            |
+| `q_to`    | `RealValueOutput` | volt-ampere-reactive (var) | reactive power flowing into the branch at to-side          |
+| `i_to`    | `RealValueOutput` | ampere (A)                 | magnitude of current at to-side                            |
+| `s_to`    | `RealValueOutput` | volt-ampere (VA)           | apparent power flowing at to-side                          |
 | `loading` | `double`          | -                          | relative loading of the branch, `1.0` meaning 100% loaded. |
 
 #### Short circuit output
@@ -128,17 +128,17 @@ If `i_n` is not provided, `loading` of line will be a `nan` value.
 
 #### Input
 
-| name   | data type | unit       | description                                |                 required                  |  update  |            valid values            |
-| ------ | --------- | ---------- | ------------------------------------------ | :---------------------------------------: | :------: | :--------------------------------: |
-| `r1`   | `double`  | ohm (Ω)    | positive-sequence serial resistance        |                 &#10004;                  | &#10060; | `r1` and `x1` cannot be both `0.0` |
-| `x1`   | `double`  | ohm (Ω)    | positive-sequence serial reactance         |                 &#10004;                  | &#10060; | `r1` and `x1` cannot be both `0.0` |
-| `c1`   | `double`  | farad (F)  | positive-sequence shunt capacitance        |                 &#10004;                  | &#10060; |                                    |
-| `tan1` | `double`  | -          | positive-sequence shunt loss factor (tan𝛿) |                 &#10004;                  | &#10060; |                                    |
-| `r0`   | `double`  | ohm (Ω)    | zero-sequence serial resistance            | &#10024; only for asymmetric calculations | &#10060; | `r0` and `x0` cannot be both `0.0` |
-| `x0`   | `double`  | ohm (Ω)    | zero-sequence serial reactance             | &#10024; only for asymmetric calculations | &#10060; | `r0` and `x0` cannot be both `0.0` |
-| `c0`   | `double`  | farad (F)  | zero-sequence shunt capacitance            | &#10024; only for asymmetric calculations | &#10060; |                                    |
-| `tan0` | `double`  | -          | zero-sequence shunt loss factor (tan𝛿)     | &#10024; only for asymmetric calculations | &#10060; |                                    |
-| `i_n`  | `double`  | ampere (A) | rated current                              |                 &#10060;                  | &#10060; |               `> 0`                |
+| name   | data type | unit       | description                                        |                 required                  |  update  |            valid values            |
+| ------ | --------- | ---------- | -------------------------------------------------- | :---------------------------------------: | :------: | :--------------------------------: |
+| `r1`   | `double`  | ohm (Ω)    | positive-sequence serial resistance                |                 &#10004;                  | &#10060; | `r1` and `x1` cannot be both `0.0` |
+| `x1`   | `double`  | ohm (Ω)    | positive-sequence serial reactance                 |                 &#10004;                  | &#10060; | `r1` and `x1` cannot be both `0.0` |
+| `c1`   | `double`  | farad (F)  | positive-sequence shunt capacitance                |                 &#10004;                  | &#10060; |                                    |
+| `tan1` | `double`  | -          | positive-sequence shunt loss factor (tan &#x03B4;) |                 &#10004;                  | &#10060; |                                    |
+| `r0`   | `double`  | ohm (Ω)    | zero-sequence serial resistance                    | &#10024; only for asymmetric calculations | &#10060; | `r0` and `x0` cannot be both `0.0` |
+| `x0`   | `double`  | ohm (Ω)    | zero-sequence serial reactance                     | &#10024; only for asymmetric calculations | &#10060; | `r0` and `x0` cannot be both `0.0` |
+| `c0`   | `double`  | farad (F)  | zero-sequence shunt capacitance                    | &#10024; only for asymmetric calculations | &#10060; |                                    |
+| `tan0` | `double`  | -          | zero-sequence shunt loss factor (tan &#x03B4;)     | &#10024; only for asymmetric calculations | &#10060; |                                    |
+| `i_n`  | `double`  | ampere (A) | rated current                                      |                 &#10060;                  | &#10060; |               `> 0`                |
 
 ```{note}
 In case of short circuit calculations, the zero-sequence parameters are required only if any of the faults in any of the
@@ -196,7 +196,7 @@ An example of usage of transformer is given in [Transformer Examples](../example
 | `p0`               | `double`                                                    | watt (W)         | no-load (iron) loss                                                                                                                                                                                                         |                        &#10004;                         | &#10060; |                                 `>= 0`                                 |
 | `winding_from`     | {py:class}`WindingType <power_grid_model.enum.WindingType>` | -                | from-side winding type                                                                                                                                                                                                      |                        &#10004;                         | &#10060; |                                                                        |
 | `winding_to`       | {py:class}`WindingType <power_grid_model.enum.WindingType>` | -                | to-side winding type                                                                                                                                                                                                        |                        &#10004;                         | &#10060; |                                                                        |
-| `clock`            | `int8_t`                                                    | -                | clock number of phase shift. Even number is not possible if one side is Y(N) winding and the other side is not Y(N) winding. Odd number is not possible, if both sides are Y(N) winding or both sides are not Y(N) winding. |                        &#10004;                         | &#10060; |                         `>= -12` and `<= 12`                           |
+| `clock`            | `int8_t`                                                    | -                | clock number of phase shift. Even number is not possible if one side is Y(N) winding and the other side is not Y(N) winding. Odd number is not possible, if both sides are Y(N) winding or both sides are not Y(N) winding. |                        &#10004;                         | &#10060; |                          `>= -12` and `<= 12`                          |
 | `tap_side`         | {py:class}`BranchSide <power_grid_model.enum.BranchSide>`   | -                | side of tap changer                                                                                                                                                                                                         |                        &#10004;                         | &#10060; |                                                                        |
 | `tap_pos`          | `int8_t`                                                    | -                | current position of tap changer                                                                                                                                                                                             | &#10060; default `tap_nom`, if no `tap_nom` default `0` | &#10004; | `(tap_min <= tap_pos <= tap_max)` or `(tap_min >= tap_pos >= tap_max)` |
 | `tap_min`          | `int8_t`                                                    | -                | position of tap changer at minimum voltage                                                                                                                                                                                  |                        &#10004;                         | &#10060; |                                                                        |
@@ -514,8 +514,8 @@ An example of usage of three-winding transformer is given in
 | `winding_1`     | {py:class}`WindingType <power_grid_model.enum.WindingType>` | -                | side 1 winding type                                                                                       |                        &#10004;                         | &#10060; |                                                                        |
 | `winding_2`     | {py:class}`WindingType <power_grid_model.enum.WindingType>` | -                | side 2 winding type                                                                                       |                        &#10004;                         | &#10060; |                                                                        |
 | `winding_3`     | {py:class}`WindingType <power_grid_model.enum.WindingType>` | -                | side 3 winding type                                                                                       |                        &#10004;                         | &#10060; |                                                                        |
-| `clock_12`      | `int8_t`                                                    | -                | clock number of phase shift across side 1-2, odd number is only allowed for Dy(n) or Y(N)d configuration. |                        &#10004;                         | &#10060; |                         `>= -12` and `<= 12`                           |
-| `clock_13`      | `int8_t`                                                    | -                | clock number of phase shift across side 1-3, odd number is only allowed for Dy(n) or Y(N)d configuration. |                        &#10004;                         | &#10060; |                         `>= -12` and `<= 12`                           |
+| `clock_12`      | `int8_t`                                                    | -                | clock number of phase shift across side 1-2, odd number is only allowed for Dy(n) or Y(N)d configuration. |                        &#10004;                         | &#10060; |                          `>= -12` and `<= 12`                          |
+| `clock_13`      | `int8_t`                                                    | -                | clock number of phase shift across side 1-3, odd number is only allowed for Dy(n) or Y(N)d configuration. |                        &#10004;                         | &#10060; |                          `>= -12` and `<= 12`                          |
 | `tap_side`      | {py:class}`Branch3Side <power_grid_model.enum.Branch3Side>` | -                | side of tap changer                                                                                       |                        &#10004;                         | &#10060; |                    `side_1` or `side_2` or `side_3`                    |
 | `tap_pos`       | `int8_t`                                                    | -                | current position of tap changer                                                                           | &#10060; default `tap_nom`, if no `tap_nom` default `0` | &#10004; | `(tap_min <= tap_pos <= tap_max)` or `(tap_min >= tap_pos >= tap_max)` |
 | `tap_min`       | `int8_t`                                                    | -                | position of tap changer at minimum voltage                                                                |                        &#10004;                         | &#10060; |                                                                        |

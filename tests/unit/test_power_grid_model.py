@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-from copy import copy
+from copy import copy, deepcopy
 
 import numpy as np
 import pytest
@@ -173,6 +173,37 @@ def test_update_error(model: PowerGridModel):
 def test_copy_model(model: PowerGridModel, sym_output):
     model_2 = copy(model)
     result = model_2.calculate_power_flow()
+    compare_result(result, sym_output, rtol=0.0, atol=1e-8)
+
+
+def test_deepcopy_model(model: PowerGridModel, sym_output, update_batch, sym_output_batch):
+    model_other = PowerGridModel({})
+
+    # list containing different models twice
+    model_list = [model, model_other, model, model_other]
+
+    new_model_list = deepcopy(model_list)
+
+    # check if identities are as expected
+    assert id(new_model_list[0]) != id(model_list[0])
+    assert id(new_model_list[1]) != id(model_list[1])
+    assert id(new_model_list[0]) != id(new_model_list[1])
+    assert id(new_model_list[0]) == id(new_model_list[2])
+    assert id(new_model_list[1]) == id(new_model_list[3])
+
+    # check if the deepcopied objects are really independent from the original ones
+    # by modifying the copies and seeing if the original one is impacted by this change
+    new_model_list[0].update(update_data=get_dataset_scenario(update_batch, 0))
+
+    new_expected_result = get_dataset_scenario(sym_output_batch, 0)
+    new_result_0 = new_model_list[0].calculate_power_flow()
+    compare_result(new_result_0, new_expected_result, rtol=0.0, atol=1e-8)
+    # at index 0 and 2 should be the same objects, check if changing the object at index 0
+    # and obtaining a power flow result is ident to the result at index 2
+    new_result_2 = new_model_list[2].calculate_power_flow()
+    compare_result(new_result_2, new_expected_result, rtol=0.0, atol=1e-8)
+
+    result = model.calculate_power_flow()
     compare_result(result, sym_output, rtol=0.0, atol=1e-8)
 
 

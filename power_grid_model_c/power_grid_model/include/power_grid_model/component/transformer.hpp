@@ -258,6 +258,27 @@ class Transformer : public Branch {
             param0.ytt() = y0_series;
         }
 
+        auto const low_susceptance = -transformer_low_susceptance_ratio * sn_ / base_power_3p / uk_;
+        auto const zero_seq_available = [](WindingType this_side, WindingType other_side) {
+            using enum WindingType;
+            switch (this_side) {
+            case wye_n:
+                return other_side == wye_n || other_side == delta;
+            case zigzag_n:
+                return true;
+            default:
+                return false;
+            }
+        };
+        bool const zero_seq_available_from = zero_seq_available(winding_from_, winding_to_);
+        bool const zero_seq_available_to = zero_seq_available(winding_to_, winding_from_);
+        if (!zero_seq_available_from && from_status()) {
+            param0.yff() += DoubleComplex{0.0, low_susceptance};
+        }
+        if (!zero_seq_available_to && to_status()) {
+            param0.ytt() += DoubleComplex{0.0, low_susceptance};
+        }
+
         // for the rest param0 is zero
         // calculate yabc
         ComplexTensor<asymmetric_t> const sym_matrix = get_sym_matrix();
@@ -269,6 +290,7 @@ class Transformer : public Branch {
             y012 << param0.value[i], 0.0, 0.0, 0.0, param1.value[i], 0.0, 0.0, 0.0, param2.value[i];
             param.value[i] = dot(sym_matrix, y012, sym_matrix_inv);
         }
+
         return param;
     }
 };
