@@ -204,35 +204,44 @@ void merge_batch_error_msgs(PGM_Handle* handle, PGM_Handle const& local_handle, 
     }
 }
 
+Idx get_batch_dimension(PGM_ConstDataset const* batch_dataset) {
+    Idx dimension = 0;
+    while (batch_dataset != nullptr) {
+        ++dimension;
+        batch_dataset = batch_dataset->get_next();
+    }
+    return dimension;
+}
+
 } // namespace
 
 // run calculation
 void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options const* opt,
                    PGM_MutableDataset const* output_dataset, PGM_ConstDataset const* batch_dataset) {
-    // if dimension is zero, no batch calculation, force pointer to NULL
-    if (opt->batch_dimension == 0) {
-        batch_dataset = nullptr;
-    }
+    Idx const batch_dimension = get_batch_dimension(batch_dataset);
 
-    // for dimensions which are 1D batch or default (-1), call implementation directly
-    if (opt->batch_dimension < 2) {
+    // for dimension < 2 (one-time or 1D batch), call implementation directly
+    if (batch_dimension < 2) {
         calculate_impl(handle, model, opt, output_dataset, batch_dataset);
         return;
     }
 
     // get stride size of the rest of dimensions
     Idx const first_batch_size = batch_dataset->batch_size();
-    Idx const stride_size =
-        std::transform_reduce(batch_dataset + 1, batch_dataset + opt->batch_dimension, Idx{1}, std::multiplies{},
-                              [](PGM_ConstDataset const& ds) { return ds.batch_size(); });
+    Idx const stride_size = [batch_dataset]() {
+        Idx size = 1;
+        PGM_ConstDataset const* current = batch_dataset->get_next();
+        while (current != nullptr) {
+            size *= current->batch_size();
+            current = current->get_next();
+        }
+        return size;
+    }();
 
     // loop over the first dimension batche
     for (Idx i = 0; i < first_batch_size; ++i) {
         // a new handle
         PGM_Handle local_handle{};
-        // deep opt is one dimension less
-        PGM_Options deep_opt = *opt;
-        --deep_opt.batch_dimension;
         // create sliced datasets for the rest of dimensions
         PGM_ConstDataset const single_update_dataset = batch_dataset->get_individual_scenario(i);
         PGM_MutableDataset const sliced_output_dataset =
@@ -252,13 +261,8 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
             continue;
         }
 
-        // if the deep opt have less than 2 dimensions, call implementation directly
-        if (deep_opt.batch_dimension < 2) {
-            calculate_impl(&local_handle, local_model.get(), &deep_opt, &sliced_output_dataset, batch_dataset + 1);
-        } else {
-            // recursive call
-            PGM_calculate(&local_handle, local_model.get(), &deep_opt, &sliced_output_dataset, batch_dataset + 1);
-        }
+        // recursive call
+        PGM_calculate(&local_handle, local_model.get(), opt, &sliced_output_dataset, batch_dataset->get_next());
         // merge errors
         merge_batch_error_msgs(handle, local_handle, i * stride_size, stride_size);
     }
