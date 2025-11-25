@@ -542,10 +542,14 @@ template <dataset_type_tag dataset_type_> class Dataset {
         return result;
     }
 
+    void set_next(Dataset const* next) { next_ = next; }
+    Dataset const* get_next() const { return next_; }
+
   private:
     MetaData const* meta_data_;
     DatasetInfo dataset_info_;
     std::vector<Buffer> buffers_;
+    Dataset const* next_{};
 
     std::span<Indptr> get_indptr_span(Indptr* indptr) const {
         return std::span{indptr, static_cast<size_t>(batch_size() + 1)};
