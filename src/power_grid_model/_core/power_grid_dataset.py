@@ -32,7 +32,6 @@ from power_grid_model._core.error_handling import VALIDATOR_MSG, assert_no_error
 from power_grid_model._core.power_grid_core import (
     ConstDatasetPtr,
     DatasetInfoPtr,
-    MultiDimensionDatasetPtr,
     MutableDatasetPtr,
     WritableDatasetPtr,
     power_grid_core as pgc,
@@ -353,57 +352,6 @@ class CConstDataset:
 
     def __del__(self):
         pgc.destroy_dataset_const(self._const_dataset)
-
-
-class CMultiDimensionalDataset:
-    """
-    A proxy of a multi-dimensional dataset representing multiple const dataset for multidimensional batch scenarios.
-    """
-
-    _multi_dimensional_dataset: MultiDimensionDatasetPtr
-    _const_datasets: list[CConstDataset]
-    _total_batch_size: int
-
-    def __new__(cls, datasets: list[CConstDataset]):
-        instance = super().__new__(cls)
-        instance._multi_dimensional_dataset = MultiDimensionDatasetPtr()
-        instance._const_datasets = datasets
-
-        DatasetsPtrArray = ConstDatasetPtr * len(datasets)
-        datasets_ptr_array = DatasetsPtrArray()
-        total_batch_size = 1
-        for idx, dataset in enumerate(datasets):
-            datasets_ptr_array[idx] = dataset.get_dataset_ptr()
-            total_batch_size *= dataset.get_info().batch_size()
-        instance._total_batch_size = total_batch_size
-
-        instance._multi_dimensional_dataset = pgc.dataset_create_multidimensional_from_const(
-            datasets_ptr_array, len(datasets)
-        )
-        assert_no_error()
-
-        return instance
-
-    def get_array_ptr(self) -> ConstDatasetPtr:
-        """
-        Get the raw underlying multi-dimensional dataset pointer.
-
-        Returns:
-            MultiDimensionDatasetPtr: the raw underlying multi-dimensional dataset pointer.
-        """
-        return pgc.get_array_pointer_from_multidimensional(self._multi_dimensional_dataset)
-
-    def get_total_batch_size(self) -> int:
-        """
-        Get the total batch size of the multi-dimensional dataset.
-
-        Returns:
-            int: the total batch size of the multi-dimensional dataset.
-        """
-        return self._total_batch_size
-
-    def __del__(self):
-        pgc.destroy_multidimensional_dataset(self._multi_dimensional_dataset)
 
 
 class CWritableDataset:

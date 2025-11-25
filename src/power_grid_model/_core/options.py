@@ -45,7 +45,6 @@ class Options:
     tap_changing_strategy = OptionSetter(pgc.set_tap_changing_strategy)
     short_circuit_voltage_scaling = OptionSetter(pgc.set_short_circuit_voltage_scaling)
     experimental_features = OptionSetter(pgc.set_experimental_features)
-    batch_dimension = OptionSetter(pgc.set_batch_dimension)
 
     @property
     def opt(self) -> OptionsPtr:
