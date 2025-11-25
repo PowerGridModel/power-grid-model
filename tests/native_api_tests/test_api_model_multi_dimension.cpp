@@ -72,20 +72,19 @@ TEST_CASE("API Model Multi-Dimension") {
     }
 
     // construct batch update dataset
-    std::vector<DatasetConst> batch_datasets;
-    batch_datasets.emplace_back("update", true, size_u_ref);
-    batch_datasets.emplace_back("update", true, size_p_specified);
-    batch_datasets.emplace_back("update", true, size_q_specified);
-
-    DatasetConst& batch_u_ref = batch_datasets[0];
+    DatasetConst batch_u_ref{"update", true, size_u_ref};
     batch_u_ref.add_buffer("source", 1, size_u_ref, nullptr, nullptr);
     batch_u_ref.add_attribute_buffer("source", "u_ref", u_ref.data());
-    DatasetConst& batch_p_specified = batch_datasets[1];
+    DatasetConst batch_p_specified{"update", true, size_p_specified};
     batch_p_specified.add_buffer("sym_load", 1, size_p_specified, nullptr, nullptr);
     batch_p_specified.add_attribute_buffer("sym_load", "p_specified", p_specified.data());
-    DatasetConst& batch_q_specified = batch_datasets[2];
+    DatasetConst batch_q_specified{"update", true, size_q_specified};
     batch_q_specified.add_buffer("sym_load", 1, size_q_specified, nullptr, nullptr);
     batch_q_specified.add_attribute_buffer("sym_load", "q_specified", q_specified.data());
+
+    // chaining
+    batch_u_ref.set_next(batch_p_specified);
+    batch_p_specified.set_next(batch_q_specified);
 
     // output dataset
     std::vector<double> i_source_result(total_batch_size);
@@ -95,10 +94,9 @@ TEST_CASE("API Model Multi-Dimension") {
 
     // options
     Options options{};
-    options.set_batch_dimension(3);
 
     // calculate
-    model.calculate(options, batch_output_dataset, batch_datasets);
+    model.calculate(options, batch_output_dataset, batch_u_ref);
 
     // check results
     for (Idx idx = 0; idx < total_batch_size; ++idx) {
