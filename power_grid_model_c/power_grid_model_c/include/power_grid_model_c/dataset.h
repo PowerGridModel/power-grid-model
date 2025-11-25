@@ -213,6 +213,16 @@ PGM_API void PGM_dataset_const_add_attribute_buffer(PGM_Handle* handle, PGM_Cons
 PGM_API PGM_DatasetInfo const* PGM_dataset_const_get_info(PGM_Handle* handle, PGM_ConstDataset const* dataset);
 
 /**
+ * @brief Set next const dataset for chaining for MD batch
+ * 
+ * @param handle 
+ * @param dataset 
+ * @param next_dataset The next dataset in the chain.
+ */
+PGM_API void PGM_dataset_const_set_next(PGM_Handle* handle, PGM_ConstDataset* dataset,
+                                        PGM_ConstDataset const* next_dataset);
+
+/**
  * @brief Get the dataset info of the instance PGM_WritableDataset.
  * @param handle
  * @param dataset A pointer to the PGM_WritableDataset.
