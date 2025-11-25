@@ -488,7 +488,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
     Dataset get_individual_scenario(Idx scenario) const
         requires(!is_indptr_mutable_v<dataset_type>)
     {
-        assert(0 <= scenario && scenario <= batch_size());
+        assert(0 <= scenario && scenario < batch_size());
 
         Dataset result{*this};
         result.dataset_info_.is_batch = false;
@@ -523,6 +523,14 @@ template <dataset_type_tag dataset_type_> class Dataset {
         assert(is_batch());
         assert(is_dense());
 
+        // empty slice
+        if (begin == end) {
+            Dataset result{true, 0, dataset_info_.dataset->name, *meta_data_};
+            result.add_buffer("node", 0, 0, nullptr, nullptr);
+            return result;
+        }
+
+        // start with begin
         Dataset result = get_individual_scenario(begin);
         Idx const batch_size = end - begin;
         result.dataset_info_.is_batch = true;
