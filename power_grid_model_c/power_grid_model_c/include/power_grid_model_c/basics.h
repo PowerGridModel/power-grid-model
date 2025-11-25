@@ -137,12 +137,6 @@ typedef struct PGM_WritableDataset PGM_WritableDataset;
  * @brief Opaque struct for the information of the dataset.
  */
 typedef struct PGM_DatasetInfo PGM_DatasetInfo;
-
-/**
- * @brief Opaque struct for the multi dimensional dataset class.
- *
- */
-typedef struct PGM_MultiDimensionalDataset PGM_MultiDimensionalDataset;
 #endif
 
 // NOLINTEND(modernize-use-using)
