@@ -482,6 +482,10 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
+    def dataset_const_set_next(self, dataset: ConstDatasetPtr, next_dataset: ConstDatasetPtr) -> None:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
     def dataset_writable_get_info(self, dataset: WritableDatasetPtr) -> DatasetInfoPtr:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
