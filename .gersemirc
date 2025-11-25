@@ -1,0 +1,12 @@
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+definitions: [./cmake/stubs/]
+disable_formatting: false
+extensions: []
+indent: 4
+line_length: 80
+list_expansion: favour-inlining
+unsafe: false
+warn_about_unknown_commands: true
