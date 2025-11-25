@@ -6,6 +6,7 @@
 Main power grid model class
 """
 
+import itertools
 from enum import IntEnum
 from typing import Any, overload
 
@@ -49,7 +50,6 @@ from power_grid_model._core.error_handling import PowerGridBatchError, assert_no
 from power_grid_model._core.index_integer import IdNp, IdxNp
 from power_grid_model._core.options import Options
 from power_grid_model._core.power_grid_core import ConstDatasetPtr, IDPtr, IdxPtr, ModelPtr, power_grid_core as pgc
-from power_grid_model._core.power_grid_dataset import CMultiDimensionalDataset
 from power_grid_model._core.typing import ComponentAttributeMapping, ComponentAttributeMappingDict
 
 
@@ -291,12 +291,12 @@ class PowerGridModel:
             is_batch = True
         if not isinstance(update_data, list):
             update_data = [update_data]
-        options.batch_dimension = len(update_data)
         update_data = [_map_to_component_types(x) for x in update_data]
-
-        prepared_update = CMultiDimensionalDataset([prepare_update_view(x) for x in update_data])
-        update_ptr: ConstDatasetPtr = prepared_update.get_array_ptr()
-        batch_size = prepared_update.get_total_batch_size()
+        prepared_update = [prepare_update_view(x) for x in update_data]
+        for this_dataset, next_dataset in itertools.pairwise(prepared_update):
+            this_dataset.set_next(next_dataset)
+        update_ptr: ConstDatasetPtr = prepared_update[0].get_dataset_ptr() if prepared_update else ConstDatasetPtr()
+        batch_size = np.prod([x.get_info().batch_size() for x in prepared_update])
 
         output_data = self._construct_output(
             output_component_types=output_component_types,
