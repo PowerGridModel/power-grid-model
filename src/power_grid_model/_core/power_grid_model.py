@@ -121,8 +121,8 @@ class PowerGridModel:
         return new_model
 
     def __repr__(self) -> str:
-        """
-        Return a string representation of the current model.
+        """Return a string representation of the current model.
+
         This includes the total number of components and the number of components per component type of the model.
 
         Returns:
