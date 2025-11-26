@@ -198,6 +198,10 @@ class DatasetConst {
                           data.get());
     }
 
+    void set_next(DatasetConst const& next_dataset) {
+        handle_.call_with(PGM_dataset_const_set_next, get(), next_dataset.get());
+    }
+
     DatasetInfo const& get_info() const { return info_; }
 
   private:
