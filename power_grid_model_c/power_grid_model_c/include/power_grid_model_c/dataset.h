@@ -214,9 +214,9 @@ PGM_API PGM_DatasetInfo const* PGM_dataset_const_get_info(PGM_Handle* handle, PG
 
 /**
  * @brief Set next const dataset for chaining for MD batch
- * 
- * @param handle 
- * @param dataset 
+ *
+ * @param handle
+ * @param dataset
  * @param next_dataset The next dataset in the chain.
  */
 PGM_API void PGM_dataset_const_set_next(PGM_Handle* handle, PGM_ConstDataset* dataset,
