@@ -8,6 +8,7 @@ Main power grid model class
 
 import itertools
 from enum import IntEnum
+from math import prod
 from typing import Any, overload
 
 import numpy as np
@@ -296,7 +297,7 @@ class PowerGridModel:
         for this_dataset, next_dataset in itertools.pairwise(prepared_update):
             this_dataset.set_next(next_dataset)
         update_ptr: ConstDatasetPtr = prepared_update[0].get_dataset_ptr() if prepared_update else ConstDatasetPtr()
-        batch_size = np.prod([x.get_info().batch_size() for x in prepared_update])
+        batch_size = prod([x.get_info().batch_size() for x in prepared_update])
 
         output_data = self._construct_output(
             output_component_types=output_component_types,

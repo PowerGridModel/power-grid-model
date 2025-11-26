@@ -93,7 +93,7 @@ TEST_CASE("API Model Multi-Dimension") {
     batch_output_dataset.add_attribute_buffer("source", "i", i_source_result.data());
 
     // options
-    Options options{};
+    Options const options{};
 
     // calculate
     model.calculate(options, batch_output_dataset, batch_u_ref);
