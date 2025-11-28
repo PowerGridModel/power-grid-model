@@ -188,7 +188,7 @@ struct get_attributes_list<LinkInput> {
 
 template<>
 struct get_attributes_list<TransformerInput> {
-    static constexpr std::array<MetaAttribute, 29> value{
+    static constexpr std::array<MetaAttribute, 31> value{
             // all attributes including base class
             
             meta_data_gen::get_meta_attribute<&TransformerInput::id>(offsetof(TransformerInput, id), "id"),
@@ -203,6 +203,8 @@ struct get_attributes_list<TransformerInput> {
             meta_data_gen::get_meta_attribute<&TransformerInput::pk>(offsetof(TransformerInput, pk), "pk"),
             meta_data_gen::get_meta_attribute<&TransformerInput::i0>(offsetof(TransformerInput, i0), "i0"),
             meta_data_gen::get_meta_attribute<&TransformerInput::p0>(offsetof(TransformerInput, p0), "p0"),
+            meta_data_gen::get_meta_attribute<&TransformerInput::i0_zero_sequence>(offsetof(TransformerInput, i0_zero_sequence), "i0_zero_sequence"),
+            meta_data_gen::get_meta_attribute<&TransformerInput::p0_zero_sequence>(offsetof(TransformerInput, p0_zero_sequence), "p0_zero_sequence"),
             meta_data_gen::get_meta_attribute<&TransformerInput::winding_from>(offsetof(TransformerInput, winding_from), "winding_from"),
             meta_data_gen::get_meta_attribute<&TransformerInput::winding_to>(offsetof(TransformerInput, winding_to), "winding_to"),
             meta_data_gen::get_meta_attribute<&TransformerInput::clock>(offsetof(TransformerInput, clock), "clock"),

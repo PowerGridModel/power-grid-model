@@ -122,6 +122,8 @@ PGM_API extern PGM_MetaAttribute const* const PGM_def_input_transformer_uk;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_transformer_pk;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_transformer_i0;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_transformer_p0;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_transformer_i0_zero_sequence;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_transformer_p0_zero_sequence;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_transformer_winding_from;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_transformer_winding_to;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_transformer_clock;
