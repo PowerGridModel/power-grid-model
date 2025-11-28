@@ -327,7 +327,7 @@ TEST_CASE("Test asym line") {
                                       input.r_ca, input.r_na, input.r_cb, input.r_nb, input.r_nc};
         ComplexTensor4 const x_matrix{input.x_aa, input.x_bb, input.x_cc, input.x_nn, input.x_ba,
                                       input.x_ca, input.x_na, input.x_cb, input.x_nb, input.x_nc};
-        ComplexTensor<asymmetric_t> const c_matrix =
+        auto const c_matrix =
             ComplexTensor<asymmetric_t>{(2.0 * input.c1 + input.c0) / 3.0, (input.c0 - input.c1) / 3.0};
         ComplexTensor4 const z = r_matrix + 1.0i * x_matrix;
 
@@ -361,7 +361,7 @@ TEST_CASE("Test asym line") {
         ComplexTensor<asymmetric_t> const x_matrix{input.x_aa, input.x_bb, input.x_cc,
                                                    input.x_ba, input.x_ca, input.x_cb};
         ComplexTensor<asymmetric_t> const y_series = 1 / base_y * inv(r_matrix + 1.0i * x_matrix);
-        ComplexTensor<asymmetric_t> const c_matrix =
+        auto const c_matrix =
             ComplexTensor<asymmetric_t>{(2.0 * input.c1 + input.c0) / 3.0, (input.c0 - input.c1) / 3.0};
         execute_subcases(input, y_series, c_matrix, base_i, base_y, system_frequency, voltage_lvl);
     }
@@ -396,7 +396,7 @@ TEST_CASE("Test asym line") {
         ComplexTensor<asymmetric_t> const x_matrix{input.x_aa, input.x_bb, input.x_cc,
                                                    input.x_ba, input.x_ca, input.x_cb};
         ComplexTensor<asymmetric_t> const y_series = 1 / base_y * inv(r_matrix + 1.0i * x_matrix);
-        ComplexTensor<asymmetric_t> const c_matrix =
+        auto const c_matrix =
             ComplexTensor<asymmetric_t>(input.c_aa, input.c_bb, input.c_cc, input.c_ba, input.c_ca, input.c_cb);
         execute_subcases(input, y_series, c_matrix, base_i, base_y, system_frequency, voltage_lvl);
     }

@@ -91,7 +91,7 @@ struct JsonConverter : NullVisitor<JsonConverter> {
         if (indent < 0) {
             return;
         }
-        Idx const indent_level = static_cast<Idx>(map_array.size());
+        auto const indent_level = static_cast<Idx>(map_array.size());
         if (indent_level > max_indent_level) {
             if (map_array.top().begin) {
                 map_array.top().begin = false;
@@ -256,8 +256,8 @@ class Serializer {
             break;
         default: {
             using namespace std::string_literals;
-            throw SerializationError("Unsupported serialization format: "s +
-                                     std::to_string(std::to_underlying(serialization_format_)));
+            throw SerializationError(
+                std::format("Unsupported serialization format: {}", std::to_underlying(serialization_format_)));
         }
         }
 
@@ -272,9 +272,8 @@ class Serializer {
             return get_msgpack(use_compact_list);
         default: {
             using namespace std::string_literals;
-            throw SerializationError("Serialization format "s +
-                                     std::to_string(std::to_underlying(serialization_format_)) +
-                                     " does not support binary buffer output"s);
+            throw SerializationError(std::format("Serialization format {} does not support binary buffer output",
+                                                 std::to_underlying(serialization_format_)));
         }
         }
     }
@@ -287,9 +286,8 @@ class Serializer {
             [[fallthrough]];
         default: {
             using namespace std::string_literals;
-            throw SerializationError("Serialization format "s +
-                                     std::to_string(std::to_underlying(serialization_format_)) +
-                                     " does not support string output"s);
+            throw SerializationError(std::format("Serialization format {} does not support string output",
+                                                 std::to_underlying(serialization_format_)));
         }
         }
     }

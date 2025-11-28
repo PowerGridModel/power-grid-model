@@ -146,8 +146,7 @@ template <symmetry_tag sym> class VoltageSensor : public GenericVoltageSensor {
         value.energized = 1;
 
         DoubleComplex const u1_measured = sym_calc_param().value;
-        bool const has_angle = !is_nan(imag(u1_measured));
-        if (has_angle) {
+        if (bool const has_angle = !is_nan(imag(u1_measured)); has_angle) {
             value.u_residual = (cabs(u1_measured) - cabs(u)) * u_rated_;
         } else {
             value.u_residual = (real(u1_measured) - cabs(u)) * u_rated_;
