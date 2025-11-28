@@ -41,8 +41,8 @@ class Transformer : public Branch {
           pk_{transformer_input.pk},
           i0_{transformer_input.i0},
           p0_{transformer_input.p0},
-          i0_zero_sequence_{isnan(transformer_input.i0_zero_sequence) ? i0_ : transformer_input.i0_zero_sequence},
-          p0_zero_sequence_{isnan(transformer_input.p0_zero_sequence)
+          i0_zero_sequence_{is_nan(transformer_input.i0_zero_sequence) ? i0_ : transformer_input.i0_zero_sequence},
+          p0_zero_sequence_{is_nan(transformer_input.p0_zero_sequence)
                                 ? p0_ + pk_ * (i0_zero_sequence_ * i0_zero_sequence_ - i0_ * i0_)
                                 : transformer_input.p0_zero_sequence},
           winding_from_{transformer_input.winding_from},
