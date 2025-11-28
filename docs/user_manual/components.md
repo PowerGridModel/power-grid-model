@@ -219,6 +219,16 @@ It can happen that `tap_min > tap_max`.
 In this case the winding voltage is decreased if the tap position is increased.
 ```
 
+**Note:**
+By default, PGM uses the same magnetization current (and thus impedance) for positive- and zero-sequence circuit.
+This is typically not the case for 3-leg core-type transformers.
+Due to lack of iron-core pass for zero-sequence flux,
+the zero-sequence magnetization current is usually significantly higher than positive sequence.
+If you want to do asymmetrical calculation with 3-leg core-type transformers,
+please set the attribute `i0_zero_sequence`.
+If the transformer specificaiton does not provide such an attribute,
+a good guess will be `i0_zero_sequence = 1.0`.
+
 #### Electric Model
 
 `transformer` is described by a $\pi$ model, where $Z_{\text{series}}$ can be computed as
