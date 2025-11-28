@@ -419,7 +419,6 @@ TEST_CASE("Test Transfomer - Test grounding - Dyn11") {
                                  .i0 = 0.015,
                                  .p0 = 30.0e4,
                                  .i0_zero_sequence = 1.0,
-                                 .p0_zero_sequence = 50.0e4,
                                  .winding_from = WindingType::delta,
                                  .winding_to = WindingType::wye_n,
                                  .clock = 11,
@@ -464,8 +463,10 @@ TEST_CASE("Test Transfomer - Test grounding - Dyn11") {
     }
     DoubleComplex const y_1_shunt = (y_shunt_real + 1i * y_shunt_imag) / base_y_to;
 
+    double const p0_zero_sequence =
+        input.p0 + input.pk * (input.i0_zero_sequence * input.i0_zero_sequence - input.i0 * input.i0);
     double const y0_shunt_abs = input.i0_zero_sequence * input.sn / input.u2 / input.u2;
-    double const y0_shunt_real = input.p0_zero_sequence / input.u2 / input.u2;
+    double const y0_shunt_real = p0_zero_sequence / input.u2 / input.u2;
     double y0_shunt_imag;
     if (y0_shunt_real > y0_shunt_abs) {
         y0_shunt_imag = 0.0;
