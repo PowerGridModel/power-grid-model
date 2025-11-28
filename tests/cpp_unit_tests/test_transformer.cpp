@@ -418,6 +418,8 @@ TEST_CASE("Test Transfomer - Test grounding - Dyn11") {
                                  .pk = 100e3,
                                  .i0 = 0.015,
                                  .p0 = 30.0e4,
+                                 .i0_zero_sequence = 1.0,
+                                 .p0_zero_sequence = 50.0e4,
                                  .winding_from = WindingType::delta,
                                  .winding_to = WindingType::wye_n,
                                  .clock = 11,
@@ -462,6 +464,16 @@ TEST_CASE("Test Transfomer - Test grounding - Dyn11") {
     }
     DoubleComplex const y_1_shunt = (y_shunt_real + 1i * y_shunt_imag) / base_y_to;
 
+    double const y0_shunt_abs = input.i0_zero_sequence * input.sn / input.u2 / input.u2;
+    double const y0_shunt_real = input.p0_zero_sequence / input.u2 / input.u2;
+    double y0_shunt_imag;
+    if (y0_shunt_real > y0_shunt_abs) {
+        y0_shunt_imag = 0.0;
+    } else {
+        y0_shunt_imag = -std::sqrt(y0_shunt_abs * y0_shunt_abs - y0_shunt_real * y0_shunt_real);
+    }
+    DoubleComplex const y_0_shunt = (y0_shunt_real + 1i * y0_shunt_imag) / base_y_to;
+
     DoubleComplex const tap_ratio_1 = k * std::exp(1.0i * (deg_30 * input.clock));
 
     DoubleComplex const y_1_tt = (1.0 / z_1_series) + 0.5 * y_1_shunt;
@@ -485,7 +497,7 @@ TEST_CASE("Test Transfomer - Test grounding - Dyn11") {
     DoubleComplex const y_0_ff = low_admittance;
     DoubleComplex const y_0_ft = 0.0;
     DoubleComplex const y_0_tf = 0.0;
-    DoubleComplex const y_0_tt = (1.0 / (1.0 / (1.0 / z_1_series + y_1_shunt) + 3.0 * z_grounding_to));
+    DoubleComplex const y_0_tt = (1.0 / (1.0 / (1.0 / z_1_series + y_0_shunt) + 3.0 * z_grounding_to));
 
     // Sequence admittances -> phase addmitance
     ComplexTensor<asymmetric_t> y_ff_diagonal;
