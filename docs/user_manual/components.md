@@ -226,7 +226,7 @@ Due to lack of iron-core pass for zero-sequence flux,
 the zero-sequence magnetization current is usually significantly higher than positive sequence.
 If you want to do asymmetrical calculation with 3-leg core-type transformers,
 please set the attribute `i0_zero_sequence`.
-If the transformer specificaiton does not provide such an attribute,
+If the transformer specification does not provide such an attribute,
 a good guess will be `i0_zero_sequence = 1.0`.
 ```
 
