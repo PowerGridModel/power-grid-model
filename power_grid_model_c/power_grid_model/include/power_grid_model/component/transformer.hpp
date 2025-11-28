@@ -18,6 +18,14 @@
 namespace power_grid_model {
 
 class Transformer : public Branch {
+  private:
+    struct TransformerParams {
+        DoubleComplex y_series{};
+        DoubleComplex y_shunt{};
+        DoubleComplex y0_shunt{};
+        double k{1.0};
+    };
+
   public:
     using InputType = TransformerInput;
     using UpdateType = TransformerUpdate;
@@ -162,7 +170,7 @@ class Transformer : public Branch {
     }
 
     // calculate transformer parameter
-    std::tuple<DoubleComplex, DoubleComplex, double> transformer_params() const {
+    TransformerParams transformer_params() const {
         double const base_y_to = base_i_to_ * base_i_to_ / base_power_1p;
         // off nominal tap ratio
         auto const [u1, u2] = [this]() {
@@ -211,16 +219,16 @@ class Transformer : public Branch {
         // y shunt
         y_shunt = y_shunt / base_y_to;
         // return
-        return std::make_tuple(y_series, y_shunt, k);
+        return TransformerParams{.y_series = y_series, .y_shunt = y_shunt, .k = k};
     }
 
     // branch param
     BranchCalcParam<symmetric_t> sym_calc_param() const final {
-        auto const [y_series, y_shunt, k] = transformer_params();
+        auto const [y_series, y_shunt, [[maybe_unused]] y0_shunt, k] = transformer_params();
         return calc_param_y_sym(y_series, y_shunt, k * std::exp(1.0i * (clock_ * deg_30)));
     }
     BranchCalcParam<asymmetric_t> asym_calc_param() const final {
-        auto const [y_series, y_shunt, k] = transformer_params();
+        auto const [y_series, y_shunt, y0_shunt, k] = transformer_params();
         // positive sequence
         auto const param1 = calc_param_y_sym(y_series, y_shunt, k * std::exp(1.0i * (clock_ * deg_30)));
         // negative sequence
