@@ -206,25 +206,35 @@ class Transformer : public Branch {
         z_series.imag(uk_sign * (z_series_imag_squared > 0.0 ? std::sqrt(z_series_imag_squared) : 0.0));
         // y series
         y_series = (1.0 / z_series) / base_y_to;
+
         // shunt
         DoubleComplex y_shunt;
-        // Y = I0_2 / (U2/sqrt3) = i0 * (S / sqrt3 / U2) / (U2/sqrt3) = i0 * S * / U2 / U2
+        // Y = I0 / (U2/sqrt3) = i0 * (S / sqrt3 / U2) / (U2/sqrt3) = i0 * S * / U2 / U2
         double const y_shunt_abs = i0_ * sn_ / u2 / u2;
         // G = P0 / (U2^2)
         y_shunt.real(p0_ / u2 / u2);
-
         auto const y_shunt_imag_squared = y_shunt_abs * y_shunt_abs - y_shunt.real() * y_shunt.real();
         y_shunt.imag(y_shunt_imag_squared > 0.0 ? -std::sqrt(y_shunt_imag_squared) : 0.0);
-
-        // y shunt
         y_shunt = y_shunt / base_y_to;
+
+        // shunt zero sequence
+        DoubleComplex y0_shunt;
+        // Y0 = I0_0 / (U2/sqrt3) = i0_zero_sequence_ * (S / sqrt3 / U2) / (U2/sqrt3) = i0_zero_sequence_ * S * / U2 /
+        // U2
+        double const y0_shunt_abs = i0_zero_sequence_ * sn_ / u2 / u2;
+        // G0 = P0_0 / (U2^2)
+        y0_shunt.real(p0_zero_sequence_ / u2 / u2);
+        auto const y0_shunt_imag_squared = y0_shunt_abs * y0_shunt_abs - y0_shunt.real() * y0_shunt.real();
+        y0_shunt.imag(y0_shunt_imag_squared > 0.0 ? -std::sqrt(y0_shunt_imag_squared) : 0.0);
+        y0_shunt = y0_shunt / base_y_to;
+
         // return
-        return TransformerParams{.y_series = y_series, .y_shunt = y_shunt, .k = k};
+        return TransformerParams{.y_series = y_series, .y_shunt = y_shunt, .y0_shunt = y0_shunt, .k = k};
     }
 
     // branch param
     BranchCalcParam<symmetric_t> sym_calc_param() const final {
-        auto const [y_series, y_shunt, [[maybe_unused]] y0_shunt, k] = transformer_params();
+        auto const [y_series, y_shunt, y0_shunt, k] = transformer_params();
         return calc_param_y_sym(y_series, y_shunt, k * std::exp(1.0i * (clock_ * deg_30)));
     }
     BranchCalcParam<asymmetric_t> asym_calc_param() const final {
@@ -244,12 +254,12 @@ class Transformer : public Branch {
             }
             DoubleComplex const z0_series = 1.0 / y_series + 3.0 * (z_grounding_to_ + z_grounding_from_ / k / k);
             DoubleComplex const y0_series = 1.0 / z0_series;
-            param0 = calc_param_y_sym(y0_series, y_shunt, k * std::exp(1.0i * phase_shift_0));
+            param0 = calc_param_y_sym(y0_series, y0_shunt, k * std::exp(1.0i * phase_shift_0));
         }
         // YN*
         else if (winding_from_ == WindingType::wye_n && from_status()) {
             // ground path always possible via magnetization branch
-            DoubleComplex y0 = y_shunt;
+            DoubleComplex y0 = y0_shunt;
             if (winding_to_ == WindingType::delta) {
                 // additional path via zk
                 y0 += y_series;
@@ -264,7 +274,7 @@ class Transformer : public Branch {
         // *yn
         else if (winding_to_ == WindingType::wye_n && to_status()) {
             // ground path always possible via magnetization branch
-            DoubleComplex y0 = y_shunt;
+            DoubleComplex y0 = y0_shunt;
             if (winding_from_ == WindingType::delta) {
                 // additional path via zk
                 y0 += y_series;
