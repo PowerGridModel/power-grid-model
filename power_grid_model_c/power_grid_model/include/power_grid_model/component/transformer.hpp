@@ -33,6 +33,10 @@ class Transformer : public Branch {
           pk_{transformer_input.pk},
           i0_{transformer_input.i0},
           p0_{transformer_input.p0},
+          i0_zero_sequence_{isnan(transformer_input.i0_zero_sequence) ? i0_ : transformer_input.i0_zero_sequence},
+          p0_zero_sequence_{isnan(transformer_input.p0_zero_sequence)
+                                ? p0_ + pk_ * (i0_zero_sequence_ * i0_zero_sequence_ - i0_ * i0_)
+                                : transformer_input.p0_zero_sequence},
           winding_from_{transformer_input.winding_from},
           winding_to_{transformer_input.winding_to},
           clock_{transformer_input.clock},
@@ -120,6 +124,8 @@ class Transformer : public Branch {
     double pk_;
     double i0_;
     double p0_;
+    double i0_zero_sequence_;
+    double p0_zero_sequence_;
     WindingType winding_from_;
     WindingType winding_to_;
     IntS clock_;
