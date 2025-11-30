@@ -223,7 +223,7 @@
                 },
                 {
                     "data_type": "double",
-                    "names": ["uk", "pk", "i0", "p0"],
+                    "names": ["uk", "pk", "i0", "p0", "i0_zero_sequence", "p0_zero_sequence"],
                     "description": "short circuit and open testing parameters"
                 },
                 {
