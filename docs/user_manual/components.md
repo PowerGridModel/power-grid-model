@@ -228,6 +228,8 @@ If you want to do asymmetrical calculation with 3-leg core-type transformers,
 please set the attribute `i0_zero_sequence`.
 If the transformer specification does not provide such an attribute,
 a good guess will be `i0_zero_sequence = 1.0`.
+See [OpenDSS Documentation](https://opendss.epri.com/3-PhaseTransformerModeling.html)
+for detailed explanation.
 ```
 
 #### Electric Model
