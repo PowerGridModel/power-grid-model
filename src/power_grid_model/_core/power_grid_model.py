@@ -7,7 +7,7 @@ Main power grid model class
 """
 
 from enum import IntEnum
-from typing import overload
+from typing import Any, overload
 
 import numpy as np
 
@@ -108,8 +108,37 @@ class PowerGridModel:
         new_model._all_component_count = self._all_component_count
         return new_model
 
-    def __copy__(self):
+    def __copy__(self) -> "PowerGridModel":
         return self.copy()
+
+    def __deepcopy__(self, memo: dict[int, Any]) -> "PowerGridModel":
+        # PowerGridModel.copy makes already a deepcopy
+        new_model = self.copy()
+
+        # memorize that this object (self) has been deepcopied
+        memo[id(self)] = new_model
+
+        return new_model
+
+    def __repr__(self) -> str:
+        """Return a string representation of the current model.
+
+        This includes the total number of components and the number of components per component type of the model.
+
+        Returns:
+            String representation of the model
+        """
+        try:
+            component_count = self.all_component_count
+        except TypeError:
+            component_count = {}
+
+        message = f"{self.__class__.__name__} ({sum(component_count.values())} components)\n"
+
+        for component_type, number in component_count.items():
+            message += f"  - {component_type.value}: {number}\n"
+
+        return message
 
     def __new__(cls, *_args, **_kwargs):
         instance = super().__new__(cls)
@@ -229,7 +258,7 @@ class PowerGridModel:
             if key_enum in kwargs:
                 value_enum = kwargs[key_enum]
                 if isinstance(value_enum, str):
-                    kwargs[key_enum] = type_[value_enum]
+                    kwargs[key_enum] = type_[value_enum]  # NOSONAR(S5864) IntEnum has __getitem__
 
         as_enum_value("calculation_method", CalculationMethod)
         as_enum_value("tap_changing_strategy", TapChangingStrategy)
