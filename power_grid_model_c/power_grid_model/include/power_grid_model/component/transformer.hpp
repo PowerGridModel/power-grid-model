@@ -219,7 +219,7 @@ class Transformer : public Branch {
 
         // shunt zero sequence
         DoubleComplex y0_shunt;
-        // Y0 = I0_0 / (U2/sqrt3) = i0_zero_sequence_ * (S / sqrt3 / U2) / (U2/sqrt3) = i0_zero_sequence_ * S * / U2 /
+        // Y0 = I0_0 / (U2/sqrt3) = i0_zero_sequence_ * (S / sqrt3 / U2) / (U2/sqrt3) = i0_zero_sequence_ * S / U2 /
         // U2
         double const y0_shunt_abs = i0_zero_sequence_ * sn_ / u2 / u2;
         // G0 = P0_0 / (U2^2)
