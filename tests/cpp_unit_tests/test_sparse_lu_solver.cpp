@@ -220,7 +220,7 @@ TEST_CASE("LU solver with multiple orders of magnitude") {
     auto const run = [](Matrix& data) {
         Solver::BlockPerm block_perm{};
         bool has_pivot_perturbation = false;
-        Solver::factorize_block_in_place(data.matrix(), block_perm, 1e-12, false, has_pivot_perturbation);
+        Solver::factorize_block_in_place(data.matrix(), block_perm, 0.0, false, has_pivot_perturbation);
         return data;
     };
 
