@@ -118,9 +118,15 @@ template <rk2_tensor Matrix> class DenseLUFactor {
             // check stability
             Scalar const piv_size = cabs(matrix(pivot, pivot));
             double const piv_error = accumulated_error(pivot, pivot);
-            if (cabs(matrix(pivot, pivot)) <
-                2 * std::max(accumulated_error.row(pivot).maxCoeff(), accumulated_error.col(pivot).maxCoeff())) {
-                throw SparseMatrixError{};
+            if (cabs(matrix(pivot, pivot)) <= std::max(accumulated_error.row(pivot).tail(size - pivot).maxCoeff(),
+                                                       accumulated_error.col(pivot).tail(size - pivot).maxCoeff())) {
+                throw SparseMatrixError{
+                    3, std::format(
+                           "Accumulated error is equal to or exceeds stability threshold: pivot magnitude = {}, max "
+                           "accumulated error = {}.",
+                           cabs(matrix(pivot, pivot)),
+                           std::max(accumulated_error.row(pivot).tail(size - pivot).maxCoeff(),
+                                    accumulated_error.col(pivot).tail(size - pivot).maxCoeff()))};
             }
 
             // use Gaussian elimination to calculate the bottom right corner
@@ -132,6 +138,9 @@ template <rk2_tensor Matrix> class DenseLUFactor {
                 struct AbsoluteStability {
                     typedef double result_type;
                     result_type operator()(Matrix::Scalar const& a, Matrix::Scalar const& b) const {
+                        if (a == Scalar{} || b == Scalar{}) {
+                            return 0.0;
+                        }
                         return epsilon * (cabs(a) + cabs(b)) / 2;
                     }
                 };
@@ -164,7 +173,8 @@ template <rk2_tensor Matrix> class DenseLUFactor {
         double const pivot_threshold = has_pivot_perturbation ? 0.0 : epsilon * max_pivot;
         for (int8_t pivot = 0; pivot != size; ++pivot) {
             if (!is_normal(matrix(pivot, pivot))) {
-                throw SparseMatrixError{}; // can not specify error code
+                throw SparseMatrixError{4, std::format("Non-normal dense pivot element {}: value = {}.", pivot,
+                                                       cabs(matrix(pivot, pivot)))};
             }
         }
         capturing::into_the_void(std::move(matrix));
@@ -309,7 +319,8 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
                                                 has_pivot_perturbation_);
                     }
                     if (!is_normal(lu_matrix[pivot_idx])) {
-                        throw SparseMatrixError{};
+                        throw SparseMatrixError{5, std::format("Non-normal sparse pivot element {}: value = {}.",
+                                                               pivot_row_col, cabs(lu_matrix[pivot_idx]))};
                     }
                     return {};
                 }
@@ -461,7 +472,8 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         while (backward_error > epsilon_converge) {
             // check maximum iteration, including one initial run
             if (num_iter++ == max_iterative_refinement + 1) {
-                throw SparseMatrixError{};
+                throw SparseMatrixError{6, std::format("Iterative refinement did not converge after {} iterations.",
+                                                       max_iterative_refinement)};
             }
             // solve with residual (first time it is the b vector)
             solve_once(data, block_perm_array, residual_.value(), dx_.value());

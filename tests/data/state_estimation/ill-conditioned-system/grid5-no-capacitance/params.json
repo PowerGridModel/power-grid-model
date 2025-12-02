@@ -7,5 +7,19 @@
   "atol": {
     "default": 1e-06,
     ".+_residual": 0.0001
+  },
+  "extra_params": {
+    "sym-newton_raphson": {
+      "raises": {
+        "raises": "SparseMatrixError",
+        "reason": "System is ill-conditioned for the Newton-Raphson calculation method"
+      }
+    },
+    "asym": {
+      "raises": {
+        "raises": "SparseMatrixError",
+        "reason": "System is ill-conditioned for asymmetric calculations"
+      }
+    }
   }
 }
