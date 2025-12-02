@@ -69,6 +69,9 @@ template <rk2_tensor Matrix> class DenseLUFactor {
         TranspositionVector col_transpositions{};
         double max_pivot{};
 
+        Eigen::Matrix<decltype(cabs(Scalar{})), size, size> accumulated_error{
+            Eigen::Matrix<decltype(cabs(Scalar{})), size, size>::Zero()};
+
         // main loop
         for (int8_t pivot = 0; pivot != size; ++pivot) {
             int row_biggest_eigen{};
@@ -105,15 +108,41 @@ template <rk2_tensor Matrix> class DenseLUFactor {
             col_transpositions[pivot] = col_biggest;
             if (pivot != row_biggest) {
                 matrix.row(pivot).swap(matrix.row(row_biggest));
+                accumulated_error.row(pivot).swap(accumulated_error.row(row_biggest));
             }
             if (pivot != col_biggest) {
                 matrix.col(pivot).swap(matrix.col(col_biggest));
+                accumulated_error.row(pivot).swap(accumulated_error.row(col_biggest));
+            }
+
+            // check stability
+            Scalar const piv_size = cabs(matrix(pivot, pivot));
+            double const piv_error = accumulated_error(pivot, pivot);
+            if (cabs(matrix(pivot, pivot)) <
+                2 * std::max(accumulated_error.row(pivot).maxCoeff(), accumulated_error.col(pivot).maxCoeff())) {
+                throw SparseMatrixError{};
             }
 
             // use Gaussian elimination to calculate the bottom right corner
             if (pivot < size - 1) {
                 // calculate the pivot column
                 matrix.col(pivot).tail(size - pivot - 1) /= matrix(pivot, pivot);
+                accumulated_error.col(pivot).tail(size - pivot - 1) /= cabs(matrix(pivot, pivot));
+
+                struct AbsoluteStability {
+                    typedef double result_type;
+                    result_type operator()(Matrix::Scalar const& a, Matrix::Scalar const& b) const {
+                        return epsilon * (cabs(a) + cabs(b)) / 2;
+                    }
+                };
+
+                // check for numerical stability by calculating the new diagonal entries and comparing to the old ones
+                accumulated_error.bottomRightCorner(size - pivot - 1, size - pivot - 1) +=
+                    matrix.bottomRightCorner(size - pivot - 1, size - pivot - 1)
+                        .binaryExpr(
+                            (matrix.col(pivot).tail(size - pivot - 1) * matrix.row(pivot).tail(size - pivot - 1)),
+                            AbsoluteStability{});
+
                 // calculate the bottom right corner
                 matrix.bottomRightCorner(size - pivot - 1, size - pivot - 1).noalias() -=
                     matrix.col(pivot).tail(size - pivot - 1) * matrix.row(pivot).tail(size - pivot - 1);
@@ -134,7 +163,7 @@ template <rk2_tensor Matrix> class DenseLUFactor {
         // only check condition number if pivot perturbation is not used
         double const pivot_threshold = has_pivot_perturbation ? 0.0 : epsilon * max_pivot;
         for (int8_t pivot = 0; pivot != size; ++pivot) {
-            if (cabs(matrix(pivot, pivot)) < pivot_threshold || !is_normal(matrix(pivot, pivot))) {
+            if (!is_normal(matrix(pivot, pivot))) {
                 throw SparseMatrixError{}; // can not specify error code
             }
         }

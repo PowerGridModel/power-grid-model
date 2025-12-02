@@ -7,6 +7,8 @@
 
 #include <doctest/doctest.h>
 
+#include <ranges>
+
 namespace power_grid_model::math_solver {
 namespace {
 using lu_trait_double = math_solver::sparse_lu_entry_trait<double, double, double>;
@@ -193,6 +195,122 @@ TEST_CASE("LU solver with ill-conditioned system") {
             CHECK_NOTHROW(solver.prefactorize(data, block_perm, true));
             solver.solve_with_prefactorized_matrix(data, block_perm, rhs, x);
             check_result(x, x_ref);
+        }
+    }
+}
+
+TEST_CASE("LU solver with multiple orders of magnitude") {
+    // [              [        [
+    //  aa  ab  ac     xa       ya
+    //  ba  bb  bc  *  xb   =   yb
+    //  ca  bc  cc     xc       yc
+    //            ]      ]        ]
+    //
+
+    using Matrix = RealTensor<asymmetric_t>;
+    using Solver = DenseLUFactor<Matrix>;
+
+    static constexpr auto epsilon = std::numeric_limits<double>::epsilon();
+    static constexpr auto regular_small_value = epsilon * 10;              // ~1e-15
+    static constexpr auto very_small_value = epsilon / 10;                 // ~1e-17
+    static constexpr auto regular_large_value = 1.0 / regular_small_value; // ~1e+16
+    static constexpr auto very_large_value = 1.0 / very_small_value;       // ~1e+17
+    static constexpr auto normal_value = 1.0;
+
+    auto const run = [](Matrix& data) {
+        Solver::BlockPerm block_perm{};
+        bool has_pivot_perturbation = false;
+        Solver::factorize_block_in_place(data.matrix(), block_perm, 1e-12, false, has_pivot_perturbation);
+        return data;
+    };
+
+    constexpr auto all_values = [] {
+        return std::views::cartesian_product(std::array{regular_large_value, very_large_value},
+                                             std::array{normal_value},
+                                             std::array{regular_small_value, very_small_value});
+    };
+
+    SUBCASE("Different orders of magnitude only on diagonal") {
+        SUBCASE("Full matrix") {
+            //  [ AA   ab   ac ]
+            //  [ ba   bb   bc ]
+            //  [ ca   cb  (cc)]
+            // factor 2 for (cc) needed to to avoid zeros on pivot
+            for (auto const& [large_value, normal_value, small_value] : all_values()) {
+                CAPTURE(large_value);
+                CAPTURE(normal_value);
+                CAPTURE(small_value);
+                auto data =
+                    Matrix{large_value, normal_value, 2 * small_value, normal_value, normal_value, normal_value};
+                CHECK_NOTHROW(run(data));
+            }
+        }
+        SUBCASE("Tri-diagonal matrix") {
+            //  [ AA   ab   0  ]
+            //  [ ba   bb   bc ]
+            //  [ 0    cb  (cc)]
+            for (auto const& [large_value, normal_value, small_value] : all_values()) {
+                CAPTURE(large_value);
+                CAPTURE(normal_value);
+                CAPTURE(small_value);
+                auto data = Matrix{large_value, normal_value, small_value, normal_value, 0.0, normal_value};
+                CHECK_NOTHROW(run(data));
+            }
+        }
+        SUBCASE("Full matrix with rounding errors") {
+            //  [ AA   ab   ac ]
+            //  [ ba   bb   bc ]
+            //  [ ca   cb  (cc)]
+            for (auto const& [large_value, normal_value, small_value] : all_values()) {
+                CAPTURE(large_value);
+                CAPTURE(normal_value);
+                CAPTURE(small_value);
+                auto data = Matrix{large_value, normal_value, small_value, normal_value, normal_value, normal_value};
+                CHECK_NOTHROW(run(data));
+            }
+        }
+    }
+
+    SUBCASE("Different orders of magnitude in off-diagonal, but largest on diagonal") {
+        SUBCASE("Full matrix") {
+            //  [ AA   ab  (ac)]
+            //  [ ba   bb  (bc)]
+            //  [(ca) (cb) (cc)]
+            for (auto const& [large_value, normal_value, small_value] : all_values()) {
+                CAPTURE(large_value);
+                CAPTURE(normal_value);
+                CAPTURE(small_value);
+                auto data = Matrix{large_value, normal_value, small_value, normal_value, small_value, small_value};
+                CHECK_NOTHROW(run(data));
+            }
+        }
+        SUBCASE("Tri-diagonal matrix") {
+            //  [ AA   ab   0  ]
+            //  [ ba   bb  (bc)]
+            //  [ 0   (cb) (cc)]
+            for (auto const& [large_value, normal_value, small_value] : all_values()) {
+                CAPTURE(large_value);
+                CAPTURE(normal_value);
+                CAPTURE(small_value);
+                auto data = Matrix{large_value, normal_value, small_value, normal_value, 0.0, small_value};
+                CHECK_NOTHROW(run(data));
+            }
+        }
+    }
+
+    SUBCASE("With small deviations: raises if deviations too small") {
+        SUBCASE("Full matrix") {
+            SUBCASE("Small but not too small deviation") {
+                auto data =
+                    Matrix{normal_value,       normal_value + regular_small_value, regular_small_value, normal_value, 0,
+                           regular_small_value};
+                CHECK_NOTHROW(run(data));
+            }
+            SUBCASE("Too small deviation results in cancelling values => another pivot element is selected => raises") {
+                auto data = Matrix{normal_value,    normal_value + very_small_value, very_small_value, normal_value, 0,
+                                   very_small_value};
+                CHECK_THROWS_AS(run(data), SparseMatrixError);
+            }
         }
     }
 }

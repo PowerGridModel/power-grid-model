@@ -4,8 +4,12 @@
   "atol": {
     "default": 1e-8
   },
-  "raises": {
-    "raises": "SparseMatrixError",
-    "reason": "Observability check for meshed grids is not yet implemented. Also, pivot perturbation wouldn't be triggered as Matrix norm is smaller than the max pivot. See https://github.com/PowerGridModel/power-grid-model/pull/1118#issuecomment-3269339573"
+  "extra_params": {
+    "newton_raphson": {
+      "raises": {
+        "raises": "SparseMatrixError",
+        "reason": "Observability check for meshed grids is not yet implemented. Also, pivot perturbation wouldn't be triggered as Matrix norm is smaller than the max pivot. See https://github.com/PowerGridModel/power-grid-model/pull/1118#issuecomment-3269339573"
+      }
+    }
   }
 }

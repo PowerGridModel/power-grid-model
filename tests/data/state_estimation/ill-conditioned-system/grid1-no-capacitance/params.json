@@ -7,5 +7,13 @@
   "atol": {
     "default": 1e-06,
     ".+_residual": 0.0001
+  },
+  "extra_params": {
+    "asym_newton_raphson": {
+      "raises": {
+        "raises": "SparseMatrixError",
+        "reason": "No shunt capacitance causes numerical instabilities in the LU decomposition."
+      }
+    }
   }
 }
