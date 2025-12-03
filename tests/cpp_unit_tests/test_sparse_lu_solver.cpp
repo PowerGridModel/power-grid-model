@@ -299,6 +299,10 @@ TEST_CASE("LU solver with multiple orders of magnitude") {
     }
 
     SUBCASE("With small deviations: raises if deviations too small") {
+        //  [ aa   ab   0  ]
+        //  [ ba   bb  (bc)]
+        //  [ 0   (cb) (cc)]
+        // with aa = ab, bb = aa + delta and (cc) = (bc)
         SUBCASE("Full matrix") {
             SUBCASE("Small but not too small deviation") {
                 auto data =
