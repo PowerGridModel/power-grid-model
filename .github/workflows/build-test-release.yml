@@ -221,6 +221,8 @@ jobs:
           # pass GitHub runner info into Linux container
           CIBW_ENVIRONMENT_PASS_LINUX: GITHUB_SHA GITHUB_REF GITHUB_RUN_NUMBER
           CIBW_BUILD: ${{ matrix.cibw_build }}
+        with:
+          extras: "uv"
 
       - name: Keep wheel files
         uses: actions/upload-artifact@v5

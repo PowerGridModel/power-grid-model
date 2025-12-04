@@ -202,7 +202,7 @@ disable_error_code = [
 
 # CI build options
 [tool.cibuildwheel]
-build-frontend = "build"
+build-frontend = "build[uv]"
 build-verbosity = 1
 test-groups = ["test"]
 test-command = "pytest {package}/tests"
