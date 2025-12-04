@@ -18,6 +18,14 @@
 namespace power_grid_model {
 
 class Transformer : public Branch {
+  private:
+    struct TransformerParams {
+        DoubleComplex y_series{};
+        DoubleComplex y_shunt{};
+        DoubleComplex y0_shunt{};
+        double k{1.0};
+    };
+
   public:
     using InputType = TransformerInput;
     using UpdateType = TransformerUpdate;
@@ -33,6 +41,10 @@ class Transformer : public Branch {
           pk_{transformer_input.pk},
           i0_{transformer_input.i0},
           p0_{transformer_input.p0},
+          i0_zero_sequence_{is_nan(transformer_input.i0_zero_sequence) ? i0_ : transformer_input.i0_zero_sequence},
+          p0_zero_sequence_{is_nan(transformer_input.p0_zero_sequence)
+                                ? p0_ + pk_ * (i0_zero_sequence_ * i0_zero_sequence_ - i0_ * i0_)
+                                : transformer_input.p0_zero_sequence},
           winding_from_{transformer_input.winding_from},
           winding_to_{transformer_input.winding_to},
           clock_{transformer_input.clock},
@@ -120,6 +132,8 @@ class Transformer : public Branch {
     double pk_;
     double i0_;
     double p0_;
+    double i0_zero_sequence_;
+    double p0_zero_sequence_;
     WindingType winding_from_;
     WindingType winding_to_;
     IntS clock_;
@@ -156,7 +170,7 @@ class Transformer : public Branch {
     }
 
     // calculate transformer parameter
-    std::tuple<DoubleComplex, DoubleComplex, double> transformer_params() const {
+    TransformerParams transformer_params() const {
         double const base_y_to = base_i_to_ * base_i_to_ / base_power_1p;
         // off nominal tap ratio
         auto const [u1, u2] = [this]() {
@@ -192,29 +206,39 @@ class Transformer : public Branch {
         z_series.imag(uk_sign * (z_series_imag_squared > 0.0 ? std::sqrt(z_series_imag_squared) : 0.0));
         // y series
         y_series = (1.0 / z_series) / base_y_to;
+
         // shunt
         DoubleComplex y_shunt;
-        // Y = I0_2 / (U2/sqrt3) = i0 * (S / sqrt3 / U2) / (U2/sqrt3) = i0 * S * / U2 / U2 // NOSONAR(S125)
+        // Y = I0 / (U2/sqrt3) = i0 * (S / sqrt3 / U2) / (U2/sqrt3) = i0 * S * / U2 / U2 // NOSONAR(S125)
         double const y_shunt_abs = i0_ * sn_ / u2 / u2;
         // G = P0 / (U2^2) // NOSONAR(S125)
         y_shunt.real(p0_ / u2 / u2);
-
         auto const y_shunt_imag_squared = y_shunt_abs * y_shunt_abs - y_shunt.real() * y_shunt.real();
         y_shunt.imag(y_shunt_imag_squared > 0.0 ? -std::sqrt(y_shunt_imag_squared) : 0.0);
-
-        // y shunt
         y_shunt = y_shunt / base_y_to;
+
+        // shunt zero sequence
+        DoubleComplex y0_shunt;
+        // Y0 = I0_0 / (U2/sqrt3) = i0_zero_sequence_ * (S / sqrt3 / U2) / (U2/sqrt3) = i0_zero_sequence_ * S / U2 /
+        // U2
+        double const y0_shunt_abs = i0_zero_sequence_ * sn_ / u2 / u2;
+        // G0 = P0_0 / (U2^2)
+        y0_shunt.real(p0_zero_sequence_ / u2 / u2);
+        auto const y0_shunt_imag_squared = y0_shunt_abs * y0_shunt_abs - y0_shunt.real() * y0_shunt.real();
+        y0_shunt.imag(y0_shunt_imag_squared > 0.0 ? -std::sqrt(y0_shunt_imag_squared) : 0.0);
+        y0_shunt = y0_shunt / base_y_to;
+
         // return
-        return std::make_tuple(y_series, y_shunt, k);
+        return TransformerParams{.y_series = y_series, .y_shunt = y_shunt, .y0_shunt = y0_shunt, .k = k};
     }
 
     // branch param
     BranchCalcParam<symmetric_t> sym_calc_param() const final {
-        auto const [y_series, y_shunt, k] = transformer_params();
+        auto const [y_series, y_shunt, y0_shunt, k] = transformer_params();
         return calc_param_y_sym(y_series, y_shunt, k * std::exp(1.0i * (clock_ * deg_30)));
     }
     BranchCalcParam<asymmetric_t> asym_calc_param() const final {
-        auto const [y_series, y_shunt, k] = transformer_params();
+        auto const [y_series, y_shunt, y0_shunt, k] = transformer_params();
         // positive sequence
         auto const param1 = calc_param_y_sym(y_series, y_shunt, k * std::exp(1.0i * (clock_ * deg_30)));
         // negative sequence
@@ -230,19 +254,37 @@ class Transformer : public Branch {
             }
             DoubleComplex const z0_series = 1.0 / y_series + 3.0 * (z_grounding_to_ + z_grounding_from_ / k / k);
             DoubleComplex const y0_series = 1.0 / z0_series;
-            param0 = calc_param_y_sym(y0_series, y_shunt, k * std::exp(1.0i * phase_shift_0));
+            param0 = calc_param_y_sym(y0_series, y0_shunt, k * std::exp(1.0i * phase_shift_0));
         }
-        // YNd
-        if (winding_from_ == WindingType::wye_n && winding_to_ == WindingType::delta && from_status()) {
-            DoubleComplex const z0_series = 1.0 / y_series + 3.0 * z_grounding_from_ / k / k;
-            DoubleComplex const y0_series = 1.0 / z0_series;
-            param0.yff() = (y0_series + y_shunt) / k / k;
+        // YN*
+        else if (winding_from_ == WindingType::wye_n && from_status()) {
+            // ground path always possible via magnetization branch
+            DoubleComplex y0 = y0_shunt;
+            if (winding_to_ == WindingType::delta) {
+                // additional path via zk
+                y0 += y_series;
+            }
+            if (y0 != DoubleComplex{0.0, 0.0}) {
+                // avoid division by zero
+                DoubleComplex const z0 = 1.0 / y0 + 3.0 * z_grounding_from_ / k / k;
+                y0 = 1.0 / z0;
+                param0.yff() = y0 / k / k;
+            }
         }
-        // Dyn
-        if (winding_from_ == WindingType::delta && winding_to_ == WindingType::wye_n && to_status()) {
-            DoubleComplex const z0_series = 1.0 / y_series + 3.0 * z_grounding_to_;
-            DoubleComplex const y0_series = 1.0 / z0_series;
-            param0.ytt() = (y0_series + y_shunt);
+        // *yn
+        else if (winding_to_ == WindingType::wye_n && to_status()) {
+            // ground path always possible via magnetization branch
+            DoubleComplex y0 = y0_shunt;
+            if (winding_from_ == WindingType::delta) {
+                // additional path via zk
+                y0 += y_series;
+            }
+            if (y0 != DoubleComplex{0.0, 0.0}) {
+                // avoid division by zero
+                DoubleComplex const z0 = 1.0 / y0 + 3.0 * z_grounding_to_;
+                y0 = 1.0 / z0;
+                param0.ytt() = y0;
+            }
         }
         // ZN*
         // Zero sequence impedance of zigzag winding is approximately 10% of positive sequence impedance

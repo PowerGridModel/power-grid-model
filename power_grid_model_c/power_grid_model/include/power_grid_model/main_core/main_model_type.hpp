@@ -67,7 +67,6 @@ concept validate_component_types_c =
 
 template <class T, class U> class MainModelType;
 
-// TODO: discussion on checking dependent types can also be done here.
 template <class... ExtraRetrievableType, class... ComponentType>
     requires detail::validate_component_types_c<ComponentList<ComponentType...>>
 class MainModelType<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentList<ComponentType...>> {
@@ -111,11 +110,11 @@ class MainModelType<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     using ComponentFlags = std::array<bool, n_types>;
 
     template <class Functor> static constexpr void run_functor_with_all_component_types_return_void(Functor&& functor) {
-        (std::forward<Functor>(functor).template operator()<ComponentType>(), ...);
+        return utils::run_functor_with_tuple_return_void<ComponentTypesTuple>(std::forward<Functor>(functor));
     }
     template <class Functor>
     static constexpr auto run_functor_with_all_component_types_return_array(Functor&& functor) {
-        return std::array { std::forward<Functor>(functor).template operator()<ComponentType>()... };
+        return utils::run_functor_with_tuple_return_array<ComponentTypesTuple>(std::forward<Functor>(functor));
     }
 };
 
