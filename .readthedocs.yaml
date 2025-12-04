@@ -29,9 +29,9 @@ build:
       - cd docs/doxygen && doxygen && cd ../..
 
       # build class and package diagrams
-      - uv run pyreverse --no-standalone -o dot src/power_grid_model
-      - uv run ccomps -x classes.dot | dot -Grankdir=LR -Nfontsize=13 -Efontsize=13 | gvpack -m100 -array_l1 | neato -n2 -Tsvg -o docs/_static/classes.svg
-      - uv run dot packages.dot -Grankdir=TD -Nfontsize=13 -Efontsize=13 -Tsvg -o docs/_static/packages.svg
+      - pyreverse --no-standalone -o dot src/power_grid_model
+      - ccomps -x classes.dot | dot -Grankdir=LR -Nfontsize=13 -Efontsize=13 | gvpack -m100 -array_l1 | neato -n2 -Tsvg -o docs/_static/classes.svg
+      - dot packages.dot -Grankdir=TD -Nfontsize=13 -Efontsize=13 -Tsvg -o docs/_static/packages.svg
       - rm packages.dot classes.dot
 
       # download support and contribution
