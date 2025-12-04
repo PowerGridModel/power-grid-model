@@ -20,7 +20,7 @@ build:
     post_install:
       # Build package with doc requirements from pyproject.optional-dependencies
       - pip install uv
-      - CC=gcc-14 CXX=g++-14 uv sync --no-default-groups --group doc
+      - CC=gcc-14 CXX=g++-14 uv sync --group doc
 
       # remove API DLL define in header
       - find power_grid_model_c/power_grid_model_c/include -name *.h -exec sed -i -r "s/#define PGM.*//g" {} \;
