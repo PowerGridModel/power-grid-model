@@ -204,7 +204,7 @@ disable_error_code = [
 [tool.cibuildwheel]
 build-frontend = "build"
 build-verbosity = 1
-test-extras = ["dev"]
+test-groups = ["test"]
 test-command = "pytest {package}/tests"
 # we do not support 
 #    PyPy
