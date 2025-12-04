@@ -10,18 +10,20 @@ sphinx:
 
 build:
   os: "ubuntu-24.04"
-  tools:
-    python: "3.13"
   apt_packages:
     - graphviz
     - gcc-14
     - g++-14
   jobs:
+    pre_create_environment:
+      - asdf plugin add uv
+      - asdf install uv latest
+      - asdf global uv latest
+    create_environment:
+      - uv venv "${READTHEDOCS_VIRTUALENV_PATH}"
+    install:
+      - CC=gcc-14 CXX=g++-14 UV_PROJECT_ENVIRONMENT="${READTHEDOCS_VIRTUALENV_PATH}" uv sync --frozen --group doc
     post_install:
-      # Build package with doc requirements from pyproject.optional-dependencies
-      - pip install --upgrade pip
-      - CC=gcc-14 CXX=g++-14 pip install . --group dev --group doc
-
       # remove API DLL define in header
       - find power_grid_model_c/power_grid_model_c/include -name *.h -exec sed -i -r "s/#define PGM.*//g" {} \;
       - find power_grid_model_c/power_grid_model_c/include -name *.h -exec sed -i -r "s/PGM_API //g" {} \;
