@@ -41,6 +41,7 @@ lint = [
     "pre-commit",
     "ruff",
     "mypy",
+    "numpy",  # needed for mypy
     "gersemi",              # CMake linter
     "clang-format ~= 18.0", # C++ formatter
 ]
