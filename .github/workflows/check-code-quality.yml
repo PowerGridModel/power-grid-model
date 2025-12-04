@@ -31,7 +31,8 @@ jobs:
         uses: astral-sh/setup-uv@v7
 
       - name: Install most linters from uv
-        run: uv sync --only-group lint
+        run: |
+          CC=gcc-14 CXX=g++-14 uv sync --group lint
 
       - name: Run mypy
         run: |
