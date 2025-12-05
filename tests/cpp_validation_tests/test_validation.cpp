@@ -507,8 +507,16 @@ std::optional<CaseParam> construct_case(std::filesystem::path const& case_dir, j
     json calculation_method_params;
     calculation_method_params.update(j, true);
     if (j.contains("extra_params")) {
-        if (json const& extra_params = j.at("extra_params"); extra_params.contains(calculation_method)) {
+        json const& extra_params = j.at("extra_params");
+        if (extra_params.contains(calculation_method)) {
             calculation_method_params.update(extra_params.at(calculation_method), true);
+        }
+        if (extra_params.contains(sym ? "sym" : "asym")) {
+            calculation_method_params.update(extra_params.at(sym ? "sym" : "asym"), true);
+        }
+        if (extra_params.contains(std::format("{}-{}", sym ? "sym" : "asym", calculation_method))) {
+            calculation_method_params.update(
+                extra_params.at(std::format("{}-{}", sym ? "sym" : "asym", calculation_method)), true);
         }
     }
 
