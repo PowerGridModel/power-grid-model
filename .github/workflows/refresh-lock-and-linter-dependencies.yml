@@ -91,3 +91,4 @@ jobs:
           labels: "dependencies"
           signoff: true
           delete-branch: true
+          base: ${{ github.head_ref }}
