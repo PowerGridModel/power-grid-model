@@ -7,6 +7,7 @@
 #include "../common/common.hpp"
 
 namespace power_grid_model::main_core {
+constexpr Idx isolated_component{-1};
 
 namespace detail {
 template <std::derived_from<Branch> ComponentType, typename ComponentContainer>
