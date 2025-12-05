@@ -216,7 +216,7 @@ class Branch : public Base {
                 if (cabs(y_shunt) < numerical_tolerance) {
                     branch_shunt = 0.0;
                 } else {
-                    // branch_shunt = y_shunt/2 + 1/(1/y_series + 2/y_shunt)
+                    // branch_shunt = y_shunt/2 + 1/(1/y_series + 2/y_shunt) // NOSONAR(S125)
                     branch_shunt = 0.5 * y_shunt + 1.0 / (1.0 / y_series + 2.0 / y_shunt);
                 }
                 // from or to connected

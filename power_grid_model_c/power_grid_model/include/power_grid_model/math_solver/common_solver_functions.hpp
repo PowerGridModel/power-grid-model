@@ -27,7 +27,7 @@ template <symmetry_tag sym>
 inline void add_linear_loads(IdxRange const& load_gens_per_bus, Idx /* bus_number */, PowerFlowInput<sym> const& input,
                              ComplexTensor<sym>& diagonal_element) {
     for (auto load_number : load_gens_per_bus) {
-        // YBus_diag += -conj(S_base)
+        // YBus_diag += -conj(S_base) // NOSONAR(S125)
         add_diag(diagonal_element, -conj(input.s_injection[load_number]));
     }
 }

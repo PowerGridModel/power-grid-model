@@ -195,13 +195,13 @@ class Transformer : public Branch {
         // uk can be negative for artificial transformer from 3-winding
         // in this case, the imaginary part of z_series should be negative
         double const uk_sign = (uk >= 0) ? 1.0 : -1.0;
-        // Z = abs(uk)*U2^2/S
+        // Z = abs(uk)*U2^2/S // NOSONAR(S125)
         double const z_series_abs = cabs(uk) * u2 * u2 / sn_;
-        // R = pk * U2^2/S^2
+        // R = pk * U2^2/S^2 // NOSONAR(S125)
         // pk can be negative for aritificual transformer from 3-winding
         // in this case, the real part of z_series should be negative
         z_series.real(pk * u2 * u2 / sn_ / sn_);
-        // X = uk_sign * sqrt(Z^2 - R^2)
+        // X = uk_sign * sqrt(Z^2 - R^2) // NOSONAR(S125)
         auto const z_series_imag_squared = z_series_abs * z_series_abs - z_series.real() * z_series.real();
         z_series.imag(uk_sign * (z_series_imag_squared > 0.0 ? std::sqrt(z_series_imag_squared) : 0.0));
         // y series
@@ -209,9 +209,9 @@ class Transformer : public Branch {
 
         // shunt
         DoubleComplex y_shunt;
-        // Y = I0 / (U2/sqrt3) = i0 * (S / sqrt3 / U2) / (U2/sqrt3) = i0 * S * / U2 / U2
+        // Y = I0 / (U2/sqrt3) = i0 * (S / sqrt3 / U2) / (U2/sqrt3) = i0 * S * / U2 / U2 // NOSONAR(S125)
         double const y_shunt_abs = i0_ * sn_ / u2 / u2;
-        // G = P0 / (U2^2)
+        // G = P0 / (U2^2) // NOSONAR(S125)
         y_shunt.real(p0_ / u2 / u2);
         auto const y_shunt_imag_squared = y_shunt_abs * y_shunt_abs - y_shunt.real() * y_shunt.real();
         y_shunt.imag(y_shunt_imag_squared > 0.0 ? -std::sqrt(y_shunt_imag_squared) : 0.0);

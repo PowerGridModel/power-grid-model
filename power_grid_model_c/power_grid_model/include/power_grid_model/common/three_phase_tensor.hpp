@@ -200,7 +200,7 @@ inline auto cabs(Eigen::ArrayBase<DerivedA> const& m)
     return m.abs();
 }
 
-// phase_shift(x) = e^{i arg(x)} = x / |x|
+// phase_shift(x) = e^{i arg(x)} = x / |x| // NOSONAR(S125)
 template <std::floating_point Float> inline std::complex<Float> phase_shift(std::complex<Float> const x) {
     if (auto const abs_x = cabs(x); abs_x > 0.0) {
         return x / abs_x;

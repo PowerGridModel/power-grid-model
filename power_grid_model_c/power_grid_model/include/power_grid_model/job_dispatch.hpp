@@ -54,7 +54,7 @@ class JobDispatch {
 
     // Lippincott pattern
     static auto scenario_exception_handler(std::vector<std::string>& messages) {
-        return [&messages](Idx scenario_idx) -> void {
+        return [&messages](Idx scenario_idx) {
             assert(0 <= scenario_idx);
             assert(scenario_idx < std::ssize(messages));
 
