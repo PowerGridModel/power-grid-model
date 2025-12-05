@@ -46,7 +46,7 @@ except ImportError:
         """ Some validation cases tests marked as {"xfail": {"raises": "Failed"}} may report as xfail"""
         """ even though they are actual problems."""
     )
-    _Failed = None
+    _Failed = None  # type: ignore[assignment,misc]
 
 
 BASE_PATH = Path(__file__).parent.parent

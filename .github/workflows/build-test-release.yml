@@ -33,9 +33,8 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.13"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
 
       - name: Set PyPI Version
         uses: PowerGridModel/pgm-version-bump@main
@@ -46,8 +45,7 @@ jobs:
         run: |
           cp PYPI_VERSION VERSION
           cat VERSION
-          pip install build
-          python -m build --sdist --outdir wheelhouse .
+          uv build --sdist --no-create-gitignore --out-dir wheelhouse .
 
       - name: Keep version file
         uses: actions/upload-artifact@v5
@@ -221,6 +219,8 @@ jobs:
           # pass GitHub runner info into Linux container
           CIBW_ENVIRONMENT_PASS_LINUX: GITHUB_SHA GITHUB_REF GITHUB_RUN_NUMBER
           CIBW_BUILD: ${{ matrix.cibw_build }}
+        with:
+          extras: "uv"
 
       - name: Keep wheel files
         uses: actions/upload-artifact@v5
@@ -309,12 +309,6 @@ jobs:
           exit 1
 
       - uses: actions/checkout@v6
-
-      - name: Setup python
-        uses: actions/setup-python@v6
-        with:
-          python-version: '3.12'
-          architecture: x64
 
       - uses: actions/download-artifact@v6
 
