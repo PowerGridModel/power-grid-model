@@ -6,6 +6,21 @@ name: Refresh lock and linter Dependencies
 
 on:
   workflow_call:
+    inputs:
+      create-pr:
+        type: boolean
+        description: "Whether to create a pull request with the changes"
+        required: false
+        default: false
+  workflow_dispatch:
+    inputs:
+      create-pr:
+        type: boolean
+        description: "Whether to create a pull request with the changes"
+        required: false
+        default: false
+  schedule:
+    - cron: "0 2 * * 0" # Every Sunday at 2:00 UTC
 
 
 concurrency:
@@ -64,4 +79,15 @@ jobs:
         run: |
           git status
           git diff .pre-commit-config.yaml
-
+      
+      - name: create pull request
+        if: ${{ inputs.create-pr || github.event_name == 'schedule' }}
+        uses: peter-evans/create-pull-request@v5
+        with:
+          commit-message: "Refresh lock and linter dependencies"
+          branch: "dependencies/refresh-lock-and-linter"
+          title: "Refresh lock and linter dependencies"
+          body: "This PR refreshes the lock file and updates linter dependencies to their latest versions."
+          labels: "dependencies"
+          signoff: true
+          delete-branch: true

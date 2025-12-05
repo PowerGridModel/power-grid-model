@@ -61,6 +61,8 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+    with:
+      create-pr: true  # change to false after testing
 
   ci-passed:
     runs-on: ubuntu-latest
