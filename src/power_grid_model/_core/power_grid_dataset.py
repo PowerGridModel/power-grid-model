@@ -350,6 +350,16 @@ class CConstDataset:
         """
         return CDatasetInfo(pgc.dataset_const_get_info(self._const_dataset))
 
+    def set_next(self, next_dataset: "CConstDataset") -> None:
+        """
+        Set the next dataset in the linked list.
+
+        Args:
+            next_dataset: The next dataset to set.
+        """
+        pgc.dataset_const_set_next(self._const_dataset, next_dataset._const_dataset)
+        assert_no_error()
+
     def __del__(self):
         pgc.destroy_dataset_const(self._const_dataset)
 
