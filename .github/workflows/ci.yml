@@ -55,9 +55,17 @@ jobs:
     with:
       target: "all"
 
+  refresh-linter-dependencies:
+    name: Refresh Linter Dependencies
+    uses: "./.github/workflows/refresh-linter-dependencies.yml"
+    needs: [ci-started]
+    permissions:
+      contents: write
+      pull-requests: write
+
   ci-passed:
     runs-on: ubuntu-latest
-    needs: [ci-started, build-test-release, check-code-quality, reuse-compliance, clang-tidy]
+    needs: [ci-started, build-test-release, check-code-quality, reuse-compliance, clang-tidy, refresh-linter-dependencies]
     if: always()
 
     steps:

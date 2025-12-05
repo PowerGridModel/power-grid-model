@@ -1,0 +1,60 @@
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+name: Refresh Linter Dependencies
+
+on:
+  workflow_call:
+
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-linter-dependencies
+  cancel-in-progress: true
+
+
+jobs:
+  refresh-linter-dependencies:
+    name: Refresh Linter Dependencies
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: Install linters from uv
+        run: |
+          uv sync --group lint
+      
+      - name: retrieve versions
+        id: versions
+        run: |
+          grab_installed_version() {
+            local pkg="$1"
+            local version
+            version=$(uv pip freeze | grep -i "^$pkg==" | head -n1 | cut -d= -f3)
+            echo "${pkg}=$version" >> "$GITHUB_OUTPUT"
+          }
+          grab_installed_version "ruff"
+          grab_installed_version "clang-format"
+          grab_installed_version "mypy"
+          grab_installed_version "gersemi"
+
+      - name: Update .pre-commit-config.yaml
+        uses: cuchi/jinja2-action@v1.3.0
+        with:
+          template: .pre-commit-config.yaml.jinja
+          output_file: .pre-commit-config.yaml
+          variables: |
+            ruff=${{ steps.versions.outputs.ruff }}
+            clang_format=${{ steps.versions.outputs.clang-format }}
+            mypy=${{ steps.versions.outputs.mypy }}
+            gersemi=${{ steps.versions.outputs.gersemi }}
+      - name: show changed files
+        run: git status
