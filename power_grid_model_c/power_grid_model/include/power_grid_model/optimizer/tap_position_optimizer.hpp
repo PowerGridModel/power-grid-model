@@ -531,9 +531,9 @@ inline TapRegulatorRef<TransformerTypes...> regulator_mapping(State const& state
                               .transformer = {std::cref(transformer), transformer_index_, topology_index}};
         }...};
 
-    for (Idx idx = 0; idx < static_cast<Idx>(n_types); ++idx) {
-        if (is_type[idx](transformer_index)) {
-            return transformer_mappings[idx](state, transformer_index);
+    for (auto const& [current_is_type, transformer_mapping] : std::views::zip(is_type, transformer_mappings)) {
+        if (current_is_type(transformer_index)) {
+            return transformer_mapping(state, transformer_index);
         }
     }
     throw UnreachableHit{"TapPositionOptimizer::regulator_mapping", "Transformer must be regulated"};

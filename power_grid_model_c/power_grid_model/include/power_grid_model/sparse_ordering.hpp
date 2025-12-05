@@ -88,8 +88,8 @@ inline std::vector<std::pair<Idx, DegreeLookup>> comp_size_degrees_graph(std::ma
 inline std::map<Idx, IdxVector> make_clique(IdxVector& l) {
     std::map<Idx, IdxVector> d;
 
-    for (Idx i = 0; i < static_cast<Idx>(l.size()); i++) {
-        IdxVector sl(l.size() - 1);
+    for (Idx i = 0; i < std::ssize(l); i++) {
+        IdxVector sl(std::ssize(l) - 1);
         std::copy(l.begin(), l.begin() + i, sl.begin());
         std::copy(l.begin() + i + 1, l.end(), sl.begin() + i);
         d[l[i]] = std::move(sl);

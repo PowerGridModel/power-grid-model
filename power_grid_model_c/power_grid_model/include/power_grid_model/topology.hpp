@@ -126,7 +126,7 @@ class Topology {
         std::pair<std::vector<std::shared_ptr<MathModelTopology const>>,
                   std::shared_ptr<TopologicalComponentToMathCoupling const>>
             pair;
-        for (Idx k = 0; k != static_cast<Idx>(math_topology_.size()); ++k) {
+        for (Idx const k : IdxRange{std::ssize(math_topology_)}) {
             pair.first.emplace_back(std::make_shared<MathModelTopology const>(std::move(math_topology_[k])));
         }
         pair.second = std::make_shared<TopologicalComponentToMathCoupling const>(std::move(comp_coup_));
@@ -170,7 +170,7 @@ class Topology {
         std::vector<std::pair<GraphIdx, GraphIdx>> edges;
         std::vector<GlobalEdge> edge_props;
         // k as branch number for 2-way branch
-        for (Idx k = 0; k != static_cast<Idx>(comp_topo_.branch_node_idx.size()); ++k) {
+        for (Idx const k : IdxRange{std::ssize(comp_topo_.branch_node_idx)}) {
             auto const [i, j] = comp_topo_.branch_node_idx[k];
             auto const [i_status, j_status] = comp_conn_.branch_connected[k];
             // node_i - node_j
@@ -185,7 +185,7 @@ class Topology {
             }
         }
         // k as branch number for 3-way branch
-        for (Idx k = 0; k != static_cast<Idx>(comp_topo_.branch3_node_idx.size()); ++k) {
+        for (Idx const k : IdxRange{std::ssize(comp_topo_.branch3_node_idx)}) {
             auto const i = comp_topo_.branch3_node_idx[k];
             auto const i_status = comp_conn_.branch3_connected[k];
             // node_i - node_internal
@@ -217,7 +217,7 @@ class Topology {
         // m as math solver sequence number
         Idx math_solver_idx = 0;
         // loop all source as k
-        for (Idx k = 0; k != static_cast<Idx>(comp_topo_.source_node_idx.size()); ++k) {
+        for (Idx const k : IdxRange{std::ssize(comp_topo_.source_node_idx)}) {
             // skip disconnected source
             if (static_cast<int>(comp_conn_.source_connected[k]) == 0) {
                 continue;
@@ -270,7 +270,7 @@ class Topology {
             math_topology_.emplace_back(std::move(math_topo_single));
             // iterate math model sequence number
             ++math_solver_idx;
-            assert(math_solver_idx == static_cast<Idx>(math_topology_.size()));
+            assert(math_solver_idx == std::ssize(math_topology_));
         }
     }
 
@@ -330,7 +330,7 @@ class Topology {
 
         const auto n_non_cyclic_nodes = static_cast<Idx>(dfs_node.size());
         std::map<Idx, Idx> permuted_node_indices;
-        for (Idx idx = 0; idx < static_cast<Idx>(reordered.size()); ++idx) {
+        for (Idx const idx : IdxRange{std::ssize(reordered)}) {
             permuted_node_indices[reordered[idx]] = n_non_cyclic_nodes + idx;
         }
 
@@ -353,7 +353,7 @@ class Topology {
             return math_idx.pos;
         };
         // k as branch number for 2-way branch
-        for (Idx k = 0; k != static_cast<Idx>(comp_topo_.branch_node_idx.size()); ++k) {
+        for (Idx const k : IdxRange{std::ssize(comp_topo_.branch_node_idx)}) {
             auto const [i, j] = comp_topo_.branch_node_idx[k];
             IntS const i_status = comp_conn_.branch_connected[k][0];
             IntS const j_status = comp_conn_.branch_connected[k][1];
@@ -384,7 +384,7 @@ class Topology {
             comp_coup_.branch[k] = Idx2D{.group = math_group, .pos = branch_pos};
         }
         // k as branch number for 3-way branch
-        for (Idx k = 0; k != static_cast<Idx>(comp_topo_.branch3_node_idx.size()); ++k) {
+        for (Idx const k : IdxRange{std::ssize(comp_topo_.branch3_node_idx)}) {
             auto const i = comp_topo_.branch3_node_idx[k];
             auto const i_status = comp_conn_.branch3_connected[k];
             std::array<Idx2D, 3> const i_math{
@@ -529,7 +529,7 @@ class Topology {
             }
 
             // Store component coupling for the current topology
-            for (Idx new_math_comp_i = 0; new_math_comp_i != static_cast<Idx>(reorder.size()); ++new_math_comp_i) {
+            for (Idx const new_math_comp_i : IdxRange{std::ssize(reorder)}) {
                 Idx const old_math_comp_i = reorder[new_math_comp_i];
                 Idx const topo_comp_i = topo_component_idx[topo_idx][old_math_comp_i];
                 coupling[topo_comp_i] = Idx2D{.group = topo_idx, .pos = new_math_comp_i};
@@ -553,7 +553,7 @@ class Topology {
         std::ranges::for_each(math_topology_,
                               [](MathModelTopology& topo) { topo.load_gen_type.resize(topo.n_load_gen()); });
         // assign load type
-        for (Idx k = 0; k != static_cast<Idx>(comp_topo_.load_gen_node_idx.size()); ++k) {
+        for (Idx const k : IdxRange{std::ssize(comp_topo_.load_gen_node_idx)}) {
             Idx2D const idx_math = comp_coup_.load_gen[k];
             if (idx_math.group == -1) {
                 continue;
