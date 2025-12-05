@@ -62,7 +62,7 @@ jobs:
       contents: write
       pull-requests: write
     with:
-      create-pr: true  # change to false after testing
+      create-pr: false
 
   ci-passed:
     runs-on: ubuntu-latest
