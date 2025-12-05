@@ -82,8 +82,9 @@ jobs:
 
       - name: try to install pre-commit
         run: |
-          uv run pre-commit install
-          uv run pre-commit install-hooks
+          source .venv/bin/activate
+          pre-commit install
+          pre-commit install-hooks
 
       - name: create pull request
         if: ${{ inputs.create-pr || github.event_name == 'schedule' }}
