@@ -188,7 +188,7 @@ class JobDispatch {
         std::ostringstream combined_error_message;
         IdxVector failed_scenarios;
         std::vector<std::string> err_msgs;
-        for (auto const& [batch, exception] : std::views::enumerate(exceptions)) {
+        for (auto const& [batch, exception] : std::views::zip(IdxTange(std::ssize(exceptions), exceptions)) {
             // append exception if it is not empty
             if (!exception.empty()) {
                 combined_error_message << std::format("Error in batch #{}: {}\n", batch, exception);

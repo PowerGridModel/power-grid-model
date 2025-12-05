@@ -351,7 +351,7 @@ class Topology {
         // k as branch number for 2-way branch
         for (auto const& [branch_node_idx, branch_connected, branch] :
              std::views::zip(comp_topo_.branch_node_idx, comp_conn_.branch_connected, comp_coup_.branch)) {
-            assert(std::ssize(branch_connected) == 2);
+            static_assert(std::ssize(branch_connected) == 2);
 
             auto const [i, j] = branch_node_idx;
             IntS const i_status = branch_connected[0];
@@ -527,7 +527,7 @@ class Topology {
             }
 
             // Store component coupling for the current topology
-            for (auto const [new_math_comp_i, old_math_comp_i] : std::views::enumerate(reorder)) {
+            for (auto const [new_math_comp_i, old_math_comp_i] : std::views::zip(IdxRange(std::ssize(reorder), reorder)) {
                 Idx const topo_comp_i = topo_component_idx[topo_idx][old_math_comp_i];
                 coupling[topo_comp_i] = Idx2D{.group = topo_idx, .pos = new_math_comp_i};
             }
