@@ -61,4 +61,7 @@ jobs:
             gersemi=${{ steps.versions.outputs.gersemi }}
 
       - name: show changed files
-        run: git status
+        run: |
+          git status
+          git diff .pre-commit-config.yaml
+

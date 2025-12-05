@@ -58,7 +58,6 @@ jobs:
   refresh-linter-dependencies:
     name: Refresh Linter Dependencies
     uses: "./.github/workflows/refresh-linter-dependencies.yml"
-    needs: [ci-started]
     permissions:
       contents: write
       pull-requests: write
