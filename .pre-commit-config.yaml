@@ -44,7 +44,7 @@ repos:
       name: cmake-linter
       alias: cmake-linter
   - repo: https://github.com/igorshubovych/markdownlint-cli  # outside pypi 
-    rev: v0.45.0
+    rev: v0.46.0
     hooks:
     - id: markdownlint
       args: ["--fix"]
