@@ -79,7 +79,12 @@ jobs:
         run: |
           git status
           git diff .pre-commit-config.yaml
-      
+
+      - name: try to install pre-commit
+        run: |
+          uv run pre-commit install
+          uv run pre-commit install-hooks
+
       - name: create pull request
         if: ${{ inputs.create-pr || github.event_name == 'schedule' }}
         uses: peter-evans/create-pull-request@v7
