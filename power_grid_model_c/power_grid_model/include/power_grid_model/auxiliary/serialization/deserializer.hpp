@@ -45,6 +45,13 @@ using nlohmann::json;
 struct JsonMapArrayData {
     size_t size{};
     msgpack::sbuffer buffer;
+
+    JsonMapArrayData() = default;
+    JsonMapArrayData(JsonMapArrayData const&) = delete;
+    JsonMapArrayData& operator=(JsonMapArrayData const&) = delete;
+    JsonMapArrayData(JsonMapArrayData&&) noexcept = default;
+    JsonMapArrayData& operator=(JsonMapArrayData&&) noexcept = default;
+    ~JsonMapArrayData() = default;
 };
 
 struct JsonSAXVisitor {
@@ -420,7 +427,7 @@ class Deserializer {
     Deserializer(Deserializer const&) = delete;
     Deserializer& operator=(Deserializer const&) = delete;
     // movable
-    Deserializer(Deserializer&&) = default;
+    Deserializer(Deserializer&&) noexcept = default;
     Deserializer& operator=(Deserializer&&) noexcept = default;
 
     // destructor
