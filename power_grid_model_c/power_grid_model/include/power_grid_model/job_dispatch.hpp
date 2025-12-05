@@ -7,10 +7,12 @@
 #include "batch_parameter.hpp"
 #include "job_interface.hpp"
 
+#include "common/counting_iterator.hpp"
 #include "common/exception.hpp"
 #include "common/timer.hpp"
 #include "common/typing.hpp"
 
+#include <ranges>
 #include <thread>
 
 namespace power_grid_model {
@@ -187,12 +189,12 @@ class JobDispatch {
         std::ostringstream combined_error_message;
         IdxVector failed_scenarios;
         std::vector<std::string> err_msgs;
-        for (Idx batch = 0; batch < static_cast<Idx>(exceptions.size()); ++batch) {
+        for (auto const& [batch, exception] : std::views::zip(IdxRange(std::ssize(exceptions)), exceptions)) {
             // append exception if it is not empty
-            if (!exceptions[batch].empty()) {
-                combined_error_message << std::format("Error in batch #{}: {}\n", batch, exceptions[batch]);
+            if (!exception.empty()) {
+                combined_error_message << std::format("Error in batch #{}: {}\n", batch, exception);
                 failed_scenarios.push_back(batch);
-                err_msgs.push_back(exceptions[batch]);
+                err_msgs.push_back(exception);
             }
         }
         if (!combined_error_message.view().empty()) {

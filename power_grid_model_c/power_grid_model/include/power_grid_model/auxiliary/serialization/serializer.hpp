@@ -164,7 +164,7 @@ struct JsonConverter : NullVisitor<JsonConverter> {
     bool end_array() {
         bool const empty = map_array.top().empty;
         map_array.pop();
-        if (static_cast<Idx>(map_array.size()) < max_indent_level && !empty) {
+        if (std::ssize(map_array) < max_indent_level && !empty) {
             print_indent();
         }
         ss << ']';
@@ -194,7 +194,7 @@ struct JsonConverter : NullVisitor<JsonConverter> {
     bool end_map() {
         bool const empty = map_array.top().empty;
         map_array.pop();
-        if (static_cast<Idx>(map_array.size()) < max_indent_level && !empty) {
+        if (std::ssize(map_array) < max_indent_level && !empty) {
             print_indent();
         }
         ss << '}';
