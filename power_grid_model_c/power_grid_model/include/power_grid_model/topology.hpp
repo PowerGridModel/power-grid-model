@@ -351,7 +351,7 @@ class Topology {
         // k as branch number for 2-way branch
         for (auto const& [branch_node_idx, branch_connected, branch] :
              std::views::zip(comp_topo_.branch_node_idx, comp_conn_.branch_connected, comp_coup_.branch)) {
-            static_assert(std::ssize(branch_connected) == 2);
+            assert(std::ssize(branch_connected) == 2);
 
             auto const [i, j] = branch_node_idx;
             IntS const i_status = branch_connected[0];
