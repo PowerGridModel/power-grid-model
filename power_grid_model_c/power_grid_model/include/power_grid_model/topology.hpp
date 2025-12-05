@@ -350,8 +350,8 @@ class Topology {
         };
         // k as branch number for 2-way branch
         for (auto const& [branch_node_idx, branch_connected, branch] :
-             std::views::zip(comp_topo_.branch_node_idx, comp_conn_.branch_connected, comp_coup_.branch)) {
-            assert(std::ssize(branch_connected) == 2);
+             std::views::zip(comp_topo_.branch_node_idx, comp_conn_.branch_connected, comp_coup_.branch) | std::views::as_const) {
+            assert(std::ssize(branch_connected) == 2); // NOSONAR(R354)
 
             auto const [i, j] = branch_node_idx;
             IntS const i_status = branch_connected[0];
@@ -385,7 +385,7 @@ class Topology {
         // k as branch number for 3-way branch
         for (auto const& [i, i_status, j, branch3] :
              std::views::zip(comp_topo_.branch3_node_idx, comp_conn_.branch3_connected,
-                             std::views::iota(comp_topo_.n_node), comp_coup_.branch3)) {
+                             std::views::iota(comp_topo_.n_node), comp_coup_.branch3) | std::views::as_const) {
             std::array<Idx2D, 3> const i_math{
                 comp_coup_.node[i[0]],
                 comp_coup_.node[i[1]],
@@ -550,7 +550,7 @@ class Topology {
         std::ranges::for_each(math_topology_,
                               [](MathModelTopology& topo) { topo.load_gen_type.resize(topo.n_load_gen()); });
         // assign load type
-        for (auto const& [idx_math, load_gen_type] : std::views::zip(comp_coup_.load_gen, comp_topo_.load_gen_type)) {
+        for (auto const& [idx_math, load_gen_type] : std::views::zip(comp_coup_.load_gen, comp_topo_.load_gen_type) | std::views::as_const) {
             if (idx_math.group == -1) {
                 continue;
             }
