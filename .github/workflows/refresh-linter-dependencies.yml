@@ -28,9 +28,12 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v7
 
+      - name: upgrade uv lock
+        run: uv lock --upgrade  
+
       - name: Install linters from uv
         run: |
-          uv sync --group lint
+          uv sync --only-group lint
       
       - name: retrieve versions
         id: versions
@@ -56,5 +59,6 @@ jobs:
             clang_format=${{ steps.versions.outputs.clang-format }}
             mypy=${{ steps.versions.outputs.mypy }}
             gersemi=${{ steps.versions.outputs.gersemi }}
+
       - name: show changed files
         run: git status
