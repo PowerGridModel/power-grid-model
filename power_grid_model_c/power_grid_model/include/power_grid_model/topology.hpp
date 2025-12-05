@@ -527,7 +527,7 @@ class Topology {
             }
 
             // Store component coupling for the current topology
-            for (Idx const [new_math_comp_i, old_math_comp_i] : std::views::enumerate(reorder)) {
+            for (auto const [new_math_comp_i, old_math_comp_i] : std::views::enumerate(reorder)) {
                 Idx const topo_comp_i = topo_component_idx[topo_idx][old_math_comp_i];
                 coupling[topo_comp_i] = Idx2D{.group = topo_idx, .pos = new_math_comp_i};
             }
