@@ -7,6 +7,7 @@
 #include "batch_parameter.hpp"
 #include "job_interface.hpp"
 
+#include "common/counting_iterator.hpp"
 #include "common/exception.hpp"
 #include "common/timer.hpp"
 #include "common/typing.hpp"
