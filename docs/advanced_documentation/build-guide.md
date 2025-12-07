@@ -87,24 +87,27 @@ The table below shows the C++ build dependencies
 
 #### Python
 
-The table below shows the Python dependencies
+The table below shows the Python dependencies.
+Although it is opt-in, it is recommended to use [`uv`](https://github.com/astral-sh/uv) as
+your development environment manager.
 
 | Library name                                                           | Remark                 | License                                                                                    |
-| ---------------------------------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------ |
+|------------------------------------------------------------------------|------------------------|--------------------------------------------------------------------------------------------|
 | [numpy](https://numpy.org/)                                            | runtime dependency     | [BSD-3](https://github.com/numpy/numpy/blob/main/LICENSE.txt)                              |
 | [scikit-build-core](https://github.com/scikit-build/scikit-build-core) | build dependency       | [Apache](https://github.com/scikit-build/scikit-build-core/blob/main/LICENSE)              |
 | [pytest](https://github.com/pytest-dev/pytest)                         | Development dependency | [MIT](https://github.com/pytest-dev/pytest/blob/main/LICENSE)                              |
 | [pytest-cov](https://github.com/pytest-dev/pytest-cov)                 | Development dependency | [MIT](https://github.com/pytest-dev/pytest-cov/blob/master/LICENSE)                        |
 | [msgpack-python](https://github.com/msgpack/msgpack-python)            | Development dependency | [Apache License, Version 2.0](https://github.com/msgpack/msgpack-python/blob/main/COPYING) |
+| [uv](https://github.com/astral-sh/uv)                                  | Development dependency | [Apache License, Version 2.0](https://github.com/astral-sh/uv/blob/main/LICENSE-APACHE)    |
 
 ## Build Python Package
 
 Once you have prepared the build dependencies,
-you can install the library from source in editable mode with the development dependency.
+you can install the library from source in editable mode (with the development dependency group by default).
 Go to the root folder of the repository.
 
 ```shell
-pip install -e .[dev]
+uv sync
 ```
 
 Then you can run the tests.
@@ -238,7 +241,7 @@ Install the following packages from Ubuntu.
 
 ```shell
 sudo apt update && sudo apt -y upgrade
-sudo apt install -y wget curl zip unzip tar git build-essential gcovr lcov gcc g++ clang-18 make gdb ninja-build pkg-config python3.12 python3.12-dev python3.12-venv python3-pip
+sudo apt install -y wget curl zip unzip tar git build-essential gcovr lcov gcc g++ clang-18 make gdb ninja-build pkg-config
 ```
 
 ### C++ packages
@@ -249,30 +252,27 @@ The recommended way to get C++ package is via [Homebrew](https://brew.sh/).
 Go to its website to follow the installation instruction.
 ```
 
-Install the C++ dependencies
+Install the C++ dependencies and uv
 
 ```shell
-brew install boost eigen nlohmann-json msgpack-cxx doctest cmake
+brew install boost eigen nlohmann-json msgpack-cxx doctest cmake uv
 ```
 
 ### Build Python Library from Source
 
-It is recommended to create a virtual environment.
-Clone repository, create and activate virtual environment.
-Go to a root folder you prefer to save the repositories.
+Go to the root folder you prefer to save the repositories.
 
 ```shell
 git clone https://github.com/PowerGridModel/power-grid-model.git
 cd power-grid-model
-python3.11 -m venv .venv
-source ./.venv/bin/activate
 ```
 
-Install from source in develop mode, and run `pytest`.
+It is recommended to create a virtual environment by using `uv`, and 
+install from source in develop mode, and run `pytest`.
 
 ```shell
-pip install -e .[dev]
-pytest
+uv sync
+uv run pytest
 ```
 
 ### Build CMake Project
@@ -408,7 +408,7 @@ It includes debug and release builds.
 
 ## Example Setup for macOS (Sequoia)
 
-In this section an example is given for setup in macOS Sequoia and Python 3.11.
+In this section an example is given for setup in macOS Sequoia and project default python.
 
 ### Environment variables
 
@@ -425,27 +425,24 @@ export CMAKE_PREFIX_PATH=/usr/local
 Install the following packages with [Homebrew](https://brew.sh/).
 
 ```shell
-brew install ninja cmake boost eigen nlohmann-json msgpack-cxx doctest
+brew install ninja cmake boost eigen nlohmann-json msgpack-cxx doctest uv
 ```
 
 ### Build Python Library from Source
 
-It is recommended to create a virtual environment.
-Clone repository, create and activate virtual environment, and install the build dependency.
 Go to a root folder of your choice to save the repositories.
 
 ```shell
 git clone https://github.com/PowerGridModel/power-grid-model.git 
 cd power-grid-model
-python3.11 -m venv .venv
-source ./.venv/bin/activate
 ```
 
-Install from source in develop mode, and run `pytest`.
+It is recommended to create a virtual environment by using `uv` and
+install from source in develop mode, and run `pytest`.
 
 ```shell
-pip install -e .[dev]
-pytest
+uv sync
+uv run pytest
 ```
 
 ### Build CMake Project
@@ -510,11 +507,11 @@ In addition, the `power-grid-model` Python package needs to be built by followin
 After that, the documentation specific packages can be installed via:
 
 ```shell
-pip install -e .[doc]
+uv sync --group doc
 ```
 
 ```{note}
-The `pip install .` part of the command installs the complete package from scratch.
+The `uv sync` part of the command installs the complete package from scratch.
 ```
 
 The C API documentation is generated using [Doxygen](https://www.doxygen.nl).
