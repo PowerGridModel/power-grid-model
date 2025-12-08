@@ -8,10 +8,14 @@
 
 #include <doctest/doctest.h>
 
+#ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable : 4702) // Maybe unused code
+#endif
 #include <nlohmann/json.hpp>
+#ifdef _MSC_VER
 #pragma warning(pop)
+#endif
 
 #include <cmath>
 #include <limits>
