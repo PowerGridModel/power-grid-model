@@ -55,18 +55,9 @@ jobs:
     with:
       target: "all"
 
-  refresh-lock-and-linter-dependencies:
-    name: Refresh lock and linter Dependencies
-    uses: "./.github/workflows/refresh-lock-and-linter-dependencies.yml"
-    permissions:
-      contents: write
-      pull-requests: write
-    with:
-      create-pr: false
-
   ci-passed:
     runs-on: ubuntu-latest
-    needs: [ci-started, build-test-release, check-code-quality, reuse-compliance, clang-tidy, refresh-lock-and-linter-dependencies]
+    needs: [ci-started, build-test-release, check-code-quality, reuse-compliance, clang-tidy]
     if: always()
 
     steps:
