@@ -440,17 +440,17 @@ class MainModelImpl {
     template <calculation_type_tag calculation_type, symmetry_tag sym>
     auto calculate(Options const& options, Logger& logger) {
         auto const calculator = [this, &options, &logger] {
+            assert(options.optimizer_type == OptimizerType::no_optimization ||
+                   (std::derived_from<calculation_type, power_flow_t>));
             if constexpr (std::derived_from<calculation_type, power_flow_t>) {
                 return calculate_power_flow_<sym>(options.err_tol, options.max_iter, logger);
-            }
-            assert(options.optimizer_type == OptimizerType::no_optimization);
-            if constexpr (std::derived_from<calculation_type, state_estimation_t>) {
+            } else if constexpr (std::derived_from<calculation_type, state_estimation_t>) {
                 return calculate_state_estimation_<sym>(options.err_tol, options.max_iter, logger);
-            }
-            if constexpr (std::derived_from<calculation_type, short_circuit_t>) {
+            } else if constexpr (std::derived_from<calculation_type, short_circuit_t>) {
                 return calculate_short_circuit_<sym>(options.short_circuit_voltage_scaling, logger);
+            } else {
+                std::unreachable();
             }
-            throw UnreachableHit{"MainModelImpl::calculate", "Unknown calculation type"};
         }();
 
         SearchMethod const& search_method = options.optimizer_strategy == OptimizerStrategy::any

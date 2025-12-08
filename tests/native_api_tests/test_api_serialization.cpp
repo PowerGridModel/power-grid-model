@@ -7,7 +7,11 @@
 #include <power_grid_model_c/dataset_definitions.h>
 
 #include <doctest/doctest.h>
+
+#pragma warning(push)
+#pragma warning(disable : 4702) // Maybe unused code
 #include <nlohmann/json.hpp>
+#pragma warning(pop)
 
 #include <cmath>
 #include <limits>

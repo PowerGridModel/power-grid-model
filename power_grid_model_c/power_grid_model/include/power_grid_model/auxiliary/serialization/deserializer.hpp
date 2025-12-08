@@ -12,11 +12,10 @@
 #include "../dataset.hpp"
 #include "../meta_data.hpp"
 
-#include <nlohmann/json.hpp>
-
 #pragma warning(push)
 #pragma warning(disable : 4702) // Maybe unused code
 #include <msgpack.hpp>
+#include <nlohmann/json.hpp>
 #pragma warning(pop)
 
 #include <set>
