@@ -355,12 +355,22 @@ TEST_CASE("Test job dispatch logic") {
         Idx winddown_called{0};
         Idx handle_exception_called{0};
         Idx recover_from_bad_called{0};
+        bool will_throw{false}; // to disable compile-time branch optimization
 
         auto setup_fn = [&setup_called](Idx) { setup_called++; };
-        auto run_fn_no_throw = [&run_called](Idx) { run_called++; };
-        auto run_fn_throw = [&run_called](Idx) {
+        auto const run_fn_throw_if = [&will_throw, &run_called](Idx) {
             run_called++;
-            throw SomeTestException{"Run error"};
+            if (will_throw) {
+                throw SomeTestException{"Run error"};
+            }
+        };
+        auto run_fn_no_throw = [&will_throw, &run_fn_throw_if](Idx idx) {
+            will_throw = true;
+            run_fn_throw_if(idx);
+        };
+        auto run_fn_throw = [&will_throw, &run_fn_throw_if](Idx idx) {
+            will_throw = false;
+            run_fn_throw_if(idx);
         };
         auto winddown_fn_no_throw = [&winddown_called]() { winddown_called++; };
         auto winddown_fn_throw = [&winddown_called]() {

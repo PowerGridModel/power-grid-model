@@ -281,8 +281,6 @@ class Topology {
     // return list of fill-ins when factorize the matrix
     std::vector<BranchIdx> reorder_node(std::vector<Idx>& dfs_node,
                                         std::vector<std::pair<GraphIdx, GraphIdx>> const& back_edges) {
-        using GlobalVertexDesc = boost::graph_traits<GlobalGraph>::vertex_descriptor;
-
         std::vector<BranchIdx> fill_in;
         // make a copy and clear current vector
         std::vector<Idx> const dfs_node_copy(dfs_node);

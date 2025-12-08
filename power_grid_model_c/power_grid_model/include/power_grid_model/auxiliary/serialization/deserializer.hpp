@@ -235,10 +235,11 @@ struct MapArrayVisitor : DefaultErrorVisitor<MapArrayVisitor<map_array>> {
     bool start_map(uint32_t num_kv_pairs) {
         if constexpr (!enable_map) {
             this->throw_error();
+        } else {
+            size = static_cast<Idx>(num_kv_pairs);
+            is_map = true;
+            return true;
         }
-        size = static_cast<Idx>(num_kv_pairs);
-        is_map = true;
-        return true;
     }
     bool start_map_key() { return false; }
     bool end_map() {
@@ -248,10 +249,11 @@ struct MapArrayVisitor : DefaultErrorVisitor<MapArrayVisitor<map_array>> {
     bool start_array(uint32_t num_elements) {
         if constexpr (!enable_array) {
             this->throw_error();
+        } else {
+            size = static_cast<Idx>(num_elements);
+            is_map = false;
+            return true;
         }
-        size = static_cast<Idx>(num_elements);
-        is_map = false;
-        return true;
     }
     bool start_array_item() { return false; }
     bool end_array() {
