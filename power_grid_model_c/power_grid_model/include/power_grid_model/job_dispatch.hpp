@@ -165,6 +165,10 @@ class JobDispatch {
                  std::invocable<std::remove_cvref_t<RecoverFromBadFn>>
     static auto call_with(RunFn run, SetupFn setup, WinddownFn winddown, HandleExceptionFn handle_exception,
                           RecoverFromBadFn recover_from_bad) {
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4702, justification : "Unreachable if run_ is [[noreturn]]")
+#endif // _MSC_VER
         return [setup_ = std::move(setup), run_ = std::move(run), winddown_ = std::move(winddown),
                 handle_exception_ = std::move(handle_exception),
                 recover_from_bad_ = std::move(recover_from_bad)](Args const&... args) {
@@ -181,6 +185,9 @@ class JobDispatch {
                 }
             }
         };
+#ifdef _MSC_VER
+#pragma warning(default : 4702)
+#endif // _MSC_VER
     }
 
     static void handle_batch_exceptions(std::vector<std::string> const& exceptions) {

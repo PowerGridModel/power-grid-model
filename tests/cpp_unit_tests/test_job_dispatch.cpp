@@ -365,12 +365,16 @@ TEST_CASE("Test job dispatch logic") {
             }
         };
         auto run_fn_no_throw = [&will_throw, &run_fn_throw_if](Idx idx) {
-            will_throw = true;
+            will_throw = false;
             run_fn_throw_if(idx);
         };
         auto run_fn_throw = [&will_throw, &run_fn_throw_if](Idx idx) {
-            will_throw = false;
+            will_throw = true;
             run_fn_throw_if(idx);
+        };
+        auto run_fn_noreturn_throw = [&run_called] [[noreturn]] (Idx) -> void {
+            run_called++;
+            throw SomeTestException{"Run error"};
         };
         auto winddown_fn_no_throw = [&winddown_called]() { winddown_called++; };
         auto winddown_fn_throw = [&winddown_called]() {
@@ -392,6 +396,16 @@ TEST_CASE("Test job dispatch logic") {
         }
         SUBCASE("With run exception") {
             auto call_with = JobDispatch::call_with<Idx>(run_fn_throw, setup_fn, winddown_fn_no_throw,
+                                                         handle_exception_fn, recover_from_bad_fn);
+            call_with(2);
+            CHECK(setup_called == 1);
+            CHECK(run_called == 1);
+            CHECK(winddown_called == 1);
+            CHECK(handle_exception_called == 1);
+            CHECK(recover_from_bad_called == 0);
+        }
+        SUBCASE("With run exception that is noreturn") {
+            auto call_with = JobDispatch::call_with<Idx>(run_fn_noreturn_throw, setup_fn, winddown_fn_no_throw,
                                                          handle_exception_fn, recover_from_bad_fn);
             call_with(2);
             CHECK(setup_called == 1);

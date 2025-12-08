@@ -261,7 +261,7 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
 
 #ifdef _MSC_VER
 #pragma warning(push)
-#pragma warning(disable : 4268)
+#pragma warning(disable : 4268, justification : "The parameter expansion may be empty")
 #endif // _MSC_VER
     // array of base judge
     template <supported_type_c<GettableTypes...> Gettable>

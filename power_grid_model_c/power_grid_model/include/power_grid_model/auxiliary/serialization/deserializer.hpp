@@ -14,13 +14,13 @@
 
 #ifdef _MSC_VER
 #pragma warning(push)
-#pragma warning(disable : 4702) // Maybe unused code
-#endif
+#pragma warning(disable : 4702, justification : "Contains potentially unreachable code")
+#endif // _MSC_VER
 #include <msgpack.hpp>
 #include <nlohmann/json.hpp>
 #ifdef _MSC_VER
 #pragma warning(pop)
-#endif
+#endif // _MSC_VER
 
 #include <set>
 #include <span>
