@@ -9,11 +9,7 @@
 #include "iterator_facade.hpp"
 #include "typing.hpp"
 
-#include <boost/iterator/zip_iterator.hpp>
-#include <boost/range.hpp>
-#include <boost/range/adaptor/indexed.hpp>
-#include <boost/range/counting_range.hpp>
-
+#include <algorithm>
 #include <ranges>
 
 /*
@@ -98,26 +94,20 @@ constexpr auto from_dense = from_dense_t{};
 
 class SparseGroupedIdxVector {
   private:
-    class GroupIterator : public IteratorFacade<GroupIterator, IdxRange const, Idx> {
-        friend class IteratorFacade<GroupIterator, IdxRange const, Idx>;
-        using Base = IteratorFacade<GroupIterator, IdxRange const, Idx>;
-
+    class GroupIterator : public IteratorFacade {
       public:
-        using value_type = typename Base::value_type;
-        using difference_type = typename Base::difference_type;
-        using reference = typename Base::reference;
+        using iterator = GroupIterator;
+        using const_iterator = std::add_const_t<GroupIterator>;
+        using value_type = IdxRange const;
+        using difference_type = Idx;
+        using pointer = std::add_pointer_t<value_type>;
+        using reference = std::add_lvalue_reference_t<value_type>;
 
-        GroupIterator() = default;
-        explicit constexpr GroupIterator(IdxVector const& indptr, Idx group) : indptr_{&indptr}, group_{group} {}
+        GroupIterator() : IteratorFacade{*this} {};
+        explicit constexpr GroupIterator(IdxVector const& indptr, Idx group)
+            : IteratorFacade{*this}, indptr_{&indptr}, group_{group} {}
 
-      private:
-        IdxVector const* indptr_{};
-        Idx group_{};
-        mutable value_type latest_value_{}; // making this mutable allows us to delay out-of-bounds checks until
-                                            // dereferencing instead of update methods. Note that the value will be
-                                            // invalidated at first update
-
-        constexpr auto dereference() const -> reference {
+        constexpr auto operator*() const -> reference {
             assert(indptr_ != nullptr);
             assert(0 <= group_);
             assert(group_ < static_cast<Idx>(indptr_->size() - 1));
@@ -127,15 +117,29 @@ class SparseGroupedIdxVector {
             latest_value_ = value_type{(*indptr_)[group_], (*indptr_)[group_ + 1]};
             return latest_value_;
         }
-        constexpr std::strong_ordering three_way_compare(GroupIterator const& other) const {
-            assert(indptr_ == other.indptr_);
-            return group_ <=> other.group_;
+
+        friend constexpr std::strong_ordering operator<=>(GroupIterator const& first, GroupIterator const& second) {
+            assert(first.indptr_ == second.indptr_);
+            return first.group_ <=> second.group_;
         }
-        constexpr auto distance_to(GroupIterator const& other) const {
-            assert(indptr_ == other.indptr_);
-            return other.group_ - group_;
+
+        constexpr auto operator+=(difference_type n) -> std::add_lvalue_reference_t<GroupIterator> {
+            group_ += n;
+            return *this;
         }
-        constexpr void advance(Idx n) { group_ += n; }
+
+        friend auto operator-(GroupIterator const& first, GroupIterator const& second) -> difference_type {
+            assert(first.indptr_ == second.indptr_);
+            return first.group_ - second.group_;
+        }
+
+      private:
+        IdxVector const* indptr_{};
+        Idx group_{};
+        mutable std::remove_const_t<value_type>
+            latest_value_{}; // making this mutable allows us to delay out-of-bounds checks until
+                             // dereferencing instead of update methods. Note that the value will be
+                             // invalidated at first update
     };
 
     constexpr auto group_iterator(Idx group) const { return GroupIterator{indptr_, group}; }
@@ -172,32 +176,25 @@ class SparseGroupedIdxVector {
 
 class DenseGroupedIdxVector {
   private:
-    class GroupIterator : public IteratorFacade<GroupIterator, IdxRange const, Idx> {
-        friend class IteratorFacade<GroupIterator, IdxRange const, Idx>;
-        using Base = IteratorFacade<GroupIterator, IdxRange const, Idx>;
+    class GroupIterator : public IteratorFacade {
+        friend class IteratorFacade; // to expose increment and decrement
 
       public:
-        using value_type = typename Base::value_type;
-        using difference_type = typename Base::difference_type;
-        using reference = typename Base::reference;
+        using iterator = GroupIterator;
+        using const_iterator = std::add_const_t<GroupIterator>;
+        using value_type = IdxRange const;
+        using difference_type = Idx;
+        using pointer = std::add_pointer_t<value_type>;
+        using reference = std::add_lvalue_reference_t<value_type>;
 
-        GroupIterator() = default;
+        GroupIterator() : IteratorFacade{*this} {};
         explicit constexpr GroupIterator(IdxVector const& dense_vector, Idx group)
-            : dense_vector_{&dense_vector},
+            : IteratorFacade{*this},
+              dense_vector_{&dense_vector},
               group_{group},
               group_range_{std::ranges::equal_range(*dense_vector_, group)} {}
 
-      private:
-        using group_iterator = IdxVector::const_iterator;
-
-        IdxVector const* dense_vector_{};
-        Idx group_{};
-        std::ranges::subrange<group_iterator> group_range_;
-        mutable value_type latest_value_{}; // making this mutable allows us to delay out-of-bounds checks until
-                                            // dereferencing instead of update methods. Note that the value will be
-                                            // invalidated at first update
-
-        constexpr auto dereference() const -> reference {
+        constexpr auto operator*() const -> reference {
             assert(dense_vector_ != nullptr);
 
             // delaying out-of-bounds checking until dereferencing while still returning a reference type requires
@@ -207,10 +204,31 @@ class DenseGroupedIdxVector {
                            narrow_cast<Idx>(std::distance(std::cbegin(*dense_vector_), group_range_.end()))};
             return latest_value_;
         }
-        constexpr std::strong_ordering three_way_compare(GroupIterator const& other) const {
-            return group_ <=> other.group_;
+
+        friend constexpr std::strong_ordering operator<=>(GroupIterator const& first, GroupIterator const& second) {
+            assert(first.dense_vector_ == second.dense_vector_);
+            return first.group_ <=> second.group_;
         }
-        constexpr auto distance_to(GroupIterator const& other) const { return other.group_ - group_; }
+
+        constexpr auto operator+=(difference_type n) -> std::add_lvalue_reference_t<GroupIterator> {
+            advance(n);
+            return *this;
+        }
+        friend auto operator-(GroupIterator const& first, GroupIterator const& second) -> difference_type {
+            assert(first.dense_vector_ == second.dense_vector_);
+            return first.group_ - second.group_;
+        }
+
+      private:
+        using group_iterator = IdxVector::const_iterator;
+
+        IdxVector const* dense_vector_{};
+        Idx group_{};
+        std::ranges::subrange<group_iterator> group_range_;
+        mutable std::remove_const_t<value_type>
+            latest_value_{}; // making this mutable allows us to delay out-of-bounds checks until
+                             // dereferencing instead of update methods. Note that the value will be
+                             // invalidated at first update
 
         constexpr void increment() {
             ++group_;
@@ -224,7 +242,7 @@ class DenseGroupedIdxVector {
                                 .base(),
                             group_range_.begin()};
         }
-        constexpr void advance(Idx n) {
+        constexpr void advance(difference_type n) {
             auto const start = n > 0 ? group_range_.end() : std::cbegin(*dense_vector_);
             auto const stop = n < 0 ? group_range_.begin() : std::cend(*dense_vector_);
 
@@ -270,15 +288,10 @@ static_assert(grouped_idx_vector_type<DenseGroupedIdxVector>);
 
 inline auto enumerated_zip_sequence(grouped_idx_vector_type auto const& first,
                                     grouped_idx_vector_type auto const&... rest) {
-    assert(((first.size() == rest.size()) && ...));
-
-    auto const indices = boost::counting_range(Idx{}, first.size());
-
-    auto const zip_begin =
-        boost::make_zip_iterator(boost::make_tuple(std::cbegin(indices), std::cbegin(first), std::cbegin(rest)...));
-    auto const zip_end =
-        boost::make_zip_iterator(boost::make_tuple(std::cend(indices), std::cend(first), std::cend(rest)...));
-    return boost::make_iterator_range(zip_begin, zip_end);
+    if constexpr (sizeof...(rest) > 0) {
+        assert(((first.size() == rest.size()) && ...));
+    }
+    return std::views::zip(IdxRange{first.size()}, first, rest...);
 }
 
 } // namespace power_grid_model

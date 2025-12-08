@@ -252,7 +252,7 @@ constexpr std::string_view json_batch = R"(
 }
 )";
 
-void check_error(std::string_view json, char const* err_msg) {
+void check_error(std::string_view json, std::string_view err_msg) {
     std::vector<NodeInput> node(1);
 
     auto const run = [&]() {
@@ -261,9 +261,8 @@ void check_error(std::string_view json, char const* err_msg) {
         deserializer.parse();
     };
 
-    CHECK_THROWS_WITH_AS(run(), doctest::Contains(err_msg), std::exception);
+    CHECK_THROWS_WITH_AS(run(), doctest::Contains(err_msg.data()), std::exception);
 }
-
 } // namespace
 
 TEST_CASE("Deserializer") {
@@ -632,6 +631,46 @@ true}]}})";
             R"({"version": "1.0", "type": "input", "is_batch": true, "attributes": {}, "data": [{"node": [{"id":
 true}]}]})";
         check_error(wrong_type_dict, "Position of error: data/0/node/0/id");
+    }
+
+    SUBCASE("Last token") {
+        CHECK(detail::JsonSAXVisitor::max_error_message_token_length == 100);
+
+        SUBCASE("Token is way too long") {
+            constexpr std::string_view json_invalid =
+                R"({"version": "1.0", "type": "input", "is_batch": false, "attributes": {}, "data": {"this is an extremely long token that exceeds the maximum length allowed by the deserializer which is set to one hundred characters":})";
+
+            std::string const short_token_string{"\"this is an extremely long token that exceeds the maximum length "
+                                                 "allowed by the deserializer which i"};
+            CHECK(short_token_string.size() == detail::JsonSAXVisitor::max_error_message_token_length);
+
+            check_error(json_invalid,
+                        std::format("Last token: {}...[truncated]. Exception message:", short_token_string));
+        }
+        SUBCASE("Token is just too long") {
+            constexpr std::string_view json_invalid =
+                R"({"version": "1.0", "type": "input", "is_batch": false, "attributes": {}, "data": {"this is a token that is just too long. It barely exceeds the maximum length allowed in the errors":})";
+
+            std::string const full_token_string{"\"this is a token that is just too long. It barely exceeds the "
+                                                "maximum length allowed in the errors\":}"};
+            std::string const truncated_token_string{
+                full_token_string.substr(0, detail::JsonSAXVisitor::max_error_message_token_length)};
+            CHECK(full_token_string.size() == detail::JsonSAXVisitor::max_error_message_token_length + 1);
+            CHECK(truncated_token_string.size() == detail::JsonSAXVisitor::max_error_message_token_length);
+
+            check_error(json_invalid,
+                        std::format("Last token: {}...[truncated]. Exception message:", truncated_token_string));
+        }
+        SUBCASE("Token is barely short enough") {
+            constexpr std::string_view json_invalid =
+                R"({"version": "1.0", "type": "input", "is_batch": false, "attributes": {}, "data": {"this is a token that is just too long. It fits barely in the maximum length allowed in the error":})";
+
+            std::string const full_token_string{"\"this is a token that is just too long. It fits barely in the "
+                                                "maximum length allowed in the error\":}"};
+            CHECK(full_token_string.size() == detail::JsonSAXVisitor::max_error_message_token_length);
+
+            check_error(json_invalid, std::format("Last token: {}. Exception message:", full_token_string));
+        }
     }
 }
 

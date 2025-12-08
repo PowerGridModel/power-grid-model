@@ -12,3 +12,4 @@ IndentWidth: 4
 AlwaysBreakTemplateDeclarations: MultiLine
 PackConstructorInitializers: NextLine
 PointerAlignment: Left
+InsertNewlineAtEOF: true

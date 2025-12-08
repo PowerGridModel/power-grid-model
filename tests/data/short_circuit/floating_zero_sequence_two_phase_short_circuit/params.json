@@ -1,0 +1,8 @@
+{
+  "calculation_method": [
+    "iec60909"
+  ],
+  "rtol": 1e-07,
+  "atol": 1e-07,
+  "short_circuit_voltage_scaling": "maximum"
+}

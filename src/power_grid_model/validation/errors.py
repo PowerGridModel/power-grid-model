@@ -194,7 +194,7 @@ class MultiComponentValidationError(ValidationError):
             fields: List of field names, formatted as tuples (component, field)
             ids: List of component IDs (not row indices), formatted as tuples (component, id)
         """
-        self.component = sorted(set(component for component, _ in fields), key=str)
+        self.component = sorted({component for component, _ in fields}, key=str)
         self.field = sorted(fields)
         self.ids = sorted(ids)
 

@@ -108,9 +108,9 @@ def test_get_dataset_batch_size_mixed():
             "indptr": np.array([0, 2, 3]),
         },
     }
-    with pytest.raises(ValueError, match="Inconsistent number of batches in batch data."):
+    with pytest.raises(ValueError, match="Inconsistent number of batches in batch data"):
         get_dataset_batch_size(data_dense)
-    with pytest.raises(ValueError, match="Inconsistent number of batches in batch data."):
+    with pytest.raises(ValueError, match="Inconsistent number of batches in batch data"):
         get_dataset_batch_size(data_sparse)
 
 

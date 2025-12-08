@@ -25,10 +25,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.12'
 
@@ -42,15 +42,20 @@ jobs:
 
       - name: Install and run ruff
         run: |
-          pip install ruff .
+          pip install ruff
           ruff check .
           ruff format .
           git restore README.md
 
       - name: Install and run clang-format
         run: |
-          sudo apt-get update && sudo apt-get install -y clang-format-18
+          sudo apt-get install -y clang-format-18
           find . -regex '.*\.\(h\|c\|cpp\|hpp\|cc\|cxx\)' -exec clang-format-18 -style=file -i {} \;
+
+      - name: Install and run cmake-linter
+        run: |
+          pip install gersemi
+          gersemi -i --warnings-as-errors src/ tests/ cmake/
 
       - name: Install and run markdownlint
         run: |
@@ -60,7 +65,6 @@ jobs:
 
       - name: If needed raise error
         run: |
-
           if [[ `git status --porcelain --untracked-files=no` ]]; then
             echo "Formatting not correct! See below the files which need to be reformatted!"
             git status --porcelain --untracked-files=no
@@ -96,4 +100,3 @@ jobs:
           else
             echo "The test-workflow.yml file matches main."
           fi
-

@@ -193,8 +193,8 @@ class Branch : public Base {
     auto inverse(std::convertible_to<BranchUpdate> auto update_data) const {
         assert(update_data.id == this->id() || is_nan(update_data.id));
 
-        set_if_not_nan(update_data.from_status, static_cast<IntS>(from_status_));
-        set_if_not_nan(update_data.to_status, static_cast<IntS>(to_status_));
+        set_if_not_nan(update_data.from_status, status_to_int(from_status_));
+        set_if_not_nan(update_data.to_status, status_to_int(to_status_));
 
         return update_data;
     }
@@ -216,7 +216,7 @@ class Branch : public Base {
                 if (cabs(y_shunt) < numerical_tolerance) {
                     branch_shunt = 0.0;
                 } else {
-                    // branch_shunt = y_shunt/2 + 1/(1/y_series + 2/y_shunt)
+                    // branch_shunt = y_shunt/2 + 1/(1/y_series + 2/y_shunt) // NOSONAR(S125)
                     branch_shunt = 0.5 * y_shunt + 1.0 / (1.0 / y_series + 2.0 / y_shunt);
                 }
                 // from or to connected

@@ -113,9 +113,9 @@ TEST_CASE("Test transformer tap regulator") {
         }
 
         SUBCASE("Status") {
-            SUBCASE("same") { update.status = static_cast<IntS>(transformer_tap_regulator.status()); }
+            SUBCASE("same") { update.status = status_to_int(transformer_tap_regulator.status()); }
             SUBCASE("different") { update.status = IntS{0}; }
-            expected.status = static_cast<IntS>(transformer_tap_regulator.status());
+            expected.status = status_to_int(transformer_tap_regulator.status());
         }
 
         SUBCASE("u_set") {
@@ -149,7 +149,7 @@ TEST_CASE("Test transformer tap regulator") {
             update.u_band = 2.0e3;
             update.line_drop_compensation_r = 2.0;
             update.line_drop_compensation_x = 4.0;
-            expected.status = static_cast<IntS>(transformer_tap_regulator.status());
+            expected.status = status_to_int(transformer_tap_regulator.status());
             expected.u_set = input.u_set;
             expected.u_band = input.u_band;
             expected.line_drop_compensation_r = input.line_drop_compensation_r;

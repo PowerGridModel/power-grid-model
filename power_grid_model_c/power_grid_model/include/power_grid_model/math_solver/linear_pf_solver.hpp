@@ -62,26 +62,27 @@ template <symmetry_tag sym_type> class LinearPFSolver {
           sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
           perm_(n_bus_) {}
 
-    SolverOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
-                                     CalculationInfo& calculation_info) {
+    SolverOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, Logger& log) {
+        using enum LogEvent;
+
         // output
         SolverOutput<sym> output;
         output.u.resize(n_bus_);
 
-        Timer const main_timer(calculation_info, 2220, "Math solver");
+        Timer const main_timer{log, math_solver};
 
         // prepare matrix
-        Timer sub_timer(calculation_info, 2221, "Prepare matrix");
+        Timer sub_timer{log, prepare_matrix};
         detail::copy_y_bus<sym>(y_bus, mat_data_);
         prepare_matrix_and_rhs(y_bus, input, output);
 
         // solve
         // u vector will have I_injection for slack bus for now
-        sub_timer = Timer(calculation_info, 2222, "Solve sparse linear equation");
+        sub_timer = Timer{log, solve_sparse_linear_equation};
         sparse_solver_.prefactorize_and_solve(mat_data_, perm_, output.u, output.u);
 
         // calculate math result
-        sub_timer = Timer(calculation_info, 2223, "Calculate math result");
+        sub_timer = Timer{log, calculate_math_result};
         calculate_result(y_bus, input, output);
 
         // output

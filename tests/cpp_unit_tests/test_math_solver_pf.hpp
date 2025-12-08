@@ -8,7 +8,7 @@
 
 #include "test_math_solver_common.hpp"
 
-#include <power_grid_model/common/calculation_info.hpp>
+#include <power_grid_model/common/dummy_logging.hpp>
 #include <power_grid_model/math_solver/sparse_lu_solver.hpp>
 #include <power_grid_model/math_solver/y_bus.hpp>
 
@@ -16,11 +16,11 @@ namespace power_grid_model {
 template <typename SolverType>
 inline auto run_power_flow(SolverType& solver, YBus<typename SolverType::sym> const& y_bus,
                            PowerFlowInput<typename SolverType::sym> const& input, double err_tol, Idx max_iter,
-                           CalculationInfo& calculation_info) {
+                           Logger& log) {
     if constexpr (SolverType::is_iterative) {
-        return solver.run_power_flow(y_bus, input, err_tol, max_iter, calculation_info);
+        return solver.run_power_flow(y_bus, input, err_tol, max_iter, log);
     } else {
-        return solver.run_power_flow(y_bus, input, calculation_info);
+        return solver.run_power_flow(y_bus, input, log);
     }
 };
 
@@ -74,6 +74,7 @@ template <symmetry_tag sym_type> struct PFSolverTestGrid : public SteadyStateSol
 
 TEST_CASE_TEMPLATE_DEFINE("Test math solver - PF", SolverType, test_math_solver_pf_id) {
     using sym = typename SolverType::sym;
+    using common::logging::NoLogger;
 
     PFSolverTestGrid<sym> const grid;
 
@@ -89,20 +90,20 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - PF", SolverType, test_math_solver_
             SolverType::is_iterative ? 1e-12 : 0.15; // linear methods may be very inaccurate
 
         SolverType solver{y_bus, topo_ptr};
-        CalculationInfo info;
+        NoLogger log;
 
         PowerFlowInput<sym> const pf_input = grid.pf_input();
-        SolverOutput<sym> const output = run_power_flow(solver, y_bus, pf_input, error_tolerance, num_iter, info);
+        SolverOutput<sym> const output = run_power_flow(solver, y_bus, pf_input, error_tolerance, num_iter, log);
         assert_output(output, grid.output_ref(), false, result_tolerance);
     }
 
     SUBCASE("Test const z pf solver") {
         SolverType solver{y_bus, topo_ptr};
-        CalculationInfo info;
+        NoLogger log;
 
         // const z
         PowerFlowInput<sym> const pf_input_z = grid.pf_input_z();
-        SolverOutput<sym> const output = run_power_flow(solver, y_bus, pf_input_z, 1e-12, 20, info);
+        SolverOutput<sym> const output = run_power_flow(solver, y_bus, pf_input_z, 1e-12, 20, log);
         assert_output(output, grid.output_ref_z()); // for const z, all methods (including linear) should be accurate
     }
 
@@ -113,19 +114,19 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - PF", SolverType, test_math_solver_
             constexpr auto result_tolerance{0.15};
 
             SolverType solver{y_bus, topo_ptr};
-            CalculationInfo info;
+            NoLogger log;
 
             PowerFlowInput<sym> const pf_input = grid.pf_input();
-            SolverOutput<sym> const output = run_power_flow(solver, y_bus, pf_input, error_tolerance, 1, info);
+            SolverOutput<sym> const output = run_power_flow(solver, y_bus, pf_input, error_tolerance, 1, log);
             assert_output(output, grid.output_ref(), false, result_tolerance);
         }
         SUBCASE("Test not converge") {
             SolverType solver{y_bus, topo_ptr};
-            CalculationInfo info;
+            NoLogger log;
 
             PowerFlowInput<sym> pf_input = grid.pf_input();
             pf_input.s_injection[6] = ComplexValue<sym>{1e6};
-            CHECK_THROWS_AS(run_power_flow(solver, y_bus, pf_input, 1e-12, 20, info), IterationDiverge);
+            CHECK_THROWS_AS(run_power_flow(solver, y_bus, pf_input, 1e-12, 20, log), IterationDiverge);
         }
     }
 
@@ -136,10 +137,10 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - PF", SolverType, test_math_solver_
         singular_param.shunt_param[0] = ComplexTensor<sym>{};
         y_bus.update_admittance(std::make_shared<MathModelParam<sym> const>(singular_param));
         SolverType solver{y_bus, topo_ptr};
-        CalculationInfo info;
+        NoLogger log;
 
         PowerFlowInput<sym> const pf_input = grid.pf_input();
-        CHECK_THROWS_AS(run_power_flow(solver, y_bus, pf_input, 1e-12, 20, info), SparseMatrixError);
+        CHECK_THROWS_AS(run_power_flow(solver, y_bus, pf_input, 1e-12, 20, log), SparseMatrixError);
     }
 }
 

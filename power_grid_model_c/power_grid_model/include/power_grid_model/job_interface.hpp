@@ -6,79 +6,68 @@
 
 // batch dispatch interface class
 
-#include "common/calculation_info.hpp"
 #include "common/common.hpp"
+#include "common/logging.hpp"
 
 #include <concepts>
-#include <mutex>
 #include <type_traits>
 #include <utility>
 
 namespace power_grid_model {
-template <typename Adapter> class JobInterface {
+class JobInterface {
   public:
     // the multiple  NOSONARs are used to avoid the complaints about the unnamed concepts
-    template <typename ResultDataset>
-    void calculate(ResultDataset const& result_data, Idx pos = 0)
-        requires requires(Adapter& adapter) { // NOSONAR
-            { adapter.calculate_impl(result_data, pos) } -> std::same_as<void>;
+    template <typename Self, typename ResultDataset>
+    void calculate(this Self&& self, ResultDataset const& result_data, Idx pos, Logger& logger)
+        requires requires { // NOSONAR
+            { std::forward<Self>(self).calculate_impl(result_data, pos, logger) } -> std::same_as<void>;
         }
     {
-        return static_cast<Adapter*>(this)->calculate_impl(result_data, pos);
+        return std::forward<Self>(self).calculate_impl(result_data, pos, logger);
     }
 
-    void cache_calculate()
-        requires requires(Adapter& adapter) { // NOSONAR
-            { adapter.cache_calculate_impl() } -> std::same_as<void>;
-        }
-    {
-        return static_cast<Adapter*>(this)->cache_calculate_impl();
+    template <typename Self, typename ResultDataset>
+    void calculate(this Self&& self, ResultDataset const& result_data, Logger& logger) {
+        std::forward<Self>(self).calculate(result_data, Idx{}, logger);
     }
 
-    template <typename UpdateDataset>
-    void prepare_job_dispatch(UpdateDataset const& update_data)
-        requires requires(Adapter& adapter) { // NOSONAR
-            { adapter.prepare_job_dispatch_impl(update_data) } -> std::same_as<void>;
+    template <typename Self>
+    void cache_calculate(this Self&& self, Logger& logger)
+        requires requires { // NOSONAR
+            { std::forward<Self>(self).cache_calculate_impl(logger) } -> std::same_as<void>;
         }
     {
-        return static_cast<Adapter*>(this)->prepare_job_dispatch_impl(update_data);
+        return std::forward<Self>(self).cache_calculate_impl(logger);
     }
 
-    template <typename UpdateDataset>
-    void setup(UpdateDataset const& update_data, Idx scenario_idx)
-        requires requires(Adapter& adapter) { // NOSONAR
-            { adapter.setup_impl(update_data, scenario_idx) } -> std::same_as<void>;
+    template <typename Self, typename UpdateDataset>
+    void prepare_job_dispatch(this Self&& self, UpdateDataset const& update_data)
+        requires requires { // NOSONAR
+            { std::forward<Self>(self).prepare_job_dispatch_impl(update_data) } -> std::same_as<void>;
         }
     {
-        return static_cast<Adapter*>(this)->setup_impl(update_data, scenario_idx);
+        return std::forward<Self>(self).prepare_job_dispatch_impl(update_data);
     }
 
-    void winddown()
-        requires requires(Adapter& adapter) { // NOSONAR
-            { adapter.winddown_impl() } -> std::same_as<void>;
+    template <typename Self, typename UpdateDataset>
+    void setup(this Self&& self, UpdateDataset const& update_data, Idx scenario_idx)
+        requires requires { // NOSONAR
+            { std::forward<Self>(self).setup_impl(update_data, scenario_idx) } -> std::same_as<void>;
         }
     {
-        return static_cast<Adapter*>(this)->winddown_impl();
+        return std::forward<Self>(self).setup_impl(update_data, scenario_idx);
     }
 
-    CalculationInfo get_calculation_info() const
-        requires requires(Adapter& adapter) { // NOSONAR
-            { adapter.get_calculation_info_impl() } -> std::same_as<CalculationInfo>;
+    template <typename Self>
+    void winddown(this Self&& self)
+        requires requires { // NOSONAR
+            { std::forward<Self>(self).winddown_impl() } -> std::same_as<void>;
         }
     {
-        return static_cast<const Adapter*>(this)->get_calculation_info_impl();
-    }
-
-    void thread_safe_add_calculation_info(CalculationInfo const& info)
-        requires requires(Adapter& adapter) { // NOSONAR
-            { adapter.thread_safe_add_calculation_info_impl(info) } -> std::same_as<void>;
-        }
-    {
-        static_cast<Adapter*>(this)->thread_safe_add_calculation_info_impl(info);
+        return std::forward<Self>(self).winddown_impl();
     }
 
   protected:
-    // Protected & defaulted special members — CRTP: only the derived can create/copy/move this base
     JobInterface() = default;
     JobInterface(const JobInterface& /*other*/) = default;
     JobInterface& operator=(const JobInterface& /*other*/) = default;

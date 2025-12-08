@@ -8,6 +8,8 @@
 #include "job_dispatch.hpp"
 #include "main_model_impl.hpp"
 
+#include "common/calculation_info.hpp"
+
 #include <memory>
 
 namespace power_grid_model {
@@ -16,10 +18,7 @@ namespace power_grid_model {
 
 class MainModel {
   private:
-    using Impl = MainModelImpl<
-        ExtraRetrievableTypes<Base, Node, Branch, Branch3, Appliance, GenericLoadGen, GenericLoad, GenericGenerator,
-                              GenericPowerSensor, GenericVoltageSensor, GenericCurrentSensor, Regulator>,
-        AllComponents>;
+    using Impl = MainModelImpl<main_core::MainModelType<AllExtraRetrievableTypes, AllComponents>>;
 
   public:
     using Options = MainModelOptions;
@@ -78,11 +77,12 @@ class MainModel {
     */
     BatchParameter calculate(Options const& options, MutableDataset const& result_data,
                              ConstDataset const& update_data) {
-        JobAdapter<Impl, AllComponents> adapter{std::ref(impl()), std::ref(options)};
-        return JobDispatch::batch_calculation(adapter, result_data, update_data, options.threading);
+        info_.clear();
+        JobAdapter<Impl> adapter{std::ref(impl()), std::ref(options)};
+        return JobDispatch::batch_calculation(adapter, result_data, update_data, options.threading, info_);
     }
 
-    CalculationInfo calculation_info() const { return impl().calculation_info(); }
+    CalculationInfo calculation_info() const { return info_.get(); }
 
     void check_no_experimental_features_used(Options const& options) const {
         impl().check_no_experimental_features_used(options);
@@ -99,6 +99,7 @@ class MainModel {
     }
 
     std::unique_ptr<Impl> impl_;
+    MultiThreadedCalculationInfo info_;
 };
 
 } // namespace power_grid_model

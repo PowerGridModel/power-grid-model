@@ -84,7 +84,7 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
           perm_(y_bus.size()) {}
 
     SolverOutput<sym> run_state_estimation(YBus<sym> const& y_bus, StateEstimationInput<sym> const& input,
-                                           double err_tol, Idx max_iter, CalculationInfo& calculation_info) {
+                                           double err_tol, Idx max_iter, Logger& log) {
         // prepare
         Timer main_timer;
         Timer sub_timer;
@@ -93,22 +93,22 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
         output.bus_injection.resize(n_bus_);
         double max_dev = std::numeric_limits<double>::max();
 
-        main_timer = Timer(calculation_info, 2220, "Math solver");
+        main_timer = Timer{log, LogEvent::math_solver};
 
         // preprocess measured value
-        sub_timer = Timer(calculation_info, 2221, "Pre-process measured value");
+        sub_timer = Timer{log, LogEvent::preprocess_measured_value};
         MeasuredValues<sym> const measured_values{y_bus.shared_topology(), input};
         auto const observability_result =
-            observability_check(measured_values, y_bus.math_topology(), y_bus.y_bus_structure());
+            observability::observability_check(measured_values, y_bus.math_topology(), y_bus.y_bus_structure());
 
         // prepare matrix
-        sub_timer = Timer(calculation_info, 2222, "Prepare matrix, including pre-factorization");
+        sub_timer = Timer{log, LogEvent::prepare_matrix_including_prefactorization};
         prepare_matrix(y_bus, measured_values);
         // prefactorize
         sparse_solver_.prefactorize(data_gain_, perm_, observability_result.use_perturbation());
 
         // initialize voltage with initial angle
-        sub_timer = Timer(calculation_info, 2223, "Initialize voltages");
+        sub_timer = Timer{log, LogEvent::initialize_voltages}; // TODO(mgovers): make scoped subtimers
         RealValue<sym> const mean_angle_shift = measured_values.mean_angle_shift();
         for (Idx bus = 0; bus != n_bus_; ++bus) {
             output.u[bus] = exp(1.0i * (mean_angle_shift + math_topo_->phase_shift[bus]));
@@ -120,25 +120,24 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
             if (num_iter++ == max_iter) {
                 throw IterationDiverge{max_iter, max_dev, err_tol};
             }
-            sub_timer = Timer(calculation_info, 2224, "Calculate rhs");
+            sub_timer = Timer{log, LogEvent::calculate_rhs};
             prepare_rhs(y_bus, measured_values, output.u);
             // solve with prefactorization
-            sub_timer = Timer(calculation_info, 2225, "Solve sparse linear equation (pre-factorized)");
+            sub_timer = Timer{log, LogEvent::solve_sparse_linear_equation_prefactorized};
             sparse_solver_.solve_with_prefactorized_matrix(data_gain_, perm_, x_rhs_, x_rhs_);
-            sub_timer = Timer(calculation_info, 2226, "Iterate unknown");
+            sub_timer = Timer{log, LogEvent::iterate_unknown};
             max_dev = iterate_unknown(output.u, measured_values.has_angle());
-        };
+        }
 
         // calculate math result
-        sub_timer = Timer(calculation_info, 2227, "Calculate math result");
+        sub_timer = Timer{log, LogEvent::calculate_math_result};
         detail::calculate_se_result<sym>(y_bus, measured_values, output);
 
         // Manually stop timers to avoid "Max number of iterations" to be included in the timing.
         sub_timer.stop();
         main_timer.stop();
 
-        auto const key = Timer::make_key(2228, "Max number of iterations");
-        calculation_info[key] = std::max(calculation_info[key], static_cast<double>(num_iter));
+        log.log(LogEvent::max_num_iter, num_iter);
 
         return output;
     }
@@ -202,7 +201,7 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
                     // shunt
                     if (type == YBusElementType::shunt) {
                         if (measured_value.has_shunt(obj)) {
-                            // G += (-Ys)^H * (variance^-1) * (-Ys)
+                            // G += (-Ys)^H * (variance^-1) * (-Ys) // NOSONAR(S125)
                             auto const& shunt_power = measured_value.shunt_power(obj);
                             auto const current = power_to_global_current_measurement(shunt_power);
                             block.g() += dot(hermitian_transpose(param.shunt_param[obj]),
@@ -215,10 +214,10 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
                                                                 IntS measured_side,
                                                                 IndependentComplexRandVar<sym> const& branch_current) {
                             // branch from- and to-side index at 0, and 1 position
-                            IntS const b0 = static_cast<IntS>(type) / 2;
-                            IntS const b1 = static_cast<IntS>(type) % 2;
+                            IntS const b0 = std::to_underlying(type) / 2;
+                            IntS const b1 = std::to_underlying(type) % 2;
 
-                            // G += Y{side, b0}^H * (variance^-1) * Y{side, b1}
+                            // G += Y{side, b0}^H * (variance^-1) * Y{side, b1} // NOSONAR(S125)
                             block.g() += dot(hermitian_transpose(param.branch_param[obj].value[measured_side * 2 + b0]),
                                              diagonal_inverse(branch_current.variance),
                                              param.branch_param[obj].value[measured_side * 2 + b1]);
@@ -244,7 +243,7 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
                 // fill block with injection measurement
                 // injection measurement exist
                 if (measured_value.has_bus_injection(row)) {
-                    // Q_ij = Y_bus_ij
+                    // Q_ij = Y_bus_ij // NOSONAR(S125)
                     block.q() = y_bus.admittance()[data_idx];
                     // R_ii = -variance, only diagonal
                     if (row == col) {
@@ -318,7 +317,7 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
                                                          type](IntS measured_side,
                                                                IndependentComplexRandVar<sym> const& branch_current) {
                         // branch is either ff or tt
-                        IntS const b = static_cast<IntS>(type) / 2;
+                        IntS const b = std::to_underlying(type) / 2;
                         // eta += Y{side, b}^H * (variance^-1) * i_branch_{f, t}
                         rhs_block.eta() +=
                             dot(hermitian_transpose(param.branch_param[obj].value[measured_side * 2 + b]),

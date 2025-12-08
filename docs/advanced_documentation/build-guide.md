@@ -27,7 +27,7 @@ In this repository there are three builds:
 
 To build the library from source, you need to first prepare the compiler toolchains and the build dependencies.
 In this section a list of general requirements are given.
-After this section there are examples of setup in Linux (Ubuntu 22.04), Windows 10, and macOS (Big Sur).
+After this section there are examples of setup in Linux (Ubuntu 24.04), Windows 11, and macOS (Sequoia).
 
 ### Architecture Support
 
@@ -40,7 +40,7 @@ In this way, minimum effort should be necessary to port the library to other pla
 
 ### Compiler Support
 
-You need a C++ compiler with C++20 support.
+You need a C++ compiler with C++23 support.
 Below is a list of tested compilers:
 
 #### Linux
@@ -350,7 +350,7 @@ It is possible to enable long paths in Windows by following the steps in the
 ### C++ packages
 
 The recommended way to get C++ package is via `conda`.
-Open a miniconda console.
+Open a miniforge console.
 
 ```shell
 conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge libboost-headers eigen nlohmann_json msgpack-cxx doctest

@@ -4,10 +4,13 @@
 
 #pragma once
 
+#include "container_queries.hpp"
 #include "state.hpp"
 #include "state_queries.hpp"
 
 #include "../all_components.hpp"
+
+#include <concepts>
 
 namespace power_grid_model::main_core {
 
@@ -25,13 +28,13 @@ constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> cons
 template <std::derived_from<Branch> Component, class ComponentContainer>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
-    return state.topo_comp_coup->branch.cbegin() + get_component_sequence_offset<Branch, Component>(state);
+    return state.topo_comp_coup->branch.cbegin() + get_component_sequence_offset<Branch, Component>(state.components);
 }
 
 template <std::derived_from<Branch3> Component, class ComponentContainer>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
-    return state.topo_comp_coup->branch3.cbegin() + get_component_sequence_offset<Branch3, Component>(state);
+    return state.topo_comp_coup->branch3.cbegin() + get_component_sequence_offset<Branch3, Component>(state.components);
 }
 
 template <std::same_as<Source> Component, class ComponentContainer>
@@ -43,7 +46,8 @@ constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> cons
 template <std::derived_from<GenericLoadGen> Component, class ComponentContainer>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
-    return state.topo_comp_coup->load_gen.cbegin() + get_component_sequence_offset<GenericLoadGen, Component>(state);
+    return state.topo_comp_coup->load_gen.cbegin() +
+           get_component_sequence_offset<GenericLoadGen, Component>(state.components);
 }
 
 template <std::same_as<Shunt> Component, class ComponentContainer>
@@ -56,21 +60,21 @@ template <std::derived_from<GenericVoltageSensor> Component, class ComponentCont
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
     return state.comp_topo->voltage_sensor_node_idx.cbegin() +
-           get_component_sequence_offset<GenericVoltageSensor, Component>(state);
+           get_component_sequence_offset<GenericVoltageSensor, Component>(state.components);
 }
 
 template <std::derived_from<GenericPowerSensor> Component, class ComponentContainer>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
     return state.comp_topo->power_sensor_object_idx.cbegin() +
-           get_component_sequence_offset<GenericPowerSensor, Component>(state);
+           get_component_sequence_offset<GenericPowerSensor, Component>(state.components);
 }
 
 template <std::derived_from<GenericCurrentSensor> Component, class ComponentContainer>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
     return state.comp_topo->current_sensor_object_idx.cbegin() +
-           get_component_sequence_offset<GenericCurrentSensor, Component>(state);
+           get_component_sequence_offset<GenericCurrentSensor, Component>(state.components);
 }
 
 template <std::same_as<Fault> Component, class ComponentContainer>
@@ -82,14 +86,15 @@ constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> cons
 template <std::same_as<TransformerTapRegulator> Component, class ComponentContainer>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
-    return state.comp_topo->regulated_object_idx.cbegin() + get_component_sequence_offset<Regulator, Component>(state);
+    return state.comp_topo->regulated_object_idx.cbegin() +
+           get_component_sequence_offset<Regulator, Component>(state.components);
 }
 
 template <std::derived_from<Base> Component, class ComponentContainer>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr auto comp_base_sequence(MainModelState<ComponentContainer> const& state) {
     auto const start = comp_base_sequence_cbegin<Component>(state);
-    return std::ranges::subrange{start, start + get_component_size<Component>(state)};
+    return std::ranges::subrange{start, start + get_component_size<Component>(state.components)};
 }
 
 template <typename Component, typename IndexType, class ComponentContainer, std::ranges::viewable_range ComponentOutput,
@@ -102,8 +107,8 @@ template <typename Component, typename IndexType, class ComponentContainer, std:
                                                 MainModelState<ComponentContainer>{}))>>
 constexpr void produce_output(MainModelState<ComponentContainer> const& state, ComponentOutput&& output,
                               ResFunc&& func) {
-    std::ranges::transform(get_component_citer<Component>(state), comp_base_sequence<Component>(state),
-                           std::ranges::begin(output), std::forward<ResFunc>(func));
+    std::ranges::transform(get_component_citer<Component>(state.components), comp_base_sequence<Component>(state),
+                           std::ranges::begin(std::forward<ComponentOutput>(output)), std::forward<ResFunc>(func));
 }
 
 } // namespace detail
@@ -363,7 +368,7 @@ constexpr auto output_result(Component const& current_sensor, MainModelState<Com
         return current_sensor.template get_null_output<sym>();
     }
 
-    auto const topological_index = get_topology_index<Branch>(state, obj_math_id);
+    auto const topological_index = get_topology_index<Branch>(state.components, obj_math_id);
     auto const branch_nodes = get_branch_nodes<Branch>(state, topological_index);
     auto const node_from_math_id = get_math_id<Node>(state, branch_nodes[0]);
     auto const node_to_math_id = get_math_id<Node>(state, branch_nodes[1]);
@@ -416,7 +421,7 @@ inline auto output_result(Component const& fault, MainModelState<ComponentContai
         return fault.get_null_sc_output();
     }
 
-    auto const u_rated = get_component<Node>(state, fault.get_fault_object()).u_rated();
+    auto const u_rated = get_component<Node>(state.components, fault.get_fault_object()).u_rated();
     return fault.get_sc_output(solver_output[math_id.group].fault[math_id.pos], u_rated);
 }
 

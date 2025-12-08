@@ -40,30 +40,38 @@ inline void append_element_vector(std::vector<YBusElementMap>& vec, Idx first_bu
 
 // counting sort element
 inline void counting_sort_element(std::vector<YBusElementMap>& vec, Idx n_bus) {
-    // count vec
-    std::vector<YBusElementMap> count_vec(vec.size());
+    // temp vec for swapping
+    std::vector<YBusElementMap> temp_vec(vec.size());
     IdxVector counter(n_bus, 0);
-    // sort column
+
+    // sort column first
     for (YBusElementMap const& element : vec) {
         ++counter[element.pos.second];
     }
     for (size_t i = 1, n = counter.size(); i != n; ++i) {
         counter[i] += counter[i - 1];
     }
-    for (auto it_element = vec.crbegin(); it_element != vec.crend(); ++it_element) {
-        count_vec[--counter[it_element->pos.second]] = *it_element;
+    for (auto it_element = vec.rbegin(); it_element != vec.rend(); ++it_element) {
+        temp_vec[--counter[it_element->pos.second]] = std::move(*it_element);
     }
-    // sort row
+
+    // swap vectors to avoid copying
+    vec.swap(temp_vec);
+
+    // sort row second
     std::ranges::fill(counter, 0);
-    for (YBusElementMap const& element : count_vec) {
+    for (YBusElementMap const& element : vec) {
         ++counter[element.pos.first];
     }
     for (size_t i = 1, n = counter.size(); i != n; ++i) {
         counter[i] += counter[i - 1];
     }
-    for (auto it_element = count_vec.crbegin(); it_element != count_vec.crend(); ++it_element) {
-        vec[--counter[it_element->pos.first]] = *it_element;
+    for (auto it_element = vec.rbegin(); it_element != vec.rend(); ++it_element) {
+        temp_vec[--counter[it_element->pos.first]] = std::move(*it_element);
     }
+
+    // final swap to get result back in vec
+    vec.swap(temp_vec);
 }
 
 // y bus structure
@@ -261,10 +269,8 @@ struct YBusStructure {
         // end of y_bus_entry_indptr is same as size of entry
         assert(y_bus_entry_indptr.back() == static_cast<Idx>(y_bus_element.size()));
 
-        // construct transpose entry
-        lu_transpose_entry.resize(nnz_counter_lu);
-        // default transpose_entry[i] = i
-        std::iota(lu_transpose_entry.begin(), lu_transpose_entry.end(), 0);
+        lu_transpose_entry = IdxRange{nnz_counter_lu} | std::ranges::to<IdxVector>();
+
         // fill off-diagonal, loop all the branches
         for (auto const [entry_1, entry_2] : off_diag_map) {
             // for each branch entry tf and ft, they are transpose to each other
@@ -325,11 +331,6 @@ template <symmetry_tag sym> class YBus {
     std::shared_ptr<IdxVector const> shared_diag_lu() const { return {y_bus_struct_, &y_bus_struct_->diag_lu}; }
 
     constexpr auto& get_y_bus_structure() const { return y_bus_struct_; }
-
-    void set_branch_param_idx(IdxVector branch_param_idx) { branch_param_idx_ = std::move(branch_param_idx); }
-    void set_shunt_param_idx(IdxVector shunt_param_idx) { shunt_param_idx_ = std::move(shunt_param_idx); }
-    IdxVector const& get_branch_param_idx() const { return branch_param_idx_; }
-    IdxVector const& get_shunt_param_idx() const { return shunt_param_idx_; }
 
     void update_admittance(std::shared_ptr<MathModelParam<sym> const> const& math_model_param) {
         // overwrite the old cached parameters
@@ -525,10 +526,6 @@ template <symmetry_tag sym> class YBus {
 
     // cache the math parameters
     std::shared_ptr<MathModelParam<sym> const> math_model_param_;
-
-    // cache the branch and shunt parameters in sequence_idx_map
-    IdxVector branch_param_idx_;
-    IdxVector shunt_param_idx_;
 
     // map index between admittance entries and parameter entries
     std::vector<IdxVector> map_admittance_param_branch_;

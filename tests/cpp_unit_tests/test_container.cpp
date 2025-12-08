@@ -225,6 +225,21 @@ TEST_CASE("Test component container") {
         CHECK(const_container.get_id_by_idx(Idx2D{2, 0}) == 3);
     }
 #endif // NDEBUG
+
+    SUBCASE("Component Container concept") {
+        static_assert(common::component_container_c<CompContainer, C>);
+        static_assert(common::component_container_c<CompContainer, C1>);
+        static_assert(common::component_container_c<CompContainer, C2>);
+        static_assert(common::component_container_c<CompContainer, C, C1>);
+        static_assert(common::component_container_c<CompContainer, C1, C2>);
+        static_assert(common::component_container_c<CompContainer, C, C1, C2>);
+        static_assert(common::component_container_c<CompContainer2, C>);
+        static_assert(common::component_container_c<CompContainer2, C1>);
+        static_assert(common::component_container_c<CompContainer2, C2>);
+        static_assert(common::component_container_c<CompContainer2, C, C1>);
+        static_assert(common::component_container_c<CompContainer2, C1, C2>);
+        static_assert(common::component_container_c<CompContainer2, C, C1, C2>);
+    }
 }
 
 } // namespace power_grid_model

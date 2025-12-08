@@ -38,8 +38,8 @@ TEST_CASE("Exceptions") {
         CHECK(std::string{InvalidArguments{"bar"}.what()} == "bar");
         CHECK(std::string{InvalidArguments{"foo", "bar"}.what()} == "foo is not implemented for bar!\n");
 
-        InvalidArguments::TypeValuePair const foo{"foo", "baz"};
-        InvalidArguments::TypeValuePair const bar{"bar", "bla"};
+        InvalidArguments::TypeValuePair const foo{.name = "foo", .value = "baz"};
+        InvalidArguments::TypeValuePair const bar{.name = "bar", .value = "bla"};
         CHECK(std::string{InvalidArguments{"Test method", foo}.what()} ==
               "Test method is not implemented for the following combination of options!\n"
               " foo: baz\n");
@@ -298,8 +298,8 @@ TEST_CASE("Exceptions") {
         CHECK(std::string{ExperimentalFeature{"bar"}.what()} == "bar");
         CHECK(std::string{ExperimentalFeature{"foo", "bar"}.what()} == "foo is not implemented for bar!\n");
 
-        ExperimentalFeature::TypeValuePair const foo{"foo", "baz"};
-        ExperimentalFeature::TypeValuePair const bar{"bar", "bla"};
+        ExperimentalFeature::TypeValuePair const foo{.name = "foo", .value = "baz"};
+        ExperimentalFeature::TypeValuePair const bar{.name = "bar", .value = "bla"};
         CHECK(std::string{ExperimentalFeature{"Test method", foo}.what()} ==
               "Test method is not implemented for the following combination of options!\n"
               " foo: baz\n");

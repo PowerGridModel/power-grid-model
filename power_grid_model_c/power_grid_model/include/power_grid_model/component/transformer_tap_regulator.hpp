@@ -62,7 +62,7 @@ class TransformerTapRegulator : public Regulator {
     TransformerTapRegulatorOutput get_output(IntS const& tap_pos) const {
         TransformerTapRegulatorOutput output{};
         output.id = id();
-        output.energized = static_cast<IntS>(energized(true));
+        output.energized = status_to_int(energized(true));
         output.tap_pos = tap_pos;
         return output;
     }
@@ -76,7 +76,7 @@ class TransformerTapRegulator : public Regulator {
         DoubleComplex const z_compensation{is_nan(line_drop_compensation_r_) ? 0.0 : line_drop_compensation_r_,
                                            is_nan(line_drop_compensation_x_) ? 0.0 : line_drop_compensation_x_};
         param.z_compensation = z_compensation / z_base;
-        param.status = static_cast<IntS>(Regulator::status());
+        param.status = status_to_int(Regulator::status());
         return param;
     }
 

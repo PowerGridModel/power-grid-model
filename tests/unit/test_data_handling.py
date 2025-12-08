@@ -168,5 +168,5 @@ def test_dtype_compatibility_check_compatible():
 def test_dtype_compatibility_check__error():
     nodes = initialize_array(DT.sym_output, CT.node, (1, 2))
     data = {CT.node: nodes.astype(nodes.dtype.newbyteorder("S"))}
-    with pytest.raises(ValueError, match="Data type does not match schema."):
+    with pytest.raises(ValueError, match="Data type does not match schema"):
         CMutableDataset(data, DT.sym_output)

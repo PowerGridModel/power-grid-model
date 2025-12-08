@@ -8,7 +8,7 @@
 
 #include "test_math_solver_common.hpp"
 
-#include <power_grid_model/common/calculation_info.hpp>
+#include <power_grid_model/common/dummy_logging.hpp>
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/math_solver/sparse_lu_solver.hpp>
 #include <power_grid_model/math_solver/y_bus.hpp>
@@ -17,10 +17,12 @@ namespace power_grid_model {
 template <typename SolverType>
 inline auto run_state_estimation(SolverType& solver, YBus<typename SolverType::sym> const& y_bus,
                                  StateEstimationInput<typename SolverType::sym> const& input, double err_tol,
-                                 Idx max_iter, CalculationInfo& calculation_info) {
+                                 Idx max_iter, Logger& log) {
     static_assert(SolverType::is_iterative); // otherwise, call different version
-    return solver.run_state_estimation(y_bus, input, err_tol, max_iter, calculation_info);
+    return solver.run_state_estimation(y_bus, input, err_tol, max_iter, log);
 };
+
+inline auto get_logger() { return common::logging::NoLogger{}; }
 
 template <symmetry_tag sym_type> struct SESolverTestGrid : public SteadyStateSolverTestGrid<sym_type> {
     using sym = sym_type;
@@ -315,37 +317,37 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE", SolverType, test_math_solver_
 
         SUBCASE("Test se with angle") {
             SolverType solver{y_bus, topo_ptr};
-            CalculationInfo info;
+            auto log = get_logger();
 
             auto const se_input = grid.se_input_angle();
             SolverOutput<sym> const output =
-                run_state_estimation(solver, y_bus, se_input, error_tolerance, num_iter, info);
+                run_state_estimation(solver, y_bus, se_input, error_tolerance, num_iter, log);
             assert_output(output, grid.output_ref());
         }
 
         SUBCASE("Test se without angle") {
             SolverType solver{y_bus, topo_ptr};
-            CalculationInfo info;
+            auto log = get_logger();
 
             auto const se_input = grid.se_input_no_angle();
             SolverOutput<sym> const output =
-                run_state_estimation(solver, y_bus, se_input, error_tolerance, num_iter, info);
+                run_state_estimation(solver, y_bus, se_input, error_tolerance, num_iter, log);
             assert_output(output, grid.output_ref(), true);
         }
 
         SUBCASE("Test se with angle, const z") {
             SolverType solver{y_bus, topo_ptr};
-            CalculationInfo info;
+            auto log = get_logger();
 
             auto const se_input = grid.se_input_angle_const_z();
             SolverOutput<sym> const output =
-                run_state_estimation(solver, y_bus, se_input, error_tolerance, num_iter, info);
+                run_state_estimation(solver, y_bus, se_input, error_tolerance, num_iter, log);
             assert_output(output, grid.output_ref_z());
         }
 
         SUBCASE("Test se with angle and different power variances") {
             SolverType solver{y_bus, topo_ptr};
-            CalculationInfo info;
+            auto log = get_logger();
 
             auto se_input = grid.se_input_angle();
             auto& branch_from_power = se_input.measured_branch_from_power.front();
@@ -353,7 +355,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE", SolverType, test_math_solver_
             branch_from_power.imag_component.variance = RealValue<sym>{0.75};
 
             SolverOutput<sym> const output =
-                run_state_estimation(solver, y_bus, se_input, error_tolerance, num_iter, info);
+                run_state_estimation(solver, y_bus, se_input, error_tolerance, num_iter, log);
             assert_output(output, grid.output_ref());
         }
     }
@@ -363,21 +365,21 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE", SolverType, test_math_solver_
         YBus<sym> const y_bus{topo_ptr, param_ptr};
         SUBCASE("Test se with local angle current sensors") {
             SolverType solver{y_bus, topo_ptr};
-            CalculationInfo info;
+            auto log = get_logger();
 
             auto const se_input = grid.se_input_angle_current_sensors(AngleMeasurementType::local_angle);
             SolverOutput<sym> const output =
-                run_state_estimation(solver, y_bus, se_input, error_tolerance, num_iter, info);
+                run_state_estimation(solver, y_bus, se_input, error_tolerance, num_iter, log);
             assert_output(output, grid.output_ref());
         }
 
         SUBCASE("Test se with global angle current sensors") {
             SolverType solver{y_bus, topo_ptr};
-            CalculationInfo info;
+            auto log = get_logger();
 
             auto const se_input = grid.se_input_angle_current_sensors(AngleMeasurementType::global_angle);
             SolverOutput<sym> const output =
-                run_state_estimation(solver, y_bus, se_input, error_tolerance, num_iter, info);
+                run_state_estimation(solver, y_bus, se_input, error_tolerance, num_iter, log);
             assert_output(output, grid.output_ref());
         }
     }
@@ -422,10 +424,10 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, zero variance test", SolverTyp
     se_input.measured_voltage = {{.value = 1.0, .variance = 1.0}};
 
     SolverType solver{y_bus_sym, topo_ptr};
-    CalculationInfo info;
+    auto log = get_logger();
     SolverOutput<symmetric_t> output;
 
-    output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, info);
+    output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, log);
 
     // check both voltage
     check_close(output.u[0], 1.0);
@@ -472,7 +474,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
     se_input.load_gen_status = {1};
     se_input.measured_voltage = {{.value = 1.0, .variance = 0.1}};
 
-    CalculationInfo info;
+    auto log = get_logger();
     SolverOutput<symmetric_t> output;
 
     SUBCASE("Source and branch") {
@@ -498,7 +500,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
 
         SolverType solver{y_bus_sym, topo_ptr};
 
-        output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, info);
+        output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, log);
 
         CHECK(real(output.bus_injection[0]) == doctest::Approx(1.95));
         CHECK(real(output.source[0].s) == doctest::Approx(1.95));
@@ -540,7 +542,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
                         {.angle_measurement_type = AngleMeasurementType::local_angle,
                          .measurement = {.real_component = {.value = 1.97, .variance = 0.05},
                                          .imag_component = {.value = 0.0, .variance = 0.05}}}};
-                    output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, info);
+                    output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, log);
 
                     CHECK(real(output.bus_injection[0]) == doctest::Approx(1.95));
                     CHECK(real(output.source[0].s) == doctest::Approx(1.95));
@@ -556,7 +558,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
                          .measurement = {.real_component = {.value = 0.0, .variance = 0.05},
                                          .imag_component = {.value = 1.97, .variance = 0.05}}}};
 
-                    output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, info);
+                    output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, log);
 
                     CHECK(imag(output.bus_injection[0]) == doctest::Approx(1.95));
                     CHECK(imag(output.source[0].s) == doctest::Approx(1.95));
@@ -573,7 +575,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
                      .measurement = {.real_component = {.value = real(1.97 * global_shift), .variance = 0.05},
                                      .imag_component = {.value = imag(1.97 * global_shift), .variance = 0.05}}}};
 
-                output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, info);
+                output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, log);
 
                 CHECK(real(output.bus_injection[0]) == doctest::Approx(1.95));
                 CHECK(real(output.source[0].s) == doctest::Approx(1.95));
@@ -606,7 +608,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
         SolverType solver{y_bus_sym, topo_ptr};
 
-        output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, info);
+        output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, log);
 
         CHECK(real(output.bus_injection[1]) == doctest::Approx(-1.95));
         CHECK(real(output.load_gen[0].s) == doctest::Approx(-1.95));
@@ -638,7 +640,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
         SolverType solver{y_bus_sym, topo_ptr};
 
-        output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, info);
+        output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, log);
 
         CHECK(real(output.bus_injection[0]) == doctest::Approx(2.0));
         CHECK(real(output.source[0].s) == doctest::Approx(2.0));
@@ -670,7 +672,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
         SolverType solver{y_bus_sym, topo_ptr};
 
-        output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, info);
+        output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, log);
 
         CHECK(real(output.bus_injection[0]) == doctest::Approx(2.0));
         CHECK(real(output.source[0].s) == doctest::Approx(2.0));
@@ -702,7 +704,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
         SolverType solver{y_bus_sym, topo_ptr};
 
-        output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, info);
+        output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, log);
 
         CHECK(real(output.bus_injection[1]) == doctest::Approx(-2.0));
         CHECK(real(output.load_gen[0].s) == doctest::Approx(-2.0));
@@ -732,7 +734,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
         SolverType solver{y_bus_sym, topo_ptr};
 
-        output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, info);
+        output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, log);
 
         CHECK(real(output.bus_injection[1]) == doctest::Approx(-2.0));
         CHECK(real(output.branch[0].s_t) == doctest::Approx(-2.0));
@@ -766,7 +768,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
         SolverType solver{y_bus_sym, topo_ptr};
 
-        output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, info);
+        output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, log);
 
         CHECK(real(output.bus_injection[1]) == doctest::Approx(-1.0));
         CHECK(real(output.load_gen[0].s) == doctest::Approx(-1.85));
@@ -799,7 +801,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
         SolverType solver{y_bus_sym, topo_ptr};
 
-        output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, info);
+        output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, log);
 
         // the different aggregation of the load gen's P and Q measurements cause differences compared to the case with
         // identical variances

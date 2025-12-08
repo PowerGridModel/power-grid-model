@@ -122,7 +122,8 @@ template <symmetry_tag sym> class VoltageSensor : public GenericVoltageSensor {
     VoltageSensorCalcParam<symmetric_t> sym_calc_param() const final {
         double const u_variance = u_sigma_ * u_sigma_;
         if (has_angle()) {
-            ComplexValue<symmetric_t> const u = pos_seq(u_measured_ * exp(1i * u_angle_measured_));
+            ComplexValue<sym> const u_phasor_measured{u_measured_ * exp(1i * u_angle_measured_)};
+            ComplexValue<symmetric_t> const u = pos_seq(u_phasor_measured);
             return {u, u_variance};
         }
         ComplexValue<symmetric_t> const u{mean_val(u_measured_), nan};
@@ -145,8 +146,7 @@ template <symmetry_tag sym> class VoltageSensor : public GenericVoltageSensor {
         value.energized = 1;
 
         DoubleComplex const u1_measured = sym_calc_param().value;
-        bool const has_angle = !is_nan(imag(u1_measured));
-        if (has_angle) {
+        if (bool const has_angle = !is_nan(imag(u1_measured)); has_angle) {
             value.u_residual = (cabs(u1_measured) - cabs(u)) * u_rated_;
         } else {
             value.u_residual = (real(u1_measured) - cabs(u)) * u_rated_;

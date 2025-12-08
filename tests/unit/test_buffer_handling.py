@@ -10,9 +10,8 @@ import numpy as np
 import pytest
 
 from power_grid_model._core.buffer_handling import (
-    _get_dense_buffer_properties,
     _get_raw_attribute_data_view,
-    _get_sparse_buffer_properties,
+    get_buffer_properties,
     get_buffer_view,
 )
 from power_grid_model._core.dataset_definitions import ComponentType, DatasetType
@@ -26,16 +25,19 @@ BATCH_TOTAL_ELEMENTS = 8
 
 def load_data(component_type, is_batch, is_sparse, is_columnar):
     """Creates load data of different formats for testing"""
-    shape = (2, 4) if is_batch else (4,)
+    shape = (BATCH_DATASET_NDIM, SCENARIO_TOTAL_ELEMENTS) if is_batch else (SCENARIO_TOTAL_ELEMENTS,)
     load = initialize_array(DatasetType.update, component_type, shape)
     columnar_names = ["p_specified", "q_specified"]
 
     if is_columnar:
         if is_sparse:
-            return {"indptr": np.array([0, 5, 8]), "data": {k: load.reshape(-1)[k] for k in columnar_names}}
+            return {
+                "indptr": np.array([0, 5, BATCH_TOTAL_ELEMENTS]),
+                "data": {k: load.reshape(-1)[k] for k in columnar_names},
+            }
         return {k: load[k] for k in columnar_names}
     if is_sparse:
-        return {"indptr": np.array([0, 5, 8]), "data": load.reshape(-1)}
+        return {"indptr": np.array([0, 5, BATCH_TOTAL_ELEMENTS]), "data": load.reshape(-1)}
     return load
 
 
@@ -56,7 +58,7 @@ def test__get_dense_buffer_properties(component_type, is_batch, is_columnar):
     data = load_data(component_type, is_batch=is_batch, is_columnar=is_columnar, is_sparse=False)
     schema = power_grid_meta_data[DatasetType.update][component_type]
     batch_size = BATCH_DATASET_NDIM if is_batch else None
-    properties = _get_dense_buffer_properties(data, schema=schema, is_batch=is_batch, batch_size=batch_size)
+    properties = get_buffer_properties(data, schema=schema, is_batch=is_batch, batch_size=batch_size)
 
     assert not properties.is_sparse
     assert properties.is_batch == is_batch
@@ -82,7 +84,7 @@ def test__get_sparse_buffer_properties(component_type, is_columnar):
     data = load_data(component_type, is_batch=True, is_columnar=is_columnar, is_sparse=True)
 
     schema = power_grid_meta_data[DatasetType.update][component_type]
-    properties = _get_sparse_buffer_properties(data, schema=schema, batch_size=2)
+    properties = get_buffer_properties(data, schema=schema, batch_size=2)
 
     assert properties.is_sparse
     assert properties.is_batch
@@ -93,6 +95,82 @@ def test__get_sparse_buffer_properties(component_type, is_columnar):
         assert properties.columns == list(data["data"].keys())
     else:
         assert properties.columns is None
+
+
+@pytest.mark.parametrize(
+    ("component_type", "is_columnar"),
+    [
+        pytest.param(ComponentType.sym_load, True, id="sym_load-single-columnar"),
+        pytest.param(ComponentType.sym_load, False, id="sym_load-single-row_based"),
+        pytest.param(ComponentType.asym_load, True, id="asym_load-single-columnar"),
+        pytest.param(ComponentType.asym_load, False, id="asym_load-single-row_based"),
+    ],
+)
+def test__get_buffer_properties__batch_requested_for_single_data(component_type, is_columnar):
+    data = load_data(component_type, is_batch=False, is_columnar=is_columnar, is_sparse=False)
+    schema = power_grid_meta_data[DatasetType.update][component_type]
+
+    with pytest.raises(
+        ValueError, match=r"Incorrect\/inconsistent data provided: single data provided but batch data expected"
+    ):
+        get_buffer_properties(data, schema=schema, is_batch=True, batch_size=BATCH_DATASET_NDIM)
+
+
+@pytest.mark.parametrize(
+    ("component_type", "is_sparse", "is_columnar"),
+    [
+        pytest.param(ComponentType.sym_load, False, True, id="sym_load-batch-columnar"),
+        pytest.param(ComponentType.sym_load, False, False, id="sym_load-batch-row_based"),
+        pytest.param(ComponentType.asym_load, False, True, id="asym_load-batch-columnar"),
+        pytest.param(ComponentType.asym_load, False, False, id="asym_load-batch-row_based"),
+        pytest.param(ComponentType.sym_load, True, True, id="sym_load-columnar"),
+        pytest.param(ComponentType.sym_load, True, False, id="sym_load-row_based"),
+        pytest.param(ComponentType.asym_load, True, True, id="asym_load-columnar"),
+        pytest.param(ComponentType.asym_load, True, False, id="asym_load-row_based"),
+    ],
+)
+def test__get_buffer_properties__single_requested_for_batch(component_type, is_sparse, is_columnar):
+    data = load_data(component_type, is_batch=True, is_columnar=is_columnar, is_sparse=is_sparse)
+    schema = power_grid_meta_data[DatasetType.update][component_type]
+
+    if is_sparse:
+        with pytest.raises(ValueError, match="Sparse data must be batch data"):
+            get_buffer_properties(data, schema=schema, is_batch=False, batch_size=None)
+    else:
+        with pytest.raises(
+            ValueError, match=r"Incorrect\/inconsistent data provided: batch data provided but single data expected"
+        ):
+            get_buffer_properties(data, schema=schema, is_batch=False, batch_size=None)
+
+
+@pytest.mark.parametrize(
+    ("component_type", "is_sparse", "is_columnar"),
+    [
+        pytest.param(ComponentType.sym_load, False, True, id="sym_load-batch-columnar"),
+        pytest.param(ComponentType.sym_load, False, False, id="sym_load-batch-row_based"),
+        pytest.param(ComponentType.asym_load, False, True, id="asym_load-batch-columnar"),
+        pytest.param(ComponentType.asym_load, False, False, id="asym_load-batch-row_based"),
+        pytest.param(ComponentType.sym_load, True, True, id="sym_load-columnar"),
+        pytest.param(ComponentType.sym_load, True, False, id="sym_load-row_based"),
+        pytest.param(ComponentType.asym_load, True, True, id="asym_load-columnar"),
+        pytest.param(ComponentType.asym_load, True, False, id="asym_load-row_based"),
+    ],
+)
+def test__get_buffer_properties__wrong_batch_size(component_type, is_sparse, is_columnar):
+    data = load_data(component_type, is_batch=True, is_columnar=is_columnar, is_sparse=is_sparse)
+    schema = power_grid_meta_data[DatasetType.update][component_type]
+
+    actual_batch_size = BATCH_DATASET_NDIM
+    wrong_batch_size = actual_batch_size + 1
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            f"Incorrect/inconsistent batch size provided: {actual_batch_size} scenarios provided but "
+            f"{wrong_batch_size} scenarios expected."
+        ),
+    ):
+        get_buffer_properties(data, schema=schema, is_batch=True, batch_size=wrong_batch_size)
 
 
 @pytest.mark.parametrize(
@@ -155,7 +233,7 @@ def test__get_raw_attribute_data_view_fail(component, attribute):
     assert old_shape[-1] == asym_dense_batch_last_dim
     assert updated_shape[-1] == unsupported_asym_dense_batch_last_dim
 
-    with pytest.raises(ValueError, match="Given data has a different schema than supported."):
+    with pytest.raises(ValueError, match="Given data has a different schema than supported"):
         get_buffer_view(data, schema=schema, is_batch=True)
 
 
@@ -244,5 +322,5 @@ def test__get_raw_attribute_data_view_directly_fail(component, attr_data_shape, 
     arr = np.zeros(attr_data_shape)
     schema = power_grid_meta_data[DatasetType.update][component]
 
-    with pytest.raises(ValueError, match="Given data has a different schema than supported."):
+    with pytest.raises(ValueError, match="Given data has a different schema than supported"):
         _get_raw_attribute_data_view(arr, schema, attribute)

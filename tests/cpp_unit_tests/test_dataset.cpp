@@ -1068,12 +1068,11 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                 check_get_individual_scenario();
             }
             SUBCASE("columnar") {
-                auto a_id_buffer = std::vector<ID>(a_elements_per_scenario * batch_size);
-                auto a_a1_buffer = std::vector<double>(a_elements_per_scenario * batch_size);
+                auto a_id_buffer =
+                    std::views::iota(0, a_elements_per_scenario * batch_size) | std::ranges::to<std::vector<ID>>();
+                auto a_a1_buffer =
+                    std::views::iota(0, a_elements_per_scenario * batch_size) | std::ranges::to<std::vector<double>>();
                 auto b_indptr = std::vector<Idx>{0, 0, 3};
-
-                std::iota(a_id_buffer.begin(), a_id_buffer.end(), ID{0});
-                std::iota(a_a1_buffer.begin(), a_a1_buffer.end(), 0.0);
 
                 add_homogeneous_buffer(dataset, A::name, a_elements_per_scenario, nullptr);
                 add_attribute_buffer(dataset, A::name, "id", static_cast<void*>(a_id_buffer.data()));

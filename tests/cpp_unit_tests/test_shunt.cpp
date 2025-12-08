@@ -157,9 +157,9 @@ TEST_CASE("Test shunt") {
         }
 
         SUBCASE("Status") {
-            SUBCASE("same") { shunt_update.status = static_cast<IntS>(shunt.status()); }
+            SUBCASE("same") { shunt_update.status = status_to_int(shunt.status()); }
             SUBCASE("different") { shunt_update.status = IntS{0}; }
-            expected.status = static_cast<IntS>(shunt.status());
+            expected.status = status_to_int(shunt.status());
         }
 
         SUBCASE("g1") {
@@ -192,7 +192,7 @@ TEST_CASE("Test shunt") {
             shunt_update.b1 = 0.1;
             shunt_update.g0 = 0.2;
             shunt_update.b0 = 0.3;
-            expected.status = static_cast<IntS>(shunt.status());
+            expected.status = status_to_int(shunt.status());
             expected.g1 = 1.0;
             expected.b1 = 2.0;
             expected.g0 = 3.0;

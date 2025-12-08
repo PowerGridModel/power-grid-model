@@ -4,11 +4,10 @@
 
 #pragma once
 
-#include "calculation_info.hpp"
 #include "common.hpp"
+#include "logging.hpp"
 
 #include <chrono>
-#include <iomanip>
 #include <sstream>
 
 namespace power_grid_model {
@@ -18,19 +17,17 @@ using Duration = std::chrono::duration<double>;
 
 class Timer {
   private:
-    CalculationInfo* info_;
-    int code_;
-    std::string name_;
+    Logger* log_;
+    LogEvent code_;
     Clock::time_point start_;
 
   public:
-    Timer() : info_(nullptr), code_{-1} {};
-
-    Timer(CalculationInfo& info, int code, std::string name)
-        : info_{&info}, code_{code}, name_{std::move(name)}, start_{Clock::now()} {}
+    Timer() : log_{nullptr}, code_{LogEvent::unknown} {};
+    Timer(Logger& log, LogEvent code) : log_{&log}, code_{code}, start_{Clock::now()} {}
 
     Timer(Timer const&) = delete;
-    Timer(Timer&&) = default;
+    Timer(Timer&& other) noexcept
+        : log_{std::exchange(other.log_, nullptr)}, code_{other.code_}, start_{other.start_} {}
     Timer& operator=(Timer const&) = delete;
 
     Timer& operator=(Timer&& timer) noexcept {
@@ -38,45 +35,30 @@ class Timer {
         stop();
 
         // Copy/move members
-        info_ = timer.info_;
+        log_ = timer.log_;
         code_ = timer.code_;
-        name_ = std::move(timer.name_);
         start_ = timer.start_;
 
         // Disable original timer
-        timer.info_ = nullptr;
+        timer.log_ = nullptr;
 
         // Return reference
         return *this;
     }
 
     ~Timer() {
-        if (info_ != nullptr) {
+        if (log_ != nullptr) {
             stop();
         }
     }
 
     void stop() {
-        if (info_ != nullptr) {
+        if (log_ != nullptr) {
             auto const now = Clock::now();
             auto const duration = Duration(now - start_);
-            info_->operator[](Timer::make_key(code_, name_)) += (double)duration.count();
-            info_ = nullptr;
+            log_->log(code_, duration.count());
+            log_ = nullptr;
         }
-    }
-
-    static std::string make_key(int code, std::string_view name) {
-        std::stringstream ss;
-        ss << std::setw(4) << std::setfill('0') << code << ".";
-        auto key = ss.str();
-        for (size_t i = 0, n = key.length() - 1; i < n; ++i) {
-            if (key[i] == '0') {
-                break;
-            }
-            key += "\t";
-        }
-        key += name;
-        return key;
     }
 };
 

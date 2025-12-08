@@ -11,13 +11,15 @@ sphinx:
 build:
   os: "ubuntu-24.04"
   tools:
-    python: "3.11"
+    python: "3.13"
   apt_packages:
     - graphviz
+    - gcc-14
+    - g++-14
   jobs:
     post_install:
       # Build package with doc requirements from pyproject.optional-dependencies
-      - pip install --verbose --editable .[doc]
+      - CC=gcc-14 CXX=g++-14 pip install --verbose --editable .[doc]
 
       # remove API DLL define in header
       - find power_grid_model_c/power_grid_model_c/include -name *.h -exec sed -i -r "s/#define PGM.*//g" {} \;
@@ -34,7 +36,7 @@ build:
       # download support and contribution
       - git clone https://github.com/PowerGridModel/.github.git --depth 1 --branch main pgm_org_github
       - mkdir -p docs/release_and_support
-      - mv pgm_org_github/RELEASE.md pgm_org_github/SUPPORT.md pgm_org_github/SECURITY.md pgm_org_github/CITATION.md docs/release_and_support/
+      - mv pgm_org_github/RELEASE.md pgm_org_github/SUPPORT.md pgm_org_github/COMMUNITY.md pgm_org_github/SECURITY.md pgm_org_github/CITATION.md docs/release_and_support/
       - mkdir -p docs/contribution
       - mv pgm_org_github/GOVERNANCE.md pgm_org_github/CONTRIBUTING.md pgm_org_github/CODE_OF_CONDUCT.md docs/contribution/
       # fix links

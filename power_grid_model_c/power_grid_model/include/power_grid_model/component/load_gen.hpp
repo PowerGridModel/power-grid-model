@@ -113,7 +113,7 @@ class LoadGen final : public std::conditional_t<is_generator_v<appliance_type_>,
         assert(update_data.id == this->id() || is_nan(update_data.id));
         double const scalar = direction_ * base_power<loadgen_symmetry>;
 
-        set_if_not_nan(update_data.status, static_cast<IntS>(this->status()));
+        set_if_not_nan(update_data.status, status_to_int(this->status()));
         set_if_not_nan(update_data.p_specified, real(s_specified_) * scalar);
         set_if_not_nan(update_data.q_specified, imag(s_specified_) * scalar);
 

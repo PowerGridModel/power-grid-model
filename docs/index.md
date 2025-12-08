@@ -48,6 +48,18 @@ If you are using `conda`, you can directly install the package from `conda-forge
 conda install -c conda-forge power-grid-model
 ```
 
+## Installation via Homebrew
+
+If you are using the C API with `brew`, you can install the C API (and experimental C++ wrapper) directly:
+
+```sh
+brew install powergridmodel/pgm/power-grid-model
+```
+
+If you are interested in having this package in [`homebrew-core`](https://github.com/Homebrew/homebrew-core), please
+consider contributing the [formula](https://github.com/PowerGridModel/homebrew-pgm), in conformance to
+[their documentation](https://docs.brew.sh/Acceptable-Formulae).
+
 ## Build and install from Source
 
 To install the library from source, refer to the [Build Guide](advanced_documentation/build-guide.md).
@@ -134,6 +146,7 @@ contribution/GOVERNANCE.md
 :maxdepth: 2
 release_and_support/RELEASE.md
 release_and_support/SUPPORT.md
+release_and_support/COMMUNITY.md
 release_and_support/SECURITY.md
 release_and_support/CITATION.md
 ```

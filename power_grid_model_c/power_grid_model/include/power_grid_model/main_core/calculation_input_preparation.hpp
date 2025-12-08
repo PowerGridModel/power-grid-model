@@ -94,7 +94,7 @@ void prepare_input(main_model_state_c auto const& state, std::vector<Idx2D> cons
         if (include(i)) {
             Idx2D const math_idx = components[i];
             if (math_idx.group != isolated_component) {
-                auto const& component = get_component_by_sequence<ComponentIn>(state, i);
+                auto const& component = get_component_by_sequence<ComponentIn>(state.components, i);
                 CalcStructOut& math_model_input = calc_input[math_idx.group];
                 std::vector<CalcParamOut>& math_model_input_vect = math_model_input.*comp_vect;
                 math_model_input_vect[math_idx.pos] = calculate_param<CalcStructOut>(component);
@@ -114,7 +114,7 @@ void prepare_input(main_model_state_c auto const& state, std::vector<Idx2D> cons
         if (include(i)) {
             Idx2D const math_idx = components[i];
             if (math_idx.group != isolated_component) {
-                auto const& component = get_component_by_sequence<ComponentIn>(state, i);
+                auto const& component = get_component_by_sequence<ComponentIn>(state.components, i);
                 CalcStructOut& math_model_input = calc_input[math_idx.group];
                 std::vector<CalcParamOut>& math_model_input_vect = math_model_input.*comp_vect;
                 math_model_input_vect[math_idx.pos] = calculate_param<CalcStructOut>(component, extra_args(component));
@@ -132,7 +132,7 @@ void prepare_input_status(main_model_state_c auto const& state, std::vector<Idx2
             continue;
         }
         (input[math_idx.group].*component)[math_idx.pos] =
-            main_core::get_component_by_sequence<Component>(state, i).status();
+            main_core::get_component_by_sequence<Component>(state.components, i).status();
     }
 }
 } // namespace detail
@@ -274,7 +274,10 @@ std::vector<ShortCircuitInput> prepare_short_circuit_input(main_model_state_c au
         }
 
         sc_input[i].fault_buses = {from_dense, std::move(map.indvector), state.math_topology[i]->n_bus()};
+
+        // we need to reserve enough space because fault_object is updateable
         sc_input[i].faults.resize(state.components.template size<Fault>());
+
         sc_input[i].source.resize(state.math_topology[i]->n_source());
     }
 
@@ -288,6 +291,16 @@ std::vector<ShortCircuitInput> prepare_short_circuit_input(main_model_state_c au
         state, state.topo_comp_coup->source, sc_input, [&state, voltage_scaling](Source const& source) {
             return std::pair{state.components.template get_item<Node>(source.node()).u_rated(), voltage_scaling};
         });
+
+    // only now do we know where the fault objects are placed => resize to used only
+    for (auto& input : sc_input) {
+        auto const is_unused = [](FaultCalcParam const& param) {
+            return param.fault_type == FaultType::nan && param.fault_phase == FaultPhase::nan;
+        };
+        auto const first_non_used = std::ranges::find_if(input.faults, is_unused);
+        assert(std::all_of(first_non_used, input.faults.end(), is_unused));
+        input.faults.resize(std::distance(input.faults.begin(), first_non_used));
+    }
 
     return sc_input;
 }

@@ -53,14 +53,14 @@ static_assert(transformer_c<StubTransformer>);
 static_assert(transformer_c<StubTransformerA>);
 static_assert(transformer_c<StubTransformerB>);
 
-template <std::derived_from<StubTransformer> ComponentType, typename State>
-    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
-constexpr auto get_topology_index(State const& /* state */, auto const& /* id_or_index */) {
+template <std::derived_from<StubTransformer> ComponentType, typename ComponentContainer>
+    requires common::component_container_c<ComponentContainer, ComponentType>
+constexpr auto get_topology_index(ComponentContainer const& /* Components */, auto const& /* id_or_index */) {
     return Idx{};
 }
 
 template <std::derived_from<StubTransformer> ComponentType, typename State>
-    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
+    requires common::component_container_c<typename State::ComponentContainer, ComponentType>
 constexpr auto get_math_id(State const& /* state */, Idx /* topology_sequence_idx */) {
     return StubTransformerMathIdType{};
 }
@@ -73,7 +73,7 @@ inline auto i_pu(std::vector<SolverOutputType> const& /* solver_output */,
 
 template <std::derived_from<StubTransformer> ComponentType, typename State,
           steady_state_solver_output_type SolverOutputType>
-    requires main_core::component_container_c<typename State::ComponentContainer, ComponentType>
+    requires common::component_container_c<typename State::ComponentContainer, ComponentType>
 inline auto u_pu(State const& /* state */, std::vector<SolverOutputType> const& /* solver_output */,
                  Idx /* topology_index */, ControlSide /* control_side */) {
     return ComplexValue<typename SolverOutputType::sym>{};

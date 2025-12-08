@@ -673,7 +673,7 @@ def test_not_all_missing():
         assert len(errors) == 1
         assert errors == [MultiFieldValidationError("foo_test", ["foo", "bar", "baz"], [1])]
 
-        with pytest.raises(ValueError, match="The fields parameter must contain at least 2 fields.") as excinfo:
+        with pytest.raises(ValueError, match="The fields parameter must contain at least 2 fields") as excinfo:
             not_all_missing(invalid, ["bar"], "foo_test")
 
         assert excinfo.type is ValueError

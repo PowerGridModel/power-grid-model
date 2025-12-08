@@ -29,7 +29,7 @@ constexpr auto get_optimizer(OptimizerType optimizer_type, OptimizerStrategy str
     case automatic_tap_adjustment:
         if constexpr (detail::steady_state_calculator_c<StateCalculator, State> &&
                       std::invocable<std::remove_cvref_t<StateUpdater>, ConstDataset const&> &&
-                      main_core::component_container_c<typename State::ComponentContainer, TransformerTapRegulator>) {
+                      common::component_container_c<typename State::ComponentContainer, TransformerTapRegulator>) {
             return BaseOptimizer::template make_shared<TapPositionOptimizer<StateCalculator, StateUpdater, State>>(
                 std::move(calculator), std::move(updater), strategy, meta_data, search);
         }

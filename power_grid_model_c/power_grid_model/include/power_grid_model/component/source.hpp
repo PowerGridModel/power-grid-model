@@ -99,7 +99,7 @@ class Source : public Appliance {
     SourceUpdate inverse(SourceUpdate update_data) const {
         assert(update_data.id == this->id() || is_nan(update_data.id));
 
-        set_if_not_nan(update_data.status, static_cast<IntS>(this->status()));
+        set_if_not_nan(update_data.status, status_to_int(this->status()));
         set_if_not_nan(update_data.u_ref, u_ref_);
         set_if_not_nan(update_data.u_ref_angle, u_ref_angle_);
 

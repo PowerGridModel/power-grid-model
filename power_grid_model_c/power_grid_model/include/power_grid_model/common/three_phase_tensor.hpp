@@ -11,6 +11,7 @@
 
 #include <cmath>
 #include <complex>
+#include <utility>
 
 namespace power_grid_model {
 
@@ -199,7 +200,7 @@ inline auto cabs(Eigen::ArrayBase<DerivedA> const& m)
     return m.abs();
 }
 
-// phase_shift(x) = e^{i arg(x)} = x / |x|
+// phase_shift(x) = e^{i arg(x)} = x / |x| // NOSONAR(S125)
 template <std::floating_point Float> inline std::complex<Float> phase_shift(std::complex<Float> const x) {
     if (auto const abs_x = cabs(x); abs_x > 0.0) {
         return x / abs_x;
@@ -354,7 +355,7 @@ constexpr bool is_nan(IntS x) { return x == na_IntS; }
 template <class Enum>
     requires std::same_as<std::underlying_type_t<Enum>, IntS>
 constexpr bool is_nan(Enum x) {
-    return static_cast<IntS>(x) == na_IntS;
+    return std::to_underlying(x) == na_IntS;
 }
 constexpr bool is_nan(Idx x) { return x == na_Idx; }
 

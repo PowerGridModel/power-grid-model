@@ -120,7 +120,7 @@ class Fault final : public Base {
     FaultUpdate inverse(FaultUpdate update_data) const {
         assert(update_data.id == this->id() || is_nan(update_data.id));
 
-        set_if_not_nan(update_data.status, static_cast<IntS>(status_));
+        set_if_not_nan(update_data.status, status_to_int(status_));
         set_if_not_nan(update_data.fault_type, fault_type_);
         set_if_not_nan(update_data.fault_phase, fault_phase_);
         set_if_not_nan(update_data.fault_object, fault_object_);
@@ -150,9 +150,8 @@ class Fault final : public Base {
     FaultType get_fault_type() const {
         using enum FaultType;
 
-        constexpr auto supported = std::array{three_phase, single_phase_to_ground, two_phase, two_phase_to_ground};
-
-        if (std::ranges::find(supported, fault_type_) == cend(supported)) {
+        if (constexpr auto supported = std::array{three_phase, single_phase_to_ground, two_phase, two_phase_to_ground};
+            std::ranges::find(supported, fault_type_) == cend(supported)) {
             throw InvalidShortCircuitType(fault_type_);
         }
 

@@ -646,8 +646,8 @@ class FictionalGridGenerator {
         std::uniform_real_distribution<double> load_scaling_gen{0.0, 1.0};
         load_series.resize(input.size() * batch_size);
         auto const n_object = std::ssize(input);
-        for (Idx batch : IdxRange{batch_size}) {
-            for (Idx object : IdxRange{n_object}) {
+        for (Idx const batch : IdxRange{batch_size}) {
+            for (Idx const object : IdxRange{n_object}) {
                 T const& input_obj = input[object];
                 U& update_obj = load_series[batch * n_object + object];
                 update_obj.id = input_obj.id;
@@ -698,10 +698,10 @@ class FictionalGridGenerator {
 
         sensor_series.resize(input.size() * batch_size);
         auto const n_object = std::ssize(input);
-        for (Idx object : IdxRange{n_object}) {
+        for (Idx const object : IdxRange{n_object}) {
             T const& input_obj = input[object];
 
-            for (Idx batch : IdxRange{batch_size}) {
+            for (Idx const batch : IdxRange{batch_size}) {
                 U& update_obj = sensor_series[batch * n_object + object];
                 update_obj.id = input_obj.id;
                 if constexpr (is_symmetric_v<typename T::sym>) {
