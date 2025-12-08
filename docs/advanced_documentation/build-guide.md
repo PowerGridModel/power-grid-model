@@ -267,7 +267,7 @@ git clone https://github.com/PowerGridModel/power-grid-model.git
 cd power-grid-model
 ```
 
-It is recommended to create a virtual environment by using `uv`, and 
+It is recommended to create a virtual environment by using `uv`, and
 install from source in develop mode, and run `pytest`.
 
 ```shell
@@ -347,6 +347,14 @@ It is possible to enable long paths in Windows by following the steps in the
 [Microsoft documentation](https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=registry)
 ```
 
+### Install uv
+
+You can install `uv` by the following command as suggested in their [website](https://github.com/astral-sh/uv).
+
+```shell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
 ### C++ packages
 
 The recommended way to get C++ package is via `conda`.
@@ -365,26 +373,17 @@ It is possible to enable long paths in Windows by following the steps in the
 
 ### Build Python Library from Source
 
-It is recommended to create a virtual environment.
-Clone repository, create and activate virtual environment.
-Go to a root folder you prefer to save the repositories, open a Git Bash Console.
+Clone repository, go to a root folder you prefer to save the repositories, open a Git Bash Console.
 
 ```shell
 git clone https://github.com/PowerGridModel/power-grid-model.git
 ```
 
-Go to the repository folder.
+Go to the repository folder in your powershell, build project from source and run `pytest`.
 
 ```shell
-python -m venv .venv
-.venv\Script\activate
-```
-
-Install from source in develop mode, and run `pytest`.
-
-```shell
-pip install -e .[dev]
-pytest
+uv sync
+uv run pytest
 ```
 
 ### Build CMake Project
