@@ -176,7 +176,7 @@ struct CheckHasMap : DefaultNullVisitor {
     }
 };
 
-template <class T> struct DefaultErrorVisitor : DefaultNullVisitor {
+struct DefaultErrorVisitor : DefaultNullVisitor {
     static constexpr std::string_view static_err_msg = "Unexpected data type!\n";
 
     bool visit_nil() { return throw_error(); }
@@ -199,13 +199,16 @@ template <class T> struct DefaultErrorVisitor : DefaultNullVisitor {
     bool end_map_value() { return throw_error(); }
     bool end_map() { return throw_error(); }
 
-    [[noreturn]] bool throw_error() { throw SerializationError{(static_cast<T&>(*this)).get_err_msg()}; }
+    template <typename Self> [[noreturn]] bool throw_error(this Self&& self) {
+        throw SerializationError{std::forward<Self>(self).get_err_msg()};
+    }
 
-    std::string get_err_msg() { return std::string{T::static_err_msg}; }
+    template <typename Self> std::string get_err_msg(this Self&& self) {
+        return std::string{std::forward<Self>(self).static_err_msg};
+    }
 
-  private:
+  protected:
     DefaultErrorVisitor() = default;
-    friend T; // CRTP compliance
 };
 
 struct visit_map_t;
@@ -215,7 +218,7 @@ struct visit_map_array_t;
 template <class map_array>
     requires(std::same_as<map_array, visit_map_t> || std::same_as<map_array, visit_array_t> ||
              std::same_as<map_array, visit_map_array_t>)
-struct MapArrayVisitor : DefaultErrorVisitor<MapArrayVisitor<map_array>> {
+struct MapArrayVisitor : DefaultErrorVisitor {
     static constexpr bool enable_map =
         std::same_as<map_array, visit_map_t> || std::same_as<map_array, visit_map_array_t>;
     static constexpr bool enable_array =
@@ -264,7 +267,7 @@ struct MapArrayVisitor : DefaultErrorVisitor<MapArrayVisitor<map_array>> {
     MapArrayVisitor() = default;
 };
 
-struct StringVisitor : DefaultErrorVisitor<StringVisitor> {
+struct StringVisitor : DefaultErrorVisitor {
     static constexpr std::string_view static_err_msg = "String expected.";
 
     std::string_view str;
@@ -276,7 +279,7 @@ struct StringVisitor : DefaultErrorVisitor<StringVisitor> {
     StringVisitor() = default;
 };
 
-struct BoolVisitor : DefaultErrorVisitor<BoolVisitor> {
+struct BoolVisitor : DefaultErrorVisitor {
     static constexpr std::string_view static_err_msg = "Boolean expected.";
 
     bool value{};
@@ -290,7 +293,7 @@ struct BoolVisitor : DefaultErrorVisitor<BoolVisitor> {
 
 template <class T> struct ValueVisitor;
 
-template <std::integral T> struct ValueVisitor<T> : DefaultErrorVisitor<ValueVisitor<T>> {
+template <std::integral T> struct ValueVisitor<T> : DefaultErrorVisitor {
     static constexpr std::string_view static_err_msg = "Integer expected.";
 
     T& value; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
@@ -311,10 +314,10 @@ template <std::integral T> struct ValueVisitor<T> : DefaultErrorVisitor<ValueVis
         return true;
     }
 
-    ValueVisitor(T& v) : DefaultErrorVisitor<ValueVisitor<T>>{}, value{v} {}
+    ValueVisitor(T& v) : DefaultErrorVisitor{}, value{v} {}
 };
 
-template <> struct ValueVisitor<double> : DefaultErrorVisitor<ValueVisitor<double>> {
+template <> struct ValueVisitor<double> : DefaultErrorVisitor {
     static constexpr std::string_view static_err_msg = "Number expected.";
 
     double& value; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
@@ -337,10 +340,10 @@ template <> struct ValueVisitor<double> : DefaultErrorVisitor<ValueVisitor<doubl
         return true;
     }
 
-    ValueVisitor(double& v) : DefaultErrorVisitor<ValueVisitor<double>>{}, value{v} {}
+    ValueVisitor(double& v) : DefaultErrorVisitor{}, value{v} {}
 };
 
-template <> struct ValueVisitor<RealValue<asymmetric_t>> : DefaultErrorVisitor<ValueVisitor<RealValue<asymmetric_t>>> {
+template <> struct ValueVisitor<RealValue<asymmetric_t>> : DefaultErrorVisitor {
     static constexpr std::string_view static_err_msg = "Array of 3 numbers expected.";
 
     RealValue<asymmetric_t>& value; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
@@ -390,7 +393,7 @@ template <> struct ValueVisitor<RealValue<asymmetric_t>> : DefaultErrorVisitor<V
         return true;
     }
 
-    ValueVisitor(RealValue<asymmetric_t>& v) : DefaultErrorVisitor<ValueVisitor<RealValue<asymmetric_t>>>{}, value{v} {}
+    ValueVisitor(RealValue<asymmetric_t>& v) : DefaultErrorVisitor{}, value{v} {}
 };
 
 } // namespace detail
