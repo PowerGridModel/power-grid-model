@@ -10,8 +10,8 @@
 
 #ifdef _MSC_VER
 #pragma warning(push)
-#pragma warning(disable : 4702, justification : "Contains potentially unreachable code")
-#endif // _MSC_VER
+#pragma warning(disable : 4702) // Contains potentially unreachable code
+#endif                          // _MSC_VER
 #include <nlohmann/json.hpp>
 #ifdef _MSC_VER
 #pragma warning(pop)

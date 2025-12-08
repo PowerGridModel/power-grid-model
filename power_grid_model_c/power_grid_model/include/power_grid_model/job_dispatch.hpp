@@ -167,8 +167,8 @@ class JobDispatch {
                           RecoverFromBadFn recover_from_bad) {
 #ifdef _MSC_VER
 #pragma warning(push)
-#pragma warning(disable : 4702, justification : "Unreachable if run_ is [[noreturn]]")
-#endif // _MSC_VER
+#pragma warning(disable : 4702) // Unreachable if run_ is [[noreturn]]
+#endif                          // _MSC_VER
         return [setup_ = std::move(setup), run_ = std::move(run), winddown_ = std::move(winddown),
                 handle_exception_ = std::move(handle_exception),
                 recover_from_bad_ = std::move(recover_from_bad)](Args const&... args) {
