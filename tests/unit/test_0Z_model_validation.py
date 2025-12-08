@@ -97,7 +97,9 @@ def get_kwargs(sym: bool, calculation_type: str, calculation_method: str, params
 def maybe_raises(params: dict):
     raises = params.get("raises")
     if raises:
-        return pytest.raises(KNOWN_EXCEPTIONS[raises.get("raises", "AssertionError")])  # type: ignore[arg-type]
+        raise_type = KNOWN_EXCEPTIONS.get(raises, AssertionError)
+        if raise_type is not None:
+            return pytest.raises(raise_type)
 
     class PassThrough:
         def __enter__(self):
