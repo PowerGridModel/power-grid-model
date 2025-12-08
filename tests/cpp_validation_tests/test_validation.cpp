@@ -236,8 +236,7 @@ bool check_angle_and_magnitude(T const& ref_angle, T const& angle, T const& ref_
         std::ranges::transform(magnitude, angle, result.begin(), to_complex);
         std::ranges::transform(ref_magnitude, ref_angle, ref_result.begin(), to_complex);
         return std::ranges::equal(result, ref_result, is_within_tolerance);
-    }
-    if constexpr (std::is_same_v<std::decay_t<T>, double>) {
+    } else if constexpr (std::is_same_v<std::decay_t<T>, double>) {
         std::complex<double> const result = to_complex(magnitude, angle);
         std::complex<double> const ref_result = to_complex(ref_magnitude, ref_angle);
         return is_within_tolerance(result, ref_result);
@@ -326,7 +325,6 @@ void assert_result(OwningDataset const& owning_result, OwningDataset const& owni
 
     DatasetConst const result{owning_result.dataset};
     auto const& result_info = result.get_info();
-    auto const& result_name = result_info.name();
     Idx const result_batch_size = result_info.batch_size();
     auto const& storage = owning_result.storage;
 

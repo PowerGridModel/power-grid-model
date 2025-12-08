@@ -384,6 +384,7 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
             (void)add_buffer;
             (void)get_data_buffer;
             (void)get_indptr_buffer;
+            (void)is_columnar;
             dataset.add_component_info(name, elements_per_scenario, total_elements);
         } else {
             void* data_buffer = get_data_buffer(is_columnar, total_elements);
@@ -973,11 +974,11 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                     DatasetError);
             }
             SUBCASE("Mixed buffer types") {
-                auto a_indptr = std::vector<Idx>{0, 0};
+                auto other_indptr = std::vector<Idx>{0, 0};
                 add_homogeneous_buffer(dataset, A::name, 0, static_cast<void*>(a_buffer.data()));
-                CHECK_THROWS_AS(
-                    add_inhomogeneous_buffer(dataset, A::name, 0, a_indptr.data(), static_cast<void*>(a_buffer.data())),
-                    DatasetError);
+                CHECK_THROWS_AS(add_inhomogeneous_buffer(dataset, A::name, 0, other_indptr.data(),
+                                                         static_cast<void*>(a_buffer.data())),
+                                DatasetError);
             }
         }
     }

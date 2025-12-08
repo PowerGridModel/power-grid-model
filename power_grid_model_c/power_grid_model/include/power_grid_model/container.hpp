@@ -259,9 +259,17 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
             &Container::get_raw<GettableBaseType, StorageableSubType>;
     };
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4268) // The parameter expansion may be empty
+#endif                          // _MSC_VER
     // array of base judge
     template <supported_type_c<GettableTypes...> Gettable>
     static constexpr std::array<bool, num_storageable> is_base{std::is_base_of_v<Gettable, StorageableTypes>...};
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif // _MSC_VER
+
     // array of relevant vector size, for a non-derived class, the size is zero
     template <supported_type_c<GettableTypes...> Gettable> std::array<Idx, num_storageable> size_per_vector() const {
         assert(construction_complete_);

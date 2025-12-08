@@ -476,12 +476,16 @@ class Serializer {
             return found->second;
         }();
         auto const reordered_attribute_buffers = [&]() -> std::span<AttributeBuffer<void const> const> {
-            if (detail::is_row_based_v<row_or_column_t> || !use_compact_list) {
+            if constexpr (detail::is_row_based_v<row_or_column_t>) {
                 return {};
+            } else {
+                if (!use_compact_list) {
+                    return {};
+                }
+                auto const found = reordered_attribute_buffers_.find(component_buffer.component);
+                assert(found != reordered_attribute_buffers_.cend());
+                return found->second;
             }
-            auto const found = reordered_attribute_buffers_.find(component_buffer.component);
-            assert(found != reordered_attribute_buffers_.cend());
-            return found->second;
         }();
 
         BufferView const buffer_view{.buffer = component_buffer.buffer_view.buffer,

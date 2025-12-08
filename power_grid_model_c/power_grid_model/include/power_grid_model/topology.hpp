@@ -166,6 +166,10 @@ class Topology {
         comp_coup_.current_sensor.resize(comp_topo_.current_sensor_object_idx.size(), unknown_idx2d);
     }
 
+    template <typename F> static void for_all_vertices(GlobalGraph const& graph, F&& func) {
+        BGL_FORALL_VERTICES(v, graph, GlobalGraph) { std::forward<F>(func)(v); }
+    }
+
     void build_sparse_graph() {
         std::vector<std::pair<GraphIdx, GraphIdx>> edges;
         std::vector<GlobalEdge> edge_props;
@@ -203,10 +207,9 @@ class Topology {
         // build graph
         global_graph_ = GlobalGraph{boost::edges_are_unsorted_multi_pass, edges.cbegin(), edges.cend(),
                                     edge_props.cbegin(), (GraphIdx)comp_topo_.n_node_total()};
-        // set color
-        BGL_FORALL_VERTICES(v, global_graph_, GlobalGraph) {
+        for_all_vertices(global_graph_, [this](boost::graph_traits<GlobalGraph>::vertex_descriptor const& v) {
             global_graph_[v].color = boost::default_color_type::white_color;
-        }
+        });
     }
 
     void dfs_search() {
