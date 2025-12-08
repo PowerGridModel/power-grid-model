@@ -358,18 +358,15 @@ TEST_CASE("Test job dispatch logic") {
         bool will_throw{false}; // to disable compile-time branch optimization
 
         auto setup_fn = [&setup_called](Idx) { setup_called++; };
+        auto run_fn_no_throw = [&run_called](Idx) { run_called++; };
         auto const run_fn_throw_if = [&will_throw, &run_called](Idx) {
             run_called++;
             if (will_throw) {
                 throw SomeTestException{"Run error"};
             }
         };
-        auto run_fn_no_throw = [&will_throw, &run_fn_throw_if](Idx idx) {
-            will_throw = false;
-            run_fn_throw_if(idx);
-        };
-        auto run_fn_throw = [&will_throw, &run_fn_throw_if](Idx idx) {
-            will_throw = true;
+        auto run_fn_no_optimize_noreturn_throw = [&will_throw, &run_fn_throw_if](Idx idx) {
+            will_throw = true; // enforce runtime decision to prevent optimization
             run_fn_throw_if(idx);
         };
         auto run_fn_noreturn_throw = [&run_called] [[noreturn]] (Idx) -> void {
@@ -395,8 +392,9 @@ TEST_CASE("Test job dispatch logic") {
             CHECK(recover_from_bad_called == 0);
         }
         SUBCASE("With run exception") {
-            auto call_with = JobDispatch::call_with<Idx>(run_fn_throw, setup_fn, winddown_fn_no_throw,
-                                                         handle_exception_fn, recover_from_bad_fn);
+            auto call_with =
+                JobDispatch::call_with<Idx>(run_fn_no_optimize_noreturn_throw, setup_fn, winddown_fn_no_throw,
+                                            handle_exception_fn, recover_from_bad_fn);
             call_with(2);
             CHECK(setup_called == 1);
             CHECK(run_called == 1);
