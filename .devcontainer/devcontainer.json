@@ -12,7 +12,7 @@
     "type=volume,source=dev-pip-cache,target=/root/.cache/uv"
   ],
 
-  "postCreateCommand": "uv sync && uv run pre-commit install",
+  "postCreateCommand": "uv sync && uv run pre-commit install || true",
 
   "customizations": {
     "vscode": {
