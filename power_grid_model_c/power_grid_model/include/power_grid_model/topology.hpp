@@ -349,8 +349,8 @@ class Topology {
             return math_idx.pos;
         };
         // k as branch number for 2-way branch
-        for (auto const& [branch_node_idx, branch_connected, branch] :
-             std::views::zip(comp_topo_.branch_node_idx, comp_conn_.branch_connected, comp_coup_.branch) | std::views::as_const) {
+        for (auto const& [idx, branch_node_idx, branch_connected] :
+             std::views::zip(std::views::iota(0), comp_topo_.branch_node_idx, comp_conn_.branch_connected)) {
             assert(std::ssize(branch_connected) == 2); // NOSONAR(R354)
 
             auto const [i, j] = branch_node_idx;
@@ -380,19 +380,18 @@ class Topology {
             // push back
             math_topology_[math_group].branch_bus_idx.push_back(branch_idx);
             // set branch idx in coupling
-            branch = Idx2D{.group = math_group, .pos = branch_pos};
+            comp_coup_.branch[idx] = Idx2D{.group = math_group, .pos = branch_pos};
         }
         // k as branch number for 3-way branch
-        for (auto const& [i, i_status, j, branch3] :
-             std::views::zip(comp_topo_.branch3_node_idx, comp_conn_.branch3_connected,
-                             std::views::iota(comp_topo_.n_node), comp_coup_.branch3) | std::views::as_const) {
+        for (auto const& [idx, i, i_status, j_math] :
+             std::views::zip(std::views::iota(0), comp_topo_.branch3_node_idx, comp_conn_.branch3_connected,
+                             std::views::drop(comp_coup_.node, comp_topo_.n_node))) {
             std::array<Idx2D, 3> const i_math{
                 comp_coup_.node[i[0]],
                 comp_coup_.node[i[1]],
                 comp_coup_.node[i[2]],
             };
             // internal node number as j
-            Idx2D const j_math = comp_coup_.node[j];
             Idx const math_group = [&]() {
                 Idx group = -1;
                 // loop 3 way as indices n
@@ -428,7 +427,7 @@ class Topology {
                 idx_branch3.pos[n] = branch_pos;
             }
             // set branch idx in coupling
-            branch3 = idx_branch3;
+            comp_coup_.branch3[idx] = idx_branch3;
         }
     }
 
@@ -527,7 +526,8 @@ class Topology {
             }
 
             // Store component coupling for the current topology
-            for (auto const [new_math_comp_i, old_math_comp_i] : std::views::zip(IdxRange(std::ssize(reorder)), reorder)) {
+            for (auto const [new_math_comp_i, old_math_comp_i] :
+                 std::views::zip(IdxRange(std::ssize(reorder)), reorder)) {
                 Idx const topo_comp_i = topo_component_idx[topo_idx][old_math_comp_i];
                 coupling[topo_comp_i] = Idx2D{.group = topo_idx, .pos = new_math_comp_i};
             }
@@ -550,7 +550,8 @@ class Topology {
         std::ranges::for_each(math_topology_,
                               [](MathModelTopology& topo) { topo.load_gen_type.resize(topo.n_load_gen()); });
         // assign load type
-        for (auto const& [idx_math, load_gen_type] : std::views::zip(comp_coup_.load_gen, comp_topo_.load_gen_type) | std::views::as_const) {
+        for (auto const& [idx_math, load_gen_type] :
+             std::views::zip(comp_coup_.load_gen, comp_topo_.load_gen_type) | std::views::as_const) {
             if (idx_math.group == -1) {
                 continue;
             }
