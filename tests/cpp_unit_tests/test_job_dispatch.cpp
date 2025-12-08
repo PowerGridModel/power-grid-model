@@ -369,7 +369,7 @@ TEST_CASE("Test job dispatch logic") {
             will_throw = true; // enforce runtime decision to prevent optimization
             run_fn_throw_if(idx);
         };
-        auto run_fn_noreturn_throw = [&run_called] [[noreturn]] (Idx) -> void {
+        auto run_fn_noreturn_throw = [&run_called] [[noreturn]] (Idx) {
             run_called++;
             throw SomeTestException{"Run error"};
         };

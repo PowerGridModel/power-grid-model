@@ -166,7 +166,7 @@ class Topology {
         comp_coup_.current_sensor.resize(comp_topo_.current_sensor_object_idx.size(), unknown_idx2d);
     }
 
-    template <typename F> static void for_all_vertices(GlobalGraph& graph, F&& func) {
+    template <typename F> static void for_all_vertices(GlobalGraph const& graph, F&& func) {
         BGL_FORALL_VERTICES(v, graph, GlobalGraph) { std::forward<F>(func)(v); }
     }
 

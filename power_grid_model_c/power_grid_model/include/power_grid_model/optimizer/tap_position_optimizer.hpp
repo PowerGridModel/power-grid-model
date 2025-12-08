@@ -257,7 +257,7 @@ inline auto build_transformer_graph(State const& state) -> TransformerGraph {
                                  edge_props.cbegin(),
                                  static_cast<TrafoGraphIdx>(state.components.template size<Node>())};
 
-    for_all_vertices(trafo_graph, [&](auto const& v) { trafo_graph[v].is_source = false; });
+    for_all_vertices(trafo_graph, [&trafo_graph](auto const& v) { trafo_graph[v].is_source = false; });
 
     // Mark sources
     for (auto const& source : state.components.template citer<Source>()) {
@@ -301,7 +301,7 @@ inline bool is_unreachable(EdgeWeight edge_res) { return edge_res == infty; }
 
 inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgeProperties {
     std::vector<EdgeWeight> vertex_distances(boost::num_vertices(graph), infty);
-    for_all_vertices(graph, [&](auto const& v) {
+    for_all_vertices(graph, [&graph, &vertex_distances](auto const& v) {
         if (graph[v].is_source) {
             process_edges_dijkstra(v, vertex_distances, graph);
         }
