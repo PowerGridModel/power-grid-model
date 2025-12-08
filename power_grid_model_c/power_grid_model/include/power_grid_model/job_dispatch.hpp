@@ -186,7 +186,7 @@ class JobDispatch {
             }
         };
 #ifdef _MSC_VER
-#pragma warning(default : 4702)
+#pragma warning(pop)
 #endif // _MSC_VER
     }
 
