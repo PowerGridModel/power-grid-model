@@ -449,7 +449,7 @@ class MainModelImpl {
             } else if constexpr (std::derived_from<calculation_type, short_circuit_t>) {
                 return calculate_short_circuit_<sym>(options.short_circuit_voltage_scaling, logger);
             } else {
-                std::unreachable();
+                throw UnreachableHit{"MainModelImpl::calculate", "Unknown calculation type"};
             }
         }();
 
