@@ -239,6 +239,10 @@ inline auto retrieve_regulator_info(State const& state) -> RegulatedObjects {
     return regulated_objects;
 }
 
+template <typename F> inline void for_all_vertices(TransformerGraph const& graph, F&& func) {
+    BGL_FORALL_VERTICES(v, graph, TransformerGraph) { std::forward<F>(func)(v); }
+}
+
 template <main_core::main_model_state_c State>
 inline auto build_transformer_graph(State const& state) -> TransformerGraph {
     TrafoGraphEdges edges;
@@ -253,7 +257,7 @@ inline auto build_transformer_graph(State const& state) -> TransformerGraph {
                                  edge_props.cbegin(),
                                  static_cast<TrafoGraphIdx>(state.components.template size<Node>())};
 
-    BGL_FORALL_VERTICES(v, trafo_graph, TransformerGraph) { trafo_graph[v].is_source = false; }
+    for_all_vertices(trafo_graph, [&trafo_graph](auto const& v) { trafo_graph[v].is_source = false; });
 
     // Mark sources
     for (auto const& source : state.components.template citer<Source>()) {
@@ -297,11 +301,11 @@ inline bool is_unreachable(EdgeWeight edge_res) { return edge_res == infty; }
 
 inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgeProperties {
     std::vector<EdgeWeight> vertex_distances(boost::num_vertices(graph), infty);
-    BGL_FORALL_VERTICES(v, graph, TransformerGraph) {
+    for_all_vertices(graph, [&graph, &vertex_distances](auto const& v) {
         if (graph[v].is_source) {
             process_edges_dijkstra(v, vertex_distances, graph);
         }
-    }
+    });
 
     TrafoGraphEdgeProperties result;
     BGL_FORALL_EDGES(e, graph, TransformerGraph) {
@@ -350,7 +354,7 @@ inline auto rank_transformers(TrafoGraphEdgeProperties const& w_trafo_list) -> R
     auto sorted_trafos = w_trafo_list;
 
     std::ranges::sort(sorted_trafos,
-                      [](TrafoGraphEdge const& a, TrafoGraphEdge const& b) { return a.weight < b.weight; });
+                      [](TrafoGraphEdge const& x, TrafoGraphEdge const& y) { return x.weight < y.weight; });
 
     RankedTransformerGroups groups;
     auto previous_weight = std::numeric_limits<EdgeWeight>::lowest();
@@ -531,9 +535,9 @@ inline TapRegulatorRef<TransformerTypes...> regulator_mapping(State const& state
                               .transformer = {std::cref(transformer), transformer_index_, topology_index}};
         }...};
 
-    for (Idx idx = 0; idx < static_cast<Idx>(n_types); ++idx) {
-        if (is_type[idx](transformer_index)) {
-            return transformer_mappings[idx](state, transformer_index);
+    for (auto const& [current_is_type, transformer_mapping] : std::views::zip(is_type, transformer_mappings)) {
+        if (current_is_type(transformer_index)) {
+            return transformer_mapping(state, transformer_index);
         }
     }
     throw UnreachableHit{"TapPositionOptimizer::regulator_mapping", "Transformer must be regulated"};
@@ -917,8 +921,8 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
   private:
     void opt_prep(std::vector<std::vector<RegulatedTransformer>> const& regulator_order) {
-        constexpr auto tap_pos_range_cmp = [](RegulatedTransformer const& a, RegulatedTransformer const& b) {
-            return a.transformer.tap_range() < b.transformer.tap_range();
+        constexpr auto tap_pos_range_cmp = [](RegulatedTransformer const& x, RegulatedTransformer const& y) {
+            return x.transformer.tap_range() < y.transformer.tap_range();
         };
 
         bs_prep(regulator_order);
