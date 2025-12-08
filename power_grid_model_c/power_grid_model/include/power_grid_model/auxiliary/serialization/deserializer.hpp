@@ -640,8 +640,7 @@ class Deserializer {
             component_key_ = single_component.first;
             MetaComponent const* const component = &dataset.get_component(component_key_);
             std::vector<MetaAttribute const*> attributes_per_component;
-            for (element_number_ = 0; element_number_ != static_cast<Idx>(single_component.second.size());
-                 ++element_number_) {
+            for (element_number_ = 0; element_number_ != std::ssize(single_component.second); ++element_number_) {
                 attributes_per_component.push_back(&component->get_attribute(single_component.second[element_number_]));
             }
             attributes_[component] = std::move(attributes_per_component);
@@ -696,7 +695,7 @@ class Deserializer {
         root_key_ = "data";
         // get set of all components
         std::set<MetaComponent const*> all_components;
-        for (scenario_number_ = 0; scenario_number_ != static_cast<Idx>(data_counts.size()); ++scenario_number_) {
+        for (scenario_number_ = 0; scenario_number_ != std::ssize(data_counts); ++scenario_number_) {
             for (auto const& component_byte_meta : data_counts[scenario_number_]) {
                 component_key_ = component_byte_meta.component;
                 all_components.insert(&handler.dataset().get_component(component_key_));
@@ -943,7 +942,7 @@ class Deserializer {
     template <detail::row_based_or_columnar_c row_or_column_t>
     void parse_array_element(row_or_column_t row_or_column_tag, BufferView const& buffer_view, Idx array_size,
                              MetaComponent const& component, std::span<MetaAttribute const* const> attributes) {
-        if (array_size != static_cast<Idx>(attributes.size())) {
+        if (array_size != std::ssize(attributes)) {
             throw SerializationError{
                 "An element of a list should have same length as the list of predefined attributes!\n"};
         }
