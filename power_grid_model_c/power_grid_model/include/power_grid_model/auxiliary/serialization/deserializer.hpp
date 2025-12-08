@@ -199,7 +199,7 @@ template <class T> struct DefaultErrorVisitor : DefaultNullVisitor {
     bool end_map_value() { return throw_error(); }
     bool end_map() { return throw_error(); }
 
-    bool throw_error() { throw SerializationError{(static_cast<T&>(*this)).get_err_msg()}; }
+    [[noreturn]] bool throw_error() { throw SerializationError{(static_cast<T&>(*this)).get_err_msg()}; }
 
     std::string get_err_msg() { return std::string{T::static_err_msg}; }
 
