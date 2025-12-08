@@ -14,8 +14,8 @@
 
 #ifdef _MSC_VER
 #pragma warning(push)
-#pragma warning(disable : 4702, justification : "Contains potentially unreachable code")
-#endif // _MSC_VER
+#pragma warning(disable : 4702) // Contains potentially unreachable code
+#endif                          // _MSC_VER
 #include <msgpack.hpp>
 #include <nlohmann/json.hpp>
 #ifdef _MSC_VER
@@ -199,13 +199,9 @@ struct DefaultErrorVisitor : DefaultNullVisitor {
     bool end_map_value() { return throw_error(); }
     bool end_map() { return throw_error(); }
 
-    template <typename Self> [[noreturn]] bool throw_error(this Self&& self) {
-        throw SerializationError{std::forward<Self>(self).get_err_msg()};
-    }
+    [[noreturn]] bool throw_error(this auto const& self) { throw SerializationError{self.get_err_msg()}; }
 
-    template <typename Self> std::string get_err_msg(this Self&& self) {
-        return std::string{std::forward<Self>(self).static_err_msg};
-    }
+    std::string get_err_msg(this auto const& self) { return std::string{self.static_err_msg}; }
 
   protected:
     DefaultErrorVisitor() = default;
