@@ -166,18 +166,9 @@ class Topology {
         comp_coup_.current_sensor.resize(comp_topo_.current_sensor_object_idx.size(), unknown_idx2d);
     }
 
-#pragma warning(push)
-#pragma warning(disable : 4701) // disable boost iteration macro issue
     template <typename F> static void for_all_vertices(GlobalGraph& graph, F&& func) {
         BGL_FORALL_VERTICES(v, graph, GlobalGraph) { std::forward<F>(func)(v); }
     }
-
-    template <typename F>
-    static void for_all_adjacent_vertices(boost::graph_traits<GlobalGraph>::vertex_descriptor current,
-                                          GlobalGraph& graph, F&& func) {
-        BGL_FORALL_ADJ(current, adjacent, graph, GlobalGraph) { std::forward<F>(func)(adjacent); }
-    }
-#pragma warning(pop)
 
     void build_sparse_graph() {
         std::vector<std::pair<GraphIdx, GraphIdx>> edges;
