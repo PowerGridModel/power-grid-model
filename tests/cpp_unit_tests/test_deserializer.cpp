@@ -275,6 +275,22 @@ class OtherErrorVisitorImpl : public detail::DefaultErrorVisitor {
 
     static constexpr auto static_err_msg = "Other error message.\n"sv;
 };
+
+class OverloadErrorVisitorImpl : public detail::DefaultErrorVisitor {
+  public:
+    using detail::DefaultErrorVisitor::DefaultErrorVisitor;
+
+    static constexpr auto static_err_msg = "Overload error message.\n"sv;
+
+    bool visit_nil() {
+        visited_nil_ = true;
+        throw_error();
+    }
+    bool has_visited_nil() const { return visited_nil_; }
+
+  private:
+    bool visited_nil_{false};
+};
 } // namespace
 
 TEST_CASE("Deserializer visitors") {
@@ -313,8 +329,15 @@ TEST_CASE("Deserializer visitors") {
         };
 
         SUBCASE("Default error message") { test(ErrorVisitorImpl{}, "Unexpected data type!\n"sv); }
-
         SUBCASE("Custom error message") { test(OtherErrorVisitorImpl{}, "Other error message.\n"sv); }
+        SUBCASE("Overload error message") { test(OverloadErrorVisitorImpl{}, "Overload error message.\n"sv); }
+        SUBCASE("Overloading actually calls the derived type's method") {
+            OverloadErrorVisitorImpl visitor{};
+            CHECK(!visitor.has_visited_nil());
+            CHECK_THROWS_WITH_AS(visitor.visit_nil(), doctest::Contains("Overload error message.\n"),
+                                 SerializationError);
+            CHECK(visitor.has_visited_nil());
+        }
     }
 }
 
