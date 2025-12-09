@@ -6,13 +6,13 @@ resolution-markers = [
     "python_full_version < '3.12' and implementation_name == 'cpython' and sys_platform == 'darwin'",
     "python_full_version >= '3.12' and implementation_name == 'cpython' and sys_platform == 'linux'",
     "python_full_version < '3.12' and implementation_name == 'cpython' and sys_platform == 'linux'",
-    "python_full_version >= '3.12' and implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32'",
-    "python_full_version < '3.12' and implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32'",
+    "python_full_version >= '3.12' and implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32'",
+    "python_full_version < '3.12' and implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32'",
 ]
 supported-markers = [
     "implementation_name == 'cpython' and sys_platform == 'darwin'",
     "implementation_name == 'cpython' and sys_platform == 'linux'",
-    "implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32'",
+    "implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32'",
 ]
 
 [[package]]
@@ -83,7 +83,7 @@ name = "breathe"
 version = "4.36.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "sphinx", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "sphinx", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/01/56/99bf7d0799d95ad485d95596dc01c2a5b3dda58ebf50a94f6f73b33bacdf/breathe-4.36.0.tar.gz", hash = "sha256:14860b73118ac140b7a3f55446890c777d1b67149cb024279fe3710dad7f535c", size = 154842, upload-time = "2025-02-22T18:36:03.36Z" }
 wheels = [
@@ -199,7 +199,7 @@ name = "click"
 version = "8.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32'" },
+    { name = "colorama", marker = "implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/3d/fa/656b739db8587d7b5dfa22e22ed02566950fbfbcdc20311993483657a5c0/click-8.3.1.tar.gz", hash = "sha256:12ff4785d337a1bb490bb7e9c2b1ee5da3112e94a8622f26a6c77f5d2fc6842a", size = 295065, upload-time = "2025-11-15T20:45:42.706Z" }
 wheels = [
@@ -301,7 +301,7 @@ wheels = [
 
 [package.optional-dependencies]
 toml = [
-    { name = "tomli", marker = "(python_full_version <= '3.11' and implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (python_full_version <= '3.11' and implementation_name == 'cpython' and sys_platform == 'darwin') or (python_full_version <= '3.11' and implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "tomli", marker = "(python_full_version <= '3.11' and implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (python_full_version <= '3.11' and implementation_name == 'cpython' and sys_platform == 'darwin') or (python_full_version <= '3.11' and implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 
 [[package]]
@@ -393,9 +393,9 @@ name = "gersemi"
 version = "0.23.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "appdirs", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "lark", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "pyyaml", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "appdirs", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "lark", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "pyyaml", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/1b/fe/b6ab9391da6f00466b821bc8731fce23304fc80560664d6b06c0f41e0507/gersemi-0.23.2.tar.gz", hash = "sha256:20ff59fc9af53ef63557ab8fdad4b2429a6a8d84cf0c0d4e3960c29912b87b46", size = 101442, upload-time = "2025-11-25T17:21:12.94Z" }
 wheels = [
@@ -407,7 +407,7 @@ name = "gitdb"
 version = "4.0.12"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "smmap", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "smmap", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/72/94/63b0fc47eb32792c7ba1fe1b694daec9a63620db1e313033d18140c2320a/gitdb-4.0.12.tar.gz", hash = "sha256:5ef71f855d191a3326fcfbc0d5da835f26b13fbcba60c32c21091c349ffdb571", size = 394684, upload-time = "2025-01-02T07:20:46.413Z" }
 wheels = [
@@ -419,7 +419,7 @@ name = "gitpython"
 version = "3.1.45"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "gitdb", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "gitdb", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/9a/c8/dd58967d119baab745caec2f9d853297cec1989ec1d63f677d3880632b88/gitpython-3.1.45.tar.gz", hash = "sha256:85b0ee964ceddf211c41b9f27a49086010a190fd8132a24e21f362a4b36a791c", size = 215076, upload-time = "2025-07-24T03:45:54.871Z" }
 wheels = [
@@ -508,7 +508,7 @@ name = "importlib-metadata"
 version = "8.7.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "zipp", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "zipp", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/76/66/650a33bd90f786193e4de4b3ad86ea60b53c89b669a5c7be931fac31cdb0/importlib_metadata-8.7.0.tar.gz", hash = "sha256:d13b81ad223b890aa16c5471f2ac3056cf76c5f10f82d6f9292f0b415f389000", size = 56641, upload-time = "2025-04-27T15:29:01.736Z" }
 wheels = [
@@ -530,18 +530,18 @@ version = "7.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "appnope", marker = "implementation_name == 'cpython' and sys_platform == 'darwin'" },
-    { name = "comm", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "debugpy", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "ipython", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "jupyter-client", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "jupyter-core", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "matplotlib-inline", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "nest-asyncio", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "packaging", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "psutil", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "pyzmq", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "tornado", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "traitlets", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "comm", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "debugpy", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "ipython", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "jupyter-client", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "jupyter-core", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "matplotlib-inline", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "nest-asyncio", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "packaging", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "psutil", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "pyzmq", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "tornado", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "traitlets", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/b9/a4/4948be6eb88628505b83a1f2f40d90254cab66abf2043b3c40fa07dfce0f/ipykernel-7.1.0.tar.gz", hash = "sha256:58a3fc88533d5930c3546dc7eac66c6d288acde4f801e2001e65edc5dc9cf0db", size = 174579, upload-time = "2025-10-27T09:46:39.471Z" }
 wheels = [
@@ -553,17 +553,17 @@ name = "ipython"
 version = "9.8.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32'" },
-    { name = "decorator", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "ipython-pygments-lexers", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "jedi", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "matplotlib-inline", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "colorama", marker = "implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32'" },
+    { name = "decorator", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "ipython-pygments-lexers", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "jedi", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "matplotlib-inline", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
     { name = "pexpect", marker = "(implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "prompt-toolkit", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "pygments", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "stack-data", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "traitlets", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "typing-extensions", marker = "(python_full_version < '3.12' and implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (python_full_version < '3.12' and implementation_name == 'cpython' and sys_platform == 'darwin') or (python_full_version < '3.12' and implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "prompt-toolkit", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "pygments", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "stack-data", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "traitlets", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "typing-extensions", marker = "(python_full_version < '3.12' and implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (python_full_version < '3.12' and implementation_name == 'cpython' and sys_platform == 'darwin') or (python_full_version < '3.12' and implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/12/51/a703c030f4928646d390b4971af4938a1b10c9dfce694f0d99a0bb073cb2/ipython-9.8.0.tar.gz", hash = "sha256:8e4ce129a627eb9dd221c41b1d2cdaed4ef7c9da8c17c63f6f578fe231141f83", size = 4424940, upload-time = "2025-12-03T10:18:24.353Z" }
 wheels = [
@@ -575,7 +575,7 @@ name = "ipython-pygments-lexers"
 version = "1.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pygments", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "pygments", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/ef/4c/5dd1d8af08107f88c7f741ead7a40854b8ac24ddf9ae850afbcf698aa552/ipython_pygments_lexers-1.1.1.tar.gz", hash = "sha256:09c0138009e56b6854f9535736f4171d855c8c08a563a0dcd8022f78355c7e81", size = 8393, upload-time = "2025-01-17T11:24:34.505Z" }
 wheels = [
@@ -596,7 +596,7 @@ name = "jedi"
 version = "0.19.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "parso", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "parso", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/72/3a/79a912fbd4d8dd6fbb02bf69afd3bb72cf0c729bb3063c6f4498603db17a/jedi-0.19.2.tar.gz", hash = "sha256:4770dc3de41bde3966b02eb84fbcf557fb33cce26ad23da12c742fb50ecb11f0", size = 1231287, upload-time = "2024-11-11T01:41:42.873Z" }
 wheels = [
@@ -608,7 +608,7 @@ name = "jinja2"
 version = "3.1.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "markupsafe", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "markupsafe", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/df/bf/f7da0350254c0ed7c72f3e33cef02e048281fec7ecec5f032d4aac52226b/jinja2-3.1.6.tar.gz", hash = "sha256:0137fb05990d35f1275a587e9aee6d56da821fc83491a0fb838183be43f66d6d", size = 245115, upload-time = "2025-03-05T20:05:02.478Z" }
 wheels = [
@@ -620,10 +620,10 @@ name = "jsonschema"
 version = "4.25.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "attrs", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "jsonschema-specifications", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "referencing", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "rpds-py", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "attrs", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "jsonschema-specifications", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "referencing", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "rpds-py", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/74/69/f7185de793a29082a9f3c7728268ffb31cb5095131a9c139a74078e27336/jsonschema-4.25.1.tar.gz", hash = "sha256:e4a9655ce0da0c0b67a085847e00a3a51449e1157f4f75e9fb5aa545e122eb85", size = 357342, upload-time = "2025-08-18T17:03:50.038Z" }
 wheels = [
@@ -635,7 +635,7 @@ name = "jsonschema-specifications"
 version = "2025.9.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "referencing", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "referencing", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/19/74/a633ee74eb36c44aa6d1095e7cc5569bebf04342ee146178e2d36600708b/jsonschema_specifications-2025.9.1.tar.gz", hash = "sha256:b540987f239e745613c7a9176f3edb72b832a4ac465cf02712288397832b5e8d", size = 32855, upload-time = "2025-09-08T01:34:59.186Z" }
 wheels = [
@@ -647,14 +647,14 @@ name = "jupyter-cache"
 version = "1.0.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "attrs", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "click", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "importlib-metadata", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "nbclient", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "nbformat", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "pyyaml", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "sqlalchemy", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "tabulate", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "attrs", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "click", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "importlib-metadata", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "nbclient", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "nbformat", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "pyyaml", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "sqlalchemy", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "tabulate", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/bb/f7/3627358075f183956e8c4974603232b03afd4ddc7baf72c2bc9fff522291/jupyter_cache-1.0.1.tar.gz", hash = "sha256:16e808eb19e3fb67a223db906e131ea6e01f03aa27f49a7214ce6a5fec186fb9", size = 32048, upload-time = "2024-11-15T16:03:55.322Z" }
 wheels = [
@@ -666,11 +666,11 @@ name = "jupyter-client"
 version = "8.6.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "jupyter-core", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "python-dateutil", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "pyzmq", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "tornado", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "traitlets", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "jupyter-core", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "python-dateutil", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "pyzmq", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "tornado", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "traitlets", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/71/22/bf9f12fdaeae18019a468b68952a60fe6dbab5d67cd2a103cac7659b41ca/jupyter_client-8.6.3.tar.gz", hash = "sha256:35b3a0947c4a6e9d589eb97d7d4cd5e90f910ee73101611f01283732bd6d9419", size = 342019, upload-time = "2024-09-17T10:44:17.613Z" }
 wheels = [
@@ -682,8 +682,8 @@ name = "jupyter-core"
 version = "5.9.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "platformdirs", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "traitlets", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "platformdirs", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "traitlets", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/02/49/9d1284d0dc65e2c757b74c6687b6d319b02f822ad039e5c512df9194d9dd/jupyter_core-5.9.1.tar.gz", hash = "sha256:4d09aaff303b9566c3ce657f580bd089ff5c91f5f89cf7d8846c3cdf465b5508", size = 89814, upload-time = "2025-10-16T19:19:18.444Z" }
 wheels = [
@@ -757,7 +757,7 @@ name = "markdown-it-py"
 version = "3.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "mdurl", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "mdurl", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/38/71/3b932df36c1a044d397a1f92d1cf91ee0a503d91e470cbd670aa66b07ed0/markdown-it-py-3.0.0.tar.gz", hash = "sha256:e3f60a94fa066dc52ec76661e37c851cb232d92f9886b15cb560aaada2df8feb", size = 74596, upload-time = "2023-06-03T06:41:14.443Z" }
 wheels = [
@@ -831,7 +831,7 @@ name = "matplotlib-inline"
 version = "0.2.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "traitlets", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "traitlets", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/c7/74/97e72a36efd4ae2bccb3463284300f8953f199b5ffbc04cbbb0ec78f74b1/matplotlib_inline-0.2.1.tar.gz", hash = "sha256:e1ee949c340d771fc39e241ea75683deb94762c8fa5f2927ec57c83c4dffa9fe", size = 8110, upload-time = "2025-10-23T09:00:22.126Z" }
 wheels = [
@@ -852,7 +852,7 @@ name = "mdit-py-plugins"
 version = "0.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "markdown-it-py", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "markdown-it-py", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/b2/fd/a756d36c0bfba5f6e39a1cdbdbfdd448dc02692467d83816dff4592a1ebc/mdit_py_plugins-0.5.0.tar.gz", hash = "sha256:f4918cb50119f50446560513a8e311d574ff6aaed72606ddae6d35716fe809c6", size = 44655, upload-time = "2025-08-11T07:25:49.083Z" }
 wheels = [
@@ -916,10 +916,10 @@ name = "mypy"
 version = "1.19.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "librt", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "mypy-extensions", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "pathspec", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "typing-extensions", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "librt", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "mypy-extensions", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "pathspec", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "typing-extensions", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/f9/b5/b58cdc25fadd424552804bf410855d52324183112aa004f0732c5f6324cf/mypy-1.19.0.tar.gz", hash = "sha256:f6b874ca77f733222641e5c46e4711648c4037ea13646fd0cdc814c2eaec2528", size = 3579025, upload-time = "2025-11-28T15:49:01.26Z" }
 wheels = [
@@ -964,16 +964,16 @@ name = "myst-nb"
 version = "1.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "importlib-metadata", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "ipykernel", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "ipython", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "jupyter-cache", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "myst-parser", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "nbclient", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "nbformat", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "pyyaml", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "sphinx", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "typing-extensions", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "importlib-metadata", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "ipykernel", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "ipython", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "jupyter-cache", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "myst-parser", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "nbclient", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "nbformat", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "pyyaml", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "sphinx", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "typing-extensions", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/21/83/a894bd8dea7a6e9f053502ee8413484dcbf75a219013d6a72e971c0fecfd/myst_nb-1.3.0.tar.gz", hash = "sha256:df3cd4680f51a5af673fd46b38b562be3559aef1475e906ed0f2e66e4587ce4b", size = 81963, upload-time = "2025-07-13T22:49:38.493Z" }
 wheels = [
@@ -985,12 +985,12 @@ name = "myst-parser"
 version = "4.0.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "docutils", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "jinja2", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "markdown-it-py", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "mdit-py-plugins", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "pyyaml", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "sphinx", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "docutils", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "jinja2", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "markdown-it-py", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "mdit-py-plugins", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "pyyaml", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "sphinx", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/66/a5/9626ba4f73555b3735ad86247a8077d4603aa8628537687c839ab08bfe44/myst_parser-4.0.1.tar.gz", hash = "sha256:5cfea715e4f3574138aecbf7d54132296bfd72bb614d31168f48c477a830a7c4", size = 93985, upload-time = "2025-02-12T10:53:03.833Z" }
 wheels = [
@@ -1002,10 +1002,10 @@ name = "nbclient"
 version = "0.10.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "jupyter-client", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "jupyter-core", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "nbformat", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "traitlets", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "jupyter-client", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "jupyter-core", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "nbformat", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "traitlets", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/87/66/7ffd18d58eae90d5721f9f39212327695b749e23ad44b3881744eaf4d9e8/nbclient-0.10.2.tar.gz", hash = "sha256:90b7fc6b810630db87a6d0c2250b1f0ab4cf4d3c27a299b0cde78a4ed3fd9193", size = 62424, upload-time = "2024-12-19T10:32:27.164Z" }
 wheels = [
@@ -1017,10 +1017,10 @@ name = "nbformat"
 version = "5.10.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "fastjsonschema", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "jsonschema", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "jupyter-core", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "traitlets", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "fastjsonschema", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "jsonschema", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "jupyter-core", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "traitlets", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/6d/fd/91545e604bc3dad7dca9ed03284086039b294c6b3d75c0d2fa45f9e9caf3/nbformat-5.10.4.tar.gz", hash = "sha256:322168b14f937a5d11362988ecac2a4952d3d8e3a2cbeb2319584631226d5b3a", size = 142749, upload-time = "2024-04-04T11:20:37.371Z" }
 wheels = [
@@ -1119,7 +1119,7 @@ name = "numpydoc"
 version = "1.10.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "sphinx", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "sphinx", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/e9/3c/dfccc9e7dee357fb2aa13c3890d952a370dd0ed071e0f7ed62ed0df567c1/numpydoc-1.10.0.tar.gz", hash = "sha256:3f7970f6eee30912260a6b31ac72bba2432830cd6722569ec17ee8d3ef5ffa01", size = 94027, upload-time = "2025-12-02T16:39:12.937Z" }
 wheels = [
@@ -1140,10 +1140,10 @@ name = "pandas"
 version = "2.3.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "numpy", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "python-dateutil", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "pytz", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "tzdata", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "numpy", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "python-dateutil", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "pytz", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "tzdata", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/33/01/d40b85317f86cf08d853a4f495195c73815fdf205eef3993821720274518/pandas-2.3.3.tar.gz", hash = "sha256:e05e1af93b977f7eafa636d043f9f94c7ee3ac81af99c13508215942e64c993b", size = 4495223, upload-time = "2025-09-29T23:34:51.853Z" }
 wheels = [
@@ -1241,47 +1241,47 @@ wheels = [
 name = "power-grid-model"
 source = { editable = "." }
 dependencies = [
-    { name = "numpy", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "numpy", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 
 [package.dev-dependencies]
 dev = [
-    { name = "clang-format", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "gersemi", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "msgpack", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "mypy", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "numpy", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "pre-commit", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "pytest", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "pytest-cov", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "ruff", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "clang-format", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "gersemi", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "msgpack", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "mypy", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "numpy", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "pre-commit", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "pytest", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "pytest-cov", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "ruff", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 doc = [
-    { name = "breathe", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "gitpython", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "myst-nb", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "numpydoc", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "pandas", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "pylint", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "readthedocs-sphinx-search", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "sphinx", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "sphinx-hoverxref", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "sphinx-rtd-theme", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "sphinxcontrib-mermaid", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "sphinxcontrib-tikz", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "breathe", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "gitpython", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "myst-nb", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "numpydoc", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "pandas", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "pylint", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "readthedocs-sphinx-search", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "sphinx", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "sphinx-hoverxref", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "sphinx-rtd-theme", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "sphinxcontrib-mermaid", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "sphinxcontrib-tikz", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 lint = [
-    { name = "clang-format", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "gersemi", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "mypy", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "numpy", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "pre-commit", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "ruff", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "clang-format", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "gersemi", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "mypy", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "numpy", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "pre-commit", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "ruff", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 test = [
-    { name = "msgpack", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "pytest", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "pytest-cov", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "msgpack", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "pytest", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "pytest-cov", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 
 [package.metadata]
@@ -1332,11 +1332,11 @@ name = "pre-commit"
 version = "4.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cfgv", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "identify", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "nodeenv", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "pyyaml", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "virtualenv", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "cfgv", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "identify", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "nodeenv", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "pyyaml", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "virtualenv", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/f4/9b/6a4ffb4ed980519da959e1cf3122fc6cb41211daa58dbae1c73c0e519a37/pre_commit-4.5.0.tar.gz", hash = "sha256:dc5a065e932b19fc1d4c653c6939068fe54325af8e741e74e88db4d28a4dd66b", size = 198428, upload-time = "2025-11-22T21:02:42.304Z" }
 wheels = [
@@ -1348,7 +1348,7 @@ name = "prompt-toolkit"
 version = "3.0.52"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "wcwidth", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "wcwidth", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/a1/96/06e01a7b38dce6fe1db213e061a4602dd6032a8a97ef6c1a862537732421/prompt_toolkit-3.0.52.tar.gz", hash = "sha256:28cde192929c8e7321de85de1ddbe736f1375148b02f2e17edd840042b1be855", size = 434198, upload-time = "2025-08-27T15:24:02.057Z" }
 wheels = [
@@ -1410,13 +1410,13 @@ name = "pylint"
 version = "4.0.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "astroid", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "colorama", marker = "implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32'" },
-    { name = "dill", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "isort", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "mccabe", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "platformdirs", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "tomlkit", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "astroid", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "colorama", marker = "implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32'" },
+    { name = "dill", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "isort", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "mccabe", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "platformdirs", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "tomlkit", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/5a/d2/b081da1a8930d00e3fc06352a1d449aaf815d4982319fab5d8cdb2e9ab35/pylint-4.0.4.tar.gz", hash = "sha256:d9b71674e19b1c36d79265b5887bf8e55278cbe236c9e95d22dc82cf044fdbd2", size = 1571735, upload-time = "2025-11-30T13:29:04.315Z" }
 wheels = [
@@ -1428,11 +1428,11 @@ name = "pytest"
 version = "9.0.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32'" },
-    { name = "iniconfig", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "packaging", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "pluggy", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "pygments", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "colorama", marker = "implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32'" },
+    { name = "iniconfig", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "packaging", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "pluggy", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "pygments", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/07/56/f013048ac4bc4c1d9be45afd4ab209ea62822fb1598f40687e6bf45dcea4/pytest-9.0.1.tar.gz", hash = "sha256:3e9c069ea73583e255c3b21cf46b8d3c56f6e3a1a8f6da94ccb0fcf57b9d73c8", size = 1564125, upload-time = "2025-11-12T13:05:09.333Z" }
 wheels = [
@@ -1444,9 +1444,9 @@ name = "pytest-cov"
 version = "7.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "coverage", extra = ["toml"], marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "pluggy", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "pytest", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "coverage", extra = ["toml"], marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "pluggy", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "pytest", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/5e/f7/c933acc76f5208b3b00089573cf6a2bc26dc80a8aece8f52bb7d6b1855ca/pytest_cov-7.0.0.tar.gz", hash = "sha256:33c97eda2e049a0c5298e91f519302a1334c26ac65c1a483d6206fd458361af1", size = 54328, upload-time = "2025-09-09T10:57:02.113Z" }
 wheels = [
@@ -1458,7 +1458,7 @@ name = "python-dateutil"
 version = "2.9.0.post0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "six", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "six", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/66/c0/0c8b6ad9f17a802ee498c46e004a0eb49bc148f2fd230864601a86dcf6db/python-dateutil-2.9.0.post0.tar.gz", hash = "sha256:37dd54208da7e1cd875388217d5e00ebd4179249f90fb72437e91a35459a0ad3", size = 342432, upload-time = "2024-03-01T18:36:20.211Z" }
 wheels = [
@@ -1581,9 +1581,9 @@ name = "referencing"
 version = "0.37.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "attrs", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "rpds-py", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "typing-extensions", marker = "(python_full_version < '3.13' and implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (python_full_version < '3.13' and implementation_name == 'cpython' and sys_platform == 'darwin') or (python_full_version < '3.13' and implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "attrs", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "rpds-py", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "typing-extensions", marker = "(python_full_version < '3.13' and implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (python_full_version < '3.13' and implementation_name == 'cpython' and sys_platform == 'darwin') or (python_full_version < '3.13' and implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/22/f5/df4e9027acead3ecc63e50fe1e36aca1523e1719559c499951bb4b53188f/referencing-0.37.0.tar.gz", hash = "sha256:44aefc3142c5b842538163acb373e24cce6632bd54bdb01b21ad5863489f50d8", size = 78036, upload-time = "2025-10-13T15:30:48.871Z" }
 wheels = [
@@ -1595,10 +1595,10 @@ name = "requests"
 version = "2.32.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "certifi", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "charset-normalizer", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "idna", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "urllib3", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "certifi", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "charset-normalizer", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "idna", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "urllib3", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/c9/74/b3ff8e6c8446842c3f5c837e9c3dfcfe2018ea6ecef224c710c85ef728f4/requests-2.32.5.tar.gz", hash = "sha256:dbba0bac56e100853db0ea71b82b4dfd5fe2bf6d3754a8893c3af500cec7d7cf", size = 134517, upload-time = "2025-08-18T20:46:02.573Z" }
 wheels = [
@@ -1768,23 +1768,23 @@ name = "sphinx"
 version = "8.2.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "alabaster", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "babel", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "colorama", marker = "implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32'" },
-    { name = "docutils", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "imagesize", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "jinja2", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "packaging", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "pygments", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "requests", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "roman-numerals-py", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "snowballstemmer", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "sphinxcontrib-applehelp", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "sphinxcontrib-devhelp", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "sphinxcontrib-htmlhelp", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "sphinxcontrib-jsmath", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "sphinxcontrib-qthelp", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "sphinxcontrib-serializinghtml", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "alabaster", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "babel", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "colorama", marker = "implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32'" },
+    { name = "docutils", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "imagesize", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "jinja2", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "packaging", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "pygments", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "requests", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "roman-numerals-py", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "snowballstemmer", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "sphinxcontrib-applehelp", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "sphinxcontrib-devhelp", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "sphinxcontrib-htmlhelp", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "sphinxcontrib-jsmath", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "sphinxcontrib-qthelp", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "sphinxcontrib-serializinghtml", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/38/ad/4360e50ed56cb483667b8e6dadf2d3fda62359593faabbe749a27c4eaca6/sphinx-8.2.3.tar.gz", hash = "sha256:398ad29dee7f63a75888314e9424d40f52ce5a6a87ae88e7071e80af296ec348", size = 8321876, upload-time = "2025-03-02T22:31:59.658Z" }
 wheels = [
@@ -1796,8 +1796,8 @@ name = "sphinx-hoverxref"
 version = "1.4.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "sphinx", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "sphinxcontrib-jquery", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "sphinx", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "sphinxcontrib-jquery", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/d6/6d/89764d3c719ed172d94778a74661cca647b2475165ae6cde1f73c9524d63/sphinx_hoverxref-1.4.2.tar.gz", hash = "sha256:74fab961b1b8c0e9c2cf22fa195c0e783d635e78686d39dd06ff157c196ca0c9", size = 1715764, upload-time = "2024-11-18T18:01:34.965Z" }
 wheels = [
@@ -1809,9 +1809,9 @@ name = "sphinx-rtd-theme"
 version = "3.0.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "docutils", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "sphinx", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "sphinxcontrib-jquery", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "docutils", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "sphinx", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "sphinxcontrib-jquery", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/91/44/c97faec644d29a5ceddd3020ae2edffa69e7d00054a8c7a6021e82f20335/sphinx_rtd_theme-3.0.2.tar.gz", hash = "sha256:b7457bc25dda723b20b086a670b9953c859eab60a2a03ee8eb2bb23e176e5f85", size = 7620463, upload-time = "2024-11-13T11:06:04.545Z" }
 wheels = [
@@ -1850,7 +1850,7 @@ name = "sphinxcontrib-jquery"
 version = "4.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "sphinx", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "sphinx", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/de/f3/aa67467e051df70a6330fe7770894b3e4f09436dea6881ae0b4f3d87cad8/sphinxcontrib-jquery-4.1.tar.gz", hash = "sha256:1620739f04e36a2c779f1a131a2dfd49b2fd07351bf1968ced074365933abc7a", size = 122331, upload-time = "2023-03-14T15:01:01.944Z" }
 wheels = [
@@ -1871,8 +1871,8 @@ name = "sphinxcontrib-mermaid"
 version = "1.2.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pyyaml", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "sphinx", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "pyyaml", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "sphinx", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/f5/49/c6ddfe709a4ab76ac6e5a00e696f73626b2c189dc1e1965a361ec102e6cc/sphinxcontrib_mermaid-1.2.3.tar.gz", hash = "sha256:358699d0ec924ef679b41873d9edd97d0773446daf9760c75e18dc0adfd91371", size = 18885, upload-time = "2025-11-26T04:18:32.43Z" }
 wheels = [
@@ -1902,7 +1902,7 @@ name = "sphinxcontrib-tikz"
 version = "0.4.20"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "sphinx", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "sphinx", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/90/f1/514013965c81338d2742b47b6affb633149e809affecedf6a969af31d09f/sphinxcontrib-tikz-0.4.20.tar.gz", hash = "sha256:2ee3bd1f9ca2f349c0823a4f3507d91c410e7f96be20f051fef7af1665f341ca", size = 16230, upload-time = "2024-07-13T08:51:31.296Z" }
 
@@ -1911,8 +1911,8 @@ name = "sqlalchemy"
 version = "2.0.44"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "greenlet", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'darwin') or (implementation_name == 'cpython' and platform_machine == 'WIN32' and sys_platform == 'darwin') or (implementation_name == 'cpython' and platform_machine == 'aarch64' and sys_platform == 'darwin') or (implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'darwin') or (implementation_name == 'cpython' and platform_machine == 'ppc64le' and sys_platform == 'darwin') or (implementation_name == 'cpython' and platform_machine == 'win32' and sys_platform == 'darwin') or (implementation_name == 'cpython' and platform_machine == 'x86_64' and sys_platform == 'darwin') or (implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'linux') or (implementation_name == 'cpython' and platform_machine == 'WIN32' and sys_platform == 'linux') or (implementation_name == 'cpython' and platform_machine == 'aarch64' and sys_platform == 'linux') or (implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'linux') or (implementation_name == 'cpython' and platform_machine == 'ppc64le' and sys_platform == 'linux') or (implementation_name == 'cpython' and platform_machine == 'win32' and sys_platform == 'linux') or (implementation_name == 'cpython' and platform_machine == 'x86_64' and sys_platform == 'linux') or (implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32')" },
-    { name = "typing-extensions", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "greenlet", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'darwin') or (implementation_name == 'cpython' and platform_machine == 'WIN32' and sys_platform == 'darwin') or (implementation_name == 'cpython' and platform_machine == 'aarch64' and sys_platform == 'darwin') or (implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'darwin') or (implementation_name == 'cpython' and platform_machine == 'ppc64le' and sys_platform == 'darwin') or (implementation_name == 'cpython' and platform_machine == 'win32' and sys_platform == 'darwin') or (implementation_name == 'cpython' and platform_machine == 'x86_64' and sys_platform == 'darwin') or (implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'linux') or (implementation_name == 'cpython' and platform_machine == 'WIN32' and sys_platform == 'linux') or (implementation_name == 'cpython' and platform_machine == 'aarch64' and sys_platform == 'linux') or (implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'linux') or (implementation_name == 'cpython' and platform_machine == 'ppc64le' and sys_platform == 'linux') or (implementation_name == 'cpython' and platform_machine == 'win32' and sys_platform == 'linux') or (implementation_name == 'cpython' and platform_machine == 'x86_64' and sys_platform == 'linux') or (implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32')" },
+    { name = "typing-extensions", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/f0/f2/840d7b9496825333f532d2e3976b8eadbf52034178aac53630d09fe6e1ef/sqlalchemy-2.0.44.tar.gz", hash = "sha256:0ae7454e1ab1d780aee69fd2aae7d6b8670a581d8847f2d1e0f7ddfbf47e5a22", size = 9819830, upload-time = "2025-10-10T14:39:12.935Z" }
 wheels = [
@@ -1945,9 +1945,9 @@ name = "stack-data"
 version = "0.6.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "asttokens", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "executing", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "pure-eval", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "asttokens", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "executing", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "pure-eval", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/28/e3/55dcc2cfbc3ca9c29519eb6884dd1415ecb53b0e934862d3559ddcb7e20b/stack_data-0.6.3.tar.gz", hash = "sha256:836a778de4fec4dcd1dcd89ed8abff8a221f58308462e1c4aa2a3cf30148f0b9", size = 44707, upload-time = "2023-09-30T13:58:05.479Z" }
 wheels = [
@@ -2074,9 +2074,9 @@ name = "virtualenv"
 version = "20.35.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "distlib", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "filelock", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
-    { name = "platformdirs", marker = "(implementation_name == 'cpython' and platform_machine == 'amd64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "distlib", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "filelock", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
+    { name = "platformdirs", marker = "(implementation_name == 'cpython' and platform_machine == 'AMD64' and sys_platform == 'win32') or (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/20/28/e6f1a6f655d620846bd9df527390ecc26b3805a0c5989048c210e22c5ca9/virtualenv-20.35.4.tar.gz", hash = "sha256:643d3914d73d3eeb0c552cbb12d7e82adf0e504dbf86a3182f8771a153a1971c", size = 6028799, upload-time = "2025-10-29T06:57:40.511Z" }
 wheels = [
