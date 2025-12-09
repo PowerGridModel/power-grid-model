@@ -21,6 +21,7 @@
 #include <boost/graph/compressed_sparse_row_graph.hpp>
 
 #include <algorithm>
+#include <compare>
 #include <functional>
 #include <numeric>
 #include <optional>
@@ -28,7 +29,6 @@
 #include <ranges>
 #include <variant>
 #include <vector>
-#include <compare>
 
 namespace power_grid_model::optimizer {
 namespace tap_position_optimizer {
