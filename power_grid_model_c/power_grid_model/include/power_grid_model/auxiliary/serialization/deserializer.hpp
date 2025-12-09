@@ -179,25 +179,25 @@ struct CheckHasMap : DefaultNullVisitor {
 struct DefaultErrorVisitor : DefaultNullVisitor {
     static constexpr std::string_view static_err_msg = "Unexpected data type!\n";
 
-    [[noreturn]] bool visit_nil() const { throw_error(); }
-    [[noreturn]] bool visit_boolean(bool /*v*/) const { throw_error(); }
-    [[noreturn]] bool visit_positive_integer(uint64_t /*v*/) const { throw_error(); }
-    [[noreturn]] bool visit_negative_integer(int64_t /*v*/) const { throw_error(); }
-    [[noreturn]] bool visit_float32(float /*v*/) const { throw_error(); }
-    [[noreturn]] bool visit_float64(double /*v*/) const { throw_error(); }
-    [[noreturn]] bool visit_str(const char* /*v*/, uint32_t /*size*/) const { throw_error(); }
-    [[noreturn]] bool visit_bin(const char* /*v*/, uint32_t /*size*/) const { throw_error(); }
-    [[noreturn]] bool visit_ext(const char* /*v*/, uint32_t /*size*/) const { throw_error(); }
-    [[noreturn]] bool start_array(uint32_t /*num_elements*/) const { throw_error(); }
-    [[noreturn]] bool start_array_item() const { throw_error(); }
-    [[noreturn]] bool end_array_item() const { throw_error(); }
-    [[noreturn]] bool end_array() const { throw_error(); }
-    [[noreturn]] bool start_map(uint32_t /*num_kv_pairs*/) const { throw_error(); }
-    [[noreturn]] bool start_map_key() const { throw_error(); }
-    [[noreturn]] bool end_map_key() const { throw_error(); }
-    [[noreturn]] bool start_map_value() const { throw_error(); }
-    [[noreturn]] bool end_map_value() const { throw_error(); }
-    [[noreturn]] bool end_map() const { throw_error(); }
+    [[noreturn]] bool visit_nil(this auto const& self) { self.throw_error(); }
+    [[noreturn]] bool visit_boolean(this auto const& self, bool /*v*/) { self.throw_error(); }
+    [[noreturn]] bool visit_positive_integer(this auto const& self, uint64_t /*v*/) { self.throw_error(); }
+    [[noreturn]] bool visit_negative_integer(this auto const& self, int64_t /*v*/) { self.throw_error(); }
+    [[noreturn]] bool visit_float32(this auto const& self, float /*v*/) { self.throw_error(); }
+    [[noreturn]] bool visit_float64(this auto const& self, double /*v*/) { self.throw_error(); }
+    [[noreturn]] bool visit_str(this auto const& self, const char* /*v*/, uint32_t /*size*/) { self.throw_error(); }
+    [[noreturn]] bool visit_bin(this auto const& self, const char* /*v*/, uint32_t /*size*/) { self.throw_error(); }
+    [[noreturn]] bool visit_ext(this auto const& self, const char* /*v*/, uint32_t /*size*/) { self.throw_error(); }
+    [[noreturn]] bool start_array(this auto const& self, uint32_t /*num_elements*/) { self.throw_error(); }
+    [[noreturn]] bool start_array_item(this auto const& self) { self.throw_error(); }
+    [[noreturn]] bool end_array_item(this auto const& self) { self.throw_error(); }
+    [[noreturn]] bool end_array(this auto const& self) { self.throw_error(); }
+    [[noreturn]] bool start_map(this auto const& self, uint32_t /*num_kv_pairs*/) { self.throw_error(); }
+    [[noreturn]] bool start_map_key(this auto const& self) { self.throw_error(); }
+    [[noreturn]] bool end_map_key(this auto const& self) { self.throw_error(); }
+    [[noreturn]] bool start_map_value(this auto const& self) { self.throw_error(); }
+    [[noreturn]] bool end_map_value(this auto const& self) { self.throw_error(); }
+    [[noreturn]] bool end_map(this auto const& self) { self.throw_error(); }
 
     [[noreturn]] bool throw_error(this auto const& self) { throw SerializationError{self.get_err_msg()}; }
 
