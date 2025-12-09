@@ -28,6 +28,7 @@
 #include <ranges>
 #include <variant>
 #include <vector>
+#include <compare>
 
 namespace power_grid_model::optimizer {
 namespace tap_position_optimizer {
@@ -62,10 +63,10 @@ struct TrafoGraphEdge {
     } // thanks boost
 
     auto constexpr operator<=>(TrafoGraphEdge const& other) const {
-        if (auto cmp = weight <=> other.weight; cmp != 0) { // NOLINT(modernize-use-nullptr)
+        if (auto cmp = weight <=> other.weight; !std::is_eq(cmp)) {
             return cmp;
         }
-        if (auto cmp = regulated_idx.group <=> other.regulated_idx.group; cmp != 0) { // NOLINT(modernize-use-nullptr)
+        if (auto cmp = regulated_idx.group <=> other.regulated_idx.group; !std::is_eq(cmp)) {
             return cmp;
         }
         return regulated_idx.pos <=> other.regulated_idx.pos;
@@ -1085,10 +1086,10 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
             auto const cmp = node_state <=> param;
             auto new_tap_pos = [&transformer, &cmp, &control_at_tap_side] {
-                if (cmp > 0) { // NOLINT(modernize-use-nullptr)
+                if (std::is_gt(cmp)) {
                     return one_step_control_voltage_down(transformer, control_at_tap_side);
                 }
-                if (cmp < 0) { // NOLINT(modernize-use-nullptr)
+                if (std::is_lt(cmp)) {
                     return one_step_control_voltage_up(transformer, control_at_tap_side);
                 }
                 return transformer.tap_pos();
@@ -1126,8 +1127,8 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             auto const cmp = node_state <=> param;
             if (auto new_tap_pos =
                     [&cmp, strategy_max, &current_bs] {
-                        if (cmp != 0) {                                        // NOLINT(modernize-use-nullptr)
-                            current_bs.propose_new_pos(strategy_max, cmp > 0); // NOLINT(modernize-use-nullptr)
+                        if (!std::is_eq(cmp)) {
+                            current_bs.propose_new_pos(strategy_max, std::is_gt(cmp));
                         }
                         return current_bs.get_current_tap();
                     }();
@@ -1138,7 +1139,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                 return;
             }
 
-            if (strategy_ == OptimizerStrategy::fast_any && cmp == 0) { // NOLINT(modernize-use-nullptr)
+            if (strategy_ == OptimizerStrategy::fast_any && std::is_eq(cmp)) {
                 tap_changed = false;
                 return;
             }
