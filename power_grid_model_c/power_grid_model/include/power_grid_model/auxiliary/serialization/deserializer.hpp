@@ -179,7 +179,7 @@ struct CheckHasMap : DefaultNullVisitor {
 struct DefaultErrorVisitor : DefaultNullVisitor {
     static constexpr std::string_view static_err_msg = "Unexpected data type!\n";
 
-    // NOSONARBEGIN // suppress hiding members from derived class
+    // NOSONARBEGIN
     [[noreturn]] bool visit_nil() const { throw_error(); }
     [[noreturn]] bool visit_boolean(bool /*v*/) const { throw_error(); }
     [[noreturn]] bool visit_positive_integer(uint64_t /*v*/) const { throw_error(); }
@@ -203,7 +203,7 @@ struct DefaultErrorVisitor : DefaultNullVisitor {
     [[noreturn]] bool throw_error(this auto const& self) { throw SerializationError{self.get_err_msg()}; }
 
     std::string get_err_msg(this auto const& self) { return std::string{self.static_err_msg}; }
-    // NOSONAREND // suppress hiding members from derived class
+    // NOSONAREND
 
   protected:
     DefaultErrorVisitor() = default;
