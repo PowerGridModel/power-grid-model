@@ -264,14 +264,14 @@ void check_error(std::string_view json, std::string_view err_msg) {
     CHECK_THROWS_WITH_AS(run(), doctest::Contains(err_msg.data()), std::exception);
 }
 
-class ErrorVisitorImpl : public detail::DefaultErrorVisitor<ErrorVisitorImpl> {
+class ErrorVisitorImpl : public detail::DefaultErrorVisitor {
   public:
-    using detail::DefaultErrorVisitor<ErrorVisitorImpl>::DefaultErrorVisitor;
+    using detail::DefaultErrorVisitor::DefaultErrorVisitor;
 };
 
-class OtherErrorVisitorImpl : public detail::DefaultErrorVisitor<OtherErrorVisitorImpl> {
+class OtherErrorVisitorImpl : public detail::DefaultErrorVisitor {
   public:
-    using detail::DefaultErrorVisitor<OtherErrorVisitorImpl>::DefaultErrorVisitor;
+    using detail::DefaultErrorVisitor::DefaultErrorVisitor;
 
     static constexpr auto static_err_msg = "Other error message.\n"sv;
 };
@@ -279,10 +279,10 @@ class OtherErrorVisitorImpl : public detail::DefaultErrorVisitor<OtherErrorVisit
 
 TEST_CASE("Deserializer visitors") {
     SUBCASE("DefaultErrorVisitor") {
-        auto const test = []<typename T>(T visitor, std::string_view expected_str) {
-            static_assert(!std::is_default_constructible_v<detail::DefaultErrorVisitor<T>>);
+        auto const test = []<std::derived_from<detail::DefaultErrorVisitor> T>(T visitor,
+                                                                               std::string_view expected_str) {
+            static_assert(!std::is_default_constructible_v<detail::DefaultErrorVisitor>);
             static_assert(std::is_default_constructible_v<T>);
-            static_assert(std::derived_from<T, detail::DefaultErrorVisitor<T>>);
 
             auto const expected = doctest::Contains(
                 doctest::String(expected_str.data(), narrow_cast<doctest::String::size_type>(expected_str.size())));
