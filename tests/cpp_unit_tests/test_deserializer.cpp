@@ -14,11 +14,11 @@
 #include <doctest/doctest.h>
 
 namespace power_grid_model::meta_data {
-
+namespace {
 using namespace std::string_literals;
+using namespace std::literals::string_view_literals;
 
 // single data
-namespace {
 constexpr std::string_view json_single = R"(
 {
   "version": "1.0",
@@ -263,7 +263,62 @@ void check_error(std::string_view json, std::string_view err_msg) {
 
     CHECK_THROWS_WITH_AS(run(), doctest::Contains(err_msg.data()), std::exception);
 }
+
+class ErrorVisitorImpl : public detail::DefaultErrorVisitor {
+  public:
+    using detail::DefaultErrorVisitor::DefaultErrorVisitor;
+};
+
+class OtherErrorVisitorImpl : public detail::DefaultErrorVisitor {
+  public:
+    using detail::DefaultErrorVisitor::DefaultErrorVisitor;
+
+    static constexpr auto static_err_msg = "Other error message.\n"sv;
+};
 } // namespace
+
+TEST_CASE("Deserializer visitors") {
+    SUBCASE("DefaultErrorVisitor") {
+        auto const test = []<std::derived_from<detail::DefaultErrorVisitor> T>(T visitor,
+                                                                               std::string_view expected_str) {
+            static_assert(!std::is_default_constructible_v<detail::DefaultErrorVisitor>);
+            static_assert(std::is_default_constructible_v<T>);
+
+            auto const expected = doctest::Contains(
+                doctest::String(expected_str.data(), narrow_cast<doctest::String::size_type>(expected_str.size())));
+
+            CHECK_THROWS_WITH_AS(visitor.visit_nil(), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.visit_boolean(true), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.visit_boolean(false), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.visit_positive_integer(42U), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.visit_negative_integer(-42), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.visit_float32(3.14f), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.visit_float64(2.718), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.visit_str("test_key", 8), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.visit_bin("test_bin", 8), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.visit_ext("test_ext", 8), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.start_array(3), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.start_array_item(), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.end_array_item(), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.end_array(), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.start_map(2), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.start_map_key(), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.end_map_key(), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.start_map_value(), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.end_map_value(), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.end_map(), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.throw_error(), expected, SerializationError);
+            CHECK(T::static_err_msg == expected_str);
+            CHECK(visitor.get_err_msg() == T::static_err_msg);
+        };
+
+        SUBCASE("Default error message") { test.template operator()(ErrorVisitorImpl{}, "Unexpected data type!\n"sv); }
+
+        SUBCASE("Custom error message") {
+            test.template operator()(OtherErrorVisitorImpl{}, "Other error message.\n"sv);
+        }
+    }
+}
 
 TEST_CASE("Deserializer") {
     SUBCASE("Single dataset") {
