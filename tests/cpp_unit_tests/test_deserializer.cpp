@@ -282,7 +282,7 @@ class OverloadErrorVisitorImpl : public detail::DefaultErrorVisitor {
 
     static constexpr auto static_err_msg = "Overload error message.\n"sv;
 
-    bool visit_nil() {
+    [[noreturn]] bool visit_nil() {
         visited_nil_ = true;
         throw_error();
     }
