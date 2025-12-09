@@ -78,7 +78,7 @@ power_grid_model = "power_grid_model._core.power_grid_model_c"
 environments = [
     "implementation_name == 'cpython' and sys_platform == 'darwin'",
     "implementation_name == 'cpython' and sys_platform == 'linux'",
-    "implementation_name == 'cpython' and sys_platform == 'win32' and platform_machine == 'amd64'",
+    "implementation_name == 'cpython' and sys_platform == 'win32' and platform_machine == 'AMD64'",
 ]
 
 [tool.scikit-build]
