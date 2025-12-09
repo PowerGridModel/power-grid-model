@@ -265,9 +265,9 @@ struct YBusStructure {
         assert(row_start == n_bus);
         assert(row_start_lu == n_bus);
         // size of y_bus_entry_indptr is nnz + 1
-        assert(static_cast<Idx>(y_bus_entry_indptr.size()) == nnz_counter + 1);
+        assert(std::ssize(y_bus_entry_indptr) == nnz_counter + 1);
         // end of y_bus_entry_indptr is same as size of entry
-        assert(y_bus_entry_indptr.back() == static_cast<Idx>(y_bus_element.size()));
+        assert(y_bus_entry_indptr.back() == std::ssize(y_bus_element));
 
         lu_transpose_entry = IdxRange{nnz_counter_lu} | std::ranges::to<IdxVector>();
 

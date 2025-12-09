@@ -7,10 +7,12 @@
 #include "batch_parameter.hpp"
 #include "job_interface.hpp"
 
+#include "common/counting_iterator.hpp"
 #include "common/exception.hpp"
 #include "common/timer.hpp"
 #include "common/typing.hpp"
 
+#include <ranges>
 #include <thread>
 
 namespace power_grid_model {
@@ -54,7 +56,7 @@ class JobDispatch {
 
     // Lippincott pattern
     static auto scenario_exception_handler(std::vector<std::string>& messages) {
-        return [&messages](Idx scenario_idx) -> void {
+        return [&messages](Idx scenario_idx) {
             assert(0 <= scenario_idx);
             assert(scenario_idx < std::ssize(messages));
 
@@ -165,6 +167,10 @@ class JobDispatch {
                  std::invocable<std::remove_cvref_t<RecoverFromBadFn>>
     static auto call_with(RunFn run, SetupFn setup, WinddownFn winddown, HandleExceptionFn handle_exception,
                           RecoverFromBadFn recover_from_bad) {
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4702) // Unreachable if run_ is [[noreturn]]
+#endif                          // _MSC_VER
         return [setup_ = std::move(setup), run_ = std::move(run), winddown_ = std::move(winddown),
                 handle_exception_ = std::move(handle_exception),
                 recover_from_bad_ = std::move(recover_from_bad)](Args const&... args) {
@@ -181,18 +187,21 @@ class JobDispatch {
                 }
             }
         };
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif // _MSC_VER
     }
 
     static void handle_batch_exceptions(std::vector<std::string> const& exceptions) {
         std::ostringstream combined_error_message;
         IdxVector failed_scenarios;
         std::vector<std::string> err_msgs;
-        for (Idx batch = 0; batch < static_cast<Idx>(exceptions.size()); ++batch) {
+        for (auto const& [batch, exception] : std::views::zip(IdxRange(std::ssize(exceptions)), exceptions)) {
             // append exception if it is not empty
-            if (!exceptions[batch].empty()) {
-                combined_error_message << std::format("Error in batch #{}: {}\n", batch, exceptions[batch]);
+            if (!exception.empty()) {
+                combined_error_message << std::format("Error in batch #{}: {}\n", batch, exception);
                 failed_scenarios.push_back(batch);
-                err_msgs.push_back(exceptions[batch]);
+                err_msgs.push_back(exception);
             }
         }
         if (!combined_error_message.view().empty()) {

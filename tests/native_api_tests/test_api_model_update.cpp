@@ -182,15 +182,17 @@ TEST_CASE_TEMPLATE(
     auto load_updates_id = [] {
         if constexpr (std::is_same_v<id_check_type, invalid_id_t>) {
             return std::vector<ID>{99, 2};
+        } else {
+            return std::vector<ID>{2, 2};
         }
-        return std::vector<ID>{2, 2};
     }();
 
     auto source_indptr = [] {
         if constexpr (std::is_same_v<id_check_type, mixed_optional_id_t>) {
             return std::vector<Idx>{0, 1, 1};
+        } else {
+            return std::vector<Idx>{0, 0, 0};
         }
-        return std::vector<Idx>{0, 0, 0};
     }();
     std::vector<ID> const source_updates_id = {1};
 

@@ -11,5 +11,5 @@ Test case for validation of the generic_branch component for symmetrical power f
 The circuit diagram is as follows:
 
 ```txt
-source_4--node_1--genric_branch_3--node_2--load_5                                                                              
+source_4--node_1--generic_branch_3--node_2--load_5                                                                              
 ```

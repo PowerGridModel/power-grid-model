@@ -84,6 +84,8 @@ constexpr DoubleComplex y_link{g_link, g_link};
 constexpr double default_source_sk = 1e10; // 10 GVA 10^10
 constexpr double default_source_rx_ratio = 0.1;
 constexpr double default_source_z01_ratio = 1.0;
+// transformer low susceptance ratio for floating zero sequence
+constexpr double transformer_low_susceptance_ratio = 1e-8;
 
 // some usual vector
 using DoubleVector = std::vector<double>;

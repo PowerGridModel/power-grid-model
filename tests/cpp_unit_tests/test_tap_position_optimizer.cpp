@@ -617,8 +617,8 @@ class MockSolverOutput : public SolverOutput<symmetric_t> {
     }
 
   private:
-    void add_tap_positions(main_core::MainModelState<ContainerType> const& state) {
-        AddTapPositions<typename ContainerType::gettable_types>{}(state, state_tap_positions);
+    void add_tap_positions(main_core::MainModelState<ContainerType> const& state_) {
+        AddTapPositions<typename ContainerType::gettable_types>{}(state_, state_tap_positions);
     }
 
     template <typename... T> struct AddTapPositions;
