@@ -31,7 +31,7 @@ jobs:
     name: Build sdist and set version
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - uses: actions/setup-python@v6
         with:
@@ -50,13 +50,13 @@ jobs:
           python -m build --sdist --outdir wheelhouse .
 
       - name: Keep version file
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: version
           path: VERSION
 
       - name: Keep SDist
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: wheelhouse
           path: ./wheelhouse/*.tar.gz
@@ -77,7 +77,7 @@ jobs:
       HOMEBREW_FORCE_BREWED_CURL: 1
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Install packages
         run: |
           sudo apt-get update
@@ -92,6 +92,7 @@ jobs:
           echo "/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
       - name: Install C++ dependencies
         run: |
+          brew update
           brew install boost eigen nlohmann-json msgpack-cxx doctest
       - name: Build and test
         run: ./build.sh -p ${{ env.PRESET }} -e -i -t
@@ -107,7 +108,7 @@ jobs:
       PRESET: ${{ matrix.compiler }}-${{ matrix.build-option }}
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Activate conda
         uses: conda-incubator/setup-miniconda@v3  # install miniforge instead
@@ -160,7 +161,7 @@ jobs:
       PRESET: ci-clang-${{ matrix.build-option }}
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Set up XCode
         uses: maxim-lobanov/setup-xcode@v1
@@ -169,6 +170,7 @@ jobs:
 
       - name: Install cpp dependencies
         run: |
+          brew update
           brew install ninja boost eigen nlohmann-json msgpack-cxx doctest
 
       - name: Build and test
@@ -196,9 +198,9 @@ jobs:
     needs: [acquire-python-version-build-sdist]
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6
         with:
           name: version
           path: .
@@ -213,7 +215,7 @@ jobs:
           xcode-version: latest-stable
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v3.2
+        uses: pypa/cibuildwheel@v3.3
         # GitHub Actions specific build parameters
         env:
           # pass GitHub runner info into Linux container
@@ -221,7 +223,7 @@ jobs:
           CIBW_BUILD: ${{ matrix.cibw_build }}
 
       - name: Keep wheel files
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: wheelhouse-${{ matrix.platform }}
           path: ./wheelhouse/*.whl
@@ -245,7 +247,7 @@ jobs:
       run:
         shell: ${{ matrix.shell }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - uses: conda-incubator/setup-miniconda@v3
         with:
@@ -306,7 +308,7 @@ jobs:
           echo "Previous jobs have failures!"
           exit 1
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Setup python
         uses: actions/setup-python@v6
@@ -314,9 +316,9 @@ jobs:
           python-version: '3.12'
           architecture: x64
 
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6
 
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6
         with:
           name: version
           path: .

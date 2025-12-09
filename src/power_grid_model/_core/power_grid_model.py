@@ -7,6 +7,7 @@ Main power grid model class
 """
 
 from enum import IntEnum
+from typing import Any, overload
 
 import numpy as np
 
@@ -17,16 +18,29 @@ from power_grid_model._core.data_handling import (
     prepare_output_view,
     prepare_update_view,
 )
-from power_grid_model._core.data_types import Dataset, SingleDataset
+from power_grid_model._core.data_types import (
+    BatchDataset,
+    Dataset,
+    DenseBatchColumnarOutputDataset,
+    DenseBatchOutputDataset,
+    DenseBatchRowBasedOutputDataset,
+    SingleColumnarOutputDataset,
+    SingleDataset,
+    SingleOutputDataset,
+    SingleRowBasedDataset,
+    SingleRowBasedOutputDataset,
+)
 from power_grid_model._core.dataset_definitions import (
     ComponentType,
     ComponentTypeLike,
+    ComponentTypeVar,
     _map_to_component_types,
     _str_to_component_type,
 )
 from power_grid_model._core.enum import (
     CalculationMethod,
     CalculationType,
+    ComponentAttributeFilterOptions,
     ShortCircuitVoltageScaling,
     TapChangingStrategy,
     _ExperimentalFeatures,
@@ -35,7 +49,7 @@ from power_grid_model._core.error_handling import PowerGridBatchError, assert_no
 from power_grid_model._core.index_integer import IdNp, IdxNp
 from power_grid_model._core.options import Options
 from power_grid_model._core.power_grid_core import ConstDatasetPtr, IDPtr, IdxPtr, ModelPtr, power_grid_core as pgc
-from power_grid_model._core.typing import ComponentAttributeMapping
+from power_grid_model._core.typing import ComponentAttributeMapping, ComponentAttributeMappingDict
 
 
 class PowerGridModel:
@@ -94,8 +108,37 @@ class PowerGridModel:
         new_model._all_component_count = self._all_component_count
         return new_model
 
-    def __copy__(self):
+    def __copy__(self) -> "PowerGridModel":
         return self.copy()
+
+    def __deepcopy__(self, memo: dict[int, Any]) -> "PowerGridModel":
+        # PowerGridModel.copy makes already a deepcopy
+        new_model = self.copy()
+
+        # memorize that this object (self) has been deepcopied
+        memo[id(self)] = new_model
+
+        return new_model
+
+    def __repr__(self) -> str:
+        """Return a string representation of the current model.
+
+        This includes the total number of components and the number of components per component type of the model.
+
+        Returns:
+            String representation of the model
+        """
+        try:
+            component_count = self.all_component_count
+        except TypeError:
+            component_count = {}
+
+        message = f"{self.__class__.__name__} ({sum(component_count.values())} components)\n"
+
+        for component_type, number in component_count.items():
+            message += f"  - {component_type.value}: {number}\n"
+
+        return message
 
     def __new__(cls, *_args, **_kwargs):
         instance = super().__new__(cls)
@@ -199,7 +242,7 @@ class PowerGridModel:
         symmetric: bool,
         is_batch: bool,
         batch_size: int,
-    ) -> dict[ComponentType, np.ndarray]:
+    ):
         all_component_count = self._get_output_component_count(calculation_type=calculation_type)
         return create_output_data(
             output_component_types=output_component_types,
@@ -215,7 +258,7 @@ class PowerGridModel:
             if key_enum in kwargs:
                 value_enum = kwargs[key_enum]
                 if isinstance(value_enum, str):
-                    kwargs[key_enum] = type_[value_enum]
+                    kwargs[key_enum] = type_[value_enum]  # NOSONAR(S5864) IntEnum has __getitem__
 
         as_enum_value("calculation_method", CalculationMethod)
         as_enum_value("tap_changing_strategy", TapChangingStrategy)
@@ -244,7 +287,7 @@ class PowerGridModel:
         continue_on_batch_error: bool,
         decode_error: bool,
         experimental_features: _ExperimentalFeatures | str,  # NOSONAR # noqa: ARG002
-    ):
+    ) -> Dataset:
         """
         Core calculation routine
 
@@ -313,7 +356,7 @@ class PowerGridModel:
         decode_error: bool = True,
         tap_changing_strategy: TapChangingStrategy | str = TapChangingStrategy.disabled,
         experimental_features: _ExperimentalFeatures | str = _ExperimentalFeatures.disabled,
-    ):
+    ) -> Dataset:
         calculation_type = CalculationType.power_flow
         options = self._options(
             calculation_type=calculation_type,
@@ -349,7 +392,7 @@ class PowerGridModel:
         continue_on_batch_error: bool = False,
         decode_error: bool = True,
         experimental_features: _ExperimentalFeatures | str = _ExperimentalFeatures.disabled,
-    ) -> dict[ComponentType, np.ndarray]:
+    ) -> Dataset:
         calculation_type = CalculationType.state_estimation
         options = self._options(
             calculation_type=calculation_type,
@@ -382,7 +425,7 @@ class PowerGridModel:
         decode_error: bool = True,
         short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str = ShortCircuitVoltageScaling.maximum,
         experimental_features: _ExperimentalFeatures | str = _ExperimentalFeatures.disabled,
-    ) -> dict[ComponentType, np.ndarray]:
+    ) -> Dataset:
         calculation_type = CalculationType.short_circuit
         symmetric = False
 
@@ -405,6 +448,110 @@ class PowerGridModel:
             experimental_features=experimental_features,
         )
 
+    @overload
+    def calculate_power_flow(
+        self,
+        *,
+        symmetric: bool = ...,
+        error_tolerance: float = ...,
+        max_iterations: int = ...,
+        calculation_method: CalculationMethod | str = ...,
+        threading: int = ...,
+        output_component_types: None | set[ComponentTypeVar] | list[ComponentTypeVar] = ...,
+        continue_on_batch_error: bool = ...,
+        decode_error: bool = ...,
+        tap_changing_strategy: TapChangingStrategy | str = ...,
+    ) -> SingleRowBasedDataset: ...
+    @overload
+    def calculate_power_flow(
+        self,
+        *,
+        symmetric: bool = ...,
+        error_tolerance: float = ...,
+        max_iterations: int = ...,
+        calculation_method: CalculationMethod | str = ...,
+        update_data: None = ...,
+        threading: int = ...,
+        output_component_types: None | set[ComponentTypeVar] | list[ComponentTypeVar] = ...,
+        continue_on_batch_error: bool = ...,
+        decode_error: bool = ...,
+        tap_changing_strategy: TapChangingStrategy | str = ...,
+    ) -> SingleRowBasedDataset: ...
+    @overload
+    def calculate_power_flow(
+        self,
+        *,
+        symmetric: bool = ...,
+        error_tolerance: float = ...,
+        max_iterations: int = ...,
+        calculation_method: CalculationMethod | str = ...,
+        update_data: None = ...,
+        threading: int = ...,
+        output_component_types: ComponentAttributeFilterOptions = ...,
+        continue_on_batch_error: bool = ...,
+        decode_error: bool = ...,
+        tap_changing_strategy: TapChangingStrategy | str = ...,
+    ) -> SingleColumnarOutputDataset: ...
+    @overload
+    def calculate_power_flow(
+        self,
+        *,
+        symmetric: bool = ...,
+        error_tolerance: float = ...,
+        max_iterations: int = ...,
+        calculation_method: CalculationMethod | str = ...,
+        update_data: None = ...,
+        threading: int = ...,
+        output_component_types: ComponentAttributeMappingDict = ...,
+        continue_on_batch_error: bool = ...,
+        decode_error: bool = ...,
+        tap_changing_strategy: TapChangingStrategy | str = ...,
+    ) -> SingleOutputDataset: ...
+    @overload
+    def calculate_power_flow(
+        self,
+        *,
+        symmetric: bool = ...,
+        error_tolerance: float = ...,
+        max_iterations: int = ...,
+        calculation_method: CalculationMethod | str = ...,
+        update_data: BatchDataset = ...,
+        threading: int = ...,
+        output_component_types: None | set[ComponentTypeVar] | list[ComponentTypeVar] = ...,
+        continue_on_batch_error: bool = ...,
+        decode_error: bool = ...,
+        tap_changing_strategy: TapChangingStrategy | str = ...,
+    ) -> DenseBatchRowBasedOutputDataset: ...
+    @overload
+    def calculate_power_flow(
+        self,
+        *,
+        symmetric: bool = ...,
+        error_tolerance: float = ...,
+        max_iterations: int = ...,
+        calculation_method: CalculationMethod | str = ...,
+        update_data: BatchDataset = ...,
+        threading: int = ...,
+        output_component_types: ComponentAttributeFilterOptions = ...,
+        continue_on_batch_error: bool = ...,
+        decode_error: bool = ...,
+        tap_changing_strategy: TapChangingStrategy | str = ...,
+    ) -> DenseBatchColumnarOutputDataset: ...
+    @overload
+    def calculate_power_flow(
+        self,
+        *,
+        symmetric: bool = ...,
+        error_tolerance: float = ...,
+        max_iterations: int = ...,
+        calculation_method: CalculationMethod | str = ...,
+        update_data: BatchDataset = ...,
+        threading: int = ...,
+        output_component_types: ComponentAttributeMappingDict = ...,
+        continue_on_batch_error: bool = ...,
+        decode_error: bool = ...,
+        tap_changing_strategy: TapChangingStrategy | str = ...,
+    ) -> DenseBatchOutputDataset: ...
     def calculate_power_flow(  # noqa: PLR0913
         self,
         *,
@@ -412,13 +559,13 @@ class PowerGridModel:
         error_tolerance: float = 1e-8,
         max_iterations: int = 20,
         calculation_method: CalculationMethod | str = CalculationMethod.newton_raphson,
-        update_data: dict[str, np.ndarray | dict[str, np.ndarray]] | Dataset | None = None,
+        update_data: BatchDataset | None = None,
         threading: int = -1,
         output_component_types: ComponentAttributeMapping = None,
         continue_on_batch_error: bool = False,
         decode_error: bool = True,
         tap_changing_strategy: TapChangingStrategy | str = TapChangingStrategy.disabled,
-    ) -> dict[ComponentType, np.ndarray]:
+    ) -> Dataset:
         """
         Calculate power flow once with the current model attributes.
         Or calculate in batch with the given update dataset in batch.
@@ -464,7 +611,7 @@ class PowerGridModel:
                 - None: Row based data for all component types.
                 - set[ComponentTypeVar] or list[ComponentTypeVar]: Row based data for the specified component types.
                 - ComponentAttributeFilterOptions: Columnar data for all component types.
-                - dict[ComponentType, set[str] | list[str] | None | ComponentAttributeFilterOptions]:
+                - ComponentAttributeMappingDict:
                     key: ComponentType
                     value:
                         - None: Row based data for the specified component types.
@@ -504,6 +651,90 @@ class PowerGridModel:
             tap_changing_strategy=tap_changing_strategy,
         )
 
+    @overload
+    def calculate_state_estimation(
+        self,
+        *,
+        symmetric: bool = ...,
+        error_tolerance: float = ...,
+        max_iterations: int = ...,
+        calculation_method: CalculationMethod | str = ...,
+        update_data: None = ...,
+        threading: int = ...,
+        output_component_types: None | set[ComponentTypeVar] | list[ComponentTypeVar] = ...,
+        continue_on_batch_error: bool = ...,
+        decode_error: bool = ...,
+    ) -> SingleRowBasedOutputDataset: ...
+    @overload
+    def calculate_state_estimation(
+        self,
+        *,
+        symmetric: bool = ...,
+        error_tolerance: float = ...,
+        max_iterations: int = ...,
+        calculation_method: CalculationMethod | str = ...,
+        update_data: None = ...,
+        threading: int = ...,
+        output_component_types: ComponentAttributeFilterOptions = ...,
+        continue_on_batch_error: bool = ...,
+        decode_error: bool = ...,
+    ) -> SingleColumnarOutputDataset: ...
+    @overload
+    def calculate_state_estimation(
+        self,
+        *,
+        symmetric: bool = ...,
+        error_tolerance: float = ...,
+        max_iterations: int = ...,
+        calculation_method: CalculationMethod | str = ...,
+        update_data: None = ...,
+        threading: int = ...,
+        output_component_types: ComponentAttributeMappingDict = ...,
+        continue_on_batch_error: bool = ...,
+        decode_error: bool = ...,
+    ) -> SingleOutputDataset: ...
+    @overload
+    def calculate_state_estimation(
+        self,
+        *,
+        symmetric: bool = ...,
+        error_tolerance: float = ...,
+        max_iterations: int = ...,
+        calculation_method: CalculationMethod | str = ...,
+        update_data: BatchDataset = ...,
+        threading: int = ...,
+        output_component_types: None | set[ComponentTypeVar] | list[ComponentTypeVar] = ...,
+        continue_on_batch_error: bool = ...,
+        decode_error: bool = ...,
+    ) -> DenseBatchRowBasedOutputDataset: ...
+    @overload
+    def calculate_state_estimation(
+        self,
+        *,
+        symmetric: bool = ...,
+        error_tolerance: float = ...,
+        max_iterations: int = ...,
+        calculation_method: CalculationMethod | str = ...,
+        update_data: BatchDataset = ...,
+        threading: int = ...,
+        output_component_types: ComponentAttributeFilterOptions = ...,
+        continue_on_batch_error: bool = ...,
+        decode_error: bool = ...,
+    ) -> DenseBatchColumnarOutputDataset: ...
+    @overload
+    def calculate_state_estimation(
+        self,
+        *,
+        symmetric: bool = ...,
+        error_tolerance: float = ...,
+        max_iterations: int = ...,
+        calculation_method: CalculationMethod | str = ...,
+        update_data: BatchDataset = ...,
+        threading: int = ...,
+        output_component_types: ComponentAttributeMappingDict = ...,
+        continue_on_batch_error: bool = ...,
+        decode_error: bool = ...,
+    ) -> DenseBatchOutputDataset: ...
     def calculate_state_estimation(  # noqa: PLR0913
         self,
         *,
@@ -511,12 +742,12 @@ class PowerGridModel:
         error_tolerance: float = 1e-8,
         max_iterations: int = 20,
         calculation_method: CalculationMethod | str = CalculationMethod.iterative_linear,
-        update_data: dict[str, np.ndarray | dict[str, np.ndarray]] | Dataset | None = None,
+        update_data: BatchDataset | None = None,
         threading: int = -1,
         output_component_types: ComponentAttributeMapping = None,
         continue_on_batch_error: bool = False,
         decode_error: bool = True,
-    ) -> dict[ComponentType, np.ndarray]:
+    ) -> Dataset:
         """
         Calculate state estimation once with the current model attributes.
         Or calculate in batch with the given update dataset in batch.
@@ -559,7 +790,7 @@ class PowerGridModel:
                 - None: Row based data for all component types.
                 - set[ComponentTypeVar] or list[ComponentTypeVar]: Row based data for the specified component types.
                 - ComponentAttributeFilterOptions: Columnar data for all component types.
-                - dict[ComponentType, set[str] | list[str] | None | ComponentAttributeFilterOptions]:
+                - ComponentAttributeMappingDict:
                     key: ComponentType
                     value:
                         - None: Row based data for the specified component types.
@@ -598,17 +829,89 @@ class PowerGridModel:
             decode_error=decode_error,
         )
 
+    @overload
+    def calculate_short_circuit(
+        self,
+        *,
+        calculation_method: CalculationMethod | str = ...,
+        update_data: None = ...,
+        threading: int = ...,
+        output_component_types: None | set[ComponentTypeVar] | list[ComponentTypeVar] = ...,
+        continue_on_batch_error: bool = ...,
+        decode_error: bool = ...,
+        short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str,
+    ) -> SingleRowBasedDataset: ...
+    @overload
+    def calculate_short_circuit(
+        self,
+        *,
+        calculation_method: CalculationMethod | str = ...,
+        update_data: None = ...,
+        threading: int = ...,
+        output_component_types: ComponentAttributeFilterOptions = ...,
+        continue_on_batch_error: bool = ...,
+        decode_error: bool = ...,
+        short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str,
+    ) -> SingleColumnarOutputDataset: ...
+    @overload
+    def calculate_short_circuit(
+        self,
+        *,
+        calculation_method: CalculationMethod | str = ...,
+        update_data: None = ...,
+        threading: int = ...,
+        output_component_types: ComponentAttributeMappingDict = ...,
+        continue_on_batch_error: bool = ...,
+        decode_error: bool = ...,
+        short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str,
+    ) -> SingleOutputDataset: ...
+    @overload
+    def calculate_short_circuit(
+        self,
+        *,
+        calculation_method: CalculationMethod | str = ...,
+        update_data: BatchDataset = ...,
+        threading: int = ...,
+        output_component_types: None | set[ComponentTypeVar] | list[ComponentTypeVar] = ...,
+        continue_on_batch_error: bool = ...,
+        decode_error: bool = ...,
+        short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str,
+    ) -> DenseBatchRowBasedOutputDataset: ...
+    @overload
+    def calculate_short_circuit(
+        self,
+        *,
+        calculation_method: CalculationMethod | str = ...,
+        update_data: BatchDataset = ...,
+        threading: int = ...,
+        output_component_types: ComponentAttributeFilterOptions = ...,
+        continue_on_batch_error: bool = ...,
+        decode_error: bool = ...,
+        short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str,
+    ) -> DenseBatchColumnarOutputDataset: ...
+    @overload
+    def calculate_short_circuit(
+        self,
+        *,
+        calculation_method: CalculationMethod | str = ...,
+        update_data: BatchDataset = ...,
+        threading: int = ...,
+        output_component_types: ComponentAttributeMappingDict = ...,
+        continue_on_batch_error: bool = ...,
+        decode_error: bool = ...,
+        short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str,
+    ) -> DenseBatchOutputDataset: ...
     def calculate_short_circuit(  # noqa: PLR0913
         self,
         *,
         calculation_method: CalculationMethod | str = CalculationMethod.iec60909,
-        update_data: dict[str, np.ndarray | dict[str, np.ndarray]] | Dataset | None = None,
+        update_data: BatchDataset | None = None,
         threading: int = -1,
         output_component_types: ComponentAttributeMapping = None,
         continue_on_batch_error: bool = False,
         decode_error: bool = True,
         short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str = ShortCircuitVoltageScaling.maximum,
-    ) -> dict[ComponentType, np.ndarray]:
+    ) -> Dataset:
         """
         Calculate a short circuit once with the current model attributes.
         Or calculate in batch with the given update dataset in batch
@@ -643,7 +946,7 @@ class PowerGridModel:
                 - None: Row based data for all component types.
                 - set[ComponentTypeVar] or list[ComponentTypeVar]: Row based data for the specified component types.
                 - ComponentAttributeFilterOptions: Columnar data for all component types.
-                - dict[ComponentType, set[str] | list[str] | None | ComponentAttributeFilterOptions]:
+                - ComponentAttributeMappingDict:
                     key: ComponentType
                     value:
                         - None: Row based data for the specified component types.

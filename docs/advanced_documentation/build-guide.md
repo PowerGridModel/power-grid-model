@@ -350,7 +350,7 @@ It is possible to enable long paths in Windows by following the steps in the
 ### C++ packages
 
 The recommended way to get C++ package is via `conda`.
-Open a miniconda console.
+Open a miniforge console.
 
 ```shell
 conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge libboost-headers eigen nlohmann_json msgpack-cxx doctest

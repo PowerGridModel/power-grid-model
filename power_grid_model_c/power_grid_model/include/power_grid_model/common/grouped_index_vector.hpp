@@ -110,7 +110,7 @@ class SparseGroupedIdxVector {
         constexpr auto operator*() const -> reference {
             assert(indptr_ != nullptr);
             assert(0 <= group_);
-            assert(group_ < static_cast<Idx>(indptr_->size() - 1));
+            assert(group_ < std::ssize(*indptr_) - 1);
 
             // delaying out-of-bounds checking until dereferencing while still returning a reference type requires
             // setting this here

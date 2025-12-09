@@ -94,8 +94,8 @@ ObservabilitySensorsResult scan_network_sensors(MeasuredValues<sym> const& measu
                 // we only need one flow sensor, so the loop will break
                 Idx const branch = element.idx;
                 Idx const neighbour_bus = y_bus_structure.col_indices[ybus_index];
-                BusNeighbourhoodInfo::neighbour const neighbour_info{neighbour_bus,
-                                                                     ConnectivityStatus::has_no_measurement};
+                BusNeighbourhoodInfo::neighbour const neighbour_info{.bus = neighbour_bus,
+                                                                     .status = ConnectivityStatus::has_no_measurement};
                 bus_neighbourhood_info[bus].direct_neighbours.push_back(neighbour_info);
                 if (has_flow_sensor(branch) && is_branch_connected(branch)) {
                     result.flow_sensors[ybus_index] = 1;
@@ -231,7 +231,7 @@ inline void complete_bidirectional_neighbourhood_info(std::vector<BusNeighbourho
             auto it = std::ranges::find_if(
                 reverse_neighbour_list, [&bus](auto const& reverse_neighbour) { return reverse_neighbour.bus == bus; });
             if (it == reverse_neighbour_list.end()) {
-                BusNeighbourhoodInfo::neighbour const reverse_neighbour_info{bus, neighbour.status};
+                BusNeighbourhoodInfo::neighbour const reverse_neighbour_info{.bus = bus, .status = neighbour.status};
                 reverse_neighbour_list.push_back(reverse_neighbour_info);
             }
         }
@@ -505,9 +505,15 @@ sufficient_condition_meshed_without_voltage_phasor(std::vector<detail::BusNeighb
     prepare_starting_nodes(neighbour_list, n_bus, starting_candidates);
 
     // Try each starting candidate
-    return std::ranges::any_of(starting_candidates, [&](Idx const start_bus) {
+    bool const found_spanning_tree = std::ranges::any_of(starting_candidates, [&](Idx const start_bus) {
         return find_spanning_tree_from_node(start_bus, n_bus, neighbour_list);
     });
+
+    if (!found_spanning_tree) {
+        throw NotObservableError{"Meshed observability check fail. Network unobservable.\n"};
+    }
+
+    return true;
 }
 
 } // namespace detail
@@ -558,12 +564,9 @@ inline ObservabilityResult observability_check(MeasuredValues<sym> const& measur
     // check the sufficient condition for observability
     // the check is currently only implemented for radial grids
     if (topo.is_radial) {
-        // Temporary path, ideally this is only called when
-        // n_voltage_phasor_sensors > 0, regardless of network type
         is_sufficient_condition_met = detail::sufficient_condition_radial_with_voltage_phasor(
             y_bus_structure, observability_sensors, n_voltage_phasor_sensors);
     } else {
-        // Temporary path, to be refined later
         is_sufficient_condition_met =
             detail::sufficient_condition_meshed_without_voltage_phasor(bus_neighbourhood_info);
     }

@@ -568,7 +568,8 @@ TEST_CASE("Test Observability - complete_bidirectional_neighbourhood_info") {
         // Initialize test data
         neighbour_list[0].bus = 0;
         neighbour_list[0].status = has_no_measurement;
-        neighbour_list[0].direct_neighbours = {{1, has_no_measurement}, {2, node_measured}};
+        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = has_no_measurement},
+                                               {.bus = 2, .status = node_measured}};
 
         neighbour_list[1].bus = 1;
         neighbour_list[1].status = node_measured;
@@ -615,17 +616,18 @@ TEST_CASE("Test Observability - complete_bidirectional_neighbourhood_info") {
         // Bus 0 connects to buses 1 and 3
         neighbour_list[0].bus = 0;
         neighbour_list[0].status = node_measured;
-        neighbour_list[0].direct_neighbours = {{1, branch_native_measurement_unused}, {3, has_no_measurement}};
+        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = branch_native_measurement_unused},
+                                               {.bus = 3, .status = has_no_measurement}};
 
         // Bus 1 connects to bus 2 (but not back to 0 yet)
         neighbour_list[1].bus = 1;
         neighbour_list[1].status = has_no_measurement;
-        neighbour_list[1].direct_neighbours = {{2, branch_discovered_with_from_node_sensor}};
+        neighbour_list[1].direct_neighbours = {{.bus = 2, .status = branch_discovered_with_from_node_sensor}};
 
         // Bus 2 has existing connection to bus 3
         neighbour_list[2].bus = 2;
         neighbour_list[2].status = branch_discovered_with_to_node_sensor;
-        neighbour_list[2].direct_neighbours = {{3, branch_native_measurement_consumed}};
+        neighbour_list[2].direct_neighbours = {{.bus = 3, .status = branch_native_measurement_consumed}};
 
         // Bus 3 initially has no connections
         neighbour_list[3].bus = 3;
@@ -700,15 +702,17 @@ TEST_CASE("Test Observability - complete_bidirectional_neighbourhood_info") {
         // Initialize with some connections already bidirectional
         neighbour_list[0].bus = 0;
         neighbour_list[0].status = has_no_measurement;
-        neighbour_list[0].direct_neighbours = {{1, has_no_measurement}, {2, node_measured}};
+        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = has_no_measurement},
+                                               {.bus = 2, .status = node_measured}};
 
         neighbour_list[1].bus = 1;
         neighbour_list[1].status = node_measured;
-        neighbour_list[1].direct_neighbours = {{0, has_no_measurement}, {2, branch_native_measurement_unused}};
+        neighbour_list[1].direct_neighbours = {{.bus = 0, .status = has_no_measurement},
+                                               {.bus = 2, .status = branch_native_measurement_unused}};
 
         neighbour_list[2].bus = 2;
         neighbour_list[2].status = node_measured;
-        neighbour_list[2].direct_neighbours = {{1, branch_native_measurement_unused}};
+        neighbour_list[2].direct_neighbours = {{.bus = 1, .status = branch_native_measurement_unused}};
 
         // Test the function
         complete_bidirectional_neighbourhood_info(neighbour_list);
@@ -1565,10 +1569,8 @@ TEST_CASE("Test Observability - sufficient_condition_meshed_without_voltage_phas
         // Expand bidirectional connections
         complete_bidirectional_neighbourhood_info(neighbour_list);
 
-        bool const result = sufficient_condition_meshed_without_voltage_phasor(neighbour_list);
-
         // Should fail due to insufficient measurements
-        CHECK(result == false);
+        CHECK_THROWS_AS(sufficient_condition_meshed_without_voltage_phasor(neighbour_list), NotObservableError);
     }
 
     SUBCASE("Single bus network - edge case") {

@@ -49,19 +49,19 @@ class IteratorFacade {
     template <typename Self> constexpr std::add_lvalue_reference_t<Self> operator++(this Self& self) {
         if constexpr (requires { self.increment(); }) { // NOTE: IteratorFacade should be a friend class
             self.increment();
+            return self;
         } else {
             return (self += 1);
         }
-        return self;
     }
     // NOLINTNEXTLINE(cert-dcl21-cpp) // pre-decrement but clang-tidy incorrectly sees this as post-decrement
     template <typename Self> constexpr std::add_lvalue_reference_t<Self> operator--(this Self& self) {
         if constexpr (requires { self.decrement(); }) { // NOTE: IteratorFacade should be a friend class
             self.decrement();
+            return self;
         } else {
             return (self += -1);
         }
-        return self;
     }
     template <typename Self>
     constexpr std::remove_cvref_t<Self> operator++(this Self& self, std::integral auto /*idx*/) {

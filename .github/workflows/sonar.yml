@@ -28,7 +28,7 @@ jobs:
       LLVM_COV: llvm-cov-18
       HOMEBREW_FORCE_BREWED_CURL: 1
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
       - name: Install packages
@@ -42,6 +42,7 @@ jobs:
           echo "/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
       - name: Install C++ dependencies
         run: |
+          brew update
           brew install boost eigen nlohmann-json msgpack-cxx doctest
       - name: Set up Python
         uses: actions/setup-python@v6

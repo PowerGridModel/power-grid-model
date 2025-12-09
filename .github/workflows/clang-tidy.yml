@@ -48,7 +48,7 @@ jobs:
       HOMEBREW_FORCE_BREWED_CURL: 1
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Install packages
         run: |
@@ -64,6 +64,7 @@ jobs:
 
       - name: Install C++ dependencies
         run: |
+          brew update
           brew install boost eigen nlohmann-json msgpack-cxx doctest
 
       - name: Set build target in case of workflow dispatch

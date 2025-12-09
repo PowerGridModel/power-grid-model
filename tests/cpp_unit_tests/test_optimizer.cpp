@@ -120,9 +120,9 @@ TEST_CASE("Test get optimizer") {
                 REQUIRE(tap_optimizer != nullptr);
                 CHECK(tap_optimizer->get_strategy() == strategy);
 
-                StubState empty_state{};
-                empty_state.components.set_construction_complete();
-                CHECK(optimizer->optimize(empty_state, method).solver_output.empty());
+                StubState other_empty_state{};
+                other_empty_state.components.set_construction_complete();
+                CHECK(optimizer->optimize(other_empty_state, method).solver_output.empty());
             }
         }
     }
