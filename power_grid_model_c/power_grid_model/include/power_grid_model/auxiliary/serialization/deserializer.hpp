@@ -12,15 +12,9 @@
 #include "../dataset.hpp"
 #include "../meta_data.hpp"
 
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 4702) // Contains potentially unreachable code
-#endif                          // _MSC_VER
-#include <msgpack.hpp>
 #include <nlohmann/json.hpp>
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif // _MSC_VER
+
+#include <msgpack.hpp>
 
 #include <set>
 #include <span>
@@ -176,37 +170,36 @@ struct CheckHasMap : DefaultNullVisitor {
     }
 };
 
-struct DefaultErrorVisitor : DefaultNullVisitor {
+template <class T> struct DefaultErrorVisitor : DefaultNullVisitor {
     static constexpr std::string_view static_err_msg = "Unexpected data type!\n";
 
-    // NOSONARBEGIN
-    [[noreturn]] bool visit_nil() const { throw_error(); }
-    [[noreturn]] bool visit_boolean(bool /*v*/) const { throw_error(); }
-    [[noreturn]] bool visit_positive_integer(uint64_t /*v*/) const { throw_error(); }
-    [[noreturn]] bool visit_negative_integer(int64_t /*v*/) const { throw_error(); }
-    [[noreturn]] bool visit_float32(float /*v*/) const { throw_error(); }
-    [[noreturn]] bool visit_float64(double /*v*/) const { throw_error(); }
-    [[noreturn]] bool visit_str(const char* /*v*/, uint32_t /*size*/) const { throw_error(); }
-    [[noreturn]] bool visit_bin(const char* /*v*/, uint32_t /*size*/) const { throw_error(); }
-    [[noreturn]] bool visit_ext(const char* /*v*/, uint32_t /*size*/) const { throw_error(); }
-    [[noreturn]] bool start_array(uint32_t /*num_elements*/) const { throw_error(); }
-    [[noreturn]] bool start_array_item() const { throw_error(); }
-    [[noreturn]] bool end_array_item() const { throw_error(); }
-    [[noreturn]] bool end_array() const { throw_error(); }
-    [[noreturn]] bool start_map(uint32_t /*num_kv_pairs*/) const { throw_error(); }
-    [[noreturn]] bool start_map_key() const { throw_error(); }
-    [[noreturn]] bool end_map_key() const { throw_error(); }
-    [[noreturn]] bool start_map_value() const { throw_error(); }
-    [[noreturn]] bool end_map_value() const { throw_error(); }
-    [[noreturn]] bool end_map() const { throw_error(); }
+    bool visit_nil() { return throw_error(); }
+    bool visit_boolean(bool /*v*/) { return throw_error(); }
+    bool visit_positive_integer(uint64_t /*v*/) { return throw_error(); }
+    bool visit_negative_integer(int64_t /*v*/) { return throw_error(); }
+    bool visit_float32(float /*v*/) { return throw_error(); }
+    bool visit_float64(double /*v*/) { return throw_error(); }
+    bool visit_str(const char* /*v*/, uint32_t /*size*/) { return throw_error(); }
+    bool visit_bin(const char* /*v*/, uint32_t /*size*/) { return throw_error(); }
+    bool visit_ext(const char* /*v*/, uint32_t /*size*/) { return throw_error(); }
+    bool start_array(uint32_t /*num_elements*/) { return throw_error(); }
+    bool start_array_item() { return throw_error(); }
+    bool end_array_item() { return throw_error(); }
+    bool end_array() { return throw_error(); }
+    bool start_map(uint32_t /*num_kv_pairs*/) { return throw_error(); }
+    bool start_map_key() { return throw_error(); }
+    bool end_map_key() { return throw_error(); }
+    bool start_map_value() { return throw_error(); }
+    bool end_map_value() { return throw_error(); }
+    bool end_map() { return throw_error(); }
 
-    [[noreturn]] bool throw_error(this auto const& self) { throw SerializationError{self.get_err_msg()}; }
+    bool throw_error() { throw SerializationError{(static_cast<T&>(*this)).get_err_msg()}; }
 
-    std::string get_err_msg(this auto const& self) { return std::string{self.static_err_msg}; }
-    // NOSONAREND
+    std::string get_err_msg() { return std::string{T::static_err_msg}; }
 
-  protected:
+  private:
     DefaultErrorVisitor() = default;
+    friend T; // CRTP compliance
 };
 
 struct visit_map_t;
@@ -216,7 +209,7 @@ struct visit_map_array_t;
 template <class map_array>
     requires(std::same_as<map_array, visit_map_t> || std::same_as<map_array, visit_array_t> ||
              std::same_as<map_array, visit_map_array_t>)
-struct MapArrayVisitor : DefaultErrorVisitor {
+struct MapArrayVisitor : DefaultErrorVisitor<MapArrayVisitor<map_array>> {
     static constexpr bool enable_map =
         std::same_as<map_array, visit_map_t> || std::same_as<map_array, visit_map_array_t>;
     static constexpr bool enable_array =
@@ -236,11 +229,10 @@ struct MapArrayVisitor : DefaultErrorVisitor {
     bool start_map(uint32_t num_kv_pairs) {
         if constexpr (!enable_map) {
             this->throw_error();
-        } else {
-            size = static_cast<Idx>(num_kv_pairs);
-            is_map = true;
-            return true;
         }
+        size = static_cast<Idx>(num_kv_pairs);
+        is_map = true;
+        return true;
     }
     bool start_map_key() { return false; }
     bool end_map() {
@@ -250,11 +242,10 @@ struct MapArrayVisitor : DefaultErrorVisitor {
     bool start_array(uint32_t num_elements) {
         if constexpr (!enable_array) {
             this->throw_error();
-        } else {
-            size = static_cast<Idx>(num_elements);
-            is_map = false;
-            return true;
         }
+        size = static_cast<Idx>(num_elements);
+        is_map = false;
+        return true;
     }
     bool start_array_item() { return false; }
     bool end_array() {
@@ -265,7 +256,7 @@ struct MapArrayVisitor : DefaultErrorVisitor {
     MapArrayVisitor() = default;
 };
 
-struct StringVisitor : DefaultErrorVisitor {
+struct StringVisitor : DefaultErrorVisitor<StringVisitor> {
     static constexpr std::string_view static_err_msg = "String expected.";
 
     std::string_view str;
@@ -277,7 +268,7 @@ struct StringVisitor : DefaultErrorVisitor {
     StringVisitor() = default;
 };
 
-struct BoolVisitor : DefaultErrorVisitor {
+struct BoolVisitor : DefaultErrorVisitor<BoolVisitor> {
     static constexpr std::string_view static_err_msg = "Boolean expected.";
 
     bool value{};
@@ -291,7 +282,7 @@ struct BoolVisitor : DefaultErrorVisitor {
 
 template <class T> struct ValueVisitor;
 
-template <std::integral T> struct ValueVisitor<T> : DefaultErrorVisitor {
+template <std::integral T> struct ValueVisitor<T> : DefaultErrorVisitor<ValueVisitor<T>> {
     static constexpr std::string_view static_err_msg = "Integer expected.";
 
     T& value; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
@@ -312,10 +303,10 @@ template <std::integral T> struct ValueVisitor<T> : DefaultErrorVisitor {
         return true;
     }
 
-    ValueVisitor(T& v) : DefaultErrorVisitor{}, value{v} {}
+    ValueVisitor(T& v) : DefaultErrorVisitor<ValueVisitor<T>>{}, value{v} {}
 };
 
-template <> struct ValueVisitor<double> : DefaultErrorVisitor {
+template <> struct ValueVisitor<double> : DefaultErrorVisitor<ValueVisitor<double>> {
     static constexpr std::string_view static_err_msg = "Number expected.";
 
     double& value; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
@@ -338,10 +329,10 @@ template <> struct ValueVisitor<double> : DefaultErrorVisitor {
         return true;
     }
 
-    ValueVisitor(double& v) : DefaultErrorVisitor{}, value{v} {}
+    ValueVisitor(double& v) : DefaultErrorVisitor<ValueVisitor<double>>{}, value{v} {}
 };
 
-template <> struct ValueVisitor<RealValue<asymmetric_t>> : DefaultErrorVisitor {
+template <> struct ValueVisitor<RealValue<asymmetric_t>> : DefaultErrorVisitor<ValueVisitor<RealValue<asymmetric_t>>> {
     static constexpr std::string_view static_err_msg = "Array of 3 numbers expected.";
 
     RealValue<asymmetric_t>& value; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
@@ -391,7 +382,7 @@ template <> struct ValueVisitor<RealValue<asymmetric_t>> : DefaultErrorVisitor {
         return true;
     }
 
-    ValueVisitor(RealValue<asymmetric_t>& v) : DefaultErrorVisitor{}, value{v} {}
+    ValueVisitor(RealValue<asymmetric_t>& v) : DefaultErrorVisitor<ValueVisitor<RealValue<asymmetric_t>>>{}, value{v} {}
 };
 
 } // namespace detail
