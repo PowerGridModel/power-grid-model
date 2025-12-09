@@ -8,6 +8,6 @@
   },
    "xfail": {
     "raises": "AssertionError",
-    "reason": "Bug in fast any tap changing strategy ins this edge case"
+    "reason": "Bug in fast any tap changing strategy in this edge case: https://github.com/PowerGridModel/power-grid-model/issues/1215"
   }
 }
