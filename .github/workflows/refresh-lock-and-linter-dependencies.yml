@@ -31,7 +31,7 @@ concurrency:
 jobs:
   refresh-lock-and-linter-dependencies:
     name: Refresh lock and linter Dependencies
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
