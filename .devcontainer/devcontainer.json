@@ -1,10 +1,6 @@
 {
   "name": "power-grid-model",
-  "build": {
-    "dockerfile": "Dockerfile",
-    "context": ".."
-  },
-
+  "image": "ghcr.io/astral-sh/uv:debian",
   "workspaceFolder": "/power-grid-model",
   "workspaceMount": "source=${localWorkspaceFolder},target=/power-grid-model,type=bind",
 
@@ -13,10 +9,10 @@
 
   // cache pip installs
   "mounts": [
-    "type=volume,source=dev-pip-cache,target=/root/.cache/pip"
+    "type=volume,source=dev-pip-cache,target=/root/.cache/uv"
   ],
 
-  "postCreateCommand": "mkdir -p src/power_grid_model/_core/power_grid_model_c/lib && ln -sf /usr/local/lib/python3.13/site-packages/power_grid_model/_core/power_grid_model_c/lib/libpower_grid_model_c.so src/power_grid_model/_core/power_grid_model_c/lib/ && pre-commit install || true",
+  "postCreateCommand": "uv sync && uv run pre-commit install || true",
 
   "customizations": {
     "vscode": {
@@ -37,7 +33,7 @@
         "davidanson.vscode-markdownlint"
       ],
       "settings": {
-        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.defaultInterpreterPath": ".venv/bin/python",
         "python.testing.pytestEnabled": true,
         "python.testing.unittestEnabled": false,
         "editor.formatOnSave": true,
