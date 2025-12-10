@@ -73,11 +73,14 @@ template <symmetry_tag sym_type>
 struct get_attributes_list<Branch3Output<sym_type>> {
     using sym = sym_type;
 
-    static constexpr std::array<MetaAttribute, 15> value{
+    static constexpr std::array<MetaAttribute, 18> value{
             // all attributes including base class
             
             meta_data_gen::get_meta_attribute<&Branch3Output<sym>::id>(offsetof(Branch3Output<sym>, id), "id"),
             meta_data_gen::get_meta_attribute<&Branch3Output<sym>::energized>(offsetof(Branch3Output<sym>, energized), "energized"),
+            meta_data_gen::get_meta_attribute<&Branch3Output<sym>::loading_1>(offsetof(Branch3Output<sym>, loading_1), "loading_1"),
+            meta_data_gen::get_meta_attribute<&Branch3Output<sym>::loading_2>(offsetof(Branch3Output<sym>, loading_2), "loading_2"),
+            meta_data_gen::get_meta_attribute<&Branch3Output<sym>::loading_3>(offsetof(Branch3Output<sym>, loading_3), "loading_3"),
             meta_data_gen::get_meta_attribute<&Branch3Output<sym>::loading>(offsetof(Branch3Output<sym>, loading), "loading"),
             meta_data_gen::get_meta_attribute<&Branch3Output<sym>::p_1>(offsetof(Branch3Output<sym>, p_1), "p_1"),
             meta_data_gen::get_meta_attribute<&Branch3Output<sym>::q_1>(offsetof(Branch3Output<sym>, q_1), "q_1"),
