@@ -63,10 +63,10 @@ struct TrafoGraphEdge {
     } // thanks boost
 
     auto constexpr operator<=>(TrafoGraphEdge const& other) const {
-        if (auto cmp = weight <=> other.weight; !std::is_eq(cmp)) {
+        if (auto cmp = weight <=> other.weight; std::is_neq(cmp)) {
             return cmp;
         }
-        if (auto cmp = regulated_idx.group <=> other.regulated_idx.group; !std::is_eq(cmp)) {
+        if (auto cmp = regulated_idx.group <=> other.regulated_idx.group; std::is_neq(cmp)) {
             return cmp;
         }
         return regulated_idx.pos <=> other.regulated_idx.pos;
@@ -1131,7 +1131,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             auto const cmp = node_state <=> param;
             if (auto new_tap_pos =
                     [&cmp, strategy_max, &current_bs] {
-                        if (!std::is_eq(cmp)) {
+                        if (std::is_neq(cmp)) {
                             current_bs.propose_new_pos(strategy_max, std::is_gt(cmp));
                         }
                         return current_bs.get_current_tap();
