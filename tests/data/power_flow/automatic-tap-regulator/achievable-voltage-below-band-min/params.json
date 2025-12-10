@@ -1,0 +1,9 @@
+{
+  "calculation_method": "newton_raphson",
+  "tap_changing_strategy": "min_voltage_tap",
+  "rtol": 1e-05,
+  "atol": {
+    "default": 1e-05,
+    "u": 100.0
+  }
+}
