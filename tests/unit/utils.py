@@ -38,7 +38,9 @@ from power_grid_model.utils import json_deserialize, json_deserialize_from_file,
 
 _Failed: type[BaseException] | None
 try:
-    from _pytest.outcomes import Failed as _Failed
+    from _pytest.outcomes import Failed as _PytestFailedOutcome
+
+    _Failed = _PytestFailedOutcome
 except ImportError:
     import warnings
 
@@ -57,7 +59,7 @@ EXPORT_OUTPUT = ("POWER_GRID_MODEL_VALIDATION_TEST_EXPORT" in os.environ) and (
     os.environ["POWER_GRID_MODEL_VALIDATION_TEST_EXPORT"] == "ON"
 )
 
-KNOWN_EXCEPTIONS: dict[str, type[BaseException] | None] = {
+KNOWN_EXCEPTIONS: dict[str, type[BaseException] | None] = {  # blas
     ex.__name__: ex
     for ex in (
         PowerGridBatchError,
