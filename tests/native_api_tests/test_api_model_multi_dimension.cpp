@@ -54,9 +54,9 @@ TEST_CASE("API Model Multi-Dimension") {
     std::vector<double> const u_ref{0.9, 1.0, 1.1};
     std::vector<double> const p_specified{1e6, 2e6, 3e6, 4e6};
     std::vector<double> const q_specified{0.1e6, 0.2e6, 0.3e6, 0.4e6, 0.5e6};
-    Idx const size_u_ref = static_cast<Idx>(u_ref.size());
-    Idx const size_p_specified = static_cast<Idx>(p_specified.size());
-    Idx const size_q_specified = static_cast<Idx>(q_specified.size());
+    Idx const size_u_ref = std::ssize(u_ref);
+    Idx const size_p_specified = std::ssize(p_specified);
+    Idx const size_q_specified = std::ssize(q_specified);
     Idx const total_batch_size = size_u_ref * size_p_specified * size_q_specified;
 
     // calculate source current manually
