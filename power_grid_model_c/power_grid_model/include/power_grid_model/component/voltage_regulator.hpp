@@ -19,7 +19,7 @@ namespace power_grid_model {
 class VoltageRegulator : public Regulator {
   public:
     using InputType = VoltageRegulatorInput;
-    using UpdateType = RegulatorUpdate;
+    using UpdateType = VoltageRegulatorUpdate;
     template <symmetry_tag sym> using OutputType = VoltageRegulatorOutput<sym>;
 
     static constexpr char const* name = "voltage_regulator";
@@ -30,17 +30,21 @@ class VoltageRegulator : public Regulator {
           injection_direction_{injection_direction},
           u_ref_{voltage_regulator_input.u_ref} {}
 
-    // update for transformer tap regulator, hide default update for branch
-    UpdateChange update(UpdateType const& update_data) {
+    UpdateChange update(VoltageRegulatorUpdate const& update_data) {
         assert(update_data.id == this->id() || is_nan(update_data.id));
         set_status(update_data.status);
+        set_u_ref(update_data.u_ref);
+        set_q_limits(update_data.q_min, update_data.q_max);
         return {.topo = false, .param = false};
     }
 
-    UpdateType inverse(UpdateType update_data) const {
+    VoltageRegulatorUpdate inverse(VoltageRegulatorUpdate update_data) const {
         assert(update_data.id == this->id() || is_nan(update_data.id));
 
         update_data = Regulator::inverse(update_data);
+        set_if_not_nan(update_data.u_ref, u_ref_);
+        set_if_not_nan(update_data.q_min, q_min_);
+        set_if_not_nan(update_data.q_max, q_max_);
         return update_data;
     }
 
@@ -73,6 +77,29 @@ class VoltageRegulator : public Regulator {
             .q_max = RealValue<sym>{q_max_}, // TODO: #185 divide by base_power?
             .generator_id = this->regulated_object()
         };
+    }
+
+    // setter
+    bool set_u_ref(double new_u_ref) {
+        bool changed = false;
+        if (!is_nan(new_u_ref)) {
+            u_ref_ = new_u_ref;
+            changed = true;
+        }
+        return changed;
+    }
+
+    bool set_q_limits(double new_q_min, double new_q_max) {
+        bool changed = false;
+        if (!is_nan(new_q_min)) {
+            q_min_ = new_q_min;
+            changed = true;
+        }
+        if (!is_nan(new_q_max)) {
+            q_max_ = new_q_max;
+            changed = true;
+        }
+        return changed;
     }
 
     // getter
