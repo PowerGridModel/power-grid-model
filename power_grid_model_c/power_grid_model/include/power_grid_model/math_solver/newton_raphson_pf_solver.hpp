@@ -340,8 +340,6 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         std::vector<BusType> const& bus_types = y_bus.bus_type();
         ComplexTensorVector<sym> const& ydata = y_bus.admittance();
 
-        // auto const& load_gen_type = y_bus.math_topology().load_gen_type;
-
         for (Idx row = 0; row != this->n_bus_; ++row) {
             // reset power injection
             del_x_pq_[row].p() = RealValue<sym>{0.0};
@@ -359,7 +357,6 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
                 Idx const j = indices[k];
                 // incomplete jacobian
                 data_jac_[k] = calculate_hnml(ydata[k_y_bus], u[row], u[j]);
-
                 // accumulate negative power injection
                 // -P = sum(-N)
                 del_x_pq_[row].p() -= sum_row(data_jac_[k].n());
@@ -367,7 +364,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
                 del_x_pq_[row].q() -= sum_row(data_jac_[k].h());
             }
             // correct diagonal part of jacobian
-            Idx const k = bus_entry[row]; // #185 : k = diagonal position in matrix data (INFO)
+            Idx const k = bus_entry[row];
             // diagonal correction
             // del_pq has negative injection
             // H += (-Q)

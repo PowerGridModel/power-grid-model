@@ -39,7 +39,18 @@ class GenericLoadGen : public Appliance {
         : Appliance{generic_load_gen_input, u}, type_{generic_load_gen_input.type} {}
 
     // getter for load type
-    LoadGenType type() const { return type_; }
+    LoadGenType type() const {
+        if (type_ == LoadGenType::const_pv && !status()) {
+            // If a pv generator is not connected, then it gets a {0, 0} injection in calc_param().
+            // However, when distributing the bus injection (Q) in calculate_pv_gen_result (common_solver_function),
+            // the pv generator would still be considered as active and would receive a share of the bus injection.
+            // To avoid this, we change the type to const_pq when the pv generator is disconnected.
+            // Otherwise the status would have to be checked during the distribution (and maybe other places).
+            return LoadGenType::const_pq;
+        }
+        return type_;
+    }
+
     // getter for calculation param, power injection
     template <symmetry_tag sym> LoadGenCalcParam<sym> calc_param(bool is_connected_to_source = true) const {
         if (!energized(is_connected_to_source)) {
@@ -106,7 +117,6 @@ class LoadGen final : public std::conditional_t<is_generator_v<appliance_type_>,
     }
 
     // Cannot be calc_param as for Source, as it is already defined in GenericLoadGen
-    // DoubleComplex calc_param() const { return {u_ref_, 0.0}; }
     DoubleComplex get_u_ref() const { return {u_ref_, 0.0}; }
 
     // update for load_gen
@@ -180,7 +190,8 @@ class LoadGen final : public std::conditional_t<is_generator_v<appliance_type_>,
         auto const params = [this] { return this->template calc_param<calculation_symmetry>(); };
         switch (this->type()) {
         case const_pv:
-        case const_pq: // TODO: #185 what about const_pv?
+            [[fallthrough]];
+        case const_pq:
             return params().s_injection;
         case const_y:
             return params().s_injection * abs2(u);
