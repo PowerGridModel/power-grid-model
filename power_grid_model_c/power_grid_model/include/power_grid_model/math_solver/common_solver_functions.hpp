@@ -174,17 +174,21 @@ inline void calculate_pv_gen_result(Idx const& bus_number, std::vector<BusType> 
 
         ComplexValue<sym> const s_remaining = output.bus_injection[bus_number] - s_pq_gen_bus - s_shunt_bus;
 
-        if constexpr (is_symmetric_v<sym>) {
-            size_t num_gens = std::ranges::distance(pv_gens);
-            auto const& q_remainging = imag(s_remaining);
-            for (Idx const pv_gen : pv_gens) {
-                auto const& p_pv_gen = real(input.load_gen[pv_gen].s_injection);
-                // TODO: #185 equal distribution for now, later consider proportional distribution based on Q limits
-                output.load_gen[pv_gen].s = ComplexValue<sym>{p_pv_gen, q_remainging / num_gens};
-                output.load_gen[pv_gen].i = conj(output.load_gen[pv_gen].s / output.u[bus_number]);
+        size_t num_gens = std::ranges::distance(pv_gens);
+        auto const& q_remaining = imag(s_remaining);
+        for (Idx const pv_gen : pv_gens) {
+            auto const& p_pv_gen = real(input.load_gen[pv_gen].s_injection);
+            // TODO: #185 equal distribution for now, later consider proportional distribution based on Q limits
+            if constexpr (is_symmetric_v<sym>) {
+                output.load_gen[pv_gen].s = ComplexValue<sym>{p_pv_gen, q_remaining / num_gens};
+            } else {
+                output.load_gen[pv_gen].s = ComplexValue<asymmetric_t>{
+                    {p_pv_gen[0], q_remaining[0] / num_gens},
+                    {p_pv_gen[1], q_remaining[1] / num_gens},
+                    {p_pv_gen[2], q_remaining[2] / num_gens}
+                };
             }
-        } else {
-            // TODO: #185 implement for asymmetric case
+            output.load_gen[pv_gen].i = conj(output.load_gen[pv_gen].s / output.u[bus_number]);
         }
     }
 }
