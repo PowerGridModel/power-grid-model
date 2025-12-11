@@ -44,17 +44,15 @@ jobs:
         run: |
           brew update
           brew install boost eigen nlohmann-json msgpack-cxx doctest
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.12"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
       - name: Install build-wrapper
         uses: SonarSource/sonarqube-scan-action/install-build-wrapper@v6
         
       - name: Python test and coverage
         run: |
-          CC=clang CXX=clang++ pip install -e .[dev]
-          pytest
+          CC=clang CXX=clang++ uv sync --no-default-groups --group test
+          uv run pytest
 
       - name: Run build-wrapper for C++
         run: |

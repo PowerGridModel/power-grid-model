@@ -1,0 +1,100 @@
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+name: Refresh lock and linter Dependencies
+
+on:
+  workflow_call:
+    inputs:
+      create-pr:
+        type: boolean
+        description: "Whether to create a pull request with the changes"
+        required: false
+        default: false
+  workflow_dispatch:
+    inputs:
+      create-pr:
+        type: boolean
+        description: "Whether to create a pull request with the changes"
+        required: false
+        default: false
+  schedule:
+    - cron: "0 2 * * 0" # Every Sunday at 2:00 UTC
+
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-linter-dependencies
+  cancel-in-progress: true
+
+
+jobs:
+  refresh-lock-and-linter-dependencies:
+    name: Refresh lock and linter Dependencies
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: upgrade uv lock
+        run: uv lock --upgrade  
+
+      - name: Install linters from uv
+        run: |
+          uv sync --only-group lint
+      
+      - name: retrieve versions
+        id: versions
+        run: |
+          grab_installed_version() {
+            local pkg="$1"
+            local version
+            version=$(uv pip freeze | grep -i "^$pkg==" | head -n1 | cut -d= -f3)
+            echo "${pkg}=$version" >> "$GITHUB_OUTPUT"
+          }
+          grab_installed_version "ruff"
+          grab_installed_version "clang-format"
+          grab_installed_version "mypy"
+          grab_installed_version "gersemi"
+
+      - name: Update .pre-commit-config.yaml
+        uses: cuchi/jinja2-action@v1.3.0
+        with:
+          template: .pre-commit-config.yaml.jinja
+          output_file: .pre-commit-config.yaml
+          variables: |
+            ruff=${{ steps.versions.outputs.ruff }}
+            clang_format=${{ steps.versions.outputs.clang-format }}
+            mypy=${{ steps.versions.outputs.mypy }}
+            gersemi=${{ steps.versions.outputs.gersemi }}
+
+      - name: show changed files
+        run: |
+          git status
+          git diff .pre-commit-config.yaml
+
+      - name: try to install pre-commit
+        run: |
+          source .venv/bin/activate
+          pre-commit install
+          pre-commit install-hooks
+
+      - name: create pull request
+        if: ${{ inputs.create-pr || github.event_name == 'schedule' }}
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "Refresh lock and linter dependencies"
+          branch: "dependencies/refresh-lock-and-linter"
+          title: "Refresh lock and linter dependencies"
+          body: "This PR refreshes the lock file and updates linter dependencies to their latest versions."
+          labels: "dependencies"
+          signoff: true
+          delete-branch: true
+          base: ${{ github.head_ref }}
