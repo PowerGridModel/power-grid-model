@@ -346,13 +346,6 @@
                         "q_specified"
                     ],
                     "description": "specified active/reactive power"
-                },
-                {
-                    "data_type": "double",
-                    "names": [
-                        "u_ref"
-                    ],
-                    "description": "specified voltage reference"
                 }
             ]
         },
@@ -544,6 +537,28 @@
                     "data_type": "double",
                     "names": "line_drop_compensation_x",
                     "description": "line drop compensation reactance"
+                }
+            ]
+        },
+        {
+            "name": "VoltageRegulatorInput",
+            "base": "RegulatorInput",
+            "is_template": false,
+            "attributes": [
+                {
+                    "data_type": "double",
+                    "names": [
+                        "u_ref"
+                    ],
+                    "description": "reference voltage"
+                },
+                {
+                    "data_type": "double",
+                    "names": [
+                        "q_min",
+                        "q_max"
+                    ],
+                    "description": "reactive power limits"
                 }
             ]
         },

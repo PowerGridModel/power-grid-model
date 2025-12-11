@@ -109,6 +109,8 @@ class Appliance : public Base {
         return get_sc_output(appliance_solver_output.i);
     }
 
+    virtual double injection_direction() const = 0;
+
   private:
     ID node_;
     bool status_;
@@ -117,8 +119,6 @@ class Appliance : public Base {
     // pure virtual functions for translate from u to s/i
     virtual ApplianceSolverOutput<symmetric_t> sym_u2si(ComplexValue<symmetric_t> const& u) const = 0;
     virtual ApplianceSolverOutput<asymmetric_t> asym_u2si(ComplexValue<asymmetric_t> const& u) const = 0;
-
-    virtual double injection_direction() const = 0;
 };
 
 } // namespace power_grid_model

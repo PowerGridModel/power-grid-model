@@ -32,15 +32,13 @@ template <symmetry_tag sym_type> struct PFSolverTestGrid : public SteadyStateSol
         auto const s1_load_injection = this->s1_load_inj;
         auto const v_0 = this->v0;
         auto const v_1 = this->v1;
-        return std::vector<LoadGenCalcParam<symmetric_t>>{
-                                               {{s0_load_injection / 3.0}, {}},
-                                               {{s0_load_injection / 3.0 / v_0}, {}},
-                                               {{s0_load_injection / 3.0 / v_0 / v_0}, {}},
-                                               {{s1_load_injection / 3.0}, {}},
-                                               {{s1_load_injection / 3.0 / v_1}, {}},
-                                               {{s1_load_injection / 3.0 / v_1 / v_1}, {}},
-                                               {{0.0}, {}}
-        };
+        return ComplexValueVector<symmetric_t>{s0_load_injection / 3.0,
+                                               s0_load_injection / 3.0 / v_0,
+                                               s0_load_injection / 3.0 / v_0 / v_0,
+                                               s1_load_injection / 3.0,
+                                               s1_load_injection / 3.0 / v_1,
+                                               s1_load_injection / 3.0 / v_1 / v_1,
+                                               0.0};
     }
 
     auto pf_input() const {
@@ -50,12 +48,12 @@ template <symmetry_tag sym_type> struct PFSolverTestGrid : public SteadyStateSol
 
         result.source = {this->vref};
         if constexpr (is_symmetric_v<sym>) {
-            result.load_gen = std::move(sym_s_injection);
+            result.s_injection = std::move(sym_s_injection);
         } else {
-            result.load_gen.resize(sym_s_injection.size());
+            result.s_injection.resize(sym_s_injection.size());
             for (size_t i = 0; i < sym_s_injection.size(); i++) {
-                result.load_gen[i].s_injection = RealValue<asymmetric_t>{real(sym_s_injection[i].s_injection)} +
-                                        1.0i * RealValue<asymmetric_t>{imag(sym_s_injection[i].s_injection)};
+                result.s_injection[i] = RealValue<asymmetric_t>{real(sym_s_injection[i])} +
+                                        1.0i * RealValue<asymmetric_t>{imag(sym_s_injection[i])};
             }
         }
         return result;
@@ -65,15 +63,15 @@ template <symmetry_tag sym_type> struct PFSolverTestGrid : public SteadyStateSol
         PowerFlowInput<sym> result{this->pf_input()};
         for (size_t i = 0; i < 6; i++) {
             if (i % 3 == 2) {
-                result.load_gen[i].s_injection *= 3.0;
+                result.s_injection[i] *= 3.0;
             } else {
-                result.load_gen[i].s_injection = ComplexValue<sym>{0.0};
+                result.s_injection[i] = ComplexValue<sym>{0.0};
             }
         }
         return result;
     }
 };
-// TODO: is this the place for a PV Node Test?
+
 TEST_CASE_TEMPLATE_DEFINE("Test math solver - PF", SolverType, test_math_solver_pf_id) {
     using sym = typename SolverType::sym;
     using common::logging::NoLogger;
@@ -127,7 +125,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - PF", SolverType, test_math_solver_
             NoLogger log;
 
             PowerFlowInput<sym> pf_input = grid.pf_input();
-            pf_input.load_gen[6].s_injection = ComplexValue<sym>{1e6};
+            pf_input.s_injection[6] = ComplexValue<sym>{1e6};
             CHECK_THROWS_AS(run_power_flow(solver, y_bus, pf_input, 1e-12, 20, log), IterationDiverge);
         }
     }

@@ -155,6 +155,8 @@ J.L -= -dQ_cal_m/dV
 #include "../common/three_phase_tensor.hpp"
 #include "../common/timer.hpp"
 
+#include <map>
+
 namespace power_grid_model::math_solver {
 
 // hide implementation in inside namespace
@@ -217,7 +219,8 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
           x_(y_bus.size()),
           del_x_pq_(y_bus.size()),
           sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
-          perm_(y_bus.size()) {}
+          perm_(y_bus.size()),
+          bus_types_(y_bus.size(), BusType::pq) {}
 
     // Initilize the unknown variable in polar form
     void initialize_derived_solver(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
@@ -234,7 +237,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
                                               linear_mat_data);
         linear_sparse_solver.prefactorize_and_solve(linear_mat_data, linear_perm, output.u, output.u);
 
-        set_u_ref(y_bus, input, output.u);
+        set_u_ref_and_bus_types(input, output.u);
 
         // get magnitude and angle of start voltage
         for (Idx i = 0; i != this->n_bus_; ++i) {
@@ -243,16 +246,33 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         }
     }
 
-    void set_u_ref(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, ComplexValueVector<sym>& u) {
-        auto const& bus_types = y_bus.bus_type();
-        for (auto const& [bus_number, load_gens] : enumerated_zip_sequence(*this->load_gens_per_bus_)) {
-            if (bus_types[bus_number] == BusType::pv) {
-                for (Idx const load_number : load_gens) {
-                    if ((*this->load_gen_type_)[load_number] == LoadGenType::const_pv) {
-                        // take u_ref of first pv generator, other should be validated to be the same
-                        u[bus_number] = ComplexValue<sym>{input.load_gen[load_number].u_ref}; // #185: correct for asym case?
-                        break; // only set once
-                    }
+    void set_u_ref_and_bus_types(PowerFlowInput<sym> const& input, ComplexValueVector<sym>& u) {
+        std::map<Idx, Idx> loadgen_to_regulator{};
+        for (auto const& [load_gen, regulators] : enumerated_zip_sequence(*this->voltage_regulators_per_load_gen_)) {
+            if (input.load_gen_status[load_gen] == 0) { continue; }
+            for(Idx const regulator_number : regulators) {
+                if (input.voltage_regulator[regulator_number].status != 0) {
+                    loadgen_to_regulator.insert({load_gen, regulator_number});
+                }
+            }
+        }
+
+        // expect that one load/gen is only regulated by one regulator and if multiple loads/gens with regulators
+        // are connected to the same bus, they all have the same u_ref
+        for (auto const& [bus_number, load_gens, sources]
+            : enumerated_zip_sequence(*this->load_gens_per_bus_, *this->sources_per_bus_)) {
+            if (!sources.empty()) {
+                bus_types_[bus_number] = BusType::slack;
+                continue;
+            }
+
+            for (auto const load_number : load_gens) {
+                if (loadgen_to_regulator.find(load_number) != loadgen_to_regulator.end()) {
+                    Idx const regulator_number = loadgen_to_regulator[load_number];
+                    auto const& regulator = input.voltage_regulator[regulator_number];
+                    u[bus_number] = ComplexValue<sym>{regulator.u_ref};
+                    bus_types_[bus_number] = BusType::pv;
+                    break;
                 }
             }
         }
@@ -262,7 +282,6 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
     void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                 ComplexValueVector<sym> const& u) {
         std::vector<LoadGenType> const& load_gen_type = *this->load_gen_type_;
-        std::vector<BusType> const& bus_type = y_bus.bus_type();
         IdxVector const& bus_entry = y_bus.lu_diag();
 
         prepare_matrix_and_rhs_from_network_perspective(y_bus, u, bus_entry);
@@ -270,7 +289,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         for (auto const& [bus_number, load_gens, sources] :
              enumerated_zip_sequence(*this->load_gens_per_bus_, *this->sources_per_bus_)) {
             Idx const diagonal_position = bus_entry[bus_number];
-            add_loads(load_gens, bus_number, diagonal_position, input, load_gen_type, bus_type);
+            add_loads(load_gens, bus_number, diagonal_position, input, load_gen_type);
             add_sources(sources, bus_number, diagonal_position, y_bus, input, u);
         }
     }
@@ -314,6 +333,8 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
     // permutation array
     BlockPermArray perm_;
 
+    std::vector<BusType> bus_types_;
+
     /// @brief power_flow_ij = (ui @* conj(uj))  .* conj(yij)
     /// Hij = diag(Vi) * ( Gij .* sin(theta_ij) - Bij .* cos(theta_ij) ) * diag(Vj)
     /// = imaginary(power_flow_ij)
@@ -337,7 +358,6 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         IdxVector const& indptr = y_bus.row_indptr_lu();
         IdxVector const& indices = y_bus.col_indices_lu();
         IdxVector const& map_lu_y_bus = y_bus.map_lu_y_bus();
-        std::vector<BusType> const& bus_types = y_bus.bus_type();
         ComplexTensorVector<sym> const& ydata = y_bus.admittance();
 
         for (Idx row = 0; row != this->n_bus_; ++row) {
@@ -388,7 +408,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         //   - only the diagonal L entry is set to V.
         // This removes the Q-equation and enforces the PV voltage constraint in the NR step.
         for (Idx row = 0; row != this->n_bus_; ++row) {
-            const BusType bus_type = bus_types[row];
+            const BusType bus_type = bus_types_[row];
             for (Idx k = indptr[row]; k != indptr[row + 1]; ++k) {
                 Idx const j = indices[k];
                 if (bus_type == BusType::pv) {
@@ -413,15 +433,12 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
     }
 
     void add_loads(IdxRange const& load_gens, Idx bus_number, Idx diagonal_position, PowerFlowInput<sym> const& input,
-                   std::vector<LoadGenType> const& load_gen_type, std::vector<BusType> const& bus_types) {
+                   std::vector<LoadGenType> const& load_gen_type) {
         using enum LoadGenType;
         for (Idx const load_number : load_gens) {
             LoadGenType const type = load_gen_type[load_number];
             // modify jacobian and del_pq based on type
             switch (type) {
-            case const_pv:
-                // treat pv generator as constant power appliance, set Q to zero later (if connected to pv bus)
-                [[fallthrough]];
             case const_pq:
                 add_const_power_load(bus_number, load_number, input);
                 break;
@@ -435,7 +452,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
                 throw MissingCaseForEnumError("Jacobian and deviation calculation", type);
             }
         }
-        if (bus_types[bus_number] == BusType::pv) {
+        if (bus_types_[bus_number] == BusType::pv) {
             // Set ΔQ = 0 to enforce voltage magnitude constraint V = V_set (see Jacobian modification above).
             // This forces ΔV = 0 in the NR step, keeping |U| constant.
             del_x_pq_[bus_number].q() = 0.0;
@@ -444,32 +461,31 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
 
     void add_const_power_load(Idx bus_number, Idx load_number, PowerFlowInput<sym> const& input) {
         // PQ_sp = PQ_base
-        del_x_pq_[bus_number].p() += real(input.load_gen[load_number].s_injection);
-        del_x_pq_[bus_number].q() += imag(input.load_gen[load_number].s_injection);
+        del_x_pq_[bus_number].p() += real(input.s_injection[load_number]);
+        del_x_pq_[bus_number].q() += imag(input.s_injection[load_number]);
         // -dPQ_sp/dV * V = 0
     }
 
     void add_const_impedance_load(Idx bus_number, Idx load_number, Idx diagonal_position,
                                   PowerFlowInput<sym> const& input) {
         // PQ_sp = PQ_base * V^2
-        del_x_pq_[bus_number].p() += real(input.load_gen[load_number].s_injection) * x_[bus_number].v() * x_[bus_number].v();
-        del_x_pq_[bus_number].q() += imag(input.load_gen[load_number].s_injection) * x_[bus_number].v() * x_[bus_number].v();
-
+        del_x_pq_[bus_number].p() += real(input.s_injection[load_number]) * x_[bus_number].v() * x_[bus_number].v();
+        del_x_pq_[bus_number].q() += imag(input.s_injection[load_number]) * x_[bus_number].v() * x_[bus_number].v();
         // -dPQ_sp/dV * V = -PQ_base * 2 * V^2
         add_diag(data_jac_[diagonal_position].n(),
-                 -real(input.load_gen[load_number].s_injection) * 2.0 * x_[bus_number].v() * x_[bus_number].v());
+                 -real(input.s_injection[load_number]) * 2.0 * x_[bus_number].v() * x_[bus_number].v());
         add_diag(data_jac_[diagonal_position].l(),
-                 -imag(input.load_gen[load_number].s_injection) * 2.0 * x_[bus_number].v() * x_[bus_number].v());
+                 -imag(input.s_injection[load_number]) * 2.0 * x_[bus_number].v() * x_[bus_number].v());
     }
 
     void add_const_current_load(Idx bus_number, Idx load_number, Idx diagonal_position,
                                 PowerFlowInput<sym> const& input) {
         // PQ_sp = PQ_base * V
-        del_x_pq_[bus_number].p() += real(input.load_gen[load_number].s_injection) * x_[bus_number].v();
-        del_x_pq_[bus_number].q() += imag(input.load_gen[load_number].s_injection) * x_[bus_number].v();
+        del_x_pq_[bus_number].p() += real(input.s_injection[load_number]) * x_[bus_number].v();
+        del_x_pq_[bus_number].q() += imag(input.s_injection[load_number]) * x_[bus_number].v();
         // -dPQ_sp/dV * V = -PQ_base * V
-        add_diag(data_jac_[diagonal_position].n(), -real(input.load_gen[load_number].s_injection) * x_[bus_number].v());
-        add_diag(data_jac_[diagonal_position].l(), -imag(input.load_gen[load_number].s_injection) * x_[bus_number].v());
+        add_diag(data_jac_[diagonal_position].n(), -real(input.s_injection[load_number]) * x_[bus_number].v());
+        add_diag(data_jac_[diagonal_position].l(), -imag(input.s_injection[load_number]) * x_[bus_number].v());
     }
 
     void add_sources(IdxRange const& sources, Idx bus_number, Idx diagonal_position, YBus<sym> const& y_bus,

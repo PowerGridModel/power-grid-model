@@ -299,7 +299,7 @@ template <symmetry_tag sym_type>
 struct get_attributes_list<LoadGenInput<sym_type>> {
     using sym = sym_type;
 
-    static constexpr std::array<MetaAttribute, 7> value{
+    static constexpr std::array<MetaAttribute, 6> value{
             // all attributes including base class
             
             meta_data_gen::get_meta_attribute<&LoadGenInput<sym>::id>(offsetof(LoadGenInput<sym>, id), "id"),
@@ -308,7 +308,6 @@ struct get_attributes_list<LoadGenInput<sym_type>> {
             meta_data_gen::get_meta_attribute<&LoadGenInput<sym>::type>(offsetof(LoadGenInput<sym>, type), "type"),
             meta_data_gen::get_meta_attribute<&LoadGenInput<sym>::p_specified>(offsetof(LoadGenInput<sym>, p_specified), "p_specified"),
             meta_data_gen::get_meta_attribute<&LoadGenInput<sym>::q_specified>(offsetof(LoadGenInput<sym>, q_specified), "q_specified"),
-            meta_data_gen::get_meta_attribute<&LoadGenInput<sym>::u_ref>(offsetof(LoadGenInput<sym>, u_ref), "u_ref"),
     };
 };
 
@@ -438,6 +437,20 @@ struct get_attributes_list<TransformerTapRegulatorInput> {
             meta_data_gen::get_meta_attribute<&TransformerTapRegulatorInput::u_band>(offsetof(TransformerTapRegulatorInput, u_band), "u_band"),
             meta_data_gen::get_meta_attribute<&TransformerTapRegulatorInput::line_drop_compensation_r>(offsetof(TransformerTapRegulatorInput, line_drop_compensation_r), "line_drop_compensation_r"),
             meta_data_gen::get_meta_attribute<&TransformerTapRegulatorInput::line_drop_compensation_x>(offsetof(TransformerTapRegulatorInput, line_drop_compensation_x), "line_drop_compensation_x"),
+    };
+};
+
+template<>
+struct get_attributes_list<VoltageRegulatorInput> {
+    static constexpr std::array<MetaAttribute, 6> value{
+            // all attributes including base class
+            
+            meta_data_gen::get_meta_attribute<&VoltageRegulatorInput::id>(offsetof(VoltageRegulatorInput, id), "id"),
+            meta_data_gen::get_meta_attribute<&VoltageRegulatorInput::regulated_object>(offsetof(VoltageRegulatorInput, regulated_object), "regulated_object"),
+            meta_data_gen::get_meta_attribute<&VoltageRegulatorInput::status>(offsetof(VoltageRegulatorInput, status), "status"),
+            meta_data_gen::get_meta_attribute<&VoltageRegulatorInput::u_ref>(offsetof(VoltageRegulatorInput, u_ref), "u_ref"),
+            meta_data_gen::get_meta_attribute<&VoltageRegulatorInput::q_min>(offsetof(VoltageRegulatorInput, q_min), "q_min"),
+            meta_data_gen::get_meta_attribute<&VoltageRegulatorInput::q_max>(offsetof(VoltageRegulatorInput, q_max), "q_max"),
     };
 };
 

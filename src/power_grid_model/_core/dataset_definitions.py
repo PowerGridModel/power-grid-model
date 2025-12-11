@@ -65,6 +65,7 @@ class ComponentType(str, Enum, metaclass=_MetaEnum):
     sym_gen = "sym_gen"
     asym_load = "asym_load"
     asym_gen = "asym_gen"
+    voltage_regulator = "voltage_regulator"
     shunt = "shunt"
     source = "source"
     sym_voltage_sensor = "sym_voltage_sensor"

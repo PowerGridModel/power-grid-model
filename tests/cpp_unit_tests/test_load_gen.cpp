@@ -109,11 +109,11 @@ TEST_CASE("Test load generator") {
         CHECK(asym_result.i(0) == doctest::Approx(i_pq));
         CHECK(asym_result.pf(1) == doctest::Approx(pf));
         // test sym power injection
-        ComplexValue<symmetric_t> const s_inj = load_gen.calc_param<symmetric_t>().s_injection;
+        ComplexValue<symmetric_t> const s_inj = load_gen.calc_param<symmetric_t>();
         CHECK(real(s_inj) == doctest::Approx(p_pu));
         CHECK(imag(s_inj) == doctest::Approx(p_pu));
         // test asym power injection
-        ComplexValue<asymmetric_t> const s_inj_a = load_gen.calc_param<asymmetric_t>().s_injection;
+        ComplexValue<asymmetric_t> const s_inj_a = load_gen.calc_param<asymmetric_t>();
         CHECK(real(s_inj_a(0)) == doctest::Approx(p_pu));
         CHECK(imag(s_inj_a(1)) == doctest::Approx(p_pu));
     }
@@ -168,10 +168,10 @@ TEST_CASE("Test load generator") {
         CHECK(asym_result.i(0) == doctest::Approx(i_pq));
         CHECK(asym_result.pf(1) == doctest::Approx(pf));
         // test sym power injection
-        ComplexValue<symmetric_t> const s_inj = load_gen.calc_param<symmetric_t>().s_injection;
+        ComplexValue<symmetric_t> const s_inj = load_gen.calc_param<symmetric_t>();
         CHECK(real(s_inj) == doctest::Approx(-p_pu));
         CHECK(imag(s_inj) == doctest::Approx(-p_pu));
-        ComplexValue<asymmetric_t> const s_inj_a = load_gen.calc_param<asymmetric_t>().s_injection;
+        ComplexValue<asymmetric_t> const s_inj_a = load_gen.calc_param<asymmetric_t>();
         CHECK(real(s_inj_a(0)) == doctest::Approx(-p_pu));
         CHECK(imag(s_inj_a(1)) == doctest::Approx(-p_pu));
     }
@@ -306,13 +306,13 @@ TEST_CASE("Test load generator") {
     SUBCASE("Test set_power - sym") {
         // update with nan, nothing happens
         sym_gen_pq.set_power(RealValue<symmetric_t>{nan}, RealValue<symmetric_t>{nan});
-        ComplexValue<symmetric_t> const s_1 = sym_gen_pq.calc_param<symmetric_t>().s_injection;
+        ComplexValue<symmetric_t> const s_1 = sym_gen_pq.calc_param<symmetric_t>();
         CHECK(real(s_1) == 3.0);
         CHECK(imag(s_1) == 3.0);
 
         // update with values, s changes
         sym_gen_pq.set_power(RealValue<symmetric_t>{4.0e6}, RealValue<symmetric_t>{5.0e6});
-        ComplexValue<symmetric_t> const s_2 = sym_gen_pq.calc_param<symmetric_t>().s_injection;
+        ComplexValue<symmetric_t> const s_2 = sym_gen_pq.calc_param<symmetric_t>();
         CHECK(real(s_2) == 4.0);
         CHECK(imag(s_2) == 5.0);
     }
@@ -320,7 +320,7 @@ TEST_CASE("Test load generator") {
     SUBCASE("Test set_power - asym") {
         // update with {nan, nan, nan}, nothing happens
         asym_load_pq.set_power(RealValue<asymmetric_t>{nan}, RealValue<asymmetric_t>{nan});
-        ComplexValue<asymmetric_t> s_1 = asym_load_pq.calc_param<asymmetric_t>().s_injection;
+        ComplexValue<asymmetric_t> s_1 = asym_load_pq.calc_param<asymmetric_t>();
         for (size_t i = 0; i != 3; i++) {
             CHECK(real(s_1(i)) == -3.0);
             CHECK(imag(s_1(i)) == -3.0);
@@ -328,7 +328,7 @@ TEST_CASE("Test load generator") {
 
         // update some with nan, some with values
         asym_load_pq.set_power(RealValue<asymmetric_t>{2.0e6, nan, 3.0e6}, RealValue<asymmetric_t>{nan, 4.0e6, nan});
-        ComplexValue<asymmetric_t> s_2 = asym_load_pq.calc_param<asymmetric_t>().s_injection;
+        ComplexValue<asymmetric_t> s_2 = asym_load_pq.calc_param<asymmetric_t>();
         CHECK(real(s_2(0)) == -6.0);
         CHECK(real(s_2(1)) == -3.0); // not updated
         CHECK(real(s_2(2)) == -9.0);
@@ -338,7 +338,7 @@ TEST_CASE("Test load generator") {
     }
 
     SUBCASE("Test no source") {
-        auto const s = sym_gen_pq.calc_param<asymmetric_t>(false).s_injection;
+        auto const s = sym_gen_pq.calc_param<asymmetric_t>(false);
         CHECK(real(s)(0) == doctest::Approx(0.0));
         CHECK(imag(s)(1) == doctest::Approx(0.0));
         auto const asym_result = sym_gen_pq.get_null_output<asymmetric_t>();
@@ -390,13 +390,13 @@ TEST_CASE_TEMPLATE("Test load generator", LoadGeneratorType, SymLoad, AsymLoad, 
 
         LoadGeneratorType load_gen{input, 1.0};
 
-        auto const result_incomplete = load_gen.template calc_param<symmetric_t>(true).s_injection;
+        auto const result_incomplete = load_gen.template calc_param<symmetric_t>(true);
         CHECK(std::isnan(result_incomplete.real()));
         CHECK(std::isnan(result_incomplete.imag()));
 
         load_gen.update(update);
 
-        auto const result_complete = load_gen.template calc_param<symmetric_t>(true).s_injection;
+        auto const result_complete = load_gen.template calc_param<symmetric_t>(true);
         CHECK_FALSE(std::isnan(result_complete.real()));
         CHECK_FALSE(std::isnan(result_complete.imag()));
     }

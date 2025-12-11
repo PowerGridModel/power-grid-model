@@ -10,6 +10,8 @@
 #include "../calculation_parameters.hpp"
 #include "../common/exception.hpp"
 
+#include <map>
+
 namespace power_grid_model::math_solver::detail {
 
 template <symmetry_tag sym>
@@ -146,58 +148,87 @@ inline void calculate_source_result(IdxRange const& sources, Idx const& bus_numb
     }
 }
 
-template <symmetry_tag sym, std::ranges::forward_range PVRange, std::ranges::forward_range PQRange>
-    requires std::same_as<std::ranges::range_value_t<PQRange>, Idx> &&
-             std::same_as<std::ranges::range_value_t<PVRange>, Idx>
-inline void calculate_pv_gen_result(Idx const& bus_number, std::vector<BusType> const& bus_type,
-                                    PowerFlowInput<sym> const& input, SolverOutput<sym>& output,
-                                    PVRange&& pv_gens, PQRange&& pq_load_gens, IdxRange const& shunts) {
-    if (bus_type[bus_number] == BusType::pq) {
+template <symmetry_tag sym>
+inline void calculate_voltage_regulator_result(Idx const& bus_number, PowerFlowInput<sym> const& input, SolverOutput<sym>& output,
+                                               IdxRange const& load_gens, IdxRange const& shunts,
+                                               std::map<Idx, Idx> const& loadgen_to_regulator) {
+    if (load_gens.empty()) {
+        return;
+    }
+
+    ComplexValue<sym> const s_load_gen_bus =
+        std::transform_reduce(load_gens.begin(), load_gens.end(), ComplexValue<sym>{}, std::plus{},
+                            [&](Idx const load_gen) { return output.load_gen[load_gen].s; });
+
+    ComplexValue<sym> const s_shunt_bus =
+        std::transform_reduce(shunts.begin(), shunts.end(), ComplexValue<sym>{}, std::plus{},
+                            [&](Idx const shunt) { return output.shunt[shunt].s; });
+
+    ComplexValue<sym> const s_remaining = output.bus_injection[bus_number] - s_load_gen_bus - s_shunt_bus;
+
+    auto regulating_gens = load_gens
+        | std::views::filter([&](Idx lg) {
+            return loadgen_to_regulator.contains(lg);
+        })
+        | std::views::filter([&](Idx lg) {
+            auto const regulator = loadgen_to_regulator.at(lg);
+            return input.load_gen_status[lg] != 0 &&
+                input.voltage_regulator[regulator].status != 0;
+        });
+    auto num_regulating_gens = std::ranges::distance(regulating_gens);
+
+    auto const& q_remaining = imag(s_remaining);
+    for (Idx const load_gen : load_gens) {
+        if (!loadgen_to_regulator.contains(load_gen)) {
+            continue;
+        }
+        auto const regulator = loadgen_to_regulator.at(load_gen);
+
+        auto const& input_regulator = input.voltage_regulator[regulator];
+        auto& output_regulator = output.voltage_regulator[regulator];
+        output_regulator.generator_id = input_regulator.generator_id;
+        output_regulator.generator_status = input.load_gen_status[load_gen];
+        output_regulator.limit_violated = 0;
+        output_regulator.q = RealValue<sym>{0}; // no violation
+
+        if(input.load_gen_status[load_gen] == 0 || input.voltage_regulator[regulator].status == 0) {
+            continue;
+        }
+
         // TODO: #185 consider Q Limits (PV to PQ conversion)
-        for (Idx const pv_gen : pv_gens) {
-            output.load_gen[pv_gen].s = input.load_gen[pv_gen].s_injection;
-            output.load_gen[pv_gen].i = conj(output.load_gen[pv_gen].s / output.u[bus_number]);
+        // TODO: #185 equal distribution for now, later consider proportional distribution based on Q limits
+        if constexpr (is_symmetric_v<sym>) {
+            auto const q_regulator = q_remaining / num_regulating_gens;
+            output_regulator.q = q_regulator;
+            output_regulator.limit_violated = 0; // no violation
+
+            auto const& s_load_gen = output.load_gen[load_gen].s;
+            output.load_gen[load_gen].s = ComplexValue<sym>{real(s_load_gen), imag(s_load_gen) + q_regulator};
+        } else {
+            output.voltage_regulator[regulator].q = RealValue<asymmetric_t>{
+                q_remaining[0] / num_regulating_gens,
+                q_remaining[1] / num_regulating_gens,
+                q_remaining[2] / num_regulating_gens
+            };
+            output.voltage_regulator[regulator].limit_violated = 0; // no violation
+
+            auto const& s_load_gen = output.load_gen[load_gen].s;
+            auto const& p_load_gen = real(s_load_gen);
+            auto const& q_load_gen = imag(s_load_gen);
+            output.load_gen[load_gen].s = ComplexValue<asymmetric_t>{
+                {p_load_gen[0], q_load_gen[0] + q_remaining[0] / num_regulating_gens},
+                {p_load_gen[1], q_load_gen[1] + q_remaining[1] / num_regulating_gens},
+                {p_load_gen[2], q_load_gen[2] + q_remaining[2] / num_regulating_gens}
+            };
         }
-    } else {
-        // distribute Q to PV generators on PV or Slack bus
-        if (pv_gens.empty()) {
-            return;
-        }
-
-        ComplexValue<sym> const s_pq_gen_bus =
-            std::transform_reduce(pq_load_gens.begin(), pq_load_gens.end(), ComplexValue<sym>{}, std::plus{},
-                                [&](Idx const load_gen) { return output.load_gen[load_gen].s; });
-
-        ComplexValue<sym> const s_shunt_bus =
-            std::transform_reduce(shunts.begin(), shunts.end(), ComplexValue<sym>{}, std::plus{},
-                                [&](Idx const shunt) { return output.shunt[shunt].s; });
-
-        ComplexValue<sym> const s_remaining = output.bus_injection[bus_number] - s_pq_gen_bus - s_shunt_bus;
-
-        size_t num_gens = std::ranges::distance(pv_gens);
-        auto const& q_remaining = imag(s_remaining);
-        for (Idx const pv_gen : pv_gens) {
-            auto const& p_pv_gen = real(input.load_gen[pv_gen].s_injection);
-            // TODO: #185 equal distribution for now, later consider proportional distribution based on Q limits
-            if constexpr (is_symmetric_v<sym>) {
-                output.load_gen[pv_gen].s = ComplexValue<sym>{p_pv_gen, q_remaining / num_gens};
-            } else {
-                output.load_gen[pv_gen].s = ComplexValue<asymmetric_t>{
-                    {p_pv_gen[0], q_remaining[0] / num_gens},
-                    {p_pv_gen[1], q_remaining[1] / num_gens},
-                    {p_pv_gen[2], q_remaining[2] / num_gens}
-                };
-            }
-            output.load_gen[pv_gen].i = conj(output.load_gen[pv_gen].s / output.u[bus_number]);
-        }
+        output.load_gen[load_gen].i = conj(output.load_gen[load_gen].s / output.u[bus_number]);
     }
 }
 
-template <symmetry_tag sym, class LoadGenFunc, std::ranges::forward_range Range>
+template <symmetry_tag sym, class LoadGenFunc>
     requires std::invocable<std::remove_cvref_t<LoadGenFunc>, Idx> &&
-             std::same_as<std::invoke_result_t<LoadGenFunc, Idx>, LoadGenType> &&
-             std::same_as<std::ranges::range_value_t<Range>, Idx>
-inline void calculate_load_gen_result(Range&& load_gens, Idx bus_number, PowerFlowInput<sym> const& input,
+             std::same_as<std::invoke_result_t<LoadGenFunc, Idx>, LoadGenType>
+inline void calculate_load_gen_result(IdxRange const& load_gens, Idx bus_number, PowerFlowInput<sym> const& input,
                                       SolverOutput<sym>& output, LoadGenFunc load_gen_func) {
     for (Idx const load_gen : load_gens) {
         switch (LoadGenType const type = load_gen_func(load_gen); type) {
@@ -205,15 +236,15 @@ inline void calculate_load_gen_result(Range&& load_gens, Idx bus_number, PowerFl
 
         case const_pq:
             // always same power
-            output.load_gen[load_gen].s = input.load_gen[load_gen].s_injection;
+            output.load_gen[load_gen].s = input.s_injection[load_gen];
             break;
         case const_y:
             // power is quadratic relation to voltage
-            output.load_gen[load_gen].s = input.load_gen[load_gen].s_injection * abs2(output.u[bus_number]);
+            output.load_gen[load_gen].s = input.s_injection[load_gen] * abs2(output.u[bus_number]);
             break;
         case const_i:
             // power is linear relation to voltage
-            output.load_gen[load_gen].s = input.load_gen[load_gen].s_injection * cabs(output.u[bus_number]);
+            output.load_gen[load_gen].s = input.s_injection[load_gen] * cabs(output.u[bus_number]);
             break;
         default:
             throw MissingCaseForEnumError("Power injection", type);
@@ -229,39 +260,36 @@ inline void calculate_pf_result(YBus<sym> const& y_bus, PowerFlowInput<sym> cons
                                 grouped_idx_vector_type auto const& sources_per_bus,
                                 grouped_idx_vector_type auto const& load_gens_per_bus,
                                 grouped_idx_vector_type auto const& shunts_per_bus,
+                                grouped_idx_vector_type auto const& voltage_regulators_per_load_gen,
                                 SolverOutput<sym>& output,
                                 LoadGenFunc load_gen_func) {
     assert(sources_per_bus.size() == load_gens_per_bus.size());
-
-    std::vector<BusType> const& bus_type = y_bus.bus_type();
 
     // call y bus
     output.branch = y_bus.template calculate_branch_flow<BranchSolverOutput<sym>>(output.u);
     output.shunt = y_bus.template calculate_shunt_flow<ApplianceSolverOutput<sym>>(output.u);
 
-    auto is_pv = [&](Idx load_gen) {
-        return load_gen_func(load_gen) == LoadGenType::const_pv;
-    };
-
     // prepare source, load gen and node injection
     output.source.resize(sources_per_bus.element_size());
     output.load_gen.resize(load_gens_per_bus.element_size());
+    output.voltage_regulator.resize(voltage_regulators_per_load_gen.element_size());
     output.bus_injection.resize(sources_per_bus.size());
     output.bus_injection = y_bus.calculate_injection(output.u);
+
+    std::map<Idx, Idx> loadgen_to_regulator; // save mapping from generator to its regulator
+    for (auto const& [load_gen, regulators] : enumerated_zip_sequence(voltage_regulators_per_load_gen)) {
+        for (Idx const regulator : regulators) {
+            loadgen_to_regulator.insert({load_gen, regulator});
+        }
+    }
+
     for (auto const& [bus_number, sources, load_gens, shunts]
         : enumerated_zip_sequence(sources_per_bus, load_gens_per_bus, shunts_per_bus)) {
 
-        auto pv_gens = load_gens | std::views::filter(is_pv);
-        auto pq_load_gens = load_gens | std::views::filter(std::not_fn(is_pv));
-
-        // handle only pq load gens here
-        calculate_load_gen_result<sym>(pq_load_gens, bus_number, input, output,
+        calculate_load_gen_result<sym>(load_gens, bus_number, input, output,
                                        [&load_gen_func](Idx idx) { return load_gen_func(idx); });
-
-        // handle pv gens separately - distribute Q
-        calculate_pv_gen_result<sym>(bus_number, bus_type, input, output, pv_gens, pq_load_gens, shunts);
-
-        // push remaining p and q to sources
+        calculate_voltage_regulator_result<sym>(bus_number, input, output,
+                                                load_gens, shunts, loadgen_to_regulator);
         calculate_source_result<sym>(sources, bus_number, y_bus, input, output, load_gens, shunts);
     }
 }

@@ -123,6 +123,19 @@ void prepare_input(main_model_state_c auto const& state, std::vector<Idx2D> cons
     }
 }
 
+template <symmetry_tag sym, IntSVector(PowerFlowInput<sym>::*component), class Component>
+void prepare_input_status(main_model_state_c auto const& state, std::vector<Idx2D> const& objects,
+                          std::vector<PowerFlowInput<sym>>& input) {
+    for (Idx i = 0, n = narrow_cast<Idx>(objects.size()); i != n; ++i) {
+        Idx2D const math_idx = objects[i];
+        if (math_idx.group == isolated_component) {
+            continue;
+        }
+        (input[math_idx.group].*component)[math_idx.pos] =
+            main_core::get_component_by_sequence<Component>(state.components, i).status();
+    }
+}
+
 template <symmetry_tag sym, IntSVector(StateEstimationInput<sym>::*component), class Component>
 void prepare_input_status(main_model_state_c auto const& state, std::vector<Idx2D> const& objects,
                           std::vector<StateEstimationInput<sym>>& input) {
@@ -140,16 +153,26 @@ void prepare_input_status(main_model_state_c auto const& state, std::vector<Idx2
 template <symmetry_tag sym>
 std::vector<PowerFlowInput<sym>> prepare_power_flow_input(main_model_state_c auto const& state, Idx n_math_solvers) {
     using detail::prepare_input;
+    using detail::prepare_input_status;
 
     std::vector<PowerFlowInput<sym>> pf_input(n_math_solvers);
     for (Idx i = 0; i != n_math_solvers; ++i) {
-        pf_input[i].load_gen.resize(state.math_topology[i]->n_load_gen());
+        pf_input[i].s_injection.resize(state.math_topology[i]->n_load_gen());
         pf_input[i].source.resize(state.math_topology[i]->n_source());
+        pf_input[i].voltage_regulator.resize(state.math_topology[i]->n_load_gen_voltage_regulator());
+        pf_input[i].load_gen_status.resize(state.math_topology[i]->n_load_gen());
     }
     prepare_input<PowerFlowInput<sym>, DoubleComplex, &PowerFlowInput<sym>::source, Source>(
         state, state.topo_comp_coup->source, pf_input);
 
-    prepare_input<PowerFlowInput<sym>, LoadGenCalcParam<sym>, &PowerFlowInput<sym>::load_gen, GenericLoadGen>(
+    prepare_input<PowerFlowInput<sym>, ComplexValue<sym>, &PowerFlowInput<sym>::s_injection, GenericLoadGen>(
+        state, state.topo_comp_coup->load_gen, pf_input);
+
+    prepare_input<PowerFlowInput<sym>, VoltageRegulatorCalcParam<sym>, &PowerFlowInput<sym>::voltage_regulator, VoltageRegulator>(
+        state, state.topo_comp_coup->voltage_regulator, pf_input,
+        [&state](Idx i) { return state.comp_topo->regulated_object_type[i] == ComponentType::generic_load_gen; });
+
+    prepare_input_status<sym, &PowerFlowInput<sym>::load_gen_status, GenericLoadGen>(
         state, state.topo_comp_coup->load_gen, pf_input);
 
     return pf_input;

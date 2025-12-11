@@ -203,7 +203,6 @@ PGM_MetaAttribute const* const PGM_def_input_sym_load_status = PGM_meta_get_attr
 PGM_MetaAttribute const* const PGM_def_input_sym_load_type = PGM_meta_get_attribute_by_name(nullptr, "input", "sym_load", "type");
 PGM_MetaAttribute const* const PGM_def_input_sym_load_p_specified = PGM_meta_get_attribute_by_name(nullptr, "input", "sym_load", "p_specified");
 PGM_MetaAttribute const* const PGM_def_input_sym_load_q_specified = PGM_meta_get_attribute_by_name(nullptr, "input", "sym_load", "q_specified");
-PGM_MetaAttribute const* const PGM_def_input_sym_load_u_ref = PGM_meta_get_attribute_by_name(nullptr, "input", "sym_load", "u_ref");
 // component sym_gen
 PGM_MetaComponent const* const PGM_def_input_sym_gen = PGM_meta_get_component_by_name(nullptr, "input", "sym_gen");
 // attributes of input sym_gen
@@ -213,7 +212,6 @@ PGM_MetaAttribute const* const PGM_def_input_sym_gen_status = PGM_meta_get_attri
 PGM_MetaAttribute const* const PGM_def_input_sym_gen_type = PGM_meta_get_attribute_by_name(nullptr, "input", "sym_gen", "type");
 PGM_MetaAttribute const* const PGM_def_input_sym_gen_p_specified = PGM_meta_get_attribute_by_name(nullptr, "input", "sym_gen", "p_specified");
 PGM_MetaAttribute const* const PGM_def_input_sym_gen_q_specified = PGM_meta_get_attribute_by_name(nullptr, "input", "sym_gen", "q_specified");
-PGM_MetaAttribute const* const PGM_def_input_sym_gen_u_ref = PGM_meta_get_attribute_by_name(nullptr, "input", "sym_gen", "u_ref");
 // component asym_load
 PGM_MetaComponent const* const PGM_def_input_asym_load = PGM_meta_get_component_by_name(nullptr, "input", "asym_load");
 // attributes of input asym_load
@@ -223,7 +221,6 @@ PGM_MetaAttribute const* const PGM_def_input_asym_load_status = PGM_meta_get_att
 PGM_MetaAttribute const* const PGM_def_input_asym_load_type = PGM_meta_get_attribute_by_name(nullptr, "input", "asym_load", "type");
 PGM_MetaAttribute const* const PGM_def_input_asym_load_p_specified = PGM_meta_get_attribute_by_name(nullptr, "input", "asym_load", "p_specified");
 PGM_MetaAttribute const* const PGM_def_input_asym_load_q_specified = PGM_meta_get_attribute_by_name(nullptr, "input", "asym_load", "q_specified");
-PGM_MetaAttribute const* const PGM_def_input_asym_load_u_ref = PGM_meta_get_attribute_by_name(nullptr, "input", "asym_load", "u_ref");
 // component asym_gen
 PGM_MetaComponent const* const PGM_def_input_asym_gen = PGM_meta_get_component_by_name(nullptr, "input", "asym_gen");
 // attributes of input asym_gen
@@ -233,7 +230,15 @@ PGM_MetaAttribute const* const PGM_def_input_asym_gen_status = PGM_meta_get_attr
 PGM_MetaAttribute const* const PGM_def_input_asym_gen_type = PGM_meta_get_attribute_by_name(nullptr, "input", "asym_gen", "type");
 PGM_MetaAttribute const* const PGM_def_input_asym_gen_p_specified = PGM_meta_get_attribute_by_name(nullptr, "input", "asym_gen", "p_specified");
 PGM_MetaAttribute const* const PGM_def_input_asym_gen_q_specified = PGM_meta_get_attribute_by_name(nullptr, "input", "asym_gen", "q_specified");
-PGM_MetaAttribute const* const PGM_def_input_asym_gen_u_ref = PGM_meta_get_attribute_by_name(nullptr, "input", "asym_gen", "u_ref");
+// component voltage_regulator
+PGM_MetaComponent const* const PGM_def_input_voltage_regulator = PGM_meta_get_component_by_name(nullptr, "input", "voltage_regulator");
+// attributes of input voltage_regulator
+PGM_MetaAttribute const* const PGM_def_input_voltage_regulator_id = PGM_meta_get_attribute_by_name(nullptr, "input", "voltage_regulator", "id");
+PGM_MetaAttribute const* const PGM_def_input_voltage_regulator_regulated_object = PGM_meta_get_attribute_by_name(nullptr, "input", "voltage_regulator", "regulated_object");
+PGM_MetaAttribute const* const PGM_def_input_voltage_regulator_status = PGM_meta_get_attribute_by_name(nullptr, "input", "voltage_regulator", "status");
+PGM_MetaAttribute const* const PGM_def_input_voltage_regulator_u_ref = PGM_meta_get_attribute_by_name(nullptr, "input", "voltage_regulator", "u_ref");
+PGM_MetaAttribute const* const PGM_def_input_voltage_regulator_q_min = PGM_meta_get_attribute_by_name(nullptr, "input", "voltage_regulator", "q_min");
+PGM_MetaAttribute const* const PGM_def_input_voltage_regulator_q_max = PGM_meta_get_attribute_by_name(nullptr, "input", "voltage_regulator", "q_max");
 // component shunt
 PGM_MetaComponent const* const PGM_def_input_shunt = PGM_meta_get_component_by_name(nullptr, "input", "shunt");
 // attributes of input shunt
@@ -414,6 +419,13 @@ PGM_MetaComponent const* const PGM_def_sym_output_transformer_tap_regulator = PG
 PGM_MetaAttribute const* const PGM_def_sym_output_transformer_tap_regulator_id = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "transformer_tap_regulator", "id");
 PGM_MetaAttribute const* const PGM_def_sym_output_transformer_tap_regulator_energized = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "transformer_tap_regulator", "energized");
 PGM_MetaAttribute const* const PGM_def_sym_output_transformer_tap_regulator_tap_pos = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "transformer_tap_regulator", "tap_pos");
+// component voltage_regulator
+PGM_MetaComponent const* const PGM_def_sym_output_voltage_regulator = PGM_meta_get_component_by_name(nullptr, "sym_output", "voltage_regulator");
+// attributes of sym_output voltage_regulator
+PGM_MetaAttribute const* const PGM_def_sym_output_voltage_regulator_id = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "voltage_regulator", "id");
+PGM_MetaAttribute const* const PGM_def_sym_output_voltage_regulator_energized = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "voltage_regulator", "energized");
+PGM_MetaAttribute const* const PGM_def_sym_output_voltage_regulator_limit_violated = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "voltage_regulator", "limit_violated");
+PGM_MetaAttribute const* const PGM_def_sym_output_voltage_regulator_q = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "voltage_regulator", "q");
 // component three_winding_transformer
 PGM_MetaComponent const* const PGM_def_sym_output_three_winding_transformer = PGM_meta_get_component_by_name(nullptr, "sym_output", "three_winding_transformer");
 // attributes of sym_output three_winding_transformer
@@ -628,6 +640,13 @@ PGM_MetaComponent const* const PGM_def_asym_output_transformer_tap_regulator = P
 PGM_MetaAttribute const* const PGM_def_asym_output_transformer_tap_regulator_id = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "transformer_tap_regulator", "id");
 PGM_MetaAttribute const* const PGM_def_asym_output_transformer_tap_regulator_energized = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "transformer_tap_regulator", "energized");
 PGM_MetaAttribute const* const PGM_def_asym_output_transformer_tap_regulator_tap_pos = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "transformer_tap_regulator", "tap_pos");
+// component voltage_regulator
+PGM_MetaComponent const* const PGM_def_asym_output_voltage_regulator = PGM_meta_get_component_by_name(nullptr, "asym_output", "voltage_regulator");
+// attributes of asym_output voltage_regulator
+PGM_MetaAttribute const* const PGM_def_asym_output_voltage_regulator_id = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "voltage_regulator", "id");
+PGM_MetaAttribute const* const PGM_def_asym_output_voltage_regulator_energized = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "voltage_regulator", "energized");
+PGM_MetaAttribute const* const PGM_def_asym_output_voltage_regulator_limit_violated = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "voltage_regulator", "limit_violated");
+PGM_MetaAttribute const* const PGM_def_asym_output_voltage_regulator_q = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "voltage_regulator", "q");
 // component three_winding_transformer
 PGM_MetaComponent const* const PGM_def_asym_output_three_winding_transformer = PGM_meta_get_component_by_name(nullptr, "asym_output", "three_winding_transformer");
 // attributes of asym_output three_winding_transformer

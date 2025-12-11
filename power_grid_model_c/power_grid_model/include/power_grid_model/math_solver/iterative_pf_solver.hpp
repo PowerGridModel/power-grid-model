@@ -65,7 +65,6 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
                 Timer const sub_timer{log, LogEvent::iterate_unknown};
                 max_dev = derived_solver.iterate_unknown(output.u);
             }
-            // TODO: #185 PV -> PQ here?
         }
 
         // calculate math result
@@ -82,7 +81,8 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
     }
 
     void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, SolverOutput<sym>& output) {
-        detail::calculate_pf_result(y_bus, input, *sources_per_bus_, *load_gens_per_bus_, *shunts_per_bus_, output,
+        detail::calculate_pf_result(y_bus, input, *sources_per_bus_, *load_gens_per_bus_, *shunts_per_bus_,
+                                    *voltage_regulators_per_load_gen_, output,
                                     [this](Idx i) { return (*load_gen_type_)[i]; });
     }
 
@@ -93,13 +93,15 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
     std::shared_ptr<DenseGroupedIdxVector const> sources_per_bus_;
     std::shared_ptr<DenseGroupedIdxVector const> shunts_per_bus_;
     std::shared_ptr<std::vector<LoadGenType> const> load_gen_type_;
+    std::shared_ptr<DenseGroupedIdxVector const> voltage_regulators_per_load_gen_;
     IterativePFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : n_bus_{y_bus.size()},
           phase_shift_{topo_ptr, &topo_ptr->phase_shift},
           load_gens_per_bus_{topo_ptr, &topo_ptr->load_gens_per_bus},
           sources_per_bus_{topo_ptr, &topo_ptr->sources_per_bus},
           shunts_per_bus_{topo_ptr, &topo_ptr->shunts_per_bus},
-          load_gen_type_{topo_ptr, &topo_ptr->load_gen_type} {}
+          load_gen_type_{topo_ptr, &topo_ptr->load_gen_type},
+          voltage_regulators_per_load_gen_{topo_ptr, &topo_ptr->voltage_regulators_per_load_gen} {}
 };
 
 } // namespace power_grid_model::math_solver

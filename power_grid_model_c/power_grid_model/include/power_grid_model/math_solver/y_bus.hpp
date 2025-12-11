@@ -85,7 +85,6 @@ struct YBusStructure {
     std::vector<MatrixPos> y_bus_pos_in_entries;
     // sequence entry of bus data
     IdxVector bus_entry;
-    std::vector<BusType> bus_type;
     // LU csr structure for the y bus with sparse fill-ins
     // this is the structure when y bus is LU-factorized
     // it will contain all the elements plus the elements in fill_in from topology
@@ -133,26 +132,6 @@ struct YBusStructure {
                 append_element_vector(vec_map_element, bus, bus, YBusElementType::shunt, shunt);
             }
         }
-        // loop appliances
-        bus_type.resize(n_bus, BusType::pq);
-        if (!topo.load_gen_type.empty()) {
-            // types may not be present in certain cases, e.g se tests
-            for (auto const& [bus, load_gens] : enumerated_zip_sequence(topo.load_gens_per_bus)) {
-                for (Idx const load_gen : load_gens) {
-                    if (topo.load_gen_type[load_gen] == LoadGenType::const_pv) {
-                        bus_type[bus] = BusType::pv;
-                        break;
-                    }
-                }
-            }
-        }
-        // loop sources
-        for (auto const& [bus, sources] : enumerated_zip_sequence(topo.sources_per_bus)) {
-            if (!sources.empty()) {
-                bus_type[bus] = BusType::slack;
-            }
-        }
-
         for (Idx fill_in = 0; fill_in != n_fill_in; ++fill_in) {
             Idx const bus1 = topo.fill_in[fill_in][0];
             Idx const bus2 = topo.fill_in[fill_in][1];
@@ -337,7 +316,6 @@ template <symmetry_tag sym> class YBus {
 
     ComplexTensorVector<sym> const& admittance() const { return admittance_; }
     IdxVector const& bus_entry() const { return y_bus_struct_->bus_entry; }
-    std::vector<BusType> const& bus_type() const { return y_bus_struct_->bus_type; }
     IdxVector const& lu_diag() const { return y_bus_struct_->diag_lu; }
     IdxVector const& map_lu_y_bus() const { return y_bus_struct_->map_lu_y_bus; }
 

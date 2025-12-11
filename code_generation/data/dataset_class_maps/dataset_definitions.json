@@ -41,6 +41,10 @@
                     "class_name": "LoadGenInput"
                 },
                 {
+                    "names": ["voltage_regulator"],
+                    "class_name": "VoltageRegulatorInput"
+                },
+                {
                     "names": ["shunt"],
                     "class_name": "ShuntInput"
                 },
@@ -81,6 +85,10 @@
                 {
                     "names": ["transformer_tap_regulator"],
                     "class_name": "TransformerTapRegulatorOutput"
+                },
+                {
+                    "names": ["voltage_regulator"],
+                    "class_name": "VoltageRegulatorOutput"
                 },
                 {
                     "names": ["three_winding_transformer"],
