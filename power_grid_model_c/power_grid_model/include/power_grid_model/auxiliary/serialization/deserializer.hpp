@@ -12,9 +12,15 @@
 #include "../dataset.hpp"
 #include "../meta_data.hpp"
 
-#include <nlohmann/json.hpp>
-
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4702) // Contains potentially unreachable code
+#endif                          // _MSC_VER
 #include <msgpack.hpp>
+#include <nlohmann/json.hpp>
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif // _MSC_VER
 
 #include <set>
 #include <span>
@@ -45,6 +51,13 @@ using nlohmann::json;
 struct JsonMapArrayData {
     size_t size{};
     msgpack::sbuffer buffer;
+
+    JsonMapArrayData() = default;
+    JsonMapArrayData(JsonMapArrayData const&) = delete;
+    JsonMapArrayData& operator=(JsonMapArrayData const&) = delete;
+    JsonMapArrayData(JsonMapArrayData&&) noexcept = default;
+    JsonMapArrayData& operator=(JsonMapArrayData&&) noexcept = default;
+    ~JsonMapArrayData() = default;
 };
 
 struct JsonSAXVisitor {
@@ -163,36 +176,35 @@ struct CheckHasMap : DefaultNullVisitor {
     }
 };
 
-template <class T> struct DefaultErrorVisitor : DefaultNullVisitor {
+struct DefaultErrorVisitor : DefaultNullVisitor {
     static constexpr std::string_view static_err_msg = "Unexpected data type!\n";
 
-    bool visit_nil() { return throw_error(); }
-    bool visit_boolean(bool /*v*/) { return throw_error(); }
-    bool visit_positive_integer(uint64_t /*v*/) { return throw_error(); }
-    bool visit_negative_integer(int64_t /*v*/) { return throw_error(); }
-    bool visit_float32(float /*v*/) { return throw_error(); }
-    bool visit_float64(double /*v*/) { return throw_error(); }
-    bool visit_str(const char* /*v*/, uint32_t /*size*/) { return throw_error(); }
-    bool visit_bin(const char* /*v*/, uint32_t /*size*/) { return throw_error(); }
-    bool visit_ext(const char* /*v*/, uint32_t /*size*/) { return throw_error(); }
-    bool start_array(uint32_t /*num_elements*/) { return throw_error(); }
-    bool start_array_item() { return throw_error(); }
-    bool end_array_item() { return throw_error(); }
-    bool end_array() { return throw_error(); }
-    bool start_map(uint32_t /*num_kv_pairs*/) { return throw_error(); }
-    bool start_map_key() { return throw_error(); }
-    bool end_map_key() { return throw_error(); }
-    bool start_map_value() { return throw_error(); }
-    bool end_map_value() { return throw_error(); }
-    bool end_map() { return throw_error(); }
+    [[noreturn]] bool visit_nil(this auto const& self) { self.throw_error(); }
+    [[noreturn]] bool visit_boolean(this auto const& self, bool /*v*/) { self.throw_error(); }
+    [[noreturn]] bool visit_positive_integer(this auto const& self, uint64_t /*v*/) { self.throw_error(); }
+    [[noreturn]] bool visit_negative_integer(this auto const& self, int64_t /*v*/) { self.throw_error(); }
+    [[noreturn]] bool visit_float32(this auto const& self, float /*v*/) { self.throw_error(); }
+    [[noreturn]] bool visit_float64(this auto const& self, double /*v*/) { self.throw_error(); }
+    [[noreturn]] bool visit_str(this auto const& self, const char* /*v*/, uint32_t /*size*/) { self.throw_error(); }
+    [[noreturn]] bool visit_bin(this auto const& self, const char* /*v*/, uint32_t /*size*/) { self.throw_error(); }
+    [[noreturn]] bool visit_ext(this auto const& self, const char* /*v*/, uint32_t /*size*/) { self.throw_error(); }
+    [[noreturn]] bool start_array(this auto const& self, uint32_t /*num_elements*/) { self.throw_error(); }
+    [[noreturn]] bool start_array_item(this auto const& self) { self.throw_error(); }
+    [[noreturn]] bool end_array_item(this auto const& self) { self.throw_error(); }
+    [[noreturn]] bool end_array(this auto const& self) { self.throw_error(); }
+    [[noreturn]] bool start_map(this auto const& self, uint32_t /*num_kv_pairs*/) { self.throw_error(); }
+    [[noreturn]] bool start_map_key(this auto const& self) { self.throw_error(); }
+    [[noreturn]] bool end_map_key(this auto const& self) { self.throw_error(); }
+    [[noreturn]] bool start_map_value(this auto const& self) { self.throw_error(); }
+    [[noreturn]] bool end_map_value(this auto const& self) { self.throw_error(); }
+    [[noreturn]] bool end_map(this auto const& self) { self.throw_error(); }
 
-    bool throw_error() { throw SerializationError{(static_cast<T&>(*this)).get_err_msg()}; }
+    [[noreturn]] bool throw_error(this auto const& self) { throw SerializationError{self.get_err_msg()}; }
 
-    std::string get_err_msg() { return std::string{T::static_err_msg}; }
+    std::string get_err_msg(this auto const& self) { return std::string{self.static_err_msg}; }
 
-  private:
+  protected:
     DefaultErrorVisitor() = default;
-    friend T; // CRTP compliance
 };
 
 struct visit_map_t;
@@ -202,7 +214,7 @@ struct visit_map_array_t;
 template <class map_array>
     requires(std::same_as<map_array, visit_map_t> || std::same_as<map_array, visit_array_t> ||
              std::same_as<map_array, visit_map_array_t>)
-struct MapArrayVisitor : DefaultErrorVisitor<MapArrayVisitor<map_array>> {
+struct MapArrayVisitor : DefaultErrorVisitor {
     static constexpr bool enable_map =
         std::same_as<map_array, visit_map_t> || std::same_as<map_array, visit_map_array_t>;
     static constexpr bool enable_array =
@@ -222,10 +234,11 @@ struct MapArrayVisitor : DefaultErrorVisitor<MapArrayVisitor<map_array>> {
     bool start_map(uint32_t num_kv_pairs) {
         if constexpr (!enable_map) {
             this->throw_error();
+        } else {
+            size = static_cast<Idx>(num_kv_pairs);
+            is_map = true;
+            return true;
         }
-        size = static_cast<Idx>(num_kv_pairs);
-        is_map = true;
-        return true;
     }
     bool start_map_key() { return false; }
     bool end_map() {
@@ -235,10 +248,11 @@ struct MapArrayVisitor : DefaultErrorVisitor<MapArrayVisitor<map_array>> {
     bool start_array(uint32_t num_elements) {
         if constexpr (!enable_array) {
             this->throw_error();
+        } else {
+            size = static_cast<Idx>(num_elements);
+            is_map = false;
+            return true;
         }
-        size = static_cast<Idx>(num_elements);
-        is_map = false;
-        return true;
     }
     bool start_array_item() { return false; }
     bool end_array() {
@@ -249,7 +263,7 @@ struct MapArrayVisitor : DefaultErrorVisitor<MapArrayVisitor<map_array>> {
     MapArrayVisitor() = default;
 };
 
-struct StringVisitor : DefaultErrorVisitor<StringVisitor> {
+struct StringVisitor : DefaultErrorVisitor {
     static constexpr std::string_view static_err_msg = "String expected.";
 
     std::string_view str;
@@ -261,7 +275,7 @@ struct StringVisitor : DefaultErrorVisitor<StringVisitor> {
     StringVisitor() = default;
 };
 
-struct BoolVisitor : DefaultErrorVisitor<BoolVisitor> {
+struct BoolVisitor : DefaultErrorVisitor {
     static constexpr std::string_view static_err_msg = "Boolean expected.";
 
     bool value{};
@@ -275,7 +289,7 @@ struct BoolVisitor : DefaultErrorVisitor<BoolVisitor> {
 
 template <class T> struct ValueVisitor;
 
-template <std::integral T> struct ValueVisitor<T> : DefaultErrorVisitor<ValueVisitor<T>> {
+template <std::integral T> struct ValueVisitor<T> : DefaultErrorVisitor {
     static constexpr std::string_view static_err_msg = "Integer expected.";
 
     T& value; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
@@ -296,10 +310,10 @@ template <std::integral T> struct ValueVisitor<T> : DefaultErrorVisitor<ValueVis
         return true;
     }
 
-    ValueVisitor(T& v) : DefaultErrorVisitor<ValueVisitor<T>>{}, value{v} {}
+    ValueVisitor(T& v) : DefaultErrorVisitor{}, value{v} {}
 };
 
-template <> struct ValueVisitor<double> : DefaultErrorVisitor<ValueVisitor<double>> {
+template <> struct ValueVisitor<double> : DefaultErrorVisitor {
     static constexpr std::string_view static_err_msg = "Number expected.";
 
     double& value; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
@@ -322,10 +336,10 @@ template <> struct ValueVisitor<double> : DefaultErrorVisitor<ValueVisitor<doubl
         return true;
     }
 
-    ValueVisitor(double& v) : DefaultErrorVisitor<ValueVisitor<double>>{}, value{v} {}
+    ValueVisitor(double& v) : DefaultErrorVisitor{}, value{v} {}
 };
 
-template <> struct ValueVisitor<RealValue<asymmetric_t>> : DefaultErrorVisitor<ValueVisitor<RealValue<asymmetric_t>>> {
+template <> struct ValueVisitor<RealValue<asymmetric_t>> : DefaultErrorVisitor {
     static constexpr std::string_view static_err_msg = "Array of 3 numbers expected.";
 
     RealValue<asymmetric_t>& value; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
@@ -375,7 +389,7 @@ template <> struct ValueVisitor<RealValue<asymmetric_t>> : DefaultErrorVisitor<V
         return true;
     }
 
-    ValueVisitor(RealValue<asymmetric_t>& v) : DefaultErrorVisitor<ValueVisitor<RealValue<asymmetric_t>>>{}, value{v} {}
+    ValueVisitor(RealValue<asymmetric_t>& v) : DefaultErrorVisitor{}, value{v} {}
 };
 
 } // namespace detail
@@ -420,7 +434,7 @@ class Deserializer {
     Deserializer(Deserializer const&) = delete;
     Deserializer& operator=(Deserializer const&) = delete;
     // movable
-    Deserializer(Deserializer&&) = default;
+    Deserializer(Deserializer&&) noexcept = default;
     Deserializer& operator=(Deserializer&&) noexcept = default;
 
     // destructor
@@ -633,8 +647,7 @@ class Deserializer {
             component_key_ = single_component.first;
             MetaComponent const* const component = &dataset.get_component(component_key_);
             std::vector<MetaAttribute const*> attributes_per_component;
-            for (element_number_ = 0; element_number_ != static_cast<Idx>(single_component.second.size());
-                 ++element_number_) {
+            for (element_number_ = 0; element_number_ != std::ssize(single_component.second); ++element_number_) {
                 attributes_per_component.push_back(&component->get_attribute(single_component.second[element_number_]));
             }
             attributes_[component] = std::move(attributes_per_component);
@@ -689,7 +702,7 @@ class Deserializer {
         root_key_ = "data";
         // get set of all components
         std::set<MetaComponent const*> all_components;
-        for (scenario_number_ = 0; scenario_number_ != static_cast<Idx>(data_counts.size()); ++scenario_number_) {
+        for (scenario_number_ = 0; scenario_number_ != std::ssize(data_counts); ++scenario_number_) {
             for (auto const& component_byte_meta : data_counts[scenario_number_]) {
                 component_key_ = component_byte_meta.component;
                 all_components.insert(&handler.dataset().get_component(component_key_));
@@ -936,7 +949,7 @@ class Deserializer {
     template <detail::row_based_or_columnar_c row_or_column_t>
     void parse_array_element(row_or_column_t row_or_column_tag, BufferView const& buffer_view, Idx array_size,
                              MetaComponent const& component, std::span<MetaAttribute const* const> attributes) {
-        if (array_size != static_cast<Idx>(attributes.size())) {
+        if (array_size != std::ssize(attributes)) {
             throw SerializationError{
                 "An element of a list should have same length as the list of predefined attributes!\n"};
         }
@@ -988,8 +1001,8 @@ class Deserializer {
             [[fallthrough]];
         default: {
             using namespace std::string_literals;
-            throw SerializationError("String data input not supported for serialization format "s +
-                                     std::to_string(std::to_underlying(serialization_format)));
+            throw SerializationError(std::format("String data input not supported for serialization format {}",
+                                                 std::to_underlying(serialization_format)));
         }
         }
     }
@@ -1003,8 +1016,8 @@ class Deserializer {
             return {from_msgpack, buffer, meta_data};
         default: {
             using namespace std::string_literals;
-            throw SerializationError("Buffer data input not supported for serialization format "s +
-                                     std::to_string(std::to_underlying(serialization_format)));
+            throw SerializationError(std::format("Buffer data input not supported for serialization format {}",
+                                                 std::to_underlying(serialization_format)));
         }
         }
     }

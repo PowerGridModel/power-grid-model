@@ -122,6 +122,26 @@ class PowerGridModel:
 
         return new_model
 
+    def __repr__(self) -> str:
+        """Return a string representation of the current model.
+
+        This includes the total number of components and the number of components per component type of the model.
+
+        Returns:
+            String representation of the model
+        """
+        try:
+            component_count = self.all_component_count
+        except TypeError:
+            component_count = {}
+
+        message = f"{self.__class__.__name__} ({sum(component_count.values())} components)\n"
+
+        for component_type, number in component_count.items():
+            message += f"  - {component_type.value}: {number}\n"
+
+        return message
+
     def __new__(cls, *_args, **_kwargs):
         instance = super().__new__(cls)
         instance._model_ptr = ModelPtr()

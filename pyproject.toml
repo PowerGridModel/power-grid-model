@@ -33,16 +33,21 @@ requires-python = ">=3.11"
 dependencies = ["numpy>=2.0.0"]
 dynamic = ["version"]
 
-[project.optional-dependencies]
-dev = [
-    "msgpack",
+[dependency-groups]
+
+test = ["pytest", "pytest-cov", "msgpack"]
+
+lint = [
     "pre-commit",
-    "pytest",
-    "pytest-cov",
     "ruff",
     "mypy",
-    "gersemi",  # CMake linter
+    "numpy",  # needed for mypy
+    "gersemi",              # CMake linter
+    "clang-format ~= 18.0", # C++ formatter
 ]
+
+dev = [{ include-group = "test" }, { include-group = "lint" }]
+
 doc = [
     "sphinx",
     "breathe",
@@ -190,9 +195,9 @@ disable_error_code = [
 
 # CI build options
 [tool.cibuildwheel]
-build-frontend = "build"
+build-frontend = "build[uv]"
 build-verbosity = 1
-test-extras = ["dev"]
+test-groups = ["test"]
 test-command = "pytest {package}/tests"
 # we do not support 
 #    PyPy

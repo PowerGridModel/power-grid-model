@@ -3,13 +3,13 @@
 # SPDX-License-Identifier: MPL-2.0
 
 repos:
-  - repo: https://github.com/fsfe/reuse-tool
+  - repo: https://github.com/fsfe/reuse-tool  # outside pypi
     rev: v4.0.3
     hooks:
       - id: reuse
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
-    rev: v0.12.7
+    rev: v0.14.7
     hooks:
       # Run the linter.
       - id: ruff-check
@@ -19,7 +19,7 @@ repos:
       - id: ruff-format
         name: ruff-format
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.16.0
+    rev: v1.19.0
     hooks:
       - id: mypy
         additional_dependencies:
@@ -28,23 +28,23 @@ repos:
     hooks:
       - id: pytest
         name: pytest
-        entry: pytest
+        entry: uv run pytest
         language: system
         pass_filenames: false
         always_run: true
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: v18.1.3
+    rev: v18.1.8
     hooks:
       - id: clang-format
         types_or: [ c++, c ]
   - repo: https://github.com/BlankSpruce/gersemi
-    rev: 0.23.1
+    rev: 0.23.2
     hooks:
     - id: gersemi
       name: cmake-linter
       alias: cmake-linter
-  - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.45.0
+  - repo: https://github.com/igorshubovych/markdownlint-cli  # outside pypi 
+    rev: v0.46.0
     hooks:
     - id: markdownlint
       args: ["--fix"]

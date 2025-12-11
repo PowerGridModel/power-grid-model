@@ -145,6 +145,11 @@ def model(input):
     return PowerGridModel(input)
 
 
+@pytest.fixture
+def empty_model():
+    return PowerGridModel({})
+
+
 def test_simple_power_flow(model: PowerGridModel, sym_output):
     result = model.calculate_power_flow()
     compare_result(result, sym_output, rtol=0.0, atol=1e-8)
@@ -176,11 +181,9 @@ def test_copy_model(model: PowerGridModel, sym_output):
     compare_result(result, sym_output, rtol=0.0, atol=1e-8)
 
 
-def test_deepcopy_model(model: PowerGridModel, sym_output, update_batch, sym_output_batch):
-    model_other = PowerGridModel({})
-
+def test_deepcopy_model(model: PowerGridModel, empty_model: PowerGridModel, sym_output, update_batch, sym_output_batch):
     # list containing different models twice
-    model_list = [model, model_other, model, model_other]
+    model_list = [model, empty_model, model, empty_model]
 
     new_model_list = deepcopy(model_list)
 
@@ -205,6 +208,16 @@ def test_deepcopy_model(model: PowerGridModel, sym_output, update_batch, sym_out
 
     result = model.calculate_power_flow()
     compare_result(result, sym_output, rtol=0.0, atol=1e-8)
+
+
+def test_repr_and_str(model: PowerGridModel, empty_model: PowerGridModel):
+    repr_empty_model_expected = "PowerGridModel (0 components)\n"
+    assert repr_empty_model_expected == repr(empty_model)
+    assert repr_empty_model_expected == str(empty_model)
+
+    repr_model_expected = "PowerGridModel (3 components)\n  - node: 1\n  - source: 1\n  - sym_load: 1\n"
+    assert repr_model_expected == repr(model)
+    assert repr_model_expected == str(model)
 
 
 def test_get_indexer(model: PowerGridModel):

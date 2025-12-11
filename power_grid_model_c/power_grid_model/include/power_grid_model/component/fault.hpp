@@ -150,9 +150,8 @@ class Fault final : public Base {
     FaultType get_fault_type() const {
         using enum FaultType;
 
-        constexpr auto supported = std::array{three_phase, single_phase_to_ground, two_phase, two_phase_to_ground};
-
-        if (std::ranges::find(supported, fault_type_) == cend(supported)) {
+        if (constexpr auto supported = std::array{three_phase, single_phase_to_ground, two_phase, two_phase_to_ground};
+            std::ranges::find(supported, fault_type_) == cend(supported)) {
             throw InvalidShortCircuitType(fault_type_);
         }
 
