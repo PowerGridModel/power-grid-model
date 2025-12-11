@@ -146,61 +146,59 @@ inline void calculate_source_result(IdxRange const& sources, Idx const& bus_numb
     }
 }
 
-template <symmetry_tag sym, class LoadGenFunc>
-inline void calculate_pv_gen_result(Idx const& bus_number, PowerFlowInput<sym> const& input, SolverOutput<sym>& output,
-                                    IdxRange const& load_gens, IdxRange const& shunts,
-                                    LoadGenFunc load_gen_func) {
-    auto is_pv = [&](Idx load_gen) {
-        return load_gen_func(load_gen) == LoadGenType::const_pv;
-    };
-    auto pv_gens = load_gens | std::views::filter(is_pv);
-    auto pq_gens = load_gens | std::views::filter(std::not_fn(is_pv));
-
-    ComplexValue<sym> const s_pq_gen_bus =
-        std::transform_reduce(pq_gens.begin(), pq_gens.end(), ComplexValue<sym>{}, std::plus{},
-                              [&](Idx const load_gen) { return output.load_gen[load_gen].s; });
-
-    ComplexValue<sym> const s_shunt_bus =
-        std::transform_reduce(shunts.begin(), shunts.end(), ComplexValue<sym>{}, std::plus{},
-                              [&](Idx const shunt) { return output.shunt[shunt].s; });
-
-    ComplexValue<sym> const s_inj_t = output.bus_injection[bus_number] - s_pq_gen_bus - s_shunt_bus;
-
-    if constexpr (is_symmetric_v<sym>) {
-        RealTensor<sym> const p_pv_gen_bus =
-            std::transform_reduce(pv_gens.begin(), pv_gens.end(), RealTensor<sym>{}, std::plus{},
-                                [&](Idx const load_gen) { return real(input.load_gen[load_gen].s_injection); });
-
-        for (Idx const load_gen : pv_gens) {
-            output.load_gen[load_gen].s = ComplexValue<sym>{
-                real(input.load_gen[load_gen].s_injection),
-                imag(s_inj_t) * real(input.load_gen[load_gen].s_injection) / p_pv_gen_bus
-            };
-            output.load_gen[load_gen].i = conj(output.load_gen[load_gen].s / output.u[bus_number]);
+template <symmetry_tag sym, std::ranges::forward_range PVRange, std::ranges::forward_range PQRange>
+    requires std::same_as<std::ranges::range_value_t<PQRange>, Idx> &&
+             std::same_as<std::ranges::range_value_t<PVRange>, Idx>
+inline void calculate_pv_gen_result(Idx const& bus_number, std::vector<BusType> const& bus_type,
+                                    PowerFlowInput<sym> const& input, SolverOutput<sym>& output,
+                                    PVRange&& pv_gens, PQRange&& pq_load_gens, IdxRange const& shunts) {
+    if (bus_type[bus_number] == BusType::pq) {
+        // TODO: #185 consider Q Limits (PV to PQ conversion)
+        for (Idx const pv_gen : pv_gens) {
+            output.load_gen[pv_gen].s = input.load_gen[pv_gen].s_injection;
+            output.load_gen[pv_gen].i = conj(output.load_gen[pv_gen].s / output.u[bus_number]);
         }
     } else {
-        // TODO: #185 implement for asymmetric case
+        // distribute Q to PV generators on PV or Slack bus
+        if (pv_gens.empty()) {
+            return;
+        }
+
+        ComplexValue<sym> const s_pq_gen_bus =
+            std::transform_reduce(pq_load_gens.begin(), pq_load_gens.end(), ComplexValue<sym>{}, std::plus{},
+                                [&](Idx const load_gen) { return output.load_gen[load_gen].s; });
+
+        ComplexValue<sym> const s_shunt_bus =
+            std::transform_reduce(shunts.begin(), shunts.end(), ComplexValue<sym>{}, std::plus{},
+                                [&](Idx const shunt) { return output.shunt[shunt].s; });
+
+        ComplexValue<sym> const s_remaining = output.bus_injection[bus_number] - s_pq_gen_bus - s_shunt_bus;
+
+        if constexpr (is_symmetric_v<sym>) {
+            size_t num_gens = std::ranges::distance(pv_gens);
+            auto const& q_remainging = imag(s_remaining);
+            for (Idx const pv_gen : pv_gens) {
+                auto const& p_pv_gen = real(input.load_gen[pv_gen].s_injection);
+                // TODO: #185 equal distribution for now, later consider proportional distribution based on Q limits
+                output.load_gen[pv_gen].s = ComplexValue<sym>{p_pv_gen, q_remainging / num_gens};
+                output.load_gen[pv_gen].i = conj(output.load_gen[pv_gen].s / output.u[bus_number]);
+            }
+        } else {
+            // TODO: #185 implement for asymmetric case
+        }
     }
 }
 
-template <symmetry_tag sym, class LoadGenFunc>
+template <symmetry_tag sym, class LoadGenFunc, std::ranges::forward_range Range>
     requires std::invocable<std::remove_cvref_t<LoadGenFunc>, Idx> &&
-             std::same_as<std::invoke_result_t<LoadGenFunc, Idx>, LoadGenType>
-inline void calculate_load_gen_result(IdxRange const& load_gens, Idx bus_number, PowerFlowInput<sym> const& input, std::vector<BusType> const& bus_type,
+             std::same_as<std::invoke_result_t<LoadGenFunc, Idx>, LoadGenType> &&
+             std::same_as<std::ranges::range_value_t<Range>, Idx>
+inline void calculate_load_gen_result(Range&& load_gens, Idx bus_number, PowerFlowInput<sym> const& input,
                                       SolverOutput<sym>& output, LoadGenFunc load_gen_func) {
     for (Idx const load_gen : load_gens) {
         switch (LoadGenType const type = load_gen_func(load_gen); type) {
             using enum LoadGenType;
 
-        case const_pv:
-            // If pv generator is connected to a slack, then consider it here as a pq generator.
-            // If it is connected to a pv bus, then defer its calculation until later.
-            if (bus_type[bus_number] == BusType::pv) {
-                break;
-            } else if (bus_type[bus_number] == BusType::pq) {
-                // TODO: #185 later consider Q Limits here (PV to PQ conversion)
-            }
-            [[fallthrough]];
         case const_pq:
             // always same power
             output.load_gen[load_gen].s = input.load_gen[load_gen].s_injection;
@@ -231,11 +229,15 @@ inline void calculate_pf_result(YBus<sym> const& y_bus, PowerFlowInput<sym> cons
                                 LoadGenFunc load_gen_func) {
     assert(sources_per_bus.size() == load_gens_per_bus.size());
 
-    std::vector<BusType> bus_type = y_bus.bus_type();
+    std::vector<BusType> const& bus_type = y_bus.bus_type();
 
     // call y bus
     output.branch = y_bus.template calculate_branch_flow<BranchSolverOutput<sym>>(output.u);
     output.shunt = y_bus.template calculate_shunt_flow<ApplianceSolverOutput<sym>>(output.u);
+
+    auto is_pv = [&](Idx load_gen) {
+        return load_gen_func(load_gen) == LoadGenType::const_pv;
+    };
 
     // prepare source, load gen and node injection
     output.source.resize(sources_per_bus.element_size());
@@ -244,16 +246,19 @@ inline void calculate_pf_result(YBus<sym> const& y_bus, PowerFlowInput<sym> cons
     output.bus_injection = y_bus.calculate_injection(output.u);
     for (auto const& [bus_number, sources, load_gens, shunts]
         : enumerated_zip_sequence(sources_per_bus, load_gens_per_bus, shunts_per_bus)) {
-        calculate_load_gen_result<sym>(load_gens, bus_number, input, bus_type, output,
+
+        auto pv_gens = load_gens | std::views::filter(is_pv);
+        auto pq_load_gens = load_gens | std::views::filter(std::not_fn(is_pv));
+
+        // handle only pq load gens here
+        calculate_load_gen_result<sym>(pq_load_gens, bus_number, input, output,
                                        [&load_gen_func](Idx idx) { return load_gen_func(idx); });
-        if (bus_type[bus_number] == BusType::slack) {
-            // pv generators are treated as pq generators at slack buses
-            calculate_source_result<sym>(sources, bus_number, y_bus, input, output, load_gens, shunts);
-        } else if (bus_type[bus_number] == BusType::pv) {
-            // distribute remaining power to pv generators only
-            calculate_pv_gen_result<sym>(bus_number, input, output, load_gens, shunts,
-                                         [&load_gen_func](Idx idx) { return load_gen_func(idx); });
-        }
+
+        // handle pv gens separately - distribute Q
+        calculate_pv_gen_result<sym>(bus_number, bus_type, input, output, pv_gens, pq_load_gens, shunts);
+
+        // push remaining p and q to sources
+        calculate_source_result<sym>(sources, bus_number, y_bus, input, output, load_gens, shunts);
     }
 }
 

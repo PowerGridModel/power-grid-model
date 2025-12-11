@@ -391,7 +391,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         //   - only the diagonal L entry is set to V.
         // This removes the Q-equation and enforces the PV voltage constraint in the NR step.
         for (Idx row = 0; row != this->n_bus_; ++row) {
-            BusType bus_type = bus_types[row];
+            const BusType bus_type = bus_types[row];
             for (Idx k = indptr[row]; k != indptr[row + 1]; ++k) {
                 Idx const j = indices[k];
                 if (bus_type == BusType::pv) {
