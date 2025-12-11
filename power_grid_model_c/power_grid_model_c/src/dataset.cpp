@@ -101,9 +101,8 @@ void PGM_dataset_const_add_attribute_buffer(PGM_Handle* handle, PGM_ConstDataset
         PGM_regular_error);
 }
 
-void PGM_dataset_const_set_next(PGM_Handle* /*unused*/, PGM_ConstDataset* dataset,
-                                PGM_ConstDataset const* next_dataset) {
-    dataset->set_next(next_dataset);
+void PGM_dataset_const_set_next(PGM_Handle* handle, PGM_ConstDataset* dataset, PGM_ConstDataset const* next_dataset) {
+    call_with_catch(handle, [dataset, next_dataset]() { dataset->set_next(next_dataset); }, PGM_regular_error);
 }
 
 PGM_DatasetInfo const* PGM_dataset_const_get_info(PGM_Handle* /*unused*/, PGM_ConstDataset const* dataset) {

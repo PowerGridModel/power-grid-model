@@ -535,14 +535,19 @@ template <dataset_type_tag dataset_type_> class Dataset {
         Idx const batch_size = end - begin;
         result.dataset_info_.is_batch = true;
         result.dataset_info_.batch_size = batch_size;
-        for (auto&& [buffer, component_info] : std::views::zip(result.buffers_, result.dataset_info_.component_info)) {
+        for (auto& component_info : result.dataset_info_.component_info) {
             Idx const size = component_info.elements_per_scenario * batch_size;
             component_info.total_elements = size;
         }
         return result;
     }
 
-    void set_next(Dataset const* next) { next_ = next; }
+    void set_next(Dataset const* next) {
+        if (this == next) {
+            throw DatasetError{"Cannot chain dataset to itself!\n"};
+        }
+        next_ = next;
+    }
     Dataset const* get_next() const { return next_; }
 
   private:

@@ -102,6 +102,9 @@ TEST_CASE("API Model Multi-Dimension") {
     for (Idx idx = 0; idx < total_batch_size; ++idx) {
         CHECK(i_source_result[idx] == doctest::Approx(i_source_ref[idx]));
     }
+
+    // check cannot set next to itself
+    CHECK_THROWS_AS(batch_u_ref.set_next(batch_u_ref), PowerGridRegularError);
 }
 
 } // namespace power_grid_model_cpp
