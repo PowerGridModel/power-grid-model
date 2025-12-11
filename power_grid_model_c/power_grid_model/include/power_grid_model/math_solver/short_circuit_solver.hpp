@@ -430,7 +430,7 @@ template <symmetry_tag sym> class ShortCircuitSolver {
             return true;
         }
 
-        return std::all_of(cbegin(vec), cend(vec), [first = vec.front()](FaultCalcParam const& param) {
+        return std::ranges::all_of(vec, [first = vec.front()](FaultCalcParam const& param) {
             return (param.fault_type == first.fault_type) && (param.fault_phase == first.fault_phase);
         });
     }

@@ -259,9 +259,17 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
             &Container::get_raw<GettableBaseType, StorageableSubType>;
     };
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4268) // The parameter expansion may be empty
+#endif                          // _MSC_VER
     // array of base judge
     template <supported_type_c<GettableTypes...> Gettable>
     static constexpr std::array<bool, num_storageable> is_base{std::is_base_of_v<Gettable, StorageableTypes>...};
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif // _MSC_VER
+
     // array of relevant vector size, for a non-derived class, the size is zero
     template <supported_type_c<GettableTypes...> Gettable> std::array<Idx, num_storageable> size_per_vector() const {
         assert(construction_complete_);
@@ -286,15 +294,19 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
     }
 
     // define iterator
-    template <supported_type_c<GettableTypes...> Gettable>
-    class Iterator : public IteratorFacade<Iterator<Gettable>, Gettable, Idx> {
+    template <supported_type_c<GettableTypes...> Gettable> class Iterator : public IteratorFacade {
       public:
+        using value_type = Gettable;
+        using difference_type = Idx;
+        using pointer = std::add_pointer_t<value_type>;
+        using reference = std::add_lvalue_reference_t<value_type>;
+
         static constexpr bool is_const = std::is_const_v<Gettable>;
         using base_type = std::remove_cv_t<Gettable>;
         using container_type = std::conditional_t<is_const, Container const, Container>;
         // constructor including default
         explicit Iterator(container_type* container_ptr = nullptr, Idx idx = 0)
-            : container_ptr_{container_ptr}, idx_{idx} {}
+            : IteratorFacade{*this}, container_ptr_{container_ptr}, idx_{idx} {}
         // conversion to const iterator
         template <class ConstGettable = Gettable>
             requires(!is_const)
@@ -302,22 +314,27 @@ class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
             return Iterator<ConstGettable const>{container_ptr_, idx_};
         }
 
-      private:
-        friend class IteratorFacade<Iterator<Gettable>, Gettable, Idx>;
-
-        constexpr Gettable const& dereference() const {
+        constexpr Gettable const& operator*() const {
             return container_ptr_->template get_item_by_seq<base_type>(idx_);
         }
-        constexpr Gettable& dereference() { return container_ptr_->template get_item_by_seq<base_type>(idx_); }
-        constexpr auto three_way_compare(Iterator const& other) const {
-            assert(container_ptr_ == other.container_ptr_);
-            return idx_ <=> other.idx_;
+        constexpr Gettable& operator*() { return container_ptr_->template get_item_by_seq<base_type>(idx_); }
+
+        constexpr auto operator+=(Idx n) -> std::add_lvalue_reference_t<Iterator> {
+            idx_ += n;
+            return *this;
         }
+
+        friend constexpr auto operator<=>(Iterator const& first, Iterator const& second) -> std::strong_ordering {
+            assert(first.container_ptr_ == second.container_ptr_);
+            return first.idx_ <=> second.idx_;
+        }
+        friend constexpr auto operator-(Iterator const& first, Iterator const& second) -> difference_type {
+            assert(first.container_ptr_ == second.container_ptr_);
+            return first.idx_ - second.idx_;
+        }
+
+      private:
         constexpr void advance(Idx n) { idx_ += n; }
-        constexpr Idx distance_to(Iterator const& other) const {
-            assert(container_ptr_ == other.container_ptr_);
-            return other.idx_ - idx_;
-        }
 
         // store container pointer
         // and idx

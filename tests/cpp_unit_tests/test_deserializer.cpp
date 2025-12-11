@@ -14,11 +14,11 @@
 #include <doctest/doctest.h>
 
 namespace power_grid_model::meta_data {
-
+namespace {
 using namespace std::string_literals;
+using namespace std::literals::string_view_literals;
 
 // single data
-namespace {
 constexpr std::string_view json_single = R"(
 {
   "version": "1.0",
@@ -252,7 +252,7 @@ constexpr std::string_view json_batch = R"(
 }
 )";
 
-void check_error(std::string_view json, char const* err_msg) {
+void check_error(std::string_view json, std::string_view err_msg) {
     std::vector<NodeInput> node(1);
 
     auto const run = [&]() {
@@ -261,10 +261,85 @@ void check_error(std::string_view json, char const* err_msg) {
         deserializer.parse();
     };
 
-    CHECK_THROWS_WITH_AS(run(), doctest::Contains(err_msg), std::exception);
+    CHECK_THROWS_WITH_AS(run(), doctest::Contains(err_msg.data()), std::exception);
 }
 
+class ErrorVisitorImpl : public detail::DefaultErrorVisitor {
+  public:
+    using detail::DefaultErrorVisitor::DefaultErrorVisitor;
+};
+
+class OtherErrorVisitorImpl : public detail::DefaultErrorVisitor {
+  public:
+    using detail::DefaultErrorVisitor::DefaultErrorVisitor;
+
+    static constexpr auto static_err_msg = "Other error message.\n"sv;
+};
+
+class OverloadErrorVisitorImpl : public detail::DefaultErrorVisitor {
+  public:
+    using detail::DefaultErrorVisitor::DefaultErrorVisitor;
+
+    static constexpr auto static_err_msg = "Overload error message.\n"sv;
+
+    [[noreturn]] bool visit_nil() {
+        visited_nil_ = true;
+        throw_error();
+    }
+    bool has_visited_nil() const { return visited_nil_; }
+
+  private:
+    bool visited_nil_{false};
+};
 } // namespace
+
+TEST_CASE("Deserializer visitors") {
+    SUBCASE("DefaultErrorVisitor") {
+        auto const test = []<std::derived_from<detail::DefaultErrorVisitor> T>(T visitor,
+                                                                               std::string_view expected_str) {
+            static_assert(!std::is_default_constructible_v<detail::DefaultErrorVisitor>);
+            static_assert(std::is_default_constructible_v<T>);
+
+            auto const expected = doctest::Contains(
+                doctest::String(expected_str.data(), narrow_cast<doctest::String::size_type>(expected_str.size())));
+
+            CHECK_THROWS_WITH_AS(visitor.visit_nil(), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.visit_boolean(true), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.visit_boolean(false), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.visit_positive_integer(42U), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.visit_negative_integer(-42), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.visit_float32(3.14f), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.visit_float64(2.718), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.visit_str("test_key", 8), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.visit_bin("test_bin", 8), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.visit_ext("test_ext", 8), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.start_array(3), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.start_array_item(), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.end_array_item(), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.end_array(), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.start_map(2), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.start_map_key(), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.end_map_key(), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.start_map_value(), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.end_map_value(), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.end_map(), expected, SerializationError);
+            CHECK_THROWS_WITH_AS(visitor.throw_error(), expected, SerializationError);
+            CHECK(T::static_err_msg == expected_str);
+            CHECK(visitor.get_err_msg() == T::static_err_msg);
+        };
+
+        SUBCASE("Default error message") { test(ErrorVisitorImpl{}, "Unexpected data type!\n"sv); }
+        SUBCASE("Custom error message") { test(OtherErrorVisitorImpl{}, "Other error message.\n"sv); }
+        SUBCASE("Overload error message") { test(OverloadErrorVisitorImpl{}, "Overload error message.\n"sv); }
+        SUBCASE("Overloading actually calls the derived type's method") {
+            OverloadErrorVisitorImpl visitor{};
+            CHECK(!visitor.has_visited_nil());
+            CHECK_THROWS_WITH_AS(visitor.visit_nil(), doctest::Contains("Overload error message.\n"),
+                                 SerializationError);
+            CHECK(visitor.has_visited_nil());
+        }
+    }
+}
 
 TEST_CASE("Deserializer") {
     SUBCASE("Single dataset") {
@@ -632,6 +707,46 @@ true}]}})";
             R"({"version": "1.0", "type": "input", "is_batch": true, "attributes": {}, "data": [{"node": [{"id":
 true}]}]})";
         check_error(wrong_type_dict, "Position of error: data/0/node/0/id");
+    }
+
+    SUBCASE("Last token") {
+        CHECK(detail::JsonSAXVisitor::max_error_message_token_length == 100);
+
+        SUBCASE("Token is way too long") {
+            constexpr std::string_view json_invalid =
+                R"({"version": "1.0", "type": "input", "is_batch": false, "attributes": {}, "data": {"this is an extremely long token that exceeds the maximum length allowed by the deserializer which is set to one hundred characters":})";
+
+            std::string const short_token_string{"\"this is an extremely long token that exceeds the maximum length "
+                                                 "allowed by the deserializer which i"};
+            CHECK(short_token_string.size() == detail::JsonSAXVisitor::max_error_message_token_length);
+
+            check_error(json_invalid,
+                        std::format("Last token: {}...[truncated]. Exception message:", short_token_string));
+        }
+        SUBCASE("Token is just too long") {
+            constexpr std::string_view json_invalid =
+                R"({"version": "1.0", "type": "input", "is_batch": false, "attributes": {}, "data": {"this is a token that is just too long. It barely exceeds the maximum length allowed in the errors":})";
+
+            std::string const full_token_string{"\"this is a token that is just too long. It barely exceeds the "
+                                                "maximum length allowed in the errors\":}"};
+            std::string const truncated_token_string{
+                full_token_string.substr(0, detail::JsonSAXVisitor::max_error_message_token_length)};
+            CHECK(full_token_string.size() == detail::JsonSAXVisitor::max_error_message_token_length + 1);
+            CHECK(truncated_token_string.size() == detail::JsonSAXVisitor::max_error_message_token_length);
+
+            check_error(json_invalid,
+                        std::format("Last token: {}...[truncated]. Exception message:", truncated_token_string));
+        }
+        SUBCASE("Token is barely short enough") {
+            constexpr std::string_view json_invalid =
+                R"({"version": "1.0", "type": "input", "is_batch": false, "attributes": {}, "data": {"this is a token that is just too long. It fits barely in the maximum length allowed in the error":})";
+
+            std::string const full_token_string{"\"this is a token that is just too long. It fits barely in the "
+                                                "maximum length allowed in the error\":}"};
+            CHECK(full_token_string.size() == detail::JsonSAXVisitor::max_error_message_token_length);
+
+            check_error(json_invalid, std::format("Last token: {}. Exception message:", full_token_string));
+        }
     }
 }
 

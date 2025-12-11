@@ -55,8 +55,8 @@ template <symmetry_tag sym_type> struct BranchShortCircuitSolverOutput {
 // fault math calculation parameters and math output
 struct FaultCalcParam {
     DoubleComplex y_fault;
-    FaultType fault_type{};
-    FaultPhase fault_phase{};
+    FaultType fault_type{FaultType::nan};
+    FaultPhase fault_phase{FaultPhase::nan};
 };
 
 template <symmetry_tag sym_type> struct FaultShortCircuitSolverOutput {

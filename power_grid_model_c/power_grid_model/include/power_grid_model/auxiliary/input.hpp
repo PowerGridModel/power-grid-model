@@ -195,6 +195,8 @@ struct TransformerInput {
     double pk{nan};  // short circuit and open testing parameters
     double i0{nan};  // short circuit and open testing parameters
     double p0{nan};  // short circuit and open testing parameters
+    double i0_zero_sequence{nan};  // short circuit and open testing parameters
+    double p0_zero_sequence{nan};  // short circuit and open testing parameters
     WindingType winding_from{static_cast<WindingType>(na_IntS)};  // winding type at each side
     WindingType winding_to{static_cast<WindingType>(na_IntS)};  // winding type at each side
     IntS clock{na_IntS};  // clock number

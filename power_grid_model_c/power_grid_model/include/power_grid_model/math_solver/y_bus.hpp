@@ -40,30 +40,38 @@ inline void append_element_vector(std::vector<YBusElementMap>& vec, Idx first_bu
 
 // counting sort element
 inline void counting_sort_element(std::vector<YBusElementMap>& vec, Idx n_bus) {
-    // count vec
-    std::vector<YBusElementMap> count_vec(vec.size());
+    // temp vec for swapping
+    std::vector<YBusElementMap> temp_vec(vec.size());
     IdxVector counter(n_bus, 0);
-    // sort column
+
+    // sort column first
     for (YBusElementMap const& element : vec) {
         ++counter[element.pos.second];
     }
     for (size_t i = 1, n = counter.size(); i != n; ++i) {
         counter[i] += counter[i - 1];
     }
-    for (auto it_element = vec.crbegin(); it_element != vec.crend(); ++it_element) {
-        count_vec[--counter[it_element->pos.second]] = *it_element;
+    for (auto it_element = vec.rbegin(); it_element != vec.rend(); ++it_element) {
+        temp_vec[--counter[it_element->pos.second]] = std::move(*it_element);
     }
-    // sort row
+
+    // swap vectors to avoid copying
+    vec.swap(temp_vec);
+
+    // sort row second
     std::ranges::fill(counter, 0);
-    for (YBusElementMap const& element : count_vec) {
+    for (YBusElementMap const& element : vec) {
         ++counter[element.pos.first];
     }
     for (size_t i = 1, n = counter.size(); i != n; ++i) {
         counter[i] += counter[i - 1];
     }
-    for (auto it_element = count_vec.crbegin(); it_element != count_vec.crend(); ++it_element) {
-        vec[--counter[it_element->pos.first]] = *it_element;
+    for (auto it_element = vec.rbegin(); it_element != vec.rend(); ++it_element) {
+        temp_vec[--counter[it_element->pos.first]] = std::move(*it_element);
     }
+
+    // final swap to get result back in vec
+    vec.swap(temp_vec);
 }
 
 // y bus structure
@@ -257,9 +265,9 @@ struct YBusStructure {
         assert(row_start == n_bus);
         assert(row_start_lu == n_bus);
         // size of y_bus_entry_indptr is nnz + 1
-        assert(static_cast<Idx>(y_bus_entry_indptr.size()) == nnz_counter + 1);
+        assert(std::ssize(y_bus_entry_indptr) == nnz_counter + 1);
         // end of y_bus_entry_indptr is same as size of entry
-        assert(y_bus_entry_indptr.back() == static_cast<Idx>(y_bus_element.size()));
+        assert(y_bus_entry_indptr.back() == std::ssize(y_bus_element));
 
         lu_transpose_entry = IdxRange{nnz_counter_lu} | std::ranges::to<IdxVector>();
 

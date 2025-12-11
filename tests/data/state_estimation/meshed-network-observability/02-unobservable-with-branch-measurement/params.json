@@ -6,10 +6,7 @@
     ".+_residual": 5e-4
   },
   "raises": {
-    "raises": "SparseMatrixError",
+    "raises": "NotObservableError",
     "reason": "One nodal measurement can not be made use of."
-  },
-  "xpass": {
-    "reason": "Full observability check for meshed grids is not yet implemented. See also https://github.com/PowerGridModel/power-grid-model/issues/864."
   }
 }

@@ -99,7 +99,7 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
         sub_timer = Timer{log, LogEvent::preprocess_measured_value};
         MeasuredValues<sym> const measured_values{y_bus.shared_topology(), input};
         auto const observability_result =
-            observability_check(measured_values, y_bus.math_topology(), y_bus.y_bus_structure());
+            observability::observability_check(measured_values, y_bus.math_topology(), y_bus.y_bus_structure());
 
         // prepare matrix
         sub_timer = Timer{log, LogEvent::prepare_matrix_including_prefactorization};
@@ -127,7 +127,7 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
             sparse_solver_.solve_with_prefactorized_matrix(data_gain_, perm_, x_rhs_, x_rhs_);
             sub_timer = Timer{log, LogEvent::iterate_unknown};
             max_dev = iterate_unknown(output.u, measured_values.has_angle());
-        };
+        }
 
         // calculate math result
         sub_timer = Timer{log, LogEvent::calculate_math_result};
@@ -201,7 +201,7 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
                     // shunt
                     if (type == YBusElementType::shunt) {
                         if (measured_value.has_shunt(obj)) {
-                            // G += (-Ys)^H * (variance^-1) * (-Ys)
+                            // G += (-Ys)^H * (variance^-1) * (-Ys) // NOSONAR(S125)
                             auto const& shunt_power = measured_value.shunt_power(obj);
                             auto const current = power_to_global_current_measurement(shunt_power);
                             block.g() += dot(hermitian_transpose(param.shunt_param[obj]),
@@ -217,7 +217,7 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
                             IntS const b0 = std::to_underlying(type) / 2;
                             IntS const b1 = std::to_underlying(type) % 2;
 
-                            // G += Y{side, b0}^H * (variance^-1) * Y{side, b1}
+                            // G += Y{side, b0}^H * (variance^-1) * Y{side, b1} // NOSONAR(S125)
                             block.g() += dot(hermitian_transpose(param.branch_param[obj].value[measured_side * 2 + b0]),
                                              diagonal_inverse(branch_current.variance),
                                              param.branch_param[obj].value[measured_side * 2 + b1]);
@@ -243,7 +243,7 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
                 // fill block with injection measurement
                 // injection measurement exist
                 if (measured_value.has_bus_injection(row)) {
-                    // Q_ij = Y_bus_ij
+                    // Q_ij = Y_bus_ij // NOSONAR(S125)
                     block.q() = y_bus.admittance()[data_idx];
                     // R_ii = -variance, only diagonal
                     if (row == col) {
