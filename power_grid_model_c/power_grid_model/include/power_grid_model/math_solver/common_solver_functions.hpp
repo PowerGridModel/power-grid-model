@@ -175,7 +175,10 @@ inline void calculate_voltage_regulator_result(Idx const& bus_number, PowerFlowI
             return input.load_gen_status[lg] != 0 &&
                 input.voltage_regulator[regulator].status != 0;
         });
-    auto num_regulating_gens = std::ranges::distance(regulating_gens);
+    double num_regulating_gens = 0.0;
+    for ([[maybe_unused]] auto const& _ : regulating_gens) {
+        ++num_regulating_gens;
+    }
 
     auto const& q_remaining = imag(s_remaining);
     for (Idx const load_gen : load_gens) {
