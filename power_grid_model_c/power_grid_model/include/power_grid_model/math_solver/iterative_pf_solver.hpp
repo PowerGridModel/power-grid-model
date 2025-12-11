@@ -65,6 +65,7 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
                 Timer const sub_timer{log, LogEvent::iterate_unknown};
                 max_dev = derived_solver.iterate_unknown(output.u);
             }
+            // TODO: #185 PV -> PQ here?
         }
 
         // calculate math result

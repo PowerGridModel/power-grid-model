@@ -214,6 +214,7 @@ PGM_API extern PGM_MetaAttribute const* const PGM_def_input_sym_load_status;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_sym_load_type;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_sym_load_p_specified;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_sym_load_q_specified;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_sym_load_u_ref;
 // component sym_gen
 PGM_API extern PGM_MetaComponent const* const PGM_def_input_sym_gen;
 // attributes of input sym_gen
@@ -223,6 +224,7 @@ PGM_API extern PGM_MetaAttribute const* const PGM_def_input_sym_gen_status;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_sym_gen_type;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_sym_gen_p_specified;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_sym_gen_q_specified;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_sym_gen_u_ref;
 // component asym_load
 PGM_API extern PGM_MetaComponent const* const PGM_def_input_asym_load;
 // attributes of input asym_load
@@ -232,6 +234,7 @@ PGM_API extern PGM_MetaAttribute const* const PGM_def_input_asym_load_status;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_asym_load_type;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_asym_load_p_specified;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_asym_load_q_specified;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_asym_load_u_ref;
 // component asym_gen
 PGM_API extern PGM_MetaComponent const* const PGM_def_input_asym_gen;
 // attributes of input asym_gen
@@ -241,6 +244,7 @@ PGM_API extern PGM_MetaAttribute const* const PGM_def_input_asym_gen_status;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_asym_gen_type;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_asym_gen_p_specified;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_asym_gen_q_specified;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_asym_gen_u_ref;
 // component shunt
 PGM_API extern PGM_MetaComponent const* const PGM_def_input_shunt;
 // attributes of input shunt

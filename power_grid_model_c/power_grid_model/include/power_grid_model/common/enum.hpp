@@ -12,6 +12,7 @@ enum class LoadGenType : IntS {
     const_pq = 0, // constant power
     const_y = 1,  // constant element_admittance (impedance)
     const_i = 2,  // constant current
+    const_pv = 3  // constant voltage (regulated)
 };
 
 enum class WindingType : IntS { wye = 0, wye_n = 1, delta = 2, zigzag = 3, zigzag_n = 4 };

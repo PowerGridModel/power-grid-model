@@ -143,13 +143,13 @@ std::vector<PowerFlowInput<sym>> prepare_power_flow_input(main_model_state_c aut
 
     std::vector<PowerFlowInput<sym>> pf_input(n_math_solvers);
     for (Idx i = 0; i != n_math_solvers; ++i) {
-        pf_input[i].s_injection.resize(state.math_topology[i]->n_load_gen());
+        pf_input[i].load_gen.resize(state.math_topology[i]->n_load_gen());
         pf_input[i].source.resize(state.math_topology[i]->n_source());
     }
     prepare_input<PowerFlowInput<sym>, DoubleComplex, &PowerFlowInput<sym>::source, Source>(
         state, state.topo_comp_coup->source, pf_input);
 
-    prepare_input<PowerFlowInput<sym>, ComplexValue<sym>, &PowerFlowInput<sym>::s_injection, GenericLoadGen>(
+    prepare_input<PowerFlowInput<sym>, LoadGenCalcParam<sym>, &PowerFlowInput<sym>::load_gen, GenericLoadGen>(
         state, state.topo_comp_coup->load_gen, pf_input);
 
     return pf_input;

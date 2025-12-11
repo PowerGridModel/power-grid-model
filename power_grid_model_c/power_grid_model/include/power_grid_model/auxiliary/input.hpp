@@ -310,6 +310,7 @@ struct LoadGenInput {
     LoadGenType type{static_cast<LoadGenType>(na_IntS)};  // type of the load_gen
     RealValue<sym> p_specified{nan};  // specified active/reactive power
     RealValue<sym> q_specified{nan};  // specified active/reactive power
+    double u_ref{nan};  // specified voltage reference
 
     // implicit conversions to BaseInput
     operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }

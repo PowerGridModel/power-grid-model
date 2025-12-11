@@ -240,7 +240,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
             x_[i].theta() = arg(output.u[i]);
         }
     }
-
+    // TODO: #185 here!!!
     // Calculate the Jacobian and deviation
     void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                 ComplexValueVector<sym> const& u) {
@@ -321,6 +321,8 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         IdxVector const& map_lu_y_bus = y_bus.map_lu_y_bus();
         ComplexTensorVector<sym> const& ydata = y_bus.admittance();
 
+        // auto const& load_gen_type = y_bus.math_topology().load_gen_type;
+
         for (Idx row = 0; row != this->n_bus_; ++row) {
             // reset power injection
             del_x_pq_[row].p() = RealValue<sym>{0.0};
@@ -328,6 +330,8 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
             // loop for column for incomplete jacobian and injection
             // k as data indices
             // j as column indices
+            auto bus_types = y_bus.bus_type();
+            auto bus_type = bus_types[row];
             for (Idx k = indptr[row]; k != indptr[row + 1]; ++k) {
                 // set to zero and skip if it is a fill-in
                 Idx const k_y_bus = map_lu_y_bus[k];
@@ -338,18 +342,43 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
                 Idx const j = indices[k];
                 // incomplete jacobian
                 data_jac_[k] = calculate_hnml(ydata[k_y_bus], u[row], u[j]);
+
+                // 1. bestimmen welcher Knoten das ist
+                // 2. bestimmen ob am Knoten reguliert wird
+
+                if (bus_type == BusType::PV) {
+                    // wenn ja hmml anpassen
+                    // if (dialgonale) {
+                    //     // diagonal position
+                    //     Idx const diag_pos = bus_entry[row];
+                    //     // set N and M to zero
+                    //     data_jac_[diag_pos].n() = RealTensor<sym>{0.0};
+                    //     data_jac_[diag_pos].m() = RealTensor<sym>{0.0};
+                    //     data_jac_[diag_pos].l() = RealTensor<sym>{1.0};
+                    // } else {
+                        data_jac_[k].n() = RealTensor<sym>{0.0};
+                        data_jac_[k].m() = RealTensor<sym>{0.0};
+                        data_jac_[k].l() = RealTensor<sym>{0.0};
+                    // }
+                }
+
+
+                // Idx const bus_type = bus_entry[row]
+
                 // accumulate negative power injection
                 // -P = sum(-N)
+                // TODO: #185 handle PV nodes here
                 del_x_pq_[row].p() -= sum_row(data_jac_[k].n());
                 // -Q = sum (-H)
                 del_x_pq_[row].q() -= sum_row(data_jac_[k].h());
             }
             // correct diagonal part of jacobian
-            Idx const k = bus_entry[row];
+            Idx const k = bus_entry[row]; // #185 : k = diagonal position in matrix data (INFO)
             // diagonal correction
             // del_pq has negative injection
             // H += (-Q)
             add_diag(data_jac_[k].h(), del_x_pq_[row].q());
+            // TODO: #185 handle PV nodes here
             // N -= (-P)
             add_diag(data_jac_[k].n(), -del_x_pq_[row].p());
             // M -= (-P)
@@ -375,39 +404,48 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
             case const_i:
                 add_const_current_load(bus_number, load_number, diagonal_position, input);
                 break;
+            case const_pv:
+                // TODO: #185 handle PV nodes here
+                add_const_voltage_load(bus_number, load_number, diagonal_position, input);
             default:
                 throw MissingCaseForEnumError("Jacobian and deviation calculation", type);
             }
         }
     }
 
+    void add_const_voltage_load(Idx /* bus_number */, Idx /* load_number */, Idx /* diagonal_position */,
+                                 PowerFlowInput<sym> const& /* input */) {
+        // no effect on jacobian and del_pq
+    }
+
     void add_const_power_load(Idx bus_number, Idx load_number, PowerFlowInput<sym> const& input) {
         // PQ_sp = PQ_base
-        del_x_pq_[bus_number].p() += real(input.s_injection[load_number]);
-        del_x_pq_[bus_number].q() += imag(input.s_injection[load_number]);
+        del_x_pq_[bus_number].p() += real(input.load_gen[load_number].s_injection);
+        del_x_pq_[bus_number].q() += imag(input.load_gen[load_number].s_injection);
         // -dPQ_sp/dV * V = 0
     }
 
     void add_const_impedance_load(Idx bus_number, Idx load_number, Idx diagonal_position,
                                   PowerFlowInput<sym> const& input) {
         // PQ_sp = PQ_base * V^2
-        del_x_pq_[bus_number].p() += real(input.s_injection[load_number]) * x_[bus_number].v() * x_[bus_number].v();
-        del_x_pq_[bus_number].q() += imag(input.s_injection[load_number]) * x_[bus_number].v() * x_[bus_number].v();
+        del_x_pq_[bus_number].p() += real(input.load_gen[load_number].s_injection) * x_[bus_number].v() * x_[bus_number].v();
+        del_x_pq_[bus_number].q() += imag(input.load_gen[load_number].s_injection) * x_[bus_number].v() * x_[bus_number].v();
+
         // -dPQ_sp/dV * V = -PQ_base * 2 * V^2
         add_diag(data_jac_[diagonal_position].n(),
-                 -real(input.s_injection[load_number]) * 2.0 * x_[bus_number].v() * x_[bus_number].v());
+                 -real(input.load_gen[load_number].s_injection) * 2.0 * x_[bus_number].v() * x_[bus_number].v());
         add_diag(data_jac_[diagonal_position].l(),
-                 -imag(input.s_injection[load_number]) * 2.0 * x_[bus_number].v() * x_[bus_number].v());
+                 -imag(input.load_gen[load_number].s_injection) * 2.0 * x_[bus_number].v() * x_[bus_number].v());
     }
 
     void add_const_current_load(Idx bus_number, Idx load_number, Idx diagonal_position,
                                 PowerFlowInput<sym> const& input) {
         // PQ_sp = PQ_base * V
-        del_x_pq_[bus_number].p() += real(input.s_injection[load_number]) * x_[bus_number].v();
-        del_x_pq_[bus_number].q() += imag(input.s_injection[load_number]) * x_[bus_number].v();
+        del_x_pq_[bus_number].p() += real(input.load_gen[load_number].s_injection) * x_[bus_number].v();
+        del_x_pq_[bus_number].q() += imag(input.load_gen[load_number].s_injection) * x_[bus_number].v();
         // -dPQ_sp/dV * V = -PQ_base * V
-        add_diag(data_jac_[diagonal_position].n(), -real(input.s_injection[load_number]) * x_[bus_number].v());
-        add_diag(data_jac_[diagonal_position].l(), -imag(input.s_injection[load_number]) * x_[bus_number].v());
+        add_diag(data_jac_[diagonal_position].n(), -real(input.load_gen[load_number].s_injection) * x_[bus_number].v());
+        add_diag(data_jac_[diagonal_position].l(), -imag(input.load_gen[load_number].s_injection) * x_[bus_number].v());
     }
 
     void add_sources(IdxRange const& sources, Idx bus_number, Idx diagonal_position, YBus<sym> const& y_bus,

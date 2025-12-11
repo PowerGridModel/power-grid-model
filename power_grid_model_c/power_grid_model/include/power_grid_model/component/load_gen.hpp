@@ -41,9 +41,9 @@ class GenericLoadGen : public Appliance {
     // getter for load type
     LoadGenType type() const { return type_; }
     // getter for calculation param, power injection
-    template <symmetry_tag sym> ComplexValue<sym> calc_param(bool is_connected_to_source = true) const {
+    template <symmetry_tag sym> LoadGenCalcParam<sym> calc_param(bool is_connected_to_source = true) const {
         if (!energized(is_connected_to_source)) {
-            return ComplexValue<sym>{};
+            return LoadGenCalcParam<sym>{ComplexValue<sym>{}, {nan, nan}};
         }
         if constexpr (is_symmetric_v<sym>) {
             return sym_calc_param();
@@ -54,8 +54,8 @@ class GenericLoadGen : public Appliance {
 
   private:
     LoadGenType type_;
-    virtual ComplexValue<symmetric_t> sym_calc_param() const = 0;
-    virtual ComplexValue<asymmetric_t> asym_calc_param() const = 0;
+    virtual LoadGenCalcParam<symmetric_t> sym_calc_param() const = 0;
+    virtual LoadGenCalcParam<asymmetric_t> asym_calc_param() const = 0;
 };
 
 // abstraction of load/generation
@@ -87,6 +87,7 @@ class LoadGen final : public std::conditional_t<is_generator_v<appliance_type_>,
 
     LoadGen(LoadGenInput<loadgen_symmetry> const& load_gen_input, double u) : BaseClass{load_gen_input, u} {
         set_power(load_gen_input.p_specified, load_gen_input.q_specified);
+        set_u_ref(load_gen_input.u_ref);
     }
 
     void set_power(RealValue<loadgen_symmetry> const& new_p_specified,
@@ -100,11 +101,19 @@ class LoadGen final : public std::conditional_t<is_generator_v<appliance_type_>,
         s_specified_ = ComplexValue<loadgen_symmetry>{ps, qs};
     }
 
+    void set_u_ref(double const& new_u_ref) {
+        u_ref_ = new_u_ref;
+    }
+
+    // Cannot be calc_param as for Source, as it is already defined in GenericLoadGen
+    // DoubleComplex calc_param() const { return {u_ref_, 0.0}; }
+    DoubleComplex get_u_ref() const { return {u_ref_, 0.0}; }
+
     // update for load_gen
     UpdateChange update(LoadGenUpdate<loadgen_symmetry> const& update_data) {
         assert(update_data.id == this->id() || is_nan(update_data.id));
         this->set_status(update_data.status);
-        set_power(update_data.p_specified, update_data.q_specified);
+        set_power(update_data.p_specified, update_data.q_specified); // TODO: #185 update u_ref too?
         // change load connection and/or value will not change topology or parameters
         return {.topo = false, .param = false};
     }
@@ -122,26 +131,30 @@ class LoadGen final : public std::conditional_t<is_generator_v<appliance_type_>,
 
   private:
     ComplexValue<loadgen_symmetry> s_specified_{std::complex<double>{nan, nan}}; // specified power injection
+    double u_ref_{nan}; // reference voltage
 
     // direction of load_gen
     static constexpr double direction_ = is_generator_v<appliance_type> ? 1.0 : -1.0;
 
     // override calc_param
-    ComplexValue<symmetric_t> sym_calc_param() const override {
+    LoadGenCalcParam<symmetric_t> sym_calc_param() const override {
         if constexpr (is_symmetric_v<loadgen_symmetry>) {
             if (is_nan(real(s_specified_)) || is_nan(imag(s_specified_))) {
-                return {nan, nan};
+                return LoadGenCalcParam<symmetric_t>{{nan, nan}, {nan, nan}};
             }
         }
-        return mean_val(s_specified_);
+        return LoadGenCalcParam<symmetric_t>{mean_val(s_specified_), {u_ref_, 0.0}};
     }
-    ComplexValue<asymmetric_t> asym_calc_param() const override {
+    LoadGenCalcParam<asymmetric_t> asym_calc_param() const override {
         if constexpr (is_symmetric_v<loadgen_symmetry>) {
             if (is_nan(real(s_specified_)) || is_nan(imag(s_specified_))) {
-                return ComplexValue<asymmetric_t>{std::complex{nan, nan}};
+                return LoadGenCalcParam<asymmetric_t>{
+                    ComplexValue<asymmetric_t>{std::complex{nan, nan}},
+                    {nan, nan}
+                };
             }
         }
-        return piecewise_complex_value(s_specified_);
+        return LoadGenCalcParam<asymmetric_t>{piecewise_complex_value(s_specified_), {u_ref_, 0.0}};
     }
     template <symmetry_tag calculation_symmetry>
     ApplianceSolverOutput<calculation_symmetry> u2si(ComplexValue<calculation_symmetry> const& u) const {
@@ -166,12 +179,13 @@ class LoadGen final : public std::conditional_t<is_generator_v<appliance_type_>,
 
         auto const params = [this] { return this->template calc_param<calculation_symmetry>(); };
         switch (this->type()) {
-        case const_pq:
-            return params();
+        case const_pv:
+        case const_pq: // TODO: #185 what about const_pv?
+            return params().s_injection;
         case const_y:
-            return params() * abs2(u);
+            return params().s_injection * abs2(u);
         case const_i:
-            return params() * cabs(u);
+            return params().s_injection * cabs(u);
         default:
             throw MissingCaseForEnumError(std::string{name} + " power scaling factor", this->type());
         }

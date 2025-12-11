@@ -169,17 +169,19 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCur
             switch (type) {
                 using enum LoadGenType;
 
+            case const_pv:
+                // TODO: #185 handle PV nodes here
             case const_pq:
                 // I_inj_i = conj(S_inj_j/U_i) for constant PQ type
-                rhs_u_[bus_number] += conj(input.s_injection[load_number] / u[bus_number]);
+                rhs_u_[bus_number] += conj(input.load_gen[load_number].s_injection / u[bus_number]);
                 break;
             case const_y:
                 // I_inj_i = conj((S_inj_j * abs(U_i)^2) / U_i) = conj((S_inj_j) * U_i for const impedance type
-                rhs_u_[bus_number] += conj(input.s_injection[load_number]) * u[bus_number];
+                rhs_u_[bus_number] += conj(input.load_gen[load_number].s_injection) * u[bus_number];
                 break;
             case const_i:
                 // I_inj_i = conj(S_inj_j*abs(U_i)/U_i) for const current type
-                rhs_u_[bus_number] += conj(input.s_injection[load_number] * cabs(u[bus_number]) / u[bus_number]);
+                rhs_u_[bus_number] += conj(input.load_gen[load_number].s_injection * cabs(u[bus_number]) / u[bus_number]);
                 break;
             default:
                 throw MissingCaseForEnumError("Injection current calculation", type);

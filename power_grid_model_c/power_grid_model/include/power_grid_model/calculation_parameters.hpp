@@ -202,6 +202,14 @@ struct SourceCalcParam {
     }
 };
 
+template <symmetry_tag sym_type>
+struct LoadGenCalcParam {
+    using sym = sym_type;
+
+    ComplexValue<sym> s_injection; // Specified injection power of each load_gen
+    DoubleComplex u_ref;           // Complex u_ref of each generator (PV node)
+};
+
 template <symmetry_tag sym_type> struct MathModelParam {
     using sym = sym_type;
 
@@ -219,7 +227,7 @@ template <symmetry_tag sym_type> struct PowerFlowInput {
     using sym = sym_type;
 
     ComplexVector source;                // Complex u_ref of each source
-    ComplexValueVector<sym> s_injection; // Specified injection power of each load_gen
+    std::vector<LoadGenCalcParam<sym>> load_gen;
 };
 
 template <symmetry_tag sym_type> struct StateEstimationInput {
@@ -284,7 +292,7 @@ struct solver_output_t {};
 template <symmetry_tag sym_type> struct SolverOutput {
     using type = solver_output_t;
     using sym = sym_type;
-
+    // TODO: #185 do we need to return more info here? nodes with their new type PQ (if conversion PV -> PQ)
     std::vector<ComplexValue<sym>> u;
     std::vector<ComplexValue<sym>> bus_injection;
     std::vector<BranchSolverOutput<sym>> branch;
