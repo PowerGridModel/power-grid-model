@@ -420,12 +420,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
             // modify jacobian and del_pq based on type
             switch (type) {
             case const_pv:
-                // If a const_pv generator is connected to a bus with sources (i.e. BusType::slack), then
-                // it will be treated as a const_pq generator
-                if (bus_types[bus_number] == BusType::pv) {
-                    add_const_voltage_load(bus_number, load_number, input);
-                    break;
-                }
+                // treat pv generator as constant power appliance, set Q to zero later (if connected to pv bus)
                 [[fallthrough]];
             case const_pq:
                 add_const_power_load(bus_number, load_number, input);
@@ -440,12 +435,11 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
                 throw MissingCaseForEnumError("Jacobian and deviation calculation", type);
             }
         }
-    }
-
-    void add_const_voltage_load(Idx bus_number, Idx load_number, PowerFlowInput<sym> const& input) {
-        // TODO: #185 - formulas?
-        del_x_pq_[bus_number].p() += real(input.load_gen[load_number].s_injection);
-        del_x_pq_[bus_number].q() = 0.0; // Q is not calculated for PV node
+        if (bus_types[bus_number] == BusType::pv) {
+            // Set ΔQ = 0 to enforce voltage magnitude constraint V = V_set (see Jacobian modification above).
+            // This forces ΔV = 0 in the NR step, keeping |U| constant.
+            del_x_pq_[bus_number].q() = 0.0;
+        }
     }
 
     void add_const_power_load(Idx bus_number, Idx load_number, PowerFlowInput<sym> const& input) {
