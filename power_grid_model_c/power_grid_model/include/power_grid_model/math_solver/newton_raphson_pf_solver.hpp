@@ -234,17 +234,35 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
                                               linear_mat_data);
         linear_sparse_solver.prefactorize_and_solve(linear_mat_data, linear_perm, output.u, output.u);
 
+        set_u_ref(y_bus, input, output.u);
+
         // get magnitude and angle of start voltage
         for (Idx i = 0; i != this->n_bus_; ++i) {
             x_[i].v() = cabs(output.u[i]);
             x_[i].theta() = arg(output.u[i]);
         }
     }
-    // TODO: #185 here!!!
+
+    void set_u_ref(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, ComplexValueVector<sym>& u) {
+        auto const& bus_types = y_bus.bus_type();
+        for (auto const& [bus_number, load_gens] : enumerated_zip_sequence(*this->load_gens_per_bus_)) {
+            if (bus_types[bus_number] == BusType::pv) {
+                for (Idx const load_number : load_gens) {
+                    if ((*this->load_gen_type_)[load_number] == LoadGenType::const_pv) {
+                        // take u_ref of first pv generator, other should be validated to be the same
+                        u[bus_number] = ComplexValue<sym>{input.load_gen[load_number].u_ref}; // #185: correct for asym case?
+                        break; // only set once
+                    }
+                }
+            }
+        }
+    }
+
     // Calculate the Jacobian and deviation
     void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                 ComplexValueVector<sym> const& u) {
         std::vector<LoadGenType> const& load_gen_type = *this->load_gen_type_;
+        std::vector<BusType> const& bus_type = y_bus.bus_type();
         IdxVector const& bus_entry = y_bus.lu_diag();
 
         prepare_matrix_and_rhs_from_network_perspective(y_bus, u, bus_entry);
@@ -252,7 +270,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         for (auto const& [bus_number, load_gens, sources] :
              enumerated_zip_sequence(*this->load_gens_per_bus_, *this->sources_per_bus_)) {
             Idx const diagonal_position = bus_entry[bus_number];
-            add_loads(load_gens, bus_number, diagonal_position, input, load_gen_type);
+            add_loads(load_gens, bus_number, diagonal_position, input, load_gen_type, bus_type);
             add_sources(sources, bus_number, diagonal_position, y_bus, input, u);
         }
     }
@@ -319,6 +337,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         IdxVector const& indptr = y_bus.row_indptr_lu();
         IdxVector const& indices = y_bus.col_indices_lu();
         IdxVector const& map_lu_y_bus = y_bus.map_lu_y_bus();
+        std::vector<BusType> const& bus_types = y_bus.bus_type();
         ComplexTensorVector<sym> const& ydata = y_bus.admittance();
 
         // auto const& load_gen_type = y_bus.math_topology().load_gen_type;
@@ -330,8 +349,6 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
             // loop for column for incomplete jacobian and injection
             // k as data indices
             // j as column indices
-            auto bus_types = y_bus.bus_type();
-            auto bus_type = bus_types[row];
             for (Idx k = indptr[row]; k != indptr[row + 1]; ++k) {
                 // set to zero and skip if it is a fill-in
                 Idx const k_y_bus = map_lu_y_bus[k];
@@ -343,31 +360,8 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
                 // incomplete jacobian
                 data_jac_[k] = calculate_hnml(ydata[k_y_bus], u[row], u[j]);
 
-                // 1. bestimmen welcher Knoten das ist
-                // 2. bestimmen ob am Knoten reguliert wird
-
-                if (bus_type == BusType::PV) {
-                    // wenn ja hmml anpassen
-                    // if (dialgonale) {
-                    //     // diagonal position
-                    //     Idx const diag_pos = bus_entry[row];
-                    //     // set N and M to zero
-                    //     data_jac_[diag_pos].n() = RealTensor<sym>{0.0};
-                    //     data_jac_[diag_pos].m() = RealTensor<sym>{0.0};
-                    //     data_jac_[diag_pos].l() = RealTensor<sym>{1.0};
-                    // } else {
-                        data_jac_[k].n() = RealTensor<sym>{0.0};
-                        data_jac_[k].m() = RealTensor<sym>{0.0};
-                        data_jac_[k].l() = RealTensor<sym>{0.0};
-                    // }
-                }
-
-
-                // Idx const bus_type = bus_entry[row]
-
                 // accumulate negative power injection
                 // -P = sum(-N)
-                // TODO: #185 handle PV nodes here
                 del_x_pq_[row].p() -= sum_row(data_jac_[k].n());
                 // -Q = sum (-H)
                 del_x_pq_[row].q() -= sum_row(data_jac_[k].h());
@@ -378,7 +372,6 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
             // del_pq has negative injection
             // H += (-Q)
             add_diag(data_jac_[k].h(), del_x_pq_[row].q());
-            // TODO: #185 handle PV nodes here
             // N -= (-P)
             add_diag(data_jac_[k].n(), -del_x_pq_[row].p());
             // M -= (-P)
@@ -386,15 +379,57 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
             // L -= (-Q)
             add_diag(data_jac_[k].l(), -del_x_pq_[row].q());
         }
+
+        // PV-bus voltage identity row:
+        // For PV buses, the Q-equation is replaced by the algebraic constraint
+        //     rPV = V - Vset = 0.
+        // Since the state vector uses relative voltage increments ΔV_rel = ΔV / V,
+        // the derivative ∂rPV/∂ΔV_rel equals the current voltage magnitude V.
+        // Therefore:
+        //   - all off-diagonal voltage derivatives (L block) are zero,
+        //   - all θ-derivatives (M block) are zero,
+        //   - only the diagonal L entry is set to V.
+        // This removes the Q-equation and enforces the PV voltage constraint in the NR step.
+        for (Idx row = 0; row != this->n_bus_; ++row) {
+            BusType bus_type = bus_types[row];
+            for (Idx k = indptr[row]; k != indptr[row + 1]; ++k) {
+                Idx const j = indices[k];
+                if (bus_type == BusType::pv) {
+                    // If there are pv generators on a bus with type ::slack, then these generators
+                    // will be considered as ::pq and the jacobian row will not be modified.
+                    // TODO: #185 or should the slack behave like a pv bus too?
+                    data_jac_[k].m() = RealTensor<sym>{0.0};
+                    if (row == j) {
+                        auto const& v = x_[j].v();
+                        if constexpr (is_symmetric_v<sym>) {
+                            data_jac_[k].l() = v;
+                        } else {
+                            data_jac_[k].l() = RealTensor<asymmetric_t>{{v[0], v[1], v[2]}};
+                        }
+
+                    } else {
+                        data_jac_[k].l() = RealTensor<sym>{0.0};
+                    }
+                }
+            }
+        }
     }
 
     void add_loads(IdxRange const& load_gens, Idx bus_number, Idx diagonal_position, PowerFlowInput<sym> const& input,
-                   std::vector<LoadGenType> const& load_gen_type) {
+                   std::vector<LoadGenType> const& load_gen_type, std::vector<BusType> const& bus_types) {
         using enum LoadGenType;
         for (Idx const load_number : load_gens) {
             LoadGenType const type = load_gen_type[load_number];
             // modify jacobian and del_pq based on type
             switch (type) {
+            case const_pv:
+                // If a const_pv generator is connected to a bus with sources (i.e. BusType::slack), then
+                // it will be treated as a const_pq generator
+                if (bus_types[bus_number] == BusType::pv) {
+                    add_const_voltage_load(bus_number, load_number, input);
+                    break;
+                }
+                [[fallthrough]];
             case const_pq:
                 add_const_power_load(bus_number, load_number, input);
                 break;
@@ -404,18 +439,16 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
             case const_i:
                 add_const_current_load(bus_number, load_number, diagonal_position, input);
                 break;
-            case const_pv:
-                // TODO: #185 handle PV nodes here
-                add_const_voltage_load(bus_number, load_number, diagonal_position, input);
             default:
                 throw MissingCaseForEnumError("Jacobian and deviation calculation", type);
             }
         }
     }
 
-    void add_const_voltage_load(Idx /* bus_number */, Idx /* load_number */, Idx /* diagonal_position */,
-                                 PowerFlowInput<sym> const& /* input */) {
-        // no effect on jacobian and del_pq
+    void add_const_voltage_load(Idx bus_number, Idx load_number, PowerFlowInput<sym> const& input) {
+        // TODO: #185 - formulas?
+        del_x_pq_[bus_number].p() += real(input.load_gen[load_number].s_injection);
+        del_x_pq_[bus_number].q() = 0.0; // Q is not calculated for PV node
     }
 
     void add_const_power_load(Idx bus_number, Idx load_number, PowerFlowInput<sym> const& input) {

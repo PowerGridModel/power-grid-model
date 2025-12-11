@@ -74,8 +74,6 @@ inline void counting_sort_element(std::vector<YBusElementMap>& vec, Idx n_bus) {
     vec.swap(temp_vec);
 }
 
-enum BusType { PQ = 0, PV = 1, SLACK = 2 };
-
 // y bus structure
 struct YBusStructure {
     // csr structure
@@ -136,13 +134,22 @@ struct YBusStructure {
             }
         }
         // loop appliances
-        bus_type.resize(n_bus, BusType::PQ);
-        for (auto const& [bus, load_gens] : enumerated_zip_sequence(topo.load_gens_per_bus)) {
-            for (Idx const load_gen : load_gens) {
-                if (topo.load_gen_type[load_gen] == LoadGenType::const_pv) {
-                    bus_type[bus] = BusType::PV;
-                    break;
+        bus_type.resize(n_bus, BusType::pq);
+        if (!topo.load_gen_type.empty()) {
+            // types may not be present in certain cases, e.g se tests
+            for (auto const& [bus, load_gens] : enumerated_zip_sequence(topo.load_gens_per_bus)) {
+                for (Idx const load_gen : load_gens) {
+                    if (topo.load_gen_type[load_gen] == LoadGenType::const_pv) {
+                        bus_type[bus] = BusType::pv;
+                        break;
+                    }
                 }
+            }
+        }
+        // loop sources
+        for (auto const& [bus, sources] : enumerated_zip_sequence(topo.sources_per_bus)) {
+            if (!sources.empty()) {
+                bus_type[bus] = BusType::slack;
             }
         }
 
