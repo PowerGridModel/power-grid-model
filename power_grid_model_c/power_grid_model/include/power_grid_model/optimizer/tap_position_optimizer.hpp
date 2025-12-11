@@ -21,6 +21,7 @@
 #include <boost/graph/compressed_sparse_row_graph.hpp>
 
 #include <algorithm>
+#include <compare>
 #include <functional>
 #include <numeric>
 #include <optional>
@@ -62,10 +63,10 @@ struct TrafoGraphEdge {
     } // thanks boost
 
     auto constexpr operator<=>(TrafoGraphEdge const& other) const {
-        if (auto cmp = weight <=> other.weight; cmp != 0) { // NOLINT(modernize-use-nullptr)
+        if (auto cmp = weight <=> other.weight; std::is_neq(cmp)) {
             return cmp;
         }
-        if (auto cmp = regulated_idx.group <=> other.regulated_idx.group; cmp != 0) { // NOLINT(modernize-use-nullptr)
+        if (auto cmp = regulated_idx.group <=> other.regulated_idx.group; std::is_neq(cmp)) {
             return cmp;
         }
         return regulated_idx.pos <=> other.regulated_idx.pos;
@@ -804,6 +805,10 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             return tap_pos;
         }
 
+        void rewind(IntS tap_pos, IntS tap_min, IntS tap_max) {
+            reset(tap_pos, tap_min, tap_max, control_at_tap_side_);
+        }
+
       private:
         void reset(IntS tap_pos, IntS tap_min, IntS tap_max, bool control_at_tap_side) {
             last_down_ = false;
@@ -1085,10 +1090,10 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
             auto const cmp = node_state <=> param;
             auto new_tap_pos = [&transformer, &cmp, &control_at_tap_side] {
-                if (cmp > 0) { // NOLINT(modernize-use-nullptr)
+                if (std::is_gt(cmp)) {
                     return one_step_control_voltage_down(transformer, control_at_tap_side);
                 }
-                if (cmp < 0) { // NOLINT(modernize-use-nullptr)
+                if (std::is_lt(cmp)) {
                     return one_step_control_voltage_up(transformer, control_at_tap_side);
                 }
                 return transformer.tap_pos();
@@ -1126,8 +1131,8 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             auto const cmp = node_state <=> param;
             if (auto new_tap_pos =
                     [&cmp, strategy_max, &current_bs] {
-                        if (cmp != 0) {                                        // NOLINT(modernize-use-nullptr)
-                            current_bs.propose_new_pos(strategy_max, cmp > 0); // NOLINT(modernize-use-nullptr)
+                        if (std::is_neq(cmp)) {
+                            current_bs.propose_new_pos(strategy_max, std::is_gt(cmp));
                         }
                         return current_bs.get_current_tap();
                     }();
@@ -1138,7 +1143,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                 return;
             }
 
-            if (strategy_ == OptimizerStrategy::fast_any) {
+            if (strategy_ == OptimizerStrategy::fast_any && std::is_eq(cmp)) {
                 tap_changed = false;
                 return;
             }
@@ -1147,6 +1152,16 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             current_bs.recalibrate(strategy_max);
 
             IntS const tap_pos = current_bs.repropose_tap(strategy_max, previous_down, tap_changed);
+            // The new same tap pos is only valid in a cmp == equivalent situation
+            // in other words, a same tap pos in a non equivalent situation means
+            // the binary search cannot find a valid tap position
+            // _tap_changed_ is an aggregated flag with _inevitable_run_, so we can not use it here
+            if (tap_pos == transformer.tap_pos() && cmp != 0 && !current_bs.get_end_of_bs()) {
+                current_bs.rewind(tap_pos, transformer.tap_min(), transformer.tap_max());
+                throw MaxIterationReached{std::format(
+                    "TapPositionOptimizer::binary_search: no valid tap position found between tap {} and tap {}",
+                    transformer.tap_min(), transformer.tap_max())};
+            }
             add_tap_pos_update(tap_pos, transformer, update_data);
         };
         regulator.transformer.apply(adjust_transformer_);
