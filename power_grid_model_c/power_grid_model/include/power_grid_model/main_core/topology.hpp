@@ -169,10 +169,15 @@ constexpr void register_topology_components(ComponentContainer const& components
                 return get_component_sequence_idx<Branch>(components, regulator.regulated_object());
             case ComponentType::branch3:
                 return get_component_sequence_idx<Branch3>(components, regulator.regulated_object());
+            case ComponentType::generic_load_gen:
+                return get_component_sequence_idx<GenericLoadGen>(components, regulator.regulated_object());
             default:
                 throw MissingCaseForEnumError("Regulator idx to seq transformation", regulator.regulated_object_type());
             }
         });
+
+    apply_registration<Component>(components, comp_topo.regulator_type,
+                                  [](Regulator const& regulator) { return regulator.math_model_type(); });
 
     apply_registration<Component>(components, comp_topo.regulated_object_type,
                                   [](Regulator const& regulator) { return regulator.regulated_object_type(); });

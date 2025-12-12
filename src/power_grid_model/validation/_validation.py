@@ -342,9 +342,13 @@ def validate_required_values(  # noqa: PLR0915
 
     # Regulators
     required["regulator"] = required["base"] + ["regulated_object", "status"]
-    required[ComponentType.transformer_tap_regulator] = required["regulator"]
+    required[ComponentType.transformer_tap_regulator] = required["regulator"].copy()
     if calculation_type is None or calculation_type == CalculationType.power_flow:
         required[ComponentType.transformer_tap_regulator] += ["control_side", "u_set", "u_band"]
+
+    required[ComponentType.voltage_regulator] = required["regulator"].copy()
+    if calculation_type is None or calculation_type == CalculationType.power_flow:
+        required[ComponentType.voltage_regulator] += ["u_ref"]
 
     # Appliances
     required["appliance"] = required["base"] + ["node", "status"]
@@ -504,6 +508,7 @@ def validate_values(data: SingleDataset, calculation_type: CalculationType | Non
         ComponentType.asym_load: lambda d: validate_generic_load_gen(d, ComponentType.asym_load),
         ComponentType.asym_gen: lambda d: validate_generic_load_gen(d, ComponentType.asym_gen),
         ComponentType.shunt: validate_shunt,
+        ComponentType.voltage_regulator: validate_voltage_regulator,
     }
 
     for component, validator in component_validators.items():
@@ -883,6 +888,20 @@ def validate_generic_load_gen(data: SingleDataset, component: ComponentType) -> 
 
 def validate_shunt(data: SingleDataset) -> list[ValidationError]:
     return validate_appliance(data, ComponentType.shunt)
+
+
+def validate_voltage_regulator(data: SingleDataset) -> list[ValidationError]:
+    errors = validate_base(data, ComponentType.voltage_regulator)
+    errors += _all_valid_ids(data, ComponentType.voltage_regulator, "regulated_object", [
+        ComponentType.sym_gen,
+        ComponentType.asym_gen,
+        ComponentType.sym_load,
+        ComponentType.asym_load
+    ])
+    errors += _all_boolean(data, ComponentType.voltage_regulator, "status")
+    errors += _all_unique(data, ComponentType.voltage_regulator, "regulated_object")
+    errors += _all_greater_than_zero(data, ComponentType.voltage_regulator, "u_ref")
+    return errors
 
 
 def validate_generic_voltage_sensor(data: SingleDataset, component: ComponentType) -> list[ValidationError]:

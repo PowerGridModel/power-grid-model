@@ -221,6 +221,19 @@ static_assert(std::same_as<decltype(TransformerTapRegulatorUpdate::status), decl
 static_assert(offsetof(TransformerTapRegulatorUpdate, id) == offsetof(RegulatorUpdate, id));
 static_assert(offsetof(TransformerTapRegulatorUpdate, status) == offsetof(RegulatorUpdate, status));
 
+// static asserts for VoltageRegulatorUpdate
+static_assert(std::is_standard_layout_v<VoltageRegulatorUpdate>);
+// static asserts for conversion of VoltageRegulatorUpdate to BaseUpdate
+static_assert(std::alignment_of_v<VoltageRegulatorUpdate> >= std::alignment_of_v<RegulatorUpdate>);
+static_assert(std::same_as<decltype(VoltageRegulatorUpdate::id), decltype(BaseUpdate::id)>);
+static_assert(offsetof(VoltageRegulatorUpdate, id) == offsetof(BaseUpdate, id));
+// static asserts for conversion of VoltageRegulatorUpdate to RegulatorUpdate
+static_assert(std::alignment_of_v<VoltageRegulatorUpdate> >= std::alignment_of_v<RegulatorUpdate>);
+static_assert(std::same_as<decltype(VoltageRegulatorUpdate::id), decltype(RegulatorUpdate::id)>);
+static_assert(std::same_as<decltype(VoltageRegulatorUpdate::status), decltype(RegulatorUpdate::status)>);
+static_assert(offsetof(VoltageRegulatorUpdate, id) == offsetof(RegulatorUpdate, id));
+static_assert(offsetof(VoltageRegulatorUpdate, status) == offsetof(RegulatorUpdate, status));
+
 // static asserts for CurrentSensorUpdate<symmetric_t>
 static_assert(std::is_standard_layout_v<CurrentSensorUpdate<symmetric_t>>);
 // static asserts for conversion of CurrentSensorUpdate<symmetric_t> to BaseUpdate

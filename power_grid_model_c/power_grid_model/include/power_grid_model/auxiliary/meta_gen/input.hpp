@@ -441,6 +441,20 @@ struct get_attributes_list<TransformerTapRegulatorInput> {
 };
 
 template<>
+struct get_attributes_list<VoltageRegulatorInput> {
+    static constexpr std::array<MetaAttribute, 6> value{
+            // all attributes including base class
+            
+            meta_data_gen::get_meta_attribute<&VoltageRegulatorInput::id>(offsetof(VoltageRegulatorInput, id), "id"),
+            meta_data_gen::get_meta_attribute<&VoltageRegulatorInput::regulated_object>(offsetof(VoltageRegulatorInput, regulated_object), "regulated_object"),
+            meta_data_gen::get_meta_attribute<&VoltageRegulatorInput::status>(offsetof(VoltageRegulatorInput, status), "status"),
+            meta_data_gen::get_meta_attribute<&VoltageRegulatorInput::u_ref>(offsetof(VoltageRegulatorInput, u_ref), "u_ref"),
+            meta_data_gen::get_meta_attribute<&VoltageRegulatorInput::q_min>(offsetof(VoltageRegulatorInput, q_min), "q_min"),
+            meta_data_gen::get_meta_attribute<&VoltageRegulatorInput::q_max>(offsetof(VoltageRegulatorInput, q_max), "q_max"),
+    };
+};
+
+template<>
 struct get_attributes_list<GenericCurrentSensorInput> {
     static constexpr std::array<MetaAttribute, 6> value{
             // all attributes including base class

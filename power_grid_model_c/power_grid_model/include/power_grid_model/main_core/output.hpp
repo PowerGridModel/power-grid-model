@@ -90,6 +90,13 @@ constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> cons
            get_component_sequence_offset<Regulator, Component>(state.components);
 }
 
+template <std::same_as<VoltageRegulator> Component, class ComponentContainer>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
+constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
+    return state.comp_topo->regulated_object_idx.cbegin() +
+           get_component_sequence_offset<Regulator, Component>(state.components);
+}
+
 template <std::derived_from<Base> Component, class ComponentContainer>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr auto comp_base_sequence(MainModelState<ComponentContainer> const& state) {
@@ -449,6 +456,39 @@ constexpr auto
 output_result(Component const& transformer_tap_regulator, MainModelState<ComponentContainer> const& /* state */,
               MathOutput<std::vector<SolverOutputType>> const& /* math_output */, Idx const /* obj_seq */) {
     return transformer_tap_regulator.get_null_sc_output();
+}
+
+// output voltage regulator
+template <std::derived_from<VoltageRegulator> Component, class ComponentContainer,
+          steady_state_solver_output_type SolverOutputType>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
+constexpr auto output_result(Component const& voltage_regulator,
+                             MainModelState<ComponentContainer> const& state,
+                             MathOutput<std::vector<SolverOutputType>> const& math_output,
+                             Idx const obj_seq) {
+    using sym = typename SolverOutputType::sym;
+
+    Idx2D const gen_math_id = [&]() {
+        return state.topo_comp_coup->load_gen[obj_seq];
+    }();
+    if (gen_math_id.group != -1) {
+        // is voltage regulator always in same group as the generator it regulates?
+        for (auto const& vr_output: math_output.solver_output[gen_math_id.group].voltage_regulator) {
+            if (vr_output.generator_id == voltage_regulator.regulated_object()) {
+                return voltage_regulator.template get_output<sym>(vr_output);
+            }
+        }
+    }
+    return voltage_regulator.template get_null_output<sym>();
+}
+
+template <std::derived_from<VoltageRegulator> Component, class ComponentContainer,
+          short_circuit_solver_output_type SolverOutputType>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
+constexpr auto
+output_result(Component const& voltage_regulator, MainModelState<ComponentContainer> const& /* state */,
+              MathOutput<std::vector<SolverOutputType>> const& /* math_output */, Idx const /* obj_seq */) {
+    return voltage_regulator.get_null_sc_output();
 }
 
 // output base component

@@ -155,6 +155,8 @@ J.L -= -dQ_cal_m/dV
 #include "../common/three_phase_tensor.hpp"
 #include "../common/timer.hpp"
 
+#include <map>
+
 namespace power_grid_model::math_solver {
 
 // hide implementation in inside namespace
@@ -217,7 +219,8 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
           x_(y_bus.size()),
           del_x_pq_(y_bus.size()),
           sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
-          perm_(y_bus.size()) {}
+          perm_(y_bus.size()),
+          bus_types_(y_bus.size(), BusType::pq) {}
 
     // Initilize the unknown variable in polar form
     void initialize_derived_solver(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
@@ -234,10 +237,44 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
                                               linear_mat_data);
         linear_sparse_solver.prefactorize_and_solve(linear_mat_data, linear_perm, output.u, output.u);
 
+        set_u_ref_and_bus_types(input, output.u);
+
         // get magnitude and angle of start voltage
         for (Idx i = 0; i != this->n_bus_; ++i) {
             x_[i].v() = cabs(output.u[i]);
             x_[i].theta() = arg(output.u[i]);
+        }
+    }
+
+    void set_u_ref_and_bus_types(PowerFlowInput<sym> const& input, ComplexValueVector<sym>& u) {
+        std::map<Idx, Idx> loadgen_to_regulator{};
+        for (auto const& [load_gen, regulators] : enumerated_zip_sequence(*this->voltage_regulators_per_load_gen_)) {
+            if (input.load_gen_status[load_gen] == 0) { continue; }
+            for(Idx const regulator_number : regulators) {
+                if (input.voltage_regulator[regulator_number].status != 0) {
+                    loadgen_to_regulator.insert({load_gen, regulator_number});
+                }
+            }
+        }
+
+        // expect that one load/gen is only regulated by one regulator and if multiple loads/gens with regulators
+        // are connected to the same bus, they all have the same u_ref
+        for (auto const& [bus_number, load_gens, sources]
+            : enumerated_zip_sequence(*this->load_gens_per_bus_, *this->sources_per_bus_)) {
+            if (!sources.empty()) {
+                bus_types_[bus_number] = BusType::slack;
+                continue;
+            }
+
+            for (auto const load_number : load_gens) {
+                if (loadgen_to_regulator.find(load_number) != loadgen_to_regulator.end()) {
+                    Idx const regulator_number = loadgen_to_regulator[load_number];
+                    auto const& regulator = input.voltage_regulator[regulator_number];
+                    u[bus_number] = ComplexValue<sym>{regulator.u_ref};
+                    bus_types_[bus_number] = BusType::pv;
+                    break;
+                }
+            }
         }
     }
 
@@ -295,6 +332,8 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
     SparseSolverType sparse_solver_;
     // permutation array
     BlockPermArray perm_;
+
+    std::vector<BusType> bus_types_;
 
     /// @brief power_flow_ij = (ui @* conj(uj))  .* conj(yij)
     /// Hij = diag(Vi) * ( Gij .* sin(theta_ij) - Bij .* cos(theta_ij) ) * diag(Vj)
@@ -357,6 +396,40 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
             // L -= (-Q)
             add_diag(data_jac_[k].l(), -del_x_pq_[row].q());
         }
+
+        // PV-bus voltage identity row:
+        // For PV buses, the Q-equation is replaced by the algebraic constraint
+        //     rPV = V - Vset = 0.
+        // Since the state vector uses relative voltage increments ΔV_rel = ΔV / V,
+        // the derivative ∂rPV/∂ΔV_rel equals the current voltage magnitude V.
+        // Therefore:
+        //   - all off-diagonal voltage derivatives (L block) are zero,
+        //   - all θ-derivatives (M block) are zero,
+        //   - only the diagonal L entry is set to V.
+        // This removes the Q-equation and enforces the PV voltage constraint in the NR step.
+        for (Idx row = 0; row != this->n_bus_; ++row) {
+            const BusType bus_type = bus_types_[row];
+            for (Idx k = indptr[row]; k != indptr[row + 1]; ++k) {
+                Idx const j = indices[k];
+                if (bus_type == BusType::pv) {
+                    // If there are pv generators on a bus with type ::slack, then these generators
+                    // will be considered as ::pq and the jacobian row will not be modified.
+                    // TODO: #185 or should the slack behave like a pv bus too?
+                    data_jac_[k].m() = RealTensor<sym>{0.0};
+                    if (row == j) {
+                        auto const& v = x_[j].v();
+                        if constexpr (is_symmetric_v<sym>) {
+                            data_jac_[k].l() = v;
+                        } else {
+                            data_jac_[k].l() = RealTensor<asymmetric_t>{{v[0], v[1], v[2]}};
+                        }
+
+                    } else {
+                        data_jac_[k].l() = RealTensor<sym>{0.0};
+                    }
+                }
+            }
+        }
     }
 
     void add_loads(IdxRange const& load_gens, Idx bus_number, Idx diagonal_position, PowerFlowInput<sym> const& input,
@@ -378,6 +451,11 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
             default:
                 throw MissingCaseForEnumError("Jacobian and deviation calculation", type);
             }
+        }
+        if (bus_types_[bus_number] == BusType::pv) {
+            // Set ΔQ = 0 to enforce voltage magnitude constraint V = V_set (see Jacobian modification above).
+            // This forces ΔV = 0 in the NR step, keeping |U| constant.
+            del_x_pq_[bus_number].q() = 0.0;
         }
     }
 

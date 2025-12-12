@@ -79,6 +79,17 @@ template <symmetry_tag sym_type> struct ApplianceShortCircuitSolverOutput {
     ComplexValue<sym> i{};
 };
 
+template <symmetry_tag sym_type> struct VoltageRegulatorSolverOutput {
+    using sym = sym_type;
+
+    IntS limit_violated{};
+    RealValue<sym> q{};
+
+    // provide generator info, as the regulator component has no other access to it
+    ID generator_id{};
+    IntS generator_status{};
+};
+
 // voltage sensor calculation parameters for state estimation
 // The value is the complex voltage
 // If the imaginary part is NaN, it means the angle calculation is not correct
@@ -158,6 +169,9 @@ struct MathModelTopology {
     DenseGroupedIdxVector current_sensors_per_branch_to;
     DenseGroupedIdxVector tap_regulators_per_branch;
 
+    // TODO: #185 There should be at most one voltage regulator per load_gen. Is there a simpler way to represent this?
+    DenseGroupedIdxVector voltage_regulators_per_load_gen;
+
     Idx n_bus() const { return static_cast<Idx>(phase_shift.size()); }
 
     Idx n_branch() const { return static_cast<Idx>(branch_bus_idx.size()); }
@@ -187,6 +201,8 @@ struct MathModelTopology {
     Idx n_branch_to_current_sensor() const { return current_sensors_per_branch_to.element_size(); }
 
     Idx n_transformer_tap_regulator() const { return tap_regulators_per_branch.element_size(); }
+
+    Idx n_load_gen_voltage_regulator() const { return voltage_regulators_per_load_gen.element_size(); }
 };
 
 struct SourceCalcParam {
@@ -200,6 +216,18 @@ struct SourceCalcParam {
             return ComplexTensor<asymmetric_t>{(2.0 * y1 + y0) / 3.0, (y0 - y1) / 3.0};
         }
     }
+};
+
+template <symmetry_tag sym_type> struct VoltageRegulatorCalcParam {
+    using sym = sym_type;
+
+    IntS status{};
+    DoubleComplex u_ref;
+    RealValue<sym> q_min{};
+    RealValue<sym> q_max{};
+
+    // add generator id for later lookup
+    ID generator_id{};
 };
 
 template <symmetry_tag sym_type> struct MathModelParam {
@@ -220,6 +248,8 @@ template <symmetry_tag sym_type> struct PowerFlowInput {
 
     ComplexVector source;                // Complex u_ref of each source
     ComplexValueVector<sym> s_injection; // Specified injection power of each load_gen
+    std::vector<VoltageRegulatorCalcParam<sym>> voltage_regulator;
+    IntSVector load_gen_status;
 };
 
 template <symmetry_tag sym_type> struct StateEstimationInput {
@@ -291,6 +321,7 @@ template <symmetry_tag sym_type> struct SolverOutput {
     std::vector<ApplianceSolverOutput<sym>> source;
     std::vector<ApplianceSolverOutput<sym>> shunt;
     std::vector<ApplianceSolverOutput<sym>> load_gen;
+    std::vector<VoltageRegulatorSolverOutput<sym>> voltage_regulator;
 };
 
 template <symmetry_tag sym_type> struct ShortCircuitSolverOutput {
@@ -435,6 +466,7 @@ struct TopologicalComponentToMathCoupling {
     std::vector<Idx2D> power_sensor;   // can be coupled to branch-from/to, source, load_gen, or shunt sensor
     std::vector<Idx2D> current_sensor; // can be coupled to branch-from/to
     std::vector<Idx2D> regulator;
+    std::vector<Idx2D> voltage_regulator;
 };
 
 } // namespace power_grid_model
