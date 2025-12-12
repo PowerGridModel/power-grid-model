@@ -9,9 +9,8 @@
 
 #include "../calculation_parameters.hpp"
 #include "../common/common.hpp"
-#include "../common/exception.hpp"
+#include "../common/logging.hpp"
 #include "../common/three_phase_tensor.hpp"
-#include "../common/timer.hpp"
 
 #include <memory>
 

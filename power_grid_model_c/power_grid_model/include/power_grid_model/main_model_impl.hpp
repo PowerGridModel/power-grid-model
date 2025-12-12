@@ -19,10 +19,10 @@
 #include "common/timer.hpp"
 
 // component include
-#include "all_components.hpp"
 #include "auxiliary/dataset.hpp"
 #include "auxiliary/input.hpp"
 #include "auxiliary/output.hpp"
+#include "component/component.hpp"
 
 // math model include
 #include "math_solver/math_solver_dispatch.hpp"
