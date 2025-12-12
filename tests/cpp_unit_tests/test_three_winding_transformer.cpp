@@ -342,8 +342,9 @@ TEST_CASE("Test three winding transformer") {
         double const out_q_3 = base_power<symmetric_t> * 1;
         double const out_i_3 = base_i_3 * cabs(b3_output.i_f);
         double const out_s_3 = base_power<symmetric_t> * cabs(b3_output.s_f);
-        // max loading is at branch 3
-        double const out_loading = 0.316227766;
+        double const out_loading_1 = 0.037267800;
+        double const out_loading_2 = 0.072111026;
+        double const out_loading_3 = 0.316227766;
 
         CHECK(sym_output.id == 1);
         CHECK(sym_output.energized);
@@ -359,7 +360,11 @@ TEST_CASE("Test three winding transformer") {
         CHECK(sym_output.q_3 == doctest::Approx(out_q_3));
         CHECK(sym_output.i_3 == doctest::Approx(out_i_3));
         CHECK(sym_output.s_3 == doctest::Approx(out_s_3));
-        CHECK(sym_output.loading == doctest::Approx(out_loading));
+        CHECK(sym_output.loading_1 == doctest::Approx(out_loading_1));
+        CHECK(sym_output.loading_2 == doctest::Approx(out_loading_2));
+        CHECK(sym_output.loading_3 == doctest::Approx(out_loading_3));
+        // max loading is at branch 3
+        CHECK(sym_output.loading == doctest::Approx(out_loading_3));
 
         BranchSolverOutput<asymmetric_t> const asym_b1_output{.s_f = {(1.0 - 2.0i), (1.0 - 2.0i), (1.0 - 2.0i)},
                                                               .s_t = {(2.0 - 3.0i), (2.0 - 3.0i), (2.0 - 3.0i)},
@@ -390,7 +395,11 @@ TEST_CASE("Test three winding transformer") {
         CHECK(asym_output.q_3(0) == doctest::Approx(out_q_3 / 3));
         CHECK(asym_output.i_3(1) == doctest::Approx(out_i_3));
         CHECK(asym_output.s_3(2) == doctest::Approx(out_s_3 / 3));
-        CHECK(asym_output.loading == doctest::Approx(out_loading));
+        CHECK(asym_output.loading_1 == doctest::Approx(out_loading_1));
+        CHECK(asym_output.loading_2 == doctest::Approx(out_loading_2));
+        CHECK(asym_output.loading_3 == doctest::Approx(out_loading_3));
+        // max loading is at branch 3
+        CHECK(asym_output.loading == doctest::Approx(out_loading_3));
     }
 
     SUBCASE("Check asym short circuit output of branch 3") {

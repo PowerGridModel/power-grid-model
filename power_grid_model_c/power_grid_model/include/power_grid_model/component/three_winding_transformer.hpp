@@ -104,9 +104,9 @@ class ThreeWindingTransformer : public Branch3 {
     double base_i_1() const final { return base_i_1_; }
     double base_i_2() const final { return base_i_2_; }
     double base_i_3() const final { return base_i_3_; }
-    double loading(double s_1, double s_2, double s_3) const final {
-        return std::max({s_1 / sn_1_, s_2 / sn_2_, s_3 / sn_3_});
-    }
+    double loading_1(double s_1) const final { return s_1 / sn_1_; }
+    double loading_2(double s_2) const final { return s_2 / sn_2_; }
+    double loading_3(double s_3) const final { return s_3 / sn_3_; }
     // 3-way branch, phase shift = phase_node_x - phase_internal_node
     // the clock_12 and clock_13 is reverted
     // because clock_12 is the phase shift node_1 - node_2

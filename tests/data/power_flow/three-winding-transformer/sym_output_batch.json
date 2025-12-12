@@ -28,7 +28,10 @@
       "three_winding_transformer": [
         {
           "id": 4,
-          "loading": 9.732496033240084e-15,
+          "loading_1": 0.0,
+          "loading_2": 0.0,
+          "loading_3": 0.0,
+          "loading": 0.0,
           "p_1": 4.618527782440651e-08,
           "q_1": -5.6843418860808015e-08,
           "i_1": 3.0641848386786175e-13,
@@ -65,6 +68,9 @@
       "three_winding_transformer": [
         {
           "id": 4,
+          "loading_1": 0.0,
+          "loading_2": 0.0,
+          "loading_3": 0.0,
           "loading": 0.0,
           "p_1": 0.0,
           "q_1": 0.0,
@@ -102,6 +108,9 @@
       "three_winding_transformer": [
         {
           "id": 4,
+          "loading_1": 0.0,
+          "loading_2": 0.0,
+          "loading_3": 0.0,
           "loading": 0.0,
           "p_1": 0.0,
           "q_1": 0.0,
@@ -139,6 +148,9 @@
       "three_winding_transformer": [
         {
           "id": 4,
+          "loading_1": 0.0,
+          "loading_2": 0.0,
+          "loading_3": 0.0,
           "loading": 0.0,
           "p_1": 0.0,
           "q_1": 0.0,
@@ -176,6 +188,9 @@
       "three_winding_transformer": [
         {
           "id": 4,
+          "loading_1": 0.0,
+          "loading_2": 0.0,
+          "loading_3": 0.0,
           "loading": 0.0,
           "p_1": 0.0,
           "q_1": 0.0,
@@ -213,6 +228,9 @@
       "three_winding_transformer": [
         {
           "id": 4,
+          "loading_1": 0.0,
+          "loading_2": 0.0,
+          "loading_3": 0.0,
           "loading": 0.0,
           "p_1": 0.0,
           "q_1": 0.0,
@@ -250,6 +268,9 @@
       "three_winding_transformer": [
         {
           "id": 4,
+          "loading_1": 0.0,
+          "loading_2": 0.0,
+          "loading_3": 0.0,
           "loading": 0.0,
           "p_1": 0.0,
           "q_1": 0.0,
@@ -287,6 +308,9 @@
       "three_winding_transformer": [
         {
           "id": 4,
+          "loading_1": 0.0,
+          "loading_2": 0.0,
+          "loading_3": 0.0,
           "loading": 0.0,
           "p_1": 0.0,
           "q_1": 0.0,
@@ -324,6 +348,9 @@
       "three_winding_transformer": [
         {
           "id": 4,
+          "loading_1": 0.0,
+          "loading_2": 0.0,
+          "loading_3": 0.0,
           "loading": 0.0,
           "p_1": 0.0,
           "q_1": 0.0,
@@ -361,6 +388,9 @@
       "three_winding_transformer": [
         {
           "id": 4,
+          "loading_1": 0.0,
+          "loading_2": 0.0,
+          "loading_3": 0.0,
           "loading": 0.0,
           "p_1": 0.0,
           "q_1": 0.0,

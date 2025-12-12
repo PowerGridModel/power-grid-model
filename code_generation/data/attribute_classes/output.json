@@ -80,6 +80,21 @@
             "attributes": [
                 {
                     "data_type": "double",
+                    "names": "loading_1",
+                    "description": "loading of the branch at side 1"
+                },
+                {
+                    "data_type": "double",
+                    "names": "loading_2",
+                    "description": "loading of the branch at side 2"
+                },
+                {
+                    "data_type": "double",
+                    "names": "loading_3",
+                    "description": "loading of the branch at side 3"
+                },
+                {
+                    "data_type": "double",
                     "names": "loading",
                     "description": "loading of the branch"
                 },
