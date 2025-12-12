@@ -83,8 +83,8 @@ TEST_CASE("API Model Multi-Dimension") {
     batch_q_specified.add_attribute_buffer("sym_load", "q_specified", q_specified.data());
 
     // chaining
-    batch_u_ref.set_next(batch_p_specified);
-    batch_p_specified.set_next(batch_q_specified);
+    batch_u_ref.set_next_cartesian_product_dimension(batch_p_specified);
+    batch_p_specified.set_next_cartesian_product_dimension(batch_q_specified);
 
     // output dataset
     std::vector<double> i_source_result(total_batch_size);
@@ -104,7 +104,7 @@ TEST_CASE("API Model Multi-Dimension") {
     }
 
     // check cannot set next to itself
-    CHECK_THROWS_AS(batch_u_ref.set_next(batch_u_ref), PowerGridRegularError);
+    CHECK_THROWS_AS(batch_u_ref.set_next_cartesian_product_dimension(batch_u_ref), PowerGridRegularError);
 }
 
 } // namespace power_grid_model_cpp
