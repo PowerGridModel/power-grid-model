@@ -543,8 +543,12 @@ template <dataset_type_tag dataset_type_> class Dataset {
     }
 
     void set_next_cartesian_product_dimension(Dataset const* next) {
-        if (this == next) {
-            throw DatasetError{"Cannot chain dataset to itself!\n"};
+        Dataset const* current = next;
+        while (current != nullptr) {
+            if (this == current) {
+                throw DatasetError{"Cannot create cyclic cartesian product dimension chain!\n"};
+            }
+            current = current->get_next_cartesian_product_dimension();
         }
         next_ = next;
     }
