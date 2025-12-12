@@ -591,6 +591,7 @@ class PowerGridModel:
                 - linear: Use linear method.
             update_data (dict, list of dict, optional):
                 None: Calculate power flow once with the current model attributes.
+
                 Or a dictionary for batch calculation with batch update.
 
                     - key: Component type name to be updated in batch.
