@@ -589,7 +589,7 @@ class PowerGridModel:
 
                 - newton_raphson: Use Newton-Raphson iterative method (default).
                 - linear: Use linear method.
-            update_data (dict, optional):
+            update_data (dict, list of dict, optional):
                 None: Calculate power flow once with the current model attributes.
                 Or a dictionary for batch calculation with batch update.
 
@@ -607,6 +607,13 @@ class PowerGridModel:
                               compressed sparse structure.
                               https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html
                             - data: 1D numpy structured array in flat.
+                Or a list of such dictionaries (batch datasets) to represent multiple dimensions of cartesian product.
+                The calculation core will interpret these datasets as a cartesian product of all the scenarios.
+                Each batch dataset in the list represents one dimension of the cartesian product.
+                The output will then have row size equal to the product of the batch sizes of all these datasets,
+                in 1D flat structure.
+                E.g., if you have three batch datasets with batch sizes 2, 3, and 4 respectively,
+                and the number of nodes is 5, the final output for nodes will have shape (2*3*4, 5).
             threading (int, optional): Applicable only for batch calculation.
 
                 - < 0: Sequential
