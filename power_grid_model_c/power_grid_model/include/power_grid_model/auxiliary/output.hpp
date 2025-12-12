@@ -70,9 +70,9 @@ struct Branch3Output {
 
     ID id{na_IntID};  // ID of the object
     IntS energized{na_IntS};  // whether the object is energized
-    double loading_1{nan};  // loading of the branch at site 1
-    double loading_2{nan};  // loading of the branch at site 2
-    double loading_3{nan};  // loading of the branch at site 3
+    double loading_1{nan};  // loading of the branch at side 1
+    double loading_2{nan};  // loading of the branch at side 2
+    double loading_3{nan};  // loading of the branch at side 3
     double loading{nan};  // loading of the branch
     RealValue<sym> p_1{nan};  // power flow at side 1
     RealValue<sym> q_1{nan};  // power flow at side 1

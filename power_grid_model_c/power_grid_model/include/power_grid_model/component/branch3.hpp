@@ -87,7 +87,9 @@ class Branch3 : public Base {
     virtual double loading_1(double s_1) const = 0;
     virtual double loading_2(double s_2) const = 0;
     virtual double loading_3(double s_3) const = 0;
-    virtual double loading(double s_1, double s_2, double s_3) const = 0;
+    double loading(double s_1, double s_2, double s_3) const {
+        return std::max({loading_1(s_1), loading_2(s_2), loading_3(s_3)});
+    }
     virtual std::array<double, 3> phase_shift() const = 0;
 
     template <symmetry_tag sym>
