@@ -216,6 +216,31 @@ Hence, they can be constructed by PGM output attributes in the following way:
   The `side` here can be `from`, `to` for {hoverxreftooltip}`user_manual/components:Branch`es, `1`, `2`, `3` for
   {hoverxreftooltip}`user_manual/components:Branch3`s.
 
+#### Symmetric vs asymmetric calculations
+
+Power-grid-model can solve the grid either as a balanced single-phase equivalent (symmetric) or in full three-phase
+detail (asymmetric).
+The option affects which attributes are required and how results are exposed.
+
+- **Symmetric calculations (`symmetric=True`, default):** Assume a perfectly balanced three-phase system so every phase
+  shares the same voltage and current.
+  The solver builds a positive-sequence network using `r1`, `x1`, `c1`, … parameters and collapses any asymmetric
+  appliance to a single equivalent (asymmetric loads/generators are averaged across phases as described in
+  [Component Type Hierarchy and Graph Data Model](./data-model.md#symmetry-of-components-and-calculation)).
+  Output returns single values and voltages are line-to-line voltage magnitudes.
+- **Asymmetric calculations (`symmetric=False` or any non-three-phase fault):** Builds a full $abc$ nodal admittance
+  matrix and solves each phase separately.
+  Next to the positive-sequence parameters, the model now also needs the zero-sequence parameters (e.g. `r0`, `x0`,
+  `c0`), or per-phase parameters (`r_matrix` & `x_matrix`) for `asym_line`; symmetric components are expanded by evenly
+  splitting their totals across the three phases.
+  Output returns arrays with values per phase and voltages are line-to-neutral voltage magnitudes.
+
+```{note}
+For short-circuit calculations, a three-phase `fault_type` is calculated with a symmetric calculation, while any other
+`fault_type` (e.g. single- or two-phase faults) automatically triggers the asymmetric calculation.
+Outputs for short circuit calculations are always giving asymmetric output, independent of the fault type present.
+```
+
 ### Power flow algorithms
 
 Two types of power flow algorithms are implemented in power-grid-model; iterative algorithms (Newton-Raphson / Iterative
