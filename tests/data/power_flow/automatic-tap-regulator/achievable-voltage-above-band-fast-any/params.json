@@ -7,7 +7,7 @@
     "u": 100.0
   },
    "xfail": {
-    "raises": "AssertionError",
+    "raises": "MaxIterationReached",
     "reason": "Bug in fast any tap changing strategy in this edge case: https://github.com/PowerGridModel/power-grid-model/issues/1215"
   }
 }
