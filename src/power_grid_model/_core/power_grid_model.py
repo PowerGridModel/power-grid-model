@@ -315,7 +315,7 @@ class PowerGridModel:
         update_data = [_map_to_component_types(x) for x in update_data]
         prepared_update = [prepare_update_view(x) for x in update_data]
         for this_dataset, next_dataset in itertools.pairwise(prepared_update):
-            this_dataset.set_next(next_dataset)
+            this_dataset.set_next_cartesian_product_dimension(next_dataset)
         update_ptr: ConstDatasetPtr = prepared_update[0].get_dataset_ptr() if prepared_update else ConstDatasetPtr()
         batch_size = prod([x.get_info().batch_size() for x in prepared_update])
 
