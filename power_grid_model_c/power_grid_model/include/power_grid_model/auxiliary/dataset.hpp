@@ -542,13 +542,13 @@ template <dataset_type_tag dataset_type_> class Dataset {
         return result;
     }
 
-    void set_next(Dataset const* next) {
+    void set_next_cartesian_product_dimension(Dataset const* next) {
         if (this == next) {
             throw DatasetError{"Cannot chain dataset to itself!\n"};
         }
         next_ = next;
     }
-    Dataset const* get_next() const { return next_; }
+    Dataset const* get_next_cartesian_product_dimension() const { return next_; }
 
   private:
     MetaData const* meta_data_;

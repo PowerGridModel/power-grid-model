@@ -208,17 +208,17 @@ Idx get_batch_dimension(PGM_ConstDataset const* batch_dataset) {
     Idx dimension = 0;
     while (batch_dataset != nullptr) {
         ++dimension;
-        batch_dataset = batch_dataset->get_next();
+        batch_dataset = batch_dataset->get_next_cartesian_product_dimension();
     }
     return dimension;
 }
 
 Idx get_stride_size(PGM_ConstDataset const* batch_dataset) {
     Idx size = 1;
-    PGM_ConstDataset const* current = batch_dataset->get_next();
+    PGM_ConstDataset const* current = batch_dataset->get_next_cartesian_product_dimension();
     while (current != nullptr) {
         size *= current->batch_size();
-        current = current->get_next();
+        current = current->get_next_cartesian_product_dimension();
     }
     return size;
 }
@@ -264,7 +264,8 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
         }
 
         // recursive call
-        PGM_calculate(&local_handle, local_model.get(), opt, &sliced_output_dataset, batch_dataset->get_next());
+        PGM_calculate(&local_handle, local_model.get(), opt, &sliced_output_dataset,
+                      batch_dataset->get_next_cartesian_product_dimension());
         // merge errors
         merge_batch_error_msgs(handle, local_handle, i * stride_size, stride_size);
     }
