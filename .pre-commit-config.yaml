@@ -4,7 +4,7 @@
 
 repos:
   - repo: https://github.com/fsfe/reuse-tool  # outside pypi
-    rev: v4.0.3
+    rev: v6.2.0
     hooks:
       - id: reuse
   - repo: https://github.com/astral-sh/ruff-pre-commit
