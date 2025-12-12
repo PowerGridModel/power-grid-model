@@ -213,6 +213,16 @@ Idx get_batch_dimension(PGM_ConstDataset const* batch_dataset) {
     return dimension;
 }
 
+Idx get_stride_size(PGM_ConstDataset const* batch_dataset) {
+    Idx size = 1;
+    PGM_ConstDataset const* current = batch_dataset->get_next();
+    while (current != nullptr) {
+        size *= current->batch_size();
+        current = current->get_next();
+    }
+    return size;
+}
+
 } // namespace
 
 // run calculation
@@ -228,15 +238,7 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
 
     // get stride size of the rest of dimensions
     Idx const first_batch_size = batch_dataset->batch_size();
-    Idx const stride_size = [batch_dataset]() {
-        Idx size = 1;
-        PGM_ConstDataset const* current = batch_dataset->get_next();
-        while (current != nullptr) {
-            size *= current->batch_size();
-            current = current->get_next();
-        }
-        return size;
-    }();
+    Idx const stride_size = get_stride_size(batch_dataset);
 
     // loop over the first dimension batche
     for (Idx i = 0; i < first_batch_size; ++i) {
