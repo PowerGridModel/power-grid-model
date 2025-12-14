@@ -85,6 +85,7 @@ jobs:
           source .venv/bin/activate
           pre-commit install
           pre-commit install-hooks
+          pre-commit uninstall
 
       - name: create pull request
         if: ${{ inputs.create-pr || github.event_name == 'schedule' }}
