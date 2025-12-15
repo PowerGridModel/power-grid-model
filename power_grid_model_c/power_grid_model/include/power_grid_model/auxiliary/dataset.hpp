@@ -546,7 +546,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
         Dataset const* current = next;
         while (current != nullptr) {
             if (this == current) {
-                throw DatasetError{"Cannot create cyclic cartesian product dimension chain!\n"};
+                throw DatasetError{"Cannot create cyclic cartesian product dimension linked list!\n"};
             }
             current = current->get_next_cartesian_product_dimension();
         }

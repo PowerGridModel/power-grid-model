@@ -105,7 +105,7 @@ TEST_CASE("API Model Multi-Dimension") {
 
     // check cannot set next to itself
     CHECK_THROWS_AS(batch_u_ref.set_next_cartesian_product_dimension(batch_u_ref), PowerGridRegularError);
-    // check cannot create cyclic chain
+    // check cannot create cyclic linked list
     CHECK_THROWS_AS(batch_q_specified.set_next_cartesian_product_dimension(batch_u_ref), PowerGridRegularError);
 }
 

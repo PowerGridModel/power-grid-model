@@ -216,13 +216,14 @@ PGM_API PGM_DatasetInfo const* PGM_dataset_const_get_info(PGM_Handle* handle, PG
  * @brief Set the next const dataset as cartesian product dimension.
  *
  * This function allows user to run a batch calculation with multiple dimensions of scenarios.
- * The way user can archive this is to chain the datasets with this function.
- * The calculation core will interpret the chained datasets as a cartesian product of all the scenarios.
- * Each batch dataset in the chain represents one dimension of the cartesian product.
+ * The way user can archive this is to combine multiple batch datasets
+ * to create a multi-dimension batch calculation using a linked list pattern. The calculation core will
+ * interpret the combined dataset as a cartesian product on a linked list of all the scenarios.
+ * Each batch dataset in the linked list represents one dimension of the cartesian product.
  *
  * @param handle
  * @param dataset
- * @param next_dataset The next dataset in the chain.
+ * @param next_dataset The next dataset in the linked list.
  */
 PGM_API void PGM_dataset_const_set_next_cartesian_product_dimension(PGM_Handle* handle, PGM_ConstDataset* dataset,
                                                                     PGM_ConstDataset const* next_dataset);
