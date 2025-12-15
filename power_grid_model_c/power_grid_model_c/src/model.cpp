@@ -228,10 +228,8 @@ Idx get_stride_size(PGM_ConstDataset const* batch_dataset) {
 // run calculation
 void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options const* opt,
                    PGM_MutableDataset const* output_dataset, PGM_ConstDataset const* batch_dataset) {
-    Idx const batch_dimension = get_batch_dimension(batch_dataset);
-
     // for dimension < 2 (one-time or 1D batch), call implementation directly
-    if (batch_dimension < 2) {
+    if (auto const batch_dimension = get_batch_dimension(batch_dataset); batch_dimension < 2) {
         calculate_impl(handle, model, opt, output_dataset, batch_dataset);
         return;
     }
