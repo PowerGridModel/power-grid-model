@@ -48,13 +48,13 @@ jobs:
           uv build --sdist --no-create-gitignore --out-dir wheelhouse .
 
       - name: Keep version file
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: version
           path: VERSION
 
       - name: Keep SDist
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: wheelhouse
           path: ./wheelhouse/*.tar.gz
@@ -223,7 +223,7 @@ jobs:
           extras: "uv"
 
       - name: Keep wheel files
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: wheelhouse-${{ matrix.platform }}
           path: ./wheelhouse/*.whl
