@@ -91,9 +91,9 @@ PGM_API void PGM_get_indexer(PGM_Handle* handle, PGM_PowerGridModel const* model
  * If batch_dataset == NULL, it is a one-time calculation.
  * If batch_dataset != NULL, it is a batch calculation with batch update in the batch_dataset.
  *
- * The user can use the function set_next_cartesian_product_dimension() to chain multiple batch datasets
- * to create a multi-dimension batch calculation. The calculation core will interpret the chained datasets
- * as a cartesian product of all the scenarios.
+ * The user can use the function set_next_cartesian_product_dimension() to combine multiple batch datasets
+ * to create a multi-dimension batch calculation using a linked list pattern. The calculation core will
+ * interpret the combined dataset as a cartesian product on a linked list of all the scenarios.
  * Each batch dataset in the chain represents one dimension of the cartesian product.
  *
  * You need to pre-allocate all output buffer.
