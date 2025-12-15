@@ -82,31 +82,33 @@ TEST_CASE("API Model Multi-Dimension") {
     batch_q_specified.add_buffer("sym_load", 1, size_q_specified, nullptr, nullptr);
     batch_q_specified.add_attribute_buffer("sym_load", "q_specified", q_specified.data());
 
-    // chaining
-    batch_u_ref.set_next_cartesian_product_dimension(batch_p_specified);
-    batch_p_specified.set_next_cartesian_product_dimension(batch_q_specified);
+    SUBCASE("Correct cartesian product usage") {
+        batch_u_ref.set_next_cartesian_product_dimension(batch_p_specified);
+        batch_p_specified.set_next_cartesian_product_dimension(batch_q_specified);
 
-    // output dataset
-    std::vector<double> i_source_result(total_batch_size);
-    DatasetMutable batch_output_dataset{"sym_output", true, total_batch_size};
-    batch_output_dataset.add_buffer("source", 1, total_batch_size, nullptr, nullptr);
-    batch_output_dataset.add_attribute_buffer("source", "i", i_source_result.data());
+        // output dataset
+        std::vector<double> i_source_result(total_batch_size);
+        DatasetMutable batch_output_dataset{"sym_output", true, total_batch_size};
+        batch_output_dataset.add_buffer("source", 1, total_batch_size, nullptr, nullptr);
+        batch_output_dataset.add_attribute_buffer("source", "i", i_source_result.data());
 
-    // options
-    Options const options{};
+        // options
+        Options const options{};
 
-    // calculate
-    model.calculate(options, batch_output_dataset, batch_u_ref);
+        // calculate
+        model.calculate(options, batch_output_dataset, batch_u_ref);
 
-    // check results
-    for (Idx idx = 0; idx < total_batch_size; ++idx) {
-        CHECK(i_source_result[idx] == doctest::Approx(i_source_ref[idx]));
+        // check results
+        for (Idx idx = 0; idx < total_batch_size; ++idx) {
+            CHECK(i_source_result[idx] == doctest::Approx(i_source_ref[idx]));
+        }
     }
-
-    // check cannot set next to itself
-    CHECK_THROWS_AS(batch_u_ref.set_next_cartesian_product_dimension(batch_u_ref), PowerGridRegularError);
-    // check cannot create cyclic linked list
-    CHECK_THROWS_AS(batch_q_specified.set_next_cartesian_product_dimension(batch_u_ref), PowerGridRegularError);
+    SUBCASE("Linked list item referring to itself is not allowed") {
+        CHECK_THROWS_AS(batch_u_ref.set_next_cartesian_product_dimension(batch_u_ref), PowerGridRegularError);
+    }
+    SUBCASE("Cyclic linked list is not allowed") {
+        CHECK_THROWS_AS(batch_q_specified.set_next_cartesian_product_dimension(batch_u_ref), PowerGridRegularError);
+    }
 }
 
 } // namespace power_grid_model_cpp
