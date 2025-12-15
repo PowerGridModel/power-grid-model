@@ -317,7 +317,7 @@ class PowerGridModel:
         for this_dataset, next_dataset in itertools.pairwise(prepared_update):
             this_dataset.set_next_cartesian_product_dimension(next_dataset)
         update_ptr: ConstDatasetPtr = prepared_update[0].get_dataset_ptr() if prepared_update else ConstDatasetPtr()
-        batch_size = prod([x.get_info().batch_size() for x in prepared_update])
+        batch_size = prod(x.get_info().batch_size() for x in prepared_update)
 
         output_data = self._construct_output(
             output_component_types=output_component_types,
