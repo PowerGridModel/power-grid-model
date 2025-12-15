@@ -238,7 +238,7 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
     Idx const first_batch_size = batch_dataset->batch_size();
     Idx const stride_size = get_stride_size(batch_dataset);
 
-    // loop over the first dimension batche
+    // loop over the first dimension batch
     for (Idx i = 0; i < first_batch_size; ++i) {
         // a new handle
         PGM_Handle local_handle{};
