@@ -81,11 +81,10 @@ TEST_CASE("API Model Multi-Dimension") {
     DatasetConst batch_q_specified{"update", true, size_q_specified};
     batch_q_specified.add_buffer("sym_load", 1, size_q_specified, nullptr, nullptr);
     batch_q_specified.add_attribute_buffer("sym_load", "q_specified", q_specified.data());
+    batch_u_ref.set_next_cartesian_product_dimension(batch_p_specified);
+    batch_p_specified.set_next_cartesian_product_dimension(batch_q_specified);
 
     SUBCASE("Correct cartesian product usage") {
-        batch_u_ref.set_next_cartesian_product_dimension(batch_p_specified);
-        batch_p_specified.set_next_cartesian_product_dimension(batch_q_specified);
-
         // output dataset
         std::vector<double> i_source_result(total_batch_size);
         DatasetMutable batch_output_dataset{"sym_output", true, total_batch_size};
