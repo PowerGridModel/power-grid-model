@@ -37,7 +37,11 @@ jobs:
       - name: Install packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build ${{matrix.c_compiler}} ${{matrix.cxx_compiler}}
+          sudo apt-get install -y ninja-build gcc-14 g++-14 clang-18
+          sudo ln -s /usr/bin/clang-18 /usr/local/bin/clang
+          sudo ln -s /usr/bin/clang++-18 /usr/local/bin/clang++
+          sudo ln -s /usr/bin/gcc-14 /usr/local/bin/gcc
+          sudo ln -s /usr/bin/g++-14 /usr/local/bin/g++
 
       - name: Enable brew
         run: |
@@ -60,8 +64,8 @@ jobs:
 
       - name: Compare builds
         run: |
-          hash1="$(sha1sum ./install/ci-gcc-14-reproducible-1/lib/libpower_grid_model_c.so)"
-          hash2="$(sha1sum ./install/ci-gcc-14-reproducible-2/lib/libpower_grid_model_c.so)"
+          hash1="$(sha1sum ./install/${{ env.PRESET }}-1/lib/libpower_grid_model_c.so)"
+          hash2="$(sha1sum ./install/${{ env.PRESET }}-2/lib/libpower_grid_model_c.so)"
           if [ "$hash1" != "$hash2" ]; then
             echo "Build mismatch detected"
             exit 1
@@ -151,8 +155,8 @@ jobs:
 
       - name: Compare builds
         run: |
-          hash1="$(sha1sum ./install/ci-gcc-14-reproducible-1/lib/libpower_grid_model_c.so)"
-          hash2="$(sha1sum ./install/ci-gcc-14-reproducible-2/lib/libpower_grid_model_c.so)"
+          hash1="$(sha1sum ./install/${{ env.PRESET }}-1/lib/libpower_grid_model_c.so)"
+          hash2="$(sha1sum ./install/${{ env.PRESET }}-2/lib/libpower_grid_model_c.so)"
           if [ "$hash1" != "$hash2" ]; then
             echo "Build mismatch detected"
             exit 1
