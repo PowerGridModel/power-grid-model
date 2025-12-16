@@ -57,10 +57,12 @@ jobs:
           cmake --build --preset ${{ env.PRESET }} --verbose -j 1
           cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install
           mv install/${{ env.PRESET }} install/${{ env.PRESET }}-1
+          mv cpp_build/ cpp_build_1/
           cmake --preset ${{ env.PRESET }}
           cmake --build --preset ${{ env.PRESET }} --verbose -j 1
           cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install
           mv install/${{ env.PRESET }} install/${{ env.PRESET }}-2
+          mv cpp_build/ cpp_build_2/
 
       - name: Compare builds
         run: |
@@ -110,10 +112,12 @@ jobs:
           cmake --build --preset ${{ env.PRESET }} --verbose -j 1; if(!$?) { Exit $LASTEXITCODE }
           cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install; if(!$?) { Exit $LASTEXITCODE }
           mv install/${{ env.PRESET }} install/${{ env.PRESET }}-1; if(!$?) { Exit $LASTEXITCODE }
+          mv cpp_build/ cpp_build_1/; if(!$?) { Exit $LASTEXITCODE }
           cmake --preset ${{ env.PRESET }} -DCMAKE_PREFIX_PATH=C:\conda_envs\cpp_pkgs\Library; if(!$?) { Exit $LASTEXITCODE }
           cmake --build --preset ${{ env.PRESET }} --verbose -j 1; if(!$?) { Exit $LASTEXITCODE }
           cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install; if(!$?) { Exit $LASTEXITCODE }
           mv install/${{ env.PRESET }} install/${{ env.PRESET }}-2; if(!$?) { Exit $LASTEXITCODE }
+          mv cpp_build/ cpp_build_2/; if(!$?) { Exit $LASTEXITCODE }
 
       - name: Compare builds
         run: |
@@ -148,10 +152,12 @@ jobs:
           cmake --build --preset ${{ env.PRESET }} --verbose -j 1
           cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install
           mv install/${{ env.PRESET }} install/${{ env.PRESET }}-1
+          mv cpp_build/ cpp_build_1
           cmake --preset ${{ env.PRESET }}
           cmake --build --preset ${{ env.PRESET }} --verbose -j 1
           cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install
           mv install/${{ env.PRESET }} install/${{ env.PRESET }}-2
+          mv cpp_build/ cpp_build_2
 
       - name: Compare builds
         run: |
