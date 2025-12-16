@@ -296,6 +296,22 @@
     {
       "name": "ci-clang-tidy-release",
       "inherits": "clang-tidy-release"
+    },
+    {
+      "name": "ci-msvc-reproducible",
+      "inherits": "msvc-release",
+      "cacheVariables": {
+        "PGM_ENABLE_DEV_BUILD": "OFF",
+        "CMAKE_SHARED_LINKER_FLAGS": "/Brepro /INCREMENTAL:NO"
+      }
+    },
+    {
+      "name": "ci-clang-cl-reproducible",
+      "inherits": "clang-cl-release",
+      "cacheVariables": {
+        "PGM_ENABLE_DEV_BUILD": "OFF",
+        "CMAKE_SHARED_LINKER_FLAGS": "/Brepro /INCREMENTAL:NO"
+      }
     }
   ],
   "buildPresets": [
@@ -374,6 +390,14 @@
     {
       "name": "ci-clang-tidy-debug",
       "configurePreset": "ci-clang-tidy-debug"
+    },
+    {
+      "name": "ci-msvc-reproducible",
+      "configurePreset": "ci-msvc-reproducible"
+    },
+    {
+      "name": "ci-clang-cl-reproducible",
+      "configurePreset": "ci-clang-cl-reproducible"
     }
   ],
   "testPresets": [

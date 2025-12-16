@@ -50,12 +50,6 @@ set_target_properties(
         BUILD_RPATH_USE_ORIGIN TRUE
 )
 
-# target_link_options(
-#     power_grid_model_c
-#     PRIVATE
-#         "$<$<CXX_COMPILER_ID:MSVC>:/Brepro>"
-# )
-
 install(
     TARGETS power_grid_model_c
     EXPORT power_grid_modelTargets
