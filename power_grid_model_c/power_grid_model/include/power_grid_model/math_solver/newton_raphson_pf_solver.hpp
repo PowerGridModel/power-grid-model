@@ -220,7 +220,8 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
           del_x_pq_(y_bus.size()),
           sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
           perm_(y_bus.size()),
-          bus_types_(y_bus.size(), BusType::pq) {}
+          bus_types_(y_bus.size(), BusType::pq),
+          voltage_regulators_per_load_gen_{topo_ptr, &topo_ptr->voltage_regulators_per_load_gen} {}
 
     // Initilize the unknown variable in polar form
     void initialize_derived_solver(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
@@ -302,6 +303,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
     BlockPermArray perm_;
 
     std::vector<BusType> bus_types_;
+    std::shared_ptr<DenseGroupedIdxVector const> voltage_regulators_per_load_gen_;
 
     void set_u_ref_and_bus_types(PowerFlowInput<sym> const& input, ComplexValueVector<sym>& u) {
         std::map<Idx, Idx> loadgen_to_regulator = prepare_mapping_of_active_regulators(input);

@@ -201,8 +201,8 @@ inline void calculate_voltage_regulator_result(Idx const& bus_number, PowerFlowI
             continue;
         }
 
-        // TODO: #185 consider Q Limits (PV to PQ conversion)
-        // TODO: #185 equal distribution for now, later consider proportional distribution based on Q limits
+        // TODO(scud-soptim): #185 consider Q Limits (PV to PQ conversion)
+        // TODO(scud-soptim): #185 equal distribution for now, later consider proportional distribution based on Q limits
         if constexpr (is_symmetric_v<sym>) {
             auto const q_regulator = q_remaining / num_regulating_gens;
             output_regulator.q = q_regulator;
@@ -264,12 +264,12 @@ template <symmetry_tag sym, typename LoadGenFunc>
              std::same_as<std::invoke_result_t<LoadGenFunc, Idx>, LoadGenType>
 inline void calculate_pf_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                 grouped_idx_vector_type auto const& sources_per_bus,
-                                grouped_idx_vector_type auto const& load_gens_per_bus,
-                                grouped_idx_vector_type auto const& shunts_per_bus,
-                                grouped_idx_vector_type auto const& voltage_regulators_per_load_gen,
-                                SolverOutput<sym>& output,
+                                grouped_idx_vector_type auto const& load_gens_per_bus, SolverOutput<sym>& output,
                                 LoadGenFunc load_gen_func) {
     assert(sources_per_bus.size() == load_gens_per_bus.size());
+
+    auto const& shunts_per_bus = y_bus.math_topology().shunts_per_bus;
+    auto const& voltage_regulators_per_load_gen = y_bus.math_topology().voltage_regulators_per_load_gen;
 
     // call y bus
     output.branch = y_bus.template calculate_branch_flow<BranchSolverOutput<sym>>(output.u);

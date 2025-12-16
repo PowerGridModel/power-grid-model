@@ -58,8 +58,6 @@ template <symmetry_tag sym_type> class LinearPFSolver {
         : n_bus_{y_bus.size()},
           load_gens_per_bus_{topo_ptr, &topo_ptr->load_gens_per_bus},
           sources_per_bus_{topo_ptr, &topo_ptr->sources_per_bus},
-          shunts_per_bus_{topo_ptr, &topo_ptr->shunts_per_bus},
-          voltage_regulators_per_load_gen_{topo_ptr, &topo_ptr->voltage_regulators_per_load_gen},
           mat_data_(y_bus.nnz_lu()),
           sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
           perm_(n_bus_) {}
@@ -96,8 +94,6 @@ template <symmetry_tag sym_type> class LinearPFSolver {
     // shared topo data
     std::shared_ptr<SparseGroupedIdxVector const> load_gens_per_bus_;
     std::shared_ptr<DenseGroupedIdxVector const> sources_per_bus_;
-    std::shared_ptr<DenseGroupedIdxVector const> shunts_per_bus_;
-    std::shared_ptr<DenseGroupedIdxVector const> voltage_regulators_per_load_gen_;
     // sparse linear equation
     ComplexTensorVector<sym> mat_data_;
     // sparse solver
@@ -109,8 +105,7 @@ template <symmetry_tag sym_type> class LinearPFSolver {
     }
 
     void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, SolverOutput<sym>& output) {
-        detail::calculate_pf_result(y_bus, input, *sources_per_bus_, *load_gens_per_bus_, *shunts_per_bus_,
-                                    *voltage_regulators_per_load_gen_, output,
+        detail::calculate_pf_result(y_bus, input, *sources_per_bus_, *load_gens_per_bus_, output,
                                     [](Idx /*i*/) { return LoadGenType::const_y; });
     }
 };
