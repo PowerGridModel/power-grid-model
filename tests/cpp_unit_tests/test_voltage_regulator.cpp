@@ -24,7 +24,7 @@ TEST_CASE("Test voltage regulator") {
                                       .regulated_object = 2,
                                       .status = 1,
                                       .u_ref = 1.05,
-                                      .q_min = 0e6,
+                                      .q_min = 1e6,
                                       .q_max = 100e6};
 
     double const injection_direction{1.0};
@@ -51,7 +51,7 @@ TEST_CASE("Test voltage regulator") {
     }
 
     SUBCASE("Test q limits") {
-        CHECK(voltage_regulator.q_min() == 0e6);
+        CHECK(voltage_regulator.q_min() == 1e6);
         CHECK(voltage_regulator.q_max() == 100e6);
     }
 
@@ -89,8 +89,8 @@ TEST_CASE("Test voltage regulator") {
             VoltageRegulatorCalcParam<symmetric_t> const param = voltage_regulator.calc_param<symmetric_t>();
 
             CHECK(param.u_ref == 1.05);
-            CHECK(param.q_min == 0e6);
-            CHECK(param.q_max == 100.e6);
+            CHECK(param.q_min == 1);
+            CHECK(param.q_max == 100);
             CHECK(param.status);
         }
         SUBCASE("asymmetric") {
@@ -98,8 +98,8 @@ TEST_CASE("Test voltage regulator") {
 
             CHECK(param.u_ref == 1.05);
             for (size_t i = 0; i != 3; i++) {
-                CHECK(param.q_min(i) == 0e6);
-                CHECK(param.q_max(i) == 100e6);
+                CHECK(param.q_min(i) == 1);
+                CHECK(param.q_max(i) == 100);
             }
             CHECK(param.status);
         }
@@ -124,8 +124,8 @@ TEST_CASE("Test voltage regulator") {
                 VoltageRegulatorCalcParam<symmetric_t> const param = voltage_regulator.calc_param<symmetric_t>();
 
                 CHECK(param.u_ref == 0.97);
-                CHECK(param.q_min == 10.e6);
-                CHECK(param.q_max == 110.e6);
+                CHECK(param.q_min == 10.0);
+                CHECK(param.q_max == 110.0);
                 CHECK_FALSE(param.status);
                 CHECK_FALSE(voltage_regulator.is_energized(true));
                 CHECK_FALSE(voltage_regulator.is_energized(false));
@@ -135,8 +135,8 @@ TEST_CASE("Test voltage regulator") {
 
                 CHECK(param.u_ref == 0.97);
                 for (size_t i = 0; i != 3; i++) {
-                    CHECK(param.q_min(i) == 10.0e6);
-                    CHECK(param.q_max(i) == 110.0e6);
+                    CHECK(param.q_min(i) == 10.0);
+                    CHECK(param.q_max(i) == 110.0);
                 }
                 CHECK_FALSE(param.status);
                 CHECK_FALSE(voltage_regulator.is_energized(true));
