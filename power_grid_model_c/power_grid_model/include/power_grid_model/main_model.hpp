@@ -10,8 +10,6 @@
 
 #include "common/calculation_info.hpp"
 
-#include "prepare_calculate.hpp"
-
 #include <memory>
 
 namespace power_grid_model {

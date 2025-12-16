@@ -9,9 +9,9 @@
 // main include
 #include "batch_parameter.hpp"
 #include "calculation_parameters.hpp"
+#include "calculation_preparation.hpp"
 #include "container.hpp"
 #include "main_model_fwd.hpp"
-#include "prepare_calculate.hpp"
 #include "topology.hpp"
 
 // common
@@ -199,8 +199,7 @@ class MainModelImpl {
 
         UpdateChange const changed = main_core::update::update_component<CompType>(
             state_.components, std::forward<Updates>(updates),
-            std::back_inserter(std::get<comp_index>(solvers_cache_status_.get_changed_components_indices())),
-            sequence_idx);
+            std::back_inserter(std::get<comp_index>(solvers_cache_status_.changed_components_indices())), sequence_idx);
 
         // update, get changed variable
         solvers_cache_status_.update(changed);

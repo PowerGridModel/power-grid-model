@@ -38,13 +38,13 @@ class SolversCacheStatus {
     bool topology_cache_validity{false};
     YBusParameterCacheValidity parameter_cache_validity{};
     SymmetryMode previous_symmetry_mode{SymmetryMode::not_set};
-    SequenceIdx changed_components_indices{};
+    SequenceIdx changed_components_indices_{};
 
   public:
-    SequenceIdx const& get_changed_components_indices() const { return changed_components_indices; }
-    SequenceIdx& get_changed_components_indices() { return changed_components_indices; }
+    SequenceIdx const& changed_components_indices() const { return changed_components_indices_; }
+    SequenceIdx& changed_components_indices() { return changed_components_indices_; }
     void clear_changed_components_indices() {
-        std::ranges::for_each(get_changed_components_indices(), [](auto& comps) { comps.clear(); });
+        std::ranges::for_each(changed_components_indices(), [](auto& comps) { comps.clear(); });
     }
 
     bool is_topology_valid() const { return topology_cache_validity; }
@@ -168,7 +168,7 @@ void prepare_solvers(typename ModelType::MainModelState& state, SolverPreparatio
         if (solvers_cache_status.template is_symmetry_mode_conserved<sym>()) {
             std::vector<MathModelParamIncrement> const math_param_increments =
                 main_core::get_math_param_increment<ModelType>(state, n_math_solvers,
-                                                               solvers_cache_status.get_changed_components_indices());
+                                                               solvers_cache_status.changed_components_indices());
             main_core::update_y_bus(solver_context.math_state, math_params, math_param_increments);
         } else {
             main_core::update_y_bus(solver_context.math_state, math_params);
