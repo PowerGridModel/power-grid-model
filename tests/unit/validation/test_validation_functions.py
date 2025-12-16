@@ -477,10 +477,22 @@ def test_validate_required_values_sym_calculation(calculation_type, symmetric):
     assert (MissingValueError(ComponentType.fault, "status", [NaN]) in required_values_errors) == sc_dependent
     assert (MissingValueError(ComponentType.fault, "fault_type", [NaN]) in required_values_errors) == sc_dependent
 
-    assert MissingValueError(ComponentType.voltage_regulator, "id", [NaN]) in required_values_errors
-    assert MissingValueError(ComponentType.voltage_regulator, "status", [NaN]) in required_values_errors
-    assert MissingValueError(ComponentType.voltage_regulator, "regulated_object", [NaN]) in required_values_errors
-    assert (MissingValueError(ComponentType.voltage_regulator, "u_ref", [NaN]) in required_values_errors) == pf_dependent
+    assert (
+        MissingValueError(ComponentType.voltage_regulator, "id", [NaN])
+        in required_values_errors
+    )
+    assert (
+        MissingValueError(ComponentType.voltage_regulator, "status", [NaN])
+        in required_values_errors
+    )
+    assert (
+        MissingValueError(ComponentType.voltage_regulator, "regulated_object", [NaN])
+        in required_values_errors
+    )
+    assert (
+        MissingValueError(ComponentType.voltage_regulator, "u_ref", [NaN])
+        in required_values_errors
+    ) == pf_dependent
 
 
 def test_validate_required_values_asym_calculation():
