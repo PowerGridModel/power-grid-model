@@ -66,6 +66,7 @@ from power_grid_model.validation._rules import (
 from power_grid_model.validation.errors import (
     IdNotInDatasetError,
     InvalidIdError,
+    InvalidVoltageRegulationError,
     MissingValueError,
     MultiComponentNotUniqueError,
     ValidationError,
@@ -901,8 +902,98 @@ def validate_voltage_regulator(data: SingleDataset) -> list[ValidationError]:
     errors += _all_boolean(data, ComponentType.voltage_regulator, "status")
     errors += _all_unique(data, ComponentType.voltage_regulator, "regulated_object")
     errors += _all_greater_than_zero(data, ComponentType.voltage_regulator, "u_ref")
+    errors += validate_same_u_ref_per_node_voltage_regulator(data)
     return errors
 
+
+def validate_same_u_ref_per_node_voltage_regulator(
+    data: SingleDataset,
+) -> list[ValidationError]:
+    """Ensure that all voltage regulators and sources connected to the same node have the same u_ref
+    - collect u_ref defined by sources
+    - if there are multiple sources on the same node, check they have the same u_ref
+    - if they have different u_ref, then remove them from consideration and later only check
+      that two voltage regulators connected to the same node have the same u_ref, because
+      usually the source has priority in defining the node type (Slack vs. PV)
+    """
+
+    errors: list[ValidationError] = []
+    if ComponentType.voltage_regulator in data:
+        node_u_refs = _init_node_u_ref_from_sources(data)
+        vr_data = data[ComponentType.voltage_regulator]
+        if vr_data.size != 0:
+            appliance_to_node = _init_appliance_to_node_mapping(data)
+
+            regulator_ids = vr_data["id"]
+            regulator_status = vr_data["status"]
+            appliance_ids = vr_data["regulated_object"]
+            u_refs = vr_data["u_ref"]
+
+            # update node_u_refs with voltage regulator u_ref
+            node_regulators = {}
+            for appliance_id, regulator_id, status, u_ref in zip(
+                appliance_ids, regulator_ids, regulator_status, u_refs
+            ):
+                if status == 0:
+                    continue  # skip disabled voltage regulators
+                node_id = appliance_to_node.get(appliance_id)
+                node_u_refs.setdefault(node_id, set()).add(u_ref)
+                node_regulators.setdefault(node_id, []).append(regulator_id)
+
+            # get nodes with different u_refs
+            error_node_ids = set(
+                [
+                    node_id
+                    for node_id, u_refs in node_u_refs.items()
+                    if node_id is not None and u_refs is not None and len(u_refs) > 1
+                ]
+            )
+
+            # collect voltage regulator ids connected to those nodes
+            error_regulator_ids = []
+            for node_id in error_node_ids:
+                error_regulator_ids.extend(node_regulators[node_id])
+
+            if len(error_regulator_ids) > 0:
+                errors.append(
+                    InvalidVoltageRegulationError(
+                        ComponentType.voltage_regulator, "u_ref", error_regulator_ids
+                    )
+                )
+
+    return errors
+
+
+def _init_node_u_ref_from_sources(data: SingleDataset):
+    """ Initialize a mapping of node IDs to u_ref values defined by sources connected to those nodes.
+    Multiple sources connected to the same node are possible and the resulting u_ref is effectively
+    determined relative to the sk value of those sources. In that case, a voltage regulator at the same node
+    probably won't reference the same u_ref value as the sources, so we remove the u_ref of the sources again
+    and only check the voltage regulators among each other.
+    """
+    node_u_refs = {}
+    if ComponentType.source in data:
+        source_data = data[ComponentType.source]
+        for idx, node_id in enumerate(source_data["node"]):
+            u_ref = source_data["u_ref"][idx]
+            node_u_refs.setdefault(node_id, set()).add(u_ref)
+
+        # clear nodes with different source u_refs from consideration
+        for node_id, u_refs in node_u_refs.items():
+            if len(u_refs) > 1:
+                node_u_refs[node_id] = None
+
+    return node_u_refs
+
+def _init_appliance_to_node_mapping(data: SingleDataset):
+    appliance_to_node = {}
+    for component_type in [ComponentType.sym_gen, ComponentType.asym_gen,
+                           ComponentType.sym_load, ComponentType.asym_load]:
+        if component_type in data:
+            for appliance in data[component_type]:
+                appliance_to_node[appliance["id"]] = appliance["node"]
+
+    return appliance_to_node
 
 def validate_generic_voltage_sensor(data: SingleDataset, component: ComponentType) -> list[ValidationError]:
     errors = validate_base(data, component)
