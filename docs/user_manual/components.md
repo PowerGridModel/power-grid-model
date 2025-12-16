@@ -1258,9 +1258,13 @@ The voltage regulator changes the reactive power output of the generator it regu
 If `q_min` and `q_max` are provided, the reactive power is constrained within this range (i.e., `q_min <= q <= q_max` or `q_min >= q >= q_max`).
 If these limits are not provided, the reactive power can take any value needed to maintain the voltage setpoint.
 
+```{warning}
+Voltage regulation is only supported by the [Newton-Raphson](#newton-raphson-power-flow) method as an experimental feature.
+```
+
 ```{note}
-The `regulated_object` must reference a generator (`sym_gen` or `asym_gen`).
-Each generator can have at most one voltage regulator.
+The `regulated_object` must reference a generator (`sym_gen` or `asym_gen`) or a load (`sym_load` or `asym_load`).
+Each generator or load can have at most one voltage regulator.
 When multiple voltage-regulated generators are connected to the same node, they should all specify the same `u_ref` value to avoid conflicting voltage setpoints.
 ```
 
