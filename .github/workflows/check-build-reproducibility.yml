@@ -29,7 +29,7 @@ jobs:
 
     env:
       CMAKE_PREFIX_PATH: /home/linuxbrew/.linuxbrew
-      PRESET: ci-${{ matrix.compiler }}-${{ matrix.build-option }}
+      PRESET: ci-${{ matrix.compiler }}-reproducibility
       HOMEBREW_FORCE_BREWED_CURL: 1
 
     steps:
@@ -73,11 +73,10 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        build-option: [debug, release]
         compiler: [msvc, clang-cl]
 
     env:
-      PRESET: ${{ matrix.compiler }}-${{ matrix.build-option }}
+      PRESET: ${{ matrix.compiler }}-reproducibility
 
     steps:
       - uses: actions/checkout@v6
@@ -122,12 +121,9 @@ jobs:
 
   check-reproducibility-c-macos:
     runs-on: macos-latest
-    strategy:
-      matrix:
-        build-option: [debug, release]
     env:
       CMAKE_PREFIX_PATH: /usr/local
-      PRESET: ci-clang-${{ matrix.build-option }}
+      PRESET: ci-clang-reproducibility
 
     steps:
       - uses: actions/checkout@v6
