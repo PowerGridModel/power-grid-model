@@ -179,6 +179,9 @@ inline void calculate_voltage_regulator_result(Idx const& bus_number, PowerFlowI
     for ([[maybe_unused]] auto const& _ : regulating_gens) {
         ++num_regulating_gens;
     }
+    if (num_regulating_gens == 0.0) {
+        return;
+    }
 
     auto const& q_remaining = imag(s_remaining);
     for (Idx const load_gen : load_gens) {
@@ -192,7 +195,7 @@ inline void calculate_voltage_regulator_result(Idx const& bus_number, PowerFlowI
         output_regulator.generator_id = input_regulator.generator_id;
         output_regulator.generator_status = input.load_gen_status[load_gen];
         output_regulator.limit_violated = 0;
-        output_regulator.q = RealValue<sym>{0}; // no violation
+        output_regulator.q = RealValue<sym>{0};
 
         if(input.load_gen_status[load_gen] == 0 || input.voltage_regulator[regulator].status == 0) {
             continue;

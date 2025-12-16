@@ -246,38 +246,6 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         }
     }
 
-    void set_u_ref_and_bus_types(PowerFlowInput<sym> const& input, ComplexValueVector<sym>& u) {
-        std::map<Idx, Idx> loadgen_to_regulator{};
-        for (auto const& [load_gen, regulators] : enumerated_zip_sequence(*this->voltage_regulators_per_load_gen_)) {
-            if (input.load_gen_status[load_gen] == 0) { continue; }
-            for(Idx const regulator_number : regulators) {
-                if (input.voltage_regulator[regulator_number].status != 0) {
-                    loadgen_to_regulator.insert({load_gen, regulator_number});
-                }
-            }
-        }
-
-        // expect that one load/gen is only regulated by one regulator and if multiple loads/gens with regulators
-        // are connected to the same bus, they all have the same u_ref
-        for (auto const& [bus_number, load_gens, sources]
-            : enumerated_zip_sequence(*this->load_gens_per_bus_, *this->sources_per_bus_)) {
-            if (!sources.empty()) {
-                bus_types_[bus_number] = BusType::slack;
-                continue;
-            }
-
-            for (auto const load_number : load_gens) {
-                if (loadgen_to_regulator.find(load_number) != loadgen_to_regulator.end()) {
-                    Idx const regulator_number = loadgen_to_regulator[load_number];
-                    auto const& regulator = input.voltage_regulator[regulator_number];
-                    u[bus_number] = ComplexValue<sym>{regulator.u_ref};
-                    bus_types_[bus_number] = BusType::pv;
-                    break;
-                }
-            }
-        }
-    }
-
     // Calculate the Jacobian and deviation
     void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                 ComplexValueVector<sym> const& u) {
@@ -334,6 +302,43 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
     BlockPermArray perm_;
 
     std::vector<BusType> bus_types_;
+
+    void set_u_ref_and_bus_types(PowerFlowInput<sym> const& input, ComplexValueVector<sym>& u) {
+        std::map<Idx, Idx> loadgen_to_regulator = prepare_mapping_of_active_regulators(input);
+
+        // expect that one load/gen is only regulated by one regulator and if multiple loads/gens with regulators
+        // are connected to the same bus, they all have the same u_ref
+        for (auto const& [bus_number, load_gens, sources]
+            : enumerated_zip_sequence(*this->load_gens_per_bus_, *this->sources_per_bus_)) {
+            if (!sources.empty()) {
+                bus_types_[bus_number] = BusType::slack;
+                continue;
+            }
+
+            for (auto const load_number : load_gens) {
+                if (loadgen_to_regulator.find(load_number) != loadgen_to_regulator.end()) {
+                    Idx const regulator_number = loadgen_to_regulator[load_number];
+                    auto const& regulator = input.voltage_regulator[regulator_number];
+                    u[bus_number] = ComplexValue<sym>{regulator.u_ref};
+                    bus_types_[bus_number] = BusType::pv;
+                    break;
+                }
+            }
+        }
+    }
+
+    auto prepare_mapping_of_active_regulators(PowerFlowInput<sym> const& input) {
+        std::map<Idx, Idx> loadgen_to_regulator{};
+        for (auto const& [load_gen, regulators] : enumerated_zip_sequence(*this->voltage_regulators_per_load_gen_)) {
+            if (input.load_gen_status[load_gen] == 0) { continue; }
+            for(Idx const regulator_number : regulators) {
+                if (input.voltage_regulator[regulator_number].status != 0) {
+                    loadgen_to_regulator.insert({load_gen, regulator_number});
+                }
+            }
+        }
+        return loadgen_to_regulator;
+    }
 
     /// @brief power_flow_ij = (ui @* conj(uj))  .* conj(yij)
     /// Hij = diag(Vi) * ( Gij .* sin(theta_ij) - Bij .* cos(theta_ij) ) * diag(Vj)
@@ -408,10 +413,9 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         //   - only the diagonal L entry is set to V.
         // This removes the Q-equation and enforces the PV voltage constraint in the NR step.
         for (Idx row = 0; row != this->n_bus_; ++row) {
-            const BusType bus_type = bus_types_[row];
-            for (Idx k = indptr[row]; k != indptr[row + 1]; ++k) {
-                Idx const j = indices[k];
-                if (bus_type == BusType::pv) {
+            if (bus_types_[row] == BusType::pv) {
+                for (Idx k = indptr[row]; k != indptr[row + 1]; ++k) {
+                    Idx const j = indices[k];
                     // If there are pv generators on a bus with type ::slack, then these generators
                     // will be considered as ::pq and the jacobian row will not be modified.
                     // TODO: #185 or should the slack behave like a pv bus too?

@@ -123,22 +123,10 @@ void prepare_input(main_model_state_c auto const& state, std::vector<Idx2D> cons
     }
 }
 
-template <symmetry_tag sym, IntSVector(PowerFlowInput<sym>::*component), class Component>
+template <symmetry_tag sym, class InputType, IntSVector(InputType::*component), class Component>
+    requires std::same_as<InputType, PowerFlowInput<sym>> || std::same_as<InputType, StateEstimationInput<sym>>
 void prepare_input_status(main_model_state_c auto const& state, std::vector<Idx2D> const& objects,
-                          std::vector<PowerFlowInput<sym>>& input) {
-    for (Idx i = 0, n = narrow_cast<Idx>(objects.size()); i != n; ++i) {
-        Idx2D const math_idx = objects[i];
-        if (math_idx.group == isolated_component) {
-            continue;
-        }
-        (input[math_idx.group].*component)[math_idx.pos] =
-            main_core::get_component_by_sequence<Component>(state.components, i).status();
-    }
-}
-
-template <symmetry_tag sym, IntSVector(StateEstimationInput<sym>::*component), class Component>
-void prepare_input_status(main_model_state_c auto const& state, std::vector<Idx2D> const& objects,
-                          std::vector<StateEstimationInput<sym>>& input) {
+                          std::vector<InputType>& input) {
     for (Idx i = 0, n = narrow_cast<Idx>(objects.size()); i != n; ++i) {
         Idx2D const math_idx = objects[i];
         if (math_idx.group == isolated_component) {
@@ -169,10 +157,9 @@ std::vector<PowerFlowInput<sym>> prepare_power_flow_input(main_model_state_c aut
         state, state.topo_comp_coup->load_gen, pf_input);
 
     prepare_input<PowerFlowInput<sym>, VoltageRegulatorCalcParam<sym>, &PowerFlowInput<sym>::voltage_regulator, VoltageRegulator>(
-        state, state.topo_comp_coup->voltage_regulator, pf_input,
-        [&state](Idx i) { return state.comp_topo->regulated_object_type[i] == ComponentType::generic_load_gen; });
+        state, state.topo_comp_coup->voltage_regulator, pf_input);
 
-    prepare_input_status<sym, &PowerFlowInput<sym>::load_gen_status, GenericLoadGen>(
+    prepare_input_status<sym, PowerFlowInput<sym>, &PowerFlowInput<sym>::load_gen_status, GenericLoadGen>(
         state, state.topo_comp_coup->load_gen, pf_input);
 
     return pf_input;
@@ -201,12 +188,12 @@ std::vector<StateEstimationInput<sym>> prepare_state_estimation_input(main_model
         se_input[i].measured_branch_to_current.resize(state.math_topology[i]->n_branch_to_current_sensor());
     }
 
-    prepare_input_status<sym, &StateEstimationInput<sym>::shunt_status, Shunt>(state, state.topo_comp_coup->shunt,
-                                                                               se_input);
-    prepare_input_status<sym, &StateEstimationInput<sym>::load_gen_status, GenericLoadGen>(
+    prepare_input_status<sym, StateEstimationInput<sym>, &StateEstimationInput<sym>::shunt_status, Shunt>(
+        state, state.topo_comp_coup->shunt, se_input);
+    prepare_input_status<sym, StateEstimationInput<sym>, &StateEstimationInput<sym>::load_gen_status, GenericLoadGen>(
         state, state.topo_comp_coup->load_gen, se_input);
-    prepare_input_status<sym, &StateEstimationInput<sym>::source_status, Source>(state, state.topo_comp_coup->source,
-                                                                                 se_input);
+    prepare_input_status<sym, StateEstimationInput<sym>, &StateEstimationInput<sym>::source_status, Source>(
+        state, state.topo_comp_coup->source, se_input);
 
     prepare_input<StateEstimationInput<sym>, VoltageSensorCalcParam<sym>, &StateEstimationInput<sym>::measured_voltage,
                   GenericVoltageSensor>(state, state.topo_comp_coup->voltage_sensor, se_input);

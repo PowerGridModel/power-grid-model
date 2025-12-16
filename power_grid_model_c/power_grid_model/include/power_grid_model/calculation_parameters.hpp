@@ -168,8 +168,6 @@ struct MathModelTopology {
     DenseGroupedIdxVector current_sensors_per_branch_from;
     DenseGroupedIdxVector current_sensors_per_branch_to;
     DenseGroupedIdxVector tap_regulators_per_branch;
-
-    // TODO: #185 There should be at most one voltage regulator per load_gen. Is there a simpler way to represent this?
     DenseGroupedIdxVector voltage_regulators_per_load_gen;
 
     Idx n_bus() const { return static_cast<Idx>(phase_shift.size()); }

@@ -176,9 +176,6 @@ constexpr void register_topology_components(ComponentContainer const& components
             }
         });
 
-    apply_registration<Component>(components, comp_topo.regulator_type,
-                                  [](Regulator const& regulator) { return regulator.math_model_type(); });
-
     apply_registration<Component>(components, comp_topo.regulated_object_type,
                                   [](Regulator const& regulator) { return regulator.regulated_object_type(); });
 }

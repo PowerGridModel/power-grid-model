@@ -24,11 +24,13 @@ class VoltageRegulator : public Regulator {
 
     static constexpr char const* name = "voltage_regulator";
     explicit VoltageRegulator(VoltageRegulatorInput const& voltage_regulator_input,
-                           ComponentType regulated_object_type,
-                            double injection_direction)
+                              ComponentType regulated_object_type,
+                              double injection_direction)
         : Regulator{voltage_regulator_input, regulated_object_type},
           injection_direction_{injection_direction},
-          u_ref_{voltage_regulator_input.u_ref} {}
+          u_ref_{voltage_regulator_input.u_ref},
+          q_min_{voltage_regulator_input.q_min},
+          q_max_{voltage_regulator_input.q_max} {}
 
     UpdateChange update(VoltageRegulatorUpdate const& update_data) {
         assert(update_data.id == this->id() || is_nan(update_data.id));
@@ -73,40 +75,33 @@ class VoltageRegulator : public Regulator {
         return VoltageRegulatorCalcParam<sym>{
             .status = static_cast<IntS>(status()),
             .u_ref = {u_ref_, 0.0},
-            .q_min = RealValue<sym>{q_min_}, // TODO: #185 divide by 3 for asymmetric case?
-            .q_max = RealValue<sym>{q_max_}, // TODO: #185 divide by base_power?
+            .q_min = RealValue<sym>{q_min_ / base_power_3p},
+            .q_max = RealValue<sym>{q_max_ / base_power_3p},
             .generator_id = this->regulated_object()
         };
     }
 
     // setter
-    bool set_u_ref(double new_u_ref) {
-        bool changed = false;
+    void set_u_ref(double new_u_ref) {
         if (!is_nan(new_u_ref)) {
             u_ref_ = new_u_ref;
-            changed = true;
         }
-        return changed;
     }
 
-    bool set_q_limits(double new_q_min, double new_q_max) {
-        bool changed = false;
+    void set_q_limits(double new_q_min, double new_q_max) {
         if (!is_nan(new_q_min)) {
             q_min_ = new_q_min;
-            changed = true;
         }
         if (!is_nan(new_q_max)) {
             q_max_ = new_q_max;
-            changed = true;
         }
-        return changed;
     }
 
     // getter
-    double injection_direction() const { return injection_direction_; }
-    double u_ref() const { return u_ref_; }
-    double q_min() const { return q_min_; }
-    double q_max() const { return q_max_; }
+    constexpr double injection_direction() const { return injection_direction_; }
+    constexpr double u_ref() const { return u_ref_; }
+    constexpr double q_min() const { return q_min_; }
+    constexpr double q_max() const { return q_max_; }
 
   private:
     double injection_direction_;

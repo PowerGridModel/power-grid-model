@@ -83,14 +83,7 @@ constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> cons
     return state.comp_coup.fault.cbegin();
 }
 
-template <std::same_as<TransformerTapRegulator> Component, class ComponentContainer>
-    requires model_component_state_c<MainModelState, ComponentContainer, Component>
-constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
-    return state.comp_topo->regulated_object_idx.cbegin() +
-           get_component_sequence_offset<Regulator, Component>(state.components);
-}
-
-template <std::same_as<VoltageRegulator> Component, class ComponentContainer>
+template <std::derived_from<Regulator> Component, class ComponentContainer>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
     return state.comp_topo->regulated_object_idx.cbegin() +
@@ -468,12 +461,12 @@ constexpr auto output_result(Component const& voltage_regulator,
                              Idx const obj_seq) {
     using sym = typename SolverOutputType::sym;
 
-    Idx2D const gen_math_id = [&]() {
+    Idx2D const load_gen_math_id = [&]() {
         return state.topo_comp_coup->load_gen[obj_seq];
     }();
-    if (gen_math_id.group != -1) {
+    if (load_gen_math_id.group != -1) {
         // is voltage regulator always in same group as the generator it regulates?
-        for (auto const& vr_output: math_output.solver_output[gen_math_id.group].voltage_regulator) {
+        for (auto const& vr_output: math_output.solver_output[load_gen_math_id.group].voltage_regulator) {
             if (vr_output.generator_id == voltage_regulator.regulated_object()) {
                 return voltage_regulator.template get_output<sym>(vr_output);
             }
