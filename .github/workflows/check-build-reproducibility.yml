@@ -60,7 +60,7 @@ jobs:
         run: |
           diff -r build_1 build_2
 
-  build-cpp-test-windows:
+  check-reproducibility-c-windows:
     runs-on: windows-latest
     strategy:
       matrix:
@@ -111,7 +111,7 @@ jobs:
           if ($LASTEXITCODE -eq 1) { Exit 1 }
           Write-Host "Builds are identical"
 
-  build-cpp-test-macos:
+  check-reproducibility-c-macos:
     runs-on: macos-latest
     strategy:
       matrix:
