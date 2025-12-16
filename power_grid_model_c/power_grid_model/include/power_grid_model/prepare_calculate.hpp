@@ -24,24 +24,27 @@ struct SolverPreparationContext {
 template <class ModelType>
     requires(main_core::is_main_model_type_v<ModelType>)
 class SolversCacheStatus {
+  public:
+    using SequenceIdx = typename ModelType::SequenceIdx;
+
   private:
     struct YBusParameterCacheValidity {
         bool sym{false};
         bool asym{false};
     };
 
-    enum class SymmetryMode { symmetric, asymmetric, not_set };
+    enum class SymmetryMode : IntS { symmetric = 0, asymmetric = 1, not_set = na_IntS };
 
     bool topology_cache_validity{false};
     YBusParameterCacheValidity parameter_cache_validity{};
     SymmetryMode previous_symmetry_mode{SymmetryMode::not_set};
-
-  public:
-    using SequenceIdx = typename ModelType::SequenceIdx;
     SequenceIdx changed_components_indices{};
 
+  public:
+    SequenceIdx const& get_changed_components_indices() const { return changed_components_indices; }
+    SequenceIdx& get_changed_components_indices() { return changed_components_indices; }
     void clear_changed_components_indices() {
-        std::ranges::for_each(changed_components_indices, [](auto& comps) { comps.clear(); });
+        std::ranges::for_each(get_changed_components_indices(), [](auto& comps) { comps.clear(); });
     }
 
     bool is_topology_valid() const { return topology_cache_validity; }
@@ -80,6 +83,28 @@ class SolversCacheStatus {
             previous_symmetry_mode = SymmetryMode::asymmetric;
         }
     }
+
+    void update(UpdateChange const& changes) {
+        // if topology changed, everything is not up to date
+        // if only param changed, set param to not up to date
+        if (changes.topo || !is_topology_valid()) {
+            set_topology_status(false);
+            set_parameter_status<symmetric_t>(false);
+            set_parameter_status<asymmetric_t>(false);
+            return;
+        }
+
+        if (changes.param) {
+            set_topology_status(true);
+            set_parameter_status<symmetric_t>(false);
+            set_parameter_status<asymmetric_t>(false);
+            return;
+        }
+
+        set_topology_status(true);
+        set_parameter_status<symmetric_t>(is_parameter_valid<symmetric_t>());
+        set_parameter_status<asymmetric_t>(is_parameter_valid<asymmetric_t>());
+    }
 };
 
 namespace detail {
@@ -114,7 +139,6 @@ template <class ModelType> Idx get_n_math_solvers(typename ModelType::MainModelS
     return static_cast<Idx>(state.math_topology.size());
 }
 
-// all the logic for the cache is here, the rest are only asserts to debug better
 template <symmetry_tag sym, class ModelType>
 void prepare_solvers(typename ModelType::MainModelState& state, SolverPreparationContext& solver_context,
                      SolversCacheStatus<ModelType>& solvers_cache_status) {
@@ -139,13 +163,12 @@ void prepare_solvers(typename ModelType::MainModelState& state, SolverPreparatio
             main_core::get_y_bus<sym>(solver_context.math_state)[idx].register_parameters_changed_callback(
                 [solver = std::ref(solvers[idx])](bool changed) { solver.get().get().parameters_changed(changed); });
         }
-    } else if (!solvers_cache_status.template is_parameter_valid<sym>()) { // topology doesn't change when changing
-                                                                           // symmetry but ybus changes
+    } else if (!solvers_cache_status.template is_parameter_valid<sym>()) {
         std::vector<MathModelParam<sym>> const math_params = main_core::get_math_param<sym>(state, n_math_solvers);
         if (solvers_cache_status.template is_symmetry_mode_conserved<sym>()) {
             std::vector<MathModelParamIncrement> const math_param_increments =
                 main_core::get_math_param_increment<ModelType>(state, n_math_solvers,
-                                                               solvers_cache_status.changed_components_indices);
+                                                               solvers_cache_status.get_changed_components_indices());
             main_core::update_y_bus(solver_context.math_state, math_params, math_param_increments);
         } else {
             main_core::update_y_bus(solver_context.math_state, math_params);

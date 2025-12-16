@@ -199,10 +199,11 @@ class MainModelImpl {
 
         UpdateChange const changed = main_core::update::update_component<CompType>(
             state_.components, std::forward<Updates>(updates),
-            std::back_inserter(std::get<comp_index>(solvers_cache_status.changed_components_indices)), sequence_idx);
+            std::back_inserter(std::get<comp_index>(solvers_cache_status_.get_changed_components_indices())),
+            sequence_idx);
 
         // update, get changed variable
-        update_state(changed);
+        solvers_cache_status_.update(changed);
         if constexpr (CacheType::value) {
             cached_state_changes_ = cached_state_changes_ || changed;
         }
@@ -285,16 +286,6 @@ class MainModelImpl {
                                                                       components_to_update, update_independence, false);
     }
 
-    void update_state(UpdateChange const& changes) {
-        // if topology changed, everything is not up to date
-        // if only param changed, set param to not up to date
-        solvers_cache_status.set_topology_status(solvers_cache_status.is_topology_valid() && !changes.topo);
-        solvers_cache_status.template set_parameter_status<symmetric_t>(
-            solvers_cache_status.template is_parameter_valid<symmetric_t>() && !changes.topo && !changes.param);
-        solvers_cache_status.template set_parameter_status<asymmetric_t>(
-            solvers_cache_status.template is_parameter_valid<asymmetric_t>() && !changes.topo && !changes.param);
-    }
-
     template <typename CompType> void restore_component(SequenceIdxView const& sequence_idx) {
         constexpr auto component_index = ModelType::template index_of_component<CompType>;
 
@@ -313,7 +304,7 @@ class MainModelImpl {
         ModelType::run_functor_with_all_component_types_return_void(
             [this, &sequence_idx]<typename CompType>() { this->restore_component<CompType>(sequence_idx); });
 
-        update_state(cached_state_changes_);
+        solvers_cache_status_.update(cached_state_changes_);
         cached_state_changes_ = {};
     }
 
@@ -347,9 +338,9 @@ class MainModelImpl {
         auto const& input = [this, &logger, prepare_input_ = std::forward<PrepareInputFn>(prepare_input)] {
             Timer const timer{logger, LogEvent::prepare};
             assert(construction_complete_);
-            prepare_solvers<sym>(state_, solver_preparation_context_, solvers_cache_status);
-            assert(
-                (solvers_cache_status.is_topology_valid() && solvers_cache_status.template is_parameter_valid<sym>()));
+            prepare_solvers<sym>(state_, solver_preparation_context_, solvers_cache_status_);
+            assert(solvers_cache_status_.is_topology_valid());
+            assert(solvers_cache_status_.template is_parameter_valid<sym>());
             return prepare_input_(get_n_math_solvers<ModelType>(state_));
         }();
         // calculate
@@ -409,8 +400,8 @@ class MainModelImpl {
 
             return calculate_<ShortCircuitSolverOutput<sym>, MathSolverProxy<sym>, YBus<sym>, ShortCircuitInput>(
                 [this, voltage_scaling](Idx n_math_solvers) {
-                    assert((solvers_cache_status.is_topology_valid() &&
-                            solvers_cache_status.template is_parameter_valid<sym>()));
+                    assert(solvers_cache_status_.is_topology_valid());
+                    assert(solvers_cache_status_.template is_parameter_valid<sym>());
                     return main_core::prepare_short_circuit_input<sym>(state_, state_.comp_coup, n_math_solvers,
                                                                        voltage_scaling);
                 },
@@ -533,7 +524,7 @@ class MainModelImpl {
 
     SolverPreparationContext solver_preparation_context_;
 
-    SolversCacheStatus<ImplType> solvers_cache_status{};
+    SolversCacheStatus<ImplType> solvers_cache_status_{};
 
     OwnedUpdateDataset cached_inverse_update_{};
     UpdateChange cached_state_changes_{};
