@@ -49,16 +49,25 @@ jobs:
 
       - name: Build twice
         run: |
-          CC=${ matrix.c_compiler} CXX=${ matrix.cxx_compiler} cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -G Ninja
-          cmake --build build --verbose -j1
-          mv build build_1
-          CC=${ matrix.c_compiler} CXX=${ matrix.cxx_compiler} cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -G Ninja
-          cmake --build build --verbose -j1
-          mv build build_2
+          cmake --preset ${{ env.PRESET }}
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install
+          mv install/${{ env.PRESET }} install/${{ env.PRESET }}-1
+          cmake --preset ${{ env.PRESET }}
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install
+          mv install/${{ env.PRESET }} install/${{ env.PRESET }}-2
 
       - name: Compare builds
         run: |
-          diff -r build_1 build_2
+          hash1="$(sha1sum ./install/ci-gcc-14-reproducible-1/lib/libpower_grid_model_c.so)"
+          hash2="$(sha1sum ./install/ci-gcc-14-reproducible-2/lib/libpower_grid_model_c.so)"
+          if [ "$hash1" != "$hash2" ]; then
+            echo "Build mismatch detected"
+            exit 1
+          else
+            echo "Builds are identical"
+          fi
 
   check-reproducibility-c-windows:
     runs-on: windows-latest
@@ -94,19 +103,19 @@ jobs:
 
       - name: Build twice
         run: |
-          cmake --preset ci-msvc-reproducible; if(!$?) { Exit $LASTEXITCODE }
-          cmake --build --preset ci-msvc-reproducible --verbose -j 1; if(!$?) { Exit $LASTEXITCODE }
-          cmake --build --preset ci-msvc-reproducible --verbose -j 1 --target install; if(!$?) { Exit $LASTEXITCODE }
-          mv install/ci-msvc-reproducible install/ci-msvc-reproducible-1; if(!$?) { Exit $LASTEXITCODE }
-          cmake --preset ci-msvc-reproducible; if(!$?) { Exit $LASTEXITCODE }
-          cmake --build --preset ci-msvc-reproducible --verbose -j 1; if(!$?) { Exit $LASTEXITCODE }
-          cmake --build --preset ci-msvc-reproducible --verbose -j 1 --target install; if(!$?) { Exit $LASTEXITCODE }
-          mv install/ci-msvc-reproducible install/ci-msvc-reproducible-2; if(!$?) { Exit $LASTEXITCODE }
+          cmake --preset ${{ env.PRESET }}; if(!$?) { Exit $LASTEXITCODE }
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1; if(!$?) { Exit $LASTEXITCODE }
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install; if(!$?) { Exit $LASTEXITCODE }
+          mv install/${{ env.PRESET }} install/${{ env.PRESET }}-1; if(!$?) { Exit $LASTEXITCODE }
+          cmake --preset ${{ env.PRESET }}; if(!$?) { Exit $LASTEXITCODE }
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1; if(!$?) { Exit $LASTEXITCODE }
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install; if(!$?) { Exit $LASTEXITCODE }
+          mv install/${{ env.PRESET }} install/${{ env.PRESET }}-2; if(!$?) { Exit $LASTEXITCODE }
 
       - name: Compare builds
         run: |
-          $hash1 = Get-ChildItem -Path install/ci-msvc-reproducible-1/bin/power_grid_model_c.dll -Recurse -File | Get-FileHash | Sort-Object Path
-          $hash2 = Get-ChildItem -Path install/ci-msvc-reproducible-2/bin/power_grid_model_c.dll -Recurse -File | Get-FileHash | Sort-Object Path
+          $hash1 = Get-ChildItem -Path install/${{ env.PRESET }}-1/bin/power_grid_model_c.dll -Recurse -File | Get-FileHash | Sort-Object Path
+          $hash2 = Get-ChildItem -Path install/${{ env.PRESET }}-2/bin/power_grid_model_c.dll -Recurse -File | Get-FileHash | Sort-Object Path
           Compare-Object $hash1 $hash2 -Property Hash, Path -PassThru | ForEach-Object { if ($_.SideIndicator) { Write-Error "Build mismatch detected"; Exit 1 } }
           if ($LASTEXITCODE -eq 1) { Exit 1 }
           Write-Host "Builds are identical"
@@ -135,13 +144,22 @@ jobs:
 
       - name: Build twice
         run: |
-          CC=${ matrix.c_compiler} CXX=${ matrix.cxx_compiler} cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -G Ninja
-          cmake --build build --verbose -j1
-          mv build build_1
-          CC=${ matrix.c_compiler} CXX=${ matrix.cxx_compiler} cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -G Ninja
-          cmake --build build --verbose -j1
-          mv build build_2
+          cmake --preset ${{ env.PRESET }}
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install
+          mv install/${{ env.PRESET }} install/${{ env.PRESET }}-1
+          cmake --preset ${{ env.PRESET }}
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install
+          mv install/${{ env.PRESET }} install/${{ env.PRESET }}-2
 
       - name: Compare builds
         run: |
-          diff -r build_1 build_2
+          hash1="$(sha1sum ./install/ci-gcc-14-reproducible-1/lib/libpower_grid_model_c.so)"
+          hash2="$(sha1sum ./install/ci-gcc-14-reproducible-2/lib/libpower_grid_model_c.so)"
+          if [ "$hash1" != "$hash2" ]; then
+            echo "Build mismatch detected"
+            exit 1
+          else
+            echo "Builds are identical"
+          fi

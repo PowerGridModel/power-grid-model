@@ -312,6 +312,26 @@
         "PGM_ENABLE_DEV_BUILD": "OFF",
         "CMAKE_SHARED_LINKER_FLAGS": "/Brepro /INCREMENTAL:NO"
       }
+    },
+    {
+      "name": "ci-gcc-reproducible",
+      "inherits": "gcc-release",
+      "environment": {
+        "CFLAGS": "$penv{CFLAGS} -frandom-seed=0 -Wdate-time"
+      },
+      "cacheVariables": {
+        "PGM_ENABLE_DEV_BUILD": "OFF"
+      }
+    },
+    {
+      "name": "ci-clang-reproducible",
+      "inherits": "clang-release",
+      "environment": {
+        "CFLAGS": "$penv{CFLAGS} -frandom-seed=0 -Wdate-time"
+      },
+      "cacheVariables": {
+        "PGM_ENABLE_DEV_BUILD": "OFF"
+      }
     }
   ],
   "buildPresets": [
@@ -398,6 +418,14 @@
     {
       "name": "ci-clang-cl-reproducible",
       "configurePreset": "ci-clang-cl-reproducible"
+    },
+    {
+      "name": "ci-gcc-reproducible",
+      "configurePreset": "ci-gcc-reproducible"
+    },
+    {
+      "name": "ci-clang-reproducible",
+      "configurePreset": "ci-clang-reproducible"
     }
   ],
   "testPresets": [
