@@ -106,11 +106,11 @@ jobs:
 
       - name: Build twice
         run: |
-          cmake --preset ${{ env.PRESET }}; if(!$?) { Exit $LASTEXITCODE }
+          cmake --preset ${{ env.PRESET }} -DCMAKE_PREFIX_PATH=C:\conda_envs\cpp_pkgs\Library; if(!$?) { Exit $LASTEXITCODE }
           cmake --build --preset ${{ env.PRESET }} --verbose -j 1; if(!$?) { Exit $LASTEXITCODE }
           cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install; if(!$?) { Exit $LASTEXITCODE }
           mv install/${{ env.PRESET }} install/${{ env.PRESET }}-1; if(!$?) { Exit $LASTEXITCODE }
-          cmake --preset ${{ env.PRESET }}; if(!$?) { Exit $LASTEXITCODE }
+          cmake --preset ${{ env.PRESET }} -DCMAKE_PREFIX_PATH=C:\conda_envs\cpp_pkgs\Library; if(!$?) { Exit $LASTEXITCODE }
           cmake --build --preset ${{ env.PRESET }} --verbose -j 1; if(!$?) { Exit $LASTEXITCODE }
           cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install; if(!$?) { Exit $LASTEXITCODE }
           mv install/${{ env.PRESET }} install/${{ env.PRESET }}-2; if(!$?) { Exit $LASTEXITCODE }
