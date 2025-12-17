@@ -87,7 +87,8 @@ jobs:
           pre-commit install-hooks
           pre-commit uninstall
 
-      - uses: actions/create-github-app-token@v2
+      - name: generate GitHub App token
+        uses: actions/create-github-app-token@v2
         id: generate-token
         with:
           app-id: ${{ secrets.CI_BOT_APP_ID }}
