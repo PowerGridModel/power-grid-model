@@ -26,7 +26,7 @@ struct ClIOptions {
 
     Idx calculation_type{PGM_power_flow};
     Idx calculation_method{PGM_default_method};
-    Idx symmetric_calculation{PGM_symmetric};
+    bool symmetric_calculation{PGM_symmetric};
     double error_tolerance{1e-8};
     Idx max_iterations{20};
     Idx threading{-1};

@@ -50,8 +50,37 @@ CLIResult parse_cli_options(int argc, char** argv, ClIOptions& options) {
                 {"iec60909", PGM_iec60909},
             },
             CLI::ignore_case));
-    
-    
+    app.add_flag("-s,--symmetric-calculation,!-a,!--asymmetric-calculation", options.symmetric_calculation,
+                 "Use symmetric calculation (1) or not (0)");
+    app.add_option("-e,--error-tolerance", options.error_tolerance, "Error tolerance for iterative calculations");
+    app.add_option("-x,--max-iterations", options.max_iterations,
+                   "Maximum number of iterations for iterative calculations");
+    app.add_option("-t,--threading", options.threading, "Number of threads to use (-1 for automatic selection)");
+    app.add_option("--short-circuit-voltage-scaling", options.short_circuit_voltage_scaling,
+                   "Short circuit voltage scaling")
+        ->transform(CLI::CheckedTransformer(
+            EnumMap{
+                {"minimum", PGM_short_circuit_voltage_scaling_minimum},
+                {"maximum", PGM_short_circuit_voltage_scaling_maximum},
+            },
+            CLI::ignore_case));
+    app.add_option("--tap-changing-strategy", options.tap_changing_strategy, "Tap changing strategy")
+        ->transform(CLI::CheckedTransformer(
+            EnumMap{
+                {"disabled", PGM_tap_changing_strategy_disabled},
+                {"any", PGM_tap_changing_strategy_any_valid_tap},
+                {"min_voltage", PGM_tap_changing_strategy_min_voltage_tap},
+                {"max_voltage", PGM_tap_changing_strategy_max_voltage_tap},
+                {"fast_any", PGM_tap_changing_strategy_fast_any_tap},
+            },
+            CLI::ignore_case));
+    app.add_flag("--msgpack,--use-msgpack-output-serialization", options.use_msgpack_output_serialization,
+                 "Use MessagePack output serialization");
+    app.add_option("--indent,--output-json-indent", options.output_json_indent,
+                   "Number of spaces to indent JSON output");
+    app.add_flag("--compact,--use-compact-serialization", options.use_compact_serialization,
+                 "Use compact serialization (no extra whitespace)");
+
     try {
         app.parse(argc, argv);
     } catch (const CLI::ParseError& e) {
