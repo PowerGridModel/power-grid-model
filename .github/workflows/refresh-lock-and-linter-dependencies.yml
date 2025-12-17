@@ -87,6 +87,12 @@ jobs:
           pre-commit install-hooks
           pre-commit uninstall
 
+      - uses: actions/create-github-app-token@v2
+        id: generate-token
+        with:
+          app-id: ${{ secrets.CI_BOT_APP_ID }}
+          private-key: ${{ secrets.CI_BOT_PRIVATE_KEY }}
+
       - name: create pull request
         if: ${{ inputs.create-pr || github.event_name == 'schedule' }}
         uses: peter-evans/create-pull-request@v8
@@ -99,3 +105,4 @@ jobs:
           signoff: true
           delete-branch: true
           base: ${{ github.head_ref }}
+          token: ${{ steps.generate-token.outputs.token }}
