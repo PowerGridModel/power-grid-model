@@ -39,7 +39,9 @@ struct ClIOptions {
     Idx output_json_indent{2};
     bool use_compact_serialization{false};
 
-    std::map<PGM_MetaComponent const*, std::set<PGM_MetaAttribute const*>> output_component_attribute_filters;
+    std::string output_dataset_name;
+    MetaDataset const* output_dataset{nullptr};
+    std::map<MetaComponent const*, std::set<MetaAttribute const*>> output_component_attribute_filters;
 
     friend std::ostream& operator<<(std::ostream& os, ClIOptions const& options);
 };

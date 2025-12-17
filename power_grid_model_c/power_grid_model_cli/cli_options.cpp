@@ -17,8 +17,31 @@ struct CLIPostCallback {
     ClIOptions& options;
     CLI::Option* msgpack_flag;
     CLI::Option* compact_flag;
+    std::vector<std::string> const& output_components;
+    std::vector<std::string> const& output_attributes;
 
     void operator()() {
+        set_default_values();
+        set_output_dataset();
+        add_component_output_filter();
+        add_attribute_output_filter();
+    }
+
+    static bool is_msgpack_file(std::filesystem::path const& path) {
+        std::ifstream file{path, std::ios::binary};
+        if (!file.is_open()) {
+            return false;
+        }
+        uint8_t header;
+        file.read(reinterpret_cast<char*>(&header), 1);
+        if (!file) {
+            return false;
+        }
+        // Check for fixmap (0x80-0x8f), map16 (0xde), or map32 (0xdf)
+        return (header >= 0x80 && header <= 0x8f) || header == 0xde || header == 0xdf;
+    }
+
+    void set_default_values() {
         // detect if input file is msgpack
         options.input_msgpack_serialization = is_msgpack_file(options.input_file);
         // detect if batch update file is msgpack
@@ -35,18 +58,58 @@ struct CLIPostCallback {
         }
     }
 
-    static bool is_msgpack_file(std::filesystem::path const& path) {
-        std::ifstream file{path, std::ios::binary};
-        if (!file.is_open()) {
-            return false;
+    void set_output_dataset() {
+        if (options.calculation_type == PGM_power_flow || options.calculation_type == PGM_state_estimation) {
+            if (options.symmetric_calculation) {
+                options.output_dataset_name = "sym_output";
+            } else {
+                options.output_dataset_name = "asym_output";
+            }
+        } else {
+            // options.calculation_type == PGM_short_circuit
+            options.output_dataset_name = "sc_output";
         }
-        uint8_t header;
-        file.read(reinterpret_cast<char*>(&header), 1);
-        if (!file) {
-            return false;
+        options.output_dataset = MetaData::get_dataset_by_name(options.output_dataset_name);
+    }
+
+    void add_component_output_filter() {
+        for (auto const& comp_name : output_components) {
+            try {
+                auto const component = MetaData::get_component_by_name(options.output_dataset_name, comp_name);
+                options.output_component_attribute_filters[component] = {};
+            } catch (PowerGridError const&) {
+                throw CLI::ValidationError("output-component", "Component '" + comp_name + "' not found in dataset '" +
+                                                                   options.output_dataset_name + "'.");
+            }
         }
-        // Check for fixmap (0x80-0x8f), map16 (0xde), or map32 (0xdf)
-        return (header >= 0x80 && header <= 0x8f) || header == 0xde || header == 0xdf;
+    }
+
+    void add_attribute_output_filter() {
+        for (auto const& attr_full_name : output_attributes) {
+            auto dot_pos = attr_full_name.find('.');
+            if (dot_pos == std::string::npos || dot_pos == 0 || dot_pos == attr_full_name.size() - 1) {
+                throw CLI::ValidationError("output-attribute", "Attribute '" + attr_full_name +
+                                                                   "' is not in the format 'component.attribute'.");
+            }
+            auto comp_name = attr_full_name.substr(0, dot_pos);
+            auto attr_name = attr_full_name.substr(dot_pos + 1);
+            MetaComponent const* component = nullptr;
+            try {
+                component = MetaData::get_component_by_name(options.output_dataset_name, comp_name);
+            } catch (PowerGridError const&) {
+                throw CLI::ValidationError("output-attribute", "Component '" + comp_name + "' not found in dataset '" +
+                                                                   options.output_dataset_name + "'.");
+            }
+            MetaAttribute const* attribute = nullptr;
+            try {
+                attribute = MetaData::get_attribute_by_name(options.output_dataset_name, comp_name, attr_name);
+            } catch (PowerGridError const&) {
+                throw CLI::ValidationError("output-attribute",
+                                           "Attribute '" + attr_name + "' not found in component '" + comp_name +
+                                               "' of dataset '" + options.output_dataset_name + "'.");
+            }
+            options.output_component_attribute_filters[component].insert(attribute);
+        }
     }
 };
 
@@ -128,7 +191,11 @@ CLIResult parse_cli_options(int argc, char** argv, ClIOptions& options) {
                    "Filter output to only include specified attributes, in the format `component.attribute` (can be "
                    "specified multiple times)");
 
-    app.callback(CLIPostCallback{.options = options, .msgpack_flag = msgpack_flag, .compact_flag = compact_flag});
+    app.callback(CLIPostCallback{.options = options,
+                                 .msgpack_flag = msgpack_flag,
+                                 .compact_flag = compact_flag,
+                                 .output_components = output_components,
+                                 .output_attributes = output_attributes});
 
     try {
         app.parse(argc, argv);
