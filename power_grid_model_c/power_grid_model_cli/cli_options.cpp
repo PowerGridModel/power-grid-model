@@ -81,6 +81,13 @@ CLIResult parse_cli_options(int argc, char** argv, ClIOptions& options) {
     auto compact_flag =
         app.add_flag("--compact,--use-compact-serialization,!--no-compact,!--no-compact-serialization",
                      options.use_compact_serialization, "Use compact serialization (no extra whitespace)");
+    std::vector<std::string> output_components;
+    app.add_option("--oc,--output-component", output_components,
+                   "Filter output to only include specified components (can be specified multiple times)");
+    std::vector<std::string> output_attributes;
+    app.add_option("--oa,--output-attribute", output_attributes,
+                   "Filter output to only include specified attributes, in the format `component.attribute` (can be "
+                   "specified multiple times)");
 
     app.callback([&options, compact_flag]() {
         if (compact_flag->count() == 0 && options.use_msgpack_output_serialization) {
