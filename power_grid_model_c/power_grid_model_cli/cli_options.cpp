@@ -6,7 +6,11 @@
 
 #include <CLI/CLI.hpp>
 
+#include <map>
+
 namespace power_grid_model_cpp {
+
+using EnumMap = std::map<std::string, Idx>;
 
 CLIResult parse_cli_options(int argc, char** argv, ClIOptions& options) {
     CLI::App app{"Power Grid Model CLI"};
@@ -27,6 +31,27 @@ CLIResult parse_cli_options(int argc, char** argv, ClIOptions& options) {
     app.add_option("-o,--output", options.output_file, "Output file path")
         ->required()
         ->check(existing_parent_dir_validator);
+    app.add_option("-c,--calculation-type", options.calculation_type, "Calculation type")
+        ->transform(CLI::CheckedTransformer(
+            EnumMap{
+                {"power_flow", PGM_power_flow},
+                {"short_circuit", PGM_short_circuit},
+                {"state_estimation", PGM_state_estimation},
+            },
+            CLI::ignore_case));
+    app.add_option("-m,--calculation-method", options.calculation_method, "Calculation method")
+        ->transform(CLI::CheckedTransformer(
+            EnumMap{
+                {"default", PGM_default_method},
+                {"newton_raphson", PGM_newton_raphson},
+                {"iterative_linear", PGM_iterative_linear},
+                {"iterative_current", PGM_iterative_current},
+                {"linear_current", PGM_linear_current},
+                {"iec60909", PGM_iec60909},
+            },
+            CLI::ignore_case));
+    
+    
     try {
         app.parse(argc, argv);
     } catch (const CLI::ParseError& e) {
