@@ -6,6 +6,7 @@
 
 #include <CLI/CLI.hpp>
 
+#include <fstream>
 #include <map>
 
 namespace power_grid_model_cpp {
@@ -18,6 +19,11 @@ struct CLIPostCallback {
     CLI::Option* compact_flag;
 
     void operator()() {
+        // detect if input file is msgpack
+        options.input_msgpack_serialization = is_msgpack_file(options.input_file);
+        // detect if batch update file is msgpack
+        options.batch_update_msgpack_serialization =
+            !options.batch_update_file.empty() && is_msgpack_file(options.batch_update_file);
         // default msgpack output if input or batch update is msgpack and user did not specify output format
         if (msgpack_flag->count() == 0 &&
             (options.input_msgpack_serialization || options.batch_update_msgpack_serialization)) {
@@ -27,6 +33,20 @@ struct CLIPostCallback {
         if (compact_flag->count() == 0 && options.use_msgpack_output_serialization) {
             options.use_compact_serialization = true;
         }
+    }
+
+    static bool is_msgpack_file(std::filesystem::path const& path) {
+        std::ifstream file{path, std::ios::binary};
+        if (!file.is_open()) {
+            return false;
+        }
+        uint8_t header;
+        file.read(reinterpret_cast<char*>(&header), 1);
+        if (!file) {
+            return false;
+        }
+        // Check for fixmap (0x80-0x8f), map16 (0xde), or map32 (0xdf)
+        return (header >= 0x80 && header <= 0x8f) || header == 0xde || header == 0xdf;
     }
 };
 
