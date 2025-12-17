@@ -205,7 +205,7 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
   private:
     Idx n_bus_;
     // shared topo data
-    MathModelTopology const& math_topo_;
+    std::reference_wrapper<MathModelTopology const> math_topo_;
 
     // data for gain matrix
     std::vector<NRSEGainBlock<sym>> data_gain_;
@@ -225,7 +225,7 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
         for (Idx bus = 0; bus != n_bus_; ++bus) {
             auto& estimated_result = x_[bus];
 
-            estimated_result.theta() = mean_angle_shift + math_topo_.phase_shift[bus];
+            estimated_result.theta() = mean_angle_shift + math_topo_.get().phase_shift[bus];
             if (measured_values.has_voltage(bus)) {
                 if (measured_values.has_angle_measurement(bus)) {
                     estimated_result.theta() = arg(measured_values.voltage(bus));
@@ -645,8 +645,8 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
         auto const abs_measured_v = cabs_or_real<sym>(measured_values.voltage(bus));
         auto const delta_v = abs_measured_v - x_[bus].v();
 
-        auto const virtual_angle_measurement_bus = measured_values.has_voltage(math_topo_.slack_bus)
-                                                       ? math_topo_.slack_bus
+        auto const virtual_angle_measurement_bus = measured_values.has_voltage(math_topo_.get().slack_bus)
+                                                       ? math_topo_.get().slack_bus
                                                        : measured_values.first_voltage_measurement();
 
         RealTensor<sym> w_theta{};
@@ -772,7 +772,7 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
             if (measured_values.has_angle()) {
                 return 0.0;
             }
-            auto const& theta = x_[math_topo_.slack_bus].theta() + delta_x_rhs_[math_topo_.slack_bus].theta();
+            auto const& theta = x_[math_topo_.get().slack_bus].theta() + delta_x_rhs_[math_topo_.get().slack_bus].theta();
             if constexpr (is_symmetric_v<sym>) {
                 return theta;
             } else {

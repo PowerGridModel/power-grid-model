@@ -111,7 +111,7 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
         sub_timer = Timer{log, LogEvent::initialize_voltages}; // TODO(mgovers): make scoped subtimers
         RealValue<sym> const mean_angle_shift = measured_values.mean_angle_shift();
         for (Idx bus = 0; bus != n_bus_; ++bus) {
-            output.u[bus] = exp(1.0i * (mean_angle_shift + math_topo_.phase_shift[bus]));
+            output.u[bus] = exp(1.0i * (mean_angle_shift + math_topo_.get().phase_shift[bus]));
         }
 
         // loop to iterate
@@ -155,7 +155,7 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
 
     Idx n_bus_;
     // shared topo data
-    MathModelTopology const& math_topo_;
+    std::reference_wrapper<MathModelTopology const> math_topo_;
 
     // data for gain matrix
     std::vector<ILSEGainBlock<sym>> data_gain_;
@@ -359,7 +359,7 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
             if (has_angle) {
                 return 1.0;
             }
-            auto const& voltage = x_rhs_[math_topo_.slack_bus].u();
+            auto const& voltage = x_rhs_[math_topo_.get().slack_bus].u();
             auto const& voltage_a = [&voltage]() -> auto const& {
                 if constexpr (is_symmetric_v<sym>) {
                     return voltage;
