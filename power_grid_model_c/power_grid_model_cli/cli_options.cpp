@@ -4,13 +4,24 @@
 
 #include "cli_options.hpp"
 
+#include <CLI/CLI.hpp>
+
 namespace power_grid_model_cpp {
 
-int parse_cli_options(int argc, char** argv, ClIOptions& options) {
-    (void)argc;
-    (void)argv;
-    (void)options;
-    return 0;
+CLIResult parse_cli_options(int argc, char** argv, ClIOptions& options) {
+    CLI::App app{"Power Grid Model CLI"};
+
+    app.add_option("-i,--input", options.input_file, "Input file path")->required()->check(CLI::ExistingFile);
+    app.add_option("-b,--batch-update", options.batch_update_file, "Batch update file path")->check(CLI::ExistingFile);
+    app.add_option("-o,--output", options.output_file, "Output file path")->required()->check(CLI::ExistingDirectory);
+
+    try {
+        app.parse(argc, argv);
+    } catch (const CLI::ParseError& e) {
+        return {.exit_code = app.exit(e), .should_exit = true};
+    }
+
+    return {.exit_code = 0, .should_exit = false};
 }
 
 std::ostream& operator<<(std::ostream& os, ClIOptions const& options) {

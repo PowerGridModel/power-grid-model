@@ -6,11 +6,18 @@
 
 #include <filesystem>
 #include <map>
+#include <ostream>
 #include <set>
 #include <vector>
-#include <ostream>
 
 namespace power_grid_model_cpp {
+
+struct CLIResult {
+    int exit_code;
+    bool should_exit;
+
+    operator bool() const { return should_exit || exit_code != 0; }
+};
 
 struct ClIOptions {
     std::filesystem::path input_file;
@@ -25,7 +32,7 @@ struct ClIOptions {
     Idx threading{-1};
     Idx short_circuit_voltage_scaling{PGM_short_circuit_voltage_scaling_maximum};
     Idx tap_changing_strategy{PGM_tap_changing_strategy_disabled};
-    
+
     bool use_msgpack_output_serialization{false};
     Idx output_json_indent{2};
     bool use_compact_serialization{false};
@@ -35,6 +42,6 @@ struct ClIOptions {
     friend std::ostream& operator<<(std::ostream& os, ClIOptions const& options);
 };
 
-int parse_cli_options(int argc, char** argv, ClIOptions& options);
+CLIResult parse_cli_options(int argc, char** argv, ClIOptions& options);
 
 } // namespace power_grid_model_cpp
