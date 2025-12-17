@@ -1252,24 +1252,31 @@ source_6     |                                    load_7
 * base: {hoverxreftooltip}`user_manual/components:regulator`
 
 `voltage_regulator` defines a regulator for voltage-controlled generators in the grid.
-A voltage regulator adjusts the reactive power output of a generator to maintain the voltage at its connection node at a specified setpoint.
+A voltage regulator adjusts the reactive power output of a generator to maintain the voltage at its connection node
+at a specified setpoint.
 
-The voltage regulator changes the reactive power output of the generator it regulates to achieve the reference voltage `u_ref` at the generator's node.
-If `q_min` and `q_max` are provided, the reactive power is constrained within this range (i.e., `q_min <= q <= q_max` or `q_min >= q >= q_max`).
+The voltage regulator changes the reactive power output of the generator it regulates to achieve the reference voltage
+`u_ref` at the generator's node.
+If `q_min` and `q_max` are provided, the reactive power is constrained within this range (i.e., `q_min <= q <= q_max` or
+`q_min >= q >= q_max`).
 If these limits are not provided, the reactive power can take any value needed to maintain the voltage setpoint.
 
 ```{warning}
-Voltage regulation is only supported by the [Newton-Raphson](#newton-raphson-power-flow) method as an experimental feature.
+Voltage regulation is only supported by the [Newton-Raphson](#newton-raphson-power-flow) method as an experimental
+feature.
 ```
 
 ```{note}
 The `regulated_object` must reference a generator (`sym_gen` or `asym_gen`) or a load (`sym_load` or `asym_load`).
 Each generator or load can have at most one voltage regulator.
-When multiple voltage-regulated generators are connected to the same node, they should all specify the same `u_ref` value to avoid conflicting voltage setpoints.
+When multiple voltage-regulated generators are connected to the same node, they should all specify the same `u_ref`
+value to avoid conflicting voltage setpoints.
 ```
 
 ```{warning}
-Reactive power limit checking is not yet fully implemented. When `q_min` and `q_max` are specified, the intended behavior is that if the required reactive power to maintain `u_ref` exceeds these limits, the voltage regulator should operate at the limit and the voltage may deviate from `u_ref`.
+Reactive power limit checking is not yet fully implemented. When `q_min` and `q_max` are specified,
+the intended behavior is that if the required reactive power to maintain `u_ref` exceeds these limits,
+the voltage regulator should operate at the limit and the voltage may deviate from `u_ref`.
 ```
 
 #### Input
@@ -1309,7 +1316,8 @@ $$
    Q_{\text{min}} \leq Q_{\text{gen}} \leq Q_{\text{max}}
 $$
 
-When fully implemented, if the reactive power constraints are violated, the generator will operate at the limit and the node becomes a PQ node:
+When fully implemented, if the reactive power constraints are violated, the generator will operate at the limit and the
+node becomes a PQ node:
 
 $$
    \begin{eqnarray}
@@ -1319,4 +1327,5 @@ $$
    \end{eqnarray}
 $$
 
-In this case, `limit_violated` will indicate which limit was exceeded, and the actual voltage at the node may differ from `u_ref`.
+In this case, `limit_violated` will indicate which limit was exceeded, and the actual voltage at the node may differ
+from `u_ref`.
