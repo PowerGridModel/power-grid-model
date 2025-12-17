@@ -18,6 +18,9 @@
 #include "../common/three_phase_tensor.hpp"
 #include "../common/timer.hpp"
 
+#include <functional>
+#include <span>
+
 namespace power_grid_model::math_solver {
 
 // solver
@@ -81,22 +84,22 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
     }
 
     void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, SolverOutput<sym>& output) {
-        detail::calculate_pf_result(y_bus, input, *sources_per_bus_, *load_gens_per_bus_, output,
-                                    [this](Idx i) { return (*load_gen_type_)[i]; });
+        detail::calculate_pf_result(y_bus, input, sources_per_bus_.get(), load_gens_per_bus_.get(), output,
+                                    [this](Idx i) { return (load_gen_type_.get())[i]; });
     }
 
   private:
     Idx n_bus_;
-    std::shared_ptr<DoubleVector const> phase_shift_;
-    std::shared_ptr<SparseGroupedIdxVector const> load_gens_per_bus_;
-    std::shared_ptr<DenseGroupedIdxVector const> sources_per_bus_;
-    std::shared_ptr<std::vector<LoadGenType> const> load_gen_type_;
+    std::reference_wrapper<DoubleVector const> phase_shift_;
+    std::reference_wrapper<SparseGroupedIdxVector const> load_gens_per_bus_;
+    std::reference_wrapper<DenseGroupedIdxVector const> sources_per_bus_;
+    std::reference_wrapper<std::vector<LoadGenType> const> load_gen_type_;
     IterativePFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : n_bus_{y_bus.size()},
-          phase_shift_{topo_ptr, &topo_ptr->phase_shift},
-          load_gens_per_bus_{topo_ptr, &topo_ptr->load_gens_per_bus},
-          sources_per_bus_{topo_ptr, &topo_ptr->sources_per_bus},
-          load_gen_type_{topo_ptr, &topo_ptr->load_gen_type} {}
+          phase_shift_{std::cref(topo_ptr->phase_shift)},
+          load_gens_per_bus_{std::cref(topo_ptr->load_gens_per_bus)},
+          sources_per_bus_{std::cref(topo_ptr->sources_per_bus)},
+          load_gen_type_{std::cref(topo_ptr->load_gen_type)} {}
 };
 
 } // namespace power_grid_model::math_solver

@@ -90,7 +90,7 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCur
                                    SolverOutput<sym>& output) {
         make_flat_start(input, output.u);
 
-        auto const& sources_per_bus = *this->sources_per_bus_;
+        auto const& sources_per_bus = this->sources_per_bus_.get();
         IdxVector const& bus_entry = y_bus.lu_diag();
         // if Y bus is not up to date
         // re-build matrix and prefactorize Build y bus data with source admittance
@@ -119,14 +119,14 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCur
     // Prepare matrix calculates injected current, i.e., RHS of solver for each iteration.
     void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                 ComplexValueVector<sym> const& u) {
-        std::vector<LoadGenType> const& load_gen_type = *this->load_gen_type_;
+        std::vector<LoadGenType> const& load_gen_type = this->load_gen_type_.get();
 
         // set rhs to zero for iteration start
         std::fill(rhs_u_.begin(), rhs_u_.end(), ComplexValue<sym>{0.0});
 
         // loop buses: i
         for (auto const& [bus_number, load_gens, sources] :
-             enumerated_zip_sequence(*this->load_gens_per_bus_, *this->sources_per_bus_)) {
+             enumerated_zip_sequence(this->load_gens_per_bus_.get(), this->sources_per_bus_.get())) {
             add_loads(load_gens, bus_number, input, load_gen_type, u);
             add_sources(sources, bus_number, y_bus, input);
         }
@@ -197,11 +197,11 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCur
     }
 
     void make_flat_start(PowerFlowInput<sym> const& input, ComplexValueVector<sym>& output_u) {
-        std::vector<double> const& phase_shift = *this->phase_shift_;
+        std::vector<double> const& phase_shift = this->phase_shift_.get();
         // average u_ref of all sources
         DoubleComplex const u_ref = [&]() {
             DoubleComplex sum_u_ref = 0.0;
-            for (auto const& [bus, sources] : enumerated_zip_sequence(*this->sources_per_bus_)) {
+            for (auto const& [bus, sources] : enumerated_zip_sequence(this->sources_per_bus_.get())) {
                 for (Idx const source : sources) {
                     sum_u_ref += input.source[source] * std::exp(1.0i * -phase_shift[bus]); // offset phase shift
                 }

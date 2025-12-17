@@ -230,7 +230,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         typename LinearSparseSolverType::BlockPermArray linear_perm(y_bus.size());
 
         detail::copy_y_bus<sym>(y_bus, linear_mat_data);
-        detail::prepare_linear_matrix_and_rhs(y_bus, input, *this->load_gens_per_bus_, *this->sources_per_bus_, output,
+        detail::prepare_linear_matrix_and_rhs(y_bus, input, this->load_gens_per_bus_.get(), this->sources_per_bus_.get(), output,
                                               linear_mat_data);
         linear_sparse_solver.prefactorize_and_solve(linear_mat_data, linear_perm, output.u, output.u);
 
@@ -244,13 +244,13 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
     // Calculate the Jacobian and deviation
     void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                 ComplexValueVector<sym> const& u) {
-        std::vector<LoadGenType> const& load_gen_type = *this->load_gen_type_;
+        std::vector<LoadGenType> const& load_gen_type = this->load_gen_type_.get();
         IdxVector const& bus_entry = y_bus.lu_diag();
 
         prepare_matrix_and_rhs_from_network_perspective(y_bus, u, bus_entry);
 
         for (auto const& [bus_number, load_gens, sources] :
-             enumerated_zip_sequence(*this->load_gens_per_bus_, *this->sources_per_bus_)) {
+             enumerated_zip_sequence(this->load_gens_per_bus_.get(), this->sources_per_bus_.get())) {
             Idx const diagonal_position = bus_entry[bus_number];
             add_loads(load_gens, bus_number, diagonal_position, input, load_gen_type);
             add_sources(sources, bus_number, diagonal_position, y_bus, input, u);

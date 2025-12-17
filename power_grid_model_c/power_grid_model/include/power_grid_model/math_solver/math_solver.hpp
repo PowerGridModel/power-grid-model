@@ -152,7 +152,7 @@ template <symmetry_tag sym> class MathSolver : public MathSolverBase<sym> {
         // construct model if needed
         if (!iterative_linear_se_solver_.has_value()) {
             Timer const timer{log, LogEvent::create_math_solver};
-            iterative_linear_se_solver_.emplace(y_bus, topo_ptr_);
+            iterative_linear_se_solver_.emplace(y_bus, *topo_ptr_);
         }
 
         // call calculation
@@ -164,7 +164,7 @@ template <symmetry_tag sym> class MathSolver : public MathSolverBase<sym> {
         // construct model if needed
         if (!newton_raphson_se_solver_.has_value()) {
             Timer const timer{log, LogEvent::create_math_solver};
-            newton_raphson_se_solver_.emplace(y_bus, topo_ptr_);
+            newton_raphson_se_solver_.emplace(y_bus, *topo_ptr_);
         }
 
         // call calculation

@@ -26,7 +26,7 @@ template <symmetry_tag sym> class ShortCircuitSolver {
     ShortCircuitSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : n_bus_{y_bus.size()},
           n_source_{topo_ptr->n_source()},
-          sources_per_bus_{topo_ptr, &topo_ptr->sources_per_bus},
+          sources_per_bus_{std::cref(topo_ptr->sources_per_bus)},
           mat_data_(y_bus.nnz_lu()),
           sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
           perm_{static_cast<BlockPermArray>(n_bus_)} {}
@@ -64,7 +64,7 @@ template <symmetry_tag sym> class ShortCircuitSolver {
     Idx n_bus_;
     Idx n_source_;
     // shared topo data
-    std::shared_ptr<DenseGroupedIdxVector const> sources_per_bus_;
+    std::reference_wrapper<DenseGroupedIdxVector const> sources_per_bus_;
     // sparse linear equation
     ComplexTensorVector<sym> mat_data_;
     // sparse solver
@@ -77,7 +77,7 @@ template <symmetry_tag sym> class ShortCircuitSolver {
         IdxVector const& bus_entry = y_bus.lu_diag();
 
         for (auto const& [bus_number, sources, faults] :
-             enumerated_zip_sequence(*sources_per_bus_, input.fault_buses)) {
+             enumerated_zip_sequence(sources_per_bus_.get(), input.fault_buses)) {
             Idx const diagonal_position = bus_entry[bus_number];
             auto& diagonal_element = mat_data_[diagonal_position];
             auto& u_bus = output.u_bus[bus_number];
@@ -226,7 +226,7 @@ template <symmetry_tag sym> class ShortCircuitSolver {
         using enum FaultType;
 
         for (auto const& [bus_number, faults, sources] :
-             enumerated_zip_sequence(input.fault_buses, *sources_per_bus_)) {
+             enumerated_zip_sequence(input.fault_buses, sources_per_bus_.get())) {
             ComplexValue<sym> const x_bus_subtotal = output.u_bus[bus_number];
             auto const infinite_admittance_fault_counter_bus =
                 static_cast<double>(infinite_admittance_fault_counter[bus_number]);
