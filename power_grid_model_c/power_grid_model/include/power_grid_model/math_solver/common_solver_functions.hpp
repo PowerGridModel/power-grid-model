@@ -127,19 +127,14 @@ inline void calculate_multiple_source_result(IdxRange const& sources, YBus<asymm
 template <symmetry_tag sym>
 inline void calculate_source_result(IdxRange const& sources, Idx const& bus_number, YBus<sym> const& y_bus,
                                     PowerFlowInput<sym> const& input, SolverOutput<sym>& output,
-                                    IdxRange const& load_gens, IdxRange const& shunts) {
+                                    IdxRange const& load_gens) {
     if (sources.empty()) {
         return;
     }
     ComplexValue<sym> const i_load_gen_bus =
         std::transform_reduce(load_gens.begin(), load_gens.end(), ComplexValue<sym>{}, std::plus{},
                               [&](Idx const load_gen) { return output.load_gen[load_gen].i; });
-
-    ComplexValue<sym> const i_shunt_bus =
-        std::transform_reduce(shunts.begin(), shunts.end(), ComplexValue<sym>{}, std::plus{},
-                              [&](Idx const shunt) { return output.shunt[shunt].i; });
-
-    ComplexValue<sym> const i_inj_t = conj(output.bus_injection[bus_number] / output.u[bus_number]) - i_load_gen_bus - i_shunt_bus;
+    ComplexValue<sym> const i_inj_t = conj(output.bus_injection[bus_number] / output.u[bus_number]) - i_load_gen_bus;
     if (sources.size() == 1) {
         output.source[*sources.begin()].i = i_inj_t;
         output.source[*sources.begin()].s = output.u[bus_number] * conj(output.source[*sources.begin()].i);
@@ -150,8 +145,7 @@ inline void calculate_source_result(IdxRange const& sources, Idx const& bus_numb
 
 template <symmetry_tag sym>
 inline void calculate_voltage_regulator_result(Idx const& bus_number, PowerFlowInput<sym> const& input, SolverOutput<sym>& output,
-                                               IdxRange const& load_gens, IdxRange const& shunts,
-                                               std::map<Idx, Idx> const& loadgen_to_regulator) {
+                                               IdxRange const& load_gens, std::map<Idx, Idx> const& loadgen_to_regulator) {
     if (load_gens.empty()) {
         return;
     }
@@ -160,11 +154,7 @@ inline void calculate_voltage_regulator_result(Idx const& bus_number, PowerFlowI
         std::transform_reduce(load_gens.begin(), load_gens.end(), ComplexValue<sym>{}, std::plus{},
                             [&](Idx const load_gen) { return output.load_gen[load_gen].s; });
 
-    ComplexValue<sym> const s_shunt_bus =
-        std::transform_reduce(shunts.begin(), shunts.end(), ComplexValue<sym>{}, std::plus{},
-                            [&](Idx const shunt) { return output.shunt[shunt].s; });
-
-    ComplexValue<sym> const s_remaining = output.bus_injection[bus_number] - s_load_gen_bus - s_shunt_bus;
+    ComplexValue<sym> const s_remaining = output.bus_injection[bus_number] - s_load_gen_bus;
 
     auto regulating_gens = load_gens
         | std::views::filter([&](Idx lg) {
@@ -268,7 +258,6 @@ inline void calculate_pf_result(YBus<sym> const& y_bus, PowerFlowInput<sym> cons
                                 LoadGenFunc load_gen_func) {
     assert(sources_per_bus.size() == load_gens_per_bus.size());
 
-    auto const& shunts_per_bus = y_bus.math_topology().shunts_per_bus;
     auto const& voltage_regulators_per_load_gen = y_bus.math_topology().voltage_regulators_per_load_gen;
 
     // call y bus
@@ -289,14 +278,11 @@ inline void calculate_pf_result(YBus<sym> const& y_bus, PowerFlowInput<sym> cons
         }
     }
 
-    for (auto const& [bus_number, sources, load_gens, shunts]
-        : enumerated_zip_sequence(sources_per_bus, load_gens_per_bus, shunts_per_bus)) {
-
+    for (auto const& [bus_number, sources, load_gens] : enumerated_zip_sequence(sources_per_bus, load_gens_per_bus)) {
         calculate_load_gen_result<sym>(load_gens, bus_number, input, output,
                                        [&load_gen_func](Idx idx) { return load_gen_func(idx); });
-        calculate_voltage_regulator_result<sym>(bus_number, input, output,
-                                                load_gens, shunts, loadgen_to_regulator);
-        calculate_source_result<sym>(sources, bus_number, y_bus, input, output, load_gens, shunts);
+        calculate_voltage_regulator_result<sym>(bus_number, input, output, load_gens, loadgen_to_regulator);
+        calculate_source_result<sym>(sources, bus_number, y_bus, input, output, load_gens);
     }
 }
 
