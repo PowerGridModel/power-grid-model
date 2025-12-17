@@ -6,6 +6,7 @@ add_executable(power-grid-model main.cpp)
 
 target_link_libraries(power-grid-model PRIVATE power_grid_model_c)
 target_link_libraries(power-grid-model PRIVATE power_grid_model_cpp)
+target_link_libraries(power-grid-model PRIVATE CLI11::CLI11)
 
 set_property(TARGET power-grid-model PROPERTY INSTALL_RPATH_USE_LINK_PATH FALSE)
 if(APPLE)
