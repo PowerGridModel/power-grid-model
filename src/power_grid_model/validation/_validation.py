@@ -922,7 +922,7 @@ def validate_same_u_ref_per_node_voltage_regulator(
         node_u_refs = _init_node_u_ref_from_sources(data)
         vr_data = data[ComponentType.voltage_regulator]
         if vr_data.size != 0:
-            appliance_to_node = _init_appliance_to_node_mapping(data)
+            appliance_to_node : dict[int, int] = _init_appliance_to_node_mapping(data)
 
             regulator_ids = vr_data["id"]
             regulator_status = vr_data["status"]
@@ -930,15 +930,16 @@ def validate_same_u_ref_per_node_voltage_regulator(
             u_refs = vr_data["u_ref"]
 
             # update node_u_refs with voltage regulator u_ref
-            node_regulators = {}
+            node_regulators: dict[int, list[int]] = {}
             for appliance_id, regulator_id, status, u_ref in zip(
                 appliance_ids, regulator_ids, regulator_status, u_refs
             ):
                 if status == 0:
                     continue  # skip disabled voltage regulators
                 node_id = appliance_to_node.get(appliance_id)
-                node_u_refs.setdefault(node_id, set()).add(u_ref)
-                node_regulators.setdefault(node_id, []).append(regulator_id)
+                if node_id is not None:
+                    node_u_refs.setdefault(node_id, set()).add(u_ref)
+                    node_regulators.setdefault(node_id, []).append(regulator_id)
 
             # get nodes with different u_refs
             error_node_ids = set(
@@ -971,7 +972,7 @@ def _init_node_u_ref_from_sources(data: SingleDataset):
     probably won't reference the same u_ref value as the sources, so we remove the u_ref of the sources again
     and only check the voltage regulators among each other.
     """
-    node_u_refs = {}
+    node_u_refs: dict[int, set[float]] = {}
     if ComponentType.source in data:
         source_data = data[ComponentType.source]
         for idx, node_id in enumerate(source_data["node"]):
@@ -981,12 +982,12 @@ def _init_node_u_ref_from_sources(data: SingleDataset):
         # clear nodes with different source u_refs from consideration
         for node_id, u_refs in node_u_refs.items():
             if len(u_refs) > 1:
-                node_u_refs[node_id] = None
+                u_refs.clear()
 
     return node_u_refs
 
 def _init_appliance_to_node_mapping(data: SingleDataset):
-    appliance_to_node = {}
+    appliance_to_node: dict[int, int] = {}
     for component_type in [ComponentType.sym_gen, ComponentType.asym_gen,
                            ComponentType.sym_load, ComponentType.asym_load]:
         if component_type in data:
