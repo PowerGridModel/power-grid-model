@@ -11,10 +11,22 @@ namespace power_grid_model_cpp {
 CLIResult parse_cli_options(int argc, char** argv, ClIOptions& options) {
     CLI::App app{"Power Grid Model CLI"};
 
+    CLI::Validator existing_parent_dir_validator{
+        [](std::string& input) {
+            std::filesystem::path p{input};
+            auto parent = p.has_parent_path() ? p.parent_path() : std::filesystem::path{"."};
+            if (parent.empty() || !std::filesystem::exists(parent) || !std::filesystem::is_directory(parent)) {
+                return std::string("The parent directory of the specified path does not exist or is not a directory.");
+            }
+            return std::string{};
+        },
+        "ExistingParentDirectory"};
+
     app.add_option("-i,--input", options.input_file, "Input file path")->required()->check(CLI::ExistingFile);
     app.add_option("-b,--batch-update", options.batch_update_file, "Batch update file path")->check(CLI::ExistingFile);
-    app.add_option("-o,--output", options.output_file, "Output file path")->required()->check(CLI::ExistingDirectory);
-
+    app.add_option("-o,--output", options.output_file, "Output file path")
+        ->required()
+        ->check(existing_parent_dir_validator);
     try {
         app.parse(argc, argv);
     } catch (const CLI::ParseError& e) {
