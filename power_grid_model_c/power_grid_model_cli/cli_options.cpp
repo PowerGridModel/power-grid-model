@@ -78,8 +78,15 @@ CLIResult parse_cli_options(int argc, char** argv, ClIOptions& options) {
                  "Use MessagePack output serialization");
     app.add_option("--indent,--output-json-indent", options.output_json_indent,
                    "Number of spaces to indent JSON output");
-    app.add_flag("--compact,--use-compact-serialization", options.use_compact_serialization,
-                 "Use compact serialization (no extra whitespace)");
+    auto compact_flag =
+        app.add_flag("--compact,--use-compact-serialization,!--no-compact,!--no-compact-serialization",
+                     options.use_compact_serialization, "Use compact serialization (no extra whitespace)");
+
+    app.callback([&options, compact_flag]() {
+        if (compact_flag->count() == 0 && options.use_msgpack_output_serialization) {
+            options.use_compact_serialization = true;
+        }
+    });
 
     try {
         app.parse(argc, argv);
