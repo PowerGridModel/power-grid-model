@@ -97,14 +97,14 @@ class ColumnarAttributeRange : public std::ranges::view_interface<ColumnarAttrib
             for (auto const& attribute_buffer : attribute_buffers_) {
                 assert(attribute_buffer.meta_attribute != nullptr);
                 auto const& meta_attribute = *attribute_buffer.meta_attribute;
-                ctype_func_selector(
-                    meta_attribute.ctype, [&result, &attribute_buffer, &meta_attribute, this]<typename AttributeType> {
-                        AttributeType const* buffer_ptr =
-                            reinterpret_cast<AttributeType const*>(attribute_buffer.data) + idx_;
-                        auto& attribute_ref =
-                            meta_attribute.template get_attribute<AttributeType>(reinterpret_cast<RawDataPtr>(&result));
-                        attribute_ref = *buffer_ptr;
-                    });
+                ctype_func_selector(meta_attribute.ctype, [&result, &attribute_buffer, &meta_attribute,
+                                                           idx = idx_]<typename AttributeType> {
+                    AttributeType const* buffer_ptr =
+                        reinterpret_cast<AttributeType const*>(attribute_buffer.data) + idx;
+                    AttributeType& attribute_ref =
+                        meta_attribute.template get_attribute<AttributeType>(reinterpret_cast<RawDataPtr>(&result));
+                    attribute_ref = *buffer_ptr;
+                });
             }
             return result;
         }

@@ -49,6 +49,28 @@ set_target_properties(
         INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE
 )
 
+target_compile_options(
+    power_grid_model_c
+    BEFORE
+    PUBLIC
+        # "$<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-fstack-protector;-fsanitize=undefined>"
+        "$<$<CXX_COMPILER_ID:GNU>:-fstack-protector;-fsanitize=undefined;-static-libubsan>"
+        # "$<$<CXX_COMPILER_ID:Clang>:-fsanitize=undefined>"
+        # "$<$<AND:$<CXX_COMPILER_ID:Clang>,$<IN_LIST:address,${CMAKE_LDFLAGS}>>:-fsanitize-minimal-runtime>"
+        "$<$<CXX_COMPILER_ID:MSVC>:/RTC1>"
+)
+
+target_link_options(
+    power_grid_model_c
+    BEFORE
+    PUBLIC
+        # "$<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-fstack-protector;-fsanitize=undefined>"
+        "$<$<CXX_COMPILER_ID:GNU>:-fstack-protector;-fsanitize=undefined;-static-libubsan>"
+        # "$<$<CXX_COMPILER_ID:Clang>:-fsanitize=undefined>"
+        # "$<$<AND:$<CXX_COMPILER_ID:Clang>,$<IN_LIST:address,${CMAKE_LDFLAGS}>>:-fsanitize-minimal-runtime>"
+        "$<$<CXX_COMPILER_ID:MSVC>:/RTC1>"
+)
+
 install(
     TARGETS power_grid_model_c
     EXPORT power_grid_modelTargets

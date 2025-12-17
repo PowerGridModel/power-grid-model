@@ -29,6 +29,7 @@ target_compile_options(
     power_grid_model
     BEFORE
     INTERFACE
+        "$<$<CXX_COMPILER_ID:GCC>:-fstack-protector>"
         "$<$<CXX_COMPILER_ID:Clang>:-Wno-unknown-attributes>"
-        "$<$<CXX_COMPILER_ID:MSVC>:/bigobj>"
+        "$<$<CXX_COMPILER_ID:MSVC>:/bigobj /RTC1>"
 )

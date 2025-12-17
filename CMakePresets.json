@@ -61,7 +61,7 @@
       "hidden": true,
       "environment": {
         "PreferredToolArchitecture": "x64",
-        "PLATFORM_C_FLAGS": "/DWIN32 /D_WINDOWS /W4 /WX /GR /EHsc /utf-8 /bigobj /FC"
+        "PLATFORM_C_FLAGS": "/DWIN32 /D_WINDOWS /W4 /WX /GR /EHsc /utf-8 /bigobj /FC /RTC1"
       },
       "condition": {
         "type": "equals",
@@ -109,7 +109,7 @@
     {
       "name": "unix-sanitizer",
       "environment": {
-        "SANITIZER_FLAGS": "-fsanitize=address"
+        "SANITIZER_FLAGS": "-fsanitize=address,pointer-compare,undefined"
       },
       "inherits": "unix-base",
       "hidden": true
