@@ -12,6 +12,24 @@ namespace power_grid_model_cpp {
 
 using EnumMap = std::map<std::string, Idx>;
 
+struct CLIPostCallback {
+    ClIOptions& options;
+    CLI::Option* msgpack_flag;
+    CLI::Option* compact_flag;
+
+    void operator()() {
+        // default msgpack output if input or batch update is msgpack and user did not specify output format
+        if (msgpack_flag->count() == 0 &&
+            (options.input_msgpack_serialization || options.batch_update_msgpack_serialization)) {
+            options.use_msgpack_output_serialization = true;
+        }
+        // default compact serialization if msgpack output and user did not specify compact option
+        if (compact_flag->count() == 0 && options.use_msgpack_output_serialization) {
+            options.use_compact_serialization = true;
+        }
+    }
+};
+
 CLIResult parse_cli_options(int argc, char** argv, ClIOptions& options) {
     CLI::App app{"Power Grid Model CLI"};
 
@@ -74,8 +92,9 @@ CLIResult parse_cli_options(int argc, char** argv, ClIOptions& options) {
                 {"fast_any", PGM_tap_changing_strategy_fast_any_tap},
             },
             CLI::ignore_case));
-    app.add_flag("--msgpack,--use-msgpack-output-serialization", options.use_msgpack_output_serialization,
-                 "Use MessagePack output serialization");
+    auto msgpack_flag =
+        app.add_flag("--msgpack,--use-msgpack-output-serialization,!--json,!--use-json-output-serialization",
+                     options.use_msgpack_output_serialization, "Use MessagePack output serialization");
     app.add_option("--indent,--output-json-indent", options.output_json_indent,
                    "Number of spaces to indent JSON output");
     auto compact_flag =
@@ -89,11 +108,7 @@ CLIResult parse_cli_options(int argc, char** argv, ClIOptions& options) {
                    "Filter output to only include specified attributes, in the format `component.attribute` (can be "
                    "specified multiple times)");
 
-    app.callback([&options, compact_flag]() {
-        if (compact_flag->count() == 0 && options.use_msgpack_output_serialization) {
-            options.use_compact_serialization = true;
-        }
-    });
+    app.callback(CLIPostCallback{.options = options, .msgpack_flag = msgpack_flag, .compact_flag = compact_flag});
 
     try {
         app.parse(argc, argv);

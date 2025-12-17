@@ -23,6 +23,8 @@ struct ClIOptions {
     std::filesystem::path input_file;
     std::filesystem::path batch_update_file;
     std::filesystem::path output_file;
+    bool input_msgpack_serialization{false};
+    bool batch_update_msgpack_serialization{false};
 
     Idx calculation_type{PGM_power_flow};
     Idx calculation_method{PGM_default_method};
