@@ -49,25 +49,30 @@ set_target_properties(
         INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE
 )
 
+# Always-on hardening
+target_compile_definitions(
+    power_grid_model_c
+    PUBLIC
+        "$<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:_FORTIFY_SOURCE=2>"
+)
 target_compile_options(
     power_grid_model_c
     BEFORE
     PUBLIC
-        # "$<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-fstack-protector;-fsanitize=undefined>"
-        "$<$<CXX_COMPILER_ID:GNU>:-fstack-protector;-fsanitize=undefined;-static-libubsan>"
-        # "$<$<CXX_COMPILER_ID:Clang>:-fsanitize=undefined>"
-        # "$<$<AND:$<CXX_COMPILER_ID:Clang>,$<IN_LIST:address,${CMAKE_LDFLAGS}>>:-fsanitize-minimal-runtime>"
+        "$<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-fstack-protector;-fsanitize=undefined>"
+        "$<$<CXX_COMPILER_ID:GNU>:-static-libubsan>"
+        "$<$<CXX_COMPILER_ID:Clang>:-lubsan>"
+        "$<$<AND:$<CXX_COMPILER_ID:Clang>,$<NOT:$<OR:$<IN_LIST:address,${CMAKE_CFLAGS}>,$<IN_LIST:address,${CMAKE_CXXFLAGS}>>>>:-fsanitize-minimal-runtime>"
         "$<$<CXX_COMPILER_ID:MSVC>:/RTC1>"
 )
-
 target_link_options(
     power_grid_model_c
     BEFORE
     PUBLIC
-        # "$<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-fstack-protector;-fsanitize=undefined>"
-        "$<$<CXX_COMPILER_ID:GNU>:-fstack-protector;-fsanitize=undefined;-static-libubsan>"
-        # "$<$<CXX_COMPILER_ID:Clang>:-fsanitize=undefined>"
-        # "$<$<AND:$<CXX_COMPILER_ID:Clang>,$<IN_LIST:address,${CMAKE_LDFLAGS}>>:-fsanitize-minimal-runtime>"
+        "$<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-fstack-protector;-fsanitize=undefined>"
+        "$<$<CXX_COMPILER_ID:GNU>:-static-libubsan>"
+        "$<$<CXX_COMPILER_ID:Clang>:-lubsan>"
+        "$<$<AND:$<CXX_COMPILER_ID:Clang>,$<NOT:$<IN_LIST:address,${CMAKE_LDFLAGS}>>>:-fsanitize-minimal-runtime>"
         "$<$<CXX_COMPILER_ID:MSVC>:/RTC1>"
 )
 
