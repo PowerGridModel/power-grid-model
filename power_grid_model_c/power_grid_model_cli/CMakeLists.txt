@@ -2,7 +2,10 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-add_executable(power-grid-model main.cpp)
+add_executable(power-grid-model 
+  main.cpp
+  cli_options.cpp
+)
 
 target_link_libraries(power-grid-model PRIVATE power_grid_model_c)
 target_link_libraries(power-grid-model PRIVATE power_grid_model_cpp)
