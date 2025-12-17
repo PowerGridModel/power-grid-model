@@ -85,10 +85,11 @@ jobs:
           source .venv/bin/activate
           pre-commit install
           pre-commit install-hooks
+          pre-commit uninstall
 
       - name: create pull request
         if: ${{ inputs.create-pr || github.event_name == 'schedule' }}
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           commit-message: "Refresh lock and linter dependencies"
           branch: "dependencies/refresh-lock-and-linter"

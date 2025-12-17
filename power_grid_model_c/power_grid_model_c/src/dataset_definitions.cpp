@@ -424,6 +424,9 @@ PGM_MetaComponent const* const PGM_def_sym_output_three_winding_transformer = PG
 // attributes of sym_output three_winding_transformer
 PGM_MetaAttribute const* const PGM_def_sym_output_three_winding_transformer_id = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "three_winding_transformer", "id");
 PGM_MetaAttribute const* const PGM_def_sym_output_three_winding_transformer_energized = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "three_winding_transformer", "energized");
+PGM_MetaAttribute const* const PGM_def_sym_output_three_winding_transformer_loading_1 = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "three_winding_transformer", "loading_1");
+PGM_MetaAttribute const* const PGM_def_sym_output_three_winding_transformer_loading_2 = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "three_winding_transformer", "loading_2");
+PGM_MetaAttribute const* const PGM_def_sym_output_three_winding_transformer_loading_3 = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "three_winding_transformer", "loading_3");
 PGM_MetaAttribute const* const PGM_def_sym_output_three_winding_transformer_loading = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "three_winding_transformer", "loading");
 PGM_MetaAttribute const* const PGM_def_sym_output_three_winding_transformer_p_1 = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "three_winding_transformer", "p_1");
 PGM_MetaAttribute const* const PGM_def_sym_output_three_winding_transformer_q_1 = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "three_winding_transformer", "q_1");
@@ -645,6 +648,9 @@ PGM_MetaComponent const* const PGM_def_asym_output_three_winding_transformer = P
 // attributes of asym_output three_winding_transformer
 PGM_MetaAttribute const* const PGM_def_asym_output_three_winding_transformer_id = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "three_winding_transformer", "id");
 PGM_MetaAttribute const* const PGM_def_asym_output_three_winding_transformer_energized = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "three_winding_transformer", "energized");
+PGM_MetaAttribute const* const PGM_def_asym_output_three_winding_transformer_loading_1 = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "three_winding_transformer", "loading_1");
+PGM_MetaAttribute const* const PGM_def_asym_output_three_winding_transformer_loading_2 = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "three_winding_transformer", "loading_2");
+PGM_MetaAttribute const* const PGM_def_asym_output_three_winding_transformer_loading_3 = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "three_winding_transformer", "loading_3");
 PGM_MetaAttribute const* const PGM_def_asym_output_three_winding_transformer_loading = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "three_winding_transformer", "loading");
 PGM_MetaAttribute const* const PGM_def_asym_output_three_winding_transformer_p_1 = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "three_winding_transformer", "p_1");
 PGM_MetaAttribute const* const PGM_def_asym_output_three_winding_transformer_q_1 = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "three_winding_transformer", "q_1");

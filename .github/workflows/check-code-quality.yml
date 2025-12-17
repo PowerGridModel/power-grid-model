@@ -69,7 +69,7 @@ jobs:
       - name: Check generated code
         if: success()
         run: |
-          uv pip install -r code_generation/requirements.txt
+          uv sync --group code-generation
           uv run code_generation/code_gen.py
           if [ -n "$(git status --porcelain)" ]; then
             echo
