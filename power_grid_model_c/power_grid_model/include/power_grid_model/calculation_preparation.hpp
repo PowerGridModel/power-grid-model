@@ -94,14 +94,12 @@ class SolversCacheStatus {
             return;
         }
 
+        set_topology_status(true);
         if (changes.param) {
-            set_topology_status(true);
             set_parameter_status<symmetric_t>(false);
             set_parameter_status<asymmetric_t>(false);
             return;
         }
-
-        set_topology_status(true);
         set_parameter_status<symmetric_t>(is_parameter_valid<symmetric_t>());
         set_parameter_status<asymmetric_t>(is_parameter_valid<asymmetric_t>());
     }

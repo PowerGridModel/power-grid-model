@@ -15,7 +15,7 @@ using MainModelType = main_core::MainModelType<AllExtraRetrievableTypes, AllComp
 
 TEST_CASE("Test SolversCacheStatus") {
     SUBCASE("Default construction") {
-        SolversCacheStatus<MainModelType> cache_status{};
+        SolversCacheStatus<MainModelType> const cache_status{};
 
         CHECK_FALSE(cache_status.is_topology_valid());
         CHECK_FALSE(cache_status.is_parameter_valid<symmetric_t>());
@@ -71,7 +71,7 @@ TEST_CASE("Test SolversCacheStatus") {
 
 TEST_CASE("Test SolverPreparationContext") {
     SUBCASE("Default construction") {
-        SolverPreparationContext context{};
+        SolverPreparationContext const context{};
 
         CHECK(context.math_solver_dispatcher == nullptr);
         CHECK(context.math_state.y_bus_vec_sym.empty());
@@ -81,8 +81,8 @@ TEST_CASE("Test SolverPreparationContext") {
     }
 
     SUBCASE("Dummy construction") {
-        MathSolverDispatcher dispatcher{math_solver::math_solver_tag<MathSolver>{}};
-        SolverPreparationContext context{.math_state = {}, .math_solver_dispatcher = &dispatcher};
+        MathSolverDispatcher const dispatcher{math_solver::math_solver_tag<MathSolver>{}};
+        SolverPreparationContext const context{.math_state = {}, .math_solver_dispatcher = &dispatcher};
 
         CHECK(context.math_solver_dispatcher == &dispatcher);
         CHECK(context.math_state.y_bus_vec_sym.empty());

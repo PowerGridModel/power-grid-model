@@ -304,6 +304,7 @@ class MainModelImpl {
             [this, &sequence_idx]<typename CompType>() { this->restore_component<CompType>(sequence_idx); });
 
         solvers_cache_status_.update(cached_state_changes_);
+        // we can probably reset topo, solvers and ybus here
         cached_state_changes_ = {};
     }
 
