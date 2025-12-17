@@ -103,6 +103,7 @@ jobs:
           body: "This PR refreshes the lock file and updates linter dependencies to their latest versions."
           labels: "dependencies"
           signoff: true
+          sign-commits: true
           delete-branch: true
           base: ${{ github.head_ref }}
           token: ${{ steps.generate-token.outputs.token }}
