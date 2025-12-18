@@ -97,8 +97,10 @@ inline OwningDataset create_owning_dataset(DatasetWritable& writable_dataset) {
     bool const is_batch = info.is_batch();
     Idx const batch_size = info.batch_size();
     auto const& dataset_name = info.name();
-    DatasetMutable dataset_mutable{dataset_name, is_batch, batch_size};
-    OwningMemory storage{};
+    OwningDataset owning_dataset{.dataset = DatasetMutable{dataset_name, is_batch, batch_size},
+                                 .storage = OwningMemory{}};
+    DatasetMutable& dataset_mutable = owning_dataset.dataset;
+    OwningMemory& storage = owning_dataset.storage;
 
     for (Idx component_idx{}; component_idx < info.n_components(); ++component_idx) {
         auto const& component_name = info.component_name(component_idx);
@@ -112,12 +114,17 @@ inline OwningDataset create_owning_dataset(DatasetWritable& writable_dataset) {
             current_indptr.at(batch_size) = component_size;
         }
         Idx* const indptr = current_indptr.empty() ? nullptr : current_indptr.data();
-        auto& current_buffer = storage.buffers.emplace_back(component_meta, component_size);
-        writable_dataset.set_buffer(component_name, indptr, current_buffer);
-        dataset_mutable.add_buffer(component_name, elements_per_scenario, component_size, indptr, current_buffer);
+        if (info.has_attribute_indications(component_idx)) {
+            auto& current_buffer = storage.buffers.emplace_back(component_meta, 0);
+            writable_dataset.set_buffer(component_name, indptr, current_buffer);
+            dataset_mutable.add_buffer(component_name, elements_per_scenario, component_size, indptr, current_buffer);
+        } else {
+            auto& current_buffer = storage.buffers.emplace_back(component_meta, component_size);
+            writable_dataset.set_buffer(component_name, indptr, current_buffer);
+            dataset_mutable.add_buffer(component_name, elements_per_scenario, component_size, indptr, current_buffer);
+        }
     }
-    return OwningDataset{// NOLINT(modernize-use-designated-initializers)
-                         std::move(dataset_mutable), std::move(storage)};
+    return owning_dataset;
 }
 } // namespace power_grid_model_cpp
 
