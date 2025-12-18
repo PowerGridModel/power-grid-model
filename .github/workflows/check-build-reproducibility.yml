@@ -161,8 +161,8 @@ jobs:
 
       - name: Compare builds
         run: |
-          hash1="$(sha1sum ./install/${{ env.PRESET }}-1/lib/libpower_grid_model_c.so)"
-          hash2="$(sha1sum ./install/${{ env.PRESET }}-2/lib/libpower_grid_model_c.so)"
+          hash1="$(sha1sum ./install/${{ env.PRESET }}-1/lib/libpower_grid_model_c.dylib)"
+          hash2="$(sha1sum ./install/${{ env.PRESET }}-2/lib/libpower_grid_model_c.dylib)"
           if [ "$hash1" != "$hash2" ]; then
             echo "Build mismatch detected"
             exit 1
