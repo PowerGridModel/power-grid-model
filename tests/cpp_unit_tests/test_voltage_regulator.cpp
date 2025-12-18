@@ -18,14 +18,9 @@ void check_nan_preserving_equality(std::floating_point auto actual, std::floatin
 }
 } // namespace
 
-
 TEST_CASE("Test voltage regulator") {
-    VoltageRegulatorInput const input{.id = 1,
-                                      .regulated_object = 2,
-                                      .status = 1,
-                                      .u_ref = 1.05,
-                                      .q_min = 1e6,
-                                      .q_max = 100e6};
+    VoltageRegulatorInput const input{
+        .id = 1, .regulated_object = 2, .status = 1, .u_ref = 1.05, .q_min = 1e6, .q_max = 100e6};
 
     double const injection_direction{1.0};
 
@@ -46,9 +41,7 @@ TEST_CASE("Test voltage regulator") {
 
     SUBCASE("Test u_ref") { CHECK(voltage_regulator.u_ref() == 1.05); }
 
-    SUBCASE("Test injection direction") {
-        CHECK(voltage_regulator.injection_direction() == injection_direction);
-    }
+    SUBCASE("Test injection direction") { CHECK(voltage_regulator.injection_direction() == injection_direction); }
 
     SUBCASE("Test q limits") {
         CHECK(voltage_regulator.q_min() == 1e6);
@@ -57,24 +50,16 @@ TEST_CASE("Test voltage regulator") {
 
     SUBCASE("Test get_output") {
         SUBCASE("symmetric") {
-            VoltageRegulatorOutput<symmetric_t> const output = voltage_regulator.get_output<symmetric_t>({
-                .limit_violated = 0,
-                .q = 50.0 /*Mvar*/,
-                .generator_id = 2,
-                .generator_status = 1
-            });
+            VoltageRegulatorOutput<symmetric_t> const output = voltage_regulator.get_output<symmetric_t>(
+                {.limit_violated = 0, .q = 50.0 /*Mvar*/, .generator_id = 2, .generator_status = 1});
             CHECK(output.id == 1);
             CHECK(output.energized);
             CHECK(output.q == 50.0 * base_power<symmetric_t>);
             CHECK(output.limit_violated == 0);
         }
         SUBCASE("asymmetric") {
-            VoltageRegulatorOutput<asymmetric_t> const output = voltage_regulator.get_output<asymmetric_t>({
-                .limit_violated = 0,
-                .q = {30.0, 40.0, 50.0} /*Mvar*/,
-                .generator_id = 2,
-                .generator_status = 1
-            });
+            VoltageRegulatorOutput<asymmetric_t> const output = voltage_regulator.get_output<asymmetric_t>(
+                {.limit_violated = 0, .q = {30.0, 40.0, 50.0} /*Mvar*/, .generator_id = 2, .generator_status = 1});
             CHECK(output.id == 1);
             CHECK(output.energized);
             CHECK(output.q[0] == doctest::Approx(30.0 * base_power<asymmetric_t>));
@@ -113,11 +98,7 @@ TEST_CASE("Test voltage regulator") {
 
     SUBCASE("Test update") {
         SUBCASE("Set all values") {
-            VoltageRegulatorUpdate const update{.id = 1,
-                                                .status = 0,
-                                                .u_ref = 0.97,
-                                                .q_min = 10e6,
-                                                .q_max = 110e6};
+            VoltageRegulatorUpdate const update{.id = 1, .status = 0, .u_ref = 0.97, .q_min = 10e6, .q_max = 110e6};
             voltage_regulator.update(update);
 
             SUBCASE("symmetric") {
@@ -158,7 +139,8 @@ TEST_CASE("Test voltage regulator") {
                 CHECK(param.status == before_param.status);
             }
             SUBCASE("asymmetric") {
-                VoltageRegulatorCalcParam<asymmetric_t> const before_param = voltage_regulator.calc_param<asymmetric_t>();
+                VoltageRegulatorCalcParam<asymmetric_t> const before_param =
+                    voltage_regulator.calc_param<asymmetric_t>();
 
                 VoltageRegulatorUpdate const update{.id = 1};
                 voltage_regulator.update(update);
@@ -176,11 +158,7 @@ TEST_CASE("Test voltage regulator") {
     }
 
     SUBCASE("Test update inverse") {
-        VoltageRegulatorUpdate update{.id = 1,
-                                      .status = na_IntS,
-                                      .u_ref = nan,
-                                      .q_min = nan,
-                                      .q_max = nan};
+        VoltageRegulatorUpdate update{.id = 1, .status = na_IntS, .u_ref = nan, .q_min = nan, .q_max = nan};
         auto expected = update;
 
         SUBCASE("Identical") {

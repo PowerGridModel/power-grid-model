@@ -173,16 +173,14 @@ class DuplicativelyRegulatedObject : public PowerGridError {
 class UnsupportedRegulatorCombinationError : public PowerGridError {
   public:
     UnsupportedRegulatorCombinationError()
-        : PowerGridError{
-              "The combination of voltage regulators and transformer tap regulators is not supported in the same model."
-          } {}
+        : PowerGridError{"The combination of voltage regulators and transformer tap regulators is not supported in the "
+                         "same model."} {}
 };
 
 class ConflictingVoltageRegulatorURef : public PowerGridError {
   public:
     ConflictingVoltageRegulatorURef(std::string const& regulator_ids)
-        : PowerGridError{
-              std::format("Conflicting u_ref values detected for voltage regulators {}.", regulator_ids)} {}
+        : PowerGridError{std::format("Conflicting u_ref values detected for voltage regulators {}.", regulator_ids)} {}
 };
 
 class AutomaticTapCalculationError : public PowerGridError {

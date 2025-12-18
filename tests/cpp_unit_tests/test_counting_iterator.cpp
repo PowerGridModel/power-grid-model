@@ -24,7 +24,7 @@ TEST_CASE("Counting Iterator") {
     CHECK(*IdxCount{0} == 0);
     CHECK(*IdxCount{2} == 2);
     CHECK(*(++IdxCount{0}) == 1);
-    CHECK(*(IdxCount { 0 } ++) == 0);
+    CHECK(*(IdxCount{0} ++) == 0);
     CHECK(*(IdxCount{0} + 1) == 1);
     CHECK(IdxRange{IdxRange{1, 3}.begin(), IdxRange{1, 3}.end()}.size() == 2);
     CHECK(*IdxRange{IdxRange{1, 3}.begin(), IdxRange{1, 3}.end()}.begin() == 1);

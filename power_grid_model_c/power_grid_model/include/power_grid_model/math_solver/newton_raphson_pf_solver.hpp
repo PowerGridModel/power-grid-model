@@ -310,8 +310,8 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
 
         // expect that one load/gen is only regulated by one regulator and if multiple loads/gens with regulators
         // are connected to the same bus, they all have the same u_ref
-        for (auto const& [bus_number, load_gens, sources]
-            : enumerated_zip_sequence(*this->load_gens_per_bus_, *this->sources_per_bus_)) {
+        for (auto const& [bus_number, load_gens, sources] :
+             enumerated_zip_sequence(*this->load_gens_per_bus_, *this->sources_per_bus_)) {
             if (!sources.empty()) {
                 bus_types_[bus_number] = BusType::slack;
                 continue;
@@ -332,8 +332,10 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
     auto prepare_mapping_of_active_regulators(PowerFlowInput<sym> const& input) {
         std::map<Idx, Idx> loadgen_to_regulator{};
         for (auto const& [load_gen, regulators] : enumerated_zip_sequence(*this->voltage_regulators_per_load_gen_)) {
-            if (input.load_gen_status[load_gen] == 0) { continue; }
-            for(Idx const regulator_number : regulators) {
+            if (input.load_gen_status[load_gen] == 0) {
+                continue;
+            }
+            for (Idx const regulator_number : regulators) {
                 if (input.voltage_regulator[regulator_number].status != 0) {
                     loadgen_to_regulator.insert({load_gen, regulator_number});
                 }

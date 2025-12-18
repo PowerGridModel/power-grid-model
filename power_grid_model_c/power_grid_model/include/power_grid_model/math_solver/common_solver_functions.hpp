@@ -144,27 +144,24 @@ inline void calculate_source_result(IdxRange const& sources, Idx const& bus_numb
 }
 
 template <symmetry_tag sym>
-inline void calculate_voltage_regulator_result(Idx const& bus_number, PowerFlowInput<sym> const& input, SolverOutput<sym>& output,
-                                               IdxRange const& load_gens, std::map<Idx, Idx> const& loadgen_to_regulator) {
+inline void calculate_voltage_regulator_result(Idx const& bus_number, PowerFlowInput<sym> const& input,
+                                               SolverOutput<sym>& output, IdxRange const& load_gens,
+                                               std::map<Idx, Idx> const& loadgen_to_regulator) {
     if (load_gens.empty()) {
         return;
     }
 
     ComplexValue<sym> const s_load_gen_bus =
         std::transform_reduce(load_gens.begin(), load_gens.end(), ComplexValue<sym>{}, std::plus{},
-                            [&](Idx const load_gen) { return output.load_gen[load_gen].s; });
+                              [&](Idx const load_gen) { return output.load_gen[load_gen].s; });
 
     ComplexValue<sym> const s_remaining = output.bus_injection[bus_number] - s_load_gen_bus;
 
-    auto regulating_gens = load_gens
-        | std::views::filter([&](Idx lg) {
-            return loadgen_to_regulator.contains(lg);
-        })
-        | std::views::filter([&](Idx lg) {
-            auto const regulator = loadgen_to_regulator.at(lg);
-            return input.load_gen_status[lg] != 0 &&
-                input.voltage_regulator[regulator].status != 0;
-        });
+    auto regulating_gens = load_gens | std::views::filter([&](Idx lg) { return loadgen_to_regulator.contains(lg); }) |
+                           std::views::filter([&](Idx lg) {
+                               auto const regulator = loadgen_to_regulator.at(lg);
+                               return input.load_gen_status[lg] != 0 && input.voltage_regulator[regulator].status != 0;
+                           });
     double num_regulating_gens = 0.0;
     for ([[maybe_unused]] auto const& _ : regulating_gens) {
         ++num_regulating_gens;
@@ -187,12 +184,13 @@ inline void calculate_voltage_regulator_result(Idx const& bus_number, PowerFlowI
         output_regulator.limit_violated = 0;
         output_regulator.q = RealValue<sym>{0};
 
-        if(input.load_gen_status[load_gen] == 0 || input.voltage_regulator[regulator].status == 0) {
+        if (input.load_gen_status[load_gen] == 0 || input.voltage_regulator[regulator].status == 0) {
             continue;
         }
 
         // TODO(scud-soptim): #185 consider Q Limits (PV to PQ conversion)
-        // TODO(scud-soptim): #185 equal distribution for now, later consider proportional distribution based on Q limits
+        // TODO(scud-soptim): #185 equal distribution for now, later consider proportional distribution based on Q
+        // limits
         if constexpr (is_symmetric_v<sym>) {
             auto const q_regulator = q_remaining / num_regulating_gens;
             output_regulator.q = q_regulator;
@@ -201,21 +199,18 @@ inline void calculate_voltage_regulator_result(Idx const& bus_number, PowerFlowI
             auto const& s_load_gen = output.load_gen[load_gen].s;
             output.load_gen[load_gen].s = ComplexValue<sym>{real(s_load_gen), imag(s_load_gen) + q_regulator};
         } else {
-            output.voltage_regulator[regulator].q = RealValue<asymmetric_t>{
-                q_remaining[0] / num_regulating_gens,
-                q_remaining[1] / num_regulating_gens,
-                q_remaining[2] / num_regulating_gens
-            };
+            output.voltage_regulator[regulator].q =
+                RealValue<asymmetric_t>{q_remaining[0] / num_regulating_gens, q_remaining[1] / num_regulating_gens,
+                                        q_remaining[2] / num_regulating_gens};
             output.voltage_regulator[regulator].limit_violated = 0; // no violation
 
             auto const& s_load_gen = output.load_gen[load_gen].s;
             auto const& p_load_gen = real(s_load_gen);
             auto const& q_load_gen = imag(s_load_gen);
-            output.load_gen[load_gen].s = ComplexValue<asymmetric_t>{
-                {p_load_gen[0], q_load_gen[0] + q_remaining[0] / num_regulating_gens},
-                {p_load_gen[1], q_load_gen[1] + q_remaining[1] / num_regulating_gens},
-                {p_load_gen[2], q_load_gen[2] + q_remaining[2] / num_regulating_gens}
-            };
+            output.load_gen[load_gen].s =
+                ComplexValue<asymmetric_t>{{p_load_gen[0], q_load_gen[0] + q_remaining[0] / num_regulating_gens},
+                                           {p_load_gen[1], q_load_gen[1] + q_remaining[1] / num_regulating_gens},
+                                           {p_load_gen[2], q_load_gen[2] + q_remaining[2] / num_regulating_gens}};
         }
         output.load_gen[load_gen].i = conj(output.load_gen[load_gen].s / output.u[bus_number]);
     }

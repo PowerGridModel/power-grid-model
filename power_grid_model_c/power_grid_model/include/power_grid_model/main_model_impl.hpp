@@ -491,7 +491,8 @@ class MainModelImpl {
         if (options.calculation_type == CalculationType::power_flow &&
             options.calculation_method == CalculationMethod::newton_raphson &&
             state_.components.template size<VoltageRegulator>() > 0) {
-            throw ExperimentalFeature{"Voltage Regulator with Newton-Raphson Power Flow Method is an experimental feature."};
+            throw ExperimentalFeature{
+                "Voltage Regulator with Newton-Raphson Power Flow Method is an experimental feature."};
         }
     }
 
@@ -521,7 +522,7 @@ class MainModelImpl {
             // lookup of appliance node by appliance ID
             std::map<ID, ID> appliance_nodes;
             for (auto const& load : state_.components.template citer<GenericLoadGen>()) {
-                if (load.status() == true) {
+                if (load.status()) {
                     appliance_nodes[load.id()] = load.node();
                 }
             }
@@ -549,8 +550,7 @@ class MainModelImpl {
             for (auto const& [node_id, u_refs] : node_u_refs) {
                 if (u_refs.size() > 1) {
                     auto const& regulators = node_regulators[node_id];
-                    conflicting_regulators.insert(conflicting_regulators.end(),
-                                                  regulators.begin(), regulators.end());
+                    conflicting_regulators.insert(conflicting_regulators.end(), regulators.begin(), regulators.end());
                 }
             }
             if (!conflicting_regulators.empty()) {
@@ -558,10 +558,12 @@ class MainModelImpl {
                 // std::accumulate when used in exception constructor
                 std::ostringstream oss;
                 for (size_t i = 0; i < conflicting_regulators.size(); ++i) {
-                    if (i > 0) oss << ", ";
+                    if (i > 0) {
+                        oss << ", ";
+                    }
                     oss << conflicting_regulators[i];
                 }
-                std::string ids = oss.str();
+                const std::string ids = oss.str();
                 throw ConflictingVoltageRegulatorURef{ids};
             }
         }

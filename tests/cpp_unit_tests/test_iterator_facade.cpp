@@ -61,8 +61,8 @@ template <advance_type_c advance_type_t, typename UnderlyingType> class BaseTest
         return *it_;
     }
 
-    friend constexpr auto operator<=>(BaseTestIterator const& first,
-                                      BaseTestIterator const& second) -> std::strong_ordering {
+    friend constexpr auto operator<=>(BaseTestIterator const& first, BaseTestIterator const& second)
+        -> std::strong_ordering {
         first.last_call_ = IteratorFacadeableCalls::distance_to;
         return *first.it_ <=> *second.it_;
     }

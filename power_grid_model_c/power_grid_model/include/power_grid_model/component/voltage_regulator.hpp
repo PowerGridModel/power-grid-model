@@ -23,8 +23,7 @@ class VoltageRegulator : public Regulator {
     template <symmetry_tag sym> using OutputType = VoltageRegulatorOutput<sym>;
 
     static constexpr char const* name = "voltage_regulator";
-    explicit VoltageRegulator(VoltageRegulatorInput const& voltage_regulator_input,
-                              ComponentType regulated_object_type,
+    explicit VoltageRegulator(VoltageRegulatorInput const& voltage_regulator_input, ComponentType regulated_object_type,
                               double injection_direction)
         : Regulator{voltage_regulator_input, regulated_object_type},
           injection_direction_{injection_direction},
@@ -52,14 +51,11 @@ class VoltageRegulator : public Regulator {
 
     constexpr RegulatorShortCircuitOutput get_null_sc_output() const { return {.id = id(), .energized = 0}; }
 
-    template <symmetry_tag sym>
-    constexpr VoltageRegulatorOutput<sym> get_null_output() const {
+    template <symmetry_tag sym> constexpr VoltageRegulatorOutput<sym> get_null_output() const {
         return {.id = id(), .energized = 0, .limit_violated = 0, .q = RealValue<sym>{0}};
     }
 
-    constexpr bool is_energized(bool is_connected_to_source = true) const {
-        return is_connected_to_source && status();
-    }
+    constexpr bool is_energized(bool is_connected_to_source = true) const { return is_connected_to_source && status(); }
 
     template <symmetry_tag sym>
     VoltageRegulatorOutput<sym> get_output(VoltageRegulatorSolverOutput<sym> const& solver_output) const {
@@ -70,15 +66,12 @@ class VoltageRegulator : public Regulator {
         return output;
     }
 
-    template <symmetry_tag sym>
-    VoltageRegulatorCalcParam<sym> calc_param() const {
-        return VoltageRegulatorCalcParam<sym>{
-            .status = static_cast<IntS>(status()),
-            .u_ref = {u_ref_, 0.0},
-            .q_min = RealValue<sym>{q_min_ / base_power_3p},
-            .q_max = RealValue<sym>{q_max_ / base_power_3p},
-            .generator_id = this->regulated_object()
-        };
+    template <symmetry_tag sym> VoltageRegulatorCalcParam<sym> calc_param() const {
+        return VoltageRegulatorCalcParam<sym>{.status = static_cast<IntS>(status()),
+                                              .u_ref = {u_ref_, 0.0},
+                                              .q_min = RealValue<sym>{q_min_ / base_power_3p},
+                                              .q_max = RealValue<sym>{q_max_ / base_power_3p},
+                                              .generator_id = this->regulated_object()};
     }
 
     // setter
