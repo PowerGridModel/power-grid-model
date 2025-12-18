@@ -9,7 +9,6 @@
 
 #include <exception>
 #include <format>
-#include <numeric>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -181,14 +180,9 @@ class UnsupportedRegulatorCombinationError : public PowerGridError {
 
 class ConflictingVoltageRegulatorURef : public PowerGridError {
   public:
-    ConflictingVoltageRegulatorURef(std::vector<ID> const& regulator_ids)
+    ConflictingVoltageRegulatorURef(std::string const& regulator_ids)
         : PowerGridError{
-              std::format("Conflicting u_ref values detected for voltage regulators {}.",
-                std::accumulate(std::next(regulator_ids.begin()), regulator_ids.end(),
-                  std::to_string(regulator_ids[0]),
-                  [](std::string a, ID b) { return a + ", " + std::to_string(b); }
-                )
-              )} {}
+              std::format("Conflicting u_ref values detected for voltage regulators {}.", regulator_ids)} {}
 };
 
 class AutomaticTapCalculationError : public PowerGridError {

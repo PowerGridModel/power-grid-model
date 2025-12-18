@@ -554,7 +554,15 @@ class MainModelImpl {
                 }
             }
             if (!conflicting_regulators.empty()) {
-                throw ConflictingVoltageRegulatorURef{conflicting_regulators};
+                // join IDs like this, because of various compiler errors with std::format and
+                // std::accumulate when used in exception constructor
+                std::ostringstream oss;
+                for (size_t i = 0; i < conflicting_regulators.size(); ++i) {
+                    if (i > 0) oss << ", ";
+                    oss << conflicting_regulators[i];
+                }
+                std::string ids = oss.str();
+                throw ConflictingVoltageRegulatorURef{ids};
             }
         }
     }
