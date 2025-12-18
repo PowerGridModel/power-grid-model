@@ -92,7 +92,8 @@ class Serializer {
     detail::UniquePtr<RawSerializer, &PGM_destroy_serializer> serializer_;
 };
 
-inline OwningDataset create_owning_dataset(DatasetWritable& writable_dataset) {
+// TODO change this later to false
+inline OwningDataset create_owning_dataset(DatasetWritable& writable_dataset, bool enable_columnar_buffers = true) {
     auto const& info = writable_dataset.get_info();
     bool const is_batch = info.is_batch();
     Idx const batch_size = info.batch_size();
@@ -104,7 +105,7 @@ inline OwningDataset create_owning_dataset(DatasetWritable& writable_dataset) {
 
     for (Idx component_idx{}; component_idx < info.n_components(); ++component_idx) {
         auto const& component_name = info.component_name(component_idx);
-        auto const& component_meta = MetaData::get_component_by_name(dataset_name, component_name);
+        auto const component_meta = MetaData::get_component_by_name(dataset_name, component_name);
         Idx const component_size = info.component_total_elements(component_idx);
         Idx const elements_per_scenario = info.component_elements_per_scenario(component_idx);
 
@@ -114,12 +115,22 @@ inline OwningDataset create_owning_dataset(DatasetWritable& writable_dataset) {
             current_indptr.at(batch_size) = component_size;
         }
         Idx* const indptr = current_indptr.empty() ? nullptr : current_indptr.data();
-        if (info.has_attribute_indications(component_idx)) {
+        if (info.has_attribute_indications(component_idx) && enable_columnar_buffers) {
             auto& current_buffer = storage.buffers.emplace_back();
             writable_dataset.set_buffer(component_name, indptr, current_buffer);
             dataset_mutable.add_buffer(component_name, elements_per_scenario, component_size, indptr, current_buffer);
+            auto const& attribute_indications = info.attribute_indications(component_idx);
+            // auto& current_attribute_buffers = storage.attribute_buffers.emplace_back(0);
+            for (auto const& attribute_name : attribute_indications) {
+                auto const attribute_meta =
+                    MetaData::get_attribute_by_name(dataset_name, component_name, attribute_name);
+                auto const attribute_ctype = MetaData::attribute_ctype(attribute_meta);
+                (void)attribute_ctype;
+                // current_attribute_buffers.emplace_back();  // TODO change this
+            }
         } else {
             auto& current_buffer = storage.buffers.emplace_back(component_meta, component_size);
+            storage.attribute_buffers.emplace_back({}); // empty attribute buffers
             writable_dataset.set_buffer(component_name, indptr, current_buffer);
             dataset_mutable.add_buffer(component_name, elements_per_scenario, component_size, indptr, current_buffer);
         }
