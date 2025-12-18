@@ -206,9 +206,24 @@ class DatasetConst {
     DatasetInfo info_;
 };
 
+using AttributeBufferPtr = std::unique_ptr<void, std::add_pointer_t<void(RawDataConstPtr)>>;
+template <class T> struct AttributeBufferCreator {
+    static void delete_ptr(RawDataConstPtr ptr) { delete[] reinterpret_cast<T const*>(ptr); }
+
+    AttributeBufferPtr operator()(Idx size, bool fill_in_nan = false) const {
+        auto ptr = AttributeBufferPtr{new T[size], &delete_ptr};
+        auto raw_ptr = reinterpret_cast<T*>(ptr.get());
+        if (fill_in_nan) {
+            std::fill_n(raw_ptr, size, nan_value<T>());
+        }
+        return ptr;
+    }
+};
+
 struct OwningMemory {
     std::vector<Buffer> buffers;
     std::vector<std::vector<Idx>> indptrs;
+    std::vector<std::vector<AttributeBufferPtr>> attribute_buffers;
 };
 
 struct OwningDataset {
