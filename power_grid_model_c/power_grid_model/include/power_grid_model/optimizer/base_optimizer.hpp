@@ -65,7 +65,7 @@ concept optimizer_c =
         {
             optimizer.optimize(state, method)
         } -> std::same_as<
-            MathOutput<detail::state_calculator_result_t<typename Optimizer::Calculator, typename Optimizer::State>>>;
+              MathOutput<detail::state_calculator_result_t<typename Optimizer::Calculator, typename Optimizer::State>>>;
     };
 
 template <typename StateCalculator, typename State_>
