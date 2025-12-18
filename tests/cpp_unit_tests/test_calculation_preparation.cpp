@@ -58,10 +58,10 @@ TEST_CASE("Test SolversCacheStatus") {
 
         // Changed components indices
         auto& indices = cache_status.changed_components_indices();
-        std::get<0>(indices).push_back(Idx2D{0, 1});
-        std::get<1>(indices).push_back(Idx2D{1, 2});
-        CHECK(std::get<0>(cache_status.changed_components_indices())[0] == Idx2D{0, 1});
-        CHECK(std::get<1>(cache_status.changed_components_indices())[0] == Idx2D{1, 2});
+        std::get<0>(indices).push_back(Idx2D{.group=0, .pos=1});
+        std::get<1>(indices).push_back(Idx2D{.group=1, .pos=2});
+        CHECK(std::get<0>(cache_status.changed_components_indices())[0] == Idx2D{.group=0, .pos=1});
+        CHECK(std::get<1>(cache_status.changed_components_indices())[0] == Idx2D{.group=1, .pos=2});
 
         cache_status.clear_changed_components_indices();
         CHECK(std::ranges::all_of(cache_status.changed_components_indices(),
