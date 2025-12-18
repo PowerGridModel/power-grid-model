@@ -301,7 +301,7 @@
       "name": "ci-msvc-reproducible",
       "inherits": "msvc-release",
       "environment": {
-        "SANITIZER_FLAGS": "/d1nodatetime"
+        "SANITIZER_FLAGS": "/d1nodatetime /experimental:deterministic"
       },
       "cacheVariables": {
         "PGM_ENABLE_DEV_BUILD": "OFF",
