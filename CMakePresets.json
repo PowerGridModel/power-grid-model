@@ -300,6 +300,9 @@
     {
       "name": "ci-msvc-reproducible",
       "inherits": "msvc-release",
+      "environment": {
+        "SANITIZER_FLAGS": "/d1nodatetime"
+      },
       "cacheVariables": {
         "PGM_ENABLE_DEV_BUILD": "OFF",
         "CMAKE_SHARED_LINKER_FLAGS": "/Brepro /INCREMENTAL:NO"
