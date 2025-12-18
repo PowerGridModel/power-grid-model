@@ -9,6 +9,7 @@
 #include "basics.hpp"
 #include "buffer.hpp"
 #include "handle.hpp"
+#include "utils.hpp"
 
 #include "power_grid_model_c/dataset.h"
 
