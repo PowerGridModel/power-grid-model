@@ -30,5 +30,5 @@ target_compile_options(
     BEFORE
     INTERFACE
         "$<$<CXX_COMPILER_ID:Clang>:-Wno-unknown-attributes>"
-        "$<$<CXX_COMPILER_ID:MSVC>:/bigobj /RTC1>"
+        "$<$<CXX_COMPILER_ID:MSVC>:/bigobj>"
 )
