@@ -109,7 +109,7 @@
     {
       "name": "unix-sanitizer",
       "environment": {
-        "SANITIZER_FLAGS": "-fstack-protector;-fsanitize=address,pointer-compare,undefined"
+        "SANITIZER_FLAGS": "-fstack-protector -fsanitize=address,pointer-compare,undefined"
       },
       "inherits": "unix-base",
       "hidden": true
