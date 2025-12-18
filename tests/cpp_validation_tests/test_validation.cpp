@@ -64,9 +64,6 @@ OwningDataset create_result_dataset(OwningDataset const& input, std::string cons
 }
 
 OwningDataset load_dataset(std::filesystem::path const& path) {
-// Issue in msgpack, reported in https://github.com/msgpack/msgpack-c/issues/1098
-// May be a Clang Analyzer bug
-#ifndef __clang_analyzer__ // TODO(mgovers): re-enable this when issue in msgpack is fixed
     auto read_file = [](std::filesystem::path const& read_file_path) {
         std::ifstream const f{read_file_path};
         std::ostringstream buffer;
@@ -79,11 +76,6 @@ OwningDataset load_dataset(std::filesystem::path const& path) {
     auto dataset = create_owning_dataset(writable_dataset);
     deserializer.parse_to_buffer();
     return dataset;
-#else  // __clang_analyzer__ // issue in msgpack
-    (void)path;
-    // fallback for https://github.com/msgpack/msgpack-c/issues/1098
-    return OwningDataset{.dataset{"Empty dataset", false, Idx{1}}};
-#endif // __clang_analyzer__ // issue in msgpack
 }
 
 template <typename T> std::string get_as_string(T const& attribute_value) {
