@@ -63,7 +63,7 @@ OwningDataset create_result_dataset(OwningDataset const& input, std::string cons
     return result;
 }
 
-OwningDataset load_dataset(std::filesystem::path const& path) {
+OwningDataset load_dataset(std::filesystem::path const& path, bool enable_columnar_buffers = false) {
     auto read_file = [](std::filesystem::path const& read_file_path) {
         std::ifstream const f{read_file_path};
         std::ostringstream buffer;
@@ -73,7 +73,7 @@ OwningDataset load_dataset(std::filesystem::path const& path) {
 
     Deserializer deserializer{read_file(path), PGM_json};
     auto& writable_dataset = deserializer.get_dataset();
-    auto dataset = create_owning_dataset(writable_dataset);
+    auto dataset = create_owning_dataset(writable_dataset, enable_columnar_buffers);
     deserializer.parse_to_buffer();
     return dataset;
 }
@@ -566,7 +566,7 @@ struct ValidationCase {
 ValidationCase create_validation_case(CaseParam const& param, std::string const& output_type) {
     // input
     ValidationCase validation_case{.param = param,
-                                   .input = load_dataset(param.case_dir / "input.json"),
+                                   .input = load_dataset(param.case_dir / "input.json", true),
                                    .output = std::nullopt,
                                    .update_batch = std::nullopt,
                                    .output_batch = std::nullopt};

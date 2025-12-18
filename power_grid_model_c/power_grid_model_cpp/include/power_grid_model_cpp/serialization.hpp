@@ -93,8 +93,7 @@ class Serializer {
     detail::UniquePtr<RawSerializer, &PGM_destroy_serializer> serializer_;
 };
 
-// TODO change this later to false
-inline OwningDataset create_owning_dataset(DatasetWritable& writable_dataset, bool enable_columnar_buffers = true) {
+inline OwningDataset create_owning_dataset(DatasetWritable& writable_dataset, bool enable_columnar_buffers = false) {
     auto const& info = writable_dataset.get_info();
     bool const is_batch = info.is_batch();
     Idx const batch_size = info.batch_size();
