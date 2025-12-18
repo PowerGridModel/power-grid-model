@@ -471,3 +471,44 @@ def _make_test_case(  # noqa: PLR0913
     params_json = json.dumps(params, indent=2)
     (output_path / "params.json").write_text(data=params_json, encoding="utf-8")
     (output_path / "params.json.license").write_text(data=LICENSE_TEXT, encoding="utf-8")
+
+
+def msgpack_deserialize_from_fileobj(
+    file: BytesIO,
+    data_filter: ComponentAttributeMapping = None,
+) -> Dataset:
+    """
+    Load and deserialize a msgpack file to a new dataset.
+
+    Args:
+        file: the ByteIO to the file to load and deserialize.
+
+    Raises:
+        ValueError: if the data is inconsistent with the rest of the dataset or a component is unknown.
+        PowerGridError: if there was an internal error.
+
+    Returns:
+        The deserialized dataset in Power grid model input format.
+    """
+    return msgpack_deserialize(file.read(), data_filter=data_filter)
+
+
+def msgpack_serialize_to_fileobj(
+    file: BytesIO, data: Dataset,
+    dataset_type: DatasetType | None = None,
+    use_compact_list: bool = False
+):
+    """
+    Export msgpack data in most recent format.
+
+    Args:
+        file: the ByteIO to the file to load and deserialize.
+        data: a single or batch dataset for power-grid-model.
+        use_compact_list: write components on a single line.
+
+    Returns:
+        Save to BytesIO file.
+    """
+    data = _map_to_component_types(data)
+    result = msgpack_serialize(data=data, dataset_type=dataset_type, use_compact_list=use_compact_list)
+    file.write(result)
