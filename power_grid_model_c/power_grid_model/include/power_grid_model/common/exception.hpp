@@ -170,6 +170,26 @@ class DuplicativelyRegulatedObject : public PowerGridError {
         : PowerGridError{"There are objects regulated by more than one regulator. Maximum one regulator is allowed."} {}
 };
 
+class UnsupportedRegulatorCombinationError : public PowerGridError {
+  public:
+    UnsupportedRegulatorCombinationError()
+        : PowerGridError{
+              "The combination of voltage regulators and transformer tap regulators is not supported in the same model."
+          } {}
+};
+
+class ConflictingVoltageRegulatorURef : public PowerGridError {
+  public:
+    ConflictingVoltageRegulatorURef(std::vector<ID> const& regulator_ids)
+        : PowerGridError{
+              std::format("Conflicting u_ref values detected for voltage regulators {}.",
+                std::accumulate(std::next(regulator_ids.begin()), regulator_ids.end(),
+                  std::to_string(regulator_ids[0]),
+                  [](std::string a, ID b) { return a + ", " + std::to_string(b); }
+                )
+              )} {}
+};
+
 class AutomaticTapCalculationError : public PowerGridError {
   public:
     AutomaticTapCalculationError(ID id)

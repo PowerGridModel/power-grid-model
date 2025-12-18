@@ -143,6 +143,7 @@ class MainModelImpl {
         assert(input_data.get_description().dataset->name == std::string_view("input"));
         add_components(input_data, pos);
         set_construction_complete();
+        check_regulator_validity();
     }
 
     // constructor with only frequency
@@ -491,6 +492,70 @@ class MainModelImpl {
             options.calculation_method == CalculationMethod::newton_raphson &&
             state_.components.template size<VoltageRegulator>() > 0) {
             throw ExperimentalFeature{"Voltage Regulator with Newton-Raphson Power Flow Method is an experimental feature."};
+        }
+    }
+
+    void check_regulator_validity() const {
+        if (state_.components.template size<VoltageRegulator>() > 0 &&
+            state_.components.template size<TransformerTapRegulator>() > 0) {
+            throw UnsupportedRegulatorCombinationError{};
+        }
+        if (state_.components.template size<VoltageRegulator>() > 0) {
+            std::map<ID, std::set<double>> node_u_refs; // u_ref per node
+
+            // collect u_refs from sources
+            for (auto const& src : state_.components.template citer<Source>()) {
+                if (src.status()) {
+                    node_u_refs[src.node()].insert(src.u_ref());
+                }
+            }
+            // discard nodes with different source u_refs from consideration
+            // -> source have priority and final u_ref determined relative to their sk values
+            // -> later only check voltage regulator consistency for suche node
+            for (auto& [node_id, u_refs] : node_u_refs) {
+                if (u_refs.size() > 1) {
+                    u_refs.clear();
+                }
+            }
+
+            // lookup of appliance node by appliance ID
+            std::map<ID, ID> appliance_nodes;
+            for (auto const& load : state_.components.template citer<GenericLoadGen>()) {
+                if (load.status() == true) {
+                    appliance_nodes[load.id()] = load.node();
+                }
+            }
+
+            // collect u_refs from voltage regulators
+            std::map<ID, std::set<ID>> node_regulators;
+            for (auto const& vr : state_.components.template citer<VoltageRegulator>()) {
+                if (!vr.status()) {
+                    continue;
+                }
+                auto const node_it = appliance_nodes.find(vr.regulated_object());
+                if (node_it != appliance_nodes.end()) {
+                    ID const node_id = node_it->second;
+                    auto const u_ref_it = node_u_refs.find(node_id);
+                    if (u_ref_it == node_u_refs.end()) {
+                        node_u_refs[node_id] = {};
+                    }
+                    node_u_refs[node_id].insert(vr.u_ref());
+                    node_regulators[node_id].insert(vr.id());
+                }
+            }
+
+            // collect node IDs with conflicting u_refs
+            std::vector<ID> conflicting_regulators;
+            for (auto const& [node_id, u_refs] : node_u_refs) {
+                if (u_refs.size() > 1) {
+                    auto const& regulators = node_regulators[node_id];
+                    conflicting_regulators.insert(conflicting_regulators.end(),
+                                                  regulators.begin(), regulators.end());
+                }
+            }
+            if (!conflicting_regulators.empty()) {
+                throw ConflictingVoltageRegulatorURef{conflicting_regulators};
+            }
         }
     }
 

@@ -350,6 +350,7 @@ def validate_required_values(  # noqa: PLR0915
     required[ComponentType.voltage_regulator] = required["regulator"].copy()
     if calculation_type is None or calculation_type == CalculationType.power_flow:
         required[ComponentType.voltage_regulator] += ["u_ref"]
+        # TODO(scud-soptim): add unit test for optional q_min and q_max when limit handling is implemented
 
     # Appliances
     required["appliance"] = required["base"] + ["node", "status"]
@@ -976,8 +977,10 @@ def _init_node_u_ref_from_sources(data: SingleDataset):
     if ComponentType.source in data:
         source_data = data[ComponentType.source]
         for idx, node_id in enumerate(source_data["node"]):
-            u_ref = source_data["u_ref"][idx]
-            node_u_refs.setdefault(node_id, set()).add(u_ref)
+            status = source_data["status"][idx]
+            if status != 0:
+                u_ref = source_data["u_ref"][idx]
+                node_u_refs.setdefault(node_id, set()).add(u_ref)
 
         # clear nodes with different source u_refs from consideration
         for node_id, u_refs in node_u_refs.items():
@@ -992,7 +995,8 @@ def _init_appliance_to_node_mapping(data: SingleDataset):
                            ComponentType.sym_load, ComponentType.asym_load]:
         if component_type in data:
             for appliance in data[component_type]:
-                appliance_to_node[appliance["id"]] = appliance["node"]
+                if appliance["status"] != 0:
+                    appliance_to_node[appliance["id"]] = appliance["node"]
 
     return appliance_to_node
 

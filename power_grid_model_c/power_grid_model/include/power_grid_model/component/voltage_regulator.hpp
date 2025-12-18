@@ -57,7 +57,7 @@ class VoltageRegulator : public Regulator {
         return {.id = id(), .energized = 0, .limit_violated = 0, .q = RealValue<sym>{0}};
     }
 
-    bool is_energized(bool is_connected_to_source = true) const {
+    constexpr bool is_energized(bool is_connected_to_source = true) const {
         return is_connected_to_source && status();
     }
 
