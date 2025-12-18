@@ -9,6 +9,7 @@
 
 #include <exception>
 #include <format>
+#include <numeric>
 #include <sstream>
 #include <string>
 #include <utility>
