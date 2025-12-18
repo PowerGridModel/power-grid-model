@@ -52,28 +52,27 @@ set_target_properties(
 # Always-on hardening
 target_compile_definitions(
     power_grid_model_c
-    PUBLIC
+    PRIVATE
         "$<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:_FORTIFY_SOURCE=2>"
+        "$<$<CXX_COMPILER_ID:MSVC>:_ITERATOR_DEBUG_LEVEL=$<IF:$<CONFIG:DEBUG>,2,1>>"
 )
 target_compile_options(
     power_grid_model_c
     BEFORE
-    PUBLIC
+    PRIVATE
         "$<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-fstack-protector;-fsanitize=undefined>"
         "$<$<CXX_COMPILER_ID:GNU>:-static-libubsan>"
         "$<$<CXX_COMPILER_ID:Clang>:-lubsan>"
         "$<$<AND:$<CXX_COMPILER_ID:Clang>,$<NOT:$<OR:$<IN_LIST:address,${CMAKE_CFLAGS}>,$<IN_LIST:address,${CMAKE_CXXFLAGS}>>>>:-fsanitize-minimal-runtime>"
-        "$<$<CXX_COMPILER_ID:MSVC>:/RTC1>"
 )
 target_link_options(
     power_grid_model_c
     BEFORE
-    PUBLIC
+    PRIVATE
         "$<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-fstack-protector;-fsanitize=undefined>"
         "$<$<CXX_COMPILER_ID:GNU>:-static-libubsan>"
         "$<$<CXX_COMPILER_ID:Clang>:-lubsan>"
         "$<$<AND:$<CXX_COMPILER_ID:Clang>,$<NOT:$<IN_LIST:address,${CMAKE_LDFLAGS}>>>:-fsanitize-minimal-runtime>"
-        "$<$<CXX_COMPILER_ID:MSVC>:/RTC1>"
 )
 
 install(

@@ -24,12 +24,3 @@ target_include_directories(
 
 # only use MPL version of eigen
 target_compile_definitions(power_grid_model INTERFACE "EIGEN_MPL2_ONLY=1")
-
-target_compile_options(
-    power_grid_model
-    BEFORE
-    INTERFACE
-        "$<$<CXX_COMPILER_ID:GCC>:-fstack-protector>"
-        "$<$<CXX_COMPILER_ID:Clang>:-Wno-unknown-attributes>"
-        "$<$<CXX_COMPILER_ID:MSVC>:/bigobj /RTC1>"
-)
