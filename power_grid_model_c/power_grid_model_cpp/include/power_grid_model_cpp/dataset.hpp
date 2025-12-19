@@ -230,16 +230,13 @@ struct OwningDataset {
     DatasetMutable dataset;
     OwningMemory storage{};
 
-    static inline OwningDataset create_owning_dataset(DatasetWritable& writable_dataset,
-                                                      bool enable_columnar_buffers = false) {
+    OwningDataset(DatasetWritable& writable_dataset, bool enable_columnar_buffers = false)
+        : dataset{writable_dataset.get_info().name(), writable_dataset.get_info().is_batch(),
+                  writable_dataset.get_info().batch_size()},
+          storage{} {
         auto const& info = writable_dataset.get_info();
-        bool const is_batch = info.is_batch();
         Idx const batch_size = info.batch_size();
         auto const& dataset_name = info.name();
-        OwningDataset owning_dataset{.dataset = DatasetMutable{dataset_name, is_batch, batch_size},
-                                     .storage = OwningMemory{}};
-        DatasetMutable& dataset_mutable = owning_dataset.dataset;
-        OwningMemory& storage = owning_dataset.storage;
 
         for (Idx component_idx{}; component_idx < info.n_components(); ++component_idx) {
             auto const& component_name = info.component_name(component_idx);
@@ -256,8 +253,7 @@ struct OwningDataset {
             if (info.has_attribute_indications(component_idx) && enable_columnar_buffers) {
                 auto& current_buffer = storage.buffers.emplace_back();
                 writable_dataset.set_buffer(component_name, indptr, current_buffer);
-                dataset_mutable.add_buffer(component_name, elements_per_scenario, component_size, indptr,
-                                           current_buffer);
+                dataset.add_buffer(component_name, elements_per_scenario, component_size, indptr, current_buffer);
                 auto const& attribute_indications = info.attribute_indications(component_idx);
                 auto& current_attribute_buffers = storage.attribute_buffers.emplace_back();
                 for (auto const& attribute_name : attribute_indications) {
@@ -269,25 +265,22 @@ struct OwningDataset {
                         pgm_type_func_selector(attribute_ctype, AttributeBufferCreator{}, component_size));
                     writable_dataset.set_attribute_buffer(component_name, attribute_name,
                                                           current_attribute_buffers.back().get());
-                    dataset_mutable.add_attribute_buffer(component_name, attribute_name,
-                                                         current_attribute_buffers.back().get());
+                    dataset.add_attribute_buffer(component_name, attribute_name,
+                                                 current_attribute_buffers.back().get());
                 }
             } else {
                 auto& current_buffer = storage.buffers.emplace_back(component_meta, component_size);
                 storage.attribute_buffers.emplace_back(); // empty attribute buffers
                 writable_dataset.set_buffer(component_name, indptr, current_buffer);
-                dataset_mutable.add_buffer(component_name, elements_per_scenario, component_size, indptr,
-                                           current_buffer);
+                dataset.add_buffer(component_name, elements_per_scenario, component_size, indptr, current_buffer);
             }
         }
-        return owning_dataset;
     }
 
-    static OwningDataset create_result_dataset(OwningDataset const& ref_dataset, std::string const& dataset_name,
-                                               bool is_batch = false, Idx batch_size = 1) {
+    OwningDataset(OwningDataset const& ref_dataset, std::string const& dataset_name, bool is_batch = false,
+                  Idx batch_size = 1)
+        : dataset{dataset_name, is_batch, batch_size}, storage{} {
         DatasetInfo const& ref_info = ref_dataset.dataset.get_info();
-
-        OwningDataset result{.dataset = DatasetMutable{dataset_name, is_batch, batch_size}, .storage{}};
 
         for (Idx component_idx{}; component_idx != ref_info.n_components(); ++component_idx) {
             auto const& component_name = ref_info.component_name(component_idx);
@@ -298,13 +291,11 @@ struct OwningDataset {
             }
             Idx const component_size = ref_info.component_total_elements(component_idx);
 
-            result.storage.indptrs.emplace_back();
+            storage.indptrs.emplace_back();
             Idx const* const indptr = nullptr;
-            auto& current_buffer = result.storage.buffers.emplace_back(component_meta, component_size);
-            result.dataset.add_buffer(component_name, component_elements_per_scenario, component_size, indptr,
-                                      current_buffer);
+            auto& current_buffer = storage.buffers.emplace_back(component_meta, component_size);
+            dataset.add_buffer(component_name, component_elements_per_scenario, component_size, indptr, current_buffer);
         }
-        return result;
     }
 };
 } // namespace power_grid_model_cpp

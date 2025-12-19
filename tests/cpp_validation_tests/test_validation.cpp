@@ -51,7 +51,7 @@ OwningDataset load_dataset(std::filesystem::path const& path, bool enable_column
 
     Deserializer deserializer{read_file(path), PGM_json};
     auto& writable_dataset = deserializer.get_dataset();
-    auto dataset = OwningDataset::create_owning_dataset(writable_dataset, enable_columnar_buffers);
+    OwningDataset dataset{writable_dataset, enable_columnar_buffers};
     deserializer.parse_to_buffer();
     return dataset;
 }
@@ -616,7 +616,7 @@ void validate_single_case(CaseParam const& param) {
     execute_test(param, [&param](Subcase& subcase) {
         auto const output_prefix = get_output_type(param.calculation_type, param.sym);
         auto const validation_case = create_validation_case(param, output_prefix);
-        auto const result = OwningDataset::create_result_dataset(validation_case.output.value(), output_prefix);
+        OwningDataset const result{validation_case.output.value(), output_prefix};
 
         // create and run model
         auto const& options = get_options(param);
@@ -634,8 +634,7 @@ void validate_batch_case(CaseParam const& param) {
         auto const validation_case = create_validation_case(param, output_prefix);
         auto const& info = validation_case.update_batch.value().dataset.get_info();
         Idx const batch_size = info.batch_size();
-        auto const batch_result =
-            OwningDataset::create_result_dataset(validation_case.output_batch.value(), output_prefix, true, batch_size);
+        OwningDataset const batch_result{validation_case.output_batch.value(), output_prefix, true, batch_size};
 
         // create model
         Model model{50.0, validation_case.input.dataset};
