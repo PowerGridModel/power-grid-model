@@ -386,6 +386,22 @@ uv sync
 uv run pytest
 ```
 
+#### Build Python Library from Source with Native Debug Symbols
+
+For debugging purposes, it may be useful to build the Power Grid Model with debug symbols in the shared native library.
+To do so, the following command can be used to override the default build settings.
+
+```shell
+uv sync --config-settings=cmake.build-type="RelWithDebInfo"
+```
+
+It is also possible to install the Power Grid Model as a full debug build, including extra sanity checks and with a
+lower degree of optimizations. Note this may come with a significant impact on the performance.
+
+```shell
+uv sync --config-settings=cmake.build-type="Debug"
+```
+
 ### Build CMake Project
 
 If you have installed Visual Studio 2019/2022 (not the build tools), you can open the repo folder as a cmake project.
