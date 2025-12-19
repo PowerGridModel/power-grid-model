@@ -25,4 +25,9 @@ target_compile_definitions(
     PRIVATE PGM_ENABLE_EXPERIMENTAL
 )
 
+set_target_properties(
+    power_grid_model_api_tests
+    PROPERTIES BUILD_RPATH $<TARGET_FILE_DIR:power_grid_model_c>
+)
+
 doctest_discover_tests(power_grid_model_api_tests)
