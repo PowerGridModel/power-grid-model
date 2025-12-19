@@ -820,50 +820,45 @@ def test_serialize_deserialize_double_round_trip(deserialize, serialize, seriali
 
 
 def test_messagepack_round_trip_with_stream(serialized_data):
-    if serialized_data["data"] != {}:
-        data = to_msgpack(serialized_data)
-        input_data: Dataset = msgpack_deserialize(data)
+    data = to_msgpack(serialized_data)
+    input_data: Dataset = msgpack_deserialize(data)
 
-        io_buffer_data = BytesIO()
-        msgpack_serialize_to_stream(io_buffer_data, input_data)
-        io_buffer_data.seek(0)
-        output_data = msgpack_deserialize_from_stream(io_buffer_data)
-        assert str(output_data) == str(input_data)
-
-
-def test_messagepack_text_to_stream(serialized_data):
-    if serialized_data["data"] != {}:
-        data = to_msgpack(serialized_data)
-        input_data: Dataset = msgpack_deserialize(data)
-
-        io_buffer_data = TextIOBase()
-        with pytest.raises(TypeError) as excinfo:
-            msgpack_serialize_to_stream(io_buffer_data, input_data)
-        assert "Expected a binary stream." in str(excinfo.value)
+    io_buffer_data = BytesIO()
+    msgpack_serialize_to_stream(io_buffer_data, input_data, dataset_type=serialized_data["type"])
+    io_buffer_data.seek(0)
+    output_data = msgpack_deserialize_from_stream(io_buffer_data)
+    assert str(output_data) == str(input_data)
 
 
-def test_messagepack_text_from_stream(serialized_data):
-    if serialized_data["data"] != {}:
-        io_buffer_data = TextIOBase()
-        with pytest.raises(TypeError) as excinfo:
-            _ = msgpack_deserialize_from_stream(io_buffer_data)
-        assert "Expected a binary stream." in str(excinfo.value)
+def test_messagepack_to_stream_text_type_error(serialized_data):
+    data = to_msgpack(serialized_data)
+    input_data: Dataset = msgpack_deserialize(data)
+
+    io_buffer_data = TextIOBase()
+    with pytest.raises(TypeError) as excinfo:
+        msgpack_serialize_to_stream(io_buffer_data, input_data, dataset_type=serialized_data["type"])
+    assert "Expected a binary stream." in str(excinfo.value)
 
 
-def test_messagepack_reading_from_stream(serialized_data):
-    if serialized_data["data"] != {}:
-        io_buffer_data = FakeRawIO(initial_bytes=b"bla")
-        with pytest.raises(UnsupportedOperation) as excinfo:
-            _ = msgpack_deserialize_from_stream(io_buffer_data)
-        assert "Stream is not readable." in str(excinfo.value)
+def test_messagepack_from_stream_text_type_error():
+    io_buffer_data = TextIOBase()
+    with pytest.raises(TypeError) as excinfo:
+        _ = msgpack_deserialize_from_stream(io_buffer_data)
+    assert "Expected a binary stream." in str(excinfo.value)
 
 
-def test_messagepack_writiing_to_stream(serialized_data):
-    if serialized_data["data"] != {}:
-        data = to_msgpack(serialized_data)
-        input_data: Dataset = msgpack_deserialize(data)
+def test_messagepack_from_stream_readable_error():
+    io_buffer_data = FakeRawIO(initial_bytes=b"bla")
+    with pytest.raises(UnsupportedOperation) as excinfo:
+        _ = msgpack_deserialize_from_stream(io_buffer_data)
+    assert "Stream is not readable." in str(excinfo.value)
 
-        io_buffer_data = FakeRawIO(initial_bytes=b"bla")
-        with pytest.raises(UnsupportedOperation) as excinfo:
-            _ = msgpack_serialize_to_stream(io_buffer_data, input_data)
-        assert "Stream is not writable." in str(excinfo.value)
+
+def test_messagepack_to_stream_writable_error(serialized_data):
+    data = to_msgpack(serialized_data)
+    input_data: Dataset = msgpack_deserialize(data)
+
+    io_buffer_data = FakeRawIO(initial_bytes=b"bla")
+    with pytest.raises(UnsupportedOperation) as excinfo:
+        _ = msgpack_serialize_to_stream(io_buffer_data, input_data, dataset_type=serialized_data["type"])
+    assert "Stream is not writable." in str(excinfo.value)
