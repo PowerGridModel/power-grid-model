@@ -23,8 +23,8 @@ struct ClIOptions {
     std::filesystem::path input_file;
     std::filesystem::path batch_update_file;
     std::filesystem::path output_file;
-    bool input_msgpack_serialization{false};
-    bool batch_update_msgpack_serialization{false};
+    PGM_SerializationFormat input_serialization_format{PGM_json};
+    PGM_SerializationFormat batch_update_serialization_format{PGM_json};
     bool is_batch{false};
 
     double system_frequency{50.0};

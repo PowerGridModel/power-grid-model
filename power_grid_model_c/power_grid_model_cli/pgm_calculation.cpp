@@ -10,14 +10,13 @@ namespace power_grid_model_cpp {
 
 void pgm_calculation(ClIOptions const& cli_options) {
     // Load input dataset
-    OwningDataset input_dataset =
-        load_dataset(cli_options.input_file, cli_options.input_msgpack_serialization ? PGM_msgpack : PGM_json);
+    OwningDataset input_dataset = load_dataset(cli_options.input_file, cli_options.input_serialization_format);
 
     // Apply batch updates if provided
     std::optional<OwningDataset> batch_update_dataset{std::nullopt};
     if (cli_options.is_batch) {
-        batch_update_dataset = load_dataset(cli_options.batch_update_file,
-                                            cli_options.batch_update_msgpack_serialization ? PGM_msgpack : PGM_json);
+        batch_update_dataset =
+            load_dataset(cli_options.batch_update_file, cli_options.batch_update_serialization_format);
     }
     Idx const batch_size = cli_options.is_batch ? batch_update_dataset->dataset.get_info().batch_size() : 1;
 

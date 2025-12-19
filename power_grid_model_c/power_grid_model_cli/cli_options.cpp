@@ -43,14 +43,15 @@ struct CLIPostCallback {
 
     void set_default_values() {
         // detect if input file is msgpack
-        options.input_msgpack_serialization = is_msgpack_file(options.input_file);
+        options.input_serialization_format = is_msgpack_file(options.input_file) ? PGM_msgpack : PGM_json;
         // detect if batch update file is provided
         options.is_batch = !options.batch_update_file.empty();
         // detect if batch update file is msgpack
-        options.batch_update_msgpack_serialization = options.is_batch && is_msgpack_file(options.batch_update_file);
+        options.batch_update_serialization_format =
+            options.is_batch && is_msgpack_file(options.batch_update_file) ? PGM_msgpack : PGM_json;
         // default msgpack output if input or batch update is msgpack and user did not specify output format
-        if (msgpack_flag->count() == 0 &&
-            (options.input_msgpack_serialization || options.batch_update_msgpack_serialization)) {
+        if (msgpack_flag->count() == 0 && (options.input_serialization_format == PGM_msgpack ||
+                                           options.batch_update_serialization_format == PGM_msgpack)) {
             options.use_msgpack_output_serialization = true;
         }
         // default compact serialization if msgpack output and user did not specify compact option
