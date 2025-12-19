@@ -4,6 +4,7 @@
 
 import json
 from collections.abc import Mapping
+from io import BytesIO
 from typing import Any
 
 import msgpack
@@ -15,7 +16,8 @@ from power_grid_model._core.dataset_definitions import ComponentType
 from power_grid_model._core.utils import get_dataset_type, is_columnar, is_sparse
 from power_grid_model.data_types import BatchDataset, Dataset, DenseBatchData, SingleComponentData, SingleDataset
 from power_grid_model.enum import ComponentAttributeFilterOptions
-from power_grid_model.utils import json_deserialize, json_serialize, msgpack_deserialize, msgpack_serialize
+from power_grid_model.utils import json_deserialize, json_serialize, msgpack_deserialize, msgpack_serialize, \
+    msgpack_serialize_to_fileobj, msgpack_deserialize_from_fileobj
 
 
 def to_json(data, raw_buffer: bool = False, indent: int | None = None):
@@ -790,3 +792,16 @@ def test_serialize_deserialize_double_round_trip(deserialize, serialize, seriali
 
             np.testing.assert_array_equal(nan_a, nan_b)
             np.testing.assert_allclose(field_result_a[~nan_a], field_result_b[~nan_b], rtol=1e-15)
+
+
+def test_messagepack_round_trip_to_io(serialized_data):
+    if serialized_data['data'] != {}:
+        data = to_msgpack(serialized_data)
+        input_data: Dataset = msgpack_deserialize(data)
+
+        io_buffer_data = BytesIO()
+        msgpack_serialize_to_fileobj(io_buffer_data, input_data)
+        io_buffer_data.seek(0)
+        output_data = msgpack_deserialize_from_fileobj(io_buffer_data)
+        assert str(output_data)==str(input_data)
+

@@ -482,7 +482,7 @@ def msgpack_deserialize_from_fileobj(
     Load and deserialize a msgpack file to a new dataset.
 
     Args:
-        file: the ByteIO to the file to load and deserialize.
+        file: the bytes IO stream to the file to load and deserialize.
 
     Raises:
         ValueError: if the data is inconsistent with the rest of the dataset or a component is unknown.
@@ -504,7 +504,7 @@ def msgpack_serialize_to_fileobj(
     Export msgpack data in most recent format.
 
     Args:
-        file: the ByteIO to the file to load and deserialize.
+        file: the bytes IO stream to the file to load and deserialize.
         data: a single or batch dataset for power-grid-model.
         use_compact_list: write components on a single line.
 
