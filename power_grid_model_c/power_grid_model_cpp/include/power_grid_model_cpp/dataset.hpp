@@ -260,7 +260,6 @@ struct OwningDataset {
                     auto const attribute_meta =
                         MetaData::get_attribute_by_name(dataset_name, component_name, attribute_name);
                     auto const attribute_ctype = MetaData::attribute_ctype(attribute_meta);
-                    (void)attribute_ctype;
                     current_attribute_buffers.emplace_back(
                         pgm_type_func_selector(attribute_ctype, AttributeBufferCreator{}, component_size));
                     writable_dataset.set_attribute_buffer(component_name, attribute_name,
