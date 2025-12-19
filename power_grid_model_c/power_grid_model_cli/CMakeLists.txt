@@ -5,6 +5,7 @@
 add_executable(power-grid-model 
   main.cpp
   cli_options.cpp
+  pgm_calculation.cpp
 )
 
 target_link_libraries(power-grid-model PRIVATE power_grid_model_c)

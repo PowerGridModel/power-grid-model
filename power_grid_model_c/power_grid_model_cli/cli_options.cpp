@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "cli_options.hpp"
+#include "cli_functions.hpp"
 
 #include <CLI/CLI.hpp>
 

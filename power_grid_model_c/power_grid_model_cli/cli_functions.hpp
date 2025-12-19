@@ -48,4 +48,6 @@ struct ClIOptions {
 
 CLIResult parse_cli_options(int argc, char** argv, ClIOptions& options);
 
+void pgm_calculation(ClIOptions const& options);
+
 } // namespace power_grid_model_cpp
