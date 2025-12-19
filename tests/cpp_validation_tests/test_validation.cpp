@@ -73,7 +73,7 @@ OwningDataset load_dataset(std::filesystem::path const& path, bool enable_column
 
     Deserializer deserializer{read_file(path), PGM_json};
     auto& writable_dataset = deserializer.get_dataset();
-    auto dataset = create_owning_dataset(writable_dataset, enable_columnar_buffers);
+    auto dataset = OwningDataset::create_owning_dataset(writable_dataset, enable_columnar_buffers);
     deserializer.parse_to_buffer();
     return dataset;
 }

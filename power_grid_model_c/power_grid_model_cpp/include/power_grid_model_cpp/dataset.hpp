@@ -229,6 +229,60 @@ struct OwningMemory {
 struct OwningDataset {
     DatasetMutable dataset;
     OwningMemory storage{};
+
+    static inline OwningDataset create_owning_dataset(DatasetWritable& writable_dataset,
+                                                      bool enable_columnar_buffers = false) {
+        auto const& info = writable_dataset.get_info();
+        bool const is_batch = info.is_batch();
+        Idx const batch_size = info.batch_size();
+        auto const& dataset_name = info.name();
+        OwningDataset owning_dataset{.dataset = DatasetMutable{dataset_name, is_batch, batch_size},
+                                     .storage = OwningMemory{}};
+        DatasetMutable& dataset_mutable = owning_dataset.dataset;
+        OwningMemory& storage = owning_dataset.storage;
+
+        for (Idx component_idx{}; component_idx < info.n_components(); ++component_idx) {
+            auto const& component_name = info.component_name(component_idx);
+            auto const component_meta = MetaData::get_component_by_name(dataset_name, component_name);
+            Idx const component_size = info.component_total_elements(component_idx);
+            Idx const elements_per_scenario = info.component_elements_per_scenario(component_idx);
+
+            auto& current_indptr = storage.indptrs.emplace_back(elements_per_scenario < 0 ? batch_size + 1 : 0);
+            if (!current_indptr.empty()) {
+                current_indptr.at(0) = 0;
+                current_indptr.at(batch_size) = component_size;
+            }
+            Idx* const indptr = current_indptr.empty() ? nullptr : current_indptr.data();
+            if (info.has_attribute_indications(component_idx) && enable_columnar_buffers) {
+                auto& current_buffer = storage.buffers.emplace_back();
+                writable_dataset.set_buffer(component_name, indptr, current_buffer);
+                dataset_mutable.add_buffer(component_name, elements_per_scenario, component_size, indptr,
+                                           current_buffer);
+                auto const& attribute_indications = info.attribute_indications(component_idx);
+                auto& current_attribute_buffers =
+                    storage.attribute_buffers.emplace_back(std::vector<AttributeBufferPtr>{});
+                for (auto const& attribute_name : attribute_indications) {
+                    auto const attribute_meta =
+                        MetaData::get_attribute_by_name(dataset_name, component_name, attribute_name);
+                    auto const attribute_ctype = MetaData::attribute_ctype(attribute_meta);
+                    (void)attribute_ctype;
+                    current_attribute_buffers.emplace_back(
+                        pgm_type_func_selector(attribute_ctype, AttributeBufferCreator{}, component_size));
+                    writable_dataset.set_attribute_buffer(component_name, attribute_name,
+                                                          current_attribute_buffers.back().get());
+                    dataset_mutable.add_attribute_buffer(component_name, attribute_name,
+                                                         current_attribute_buffers.back().get());
+                }
+            } else {
+                auto& current_buffer = storage.buffers.emplace_back(component_meta, component_size);
+                storage.attribute_buffers.emplace_back(std::vector<AttributeBufferPtr>{}); // empty attribute buffers
+                writable_dataset.set_buffer(component_name, indptr, current_buffer);
+                dataset_mutable.add_buffer(component_name, elements_per_scenario, component_size, indptr,
+                                           current_buffer);
+            }
+        }
+        return owning_dataset;
+    }
 };
 } // namespace power_grid_model_cpp
 
