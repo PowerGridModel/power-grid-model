@@ -41,12 +41,14 @@ lint = [
     "pre-commit",
     "ruff",
     "mypy",
-    "numpy",  # needed for mypy
+    "numpy",                # needed for mypy
     "gersemi",              # CMake linter
     "clang-format ~= 18.0", # C++ formatter
 ]
 
 dev = [{ include-group = "test" }, { include-group = "lint" }]
+
+code-generation = ["dataclasses_json", "jinja2"]
 
 doc = [
     "sphinx",

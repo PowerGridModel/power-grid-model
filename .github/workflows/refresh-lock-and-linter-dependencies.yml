@@ -87,6 +87,13 @@ jobs:
           pre-commit install-hooks
           pre-commit uninstall
 
+      - name: generate GitHub App token
+        uses: actions/create-github-app-token@v2
+        id: generate-token
+        with:
+          app-id: ${{ secrets.CI_BOT_APP_ID }}
+          private-key: ${{ secrets.CI_BOT_PRIVATE_KEY }}
+
       - name: create pull request
         if: ${{ inputs.create-pr || github.event_name == 'schedule' }}
         uses: peter-evans/create-pull-request@v8
@@ -97,5 +104,7 @@ jobs:
           body: "This PR refreshes the lock file and updates linter dependencies to their latest versions."
           labels: "dependencies"
           signoff: true
+          sign-commits: true
           delete-branch: true
           base: ${{ github.head_ref }}
+          token: ${{ steps.generate-token.outputs.token }}

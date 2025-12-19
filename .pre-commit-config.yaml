@@ -9,7 +9,7 @@ repos:
       - id: reuse
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
-    rev: v0.14.7
+    rev: v0.14.9
     hooks:
       # Run the linter.
       - id: ruff-check
@@ -19,7 +19,7 @@ repos:
       - id: ruff-format
         name: ruff-format
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.19.0
+    rev: v1.19.1
     hooks:
       - id: mypy
         additional_dependencies:
@@ -38,13 +38,13 @@ repos:
       - id: clang-format
         types_or: [ c++, c ]
   - repo: https://github.com/BlankSpruce/gersemi
-    rev: 0.23.2
+    rev: 0.24.0
     hooks:
     - id: gersemi
       name: cmake-linter
       alias: cmake-linter
   - repo: https://github.com/igorshubovych/markdownlint-cli  # outside pypi 
-    rev: v0.46.0
+    rev: v0.47.0
     hooks:
     - id: markdownlint
       args: ["--fix"]
