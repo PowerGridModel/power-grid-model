@@ -118,6 +118,19 @@ inline OwningDataset load_dataset(std::filesystem::path const& path, PGM_Seriali
     return dataset;
 }
 
+inline void save_dataset(std::filesystem::path const& path, DatasetConst const& dataset,
+                         PGM_SerializationFormat serialization_format, Idx use_compact_list, Idx indent = 2) {
+    Serializer serializer{dataset, serialization_format};
+    std::string_view serialized_data = serialization_format == PGM_msgpack
+                                           ? serializer.get_to_binary_buffer(use_compact_list)
+                                           : serializer.get_to_zero_terminated_c_string(use_compact_list, indent);
+    std::ofstream f{path, std::ios::binary};
+    if (!f) {
+        throw std::runtime_error("Failed to open file for writing: " + path.string());
+    }
+    f << serialized_data;
+}
+
 } // namespace power_grid_model_cpp
 
 #endif // POWER_GRID_MODEL_CPP_SERIALIZATION_HPP
