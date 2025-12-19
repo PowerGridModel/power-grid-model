@@ -281,7 +281,7 @@ struct OwningDataset {
 
     OwningDataset(
         OwningDataset const& ref_dataset, std::string const& dataset_name, bool is_batch = false, Idx batch_size = 1,
-        std::map<MetaComponent const*, std::set<MetaAttribute const*>> output_component_attribute_filters = {})
+        std::map<MetaComponent const*, std::set<MetaAttribute const*>> const& output_component_attribute_filters = {})
         : dataset{dataset_name, is_batch, batch_size}, storage{} {
         DatasetInfo const& ref_info = ref_dataset.dataset.get_info();
         bool const enable_filters = !output_component_attribute_filters.empty();
