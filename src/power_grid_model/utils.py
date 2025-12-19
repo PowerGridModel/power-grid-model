@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: 2025 Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 # SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 #
 # SPDX-License-Identifier: MPL-2.0
@@ -11,7 +12,7 @@ import math
 import tempfile
 import warnings
 from pathlib import Path
-from typing import cast as cast_type
+from typing import IO as mp_IO, Any as mp_Any, cast as cast_type
 
 import numpy as np
 
@@ -474,7 +475,7 @@ def _make_test_case(  # noqa: PLR0913
 
 
 def msgpack_deserialize_from_fileobj(
-    file: BytesIO,
+    file: mp_IO[mp_Any],
     data_filter: ComponentAttributeMapping = None,
 ) -> Dataset:
     """
@@ -494,9 +495,10 @@ def msgpack_deserialize_from_fileobj(
 
 
 def msgpack_serialize_to_fileobj(
-    file: BytesIO, data: Dataset,
+    file: mp_IO[mp_Any],
+    data: Dataset,
     dataset_type: DatasetType | None = None,
-    use_compact_list: bool = False
+    use_compact_list: bool = False,
 ):
     """
     Export msgpack data in most recent format.
