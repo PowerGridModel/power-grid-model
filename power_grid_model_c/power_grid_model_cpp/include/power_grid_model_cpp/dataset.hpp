@@ -299,7 +299,7 @@ struct OwningDataset {
             if (component_elements_per_scenario < 0) {
                 throw PowerGridError{"Cannot create result dataset for component with variable size per scenario"};
             }
-            Idx const component_size = ref_info.component_total_elements(component_idx);
+            Idx const component_size = component_elements_per_scenario * batch_size;
             storage.indptrs.emplace_back();
 
             std::set<MetaAttribute const*> const& attribute_filter =
