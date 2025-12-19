@@ -27,6 +27,8 @@ struct ClIOptions {
     bool batch_update_msgpack_serialization{false};
     bool is_batch{false};
 
+    double system_frequency{50.0};
+
     Idx calculation_type{PGM_power_flow};
     Idx calculation_method{PGM_default_method};
     bool symmetric_calculation{PGM_symmetric};
@@ -49,6 +51,6 @@ struct ClIOptions {
 
 CLIResult parse_cli_options(int argc, char** argv, ClIOptions& options);
 
-void pgm_calculation(ClIOptions const& options);
+void pgm_calculation(ClIOptions const& cli_options);
 
 } // namespace power_grid_model_cpp
