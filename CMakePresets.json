@@ -311,9 +311,6 @@
     {
       "name": "ci-clang-cl-reproducible",
       "inherits": "clang-cl-release",
-      "environment": {
-        "SANITIZER_FLAGS": "/d1nodatetime /experimental:deterministic"
-      },
       "cacheVariables": {
         "PGM_ENABLE_DEV_BUILD": "OFF",
         "CMAKE_SHARED_LINKER_FLAGS": "/Brepro /INCREMENTAL:NO"
