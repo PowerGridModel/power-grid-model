@@ -1,10 +1,11 @@
+# SPDX-FileCopyrightText: 2025 Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 # SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 #
 # SPDX-License-Identifier: MPL-2.0
-
+import io
 import json
 from collections.abc import Mapping
-from io import BytesIO
+from io import BytesIO, TextIOBase, UnsupportedOperation
 from typing import Any
 
 import msgpack
@@ -16,8 +17,32 @@ from power_grid_model._core.dataset_definitions import ComponentType
 from power_grid_model._core.utils import get_dataset_type, is_columnar, is_sparse
 from power_grid_model.data_types import BatchDataset, Dataset, DenseBatchData, SingleComponentData, SingleDataset
 from power_grid_model.enum import ComponentAttributeFilterOptions
-from power_grid_model.utils import json_deserialize, json_serialize, msgpack_deserialize, msgpack_serialize, \
-    msgpack_serialize_to_fileobj, msgpack_deserialize_from_fileobj
+from power_grid_model.utils import (
+    json_deserialize,
+    json_serialize,
+    msgpack_deserialize,
+    msgpack_deserialize_from_stream,
+    msgpack_serialize,
+    msgpack_serialize_to_stream,
+)
+
+
+class FakeRawIO(io.RawIOBase):
+    def __init__(self, initial_bytes: bytes | bytearray = b"2"):
+        super().__init__()
+        self._buf = bytearray(initial_bytes)
+        self._pos = 0
+        self._closed = False
+
+    # --- Capability flags ---
+    def readable(self) -> bool:
+        return False
+
+    def writable(self) -> bool:
+        return False
+
+    def seekable(self) -> bool:
+        return True
 
 
 def to_json(data, raw_buffer: bool = False, indent: int | None = None):
@@ -794,14 +819,51 @@ def test_serialize_deserialize_double_round_trip(deserialize, serialize, seriali
             np.testing.assert_allclose(field_result_a[~nan_a], field_result_b[~nan_b], rtol=1e-15)
 
 
-def test_messagepack_round_trip_to_io(serialized_data):
-    if serialized_data['data'] != {}:
+def test_messagepack_round_trip_with_stream(serialized_data):
+    if serialized_data["data"] != {}:
         data = to_msgpack(serialized_data)
         input_data: Dataset = msgpack_deserialize(data)
 
         io_buffer_data = BytesIO()
-        msgpack_serialize_to_fileobj(io_buffer_data, input_data)
+        msgpack_serialize_to_stream(io_buffer_data, input_data)
         io_buffer_data.seek(0)
-        output_data = msgpack_deserialize_from_fileobj(io_buffer_data)
-        assert str(output_data)==str(input_data)
+        output_data = msgpack_deserialize_from_stream(io_buffer_data)
+        assert str(output_data) == str(input_data)
 
+
+def test_messagepack_text_to_stream(serialized_data):
+    if serialized_data["data"] != {}:
+        data = to_msgpack(serialized_data)
+        input_data: Dataset = msgpack_deserialize(data)
+
+        io_buffer_data = TextIOBase()
+        with pytest.raises(TypeError) as excinfo:
+            msgpack_serialize_to_stream(io_buffer_data, input_data)
+        assert "Expected a binary stream." in str(excinfo.value)
+
+
+def test_messagepack_text_from_stream(serialized_data):
+    if serialized_data["data"] != {}:
+        io_buffer_data = TextIOBase()
+        with pytest.raises(TypeError) as excinfo:
+            _ = msgpack_deserialize_from_stream(io_buffer_data)
+        assert "Expected a binary stream." in str(excinfo.value)
+
+
+def test_messagepack_reading_from_stream(serialized_data):
+    if serialized_data["data"] != {}:
+        io_buffer_data = FakeRawIO(initial_bytes=b"bla")
+        with pytest.raises(UnsupportedOperation) as excinfo:
+            _ = msgpack_deserialize_from_stream(io_buffer_data)
+        assert "Stream is not readable." in str(excinfo.value)
+
+
+def test_messagepack_writiing_to_stream(serialized_data):
+    if serialized_data["data"] != {}:
+        data = to_msgpack(serialized_data)
+        input_data: Dataset = msgpack_deserialize(data)
+
+        io_buffer_data = FakeRawIO(initial_bytes=b"bla")
+        with pytest.raises(UnsupportedOperation) as excinfo:
+            _ = msgpack_serialize_to_stream(io_buffer_data, input_data)
+        assert "Stream is not writable." in str(excinfo.value)

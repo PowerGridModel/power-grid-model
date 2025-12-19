@@ -7,12 +7,13 @@
 This module contains functions that may be useful when working with the power-grid-model library.
 """
 
+import io
 import json
 import math
 import tempfile
 import warnings
 from pathlib import Path
-from typing import IO as mp_IO, Any as mp_Any, cast as cast_type
+from typing import IO, Any, cast as cast_type
 
 import numpy as np
 
@@ -474,15 +475,15 @@ def _make_test_case(  # noqa: PLR0913
     (output_path / "params.json.license").write_text(data=LICENSE_TEXT, encoding="utf-8")
 
 
-def msgpack_deserialize_from_fileobj(
-    file: mp_IO[mp_Any],
+def msgpack_deserialize_from_stream(
+    stream: IO[bytes],
     data_filter: ComponentAttributeMapping = None,
 ) -> Dataset:
     """
     Load and deserialize a msgpack file to a new dataset.
 
     Args:
-        file: the bytes IO stream to the file to load and deserialize.
+        stream: the Binary IO stream to the file to load and deserialize.
 
     Raises:
         ValueError: if the data is inconsistent with the rest of the dataset or a component is unknown.
@@ -491,11 +492,17 @@ def msgpack_deserialize_from_fileobj(
     Returns:
         The deserialized dataset in Power grid model input format.
     """
-    return msgpack_deserialize(file.read(), data_filter=data_filter)
+    if stream is IO[Any]:
+        raise TypeError("Expected a stream.")
+    if isinstance(stream, io.TextIOBase):
+        raise TypeError("Expected a binary stream.")
+    if not stream.readable():
+        raise io.UnsupportedOperation("Stream is not readable.")
+    return msgpack_deserialize(stream.read(), data_filter=data_filter)
 
 
-def msgpack_serialize_to_fileobj(
-    file: mp_IO[mp_Any],
+def msgpack_serialize_to_stream(
+    stream: IO[bytes],
     data: Dataset,
     dataset_type: DatasetType | None = None,
     use_compact_list: bool = False,
@@ -504,13 +511,20 @@ def msgpack_serialize_to_fileobj(
     Export msgpack data in most recent format.
 
     Args:
-        file: the bytes IO stream to the file to load and deserialize.
+        stream: the Binary IO stream to the file to load and deserialize.
         data: a single or batch dataset for power-grid-model.
         use_compact_list: write components on a single line.
 
     Returns:
         Save to BytesIO file.
     """
+    if stream is IO[Any]:
+        raise TypeError("Expected a stream.")
+    if isinstance(stream, io.TextIOBase):
+        raise TypeError("Expected a binary stream.")
+    if not stream.writable():
+        raise io.UnsupportedOperation("Stream is not writable.")
+
     data = _map_to_component_types(data)
     result = msgpack_serialize(data=data, dataset_type=dataset_type, use_compact_list=use_compact_list)
-    file.write(result)
+    stream.write(result)
