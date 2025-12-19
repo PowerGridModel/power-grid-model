@@ -41,28 +41,6 @@ auto read_json(std::filesystem::path const& path) {
     return j;
 }
 
-OwningDataset create_result_dataset(OwningDataset const& input, std::string const& dataset_name, bool is_batch = false,
-                                    Idx batch_size = 1) {
-    DatasetInfo const& input_info = input.dataset.get_info();
-
-    OwningDataset result{.dataset = DatasetMutable{dataset_name, is_batch, batch_size}, .storage{}};
-
-    for (Idx component_idx{}; component_idx != input_info.n_components(); ++component_idx) {
-        auto const& component_name = input_info.component_name(component_idx);
-        auto const& component_meta = MetaData::get_component_by_name(dataset_name, component_name);
-        Idx const component_elements_per_scenario = input_info.component_elements_per_scenario(component_idx);
-        Idx const component_size = input_info.component_total_elements(component_idx);
-
-        auto& current_indptr = result.storage.indptrs.emplace_back(
-            input_info.component_elements_per_scenario(component_idx) < 0 ? batch_size + 1 : 0);
-        Idx const* const indptr = current_indptr.empty() ? nullptr : current_indptr.data();
-        auto& current_buffer = result.storage.buffers.emplace_back(component_meta, component_size);
-        result.dataset.add_buffer(component_name, component_elements_per_scenario, component_size, indptr,
-                                  current_buffer);
-    }
-    return result;
-}
-
 OwningDataset load_dataset(std::filesystem::path const& path, bool enable_columnar_buffers = false) {
     auto read_file = [](std::filesystem::path const& read_file_path) {
         std::ifstream const f{read_file_path};
@@ -638,7 +616,7 @@ void validate_single_case(CaseParam const& param) {
     execute_test(param, [&param](Subcase& subcase) {
         auto const output_prefix = get_output_type(param.calculation_type, param.sym);
         auto const validation_case = create_validation_case(param, output_prefix);
-        auto const result = create_result_dataset(validation_case.output.value(), output_prefix);
+        auto const result = OwningDataset::create_result_dataset(validation_case.output.value(), output_prefix);
 
         // create and run model
         auto const& options = get_options(param);
@@ -657,7 +635,7 @@ void validate_batch_case(CaseParam const& param) {
         auto const& info = validation_case.update_batch.value().dataset.get_info();
         Idx const batch_size = info.batch_size();
         auto const batch_result =
-            create_result_dataset(validation_case.output_batch.value(), output_prefix, true, batch_size);
+            OwningDataset::create_result_dataset(validation_case.output_batch.value(), output_prefix, true, batch_size);
 
         // create model
         Model model{50.0, validation_case.input.dataset};

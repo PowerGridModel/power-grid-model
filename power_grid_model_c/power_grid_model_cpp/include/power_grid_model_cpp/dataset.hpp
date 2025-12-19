@@ -282,6 +282,30 @@ struct OwningDataset {
         }
         return owning_dataset;
     }
+
+    static OwningDataset create_result_dataset(OwningDataset const& ref_dataset, std::string const& dataset_name,
+                                               bool is_batch = false, Idx batch_size = 1) {
+        DatasetInfo const& ref_info = ref_dataset.dataset.get_info();
+
+        OwningDataset result{.dataset = DatasetMutable{dataset_name, is_batch, batch_size}, .storage{}};
+
+        for (Idx component_idx{}; component_idx != ref_info.n_components(); ++component_idx) {
+            auto const& component_name = ref_info.component_name(component_idx);
+            auto const& component_meta = MetaData::get_component_by_name(dataset_name, component_name);
+            Idx const component_elements_per_scenario = ref_info.component_elements_per_scenario(component_idx);
+            if (component_elements_per_scenario < 0) {
+                throw PowerGridError{"Cannot create result dataset for component with variable size per scenario"};
+            }
+            Idx const component_size = ref_info.component_total_elements(component_idx);
+
+            result.storage.indptrs.emplace_back();
+            Idx const* const indptr = nullptr;
+            auto& current_buffer = result.storage.buffers.emplace_back(component_meta, component_size);
+            result.dataset.add_buffer(component_name, component_elements_per_scenario, component_size, indptr,
+                                      current_buffer);
+        }
+        return result;
+    }
 };
 } // namespace power_grid_model_cpp
 
