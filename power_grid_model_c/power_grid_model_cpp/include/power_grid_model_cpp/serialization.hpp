@@ -14,6 +14,8 @@
 #include "power_grid_model_c/serialization.h"
 
 #include <cstring>
+#include <filesystem>
+#include <fstream>
 
 namespace power_grid_model_cpp {
 class Deserializer {
@@ -94,6 +96,27 @@ class Serializer {
     power_grid_model_cpp::Handle handle_{};
     detail::UniquePtr<RawSerializer, &PGM_destroy_serializer> serializer_;
 };
+
+inline OwningDataset load_dataset(std::filesystem::path const& path, PGM_SerializationFormat serialization_format,
+                                  bool enable_columnar_buffers = false) {
+    auto read_file = [](std::filesystem::path const& read_file_path) {
+        std::ifstream f{read_file_path, std::ios::binary | std::ios::ate};
+        if (!f) {
+            throw std::runtime_error("Failed to open file: " + read_file_path.string());
+        }
+        auto const file_size = f.tellg();
+        f.seekg(0, std::ios::beg);
+        std::vector<char> buffer(static_cast<size_t>(file_size));
+        f.read(buffer.data(), file_size);
+        return buffer;
+    };
+
+    Deserializer deserializer{read_file(path), serialization_format};
+    auto& writable_dataset = deserializer.get_dataset();
+    OwningDataset dataset{writable_dataset, enable_columnar_buffers};
+    deserializer.parse_to_buffer();
+    return dataset;
+}
 
 } // namespace power_grid_model_cpp
 

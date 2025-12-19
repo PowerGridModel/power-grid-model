@@ -41,21 +41,6 @@ auto read_json(std::filesystem::path const& path) {
     return j;
 }
 
-OwningDataset load_dataset(std::filesystem::path const& path, bool enable_columnar_buffers = false) {
-    auto read_file = [](std::filesystem::path const& read_file_path) {
-        std::ifstream const f{read_file_path};
-        std::ostringstream buffer;
-        buffer << f.rdbuf();
-        return buffer.str();
-    };
-
-    Deserializer deserializer{read_file(path), PGM_json};
-    auto& writable_dataset = deserializer.get_dataset();
-    OwningDataset dataset{writable_dataset, enable_columnar_buffers};
-    deserializer.parse_to_buffer();
-    return dataset;
-}
-
 template <typename T> std::string get_as_string(T const& attribute_value) {
     std::stringstream sstr;
     sstr << std::setprecision(16);
@@ -544,17 +529,17 @@ struct ValidationCase {
 ValidationCase create_validation_case(CaseParam const& param, std::string const& output_type) {
     // input
     ValidationCase validation_case{.param = param,
-                                   .input = load_dataset(param.case_dir / "input.json", true),
+                                   .input = load_dataset(param.case_dir / "input.json", PGM_json, true),
                                    .output = std::nullopt,
                                    .update_batch = std::nullopt,
                                    .output_batch = std::nullopt};
 
     // output and update
     if (!param.is_batch) {
-        validation_case.output = load_dataset(param.case_dir / (output_type + ".json"));
+        validation_case.output = load_dataset(param.case_dir / (output_type + ".json"), PGM_json);
     } else {
-        validation_case.update_batch = load_dataset(param.case_dir / "update_batch.json");
-        validation_case.output_batch = load_dataset(param.case_dir / (output_type + "_batch.json"));
+        validation_case.update_batch = load_dataset(param.case_dir / "update_batch.json", PGM_json);
+        validation_case.output_batch = load_dataset(param.case_dir / (output_type + "_batch.json"), PGM_json);
     }
     return validation_case;
 }
