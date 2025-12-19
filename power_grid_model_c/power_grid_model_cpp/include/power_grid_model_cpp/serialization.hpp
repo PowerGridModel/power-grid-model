@@ -83,8 +83,11 @@ class Serializer {
     }
 
     std::string get_to_zero_terminated_string(Idx use_compact_list, Idx indent) {
-        return std::string{
-            handle_.call_with(PGM_serializer_get_to_zero_terminated_string, get(), use_compact_list, indent)};
+        return std::string{get_to_zero_terminated_c_string(use_compact_list, indent)};
+    }
+
+    char const* get_to_zero_terminated_c_string(Idx use_compact_list, Idx indent) {
+        return handle_.call_with(PGM_serializer_get_to_zero_terminated_string, get(), use_compact_list, indent);
     }
 
   private:
