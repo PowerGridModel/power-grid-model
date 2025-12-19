@@ -259,8 +259,7 @@ struct OwningDataset {
                 dataset_mutable.add_buffer(component_name, elements_per_scenario, component_size, indptr,
                                            current_buffer);
                 auto const& attribute_indications = info.attribute_indications(component_idx);
-                auto& current_attribute_buffers =
-                    storage.attribute_buffers.emplace_back(std::vector<AttributeBufferPtr>{});
+                auto& current_attribute_buffers = storage.attribute_buffers.emplace_back();
                 for (auto const& attribute_name : attribute_indications) {
                     auto const attribute_meta =
                         MetaData::get_attribute_by_name(dataset_name, component_name, attribute_name);
@@ -275,7 +274,7 @@ struct OwningDataset {
                 }
             } else {
                 auto& current_buffer = storage.buffers.emplace_back(component_meta, component_size);
-                storage.attribute_buffers.emplace_back(std::vector<AttributeBufferPtr>{}); // empty attribute buffers
+                storage.attribute_buffers.emplace_back(); // empty attribute buffers
                 writable_dataset.set_buffer(component_name, indptr, current_buffer);
                 dataset_mutable.add_buffer(component_name, elements_per_scenario, component_size, indptr,
                                            current_buffer);
