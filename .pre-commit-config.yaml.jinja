@@ -1,0 +1,50 @@
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+repos:
+  - repo: https://github.com/fsfe/reuse-tool  # outside pypi
+    rev: v6.2.0
+    hooks:
+      - id: reuse
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version.
+    rev: v{{ ruff }}
+    hooks:
+      # Run the linter.
+      - id: ruff-check
+        name: ruff-check
+        args: [ --fix ]
+      # Run the formatter.
+      - id: ruff-format
+        name: ruff-format
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v{{ mypy }}
+    hooks:
+      - id: mypy
+        additional_dependencies:
+          - numpy
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest
+        entry: uv run pytest
+        language: system
+        pass_filenames: false
+        always_run: true
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v{{ clang_format }}
+    hooks:
+      - id: clang-format
+        types_or: [ c++, c ]
+  - repo: https://github.com/BlankSpruce/gersemi
+    rev: {{ gersemi }}
+    hooks:
+    - id: gersemi
+      name: cmake-linter
+      alias: cmake-linter
+  - repo: https://github.com/igorshubovych/markdownlint-cli  # outside pypi 
+    rev: v0.47.0
+    hooks:
+    - id: markdownlint
+      args: ["--fix"]

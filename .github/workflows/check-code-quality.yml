@@ -27,39 +27,34 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: '3.12'
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
 
-      - name: Upgrade pip
-        run: pip install --upgrade pip
-
-      - name: Install and run mypy
+      - name: Install most linters from uv
         run: |
-          pip install mypy numpy
-          mypy .
+          CC=gcc-14 CXX=g++-14 uv sync --group lint
 
-      - name: Install and run ruff
+      - name: Run mypy
         run: |
-          pip install ruff
-          ruff check .
-          ruff format .
+          uv run mypy .
+
+      - name: Run ruff
+        run: |
+          uv run ruff check .
+          uv run ruff format .
           git restore README.md
 
-      - name: Install and run clang-format
+      - name: Run clang-format
         run: |
-          sudo apt-get install -y clang-format-18
-          find . -regex '.*\.\(h\|c\|cpp\|hpp\|cc\|cxx\)' -exec clang-format-18 -style=file -i {} \;
+          find . -regex '.*\.\(h\|c\|cpp\|hpp\|cc\|cxx\)' -exec uv run clang-format -style=file -i {} \;
 
-      - name: Install and run cmake-linter
+      - name: Run cmake-linter
         run: |
-          pip install gersemi
-          gersemi -i --warnings-as-errors src/ tests/ cmake/
+          uv run gersemi -i --warnings-as-errors src/ tests/ cmake/
 
       - name: Install and run markdownlint
         run: |
-          npm install -g markdownlint-cli
+          npm install -g markdownlint-cli@0.47.0
           echo "Running markdownlint"
           markdownlint --fix .
 
@@ -74,8 +69,8 @@ jobs:
       - name: Check generated code
         if: success()
         run: |
-          pip install -r code_generation/requirements.txt
-          python code_generation/code_gen.py
+          uv sync --group code-generation
+          uv run code_generation/code_gen.py
           if [ -n "$(git status --porcelain)" ]; then
             echo
             echo "The following files are outdated or were manually updated:"
