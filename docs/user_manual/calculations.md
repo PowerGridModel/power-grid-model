@@ -227,13 +227,15 @@ The option affects which attributes are required and how results are exposed.
   The solver builds a positive-sequence network using `r1`, `x1`, `c1`, … parameters and collapses any asymmetric
   appliance to a single equivalent (asymmetric loads/generators are averaged across phases as described in
   [Component Type Hierarchy and Graph Data Model](./data-model.md#symmetry-of-components-and-calculation)).
-  Output returns single values and voltages are line-to-line voltage magnitudes.
+  For symmetric calculations voltages are given as line-to-line and the output contains single values for all output
+  variables.
 - **Asymmetric calculations (`symmetric=False` or any non-three-phase fault):** Builds a full $abc$ nodal admittance
   matrix and solves each phase separately.
   Next to the positive-sequence parameters, the model now also needs the zero-sequence parameters (e.g. `r0`, `x0`,
   `c0`), or per-phase parameters (`r_matrix` & `x_matrix`) for `asym_line`; symmetric components are expanded by evenly
   splitting their totals across the three phases.
-  Output returns arrays with values per phase and voltages are line-to-neutral voltage magnitudes.
+  For asymmetric calculations voltages are given as line-to-neutral and output contains arrays with values per phase
+  for all output variables.
 
 ```{note}
 For short-circuit calculations, a three-phase `fault_type` is calculated with a symmetric calculation, while any other
