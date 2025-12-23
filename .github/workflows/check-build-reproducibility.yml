@@ -1,0 +1,171 @@
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+name: Build and Test C++ and Python
+
+# Controls when the workflow will run
+on:
+  # run pipeline from another workflow
+  workflow_call:
+  # run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-build-reproducibility
+  cancel-in-progress: true
+
+jobs:
+  check-power-grid-model-c-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: [gcc, clang]
+        include:
+          - c_compiler: gcc-14
+            cxx_compiler: g++-14
+          - c_compiler: clang-18
+            cxx_compiler: clang++-18
+
+    env:
+      CMAKE_PREFIX_PATH: /home/linuxbrew/.linuxbrew
+      PRESET: ci-${{ matrix.compiler }}-reproducible
+      HOMEBREW_FORCE_BREWED_CURL: 1
+
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build gcc-14 g++-14 clang-18
+          sudo ln -s /usr/bin/clang-18 /usr/local/bin/clang
+          sudo ln -s /usr/bin/clang++-18 /usr/local/bin/clang++
+          sudo ln -s /usr/bin/gcc-14 /usr/local/bin/gcc
+          sudo ln -s /usr/bin/g++-14 /usr/local/bin/g++
+
+      - name: Enable brew
+        run: |
+          echo "/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
+      - name: Install C++ dependencies
+        run: |
+          brew update
+          brew install boost eigen nlohmann-json msgpack-cxx doctest
+
+      - name: Build twice
+        run: |
+          cmake --preset ${{ env.PRESET }}
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install
+          mv install/${{ env.PRESET }} install/${{ env.PRESET }}-1
+          mv cpp_build/ cpp_build_1/
+          cmake --preset ${{ env.PRESET }}
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install
+          mv install/${{ env.PRESET }} install/${{ env.PRESET }}-2
+          mv cpp_build/ cpp_build_2/
+
+      - name: Compare builds
+        run: |
+          hash1="$(sha1sum ./install/${{ env.PRESET }}-1/lib/libpower_grid_model_c.so)"
+          hash2="$(sha1sum ./install/${{ env.PRESET }}-2/lib/libpower_grid_model_c.so)"
+          if [ "$hash1" != "$hash2" ]; then
+            echo "Build mismatch detected"
+            exit 1
+          else
+            echo "Builds are identical"
+          fi
+
+  check-reproducibility-c-windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        compiler: [msvc, clang-cl]
+
+    env:
+      PRESET: ci-${{ matrix.compiler }}-reproducible
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Activate conda
+        uses: conda-incubator/setup-miniconda@v3 # install miniforge instead
+        with:
+          miniforge-version: latest
+          channels: conda-forge
+          conda-remove-defaults: "true"
+
+      - name: List conda
+        run: |
+          conda info
+          conda list
+
+      - name: Install conda environment
+        run: |
+          conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge libboost-headers eigen nlohmann_json msgpack-cxx doctest
+
+      - uses: ./.github/actions/enable-msvc
+        if: runner.os == 'Windows'
+
+      - name: Build twice
+        run: |
+          cmake --preset ${{ env.PRESET }} -DCMAKE_PREFIX_PATH=C:\conda_envs\cpp_pkgs\Library; if(!$?) { Exit $LASTEXITCODE }
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1; if(!$?) { Exit $LASTEXITCODE }
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install; if(!$?) { Exit $LASTEXITCODE }
+          mv install/${{ env.PRESET }} install/${{ env.PRESET }}-1; if(!$?) { Exit $LASTEXITCODE }
+          mv cpp_build/ cpp_build_1/; if(!$?) { Exit $LASTEXITCODE }
+          cmake --preset ${{ env.PRESET }} -DCMAKE_PREFIX_PATH=C:\conda_envs\cpp_pkgs\Library; if(!$?) { Exit $LASTEXITCODE }
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1; if(!$?) { Exit $LASTEXITCODE }
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install; if(!$?) { Exit $LASTEXITCODE }
+          mv install/${{ env.PRESET }} install/${{ env.PRESET }}-2; if(!$?) { Exit $LASTEXITCODE }
+          mv cpp_build/ cpp_build_2/; if(!$?) { Exit $LASTEXITCODE }
+
+      - name: Compare builds
+        run: |
+          $hash1 = Get-ChildItem -Path install/${{ env.PRESET }}-1/bin/power_grid_model_c.dll -Recurse -File | Get-FileHash | Sort-Object Path
+          $hash2 = Get-ChildItem -Path install/${{ env.PRESET }}-2/bin/power_grid_model_c.dll -Recurse -File | Get-FileHash | Sort-Object Path
+          Compare-Object $hash1 $hash2 -Property Hash, Path -PassThru | ForEach-Object { if ($_.SideIndicator) { Write-Error "Build mismatch detected"; Exit 1 } }
+          if ($LASTEXITCODE -eq 1) { Exit 1 }
+          Write-Host "Builds are identical"
+
+  check-reproducibility-c-macos:
+    runs-on: macos-latest
+    env:
+      CMAKE_PREFIX_PATH: /usr/local
+      PRESET: ci-clang-reproducible
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up XCode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Install cpp dependencies
+        run: |
+          brew update
+          brew install ninja boost eigen nlohmann-json msgpack-cxx doctest
+
+      - name: Build twice
+        run: |
+          cmake --preset ${{ env.PRESET }}
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install
+          mv install/${{ env.PRESET }} install/${{ env.PRESET }}-1
+          mv cpp_build/ cpp_build_1
+          cmake --preset ${{ env.PRESET }}
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install
+          mv install/${{ env.PRESET }} install/${{ env.PRESET }}-2
+          mv cpp_build/ cpp_build_2
+
+      - name: Compare builds
+        run: |
+          hash1="$(sha1sum ./install/${{ env.PRESET }}-1/lib/libpower_grid_model_c.dylib)"
+          hash2="$(sha1sum ./install/${{ env.PRESET }}-2/lib/libpower_grid_model_c.dylib)"
+          if [ "$hash1" != "$hash2" ]; then
+            echo "Build mismatch detected"
+            exit 1
+          else
+            echo "Builds are identical"
+          fi
