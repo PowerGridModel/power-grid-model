@@ -4,6 +4,21 @@
 
 #include <power_grid_model/component/transformer.hpp>
 
+#include "power_grid_model/auxiliary/input.hpp"
+#include "power_grid_model/auxiliary/update.hpp"
+#include <power_grid_model/calculation_parameters.hpp>
+#include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/enum.hpp>
+#include <power_grid_model/common/exception.hpp>
+#include <power_grid_model/common/three_phase_tensor.hpp>
+// TODO (nitbharambe) Added base.hpp for status_to_int function
+#include <power_grid_model/component/base.hpp>
+
+#include <cmath>
+#include <complex>
+#include <cstddef>
+#include <vector>
+
 #include <doctest/doctest.h>
 
 namespace power_grid_model {
