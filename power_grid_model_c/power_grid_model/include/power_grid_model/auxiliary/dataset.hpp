@@ -287,6 +287,9 @@ template <dataset_type_tag dataset_type_> class Dataset {
     }
     constexpr bool is_dense(Idx const i) const { return is_dense(buffers_[i]); }
     constexpr bool is_dense(Buffer const& buffer) const { return buffer.indptr.empty(); }
+    constexpr bool is_dense() const {
+        return std::ranges::all_of(buffers_, [this](Buffer const& buffer) { return is_dense(buffer); });
+    }
     constexpr bool is_sparse(std::string_view component, bool with_attribute_buffers = false) const {
         Idx const idx = find_component(component, false);
         if (idx == invalid_index) {
@@ -510,10 +513,52 @@ template <dataset_type_tag dataset_type_> class Dataset {
         return result;
     }
 
+    // get slice dataset from batch
+    Dataset get_slice_scenario(Idx begin, Idx end) const
+        requires(!is_indptr_mutable_v<dataset_type>)
+    {
+        assert(begin <= end);
+        assert(0 <= begin);
+        assert(end <= batch_size());
+        assert(is_batch());
+        assert(is_dense());
+
+        // empty slice
+        if (begin == end) {
+            Dataset result{true, 0, dataset_info_.dataset->name, *meta_data_};
+            result.add_buffer("node", 0, 0, nullptr, nullptr);
+            return result;
+        }
+
+        // start with begin
+        Dataset result = get_individual_scenario(begin);
+        Idx const batch_size = end - begin;
+        result.dataset_info_.is_batch = true;
+        result.dataset_info_.batch_size = batch_size;
+        for (auto& component_info : result.dataset_info_.component_info) {
+            Idx const size = component_info.elements_per_scenario * batch_size;
+            component_info.total_elements = size;
+        }
+        return result;
+    }
+
+    void set_next_cartesian_product_dimension(Dataset const* next) {
+        Dataset const* current = next;
+        while (current != nullptr) {
+            if (this == current) {
+                throw DatasetError{"Cannot create cyclic cartesian product dimension linked list!\n"};
+            }
+            current = current->get_next_cartesian_product_dimension();
+        }
+        next_ = next;
+    }
+    Dataset const* get_next_cartesian_product_dimension() const { return next_; }
+
   private:
     MetaData const* meta_data_;
     DatasetInfo dataset_info_;
     std::vector<Buffer> buffers_;
+    Dataset const* next_{};
 
     std::span<Indptr> get_indptr_span(Indptr* indptr) const {
         return std::span{indptr, static_cast<size_t>(batch_size() + 1)};

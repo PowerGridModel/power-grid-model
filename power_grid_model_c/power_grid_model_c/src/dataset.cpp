@@ -101,6 +101,13 @@ void PGM_dataset_const_add_attribute_buffer(PGM_Handle* handle, PGM_ConstDataset
         PGM_regular_error);
 }
 
+void PGM_dataset_const_set_next_cartesian_product_dimension(PGM_Handle* handle, PGM_ConstDataset* dataset,
+                                                            PGM_ConstDataset const* next_dataset) {
+    call_with_catch(
+        handle, [dataset, next_dataset]() { dataset->set_next_cartesian_product_dimension(next_dataset); },
+        PGM_regular_error);
+}
+
 PGM_DatasetInfo const* PGM_dataset_const_get_info(PGM_Handle* /*unused*/, PGM_ConstDataset const* dataset) {
     return &dataset->get_description();
 }
