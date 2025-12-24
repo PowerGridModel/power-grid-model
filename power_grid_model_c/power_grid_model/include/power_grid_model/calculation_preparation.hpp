@@ -106,6 +106,8 @@ class SolversCacheStatus {
 };
 
 namespace detail {
+static constexpr Idx disconnected = -1;
+
 template <class ModelType>
 void reset_solvers(typename ModelType::MainModelState& state, SolverPreparationContext& solver_context,
                    SolversCacheStatus<ModelType>& solvers_cache_status) {
@@ -130,6 +132,73 @@ void rebuild_topology(typename ModelType::MainModelState& state, SolverPreparati
     solvers_cache_status.set_topology_status(true);
     solvers_cache_status.template set_parameter_status<symmetric_t>(false);
     solvers_cache_status.template set_parameter_status<asymmetric_t>(false);
+}
+
+template <class ModelType> void check_voltage_regulator_validity(typename ModelType::MainModelState const& state) {
+    // TODO(figueroa1395): This check is currently at tap_position_optimizer.hpp, is it worth to keep it here as an
+    // earlier check instead? if (state.components.template size<VoltageRegulator>() > 0 &&
+    //     state.components.template size<TransformerTapRegulator>() > 0) {
+    //     throw UnsupportedRegulatorCombinationError{};
+    // }
+    if (state.components.template size<VoltageRegulator>() > 0) {
+        std::unordered_set<Idx2D, Idx2DHash> visited_nodes{};
+
+        for (auto const& voltage_regulator : state.components.template citer<VoltageRegulator>()) {
+            if (!voltage_regulator.status()) {
+                continue;
+            }
+
+            ID const node_id =
+                main_core::get_component<GenericLoadGen>(state.components, voltage_regulator.regulated_object()).node();
+
+            Idx2D const node_math_idx =
+                state.topo_comp_coup->node[main_core::get_component_sequence_idx<Node>(state.components, node_id)];
+            Idx const node_idx = node_math_idx.pos;
+            Idx const node_group_idx = node_math_idx.group;
+
+            // skip node if isolated or already visited
+            if (node_group_idx == disconnected || !visited_nodes.insert(node_math_idx).second) {
+                continue;
+            }
+
+            auto const& math_topo = state.math_topology[node_group_idx];
+
+            // sources at the same node where a voltage regulator is connected are not allowed
+            // TODO(figueroa1395): test this
+            if (!math_topo->sources_per_bus.get_element_range(node_idx).empty()) {
+                throw UnsupportedVoltageRegulatorSourceCombinationError{node_id};
+            }
+
+            std::unordered_set<double> u_refs_at_bus{};
+            ID first_voltage_regulator_id = na_IntID;
+
+            for (Idx load_gen_idx : math_topo->load_gens_per_bus.get_element_range(node_idx)) {
+                auto const voltage_regulators_at_load_gen =
+                    math_topo->voltage_regulators_per_load_gen.get_element_range(load_gen_idx);
+                assert(voltage_regulators_at_load_gen.size() <= 1);
+
+                for (Idx voltage_regulator_math_idx : voltage_regulators_at_load_gen) {
+                    auto voltage_regulator_at_node = main_core::get_component<VoltageRegulator>(
+                        state.components, Idx2D{.group = state.components.template get_group_idx<VoltageRegulator>(),
+                                                .pos = voltage_regulator_math_idx});
+                    ID const voltage_regulator_at_node_id = voltage_regulator_at_node.id();
+
+                    if (first_voltage_regulator_id == na_IntID) {
+                        first_voltage_regulator_id = voltage_regulator_at_node_id;
+                    }
+
+                    u_refs_at_bus.insert(voltage_regulator_at_node.u_ref());
+
+                    // voltage regulators with different u_ref at the same node are not allowed
+                    // TODO(figueroa1395): test this
+                    if (u_refs_at_bus.size() > 1) {
+                        throw ConflictingVoltageRegulatorURef{
+                            std::format("{}, {}", first_voltage_regulator_id, voltage_regulator_at_node_id)};
+                    }
+                }
+            }
+        }
+    }
 }
 } // namespace detail
 
@@ -176,5 +245,10 @@ void prepare_solvers(typename ModelType::MainModelState& state, SolverPreparatio
     solvers_cache_status.template set_parameter_status<sym>(true);
     solvers_cache_status.clear_changed_components_indices();
     solvers_cache_status.template set_previous_symmetry_mode<sym>();
+
+    // validate voltage regulators after topology and parameters are set
+    // TODO(figueroa1395): Is this the correct place for this check? - It can allow for further optimizations.
+    // TODO(figueroa1395): Optimize by checking only when voltage regulator related components change
+    detail::check_voltage_regulator_validity<ModelType>(state);
 }
 } // namespace power_grid_model

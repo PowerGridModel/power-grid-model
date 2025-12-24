@@ -183,6 +183,14 @@ class ConflictingVoltageRegulatorURef : public PowerGridError {
         : PowerGridError{std::format("Conflicting u_ref values detected for voltage regulators {}.", regulator_ids)} {}
 };
 
+class UnsupportedVoltageRegulatorSourceCombinationError : public PowerGridError {
+  public:
+    UnsupportedVoltageRegulatorSourceCombinationError(ID id)
+        : PowerGridError{std::format(
+              "Nodes with a source and a voltage regulated load/generator are not supported. Found at node with id {}",
+              id)} {}
+};
+
 class AutomaticTapCalculationError : public PowerGridError {
   public:
     AutomaticTapCalculationError(ID id)

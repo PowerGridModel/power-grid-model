@@ -908,6 +908,13 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     }
 
     auto optimize(State const& state, CalculationMethod method) -> MathOutput<ResultType> final {
+        // TODO(figueroa1395): Test this
+        if constexpr (common::component_container_c<ComponentContainer, VoltageRegulator>) {
+            if (state.components.template size<VoltageRegulator>() > 0 &&
+                state.components.template size<TransformerTapRegulator>() > 0) {
+                throw UnsupportedRegulatorCombinationError{};
+            }
+        }
         auto const order = regulator_mapping<TransformerTypes...>(state, TransformerRanker{}(state));
         auto const cache = cache_states(order);
         try {
