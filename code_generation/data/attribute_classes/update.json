@@ -245,6 +245,25 @@
             ]
         },
         {
+            "name": "VoltageRegulatorUpdate",
+            "base": "RegulatorUpdate",
+            "attributes": [
+                {
+                    "data_type": "double",
+                    "names": "u_ref",
+                    "description": "reference voltage"
+                },
+                {
+                    "data_type": "double",
+                    "names": [
+                        "q_min",
+                        "q_max"
+                    ],
+                    "description": "reactive power limits"
+                }
+            ]
+        },
+        {
             "name": "CurrentSensorUpdate",
             "base": "BaseUpdate",
             "is_template": true,
@@ -252,7 +271,7 @@
                 {
                     "data_type": "double",
                     "names": [
-                        "i_sigma", 
+                        "i_sigma",
                         "i_angle_sigma"
                     ],
                     "description": "sigma of error margin of current (angle) measurement"

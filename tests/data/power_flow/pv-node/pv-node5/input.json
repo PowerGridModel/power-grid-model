@@ -1,0 +1,241 @@
+{
+  "version": "1.0",
+  "type": "input",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "node": [
+      {
+        "id": 1,
+        "u_rated": 110.0e3
+      },
+      {
+        "id": 2,
+        "u_rated": 110.0e3
+      },
+      {
+        "id": 3,
+        "u_rated": 110.0e3
+      },
+      {
+        "id": 4,
+        "u_rated": 110.0e3
+      },
+      {
+        "id": 5,
+        "u_rated": 110.0e3
+      }
+    ],
+    "line": [
+      {
+        "id": 6,
+        "from_node": 1,
+        "to_node": 3,
+        "from_status": 1,
+        "to_status": 1,
+        "r1": 1.0,
+        "x1": 10.0,
+        "c1": 200.0e-9,
+        "tan1": 0.0,
+        "r0": 1.0,
+        "x0": 10.0,
+        "c0": 200.0e-9,
+        "tan0": 0.0,
+        "i_n": 510.0,
+        "_length": 20.0
+      },
+      {
+        "id": 7,
+        "from_node": 3,
+        "to_node": 5,
+        "from_status": 1,
+        "to_status": 1,
+        "r1": 2.5,
+        "x1": 25.0,
+        "c1": 500.0e-9,
+        "tan1": 0.0,
+        "r0": 2.5,
+        "x0": 25.0,
+        "c0": 500.0e-9,
+        "tan0": 0.0,
+        "i_n": 510.0,
+        "_length": 50.0
+      },
+      {
+        "id": 8,
+        "from_node": 5,
+        "to_node": 4,
+        "from_status": 1,
+        "to_status": 1,
+        "r1": 5.0,
+        "x1": 50.0,
+        "c1": 1000.0e-9,
+        "tan1": 0.0,
+        "r0": 5.0,
+        "x0": 50.0,
+        "c0": 1000.0e-9,
+        "tan0": 0.0,
+        "i_n": 510.0,
+        "_length": 100.0
+      },
+      {
+        "id": 9,
+        "from_node": 4,
+        "to_node": 1,
+        "from_status": 1,
+        "to_status": 1,
+        "r1": 5.0,
+        "x1": 50.0,
+        "c1": 1000.0e-9,
+        "tan1": 0.0,
+        "r0": 5.0,
+        "x0": 50.0,
+        "c0": 1000.0e-9,
+        "tan0": 0.0,
+        "i_n": 510.0,
+        "_length": 100.0
+      },
+      {
+        "id": 10,
+        "from_node": 4,
+        "to_node": 2,
+        "from_status": 1,
+        "to_status": 1,
+        "r1": 5.0,
+        "x1": 50.0,
+        "c1": 1000.0e-9,
+        "tan1": 0.0,
+        "r0": 5.0,
+        "x0": 50.0,
+        "c0": 1000.0e-9,
+        "tan0": 0.0,
+        "i_n": 510.0,
+        "_length": 100.0
+      },
+      {
+        "id": 11,
+        "from_node": 2,
+        "to_node": 1,
+        "from_status": 1,
+        "to_status": 1,
+        "r1": 1.0,
+        "x1": 10.0,
+        "c1": 200.0e-9,
+        "tan1": 0.0,
+        "r0": 1.0,
+        "x0": 10.0,
+        "c0": 200.0e-9,
+        "tan0": 0.0,
+        "i_n": 510.0,
+        "_length": 20.0
+      }
+    ],
+    "sym_load": [
+      {
+        "id": 15,
+        "node": 2,
+        "status": 1,
+        "type": 0,
+        "p_specified": 25e6,
+        "q_specified": 8e6
+      },
+      {
+        "id": 16,
+        "node": 2,
+        "status": 1,
+        "type": 0,
+        "p_specified": 25e6,
+        "q_specified": 7e6
+      },
+      {
+        "id": 17,
+        "node": 4,
+        "status": 1,
+        "type": 0,
+        "p_specified": 25e6,
+        "q_specified": 7e6
+      },
+      {
+        "id": 18,
+        "node": 4,
+        "status": 1,
+        "type": 0,
+        "p_specified": 25e6,
+        "q_specified": 8e6
+      },
+      {
+        "id": 19,
+        "node": 5,
+        "status": 1,
+        "type": 0,
+        "p_specified": 10e6,
+        "q_specified": 5e6
+      },
+      {
+        "id": 20,
+        "node": 5,
+        "status": 1,
+        "type": 0,
+        "p_specified": 15e6,
+        "q_specified": 5e6
+      }
+    ],
+    "sym_gen": [
+      {
+        "id": 21,
+        "node": 3,
+        "status": 1,
+        "type": 0,
+        "p_specified": 20e6,
+        "q_specified": 15e6
+      },
+      {
+        "id": 23,
+        "node": 5,
+        "status": 1,
+        "type": 0,
+        "p_specified": 0e6,
+        "q_specified": 0e6
+      }
+    ],
+    "asym_gen": [
+      {
+        "id": 22,
+        "node": 3,
+        "status": 1,
+        "type": 0,
+        "p_specified": [3.0e6, 3.3e6, 3.7e6],
+        "q_specified": [3.7e6, 3.3e6, 3.0e6]
+      }
+    ],
+    "voltage_regulator": [
+      {
+        "id": 30,
+        "status": 1,
+        "regulated_object": 21,
+        "u_ref": 1.03
+      },
+      {
+        "id": 31,
+        "status": 1,
+        "regulated_object": 22,
+        "u_ref": 1.03
+      },
+      {
+        "id": 32,
+        "status": 1,
+        "regulated_object": 23,
+        "u_ref": 1.0
+      }
+    ],
+    "source": [
+      {
+        "id": 12,
+        "node": 1,
+        "status": 1,
+        "u_ref": 1.0,
+        "sk": 1e99
+      }
+    ]
+  }
+}

@@ -176,7 +176,7 @@
             "name": "GenericBranchInput",
             "base": "BranchInput",
             "attributes": [
-                {    
+                {
                     "data_type": "double",
                     "names": ["r1","x1","g1","b1"],
                     "description": "positive sequence parameters"
@@ -541,6 +541,28 @@
             ]
         },
         {
+            "name": "VoltageRegulatorInput",
+            "base": "RegulatorInput",
+            "is_template": false,
+            "attributes": [
+                {
+                    "data_type": "double",
+                    "names": [
+                        "u_ref"
+                    ],
+                    "description": "reference voltage"
+                },
+                {
+                    "data_type": "double",
+                    "names": [
+                        "q_min",
+                        "q_max"
+                    ],
+                    "description": "reactive power limits"
+                }
+            ]
+        },
+        {
             "name": "GenericCurrentSensorInput",
             "base": "SensorInput",
             "attributes": [
@@ -557,7 +579,7 @@
                 {
                     "data_type": "double",
                     "names": [
-                        "i_sigma", 
+                        "i_sigma",
                         "i_angle_sigma"
                     ],
                     "description": "sigma of error margin of current (angle) measurement"

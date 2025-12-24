@@ -536,6 +536,21 @@ static_assert(offsetof(TransformerTapRegulatorInput, id) == offsetof(RegulatorIn
 static_assert(offsetof(TransformerTapRegulatorInput, regulated_object) == offsetof(RegulatorInput, regulated_object));
 static_assert(offsetof(TransformerTapRegulatorInput, status) == offsetof(RegulatorInput, status));
 
+// static asserts for VoltageRegulatorInput
+static_assert(std::is_standard_layout_v<VoltageRegulatorInput>);
+// static asserts for conversion of VoltageRegulatorInput to BaseInput
+static_assert(std::alignment_of_v<VoltageRegulatorInput> >= std::alignment_of_v<RegulatorInput>);
+static_assert(std::same_as<decltype(VoltageRegulatorInput::id), decltype(BaseInput::id)>);
+static_assert(offsetof(VoltageRegulatorInput, id) == offsetof(BaseInput, id));
+// static asserts for conversion of VoltageRegulatorInput to RegulatorInput
+static_assert(std::alignment_of_v<VoltageRegulatorInput> >= std::alignment_of_v<RegulatorInput>);
+static_assert(std::same_as<decltype(VoltageRegulatorInput::id), decltype(RegulatorInput::id)>);
+static_assert(std::same_as<decltype(VoltageRegulatorInput::regulated_object), decltype(RegulatorInput::regulated_object)>);
+static_assert(std::same_as<decltype(VoltageRegulatorInput::status), decltype(RegulatorInput::status)>);
+static_assert(offsetof(VoltageRegulatorInput, id) == offsetof(RegulatorInput, id));
+static_assert(offsetof(VoltageRegulatorInput, regulated_object) == offsetof(RegulatorInput, regulated_object));
+static_assert(offsetof(VoltageRegulatorInput, status) == offsetof(RegulatorInput, status));
+
 // static asserts for GenericCurrentSensorInput
 static_assert(std::is_standard_layout_v<GenericCurrentSensorInput>);
 // static asserts for conversion of GenericCurrentSensorInput to BaseInput
