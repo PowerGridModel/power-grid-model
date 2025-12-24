@@ -240,7 +240,7 @@ The option affects which attributes are required and how results are exposed.
 ```{note}
 For short-circuit calculations, a three-phase `fault_type` is calculated with a symmetric calculation, while any other
 `fault_type` (e.g. single- or two-phase faults) automatically triggers the asymmetric calculation.
-Outputs for short circuit calculations are always giving asymmetric output, independent of the fault type present.
+Outputs for short circuit calculations always give asymmetric output, independent of the fault type present.
 ```
 
 ### Power flow algorithms
