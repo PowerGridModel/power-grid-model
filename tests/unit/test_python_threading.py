@@ -3,6 +3,8 @@
 # SPDX-License-Identifier: MPL-2.0
 
 
+import threading
+
 import pytest
 
 from power_grid_model.errors import PowerGridSerializationError
@@ -33,5 +35,9 @@ def json_deserialize_invalid_json():
 
 
 def test_python_threading_json_deserialization():
-    json_deserialize_valid_json()
-    json_deserialize_invalid_json()
+    thread_1 = threading.Thread(target=json_deserialize_valid_json)
+    thread_2 = threading.Thread(target=json_deserialize_invalid_json)
+    thread_1.start()
+    thread_2.start()
+    thread_1.join()
+    thread_2.join()
