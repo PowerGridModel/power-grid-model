@@ -6,6 +6,7 @@
 Loader for the dynamic library
 """
 
+import threading
 from collections.abc import Callable
 from ctypes import CDLL, POINTER, c_char, c_char_p, c_double, c_size_t, c_void_p
 from inspect import signature
@@ -13,6 +14,10 @@ from itertools import chain
 
 from power_grid_model._core.index_integer import IdC, IdxC
 from power_grid_model._core.power_grid_model_c.get_pgm_dll_path import get_pgm_dll_path
+
+# threading local
+_thread_local_data = threading.local()
+
 
 # integer index
 IdxPtr = POINTER(IdxC)
@@ -195,14 +200,12 @@ class PowerGridCore:
     """
 
     _handle: HandlePtr
-    _instance: "PowerGridCore | None" = None
 
     # singleton of power grid core
     def __new__(cls, *args, **kwargs):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls, *args, **kwargs)
-            cls._instance._handle = _CDLL.PGM_create_handle()
-        return cls._instance
+        instance = super().__new__(cls, *args, **kwargs)
+        instance._handle = _CDLL.PGM_create_handle()
+        return instance
 
     def __del__(self):
         _CDLL.PGM_destroy_handle(self._handle)
@@ -560,4 +563,7 @@ class PowerGridCore:
 
 
 # make one instance
-power_grid_core = PowerGridCore()
+def get_power_grid_core() -> PowerGridCore:
+    if not hasattr(_thread_local_data, "power_grid_core"):
+        _thread_local_data.power_grid_core = PowerGridCore()
+    return _thread_local_data.power_grid_core

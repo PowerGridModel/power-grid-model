@@ -40,7 +40,7 @@ from power_grid_model._core.errors import (
     TapSearchStrategyIncompatibleError,
 )
 from power_grid_model._core.index_integer import IdxNp
-from power_grid_model._core.power_grid_core import power_grid_core as pgc
+from power_grid_model._core.power_grid_core import get_power_grid_core as get_pgc
 
 VALIDATOR_MSG = "\nTry validate_input_data() or validate_batch_data() to validate your data.\n"
 # error codes
@@ -133,19 +133,19 @@ def find_error(batch_size: int = 1, decode_error: bool = True) -> RuntimeError |
     Returns: error object, can be none
 
     """
-    error_code: int = pgc.error_code()
+    error_code: int = get_pgc().error_code()
     if error_code == PGM_NO_ERROR:
         return None
     if error_code == PGM_REGULAR_ERROR:
-        error_message = pgc.error_message()
+        error_message = get_pgc().error_message()
         error_message += VALIDATOR_MSG
         return _interpret_error(error_message, decode_error=decode_error)
     if error_code == PGM_BATCH_ERROR:
         error_message = "There are errors in the batch calculation." + VALIDATOR_MSG
         error = PowerGridBatchError(error_message)
-        n_fails = pgc.n_failed_scenarios()
-        failed_idxptr = pgc.failed_scenarios()
-        failed_msgptr = pgc.batch_errors()
+        n_fails = get_pgc().n_failed_scenarios()
+        failed_idxptr = get_pgc().failed_scenarios()
+        failed_msgptr = get_pgc().batch_errors()
         error.failed_scenarios = np.ctypeslib.as_array(failed_idxptr, shape=(n_fails,)).copy()
         error.error_messages = [failed_msgptr[i].decode() for i in range(n_fails)]  # type: ignore
         error.errors = [_interpret_error(message, decode_error=decode_error) for message in error.error_messages]
@@ -155,7 +155,7 @@ def find_error(batch_size: int = 1, decode_error: bool = True) -> RuntimeError |
         error.succeeded_scenarios = all_scenarios[mask]
         return error
     if error_code == PGM_SERIALIZATION_ERROR:
-        return PowerGridSerializationError(pgc.error_message())
+        return PowerGridSerializationError(get_pgc().error_message())
     return RuntimeError("Unknown error!")
 
 
