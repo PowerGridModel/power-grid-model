@@ -564,6 +564,8 @@ class PowerGridCore:
 
 # make one instance
 def get_power_grid_core() -> PowerGridCore:
-    if not hasattr(_thread_local_data, "power_grid_core"):
+    try:
+        return _thread_local_data.power_grid_core
+    except AttributeError:
         _thread_local_data.power_grid_core = PowerGridCore()
-    return _thread_local_data.power_grid_core
+        return _thread_local_data.power_grid_core
