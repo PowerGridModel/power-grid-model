@@ -558,6 +558,14 @@ class InvalidAssociatedEnumValueError(MultiFieldValidationError):
         return super().__eq__(other) and self.enum == other.enum
 
 
+class InvalidVoltageRegulationError(SingleFieldValidationError):
+    """
+    U_ref values for voltage regulators connected to the same node are not identical.
+    """
+
+    _message = "Voltage regulators connected to the same node have different u_ref values for {n} {objects}."
+
+
 class UnsupportedMeasuredTerminalType(InvalidValueError):
     """
     The measured terminal type is not a supported value.

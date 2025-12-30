@@ -61,8 +61,8 @@ concept validate_component_types_c =
     dependent_type_check<CompList, AsymCurrentSensor, Line, AsymLine, Link, GenericBranch, Transformer,
                          ThreeWindingTransformer> &&                                                       //
     dependent_type_check<CompList, TransformerTapRegulator, Node, Transformer, ThreeWindingTransformer> && //
-    dependent_type_check<CompList, Fault, Node>;
-
+    dependent_type_check<CompList, Fault, Node> &&                                                         //
+    dependent_type_check<CompList, VoltageRegulator, SymGenerator, AsymGenerator, SymLoad, AsymLoad>;
 } // namespace detail
 
 template <class T, class U> class MainModelType;
