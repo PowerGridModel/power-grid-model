@@ -36,4 +36,16 @@ concept component_c = requires(T t, T const& ct, typename T::UpdateType u, typen
     { ct.inverse(u) } -> std::same_as<typename T::UpdateType>;
 };
 
+struct load_appliance_t {};
+struct gen_appliance_t {};
+
+template <typename T>
+concept appliance_type_tag = std::same_as<T, load_appliance_t> || std::same_as<T, gen_appliance_t>;
+template <appliance_type_tag T> constexpr bool is_generator_v = std::same_as<T, gen_appliance_t>;
+
+static_assert(appliance_type_tag<load_appliance_t>);
+static_assert(appliance_type_tag<gen_appliance_t>);
+static_assert(!is_generator_v<load_appliance_t>);
+static_assert(is_generator_v<gen_appliance_t>);
+
 } // namespace power_grid_model
