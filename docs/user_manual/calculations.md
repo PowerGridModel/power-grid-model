@@ -1065,11 +1065,11 @@ for component_idx, scenario in enumerate(line_update):
 independent_update_data = {'line': line_update}
 ```
 
-### Chaining Batch Datasets
+### Cartesian product of Batch Datasets
 
 Consider an example of running a contingency analysis with a timeseries data.
 Or maybe probablistic data along with timeseries data.
-In such simulations, it is required to perform a loadflow on a cross product of situations.
+In such simulations, it is required to perform a loadflow on a cartesian product of situations.
 This is possible to do via providing the `update_data` with a list of multiple batch datasets.
 The output of such calculation would be flattened with dimension &scenarios * components$.
 
@@ -1084,9 +1084,6 @@ line_update = initialize_array('update', 'line', (3, 1))
 
 chained_update_data = [{'line': load_update}, {'sym_load': line_udpate }]
 ```
-
-Note that the [Data validator](data-validator.md) does not support chained datasets.
-User should do the chaining themselves via numpy in order to validate the dataset.
 
 ### Parallel Computing
 
