@@ -38,7 +38,7 @@ repos:
       - id: clang-format
         types_or: [ c++, c ]
   - repo: https://github.com/BlankSpruce/gersemi
-    rev: 0.24.0
+    rev: 0.25.0
     hooks:
     - id: gersemi
       name: cmake-linter
