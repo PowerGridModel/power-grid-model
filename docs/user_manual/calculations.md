@@ -1071,7 +1071,7 @@ Consider an example of running a contingency analysis with a timeseries data.
 Or maybe probablistic data along with timeseries data.
 In such simulations, it is required to perform a loadflow on a cartesian product of situations.
 This is possible to do via providing the `update_data` with a list of multiple batch datasets.
-The output of such calculation would be flattened with dimension &scenarios * components$.
+The output of such calculation would be flattened with dimension $scenarios * components$.
 
 #### Example: Chaining datasets
 
