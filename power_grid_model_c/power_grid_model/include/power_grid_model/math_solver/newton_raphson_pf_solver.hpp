@@ -216,7 +216,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
           data_jac_(y_bus.nnz_lu()),
           x_(y_bus.size()),
           del_x_pq_(y_bus.size()),
-          sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
+          sparse_solver_{y_bus.row_indptr_lu(), y_bus.col_indices_lu(), y_bus.lu_diag()},
           perm_(y_bus.size()) {}
 
     // Initilize the unknown variable in polar form
@@ -225,8 +225,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         using LinearSparseSolverType = SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>;
 
         ComplexTensorVector<sym> linear_mat_data(y_bus.nnz_lu());
-        LinearSparseSolverType linear_sparse_solver{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(),
-                                                    y_bus.shared_diag_lu()};
+        LinearSparseSolverType linear_sparse_solver{y_bus.row_indptr_lu(), y_bus.col_indices_lu(), y_bus.lu_diag()};
         typename LinearSparseSolverType::BlockPermArray linear_perm(y_bus.size());
 
         detail::copy_y_bus<sym>(y_bus, linear_mat_data);

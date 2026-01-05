@@ -80,7 +80,7 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
           math_topo_{topo_ptr},
           data_gain_(y_bus.nnz_lu()),
           x_rhs_(y_bus.size()),
-          sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
+          sparse_solver_{y_bus.row_indptr_lu(), y_bus.col_indices_lu(), y_bus.lu_diag()},
           perm_(y_bus.size()) {}
 
     SolverOutput<sym> run_state_estimation(YBus<sym> const& y_bus, StateEstimationInput<sym> const& input,

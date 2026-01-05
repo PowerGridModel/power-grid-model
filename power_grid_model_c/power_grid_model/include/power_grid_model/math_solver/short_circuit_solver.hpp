@@ -28,7 +28,7 @@ template <symmetry_tag sym> class ShortCircuitSolver {
           n_source_{topo_ptr->n_source()},
           sources_per_bus_{std::cref(topo_ptr->sources_per_bus)},
           mat_data_(y_bus.nnz_lu()),
-          sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
+          sparse_solver_{y_bus.row_indptr_lu(), y_bus.col_indices_lu(), y_bus.lu_diag()},
           perm_{static_cast<BlockPermArray>(n_bus_)} {}
 
     ShortCircuitSolverOutput<sym> run_short_circuit(YBus<sym> const& y_bus, ShortCircuitInput const& input) {
