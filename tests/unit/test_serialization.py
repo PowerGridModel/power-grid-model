@@ -841,9 +841,8 @@ def test_messagepack_to_stream_text_type_error(serialized_data):
 
 def test_messagepack_from_stream_text_type_error():
     io_buffer_data = TextIOBase()
-    with pytest.raises(TypeError) as excinfo:
+    with pytest.raises(TypeError, match="Expected a binary stream."):
         _ = msgpack_deserialize_from_stream(io_buffer_data)
-    assert "Expected a binary stream." in str(excinfo.value)
 
 
 def test_messagepack_from_stream_readable_error():
