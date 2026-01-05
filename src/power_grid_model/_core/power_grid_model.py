@@ -50,7 +50,13 @@ from power_grid_model._core.enum import (
 from power_grid_model._core.error_handling import PowerGridBatchError, assert_no_error, handle_errors
 from power_grid_model._core.index_integer import IdNp, IdxNp
 from power_grid_model._core.options import Options
-from power_grid_model._core.power_grid_core import ConstDatasetPtr, IDPtr, IdxPtr, ModelPtr, power_grid_core as pgc
+from power_grid_model._core.power_grid_core import (
+    ConstDatasetPtr,
+    IDPtr,
+    IdxPtr,
+    ModelPtr,
+    get_power_grid_core as get_pgc,
+)
 from power_grid_model._core.typing import ComponentAttributeMapping, ComponentAttributeMappingDict
 
 
@@ -105,7 +111,7 @@ class PowerGridModel:
             A copy of PowerGridModel
         """
         new_model = PowerGridModel.__new__(PowerGridModel)
-        new_model._model_ptr = pgc.copy_model(self._model)
+        new_model._model_ptr = get_pgc().copy_model(self._model)
         assert_no_error()
         new_model._all_component_count = self._all_component_count
         return new_model
@@ -161,11 +167,11 @@ class PowerGridModel:
             system_frequency: Frequency of the power system, default 50 Hz
         """
         # destroy old instance
-        pgc.destroy_model(self._model_ptr)
+        get_pgc().destroy_model(self._model_ptr)
         self._all_component_count = None
         # create new
         prepared_input = prepare_input_view(_map_to_component_types(input_data))
-        self._model_ptr = pgc.create_model(system_frequency, input_data=prepared_input.get_dataset_ptr())
+        self._model_ptr = get_pgc().create_model(system_frequency, input_data=prepared_input.get_dataset_ptr())
         assert_no_error()
         self._all_component_count = {k: v for k, v in prepared_input.get_info().total_elements().items() if v > 0}
 
@@ -188,7 +194,7 @@ class PowerGridModel:
             None
         """
         prepared_update = prepare_update_view(_map_to_component_types(update_data))
-        pgc.update_model(self._model, prepared_update.get_dataset_ptr())
+        get_pgc().update_model(self._model, prepared_update.get_dataset_ptr())
         assert_no_error()
 
     def get_indexer(self, component_type: ComponentTypeLike, ids: np.ndarray):
@@ -210,7 +216,7 @@ class PowerGridModel:
         indexer_c = indexer.ctypes.data_as(IdxPtr)
         size = ids.size
         # call c function
-        pgc.get_indexer(self._model, component_type, size, ids_c, indexer_c)
+        get_pgc().get_indexer(self._model, component_type, size, ids_c, indexer_c)
         assert_no_error()
         return indexer
 
@@ -332,7 +338,7 @@ class PowerGridModel:
         )
 
         # run calculation
-        pgc.calculate(
+        get_pgc().calculate(
             # model and options
             self._model,
             options.opt,
@@ -1016,4 +1022,4 @@ class PowerGridModel:
         )
 
     def __del__(self):
-        pgc.destroy_model(self._model_ptr)
+        get_pgc().destroy_model(self._model_ptr)

@@ -34,7 +34,7 @@ from power_grid_model._core.power_grid_core import (
     DatasetInfoPtr,
     MutableDatasetPtr,
     WritableDatasetPtr,
-    power_grid_core as pgc,
+    get_power_grid_core as get_pgc,
 )
 from power_grid_model._core.power_grid_meta import ComponentMetaData, DatasetMetaData, power_grid_meta_data
 from power_grid_model._core.typing import ComponentAttributeMapping, ComponentAttributeMappingDict
@@ -62,7 +62,7 @@ class CDatasetInfo:
         Returns:
             The name of the dataset type
         """
-        return pgc.dataset_info_name(self._info)
+        return get_pgc().dataset_info_name(self._info)
 
     def dataset_type(self):
         """
@@ -80,7 +80,7 @@ class CDatasetInfo:
         Returns:
             Whether the dataset is a batch dataset
         """
-        return bool(pgc.dataset_info_is_batch(self._info))
+        return bool(get_pgc().dataset_info_is_batch(self._info))
 
     def batch_size(self) -> int:
         """
@@ -89,7 +89,7 @@ class CDatasetInfo:
         Returns:
             The size of the dataset
         """
-        return pgc.dataset_info_batch_size(self._info)
+        return get_pgc().dataset_info_batch_size(self._info)
 
     def n_components(self) -> int:
         """
@@ -98,7 +98,7 @@ class CDatasetInfo:
         Returns:
             The amount of components in the dataset
         """
-        return pgc.dataset_info_n_components(self._info)
+        return get_pgc().dataset_info_n_components(self._info)
 
     def components(self) -> list[ComponentType]:
         """
@@ -108,7 +108,7 @@ class CDatasetInfo:
             A list of the component names in the dataset
         """
         return [
-            _str_to_component_type(pgc.dataset_info_component_name(self._info, idx))
+            _str_to_component_type(get_pgc().dataset_info_component_name(self._info, idx))
             for idx in range(self.n_components())
         ]
 
@@ -121,7 +121,7 @@ class CDatasetInfo:
             or -1 if the scenario is not uniform (different amount per scenario)
         """
         return {
-            component_name: pgc.dataset_info_elements_per_scenario(self._info, idx)
+            component_name: get_pgc().dataset_info_elements_per_scenario(self._info, idx)
             for idx, component_name in enumerate(self.components())
         }
 
@@ -135,7 +135,7 @@ class CDatasetInfo:
                 the product of the batch size and the amount of elements per scenario for that component.
         """
         return {
-            component_name: pgc.dataset_info_total_elements(self._info, idx)
+            component_name: get_pgc().dataset_info_total_elements(self._info, idx)
             for idx, component_name in enumerate(self.components())
         }
 
@@ -150,13 +150,13 @@ class CDatasetInfo:
         result_dict: dict[ComponentType, None | list[AttributeType]] = {}
         components = self.components()
         for component_idx, component_name in enumerate(components):
-            has_indications = pgc.dataset_info_has_attribute_indications(self._info, component_idx)
+            has_indications = get_pgc().dataset_info_has_attribute_indications(self._info, component_idx)
             if has_indications == 0:
                 result_dict[component_name] = None
             else:
-                n_indications = pgc.dataset_info_n_attribute_indications(self._info, component_idx)
+                n_indications = get_pgc().dataset_info_n_attribute_indications(self._info, component_idx)
                 result_dict[component_name] = [
-                    pgc.dataset_info_attribute_name(self._info, component_idx, attribute_idx)
+                    get_pgc().dataset_info_attribute_name(self._info, component_idx, attribute_idx)
                     for attribute_idx in range(n_indications)
                 ]
         return result_dict
@@ -195,7 +195,7 @@ class CMutableDataset:
             instance._is_batch = False
             instance._batch_size = 1
 
-        instance._mutable_dataset = pgc.create_dataset_mutable(
+        instance._mutable_dataset = get_pgc().create_dataset_mutable(
             instance._dataset_type.value, instance._is_batch, instance._batch_size
         )
         assert_no_error()
@@ -221,7 +221,7 @@ class CMutableDataset:
         Returns:
             The dataset info for this dataset.
         """
-        return CDatasetInfo(pgc.dataset_mutable_get_info(self._mutable_dataset))
+        return CDatasetInfo(get_pgc().dataset_mutable_get_info(self._mutable_dataset))
 
     def get_buffer_views(self) -> list[CBuffer]:
         """
@@ -272,7 +272,7 @@ class CMutableDataset:
         self._register_buffer(component, c_buffer)
 
     def _register_buffer(self, component: ComponentType, buffer: CBuffer):
-        pgc.dataset_mutable_add_buffer(
+        get_pgc().dataset_mutable_add_buffer(
             dataset=self._mutable_dataset,
             component=component.value,
             elements_per_scenario=buffer.n_elements_per_scenario,
@@ -285,7 +285,7 @@ class CMutableDataset:
             self._register_attribute_buffer(component, attr, attr_data)
 
     def _register_attribute_buffer(self, component, attr, attr_data):
-        pgc.dataset_mutable_add_attribute_buffer(
+        get_pgc().dataset_mutable_add_attribute_buffer(
             dataset=self._mutable_dataset,
             component=component.value,
             attribute=attr,
@@ -303,7 +303,7 @@ class CMutableDataset:
             raise ValueError(f"Dataset must have a consistent batch size across all components. {VALIDATOR_MSG}")
 
     def __del__(self):
-        pgc.destroy_dataset_mutable(self._mutable_dataset)
+        get_pgc().destroy_dataset_mutable(self._mutable_dataset)
 
 
 class CConstDataset:
@@ -326,7 +326,7 @@ class CConstDataset:
 
         # create from mutable dataset
         mutable_dataset = CMutableDataset(data=data, dataset_type=dataset_type)
-        instance._const_dataset = pgc.create_dataset_const_from_mutable(mutable_dataset.get_dataset_ptr())
+        instance._const_dataset = get_pgc().create_dataset_const_from_mutable(mutable_dataset.get_dataset_ptr())
         assert_no_error()
         instance._buffer_views = mutable_dataset.get_buffer_views()
 
@@ -348,7 +348,7 @@ class CConstDataset:
         Returns:
             The dataset info for this dataset.
         """
-        return CDatasetInfo(pgc.dataset_const_get_info(self._const_dataset))
+        return CDatasetInfo(get_pgc().dataset_const_get_info(self._const_dataset))
 
     def set_next_cartesian_product_dimension(self, next_dataset: "CConstDataset") -> None:
         """
@@ -361,7 +361,7 @@ class CConstDataset:
         assert_no_error()
 
     def __del__(self):
-        pgc.destroy_dataset_const(self._const_dataset)
+        get_pgc().destroy_dataset_const(self._const_dataset)
 
 
 class CWritableDataset:
@@ -410,7 +410,7 @@ class CWritableDataset:
         Returns:
             The dataset info for this dataset.
         """
-        return CDatasetInfo(pgc.dataset_writable_get_info(self._writable_dataset))
+        return CDatasetInfo(get_pgc().dataset_writable_get_info(self._writable_dataset))
 
     def get_data(self) -> Dataset:
         """
@@ -455,7 +455,7 @@ class CWritableDataset:
         self._register_buffer(component, get_buffer_view(self._data[component], schema))
 
     def _register_buffer(self, component: ComponentType, buffer: CBuffer):
-        pgc.dataset_writable_set_buffer(
+        get_pgc().dataset_writable_set_buffer(
             dataset=self._writable_dataset,
             component=component,
             indptr=buffer.indptr,
@@ -471,7 +471,7 @@ class CWritableDataset:
         attribute: AttributeType,
         buffer: CAttributeBuffer,
     ):
-        pgc.dataset_writable_set_attribute_buffer(
+        get_pgc().dataset_writable_set_attribute_buffer(
             dataset=self._writable_dataset,
             component=component,
             attribute=attribute,
