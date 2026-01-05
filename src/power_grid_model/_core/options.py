@@ -9,7 +9,7 @@ Option class
 from collections.abc import Callable
 from typing import Any
 
-from power_grid_model._core.power_grid_core import OptionsPtr, power_grid_core as pgc
+from power_grid_model._core.power_grid_core import OptionsPtr, get_power_grid_core as get_pgc
 
 
 class OptionSetter:
@@ -36,15 +36,15 @@ class Options:
 
     _opt: OptionsPtr
     # option setter
-    calculation_type = OptionSetter(pgc.set_calculation_type)
-    calculation_method = OptionSetter(pgc.set_calculation_method)
-    symmetric = OptionSetter(pgc.set_symmetric)
-    error_tolerance = OptionSetter(pgc.set_err_tol)
-    max_iterations = OptionSetter(pgc.set_max_iter)
-    threading = OptionSetter(pgc.set_threading)
-    tap_changing_strategy = OptionSetter(pgc.set_tap_changing_strategy)
-    short_circuit_voltage_scaling = OptionSetter(pgc.set_short_circuit_voltage_scaling)
-    experimental_features = OptionSetter(pgc.set_experimental_features)
+    calculation_type = OptionSetter(get_pgc().set_calculation_type)
+    calculation_method = OptionSetter(get_pgc().set_calculation_method)
+    symmetric = OptionSetter(get_pgc().set_symmetric)
+    error_tolerance = OptionSetter(get_pgc().set_err_tol)
+    max_iterations = OptionSetter(get_pgc().set_max_iter)
+    threading = OptionSetter(get_pgc().set_threading)
+    tap_changing_strategy = OptionSetter(get_pgc().set_tap_changing_strategy)
+    short_circuit_voltage_scaling = OptionSetter(get_pgc().set_short_circuit_voltage_scaling)
+    experimental_features = OptionSetter(get_pgc().set_experimental_features)
 
     @property
     def opt(self) -> OptionsPtr:
@@ -57,11 +57,11 @@ class Options:
 
     def __new__(cls, *args, **kwargs):
         instance = super().__new__(cls, *args, **kwargs)
-        instance._opt = pgc.create_options()
+        instance._opt = get_pgc().create_options()
         return instance
 
     def __del__(self):
-        pgc.destroy_options(self._opt)
+        get_pgc().destroy_options(self._opt)
 
     # not copyable
     def __copy__(self):
