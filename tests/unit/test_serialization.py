@@ -847,9 +847,8 @@ def test_messagepack_from_stream_text_type_error():
 
 def test_messagepack_from_stream_readable_error():
     io_buffer_data = FakeRawIO(initial_bytes=b"bla")
-    with pytest.raises(UnsupportedOperation) as excinfo:
+    with pytest.raises(UnsupportedOperation, match="Stream is not readable."):
         _ = msgpack_deserialize_from_stream(io_buffer_data)
-    assert "Stream is not readable." in str(excinfo.value)
 
 
 def test_messagepack_to_stream_writable_error(serialized_data):
