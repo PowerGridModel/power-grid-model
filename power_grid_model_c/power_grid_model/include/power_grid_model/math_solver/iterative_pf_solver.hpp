@@ -18,9 +18,6 @@
 #include "../common/three_phase_tensor.hpp"
 #include "../common/timer.hpp"
 
-#include <functional>
-#include <span>
-
 namespace power_grid_model::math_solver {
 
 // solver
