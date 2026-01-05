@@ -856,6 +856,5 @@ def test_messagepack_to_stream_writable_error(serialized_data):
     input_data: Dataset = msgpack_deserialize(data)
 
     io_buffer_data = FakeRawIO(initial_bytes=b"bla")
-    with pytest.raises(UnsupportedOperation) as excinfo:
+    with pytest.raises(UnsupportedOperation, match="Stream is not writable."):
         _ = msgpack_serialize_to_stream(io_buffer_data, input_data, dataset_type=serialized_data["type"])
-    assert "Stream is not writable." in str(excinfo.value)
