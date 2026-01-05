@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: MPL-2.0
 import io
 import json
+import re
 from collections.abc import Mapping
 from io import BytesIO, TextIOBase, UnsupportedOperation
 from typing import Any
@@ -835,19 +836,19 @@ def test_messagepack_to_stream_text_type_error(serialized_data):
     input_data: Dataset = msgpack_deserialize(data)
 
     io_buffer_data = TextIOBase()
-    with pytest.raises(TypeError, match="Expected a binary stream."):
+    with pytest.raises(TypeError, match=re.escape("Expected a binary stream.")):
         msgpack_serialize_to_stream(io_buffer_data, input_data, dataset_type=serialized_data["type"])
 
 
 def test_messagepack_from_stream_text_type_error():
     io_buffer_data = TextIOBase()
-    with pytest.raises(TypeError, match="Expected a binary stream."):
+    with pytest.raises(TypeError, match=re.escape("Expected a binary stream.")):
         _ = msgpack_deserialize_from_stream(io_buffer_data)
 
 
 def test_messagepack_from_stream_readable_error():
     io_buffer_data = FakeRawIO(initial_bytes=b"bla")
-    with pytest.raises(UnsupportedOperation, match="Stream is not readable."):
+    with pytest.raises(UnsupportedOperation, match=re.escape("Stream is not readable.")):
         _ = msgpack_deserialize_from_stream(io_buffer_data)
 
 
@@ -856,5 +857,5 @@ def test_messagepack_to_stream_writable_error(serialized_data):
     input_data: Dataset = msgpack_deserialize(data)
 
     io_buffer_data = FakeRawIO(initial_bytes=b"bla")
-    with pytest.raises(UnsupportedOperation, match="Stream is not writable."):
-        _ = msgpack_serialize_to_stream(io_buffer_data, input_data, dataset_type=serialized_data["type"])
+    with pytest.raises(UnsupportedOperation, match=re.escape("Stream is not writable.")):
+        msgpack_serialize_to_stream(io_buffer_data, input_data, dataset_type=serialized_data["type"])
