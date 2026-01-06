@@ -1071,16 +1071,18 @@ Consider an example of running a contingency analysis with a timeseries data.
 Or maybe probablistic data along with timeseries data.
 In such simulations, it is required to perform a loadflow on a cartesian product of situations.
 This is possible to do via providing the `update_data` with a list of multiple batch datasets.
+ie. a list[{py:class}`BatchDataset <power_grid_model.data_types.BatchDataset>`]
+The datasets can be of row based or columnar format.
 The output of such calculation would be flattened with dimension $scenarios * components$.
 
-#### Example: Chaining datasets
+#### Example: Cartesian product of datasets
 
 ```py
 # 5 scenarios of timeseries
 load_update = initialize_array('update', 'sym_load', (5, 1))
-# Fil load_update
+# (Fill load_update)
 line_update = initialize_array('update', 'line', (3, 1))
-# Fill line_update
+# (Fill line_update)
 
 chained_update_data = [{'line': load_update}, {'sym_load': line_udpate }]
 ```
