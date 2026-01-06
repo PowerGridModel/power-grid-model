@@ -58,14 +58,13 @@ jobs:
           sudo ln -s /usr/bin/clang++-18 /usr/local/bin/clang++
           sudo ln -s /usr/bin/clang-tidy-18 /usr/local/bin/clang-tidy
 
-      - name: Enable brew
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+      
+      - name: Install pgm-build-dependencies
         run: |
-          echo "/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
-
-      - name: Install C++ dependencies
-        run: |
-          brew update
-          brew install boost eigen nlohmann-json msgpack-cxx doctest
+          uv tool install https://github.com/PowerGridModel/pgm-build-dependencies/releases/latest/download/pgm_build_dependencies-0.1.0-py3-none-any.whl
+          pgm-build-setup-ga-ci
 
       - name: Set build target in case of workflow dispatch
         if: inputs.target != null
