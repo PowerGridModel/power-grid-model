@@ -4,7 +4,6 @@
 
 #include <power_grid_model/component/fault.hpp>
 
-// #include "power_grid_model/auxiliary/input.hpp"
 #include "power_grid_model/auxiliary/output.hpp"
 #include "power_grid_model/auxiliary/update.hpp"
 #include <power_grid_model/calculation_parameters.hpp>
