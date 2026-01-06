@@ -16,7 +16,12 @@ add_executable(power_grid_model_api_tests ${PROJECT_SOURCES})
 
 target_link_libraries(
     power_grid_model_api_tests
-    PRIVATE power_grid_model_c power_grid_model_cpp doctest::doctest
+    PRIVATE
+        power_grid_model_c
+        power_grid_model_cpp
+        doctest::doctest
+        nlohmann_json
+        nlohmann_json::nlohmann_json
 )
 
 # TODO: remove this when the API becomes stable
