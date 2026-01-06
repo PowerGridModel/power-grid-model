@@ -357,7 +357,7 @@ class CConstDataset:
         Args:
             next_dataset: The next dataset to set.
         """
-        pgc.dataset_const_set_next_cartesian_product_dimension(self._const_dataset, next_dataset._const_dataset)
+        get_pgc().dataset_const_set_next_cartesian_product_dimension(self._const_dataset, next_dataset._const_dataset)
         assert_no_error()
 
     def __del__(self):
