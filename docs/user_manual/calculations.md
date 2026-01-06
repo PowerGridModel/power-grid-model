@@ -1084,7 +1084,7 @@ load_update = initialize_array('update', 'sym_load', (5, 1))
 line_update = initialize_array('update', 'line', (3, 1))
 # (Fill line_update)
 
-chained_update_data = [{'line': load_update}, {'sym_load': line_udpate }]
+product_update_data = [{'line': load_update}, {'sym_load': line_udpate }]
 ```
 
 ### Parallel Computing
