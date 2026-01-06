@@ -1,9 +1,12 @@
+# SPDX-FileCopyrightText: 2025 Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 # SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 #
 # SPDX-License-Identifier: MPL-2.0
-
+import io
 import json
+import re
 from collections.abc import Mapping
+from io import BytesIO, TextIOBase, UnsupportedOperation
 from typing import Any
 
 import msgpack
@@ -15,7 +18,32 @@ from power_grid_model._core.dataset_definitions import ComponentType
 from power_grid_model._core.utils import get_dataset_type, is_columnar, is_sparse
 from power_grid_model.data_types import BatchDataset, Dataset, DenseBatchData, SingleComponentData, SingleDataset
 from power_grid_model.enum import ComponentAttributeFilterOptions
-from power_grid_model.utils import json_deserialize, json_serialize, msgpack_deserialize, msgpack_serialize
+from power_grid_model.utils import (
+    json_deserialize,
+    json_serialize,
+    msgpack_deserialize,
+    msgpack_deserialize_from_stream,
+    msgpack_serialize,
+    msgpack_serialize_to_stream,
+)
+
+
+class FakeRawIO(io.RawIOBase):
+    def __init__(self, initial_bytes: bytes | bytearray = b"2"):
+        super().__init__()
+        self._buf = bytearray(initial_bytes)
+        self._pos = 0
+        self._closed = False
+
+    # --- Capability flags ---
+    def readable(self) -> bool:
+        return False
+
+    def writable(self) -> bool:
+        return False
+
+    def seekable(self) -> bool:
+        return True
 
 
 def to_json(data, raw_buffer: bool = False, indent: int | None = None):
@@ -790,3 +818,44 @@ def test_serialize_deserialize_double_round_trip(deserialize, serialize, seriali
 
             np.testing.assert_array_equal(nan_a, nan_b)
             np.testing.assert_allclose(field_result_a[~nan_a], field_result_b[~nan_b], rtol=1e-15)
+
+
+def test_messagepack_round_trip_with_stream(serialized_data):
+    data = to_msgpack(serialized_data)
+    input_data: Dataset = msgpack_deserialize(data)
+
+    io_buffer_data = BytesIO()
+    msgpack_serialize_to_stream(io_buffer_data, input_data, dataset_type=serialized_data["type"])
+    io_buffer_data.seek(0)
+    output_data = msgpack_deserialize_from_stream(io_buffer_data)
+    assert str(output_data) == str(input_data)
+
+
+def test_messagepack_to_stream_text_type_error(serialized_data):
+    data = to_msgpack(serialized_data)
+    input_data: Dataset = msgpack_deserialize(data)
+
+    io_buffer_data = TextIOBase()
+    with pytest.raises(TypeError, match=re.escape("Expected a binary stream.")):
+        msgpack_serialize_to_stream(io_buffer_data, input_data, dataset_type=serialized_data["type"])
+
+
+def test_messagepack_from_stream_text_type_error():
+    io_buffer_data = TextIOBase()
+    with pytest.raises(TypeError, match=re.escape("Expected a binary stream.")):
+        _ = msgpack_deserialize_from_stream(io_buffer_data)
+
+
+def test_messagepack_from_stream_readable_error():
+    io_buffer_data = FakeRawIO(initial_bytes=b"bla")
+    with pytest.raises(UnsupportedOperation, match=re.escape("Stream is not readable.")):
+        _ = msgpack_deserialize_from_stream(io_buffer_data)
+
+
+def test_messagepack_to_stream_writable_error(serialized_data):
+    data = to_msgpack(serialized_data)
+    input_data: Dataset = msgpack_deserialize(data)
+
+    io_buffer_data = FakeRawIO(initial_bytes=b"bla")
+    with pytest.raises(UnsupportedOperation, match=re.escape("Stream is not writable.")):
+        msgpack_serialize_to_stream(io_buffer_data, input_data, dataset_type=serialized_data["type"])
