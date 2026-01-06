@@ -42,9 +42,9 @@ TEST_CASE("Test Sparse LU solver") {
     /// x x f
     /// x f x
 
-    auto row_indptr = std::make_shared<IdxVector const>(IdxVector{0, 3, 6, 9});
-    auto col_indices = std::make_shared<IdxVector const>(IdxVector{0, 1, 2, 0, 1, 2, 0, 1, 2});
-    auto diag_lu = std::make_shared<IdxVector const>(IdxVector{0, 4, 8});
+    auto row_indptr = IdxVector{0, 3, 6, 9};
+    auto col_indices = IdxVector{0, 1, 2, 0, 1, 2, 0, 1, 2};
+    auto diag_lu = IdxVector{0, 4, 8};
 
     SUBCASE("Scalar(double) calculation") {
         // [4 1 5        3          21
@@ -141,9 +141,9 @@ TEST_CASE("LU solver with ill-conditioned system") {
     //
 
     SUBCASE("Scalar variant") {
-        auto row_indptr = std::make_shared<IdxVector const>(IdxVector{0, 4, 8, 12, 16});
-        auto col_indices = std::make_shared<IdxVector const>(IdxVector{0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3});
-        auto diag_lu = std::make_shared<IdxVector const>(IdxVector{0, 5, 10, 15});
+        auto row_indptr = IdxVector{0, 4, 8, 12, 16};
+        auto col_indices = IdxVector{0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3};
+        auto diag_lu = IdxVector{0, 5, 10, 15};
         auto data = std::vector<double>{
             0,  0,  0, -1, // row 0
             0,  -1, 0, 0,  // row 1
@@ -169,9 +169,9 @@ TEST_CASE("LU solver with ill-conditioned system") {
     }
 
     SUBCASE("Block variant") {
-        auto row_indptr = std::make_shared<IdxVector const>(IdxVector{0, 2, 4});
-        auto col_indices = std::make_shared<IdxVector const>(IdxVector{0, 1, 0, 1});
-        auto diag_lu = std::make_shared<IdxVector const>(IdxVector{0, 3});
+        auto row_indptr = IdxVector{0, 2, 4};
+        auto col_indices = IdxVector{0, 1, 0, 1};
+        auto diag_lu = IdxVector{0, 3};
         auto data = std::vector<Tensor>{
             {{0, 0}, {0, -1}}, // 0, 0
             {{0, -1}, {0, 0}}, // 0, 1

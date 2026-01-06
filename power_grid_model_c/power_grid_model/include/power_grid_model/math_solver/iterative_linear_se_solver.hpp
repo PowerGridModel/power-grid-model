@@ -75,12 +75,12 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
     static constexpr Idx bsr_block_size_ = is_symmetric_v<sym> ? 2 : 6;
 
   public:
-    IterativeLinearSESolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> topo_ptr)
+    IterativeLinearSESolver(YBus<sym> const& y_bus, MathModelTopology const& topo_ptr)
         : n_bus_{y_bus.size()},
-          math_topo_{std::move(topo_ptr)},
+          math_topo_{topo_ptr},
           data_gain_(y_bus.nnz_lu()),
           x_rhs_(y_bus.size()),
-          sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
+          sparse_solver_{y_bus.row_indptr_lu(), y_bus.col_indices_lu(), y_bus.lu_diag()},
           perm_(y_bus.size()) {}
 
     SolverOutput<sym> run_state_estimation(YBus<sym> const& y_bus, StateEstimationInput<sym> const& input,
@@ -111,7 +111,7 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
         sub_timer = Timer{log, LogEvent::initialize_voltages}; // TODO(mgovers): make scoped subtimers
         RealValue<sym> const mean_angle_shift = measured_values.mean_angle_shift();
         for (Idx bus = 0; bus != n_bus_; ++bus) {
-            output.u[bus] = exp(1.0i * (mean_angle_shift + math_topo_->phase_shift[bus]));
+            output.u[bus] = exp(1.0i * (mean_angle_shift + math_topo_.get().phase_shift[bus]));
         }
 
         // loop to iterate
@@ -155,7 +155,7 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
 
     Idx n_bus_;
     // shared topo data
-    std::shared_ptr<MathModelTopology const> math_topo_;
+    std::reference_wrapper<MathModelTopology const> math_topo_;
 
     // data for gain matrix
     std::vector<ILSEGainBlock<sym>> data_gain_;
@@ -359,7 +359,7 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
             if (has_angle) {
                 return 1.0;
             }
-            auto const& voltage = x_rhs_[math_topo_->slack_bus].u();
+            auto const& voltage = x_rhs_[math_topo_.get().slack_bus].u();
             auto const& voltage_a = [&voltage]() -> auto const& {
                 if constexpr (is_symmetric_v<sym>) {
                     return voltage;

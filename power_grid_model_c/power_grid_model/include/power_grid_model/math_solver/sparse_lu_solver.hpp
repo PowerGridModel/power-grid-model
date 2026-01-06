@@ -200,14 +200,14 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     using BlockPermArray = typename entry_trait::BlockPermArray;
     static constexpr Idx max_iterative_refinement = 5;
 
-    SparseLUSolver(std::shared_ptr<IdxVector const> const& row_indptr, // indptr including fill-ins
-                   std::shared_ptr<IdxVector const> col_indices,       // indices including fill-ins
-                   std::shared_ptr<IdxVector const> diag_lu)
-        : size_{static_cast<Idx>(row_indptr->size()) - 1},
-          nnz_{row_indptr->back()},
-          row_indptr_{row_indptr},
-          col_indices_{std::move(col_indices)},
-          diag_lu_{std::move(diag_lu)} {}
+    SparseLUSolver(IdxVector const& row_indptr, // indptr including fill-ins
+                   IdxVector const& col_indices,       // indices including fill-ins
+                   IdxVector const& diag_lu)
+        : size_{static_cast<Idx>(row_indptr.size()) - 1},
+          nnz_{row_indptr.back()},
+          row_indptr_{&row_indptr},
+          col_indices_{&col_indices},
+          diag_lu_{&diag_lu} {}
 
     // solve with new matrix data, need to factorize first
     void
@@ -407,9 +407,9 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
   private:
     Idx size_;
     Idx nnz_; // number of non zeroes (in block)
-    std::shared_ptr<IdxVector const> row_indptr_;
-    std::shared_ptr<IdxVector const> col_indices_;
-    std::shared_ptr<IdxVector const> diag_lu_;
+    IdxVector const* row_indptr_;
+    IdxVector const* col_indices_;
+    IdxVector const* diag_lu_;
     // cache value for pivot perturbation for the factorize step
     bool has_pivot_perturbation_{false};
     double matrix_norm_{};
