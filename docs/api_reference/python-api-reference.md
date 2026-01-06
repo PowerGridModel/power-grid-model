@@ -8,8 +8,8 @@ SPDX-License-Identifier: MPL-2.0
 
 This is the Python API reference for the `power-grid-model` library.
 Due to the nature of how Python module works, we cannnot hide the implementation detail completely from the user.
-As a general rule, any Python modules/functions/classes which are not documented in this API documentation,
-are internal implementations.
+As a general rule, any Python modules/functions/classes not documented in this API documentation are internal
+implementations.
 **The user should not use any of them.**
 **We do not guarantee the stability or even the existence of those modules.**
 
@@ -114,6 +114,8 @@ This includes all miscellaneous type hints not under dataset or categories.
 .. autofunction:: power_grid_model.utils.json_serialize_to_file
 .. autofunction:: power_grid_model.utils.msgpack_deserialize_from_file
 .. autofunction:: power_grid_model.utils.msgpack_serialize_to_file
+.. autofunction:: power_grid_model.utils.msgpack_deserialize_from_stream
+.. autofunction:: power_grid_model.utils.msgpack_serialize_to_stream
 .. autofunction:: power_grid_model.utils.import_json_data
 .. autofunction:: power_grid_model.utils.export_json_data
 .. autofunction:: power_grid_model.utils.self_test
