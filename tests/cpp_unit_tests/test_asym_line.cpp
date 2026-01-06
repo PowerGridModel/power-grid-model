@@ -12,7 +12,6 @@
 #include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/common/three_phase_tensor.hpp>
-// TODO (nitbharambe) Added base.hpp for status_to_int function
 #include <power_grid_model/component/base.hpp>
 #include <power_grid_model/component/branch.hpp>
 #include <power_grid_model/component/line_utils.hpp>
