@@ -36,7 +36,8 @@ struct PGM_PowerGridModel : public MainModel {
 PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency,
                                      PGM_ConstDataset const* input_dataset) {
     return call_with_catch(handle, [system_frequency, input_dataset] {
-        return new PGM_PowerGridModel{system_frequency, safe_ptr_get(input_dataset), get_math_solver_dispatcher(), 0};
+        return new PGM_PowerGridModel{system_frequency, safe_ptr_get(input_dataset), get_math_solver_dispatcher(),
+                                      0}; // NOSONAR(S5025)
     });
 }
 
@@ -49,7 +50,9 @@ void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_ConstDa
 
 // copy model
 PGM_PowerGridModel* PGM_copy_model(PGM_Handle* handle, PGM_PowerGridModel const* model) {
-    return call_with_catch(handle, [model] { return new PGM_PowerGridModel{safe_ptr_get(model)}; });
+    return call_with_catch(handle, [model] {
+        return new PGM_PowerGridModel{safe_ptr_get(model)}; // NOSONAR(S5025)
+    });
 }
 
 // get indexer
@@ -204,4 +207,6 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
 }
 
 // destroy model
-void PGM_destroy_model(PGM_PowerGridModel* model) { delete model; }
+void PGM_destroy_model(PGM_PowerGridModel* model) {
+    delete model; // NOSONAR(S5025)
+}

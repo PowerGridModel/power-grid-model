@@ -88,20 +88,27 @@ char const* PGM_dataset_info_attribute_name(PGM_Handle* handle, PGM_DatasetInfo 
 PGM_ConstDataset* PGM_create_dataset_const(PGM_Handle* handle, char const* dataset, PGM_Idx is_batch,
                                            PGM_Idx batch_size) {
     return call_with_catch(handle, [dataset, is_batch, batch_size] {
-        return new ConstDataset{safe_bool(is_batch), batch_size, safe_str_view(dataset), get_meta_data()};
+        return new ConstDataset{safe_bool(is_batch), batch_size, safe_str_view(dataset),
+                                get_meta_data()}; // NOSONAR(S5025)
     });
 }
 
 PGM_ConstDataset* PGM_create_dataset_const_from_writable(PGM_Handle* handle,
                                                          PGM_WritableDataset const* writable_dataset) {
-    return call_with_catch(handle, [writable_dataset] { return new ConstDataset{safe_ptr_get(writable_dataset)}; });
+    return call_with_catch(handle, [writable_dataset] {
+        return new ConstDataset{safe_ptr_get(writable_dataset)}; // NOSONAR(S5025)
+    });
 }
 
 PGM_ConstDataset* PGM_create_dataset_const_from_mutable(PGM_Handle* handle, PGM_MutableDataset const* mutable_dataset) {
-    return call_with_catch(handle, [mutable_dataset] { return new ConstDataset{safe_ptr_get(mutable_dataset)}; });
+    return call_with_catch(handle, [mutable_dataset] {
+        return new ConstDataset{safe_ptr_get(mutable_dataset)}; // NOSONAR(S5025)
+    });
 }
 
-void PGM_destroy_dataset_const(PGM_ConstDataset* dataset) { delete dataset; }
+void PGM_destroy_dataset_const(PGM_ConstDataset* dataset) {
+    delete dataset; // NOSONAR(S5025)
+}
 
 void PGM_dataset_const_add_buffer(PGM_Handle* handle, PGM_ConstDataset* dataset, char const* component,
                                   PGM_Idx elements_per_scenario, PGM_Idx total_elements, PGM_Idx const* indptr,
@@ -149,11 +156,14 @@ void PGM_dataset_writable_set_attribute_buffer(PGM_Handle* handle, PGM_WritableD
 PGM_MutableDataset* PGM_create_dataset_mutable(PGM_Handle* handle, char const* dataset, PGM_Idx is_batch,
                                                PGM_Idx batch_size) {
     return call_with_catch(handle, [dataset, is_batch, batch_size] {
-        return new MutableDataset{safe_bool(is_batch), batch_size, safe_str_view(dataset), get_meta_data()};
+        return new MutableDataset{safe_bool(is_batch), batch_size, safe_str_view(dataset),
+                                  get_meta_data()}; // NOSONAR(S5025)
     });
 }
 
-void PGM_destroy_dataset_mutable(PGM_MutableDataset* dataset) { delete dataset; }
+void PGM_destroy_dataset_mutable(PGM_MutableDataset* dataset) {
+    delete dataset; // NOSONAR(S5025)
+}
 
 void PGM_dataset_mutable_add_buffer(PGM_Handle* handle, PGM_MutableDataset* dataset, char const* component,
                                     PGM_Idx elements_per_scenario, PGM_Idx total_elements, PGM_Idx const* indptr,

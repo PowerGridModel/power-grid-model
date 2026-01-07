@@ -19,8 +19,12 @@ using power_grid_model_c::safe_ptr_get;
 } // namespace
 
 // options
-PGM_Options* PGM_create_options(PGM_Handle* /* handle */) { return new PGM_Options{}; }
-void PGM_destroy_options(PGM_Options* opt) { delete opt; }
+PGM_Options* PGM_create_options(PGM_Handle* /* handle */) {
+    return new PGM_Options{}; // NOSONAR(S5025)
+}
+void PGM_destroy_options(PGM_Options* opt) {
+    delete opt; // NOSONAR(S5025)
+}
 void PGM_set_calculation_type(PGM_Handle* handle, PGM_Options* opt, PGM_Idx type) {
     call_with_catch(handle, [opt, type] { safe_ptr_get(opt).calculation_type = type; });
 }

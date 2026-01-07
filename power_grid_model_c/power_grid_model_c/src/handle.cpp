@@ -21,8 +21,12 @@ using power_grid_model_c::compile_time_safe_cast;
 } // namespace
 
 // create and destroy handle
-PGM_Handle* PGM_create_handle() { return new PGM_Handle{}; }
-void PGM_destroy_handle(PGM_Handle* handle) { delete handle; }
+PGM_Handle* PGM_create_handle() {
+    return new PGM_Handle{}; // NOSONAR(S5025)
+}
+void PGM_destroy_handle(PGM_Handle* handle) {
+    delete handle; // NOSONAR(S5025)
+}
 
 // error handling
 PGM_Idx PGM_error_code(PGM_Handle const* handle) {

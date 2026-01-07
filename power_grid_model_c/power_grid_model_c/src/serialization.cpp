@@ -41,7 +41,7 @@ PGM_Deserializer* PGM_create_deserializer_from_binary_buffer(PGM_Handle* handle,
             return new PGM_Deserializer{from_buffer,
                                         {data, safe_size<size_t>(size)},
                                         safe_enum<power_grid_model::SerializationFormat>(serialization_format),
-                                        get_meta_data()};
+                                        get_meta_data()}; // NOSONAR(S5025)
         },
         serialization_exception_handler);
 }
@@ -53,7 +53,7 @@ PGM_Deserializer* PGM_create_deserializer_from_null_terminated_string(PGM_Handle
         [data_string, serialization_format] {
             return new PGM_Deserializer{from_string, data_string,
                                         safe_enum<power_grid_model::SerializationFormat>(serialization_format),
-                                        get_meta_data()};
+                                        get_meta_data()}; // NOSONAR(S5025)
         },
         serialization_exception_handler);
 }
@@ -68,14 +68,17 @@ void PGM_deserializer_parse_to_buffer(PGM_Handle* handle, PGM_Deserializer* dese
 
 // false warning from clang-tidy
 // NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDelete)
-void PGM_destroy_deserializer(PGM_Deserializer* deserializer) { delete deserializer; }
+void PGM_destroy_deserializer(PGM_Deserializer* deserializer) {
+    delete deserializer; // NOSONAR(S5025)
+}
 
 PGM_Serializer* PGM_create_serializer(PGM_Handle* handle, PGM_ConstDataset const* dataset,
                                       PGM_Idx serialization_format) {
     return call_with_catch(
         handle,
         [dataset, serialization_format] {
-            return new PGM_Serializer{*dataset, safe_enum<power_grid_model::SerializationFormat>(serialization_format)};
+            return new PGM_Serializer{
+                *dataset, safe_enum<power_grid_model::SerializationFormat>(serialization_format)}; // NOSONAR(S5025)
         },
         serialization_exception_handler);
 }
@@ -102,4 +105,6 @@ char const* PGM_serializer_get_to_zero_terminated_string(PGM_Handle* handle, PGM
         serialization_exception_handler);
 }
 
-void PGM_destroy_serializer(PGM_Serializer* serializer) { delete serializer; }
+void PGM_destroy_serializer(PGM_Serializer* serializer) {
+    delete serializer; // NOSONAR(S5025)
+}
