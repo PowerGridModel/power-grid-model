@@ -7,7 +7,7 @@ Power grid model buffer handler
 """
 
 from dataclasses import dataclass
-from typing import cast
+from typing import cast, overload
 
 import numpy as np
 
@@ -19,6 +19,10 @@ from power_grid_model._core.data_types import (
     SingleComponentData,
     SparseBatchArray,
     SparseBatchData,
+    DenseBatchArray,
+    DenseBatchColumnarData,
+    SingleArray,
+    SingleColumnarData,
 )
 from power_grid_model._core.error_handling import VALIDATOR_MSG
 from power_grid_model._core.index_integer import IdxC, IdxNp
@@ -418,6 +422,7 @@ def get_buffer_view(
     return _get_sparse_buffer_view(cast(SparseBatchArray, data), schema, batch_size)
 
 
+
 def create_buffer(properties: BufferProperties, schema: ComponentMetaData) -> ComponentData:
     """
     Create a buffer with the provided properties and type.
@@ -463,6 +468,7 @@ def _create_uniform_buffer(properties: BufferProperties, schema: ComponentMetaDa
     return _create_contents_buffer(shape=shape, dtype=schema.dtype, columns=properties.columns)
 
 
+
 def _create_sparse_buffer(properties: BufferProperties, schema: ComponentMetaData) -> SparseBatchData:
     """
     Create a sparse buffer with the provided properties and type.
@@ -486,7 +492,14 @@ def _create_sparse_buffer(properties: BufferProperties, schema: ComponentMetaDat
     return cast(SparseBatchData, {"data": data, "indptr": indptr})
 
 
-def _create_contents_buffer(shape, dtype, columns: list[AttributeType] | None) -> SingleComponentData | DenseBatchData:
+@overload
+def _create_contents_buffer(shape, dtype, columns: None) -> SingleArray | DenseBatchArray: ...
+@overload
+def _create_contents_buffer(
+    shape, dtype, columns: list[AttributeType]
+) -> SingleColumnarData | DenseBatchColumnarData: ...
+
+def _create_contents_buffer(shape, dtype, columns):
     if columns is None:
         return np.empty(shape=shape, dtype=dtype)
 
