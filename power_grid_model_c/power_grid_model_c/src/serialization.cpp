@@ -77,8 +77,8 @@ PGM_Serializer* PGM_create_serializer(PGM_Handle* handle, PGM_ConstDataset const
     return call_with_catch(
         handle,
         [dataset, serialization_format] {
-            return new PGM_Serializer{
-                *dataset, safe_enum<power_grid_model::SerializationFormat>(serialization_format)}; // NOSONAR(S5025)
+            return new PGM_Serializer{// NOSONAR(S5025)
+                                      *dataset, safe_enum<power_grid_model::SerializationFormat>(serialization_format)};
         },
         serialization_exception_handler);
 }

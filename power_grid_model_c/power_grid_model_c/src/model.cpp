@@ -36,8 +36,8 @@ struct PGM_PowerGridModel : public MainModel {
 PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency,
                                      PGM_ConstDataset const* input_dataset) {
     return call_with_catch(handle, [system_frequency, input_dataset] {
-        return new PGM_PowerGridModel{system_frequency, safe_ptr_get(input_dataset), get_math_solver_dispatcher(),
-                                      0}; // NOSONAR(S5025)
+        return new PGM_PowerGridModel{// NOSONAR(S5025)
+                                      system_frequency, safe_ptr_get(input_dataset), get_math_solver_dispatcher(), 0};
     });
 }
 

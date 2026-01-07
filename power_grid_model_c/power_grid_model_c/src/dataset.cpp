@@ -88,8 +88,8 @@ char const* PGM_dataset_info_attribute_name(PGM_Handle* handle, PGM_DatasetInfo 
 PGM_ConstDataset* PGM_create_dataset_const(PGM_Handle* handle, char const* dataset, PGM_Idx is_batch,
                                            PGM_Idx batch_size) {
     return call_with_catch(handle, [dataset, is_batch, batch_size] {
-        return new ConstDataset{safe_bool(is_batch), batch_size, safe_str_view(dataset),
-                                get_meta_data()}; // NOSONAR(S5025)
+        return new ConstDataset{// NOSONAR(S5025)
+                                safe_bool(is_batch), batch_size, safe_str_view(dataset), get_meta_data()};
     });
 }
 
@@ -156,8 +156,8 @@ void PGM_dataset_writable_set_attribute_buffer(PGM_Handle* handle, PGM_WritableD
 PGM_MutableDataset* PGM_create_dataset_mutable(PGM_Handle* handle, char const* dataset, PGM_Idx is_batch,
                                                PGM_Idx batch_size) {
     return call_with_catch(handle, [dataset, is_batch, batch_size] {
-        return new MutableDataset{safe_bool(is_batch), batch_size, safe_str_view(dataset),
-                                  get_meta_data()}; // NOSONAR(S5025)
+        return new MutableDataset{// NOSONAR(S5025)
+                                  safe_bool(is_batch), batch_size, safe_str_view(dataset), get_meta_data()};
     });
 }
 
