@@ -23,6 +23,7 @@ using power_grid_model_c::call_with_catch;
 using power_grid_model_c::safe_ptr;
 using power_grid_model_c::safe_ptr_get;
 using power_grid_model_c::safe_ptr_maybe_nullptr;
+using power_grid_model_c::to_c_size;
 
 RawDataPtr create_buffer_impl(PGM_MetaComponent const& component, PGM_Idx size) {
     // alignment should be maximum of alignment of the component and alignment of void*
@@ -77,11 +78,11 @@ void buffer_get_set_value(PGM_MetaAttribute const& attribute, BufferPtr buffer_p
 
     // if stride is negative, use the size of the attributes as stride
     if (stride < 0) {
-        stride = static_cast<PGM_Idx>(attribute.size);
+        stride = to_c_size(attribute.size);
     }
 
-    RawValuePtr const raw_value_ptr = reinterpret_cast<RawValuePtr>(safe_ptr(value_ptr));
-    BufferPtr const safe_buffer_ptr = safe_ptr(buffer_ptr);
+    auto const raw_value_ptr = reinterpret_cast<RawValuePtr>(safe_ptr(value_ptr));
+    auto const safe_buffer_ptr = safe_ptr(buffer_ptr);
 
     for (Idx i = buffer_offset; i != size + buffer_offset; ++i) {
         ValuePtr const shifted_value_ptr = raw_value_ptr + stride * i;

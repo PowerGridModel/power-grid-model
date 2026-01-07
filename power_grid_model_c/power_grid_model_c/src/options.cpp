@@ -7,6 +7,7 @@
 
 #include "power_grid_model_c/options.h"
 
+#include "handle.hpp"
 #include "input_sanitization.hpp"
 #include "options.hpp"
 

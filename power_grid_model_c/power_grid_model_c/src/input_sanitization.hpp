@@ -4,9 +4,10 @@
 
 #pragma once
 
-#include "handle.hpp"
-
-#include "power_grid_model/common/exception.hpp"
+#include <exception>
+#include <format>
+#include <string>
+#include <string_view>
 
 namespace power_grid_model_c {
 class IllegalOperationError : public std::exception {
@@ -18,6 +19,50 @@ class IllegalOperationError : public std::exception {
   private:
     std::string msg_;
 };
+
+template <std::integral T, std::integral U>
+    requires std::convertible_to<U, T>
+constexpr auto safe_cast(U value) {
+    if constexpr (std::same_as<T, U>) {
+        return value;
+    } else {
+        if (std::in_range<T>(value)) {
+            return static_cast<T>(value);
+        }
+        throw IllegalOperationError{"Value out of range for target type"};
+    }
+}
+
+template <std::integral T> constexpr T safe_int(PGM_Idx value) { return safe_cast<T>(value); }
+template <std::integral T> constexpr T safe_size(PGM_Idx value) {
+    if (value >= 0) {
+        return safe_cast<T>(value);
+    }
+    throw IllegalOperationError{"Received negative value for size"};
+}
+template <std::integral T> constexpr PGM_Idx to_c_size(T value) {
+    assert(value >= 0);
+    return safe_cast<PGM_Idx>(value);
+}
+
+constexpr bool safe_bool(PGM_Idx value) { return value != 0; }
+template <std::integral T> constexpr T to_c_bool(bool value) { return value ? 1 : 0; }
+
+// safe enum conversion from C integer type to C++ enum type.
+//
+// It does NOT check that the value is a valid enumerator of the enum type T.
+// It only ensures that there is no unexpected behavior like wrap-arounds during the conversion.
+// E.g.: for an enum class with underlying type uint8_t, passing 256 would wrap around to 0 without this check.
+template <typename T>
+    requires std::is_enum_v<T>
+constexpr T safe_enum(PGM_Idx value) {
+    return static_cast<T>(safe_cast<std::underlying_type_t<T>>(value));
+}
+template <typename T>
+    requires std::is_enum_v<T>
+constexpr PGM_Idx to_c_enum(T value) {
+    return safe_cast<PGM_Idx>(std::to_underlying(value));
+}
 
 // no-op sanitization for clarity that we did think about input input sanitization but we deliberately allow nullptr
 template <typename T> constexpr T* safe_ptr_maybe_nullptr(T* ptr) { return ptr; }

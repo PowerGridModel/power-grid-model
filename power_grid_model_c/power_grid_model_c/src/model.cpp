@@ -20,6 +20,7 @@ namespace {
 using namespace power_grid_model;
 
 using power_grid_model_c::call_with_catch;
+using power_grid_model_c::safe_enum;
 using power_grid_model_c::safe_ptr;
 using power_grid_model_c::safe_ptr_get;
 using power_grid_model_c::safe_ptr_maybe_nullptr;
@@ -76,9 +77,7 @@ void check_calculate_valid_options(PGM_Options const& opt) {
     }
 }
 
-constexpr auto get_calculation_type(PGM_Options const& opt) {
-    return static_cast<CalculationType>(opt.calculation_type);
-}
+constexpr auto get_calculation_type(PGM_Options const& opt) { return safe_enum<CalculationType>(opt.calculation_type); }
 
 constexpr auto get_calculation_symmetry(PGM_Options const& opt) {
     switch (opt.symmetric) {
@@ -92,7 +91,7 @@ constexpr auto get_calculation_symmetry(PGM_Options const& opt) {
 }
 
 constexpr auto get_calculation_method(PGM_Options const& opt) {
-    return static_cast<CalculationMethod>(opt.calculation_method);
+    return safe_enum<CalculationMethod>(opt.calculation_method);
 }
 
 constexpr auto get_optimizer_type(PGM_Options const& opt) {
@@ -130,7 +129,7 @@ constexpr auto get_optimizer_strategy(PGM_Options const& opt) {
 }
 
 constexpr auto get_short_circuit_voltage_scaling(PGM_Options const& opt) {
-    return static_cast<ShortCircuitVoltageScaling>(opt.short_circuit_voltage_scaling);
+    return safe_enum<ShortCircuitVoltageScaling>(opt.short_circuit_voltage_scaling);
 }
 
 constexpr auto extract_calculation_options(PGM_Options const& opt) {
@@ -172,7 +171,7 @@ void calculate_impl(PGM_PowerGridModel& model, PGM_Options const& opt, MutableDa
     model.calculate(options, output_dataset, exported_update_dataset);
 }
 
-struct BatchExceptionHandler : public DefaultExceptionHandler {
+struct BatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandler {
     void operator()(PGM_Handle& handle) const {
         std::exception_ptr const ex_ptr = std::current_exception();
         try {
@@ -181,9 +180,9 @@ struct BatchExceptionHandler : public DefaultExceptionHandler {
             handle_regular_error(handle, ex, PGM_batch_error);
             handle.failed_scenarios = ex.failed_scenarios();
             handle.batch_errs = ex.err_msgs();
-        } catch (std::exception& ex) {
+        } catch (std::exception& ex) { // NOSONAR(S1181)
             handle_regular_error(handle, ex, PGM_regular_error);
-        } catch (...) {
+        } catch (...) { // NOSONAR(S2738)
             handle_unkown_error(handle);
         }
     }

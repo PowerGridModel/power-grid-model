@@ -22,12 +22,14 @@ using namespace power_grid_model;
 using power_grid_model_c::call_with_catch;
 using power_grid_model_c::safe_ptr_get;
 using power_grid_model_c::safe_str_view;
+using power_grid_model_c::to_c_bool;
+using power_grid_model_c::to_c_enum;
 
 // assert index type
 static_assert(std::is_same_v<PGM_Idx, Idx>);
 static_assert(std::is_same_v<PGM_ID, ID>);
 
-struct RangedExceptionHandler : public DefaultExceptionHandler {
+struct RangedExceptionHandler : public power_grid_model_c::DefaultExceptionHandler {
     void operator()(PGM_Handle& handle) const noexcept {
         using namespace std::string_literals;
 
@@ -140,9 +142,9 @@ char const* PGM_meta_attribute_name(PGM_Handle* handle, PGM_MetaAttribute const*
     return call_with_catch(handle, [attribute] { return safe_ptr_get(attribute).name; });
 }
 PGM_Idx PGM_meta_attribute_ctype(PGM_Handle* handle, PGM_MetaAttribute const* attribute) {
-    return call_with_catch(handle, [attribute] { return static_cast<PGM_Idx>(safe_ptr_get(attribute).ctype); });
+    return call_with_catch(handle, [attribute] { return to_c_enum(safe_ptr_get(attribute).ctype); });
 }
 size_t PGM_meta_attribute_offset(PGM_Handle* handle, PGM_MetaAttribute const* attribute) {
     return call_with_catch(handle, [attribute] { return safe_ptr_get(attribute).offset; });
 }
-int PGM_is_little_endian(PGM_Handle* /* handle */) { return static_cast<int>(meta_data::is_little_endian()); }
+int PGM_is_little_endian(PGM_Handle* /* handle */) { return to_c_bool<int>(meta_data::is_little_endian()); }

@@ -18,10 +18,13 @@
 using namespace power_grid_model;
 using namespace power_grid_model::meta_data;
 using power_grid_model_c::call_with_catch;
+using power_grid_model_c::safe_bool;
 using power_grid_model_c::safe_ptr;
 using power_grid_model_c::safe_ptr_get;
 using power_grid_model_c::safe_ptr_maybe_nullptr;
 using power_grid_model_c::safe_str_view;
+using power_grid_model_c::to_c_bool;
+using power_grid_model_c::to_c_size;
 
 // dataset info
 
@@ -30,7 +33,7 @@ char const* PGM_dataset_info_name(PGM_Handle* handle, PGM_DatasetInfo const* inf
 }
 
 PGM_Idx PGM_dataset_info_is_batch(PGM_Handle* handle, PGM_DatasetInfo const* info) {
-    return call_with_catch(handle, [info] { return static_cast<PGM_Idx>(safe_ptr_get(info).is_batch); });
+    return call_with_catch(handle, [info] { return to_c_bool<PGM_Idx>(safe_ptr_get(info).is_batch); });
 }
 
 PGM_Idx PGM_dataset_info_batch_size(PGM_Handle* handle, PGM_DatasetInfo const* info) {
@@ -38,8 +41,7 @@ PGM_Idx PGM_dataset_info_batch_size(PGM_Handle* handle, PGM_DatasetInfo const* i
 }
 
 PGM_Idx PGM_dataset_info_n_components(PGM_Handle* handle, PGM_DatasetInfo const* info) {
-    return call_with_catch(handle,
-                           [info] { return narrow_cast<PGM_Idx>(std::ssize(safe_ptr_get(info).component_info)); });
+    return call_with_catch(handle, [info] { return to_c_size(std::ssize(safe_ptr_get(info).component_info)); });
 }
 
 char const* PGM_dataset_info_component_name(PGM_Handle* handle, PGM_DatasetInfo const* info, PGM_Idx component_idx) {
@@ -62,15 +64,14 @@ PGM_Idx PGM_dataset_info_total_elements(PGM_Handle* handle, PGM_DatasetInfo cons
 PGM_Idx PGM_dataset_info_has_attribute_indications(PGM_Handle* handle, PGM_DatasetInfo const* info,
                                                    PGM_Idx component_idx) {
     return call_with_catch(handle, [info, component_idx] {
-        return static_cast<PGM_Idx>(safe_ptr_get(info).component_info.at(component_idx).has_attribute_indications);
+        return to_c_bool<PGM_Idx>(safe_ptr_get(info).component_info.at(component_idx).has_attribute_indications);
     });
 }
 
 PGM_Idx PGM_dataset_info_n_attribute_indications(PGM_Handle* handle, PGM_DatasetInfo const* info,
                                                  PGM_Idx component_idx) {
     return call_with_catch(handle, [info, component_idx] {
-        return narrow_cast<PGM_Idx>(
-            std::ssize(safe_ptr_get(info).component_info.at(component_idx).attribute_indications));
+        return to_c_size(std::ssize(safe_ptr_get(info).component_info.at(component_idx).attribute_indications));
     });
 }
 
@@ -87,7 +88,7 @@ char const* PGM_dataset_info_attribute_name(PGM_Handle* handle, PGM_DatasetInfo 
 PGM_ConstDataset* PGM_create_dataset_const(PGM_Handle* handle, char const* dataset, PGM_Idx is_batch,
                                            PGM_Idx batch_size) {
     return call_with_catch(handle, [dataset, is_batch, batch_size] {
-        return new ConstDataset{static_cast<bool>(is_batch), batch_size, safe_str_view(dataset), get_meta_data()};
+        return new ConstDataset{safe_bool(is_batch), batch_size, safe_str_view(dataset), get_meta_data()};
     });
 }
 
@@ -148,7 +149,7 @@ void PGM_dataset_writable_set_attribute_buffer(PGM_Handle* handle, PGM_WritableD
 PGM_MutableDataset* PGM_create_dataset_mutable(PGM_Handle* handle, char const* dataset, PGM_Idx is_batch,
                                                PGM_Idx batch_size) {
     return call_with_catch(handle, [dataset, is_batch, batch_size] {
-        return new MutableDataset{static_cast<bool>(is_batch), batch_size, safe_str_view(dataset), get_meta_data()};
+        return new MutableDataset{safe_bool(is_batch), batch_size, safe_str_view(dataset), get_meta_data()};
     });
 }
 

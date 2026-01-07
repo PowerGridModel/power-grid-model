@@ -28,8 +28,9 @@ struct PGM_Handle {
     [[no_unique_address]] power_grid_model::BatchParameter batch_parameter;
 };
 
+namespace power_grid_model_c {
 constexpr void clear_error(PGM_Handle* handle) {
-    if (handle) {
+    if (handle != nullptr) {
         *handle = PGM_Handle{};
     }
 }
@@ -38,11 +39,11 @@ struct DefaultExceptionHandler {
     void operator()(PGM_Handle& handle) const noexcept { handle_all_errors(handle, PGM_regular_error); }
 
     static void handle_all_errors(PGM_Handle& handle, PGM_Idx error_code,
-                                  std::string const& extra_message = "") noexcept {
+                                  std::string_view extra_message = "") noexcept {
         std::exception_ptr const ex_ptr = std::current_exception();
         try {
             std::rethrow_exception(ex_ptr);
-        } catch (std::exception const& ex) {
+        } catch (std::exception const& ex) { // NOSONAR(S1181)
             handle_regular_error(handle, ex, error_code, extra_message);
         } catch (...) {
             handle_unkown_error(handle);
@@ -50,7 +51,7 @@ struct DefaultExceptionHandler {
     }
 
     static void handle_regular_error(PGM_Handle& handle, std::exception const& ex, PGM_Idx error_code,
-                                     std::string const& extra_message = "") noexcept {
+                                     std::string_view extra_message = "") noexcept {
         handle.err_code = error_code;
         handle.err_msg = ex.what();
         if (!extra_message.empty()) {
@@ -64,7 +65,10 @@ struct DefaultExceptionHandler {
     }
 };
 
-namespace power_grid_model_c {
+// Call function with exception handling using Lippincott pattern
+//
+// The handle itself is inherently unsafe, as checking for safety would then raise, which in turn would require another
+// handle, etc. Therefore, only a nullptr check can be done here.
 template <class Functor, class ExceptionHandler = DefaultExceptionHandler>
     requires std::invocable<Functor> && std::invocable<ExceptionHandler const&, PGM_Handle&>
 inline auto call_with_catch(PGM_Handle* handle, Functor func, ExceptionHandler const& exception_handler = {}) noexcept(
@@ -74,12 +78,12 @@ inline auto call_with_catch(PGM_Handle* handle, Functor func, ExceptionHandler c
     static constexpr std::conditional_t<std::is_void_v<ReturnValueType>, int, ReturnValueType> empty{};
 
     try {
-        if (handle) {
+        if (handle != nullptr) {
             clear_error(handle);
         }
         return func();
-    } catch (...) {
-        if (handle) {
+    } catch (...) { // NOSONAR(S2738) // Lippincott pattern handles all exceptions if the handle is provided
+        if (handle != nullptr) {
             exception_handler(*handle);
         }
         return static_cast<ReturnValueType>(empty);
