@@ -350,6 +350,16 @@ class CConstDataset:
         """
         return CDatasetInfo(get_pgc().dataset_const_get_info(self._const_dataset))
 
+    def set_next_cartesian_product_dimension(self, next_dataset: "CConstDataset") -> None:
+        """
+        Set the next dataset in the linked list.
+
+        Args:
+            next_dataset: The next dataset to set.
+        """
+        get_pgc().dataset_const_set_next_cartesian_product_dimension(self._const_dataset, next_dataset._const_dataset)
+        assert_no_error()
+
     def __del__(self):
         get_pgc().destroy_dataset_const(self._const_dataset)
 
