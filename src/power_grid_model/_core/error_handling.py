@@ -7,7 +7,7 @@ Error handling
 """
 
 import re
-from enum import Enum
+from enum import IntEnum
 
 import numpy as np
 
@@ -48,7 +48,7 @@ VALIDATOR_MSG = "\nTry validate_input_data() or validate_batch_data() to validat
 # error codes
 
 
-class _PgmCErrorCode(Enum):
+class _PgmCErrorCode(IntEnum):
     NO_ERROR = 0
     REGULAR_ERROR = 1
     BATCH_ERROR = 2
