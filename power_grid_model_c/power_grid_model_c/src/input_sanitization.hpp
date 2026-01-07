@@ -21,7 +21,9 @@ class IllegalOperationError : public std::exception {
     std::string msg_;
 };
 
-template <typename T, std::convertible_to<T> U> constexpr T compile_time_safe_cast(U value) noexcept {
+template <typename T, typename U> constexpr T compile_time_safe_cast(U value) noexcept {
+    static_assert(std::convertible_to<U, T>,
+                  "Type U is not convertible to type T; compile-time safe cast not possible");
     static_assert(std::same_as<T, std::common_type_t<T, U>>,
                   "Loss of conversion possible; common type differs from target type");
 
