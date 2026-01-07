@@ -8,6 +8,7 @@
 #include <format>
 #include <string>
 #include <string_view>
+#include <utility>
 
 namespace power_grid_model_c {
 class IllegalOperationError : public std::exception {
