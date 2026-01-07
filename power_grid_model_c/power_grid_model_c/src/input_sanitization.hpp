@@ -78,7 +78,7 @@ constexpr PGM_Idx to_c_enum(T value) {
     return safe_cast<PGM_Idx>(std::to_underlying(value));
 }
 
-// no-op sanitization for clarity that we did think about input input sanitization but we deliberately allow nullptr
+// no-op sanitization for clarity that we did think about input sanitization but we deliberately allow nullptr
 template <typename T> constexpr T* safe_ptr_maybe_nullptr(T* ptr) { return ptr; }
 
 template <typename T> constexpr T* safe_ptr(T* ptr) {
