@@ -15,6 +15,7 @@
 #include <power_grid_model/batch_parameter.hpp>
 #include <power_grid_model/common/common.hpp>
 
+#include <exception>
 #include <string_view>
 
 // context handle
