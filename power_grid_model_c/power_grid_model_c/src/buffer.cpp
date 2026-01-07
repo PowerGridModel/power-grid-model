@@ -7,6 +7,9 @@
 
 #include "power_grid_model_c/buffer.h"
 
+#include "handle.hpp"
+#include "input_sanitization.hpp"
+
 #include <power_grid_model/auxiliary/meta_data.hpp>
 
 #include <cstdlib>
@@ -16,14 +19,16 @@ using namespace power_grid_model;
 
 using meta_data::RawDataConstPtr;
 using meta_data::RawDataPtr;
-} // namespace
+using power_grid_model_c::call_with_catch;
+using power_grid_model_c::safe_ptr;
+using power_grid_model_c::safe_ptr_get;
+using power_grid_model_c::safe_ptr_maybe_nullptr;
 
-// buffer control
-RawDataPtr PGM_create_buffer(PGM_Handle* /* handle */, PGM_MetaComponent const* component, PGM_Idx size) {
+RawDataPtr create_buffer_impl(PGM_MetaComponent const& component, PGM_Idx size) {
     // alignment should be maximum of alignment of the component and alignment of void*
-    size_t const alignment = std::max(component->alignment, sizeof(void*));
+    size_t const alignment = std::max(component.alignment, sizeof(void*));
     // total bytes should be multiple of alignment
-    size_t const requested_bytes = component->size * size;
+    size_t const requested_bytes = component.size * size;
     size_t const rounded_bytes = ((requested_bytes + alignment - 1) / alignment) * alignment;
 #ifdef _WIN32
     return _aligned_malloc(rounded_bytes, alignment);
@@ -31,43 +36,74 @@ RawDataPtr PGM_create_buffer(PGM_Handle* /* handle */, PGM_MetaComponent const* 
     return std::aligned_alloc(alignment, rounded_bytes);
 #endif
 }
-void PGM_destroy_buffer(RawDataPtr ptr) {
+void destroy_buffer_impl(RawDataPtr ptr) {
 #ifdef _WIN32
     _aligned_free(ptr); // NOLINT(hicpp-no-malloc)
 #else
     std::free(ptr); // NOLINT(hicpp-no-malloc)
 #endif
 }
-void PGM_buffer_set_nan(PGM_Handle* /* handle */, PGM_MetaComponent const* component, void* ptr, PGM_Idx buffer_offset,
+} // namespace
+
+// buffer control
+RawDataPtr PGM_create_buffer(PGM_Handle* handle, PGM_MetaComponent const* component, PGM_Idx size) {
+    return call_with_catch(handle, [component, size] { return create_buffer_impl(safe_ptr_get(component), size); });
+}
+void PGM_destroy_buffer(RawDataPtr ptr) { destroy_buffer_impl(ptr); }
+
+namespace {
+void buffer_set_nan_impl(PGM_MetaComponent const& component, RawDataPtr ptr, PGM_Idx buffer_offset, PGM_Idx size) {
+    assert(ptr != nullptr);
+    component.set_nan(ptr, buffer_offset, size);
+}
+} // namespace
+void PGM_buffer_set_nan(PGM_Handle* handle, PGM_MetaComponent const* component, void* ptr, PGM_Idx buffer_offset,
                         PGM_Idx size) {
-    component->set_nan(ptr, buffer_offset, size);
+    call_with_catch(handle, [component, ptr, buffer_offset, size] {
+        buffer_set_nan_impl(safe_ptr_get(component), safe_ptr(ptr), buffer_offset, size);
+    });
 }
 
 namespace {
 // template for get and set attribute
 template <bool is_get, class BufferPtr, class ValuePtr>
-void buffer_get_set_value(PGM_MetaAttribute const* attribute, BufferPtr buffer_ptr, ValuePtr value_ptr,
+void buffer_get_set_value(PGM_MetaAttribute const& attribute, BufferPtr buffer_ptr, ValuePtr value_ptr,
                           PGM_Idx buffer_offset, PGM_Idx size, PGM_Idx stride) {
+    using RawValuePtr = std::conditional_t<is_get, char*, char const*>;
+
+    if (size <= 0) {
+        return;
+    }
+
     // if stride is negative, use the size of the attributes as stride
     if (stride < 0) {
-        stride = static_cast<PGM_Idx>(attribute->size);
+        stride = static_cast<PGM_Idx>(attribute.size);
     }
+
+    RawValuePtr const raw_value_ptr = reinterpret_cast<RawValuePtr>(safe_ptr(value_ptr));
+    BufferPtr const safe_buffer_ptr = safe_ptr(buffer_ptr);
+
     for (Idx i = buffer_offset; i != size + buffer_offset; ++i) {
-        ValuePtr const shifted_value_ptr =
-            reinterpret_cast<std::conditional_t<is_get, char*, char const*>>(value_ptr) + stride * i;
+        ValuePtr const shifted_value_ptr = raw_value_ptr + stride * i;
         if constexpr (is_get) {
-            attribute->get_value(buffer_ptr, shifted_value_ptr, i);
+            attribute.get_value(safe_buffer_ptr, shifted_value_ptr, i);
         } else {
-            attribute->set_value(buffer_ptr, shifted_value_ptr, i);
+            attribute.set_value(safe_buffer_ptr, shifted_value_ptr, i);
         }
     }
 }
 } // namespace
-void PGM_buffer_set_value(PGM_Handle* /* handle */, PGM_MetaAttribute const* attribute, RawDataPtr buffer_ptr,
+void PGM_buffer_set_value(PGM_Handle* handle, PGM_MetaAttribute const* attribute, RawDataPtr buffer_ptr,
                           RawDataConstPtr src_ptr, PGM_Idx buffer_offset, PGM_Idx size, PGM_Idx src_stride) {
-    buffer_get_set_value<false>(attribute, buffer_ptr, src_ptr, buffer_offset, size, src_stride);
+    call_with_catch(handle, [attribute, buffer_ptr, src_ptr, buffer_offset, size, src_stride] {
+        buffer_get_set_value<false>(safe_ptr_get(attribute), safe_ptr_maybe_nullptr(buffer_ptr),
+                                    safe_ptr_maybe_nullptr(src_ptr), buffer_offset, size, src_stride);
+    });
 }
-void PGM_buffer_get_value(PGM_Handle* /* handle */, PGM_MetaAttribute const* attribute, RawDataConstPtr buffer_ptr,
+void PGM_buffer_get_value(PGM_Handle* handle, PGM_MetaAttribute const* attribute, RawDataConstPtr buffer_ptr,
                           RawDataPtr dest_ptr, PGM_Idx buffer_offset, PGM_Idx size, PGM_Idx dest_stride) {
-    buffer_get_set_value<true>(attribute, buffer_ptr, dest_ptr, buffer_offset, size, dest_stride);
+    call_with_catch(handle, [attribute, buffer_ptr, dest_ptr, buffer_offset, size, dest_stride] {
+        buffer_get_set_value<true>(safe_ptr_get(attribute), safe_ptr_maybe_nullptr(buffer_ptr),
+                                   safe_ptr_maybe_nullptr(dest_ptr), buffer_offset, size, dest_stride);
+    });
 }
