@@ -23,6 +23,8 @@ using namespace power_grid_model::meta_data;
 using power_grid_model_c::call_with_catch;
 using power_grid_model_c::safe_bool;
 using power_grid_model_c::safe_enum;
+using power_grid_model_c::safe_ptr;
+using power_grid_model_c::safe_ptr_get;
 using power_grid_model_c::safe_size;
 using power_grid_model_c::to_c_size;
 
@@ -38,10 +40,11 @@ PGM_Deserializer* PGM_create_deserializer_from_binary_buffer(PGM_Handle* handle,
     return call_with_catch(
         handle,
         [data, size, serialization_format] {
-            return new PGM_Deserializer{from_buffer,
-                                        {data, safe_size<size_t>(size)},
+            return new PGM_Deserializer{// NOSONAR(S5025)
+                                        from_buffer,
+                                        {safe_ptr(data), safe_size<size_t>(size)},
                                         safe_enum<power_grid_model::SerializationFormat>(serialization_format),
-                                        get_meta_data()}; // NOSONAR(S5025)
+                                        get_meta_data()};
         },
         serialization_exception_handler);
 }
@@ -51,19 +54,20 @@ PGM_Deserializer* PGM_create_deserializer_from_null_terminated_string(PGM_Handle
     return call_with_catch(
         handle,
         [data_string, serialization_format] {
-            return new PGM_Deserializer{from_string, data_string,
+            return new PGM_Deserializer{// NOSONAR(S5025)
+                                        from_string, safe_ptr(data_string),
                                         safe_enum<power_grid_model::SerializationFormat>(serialization_format),
-                                        get_meta_data()}; // NOSONAR(S5025)
+                                        get_meta_data()};
         },
         serialization_exception_handler);
 }
 
-PGM_WritableDataset* PGM_deserializer_get_dataset(PGM_Handle* /*unused*/, PGM_Deserializer* deserializer) {
-    return &deserializer->get_dataset_info();
+PGM_WritableDataset* PGM_deserializer_get_dataset(PGM_Handle* handle, PGM_Deserializer* deserializer) {
+    return call_with_catch(handle, [deserializer] { return &safe_ptr_get(deserializer).get_dataset_info(); });
 }
 
 void PGM_deserializer_parse_to_buffer(PGM_Handle* handle, PGM_Deserializer* deserializer) {
-    call_with_catch(handle, [deserializer] { deserializer->parse(); }, serialization_exception_handler);
+    call_with_catch(handle, [deserializer] { safe_ptr_get(deserializer).parse(); }, serialization_exception_handler);
 }
 
 // false warning from clang-tidy
@@ -78,7 +82,8 @@ PGM_Serializer* PGM_create_serializer(PGM_Handle* handle, PGM_ConstDataset const
         handle,
         [dataset, serialization_format] {
             return new PGM_Serializer{// NOSONAR(S5025)
-                                      *dataset, safe_enum<power_grid_model::SerializationFormat>(serialization_format)};
+                                      safe_ptr_get(dataset),
+                                      safe_enum<power_grid_model::SerializationFormat>(serialization_format)};
         },
         serialization_exception_handler);
 }
@@ -88,7 +93,7 @@ void PGM_serializer_get_to_binary_buffer(PGM_Handle* handle, PGM_Serializer* ser
     call_with_catch(
         handle,
         [serializer, use_compact_list, data, size] {
-            auto const buffer_data = serializer->get_binary_buffer(safe_bool(use_compact_list));
+            auto const buffer_data = safe_ptr_get(serializer).get_binary_buffer(safe_bool(use_compact_list));
             *data = buffer_data.data();
             *size = to_c_size<PGM_Idx>(std::ssize(buffer_data));
         },
@@ -100,7 +105,7 @@ char const* PGM_serializer_get_to_zero_terminated_string(PGM_Handle* handle, PGM
     return call_with_catch(
         handle,
         [serializer, use_compact_list, indent] {
-            return serializer->get_string(safe_bool(use_compact_list), indent).c_str();
+            return safe_ptr_get(serializer).get_string(safe_bool(use_compact_list), indent).c_str();
         },
         serialization_exception_handler);
 }
