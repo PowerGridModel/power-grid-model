@@ -7,15 +7,15 @@
     "node": [
       {
         "id": 1,
-        "u_rated": 10.5e3
+        "u_rated": 10500.0
       },
       {
         "id": 2,
-        "u_rated": 10.5e3
+        "u_rated": 10500.0
       },
       {
         "id": 3,
-        "u_rated": 10.5e3
+        "u_rated": 10500.0
       }
     ],
     "line": [
@@ -50,7 +50,7 @@
         "node": 1,
         "status": 1,
         "u_ref": 1.01047619047619,
-        "sk": 1e20
+        "sk": 1e+20
       }
     ],
     "sym_load": [
@@ -59,16 +59,16 @@
         "node": 2,
         "status": 1,
         "type": 0,
-        "p_specified": 1.01e6,
-        "q_specified": 0.21e6
+        "p_specified": 1010000.0,
+        "q_specified": 210000.0
       },
       {
         "id": 8,
         "node": 3,
         "status": 1,
         "type": 0,
-        "p_specified": 1.02e6,
-        "q_specified": 0.22e6
+        "p_specified": 1020000.0,
+        "q_specified": 220000.0
       }
     ]
   }

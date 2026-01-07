@@ -5,9 +5,9 @@
     "iterative_current",
     "linear_current"
   ],
-  "rtol": 1e-5,
+  "rtol": 1e-05,
   "atol": {
-    "default": 1e-5,
+    "default": 1e-05,
     "p": 0.006,
     "q": 0.05
   }

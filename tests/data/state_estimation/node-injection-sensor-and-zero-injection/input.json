@@ -49,9 +49,9 @@
         "id": 401,
         "measured_object": 2,
         "measured_terminal_type": 9,
-        "p_measured": 100e3,
-        "q_measured": 100e3,
-        "power_sigma": 1e3
+        "p_measured": 100000.0,
+        "q_measured": 100000.0,
+        "power_sigma": 1000.0
       }
     ]
   }

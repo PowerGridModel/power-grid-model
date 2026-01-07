@@ -3,9 +3,9 @@
     "newton_raphson",
     "iterative_linear"
   ],
-  "rtol": 1e-8,
+  "rtol": 1e-08,
   "atol": {
-    "default": 1e-8
+    "default": 1e-08
   },
   "raises": {
     "raises": "SparseMatrixError",

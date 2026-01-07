@@ -7,17 +7,17 @@
     "node": [
       {
         "id": 1,
-        "u_rated": 10e3,
+        "u_rated": 10000.0,
         "extra": "First Node"
       },
       {
         "id": 2,
-        "u_rated": 10e3,
+        "u_rated": 10000.0,
         "extra": "Second Node"
       },
       {
         "id": 3,
-        "u_rated": 10e3,
+        "u_rated": 10000.0,
         "extra": "Third Node"
       }
     ],
@@ -53,14 +53,14 @@
         "node": 1,
         "status": 1,
         "u_ref": 1.05,
-        "sk": 1e12
+        "sk": 1000000000000.0
       },
       {
         "id": 10,
         "node": 3,
         "status": 0,
         "u_ref": 1.05,
-        "sk": 1e12
+        "sk": 1000000000000.0
       }
     ],
     "sym_load": [
@@ -69,7 +69,7 @@
         "node": 3,
         "status": 1,
         "type": 1,
-        "p_specified": 0.5e6,
+        "p_specified": 500000.0,
         "q_specified": 0.0
       }
     ],
@@ -79,8 +79,16 @@
         "node": 3,
         "status": 1,
         "type": 1,
-        "p_specified": [166666.66666666666, 166666.66666666666, 166666.66666666666],
-        "q_specified": [0.0, 0.0, 0.0]
+        "p_specified": [
+          166666.66666666666,
+          166666.66666666666,
+          166666.66666666666
+        ],
+        "q_specified": [
+          0.0,
+          0.0,
+          0.0
+        ]
       }
     ],
     "shunt": [
