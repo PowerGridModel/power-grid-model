@@ -181,10 +181,10 @@ enum PGM_SymmetryType {
  *
  */
 enum PGM_ErrorCode {
-    PGM_no_error = 0,           /**< no error occurred */
-    PGM_regular_error = 1,      /**< some error occurred which is not in the batch calculation */
-    PGM_batch_error = 2,        /**< some error occurred which is in the batch calculation */
-    PGM_serialization_error = 3 /**< some error occurred which is in the (de)serialization process */
+    PGM_no_error = 0,            /**< no error occurred */
+    PGM_regular_error = 1,       /**< some error occurred which is not in the batch calculation */
+    PGM_batch_error = 2,         /**< some error occurred which is in the batch calculation */
+    PGM_serialization_error = 3, /**< some error occurred which is in the (de)serialization process */
 };
 
 /**

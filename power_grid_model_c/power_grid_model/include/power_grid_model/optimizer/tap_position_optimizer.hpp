@@ -916,7 +916,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             auto result = optimize(state, order, method);
             update_state(cache);
             return result;
-        } catch (...) {
+        } catch (...) { // NOSONAR(S2738)
             update_state(cache);
             throw;
         }
