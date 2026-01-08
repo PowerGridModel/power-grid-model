@@ -201,11 +201,7 @@ constexpr BatchExceptionHandler batch_exception_handler{};
 template <typename T, std::ranges::input_range R>
     requires std::convertible_to<std::ranges::range_value_t<R>, T>
 void append_range(std::vector<T>& vec, R&& range) {
-#if __cpp_lib_containers_ranges >= 202202L
-    vec.append_range(std::forward<R>(range));
-#else
-    vec.insert(vec.end(), std::ranges::begin(range), std::ranges::end(range));
-#endif
+    std::ranges::move(std::forward<R>(range), std::back_inserter(vec));
 }
 
 class MDBatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandler {
