@@ -198,6 +198,16 @@ struct BatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandle
 
 constexpr BatchExceptionHandler batch_exception_handler{};
 
+template <typename T, std::ranges::input_range R>
+    requires std::convertible_to<std::ranges::range_value_t<R>, T>
+void append_range(std::vector<T>& vec, R&& range) {
+#if __cpp_lib_containers_ranges >= 202202L
+    vec.append_range(std::forward<R>(range));
+#else
+    vec.insert(vec.end(), std::ranges::begin(range), std::ranges::end(range));
+#endif
+}
+
 class MDBatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandler {
   public:
     MDBatchExceptionHandler(Idx scenario_offset, Idx stride_size)
@@ -214,15 +224,16 @@ class MDBatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandl
             std::rethrow_exception(ex_ptr);
         } catch (BatchCalculationError const& ex) {
             handle_regular_error(handle, ex, PGM_batch_error);
-            handle.failed_scenarios.append_range(
-                ex.failed_scenarios() |
-                std::views::transform([scenario_offset = scenario_offset_](Idx idx) { return idx + scenario_offset; }));
+            append_range(handle.failed_scenarios,
+                         ex.failed_scenarios() | std::views::transform([scenario_offset = scenario_offset_](Idx idx) {
+                             return idx + scenario_offset;
+                         }));
 
-            handle.batch_errs.append_range(ex.err_msgs());
+            append_range(handle.batch_errs, ex.err_msgs());
         } catch (std::exception const& ex) {
             handle_regular_error(handle, ex, PGM_batch_error);
-            handle.failed_scenarios.append_range(IdxRange{stride_size_});
-            handle.batch_errs.append_range(std::views::repeat(ex.what(), stride_size_));
+            append_range(handle.failed_scenarios, IdxRange{stride_size_});
+            append_range(handle.batch_errs, std::views::repeat(ex.what(), stride_size_));
         } catch (...) { // NOSONAR(S2738)
             handle_unkown_error(handle);
         }
