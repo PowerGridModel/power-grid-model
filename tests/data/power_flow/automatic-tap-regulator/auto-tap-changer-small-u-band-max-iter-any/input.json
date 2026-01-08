@@ -64,7 +64,7 @@
         "status": 1,
         "control_side": 1,
         "u_set": 400,
-        "u_band": 0.00001
+        "u_band": 1e-05
       }
     ]
   }

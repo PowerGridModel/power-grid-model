@@ -1,5 +1,8 @@
 {
-  "calculation_method": ["newton_raphson", "iterative_current"],
-  "rtol": 1e-03,
-  "atol": 1e-03
+  "calculation_method": [
+    "newton_raphson",
+    "iterative_current"
+  ],
+  "rtol": 0.001,
+  "atol": 0.001
 }

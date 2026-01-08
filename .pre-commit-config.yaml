@@ -48,3 +48,18 @@ repos:
     hooks:
     - id: markdownlint
       args: ["--fix"]
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+    - id: pretty-format-json
+      args:
+      - --autofix   # automatically format json files
+      - --indent=2  # 2 spaces for indentation
+      - --no-sort-keys  # when autofixing, retain the original key ordering (instead of sorting the keys)
+      - --no-ensure-ascii  # preserve unicode characters instead of converting to escape sequences
+      files: >
+        (?x)^(
+          # fix JSON formatting in the following top-level folders:
+          code_generation|
+          tests
+        )/.*\.json$

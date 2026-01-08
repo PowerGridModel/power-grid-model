@@ -1,19 +1,20 @@
 {
   "calculation_method": "newton_raphson",
-  "rtol": 1e-4,
+  "rtol": 0.0001,
   "atol": {
-    "default": 1.0e-4,
-    "u":       0.5,
-    "p_from":  0.5e3,
-    "q_from":  0.5e3,
-    "i_from":  0.5,
-    "s_from":  0.5e3,
-    "p_to":    0.5e3,
-    "q_to":    0.5e3,
-    "i_to":    0.5,
-    "s_to":    0.5e3,
-    "p":    0.5e3,
-    "q":    0.5e3,
-    "i":    0.5,
-    "s":    0.5e3}
+    "default": 0.0001,
+    "u": 0.5,
+    "p_from": 500.0,
+    "q_from": 500.0,
+    "i_from": 0.5,
+    "s_from": 500.0,
+    "p_to": 500.0,
+    "q_to": 500.0,
+    "i_to": 0.5,
+    "s_to": 500.0,
+    "p": 500.0,
+    "q": 500.0,
+    "i": 0.5,
+    "s": 500.0
+  }
 }

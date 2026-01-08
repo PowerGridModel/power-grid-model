@@ -55,8 +55,8 @@
     "sym_power_sensor": [
       {
         "id": 401,
-        "p_residual": 100e3,
-        "q_residual": 100e3
+        "p_residual": 100000.0,
+        "q_residual": 100000.0
       }
     ]
   }

@@ -6,7 +6,7 @@
     "default": 1e-05,
     "u": 100.0
   },
-   "xfail": {
+  "xfail": {
     "raises": "MaxIterationReached",
     "reason": "Bug in fast any tap changing strategy in this edge case: https://github.com/PowerGridModel/power-grid-model/issues/1215"
   }

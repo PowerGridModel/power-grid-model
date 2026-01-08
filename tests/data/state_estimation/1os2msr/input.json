@@ -7,15 +7,15 @@
     "node": [
       {
         "id": 1,
-        "u_rated": 10.5e3
+        "u_rated": 10500.0
       },
       {
         "id": 2,
-        "u_rated": 10.5e3
+        "u_rated": 10500.0
       },
       {
         "id": 3,
-        "u_rated": 10.5e3
+        "u_rated": 10500.0
       }
     ],
     "line": [
@@ -50,7 +50,7 @@
         "node": 1,
         "status": 1,
         "u_ref": 1.01047619047619,
-        "sk": 200e6
+        "sk": 200000000.0
       }
     ],
     "sym_load": [
@@ -105,7 +105,7 @@
         "measured_terminal_type": 1,
         "p_measured": -2000000.0,
         "q_measured": 1000000.0,
-        "power_sigma": 1e15
+        "power_sigma": 1000000000000000.0
       },
       {
         "id": 501,
