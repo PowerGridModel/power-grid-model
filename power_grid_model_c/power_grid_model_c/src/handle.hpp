@@ -45,7 +45,7 @@ struct DefaultExceptionHandler {
             std::rethrow_exception(ex_ptr);
         } catch (std::exception const& ex) { // NOSONAR(S1181)
             handle_regular_error(handle, ex, error_code, extra_message);
-        } catch (...) {
+        } catch (...) { // NOSONAR(S2738)
             handle_unkown_error(handle);
         }
     }

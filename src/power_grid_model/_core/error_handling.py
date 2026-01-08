@@ -45,7 +45,6 @@ from power_grid_model._core.index_integer import IdxNp
 from power_grid_model._core.power_grid_core import get_power_grid_core as get_pgc
 
 VALIDATOR_MSG = "\nTry validate_input_data() or validate_batch_data() to validate your data.\n"
-# error codes
 
 
 class _PgmCErrorCode(IntEnum):
@@ -53,12 +52,6 @@ class _PgmCErrorCode(IntEnum):
     REGULAR_ERROR = 1
     BATCH_ERROR = 2
     SERIALIZATION_ERROR = 3
-
-
-PGM_NO_ERROR = _PgmCErrorCode.NO_ERROR
-PGM_REGULAR_ERROR = _PgmCErrorCode.REGULAR_ERROR
-PGM_BATCH_ERROR = _PgmCErrorCode.BATCH_ERROR
-PGM_SERIALIZATION_ERROR = _PgmCErrorCode.SERIALIZATION_ERROR
 
 
 _MISSING_CASE_FOR_ENUM_RE = re.compile(r" is not implemented for (.+) #(-?\d+)!\n")

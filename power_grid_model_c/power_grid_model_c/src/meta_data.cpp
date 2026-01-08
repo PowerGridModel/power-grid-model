@@ -40,7 +40,7 @@ struct RangedExceptionHandler : public power_grid_model_c::DefaultExceptionHandl
             handle_regular_error(handle, ex, PGM_regular_error, "\n You supplied wrong name and/or index!\n");
         } catch (std::exception const& ex) {
             handle_regular_error(handle, ex, PGM_regular_error);
-        } catch (...) {
+        } catch (...) { // NOSONAR(S2738)
             handle_unkown_error(handle);
         }
     }

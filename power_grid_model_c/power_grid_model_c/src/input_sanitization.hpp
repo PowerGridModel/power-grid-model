@@ -21,16 +21,16 @@ class IllegalOperationError : public std::exception {
     std::string msg_;
 };
 
-template <typename T, typename U> constexpr T compile_time_safe_cast(U&& value) noexcept {
+template <typename T, typename U> constexpr T compile_time_safe_cast(U const& value) noexcept {
     static_assert(std::convertible_to<U, T>,
                   "Type U is not convertible to type T; compile-time safe cast not possible");
     static_assert(std::same_as<T, std::common_type_t<T, U>>,
-                  "Loss of conversion possible; common type differs from target type");
+                  "Loss of precision during conversion possible; common type differs from target type");
 
     if constexpr (std::same_as<T, U>) {
-        return std::forward<U>(value);
+        return value;
     } else {
-        return static_cast<T>(std::forward<U>(value));
+        return static_cast<T>(value);
     }
 }
 
@@ -59,13 +59,13 @@ template <std::integral T> constexpr PGM_Idx to_c_size(T value) {
     return safe_cast<PGM_Idx>(value);
 }
 
-constexpr bool safe_bool(PGM_Idx value) { return value != 0; }
-template <std::integral T> constexpr T to_c_bool(bool value) { return value ? 1 : 0; }
+template <std::integral T> constexpr bool safe_bool(T value) { return value != T{0}; }
+template <std::integral T> constexpr T to_c_bool(bool value) { return value ? T{1} : T{0}; }
 
 // safe enum conversion from C integer type to C++ enum type.
 //
-// It does NOT check that the value is a valid enumerator of the enum type T.
-// It only ensures that there is no unexpected behavior like wrap-arounds during the conversion.
+// Just like that. It does not (and cannot) check if the value is one of the pre-defined names.
+// However, it does ensure that there is no unexpected behavior like wrap-arounds during the conversion.
 // E.g.: for an enum class with underlying type uint8_t, passing 256 would wrap around to 0 without this check.
 template <typename T>
     requires std::is_enum_v<T>
