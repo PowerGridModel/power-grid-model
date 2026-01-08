@@ -24,44 +24,37 @@ using power_grid_model_c::safe_ptr;
 using power_grid_model_c::safe_ptr_get;
 using power_grid_model_c::safe_ptr_maybe_nullptr;
 using power_grid_model_c::to_c_size;
+} // namespace
 
-RawDataPtr create_buffer_impl(PGM_MetaComponent const& component, PGM_Idx size) {
-    // alignment should be maximum of alignment of the component and alignment of void*
-    size_t const alignment = std::max(component.alignment, sizeof(void*));
-    // total bytes should be multiple of alignment
-    size_t const requested_bytes = component.size * size;
-    size_t const rounded_bytes = ((requested_bytes + alignment - 1) / alignment) * alignment;
+// buffer control
+RawDataPtr PGM_create_buffer(PGM_Handle* handle, PGM_MetaComponent const* component, PGM_Idx size) {
+    return call_with_catch(handle, [component, size] {
+        auto const& safe_component = safe_ptr_get(component);
+
+        // alignment should be maximum of alignment of the component and alignment of void*
+        size_t const alignment = std::max(safe_component.alignment, sizeof(void*));
+        // total bytes should be multiple of alignment
+        size_t const requested_bytes = safe_component.size * size;
+        size_t const rounded_bytes = ((requested_bytes + alignment - 1) / alignment) * alignment;
 #ifdef _WIN32
-    return _aligned_malloc(rounded_bytes, alignment);
+        return _aligned_malloc(rounded_bytes, alignment);
 #else
-    return std::aligned_alloc(alignment, rounded_bytes);
+        return std::aligned_alloc(alignment, rounded_bytes);
 #endif
+    });
 }
-void destroy_buffer_impl(RawDataPtr ptr) {
+void PGM_destroy_buffer(RawDataPtr ptr) {
 #ifdef _WIN32
     _aligned_free(ptr); // NOLINT(hicpp-no-malloc)
 #else
     std::free(ptr); // NOLINT(hicpp-no-malloc)
 #endif
 }
-} // namespace
 
-// buffer control
-RawDataPtr PGM_create_buffer(PGM_Handle* handle, PGM_MetaComponent const* component, PGM_Idx size) {
-    return call_with_catch(handle, [component, size] { return create_buffer_impl(safe_ptr_get(component), size); });
-}
-void PGM_destroy_buffer(RawDataPtr ptr) { destroy_buffer_impl(ptr); }
-
-namespace {
-void buffer_set_nan_impl(PGM_MetaComponent const& component, RawDataPtr ptr, PGM_Idx buffer_offset, PGM_Idx size) {
-    assert(ptr != nullptr);
-    component.set_nan(ptr, buffer_offset, size);
-}
-} // namespace
 void PGM_buffer_set_nan(PGM_Handle* handle, PGM_MetaComponent const* component, void* ptr, PGM_Idx buffer_offset,
                         PGM_Idx size) {
     call_with_catch(handle, [component, ptr, buffer_offset, size] {
-        buffer_set_nan_impl(safe_ptr_get(component), safe_ptr(ptr), buffer_offset, size);
+        safe_ptr_get(component).set_nan(safe_ptr(ptr), buffer_offset, size);
     });
 }
 
