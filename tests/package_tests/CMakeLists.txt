@@ -27,7 +27,7 @@ target_link_libraries(
 )
 set_target_properties(
     power_grid_model_package_test
-    PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE
+    PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE BUILD_RPATH_USE_ORIGIN TRUE
 )
 
 # TODO: remove this when the API becomes stable
