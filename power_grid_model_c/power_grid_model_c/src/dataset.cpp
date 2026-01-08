@@ -125,6 +125,12 @@ void PGM_dataset_const_add_attribute_buffer(PGM_Handle* handle, PGM_ConstDataset
         safe_ptr_get(dataset).add_attribute_buffer(safe_str_view(component), safe_str_view(attribute), safe_ptr(data));
     });
 }
+void PGM_dataset_const_set_next_cartesian_product_dimension(PGM_Handle* handle, PGM_ConstDataset* dataset,
+                                                            PGM_ConstDataset const* next_dataset) {
+    call_with_catch(handle, [dataset, next_dataset] {
+        safe_ptr_get(dataset).set_next_cartesian_product_dimension(safe_ptr(next_dataset));
+    });
+}
 
 PGM_DatasetInfo const* PGM_dataset_const_get_info(PGM_Handle* handle, PGM_ConstDataset const* dataset) {
     return call_with_catch(handle, [dataset] { return &safe_ptr_get(dataset).get_description(); });

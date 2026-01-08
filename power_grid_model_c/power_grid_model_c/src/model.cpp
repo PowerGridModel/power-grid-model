@@ -16,6 +16,9 @@
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/main_model.hpp>
 
+#include <memory>
+#include <numeric>
+
 namespace {
 using namespace power_grid_model;
 
@@ -64,6 +67,7 @@ void PGM_get_indexer(PGM_Handle* handle, PGM_PowerGridModel const* model, char c
     });
 }
 
+// helper functions
 namespace {
 void check_no_experimental_features_used(MainModel const& model, MainModel::Options const& opt) {
     // optionally add experimental feature checks here
@@ -153,8 +157,8 @@ class BadCalculationRequest : public PowerGridError {
     explicit BadCalculationRequest(std::string msg) : PowerGridError{std::move(msg)} {}
 };
 
-void calculate_impl(PGM_PowerGridModel& model, PGM_Options const& opt, MutableDataset const& output_dataset,
-                    ConstDataset const* batch_dataset) {
+void calculate_single_batch_dimension_impl(PGM_PowerGridModel& model, PGM_Options const& opt,
+                                           MutableDataset const& output_dataset, ConstDataset const* batch_dataset) {
     // check dataset integrity
     if ((batch_dataset != nullptr) && (!batch_dataset->is_batch() || !output_dataset.is_batch())) {
         throw BadCalculationRequest{
@@ -193,6 +197,108 @@ struct BatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandle
 };
 
 constexpr BatchExceptionHandler batch_exception_handler{};
+
+class MDBatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandler {
+  public:
+    MDBatchExceptionHandler(Idx scenario_offset, Idx stride_size)
+        : scenario_offset_{scenario_offset}, stride_size_{stride_size} {
+        assert(scenario_offset_ >= 0);
+        assert(stride_size_ > 0);
+    }
+
+    void operator()(PGM_Handle& handle) const noexcept {
+        using namespace std::string_literals;
+
+        std::exception_ptr const ex_ptr = std::current_exception();
+        try {
+            std::rethrow_exception(ex_ptr);
+        } catch (BatchCalculationError const& ex) {
+            handle_regular_error(handle, ex, PGM_batch_error);
+            handle.failed_scenarios.append_range(
+                ex.failed_scenarios() |
+                std::views::transform([scenario_offset = scenario_offset_](Idx idx) { return idx + scenario_offset; }));
+
+            handle.batch_errs.append_range(ex.err_msgs());
+        } catch (std::exception const& ex) {
+            handle_regular_error(handle, ex, PGM_batch_error);
+            handle.failed_scenarios.append_range(IdxRange{stride_size_});
+            handle.batch_errs.append_range(std::views::repeat(ex.what(), stride_size_));
+        } catch (...) { // NOSONAR(S2738)
+            handle_unkown_error(handle);
+        }
+    }
+
+  private:
+    Idx scenario_offset_{};
+    Idx stride_size_{};
+};
+
+Idx get_batch_dimension(PGM_ConstDataset const* batch_dataset) {
+    Idx dimension = 0;
+    while (batch_dataset != nullptr) {
+        ++dimension;
+        batch_dataset = batch_dataset->get_next_cartesian_product_dimension();
+    }
+    return dimension;
+}
+
+Idx get_stride_size(PGM_ConstDataset const* batch_dataset) {
+    Idx size = 1;
+    PGM_ConstDataset const* current = batch_dataset->get_next_cartesian_product_dimension();
+    while (current != nullptr) {
+        size *= current->batch_size();
+        current = current->get_next_cartesian_product_dimension();
+    }
+    return size;
+}
+
+// run calculation
+void calculate_multi_dimensional_impl(PGM_PowerGridModel& model, PGM_Options const& opt,
+                                      PGM_MutableDataset const& output_dataset, PGM_ConstDataset const* batch_dataset) {
+    // for dimension < 2 (one-time or 1D batch), call implementation directly
+    if (auto const batch_dimension = get_batch_dimension(batch_dataset); batch_dimension < 2) {
+        calculate_single_batch_dimension_impl(model, opt, output_dataset, batch_dataset);
+        return;
+    }
+
+    auto const& safe_batch_dataset = safe_ptr_get(batch_dataset);
+
+    // get stride size of the rest of dimensions
+    Idx const first_batch_size = safe_batch_dataset.batch_size();
+    Idx const stride_size = get_stride_size(batch_dataset);
+
+    PGM_Handle local_handle{};
+
+    // loop over the first dimension batch
+    for (Idx i = 0; i < first_batch_size; ++i) {
+        // a new handle
+        call_with_catch(
+            &local_handle,
+            [&model, &opt, &output_dataset, &safe_batch_dataset, i, stride_size] {
+                // create sliced datasets for the rest of dimensions
+                PGM_ConstDataset const single_update_dataset = safe_batch_dataset.get_individual_scenario(i);
+                PGM_MutableDataset const sliced_output_dataset =
+                    output_dataset.get_slice_scenario(i * stride_size, (i + 1) * stride_size);
+
+                // create a model copy
+                PGM_PowerGridModel local_model{model};
+
+                // apply the update
+                local_model.update_components<permanent_update_t>(single_update_dataset);
+
+                // recursive call
+                calculate_multi_dimensional_impl(local_model, opt, sliced_output_dataset,
+                                                 safe_batch_dataset.get_next_cartesian_product_dimension());
+            },
+            MDBatchExceptionHandler{i * stride_size, stride_size});
+    }
+
+    if (local_handle.err_code != PGM_no_error) {
+        throw BatchCalculationError{std::move(local_handle.err_msg), std::move(local_handle.failed_scenarios),
+                                    std::move(local_handle.batch_errs)};
+    }
+}
+
 } // namespace
 
 // run calculation
@@ -201,8 +307,8 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
     call_with_catch(
         handle,
         [model, opt, output_dataset, batch_dataset] {
-            calculate_impl(safe_ptr_get(model), safe_ptr_get(opt), safe_ptr_get(output_dataset),
-                           safe_ptr_maybe_nullptr(batch_dataset));
+            calculate_multi_dimensional_impl(safe_ptr_get(model), safe_ptr_get(opt), safe_ptr_get(output_dataset),
+                                             safe_ptr_maybe_nullptr(batch_dataset));
         },
         batch_exception_handler);
 }

@@ -13,14 +13,6 @@ An alternative approach would be to validate only when an exception is raised, b
 will raise exceptions, most of them wil just yield invalid results without warning.
 The main validation functions and classes can be included from `power_grid_model.validation`.
 
-Two helper type definitions are used throughout the validation functions, `InputData` and `UpdateData`.
-They are not special types or classes, but merely type hinting aliases:
-
-```python
-InputData = dict[str, np.ndarray]
-UpdateData = dict[str, np.ndarray | dict[str, np.ndarray]]
-```
-
 ```{seealso}
 Check the [example](examples/Validation%20Examples.ipynb) for an example of function applications.
 ```
@@ -49,11 +41,13 @@ class ValidationError:
 ### Manual validation
 
 The validation functions below can be used to validate input/batch data manually.
-The functions require `input_data: InputData`, which is power-grid-model input data, and `symmetric: bool`, stating if
+The functions require `input_data` of {py:class}`SingleDataset <power_grid_model.data_types.SingleDataset>` type,
+which is power-grid-model input data, and `symmetric: bool`, stating if
 the data will be used for symmetric or asymmetric calculations.
 `calculation_type: CalculationType` is optional and can be supplied to allow missing values for unused fields; see the
 [API reference](../api_reference/python-api-reference.md#enum) for more information.
-To validate update/batch data `update_data: UpdateData`, power-grid-model update data, should also be supplied.
+To validate update/batch data `update_data` of {py:class}`BatchDataset <power_grid_model.data_types.BatchDataset>` type,
+power-grid-model update data, should also be supplied.
 
 - `validate_input_data(input_data, calculation_type, symmetric) -> list[ValidationError]` validates input_data.
 - `validate_batch_data(input_data, update_data, calculation_type, symmetric) -> dict[int, list[ValidationError]]`
@@ -67,6 +61,10 @@ This means, that `validate_input_data(input_data, **kwargs)` may fail, while
 In such cases, the latter is leading when only running batch calculations.
 Running single calculations on an incomplete input data set is, of course, unsupported.
 ```
+
+Validating a cartesian product of datasets used in PGM's `update_data` via providing it with `list[BatchDataset]`is
+not straightforward.
+User should convert such multiple dataset into a single flat batch dataset.
 
 ### Assertions
 
