@@ -353,7 +353,7 @@ class Topology {
             return math_idx.pos;
         };
         // k as branch number for 2-way branch
-        for (auto const& [idx, branch_node_idx, branch_connected] :
+        for (auto&& [idx, branch_node_idx, branch_connected] :
              std::views::zip(std::views::iota(0), comp_topo_.branch_node_idx, comp_conn_.branch_connected)) {
             assert(std::ssize(branch_connected) == 2); // NOSONAR(R354)
 
@@ -386,7 +386,7 @@ class Topology {
             // set branch idx in coupling
             comp_coup_.branch[idx] = Idx2D{.group = math_group, .pos = branch_pos};
         }
-        for (auto const& [idx, branch_node_idx, branch_connected] :
+        for (auto&& [idx, branch_node_idx, branch_connected] :
              std::views::zip(std::views::iota(0), comp_topo_.branch_node_idx, comp_conn_.branch_connected)) {
             assert(std::ssize(branch_connected) == 2); // NOSONAR(R354)
 
@@ -410,17 +410,13 @@ class Topology {
             }
             assert(i_status || j_status);
             // get and set branch idx in math model
-            BranchIdx const branch_idx{get_group_pos_if(math_group, i_status, i_math),
+            [[maybe_unused]] BranchIdx const branch_idx{get_group_pos_if(math_group, i_status, i_math),
                                        get_group_pos_if(math_group, j_status, j_math)};
             // current branch position index in math model
-            auto const branch_pos = math_topology_[math_group].n_branch();
-            // push back
-            math_topology_[math_group].branch_bus_idx.push_back(branch_idx);
-            // set branch idx in coupling
-            comp_coup_.branch[idx] = Idx2D{.group = math_group, .pos = branch_pos};
+            [[maybe_unused]] auto const branch_pos = math_topology_[math_group].n_branch();
         }
         // k as branch number for 3-way branch
-        for (auto const& [idx, i, i_status, j_math] :
+        for (auto&& [idx, i, i_status, j_math] :
              std::views::zip(std::views::iota(0), comp_topo_.branch3_node_idx, comp_conn_.branch3_connected,
                              std::views::drop(comp_coup_.node, comp_topo_.n_node))) {
             std::array<Idx2D, 3> const i_math{
