@@ -344,6 +344,48 @@ class Topology {
         return fill_in;
     }
 
+    // TODO(mgovers): remove this before merge!!!!!
+    void reproduce_issue() {
+        std::vector<int> v1{1, 2, 3, 4, 5};
+        std::vector<int> v2{6, 7, 8, 9, 10};
+        std::string dummy;
+
+        // Versions with modifying: should raise sonar cloud warnings
+        for (auto const& t : std::views::zip(v1, v2)) {
+            get<0>(t) = get<1>(t);              // Compiles
+            dummy += std::to_string(get<0>(t)); // Compiles and warns
+        }
+        for (auto&& t : std::views::zip(v1, v2)) {
+            get<0>(t) = get<1>(t);              // Compiles
+            dummy += std::to_string(get<0>(t)); // Compiles and warns
+        }
+        for (auto const& [t1, t2] : std::views::zip(v1, v2)) {
+            t1 = t2;                     // Compiles
+            dummy += std::to_string(t1); // Compiles and warns
+        }
+        for (auto&& [t1, t2] : std::views::zip(v1, v2)) {
+            t1 = t2;                     // Compiles
+            dummy += std::to_string(t1); // Compiles and warns
+        }
+        // Versions with modifying that do not compile
+        for (auto const& t : std::views::zip(v1, v2) | std::views::as_const) {
+            // get<0>(t) = get<1>(t); // Does not compile
+            dummy += std::to_string(get<0>(t)); // Compiles and warns
+        }
+        for (auto&& t : std::views::zip(v1, v2) | std::views::as_const) {
+            // get<0>(t) = get<1>(t); // Does not compile
+            dummy += std::to_string(get<0>(t)); // Compiles and warns
+        }
+        for (auto const& t : std::views::zip(std::as_const(v1), std::as_const(v2))) {
+            // get<0>(t) = get<1>(t); // Does not compile
+            dummy += std::to_string(get<0>(t)); // Compiles and warns
+        }
+        for (auto&& t : std::views::zip(std::as_const(v1), std::as_const(v2))) {
+            // get<0>(t) = get<1>(t); // Does not compile
+            dummy += std::to_string(get<0>(t)); // Compiles and warns
+        }
+    }
+
     void couple_branch() {
         auto const get_group_pos_if = []([[maybe_unused]] Idx math_group, IntS status, Idx2D const& math_idx) {
             if (status == 0) {
@@ -354,7 +396,8 @@ class Topology {
         };
         // k as branch number for 2-way branch
         for (auto&& [idx, branch_node_idx, branch_connected] :
-             std::views::zip(std::views::iota(0), comp_topo_.branch_node_idx, comp_conn_.branch_connected)) {
+             std::views::zip(std::views::iota(0), std::as_const(comp_topo_.branch_node_idx),
+                             std::as_const(comp_conn_.branch_connected))) {
             assert(std::ssize(branch_connected) == 2); // NOSONAR(R354)
 
             auto const [i, j] = branch_node_idx;
@@ -386,39 +429,11 @@ class Topology {
             // set branch idx in coupling
             comp_coup_.branch[idx] = Idx2D{.group = math_group, .pos = branch_pos};
         }
-        for (auto&& [idx, branch_node_idx, branch_connected] :
-             std::views::zip(std::views::iota(0), comp_topo_.branch_node_idx, comp_conn_.branch_connected)) {
-            assert(std::ssize(branch_connected) == 2); // NOSONAR(R354)
-
-            auto const [i, j] = branch_node_idx;
-            IntS const i_status = branch_connected[0];
-            IntS const j_status = branch_connected[1];
-            Idx2D const i_math = comp_coup_.node[i];
-            Idx2D const j_math = comp_coup_.node[j];
-            Idx const math_group = [&]() {
-                if (i_status != 0 && i_math.group != -1) {
-                    return i_math.group;
-                }
-                if (j_status != 0 && j_math.group != -1) {
-                    return j_math.group;
-                }
-                return Idx{-1};
-            }();
-            // skip if no math model connected
-            if (math_group == -1) {
-                continue;
-            }
-            assert(i_status || j_status);
-            // get and set branch idx in math model
-            [[maybe_unused]] BranchIdx const branch_idx{get_group_pos_if(math_group, i_status, i_math),
-                                       get_group_pos_if(math_group, j_status, j_math)};
-            // current branch position index in math model
-            [[maybe_unused]] auto const branch_pos = math_topology_[math_group].n_branch();
-        }
         // k as branch number for 3-way branch
         for (auto&& [idx, i, i_status, j_math] :
-             std::views::zip(std::views::iota(0), comp_topo_.branch3_node_idx, comp_conn_.branch3_connected,
-                             std::views::drop(comp_coup_.node, comp_topo_.n_node))) {
+             std::views::zip(std::views::iota(0), std::as_const(comp_topo_.branch3_node_idx),
+                             std::as_const(comp_conn_.branch3_connected),
+                             std::views::drop(std::as_const(comp_coup_.node), std::as_const(comp_topo_.n_node)))) {
             std::array<Idx2D, 3> const i_math{
                 comp_coup_.node[i[0]],
                 comp_coup_.node[i[1]],
