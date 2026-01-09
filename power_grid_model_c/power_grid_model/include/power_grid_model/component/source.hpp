@@ -106,6 +106,8 @@ class Source : public Appliance {
         return update_data;
     }
 
+    constexpr double u_ref() const { return u_ref_; }
+
   private:
     double u_ref_;
     double u_ref_angle_;
