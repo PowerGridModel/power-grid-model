@@ -386,6 +386,39 @@ class Topology {
             // set branch idx in coupling
             comp_coup_.branch[idx] = Idx2D{.group = math_group, .pos = branch_pos};
         }
+        for (auto const& [idx, branch_node_idx, branch_connected] :
+             std::views::zip(std::views::iota(0), comp_topo_.branch_node_idx, comp_conn_.branch_connected)) {
+            assert(std::ssize(branch_connected) == 2); // NOSONAR(R354)
+
+            auto const [i, j] = branch_node_idx;
+            IntS const i_status = branch_connected[0];
+            IntS const j_status = branch_connected[1];
+            Idx2D const i_math = comp_coup_.node[i];
+            Idx2D const j_math = comp_coup_.node[j];
+            Idx const math_group = [&]() {
+                if (i_status != 0 && i_math.group != -1) {
+                    return i_math.group;
+                }
+                if (j_status != 0 && j_math.group != -1) {
+                    return j_math.group;
+                }
+                return Idx{-1};
+            }();
+            // skip if no math model connected
+            if (math_group == -1) {
+                continue;
+            }
+            assert(i_status || j_status);
+            // get and set branch idx in math model
+            BranchIdx const branch_idx{get_group_pos_if(math_group, i_status, i_math),
+                                       get_group_pos_if(math_group, j_status, j_math)};
+            // current branch position index in math model
+            auto const branch_pos = math_topology_[math_group].n_branch();
+            // push back
+            math_topology_[math_group].branch_bus_idx.push_back(branch_idx);
+            // set branch idx in coupling
+            comp_coup_.branch[idx] = Idx2D{.group = math_group, .pos = branch_pos};
+        }
         // k as branch number for 3-way branch
         for (auto const& [idx, i, i_status, j_math] :
              std::views::zip(std::views::iota(0), comp_topo_.branch3_node_idx, comp_conn_.branch3_connected,
