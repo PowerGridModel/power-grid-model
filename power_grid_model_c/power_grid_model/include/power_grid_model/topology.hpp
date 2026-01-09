@@ -344,48 +344,6 @@ class Topology {
         return fill_in;
     }
 
-    // TODO(mgovers): remove this before merge!!!!!
-    void reproduce_issue() {
-        std::vector<int> v1{1, 2, 3, 4, 5};
-        std::vector<int> v2{6, 7, 8, 9, 10};
-        std::string dummy;
-
-        // Versions with modifying: should raise sonar cloud warnings
-        for (auto const& t : std::views::zip(v1, v2)) {
-            get<0>(t) = get<1>(t);              // Compiles
-            dummy += std::to_string(get<0>(t)); // Compiles and warns
-        }
-        for (auto&& t : std::views::zip(v1, v2)) {
-            get<0>(t) = get<1>(t);              // Compiles
-            dummy += std::to_string(get<0>(t)); // Compiles and warns
-        }
-        for (auto const& [t1, t2] : std::views::zip(v1, v2)) {
-            t1 = t2;                     // Compiles
-            dummy += std::to_string(t1); // Compiles and warns
-        }
-        for (auto&& [t1, t2] : std::views::zip(v1, v2)) {
-            t1 = t2;                     // Compiles
-            dummy += std::to_string(t1); // Compiles and warns
-        }
-        // Versions with modifying that do not compile
-        for (auto const& t : std::views::zip(v1, v2) | std::views::as_const) {
-            // get<0>(t) = get<1>(t); // Does not compile
-            dummy += std::to_string(get<0>(t)); // Compiles and warns
-        }
-        for (auto&& t : std::views::zip(v1, v2) | std::views::as_const) {
-            // get<0>(t) = get<1>(t); // Does not compile
-            dummy += std::to_string(get<0>(t)); // Compiles and warns
-        }
-        for (auto const& t : std::views::zip(std::as_const(v1), std::as_const(v2))) {
-            // get<0>(t) = get<1>(t); // Does not compile
-            dummy += std::to_string(get<0>(t)); // Compiles and warns
-        }
-        for (auto&& t : std::views::zip(std::as_const(v1), std::as_const(v2))) {
-            // get<0>(t) = get<1>(t); // Does not compile
-            dummy += std::to_string(get<0>(t)); // Compiles and warns
-        }
-    }
-
     void couple_branch() {
         auto const get_group_pos_if = []([[maybe_unused]] Idx math_group, IntS status, Idx2D const& math_idx) {
             if (status == 0) {
