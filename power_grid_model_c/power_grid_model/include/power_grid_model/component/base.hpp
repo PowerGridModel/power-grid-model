@@ -13,6 +13,7 @@
 #include "../common/enum.hpp"
 
 namespace power_grid_model {
+
 constexpr IntS status_to_int(bool status) { return status ? IntS{1} : IntS{0}; }
 
 class Base {

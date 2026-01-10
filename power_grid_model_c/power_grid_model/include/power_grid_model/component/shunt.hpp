@@ -5,7 +5,6 @@
 #pragma once
 
 #include "appliance.hpp"
-#include "base.hpp"
 
 #include "../auxiliary/input.hpp"
 #include "../auxiliary/output.hpp"
