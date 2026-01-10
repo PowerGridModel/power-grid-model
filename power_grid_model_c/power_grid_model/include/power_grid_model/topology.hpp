@@ -556,7 +556,8 @@ class Topology {
         std::ranges::for_each(math_topology_,
                               [](MathModelTopology& topo) { topo.load_gen_type.resize(topo.n_load_gen()); });
         // assign load type
-        for (auto const& [idx_math, load_gen_type] : std::views::zip(comp_coup_.load_gen, comp_topo_.load_gen_type)) {
+        for (auto const& [idx_math, load_gen_type] : std::views::zip(std::as_const(comp_coup_.load_gen),
+                                                                     std::as_const(comp_topo_.load_gen_type))) {
             if (idx_math.group == -1) {
                 continue;
             }
