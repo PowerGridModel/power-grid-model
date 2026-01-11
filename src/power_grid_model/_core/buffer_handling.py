@@ -14,15 +14,15 @@ import numpy as np
 from power_grid_model._core.data_types import (
     AttributeType,
     ComponentData,
+    DenseBatchArray,
+    DenseBatchColumnarData,
     DenseBatchData,
     IndexPointer,
+    SingleArray,
+    SingleColumnarData,
     SingleComponentData,
     SparseBatchArray,
     SparseBatchData,
-    DenseBatchArray,
-    DenseBatchColumnarData,
-    SingleArray,
-    SingleColumnarData,
 )
 from power_grid_model._core.error_handling import VALIDATOR_MSG
 from power_grid_model._core.index_integer import IdxC, IdxNp
@@ -76,6 +76,7 @@ class CBuffer:
     attribute_data: dict[AttributeType, CAttributeBuffer]
 
 
+
 def _get_raw_data_view(data: np.ndarray, dtype: np.dtype) -> VoidPtr:
     """
     Get a raw view on the data.
@@ -91,6 +92,14 @@ def _get_raw_data_view(data: np.ndarray, dtype: np.dtype) -> VoidPtr:
         raise ValueError(f"Data type does not match schema. {VALIDATOR_MSG}")
     return np.ascontiguousarray(data, dtype=dtype).ctypes.data_as(VoidPtr)
 
+
+
+@overload
+def _get_raw_component_data_view(data: np.ndarray, schema: ComponentMetaData) -> VoidPtr: ...
+@overload
+def _get_raw_component_data_view(
+    data: dict[AttributeType, np.ndarray], schema: ComponentMetaData
+) -> None: ...
 
 def _get_raw_component_data_view(
     data: np.ndarray | dict[AttributeType, np.ndarray], schema: ComponentMetaData
@@ -279,6 +288,21 @@ def _get_sparse_buffer_properties(
         columns=columns,
     )
 
+@overload
+def get_buffer_properties(
+    data: DenseBatchData,
+    schema: ComponentMetaData,
+    is_batch: bool | None = ...,
+    batch_size: int | None = ...,
+) -> BufferProperties: ...
+
+@overload
+def get_buffer_properties(
+    data: SparseBatchArray,
+    schema: ComponentMetaData,
+    is_batch: bool | None = ...,
+    batch_size: int | None = ...,
+) -> BufferProperties: ...
 
 def get_buffer_properties(
     data: ComponentData,
@@ -309,6 +333,15 @@ def get_buffer_properties(
 
     return _get_sparse_buffer_properties(data=cast(SparseBatchArray, data), schema=schema, batch_size=batch_size)
 
+
+@overload
+def _get_attribute_buffer_views(
+    data: np.ndarray, schema: ComponentMetaData
+) -> dict[AttributeType, CAttributeBuffer]: ...
+@overload
+def _get_attribute_buffer_views(
+    data: dict[AttributeType, np.ndarray], schema: ComponentMetaData
+) -> dict[AttributeType, CAttributeBuffer]: ...
 
 def _get_attribute_buffer_views(
     data: np.ndarray | dict[AttributeType, np.ndarray], schema: ComponentMetaData
@@ -394,6 +427,21 @@ def _get_sparse_buffer_view(
         attribute_data=_get_attribute_buffer_views(data=contents, schema=schema),
     )
 
+@overload
+def get_buffer_view(
+    data: DenseBatchData,
+    schema: ComponentMetaData,
+    is_batch: bool | None = ...,
+    batch_size: int | None = ...,
+) -> CBuffer: ...
+
+@overload
+def get_buffer_view(
+    data: SparseBatchArray,
+    schema: ComponentMetaData,
+    is_batch: bool | None = ...,
+    batch_size: int | None = ...,
+) -> CBuffer: ...
 
 def get_buffer_view(
     data: ComponentData,
