@@ -87,7 +87,7 @@ template <symmetry_tag sym> class MathSolver : public MathSolverBase<sym> {
         // construct model if needed
         if (!iec60909_sc_solver_.has_value()) {
             Timer const timer{log, LogEvent::create_math_solver};
-            iec60909_sc_solver_.emplace(y_bus, topo_ptr_);
+            iec60909_sc_solver_.emplace(y_bus, *topo_ptr_);
         }
 
         // call calculation
