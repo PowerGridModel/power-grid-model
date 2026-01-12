@@ -403,21 +403,6 @@ def _get_sparse_buffer_view(
         attribute_data=_get_attribute_buffer_views(data=contents, schema=schema),
     )
 
-@overload
-def get_buffer_view(
-    data: DenseBatchData,
-    schema: ComponentMetaData,
-    is_batch: bool | None = ...,
-    batch_size: int | None = ...,
-) -> CBuffer: ...
-
-@overload
-def get_buffer_view(
-    data: SparseBatchArray,
-    schema: ComponentMetaData,
-    is_batch: bool | None = ...,
-    batch_size: int | None = ...,
-) -> CBuffer: ...
 
 def get_buffer_view(
     data: ComponentData,
