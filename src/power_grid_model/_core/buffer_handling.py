@@ -76,7 +76,6 @@ class CBuffer:
     attribute_data: dict[AttributeType, CAttributeBuffer]
 
 
-
 def _get_raw_data_view(data: np.ndarray, dtype: np.dtype) -> VoidPtr:
     """
     Get a raw view on the data.
@@ -93,14 +92,10 @@ def _get_raw_data_view(data: np.ndarray, dtype: np.dtype) -> VoidPtr:
     return np.ascontiguousarray(data, dtype=dtype).ctypes.data_as(VoidPtr)
 
 
-
 @overload
 def _get_raw_component_data_view(data: np.ndarray, schema: ComponentMetaData) -> VoidPtr: ...
 @overload
-def _get_raw_component_data_view(
-    data: dict[AttributeType, np.ndarray], schema: ComponentMetaData
-) -> None: ...
-
+def _get_raw_component_data_view(data: dict[AttributeType, np.ndarray], schema: ComponentMetaData) -> None: ...
 def _get_raw_component_data_view(
     data: np.ndarray | dict[AttributeType, np.ndarray], schema: ComponentMetaData
 ) -> VoidPtr | None:
@@ -431,7 +426,6 @@ def get_buffer_view(
     return _get_sparse_buffer_view(cast(SparseBatchArray, data), schema, batch_size)
 
 
-
 def create_buffer(properties: BufferProperties, schema: ComponentMetaData) -> ComponentData:
     """
     Create a buffer with the provided properties and type.
@@ -477,7 +471,6 @@ def _create_uniform_buffer(properties: BufferProperties, schema: ComponentMetaDa
     return _create_contents_buffer(shape=shape, dtype=schema.dtype, columns=properties.columns)
 
 
-
 def _create_sparse_buffer(properties: BufferProperties, schema: ComponentMetaData) -> SparseBatchData:
     """
     Create a sparse buffer with the provided properties and type.
@@ -507,7 +500,6 @@ def _create_contents_buffer(shape, dtype, columns: None) -> SingleArray | DenseB
 def _create_contents_buffer(
     shape, dtype, columns: list[AttributeType]
 ) -> SingleColumnarData | DenseBatchColumnarData: ...
-
 def _create_contents_buffer(shape, dtype, columns):
     if columns is None:
         return np.empty(shape=shape, dtype=dtype)
