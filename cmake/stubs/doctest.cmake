@@ -8,3 +8,8 @@ cmake_minimum_required(VERSION 3.23)
 function(doctest_discover_tests target)
     # no-op
 endfunction()
+
+# stub for check_required_components
+function(check_required_components)
+    # no-op
+endfunction()

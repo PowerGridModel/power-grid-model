@@ -74,8 +74,13 @@ template <class StructType> constexpr MetaComponent get_meta_component(char cons
                 auto ptr = reinterpret_cast<StructType*>(buffer_ptr);
                 std::fill(ptr + pos, ptr + pos + size, StructType{});
             },
-        .create_buffer = [](Idx size) -> RawDataPtr { return new StructType[size]; },
-        .destroy_buffer = [](RawDataConstPtr buffer_ptr) { delete[] reinterpret_cast<StructType const*>(buffer_ptr); },
+        .create_buffer = [](Idx size) -> RawDataPtr {
+            return new StructType[size]; // NOSONAR(S5025)
+        },
+        .destroy_buffer =
+            [](RawDataConstPtr buffer_ptr) {
+                delete[] reinterpret_cast<StructType const*>(buffer_ptr); // NOSONAR(S5025)
+            },
     };
 };
 

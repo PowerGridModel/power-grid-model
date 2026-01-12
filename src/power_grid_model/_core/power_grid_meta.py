@@ -21,7 +21,12 @@ from power_grid_model._core.dataset_definitions import (
     _str_to_component_type,
     _str_to_datatype,
 )
-from power_grid_model._core.power_grid_core import AttributePtr, ComponentPtr, DatasetPtr, power_grid_core as pgc
+from power_grid_model._core.power_grid_core import (
+    AttributePtr,
+    ComponentPtr,
+    DatasetPtr,
+    get_power_grid_core as get_pgc,
+)
 
 
 # constant enum for ctype
@@ -35,7 +40,7 @@ class PGMCType(IntEnum):
 
 
 _CTYPE_NUMPY_MAP = {PGMCType.double: "f8", PGMCType.int32: "i4", PGMCType.int8: "i1", PGMCType.double3: "(3,)f8"}
-_ENDIANNESS = "<" if pgc.is_little_endian() == 1 else ">"
+_ENDIANNESS = "<" if get_pgc().is_little_endian() == 1 else ">"
 _NAN_VALUE_MAP = {
     f"{_ENDIANNESS}f8": np.nan,
     f"{_ENDIANNESS}(3,)f8": np.nan,
@@ -82,10 +87,10 @@ def _generate_meta_data() -> PowerGridMetaData:
 
     """
     py_meta_data = {}
-    n_datasets = pgc.meta_n_datasets()
+    n_datasets = get_pgc().meta_n_datasets()
     for i in range(n_datasets):
-        dataset = pgc.meta_get_dataset_by_idx(i)
-        py_meta_data[_str_to_datatype(pgc.meta_dataset_name(dataset))] = _generate_meta_dataset(dataset)
+        dataset = get_pgc().meta_get_dataset_by_idx(i)
+        py_meta_data[_str_to_datatype(get_pgc().meta_dataset_name(dataset))] = _generate_meta_dataset(dataset)
     return py_meta_data
 
 
@@ -99,10 +104,10 @@ def _generate_meta_dataset(dataset: DatasetPtr) -> DatasetMetaData:
 
     """
     py_meta_dataset = {}
-    n_components = pgc.meta_n_components(dataset)
+    n_components = get_pgc().meta_n_components(dataset)
     for i in range(n_components):
-        component = pgc.meta_get_component_by_idx(dataset, i)
-        py_meta_dataset[_str_to_component_type(pgc.meta_component_name(component))] = _generate_meta_component(
+        component = get_pgc().meta_get_component_by_idx(dataset, i)
+        py_meta_dataset[_str_to_component_type(get_pgc().meta_component_name(component))] = _generate_meta_component(
             component
         )
     return py_meta_dataset
@@ -121,8 +126,8 @@ def _generate_meta_component(component: ComponentPtr) -> ComponentMetaData:
     dtype_dict = _generate_meta_attributes(component)
     dtype = np.dtype({k: v for k, v in dtype_dict.items() if k != "nans"})  # type: ignore
     nans = dict(zip(dtype_dict["names"], dtype_dict["nans"]))
-    if dtype.alignment != pgc.meta_component_alignment(component):
-        raise TypeError(f'Aligment mismatch for component type: "{pgc.meta_component_name(component)}" !')
+    if dtype.alignment != get_pgc().meta_component_alignment(component):
+        raise TypeError(f'Aligment mismatch for component type: "{get_pgc().meta_component_name(component)}" !')
     # get single nan scalar
     nan_scalar = np.empty(1, dtype=dtype)
     for key, value in nans.items():
@@ -143,12 +148,12 @@ def _generate_meta_attributes(component: ComponentPtr) -> dict:
     formats = []
     offsets = []
     nans = []
-    n_attrs = pgc.meta_n_attributes(component)
+    n_attrs = get_pgc().meta_n_attributes(component)
     for i in range(n_attrs):
-        attribute: AttributePtr = pgc.meta_get_attribute_by_idx(component, i)
-        attr_name: str = pgc.meta_attribute_name(attribute)
-        attr_ctype: int = pgc.meta_attribute_ctype(attribute)
-        attr_offset: int = pgc.meta_attribute_offset(attribute)
+        attribute: AttributePtr = get_pgc().meta_get_attribute_by_idx(component, i)
+        attr_name: str = get_pgc().meta_attribute_name(attribute)
+        attr_ctype: int = get_pgc().meta_attribute_ctype(attribute)
+        attr_offset: int = get_pgc().meta_attribute_offset(attribute)
         attr_np_type = f"{_ENDIANNESS}{_CTYPE_NUMPY_MAP[PGMCType(attr_ctype)]}"
         attr_nan = _NAN_VALUE_MAP[attr_np_type]
         names.append(attr_name)
@@ -159,7 +164,7 @@ def _generate_meta_attributes(component: ComponentPtr) -> dict:
         "names": names,
         "formats": formats,
         "offsets": offsets,
-        "itemsize": pgc.meta_component_size(component),
+        "itemsize": get_pgc().meta_component_size(component),
         "aligned": True,
         "nans": nans,
     }

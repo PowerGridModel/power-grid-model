@@ -167,7 +167,8 @@ class Topology {
     }
 
     template <typename F> static void for_all_vertices(GlobalGraph const& graph, F&& func) {
-        BGL_FORALL_VERTICES(v, graph, GlobalGraph) { std::forward<F>(func)(v); }
+        BGL_FORALL_VERTICES(v, graph, GlobalGraph) { func(v); }
+        capturing::into_the_void(std::forward<F>(func));
     }
 
     void build_sparse_graph() {
@@ -352,8 +353,9 @@ class Topology {
             return math_idx.pos;
         };
         // k as branch number for 2-way branch
-        for (auto const& [idx, branch_node_idx, branch_connected] :
-             std::views::zip(std::views::iota(0), comp_topo_.branch_node_idx, comp_conn_.branch_connected)) {
+        for (auto&& [idx, branch_node_idx, branch_connected] :
+             std::views::zip(std::views::iota(0), std::as_const(comp_topo_.branch_node_idx),
+                             std::as_const(comp_conn_.branch_connected))) {
             assert(std::ssize(branch_connected) == 2); // NOSONAR(R354)
 
             auto const [i, j] = branch_node_idx;
@@ -386,9 +388,10 @@ class Topology {
             comp_coup_.branch[idx] = Idx2D{.group = math_group, .pos = branch_pos};
         }
         // k as branch number for 3-way branch
-        for (auto const& [idx, i, i_status, j_math] :
-             std::views::zip(std::views::iota(0), comp_topo_.branch3_node_idx, comp_conn_.branch3_connected,
-                             std::views::drop(comp_coup_.node, comp_topo_.n_node))) {
+        for (auto&& [idx, i, i_status, j_math] :
+             std::views::zip(std::views::iota(0), std::as_const(comp_topo_.branch3_node_idx),
+                             std::as_const(comp_conn_.branch3_connected),
+                             std::views::drop(std::as_const(comp_coup_.node), std::as_const(comp_topo_.n_node)))) {
             std::array<Idx2D, 3> const i_math{
                 comp_coup_.node[i[0]],
                 comp_coup_.node[i[1]],
@@ -553,7 +556,8 @@ class Topology {
         std::ranges::for_each(math_topology_,
                               [](MathModelTopology& topo) { topo.load_gen_type.resize(topo.n_load_gen()); });
         // assign load type
-        for (auto const& [idx_math, load_gen_type] : std::views::zip(comp_coup_.load_gen, comp_topo_.load_gen_type)) {
+        for (auto const& [idx_math, load_gen_type] :
+             std::views::zip(std::as_const(comp_coup_.load_gen), std::as_const(comp_topo_.load_gen_type))) {
             if (idx_math.group == -1) {
                 continue;
             }

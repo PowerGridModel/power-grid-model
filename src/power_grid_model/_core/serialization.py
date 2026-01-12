@@ -20,7 +20,7 @@ from power_grid_model._core.power_grid_core import (
     DeserializerPtr,
     SerializerPtr,
     WritableDatasetPtr,
-    power_grid_core as pgc,
+    get_power_grid_core as get_pgc,
 )
 from power_grid_model._core.power_grid_dataset import CConstDataset, CWritableDataset
 from power_grid_model._core.typing import ComponentAttributeMapping
@@ -52,12 +52,12 @@ class Deserializer:
         instance = super().__new__(cls)
 
         raw_data = data if isinstance(data, bytes) else data.encode()
-        instance._deserializer = pgc.create_deserializer_from_binary_buffer(
+        instance._deserializer = get_pgc().create_deserializer_from_binary_buffer(
             raw_data, len(raw_data), serialization_type.value
         )
         assert_no_error()
 
-        instance._dataset_ptr = pgc.deserializer_get_dataset(instance._deserializer)
+        instance._dataset_ptr = get_pgc().deserializer_get_dataset(instance._deserializer)
         assert_no_error()
 
         instance._data_filter = data_filter
@@ -68,7 +68,7 @@ class Deserializer:
 
     def __del__(self):
         if hasattr(self, "_deserializer"):
-            pgc.destroy_deserializer(self._deserializer)
+            get_pgc().destroy_deserializer(self._deserializer)
 
     def load(self) -> Dataset:
         """
@@ -81,7 +81,7 @@ class Deserializer:
         Returns:
             A tuple containing the deserialized dataset in Power grid model input format and the type of the dataset.
         """
-        pgc.deserializer_parse_to_buffer(self._deserializer)
+        get_pgc().deserializer_parse_to_buffer(self._deserializer)
         return self._dataset.get_data()
 
 
@@ -101,14 +101,16 @@ class Serializer(ABC):
         instance._dataset = CConstDataset(instance._data, dataset_type=dataset_type)
         assert_no_error()
 
-        instance._serializer = pgc.create_serializer(instance._dataset.get_dataset_ptr(), serialization_type.value)
+        instance._serializer = get_pgc().create_serializer(
+            instance._dataset.get_dataset_ptr(), serialization_type.value
+        )
         assert_no_error()
 
         return instance
 
     def __del__(self):
         if hasattr(self, "_serializer"):
-            pgc.destroy_serializer(self._serializer)
+            get_pgc().destroy_serializer(self._serializer)
 
     def dump_str(self, *, use_compact_list: bool = False, indent: int = 2) -> str:
         """
@@ -123,7 +125,7 @@ class Serializer(ABC):
         Returns:
             A serialized string containing the dataset.
         """
-        data = pgc.serializer_get_to_zero_terminated_string(self._serializer, int(use_compact_list), indent)
+        data = get_pgc().serializer_get_to_zero_terminated_string(self._serializer, int(use_compact_list), indent)
         assert_no_error()
         return data
 
@@ -139,7 +141,7 @@ class Serializer(ABC):
         """
         raw_data = CharPtr()
         size = IdxC()
-        pgc.serializer_get_to_binary_buffer(self._serializer, int(use_compact_list), byref(raw_data), byref(size))
+        get_pgc().serializer_get_to_binary_buffer(self._serializer, int(use_compact_list), byref(raw_data), byref(size))
         assert_no_error()
 
         result = raw_data[: size.value]
