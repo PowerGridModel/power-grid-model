@@ -63,9 +63,9 @@ class JobDispatch {
             std::exception_ptr const ex_ptr = std::current_exception();
             try {
                 std::rethrow_exception(ex_ptr);
-            } catch (std::exception const& ex) {
+            } catch (std::exception const& ex) { // NOSONAR(S1181)
                 messages[scenario_idx] = ex.what();
-            } catch (...) {
+            } catch (...) { // NOSONAR(S2738)
                 messages[scenario_idx] = "unknown exception";
             }
         };
@@ -178,11 +178,11 @@ class JobDispatch {
                 setup_(args...);
                 run_(args...);
                 winddown_();
-            } catch (...) {
+            } catch (...) { // NOSONAR(S2738)
                 handle_exception_(args...);
                 try {
                     winddown_();
-                } catch (...) {
+                } catch (...) { // NOSONAR(S2738)
                     recover_from_bad_();
                 }
             }
