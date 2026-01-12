@@ -319,15 +319,6 @@ def get_buffer_properties(
     return _get_sparse_buffer_properties(data=cast(SparseBatchArray, data), schema=schema, batch_size=batch_size)
 
 
-@overload
-def _get_attribute_buffer_views(
-    data: np.ndarray, schema: ComponentMetaData
-) -> dict[AttributeType, CAttributeBuffer]: ...
-@overload
-def _get_attribute_buffer_views(
-    data: dict[AttributeType, np.ndarray], schema: ComponentMetaData
-) -> dict[AttributeType, CAttributeBuffer]: ...
-
 def _get_attribute_buffer_views(
     data: np.ndarray | dict[AttributeType, np.ndarray], schema: ComponentMetaData
 ) -> dict[AttributeType, CAttributeBuffer]:
