@@ -878,7 +878,7 @@ TEST_CASE("API Model") {
                 } else {
                     try {
                         model.calculate(options, output_dataset);
-                    } catch (std::exception const& e) {
+                    } catch (std::exception const& e) { // NOSONAR(S1181)
                         CHECK(e.what() != doctest::Contains(invalid_calculation_method_pattern));
                     }
                 }

@@ -7,6 +7,7 @@ Error handling
 """
 
 import re
+from enum import IntEnum
 
 import numpy as np
 
@@ -33,6 +34,7 @@ from power_grid_model._core.errors import (
     PowerGridBatchError,
     PowerGridDatasetError,
     PowerGridError,
+    PowerGridIllegalOperationError,
     PowerGridNotImplementedError,
     PowerGridSerializationError,
     PowerGridUnreachableHitError,
@@ -43,11 +45,14 @@ from power_grid_model._core.index_integer import IdxNp
 from power_grid_model._core.power_grid_core import get_power_grid_core as get_pgc
 
 VALIDATOR_MSG = "\nTry validate_input_data() or validate_batch_data() to validate your data.\n"
-# error codes
-PGM_NO_ERROR = 0
-PGM_REGULAR_ERROR = 1
-PGM_BATCH_ERROR = 2
-PGM_SERIALIZATION_ERROR = 3
+
+
+class _PgmCErrorCode(IntEnum):
+    NO_ERROR = 0
+    REGULAR_ERROR = 1
+    BATCH_ERROR = 2
+    SERIALIZATION_ERROR = 3
+
 
 _MISSING_CASE_FOR_ENUM_RE = re.compile(r" is not implemented for (.+) #(-?\d+)!\n")
 _INVALID_ARGUMENTS_RE = re.compile(r" is not implemented for ")  # multiple different flavors
@@ -82,6 +87,7 @@ _INVALID_CALCULATION_METHOD_RE = re.compile(r"The calculation method is invalid 
 _INVALID_SHORT_CIRCUIT_PHASE_OR_TYPE_RE = re.compile(r"short circuit type")  # multiple different flavors
 _TAP_STRATEGY_SEARCH_OPT_INCMPT_RE = re.compile(r"Search method is incompatible with optimization strategy: ")
 _POWER_GRID_DATASET_ERROR_RE = re.compile(r"Dataset error: ")  # multiple different flavors
+_POWER_GRID_ILLEGAL_OPERATION_ERROR_RE = re.compile(r"Illegal operation: ")  # multiple different flavors
 _POWER_GRID_UNREACHABLE_HIT_RE = re.compile(r"Unreachable code hit when executing ")  # multiple different flavors
 _POWER_GRID_NOT_IMPLEMENTED_ERROR_RE = re.compile(r"The functionality is either not supported or not yet implemented!")
 
@@ -108,6 +114,7 @@ _ERROR_MESSAGE_PATTERNS = {
     _INVALID_SHORT_CIRCUIT_PHASE_OR_TYPE_RE: InvalidShortCircuitPhaseOrType,
     _TAP_STRATEGY_SEARCH_OPT_INCMPT_RE: TapSearchStrategyIncompatibleError,
     _POWER_GRID_DATASET_ERROR_RE: PowerGridDatasetError,
+    _POWER_GRID_ILLEGAL_OPERATION_ERROR_RE: PowerGridIllegalOperationError,
     _POWER_GRID_UNREACHABLE_HIT_RE: PowerGridUnreachableHitError,
     _POWER_GRID_NOT_IMPLEMENTED_ERROR_RE: PowerGridNotImplementedError,
 }
@@ -134,29 +141,31 @@ def find_error(batch_size: int = 1, decode_error: bool = True) -> RuntimeError |
 
     """
     error_code: int = get_pgc().error_code()
-    if error_code == PGM_NO_ERROR:
-        return None
-    if error_code == PGM_REGULAR_ERROR:
-        error_message = get_pgc().error_message()
-        error_message += VALIDATOR_MSG
-        return _interpret_error(error_message, decode_error=decode_error)
-    if error_code == PGM_BATCH_ERROR:
-        error_message = "There are errors in the batch calculation." + VALIDATOR_MSG
-        error = PowerGridBatchError(error_message)
-        n_fails = get_pgc().n_failed_scenarios()
-        failed_idxptr = get_pgc().failed_scenarios()
-        failed_msgptr = get_pgc().batch_errors()
-        error.failed_scenarios = np.ctypeslib.as_array(failed_idxptr, shape=(n_fails,)).copy()
-        error.error_messages = [failed_msgptr[i].decode() for i in range(n_fails)]  # type: ignore
-        error.errors = [_interpret_error(message, decode_error=decode_error) for message in error.error_messages]
-        all_scenarios = np.arange(batch_size, dtype=IdxNp)
-        mask = np.ones(batch_size, dtype=np.bool_)
-        mask[error.failed_scenarios] = False
-        error.succeeded_scenarios = all_scenarios[mask]
-        return error
-    if error_code == PGM_SERIALIZATION_ERROR:
-        return PowerGridSerializationError(get_pgc().error_message())
-    return RuntimeError("Unknown error!")
+    match error_code:
+        case _PgmCErrorCode.NO_ERROR:
+            return None
+        case _PgmCErrorCode.REGULAR_ERROR:
+            error_message = get_pgc().error_message()
+            error_message += VALIDATOR_MSG
+            return _interpret_error(error_message, decode_error=decode_error)
+        case _PgmCErrorCode.BATCH_ERROR:
+            error_message = "There are errors in the batch calculation." + VALIDATOR_MSG
+            error = PowerGridBatchError(error_message)
+            n_fails = get_pgc().n_failed_scenarios()
+            failed_idxptr = get_pgc().failed_scenarios()
+            failed_msgptr = get_pgc().batch_errors()
+            error.failed_scenarios = np.ctypeslib.as_array(failed_idxptr, shape=(n_fails,)).copy()
+            error.error_messages = [failed_msgptr[i].decode() for i in range(n_fails)]  # type: ignore
+            error.errors = [_interpret_error(message, decode_error=decode_error) for message in error.error_messages]
+            all_scenarios = np.arange(batch_size, dtype=IdxNp)
+            mask = np.ones(batch_size, dtype=np.bool_)
+            mask[error.failed_scenarios] = False
+            error.succeeded_scenarios = all_scenarios[mask]
+            return error
+        case _PgmCErrorCode.SERIALIZATION_ERROR:
+            return PowerGridSerializationError(get_pgc().error_message())
+        case _:
+            return RuntimeError("Unknown error!")
 
 
 def assert_no_error(batch_size: int = 1, decode_error: bool = True):

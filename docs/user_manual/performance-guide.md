@@ -53,6 +53,15 @@ If you are running on a system where memory is the bottle-neck, using a columnar
 footprint.
 This may or may not induce a slight computational overhead during calculations.
 
+Some simulations might require a cartesian product of scenarios of two batch datasets.
+This can be done by passing them to `update_data` as a list
+ie. a list[{py:class}`BatchDataset <power_grid_model.data_types.BatchDataset>`]
+(Check [Power Flow Example](../examples/Power%20Flow%20Example.ipynb)).
+This gets treated as a cartesian product of the provided datasets and the combination of scenarios gets handled
+internally.
+Hence there is no need to allocate memory for full `N1 * N2 * ...` scenarios for a cartesian product of data sets with
+scenario size `N1, N2, ...`.
+
 ### Output data volume
 
 For most use cases, only certain output values are relevant.
