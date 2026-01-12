@@ -772,7 +772,8 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
             if (measured_values.has_angle()) {
                 return 0.0;
             }
-            auto const& theta = x_[math_topo_.get().slack_bus].theta() + delta_x_rhs_[math_topo_.get().slack_bus].theta();
+            auto const& theta =
+                x_[math_topo_.get().slack_bus].theta() + delta_x_rhs_[math_topo_.get().slack_bus].theta();
             if constexpr (is_symmetric_v<sym>) {
                 return theta;
             } else {

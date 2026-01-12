@@ -201,8 +201,8 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     using BlockPermArray = typename entry_trait::BlockPermArray;
     static constexpr Idx max_iterative_refinement = 5;
 
-    SparseLUSolver(std::span<Idx const> row_indptr, // indptr including fill-ins
-                   std::span<Idx const> col_indices,       // indices including fill-ins
+    SparseLUSolver(std::span<Idx const> row_indptr,  // indptr including fill-ins
+                   std::span<Idx const> col_indices, // indices including fill-ins
                    std::span<Idx const> diag_lu)
         : size_{static_cast<Idx>(row_indptr.size()) - 1},
           nnz_{row_indptr.back()},

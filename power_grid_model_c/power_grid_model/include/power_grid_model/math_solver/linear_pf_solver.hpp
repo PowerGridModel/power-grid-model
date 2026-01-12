@@ -101,7 +101,8 @@ template <symmetry_tag sym_type> class LinearPFSolver {
     BlockPermArray perm_;
 
     void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, SolverOutput<sym>& output) {
-        detail::prepare_linear_matrix_and_rhs(y_bus, input, load_gens_per_bus_.get(), sources_per_bus_.get(), output, mat_data_);
+        detail::prepare_linear_matrix_and_rhs(y_bus, input, load_gens_per_bus_.get(), sources_per_bus_.get(), output,
+                                              mat_data_);
     }
 
     void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, SolverOutput<sym>& output) {
