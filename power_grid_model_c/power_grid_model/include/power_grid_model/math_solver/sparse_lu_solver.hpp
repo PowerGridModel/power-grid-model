@@ -11,6 +11,7 @@
 
 #include <memory>
 #include <optional>
+#include <span>
 
 namespace power_grid_model::math_solver {
 
@@ -200,14 +201,14 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     using BlockPermArray = typename entry_trait::BlockPermArray;
     static constexpr Idx max_iterative_refinement = 5;
 
-    SparseLUSolver(IdxVector const& row_indptr, // indptr including fill-ins
-                   IdxVector const& col_indices,       // indices including fill-ins
-                   IdxVector const& diag_lu)
+    SparseLUSolver(std::span<Idx const> row_indptr, // indptr including fill-ins
+                   std::span<Idx const> col_indices,       // indices including fill-ins
+                   std::span<Idx const> diag_lu)
         : size_{static_cast<Idx>(row_indptr.size()) - 1},
           nnz_{row_indptr.back()},
-          row_indptr_{&row_indptr},
-          col_indices_{&col_indices},
-          diag_lu_{&diag_lu} {}
+          row_indptr_{row_indptr},
+          col_indices_{col_indices},
+          diag_lu_{diag_lu} {}
 
     // solve with new matrix data, need to factorize first
     void
@@ -247,9 +248,9 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         double const perturb_threshold = epsilon_perturbation * matrix_norm_;
 
         // local reference
-        auto const& row_indptr = *row_indptr_;
-        auto const& col_indices = *col_indices_;
-        auto const& diag_lu = *diag_lu_;
+        auto const& row_indptr = row_indptr_;
+        auto const& col_indices = col_indices_;
+        auto const& diag_lu = diag_lu_;
         // lu matrix inplace
         std::vector<Tensor>& lu_matrix = data;
 
@@ -407,9 +408,9 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
   private:
     Idx size_;
     Idx nnz_; // number of non zeroes (in block)
-    IdxVector const* row_indptr_;
-    IdxVector const* col_indices_;
-    IdxVector const* diag_lu_;
+    std::span<Idx const> row_indptr_;
+    std::span<Idx const> col_indices_;
+    std::span<Idx const> diag_lu_;
     // cache value for pivot perturbation for the factorize step
     bool has_pivot_perturbation_{false};
     double matrix_norm_{};
@@ -471,8 +472,8 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     }
 
     void calculate_residual(std::vector<XVector> const& x) {
-        auto const& row_indptr = *row_indptr_;
-        auto const& col_indices = *col_indices_;
+        auto const& row_indptr = row_indptr_;
+        auto const& col_indices = col_indices_;
         auto const& original_matrix = original_matrix_.value();
         auto const& rhs = rhs_.value();
         auto& residual = residual_.value();
@@ -488,8 +489,8 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     }
 
     double iterate_and_backward_error(std::vector<XVector>& x) {
-        auto const& row_indptr = *row_indptr_;
-        auto const& col_indices = *col_indices_;
+        auto const& row_indptr = row_indptr_;
+        auto const& col_indices = col_indices_;
         auto const& original_matrix = original_matrix_.value();
         auto const& rhs = rhs_.value();
         auto const& residual = residual_.value();
@@ -542,8 +543,8 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         // 2. sum all norms of the blocks per row, except the diagonal block
         // 3. take the maximum of all the sums
         matrix_norm_ = 0.0;
-        auto const& row_indptr = *row_indptr_;
-        auto const& col_indices = *col_indices_;
+        auto const& row_indptr = row_indptr_;
+        auto const& col_indices = col_indices_;
         for (Idx row = 0; row != size_; ++row) {
             // calculate the sum of the norms of the blocks in the row
             double row_norm = 0.0;
@@ -572,9 +573,9 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
                     BlockPermArray const& block_perm_array, // pre-calculated permutation, const ref
                     std::vector<RHSVector> const& rhs, std::vector<XVector>& x) const {
         // local reference
-        auto const& row_indptr = *row_indptr_;
-        auto const& col_indices = *col_indices_;
-        auto const& diag_lu = *diag_lu_;
+        auto const& row_indptr = row_indptr_;
+        auto const& col_indices = col_indices_;
+        auto const& diag_lu = diag_lu_;
         auto const& lu_matrix = data;
 
         // forward substitution with L

@@ -80,7 +80,7 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCur
 
     static constexpr auto is_iterative = true;
 
-    IterativeCurrentPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
+    IterativeCurrentPFSolver(YBus<sym> const& y_bus, MathModelTopology const& topo_ptr)
         : IterativePFSolver<sym, IterativeCurrentPFSolver>{y_bus, topo_ptr},
           rhs_u_(y_bus.size()),
           sparse_solver_{y_bus.row_indptr_lu(), y_bus.col_indices_lu(), y_bus.lu_diag()} {}

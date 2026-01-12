@@ -54,10 +54,10 @@ template <symmetry_tag sym_type> class LinearPFSolver {
 
     static constexpr auto is_iterative = false;
 
-    LinearPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
+    LinearPFSolver(YBus<sym> const& y_bus, MathModelTopology const& topo_ptr)
         : n_bus_{y_bus.size()},
-          load_gens_per_bus_{std::cref(topo_ptr->load_gens_per_bus)},
-          sources_per_bus_{std::cref(topo_ptr->sources_per_bus)},
+          load_gens_per_bus_{std::cref(topo_ptr.load_gens_per_bus)},
+          sources_per_bus_{std::cref(topo_ptr.sources_per_bus)},
           mat_data_(y_bus.nnz_lu()),
           sparse_solver_{y_bus.row_indptr_lu(), y_bus.col_indices_lu(), y_bus.lu_diag()},
           perm_(n_bus_) {}

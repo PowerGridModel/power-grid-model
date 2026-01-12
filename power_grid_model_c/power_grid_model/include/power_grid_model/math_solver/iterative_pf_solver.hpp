@@ -91,12 +91,12 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
     std::reference_wrapper<SparseGroupedIdxVector const> load_gens_per_bus_;
     std::reference_wrapper<DenseGroupedIdxVector const> sources_per_bus_;
     std::reference_wrapper<std::vector<LoadGenType> const> load_gen_type_;
-    IterativePFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
+    IterativePFSolver(YBus<sym> const& y_bus, MathModelTopology const& topo_ptr)
         : n_bus_{y_bus.size()},
-          phase_shift_{std::cref(topo_ptr->phase_shift)},
-          load_gens_per_bus_{std::cref(topo_ptr->load_gens_per_bus)},
-          sources_per_bus_{std::cref(topo_ptr->sources_per_bus)},
-          load_gen_type_{std::cref(topo_ptr->load_gen_type)} {}
+          phase_shift_{std::cref(topo_ptr.phase_shift)},
+          load_gens_per_bus_{std::cref(topo_ptr.load_gens_per_bus)},
+          sources_per_bus_{std::cref(topo_ptr.sources_per_bus)},
+          load_gen_type_{std::cref(topo_ptr.load_gen_type)} {}
 };
 
 } // namespace power_grid_model::math_solver
