@@ -121,9 +121,18 @@ jobs:
 
       - name: Compare builds
         run: |
-          $hash1 = Get-ChildItem -Path install/${{ env.PRESET }}-1/bin/power_grid_model_c.dll -Recurse -File | Get-FileHash | Sort-Object Path
-          $hash2 = Get-ChildItem -Path install/${{ env.PRESET }}-2/bin/power_grid_model_c.dll -Recurse -File | Get-FileHash | Sort-Object Path
-          Compare-Object $hash1 $hash2 -Property Hash, Path -PassThru | ForEach-Object { if ($_.SideIndicator) { Write-Error "Build mismatch detected"; Exit 1 } }
+          $hash1 = Get-ChildItem -Path install/${{ env.PRESET }}-1 -Recurse -File | Get-FileHash | Sort-Object Path
+          $hash2 = Get-ChildItem -Path install/${{ env.PRESET }}-2 -Recurse -File | Get-FileHash | Sort-Object Path
+          Compare-Object $hash1 $hash2 -Property Hash -PassThru -IncludeEqual | ForEach-Object {
+              $currentPath = $_.Path
+
+              if ($_.SideIndicator -eq '==') {
+                  Write-Host "Files match: $currentPath"
+              } else {
+                  Write-Error "Build mismatch detected: $currentPath";
+                  Exit 1
+              }
+          }
           if ($LASTEXITCODE -eq 1) { Exit 1 }
           Write-Host "Builds are identical"
 
