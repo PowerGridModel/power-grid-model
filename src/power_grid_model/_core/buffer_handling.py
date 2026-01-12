@@ -288,21 +288,6 @@ def _get_sparse_buffer_properties(
         columns=columns,
     )
 
-@overload
-def get_buffer_properties(
-    data: DenseBatchData,
-    schema: ComponentMetaData,
-    is_batch: bool | None = ...,
-    batch_size: int | None = ...,
-) -> BufferProperties: ...
-
-@overload
-def get_buffer_properties(
-    data: SparseBatchArray,
-    schema: ComponentMetaData,
-    is_batch: bool | None = ...,
-    batch_size: int | None = ...,
-) -> BufferProperties: ...
 
 def get_buffer_properties(
     data: ComponentData,
