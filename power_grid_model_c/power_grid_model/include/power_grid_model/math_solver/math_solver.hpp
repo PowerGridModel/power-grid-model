@@ -32,7 +32,9 @@ template <symmetry_tag sym> class MathSolver : public MathSolverBase<sym> {
           all_const_y_{std::all_of(topo_ptr->load_gen_type.cbegin(), topo_ptr->load_gen_type.cend(),
                                    [](LoadGenType x) { return x == LoadGenType::const_y; })} {}
 
-    MathSolver<sym>* clone() const final { return new MathSolver<sym>(*this); }
+    MathSolver<sym>* clone() const final {
+        return new MathSolver<sym>(*this); // NOSONAR(S5025)
+    }
 
     SolverOutput<sym> run_power_flow(PowerFlowInput<sym> const& input, double err_tol, Idx max_iter, Logger& log,
                                      CalculationMethod calculation_method, YBus<sym> const& y_bus) final {

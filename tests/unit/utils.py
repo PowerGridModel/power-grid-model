@@ -36,10 +36,13 @@ from power_grid_model.errors import (
 )
 from power_grid_model.utils import json_deserialize, json_deserialize_from_file, json_serialize_to_file
 
+_Failed: type[BaseException] | None
 try:
-    from _pytest.outcomes import Failed as _Failed  # pylint: disable=import-outside-toplevel
+    from _pytest.outcomes import Failed as _PytestFailedOutcome
+
+    _Failed = _PytestFailedOutcome
 except ImportError:
-    import warnings  # pylint: disable=import-outside-toplevel
+    import warnings
 
     warnings.warn(
         """Failed to import _pytest.outcomes.Failed."""

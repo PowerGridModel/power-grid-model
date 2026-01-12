@@ -122,6 +122,8 @@ PGM_API extern PGM_MetaAttribute const* const PGM_def_input_transformer_uk;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_transformer_pk;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_transformer_i0;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_transformer_p0;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_transformer_i0_zero_sequence;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_transformer_p0_zero_sequence;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_transformer_winding_from;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_transformer_winding_to;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_transformer_clock;
@@ -424,6 +426,9 @@ PGM_API extern PGM_MetaComponent const* const PGM_def_sym_output_three_winding_t
 // attributes of sym_output three_winding_transformer
 PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_three_winding_transformer_id;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_three_winding_transformer_energized;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_three_winding_transformer_loading_1;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_three_winding_transformer_loading_2;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_three_winding_transformer_loading_3;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_three_winding_transformer_loading;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_three_winding_transformer_p_1;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_three_winding_transformer_q_1;
@@ -638,6 +643,9 @@ PGM_API extern PGM_MetaComponent const* const PGM_def_asym_output_three_winding_
 // attributes of asym_output three_winding_transformer
 PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_three_winding_transformer_id;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_three_winding_transformer_energized;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_three_winding_transformer_loading_1;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_three_winding_transformer_loading_2;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_three_winding_transformer_loading_3;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_three_winding_transformer_loading;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_three_winding_transformer_p_1;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_three_winding_transformer_q_1;

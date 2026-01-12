@@ -434,13 +434,13 @@ TEST_CASE("Test counting_sort_element") {
     SUBCASE("Test basic sorting") {
         // Create test data: elements at various matrix positions
         std::vector<YBusElementMap> vec = {
-            {{2, 1}, {bft, 5}},   // pos (2,1)
-            {{0, 0}, {bff, 0}},   // pos (0,0)
-            {{1, 2}, {btf, 3}},   // pos (1,2)
-            {{0, 1}, {bft, 1}},   // pos (0,1)
-            {{2, 1}, {shunt, 6}}, // pos (2,1) - same position as first
-            {{1, 0}, {btf, 2}},   // pos (1,0)
-            {{2, 2}, {btt, 7}},   // pos (2,2)
+            {.pos = {2, 1}, .element = {.element_type = bft, .idx = 5}},   // pos (2,1)
+            {.pos = {0, 0}, .element = {.element_type = bff, .idx = 0}},   // pos (0,0)
+            {.pos = {1, 2}, .element = {.element_type = btf, .idx = 3}},   // pos (1,2)
+            {.pos = {0, 1}, .element = {.element_type = bft, .idx = 1}},   // pos (0,1)
+            {.pos = {2, 1}, .element = {.element_type = shunt, .idx = 6}}, // pos (2,1) - same position as first
+            {.pos = {1, 0}, .element = {.element_type = btf, .idx = 2}},   // pos (1,0)
+            {.pos = {2, 2}, .element = {.element_type = btt, .idx = 7}},   // pos (2,2)
         };
 
         // Expected sorted order: by row first, then by column
@@ -465,7 +465,7 @@ TEST_CASE("Test counting_sort_element") {
     }
 
     SUBCASE("Test with single bus") {
-        std::vector<YBusElementMap> vec = {{{0, 0}, {shunt, 10}}};
+        std::vector<YBusElementMap> vec = {{.pos = {0, 0}, .element = {.element_type = shunt, .idx = 10}}};
 
         counting_sort_element(vec, 1);
 
@@ -483,9 +483,9 @@ TEST_CASE("Test counting_sort_element") {
 
     SUBCASE("Test stability - elements with same position maintain relative order") {
         std::vector<YBusElementMap> vec = {
-            {{1, 1}, {bff, 100}},
-            {{1, 1}, {bft, 200}},
-            {{1, 1}, {shunt, 300}},
+            {.pos = {1, 1}, .element = {.element_type = bff, .idx = 100}},
+            {.pos = {1, 1}, .element = {.element_type = bft, .idx = 200}},
+            {.pos = {1, 1}, .element = {.element_type = shunt, .idx = 300}},
         };
 
         counting_sort_element(vec, 2);
@@ -510,7 +510,7 @@ TEST_CASE("Test counting_sort_element") {
             Idx const row = i / n_bus;
             Idx const col = i % n_bus;
             if ((row + col) % 3 == 0) { // Sparse pattern
-                vec.push_back({{row, col}, {bff, row * n_bus + col}});
+                vec.push_back({.pos = {row, col}, .element = {.element_type = bff, .idx = row * n_bus + col}});
             }
         }
 
@@ -535,8 +535,13 @@ TEST_CASE("Test counting_sort_element") {
 
     SUBCASE("Test all YBusElementType values") {
         std::vector<YBusElementMap> vec = {
-            {{1, 1}, {fill_in_tf, 6}}, {{0, 1}, {bft, 1}},   {{1, 0}, {btf, 2}},        {{0, 0}, {bff, 0}},
-            {{1, 1}, {btt, 3}},        {{2, 2}, {shunt, 4}}, {{1, 2}, {fill_in_ft, 5}},
+            {.pos = {1, 1}, .element = {.element_type = fill_in_tf, .idx = 6}},
+            {.pos = {0, 1}, .element = {.element_type = bft, .idx = 1}},
+            {.pos = {1, 0}, .element = {.element_type = btf, .idx = 2}},
+            {.pos = {0, 0}, .element = {.element_type = bff, .idx = 0}},
+            {.pos = {1, 1}, .element = {.element_type = btt, .idx = 3}},
+            {.pos = {2, 2}, .element = {.element_type = shunt, .idx = 4}},
+            {.pos = {1, 2}, .element = {.element_type = fill_in_ft, .idx = 5}},
         };
 
         counting_sort_element(vec, 3);

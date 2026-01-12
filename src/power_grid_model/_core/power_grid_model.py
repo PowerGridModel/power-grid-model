@@ -6,7 +6,9 @@
 Main power grid model class
 """
 
+import itertools
 from enum import IntEnum
+from math import prod
 from typing import Any, overload
 
 import numpy as np
@@ -48,7 +50,13 @@ from power_grid_model._core.enum import (
 from power_grid_model._core.error_handling import PowerGridBatchError, assert_no_error, handle_errors
 from power_grid_model._core.index_integer import IdNp, IdxNp
 from power_grid_model._core.options import Options
-from power_grid_model._core.power_grid_core import ConstDatasetPtr, IDPtr, IdxPtr, ModelPtr, power_grid_core as pgc
+from power_grid_model._core.power_grid_core import (
+    ConstDatasetPtr,
+    IDPtr,
+    IdxPtr,
+    ModelPtr,
+    get_power_grid_core as get_pgc,
+)
 from power_grid_model._core.typing import ComponentAttributeMapping, ComponentAttributeMappingDict
 
 
@@ -103,7 +111,7 @@ class PowerGridModel:
             A copy of PowerGridModel
         """
         new_model = PowerGridModel.__new__(PowerGridModel)
-        new_model._model_ptr = pgc.copy_model(self._model)
+        new_model._model_ptr = get_pgc().copy_model(self._model)
         assert_no_error()
         new_model._all_component_count = self._all_component_count
         return new_model
@@ -119,6 +127,26 @@ class PowerGridModel:
         memo[id(self)] = new_model
 
         return new_model
+
+    def __repr__(self) -> str:
+        """Return a string representation of the current model.
+
+        This includes the total number of components and the number of components per component type of the model.
+
+        Returns:
+            String representation of the model
+        """
+        try:
+            component_count = self.all_component_count
+        except TypeError:
+            component_count = {}
+
+        message = f"{self.__class__.__name__} ({sum(component_count.values())} components)\n"
+
+        for component_type, number in component_count.items():
+            message += f"  - {component_type.value}: {number}\n"
+
+        return message
 
     def __new__(cls, *_args, **_kwargs):
         instance = super().__new__(cls)
@@ -139,11 +167,11 @@ class PowerGridModel:
             system_frequency: Frequency of the power system, default 50 Hz
         """
         # destroy old instance
-        pgc.destroy_model(self._model_ptr)
+        get_pgc().destroy_model(self._model_ptr)
         self._all_component_count = None
         # create new
         prepared_input = prepare_input_view(_map_to_component_types(input_data))
-        self._model_ptr = pgc.create_model(system_frequency, input_data=prepared_input.get_dataset_ptr())
+        self._model_ptr = get_pgc().create_model(system_frequency, input_data=prepared_input.get_dataset_ptr())
         assert_no_error()
         self._all_component_count = {k: v for k, v in prepared_input.get_info().total_elements().items() if v > 0}
 
@@ -166,7 +194,7 @@ class PowerGridModel:
             None
         """
         prepared_update = prepare_update_view(_map_to_component_types(update_data))
-        pgc.update_model(self._model, prepared_update.get_dataset_ptr())
+        get_pgc().update_model(self._model, prepared_update.get_dataset_ptr())
         assert_no_error()
 
     def get_indexer(self, component_type: ComponentTypeLike, ids: np.ndarray):
@@ -188,7 +216,7 @@ class PowerGridModel:
         indexer_c = indexer.ctypes.data_as(IdxPtr)
         size = ids.size
         # call c function
-        pgc.get_indexer(self._model, component_type, size, ids_c, indexer_c)
+        get_pgc().get_indexer(self._model, component_type, size, ids_c, indexer_c)
         assert_no_error()
         return indexer
 
@@ -261,7 +289,7 @@ class PowerGridModel:
         self,
         calculation_type: CalculationType,
         symmetric: bool,
-        update_data: Dataset | None,
+        update_data: Dataset | list[Dataset] | None,
         output_component_types: ComponentAttributeMapping,
         options: Options,
         continue_on_batch_error: bool,
@@ -283,15 +311,19 @@ class PowerGridModel:
         Returns:
         """
         self._batch_error = None
-        is_batch = update_data is not None
-
-        if update_data is not None:
-            prepared_update = prepare_update_view(update_data)
-            update_ptr = prepared_update.get_dataset_ptr()
-            batch_size = prepared_update.get_info().batch_size()
+        if update_data is None:
+            is_batch = False
+            update_data = []
         else:
-            update_ptr = ConstDatasetPtr()
-            batch_size = 1
+            is_batch = True
+        if not isinstance(update_data, list):
+            update_data = [update_data]
+        update_data = [_map_to_component_types(x) for x in update_data]
+        prepared_update = [prepare_update_view(x) for x in update_data]
+        for this_dataset, next_dataset in itertools.pairwise(prepared_update):
+            this_dataset.set_next_cartesian_product_dimension(next_dataset)
+        update_ptr: ConstDatasetPtr = prepared_update[0].get_dataset_ptr() if prepared_update else ConstDatasetPtr()
+        batch_size = prod(x.get_info().batch_size() for x in prepared_update)
 
         output_data = self._construct_output(
             output_component_types=output_component_types,
@@ -306,7 +338,7 @@ class PowerGridModel:
         )
 
         # run calculation
-        pgc.calculate(
+        get_pgc().calculate(
             # model and options
             self._model,
             options.opt,
@@ -329,7 +361,7 @@ class PowerGridModel:
         error_tolerance: float = 1e-8,
         max_iterations: int = 20,
         calculation_method: CalculationMethod | str = CalculationMethod.newton_raphson,
-        update_data: Dataset | None = None,
+        update_data: Dataset | list[Dataset] | None = None,
         threading: int = -1,
         output_component_types: ComponentAttributeMapping = None,
         continue_on_batch_error: bool = False,
@@ -366,7 +398,7 @@ class PowerGridModel:
         error_tolerance: float = 1e-8,
         max_iterations: int = 20,
         calculation_method: CalculationMethod | str = CalculationMethod.iterative_linear,
-        update_data: Dataset | None = None,
+        update_data: Dataset | list[Dataset] | None = None,
         threading: int = -1,
         output_component_types: ComponentAttributeMapping = None,
         continue_on_batch_error: bool = False,
@@ -398,7 +430,7 @@ class PowerGridModel:
         self,
         *,
         calculation_method: CalculationMethod | str = CalculationMethod.iec60909,
-        update_data: Dataset | None = None,
+        update_data: Dataset | list[Dataset] | None = None,
         threading: int = -1,
         output_component_types: ComponentAttributeMapping = None,
         continue_on_batch_error: bool = False,
@@ -495,7 +527,7 @@ class PowerGridModel:
         error_tolerance: float = ...,
         max_iterations: int = ...,
         calculation_method: CalculationMethod | str = ...,
-        update_data: BatchDataset = ...,
+        update_data: BatchDataset | list[BatchDataset] = ...,
         threading: int = ...,
         output_component_types: None | set[ComponentTypeVar] | list[ComponentTypeVar] = ...,
         continue_on_batch_error: bool = ...,
@@ -510,7 +542,7 @@ class PowerGridModel:
         error_tolerance: float = ...,
         max_iterations: int = ...,
         calculation_method: CalculationMethod | str = ...,
-        update_data: BatchDataset = ...,
+        update_data: BatchDataset | list[BatchDataset] = ...,
         threading: int = ...,
         output_component_types: ComponentAttributeFilterOptions = ...,
         continue_on_batch_error: bool = ...,
@@ -525,7 +557,7 @@ class PowerGridModel:
         error_tolerance: float = ...,
         max_iterations: int = ...,
         calculation_method: CalculationMethod | str = ...,
-        update_data: BatchDataset = ...,
+        update_data: BatchDataset | list[BatchDataset] = ...,
         threading: int = ...,
         output_component_types: ComponentAttributeMappingDict = ...,
         continue_on_batch_error: bool = ...,
@@ -539,7 +571,7 @@ class PowerGridModel:
         error_tolerance: float = 1e-8,
         max_iterations: int = 20,
         calculation_method: CalculationMethod | str = CalculationMethod.newton_raphson,
-        update_data: BatchDataset | None = None,
+        update_data: BatchDataset | list[BatchDataset] | None = None,
         threading: int = -1,
         output_component_types: ComponentAttributeMapping = None,
         continue_on_batch_error: bool = False,
@@ -563,8 +595,9 @@ class PowerGridModel:
 
                 - newton_raphson: Use Newton-Raphson iterative method (default).
                 - linear: Use linear method.
-            update_data (dict, optional):
+            update_data (dict, list of dict, optional):
                 None: Calculate power flow once with the current model attributes.
+
                 Or a dictionary for batch calculation with batch update.
 
                     - key: Component type name to be updated in batch.
@@ -581,6 +614,13 @@ class PowerGridModel:
                               compressed sparse structure.
                               https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html
                             - data: 1D numpy structured array in flat.
+                Or a list of such dictionaries (batch datasets) to represent multiple dimensions of cartesian product.
+                The calculation core will interpret these datasets as a cartesian product of all the scenarios.
+                Each batch dataset in the list represents one dimension of the cartesian product.
+                The output will then have row size equal to the product of the batch sizes of all these datasets,
+                in 1D flat structure.
+                E.g., if you have three batch datasets with batch sizes 2, 3, and 4 respectively,
+                and the number of nodes is 5, the final output for nodes will have shape (2*3*4, 5).
             threading (int, optional): Applicable only for batch calculation.
 
                 - < 0: Sequential
@@ -623,7 +663,7 @@ class PowerGridModel:
             error_tolerance=error_tolerance,
             max_iterations=max_iterations,
             calculation_method=calculation_method,
-            update_data=(_map_to_component_types(update_data) if update_data is not None else None),
+            update_data=update_data,
             threading=threading,
             output_component_types=output_component_types,
             continue_on_batch_error=continue_on_batch_error,
@@ -681,7 +721,7 @@ class PowerGridModel:
         error_tolerance: float = ...,
         max_iterations: int = ...,
         calculation_method: CalculationMethod | str = ...,
-        update_data: BatchDataset = ...,
+        update_data: BatchDataset | list[BatchDataset] = ...,
         threading: int = ...,
         output_component_types: None | set[ComponentTypeVar] | list[ComponentTypeVar] = ...,
         continue_on_batch_error: bool = ...,
@@ -695,7 +735,7 @@ class PowerGridModel:
         error_tolerance: float = ...,
         max_iterations: int = ...,
         calculation_method: CalculationMethod | str = ...,
-        update_data: BatchDataset = ...,
+        update_data: BatchDataset | list[BatchDataset] = ...,
         threading: int = ...,
         output_component_types: ComponentAttributeFilterOptions = ...,
         continue_on_batch_error: bool = ...,
@@ -709,7 +749,7 @@ class PowerGridModel:
         error_tolerance: float = ...,
         max_iterations: int = ...,
         calculation_method: CalculationMethod | str = ...,
-        update_data: BatchDataset = ...,
+        update_data: BatchDataset | list[BatchDataset] = ...,
         threading: int = ...,
         output_component_types: ComponentAttributeMappingDict = ...,
         continue_on_batch_error: bool = ...,
@@ -722,7 +762,7 @@ class PowerGridModel:
         error_tolerance: float = 1e-8,
         max_iterations: int = 20,
         calculation_method: CalculationMethod | str = CalculationMethod.iterative_linear,
-        update_data: BatchDataset | None = None,
+        update_data: BatchDataset | list[BatchDataset] | None = None,
         threading: int = -1,
         output_component_types: ComponentAttributeMapping = None,
         continue_on_batch_error: bool = False,
@@ -744,6 +784,7 @@ class PowerGridModel:
             calculation_method (an enumeration): Use iterative linear method.
             update_data (dict, optional):
                 None: Calculate state estimation once with the current model attributes.
+
                 Or a dictionary for batch calculation with batch update.
 
                     - key: Component type name to be updated in batch.
@@ -760,6 +801,13 @@ class PowerGridModel:
                               compressed sparse structure.
                               https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html
                             - data: 1D numpy structured array in flat.
+                Or a list of such dictionaries (batch datasets) to represent multiple dimensions of cartesian product.
+                The calculation core will interpret these datasets as a cartesian product of all the scenarios.
+                Each batch dataset in the list represents one dimension of the cartesian product.
+                The output will then have row size equal to the product of the batch sizes of all these datasets,
+                in 1D flat structure.
+                E.g., if you have three batch datasets with batch sizes 2, 3, and 4 respectively,
+                and the number of nodes is 5, the final output for nodes will have shape (2*3*4, 5).
             threading (int, optional): Applicable only for batch calculation.
 
                 - < 0: Sequential
@@ -802,7 +850,7 @@ class PowerGridModel:
             error_tolerance=error_tolerance,
             max_iterations=max_iterations,
             calculation_method=calculation_method,
-            update_data=(_map_to_component_types(update_data) if update_data is not None else None),
+            update_data=update_data,
             threading=threading,
             output_component_types=output_component_types,
             continue_on_batch_error=continue_on_batch_error,
@@ -850,7 +898,7 @@ class PowerGridModel:
         self,
         *,
         calculation_method: CalculationMethod | str = ...,
-        update_data: BatchDataset = ...,
+        update_data: BatchDataset | list[BatchDataset] = ...,
         threading: int = ...,
         output_component_types: None | set[ComponentTypeVar] | list[ComponentTypeVar] = ...,
         continue_on_batch_error: bool = ...,
@@ -862,7 +910,7 @@ class PowerGridModel:
         self,
         *,
         calculation_method: CalculationMethod | str = ...,
-        update_data: BatchDataset = ...,
+        update_data: BatchDataset | list[BatchDataset] = ...,
         threading: int = ...,
         output_component_types: ComponentAttributeFilterOptions = ...,
         continue_on_batch_error: bool = ...,
@@ -874,7 +922,7 @@ class PowerGridModel:
         self,
         *,
         calculation_method: CalculationMethod | str = ...,
-        update_data: BatchDataset = ...,
+        update_data: BatchDataset | list[BatchDataset] = ...,
         threading: int = ...,
         output_component_types: ComponentAttributeMappingDict = ...,
         continue_on_batch_error: bool = ...,
@@ -885,7 +933,7 @@ class PowerGridModel:
         self,
         *,
         calculation_method: CalculationMethod | str = CalculationMethod.iec60909,
-        update_data: BatchDataset | None = None,
+        update_data: BatchDataset | list[BatchDataset] | None = None,
         threading: int = -1,
         output_component_types: ComponentAttributeMapping = None,
         continue_on_batch_error: bool = False,
@@ -900,6 +948,7 @@ class PowerGridModel:
             calculation_method (an enumeration): Use the iec60909 standard.
             update_data:
                 None: calculate a short circuit once with the current model attributes.
+
                 Or a dictionary for batch calculation with batch update
 
                     - key: Component type name to be updated in batch
@@ -916,6 +965,13 @@ class PowerGridModel:
                               compressed sparse structure.
                               https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html
                             - data: 1D numpy structured array in flat.
+                Or a list of such dictionaries (batch datasets) to represent multiple dimensions of cartesian product.
+                The calculation core will interpret these datasets as a cartesian product of all the scenarios.
+                Each batch dataset in the list represents one dimension of the cartesian product.
+                The output will then have row size equal to the product of the batch sizes of all these datasets,
+                in 1D flat structure.
+                E.g., if you have three batch datasets with batch sizes 2, 3, and 4 respectively,
+                and the number of nodes is 5, the final output for nodes will have shape (2*3*4, 5).
             threading (int, optional): Applicable only for batch calculation.
 
                 - < 0: Sequential
@@ -957,7 +1013,7 @@ class PowerGridModel:
         """
         return self._calculate_short_circuit(
             calculation_method=calculation_method,
-            update_data=(_map_to_component_types(update_data) if update_data is not None else None),
+            update_data=update_data,
             threading=threading,
             output_component_types=output_component_types,
             continue_on_batch_error=continue_on_batch_error,
@@ -966,4 +1022,4 @@ class PowerGridModel:
         )
 
     def __del__(self):
-        pgc.destroy_model(self._model_ptr)
+        get_pgc().destroy_model(self._model_ptr)

@@ -21,6 +21,7 @@
 #include <boost/graph/compressed_sparse_row_graph.hpp>
 
 #include <algorithm>
+#include <compare>
 #include <functional>
 #include <numeric>
 #include <optional>
@@ -62,10 +63,10 @@ struct TrafoGraphEdge {
     } // thanks boost
 
     auto constexpr operator<=>(TrafoGraphEdge const& other) const {
-        if (auto cmp = weight <=> other.weight; cmp != 0) { // NOLINT(modernize-use-nullptr)
+        if (auto cmp = weight <=> other.weight; std::is_neq(cmp)) {
             return cmp;
         }
-        if (auto cmp = regulated_idx.group <=> other.regulated_idx.group; cmp != 0) { // NOLINT(modernize-use-nullptr)
+        if (auto cmp = regulated_idx.group <=> other.regulated_idx.group; std::is_neq(cmp)) {
             return cmp;
         }
         return regulated_idx.pos <=> other.regulated_idx.pos;
@@ -239,6 +240,11 @@ inline auto retrieve_regulator_info(State const& state) -> RegulatedObjects {
     return regulated_objects;
 }
 
+template <typename F> inline void for_all_vertices(TransformerGraph const& graph, F&& func) {
+    BGL_FORALL_VERTICES(v, graph, TransformerGraph) { func(v); }
+    capturing::into_the_void(std::forward<F>(func));
+}
+
 template <main_core::main_model_state_c State>
 inline auto build_transformer_graph(State const& state) -> TransformerGraph {
     TrafoGraphEdges edges;
@@ -253,7 +259,7 @@ inline auto build_transformer_graph(State const& state) -> TransformerGraph {
                                  edge_props.cbegin(),
                                  static_cast<TrafoGraphIdx>(state.components.template size<Node>())};
 
-    BGL_FORALL_VERTICES(v, trafo_graph, TransformerGraph) { trafo_graph[v].is_source = false; }
+    for_all_vertices(trafo_graph, [&trafo_graph](auto const& v) { trafo_graph[v].is_source = false; });
 
     // Mark sources
     for (auto const& source : state.components.template citer<Source>()) {
@@ -297,11 +303,11 @@ inline bool is_unreachable(EdgeWeight edge_res) { return edge_res == infty; }
 
 inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgeProperties {
     std::vector<EdgeWeight> vertex_distances(boost::num_vertices(graph), infty);
-    BGL_FORALL_VERTICES(v, graph, TransformerGraph) {
+    for_all_vertices(graph, [&graph, &vertex_distances](auto const& v) {
         if (graph[v].is_source) {
             process_edges_dijkstra(v, vertex_distances, graph);
         }
-    }
+    });
 
     TrafoGraphEdgeProperties result;
     BGL_FORALL_EDGES(e, graph, TransformerGraph) {
@@ -350,7 +356,7 @@ inline auto rank_transformers(TrafoGraphEdgeProperties const& w_trafo_list) -> R
     auto sorted_trafos = w_trafo_list;
 
     std::ranges::sort(sorted_trafos,
-                      [](TrafoGraphEdge const& a, TrafoGraphEdge const& b) { return a.weight < b.weight; });
+                      [](TrafoGraphEdge const& x, TrafoGraphEdge const& y) { return x.weight < y.weight; });
 
     RankedTransformerGroups groups;
     auto previous_weight = std::numeric_limits<EdgeWeight>::lowest();
@@ -531,9 +537,9 @@ inline TapRegulatorRef<TransformerTypes...> regulator_mapping(State const& state
                               .transformer = {std::cref(transformer), transformer_index_, topology_index}};
         }...};
 
-    for (Idx idx = 0; idx < static_cast<Idx>(n_types); ++idx) {
-        if (is_type[idx](transformer_index)) {
-            return transformer_mappings[idx](state, transformer_index);
+    for (auto const& [current_is_type, transformer_mapping] : std::views::zip(is_type, transformer_mappings)) {
+        if (current_is_type(transformer_index)) {
+            return transformer_mapping(state, transformer_index);
         }
     }
     throw UnreachableHit{"TapPositionOptimizer::regulator_mapping", "Transformer must be regulated"};
@@ -800,6 +806,10 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             return tap_pos;
         }
 
+        void rewind(IntS tap_pos, IntS tap_min, IntS tap_max) {
+            reset(tap_pos, tap_min, tap_max, control_at_tap_side_);
+        }
+
       private:
         void reset(IntS tap_pos, IntS tap_min, IntS tap_max, bool control_at_tap_side) {
             last_down_ = false;
@@ -906,7 +916,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             auto result = optimize(state, order, method);
             update_state(cache);
             return result;
-        } catch (...) {
+        } catch (...) { // NOSONAR(S2738)
             update_state(cache);
             throw;
         }
@@ -917,8 +927,8 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
   private:
     void opt_prep(std::vector<std::vector<RegulatedTransformer>> const& regulator_order) {
-        constexpr auto tap_pos_range_cmp = [](RegulatedTransformer const& a, RegulatedTransformer const& b) {
-            return a.transformer.tap_range() < b.transformer.tap_range();
+        constexpr auto tap_pos_range_cmp = [](RegulatedTransformer const& x, RegulatedTransformer const& y) {
+            return x.transformer.tap_range() < y.transformer.tap_range();
         };
 
         bs_prep(regulator_order);
@@ -1081,10 +1091,10 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
             auto const cmp = node_state <=> param;
             auto new_tap_pos = [&transformer, &cmp, &control_at_tap_side] {
-                if (cmp > 0) { // NOLINT(modernize-use-nullptr)
+                if (std::is_gt(cmp)) {
                     return one_step_control_voltage_down(transformer, control_at_tap_side);
                 }
-                if (cmp < 0) { // NOLINT(modernize-use-nullptr)
+                if (std::is_lt(cmp)) {
                     return one_step_control_voltage_up(transformer, control_at_tap_side);
                 }
                 return transformer.tap_pos();
@@ -1122,8 +1132,8 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             auto const cmp = node_state <=> param;
             if (auto new_tap_pos =
                     [&cmp, strategy_max, &current_bs] {
-                        if (cmp != 0) {                                        // NOLINT(modernize-use-nullptr)
-                            current_bs.propose_new_pos(strategy_max, cmp > 0); // NOLINT(modernize-use-nullptr)
+                        if (std::is_neq(cmp)) {
+                            current_bs.propose_new_pos(strategy_max, std::is_gt(cmp));
                         }
                         return current_bs.get_current_tap();
                     }();
@@ -1134,7 +1144,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
                 return;
             }
 
-            if (strategy_ == OptimizerStrategy::fast_any) {
+            if (strategy_ == OptimizerStrategy::fast_any && std::is_eq(cmp)) {
                 tap_changed = false;
                 return;
             }
@@ -1143,6 +1153,16 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             current_bs.recalibrate(strategy_max);
 
             IntS const tap_pos = current_bs.repropose_tap(strategy_max, previous_down, tap_changed);
+            // The new same tap pos is only valid in a cmp == equivalent situation
+            // in other words, a same tap pos in a non equivalent situation means
+            // the binary search cannot find a valid tap position
+            // _tap_changed_ is an aggregated flag with _inevitable_run_, so we can not use it here
+            if (tap_pos == transformer.tap_pos() && cmp != 0 && !current_bs.get_end_of_bs()) {
+                current_bs.rewind(tap_pos, transformer.tap_min(), transformer.tap_max());
+                throw MaxIterationReached{std::format(
+                    "TapPositionOptimizer::binary_search: no valid tap position found between tap {} and tap {}",
+                    transformer.tap_min(), transformer.tap_max())};
+            }
             add_tap_pos_update(tap_pos, transformer, update_data);
         };
         regulator.transformer.apply(adjust_transformer_);

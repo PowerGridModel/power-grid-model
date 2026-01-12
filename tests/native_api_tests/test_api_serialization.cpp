@@ -7,7 +7,15 @@
 #include <power_grid_model_c/dataset_definitions.h>
 
 #include <doctest/doctest.h>
+
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4702) // Contains potentially unreachable code
+#endif                          // _MSC_VER
 #include <nlohmann/json.hpp>
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif // _MSC_VER
 
 #include <cmath>
 #include <limits>
