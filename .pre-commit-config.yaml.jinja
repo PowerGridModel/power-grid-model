@@ -48,3 +48,9 @@ repos:
     hooks:
     - id: markdownlint
       args: ["--fix"]
+  # format .json and .jsonc files
+  - repo: https://github.com/biomejs/pre-commit  # outside pypi 
+    rev: v2.3.11
+    hooks:
+    # configuration is located in biome.jsonc
+    - id: biome-format

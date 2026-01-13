@@ -58,6 +58,12 @@ jobs:
           echo "Running markdownlint"
           markdownlint --fix .
 
+      - name: Install and run Biome
+        run: |
+          npm install -g @biomejs/biome@2.3.11
+          echo "Running Biome"
+          biome format --write --files-ignore-unknown=true --no-errors-on-unmatched
+
       - name: If needed raise error
         run: |
           if [[ `git status --porcelain --untracked-files=no` ]]; then

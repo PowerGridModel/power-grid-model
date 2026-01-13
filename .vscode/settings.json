@@ -39,5 +39,13 @@
         "editor.rulers": [
             120
         ]
+    },
+
+    // can be removed when Biome is used in VS Code as formatter
+    "json.format.keepLines": true,
+    "[json][jsonc]": {
+        "editor.tabSize": 2,
+        "editor.insertSpaces": true,
+        "editor.detectIndentation": false
     }
 }
