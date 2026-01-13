@@ -92,34 +92,22 @@
     {
       "name": "msvc-debug",
       "displayName": "Debug (MSVC)",
-      "inherits": [
-        "msvc-base",
-        "debug"
-      ]
+      "inherits": ["msvc-base", "debug"]
     },
     {
       "name": "msvc-release",
       "displayName": "Release (MSVC)",
-      "inherits": [
-        "msvc-base",
-        "release"
-      ]
+      "inherits": ["msvc-base", "release"]
     },
     {
       "name": "clang-cl-debug",
       "displayName": "Debug (Clang CL)",
-      "inherits": [
-        "clang-cl-base",
-        "debug"
-      ]
+      "inherits": ["clang-cl-base", "debug"]
     },
     {
       "name": "clang-cl-release",
       "displayName": "Release (Clang CL)",
-      "inherits": [
-        "clang-cl-base",
-        "release"
-      ]
+      "inherits": ["clang-cl-base", "release"]
     },
     {
       "name": "clang-base",
@@ -139,43 +127,23 @@
     },
     {
       "name": "ci-clang-debug",
-      "inherits": [
-        "unix-sanitizer",
-        "clang-base",
-        "debug"
-      ]
+      "inherits": ["unix-sanitizer", "clang-base", "debug"]
     },
     {
       "name": "ci-clang-release",
-      "inherits": [
-        "unix-sanitizer",
-        "clang-base",
-        "release"
-      ]
+      "inherits": ["unix-sanitizer", "clang-base", "release"]
     },
     {
       "name": "ci-gcc-debug",
-      "inherits": [
-        "unix-sanitizer",
-        "gcc-base",
-        "debug"
-      ]
+      "inherits": ["unix-sanitizer", "gcc-base", "debug"]
     },
     {
       "name": "ci-gcc-release",
-      "inherits": [
-        "unix-sanitizer",
-        "gcc-base",
-        "release"
-      ]
+      "inherits": ["unix-sanitizer", "gcc-base", "release"]
     },
     {
       "name": "ci-sonar",
-      "inherits": [
-        "unix-base",
-        "clang-base",
-        "debug"
-      ]
+      "inherits": ["unix-base", "clang-base", "debug"]
     }
   ],
   "buildPresets": [

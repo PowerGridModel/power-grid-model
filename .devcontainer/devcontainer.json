@@ -8,9 +8,7 @@
   "overrideCommand": true,
 
   // cache pip installs
-  "mounts": [
-    "type=volume,source=dev-pip-cache,target=/root/.cache/uv"
-  ],
+  "mounts": ["type=volume,source=dev-pip-cache,target=/root/.cache/uv"],
 
   "postCreateCommand": "uv sync && uv run pre-commit install || true",
 
