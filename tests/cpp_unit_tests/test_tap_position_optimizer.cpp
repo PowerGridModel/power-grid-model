@@ -11,8 +11,12 @@
 #include <doctest/doctest.h>
 
 #include <algorithm>
+#include <concepts>
+#include <functional>
+#include <limits>
 #include <map>
-#include <ranges>
+#include <optional>
+#include <tuple>
 
 TEST_SUITE_BEGIN("Automatic Tap Changer");
 

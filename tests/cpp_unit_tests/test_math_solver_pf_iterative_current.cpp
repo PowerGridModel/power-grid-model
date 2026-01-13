@@ -4,6 +4,7 @@
 
 #include "test_math_solver_pf.hpp"
 
+#include <power_grid_model/common/common.hpp>
 #include <power_grid_model/math_solver/iterative_current_pf_solver.hpp>
 
 #include <doctest/doctest.h>

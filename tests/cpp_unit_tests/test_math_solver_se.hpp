@@ -8,6 +8,7 @@
 
 #include "test_math_solver_common.hpp"
 
+#include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/dummy_logging.hpp>
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/math_solver/sparse_lu_solver.hpp>

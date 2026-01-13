@@ -4,7 +4,10 @@
 
 #include "test_math_solver_common.hpp"
 
-#include <power_grid_model/math_solver/short_circuit_solver.hpp>
+#include <power_grid_model/math_solver/short_circuit_solver.hpp> // NOLINT(misc-include-cleaner)
+
+#include <cstddef>
+#include <limits>
 
 namespace power_grid_model::math_solver {
 
