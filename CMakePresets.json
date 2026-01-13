@@ -14,11 +14,12 @@
       "environment": {
         "PLATFORM_C_FLAGS": "",
         "PLATFORM_CXX_FLAGS": "$env{PLATFORM_C_FLAGS}",
+        "PLATFORM_LINKER_FLAGS": "",
         "COMPILER_C_FLAGS": "",
         "COMPILER_CXX_FLAGS": "$env{COMPILER_C_FLAGS}",
         "CFLAGS": "$penv{CFLAGS} $env{PLATFORM_C_FLAGS} $env{COMPILER_C_FLAGS} $env{COVERAGE_FLAGS} $env{SANITIZER_FLAGS}",
         "CXXFLAGS": "$penv{CXXFLAGS} $env{PLATFORM_CXX_FLAGS} $env{COMPILER_CXX_FLAGS} $env{COVERAGE_FLAGS} $env{SANITIZER_FLAGS}",
-        "LDFLAGS": "$env{SANITIZER_FLAGS}"
+        "LDFLAGS": "$env{PLATFORM_LINKER_FLAGS} $env{SANITIZER_FLAGS}"
       },
       "architecture": {
         "value": "x64",
@@ -334,6 +335,13 @@
       },
       "cacheVariables": {
         "PGM_ENABLE_DEV_BUILD": "OFF"
+      }
+    },
+    {
+      "name": "ci-apple-clang-reproducible",
+      "inherits": "ci-clang-reproducible",
+      "environment": {
+        "PLATFORM_LINKER_FLAGS": "$penv{PLATFORM_LINKER_FLAGS} -Wl,-no_uuid"
       }
     }
   ],

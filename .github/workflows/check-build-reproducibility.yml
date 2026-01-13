@@ -129,7 +129,7 @@ jobs:
     runs-on: macos-latest
     env:
       CMAKE_PREFIX_PATH: /usr/local
-      PRESET: ci-clang-reproducible
+      PRESET: ci-apple-clang-reproducible
 
     steps:
       - uses: actions/checkout@v6
