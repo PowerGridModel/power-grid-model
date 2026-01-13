@@ -118,7 +118,6 @@ jobs:
           pgm-build-setup-ga-ci
  
       - uses: ./.github/actions/enable-msvc
-        if: runner.os == 'Windows'
     
       - name: Build and test
         run: |
