@@ -8,6 +8,7 @@
 
 #include <cassert>
 #include <mutex>
+#include <utility>
 
 namespace power_grid_model::common::logging {
 
