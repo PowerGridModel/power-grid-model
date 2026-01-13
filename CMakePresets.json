@@ -437,6 +437,10 @@
     {
       "name": "ci-clang-reproducible",
       "configurePreset": "ci-clang-reproducible"
+    },
+    {
+      "name": "ci-apple-clang-reproducible",
+      "configurePreset": "ci-apple-clang-reproducible"
     }
   ],
   "testPresets": [
