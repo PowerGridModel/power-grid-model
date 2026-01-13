@@ -66,7 +66,11 @@ jobs:
 
       - name: Compare builds
         run: |
-          diff -qr ${PATH1} ${PATH2} || (echo "Build mismatch detected" && exit 1)
+          diff -qr ${PATH1} ${PATH2}
+          if [ $? -ne 0 ]; then
+            echo "Build mismatch detected"
+            exit 1
+          fi
           echo "Builds are identical"
 
   check-reproducibility-c-windows:
@@ -164,11 +168,9 @@ jobs:
 
       - name: Compare builds
         run: |
-          hash1="$(sha1sum ./install/${{ env.PRESET }}-1/lib/libpower_grid_model_c.dylib)"
-          hash2="$(sha1sum ./install/${{ env.PRESET }}-2/lib/libpower_grid_model_c.dylib)"
-          if [ "$hash1" != "$hash2" ]; then
+          diff -qr ${PATH1} ${PATH2}
+          if [ $? -ne 0 ]; then
             echo "Build mismatch detected"
             exit 1
-          else
-            echo "Builds are identical"
           fi
+          echo "Builds are identical"
