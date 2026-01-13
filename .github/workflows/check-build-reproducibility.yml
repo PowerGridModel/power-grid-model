@@ -66,14 +66,8 @@ jobs:
 
       - name: Compare builds
         run: |
-          hash1="$(sha1sum ./install/${{ env.PRESET }}-1/lib/libpower_grid_model_c.so)"
-          hash2="$(sha1sum ./install/${{ env.PRESET }}-2/lib/libpower_grid_model_c.so)"
-          if [ "$hash1" != "$hash2" ]; then
-            echo "Build mismatch detected"
-            exit 1
-          else
-            echo "Builds are identical"
-          fi
+          diff -qr ${PATH1} ${PATH2} || (echo "Build mismatch detected" && exit 1)
+          echo "Builds are identical"
 
   check-reproducibility-c-windows:
     runs-on: windows-latest
