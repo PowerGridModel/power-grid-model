@@ -341,7 +341,11 @@
       "name": "ci-apple-clang-reproducible",
       "inherits": "ci-clang-reproducible",
       "environment": {
-        "PLATFORM_LINKER_FLAGS": "$penv{PLATFORM_LINKER_FLAGS} -Wl,-no_uuid"
+        "SOURCE_DATE_EPOCH": "1",
+        "DSYMUTIL": ""
+      },
+      "cacheVariables": {
+        "CMAKE_SHARED_LINKER_FLAGS": "-reproducible -no_uuid -S"
       }
     }
   ],
