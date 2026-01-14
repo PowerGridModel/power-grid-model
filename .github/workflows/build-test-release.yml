@@ -118,14 +118,9 @@ jobs:
           pgm-build-setup-ga-ci
  
       - uses: ./.github/actions/enable-msvc
-        if: runner.os == 'Windows'
     
       - name: Build and test
         run: |
-          # Resolve dirty PATH environment
-          # TODO(mgovers): Remove after https://github.com/actions/runner-images/issues/10001 is resolved
-          $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -ne 'C:\Program Files\LLVM\bin' }) -join ';'
-
           # generate cmake cache
           cmake --preset ${{ env.PRESET }} -DCMAKE_PREFIX_PATH=C:\conda_envs\cpp_pkgs\Library; if(!$?) { Exit $LASTEXITCODE }
           # build

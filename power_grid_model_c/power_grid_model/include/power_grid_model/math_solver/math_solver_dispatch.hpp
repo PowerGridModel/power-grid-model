@@ -58,7 +58,7 @@ class MathSolverDispatcher {
         template <template <class> class MathSolverType>
         constexpr Config(math_solver_tag<MathSolverType> /* unused */)
             : create{[](std::shared_ptr<MathModelTopology const> const& topo_ptr) -> MathSolverBase<sym>* {
-                  return new MathSolverType<sym>{topo_ptr};
+                  return new MathSolverType<sym>{topo_ptr}; // NOSONAR(S5025)
               }} {}
 
         std::add_pointer_t<MathSolverBase<sym>*(std::shared_ptr<MathModelTopology const> const&)> create;

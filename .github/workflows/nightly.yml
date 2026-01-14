@@ -22,6 +22,9 @@ jobs:
     with:
       create_release: false
 
+  check-build-reproducibility:
+    uses: "./.github/workflows/check-build-reproducibility.yml"
+
   check-code-quality:
     uses: "./.github/workflows/check-code-quality.yml"
 
