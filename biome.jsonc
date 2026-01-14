@@ -8,11 +8,19 @@
     "includes": [
       "**/*.json",
       "**/*.jsonc",
-      "!docs/**/*.json",
+
+      "!docs",
       "!tests/data/**/input.json",
       "!tests/data/**/*_output*.json",
-      "!tests/data/**/update_batch.json"
+      "!tests/data/**/update_batch.json",
+      "!tests/unit/deprecated/data"
     ]
+  },
+  // ignore files specified in .gitignore
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
   },
   "json": {
     "formatter": {
