@@ -216,6 +216,33 @@ Hence, they can be constructed by PGM output attributes in the following way:
   The `side` here can be `from`, `to` for {hoverxreftooltip}`user_manual/components:Branch`es, `1`, `2`, `3` for
   {hoverxreftooltip}`user_manual/components:Branch3`s.
 
+#### Symmetric vs asymmetric calculations
+
+Power-grid-model can solve the grid either as a balanced single-phase equivalent (symmetric) or in full three-phase
+detail (asymmetric).
+The option affects which attributes are required and how results are exposed.
+
+- **Symmetric calculations (`symmetric=True`, default):** Assume a perfectly balanced three-phase system so every phase
+  shares the same voltage and current.
+  The solver builds a positive-sequence network using `r1`, `x1`, `c1`, … parameters and collapses any asymmetric
+  appliance to a single equivalent (asymmetric loads/generators are averaged across phases as described in
+  [Component Type Hierarchy and Graph Data Model](./data-model.md#symmetry-of-components-and-calculation)).
+  For symmetric calculations voltages are given as line-to-line and the output contains single values for all output
+  variables.
+- **Asymmetric calculations (`symmetric=False` or any non-three-phase fault):** Builds a full $abc$ nodal admittance
+  matrix and solves each phase separately.
+  Next to the positive-sequence parameters, the model now also needs the zero-sequence parameters (e.g. `r0`, `x0`,
+  `c0`), or per-phase parameters (`r_matrix` & `x_matrix`) for `asym_line`; symmetric components are expanded by evenly
+  splitting their totals across the three phases.
+  For asymmetric calculations voltages are given as line-to-neutral and output contains arrays with values per phase
+  for all output variables.
+
+```{note}
+For short-circuit calculations, a three-phase `fault_type` is calculated with a symmetric calculation, while any other
+`fault_type` (e.g. single- or two-phase faults) automatically triggers the asymmetric calculation.
+Outputs for short circuit calculations always give asymmetric output, independent of the fault type present.
+```
+
 ### Power flow algorithms
 
 Two types of power flow algorithms are implemented in power-grid-model; iterative algorithms (Newton-Raphson / Iterative
@@ -1063,6 +1090,28 @@ for component_idx, scenario in enumerate(line_update):
     component['to_status'] = 0
 
 independent_update_data = {'line': line_update}
+```
+
+### Cartesian product of Batch Datasets
+
+Consider an example of running a contingency analysis with a timeseries data.
+Or maybe probablistic data along with timeseries data.
+In such simulations, it is required to perform a loadflow on a cartesian product of situations.
+This is possible to do via providing the `update_data` with a list of multiple batch datasets.
+ie. a list[{py:class}`BatchDataset <power_grid_model.data_types.BatchDataset>`]
+The datasets can be of row based or columnar format.
+The output of such calculation would be flattened with dimension $scenarios * components$.
+
+#### Example: Cartesian product of datasets
+
+```py
+# 5 scenarios of timeseries
+load_update = initialize_array('update', 'sym_load', (5, 1))
+# (Fill load_update)
+line_update = initialize_array('update', 'line', (3, 1))
+# (Fill line_update)
+
+product_update_data = [{'line': load_update}, {'sym_load': line_udpate }]
 ```
 
 ### Parallel Computing

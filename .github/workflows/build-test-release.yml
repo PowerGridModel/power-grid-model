@@ -85,13 +85,14 @@ jobs:
           sudo ln -s /usr/bin/gcc-14 /usr/local/bin/gcc
           sudo ln -s /usr/bin/g++-14 /usr/local/bin/g++
 
-      - name: Enable brew
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+      
+      - name: Install pgm-build-dependencies
         run: |
-          echo "/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
-      - name: Install C++ dependencies
-        run: |
-          brew update
-          brew install boost eigen nlohmann-json msgpack-cxx doctest
+          uv tool install https://github.com/PowerGridModel/pgm-build-dependencies/releases/latest/download/pgm_build_dependencies-0.1.0-py3-none-any.whl
+          pgm-build-setup-ga-ci
+
       - name: Build and test
         run: ./build.sh -p ${{ env.PRESET }} -e -i -t
 
@@ -108,21 +109,13 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Activate conda
-        uses: conda-incubator/setup-miniconda@v3  # install miniforge instead
-        with:
-          miniforge-version: latest
-          channels: conda-forge
-          conda-remove-defaults: "true"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
       
-      - name: List conda
+      - name: Install pgm-build-dependencies
         run: |
-          conda info
-          conda list
-
-      - name: Install conda environment
-        run: |
-          conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge libboost-headers eigen nlohmann_json msgpack-cxx doctest
+          uv tool install https://github.com/PowerGridModel/pgm-build-dependencies/releases/latest/download/pgm_build_dependencies-0.1.0-py3-none-any.whl
+          pgm-build-setup-ga-ci
  
       - uses: ./.github/actions/enable-msvc
         if: runner.os == 'Windows'
@@ -166,10 +159,13 @@ jobs:
         with:
           xcode-version: latest-stable
 
-      - name: Install cpp dependencies
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+      
+      - name: Install pgm-build-dependencies
         run: |
-          brew update
-          brew install ninja boost eigen nlohmann-json msgpack-cxx doctest
+          uv tool install https://github.com/PowerGridModel/pgm-build-dependencies/releases/latest/download/pgm_build_dependencies-0.1.0-py3-none-any.whl
+          pgm-build-setup-ga-ci
 
       - name: Build and test
         run: ./build.sh -p ${{ env.PRESET }} -e -i -t

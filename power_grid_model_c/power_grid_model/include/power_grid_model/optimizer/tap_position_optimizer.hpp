@@ -241,7 +241,8 @@ inline auto retrieve_regulator_info(State const& state) -> RegulatedObjects {
 }
 
 template <typename F> inline void for_all_vertices(TransformerGraph const& graph, F&& func) {
-    BGL_FORALL_VERTICES(v, graph, TransformerGraph) { std::forward<F>(func)(v); }
+    BGL_FORALL_VERTICES(v, graph, TransformerGraph) { func(v); }
+    capturing::into_the_void(std::forward<F>(func));
 }
 
 template <main_core::main_model_state_c State>
@@ -915,7 +916,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
             auto result = optimize(state, order, method);
             update_state(cache);
             return result;
-        } catch (...) {
+        } catch (...) { // NOSONAR(S2738)
             update_state(cache);
             throw;
         }
