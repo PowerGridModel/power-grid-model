@@ -12,6 +12,7 @@ include("cmake/pgm_version.cmake")
 project(power_grid_model VERSION ${PGM_VERSION})
 
 option(PGM_ENABLE_DEV_BUILD "Enable developer build (e.g.: tests)" OFF)
+option(PGM_ENABLE_HARDENING "Enable compile and link time hardening options" ON)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

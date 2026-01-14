@@ -45,7 +45,7 @@
       "description": "Target Unix platform.",
       "hidden": true,
       "environment": {
-        "PLATFORM_C_FLAGS": "-Wall -Wextra -pedantic -Werror -Wno-deprecated-declarations",
+        "PLATFORM_C_FLAGS": "-Wall -Wextra -pedantic -Werror -Wno-deprecated-declarations -fsanitize-minimal-runtime",
         "PLATFORM_CXX_FLAGS": "$env{PLATFORM_C_FLAGS} -Wno-deprecated-copy"
       },
       "condition": {
@@ -109,7 +109,7 @@
     {
       "name": "unix-sanitizer",
       "environment": {
-        "SANITIZER_FLAGS": "-fstack-protector -fsanitize=address,pointer-compare,undefined"
+        "SANITIZER_FLAGS": "-fstack-protector -fsanitize=address,pointer-compare,undefined -fno-sanitize-minimal-runtime"
       },
       "inherits": "unix-base",
       "hidden": true
