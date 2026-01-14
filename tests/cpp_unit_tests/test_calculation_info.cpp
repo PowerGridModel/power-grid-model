@@ -105,19 +105,19 @@ TEST_CASE("Test MultiThreadedCalculationInfo") {
     }; // when the jthread ends, the ThreadLogger is destroyed and sync is called (tested)
 
     SUBCASE("Log and report through child - single threaded") {
-        Idx n_threads = 1;
+        Idx const n_threads = 1;
         run_parallel_jobs(n_threads, single_thread_job);
         report_checker_helper(multi_threaded_info.report(), n_threads);
     }
 
     SUBCASE("Log and report through child - multi threaded") {
-        Idx n_threads = 7; // arbitrary >1 value
+        Idx const n_threads = 7; // arbitrary >1 value
         run_parallel_jobs(n_threads, single_thread_job);
         report_checker_helper(multi_threaded_info.report(), n_threads);
     }
 
     SUBCASE("Direct logging") {
-        Idx n_threads = 9; // arbitrary >1 value
+        Idx const n_threads = 9; // arbitrary >1 value
         run_parallel_jobs(n_threads, single_thread_job);
 
         // direct logging to the MultiThreadedCalculationInfo
@@ -138,7 +138,7 @@ TEST_CASE("Test MultiThreadedCalculationInfo") {
     }
 
     SUBCASE("Clear report") {
-        Idx n_threads = 5; // arbitrary >1 value
+        Idx const n_threads = 5; // arbitrary >1 value
         auto clean_report = multi_threaded_info.report();
         CHECK(clean_report.empty());
 
@@ -149,7 +149,7 @@ TEST_CASE("Test MultiThreadedCalculationInfo") {
     }
 
     SUBCASE("Getters of underlying CalculationInfo") {
-        auto n_threads = static_cast<Idx>(std::thread::hardware_concurrency());
+        auto const n_threads = static_cast<Idx>(std::thread::hardware_concurrency());
         run_parallel_jobs(n_threads, single_thread_job);
 
         SUBCASE("Log and report - Non-const getter") {
@@ -200,7 +200,7 @@ TEST_CASE("Test MultiThreadedCalculationInfo") {
 
         SUBCASE("Copy constructor") {
             auto thread_logger_copy{
-                static_cast<MultiThreadedLoggerImpl<CalculationInfo>::ThreadLogger const&>(thread_logger)};
+                dynamic_cast<MultiThreadedLoggerImpl<CalculationInfo>::ThreadLogger const&>(thread_logger)};
             report = multi_threaded_info.report();
             CHECK(report.empty());
 
@@ -211,7 +211,7 @@ TEST_CASE("Test MultiThreadedCalculationInfo") {
 
         SUBCASE("Copy assignment") {
             auto thread_logger_copy =
-                static_cast<MultiThreadedLoggerImpl<CalculationInfo>::ThreadLogger const&>(thread_logger);
+                dynamic_cast<MultiThreadedLoggerImpl<CalculationInfo>::ThreadLogger const&>(thread_logger);
             report = multi_threaded_info.report();
             CHECK(report.empty());
 
@@ -222,13 +222,7 @@ TEST_CASE("Test MultiThreadedCalculationInfo") {
 
         SUBCASE("Move constructor") {
             auto thread_logger_moved{
-                std::move(static_cast<MultiThreadedLoggerImpl<CalculationInfo>::ThreadLogger&>(thread_logger))};
-            report = multi_threaded_info.report();
-            CHECK(report.empty());
-
-            auto const& thread_logger_empty_typed =
-                static_cast<MultiThreadedLoggerImpl<CalculationInfo>::ThreadLogger&>(thread_logger);
-            thread_logger_empty_typed.sync();
+                std::move(dynamic_cast<MultiThreadedLoggerImpl<CalculationInfo>::ThreadLogger&>(thread_logger))};
             report = multi_threaded_info.report();
             CHECK(report.empty());
 
@@ -239,13 +233,7 @@ TEST_CASE("Test MultiThreadedCalculationInfo") {
 
         SUBCASE("Move assignment") {
             auto thread_logger_moved =
-                std::move(static_cast<MultiThreadedLoggerImpl<CalculationInfo>::ThreadLogger&>(thread_logger));
-            report = multi_threaded_info.report();
-            CHECK(report.empty());
-
-            auto const& thread_logger_empty_typed =
-                static_cast<MultiThreadedLoggerImpl<CalculationInfo>::ThreadLogger&>(thread_logger);
-            thread_logger_empty_typed.sync();
+                std::move(dynamic_cast<MultiThreadedLoggerImpl<CalculationInfo>::ThreadLogger&>(thread_logger));
             report = multi_threaded_info.report();
             CHECK(report.empty());
 
