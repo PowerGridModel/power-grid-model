@@ -1,0 +1,83 @@
+{
+    "version": "1.0",
+    "type": "input",
+    "is_batch": false,
+    "attributes": {},
+    "data": {
+        "node": [
+            {
+                "id": 1,
+                "u_rated": 220000.0
+            },
+            {
+                "id": 2,
+                "u_rated": 110000.0
+            }
+        ],
+        "transformer": [
+            {
+                "id": 3,
+                "from_node": 1,
+                "to_node": 2,
+                "from_status": 1,
+                "to_status": 1,
+                "u1": 231000.0,
+                "u2": 115000.0,
+                "sn": 1000000000.0,
+                "uk": 0.1,
+                "pk": 10000.0,
+                "i0": 0.01,
+                "p0": 1000.0,
+                "winding_from": 1,
+                "winding_to": 1,
+                "clock": 0,
+                "tap_side": 0,
+                "tap_pos": 0,
+                "tap_min": -10,
+                "tap_max": 10,
+                "tap_size": 1000.0
+            }
+        ],
+        "sym_gen": [
+            {
+                "id": 4,
+                "node": 2,
+                "status": 1,
+                "type": 0,
+                "p_specified": 1000e6,
+                "q_specified": 10e6
+            }
+        ],
+        "voltage_regulator": [
+            {
+                "id": 5,
+                "regulated_object": 4,
+                "status": 0,
+                "u_ref": 1.05
+            }
+        ],
+        "transformer_tap_regulator": [
+            {
+                "id": 6,
+                "regulated_object": 3,
+                "status": 1,
+                "control_side": 1,
+                "u_set": 10600,
+                "u_band": 1000,
+                "line_drop_compensation_r": 0,
+                "line_drop_compensation_x": 0
+            }
+        ],
+        "source": [
+            {
+                "id": 7,
+                "node": 1,
+                "status": 1,
+                "u_ref": 1.05,
+                "sk": 1e40,
+                "rx_ratio": 0.1,
+                "z01_ratio": 1.0
+            }
+        ]
+    }
+}

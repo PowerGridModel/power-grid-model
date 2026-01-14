@@ -204,8 +204,16 @@
         "node": 3,
         "status": 1,
         "type": 0,
-        "p_specified": [3.0e6, 3.3e6, 3.7e6],
-        "q_specified": [3.7e6, 3.3e6, 3.0e6]
+        "p_specified": [
+          3.0e6,
+          3.3e6,
+          3.7e6
+        ],
+        "q_specified": [
+          3.7e6,
+          3.3e6,
+          3.0e6
+        ]
       }
     ],
     "voltage_regulator": [

@@ -166,7 +166,14 @@ template <class ModelType> void check_voltage_regulator_validity(typename ModelT
             // sources at the same node where a voltage regulator is connected are not allowed
             // TODO(figueroa1395): test this
             if (!math_topo->sources_per_bus.get_element_range(node_idx).empty()) {
-                throw UnsupportedVoltageRegulatorSourceCombinationError{node_id};
+                auto const& source_idxs = math_topo->sources_per_bus.get_element_range(node_idx);
+                for (Idx source_math_idx : source_idxs) {
+                    auto source_at_node = main_core::get_component<Source>(
+                        state.components, Idx2D{.group = state.components.template get_group_idx<Source>(), .pos = source_math_idx});
+                    if (source_at_node.status()) {
+                        throw UnsupportedVoltageRegulatorSourceCombinationError{node_id};
+                    }
+                }
             }
 
             std::unordered_set<double> u_refs_at_bus{};

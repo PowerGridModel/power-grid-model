@@ -1,0 +1,357 @@
+{
+  "version": "1.0",
+  "type": "input",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "node": [
+        {
+            "id": 10,
+            "u_rated": 220000.0
+        },
+        {
+            "id": 20,
+            "u_rated": 110000.0
+        },
+        {
+            "id": 30,
+            "u_rated": 110000.0
+        },
+        {
+            "id": 40,
+            "u_rated": 110000.0
+        },
+        {
+            "id": 50,
+            "u_rated": 110000.0
+        },
+        {
+            "id": 60,
+            "u_rated": 380000.0
+        }
+    ],
+    "line": [
+        {
+            "id": 71,
+            "from_node": 20,
+            "to_node": 30,
+            "from_status": 1,
+            "to_status": 1,
+            "r1": 0.25,
+            "x1": 2.0,
+            "c1": 1e-06,
+            "tan1": 0.0,
+            "i_n": 1000.0
+        },
+        {
+            "id": 72,
+            "from_node": 20,
+            "to_node": 40,
+            "from_status": 1,
+            "to_status": 1,
+            "r1": 0.25,
+            "x1": 2.0,
+            "c1": 1e-06,
+            "tan1": 0.0,
+            "i_n": 1000.0
+        },
+        {
+            "id": 73,
+            "from_node": 20,
+            "to_node": 50,
+            "from_status": 1,
+            "to_status": 1,
+            "r1": 0.25,
+            "x1": 2.0,
+            "c1": 1e-06,
+            "tan1": 0.0,
+            "i_n": 1000.0
+        },
+        {
+            "id": 74,
+            "from_node": 30,
+            "to_node": 50,
+            "from_status": 1,
+            "to_status": 1,
+            "r1": 0.25,
+            "x1": 2.0,
+            "c1": 1e-06,
+            "tan1": 0.0,
+            "i_n": 1000.0
+        },
+        {
+            "id": 75,
+            "from_node": 40,
+            "to_node": 50,
+            "from_status": 1,
+            "to_status": 1,
+            "r1": 0.25,
+            "x1": 2.0,
+            "c1": 1e-06,
+            "tan1": 0.0,
+            "i_n": 1000.0
+        }
+    ],
+    "transformer": [
+        {
+            "id": 81,
+            "from_node": 10,
+            "to_node": 20,
+            "from_status": 1,
+            "to_status": 1,
+            "u1": 231000.0,
+            "u2": 115000.0,
+            "sn": 1000000000.0,
+            "uk": 0.1,
+            "pk": 10000.0,
+            "i0": 0.01,
+            "p0": 1000.0,
+            "winding_from": 1,
+            "winding_to": 1,
+            "clock": 0,
+            "tap_side": 0,
+            "tap_pos": 0,
+            "tap_min": 0,
+            "tap_max": 0,
+            "tap_size": 1000.0
+        },
+        {
+            "id": 82,
+            "from_node": 50,
+            "to_node": 60,
+            "from_status": 1,
+            "to_status": 1,
+            "u1": 115000.0,
+            "u2": 405000.0,
+            "sn": 1000000000.0,
+            "uk": 0.1,
+            "pk": 10000.0,
+            "i0": 0.01,
+            "p0": 1000.0,
+            "winding_from": 1,
+            "winding_to": 1,
+            "clock": 0,
+            "tap_side": 0,
+            "tap_pos": 0,
+            "tap_min": 0,
+            "tap_max": 0,
+            "tap_size": 1000.0
+        }
+    ],
+    "shunt": [
+        {
+            "id": 14,
+            "node": 10,
+            "status": 1,
+            "g1": 0,
+            "b1": 0.0025
+        },
+        {
+            "id": 23,
+            "node": 20,
+            "status": 1,
+            "g1": 0,
+            "b1": 0.0025
+        },
+        {
+            "id": 43,
+            "node": 40,
+            "status": 1,
+            "g1": 0,
+            "b1": 0.0025
+        },
+        {
+            "id": 52,
+            "node": 40,
+            "status": 1,
+            "g1": 0,
+            "b1": 0.0025
+        },
+        {
+            "id": 53,
+            "node": 50,
+            "status": 1,
+            "g1": 0,
+            "b1": 0.0025
+        },
+        {
+            "id": 64,
+            "node": 60,
+            "status": 1,
+            "g1": 0,
+            "b1": 0.0025
+        }
+    ],
+    "sym_load": [
+        {
+            "id": 13,
+            "node": 10,
+            "status": 1,
+            "type": 0,
+            "p_specified": 50e6,
+            "q_specified": 40e6
+        },
+        {
+            "id": 22,
+            "node": 20,
+            "status": 1,
+            "type": 0,
+            "p_specified": 600e6,
+            "q_specified": 60e6
+        },
+        {
+            "id": 32,
+            "node": 30,
+            "status": 1,
+            "type": 0,
+            "p_specified": 400e6,
+            "q_specified": 40e6
+        },
+        {
+            "id": 51,
+            "node": 50,
+            "status": 1,
+            "type": 0,
+            "p_specified": 400e6,
+            "q_specified": 80e6
+        },
+        {
+            "id": 63,
+            "node": 60,
+            "status": 1,
+            "type": 0,
+            "p_specified": 60e6,
+            "q_specified": 12e6
+        }
+    ],
+    "asym_load":[
+        {
+            "id": 33,
+            "node": 30,
+            "status": 1,
+            "type": 0,
+            "p_specified": [240e6, 250e6, 260e6],
+            "q_specified": [10e6, 10e6, 10e6]
+        }
+    ],
+    "sym_gen": [
+        {
+            "id": 12,
+            "node": 10,
+            "status": 1,
+            "type": 0,
+            "p_specified": 1000e6,
+            "q_specified": 10e6
+        },
+        {
+            "id": 21,
+            "node": 20,
+            "status": 1,
+            "type": 0,
+            "p_specified": 100e6,
+            "q_specified": 0.0
+        },
+        {
+            "id": 41,
+            "node": 40,
+            "status": 1,
+            "type": 0,
+            "u_ref": 1.0475,
+            "p_specified": 60e6,
+            "q_specified": 10e6
+        },
+        {
+            "id": 42,
+            "node": 40,
+            "status": 1,
+            "type": 2,
+            "u_ref": 1.0475,
+            "p_specified": 75e6,
+            "q_specified": 20e6
+        },
+        {
+            "id": 62,
+            "node": 60,
+            "status": 1,
+            "type": 0,
+            "u_ref": 1.055,
+            "p_specified": 600e6,
+            "q_specified": 0.0
+        }
+    ],
+    "asym_gen": [
+        {
+            "id": 31,
+            "node": 30,
+            "status": 1,
+            "type": 1,
+            "p_specified": [40e6, 50e6, 60e6],
+            "q_specified": [0.0, 0.0, 0.0]
+        }
+    ],
+    "voltage_regulator": [
+        {
+            "id": 19,
+            "regulated_object": 12,
+            "status": 0,
+            "u_ref": 1.05
+        },
+        {
+            "id": 29,
+            "regulated_object": 21,
+            "status": 1,
+            "u_ref": 1.045
+        },
+        {
+            "id": 38,
+            "regulated_object": 32,
+            "status": 1,
+            "u_ref": 1.04
+        },
+        {
+            "id": 39,
+            "regulated_object": 31,
+            "status": 1,
+            "u_ref": 1.04
+        },
+        {
+            "id": 48,
+            "regulated_object": 42,
+            "status": 1,
+            "u_ref": 1.0475
+        },
+        {
+            "id": 49,
+            "regulated_object": 41,
+            "status": 1,
+            "u_ref": 1.0475
+        },
+        {
+            "id": 69,
+            "regulated_object": 62,
+            "status": 1,
+            "u_ref": 1.055
+        }
+    ],
+    "source": [
+        {
+            "id": 11,
+            "node": 10,
+            "status": 1,
+            "u_ref": 1.05,
+            "sk": 1e40,
+            "rx_ratio": 0.1,
+            "z01_ratio": 1.0
+        },
+        {
+            "id": 61,
+            "node": 60,
+            "status": 0,
+            "u_ref": 1.055,
+            "sk": 1e40,
+            "rx_ratio": 0.1,
+            "z01_ratio": 1.0
+        }
+    ]
+  }
+}

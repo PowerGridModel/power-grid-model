@@ -151,12 +151,25 @@ inline void calculate_voltage_regulator_result(Idx const& bus_number, PowerFlowI
         return;
     }
 
+    auto non_regulating_load_gens = load_gens |
+                        std::views::filter([&](Idx lg) {
+                            if (!loadgen_to_regulator.contains(lg)) {
+                                return true;
+                            } else {
+                                auto const regulator = loadgen_to_regulator.at(lg);
+                                return input.load_gen_status[lg] != 0 && input.voltage_regulator[regulator].status == 0;
+                            }
+                        });
+
     ComplexValue<sym> const s_load_gen_bus =
-        std::transform_reduce(load_gens.begin(), load_gens.end(), ComplexValue<sym>{}, std::plus{},
+        std::transform_reduce(non_regulating_load_gens.begin(), non_regulating_load_gens.end(),
+                              ComplexValue<sym>{}, std::plus{},
                               [&](Idx const load_gen) { return output.load_gen[load_gen].s; });
 
     ComplexValue<sym> const s_remaining = output.bus_injection[bus_number] - s_load_gen_bus;
 
+    // get number of regulating generators using ranges instead of "load_gens.size() - non_regulating_load_gens.size()" because
+    // there might still be disconnected load_gens
     auto regulating_gens = load_gens | std::views::filter([&](Idx lg) { return loadgen_to_regulator.contains(lg); }) |
                            std::views::filter([&](Idx lg) {
                                auto const regulator = loadgen_to_regulator.at(lg);
@@ -197,7 +210,7 @@ inline void calculate_voltage_regulator_result(Idx const& bus_number, PowerFlowI
             output_regulator.limit_violated = 0; // no violation
 
             auto const& s_load_gen = output.load_gen[load_gen].s;
-            output.load_gen[load_gen].s = ComplexValue<sym>{real(s_load_gen), imag(s_load_gen) + q_regulator};
+            output.load_gen[load_gen].s = ComplexValue<sym>{real(s_load_gen), q_regulator};
         } else {
             output.voltage_regulator[regulator].q =
                 RealValue<asymmetric_t>{q_remaining[0] / num_regulating_gens, q_remaining[1] / num_regulating_gens,
@@ -206,11 +219,10 @@ inline void calculate_voltage_regulator_result(Idx const& bus_number, PowerFlowI
 
             auto const& s_load_gen = output.load_gen[load_gen].s;
             auto const& p_load_gen = real(s_load_gen);
-            auto const& q_load_gen = imag(s_load_gen);
             output.load_gen[load_gen].s =
-                ComplexValue<asymmetric_t>{{p_load_gen[0], q_load_gen[0] + q_remaining[0] / num_regulating_gens},
-                                           {p_load_gen[1], q_load_gen[1] + q_remaining[1] / num_regulating_gens},
-                                           {p_load_gen[2], q_load_gen[2] + q_remaining[2] / num_regulating_gens}};
+                ComplexValue<asymmetric_t>{{p_load_gen[0], q_remaining[0] / num_regulating_gens},
+                                           {p_load_gen[1], q_remaining[1] / num_regulating_gens},
+                                           {p_load_gen[2], q_remaining[2] / num_regulating_gens}};
         }
         output.load_gen[load_gen].i = conj(output.load_gen[load_gen].s / output.u[bus_number]);
     }

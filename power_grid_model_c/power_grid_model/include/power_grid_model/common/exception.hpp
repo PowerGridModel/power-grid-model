@@ -187,7 +187,7 @@ class UnsupportedVoltageRegulatorSourceCombinationError : public PowerGridError 
   public:
     UnsupportedVoltageRegulatorSourceCombinationError(ID id)
         : PowerGridError{std::format(
-              "Nodes with a source and a voltage regulated load/generator are not supported. Found at node with id {}",
+              "Nodes with a source and a voltage regulated load/generator are not supported when both are enabled. Found at node with id {}",
               id)} {}
 };
 
