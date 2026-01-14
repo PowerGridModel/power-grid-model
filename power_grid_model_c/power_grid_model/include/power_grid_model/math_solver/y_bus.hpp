@@ -452,8 +452,7 @@ template <symmetry_tag sym> class YBus {
     std::vector<T> calculate_branch_flow(ComplexValueVector<sym> const& u) const {
         assert(math_topology_ != nullptr);
 
-        return std::views::zip(std::as_const(math_topology_->branch_bus_idx),
-                               std::as_const(math_model_param_->branch_param)) |
+        return std::views::zip(math_topology_->branch_bus_idx, math_model_param_->branch_param) |
                std::views::transform([&u](auto const& branch_idx_params) -> T {
                    auto const& [branch_idx, param] = branch_idx_params;
 
