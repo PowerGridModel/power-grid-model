@@ -100,7 +100,7 @@ class Subcase {
                 statement_(subcase);
                 throw RaisesFailed{std::format(
                     "Test case marked as raises with message '{}' but no exception was thrown", raises_.value())};
-            } catch (std::exception const& e) {
+            } catch (std::exception const& e) { // NOSONAR(S1181)
                 if (match_exception(e, raises_.value())) {
                     // correct exception raised => pass
                     subcase.has_failing_assertion = false; // assertions may fail when an exception is raised
@@ -122,7 +122,7 @@ class Subcase {
                 statement_(subcase);
                 bool const xfailed = subcase.has_failing_assertion;
                 CHECK_MESSAGE(xfailed, "XPASS");
-            } catch (std::exception const& e) {
+            } catch (std::exception const& e) { // NOSONAR(S1181)
                 subcase.check_message(match_exception(e, xfail_raises_.value()),
                                       std::format("Test case marked as xfail with message '{}' but got exception: {}",
                                                   xfail_raises_.value(), e.what()));
