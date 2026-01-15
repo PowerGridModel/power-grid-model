@@ -22,9 +22,7 @@ TEST_CASE("Test voltage regulator") {
     VoltageRegulatorInput const input{
         .id = 1, .regulated_object = 2, .status = 1, .u_ref = 1.05, .q_min = 1e6, .q_max = 100e6};
 
-    double const injection_direction{1.0};
-
-    VoltageRegulator voltage_regulator{input, ComponentType::generic_load_gen, injection_direction};
+    VoltageRegulator voltage_regulator{input, ComponentType::generic_load_gen};
 
     SUBCASE("Test energized") {
         CHECK(voltage_regulator.is_energized(true));
@@ -41,32 +39,17 @@ TEST_CASE("Test voltage regulator") {
 
     SUBCASE("Test u_ref") { CHECK(voltage_regulator.u_ref() == 1.05); }
 
-    SUBCASE("Test injection direction") { CHECK(voltage_regulator.injection_direction() == injection_direction); }
-
     SUBCASE("Test q limits") {
         CHECK(voltage_regulator.q_min() == 1e6);
         CHECK(voltage_regulator.q_max() == 100e6);
     }
 
     SUBCASE("Test get_output") {
-        SUBCASE("symmetric") {
-            VoltageRegulatorOutput<symmetric_t> const output = voltage_regulator.get_output<symmetric_t>(
-                {.limit_violated = 0, .q = 50.0 /*Mvar*/, .generator_id = 2, .generator_status = 1});
-            CHECK(output.id == 1);
-            CHECK(output.energized);
-            CHECK(output.q == 50.0 * base_power<symmetric_t>);
-            CHECK(output.limit_violated == 0);
-        }
-        SUBCASE("asymmetric") {
-            VoltageRegulatorOutput<asymmetric_t> const output = voltage_regulator.get_output<asymmetric_t>(
-                {.limit_violated = 0, .q = {30.0, 40.0, 50.0} /*Mvar*/, .generator_id = 2, .generator_status = 1});
-            CHECK(output.id == 1);
-            CHECK(output.energized);
-            CHECK(output.q[0] == doctest::Approx(30.0 * base_power<asymmetric_t>));
-            CHECK(output.q[1] == doctest::Approx(40.0 * base_power<asymmetric_t>));
-            CHECK(output.q[2] == doctest::Approx(50.0 * base_power<asymmetric_t>));
-            CHECK(output.limit_violated == 0);
-        }
+        VoltageRegulatorOutput const output = voltage_regulator.get_output(
+            {.limit_violated = 0, .generator_id = 2, .generator_status = 1});
+        CHECK(output.id == 1);
+        CHECK(output.energized);
+        CHECK(output.limit_violated == 0);
     }
 
     SUBCASE("Test calc param") {

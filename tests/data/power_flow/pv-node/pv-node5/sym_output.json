@@ -223,19 +223,16 @@
       {
         "id": 30,
         "energized": 1,
-        "q": 24548049.69586,
         "limit_violated": 0
       },
       {
         "id": 31,
         "energized": 1,
-        "q": 24548049.69586,
         "limit_violated": 0
       },
       {
         "id": 32,
         "energized": 1,
-        "q": 3699505.482704,
         "limit_violated": 0
       }
     ]

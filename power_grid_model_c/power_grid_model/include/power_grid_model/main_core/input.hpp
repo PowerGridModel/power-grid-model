@@ -200,8 +200,7 @@ inline void add_component(ComponentContainer& components, Inputs&& component_inp
 
             auto const& regulated_object = get_component<Appliance>(components, regulated_object_idx);
             auto const regulated_object_type = regulated_object.math_model_type();
-            auto const injection_direction = regulated_object.injection_direction();
-            emplace_component<Component>(components, id, input, regulated_object_type, injection_direction);
+            emplace_component<Component>(components, id, input, regulated_object_type);
         }
     }
     // Make sure that each regulated object has at most one regulator

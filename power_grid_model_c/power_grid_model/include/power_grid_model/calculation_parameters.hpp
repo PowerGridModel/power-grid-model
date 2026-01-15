@@ -79,11 +79,8 @@ template <symmetry_tag sym_type> struct ApplianceShortCircuitSolverOutput {
     ComplexValue<sym> i{};
 };
 
-template <symmetry_tag sym_type> struct VoltageRegulatorSolverOutput {
-    using sym = sym_type;
-
+struct VoltageRegulatorSolverOutput {
     IntS limit_violated{};
-    RealValue<sym> q{};
 
     // provide generator info, as the regulator component has no other access to it
     ID generator_id{};
@@ -319,7 +316,7 @@ template <symmetry_tag sym_type> struct SolverOutput {
     std::vector<ApplianceSolverOutput<sym>> source;
     std::vector<ApplianceSolverOutput<sym>> shunt;
     std::vector<ApplianceSolverOutput<sym>> load_gen;
-    std::vector<VoltageRegulatorSolverOutput<sym>> voltage_regulator;
+    std::vector<VoltageRegulatorSolverOutput> voltage_regulator;
 };
 
 template <symmetry_tag sym_type> struct ShortCircuitSolverOutput {

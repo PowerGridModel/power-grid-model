@@ -506,7 +506,6 @@ PGM_MetaComponent const* const PGM_def_sym_output_voltage_regulator = PGM_meta_g
 PGM_MetaAttribute const* const PGM_def_sym_output_voltage_regulator_id = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "voltage_regulator", "id");
 PGM_MetaAttribute const* const PGM_def_sym_output_voltage_regulator_energized = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "voltage_regulator", "energized");
 PGM_MetaAttribute const* const PGM_def_sym_output_voltage_regulator_limit_violated = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "voltage_regulator", "limit_violated");
-PGM_MetaAttribute const* const PGM_def_sym_output_voltage_regulator_q = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "voltage_regulator", "q");
 // component sym_voltage_sensor
 PGM_MetaComponent const* const PGM_def_sym_output_sym_voltage_sensor = PGM_meta_get_component_by_name(nullptr, "sym_output", "sym_voltage_sensor");
 // attributes of sym_output sym_voltage_sensor
@@ -730,7 +729,6 @@ PGM_MetaComponent const* const PGM_def_asym_output_voltage_regulator = PGM_meta_
 PGM_MetaAttribute const* const PGM_def_asym_output_voltage_regulator_id = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "voltage_regulator", "id");
 PGM_MetaAttribute const* const PGM_def_asym_output_voltage_regulator_energized = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "voltage_regulator", "energized");
 PGM_MetaAttribute const* const PGM_def_asym_output_voltage_regulator_limit_violated = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "voltage_regulator", "limit_violated");
-PGM_MetaAttribute const* const PGM_def_asym_output_voltage_regulator_q = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "voltage_regulator", "q");
 // component sym_voltage_sensor
 PGM_MetaComponent const* const PGM_def_asym_output_sym_voltage_sensor = PGM_meta_get_component_by_name(nullptr, "asym_output", "sym_voltage_sensor");
 // attributes of asym_output sym_voltage_sensor

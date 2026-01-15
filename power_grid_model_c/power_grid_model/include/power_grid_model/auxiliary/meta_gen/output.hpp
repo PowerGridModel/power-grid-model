@@ -240,17 +240,14 @@ struct get_attributes_list<TransformerTapRegulatorOutput> {
     };
 };
 
-template <symmetry_tag sym_type>
-struct get_attributes_list<VoltageRegulatorOutput<sym_type>> {
-    using sym = sym_type;
-
-    static constexpr std::array<MetaAttribute, 4> value{
+template<>
+struct get_attributes_list<VoltageRegulatorOutput> {
+    static constexpr std::array<MetaAttribute, 3> value{
             // all attributes including base class
             
-            meta_data_gen::get_meta_attribute<&VoltageRegulatorOutput<sym>::id>(offsetof(VoltageRegulatorOutput<sym>, id), "id"),
-            meta_data_gen::get_meta_attribute<&VoltageRegulatorOutput<sym>::energized>(offsetof(VoltageRegulatorOutput<sym>, energized), "energized"),
-            meta_data_gen::get_meta_attribute<&VoltageRegulatorOutput<sym>::limit_violated>(offsetof(VoltageRegulatorOutput<sym>, limit_violated), "limit_violated"),
-            meta_data_gen::get_meta_attribute<&VoltageRegulatorOutput<sym>::q>(offsetof(VoltageRegulatorOutput<sym>, q), "q"),
+            meta_data_gen::get_meta_attribute<&VoltageRegulatorOutput::id>(offsetof(VoltageRegulatorOutput, id), "id"),
+            meta_data_gen::get_meta_attribute<&VoltageRegulatorOutput::energized>(offsetof(VoltageRegulatorOutput, energized), "energized"),
+            meta_data_gen::get_meta_attribute<&VoltageRegulatorOutput::limit_violated>(offsetof(VoltageRegulatorOutput, limit_violated), "limit_violated"),
     };
 };
 

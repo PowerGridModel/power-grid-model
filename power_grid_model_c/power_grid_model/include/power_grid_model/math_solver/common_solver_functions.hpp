@@ -195,7 +195,6 @@ inline void calculate_voltage_regulator_result(Idx const& bus_number, PowerFlowI
         output_regulator.generator_id = input_regulator.generator_id;
         output_regulator.generator_status = input.load_gen_status[load_gen];
         output_regulator.limit_violated = 0;
-        output_regulator.q = RealValue<sym>{0};
 
         if (input.load_gen_status[load_gen] == 0 || input.voltage_regulator[regulator].status == 0) {
             continue;
@@ -206,15 +205,11 @@ inline void calculate_voltage_regulator_result(Idx const& bus_number, PowerFlowI
         // limits
         if constexpr (is_symmetric_v<sym>) {
             auto const q_regulator = q_remaining / num_regulating_gens;
-            output_regulator.q = q_regulator;
             output_regulator.limit_violated = 0; // no violation
 
             auto const& s_load_gen = output.load_gen[load_gen].s;
             output.load_gen[load_gen].s = ComplexValue<sym>{real(s_load_gen), q_regulator};
         } else {
-            output.voltage_regulator[regulator].q =
-                RealValue<asymmetric_t>{q_remaining[0] / num_regulating_gens, q_remaining[1] / num_regulating_gens,
-                                        q_remaining[2] / num_regulating_gens};
             output.voltage_regulator[regulator].limit_violated = 0; // no violation
 
             auto const& s_load_gen = output.load_gen[load_gen].s;

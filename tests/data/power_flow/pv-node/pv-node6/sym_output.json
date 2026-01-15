@@ -283,43 +283,36 @@
       {
         "id": 19,
         "energized": 0,
-        "q": 0.0,
         "limit_violated": 0
       },
       {
         "id": 29,
         "energized": 1,
-        "q": 87199256.762823,
         "limit_violated": 0
       },
       {
         "id": 38,
         "energized": 1,
-        "q": -82040176.552776,
         "limit_violated": 0
       },
       {
         "id": 39,
         "energized": 1,
-        "q": 82040176.552776,
         "limit_violated": 0
       },
       {
         "id": 48,
         "energized": 1,
-        "q": -8092222.597075,
         "limit_violated": 0
       },
       {
         "id": 49,
         "energized": 1,
-        "q": -8092222.597075,
         "limit_violated": 0
       },
       {
         "id": 69,
         "energized": 1,
-        "q": -408387441.596552,
         "limit_violated": 0
       }
     ]

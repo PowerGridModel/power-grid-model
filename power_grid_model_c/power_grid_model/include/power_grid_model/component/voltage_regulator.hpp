@@ -20,13 +20,11 @@ class VoltageRegulator : public Regulator {
   public:
     using InputType = VoltageRegulatorInput;
     using UpdateType = VoltageRegulatorUpdate;
-    template <symmetry_tag sym> using OutputType = VoltageRegulatorOutput<sym>;
+    template <symmetry_tag sym> using OutputType = VoltageRegulatorOutput;
 
     static constexpr char const* name = "voltage_regulator";
-    explicit VoltageRegulator(VoltageRegulatorInput const& voltage_regulator_input, ComponentType regulated_object_type,
-                              double injection_direction)
+    explicit VoltageRegulator(VoltageRegulatorInput const& voltage_regulator_input, ComponentType regulated_object_type)
         : Regulator{voltage_regulator_input, regulated_object_type},
-          injection_direction_{injection_direction},
           u_ref_{voltage_regulator_input.u_ref},
           q_min_{voltage_regulator_input.q_min},
           q_max_{voltage_regulator_input.q_max} {}
@@ -51,18 +49,16 @@ class VoltageRegulator : public Regulator {
 
     constexpr RegulatorShortCircuitOutput get_null_sc_output() const { return {.id = id(), .energized = 0}; }
 
-    template <symmetry_tag sym> constexpr VoltageRegulatorOutput<sym> get_null_output() const {
-        return {.id = id(), .energized = 0, .limit_violated = 0, .q = RealValue<sym>{0}};
+    constexpr VoltageRegulatorOutput get_null_output() const {
+        return {.id = id(), .energized = 0, .limit_violated = 0};
     }
 
     constexpr bool is_energized(bool is_connected_to_source = true) const { return is_connected_to_source && status(); }
 
-    template <symmetry_tag sym>
-    VoltageRegulatorOutput<sym> get_output(VoltageRegulatorSolverOutput<sym> const& solver_output) const {
-        VoltageRegulatorOutput<sym> output{};
+    VoltageRegulatorOutput get_output(VoltageRegulatorSolverOutput const& solver_output) const {
+        VoltageRegulatorOutput output{};
         static_cast<BaseOutput&>(output) = base_output(is_energized(true) && solver_output.generator_status != 0);
         output.limit_violated = solver_output.limit_violated;
-        output.q = base_power<sym> * solver_output.q * injection_direction();
         return output;
     }
 
@@ -91,13 +87,11 @@ class VoltageRegulator : public Regulator {
     }
 
     // getter
-    constexpr double injection_direction() const { return injection_direction_; }
     constexpr double u_ref() const { return u_ref_; }
     constexpr double q_min() const { return q_min_; }
     constexpr double q_max() const { return q_max_; }
 
   private:
-    double injection_direction_;
     double u_ref_;
     double q_min_;
     double q_max_;

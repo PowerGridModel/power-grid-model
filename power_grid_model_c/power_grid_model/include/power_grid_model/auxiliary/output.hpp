@@ -239,22 +239,15 @@ struct TransformerTapRegulatorOutput {
     operator BaseOutput const&() const { return reinterpret_cast<BaseOutput const&>(*this); }
 };
 
-template <symmetry_tag sym_type>
 struct VoltageRegulatorOutput {
-    using sym = sym_type;
-
     ID id{na_IntID};  // ID of the object
     IntS energized{na_IntS};  // whether the object is energized
     IntS limit_violated{na_IntS};  // indicates whether voltage limits are violated
-    RealValue<sym> q{nan};  // additional reactive power injected by the voltage regulator
 
     // implicit conversions to BaseOutput
     operator BaseOutput&() { return reinterpret_cast<BaseOutput&>(*this); }
     operator BaseOutput const&() const { return reinterpret_cast<BaseOutput const&>(*this); }
 };
-
-using SymVoltageRegulatorOutput = VoltageRegulatorOutput<symmetric_t>;
-using AsymVoltageRegulatorOutput = VoltageRegulatorOutput<asymmetric_t>;
 
 struct RegulatorShortCircuitOutput {
     ID id{na_IntID};  // ID of the object

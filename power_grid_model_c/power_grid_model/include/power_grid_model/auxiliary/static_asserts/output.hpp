@@ -286,38 +286,14 @@ static_assert(std::same_as<decltype(TransformerTapRegulatorOutput::energized), d
 static_assert(offsetof(TransformerTapRegulatorOutput, id) == offsetof(BaseOutput, id));
 static_assert(offsetof(TransformerTapRegulatorOutput, energized) == offsetof(BaseOutput, energized));
 
-// static asserts for VoltageRegulatorOutput<symmetric_t>
-static_assert(std::is_standard_layout_v<VoltageRegulatorOutput<symmetric_t>>);
-// static asserts for conversion of VoltageRegulatorOutput<symmetric_t> to BaseOutput
-static_assert(std::alignment_of_v<VoltageRegulatorOutput<symmetric_t>> >= std::alignment_of_v<BaseOutput>);
-static_assert(std::same_as<decltype(VoltageRegulatorOutput<symmetric_t>::id), decltype(BaseOutput::id)>);
-static_assert(std::same_as<decltype(VoltageRegulatorOutput<symmetric_t>::energized), decltype(BaseOutput::energized)>);
-static_assert(offsetof(VoltageRegulatorOutput<symmetric_t>, id) == offsetof(BaseOutput, id));
-static_assert(offsetof(VoltageRegulatorOutput<symmetric_t>, energized) == offsetof(BaseOutput, energized));
-// static asserts for VoltageRegulatorOutput<asymmetric_t>
-static_assert(std::is_standard_layout_v<VoltageRegulatorOutput<asymmetric_t>>);
-// static asserts for conversion of VoltageRegulatorOutput<asymmetric_t> to BaseOutput
-static_assert(std::alignment_of_v<VoltageRegulatorOutput<asymmetric_t>> >= std::alignment_of_v<BaseOutput>);
-static_assert(std::same_as<decltype(VoltageRegulatorOutput<asymmetric_t>::id), decltype(BaseOutput::id)>);
-static_assert(std::same_as<decltype(VoltageRegulatorOutput<asymmetric_t>::energized), decltype(BaseOutput::energized)>);
-static_assert(offsetof(VoltageRegulatorOutput<asymmetric_t>, id) == offsetof(BaseOutput, id));
-static_assert(offsetof(VoltageRegulatorOutput<asymmetric_t>, energized) == offsetof(BaseOutput, energized));
-// static asserts for SymVoltageRegulatorOutput
-static_assert(std::is_standard_layout_v<SymVoltageRegulatorOutput>);
-// static asserts for conversion of SymVoltageRegulatorOutput to BaseOutput
-static_assert(std::alignment_of_v<SymVoltageRegulatorOutput> >= std::alignment_of_v<BaseOutput>);
-static_assert(std::same_as<decltype(SymVoltageRegulatorOutput::id), decltype(BaseOutput::id)>);
-static_assert(std::same_as<decltype(SymVoltageRegulatorOutput::energized), decltype(BaseOutput::energized)>);
-static_assert(offsetof(SymVoltageRegulatorOutput, id) == offsetof(BaseOutput, id));
-static_assert(offsetof(SymVoltageRegulatorOutput, energized) == offsetof(BaseOutput, energized));
-// static asserts for AsymVoltageRegulatorOutput
-static_assert(std::is_standard_layout_v<AsymVoltageRegulatorOutput>);
-// static asserts for conversion of AsymVoltageRegulatorOutput to BaseOutput
-static_assert(std::alignment_of_v<AsymVoltageRegulatorOutput> >= std::alignment_of_v<BaseOutput>);
-static_assert(std::same_as<decltype(AsymVoltageRegulatorOutput::id), decltype(BaseOutput::id)>);
-static_assert(std::same_as<decltype(AsymVoltageRegulatorOutput::energized), decltype(BaseOutput::energized)>);
-static_assert(offsetof(AsymVoltageRegulatorOutput, id) == offsetof(BaseOutput, id));
-static_assert(offsetof(AsymVoltageRegulatorOutput, energized) == offsetof(BaseOutput, energized));
+// static asserts for VoltageRegulatorOutput
+static_assert(std::is_standard_layout_v<VoltageRegulatorOutput>);
+// static asserts for conversion of VoltageRegulatorOutput to BaseOutput
+static_assert(std::alignment_of_v<VoltageRegulatorOutput> >= std::alignment_of_v<BaseOutput>);
+static_assert(std::same_as<decltype(VoltageRegulatorOutput::id), decltype(BaseOutput::id)>);
+static_assert(std::same_as<decltype(VoltageRegulatorOutput::energized), decltype(BaseOutput::energized)>);
+static_assert(offsetof(VoltageRegulatorOutput, id) == offsetof(BaseOutput, id));
+static_assert(offsetof(VoltageRegulatorOutput, energized) == offsetof(BaseOutput, energized));
 
 // static asserts for RegulatorShortCircuitOutput
 static_assert(std::is_standard_layout_v<RegulatorShortCircuitOutput>);

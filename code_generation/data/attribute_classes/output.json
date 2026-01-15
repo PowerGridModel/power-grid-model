@@ -306,19 +306,12 @@
         {
             "name": "VoltageRegulatorOutput",
             "base": "BaseOutput",
-            "is_template": true,
+            "is_template": false,
             "attributes": [
                 {
                     "data_type": "IntS",
                     "names": "limit_violated",
                     "description": "indicates whether voltage limits are violated"
-                },
-                {
-                    "data_type": "RealValue<sym>",
-                    "names": [
-                        "q"
-                    ],
-                    "description": "additional reactive power injected by the voltage regulator"
                 }
             ]
         },
