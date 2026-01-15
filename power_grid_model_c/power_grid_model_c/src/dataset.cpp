@@ -15,6 +15,7 @@
 #include <power_grid_model/auxiliary/meta_data.hpp>
 #include <power_grid_model/common/typing.hpp>
 
+namespace {
 using namespace power_grid_model;
 using namespace power_grid_model::meta_data;
 using power_grid_model_c::call_with_catch;
@@ -25,6 +26,37 @@ using power_grid_model_c::safe_ptr_maybe_nullptr;
 using power_grid_model_c::safe_str_view;
 using power_grid_model_c::to_c_bool;
 using power_grid_model_c::to_c_size;
+using power_grid_model_c::wrap;
+} // namespace
+
+struct PGM_ConstDataset : public power_grid_model::meta_data::ConstDataset {
+    using Dataset::Dataset;
+};
+struct PGM_MutableDataset : public power_grid_model::meta_data::MutableDataset {
+    using Dataset::Dataset;
+};
+struct PGM_WritableDataset : public power_grid_model::meta_data::WritableDataset {
+    using Dataset::Dataset;
+};
+struct PGM_DatasetInfo : public power_grid_model::meta_data::DatasetInfo {};
+
+namespace power_grid_model_c {
+ConstDataset const* unwrap(PGM_ConstDataset const* instance) {
+    return static_cast<ConstDataset const*>(instance); // may invoke undefined behavior
+}
+ConstDataset const& unwrap(PGM_ConstDataset const& instance) {
+    return static_cast<ConstDataset const&>(instance); // may invoke undefined behavior
+}
+MutableDataset const& unwrap(PGM_MutableDataset const& instance) {
+    return static_cast<MutableDataset const&>(instance); // may invoke undefined behavior
+}
+PGM_WritableDataset& wrap(WritableDataset& instance) {
+    return static_cast<PGM_WritableDataset&>(instance); // may invoke undefined behavior
+}
+PGM_DatasetInfo const& wrap(DatasetInfo const& instance) {
+    return static_cast<PGM_DatasetInfo const&>(instance); // may invoke undefined behavior
+}
+} // namespace power_grid_model_c
 
 // dataset info
 
@@ -88,21 +120,21 @@ char const* PGM_dataset_info_attribute_name(PGM_Handle* handle, PGM_DatasetInfo 
 PGM_ConstDataset* PGM_create_dataset_const(PGM_Handle* handle, char const* dataset, PGM_Idx is_batch,
                                            PGM_Idx batch_size) {
     return call_with_catch(handle, [dataset, is_batch, batch_size] {
-        return new ConstDataset{// NOSONAR(S5025)
-                                safe_bool(is_batch), batch_size, safe_str_view(dataset), get_meta_data()};
+        return new PGM_ConstDataset{// NOSONAR(S5025)
+                                    safe_bool(is_batch), batch_size, safe_str_view(dataset), get_meta_data()};
     });
 }
 
 PGM_ConstDataset* PGM_create_dataset_const_from_writable(PGM_Handle* handle,
                                                          PGM_WritableDataset const* writable_dataset) {
     return call_with_catch(handle, [writable_dataset] {
-        return new ConstDataset{safe_ptr_get(writable_dataset)}; // NOSONAR(S5025)
+        return new PGM_ConstDataset{safe_ptr_get(writable_dataset)}; // NOSONAR(S5025)
     });
 }
 
 PGM_ConstDataset* PGM_create_dataset_const_from_mutable(PGM_Handle* handle, PGM_MutableDataset const* mutable_dataset) {
     return call_with_catch(handle, [mutable_dataset] {
-        return new ConstDataset{safe_ptr_get(mutable_dataset)}; // NOSONAR(S5025)
+        return new PGM_ConstDataset{safe_ptr_get(mutable_dataset)}; // NOSONAR(S5025)
     });
 }
 
@@ -133,13 +165,13 @@ void PGM_dataset_const_set_next_cartesian_product_dimension(PGM_Handle* handle, 
 }
 
 PGM_DatasetInfo const* PGM_dataset_const_get_info(PGM_Handle* handle, PGM_ConstDataset const* dataset) {
-    return call_with_catch(handle, [dataset] { return &safe_ptr_get(dataset).get_description(); });
+    return call_with_catch(handle, [dataset] { return &wrap(safe_ptr_get(dataset).get_description()); });
 }
 
 // writable dataset
 
 PGM_DatasetInfo const* PGM_dataset_writable_get_info(PGM_Handle* handle, PGM_WritableDataset const* dataset) {
-    return call_with_catch(handle, [dataset] { return &safe_ptr_get(dataset).get_description(); });
+    return call_with_catch(handle, [dataset] { return &wrap(safe_ptr_get(dataset).get_description()); });
 }
 
 void PGM_dataset_writable_set_buffer(PGM_Handle* handle, PGM_WritableDataset* dataset, char const* component,
@@ -162,8 +194,8 @@ void PGM_dataset_writable_set_attribute_buffer(PGM_Handle* handle, PGM_WritableD
 PGM_MutableDataset* PGM_create_dataset_mutable(PGM_Handle* handle, char const* dataset, PGM_Idx is_batch,
                                                PGM_Idx batch_size) {
     return call_with_catch(handle, [dataset, is_batch, batch_size] {
-        return new MutableDataset{// NOSONAR(S5025)
-                                  safe_bool(is_batch), batch_size, safe_str_view(dataset), get_meta_data()};
+        return new PGM_MutableDataset{// NOSONAR(S5025)
+                                      safe_bool(is_batch), batch_size, safe_str_view(dataset), get_meta_data()};
     });
 }
 
@@ -188,5 +220,5 @@ void PGM_dataset_mutable_add_attribute_buffer(PGM_Handle* handle, PGM_MutableDat
 }
 
 PGM_DatasetInfo const* PGM_dataset_mutable_get_info(PGM_Handle* handle, PGM_MutableDataset const* dataset) {
-    return call_with_catch(handle, [dataset] { return &safe_ptr_get(dataset).get_description(); });
+    return call_with_catch(handle, [dataset] { return &wrap(safe_ptr_get(dataset).get_description()); });
 }

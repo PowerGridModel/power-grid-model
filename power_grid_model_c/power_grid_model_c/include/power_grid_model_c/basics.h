@@ -81,7 +81,6 @@ typedef struct PGM_Options PGM_Options;
 
 // Only enable the opaque struct definition if this header is consumed by the C-API user.
 // If this header is included when compiling the C-API, the structs below are decleared/defined in the C++ files.
-#ifndef PGM_DLL_EXPORTS
 /**
  * @brief Opaque struct for the attribute meta class.
  *
@@ -137,7 +136,6 @@ typedef struct PGM_WritableDataset PGM_WritableDataset;
  * @brief Opaque struct for the information of the dataset.
  */
 typedef struct PGM_DatasetInfo PGM_DatasetInfo;
-#endif
 
 // NOLINTEND(modernize-use-using)
 

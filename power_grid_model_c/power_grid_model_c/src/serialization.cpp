@@ -27,6 +27,8 @@ using power_grid_model_c::safe_ptr;
 using power_grid_model_c::safe_ptr_get;
 using power_grid_model_c::safe_size;
 using power_grid_model_c::to_c_size;
+using power_grid_model_c::unwrap;
+using power_grid_model_c::wrap;
 
 struct SerializationExceptionHandler : public power_grid_model_c::DefaultExceptionHandler {
     void operator()(PGM_Handle& handle) const noexcept { handle_all_errors(handle, PGM_serialization_error); }
@@ -34,6 +36,13 @@ struct SerializationExceptionHandler : public power_grid_model_c::DefaultExcepti
 
 constexpr SerializationExceptionHandler serialization_exception_handler{};
 } // namespace
+
+struct PGM_Serializer : public power_grid_model::meta_data::Serializer {
+    using Serializer::Serializer;
+};
+struct PGM_Deserializer : public power_grid_model::meta_data::Deserializer {
+    using Deserializer::Deserializer;
+};
 
 PGM_Deserializer* PGM_create_deserializer_from_binary_buffer(PGM_Handle* handle, char const* data, PGM_Idx size,
                                                              PGM_Idx serialization_format) {
@@ -63,7 +72,7 @@ PGM_Deserializer* PGM_create_deserializer_from_null_terminated_string(PGM_Handle
 }
 
 PGM_WritableDataset* PGM_deserializer_get_dataset(PGM_Handle* handle, PGM_Deserializer* deserializer) {
-    return call_with_catch(handle, [deserializer] { return &safe_ptr_get(deserializer).get_dataset_info(); });
+    return call_with_catch(handle, [deserializer] { return &wrap(safe_ptr_get(deserializer).get_dataset_info()); });
 }
 
 void PGM_deserializer_parse_to_buffer(PGM_Handle* handle, PGM_Deserializer* deserializer) {
@@ -82,7 +91,7 @@ PGM_Serializer* PGM_create_serializer(PGM_Handle* handle, PGM_ConstDataset const
         handle,
         [dataset, serialization_format] {
             return new PGM_Serializer{// NOSONAR(S5025)
-                                      safe_ptr_get(dataset),
+                                      unwrap(safe_ptr_get(dataset)),
                                       safe_enum<power_grid_model::SerializationFormat>(serialization_format)};
         },
         serialization_exception_handler);

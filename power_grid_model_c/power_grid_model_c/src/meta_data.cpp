@@ -24,6 +24,7 @@ using power_grid_model_c::safe_ptr_get;
 using power_grid_model_c::safe_str_view;
 using power_grid_model_c::to_c_bool;
 using power_grid_model_c::to_c_enum;
+using power_grid_model_c::wrap;
 
 // assert index type
 static_assert(std::is_same_v<PGM_Idx, Idx>);
@@ -49,6 +50,28 @@ struct RangedExceptionHandler : public power_grid_model_c::DefaultExceptionHandl
 constexpr RangedExceptionHandler ranged_exception_handler{};
 } // namespace
 
+struct PGM_MetaAttribute : public power_grid_model::meta_data::MetaAttribute {};
+struct PGM_MetaComponent : public power_grid_model::meta_data::MetaComponent {};
+struct PGM_MetaDataset : public power_grid_model::meta_data::MetaDataset {};
+
+namespace power_grid_model_c {
+MetaComponent const& unwrap(PGM_MetaComponent const& instance) {
+    return static_cast<MetaComponent const&>(instance); // may invoke undefined behavior
+}
+MetaAttribute const& unwrap(PGM_MetaAttribute const& instance) {
+    return static_cast<MetaAttribute const&>(instance); // may invoke undefined behavior
+}
+PGM_MetaAttribute const& wrap(MetaAttribute const& instance) {
+    return static_cast<PGM_MetaAttribute const&>(instance); // may invoke undefined behavior
+}
+PGM_MetaComponent const& wrap(MetaComponent const& instance) {
+    return static_cast<PGM_MetaComponent const&>(instance); // may invoke undefined behavior
+}
+PGM_MetaDataset const& wrap(MetaDataset const& instance) {
+    return static_cast<PGM_MetaDataset const&>(instance); // may invoke undefined behavior
+}
+} // namespace power_grid_model_c
+
 // retrieve meta data
 power_grid_model::meta_data::MetaData const& get_meta_data() {
     return power_grid_model::meta_data::meta_data_gen::meta_data;
@@ -63,13 +86,14 @@ PGM_MetaDataset const* PGM_meta_get_dataset_by_idx(PGM_Handle* handle, PGM_Idx i
             if (idx < 0 || idx >= get_meta_data().n_datasets()) {
                 throw std::out_of_range{"Index out of range!\n"};
             }
-            return &get_meta_data().datasets[idx];
+            return &wrap(get_meta_data().datasets[idx]);
         },
         ranged_exception_handler);
 }
 PGM_MetaDataset const* PGM_meta_get_dataset_by_name(PGM_Handle* handle, char const* dataset) {
     return call_with_catch(
-        handle, [dataset] { return &get_meta_data().get_dataset(safe_str_view(dataset)); }, ranged_exception_handler);
+        handle, [dataset] { return &wrap(get_meta_data().get_dataset(safe_str_view(dataset))); },
+        ranged_exception_handler);
 }
 char const* PGM_meta_dataset_name(PGM_Handle* handle, PGM_MetaDataset const* dataset) {
     return call_with_catch(handle, [dataset] { return safe_ptr_get(dataset).name; });
@@ -87,7 +111,7 @@ PGM_MetaComponent const* PGM_meta_get_component_by_idx(PGM_Handle* handle, PGM_M
             if (idx < 0 || idx >= safe_dataset.n_components()) {
                 throw std::out_of_range{"Index out of range!\n"};
             }
-            return &safe_dataset.components[idx];
+            return &wrap(safe_dataset.components[idx]);
         },
         ranged_exception_handler);
 }
@@ -96,7 +120,7 @@ PGM_MetaComponent const* PGM_meta_get_component_by_name(PGM_Handle* handle, char
     return call_with_catch(
         handle,
         [component, dataset] {
-            return &get_meta_data().get_dataset(safe_str_view(dataset)).get_component(safe_str_view(component));
+            return &wrap(get_meta_data().get_dataset(safe_str_view(dataset)).get_component(safe_str_view(component)));
         },
         ranged_exception_handler);
 }
@@ -122,7 +146,7 @@ PGM_MetaAttribute const* PGM_meta_get_attribute_by_idx(PGM_Handle* handle, PGM_M
             if (idx < 0 || idx >= safe_component.n_attributes()) {
                 throw std::out_of_range{"Index out of range!\n"};
             }
-            return &safe_component.attributes[idx];
+            return &wrap(safe_component.attributes[idx]);
         },
         ranged_exception_handler);
 }
@@ -131,10 +155,10 @@ PGM_MetaAttribute const* PGM_meta_get_attribute_by_name(PGM_Handle* handle, char
     return call_with_catch(
         handle,
         [component, dataset, attribute] {
-            return &get_meta_data()
-                        .get_dataset(safe_str_view(dataset))
-                        .get_component(safe_str_view(component))
-                        .get_attribute(safe_str_view(attribute));
+            return &wrap(get_meta_data()
+                             .get_dataset(safe_str_view(dataset))
+                             .get_component(safe_str_view(component))
+                             .get_attribute(safe_str_view(attribute)));
         },
         ranged_exception_handler);
 }
