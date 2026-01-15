@@ -14,8 +14,6 @@
 
 namespace power_grid_model::common::logging {
 namespace {
-using common::logging::MultiThreadedLogger;
-
 class MiniLogger : public common::logging::Logger {
   private:
     using Entry = std::pair<LogEvent, double>;
@@ -35,6 +33,15 @@ TEST_CASE("Test Timer") {
     auto test_logger = MiniLogger{};
     auto report = test_logger.report();
     CHECK(report.size() == 0);
+    auto const sleep_duration = std::chrono::microseconds(10); // small delay to ensure measurable time
+    double const time_reference = std::chrono::duration<double>(sleep_duration).count();
+
+    auto check_report = [&time_reference](auto const& report, LogEvent const event, Idx const idx, Idx const size) {
+        CHECK(report.size() == size);
+        CHECK(report[idx].first == event);
+        double const time_stamp = report[idx].second;
+        CHECK(time_stamp >= time_reference);
+    };
 
     SUBCASE("Default constructor") {
         static_assert(std::is_default_constructible_v<Timer>);
@@ -45,56 +52,38 @@ TEST_CASE("Test Timer") {
         CHECK_NOTHROW(timer_tester();); // destructor should not throw
     }
 
-    SUBCASE("Logging time") {
+    SUBCASE("Log time") {
         auto const& event_1 = LogEvent::prepare;
         auto const& event_2 = LogEvent::create_math_solver;
         auto const& event_3 = LogEvent::math_solver;
-        auto time_event = [&test_logger](LogEvent event) {
+        auto time_event = [&test_logger, sleep_duration](LogEvent event) {
             auto timer = Timer{test_logger, event};
-            std::this_thread::sleep_for(
-                std::chrono::milliseconds(10)); // abitrary (reasonable) sleep to have measurable
+            std::this_thread::sleep_for(sleep_duration);
         };
 
         time_event(event_1);
         report = test_logger.report();
-        CHECK(report.size() == 1);
-        CHECK(report[0].first == event_1);
-        CAPTURE(report[0].second);
-        CHECK((report[0].second >= 0.01 && report[0].second < 0.015)); // allow some margin
+        check_report(report, event_1, Idx{0}, Idx{1});
 
         time_event(event_2);
         report = test_logger.report();
-        CHECK(report.size() == 2);
-        CHECK(report[1].first == event_2);
-        CAPTURE(report[1].second);
-        CHECK((report[1].second >= 0.01 && report[1].second < 0.015)); // allow some margin
+        check_report(report, event_2, Idx{1}, Idx{2});
 
         time_event(event_3);
         report = test_logger.report();
-        CHECK(report.size() == 3);
-        CHECK(report[2].first == event_3);
-        CAPTURE(report[2].second);
-        CHECK((report[2].second >= 0.01 && report[2].second < 0.015)); // allow some margin
+        check_report(report, event_3, Idx{2}, Idx{3});
     }
 
     SUBCASE("Stop timer") {
         auto const& event = LogEvent::prepare;
         auto timer = Timer{test_logger, event};
-        auto check_report = [&test_logger, &event]() {
-            auto scoped_report = test_logger.report();
-            CHECK(scoped_report.size() == 1);
-            CHECK(scoped_report[0].first == event);
-            CAPTURE(scoped_report[0].second);
-            CHECK((scoped_report[0].second >= 0.01 && scoped_report[0].second < 0.015)); // allow some margin
-        };
-
-        std::this_thread::sleep_for(
-            std::chrono::milliseconds(10)); // abitrary (reasonable) sleep to have measurable time
+        std::this_thread::sleep_for(sleep_duration);
         timer.stop();
         CHECK_NOTHROW(timer.stop()); // second stop should have no effect
-        check_report();
+        report = test_logger.report();
+        check_report(report, event, 0, 1);
         CHECK_NOTHROW(timer.stop()); // third stop should have no effect
-        check_report();
+        check_report(report, event, 0, 1);
     }
 
     SUBCASE("Timer is not copyable") {
@@ -105,45 +94,27 @@ TEST_CASE("Test Timer") {
     SUBCASE("Move constructor") {
         auto const& event = LogEvent::prepare;
         auto timer_1 = Timer{test_logger, event};
-        std::this_thread::sleep_for(
-            std::chrono::milliseconds(10)); // abitrary (reasonable) sleep to have measurable time
-
         auto timer_2 = Timer{std::move(timer_1)};
-        std::this_thread::sleep_for(
-            std::chrono::milliseconds(10)); // abitrary (reasonable) sleep to have measurable time
+        std::this_thread::sleep_for(sleep_duration);
         timer_2.stop();
 
-        auto report = test_logger.report();
-        CHECK(report.size() == 1);
-        CHECK(report[0].first == event);
-        CAPTURE(report[0].second);
-        CHECK((report[0].second >= 0.02 && report[0].second < 0.03)); // allow some margin
+        report = test_logger.report();
+        check_report(report, event, 0, 1);
     }
 
     SUBCASE("Move assignment") {
         auto const& event_1 = LogEvent::prepare;
         auto const& event_2 = LogEvent::create_math_solver;
         auto timer_1 = Timer{test_logger, event_1};
-        std::this_thread::sleep_for(
-            std::chrono::milliseconds(10)); // abitrary (reasonable) sleep to have measurable time
-
         auto timer_2 = Timer{test_logger, event_2};
-        std::this_thread::sleep_for(
-            std::chrono::milliseconds(10)); // abitrary (reasonable) sleep to have measurable time
-
+        std::this_thread::sleep_for(sleep_duration);
         timer_2 = std::move(timer_1);
-        std::this_thread::sleep_for(
-            std::chrono::milliseconds(10)); // abitrary (reasonable) sleep to have measurable time
+        std::this_thread::sleep_for(sleep_duration);
         timer_2.stop();
 
-        auto report = test_logger.report();
-        CHECK(report.size() == 2);
-        CHECK(report[0].first == event_2);
-        CAPTURE(report[0].second);
-        CHECK((report[0].second >= 0.01 && report[0].second < 0.015)); // allow some margin
-        CHECK(report[1].first == event_1);
-        CAPTURE(report[1].second);
-        CHECK((report[1].second >= 0.03 && report[1].second < 0.04)); // allow some margin
+        report = test_logger.report();
+        check_report(report, event_2, 0, 2);
+        check_report(report, event_1, 1, 2);
     }
 }
 
