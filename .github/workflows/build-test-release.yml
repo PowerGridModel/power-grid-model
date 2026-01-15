@@ -199,6 +199,13 @@ jobs:
           name: version
           path: .
 
+      - name: Set up gcc
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install -y ninja-build gcc-14 g++-14
+          sudo ln -s /usr/bin/gcc-14 /usr/local/bin/gcc
+          sudo ln -s /usr/bin/g++-14 /usr/local/bin/g++
+
       - uses: ./.github/actions/enable-msvc
         if: runner.os == 'Windows'
 
