@@ -29,7 +29,7 @@ using power_grid_model_c::to_c_size;
 // dataset info
 
 char const* PGM_dataset_info_name(PGM_Handle* handle, PGM_DatasetInfo const* info) {
-    return call_with_catch(handle, [info] { return safe_ptr_get(safe_ptr(info)->dataset).name; });
+    return call_with_catch(handle, [info] { return safe_ptr_get(safe_ptr_get(info).dataset).name; });
 }
 
 PGM_Idx PGM_dataset_info_is_batch(PGM_Handle* handle, PGM_DatasetInfo const* info) {
