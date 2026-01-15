@@ -142,6 +142,7 @@ add_executable(
     power_grid_model_unit_tests_logging
     "test_entry_point.cpp"
     "test_calculation_info.cpp"
+    "test_timer.cpp"
 )
 
 target_link_libraries(
