@@ -59,116 +59,116 @@ jobs:
           name: wheelhouse
           path: ./wheelhouse/*.tar.gz
 
-  # build-cpp-test-linux:
-  #   runs-on: ubuntu-24.04
-  #   strategy:
-  #     matrix:
-  #       build-option: [ debug, release ]
-  #       compiler: [gcc, clang]
-  #       include:
-  #         - compiler: gcc
-  #         - compiler: clang
+  build-cpp-test-linux:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        build-option: [ debug, release ]
+        compiler: [gcc, clang]
+        include:
+          - compiler: gcc
+          - compiler: clang
 
-  #   env:
-  #     CMAKE_PREFIX_PATH: /home/linuxbrew/.linuxbrew
-  #     PRESET: ci-${{ matrix.compiler }}-${{ matrix.build-option }}
-  #     HOMEBREW_FORCE_BREWED_CURL: 1
+    env:
+      CMAKE_PREFIX_PATH: /home/linuxbrew/.linuxbrew
+      PRESET: ci-${{ matrix.compiler }}-${{ matrix.build-option }}
+      HOMEBREW_FORCE_BREWED_CURL: 1
 
-  #   steps:
-  #     - uses: actions/checkout@v6
-  #     - name: Install packages
-  #       run: |
-  #         sudo apt-get update
-  #         sudo apt-get install -y ninja-build gcc-14 g++-14 clang-18
-  #         sudo ln -s /usr/bin/clang-18 /usr/local/bin/clang
-  #         sudo ln -s /usr/bin/clang++-18 /usr/local/bin/clang++
-  #         sudo ln -s /usr/bin/gcc-14 /usr/local/bin/gcc
-  #         sudo ln -s /usr/bin/g++-14 /usr/local/bin/g++
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build gcc-14 g++-14 clang-18
+          sudo ln -s /usr/bin/clang-18 /usr/local/bin/clang
+          sudo ln -s /usr/bin/clang++-18 /usr/local/bin/clang++
+          sudo ln -s /usr/bin/gcc-14 /usr/local/bin/gcc
+          sudo ln -s /usr/bin/g++-14 /usr/local/bin/g++
 
-  #     - name: Install uv
-  #       uses: astral-sh/setup-uv@v7
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
       
-  #     - name: Install pgm-build-dependencies
-  #       run: |
-  #         uv tool install https://github.com/PowerGridModel/pgm-build-dependencies/releases/latest/download/pgm_build_dependencies-0.1.0-py3-none-any.whl
-  #         pgm-build-setup-ga-ci
+      - name: Install pgm-build-dependencies
+        run: |
+          uv tool install https://github.com/PowerGridModel/pgm-build-dependencies/releases/latest/download/pgm_build_dependencies-0.1.0-py3-none-any.whl
+          pgm-build-setup-ga-ci
 
-  #     - name: Build and test
-  #       run: ./build.sh -p ${{ env.PRESET }} -e -i -t
+      - name: Build and test
+        run: ./build.sh -p ${{ env.PRESET }} -e -i -t
 
-  # build-cpp-test-windows:
-  #   runs-on: windows-latest
-  #   strategy:
-  #     matrix:
-  #       build-option: [ debug, release ]
-  #       compiler: [msvc, clang-cl]
+  build-cpp-test-windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        build-option: [ debug, release ]
+        compiler: [msvc, clang-cl]
 
-  #   env:
-  #     PRESET: ${{ matrix.compiler }}-${{ matrix.build-option }}
+    env:
+      PRESET: ${{ matrix.compiler }}-${{ matrix.build-option }}
 
-  #   steps:
-  #     - uses: actions/checkout@v6
+    steps:
+      - uses: actions/checkout@v6
 
-  #     - name: Install uv
-  #       uses: astral-sh/setup-uv@v7
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
       
-  #     - name: Install pgm-build-dependencies
-  #       run: |
-  #         uv tool install https://github.com/PowerGridModel/pgm-build-dependencies/releases/latest/download/pgm_build_dependencies-0.1.0-py3-none-any.whl
-  #         pgm-build-setup-ga-ci
+      - name: Install pgm-build-dependencies
+        run: |
+          uv tool install https://github.com/PowerGridModel/pgm-build-dependencies/releases/latest/download/pgm_build_dependencies-0.1.0-py3-none-any.whl
+          pgm-build-setup-ga-ci
  
-  #     - uses: ./.github/actions/enable-msvc
-  #       if: runner.os == 'Windows'
+      - uses: ./.github/actions/enable-msvc
+        if: runner.os == 'Windows'
     
-  #     - name: Build and test
-  #       run: |
-  #         # Resolve dirty PATH environment
-  #         # TODO(mgovers): Remove after https://github.com/actions/runner-images/issues/10001 is resolved
-  #         $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -ne 'C:\Program Files\LLVM\bin' }) -join ';'
+      - name: Build and test
+        run: |
+          # Resolve dirty PATH environment
+          # TODO(mgovers): Remove after https://github.com/actions/runner-images/issues/10001 is resolved
+          $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -ne 'C:\Program Files\LLVM\bin' }) -join ';'
 
-  #         # generate cmake cache
-  #         cmake --preset ${{ env.PRESET }} -DCMAKE_PREFIX_PATH=C:\conda_envs\cpp_pkgs\Library; if(!$?) { Exit $LASTEXITCODE }
-  #         # build
-  #         cmake --build --preset ${{ env.PRESET }} --verbose -j 1; if(!$?) { Exit $LASTEXITCODE }
-  #         # test
-  #         ctest --preset ${{ env.PRESET }} --output-on-failure; if(!$?) { Exit $LASTEXITCODE }
-  #         # install
-  #         cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install; if(!$?) { Exit $LASTEXITCODE }
+          # generate cmake cache
+          cmake --preset ${{ env.PRESET }} -DCMAKE_PREFIX_PATH=C:\conda_envs\cpp_pkgs\Library; if(!$?) { Exit $LASTEXITCODE }
+          # build
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1; if(!$?) { Exit $LASTEXITCODE }
+          # test
+          ctest --preset ${{ env.PRESET }} --output-on-failure; if(!$?) { Exit $LASTEXITCODE }
+          # install
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install; if(!$?) { Exit $LASTEXITCODE }
 
-  #         # build and run integration test
-  #         cd tests/package_tests; if(!$?) { Exit $LASTEXITCODE }
-  #         cmake --preset ${{ env.PRESET }}; if(!$?) { Exit $LASTEXITCODE }
-  #         cmake --build --preset ${{ env.PRESET }} --verbose -j 1; if(!$?) { Exit $LASTEXITCODE }
-  #         cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install; if(!$?) { Exit $LASTEXITCODE }
-  #         install\${{ env.PRESET }}\bin\power_grid_model_package_test; if(!$?) { Exit $LASTEXITCODE }
+          # build and run integration test
+          cd tests/package_tests; if(!$?) { Exit $LASTEXITCODE }
+          cmake --preset ${{ env.PRESET }}; if(!$?) { Exit $LASTEXITCODE }
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1; if(!$?) { Exit $LASTEXITCODE }
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install; if(!$?) { Exit $LASTEXITCODE }
+          install\${{ env.PRESET }}\bin\power_grid_model_package_test; if(!$?) { Exit $LASTEXITCODE }
 
-  # build-cpp-test-macos:
-  #   runs-on: macos-15
-  #   strategy:
-  #     matrix:
-  #       build-option: [ debug, release ]
-  #   env:
-  #     CMAKE_PREFIX_PATH: /usr/local
-  #     PRESET: ci-clang-${{ matrix.build-option }}
+  build-cpp-test-macos:
+    runs-on: macos-15
+    strategy:
+      matrix:
+        build-option: [ debug, release ]
+    env:
+      CMAKE_PREFIX_PATH: /usr/local
+      PRESET: ci-clang-${{ matrix.build-option }}
 
-  #   steps:
-  #     - uses: actions/checkout@v6
+    steps:
+      - uses: actions/checkout@v6
 
-  #     - name: Set up XCode
-  #       uses: maxim-lobanov/setup-xcode@v1
-  #       with:
-  #         xcode-version: latest-stable
+      - name: Set up XCode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
 
-  #     - name: Install uv
-  #       uses: astral-sh/setup-uv@v7
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
       
-  #     - name: Install pgm-build-dependencies
-  #       run: |
-  #         uv tool install https://github.com/PowerGridModel/pgm-build-dependencies/releases/latest/download/pgm_build_dependencies-0.1.0-py3-none-any.whl
-  #         pgm-build-setup-ga-ci
+      - name: Install pgm-build-dependencies
+        run: |
+          uv tool install https://github.com/PowerGridModel/pgm-build-dependencies/releases/latest/download/pgm_build_dependencies-0.1.0-py3-none-any.whl
+          pgm-build-setup-ga-ci
 
-  #     - name: Build and test
-  #       run: ./build.sh -p ${{ env.PRESET }} -e -i -t
+      - name: Build and test
+        run: ./build.sh -p ${{ env.PRESET }} -e -i -t
 
   build-and-test-python:
     strategy:
@@ -224,69 +224,69 @@ jobs:
           name: wheelhouse-${{ matrix.platform }}
           path: ./wheelhouse/*.whl
 
-  # build-and-test-conda:
-  #   name: Build and test in Conda
+  build-and-test-conda:
+    name: Build and test in Conda
 
-  #   runs-on: ${{ matrix.os }}-latest
-  #   strategy:
-  #     matrix:
-  #       os: ["ubuntu", "windows"] # We do not test conda for MacOS
-  #       include:
-  #         - os: ubuntu
-  #           shell: bash -el {0}
-  #         - os: windows
-  #           shell: powershell
-  #   env:
-  #     POWER_GRID_MODEL_NO_BINARY_BUILD: 1
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      matrix:
+        os: ["ubuntu", "windows"] # We do not test conda for MacOS
+        include:
+          - os: ubuntu
+            shell: bash -el {0}
+          - os: windows
+            shell: powershell
+    env:
+      POWER_GRID_MODEL_NO_BINARY_BUILD: 1
 
-  #   defaults:
-  #     run:
-  #       shell: ${{ matrix.shell }}
-  #   steps:
-  #     - uses: actions/checkout@v6
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
+    steps:
+      - uses: actions/checkout@v6
 
-  #     - uses: conda-incubator/setup-miniconda@v3
-  #       with:
-  #         miniforge-version: latest  # use miniforge instead of miniconda
-  #         activate-environment: conda-pgm-env
-  #         environment-file: .github/conda_pgm_env.yml
-  #         auto-activate-base: false
-  #         channels: conda-forge
-  #         conda-remove-defaults: "true"
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniforge-version: latest  # use miniforge instead of miniconda
+          activate-environment: conda-pgm-env
+          environment-file: .github/conda_pgm_env.yml
+          auto-activate-base: false
+          channels: conda-forge
+          conda-remove-defaults: "true"
       
-  #     - name: List conda
-  #       run: |
-  #         conda info
-  #         conda list
+      - name: List conda
+        run: |
+          conda info
+          conda list
 
-  #     - name: Enable MSVC
-  #       uses: ./.github/actions/enable-msvc
-  #       if: runner.os == 'Windows'
+      - name: Enable MSVC
+        uses: ./.github/actions/enable-msvc
+        if: runner.os == 'Windows'
 
-  #     - name: Enable gcc/g++
-  #       if: matrix.os == 'ubuntu'
-  #       run: |
-  #         conda install -y gcc_linux-64 gxx_linux-64
+      - name: Enable gcc/g++
+        if: matrix.os == 'ubuntu'
+        run: |
+          conda install -y gcc_linux-64 gxx_linux-64
 
-  #     - name: Build and install cmake target for Windows
-  #       if: matrix.os == 'windows'
-  #       run: |          
-  #         cmake -GNinja -DCMAKE_BUILD_TYPE=Release -B build/ -S .
-  #         cmake --build build/ --verbose -j1
-  #         cmake --install build/ --prefix ${env:CONDA_PREFIX}/Library
+      - name: Build and install cmake target for Windows
+        if: matrix.os == 'windows'
+        run: |          
+          cmake -GNinja -DCMAKE_BUILD_TYPE=Release -B build/ -S .
+          cmake --build build/ --verbose -j1
+          cmake --install build/ --prefix ${env:CONDA_PREFIX}/Library
 
-  #     - name: Build and install cmake target for Linux
-  #       if: matrix.os == 'ubuntu'
-  #       run: |
-  #         cmake -GNinja -DCMAKE_BUILD_TYPE=Release -B build/ -S . -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_PREFIX_PATH=$CONDA_PREFIX
-  #         cmake --build build/ --verbose -j1
-  #         cmake --install build/
+      - name: Build and install cmake target for Linux
+        if: matrix.os == 'ubuntu'
+        run: |
+          cmake -GNinja -DCMAKE_BUILD_TYPE=Release -B build/ -S . -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_PREFIX_PATH=$CONDA_PREFIX
+          cmake --build build/ --verbose -j1
+          cmake --install build/
 
-  #     - name: Build python
-  #       run: python -m pip install . --no-build-isolation --no-deps -C wheel.cmake=false
+      - name: Build python
+        run: python -m pip install . --no-build-isolation --no-deps -C wheel.cmake=false
 
-  #     - name: Test
-  #       run: pytest
+      - name: Test
+        run: pytest
 
   github-release:
     name: Create and release assets to GitHub
