@@ -63,14 +63,14 @@ if(PGM_ENABLE_HARDENING)
         target_compile_options(
             power_grid_model_c
             BEFORE
-            PRIVATE "-fstack-protector" "-fsanitize=undefined"
+            PRIVATE "-fstack-protector" "-fsanitize=undefined" "-fno-sanitize-recover=undefined"
         )
     endif()
     target_link_options(
         power_grid_model_c
         BEFORE
         PRIVATE
-            "$<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-fstack-protector;-fsanitize=undefined>"
+            "$<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-fstack-protector;-fsanitize=undefined;-fno-sanitize-recover=undefined>"
             "$<$<CXX_COMPILER_ID:GNU>:-static-libubsan>"
             "$<$<CXX_COMPILER_ID:Clang>:-lubsan>"
     )

@@ -211,7 +211,8 @@ skip = ["pp*", "*-musllinux_aarch64"]
 
 [tool.cibuildwheel.linux]
 archs = ["x86_64", "aarch64"]
-environment = { CC = "gcc", CXX = "g++" }
+before-all = """yum install -y gcc-14 g++-14"""
+environment = { CC = "gcc-14", CXX = "g++-14" }
 manylinux-x86_64-image = "manylinux_2_28"
 manylinux-aarch64-image = "manylinux_2_28"
 musllinux-x86_64-image = "musllinux_1_2"
