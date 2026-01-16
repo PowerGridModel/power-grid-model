@@ -59,12 +59,12 @@ jobs:
       - name: Run markdownlint
         run: |
           echo "Running markdownlint"
-          markdownlint --fix .
+          npx markdownlint --fix .
 
       - name: Run Biome
         run: |
           echo "Running Biome"
-          biome format --write --files-ignore-unknown=true --no-errors-on-unmatched
+          npx biome format --write --files-ignore-unknown=true --no-errors-on-unmatched
 
       - name: If needed raise error
         run: |
