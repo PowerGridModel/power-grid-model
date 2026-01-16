@@ -29,9 +29,9 @@ struct DatasetInfo;
 
 namespace power_grid_model_c {
 
-template <class c_type, class cpp_type> struct c_cpp_type_map {
-    using c_type = c_type;
-    using cpp_type = cpp_type;
+template <class c_type_input, class cpp_type_input> struct c_cpp_type_map {
+    using c_type = c_type_input;
+    using cpp_type = cpp_type_input;
 };
 
 template <class... type_maps> struct type_mapping_list_impl {
@@ -43,12 +43,12 @@ template <class first_map, class... rest_maps> struct type_mapping_list_impl<fir
     template <class c_type>
     using get_cpp_type_t =
         std::conditional_t<std::is_same_v<typename first_map::c_type, c_type>, typename first_map::cpp_type,
-                           template type_mapping_list_impl<rest_maps...>>::get_cpp_type_t<c_type>;
+                           typename type_mapping_list_impl<rest_maps...>::template get_cpp_type_t<c_type>>;
 
     template <class cpp_type>
     using get_c_type_t =
         std::conditional_t<std::is_same_v<typename first_map::cpp_type, cpp_type>, typename first_map::c_type,
-                           template type_mapping_list_impl<rest_maps...>>::get_c_type_t<cpp_type>;
+                           typename type_mapping_list_impl<rest_maps...>::template get_c_type_t<cpp_type>>;
 };
 
 using type_mapping_list = type_mapping_list_impl<

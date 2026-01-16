@@ -63,31 +63,32 @@ PGM_MetaDataset const* PGM_meta_get_dataset_by_idx(PGM_Handle* handle, PGM_Idx i
             if (idx < 0 || idx >= get_meta_data().n_datasets()) {
                 throw std::out_of_range{"Index out of range!\n"};
             }
-            return &get_meta_data().datasets[idx];
+            return cast_to_c(&get_meta_data().datasets[idx]);
         },
         ranged_exception_handler);
 }
 PGM_MetaDataset const* PGM_meta_get_dataset_by_name(PGM_Handle* handle, char const* dataset) {
     return call_with_catch(
-        handle, [dataset] { return &get_meta_data().get_dataset(safe_str_view(dataset)); }, ranged_exception_handler);
+        handle, [dataset] { return cast_to_c(&get_meta_data().get_dataset(safe_str_view(dataset))); },
+        ranged_exception_handler);
 }
 char const* PGM_meta_dataset_name(PGM_Handle* handle, PGM_MetaDataset const* dataset) {
-    return call_with_catch(handle, [dataset] { return safe_ptr_get(dataset).name; });
+    return call_with_catch(handle, [dataset] { return safe_ptr_get(cast_to_cpp(dataset)).name; });
 }
 // component
 PGM_Idx PGM_meta_n_components(PGM_Handle* handle, PGM_MetaDataset const* dataset) {
-    return call_with_catch(handle, [dataset] { return safe_ptr_get(dataset).n_components(); });
+    return call_with_catch(handle, [dataset] { return safe_ptr_get(cast_to_cpp(dataset)).n_components(); });
 }
 PGM_MetaComponent const* PGM_meta_get_component_by_idx(PGM_Handle* handle, PGM_MetaDataset const* dataset,
                                                        PGM_Idx idx) {
     return call_with_catch(
         handle,
         [idx, dataset] {
-            auto const& safe_dataset = safe_ptr_get(dataset);
+            auto const& safe_dataset = safe_ptr_get(cast_to_cpp(dataset));
             if (idx < 0 || idx >= safe_dataset.n_components()) {
                 throw std::out_of_range{"Index out of range!\n"};
             }
-            return &safe_dataset.components[idx];
+            return cast_to_c(&safe_dataset.components[idx]);
         },
         ranged_exception_handler);
 }
@@ -96,33 +97,34 @@ PGM_MetaComponent const* PGM_meta_get_component_by_name(PGM_Handle* handle, char
     return call_with_catch(
         handle,
         [component, dataset] {
-            return &get_meta_data().get_dataset(safe_str_view(dataset)).get_component(safe_str_view(component));
+            return cast_to_c(
+                &get_meta_data().get_dataset(safe_str_view(dataset)).get_component(safe_str_view(component)));
         },
         ranged_exception_handler);
 }
 char const* PGM_meta_component_name(PGM_Handle* handle, PGM_MetaComponent const* component) {
-    return call_with_catch(handle, [component] { return safe_ptr_get(component).name; });
+    return call_with_catch(handle, [component] { return safe_ptr_get(cast_to_cpp(component)).name; });
 }
 size_t PGM_meta_component_size(PGM_Handle* handle, PGM_MetaComponent const* component) {
-    return call_with_catch(handle, [component] { return safe_ptr_get(component).size; });
+    return call_with_catch(handle, [component] { return safe_ptr_get(cast_to_cpp(component)).size; });
 }
 size_t PGM_meta_component_alignment(PGM_Handle* handle, PGM_MetaComponent const* component) {
-    return call_with_catch(handle, [component] { return safe_ptr_get(component).alignment; });
+    return call_with_catch(handle, [component] { return safe_ptr_get(cast_to_cpp(component)).alignment; });
 }
 // attributes
 PGM_Idx PGM_meta_n_attributes(PGM_Handle* handle, PGM_MetaComponent const* component) {
-    return call_with_catch(handle, [component] { return safe_ptr_get(component).n_attributes(); });
+    return call_with_catch(handle, [component] { return safe_ptr_get(cast_to_cpp(component)).n_attributes(); });
 }
 PGM_MetaAttribute const* PGM_meta_get_attribute_by_idx(PGM_Handle* handle, PGM_MetaComponent const* component,
                                                        PGM_Idx idx) {
     return call_with_catch(
         handle,
         [idx, component] {
-            auto const& safe_component = safe_ptr_get(component);
+            auto const& safe_component = safe_ptr_get(cast_to_cpp(component));
             if (idx < 0 || idx >= safe_component.n_attributes()) {
                 throw std::out_of_range{"Index out of range!\n"};
             }
-            return &safe_component.attributes[idx];
+            return cast_to_c(&safe_component.attributes[idx]);
         },
         ranged_exception_handler);
 }
@@ -131,20 +133,20 @@ PGM_MetaAttribute const* PGM_meta_get_attribute_by_name(PGM_Handle* handle, char
     return call_with_catch(
         handle,
         [component, dataset, attribute] {
-            return &get_meta_data()
-                        .get_dataset(safe_str_view(dataset))
-                        .get_component(safe_str_view(component))
-                        .get_attribute(safe_str_view(attribute));
+            return cast_to_c(&get_meta_data()
+                                  .get_dataset(safe_str_view(dataset))
+                                  .get_component(safe_str_view(component))
+                                  .get_attribute(safe_str_view(attribute)));
         },
         ranged_exception_handler);
 }
 char const* PGM_meta_attribute_name(PGM_Handle* handle, PGM_MetaAttribute const* attribute) {
-    return call_with_catch(handle, [attribute] { return safe_ptr_get(attribute).name; });
+    return call_with_catch(handle, [attribute] { return safe_ptr_get(cast_to_cpp(attribute)).name; });
 }
 PGM_Idx PGM_meta_attribute_ctype(PGM_Handle* handle, PGM_MetaAttribute const* attribute) {
-    return call_with_catch(handle, [attribute] { return to_c_enum(safe_ptr_get(attribute).ctype); });
+    return call_with_catch(handle, [attribute] { return to_c_enum(safe_ptr_get(cast_to_cpp(attribute)).ctype); });
 }
 size_t PGM_meta_attribute_offset(PGM_Handle* handle, PGM_MetaAttribute const* attribute) {
-    return call_with_catch(handle, [attribute] { return safe_ptr_get(attribute).offset; });
+    return call_with_catch(handle, [attribute] { return safe_ptr_get(cast_to_cpp(attribute)).offset; });
 }
 int PGM_is_little_endian(PGM_Handle* /* handle */) { return to_c_bool<int>(meta_data::is_little_endian()); }
