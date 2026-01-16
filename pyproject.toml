@@ -76,11 +76,13 @@ Discussion = "https://github.com/orgs/PowerGridModel/discussions"
 power_grid_model = "power_grid_model._core.power_grid_model_c"
 
 [tool.scikit-build]
-logging.level = "INFO"
+logging.level = "DEBUG"
 
 cmake.version = ">=3.23"
 cmake.build-type = "Release"
 cmake.args = ["-GNinja"]
+cmake.verbose = true
+
 
 build-dir = "build"
 
