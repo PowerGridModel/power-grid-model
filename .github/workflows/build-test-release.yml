@@ -202,7 +202,10 @@ jobs:
       - name: Set up gcc
         if: runner.os == 'Linux'
         run: |
-          sudo apt-get install -y ninja-build gcc-14 g++-14
+          sudo apt-get update
+          sudo apt-get install -y ninja-build gcc-14 g++-14 clang-18
+          sudo ln -s /usr/bin/clang-18 /usr/local/bin/clang
+          sudo ln -s /usr/bin/clang++-18 /usr/local/bin/clang++
           sudo ln -s /usr/bin/gcc-14 /usr/local/bin/gcc
           sudo ln -s /usr/bin/g++-14 /usr/local/bin/g++
 
