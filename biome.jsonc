@@ -28,17 +28,5 @@
       "indentWidth": 2,
       "lineWidth": 120
     }
-  },
-  "overrides": [
-    {
-      // VS Code and devcontainer .json files allow comments and trailing commas
-      "includes": [".vscode/**/*.json", ".devcontainer/**/*.json"],
-      "json": {
-        "parser": {
-          "allowComments": true,
-          "allowTrailingCommas": true
-        }
-      }
-    }
-  ]
+  }
 }

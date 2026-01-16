@@ -24,6 +24,7 @@
     "cschlosser.doxdocgen",
     "fredericbonnet.cmake-test-adapter",
     "sonarsource.sonarlint-vscode",
-    "davidanson.vscode-markdownlint"
+    "davidanson.vscode-markdownlint",
+    "biomejs.biome"
   ]
 }
