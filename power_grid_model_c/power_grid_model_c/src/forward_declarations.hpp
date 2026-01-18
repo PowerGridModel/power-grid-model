@@ -13,7 +13,11 @@
 // forward declare all referenced struct/class in C++ core
 // alias them in the root namespace
 
-namespace power_grid_model::meta_data {
+namespace power_grid_model {
+
+class MainModel;
+
+namespace meta_data {
 
 struct MetaAttribute;
 struct MetaComponent;
@@ -25,7 +29,9 @@ template <dataset_type_tag dataset_type> class Dataset;
 
 struct DatasetInfo;
 
-} // namespace power_grid_model::meta_data
+} // namespace meta_data
+
+} // namespace power_grid_model
 
 namespace power_grid_model_c {
 
@@ -52,6 +58,7 @@ template <class first_map, class... rest_maps> struct type_mapping_list_impl<fir
 };
 
 using type_mapping_list = type_mapping_list_impl<
+    c_cpp_type_map<PGM_PowerGridModel, power_grid_model::MainModel>,
     c_cpp_type_map<PGM_MetaAttribute, power_grid_model::meta_data::MetaAttribute>,
     c_cpp_type_map<PGM_MetaComponent, power_grid_model::meta_data::MetaComponent>,
     c_cpp_type_map<PGM_MetaDataset, power_grid_model::meta_data::MetaDataset>,
