@@ -29,7 +29,6 @@ using power_grid_model_c::get_math_solver_dispatcher;
 using power_grid_model_c::safe_enum;
 using power_grid_model_c::safe_ptr;
 using power_grid_model_c::safe_ptr_get;
-using power_grid_model_c::safe_ptr_maybe_nullptr;
 using power_grid_model_c::safe_str_view;
 } // namespace
 
