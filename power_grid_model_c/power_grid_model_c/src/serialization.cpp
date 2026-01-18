@@ -21,6 +21,8 @@ namespace {
 using namespace power_grid_model::meta_data;
 
 using power_grid_model_c::call_with_catch;
+using power_grid_model_c::cast_to_c;
+using power_grid_model_c::cast_to_cpp;
 using power_grid_model_c::safe_bool;
 using power_grid_model_c::safe_enum;
 using power_grid_model_c::safe_ptr;

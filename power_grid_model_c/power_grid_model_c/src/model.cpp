@@ -23,6 +23,8 @@ namespace {
 using namespace power_grid_model;
 
 using power_grid_model_c::call_with_catch;
+using power_grid_model_c::cast_to_c;
+using power_grid_model_c::cast_to_cpp;
 using power_grid_model_c::get_math_solver_dispatcher;
 using power_grid_model_c::safe_enum;
 using power_grid_model_c::safe_ptr;

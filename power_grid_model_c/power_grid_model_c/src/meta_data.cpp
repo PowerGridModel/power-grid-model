@@ -20,6 +20,8 @@ namespace {
 using namespace power_grid_model;
 
 using power_grid_model_c::call_with_catch;
+using power_grid_model_c::cast_to_c;
+using power_grid_model_c::cast_to_cpp;
 using power_grid_model_c::safe_ptr_get;
 using power_grid_model_c::safe_str_view;
 using power_grid_model_c::to_c_bool;

@@ -96,6 +96,3 @@ template <class CPPTypePtr> auto cast_to_c(CPPTypePtr ptr) {
 }
 
 } // namespace power_grid_model_c
-
-using power_grid_model_c::cast_to_c;
-using power_grid_model_c::cast_to_cpp;
