@@ -29,6 +29,7 @@ using power_grid_model_c::get_math_solver_dispatcher;
 using power_grid_model_c::safe_enum;
 using power_grid_model_c::safe_ptr;
 using power_grid_model_c::safe_ptr_get;
+using power_grid_model_c::safe_ptr_maybe_nullptr;
 using power_grid_model_c::safe_str_view;
 } // namespace
 
@@ -312,8 +313,9 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
     call_with_catch(
         handle,
         [model, opt, output_dataset, batch_dataset] {
-            calculate_multi_dimensional_impl(*cast_to_cpp(model), *opt, *cast_to_cpp(output_dataset),
-                                             cast_to_cpp(batch_dataset));
+            calculate_multi_dimensional_impl(safe_ptr_get(cast_to_cpp(model)), safe_ptr_get(opt),
+                                             safe_ptr_get(cast_to_cpp(output_dataset)),
+                                             safe_ptr_maybe_nullptr(cast_to_cpp(batch_dataset)));
         },
         batch_exception_handler);
 }
