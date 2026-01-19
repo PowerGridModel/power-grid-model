@@ -9,6 +9,15 @@
       "**/*.json",
       "**/*.jsonc",
 
+      "!.git",
+      "!.mypy_cache",
+      "!.pytest_cache",
+      "!.ruff_cache",
+      "!.venv",
+      "!build",
+      "!node_modules",
+      "!python_cov_html",
+
       "!docs",
       "!tests/data/**/input.json",
       "!tests/data/**/*_output*.json",
@@ -16,17 +25,23 @@
       "!tests/unit/deprecated/data"
     ]
   },
-  // ignore files specified in .gitignore
-  "vcs": {
-    "enabled": true,
-    "clientKind": "git",
-    "useIgnoreFile": true
-  },
   "json": {
     "formatter": {
       "indentStyle": "space",
       "indentWidth": 2,
       "lineWidth": 120
     }
-  }
+  },
+  "overrides": [
+    {
+      // VS Code and devcontainer .json files allow comments and trailing commas
+      "includes": [".vscode/**/*.json", ".devcontainer/**/*.json"],
+      "json": {
+        "parser": {
+          "allowComments": true,
+          "allowTrailingCommas": true
+        }
+      }
+    }
+  ]
 }
