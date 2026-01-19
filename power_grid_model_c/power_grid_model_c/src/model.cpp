@@ -156,7 +156,7 @@ class BadCalculationRequest : public PowerGridError {
     explicit BadCalculationRequest(std::string msg) : PowerGridError{std::move(msg)} {}
 };
 
-void calculate_single_batch_dimension_impl(MainModel& model, PGM_Options const& opt,
+void calculate_single_batch_dimension_impl(MainModel& model, MainModel::Options const& options,
                                            MutableDataset const& output_dataset, ConstDataset const* batch_dataset) {
     // check dataset integrity
     if ((batch_dataset != nullptr) && (!batch_dataset->is_batch() || !output_dataset.is_batch())) {
@@ -167,13 +167,6 @@ void calculate_single_batch_dimension_impl(MainModel& model, PGM_Options const& 
     ConstDataset const& exported_update_dataset = batch_dataset != nullptr
                                                       ? safe_ptr_get(batch_dataset)
                                                       : ConstDataset{false, 1, "update", output_dataset.meta_data()};
-
-    check_calculate_valid_options(opt);
-    auto const options = extract_calculation_options(opt);
-
-    if (opt.experimental_features == PGM_experimental_features_disabled) {
-        check_no_experimental_features_used(model, options);
-    }
 
     model.calculate(options, output_dataset, exported_update_dataset);
 }
@@ -241,29 +234,33 @@ class MDBatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandl
 
 Idx get_batch_dimension(ConstDataset const* batch_dataset) {
     Idx dimension = 0;
-    while (batch_dataset != nullptr) {
+    ConstDataset const* safe_batch_dataset = safe_ptr_maybe_nullptr(batch_dataset);
+    while (safe_batch_dataset != nullptr) {
         ++dimension;
-        batch_dataset = batch_dataset->get_next_cartesian_product_dimension();
+        safe_batch_dataset =
+            safe_ptr_maybe_nullptr(safe_ptr_get(safe_batch_dataset).get_next_cartesian_product_dimension());
     }
     return dimension;
 }
 
 Idx get_stride_size(ConstDataset const* batch_dataset) {
     Idx size = 1;
-    ConstDataset const* current = batch_dataset->get_next_cartesian_product_dimension();
+    ConstDataset const* current =
+        safe_ptr_maybe_nullptr(safe_ptr_get(batch_dataset).get_next_cartesian_product_dimension());
     while (current != nullptr) {
-        size *= current->batch_size();
-        current = current->get_next_cartesian_product_dimension();
+        auto const& safe_current = safe_ptr_get(current);
+        size *= safe_current.batch_size();
+        current = safe_current.get_next_cartesian_product_dimension();
     }
     return size;
 }
 
 // run calculation
-void calculate_multi_dimensional_impl(MainModel& model, PGM_Options const& opt, MutableDataset const& output_dataset,
+void calculate_multi_dimensional_impl(MainModel& model, MainModel::Options const& options, MutableDataset const& output_dataset,
                                       ConstDataset const* batch_dataset) {
     // for dimension < 2 (one-time or 1D batch), call implementation directly
     if (auto const batch_dimension = get_batch_dimension(batch_dataset); batch_dimension < 2) {
-        calculate_single_batch_dimension_impl(model, opt, output_dataset, batch_dataset);
+        calculate_single_batch_dimension_impl(model, options, output_dataset, batch_dataset);
         return;
     }
 
@@ -280,7 +277,7 @@ void calculate_multi_dimensional_impl(MainModel& model, PGM_Options const& opt, 
         // a new handle
         call_with_catch(
             &local_handle,
-            [&model, &opt, &output_dataset, &safe_batch_dataset, i, stride_size] {
+            [&model, &options, &output_dataset, &safe_batch_dataset, i, stride_size] {
                 // create sliced datasets for the rest of dimensions
                 ConstDataset const single_update_dataset = safe_batch_dataset.get_individual_scenario(i);
                 MutableDataset const sliced_output_dataset =
@@ -293,7 +290,7 @@ void calculate_multi_dimensional_impl(MainModel& model, PGM_Options const& opt, 
                 local_model.update_components<permanent_update_t>(single_update_dataset);
 
                 // recursive call
-                calculate_multi_dimensional_impl(local_model, opt, sliced_output_dataset,
+                calculate_multi_dimensional_impl(local_model, options, sliced_output_dataset,
                                                  safe_batch_dataset.get_next_cartesian_product_dimension());
             },
             MDBatchExceptionHandler{i * stride_size, stride_size});
@@ -305,6 +302,18 @@ void calculate_multi_dimensional_impl(MainModel& model, PGM_Options const& opt, 
     }
 }
 
+void calculate_impl(MainModel& model, PGM_Options const& options, MutableDataset const& output_dataset,
+                    ConstDataset const* batch_dataset) {
+    check_calculate_valid_options(options);
+    auto const extracted_options = extract_calculation_options(options);
+
+    if (options.experimental_features == PGM_experimental_features_disabled) {
+        check_no_experimental_features_used(model, extracted_options);
+    }
+
+    calculate_multi_dimensional_impl(model, extracted_options, output_dataset, batch_dataset);
+}
+
 } // namespace
 
 // run calculation
@@ -313,7 +322,7 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
     call_with_catch(
         handle,
         [model, opt, output_dataset, batch_dataset] {
-            calculate_multi_dimensional_impl(safe_ptr_get(cast_to_cpp(model)), safe_ptr_get(opt),
+            calculate_impl(safe_ptr_get(cast_to_cpp(model)), safe_ptr_get(opt),
                                              safe_ptr_get(cast_to_cpp(output_dataset)),
                                              safe_ptr_maybe_nullptr(cast_to_cpp(batch_dataset)));
         },
