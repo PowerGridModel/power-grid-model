@@ -68,7 +68,7 @@ TEST_CASE("Test y bus") {
     //   x, 0
     // ]
     IdxVector const col_indices = {// Culumn col_indices for each non-zero element in Y bus.
-                             0, 1, 0, 1, 2, 1, 2, 3, 2, 3};
+                                   0, 1, 0, 1, 2, 1, 2, 3, 2, 3};
     Idx nnz = 10; // Number of non-zero elements in Y bus
     IdxVector const bus_entry = {0, 3, 6, 9};
     IdxVector const lu_transpose_entry = {// Flip the id's of non-diagonal elements
