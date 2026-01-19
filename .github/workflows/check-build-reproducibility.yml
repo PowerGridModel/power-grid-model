@@ -1,0 +1,170 @@
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+name: Build and Test C++ and Python
+
+# Controls when the workflow will run
+on:
+  # run pipeline from another workflow
+  workflow_call:
+  # run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-build-reproducibility
+  cancel-in-progress: true
+
+jobs:
+  check-power-grid-model-c-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: [gcc, clang]
+        include:
+          - c_compiler: gcc-14
+            cxx_compiler: g++-14
+          - c_compiler: clang-18
+            cxx_compiler: clang++-18
+
+    env:
+      CMAKE_PREFIX_PATH: /home/linuxbrew/.linuxbrew
+      PRESET: ci-${{ matrix.compiler }}-reproducible
+      HOMEBREW_FORCE_BREWED_CURL: 1
+
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build gcc-14 g++-14 clang-18
+          sudo ln -s /usr/bin/clang-18 /usr/local/bin/clang
+          sudo ln -s /usr/bin/clang++-18 /usr/local/bin/clang++
+          sudo ln -s /usr/bin/gcc-14 /usr/local/bin/gcc
+          sudo ln -s /usr/bin/g++-14 /usr/local/bin/g++
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: Install pgm-build-dependencies
+        run: |
+          uv tool install https://github.com/PowerGridModel/pgm-build-dependencies/releases/latest/download/pgm_build_dependencies-0.1.0-py3-none-any.whl
+          pgm-build-setup-ga-ci
+
+      - name: Build twice
+        run: |
+          cmake --preset ${{ env.PRESET }}
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install
+          mv install/${{ env.PRESET }} install/${{ env.PRESET }}-1
+          mv cpp_build/ cpp_build_1/
+          cmake --preset ${{ env.PRESET }}
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install
+          mv install/${{ env.PRESET }} install/${{ env.PRESET }}-2
+          mv cpp_build/ cpp_build_2/
+
+      - name: Compare builds
+        run: |
+          diff -qr install/${{ env.PRESET }}-1 install/${{ env.PRESET }}-2
+          if [ $? -ne 0 ]; then
+            echo "Build mismatch detected"
+            exit 1
+          fi
+          echo "Builds are identical"
+
+  check-reproducibility-c-windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        compiler: [msvc, clang-cl]
+
+    env:
+      PRESET: ci-${{ matrix.compiler }}-reproducible
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: Install pgm-build-dependencies
+        run: |
+          uv tool install https://github.com/PowerGridModel/pgm-build-dependencies/releases/latest/download/pgm_build_dependencies-0.1.0-py3-none-any.whl
+          pgm-build-setup-ga-ci
+
+      - uses: ./.github/actions/enable-msvc
+
+      - name: Build twice
+        run: |
+          cmake --preset ${{ env.PRESET }} -DCMAKE_PREFIX_PATH=C:\conda_envs\cpp_pkgs\Library; if(!$?) { Exit $LASTEXITCODE }
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1; if(!$?) { Exit $LASTEXITCODE }
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install; if(!$?) { Exit $LASTEXITCODE }
+          mv install/${{ env.PRESET }} install/${{ env.PRESET }}-1; if(!$?) { Exit $LASTEXITCODE }
+          mv cpp_build/ cpp_build_1/; if(!$?) { Exit $LASTEXITCODE }
+          cmake --preset ${{ env.PRESET }} -DCMAKE_PREFIX_PATH=C:\conda_envs\cpp_pkgs\Library; if(!$?) { Exit $LASTEXITCODE }
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1; if(!$?) { Exit $LASTEXITCODE }
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install; if(!$?) { Exit $LASTEXITCODE }
+          mv install/${{ env.PRESET }} install/${{ env.PRESET }}-2; if(!$?) { Exit $LASTEXITCODE }
+          mv cpp_build/ cpp_build_2/; if(!$?) { Exit $LASTEXITCODE }
+
+      - name: Compare builds
+        run: |
+          $hash1 = Get-ChildItem -Path install/${{ env.PRESET }}-1 -Recurse -File | Get-FileHash | Sort-Object Path
+          $hash2 = Get-ChildItem -Path install/${{ env.PRESET }}-2 -Recurse -File | Get-FileHash | Sort-Object Path
+          Compare-Object $hash1 $hash2 -Property Hash -PassThru -IncludeEqual | ForEach-Object {
+              $currentPath = $_.Path
+
+              if ($_.SideIndicator -eq '==') {
+                  Write-Host "Files match: $currentPath"
+              } else {
+                  Write-Error "Build mismatch detected: $currentPath";
+                  Exit 1
+              }
+          }
+          if ($LASTEXITCODE -eq 1) { Exit 1 }
+          Write-Host "Builds are identical"
+
+  check-reproducibility-c-macos:
+    runs-on: macos-latest
+    env:
+      CMAKE_PREFIX_PATH: /usr/local
+      PRESET: ci-apple-clang-reproducible
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up XCode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: Install pgm-build-dependencies
+        run: |
+          uv tool install https://github.com/PowerGridModel/pgm-build-dependencies/releases/latest/download/pgm_build_dependencies-0.1.0-py3-none-any.whl
+          pgm-build-setup-ga-ci
+
+      - name: Build twice
+        run: |
+          cmake --preset ${{ env.PRESET }}
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install
+          mv install/${{ env.PRESET }} install/${{ env.PRESET }}-1
+          mv cpp_build/ cpp_build_1
+          cmake --preset ${{ env.PRESET }}
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1
+          cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install
+          mv install/${{ env.PRESET }} install/${{ env.PRESET }}-2
+          mv cpp_build/ cpp_build_2
+
+      - name: Compare builds
+        run: |
+          diff -qr install/${{ env.PRESET }}-1 install/${{ env.PRESET }}-2
+          if [ $? -ne 0 ]; then
+            echo "Build mismatch detected"
+            exit 1
+          fi
+          echo "Builds are identical"

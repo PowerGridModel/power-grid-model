@@ -124,6 +124,10 @@ class PowerGridNotImplementedError(PowerGridError):
     """The functionality is either not supported or not yet implemented."""
 
 
+class PowerGridIllegalOperationError(PowerGridError):
+    """An illegal operation was attempted to the C API, such as accessing a null pointer."""
+
+
 class PowerGridUnreachableHitError(PowerGridError):
     """Supposedly unreachable code was hit.
 

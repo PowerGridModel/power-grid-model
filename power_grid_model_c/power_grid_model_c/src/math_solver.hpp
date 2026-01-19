@@ -12,8 +12,8 @@
 
 #include <power_grid_model/math_solver/math_solver_dispatch.hpp>
 
-namespace power_grid_model {
+namespace power_grid_model_c {
+using power_grid_model::MathSolverDispatcher;
 
 MathSolverDispatcher const& get_math_solver_dispatcher();
-
-} // namespace power_grid_model
+} // namespace power_grid_model_c
