@@ -73,14 +73,12 @@ jobs:
         run: |
           grab_installed_version() {
             local pkg="$1"
-            # prefix with `devDependencies.`
-            local dev_pkg="devDependencies.$pkg"
             local nospecialchars_pkg
             local version
             # remove characters `@` and `/`
             nospecialchars_pkg=$(echo $pkg | tr -d '@/')
-            version=$(npm pkg get $dev_pkg | tr -d '"')
-            echo "${pkg}=$version" >> "$GITHUB_OUTPUT"
+            version=$(npm ls --json --package-lock-only $pkg | grep -i '"version": ' | cut -d\" -f4)
+            echo "${nospecialchars_pkg}=$version" >> "$GITHUB_OUTPUT"
           }
           grab_installed_version_npm "@biomejs/biome"
           grab_installed_version_npm "markdownlint-cli"
