@@ -876,7 +876,8 @@ Please refer to their respective sections for detailed documentation.
 #### Power flow with automatic tap changing
 
 Some of the most important regulators in the grid affect the tap position of transformers.
-These [Transformer Tap Regulator](../user_manual/components.md#transformer-tap-regulator)s try to regulate a control voltage
+These [Transformer Tap Regulator](../user_manual/components.md#transformer-tap-regulator)s try to regulate
+a control voltage
 $U_{\text{control}}$ such that it is within a specified voltage band.
 The $U_{\text{control}}$ may be compensated for the voltage drop during transport.
 Power flow calculations that take the behavior of these regulators into account may be toggled by providing one of the
@@ -902,8 +903,9 @@ sides.
   inbetween.
   In the presence of meshed grids, transformers with conflicting ranks will be ranked the last.
   - Transformers are regulated in order according to their ranks.
-- Initialize all transformers to their starting tap position (see
-  [Initialization and exploitation of regulated transformers](#initialization-and-exploitation-of-regulated-transformers))
+- Initialize all transformers to their starting tap position
+  (see[Initialization and exploitation of regulated transformers](
+    #initialization-and-exploitation-of-regulated-transformers))
 - Find the optimal state using the following procedure
   - While some transformers can still be further regulated, iterate as follows:
     - Run a power flow calculation with the current tap positions with the specified
@@ -928,12 +930,14 @@ sides.
         - A better combination of tap positions may have been found.
         - Step out of the loop and go to the next iteration step.
   - Exploit the neighbourhood of all transformers (see
-    [Initialization and exploitation of regulated transformers](#initialization-and-exploitation-of-regulated-transformers))
+    [Initialization and exploitation of regulated transformers](
+      #initialization-and-exploitation-of-regulated-transformers))
     - Re-run the iteration in the above if any of the tap positions changed by the exploitation.
 
 In the case where the control side of the regulator and the tap side of the transformer are at the same side, the
 control logic of taps will be reverted (see
-[Initialization and exploitation of regulated transformers](#initialization-and-exploitation-of-regulated-transformers)).
+[Initialization and exploitation of regulated transformers](
+  #initialization-and-exploitation-of-regulated-transformers)).
 The exploitation of the neighbourhood ensures that the actual optimum is not accidentally missed due to feedback
 mechanisms in the grid.
 
