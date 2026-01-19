@@ -253,7 +253,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         std::vector<Tensor>& lu_matrix = data;
 
         // column position idx per row for LU matrix
-        IdxVector col_position_idx(row_indptr_.cbegin(), row_indptr_.cend() - 1);
+        IdxVector col_position_idx(row_indptr_.begin(), row_indptr_.end() - 1);
 
         // start pivoting, it is always the diagonal
         for (Idx pivot_row_col = 0; pivot_row_col != size_; ++pivot_row_col) {
@@ -382,12 +382,12 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
                     Idx const u_col = col_indices_[u_idx];
                     assert(u_col > pivot_row_col);
                     // search the a_idx to the u_col,
-                    auto const found = std::lower_bound(col_indices_.cbegin() + a_idx,
-                                                        col_indices_.cbegin() + row_indptr_[l_row + 1], u_col);
+                    auto const found = std::lower_bound(col_indices_.begin() + a_idx,
+                                                        col_indices_.begin() + row_indptr_[l_row + 1], u_col);
                     // should always found
-                    assert(found != col_indices_.cbegin() + row_indptr_[l_row + 1]);
+                    assert(found != col_indices_.begin() + row_indptr_[l_row + 1]);
                     assert(*found == u_col);
-                    a_idx = narrow_cast<Idx>(std::distance(col_indices_.cbegin(), found));
+                    a_idx = narrow_cast<Idx>(std::distance(col_indices_.begin(), found));
                     // subtract
                     lu_matrix[a_idx] -= dot(l, lu_matrix[u_idx]);
                 }
