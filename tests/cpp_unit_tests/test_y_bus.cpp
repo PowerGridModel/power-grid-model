@@ -59,7 +59,7 @@ TEST_CASE("Test y bus") {
     auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
 
     // output
-    IdxVector row_indptr = {0, 2, 5, 8, 10};
+    IdxVector const row_indptr = {0, 2, 5, 8, 10};
 
     // Use col_indices to find the location in Y bus
     //  e.g. col_indices = {0, 1, 0} results in Y bus:
@@ -67,10 +67,10 @@ TEST_CASE("Test y bus") {
     //	x, x
     //   x, 0
     // ]
-    IdxVector col_indices = {// Culumn col_indices for each non-zero element in Y bus.
+    IdxVector const col_indices = {// Culumn col_indices for each non-zero element in Y bus.
                              0, 1, 0, 1, 2, 1, 2, 3, 2, 3};
     Idx nnz = 10; // Number of non-zero elements in Y bus
-    IdxVector bus_entry = {0, 3, 6, 9};
+    IdxVector const bus_entry = {0, 3, 6, 9};
     IdxVector const lu_transpose_entry = {// Flip the id's of non-diagonal elements
                                           0, 2, 1, 3, 5, 4, 6, 8, 7, 9};
     IdxVector const y_bus_entry_indptr = {0,  3,      // 0, 1, 2 belong to element [0,0] in Ybus /  3,4 to element [0,1]
