@@ -28,7 +28,7 @@ template <class T> using EigenDiagonalTensor3 = Eigen::DiagonalMatrix<T, 3>;
 
 template <scalar_value T> class Vector : public EigenVector3<T> {
   public:
-    Vector() { (*this) = EigenVector3<T>::Zero(); };
+    Vector() { this->setConstant(T{}); };
     // eigen expression
     template <typename OtherDerived> Vector(Eigen::ArrayBase<OtherDerived> const& other) : EigenVector3<T>{other} {}
     template <typename OtherDerived> Vector& operator=(Eigen::ArrayBase<OtherDerived> const& other) {
