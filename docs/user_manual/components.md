@@ -40,7 +40,7 @@ An example of the usage of optional IDs is given in [Power Flow Example](./Power
 ## Node
 
 * type name: `node`
-* base: {hoverxreftooltip}`user_manual/components:base`
+* base: [base](#base)
 
 `node` is a point in the grid.
 Physically a node can be a busbar, a joint, or other similar component.
@@ -63,7 +63,7 @@ Physically a node can be a busbar, a joint, or other similar component.
 
 ```{note}
 The `p` and `q` output of injection follows the `generator` reference direction as mentioned in  
-{hoverxreftooltip}`user_manual/data-model:Reference Direction`
+[Reference Direction](data-model.md#reference-direction)
 ```
 
 #### Short circuit output
@@ -77,7 +77,7 @@ The `p` and `q` output of injection follows the `generator` reference direction 
 ## Branch
 
 * type name: `branch`
-* base: {hoverxreftooltip}`user_manual/components:base`
+* base: [base](#base)
 
 `branch` is the abstract base type for the component which connects two *different* nodes.
 For each branch two switches are always defined at from- and to-side of the branch.
@@ -121,7 +121,7 @@ In this case, the attribute `from_status` and `to_status` is always 1.
 
 * type name: `line`
 
-`line` is a {hoverxreftooltip}`user_manual/components:branch` with specified serial impedance and shunt admittance.
+`line` is a [branch](#branch) with specified serial impedance and shunt admittance.
 A cable is also modeled as `line`.
 A `line` can only connect two nodes with the same rated voltage.
 If `i_n` is not provided, `loading` of line will be a `nan` value.
@@ -160,7 +160,7 @@ $$
 
 * type name: `link`
 
-`link` is a {hoverxreftooltip}`user_manual/components:branch` which usually represents a short internal cable/connection
+`link` is a [branch](#branch) which usually represents a short internal cable/connection
 between two busbars inside a substation.
 It has a very high admittance (small impedance) which is set to a fixed per-unit value (equivalent to 10e6 siemens for
 10kV network).
@@ -179,7 +179,7 @@ $$
 
 ### Transformer
 
-`transformer` is a {hoverxreftooltip}`user_manual/components:branch` which connects two nodes with possibly different
+`transformer` is a [branch](#branch) which connects two nodes with possibly different
 voltage levels.
 An example of usage of transformer is given in [Transformer Examples](../examples/Transformer%20Examples.ipynb)
 
@@ -260,7 +260,7 @@ where $z_{\text{base,transformer}} = 1 / y_{\text{base,transformer}} = {u_{\text
 
 * type name: `generic_branch`
 
-`generic_branch` is a {hoverxreftooltip}`user_manual/components:branch` that connects two nodes, potentially at
+`generic_branch` is a [branch](#branch) that connects two nodes, potentially at
 different voltage levels.
 Depending on the choice of parameters, it behaves either as a line or as a transformer.
 The advantage is that the input parameters are based directly on the electrical equivalent circuit model.
@@ -320,7 +320,7 @@ $$
 
 * type name: `asym_line`
 
-`asym_line` is a {hoverxreftooltip}`user_manual/components:branch` with specified resistance and reactance per phase.
+`asym_line` is a [branch](#branch) with specified resistance and reactance per phase.
 A cable can be modelled as `line` or `asym_line`. An `asym_line` can only connect two nodes with the same rated voltage.
 If `i_n` is not provided, `loading` of line will be a `nan` value.
 The `asym_line` denotes a 3 or 4 phase line with phases `a`, `b`, `c` and optionally `n` for neutral.
@@ -455,7 +455,7 @@ Where $Z_{\text{i,j}}$ denotes the row and column of the $Z_{\text{series}}$ mat
 ## Branch3
 
 * type name: `branch3`
-* base: {hoverxreftooltip}`user_manual/components:base`
+* base: [base](#base)
 
 `branch3` is the abstract base type for the component which connects three *different* nodes.
 For each branch3 three switches are always defined at side 1, 2, or 3 of the branch.
@@ -503,7 +503,7 @@ In reality such switches may not exist.
 
 ### Three-Winding Transformer
 
-`three_winding_transformer` is a {hoverxreftooltip}`user_manual/components:branch3` connects three nodes with possibly
+`three_winding_transformer` is a [branch3](#branch3) connects three nodes with possibly
 different voltage levels.
 An example of usage of three-winding transformer is given in
 [Transformer Examples](../examples/Transformer%20Examples.ipynb).
@@ -568,16 +568,16 @@ However, there are only 2 `pi` "legs": One at `side_1` and one in the centre of 
 The values between windings (for e.g., `uk_12` or `pk_23`) are converted from delta to corresponding star configuration
 values.
 The calculation of series and shunt admittance from `uk`, `pk`, `i0` and `p0` is same as mentioned in
-{hoverxreftooltip}`user_manual/components:transformer`.
+[transformer](#transformer).
 
 ## Appliance
 
 * type name: `appliance`
-* base: {hoverxreftooltip}`user_manual/components:base`
+* base: [base](#base)
 
 `appliance` is an abstract user which is coupled to a `node`.
 For each `appliance`, a switch is defined between the `appliance` and the `node`.
-The reference direction for power flows is mentioned in {hoverxreftooltip}`user_manual/data-model:Reference Direction`.
+The reference direction for power flows is mentioned in [Reference Direction](data-model.md#reference-direction).
 
 #### Input
 
@@ -606,9 +606,9 @@ The reference direction for power flows is mentioned in {hoverxreftooltip}`user_
 ### Source
 
 * type name: `source`
-* {hoverxreftooltip}`user_manual/data-model:Reference Direction`: generator
+* [Reference Direction](data-model.md#reference-direction): generator
 
-`source` is an {hoverxreftooltip}`user_manual/components:appliance` representing the external network with a
+`source` is an [appliance](#appliance) representing the external network with a
 [Thévenin's equivalence](https://en.wikipedia.org/wiki/Th%C3%A9venin%27s_theorem).
 It has an infinite voltage source with an internal impedance.
 The impedance is specified by convention as short circuit power.
@@ -654,7 +654,7 @@ $$
 
 * type name: `generic_load_gen`
 
-`generic_load_gen` is an abstract load/generation {hoverxreftooltip}`user_manual/components:appliance` which contains
+`generic_load_gen` is an abstract load/generation [appliance](#appliance) which contains
 only the type of the load/generation with response to voltage.
 
 | name   | data type                                                   | unit | description                                     | required |  update  |
@@ -717,9 +717,9 @@ where $\bar{u}$ is the calculated node voltage.
 ### Shunt
 
 * type name: `shunt`
-* {hoverxreftooltip}`user_manual/data-model:Reference Direction`: load
+* [Reference Direction](data-model.md#reference-direction): load
 
-`shunt` is an {hoverxreftooltip}`user_manual/components:appliance` with a fixed admittance (impedance).
+`shunt` is an [appliance](#appliance) with a fixed admittance (impedance).
 It behaves similar to a load/generator with type `const_impedance`.
 
 #### Input
@@ -743,7 +743,7 @@ scenarios within a batch are not three-phase faults (i.e. `fault_type` is not `F
 ## Sensor
 
 * type name: `sensor`
-* base: {hoverxreftooltip}`user_manual/components:base`
+* base: [base](#base)
 
 `sensor` is an abstract type for all the sensor types.
 A sensor does not have any physical meaning.
@@ -766,7 +766,7 @@ For other calculation types, sensor output is undefined.
 * type name: `generic_voltage_sensor`
 
 `generic_voltage_sensor` is an abstract class for symmetric and asymmetric voltage sensor and derived from
-{hoverxreftooltip}`user_manual/components:sensor`.
+[sensor](#sensor).
 It measures the magnitude and (optionally) the angle of the voltage of a `node`.
 
 #### Input
@@ -829,12 +829,12 @@ The $\pmod{2\pi}$ is handled such that $-\pi \lt \theta_{\text{angle},\text{resi
 * type name: `generic_power_sensor`
 
 `power_sensor` is an abstract class for symmetric and asymmetric power sensor and is derived from
-{hoverxreftooltip}`user_manual/components:sensor`.
+[sensor](#sensor).
 It measures the active/reactive power flow of a terminal.
 The terminal is either connecting an `appliance` and a `node`, or connecting the from/to end of a `branch` (except
 `link`) and a `node`.
 In case of a terminal between an `appliance` and a `node`, the power
-{hoverxreftooltip}`user_manual/data-model:Reference Direction` in the measurement data is the same as the reference
+[Reference Direction](data-model.md#reference-direction) in the measurement data is the same as the reference
 direction of the `appliance`.
 For example, if a `power_sensor` is measuring a `source`, a positive `p_measured` indicates that the active power flows
 from the source to the node.
@@ -865,7 +865,7 @@ However, such mixing of sensor types is allowed as long as they are on different
 | name                     | data type                                                                     | unit             | description                                                                                                                                                                                 |                                                            required                                                           |  update  |                     valid values                     |
 | ------------------------ | ----------------------------------------------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------: | :------: | :--------------------------------------------------: |
 | `measured_terminal_type` | {py:class}`MeasuredTerminalType <power_grid_model.enum.MeasuredTerminalType>` | -                | indicate if it measures an `appliance` or a `branch`                                                                                                                                        |                                                            &#10004;                                                           | &#10060; | the terminal type should match the `measured_object` |
-| `power_sigma`            | `double`                                                                      | volt-ampere (VA) | standard deviation of the measurement error. Usually this is the absolute measurement error range divided by 3. See {hoverxreftooltip}`user_manual/components:Power Sensor Concrete Types`. | &#10024; in certain cases for state estimation. See the explanation for [concrete types](#power-sensor-concrete-types) below. | &#10004; |                        `> 0`                         |
+| `power_sigma`            | `double`                                                                      | volt-ampere (VA) | standard deviation of the measurement error. Usually this is the absolute measurement error range divided by 3. See [Power Sensor Concrete Types](#power-sensor-concrete-types). | &#10024; in certain cases for state estimation. See the explanation for [concrete types](#power-sensor-concrete-types) below. | &#10004; |                        `> 0`                         |
 
 #### Power Sensor Concrete Types
 
@@ -942,7 +942,7 @@ $$
 * type name: `generic_current_sensor`
 
 `current_sensor` is an abstract class for symmetric and asymmetric current sensor and is derived from
-{hoverxreftooltip}`user_manual/components:sensor`.
+[sensor](#sensor).
 It measures the magnitude and angle of the current flow of a terminal.
 The terminal is connecting the from/to end of a `branch` (except `link`) and a `node`.
 
@@ -1065,7 +1065,7 @@ The $\pmod{2\pi}$ is handled such that $-\pi \lt i_{\text{angle},\text{residual}
 ## Fault
 
 * type name: `fault`
-* base: {hoverxreftooltip}`user_manual/components:base`
+* base: [base](#base)
 
 `fault` defines a short circuit location in the grid.
 A fault can only happen at a `node`.
@@ -1123,7 +1123,7 @@ The supported values of `fault_phase`, as well as its default value, are listed 
 ## Regulator
 
 * type name: `regulator`
-* base: {hoverxreftooltip}`user_manual/components:base`
+* base: [base](#base)
 
 `regulator` is an abstract regulator that is coupled to a given `regulated_object`. For each `regulator`, a switch is
 defined between the `regulator` and the `regulated_object`.
@@ -1139,12 +1139,12 @@ Which object types are supported as `regulated_object` is regulator type-depende
 ### Transformer tap regulator
 
 * type name: `transformer_tap_regulator`
-* base: {hoverxreftooltip}`user_manual/components:regulator`
+* base: [regulator](#regulator)
 
 `transformer_tap_regulator` defines a regulator for transformers in the grid.
 A transformer tap regulator regulates a component that is either a
-{hoverxreftooltip}`user_manual/components:transformer` or a
-{hoverxreftooltip}`user_manual/components:Three-Winding Transformer`.
+[transformer](#transformer) or a
+[Three-Winding Transformer](#three-winding-transformer).
 
 The transformer tap regulator changes the `tap_pos` of the transformer it regulates in the range set by the user via
 `tap_min` and `tap_max` (i.e., `(tap_min <= tap_pos <= tap_max)` or `(tap_min >= tap_pos >= tap_max)`).
@@ -1163,7 +1163,7 @@ The actual grid state is not changed after calculations are done.
 
 | name                       | data type                                                                                                                                                                                                                                                                                                          | unit     | description                                                                                             |           required           |  update  |                           valid values                           |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- | ------------------------------------------------------------------------------------------------------- | :--------------------------: | :------: | :--------------------------------------------------------------: |
-| `control_side`             | {py:class}`BranchSide <power_grid_model.enum.BranchSide>` if the regulated object is a {hoverxreftooltip}`user_manual/components:transformer` and {py:class}`Branch3Side <power_grid_model.enum.Branch3Side>` if it the regulated object is a {hoverxreftooltip}`user_manual/components:Three-Winding Transformer` | -        | the controlled side of the transformer                                                                  | &#10024; only for power flow | &#10060; | `control_side` should be the relatively further side to a source |
+| `control_side`             | {py:class}`BranchSide <power_grid_model.enum.BranchSide>` if the regulated object is a [transformer](#transformer) and {py:class}`Branch3Side <power_grid_model.enum.Branch3Side>` if it the regulated object is a [Three-Winding Transformer](#three-winding-transformer) | -        | the controlled side of the transformer                                                                  | &#10024; only for power flow | &#10060; | `control_side` should be the relatively further side to a source |
 | `u_set`                    | `double`                                                                                                                                                                                                                                                                                                           | volt (V) | the voltage setpoint (at the center of the band)                                                        | &#10024; only for power flow | &#10004; |                              `>= 0`                              |
 | `u_band`                   | `double`                                                                                                                                                                                                                                                                                                           | volt (V) | the width of the voltage band ($=2*\left(\Delta U\right)_{\text{acceptable}}$)                          | &#10024; only for power flow | &#10004; |                        `> 0` (see below)                         |
 | `line_drop_compensation_r` | `double`                                                                                                                                                                                                                                                                                                           | ohm (Ω)  | compensation for voltage drop due to resistance during transport (see [below](#line-drop-compensation)) |    &#10060; default `0.0`    | &#10004; |                              `>= 0`                              |
