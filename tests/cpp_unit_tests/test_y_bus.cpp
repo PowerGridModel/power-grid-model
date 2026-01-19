@@ -131,9 +131,6 @@ TEST_CASE("Test y bus") {
         }
 
         // check lu
-        CHECK(*ybus.shared_indptr_lu() == row_indptr);
-        CHECK(*ybus.shared_indices_lu() == col_indices);
-        CHECK(*ybus.shared_diag_lu() == bus_entry);
         CHECK(ybus.map_lu_y_bus() == map_lu_y_bus);
 
         SUBCASE("Test y bus structure getter") {

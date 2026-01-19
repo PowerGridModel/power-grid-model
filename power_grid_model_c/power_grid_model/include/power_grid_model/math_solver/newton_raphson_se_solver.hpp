@@ -142,9 +142,9 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
     };
 
   public:
-    NewtonRaphsonSESolver(YBus<sym> const& y_bus, MathModelTopology const& topo_ptr)
+    NewtonRaphsonSESolver(YBus<sym> const& y_bus, MathModelTopology const& topo)
         : n_bus_{y_bus.size()},
-          math_topo_{topo_ptr},
+          math_topo_{topo},
           data_gain_(y_bus.nnz_lu()),
           delta_x_rhs_(y_bus.size()),
           x_(y_bus.size()),

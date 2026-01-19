@@ -248,14 +248,12 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         double const perturb_threshold = epsilon_perturbation * matrix_norm_;
 
         // local reference
-        auto const& row_indptr = row_indptr_;
-        auto const& col_indices = col_indices_;
         auto const& diag_lu = diag_lu_;
         // lu matrix inplace
         std::vector<Tensor>& lu_matrix = data;
 
         // column position idx per row for LU matrix
-        IdxVector col_position_idx(row_indptr.cbegin(), row_indptr.cend() - 1);
+        IdxVector col_position_idx(row_indptr_.cbegin(), row_indptr_.cend() - 1);
 
         // start pivoting, it is always the diagonal
         for (Idx pivot_row_col = 0; pivot_row_col != size_; ++pivot_row_col) {
@@ -297,14 +295,14 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
             if constexpr (is_block) {
                 // loop rows and columns at the same time
                 // since the matrix is symmetric
-                for (Idx l_idx = row_indptr[pivot_row_col]; l_idx < pivot_idx; ++l_idx) {
+                for (Idx l_idx = row_indptr_[pivot_row_col]; l_idx < pivot_idx; ++l_idx) {
                     // permute rows of L_k,pivot
                     lu_matrix[l_idx] = (block_perm.p * lu_matrix[l_idx].matrix()).array();
                     // get row and idx of u
-                    Idx const u_row = col_indices[l_idx];
+                    Idx const u_row = col_indices_[l_idx];
                     Idx const u_idx = col_position_idx[u_row];
                     // we should exactly find the current column
-                    assert(col_indices[u_idx] == pivot_row_col);
+                    assert(col_indices_[u_idx] == pivot_row_col);
                     // permute columns of U_pivot,k
                     lu_matrix[u_idx] = (lu_matrix[u_idx].matrix() * block_perm.q).array();
                     // increment column position
@@ -316,7 +314,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
             // calculate U blocks in the right of the pivot, in-place
             // L_pivot * U_pivot,k = P_pivot * A_pivot,k       k > pivot
             if constexpr (is_block) {
-                for (Idx u_idx = pivot_idx + 1; u_idx < row_indptr[pivot_row_col + 1]; ++u_idx) {
+                for (Idx u_idx = pivot_idx + 1; u_idx < row_indptr_[pivot_row_col + 1]; ++u_idx) {
                     Tensor& u = lu_matrix[u_idx];
                     // permutation
                     u = (block_perm.p * u.matrix()).array();
@@ -334,12 +332,12 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
             // because the matrix is symmetric,
             //    looking for col_indices at pivot_row_col, starting from the diagonal (pivot_row_col, pivot_row_col)
             //    we get also the non-zero row indices under the pivot
-            for (Idx l_ref_idx = pivot_idx + 1; l_ref_idx < row_indptr[pivot_row_col + 1]; ++l_ref_idx) {
+            for (Idx l_ref_idx = pivot_idx + 1; l_ref_idx < row_indptr_[pivot_row_col + 1]; ++l_ref_idx) {
                 // find index of l in corresponding row
-                Idx const l_row = col_indices[l_ref_idx];
+                Idx const l_row = col_indices_[l_ref_idx];
                 Idx const l_idx = col_position_idx[l_row];
                 // we should exactly find the current column
-                assert(col_indices[l_idx] == pivot_row_col);
+                assert(col_indices_[l_idx] == pivot_row_col);
                 // calculating l at (l_row, pivot_row_col)
                 if constexpr (is_block) {
                     // for block matrix
@@ -380,16 +378,16 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
                 // starting A index from (l_row, pivot_row_col)
                 Idx a_idx = l_idx;
                 // loop all columns in the right of (pivot_row_col, pivot_row_col), at pivot_row
-                for (Idx u_idx = pivot_idx + 1; u_idx < row_indptr[pivot_row_col + 1]; ++u_idx) {
-                    Idx const u_col = col_indices[u_idx];
+                for (Idx u_idx = pivot_idx + 1; u_idx < row_indptr_[pivot_row_col + 1]; ++u_idx) {
+                    Idx const u_col = col_indices_[u_idx];
                     assert(u_col > pivot_row_col);
                     // search the a_idx to the u_col,
-                    auto const found = std::lower_bound(col_indices.cbegin() + a_idx,
-                                                        col_indices.cbegin() + row_indptr[l_row + 1], u_col);
+                    auto const found = std::lower_bound(col_indices_.cbegin() + a_idx,
+                                                        col_indices_.cbegin() + row_indptr_[l_row + 1], u_col);
                     // should always found
-                    assert(found != col_indices.cbegin() + row_indptr[l_row + 1]);
+                    assert(found != col_indices_.cbegin() + row_indptr_[l_row + 1]);
                     assert(*found == u_col);
-                    a_idx = narrow_cast<Idx>(std::distance(col_indices.cbegin(), found));
+                    a_idx = narrow_cast<Idx>(std::distance(col_indices_.cbegin(), found));
                     // subtract
                     lu_matrix[a_idx] -= dot(l, lu_matrix[u_idx]);
                 }
@@ -472,8 +470,6 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     }
 
     void calculate_residual(std::vector<XVector> const& x) {
-        auto const& row_indptr = row_indptr_;
-        auto const& col_indices = col_indices_;
         auto const& original_matrix = original_matrix_.value();
         auto const& rhs = rhs_.value();
         auto& residual = residual_.value();
@@ -481,16 +477,14 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         for (Idx row = 0; row != size_; ++row) {
             residual[row] = rhs[row];
             // loop all columns
-            for (Idx idx = row_indptr[row]; idx != row_indptr[row + 1]; ++idx) {
+            for (Idx idx = row_indptr_[row]; idx != row_indptr_[row + 1]; ++idx) {
                 // subtract
-                residual[row] -= dot(original_matrix[idx], x[col_indices[idx]]);
+                residual[row] -= dot(original_matrix[idx], x[col_indices_[idx]]);
             }
         }
     }
 
     double iterate_and_backward_error(std::vector<XVector>& x) {
-        auto const& row_indptr = row_indptr_;
-        auto const& col_indices = col_indices_;
         auto const& original_matrix = original_matrix_.value();
         auto const& rhs = rhs_.value();
         auto const& residual = residual_.value();
@@ -504,8 +498,8 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
             // error denominator by |rhs|
             RealValueType denominator = cabs(rhs[row]);
             // then append |A| * |x|
-            for (Idx idx = row_indptr[row]; idx != row_indptr[row + 1]; ++idx) {
-                denominator += dot(cabs(original_matrix[idx]), cabs(x[col_indices[idx]]));
+            for (Idx idx = row_indptr_[row]; idx != row_indptr_[row + 1]; ++idx) {
+                denominator += dot(cabs(original_matrix[idx]), cabs(x[col_indices_[idx]]));
             }
             all_denominators[row] = denominator;
             max_denominator = std::max(max_denominator, max_val(denominator));
@@ -543,14 +537,12 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         // 2. sum all norms of the blocks per row, except the diagonal block
         // 3. take the maximum of all the sums
         matrix_norm_ = 0.0;
-        auto const& row_indptr = row_indptr_;
-        auto const& col_indices = col_indices_;
         for (Idx row = 0; row != size_; ++row) {
             // calculate the sum of the norms of the blocks in the row
             double row_norm = 0.0;
-            for (Idx idx = row_indptr[row]; idx != row_indptr[row + 1]; ++idx) {
+            for (Idx idx = row_indptr_[row]; idx != row_indptr_[row + 1]; ++idx) {
                 // skip diagonal
-                if (col_indices[idx] == row) {
+                if (col_indices_[idx] == row) {
                     continue;
                 }
                 if constexpr (is_block) {
@@ -573,8 +565,6 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
                     BlockPermArray const& block_perm_array, // pre-calculated permutation, const ref
                     std::vector<RHSVector> const& rhs, std::vector<XVector>& x) const {
         // local reference
-        auto const& row_indptr = row_indptr_;
-        auto const& col_indices = col_indices_;
         auto const& diag_lu = diag_lu_;
         auto const& lu_matrix = data;
 
@@ -588,8 +578,8 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
             }
 
             // loop all columns until diagonal
-            for (Idx l_idx = row_indptr[row]; l_idx < diag_lu[row]; ++l_idx) {
-                Idx const col = col_indices[l_idx];
+            for (Idx l_idx = row_indptr_[row]; l_idx < diag_lu[row]; ++l_idx) {
+                Idx const col = col_indices_[l_idx];
                 // never overshoot
                 assert(col < row);
                 // forward subtract
@@ -610,8 +600,8 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         // backward substitution with U
         for (Idx row = size_ - 1; row != -1; --row) {
             // loop all columns from diagonal
-            for (Idx u_idx = row_indptr[row + 1] - 1; u_idx > diag_lu[row]; --u_idx) {
-                Idx const col = col_indices[u_idx];
+            for (Idx u_idx = row_indptr_[row + 1] - 1; u_idx > diag_lu[row]; --u_idx) {
+                Idx const col = col_indices_[u_idx];
                 // always in upper diagonal
                 assert(col > row);
                 // backward subtract

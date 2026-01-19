@@ -211,8 +211,8 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
 
     static constexpr auto is_iterative = true;
 
-    NewtonRaphsonPFSolver(YBus<sym> const& y_bus, MathModelTopology const& topo_ptr)
-        : IterativePFSolver<sym, NewtonRaphsonPFSolver>{y_bus, topo_ptr},
+    NewtonRaphsonPFSolver(YBus<sym> const& y_bus, MathModelTopology const& topo)
+        : IterativePFSolver<sym, NewtonRaphsonPFSolver>{y_bus, topo},
           data_jac_(y_bus.nnz_lu()),
           x_(y_bus.size()),
           del_x_pq_(y_bus.size()),

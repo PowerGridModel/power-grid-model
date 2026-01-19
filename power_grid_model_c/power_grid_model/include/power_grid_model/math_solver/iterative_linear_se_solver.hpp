@@ -75,9 +75,9 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
     static constexpr Idx bsr_block_size_ = is_symmetric_v<sym> ? 2 : 6;
 
   public:
-    IterativeLinearSESolver(YBus<sym> const& y_bus, MathModelTopology const& topo_ptr)
+    IterativeLinearSESolver(YBus<sym> const& y_bus, MathModelTopology const& topo)
         : n_bus_{y_bus.size()},
-          math_topo_{topo_ptr},
+          math_topo_{topo},
           data_gain_(y_bus.nnz_lu()),
           x_rhs_(y_bus.size()),
           sparse_solver_{y_bus.row_indptr_lu(), y_bus.col_indices_lu(), y_bus.lu_diag()},

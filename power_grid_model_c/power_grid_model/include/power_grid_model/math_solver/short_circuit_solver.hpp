@@ -23,10 +23,10 @@ template <symmetry_tag sym> class ShortCircuitSolver {
         typename SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>::BlockPermArray;
 
   public:
-    ShortCircuitSolver(YBus<sym> const& y_bus, MathModelTopology const& topo_ptr)
+    ShortCircuitSolver(YBus<sym> const& y_bus, MathModelTopology const& topo)
         : n_bus_{y_bus.size()},
-          n_source_{topo_ptr.n_source()},
-          sources_per_bus_{std::cref(topo_ptr.sources_per_bus)},
+          n_source_{topo.n_source()},
+          sources_per_bus_{std::cref(topo.sources_per_bus)},
           mat_data_(y_bus.nnz_lu()),
           sparse_solver_{y_bus.row_indptr_lu(), y_bus.col_indices_lu(), y_bus.lu_diag()},
           perm_{static_cast<BlockPermArray>(n_bus_)} {}
