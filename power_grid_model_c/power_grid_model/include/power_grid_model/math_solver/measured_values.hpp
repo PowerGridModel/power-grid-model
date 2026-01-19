@@ -35,8 +35,8 @@ template <symmetry_tag sym> class MeasuredValues {
 
   public:
     // construct
-    MeasuredValues(std::shared_ptr<MathModelTopology const> topo, StateEstimationInput<sym> const& input)
-        : math_topology_{std::cref(*topo)},
+    MeasuredValues(MathModelTopology const& topo, StateEstimationInput<sym> const& input)
+        : math_topology_{topo},
           bus_appliance_injection_(math_topology().n_bus()),
           idx_voltage_(math_topology().n_bus()),
           bus_injection_(math_topology().n_bus()),
