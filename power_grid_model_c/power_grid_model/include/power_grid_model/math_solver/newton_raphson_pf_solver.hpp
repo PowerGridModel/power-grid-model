@@ -395,11 +395,11 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         // PV-bus voltage identity row:
         // For PV buses, the Q-equation is replaced by the algebraic constraint
         //     rPV = V - Vset = 0.
-        // Since the state vector uses relative voltage increments ΔV_rel = ΔV / V,
-        // the derivative ∂rPV/∂ΔV_rel equals the current voltage magnitude V.
+        // Since the state vector uses relative voltage increments deltaV_rel = deltaV / V,
+        // the derivative drPV/dDeltaV_rel equals the current voltage magnitude V.
         // Therefore:
         //   - all off-diagonal voltage derivatives (L block) are zero,
-        //   - all θ-derivatives (M block) are zero,
+        //   - all Theta-derivatives (M block) are zero,
         //   - only the diagonal L entry is set to V.
         // This removes the Q-equation and enforces the PV voltage constraint in the NR step.
         for (Idx row = 0; row != this->n_bus_; ++row) {
@@ -447,8 +447,8 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
             }
         }
         if (bus_types_[bus_number] == BusType::pv) {
-            // Set ΔQ = 0 to enforce voltage magnitude constraint V = V_set (see Jacobian modification above).
-            // This forces ΔV = 0 in the NR step, keeping |U| constant.
+            // Set deltaQ = 0 to enforce voltage magnitude constraint V = V_set (see Jacobian modification above).
+            // This forces deltaV = 0 in the NR step, keeping |U| constant.
             del_x_pq_[bus_number].q() = 0.0;
         }
     }
