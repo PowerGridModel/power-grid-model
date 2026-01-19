@@ -35,9 +35,12 @@ struct DatasetInfo;
 
 namespace power_grid_model_c {
 
+namespace detail {
+
 template <class c_type_input, class cpp_type_input> struct c_cpp_type_map {
     using c_type = c_type_input;
     using cpp_type = cpp_type_input;
+    static_assert(!std::is_same_v<c_type, cpp_type>, "C and C++ types in type map cannot be the same!");
 };
 
 template <class... type_maps> struct type_mapping_list_impl {
@@ -94,5 +97,10 @@ template <class CTypePtr> auto cast_to_cpp(CTypePtr ptr) {
 template <class CPPTypePtr> auto cast_to_c(CPPTypePtr ptr) {
     return reinterpret_cast<convert_ptr_to_c_t<CPPTypePtr>>(ptr);
 }
+
+} // namespace detail
+
+using detail::cast_to_c;
+using detail::cast_to_cpp;
 
 } // namespace power_grid_model_c
