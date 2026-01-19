@@ -904,7 +904,7 @@ sides.
   In the presence of meshed grids, transformers with conflicting ranks will be ranked the last.
   - Transformers are regulated in order according to their ranks.
 - Initialize all transformers to their starting tap position
-  (see[Initialization and exploitation of regulated transformers](
+  (see [Initialization and exploitation of regulated transformers](
     #initialization-and-exploitation-of-regulated-transformers))
 - Find the optimal state using the following procedure
   - While some transformers can still be further regulated, iterate as follows:
