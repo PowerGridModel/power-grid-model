@@ -79,8 +79,6 @@ typedef struct PGM_Handle PGM_Handle;
  */
 typedef struct PGM_Options PGM_Options;
 
-// Only enable the opaque struct definition if this header is consumed by the C-API user.
-// If this header is included when compiling the C-API, the structs below are decleared/defined in the C++ files.
 /**
  * @brief Opaque struct for the attribute meta class.
  *
