@@ -206,7 +206,6 @@ test-command = "pytest {package}/tests"
 # we do not support 
 #    PyPy
 #    musllinux in aarch64
-#    disable Python 3.14 for now until it is released
 skip = ["pp*", "*-musllinux_aarch64"]
 
 [tool.cibuildwheel.linux]
