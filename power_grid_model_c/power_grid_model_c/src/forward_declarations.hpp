@@ -26,9 +26,6 @@ class Serializer;
 class Deserializer;
 
 template <dataset_type_tag dataset_type> class Dataset;
-using ConstDataset = Dataset<const_dataset_t>;
-using MutableDataset = Dataset<mutable_dataset_t>;
-using WritableDataset = Dataset<writable_dataset_t>;
 
 struct DatasetInfo;
 

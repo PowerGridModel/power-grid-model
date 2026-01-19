@@ -356,7 +356,7 @@ class Topology {
         for (auto&& [idx, branch_node_idx, branch_connected] :
              std::views::zip(std::views::iota(0), std::as_const(comp_topo_.branch_node_idx),
                              std::as_const(comp_conn_.branch_connected))) {
-            assert(std::ssize(branch_connected) == 2);
+            assert(std::ssize(branch_connected) == 2); // NOSONAR(R354)
 
             auto const [i, j] = branch_node_idx;
             IntS const i_status = branch_connected[0];

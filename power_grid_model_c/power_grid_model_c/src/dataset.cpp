@@ -30,35 +30,6 @@ using power_grid_model_c::to_c_bool;
 using power_grid_model_c::to_c_size;
 } // namespace
 
-struct PGM_ConstDataset : public power_grid_model::meta_data::ConstDataset {
-    using Dataset::Dataset;
-};
-struct PGM_MutableDataset : public power_grid_model::meta_data::MutableDataset {
-    using Dataset::Dataset;
-};
-struct PGM_WritableDataset : public power_grid_model::meta_data::WritableDataset {
-    using Dataset::Dataset;
-};
-struct PGM_DatasetInfo : public power_grid_model::meta_data::DatasetInfo {};
-
-namespace power_grid_model_c {
-ConstDataset const* unwrap(PGM_ConstDataset const* instance) {
-    return static_cast<ConstDataset const*>(instance); // may invoke undefined behavior
-}
-ConstDataset const& unwrap(PGM_ConstDataset const& instance) {
-    return static_cast<ConstDataset const&>(instance); // may invoke undefined behavior
-}
-MutableDataset const& unwrap(PGM_MutableDataset const& instance) {
-    return static_cast<MutableDataset const&>(instance); // may invoke undefined behavior
-}
-PGM_WritableDataset& wrap(WritableDataset& instance) {
-    return static_cast<PGM_WritableDataset&>(instance); // may invoke undefined behavior
-}
-PGM_DatasetInfo const& wrap(DatasetInfo const& instance) {
-    return static_cast<PGM_DatasetInfo const&>(instance); // may invoke undefined behavior
-}
-} // namespace power_grid_model_c
-
 // dataset info
 
 char const* PGM_dataset_info_name(PGM_Handle* handle, PGM_DatasetInfo const* info) {
