@@ -15,6 +15,7 @@
 #include <power_grid_model/auxiliary/meta_data.hpp>
 #include <power_grid_model/common/typing.hpp>
 
+namespace {
 using namespace power_grid_model;
 using namespace power_grid_model::meta_data;
 using power_grid_model_c::call_with_catch;
@@ -27,11 +28,12 @@ using power_grid_model_c::safe_ptr_maybe_nullptr;
 using power_grid_model_c::safe_str_view;
 using power_grid_model_c::to_c_bool;
 using power_grid_model_c::to_c_size;
+} // namespace
 
 // dataset info
 
 char const* PGM_dataset_info_name(PGM_Handle* handle, PGM_DatasetInfo const* info) {
-    return call_with_catch(handle, [info] { return safe_ptr_get(safe_ptr(cast_to_cpp(info))->dataset).name; });
+    return call_with_catch(handle, [info] { return safe_ptr_get(safe_ptr_get(cast_to_cpp(info)).dataset).name; });
 }
 
 PGM_Idx PGM_dataset_info_is_batch(PGM_Handle* handle, PGM_DatasetInfo const* info) {
@@ -132,7 +134,7 @@ void PGM_dataset_const_add_attribute_buffer(PGM_Handle* handle, PGM_ConstDataset
                                             char const* attribute, void const* data) {
     call_with_catch(handle, [dataset, component, attribute, data] {
         safe_ptr_get(cast_to_cpp(dataset))
-            .add_attribute_buffer(safe_str_view(component), safe_str_view(attribute), safe_ptr(data));
+            .add_attribute_buffer(safe_str_view(component), safe_str_view(attribute), safe_ptr_maybe_nullptr(data));
     });
 }
 void PGM_dataset_const_set_next_cartesian_product_dimension(PGM_Handle* handle, PGM_ConstDataset* dataset,
@@ -166,7 +168,7 @@ void PGM_dataset_writable_set_attribute_buffer(PGM_Handle* handle, PGM_WritableD
                                                char const* attribute, void* data) {
     call_with_catch(handle, [dataset, component, attribute, data] {
         safe_ptr_get(cast_to_cpp(dataset))
-            .set_attribute_buffer(safe_str_view(component), safe_str_view(attribute), safe_ptr(data));
+            .set_attribute_buffer(safe_str_view(component), safe_str_view(attribute), safe_ptr_maybe_nullptr(data));
     });
 }
 
@@ -198,7 +200,7 @@ void PGM_dataset_mutable_add_attribute_buffer(PGM_Handle* handle, PGM_MutableDat
                                               char const* attribute, void* data) {
     call_with_catch(handle, [dataset, component, attribute, data] {
         safe_ptr_get(cast_to_cpp(dataset))
-            .add_attribute_buffer(safe_str_view(component), safe_str_view(attribute), safe_ptr(data));
+            .add_attribute_buffer(safe_str_view(component), safe_str_view(attribute), safe_ptr_maybe_nullptr(data));
     });
 }
 
