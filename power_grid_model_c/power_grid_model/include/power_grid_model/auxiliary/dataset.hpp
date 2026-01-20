@@ -611,8 +611,12 @@ template <dataset_type_tag dataset_type_> class Dataset {
             }) != buffer.attributes.end()) {
             throw DatasetError{"Cannot have duplicated attribute buffers!\n"};
         }
+        auto const& component_info = dataset_info_.component_info[idx];
+        if (component_info.total_elements > 0 && data == nullptr) {
+            throw DatasetError{"Attribute buffer data pointer cannot be null for non-empty component!\n"};
+        }
         AttributeBuffer<Data> const attribute_buffer{
-            .data = data, .meta_attribute = &dataset_info_.component_info[idx].component->get_attribute(attribute)};
+            .data = data, .meta_attribute = &component_info.component->get_attribute(attribute)};
         buffer.attributes.emplace_back(attribute_buffer);
     }
 

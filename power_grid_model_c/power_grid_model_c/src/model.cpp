@@ -256,8 +256,8 @@ Idx get_stride_size(ConstDataset const* batch_dataset) {
 }
 
 // run calculation
-void calculate_multi_dimensional_impl(MainModel& model, MainModel::Options const& options, MutableDataset const& output_dataset,
-                                      ConstDataset const* batch_dataset) {
+void calculate_multi_dimensional_impl(MainModel& model, MainModel::Options const& options,
+                                      MutableDataset const& output_dataset, ConstDataset const* batch_dataset) {
     // for dimension < 2 (one-time or 1D batch), call implementation directly
     if (auto const batch_dimension = get_batch_dimension(batch_dataset); batch_dimension < 2) {
         calculate_single_batch_dimension_impl(model, options, output_dataset, batch_dataset);
@@ -323,8 +323,8 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
         handle,
         [model, opt, output_dataset, batch_dataset] {
             calculate_impl(safe_ptr_get(cast_to_cpp(model)), safe_ptr_get(opt),
-                                             safe_ptr_get(cast_to_cpp(output_dataset)),
-                                             safe_ptr_maybe_nullptr(cast_to_cpp(batch_dataset)));
+                           safe_ptr_get(cast_to_cpp(output_dataset)),
+                           safe_ptr_maybe_nullptr(cast_to_cpp(batch_dataset)));
         },
         batch_exception_handler);
 }
