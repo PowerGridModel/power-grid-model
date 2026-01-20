@@ -720,6 +720,15 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                             check_all_spans();
                         }
                     }
+
+                    double* a0_nullptr = nullptr;
+                    if (total_elements > 0) {
+                        CHECK_THROWS_AS(add_attribute_buffer(dataset, A::name, A::InputType::a0_name, a0_nullptr),
+                                        DatasetError);
+                    } else {
+                        add_attribute_buffer(dataset, A::name, A::InputType::a0_name, a0_nullptr);
+                    }
+                    check_all_spans();
                 }
             }
             SUBCASE("Batch dataset") {

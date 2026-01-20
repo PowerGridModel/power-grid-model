@@ -44,7 +44,6 @@ extensions = [
     "sphinx.ext.mathjax",
     "breathe",
     "sphinx.ext.napoleon",
-    "hoverxref.extension",
     "myst_nb",
     "sphinxcontrib.mermaid",
     "sphinxcontrib.tikz",
@@ -86,23 +85,6 @@ myst_substitutions = {
     "pgm_project_contribution": pgm_project_contribution,
 }
 
-
-# -- hoverxref config --------------------------------------------------------
-# hover tooltip on python classes
-# hoverx links are in sphinx style: {ref} `docs_path\file:Exact Section Name`
-hoverxref_domains = [
-    "py",
-]
-hoverxref_default_type = "tooltip"
-hoverxref_role_types = {
-    "hoverxref": "tooltip",
-    "ref": "modal",  # for hoverxref_auto_ref config
-    "confval": "tooltip",  # for custom object
-    "mod": "tooltip",  # for Python Sphinx Domain
-    "class": "tooltip",  # for Python Sphinx Domain
-    "obj": "tooltip",
-    "function": "tooltip",
-}
 
 # -- sphinx.autodoc config ---------------------------------------------------
 autodoc_default_options = {

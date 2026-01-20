@@ -213,8 +213,8 @@ Hence, they can be constructed by PGM output attributes in the following way:
 - For  $\underline{I}$ of branches, `i_side` is the magnitude.
   Its angle can be found from `p_side` and `q_side` by:
   $\arctan(\frac{P_{side} + j \cdot Q_{side}}{\underline{U}})^{*}$.
-  The `side` here can be `from`, `to` for {hoverxreftooltip}`user_manual/components:Branch`es, `1`, `2`, `3` for
-  {hoverxreftooltip}`user_manual/components:Branch3`s.
+  The `side` here can be `from`, `to` for [Branch](../user_manual/components.md#branch)es, `1`, `2`, `3` for
+  [Branch3](../user_manual/components.md#branch3)s.
 
 #### Symmetric vs asymmetric calculations
 
@@ -876,7 +876,8 @@ Please refer to their respective sections for detailed documentation.
 #### Power flow with automatic tap changing
 
 Some of the most important regulators in the grid affect the tap position of transformers.
-These {hoverxreftooltip}`user_manual/components:Transformer Tap Regulator`s try to regulate a control voltage
+These [Transformer Tap Regulator](../user_manual/components.md#transformer-tap-regulator)s try to regulate
+a control voltage
 $U_{\text{control}}$ such that it is within a specified voltage band.
 The $U_{\text{control}}$ may be compensated for the voltage drop during transport.
 Power flow calculations that take the behavior of these regulators into account may be toggled by providing one of the
@@ -898,17 +899,18 @@ For simplicity, we demonstrate the case where the regulator control side and the
 sides.
 
 - Regulated transformers are ranked according to how close they are to
-  {hoverxreftooltip}`sources <user_manual/components:source>` in terms of the amount of regulated transformers
+  [sources](../user_manual/components.md#source) in terms of the amount of regulated transformers
   inbetween.
   In the presence of meshed grids, transformers with conflicting ranks will be ranked the last.
   - Transformers are regulated in order according to their ranks.
-- Initialize all transformers to their starting tap position (see
-  {hoverxreftooltip}`user_manual/calculations:Initialization and exploitation of regulated transformers`)
+- Initialize all transformers to their starting tap position
+  (see [Initialization and exploitation of regulated transformers](
+    #initialization-and-exploitation-of-regulated-transformers))
 - Find the optimal state using the following procedure
   - While some transformers can still be further regulated, iterate as follows:
     - Run a power flow calculation with the current tap positions with the specified
       [calculation method](#power-flow-algorithms).
-    - Start with the transformers ranked closest to a {hoverxreftooltip}`user_manual/components:source` (because the
+    - Start with the transformers ranked closest to a [source](../user_manual/components.md#source) (because the
       source provides a relatively stable voltage level and these transformers will have a high impact on the rest of
       the grid).
     - Loop over all ranks:
@@ -928,12 +930,14 @@ sides.
         - A better combination of tap positions may have been found.
         - Step out of the loop and go to the next iteration step.
   - Exploit the neighbourhood of all transformers (see
-    {hoverxreftooltip}`user_manual/calculations:Initialization and exploitation of regulated transformers`)
+    [Initialization and exploitation of regulated transformers](
+      #initialization-and-exploitation-of-regulated-transformers))
     - Re-run the iteration in the above if any of the tap positions changed by the exploitation.
 
 In the case where the control side of the regulator and the tap side of the transformer are at the same side, the
 control logic of taps will be reverted (see
-{hoverxreftooltip}`user_manual/calculations:Initialization and exploitation of regulated transformers`).
+[Initialization and exploitation of regulated transformers](
+  #initialization-and-exploitation-of-regulated-transformers)).
 The exploitation of the neighbourhood ensures that the actual optimum is not accidentally missed due to feedback
 mechanisms in the grid.
 
@@ -950,14 +954,14 @@ method.
 The control logic assumes that changes in the voltage level at a transformer are dominated by changes in the tap
 position of the transformer itself, rather than by adjacent transformers.
 This assumption is reflected in the requirements mentioned in
-{hoverxreftooltip}`user_manual/components:Transformer Tap Regulator`.
+[Transformer Tap Regulator](../user_manual/components.md#transformer-tap-regulator).
 ```
 
 ```{note}
 If the line drop compensation impedance is high, and the control side has generator-like behavior, then this assumption
 does not hold, and the calculation may diverge.
 Hence, this assumption is reflected in the requirements mentioned in
-{hoverxreftooltip}`user_manual/components:Line drop compensation`.
+[Line drop compensation](../user_manual/components.md#line-drop-compensation).
 ```
 
 ##### Initialization and exploitation of regulated transformers
