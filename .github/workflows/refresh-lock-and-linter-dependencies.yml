@@ -71,7 +71,7 @@ jobs:
       - name: retrieve npm development package versions
         id: versions_npm
         run: |
-          grab_installed_version() {
+          grab_installed_version_npm() {
             local pkg="$1"
             local nospecialchars_pkg
             local version
