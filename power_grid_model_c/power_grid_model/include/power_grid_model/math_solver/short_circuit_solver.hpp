@@ -76,8 +76,8 @@ template <symmetry_tag sym> class ShortCircuitSolver {
                                 FaultType const& fault_type, IntS phase_1, IntS phase_2) {
         IdxVector const& bus_entry = y_bus.lu_diag();
 
-        for (auto const& [bus_number, sources, faults] :
-             enumerated_zip_sequence(sources_per_bus_.get(), input.fault_buses)) {
+        auto const& sources_per_bus = sources_per_bus_.get();
+        for (auto const& [bus_number, sources, faults] : enumerated_zip_sequence(sources_per_bus, input.fault_buses)) {
             Idx const diagonal_position = bus_entry[bus_number];
             auto& diagonal_element = mat_data_[diagonal_position];
             auto& u_bus = output.u_bus[bus_number];
@@ -225,8 +225,8 @@ template <symmetry_tag sym> class ShortCircuitSolver {
                           int const phase_1, int const phase_2) const {
         using enum FaultType;
 
-        for (auto const& [bus_number, faults, sources] :
-             enumerated_zip_sequence(input.fault_buses, sources_per_bus_.get())) {
+        auto const& sources_per_bus = sources_per_bus_.get();
+        for (auto const& [bus_number, faults, sources] : enumerated_zip_sequence(input.fault_buses, sources_per_bus)) {
             ComplexValue<sym> const x_bus_subtotal = output.u_bus[bus_number];
             auto const infinite_admittance_fault_counter_bus =
                 static_cast<double>(infinite_admittance_fault_counter[bus_number]);

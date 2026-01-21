@@ -115,9 +115,10 @@ template <symmetry_tag sym> class MeasuredValues {
         std::vector<ApplianceSolverOutput<sym>> load_gen_flow(math_topology_.get().n_load_gen());
         std::vector<ApplianceSolverOutput<sym>> source_flow(math_topology_.get().n_source());
 
+        auto const& topo = math_topology_.get();
         // loop all buses
         for (auto const& [bus, load_gens, sources] :
-             enumerated_zip_sequence(math_topology_.get().load_gens_per_bus, math_topology_.get().sources_per_bus)) {
+             enumerated_zip_sequence(topo.load_gens_per_bus, topo.sources_per_bus)) {
             // under-determined or exactly determined
             if (bus_injection_[bus].n_unmeasured_appliances > 0) {
                 calculate_non_over_determined_injection(bus_injection_[bus].n_unmeasured_appliances, load_gens, sources,

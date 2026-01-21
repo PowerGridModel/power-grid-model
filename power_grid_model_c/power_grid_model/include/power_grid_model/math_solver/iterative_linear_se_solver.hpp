@@ -110,8 +110,9 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
         // initialize voltage with initial angle
         sub_timer = Timer{log, LogEvent::initialize_voltages}; // TODO(mgovers): make scoped subtimers
         RealValue<sym> const mean_angle_shift = measured_values.mean_angle_shift();
+        auto const& topo = math_topo_.get();
         for (Idx bus = 0; bus != n_bus_; ++bus) {
-            output.u[bus] = exp(1.0i * (mean_angle_shift + math_topo_.get().phase_shift[bus]));
+            output.u[bus] = exp(1.0i * (mean_angle_shift + topo.phase_shift[bus]));
         }
 
         // loop to iterate
