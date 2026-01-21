@@ -289,6 +289,9 @@ template <symmetry_tag sym> class YBus {
          std::shared_ptr<MathModelParam<sym> const> const& param,
          std::shared_ptr<YBusStructure const> const& y_bus_struct = {})
         : math_topology_{topo_ptr} {
+        assert(math_topology_ != nullptr);
+        assert(param != nullptr);
+
         // use existing struct or make new struct
         if (y_bus_struct) {
             y_bus_struct_ = y_bus_struct;
@@ -447,29 +450,31 @@ template <symmetry_tag sym> class YBus {
     template <typename T>
         requires std::same_as<T, BranchSolverOutput<sym>> || std::same_as<T, BranchShortCircuitSolverOutput<sym>>
     std::vector<T> calculate_branch_flow(ComplexValueVector<sym> const& u) const {
-        std::vector<T> branch_flow(math_topology_->branch_bus_idx.size());
-        std::transform(math_topology_->branch_bus_idx.cbegin(), math_topology_->branch_bus_idx.cend(),
-                       math_model_param_->branch_param.cbegin(), branch_flow.begin(),
-                       [&u](BranchIdx branch_idx, BranchCalcParam<sym> const& param) {
-                           auto const [f, t] = branch_idx;
-                           // if one side is disconnected, use zero voltage at that side
-                           ComplexValue<sym> const uf = f != -1 ? u[f] : ComplexValue<sym>{0.0};
-                           ComplexValue<sym> const ut = t != -1 ? u[t] : ComplexValue<sym>{0.0};
-                           T output;
+        assert(math_topology_ != nullptr);
 
-                           // See "Branch Flow Calculation" in "State Estimation Alliander"
-                           output.i_f = dot(param.yff(), uf) + dot(param.yft(), ut);
-                           output.i_t = dot(param.ytf(), uf) + dot(param.ytt(), ut);
+        return std::views::zip(math_topology_->branch_bus_idx, math_model_param_->branch_param) |
+               std::views::transform([&u](auto const& branch_idx_params) -> T {
+                   auto const& [branch_idx, param] = branch_idx_params;
 
-                           if constexpr (std::same_as<T, BranchSolverOutput<sym>>) {
-                               // See "Shunt Injection Flow Calculation" in "State Estimation Alliander"
-                               output.s_f = uf * conj(output.i_f);
-                               output.s_t = ut * conj(output.i_t);
-                           }
+                   auto const [f, t] = branch_idx;
+                   // if one side is disconnected, use zero voltage at that side
+                   ComplexValue<sym> const uf = f != -1 ? u[f] : ComplexValue<sym>{0.0};
+                   ComplexValue<sym> const ut = t != -1 ? u[t] : ComplexValue<sym>{0.0};
+                   T output;
 
-                           return output;
-                       });
-        return branch_flow;
+                   // See "Branch Flow Calculation" in "State Estimation Alliander"
+                   output.i_f = dot(param.yff(), uf) + dot(param.yft(), ut);
+                   output.i_t = dot(param.ytf(), uf) + dot(param.ytt(), ut);
+
+                   if constexpr (std::same_as<T, BranchSolverOutput<sym>>) {
+                       // See "Shunt Injection Flow Calculation" in "State Estimation Alliander"
+                       output.s_f = uf * conj(output.i_f);
+                       output.s_t = ut * conj(output.i_t);
+                   }
+
+                   return output;
+               }) |
+               std::ranges::to<std::vector<T>>();
     }
 
     // calculate shunt flow based on voltage, injection direction
@@ -477,6 +482,8 @@ template <symmetry_tag sym> class YBus {
         requires std::same_as<SolverOutputType, ApplianceSolverOutput<sym>> ||
                  std::same_as<SolverOutputType, ApplianceShortCircuitSolverOutput<sym>>
     std::vector<SolverOutputType> calculate_shunt_flow(ComplexValueVector<sym> const& u) const {
+        assert(math_topology_ != nullptr);
+
         std::vector<SolverOutputType> shunt_flow(math_topology_->n_shunt());
         for (auto const [bus, shunts] : enumerated_zip_sequence(math_topology_->shunts_per_bus)) {
             for (Idx const shunt : shunts) {

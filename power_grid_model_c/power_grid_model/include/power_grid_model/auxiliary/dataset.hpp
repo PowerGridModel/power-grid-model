@@ -83,10 +83,15 @@ class ColumnarAttributeRange : public std::ranges::view_interface<ColumnarAttrib
                 auto const& meta_attribute = *attribute_buffer.meta_attribute;
                 ctype_func_selector(
                     meta_attribute.ctype, [&value, &attribute_buffer, &meta_attribute, this]<typename AttributeType> {
-                        AttributeType* buffer_ptr = reinterpret_cast<AttributeType*>(attribute_buffer.data) + idx_;
-                        auto const& attribute_ref = meta_attribute.template get_attribute<AttributeType const>(
-                            reinterpret_cast<RawDataConstPtr>(&value));
-                        *buffer_ptr = attribute_ref;
+                        if constexpr (sizeof(AttributeType) <= sizeof(value_type)) {
+                            AttributeType* buffer_ptr = reinterpret_cast<AttributeType*>(attribute_buffer.data) + idx_;
+                            auto const& attribute_ref = meta_attribute.template get_attribute<AttributeType const>(
+                                reinterpret_cast<RawDataConstPtr>(&value));
+                            *buffer_ptr = attribute_ref;
+                        } else {
+                            throw UnreachableHit{"ColumnarAttributeRange::operator=",
+                                                 "AttributeType larger than value_type!"};
+                        }
                     });
             }
             return *this;
@@ -97,14 +102,18 @@ class ColumnarAttributeRange : public std::ranges::view_interface<ColumnarAttrib
             for (auto const& attribute_buffer : attribute_buffers_) {
                 assert(attribute_buffer.meta_attribute != nullptr);
                 auto const& meta_attribute = *attribute_buffer.meta_attribute;
-                ctype_func_selector(
-                    meta_attribute.ctype, [&result, &attribute_buffer, &meta_attribute, this]<typename AttributeType> {
+                ctype_func_selector(meta_attribute.ctype, [&result, &attribute_buffer, &meta_attribute,
+                                                           idx = idx_]<typename AttributeType> {
+                    if constexpr (sizeof(AttributeType) <= sizeof(value_type)) {
                         AttributeType const* buffer_ptr =
-                            reinterpret_cast<AttributeType const*>(attribute_buffer.data) + idx_;
-                        auto& attribute_ref =
+                            reinterpret_cast<AttributeType const*>(attribute_buffer.data) + idx;
+                        AttributeType& attribute_ref =
                             meta_attribute.template get_attribute<AttributeType>(reinterpret_cast<RawDataPtr>(&result));
                         attribute_ref = *buffer_ptr;
-                    });
+                    } else {
+                        throw UnreachableHit{"ColumnarAttributeRange::get", "AttributeType larger than value_type!"};
+                    }
+                });
             }
             return result;
         }

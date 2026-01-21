@@ -112,7 +112,7 @@
     {
       "name": "unix-sanitizer",
       "environment": {
-        "SANITIZER_FLAGS": "-fsanitize=address"
+        "SANITIZER_FLAGS": "-fstack-protector -fsanitize=address,pointer-compare,undefined -fno-sanitize-recover"
       },
       "inherits": "unix-base",
       "hidden": true
@@ -140,6 +140,9 @@
     {
       "name": "msvc-debug",
       "displayName": "Debug (MSVC)",
+      "environment": {
+        "SANITIZER_FLAGS": "/RTC1"
+      },
       "inherits": [
         "msvc-base",
         "debug"
