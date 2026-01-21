@@ -592,8 +592,8 @@ TEST_CASE("Test Transformer ranking") {
         //          |
         //      [trafo 10] (correct: from->to with control on to side)
         //          |
-        //        [node 1]
-        //       /      \
+        //        [ node 1 ]
+        //       /         |
         // [trafo 20]  [trafo 30] (both WRONG: to->from but controlled from "from" side)
         //    |            |
         // [node 2]     [node 3]
