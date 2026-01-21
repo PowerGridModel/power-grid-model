@@ -201,6 +201,12 @@ For optimal usage, open the folder using `code <project_dir>` from a terminal th
 See above section for tips.
 ```
 
+For automatic formatting of JSON(C) files, you will need to have [Node.js](https://nodejs.org/) installed.
+You may also need to update the recommended extension Biome to the latest version using
+`manage > install specific version` for optimal up-to-date support.
+Alternatively, as usual, you can also use [`pre-commit`]({}/CONTRIBUTING.md#pre-commit-hooks) to keep all files
+correctly formatted before committing.
+
 ## Build Script for Linux/macOS
 
 There is a convenient shell script to build the cmake project in Linux or macOS:
