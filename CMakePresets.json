@@ -140,34 +140,22 @@
     {
       "name": "msvc-debug",
       "displayName": "Debug (MSVC)",
-      "inherits": [
-        "msvc-base",
-        "debug"
-      ]
+      "inherits": ["msvc-base", "debug"]
     },
     {
       "name": "msvc-release",
       "displayName": "Release (MSVC)",
-      "inherits": [
-        "msvc-base",
-        "release"
-      ]
+      "inherits": ["msvc-base", "release"]
     },
     {
       "name": "clang-cl-debug",
       "displayName": "Debug (Clang CL)",
-      "inherits": [
-        "clang-cl-base",
-        "debug"
-      ]
+      "inherits": ["clang-cl-base", "debug"]
     },
     {
       "name": "clang-cl-release",
       "displayName": "Release (Clang CL)",
-      "inherits": [
-        "clang-cl-base",
-        "release"
-      ]
+      "inherits": ["clang-cl-base", "release"]
     },
     {
       "name": "clang-base",
@@ -180,47 +168,29 @@
     },
     {
       "name": "clang-debug",
-      "inherits": [
-        "debug",
-        "clang-base"
-      ]
+      "inherits": ["debug", "clang-base"]
     },
     {
       "name": "clang-release",
-      "inherits": [
-        "release",
-        "clang-base"
-      ]
+      "inherits": ["release", "clang-base"]
     },
     {
       "name": "clang-tidy-debug",
-      "inherits": [
-        "debug",
-        "clang-tidy-unix-base"
-      ]
+      "inherits": ["debug", "clang-tidy-unix-base"]
     },
     {
       "name": "clang-tidy-release",
-      "inherits": [
-        "release",
-        "clang-tidy-unix-base"
-      ]
+      "inherits": ["release", "clang-tidy-unix-base"]
     },
     {
       "name": "clang-tidy-windows-debug",
       "displayName": "Debug (Clang CL + Clang Tidy)",
-      "inherits": [
-        "debug",
-        "clang-tidy-windows-base"
-      ]
+      "inherits": ["debug", "clang-tidy-windows-base"]
     },
     {
       "name": "clang-tidy-windows-release",
       "displayName": "Release (Clang CL + Clang Tidy)",
-      "inherits": [
-        "release",
-        "clang-tidy-windows-base"
-      ]
+      "inherits": ["release", "clang-tidy-windows-base"]
     },
     {
       "name": "gcc-base",
@@ -236,24 +206,15 @@
     },
     {
       "name": "gcc-debug",
-      "inherits": [
-        "debug",
-        "gcc-base"
-      ]
+      "inherits": ["debug", "gcc-base"]
     },
     {
       "name": "gcc-release",
-      "inherits": [
-        "release",
-        "gcc-base"
-      ]
+      "inherits": ["release", "gcc-base"]
     },
     {
       "name": "ci-clang-debug",
-      "inherits": [
-        "clang-debug",
-        "unix-coverage"
-      ]
+      "inherits": ["clang-debug", "unix-coverage"]
     },
     {
       "name": "ci-clang-release",
@@ -267,16 +228,11 @@
       "environment": {
         "COMPILER_CXX_FLAGS": "$env{COMPILER_C_FLAGS} -Wno-maybe-uninitialized"
       },
-      "inherits": [
-        "gcc-debug",
-        "unix-coverage"
-      ]
+      "inherits": ["gcc-debug", "unix-coverage"]
     },
     {
       "name": "ci-gcc-release",
-      "inherits": [
-        "gcc-release"
-      ],
+      "inherits": ["gcc-release"],
       "cacheVariables": {
         "CMAKE_INTERPROCEDURAL_OPTIMIZATION": "TRUE"
       },
@@ -286,11 +242,7 @@
     },
     {
       "name": "ci-sonar",
-      "inherits": [
-        "clang-base",
-        "debug",
-        "unix-coverage"
-      ]
+      "inherits": ["clang-base", "debug", "unix-coverage"]
     },
     {
       "name": "ci-clang-tidy-debug",
