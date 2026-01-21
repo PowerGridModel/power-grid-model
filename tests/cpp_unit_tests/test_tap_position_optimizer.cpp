@@ -191,7 +191,7 @@ TEST_CASE("Test Transformer ranking") {
         // Dummy graph
         pgm_tap::TrafoGraphEdges const edge_array = {{0, 1}, {0, 2}, {2, 3}};
         pgm_tap::TrafoGraphEdgeProperties const edge_prop{
-            {{.group = 0, .pos = 1}, 1}, {{.group = -1, .pos = -1}, 0}, {{.group = 2, .pos = 3}, 1}};
+            {{.group = 0, .pos = 1}, 1, 99}, {{.group = -1, .pos = -1}, 0, na_IntID}, {{.group = 2, .pos = 3}, 1, 98}};
         std::vector<pgm_tap::TrafoGraphVertex> vertex_props{{true}, {false}, {false}, {false}};
 
         pgm_tap::TransformerGraph g{boost::edges_are_unsorted_multi_pass, edge_array.cbegin(), edge_array.cend(),
@@ -205,16 +205,16 @@ TEST_CASE("Test Transformer ranking") {
         }
 
         pgm_tap::TrafoGraphEdgeProperties const regulated_edge_weights = get_edge_weights(g);
-        pgm_tap::TrafoGraphEdgeProperties const ref_regulated_edge_weights{{{.group = 0, .pos = 1}, 1},
-                                                                           {{.group = 2, .pos = 3}, 1}};
+        pgm_tap::TrafoGraphEdgeProperties const ref_regulated_edge_weights{{{.group = 0, .pos = 1}, 1, 99},
+                                                                           {{.group = 2, .pos = 3}, 1, 98}};
         CHECK(regulated_edge_weights == ref_regulated_edge_weights);
     }
 
     SUBCASE("Sorting transformer edges") {
-        pgm_tap::TrafoGraphEdgeProperties const trafoList{{Idx2D{.group = 1, .pos = 1}, pgm_tap::infty},
-                                                          {Idx2D{.group = 1, .pos = 2}, 5},
-                                                          {Idx2D{.group = 1, .pos = 3}, 4},
-                                                          {Idx2D{.group = 2, .pos = 1}, 4}};
+        pgm_tap::TrafoGraphEdgeProperties const trafoList{{Idx2D{.group = 1, .pos = 1}, pgm_tap::infty, 1},
+                                                          {Idx2D{.group = 1, .pos = 2}, 5, 2},
+                                                          {Idx2D{.group = 1, .pos = 3}, 4, 3},
+                                                          {Idx2D{.group = 2, .pos = 1}, 4, 4}};
 
         pgm_tap::RankedTransformerGroups const referenceList{{Idx2D{.group = 1, .pos = 3}, Idx2D{.group = 2, .pos = 1}},
                                                              {Idx2D{.group = 1, .pos = 2}},
@@ -233,10 +233,10 @@ TEST_CASE("Test Transformer ranking") {
 
         // Grid with multiple sources and symetric graph
         pgm_tap::TrafoGraphEdges const edge_array = {{0, 1}, {1, 2}, {3, 2}, {4, 3}};
-        pgm_tap::TrafoGraphEdgeProperties const edge_prop{{{.group = 0, .pos = 1}, 1},
-                                                          {{.group = 1, .pos = 2}, 1},
-                                                          {{.group = 2, .pos = 3}, 1},
-                                                          {{.group = 3, .pos = 4}, 1}};
+        pgm_tap::TrafoGraphEdgeProperties const edge_prop{{{.group = 0, .pos = 1}, 1, 10},
+                                                          {{.group = 1, .pos = 2}, 1, 11},
+                                                          {{.group = 2, .pos = 3}, 1, 12},
+                                                          {{.group = 3, .pos = 4}, 1, 13}};
         std::vector<pgm_tap::TrafoGraphVertex> vertex_props{{true}, {false}, {false}, {false}, {true}};
 
         pgm_tap::TransformerGraph g{boost::edges_are_unsorted_multi_pass, edge_array.cbegin(), edge_array.cend(),
@@ -250,10 +250,10 @@ TEST_CASE("Test Transformer ranking") {
         }
 
         pgm_tap::TrafoGraphEdgeProperties const regulated_edge_weights = get_edge_weights(g);
-        pgm_tap::TrafoGraphEdgeProperties const ref_regulated_edge_weights{{{.group = 0, .pos = 1}, 1},
-                                                                           {{.group = 1, .pos = 2}, 2},
-                                                                           {{.group = 2, .pos = 3}, 2},
-                                                                           {{.group = 3, .pos = 4}, 1}};
+        pgm_tap::TrafoGraphEdgeProperties const ref_regulated_edge_weights{{{.group = 0, .pos = 1}, 1, 10},
+                                                                           {{.group = 1, .pos = 2}, 2, 11},
+                                                                           {{.group = 2, .pos = 3}, 2, 12},
+                                                                           {{.group = 3, .pos = 4}, 1, 13}};
         CHECK(regulated_edge_weights == ref_regulated_edge_weights);
     }
 
@@ -325,16 +325,17 @@ TEST_CASE("Test Transformer ranking") {
 
             // reference graph creation
             pgm_tap::TrafoGraphEdgeProperties expected_edges_prop;
-            expected_edges_prop.insert(expected_edges_prop.end(), {{{.group = 3, .pos = 0}, 1},
-                                                                   {{.group = 3, .pos = 1}, 1},
-                                                                   {{.group = 3, .pos = 2}, 1},
-                                                                   {{.group = 3, .pos = 3}, 1},
-                                                                   {{.group = 3, .pos = 4}, 1},
-                                                                   {{.group = 3, .pos = 6}, 1}});
-            expected_edges_prop.insert(
-                expected_edges_prop.end(),
-                {{{.group = 4, .pos = 0}, 1}, {{.group = 4, .pos = 0}, 1}, {unregulated_idx, 0}, {unregulated_idx, 0}});
-            expected_edges_prop.insert(expected_edges_prop.end(), 10, {unregulated_idx, 0});
+            expected_edges_prop.insert(expected_edges_prop.end(), {{{.group = 3, .pos = 0}, 1, 11},
+                                                                   {{.group = 3, .pos = 1}, 1, 12},
+                                                                   {{.group = 3, .pos = 2}, 1, 13},
+                                                                   {{.group = 3, .pos = 3}, 1, 14},
+                                                                   {{.group = 3, .pos = 4}, 1, 15},
+                                                                   {{.group = 3, .pos = 6}, 1, 104}});
+            expected_edges_prop.insert(expected_edges_prop.end(), {{{.group = 4, .pos = 0}, 1, 16},
+                                                                   {{.group = 4, .pos = 0}, 1, 16},
+                                                                   {unregulated_idx, 0, na_IntID},
+                                                                   {unregulated_idx, 0, na_IntID}});
+            expected_edges_prop.insert(expected_edges_prop.end(), 10, {unregulated_idx, 0, na_IntID});
 
             std::vector<pgm_tap::TrafoGraphVertex> const expected_vertex_props{
                 {true},  {false}, {false}, {false}, {false}, {false}, {false},
@@ -363,8 +364,9 @@ TEST_CASE("Test Transformer ranking") {
 
             // Dummy graph
             pgm_tap::TrafoGraphEdges const edge_array = {{0, 1}, {0, 2}, {2, 3}};
-            pgm_tap::TrafoGraphEdgeProperties const edge_prop{
-                {{.group = 0, .pos = 1}, 1}, {{.group = -1, .pos = -1}, 0}, {{.group = 2, .pos = 3}, 1}};
+            pgm_tap::TrafoGraphEdgeProperties const edge_prop{{{.group = 0, .pos = 1}, 1, 97},
+                                                              {{.group = -1, .pos = -1}, 0, na_IntID},
+                                                              {{.group = 2, .pos = 3}, 1, 96}};
             std::vector<pgm_tap::TrafoGraphVertex> vertex_props{{true}, {false}, {false}, {false}};
 
             pgm_tap::TransformerGraph g{boost::edges_are_unsorted_multi_pass, edge_array.cbegin(), edge_array.cend(),
@@ -378,16 +380,16 @@ TEST_CASE("Test Transformer ranking") {
             }
 
             pgm_tap::TrafoGraphEdgeProperties const regulated_edge_weights = get_edge_weights(g);
-            pgm_tap::TrafoGraphEdgeProperties const ref_regulated_edge_weights{{{.group = 0, .pos = 1}, 1},
-                                                                               {{.group = 2, .pos = 3}, 1}};
+            pgm_tap::TrafoGraphEdgeProperties const ref_regulated_edge_weights{{{.group = 0, .pos = 1}, 1, 97},
+                                                                               {{.group = 2, .pos = 3}, 1, 96}};
             CHECK(regulated_edge_weights == ref_regulated_edge_weights);
         }
 
         SUBCASE("Sorting transformer edges") {
-            pgm_tap::TrafoGraphEdgeProperties const trafoList{{Idx2D{.group = 1, .pos = 1}, pgm_tap::infty},
-                                                              {Idx2D{.group = 1, .pos = 2}, 5},
-                                                              {Idx2D{.group = 1, .pos = 3}, 4},
-                                                              {Idx2D{.group = 2, .pos = 1}, 4}};
+            pgm_tap::TrafoGraphEdgeProperties const trafoList{{Idx2D{.group = 1, .pos = 1}, pgm_tap::infty, 5},
+                                                              {Idx2D{.group = 1, .pos = 2}, 5, 6},
+                                                              {Idx2D{.group = 1, .pos = 3}, 4, 7},
+                                                              {Idx2D{.group = 2, .pos = 1}, 4, 8}};
 
             pgm_tap::RankedTransformerGroups const referenceList{
                 {Idx2D{.group = 1, .pos = 3}, Idx2D{.group = 2, .pos = 1}},
@@ -407,10 +409,10 @@ TEST_CASE("Test Transformer ranking") {
 
             // Grid with multiple sources and symetric graph
             pgm_tap::TrafoGraphEdges const edge_array = {{0, 1}, {1, 2}, {3, 2}, {4, 3}};
-            pgm_tap::TrafoGraphEdgeProperties const edge_prop{{{.group = 0, .pos = 1}, 1},
-                                                              {{.group = 1, .pos = 2}, 1},
-                                                              {{.group = 2, .pos = 3}, 1},
-                                                              {{.group = 3, .pos = 4}, 1}};
+            pgm_tap::TrafoGraphEdgeProperties const edge_prop{{{.group = 0, .pos = 1}, 1, 20},
+                                                              {{.group = 1, .pos = 2}, 1, 21},
+                                                              {{.group = 2, .pos = 3}, 1, 22},
+                                                              {{.group = 3, .pos = 4}, 1, 23}};
             std::vector<pgm_tap::TrafoGraphVertex> vertex_props{{true}, {false}, {false}, {false}, {true}};
 
             pgm_tap::TransformerGraph g{boost::edges_are_unsorted_multi_pass, edge_array.cbegin(), edge_array.cend(),
@@ -424,10 +426,10 @@ TEST_CASE("Test Transformer ranking") {
             }
 
             pgm_tap::TrafoGraphEdgeProperties const regulated_edge_weights = get_edge_weights(g);
-            pgm_tap::TrafoGraphEdgeProperties const ref_regulated_edge_weights{{{.group = 0, .pos = 1}, 1},
-                                                                               {{.group = 1, .pos = 2}, 2},
-                                                                               {{.group = 2, .pos = 3}, 2},
-                                                                               {{.group = 3, .pos = 4}, 1}};
+            pgm_tap::TrafoGraphEdgeProperties const ref_regulated_edge_weights{{{.group = 0, .pos = 1}, 1, 20},
+                                                                               {{.group = 1, .pos = 2}, 2, 21},
+                                                                               {{.group = 2, .pos = 3}, 2, 22},
+                                                                               {{.group = 3, .pos = 4}, 1, 23}};
             CHECK(regulated_edge_weights == ref_regulated_edge_weights);
         }
 
