@@ -13,7 +13,9 @@ namespace power_grid_model::common::logging {
 namespace {
 constexpr Idx arbitrary_n_threads = Idx{7};
 
-Idx some_func(Idx n_threads, Idx multiplier) { return n_threads * n_threads * multiplier; }
+double max_thread_value(Idx n_threads, Idx multiplier) {
+    return static_cast<double>(n_threads * n_threads * multiplier);
+}
 
 void logger_helper(Logger& logger, Idx n_threads = Idx{1}) {
     using enum LogEvent;
@@ -24,8 +26,8 @@ void logger_helper(Logger& logger, Idx n_threads = Idx{1}) {
     logger.log(iterative_pf_solver_max_num_iter, Idx{4});
     logger.log(math_solver, 1.0);
     logger.log(total, 1.0);
-    logger.log(max_num_iter, 3.0 * static_cast<double>(n_threads));             // max value if multiple threads
-    logger.log(iterative_pf_solver_max_num_iter, some_func(n_threads, Idx{7})); // max value
+    logger.log(max_num_iter, 3.0 * static_cast<double>(n_threads));                    // max value if multiple threads
+    logger.log(iterative_pf_solver_max_num_iter, max_thread_value(n_threads, Idx{7})); // max value
     logger.log(total, Idx{1});
     logger.log(build_model, "should be ignored"); // should be ignored
     logger.log(unknown, 1.0);                     // should be ignored
@@ -38,7 +40,7 @@ void report_checker_helper(auto& report, Idx n_threads = Idx{1}) {
     CHECK(report.at(total) == doctest::Approx(3.0 * static_cast<double>(n_threads)));
     CHECK(report.at(math_solver) == doctest::Approx(1.0 * static_cast<double>(n_threads)));
     CHECK(report.at(preprocess_measured_value) == doctest::Approx(1.0 * static_cast<double>(n_threads)));
-    CHECK(report.at(iterative_pf_solver_max_num_iter) == doctest::Approx(some_func(n_threads, Idx{7})));
+    CHECK(report.at(iterative_pf_solver_max_num_iter) == doctest::Approx(max_thread_value(n_threads, Idx{7})));
     if (n_threads == 1) {
         CHECK(report.at(max_num_iter) == doctest::Approx(5.0));
     } else {
@@ -156,7 +158,8 @@ TEST_CASE("Test MultiThreadedCalculationInfo") {
         multi_threaded_info.log(total, Idx{1});
         multi_threaded_info.log(math_solver, "should be ignored");
         multi_threaded_info.log(preprocess_measured_value, 2.0);
-        multi_threaded_info.log(iterative_pf_solver_max_num_iter, some_func(arbitrary_n_threads + Idx{2}, Idx{5}));
+        multi_threaded_info.log(iterative_pf_solver_max_num_iter,
+                                max_thread_value(arbitrary_n_threads + Idx{2}, Idx{5}));
         multi_threaded_info.log(max_num_iter);
 
         auto report = multi_threaded_info.report();
@@ -166,7 +169,7 @@ TEST_CASE("Test MultiThreadedCalculationInfo") {
         CHECK(report.at(preprocess_measured_value) ==
               doctest::Approx((1.0 * static_cast<double>(arbitrary_n_threads)) + 2.0));
         CHECK(report.at(iterative_pf_solver_max_num_iter) ==
-              doctest::Approx(some_func(arbitrary_n_threads + Idx{2}, Idx{5})));
+              doctest::Approx(max_thread_value(arbitrary_n_threads + Idx{2}, Idx{5})));
         CHECK(report.at(max_num_iter) == doctest::Approx(3.0 * static_cast<double>(arbitrary_n_threads)));
     }
 
@@ -193,7 +196,7 @@ TEST_CASE("Test MultiThreadedCalculationInfo") {
             CHECK(report.at(total) == doctest::Approx(3.0 * static_cast<double>(n_threads + 1)));
             CHECK(report.at(math_solver) == doctest::Approx(1.0 * static_cast<double>(n_threads + 1)));
             CHECK(report.at(preprocess_measured_value) == doctest::Approx(1.0 * static_cast<double>(n_threads + 1)));
-            CHECK(report.at(iterative_pf_solver_max_num_iter) == doctest::Approx(some_func(n_threads, Idx{7})));
+            CHECK(report.at(iterative_pf_solver_max_num_iter) == doctest::Approx(max_thread_value(n_threads, Idx{7})));
             CHECK(report.at(max_num_iter) ==
                   doctest::Approx(3.0 * static_cast<double>(n_threads))); // the + 1 from the info doesn't contribute
         }
@@ -218,7 +221,7 @@ TEST_CASE("Test MultiThreadedCalculationInfo") {
             CHECK(report.at(total) == doctest::Approx(3.0 * static_cast<double>(n_threads * 2)));
             CHECK(report.at(math_solver) == doctest::Approx(1.0 * static_cast<double>(n_threads * 2)));
             CHECK(report.at(preprocess_measured_value) == doctest::Approx(1.0 * static_cast<double>(n_threads * 2)));
-            CHECK(report.at(iterative_pf_solver_max_num_iter) == doctest::Approx(some_func(n_threads, Idx{7})));
+            CHECK(report.at(iterative_pf_solver_max_num_iter) == doctest::Approx(max_thread_value(n_threads, Idx{7})));
             CHECK(report.at(max_num_iter) == doctest::Approx(3.0 * static_cast<double>(n_threads)));
         }
     }
