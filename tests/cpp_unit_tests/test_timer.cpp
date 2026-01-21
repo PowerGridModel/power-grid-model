@@ -117,5 +117,4 @@ TEST_CASE("Test Timer") {
         check_report(report, event_1, 1, 2);
     }
 }
-
 } // namespace power_grid_model::common::logging
