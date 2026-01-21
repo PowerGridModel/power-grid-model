@@ -83,13 +83,16 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - PF", SolverType, test_math_solver_
     auto topo_ptr = std::make_shared<MathModelTopology const>(grid.topo());
     YBus<sym> y_bus{topo_ptr, param_ptr};
 
+    // because YBus still requires a shared_ptr while solvers were changed to not require it anymore
+    auto const& topo = *topo_ptr;
+
     SUBCASE("Test pf solver") {
         constexpr auto error_tolerance{1e-12};
         constexpr auto num_iter{20};
         constexpr auto result_tolerance =
             SolverType::is_iterative ? 1e-12 : 0.15; // linear methods may be very inaccurate
 
-        SolverType solver{y_bus, *topo_ptr};
+        SolverType solver{y_bus, topo};
         NoLogger log;
 
         PowerFlowInput<sym> const pf_input = grid.pf_input();
@@ -98,7 +101,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - PF", SolverType, test_math_solver_
     }
 
     SUBCASE("Test const z pf solver") {
-        SolverType solver{y_bus, *topo_ptr};
+        SolverType solver{y_bus, topo};
         NoLogger log;
 
         // const z
@@ -113,7 +116,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - PF", SolverType, test_math_solver_
             constexpr auto error_tolerance{std::numeric_limits<double>::infinity()};
             constexpr auto result_tolerance{0.15};
 
-            SolverType solver{y_bus, *topo_ptr};
+            SolverType solver{y_bus, topo};
             NoLogger log;
 
             PowerFlowInput<sym> const pf_input = grid.pf_input();
@@ -121,7 +124,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - PF", SolverType, test_math_solver_
             assert_output(output, grid.output_ref(), false, result_tolerance);
         }
         SUBCASE("Test not converge") {
-            SolverType solver{y_bus, *topo_ptr};
+            SolverType solver{y_bus, topo};
             NoLogger log;
 
             PowerFlowInput<sym> pf_input = grid.pf_input();
@@ -136,7 +139,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - PF", SolverType, test_math_solver_
         singular_param.branch_param[1] = BranchCalcParam<sym>{};
         singular_param.shunt_param[0] = ComplexTensor<sym>{};
         y_bus.update_admittance(std::make_shared<MathModelParam<sym> const>(singular_param));
-        SolverType solver{y_bus, *topo_ptr};
+        SolverType solver{y_bus, topo};
         NoLogger log;
 
         PowerFlowInput<sym> const pf_input = grid.pf_input();
