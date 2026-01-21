@@ -1,0 +1,7 @@
+{
+  "private": true,
+  "devDependencies": {
+    "@biomejs/biome": "*",
+    "markdownlint-cli": "*"
+  }
+}
