@@ -50,19 +50,38 @@ jobs:
         run: |
           uv sync --only-group lint
       
-      - name: retrieve versions
-        id: versions
+      - name: retrieve uv package versions
+        id: versions_uv
         run: |
-          grab_installed_version() {
+          grab_installed_version_uv() {
             local pkg="$1"
             local version
             version=$(uv pip freeze | grep -i "^$pkg==" | head -n1 | cut -d= -f3)
             echo "${pkg}=$version" >> "$GITHUB_OUTPUT"
           }
-          grab_installed_version "ruff"
-          grab_installed_version "clang-format"
-          grab_installed_version "mypy"
-          grab_installed_version "gersemi"
+          grab_installed_version_uv "ruff"
+          grab_installed_version_uv "clang-format"
+          grab_installed_version_uv "mypy"
+          grab_installed_version_uv "gersemi"
+
+      - name: update npm packages
+        run: |
+          npm update
+
+      - name: retrieve npm development package versions
+        id: versions_npm
+        run: |
+          grab_installed_version_npm() {
+            local pkg="$1"
+            local nospecialchars_pkg
+            local version
+            # remove characters `@` and `/`
+            nospecialchars_pkg=$(echo $pkg | tr -d '@/')
+            version=$(npm ls --json --package-lock-only $pkg | grep -i '"version": ' | cut -d\" -f4)
+            echo "${nospecialchars_pkg}=$version" >> "$GITHUB_OUTPUT"
+          }
+          grab_installed_version_npm "@biomejs/biome"
+          grab_installed_version_npm "markdownlint-cli"
 
       - name: Update .pre-commit-config.yaml
         uses: cuchi/jinja2-action@v1.3.0
@@ -70,10 +89,12 @@ jobs:
           template: .pre-commit-config.yaml.jinja
           output_file: .pre-commit-config.yaml
           variables: |
-            ruff=${{ steps.versions.outputs.ruff }}
-            clang_format=${{ steps.versions.outputs.clang-format }}
-            mypy=${{ steps.versions.outputs.mypy }}
-            gersemi=${{ steps.versions.outputs.gersemi }}
+            ruff=${{ steps.versions_uv.outputs.ruff }}
+            clang_format=${{ steps.versions_uv.outputs.clang-format }}
+            mypy=${{ steps.versions_uv.outputs.mypy }}
+            gersemi=${{ steps.versions_uv.outputs.gersemi }}
+            biome=${{ steps.versions_npm.outputs.biomejsbiome }}
+            markdownlint_cli=${{ steps.versions_npm.outputs.markdownlint-cli }}
 
       - name: show changed files
         run: |

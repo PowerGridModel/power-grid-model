@@ -1,43 +1,41 @@
 {
-    "cmake.buildDirectory": "${workspaceFolder}/cpp_build/${buildType}",
-    "C_Cpp.autoAddFileAssociations": false,
-    "cmake.configureOnOpen": true,
-    "cmake.generator": "Ninja",
-    "cmake.configureSettings": {
-        "POWER_GRID_MODEL_SANITIZER": 1
-    },
-    "testMate.cpp.test.executables": "${command:cmake.buildDirectory}/bin/power_grid_model_*_tests*",
-    "testMate.cpp.debug.configTemplate": {
-        "type": "cppvsdbg",
-        "linux": { "type": "cppdbg", "MIMode": "gdb" },
-        "darwin": { "type": "cppdbg", "MIMode": "lldb" },
-        "win32": { "type": "cppvsdbg" },
-        "program": "${exec}",
-        "args": "${argsArray}",
-        "cwd": "${cwd}",
-        "env": "${envObj}",
-        "environment": "${envObjArray}",
-        "sourceFileMap": "${sourceFileMapObj}",
-    },
-    "doxdocgen.generic.filteredKeywords": ["PGM_API"],
-    "doxdocgen.generic.includeTypeAtReturn": false,
-    "python.testing.pytestArgs": [
-        "tests",
-        "--no-cov"
-    ],
-    "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true,
-    "sonarlint.pathToCompileCommands": "${command:cmake.buildDirectory}/compile_commands.json",
-    "sonarlint.connectedMode.project": {
-        "connectionId": "powergridmodel",
-        "projectKey": "PowerGridModel_power-grid-model"
-    },
-    "C_Cpp.formatting": "clangFormat",
-    "C_Cpp.clang_format_fallbackStyle": "LLVM",
-    "[markdown]": {
-        "editor.defaultFormatter": "DavidAnson.vscode-markdownlint",
-        "editor.rulers": [
-            120
-        ]
-    }
+  "cmake.buildDirectory": "${workspaceFolder}/cpp_build/${buildType}",
+  "C_Cpp.autoAddFileAssociations": false,
+  "cmake.configureOnOpen": true,
+  "cmake.generator": "Ninja",
+  "cmake.configureSettings": {
+    "POWER_GRID_MODEL_SANITIZER": 1
+  },
+  "testMate.cpp.test.executables": "${command:cmake.buildDirectory}/bin/power_grid_model_*_tests*",
+  "testMate.cpp.debug.configTemplate": {
+    "type": "cppvsdbg",
+    "linux": { "type": "cppdbg", "MIMode": "gdb" },
+    "darwin": { "type": "cppdbg", "MIMode": "lldb" },
+    "win32": { "type": "cppvsdbg" },
+    "program": "${exec}",
+    "args": "${argsArray}",
+    "cwd": "${cwd}",
+    "env": "${envObj}",
+    "environment": "${envObjArray}",
+    "sourceFileMap": "${sourceFileMapObj}"
+  },
+  "doxdocgen.generic.filteredKeywords": ["PGM_API"],
+  "doxdocgen.generic.includeTypeAtReturn": false,
+  "python.testing.pytestArgs": ["tests", "--no-cov"],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true,
+  "sonarlint.pathToCompileCommands": "${command:cmake.buildDirectory}/compile_commands.json",
+  "sonarlint.connectedMode.project": {
+    "connectionId": "powergridmodel",
+    "projectKey": "PowerGridModel_power-grid-model"
+  },
+  "C_Cpp.formatting": "clangFormat",
+  "C_Cpp.clang_format_fallbackStyle": "LLVM",
+  "[markdown]": {
+    "editor.defaultFormatter": "DavidAnson.vscode-markdownlint",
+    "editor.rulers": [120]
+  },
+  "[json][jsonc]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  }
 }
