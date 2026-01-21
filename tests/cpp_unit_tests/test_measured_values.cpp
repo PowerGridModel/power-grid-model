@@ -59,7 +59,7 @@ TEST_CASE("Measured Values") {
                                           .imag_component = {.value = {0.0, 0.1, -0.2}, .variance = {0.1, 0.2, 0.05}}}};
         input.load_gen_status = {1};
 
-        MeasuredValues<asymmetric_t> const values{*std::make_shared<MathModelTopology const>(std::move(topo)), input};
+        MeasuredValues<asymmetric_t> const values{topo, input};
 
         REQUIRE(values.has_bus_injection(0));
         auto const& injection = values.bus_injection(0);

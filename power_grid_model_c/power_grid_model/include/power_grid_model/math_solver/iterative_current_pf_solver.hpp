@@ -124,9 +124,11 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCur
         // set rhs to zero for iteration start
         std::fill(rhs_u_.begin(), rhs_u_.end(), ComplexValue<sym>{0.0});
 
+        auto const& sources_per_bus = this->sources_per_bus_.get();
+        auto const& load_gens_per_bus = this->load_gens_per_bus_.get();
         // loop buses: i
         for (auto const& [bus_number, load_gens, sources] :
-             enumerated_zip_sequence(this->load_gens_per_bus_.get(), this->sources_per_bus_.get())) {
+             enumerated_zip_sequence(load_gens_per_bus, sources_per_bus)) {
             add_loads(load_gens, bus_number, input, load_gen_type, u);
             add_sources(sources, bus_number, y_bus, input);
         }
