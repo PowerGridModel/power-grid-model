@@ -11,8 +11,8 @@ SPDX-License-Identifier: MPL-2.0
 [![PyPI Downloads per month](https://static.pepy.tech/badge/power-grid-model/month)](https://pepy.tech/project/power-grid-model)
 
 [![Anaconda-Server Badge](https://anaconda.org/conda-forge/power-grid-model/badges/version.svg?no-cache)](https://anaconda.org/conda-forge/power-grid-model)
-[![Anaconda-Server Platforms](https://anaconda.org/conda-forge/power-grid-model/badges/platforms.svg)]
-[![Anaconda-Server Downloads](https://anaconda.org/conda-forge/power-grid-model/badges/downloads.svg)](https://anaconda.org/conda-forge/power-grid-model/badges/downloads.svg)
+[![Anaconda-Server Platforms](https://anaconda.org/conda-forge/power-grid-model/badges/platforms.svg)](https://anaconda.org/conda-forge/power-grid-model)
+[![Anaconda-Server Downloads](https://anaconda.org/conda-forge/power-grid-model/badges/downloads.svg)](https://anaconda.org/conda-forge/power-grid-model)
 
 [![License: MPL2.0](https://img.shields.io/badge/License-MPL2.0-informational.svg)](https://github.com/PowerGridModel/power-grid-model/blob/main/LICENSE)
 [![OpenSSF Best Practices](https://bestpractices.coreinfrastructure.org/projects/7298/badge)](https://bestpractices.coreinfrastructure.org/projects/7298)
