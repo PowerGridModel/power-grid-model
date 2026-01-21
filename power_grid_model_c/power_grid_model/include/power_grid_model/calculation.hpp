@@ -7,18 +7,10 @@
 #include "common/common.hpp"
 #include "common/enum.hpp"
 
+#include "main_core/calculation_input_preparation.hpp"
+#include "main_core/main_model_type.hpp"
+
 namespace power_grid_model {
-// solver output type to output type getter meta function
-template <solver_output_type SolverOutputType> struct output_type_getter;
-template <short_circuit_solver_output_type SolverOutputType> struct output_type_getter<SolverOutputType> {
-    using type = meta_data::sc_output_getter_s;
-};
-template <> struct output_type_getter<SolverOutput<symmetric_t>> {
-    using type = meta_data::sym_output_getter_s;
-};
-template <> struct output_type_getter<SolverOutput<asymmetric_t>> {
-    using type = meta_data::asym_output_getter_s;
-};
 
 struct calculation_type_t {};
 struct power_flow_t : calculation_type_t {};
@@ -78,5 +70,59 @@ decltype(auto) calculation_type_symmetry_func_selector(CalculationType calculati
         },
         calculation_symmetry, std::forward<Functor>(f), std::forward<Args>(args)...);
 }
+
+template <typename T, typename sym> struct Calculator;
+template <symmetry_tag sym> struct Calculator<power_flow_t, sym> {
+    static auto scenario_couple_components(ComponentToMathCoupling& /*comp_coup*/) {
+        return [] { /*no-op*/ };
+    }
+    template <typename State> static auto preparer(State const& state) {
+        return [&state](Idx n_math_solvers) { return main_core::prepare_power_flow_input<sym>(state, n_math_solvers); };
+    }
+    static auto solver(CalculationMethod calculation_method, double err_tol, Idx max_iter, Logger& logger) {
+        return [err_tol, max_iter, calculation_method, &logger](MathSolverProxy<sym>& solver, YBus<sym> const& y_bus,
+                                                                PowerFlowInput<sym> const& input) {
+            return solver.get().run_power_flow(input, err_tol, max_iter, logger, calculation_method, y_bus);
+        };
+    }
+};
+template <symmetry_tag sym> struct Calculator<state_estimation_t, sym> {
+    static auto scenario_couple_components(ComponentToMathCoupling& /*comp_coup*/) {
+        return [] { /*no-op*/ };
+    }
+    template <typename State> static auto preparer(State const& state) {
+        return [&state](Idx n_math_solvers) {
+            return main_core::prepare_state_estimation_input<sym>(state, n_math_solvers);
+        };
+    }
+    static auto solver(CalculationMethod calculation_method, double err_tol, Idx max_iter, Logger& logger) {
+        return [err_tol, max_iter, calculation_method, &logger](MathSolverProxy<sym>& solver, YBus<sym> const& y_bus,
+                                                                StateEstimationInput<sym> const& input) {
+            return solver.get().run_state_estimation(input, err_tol, max_iter, logger, calculation_method, y_bus);
+        };
+    }
+};
+
+template <symmetry_tag sym> struct Calculator<short_circuit_t, sym> {
+
+    static auto scenario_couple_components(ComponentToMathCoupling& comp_coup) {
+        return [&comp_coup] { /*no-op*/ };
+    }
+    template <typename State>
+    static auto preparer(State const& state, ComponentToMathCoupling& comp_coup,
+                         ShortCircuitVoltageScaling voltage_scaling) {
+        return [&state, &comp_coup, voltage_scaling](Idx n_math_solvers) {
+            // assert(solvers_cache_status.is_topology_valid());
+            // assert(solvers_cache_status.template is_parameter_valid<sym>());
+            return main_core::prepare_short_circuit_input<sym>(state, comp_coup, n_math_solvers, voltage_scaling);
+        };
+    }
+    static auto solver(CalculationMethod calculation_method, Logger& logger) {
+        return [calculation_method, &logger](MathSolverProxy<sym>& solver, YBus<sym> const& y_bus,
+                                             ShortCircuitInput const& input) {
+            return solver.get().run_short_circuit(input, logger, calculation_method, y_bus);
+        };
+    }
+};
 
 } // namespace power_grid_model
