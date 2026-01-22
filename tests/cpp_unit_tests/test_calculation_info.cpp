@@ -120,7 +120,7 @@ TEST_CASE("Test CalculationInfo") {
 
         info.merge_into(other_info);
 
-        auto const report = other_info.report();
+        auto const& report = other_info.report();
         CHECK(report.size() == 6);
         CHECK(report.at(total) == doctest::Approx(3.0 + 2.0));
         CHECK(report.at(scenario_exception) == doctest::Approx(13.0));
@@ -165,7 +165,7 @@ TEST_CASE("Test MultiThreadedCalculationInfo") {
                                 max_thread_value(arbitrary_n_threads + Idx{2}, Idx{5}));
         multi_threaded_info.log(max_num_iter);
 
-        auto const report = multi_threaded_info.report();
+        auto const& report = multi_threaded_info.report();
         CHECK(report.size() == 5);
         CHECK(report.at(total) == doctest::Approx((3.0 * static_cast<double>(arbitrary_n_threads)) + 1.0));
         CHECK(report.at(math_solver) == doctest::Approx(1.0 * static_cast<double>(arbitrary_n_threads)));
