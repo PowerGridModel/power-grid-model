@@ -22,12 +22,12 @@
 
 #include <algorithm>
 #include <compare>
+#include <format>
 #include <functional>
 #include <numeric>
 #include <optional>
 #include <queue>
 #include <ranges>
-#include <sstream>
 #include <variant>
 #include <vector>
 
@@ -358,12 +358,10 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgePro
 
     // Throw error at the end with all problematic transformer IDs
     if (!trafo_ids_invalid_reg_side.empty()) {
-        std::ostringstream error_msg;
-        error_msg << "The following transformer(s) are being controlled from non-source side towards source side:\n";
-        for (auto const& id : trafo_ids_invalid_reg_side) {
-            error_msg << "  Transformer ID: " << id << "\n";
-        }
-        throw AutomaticTapInputError(error_msg.str());
+        throw AutomaticTapInputError(
+            std::format("The following transformer(s) are being controlled from non-source side towards source "
+                        "side:\n  Transformer IDs: {:n}",
+                        trafo_ids_invalid_reg_side));
     }
 
     return result;
