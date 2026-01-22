@@ -97,7 +97,8 @@ _UNSUPPORTED_REGULATOR_COMBINATION_ERROR_RE = re.compile(
     r"The combination of voltage regulators and transformer tap regulators is not supported in the same model."
 )
 _UNSUPPORTED_VOLTAGE_REGULATOR_SOURCE_COMBINATION_ERROR_RE = re.compile(
-    r"Nodes with a source and a voltage regulated load/generator are not supported when both are enabled. Found at node with id (-?\d+)"
+    r"Nodes with a source and a voltage regulated load/generator are not supported when both are enabled. "
+    r"Found at node with id (-?\d+)"
 )
 
 _ERROR_MESSAGE_PATTERNS = {
