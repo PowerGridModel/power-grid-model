@@ -36,15 +36,16 @@ void logger_helper(Logger& logger, Idx n_threads = Idx{1}) {
 
 void report_checker_helper(auto& report, Idx n_threads = Idx{1}) {
     using enum LogEvent;
+    auto const some_value = static_cast<double>(n_threads); // arbitrary choice that also keeps track of input args
     CHECK(report.size() == 5);
-    CHECK(report.at(total) == doctest::Approx(3.0 * static_cast<double>(n_threads)));
-    CHECK(report.at(math_solver) == doctest::Approx(1.0 * static_cast<double>(n_threads)));
-    CHECK(report.at(preprocess_measured_value) == doctest::Approx(1.0 * static_cast<double>(n_threads)));
+    CHECK(report.at(total) == doctest::Approx(3.0 * some_value));
+    CHECK(report.at(math_solver) == doctest::Approx(1.0 * some_value));
+    CHECK(report.at(preprocess_measured_value) == doctest::Approx(1.0 * some_value));
     CHECK(report.at(iterative_pf_solver_max_num_iter) == doctest::Approx(max_thread_value(n_threads, Idx{7})));
     if (n_threads == 1) {
         CHECK(report.at(max_num_iter) == doctest::Approx(5.0));
     } else {
-        CHECK(report.at(max_num_iter) == doctest::Approx(3.0 * static_cast<double>(n_threads)));
+        CHECK(report.at(max_num_iter) == doctest::Approx(3.0 * some_value));
     }
 }
 
@@ -53,7 +54,7 @@ template <typename JobFn>
 void run_parallel_jobs(Idx n_threads, JobFn&& job) {
     std::vector<std::jthread> threads;
     threads.reserve(n_threads);
-    for (Idx i = 0; i < n_threads; ++i) {
+    for (Idx i : IdxRange{n_threads}) {
         threads.emplace_back(std::forward<JobFn>(job), n_threads);
     }
 }
@@ -117,7 +118,7 @@ TEST_CASE("Test CalculationInfo") {
 
         info.merge_into(other_info);
 
-        auto report = other_info.report();
+        auto const report = other_info.report();
         CHECK(report.size() == 6);
         CHECK(report.at(total) == doctest::Approx(3.0 + 2.0));
         CHECK(report.at(scenario_exception) == doctest::Approx(13.0));
@@ -140,7 +141,7 @@ TEST_CASE("Test MultiThreadedCalculationInfo") {
     }; // when the jthread ends, the ThreadLogger is destroyed and sync is called (tested)
 
     SUBCASE("Log and report through child - single threaded") {
-        constexpr Idx const n_threads = 1;
+        constexpr Idx n_threads = 1;
         run_parallel_jobs(n_threads, single_thread_job);
         report_checker_helper(multi_threaded_info.report(), n_threads);
     }
@@ -162,7 +163,7 @@ TEST_CASE("Test MultiThreadedCalculationInfo") {
                                 max_thread_value(arbitrary_n_threads + Idx{2}, Idx{5}));
         multi_threaded_info.log(max_num_iter);
 
-        auto report = multi_threaded_info.report();
+        auto const report = multi_threaded_info.report();
         CHECK(report.size() == 5);
         CHECK(report.at(total) == doctest::Approx((3.0 * static_cast<double>(arbitrary_n_threads)) + 1.0));
         CHECK(report.at(math_solver) == doctest::Approx(1.0 * static_cast<double>(arbitrary_n_threads)));
@@ -188,17 +189,23 @@ TEST_CASE("Test MultiThreadedCalculationInfo") {
         run_parallel_jobs(n_threads, single_thread_job);
 
         SUBCASE("Log and report - Non-const getter") {
+            using enum LogEvent;
+
             CalculationInfo& info = multi_threaded_info.get();
             logger_helper(info);
             auto report = info.report();
-            using enum LogEvent;
+
+            // arbitrary choice that also keeps track of input args
+            auto const some_value_a = static_cast<double>(n_threads);
+            auto const some_value_b = static_cast<double>(n_threads + 1);
+
             CHECK(report.size() == 5);
-            CHECK(report.at(total) == doctest::Approx(3.0 * static_cast<double>(n_threads + 1)));
-            CHECK(report.at(math_solver) == doctest::Approx(1.0 * static_cast<double>(n_threads + 1)));
-            CHECK(report.at(preprocess_measured_value) == doctest::Approx(1.0 * static_cast<double>(n_threads + 1)));
+            CHECK(report.at(total) == doctest::Approx(3.0 * some_value_b));
+            CHECK(report.at(math_solver) == doctest::Approx(1.0 * some_value_b));
+            CHECK(report.at(preprocess_measured_value) == doctest::Approx(1.0 * some_value_b));
             CHECK(report.at(iterative_pf_solver_max_num_iter) == doctest::Approx(max_thread_value(n_threads, Idx{7})));
             CHECK(report.at(max_num_iter) ==
-                  doctest::Approx(3.0 * static_cast<double>(n_threads))); // the + 1 from the info doesn't contribute
+                  doctest::Approx(3.0 * some_value_a)); // the + 1 from the info doesn't contribute
         }
 
         SUBCASE("Report - Const getter") {
@@ -208,6 +215,8 @@ TEST_CASE("Test MultiThreadedCalculationInfo") {
         }
 
         SUBCASE("Merge into another CalculationInfo") {
+            using enum LogEvent;
+
             CalculationInfo const& info_const = multi_threaded_info.get();
             CalculationInfo& info_non_const = multi_threaded_info.get();
             CalculationInfo info_new{};
@@ -216,13 +225,17 @@ TEST_CASE("Test MultiThreadedCalculationInfo") {
             info_new.merge_into(info_non_const);
 
             auto report = info_non_const.report();
+
+            // arbitrary choice that also keeps track of input args
+            auto const some_value_a = static_cast<double>(n_threads);
+            auto const some_value_b = static_cast<double>(n_threads * 2);
+
             CHECK(report.size() == 5);
-            using enum LogEvent;
-            CHECK(report.at(total) == doctest::Approx(3.0 * static_cast<double>(n_threads * 2)));
-            CHECK(report.at(math_solver) == doctest::Approx(1.0 * static_cast<double>(n_threads * 2)));
-            CHECK(report.at(preprocess_measured_value) == doctest::Approx(1.0 * static_cast<double>(n_threads * 2)));
+            CHECK(report.at(total) == doctest::Approx(3.0 * some_value_b));
+            CHECK(report.at(math_solver) == doctest::Approx(1.0 * some_value_b));
+            CHECK(report.at(preprocess_measured_value) == doctest::Approx(1.0 * some_value_b));
             CHECK(report.at(iterative_pf_solver_max_num_iter) == doctest::Approx(max_thread_value(n_threads, Idx{7})));
-            CHECK(report.at(max_num_iter) == doctest::Approx(3.0 * static_cast<double>(n_threads)));
+            CHECK(report.at(max_num_iter) == doctest::Approx(3.0 * some_value_a));
         }
     }
 
@@ -231,7 +244,7 @@ TEST_CASE("Test MultiThreadedCalculationInfo") {
         Logger& thread_logger = *thread_logger_ptr;
 
         logger_helper(thread_logger);
-        auto report = multi_threaded_info.report();
+        auto const report = multi_threaded_info.report();
         CHECK(report.empty());
 
         SUBCASE("Copy constructor") {
