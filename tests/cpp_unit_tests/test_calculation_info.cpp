@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #include <power_grid_model/common/calculation_info.hpp>
+#include <power_grid_model/common/counting_iterator.hpp>
 
 #include <thread>
 #include <utility>
@@ -244,7 +245,7 @@ TEST_CASE("Test MultiThreadedCalculationInfo") {
         Logger& thread_logger = *thread_logger_ptr;
 
         logger_helper(thread_logger);
-        auto const report = multi_threaded_info.report();
+        auto report = multi_threaded_info.report();
         CHECK(report.empty());
 
         SUBCASE("Copy constructor") {
