@@ -1325,6 +1325,7 @@ code-generation = [
 dev = [
     { name = "clang-format" },
     { name = "gersemi" },
+    { name = "ipykernel" },
     { name = "msgpack" },
     { name = "mypy" },
     { name = "numpy" },
@@ -1345,6 +1346,9 @@ doc = [
     { name = "sphinx-rtd-theme" },
     { name = "sphinxcontrib-mermaid" },
     { name = "sphinxcontrib-tikz" },
+]
+example = [
+    { name = "ipykernel" },
 ]
 lint = [
     { name = "clang-format" },
@@ -1371,6 +1375,7 @@ code-generation = [
 dev = [
     { name = "clang-format", specifier = "~=18.0" },
     { name = "gersemi" },
+    { name = "ipykernel" },
     { name = "msgpack" },
     { name = "mypy" },
     { name = "numpy" },
@@ -1392,6 +1397,7 @@ doc = [
     { name = "sphinxcontrib-mermaid", specifier = ">=1.0.0" },
     { name = "sphinxcontrib-tikz" },
 ]
+example = [{ name = "ipykernel" }]
 lint = [
     { name = "clang-format", specifier = "~=18.0" },
     { name = "gersemi" },
