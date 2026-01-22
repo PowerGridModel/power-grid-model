@@ -1,11 +1,12 @@
+<!--
 SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
 
 SPDX-License-Identifier: MPL-2.0
+-->
 
 # Network
 
-```
-
+```txt
    Source11
    | Gen12[i] <-x- VolReg19  Gen21[y] <- VoltReg29   AsymGen31[y] <- VoltReg39
    | | Load13[pq]            | Load22[y]             | Load32[i] <- VoltReg38

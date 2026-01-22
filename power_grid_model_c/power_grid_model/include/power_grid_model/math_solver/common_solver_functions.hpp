@@ -151,25 +151,23 @@ inline void calculate_voltage_regulator_result(Idx const& bus_number, PowerFlowI
         return;
     }
 
-    auto non_regulating_load_gens = load_gens |
-                        std::views::filter([&](Idx lg) {
-                            if (!loadgen_to_regulator.contains(lg)) {
-                                return true;
-                            } else {
-                                auto const regulator = loadgen_to_regulator.at(lg);
-                                return input.load_gen_status[lg] != 0 && input.voltage_regulator[regulator].status == 0;
-                            }
-                        });
+    auto non_regulating_load_gens =
+        load_gens | std::views::filter([&](Idx lg) {
+            if (!loadgen_to_regulator.contains(lg)) {
+                return true;
+            }
+            auto const regulator = loadgen_to_regulator.at(lg);
+            return input.load_gen_status[lg] != 0 && input.voltage_regulator[regulator].status == 0;
+        });
 
     ComplexValue<sym> const s_load_gen_bus =
-        std::transform_reduce(non_regulating_load_gens.begin(), non_regulating_load_gens.end(),
-                              ComplexValue<sym>{}, std::plus{},
-                              [&](Idx const load_gen) { return output.load_gen[load_gen].s; });
+        std::transform_reduce(non_regulating_load_gens.begin(), non_regulating_load_gens.end(), ComplexValue<sym>{},
+                              std::plus{}, [&](Idx const load_gen) { return output.load_gen[load_gen].s; });
 
     ComplexValue<sym> const s_remaining = output.bus_injection[bus_number] - s_load_gen_bus;
 
-    // get number of regulating generators using ranges instead of "load_gens.size() - non_regulating_load_gens.size()" because
-    // there might still be disconnected load_gens
+    // get number of regulating generators using ranges instead of "load_gens.size() - non_regulating_load_gens.size()"
+    // because there might still be disconnected load_gens
     auto regulating_gens = load_gens | std::views::filter([&](Idx lg) { return loadgen_to_regulator.contains(lg); }) |
                            std::views::filter([&](Idx lg) {
                                auto const regulator = loadgen_to_regulator.at(lg);
