@@ -247,7 +247,7 @@ struct OwningDataset {
 
         for (Idx component_idx{}; component_idx < info.n_components(); ++component_idx) {
             auto const& component_name = info.component_name(component_idx);
-            auto const component_meta = MetaData::get_component_by_name(dataset_name, component_name);
+            auto const* const component_meta = MetaData::get_component_by_name(dataset_name, component_name);
             Idx const component_size = info.component_total_elements(component_idx);
             Idx const elements_per_scenario = info.component_elements_per_scenario(component_idx);
 
@@ -264,7 +264,7 @@ struct OwningDataset {
                 auto const& attribute_indications = info.attribute_indications(component_idx);
                 auto& current_attribute_buffers = storage.attribute_buffers.emplace_back();
                 for (auto const& attribute_name : attribute_indications) {
-                    auto const attribute_meta =
+                    auto const* const attribute_meta =
                         MetaData::get_attribute_by_name(dataset_name, component_name, attribute_name);
                     auto const attribute_ctype = MetaData::attribute_ctype(attribute_meta);
                     current_attribute_buffers.emplace_back(
@@ -323,7 +323,7 @@ struct OwningDataset {
                 storage.attribute_buffers.emplace_back();
                 dataset.add_buffer(component_name, component_elements_per_scenario, component_size, nullptr,
                                    component_buffer);
-                for (auto const attribute_meta : attribute_filter) {
+                for (auto const* const attribute_meta : attribute_filter) {
                     auto const attribute_name = MetaData::attribute_name(attribute_meta);
                     auto const attribute_ctype = MetaData::attribute_ctype(attribute_meta);
                     auto& attribute_buffer = storage.attribute_buffers.back().emplace_back(
