@@ -211,12 +211,12 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
 
     static constexpr auto is_iterative = true;
 
-    NewtonRaphsonPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
-        : IterativePFSolver<sym, NewtonRaphsonPFSolver>{y_bus, topo_ptr},
+    NewtonRaphsonPFSolver(YBus<sym> const& y_bus, MathModelTopology const& topo)
+        : IterativePFSolver<sym, NewtonRaphsonPFSolver>{y_bus, topo},
           data_jac_(y_bus.nnz_lu()),
           x_(y_bus.size()),
           del_x_pq_(y_bus.size()),
-          sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
+          sparse_solver_{y_bus.row_indptr_lu(), y_bus.col_indices_lu(), y_bus.lu_diag()},
           perm_(y_bus.size()) {}
 
     // Initilize the unknown variable in polar form
@@ -225,13 +225,12 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         using LinearSparseSolverType = SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>;
 
         ComplexTensorVector<sym> linear_mat_data(y_bus.nnz_lu());
-        LinearSparseSolverType linear_sparse_solver{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(),
-                                                    y_bus.shared_diag_lu()};
+        LinearSparseSolverType linear_sparse_solver{y_bus.row_indptr_lu(), y_bus.col_indices_lu(), y_bus.lu_diag()};
         typename LinearSparseSolverType::BlockPermArray linear_perm(y_bus.size());
 
         detail::copy_y_bus<sym>(y_bus, linear_mat_data);
-        detail::prepare_linear_matrix_and_rhs(y_bus, input, *this->load_gens_per_bus_, *this->sources_per_bus_, output,
-                                              linear_mat_data);
+        detail::prepare_linear_matrix_and_rhs(y_bus, input, this->load_gens_per_bus_.get(),
+                                              this->sources_per_bus_.get(), output, linear_mat_data);
         linear_sparse_solver.prefactorize_and_solve(linear_mat_data, linear_perm, output.u, output.u);
 
         // get magnitude and angle of start voltage
@@ -244,13 +243,15 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
     // Calculate the Jacobian and deviation
     void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                 ComplexValueVector<sym> const& u) {
-        std::vector<LoadGenType> const& load_gen_type = *this->load_gen_type_;
+        std::vector<LoadGenType> const& load_gen_type = this->load_gen_type_.get();
         IdxVector const& bus_entry = y_bus.lu_diag();
 
         prepare_matrix_and_rhs_from_network_perspective(y_bus, u, bus_entry);
 
+        auto const& load_gens_per_bus = this->load_gens_per_bus_.get();
+        auto const& sources_per_bus = this->sources_per_bus_.get();
         for (auto const& [bus_number, load_gens, sources] :
-             enumerated_zip_sequence(*this->load_gens_per_bus_, *this->sources_per_bus_)) {
+             enumerated_zip_sequence(load_gens_per_bus, sources_per_bus)) {
             Idx const diagonal_position = bus_entry[bus_number];
             add_loads(load_gens, bus_number, diagonal_position, input, load_gen_type);
             add_sources(sources, bus_number, diagonal_position, y_bus, input, u);

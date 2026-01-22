@@ -80,17 +80,17 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCur
 
     static constexpr auto is_iterative = true;
 
-    IterativeCurrentPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
-        : IterativePFSolver<sym, IterativeCurrentPFSolver>{y_bus, topo_ptr},
+    IterativeCurrentPFSolver(YBus<sym> const& y_bus, MathModelTopology const& topo)
+        : IterativePFSolver<sym, IterativeCurrentPFSolver>{y_bus, topo},
           rhs_u_(y_bus.size()),
-          sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()} {}
+          sparse_solver_{y_bus.row_indptr_lu(), y_bus.col_indices_lu(), y_bus.lu_diag()} {}
 
     // Add source admittance to Y bus and set variable for prepared y bus to true
     void initialize_derived_solver(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                    SolverOutput<sym>& output) {
         make_flat_start(input, output.u);
 
-        auto const& sources_per_bus = *this->sources_per_bus_;
+        auto const& sources_per_bus = this->sources_per_bus_.get();
         IdxVector const& bus_entry = y_bus.lu_diag();
         // if Y bus is not up to date
         // re-build matrix and prefactorize Build y bus data with source admittance
@@ -119,14 +119,16 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCur
     // Prepare matrix calculates injected current, i.e., RHS of solver for each iteration.
     void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                 ComplexValueVector<sym> const& u) {
-        std::vector<LoadGenType> const& load_gen_type = *this->load_gen_type_;
+        std::vector<LoadGenType> const& load_gen_type = this->load_gen_type_.get();
 
         // set rhs to zero for iteration start
         std::fill(rhs_u_.begin(), rhs_u_.end(), ComplexValue<sym>{0.0});
 
+        auto const& sources_per_bus = this->sources_per_bus_.get();
+        auto const& load_gens_per_bus = this->load_gens_per_bus_.get();
         // loop buses: i
         for (auto const& [bus_number, load_gens, sources] :
-             enumerated_zip_sequence(*this->load_gens_per_bus_, *this->sources_per_bus_)) {
+             enumerated_zip_sequence(load_gens_per_bus, sources_per_bus)) {
             add_loads(load_gens, bus_number, input, load_gen_type, u);
             add_sources(sources, bus_number, y_bus, input);
         }
@@ -197,11 +199,11 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCur
     }
 
     void make_flat_start(PowerFlowInput<sym> const& input, ComplexValueVector<sym>& output_u) {
-        std::vector<double> const& phase_shift = *this->phase_shift_;
+        std::vector<double> const& phase_shift = this->phase_shift_.get();
         // average u_ref of all sources
         DoubleComplex const u_ref = [&]() {
             DoubleComplex sum_u_ref = 0.0;
-            for (auto const& [bus, sources] : enumerated_zip_sequence(*this->sources_per_bus_)) {
+            for (auto const& [bus, sources] : enumerated_zip_sequence(this->sources_per_bus_.get())) {
                 for (Idx const source : sources) {
                     sum_u_ref += input.source[source] * std::exp(1.0i * -phase_shift[bus]); // offset phase shift
                 }
