@@ -459,7 +459,6 @@ constexpr auto output_result(Component const& voltage_regulator, MainModelState<
                              MathOutput<std::vector<SolverOutputType>> const& math_output, Idx const obj_seq) {
     Idx2D const load_gen_math_id = [&]() { return state.topo_comp_coup->load_gen[obj_seq]; }();
     if (load_gen_math_id.group != -1) {
-        // is voltage regulator always in same group as the generator it regulates?
         for (auto const& vr_output : math_output.solver_output[load_gen_math_id.group].voltage_regulator) {
             if (vr_output.generator_id == voltage_regulator.regulated_object()) {
                 return voltage_regulator.get_output(vr_output);

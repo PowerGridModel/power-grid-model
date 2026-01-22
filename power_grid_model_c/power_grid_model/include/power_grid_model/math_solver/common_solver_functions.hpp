@@ -166,8 +166,6 @@ inline void calculate_voltage_regulator_result(Idx const& bus_number, PowerFlowI
 
     ComplexValue<sym> const s_remaining = output.bus_injection[bus_number] - s_load_gen_bus;
 
-    // get number of regulating generators using ranges instead of "load_gens.size() - non_regulating_load_gens.size()"
-    // because there might still be disconnected load_gens
     auto regulating_gens = load_gens | std::views::filter([&](Idx lg) { return loadgen_to_regulator.contains(lg); }) |
                            std::views::filter([&](Idx lg) {
                                auto const regulator = loadgen_to_regulator.at(lg);

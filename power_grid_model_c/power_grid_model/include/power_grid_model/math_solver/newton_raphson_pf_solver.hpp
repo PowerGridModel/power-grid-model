@@ -316,9 +316,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
             for (Idx const load_gen_idx : load_gens) {
                 for (Idx const voltage_regulator_idx :
                      voltage_regulators_per_load_gen_->get_element_range(load_gen_idx)) {
-                    // TODO(figueroa1395): Test this. Should we also check for load_gens with status == 0? Or is this
-                    // enough? We need a validation case with load_gens with status == 0 and a voltage regulator with
-                    // status == 1 to test this.
+                    // TODO(figueroa1395): Unit test this
                     if (input.voltage_regulator[voltage_regulator_idx].status != 0) {
                         auto const& regulator = input.voltage_regulator[voltage_regulator_idx];
                         u[bus_idx] = ComplexValue<sym>{regulator.u_ref};

@@ -177,13 +177,12 @@ void check_sources_and_voltage_regulators(
     }
 }
 
-template <class ModelType> void check_voltage_regulator_validity(typename ModelType::MainModelState const& state) {
+// TODO(figueroa1395): Unit test this function
+template <class ModelType> void check_state_validity(typename ModelType::MainModelState const& state) {
     if (state.components.template size<VoltageRegulator>() > 0) {
-        // TODO(figueroa1395): The commented out check is currently at tap_position_optimizer.hpp, is it worth to keep
-        // it here as an earlier check instead?
-        // if (state.components.template size<TransformerTapRegulator>() > 0) {
-        //     throw UnsupportedRegulatorCombinationError{};
-        // }
+        if (state.components.template size<TransformerTapRegulator>() > 0) {
+            throw UnsupportedRegulatorCombinationError{};
+        }
 
         std::unordered_map<ID, ReferenceVoltageRegulator> visited_node_to_reference_regulator;
 
@@ -238,8 +237,7 @@ void prepare_solvers(typename ModelType::MainModelState& state, SolverPreparatio
     solvers_cache_status.clear_changed_components_indices();
     solvers_cache_status.template set_previous_symmetry_mode<sym>();
 
-    // validate voltage regulators after topology and parameters are set
-    // TODO(figueroa1395): Is this the correct place for this check?
-    detail::check_voltage_regulator_validity<ModelType>(state);
+    // validate state
+    detail::check_state_validity<ModelType>(state);
 }
 } // namespace power_grid_model
