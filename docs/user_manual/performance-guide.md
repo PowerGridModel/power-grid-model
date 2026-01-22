@@ -53,14 +53,15 @@ If you are running on a system where memory is the bottle-neck, using a columnar
 footprint.
 This may or may not induce a slight computational overhead during calculations.
 
-Some simulations might require a cartesian product of scenarios of two batch datasets.
+Some simulations might require a Cartesian product of scenarios of two batch datasets.
 This can be done by passing them to `update_data` as a list
 ie. a list[{py:class}`BatchDataset <power_grid_model.data_types.BatchDataset>`]
 (Check [Power Flow Example](../examples/Power%20Flow%20Example.ipynb)).
-This gets treated as a cartesian product of the provided datasets and the combination of scenarios gets handled
+This gets treated as a Cartesian product of the provided datasets and the combination of scenarios gets handled
 internally.
-Hence there is no need to allocate memory for full `N1 * N2 * ...` scenarios for a cartesian product of data sets with
+Hence there is no need to allocate memory for full `N1 * N2 * ...` scenarios for a Cartesian product of data sets with
 scenario size `N1, N2, ...`.
+For more performance guidelines, see also [below](#multi-dimensional-batch-calculations).
 
 ### Output data volume
 
@@ -137,6 +138,14 @@ To elaborate:
 - Dependent batches are useful for a sparse sampling for many different components, e.g. for N-1 checks.
 - Independent batches are useful for a dense sampling of a small subset of components, e.g. time series power flow
 - calculation.
+
+### Multi-dimensional batch calculations
+
+[Multi-dimensional batch calculations](./calculations.md#cartesian-product-of-batch-datasets) help
+[reduce the update data volume](#inputupdate-data-volume), but they also can improve [caching](#topology-caching).
+It is recommended to put the variations that do not change topology in the innermost dimension.
+That is, if you want to run a combination of both N-1 and time-series calculations, you should put time-series in the
+inner dimension (last dataset in the list).
 
 ## Parallel computing
 

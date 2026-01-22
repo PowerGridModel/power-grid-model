@@ -1,224 +1,224 @@
 {
-    "all_datasets": [
+  "all_datasets": [
+    {
+      "name": "input",
+      "is_template": false,
+      "components": [
         {
-            "name": "input",
-            "is_template": false,
-            "components": [
-                {
-                    "names": ["node"],
-                    "class_name": "NodeInput"
-                },
-                {
-                    "names": ["line"],
-                    "class_name": "LineInput"
-                },
-                {
-                    "names": ["asym_line"],
-                    "class_name": "AsymLineInput"
-                },
-                {
-                    "names": ["link"],
-                    "class_name": "LinkInput"
-                },
-                {
-                    "names": ["generic_branch"],
-                    "class_name": "GenericBranchInput"
-                },
-                {
-                    "names": ["transformer"],
-                    "class_name": "TransformerInput"
-                },
-                {
-                    "names": ["transformer_tap_regulator"],
-                    "class_name": "TransformerTapRegulatorInput"
-                },
-                {
-                    "names": ["three_winding_transformer"],
-                    "class_name": "ThreeWindingTransformerInput"
-                },
-                {
-                    "names": ["sym_load", "sym_gen", "asym_load", "asym_gen"],
-                    "class_name": "LoadGenInput"
-                },
-                {
-                    "names": ["voltage_regulator"],
-                    "class_name": "VoltageRegulatorInput"
-                },
-                {
-                    "names": ["shunt"],
-                    "class_name": "ShuntInput"
-                },
-                {
-                    "names": ["source"],
-                    "class_name": "SourceInput"
-                },
-                {
-                    "names": ["sym_voltage_sensor", "asym_voltage_sensor"],
-                    "class_name": "VoltageSensorInput"
-                },
-                {
-                    "names": ["sym_power_sensor", "asym_power_sensor"],
-                    "class_name": "PowerSensorInput"
-                },
-                {
-                    "names": ["sym_current_sensor", "asym_current_sensor"],
-                    "class_name": "CurrentSensorInput"
-                },
-                {
-                    "names": ["fault"],
-                    "class_name": "FaultInput"
-                }
-            ]
+          "names": ["node"],
+          "class_name": "NodeInput"
         },
         {
-            "name": "output",
-            "is_template": true,
-            "components": [
-                {
-                    "names": ["node"],
-                    "class_name": "NodeOutput"
-                },
-                {
-                    "names": ["line", "link", "transformer", "generic_branch", "asym_line"],
-                    "class_name": "BranchOutput"
-                },
-                {
-                    "names": ["transformer_tap_regulator"],
-                    "class_name": "TransformerTapRegulatorOutput"
-                },
-                {
-                    "names": ["three_winding_transformer"],
-                    "class_name": "Branch3Output"
-                },
-                {
-                    "names": ["sym_load", "sym_gen", "asym_load", "asym_gen", "shunt", "source"],
-                    "class_name": "ApplianceOutput"
-                },
-                {
-                    "names": ["voltage_regulator"],
-                    "class_name": "VoltageRegulatorOutput"
-                },
-                {
-                    "names": ["sym_voltage_sensor", "asym_voltage_sensor"],
-                    "class_name": "VoltageSensorOutput"
-                },
-                {
-                    "names": ["sym_power_sensor", "asym_power_sensor"],
-                    "class_name": "PowerSensorOutput"
-                },
-                {
-                    "names": ["sym_current_sensor", "asym_current_sensor"],
-                    "class_name": "CurrentSensorOutput"
-                },
-                {
-                    "names": ["fault"],
-                    "class_name": "FaultOutput"
-                }
-            ]
+          "names": ["line"],
+          "class_name": "LineInput"
         },
         {
-            "name": "update",
-            "is_template": false,
-            "components": [
-                {
-                    "names": ["node"],
-                    "class_name": "BaseUpdate"
-                },
-                {
-                    "names": ["line"],
-                    "class_name": "BranchUpdate"
-                },
-                {
-                    "names": ["asym_line"],
-                    "class_name": "BranchUpdate"
-                },
-                {
-                    "names": ["link"],
-                    "class_name": "BranchUpdate"
-                },
-                {
-                    "names": ["transformer"],
-                    "class_name": "TransformerUpdate"
-                },
-                {
-                    "names": ["transformer_tap_regulator"],
-                    "class_name": "TransformerTapRegulatorUpdate"
-                },
-                {
-                    "names": ["three_winding_transformer"],
-                    "class_name": "ThreeWindingTransformerUpdate"
-                },
-                {
-                    "names": ["sym_load", "sym_gen", "asym_load", "asym_gen"],
-                    "class_name": "LoadGenUpdate"
-                },
-                {
-                    "names": ["voltage_regulator"],
-                    "class_name": "VoltageRegulatorUpdate"
-                },
-                {
-                    "names": ["shunt"],
-                    "class_name": "ApplianceUpdate"
-                },
-                {
-                    "names": ["source"],
-                    "class_name": "SourceUpdate"
-                },
-                {
-                    "names": ["sym_voltage_sensor", "asym_voltage_sensor"],
-                    "class_name": "VoltageSensorUpdate"
-                },
-                {
-                    "names": ["sym_power_sensor", "asym_power_sensor"],
-                    "class_name": "PowerSensorUpdate"
-                },
-                {
-                    "names": ["sym_current_sensor", "asym_current_sensor"],
-                    "class_name": "CurrentSensorUpdate"
-                },
-                {
-                    "names": ["fault"],
-                    "class_name": "FaultUpdate"
-                }
-            ]
+          "names": ["asym_line"],
+          "class_name": "AsymLineInput"
         },
         {
-            "name": "sc_output",
-            "is_template": false,
-            "components": [
-                {
-                    "names": ["node"],
-                    "class_name": "NodeShortCircuitOutput"
-                },
-                {
-                    "names": ["line", "link", "transformer", "asym_line"],
-                    "class_name": "BranchShortCircuitOutput"
-                },
-                {
-                    "names": ["three_winding_transformer"],
-                    "class_name": "Branch3ShortCircuitOutput"
-                },
-                {
-                    "names": ["sym_load", "sym_gen", "asym_load", "asym_gen", "shunt", "source"],
-                    "class_name": "ApplianceShortCircuitOutput"
-                },
-                {
-                    "names": ["sym_voltage_sensor", "asym_voltage_sensor"],
-                    "class_name": "SensorShortCircuitOutput"
-                },
-                {
-                    "names": ["sym_power_sensor", "asym_power_sensor"],
-                    "class_name": "SensorShortCircuitOutput"
-                },
-                {
-                    "names": ["sym_current_sensor", "asym_current_sensor"],
-                    "class_name": "SensorShortCircuitOutput"
-                },
-                {
-                    "names": ["fault"],
-                    "class_name": "FaultShortCircuitOutput"
-                }
-            ]
+          "names": ["link"],
+          "class_name": "LinkInput"
+        },
+        {
+          "names": ["generic_branch"],
+          "class_name": "GenericBranchInput"
+        },
+        {
+          "names": ["transformer"],
+          "class_name": "TransformerInput"
+        },
+        {
+          "names": ["transformer_tap_regulator"],
+          "class_name": "TransformerTapRegulatorInput"
+        },
+        {
+          "names": ["three_winding_transformer"],
+          "class_name": "ThreeWindingTransformerInput"
+        },
+        {
+          "names": ["sym_load", "sym_gen", "asym_load", "asym_gen"],
+          "class_name": "LoadGenInput"
+        },
+        {
+          "names": ["voltage_regulator"],
+          "class_name": "VoltageRegulatorInput"
+        },
+        {
+          "names": ["shunt"],
+          "class_name": "ShuntInput"
+        },
+        {
+          "names": ["source"],
+          "class_name": "SourceInput"
+        },
+        {
+          "names": ["sym_voltage_sensor", "asym_voltage_sensor"],
+          "class_name": "VoltageSensorInput"
+        },
+        {
+          "names": ["sym_power_sensor", "asym_power_sensor"],
+          "class_name": "PowerSensorInput"
+        },
+        {
+          "names": ["sym_current_sensor", "asym_current_sensor"],
+          "class_name": "CurrentSensorInput"
+        },
+        {
+          "names": ["fault"],
+          "class_name": "FaultInput"
         }
-    ]
+      ]
+    },
+    {
+      "name": "output",
+      "is_template": true,
+      "components": [
+        {
+          "names": ["node"],
+          "class_name": "NodeOutput"
+        },
+        {
+          "names": ["line", "link", "transformer", "generic_branch", "asym_line"],
+          "class_name": "BranchOutput"
+        },
+        {
+          "names": ["transformer_tap_regulator"],
+          "class_name": "TransformerTapRegulatorOutput"
+        },
+        {
+          "names": ["three_winding_transformer"],
+          "class_name": "Branch3Output"
+        },
+        {
+          "names": ["sym_load", "sym_gen", "asym_load", "asym_gen", "shunt", "source"],
+          "class_name": "ApplianceOutput"
+        },
+        {
+          "names": ["voltage_regulator"],
+          "class_name": "VoltageRegulatorOutput"
+        },
+        {
+          "names": ["sym_voltage_sensor", "asym_voltage_sensor"],
+          "class_name": "VoltageSensorOutput"
+        },
+        {
+          "names": ["sym_power_sensor", "asym_power_sensor"],
+          "class_name": "PowerSensorOutput"
+        },
+        {
+          "names": ["sym_current_sensor", "asym_current_sensor"],
+          "class_name": "CurrentSensorOutput"
+        },
+        {
+          "names": ["fault"],
+          "class_name": "FaultOutput"
+        }
+      ]
+    },
+    {
+      "name": "update",
+      "is_template": false,
+      "components": [
+        {
+          "names": ["node"],
+          "class_name": "BaseUpdate"
+        },
+        {
+          "names": ["line"],
+          "class_name": "BranchUpdate"
+        },
+        {
+          "names": ["asym_line"],
+          "class_name": "BranchUpdate"
+        },
+        {
+          "names": ["link"],
+          "class_name": "BranchUpdate"
+        },
+        {
+          "names": ["transformer"],
+          "class_name": "TransformerUpdate"
+        },
+        {
+          "names": ["transformer_tap_regulator"],
+          "class_name": "TransformerTapRegulatorUpdate"
+        },
+        {
+          "names": ["three_winding_transformer"],
+          "class_name": "ThreeWindingTransformerUpdate"
+        },
+        {
+          "names": ["sym_load", "sym_gen", "asym_load", "asym_gen"],
+          "class_name": "LoadGenUpdate"
+        },
+        {
+          "names": ["voltage_regulator"],
+          "class_name": "VoltageRegulatorUpdate"
+        },
+        {
+          "names": ["shunt"],
+          "class_name": "ApplianceUpdate"
+        },
+        {
+          "names": ["source"],
+          "class_name": "SourceUpdate"
+        },
+        {
+          "names": ["sym_voltage_sensor", "asym_voltage_sensor"],
+          "class_name": "VoltageSensorUpdate"
+        },
+        {
+          "names": ["sym_power_sensor", "asym_power_sensor"],
+          "class_name": "PowerSensorUpdate"
+        },
+        {
+          "names": ["sym_current_sensor", "asym_current_sensor"],
+          "class_name": "CurrentSensorUpdate"
+        },
+        {
+          "names": ["fault"],
+          "class_name": "FaultUpdate"
+        }
+      ]
+    },
+    {
+      "name": "sc_output",
+      "is_template": false,
+      "components": [
+        {
+          "names": ["node"],
+          "class_name": "NodeShortCircuitOutput"
+        },
+        {
+          "names": ["line", "link", "transformer", "asym_line"],
+          "class_name": "BranchShortCircuitOutput"
+        },
+        {
+          "names": ["three_winding_transformer"],
+          "class_name": "Branch3ShortCircuitOutput"
+        },
+        {
+          "names": ["sym_load", "sym_gen", "asym_load", "asym_gen", "shunt", "source"],
+          "class_name": "ApplianceShortCircuitOutput"
+        },
+        {
+          "names": ["sym_voltage_sensor", "asym_voltage_sensor"],
+          "class_name": "SensorShortCircuitOutput"
+        },
+        {
+          "names": ["sym_power_sensor", "asym_power_sensor"],
+          "class_name": "SensorShortCircuitOutput"
+        },
+        {
+          "names": ["sym_current_sensor", "asym_current_sensor"],
+          "class_name": "SensorShortCircuitOutput"
+        },
+        {
+          "names": ["fault"],
+          "class_name": "FaultShortCircuitOutput"
+        }
+      ]
+    }
+  ]
 }
