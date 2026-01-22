@@ -128,8 +128,7 @@ inline void process_trafo3w_edge(main_core::main_model_state_c auto const& state
                                  RegulatedInfo const& trafo3w_regulated_info, Idx2D const& trafo3w_idx,
                                  ID const& trafo3w_id, TrafoGraphEdges& edges, TrafoGraphEdgeProperties& edge_props) {
     using enum Branch3Side;
-    auto const trafo3w_is_regulated = trafo3w_regulated_info.first;
-    auto const control_side = trafo3w_regulated_info.second;
+    auto const [trafo3w_is_regulated, control_side] = trafo3w_regulated_info;
 
     constexpr std::array<std::tuple<Branch3Side, Branch3Side>, 3> const branch3_combinations{
         {{side_1, side_2}, {side_1, side_3}, {side_2, side_3}}};
