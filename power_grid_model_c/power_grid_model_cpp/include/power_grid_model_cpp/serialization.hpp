@@ -124,11 +124,11 @@ inline void save_dataset(std::filesystem::path const& path, DatasetConst const& 
     std::string_view const serialized_data = serialization_format == PGM_msgpack
                                                  ? serializer.get_to_binary_buffer(use_compact_list)
                                                  : serializer.get_to_zero_terminated_c_string(use_compact_list, indent);
-    std::ofstream f{path, std::ios::binary};
-    if (!f) {
-        throw std::runtime_error("Failed to open file for writing: " + path.string());
-    }
-    f << serialized_data;
+    if (std::ofstream f{path, std::ios::binary}; f.is_open()) {
+        f << serialized_data;
+    } else {
+        throw std::runtime_error{"Failed to open file for writing: " + path.string()};
+    };
 }
 
 } // namespace power_grid_model_cpp
