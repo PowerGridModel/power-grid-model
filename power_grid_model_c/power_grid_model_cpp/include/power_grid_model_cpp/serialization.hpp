@@ -14,6 +14,8 @@
 #include "power_grid_model_c/serialization.h"
 
 #include <cstring>
+#include <filesystem>
+#include <fstream>
 
 namespace power_grid_model_cpp {
 class Deserializer {
@@ -83,8 +85,11 @@ class Serializer {
     }
 
     std::string get_to_zero_terminated_string(Idx use_compact_list, Idx indent) {
-        return std::string{
-            handle_.call_with(PGM_serializer_get_to_zero_terminated_string, get(), use_compact_list, indent)};
+        return std::string{get_to_zero_terminated_c_string(use_compact_list, indent)};
+    }
+
+    char const* get_to_zero_terminated_c_string(Idx use_compact_list, Idx indent) {
+        return handle_.call_with(PGM_serializer_get_to_zero_terminated_string, get(), use_compact_list, indent);
     }
 
   private:
@@ -92,33 +97,40 @@ class Serializer {
     detail::UniquePtr<RawSerializer, &PGM_destroy_serializer> serializer_;
 };
 
-inline OwningDataset create_owning_dataset(DatasetWritable& writable_dataset) {
-    auto const& info = writable_dataset.get_info();
-    bool const is_batch = info.is_batch();
-    Idx const batch_size = info.batch_size();
-    auto const& dataset_name = info.name();
-    DatasetMutable dataset_mutable{dataset_name, is_batch, batch_size};
-    OwningMemory storage{};
-
-    for (Idx component_idx{}; component_idx < info.n_components(); ++component_idx) {
-        auto const& component_name = info.component_name(component_idx);
-        auto const& component_meta = MetaData::get_component_by_name(dataset_name, component_name);
-        Idx const component_size = info.component_total_elements(component_idx);
-        Idx const elements_per_scenario = info.component_elements_per_scenario(component_idx);
-
-        auto& current_indptr = storage.indptrs.emplace_back(elements_per_scenario < 0 ? batch_size + 1 : 0);
-        if (!current_indptr.empty()) {
-            current_indptr.at(0) = 0;
-            current_indptr.at(batch_size) = component_size;
+inline OwningDataset load_dataset(std::filesystem::path const& path, PGM_SerializationFormat serialization_format,
+                                  bool enable_columnar_buffers = false) {
+    auto read_file = [](std::filesystem::path const& read_file_path) {
+        std::ifstream f{read_file_path, std::ios::binary | std::ios::ate};
+        if (!f) {
+            throw std::runtime_error("Failed to open file: " + read_file_path.string());
         }
-        Idx* const indptr = current_indptr.empty() ? nullptr : current_indptr.data();
-        auto& current_buffer = storage.buffers.emplace_back(component_meta, component_size);
-        writable_dataset.set_buffer(component_name, indptr, current_buffer);
-        dataset_mutable.add_buffer(component_name, elements_per_scenario, component_size, indptr, current_buffer);
-    }
-    return OwningDataset{// NOLINT(modernize-use-designated-initializers)
-                         std::move(dataset_mutable), std::move(storage)};
+        auto const file_size = f.tellg();
+        f.seekg(0, std::ios::beg);
+        std::vector<char> buffer(static_cast<size_t>(file_size));
+        f.read(buffer.data(), file_size);
+        return buffer;
+    };
+
+    Deserializer deserializer{read_file(path), serialization_format};
+    auto& writable_dataset = deserializer.get_dataset();
+    OwningDataset dataset{writable_dataset, enable_columnar_buffers};
+    deserializer.parse_to_buffer();
+    return dataset;
 }
+
+inline void save_dataset(std::filesystem::path const& path, DatasetConst const& dataset,
+                         PGM_SerializationFormat serialization_format, Idx use_compact_list, Idx indent = 2) {
+    Serializer serializer{dataset, serialization_format};
+    std::string_view serialized_data = serialization_format == PGM_msgpack
+                                           ? serializer.get_to_binary_buffer(use_compact_list)
+                                           : serializer.get_to_zero_terminated_c_string(use_compact_list, indent);
+    std::ofstream f{path, std::ios::binary};
+    if (!f) {
+        throw std::runtime_error("Failed to open file for writing: " + path.string());
+    }
+    f << serialized_data;
+}
+
 } // namespace power_grid_model_cpp
 
 #endif // POWER_GRID_MODEL_CPP_SERIALIZATION_HPP
