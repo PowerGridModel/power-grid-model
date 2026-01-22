@@ -45,8 +45,8 @@ TEST_CASE("Test voltage regulator") {
     }
 
     SUBCASE("Test get_output") {
-        VoltageRegulatorOutput const output = voltage_regulator.get_output(
-            {.limit_violated = 0, .generator_id = 2, .generator_status = 1});
+        VoltageRegulatorOutput const output =
+            voltage_regulator.get_output({.limit_violated = 0, .generator_id = 2, .generator_status = 1});
         CHECK(output.id == 1);
         CHECK(output.energized);
         CHECK(output.limit_violated == 0);

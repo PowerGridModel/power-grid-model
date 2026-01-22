@@ -133,8 +133,10 @@ class PowerGridUnreachableHitError(PowerGridError):
 
     This usually means a failed assumption and may be caused by a bug in the PGM library."""
 
+
 class UnsupportedRegulatorCombinationError(PowerGridError):
     """The combination of voltage regulators and transformer tap regulators is not supported in the same model."""
+
 
 class UnsupportedVoltageRegulatorSourceCombinationError(PowerGridError):
     """Nodes with a source and a voltage regulated load/generator are not supported when both are enabled."""
