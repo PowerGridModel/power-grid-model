@@ -55,9 +55,10 @@ template <typename JobFn>
 void run_parallel_jobs(Idx n_threads, JobFn&& job) {
     std::vector<std::jthread> threads;
     threads.reserve(n_threads);
-    for (Idx i : IdxRange{n_threads}) {
-        threads.emplace_back(std::forward<JobFn>(job), n_threads);
+    for ([[maybe_unused]] Idx i : IdxRange{n_threads}) {
+        threads.emplace_back(job, n_threads);
     }
+    capturing::into_the_void(std::forward<JobFn>(job));
 }
 } // namespace
 
