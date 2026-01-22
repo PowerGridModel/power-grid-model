@@ -294,7 +294,8 @@ struct OwningDataset {
             auto const& component_name = ref_info.component_name(component_idx);
             auto const& component_meta = MetaData::get_component_by_name(dataset_name, component_name);
             // skip components not in the filter
-            if (enable_filters && !output_component_attribute_filters.contains(component_meta)) {
+            if (enable_filters &&
+                output_component_attribute_filters.find(component_meta) == output_component_attribute_filters.end()) {
                 continue;
             }
 
@@ -306,10 +307,10 @@ struct OwningDataset {
             Idx const component_size = component_elements_per_scenario * batch_size;
             storage.indptrs.emplace_back();
 
+            auto const component_filter_it = output_component_attribute_filters.find(component_meta);
             std::set<MetaAttribute const*> const& attribute_filter =
-                output_component_attribute_filters.contains(component_meta)
-                    ? output_component_attribute_filters.at(component_meta)
-                    : std::set<MetaAttribute const*>{};
+                component_filter_it != output_component_attribute_filters.end() ? component_filter_it->second
+                                                                                : std::set<MetaAttribute const*>{};
             if (attribute_filter.empty()) {
                 // create full row buffer
                 auto& component_buffer = storage.buffers.emplace_back(component_meta, component_size);
