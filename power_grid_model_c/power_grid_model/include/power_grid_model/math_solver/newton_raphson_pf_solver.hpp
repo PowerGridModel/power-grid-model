@@ -221,7 +221,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
           sparse_solver_{y_bus.row_indptr_lu(), y_bus.col_indices_lu(), y_bus.lu_diag()},
           perm_(y_bus.size()),
           bus_types_(y_bus.size(), BusType::pq),
-          voltage_regulators_per_load_gen_{topo_ptr, &topo_ptr->voltage_regulators_per_load_gen} {}
+          voltage_regulators_per_load_gen_{std::ref(topo.voltage_regulators_per_load_gen)} {}
 
     // Initilize the unknown variable in polar form
     void initialize_derived_solver(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
@@ -304,11 +304,13 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
     BlockPermArray perm_;
 
     std::vector<BusType> bus_types_;
-    std::shared_ptr<DenseGroupedIdxVector const> voltage_regulators_per_load_gen_;
+    std::reference_wrapper<DenseGroupedIdxVector const> voltage_regulators_per_load_gen_;
 
     void set_u_ref_and_bus_types(PowerFlowInput<sym> const& input, ComplexValueVector<sym>& u) {
+        auto const& voltage_regulators_per_load_gen = voltage_regulators_per_load_gen_.get();
+
         for (auto const& [bus_idx, load_gens, sources] :
-             enumerated_zip_sequence(*this->load_gens_per_bus_, *this->sources_per_bus_)) {
+             enumerated_zip_sequence(this->load_gens_per_bus_.get(), this->sources_per_bus_.get())) {
             if (!sources.empty()) {
                 bus_types_[bus_idx] = BusType::slack;
                 continue;
@@ -316,7 +318,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
 
             for (Idx const load_gen_idx : load_gens) {
                 for (Idx const voltage_regulator_idx :
-                     voltage_regulators_per_load_gen_->get_element_range(load_gen_idx)) {
+                     voltage_regulators_per_load_gen.get_element_range(load_gen_idx)) {
                     // TODO(figueroa1395): Unit test this
                     if (input.voltage_regulator[voltage_regulator_idx].status != 0) {
                         auto const& regulator = input.voltage_regulator[voltage_regulator_idx];
