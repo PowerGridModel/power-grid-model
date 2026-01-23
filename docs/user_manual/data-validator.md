@@ -62,9 +62,8 @@ In such cases, the latter is leading when only running batch calculations.
 Running single calculations on an incomplete input data set is, of course, unsupported.
 ```
 
-Validating a cartesian product of datasets used in PGM's `update_data` via providing it with `list[BatchDataset]`is
-not straightforward.
-User should convert such multiple dataset into a single flat batch dataset.
+Validating a Cartesian product of datasets used in PGM's `update_data` via providing it with `list[BatchDataset]`is
+done by validating each individual `BatchDataset` that conforms the Cartesian product.
 
 ### Assertions
 
