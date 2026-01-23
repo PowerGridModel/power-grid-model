@@ -54,12 +54,12 @@ template <symmetry_tag sym_type> class LinearPFSolver {
 
     static constexpr auto is_iterative = false;
 
-    LinearPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
+    LinearPFSolver(YBus<sym> const& y_bus, MathModelTopology const& topo)
         : n_bus_{y_bus.size()},
-          load_gens_per_bus_{topo_ptr, &topo_ptr->load_gens_per_bus},
-          sources_per_bus_{topo_ptr, &topo_ptr->sources_per_bus},
+          load_gens_per_bus_{std::cref(topo.load_gens_per_bus)},
+          sources_per_bus_{std::cref(topo.sources_per_bus)},
           mat_data_(y_bus.nnz_lu()),
-          sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
+          sparse_solver_{y_bus.row_indptr_lu(), y_bus.col_indices_lu(), y_bus.lu_diag()},
           perm_(n_bus_) {}
 
     SolverOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, Logger& log) {
@@ -92,8 +92,8 @@ template <symmetry_tag sym_type> class LinearPFSolver {
   private:
     Idx n_bus_;
     // shared topo data
-    std::shared_ptr<SparseGroupedIdxVector const> load_gens_per_bus_;
-    std::shared_ptr<DenseGroupedIdxVector const> sources_per_bus_;
+    std::reference_wrapper<SparseGroupedIdxVector const> load_gens_per_bus_;
+    std::reference_wrapper<DenseGroupedIdxVector const> sources_per_bus_;
     // sparse linear equation
     ComplexTensorVector<sym> mat_data_;
     // sparse solver
@@ -101,11 +101,12 @@ template <symmetry_tag sym_type> class LinearPFSolver {
     BlockPermArray perm_;
 
     void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, SolverOutput<sym>& output) {
-        detail::prepare_linear_matrix_and_rhs(y_bus, input, *load_gens_per_bus_, *sources_per_bus_, output, mat_data_);
+        detail::prepare_linear_matrix_and_rhs(y_bus, input, load_gens_per_bus_.get(), sources_per_bus_.get(), output,
+                                              mat_data_);
     }
 
     void calculate_result(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, SolverOutput<sym>& output) {
-        detail::calculate_pf_result(y_bus, input, *sources_per_bus_, *load_gens_per_bus_, output,
+        detail::calculate_pf_result(y_bus, input, sources_per_bus_.get(), load_gens_per_bus_.get(), output,
                                     [](Idx /*i*/) { return LoadGenType::const_y; });
     }
 };
