@@ -226,6 +226,7 @@ class AttributeBuffer {
     };
 
     struct PtrGetter {
+        // NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)
         AttributeBuffer& buffer;
         template <class T> RawDataPtr operator()() const { return std::get<std::vector<T>>(buffer.buffer_).data(); }
     };
