@@ -9,7 +9,7 @@ repos:
       - id: reuse
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
-    rev: v0.14.13
+    rev: v0.14.14
     hooks:
       # Run the linter.
       - id: ruff-check
@@ -50,8 +50,7 @@ repos:
       args: ["--fix"]
   # format .json and .jsonc files
   - repo: https://github.com/biomejs/pre-commit  # outside pypi 
-    rev: v2.3.11
+    rev: v2.3.12
     hooks:
     # configuration is located in biome.jsonc
     - id: biome-format
-      name: biome-format
