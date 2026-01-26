@@ -687,35 +687,10 @@ TEST_CASE("Test Transformer ranking") {
             FAIL("Expected AutomaticTapInputError to be thrown");
         } catch (AutomaticTapInputError const& e) {
             std::string const error_msg = e.what();
-            // Check that error message mentions transformer 10
-            CHECK(error_msg.find("10") != std::string::npos);
-            // Check error message has appropriate description
-            CHECK(error_msg.find("controlled from non-source side towards source side") != std::string::npos);
-
-            // Verify that ID 10 appears only once in the ID list
-            // Count occurrences of "10" in the portion after "Transformer IDs:"
-            auto ids_pos = error_msg.find("Transformer IDs:");
-            REQUIRE(ids_pos != std::string::npos);
-            std::string ids_section = error_msg.substr(ids_pos);
-
-            // Count occurrences - should be exactly 1
-            size_t count = 0;
-            size_t pos = 0;
-            while ((pos = ids_section.find("10", pos)) != std::string::npos) {
-                // Make sure it's the number 10, not part of another number
-                bool valid = true;
-                if (pos > 0 && std::isdigit(ids_section[pos - 1])) {
-                    valid = false; // Part of a larger number like 110
-                }
-                if (pos + 2 < ids_section.length() && std::isdigit(ids_section[pos + 2])) {
-                    valid = false; // Part of a larger number like 100
-                }
-                if (valid) {
-                    ++count;
-                }
-                ++pos;
-            }
-            CHECK(count == 1);
+            // Check complete error message - ID 10 should appear only once
+            CHECK(error_msg == "Automatic tap changer has invalid configuration. The following transformer(s) are "
+                               "being controlled from non-source side towards "
+                               "source side:\n  Transformer IDs: 10");
         }
     }
 }
