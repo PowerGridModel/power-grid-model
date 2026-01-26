@@ -110,8 +110,8 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCur
             BlockPermArray perm(this->n_bus_);
             sparse_solver_.prefactorize(mat_data, perm);
             // move pre-factorized version into shared ptr
-            mat_data_ = std::make_shared<ComplexTensorVector<sym> const>(std::move(mat_data));
-            perm_ = std::make_shared<BlockPermArray const>(std::move(perm));
+            mat_data_ = std::move(mat_data);
+            perm_ = std::move(perm);
         }
         parameters_changed_ = false;
     }
@@ -136,7 +136,7 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCur
 
     // Solve the linear equations I_inj = YU
     // inplace
-    void solve_matrix() { sparse_solver_.solve_with_prefactorized_matrix(*mat_data_, *perm_, rhs_u_, rhs_u_); }
+    void solve_matrix() { sparse_solver_.solve_with_prefactorized_matrix(mat_data_, perm_, rhs_u_, rhs_u_); }
 
     // Find maximum deviation in voltage among all buses
     double iterate_unknown(ComplexValueVector<sym>& u) {
@@ -157,10 +157,10 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCur
 
   private:
     ComplexValueVector<sym> rhs_u_;
-    std::shared_ptr<ComplexTensorVector<sym> const> mat_data_;
+    ComplexTensorVector<sym> mat_data_;
     // sparse solver
     SparseSolverType sparse_solver_;
-    std::shared_ptr<BlockPermArray const> perm_;
+    BlockPermArray perm_;
     bool parameters_changed_ = true;
 
     void add_loads(IdxRange const& load_gens, Idx bus_number, PowerFlowInput<sym> const& input,

@@ -320,10 +320,7 @@ template <symmetry_tag sym> class YBus {
     IdxVector const& map_lu_y_bus() const { return y_bus_struct_->map_lu_y_bus; }
 
     // getter of shared ptr
-    std::shared_ptr<IdxVector const> shared_indptr() const { return {y_bus_struct_, &y_bus_struct_->row_indptr}; }
-    std::shared_ptr<IdxVector const> shared_indices() const { return {y_bus_struct_, &y_bus_struct_->col_indices}; }
     std::shared_ptr<MathModelTopology const> shared_topology() const { return math_topology_; }
-    std::shared_ptr<YBusStructure const> shared_y_bus_struct() const { return y_bus_struct_; }
 
     constexpr auto& get_y_bus_structure() const { return y_bus_struct_; }
 

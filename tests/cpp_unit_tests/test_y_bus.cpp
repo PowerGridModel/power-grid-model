@@ -149,24 +149,6 @@ TEST_CASE("Test y bus") {
         }
     }
 
-    SUBCASE("Test y bus construction (asymmetrical)") {
-        YBus<symmetric_t> const ybus_sym{topo_ptr, std::make_shared<MathModelParam<symmetric_t> const>(param_sym)};
-        // construct from existing structure
-        YBus<asymmetric_t> const ybus{topo_ptr, std::make_shared<MathModelParam<asymmetric_t> const>(param_asym),
-                                      ybus_sym.shared_y_bus_struct()};
-        CHECK(ybus.size() == 4);
-        CHECK(ybus.nnz() == nnz);
-        CHECK(row_indptr == ybus.row_indptr());
-        CHECK(col_indices == ybus.col_indices());
-        CHECK(bus_entry == ybus.bus_entry());
-        CHECK(lu_transpose_entry == ybus.lu_transpose_entry());
-        CHECK(y_bus_entry_indptr == ybus.y_bus_entry_indptr());
-        CHECK(ybus.admittance().size() == admittance_asym.size());
-        for (size_t i = 0; i < admittance_asym.size(); i++) {
-            CHECK((cabs(ybus.admittance()[i] - admittance_asym[i]) < numerical_tolerance).all());
-        }
-    }
-
     SUBCASE("Test branch flow calculation") {
         YBus<symmetric_t> const ybus{topo_ptr, std::make_shared<MathModelParam<symmetric_t> const>(param_sym)};
         ComplexVector const u{1.0, 2.0, 3.0, 4.0};
