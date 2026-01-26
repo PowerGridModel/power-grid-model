@@ -358,6 +358,11 @@ inline auto get_edge_weights(TransformerGraph const& graph) -> TrafoGraphEdgePro
 
     // Throw error at the end with all problematic transformer IDs
     if (!trafo_ids_invalid_reg_side.empty()) {
+        // Remove duplicates (e.g., from three-winding transformers with multiple edges)
+        std::ranges::sort(trafo_ids_invalid_reg_side);
+        auto [first, last] = std::ranges::unique(trafo_ids_invalid_reg_side);
+        trafo_ids_invalid_reg_side.erase(first, last);
+
         std::ostringstream error_msg;
         error_msg << "The following transformer(s) are being controlled from non-source side towards source side:\n";
         error_msg << "  Transformer IDs: ";

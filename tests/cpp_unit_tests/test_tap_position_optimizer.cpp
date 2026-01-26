@@ -649,6 +649,50 @@ TEST_CASE("Test Transformer ranking") {
             CHECK(error_msg.find("Transformer ID: 50") == std::string::npos);
         }
     }
+
+    SUBCASE("Three-winding transformer with wrong regulated side - unique report ID test") {
+        // Test that a three-winding transformer with multiple invalid edges reports its ID only once
+        // ========Test Grid========
+        //      [source 0]
+        //          |
+        //     [3w-trafo 10] (WRONG: controlled from side_1, which points towards source)
+        //     /       |        |
+        // [node 1] [node 2] [node 3]
+
+        TestState state;
+        std::vector<NodeInput> const nodes{{.id = 0, .u_rated = 150e3},
+                                           {.id = 1, .u_rated = 10e3},
+                                           {.id = 2, .u_rated = 10e3},
+                                           {.id = 3, .u_rated = 10e3}};
+        main_core::add_component<Node>(state.components, nodes, 50.0);
+
+        // Three-winding transformer with tap on side_1, controlled from side_1 (towards source - wrong)
+        std::vector<ThreeWindingTransformerInput> const transformers3w{
+            get_transformer3w(10, 0, 1, 2, Branch3Side::side_1, 0)};
+        main_core::add_component<ThreeWindingTransformer>(state.components, transformers3w, 50.0);
+
+        std::vector<SourceInput> const sources{SourceInput{.id = 20, .node = 0, .status = IntS{1}, .u_ref = 1.0}};
+        main_core::add_component<Source>(state.components, sources, 50.0);
+
+        std::vector<TransformerTapRegulatorInput> const regulators{
+            get_regulator(30, 10, ControlSide::side_1) // Wrong: controlling towards source
+        };
+        main_core::add_component<TransformerTapRegulator>(state.components, regulators, 50.0);
+
+        state.components.set_construction_complete();
+
+        // Should throw error mentioning transformer 10 only once (even though it has multiple edges)
+        try {
+            pgm_tap::rank_transformers(state);
+            FAIL("Expected AutomaticTapInputError to be thrown");
+        } catch (AutomaticTapInputError const& e) {
+            std::string const error_msg = e.what();
+            // Check complete error message - ID 10 should appear only once
+            CHECK(error_msg == "Automatic tap changer has invalid configuration. The following transformer(s) are "
+                               "being controlled from non-source side towards "
+                               "source side:\n  Transformer IDs: 10");
+        }
+    }
 }
 
 namespace optimizer::tap_position_optimizer::test {
