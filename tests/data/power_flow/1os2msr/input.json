@@ -2,21 +2,26 @@
   "version": "1.0",
   "type": "input",
   "is_batch": false,
-  "attributes": {},
+  "attributes": {
+    "node": [
+      "id",
+      "u_rated"
+    ]
+  },
   "data": {
     "node": [
-      {
-        "id": 1,
-        "u_rated": 10.5e3
-      },
-      {
-        "id": 2,
-        "u_rated": 10.5e3
-      },
-      {
-        "id": 3,
-        "u_rated": 10.5e3
-      }
+      [
+        1,
+        10.5e3
+      ],
+      [
+        2,
+        10.5e3
+      ],
+      [
+        3,
+        10.5e3
+      ]
     ],
     "line": [
       {
