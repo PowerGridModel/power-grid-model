@@ -54,3 +54,4 @@ repos:
     hooks:
     # configuration is located in biome.jsonc
     - id: biome-format
+      name: biome-format
