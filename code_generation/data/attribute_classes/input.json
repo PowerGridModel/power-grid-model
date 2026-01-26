@@ -502,6 +502,23 @@
       ]
     },
     {
+      "name": "VoltageRegulatorInput",
+      "base": "RegulatorInput",
+      "is_template": false,
+      "attributes": [
+        {
+          "data_type": "double",
+          "names": ["u_ref"],
+          "description": "reference voltage"
+        },
+        {
+          "data_type": "double",
+          "names": ["q_min", "q_max"],
+          "description": "reactive power limits"
+        }
+      ]
+    },
+    {
       "name": "GenericCurrentSensorInput",
       "base": "SensorInput",
       "attributes": [

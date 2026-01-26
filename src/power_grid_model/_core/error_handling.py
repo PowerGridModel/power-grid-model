@@ -40,6 +40,8 @@ from power_grid_model._core.errors import (
     PowerGridUnreachableHitError,
     SparseMatrixError,
     TapSearchStrategyIncompatibleError,
+    UnsupportedRegulatorCombinationError,
+    UnsupportedVoltageRegulatorSourceCombinationError,
 )
 from power_grid_model._core.index_integer import IdxNp
 from power_grid_model._core.power_grid_core import get_power_grid_core as get_pgc
@@ -91,6 +93,14 @@ _POWER_GRID_ILLEGAL_OPERATION_ERROR_RE = re.compile(r"Illegal operation: ")  # m
 _POWER_GRID_UNREACHABLE_HIT_RE = re.compile(r"Unreachable code hit when executing ")  # multiple different flavors
 _POWER_GRID_NOT_IMPLEMENTED_ERROR_RE = re.compile(r"The functionality is either not supported or not yet implemented!")
 
+_UNSUPPORTED_REGULATOR_COMBINATION_ERROR_RE = re.compile(
+    r"The combination of voltage regulators and transformer tap regulators is not supported in the same model."
+)
+_UNSUPPORTED_VOLTAGE_REGULATOR_SOURCE_COMBINATION_ERROR_RE = re.compile(
+    r"Nodes with a source and a voltage regulated load/generator are not supported when both are enabled. "
+    r"Found at node with id (-?\d+)"
+)
+
 _ERROR_MESSAGE_PATTERNS = {
     _MISSING_CASE_FOR_ENUM_RE: MissingCaseForEnumError,
     _INVALID_ARGUMENTS_RE: InvalidArguments,
@@ -117,6 +127,8 @@ _ERROR_MESSAGE_PATTERNS = {
     _POWER_GRID_ILLEGAL_OPERATION_ERROR_RE: PowerGridIllegalOperationError,
     _POWER_GRID_UNREACHABLE_HIT_RE: PowerGridUnreachableHitError,
     _POWER_GRID_NOT_IMPLEMENTED_ERROR_RE: PowerGridNotImplementedError,
+    _UNSUPPORTED_REGULATOR_COMBINATION_ERROR_RE: UnsupportedRegulatorCombinationError,
+    _UNSUPPORTED_VOLTAGE_REGULATOR_SOURCE_COMBINATION_ERROR_RE: UnsupportedVoltageRegulatorSourceCombinationError,
 }
 
 

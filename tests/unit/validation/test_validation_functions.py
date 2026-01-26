@@ -239,6 +239,8 @@ def test_validate_required_values_sym_calculation(calculation_type, symmetric):
 
     fault = initialize_array(DatasetType.input, ComponentType.fault, 1)
 
+    voltage_regulator = initialize_array(DatasetType.input, ComponentType.voltage_regulator, 1)
+
     data = {
         ComponentType.node: node,
         ComponentType.line: line,
@@ -258,6 +260,7 @@ def test_validate_required_values_sym_calculation(calculation_type, symmetric):
         ComponentType.sym_current_sensor: sym_current_sensor,
         ComponentType.asym_current_sensor: asym_current_sensor,
         ComponentType.fault: fault,
+        ComponentType.voltage_regulator: voltage_regulator,
     }
     required_values_errors = validate_required_values(data=data, calculation_type=calculation_type, symmetric=symmetric)
 
@@ -473,6 +476,13 @@ def test_validate_required_values_sym_calculation(calculation_type, symmetric):
     assert MissingValueError(ComponentType.fault, "id", [NaN]) in required_values_errors
     assert (MissingValueError(ComponentType.fault, "status", [NaN]) in required_values_errors) == sc_dependent
     assert (MissingValueError(ComponentType.fault, "fault_type", [NaN]) in required_values_errors) == sc_dependent
+
+    assert MissingValueError(ComponentType.voltage_regulator, "id", [NaN]) in required_values_errors
+    assert MissingValueError(ComponentType.voltage_regulator, "status", [NaN]) in required_values_errors
+    assert MissingValueError(ComponentType.voltage_regulator, "regulated_object", [NaN]) in required_values_errors
+    assert (
+        MissingValueError(ComponentType.voltage_regulator, "u_ref", [NaN]) in required_values_errors
+    ) == pf_dependent
 
 
 def test_validate_required_values_asym_calculation():

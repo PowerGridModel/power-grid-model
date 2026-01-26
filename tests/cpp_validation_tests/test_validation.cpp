@@ -199,6 +199,11 @@ class Subcase {
             {"InvalidCalculationMethod", std::regex{"The calculation method is invalid for this calculation!"}},
             {"InvalidShortCircuitPhaseOrType", std::regex{"short circuit type"}}, // multiple different flavors
             {"TapStrategySearchIncompatible", std::regex{"Search method is incompatible with optimization strategy: "}},
+            {"UnsupportedRegulatorCombinationError", std::regex{"The combination of voltage regulators and transformer "
+                                                                "tap regulators is not supported in the same model."}},
+            {"UnsupportedVoltageRegulatorSourceCombinationError",
+             std::regex{"Nodes with a source and a voltage regulated load/generator are not supported when both are "
+                        "enabled. Found at node with id (-?\\d+)"}},
             {"PowerGridDatasetError", std::regex{"Dataset error: "}}, // multiple different flavors
             {"PowerGridUnreachableHit",
              std::regex{"Unreachable code hit when executing "}}, // multiple different flavors

@@ -34,4 +34,6 @@ from power_grid_model._core.errors import (  # noqa: F401
     PowerGridSerializationError,
     PowerGridUnreachableHitError,
     SparseMatrixError,
+    UnsupportedRegulatorCombinationError,
+    UnsupportedVoltageRegulatorSourceCombinationError,
 )

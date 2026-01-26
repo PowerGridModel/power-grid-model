@@ -241,6 +241,17 @@ struct get_attributes_list<TransformerTapRegulatorOutput> {
 };
 
 template<>
+struct get_attributes_list<VoltageRegulatorOutput> {
+    static constexpr std::array<MetaAttribute, 3> value{
+            // all attributes including base class
+            
+            meta_data_gen::get_meta_attribute<&VoltageRegulatorOutput::id>(offsetof(VoltageRegulatorOutput, id), "id"),
+            meta_data_gen::get_meta_attribute<&VoltageRegulatorOutput::energized>(offsetof(VoltageRegulatorOutput, energized), "energized"),
+            meta_data_gen::get_meta_attribute<&VoltageRegulatorOutput::limit_violated>(offsetof(VoltageRegulatorOutput, limit_violated), "limit_violated"),
+    };
+};
+
+template<>
 struct get_attributes_list<RegulatorShortCircuitOutput> {
     static constexpr std::array<MetaAttribute, 2> value{
             // all attributes including base class

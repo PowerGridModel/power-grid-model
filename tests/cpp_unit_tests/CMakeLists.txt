@@ -61,6 +61,7 @@ add_executable(
     "test_fault.cpp"
     "test_transformer_tap_regulator.cpp"
     "test_current_sensor.cpp"
+    "test_voltage_regulator.cpp"
 )
 
 target_link_libraries(

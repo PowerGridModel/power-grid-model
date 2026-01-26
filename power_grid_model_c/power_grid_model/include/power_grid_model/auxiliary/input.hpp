@@ -491,6 +491,23 @@ struct TransformerTapRegulatorInput {
     operator RegulatorInput const&() const { return reinterpret_cast<RegulatorInput const&>(*this); }
 };
 
+struct VoltageRegulatorInput {
+    ID id{na_IntID};  // ID of the object
+    ID regulated_object{na_IntID};  // ID of the regulated object
+    IntS status{na_IntS};  // regulator enabled
+    double u_ref{nan};  // reference voltage
+    double q_min{nan};  // reactive power limits
+    double q_max{nan};  // reactive power limits
+
+    // implicit conversions to BaseInput
+    operator BaseInput&() { return reinterpret_cast<BaseInput&>(*this); }
+    operator BaseInput const&() const { return reinterpret_cast<BaseInput const&>(*this); }
+
+    // implicit conversions to RegulatorInput
+    operator RegulatorInput&() { return reinterpret_cast<RegulatorInput&>(*this); }
+    operator RegulatorInput const&() const { return reinterpret_cast<RegulatorInput const&>(*this); }
+};
+
 struct GenericCurrentSensorInput {
     ID id{na_IntID};  // ID of the object
     ID measured_object{na_IntID};  // ID of the measured object
