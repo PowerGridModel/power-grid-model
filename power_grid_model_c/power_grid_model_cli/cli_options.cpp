@@ -219,7 +219,7 @@ CLIResult parse_cli_options(int argc, char** argv, ClIOptions& options) {
 
     try {
         app.parse(argc, argv);
-    } catch (const CLI::ParseError& e) {
+    } catch (CLI::ParseError const& e) {
         return {.exit_code = app.exit(e), .should_exit = true};
     }
 
