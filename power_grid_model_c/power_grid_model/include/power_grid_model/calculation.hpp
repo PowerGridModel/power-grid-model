@@ -73,10 +73,7 @@ decltype(auto) calculation_type_symmetry_func_selector(CalculationType calculati
 
 template <typename T, typename sym> struct Calculator;
 template <symmetry_tag sym> struct Calculator<power_flow_t, sym> {
-    static auto scenario_couple_components(ComponentToMathCoupling& /*comp_coup*/) {
-        return [] { /*no-op*/ };
-    }
-    template <typename State> static auto preparer(State const& state) {
+    template <typename State> static auto preparer(State const& state, ComponentToMathCoupling& /*comp_coup*/) {
         return [&state](Idx n_math_solvers) { return main_core::prepare_power_flow_input<sym>(state, n_math_solvers); };
     }
     static auto solver(CalculationMethod calculation_method, double err_tol, Idx max_iter, Logger& logger) {
@@ -87,10 +84,7 @@ template <symmetry_tag sym> struct Calculator<power_flow_t, sym> {
     }
 };
 template <symmetry_tag sym> struct Calculator<state_estimation_t, sym> {
-    static auto scenario_couple_components(ComponentToMathCoupling& /*comp_coup*/) {
-        return [] { /*no-op*/ };
-    }
-    template <typename State> static auto preparer(State const& state) {
+    template <typename State> static auto preparer(State const& state, ComponentToMathCoupling& /*comp_coup*/) {
         return [&state](Idx n_math_solvers) {
             return main_core::prepare_state_estimation_input<sym>(state, n_math_solvers);
         };
@@ -104,10 +98,6 @@ template <symmetry_tag sym> struct Calculator<state_estimation_t, sym> {
 };
 
 template <symmetry_tag sym> struct Calculator<short_circuit_t, sym> {
-
-    static auto scenario_couple_components(ComponentToMathCoupling& comp_coup) {
-        return [&comp_coup] { /*no-op*/ };
-    }
     template <typename State>
     static auto preparer(State const& state, ComponentToMathCoupling& comp_coup,
                          ShortCircuitVoltageScaling voltage_scaling) {

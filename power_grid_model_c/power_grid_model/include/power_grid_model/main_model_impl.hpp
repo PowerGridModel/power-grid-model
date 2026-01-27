@@ -265,24 +265,20 @@ class MainModelImpl {
     }
 
     template <solver_output_type SolverOutputType, typename MathSolverType, typename YBus, typename InputType,
-              typename CoupleComponentsFn, typename PrepareInputFn, typename SolveFn>
-        requires std::invocable<std::remove_cvref_t<CoupleComponentsFn>> &&
-                 std::invocable<std::remove_cvref_t<PrepareInputFn>, Idx /*n_math_solvers*/> &&
+              typename PrepareInputFn, typename SolveFn>
+        requires std::invocable<std::remove_cvref_t<PrepareInputFn>, Idx /*n_math_solvers*/> &&
                  std::invocable<std::remove_cvref_t<SolveFn>, MathSolverType&, YBus const&, InputType const&> &&
                  std::same_as<std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>, std::vector<InputType>> &&
                  std::same_as<std::invoke_result_t<SolveFn, MathSolverType&, YBus const&, InputType const&>,
                               SolverOutputType>
-    std::vector<SolverOutputType> calculate_(CoupleComponentsFn&& couple_components, PrepareInputFn&& prepare_input,
-                                             SolveFn&& solve, Logger& logger) {
+    std::vector<SolverOutputType> calculate_(PrepareInputFn&& prepare_input, SolveFn&& solve, Logger& logger) {
         using sym = typename SolverOutputType::sym;
 
         assert(construction_complete_);
         // prepare
-        auto const& input = [this, &logger, couple_components_ = std::forward<CoupleComponentsFn>(couple_components),
-                             prepare_input_ = std::forward<PrepareInputFn>(prepare_input)] {
+        auto const& input = [this, &logger, prepare_input_ = std::forward<PrepareInputFn>(prepare_input)] {
             Timer const timer{logger, LogEvent::prepare};
             assert(construction_complete_);
-            couple_components_();
             prepare_solvers<sym>(state_, solver_preparation_context_, solvers_cache_status_);
             assert(solvers_cache_status_.is_topology_valid());
             assert(solvers_cache_status_.template is_parameter_valid<sym>());
@@ -308,9 +304,11 @@ class MainModelImpl {
         return [this, &comp_coup = state_.comp_coup, err_tol, max_iter,
                 &logger](MainModelState const& state,
                          CalculationMethod calculation_method) -> std::vector<SolverOutput<sym>> {
+            (void)state; // to avoid unused-lambda-capture when in Release build
+            assert(&state == &state_);
+
             return calculate_<SolverOutput<sym>, MathSolverProxy<sym>, YBus<sym>, PowerFlowInput<sym>>(
-                Calc::scenario_couple_components(comp_coup), Calc::preparer(state),
-                Calc::solver(calculation_method, err_tol, max_iter, logger), logger);
+                Calc::preparer(state, comp_coup), Calc::solver(calculation_method, err_tol, max_iter, logger), logger);
         };
     }
 
@@ -320,9 +318,11 @@ class MainModelImpl {
         return [this, &comp_coup = state_.comp_coup, err_tol, max_iter,
                 &logger](MainModelState const& state,
                          CalculationMethod calculation_method) -> std::vector<SolverOutput<sym>> {
+            (void)state; // to avoid unused-lambda-capture when in Release build
+            assert(&state == &state_);
+
             return calculate_<SolverOutput<sym>, MathSolverProxy<sym>, YBus<sym>, StateEstimationInput<sym>>(
-                Calc::scenario_couple_components(comp_coup), Calc::preparer(state),
-                Calc::solver(calculation_method, err_tol, max_iter, logger), logger);
+                Calc::preparer(state, comp_coup), Calc::solver(calculation_method, err_tol, max_iter, logger), logger);
         };
     }
 
@@ -334,11 +334,10 @@ class MainModelImpl {
                 &logger](MainModelState const& state,
                          CalculationMethod calculation_method) -> std::vector<ShortCircuitSolverOutput<sym>> {
             (void)state; // to avoid unused-lambda-capture when in Release build
-            // assert(&state == &state_);
+            assert(&state == &state_);
 
             return calculate_<ShortCircuitSolverOutput<sym>, MathSolverProxy<sym>, YBus<sym>, ShortCircuitInput>(
-                Calc::scenario_couple_components(comp_coup), Calc::preparer(state, comp_coup, voltage_scaling),
-                Calc::solver(calculation_method, logger), logger);
+                Calc::preparer(state, comp_coup, voltage_scaling), Calc::solver(calculation_method, logger), logger);
         };
     }
 
