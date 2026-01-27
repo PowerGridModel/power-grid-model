@@ -31,6 +31,8 @@ file(
 
 target_link_libraries(power_grid_model_c PRIVATE power_grid_model)
 
+target_compile_definitions(power_grid_model_c PRIVATE PGM_VERSION="${PGM_VERSION}")
+
 target_sources(
     power_grid_model_c
     PUBLIC
