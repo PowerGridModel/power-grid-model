@@ -18,11 +18,13 @@ namespace power_grid_model_cpp {
 using EnumMap = std::map<std::string, Idx>;
 
 struct CLIPostCallback {
+    // NOLINTBEGIN(cppcoreguidelines-avoid-const-or-ref-data-members)
     ClIOptions& options;
     CLI::Option* msgpack_flag;
     CLI::Option* compact_flag;
     std::vector<std::string> const& output_components;
     std::vector<std::string> const& output_attributes;
+    // NOLINTEND(cppcoreguidelines-avoid-const-or-ref-data-members)
 
     void operator()() {
         set_default_values();
