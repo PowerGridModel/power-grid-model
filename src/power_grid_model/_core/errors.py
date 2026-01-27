@@ -140,3 +140,7 @@ class UnsupportedRegulatorCombinationError(PowerGridError):
 
 class UnsupportedVoltageRegulatorSourceCombinationError(PowerGridError):
     """Nodes with a source and a voltage regulated load/generator are not supported when both are enabled."""
+
+
+class ExperimentalFeature(PowerGridError):
+    """An experimental feature was used."""
