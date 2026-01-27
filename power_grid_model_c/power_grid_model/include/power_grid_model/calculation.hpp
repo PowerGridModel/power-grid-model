@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "main_model_fwd.hpp"
+
 #include "common/common.hpp"
 #include "common/enum.hpp"
 
@@ -73,25 +75,29 @@ decltype(auto) calculation_type_symmetry_func_selector(CalculationType calculati
 
 template <typename T, typename sym> struct Calculator;
 template <symmetry_tag sym> struct Calculator<power_flow_t, sym> {
-    template <typename State> static auto preparer(State const& state, ComponentToMathCoupling& /*comp_coup*/) {
+    template <typename State>
+    static auto preparer(State const& state, ComponentToMathCoupling& /*comp_coup*/,
+                         MainModelOptions const& /*options*/) {
         return [&state](Idx n_math_solvers) { return main_core::prepare_power_flow_input<sym>(state, n_math_solvers); };
     }
-    static auto solver(CalculationMethod calculation_method, double err_tol, Idx max_iter, Logger& logger) {
-        return [err_tol, max_iter, calculation_method, &logger](MathSolverProxy<sym>& solver, YBus<sym> const& y_bus,
-                                                                PowerFlowInput<sym> const& input) {
+    static auto solver(CalculationMethod calculation_method, MainModelOptions const& options, Logger& logger) {
+        return [calculation_method, err_tol = options.err_tol, max_iter = options.max_iter,
+                &logger](MathSolverProxy<sym>& solver, YBus<sym> const& y_bus, PowerFlowInput<sym> const& input) {
             return solver.get().run_power_flow(input, err_tol, max_iter, logger, calculation_method, y_bus);
         };
     }
 };
 template <symmetry_tag sym> struct Calculator<state_estimation_t, sym> {
-    template <typename State> static auto preparer(State const& state, ComponentToMathCoupling& /*comp_coup*/) {
+    template <typename State>
+    static auto preparer(State const& state, ComponentToMathCoupling& /*comp_coup*/,
+                         MainModelOptions const& /*options*/) {
         return [&state](Idx n_math_solvers) {
             return main_core::prepare_state_estimation_input<sym>(state, n_math_solvers);
         };
     }
-    static auto solver(CalculationMethod calculation_method, double err_tol, Idx max_iter, Logger& logger) {
-        return [err_tol, max_iter, calculation_method, &logger](MathSolverProxy<sym>& solver, YBus<sym> const& y_bus,
-                                                                StateEstimationInput<sym> const& input) {
+    static auto solver(CalculationMethod calculation_method, MainModelOptions const& options, Logger& logger) {
+        return [calculation_method, err_tol = options.err_tol, max_iter = options.max_iter,
+                &logger](MathSolverProxy<sym>& solver, YBus<sym> const& y_bus, StateEstimationInput<sym> const& input) {
             return solver.get().run_state_estimation(input, err_tol, max_iter, logger, calculation_method, y_bus);
         };
     }
@@ -99,15 +105,14 @@ template <symmetry_tag sym> struct Calculator<state_estimation_t, sym> {
 
 template <symmetry_tag sym> struct Calculator<short_circuit_t, sym> {
     template <typename State>
-    static auto preparer(State const& state, ComponentToMathCoupling& comp_coup,
-                         ShortCircuitVoltageScaling voltage_scaling) {
-        return [&state, &comp_coup, voltage_scaling](Idx n_math_solvers) {
+    static auto preparer(State const& state, ComponentToMathCoupling& comp_coup, MainModelOptions const& options) {
+        return [&state, &comp_coup, voltage_scaling = options.short_circuit_voltage_scaling](Idx n_math_solvers) {
             // assert(solvers_cache_status.is_topology_valid());
             // assert(solvers_cache_status.template is_parameter_valid<sym>());
             return main_core::prepare_short_circuit_input<sym>(state, comp_coup, n_math_solvers, voltage_scaling);
         };
     }
-    static auto solver(CalculationMethod calculation_method, Logger& logger) {
+    static auto solver(CalculationMethod calculation_method, MainModelOptions const& /*options*/, Logger& logger) {
         return [calculation_method, &logger](MathSolverProxy<sym>& solver, YBus<sym> const& y_bus,
                                              ShortCircuitInput const& input) {
             return solver.get().run_short_circuit(input, logger, calculation_method, y_bus);

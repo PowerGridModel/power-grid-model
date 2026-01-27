@@ -298,46 +298,45 @@ class MainModelImpl {
         }();
     }
 
-    template <symmetry_tag sym> auto calculate_power_flow_(double err_tol, Idx max_iter, Logger& logger) {
+    template <symmetry_tag sym> auto calculate_power_flow_(Options const& options, Logger& logger) {
         using Calc = Calculator<power_flow_t, sym>;
 
-        return [this, &comp_coup = state_.comp_coup, err_tol, max_iter,
+        return [this, &comp_coup = state_.comp_coup, &options,
                 &logger](MainModelState const& state,
                          CalculationMethod calculation_method) -> std::vector<SolverOutput<sym>> {
             (void)state; // to avoid unused-lambda-capture when in Release build
             assert(&state == &state_);
 
             return calculate_<SolverOutput<sym>, MathSolverProxy<sym>, YBus<sym>, PowerFlowInput<sym>>(
-                Calc::preparer(state, comp_coup), Calc::solver(calculation_method, err_tol, max_iter, logger), logger);
+                Calc::preparer(state, comp_coup, options), Calc::solver(calculation_method, options, logger), logger);
         };
     }
 
-    template <symmetry_tag sym> auto calculate_state_estimation_(double err_tol, Idx max_iter, Logger& logger) {
+    template <symmetry_tag sym> auto calculate_state_estimation_(Options const& options, Logger& logger) {
         using Calc = Calculator<state_estimation_t, sym>;
 
-        return [this, &comp_coup = state_.comp_coup, err_tol, max_iter,
+        return [this, &comp_coup = state_.comp_coup, &options,
                 &logger](MainModelState const& state,
                          CalculationMethod calculation_method) -> std::vector<SolverOutput<sym>> {
             (void)state; // to avoid unused-lambda-capture when in Release build
             assert(&state == &state_);
 
             return calculate_<SolverOutput<sym>, MathSolverProxy<sym>, YBus<sym>, StateEstimationInput<sym>>(
-                Calc::preparer(state, comp_coup), Calc::solver(calculation_method, err_tol, max_iter, logger), logger);
+                Calc::preparer(state, comp_coup, options), Calc::solver(calculation_method, options, logger), logger);
         };
     }
 
-    template <symmetry_tag sym>
-    auto calculate_short_circuit_(ShortCircuitVoltageScaling voltage_scaling, Logger& logger) {
+    template <symmetry_tag sym> auto calculate_short_circuit_(Options const& options, Logger& logger) {
         using Calc = Calculator<short_circuit_t, sym>;
 
-        return [this, &comp_coup = state_.comp_coup, voltage_scaling,
+        return [this, &comp_coup = state_.comp_coup, &options,
                 &logger](MainModelState const& state,
                          CalculationMethod calculation_method) -> std::vector<ShortCircuitSolverOutput<sym>> {
             (void)state; // to avoid unused-lambda-capture when in Release build
             assert(&state == &state_);
 
             return calculate_<ShortCircuitSolverOutput<sym>, MathSolverProxy<sym>, YBus<sym>, ShortCircuitInput>(
-                Calc::preparer(state, comp_coup, voltage_scaling), Calc::solver(calculation_method, logger), logger);
+                Calc::preparer(state, comp_coup, options), Calc::solver(calculation_method, options, logger), logger);
         };
     }
 
@@ -348,11 +347,11 @@ class MainModelImpl {
             assert(options.optimizer_type == OptimizerType::no_optimization ||
                    (std::derived_from<calculation_type, power_flow_t>));
             if constexpr (std::derived_from<calculation_type, power_flow_t>) {
-                return calculate_power_flow_<sym>(options.err_tol, options.max_iter, logger);
+                return calculate_power_flow_<sym>(options, logger);
             } else if constexpr (std::derived_from<calculation_type, state_estimation_t>) {
-                return calculate_state_estimation_<sym>(options.err_tol, options.max_iter, logger);
+                return calculate_state_estimation_<sym>(options, logger);
             } else if constexpr (std::derived_from<calculation_type, short_circuit_t>) {
-                return calculate_short_circuit_<sym>(options.short_circuit_voltage_scaling, logger);
+                return calculate_short_circuit_<sym>(options, logger);
             } else {
                 throw UnreachableHit{"MainModelImpl::calculate", "Unknown calculation type"};
             }
