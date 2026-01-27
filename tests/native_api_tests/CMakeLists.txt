@@ -15,6 +15,8 @@ set(PROJECT_SOURCES
 
 add_executable(power_grid_model_api_tests ${PROJECT_SOURCES})
 
+target_compile_definitions(power_grid_model_api_tests PRIVATE PGM_VERSION="${PGM_VERSION}")
+
 target_link_libraries(
     power_grid_model_api_tests
     PRIVATE
