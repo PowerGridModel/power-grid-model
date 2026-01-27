@@ -141,6 +141,7 @@ CLIResult parse_cli_options(int argc, char** argv, ClIOptions& options) {
         },
         "ExistingParentDirectory"};
 
+    app.set_version_flag("-v,--version", PGM_version());
     app.add_option("-i,--input", options.input_file, "Input file path")->required()->check(CLI::ExistingFile);
     app.add_option("-b,--batch-update", options.batch_update_file,
                    "Batch update file path. Can be specified multiple times.\n"
