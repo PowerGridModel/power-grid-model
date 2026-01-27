@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include <cstdint>
+#include <power_grid_model/common/common.hpp>
 #include <power_grid_model/container.hpp>
 
 #include <doctest/doctest.h>

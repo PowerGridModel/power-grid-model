@@ -4,6 +4,8 @@
 
 #include <power_grid_model/math_solver/iterative_linear_se_solver.hpp>
 
+#include <power_grid_model/common/common.hpp>
+
 #include <doctest/doctest.h>
 
 namespace power_grid_model::math_solver {

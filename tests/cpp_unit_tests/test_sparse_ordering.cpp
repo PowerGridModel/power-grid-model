@@ -7,8 +7,8 @@
 #include <doctest/doctest.h>
 
 #include <chrono>
+#include <cstddef>
 #include <iostream>
-#include <sstream>
 
 namespace {
 using power_grid_model::Idx;

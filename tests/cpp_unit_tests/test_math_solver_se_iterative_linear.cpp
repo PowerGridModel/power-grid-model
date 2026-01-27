@@ -2,9 +2,9 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "test_math_solver_se.hpp"
+#include "test_math_solver_se.hpp" // NOLINT(misc-include-cleaner)
 
-#include <power_grid_model/math_solver/iterative_linear_se_solver.hpp>
+#include <power_grid_model/math_solver/iterative_linear_se_solver.hpp> // NOLINT(misc-include-cleaner)
 
 #include <doctest/doctest.h>
 

@@ -4,8 +4,8 @@
 
 #include <power_grid_model/batch_parameter.hpp>
 #include <power_grid_model/common/common.hpp>
-#include <power_grid_model/common/dummy_logging.hpp>
 #include <power_grid_model/common/exception.hpp>
+#include <power_grid_model/common/logging.hpp>
 #include <power_grid_model/common/multi_threaded_logging.hpp>
 #include <power_grid_model/job_dispatch.hpp>
 #include <power_grid_model/job_interface.hpp>
@@ -15,8 +15,13 @@
 
 #include <algorithm>
 #include <atomic>
+#include <concepts>
+#include <memory>
 #include <mutex>
 #include <ranges>
+#include <stdexcept>
+#include <string>
+#include <string_view>
 #include <variant>
 
 namespace power_grid_model {

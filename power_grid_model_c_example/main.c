@@ -25,6 +25,7 @@ We do batch calculation with 3 scenarios, with the following mutation
 #2: source: u_ref = 1.10, sym_load_3: -200 kW
 */
 
+// NOLINTBEGIN(misc-include-cleaner)
 #include "power_grid_model_c.h"
 #include "power_grid_model_c/dataset_definitions.h"
 
@@ -246,3 +247,4 @@ int main(int argc, char** argv) {
     PGM_destroy_handle(handle);
     return 0;
 }
+// NOLINTEND(misc-include-cleaner)

@@ -9,6 +9,7 @@
 // eigen properties
 #include <Eigen/Dense>
 
+#include <cassert>
 #include <cmath>
 #include <complex>
 #include <utility>

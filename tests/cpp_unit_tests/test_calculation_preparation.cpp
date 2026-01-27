@@ -2,9 +2,9 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include <power_grid_model/all_components.hpp>
 #include <power_grid_model/calculation_preparation.hpp>
 #include <power_grid_model/main_core/main_model_type.hpp>
-#include <power_grid_model/main_core/update.hpp>
 #include <power_grid_model/math_solver/math_solver.hpp>
 
 #include <doctest/doctest.h>
