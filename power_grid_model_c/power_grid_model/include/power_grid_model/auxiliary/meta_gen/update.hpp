@@ -197,6 +197,19 @@ struct get_attributes_list<TransformerTapRegulatorUpdate> {
     };
 };
 
+template<>
+struct get_attributes_list<VoltageRegulatorUpdate> {
+    static constexpr std::array<MetaAttribute, 5> value{
+            // all attributes including base class
+            
+            meta_data_gen::get_meta_attribute<&VoltageRegulatorUpdate::id>(offsetof(VoltageRegulatorUpdate, id), "id"),
+            meta_data_gen::get_meta_attribute<&VoltageRegulatorUpdate::status>(offsetof(VoltageRegulatorUpdate, status), "status"),
+            meta_data_gen::get_meta_attribute<&VoltageRegulatorUpdate::u_ref>(offsetof(VoltageRegulatorUpdate, u_ref), "u_ref"),
+            meta_data_gen::get_meta_attribute<&VoltageRegulatorUpdate::q_min>(offsetof(VoltageRegulatorUpdate, q_min), "q_min"),
+            meta_data_gen::get_meta_attribute<&VoltageRegulatorUpdate::q_max>(offsetof(VoltageRegulatorUpdate, q_max), "q_max"),
+    };
+};
+
 template <symmetry_tag sym_type>
 struct get_attributes_list<CurrentSensorUpdate<sym_type>> {
     using sym = sym_type;

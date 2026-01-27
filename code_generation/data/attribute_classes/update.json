@@ -214,6 +214,22 @@
       ]
     },
     {
+      "name": "VoltageRegulatorUpdate",
+      "base": "RegulatorUpdate",
+      "attributes": [
+        {
+          "data_type": "double",
+          "names": "u_ref",
+          "description": "reference voltage"
+        },
+        {
+          "data_type": "double",
+          "names": ["q_min", "q_max"],
+          "description": "reactive power limits"
+        }
+      ]
+    },
+    {
       "name": "CurrentSensorUpdate",
       "base": "BaseUpdate",
       "is_template": true,

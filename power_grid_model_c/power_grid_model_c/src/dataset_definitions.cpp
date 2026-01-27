@@ -230,6 +230,15 @@ PGM_MetaAttribute const* const PGM_def_input_asym_gen_status = PGM_meta_get_attr
 PGM_MetaAttribute const* const PGM_def_input_asym_gen_type = PGM_meta_get_attribute_by_name(nullptr, "input", "asym_gen", "type");
 PGM_MetaAttribute const* const PGM_def_input_asym_gen_p_specified = PGM_meta_get_attribute_by_name(nullptr, "input", "asym_gen", "p_specified");
 PGM_MetaAttribute const* const PGM_def_input_asym_gen_q_specified = PGM_meta_get_attribute_by_name(nullptr, "input", "asym_gen", "q_specified");
+// component voltage_regulator
+PGM_MetaComponent const* const PGM_def_input_voltage_regulator = PGM_meta_get_component_by_name(nullptr, "input", "voltage_regulator");
+// attributes of input voltage_regulator
+PGM_MetaAttribute const* const PGM_def_input_voltage_regulator_id = PGM_meta_get_attribute_by_name(nullptr, "input", "voltage_regulator", "id");
+PGM_MetaAttribute const* const PGM_def_input_voltage_regulator_regulated_object = PGM_meta_get_attribute_by_name(nullptr, "input", "voltage_regulator", "regulated_object");
+PGM_MetaAttribute const* const PGM_def_input_voltage_regulator_status = PGM_meta_get_attribute_by_name(nullptr, "input", "voltage_regulator", "status");
+PGM_MetaAttribute const* const PGM_def_input_voltage_regulator_u_ref = PGM_meta_get_attribute_by_name(nullptr, "input", "voltage_regulator", "u_ref");
+PGM_MetaAttribute const* const PGM_def_input_voltage_regulator_q_min = PGM_meta_get_attribute_by_name(nullptr, "input", "voltage_regulator", "q_min");
+PGM_MetaAttribute const* const PGM_def_input_voltage_regulator_q_max = PGM_meta_get_attribute_by_name(nullptr, "input", "voltage_regulator", "q_max");
 // component shunt
 PGM_MetaComponent const* const PGM_def_input_shunt = PGM_meta_get_component_by_name(nullptr, "input", "shunt");
 // attributes of input shunt
@@ -491,6 +500,12 @@ PGM_MetaAttribute const* const PGM_def_sym_output_source_q = PGM_meta_get_attrib
 PGM_MetaAttribute const* const PGM_def_sym_output_source_i = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "source", "i");
 PGM_MetaAttribute const* const PGM_def_sym_output_source_s = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "source", "s");
 PGM_MetaAttribute const* const PGM_def_sym_output_source_pf = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "source", "pf");
+// component voltage_regulator
+PGM_MetaComponent const* const PGM_def_sym_output_voltage_regulator = PGM_meta_get_component_by_name(nullptr, "sym_output", "voltage_regulator");
+// attributes of sym_output voltage_regulator
+PGM_MetaAttribute const* const PGM_def_sym_output_voltage_regulator_id = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "voltage_regulator", "id");
+PGM_MetaAttribute const* const PGM_def_sym_output_voltage_regulator_energized = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "voltage_regulator", "energized");
+PGM_MetaAttribute const* const PGM_def_sym_output_voltage_regulator_limit_violated = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "voltage_regulator", "limit_violated");
 // component sym_voltage_sensor
 PGM_MetaComponent const* const PGM_def_sym_output_sym_voltage_sensor = PGM_meta_get_component_by_name(nullptr, "sym_output", "sym_voltage_sensor");
 // attributes of sym_output sym_voltage_sensor
@@ -708,6 +723,12 @@ PGM_MetaAttribute const* const PGM_def_asym_output_source_q = PGM_meta_get_attri
 PGM_MetaAttribute const* const PGM_def_asym_output_source_i = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "source", "i");
 PGM_MetaAttribute const* const PGM_def_asym_output_source_s = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "source", "s");
 PGM_MetaAttribute const* const PGM_def_asym_output_source_pf = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "source", "pf");
+// component voltage_regulator
+PGM_MetaComponent const* const PGM_def_asym_output_voltage_regulator = PGM_meta_get_component_by_name(nullptr, "asym_output", "voltage_regulator");
+// attributes of asym_output voltage_regulator
+PGM_MetaAttribute const* const PGM_def_asym_output_voltage_regulator_id = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "voltage_regulator", "id");
+PGM_MetaAttribute const* const PGM_def_asym_output_voltage_regulator_energized = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "voltage_regulator", "energized");
+PGM_MetaAttribute const* const PGM_def_asym_output_voltage_regulator_limit_violated = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "voltage_regulator", "limit_violated");
 // component sym_voltage_sensor
 PGM_MetaComponent const* const PGM_def_asym_output_sym_voltage_sensor = PGM_meta_get_component_by_name(nullptr, "asym_output", "sym_voltage_sensor");
 // attributes of asym_output sym_voltage_sensor
@@ -832,6 +853,14 @@ PGM_MetaAttribute const* const PGM_def_update_asym_gen_id = PGM_meta_get_attribu
 PGM_MetaAttribute const* const PGM_def_update_asym_gen_status = PGM_meta_get_attribute_by_name(nullptr, "update", "asym_gen", "status");
 PGM_MetaAttribute const* const PGM_def_update_asym_gen_p_specified = PGM_meta_get_attribute_by_name(nullptr, "update", "asym_gen", "p_specified");
 PGM_MetaAttribute const* const PGM_def_update_asym_gen_q_specified = PGM_meta_get_attribute_by_name(nullptr, "update", "asym_gen", "q_specified");
+// component voltage_regulator
+PGM_MetaComponent const* const PGM_def_update_voltage_regulator = PGM_meta_get_component_by_name(nullptr, "update", "voltage_regulator");
+// attributes of update voltage_regulator
+PGM_MetaAttribute const* const PGM_def_update_voltage_regulator_id = PGM_meta_get_attribute_by_name(nullptr, "update", "voltage_regulator", "id");
+PGM_MetaAttribute const* const PGM_def_update_voltage_regulator_status = PGM_meta_get_attribute_by_name(nullptr, "update", "voltage_regulator", "status");
+PGM_MetaAttribute const* const PGM_def_update_voltage_regulator_u_ref = PGM_meta_get_attribute_by_name(nullptr, "update", "voltage_regulator", "u_ref");
+PGM_MetaAttribute const* const PGM_def_update_voltage_regulator_q_min = PGM_meta_get_attribute_by_name(nullptr, "update", "voltage_regulator", "q_min");
+PGM_MetaAttribute const* const PGM_def_update_voltage_regulator_q_max = PGM_meta_get_attribute_by_name(nullptr, "update", "voltage_regulator", "q_max");
 // component shunt
 PGM_MetaComponent const* const PGM_def_update_shunt = PGM_meta_get_component_by_name(nullptr, "update", "shunt");
 // attributes of update shunt

@@ -324,11 +324,6 @@ template <symmetry_tag sym> class YBus {
     std::shared_ptr<IdxVector const> shared_indices() const { return {y_bus_struct_, &y_bus_struct_->col_indices}; }
     std::shared_ptr<MathModelTopology const> shared_topology() const { return math_topology_; }
     std::shared_ptr<YBusStructure const> shared_y_bus_struct() const { return y_bus_struct_; }
-    std::shared_ptr<IdxVector const> shared_indptr_lu() const { return {y_bus_struct_, &y_bus_struct_->row_indptr_lu}; }
-    std::shared_ptr<IdxVector const> shared_indices_lu() const {
-        return {y_bus_struct_, &y_bus_struct_->col_indices_lu};
-    }
-    std::shared_ptr<IdxVector const> shared_diag_lu() const { return {y_bus_struct_, &y_bus_struct_->diag_lu}; }
 
     constexpr auto& get_y_bus_structure() const { return y_bus_struct_; }
 

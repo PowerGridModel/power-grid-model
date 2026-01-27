@@ -1,11 +1,6 @@
 {
-  "cmake.buildDirectory": "${workspaceFolder}/cpp_build/${buildType}",
   "C_Cpp.autoAddFileAssociations": false,
   "cmake.configureOnOpen": true,
-  "cmake.generator": "Ninja",
-  "cmake.configureSettings": {
-    "POWER_GRID_MODEL_SANITIZER": 1
-  },
   "testMate.cpp.test.executables": "${command:cmake.buildDirectory}/bin/power_grid_model_*_tests*",
   "testMate.cpp.debug.configTemplate": {
     "type": "cppvsdbg",
@@ -21,6 +16,7 @@
   },
   "doxdocgen.generic.filteredKeywords": ["PGM_API"],
   "doxdocgen.generic.includeTypeAtReturn": false,
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv",
   "python.testing.pytestArgs": ["tests", "--no-cov"],
   "python.testing.unittestEnabled": false,
   "python.testing.pytestEnabled": true,
@@ -31,6 +27,9 @@
   },
   "C_Cpp.formatting": "clangFormat",
   "C_Cpp.clang_format_fallbackStyle": "LLVM",
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff"
+  },
   "[markdown]": {
     "editor.defaultFormatter": "DavidAnson.vscode-markdownlint",
     "editor.rulers": [120]

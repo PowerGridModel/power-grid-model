@@ -23,7 +23,7 @@ void check_whether_observable(bool is_observable, MathModelTopology const& topo,
     auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
     auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
     YBus<symmetric_t> const y_bus{topo_ptr, param_ptr};
-    math_solver::MeasuredValues<symmetric_t> const measured_values{y_bus.shared_topology(), se_input};
+    math_solver::MeasuredValues<symmetric_t> const measured_values{*y_bus.shared_topology(), se_input};
 
     if (is_observable) {
         CHECK_NOTHROW(math_solver::observability::observability_check(measured_values, y_bus.math_topology(),
@@ -124,7 +124,7 @@ TEST_CASE("Test Observability - scan_network_sensors") {
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
         auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         YBus<symmetric_t> const y_bus{topo_ptr, param_ptr};
-        math_solver::MeasuredValues<symmetric_t> const measured_values{y_bus.shared_topology(), se_input};
+        math_solver::MeasuredValues<symmetric_t> const measured_values{*y_bus.shared_topology(), se_input};
 
         // Test scan_network_sensors
         std::vector<BusNeighbourhoodInfo> neighbour_results(3);
@@ -251,7 +251,7 @@ TEST_CASE("Test Observability - scan_network_sensors") {
         auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         YBus<symmetric_t> const y_bus{topo_ptr, param_ptr};
 
-        math_solver::MeasuredValues<symmetric_t> const measured_values{y_bus.shared_topology(), se_input};
+        math_solver::MeasuredValues<symmetric_t> const measured_values{*y_bus.shared_topology(), se_input};
 
         std::vector<BusNeighbourhoodInfo> neighbour_results(6);
         auto result = scan_network_sensors(measured_values, topo, y_bus.y_bus_structure(), neighbour_results);
@@ -318,7 +318,7 @@ TEST_CASE("Test Observability - scan_network_sensors") {
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
         auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         YBus<symmetric_t> const y_bus{topo_ptr, param_ptr};
-        math_solver::MeasuredValues<symmetric_t> const measured_values{y_bus.shared_topology(), se_input};
+        math_solver::MeasuredValues<symmetric_t> const measured_values{*y_bus.shared_topology(), se_input};
 
         std::vector<BusNeighbourhoodInfo> neighbour_results(1);
         auto result = scan_network_sensors(measured_values, topo, y_bus.y_bus_structure(), neighbour_results);
@@ -373,7 +373,7 @@ TEST_CASE("Test Observability - scan_network_sensors") {
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
         auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         YBus<symmetric_t> const y_bus{topo_ptr, param_ptr};
-        math_solver::MeasuredValues<symmetric_t> const measured_values{y_bus.shared_topology(), se_input};
+        math_solver::MeasuredValues<symmetric_t> const measured_values{*y_bus.shared_topology(), se_input};
 
         std::vector<BusNeighbourhoodInfo> neighbour_results(2);
         auto result = scan_network_sensors(measured_values, topo, y_bus.y_bus_structure(), neighbour_results);
@@ -1220,7 +1220,7 @@ TEST_CASE("Test Observability - sufficient_condition_radial_with_voltage_phasor"
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
         auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         YBus<symmetric_t> const y_bus{topo_ptr, param_ptr};
-        math_solver::MeasuredValues<symmetric_t> const measured_values{y_bus.shared_topology(), se_input};
+        math_solver::MeasuredValues<symmetric_t> const measured_values{*y_bus.shared_topology(), se_input};
 
         std::vector<BusNeighbourhoodInfo> neighbour_results(4);
         auto observability_sensors =
@@ -1286,7 +1286,7 @@ TEST_CASE("Test Observability - sufficient_condition_radial_with_voltage_phasor"
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
         auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         YBus<symmetric_t> const y_bus{topo_ptr, param_ptr};
-        math_solver::MeasuredValues<symmetric_t> const measured_values{y_bus.shared_topology(), se_input};
+        math_solver::MeasuredValues<symmetric_t> const measured_values{*y_bus.shared_topology(), se_input};
 
         std::vector<BusNeighbourhoodInfo> neighbour_results(3);
         auto observability_sensors =
@@ -1355,7 +1355,7 @@ TEST_CASE("Test Observability - sufficient_condition_radial_with_voltage_phasor"
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
         auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         YBus<symmetric_t> const y_bus{topo_ptr, param_ptr};
-        math_solver::MeasuredValues<symmetric_t> const measured_values{y_bus.shared_topology(), se_input};
+        math_solver::MeasuredValues<symmetric_t> const measured_values{*y_bus.shared_topology(), se_input};
 
         std::vector<BusNeighbourhoodInfo> neighbour_results(3);
         auto observability_sensors =
@@ -1405,7 +1405,7 @@ TEST_CASE("Test Observability - sufficient_condition_radial_with_voltage_phasor"
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
         auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         YBus<symmetric_t> const y_bus{topo_ptr, param_ptr};
-        math_solver::MeasuredValues<symmetric_t> const measured_values{y_bus.shared_topology(), se_input};
+        math_solver::MeasuredValues<symmetric_t> const measured_values{*y_bus.shared_topology(), se_input};
 
         std::vector<BusNeighbourhoodInfo> neighbour_results(1);
         auto observability_sensors =

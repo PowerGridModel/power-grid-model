@@ -238,6 +238,18 @@
       ]
     },
     {
+      "name": "VoltageRegulatorOutput",
+      "base": "BaseOutput",
+      "is_template": false,
+      "attributes": [
+        {
+          "data_type": "IntS",
+          "names": "limit_violated",
+          "description": "indicates whether voltage limits are violated"
+        }
+      ]
+    },
+    {
       "name": "RegulatorShortCircuitOutput",
       "base": "BaseOutput",
       "is_template": false,

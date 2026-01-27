@@ -155,6 +155,8 @@ J.L -= -dQ_cal_m/dV
 #include "../common/three_phase_tensor.hpp"
 #include "../common/timer.hpp"
 
+#include <map>
+
 namespace power_grid_model::math_solver {
 
 // hide implementation in inside namespace
@@ -211,13 +213,15 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
 
     static constexpr auto is_iterative = true;
 
-    NewtonRaphsonPFSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
-        : IterativePFSolver<sym, NewtonRaphsonPFSolver>{y_bus, topo_ptr},
+    NewtonRaphsonPFSolver(YBus<sym> const& y_bus, MathModelTopology const& topo)
+        : IterativePFSolver<sym, NewtonRaphsonPFSolver>{y_bus, topo},
           data_jac_(y_bus.nnz_lu()),
           x_(y_bus.size()),
           del_x_pq_(y_bus.size()),
-          sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
-          perm_(y_bus.size()) {}
+          sparse_solver_{y_bus.row_indptr_lu(), y_bus.col_indices_lu(), y_bus.lu_diag()},
+          perm_(y_bus.size()),
+          bus_types_(y_bus.size(), BusType::pq),
+          voltage_regulators_per_load_gen_{std::ref(topo.voltage_regulators_per_load_gen)} {}
 
     // Initilize the unknown variable in polar form
     void initialize_derived_solver(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
@@ -225,14 +229,15 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         using LinearSparseSolverType = SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>;
 
         ComplexTensorVector<sym> linear_mat_data(y_bus.nnz_lu());
-        LinearSparseSolverType linear_sparse_solver{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(),
-                                                    y_bus.shared_diag_lu()};
+        LinearSparseSolverType linear_sparse_solver{y_bus.row_indptr_lu(), y_bus.col_indices_lu(), y_bus.lu_diag()};
         typename LinearSparseSolverType::BlockPermArray linear_perm(y_bus.size());
 
         detail::copy_y_bus<sym>(y_bus, linear_mat_data);
-        detail::prepare_linear_matrix_and_rhs(y_bus, input, *this->load_gens_per_bus_, *this->sources_per_bus_, output,
-                                              linear_mat_data);
+        detail::prepare_linear_matrix_and_rhs(y_bus, input, this->load_gens_per_bus_.get(),
+                                              this->sources_per_bus_.get(), output, linear_mat_data);
         linear_sparse_solver.prefactorize_and_solve(linear_mat_data, linear_perm, output.u, output.u);
+
+        set_u_ref_and_bus_types(input, output.u);
 
         // get magnitude and angle of start voltage
         for (Idx i = 0; i != this->n_bus_; ++i) {
@@ -244,13 +249,15 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
     // Calculate the Jacobian and deviation
     void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                 ComplexValueVector<sym> const& u) {
-        std::vector<LoadGenType> const& load_gen_type = *this->load_gen_type_;
+        std::vector<LoadGenType> const& load_gen_type = this->load_gen_type_.get();
         IdxVector const& bus_entry = y_bus.lu_diag();
 
         prepare_matrix_and_rhs_from_network_perspective(y_bus, u, bus_entry);
 
+        auto const& load_gens_per_bus = this->load_gens_per_bus_.get();
+        auto const& sources_per_bus = this->sources_per_bus_.get();
         for (auto const& [bus_number, load_gens, sources] :
-             enumerated_zip_sequence(*this->load_gens_per_bus_, *this->sources_per_bus_)) {
+             enumerated_zip_sequence(load_gens_per_bus, sources_per_bus)) {
             Idx const diagonal_position = bus_entry[bus_number];
             add_loads(load_gens, bus_number, diagonal_position, input, load_gen_type);
             add_sources(sources, bus_number, diagonal_position, y_bus, input, u);
@@ -295,6 +302,34 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
     SparseSolverType sparse_solver_;
     // permutation array
     BlockPermArray perm_;
+
+    std::vector<BusType> bus_types_;
+    std::reference_wrapper<DenseGroupedIdxVector const> voltage_regulators_per_load_gen_;
+
+    void set_u_ref_and_bus_types(PowerFlowInput<sym> const& input, ComplexValueVector<sym>& u) {
+        auto const& voltage_regulators_per_load_gen = voltage_regulators_per_load_gen_.get();
+
+        for (auto const& [bus_idx, load_gens, sources] :
+             enumerated_zip_sequence(this->load_gens_per_bus_.get(), this->sources_per_bus_.get())) {
+            if (!sources.empty()) {
+                bus_types_[bus_idx] = BusType::slack;
+                continue;
+            }
+
+            for (Idx const load_gen_idx : load_gens) {
+                for (Idx const voltage_regulator_idx :
+                     voltage_regulators_per_load_gen.get_element_range(load_gen_idx)) {
+                    // TODO(figueroa1395): Unit test this
+                    if (input.voltage_regulator[voltage_regulator_idx].status != 0) {
+                        auto const& regulator = input.voltage_regulator[voltage_regulator_idx];
+                        u[bus_idx] = ComplexValue<sym>{regulator.u_ref};
+                        bus_types_[bus_idx] = BusType::pv;
+                        break;
+                    }
+                }
+            }
+        }
+    }
 
     /// @brief power_flow_ij = (ui @* conj(uj))  .* conj(yij)
     /// Hij = diag(Vi) * ( Gij .* sin(theta_ij) - Bij .* cos(theta_ij) ) * diag(Vj)
@@ -357,6 +392,39 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
             // L -= (-Q)
             add_diag(data_jac_[k].l(), -del_x_pq_[row].q());
         }
+
+        // PV-bus voltage identity row:
+        // For PV buses, the Q-equation is replaced by the algebraic constraint
+        //     rPV = V - Vset = 0.
+        // Since the state vector uses relative voltage increments deltaV_rel = deltaV / V,
+        // the derivative drPV/dDeltaV_rel equals the current voltage magnitude V.
+        // Therefore:
+        //   - all off-diagonal voltage derivatives (L block) are zero,
+        //   - all Theta-derivatives (M block) are zero,
+        //   - only the diagonal L entry is set to V.
+        // This removes the Q-equation and enforces the PV voltage constraint in the NR step.
+        for (Idx row = 0; row != this->n_bus_; ++row) {
+            if (bus_types_[row] == BusType::pv) {
+                for (Idx k = indptr[row]; k != indptr[row + 1]; ++k) {
+                    Idx const j = indices[k];
+                    // If there are pv generators on a bus with type ::slack, then these generators
+                    // will be considered as ::pq and the jacobian row will not be modified.
+                    // TODO: #185 or should the slack behave like a pv bus too?
+                    data_jac_[k].m() = RealTensor<sym>{0.0};
+                    if (row == j) {
+                        auto const& v = x_[j].v();
+                        if constexpr (is_symmetric_v<sym>) {
+                            data_jac_[k].l() = v;
+                        } else {
+                            data_jac_[k].l() = RealTensor<asymmetric_t>{{v[0], v[1], v[2]}};
+                        }
+
+                    } else {
+                        data_jac_[k].l() = RealTensor<sym>{0.0};
+                    }
+                }
+            }
+        }
     }
 
     void add_loads(IdxRange const& load_gens, Idx bus_number, Idx diagonal_position, PowerFlowInput<sym> const& input,
@@ -378,6 +446,11 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
             default:
                 throw MissingCaseForEnumError("Jacobian and deviation calculation", type);
             }
+        }
+        if (bus_types_[bus_number] == BusType::pv) {
+            // Set deltaQ = 0 to enforce voltage magnitude constraint V = V_set (see Jacobian modification above).
+            // This forces deltaV = 0 in the NR step, keeping |U| constant.
+            del_x_pq_[bus_number].q() = 0.0;
         }
     }
 

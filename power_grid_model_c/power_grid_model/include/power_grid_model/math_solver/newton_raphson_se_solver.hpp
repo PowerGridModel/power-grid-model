@@ -142,13 +142,13 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
     };
 
   public:
-    NewtonRaphsonSESolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> topo_ptr)
+    NewtonRaphsonSESolver(YBus<sym> const& y_bus, MathModelTopology const& topo)
         : n_bus_{y_bus.size()},
-          math_topo_{std::move(topo_ptr)},
+          math_topo_{topo},
           data_gain_(y_bus.nnz_lu()),
           delta_x_rhs_(y_bus.size()),
           x_(y_bus.size()),
-          sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
+          sparse_solver_{y_bus.row_indptr_lu(), y_bus.col_indices_lu(), y_bus.lu_diag()},
           perm_(y_bus.size()) {}
 
     SolverOutput<sym> run_state_estimation(YBus<sym> const& y_bus, StateEstimationInput<sym> const& input,
@@ -165,7 +165,7 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
 
         // preprocess measured value
         sub_timer = Timer{log, LogEvent::preprocess_measured_value};
-        MeasuredValues<sym> const measured_values{y_bus.shared_topology(), input};
+        MeasuredValues<sym> const measured_values{*y_bus.shared_topology(), input};
         auto const observability_result =
             observability::observability_check(measured_values, y_bus.math_topology(), y_bus.y_bus_structure());
 
@@ -205,7 +205,7 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
   private:
     Idx n_bus_;
     // shared topo data
-    std::shared_ptr<MathModelTopology const> math_topo_;
+    std::reference_wrapper<MathModelTopology const> math_topo_;
 
     // data for gain matrix
     std::vector<NRSEGainBlock<sym>> data_gain_;
@@ -222,10 +222,11 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
 
         reset_unknown();
         RealValue<sym> const mean_angle_shift = measured_values.mean_angle_shift();
+        auto const& topo = math_topo_.get();
         for (Idx bus = 0; bus != n_bus_; ++bus) {
             auto& estimated_result = x_[bus];
 
-            estimated_result.theta() = mean_angle_shift + math_topo_->phase_shift[bus];
+            estimated_result.theta() = mean_angle_shift + topo.phase_shift[bus];
             if (measured_values.has_voltage(bus)) {
                 if (measured_values.has_angle_measurement(bus)) {
                     estimated_result.theta() = arg(measured_values.voltage(bus));
@@ -645,8 +646,8 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
         auto const abs_measured_v = cabs_or_real<sym>(measured_values.voltage(bus));
         auto const delta_v = abs_measured_v - x_[bus].v();
 
-        auto const virtual_angle_measurement_bus = measured_values.has_voltage(math_topo_->slack_bus)
-                                                       ? math_topo_->slack_bus
+        auto const virtual_angle_measurement_bus = measured_values.has_voltage(math_topo_.get().slack_bus)
+                                                       ? math_topo_.get().slack_bus
                                                        : measured_values.first_voltage_measurement();
 
         RealTensor<sym> w_theta{};
@@ -772,7 +773,8 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
             if (measured_values.has_angle()) {
                 return 0.0;
             }
-            auto const& theta = x_[math_topo_->slack_bus].theta() + delta_x_rhs_[math_topo_->slack_bus].theta();
+            auto const& theta =
+                x_[math_topo_.get().slack_bus].theta() + delta_x_rhs_[math_topo_.get().slack_bus].theta();
             if constexpr (is_symmetric_v<sym>) {
                 return theta;
             } else {

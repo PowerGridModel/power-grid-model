@@ -41,43 +41,6 @@ auto read_json(std::filesystem::path const& path) {
     return j;
 }
 
-OwningDataset create_result_dataset(OwningDataset const& input, std::string const& dataset_name, bool is_batch = false,
-                                    Idx batch_size = 1) {
-    DatasetInfo const& input_info = input.dataset.get_info();
-
-    OwningDataset result{.dataset = DatasetMutable{dataset_name, is_batch, batch_size}, .storage{}};
-
-    for (Idx component_idx{}; component_idx != input_info.n_components(); ++component_idx) {
-        auto const& component_name = input_info.component_name(component_idx);
-        auto const& component_meta = MetaData::get_component_by_name(dataset_name, component_name);
-        Idx const component_elements_per_scenario = input_info.component_elements_per_scenario(component_idx);
-        Idx const component_size = input_info.component_total_elements(component_idx);
-
-        auto& current_indptr = result.storage.indptrs.emplace_back(
-            input_info.component_elements_per_scenario(component_idx) < 0 ? batch_size + 1 : 0);
-        Idx const* const indptr = current_indptr.empty() ? nullptr : current_indptr.data();
-        auto& current_buffer = result.storage.buffers.emplace_back(component_meta, component_size);
-        result.dataset.add_buffer(component_name, component_elements_per_scenario, component_size, indptr,
-                                  current_buffer);
-    }
-    return result;
-}
-
-OwningDataset load_dataset(std::filesystem::path const& path) {
-    auto read_file = [](std::filesystem::path const& read_file_path) {
-        std::ifstream const f{read_file_path};
-        std::ostringstream buffer;
-        buffer << f.rdbuf();
-        return buffer.str();
-    };
-
-    Deserializer deserializer{read_file(path), PGM_json};
-    auto& writable_dataset = deserializer.get_dataset();
-    auto dataset = create_owning_dataset(writable_dataset);
-    deserializer.parse_to_buffer();
-    return dataset;
-}
-
 template <typename T> std::string get_as_string(T const& attribute_value) {
     std::stringstream sstr;
     sstr << std::setprecision(16);
@@ -199,6 +162,11 @@ class Subcase {
             {"InvalidCalculationMethod", std::regex{"The calculation method is invalid for this calculation!"}},
             {"InvalidShortCircuitPhaseOrType", std::regex{"short circuit type"}}, // multiple different flavors
             {"TapStrategySearchIncompatible", std::regex{"Search method is incompatible with optimization strategy: "}},
+            {"UnsupportedRegulatorCombinationError", std::regex{"The combination of voltage regulators and transformer "
+                                                                "tap regulators is not supported in the same model."}},
+            {"UnsupportedVoltageRegulatorSourceCombinationError",
+             std::regex{"Nodes with a source and a voltage regulated load/generator are not supported when both are "
+                        "enabled. Found at node with id (-?\\d+)"}},
             {"PowerGridDatasetError", std::regex{"Dataset error: "}}, // multiple different flavors
             {"PowerGridUnreachableHit",
              std::regex{"Unreachable code hit when executing "}}, // multiple different flavors
@@ -566,17 +534,17 @@ struct ValidationCase {
 ValidationCase create_validation_case(CaseParam const& param, std::string const& output_type) {
     // input
     ValidationCase validation_case{.param = param,
-                                   .input = load_dataset(param.case_dir / "input.json"),
+                                   .input = load_dataset(param.case_dir / "input.json", PGM_json, true),
                                    .output = std::nullopt,
                                    .update_batch = std::nullopt,
                                    .output_batch = std::nullopt};
 
     // output and update
     if (!param.is_batch) {
-        validation_case.output = load_dataset(param.case_dir / (output_type + ".json"));
+        validation_case.output = load_dataset(param.case_dir / (output_type + ".json"), PGM_json);
     } else {
-        validation_case.update_batch = load_dataset(param.case_dir / "update_batch.json");
-        validation_case.output_batch = load_dataset(param.case_dir / (output_type + "_batch.json"));
+        validation_case.update_batch = load_dataset(param.case_dir / "update_batch.json", PGM_json);
+        validation_case.output_batch = load_dataset(param.case_dir / (output_type + "_batch.json"), PGM_json);
     }
     return validation_case;
 }
@@ -638,7 +606,7 @@ void validate_single_case(CaseParam const& param) {
     execute_test(param, [&param](Subcase& subcase) {
         auto const output_prefix = get_output_type(param.calculation_type, param.sym);
         auto const validation_case = create_validation_case(param, output_prefix);
-        auto const result = create_result_dataset(validation_case.output.value(), output_prefix);
+        OwningDataset const result{validation_case.output.value(), output_prefix};
 
         // create and run model
         auto const& options = get_options(param);
@@ -656,8 +624,7 @@ void validate_batch_case(CaseParam const& param) {
         auto const validation_case = create_validation_case(param, output_prefix);
         auto const& info = validation_case.update_batch.value().dataset.get_info();
         Idx const batch_size = info.batch_size();
-        auto const batch_result =
-            create_result_dataset(validation_case.output_batch.value(), output_prefix, true, batch_size);
+        OwningDataset const batch_result{validation_case.output_batch.value(), output_prefix, true, batch_size};
 
         // create model
         Model model{50.0, validation_case.input.dataset};

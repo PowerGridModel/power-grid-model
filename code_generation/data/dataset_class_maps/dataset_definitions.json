@@ -41,6 +41,10 @@
           "class_name": "LoadGenInput"
         },
         {
+          "names": ["voltage_regulator"],
+          "class_name": "VoltageRegulatorInput"
+        },
+        {
           "names": ["shunt"],
           "class_name": "ShuntInput"
         },
@@ -89,6 +93,10 @@
         {
           "names": ["sym_load", "sym_gen", "asym_load", "asym_gen", "shunt", "source"],
           "class_name": "ApplianceOutput"
+        },
+        {
+          "names": ["voltage_regulator"],
+          "class_name": "VoltageRegulatorOutput"
         },
         {
           "names": ["sym_voltage_sensor", "asym_voltage_sensor"],
@@ -143,6 +151,10 @@
         {
           "names": ["sym_load", "sym_gen", "asym_load", "asym_gen"],
           "class_name": "LoadGenUpdate"
+        },
+        {
+          "names": ["voltage_regulator"],
+          "class_name": "VoltageRegulatorUpdate"
         },
         {
           "names": ["shunt"],

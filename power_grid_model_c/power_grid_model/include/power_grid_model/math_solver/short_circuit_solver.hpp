@@ -23,12 +23,12 @@ template <symmetry_tag sym> class ShortCircuitSolver {
         typename SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>::BlockPermArray;
 
   public:
-    ShortCircuitSolver(YBus<sym> const& y_bus, std::shared_ptr<MathModelTopology const> const& topo_ptr)
+    ShortCircuitSolver(YBus<sym> const& y_bus, MathModelTopology const& topo)
         : n_bus_{y_bus.size()},
-          n_source_{topo_ptr->n_source()},
-          sources_per_bus_{topo_ptr, &topo_ptr->sources_per_bus},
+          n_source_{topo.n_source()},
+          sources_per_bus_{std::cref(topo.sources_per_bus)},
           mat_data_(y_bus.nnz_lu()),
-          sparse_solver_{y_bus.shared_indptr_lu(), y_bus.shared_indices_lu(), y_bus.shared_diag_lu()},
+          sparse_solver_{y_bus.row_indptr_lu(), y_bus.col_indices_lu(), y_bus.lu_diag()},
           perm_{static_cast<BlockPermArray>(n_bus_)} {}
 
     ShortCircuitSolverOutput<sym> run_short_circuit(YBus<sym> const& y_bus, ShortCircuitInput const& input) {
@@ -64,7 +64,7 @@ template <symmetry_tag sym> class ShortCircuitSolver {
     Idx n_bus_;
     Idx n_source_;
     // shared topo data
-    std::shared_ptr<DenseGroupedIdxVector const> sources_per_bus_;
+    std::reference_wrapper<DenseGroupedIdxVector const> sources_per_bus_;
     // sparse linear equation
     ComplexTensorVector<sym> mat_data_;
     // sparse solver
@@ -76,8 +76,8 @@ template <symmetry_tag sym> class ShortCircuitSolver {
                                 FaultType const& fault_type, IntS phase_1, IntS phase_2) {
         IdxVector const& bus_entry = y_bus.lu_diag();
 
-        for (auto const& [bus_number, sources, faults] :
-             enumerated_zip_sequence(*sources_per_bus_, input.fault_buses)) {
+        auto const& sources_per_bus = sources_per_bus_.get();
+        for (auto const& [bus_number, sources, faults] : enumerated_zip_sequence(sources_per_bus, input.fault_buses)) {
             Idx const diagonal_position = bus_entry[bus_number];
             auto& diagonal_element = mat_data_[diagonal_position];
             auto& u_bus = output.u_bus[bus_number];
@@ -225,8 +225,8 @@ template <symmetry_tag sym> class ShortCircuitSolver {
                           int const phase_1, int const phase_2) const {
         using enum FaultType;
 
-        for (auto const& [bus_number, faults, sources] :
-             enumerated_zip_sequence(input.fault_buses, *sources_per_bus_)) {
+        auto const& sources_per_bus = sources_per_bus_.get();
+        for (auto const& [bus_number, faults, sources] : enumerated_zip_sequence(input.fault_buses, sources_per_bus)) {
             ComplexValue<sym> const x_bus_subtotal = output.u_bus[bus_number];
             auto const infinite_admittance_fault_counter_bus =
                 static_cast<double>(infinite_admittance_fault_counter[bus_number]);
