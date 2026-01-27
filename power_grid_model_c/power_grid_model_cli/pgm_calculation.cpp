@@ -4,25 +4,48 @@
 
 #include "cli_functions.hpp"
 
+#include <cassert>
 #include <optional>
+#include <ranges>
 
 namespace power_grid_model_cpp {
+
+struct BatchDatasets {
+    explicit BatchDatasets(ClIOptions const& cli_options) {
+        if (!cli_options.is_batch) {
+            return;
+        }
+        for (auto const& [batch_file, format] :
+             std::views::zip(cli_options.batch_update_file, cli_options.batch_update_serialization_format)) {
+            datasets.emplace_back(load_dataset(batch_file, format));
+            dataset_consts.emplace_back(datasets.back().dataset);
+        }
+        assert(!datasets.empty());
+        for (auto it = dataset_consts.begin(); it != dataset_consts.end() - 1; ++it) {
+            it->set_next_cartesian_product_dimension(*(it + 1));
+        }
+    }
+
+    DatasetConst const& head() const {
+        assert(!dataset_consts.empty());
+        return dataset_consts.front();
+    }
+
+    Idx batch_size{1};
+    std::vector<OwningDataset> datasets;
+    std::vector<DatasetConst> dataset_consts;
+};
 
 void pgm_calculation(ClIOptions const& cli_options) {
     // Load input dataset
     OwningDataset input_dataset = load_dataset(cli_options.input_file, cli_options.input_serialization_format);
 
     // Apply batch updates if provided
-    std::optional<OwningDataset> batch_update_dataset{std::nullopt};
-    if (cli_options.is_batch) {
-        batch_update_dataset =
-            load_dataset(cli_options.batch_update_file, cli_options.batch_update_serialization_format);
-    }
-    Idx const batch_size = cli_options.is_batch ? batch_update_dataset->dataset.get_info().batch_size() : 1;
+    BatchDatasets const batch_datasets{cli_options};
 
     // create result dataset
-    OwningDataset result_dataset{input_dataset, cli_options.output_dataset_name, cli_options.is_batch, batch_size,
-                                 cli_options.output_component_attribute_filters};
+    OwningDataset result_dataset{input_dataset, cli_options.output_dataset_name, cli_options.is_batch,
+                                 batch_datasets.batch_size, cli_options.output_component_attribute_filters};
     // create model
     Model model{cli_options.system_frequency, input_dataset.dataset};
     // create calculation options
@@ -38,7 +61,7 @@ void pgm_calculation(ClIOptions const& cli_options) {
 
     // perform calculation
     if (cli_options.is_batch) {
-        model.calculate(calc_options, result_dataset.dataset, batch_update_dataset->dataset);
+        model.calculate(calc_options, result_dataset.dataset, batch_datasets.head());
     } else {
         model.calculate(calc_options, result_dataset.dataset);
     }

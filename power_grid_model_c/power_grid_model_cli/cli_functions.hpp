@@ -21,10 +21,10 @@ struct CLIResult {
 
 struct ClIOptions {
     std::filesystem::path input_file;
-    std::filesystem::path batch_update_file;
+    std::vector<std::filesystem::path> batch_update_file;
     std::filesystem::path output_file;
     PGM_SerializationFormat input_serialization_format{PGM_json};
-    PGM_SerializationFormat batch_update_serialization_format{PGM_json};
+    std::vector<PGM_SerializationFormat> batch_update_serialization_format;
     bool is_batch{false};
 
     double system_frequency{50.0};

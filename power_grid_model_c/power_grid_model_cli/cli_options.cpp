@@ -6,8 +6,12 @@
 
 #include <CLI/CLI.hpp>
 
+#include <algorithm>
 #include <fstream>
 #include <map>
+#include <numeric>
+#include <ranges>
+#include <string>
 
 namespace power_grid_model_cpp {
 
@@ -27,31 +31,36 @@ struct CLIPostCallback {
         add_attribute_output_filter();
     }
 
-    static bool is_msgpack_file(std::filesystem::path const& path) {
+    static PGM_SerializationFormat get_serialization_format(std::string const& argument_type,
+                                                            std::filesystem::path const& path) {
         std::ifstream file{path, std::ios::binary};
         if (!file.is_open()) {
-            return false;
+            throw CLI::ValidationError(argument_type, "Unable to open file: " + path.string());
         }
         uint8_t header;
         file.read(reinterpret_cast<char*>(&header), 1);
         if (!file) {
-            return false;
+            throw CLI::ValidationError(argument_type, "Unable to read from file: " + path.string());
         }
         // Check for fixmap (0x80-0x8f), map16 (0xde), or map32 (0xdf)
-        return (header >= 0x80 && header <= 0x8f) || header == 0xde || header == 0xdf;
+        bool const is_msgpack = (header >= 0x80 && header <= 0x8f) || header == 0xde || header == 0xdf;
+        return is_msgpack ? PGM_msgpack : PGM_json;
     }
 
     void set_default_values() {
         // detect if input file is msgpack
-        options.input_serialization_format = is_msgpack_file(options.input_file) ? PGM_msgpack : PGM_json;
+        options.input_serialization_format = get_serialization_format("input", options.input_file);
         // detect if batch update file is provided
         options.is_batch = !options.batch_update_file.empty();
         // detect if batch update file is msgpack
-        options.batch_update_serialization_format =
-            options.is_batch && is_msgpack_file(options.batch_update_file) ? PGM_msgpack : PGM_json;
-        // default msgpack output if input or batch update is msgpack and user did not specify output format
+        options.batch_update_serialization_format.resize(options.batch_update_file.size());
+        std::transform(options.batch_update_file.cbegin(), options.batch_update_file.cend(),
+                       options.batch_update_serialization_format.begin(),
+                       [](auto const& path) { return get_serialization_format("batch-update", path); });
+        // default msgpack output if input or any of the batch updates is msgpack and user did not specify output format
         if (msgpack_flag->count() == 0 && (options.input_serialization_format == PGM_msgpack ||
-                                           options.batch_update_serialization_format == PGM_msgpack)) {
+                                           std::ranges::any_of(options.batch_update_serialization_format,
+                                                               [](auto format) { return format == PGM_msgpack; }))) {
             options.use_msgpack_output_serialization = true;
         }
         // default compact serialization if msgpack output and user did not specify compact option
@@ -130,7 +139,11 @@ CLIResult parse_cli_options(int argc, char** argv, ClIOptions& options) {
         "ExistingParentDirectory"};
 
     app.add_option("-i,--input", options.input_file, "Input file path")->required()->check(CLI::ExistingFile);
-    app.add_option("-b,--batch-update", options.batch_update_file, "Batch update file path")->check(CLI::ExistingFile);
+    app.add_option("-b,--batch-update", options.batch_update_file,
+                   "Batch update file path. Can be specified multiple times.\n"
+                   "If multiple files are specified, the core will intepret them as the cartesian product of all "
+                   "combinations of all scenarios in the list of batch datasets.")
+        ->check(CLI::ExistingFile);
     app.add_option("-o,--output", options.output_file, "Output file path")
         ->required()
         ->check(existing_parent_dir_validator);
@@ -212,7 +225,10 @@ CLIResult parse_cli_options(int argc, char** argv, ClIOptions& options) {
 std::ostream& operator<<(std::ostream& os, ClIOptions const& options) {
     os << "CLI Options:\n";
     os << "Input file: " << options.input_file << "\n";
-    os << "Batch update file: " << options.batch_update_file << "\n";
+    os << "Batch update file: \n";
+    for (auto const& file : options.batch_update_file) {
+        os << '\t' << file << "\n";
+    }
     os << "Output file: " << options.output_file << "\n";
 
     os << "Calculation type: " << options.calculation_type << "\n";
