@@ -492,8 +492,18 @@ class MainModelImpl {
         return *meta_data_;
     }
 
-    void check_no_experimental_features_used(Options const& /*options*/) const {
-        // currently no experimental features
+    void check_no_experimental_features_used(Options const& options, ConstDataset const* batch_dataset) const {
+        if (!std::ranges::all_of(
+                state_.components.template citer<VoltageRegulator>(),
+                [](auto const& regulator) { return is_nan(regulator.q_min()) && is_nan(regulator.q_max()); }) ||
+            (batch_dataset != nullptr &&
+             batch_dataset->for_each_component<meta_data::update_getter_s, VoltageRegulator>([](auto const& span) {
+                 return !std::ranges::all_of(span, [](VoltageRegulatorUpdate const& regulator) {
+                     return is_nan(regulator.q_min) && is_nan(regulator.q_max);
+                 });
+             }))) {
+            throw ExperimentalFeature{"Voltage Regulator with Qmin/Qmax limits is an experimental feature"};
+        }
     }
 
   private:
@@ -503,22 +513,13 @@ class MainModelImpl {
         assert(!result_data.is_batch());
 
         auto const output_func = [this, &math_output, &result_data]<typename CT>() {
-            auto process_output_span = [this, &math_output](auto const& span) {
-                if (std::empty(span)) {
-                    return;
-                }
-                main_core::output_result<CT>(state_, math_output, span);
-            };
-
-            if (result_data.is_columnar(CT::name)) {
-                auto const span =
-                    result_data.get_columnar_buffer_span<typename output_type_getter<SolverOutputType>::type, CT>();
-                process_output_span(span);
-            } else {
-                auto const span =
-                    result_data.get_buffer_span<typename output_type_getter<SolverOutputType>::type, CT>();
-                process_output_span(span);
-            }
+            result_data.for_each_component<typename output_type_getter<SolverOutputType>::type, CT>(
+                [this, &math_output](auto const& span) {
+                    if (std::empty(span)) {
+                        return;
+                    }
+                    main_core::output_result<CT>(state_, math_output, span);
+                });
         };
 
         Timer const t_output{logger, LogEvent::produce_output};
