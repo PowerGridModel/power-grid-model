@@ -96,56 +96,6 @@ class SomeTestException : public std::runtime_error {
     using std::runtime_error::runtime_error;
 };
 
-class TestLogger : public common::logging::Logger {
-  public:
-    struct EmptyEvent {};
-    static constexpr EmptyEvent empty_event{};
-
-    struct Entry {
-        LogEvent event;
-        std::variant<EmptyEvent, std::string, double, Idx> data;
-    };
-    using Data = std::vector<Entry>;
-
-    // Mock logger for testing
-    void log(LogEvent event) override { log_.emplace_back(event, empty_event); }
-    void log(LogEvent event, std::string_view message) override { log_.emplace_back(event, std::string{message}); }
-    void log(LogEvent event, double value) override { log_.emplace_back(event, value); }
-    void log(LogEvent event, Idx value) override { log_.emplace_back(event, value); }
-
-    Data const& report() const { return log_; }
-
-    template <std::derived_from<Logger> T> T& merge_into(T& destination) const {
-        if (&destination == this) {
-            return destination; // nothing to do
-        }
-        for (const auto& entry : report()) {
-            std::visit(
-                [&destination, event = entry.event](auto&& arg) {
-                    using U = std::decay_t<decltype(arg)>;
-                    if constexpr (std::same_as<U, TestLogger::EmptyEvent>) {
-                        destination.log(event);
-                    } else {
-                        destination.log(event, arg);
-                    }
-                },
-                entry.data);
-        }
-        return destination;
-    }
-
-  private:
-    Data log_;
-};
-
-class MultiThreadedTestLogger : public common::logging::MultiThreadedLoggerImpl<TestLogger> {
-  public:
-    using MultiThreadedLoggerImpl::MultiThreadedLoggerImpl;
-    using Data = TestLogger::Data;
-
-    Data const& report() const { return get().report(); }
-};
-
 using common::logging::MultiThreadedLogger;
 
 MultiThreadedLogger& no_logger() {

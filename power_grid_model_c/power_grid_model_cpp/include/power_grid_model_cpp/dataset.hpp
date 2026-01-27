@@ -15,6 +15,7 @@
 
 #include <map>
 #include <set>
+#include <variant>
 
 namespace power_grid_model_cpp {
 class ComponentTypeNotFound : public PowerGridError {
@@ -214,23 +215,40 @@ class DatasetConst {
     DatasetInfo info_;
 };
 
-using AttributeBufferPtr = std::unique_ptr<void, std::add_pointer_t<void(RawDataConstPtr)>>;
-struct AttributeBufferCreator {
-    template <class T> AttributeBufferPtr operator()(Idx size, bool fill_in_nan = false) const {
-        static constexpr auto delete_ptr = [](RawDataConstPtr ptr) { delete[] reinterpret_cast<T const*>(ptr); };
-        auto ptr = AttributeBufferPtr{new T[size], delete_ptr};
-        auto raw_ptr = reinterpret_cast<T*>(ptr.get());
-        if (fill_in_nan) {
-            std::fill_n(raw_ptr, size, nan_value<T>());
-        }
-        return ptr;
-    }
+class AttributeBuffer {
+  private:
+    using VariantType = std::variant<std::monostate, std::vector<ID>, std::vector<IntS>, std::vector<double>,
+                                     std::vector<std::array<double, 3>>>;
+
+    struct BufferCreator {
+        Idx size;
+        template <class T> VariantType operator()() const { return std::vector<T>(size, nan_value<T>()); }
+    };
+
+    struct PtrGetter {
+        // NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)
+        AttributeBuffer& buffer;
+        template <class T> RawDataPtr operator()() const { return std::get<std::vector<T>>(buffer.buffer_).data(); }
+    };
+
+  public:
+    AttributeBuffer() = default;
+
+    explicit AttributeBuffer(MetaAttribute const* attribute, Idx size)
+        : attribute_{attribute},
+          buffer_{pgm_type_func_selector(MetaData::attribute_ctype(attribute), BufferCreator{size})} {}
+
+    RawDataPtr get() { return pgm_type_func_selector(MetaData::attribute_ctype(attribute_), PtrGetter{*this}); }
+
+  private:
+    MetaAttribute const* attribute_{nullptr};
+    VariantType buffer_;
 };
 
 struct OwningMemory {
     std::vector<Buffer> buffers;
     std::vector<std::vector<Idx>> indptrs;
-    std::vector<std::vector<AttributeBufferPtr>> attribute_buffers;
+    std::vector<std::vector<AttributeBuffer>> attribute_buffers;
 };
 
 struct OwningDataset {
@@ -247,7 +265,7 @@ struct OwningDataset {
 
         for (Idx component_idx{}; component_idx < info.n_components(); ++component_idx) {
             auto const& component_name = info.component_name(component_idx);
-            auto const component_meta = MetaData::get_component_by_name(dataset_name, component_name);
+            auto const* const component_meta = MetaData::get_component_by_name(dataset_name, component_name);
             Idx const component_size = info.component_total_elements(component_idx);
             Idx const elements_per_scenario = info.component_elements_per_scenario(component_idx);
 
@@ -264,11 +282,9 @@ struct OwningDataset {
                 auto const& attribute_indications = info.attribute_indications(component_idx);
                 auto& current_attribute_buffers = storage.attribute_buffers.emplace_back();
                 for (auto const& attribute_name : attribute_indications) {
-                    auto const attribute_meta =
+                    auto const* const attribute_meta =
                         MetaData::get_attribute_by_name(dataset_name, component_name, attribute_name);
-                    auto const attribute_ctype = MetaData::attribute_ctype(attribute_meta);
-                    current_attribute_buffers.emplace_back(
-                        pgm_type_func_selector(attribute_ctype, AttributeBufferCreator{}, component_size));
+                    current_attribute_buffers.emplace_back(attribute_meta, component_size);
                     writable_dataset.set_attribute_buffer(component_name, attribute_name,
                                                           current_attribute_buffers.back().get());
                     dataset.add_attribute_buffer(component_name, attribute_name,
@@ -294,7 +310,8 @@ struct OwningDataset {
             auto const& component_name = ref_info.component_name(component_idx);
             auto const& component_meta = MetaData::get_component_by_name(dataset_name, component_name);
             // skip components not in the filter
-            if (enable_filters && !output_component_attribute_filters.contains(component_meta)) {
+            if (enable_filters &&
+                output_component_attribute_filters.find(component_meta) == output_component_attribute_filters.end()) {
                 continue;
             }
 
@@ -306,10 +323,10 @@ struct OwningDataset {
             Idx const component_size = component_elements_per_scenario * batch_size;
             storage.indptrs.emplace_back();
 
+            auto const component_filter_it = output_component_attribute_filters.find(component_meta);
             std::set<MetaAttribute const*> const& attribute_filter =
-                output_component_attribute_filters.contains(component_meta)
-                    ? output_component_attribute_filters.at(component_meta)
-                    : std::set<MetaAttribute const*>{};
+                component_filter_it != output_component_attribute_filters.end() ? component_filter_it->second
+                                                                                : std::set<MetaAttribute const*>{};
             if (attribute_filter.empty()) {
                 // create full row buffer
                 auto& component_buffer = storage.buffers.emplace_back(component_meta, component_size);
@@ -322,11 +339,10 @@ struct OwningDataset {
                 storage.attribute_buffers.emplace_back();
                 dataset.add_buffer(component_name, component_elements_per_scenario, component_size, nullptr,
                                    component_buffer);
-                for (auto const attribute_meta : attribute_filter) {
+                for (auto const* const attribute_meta : attribute_filter) {
                     auto const attribute_name = MetaData::attribute_name(attribute_meta);
-                    auto const attribute_ctype = MetaData::attribute_ctype(attribute_meta);
-                    auto& attribute_buffer = storage.attribute_buffers.back().emplace_back(
-                        pgm_type_func_selector(attribute_ctype, AttributeBufferCreator{}, component_size));
+                    auto& attribute_buffer =
+                        storage.attribute_buffers.back().emplace_back(attribute_meta, component_size);
                     dataset.add_attribute_buffer(component_name, attribute_name, attribute_buffer.get());
                 }
             }

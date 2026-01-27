@@ -486,7 +486,14 @@ class MainModelImpl {
         return *meta_data_;
     }
 
-    void check_no_experimental_features_used(Options const& /*options*/) const {}
+    void check_no_experimental_features_used(Options const& options) const {
+        if (options.calculation_type == CalculationType::power_flow &&
+            options.calculation_method == CalculationMethod::newton_raphson &&
+            state_.components.template size<VoltageRegulator>() > 0) {
+            throw ExperimentalFeature{
+                "Voltage Regulator with Newton-Raphson Power Flow Method is an experimental feature."};
+        }
+    }
 
   private:
     template <solver_output_type SolverOutputType>

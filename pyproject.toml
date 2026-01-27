@@ -46,7 +46,13 @@ lint = [
     "clang-format ~= 18.0", # C++ formatter
 ]
 
-dev = [{ include-group = "test" }, { include-group = "lint" }]
+example = ["ipykernel"]
+
+dev = [
+    { include-group = "test" },
+    { include-group = "lint" },
+    { include-group = "example" },
+]
 
 code-generation = ["dataclasses_json", "jinja2"]
 

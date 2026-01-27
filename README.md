@@ -4,15 +4,23 @@ SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridm
 SPDX-License-Identifier: MPL-2.0
 -->
 
-[![PyPI version](https://badge.fury.io/py/power-grid-model.svg?no-cache)](https://badge.fury.io/py/power-grid-model) <!-- markdownlint-disable-line first-line-h1 line-length -->
+[![Power Grid Model logo](https://github.com/PowerGridModel/.github/blob/main/artwork/svg/color.svg)](#) <!-- markdownlint-disable-line first-line-h1 line-length no-empty-links -->
+
+[![PyPI version](https://badge.fury.io/py/power-grid-model.svg?no-cache)](https://badge.fury.io/py/power-grid-model)
+[![PyPI Downloads](https://static.pepy.tech/badge/power-grid-model)](https://pepy.tech/project/power-grid-model)
+[![PyPI Downloads per month](https://static.pepy.tech/badge/power-grid-model/month)](https://pepy.tech/project/power-grid-model)
+
 [![Anaconda-Server Badge](https://anaconda.org/conda-forge/power-grid-model/badges/version.svg?no-cache)](https://anaconda.org/conda-forge/power-grid-model)
+[![Anaconda-Server Platforms](https://anaconda.org/conda-forge/power-grid-model/badges/platforms.svg)](https://anaconda.org/conda-forge/power-grid-model)
+[![Anaconda-Server Downloads](https://anaconda.org/conda-forge/power-grid-model/badges/downloads.svg)](https://anaconda.org/conda-forge/power-grid-model)
+
 [![License: MPL2.0](https://img.shields.io/badge/License-MPL2.0-informational.svg)](https://github.com/PowerGridModel/power-grid-model/blob/main/LICENSE)
 [![OpenSSF Best Practices](https://bestpractices.coreinfrastructure.org/projects/7298/badge)](https://bestpractices.coreinfrastructure.org/projects/7298)
-[![Downloads](https://static.pepy.tech/badge/power-grid-model)](https://pepy.tech/project/power-grid-model)
-[![Downloads](https://static.pepy.tech/badge/power-grid-model/month)](https://pepy.tech/project/power-grid-model)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8054429.svg)](https://zenodo.org/record/8054429)
 
 [![CI Build](https://github.com/PowerGridModel/power-grid-model/actions/workflows/ci.yml/badge.svg)](https://github.com/PowerGridModel/power-grid-model/actions/workflows/ci.yml)
 [![docs](https://readthedocs.org/projects/power-grid-model/badge/)](https://power-grid-model.readthedocs.io/en/stable/)
+[![Nightly build](https://github.com/PowerGridModel/power-grid-model/actions/workflows/nightly.yml/badge.svg)](https://github.com/PowerGridModel/power-grid-model/actions/workflows/nightly.yml)
 
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=PowerGridModel_power-grid-model&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=PowerGridModel_power-grid-model)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=PowerGridModel_power-grid-model&metric=coverage)](https://sonarcloud.io/summary/new_code?id=PowerGridModel_power-grid-model)
@@ -20,12 +28,6 @@ SPDX-License-Identifier: MPL-2.0
 [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=PowerGridModel_power-grid-model&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=PowerGridModel_power-grid-model)
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=PowerGridModel_power-grid-model&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=PowerGridModel_power-grid-model)
 [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=PowerGridModel_power-grid-model&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=PowerGridModel_power-grid-model)
-
-[![Nightly build](https://github.com/PowerGridModel/power-grid-model/actions/workflows/nightly.yml/badge.svg)](https://github.com/PowerGridModel/power-grid-model/actions/workflows/nightly.yml)
-
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8054429.svg)](https://zenodo.org/record/8054429)
-
-[![Power Grid Model logo](https://github.com/PowerGridModel/.github/blob/main/artwork/svg/color.svg)](#) <!-- markdownlint-disable-line no-empty-links line-length -->
 
 # Power Grid Model
 

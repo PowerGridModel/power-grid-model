@@ -8,6 +8,7 @@
 
 #include <cassert>
 #include <mutex>
+#include <utility>
 
 namespace power_grid_model::common::logging {
 
@@ -29,7 +30,7 @@ class MultiThreadedLoggerImpl : public MultiThreadedLogger {
             return *this;
         };
         ThreadLogger(ThreadLogger&& other) noexcept
-            : LoggerType{std::move(static_cast<LoggerType>(other))}, parent_{other.parent_} {};
+            : LoggerType{std::move(static_cast<LoggerType&&>(other))}, parent_{other.parent_} {};
         ThreadLogger& operator=(ThreadLogger&& other) noexcept {
             if (this != &other) {
                 parent_ = std::exchange(other.parent_, nullptr);

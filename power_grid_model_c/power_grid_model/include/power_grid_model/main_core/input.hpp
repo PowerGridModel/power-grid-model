@@ -184,6 +184,23 @@ inline void add_component(ComponentContainer& components, Inputs&& component_inp
             double const u_rated = get_component<Node>(components, regulated_terminal).u_rated();
 
             emplace_component<Component>(components, id, input, regulated_object_type, u_rated);
+        } else if constexpr (std::derived_from<Component, VoltageRegulator>) {
+            Idx2D const regulated_object_idx =
+                main_core::get_component_idx_by_id<ComponentContainer>(components, input.regulated_object);
+            regulated_objects.push_back(regulated_object_idx);
+
+            // regulate generators
+            // also allow loads, in order to have more flexibility when converting existing models
+            if (regulated_object_idx.group != get_component_type_index<SymGenerator>(components) &&
+                regulated_object_idx.group != get_component_type_index<AsymGenerator>(components) &&
+                regulated_object_idx.group != get_component_type_index<SymLoad>(components) &&
+                regulated_object_idx.group != get_component_type_index<AsymLoad>(components)) {
+                throw InvalidRegulatedObject(input.regulated_object, Component::name);
+            }
+
+            auto const& regulated_object = get_component<Appliance>(components, regulated_object_idx);
+            auto const regulated_object_type = regulated_object.math_model_type();
+            emplace_component<Component>(components, id, input, regulated_object_type);
         }
     }
     // Make sure that each regulated object has at most one regulator

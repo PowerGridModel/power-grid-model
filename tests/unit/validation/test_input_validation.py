@@ -24,9 +24,11 @@ from power_grid_model.enum import CalculationType, ComponentAttributeFilterOptio
 from power_grid_model.validation import validate_input_data
 from power_grid_model.validation.errors import (
     FaultPhaseError,
+    InfinityError,
     InvalidAssociatedEnumValueError,
     InvalidEnumValueError,
     InvalidIdError,
+    InvalidVoltageRegulationError,
     MixedPowerCurrentSensorError,
     MultiComponentNotUniqueError,
     MultiFieldValidationError,
@@ -374,6 +376,14 @@ def original_data() -> dict[ComponentType, np.ndarray]:
     fault["fault_object"] = [200, 3] + list(range(10, 28, 2)) + 9 * [0]
     fault["r_f"] = [-1.0, 0.0, 1.0] + 17 * [_nan_type(ComponentType.fault, "r_f")]
     fault["x_f"] = [-1.0, 0.0, 1.0] + 17 * [_nan_type(ComponentType.fault, "x_f")]
+
+    voltage_regulator = initialize_array(DatasetType.input, ComponentType.voltage_regulator, 8)
+    voltage_regulator["id"] = [60, 61, 62, 63, 64, 65, 66, 67]
+    # 20-27 are gen/load IDs, 200 is invalid, 16,18 are shunts/sources, 20 is duplicate with different u_ref
+    voltage_regulator["regulated_object"] = [20, 23, 25, 27, 200, 16, 18, 20]
+    voltage_regulator["status"] = [1, 0, -1, 1, 1, 5, 0, 1]  # -1 and 5 are invalid boolean values
+    voltage_regulator["u_ref"] = [1.02, 100, 100.0, 100.0, 1.0, np.inf, 0.0, 1.03]
+
     data = {
         ComponentType.node: node,
         ComponentType.line: line,
@@ -396,6 +406,7 @@ def original_data() -> dict[ComponentType, np.ndarray]:
         ComponentType.sym_current_sensor: sym_current_sensor,
         ComponentType.asym_current_sensor: asym_current_sensor,
         ComponentType.fault: fault,
+        ComponentType.voltage_regulator: voltage_regulator,
     }
     return data  # noqa: RET504
 
@@ -952,6 +963,26 @@ def test_validate_input_data_transformer_tap_regulator(input_data):
         in validation_errors
     )
     assert NotUniqueError(ComponentType.transformer_tap_regulator, "regulated_object", [51, 54]) in validation_errors
+
+
+def test_validate_input_data_voltage_regulator(input_data):
+    validation_errors = validate_input_data(input_data, calculation_type=CalculationType.power_flow)
+    assert validation_errors is not None
+
+    assert NotBooleanError(ComponentType.voltage_regulator, "status", [62, 65]) in validation_errors
+    assert NotUniqueError(ComponentType.voltage_regulator, "regulated_object", [60, 67]) in validation_errors
+    assert NotGreaterThanError(ComponentType.voltage_regulator, "u_ref", [66], 0.0) in validation_errors
+    assert InfinityError(ComponentType.voltage_regulator, "u_ref", [65]) in validation_errors
+    assert (
+        InvalidIdError(
+            ComponentType.voltage_regulator,
+            "regulated_object",
+            [64, 65, 66],
+            [ComponentType.sym_gen, ComponentType.asym_gen, ComponentType.sym_load, ComponentType.asym_load],
+        )
+        in validation_errors
+    )
+    assert InvalidVoltageRegulationError(ComponentType.voltage_regulator, "u_ref", [60, 67]) in validation_errors
 
 
 def test_fault(input_data):
