@@ -88,8 +88,8 @@ class MainModel {
 
     CalculationInfo calculation_info() const { return info_.get(); }
 
-    void check_no_experimental_features_used(Options const& options) const {
-        impl().check_no_experimental_features_used(options);
+    void check_no_experimental_features_used(Options const& options, ConstDataset const* batch_dataset) const {
+        impl().check_no_experimental_features_used(options, batch_dataset);
     }
 
   private:

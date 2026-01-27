@@ -167,7 +167,8 @@ class Subcase {
             {"UnsupportedVoltageRegulatorSourceCombinationError",
              std::regex{"Nodes with a source and a voltage regulated load/generator are not supported when both are "
                         "enabled. Found at node with id (-?\\d+)"}},
-            {"PowerGridDatasetError", std::regex{"Dataset error: "}}, // multiple different flavors
+            {"ExperimentalFeature", std::regex{" is an experimental feature"}}, // multiple different flavors
+            {"PowerGridDatasetError", std::regex{"Dataset error: "}},           // multiple different flavors
             {"PowerGridUnreachableHit",
              std::regex{"Unreachable code hit when executing "}}, // multiple different flavors
             {"PowerGridNotImplementedError",
