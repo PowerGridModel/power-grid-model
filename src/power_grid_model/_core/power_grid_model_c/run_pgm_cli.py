@@ -11,13 +11,13 @@ from pathlib import Path
 
 def get_pgm_cli_path() -> Path:
     """
-    Returns the path to PGM dynamic library.
+    Returns the path to PGM CLI executable.
     """
     package_dir = Path(str(files(__package__)))
     bin_dir = package_dir / "bin"
     platform_name = platform.uname().system
 
-    # determine DLL file name
+    # determine executable file name
     if platform_name == "Windows":
         exe_file = Path("power-grid-model.exe")
     elif platform_name == "Darwin" or platform.system() == "Linux":
@@ -26,7 +26,7 @@ def get_pgm_cli_path() -> Path:
         raise NotImplementedError(f"Unsupported platform: {platform_name}")
     bin_path = bin_dir / exe_file
 
-    # determine editable path to the DLL
+    # determine editable path to the executable
     # __file__
     #   -> power_grid_model_c (..)
     #     -> _core (..)
