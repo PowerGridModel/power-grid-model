@@ -282,7 +282,7 @@ std::vector<ShortCircuitInput> prepare_short_circuit_input(main_model_state_c au
     for (Idx i : IdxRange{n_math_solvers}) {
         auto map = build_dense_mapping(topo_bus_indices[i], state.math_topology[i]->n_bus());
 
-        for (auto&& [reordered_idx, original_idx] : enumerated_zip_sequence(map.reorder)) {
+        for (auto&& [reordered_idx, original_idx] : enumerate(map.reorder)) {
             fault_coup[topo_fault_indices[i][original_idx]] = Idx2D{.group = i, .pos = reordered_idx};
         }
 
