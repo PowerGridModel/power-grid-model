@@ -107,8 +107,6 @@ template <symmetry_tag sym> struct Calculator<short_circuit_t, sym> {
     template <typename State>
     static auto preparer(State const& state, ComponentToMathCoupling& comp_coup, MainModelOptions const& options) {
         return [&state, &comp_coup, voltage_scaling = options.short_circuit_voltage_scaling](Idx n_math_solvers) {
-            // assert(solvers_cache_status.is_topology_valid());
-            // assert(solvers_cache_status.template is_parameter_valid<sym>());
             return main_core::prepare_short_circuit_input<sym>(state, comp_coup, n_math_solvers, voltage_scaling);
         };
     }

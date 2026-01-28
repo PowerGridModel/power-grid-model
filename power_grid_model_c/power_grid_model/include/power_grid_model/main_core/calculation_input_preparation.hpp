@@ -250,8 +250,6 @@ std::vector<StateEstimationInput<sym>> prepare_state_estimation_input(main_model
     return se_input;
 }
 
-template <symmetry_tag sym> void prepare_short_circuit_scenario_topo() {}
-
 template <symmetry_tag sym>
 std::vector<ShortCircuitInput> prepare_short_circuit_input(main_model_state_c auto const& state,
                                                            ComponentToMathCoupling& comp_coup, Idx n_math_solvers,
