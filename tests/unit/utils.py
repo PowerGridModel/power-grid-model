@@ -19,6 +19,7 @@ from power_grid_model.errors import (
     AutomaticTapInputError,
     ConflictID,
     ConflictVoltage,
+    ExperimentalFeature,
     IDNotFound,
     IDWrongType,
     InvalidBranch,
@@ -86,6 +87,7 @@ KNOWN_EXCEPTIONS: dict[str, type[BaseException] | None] = {
         MaxIterationReached,
         UnsupportedRegulatorCombinationError,
         UnsupportedVoltageRegulatorSourceCombinationError,
+        ExperimentalFeature,
     )
 }
 KNOWN_EXCEPTIONS["Failed"] = _Failed

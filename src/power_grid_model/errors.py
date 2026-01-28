@@ -12,6 +12,7 @@ from power_grid_model._core.errors import (  # noqa: F401
     ConflictID,
     ConflictingAngleMeasurementType,
     ConflictVoltage,
+    ExperimentalFeature,
     IDNotFound,
     IDWrongType,
     InvalidArguments,

@@ -6,10 +6,5 @@
   "xfail": {
     "raises": "UnsupportedRegulatorCombinationError",
     "reason": "Combination of voltage regulators and transformer tap regulators is not supported."
-  },
-  "extra_params": {
-    "newton_raphson": {
-      "experimental_features": "enabled"
-    }
   }
 }
