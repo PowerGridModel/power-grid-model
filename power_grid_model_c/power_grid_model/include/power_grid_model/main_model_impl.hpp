@@ -264,14 +264,18 @@ class MainModelImpl {
         });
     }
 
-    template <solver_output_type SolverOutputType, typename MathSolverType, typename YBus, typename InputType,
-              typename PrepareInputFn, typename SolveFn>
+    template <typename MathSolverType, typename YBus, typename PrepareInputFn, typename SolveFn>
         requires std::invocable<std::remove_cvref_t<PrepareInputFn>, Idx /*n_math_solvers*/> &&
-                 std::invocable<std::remove_cvref_t<SolveFn>, MathSolverType&, YBus const&, InputType const&> &&
-                 std::same_as<std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>, std::vector<InputType>> &&
-                 std::same_as<std::invoke_result_t<SolveFn, MathSolverType&, YBus const&, InputType const&>,
-                              SolverOutputType>
-    std::vector<SolverOutputType> calculate_(PrepareInputFn&& prepare_input, SolveFn&& solve, Logger& logger) {
+                 std::ranges::range<std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>> &&
+                 std::invocable<
+                     std::remove_cvref_t<SolveFn>, MathSolverType&, YBus const&,
+                     typename std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>::const_reference> &&
+                 solver_output_type<std::invoke_result_t<
+                     SolveFn, MathSolverType&, YBus const&,
+                     typename std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>::const_reference>>
+    auto calculate_(PrepareInputFn&& prepare_input, SolveFn&& solve, Logger& logger) {
+        using InputType = typename std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>::const_reference;
+        using SolverOutputType = typename std::invoke_result_t<SolveFn, MathSolverType&, YBus const&, InputType>;
         using sym = typename SolverOutputType::sym;
 
         assert(construction_complete_);
@@ -298,71 +302,32 @@ class MainModelImpl {
         }();
     }
 
-    template <symmetry_tag sym> auto calculate_power_flow_(Options const& options, Logger& logger) {
-        using Calc = Calculator<power_flow_t, sym>;
-
-        return [this, &comp_coup = state_.comp_coup, &options,
-                &logger](MainModelState const& state,
-                         CalculationMethod calculation_method) -> std::vector<SolverOutput<sym>> {
-            (void)state; // to avoid unused-lambda-capture when in Release build
-            assert(&state == &state_);
-
-            return calculate_<SolverOutput<sym>, MathSolverProxy<sym>, YBus<sym>, PowerFlowInput<sym>>(
-                Calc::preparer(state, comp_coup, options), Calc::solver(calculation_method, options, logger), logger);
-        };
-    }
-
-    template <symmetry_tag sym> auto calculate_state_estimation_(Options const& options, Logger& logger) {
-        using Calc = Calculator<state_estimation_t, sym>;
-
-        return [this, &comp_coup = state_.comp_coup, &options,
-                &logger](MainModelState const& state,
-                         CalculationMethod calculation_method) -> std::vector<SolverOutput<sym>> {
-            (void)state; // to avoid unused-lambda-capture when in Release build
-            assert(&state == &state_);
-
-            return calculate_<SolverOutput<sym>, MathSolverProxy<sym>, YBus<sym>, StateEstimationInput<sym>>(
-                Calc::preparer(state, comp_coup, options), Calc::solver(calculation_method, options, logger), logger);
-        };
-    }
-
-    template <symmetry_tag sym> auto calculate_short_circuit_(Options const& options, Logger& logger) {
-        using Calc = Calculator<short_circuit_t, sym>;
-
-        return [this, &comp_coup = state_.comp_coup, &options,
-                &logger](MainModelState const& state,
-                         CalculationMethod calculation_method) -> std::vector<ShortCircuitSolverOutput<sym>> {
-            (void)state; // to avoid unused-lambda-capture when in Release build
-            assert(&state == &state_);
-
-            return calculate_<ShortCircuitSolverOutput<sym>, MathSolverProxy<sym>, YBus<sym>, ShortCircuitInput>(
-                Calc::preparer(state, comp_coup, options), Calc::solver(calculation_method, options, logger), logger);
-        };
-    }
-
     // Calculate with optimization, e.g., automatic tap changer
     template <calculation_type_tag calculation_type, symmetry_tag sym>
     auto calculate(Options const& options, Logger& logger) {
-        auto const calculator = [this, &options, &logger] {
+        auto const get_calculator = [this, &options, &logger] {
+            using Calc = Calculator<calculation_type, sym>;
+
             assert(options.optimizer_type == OptimizerType::no_optimization ||
                    (std::derived_from<calculation_type, power_flow_t>));
-            if constexpr (std::derived_from<calculation_type, power_flow_t>) {
-                return calculate_power_flow_<sym>(options, logger);
-            } else if constexpr (std::derived_from<calculation_type, state_estimation_t>) {
-                return calculate_state_estimation_<sym>(options, logger);
-            } else if constexpr (std::derived_from<calculation_type, short_circuit_t>) {
-                return calculate_short_circuit_<sym>(options, logger);
-            } else {
-                throw UnreachableHit{"MainModelImpl::calculate", "Unknown calculation type"};
-            }
-        }();
+
+            return [this, &comp_coup = state_.comp_coup, &options, &logger](MainModelState const& state,
+                                                                            CalculationMethod calculation_method) {
+                (void)state; // to avoid unused-lambda-capture when in Release build
+                assert(&state == &state_);
+
+                return calculate_<MathSolverProxy<sym>, YBus<sym>>(Calc::preparer(state, comp_coup, options),
+                                                                   Calc::solver(calculation_method, options, logger),
+                                                                   logger);
+            };
+        };
 
         SearchMethod const& search_method = options.optimizer_strategy == OptimizerStrategy::any
                                                 ? SearchMethod::linear_search
                                                 : SearchMethod::binary_search;
 
         return optimizer::get_optimizer<MainModelState, ConstDataset>(
-                   options.optimizer_type, options.optimizer_strategy, calculator,
+                   options.optimizer_type, options.optimizer_strategy, get_calculator(),
                    [this](ConstDataset const& update_data) {
                        this->update_components<permanent_update_t>(update_data);
                    },
