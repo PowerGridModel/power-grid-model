@@ -9,7 +9,6 @@
 #include "../all_components.hpp"
 
 namespace power_grid_model::main_core {
-
 template <std::derived_from<Branch> ComponentType, class ComponentContainer>
     requires model_component_state_c<MainModelState, ComponentContainer, ComponentType>
 constexpr auto get_branch_nodes(MainModelState<ComponentContainer> const& state, Idx topology_sequence_idx) {
