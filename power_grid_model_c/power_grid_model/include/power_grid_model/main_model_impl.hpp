@@ -347,6 +347,12 @@ class MainModelImpl {
                 is_three_phase ? CalculationSymmetry::symmetric : CalculationSymmetry::asymmetric;
         }
 
+        if (options.calculation_type == CalculationType::power_flow &&
+            options.calculation_method != CalculationMethod::newton_raphson &&
+            state_.components.template size<VoltageRegulator>() > 0) {
+            throw InvalidCalculationMethod{};
+        }
+
         calculation_type_symmetry_func_selector(
             options.calculation_type, options.calculation_symmetry,
             []<calculation_type_tag calculation_type, symmetry_tag sym>(
