@@ -143,4 +143,4 @@ class UnsupportedVoltageRegulatorSourceCombinationError(PowerGridError):
 
 
 class ExperimentalFeature(PowerGridError):
-    """An experimental feature was used."""
+    """An experimental feature was used but experimental features are not enabled."""

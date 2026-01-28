@@ -17,6 +17,7 @@ from power_grid_model._core.errors import (
     ConflictID,
     ConflictingAngleMeasurementType,
     ConflictVoltage,
+    ExperimentalFeature,
     IDNotFound,
     IDWrongType,
     InvalidArguments,
@@ -42,7 +43,6 @@ from power_grid_model._core.errors import (
     TapSearchStrategyIncompatibleError,
     UnsupportedRegulatorCombinationError,
     UnsupportedVoltageRegulatorSourceCombinationError,
-    ExperimentalFeature,
 )
 from power_grid_model._core.index_integer import IdxNp
 from power_grid_model._core.power_grid_core import get_power_grid_core as get_pgc
