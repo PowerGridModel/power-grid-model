@@ -5,10 +5,5 @@
   "xfail": {
     "raises": "UnsupportedVoltageRegulatorSourceCombinationError",
     "reason": "Only the source or a voltage regulated load/generator can be enabled, not both."
-  },
-  "extra_params": {
-    "newton_raphson": {
-      "experimental_features": "enabled"
-    }
   }
 }
