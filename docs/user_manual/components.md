@@ -1262,8 +1262,7 @@ If `q_min` and `q_max` are provided, the reactive power is constrained within th
 If these limits are not provided, the reactive power can take any value needed to maintain the voltage setpoint.
 
 ```{warning}
-Voltage regulation is only supported by the [Newton-Raphson](#newton-raphson-power-flow) method as an experimental
-feature.
+Voltage regulation is only supported by the [Newton-Raphson power flow](./calculations.md#newton-raphson-power-flow) method.
 ```
 
 ```{note}

@@ -68,11 +68,12 @@ void PGM_get_indexer(PGM_Handle* handle, PGM_PowerGridModel const* model, char c
 
 // helper functions
 namespace {
-void check_no_experimental_features_used(MainModel const& model, MainModel::Options const& opt) {
+void check_no_experimental_features_used(MainModel const& model, MainModel::Options const& opt,
+                                         ConstDataset const* batch_dataset) {
     // optionally add experimental feature checks here
     using namespace std::string_literals;
 
-    model.check_no_experimental_features_used(opt);
+    model.check_no_experimental_features_used(opt, batch_dataset);
 }
 
 void check_calculate_valid_options(PGM_Options const& opt) {
@@ -308,7 +309,7 @@ void calculate_impl(MainModel& model, PGM_Options const& options, MutableDataset
     auto const extracted_options = extract_calculation_options(options);
 
     if (options.experimental_features == PGM_experimental_features_disabled) {
-        check_no_experimental_features_used(model, extracted_options);
+        check_no_experimental_features_used(model, extracted_options, batch_dataset);
     }
 
     calculate_multi_dimensional_impl(model, extracted_options, output_dataset, batch_dataset);

@@ -17,6 +17,7 @@ from power_grid_model._core.errors import (
     ConflictID,
     ConflictingAngleMeasurementType,
     ConflictVoltage,
+    ExperimentalFeature,
     IDNotFound,
     IDWrongType,
     InvalidArguments,
@@ -100,6 +101,7 @@ _UNSUPPORTED_VOLTAGE_REGULATOR_SOURCE_COMBINATION_ERROR_RE = re.compile(
     r"Nodes with a source and a voltage regulated load/generator are not supported when both are enabled. "
     r"Found at node with id (-?\d+)"
 )
+_EXPERIMENTAL_FEATURE_RE = re.compile(r" is an experimental feature")  # multiple different flavors
 
 _ERROR_MESSAGE_PATTERNS = {
     _MISSING_CASE_FOR_ENUM_RE: MissingCaseForEnumError,
@@ -129,6 +131,7 @@ _ERROR_MESSAGE_PATTERNS = {
     _POWER_GRID_NOT_IMPLEMENTED_ERROR_RE: PowerGridNotImplementedError,
     _UNSUPPORTED_REGULATOR_COMBINATION_ERROR_RE: UnsupportedRegulatorCombinationError,
     _UNSUPPORTED_VOLTAGE_REGULATOR_SOURCE_COMBINATION_ERROR_RE: UnsupportedVoltageRegulatorSourceCombinationError,
+    _EXPERIMENTAL_FEATURE_RE: ExperimentalFeature,
 }
 
 
