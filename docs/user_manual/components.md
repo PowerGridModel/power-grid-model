@@ -151,7 +151,11 @@ scenarios within a batch are not three-phase faults (i.e. `fault_type` is not `F
 
 $$
    \begin{eqnarray}
-      & Z_{\text{series}} = r + \mathrm{j}x \\
+      & Z_{\text{series}} = r + \mathrm{j}x
+   \end{eqnarray}
+$$
+$$
+   \begin{eqnarray}
       & Y_{\text{shunt}} = \frac{2 \pi fc}{\tan \delta +\mathrm{j}}
    \end{eqnarray}
 $$
@@ -238,19 +242,34 @@ for detailed explanation.
 
 $$
     \begin{eqnarray}
-        & |Z_{\text{series}}| = u_k*z_{\text{base,transformer}} \\
-        & \mathrm{Re}(Z_{\text{series}}) = \frac{p_k}{s_n}*z_{\text{base,transformer}} \\
-        & \mathrm{Im}(Z_{\text{series}}) = \sqrt{|Z_{\text{series}}|^2-\mathrm{Re}(Z_{\text{series}})^2} \\
+        & |Z_{\text{series}}| = u_k*z_{\text{base,transformer}}
     \end{eqnarray}
 $$
-
+$$
+    \begin{eqnarray}
+        & \mathrm{Re}(Z_{\text{series}}) = \frac{p_k}{s_n}*z_{\text{base,transformer}}
+    \end{eqnarray}
+$$
+$$
+    \begin{eqnarray}
+        & \mathrm{Im}(Z_{\text{series}}) = \sqrt{|Z_{\text{series}}|^2-\mathrm{Re}(Z_{\text{series}})^2}
+    \end{eqnarray}
+$$
 and $Y_{\text{shunt}}$ can be computed as
 
 $$
     \begin{eqnarray}
-        & |Y_{\text{shunt}}| = i_0*y_{\text{base,transformer}} \\
-        & \mathrm{Re}(Y_{\text{shunt}}) = \frac{s_n}{p_0}*y_{\text{base,transformer}} \\
-        & \mathrm{Im}(Y_{\text{shunt}}) = -\sqrt{|Y_{\text{shunt}}|^2-\mathrm{Re}(Y_{\text{shunt}})^2} \\
+        & |Y_{\text{shunt}}| = i_0*y_{\text{base,transformer}}
+   \end{eqnarray}
+$$
+$$
+    \begin{eqnarray}
+        & \mathrm{Re}(Y_{\text{shunt}}) = \frac{s_n}{p_0}*y_{\text{base,transformer}}
+   \end{eqnarray}
+$$
+$$
+    \begin{eqnarray}
+        & \mathrm{Im}(Y_{\text{shunt}}) = -\sqrt{|Y_{\text{shunt}}|^2-\mathrm{Re}(Y_{\text{shunt}})^2}
    \end{eqnarray}
 $$
 
@@ -310,9 +329,17 @@ Asymmetric calculation is not supported for `generic_branch`.
 
 $$
    \begin{eqnarray}
-      & Y_{\text{series}} = \frac{1}{r + \mathrm{j}x} \\
-      & Y_{\text{shunt}} =  g + \mathrm{j}b \\
-      & N = k \cdot e^{\mathrm{j} \theta} \\
+      & Y_{\text{series}} = \frac{1}{r + \mathrm{j}x}
+   \end{eqnarray}
+$$
+$$
+   \begin{eqnarray}
+      & Y_{\text{shunt}} =  g + \mathrm{j}b
+   \end{eqnarray}
+$$
+$$
+   \begin{eqnarray}
+      & N = k \cdot e^{\mathrm{j} \theta}
    \end{eqnarray}
 $$
 
@@ -632,8 +659,16 @@ Its value can be computed using following equations:
 
 $$
    \begin{eqnarray}
-        & z_{\text{source}} = \frac{s_{\text{base}}}{s_k} \\
-        & x_1 = \frac{z_{\text{source}}}{\sqrt{1+ \left(\frac{r}{x}\right)^2}} \\
+        & z_{\text{source}} = \frac{s_{\text{base}}}{s_k}
+   \end{eqnarray}
+$$
+$$
+   \begin{eqnarray}
+        & x_1 = \frac{z_{\text{source}}}{\sqrt{1+ \left(\frac{r}{x}\right)^2}}
+   \end{eqnarray}
+$$
+$$
+   \begin{eqnarray}
         & r_1 = x_1 \cdot \left(\frac{r}{x}\right)
    \end{eqnarray}
 $$
@@ -644,8 +679,16 @@ where $s_{\text{base}}$ is a constant value determined by the solver, and $\frac
 
 $$
    \begin{eqnarray}
-        & z_{\text{source,0}} = z_{\text{source}} \cdot \frac{z_0}{z_1} \\
-        & x_0 = \frac{z_{\text{source,0}}}{\sqrt{1 + \left(\frac{r}{x}\right)^2}} \\
+        & z_{\text{source,0}} = z_{\text{source}} \cdot \frac{z_0}{z_1}
+   \end{eqnarray}
+$$
+$$
+   \begin{eqnarray}
+        & x_0 = \frac{z_{\text{source,0}}}{\sqrt{1 + \left(\frac{r}{x}\right)^2}}
+   \end{eqnarray}
+$$
+$$
+   \begin{eqnarray}
         & r_0 = x_0 \cdot \left(\frac{r}{x}\right)
    \end{eqnarray}
 $$
@@ -817,8 +860,12 @@ For other calculation types, sensor output is undefined.
 
 $$
    \begin{eqnarray}
-        & u_{\text{residual}} = u_{\text{measured}} - u_{\text{state}} \\
-        & \theta_{\text{residual}} = \theta_{\text{measured}} - \theta_{\text{state}} \pmod{2 \pi}
+        & u_{\text{residual}} = u_{\text{measured}} - u_{\text{state}}
+   \end{eqnarray}
+$$
+$$
+   \begin{eqnarray}
+         & \theta_{\text{residual}} = \theta_{\text{measured}} - \theta_{\text{state}} \pmod{2 \pi}
    \end{eqnarray}
 $$
 
@@ -932,8 +979,12 @@ For other calculation types, sensor output is undefined.
 
 $$
    \begin{eqnarray}
-        & p_{\text{residual}} = p_{\text{measured}} - p_{\text{state}} \\
-        & q_{\text{residual}} = q_{\text{measured}} - q_{\text{state}}
+        & p_{\text{residual}} = p_{\text{measured}} - p_{\text{state}}
+   \end{eqnarray}
+$$
+$$
+   \begin{eqnarray}
+          & q_{\text{residual}} = q_{\text{measured}} - q_{\text{state}}
    \end{eqnarray}
 $$
 
@@ -1036,7 +1087,7 @@ $$
 
 Current sensors with `angle_measurement_type` equal to `AngleMeasurementType.local_angle` measure the phase shift
 between the voltage and the current phasor, i.e.,
-$\text{i_angle_measured} = \text{voltage_phase} - \text{current_phase}$.
+$\begin{equation}i\_angle\_measured = voltage\_phase - current\_phase\end{equation}$.
 As a result, the global current phasor depends on the local voltage phase offset and is obtained using the following
 formula.
 
@@ -1054,7 +1105,11 @@ As a result, the local angle current sensors have a different sign convention fr
 $$
    \begin{eqnarray}
         & i_{\text{residual}}
-               = i_{\text{measured}} - i_{\text{state}} && \\
+               = i_{\text{measured}} - i_{\text{state}}
+   \end{eqnarray}
+$$
+$$
+   \begin{eqnarray}
         & i_{\text{angle},\text{residual}}
                = i_{\text{angle},\text{measured}} - i_{\text{angle},\text{state}} \pmod{2 \pi}
    \end{eqnarray}
@@ -1223,7 +1278,11 @@ drop compensation.
 
 $$
    \begin{eqnarray}
-      & Z_{\text{compensation}} = r_{\text{compensation}} + \mathrm{j} x_{\text{compensation}} \\
+      & Z_{\text{compensation}} = r_{\text{compensation}} + \mathrm{j} x_{\text{compensation}}
+   \end{eqnarray}
+$$
+$$
+   \begin{eqnarray}
       & U_{\text{control}} = \left|\underline{U}_{\text{node}} - \underline{I}_{\text{transformer,out}}
                                  \cdot \underline{Z}_{\text{compensation}}\right|
                            = \left|\underline{U}_{\text{node}} + \underline{I}_{\text{transformer}}
@@ -1303,8 +1362,16 @@ The voltage regulator controls the generator to behave as a **PV node** in power
 
 $$
    \begin{eqnarray}
-      & P_{\text{gen}} = P_{\text{specified}} \\
-      & |U_{\text{node}}| = U_{\text{ref}} \\
+      & P_{\text{gen}} = P_{\text{specified}}
+   \end{eqnarray}
+$$
+$$
+   \begin{eqnarray}
+      & |U_{\text{node}}| = U_{\text{ref}}
+   \end{eqnarray}
+$$
+$$
+   \begin{eqnarray}
       & Q_{\text{gen}} = \text{calculated to satisfy } U_{\text{ref}}
    \end{eqnarray}
 $$
@@ -1320,8 +1387,16 @@ node becomes a PQ node:
 
 $$
    \begin{eqnarray}
-      & P_{\text{gen}} = P_{\text{specified}} \\
-      & Q_{\text{gen}} = Q_{\text{min}} \text{ or } Q_{\text{max}} \\
+      & P_{\text{gen}} = P_{\text{specified}}
+   \end{eqnarray}
+$$
+$$
+   \begin{eqnarray}
+      & Q_{\text{gen}} = Q_{\text{min}} \text{ or } Q_{\text{max}}
+   \end{eqnarray}
+$$
+$$
+   \begin{eqnarray}
       & |U_{\text{node}}| = \text{calculated from power flow}
    \end{eqnarray}
 $$
