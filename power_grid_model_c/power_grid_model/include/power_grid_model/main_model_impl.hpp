@@ -492,7 +492,7 @@ class MainModelImpl {
         return *meta_data_;
     }
 
-    void check_no_experimental_features_used(Options const& options, ConstDataset const* batch_dataset) const {
+    void check_no_experimental_features_used(Options const& /*options*/, ConstDataset const* batch_dataset) const {
         if (!std::ranges::all_of(
                 state_.components.template citer<VoltageRegulator>(),
                 [](auto const& regulator) { return is_nan(regulator.q_min()) && is_nan(regulator.q_max()); }) ||
