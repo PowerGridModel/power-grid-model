@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-set(PROJECT_SOURCES "test_entry_point.cpp")
+set(PROJECT_SOURCES "test_entry_point.cpp" "test_cli.cpp")
 
 add_executable(power_grid_model_cli_tests ${PROJECT_SOURCES})
 
