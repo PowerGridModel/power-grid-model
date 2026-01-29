@@ -11,3 +11,7 @@ cpp_build
 build
 node_modules
 python_cov_html
+
+# Feature request documents (to be converted to GitHub issues)
+FEATURE_REQUEST_*.md
+GITHUB_ISSUE_INSTRUCTIONS.md
