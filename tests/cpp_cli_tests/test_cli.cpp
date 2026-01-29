@@ -39,17 +39,17 @@ auto const input_json = R"json({
 
 constexpr std::string_view cli_executable = POWER_GRID_MODEL_CLI_EXECUTABLE;
 
-fs::path get_cli_tmp_path() {
+fs::path tmp_path() {
     // Get the system temp directory
     fs::path const tmpdir = fs::temp_directory_path();
     // Return the path
     return tmpdir / "pgm_cli_test";
 }
 
-fs::path get_cli_input_path() { return get_cli_tmp_path() / "input.json"; }
+fs::path input_path() { return tmp_path() / "input.json"; }
 
-void clear_and_create_cli_tmp_path() {
-    fs::path const cli_test_dir = get_cli_tmp_path();
+void clear_and_create_tmp_path() {
+    fs::path const cli_test_dir = tmp_path();
 
     // Remove the dir if it exists (including contents)
     if (fs::exists(cli_test_dir)) {
@@ -63,7 +63,7 @@ void clear_and_create_cli_tmp_path() {
 }
 
 void save_input_data() {
-    fs::path const input_file = get_cli_input_path();
+    fs::path const input_file = input_path();
     std::ofstream ofs(input_file);
     ofs << input_json;
     ofs.close();
@@ -72,8 +72,8 @@ void save_input_data() {
 } // namespace
 
 TEST_CASE("Test CLI version") {
-    clear_and_create_cli_tmp_path();
-    fs::path const version_file = get_cli_tmp_path() / "version.txt";
+    clear_and_create_tmp_path();
+    fs::path const version_file = tmp_path() / "version.txt";
     std::string const command = std::string{cli_executable} + " --version" + " > " + version_file.string();
     int ret = std::system(command.c_str());
     REQUIRE(ret == 0);
