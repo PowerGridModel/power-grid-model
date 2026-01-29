@@ -10,6 +10,7 @@ Although all functions are 'public', you probably only need validate_input_data(
 """
 
 import copy
+import heapq
 from collections.abc import Sized as ABCSized
 from itertools import chain
 from typing import Literal
@@ -1422,8 +1423,6 @@ def validate_tap_regulator_control_side_topology(data: SingleDataset) -> list[Va
 
     for source_idx in source_nodes:
         # Use Dijkstra's algorithm
-        import heapq
-
         pq = [(0, source_idx)]
         local_distances = [float("inf")] * num_nodes
         local_distances[source_idx] = 0
