@@ -18,8 +18,8 @@ from power_grid_model.validation.errors import InvalidTapRegulatorControlSideErr
 
 
 def test_valid_tap_regulator_control_side_simple():
-    """Test valid control side configuration: source -> transformer with control on from_side"""
-    # Setup: source at node 0, transformer from 0 to 1, control from from_side (0)
+    """Test valid control side configuration: source -> transformer with control on to_side"""
+    # Setup: source at node 0, transformer from 0 to 1, control from to_side (1) - VALID
     node_input = initialize_array(DatasetType.input, ComponentType.node, 2)
     node_input["id"] = [0, 1]
     node_input["u_rated"] = [150e3, 10e3]
@@ -57,7 +57,7 @@ def test_valid_tap_regulator_control_side_simple():
     transformer_tap_regulator_input["id"] = [4]
     transformer_tap_regulator_input["regulated_object"] = [3]
     transformer_tap_regulator_input["status"] = [1]
-    transformer_tap_regulator_input["control_side"] = [BranchSide.from_side]
+    transformer_tap_regulator_input["control_side"] = [BranchSide.to_side]  # Control to_side (downstream) - VALID
     transformer_tap_regulator_input["u_set"] = [10e3]
     transformer_tap_regulator_input["u_band"] = [200]
 
