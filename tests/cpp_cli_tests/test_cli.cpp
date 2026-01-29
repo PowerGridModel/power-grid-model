@@ -14,7 +14,28 @@
 
 namespace power_grid_model_cpp {
 
+namespace {
+using namespace std::string_literals;
 namespace fs = std::filesystem;
+
+// input
+auto const input_json = R"json({
+  "version": "1.0",
+  "type": "input",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "sym_load": [
+      {"id": 2, "node": 0, "status": 1, "type": 0, "p_specified": 0, "q_specified": 0}
+    ],
+    "source": [
+      {"id": 1, "node": 0, "status": 1, "u_ref": 1, "sk": 1e20}
+    ],
+    "node": [
+      {"id": 0, "u_rated": 10e3}
+    ]
+  }
+})json"s;
 
 constexpr std::string_view cli_executable = POWER_GRID_MODEL_CLI_EXECUTABLE;
 
@@ -24,6 +45,8 @@ fs::path get_cli_tmp_path() {
     // Return the path
     return tmpdir / "pgm_cli_test";
 }
+
+fs::path get_cli_input_path() { return get_cli_tmp_path() / "input.json"; }
 
 void clear_and_create_cli_tmp_path() {
     fs::path const cli_test_dir = get_cli_tmp_path();
@@ -38,6 +61,15 @@ void clear_and_create_cli_tmp_path() {
         throw std::runtime_error("Failed to create cli_test temp directory");
     }
 }
+
+void save_input_data() {
+    fs::path const input_file = get_cli_input_path();
+    std::ofstream ofs(input_file);
+    ofs << input_json;
+    ofs.close();
+}
+
+} // namespace
 
 TEST_CASE("Test CLI version") {
     clear_and_create_cli_tmp_path();
