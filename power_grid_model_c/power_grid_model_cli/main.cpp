@@ -12,11 +12,13 @@ using namespace power_grid_model_cpp;
 
 int main(int argc, char** argv) {
     ClIOptions cli_options;
-    if (auto parse_result = parse_cli_options(argc, argv, cli_options); parse_result) {
+    if (auto const parse_result = parse_cli_options(argc, argv, cli_options); parse_result) {
         return parse_result.exit_code;
     }
 
-    std::cout << cli_options << std::endl;
+    if (cli_options.verbose) {
+        std::cout << cli_options << std::endl;
+    }
 
     try {
         pgm_calculation(cli_options);

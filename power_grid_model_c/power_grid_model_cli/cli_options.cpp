@@ -210,6 +210,7 @@ CLIResult parse_cli_options(int argc, char** argv, ClIOptions& options) {
     app.add_option("--oa,--output-attribute", output_attributes,
                    "Filter output to only include specified attributes, in the format `component.attribute` (can be "
                    "specified multiple times)");
+    app.add_flag("--verbose", options.verbose, "Enable verbose output");
 
     app.callback(CLIPostCallback{.options = options,
                                  .msgpack_flag = msgpack_flag,
@@ -247,6 +248,7 @@ std::ostream& operator<<(std::ostream& os, ClIOptions const& options) {
     os << "Use msgpack output serialization: " << options.use_msgpack_output_serialization << "\n";
     os << "Output JSON indent: " << options.output_json_indent << "\n";
     os << "Use compact serialization: " << options.use_compact_serialization << "\n";
+    os << "Verbose: " << options.verbose << "\n";
     return os;
 }
 

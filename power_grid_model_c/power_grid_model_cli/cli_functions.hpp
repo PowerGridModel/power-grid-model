@@ -46,6 +46,8 @@ struct ClIOptions {
     MetaDataset const* output_dataset{nullptr};
     std::map<MetaComponent const*, std::set<MetaAttribute const*>> output_component_attribute_filters;
 
+    bool verbose{false};
+
     friend std::ostream& operator<<(std::ostream& os, ClIOptions const& options);
 };
 
