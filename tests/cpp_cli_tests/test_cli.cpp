@@ -66,7 +66,7 @@ void clear_and_create_tmp_path() {
 }
 
 void save_data(std::string_view json_data, fs::path const& path, PGM_SerializationFormat format) {
-    std::ofstream ofs(path);
+    std::ofstream ofs(path, std::ios::binary);
     if (!ofs) {
         throw std::runtime_error("Failed to open file for writing: " + path.string());
     }
