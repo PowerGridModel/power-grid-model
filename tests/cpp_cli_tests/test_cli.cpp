@@ -16,11 +16,10 @@
 namespace power_grid_model_cpp {
 
 namespace {
-using namespace std::string_literals;
 namespace fs = std::filesystem;
 
 // input
-auto const input_json = R"json({
+constexpr std::string_view input_json = R"json({
   "version": "1.0",
   "type": "input",
   "is_batch": false,
@@ -36,7 +35,7 @@ auto const input_json = R"json({
       {"id": 0, "u_rated": 10e3}
     ]
   }
-})json"s;
+})json";
 
 constexpr std::string_view cli_executable = POWER_GRID_MODEL_CLI_EXECUTABLE;
 
