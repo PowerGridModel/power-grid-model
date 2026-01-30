@@ -18,7 +18,6 @@ namespace power_grid_model_cpp {
 namespace {
 namespace fs = std::filesystem;
 
-// input
 constexpr std::string_view input_json = R"json({
   "version": "1.0",
   "type": "input",
@@ -37,6 +36,93 @@ constexpr std::string_view input_json = R"json({
   }
 })json";
 
+constexpr std::string_view batch_u_ref_json = R"json({
+  "version": "1.0",
+  "type": "update",
+  "is_batch": true,
+  "attributes": {},
+  "data": [
+    {
+      "source": [
+        {"u_ref": 0.9}
+      ]
+    },
+    {
+      "source": [
+        {"u_ref": 1.0}
+      ]
+    },
+    {
+      "source": [
+        {"u_ref": 1.1}
+      ]
+    }
+  ]
+})json";
+
+constexpr std::string_view batch_p_json = R"json({
+  "version": "1.0",
+  "type": "update",
+  "is_batch": true,
+  "attributes": { "sym_load": ["p_specified"] },
+  "data": [
+    {
+      "sym_load": [
+        [1e6]
+      ]
+    },
+    {
+      "sym_load": [
+        [2e6]
+      ]
+    },
+    {
+      "sym_load": [
+        [3e6]
+      ]
+    },
+    {
+      "sym_load": [
+        [4e6]
+      ]
+    }
+  ]
+})json";
+
+constexpr std::string_view batch_q_json = R"json({
+  "version": "1.0",
+  "type": "update",
+  "is_batch": true,
+  "attributes": {},
+  "data": [
+    {
+      "sym_load": [
+        {"q_specified": 0.1e6}
+      ]
+    },
+    {
+      "sym_load": [
+        {"q_specified": 0.2e6}
+      ]
+    },
+    {
+      "sym_load": [
+        {"q_specified": 0.3e6}
+      ]
+    },
+    {
+      "sym_load": [
+        {"q_specified": 0.4e6}
+      ]
+    },
+    {
+      "sym_load": [
+        {"q_specified": 0.5e6}
+      ]
+    }
+  ]
+})json";
+
 constexpr std::string_view cli_executable = POWER_GRID_MODEL_CLI_EXECUTABLE;
 
 fs::path tmp_path() {
@@ -47,6 +133,10 @@ fs::path tmp_path() {
 }
 
 fs::path input_path() { return tmp_path() / "input.json"; }
+fs::path batch_u_ref_path() { return tmp_path() / "batch_u_ref.json"; }
+fs::path batch_p_path() { return tmp_path() / "batch_p.json"; }
+fs::path batch_q_path() { return tmp_path() / "batch_q.json"; }
+fs::path batch_p_path_msgpack() { return tmp_path() / "batch_p.pgmb"; }
 
 fs::path stdout_path() { return tmp_path() / "stdout.txt"; }
 
@@ -65,23 +155,29 @@ void clear_and_create_tmp_path() {
 }
 
 void save_data(std::string_view json_data, fs::path const& path, PGM_SerializationFormat format) {
-    std::ofstream ofs(path, std::ios::binary);
-    if (!ofs) {
+    if (std::ofstream ofs(path, std::ios::binary); ofs) {
+        if (format == PGM_json) {
+            ofs << json_data;
+        } else {
+            nlohmann::json const j = nlohmann::json::parse(json_data);
+            std::string msgpack_buffer;
+            nlohmann::json::to_msgpack(j, msgpack_buffer);
+            ofs << msgpack_buffer;
+        }
+    } else {
         throw std::runtime_error("Failed to open file for writing: " + path.string());
     }
-    if (format == PGM_json) {
-        ofs << json_data;
-    } else {
-        nlohmann::json const j = nlohmann::json::parse(json_data);
-        std::string msgpack_buffer;
-        nlohmann::json::to_msgpack(j, msgpack_buffer);
-        ofs << msgpack_buffer;
-    }
+    // try to read the file, discard results
+    load_dataset(path, format, true);
 }
 
 void prepare_data() {
     clear_and_create_tmp_path();
     save_data(input_json, input_path(), PGM_json);
+    save_data(batch_u_ref_json, batch_u_ref_path(), PGM_json);
+    save_data(batch_p_json, batch_p_path(), PGM_json);
+    save_data(batch_p_json, batch_p_path_msgpack(), PGM_msgpack);
+    save_data(batch_q_json, batch_q_path(), PGM_json);
 }
 
 std::string read_stdout_content() {
