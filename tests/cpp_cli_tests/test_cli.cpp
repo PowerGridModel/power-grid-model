@@ -8,6 +8,7 @@
 #include <doctest/doctest.h>
 #include <filesystem>
 #include <fstream>
+#include <nlohmann/json.hpp>
 #include <power_grid_model_cpp.hpp>
 #include <string>
 #include <string_view>
@@ -48,6 +49,8 @@ fs::path tmp_path() {
 
 fs::path input_path() { return tmp_path() / "input.json"; }
 
+fs::path stdout_path() { return tmp_path() / "stdout.txt"; }
+
 void clear_and_create_tmp_path() {
     fs::path const cli_test_dir = tmp_path();
 
@@ -62,26 +65,54 @@ void clear_and_create_tmp_path() {
     }
 }
 
-void save_input_data() {
-    fs::path const input_file = input_path();
-    std::ofstream ofs(input_file);
-    ofs << input_json;
-    ofs.close();
+void save_data(std::string_view json_data, fs::path const& path, PGM_SerializationFormat format) {
+    std::ofstream ofs(path);
+    if (!ofs) {
+        throw std::runtime_error("Failed to open file for writing: " + path.string());
+    }
+    if (format == PGM_json) {
+        ofs << json_data;
+    } else {
+        nlohmann::json const j = nlohmann::json::parse(json_data);
+        std::string msgpack_buffer;
+        nlohmann::json::to_msgpack(j, msgpack_buffer);
+        ofs << msgpack_buffer;
+    }
+}
+
+void prepare_data() {
+    clear_and_create_tmp_path();
+    save_data(input_json, input_path(), PGM_json);
+}
+
+std::string read_stdout_content() {
+    fs::path const file_name = stdout_path();
+    std::ifstream version_ifs(file_name);
+    REQUIRE(version_ifs);
+
+    // Get file size
+    version_ifs.seekg(0, std::ios::end);
+    std::streamsize size = version_ifs.tellg();
+    version_ifs.seekg(0, std::ios::beg);
+
+    // Read the entire file
+    std::string file_content(size, '\0');
+    version_ifs.read(file_content.data(), size);
+    return file_content;
 }
 
 } // namespace
 
 TEST_CASE("Test CLI version") {
-    clear_and_create_tmp_path();
-    fs::path const version_file = tmp_path() / "version.txt";
-    std::string const command = std::string{cli_executable} + " --version" + " > " + version_file.string();
+    prepare_data();
+    std::string const command = std::string{cli_executable} + " --version" + " > " + stdout_path().string();
     int ret = std::system(command.c_str());
+    std::string const file_content = read_stdout_content();
+    INFO("CLI stdout content: ", file_content);
     REQUIRE(ret == 0);
-    std::ifstream version_ifs(version_file);
-    REQUIRE(version_ifs);
-    std::string version_line;
-    std::getline(version_ifs, version_line);
-    CHECK(version_line == PGM_version());
+    // Extract the first line
+    std::string const first_line = file_content.substr(0, file_content.find('\n'));
+    CHECK(first_line == PGM_version());
 }
 
 } // namespace power_grid_model_cpp
