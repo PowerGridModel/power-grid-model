@@ -20,8 +20,8 @@ using EnumMap = std::map<std::string, Idx>;
 struct CLIPostCallback {
     // NOLINTBEGIN(cppcoreguidelines-avoid-const-or-ref-data-members)
     ClIOptions& options;
-    CLI::Option* msgpack_flag;
-    CLI::Option* compact_flag;
+    CLI::Option& msgpack_flag;
+    CLI::Option& compact_flag;
     std::vector<std::string> const& output_components;
     std::vector<std::string> const& output_attributes;
     // NOLINTEND(cppcoreguidelines-avoid-const-or-ref-data-members)
@@ -60,13 +60,13 @@ struct CLIPostCallback {
                        options.batch_update_serialization_format.begin(),
                        [](auto const& path) { return get_serialization_format("batch-update", path); });
         // default msgpack output if input or any of the batch updates is msgpack and user did not specify output format
-        if (msgpack_flag->count() == 0 && (options.input_serialization_format == PGM_msgpack ||
-                                           std::ranges::any_of(options.batch_update_serialization_format,
-                                                               [](auto format) { return format == PGM_msgpack; }))) {
+        if (msgpack_flag.count() == 0 && (options.input_serialization_format == PGM_msgpack ||
+                                          std::ranges::any_of(options.batch_update_serialization_format,
+                                                              [](auto format) { return format == PGM_msgpack; }))) {
             options.use_msgpack_output_serialization = true;
         }
         // default compact serialization if msgpack output and user did not specify compact option
-        if (compact_flag->count() == 0 && options.use_msgpack_output_serialization) {
+        if (compact_flag.count() == 0 && options.use_msgpack_output_serialization) {
             options.use_compact_serialization = true;
         }
     }
@@ -195,14 +195,14 @@ CLIResult parse_cli_options(int argc, char** argv, ClIOptions& options) {
                 {"fast_any", PGM_tap_changing_strategy_fast_any_tap},
             },
             CLI::ignore_case));
-    auto msgpack_flag =
-        app.add_flag("--msgpack,--use-msgpack-output-serialization,!--json,!--use-json-output-serialization",
-                     options.use_msgpack_output_serialization, "Use MessagePack output serialization");
+    auto& msgpack_flag =
+        *app.add_flag("--msgpack,--use-msgpack-output-serialization,!--json,!--use-json-output-serialization",
+                      options.use_msgpack_output_serialization, "Use MessagePack output serialization");
     app.add_option("--indent,--output-json-indent", options.output_json_indent,
                    "Number of spaces to indent JSON output");
-    auto compact_flag =
-        app.add_flag("--compact,--use-compact-serialization,!--no-compact,!--no-compact-serialization",
-                     options.use_compact_serialization, "Use compact serialization (no extra whitespace)");
+    auto& compact_flag =
+        *app.add_flag("--compact,--use-compact-serialization,!--no-compact,!--no-compact-serialization",
+                      options.use_compact_serialization, "Use compact serialization (no extra whitespace)");
     std::vector<std::string> output_components;
     app.add_option("--oc,--output-component", output_components,
                    "Filter output to only include specified components (can be specified multiple times)");
