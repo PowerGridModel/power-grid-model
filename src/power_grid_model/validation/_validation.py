@@ -1423,7 +1423,7 @@ def validate_tap_regulator_control_side_topology(data: SingleDataset) -> list[Va
 
     for source_idx in source_nodes:
         # Use Dijkstra's algorithm
-        pq = [(0, source_idx)]
+        pq: list[tuple[float, int]] = [(0, source_idx)]
         local_distances = [float("inf")] * num_nodes
         local_distances[source_idx] = 0
 
