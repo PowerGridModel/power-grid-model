@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "power_grid_model/auxiliary/input.hpp"
+#include <power_grid_model/auxiliary/input.hpp>
 #include <power_grid_model/component/appliance.hpp>
 #include <power_grid_model/component/base.hpp>
 #include <power_grid_model/component/branch.hpp>

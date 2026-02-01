@@ -4,9 +4,9 @@
 
 #include <power_grid_model/component/asym_line.hpp>
 
-#include "power_grid_model/auxiliary/input.hpp"
-#include "power_grid_model/auxiliary/output.hpp"
-#include "power_grid_model/auxiliary/update.hpp"
+#include <power_grid_model/auxiliary/input.hpp>
+#include <power_grid_model/auxiliary/output.hpp>
+#include <power_grid_model/auxiliary/update.hpp>
 #include <power_grid_model/calculation_parameters.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/enum.hpp>

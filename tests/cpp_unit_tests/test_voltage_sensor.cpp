@@ -8,8 +8,8 @@
 #include <power_grid_model/common/three_phase_tensor.hpp>
 #include <power_grid_model/component/voltage_sensor.hpp>
 
-#include "power_grid_model/auxiliary/output.hpp"
-#include "power_grid_model/auxiliary/update.hpp"
+#include <power_grid_model/auxiliary/output.hpp>
+#include <power_grid_model/auxiliary/update.hpp>
 #include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/component/component.hpp>
 
