@@ -6,9 +6,6 @@
 Tests for transformer tap regulator control side topology validation.
 """
 
-import numpy as np
-import pytest
-
 from power_grid_model import initialize_array
 from power_grid_model._core.dataset_definitions import ComponentType, DatasetType
 from power_grid_model.enum import BranchSide, Branch3Side
@@ -171,7 +168,8 @@ def test_valid_tap_regulator_cascaded_transformers():
     transformer_tap_regulator_input["id"] = [5, 6]
     transformer_tap_regulator_input["regulated_object"] = [3, 4]
     transformer_tap_regulator_input["status"] = [1, 1]
-    transformer_tap_regulator_input["control_side"] = [BranchSide.to_side, BranchSide.to_side]  # Both control downstream
+    # Both control downstream
+    transformer_tap_regulator_input["control_side"] = [BranchSide.to_side, BranchSide.to_side]
     transformer_tap_regulator_input["u_set"] = [50e3, 10e3]
     transformer_tap_regulator_input["u_band"] = [200, 200]
 
@@ -226,7 +224,8 @@ def test_invalid_tap_regulator_second_transformer_wrong_control():
     transformer_tap_regulator_input["id"] = [5, 6]
     transformer_tap_regulator_input["regulated_object"] = [3, 4]
     transformer_tap_regulator_input["status"] = [1, 1]
-    transformer_tap_regulator_input["control_side"] = [BranchSide.to_side, BranchSide.from_side]  # T2 controls from_side (wrong!)
+    # T2 controls from_side (wrong!)
+    transformer_tap_regulator_input["control_side"] = [BranchSide.to_side, BranchSide.from_side]
     transformer_tap_regulator_input["u_set"] = [50e3, 10e3]
     transformer_tap_regulator_input["u_band"] = [200, 200]
 
@@ -525,4 +524,4 @@ def test_multiple_invalid_regulators():
     errors = validate_tap_regulator_control_side_topology(input_data)
     assert len(errors) == 1
     assert isinstance(errors[0], InvalidTapRegulatorControlSideError)
-    assert set(errors[0].ids) == {31, 32}  # Both second and third regulators are invalid
+    assert set(errors[0].ids) == {31}  # Only second regulator is invalid (third is in disconnected subgraph)
