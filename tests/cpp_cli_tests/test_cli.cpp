@@ -208,7 +208,10 @@ std::string read_stdout_content() {
     return file_content;
 }
 
-std::vector<double> get_i_source_ref() {
+std::vector<double> get_i_source_ref(bool is_batch) {
+    if (!is_batch) {
+        return {0.0};
+    }
     // 3-D batch update
     double const u_rated = 10e3;
     std::vector<double> const u_ref{0.9, 1.0, 1.1};
@@ -333,7 +336,11 @@ struct CLITestCase {
 
     void check_results() const {
         fs::path const out_path = output_path(get_output_format());
-        OwningDataset const output_dataset = load_dataset(out_path, get_output_format(), true);
+        OwningDataset const output_owning_dataset = load_dataset(out_path, get_output_format(), true);
+        auto const i_source_ref = get_i_source_ref(is_batch);
+        Idx const batch_size = output_owning_dataset.dataset.get_info().batch_size();
+        REQUIRE(batch_size == std::ssize(i_source_ref));
+        REQUIRE(is_batch == output_owning_dataset.dataset.get_info().is_batch());
     }
 
     void run_command_and_check() const {
