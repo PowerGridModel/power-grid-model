@@ -17,19 +17,19 @@ int main(int argc, char** argv) {
     }
 
     if (cli_options.verbose) {
-        std::cout << cli_options << std::endl;
+        std::cout << cli_options << '\n';
     }
 
     try {
         pgm_calculation(cli_options);
     } catch (PowerGridError const& e) {
-        std::cerr << "PowerGridError: " << e.what() << std::endl;
-        return e.error_code();
+        std::cerr << "PowerGridError: " << e.what() << '\n';
+        return static_cast<int>(e.error_code());
     } catch (std::exception const& e) {
-        std::cerr << "Exception: " << e.what() << std::endl;
+        std::cerr << "Exception: " << e.what() << '\n';
         return -666;
     } catch (...) {
-        std::cerr << "Unknown exception caught." << std::endl;
+        std::cerr << "Unknown exception caught." << '\n';
         return -999;
     }
 

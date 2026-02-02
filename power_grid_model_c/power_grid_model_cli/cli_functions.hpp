@@ -20,6 +20,7 @@ struct CLIResult {
 };
 
 struct ClIOptions {
+    // NOLINTBEGIN(clang-analyzer-optin.performance.Padding)
     std::filesystem::path input_file;
     std::vector<std::filesystem::path> batch_update_file;
     std::filesystem::path output_file;
@@ -31,7 +32,7 @@ struct ClIOptions {
 
     Idx calculation_type{PGM_power_flow};
     Idx calculation_method{PGM_default_method};
-    bool symmetric_calculation{PGM_symmetric};
+    bool symmetric_calculation{static_cast<bool>(PGM_symmetric)};
     double error_tolerance{1e-8};
     Idx max_iterations{20};
     Idx threading{-1};
@@ -47,6 +48,7 @@ struct ClIOptions {
     std::map<MetaComponent const*, std::set<MetaAttribute const*>> output_component_attribute_filters;
 
     bool verbose{false};
+    // NOLINTEND(clang-analyzer-optin.performance.Padding)
 
     friend std::ostream& operator<<(std::ostream& os, ClIOptions const& options);
 };

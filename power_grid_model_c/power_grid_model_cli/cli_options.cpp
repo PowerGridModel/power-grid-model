@@ -88,7 +88,7 @@ struct CLIPostCallback {
     void add_component_output_filter() {
         for (auto const& comp_name : output_components) {
             try {
-                auto const component = MetaData::get_component_by_name(options.output_dataset_name, comp_name);
+                auto const* const component = MetaData::get_component_by_name(options.output_dataset_name, comp_name);
                 options.output_component_attribute_filters[component] = {};
             } catch (PowerGridError const&) {
                 throw CLI::ValidationError("output-component", "Component '" + comp_name + "' not found in dataset '" +
@@ -117,9 +117,9 @@ struct CLIPostCallback {
             try {
                 attribute = MetaData::get_attribute_by_name(options.output_dataset_name, comp_name, attr_name);
             } catch (PowerGridError const&) {
-                throw CLI::ValidationError("output-attribute",
-                                           "Attribute '" + attr_name + "' not found in component '" + comp_name +
-                                               "' of dataset '" + options.output_dataset_name + "'.");
+                std::string const error_msg = "Attribute '" + attr_name + "' not found in component '" + comp_name +
+                                              "' of dataset '" + options.output_dataset_name + "'.";
+                throw CLI::ValidationError("output-attribute", error_msg);
             }
             options.output_component_attribute_filters[component].insert(attribute);
         }
@@ -130,9 +130,9 @@ CLIResult parse_cli_options(int argc, char** argv, ClIOptions& options) {
     std::string const version_str = std::string("Power Grid Model CLI\n Version: ") + PGM_version();
     CLI::App app{version_str};
 
-    CLI::Validator existing_parent_dir_validator{
+    CLI::Validator const existing_parent_dir_validator{
         [](std::string& input) {
-            std::filesystem::path p{input};
+            std::filesystem::path const p{input};
             auto parent = p.has_parent_path() ? p.parent_path() : std::filesystem::path{"."};
             if (parent.empty() || !std::filesystem::exists(parent) || !std::filesystem::is_directory(parent)) {
                 return std::string("The parent directory of the specified path does not exist or is not a directory.");
