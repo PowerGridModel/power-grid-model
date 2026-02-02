@@ -13,9 +13,6 @@
 
 #include <power_grid_model/auxiliary/meta_data.hpp>
 #include <power_grid_model/auxiliary/meta_data_gen.hpp>
-#include <power_grid_model/auxiliary/static_asserts/input.hpp>
-#include <power_grid_model/auxiliary/static_asserts/output.hpp>
-#include <power_grid_model/auxiliary/static_asserts/update.hpp>
 #include <power_grid_model/common/common.hpp>
 
 #include <power_grid_model_c/basics.h>

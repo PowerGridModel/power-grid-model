@@ -8,7 +8,6 @@
 
 #include <doctest/doctest.h>
 
-#include <memory>
 #include <string>
 
 namespace power_grid_model_cpp {

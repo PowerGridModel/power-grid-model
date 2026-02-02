@@ -8,18 +8,11 @@
 #include <power_grid_model_cpp/utils.hpp>
 #include <power_grid_model_cpp/basics.hpp
 
-#include <power_grid_model_c/dataset_definitions.h>
-
 #include <doctest/doctest.h>
 
-#include <algorithm>
 #include <array>
 #include <cmath>
 #include <concepts>
-#include <exception>
-#include <limits>
-#include <ranges>
-#include <string>
 #include <vector>
 
 namespace power_grid_model_cpp {

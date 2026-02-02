@@ -12,7 +12,6 @@
 #include "input_sanitization.hpp"
 
 #include "power_grid_model_c/basics.h"
-#include "power_grid_model_c/handle.h"
 
 #include <power_grid_model/auxiliary/serialization/deserializer.hpp>
 #include <power_grid_model/auxiliary/serialization/serializer.hpp>

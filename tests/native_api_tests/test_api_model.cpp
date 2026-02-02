@@ -20,11 +20,9 @@
 #include <algorithm>
 #include <array>
 #include <cstdint>
-#include <exception>
-#include <limits>
+#include <exception> // NOLINT(misc-include-cleaner)
 #include <map>
 #include <string>
-#include <string_literals>
 #include <string_view>
 #include <utility>
 #include <vector>
@@ -130,7 +128,7 @@ auto const complete_state_json = R"json({
       {"id": 6, "from_node": 4, "to_node": 0, "from_status": 0, "to_status": 0}
     ]
   }
-})json"s;
+})json"s; // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
 
 auto const single_update_json = R"json({
   "version": "1.0",
@@ -149,7 +147,7 @@ auto const single_update_json = R"json({
       {"id": 6, "from_status": 0, "to_status": 0}
     ]
   }
-})json"s;
+})json"s; // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
 
 auto const batch_update_json = R"json({
   "version": "1.0",
