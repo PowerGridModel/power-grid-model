@@ -23,6 +23,7 @@
 #include <numbers>
 #include <span>
 #include <string>
+#include <string_literals>
 #include <vector>
 
 namespace {
