@@ -11,6 +11,8 @@
 #include "power_grid_model_cpp/model.hpp"
 #include "power_grid_model_cpp/options.hpp"
 
+#include "power_grid_model_c/basics.h"
+
 #include <power_grid_model_c/dataset_definitions.h>
 
 #include <doctest/doctest.h>
@@ -22,6 +24,7 @@
 #include <limits>
 #include <map>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 

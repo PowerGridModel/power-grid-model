@@ -18,6 +18,7 @@
 #include <power_grid_model/auxiliary/serialization/serializer.hpp>
 #include <power_grid_model/common/enum.hpp>
 
+#include <cstddef>
 #include <vector>
 
 namespace {

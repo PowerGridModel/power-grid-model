@@ -12,6 +12,7 @@
 #include "input_sanitization.hpp"
 
 #include <power_grid_model/auxiliary/meta_data.hpp>
+#include <power_grid_model/common/common.hpp>
 
 #include <algorithm>
 #include <cstdlib>
