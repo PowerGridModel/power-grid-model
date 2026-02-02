@@ -48,8 +48,9 @@ void pgm_calculation(ClIOptions const& cli_options) {
     BatchDatasets const batch_datasets{cli_options};
 
     // create result dataset
-    OwningDataset const result_dataset{input_dataset, cli_options.output_dataset_name, cli_options.is_batch,
-                                       batch_datasets.batch_size, cli_options.output_component_attribute_filters};
+    // NOLINTNEXTLINE(misc-const-correctness)
+    OwningDataset result_dataset{input_dataset, cli_options.output_dataset_name, cli_options.is_batch,
+                                 batch_datasets.batch_size, cli_options.output_component_attribute_filters};
     // create model
     Model model{cli_options.system_frequency, input_dataset.dataset};
     // create calculation options
