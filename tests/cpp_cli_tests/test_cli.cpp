@@ -310,6 +310,7 @@ struct CLITestCase {
     }
 
     void run_command_and_check() const {
+        prepare_data();
         std::string const command = build_command();
         INFO("CLI command: ", command);
         int ret = std::system(command.c_str());
