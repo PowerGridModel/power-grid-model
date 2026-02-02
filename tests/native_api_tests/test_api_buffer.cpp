@@ -13,10 +13,12 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <concepts>
 #include <exception>
 #include <limits>
 #include <ranges>
 #include <string>
+#include <vector>
 
 namespace power_grid_model_cpp {
 namespace {

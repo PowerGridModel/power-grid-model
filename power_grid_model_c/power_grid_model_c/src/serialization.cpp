@@ -16,6 +16,9 @@
 
 #include <power_grid_model/auxiliary/serialization/deserializer.hpp>
 #include <power_grid_model/auxiliary/serialization/serializer.hpp>
+#include <power_grid_model/common/enum.hpp>
+
+#include <vector>
 
 namespace {
 using namespace power_grid_model::meta_data;

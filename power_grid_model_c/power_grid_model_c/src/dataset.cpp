@@ -15,6 +15,8 @@
 #include <power_grid_model/auxiliary/meta_data.hpp>
 #include <power_grid_model/common/typing.hpp>
 
+#include <vector>
+
 using namespace power_grid_model;
 using namespace power_grid_model::meta_data;
 using power_grid_model_c::call_with_catch;

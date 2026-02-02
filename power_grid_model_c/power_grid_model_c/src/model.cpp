@@ -14,10 +14,20 @@
 
 #include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/enum.hpp>
+#include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/main_model.hpp>
+#include <power_grid_model/main_model_fwd.hpp>
+#include <power_grid_model_c/basics.h>
 
+#include <cassert>
+#include <concepts>
+#include <exception>
 #include <memory>
 #include <numeric>
+#include <ranges>
+#include <string>
+#include <utility>
 
 namespace {
 using namespace power_grid_model;

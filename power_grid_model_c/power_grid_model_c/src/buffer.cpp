@@ -5,6 +5,7 @@
 #define PGM_DLL_EXPORTS
 #include "forward_declarations.hpp"
 
+#include "power_grid_model_c/basics.h"
 #include "power_grid_model_c/buffer.h"
 
 #include "handle.hpp"
@@ -12,7 +13,9 @@
 
 #include <power_grid_model/auxiliary/meta_data.hpp>
 
+#include <algorithm>
 #include <cstdlib>
+#include <type_traits>
 
 namespace {
 using namespace power_grid_model;

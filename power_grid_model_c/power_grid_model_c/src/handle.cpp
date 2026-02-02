@@ -5,12 +5,14 @@
 #define PGM_DLL_EXPORTS
 #include "forward_declarations.hpp"
 
+#include "power_grid_model_c/basics.h"
 #include "power_grid_model_c/handle.h"
 
 #include "handle.hpp"
 #include "input_sanitization.hpp"
 
 #include <algorithm>
+#include <iterator>
 #include <type_traits>
 
 namespace {
