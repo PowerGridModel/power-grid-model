@@ -4,11 +4,9 @@
 
 #pragma once
 
-#include "common.hpp"
 #include "logging.hpp"
 
 #include <chrono>
-#include <sstream>
 #include <utility>
 
 namespace power_grid_model {

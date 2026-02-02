@@ -21,8 +21,6 @@
 #include "state.hpp"
 #include "state_queries.hpp"
 
-#include "../component/component.hpp"
-
 #include <concepts>
 
 namespace power_grid_model::main_core {
