@@ -11,7 +11,6 @@
 
 #include <cmath>
 #include <cstddef>
-#include <memory>
 #include <type_traits>
 #include <vector>
 

@@ -2,13 +2,17 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/logging.hpp>
-#include <power_grid_model/common/multi_threaded_logging.hpp>
 #include <power_grid_model/common/timer.hpp>
 
+#include <chrono>
 #include <span>
+#include <string_view>
 #include <thread>
-#include <variant>
+#include <type_traits>
+#include <utility>
+#include <vector>
 
 #include <doctest/doctest.h>
 

@@ -15,17 +15,14 @@
 
 #include <algorithm>
 #include <atomic>
-#include <concepts>
 #include <memory>
 #include <mutex>
 #include <ranges>
 #include <stdexcept>
 #include <string>
-#include <string_view>
 #include <thread>
 #include <type_traits>
 #include <utility>
-#include <variant>
 #include <vector>
 
 namespace power_grid_model {

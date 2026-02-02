@@ -15,6 +15,7 @@
 #include "../component/shunt.hpp"
 #include "../component/source.hpp"
 #include "../component/transformer_tap_regulator.hpp"
+#include "../component/voltage_regulator.hpp"
 #include "../component/voltage_sensor.hpp"
 #include "container_queries.hpp"
 #include "state.hpp"
