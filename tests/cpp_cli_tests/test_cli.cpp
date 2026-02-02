@@ -4,16 +4,18 @@
 
 #define PGM_ENABLE_EXPERIMENTAL
 
-#include <cstdlib>
+#include <power_grid_model_c/dataset_definitions.h>
+#include <power_grid_model_cpp.hpp>
+
 #include <doctest/doctest.h>
+#include <nlohmann/json.hpp>
+
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <nlohmann/json.hpp>
 #include <numbers>
 #include <optional>
-#include <power_grid_model_c/dataset_definitions.h>
-#include <power_grid_model_cpp.hpp>
 #include <sstream>
 #include <string>
 #include <string_view>
