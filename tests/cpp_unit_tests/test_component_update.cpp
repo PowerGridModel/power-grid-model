@@ -2,4 +2,4 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include <power_grid_model/auxiliary/static_asserts/update.hpp>
+#include <power_grid_model/auxiliary/static_asserts/update.hpp> // NOLINT(misc-include-cleaner)

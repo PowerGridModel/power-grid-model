@@ -10,6 +10,7 @@
 #include "handle.hpp"
 #include "input_sanitization.hpp"
 #include "math_solver.hpp"
+#include "options.hpp"
 
 #include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/common/common.hpp>
@@ -18,7 +19,6 @@
 #include <power_grid_model/main_model.hpp>
 #include <power_grid_model/main_model_fwd.hpp>
 #include <power_grid_model_c/basics.h>
-#include <power_grid_model_c/options.hpp>
 
 #include <algorithm>
 #include <cassert>

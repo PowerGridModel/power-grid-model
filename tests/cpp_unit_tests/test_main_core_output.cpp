@@ -2,12 +2,25 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include <power_grid_model/auxiliary/static_asserts/input.hpp>
+#include <power_grid_model/auxiliary/static_asserts/output.hpp>
+#include <power_grid_model/calculation_parameters.hpp>
+#include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/component_list.hpp>
+#include <power_grid_model/common/enum.hpp>
+#include <power_grid_model/component/base.hpp>
+#include <power_grid_model/component/regulator.hpp>
 #include <power_grid_model/component/transformer_tap_regulator.hpp>
+#include <power_grid_model/container.hpp>
+#include <power_grid_model/main_core/container_queries.hpp>
 #include <power_grid_model/main_core/output.hpp>
 #include <power_grid_model/main_core/state.hpp>
-#include <power_grid_model/main_core/state_queries.hpp>
 
 #include <doctest/doctest.h>
+
+#include <memory>
+#include <utility>
+#include <vector>
 
 namespace power_grid_model::main_core {
 TEST_CASE("Test main core output") {
