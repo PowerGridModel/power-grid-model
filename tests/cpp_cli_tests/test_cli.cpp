@@ -295,7 +295,8 @@ struct CLITestCase {
         INFO("CLI command: ", command);
         int ret = std::system(command.c_str());
         REQUIRE(ret == 0);
-    };
+    }
+};
 
 } // namespace
 
