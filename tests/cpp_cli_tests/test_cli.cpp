@@ -286,9 +286,16 @@ struct CLITestCase {
         if (attribute_filter) {
             command << " --oa source.u_ref";
         }
+        command << " > " << stdout_path();
         return command.str();
     }
-};
+
+    void run_command() const {
+        std::string const command = build_command();
+        INFO("CLI command: ", command);
+        int ret = std::system(command.c_str());
+        REQUIRE(ret == 0);
+    };
 
 } // namespace
 
