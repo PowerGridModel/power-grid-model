@@ -314,6 +314,8 @@ struct CLITestCase {
         std::string const command = build_command();
         INFO("CLI command: ", command);
         int ret = std::system(command.c_str());
+        std::string const stdout_content = read_stdout_content();
+        INFO("CLI stdout content: ", stdout_content);
         REQUIRE(ret == 0);
         check_results();
     }
