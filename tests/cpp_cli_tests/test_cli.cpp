@@ -236,6 +236,13 @@ std::vector<double> get_i_source_ref(bool is_batch) {
     return i_source_ref;
 }
 
+struct BufferRef {
+    PGM_SymmetryType symmetric{PGM_symmetric};
+    bool use_attribute_buffer{false};
+    Buffer const* row_buffer;
+    AttributeBuffer const* attribute_buffer;
+};
+
 struct CLITestCase {
     bool is_batch{false};
     bool batch_p_msgpack{false};
@@ -332,6 +339,43 @@ struct CLITestCase {
         }
         command << " > " << stdout_path();
         return command.str();
+    }
+
+    BufferRef get_source_buffer(OwningDataset const& dataset) const {
+        auto const& owning_memory = dataset.storage;
+        auto const& info = dataset.dataset.get_info();
+        Idx const source_idx = info.component_idx("source");
+        auto const* const row_buffer = [this, &owning_memory, &info, source_idx]() {
+            if (has_output_filter()) {
+                REQUIRE(info.n_components() == 1);
+                REQUIRE(source_idx == 0);
+            }
+            return &owning_memory.buffers[source_idx];
+        }();
+        auto const* const attribute_buffer = [this, &owning_memory, &info, row_buffer,
+                                              source_idx]() -> AttributeBuffer const* {
+            if (output_columnar()) {
+                REQUIRE(row_buffer->get() == nullptr);
+                if (attribute_filter) {
+                    REQUIRE(owning_memory.attribute_buffers[source_idx].size() == 1);
+                    return &owning_memory.attribute_buffers[source_idx][0];
+                } else {
+                    for (auto const& attr_buf : owning_memory.attribute_buffers[source_idx]) {
+                        if (MetaData::attribute_name(attr_buf.get_attribute()) == "i") {
+                            return &attr_buf;
+                        }
+                    }
+                    DOCTEST_FAIL("Attribute 'i' buffer not found");
+                }
+            }
+            // when no filter, buffer should not be nullptr, and return nullptr for attribute buffer
+            REQUIRE(row_buffer->get() != nullptr);
+            return nullptr;
+        }();
+        return BufferRef{.symmetric = get_symmetry(),
+                         .use_attribute_buffer = output_columnar(),
+                         .row_buffer = row_buffer,
+                         .attribute_buffer = attribute_buffer};
     }
 
     void check_results() const {
