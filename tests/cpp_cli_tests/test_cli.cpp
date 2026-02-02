@@ -8,8 +8,11 @@
 #include <doctest/doctest.h>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <nlohmann/json.hpp>
+#include <optional>
 #include <power_grid_model_cpp.hpp>
+#include <sstream>
 #include <string>
 #include <string_view>
 
@@ -17,6 +20,9 @@ namespace power_grid_model_cpp {
 
 namespace {
 namespace fs = std::filesystem;
+
+// namespace for hardcode json
+namespace {
 
 constexpr std::string_view input_json = R"json({
   "version": "1.0",
@@ -125,6 +131,8 @@ constexpr std::string_view batch_q_json = R"json({
 
 constexpr std::string_view cli_executable = POWER_GRID_MODEL_CLI_EXECUTABLE;
 
+} // namespace
+
 fs::path tmp_path() {
     // Get the system temp directory
     fs::path const tmpdir = fs::temp_directory_path();
@@ -137,7 +145,9 @@ fs::path batch_u_ref_path() { return tmp_path() / "batch_u_ref.json"; }
 fs::path batch_p_path() { return tmp_path() / "batch_p.json"; }
 fs::path batch_q_path() { return tmp_path() / "batch_q.json"; }
 fs::path batch_p_path_msgpack() { return tmp_path() / "batch_p.pgmb"; }
-
+fs::path output_path(PGM_SerializationFormat format) {
+    return format == PGM_json ? tmp_path() / "output.json" : tmp_path() / "output.pgmb";
+}
 fs::path stdout_path() { return tmp_path() / "stdout.txt"; }
 
 void clear_and_create_tmp_path() {
@@ -195,6 +205,90 @@ std::string read_stdout_content() {
     version_ifs.read(file_content.data(), size);
     return file_content;
 }
+
+struct CLITestCase {
+    bool is_batch{false};
+    bool batch_p_msgpack{false};
+    bool has_frequency{false};
+    bool has_calculation_type{false};
+    bool has_calculation_method{false};
+    std::optional<PGM_SymmetryType> symmettry{};
+    bool has_error_tolerance{false};
+    bool has_max_iterations{false};
+    bool has_threading{false};
+    std::optional<PGM_SerializationFormat> output_serialization{};
+    std::optional<Idx> output_json_indent{};
+    std::optional<bool> output_compact_serialization{};
+    bool component_filter{false};
+    bool attribute_filter{false};
+
+    PGM_SerializationFormat get_output_format() const {
+        if (output_serialization.has_value()) {
+            return output_serialization.value();
+        } else if (is_batch && batch_p_msgpack) {
+            return PGM_msgpack;
+        } else {
+            return PGM_json;
+        }
+    }
+
+    std::string build_command() const {
+        std::stringstream command;
+        command << cli_executable;
+        command << " -i " << input_path();
+        if (is_batch) {
+            command << " -b " << batch_u_ref_path();
+            command << " -b " << (batch_p_msgpack ? batch_p_path_msgpack() : batch_p_path());
+            command << " -b " << batch_q_path();
+        }
+        command << " -o " << output_path(get_output_format());
+        if (has_frequency) {
+            command << " --system-frequency 50.0";
+        }
+        if (has_calculation_type) {
+            command << " --calculation-type " << "power_flow";
+        }
+        if (has_calculation_method) {
+            command << " --calculation-method " << "newton_raphson";
+        }
+        if (symmettry.has_value()) {
+            command << (symmettry.value() == PGM_symmetric ? " -s" : " -a");
+        }
+        if (has_error_tolerance) {
+            command << " --error-tolerance 1e-8";
+        }
+        if (has_max_iterations) {
+            command << " --max-iterations 20";
+        }
+        if (has_threading) {
+            command << " --threading -1";
+        }
+        if (output_serialization.has_value()) {
+            if (output_serialization.value() == PGM_msgpack) {
+                command << " --msgpack";
+            } else {
+                command << " --json";
+            }
+        }
+        if (output_json_indent.has_value()) {
+            command << " --indent " << output_json_indent.value();
+        }
+        if (output_compact_serialization.has_value()) {
+            if (output_compact_serialization.value()) {
+                command << " --compact";
+            } else {
+                command << " --no-compact";
+            }
+        }
+        if (component_filter) {
+            command << " --oc source";
+        }
+        if (attribute_filter) {
+            command << " --oa source.u_ref";
+        }
+        return command.str();
+    }
+};
 
 } // namespace
 
