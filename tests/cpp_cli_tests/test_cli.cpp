@@ -10,6 +10,7 @@
 #include <fstream>
 #include <iostream>
 #include <nlohmann/json.hpp>
+#include <numbers>
 #include <optional>
 #include <power_grid_model_cpp.hpp>
 #include <sstream>
@@ -20,6 +21,7 @@ namespace power_grid_model_cpp {
 
 namespace {
 namespace fs = std::filesystem;
+using std::numbers::sqrt3;
 
 // namespace for hardcode json
 namespace {
@@ -206,6 +208,31 @@ std::string read_stdout_content() {
     return file_content;
 }
 
+std::vector<double> get_i_source_ref() {
+    // 3-D batch update
+    double const u_rated = 10e3;
+    std::vector<double> const u_ref{0.9, 1.0, 1.1};
+    std::vector<double> const p_specified{1e6, 2e6, 3e6, 4e6};
+    std::vector<double> const q_specified{0.1e6, 0.2e6, 0.3e6, 0.4e6, 0.5e6};
+    Idx const size_u_ref = std::ssize(u_ref);
+    Idx const size_p_specified = std::ssize(p_specified);
+    Idx const size_q_specified = std::ssize(q_specified);
+    Idx const total_batch_size = size_u_ref * size_p_specified * size_q_specified;
+
+    // calculate source current manually
+    std::vector<double> i_source_ref(total_batch_size);
+    for (Idx i = 0; i < size_u_ref; ++i) {
+        for (Idx j = 0; j < size_p_specified; ++j) {
+            for (Idx k = 0; k < size_q_specified; ++k) {
+                Idx const index = i * size_p_specified * size_q_specified + j * size_q_specified + k;
+                double const s = std::abs(std::complex<double>{p_specified[j], q_specified[k]});
+                i_source_ref[index] = s / (sqrt3 * u_rated * u_ref[i]);
+            }
+        }
+    }
+    return i_source_ref;
+}
+
 struct CLITestCase {
     bool is_batch{false};
     bool batch_p_msgpack{false};
@@ -298,7 +325,7 @@ struct CLITestCase {
             command << " --oc source";
         }
         if (attribute_filter) {
-            command << " --oa source.u_ref";
+            command << " --oa source.i";
         }
         command << " > " << stdout_path();
         return command.str();
