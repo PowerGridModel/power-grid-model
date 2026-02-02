@@ -29,7 +29,7 @@
 #include <vector>
 
 /*
-Testing network
+Testing network-
 
 source_1 -- node_0 |---- line_5 ----| node_4
               |    |---- line_6 ----|
