@@ -5,6 +5,7 @@
 #define PGM_DLL_EXPORTS
 #include "forward_declarations.hpp"
 
+#include "power_grid_model_c/basics.h"
 #include "power_grid_model_c/model.h"
 
 #include "handle.hpp"
@@ -12,18 +13,16 @@
 #include "math_solver.hpp"
 #include "options.hpp"
 
+#include <algorithm>
+#include <cassert>
+#include <concepts>
+#include <exception>
 #include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/main_model.hpp>
 #include <power_grid_model/main_model_fwd.hpp>
-#include <power_grid_model_c/basics.h>
-
-#include <algorithm>
-#include <cassert>
-#include <concepts>
-#include <exception>
 #include <ranges>
 #include <string>
 #include <utility>

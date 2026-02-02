@@ -2,10 +2,18 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/common/three_phase_tensor.hpp>
 #include <power_grid_model/math_solver/sparse_lu_solver.hpp>
 
 #include <doctest/doctest.h>
+
+#include <cmath>
+#include <cstddef>
+#include <memory>
+#include <type_traits>
+#include <vector>
 
 namespace power_grid_model::math_solver {
 namespace {

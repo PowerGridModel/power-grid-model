@@ -7,20 +7,20 @@
 #include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/common/grouped_index_vector.hpp>
-#include <power_grid_model/common/iterator_facade.hpp>
 #include <power_grid_model/common/statistics.hpp>
+#include <power_grid_model/math_solver/measured_values.hpp>
 #include <power_grid_model/math_solver/observability.hpp>
 #include <power_grid_model/math_solver/y_bus.hpp>
-
-#include <ranges>
 
 #include <doctest/doctest.h>
 
 #include <algorithm>
 #include <complex>
+#include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <memory>
-#include <numeric>
+#include <ranges>
 #include <vector>
 
 namespace power_grid_model {

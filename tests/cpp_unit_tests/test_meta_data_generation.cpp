@@ -5,7 +5,6 @@
 #include <power_grid_model/auxiliary/meta_data.hpp>
 #include <power_grid_model/auxiliary/meta_data_gen.hpp>
 #include <power_grid_model/common/enum.hpp>
-#include <power_grid_model/common/three_phase_tensor.hpp>
 
 #include <doctest/doctest.h>
 

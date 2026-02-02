@@ -4,10 +4,18 @@
 
 #include "test_math_solver_common.hpp"
 
+#include <power_grid_model/calculation_parameters.hpp>
+#include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/enum.hpp>
+#include <power_grid_model/common/grouped_index_vector.hpp>
+#include <power_grid_model/common/three_phase_tensor.hpp>
 #include <power_grid_model/math_solver/short_circuit_solver.hpp> // NOLINT(misc-include-cleaner)
 
+#include <complex>
 #include <cstddef>
 #include <limits>
+#include <memory>
+#include <vector>
 
 namespace power_grid_model::math_solver {
 
