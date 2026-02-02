@@ -7,9 +7,11 @@
 #include <power_grid_model/calculation_parameters.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/enum.hpp>
+#include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/common/grouped_index_vector.hpp>
 #include <power_grid_model/common/three_phase_tensor.hpp>
 #include <power_grid_model/math_solver/short_circuit_solver.hpp> // NOLINT(misc-include-cleaner)
+#include <power_grid_model/math_solver/y_bus.hpp>
 
 #include <complex>
 #include <cstddef>

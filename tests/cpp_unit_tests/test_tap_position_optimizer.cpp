@@ -4,19 +4,61 @@
 
 #include "test_optimizer.hpp"
 
+#include <power_grid_model/auxiliary/dataset.hpp>
+#include <power_grid_model/auxiliary/input.hpp>
+#include <power_grid_model/auxiliary/meta_data.hpp>
+#include <power_grid_model/auxiliary/meta_gen/gen_getters.hpp>
+#include <power_grid_model/auxiliary/update.hpp>
+#include <power_grid_model/calculation_parameters.hpp>
+#include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/component_list.hpp>
+#include <power_grid_model/common/enum.hpp>
+#include <power_grid_model/common/exception.hpp>
+#include <power_grid_model/common/three_phase_tensor.hpp>
+#include <power_grid_model/common/typing.hpp>
+#include <power_grid_model/component/appliance.hpp>
+#include <power_grid_model/component/base.hpp>
+#include <power_grid_model/component/branch.hpp>
+#include <power_grid_model/component/branch3.hpp>
+#include <power_grid_model/component/component.hpp>
+#include <power_grid_model/component/line.hpp>
+#include <power_grid_model/component/link.hpp>
+#include <power_grid_model/component/node.hpp>
+#include <power_grid_model/component/regulator.hpp>
+#include <power_grid_model/component/source.hpp>
+#include <power_grid_model/component/three_winding_transformer.hpp>
+#include <power_grid_model/component/transformer.hpp>
+#include <power_grid_model/component/transformer_tap_regulator.hpp>
+#include <power_grid_model/component/transformer_utils.hpp>
+#include <power_grid_model/container.hpp>
+#include <power_grid_model/container_fwd.hpp>
+#include <power_grid_model/main_core/container_queries.hpp>
 #include <power_grid_model/main_core/input.hpp>
+#include <power_grid_model/main_core/state.hpp>
 #include <power_grid_model/main_core/update.hpp>
 #include <power_grid_model/optimizer/tap_position_optimizer.hpp>
+
+#include <boost/graph/compressed_sparse_row_graph.hpp>
+#include <boost/graph/graph_traits.hpp>
+#include <boost/graph/iteration_macros.hpp>
+#include <boost/tuple/tuple.hpp>
 
 #include <doctest/doctest.h>
 
 #include <algorithm>
+#include <array>
 #include <concepts>
+#include <cstddef>
+#include <cstdint>
 #include <functional>
+#include <iterator>
 #include <limits>
 #include <map>
 #include <optional>
 #include <tuple>
+#include <type_traits>
+#include <utility>
+#include <vector>
 
 TEST_SUITE_BEGIN("Automatic Tap Changer");
 

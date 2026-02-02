@@ -7,6 +7,8 @@
 
 #include <doctest/doctest.h>
 
+#include <algorithm>
+
 namespace power_grid_model {
 
 TEST_CASE("Test sparse mapping") {

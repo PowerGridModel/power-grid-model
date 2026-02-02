@@ -2,11 +2,19 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include <power_grid_model/calculation_parameters.hpp>
+#include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/common/grouped_index_vector.hpp>
 #include <power_grid_model/topology.hpp>
 
-#include <algorithm>
 #include <doctest/doctest.h>
+
+#include <algorithm>
+#include <cstddef>
+#include <utility>
+#include <vector>
+
 /*
  *  [0]   = Node / Bus
  * --0--> = Branch (from --id--> to)

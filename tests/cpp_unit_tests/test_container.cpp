@@ -4,9 +4,14 @@
 
 #include <cstdint>
 #include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/container.hpp>
+#include <power_grid_model/container_fwd.hpp>
 
 #include <doctest/doctest.h>
+
+#include <ranges>
+#include <type_traits>
 
 namespace power_grid_model {
 

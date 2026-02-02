@@ -10,6 +10,7 @@
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/component_list.hpp>
 #include <power_grid_model/common/enum.hpp>
+#include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/component/line.hpp>
 #include <power_grid_model/component/link.hpp>
 #include <power_grid_model/component/node.hpp>

@@ -2,13 +2,16 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include <power_grid_model/common/common.hpp>
 #include <power_grid_model/sparse_ordering.hpp>
 
 #include <doctest/doctest.h>
 
 #include <chrono>
-#include <cstddef>
 #include <iostream>
+#include <map>
+#include <utility>
+#include <vector>
 
 namespace {
 using power_grid_model::Idx;

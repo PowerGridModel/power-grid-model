@@ -22,7 +22,11 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <thread>
+#include <type_traits>
+#include <utility>
 #include <variant>
+#include <vector>
 
 namespace power_grid_model {
 namespace {
@@ -468,7 +472,8 @@ TEST_CASE("Test job dispatch logic") {
                     } catch (BatchCalculationError const& e) {
                         using namespace std::string_literals;
                         REQUIRE(e.err_msgs().size() == 2);
-                        CHECK(e.err_msgs() == std::vector{"Error in scenario 0"s, "Error in scenario 3"s});
+                        CHECK(e.err_msgs() == std::vector{"Error in scenario 0"s,
+                                                          "Error in scenario 3"s}); // NOLINT(misc-include-cleaner)
                         REQUIRE(e.failed_scenarios().size() == 2);
                         CHECK(e.failed_scenarios() == std::vector{Idx{0}, Idx{3}});
                         throw;
