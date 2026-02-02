@@ -4,6 +4,7 @@
 
 #include <cstdint>
 #include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/component_list.hpp>
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/container.hpp>
 #include <power_grid_model/container_fwd.hpp>

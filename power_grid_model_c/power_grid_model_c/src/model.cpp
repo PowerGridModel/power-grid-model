@@ -11,7 +11,7 @@
 #include "handle.hpp"
 #include "input_sanitization.hpp"
 #include "math_solver.hpp"
-#include "options.hpp"
+#include "options.hpp" // NOLINT(misc-include-cleaner)
 
 #include <algorithm>
 #include <cassert>

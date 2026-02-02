@@ -4,10 +4,14 @@
 
 #include <power_grid_model/all_components.hpp>
 #include <power_grid_model/calculation_preparation.hpp>
+#include <power_grid_model/common/common.hpp>
 #include <power_grid_model/main_core/main_model_type.hpp>
 #include <power_grid_model/math_solver/math_solver.hpp>
+#include <power_grid_model/math_solver/math_solver_dispatch.hpp>
 
 #include <doctest/doctest.h>
+
+#include <algorithm>
 
 namespace power_grid_model {
 namespace {

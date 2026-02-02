@@ -810,8 +810,11 @@ TEST_CASE("Test Observability - assign_independent_sensors_radial") {
 
         // Total sensors should be preserved (just reassigned)
         Idx const initial_total = 2; // We started with 1 flow + 1 voltage = 2 total
-        Idx const final_flow = std::ranges::fold_left(flow_sensors, 0, std::plus<>{});
-        Idx const final_voltage = std::ranges::fold_left(voltage_phasor_sensors, 0, std::plus<>{});
+        Idx const final_flow =
+            std::ranges::fold_left( // NOLINT (misc-include-cleaner) https://github.com/llvm/llvm-project/issues/94459
+                flow_sensors, 0, std::plus<>{});
+        Idx const final_voltage =
+            std::ranges::fold_left(voltage_phasor_sensors, 0, std::plus<>{}); // NOLINT (misc-include-cleaner)
         CHECK(final_flow + final_voltage <= initial_total); // Some sensors might be reassigned or removed
     }
 
