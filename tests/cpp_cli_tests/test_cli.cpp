@@ -262,11 +262,11 @@ struct BufferRef {
                     // use row buffer
                     if (symmetric == PGM_symmetric) {
                         double value{};
-                        row_buffer->get_value(PGM_def_sym_output_source_i, &value, idx, 1);
+                        row_buffer->get_value(PGM_def_sym_output_source_i, &value, idx, 0);
                         return value;
                     } else {
                         std::array<double, 3> val_array{};
-                        row_buffer->get_value(PGM_def_asym_output_source_i, val_array.data(), idx, 3);
+                        row_buffer->get_value(PGM_def_asym_output_source_i, val_array.data(), idx, 0);
                         CHECK(val_array[0] == doctest::Approx(val_array[1]));
                         CHECK(val_array[0] == doctest::Approx(val_array[2]));
                         return val_array[0];
@@ -460,6 +460,7 @@ TEST_CASE("Test run CLI") {
         CLITestCase{.is_batch = true, .symmetry = PGM_asymmetric, .output_serialization = PGM_msgpack},
         // batch, symmetric, json, with all options set
         CLITestCase{.is_batch = true,
+                    .batch_p_msgpack = true,
                     .has_frequency = true,
                     .has_calculation_type = true,
                     .has_calculation_method = true,
@@ -469,7 +470,9 @@ TEST_CASE("Test run CLI") {
                     .has_threading = true,
                     .output_serialization = PGM_json,
                     .output_json_indent = 4,
-                    .output_compact_serialization = false},
+                    .output_compact_serialization = true,
+                    .component_filter = true,
+                    .attribute_filter = true},
         // batch, asymmetric, msgpack, with component and attribute filter
         CLITestCase{.is_batch = true,
                     .symmetry = PGM_asymmetric,
