@@ -451,7 +451,7 @@ TEST_CASE("Test CLI version") {
 }
 
 TEST_CASE("Test run CLI") {
-    std::vector<CLITestCase> test_cases = {
+    std::vector<CLITestCase> const test_cases = {
         // basic non-batch, symmetric, json
         CLITestCase{},
         // basic batch, symmetric, json
