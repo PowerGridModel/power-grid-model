@@ -6,7 +6,6 @@
 #include <power_grid_model_cpp/buffer.hpp>
 #include <power_grid_model_cpp/meta_data.hpp>
 #include <power_grid_model_cpp/utils.hpp>
-#include <power_grid_model_cpp/basics.hpp
 
 #include <doctest/doctest.h>
 

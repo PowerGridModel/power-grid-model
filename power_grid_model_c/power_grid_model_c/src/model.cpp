@@ -18,6 +18,7 @@
 #include <power_grid_model/main_model.hpp>
 #include <power_grid_model/main_model_fwd.hpp>
 #include <power_grid_model_c/basics.h>
+#include <power_grid_model_c/options.hpp>
 
 #include <algorithm>
 #include <cassert>

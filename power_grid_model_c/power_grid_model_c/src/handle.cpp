@@ -4,8 +4,8 @@
 
 #define PGM_DLL_EXPORTS
 
-#include "power_grid_model_c/basics.h"
 #include "power_grid_model_c/handle.h"
+#include "power_grid_model_c/basics.h"
 
 #include "handle.hpp"
 #include "input_sanitization.hpp"
