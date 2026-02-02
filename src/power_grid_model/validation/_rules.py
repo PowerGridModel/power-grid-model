@@ -37,7 +37,7 @@ Output data:
 
 from collections.abc import Callable
 from enum import Enum
-from typing import Any, TypeVar
+from typing import Any
 
 import numpy as np
 
@@ -73,12 +73,8 @@ from power_grid_model.validation.errors import (
     TransformerClockError,
     TwoValuesZeroError,
     UnsupportedMeasuredTerminalType,
-    ValidationError,
 )
 from power_grid_model.validation.utils import _eval_expression, _get_mask, _get_valid_ids, _nan_type, _set_default_value
-
-Error = TypeVar("Error", bound=ValidationError)
-CompError = TypeVar("CompError", bound=ComparisonError)
 
 
 def all_greater_than_zero(data: SingleDataset, component: ComponentType, field: str) -> list[NotGreaterThanError]:
@@ -331,16 +327,16 @@ def all_between_or_at(  # noqa: PLR0913
     )
 
 
-def none_match_comparison(  # noqa: PLR0913
+def none_match_comparison[ErrorType: ComparisonError](  # noqa: PLR0913
     data: SingleDataset,
     component: ComponentType,
     field: str,
     compare_fn: Callable,
     ref_value: ComparisonError.RefType,
-    error: type[CompError] = ComparisonError,  # type: ignore
+    error: type[ErrorType] = ComparisonError,  # type: ignore
     default_value_1: np.ndarray | int | float | None = None,
     default_value_2: np.ndarray | int | float | None = None,
-) -> list[CompError]:
+) -> list[ErrorType]:
     """
     For all records of a particular type of component, check if the value in the 'field' column match the comparison.
     Returns an empty list if none of the value match the comparison, or a list containing a single error object when at

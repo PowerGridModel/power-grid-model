@@ -1,0 +1,10 @@
+{
+  "calculation_method": "newton_raphson",
+  "tap_changing_strategy": "any_valid_tap",
+  "rtol": 1e-5,
+  "atol": 1e-5,
+  "xfail": {
+    "raises": "UnsupportedRegulatorCombinationError",
+    "reason": "Combination of voltage regulators and transformer tap regulators is not supported."
+  }
+}

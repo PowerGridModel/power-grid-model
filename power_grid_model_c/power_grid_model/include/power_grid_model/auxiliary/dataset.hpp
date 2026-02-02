@@ -542,6 +542,16 @@ template <dataset_type_tag dataset_type_> class Dataset {
         return result;
     }
 
+    template <class type_getter, class ComponentType, typename Func,
+              class StructType = DataStruct<typename type_getter::template type<ComponentType>>>
+        requires std::invocable<Func, std::span<StructType>> && std::invocable<Func, RangeObject<StructType>>
+    auto for_each_component(Func&& func, Idx scenario = invalid_index) const {
+        if (is_columnar(ComponentType::name)) {
+            return std::forward<Func>(func)(get_columnar_buffer_span<type_getter, ComponentType, StructType>(scenario));
+        }
+        return std::forward<Func>(func)(get_buffer_span<type_getter, ComponentType, StructType>(scenario));
+    }
+
     void set_next_cartesian_product_dimension(Dataset const* next) {
         Dataset const* current = next;
         while (current != nullptr) {
@@ -611,8 +621,12 @@ template <dataset_type_tag dataset_type_> class Dataset {
             }) != buffer.attributes.end()) {
             throw DatasetError{"Cannot have duplicated attribute buffers!\n"};
         }
+        auto const& component_info = dataset_info_.component_info[idx];
+        if (component_info.total_elements > 0 && data == nullptr) {
+            throw DatasetError{"Attribute buffer data pointer cannot be null for non-empty component!\n"};
+        }
         AttributeBuffer<Data> const attribute_buffer{
-            .data = data, .meta_attribute = &dataset_info_.component_info[idx].component->get_attribute(attribute)};
+            .data = data, .meta_attribute = &component_info.component->get_attribute(attribute)};
         buffer.attributes.emplace_back(attribute_buffer);
     }
 

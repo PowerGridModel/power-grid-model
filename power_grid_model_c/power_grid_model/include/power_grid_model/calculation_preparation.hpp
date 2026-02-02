@@ -106,6 +106,8 @@ class SolversCacheStatus {
 };
 
 namespace detail {
+static constexpr Idx disconnected = -1;
+
 template <class ModelType>
 void reset_solvers(typename ModelType::MainModelState& state, SolverPreparationContext& solver_context,
                    SolversCacheStatus<ModelType>& solvers_cache_status) {
@@ -130,6 +132,64 @@ void rebuild_topology(typename ModelType::MainModelState& state, SolverPreparati
     solvers_cache_status.set_topology_status(true);
     solvers_cache_status.template set_parameter_status<symmetric_t>(false);
     solvers_cache_status.template set_parameter_status<asymmetric_t>(false);
+}
+
+struct ReferenceVoltageRegulator {
+    ID voltage_regulator_id = na_IntID;
+    double u_ref = nan;
+};
+
+template <class ModelType>
+void check_u_ref_per_node(typename ModelType::MainModelState const& state,
+                          std::unordered_map<ID, ReferenceVoltageRegulator>& visited_node_to_reference_regulator) {
+    for (auto const& voltage_regulator : state.components.template citer<VoltageRegulator>()) {
+        if (!voltage_regulator.status()) {
+            continue;
+        }
+
+        ID const node_id =
+            main_core::get_component<GenericLoadGen>(state.components, voltage_regulator.regulated_object()).node();
+        double const u_ref = voltage_regulator.u_ref();
+
+        if (visited_node_to_reference_regulator.contains(node_id)) {
+            auto& reference_voltage_regulator = visited_node_to_reference_regulator[node_id];
+            if (reference_voltage_regulator.u_ref != u_ref) {
+                throw ConflictingVoltageRegulatorURef{
+                    std::format("{}, {}", reference_voltage_regulator.voltage_regulator_id, voltage_regulator.id())};
+            }
+        } else {
+            visited_node_to_reference_regulator[node_id] = {.voltage_regulator_id = voltage_regulator.id(),
+                                                            .u_ref = u_ref};
+        }
+    }
+}
+
+template <class ModelType>
+void check_sources_and_voltage_regulators(
+    typename ModelType::MainModelState const& state,
+    std::unordered_map<ID, ReferenceVoltageRegulator>& visited_node_to_reference_regulator) {
+    for (auto const& source : state.components.template citer<Source>()) {
+        ID const source_node_id = source.node();
+        // only checked against nodes with a voltage regulator that is enabled
+        if (source.status() && visited_node_to_reference_regulator.contains(source_node_id)) {
+            throw UnsupportedVoltageRegulatorSourceCombinationError{source_node_id};
+        }
+    }
+}
+
+// TODO(figueroa1395): Unit test this function
+template <class ModelType> void check_state_validity(typename ModelType::MainModelState const& state) {
+    if (state.components.template size<VoltageRegulator>() > 0) {
+        if (state.components.template size<TransformerTapRegulator>() > 0) {
+            throw UnsupportedRegulatorCombinationError{};
+        }
+
+        std::unordered_map<ID, ReferenceVoltageRegulator> visited_node_to_reference_regulator;
+
+        check_u_ref_per_node<ModelType>(state, visited_node_to_reference_regulator);
+
+        check_sources_and_voltage_regulators<ModelType>(state, visited_node_to_reference_regulator);
+    }
 }
 } // namespace detail
 
@@ -176,5 +236,8 @@ void prepare_solvers(typename ModelType::MainModelState& state, SolverPreparatio
     solvers_cache_status.template set_parameter_status<sym>(true);
     solvers_cache_status.clear_changed_components_indices();
     solvers_cache_status.template set_previous_symmetry_mode<sym>();
+
+    // validate state
+    detail::check_state_validity<ModelType>(state);
 }
 } // namespace power_grid_model

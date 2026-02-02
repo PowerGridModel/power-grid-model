@@ -316,8 +316,11 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE", SolverType, test_math_solver_
         auto topo_ptr = std::make_shared<MathModelTopology const>(grid.se_topo_power_sensors());
         YBus<sym> const y_bus{topo_ptr, param_ptr};
 
+        // because YBus still requires a shared_ptr while solvers were changed to not require it anymore
+        auto const& topo = *topo_ptr;
+
         SUBCASE("Test se with angle") {
-            SolverType solver{y_bus, topo_ptr};
+            SolverType solver{y_bus, topo};
             auto log = get_logger();
 
             auto const se_input = grid.se_input_angle();
@@ -327,7 +330,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE", SolverType, test_math_solver_
         }
 
         SUBCASE("Test se without angle") {
-            SolverType solver{y_bus, topo_ptr};
+            SolverType solver{y_bus, topo};
             auto log = get_logger();
 
             auto const se_input = grid.se_input_no_angle();
@@ -337,7 +340,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE", SolverType, test_math_solver_
         }
 
         SUBCASE("Test se with angle, const z") {
-            SolverType solver{y_bus, topo_ptr};
+            SolverType solver{y_bus, topo};
             auto log = get_logger();
 
             auto const se_input = grid.se_input_angle_const_z();
@@ -347,7 +350,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE", SolverType, test_math_solver_
         }
 
         SUBCASE("Test se with angle and different power variances") {
-            SolverType solver{y_bus, topo_ptr};
+            SolverType solver{y_bus, topo};
             auto log = get_logger();
 
             auto se_input = grid.se_input_angle();
@@ -364,8 +367,11 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE", SolverType, test_math_solver_
     SUBCASE("se input angle with current sensors") {
         auto topo_ptr = std::make_shared<MathModelTopology const>(grid.se_topo_current_sensors());
         YBus<sym> const y_bus{topo_ptr, param_ptr};
+
+        // because YBus still requires a shared_ptr while solvers were changed to not require it anymore
+        auto const& topo = *topo_ptr;
         SUBCASE("Test se with local angle current sensors") {
-            SolverType solver{y_bus, topo_ptr};
+            SolverType solver{y_bus, topo};
             auto log = get_logger();
 
             auto const se_input = grid.se_input_angle_current_sensors(AngleMeasurementType::local_angle);
@@ -375,7 +381,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE", SolverType, test_math_solver_
         }
 
         SUBCASE("Test se with global angle current sensors") {
-            SolverType solver{y_bus, topo_ptr};
+            SolverType solver{y_bus, topo};
             auto log = get_logger();
 
             auto const se_input = grid.se_input_angle_current_sensors(AngleMeasurementType::global_angle);
@@ -424,7 +430,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, zero variance test", SolverTyp
     se_input.source_status = {1};
     se_input.measured_voltage = {{.value = 1.0, .variance = 1.0}};
 
-    SolverType solver{y_bus_sym, topo_ptr};
+    SolverType solver{y_bus_sym, *topo_ptr};
     auto log = get_logger();
     SolverOutput<symmetric_t> output;
 
@@ -499,7 +505,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
         YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
 
-        SolverType solver{y_bus_sym, topo_ptr};
+        SolverType solver{y_bus_sym, *topo_ptr};
 
         output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, log);
 
@@ -533,7 +539,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
             auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
             YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
 
-            SolverType solver{y_bus_sym, topo_ptr};
+            SolverType solver{y_bus_sym, *topo_ptr};
 
             SUBCASE("Local angle current sensor") {
                 SUBCASE("No phase shift") {
@@ -607,7 +613,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
         YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
-        SolverType solver{y_bus_sym, topo_ptr};
+        SolverType solver{y_bus_sym, *topo_ptr};
 
         output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, log);
 
@@ -639,7 +645,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
         YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
-        SolverType solver{y_bus_sym, topo_ptr};
+        SolverType solver{y_bus_sym, *topo_ptr};
 
         output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, log);
 
@@ -671,7 +677,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
         YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
-        SolverType solver{y_bus_sym, topo_ptr};
+        SolverType solver{y_bus_sym, *topo_ptr};
 
         output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, log);
 
@@ -703,7 +709,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
         YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
-        SolverType solver{y_bus_sym, topo_ptr};
+        SolverType solver{y_bus_sym, *topo_ptr};
 
         output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, log);
 
@@ -733,7 +739,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
         YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
-        SolverType solver{y_bus_sym, topo_ptr};
+        SolverType solver{y_bus_sym, *topo_ptr};
 
         output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, log);
 
@@ -767,7 +773,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
         YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
-        SolverType solver{y_bus_sym, topo_ptr};
+        SolverType solver{y_bus_sym, *topo_ptr};
 
         output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, log);
 
@@ -800,7 +806,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
         YBus<symmetric_t> const y_bus_sym{topo_ptr, param_ptr};
-        SolverType solver{y_bus_sym, topo_ptr};
+        SolverType solver{y_bus_sym, *topo_ptr};
 
         output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, log);
 

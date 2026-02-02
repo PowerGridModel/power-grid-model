@@ -29,7 +29,7 @@ classifiers = [
     "Operating System :: MacOS",
     "Topic :: Scientific/Engineering :: Physics",
 ]
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = ["numpy>=2.0.0"]
 dynamic = ["version"]
 
@@ -46,7 +46,13 @@ lint = [
     "clang-format ~= 18.0", # C++ formatter
 ]
 
-dev = [{ include-group = "test" }, { include-group = "lint" }]
+example = ["ipykernel"]
+
+dev = [
+    { include-group = "test" },
+    { include-group = "lint" },
+    { include-group = "example" },
+]
 
 code-generation = ["dataclasses_json", "jinja2"]
 
@@ -56,7 +62,6 @@ doc = [
     "myst_nb",
     "sphinx_rtd_theme",
     "readthedocs-sphinx-search",
-    "sphinx-hoverxref",
     "sphinxcontrib-mermaid>=1.0.0",
     "sphinxcontrib-tikz",
     "numpydoc",
@@ -122,8 +127,8 @@ line-length = 120
 indent-width = 4
 show-fixes = true
 
-# Assume Python 3.11
-target-version = "py311"
+# Assume Python 3.12
+target-version = "py312"
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

@@ -209,6 +209,22 @@ struct TransformerTapRegulatorUpdate {
     operator RegulatorUpdate const&() const { return reinterpret_cast<RegulatorUpdate const&>(*this); }
 };
 
+struct VoltageRegulatorUpdate {
+    ID id{na_IntID};  // ID of the object
+    IntS status{na_IntS};  // regulator enables
+    double u_ref{nan};  // reference voltage
+    double q_min{nan};  // reactive power limits
+    double q_max{nan};  // reactive power limits
+
+    // implicit conversions to BaseUpdate
+    operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
+    operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
+
+    // implicit conversions to RegulatorUpdate
+    operator RegulatorUpdate&() { return reinterpret_cast<RegulatorUpdate&>(*this); }
+    operator RegulatorUpdate const&() const { return reinterpret_cast<RegulatorUpdate const&>(*this); }
+};
+
 template <symmetry_tag sym_type>
 struct CurrentSensorUpdate {
     using sym = sym_type;

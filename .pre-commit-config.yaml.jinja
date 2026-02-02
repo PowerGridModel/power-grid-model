@@ -44,7 +44,14 @@ repos:
       name: cmake-linter
       alias: cmake-linter
   - repo: https://github.com/igorshubovych/markdownlint-cli  # outside pypi 
-    rev: v0.47.0
+    rev: v{{ markdownlint_cli }}
     hooks:
     - id: markdownlint
       args: ["--fix"]
+  # format .json and .jsonc files
+  - repo: https://github.com/biomejs/pre-commit  # outside pypi 
+    rev: v{{ biome }}
+    hooks:
+    # configuration is located in biome.jsonc
+    - id: biome-format
+      name: biome-format

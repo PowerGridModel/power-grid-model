@@ -19,6 +19,7 @@ from power_grid_model.errors import (
     AutomaticTapInputError,
     ConflictID,
     ConflictVoltage,
+    ExperimentalFeature,
     IDNotFound,
     IDWrongType,
     InvalidBranch,
@@ -33,6 +34,8 @@ from power_grid_model.errors import (
     PowerGridError,
     PowerGridSerializationError,
     SparseMatrixError,
+    UnsupportedRegulatorCombinationError,
+    UnsupportedVoltageRegulatorSourceCombinationError,
 )
 from power_grid_model.utils import json_deserialize, json_deserialize_from_file, json_serialize_to_file
 
@@ -82,6 +85,9 @@ KNOWN_EXCEPTIONS: dict[str, type[BaseException] | None] = {
         AssertionError,
         OSError,
         MaxIterationReached,
+        UnsupportedRegulatorCombinationError,
+        UnsupportedVoltageRegulatorSourceCombinationError,
+        ExperimentalFeature,
     )
 }
 KNOWN_EXCEPTIONS["Failed"] = _Failed

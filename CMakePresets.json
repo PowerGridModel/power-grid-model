@@ -1,5 +1,5 @@
 ﻿{
-  "version": 3,
+  "version": 6,
   "configurePresets": [
     {
       "name": "base",
@@ -14,11 +14,14 @@
       "environment": {
         "PLATFORM_C_FLAGS": "",
         "PLATFORM_CXX_FLAGS": "$env{PLATFORM_C_FLAGS}",
+        "PLATFORM_LINKER_FLAGS": "",
         "COMPILER_C_FLAGS": "",
         "COMPILER_CXX_FLAGS": "$env{COMPILER_C_FLAGS}",
-        "CFLAGS": "$penv{CFLAGS} $env{PLATFORM_C_FLAGS} $env{COMPILER_C_FLAGS} $env{COVERAGE_FLAGS} $env{SANITIZER_FLAGS}",
-        "CXXFLAGS": "$penv{CXXFLAGS} $env{PLATFORM_CXX_FLAGS} $env{COMPILER_CXX_FLAGS} $env{COVERAGE_FLAGS} $env{SANITIZER_FLAGS}",
-        "LDFLAGS": "$env{SANITIZER_FLAGS}"
+        "REPRODUCIBILITY_COMMON_FLAGS": "",
+        "REPRODUCIBILITY_LINKER_FLAGS": "",
+        "CFLAGS": "$penv{CFLAGS} $env{PLATFORM_C_FLAGS} $env{COMPILER_C_FLAGS} $env{COVERAGE_FLAGS} $env{SANITIZER_FLAGS} $env{REPRODUCIBILITY_COMMON_FLAGS}",
+        "CXXFLAGS": "$penv{CXXFLAGS} $env{PLATFORM_CXX_FLAGS} $env{COMPILER_CXX_FLAGS} $env{COVERAGE_FLAGS} $env{SANITIZER_FLAGS} $env{REPRODUCIBILITY_COMMON_FLAGS}",
+        "LDFLAGS": "$env{PLATFORM_LINKER_FLAGS} $env{SANITIZER_FLAGS} $env{REPRODUCIBILITY_LINKER_FLAGS} $env{REPRODUCIBILITY_LINKER_FLAGS}"
       },
       "architecture": {
         "value": "x64",
@@ -137,34 +140,22 @@
     {
       "name": "msvc-debug",
       "displayName": "Debug (MSVC)",
-      "inherits": [
-        "msvc-base",
-        "debug"
-      ]
+      "inherits": ["msvc-base", "debug"]
     },
     {
       "name": "msvc-release",
       "displayName": "Release (MSVC)",
-      "inherits": [
-        "msvc-base",
-        "release"
-      ]
+      "inherits": ["msvc-base", "release"]
     },
     {
       "name": "clang-cl-debug",
       "displayName": "Debug (Clang CL)",
-      "inherits": [
-        "clang-cl-base",
-        "debug"
-      ]
+      "inherits": ["clang-cl-base", "debug"]
     },
     {
       "name": "clang-cl-release",
       "displayName": "Release (Clang CL)",
-      "inherits": [
-        "clang-cl-base",
-        "release"
-      ]
+      "inherits": ["clang-cl-base", "release"]
     },
     {
       "name": "clang-base",
@@ -177,47 +168,29 @@
     },
     {
       "name": "clang-debug",
-      "inherits": [
-        "debug",
-        "clang-base"
-      ]
+      "inherits": ["debug", "clang-base"]
     },
     {
       "name": "clang-release",
-      "inherits": [
-        "release",
-        "clang-base"
-      ]
+      "inherits": ["release", "clang-base"]
     },
     {
       "name": "clang-tidy-debug",
-      "inherits": [
-        "debug",
-        "clang-tidy-unix-base"
-      ]
+      "inherits": ["debug", "clang-tidy-unix-base"]
     },
     {
       "name": "clang-tidy-release",
-      "inherits": [
-        "release",
-        "clang-tidy-unix-base"
-      ]
+      "inherits": ["release", "clang-tidy-unix-base"]
     },
     {
       "name": "clang-tidy-windows-debug",
       "displayName": "Debug (Clang CL + Clang Tidy)",
-      "inherits": [
-        "debug",
-        "clang-tidy-windows-base"
-      ]
+      "inherits": ["debug", "clang-tidy-windows-base"]
     },
     {
       "name": "clang-tidy-windows-release",
       "displayName": "Release (Clang CL + Clang Tidy)",
-      "inherits": [
-        "release",
-        "clang-tidy-windows-base"
-      ]
+      "inherits": ["release", "clang-tidy-windows-base"]
     },
     {
       "name": "gcc-base",
@@ -233,24 +206,15 @@
     },
     {
       "name": "gcc-debug",
-      "inherits": [
-        "debug",
-        "gcc-base"
-      ]
+      "inherits": ["debug", "gcc-base"]
     },
     {
       "name": "gcc-release",
-      "inherits": [
-        "release",
-        "gcc-base"
-      ]
+      "inherits": ["release", "gcc-base"]
     },
     {
       "name": "ci-clang-debug",
-      "inherits": [
-        "clang-debug",
-        "unix-coverage"
-      ]
+      "inherits": ["clang-debug", "unix-coverage"]
     },
     {
       "name": "ci-clang-release",
@@ -264,16 +228,11 @@
       "environment": {
         "COMPILER_CXX_FLAGS": "$env{COMPILER_C_FLAGS} -Wno-maybe-uninitialized"
       },
-      "inherits": [
-        "gcc-debug",
-        "unix-coverage"
-      ]
+      "inherits": ["gcc-debug", "unix-coverage"]
     },
     {
       "name": "ci-gcc-release",
-      "inherits": [
-        "gcc-release"
-      ],
+      "inherits": ["gcc-release"],
       "cacheVariables": {
         "CMAKE_INTERPROCEDURAL_OPTIMIZATION": "TRUE"
       },
@@ -283,11 +242,7 @@
     },
     {
       "name": "ci-sonar",
-      "inherits": [
-        "clang-base",
-        "debug",
-        "unix-coverage"
-      ]
+      "inherits": ["clang-base", "debug", "unix-coverage"]
     },
     {
       "name": "ci-clang-tidy-debug",
@@ -296,6 +251,54 @@
     {
       "name": "ci-clang-tidy-release",
       "inherits": "clang-tidy-release"
+    },
+    {
+      "name": "ci-msvc-reproducible",
+      "inherits": "msvc-release",
+      "environment": {
+        "REPRODUCIBILITY_COMMON_FLAGS": "/d1nodatetime /experimental:deterministic"
+      },
+      "cacheVariables": {
+        "PGM_ENABLE_DEV_BUILD": "OFF",
+        "CMAKE_SHARED_LINKER_FLAGS": "/Brepro /INCREMENTAL:NO"
+      }
+    },
+    {
+      "name": "ci-clang-cl-reproducible",
+      "inherits": "clang-cl-release",
+      "cacheVariables": {
+        "PGM_ENABLE_DEV_BUILD": "OFF",
+        "CMAKE_SHARED_LINKER_FLAGS": "/Brepro /INCREMENTAL:NO"
+      }
+    },
+    {
+      "name": "ci-gcc-reproducible",
+      "inherits": "gcc-release",
+      "environment": {
+        "REPRODUCIBILITY_COMMON_FLAGS": "$penv{REPRODUCIBILITY_COMMON_FLAGS} -frandom-seed=0 -Wdate-time"
+      },
+      "cacheVariables": {
+        "PGM_ENABLE_DEV_BUILD": "OFF"
+      }
+    },
+    {
+      "name": "ci-clang-reproducible",
+      "inherits": "clang-release",
+      "environment": {
+        "REPRODUCIBILITY_COMMON_FLAGS": "$penv{REPRODUCIBILITY_COMMON_FLAGS} -frandom-seed=0 -Wdate-time"
+      },
+      "cacheVariables": {
+        "PGM_ENABLE_DEV_BUILD": "OFF"
+      }
+    },
+    {
+      "name": "ci-apple-clang-reproducible",
+      "inherits": "ci-clang-reproducible",
+      "environment": {
+        "SOURCE_DATE_EPOCH": "1",
+        "DSYMUTIL": "",
+        "REPRODUCIBILITY_LINKER_FLAGS": "-Wl,-no_uuid -Wl,-S"
+      }
     }
   ],
   "buildPresets": [
@@ -374,6 +377,26 @@
     {
       "name": "ci-clang-tidy-debug",
       "configurePreset": "ci-clang-tidy-debug"
+    },
+    {
+      "name": "ci-msvc-reproducible",
+      "configurePreset": "ci-msvc-reproducible"
+    },
+    {
+      "name": "ci-clang-cl-reproducible",
+      "configurePreset": "ci-clang-cl-reproducible"
+    },
+    {
+      "name": "ci-gcc-reproducible",
+      "configurePreset": "ci-gcc-reproducible"
+    },
+    {
+      "name": "ci-clang-reproducible",
+      "configurePreset": "ci-clang-reproducible"
+    },
+    {
+      "name": "ci-apple-clang-reproducible",
+      "configurePreset": "ci-apple-clang-reproducible"
     }
   ],
   "testPresets": [
@@ -452,6 +475,144 @@
     {
       "name": "ci-clang-tidy-debug",
       "configurePreset": "ci-clang-tidy-debug"
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "msvc-debug",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "msvc-debug"
+        },
+        {
+          "type": "build",
+          "name": "msvc-debug"
+        },
+        {
+          "type": "test",
+          "name": "msvc-debug"
+        }
+      ]
+    },
+    {
+      "name": "msvc-release",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "msvc-release"
+        },
+        {
+          "type": "build",
+          "name": "msvc-release"
+        },
+        {
+          "type": "test",
+          "name": "msvc-release"
+        }
+      ]
+    },
+    {
+      "name": "clang-cl-debug",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "clang-cl-debug"
+        },
+        {
+          "type": "build",
+          "name": "clang-cl-debug"
+        },
+        {
+          "type": "test",
+          "name": "clang-cl-debug"
+        }
+      ]
+    },
+    {
+      "name": "clang-cl-release",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "clang-cl-release"
+        },
+        {
+          "type": "build",
+          "name": "clang-cl-release"
+        },
+        {
+          "type": "test",
+          "name": "clang-cl-release"
+        }
+      ]
+    },
+    {
+      "name": "gcc-debug",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "gcc-debug"
+        },
+        {
+          "type": "build",
+          "name": "gcc-debug"
+        },
+        {
+          "type": "test",
+          "name": "gcc-debug"
+        }
+      ]
+    },
+    {
+      "name": "gcc-release",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "gcc-release"
+        },
+        {
+          "type": "build",
+          "name": "gcc-release"
+        },
+        {
+          "type": "test",
+          "name": "gcc-release"
+        }
+      ]
+    },
+    {
+      "name": "clang-debug",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "clang-debug"
+        },
+        {
+          "type": "build",
+          "name": "clang-debug"
+        },
+        {
+          "type": "test",
+          "name": "clang-debug"
+        }
+      ]
+    },
+    {
+      "name": "clang-release",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "clang-release"
+        },
+        {
+          "type": "build",
+          "name": "clang-release"
+        },
+        {
+          "type": "test",
+          "name": "clang-release"
+        }
+      ]
     }
   ]
 }
