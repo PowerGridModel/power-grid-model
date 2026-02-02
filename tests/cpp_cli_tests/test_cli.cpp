@@ -231,6 +231,20 @@ struct CLITestCase {
             return PGM_json;
         }
     }
+    bool has_output_filter() const { return component_filter || attribute_filter; }
+    PGM_SymmetryType get_symmetry() const {
+        if (symmettry.has_value()) {
+            return symmettry.value();
+        } else {
+            return PGM_symmetric;
+        }
+    }
+    bool output_columnar() const {
+        if (output_compact_serialization.has_value()) {
+            return output_compact_serialization.value();
+        }
+        return get_output_format() == PGM_msgpack;
+    }
 
     std::string build_command() const {
         std::stringstream command;
@@ -290,11 +304,17 @@ struct CLITestCase {
         return command.str();
     }
 
-    void run_command() const {
+    void check_results() const {
+        fs::path const out_path = output_path(get_output_format());
+        OwningDataset const output_dataset = load_dataset(out_path, get_output_format(), true);
+    }
+
+    void run_command_and_check() const {
         std::string const command = build_command();
         INFO("CLI command: ", command);
         int ret = std::system(command.c_str());
         REQUIRE(ret == 0);
+        check_results();
     }
 };
 
