@@ -12,6 +12,7 @@
 #include <nlohmann/json.hpp>
 #include <numbers>
 #include <optional>
+#include <power_grid_model_c/dataset_definitions.h>
 #include <power_grid_model_cpp.hpp>
 #include <sstream>
 #include <string>
@@ -241,6 +242,40 @@ struct BufferRef {
     bool use_attribute_buffer{false};
     Buffer const* row_buffer;
     AttributeBuffer const* attribute_buffer;
+
+    void check_i_source(std::vector<double> const& i_source_ref) const {
+        Idx const batch_size = i_source_ref.size();
+        for (Idx idx = 0; idx < batch_size; ++idx) {
+            double const i_calculated = [this, idx]() {
+                if (use_attribute_buffer) {
+                    if (symmetric == PGM_symmetric) {
+                        auto const& data_vector = attribute_buffer->get_data_vector<double>();
+                        return data_vector.at(idx);
+                    } else {
+                        auto const& data_vector = attribute_buffer->get_data_vector<std::array<double, 3>>();
+                        auto const& val_array = data_vector.at(idx);
+                        CHECK(val_array[0] == doctest::Approx(val_array[1]));
+                        CHECK(val_array[0] == doctest::Approx(val_array[2]));
+                        return val_array[0];
+                    }
+                } else {
+                    // use row buffer
+                    if (symmetric == PGM_symmetric) {
+                        double value{};
+                        row_buffer->get_value(PGM_def_sym_output_source_i, &value, idx, 1);
+                        return value;
+                    } else {
+                        std::array<double, 3> val_array{};
+                        row_buffer->get_value(PGM_def_asym_output_source_i, val_array.data(), idx, 3);
+                        CHECK(val_array[0] == doctest::Approx(val_array[1]));
+                        CHECK(val_array[0] == doctest::Approx(val_array[2]));
+                        return val_array[0];
+                    }
+                }
+            }();
+            CHECK(i_calculated == doctest::Approx(i_source_ref.at(idx)));
+        }
+    }
 };
 
 struct CLITestCase {
@@ -249,7 +284,7 @@ struct CLITestCase {
     bool has_frequency{false};
     bool has_calculation_type{false};
     bool has_calculation_method{false};
-    std::optional<PGM_SymmetryType> symmettry{};
+    std::optional<PGM_SymmetryType> symmetry{};
     bool has_error_tolerance{false};
     bool has_max_iterations{false};
     bool has_threading{false};
@@ -270,8 +305,8 @@ struct CLITestCase {
     }
     bool has_output_filter() const { return component_filter || attribute_filter; }
     PGM_SymmetryType get_symmetry() const {
-        if (symmettry.has_value()) {
-            return symmettry.value();
+        if (symmetry.has_value()) {
+            return symmetry.value();
         } else {
             return PGM_symmetric;
         }
@@ -302,8 +337,8 @@ struct CLITestCase {
         if (has_calculation_method) {
             command << " --calculation-method " << "newton_raphson";
         }
-        if (symmettry.has_value()) {
-            command << (symmettry.value() == PGM_symmetric ? " -s" : " -a");
+        if (symmetry.has_value()) {
+            command << (symmetry.value() == PGM_symmetric ? " -s" : " -a");
         }
         if (has_error_tolerance) {
             command << " --error-tolerance 1e-8";
@@ -352,7 +387,7 @@ struct CLITestCase {
             }
             return &owning_memory.buffers[source_idx];
         }();
-        auto const* const attribute_buffer = [this, &owning_memory, &info, row_buffer,
+        auto const* const attribute_buffer = [this, &owning_memory, row_buffer,
                                               source_idx]() -> AttributeBuffer const* {
             if (output_columnar()) {
                 REQUIRE(row_buffer->get() == nullptr);
@@ -385,6 +420,8 @@ struct CLITestCase {
         Idx const batch_size = output_owning_dataset.dataset.get_info().batch_size();
         REQUIRE(batch_size == std::ssize(i_source_ref));
         REQUIRE(is_batch == output_owning_dataset.dataset.get_info().is_batch());
+        auto const buffer_ref = get_source_buffer(output_owning_dataset);
+        buffer_ref.check_i_source(i_source_ref);
     }
 
     void run_command_and_check() const {
@@ -411,6 +448,38 @@ TEST_CASE("Test CLI version") {
     // Extract the first line
     std::string const first_line = file_content.substr(0, file_content.find('\n'));
     CHECK(first_line == PGM_version());
+}
+
+TEST_CASE("Test run CLI") {
+    std::vector<CLITestCase> test_cases = {
+        // basic non-batch, symmetric, json
+        CLITestCase{},
+        // basic batch, symmetric, json
+        CLITestCase{.is_batch = true},
+        // batch, asymmetric, msgpack
+        CLITestCase{.is_batch = true, .symmetry = PGM_asymmetric, .output_serialization = PGM_msgpack},
+        // batch, symmetric, json, with all options set
+        CLITestCase{.is_batch = true,
+                    .has_frequency = true,
+                    .has_calculation_type = true,
+                    .has_calculation_method = true,
+                    .symmetry = PGM_symmetric,
+                    .has_error_tolerance = true,
+                    .has_max_iterations = true,
+                    .has_threading = true,
+                    .output_serialization = PGM_json,
+                    .output_json_indent = 4,
+                    .output_compact_serialization = false},
+        // batch, asymmetric, msgpack, with component and attribute filter
+        CLITestCase{.is_batch = true,
+                    .symmetry = PGM_asymmetric,
+                    .output_serialization = PGM_msgpack,
+                    .component_filter = true,
+                    .attribute_filter = true},
+    };
+    for (auto const& test_case : test_cases) {
+        SUBCASE(test_case.build_command().c_str()) { test_case.run_command_and_check(); }
+    }
 }
 
 } // namespace power_grid_model_cpp

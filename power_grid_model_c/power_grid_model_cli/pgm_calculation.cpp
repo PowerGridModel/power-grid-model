@@ -5,6 +5,8 @@
 #include "cli_functions.hpp"
 
 #include <cassert>
+#include <functional>
+#include <numeric>
 #include <optional>
 #include <ranges>
 
@@ -24,6 +26,8 @@ struct BatchDatasets {
         for (auto it = dataset_consts.begin(); it != dataset_consts.end() - 1; ++it) {
             it->set_next_cartesian_product_dimension(*(it + 1));
         }
+        batch_size = std::transform_reduce(datasets.begin(), datasets.end(), Idx{1}, std::multiplies{},
+                                           [](OwningDataset const& ds) { return ds.dataset.get_info().batch_size(); });
     }
 
     DatasetConst const& head() const {
