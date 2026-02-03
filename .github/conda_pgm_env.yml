@@ -16,6 +16,7 @@ dependencies:
   - numpy
   - cmake
   - ninja
+  - cli11
   # test deps
   - pytest
   - pytest-cov

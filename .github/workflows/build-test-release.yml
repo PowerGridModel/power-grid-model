@@ -281,7 +281,10 @@ jobs:
         run: python -m pip install . --no-build-isolation --no-deps -C wheel.cmake=false
 
       - name: Test
-        run: pytest
+        run: |
+          pytest
+          power-grid-model --help
+          power-grid-model --version
 
   github-release:
     name: Create and release assets to GitHub
