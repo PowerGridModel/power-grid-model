@@ -8,7 +8,7 @@ Tests for transformer tap regulator control side topology validation.
 
 from power_grid_model import initialize_array
 from power_grid_model._core.dataset_definitions import ComponentType, DatasetType
-from power_grid_model.enum import BranchSide, Branch3Side
+from power_grid_model.enum import Branch3Side, BranchSide
 from power_grid_model.validation import validate_input_data
 from power_grid_model.validation._validation import validate_tap_regulator_control_side_topology
 from power_grid_model.validation.errors import InvalidTapRegulatorControlSideError
