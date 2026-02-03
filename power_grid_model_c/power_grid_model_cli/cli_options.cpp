@@ -117,8 +117,13 @@ struct CLIPostCallback {
             try {
                 attribute = MetaData::get_attribute_by_name(options.output_dataset_name, comp_name, attr_name);
             } catch (PowerGridError const&) {
-                std::string const error_msg = "Attribute '" + attr_name + "' not found in component '" + comp_name +
-                                              "' of dataset '" + options.output_dataset_name + "'.";
+                std::string error_msg = "Attribute '";
+                error_msg += attr_name;
+                error_msg += "' not found in component '";
+                error_msg += comp_name;
+                error_msg += "' of dataset '";
+                error_msg += options.output_dataset_name;
+                error_msg += "'.";
                 throw CLI::ValidationError("output-attribute", error_msg);
             }
             options.output_component_attribute_filters[component].insert(attribute);

@@ -19,8 +19,8 @@ struct CLIResult {
     operator bool() const { return should_exit || exit_code != 0; }
 };
 
+// NOLINTNEXTLINE(clang-analyzer-optin.performance.Padding)
 struct ClIOptions {
-    // NOLINTBEGIN(clang-analyzer-optin.performance.Padding)
     std::filesystem::path input_file;
     std::vector<std::filesystem::path> batch_update_file;
     std::filesystem::path output_file;
@@ -48,7 +48,6 @@ struct ClIOptions {
     std::map<MetaComponent const*, std::set<MetaAttribute const*>> output_component_attribute_filters;
 
     bool verbose{false};
-    // NOLINTEND(clang-analyzer-optin.performance.Padding)
 
     friend std::ostream& operator<<(std::ostream& os, ClIOptions const& options);
 };
