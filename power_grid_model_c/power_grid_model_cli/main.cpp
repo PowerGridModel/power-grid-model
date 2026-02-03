@@ -27,10 +27,10 @@ int main(int argc, char** argv) {
         return static_cast<int>(e.error_code());
     } catch (std::exception const& e) {
         std::cerr << "Exception: " << e.what() << '\n';
-        return -666;
+        return 1;
     } catch (...) {
         std::cerr << "Unknown exception caught." << '\n';
-        return -999;
+        return 1;
     }
 
     return 0;
