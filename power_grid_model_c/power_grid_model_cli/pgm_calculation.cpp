@@ -57,7 +57,7 @@ void pgm_calculation(ClIOptions const& cli_options) {
     Options calc_options{};
     calc_options.set_calculation_type(cli_options.calculation_type);
     calc_options.set_calculation_method(cli_options.calculation_method);
-    calc_options.set_symmetric(cli_options.symmetric_calculation);
+    calc_options.set_symmetric(static_cast<Idx>(cli_options.symmetric_calculation));
     calc_options.set_err_tol(cli_options.error_tolerance);
     calc_options.set_max_iter(cli_options.max_iterations);
     calc_options.set_threading(cli_options.threading);
