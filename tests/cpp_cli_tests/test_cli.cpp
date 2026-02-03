@@ -202,7 +202,7 @@ std::string read_stdout_content() {
 
     // Get file size
     version_ifs.seekg(0, std::ios::end);
-    std::streamsize size = version_ifs.tellg();
+    std::streamsize const size = version_ifs.tellg();
     version_ifs.seekg(0, std::ios::beg);
 
     // Read the entire file
@@ -246,34 +246,33 @@ struct BufferRef {
     AttributeBuffer const* attribute_buffer;
 
     void check_i_source(std::vector<double> const& i_source_ref) const {
-        Idx const batch_size = i_source_ref.size();
+        Idx const batch_size = static_cast<Idx>(i_source_ref.size());
         for (Idx idx = 0; idx < batch_size; ++idx) {
             double const i_calculated = [this, idx]() {
                 if (use_attribute_buffer) {
                     if (symmetric == PGM_symmetric) {
                         auto const& data_vector = attribute_buffer->get_data_vector<double>();
                         return data_vector.at(idx);
-                    } else {
-                        auto const& data_vector = attribute_buffer->get_data_vector<std::array<double, 3>>();
-                        auto const& val_array = data_vector.at(idx);
-                        CHECK(val_array[0] == doctest::Approx(val_array[1]));
-                        CHECK(val_array[0] == doctest::Approx(val_array[2]));
-                        return val_array[0];
                     }
-                } else {
-                    // use row buffer
-                    if (symmetric == PGM_symmetric) {
-                        double value{};
-                        row_buffer->get_value(PGM_def_sym_output_source_i, &value, idx, 0);
-                        return value;
-                    } else {
-                        std::array<double, 3> val_array{};
-                        row_buffer->get_value(PGM_def_asym_output_source_i, val_array.data(), idx, 0);
-                        CHECK(val_array[0] == doctest::Approx(val_array[1]));
-                        CHECK(val_array[0] == doctest::Approx(val_array[2]));
-                        return val_array[0];
-                    }
+                    // else: use attribute buffer with asymmetric data
+                    auto const& data_vector = attribute_buffer->get_data_vector<std::array<double, 3>>();
+                    auto const& val_array = data_vector.at(idx);
+                    CHECK(val_array[0] == doctest::Approx(val_array[1]));
+                    CHECK(val_array[0] == doctest::Approx(val_array[2]));
+                    return val_array[0];
                 }
+                // else: use row buffer
+                if (symmetric == PGM_symmetric) {
+                    double value{};
+                    row_buffer->get_value(PGM_def_sym_output_source_i, &value, idx, 0);
+                    return value;
+                }
+                // else: use row buffer with asymmetric data
+                std::array<double, 3> val_array{};
+                row_buffer->get_value(PGM_def_asym_output_source_i, val_array.data(), idx, 0);
+                CHECK(val_array[0] == doctest::Approx(val_array[1]));
+                CHECK(val_array[0] == doctest::Approx(val_array[2]));
+                return val_array[0];
             }();
             CHECK(i_calculated == doctest::Approx(i_source_ref.at(idx)));
         }
@@ -299,19 +298,18 @@ struct CLITestCase {
     PGM_SerializationFormat get_output_format() const {
         if (output_serialization.has_value()) {
             return output_serialization.value();
-        } else if (is_batch && batch_p_msgpack) {
-            return PGM_msgpack;
-        } else {
-            return PGM_json;
         }
+        if (is_batch && batch_p_msgpack) {
+            return PGM_msgpack;
+        }
+        return PGM_json;
     }
     bool has_output_filter() const { return component_filter || attribute_filter; }
     PGM_SymmetryType get_symmetry() const {
         if (symmetry.has_value()) {
             return symmetry.value();
-        } else {
-            return PGM_symmetric;
         }
+        return PGM_symmetric;
     }
     bool output_columnar() const {
         if (output_compact_serialization.has_value()) {
@@ -396,15 +394,15 @@ struct CLITestCase {
                 REQUIRE(row_buffer->get() == nullptr);
                 if (attribute_filter) {
                     REQUIRE(owning_memory.attribute_buffers[source_idx].size() == 1);
-                    return &owning_memory.attribute_buffers[source_idx][0];
-                } else {
-                    for (auto const& attr_buf : owning_memory.attribute_buffers[source_idx]) {
-                        if (MetaData::attribute_name(attr_buf.get_attribute()) == "i") {
-                            return &attr_buf;
-                        }
-                    }
-                    DOCTEST_FAIL("Attribute 'i' buffer not found");
+                    return owning_memory.attribute_buffers[source_idx].data();
                 }
+                // else: search for 'i' attribute buffer
+                for (auto const& attr_buf : owning_memory.attribute_buffers[source_idx]) {
+                    if (MetaData::attribute_name(attr_buf.get_attribute()) == "i") {
+                        return &attr_buf;
+                    }
+                }
+                DOCTEST_FAIL("Attribute 'i' buffer not found");
             }
             // when no filter, buffer should not be nullptr, and return nullptr for attribute buffer
             REQUIRE(row_buffer->get() != nullptr);
@@ -431,7 +429,8 @@ struct CLITestCase {
         prepare_data();
         std::string const command = build_command();
         INFO("CLI command: ", command);
-        int ret = std::system(command.c_str());
+        // NOLINTNEXTLINE(cert-env33-c,concurrency-mt-unsafe)
+        int const ret = std::system(command.c_str());
         std::string const stdout_content = read_stdout_content();
         INFO("CLI stdout content: ", stdout_content);
         REQUIRE(ret == 0);
@@ -444,7 +443,8 @@ struct CLITestCase {
 TEST_CASE("Test CLI version") {
     prepare_data();
     std::string const command = std::string{cli_executable} + " --version" + " > " + stdout_path().string();
-    int ret = std::system(command.c_str());
+    // NOLINTNEXTLINE(cert-env33-c,concurrency-mt-unsafe)
+    int const ret = std::system(command.c_str());
     std::string const file_content = read_stdout_content();
     INFO("CLI stdout content: ", file_content);
     REQUIRE(ret == 0);
