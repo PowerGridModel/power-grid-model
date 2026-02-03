@@ -38,7 +38,7 @@ repos:
       - id: clang-format
         types_or: [ c++, c ]
   - repo: https://github.com/BlankSpruce/gersemi
-    rev: 0.25.1
+    rev: 0.25.4
     hooks:
     - id: gersemi
       name: cmake-linter
@@ -50,7 +50,7 @@ repos:
       args: ["--fix"]
   # format .json and .jsonc files
   - repo: https://github.com/biomejs/pre-commit  # outside pypi 
-    rev: v2.3.12
+    rev: v2.3.13
     hooks:
     # configuration is located in biome.jsonc
     - id: biome-format
