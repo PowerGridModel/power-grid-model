@@ -233,7 +233,7 @@ CLIResult parse_cli_options(int argc, char** argv, ClIOptions& options) {
 }
 
 std::ostream& operator<<(std::ostream& os, ClIOptions const& options) {
-    os << "CLI Options:\n";
+    os << "Run PGM with following CLI Options:\n";
     os << "Input file: " << options.input_file << "\n";
     os << "Batch update file: \n";
     for (auto const& file : options.batch_update_file) {

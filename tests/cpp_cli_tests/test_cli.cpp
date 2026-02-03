@@ -374,7 +374,8 @@ struct CLITestCase {
         if (attribute_filter) {
             command << " --oa source.i";
         }
-        command << " > " << stdout_path();
+        command << " --verbose";
+        command << " > " << stdout_path() << " 2>&1";
         return command.str();
     }
 
