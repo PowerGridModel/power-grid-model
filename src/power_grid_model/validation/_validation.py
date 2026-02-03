@@ -10,6 +10,7 @@ Although all functions are 'public', you probably only need validate_input_data(
 """
 
 import copy
+import heapq
 from collections.abc import Sized as ABCSized
 from itertools import chain
 from typing import Literal
@@ -66,6 +67,7 @@ from power_grid_model.validation._rules import (
 from power_grid_model.validation.errors import (
     IdNotInDatasetError,
     InvalidIdError,
+    InvalidTapRegulatorControlSideError,
     InvalidVoltageRegulationError,
     MissingValueError,
     MultiComponentNotUniqueError,
@@ -1240,6 +1242,428 @@ def validate_regulator(data: SingleDataset, component: ComponentType) -> list[Va
     return errors
 
 
+def _build_regulated_transformer_mappings(
+    regulator_data: np.ndarray,
+) -> tuple[dict[int, int], dict[int, int]]:
+    """
+    Build mappings of regulated transformers and their regulators.
+
+    Args:
+        regulator_data: Array of transformer tap regulator data
+
+    Returns:
+        Tuple of (regulated_transformers, regulator_id_by_transformer) where:
+        - regulated_transformers maps transformer_id -> control_side
+        - regulator_id_by_transformer maps transformer_id -> regulator_id
+    """
+    regulated_transformers: dict[int, int] = {}
+    regulator_id_by_transformer: dict[int, int] = {}
+
+    for regulator in regulator_data:
+        if regulator["status"] != 0:  # Only active regulators
+            regulated_transformers[regulator["regulated_object"]] = regulator["control_side"]
+            regulator_id_by_transformer[regulator["regulated_object"]] = regulator["id"]
+
+    return regulated_transformers, regulator_id_by_transformer
+
+
+def _add_transformer_edges_to_graph(
+    data: SingleDataset,
+    graph: dict[int, list[tuple[int, str]]],
+    node_id_to_idx: dict[int, int],
+    regulated_transformers: dict[int, int],
+) -> None:
+    """
+    Add 2-winding transformer edges to the topology graph.
+
+    Args:
+        data: Input dataset
+        graph: Adjacency list graph to update
+        node_id_to_idx: Mapping from node IDs to indices
+        regulated_transformers: Mapping of transformer_id -> control_side
+    """
+    if ComponentType.transformer not in data:
+        return
+
+    for transformer in data[ComponentType.transformer]:
+        if transformer["from_status"] == 0 or transformer["to_status"] == 0:
+            continue
+
+        from_node_id = transformer["from_node"]
+        to_node_id = transformer["to_node"]
+
+        if from_node_id not in node_id_to_idx or to_node_id not in node_id_to_idx:
+            continue
+
+        from_idx = node_id_to_idx[from_node_id]
+        to_idx = node_id_to_idx[to_node_id]
+        transformer_id = transformer["id"]
+
+        if transformer_id in regulated_transformers:
+            # For regulated transformers, add directed edge from non-control side to control side
+            control_side = regulated_transformers[transformer_id]
+            # BranchSide: from_side=0, to_side=1
+            if control_side == int(BranchSide.from_side):
+                # Control side is from_side, so edge goes from to_side to from_side
+                graph[to_idx].append((from_idx, "regulated"))
+            else:  # control_side == int(BranchSide.to_side)
+                # Control side is to_side, so edge goes from from_side to to_side
+                graph[from_idx].append((to_idx, "regulated"))
+        else:
+            # Unregulated transformers have bidirectional edges
+            graph[from_idx].append((to_idx, "unregulated"))
+            graph[to_idx].append((from_idx, "unregulated"))
+
+
+def _add_three_winding_transformer_edges_to_graph(
+    data: SingleDataset,
+    graph: dict[int, list[tuple[int, str]]],
+    node_id_to_idx: dict[int, int],
+    regulated_transformers: dict[int, int],
+) -> None:
+    """
+    Add 3-winding transformer edges to the topology graph.
+
+    Args:
+        data: Input dataset
+        graph: Adjacency list graph to update
+        node_id_to_idx: Mapping from node IDs to indices
+        regulated_transformers: Mapping of transformer_id -> control_side
+    """
+    if ComponentType.three_winding_transformer not in data:
+        return
+
+    for transformer3w in data[ComponentType.three_winding_transformer]:
+        if transformer3w["status_1"] == 0 or transformer3w["status_2"] == 0 or transformer3w["status_3"] == 0:
+            continue
+
+        node_1_id = transformer3w["node_1"]
+        node_2_id = transformer3w["node_2"]
+        node_3_id = transformer3w["node_3"]
+
+        if node_1_id not in node_id_to_idx or node_2_id not in node_id_to_idx or node_3_id not in node_id_to_idx:
+            continue
+
+        node_1_idx = node_id_to_idx[node_1_id]
+        node_2_idx = node_id_to_idx[node_2_id]
+        node_3_idx = node_id_to_idx[node_3_id]
+        transformer_id = transformer3w["id"]
+
+        if transformer_id in regulated_transformers:
+            control_side = regulated_transformers[transformer_id]
+            tap_side = transformer3w["tap_side"]
+
+            # Branch3Side: side_1=0, side_2=1, side_3=2
+            # Determine which node is the tap side and which is the control side
+            tap_node_idx = [node_1_idx, node_2_idx, node_3_idx][tap_side]
+            control_node_idx = [node_1_idx, node_2_idx, node_3_idx][control_side]
+            non_control_nodes = [idx for i, idx in enumerate([node_1_idx, node_2_idx, node_3_idx]) if i != control_side]
+
+            if tap_side == control_side:
+                # Tap at control side: edges from both non-control sides to control side
+                for non_control_idx in non_control_nodes:
+                    graph[non_control_idx].append((control_node_idx, "regulated"))
+                # Bidirectional edge between non-control sides
+                graph[non_control_nodes[0]].append((non_control_nodes[1], "unregulated"))
+                graph[non_control_nodes[1]].append((non_control_nodes[0], "unregulated"))
+            else:
+                # Tap at non-control side: edges from non-tap sides to their respective sides
+                for i, idx in enumerate([node_1_idx, node_2_idx, node_3_idx]):
+                    if i == tap_side:
+                        # From tap side to control side
+                        graph[tap_node_idx].append((control_node_idx, "regulated"))
+                    elif i != control_side:
+                        # From other non-tap, non-control side to control side
+                        graph[idx].append((control_node_idx, "regulated"))
+                # Bidirectional edge between tap and the other non-control side
+                other_non_control = next(idx for idx in non_control_nodes if idx != tap_node_idx)
+                graph[tap_node_idx].append((other_non_control, "unregulated"))
+                graph[other_non_control].append((tap_node_idx, "unregulated"))
+        else:
+            # Unregulated 3-winding transformers have bidirectional edges between all nodes
+            graph[node_1_idx].append((node_2_idx, "unregulated"))
+            graph[node_1_idx].append((node_3_idx, "unregulated"))
+            graph[node_2_idx].append((node_1_idx, "unregulated"))
+            graph[node_2_idx].append((node_3_idx, "unregulated"))
+            graph[node_3_idx].append((node_1_idx, "unregulated"))
+            graph[node_3_idx].append((node_2_idx, "unregulated"))
+
+
+def _add_branch_edges_to_graph(
+    data: SingleDataset, graph: dict[int, list[tuple[int, str]]], node_id_to_idx: dict[int, int]
+) -> None:
+    """
+    Add line and link edges to the topology graph.
+
+    Args:
+        data: Input dataset
+        graph: Adjacency list graph to update
+        node_id_to_idx: Mapping from node IDs to indices
+    """
+    for branch_type in [ComponentType.line, ComponentType.link]:
+        if branch_type not in data:
+            continue
+        for branch in data[branch_type]:
+            if branch["from_status"] == 0 or branch["to_status"] == 0:
+                continue
+
+            from_node_id = branch["from_node"]
+            to_node_id = branch["to_node"]
+
+            if from_node_id not in node_id_to_idx or to_node_id not in node_id_to_idx:
+                continue
+
+            from_idx = node_id_to_idx[from_node_id]
+            to_idx = node_id_to_idx[to_node_id]
+
+            # Branches always have bidirectional edges
+            graph[from_idx].append((to_idx, "unregulated"))
+            graph[to_idx].append((from_idx, "unregulated"))
+
+
+def _compute_distances_from_sources(
+    num_nodes: int, source_nodes: set[int], graph: dict[int, list[tuple[int, str]]]
+) -> list[float]:
+    """
+    Compute shortest distances from sources to all nodes using Dijkstra's algorithm.
+
+    Args:
+        num_nodes: Number of nodes in the graph
+        source_nodes: Set of source node indices
+        graph: Adjacency list graph
+
+    Returns:
+        List of distances from sources to each node (inf if unreachable)
+    """
+    distances = [float("inf")] * num_nodes
+
+    for source_idx in source_nodes:
+        # Use Dijkstra's algorithm
+        pq: list[tuple[float, int]] = [(0, source_idx)]
+        local_distances = [float("inf")] * num_nodes
+        local_distances[source_idx] = 0
+
+        while pq:
+            dist, u = heapq.heappop(pq)
+
+            if dist > local_distances[u]:
+                continue
+
+            for v, _ in graph[u]:
+                new_dist = local_distances[u] + 1
+                if new_dist < local_distances[v]:
+                    local_distances[v] = new_dist
+                    heapq.heappush(pq, (new_dist, v))
+
+        # Update global distances with minimum from all sources
+        for i in range(num_nodes):
+            distances[i] = min(distances[i], local_distances[i])
+
+    return distances
+
+
+def _check_two_winding_transformer_validity(
+    data: SingleDataset,
+    regulated_transformers: dict[int, int],
+    regulator_id_by_transformer: dict[int, int],
+    node_id_to_idx: dict[int, int],
+    distances: list[float],
+) -> list[int]:
+    """
+    Check 2-winding transformers for invalid control side configurations.
+
+    Args:
+        data: Input dataset
+        regulated_transformers: Mapping of transformer_id -> control_side
+        regulator_id_by_transformer: Mapping of transformer_id -> regulator_id
+        node_id_to_idx: Mapping from node IDs to indices
+        distances: Distances from sources to each node
+
+    Returns:
+        List of invalid regulator IDs
+    """
+    invalid_regulator_ids: list[int] = []
+
+    if ComponentType.transformer not in data:
+        return invalid_regulator_ids
+
+    for transformer in data[ComponentType.transformer]:
+        transformer_id = transformer["id"]
+
+        if transformer_id not in regulated_transformers:
+            continue
+
+        if transformer["from_status"] == 0 or transformer["to_status"] == 0:
+            continue
+
+        from_node_id = transformer["from_node"]
+        to_node_id = transformer["to_node"]
+
+        if from_node_id not in node_id_to_idx or to_node_id not in node_id_to_idx:
+            continue
+
+        from_idx = node_id_to_idx[from_node_id]
+        to_idx = node_id_to_idx[to_node_id]
+        control_side = regulated_transformers[transformer_id]
+
+        # Determine non-control side and control side
+        if control_side == int(BranchSide.from_side):
+            non_control_idx = to_idx
+            control_idx = from_idx
+        else:
+            non_control_idx = from_idx
+            control_idx = to_idx
+
+        # Check if either side is unreachable
+        non_control_dist = distances[non_control_idx]
+        control_dist = distances[control_idx]
+
+        # If at least one side is unreachable AND at least one is reachable, it's invalid
+        if (non_control_dist == float("inf") or control_dist == float("inf")) and (
+            non_control_dist != float("inf") or control_dist != float("inf")
+        ):
+            regulator_id = regulator_id_by_transformer[transformer_id]
+            invalid_regulator_ids.append(regulator_id)
+
+    return invalid_regulator_ids
+
+
+def _check_three_winding_transformer_validity(
+    data: SingleDataset,
+    regulated_transformers: dict[int, int],
+    regulator_id_by_transformer: dict[int, int],
+    node_id_to_idx: dict[int, int],
+    distances: list[float],
+) -> list[int]:
+    """
+    Check 3-winding transformers for invalid control side configurations.
+
+    Args:
+        data: Input dataset
+        regulated_transformers: Mapping of transformer_id -> control_side
+        regulator_id_by_transformer: Mapping of transformer_id -> regulator_id
+        node_id_to_idx: Mapping from node IDs to indices
+        distances: Distances from sources to each node
+
+    Returns:
+        List of invalid regulator IDs
+    """
+    invalid_regulator_ids: list[int] = []
+
+    if ComponentType.three_winding_transformer not in data:
+        return invalid_regulator_ids
+
+    for transformer3w in data[ComponentType.three_winding_transformer]:
+        transformer_id = transformer3w["id"]
+
+        if transformer_id not in regulated_transformers:
+            continue
+
+        if transformer3w["status_1"] == 0 or transformer3w["status_2"] == 0 or transformer3w["status_3"] == 0:
+            continue
+
+        node_1_id = transformer3w["node_1"]
+        node_2_id = transformer3w["node_2"]
+        node_3_id = transformer3w["node_3"]
+
+        if node_1_id not in node_id_to_idx or node_2_id not in node_id_to_idx or node_3_id not in node_id_to_idx:
+            continue
+
+        node_1_idx = node_id_to_idx[node_1_id]
+        node_2_idx = node_id_to_idx[node_2_id]
+        node_3_idx = node_id_to_idx[node_3_id]
+
+        control_side = regulated_transformers[transformer_id]
+        control_node_idx = [node_1_idx, node_2_idx, node_3_idx][control_side]
+        non_control_nodes = [idx for i, idx in enumerate([node_1_idx, node_2_idx, node_3_idx]) if i != control_side]
+
+        # Check if control side is reachable and at least one non-control side is unreachable
+        control_dist = distances[control_node_idx]
+        non_control_dists = [distances[idx] for idx in non_control_nodes]
+
+        # If any endpoint is unreachable AND at least one is reachable, it's invalid
+        if (control_dist == float("inf") or any(d == float("inf") for d in non_control_dists)) and not all(
+            d == float("inf") for d in [control_dist, *non_control_dists]
+        ):
+            regulator_id = regulator_id_by_transformer[transformer_id]
+            invalid_regulator_ids.append(regulator_id)
+
+    return invalid_regulator_ids
+
+
+def validate_tap_regulator_control_side_topology(data: SingleDataset) -> list[ValidationError]:
+    """
+    Validates that transformer tap regulators have valid control side configuration.
+    A transformer must be controlled from a side that is closer to or at the source,
+    not from a side that is farther from the source.
+
+    This implements the same logic as the C++ tap_position_optimizer:
+    1. Build a directed graph where regulated transformers have edges from non-control side to control side
+    2. Use Dijkstra's algorithm to find shortest distances from sources to all nodes
+    3. Flag transformers where the non-control side is unreachable from sources but control side is reachable
+
+    Args:
+        data: A power-grid-model input dataset
+
+    Returns:
+        A list of InvalidTapRegulatorControlSideError for transformers with invalid control side configuration
+    """
+    # Early validation checks
+    if (
+        ComponentType.transformer_tap_regulator not in data
+        or data[ComponentType.transformer_tap_regulator].size == 0
+        or ComponentType.node not in data
+    ):
+        return []
+
+    regulator_data = data[ComponentType.transformer_tap_regulator]
+    node_data = data[ComponentType.node]
+    num_nodes = node_data.size
+
+    # Create node ID to index mapping
+    node_id_to_idx = {node_id: idx for idx, node_id in enumerate(node_data["id"])}
+
+    # Build adjacency list for the graph
+    graph: dict[int, list[tuple[int, str]]] = {i: [] for i in range(num_nodes)}
+
+    # Get source nodes
+    source_nodes = set()
+    if ComponentType.source in data:
+        for source in data[ComponentType.source]:
+            if source["status"] != 0 and source["node"] in node_id_to_idx:
+                source_nodes.add(node_id_to_idx[source["node"]])
+
+    # Build mapping of regulated transformers
+    regulated_transformers, regulator_id_by_transformer = _build_regulated_transformer_mappings(regulator_data)
+
+    # Build the graph by adding edges from all components
+    _add_transformer_edges_to_graph(data, graph, node_id_to_idx, regulated_transformers)
+    _add_three_winding_transformer_edges_to_graph(data, graph, node_id_to_idx, regulated_transformers)
+    _add_branch_edges_to_graph(data, graph, node_id_to_idx)
+
+    # Compute distances from sources to all nodes
+    distances = _compute_distances_from_sources(num_nodes, source_nodes, graph)
+
+    # Check for invalid configurations
+    invalid_regulator_ids = _check_two_winding_transformer_validity(
+        data, regulated_transformers, regulator_id_by_transformer, node_id_to_idx, distances
+    )
+    invalid_regulator_ids.extend(
+        _check_three_winding_transformer_validity(
+            data, regulated_transformers, regulator_id_by_transformer, node_id_to_idx, distances
+        )
+    )
+
+    if invalid_regulator_ids:
+        return [
+            InvalidTapRegulatorControlSideError(
+                ComponentType.transformer_tap_regulator, "control_side", invalid_regulator_ids
+            )
+        ]
+
+    return []
+
+
 def validate_transformer_tap_regulator(data: SingleDataset) -> list[ValidationError]:
     errors = validate_regulator(data, ComponentType.transformer_tap_regulator)
     errors += _all_boolean(data, ComponentType.transformer_tap_regulator, "status")
@@ -1271,6 +1695,7 @@ def validate_transformer_tap_regulator(data: SingleDataset) -> list[ValidationEr
     errors += _all_greater_than_or_equal_to_zero(
         data, ComponentType.transformer_tap_regulator, "line_drop_compensation_x", 0.0
     )
+    errors += validate_tap_regulator_control_side_topology(data)
     return errors
 
 
