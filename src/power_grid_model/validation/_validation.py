@@ -1485,7 +1485,7 @@ def _check_two_winding_transformer_validity(
     Returns:
         List of invalid regulator IDs
     """
-    invalid_regulator_ids = []
+    invalid_regulator_ids: list[int] = []
 
     if ComponentType.transformer not in data:
         return invalid_regulator_ids
@@ -1551,7 +1551,7 @@ def _check_three_winding_transformer_validity(
     Returns:
         List of invalid regulator IDs
     """
-    invalid_regulator_ids = []
+    invalid_regulator_ids: list[int] = []
 
     if ComponentType.three_winding_transformer not in data:
         return invalid_regulator_ids
@@ -1594,7 +1594,7 @@ def _check_three_winding_transformer_validity(
     return invalid_regulator_ids
 
 
-def validate_tap_regulator_control_side_topology(data: SingleDataset) -> list[ValidationError]:  # noqa: PLR0911, PLR0912
+def validate_tap_regulator_control_side_topology(data: SingleDataset) -> list[ValidationError]:
     """
     Validates that transformer tap regulators have valid control side configuration.
     A transformer must be controlled from a side that is closer to or at the source,
@@ -1665,86 +1665,6 @@ def validate_tap_regulator_control_side_topology(data: SingleDataset) -> list[Va
         ]
 
     return []
-    """
-    Validates that transformer tap regulators have valid control side configuration.
-    A transformer must be controlled from a side that is closer to or at the source,
-    not from a side that is farther from the source.
-
-    This implements the same logic as the C++ tap_position_optimizer:
-    1. Build a directed graph where regulated transformers have edges from non-control side to control side
-    2. Use Dijkstra's algorithm to find shortest distances from sources to all nodes
-    3. Flag transformers where the non-control side is unreachable from sources but control side is reachable
-
-    Args:
-        data: A power-grid-model input dataset
-
-    Returns:
-        A list of InvalidTapRegulatorControlSideError for transformers with invalid control side configuration
-    """
-    errors: list[ValidationError] = []
-
-    # Check if we have tap regulators
-    if ComponentType.transformer_tap_regulator not in data:
-        return errors
-
-    regulator_data = data[ComponentType.transformer_tap_regulator]
-    if regulator_data.size == 0:
-        return errors
-
-    # Get all nodes
-    if ComponentType.node not in data:
-        return errors
-
-    node_data = data[ComponentType.node]
-    num_nodes = node_data.size
-
-    # Create node ID to index mapping
-    node_id_to_idx = {node_id: idx for idx, node_id in enumerate(node_data["id"])}
-
-    # Build adjacency list for the graph
-    graph: dict[int, list[tuple[int, str]]] = {i: [] for i in range(num_nodes)}
-
-    # Get source nodes
-    source_nodes = set()
-    if ComponentType.source in data:
-        for source in data[ComponentType.source]:
-            if source["status"] != 0:  # Only active sources
-                node_id = source["node"]
-                if node_id in node_id_to_idx:
-                    source_nodes.add(node_id_to_idx[node_id])
-
-    # Build mapping of regulated transformers
-    regulated_transformers, regulator_id_by_transformer = _build_regulated_transformer_mappings(regulator_data)
-
-    # Build the graph by adding edges from all components
-    _add_transformer_edges_to_graph(data, graph, node_id_to_idx, regulated_transformers)
-    _add_three_winding_transformer_edges_to_graph(data, graph, node_id_to_idx, regulated_transformers)
-    _add_branch_edges_to_graph(data, graph, node_id_to_idx)
-
-    # Compute distances from sources to all nodes
-    distances = _compute_distances_from_sources(num_nodes, source_nodes, graph)
-
-    # Check for invalid configurations
-    invalid_regulator_ids = []
-    invalid_regulator_ids.extend(
-        _check_two_winding_transformer_validity(
-            data, regulated_transformers, regulator_id_by_transformer, node_id_to_idx, distances
-        )
-    )
-    invalid_regulator_ids.extend(
-        _check_three_winding_transformer_validity(
-            data, regulated_transformers, regulator_id_by_transformer, node_id_to_idx, distances
-        )
-    )
-
-    if invalid_regulator_ids:
-        errors.append(
-            InvalidTapRegulatorControlSideError(
-                ComponentType.transformer_tap_regulator, "control_side", invalid_regulator_ids
-            )
-        )
-
-    return errors
 
 
 def validate_transformer_tap_regulator(data: SingleDataset) -> list[ValidationError]:
