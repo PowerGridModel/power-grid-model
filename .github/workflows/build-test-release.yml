@@ -278,7 +278,9 @@ jobs:
           cmake --install build/
 
       - name: Build python
-        run: python -m pip install . --no-build-isolation --no-deps -C wheel.cmake=false
+        run: | 
+          python conda_build_preparation.py
+          python -m pip install . --no-build-isolation --no-deps -C wheel.cmake=false
 
       - name: Test
         run: |
