@@ -1242,7 +1242,6 @@ def validate_regulator(data: SingleDataset, component: ComponentType) -> list[Va
     return errors
 
 
-
 def _build_regulated_transformer_mappings(
     regulator_data: np.ndarray,
 ) -> tuple[dict[int, int], dict[int, int]]:
@@ -1358,9 +1357,7 @@ def _add_three_winding_transformer_edges_to_graph(
             # Determine which node is the tap side and which is the control side
             tap_node_idx = [node_1_idx, node_2_idx, node_3_idx][tap_side]
             control_node_idx = [node_1_idx, node_2_idx, node_3_idx][control_side]
-            non_control_nodes = [
-                idx for i, idx in enumerate([node_1_idx, node_2_idx, node_3_idx]) if i != control_side
-            ]
+            non_control_nodes = [idx for i, idx in enumerate([node_1_idx, node_2_idx, node_3_idx]) if i != control_side]
 
             if tap_side == control_side:
                 # Tap at control side: edges from both non-control sides to control side
