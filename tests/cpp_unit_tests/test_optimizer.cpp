@@ -7,6 +7,9 @@
 #include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/auxiliary/meta_data.hpp>
 #include <power_grid_model/auxiliary/meta_gen/gen_getters.hpp>
+#include <power_grid_model/auxiliary/meta_gen/input.hpp>  // NOLINT(misc-include-cleaner)
+#include <power_grid_model/auxiliary/meta_gen/output.hpp> // NOLINT(misc-include-cleaner)
+#include <power_grid_model/auxiliary/meta_gen/update.hpp> // NOLINT(misc-include-cleaner)
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/component_list.hpp>
 #include <power_grid_model/common/enum.hpp>

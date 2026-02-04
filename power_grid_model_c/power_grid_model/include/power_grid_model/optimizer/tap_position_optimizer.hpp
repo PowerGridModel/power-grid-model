@@ -6,16 +6,18 @@
 
 #include "base_optimizer.hpp"
 
-#include "../all_components.hpp"
 #include "../auxiliary/dataset.hpp"
-#include "../auxiliary/meta_gen/update.hpp"
 #include "../common/enum.hpp"
 #include "../common/exception.hpp"
+#include "../component/line.hpp"
+#include "../component/link.hpp"
+#include "../component/node.hpp"
+#include "../component/source.hpp"
 #include "../component/three_winding_transformer.hpp"
 #include "../component/transformer.hpp"
 #include "../component/transformer_tap_regulator.hpp"
+#include "../container.hpp"
 #include "../main_core/container_queries.hpp"
-#include "../main_core/output.hpp"
 #include "../main_core/state_queries.hpp"
 
 #include <boost/graph/compressed_sparse_row_graph.hpp>

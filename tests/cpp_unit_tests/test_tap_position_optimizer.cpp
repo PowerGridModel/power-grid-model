@@ -8,6 +8,9 @@
 #include <power_grid_model/auxiliary/input.hpp>
 #include <power_grid_model/auxiliary/meta_data.hpp>
 #include <power_grid_model/auxiliary/meta_gen/gen_getters.hpp>
+#include <power_grid_model/auxiliary/meta_gen/input.hpp>  // NOLINT(misc-include-cleaner)
+#include <power_grid_model/auxiliary/meta_gen/output.hpp> // NOLINT(misc-include-cleaner)
+#include <power_grid_model/auxiliary/meta_gen/update.hpp> // NOLINT(misc-include-cleaner)
 #include <power_grid_model/auxiliary/update.hpp>
 #include <power_grid_model/calculation_parameters.hpp>
 #include <power_grid_model/common/common.hpp>
