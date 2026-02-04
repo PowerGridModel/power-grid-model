@@ -2,7 +2,6 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include <cstdint>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/component_list.hpp>
 #include <power_grid_model/common/exception.hpp>
@@ -11,6 +10,7 @@
 
 #include <doctest/doctest.h>
 
+#include <cstdint>
 #include <ranges>
 #include <type_traits>
 

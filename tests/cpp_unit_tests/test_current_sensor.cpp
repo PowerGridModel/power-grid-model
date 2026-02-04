@@ -13,8 +13,6 @@
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/common/three_phase_tensor.hpp>
 
-#include <Eigen/Dense>
-
 #include <doctest/doctest.h>
 
 #include <cmath>

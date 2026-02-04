@@ -14,6 +14,8 @@
 #include <power_grid_model/math_solver/sparse_lu_solver.hpp>
 #include <power_grid_model/math_solver/y_bus.hpp>
 
+#include <doctest/doctest.h>
+
 namespace power_grid_model {
 template <typename SolverType>
 inline auto run_state_estimation(SolverType& solver, YBus<typename SolverType::sym> const& y_bus,

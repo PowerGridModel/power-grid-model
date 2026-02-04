@@ -2,8 +2,9 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include <power_grid_model/common/common.hpp>
 #include <power_grid_model/sparse_ordering.hpp>
+
+#include <power_grid_model/common/common.hpp>
 
 #include <doctest/doctest.h>
 

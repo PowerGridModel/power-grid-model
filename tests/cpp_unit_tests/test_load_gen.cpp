@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include <power_grid_model/component/appliance.hpp>
 #include <power_grid_model/component/load_gen.hpp>
 
 #include <power_grid_model/auxiliary/input.hpp>
@@ -11,9 +12,6 @@
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/common/three_phase_tensor.hpp>
-#include <power_grid_model/component/appliance.hpp>
-
-#include <Eigen/Dense>
 
 #include <doctest/doctest.h>
 

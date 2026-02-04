@@ -2,13 +2,14 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include <power_grid_model/main_core/core_utils.hpp>
+#include <power_grid_model/main_core/main_model_type.hpp>
+
 #include <power_grid_model/all_components.hpp>
 #include <power_grid_model/auxiliary/meta_data.hpp>
 #include <power_grid_model/calculation_preparation.hpp>
 #include <power_grid_model/common/component_list.hpp>
 #include <power_grid_model/container.hpp>
-#include <power_grid_model/main_core/core_utils.hpp>
-#include <power_grid_model/main_core/main_model_type.hpp>
 #include <power_grid_model/main_model_impl.hpp>
 
 #include <doctest/doctest.h>

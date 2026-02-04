@@ -16,12 +16,10 @@
 #include <power_grid_model/component/branch.hpp>
 #include <power_grid_model/component/line_utils.hpp>
 
-#include <Eigen/Dense>
+#include <doctest/doctest.h>
 
 #include <algorithm>
 #include <complex>
-
-#include <doctest/doctest.h>
 
 namespace power_grid_model {
 

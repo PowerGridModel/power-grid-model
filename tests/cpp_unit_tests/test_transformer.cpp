@@ -13,12 +13,12 @@
 #include <power_grid_model/common/three_phase_tensor.hpp>
 #include <power_grid_model/component/base.hpp>
 
+#include <doctest/doctest.h>
+
 #include <cmath>
 #include <complex>
 #include <cstddef>
 #include <vector>
-
-#include <doctest/doctest.h>
 
 namespace power_grid_model {
 namespace {

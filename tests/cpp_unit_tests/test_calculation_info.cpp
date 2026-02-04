@@ -3,17 +3,18 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #include <power_grid_model/common/calculation_info.hpp>
+
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/counting_iterator.hpp>
 #include <power_grid_model/common/logging.hpp>
 #include <power_grid_model/common/multi_threaded_logging.hpp>
 
+#include <doctest/doctest.h>
+
 #include <concepts>
 #include <thread>
 #include <utility>
 #include <vector>
-
-#include <doctest/doctest.h>
 
 namespace power_grid_model::common::logging {
 namespace {

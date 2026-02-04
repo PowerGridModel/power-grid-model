@@ -2,12 +2,12 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include <power_grid_model/calculation_parameters.hpp>
 #include <power_grid_model/component/source.hpp>
 
 #include <power_grid_model/auxiliary/input.hpp>
 #include <power_grid_model/auxiliary/output.hpp>
 #include <power_grid_model/auxiliary/update.hpp>
+#include <power_grid_model/calculation_parameters.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/common/three_phase_tensor.hpp>

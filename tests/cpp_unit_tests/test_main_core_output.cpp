@@ -2,6 +2,10 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include <power_grid_model/main_core/container_queries.hpp>
+#include <power_grid_model/main_core/output.hpp>
+#include <power_grid_model/main_core/state.hpp>
+
 #include <power_grid_model/auxiliary/input.hpp>
 #include <power_grid_model/auxiliary/output.hpp>
 #include <power_grid_model/calculation_parameters.hpp>
@@ -12,9 +16,6 @@
 #include <power_grid_model/component/regulator.hpp>
 #include <power_grid_model/component/transformer_tap_regulator.hpp>
 #include <power_grid_model/container.hpp>
-#include <power_grid_model/main_core/container_queries.hpp>
-#include <power_grid_model/main_core/output.hpp>
-#include <power_grid_model/main_core/state.hpp>
 
 #include <doctest/doctest.h>
 

@@ -2,11 +2,11 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/statistics.hpp>
+
+#include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/three_phase_tensor.hpp>
 
-#include <Eigen/Dense>
 #include <doctest/doctest.h>
 
 #include <array>

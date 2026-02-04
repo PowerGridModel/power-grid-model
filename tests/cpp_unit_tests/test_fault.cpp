@@ -14,8 +14,6 @@
 #include <power_grid_model/component/base.hpp>
 #include <power_grid_model/component/component.hpp>
 
-#include <Eigen/Dense>
-
 #include <doctest/doctest.h>
 
 #include <cmath>

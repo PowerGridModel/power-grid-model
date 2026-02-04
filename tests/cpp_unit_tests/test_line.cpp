@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include <power_grid_model/component/branch.hpp>
 #include <power_grid_model/component/line.hpp>
 
 #include <power_grid_model/auxiliary/input.hpp>
@@ -13,12 +14,11 @@
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/common/three_phase_tensor.hpp>
 #include <power_grid_model/component/base.hpp>
-#include <power_grid_model/component/branch.hpp>
+
+#include <doctest/doctest.h>
 
 #include <algorithm>
 #include <complex>
-
-#include <doctest/doctest.h>
 
 namespace power_grid_model {
 

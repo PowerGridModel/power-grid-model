@@ -4,6 +4,8 @@
 
 #include "test_optimizer.hpp"
 
+#include <power_grid_model/optimizer/tap_position_optimizer.hpp>
+
 #include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/auxiliary/input.hpp>
 #include <power_grid_model/auxiliary/meta_data.hpp>
@@ -39,7 +41,6 @@
 #include <power_grid_model/main_core/input.hpp>
 #include <power_grid_model/main_core/state.hpp>
 #include <power_grid_model/main_core/update.hpp>
-#include <power_grid_model/optimizer/tap_position_optimizer.hpp>
 
 #include <boost/graph/compressed_sparse_row_graph.hpp>
 #include <boost/graph/graph_traits.hpp>
