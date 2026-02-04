@@ -11,9 +11,8 @@
 #include "../dataset.hpp"
 #include "../meta_data.hpp"
 
-#include <nlohmann/json.hpp>
-
 #include <msgpack.hpp>
+#include <nlohmann/json.hpp>
 
 #include <iomanip>
 #include <limits>

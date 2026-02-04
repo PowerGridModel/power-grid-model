@@ -4,10 +4,7 @@
 
 #pragma once
 
-#include "common.hpp"
-
 #include <concepts>
-#include <ranges>
 #include <utility>
 
 namespace power_grid_model {
