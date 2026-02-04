@@ -316,48 +316,46 @@ $$
 
 Where:
 
-$$
-    \begin{eqnarray}
-        x    =  \begin{bmatrix}
-                \delta \\
-                U
-                \end{bmatrix} =
-                \begin{bmatrix}
-                \delta_2 \\
-                \vdots \\
-                \delta_N \\
-                U_2 \\
-                \vdots \\
-                U_N
-                \end{bmatrix}
-        \quad\text{and}\quad
-        y    =  \begin{bmatrix}
-                P \\
-                Q
-                \end{bmatrix} =
-                \begin{bmatrix}
-                P_2 \\
-                \vdots \\
-                P_N \\
-                Q_2 \\
-                \vdots \\
-                Q_N
-                \end{bmatrix}
-        \quad\text{and}\quad
-        f(x) =  \begin{bmatrix}
-                P(x) \\
-                Q(x)
-                \end{bmatrix} =
-                \begin{bmatrix}
-                P_{2}(x) \\
-                \vdots \\
-                P_{N}(x) \\
-                Q_{2}(x) \\
-                \vdots \\
-                Q_{N}(x)
-                \end{bmatrix}
-    \end{eqnarray}
-$$
+\begin{align*}
+    x    =  \begin{bmatrix}
+            \delta \\
+            U
+            \end{bmatrix} =
+            \begin{bmatrix}
+            \delta_2 \\
+            \vdots \\
+            \delta_N \\
+            U_2 \\
+            \vdots \\
+            U_N
+            \end{bmatrix}
+    \quad\text{and}\quad
+    y    =  \begin{bmatrix}
+            P \\
+            Q
+            \end{bmatrix} =
+            \begin{bmatrix}
+            P_2 \\
+            \vdots \\
+            P_N \\
+            Q_2 \\
+            \vdots \\
+            Q_N
+            \end{bmatrix}
+    \quad\text{and}\quad
+    f(x) =  \begin{bmatrix}
+            P(x) \\
+            Q(x)
+            \end{bmatrix} =
+            \begin{bmatrix}
+            P_{2}(x) \\
+            \vdots \\
+            P_{N}(x) \\
+            Q_{2}(x) \\
+            \vdots \\
+            Q_{N}(x)
+            \end{bmatrix}
+\end{align*}
 
 As can be seen in the equations above $\delta_1$ and $V_1$ are omitted, because they are known for the slack bus.
 In each iteration $i$ the following equation is solved:
@@ -469,16 +467,14 @@ When it is approximated as a current at 1 p.u., the voltage error is only linear
 Weighted least squares (WLS) state estimation can be performed with power-grid-model.
 Given a grid with $N_b$ buses the state variable column vector is defined as below.
 
-$$
-    \begin{eqnarray}
-            \underline{U}     =     \begin{bmatrix}
-                            \underline{U}_1 \\
-                            \underline{U}_2 \\
-                            \vdots \\
-                            \underline{U}_{N_{b}}
-                        \end{bmatrix}
-    \end{eqnarray}
-$$
+\begin{align*}
+        \underline{U}     =     \begin{bmatrix}
+                        \underline{U}_1 \\
+                        \underline{U}_2 \\
+                        \vdots \\
+                        \underline{U}_{N_{b}}
+                    \end{bmatrix}
+\end{align*}
 
 Where $\underline{U}_i$ is the complex voltage phasor of the i-th bus.
 
@@ -493,37 +489,35 @@ $$
 
 Where:
 
-$$
-    \begin{eqnarray}
-        \underline{x}     =  \begin{bmatrix}
-                \underline{x}_1 \\
-                \underline{x}_2 \\
-                \vdots \\
-                \underline{x}_{N_{m}}
-                \end{bmatrix} =
-                f(\underline{U})
-        \quad\text{and}\quad
-        \underline{z}     =  \begin{bmatrix}
-                \underline{z}_1 \\
-                \underline{z}_2 \\
-                \vdots \\
-                \underline{z}_{N_{m}}
-                \end{bmatrix}
-        \quad\text{and}\quad
-        W  = \Sigma^{-1} =  \begin{bmatrix}
-                \sigma_1^2 & 0 & \cdots & 0 \\
-                0 & \sigma_2^2 & \cdots & 0 \\
-                \vdots & \vdots & \ddots & \vdots \\
-                0 & 0 & \cdots & \sigma_{N_{m}}^2
-                \end{bmatrix} ^{-1} =
-                \begin{bmatrix}
-                w_1 & 0 & \cdots & 0 \\
-                0 & w_2 & \cdots & 0 \\
-                \vdots & \vdots & \ddots & \vdots \\
-                0 & 0 & \cdots & w_{N_{m}}
-                \end{bmatrix}
-    \end{eqnarray}
-$$
+\begin{align*}
+    \underline{x}     =  \begin{bmatrix}
+            \underline{x}_1 \\
+            \underline{x}_2 \\
+            \vdots \\
+            \underline{x}_{N_{m}}
+            \end{bmatrix} =
+            f(\underline{U})
+    \quad\text{and}\quad
+    \underline{z}     =  \begin{bmatrix}
+            \underline{z}_1 \\
+            \underline{z}_2 \\
+            \vdots \\
+            \underline{z}_{N_{m}}
+            \end{bmatrix}
+    \quad\text{and}\quad
+    W  = \Sigma^{-1} =  \begin{bmatrix}
+            \sigma_1^2 & 0 & \cdots & 0 \\
+            0 & \sigma_2^2 & \cdots & 0 \\
+            \vdots & \vdots & \ddots & \vdots \\
+            0 & 0 & \cdots & \sigma_{N_{m}}^2
+            \end{bmatrix} ^{-1} =
+            \begin{bmatrix}
+            w_1 & 0 & \cdots & 0 \\
+            0 & w_2 & \cdots & 0 \\
+            \vdots & \vdots & \ddots & \vdots \\
+            0 & 0 & \cdots & w_{N_{m}}
+            \end{bmatrix}
+\end{align*}
 
 Where $\underline{x}_i$ is the real value of the i-th measured quantity in complex form, $\underline{z}_i$ is the i-th
 measured value in complex form, $\sigma_i$ is the normalized standard deviation of the measurement error of the i-th
@@ -616,10 +610,22 @@ See also [the full mathematical workout](https://github.com/PowerGridModel/power
 
 $$
    \begin{eqnarray}
-        & \mathrm{Re}\left\{I\right\} = I \cos\theta \\
-        & \mathrm{Im}\left\{I\right\} = I \sin\theta \\
+        & \mathrm{Re}\left\{I\right\} = I \cos\theta 
+   \end{eqnarray}
+$$
+$$
+   \begin{eqnarray}
+        & \mathrm{Im}\left\{I\right\} = I \sin\theta 
+   \end{eqnarray}
+$$
+$$
+   \begin{eqnarray}
         & \text{Var}\left(\mathrm{Re}\left\{I\right\}\right) =
-            \sigma_i^2 \cos^2\theta + I^2 \sigma_{\theta}^2\sin^2\theta \\
+            \sigma_i^2 \cos^2\theta + I^2 \sigma_{\theta}^2\sin^2\theta 
+   \end{eqnarray}
+$$
+$$
+   \begin{eqnarray}
         & \text{Var}\left(\mathrm{Im}\left\{I\right\}\right) =
             \sigma_i^2 \sin^2\theta + I^2 \sigma_{\theta}^2\cos^2\theta
    \end{eqnarray}
