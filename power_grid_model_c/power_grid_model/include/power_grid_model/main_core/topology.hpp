@@ -5,6 +5,7 @@
 #pragma once
 
 #include "container_queries.hpp"
+#include "core_utils.hpp"
 
 #include "../component/branch.hpp"
 #include "../component/branch3.hpp"
