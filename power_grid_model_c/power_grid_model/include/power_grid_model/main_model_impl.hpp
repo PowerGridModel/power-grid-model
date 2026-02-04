@@ -7,12 +7,9 @@
 // main model class
 
 // main include
-#include "batch_parameter.hpp"
 #include "calculation_parameters.hpp"
 #include "calculation_preparation.hpp"
-#include "container.hpp"
 #include "main_model_fwd.hpp"
-#include "topology.hpp"
 
 // common
 #include "common/common.hpp"
@@ -21,8 +18,6 @@
 
 // component include
 #include "auxiliary/dataset.hpp"
-#include "auxiliary/input.hpp"
-#include "auxiliary/output.hpp"
 #include "component/component.hpp"
 
 // math model include

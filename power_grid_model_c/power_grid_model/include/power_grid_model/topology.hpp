@@ -7,7 +7,6 @@
 #include "calculation_parameters.hpp"
 #include "common/common.hpp"
 #include "common/enum.hpp"
-#include "common/exception.hpp"
 #include "index_mapping.hpp"
 #include "sparse_ordering.hpp"
 

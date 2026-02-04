@@ -8,7 +8,6 @@
 #include "common/grouped_index_vector.hpp"
 
 #include <numeric>
-#include <ranges>
 
 namespace power_grid_model {
 

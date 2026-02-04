@@ -9,7 +9,6 @@
 
 #include <algorithm>
 #include <cassert>
-#include <compare>
 #include <map>
 #include <set>
 #include <utility>
