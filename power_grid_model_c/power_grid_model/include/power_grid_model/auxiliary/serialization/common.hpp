@@ -7,7 +7,6 @@
 #include "../dataset.hpp"
 
 #include <concepts>
-#include <ranges>
 #include <span>
 
 namespace power_grid_model::meta_data::detail {
