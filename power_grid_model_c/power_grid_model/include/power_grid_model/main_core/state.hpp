@@ -5,7 +5,7 @@
 #pragma once
 
 #include "../calculation_parameters.hpp"
-#include "../container.hpp"
+#include "../container_fwd.hpp"
 
 #include <concepts>
 

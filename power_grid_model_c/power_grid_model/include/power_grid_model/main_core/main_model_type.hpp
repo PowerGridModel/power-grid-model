@@ -11,50 +11,7 @@
 
 #include <array>
 #include <vector>
-namespace power_grid_model {
-
-class Base;
-class Node;
-class Branch;
-class Branch3;
-class Appliance;
-class GenericLoadGen;
-class GenericLoad;
-class GenericGenerator;
-class GenericPowerSensor;
-class GenericVoltageSensor;
-class GenericCurrentSensor;
-class Regulator;
-class Line;
-class AsymLine;
-class Link;
-class GenericBranch;
-class Transformer;
-class ThreeWindingTransformer;
-class Shunt;
-class Source;
-
-template <symmetry_tag loadgen_symmetry_, appliance_type_tag appliance_type_> class LoadGen;
-using SymGenerator = LoadGen<symmetric_t, gen_appliance_t>;
-using AsymGenerator = LoadGen<asymmetric_t, gen_appliance_t>;
-using SymLoad = LoadGen<symmetric_t, load_appliance_t>;
-using AsymLoad = LoadGen<asymmetric_t, load_appliance_t>;
-
-template <symmetry_tag power_sensor_symmetry_> class PowerSensor;
-using SymPowerSensor = PowerSensor<symmetric_t>;
-using AsymPowerSensor = PowerSensor<asymmetric_t>;
-
-template <symmetry_tag sym> class VoltageSensor;
-using SymVoltageSensor = VoltageSensor<symmetric_t>;
-using AsymVoltageSensor = VoltageSensor<asymmetric_t>;
-template <symmetry_tag sym> class CurrentSensor;
-using SymCurrentSensor = CurrentSensor<symmetric_t>;
-using AsymCurrentSensor = CurrentSensor<asymmetric_t>;
-
-class Fault;
-class TransformerTapRegulator;
-
-namespace main_core {
+namespace power_grid_model::main_core {
 
 namespace detail {
 
@@ -168,5 +125,4 @@ struct is_main_model_type<MainModelType<ExtraRetrievableTypes<ETs...>, Component
 
 template <typename T> inline constexpr bool is_main_model_type_v = is_main_model_type<T>::value;
 
-} // namespace main_core
-} // namespace power_grid_model
+} // namespace power_grid_model::main_core

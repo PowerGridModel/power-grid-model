@@ -8,10 +8,7 @@
 #include "core_utils.hpp"
 
 #include "../auxiliary/dataset.hpp"
-#include "../common/iterator_facade.hpp"
 #include "../component/component.hpp"
-
-#include <map>
 
 namespace power_grid_model::main_core::update {
 

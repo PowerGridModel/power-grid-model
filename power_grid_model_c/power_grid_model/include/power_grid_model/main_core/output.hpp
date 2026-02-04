@@ -4,6 +4,10 @@
 
 #pragma once
 
+#include "container_queries.hpp"
+#include "state.hpp"
+#include "state_queries.hpp"
+
 #include "../component/base.hpp"
 #include "../component/branch.hpp"
 #include "../component/branch3.hpp"
@@ -17,9 +21,6 @@
 #include "../component/transformer_tap_regulator.hpp"
 #include "../component/voltage_regulator.hpp"
 #include "../component/voltage_sensor.hpp"
-#include "container_queries.hpp"
-#include "state.hpp"
-#include "state_queries.hpp"
 
 #include <concepts>
 

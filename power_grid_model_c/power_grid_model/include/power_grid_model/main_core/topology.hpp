@@ -9,7 +9,6 @@
 #include "../component/branch.hpp"
 #include "../component/branch3.hpp"
 #include "../component/current_sensor.hpp"
-#include "../component/fault.hpp"
 #include "../component/load_gen.hpp"
 #include "../component/node.hpp"
 #include "../component/power_sensor.hpp"

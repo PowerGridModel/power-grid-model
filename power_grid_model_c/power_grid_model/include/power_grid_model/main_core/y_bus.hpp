@@ -4,6 +4,9 @@
 
 #pragma once
 
+#include "container_queries.hpp"
+#include "state.hpp"
+
 #include "../common/common.hpp"
 
 namespace power_grid_model::main_core {

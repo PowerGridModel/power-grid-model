@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include "state_queries.hpp"
-
 #include "../calculation_parameters.hpp"
 #include "../component/current_sensor.hpp"
 #include "../component/fault.hpp"

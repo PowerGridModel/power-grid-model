@@ -10,7 +10,7 @@
 #include "../component/branch3.hpp"
 #include "../component/node.hpp"
 #include "../component/regulator.hpp"
-#include "../component/transformer.hpp"
+#include "../component/transformer_utils.hpp"
 
 namespace power_grid_model::main_core {
 
