@@ -8,6 +8,8 @@
 #include "transformer.hpp"
 #include "transformer_utils.hpp"
 
+#include "component.hpp"
+
 namespace power_grid_model {
 
 class ThreeWindingTransformer : public Branch3 {

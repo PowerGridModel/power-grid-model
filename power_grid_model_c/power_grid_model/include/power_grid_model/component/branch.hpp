@@ -13,6 +13,7 @@
 #include "../common/common.hpp"
 #include "../common/exception.hpp"
 #include "../common/three_phase_tensor.hpp"
+#include "component.hpp"
 
 namespace power_grid_model {
 

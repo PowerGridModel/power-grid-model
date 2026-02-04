@@ -9,7 +9,7 @@
 #include "../calculation_parameters.hpp"
 #include "../common/common.hpp"
 #include "../common/enum.hpp"
-#include "../common/exception.hpp"
+#include "component.hpp"
 
 namespace power_grid_model {
 
