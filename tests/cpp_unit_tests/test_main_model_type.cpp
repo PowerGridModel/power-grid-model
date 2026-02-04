@@ -9,6 +9,7 @@
 #include <power_grid_model/auxiliary/meta_data.hpp>
 #include <power_grid_model/calculation_preparation.hpp>
 #include <power_grid_model/common/component_list.hpp>
+#include <power_grid_model/component/component.hpp>
 #include <power_grid_model/container.hpp>
 #include <power_grid_model/main_model_impl.hpp>
 
