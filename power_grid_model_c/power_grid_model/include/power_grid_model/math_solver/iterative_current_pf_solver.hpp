@@ -52,7 +52,6 @@ Nomenclature:
 
 */
 
-#include "block_matrix.hpp"
 #include "common_solver_functions.hpp"
 #include "iterative_pf_solver.hpp"
 #include "sparse_lu_solver.hpp"

@@ -12,8 +12,6 @@ Collect all measured Values
 #include "../common/exception.hpp"
 #include "../common/three_phase_tensor.hpp"
 
-#include <memory>
-
 namespace power_grid_model::math_solver {
 // processed measurement struct
 // combined all measurement of the same quantity

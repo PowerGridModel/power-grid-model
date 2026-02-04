@@ -154,8 +154,6 @@ J.L -= -dQ_cal_m/dV
 #include "../common/exception.hpp"
 #include "../common/three_phase_tensor.hpp"
 
-#include <map>
-
 namespace power_grid_model::math_solver {
 
 // hide implementation in inside namespace
