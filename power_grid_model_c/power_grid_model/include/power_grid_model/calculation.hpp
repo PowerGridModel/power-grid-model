@@ -74,6 +74,7 @@ decltype(auto) calculation_type_symmetry_func_selector(CalculationType calculati
 }
 
 template <typename T, typename sym> struct Calculator;
+
 template <symmetry_tag sym> struct Calculator<power_flow_t, sym> {
     template <typename State>
     static auto preparer(State const& state, ComponentToMathCoupling& /*comp_coup*/,
