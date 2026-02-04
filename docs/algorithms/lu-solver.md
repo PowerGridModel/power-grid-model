@@ -207,13 +207,11 @@ $\boldsymbol{l}_k$ and $\boldsymbol{u}_k$ ($k < p$) denote sections of the matri
 [Gaussian elimination](https://en.wikipedia.org/wiki/Gaussian_elimination) using
 [LU decomposition](https://en.wikipedia.org/wiki/LU_decomposition) constructs the matrices
 
-$$
 \begin{align*}
 \mathbf{L}_p &= \begin{bmatrix} 1 && \boldsymbol{0}^T \\ m_p^{-1} \boldsymbol{q}_p && \mathbf{1}_p\end{bmatrix} \\
 \mathbf{U}_p &= \begin{bmatrix} m_p && \boldsymbol{r}_p^T \\\boldsymbol{0} && \mathbf{1}_p\end{bmatrix} \\
 \mathbf{M}_{p+1} &= \hat{\mathbf{M}}_p - m_p^{-1} \boldsymbol{q}_p \boldsymbol{r}_p^T
 \end{align*}
-$$
 
 where $\mathbf{1}$ is the matrix with ones on the diagonal and zeros off-diagonal, and $\mathbf{M}_{p+1}$ is the start
 of the next iteration.
@@ -253,7 +251,6 @@ dimensions $\left(N-p-1\right) \times \left(N-p-1\right)$.
 
 Iterating this process yields the matrices
 
-$$
 \begin{align*}
 \mathbf{L} = \begin{bmatrix}
 1 && 0 && \cdots && 0 \\
@@ -278,7 +275,6 @@ m_0 && \left(\boldsymbol{r}_0^T\right)_0 && \cdots && \left(\boldsymbol{r}_0^T\r
 0 && \cdots && 0 && m_{N-1}
 \end{bmatrix}
 \end{align*}
-$$
 
 in which $\boldsymbol{l}_p$ is the first column of the lower triangle of $\mathbf{L}_p$ and $\boldsymbol{u}_p^T$ is the
 first row of the upper triangle of $\mathbf{U}_p$.
@@ -376,7 +372,6 @@ confusion with the block-sparse matrix components.
 The matrices constructed with [LU decomposition](https://en.wikipedia.org/wiki/LU_decomposition) for
 [Gaussian elimination](https://en.wikipedia.org/wiki/Gaussian_elimination) are constructed accordingly.
 
-$$
 \begin{align*}
 \mathbf{L}_p &= \begin{bmatrix}
     \mathbf{1} && \mathbf{0}^T \\
@@ -388,7 +383,6 @@ $$
 \end{bmatrix} \\
 \mathbf{M}_{p+1} &= \hat{\mathbf{M}}_p - \widehat{\mathbf{m}_p^{-1}\mathbf{q}_p \mathbf{r}_p^T}
 \end{align*}
-$$
 
 Here, $\overrightarrow{\mathbf{m}_p^{-1}\mathbf{q}_p}$ is symbolic notation for the block-vector of solutions to the
 equation $\mathbf{m}_p x_{p;k} = \mathbf{q}_{p;k}$, where $k = 0..(p-1)$.
@@ -396,7 +390,6 @@ Similarly, $\widehat{\mathbf{m}_p^{-1}\mathbf{q}_p \mathbf{r}_p^T}$ is symbolic 
 solutions to the equation $\mathbf{m}_p x_{p;k,l} = \mathbf{q}_{p;k} \mathbf{r}_{p;l}^T$, where $k,l = 0..(p-1)$.
 That is:
 
-$$
 \begin{align*}
 \overrightarrow{\mathbf{m}_p^{-1}\mathbf{q}_p}
 &= \begin{bmatrix}\mathbf{m}_p^{-1}\mathbf{q}_{p;0} \\
@@ -409,7 +402,6 @@ $$
 \mathbf{m}_p^{-1} \mathbf{q}_{p;0} \mathbf{r}_{p;0}^T && \cdots &&
 \mathbf{m}_p^{-1} \mathbf{q}_{p;N-1} \mathbf{r}_{p;N-1}^T \end{bmatrix}
 \end{align*}
-$$
 
 Iteratively applying above factorization process yields $\mathbf{L}$ and $\mathbf{U}$, as well as $\mathbf{P}$ and
 $\mathbf{Q}$.
@@ -435,7 +427,6 @@ $\mathbf{m}_p$ is a dense block that can be [LU factorized](#dense-lu-factorizat
 $\mathbf{m}_p = \mathbf{p}_p^{-1} \mathbf{l}_p \mathbf{u}_p \mathbf{q}_p^{-1}$.
 Partial Gaussian elimination constructs the following matrices.
 
-$$
 \begin{align*}
 \mathbf{L}_p &= \begin{bmatrix}
     \mathbf{l}_p && \mathbf{0}^T \\
@@ -448,7 +439,6 @@ $$
 \mathbf{M}_{p+1} &=
     \hat{\mathbf{M}}_p - \widehat{\mathbf{q}_p\mathbf{q}_p\mathbf{u}_p^{-1}\mathbf{l}_p^{-1}\mathbf{p}_p\mathbf{r}_p^T}
 \end{align*}
-$$
 
 Note that the first column of $\mathbf{L}_p$ can be obtained by applying a right-solve procedure, instead of the regular
 left-solve procedure, as is the case for $\mathbf{U}_p$.
@@ -457,7 +447,6 @@ left-solve procedure, as is the case for $\mathbf{U}_p$.
 
 To illustrate the rationale, let's fully solve a matrix equation (without using blocks):
 
-$$
 \begin{align*}
 \begin{bmatrix}
 \mathbf{a} && \mathbf{b} \\
@@ -511,12 +500,10 @@ a_{11} && a_{12} && b_{11} && b_{12} \\
             \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}}
 \end{bmatrix}
 \end{align*}
-$$
 
 Using the following denotations, we can simplify the above as
 $\begin{bmatrix} \mathbf{l}_a \mathbf{u}_a && \mathbf{u}_b \\ \mathbf{l}_c && \mathbf{l}_d \mathbf{u}_d \end{bmatrix}$.
 
-$$
 \begin{align*}
 \mathbf{l}_a &= \begin{bmatrix}
     1                     && 0 \\
@@ -549,7 +536,6 @@ $$
              \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}}
 \end{bmatrix}
 \end{align*}
-$$
 
 Interestingly, the matrices $\mathbf{l}_c$, $\mathbf{u}_b$ and $\mathbf{l}_d\mathbf{u}_d$ can be obtained without doing
 full pivoting on the sub-block level:
@@ -582,7 +568,6 @@ The following proves the equations $\mathbf{l}_c \mathbf{u}_a = \mathbf{c}$, $\m
 and $\mathbf{l}_d\mathbf{u}_d = \mathbf{d} - \mathbf{l}_c \mathbf{u}_b$ mentioned in the
 [previous section](#rationale-of-the-block-sparse-lu-factorization-process).
 
-$$
 \begin{align*}
 \mathbf{l}_c \mathbf{u}_a
 &=
@@ -656,7 +641,6 @@ $$
 \end{bmatrix} \\
 &= \mathbf{l}_d\mathbf{u}_d
 \end{align*}
-$$
 
 We can see that $\mathbf{l}_c$ and $\mathbf{u}_b$ are affected by the in-block LU decomposition of the pivot block
 $\left(\mathbf{l}_a,\mathbf{u}_a\right)$, as well as the data in the respective blocks ($\mathbf{c}$ and $\mathbf{b}$)
@@ -674,7 +658,6 @@ The structure of the block-sparse matrices is as follows.
 
 This can be graphically represented as
 
-$$
 \begin{align*}
 \mathbf{M} &\equiv \begin{bmatrix}
 \mathbf{M}_{0,0}   && \cdots && \mathbf{M}_{0,N-1} \\
@@ -701,7 +684,6 @@ $$
    \mathbf{M}_{N-1,N-1}\left[N_i-1,0\right] && \cdots && \mathbf{M}_{N-1,N-1}\left[N_i-1,N_j-1\right] \end{bmatrix}
 \end{bmatrix}
 \end{align*}
-$$
 
 Because of the sparse structure and the fact that all $\mathbf{M}_{i,j}$ have the same shape, it is much more efficient
 to store the blocks $\mathbf{M}_{i,j}$ in a vector $\mathbf{M}_{\tilde{k}}$ where $\tilde{k}$ is a reordered index from
@@ -711,7 +693,6 @@ by the row-index $i$, and the inner vector containing the values of $j$ for whic
 All topologically relevant matrix elements, as well as [fill-ins](#pivot-operations), are included in this mapping.
 The following illustrates this mapping.
 
-$$
 \begin{align*}
 \begin{bmatrix}
 \mathbf{M}_{0,0} &&         &&         && \mathbf{M}_{0,3} \\
@@ -749,7 +730,6 @@ $$
     [0 && && 2 && && 4 && && && 7 && && && && 10]
 \end{bmatrix}
 \end{align*}
-$$
 
 In the first equation, the upper row contains the present block entries and the bottom row their column indices per row
 to obtain a flattened representation of the matrix.
@@ -875,17 +855,17 @@ as well as the well-known
 Let $\mathbf{M}$ be the matrix, $\left\|\mathbf{M}\right\|_{\infty ,\text{bwod}}$ the
 [block-wise off-diagonal infinite norm](#block-wise-off-diagonal-infinite-matrix-norm) of the matrix.
 
-1. $\epsilon \gets \text{perturbation_threshold} * \left\|\mathbf{M}\right\|_{\text{bwod}}$.
-2. If $|\text{pivot_element}| \lt \epsilon$, then:
-   1. If $|\text{pivot_element}| = 0$, then:
-      1. $\text{phase_shift} \gets 1$.
+1. $\epsilon \gets \text{perturbation\_threshold} * \left\|\mathbf{M}\right\|_{\text{bwod}}$.
+2. If $|\text{pivot\_element}| \lt \epsilon$, then:
+   1. If $|\text{pivot\_element}| = 0$, then:
+      1. $\text{phase\_shift} \gets 1$.
       2. Proceed.
    2. Else:
-      1. $\text{phase_shift} \gets \text{pivot_element} / |\text{pivot_element}|$.
+      1. $\text{phase\_shift} \gets \text{pivot\_element} / |\text{pivot\_element}|$.
       2. Proceed.
-   3. $\text{pivot_element} \gets \epsilon * \text{phase_shift}$.
+   3. $\text{pivot\_element} \gets \epsilon * \text{phase\_shift}$.
 
-$\text{phase_shift}$ ensures that the sign (if $\mathbf{M}$ is a real matrix) or complex phase (if $\mathbf{M}$ is a
+$\text{phase\_shift}$ ensures that the sign (if $\mathbf{M}$ is a real matrix) or complex phase (if $\mathbf{M}$ is a
 complex matrix) of the pivot element is preserved.
 The positive real axis is used as a fallback when the pivot element is identically zero.
 
@@ -915,7 +895,7 @@ Solving for $\boldsymbol{\Delta x}$ and substituting back into
 $\boldsymbol{x}_{i+1} = \boldsymbol{x}_i + \boldsymbol{\Delta x}$ provides the next best approximation
 $\boldsymbol{x}_{i+1}$ for $\boldsymbol{x}$.
 
-A measure for the quality of the approximation is given by the $\text{backward_error}$ (see also
+A measure for the quality of the approximation is given by the $\text{backward\_error}$ (see also
 [backward error formula](#backward-error-calculation)).
 
 Since the matrix $\mathbf{M}$ remains static during this process, the LU decomposition is valid throughout the process.
@@ -928,11 +908,11 @@ algorithm is as follows:
 1. Initialize:
    1. Set the initial estimate: $\boldsymbol{x}_{\text{est}} = \boldsymbol{0}$.
    2. Set the initial residual: $\boldsymbol{r} \gets \boldsymbol{b}$.
-   3. Set the initial backward error: $\text{backward_error} = \infty$.
+   3. Set the initial backward error: $\text{backward\_error} = \infty$.
    4. Set the number of iterations to 0.
 2. Iteratively refine; loop:
    1. Check stop criteria:
-      1. If $\text{backward_error} \leq \epsilon$, then:
+      1. If $\text{backward\_error} \leq \epsilon$, then:
          1. Convergence reached: stop the refinement process.
       2. Else, if the number of iterations > maximum allowed amount of iterations, then:
          1. Convergence not reached; iterative refinement not possible: raise a sparse matrix error.
@@ -967,21 +947,19 @@ We use the following backward error calculation, inspired by
 [Li99](https://www.semanticscholar.org/paper/A-Scalable-Sparse-Direct-Solver-Using-Static-Li-Demmel/7ea1c3360826ad3996f387eeb6d70815e1eb3761),
 with a few modifications described [below](#improved-backward-error-calculation).
 
-$$
 \begin{align*}
 D_{\text{max}} &= \max_i\left\{
     \left(\left|\mathbf{M}\right|\cdot\left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i
 \right\} \\
-\text{backward_error} &= \max_i \left\{
+\text{backward\_error} &= \max_i \left\{
     \frac{\left|\boldsymbol{r}\right|_i}{
         \max\left\{
             \left(\left|\mathbf{M}\right|\cdot\left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i,
-            \epsilon_{\text{backward_error}} D_{\text{max}}
+            \epsilon_{\text{backward\_error}} D_{\text{max}}
         \right\}
     }
 \right\}
 \end{align*}
-$$
 
 $\epsilon \in \left[0, 1\right]$ is a value that introduces a
 [cut-off value to improve stability](#improved-backward-error-calculation) of the algorithm and should ideally be small.
@@ -1006,7 +984,7 @@ contains an early-out criterion for the [iterative refinement](#iterative-refine
 for diminishing backward error in consecutive iterations.
 It amounts to (in reverse order):
 
-1. If $\text{backward_error} \gt \frac{1}{2}\text{last_backward_error}$, then:
+1. If $\text{backward\_error} \gt \frac{1}{2}\text{last\_backward\_error}$, then:
    1. Stop iterative refinement.
 2. Else:
    1. Go to next refinement iteration.
@@ -1033,9 +1011,8 @@ their sum is prone to rounding errors, which may be several orders larger than m
 uses the following backward error in the
 [iterative refinement algorithm](#iterative-refinement-of-lu-solver-solutions):
 
-$$
 \begin{align*}
-\text{backward_error}_{\text{Li}}
+\text{backward\_error}_{\text{Li}}
    &= \max_i \frac{
          \left|\boldsymbol{r}_i\right|
       }{
@@ -1052,7 +1029,6 @@ $$
          \left(\left|\mathbf{M}\right| \cdot \left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i
       }
 \end{align*}
-$$
 
 In this equation, the symbolic notation $\left|\mathbf{M}\right|$ and $\left|\boldsymbol{x}\right|$ are the matrix and
 vector with absolute values of the elements of $\mathbf{M}$ and $\boldsymbol{x}$ as elements, i.e.,
@@ -1065,21 +1041,19 @@ iterative refinement to fail.
 The power grid model therefore uses a modified version, in which the denominator is capped to a minimum value,
 determined by the maximum across all denominators:
 
-$$
 \begin{align*}
 D_{\text{max}} &= \max_i\left\{
    \left(\left|\mathbf{M}\right|\cdot\left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i
 \right\} \\
-\text{backward_error} &= \max_i \left\{
+\text{backward\_error} &= \max_i \left\{
    \frac{\left|\boldsymbol{r}\right|_i}{
       \max\left\{
          \left(\left|\mathbf{M}\right|\cdot\left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i,
-         \epsilon_{\text{backward_error}} D_{\text{max}}
+         \epsilon_{\text{backward\_error}} D_{\text{max}}
       \right\}
    }
 \right\}
 \end{align*}
-$$
 
 $\epsilon$ may be chosen.
 $\epsilon = 0$ means no cut-off, while $\epsilon = 1$ means that only the absolute values of the residuals are
@@ -1122,24 +1096,24 @@ with dimensions $N_i\times N_j$.
 
 1. $\text{norm} \gets 0$.
 2. Loop over all block-rows: $i = 0..(N-1)$:
-   1. $\text{row_norm} \gets 0$.
+   1. $\text{row\_norm} \gets 0$.
    2. Loop over all block-columns: $j = 0..(N-1)$ (beware of sparse structure):
       1. If $i = j$, then:
          1. Skip this block: continue with the next block-column.
       2. Else, calculate the $L_{\infty}$ norm of the current block and add to the current row norm:
          1. the current block: $\mathbf{M}_{i,j} \gets \mathbf{M}\left[i,j\right]$.
-         2. $\text{block_norm} \gets 0$.
+         2. $\text{block\_norm} \gets 0$.
          3. Loop over all rows of the current block: $k = 0..(N_{i,j} - 1)$:
-            1. $\text{block_row_norm} \gets 0$.
+            1. $\text{block\_row\_norm} \gets 0$.
             2. Loop over all columns of the current block: $l = 0..(N_{i,j} - 1)$:
-               1. $\text{block_row_norm} \gets \text{block_row_norm} + \left\|\mathbf{M}_{i,j}\left[k,l\right]\right\|$.
+               1. $\text{block\_row\_norm} \gets \text{block\_row\_norm} + \left\|\mathbf{M}_{i,j}\left[k,l\right]\right\|$.
             3. Calculate the new block norm: set
-               $\text{block_norm} \gets \max\left\{\text{block_norm}, \text{block_row_norm}\right\}$.
+               $\text{block\_norm} \gets \max\left\{\text{block\_norm}, \text{block\_row\_norm}\right\}$.
             4. Continue with the next row of the current block.
-         4. $\text{row_norm} \gets \text{row_norm} + \text{block_norm}$.
+         4. $\text{row\_norm} \gets \text{row\_norm} + \text{block\_norm}$.
          5. Continue with the next block-column.
    3. Calculate the new norm: set
-      $\text{norm} \gets \max\left\{\text{norm}, \text{row_norm}\right\}$.
+      $\text{norm} \gets \max\left\{\text{norm}, \text{row\_norm}\right\}$.
    4. Continue with the next block-row.
 
 ##### Illustration of the block-wise off-diagonal infinite matrix norm calculation
