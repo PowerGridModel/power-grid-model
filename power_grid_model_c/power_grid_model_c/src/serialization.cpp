@@ -5,13 +5,12 @@
 #define PGM_DLL_EXPORTS
 #include "forward_declarations.hpp"
 
+#include "power_grid_model_c/basics.h"
 #include "power_grid_model_c/serialization.h"
 
 #include "get_meta_data.hpp"
 #include "handle.hpp"
 #include "input_sanitization.hpp"
-
-#include "power_grid_model_c/basics.h"
 
 #include <power_grid_model/auxiliary/serialization/deserializer.hpp>
 #include <power_grid_model/auxiliary/serialization/serializer.hpp>

@@ -2,12 +2,12 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "power_grid_model_cpp/basics.hpp"
-#include "power_grid_model_cpp/buffer.hpp"
-#include "power_grid_model_cpp/dataset.hpp"
-#include "power_grid_model_cpp/handle.hpp"
-#include "power_grid_model_cpp/model.hpp"
-#include "power_grid_model_cpp/serialization.hpp"
+#include <power_grid_model_cpp/basics.hpp>
+#include <power_grid_model_cpp/buffer.hpp>
+#include <power_grid_model_cpp/dataset.hpp>
+#include <power_grid_model_cpp/handle.hpp>
+#include <power_grid_model_cpp/model.hpp>
+#include <power_grid_model_cpp/serialization.hpp>
 
 #include <power_grid_model_c/basics.h>
 #include <power_grid_model_c/dataset_definitions.h>
