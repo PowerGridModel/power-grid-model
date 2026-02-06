@@ -6,6 +6,7 @@
 
 #include "../calculation_parameters.hpp"
 #include "../common/common.hpp"
+#include "../common/counting_iterator.hpp"
 #include "../common/three_phase_tensor.hpp"
 
 #include <algorithm>

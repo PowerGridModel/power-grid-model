@@ -4,13 +4,16 @@
 
 #include "load_dataset.hpp"
 
-#include "power_grid_model_cpp.hpp"
-
-#include <power_grid_model_c/dataset_definitions.h>
+#include <power_grid_model_cpp/basics.hpp>
+#include <power_grid_model_cpp/dataset.hpp>
+#include <power_grid_model_cpp/handle.hpp>
+#include <power_grid_model_cpp/model.hpp>
+#include <power_grid_model_cpp/options.hpp>
 
 #include <doctest/doctest.h>
 
 #include <array>
+#include <cmath>
 #include <complex>
 #include <numbers>
 #include <string>
@@ -39,7 +42,7 @@ auto const complete_state_json = R"json({
       {"id": 0, "u_rated": 10e3}
     ]
   }
-})json"s;
+})json"s; // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
 
 } // namespace
 

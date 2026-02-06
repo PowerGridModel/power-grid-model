@@ -10,10 +10,10 @@
 #include "meta_data.hpp"
 
 #include "../common/common.hpp"
-#include "../common/counting_iterator.hpp"
 #include "../common/exception.hpp"
 #include "../common/iterator_facade.hpp"
 
+#include <ranges>
 #include <span>
 #include <string_view>
 

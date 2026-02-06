@@ -9,7 +9,6 @@
 #include "../common/three_phase_tensor.hpp"
 #include "../common/typing.hpp"
 
-#include <memory>
 #include <optional>
 #include <span>
 

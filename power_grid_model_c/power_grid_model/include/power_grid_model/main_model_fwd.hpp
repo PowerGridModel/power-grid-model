@@ -5,6 +5,7 @@
 #pragma once
 
 #include "common/common.hpp"
+#include "common/enum.hpp"
 
 namespace power_grid_model {
 

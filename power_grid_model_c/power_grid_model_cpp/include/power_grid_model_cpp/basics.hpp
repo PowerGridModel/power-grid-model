@@ -18,10 +18,7 @@
 #include "power_grid_model_c/basics.h"
 
 #include <cassert>
-#include <exception>
 #include <memory>
-#include <string>
-#include <vector>
 
 namespace power_grid_model_cpp {
 

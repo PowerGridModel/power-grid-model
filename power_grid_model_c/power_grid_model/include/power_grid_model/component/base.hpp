@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include "component.hpp"
-
 #include "../auxiliary/input.hpp"
 #include "../auxiliary/output.hpp"
 #include "../auxiliary/update.hpp"
@@ -13,6 +11,7 @@
 #include "../common/enum.hpp"
 
 namespace power_grid_model {
+
 constexpr IntS status_to_int(bool status) { return status ? IntS{1} : IntS{0}; }
 
 class Base {

@@ -7,7 +7,6 @@
 #include "logging.hpp"
 
 #include <string_view>
-#include <vector>
 
 namespace power_grid_model::common::logging {
 class NoLogger : public Logger {

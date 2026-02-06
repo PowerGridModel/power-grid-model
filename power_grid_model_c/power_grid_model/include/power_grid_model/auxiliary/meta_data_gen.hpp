@@ -4,6 +4,8 @@
 
 #pragma once
 
+// Umbrella header for meta data generation
+
 #include "input.hpp"
 #include "meta_data.hpp"
 #include "meta_gen/gen_getters.hpp"

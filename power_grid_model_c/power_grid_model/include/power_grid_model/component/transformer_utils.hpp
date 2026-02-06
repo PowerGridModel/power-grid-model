@@ -6,6 +6,7 @@
 
 #include "../common/common.hpp"
 #include "../common/enum.hpp"
+#include "component.hpp"
 
 namespace power_grid_model {
 

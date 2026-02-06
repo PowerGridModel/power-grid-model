@@ -2,9 +2,21 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include <power_grid_model/math_solver/iterative_linear_se_solver.hpp>
+#include <power_grid_model/math_solver/measured_values.hpp>
+
+#include <power_grid_model/calculation_parameters.hpp>
+#include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/counting_iterator.hpp>
+#include <power_grid_model/common/enum.hpp>
+#include <power_grid_model/common/exception.hpp>
+#include <power_grid_model/common/grouped_index_vector.hpp>
+#include <power_grid_model/common/statistics.hpp>
 
 #include <doctest/doctest.h>
+
+#include <complex>
+#include <memory>
+#include <utility>
 
 namespace power_grid_model::math_solver {
 namespace {

@@ -4,7 +4,11 @@
 
 #pragma once
 
+#include "container_queries.hpp"
+#include "state.hpp"
+
 #include "../common/common.hpp"
+#include "math_state.hpp"
 
 namespace power_grid_model::main_core {
 constexpr Idx isolated_component{-1};

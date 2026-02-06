@@ -5,6 +5,7 @@
 #pragma once
 
 #include "base.hpp"
+#include "component.hpp"
 
 #include "../auxiliary/input.hpp"
 #include "../auxiliary/output.hpp"

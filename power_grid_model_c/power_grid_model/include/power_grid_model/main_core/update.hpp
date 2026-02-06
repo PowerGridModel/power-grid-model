@@ -7,12 +7,8 @@
 #include "container_queries.hpp"
 #include "core_utils.hpp"
 
-#include "../all_components.hpp"
 #include "../auxiliary/dataset.hpp"
-#include "../common/iterator_facade.hpp"
-#include "../container.hpp"
-
-#include <map>
+#include "../component/component.hpp"
 
 namespace power_grid_model::main_core::update {
 

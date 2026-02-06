@@ -9,7 +9,6 @@
 #include "basics.hpp"
 #include "dataset.hpp"
 #include "handle.hpp"
-#include "meta_data.hpp"
 
 #include "power_grid_model_c/serialization.h"
 

@@ -10,6 +10,7 @@
 #include "common_solver_functions.hpp"
 #include "measured_values.hpp"
 #include "observability.hpp"
+#include "sparse_lu_solver.hpp"
 #include "y_bus.hpp"
 
 #include "../calculation_parameters.hpp"

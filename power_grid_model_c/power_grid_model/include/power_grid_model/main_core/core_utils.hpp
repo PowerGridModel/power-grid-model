@@ -4,8 +4,10 @@
 
 #pragma once
 
+#include "../common/common.hpp"
+
 #include <array>
-#include <vector>
+
 namespace power_grid_model::main_core::utils {
 
 namespace detail {

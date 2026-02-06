@@ -7,10 +7,10 @@
 #include "base_optimizer.hpp"
 #include "tap_position_optimizer.hpp"
 
+#include "../auxiliary/dataset.hpp"
 #include "../auxiliary/meta_data.hpp"
 #include "../common/enum.hpp"
-
-#include <memory>
+#include "../component/transformer_tap_regulator.hpp"
 
 namespace power_grid_model::optimizer {
 

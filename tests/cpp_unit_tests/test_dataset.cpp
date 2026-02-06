@@ -5,13 +5,25 @@
 #include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/auxiliary/meta_data.hpp>
 #include <power_grid_model/auxiliary/meta_gen/gen_getters.hpp>
+
+#include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/component_list.hpp>
+#include <power_grid_model/common/exception.hpp>
+#include <power_grid_model/common/three_phase_tensor.hpp>
 #include <power_grid_model/common/typing.hpp>
 
 #include <doctest/doctest.h>
 
 #include <algorithm>
+#include <array>
+#include <concepts>
+#include <cstddef>
+#include <iterator>
 #include <numeric>
+#include <ranges>
+#include <stdexcept>
+#include <type_traits>
+#include <vector>
 
 TYPE_TO_STRING_AS("ConstDataset", power_grid_model::ConstDataset);
 TYPE_TO_STRING_AS("MutableDataset", power_grid_model::MutableDataset);

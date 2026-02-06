@@ -11,6 +11,7 @@
 #include "../common/enum.hpp"
 #include "../common/exception.hpp"
 #include "../common/statistics.hpp"
+#include "component.hpp"
 
 namespace power_grid_model {
 
