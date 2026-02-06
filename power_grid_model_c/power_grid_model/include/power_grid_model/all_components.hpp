@@ -4,6 +4,8 @@
 
 #pragma once
 
+// Umbrella header for all components
+
 // define all components
 #include "common/component_list.hpp"
 // component include

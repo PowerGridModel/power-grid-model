@@ -4,8 +4,9 @@
 
 #include "test_math_solver_se.hpp" // NOLINT(misc-include-cleaner)
 
-#include <power_grid_model/common/common.hpp>
 #include <power_grid_model/math_solver/newton_raphson_se_solver.hpp> // NOLINT(misc-include-cleaner)
+
+#include <power_grid_model/common/common.hpp>
 
 #include <doctest/doctest.h>
 

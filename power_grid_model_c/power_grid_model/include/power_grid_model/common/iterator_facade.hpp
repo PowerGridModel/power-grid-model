@@ -5,6 +5,7 @@
 #pragma once
 
 #include <concepts>
+#include <iterator>
 #include <utility>
 
 namespace power_grid_model {

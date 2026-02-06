@@ -4,14 +4,13 @@
 
 #define PGM_DLL_EXPORTS
 #include "forward_declarations.hpp"
-
-#include "power_grid_model_c/basics.h"
-#include "power_grid_model_c/model.h"
-
 #include "handle.hpp"
 #include "input_sanitization.hpp"
 #include "math_solver.hpp"
 #include "options.hpp" // NOLINT(misc-include-cleaner)
+
+#include "power_grid_model_c/basics.h"
+#include "power_grid_model_c/model.h"
 
 #include <algorithm>
 #include <cassert>

@@ -13,6 +13,8 @@
 #include "../component/shunt.hpp"
 #include "../component/source.hpp"
 #include "../component/voltage_sensor.hpp"
+#include "state.hpp"
+#include "y_bus.hpp"
 
 #include <concepts>
 #include <vector>
