@@ -207,12 +207,13 @@ $\boldsymbol{l}_k$ and $\boldsymbol{u}_k$ ($k < p$) denote sections of the matri
 [Gaussian elimination](https://en.wikipedia.org/wiki/Gaussian_elimination) using
 [LU decomposition](https://en.wikipedia.org/wiki/LU_decomposition) constructs the matrices
 
-\begin{align*}
+$$
+\begin{aligned}
 \mathbf{L}_p &= \begin{bmatrix} 1 && \boldsymbol{0}^T \\ m_p^{-1} \boldsymbol{q}_p && \mathbf{1}_p\end{bmatrix} \\
 \mathbf{U}_p &= \begin{bmatrix} m_p && \boldsymbol{r}_p^T \\\boldsymbol{0} && \mathbf{1}_p\end{bmatrix} \\
 \mathbf{M}_{p+1} &= \hat{\mathbf{M}}_p - m_p^{-1} \boldsymbol{q}_p \boldsymbol{r}_p^T
-\end{align*}
-
+\end{aligned}
+$$
 where $\mathbf{1}$ is the matrix with ones on the diagonal and zeros off-diagonal, and $\mathbf{M}_{p+1}$ is the start
 of the next iteration.
 $\mathbf{L}_p$, $\mathbf{U}_p$, $\mathbf{M}_{p+1}$ and $\mathbf{M}_{p}$ are related as follows.
@@ -251,7 +252,8 @@ dimensions $\left(N-p-1\right) \times \left(N-p-1\right)$.
 
 Iterating this process yields the matrices
 
-\begin{align*}
+$$
+\begin{aligned}
 \mathbf{L} = \begin{bmatrix}
 1 && 0 && \cdots && 0 \\
 \left(\boldsymbol{l}_0\right)_0 && \ddots && \ddots && \vdots \\
@@ -274,7 +276,8 @@ m_0 && \left(\boldsymbol{r}_0^T\right)_0 && \cdots && \left(\boldsymbol{r}_0^T\r
 \vdots && \ddots && m_{N-2} && \left(\boldsymbol{r}_{N-2}^T\right)_0 \\
 0 && \cdots && 0 && m_{N-1}
 \end{bmatrix}
-\end{align*}
+\end{aligned}
+$$
 
 in which $\boldsymbol{l}_p$ is the first column of the lower triangle of $\mathbf{L}_p$ and $\boldsymbol{u}_p^T$ is the
 first row of the upper triangle of $\mathbf{U}_p$.
@@ -372,7 +375,8 @@ confusion with the block-sparse matrix components.
 The matrices constructed with [LU decomposition](https://en.wikipedia.org/wiki/LU_decomposition) for
 [Gaussian elimination](https://en.wikipedia.org/wiki/Gaussian_elimination) are constructed accordingly.
 
-\begin{align*}
+$$
+\begin{aligned}
 \mathbf{L}_p &= \begin{bmatrix}
     \mathbf{1} && \mathbf{0}^T \\
     \overrightarrow{\mathbf{m}_p^{-1}\mathbf{q}_p} && \mathbf{1}_p
@@ -382,7 +386,8 @@ The matrices constructed with [LU decomposition](https://en.wikipedia.org/wiki/L
     \mathbf{0} && \mathbf{1}_p
 \end{bmatrix} \\
 \mathbf{M}_{p+1} &= \hat{\mathbf{M}}_p - \widehat{\mathbf{m}_p^{-1}\mathbf{q}_p \mathbf{r}_p^T}
-\end{align*}
+\end{aligned}
+$$
 
 Here, $\overrightarrow{\mathbf{m}_p^{-1}\mathbf{q}_p}$ is symbolic notation for the block-vector of solutions to the
 equation $\mathbf{m}_p x_{p;k} = \mathbf{q}_{p;k}$, where $k = 0..(p-1)$.
@@ -390,7 +395,8 @@ Similarly, $\widehat{\mathbf{m}_p^{-1}\mathbf{q}_p \mathbf{r}_p^T}$ is symbolic 
 solutions to the equation $\mathbf{m}_p x_{p;k,l} = \mathbf{q}_{p;k} \mathbf{r}_{p;l}^T$, where $k,l = 0..(p-1)$.
 That is:
 
-\begin{align*}
+$$
+\begin{aligned}
 \overrightarrow{\mathbf{m}_p^{-1}\mathbf{q}_p}
 &= \begin{bmatrix}\mathbf{m}_p^{-1}\mathbf{q}_{p;0} \\
 \vdots \\
@@ -401,7 +407,8 @@ That is:
 \vdots && \ddots && \vdots \\
 \mathbf{m}_p^{-1} \mathbf{q}_{p;0} \mathbf{r}_{p;0}^T && \cdots &&
 \mathbf{m}_p^{-1} \mathbf{q}_{p;N-1} \mathbf{r}_{p;N-1}^T \end{bmatrix}
-\end{align*}
+\end{aligned}
+$$
 
 Iteratively applying above factorization process yields $\mathbf{L}$ and $\mathbf{U}$, as well as $\mathbf{P}$ and
 $\mathbf{Q}$.
@@ -427,7 +434,8 @@ $\mathbf{m}_p$ is a dense block that can be [LU factorized](#dense-lu-factorizat
 $\mathbf{m}_p = \mathbf{p}_p^{-1} \mathbf{l}_p \mathbf{u}_p \mathbf{q}_p^{-1}$.
 Partial Gaussian elimination constructs the following matrices.
 
-\begin{align*}
+$$
+\begin{aligned}
 \mathbf{L}_p &= \begin{bmatrix}
     \mathbf{l}_p && \mathbf{0}^T \\
     \overrightarrow{\mathbf{q}_p\mathbf{q}_p\mathbf{u}_p^{-1}} && \mathbf{1}_p
@@ -438,7 +446,8 @@ Partial Gaussian elimination constructs the following matrices.
 \end{bmatrix} \\
 \mathbf{M}_{p+1} &=
     \hat{\mathbf{M}}_p - \widehat{\mathbf{q}_p\mathbf{q}_p\mathbf{u}_p^{-1}\mathbf{l}_p^{-1}\mathbf{p}_p\mathbf{r}_p^T}
-\end{align*}
+\end{aligned}
+$$
 
 Note that the first column of $\mathbf{L}_p$ can be obtained by applying a right-solve procedure, instead of the regular
 left-solve procedure, as is the case for $\mathbf{U}_p$.
@@ -447,7 +456,8 @@ left-solve procedure, as is the case for $\mathbf{U}_p$.
 
 To illustrate the rationale, let's fully solve a matrix equation (without using blocks):
 
-\begin{align*}
+$$
+\begin{aligned}
 \begin{bmatrix}
 \mathbf{a} && \mathbf{b} \\
 \mathbf{c} && \mathbf{d}
@@ -499,12 +509,14 @@ a_{11} && a_{12} && b_{11} && b_{12} \\
         - \left(b_{22} - b_{12}\frac{a_{21}}{a_{11}}\right)
             \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}}
 \end{bmatrix}
-\end{align*}
+\end{aligned}
+$$
 
 Using the following denotations, we can simplify the above as
 $\begin{bmatrix} \mathbf{l}_a \mathbf{u}_a && \mathbf{u}_b \\ \mathbf{l}_c && \mathbf{l}_d \mathbf{u}_d \end{bmatrix}$.
 
-\begin{align*}
+$$
+\begin{aligned}
 \mathbf{l}_a &= \begin{bmatrix}
     1                     && 0 \\
     \frac{a_{21}}{a_{11}} && 1
@@ -535,7 +547,8 @@ $\begin{bmatrix} \mathbf{l}_a \mathbf{u}_a && \mathbf{u}_b \\ \mathbf{l}_c && \m
          - \left(b_{22} - b_{12}\frac{a_{21}}{a_{11}}\right)
              \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}}
 \end{bmatrix}
-\end{align*}
+\end{aligned}
+$$
 
 Interestingly, the matrices $\mathbf{l}_c$, $\mathbf{u}_b$ and $\mathbf{l}_d\mathbf{u}_d$ can be obtained without doing
 full pivoting on the sub-block level:
@@ -568,7 +581,8 @@ The following proves the equations $\mathbf{l}_c \mathbf{u}_a = \mathbf{c}$, $\m
 and $\mathbf{l}_d\mathbf{u}_d = \mathbf{d} - \mathbf{l}_c \mathbf{u}_b$ mentioned in the
 [previous section](#rationale-of-the-block-sparse-lu-factorization-process).
 
-\begin{align*}
+$$
+\begin{aligned}
 \mathbf{l}_c \mathbf{u}_a
 &=
 \begin{bmatrix}
@@ -640,7 +654,8 @@ and $\mathbf{l}_d\mathbf{u}_d = \mathbf{d} - \mathbf{l}_c \mathbf{u}_b$ mentione
             \frac{c_{22} - a_{12} \frac{c_{21}}{a_{11}}}{a_{22} - a_{12} \frac{a_{21}}{a_{11}}}
 \end{bmatrix} \\
 &= \mathbf{l}_d\mathbf{u}_d
-\end{align*}
+\end{aligned}
+$$
 
 We can see that $\mathbf{l}_c$ and $\mathbf{u}_b$ are affected by the in-block LU decomposition of the pivot block
 $\left(\mathbf{l}_a,\mathbf{u}_a\right)$, as well as the data in the respective blocks ($\mathbf{c}$ and $\mathbf{b}$)
@@ -658,7 +673,8 @@ The structure of the block-sparse matrices is as follows.
 
 This can be graphically represented as
 
-\begin{align*}
+$$
+\begin{aligned}
 \mathbf{M} &\equiv \begin{bmatrix}
 \mathbf{M}_{0,0}   && \cdots && \mathbf{M}_{0,N-1} \\
 \vdots    && \ddots && \vdots \\
@@ -683,7 +699,8 @@ This can be graphically represented as
    \vdots                          && \ddots && \vdots \\
    \mathbf{M}_{N-1,N-1}\left[N_i-1,0\right] && \cdots && \mathbf{M}_{N-1,N-1}\left[N_i-1,N_j-1\right] \end{bmatrix}
 \end{bmatrix}
-\end{align*}
+\end{aligned}
+$$
 
 Because of the sparse structure and the fact that all $\mathbf{M}_{i,j}$ have the same shape, it is much more efficient
 to store the blocks $\mathbf{M}_{i,j}$ in a vector $\mathbf{M}_{\tilde{k}}$ where $\tilde{k}$ is a reordered index from
@@ -693,7 +710,8 @@ by the row-index $i$, and the inner vector containing the values of $j$ for whic
 All topologically relevant matrix elements, as well as [fill-ins](#pivot-operations), are included in this mapping.
 The following illustrates this mapping.
 
-\begin{align*}
+$$
+\begin{aligned}
 \begin{bmatrix}
 \mathbf{M}_{0,0} &&         &&         && \mathbf{M}_{0,3} \\
         && \mathbf{M}_{1,1} && \mathbf{M}_{1,2} &&         \\
@@ -729,7 +747,8 @@ The following illustrates this mapping.
     [0 && 3 && 1 && 2 && 1 && 2 && 3 && 0 && 2 && 3] && \\
     [0 && && 2 && && 4 && && && 7 && && && && 10]
 \end{bmatrix}
-\end{align*}
+\end{aligned}
+$$
 
 In the first equation, the upper row contains the present block entries and the bottom row their column indices per row
 to obtain a flattened representation of the matrix.
@@ -947,7 +966,8 @@ We use the following backward error calculation, inspired by
 [Li99](https://www.semanticscholar.org/paper/A-Scalable-Sparse-Direct-Solver-Using-Static-Li-Demmel/7ea1c3360826ad3996f387eeb6d70815e1eb3761),
 with a few modifications described [below](#improved-backward-error-calculation).
 
-\begin{align*}
+$$
+\begin{aligned}
 D_{\text{max}} &= \max_i\left\{
     \left(\left|\mathbf{M}\right|\cdot\left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i
 \right\} \\
@@ -959,7 +979,8 @@ D_{\text{max}} &= \max_i\left\{
         \right\}
     }
 \right\}
-\end{align*}
+\end{aligned}
+$$
 
 $\epsilon \in \left[0, 1\right]$ is a value that introduces a
 [cut-off value to improve stability](#improved-backward-error-calculation) of the algorithm and should ideally be small.
@@ -1011,7 +1032,8 @@ their sum is prone to rounding errors, which may be several orders larger than m
 uses the following backward error in the
 [iterative refinement algorithm](#iterative-refinement-of-lu-solver-solutions):
 
-\begin{align*}
+$$
+\begin{aligned}
 \text{backward\_error}_{\text{Li}}
    &= \max_i \frac{
          \left|\boldsymbol{r}_i\right|
@@ -1028,7 +1050,8 @@ uses the following backward error in the
       }{
          \left(\left|\mathbf{M}\right| \cdot \left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i
       }
-\end{align*}
+\end{aligned}
+$$
 
 In this equation, the symbolic notation $\left|\mathbf{M}\right|$ and $\left|\boldsymbol{x}\right|$ are the matrix and
 vector with absolute values of the elements of $\mathbf{M}$ and $\boldsymbol{x}$ as elements, i.e.,
@@ -1041,7 +1064,8 @@ iterative refinement to fail.
 The power grid model therefore uses a modified version, in which the denominator is capped to a minimum value,
 determined by the maximum across all denominators:
 
-\begin{align*}
+$$
+\begin{aligned}
 D_{\text{max}} &= \max_i\left\{
    \left(\left|\mathbf{M}\right|\cdot\left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i
 \right\} \\
@@ -1053,7 +1077,8 @@ D_{\text{max}} &= \max_i\left\{
       \right\}
    }
 \right\}
-\end{align*}
+\end{aligned}
+$$
 
 $\epsilon$ may be chosen.
 $\epsilon = 0$ means no cut-off, while $\epsilon = 1$ means that only the absolute values of the residuals are

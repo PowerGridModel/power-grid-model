@@ -316,7 +316,8 @@ $$
 
 Where:
 
-\begin{align*}
+$$
+\begin{aligned}
     x    =  \begin{bmatrix}
             \delta \\
             U
@@ -355,7 +356,8 @@ Where:
             \vdots \\
             Q_{N}(x)
             \end{bmatrix}
-\end{align*}
+\end{aligned}
+$$
 
 As can be seen in the equations above $\delta_1$ and $V_1$ are omitted, because they are known for the slack bus.
 In each iteration $i$ the following equation is solved:
@@ -467,14 +469,16 @@ When it is approximated as a current at 1 p.u., the voltage error is only linear
 Weighted least squares (WLS) state estimation can be performed with power-grid-model.
 Given a grid with $N_b$ buses the state variable column vector is defined as below.
 
-\begin{align*}
+$$
+\begin{aligned}
         \underline{U}     =     \begin{bmatrix}
                         \underline{U}_1 \\
                         \underline{U}_2 \\
                         \vdots \\
                         \underline{U}_{N_{b}}
                     \end{bmatrix}
-\end{align*}
+\end{aligned}
+$$
 
 Where $\underline{U}_i$ is the complex voltage phasor of the i-th bus.
 
@@ -489,7 +493,8 @@ $$
 
 Where:
 
-\begin{align*}
+$$
+\begin{aligned}
     \underline{x}     =  \begin{bmatrix}
             \underline{x}_1 \\
             \underline{x}_2 \\
@@ -517,7 +522,8 @@ Where:
             \vdots & \vdots & \ddots & \vdots \\
             0 & 0 & \cdots & w_{N_{m}}
             \end{bmatrix}
-\end{align*}
+\end{aligned}
+$$
 
 Where $\underline{x}_i$ is the real value of the i-th measured quantity in complex form, $\underline{z}_i$ is the i-th
 measured value in complex form, $\sigma_i$ is the normalized standard deviation of the measurement error of the i-th
