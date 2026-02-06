@@ -616,18 +616,18 @@ See also [the full mathematical workout](https://github.com/PowerGridModel/power
 
 $$
    \begin{eqnarray}
-        & \mathrm{Re}\left\{I\right\} = I \cos\theta 
+        & \mathrm{Re}\left\{I\right\} = I \cos\theta
    \end{eqnarray}
 $$
 $$
    \begin{eqnarray}
-        & \mathrm{Im}\left\{I\right\} = I \sin\theta 
+        & \mathrm{Im}\left\{I\right\} = I \sin\theta
    \end{eqnarray}
 $$
 $$
    \begin{eqnarray}
         & \text{Var}\left(\mathrm{Re}\left\{I\right\}\right) =
-            \sigma_i^2 \cos^2\theta + I^2 \sigma_{\theta}^2\sin^2\theta 
+            \sigma_i^2 \cos^2\theta + I^2 \sigma_{\theta}^2\sin^2\theta
    \end{eqnarray}
 $$
 $$
