@@ -88,13 +88,11 @@ def test_assert_valid_data_structure():
 
     # Invalid component type
     input_with_wrong_component = {ComponentType.node: node_input, "some_random_component": line_input}
-    with pytest.raises(KeyError, match=r"Unknown component \'some_random_component\' in DatasetType\.input data"):
+    with pytest.raises(KeyError, match=r"Unknown component \'some_random_component\' in input data\."):
         assert_valid_data_structure(input_with_wrong_component, DatasetType.input)
 
     input_with_wrong_data_type = {ComponentType.node: node_input, ComponentType.line: [1, 2, 3]}
-    with pytest.raises(
-        TypeError, match=r"Unexpected data type list for \'ComponentType\.line\' DatasetType\.input data"
-    ):
+    with pytest.raises(TypeError, match=r"Unexpected data type list for \'line\' input data"):
         assert_valid_data_structure(input_with_wrong_data_type, DatasetType.input)
 
 
