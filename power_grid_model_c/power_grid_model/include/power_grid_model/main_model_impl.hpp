@@ -311,8 +311,8 @@ class MainModelImpl {
             assert(options.optimizer_type == OptimizerType::no_optimization ||
                    (std::derived_from<calculation_type, power_flow_t>));
 
-            return [this, &mutable_comp_coup = state_.comp_coup, &options, &logger](MainModelState const& state,
-                                                                            CalculationMethod calculation_method) {
+            return [this, &mutable_comp_coup = state_.comp_coup, &options,
+                    &logger](MainModelState const& state, CalculationMethod calculation_method) {
                 (void)state; // to avoid unused-lambda-capture when in Release build
                 assert(&state == &state_);
 
