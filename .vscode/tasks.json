@@ -95,7 +95,7 @@
       "command": "sh",
       "args": [
         "-c",
-        "find . \\( -name \"*.h\" -o -name \"*.c\" -o -name \"*.cpp\" -o -name \"*.hpp\" -o -name \"*.cc\" -o -name \"*.cxx\" \\) -exec uv run clang-format -style=file -i {} \\;"
+        "git ls-files | grep '\\.h$\\|\\.c$\\|\\.cpp$\\|\\.hpp$\\|\\.cc$\\|\\.cxx$' | xargs -I {} uv run clang-format -style=file -i {}"
       ],
       "group": {
         "kind": "build",
@@ -106,7 +106,7 @@
         "command": "powershell",
         "args": [
           "-Command",
-          "Get-ChildItem -Recurse -Include *.h, *.c, *.cpp, *.hpp, *.cc, *.cxx | ForEach-Object { uv run clang-format -style=file -i $_.FullName }"
+          "git ls-files | Where-Object {$_ -match '\\.(h|c|cpp|hpp|cc|cxx)$'} | ForEach-Object { uv run clang-format -style=file -i $_ }"
         ]
       }
     }
