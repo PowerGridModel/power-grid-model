@@ -13,9 +13,17 @@
 #include "../common/exception.hpp"
 #include "../common/iterator_facade.hpp"
 
+#include <algorithm>
+#include <bits/basic_string.h>
+#include <cassert>
+#include <concepts>
+#include <cstddef>
 #include <ranges>
 #include <span>
+#include <string>
 #include <string_view>
+#include <type_traits>
+#include <vector>
 
 namespace power_grid_model {
 

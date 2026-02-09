@@ -11,7 +11,15 @@
 #include "../auxiliary/output.hpp"
 #include "../auxiliary/update.hpp"
 #include "../calculation_parameters.hpp"
+#include "../common/common.hpp"
+#include "../common/enum.hpp"
 #include "../common/exception.hpp"
+#include "../common/three_phase_tensor.hpp"
+
+#include <algorithm>
+#include <array>
+#include <cassert>
+#include <concepts>
 
 namespace power_grid_model {
 

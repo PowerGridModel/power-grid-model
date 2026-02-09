@@ -4,8 +4,10 @@
 
 #pragma once
 
+#include <compare>
 #include <concepts>
 #include <iterator>
+#include <type_traits>
 #include <utility>
 
 namespace power_grid_model {

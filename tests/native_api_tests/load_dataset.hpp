@@ -4,7 +4,12 @@
 
 #pragma once
 
+#include <power_grid_model_cpp/dataset.hpp>
 #include <power_grid_model_cpp/serialization.hpp>
+
+#include <power_grid_model_c/basics.h>
+
+#include <string>
 
 namespace power_grid_model_cpp_test {
 inline power_grid_model_cpp::OwningDataset load_dataset(std::string const& json_string) {

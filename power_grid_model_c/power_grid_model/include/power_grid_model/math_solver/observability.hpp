@@ -5,9 +5,23 @@
 #pragma once
 
 #include "measured_values.hpp"
+#include "power_grid_model/calculation_parameters.hpp"
+#include "power_grid_model/common/common.hpp"
+#include "power_grid_model/common/enum.hpp"
 #include "y_bus.hpp"
 
 #include "../common/exception.hpp"
+
+#include <algorithm>
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
+#include <iterator>
+#include <numeric>
+#include <span>
+#include <utility>
+#include <vector>
 
 namespace power_grid_model::math_solver {
 

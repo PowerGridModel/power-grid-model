@@ -4,16 +4,37 @@
 
 #pragma once
 
+#include "sparse_ordering.hpp"
+
 #include "calculation_parameters.hpp"
 #include "common/common.hpp"
+#include "common/counting_iterator.hpp"
 #include "common/enum.hpp"
+#include "common/grouped_index_vector.hpp"
 #include "index_mapping.hpp"
-#include "sparse_ordering.hpp"
 
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/compressed_sparse_row_graph.hpp>
 #include <boost/graph/depth_first_search.hpp>
+#include <boost/graph/graph_selectors.hpp>
+#include <boost/graph/graph_traits.hpp>
 #include <boost/graph/iteration_macros.hpp>
+#include <boost/graph/properties.hpp>
+#include <boost/iterator/counting_iterator.hpp>
+#include <boost/pending/property.hpp>
+
+#include <algorithm>
+#include <array>
+#include <cassert>
+#include <concepts>
+#include <cstddef>
+#include <iterator>
+#include <map>
+#include <memory>
+#include <ranges>
+#include <type_traits>
+#include <utility>
+#include <vector>
 
 // build topology of the grid
 // divide grid into several math models

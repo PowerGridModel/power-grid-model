@@ -7,12 +7,17 @@
 #include "common.hpp"
 
 // eigen properties
+#include <Eigen/Core>
 #include <Eigen/Dense>
 
 #include <cassert>
 #include <cmath>
 #include <complex>
+#include <concepts>
+#include <cstddef>
+#include <type_traits>
 #include <utility>
+#include <vector>
 
 namespace power_grid_model {
 

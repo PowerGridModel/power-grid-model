@@ -14,8 +14,16 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <compare>
+#include <concepts>
+#include <cstddef>
 #include <numeric>
+#include <ranges>
+#include <tuple>
+#include <type_traits>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 
 namespace power_grid_model {
 

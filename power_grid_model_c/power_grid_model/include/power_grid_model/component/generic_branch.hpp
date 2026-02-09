@@ -12,6 +12,9 @@
 #include "../common/common.hpp"
 #include "../common/exception.hpp"
 
+#include <cmath>
+#include <complex>
+
 /*
     generic Branch: either a line N = 1 or a transformer N = t*e^(j*theta)
     paramaters should be given as r1, x1, ....

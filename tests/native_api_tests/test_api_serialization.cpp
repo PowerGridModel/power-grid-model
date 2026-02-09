@@ -12,7 +12,11 @@
 #include <power_grid_model_c/basics.h>
 #include <power_grid_model_c/dataset_definitions.h>
 
+#include <nlohmann/json_fwd.hpp>
+
 #include <doctest/doctest.h>
+
+#include <bits/basic_string.h>
 
 // NOLINTBEGIN(misc-include-cleaner)
 #ifdef _MSC_VER
@@ -138,15 +142,12 @@ TEST_CASE("API Serialization and Deserialization") {
         Deserializer msgpack_deserializer{msgpack_data, 1};
 
         auto check_metadata = [&](DatasetInfo const& info) {
-            CHECK(info.name() ==
-                  "input"s); // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
+            CHECK(info.name() == "input"s);
             CHECK(info.is_batch() == is_batch);
             CHECK(info.batch_size() == batch_size);
             CHECK(info.n_components() == n_components);
-            CHECK(info.component_name(0) ==
-                  "node"s); // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
-            CHECK(info.component_name(1) ==
-                  "source"s); // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
+            CHECK(info.component_name(0) == "node"s);
+            CHECK(info.component_name(1) == "source"s);
             for (Idx const idx : {0, 1}) {
                 CHECK(info.component_elements_per_scenario(idx) == elements_per_scenario[idx]);
                 CHECK(info.component_total_elements(idx) == total_elements[idx]);

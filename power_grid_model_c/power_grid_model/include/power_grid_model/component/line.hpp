@@ -13,6 +13,8 @@
 #include "../common/exception.hpp"
 #include "../common/three_phase_tensor.hpp"
 
+#include <complex>
+
 namespace power_grid_model {
 
 class Line final : public Branch {

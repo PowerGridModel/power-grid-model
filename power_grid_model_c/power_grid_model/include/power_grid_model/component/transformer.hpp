@@ -11,8 +11,17 @@
 #include "../auxiliary/update.hpp"
 #include "../calculation_parameters.hpp"
 #include "../common/common.hpp"
+#include "../common/enum.hpp"
 #include "../common/exception.hpp"
 #include "../common/three_phase_tensor.hpp"
+#include "component.hpp"
+
+#include <algorithm>
+#include <cassert>
+#include <cmath>
+#include <complex>
+#include <cstddef>
+#include <utility>
 
 namespace power_grid_model {
 

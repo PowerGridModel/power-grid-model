@@ -5,10 +5,24 @@
 #pragma once
 
 #include "branch3.hpp"
+
+#include "../auxiliary/input.hpp"
+#include "../auxiliary/update.hpp"
+#include "../calculation_parameters.hpp"
+#include "../common/common.hpp"
+#include "../common/enum.hpp"
+#include "../common/exception.hpp"
+#include "../common/three_phase_tensor.hpp"
+#include "base.hpp"
+#include "component.hpp"
 #include "transformer.hpp"
 #include "transformer_utils.hpp"
 
-#include "component.hpp"
+#include <algorithm>
+#include <array>
+#include <cassert>
+#include <cstddef>
+#include <tuple>
 
 namespace power_grid_model {
 

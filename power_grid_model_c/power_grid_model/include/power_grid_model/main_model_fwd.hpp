@@ -7,6 +7,9 @@
 #include "common/common.hpp"
 #include "common/enum.hpp"
 
+#include <concepts>
+#include <type_traits>
+
 namespace power_grid_model {
 
 struct cached_update_t : std::true_type {};

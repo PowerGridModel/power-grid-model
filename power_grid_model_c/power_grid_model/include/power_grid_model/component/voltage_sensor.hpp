@@ -6,11 +6,18 @@
 
 #include "sensor.hpp"
 
+#include "../auxiliary/input.hpp"
+#include "../auxiliary/output.hpp"
+#include "../auxiliary/update.hpp"
 #include "../calculation_parameters.hpp"
 #include "../common/common.hpp"
 #include "../common/three_phase_tensor.hpp"
 #include "component.hpp"
 
+#include <Eigen/Core>
+
+#include <cassert>
+#include <complex>
 #include <limits>
 
 namespace power_grid_model {

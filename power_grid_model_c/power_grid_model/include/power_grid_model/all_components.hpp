@@ -11,6 +11,9 @@
 // component include
 #include "component/appliance.hpp"
 #include "component/asym_line.hpp"
+#include "component/base.hpp"
+#include "component/branch.hpp"
+#include "component/branch3.hpp"
 #include "component/current_sensor.hpp"
 #include "component/fault.hpp"
 #include "component/generic_branch.hpp"
@@ -19,6 +22,7 @@
 #include "component/load_gen.hpp"
 #include "component/node.hpp"
 #include "component/power_sensor.hpp"
+#include "component/regulator.hpp"
 #include "component/sensor.hpp"
 #include "component/shunt.hpp"
 #include "component/source.hpp"

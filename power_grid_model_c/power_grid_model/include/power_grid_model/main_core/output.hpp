@@ -8,6 +8,10 @@
 #include "state.hpp"
 #include "state_queries.hpp"
 
+#include "../calculation_parameters.hpp"
+#include "../common/common.hpp"
+#include "../common/enum.hpp"
+#include "../common/exception.hpp"
 #include "../component/base.hpp"
 #include "../component/branch.hpp"
 #include "../component/branch3.hpp"
@@ -16,13 +20,18 @@
 #include "../component/load_gen.hpp"
 #include "../component/node.hpp"
 #include "../component/power_sensor.hpp"
+#include "../component/regulator.hpp"
 #include "../component/shunt.hpp"
 #include "../component/source.hpp"
 #include "../component/transformer_tap_regulator.hpp"
 #include "../component/voltage_regulator.hpp"
 #include "../component/voltage_sensor.hpp"
 
+#include <algorithm>
 #include <concepts>
+#include <ranges>
+#include <type_traits>
+#include <vector>
 
 namespace power_grid_model::main_core {
 

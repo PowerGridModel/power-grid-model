@@ -4,6 +4,11 @@
 
 #pragma once
 
+#include "../main_core/container_queries.hpp"
+
+#include "../common/common.hpp"
+#include "../common/enum.hpp"
+#include "../common/exception.hpp"
 #include "../component/appliance.hpp"
 #include "../component/asym_line.hpp"
 #include "../component/base.hpp"
@@ -24,9 +29,14 @@
 #include "../component/voltage_regulator.hpp"
 #include "../component/voltage_sensor.hpp"
 #include "../container_fwd.hpp"
-#include "../main_core/container_queries.hpp"
 
+#include <array>
+#include <concepts>
+#include <format>
+#include <ranges>
+#include <type_traits>
 #include <unordered_set>
+#include <vector>
 
 namespace power_grid_model::main_core {
 

@@ -9,6 +9,7 @@
 #include "../auxiliary/input.hpp"
 #include "../auxiliary/output.hpp"
 #include "../common/common.hpp"
+#include "../common/enum.hpp"
 
 namespace power_grid_model {
 

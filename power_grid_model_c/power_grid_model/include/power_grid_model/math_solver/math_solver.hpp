@@ -15,9 +15,13 @@
 
 #include "../calculation_parameters.hpp"
 #include "../common/common.hpp"
+#include "../common/enum.hpp"
 #include "../common/exception.hpp"
+#include "../common/logging.hpp"
 #include "../common/timer.hpp"
 
+#include <limits>
+#include <memory>
 #include <optional>
 
 namespace power_grid_model {

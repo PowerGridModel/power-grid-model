@@ -13,6 +13,7 @@
 #include <doctest/doctest.h>
 
 #include <array>
+#include <bits/basic_string.h>
 #include <cmath>
 #include <complex>
 #include <numbers>
@@ -42,7 +43,7 @@ auto const complete_state_json = R"json({
       {"id": 0, "u_rated": 10e3}
     ]
   }
-})json"s; // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
+})json"s;
 
 } // namespace
 

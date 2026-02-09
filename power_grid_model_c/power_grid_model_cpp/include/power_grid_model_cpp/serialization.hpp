@@ -10,11 +10,18 @@
 #include "dataset.hpp"
 #include "handle.hpp"
 
+#include "power_grid_model_c/basics.h"
 #include "power_grid_model_c/serialization.h"
 
+#include <cstddef>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <ios>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <vector>
 
 namespace power_grid_model_cpp {
 class Deserializer {

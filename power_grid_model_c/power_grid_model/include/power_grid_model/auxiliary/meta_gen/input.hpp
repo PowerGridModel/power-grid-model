@@ -9,10 +9,13 @@
 
 #include "gen_getters.hpp" // NOLINT
 
-#include "../../common/common.hpp"             // NOLINT
 #include "../meta_data.hpp"                    // NOLINT
+#include "../../common/common.hpp"             // NOLINT
 
 #include "../input.hpp" // NOLINT
+
+#include <array>
+#include <cstddef>
 
 
 namespace power_grid_model::meta_data {

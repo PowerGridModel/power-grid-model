@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "component.hpp"
 #include "regulator.hpp"
 
 #include "../auxiliary/input.hpp"
@@ -12,6 +11,12 @@
 #include "../auxiliary/update.hpp"
 #include "../calculation_parameters.hpp"
 #include "../common/common.hpp"
+#include "../common/enum.hpp"
+#include "../common/three_phase_tensor.hpp"
+#include "base.hpp"
+#include "component.hpp"
+
+#include <cassert>
 
 namespace power_grid_model {
 

@@ -7,6 +7,9 @@
 #include "../common/common.hpp"
 
 #include <array>
+#include <cstddef>
+#include <tuple>
+#include <utility>
 
 namespace power_grid_model::main_core::utils {
 

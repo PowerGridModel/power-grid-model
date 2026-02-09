@@ -7,7 +7,6 @@
 // clang-format off
 #pragma once
 
-
 #include "../common/common.hpp"
 #include "../common/three_phase_tensor.hpp"
 

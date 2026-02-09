@@ -17,6 +17,7 @@
 
 #include <doctest/doctest.h>
 
+#include <bits/basic_string.h>
 #include <cstdint>
 #include <numbers>
 #include <string>
@@ -314,7 +315,7 @@ auto const complete_state_json = R"json({
       {"id": 9, "node": 3, "status": 1, "g1": 0.015, "b1": 0, "g0": 0.015, "b0": 0}
     ]
   }
-})json"s; // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
+})json"s;
 
 auto const update_json = R"json({
   "version": "1.0",
@@ -340,7 +341,7 @@ auto const update_json = R"json({
       ]
     }
   ]
-})json"s; // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
+})json"s;
 
 auto const update_vector_json = R"json({
   "version": "1.0",
@@ -360,7 +361,7 @@ auto const update_vector_json = R"json({
       ]
     }
   ]
-})json"s; // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
+})json"s;
 } // namespace
 
 TEST_CASE("API model - all updates") {

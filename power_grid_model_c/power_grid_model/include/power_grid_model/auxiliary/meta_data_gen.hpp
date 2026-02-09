@@ -6,20 +6,16 @@
 
 // Umbrella header for meta data generation
 
-#include "input.hpp"
+#include "input.hpp" // IWYU pragma: keep
 #include "meta_data.hpp"
 #include "meta_gen/gen_getters.hpp"
-#include "meta_gen/input.hpp"
-#include "meta_gen/output.hpp"
-#include "meta_gen/update.hpp"
-#include "output.hpp"
-#include "update.hpp"
+#include "meta_gen/input.hpp"  // IWYU pragma: keep
+#include "meta_gen/output.hpp" // IWYU pragma: keep
+#include "meta_gen/update.hpp" // IWYU pragma: keep
+#include "output.hpp"          // IWYU pragma: keep
+#include "update.hpp"          // IWYU pragma: keep
 
 #include "../all_components.hpp"
-#include "../common/common.hpp"
-
-#include <map>
-#include <string>
 
 // generate of meta data
 namespace power_grid_model::meta_data::meta_data_gen {

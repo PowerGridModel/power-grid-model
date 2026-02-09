@@ -5,9 +5,17 @@
 #pragma once
 
 #include "common/common.hpp"
+#include "common/counting_iterator.hpp"
 #include "common/grouped_index_vector.hpp"
 
+#include <algorithm>
+#include <cassert>
+#include <cmath>
+#include <concepts>
+#include <iterator>
 #include <numeric>
+#include <utility>
+#include <vector>
 
 namespace power_grid_model {
 

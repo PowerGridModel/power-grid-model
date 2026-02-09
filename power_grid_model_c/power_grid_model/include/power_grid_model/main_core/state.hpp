@@ -8,6 +8,8 @@
 #include "../container_fwd.hpp"
 
 #include <concepts>
+#include <memory>
+#include <vector>
 
 namespace power_grid_model::main_core {
 
