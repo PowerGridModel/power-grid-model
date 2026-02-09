@@ -7,10 +7,10 @@
 // clang-format off
 #pragma once
 
-#include "meta_data.hpp"
-
 #include "../common/common.hpp"
+{% if name in ["input", "update"] -%}
 #include "../common/enum.hpp"
+{% endif -%}
 #include "../common/three_phase_tensor.hpp"
 {% autoescape false %}
 namespace power_grid_model {
