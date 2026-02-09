@@ -68,7 +68,7 @@
       "problemMatcher": []
     },
     {
-      "label": "biome format",
+      "label": "json linter",
       "type": "shell",
       "command": "npx",
       "args": ["biome", "format", "--write", "--files-ignore-unknown=true", "--no-errors-on-unmatched"],
@@ -77,6 +77,38 @@
         "isDefault": false
       },
       "problemMatcher": []
+    },
+    {
+      "label": "cmake linter",
+      "type": "shell",
+      "command": "uv",
+      "args": ["run", "gersemi", "-i", "--warnings-as-errors", "src/", "tests/", "cmake/"],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "clang-format",
+      "type": "shell",
+      "command": "sh",
+      "args": [
+        "-c",
+        "find . \\( -name \"*.h\" -o -name \"*.c\" -o -name \"*.cpp\" -o -name \"*.hpp\" -o -name \"*.cc\" -o -name \"*.cxx\" \\) -exec uv run clang-format -style=file -i {} \\;"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "problemMatcher": [],
+      "windows": {
+        "command": "powershell",
+        "args": [
+          "-Command",
+          "Get-ChildItem -Recurse -Include *.h, *.c, *.cpp, *.hpp, *.cc, *.cxx | ForEach-Object { uv run clang-format -style=file -i $_.FullName }"
+        ]
+      }
     }
   ]
 }
