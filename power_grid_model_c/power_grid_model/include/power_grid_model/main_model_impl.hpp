@@ -311,12 +311,12 @@ class MainModelImpl {
             assert(options.optimizer_type == OptimizerType::no_optimization ||
                    (std::derived_from<calculation_type, power_flow_t>));
 
-            return [this, &comp_coup = state_.comp_coup, &options, &logger](MainModelState const& state,
+            return [this, &mutable_comp_coup = state_.comp_coup, &options, &logger](MainModelState const& state,
                                                                             CalculationMethod calculation_method) {
                 (void)state; // to avoid unused-lambda-capture when in Release build
                 assert(&state == &state_);
 
-                return calculate_<MathSolverProxy<sym>, YBus<sym>>(Calc::preparer(state, comp_coup, options),
+                return calculate_<MathSolverProxy<sym>, YBus<sym>>(Calc::preparer(state, mutable_comp_coup, options),
                                                                    Calc::solver(calculation_method, options, logger),
                                                                    logger);
             };
