@@ -95,7 +95,7 @@
       "command": "sh",
       "args": [
         "-c",
-        "git ls-files | grep '\\.h$\\|\\.c$\\|\\.cpp$\\|\\.hpp$\\|\\.cc$\\|\\.cxx$' | xargs -I {} uv run clang-format -style=file -i {}"
+        "git ls-files | grep -E '\\.(h|c|cpp|hpp|cc|cxx)$' | xargs -I {} uv run clang-format -style=file -i {}"
       ],
       "group": {
         "kind": "build",
