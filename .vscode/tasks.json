@@ -1,60 +1,82 @@
 {
-	"version": "2.0.0",
-	"tasks": [
-		{
-			"label": "uv sync",
-			"type": "shell",
-			"command": "uv",
-			"args": ["sync", "--reinstall"],
-			"group": {
-				"kind": "build",
-				"isDefault": false
-			},
-			"problemMatcher": []
-		},
-		{
-			"label": "ruff check",
-			"type": "shell",
-			"command": "uv",
-			"args": ["run", "ruff", "check", "--fix", "."],
-			"group": {
-				"kind": "test",
-				"isDefault": false
-			},
-			"problemMatcher": ["$gcc"]
-		},
-		{
-			"label": "ruff format",
-			"type": "shell",
-			"command": "uv",
-			"args": ["run", "ruff", "format", "."],
-			"group": {
-				"kind": "build",
-				"isDefault": false
-			},
-			"problemMatcher": ["$gcc"]
-		},
-		{
-			"label": "mypy",
-			"type": "shell",
-			"command": "uv",
-			"args": ["run", "mypy"],
-			"group": {
-				"kind": "test",
-				"isDefault": false
-			},
-			"problemMatcher": ["$mypy"]
-		},
-		{
-			"label": "pytest",
-			"type": "shell",
-			"command": "uv",
-			"args": ["run", "pytest"],
-			"group": {
-				"kind": "test",
-				"isDefault": false
-			},
-			"problemMatcher": []
-		}
-	]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "uv sync",
+      "type": "shell",
+      "command": "uv",
+      "args": ["sync", "--reinstall"],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "ruff check",
+      "type": "shell",
+      "command": "uv",
+      "args": ["run", "ruff", "check", "--fix", "."],
+      "group": {
+        "kind": "test",
+        "isDefault": false
+      },
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "ruff format",
+      "type": "shell",
+      "command": "uv",
+      "args": ["run", "ruff", "format", "."],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "mypy",
+      "type": "shell",
+      "command": "uv",
+      "args": ["run", "mypy"],
+      "group": {
+        "kind": "test",
+        "isDefault": false
+      },
+      "problemMatcher": ["$mypy"]
+    },
+    {
+      "label": "pytest",
+      "type": "shell",
+      "command": "uv",
+      "args": ["run", "pytest"],
+      "group": {
+        "kind": "test",
+        "isDefault": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "markdownlint",
+      "type": "shell",
+      "command": "npx",
+      "args": ["markdownlint", "--fix", "."],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "biome format",
+      "type": "shell",
+      "command": "npx",
+      "args": ["biome", "format", "--write", "--files-ignore-unknown=true", "--no-errors-on-unmatched"],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "problemMatcher": []
+    }
+  ]
 }
