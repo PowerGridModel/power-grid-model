@@ -92,10 +92,23 @@
     {
       "label": "clang-format",
       "type": "shell",
-      "command": "sh",
+      "command": "git",
       "args": [
-        "-c",
-        "git ls-files | grep -E '\\.(h|c|cpp|hpp|cc|cxx)$' | xargs -I {} uv run clang-format -style=file -i {}"
+        "ls-files",
+        "|",
+        "grep",
+        "-E",
+        "'\\.(h|c|cpp|hpp|cc|cxx)$'",
+        "|",
+        "xargs",
+        "-I",
+        "{}",
+        "uv",
+        "run",
+        "clang-format",
+        "-style=file",
+        "-i",
+        "{}"
       ],
       "group": {
         "kind": "build",
