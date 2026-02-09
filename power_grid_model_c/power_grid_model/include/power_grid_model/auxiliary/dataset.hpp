@@ -14,7 +14,6 @@
 #include "../common/iterator_facade.hpp"
 
 #include <algorithm>
-#include <bits/basic_string.h>
 #include <cassert>
 #include <concepts>
 #include <cstddef>

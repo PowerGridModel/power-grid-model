@@ -34,7 +34,6 @@
 
 #include <algorithm>
 #include <array>
-#include <bits/basic_string.h>
 #include <boost/graph/graph_selectors.hpp>
 #include <boost/graph/iteration_macros.hpp>
 #include <boost/pending/property.hpp>
@@ -53,6 +52,7 @@
 #include <ranges>
 #include <set>
 #include <sstream>
+#include <string>
 #include <string_view>
 #include <tuple>
 #include <type_traits>

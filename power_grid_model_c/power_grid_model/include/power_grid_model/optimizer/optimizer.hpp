@@ -14,8 +14,8 @@
 #include "../component/transformer_tap_regulator.hpp"
 #include "../container_fwd.hpp"
 
-#include <bits/basic_string.h>
 #include <concepts>
+#include <string>
 #include <type_traits>
 
 namespace power_grid_model::optimizer {

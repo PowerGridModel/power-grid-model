@@ -17,7 +17,6 @@
 #include <nlohmann/json.hpp>
 
 #include <algorithm>
-#include <bits/basic_string.h>
 #include <cassert>
 #include <cmath>
 #include <concepts>

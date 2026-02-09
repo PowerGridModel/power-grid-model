@@ -15,7 +15,6 @@
 #include "power_grid_model_c/dataset.h"
 
 #include <array>
-#include <bits/basic_string.h>
 #include <map>
 #include <set>
 #include <string>

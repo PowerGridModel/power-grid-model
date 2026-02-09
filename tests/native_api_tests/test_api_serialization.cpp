@@ -16,8 +16,6 @@
 
 #include <doctest/doctest.h>
 
-#include <bits/basic_string.h>
-
 // NOLINTBEGIN(misc-include-cleaner)
 #ifdef _MSC_VER
 #pragma warning(push)
@@ -142,12 +140,15 @@ TEST_CASE("API Serialization and Deserialization") {
         Deserializer msgpack_deserializer{msgpack_data, 1};
 
         auto check_metadata = [&](DatasetInfo const& info) {
-            CHECK(info.name() == "input"s);
+            CHECK(info.name() ==
+                  "input"s); // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
             CHECK(info.is_batch() == is_batch);
             CHECK(info.batch_size() == batch_size);
             CHECK(info.n_components() == n_components);
-            CHECK(info.component_name(0) == "node"s);
-            CHECK(info.component_name(1) == "source"s);
+            CHECK(info.component_name(0) ==
+                  "node"s); // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
+            CHECK(info.component_name(1) ==
+                  "source"s); // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
             for (Idx const idx : {0, 1}) {
                 CHECK(info.component_elements_per_scenario(idx) == elements_per_scenario[idx]);
                 CHECK(info.component_total_elements(idx) == total_elements[idx]);
