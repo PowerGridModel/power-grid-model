@@ -1131,7 +1131,7 @@ with dimensions $N_i\times N_j$.
          3. Loop over all rows of the current block: $k = 0..(N_{i,j} - 1)$:
             1. $\text{block\_row\_norm} \gets 0$.
             2. Loop over all columns of the current block: $l = 0..(N_{i,j} - 1)$:
-               1. $\text{block\_row\_norm} \gets \text{block\_row\_norm} + \left\|\mathbf{M}_{i,j}\left[k,l\right]\right\|$.
+               1. $\text{block\_row\_norm} \gets \text{block\_row\_norm} + \left\|\mathbf{M}_{i,j}\left[k,l\right]\right\|$.  <!-- markdownlint-disable-line line-length -->
             3. Calculate the new block norm: set
                $\text{block\_norm} \gets \max\left\{\text{block\_norm}, \text{block\_row\_norm}\right\}$.
             4. Continue with the next row of the current block.
