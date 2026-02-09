@@ -162,15 +162,35 @@ namespace fs = std::filesystem;
 
 struct TestCase {
     std::string name;
-    Idx n_nodes;
+    fs::path json_path;
 };
 
-std::vector<TestCase> discover_test_cases() {
+std::vector<TestCase> discover_test_cases(fs::path const& benchmark_dir) {
     std::vector<TestCase> cases;
 
-    // Test cases with similar sizes to the original DTC and SCH networks
-    cases.push_back({"Radial-120-nodes", 120});
-    cases.push_back({"Radial-109-nodes", 109});
+    if (!fs::exists(benchmark_dir)) {
+        std::cerr << std::format("Benchmark directory not found: {}\n", benchmark_dir.string());
+        return cases;
+    }
+
+    for (auto const& dir_entry : fs::directory_iterator(benchmark_dir)) {
+        if (!dir_entry.is_directory()) {
+            continue;
+        }
+
+        auto const folder_name = dir_entry.path().filename().string();
+        auto json_file = dir_entry.path() / "input.json";
+
+        if (!fs::exists(json_file)) {
+            json_file = dir_entry.path() / (folder_name + ".json");
+        }
+
+        if (fs::exists(json_file)) {
+            cases.push_back({folder_name, json_file});
+        }
+    }
+
+    std::sort(cases.begin(), cases.end(), [](TestCase const& a, TestCase const& b) { return a.name < b.name; });
 
     return cases;
 }
@@ -205,29 +225,41 @@ int main(int argc, char** argv) {
     using namespace power_grid_model::benchmark;
 
     // Parse command-line arguments
+    fs::path benchmark_dir = "tests/data/benchmark/observability_benchmark";
     Idx n_iterations = 5; // Default
 
     if (argc > 1) {
         std::string arg1 = argv[1];
         if (arg1 == "-h" || arg1 == "--help") {
-            std::cout << "Usage: " << argv[0] << " [ITERATIONS]\n\n";
+            std::cout << "Usage: " << argv[0] << " [BENCHMARK_DIR] [ITERATIONS]\n\n";
             std::cout << "Arguments:\n";
+            std::cout << "  BENCHMARK_DIR  Path to benchmark data directory (default: "
+                         "tests/data/benchmark/observability_benchmark)\n";
             std::cout << "  ITERATIONS     Number of iterations per algorithm (default: 5)\n\n";
             return 0;
         }
-        n_iterations = std::stoll(argv[1]);
+        benchmark_dir = argv[1];
+    }
+    if (argc > 2) {
+        n_iterations = std::stoll(argv[2]);
     }
 
     print_header();
 
+    std::cout << std::format("Benchmark directory: {}\n", benchmark_dir.string());
     std::cout << std::format("Iterations per test: {}\n\n", n_iterations);
 
     // Discover test cases
-    auto test_cases = discover_test_cases();
+    auto test_cases = discover_test_cases(benchmark_dir);
+
+    if (test_cases.empty()) {
+        std::cerr << "No test cases found.\n";
+        return 1;
+    }
 
     std::cout << std::format("Test cases: {}\n", test_cases.size());
     for (auto const& test_case : test_cases) {
-        std::cout << std::format("  - {} ({} nodes)\n", test_case.name, test_case.n_nodes);
+        std::cout << std::format("  - {}\n", test_case.name);
     }
     std::cout << "\n";
 
@@ -237,35 +269,148 @@ int main(int argc, char** argv) {
     for (auto& test_case : test_cases) {
         std::cout << std::string(80, '-') << "\n";
         std::cout << std::format("Test Case: {}\n", test_case.name);
-        std::cout << std::format("Nodes:     {}\n", test_case.n_nodes);
+        std::cout << std::format("File:      {}\n", test_case.json_path.string());
         std::cout << std::string(80, '-') << "\n";
 
         try {
-            std::cout << "Generating test model...\n";
+            std::cout << "Loading test data...\n";
 
-            // Configure grid generation options
-            Option option{};
-            option.n_node_total_specified = test_case.n_nodes;
-            option.n_mv_feeder = 5;
-            option.n_node_per_mv_feeder = 10;
-            option.n_lv_feeder = 3;
-            option.n_connection_per_lv_feeder = 4;
-            option.has_mv_ring = false;     // Radial topology
-            option.has_measurements = true; // Generate sensors for observability
-            option.has_tap_changer = false;
-            option.has_fault = false;
+            // Read JSON file
+            std::ifstream json_file(test_case.json_path);
+            if (!json_file) {
+                throw std::runtime_error(std::format("Failed to open: {}", test_case.json_path.string()));
+            }
 
-            // Create generator and generate grid
-            FictionalGridGenerator generator;
-            generator.generate_grid(option, 42); // Use seed 42 for reproducibility
+            nlohmann::json json_data;
+            json_file >> json_data;
+            json_file.close();
 
-            // Get input data and create model
-            auto const& input = generator.input_data();
+            // Parse JSON into InputData structure
+            InputData input;
+            auto const& data = json_data["data"];
+
+            // Parse nodes
+            if (data.contains("node")) {
+                for (auto const& node_json : data["node"]) {
+                    NodeInput node{};
+                    node.id = node_json["id"];
+                    node.u_rated = node_json["u_rated"];
+                    input.node.push_back(node);
+                }
+            }
+
+            // Parse lines
+            if (data.contains("line")) {
+                for (auto const& line_json : data["line"]) {
+                    LineInput line{};
+                    line.id = line_json["id"];
+                    line.from_node = line_json["from_node"];
+                    line.to_node = line_json["to_node"];
+                    line.from_status = line_json["from_status"];
+                    line.to_status = line_json["to_status"];
+                    line.r1 = line_json["r1"];
+                    line.x1 = line_json["x1"];
+                    line.c1 = line_json["c1"];
+                    line.tan1 = line_json["tan1"];
+                    input.line.push_back(line);
+                }
+            }
+
+            // Parse transformers
+            if (data.contains("transformer")) {
+                for (auto const& trafo_json : data["transformer"]) {
+                    TransformerInput trafo{};
+                    trafo.id = trafo_json["id"];
+                    trafo.from_node = trafo_json["from_node"];
+                    trafo.to_node = trafo_json["to_node"];
+                    trafo.from_status = trafo_json["from_status"];
+                    trafo.to_status = trafo_json["to_status"];
+                    trafo.u1 = trafo_json["u1"];
+                    trafo.u2 = trafo_json["u2"];
+                    trafo.sn = trafo_json["sn"];
+                    trafo.uk = trafo_json["uk"];
+                    trafo.pk = trafo_json["pk"];
+                    trafo.i0 = trafo_json["i0"];
+                    trafo.p0 = trafo_json["p0"];
+                    trafo.winding_from = trafo_json["winding_from"];
+                    trafo.winding_to = trafo_json["winding_to"];
+                    trafo.clock = trafo_json["clock"];
+                    trafo.tap_side = trafo_json["tap_side"];
+                    trafo.tap_pos = trafo_json["tap_pos"];
+                    trafo.tap_min = trafo_json.value("tap_min", na_IntS);
+                    trafo.tap_max = trafo_json.value("tap_max", na_IntS);
+                    trafo.tap_nom = trafo_json.value("tap_nom", na_IntS);
+                    trafo.tap_size = trafo_json["tap_size"];
+                    input.transformer.push_back(trafo);
+                }
+            }
+
+            // Parse sources
+            if (data.contains("source")) {
+                for (auto const& source_json : data["source"]) {
+                    SourceInput source{};
+                    source.id = source_json["id"];
+                    source.node = source_json["node"];
+                    source.status = source_json["status"];
+                    source.u_ref = source_json["u_ref"];
+                    source.sk = source_json.value("sk", power_grid_model::nan);
+                    source.rx_ratio = source_json.value("rx_ratio", power_grid_model::nan);
+                    input.source.push_back(source);
+                }
+            }
+
+            // Parse loads
+            if (data.contains("sym_load")) {
+                for (auto const& load_json : data["sym_load"]) {
+                    SymLoadGenInput load{};
+                    load.id = load_json["id"];
+                    load.node = load_json["node"];
+                    load.status = load_json["status"];
+                    load.type = load_json["type"];
+                    load.p_specified = load_json["p_specified"];
+                    load.q_specified = load_json["q_specified"];
+                    input.sym_load.push_back(load);
+                }
+            }
+
+            // Parse voltage sensors
+            if (data.contains("sym_voltage_sensor")) {
+                for (auto const& sensor_json : data["sym_voltage_sensor"]) {
+                    SymVoltageSensorInput sensor{};
+                    sensor.id = sensor_json["id"];
+                    sensor.measured_object = sensor_json["measured_object"];
+                    sensor.u_measured = sensor_json["u_measured"];
+                    sensor.u_sigma = sensor_json["u_sigma"];
+                    input.sym_voltage_sensor.push_back(sensor);
+                }
+            }
+
+            // Parse power sensors
+            if (data.contains("sym_power_sensor")) {
+                for (auto const& sensor_json : data["sym_power_sensor"]) {
+                    SymPowerSensorInput sensor{};
+                    sensor.id = sensor_json["id"];
+                    sensor.measured_object = sensor_json["measured_object"];
+                    sensor.measured_terminal_type = sensor_json["measured_terminal_type"];
+                    sensor.power_sigma = sensor_json.value("power_sigma", power_grid_model::nan);
+                    sensor.p_measured = sensor_json["p_measured"];
+                    sensor.q_measured = sensor_json["q_measured"];
+                    sensor.p_sigma = sensor_json.value("p_sigma", power_grid_model::nan);
+                    sensor.q_sigma = sensor_json.value("q_sigma", power_grid_model::nan);
+                    input.sym_power_sensor.push_back(sensor);
+                }
+            }
+
+            std::cout << std::format("Loaded {} nodes, {} lines, {} transformers, {} sensors\n", input.node.size(),
+                                     input.line.size(), input.transformer.size(),
+                                     input.sym_voltage_sensor.size() + input.sym_power_sensor.size());
+
+            // Create model from loaded data
             static constexpr MathSolverDispatcher math_solver_dispatcher{
                 math_solver::math_solver_tag<math_solver::MathSolver>{}};
             MainModel model{50.0, input.get_dataset(), math_solver_dispatcher};
 
-            std::cout << std::format("Model created: {} nodes\n", input.node.size());
+            std::cout << "Model created successfully\n";
             std::cout << "Running benchmark...\n\n";
 
             // Run benchmark
