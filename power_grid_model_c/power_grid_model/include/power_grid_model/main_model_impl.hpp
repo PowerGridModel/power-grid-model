@@ -304,7 +304,7 @@ class MainModelImpl {
 
     // Calculate with optimization, e.g., automatic tap changer
     template <calculation_type_tag calculation_type, symmetry_tag sym>
-    auto calculate(Options const& options, Logger& logger) {
+    auto calculate_with_optimizer(Options const& options, Logger& logger) {
         auto const get_calculator = [this, &options, &logger] {
             using Calc = Calculator<calculation_type, sym>;
 
@@ -358,7 +358,7 @@ class MainModelImpl {
             []<calculation_type_tag calculation_type, symmetry_tag sym>(
                 MainModelImpl& main_model_, Options const& options_, MutableDataset const& result_data_,
                 Logger& logger) {
-                auto const math_output = main_model_.calculate<calculation_type, sym>(options_, logger);
+                auto const math_output = main_model_.calculate_with_optimizer<calculation_type, sym>(options_, logger);
                 main_model_.output_result(math_output, result_data_, logger);
             },
             *this, options, result_data, logger);

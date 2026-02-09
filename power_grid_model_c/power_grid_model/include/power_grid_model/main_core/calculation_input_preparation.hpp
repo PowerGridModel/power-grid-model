@@ -4,7 +4,8 @@
 
 #pragma once
 
-#include "state_queries.hpp"
+#include "container_queries.hpp"
+#include "state.hpp"
 #include "y_bus.hpp"
 
 #include "../calculation_parameters.hpp"
