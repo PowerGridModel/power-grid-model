@@ -6,3 +6,9 @@
 
 CompileFlags:
   CompilationDatabase: .
+
+Diagnostics:
+  UnusedIncludes: Strict
+  MissingIncludes: Strict
+  Includes:
+    IgnoreHeader: Eigen/Dense

@@ -75,5 +75,5 @@ HeaderFilterRegex: '.*'
 FormatStyle: file
 
 CheckOptions:
-  misc-include-cleaner.IgnoreHeaders : 'Eigen/.*'  
+  misc-include-cleaner.IgnoreHeaders: 'Eigen/.*;nlohmann/.*;msgpack/.*'
 ...
