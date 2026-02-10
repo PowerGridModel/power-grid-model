@@ -1035,7 +1035,11 @@ $$
 
 Current sensors with `angle_measurement_type` equal to `AngleMeasurementType.local_angle` measure the phase shift
 between the voltage and the current phasor, i.e.,
-$\begin{equation}i\_angle\_measured = voltage\_phase - current\_phase\end{equation}$.
+
+$$
+\text{i\_angle\_measured} = \text{voltage\_phase} - \text{current\_phase}\text{ .}
+$$
+
 As a result, the global current phasor depends on the local voltage phase offset and is obtained using the following
 formula.
 
