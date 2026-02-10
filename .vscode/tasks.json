@@ -4,8 +4,7 @@
     {
       "label": "uv sync",
       "type": "shell",
-      "command": "uv",
-      "args": ["sync", "--reinstall"],
+      "command": "uv sync --reinstall",
       "group": {
         "kind": "build",
         "isDefault": false
@@ -15,8 +14,7 @@
     {
       "label": "ruff check",
       "type": "shell",
-      "command": "uv",
-      "args": ["run", "ruff", "check", "--fix", "."],
+      "command": "uv run ruff check --fix .",
       "group": {
         "kind": "test",
         "isDefault": false
@@ -26,8 +24,7 @@
     {
       "label": "ruff format",
       "type": "shell",
-      "command": "uv",
-      "args": ["run", "ruff", "format", "."],
+      "command": "uv run ruff format .",
       "group": {
         "kind": "build",
         "isDefault": false
@@ -37,8 +34,7 @@
     {
       "label": "mypy",
       "type": "shell",
-      "command": "uv",
-      "args": ["run", "mypy"],
+      "command": "uv run mypy",
       "group": {
         "kind": "test",
         "isDefault": false
@@ -48,8 +44,7 @@
     {
       "label": "pytest",
       "type": "shell",
-      "command": "uv",
-      "args": ["run", "pytest"],
+      "command": "uv run pytest",
       "group": {
         "kind": "test",
         "isDefault": false
@@ -59,8 +54,7 @@
     {
       "label": "markdownlint",
       "type": "shell",
-      "command": "npx",
-      "args": ["markdownlint", "--fix", "."],
+      "command": "npx markdownlint --fix .",
       "group": {
         "kind": "build",
         "isDefault": false
@@ -70,8 +64,7 @@
     {
       "label": "json linter",
       "type": "shell",
-      "command": "npx",
-      "args": ["biome", "format", "--write", "--files-ignore-unknown=true", "--no-errors-on-unmatched"],
+      "command": "npx biome format --write --files-ignore-unknown=true --no-errors-on-unmatched",
       "group": {
         "kind": "build",
         "isDefault": false
@@ -81,8 +74,7 @@
     {
       "label": "cmake linter",
       "type": "shell",
-      "command": "uv",
-      "args": ["run", "gersemi", "-i", "--warnings-as-errors", "src/", "tests/", "cmake/"],
+      "command": "uv run gersemi -i --warnings-as-errors src/ tests/ cmake/",
       "group": {
         "kind": "build",
         "isDefault": false
@@ -92,35 +84,15 @@
     {
       "label": "clang-format",
       "type": "shell",
-      "command": "git",
-      "args": [
-        "ls-files",
-        "|",
-        "grep",
-        "-E",
-        "'\\.(h|c|cpp|hpp|cc|cxx)$'",
-        "|",
-        "xargs",
-        "-I",
-        "{}",
-        "uv",
-        "run",
-        "clang-format",
-        "-style=file",
-        "-i",
-        "{}"
-      ],
+      "command": "git ls-files | grep -E '\\.(h|c|cpp|hpp|cc|cxx)$' | xargs -I {} uv run clang-format -style=file -i {}",
       "group": {
         "kind": "build",
         "isDefault": false
       },
       "problemMatcher": [],
       "windows": {
-        "command": "powershell",
-        "args": [
-          "-Command",
-          "git ls-files | Where-Object {$_ -match '\\.(h|c|cpp|hpp|cc|cxx)$'} | ForEach-Object { uv run clang-format -style=file -i $_ }"
-        ]
+        "shell": "powershell",
+        "command": "git ls-files | Where-Object {$_ -match '\\.(h|c|cpp|hpp|cc|cxx)$'} | ForEach-Object { uv run clang-format -style=file -i $_ }"
       }
     }
   ]
