@@ -29,6 +29,7 @@
 #include <filesystem>
 #include <format>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <numeric>
 #include <sstream>
@@ -48,12 +49,13 @@ namespace power_grid_model::benchmark {
  * @param measured_values The sensor measurements
  * @param topo The network topology (mutable to toggle is_radial)
  * @param n_iterations Number of iterations to run for each algorithm
+ * @return Pair of mean times: {radial_mean_ns, meshed_mean_ns}
  */
 template <symmetry_tag sym>
-inline void benchmark_observability_algorithms(YBus<sym> const& y_bus,
-                                               math_solver::MeasuredValues<sym> const& measured_values,
-                                               MathModelTopology& topo, // mutable to toggle is_radial
-                                               Idx n_iterations = 1000) {
+inline std::pair<double, double>
+benchmark_observability_algorithms(YBus<sym> const& y_bus, math_solver::MeasuredValues<sym> const& measured_values,
+                                   MathModelTopology& topo, // mutable to toggle is_radial
+                                   Idx n_iterations = 1000) {
 
     using namespace std::chrono;
 
@@ -152,6 +154,8 @@ inline void benchmark_observability_algorithms(YBus<sym> const& y_bus,
 
     std::cout << std::format("\nOverhead: {:+.2f}%\n", time_overhead);
     std::cout << std::string(60, '=') << "\n\n";
+
+    return {radial_mean.count(), meshed_mean.count()};
 }
 
 } // namespace power_grid_model::benchmark
@@ -159,6 +163,12 @@ inline void benchmark_observability_algorithms(YBus<sym> const& y_bus,
 namespace {
 using namespace power_grid_model;
 namespace fs = std::filesystem;
+
+enum class BenchmarkMode {
+    json_data,      // Load from JSON files
+    generated_grid, // Single generated grid
+    scaling_study   // Scaling experiment with varying grid sizes
+};
 
 struct TestCase {
     std::string name;
@@ -195,11 +205,25 @@ std::vector<TestCase> discover_test_cases(fs::path const& benchmark_dir) {
     return cases;
 }
 
-void print_header() {
+void print_header(BenchmarkMode mode) {
     std::cout << std::string(80, '=') << "\n";
     std::cout << "Observability Algorithm Performance Benchmark\n";
     std::cout << "Comparing Radial vs Meshed Algorithm on Radial Networks\n";
-    std::cout << std::string(80, '=') << "\n\n";
+    std::cout << std::string(80, '=') << "\n";
+
+    std::cout << "Mode: ";
+    switch (mode) {
+    case BenchmarkMode::json_data:
+        std::cout << "JSON Data Loading\n";
+        break;
+    case BenchmarkMode::generated_grid:
+        std::cout << "Generated Grid\n";
+        break;
+    case BenchmarkMode::scaling_study:
+        std::cout << "Scaling Study\n";
+        break;
+    }
+    std::cout << "\n";
 }
 
 void print_summary(std::vector<TestCase> const& cases, Idx successful_runs) {
@@ -218,6 +242,198 @@ void print_summary(std::vector<TestCase> const& cases, Idx successful_runs) {
     std::cout << std::string(80, '=') << "\n";
 }
 
+void print_summary_simple(Idx successful_runs) {
+    std::cout << "\n" << std::string(80, '=') << "\n";
+    std::cout << "Summary\n";
+    std::cout << std::string(80, '=') << "\n";
+    std::cout << std::format("Successful benchmark runs: {}\n", successful_runs);
+    std::cout << std::string(80, '=') << "\n";
+}
+
+std::pair<double, double> run_benchmark_on_generated_grid(benchmark::Option const& grid_option, Idx n_iterations) {
+    using namespace power_grid_model::benchmark;
+
+    std::cout << std::string(80, '-') << "\n";
+    std::cout << "Generating Grid\n";
+    std::cout << std::string(80, '-') << "\n";
+    std::cout << std::format("Grid parameters:\n");
+    std::cout << std::format("  MV feeders:              {}\n", grid_option.n_mv_feeder);
+    std::cout << std::format("  Nodes per MV feeder:     {}\n", grid_option.n_node_per_mv_feeder);
+    std::cout << std::format("  LV feeders:              {}\n", grid_option.n_lv_feeder);
+    std::cout << std::format("  Connections per LV:      {}\n", grid_option.n_connection_per_lv_feeder);
+    std::cout << std::format("  Has measurements:        {}\n", grid_option.has_measurements ? "Yes" : "No");
+    std::cout << std::format("  Has MV ring:             {}\n", grid_option.has_mv_ring ? "Yes" : "No");
+    std::cout << std::format("  Has LV ring:             {}\n", grid_option.has_lv_ring ? "Yes" : "No");
+
+    FictionalGridGenerator generator;
+    generator.generate_grid(grid_option);
+
+    auto const& input = generator.input_data();
+    std::cout << std::format("\nGenerated grid with {} nodes, {} lines, {} transformers, {} sensors\n",
+                             input.node.size(), input.line.size(), input.transformer.size(),
+                             input.sym_voltage_sensor.size() + input.sym_power_sensor.size());
+
+    // Create model from generated data
+    static constexpr MathSolverDispatcher math_solver_dispatcher{
+        math_solver::math_solver_tag<math_solver::MathSolver>{}};
+    MainModel model{50.0, input.get_dataset(), math_solver_dispatcher};
+
+    std::cout << "Model created successfully\n";
+    std::cout << "Running benchmark...\n\n";
+
+    // Run benchmark
+    auto [radial_mean_ns, meshed_mean_ns] = model.get_impl_for_benchmark().run_observability_benchmark<symmetric_t>(
+        benchmark_observability_algorithms<symmetric_t>, n_iterations);
+
+    return std::make_pair(radial_mean_ns, meshed_mean_ns);
+}
+
+void run_scaling_study(Idx n_iterations) {
+    using namespace power_grid_model::benchmark;
+
+    std::cout << "\nRunning Scaling Study\n";
+    std::cout << "Varying grid size from ~10 to ~10,000 nodes\n";
+    std::cout << "Testing multiple feeder configurations per size\n\n";
+
+    // Define test configurations for scaling study
+    // Format: target_size, feeders, nodes_per_feeder (all +1 for source node)
+    struct ScalingConfig {
+        std::string name;
+        Idx n_mv_feeder;
+        Idx n_node_per_mv_feeder;
+        Idx n_lv_feeder;
+        Idx n_connection_per_lv_feeder;
+        Idx approx_nodes;
+    };
+
+    std::vector<ScalingConfig> configs = {
+        // ~10 nodes: test different topologies
+        {"10 nodes (1×10)", 1, 10, 0, 0, 12},
+        {"10 nodes (2×5)", 2, 5, 0, 0, 12},
+
+        // ~50 nodes
+        {"50 nodes (5×10)", 5, 10, 0, 0, 52},
+        {"50 nodes (10×5)", 10, 5, 0, 0, 52},
+        {"50 nodes (25×2)", 25, 2, 0, 0, 52},
+
+        // ~100 nodes
+        {"100 nodes (5×20)", 5, 20, 0, 0, 102},
+        {"100 nodes (10×10)", 10, 10, 0, 0, 102},
+        {"100 nodes (20×5)", 20, 5, 0, 0, 102},
+
+        // ~500 nodes
+        {"500 nodes (10×50)", 10, 50, 0, 0, 502},
+        {"500 nodes (25×20)", 25, 20, 0, 0, 502},
+        {"500 nodes (50×10)", 50, 10, 0, 0, 502},
+
+        // ~1000 nodes
+        {"1000 nodes (10×100)", 10, 100, 0, 0, 1002},
+        {"1000 nodes (20×50)", 20, 50, 0, 0, 1002},
+        {"1000 nodes (50×20)", 50, 20, 0, 0, 1002},
+
+        // ~3000 nodes
+        {"3000 nodes (20×150)", 20, 150, 0, 0, 3002},
+        {"3000 nodes (30×100)", 30, 100, 0, 0, 3002},
+        {"3000 nodes (50×60)", 50, 60, 0, 0, 3002},
+
+        // ~5000 nodes
+        {"5000 nodes (25×200)", 25, 200, 0, 0, 5002},
+        {"5000 nodes (50×100)", 50, 100, 0, 0, 5002},
+
+        // ~10000 nodes
+        {"10000 nodes (50×200)", 50, 200, 0, 0, 10002},
+        {"10000 nodes (100×100)", 100, 100, 0, 0, 10002},
+    };
+
+    Idx successful_runs = 0;
+
+    // Store results for summary table
+    struct BenchmarkResult {
+        std::string name;
+        Idx nodes;
+        Idx feeders;
+        Idx nodes_per_feeder;
+        double radial_mean_us;
+        double meshed_mean_us;
+        double overhead_pct;
+    };
+    std::vector<BenchmarkResult> results;
+
+    for (auto const& config : configs) {
+        Option grid_option{
+            .n_node_total_specified = config.approx_nodes, // Set to actual target
+            .n_mv_feeder = config.n_mv_feeder,
+            .n_node_per_mv_feeder = config.n_node_per_mv_feeder,
+            .n_lv_feeder = config.n_lv_feeder,
+            .n_connection_per_lv_feeder = config.n_connection_per_lv_feeder,
+            .n_parallel_hv_mv_transformer = 0, // Will be calculated
+            .n_lv_grid = 0,                    // Will be calculated
+            .ratio_lv_grid = 0.0,              // Will be calculated
+            .has_mv_ring = false,              // Keep simple radial for observability
+            .has_lv_ring = false,
+            .has_tap_changer = false,
+            .has_measurements = true, // Required for observability
+            .has_fault = false,
+            .has_tap_regulator = false,
+        };
+
+        try {
+            std::cout << std::format("\n** Scaling Test: {} (target: ~{} nodes) **\n", config.name,
+                                     config.approx_nodes);
+            auto [radial_mean_ns, meshed_mean_ns] = run_benchmark_on_generated_grid(grid_option, n_iterations);
+
+            // Get actual node count from the generated grid
+            FictionalGridGenerator temp_gen;
+            temp_gen.generate_grid(grid_option);
+            Idx actual_nodes = static_cast<Idx>(temp_gen.input_data().node.size());
+
+            // Store result
+            double radial_mean_us = radial_mean_ns / 1000.0;
+            double meshed_mean_us = meshed_mean_ns / 1000.0;
+            double overhead_pct = ((meshed_mean_us - radial_mean_us) * 100.0) / radial_mean_us;
+
+            results.push_back({config.name, actual_nodes, config.n_mv_feeder, config.n_node_per_mv_feeder,
+                               radial_mean_us, meshed_mean_us, overhead_pct});
+
+            successful_runs++;
+        } catch (std::exception const& e) {
+            std::cerr << std::format("\nError in scaling test '{}': {}\n", config.name, e.what());
+            std::cerr << "Continuing with next test...\n";
+        }
+    }
+
+    // Print comprehensive summary table
+    std::cout << "\n" << std::string(120, '=') << "\n";
+    std::cout << "COMPREHENSIVE SCALING STUDY SUMMARY\n";
+    std::cout << std::string(120, '=') << "\n\n";
+
+    if (results.empty()) {
+        std::cout << "No successful benchmark runs to report.\n";
+        return;
+    }
+
+    // Print table header
+    std::cout << std::setw(30) << std::left << "Configuration" << std::setw(8) << std::right << "Nodes" << std::setw(10)
+              << "Feeders" << std::setw(12) << "N/Feeder" << std::setw(15) << "Radial (μs)" << std::setw(15)
+              << "Meshed (μs)" << std::setw(15) << "Overhead %" << std::setw(10) << "Speedup\n";
+    std::cout << std::string(120, '-') << "\n";
+
+    // Print each result
+    for (const auto& result : results) {
+        double speedup = result.meshed_mean_us / result.radial_mean_us;
+        std::cout << std::setw(30) << std::left << result.name << std::setw(8) << std::right << result.actual_nodes
+                  << std::setw(10) << result.n_feeders << std::setw(12) << result.nodes_per_feeder << std::setw(15)
+                  << std::fixed << std::setprecision(2) << result.radial_mean_us << std::setw(15) << std::fixed
+                  << std::setprecision(2) << result.meshed_mean_us << std::setw(15) << std::fixed
+                  << std::setprecision(1) << result.overhead_pct << std::setw(10) << std::fixed << std::setprecision(1)
+                  << speedup << "x\n";
+    }
+
+    std::cout << std::string(120, '=') << "\n";
+    std::cout << std::format("Successfully completed {}/{} scaling configurations\n", successful_runs, total_configs);
+    std::cout << std::string(120, '=') << "\n";
+}
+
 } // anonymous namespace
 
 int main(int argc, char** argv) {
@@ -225,27 +441,121 @@ int main(int argc, char** argv) {
     using namespace power_grid_model::benchmark;
 
     // Parse command-line arguments
+    BenchmarkMode mode = BenchmarkMode::json_data;
     fs::path benchmark_dir = "tests/data/benchmark/observability_benchmark";
-    Idx n_iterations = 5; // Default
+    Idx n_iterations = 10; // Default: 10 runs per configuration
+    Idx n_mv_feeder = 10;
+    Idx n_node_per_mv_feeder = 20;
+    Idx n_lv_feeder = 5;
+    Idx n_connection_per_lv_feeder = 10;
 
     if (argc > 1) {
         std::string arg1 = argv[1];
         if (arg1 == "-h" || arg1 == "--help") {
-            std::cout << "Usage: " << argv[0] << " [BENCHMARK_DIR] [ITERATIONS]\n\n";
-            std::cout << "Arguments:\n";
-            std::cout << "  BENCHMARK_DIR  Path to benchmark data directory (default: "
-                         "tests/data/benchmark/observability_benchmark)\n";
-            std::cout << "  ITERATIONS     Number of iterations per algorithm (default: 5)\n\n";
+            std::cout << "Usage: " << argv[0] << " [MODE] [OPTIONS...]\n\n";
+            std::cout << "Modes:\n";
+            std::cout << "  json [DIR] [ITERATIONS]\n";
+            std::cout << "    Load test cases from JSON files in DIR\n";
+            std::cout << "    DIR:        Directory path (default: tests/data/benchmark/observability_benchmark)\n";
+            std::cout << "    ITERATIONS: Number of iterations per algorithm (default: 10)\n\n";
+            std::cout << "  generated [ITERATIONS] [MV_FEEDERS] [NODES_PER_MV] [LV_FEEDERS] [CONN_PER_LV]\n";
+            std::cout << "    Run benchmark on a single generated grid\n";
+            std::cout << "    ITERATIONS:   Number of iterations per algorithm (default: 10)\n";
+            std::cout << "    MV_FEEDERS:   Number of MV feeders (default: 10)\n";
+            std::cout << "    NODES_PER_MV: Nodes per MV feeder (default: 20)\n";
+            std::cout << "    LV_FEEDERS:   Number of LV feeders (default: 5)\n";
+            std::cout << "    CONN_PER_LV:  Connections per LV feeder (default: 10)\n\n";
+            std::cout << "  scaling [ITERATIONS]\n";
+            std::cout << "    Run scaling study with predefined grid sizes (10-10,000 nodes)\n";
+            std::cout << "    Multiple topology configurations tested per size\n";
+            std::cout << "    ITERATIONS: Number of iterations per algorithm (default: 10)\n\n";
+            std::cout << "Examples:\n";
+            std::cout << "  " << argv[0] << " scaling           # Full scaling study with 10 iterations\n";
+            std::cout << "  " << argv[0] << " scaling 20        # Scaling study with 20 iterations\n";
+            std::cout << "  " << argv[0] << " generated 10 5 20 # Generate 5 feeders × 20 nodes\n\n";
+            std::cout << "If no mode is specified, 'json' mode is used with default parameters.\n\n";
             return 0;
         }
-        benchmark_dir = argv[1];
-    }
-    if (argc > 2) {
-        n_iterations = std::stoll(argv[2]);
+
+        if (arg1 == "json") {
+            mode = BenchmarkMode::json_data;
+            if (argc > 2) {
+                benchmark_dir = argv[2];
+            }
+            if (argc > 3) {
+                n_iterations = std::stoll(argv[3]);
+            }
+        } else if (arg1 == "generated") {
+            mode = BenchmarkMode::generated_grid;
+            if (argc > 2) {
+                n_iterations = std::stoll(argv[2]);
+            }
+            if (argc > 3) {
+                n_mv_feeder = std::stoll(argv[3]);
+            }
+            if (argc > 4) {
+                n_node_per_mv_feeder = std::stoll(argv[4]);
+            }
+            if (argc > 5) {
+                n_lv_feeder = std::stoll(argv[5]);
+            }
+            if (argc > 6) {
+                n_connection_per_lv_feeder = std::stoll(argv[6]);
+            }
+        } else if (arg1 == "scaling") {
+            mode = BenchmarkMode::scaling_study;
+            if (argc > 2) {
+                n_iterations = std::stoll(argv[2]);
+            }
+        } else {
+            // Assume old-style arguments: [BENCHMARK_DIR] [ITERATIONS]
+            mode = BenchmarkMode::json_data;
+            benchmark_dir = argv[1];
+            if (argc > 2) {
+                n_iterations = std::stoll(argv[2]);
+            }
+        }
     }
 
-    print_header();
+    print_header(mode);
 
+    // Handle different benchmark modes
+    if (mode == BenchmarkMode::scaling_study) {
+        run_scaling_study(n_iterations);
+        return 0;
+    }
+
+    if (mode == BenchmarkMode::generated_grid) {
+        Idx approx_nodes = n_mv_feeder * n_node_per_mv_feeder + n_lv_feeder * n_connection_per_lv_feeder * 2 + 2;
+        Option grid_option{
+            .n_node_total_specified = approx_nodes, // Set to actual target
+            .n_mv_feeder = n_mv_feeder,
+            .n_node_per_mv_feeder = n_node_per_mv_feeder,
+            .n_lv_feeder = n_lv_feeder,
+            .n_connection_per_lv_feeder = n_connection_per_lv_feeder,
+            .n_parallel_hv_mv_transformer = 0, // Will be calculated
+            .n_lv_grid = 0,                    // Will be calculated
+            .ratio_lv_grid = 0.0,              // Will be calculated
+            .has_mv_ring = false,
+            .has_lv_ring = false,
+            .has_tap_changer = false,
+            .has_measurements = true, // Required for observability
+            .has_fault = false,
+            .has_tap_regulator = false,
+        };
+
+        try {
+            run_benchmark_on_generated_grid(grid_option, n_iterations);
+            print_summary_simple(1);
+        } catch (std::exception const& e) {
+            std::cerr << std::format("\nError: {}\n", e.what());
+            print_summary_simple(0);
+            return 1;
+        }
+        return 0;
+    }
+
+    // JSON mode
     std::cout << std::format("Benchmark directory: {}\n", benchmark_dir.string());
     std::cout << std::format("Iterations per test: {}\n\n", n_iterations);
 
