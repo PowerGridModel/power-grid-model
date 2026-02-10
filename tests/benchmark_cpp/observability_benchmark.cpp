@@ -36,7 +36,48 @@
 #include <string>
 #include <vector>
 
+#ifdef __linux__
+#include <sys/resource.h>
+#include <unistd.h>
+#endif
+
 namespace power_grid_model::benchmark {
+
+/**
+ * @brief Get current memory usage in kilobytes
+ * Returns RSS (Resident Set Size) on Linux, 0 on other platforms
+ */
+inline size_t get_memory_usage_kb() {
+#ifdef __linux__
+    // Read from /proc/self/status for accurate RSS
+    std::ifstream status("/proc/self/status");
+    std::string line;
+    while (std::getline(status, line)) {
+        if (line.substr(0, 6) == "VmRSS:") {
+            std::istringstream iss(line);
+            std::string key;
+            size_t value;
+            std::string unit;
+            iss >> key >> value >> unit;
+            return value; // Already in kB
+        }
+    }
+#endif
+    return 0;
+}
+
+/**
+ * @brief Get peak (maximum) memory usage in kilobytes
+ */
+inline size_t get_peak_memory_kb() {
+#ifdef __linux__
+    struct rusage usage;
+    getrusage(RUSAGE_SELF, &usage);
+    return static_cast<size_t>(usage.ru_maxrss); // In kB on Linux
+#else
+    return 0;
+#endif
+}
 
 /**
  * @brief Benchmark observability check algorithms
@@ -49,10 +90,10 @@ namespace power_grid_model::benchmark {
  * @param measured_values The sensor measurements
  * @param topo The network topology (mutable to toggle is_radial)
  * @param n_iterations Number of iterations to run for each algorithm
- * @return Pair of mean times: {radial_mean_ns, meshed_mean_ns}
+ * @return Tuple: {radial_mean_ns, meshed_mean_ns, radial_mem_kb, meshed_mem_kb}
  */
 template <symmetry_tag sym>
-inline std::pair<double, double>
+inline std::tuple<double, double, size_t, size_t>
 benchmark_observability_algorithms(YBus<sym> const& y_bus, math_solver::MeasuredValues<sym> const& measured_values,
                                    MathModelTopology& topo, // mutable to toggle is_radial
                                    Idx n_iterations = 1000) {
@@ -72,6 +113,12 @@ benchmark_observability_algorithms(YBus<sym> const& y_bus, math_solver::Measured
     std::cout << std::format("\nBenchmarking network with {} buses\n", n_bus);
     std::cout << std::format("Running {} iterations per algorithm...\n", n_iterations);
 
+    // Memory measurement
+    size_t mem_before_radial = get_memory_usage_kb();
+    size_t mem_before_meshed = 0;
+    size_t mem_after_radial = 0;
+    size_t mem_after_meshed = 0;
+
     // Benchmark radial algorithm
     std::cout << "Benchmarking radial algorithm...\n";
     topo.is_radial = true;
@@ -87,9 +134,11 @@ benchmark_observability_algorithms(YBus<sym> const& y_bus, math_solver::Measured
         auto end = high_resolution_clock::now();
         radial_times.push_back(duration_cast<nanoseconds>(end - start));
     }
+    mem_after_radial = get_memory_usage_kb();
 
     // Benchmark meshed algorithm
     std::cout << "Benchmarking meshed algorithm...\n";
+    mem_before_meshed = get_memory_usage_kb();
     topo.is_radial = false;
     for (Idx i = 0; i < n_iterations; ++i) {
         auto start = high_resolution_clock::now();
@@ -103,6 +152,7 @@ benchmark_observability_algorithms(YBus<sym> const& y_bus, math_solver::Measured
         auto end = high_resolution_clock::now();
         meshed_times.push_back(duration_cast<nanoseconds>(end - start));
     }
+    mem_after_meshed = get_memory_usage_kb();
 
     // Restore original setting
     topo.is_radial = original_is_radial;
@@ -110,7 +160,7 @@ benchmark_observability_algorithms(YBus<sym> const& y_bus, math_solver::Measured
     // Calculate and display statistics
     if (radial_times.empty() || meshed_times.empty()) {
         std::cout << "\nBenchmark failed - one or both algorithms did not complete\n";
-        return;
+        return {0.0, 0.0, 0, 0};
     }
 
     auto calc_mean = [](auto const& times) {
@@ -135,6 +185,13 @@ benchmark_observability_algorithms(YBus<sym> const& y_bus, math_solver::Measured
     auto meshed_min = *std::min_element(meshed_times.begin(), meshed_times.end());
     auto meshed_max = *std::max_element(meshed_times.begin(), meshed_times.end());
 
+    // Calculate memory usage
+    size_t radial_mem_delta = (mem_after_radial > mem_before_radial) ? (mem_after_radial - mem_before_radial) : 0;
+    size_t meshed_mem_delta = (mem_after_meshed > mem_before_meshed) ? (mem_after_meshed - mem_before_meshed) : 0;
+    double mem_overhead = (radial_mem_delta > 0)
+                              ? ((static_cast<double>(meshed_mem_delta) - radial_mem_delta) * 100.0 / radial_mem_delta)
+                              : 0.0;
+
     double time_overhead = ((meshed_mean.count() - radial_mean.count()) * 100.0) / radial_mean.count();
 
     std::cout << "\n" << std::string(60, '=') << "\n";
@@ -145,17 +202,26 @@ benchmark_observability_algorithms(YBus<sym> const& y_bus, math_solver::Measured
     std::cout << std::format("  Median: {:.2f} μs\n", radial_median.count() / 1000.0);
     std::cout << std::format("  Min:    {:.2f} μs\n", radial_min.count() / 1000.0);
     std::cout << std::format("  Max:    {:.2f} μs\n", radial_max.count() / 1000.0);
+    if (radial_mem_delta > 0) {
+        std::cout << std::format("  Memory: {:.1f} MB\n", radial_mem_delta / 1024.0);
+    }
 
     std::cout << std::format("\nMeshed Algorithm:\n");
     std::cout << std::format("  Mean:   {:.2f} μs\n", meshed_mean.count() / 1000.0);
     std::cout << std::format("  Median: {:.2f} μs\n", meshed_median.count() / 1000.0);
     std::cout << std::format("  Min:    {:.2f} μs\n", meshed_min.count() / 1000.0);
     std::cout << std::format("  Max:    {:.2f} μs\n", meshed_max.count() / 1000.0);
+    if (meshed_mem_delta > 0) {
+        std::cout << std::format("  Memory: {:.1f} MB\n", meshed_mem_delta / 1024.0);
+    }
 
-    std::cout << std::format("\nOverhead: {:+.2f}%\n", time_overhead);
+    std::cout << std::format("\nTime Overhead: {:+.2f}%\n", time_overhead);
+    if (radial_mem_delta > 0 && meshed_mem_delta > 0) {
+        std::cout << std::format("Memory Overhead: {:+.2f}%\n", mem_overhead);
+    }
     std::cout << std::string(60, '=') << "\n\n";
 
-    return {radial_mean.count(), meshed_mean.count()};
+    return {radial_mean.count(), meshed_mean.count(), radial_mem_delta, meshed_mem_delta};
 }
 
 } // namespace power_grid_model::benchmark
@@ -250,7 +316,8 @@ void print_summary_simple(Idx successful_runs) {
     std::cout << std::string(80, '=') << "\n";
 }
 
-std::pair<double, double> run_benchmark_on_generated_grid(benchmark::Option const& grid_option, Idx n_iterations) {
+std::tuple<double, double, size_t, size_t> run_benchmark_on_generated_grid(benchmark::Option const& grid_option,
+                                                                           Idx n_iterations) {
     using namespace power_grid_model::benchmark;
 
     std::cout << std::string(80, '-') << "\n";
@@ -282,18 +349,24 @@ std::pair<double, double> run_benchmark_on_generated_grid(benchmark::Option cons
     std::cout << "Running benchmark...\n\n";
 
     // Run benchmark
-    auto [radial_mean_ns, meshed_mean_ns] = model.get_impl_for_benchmark().run_observability_benchmark<symmetric_t>(
-        benchmark_observability_algorithms<symmetric_t>, n_iterations);
+    auto [radial_mean_ns, meshed_mean_ns, radial_mem_kb, meshed_mem_kb] =
+        model.get_impl_for_benchmark().run_observability_benchmark<symmetric_t>(
+            benchmark_observability_algorithms<symmetric_t>, n_iterations);
 
-    return std::make_pair(radial_mean_ns, meshed_mean_ns);
+    return std::make_tuple(radial_mean_ns, meshed_mean_ns, radial_mem_kb, meshed_mem_kb);
 }
 
-void run_scaling_study(Idx n_iterations) {
+void run_scaling_study(Idx n_iterations, Idx max_nodes = 0) {
     using namespace power_grid_model::benchmark;
 
     std::cout << "\nRunning Scaling Study\n";
-    std::cout << "Varying grid size from ~10 to ~10,000 nodes\n";
-    std::cout << "Testing multiple feeder configurations per size\n\n";
+    if (max_nodes > 0) {
+        std::cout << std::format("Varying grid size from ~10 to ~{} nodes\n", max_nodes);
+        std::cout << "Running filtered test set\n\n";
+    } else {
+        std::cout << "Varying grid size from ~10 to ~10,000 nodes\n";
+        std::cout << "Testing multiple feeder configurations per size\n\n";
+    }
 
     // Define test configurations for scaling study
     // Format: target_size, feeders, nodes_per_feeder (all +1 for source node)
@@ -307,14 +380,16 @@ void run_scaling_study(Idx n_iterations) {
     };
 
     std::vector<ScalingConfig> configs = {
-        // ~10 nodes: test different topologies
-        {"10 nodes (1×10)", 1, 10, 0, 0, 12},
-        {"10 nodes (2×5)", 2, 5, 0, 0, 12},
-
-        // ~50 nodes
-        {"50 nodes (5×10)", 5, 10, 0, 0, 52},
-        {"50 nodes (10×5)", 10, 5, 0, 0, 52},
-        {"50 nodes (25×2)", 25, 2, 0, 0, 52},
+        // Sub-100 node detailed breakdown (to identify crossover point)
+        {"10 nodes", 2, 4, 0, 0, 10},
+        {"20 nodes", 3, 6, 0, 0, 20},
+        {"30 nodes", 3, 9, 0, 0, 30},
+        {"40 nodes", 4, 9, 0, 0, 40},
+        {"50 nodes", 5, 9, 0, 0, 50},
+        {"60 nodes", 5, 11, 0, 0, 60},
+        {"70 nodes", 6, 11, 0, 0, 70},
+        {"80 nodes", 7, 11, 0, 0, 80},
+        {"90 nodes", 8, 11, 0, 0, 90},
 
         // ~100 nodes
         {"100 nodes (5×20)", 5, 20, 0, 0, 102},
@@ -346,6 +421,7 @@ void run_scaling_study(Idx n_iterations) {
     };
 
     Idx successful_runs = 0;
+    Idx total_configs = 0; // Track total configs to be run
 
     // Store results for summary table
     struct BenchmarkResult {
@@ -356,10 +432,26 @@ void run_scaling_study(Idx n_iterations) {
         double radial_mean_us;
         double meshed_mean_us;
         double overhead_pct;
+        size_t radial_mem_mb;
+        size_t meshed_mem_mb;
+        double mem_overhead_pct;
     };
     std::vector<BenchmarkResult> results;
 
+    // Count total configs to run (for summary)
     for (auto const& config : configs) {
+        if (max_nodes > 0 && config.approx_nodes > max_nodes) {
+            continue;
+        }
+        total_configs++;
+    }
+
+    for (auto const& config : configs) {
+        // Filter by max_nodes if specified
+        if (max_nodes > 0 && config.approx_nodes > max_nodes) {
+            continue; // Skip this config
+        }
+
         Option grid_option{
             .n_node_total_specified = config.approx_nodes, // Set to actual target
             .n_mv_feeder = config.n_mv_feeder,
@@ -380,7 +472,8 @@ void run_scaling_study(Idx n_iterations) {
         try {
             std::cout << std::format("\n** Scaling Test: {} (target: ~{} nodes) **\n", config.name,
                                      config.approx_nodes);
-            auto [radial_mean_ns, meshed_mean_ns] = run_benchmark_on_generated_grid(grid_option, n_iterations);
+            auto [radial_mean_ns, meshed_mean_ns, radial_mem_kb, meshed_mem_kb] =
+                run_benchmark_on_generated_grid(grid_option, n_iterations);
 
             // Get actual node count from the generated grid
             FictionalGridGenerator temp_gen;
@@ -392,8 +485,15 @@ void run_scaling_study(Idx n_iterations) {
             double meshed_mean_us = meshed_mean_ns / 1000.0;
             double overhead_pct = ((meshed_mean_us - radial_mean_us) * 100.0) / radial_mean_us;
 
+            size_t radial_mem_mb = radial_mem_kb / 1024;
+            size_t meshed_mem_mb = meshed_mem_kb / 1024;
+            double mem_overhead_pct =
+                (radial_mem_kb > 0) ? ((static_cast<double>(meshed_mem_kb) - radial_mem_kb) * 100.0 / radial_mem_kb)
+                                    : 0.0;
+
             results.push_back({config.name, actual_nodes, config.n_mv_feeder, config.n_node_per_mv_feeder,
-                               radial_mean_us, meshed_mean_us, overhead_pct});
+                               radial_mean_us, meshed_mean_us, overhead_pct, radial_mem_mb, meshed_mem_mb,
+                               mem_overhead_pct});
 
             successful_runs++;
         } catch (std::exception const& e) {
@@ -403,35 +503,40 @@ void run_scaling_study(Idx n_iterations) {
     }
 
     // Print comprehensive summary table
-    std::cout << "\n" << std::string(120, '=') << "\n";
+    std::cout << "\n" << std::string(150, '=') << "\n";
     std::cout << "COMPREHENSIVE SCALING STUDY SUMMARY\n";
-    std::cout << std::string(120, '=') << "\n\n";
+    std::cout << std::string(150, '=') << "\n\n";
 
     if (results.empty()) {
         std::cout << "No successful benchmark runs to report.\n";
         return;
     }
 
-    // Print table header
+    // Print table headers
     std::cout << std::setw(30) << std::left << "Configuration" << std::setw(8) << std::right << "Nodes" << std::setw(10)
-              << "Feeders" << std::setw(12) << "N/Feeder" << std::setw(15) << "Radial (μs)" << std::setw(15)
-              << "Meshed (μs)" << std::setw(15) << "Overhead %" << std::setw(10) << "Speedup\n";
-    std::cout << std::string(120, '-') << "\n";
+              << "Feeders" << std::setw(12) << "N/Feeder" << std::setw(15) << "Time (μs)" << std::setw(15) << "Time OH%"
+              << std::setw(12) << "Mem (MB)" << std::setw(12) << "Mem OH%" << std::setw(10) << "Speedup\n";
+    std::cout << std::string(150, '-') << "\n";
+    std::cout << std::setw(30) << std::left << "" << std::setw(8) << std::right << "" << std::setw(10) << ""
+              << std::setw(12) << "" << std::setw(8) << "Radial" << std::setw(7) << "Meshed" << std::setw(15) << ""
+              << std::setw(6) << "R" << std::setw(6) << "M" << std::setw(12) << "" << std::setw(10) << "\n";
+    std::cout << std::string(150, '-') << "\n";
 
     // Print each result
     for (const auto& result : results) {
         double speedup = result.meshed_mean_us / result.radial_mean_us;
-        std::cout << std::setw(30) << std::left << result.name << std::setw(8) << std::right << result.actual_nodes
-                  << std::setw(10) << result.n_feeders << std::setw(12) << result.nodes_per_feeder << std::setw(15)
-                  << std::fixed << std::setprecision(2) << result.radial_mean_us << std::setw(15) << std::fixed
-                  << std::setprecision(2) << result.meshed_mean_us << std::setw(15) << std::fixed
-                  << std::setprecision(1) << result.overhead_pct << std::setw(10) << std::fixed << std::setprecision(1)
-                  << speedup << "x\n";
+        std::cout << std::setw(30) << std::left << result.name << std::setw(8) << std::right << result.nodes
+                  << std::setw(10) << result.feeders << std::setw(12) << result.nodes_per_feeder << std::setw(8)
+                  << std::fixed << std::setprecision(1) << result.radial_mean_us << std::setw(7) << std::fixed
+                  << std::setprecision(1) << result.meshed_mean_us << std::setw(15) << std::fixed
+                  << std::setprecision(1) << result.overhead_pct << std::setw(6) << result.radial_mem_mb << std::setw(6)
+                  << result.meshed_mem_mb << std::setw(12) << std::fixed << std::setprecision(1)
+                  << result.mem_overhead_pct << std::setw(10) << std::fixed << std::setprecision(1) << speedup << "x\n";
     }
 
-    std::cout << std::string(120, '=') << "\n";
+    std::cout << std::string(150, '=') << "\n";
     std::cout << std::format("Successfully completed {}/{} scaling configurations\n", successful_runs, total_configs);
-    std::cout << std::string(120, '=') << "\n";
+    std::cout << std::string(150, '=') << "\n";
 }
 
 } // anonymous namespace
@@ -448,6 +553,7 @@ int main(int argc, char** argv) {
     Idx n_node_per_mv_feeder = 20;
     Idx n_lv_feeder = 5;
     Idx n_connection_per_lv_feeder = 10;
+    Idx max_nodes = 0; // 0 means no limit
 
     if (argc > 1) {
         std::string arg1 = argv[1];
@@ -465,13 +571,17 @@ int main(int argc, char** argv) {
             std::cout << "    NODES_PER_MV: Nodes per MV feeder (default: 20)\n";
             std::cout << "    LV_FEEDERS:   Number of LV feeders (default: 5)\n";
             std::cout << "    CONN_PER_LV:  Connections per LV feeder (default: 10)\n\n";
-            std::cout << "  scaling [ITERATIONS]\n";
-            std::cout << "    Run scaling study with predefined grid sizes (10-10,000 nodes)\n";
-            std::cout << "    Multiple topology configurations tested per size\n";
-            std::cout << "    ITERATIONS: Number of iterations per algorithm (default: 10)\n\n";
+            std::cout << "  scaling [ITERATIONS] [MAX_NODES]\n";
+            std::cout << "    Run scaling study with predefined grid sizes\n";
+            std::cout << "    ITERATIONS: Number of iterations per algorithm (default: 10)\n";
+            std::cout << "    MAX_NODES:  Maximum node count to test (default: all, 0 means no limit)\n";
+            std::cout << "                Use 100 to test only sub-100 node grids (10, 20, 30, ..., 90)\n\n";
             std::cout << "Examples:\n";
-            std::cout << "  " << argv[0] << " scaling           # Full scaling study with 10 iterations\n";
-            std::cout << "  " << argv[0] << " scaling 20        # Scaling study with 20 iterations\n";
+            std::cout << "  " << argv[0]
+                      << " scaling           # Full scaling study (10-10,000 nodes) with 10 iterations\n";
+            std::cout << "  " << argv[0] << " scaling 20        # Full scaling study with 20 iterations\n";
+            std::cout << "  " << argv[0] << " scaling 5 100     # Only sub-100 node tests with 5 iterations\n";
+            std::cout << "  " << argv[0] << " scaling 10 1000   # Tests up to 1000 nodes with 10 iterations\n";
             std::cout << "  " << argv[0] << " generated 10 5 20 # Generate 5 feeders × 20 nodes\n\n";
             std::cout << "If no mode is specified, 'json' mode is used with default parameters.\n\n";
             return 0;
@@ -507,6 +617,9 @@ int main(int argc, char** argv) {
             if (argc > 2) {
                 n_iterations = std::stoll(argv[2]);
             }
+            if (argc > 3) {
+                max_nodes = std::stoll(argv[3]);
+            }
         } else {
             // Assume old-style arguments: [BENCHMARK_DIR] [ITERATIONS]
             mode = BenchmarkMode::json_data;
@@ -521,7 +634,7 @@ int main(int argc, char** argv) {
 
     // Handle different benchmark modes
     if (mode == BenchmarkMode::scaling_study) {
-        run_scaling_study(n_iterations);
+        run_scaling_study(n_iterations, max_nodes);
         return 0;
     }
 
