@@ -150,10 +150,10 @@ scenarios within a batch are not three-phase faults (i.e. `fault_type` is not `F
 `line` is described by a $\pi$ model, where
 
 $$
-   \begin{eqnarray}
-      & Z_{\text{series}} = r + \mathrm{j}x \\
-      & Y_{\text{shunt}} = \frac{2 \pi fc}{\tan \delta +\mathrm{j}}
-   \end{eqnarray}
+\begin{aligned}
+   & Z_{\text{series}} = r + \mathrm{j}x \\
+   & Y_{\text{shunt}} = \frac{2 \pi fc}{\tan \delta +\mathrm{j}}
+\end{aligned}
 $$
 
 ### Link
@@ -237,21 +237,20 @@ for detailed explanation.
 `transformer` is described by a $\pi$ model, where $Z_{\text{series}}$ can be computed as
 
 $$
-    \begin{eqnarray}
-        & |Z_{\text{series}}| = u_k*z_{\text{base,transformer}} \\
-        & \mathrm{Re}(Z_{\text{series}}) = \frac{p_k}{s_n}*z_{\text{base,transformer}} \\
-        & \mathrm{Im}(Z_{\text{series}}) = \sqrt{|Z_{\text{series}}|^2-\mathrm{Re}(Z_{\text{series}})^2} \\
-    \end{eqnarray}
+\begin{aligned}
+   & |Z_{\text{series}}| = u_k*z_{\text{base,transformer}} \\
+   & \mathrm{Re}(Z_{\text{series}}) = \frac{p_k}{s_n}*z_{\text{base,transformer}} \\
+   & \mathrm{Im}(Z_{\text{series}}) = \sqrt{|Z_{\text{series}}|^2-\mathrm{Re}(Z_{\text{series}})^2} \\
+\end{aligned}
 $$
-
 and $Y_{\text{shunt}}$ can be computed as
 
 $$
-    \begin{eqnarray}
-        & |Y_{\text{shunt}}| = i_0*y_{\text{base,transformer}} \\
-        & \mathrm{Re}(Y_{\text{shunt}}) = \frac{s_n}{p_0}*y_{\text{base,transformer}} \\
-        & \mathrm{Im}(Y_{\text{shunt}}) = -\sqrt{|Y_{\text{shunt}}|^2-\mathrm{Re}(Y_{\text{shunt}})^2} \\
-   \end{eqnarray}
+\begin{aligned}
+   & |Y_{\text{shunt}}| = i_0*y_{\text{base,transformer}} \\
+   & \mathrm{Re}(Y_{\text{shunt}}) = \frac{s_n}{p_0}*y_{\text{base,transformer}} \\
+   & \mathrm{Im}(Y_{\text{shunt}}) = -\sqrt{|Y_{\text{shunt}}|^2-\mathrm{Re}(Y_{\text{shunt}})^2} \\
+\end{aligned}
 $$
 
 where $z_{\text{base,transformer}} = 1 / y_{\text{base,transformer}} = {u_{\text{2}}}^2 / s_{\text{n}}$.
@@ -309,11 +308,11 @@ Asymmetric calculation is not supported for `generic_branch`.
 `generic_branch` is described by a PI model, where
 
 $$
-   \begin{eqnarray}
-      & Y_{\text{series}} = \frac{1}{r + \mathrm{j}x} \\
-      & Y_{\text{shunt}} =  g + \mathrm{j}b \\
-      & N = k \cdot e^{\mathrm{j} \theta} \\
-   \end{eqnarray}
+\begin{aligned}
+   & Y_{\text{series}} = \frac{1}{r + \mathrm{j}x} \\
+   & Y_{\text{shunt}} =  g + \mathrm{j}b \\
+   & N = k \cdot e^{\mathrm{j} \theta}
+\end{aligned}
 $$
 
 ### Asym Line
@@ -631,11 +630,11 @@ Its value can be computed using following equations:
 * for positive sequence,
 
 $$
-   \begin{eqnarray}
-        & z_{\text{source}} = \frac{s_{\text{base}}}{s_k} \\
-        & x_1 = \frac{z_{\text{source}}}{\sqrt{1+ \left(\frac{r}{x}\right)^2}} \\
-        & r_1 = x_1 \cdot \left(\frac{r}{x}\right)
-   \end{eqnarray}
+\begin{aligned}
+      & z_{\text{source}} = \frac{s_{\text{base}}}{s_k} \\
+      & x_1 = \frac{z_{\text{source}}}{\sqrt{1+ \left(\frac{r}{x}\right)^2}} \\
+      & r_1 = x_1 \cdot \left(\frac{r}{x}\right)
+\end{aligned}
 $$
 
 where $s_{\text{base}}$ is a constant value determined by the solver, and $\frac{r}{x}$ indicates `rx_ratio` as input.
@@ -643,11 +642,11 @@ where $s_{\text{base}}$ is a constant value determined by the solver, and $\frac
 * for zero-sequence,
 
 $$
-   \begin{eqnarray}
-        & z_{\text{source,0}} = z_{\text{source}} \cdot \frac{z_0}{z_1} \\
-        & x_0 = \frac{z_{\text{source,0}}}{\sqrt{1 + \left(\frac{r}{x}\right)^2}} \\
-        & r_0 = x_0 \cdot \left(\frac{r}{x}\right)
-   \end{eqnarray}
+\begin{aligned}
+      & z_{\text{source,0}} = z_{\text{source}} \cdot \frac{z_0}{z_1} \\
+      & x_0 = \frac{z_{\text{source,0}}}{\sqrt{1 + \left(\frac{r}{x}\right)^2}} \\
+      & r_0 = x_0 \cdot \left(\frac{r}{x}\right)
+\end{aligned}
 $$
 
 ### Generic Load and Generator
@@ -816,10 +815,10 @@ For other calculation types, sensor output is undefined.
 `generic_voltage_sensor` is modeled by following equations:
 
 $$
-   \begin{eqnarray}
-        & u_{\text{residual}} = u_{\text{measured}} - u_{\text{state}} \\
-        & \theta_{\text{residual}} = \theta_{\text{measured}} - \theta_{\text{state}} \pmod{2 \pi}
-   \end{eqnarray}
+\begin{aligned}
+      & u_{\text{residual}} = u_{\text{measured}} - u_{\text{state}} \\
+      & \theta_{\text{residual}} = \theta_{\text{measured}} - \theta_{\text{state}} \pmod{2 \pi}
+\end{aligned}
 $$
 
 The $\pmod{2\pi}$ is handled such that $-\pi \lt \theta_{\text{angle},\text{residual}} \leq \pi$.
@@ -931,10 +930,10 @@ For other calculation types, sensor output is undefined.
 `Generic Power Sensor` is modeled by following equations:
 
 $$
-   \begin{eqnarray}
-        & p_{\text{residual}} = p_{\text{measured}} - p_{\text{state}} \\
-        & q_{\text{residual}} = q_{\text{measured}} - q_{\text{state}}
-   \end{eqnarray}
+\begin{aligned}
+      & p_{\text{residual}} = p_{\text{measured}} - p_{\text{state}} \\
+         & q_{\text{residual}} = q_{\text{measured}} - q_{\text{state}}
+\end{aligned}
 $$
 
 ### Generic Current Sensor
@@ -1036,7 +1035,11 @@ $$
 
 Current sensors with `angle_measurement_type` equal to `AngleMeasurementType.local_angle` measure the phase shift
 between the voltage and the current phasor, i.e.,
-$\text{i_angle_measured} = \text{voltage_phase} - \text{current_phase}$.
+
+$$
+\text{i\_angle\_measured} = \text{voltage\_phase} - \text{current\_phase}\text{ .}
+$$
+
 As a result, the global current phasor depends on the local voltage phase offset and is obtained using the following
 formula.
 
@@ -1052,12 +1055,12 @@ As a result, the local angle current sensors have a different sign convention fr
 ##### Residuals
 
 $$
-   \begin{eqnarray}
-        & i_{\text{residual}}
-               = i_{\text{measured}} - i_{\text{state}} && \\
-        & i_{\text{angle},\text{residual}}
-               = i_{\text{angle},\text{measured}} - i_{\text{angle},\text{state}} \pmod{2 \pi}
-   \end{eqnarray}
+\begin{aligned}
+      & i_{\text{residual}}
+            = i_{\text{measured}} - i_{\text{state}} \\
+      & i_{\text{angle},\text{residual}}
+            = i_{\text{angle},\text{measured}} - i_{\text{angle},\text{state}} \pmod{2 \pi}
+\end{aligned}
 $$
 
 The $\pmod{2\pi}$ is handled such that $-\pi \lt i_{\text{angle},\text{residual}} \leq \pi$.
@@ -1222,13 +1225,13 @@ The control voltage is the voltage at the node, compensated with the voltage dro
 drop compensation.
 
 $$
-   \begin{eqnarray}
-      & Z_{\text{compensation}} = r_{\text{compensation}} + \mathrm{j} x_{\text{compensation}} \\
-      & U_{\text{control}} = \left|\underline{U}_{\text{node}} - \underline{I}_{\text{transformer,out}}
-                                 \cdot \underline{Z}_{\text{compensation}}\right|
-                           = \left|\underline{U}_{\text{node}} + \underline{I}_{\text{transformer}}
-                                 \cdot \underline{Z}_{\text{compensation}}\right|
-   \end{eqnarray}
+\begin{aligned}
+   & Z_{\text{compensation}} = r_{\text{compensation}} + \mathrm{j} x_{\text{compensation}} \\
+   & U_{\text{control}} = \left|\underline{U}_{\text{node}} - \underline{I}_{\text{transformer,out}}
+                              \cdot \underline{Z}_{\text{compensation}}\right|
+                        = \left|\underline{U}_{\text{node}} + \underline{I}_{\text{transformer}}
+                              \cdot \underline{Z}_{\text{compensation}}\right|
+\end{aligned}
 $$
 
 where $\underline{U}_{\text{node}}$ and $\underline{I}_{\text{transformer}}$ are the calculated voltage and current
@@ -1302,11 +1305,11 @@ A `voltage_regulator` has no short circuit output.
 The voltage regulator controls the generator to behave as a **PV node** in power flow calculations:
 
 $$
-   \begin{eqnarray}
-      & P_{\text{gen}} = P_{\text{specified}} \\
-      & |U_{\text{node}}| = U_{\text{ref}} \\
-      & Q_{\text{gen}} = \text{calculated to satisfy } U_{\text{ref}}
-   \end{eqnarray}
+\begin{aligned}
+   & P_{\text{gen}} = P_{\text{specified}} \\
+   & |U_{\text{node}}| = U_{\text{ref}} \\
+   & Q_{\text{gen}} = \text{calculated to satisfy } U_{\text{ref}}
+\end{aligned}
 $$
 
 When `q_min` and `q_max` are provided, the reactive power should be constrained:
@@ -1319,11 +1322,11 @@ When fully implemented, if the reactive power constraints are violated, the gene
 node becomes a PQ node:
 
 $$
-   \begin{eqnarray}
-      & P_{\text{gen}} = P_{\text{specified}} \\
-      & Q_{\text{gen}} = Q_{\text{min}} \text{ or } Q_{\text{max}} \\
-      & |U_{\text{node}}| = \text{calculated from power flow}
-   \end{eqnarray}
+\begin{aligned}
+   & P_{\text{gen}} = P_{\text{specified}} \\
+   & Q_{\text{gen}} = Q_{\text{min}} \text{ or } Q_{\text{max}} \\
+   & |U_{\text{node}}| = \text{calculated from power flow}
+\end{aligned}
 $$
 
 In this case, `limit_violated` will indicate which limit was exceeded, and the actual voltage at the node may differ
