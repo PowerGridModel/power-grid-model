@@ -284,11 +284,15 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus,
     }
 
     // Calculate average degree for iteration limit
-    Idx total_edges = 0;
+    // Use std::size_t to prevent overflow during accumulation
+    std::size_t total_edges = 0;
     for (auto const& bus_info : local_neighbour_list) {
-        total_edges += static_cast<Idx>(bus_info.direct_neighbours.size());
+        total_edges += bus_info.direct_neighbours.size();
     }
-    Idx const avg_degree = std::max(Idx{2}, total_edges / n_bus); // At least 2 to avoid edge cases
+    Idx const avg_degree = std::max(
+        Idx{2}, static_cast<Idx>(std::min(
+                    total_edges / n_bus,
+                    static_cast<std::size_t>(std::numeric_limits<Idx>::max())))); // At least 2 to avoid edge cases
 
     enum class BusVisited : std::uint8_t { NotVisited, Visited };
     // Initialize tracking structures
@@ -301,7 +305,11 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus,
     Idx current_bus = start_bus;
     // Iteration limit: visit all nodes plus some backtracking allowance
     // For a spanning tree, worst case is O(n * avg_degree) with backtracking
-    Idx const max_iterations = n_bus * avg_degree * 3; // Conservative multiplier for backtracking
+    // Calculate in wider type to prevent overflow, then clamp to Idx max
+    std::size_t const max_iter_unclamped = static_cast<std::size_t>(n_bus) * static_cast<std::size_t>(avg_degree) * 3u;
+    Idx const max_iterations =
+        static_cast<Idx>(std::min(max_iter_unclamped, static_cast<std::size_t>(std::numeric_limits<Idx>::max())));
+
     Idx iteration = 0;
 
     // Define lambda functions for the different priorities and backtracking
