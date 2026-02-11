@@ -282,7 +282,9 @@ struct StatusModification {
 };
 
 inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus, std::vector<BusNeighbourhoodInfo>& neighbour_list,
-                                         std::vector<StatusModification>& modifications) {
+                                         std::vector<StatusModification>& modifications,
+                                         std::vector<std::uint8_t>& visited_buffer,
+                                         std::vector<std::pair<Idx, Idx>>& edge_track_buffer) {
     // Handle empty network edge case
     if (n_bus == 0) {
         return true;
@@ -307,13 +309,16 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus, std::vector<B
         }
     };
 
-    enum class BusVisited : std::uint8_t { NotVisited, Visited };
-    // Initialize tracking structures
-    std::vector<BusVisited> visited(n_bus, BusVisited::NotVisited);
-    Idx visited_count = 0;                       // Track number of visited nodes
-    std::vector<std::pair<Idx, Idx>> edge_track; // for backtracking
-    edge_track.reserve(n_bus);                   // Reserve space for spanning tree edges
-    bool downwind = false;                       // downwind flag, 'need' to use measurement at current bus
+    enum class BusVisited : std::uint8_t { NotVisited = 0, Visited = 1 };
+    // Reuse provided buffers and reset them
+    visited_buffer.assign(n_bus, static_cast<std::uint8_t>(BusVisited::NotVisited));
+    edge_track_buffer.clear();
+
+    auto& visited = visited_buffer; // Use as reference for cleaner code
+    auto& edge_track = edge_track_buffer;
+
+    Idx visited_count = 0; // Track number of visited nodes
+    bool downwind = false; // downwind flag, 'need' to use measurement at current bus
 
     Idx current_bus = start_bus;
     // Iteration limit: visit all nodes plus some backtracking allowance
@@ -328,16 +333,16 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus, std::vector<B
     // Define lambda functions for the different priorities and backtracking
     auto try_native_edge_measurements = [&neighbour_list, &visited, &visited_count, &edge_track, &current_bus,
                                          &downwind, &modify_status](bool& step_success) {
-        if (visited[current_bus] == BusVisited::NotVisited) {
-            visited[current_bus] = BusVisited::Visited;
+        if (visited[current_bus] == static_cast<std::uint8_t>(BusVisited::NotVisited)) {
+            visited[current_bus] = static_cast<std::uint8_t>(BusVisited::Visited);
             ++visited_count;
         }
         for (auto& neighbour : neighbour_list[current_bus].direct_neighbours) {
             if (neighbour.status == ConnectivityStatus::branch_native_measurement_unused &&
-                visited[neighbour.bus] == BusVisited::NotVisited) {
+                visited[neighbour.bus] == static_cast<std::uint8_t>(BusVisited::NotVisited)) {
                 // Mark edge as discovered and neighbour as visited
                 edge_track.emplace_back(current_bus, neighbour.bus);
-                visited[neighbour.bus] = BusVisited::Visited;
+                visited[neighbour.bus] = static_cast<std::uint8_t>(BusVisited::Visited);
                 ++visited_count;
 
                 // Update status to branch_native_measurement_consumed
@@ -364,13 +369,13 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus, std::vector<B
         if (!current_bus_no_measurement && downwind) {
             for (auto& neighbour : neighbour_list[current_bus].direct_neighbours) {
                 if (neighbour.status == ConnectivityStatus::has_no_measurement &&
-                    visited[neighbour.bus] == BusVisited::NotVisited) {
+                    visited[neighbour.bus] == static_cast<std::uint8_t>(BusVisited::NotVisited)) {
                     edge_track.emplace_back(current_bus, neighbour.bus);
-                    if (visited[current_bus] == BusVisited::NotVisited) {
-                        visited[current_bus] = BusVisited::Visited;
+                    if (visited[current_bus] == static_cast<std::uint8_t>(BusVisited::NotVisited)) {
+                        visited[current_bus] = static_cast<std::uint8_t>(BusVisited::Visited);
                         ++visited_count;
                     }
-                    visited[neighbour.bus] = BusVisited::Visited;
+                    visited[neighbour.bus] = static_cast<std::uint8_t>(BusVisited::Visited);
                     ++visited_count;
 
                     // Update status to branch_discovered_with_from_node_sensor
@@ -402,12 +407,12 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus, std::vector<B
                              &modify_status](auto& neighbour, ConnectivityStatus neighbour_status,
                                              ConnectivityStatus reverse_status, bool use_current_node) {
             edge_track.emplace_back(current_bus, neighbour.bus);
-            if (visited[current_bus] == BusVisited::NotVisited) {
-                visited[current_bus] = BusVisited::Visited;
+            if (visited[current_bus] == static_cast<std::uint8_t>(BusVisited::NotVisited)) {
+                visited[current_bus] = static_cast<std::uint8_t>(BusVisited::Visited);
                 ++visited_count;
             }
-            if (visited[neighbour.bus] == BusVisited::NotVisited) {
-                visited[neighbour.bus] = BusVisited::Visited;
+            if (visited[neighbour.bus] == static_cast<std::uint8_t>(BusVisited::NotVisited)) {
+                visited[neighbour.bus] = static_cast<std::uint8_t>(BusVisited::Visited);
                 ++visited_count;
             }
 
@@ -434,7 +439,7 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus, std::vector<B
         };
 
         for (auto& neighbour : neighbour_list[current_bus].direct_neighbours) {
-            if (visited[neighbour.bus] == BusVisited::Visited) {
+            if (visited[neighbour.bus] == static_cast<std::uint8_t>(BusVisited::Visited)) {
                 continue;
             }
 
@@ -552,7 +557,11 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus,
     std::vector<BusNeighbourhoodInfo> mutable_copy = neighbour_list;
     std::vector<StatusModification> modifications;
     modifications.reserve(n_bus * 2);
-    return find_spanning_tree_from_node(start_bus, n_bus, mutable_copy, modifications);
+    std::vector<std::uint8_t> visited_buffer(n_bus);
+    std::vector<std::pair<Idx, Idx>> edge_track_buffer;
+    edge_track_buffer.reserve(n_bus);
+    return find_spanning_tree_from_node(start_bus, n_bus, mutable_copy, modifications, visited_buffer,
+                                        edge_track_buffer);
 }
 
 inline bool sufficient_condition_meshed_without_voltage_phasor(std::vector<BusNeighbourhoodInfo>& neighbour_list) {
@@ -560,12 +569,19 @@ inline bool sufficient_condition_meshed_without_voltage_phasor(std::vector<BusNe
     std::vector<Idx> starting_candidates;
     prepare_starting_nodes(neighbour_list, n_bus, starting_candidates);
 
+    // Allocate buffers once, reuse across all attempts
+    std::vector<StatusModification> modifications;
+    modifications.reserve(n_bus * 2); // Estimate: node + edge modifications per node in spanning tree
+    std::vector<std::uint8_t> visited_buffer(n_bus);
+    std::vector<std::pair<Idx, Idx>> edge_track_buffer;
+    edge_track_buffer.reserve(n_bus); // A spanning tree has n-1 edges
+
     // Try each starting candidate with modification tracking
     for (Idx const start_bus : starting_candidates) {
-        std::vector<StatusModification> modifications;
-        modifications.reserve(n_bus * 2); // Estimate: node + edge modifications per node in spanning tree
+        modifications.clear(); // Reuse modifications vector
 
-        if (find_spanning_tree_from_node(start_bus, n_bus, neighbour_list, modifications)) {
+        if (find_spanning_tree_from_node(start_bus, n_bus, neighbour_list, modifications, visited_buffer,
+                                         edge_track_buffer)) {
             // Success! Keep modifications and return
             return true;
         }
