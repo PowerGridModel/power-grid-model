@@ -275,31 +275,57 @@ inline void prepare_starting_nodes(std::vector<detail::BusNeighbourhoodInfo> con
 
 inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus,
                                          std::vector<detail::BusNeighbourhoodInfo> const& _neighbour_list) {
-    // Make a fresh copy for this attempt
+    // Make a local copy that we can modify
     std::vector<detail::BusNeighbourhoodInfo> local_neighbour_list = _neighbour_list;
+
+    // Handle empty network edge case
+    if (n_bus == 0) {
+        return true;
+    }
+
+    // Calculate average degree for iteration limit
+    // Use std::size_t to prevent overflow during accumulation
+    std::size_t total_edges = 0;
+    for (auto const& bus_info : local_neighbour_list) {
+        total_edges += bus_info.direct_neighbours.size();
+    }
+    Idx const avg_degree = std::max(
+        Idx{2}, static_cast<Idx>(std::min(
+                    total_edges / n_bus,
+                    static_cast<std::size_t>(std::numeric_limits<Idx>::max())))); // At least 2 to avoid edge cases
 
     enum class BusVisited : std::uint8_t { NotVisited, Visited };
     // Initialize tracking structures
     std::vector<BusVisited> visited(n_bus, BusVisited::NotVisited);
-    std::vector<std::pair<Idx, Idx>> discovered_edges; // not poped, only for documenting
-    std::vector<std::pair<Idx, Idx>> edge_track;       // for backtracking
-    bool downwind = false;                             // downwind flag, 'need' to use measurement at current bus
+    Idx visited_count = 0;                       // Track number of visited nodes
+    std::vector<std::pair<Idx, Idx>> edge_track; // for backtracking
+    edge_track.reserve(n_bus);                   // Reserve space for spanning tree edges
+    bool downwind = false;                       // downwind flag, 'need' to use measurement at current bus
 
     Idx current_bus = start_bus;
-    Idx const max_iterations = n_bus * n_bus; // prevent infinite loops
+    // Iteration limit: visit all nodes plus some backtracking allowance
+    // For a spanning tree, worst case is O(n * avg_degree) with backtracking
+    // Calculate in wider type to prevent overflow, then clamp to Idx max
+    std::size_t const max_iter_unclamped = static_cast<std::size_t>(n_bus) * static_cast<std::size_t>(avg_degree) * 3u;
+    Idx const max_iterations =
+        static_cast<Idx>(std::min(max_iter_unclamped, static_cast<std::size_t>(std::numeric_limits<Idx>::max())));
+
     Idx iteration = 0;
 
     // Define lambda functions for the different priorities and backtracking
-    auto try_native_edge_measurements = [&local_neighbour_list, &visited, &discovered_edges, &edge_track, &current_bus,
+    auto try_native_edge_measurements = [&local_neighbour_list, &visited, &visited_count, &edge_track, &current_bus,
                                          &downwind](bool& step_success) {
-        visited[current_bus] = BusVisited::Visited;
+        if (visited[current_bus] == BusVisited::NotVisited) {
+            visited[current_bus] = BusVisited::Visited;
+            ++visited_count;
+        }
         for (auto& neighbour : local_neighbour_list[current_bus].direct_neighbours) {
             if (neighbour.status == ConnectivityStatus::branch_native_measurement_unused &&
                 visited[neighbour.bus] == BusVisited::NotVisited) {
                 // Mark edge as discovered and neighbour as visited
-                discovered_edges.emplace_back(current_bus, neighbour.bus);
                 edge_track.emplace_back(current_bus, neighbour.bus);
                 visited[neighbour.bus] = BusVisited::Visited;
+                ++visited_count;
 
                 // Update status to branch_native_measurement_consumed
                 neighbour.status = ConnectivityStatus::branch_native_measurement_consumed;
@@ -320,16 +346,19 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus,
         return false;
     };
 
-    auto try_downwind_measurement = [&local_neighbour_list, &visited, &discovered_edges, &edge_track, &current_bus,
+    auto try_downwind_measurement = [&local_neighbour_list, &visited, &visited_count, &edge_track, &current_bus,
                                      &downwind](bool& step_success, bool current_bus_no_measurement) {
         if (!current_bus_no_measurement && downwind) {
             for (auto& neighbour : local_neighbour_list[current_bus].direct_neighbours) {
                 if (neighbour.status == ConnectivityStatus::has_no_measurement &&
                     visited[neighbour.bus] == BusVisited::NotVisited) {
-                    discovered_edges.emplace_back(current_bus, neighbour.bus);
                     edge_track.emplace_back(current_bus, neighbour.bus);
-                    visited[current_bus] = BusVisited::Visited;
+                    if (visited[current_bus] == BusVisited::NotVisited) {
+                        visited[current_bus] = BusVisited::Visited;
+                        ++visited_count;
+                    }
                     visited[neighbour.bus] = BusVisited::Visited;
+                    ++visited_count;
 
                     // Update status to branch_discovered_with_from_node_sensor
                     neighbour.status = ConnectivityStatus::branch_discovered_with_from_node_sensor;
@@ -352,16 +381,21 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus,
         return false;
     };
 
-    auto try_general_connection_rules = [&local_neighbour_list, &visited, &discovered_edges, &edge_track,
+    auto try_general_connection_rules = [&local_neighbour_list, &visited, &visited_count, &edge_track,
                                          &current_bus](bool& step_success, bool current_bus_no_measurement) {
         // Helper lambda to handle common edge processing logic
-        auto process_edge = [&local_neighbour_list, &visited, &discovered_edges, &edge_track, &current_bus,
+        auto process_edge = [&local_neighbour_list, &visited, &visited_count, &edge_track, &current_bus,
                              &step_success](auto& neighbour, ConnectivityStatus neighbour_status,
                                             ConnectivityStatus reverse_status, bool use_current_node) {
-            discovered_edges.emplace_back(current_bus, neighbour.bus);
             edge_track.emplace_back(current_bus, neighbour.bus);
-            visited[current_bus] = BusVisited::Visited;
-            visited[neighbour.bus] = BusVisited::Visited;
+            if (visited[current_bus] == BusVisited::NotVisited) {
+                visited[current_bus] = BusVisited::Visited;
+                ++visited_count;
+            }
+            if (visited[neighbour.bus] == BusVisited::NotVisited) {
+                visited[neighbour.bus] = BusVisited::Visited;
+                ++visited_count;
+            }
 
             // Update neighbour status
             neighbour.status = neighbour_status;
@@ -473,7 +507,7 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus,
         return false;
     };
 
-    while (std::ranges::count(visited, BusVisited::Visited) < n_bus && iteration < max_iterations) {
+    while (visited_count < n_bus && iteration < max_iterations) {
         ++iteration;
         bool step_success = false;
 
@@ -495,7 +529,7 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus,
     }
 
     // Check if all nodes were visited (spanning tree found)
-    return std::ranges::count(visited, BusVisited::Visited) == n_bus;
+    return visited_count == n_bus;
 }
 
 inline bool

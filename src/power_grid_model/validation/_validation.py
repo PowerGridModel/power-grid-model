@@ -110,7 +110,7 @@ def validate_input_data(
     errors += validate_required_values(input_data_copy, calculation_type, symmetric)
     errors += validate_unique_ids_across_components(input_data_copy)
     errors += validate_values(input_data_copy, calculation_type)
-    return errors if errors else None
+    return errors or None
 
 
 def validate_batch_data(
@@ -176,7 +176,7 @@ def validate_batch_data(
         if batch_errors:
             errors[batch] = batch_errors
 
-    return errors if errors else None
+    return errors or None
 
 
 def assert_valid_data_structure(data: Dataset, data_type: DatasetType) -> None:
