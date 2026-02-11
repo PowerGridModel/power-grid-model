@@ -295,7 +295,7 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus,
     std::vector<BusVisited> visited(n_bus, BusVisited::NotVisited);
     Idx visited_count = 0;                       // Track number of visited nodes
     std::vector<std::pair<Idx, Idx>> edge_track; // for backtracking
-    edge_track.reserve(n_bus);                   // Reserve space for spanning tree edges (n-1 edges max)
+    edge_track.reserve(n_bus);                   // Reserve space for spanning tree edges
     bool downwind = false;                       // downwind flag, 'need' to use measurement at current bus
 
     Idx current_bus = start_bus;
