@@ -384,8 +384,10 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus,
                 visited[current_bus] = BusVisited::Visited;
                 ++visited_count;
             }
-            visited[neighbour.bus] = BusVisited::Visited;
-            ++visited_count;
+            if (visited[neighbour.bus] == BusVisited::NotVisited) {
+                visited[neighbour.bus] = BusVisited::Visited;
+                ++visited_count;
+            }
 
             // Update neighbour status
             neighbour.status = neighbour_status;
