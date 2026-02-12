@@ -11,6 +11,8 @@
 
 #include "../common/exception.hpp"
 
+#include <utility>
+
 namespace power_grid_model::math_solver {
 
 namespace detail {
@@ -310,7 +312,7 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus, std::vector<B
 
     enum class BusVisited : std::uint8_t { NotVisited = 0, Visited = 1 };
     // Reuse provided buffers and reset them
-    visited_buffer.assign(n_bus, static_cast<std::uint8_t>(BusVisited::NotVisited));
+    visited_buffer.assign(n_bus, std::to_underlying(BusVisited::NotVisited));
     edge_track_buffer.clear();
 
     auto& visited = visited_buffer; // Use as reference for cleaner code
@@ -332,16 +334,16 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus, std::vector<B
     // Define lambda functions for the different priorities and backtracking
     auto try_native_edge_measurements = [&neighbour_list, &visited, &visited_count, &edge_track, &current_bus,
                                          &downwind, &modify_status](bool& step_success) {
-        if (visited[current_bus] == static_cast<std::uint8_t>(BusVisited::NotVisited)) {
-            visited[current_bus] = static_cast<std::uint8_t>(BusVisited::Visited);
+        if (visited[current_bus] == std::to_underlying(BusVisited::NotVisited)) {
+            visited[current_bus] = std::to_underlying(BusVisited::Visited);
             ++visited_count;
         }
         for (auto& neighbour : neighbour_list[current_bus].direct_neighbours) {
             if (neighbour.status == ConnectivityStatus::branch_native_measurement_unused &&
-                visited[neighbour.bus] == static_cast<std::uint8_t>(BusVisited::NotVisited)) {
+                visited[neighbour.bus] == std::to_underlying(BusVisited::NotVisited)) {
                 // Mark edge as discovered and neighbour as visited
                 edge_track.emplace_back(current_bus, neighbour.bus);
-                visited[neighbour.bus] = static_cast<std::uint8_t>(BusVisited::Visited);
+                visited[neighbour.bus] = std::to_underlying(BusVisited::Visited);
                 ++visited_count;
 
                 // Update status to branch_native_measurement_consumed
@@ -368,13 +370,13 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus, std::vector<B
         if (!current_bus_no_measurement && downwind) {
             for (auto& neighbour : neighbour_list[current_bus].direct_neighbours) {
                 if (neighbour.status == ConnectivityStatus::has_no_measurement &&
-                    visited[neighbour.bus] == static_cast<std::uint8_t>(BusVisited::NotVisited)) {
+                    visited[neighbour.bus] == std::to_underlying(BusVisited::NotVisited)) {
                     edge_track.emplace_back(current_bus, neighbour.bus);
-                    if (visited[current_bus] == static_cast<std::uint8_t>(BusVisited::NotVisited)) {
-                        visited[current_bus] = static_cast<std::uint8_t>(BusVisited::Visited);
+                    if (visited[current_bus] == std::to_underlying(BusVisited::NotVisited)) {
+                        visited[current_bus] = std::to_underlying(BusVisited::Visited);
                         ++visited_count;
                     }
-                    visited[neighbour.bus] = static_cast<std::uint8_t>(BusVisited::Visited);
+                    visited[neighbour.bus] = std::to_underlying(BusVisited::Visited);
                     ++visited_count;
 
                     // Update status to branch_discovered_with_from_node_sensor
@@ -406,12 +408,12 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus, std::vector<B
                              &modify_status](auto& neighbour, ConnectivityStatus neighbour_status,
                                              ConnectivityStatus reverse_status, bool use_current_node) {
             edge_track.emplace_back(current_bus, neighbour.bus);
-            if (visited[current_bus] == static_cast<std::uint8_t>(BusVisited::NotVisited)) {
-                visited[current_bus] = static_cast<std::uint8_t>(BusVisited::Visited);
+            if (visited[current_bus] == std::to_underlying(BusVisited::NotVisited)) {
+                visited[current_bus] = std::to_underlying(BusVisited::Visited);
                 ++visited_count;
             }
-            if (visited[neighbour.bus] == static_cast<std::uint8_t>(BusVisited::NotVisited)) {
-                visited[neighbour.bus] = static_cast<std::uint8_t>(BusVisited::Visited);
+            if (visited[neighbour.bus] == std::to_underlying(BusVisited::NotVisited)) {
+                visited[neighbour.bus] = std::to_underlying(BusVisited::Visited);
                 ++visited_count;
             }
 
@@ -438,7 +440,7 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus, std::vector<B
         };
 
         for (auto& neighbour : neighbour_list[current_bus].direct_neighbours) {
-            if (visited[neighbour.bus] == static_cast<std::uint8_t>(BusVisited::Visited)) {
+            if (visited[neighbour.bus] == std::to_underlying(BusVisited::Visited)) {
                 continue;
             }
 
