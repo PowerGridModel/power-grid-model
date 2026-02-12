@@ -4,9 +4,12 @@
 
 #pragma once
 
-#include "state_queries.hpp"
+#include "container_queries.hpp"
+#include "state.hpp"
+#include "y_bus.hpp"
 
 #include "../calculation_parameters.hpp"
+#include "../index_mapping.hpp"
 
 #include <concepts>
 #include <vector>
@@ -258,7 +261,7 @@ std::vector<ShortCircuitInput> prepare_short_circuit_input(main_model_state_c au
     std::vector<IdxVector> topo_fault_indices(state.math_topology.size());
     std::vector<IdxVector> topo_bus_indices(state.math_topology.size());
 
-    for (Idx fault_idx{0}; fault_idx < state.components.template size<Fault>(); ++fault_idx) {
+    for (Idx const fault_idx : IdxRange{state.components.template size<Fault>()}) {
         auto const& fault = state.components.template get_item_by_seq<Fault>(fault_idx);
         if (fault.status()) {
             auto const node_idx = state.components.template get_seq<Node>(fault.get_fault_object());
@@ -275,11 +278,11 @@ std::vector<ShortCircuitInput> prepare_short_circuit_input(main_model_state_c au
                                          Idx2D{.group = isolated_component, .pos = not_connected});
     std::vector<ShortCircuitInput> sc_input(n_math_solvers);
 
-    for (Idx i = 0; i != n_math_solvers; ++i) {
+    for (Idx const i : IdxRange{n_math_solvers}) {
         auto map = build_dense_mapping(topo_bus_indices[i], state.math_topology[i]->n_bus());
 
-        for (Idx reordered_idx{0}; reordered_idx < static_cast<Idx>(map.reorder.size()); ++reordered_idx) {
-            fault_coup[topo_fault_indices[i][map.reorder[reordered_idx]]] = Idx2D{.group = i, .pos = reordered_idx};
+        for (auto&& [reordered_idx, original_idx] : enumerate(map.reorder)) {
+            fault_coup[topo_fault_indices[i][original_idx]] = Idx2D{.group = i, .pos = reordered_idx};
         }
 
         sc_input[i].fault_buses = {from_dense, std::move(map.indvector), state.math_topology[i]->n_bus()};

@@ -30,4 +30,18 @@ TEST_CASE("Counting Iterator") {
     CHECK(*IdxRange{IdxRange{1, 3}.begin(), IdxRange{1, 3}.end()}.begin() == 1);
     CHECK(*(IdxRange{IdxRange{1, 3}.begin(), IdxRange{1, 3}.end()}.end() - 1) == 2);
 }
+
+TEST_CASE("Enumerate") {
+    IdxVector vec{10, 20, 30};
+    auto enumerated = enumerate(vec);
+    auto it = enumerated.begin();
+    CHECK(std::get<0>(*it) == 0);
+    CHECK(std::get<1>(*it) == 10);
+    ++it;
+    CHECK(std::get<0>(*it) == 1);
+    CHECK(std::get<1>(*it) == 20);
+    ++it;
+    CHECK(std::get<0>(*it) == 2);
+    CHECK(std::get<1>(*it) == 30);
+}
 } // namespace power_grid_model

@@ -8,6 +8,7 @@
 
 // main include
 #include "batch_parameter.hpp"
+#include "calculation.hpp"
 #include "calculation_parameters.hpp"
 #include "calculation_preparation.hpp"
 #include "container.hpp"
@@ -44,7 +45,6 @@
 
 namespace power_grid_model {
 // solver output type to output type getter meta function
-
 template <solver_output_type SolverOutputType> struct output_type_getter;
 template <short_circuit_solver_output_type SolverOutputType> struct output_type_getter<SolverOutputType> {
     using type = meta_data::sc_output_getter_s;
@@ -55,65 +55,6 @@ template <> struct output_type_getter<SolverOutput<symmetric_t>> {
 template <> struct output_type_getter<SolverOutput<asymmetric_t>> {
     using type = meta_data::asym_output_getter_s;
 };
-
-struct power_flow_t {};
-struct state_estimation_t {};
-struct short_circuit_t {};
-
-template <typename T>
-concept calculation_type_tag = std::derived_from<T, power_flow_t> || std::derived_from<T, state_estimation_t> ||
-                               std::derived_from<T, short_circuit_t>;
-
-template <class Functor, class... Args>
-decltype(auto) calculation_symmetry_func_selector(CalculationSymmetry calculation_symmetry, Functor&& f,
-                                                  Args&&... args) {
-    using enum CalculationSymmetry;
-
-    switch (calculation_symmetry) {
-    case symmetric:
-        return std::forward<Functor>(f).template operator()<symmetric_t>(std::forward<Args>(args)...);
-    case asymmetric:
-        return std::forward<Functor>(f).template operator()<asymmetric_t>(std::forward<Args>(args)...);
-    default:
-        throw MissingCaseForEnumError{"Calculation symmetry selector", calculation_symmetry};
-    }
-}
-
-template <class Functor, class... Args>
-decltype(auto) calculation_type_func_selector(CalculationType calculation_type, Functor&& f, Args&&... args) {
-    using enum CalculationType;
-
-    switch (calculation_type) {
-    case CalculationType::power_flow:
-        return std::forward<Functor>(f).template operator()<power_flow_t>(std::forward<Args>(args)...);
-    case CalculationType::state_estimation:
-        return std::forward<Functor>(f).template operator()<state_estimation_t>(std::forward<Args>(args)...);
-    case CalculationType::short_circuit:
-        return std::forward<Functor>(f).template operator()<short_circuit_t>(std::forward<Args>(args)...);
-    default:
-        throw MissingCaseForEnumError{"CalculationType", calculation_type};
-    }
-}
-
-template <class Functor, class... Args>
-decltype(auto) calculation_type_symmetry_func_selector(CalculationType calculation_type,
-                                                       CalculationSymmetry calculation_symmetry, Functor&& f,
-                                                       Args&&... args) {
-    calculation_type_func_selector(
-        calculation_type,
-        []<calculation_type_tag calculation_type, typename Functor_, typename... Args_>(
-            CalculationSymmetry calculation_symmetry_, Functor_&& f_, Args_&&... args_) {
-            calculation_symmetry_func_selector(
-                calculation_symmetry_,
-                []<symmetry_tag sym, typename SubFunctor, typename... SubArgs>(SubFunctor&& sub_f,
-                                                                               SubArgs&&... sub_args) {
-                    std::forward<SubFunctor>(sub_f).template operator()<calculation_type, sym>(
-                        std::forward<SubArgs>(sub_args)...);
-                },
-                std::forward<Functor_>(f_), std::forward<Args_>(args_)...);
-        },
-        calculation_symmetry, std::forward<Functor>(f), std::forward<Args>(args)...);
-}
 
 template <class ModelType>
     requires(main_core::is_main_model_type_v<ModelType>)
@@ -323,14 +264,18 @@ class MainModelImpl {
         });
     }
 
-    template <solver_output_type SolverOutputType, typename MathSolverType, typename YBus, typename InputType,
-              typename PrepareInputFn, typename SolveFn>
+    template <typename MathSolverType, typename YBus, typename PrepareInputFn, typename SolveFn>
         requires std::invocable<std::remove_cvref_t<PrepareInputFn>, Idx /*n_math_solvers*/> &&
-                 std::invocable<std::remove_cvref_t<SolveFn>, MathSolverType&, YBus const&, InputType const&> &&
-                 std::same_as<std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>, std::vector<InputType>> &&
-                 std::same_as<std::invoke_result_t<SolveFn, MathSolverType&, YBus const&, InputType const&>,
-                              SolverOutputType>
-    std::vector<SolverOutputType> calculate_(PrepareInputFn&& prepare_input, SolveFn&& solve, Logger& logger) {
+                 std::ranges::range<std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>> &&
+                 std::invocable<
+                     std::remove_cvref_t<SolveFn>, MathSolverType&, YBus const&,
+                     typename std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>::const_reference> &&
+                 solver_output_type<std::invoke_result_t<
+                     SolveFn, MathSolverType&, YBus const&,
+                     typename std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>::const_reference>>
+    auto calculate_(PrepareInputFn&& prepare_input, SolveFn&& solve, Logger& logger) {
+        using InputType = typename std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>::const_reference;
+        using SolverOutputType = typename std::invoke_result_t<SolveFn, MathSolverType&, YBus const&, InputType>;
         using sym = typename SolverOutputType::sym;
 
         assert(construction_complete_);
@@ -357,85 +302,32 @@ class MainModelImpl {
         }();
     }
 
-    template <symmetry_tag sym> auto calculate_power_flow_(double err_tol, Idx max_iter, Logger& logger) {
-        return
-            [this, err_tol, max_iter, &logger](MainModelState const& state,
-                                               CalculationMethod calculation_method) -> std::vector<SolverOutput<sym>> {
-                return calculate_<SolverOutput<sym>, MathSolverProxy<sym>, YBus<sym>, PowerFlowInput<sym>>(
-                    [&state](Idx n_math_solvers) {
-                        return main_core::prepare_power_flow_input<sym>(state, n_math_solvers);
-                    },
-                    [err_tol, max_iter, calculation_method,
-                     &logger](MathSolverProxy<sym>& solver, YBus<sym> const& y_bus, PowerFlowInput<sym> const& input) {
-                        return solver.get().run_power_flow(input, err_tol, max_iter, logger, calculation_method, y_bus);
-                    },
-                    logger);
-            };
-    }
-
-    template <symmetry_tag sym> auto calculate_state_estimation_(double err_tol, Idx max_iter, Logger& logger) {
-        return
-            [this, err_tol, max_iter, &logger](MainModelState const& state,
-                                               CalculationMethod calculation_method) -> std::vector<SolverOutput<sym>> {
-                return calculate_<SolverOutput<sym>, MathSolverProxy<sym>, YBus<sym>, StateEstimationInput<sym>>(
-                    [&state](Idx n_math_solvers) {
-                        return main_core::prepare_state_estimation_input<sym>(state, n_math_solvers);
-                    },
-                    [err_tol, max_iter, calculation_method, &logger](
-                        MathSolverProxy<sym>& solver, YBus<sym> const& y_bus, StateEstimationInput<sym> const& input) {
-                        return solver.get().run_state_estimation(input, err_tol, max_iter, logger, calculation_method,
-                                                                 y_bus);
-                    },
-                    logger);
-            };
-    }
-
-    template <symmetry_tag sym>
-    auto calculate_short_circuit_(ShortCircuitVoltageScaling voltage_scaling, Logger& logger) {
-        return [this, voltage_scaling,
-                &logger](MainModelState const& state,
-                         CalculationMethod calculation_method) -> std::vector<ShortCircuitSolverOutput<sym>> {
-            (void)state; // to avoid unused-lambda-capture when in Release build
-            assert(&state == &state_);
-
-            return calculate_<ShortCircuitSolverOutput<sym>, MathSolverProxy<sym>, YBus<sym>, ShortCircuitInput>(
-                [this, voltage_scaling](Idx n_math_solvers) {
-                    assert(solvers_cache_status_.is_topology_valid());
-                    assert(solvers_cache_status_.template is_parameter_valid<sym>());
-                    return main_core::prepare_short_circuit_input<sym>(state_, state_.comp_coup, n_math_solvers,
-                                                                       voltage_scaling);
-                },
-                [calculation_method, &logger](MathSolverProxy<sym>& solver, YBus<sym> const& y_bus,
-                                              ShortCircuitInput const& input) {
-                    return solver.get().run_short_circuit(input, logger, calculation_method, y_bus);
-                },
-                logger);
-        };
-    }
-
     // Calculate with optimization, e.g., automatic tap changer
     template <calculation_type_tag calculation_type, symmetry_tag sym>
-    auto calculate(Options const& options, Logger& logger) {
-        auto const calculator = [this, &options, &logger] {
+    auto calculate_with_optimizer(Options const& options, Logger& logger) {
+        auto const get_calculator = [this, &options, &logger] {
+            using Calc = Calculator<calculation_type, sym>;
+
             assert(options.optimizer_type == OptimizerType::no_optimization ||
                    (std::derived_from<calculation_type, power_flow_t>));
-            if constexpr (std::derived_from<calculation_type, power_flow_t>) {
-                return calculate_power_flow_<sym>(options.err_tol, options.max_iter, logger);
-            } else if constexpr (std::derived_from<calculation_type, state_estimation_t>) {
-                return calculate_state_estimation_<sym>(options.err_tol, options.max_iter, logger);
-            } else if constexpr (std::derived_from<calculation_type, short_circuit_t>) {
-                return calculate_short_circuit_<sym>(options.short_circuit_voltage_scaling, logger);
-            } else {
-                throw UnreachableHit{"MainModelImpl::calculate", "Unknown calculation type"};
-            }
-        }();
+
+            return [this, &mutable_comp_coup = state_.comp_coup, &options,
+                    &logger](MainModelState const& state, CalculationMethod calculation_method) {
+                (void)state; // to avoid unused-lambda-capture when in Release build
+                assert(&state == &state_);
+
+                return calculate_<MathSolverProxy<sym>, YBus<sym>>(Calc::preparer(state, mutable_comp_coup, options),
+                                                                   Calc::solver(calculation_method, options, logger),
+                                                                   logger);
+            };
+        };
 
         SearchMethod const& search_method = options.optimizer_strategy == OptimizerStrategy::any
                                                 ? SearchMethod::linear_search
                                                 : SearchMethod::binary_search;
 
         return optimizer::get_optimizer<MainModelState, ConstDataset>(
-                   options.optimizer_type, options.optimizer_strategy, calculator,
+                   options.optimizer_type, options.optimizer_strategy, get_calculator(),
                    [this](ConstDataset const& update_data) {
                        this->update_components<permanent_update_t>(update_data);
                    },
@@ -466,7 +358,7 @@ class MainModelImpl {
             []<calculation_type_tag calculation_type, symmetry_tag sym>(
                 MainModelImpl& main_model_, Options const& options_, MutableDataset const& result_data_,
                 Logger& logger) {
-                auto const math_output = main_model_.calculate<calculation_type, sym>(options_, logger);
+                auto const math_output = main_model_.calculate_with_optimizer<calculation_type, sym>(options_, logger);
                 main_model_.output_result(math_output, result_data_, logger);
             },
             *this, options, result_data, logger);
