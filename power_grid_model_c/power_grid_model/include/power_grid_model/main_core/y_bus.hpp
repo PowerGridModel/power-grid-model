@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "math_state.hpp"
+
 #include "../common/common.hpp"
 
 namespace power_grid_model::main_core {
