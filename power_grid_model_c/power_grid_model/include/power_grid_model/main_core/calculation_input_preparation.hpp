@@ -4,11 +4,13 @@
 
 #pragma once
 
+#include "container_queries.hpp"
 #include "state.hpp"
 #include "y_bus.hpp"
 
 #include "../calculation_parameters.hpp"
 #include "../common/common.hpp"
+#include "../common/counting_iterator.hpp"
 #include "../common/enum.hpp"
 #include "../common/grouped_index_vector.hpp"
 #include "../common/three_phase_tensor.hpp"
@@ -22,6 +24,7 @@
 #include "../component/shunt.hpp"
 #include "../component/source.hpp"
 #include "../component/voltage_sensor.hpp"
+#include "../index_mapping.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -103,7 +106,7 @@ inline auto calculate_param(auto const& c, auto const&... extra_args)
  * 	    The default lambda `include_all` always returns `true`.
  */
 template <calculation_input_type CalcStructOut, typename CalcParamOut,
-          std::vector<CalcParamOut>(CalcStructOut::*comp_vect), class ComponentIn,
+          std::vector<CalcParamOut>(CalcStructOut::* comp_vect), class ComponentIn,
           std::invocable<Idx> PredicateIn = IncludeAll>
     requires std::convertible_to<std::invoke_result_t<PredicateIn, Idx>, bool>
 void prepare_input(main_model_state_c auto const& state, std::vector<Idx2D> const& components,
@@ -122,7 +125,7 @@ void prepare_input(main_model_state_c auto const& state, std::vector<Idx2D> cons
 }
 
 template <calculation_input_type CalcStructOut, typename CalcParamOut,
-          std::vector<CalcParamOut>(CalcStructOut::*comp_vect), class ComponentIn,
+          std::vector<CalcParamOut>(CalcStructOut::* comp_vect), class ComponentIn,
           std::invocable<Idx> PredicateIn = IncludeAll>
     requires std::convertible_to<std::invoke_result_t<PredicateIn, Idx>, bool>
 void prepare_input(main_model_state_c auto const& state, std::vector<Idx2D> const& components,
@@ -141,7 +144,7 @@ void prepare_input(main_model_state_c auto const& state, std::vector<Idx2D> cons
     }
 }
 
-template <symmetry_tag sym, class InputType, IntSVector(InputType::*component), class Component>
+template <symmetry_tag sym, class InputType, IntSVector(InputType::* component), class Component>
     requires std::same_as<InputType, PowerFlowInput<sym>> || std::same_as<InputType, StateEstimationInput<sym>>
 void prepare_input_status(main_model_state_c auto const& state, std::vector<Idx2D> const& objects,
                           std::vector<InputType>& input) {
@@ -277,7 +280,7 @@ std::vector<ShortCircuitInput> prepare_short_circuit_input(main_model_state_c au
     std::vector<IdxVector> topo_fault_indices(state.math_topology.size());
     std::vector<IdxVector> topo_bus_indices(state.math_topology.size());
 
-    for (Idx fault_idx{0}; fault_idx < state.components.template size<Fault>(); ++fault_idx) {
+    for (Idx const fault_idx : IdxRange{state.components.template size<Fault>()}) {
         auto const& fault = state.components.template get_item_by_seq<Fault>(fault_idx);
         if (fault.status()) {
             auto const node_idx = state.components.template get_seq<Node>(fault.get_fault_object());
@@ -294,11 +297,11 @@ std::vector<ShortCircuitInput> prepare_short_circuit_input(main_model_state_c au
                                          Idx2D{.group = isolated_component, .pos = not_connected});
     std::vector<ShortCircuitInput> sc_input(n_math_solvers);
 
-    for (Idx i = 0; i != n_math_solvers; ++i) {
+    for (Idx const i : IdxRange{n_math_solvers}) {
         auto map = build_dense_mapping(topo_bus_indices[i], state.math_topology[i]->n_bus());
 
-        for (Idx reordered_idx{0}; reordered_idx < static_cast<Idx>(map.reorder.size()); ++reordered_idx) {
-            fault_coup[topo_fault_indices[i][map.reorder[reordered_idx]]] = Idx2D{.group = i, .pos = reordered_idx};
+        for (auto&& [reordered_idx, original_idx] : enumerate(map.reorder)) {
+            fault_coup[topo_fault_indices[i][original_idx]] = Idx2D{.group = i, .pos = reordered_idx};
         }
 
         sc_input[i].fault_buses = {from_dense, std::move(map.indvector), state.math_topology[i]->n_bus()};

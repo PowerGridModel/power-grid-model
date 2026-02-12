@@ -711,7 +711,7 @@ def sample_output_data():
         pytest.param([CT.shunt], {}, id="list/set filter-No component in filter present in data"),
         pytest.param(
             [CT.node, CT.shunt],
-            {k: v for k, v in sample_output_data().items() if k in [CT.node]},
+            {k: v for k, v in sample_output_data().items() if k == CT.node},
             id="list/set filter-Component in filter not present in data",
         ),
         pytest.param(
