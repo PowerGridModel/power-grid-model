@@ -296,10 +296,9 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus, std::vector<B
     for (auto const& bus_info : neighbour_list) {
         total_edges += bus_info.direct_neighbours.size();
     }
-    Idx const avg_degree = std::max(
-        Idx{2}, static_cast<Idx>(std::min(
-                    total_edges / n_bus,
-                    static_cast<std::size_t>(std::numeric_limits<Idx>::max())))); // At least 2 to avoid edge cases
+    std::size_t const avg_degree_size_t = std::min(total_edges / static_cast<std::size_t>(n_bus),
+                                                   static_cast<std::size_t>(std::numeric_limits<Idx>::max()));
+    Idx const avg_degree = std::max(Idx{2}, static_cast<Idx>(avg_degree_size_t)); // At least 2 to avoid edge cases
 
     // Helper lambda to modify status and track changes for rollback
     auto modify_status = [&modifications](ConnectivityStatus& status_ref, ConnectivityStatus new_value) {
