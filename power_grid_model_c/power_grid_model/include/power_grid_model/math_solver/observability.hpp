@@ -325,8 +325,8 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus, std::vector<B
     // Iteration limit: visit all nodes plus some backtracking allowance
     // For a spanning tree, worst case is O(n * avg_degree) with backtracking
     // Calculate in wider type to prevent overflow, then clamp to Idx max
-    std::size_t const max_iter_unclamped = static_cast<std::size_t>(n_bus) * static_cast<std::size_t>(avg_degree) * 3u;
-    Idx const max_iterations =
+    auto const max_iter_unclamped = static_cast<std::size_t>(n_bus) * static_cast<std::size_t>(avg_degree) * 3u;
+    auto const max_iterations =
         static_cast<Idx>(std::min(max_iter_unclamped, static_cast<std::size_t>(std::numeric_limits<Idx>::max())));
 
     Idx iteration = 0;
@@ -566,7 +566,7 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus,
 }
 
 inline bool sufficient_condition_meshed_without_voltage_phasor(std::vector<BusNeighbourhoodInfo>& neighbour_list) {
-    auto const n_bus = static_cast<Idx>(neighbour_list.size());
+    Idx const n_bus = static_cast<Idx>(neighbour_list.size());
     std::vector<Idx> starting_candidates;
     prepare_starting_nodes(neighbour_list, n_bus, starting_candidates);
 
