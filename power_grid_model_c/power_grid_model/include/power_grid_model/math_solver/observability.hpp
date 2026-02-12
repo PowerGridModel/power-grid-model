@@ -413,23 +413,23 @@ inline bool process_edge(SpanningTreeContext& ctx, NeighbourType& neighbour, Con
 // Helper function: Try general connection rules
 inline bool try_general_connection_rules(SpanningTreeContext& ctx, bool& step_success,
                                          bool current_bus_no_measurement) {
+    using enum ConnectivityStatus;
     for (auto& neighbour : ctx.neighbour_list[ctx.current_bus].direct_neighbours) {
         if (ctx.visited[neighbour.bus] == std::to_underlying(BusVisited::Visited)) {
             continue;
         }
 
-        bool const neighbour_bus_has_no_measurement =
-            ctx.neighbour_list[neighbour.bus].status == ConnectivityStatus::has_no_measurement;
+        bool const neighbour_bus_has_no_measurement = ctx.neighbour_list[neighbour.bus].status == has_no_measurement;
 
         if (!current_bus_no_measurement && neighbour_bus_has_no_measurement) {
             // Case: current has measurement, neighbour empty (not in downwind mode)
-            return process_edge(ctx, neighbour, ConnectivityStatus::branch_discovered_with_from_node_sensor,
-                                ConnectivityStatus::branch_discovered_with_to_node_sensor, true, step_success);
+            return process_edge(ctx, neighbour, branch_discovered_with_from_node_sensor,
+                                branch_discovered_with_to_node_sensor, true, step_success);
         }
         if (!neighbour_bus_has_no_measurement) {
             // Case: neighbour has measurement
-            return process_edge(ctx, neighbour, ConnectivityStatus::branch_discovered_with_from_node_sensor,
-                                ConnectivityStatus::branch_discovered_with_to_node_sensor, false, step_success);
+            return process_edge(ctx, neighbour, branch_discovered_with_from_node_sensor,
+                                branch_discovered_with_to_node_sensor, false, step_success);
         }
     }
     return false;
@@ -532,7 +532,7 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus, std::vector<B
                             visited_count,  current_bus,   downwind};
 
     // Iteration limit: visit all nodes plus some backtracking allowance
-    std::size_t const max_iter_unclamped = static_cast<std::size_t>(n_bus) * static_cast<std::size_t>(avg_degree) * 3u;
+    auto const max_iter_unclamped = static_cast<std::size_t>(n_bus) * static_cast<std::size_t>(avg_degree) * 3u;
     Idx const max_iterations =
         static_cast<Idx>(std::min(max_iter_unclamped, static_cast<std::size_t>(std::numeric_limits<Idx>::max())));
 
@@ -541,11 +541,10 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus, std::vector<B
         ++iteration;
         bool step_success = false;
 
-        bool const current_bus_no_measurement =
-            neighbour_list[current_bus].status == ConnectivityStatus::has_no_measurement;
-
         // Try different strategies in priority order
-        if (!try_native_edge_measurements(ctx, step_success) &&
+        if (bool const current_bus_no_measurement =
+                neighbour_list[current_bus].status == ConnectivityStatus::has_no_measurement;
+            !try_native_edge_measurements(ctx, step_success) &&
             !try_downwind_measurement(ctx, step_success, current_bus_no_measurement) &&
             !try_general_connection_rules(ctx, step_success, current_bus_no_measurement)) {
             try_backtrack(ctx, step_success);
@@ -574,7 +573,7 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus,
 }
 
 inline bool sufficient_condition_meshed_without_voltage_phasor(std::vector<BusNeighbourhoodInfo>& neighbour_list) {
-    Idx const n_bus = static_cast<Idx>(neighbour_list.size());
+    auto const n_bus = static_cast<Idx>(neighbour_list.size());
     std::vector<Idx> starting_candidates;
     prepare_starting_nodes(neighbour_list, n_bus, starting_candidates);
 
