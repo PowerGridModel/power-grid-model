@@ -297,7 +297,7 @@ struct SpanningTreeContext {
     bool* downwind;
 
     // Helper to modify status and track changes for rollback
-    void modify_status(ConnectivityStatus& status_ref, ConnectivityStatus new_value) {
+    void modify_status(ConnectivityStatus& status_ref, ConnectivityStatus new_value) const {
         if (status_ref != new_value) {
             modifications->push_back({&status_ref, status_ref});
             status_ref = new_value;
