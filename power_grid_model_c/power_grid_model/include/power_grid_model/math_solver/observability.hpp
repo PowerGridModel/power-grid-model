@@ -288,18 +288,18 @@ struct StatusModification {
 
 // Context struct to hold shared state during spanning tree search
 struct SpanningTreeContext {
-    std::vector<BusNeighbourhoodInfo>& neighbour_list;
-    std::vector<StatusModification>& modifications;
-    std::vector<std::uint8_t>& visited;
-    std::vector<std::pair<Idx, Idx>>& edge_track;
-    Idx& visited_count;
-    Idx& current_bus;
-    bool& downwind;
+    std::vector<BusNeighbourhoodInfo>* neighbour_list;
+    std::vector<StatusModification>* modifications;
+    std::vector<std::uint8_t>* visited;
+    std::vector<std::pair<Idx, Idx>>* edge_track;
+    Idx* visited_count;
+    Idx* current_bus;
+    bool* downwind;
 
     // Helper to modify status and track changes for rollback
     void modify_status(ConnectivityStatus& status_ref, ConnectivityStatus new_value) {
         if (status_ref != new_value) {
-            modifications.push_back({&status_ref, status_ref});
+            modifications->push_back({&status_ref, status_ref});
             status_ref = new_value;
         }
     }
@@ -307,30 +307,30 @@ struct SpanningTreeContext {
 
 // Helper function: Try to traverse edges with native measurements
 inline bool try_native_edge_measurements(SpanningTreeContext& ctx, bool& step_success) {
-    if (ctx.visited[ctx.current_bus] == std::to_underlying(BusVisited::NotVisited)) {
-        ctx.visited[ctx.current_bus] = std::to_underlying(BusVisited::Visited);
-        ++ctx.visited_count;
+    if ((*ctx.visited)[*ctx.current_bus] == std::to_underlying(BusVisited::NotVisited)) {
+        (*ctx.visited)[*ctx.current_bus] = std::to_underlying(BusVisited::Visited);
+        ++(*ctx.visited_count);
     }
-    for (auto& neighbour : ctx.neighbour_list[ctx.current_bus].direct_neighbours) {
+    for (auto& neighbour : (*ctx.neighbour_list)[*ctx.current_bus].direct_neighbours) {
         if (neighbour.status == ConnectivityStatus::branch_native_measurement_unused &&
-            ctx.visited[neighbour.bus] == std::to_underlying(BusVisited::NotVisited)) {
+            (*ctx.visited)[neighbour.bus] == std::to_underlying(BusVisited::NotVisited)) {
             // Mark edge as discovered and neighbour as visited
-            ctx.edge_track.emplace_back(ctx.current_bus, neighbour.bus);
-            ctx.visited[neighbour.bus] = std::to_underlying(BusVisited::Visited);
-            ++ctx.visited_count;
+            ctx.edge_track->emplace_back(*ctx.current_bus, neighbour.bus);
+            (*ctx.visited)[neighbour.bus] = std::to_underlying(BusVisited::Visited);
+            ++(*ctx.visited_count);
 
             // Update status to branch_native_measurement_consumed
             ctx.modify_status(neighbour.status, ConnectivityStatus::branch_native_measurement_consumed);
             // Update reverse connection
-            for (auto& reverse_neighbour : ctx.neighbour_list[neighbour.bus].direct_neighbours) {
-                if (reverse_neighbour.bus == ctx.current_bus) {
+            for (auto& reverse_neighbour : (*ctx.neighbour_list)[neighbour.bus].direct_neighbours) {
+                if (reverse_neighbour.bus == *ctx.current_bus) {
                     ctx.modify_status(reverse_neighbour.status, ConnectivityStatus::branch_native_measurement_consumed);
                     break;
                 }
             }
 
-            ctx.downwind = true; // set downwind
-            ctx.current_bus = neighbour.bus;
+            *ctx.downwind = true; // set downwind
+            *ctx.current_bus = neighbour.bus;
             step_success = true;
             return true;
         }
@@ -340,23 +340,23 @@ inline bool try_native_edge_measurements(SpanningTreeContext& ctx, bool& step_su
 
 // Helper function: Try to use downwind measurement
 inline bool try_downwind_measurement(SpanningTreeContext& ctx, bool& step_success, bool current_bus_no_measurement) {
-    if (!current_bus_no_measurement && ctx.downwind) {
-        for (auto& neighbour : ctx.neighbour_list[ctx.current_bus].direct_neighbours) {
+    if (!current_bus_no_measurement && *ctx.downwind) {
+        for (auto& neighbour : (*ctx.neighbour_list)[*ctx.current_bus].direct_neighbours) {
             if (neighbour.status == ConnectivityStatus::has_no_measurement &&
-                ctx.visited[neighbour.bus] == std::to_underlying(BusVisited::NotVisited)) {
-                ctx.edge_track.emplace_back(ctx.current_bus, neighbour.bus);
-                if (ctx.visited[ctx.current_bus] == std::to_underlying(BusVisited::NotVisited)) {
-                    ctx.visited[ctx.current_bus] = std::to_underlying(BusVisited::Visited);
-                    ++ctx.visited_count;
+                (*ctx.visited)[neighbour.bus] == std::to_underlying(BusVisited::NotVisited)) {
+                ctx.edge_track->emplace_back(*ctx.current_bus, neighbour.bus);
+                if ((*ctx.visited)[*ctx.current_bus] == std::to_underlying(BusVisited::NotVisited)) {
+                    (*ctx.visited)[*ctx.current_bus] = std::to_underlying(BusVisited::Visited);
+                    ++(*ctx.visited_count);
                 }
-                ctx.visited[neighbour.bus] = std::to_underlying(BusVisited::Visited);
-                ++ctx.visited_count;
+                (*ctx.visited)[neighbour.bus] = std::to_underlying(BusVisited::Visited);
+                ++(*ctx.visited_count);
 
                 // Update status to branch_discovered_with_from_node_sensor
                 ctx.modify_status(neighbour.status, ConnectivityStatus::branch_discovered_with_from_node_sensor);
                 // Update reverse connection
-                for (auto& reverse_neighbour : ctx.neighbour_list[neighbour.bus].direct_neighbours) {
-                    if (reverse_neighbour.bus == ctx.current_bus) {
+                for (auto& reverse_neighbour : (*ctx.neighbour_list)[neighbour.bus].direct_neighbours) {
+                    if (reverse_neighbour.bus == *ctx.current_bus) {
                         ctx.modify_status(reverse_neighbour.status,
                                           ConnectivityStatus::branch_discovered_with_to_node_sensor);
                         break;
@@ -364,8 +364,9 @@ inline bool try_downwind_measurement(SpanningTreeContext& ctx, bool& step_succes
                 }
 
                 // Use current node's measurement
-                ctx.modify_status(ctx.neighbour_list[ctx.current_bus].status, ConnectivityStatus::has_no_measurement);
-                ctx.current_bus = neighbour.bus;
+                ctx.modify_status((*ctx.neighbour_list)[*ctx.current_bus].status,
+                                  ConnectivityStatus::has_no_measurement);
+                *ctx.current_bus = neighbour.bus;
                 step_success = true;
                 return true;
             }
@@ -378,21 +379,21 @@ inline bool try_downwind_measurement(SpanningTreeContext& ctx, bool& step_succes
 template <typename NeighbourType>
 inline bool process_edge(SpanningTreeContext& ctx, NeighbourType& neighbour, ConnectivityStatus neighbour_status,
                          ConnectivityStatus reverse_status, bool use_current_node, bool& step_success) {
-    ctx.edge_track.emplace_back(ctx.current_bus, neighbour.bus);
-    if (ctx.visited[ctx.current_bus] == std::to_underlying(BusVisited::NotVisited)) {
-        ctx.visited[ctx.current_bus] = std::to_underlying(BusVisited::Visited);
-        ++ctx.visited_count;
+    ctx.edge_track->emplace_back(*ctx.current_bus, neighbour.bus);
+    if ((*ctx.visited)[*ctx.current_bus] == std::to_underlying(BusVisited::NotVisited)) {
+        (*ctx.visited)[*ctx.current_bus] = std::to_underlying(BusVisited::Visited);
+        ++(*ctx.visited_count);
     }
-    if (ctx.visited[neighbour.bus] == std::to_underlying(BusVisited::NotVisited)) {
-        ctx.visited[neighbour.bus] = std::to_underlying(BusVisited::Visited);
-        ++ctx.visited_count;
+    if ((*ctx.visited)[neighbour.bus] == std::to_underlying(BusVisited::NotVisited)) {
+        (*ctx.visited)[neighbour.bus] = std::to_underlying(BusVisited::Visited);
+        ++(*ctx.visited_count);
     }
 
     // Update neighbour status
     ctx.modify_status(neighbour.status, neighbour_status);
     // Update reverse connection
-    for (auto& reverse_neighbour : ctx.neighbour_list[neighbour.bus].direct_neighbours) {
-        if (reverse_neighbour.bus == ctx.current_bus) {
+    for (auto& reverse_neighbour : (*ctx.neighbour_list)[neighbour.bus].direct_neighbours) {
+        if (reverse_neighbour.bus == *ctx.current_bus) {
             ctx.modify_status(reverse_neighbour.status, reverse_status);
             break;
         }
@@ -400,12 +401,12 @@ inline bool process_edge(SpanningTreeContext& ctx, NeighbourType& neighbour, Con
 
     // Use measurement from appropriate node
     if (use_current_node) {
-        ctx.modify_status(ctx.neighbour_list[ctx.current_bus].status, ConnectivityStatus::has_no_measurement);
+        ctx.modify_status((*ctx.neighbour_list)[*ctx.current_bus].status, ConnectivityStatus::has_no_measurement);
     } else {
-        ctx.modify_status(ctx.neighbour_list[neighbour.bus].status, ConnectivityStatus::has_no_measurement);
+        ctx.modify_status((*ctx.neighbour_list)[neighbour.bus].status, ConnectivityStatus::has_no_measurement);
     }
 
-    ctx.current_bus = neighbour.bus;
+    *ctx.current_bus = neighbour.bus;
     step_success = true;
     return true;
 }
@@ -414,12 +415,12 @@ inline bool process_edge(SpanningTreeContext& ctx, NeighbourType& neighbour, Con
 inline bool try_general_connection_rules(SpanningTreeContext& ctx, bool& step_success,
                                          bool current_bus_no_measurement) {
     using enum ConnectivityStatus;
-    for (auto& neighbour : ctx.neighbour_list[ctx.current_bus].direct_neighbours) {
-        if (ctx.visited[neighbour.bus] == std::to_underlying(BusVisited::Visited)) {
+    for (auto& neighbour : (*ctx.neighbour_list)[*ctx.current_bus].direct_neighbours) {
+        if ((*ctx.visited)[neighbour.bus] == std::to_underlying(BusVisited::Visited)) {
             continue;
         }
 
-        bool const neighbour_bus_has_no_measurement = ctx.neighbour_list[neighbour.bus].status == has_no_measurement;
+        bool const neighbour_bus_has_no_measurement = (*ctx.neighbour_list)[neighbour.bus].status == has_no_measurement;
 
         if (!current_bus_no_measurement && neighbour_bus_has_no_measurement) {
             // Case: current has measurement, neighbour empty (not in downwind mode)
@@ -438,24 +439,23 @@ inline bool try_general_connection_rules(SpanningTreeContext& ctx, bool& step_su
 // Helper function: Reassign nodal measurement between two connected nodes
 inline void reassign_nodal_measurement(SpanningTreeContext& ctx, Idx from_node, Idx to_node) {
     // no reassignment possible if reached via edge measurement
-    auto const branch_it = std::ranges::find_if(
-        ctx.neighbour_list[from_node].direct_neighbours,
-        [to_node](BusNeighbourhoodInfo::neighbour const& neighbour) { return neighbour.bus == to_node; });
-
-    if (branch_it != ctx.neighbour_list[from_node].direct_neighbours.end() &&
+    if (auto const branch_it = std::ranges::find_if(
+            (*ctx.neighbour_list)[from_node].direct_neighbours,
+            [to_node](BusNeighbourhoodInfo::neighbour const& neighbour) { return neighbour.bus == to_node; });
+        branch_it != (*ctx.neighbour_list)[from_node].direct_neighbours.end() &&
         branch_it->status == ConnectivityStatus::branch_native_measurement_consumed) {
         return;
     }
 
     // Restore measurement at to_node
-    ctx.modify_status(ctx.neighbour_list[to_node].status, ConnectivityStatus::node_measured);
+    ctx.modify_status((*ctx.neighbour_list)[to_node].status, ConnectivityStatus::node_measured);
 
     // Use measurement at from_node
-    ctx.modify_status(ctx.neighbour_list[from_node].status, ConnectivityStatus::has_no_measurement);
+    ctx.modify_status((*ctx.neighbour_list)[from_node].status, ConnectivityStatus::has_no_measurement);
 
     // Update connection statuses between the two nodes
     // Find and update the connection from from_node to to_node
-    for (auto& neighbour : ctx.neighbour_list[from_node].direct_neighbours) {
+    for (auto& neighbour : (*ctx.neighbour_list)[from_node].direct_neighbours) {
         if (neighbour.bus == to_node) {
             // Change to upstream connection (from to_node to from_node perspective)
             ctx.modify_status(neighbour.status, ConnectivityStatus::branch_discovered_with_to_node_sensor);
@@ -464,7 +464,7 @@ inline void reassign_nodal_measurement(SpanningTreeContext& ctx, Idx from_node, 
     }
 
     // Find and update the reverse connection from to_node to from_node
-    for (auto& neighbour : ctx.neighbour_list[to_node].direct_neighbours) {
+    for (auto& neighbour : (*ctx.neighbour_list)[to_node].direct_neighbours) {
         if (neighbour.bus == from_node) {
             // Change from from_node to to_node perspective
             ctx.modify_status(neighbour.status, ConnectivityStatus::branch_discovered_with_from_node_sensor);
@@ -475,14 +475,14 @@ inline void reassign_nodal_measurement(SpanningTreeContext& ctx, Idx from_node, 
 
 // Helper function: Try backtracking
 inline bool try_backtrack(SpanningTreeContext& ctx, bool& step_success) {
-    if (!ctx.edge_track.empty()) {
+    if (!ctx.edge_track->empty()) {
         // Simple backtracking - go back along the last edge
-        auto const [last_edge_from, last_edge_to] = ctx.edge_track.back();
-        ctx.edge_track.pop_back();
+        auto const [last_edge_from, last_edge_to] = ctx.edge_track->back();
+        ctx.edge_track->pop_back();
 
         Idx backtrack_to_bus;
         // Determine which node to backtrack to
-        if (last_edge_from == ctx.current_bus) {
+        if (last_edge_from == *ctx.current_bus) {
             backtrack_to_bus = last_edge_to;
         } else {
             // Find connected node
@@ -490,12 +490,12 @@ inline bool try_backtrack(SpanningTreeContext& ctx, bool& step_success) {
         }
 
         // Consider reassignment if needed (downwind and current node still has measurement unused)
-        if (ctx.downwind && ctx.neighbour_list[ctx.current_bus].status == ConnectivityStatus::node_measured) {
+        if (*ctx.downwind && (*ctx.neighbour_list)[*ctx.current_bus].status == ConnectivityStatus::node_measured) {
             // Reassign measurement from current node to the node we're backtracking to
-            reassign_nodal_measurement(ctx, ctx.current_bus, backtrack_to_bus);
+            reassign_nodal_measurement(ctx, *ctx.current_bus, backtrack_to_bus);
         }
 
-        ctx.current_bus = backtrack_to_bus;
+        *ctx.current_bus = backtrack_to_bus;
         step_success = true; // We made progress by backtracking
         return true;
     }
@@ -529,8 +529,8 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus, std::vector<B
     Idx current_bus = start_bus;
 
     // Build context for helper functions
-    SpanningTreeContext ctx{neighbour_list, modifications, visited_buffer, edge_track_buffer,
-                            visited_count,  current_bus,   downwind};
+    SpanningTreeContext ctx{&neighbour_list, &modifications, &visited_buffer, &edge_track_buffer,
+                            &visited_count,  &current_bus,   &downwind};
 
     // Iteration limit: visit all nodes plus some backtracking allowance
     auto const max_iter_unclamped = static_cast<std::size_t>(n_bus) * static_cast<std::size_t>(avg_degree) * 3u;
