@@ -106,7 +106,7 @@ inline auto calculate_param(auto const& c, auto const&... extra_args)
  * 	    The default lambda `include_all` always returns `true`.
  */
 template <calculation_input_type CalcStructOut, typename CalcParamOut,
-          std::vector<CalcParamOut>(CalcStructOut::* comp_vect), class ComponentIn,
+          std::vector<CalcParamOut>(CalcStructOut::*comp_vect), class ComponentIn,
           std::invocable<Idx> PredicateIn = IncludeAll>
     requires std::convertible_to<std::invoke_result_t<PredicateIn, Idx>, bool>
 void prepare_input(main_model_state_c auto const& state, std::vector<Idx2D> const& components,
@@ -125,7 +125,7 @@ void prepare_input(main_model_state_c auto const& state, std::vector<Idx2D> cons
 }
 
 template <calculation_input_type CalcStructOut, typename CalcParamOut,
-          std::vector<CalcParamOut>(CalcStructOut::* comp_vect), class ComponentIn,
+          std::vector<CalcParamOut>(CalcStructOut::*comp_vect), class ComponentIn,
           std::invocable<Idx> PredicateIn = IncludeAll>
     requires std::convertible_to<std::invoke_result_t<PredicateIn, Idx>, bool>
 void prepare_input(main_model_state_c auto const& state, std::vector<Idx2D> const& components,
@@ -144,7 +144,7 @@ void prepare_input(main_model_state_c auto const& state, std::vector<Idx2D> cons
     }
 }
 
-template <symmetry_tag sym, class InputType, IntSVector(InputType::* component), class Component>
+template <symmetry_tag sym, class InputType, IntSVector(InputType::*component), class Component>
     requires std::same_as<InputType, PowerFlowInput<sym>> || std::same_as<InputType, StateEstimationInput<sym>>
 void prepare_input_status(main_model_state_c auto const& state, std::vector<Idx2D> const& objects,
                           std::vector<InputType>& input) {
