@@ -4,9 +4,19 @@
 
 #pragma once
 
-#include "math_state.hpp"
-
+#include "../calculation_parameters.hpp"
 #include "../common/common.hpp"
+#include "../component/branch.hpp"
+#include "../component/branch3.hpp"
+#include "../component/component.hpp"
+#include "../math_solver/y_bus.hpp"
+#include "container_queries.hpp"
+#include "math_state.hpp"
+#include "state.hpp"
+
+#include <concepts>
+#include <cstddef>
+#include <vector>
 
 namespace power_grid_model::main_core {
 constexpr Idx isolated_component{-1};

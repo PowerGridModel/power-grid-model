@@ -4,16 +4,24 @@
 
 #pragma once
 
-#include "topology.hpp"
-
-#include "common/common.hpp"
-
-#include "math_solver/math_solver_dispatch.hpp"
-
-#include "main_core/main_model_type.hpp"
-#include "main_core/math_state.hpp"
 #include "main_core/topology.hpp"
 #include "main_core/y_bus.hpp"
+#include "math_solver/math_solver_dispatch.hpp"
+#include "topology.hpp"
+
+#include "calculation_parameters.hpp"
+#include "common/common.hpp"
+#include "common/exception.hpp"
+#include "component/component.hpp"
+#include "component/load_gen.hpp"
+#include "component/source.hpp"
+#include "main_core/main_model_type.hpp"
+#include "main_core/math_state.hpp"
+
+#include <algorithm>
+#include <cassert>
+#include <unordered_map>
+#include <vector>
 
 namespace power_grid_model {
 struct SolverPreparationContext {

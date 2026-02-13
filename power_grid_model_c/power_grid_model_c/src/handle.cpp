@@ -3,15 +3,15 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #define PGM_DLL_EXPORTS
-#include "forward_declarations.hpp"
 
 #include "power_grid_model_c/handle.h"
+#include "power_grid_model_c/basics.h"
 
 #include "handle.hpp"
 #include "input_sanitization.hpp"
 
 #include <algorithm>
-#include <type_traits>
+#include <iterator>
 
 namespace {
 using namespace power_grid_model;

@@ -9,9 +9,28 @@
 #include "y_bus.hpp"
 
 #include "../calculation_parameters.hpp"
+#include "../common/common.hpp"
+#include "../common/counting_iterator.hpp"
+#include "../common/enum.hpp"
+#include "../common/grouped_index_vector.hpp"
+#include "../common/three_phase_tensor.hpp"
+#include "../common/typing.hpp"
+#include "../component/component.hpp"
+#include "../component/current_sensor.hpp"
+#include "../component/fault.hpp"
+#include "../component/load_gen.hpp"
+#include "../component/node.hpp"
+#include "../component/power_sensor.hpp"
+#include "../component/shunt.hpp"
+#include "../component/source.hpp"
+#include "../component/voltage_sensor.hpp"
 #include "../index_mapping.hpp"
 
+#include <algorithm>
+#include <cassert>
 #include <concepts>
+#include <type_traits>
+#include <utility>
 #include <vector>
 
 namespace power_grid_model::main_core {

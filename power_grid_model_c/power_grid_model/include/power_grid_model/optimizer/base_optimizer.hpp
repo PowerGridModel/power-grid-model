@@ -4,9 +4,14 @@
 
 #pragma once
 
+#include "../calculation_parameters.hpp"
+#include "../common/enum.hpp"
 #include "../main_core/state.hpp"
 
 #include <concepts>
+#include <memory>
+#include <type_traits>
+#include <vector>
 
 namespace power_grid_model::optimizer {
 

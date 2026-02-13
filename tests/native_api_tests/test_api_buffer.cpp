@@ -2,21 +2,17 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include <power_grid_model_cpp/basics.hpp>
 #include <power_grid_model_cpp/buffer.hpp>
 #include <power_grid_model_cpp/meta_data.hpp>
 #include <power_grid_model_cpp/utils.hpp>
 
-#include <power_grid_model_c/dataset_definitions.h>
-
 #include <doctest/doctest.h>
 
-#include <algorithm>
 #include <array>
 #include <cmath>
-#include <exception>
-#include <limits>
-#include <ranges>
-#include <string>
+#include <concepts>
+#include <vector>
 
 namespace power_grid_model_cpp {
 namespace {

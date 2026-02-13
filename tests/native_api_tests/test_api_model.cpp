@@ -4,22 +4,30 @@
 
 #include "load_dataset.hpp"
 
-#include "power_grid_model_cpp.hpp"
+#include <power_grid_model_cpp/basics.hpp>
+#include <power_grid_model_cpp/buffer.hpp>
+#include <power_grid_model_cpp/dataset.hpp>
+#include <power_grid_model_cpp/handle.hpp>
+#include <power_grid_model_cpp/model.hpp>
+#include <power_grid_model_cpp/options.hpp>
 
+#include <power_grid_model_c/basics.h>
 #include <power_grid_model_c/dataset_definitions.h>
 
 #include <doctest/doctest.h>
 
 #include <algorithm>
 #include <array>
-#include <exception>
-#include <limits>
+#include <cstdint>
+#include <exception> // NOLINT(misc-include-cleaner)
 #include <map>
 #include <string>
+#include <string_view>
 #include <utility>
+#include <vector>
 
 /*
-Testing network
+Testing network-
 
 source_1 -- node_0 |---- line_5 ----| node_4
               |    |---- line_6 ----|
@@ -119,7 +127,7 @@ auto const complete_state_json = R"json({
       {"id": 6, "from_node": 4, "to_node": 0, "from_status": 0, "to_status": 0}
     ]
   }
-})json"s;
+})json"s; // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
 
 auto const single_update_json = R"json({
   "version": "1.0",
@@ -138,7 +146,7 @@ auto const single_update_json = R"json({
       {"id": 6, "from_status": 0, "to_status": 0}
     ]
   }
-})json"s;
+})json"s; // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
 
 auto const batch_update_json = R"json({
   "version": "1.0",
@@ -168,7 +176,7 @@ auto const batch_update_json = R"json({
       ]
     }
   ]
-})json"s;
+})json"s; // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
 } // namespace
 
 TEST_CASE("API Model") {

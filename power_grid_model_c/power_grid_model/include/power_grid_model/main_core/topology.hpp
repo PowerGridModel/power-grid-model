@@ -4,9 +4,28 @@
 
 #pragma once
 
+#include "core_utils.hpp"
+
+#include "../calculation_parameters.hpp"
+#include "../common/enum.hpp"
+#include "../common/exception.hpp"
+#include "../component/base.hpp"
+#include "../component/branch.hpp"
+#include "../component/branch3.hpp"
+#include "../component/current_sensor.hpp"
+#include "../component/load_gen.hpp"
+#include "../component/node.hpp"
+#include "../component/power_sensor.hpp"
+#include "../component/regulator.hpp"
+#include "../component/shunt.hpp"
+#include "../component/source.hpp"
+#include "../component/voltage_sensor.hpp"
+#include "../container_fwd.hpp"
 #include "container_queries.hpp"
 
-#include "../all_components.hpp"
+#include <concepts>
+#include <type_traits>
+#include <vector>
 
 namespace power_grid_model::main_core {
 

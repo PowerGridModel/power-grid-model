@@ -4,11 +4,15 @@
 
 #include <power_grid_model/sparse_ordering.hpp>
 
+#include <power_grid_model/common/common.hpp>
+
 #include <doctest/doctest.h>
 
 #include <chrono>
 #include <iostream>
-#include <sstream>
+#include <map>
+#include <utility>
+#include <vector>
 
 namespace {
 using power_grid_model::Idx;

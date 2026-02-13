@@ -9,9 +9,20 @@
 #include "../common/three_phase_tensor.hpp"
 #include "../common/typing.hpp"
 
-#include <memory>
+#include <Eigen/Core>
+
+#include <algorithm>
+#include <cassert>
+#include <cmath>
+#include <concepts>
+#include <cstdint>
+#include <iterator>
+#include <limits>
 #include <optional>
 #include <span>
+#include <type_traits>
+#include <utility>
+#include <vector>
 
 namespace power_grid_model::math_solver {
 

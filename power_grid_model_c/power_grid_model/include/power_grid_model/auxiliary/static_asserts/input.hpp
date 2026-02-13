@@ -9,7 +9,11 @@
 
 #include "../input.hpp" // NOLINT
 
+#include "../../common/common.hpp"
+
+#include <concepts>
 #include <cstddef>
+#include <type_traits>
 
 namespace power_grid_model::test {
 

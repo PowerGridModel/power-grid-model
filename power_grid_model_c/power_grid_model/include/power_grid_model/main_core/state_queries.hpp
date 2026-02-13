@@ -4,9 +4,18 @@
 
 #pragma once
 
+#include "../common/common.hpp"
+#include "../common/enum.hpp"
 #include "state.hpp"
 
-#include "../all_components.hpp"
+#include "../component/branch.hpp"
+#include "../component/branch3.hpp"
+#include "../component/node.hpp"
+#include "../component/regulator.hpp"
+#include "../component/transformer_utils.hpp"
+
+#include <cassert>
+#include <concepts>
 
 namespace power_grid_model::main_core {
 template <std::derived_from<Branch> ComponentType, class ComponentContainer>

@@ -2,9 +2,11 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "test_math_solver_pf.hpp"
+#include "test_math_solver_pf.hpp" // NOLINT(misc-include-cleaner)
 
 #include <power_grid_model/math_solver/linear_pf_solver.hpp>
+
+#include <power_grid_model/common/common.hpp>
 
 #include <doctest/doctest.h>
 

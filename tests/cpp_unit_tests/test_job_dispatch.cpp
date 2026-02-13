@@ -2,22 +2,29 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include <power_grid_model/batch_parameter.hpp>
-#include <power_grid_model/common/common.hpp>
-#include <power_grid_model/common/dummy_logging.hpp>
-#include <power_grid_model/common/exception.hpp>
-#include <power_grid_model/common/multi_threaded_logging.hpp>
 #include <power_grid_model/job_dispatch.hpp>
 #include <power_grid_model/job_interface.hpp>
+
+#include <power_grid_model/batch_parameter.hpp>
+#include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/exception.hpp>
+#include <power_grid_model/common/logging.hpp>
+#include <power_grid_model/common/multi_threaded_logging.hpp>
 #include <power_grid_model/main_core/core_utils.hpp>
 
 #include <doctest/doctest.h>
 
 #include <algorithm>
 #include <atomic>
+#include <memory>
 #include <mutex>
 #include <ranges>
-#include <variant>
+#include <stdexcept>
+#include <string>
+#include <thread>
+#include <type_traits>
+#include <utility>
+#include <vector>
 
 namespace power_grid_model {
 namespace {
@@ -413,7 +420,8 @@ TEST_CASE("Test job dispatch logic") {
                     } catch (BatchCalculationError const& e) {
                         using namespace std::string_literals;
                         REQUIRE(e.err_msgs().size() == 2);
-                        CHECK(e.err_msgs() == std::vector{"Error in scenario 0"s, "Error in scenario 3"s});
+                        CHECK(e.err_msgs() == std::vector{"Error in scenario 0"s,   // NOLINT(misc-include-cleaner)
+                                                          "Error in scenario 3"s}); // NOLINT(misc-include-cleaner)
                         REQUIRE(e.failed_scenarios().size() == 2);
                         CHECK(e.failed_scenarios() == std::vector{Idx{0}, Idx{3}});
                         throw;

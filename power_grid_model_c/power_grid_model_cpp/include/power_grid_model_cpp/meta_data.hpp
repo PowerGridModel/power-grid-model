@@ -9,7 +9,11 @@
 #include "basics.hpp"
 #include "handle.hpp"
 
+#include "power_grid_model_c/basics.h"
 #include "power_grid_model_c/meta_data.h"
+
+#include <cstddef>
+#include <string>
 
 namespace power_grid_model_cpp {
 class MetaData {

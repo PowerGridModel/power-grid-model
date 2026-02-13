@@ -2,12 +2,21 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include "power_grid_model_cpp.hpp"
+#include <power_grid_model_cpp/basics.hpp>
+#include <power_grid_model_cpp/buffer.hpp>
+#include <power_grid_model_cpp/dataset.hpp>
+#include <power_grid_model_cpp/handle.hpp>
+#include <power_grid_model_cpp/model.hpp>
+#include <power_grid_model_cpp/serialization.hpp>
 
+#include <power_grid_model_c/basics.h>
 #include <power_grid_model_c/dataset_definitions.h>
+
+#include <nlohmann/json_fwd.hpp>
 
 #include <doctest/doctest.h>
 
+// NOLINTBEGIN(misc-include-cleaner)
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable : 4702) // Contains potentially unreachable code
@@ -16,10 +25,15 @@
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif // _MSC_VER
+// NOLINTEND(misc-include-cleaner)
 
+#include <algorithm>
 #include <cmath>
+#include <cstddef>
+#include <cstdint>
 #include <limits>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace power_grid_model_cpp {
@@ -91,7 +105,8 @@ TEST_CASE("API Serialization and Deserialization") {
                 msgpack_serializer.get_to_binary_buffer(0, msgpack_data);
                 auto const* const char_start = reinterpret_cast<unsigned char const*>(msgpack_data.data());
                 auto const* const char_end = char_start + msgpack_data.size();
-                auto const json_document = nlohmann::ordered_json::from_msgpack(char_start, char_end);
+                auto const json_document =
+                    nlohmann::ordered_json::from_msgpack(char_start, char_end); // NOLINT(misc-include-cleaner)
                 auto const json_result = json_document.dump(-1);
                 CHECK(json_result == json_data);
             }
@@ -113,7 +128,7 @@ TEST_CASE("API Serialization and Deserialization") {
 
     SUBCASE("Deserializer") {
         // msgpack data
-        auto const json_document = nlohmann::json::parse(json_data);
+        auto const json_document = nlohmann::json::parse(json_data); // NOLINT(misc-include-cleaner)
         std::vector<char> msgpack_data;
 
         nlohmann::json::to_msgpack(json_document, msgpack_data);
@@ -125,12 +140,15 @@ TEST_CASE("API Serialization and Deserialization") {
         Deserializer msgpack_deserializer{msgpack_data, 1};
 
         auto check_metadata = [&](DatasetInfo const& info) {
-            CHECK(info.name() == "input"s);
+            CHECK(info.name() ==
+                  "input"s); // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
             CHECK(info.is_batch() == is_batch);
             CHECK(info.batch_size() == batch_size);
             CHECK(info.n_components() == n_components);
-            CHECK(info.component_name(0) == "node"s);
-            CHECK(info.component_name(1) == "source"s);
+            CHECK(info.component_name(0) ==
+                  "node"s); // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
+            CHECK(info.component_name(1) ==
+                  "source"s); // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
             for (Idx const idx : {0, 1}) {
                 CHECK(info.component_elements_per_scenario(idx) == elements_per_scenario[idx]);
                 CHECK(info.component_total_elements(idx) == total_elements[idx]);

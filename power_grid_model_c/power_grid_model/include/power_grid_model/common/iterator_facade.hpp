@@ -4,10 +4,10 @@
 
 #pragma once
 
-#include "common.hpp"
-
+#include <compare>
 #include <concepts>
-#include <ranges>
+#include <iterator>
+#include <type_traits>
 #include <utility>
 
 namespace power_grid_model {

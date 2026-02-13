@@ -9,7 +9,11 @@
 
 #include "../{{ name }}.hpp" // NOLINT
 
+#include "../../common/common.hpp"
+
+#include <concepts>
 #include <cstddef>
+#include <type_traits>
 {% autoescape false %}
 namespace power_grid_model::test {
 

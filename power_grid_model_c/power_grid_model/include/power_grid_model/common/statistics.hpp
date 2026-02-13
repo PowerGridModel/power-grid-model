@@ -7,7 +7,12 @@
 #include "common.hpp"
 #include "three_phase_tensor.hpp"
 
+#include <algorithm>
+#include <complex>
+#include <concepts>
+#include <limits>
 #include <ranges>
+#include <utility>
 
 /**
  * @file statistics.hpp

@@ -3,16 +3,25 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #include <power_grid_model/calculation_parameters.hpp>
+#include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/common/exception.hpp>
+#include <power_grid_model/common/grouped_index_vector.hpp>
+#include <power_grid_model/common/statistics.hpp>
+#include <power_grid_model/math_solver/measured_values.hpp>
 #include <power_grid_model/math_solver/observability.hpp>
 #include <power_grid_model/math_solver/y_bus.hpp>
-
-#include <ranges>
 
 #include <doctest/doctest.h>
 
 #include <algorithm>
-#include <numeric>
+#include <complex>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
+#include <memory>
+#include <ranges>
+#include <vector>
 
 namespace power_grid_model {
 
@@ -801,8 +810,11 @@ TEST_CASE("Test Observability - assign_independent_sensors_radial") {
 
         // Total sensors should be preserved (just reassigned)
         Idx const initial_total = 2; // We started with 1 flow + 1 voltage = 2 total
-        Idx const final_flow = std::ranges::fold_left(flow_sensors, 0, std::plus<>{});
-        Idx const final_voltage = std::ranges::fold_left(voltage_phasor_sensors, 0, std::plus<>{});
+        Idx const final_flow =
+            std::ranges::fold_left( // NOLINT (misc-include-cleaner) https://github.com/llvm/llvm-project/issues/94459
+                flow_sensors, 0, std::plus<>{});
+        Idx const final_voltage =
+            std::ranges::fold_left(voltage_phasor_sensors, 0, std::plus<>{}); // NOLINT (misc-include-cleaner)
         CHECK(final_flow + final_voltage <= initial_total); // Some sensors might be reassigned or removed
     }
 
