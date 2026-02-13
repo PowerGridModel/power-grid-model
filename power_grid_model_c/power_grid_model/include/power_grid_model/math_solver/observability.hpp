@@ -438,10 +438,11 @@ inline bool try_general_connection_rules(SpanningTreeContext& ctx, bool& step_su
 // Helper function: Reassign nodal measurement between two connected nodes
 inline void reassign_nodal_measurement(SpanningTreeContext& ctx, Idx from_node, Idx to_node) {
     // no reassignment possible if reached via edge measurement
-    if (auto const branch_it =
-            std::ranges::find_if(ctx.neighbour_list[from_node].direct_neighbours,
-                                 [to_node](auto const& neighbour) { return neighbour.bus == to_node; });
-        branch_it != ctx.neighbour_list[from_node].direct_neighbours.end() &&
+    auto const branch_it = std::ranges::find_if(
+        ctx.neighbour_list[from_node].direct_neighbours,
+        [to_node](BusNeighbourhoodInfo::neighbour const& neighbour) { return neighbour.bus == to_node; });
+
+    if (branch_it != ctx.neighbour_list[from_node].direct_neighbours.end() &&
         branch_it->status == ConnectivityStatus::branch_native_measurement_consumed) {
         return;
     }
@@ -476,7 +477,7 @@ inline void reassign_nodal_measurement(SpanningTreeContext& ctx, Idx from_node, 
 inline bool try_backtrack(SpanningTreeContext& ctx, bool& step_success) {
     if (!ctx.edge_track.empty()) {
         // Simple backtracking - go back along the last edge
-        auto [last_edge_from, last_edge_to] = ctx.edge_track.back();
+        auto const [last_edge_from, last_edge_to] = ctx.edge_track.back();
         ctx.edge_track.pop_back();
 
         Idx backtrack_to_bus;
