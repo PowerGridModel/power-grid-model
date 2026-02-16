@@ -2,9 +2,12 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include <power_grid_model/auxiliary/input.hpp>
 #include <power_grid_model/component/appliance.hpp>
+#include <power_grid_model/component/base.hpp>
 #include <power_grid_model/component/branch.hpp>
 #include <power_grid_model/component/branch3.hpp>
+#include <power_grid_model/component/component.hpp>
 #include <power_grid_model/component/fault.hpp>
 #include <power_grid_model/component/generic_branch.hpp>
 #include <power_grid_model/component/line.hpp>
@@ -21,6 +24,9 @@
 #include <power_grid_model/component/voltage_sensor.hpp>
 
 #include <doctest/doctest.h>
+
+#include <concepts>
+#include <type_traits>
 
 namespace power_grid_model {
 

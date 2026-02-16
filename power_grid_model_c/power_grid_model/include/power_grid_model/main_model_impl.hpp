@@ -7,24 +7,24 @@
 // main model class
 
 // main include
-#include "batch_parameter.hpp"
-#include "calculation.hpp"
 #include "calculation_parameters.hpp"
 #include "calculation_preparation.hpp"
-#include "container.hpp"
 #include "main_model_fwd.hpp"
-#include "topology.hpp"
+#include "math_solver/y_bus.hpp"
 
 // common
 #include "common/common.hpp"
+#include "common/enum.hpp"
 #include "common/exception.hpp"
+#include "common/logging.hpp"
+#include "common/three_phase_tensor.hpp"
 #include "common/timer.hpp"
 
 // component include
-#include "all_components.hpp"
 #include "auxiliary/dataset.hpp"
-#include "auxiliary/input.hpp"
-#include "auxiliary/output.hpp"
+#include "auxiliary/meta_data.hpp"
+#include "auxiliary/update.hpp"
+#include "component/component.hpp"
 
 // math model include
 #include "math_solver/math_solver_dispatch.hpp"
@@ -32,7 +32,8 @@
 #include "optimizer/optimizer.hpp"
 
 // main model implementation
-#include "main_core/calculation_input_preparation.hpp"
+#include "calculation.hpp"
+#include "main_core/core_utils.hpp"
 #include "main_core/input.hpp"
 #include "main_core/main_model_type.hpp"
 #include "main_core/output.hpp"
@@ -40,8 +41,18 @@
 #include "main_core/update.hpp"
 
 // stl library
+#include <algorithm>
+#include <array>
+#include <cassert>
+#include <concepts>
+#include <limits>
 #include <memory>
+#include <ranges>
 #include <span>
+#include <string_view>
+#include <type_traits>
+#include <utility>
+#include <vector>
 
 namespace power_grid_model {
 // solver output type to output type getter meta function

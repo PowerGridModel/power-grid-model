@@ -9,12 +9,13 @@
 
 #include "gen_getters.hpp" // NOLINT
 
-#include "../../common/common.hpp"             // NOLINT
-#include "../../common/enum.hpp"               // NOLINT
-#include "../../common/three_phase_tensor.hpp" // NOLINT
 #include "../meta_data.hpp"                    // NOLINT
+#include "../../common/common.hpp"             // NOLINT
 
 #include "../output.hpp" // NOLINT
+
+#include <array>
+#include <cstddef>
 
 
 namespace power_grid_model::meta_data {

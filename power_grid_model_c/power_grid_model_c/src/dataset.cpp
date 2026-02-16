@@ -4,16 +4,17 @@
 
 #define PGM_DLL_EXPORTS
 #include "forward_declarations.hpp"
-
-#include "power_grid_model_c/dataset.h"
-
 #include "get_meta_data.hpp"
 #include "handle.hpp"
 #include "input_sanitization.hpp"
 
+#include "power_grid_model_c/basics.h"
+#include "power_grid_model_c/dataset.h"
+
 #include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/auxiliary/meta_data.hpp>
-#include <power_grid_model/common/typing.hpp>
+
+#include <vector>
 
 namespace {
 using namespace power_grid_model;

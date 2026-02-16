@@ -10,7 +10,15 @@
 #include "main_model_fwd.hpp"
 
 #include "auxiliary/dataset.hpp"
+#include "common/common.hpp"
+#include "common/exception.hpp"
+#include "common/logging.hpp"
 #include "main_core/update.hpp"
+
+#include <algorithm>
+#include <functional>
+#include <memory>
+#include <span>
 
 namespace power_grid_model {
 

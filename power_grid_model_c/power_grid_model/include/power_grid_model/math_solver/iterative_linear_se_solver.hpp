@@ -15,9 +15,20 @@
 
 #include "../calculation_parameters.hpp"
 #include "../common/common.hpp"
+#include "../common/enum.hpp"
 #include "../common/exception.hpp"
+#include "../common/logging.hpp"
+#include "../common/statistics.hpp"
 #include "../common/three_phase_tensor.hpp"
 #include "../common/timer.hpp"
+
+#include <algorithm>
+#include <array>
+#include <complex>
+#include <functional>
+#include <limits>
+#include <utility>
+#include <vector>
 
 namespace power_grid_model::math_solver {
 

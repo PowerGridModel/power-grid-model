@@ -10,16 +10,20 @@
 #include "common/component_list.hpp"
 #include "common/exception.hpp"
 #include "common/iterator_facade.hpp"
-#include "container_fwd.hpp"
 
 #include <algorithm>
 #include <array>
 #include <cassert>
-#include <functional>
-#include <memory>
+#include <compare>
+#include <concepts>
+#include <cstddef>
 #include <numeric>
-#include <span>
+#include <ranges>
+#include <tuple>
+#include <type_traits>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 
 namespace power_grid_model {
 

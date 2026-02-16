@@ -8,9 +8,24 @@
 #include "y_bus.hpp"
 
 #include "../calculation_parameters.hpp"
+#include "../common/common.hpp"
+#include "../common/counting_iterator.hpp"
+#include "../common/enum.hpp"
 #include "../common/exception.hpp"
+#include "../common/grouped_index_vector.hpp"
+#include "../common/three_phase_tensor.hpp"
 
+#include <Eigen/Core>
+
+#include <cassert>
+#include <complex>
+#include <concepts>
+#include <functional>
 #include <map>
+#include <numeric>
+#include <ranges>
+#include <type_traits>
+#include <vector>
 
 namespace power_grid_model::math_solver::detail {
 

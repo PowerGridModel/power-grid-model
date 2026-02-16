@@ -4,13 +4,17 @@
 
 #pragma once
 
-#include "main_model_fwd.hpp"
-
+#include "calculation_parameters.hpp"
 #include "common/common.hpp"
 #include "common/enum.hpp"
-
+#include "common/exception.hpp"
+#include "common/logging.hpp"
 #include "main_core/calculation_input_preparation.hpp"
-#include "main_core/main_model_type.hpp"
+#include "main_model_fwd.hpp"
+#include "math_solver/math_solver_dispatch.hpp"
+#include "math_solver/y_bus.hpp"
+
+#include <concepts>
 
 namespace power_grid_model {
 

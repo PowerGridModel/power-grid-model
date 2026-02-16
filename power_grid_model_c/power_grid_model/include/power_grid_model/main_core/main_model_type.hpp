@@ -4,13 +4,21 @@
 
 #pragma once
 
-#include "../all_components.hpp"
+#include "../common/common.hpp"
+#include "../common/component_list.hpp"
+#include "../component/component.hpp"
 #include "../container.hpp"
 #include "state.hpp"
 #include "update.hpp"
 
 #include <array>
+#include <cstddef>
+#include <functional>
+#include <span>
+#include <tuple>
+#include <type_traits>
 #include <vector>
+
 namespace power_grid_model::main_core {
 
 namespace detail {

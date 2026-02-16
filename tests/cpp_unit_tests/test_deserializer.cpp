@@ -6,9 +6,10 @@
 // May be a Clang Analyzer bug
 #ifndef __clang_analyzer__ // TODO(mgovers): re-enable this when issue in msgpack is fixed
 
+#include <power_grid_model/auxiliary/serialization/deserializer.hpp>
+
 #include <power_grid_model/auxiliary/input.hpp>
 #include <power_grid_model/auxiliary/meta_data_gen.hpp>
-#include <power_grid_model/auxiliary/serialization/deserializer.hpp>
 #include <power_grid_model/auxiliary/update.hpp>
 
 #include <doctest/doctest.h>

@@ -6,6 +6,8 @@
 #ifndef POWER_GRID_MODEL_CPP_HPP
 #define POWER_GRID_MODEL_CPP_HPP
 
+// Umbrella header for the C++ interface of the Power Grid Model library
+
 #include "power_grid_model_cpp/basics.hpp"
 #include "power_grid_model_cpp/buffer.hpp"
 #include "power_grid_model_cpp/dataset.hpp"

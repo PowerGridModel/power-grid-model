@@ -4,13 +4,26 @@
 
 #pragma once
 
+#include "all_components.hpp"
 #include "job_adapter.hpp"
 #include "job_dispatch.hpp"
 #include "main_model_impl.hpp"
 
+#include "auxiliary/dataset.hpp"
+#include "auxiliary/meta_data.hpp"
+#include "batch_parameter.hpp"
+#include "calculation_preparation.hpp"
 #include "common/calculation_info.hpp"
+#include "common/common.hpp"
+#include "main_core/main_model_type.hpp"
+#include "main_model_fwd.hpp"
+#include "math_solver/math_solver_dispatch.hpp"
 
+#include <cassert>
+#include <functional>
 #include <memory>
+#include <string_view>
+#include <utility>
 
 namespace power_grid_model {
 

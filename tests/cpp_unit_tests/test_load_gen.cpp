@@ -2,9 +2,24 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include <power_grid_model/component/appliance.hpp>
 #include <power_grid_model/component/load_gen.hpp>
 
+#include <power_grid_model/auxiliary/input.hpp>
+#include <power_grid_model/auxiliary/output.hpp>
+#include <power_grid_model/auxiliary/update.hpp>
+#include <power_grid_model/calculation_parameters.hpp>
+#include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/enum.hpp>
+#include <power_grid_model/common/three_phase_tensor.hpp>
+
 #include <doctest/doctest.h>
+
+#include <cmath>
+#include <complex>
+#include <concepts>
+#include <cstddef>
+#include <numbers>
 
 TYPE_TO_STRING_AS("SymGenerator", power_grid_model::SymGenerator);
 TYPE_TO_STRING_AS("AsymGenerator", power_grid_model::AsymGenerator);

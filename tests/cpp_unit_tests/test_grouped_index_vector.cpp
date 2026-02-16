@@ -2,9 +2,17 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include <power_grid_model/common/counting_iterator.hpp>
 #include <power_grid_model/common/grouped_index_vector.hpp>
 
+#include <power_grid_model/common/common.hpp>
+
 #include <doctest/doctest.h>
+
+#include <algorithm>
+#include <concepts>
+#include <cstddef>
+#include <vector>
 
 namespace power_grid_model {
 

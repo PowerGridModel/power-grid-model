@@ -7,11 +7,14 @@
 #include "common.hpp"
 #include "enum.hpp"
 
+#include <concepts>
 #include <exception>
 #include <format>
-#include <sstream>
 #include <string>
+#include <string_view>
+#include <type_traits>
 #include <utility>
+#include <vector>
 
 namespace power_grid_model {
 class PowerGridError : public std::exception {

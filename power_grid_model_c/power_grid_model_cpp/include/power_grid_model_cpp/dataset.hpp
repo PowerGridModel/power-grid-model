@@ -9,13 +9,18 @@
 #include "basics.hpp"
 #include "buffer.hpp"
 #include "handle.hpp"
+#include "meta_data.hpp"
 #include "utils.hpp"
 
 #include "power_grid_model_c/dataset.h"
 
+#include <array>
 #include <map>
 #include <set>
+#include <string>
+#include <string_view>
 #include <variant>
+#include <vector>
 
 namespace power_grid_model_cpp {
 class ComponentTypeNotFound : public PowerGridError {

@@ -4,7 +4,18 @@
 
 #include <power_grid_model/component/transformer_tap_regulator.hpp>
 
+#include <power_grid_model/auxiliary/input.hpp>
+#include <power_grid_model/auxiliary/output.hpp>
+#include <power_grid_model/auxiliary/update.hpp>
+#include <power_grid_model/calculation_parameters.hpp>
+#include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/enum.hpp>
+#include <power_grid_model/common/three_phase_tensor.hpp>
+#include <power_grid_model/component/base.hpp>
+
 #include <doctest/doctest.h>
+
+#include <concepts>
 
 namespace power_grid_model {
 namespace {
