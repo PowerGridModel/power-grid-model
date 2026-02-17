@@ -4,10 +4,15 @@
 
 #pragma once
 
+#include "common.hpp"
 #include "dummy_logging.hpp"
+#include "logging.hpp"
 
 #include <cassert>
+#include <concepts>
+#include <memory>
 #include <mutex>
+#include <string_view>
 #include <utility>
 
 namespace power_grid_model::common::logging {

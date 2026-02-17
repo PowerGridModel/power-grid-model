@@ -10,13 +10,25 @@
 #include "common_solver_functions.hpp"
 #include "measured_values.hpp"
 #include "observability.hpp"
+#include "sparse_lu_solver.hpp"
 #include "y_bus.hpp"
 
 #include "../calculation_parameters.hpp"
+#include "../common/common.hpp"
 #include "../common/enum.hpp"
 #include "../common/exception.hpp"
+#include "../common/logging.hpp"
+#include "../common/statistics.hpp"
 #include "../common/three_phase_tensor.hpp"
 #include "../common/timer.hpp"
+
+#include <algorithm>
+#include <cassert>
+#include <complex>
+#include <concepts>
+#include <functional>
+#include <limits>
+#include <vector>
 
 namespace power_grid_model::math_solver {
 

@@ -10,7 +10,6 @@
 #include "common/logging.hpp"
 
 #include <concepts>
-#include <type_traits>
 #include <utility>
 
 namespace power_grid_model {

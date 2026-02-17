@@ -10,6 +10,10 @@
 #include "common/statistics.hpp"
 #include "common/three_phase_tensor.hpp"
 
+#include <array>
+#include <concepts>
+#include <vector>
+
 namespace power_grid_model {
 
 // Entry of YBus, node addmittance matrix

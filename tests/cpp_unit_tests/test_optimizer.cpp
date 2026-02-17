@@ -3,8 +3,28 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #include "test_optimizer.hpp"
+#include <power_grid_model/optimizer/base_optimizer.hpp>
+#include <power_grid_model/optimizer/optimizer.hpp>
 
+#include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/auxiliary/meta_data.hpp>
+#include <power_grid_model/auxiliary/meta_gen/gen_getters.hpp>
+#include <power_grid_model/auxiliary/meta_gen/input.hpp>  // NOLINT(misc-include-cleaner)
+#include <power_grid_model/auxiliary/meta_gen/output.hpp> // NOLINT(misc-include-cleaner)
+#include <power_grid_model/auxiliary/meta_gen/update.hpp> // NOLINT(misc-include-cleaner)
+#include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/component_list.hpp>
+#include <power_grid_model/common/enum.hpp>
+#include <power_grid_model/common/exception.hpp>
+#include <power_grid_model/component/line.hpp>
+#include <power_grid_model/component/link.hpp>
+#include <power_grid_model/component/node.hpp>
+#include <power_grid_model/component/source.hpp>
+#include <power_grid_model/component/three_winding_transformer.hpp>
+#include <power_grid_model/component/transformer.hpp>
+#include <power_grid_model/component/transformer_tap_regulator.hpp>
+
+#include <memory>
 
 namespace power_grid_model::optimizer::test {
 namespace {

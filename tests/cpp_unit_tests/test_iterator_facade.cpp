@@ -5,9 +5,15 @@
 #include <power_grid_model/common/counting_iterator.hpp>
 #include <power_grid_model/common/iterator_facade.hpp>
 
+#include <power_grid_model/common/common.hpp>
+
 #include <doctest/doctest.h>
 
+#include <compare>
+#include <concepts>
 #include <optional>
+#include <ranges>
+#include <type_traits>
 
 namespace {
 using power_grid_model::Idx;

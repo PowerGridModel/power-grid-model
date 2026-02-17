@@ -7,12 +7,22 @@
 #include "container_queries.hpp"
 #include "core_utils.hpp"
 
-#include "../all_components.hpp"
 #include "../auxiliary/dataset.hpp"
-#include "../common/iterator_facade.hpp"
-#include "../container.hpp"
+#include "../auxiliary/meta_data.hpp"
+#include "../common/common.hpp"
+#include "../common/exception.hpp"
+#include "../component/component.hpp"
+#include "../container_fwd.hpp"
 
-#include <map>
+#include <algorithm>
+#include <cassert>
+#include <concepts>
+#include <iterator>
+#include <ranges>
+#include <span>
+#include <string>
+#include <type_traits>
+#include <vector>
 
 namespace power_grid_model::main_core::update {
 

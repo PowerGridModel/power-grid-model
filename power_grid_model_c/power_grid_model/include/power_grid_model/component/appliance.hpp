@@ -13,6 +13,10 @@
 #include "../common/common.hpp"
 #include "../common/three_phase_tensor.hpp"
 
+#include <Eigen/Core>
+
+#include <cstddef>
+
 namespace power_grid_model {
 
 class Appliance : public Base {

@@ -4,9 +4,16 @@
 
 #pragma once
 
+#include "../../common/common.hpp"
 #include "../../common/component_list.hpp"
 #include "../../common/counting_iterator.hpp"
+#include "../../common/three_phase_tensor.hpp"
 #include "../meta_data.hpp"
+
+#include <algorithm>
+#include <array>
+#include <concepts>
+#include <cstddef>
 
 namespace power_grid_model::meta_data::meta_data_gen {
 

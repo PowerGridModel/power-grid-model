@@ -24,6 +24,9 @@
 #ifndef POWER_GRID_MODEL_C_H
 #define POWER_GRID_MODEL_C_H
 
+// Umbrella header
+
+// IWYU pragma: begin_keep
 #include "power_grid_model_c/basics.h"
 #include "power_grid_model_c/buffer.h"
 #include "power_grid_model_c/dataset.h"
@@ -32,5 +35,6 @@
 #include "power_grid_model_c/model.h"
 #include "power_grid_model_c/options.h"
 #include "power_grid_model_c/serialization.h"
+// IWYU pragma: end_keep
 
 #endif // POWER_GRID_MODEL_C_H

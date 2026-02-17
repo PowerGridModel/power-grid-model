@@ -10,6 +10,10 @@
 #include "../common/common.hpp"
 #include "../common/three_phase_tensor.hpp"
 
+#include <Eigen/Core>
+
+#include <type_traits>
+
 namespace power_grid_model::math_solver {
 
 template <scalar_value T, symmetry_tag sym, bool is_tensor, int n_sub_block> struct block_trait {
