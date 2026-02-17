@@ -76,7 +76,7 @@ ObservabilitySensorsResult scan_network_sensors(MeasuredValues<sym> const& measu
         bool has_at_least_one_sensor{false};
         Idx const current_bus_entry = y_bus_structure.bus_entry[bus];
         bus_neighbourhood_info[bus].bus = bus;
-        // lower triangle is ignored ~~and kept as zero~~
+        // lower triangle is ignored
         // diagonal for bus injection measurement
         if (measured_values.has_bus_injection(bus)) {
             result.bus_injections[bus] = 1;
@@ -376,9 +376,9 @@ inline bool try_downwind_measurement(SpanningTreeContext& ctx, bool& step_succes
 }
 
 // Helper function: Process a single edge during general connection rules
-template <typename NeighbourType>
-inline bool process_edge(SpanningTreeContext& ctx, NeighbourType& neighbour, ConnectivityStatus neighbour_status,
-                         ConnectivityStatus reverse_status, bool use_current_node, bool& step_success) {
+inline bool process_edge(SpanningTreeContext& ctx, BusNeighbourhoodInfo::neighbour& neighbour,
+                         ConnectivityStatus neighbour_status, ConnectivityStatus reverse_status, bool use_current_node,
+                         bool& step_success) {
     ctx.edge_track->emplace_back(*ctx.current_bus, neighbour.bus);
     if ((*ctx.visited)[*ctx.current_bus] == std::to_underlying(BusVisited::NotVisited)) {
         (*ctx.visited)[*ctx.current_bus] = std::to_underlying(BusVisited::Visited);
@@ -502,10 +502,11 @@ inline bool try_backtrack(SpanningTreeContext& ctx, bool& step_success) {
     return false;
 }
 
-inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus, std::vector<BusNeighbourhoodInfo>& neighbour_list,
-                                         std::vector<StatusModification>& modifications,
-                                         std::vector<std::uint8_t>& visited_buffer,
-                                         std::vector<std::pair<Idx, Idx>>& edge_track_buffer) {
+inline bool find_spanning_tree_from_node_impl(Idx start_bus, Idx n_bus,
+                                              std::vector<BusNeighbourhoodInfo>& neighbour_list,
+                                              std::vector<StatusModification>& modifications,
+                                              std::vector<std::uint8_t>& visited_buffer,
+                                              std::vector<std::pair<Idx, Idx>>& edge_track_buffer) {
     // Handle empty network edge case
     if (n_bus == 0) {
         return true;
@@ -529,8 +530,13 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus, std::vector<B
     Idx current_bus = start_bus;
 
     // Build context for helper functions
-    SpanningTreeContext ctx{&neighbour_list, &modifications, &visited_buffer, &edge_track_buffer,
-                            &visited_count,  &current_bus,   &downwind};
+    SpanningTreeContext ctx{.neighbour_list = &neighbour_list,
+                            .modifications = &modifications,
+                            .visited = &visited_buffer,
+                            .edge_track = &edge_track_buffer,
+                            .visited_count = &visited_count,
+                            .current_bus = &current_bus,
+                            .downwind = &downwind};
 
     // Iteration limit: visit all nodes plus some backtracking allowance
     auto const max_iter_unclamped = static_cast<std::size_t>(n_bus) * static_cast<std::size_t>(avg_degree) * 3u;
@@ -569,8 +575,8 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus,
     std::vector<std::uint8_t> visited_buffer(n_bus);
     std::vector<std::pair<Idx, Idx>> edge_track_buffer;
     edge_track_buffer.reserve(n_bus);
-    return find_spanning_tree_from_node(start_bus, n_bus, mutable_copy, modifications, visited_buffer,
-                                        edge_track_buffer);
+    return find_spanning_tree_from_node_impl(start_bus, n_bus, mutable_copy, modifications, visited_buffer,
+                                             edge_track_buffer);
 }
 
 inline bool sufficient_condition_meshed_without_voltage_phasor(std::vector<BusNeighbourhoodInfo>& neighbour_list) {
@@ -589,8 +595,8 @@ inline bool sufficient_condition_meshed_without_voltage_phasor(std::vector<BusNe
     for (Idx const start_bus : starting_candidates) {
         modifications.clear(); // Reuse modifications vector
 
-        if (find_spanning_tree_from_node(start_bus, n_bus, neighbour_list, modifications, visited_buffer,
-                                         edge_track_buffer)) {
+        if (find_spanning_tree_from_node_impl(start_bus, n_bus, neighbour_list, modifications, visited_buffer,
+                                              edge_track_buffer)) {
             // Success! Keep modifications and return
             return true;
         }
