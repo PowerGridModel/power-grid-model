@@ -2,12 +2,24 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include <power_grid_model/common/three_phase_tensor.hpp>
 #include <power_grid_model/math_solver/y_bus.hpp>
+
+#include <power_grid_model/calculation_parameters.hpp>
+#include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/enum.hpp>
+#include <power_grid_model/common/grouped_index_vector.hpp>
+#include <power_grid_model/common/three_phase_tensor.hpp>
 
 #include <doctest/doctest.h>
 
+#include <algorithm>
+#include <complex>
+#include <cstddef>
+#include <iterator>
+#include <memory>
 #include <ranges>
+#include <utility>
+#include <vector>
 
 namespace power_grid_model {
 

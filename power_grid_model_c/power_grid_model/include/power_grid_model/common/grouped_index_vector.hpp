@@ -10,7 +10,13 @@
 #include "typing.hpp"
 
 #include <algorithm>
+#include <cassert>
+#include <compare>
+#include <concepts>
+#include <iterator>
 #include <ranges>
+#include <type_traits>
+#include <utility>
 
 /*
 A data-structure for iterating through the indptr, i.e., sparse representation of data.

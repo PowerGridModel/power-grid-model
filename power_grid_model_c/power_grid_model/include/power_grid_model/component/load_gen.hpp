@@ -5,29 +5,23 @@
 #pragma once
 
 #include "appliance.hpp"
-#include "base.hpp"
 
 #include "../auxiliary/input.hpp"
-#include "../auxiliary/output.hpp"
 #include "../auxiliary/update.hpp"
 #include "../calculation_parameters.hpp"
 #include "../common/common.hpp"
+#include "../common/enum.hpp"
 #include "../common/exception.hpp"
 #include "../common/three_phase_tensor.hpp"
+#include "base.hpp"
+#include "component.hpp"
+
+#include <cassert>
+#include <complex>
+#include <string>
+#include <type_traits>
 
 namespace power_grid_model {
-
-struct load_appliance_t {};
-struct gen_appliance_t {};
-
-template <typename T>
-concept appliance_type_tag = std::same_as<T, load_appliance_t> || std::same_as<T, gen_appliance_t>;
-template <appliance_type_tag T> constexpr bool is_generator_v = std::same_as<T, gen_appliance_t>;
-
-static_assert(appliance_type_tag<load_appliance_t>);
-static_assert(appliance_type_tag<gen_appliance_t>);
-static_assert(!is_generator_v<load_appliance_t>);
-static_assert(is_generator_v<gen_appliance_t>);
 
 class GenericLoadGen : public Appliance {
   public:

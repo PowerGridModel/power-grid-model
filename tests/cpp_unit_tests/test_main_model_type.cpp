@@ -2,14 +2,25 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include <power_grid_model/calculation_preparation.hpp>
-#include <power_grid_model/container.hpp>
 #include <power_grid_model/main_core/core_utils.hpp>
 #include <power_grid_model/main_core/main_model_type.hpp>
+
+#include <power_grid_model/all_components.hpp>
+#include <power_grid_model/auxiliary/meta_data.hpp>
+#include <power_grid_model/calculation_preparation.hpp>
+#include <power_grid_model/common/component_list.hpp>
+#include <power_grid_model/component/component.hpp>
+#include <power_grid_model/container.hpp>
 #include <power_grid_model/main_model_impl.hpp>
-#include <power_grid_model/math_solver/math_solver_dispatch.hpp>
 
 #include <doctest/doctest.h>
+
+#include <array>
+#include <concepts>
+#include <string_view>
+#include <tuple>
+#include <type_traits>
+#include <vector>
 
 namespace power_grid_model::main_core {
 

@@ -5,10 +5,13 @@
 #pragma once
 
 #include "../dataset.hpp"
+#include "../meta_data.hpp"
 
+#include <algorithm>
+#include <cassert>
 #include <concepts>
-#include <ranges>
 #include <span>
+#include <vector>
 
 namespace power_grid_model::meta_data::detail {
 

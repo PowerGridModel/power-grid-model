@@ -12,7 +12,6 @@
 
 #include <iomanip>
 #include <iostream>
-#include <random>
 
 namespace power_grid_model::benchmark {
 namespace {

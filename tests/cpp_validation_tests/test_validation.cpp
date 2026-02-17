@@ -4,25 +4,43 @@
 
 #define PGM_ENABLE_EXPERIMENTAL
 
-#include <power_grid_model_cpp.hpp>
+#include <power_grid_model_c/basics.h>
+#include <power_grid_model_cpp/basics.hpp>
+#include <power_grid_model_cpp/buffer.hpp>
+#include <power_grid_model_cpp/dataset.hpp>
+#include <power_grid_model_cpp/handle.hpp>
+#include <power_grid_model_cpp/meta_data.hpp>
+#include <power_grid_model_cpp/model.hpp>
+#include <power_grid_model_cpp/options.hpp>
+#include <power_grid_model_cpp/serialization.hpp>
+#include <power_grid_model_cpp/utils.hpp>
 
 #include <doctest/doctest.h>
 #include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
 
+#include <algorithm>
+#include <array>
 #include <complex>
 #include <concepts>
 #include <cstdlib>
 #include <cstring>
+#include <exception>
 #include <filesystem>
 #include <format>
 #include <fstream>
+#include <functional>
+#include <iomanip>
 #include <iostream>
-#include <limits>
-#include <numeric>
+#include <map>
 #include <optional>
 #include <regex>
-#include <stdexcept>
+#include <sstream>
+#include <string>
+#include <string_view>
 #include <type_traits>
+#include <utility>
+#include <vector>
 
 namespace power_grid_model_cpp {
 namespace {
@@ -315,7 +333,7 @@ void assert_result(OwningDataset const& owning_result, OwningDataset const& owni
                 auto attribute_type = MetaData::attribute_ctype(attribute_meta);
                 auto const& attribute_name = MetaData::attribute_name(attribute_meta);
                 // TODO need a way for common angle: u angle skipped for now
-                if (attribute_name == "u_angle"s) {
+                if (attribute_name == "u_angle"s) { // NOLINT(misc-include-cleaner)
                     continue;
                 }
                 // get absolute tolerance

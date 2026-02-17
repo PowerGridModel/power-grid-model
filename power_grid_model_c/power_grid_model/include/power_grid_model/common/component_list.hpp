@@ -6,6 +6,8 @@
 
 #include "common.hpp"
 
+#include <type_traits>
+
 namespace power_grid_model {
 
 // component list

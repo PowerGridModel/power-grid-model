@@ -11,9 +11,14 @@
 
 #include <bit>
 #include <cassert>
+#include <concepts>
+#include <cstddef>
+#include <cstdint>
 #include <span>
+#include <stdexcept>
 #include <string>
 #include <string_view>
+#include <type_traits>
 
 namespace power_grid_model::meta_data {
 

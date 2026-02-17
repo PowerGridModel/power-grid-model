@@ -151,11 +151,16 @@ J.L -= -dQ_cal_m/dV
 
 #include "../calculation_parameters.hpp"
 #include "../common/common.hpp"
+#include "../common/counting_iterator.hpp"
+#include "../common/enum.hpp"
 #include "../common/exception.hpp"
+#include "../common/grouped_index_vector.hpp"
 #include "../common/three_phase_tensor.hpp"
-#include "../common/timer.hpp"
 
-#include <map>
+#include <algorithm>
+#include <complex>
+#include <functional>
+#include <vector>
 
 namespace power_grid_model::math_solver {
 

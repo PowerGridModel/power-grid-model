@@ -4,17 +4,24 @@
 
 #define PGM_DLL_EXPORTS
 #include "forward_declarations.hpp"
-
-#include "power_grid_model_c/meta_data.h"
-
 #include "get_meta_data.hpp"
 #include "handle.hpp"
 #include "input_sanitization.hpp"
 
+#include "power_grid_model_c/basics.h"
+#include "power_grid_model_c/meta_data.h"
+
+#include <power_grid_model/auxiliary/meta_data.hpp>
 #include <power_grid_model/auxiliary/meta_data_gen.hpp>
-#include <power_grid_model/auxiliary/static_asserts/input.hpp>
-#include <power_grid_model/auxiliary/static_asserts/output.hpp>
-#include <power_grid_model/auxiliary/static_asserts/update.hpp>
+#include <power_grid_model/auxiliary/static_asserts/input.hpp>  // NOLINT(misc-include-cleaner)
+#include <power_grid_model/auxiliary/static_asserts/output.hpp> // NOLINT(misc-include-cleaner)
+#include <power_grid_model/auxiliary/static_asserts/update.hpp> // NOLINT(misc-include-cleaner)
+#include <power_grid_model/common/common.hpp>
+
+#include <cstddef>
+#include <exception>
+#include <stdexcept>
+#include <type_traits>
 
 namespace {
 using namespace power_grid_model;

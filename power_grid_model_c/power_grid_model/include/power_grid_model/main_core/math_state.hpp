@@ -4,8 +4,13 @@
 
 #pragma once
 
+#include "../calculation_parameters.hpp"
+#include "../common/common.hpp"
 #include "../math_solver/math_solver_dispatch.hpp"
 #include "../math_solver/y_bus.hpp"
+
+#include <cassert>
+#include <vector>
 
 namespace power_grid_model::main_core {
 
