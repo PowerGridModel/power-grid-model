@@ -4,10 +4,12 @@
 
 #include "cli_functions.hpp"
 
+#include <power_grid_model_cpp/model.hpp>
+#include <power_grid_model_cpp/serialization.hpp>
+
 #include <cassert>
 #include <functional>
 #include <numeric>
-#include <optional>
 #include <ranges>
 
 namespace power_grid_model_cpp {

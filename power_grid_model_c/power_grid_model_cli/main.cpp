@@ -4,8 +4,9 @@
 
 #include "cli_functions.hpp"
 
-#include <power_grid_model_cpp.hpp>
+#include <power_grid_model_cpp/handle.hpp>
 
+#include <exception>
 #include <iostream>
 
 using namespace power_grid_model_cpp;
