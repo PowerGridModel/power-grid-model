@@ -531,9 +531,11 @@ inline bool find_spanning_tree_from_node_impl(Idx start_bus, Idx n_bus,
     }
     std::size_t const avg_degree_size_t = std::min(total_edges / static_cast<std::size_t>(n_bus),
                                                    static_cast<std::size_t>(std::numeric_limits<Idx>::max()));
-    // It can be rounded down to 0 and 1. With 0 there is division by issue. With 1, we may have not enough tries. 
+    // It can be rounded down to 0 and 1. With 0 there is division by issue. With 1, we may have not enough tries.
     // 2 is a heuristic for having enough but not exhaustive.
-    Idx const avg_degree = std::max(Idx{2}, static_cast<Idx>(avg_degree_size_t));
+    constexpr auto min_avg_degree = 2;
+    Idx const avg_degree =
+        (avg_degree_size_t >= min_avg_degree) ? static_cast<Idx>(avg_degree_size_t) : static_cast<Idx>(min_avg_degree);
 
     // Reuse provided buffers and reset them
     visited_buffer.assign(n_bus, std::to_underlying(BusVisited::NotVisited));
@@ -550,7 +552,8 @@ inline bool find_spanning_tree_from_node_impl(Idx start_bus, Idx n_bus,
 
     // Iteration limit: visit all nodes plus some backtracking allowance
     // 3 is a heuristic to account for the forward search, back tracking and different candidate retires
-    auto const max_iter_unclamped = static_cast<std::size_t>(n_bus) * static_cast<std::size_t>(avg_degree) * 3u;
+    constexpr auto n_stages = 3u;
+    auto const max_iter_unclamped = static_cast<std::size_t>(n_bus) * static_cast<std::size_t>(avg_degree) * n_stages;
     auto const max_iterations =
         static_cast<Idx>(std::min(max_iter_unclamped, static_cast<std::size_t>(std::numeric_limits<Idx>::max())));
 
