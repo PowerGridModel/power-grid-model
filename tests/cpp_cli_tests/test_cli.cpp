@@ -4,12 +4,20 @@
 
 #define PGM_ENABLE_EXPERIMENTAL
 
+#include <power_grid_model_c/basics.h>
 #include <power_grid_model_c/dataset_definitions.h>
-#include <power_grid_model_cpp.hpp>
+#include <power_grid_model_c/handle.h>
+#include <power_grid_model_cpp/basics.hpp>
+#include <power_grid_model_cpp/buffer.hpp>
+#include <power_grid_model_cpp/dataset.hpp>
+#include <power_grid_model_cpp/meta_data.hpp>
+#include <power_grid_model_cpp/serialization.hpp>
 
 #include <doctest/doctest.h>
 #include <nlohmann/json.hpp>
 
+#include <array>
+#include <complex>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
@@ -17,8 +25,10 @@
 #include <numbers>
 #include <optional>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace power_grid_model_cpp {
 
