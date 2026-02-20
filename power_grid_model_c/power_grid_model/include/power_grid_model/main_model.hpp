@@ -105,6 +105,9 @@ class MainModel {
         impl().check_no_experimental_features_used(options, batch_dataset);
     }
 
+    // Benchmark accessor - provides access to internal structures for observability benchmarking
+    Impl& get_impl_for_benchmark() { return impl(); }
+
   private:
     Impl& impl() {
         assert(impl_ != nullptr);

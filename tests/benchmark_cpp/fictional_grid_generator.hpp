@@ -522,6 +522,11 @@ class FictionalGridGenerator {
         }
     }
 
+    NodeInput const* find_node_by_id(ID node_id) const {
+        auto it = std::ranges::find_if(input_.node, [node_id](NodeInput const& n) { return n.id == node_id; });
+        return it != input_.node.end() ? &(*it) : nullptr;
+    }
+
     void generate_sensors() {
         constexpr double voltage_tol = 0.1;
         constexpr double power_tol = 0.1;
@@ -555,56 +560,69 @@ class FictionalGridGenerator {
             });
 
         // appliance power sensors
-        std::ranges::transform(input_.shunt, std::back_inserter(input_.sym_power_sensor),
-                               [this](ShuntInput const& shunt) {
-                                   auto const& node = input_.node[shunt.node];
-                                   double const base_voltage2 = node.u_rated * node.u_rated;
-                                   double const base_p = base_voltage2 * shunt.g1;
-                                   double const base_q = base_voltage2 * shunt.b1;
-                                   return SymPowerSensorInput{.id = id_gen_++,
-                                                              .measured_object = shunt.id,
-                                                              .measured_terminal_type = MeasuredTerminalType::shunt,
-                                                              .power_sigma = nan,
-                                                              .p_measured = base_p,
-                                                              .q_measured = base_q,
-                                                              .p_sigma = power_tol * cabs(base_p),
-                                                              .q_sigma = power_tol * cabs(base_q)};
-                               });
-        std::ranges::transform(input_.sym_load, std::back_inserter(input_.sym_power_sensor),
-                               [this](SymLoadGenInput const& load) {
-                                   return SymPowerSensorInput{.id = id_gen_++,
-                                                              .measured_object = load.id,
-                                                              .measured_terminal_type = MeasuredTerminalType::load,
-                                                              .power_sigma = nan,
-                                                              .p_measured = load.p_specified,
-                                                              .q_measured = load.q_specified,
-                                                              .p_sigma = power_tol * cabs(load.p_specified),
-                                                              .q_sigma = power_tol * cabs(load.q_specified)};
-                               });
-        std::ranges::transform(
-            input_.asym_load, std::back_inserter(input_.asym_power_sensor), [this](AsymLoadGenInput const& load) {
-                return AsymPowerSensorInput{
-                    .id = id_gen_++,
-                    .measured_object = load.id,
-                    .measured_terminal_type = MeasuredTerminalType::load,
-                    .power_sigma = nan,
-                    .p_measured = load.p_specified,
-                    .q_measured = load.q_specified,
-                    .p_sigma = {power_tol * cabs(load.p_specified(0)), power_tol * cabs(load.p_specified(1)),
-                                power_tol * cabs(load.p_specified(2))},
-                    .q_sigma = {power_tol * cabs(load.q_specified(0)), power_tol * cabs(load.q_specified(1)),
-                                power_tol * cabs(load.q_specified(2))}};
-            });
+        if (!input_.shunt.empty()) {
+            std::ranges::transform(input_.shunt, std::back_inserter(input_.sym_power_sensor),
+                                   [this](ShuntInput const& shunt) {
+                                       auto const* node_ptr = find_node_by_id(shunt.node);
+                                       if (!node_ptr) {
+                                           throw std::runtime_error("Node not found for shunt");
+                                       }
+                                       auto const& node = *node_ptr;
+                                       double const base_voltage2 = node.u_rated * node.u_rated;
+                                       double const base_p = base_voltage2 * shunt.g1;
+                                       double const base_q = base_voltage2 * shunt.b1;
+                                       return SymPowerSensorInput{.id = id_gen_++,
+                                                                  .measured_object = shunt.id,
+                                                                  .measured_terminal_type = MeasuredTerminalType::shunt,
+                                                                  .power_sigma = nan,
+                                                                  .p_measured = base_p,
+                                                                  .q_measured = base_q,
+                                                                  .p_sigma = power_tol * cabs(base_p),
+                                                                  .q_sigma = power_tol * cabs(base_q)};
+                                   });
+        }
+        if (!input_.sym_load.empty()) {
+            std::ranges::transform(input_.sym_load, std::back_inserter(input_.sym_power_sensor),
+                                   [this](SymLoadGenInput const& load) {
+                                       return SymPowerSensorInput{.id = id_gen_++,
+                                                                  .measured_object = load.id,
+                                                                  .measured_terminal_type = MeasuredTerminalType::load,
+                                                                  .power_sigma = nan,
+                                                                  .p_measured = load.p_specified,
+                                                                  .q_measured = load.q_specified,
+                                                                  .p_sigma = power_tol * cabs(load.p_specified),
+                                                                  .q_sigma = power_tol * cabs(load.q_specified)};
+                                   });
+        }
+        if (!input_.asym_load.empty()) {
+            std::ranges::transform(
+                input_.asym_load, std::back_inserter(input_.asym_power_sensor), [this](AsymLoadGenInput const& load) {
+                    return AsymPowerSensorInput{
+                        .id = id_gen_++,
+                        .measured_object = load.id,
+                        .measured_terminal_type = MeasuredTerminalType::load,
+                        .power_sigma = nan,
+                        .p_measured = load.p_specified,
+                        .q_measured = load.q_specified,
+                        .p_sigma = {power_tol * cabs(load.p_specified(0)), power_tol * cabs(load.p_specified(1)),
+                                    power_tol * cabs(load.p_specified(2))},
+                        .q_sigma = {power_tol * cabs(load.q_specified(0)), power_tol * cabs(load.q_specified(1)),
+                                    power_tol * cabs(load.q_specified(2))}};
+                });
+        }
 
         // branch power sensors
-        std::ranges::transform(input_.line, std::back_inserter(input_.sym_power_sensor), [this](LineInput const& line) {
-            return SymPowerSensorInput{.id = id_gen_++,
-                                       .measured_object = line.id,
-                                       .measured_terminal_type = MeasuredTerminalType::branch_from,
-                                       .power_sigma = 1e6,
-                                       .p_measured = 0.0,
-                                       .q_measured = 0.0};
-        });
+        if (!input_.line.empty()) {
+            std::ranges::transform(
+                input_.line, std::back_inserter(input_.sym_power_sensor), [this](LineInput const& line) {
+                    return SymPowerSensorInput{.id = id_gen_++,
+                                               .measured_object = line.id,
+                                               .measured_terminal_type = MeasuredTerminalType::branch_from,
+                                               .power_sigma = 1e6,
+                                               .p_measured = 0.0,
+                                               .q_measured = 0.0};
+                });
+        }
     }
 
     void generate_fault() {

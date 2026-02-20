@@ -29,6 +29,11 @@
 // math model include
 #include "math_solver/math_solver_dispatch.hpp"
 
+#ifdef POWER_GRID_MODEL_OBSERVABILITY_BENCHMARK
+#include "main_core/y_bus.hpp"
+#include "math_solver/measured_values.hpp"
+#endif
+
 #include "optimizer/optimizer.hpp"
 
 // main model implementation
@@ -226,6 +231,43 @@ class MainModelImpl {
         };
         ModelType::run_functor_with_all_component_types_return_void(get_index_func);
     }
+
+#ifdef POWER_GRID_MODEL_OBSERVABILITY_BENCHMARK
+    // Benchmark method for observability algorithm comparison
+    // This method is only available when POWER_GRID_MODEL_OBSERVABILITY_BENCHMARK is defined
+    template <symmetry_tag sym, typename BenchmarkFn>
+        requires std::invocable<BenchmarkFn, YBus<sym> const&, math_solver::MeasuredValues<sym> const&,
+                                MathModelTopology&, Idx>
+    auto run_observability_benchmark(BenchmarkFn&& benchmark_fn, Idx n_iterations) {
+        assert(construction_complete_);
+
+        // Prepare solvers
+        prepare_solvers<sym>(state_, solver_preparation_context_, solvers_cache_status_);
+        assert(solvers_cache_status_.is_topology_valid());
+        assert(solvers_cache_status_.template is_parameter_valid<sym>());
+
+        // For benchmarking, we only support single-solver networks (no islands)
+        if (get_n_math_solvers<ModelType>(state_) != 1) {
+            throw InvalidCalculationMethod{}; // Only support single solver networks for benchmarking
+        }
+
+        // Get Y-bus
+        auto& y_bus_vec = main_core::get_y_bus<sym>(solver_preparation_context_.math_state);
+        YBus<sym> const& y_bus = y_bus_vec[0];
+
+        // Prepare state estimation input
+        auto se_input = main_core::prepare_state_estimation_input<sym>(state_, 1);
+
+        // Create MeasuredValues
+        math_solver::MeasuredValues<sym> const measured_values{*y_bus.shared_topology(), se_input[0]};
+
+        // Create mutable copy of MathModelTopology (since we need to toggle is_radial)
+        MathModelTopology topo = *state_.math_topology[0];
+
+        // Call the benchmark function
+        return std::forward<BenchmarkFn>(benchmark_fn)(y_bus, measured_values, topo, n_iterations);
+    }
+#endif // POWER_GRID_MODEL_OBSERVABILITY_BENCHMARK
 
   private:
     // Entry point for main_model.hpp
