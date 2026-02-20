@@ -6,6 +6,8 @@
 
 #include <power_grid_model_c/basics.h>
 #include <power_grid_model_c/handle.h>
+#include <power_grid_model_c/meta_data.h>
+#include <power_grid_model_cpp/basics.hpp>
 #include <power_grid_model_cpp/handle.hpp>
 #include <power_grid_model_cpp/meta_data.hpp>
 
@@ -15,6 +17,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <ios>
 #include <map>
 #include <ostream>
 #include <string>
