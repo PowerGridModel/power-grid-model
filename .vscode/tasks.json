@@ -94,6 +94,36 @@
         "shell": "powershell",
         "command": "git ls-files | Where-Object {$_ -match '\\.(h|c|cpp|hpp|cc|cxx)$'} | ForEach-Object { uv run clang-format -style=file -i $_ }"
       }
+    },
+    {
+      "label": "Build docs locally",
+      "type": "shell",
+      "command": "uv sync --group doc && cd docs/doxygen && doxygen && cd .. && uv run sphinx-build -b html . _build/html",
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Open locally built docs",
+      "type": "shell",
+      "command": "cd docs/_build/html && uv run python3 -m http.server 8000",
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run code generation for components",
+      "type": "shell",
+      "command": "uv sync --group code-generation && uv run code_generation/code_gen.py",
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "problemMatcher": []
     }
   ]
 }
