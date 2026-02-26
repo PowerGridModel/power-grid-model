@@ -152,7 +152,7 @@ scenarios within a batch are not three-phase faults (i.e. `fault_type` is not `F
 $$
 \begin{aligned}
    & Z_{\text{series}} = r + \mathrm{j}x \\
-   & Y_{\text{shunt}} = \frac{2 \pi fc}{\tan \delta +\mathrm{j}}
+   & Y_{\text{shunt}} = 2 \pi fc (\tan \delta +\mathrm{j})
 \end{aligned}
 $$
 
@@ -238,8 +238,8 @@ for detailed explanation.
 
 $$
 \begin{aligned}
-   & |Z_{\text{series}}| = u_k*z_{\text{base,transformer}} \\
-   & \mathrm{Re}(Z_{\text{series}}) = \frac{p_k}{s_n}*z_{\text{base,transformer}} \\
+   & |Z_{\text{series}}| = u_k p.u. \\
+   & \mathrm{Re}(Z_{\text{series}}) = \frac{p_k}{s_n} p.u. \\
    & \mathrm{Im}(Z_{\text{series}}) = \sqrt{|Z_{\text{series}}|^2-\mathrm{Re}(Z_{\text{series}})^2} \\
 \end{aligned}
 $$
@@ -247,13 +247,11 @@ and $Y_{\text{shunt}}$ can be computed as
 
 $$
 \begin{aligned}
-   & |Y_{\text{shunt}}| = i_0*y_{\text{base,transformer}} \\
-   & \mathrm{Re}(Y_{\text{shunt}}) = \frac{s_n}{p_0}*y_{\text{base,transformer}} \\
+   & |Y_{\text{shunt}}| = i_0 p.u. \\
+   & \mathrm{Re}(Y_{\text{shunt}}) = \frac{p_0}{s_n} p.u. \\
    & \mathrm{Im}(Y_{\text{shunt}}) = -\sqrt{|Y_{\text{shunt}}|^2-\mathrm{Re}(Y_{\text{shunt}})^2} \\
 \end{aligned}
 $$
-
-where $z_{\text{base,transformer}} = 1 / y_{\text{base,transformer}} = {u_{\text{2}}}^2 / s_{\text{n}}$.
 
 ### Generic Branch
 
@@ -631,13 +629,13 @@ Its value can be computed using following equations:
 
 $$
 \begin{aligned}
-      & z_{\text{source}} = \frac{s_{\text{base}}}{s_k} \\
-      & x_1 = \frac{z_{\text{source}}}{\sqrt{1+ \left(\frac{r}{x}\right)^2}} \\
-      & r_1 = x_1 \cdot \left(\frac{r}{x}\right)
+      & z_{\text{source}} = \frac{1}{s_k} p.u. \\
+      & x_1 = \frac{z_{\text{source}}}{\sqrt{1+ \left(\frac{r}{x}\right)^2}} p.u. \\
+      & r_1 = x_1 \cdot \left(\frac{r}{x}\right) p.u.
 \end{aligned}
 $$
 
-where $s_{\text{base}}$ is a constant value determined by the solver, and $\frac{r}{x}$ indicates `rx_ratio` as input.
+where $\frac{r}{x}$ indicates `rx_ratio` as input.
 
 * for zero-sequence,
 
