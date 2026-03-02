@@ -257,12 +257,12 @@ Below the table a more in depth explanation is given for each algorithm.
 
 At the moment, the following power flow algorithms are implemented.
 
-| Algorithm                                          | Default  | Speed    | Accuracy | Algorithm call                                                                                              |
-| -------------------------------------------------- | -------- | -------- | -------- | ----------------------------------------------------------------------------------------------------------- |
-| [Newton-Raphson](#newton-raphson-power-flow)       | &#10004; |          | &#10004; | {py:class}`CalculationMethod.newton_raphson <power_grid_model.enum.CalculationMethod.newton_raphson>`       |
-| [Iterative current](#iterative-current-power-flow) |          |          | &#10004; | {py:class}`CalculationMethod.iterative_current <power_grid_model.enum.CalculationMethod.iterative_current>` |
-| [Linear](#linear-power-flow)                       |          | &#10004; |          | {py:class}`CalculationMethod.linear <power_grid_model.enum.CalculationMethod.linear>`                       |
-| [Linear current](#linear-current-power-flow)       |          | &#10004; |          | {py:class}`CalculationMethod.linear_current <power_grid_model.enum.CalculationMethod.linear_current>`       |
+| Algorithm | Default | Convergence | Typical Use Cases | Algorithm call |
+| --------- | ------- | ----------- | ----------------- | -------------- |
+| [Newton-Raphson](#newton-raphson-power-flow) | &#10004; | Fast (quadratic) | General purpose, meshed networks, accurate results required | {py:class}`CalculationMethod.newton_raphson <power_grid_model.enum.CalculationMethod.newton_raphson>` |
+| [Iterative current](#iterative-current-power-flow) | | Moderate (linear) | Time-series analysis, operational studies, batch calculations | {py:class}`CalculationMethod.iterative_current <power_grid_model.enum.CalculationMethod.iterative_current>` |
+| [Linear](#linear-power-flow) | | Single iteration | Constant impedance loads only, quick estimates | {py:class}`CalculationMethod.linear <power_grid_model.enum.CalculationMethod.linear>` |
+| [Linear current](#linear-current-power-flow) | | Single iteration | Fast approximations, screening studies, real-time applications | {py:class}`CalculationMethod.linear_current <power_grid_model.enum.CalculationMethod.linear_current>` |
 
 ```{note}
 By default, the [Newton-Raphson](#newton-raphson-power-flow) method is used.
@@ -272,6 +272,57 @@ By default, the [Newton-Raphson](#newton-raphson-power-flow) method is used.
 When all the load/generation types are of constant impedance, the [Linear](#linear-power-flow) method will be the
 fastest without loss of accuracy.
 Therefore power-grid-model will use this method regardless of the input provided by the user in this case.
+```
+
+#### Choosing the right power flow algorithm
+
+The choice of algorithm depends on your specific requirements for accuracy, speed, and grid characteristics.
+
+**When accuracy is critical:**
+
+- Use **Newton-Raphson** for regulatory submissions, protection studies, or when you need high confidence in results
+- Required for meshed networks with significant power flows
+- Most robust algorithm that works in nearly all scenarios
+
+**When speed is critical:**
+
+- Use **Linear current** for initial screening, real-time applications, or large-scale studies with many scenarios
+- Use **Linear** only when loads are truly constant impedance (rare in practice; automatically selected when applicable)
+- Accept that approximations may have voltage errors, especially when actual voltages deviate significantly from 1 p.u.
+
+**For balanced performance:**
+
+- Use **Iterative current** for time-series analysis where you need reasonable accuracy with good performance
+- Excellent for radial networks and moderately meshed systems
+- Particularly efficient for batch calculations (e.g., time-series) as matrix factorization is reused across scenarios
+
+**Grid characteristics to consider:**
+
+- **Radial distribution networks**: All methods work well; Linear current offers good speed/accuracy
+  balance for approximations
+- **Meshed networks**: Newton-Raphson or Iterative current recommended; linear methods may be less accurate
+- **Voltage deviations > 5% from nominal**: Prefer Newton-Raphson or Iterative current for accuracy
+- **Constant impedance loads only**: Linear method is optimal (automatically selected)
+
+**Load type impact:**
+
+- **Constant power** (most common in practice): Newton-Raphson or Iterative current for accurate results;
+  Linear current for fast approximations
+- **Constant current**: Linear current provides good approximations
+- **Constant impedance**: Linear method is exact and fastest
+
+**Quick decision guide:**
+
+1. Start with **Newton-Raphson** (default) - it works reliably for all cases
+2. If calculations are too slow for your workflow (e.g., thousands of scenarios) and you can accept
+   approximations, try **Iterative current** for better accuracy or **Linear current** for maximum speed
+3. For real-time or interactive applications requiring sub-second response, use **Linear current**
+4. Only use **Linear** if you explicitly model all loads as constant impedance
+
+```{tip}
+The accuracy of linear approximation methods depends heavily on how close actual voltages are to 1 p.u.
+They are most accurate in well-regulated distribution systems with voltage control.
+For transmission systems or heavily loaded networks, iterative methods are recommended.
 ```
 
 The nodal equations of a power system network can be written as:
