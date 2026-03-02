@@ -280,7 +280,7 @@ The choice of algorithm depends on your specific requirements for accuracy, spee
 
 **When accuracy is critical:**
 
-- Use **Newton-Raphson** for regulatory submissions, protection studies, or when you need high confidence in results
+- Use **Newton-Raphson** when you need high confidence in results
 - Required for meshed networks with significant power flows
 - Most robust algorithm that works in nearly all scenarios
 
