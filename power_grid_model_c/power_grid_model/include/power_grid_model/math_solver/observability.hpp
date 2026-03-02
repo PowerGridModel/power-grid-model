@@ -10,6 +10,7 @@
 #include "power_grid_model/calculation_parameters.hpp"
 #include "power_grid_model/common/common.hpp"
 #include "power_grid_model/common/enum.hpp"
+#include "power_grid_model/common/typing.hpp"
 #include "y_bus.hpp"
 
 #include "../common/exception.hpp"
@@ -547,8 +548,7 @@ inline bool find_spanning_tree_from_node_impl(Idx start_bus, Idx n_bus,
     // It can be rounded down to 0 and 1. With 0 there is division by issue. With 1, we may have not enough tries.
     // 2 is a heuristic for having enough but not exhaustive.
     constexpr auto min_avg_degree = 2;
-    Idx const avg_degree =
-        (avg_degree_size_t >= min_avg_degree) ? static_cast<Idx>(avg_degree_size_t) : static_cast<Idx>(min_avg_degree);
+    Idx const avg_degree = std::max(narrow_cast<Idx>(min_avg_degree), narrow_cast<Idx>(avg_degree_size_t));
 
     // Iteration limit: visit all nodes plus some backtracking allowance
     // 3 is a heuristic to account for the forward search, back tracking and different candidate retires
