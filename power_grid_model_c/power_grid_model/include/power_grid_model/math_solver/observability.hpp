@@ -524,19 +524,6 @@ inline bool find_spanning_tree_from_node_impl(Idx start_bus, Idx n_bus,
         return true;
     }
 
-    // Calculate average degree for iteration limit
-    std::size_t total_edges = 0;
-    for (auto const& bus_info : neighbour_list) {
-        total_edges += bus_info.direct_neighbours.size();
-    }
-    std::size_t const avg_degree_size_t = std::min(total_edges / static_cast<std::size_t>(n_bus),
-                                                   static_cast<std::size_t>(std::numeric_limits<Idx>::max()));
-    // It can be rounded down to 0 and 1. With 0 there is division by issue. With 1, we may have not enough tries.
-    // 2 is a heuristic for having enough but not exhaustive.
-    constexpr auto min_avg_degree = 2;
-    Idx const avg_degree =
-        (avg_degree_size_t >= min_avg_degree) ? static_cast<Idx>(avg_degree_size_t) : static_cast<Idx>(min_avg_degree);
-
     // Reuse provided buffers and reset them
     visited_buffer.assign(n_bus, std::to_underlying(BusVisited::NotVisited));
     edge_track_buffer.clear();
@@ -549,6 +536,19 @@ inline bool find_spanning_tree_from_node_impl(Idx start_bus, Idx n_bus,
                             .visited_count = 0,
                             .current_bus = start_bus,
                             .downwind = false};
+
+    // Calculate average degree for iteration limit
+    std::size_t total_edges = 0;
+    for (auto const& bus_info : neighbour_list) {
+        total_edges += bus_info.direct_neighbours.size();
+    }
+    std::size_t const avg_degree_size_t = std::min(total_edges / static_cast<std::size_t>(n_bus),
+                                                   static_cast<std::size_t>(std::numeric_limits<Idx>::max()));
+    // It can be rounded down to 0 and 1. With 0 there is division by issue. With 1, we may have not enough tries.
+    // 2 is a heuristic for having enough but not exhaustive.
+    constexpr auto min_avg_degree = 2;
+    Idx const avg_degree =
+        (avg_degree_size_t >= min_avg_degree) ? static_cast<Idx>(avg_degree_size_t) : static_cast<Idx>(min_avg_degree);
 
     // Iteration limit: visit all nodes plus some backtracking allowance
     // 3 is a heuristic to account for the forward search, back tracking and different candidate retires
