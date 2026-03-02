@@ -260,7 +260,7 @@ At the moment, the following power flow algorithms are implemented.
 | Algorithm | Default | Convergence | Typical Use Cases | Algorithm call |
 | --------- | ------- | ----------- | ----------------- | -------------- |
 | [Newton-Raphson](#newton-raphson-power-flow) | &#10004; | Fast (quadratic) | General purpose, meshed networks, accurate results required | {py:class}`CalculationMethod.newton_raphson <power_grid_model.enum.CalculationMethod.newton_raphson>` |
-| [Iterative current](#iterative-current-power-flow) | | Moderate (linear) | Time-series analysis, operational studies, batch calculations | {py:class}`CalculationMethod.iterative_current <power_grid_model.enum.CalculationMethod.iterative_current>` |
+| [Iterative current](#iterative-current-power-flow) | | Moderate (linear) | Time-series analysis, operational studies, batch calculations, prefer radial grids | {py:class}`CalculationMethod.iterative_current <power_grid_model.enum.CalculationMethod.iterative_current>` |
 | [Linear](#linear-power-flow) | | Single iteration | Constant impedance loads only, quick estimates | {py:class}`CalculationMethod.linear <power_grid_model.enum.CalculationMethod.linear>` |
 | [Linear current](#linear-current-power-flow) | | Single iteration | Radial grids | {py:class}`CalculationMethod.linear_current <power_grid_model.enum.CalculationMethod.linear_current>` |
 
