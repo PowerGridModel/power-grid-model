@@ -247,22 +247,22 @@ Outputs for short circuit calculations always give asymmetric output, independen
 
 Two types of power flow algorithms are implemented in power-grid-model; iterative algorithms (Newton-Raphson / Iterative
 current) and linear algorithms (Linear / Linear current).
-Iterative methods are more accurate and should thus be selected when an accurate solution is required.
-Linear approximation methods are many times faster than the iterative methods, but are generally less accurate.
-They can be used where approximate solutions are acceptable.
-Their accuracy is not explicitly calculated and may vary a lot.
-The user should have an intuition of their applicability based on the input grid configuration.
-The table below can be used to pick the right algorithm.
-Below the table a more in depth explanation is given for each algorithm.
+Iterative methods converge to accurate solutions through multiple iterations
+and should be selected when accurate results are required.
+Linear approximation methods perform a single iteration and are significantly faster, but their accuracy depends on grid
+conditions and may vary.
+The table below summarizes the convergence characteristics and typical use cases for each algorithm to help you pick the
+right one.
+A more in-depth explanation of each algorithm is given below the table.
 
 At the moment, the following power flow algorithms are implemented.
 
 | Algorithm | Default | Convergence | Typical Use Cases | Algorithm call |
 | --------- | ------- | ----------- | ----------------- | -------------- |
-| [Newton-Raphson](#newton-raphson-power-flow) | &#10004; | Fast (quadratic) | General purpose, meshed networks, accurate results required | {py:class}`CalculationMethod.newton_raphson <power_grid_model.enum.CalculationMethod.newton_raphson>` |
-| [Iterative current](#iterative-current-power-flow) | | Moderate (linear) | Time-series analysis, operational studies, batch calculations, prefer radial grids | {py:class}`CalculationMethod.iterative_current <power_grid_model.enum.CalculationMethod.iterative_current>` |
+| [Newton-Raphson](#newton-raphson-power-flow) | &#10004; | Fast (quadratic), robust | General purpose, meshed networks, accurate results required | {py:class}`CalculationMethod.newton_raphson <power_grid_model.enum.CalculationMethod.newton_raphson>` |
+| [Iterative current](#iterative-current-power-flow) | | Moderate (linear), less robust | Time-series analysis, operational studies, batch calculations, prefer radial grids | {py:class}`CalculationMethod.iterative_current <power_grid_model.enum.CalculationMethod.iterative_current>` |
 | [Linear](#linear-power-flow) | | Single iteration | Constant impedance loads only, quick estimates | {py:class}`CalculationMethod.linear <power_grid_model.enum.CalculationMethod.linear>` |
-| [Linear current](#linear-current-power-flow) | | Single iteration | Radial grids | {py:class}`CalculationMethod.linear_current <power_grid_model.enum.CalculationMethod.linear_current>` |
+| [Linear current](#linear-current-power-flow) | | Single iteration | Fast approximations, screening studies, real-time applications | {py:class}`CalculationMethod.linear_current <power_grid_model.enum.CalculationMethod.linear_current>` |
 
 ```{note}
 By default, the [Newton-Raphson](#newton-raphson-power-flow) method is used.
