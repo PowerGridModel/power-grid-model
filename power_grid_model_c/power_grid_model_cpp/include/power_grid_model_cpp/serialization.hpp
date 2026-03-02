@@ -117,7 +117,8 @@ inline OwningDataset load_dataset(std::filesystem::path const& path, PGM_Seriali
         return buffer;
     };
 
-    Deserializer deserializer{read_file(path), serialization_format};
+    auto const file_content = read_file(path);
+    Deserializer deserializer{file_content, serialization_format};
     auto& writable_dataset = deserializer.get_dataset();
     OwningDataset dataset{writable_dataset, enable_columnar_buffers};
     deserializer.parse_to_buffer();

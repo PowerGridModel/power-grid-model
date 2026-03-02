@@ -5,7 +5,7 @@
 name: conda-pgm-env
 dependencies:
   # build env
-  - python=3.12
+  - python=3.14
   - pip
   - scikit-build-core
   # build deps
@@ -16,6 +16,7 @@ dependencies:
   - numpy
   - cmake
   - ninja
+  - cli11
   # test deps
   - pytest
   - pytest-cov

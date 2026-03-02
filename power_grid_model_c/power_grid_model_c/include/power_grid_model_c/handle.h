@@ -104,6 +104,13 @@ PGM_API char const** PGM_batch_errors(PGM_Handle const* handle);
  */
 PGM_API void PGM_clear_error(PGM_Handle* handle);
 
+/**
+ * @brief Get the version of the Power Grid Model library.
+ *
+ * @return A pointer to a zero-terminated string representing the version.
+ */
+PGM_API char const* PGM_version(void);
+
 #ifdef __cplusplus
 }
 #endif

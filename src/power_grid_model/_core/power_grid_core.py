@@ -167,8 +167,8 @@ def make_c_binding(func: Callable):
         c_restype = c_size_t
     # set argument in dll
     # mostly with handle pointer, except destroy function
-    is_destroy_func = "destroy" in name
-    if is_destroy_func:
+    is_func_without_handle = ("destroy" in name) or ("version" in name)
+    if is_func_without_handle:
         getattr(_CDLL, f"PGM_{name}").argtypes = c_argtypes
     else:
         getattr(_CDLL, f"PGM_{name}").argtypes = [HandlePtr, *c_argtypes]
@@ -176,7 +176,7 @@ def make_c_binding(func: Callable):
 
     # binding function
     def cbind_func(self, *args, **kwargs):
-        c_inputs = [] if "destroy" in name else [self._handle]
+        c_inputs = [] if is_func_without_handle else [self._handle]
         args = chain(args, (kwargs[key] for key in py_argnames[len(args) :]))
         for arg in args:
             if isinstance(arg, str):
@@ -239,6 +239,10 @@ class PowerGridCore:
 
     @make_c_binding
     def clear_error(self) -> None:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def version(self) -> str:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding
@@ -575,3 +579,6 @@ def get_power_grid_core() -> PowerGridCore:
     except AttributeError:
         _thread_local_data.power_grid_core = PowerGridCore()
         return _thread_local_data.power_grid_core
+
+
+pgm_version = get_power_grid_core().version()

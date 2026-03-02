@@ -245,6 +245,10 @@ class AttributeBuffer {
 
     RawDataPtr get() { return pgm_type_func_selector(MetaData::attribute_ctype(attribute_), PtrGetter{*this}); }
 
+    MetaAttribute const* get_attribute() const { return attribute_; }
+
+    template <class T> std::vector<T> const& get_data_vector() const { return std::get<std::vector<T>>(buffer_); }
+
   private:
     MetaAttribute const* attribute_{nullptr};
     VariantType buffer_;
