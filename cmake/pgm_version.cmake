@@ -12,3 +12,9 @@ string(
     PGM_VERSION
     "${_PGM_VERSION_STRIPPED}"
 )
+string(
+    REGEX REPLACE "^([0-9]+)\\.[0-9]+(\\.[0-9]+)?.*"
+    "\\1"
+    PGM_VERSION_MAJOR
+    "${PGM_VERSION}"
+)
