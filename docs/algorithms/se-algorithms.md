@@ -350,6 +350,6 @@ The system error of the phase shift converges to zero.
 ```{warning}
 The algorithm will assume angles to be zero by default (see the details about voltage sensors).
 In observable systems this helps better outputting correct results.
-On the other hand with unobservable systems, exceptions raised from calculations due to faulty results will be 
+On the other hand with unobservable systems, exceptions raised from calculations due to faulty results will be
 prevented.
 ```
