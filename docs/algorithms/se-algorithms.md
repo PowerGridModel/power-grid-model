@@ -109,7 +109,7 @@ It is not possible to mix [power sensors](../user_manual/components.md#generic-p
 [current sensors](../user_manual/components.md#generic-current-sensor) on the same terminal of the same component.
 It is also not possible to mix
 [current sensors with global angle measurement type](../user_manual/components.md#global-angle-current-sensors) with
-[current sensors with local angle measurement type](../user_manual/components.md#local-angle-current-sensors) on the same terminal 
+[current sensors with local angle measurement type](../user_manual/components.md#local-angle-current-sensors) on the same terminal
 of the same component.
 However, such mixing of sensor types is allowed as long as they are on different terminals.
 ```
