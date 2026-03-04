@@ -208,7 +208,7 @@ This section describes the control logic and algorithmic details for power flow 
 changing on regulated transformers.
 For an overview of regulated power flow and strategy selection, see
 [Regulated power flow with automatic tap changing](
-  ../user_manual/calculations.md#regulated-power-flow-with-automatic-tap-changing).
+  ../user_manual/calculations.md#power-flow-with-automatic-tap-changing).
 
 ### Control logic for power flow with automatic tap changing
 
