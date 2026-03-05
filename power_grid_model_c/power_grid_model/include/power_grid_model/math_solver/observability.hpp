@@ -672,7 +672,7 @@ inline ObservabilityResult observability_check(MeasuredValues<sym> const& measur
     }
 
     //  Sufficient early out, enough nodal measurement equals observable
-    //  Meshed voltage phasor sensor early out: currect meshed check can not handle voltage phasor
+    //  Meshed voltage phasor sensor early out: current meshed sufficient-condition implementation cannot handle voltage phasor sensors
     if (observability_sensors.total_injections > n_bus - 2 || (n_voltage_phasor_sensors > 1 && !topo.is_radial)) {
         return ObservabilityResult{.is_observable = true,
                                    .is_possibly_ill_conditioned = observability_sensors.is_possibly_ill_conditioned};
