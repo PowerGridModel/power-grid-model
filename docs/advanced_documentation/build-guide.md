@@ -6,20 +6,20 @@ SPDX-License-Identifier: MPL-2.0
 
 # Build Guide
 
-This document explains how you can build this library from source, including some examples of build environment.
+This document explains how you can build this library from source, including some examples of build environments.
 In this repository there are three builds:
 
-* A `power-grid-model` [pip](https://pypi.org/project/power-grid-model/) Python package with C++ extension as the
+* A `power-grid-model` ([PyPI](https://pypi.org/project/power-grid-model/)) Python package with a C++ extension as the
   calculation core.
 * A [CMake](https://cmake.org/) project consisting of the C++ header-only calculation core, and the following build
   targets:
-  * A dynamic library (`.dll` or `.so`) with stable pure C API/ABI which can be used by any application (enabled by
-    default)
-  * An install target that installs the package containing the dynamic library (enabled by default)
-  * Native C++ unit tests
-  * C API tests
-  * A performance benchmark program
-  * An example C program to call the shared library
+  * A dynamic library (`.dll` on Windows, `.so` on Linux, or `.dylib` on macOS) with a stable pure C API/ABI which can
+    be used by any application (enabled by default).
+  * An install target that installs the package containing the dynamic library (enabled by default).
+  * Native C++ unit tests.
+  * C API tests.
+  * A performance benchmark program.
+  * An example C program to call the shared library.
 * A separate example [CMake](https://cmake.org/) project with a small C++ program that shows how to find and use the
   installable package.
 
@@ -27,16 +27,16 @@ In this repository there are three builds:
 
 To build the library from source, you need to first prepare the compiler toolchains and the build dependencies.
 In this section a list of general requirements are given.
-After this section there are examples of setup in Linux (Ubuntu 24.04), Windows 11, and macOS (Sequoia).
+After this section there are examples of setup in Linux (Ubuntu 24.04), Windows 11, and macOS (Tahoe).
 
 ### Architecture Support
 
-This library is written and tested on `x86_64` and `arm64` architecture.
-Building the library in `IA-32` might be working, but is not tested.
+This library is written and tested on `x86_64` and `arm64` architectures.
+Building the library in `IA-32` might work, but this is not tested.
 
-The source code is written with the mindset of ISO standard C++ only, i.e. avoid compiler-extension or platform-specific
-features as much as possible.
-In this way, minimum effort should be necessary to port the library to other platform/architecture.
+The source code is written with the mindset of ISO standard C++ only, i.e. we avoid compiler-extension o
+ platform-specific features as much as possible.
+In this way, minimum effort should be necessary to port the library to other platforms/architectures.
 
 ### Compiler Support
 
@@ -45,56 +45,85 @@ Below is a list of tested compilers:
 
 #### Linux
 
-* gcc >= 14.0
+* gcc >= 14.0:
   * Version 14.x tested using the version in the `manylinux_2_28` container.
-  * Version 14.x tested using the musllinux build with custom compiler
-  * Version 14.x tested in CI
-* Clang >= 18.0
-  * Version 18.x tested in CI
-  * Version 18.x tested in CI with code quality checks
+  * Version 14.x tested using the `musllinux` build with custom compiler.
+  * Version 14.x tested in CI.
+* Clang >= 18.0:
+  * Version 18.x tested in CI.
+  * Version 18.x tested in CI with code quality checks.
 
-You can define the environment variable `CXX` to for example `clang++` to specify the C++ compiler.
+```{note}
+Wheel builds for Linux are done inside containers using `cibuildwheel`:
+- **manylinux_2_28**: glibc-based Linux distributions (Ubuntu, Debian, Fedora, etc.)
+- **musllinux_1_2**: musl-based Linux distributions (Alpine Linux, etc.)
+
+These are handled automatically in CI. For local development, use your system's native compiler.
+```
 
 #### Windows
 
-* MSVC >= 19.0
-  * Latest release tested in CI (e.g. Visual Studio 2022, IDE or build tools)
-* Clang CL >= 19.0
-  * Latest release tested in CI (e.g. Visual Studio 2022, IDE or build tools)
+* MSVC >= 19.0:
+  * Latest release tested in CI (e.g. Visual Studio 2022, IDE or build tools).* Clang CL >= 19.0:
+  * Latest release tested in CI (e.g. Visual Studio 2022, IDE or build tools).
 
 #### macOS
 
-* Clang >= 17.0
-  * Latest XCode release tested in CI
+* Apple Clang >= 17.0:
+  * Latest XCode release tested in CI.
+
+```{note}
+Once your compiler of choice is installed, you need to define the environment variables `CC` and `CXX` to specify the compiler. For example `export CC=clang-18` and `export CXX=clang++-18` to select the `clang` compiler in Ubuntu.
+```
 
 ### Build System for CMake Project
 
-This repository uses [CMake](https://cmake.org/) (version 3.23 or later) as C++ build system.
+This repository uses [CMake](https://cmake.org/) (version 3.23 or later) as its C++ build system.
 
 ### Build Dependencies
 
 #### C++
 
-The table below shows the C++ build dependencies
+The table below shows the C++ build dependencies.
+
+```{note}
+The C++ dependencies below are **build-time only**. When building the Python package from source (via `uv sync`), they are automatically downloaded and used during the build — you do not need to install them manually. Manual installation is only required for standalone CMake builds.
+```
 
 | Library name                                                        | Requirements to build Python package | Requirements to build CMake project         | Remark      | License                                                                                                      |
 | ------------------------------------------------------------------- | ------------------------------------ | ------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------ |
-| [boost](https://www.boost.org/)                                     | Will be installed automatically      | CMake needs to be able find `boost`         | header-only | [Boost Software License - Version 1.0](https://www.boost.org/LICENSE_1_0.txt)                                |
-| [eigen3](https://eigen.tuxfamily.org/)                              | Will be installed automatically      | CMake needs to be able find `eigen3`        | header-only | [Mozilla Public License, version 2.0](https://www.mozilla.org/en-US/MPL/2.0/)                                |
-| [nlohmann-json](https://github.com/nlohmann/json)                   | Will be installed automatically      | CMake needs to be able find `nlohmann_json` | header-only | [MIT](https://github.com/nlohmann/json/blob/develop/LICENSE.MIT)                                             |
-| [msgpack-cxx](https://github.com/msgpack/msgpack-c/tree/cpp_master) | Will be installed automatically      | CMake needs to be able find `msgpack-cxx`   | header-only | [Boost Software License - Version 1.0](https://github.com/msgpack/msgpack-c/blob/cpp_master/LICENSE_1_0.txt) |
+| [boost](https://www.boost.org/)                                     | Installed automatically              | CMake needs to be able find `boost`         | header-only | [Boost Software License - Version 1.0](https://www.boost.org/LICENSE_1_0.txt)                                |
+| [eigen3](https://eigen.tuxfamily.org/)                              | Installed automatically              | CMake needs to be able find `eigen3`        | header-only | [Mozilla Public License, version 2.0](https://www.mozilla.org/en-US/MPL/2.0/)                                |
+| [nlohmann-json](https://github.com/nlohmann/json)                   | Installed automatically              | CMake needs to be able find `nlohmann_json` | header-only | [MIT](https://github.com/nlohmann/json/blob/develop/LICENSE.MIT)                                             |
+| [msgpack-cxx](https://github.com/msgpack/msgpack-c/tree/cpp_master) | Installed automatically              | CMake needs to be able find `msgpack-cxx`   | header-only | [Boost Software License - Version 1.0](https://github.com/msgpack/msgpack-c/blob/cpp_master/LICENSE_1_0.txt) |
 | [doctest](https://github.com/doctest/doctest)                       | None                                 | CMake needs to be able find `doctest`       | header-only | [MIT](https://github.com/doctest/doctest/blob/master/LICENSE.txt)                                            |
+
+The recommended way to install the C++ dependencies for a CMake build on any supported platform is via
+[`uv`](https://github.com/astral-sh/uv) and
+[pgm-build-dependencies](https://github.com/PowerGridModel/pgm-build-dependencies).
+`pgm-build-dependencies` is a Python package that bundles all required header-only C++ libraries.
+
+```shell
+uv tool install https://github.com/PowerGridModel/pgm-build-dependencies/releases/latest/download/pgm_build_dependencies-0.1.0-py3-none-any.whl
+pgm-build-setup-path
+```
+
+Where `pgm-build-setup-path` gives you the path where the C++ dependencies were installed.
+Then set `CMAKE_PREFIX_PATH` so CMake can locate the libraries. See the platform-specific sections below for the exact
+syntax (`export` on Linux/macOS, `$env:` on PowerShell).
+
+```{note}
+Alternatively, you can install the C++ dependencies using your platform's package manager (e.g. `brew` on macOS, `brew` or `apt` on Linux, `conda` on Windows). In that case, set `CMAKE_PREFIX_PATH` to the installation prefix of your package manager instead.
+```
 
 #### Python
 
 The table below shows the Python dependencies.
-Although it is opt-in, it is recommended to use [`uv`](https://github.com/astral-sh/uv) as
-your development environment manager.
 
 | Library name                                                           | Remark                 | License                                                                                    |
 |------------------------------------------------------------------------|------------------------|--------------------------------------------------------------------------------------------|
-| [numpy](https://numpy.org/)                                            | runtime dependency     | [BSD-3](https://github.com/numpy/numpy/blob/main/LICENSE.txt)                              |
-| [scikit-build-core](https://github.com/scikit-build/scikit-build-core) | build dependency       | [Apache](https://github.com/scikit-build/scikit-build-core/blob/main/LICENSE)              |
+| [numpy](https://numpy.org/)                                            | Runtime dependency     | [BSD-3](https://github.com/numpy/numpy/blob/main/LICENSE.txt)                              |
+| [scikit-build-core](https://github.com/scikit-build/scikit-build-core) | Build dependency       | [Apache](https://github.com/scikit-build/scikit-build-core/blob/main/LICENSE)              |
 | [pytest](https://github.com/pytest-dev/pytest)                         | Development dependency | [MIT](https://github.com/pytest-dev/pytest/blob/main/LICENSE)                              |
 | [pytest-cov](https://github.com/pytest-dev/pytest-cov)                 | Development dependency | [MIT](https://github.com/pytest-dev/pytest-cov/blob/master/LICENSE)                        |
 | [msgpack-python](https://github.com/msgpack/msgpack-python)            | Development dependency | [Apache License, Version 2.0](https://github.com/msgpack/msgpack-python/blob/main/COPYING) |
@@ -169,9 +198,10 @@ Supported presets for your development platform can be listed using `cmake --lis
 
 In the developer build the following build targets (directories) are enabled:
 
-* `power_grid_model_c`: a dynamic library (`.dll` or `.so`) with stable pure C API/ABI which can be used by any
+* `power_grid_model_c`: a dynamic library (`.so` on Linux, `.dylib` on macOS, `.dll` on Windows) with stable pure
+C API/ABI which can be used by any
   application
-* `tests/cpp_unit_tests`: the unit test target for the C++ core using the `doctest` framework.
+* `tests/cpp_unit_tests_*`: the different unit test targets for the C++ core using the `doctest` framework.
 * `tests/cpp_validation_tests`: the validation test target using the `doctest` framework
 * `tests/native_api_tests`: the C API test target using the `doctest` framework
 * `tests/benchmark_cpp`: the C++ benchmark target for performance measure.
@@ -189,25 +219,7 @@ Developer needs to make sure the they are discoverable in `PATH`.
 For x64 Windows native development using MSVC or Clang CL, please use the `x64 Native Command Prompt`, which uses
 `vcvarsall.bat` to set up the appropriate build environment.
 
-## Visual Studio Code Support
-
-You can use any IDE to develop this project.
-As a popular cross-platform IDE, the settings for Visual Studio Code is preconfigured in the folder `.vscode`.
-You can open the repository folder with VSCode and the configuration will be loaded automatically.
-
-```{note}
-VSCode (as well as some other IDEs) does not set its own build environment itself.
-For optimal usage, open the folder using `code <project_dir>` from a terminal that has the environment set up.
-See above section for tips.
-```
-
-For automatic formatting of JSON(C) files, you will need to have [Node.js](https://nodejs.org/) installed.
-You may also need to update the recommended extension Biome to the latest version using
-`manage > install specific version` for optimal up-to-date support.
-Alternatively, as usual, you can also use [`pre-commit`]({}/CONTRIBUTING.md#pre-commit-hooks) to keep all files
-correctly formatted before committing.
-
-## Build Script for Linux/macOS
+### Build Script for Linux/macOS
 
 There is a convenient shell script to build the cmake project in Linux or macOS:
 {{ "[`build.sh`]({}/build.sh)".format(gh_link_head_blob) }}.
@@ -229,6 +241,30 @@ To list the available presets, run `./build.sh -h`.
 In this section an example is given for setup in Ubuntu 24.04.
 You can use this example in Windows Subsystem for Linux (WSL), or in a physical/virtual machine.
 
+### Ubuntu Software Packages
+
+Install the minimum required packages:
+
+```shell
+sudo apt update && sudo apt -y upgrade
+sudo apt install -y build-essential gcc g++ clang-18 ninja-build pkg-config
+```
+
+The following packages are optional depending on your use case:
+
+```shell
+# For coverage reports
+sudo apt install -y gcovr lcov
+# For debugging
+sudo apt install -y gdb
+# For downloading tools or scripted setup
+sudo apt install -y wget curl zip unzip tar git
+```
+
+### C++ Dependencies for CMake
+
+For CMake builds, install the C++ dependencies as described in the [C++ build dependencies](#c) section above.
+
 ### Environment variables
 
 Append the following lines into the file `${HOME}/.bashrc`.
@@ -236,32 +272,9 @@ Append the following lines into the file `${HOME}/.bashrc`.
 ```shell
 export CXX=clang++-18            # or g++-14
 export CC=clang-18               # or gcc-14
-export CMAKE_PREFIX_PATH=/home/linuxbrew/.linuxbrew
-export LLVM_COV=llvm-cov-18
+export CMAKE_PREFIX_PATH=$(pgm-build-setup-path)  # only needed for CMake builds
+export LLVM_COV=llvm-cov-18      # only if you want to use one of the llvm features
 export CLANG_TIDY=clang-tidy-18  # only if you want to use one of the clang-tidy presets
-```
-
-### Ubuntu Software Packages
-
-Install the following packages from Ubuntu.
-
-```shell
-sudo apt update && sudo apt -y upgrade
-sudo apt install -y wget curl zip unzip tar git build-essential gcovr lcov gcc g++ clang-18 make gdb ninja-build pkg-config
-```
-
-### C++ packages
-
-The recommended way to get C++ package is via [Homebrew](https://brew.sh/).
-
-```{note}
-Go to its website to follow the installation instruction.
-```
-
-Install the C++ dependencies and uv
-
-```shell
-brew install boost eigen nlohmann-json msgpack-cxx doctest cmake uv
 ```
 
 ### Build Python Library from Source
@@ -273,8 +286,7 @@ git clone https://github.com/PowerGridModel/power-grid-model.git
 cd power-grid-model
 ```
 
-It is recommended to create a virtual environment by using `uv`, and
-install from source in develop mode, and run `pytest`.
+Install from source in develop mode and run the tests:
 
 ```shell
 uv sync
@@ -283,45 +295,14 @@ uv run pytest
 
 ### Build CMake Project
 
-There is a convenient shell script to build the cmake project:
-{{ "[`build.sh`]({}/build.sh)".format(gh_link_head_blob) }}.
-
-As an example, go to the root folder of repo.
-Use the following command to build the project in release mode:
+Refer to the [Build CMake Project](#build-cmake-project) section above for full details.
+As a quick start, from the root of the repository:
 
 ```shell
-./build.sh -p <preset>
-```
-
-To list the available presets, run `./build.sh -h`.
-
-One can run the unit tests and C API example by:
-
-```shell
-ctest --preset <preset>
-```
-
-or
-
-```shell
-cpp_build/<preset>/bin/power_grid_model_unit_tests
-
-cpp_build/<preset>/bin/power_grid_model_c_example
-```
-
-or install using
-
-```shell
-cmake --build --preset <preset> --target install
+./build.sh -p <preset>   # list available presets with: ./build.sh -h
 ```
 
 ## Example Setup for Windows 11
-
-Define the following environment variable user-wide:
-
-| Name                | Value                            |
-| ------------------- | -------------------------------- |
-| `CMAKE_PREFIX_PATH` | `C:\conda_envs\cpp_pkgs\Library` |
 
 ### Software Toolchains
 
@@ -361,21 +342,37 @@ You can install `uv` by the following command as suggested in their [website](ht
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
-### C++ packages
+### C++ Dependencies for CMake
 
-The recommended way to get C++ package is via `conda`.
-Open a miniforge console.
+For CMake builds, install the C++ dependencies as described in the [C++ build dependencies](#c) section above.
+Open a PowerShell terminal and run:
+
+```powershell
+uv tool install https://github.com/PowerGridModel/pgm-build-dependencies/releases/latest/download/pgm_build_dependencies-0.1.0-py3-none-any.whl
+```
+
+### Environment variables
+
+Set `CMAKE_PREFIX_PATH` so CMake can locate the C++ libraries. In PowerShell:
+
+```powershell
+$env:CMAKE_PREFIX_PATH = (pgm-build-setup-path)
+```
+
+To make it persistent across sessions:
+
+```powershell
+[System.Environment]::SetEnvironmentVariable("CMAKE_PREFIX_PATH", (pgm-build-setup-path), "User")
+```
+
+```{note}
+Alternatively, you can use `conda` to install C++ dependencies:
 
 ```shell
 conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge libboost-headers eigen nlohmann_json msgpack-cxx doctest
 ```
 
-```{note}
-Long paths for (dependencies in) the installation environment might exceed the `maximum path length limitation` set by
-Windows, causing the installation to fail.
-It is possible to enable long paths in Windows by following the steps in the
-[Microsoft documentation](https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=registry)
-```
+In that case, set `CMAKE_PREFIX_PATH` to `C:\conda_envs\cpp_pkgs\Library`.
 
 ### Build Python Library from Source
 
@@ -431,22 +428,26 @@ It includes debug and release builds.
 
 In this section an example is given for setup in macOS Sequoia and project default python.
 
+### macOS Software Packages
+
+Install the compiler toolchain and build tools with [Homebrew](https://brew.sh/).
+
+```shell
+brew install ninja cmake uv
+```
+
+### C++ Dependencies for CMake
+
+For CMake builds, install the C++ dependencies as described in the [C++ build dependencies](#c) section above.
+
 ### Environment variables
 
-Append the following lines into the file `${HOME}/.bashrc`.
+Append the following lines into the file `${HOME}/.zshrc` (or `${HOME}/.bashrc` if using bash).
 
 ```shell
 export CXX=clang++
 export CC=clang
-export CMAKE_PREFIX_PATH=/usr/local
-```
-
-### macOS Software Packages and C++ libraries
-
-Install the following packages with [Homebrew](https://brew.sh/).
-
-```shell
-brew install ninja cmake boost eigen nlohmann-json msgpack-cxx doctest uv
+export CMAKE_PREFIX_PATH=$(pgm-build-setup-path)  # only needed for CMake builds
 ```
 
 ### Build Python Library from Source
@@ -454,12 +455,11 @@ brew install ninja cmake boost eigen nlohmann-json msgpack-cxx doctest uv
 Go to a root folder of your choice to save the repositories.
 
 ```shell
-git clone https://github.com/PowerGridModel/power-grid-model.git 
+git clone https://github.com/PowerGridModel/power-grid-model.git
 cd power-grid-model
 ```
 
-It is recommended to create a virtual environment by using `uv` and
-install from source in develop mode, and run `pytest`.
+Install from source in develop mode and run the tests:
 
 ```shell
 uv sync
@@ -468,38 +468,15 @@ uv run pytest
 
 ### Build CMake Project
 
-There is a convenient shell script to build the cmake project:
-{{ "[`build.sh`]({}/build.sh)".format(gh_link_head_blob) }}.
-
-**Note: the test coverage option is not supported in macOS.**
-
-As an example, go to the root folder of repo.
-Use the following command to build the project in release mode:
+Refer to the [Build CMake Project](#build-cmake-project) section above for full details.
+As a quick start, from the root of the repository:
 
 ```shell
-./build.sh -p <preset>
+./build.sh -p <preset>   # list available presets with: ./build.sh -h
 ```
 
-To list the available presets, run `cmake --list-presets`.
-
-One can run the unit tests and C API example by:
-
-```shell
-ctest --preset <preset>
-```
-
-or
-
-```shell
-cpp_build/<preset>/bin/power_grid_model_unit_tests
-
-cpp_build/<preset>/bin/power_grid_model_c_example
-```
-
-or install using
-
-```shell
-cmake --build --preset <preset> --target install
+```{note}
+Test coverage is not supported on macOS.
 ```
 
 ## Package tests
@@ -517,6 +494,25 @@ This project has the main project as a required dependency.
 Configuration will fail if the main project has not been built and installed, e.g. using
 `cmake --build --preset <preset> --target install` for the current preset.
 ```
+
+## Visual Studio Code Support
+
+You can use any IDE to develop this project.
+As a popular cross-platform IDE, the settings for Visual Studio Code is preconfigured in the folder `.vscode`.
+You can open the repository folder with VSCode and the configuration will be loaded automatically.
+
+```{note}
+VSCode (as well as some other IDEs) does not set its own build environment itself.
+For optimal usage, open the folder using `code <project_dir>` from a terminal that has the environment set up.
+See the platform-specific setup sections above for guidance.
+```
+
+For automatic formatting of JSON(C) files, you will need to have [Node.js](https://nodejs.org/) installed.
+You may also need to update the recommended extension Biome to the latest version using
+`manage > install specific version` for optimal up-to-date support.
+Alternatively, as usual, you can also use
+{{ "[`pre-commit`]({}/CONTRIBUTING.md#pre-commit-hooks)".format(gh_link_head_blob) }} to keep all files
+correctly formatted before committing.
 
 ## Documentation
 
