@@ -662,23 +662,24 @@ inline ObservabilityResult observability_check(MeasuredValues<sym> const& measur
 
     Idx n_voltage_phasor_sensors{};
 
-    // check necessary condition for observability
+    // Check necessary condition for observability
     is_necessary_condition_met = detail::necessary_condition(observability_sensors, n_bus, n_voltage_phasor_sensors,
                                                              measured_values.has_global_angle_current());
     // Early return if necessary condition is not met
-    if (!is_necessary_condition_met) {
+    // Meshed voltage phasor sensor early out: current meshed sufficient-condition implementation cannot handle voltage
+    // phasor sensors
+    if (!is_necessary_condition_met || (n_voltage_phasor_sensors > 1 && !topo.is_radial)) {
         return ObservabilityResult{.is_observable = false,
                                    .is_possibly_ill_conditioned = observability_sensors.is_possibly_ill_conditioned};
     }
 
-    //  Sufficient early out, enough nodal measurement equals observable
+    // Sufficient early out, enough nodal measurement equals observable
     if (observability_sensors.total_injections > n_bus - 2) {
         return ObservabilityResult{.is_observable = true,
                                    .is_possibly_ill_conditioned = observability_sensors.is_possibly_ill_conditioned};
     }
 
-    // check the sufficient condition for observability
-    // the check is currently only implemented for radial grids
+    // Check the sufficient condition for observability
     if (topo.is_radial) {
         is_sufficient_condition_met = detail::sufficient_condition_radial_with_voltage_phasor(
             y_bus_structure, observability_sensors, n_voltage_phasor_sensors);
