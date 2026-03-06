@@ -327,6 +327,39 @@ They are most accurate in well-regulated distribution systems with voltage contr
 For transmission systems or heavily loaded networks, iterative methods are recommended.
 ```
 
+### Regulated power flow calculations
+
+Regulated power flow calculations are disabled by default.
+
+At the time of writing, the following regulated power flow calculation types are implemented.
+Please refer to their respective sections for detailed documentation.
+
+| Regulation type                                                   | Setting                                                                                 | Enum values                                                                 |
+| ----------------------------------------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| [Automatic tap changing](#power-flow-with-automatic-tap-changing) | {py:meth}`tap_changing_strategy <power_grid_model.PowerGridModel.calculate_power_flow>` | {py:class}`TapChangingStrategy <power_grid_model.enum.TapChangingStrategy>` |
+
+#### Power flow with automatic tap changing
+
+Some of the most important regulators in the grid affect the tap position of transformers.
+These [Transformer Tap Regulator](../user_manual/components.md#transformer-tap-regulator)s try to regulate
+a control voltage
+$U_{\text{control}}$ such that it is within a specified voltage band.
+The $U_{\text{control}}$ may be compensated for the voltage drop during transport.
+Power flow calculations that take the behavior of these regulators into account may be toggled by providing one of the
+following strategies to the {py:meth}`tap_changing_strategy <power_grid_model.PowerGridModel.calculate_power_flow>`
+option.
+
+| Algorithm                                                                   | Default  | Speed    | Algorithm call                                                                                              |
+| --------------------------------------------------------------------------- | -------- | -------- | ----------------------------------------------------------------------------------------------------------- |
+| No automatic tap changing (regular power flow)                              | &#10004; | &#10004; | {py:class}`TapChangingStrategy.disabled <power_grid_model.enum.TapChangingStrategy.disabled>`               |
+| Optimize tap positions for any value in the voltage band                    |          |          | {py:class}`TapChangingStrategy.any_valid_tap <power_grid_model.enum.TapChangingStrategy.any_valid_tap>`     |
+| Optimize tap positions for lowest possible voltage in the voltage band      |          |          | {py:class}`TapChangingStrategy.min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>` |
+| Optimize tap positions for lowest possible voltage in the voltage band      |          |          | {py:class}`TapChangingStrategy.max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>` |
+| Optimize tap positions for any value in the voltage band with binary search |          | &#10004; | {py:class}`TapChangingStrategy.fast_any_tap <power_grid_model.enum.TapChangingStrategy.fast_any_tap>`       |
+
+For detailed control logic, initialization behavior, search methods, and error handling for automatic tap changing,
+see [Automatic Tap Changing Algorithm Details](../algorithms/tap-changing-algorithms.md).
+
 ### State estimation algorithms
 
 Weighted least squares (WLS) state estimation can be performed with power-grid-model to evaluate the state variable with
@@ -360,39 +393,6 @@ At the moment, the following short circuit algorithms are implemented.
 
 For detailed mathematical descriptions including the short circuit equations and IEC 60909 implementation details,
 see [Short Circuit Algorithm Details](../algorithms/sc-algorithms.md).
-
-### Regulated power flow calculations
-
-Regulated power flow calculations are disabled by default.
-
-At the time of writing, the following regulated power flow calculation types are implemented.
-Please refer to their respective sections for detailed documentation.
-
-| Regulation type                                                   | Setting                                                                                 | Enum values                                                                 |
-| ----------------------------------------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| [Automatic tap changing](#power-flow-with-automatic-tap-changing) | {py:meth}`tap_changing_strategy <power_grid_model.PowerGridModel.calculate_power_flow>` | {py:class}`TapChangingStrategy <power_grid_model.enum.TapChangingStrategy>` |
-
-#### Power flow with automatic tap changing
-
-Some of the most important regulators in the grid affect the tap position of transformers.
-These [Transformer Tap Regulator](../user_manual/components.md#transformer-tap-regulator)s try to regulate
-a control voltage
-$U_{\text{control}}$ such that it is within a specified voltage band.
-The $U_{\text{control}}$ may be compensated for the voltage drop during transport.
-Power flow calculations that take the behavior of these regulators into account may be toggled by providing one of the
-following strategies to the {py:meth}`tap_changing_strategy <power_grid_model.PowerGridModel.calculate_power_flow>`
-option.
-
-| Algorithm                                                                   | Default  | Speed    | Algorithm call                                                                                              |
-| --------------------------------------------------------------------------- | -------- | -------- | ----------------------------------------------------------------------------------------------------------- |
-| No automatic tap changing (regular power flow)                              | &#10004; | &#10004; | {py:class}`TapChangingStrategy.disabled <power_grid_model.enum.TapChangingStrategy.disabled>`               |
-| Optimize tap positions for any value in the voltage band                    |          |          | {py:class}`TapChangingStrategy.any_valid_tap <power_grid_model.enum.TapChangingStrategy.any_valid_tap>`     |
-| Optimize tap positions for lowest possible voltage in the voltage band      |          |          | {py:class}`TapChangingStrategy.min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>` |
-| Optimize tap positions for lowest possible voltage in the voltage band      |          |          | {py:class}`TapChangingStrategy.max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>` |
-| Optimize tap positions for any value in the voltage band with binary search |          | &#10004; | {py:class}`TapChangingStrategy.fast_any_tap <power_grid_model.enum.TapChangingStrategy.fast_any_tap>`       |
-
-For detailed control logic, initialization behavior, search methods, and error handling for automatic tap changing,
-see [Automatic Tap Changing](../algorithms/pf-algorithms.md#automatic-tap-changing).
 
 ## Batch Calculations
 
