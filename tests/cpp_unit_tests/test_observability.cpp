@@ -2131,10 +2131,8 @@ TEST_CASE("Test ObservabilityResult - use_perturbation with non-observable netwo
         // Verify that is_observable is true
         CHECK(result.is_observable == true);
 
-        // When observable and possibly ill-conditioned, use_perturbation should return true
-        if (result.is_possibly_ill_conditioned) {
-            CHECK(result.use_perturbation() == true);
-        }
+        // use_perturbation() should follow the invariant: is_observable && is_possibly_ill_conditioned
+        CHECK(result.use_perturbation() == (result.is_observable && result.is_possibly_ill_conditioned));
     }
 
     SUBCASE("Test use_perturbation logic directly") {
