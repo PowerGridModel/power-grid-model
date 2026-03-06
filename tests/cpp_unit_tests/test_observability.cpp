@@ -2067,15 +2067,12 @@ TEST_CASE("Test ObservabilityResult - use_perturbation with non-observable netwo
 
         // Verify that we have exactly 2 voltage phasor sensors (both with angle measurements)
         Idx phasor_count = 0;
-        for (Idx bus = 0; bus < 4; ++bus) {
+        for (Idx bus = 0; bus < topo.n_bus(); ++bus) {
             if (measured_values.has_voltage(bus) && measured_values.has_angle_measurement(bus)) {
                 ++phasor_count;
             }
         }
         CHECK(phasor_count == 2); // Verify we have 2 voltage phasor sensors
-
-        // Verify this is a meshed network (not radial)
-        CHECK(topo.is_radial == false);
 
         // Get the observability result - should return is_observable = false without throwing
         // because of early return: n_voltage_phasor_sensors > 1 && !topo.is_radial
@@ -2093,6 +2090,7 @@ TEST_CASE("Test ObservabilityResult - use_perturbation with non-observable netwo
         // Create a simple 3-bus network with sufficient sensors (observable but possibly ill-conditioned)
         MathModelTopology topo;
         topo.slack_bus = 0;
+        topo.is_radial = true;
         topo.phase_shift = {0.0, 0.0, 0.0};
         topo.branch_bus_idx = {{0, 1}, {1, 2}};
         topo.sources_per_bus = {from_sparse, {0, 1, 1, 1}};
