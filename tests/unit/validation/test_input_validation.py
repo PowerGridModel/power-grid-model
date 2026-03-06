@@ -22,6 +22,7 @@ from power_grid_model._core.enum import AngleMeasurementType
 from power_grid_model._core.utils import compatibility_convert_row_columnar_dataset
 from power_grid_model.enum import CalculationType, ComponentAttributeFilterOptions, FaultPhase, FaultType
 from power_grid_model.validation import validate_input_data
+from power_grid_model.validation.assertions import assert_valid_input_data
 from power_grid_model.validation.errors import (
     FaultPhaseError,
     InfinityError,
@@ -1082,3 +1083,10 @@ def test_asym_line_input_data(input_data):
         MultiFieldValidationError(ComponentType.asym_line, ["c_aa", "c_ba", "c_bb", "c_ca", "c_cb", "c_cc"], [58])
         in validation_errors
     )
+
+
+@pytest.mark.parametrize("component_type", ComponentType)
+def test_validate_input_data__no_components(component_type: ComponentType):
+    input_data = {component_type: initialize_array(DatasetType.input, component_type, 0)}
+    assert validate_input_data(input_data) is None
+    assert_valid_input_data(input_data)
