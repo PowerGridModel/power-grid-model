@@ -108,10 +108,8 @@ template <symmetry_tag sym> using PowerSensorCalcParam = DecomposedComplexRandVa
 template <symmetry_tag sym_type> struct CurrentSensorCalcParam {
     using sym = sym_type;
 
-    static constexpr bool symmetric{is_symmetric_v<sym>};
-
-    AngleMeasurementType angle_measurement_type{};
-    DecomposedComplexRandVar<sym> measurement;
+    AngleMeasurementType angle_measurement_type;
+    PolarComplexRandVar<sym> measurement;
 };
 
 template <typename T>
