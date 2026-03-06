@@ -282,7 +282,6 @@ The possible scenarios are:
 If the algorithm uses binary search, since the number of tap positions is often limited to tens of taps, binary search
 will find the optimal tap positions within a small number of iterations, typically under 10.
 When linear search is used, however, we avoid convergence if the search continues to iterate in an oscillatory fashion.
-Under normal circumstances, the converter flag should be set to true.
 However, the following could be a cause for `MaxIterationReached`:
 
 - **If all `tap_pos` are within `tap_min` and `tap_max` and converged to the targeted band**:
