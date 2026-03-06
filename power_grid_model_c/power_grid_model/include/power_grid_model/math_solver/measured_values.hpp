@@ -571,7 +571,9 @@ template <symmetry_tag sym> class MeasuredValues {
             }
         }
         for (auto const& x : current_main_value_) {
-            auto const variance = x.measurement.real_component.variance + x.measurement.imag_component.variance;
+            auto const& polar = x.measurement;
+            auto const variance =
+                polar.magnitude.variance + (polar.magnitude.value * polar.magnitude.value * polar.angle.variance);
             if constexpr (is_symmetric_v<sym>) {
                 unconstrained_min(variance);
             } else {
@@ -589,8 +591,8 @@ template <symmetry_tag sym> class MeasuredValues {
             x.imag_component.variance *= inv_norm_var;
         });
         std::ranges::for_each(current_main_value_, [inv_norm_var](auto& x) {
-            x.measurement.real_component.variance *= inv_norm_var;
-            x.measurement.imag_component.variance *= inv_norm_var;
+            x.measurement.magnitude.variance *= inv_norm_var;
+            x.measurement.angle.variance *= inv_norm_var;
         });
     }
 

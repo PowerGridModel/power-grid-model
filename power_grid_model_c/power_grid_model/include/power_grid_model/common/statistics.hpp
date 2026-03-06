@@ -175,6 +175,18 @@ template <symmetry_tag sym_type> struct PolarComplexRandVar {
     UniformRealRandVar<sym> angle;
 
     ComplexValue<sym> value() const { return magnitude.value * exp(1.0i * angle.value); }
+    explicit operator PolarComplexRandVar<asymmetric_t>() const
+        requires(is_symmetric_v<sym>)
+    {
+        return {.magnitude = static_cast<UniformRealRandVar<asymmetric_t>>(magnitude),
+                .angle = static_cast<UniformRealRandVar<asymmetric_t>>(angle)};
+    }
+    explicit operator PolarComplexRandVar<symmetric_t>() const
+        requires(is_asymmetric_v<sym>)
+    {
+        return {.magnitude = static_cast<UniformRealRandVar<symmetric_t>>(magnitude),
+                .angle = static_cast<UniformRealRandVar<symmetric_t>>(angle)};
+    }
 
     explicit operator UniformComplexRandVar<sym>() const {
         return static_cast<UniformComplexRandVar<sym>>(static_cast<IndependentComplexRandVar<sym>>(*this));
@@ -247,6 +259,12 @@ template <symmetry_tag sym_type> struct PolarComplexRandVar {
             .imag_component = {.value = imag(pos_seq_value), .variance = sum_val(imag_variance) / 9.0}};
     }
 };
+
+template <symmetry_tag sym> inline PolarComplexRandVar<sym> combine(std::ranges::range auto const& data) {
+    auto magnitude_data = data | std::views::transform([](auto const& x) -> auto const& { return x.magnitude; });
+    auto angle_data = data | std::views::transform([](auto const& x) -> auto const& { return x.angle; });
+    return {.magnitude = combine(magnitude_data), .angle = combine(angle_data)};
+}
 
 template <symmetry_tag sym, template <symmetry_tag> typename RandVarType>
     requires std::same_as<RandVarType<sym>, UniformComplexRandVar<sym>> ||

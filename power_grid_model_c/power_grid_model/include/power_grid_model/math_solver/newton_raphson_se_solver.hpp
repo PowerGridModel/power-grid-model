@@ -546,10 +546,12 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
 
         if (order == Order::row_major) {
             multiply_add_branch_blocks(block, diag_block, rhs_block, block_rr_or_cc, block_rc_or_cr,
-                                       current_sensor.measurement, f_x_complex);
+                                       static_cast<DecomposedComplexRandVar<sym>>(current_sensor.measurement),
+                                       f_x_complex);
         } else {
             multiply_add_branch_blocks(block, diag_block, rhs_block, block_rc_or_cr, block_rr_or_cc,
-                                       current_sensor.measurement, f_x_complex);
+                                       static_cast<DecomposedComplexRandVar<sym>>(current_sensor.measurement),
+                                       f_x_complex);
         }
     }
 
@@ -569,10 +571,12 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
 
         if (order == Order::row_major) {
             multiply_add_branch_blocks(block, diag_block, rhs_block, block_rr_or_cc, block_rc_or_cr,
-                                       current_sensor.measurement, f_x_complex);
+                                       static_cast<DecomposedComplexRandVar<sym>>(current_sensor.measurement),
+                                       f_x_complex);
         } else {
             multiply_add_branch_blocks(block, diag_block, rhs_block, block_rc_or_cr, block_rr_or_cc,
-                                       current_sensor.measurement, f_x_complex);
+                                       static_cast<DecomposedComplexRandVar<sym>>(current_sensor.measurement),
+                                       f_x_complex);
         }
     }
 

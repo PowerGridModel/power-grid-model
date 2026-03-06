@@ -139,15 +139,21 @@ template <symmetry_tag current_sensor_symmetry_> class CurrentSensor : public Ge
     double i_sigma_{};
     RealValue<current_sensor_symmetry> i_measured_{};
 
-    CurrentSensorCalcParam<symmetric_t> sym_calc_param() const final { return calc_decomposed_param<symmetric_t>(); }
-    CurrentSensorCalcParam<asymmetric_t> asym_calc_param() const final { return calc_decomposed_param<asymmetric_t>(); }
+    CurrentSensorCalcParam<symmetric_t> sym_calc_param() const final { return calc_param_internal<symmetric_t>(); }
+    CurrentSensorCalcParam<asymmetric_t> asym_calc_param() const final { return calc_param_internal<asymmetric_t>(); }
 
-    template <symmetry_tag sym_calc> CurrentSensorCalcParam<sym_calc> calc_decomposed_param() const {
+    template <symmetry_tag sym_calc> CurrentSensorCalcParam<sym_calc> calc_param_internal() const {
         auto const i_polar = PolarComplexRandVar<current_sensor_symmetry>(
             {i_measured_, i_sigma_ * i_sigma_}, {i_angle_measured_, i_angle_sigma_ * i_angle_sigma_});
-        return CurrentSensorCalcParam<sym_calc>{.angle_measurement_type = angle_measurement_type(),
-                                                .measurement = DecomposedComplexRandVar<sym_calc>(i_polar)};
+        if constexpr (std::same_as<sym_calc, current_sensor_symmetry>) {
+            return CurrentSensorCalcParam<sym_calc>{.angle_measurement_type = angle_measurement_type(),
+                                                    .measurement = i_polar};
+        } else {
+            return CurrentSensorCalcParam<sym_calc>{.angle_measurement_type = angle_measurement_type(),
+                                                    .measurement = static_cast<PolarComplexRandVar<sym_calc>>(i_polar)};
+        }
     }
+
     CurrentSensorOutput<symmetric_t> get_sym_output(ComplexValue<symmetric_t> const& i,
                                                     ComplexValue<symmetric_t> const& u) const final {
         return get_generic_output<symmetric_t>(i, u);

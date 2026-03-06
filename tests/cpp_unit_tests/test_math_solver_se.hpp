@@ -205,45 +205,43 @@ template <symmetry_tag sym_type> struct SESolverTestGrid : public SteadyStateSol
         if constexpr (is_symmetric_v<sym>) {
             result.measured_branch_from_current = {
                 {.angle_measurement_type = angle_measurement_type,
-                 .measurement = {.real_component = {.value = real(branch_from_current[0]), .variance = 0.5},
-                                 .imag_component = {.value = imag(branch_from_current[0]), .variance = 0.5}}},
+                 .measurement = {.magnitude = {.value = cabs(branch_from_current[0]), .variance = 0.25},
+                                 .angle = {.value = arg(branch_from_current[0]), .variance = 0.25}}},
             };
             result.measured_branch_to_current = {
                 {.angle_measurement_type = angle_measurement_type,
-                 .measurement = {.real_component = {.value = real(branch_to_current[0]), .variance = 0.5},
-                                 .imag_component = {.value = imag(branch_to_current[0]), .variance = 0.5}}},
+                 .measurement = {.magnitude = {.value = cabs(branch_to_current[0]), .variance = 0.25},
+                                 .angle = {.value = arg(branch_to_current[0]), .variance = 0.25}}},
                 {.angle_measurement_type = angle_measurement_type,
-                 .measurement = {.real_component = {.value = real(branch_to_current[0]), .variance = 0.5},
-                                 .imag_component = {.value = imag(branch_to_current[0]), .variance = 0.5}}},
+                 .measurement = {.magnitude = {.value = cabs(branch_to_current[0]), .variance = 0.25},
+                                 .angle = {.value = arg(branch_to_current[0]), .variance = 0.25}}},
                 {.angle_measurement_type = angle_measurement_type,
-                 .measurement = {.real_component = {.value = real(branch_to_current[1]), .variance = 0.5},
-                                 .imag_component = {.value = imag(branch_to_current[1]), .variance = 0.5}}}};
+                 .measurement = {.magnitude = {.value = cabs(branch_to_current[1]), .variance = 0.25},
+                                 .angle = {.value = arg(branch_to_current[1]), .variance = 0.25}}}};
         } else {
             result.measured_branch_from_current = {
                 {.angle_measurement_type = angle_measurement_type,
-                 .measurement = {.real_component = {.value =
-                                                        real(branch_from_current[0] * RealValue<asymmetric_t>{1.0}),
-                                                    .variance = RealValue<asymmetric_t>{0.5}},
-                                 .imag_component = {.value =
-                                                        imag(branch_from_current[0] * RealValue<asymmetric_t>{1.0}),
-                                                    .variance = RealValue<asymmetric_t>{0.5}}}},
+                 .measurement = {.magnitude = {.value = RealValue<asymmetric_t>{cabs(branch_from_current[0])},
+                                               .variance = RealValue<asymmetric_t>{0.25}},
+                                 .angle = {.value = RealValue<asymmetric_t>{arg(branch_from_current[0])},
+                                           .variance = RealValue<asymmetric_t>{0.25}}}},
             };
             result.measured_branch_to_current = {
                 {.angle_measurement_type = angle_measurement_type,
-                 .measurement = {.real_component = {.value = real(branch_to_current[0] * RealValue<asymmetric_t>{1.0}),
-                                                    .variance = RealValue<asymmetric_t>{0.5}},
-                                 .imag_component = {.value = imag(branch_to_current[0] * RealValue<asymmetric_t>{1.0}),
-                                                    .variance = RealValue<asymmetric_t>{0.5}}}},
+                 .measurement = {.magnitude = {.value = RealValue<asymmetric_t>{cabs(branch_to_current[0])},
+                                               .variance = RealValue<asymmetric_t>{0.25}},
+                                 .angle = {.value = RealValue<asymmetric_t>{arg(branch_to_current[0])},
+                                           .variance = RealValue<asymmetric_t>{0.25}}}},
                 {.angle_measurement_type = angle_measurement_type,
-                 .measurement = {.real_component = {.value = real(branch_to_current[0] * RealValue<asymmetric_t>{1.0}),
-                                                    .variance = RealValue<asymmetric_t>{0.5}},
-                                 .imag_component = {.value = imag(branch_to_current[0] * RealValue<asymmetric_t>{1.0}),
-                                                    .variance = RealValue<asymmetric_t>{0.5}}}},
+                 .measurement = {.magnitude = {.value = RealValue<asymmetric_t>{cabs(branch_to_current[0])},
+                                               .variance = RealValue<asymmetric_t>{0.25}},
+                                 .angle = {.value = RealValue<asymmetric_t>{arg(branch_to_current[0])},
+                                           .variance = RealValue<asymmetric_t>{0.25}}}},
                 {.angle_measurement_type = angle_measurement_type,
-                 .measurement = {.real_component = {.value = real(branch_to_current[1] * RealValue<asymmetric_t>{1.0}),
-                                                    .variance = RealValue<asymmetric_t>{0.5}},
-                                 .imag_component = {.value = imag(branch_to_current[1] * RealValue<asymmetric_t>{1.0}),
-                                                    .variance = RealValue<asymmetric_t>{0.5}}}},
+                 .measurement = {.magnitude = {.value = RealValue<asymmetric_t>{cabs(branch_to_current[1])},
+                                               .variance = RealValue<asymmetric_t>{0.25}},
+                                 .angle = {.value = RealValue<asymmetric_t>{arg(branch_to_current[1])},
+                                           .variance = RealValue<asymmetric_t>{0.25}}}},
             };
         }
         return result;
@@ -549,8 +547,9 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
                                                        .imag_component = {.value = 0.0, .variance = 0.05}}};
                     se_input.measured_branch_from_current = {
                         {.angle_measurement_type = AngleMeasurementType::local_angle,
-                         .measurement = {.real_component = {.value = 1.97, .variance = 0.05},
-                                         .imag_component = {.value = 0.0, .variance = 0.05}}}};
+                         .measurement = {.magnitude = {.value = 1.97, .variance = 0.05},
+                                         .angle = {.value = 0.0, .variance = 0.05}}}};
+
                     output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, log);
 
                     CHECK(real(output.bus_injection[0]) == doctest::Approx(1.95));
@@ -564,8 +563,8 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
                                                        .imag_component = {.value = 1.93, .variance = 0.05}}};
                     se_input.measured_branch_from_current = {
                         {.angle_measurement_type = AngleMeasurementType::local_angle,
-                         .measurement = {.real_component = {.value = 0.0, .variance = 0.05},
-                                         .imag_component = {.value = 1.97, .variance = 0.05}}}};
+                         .measurement = {.magnitude = {.value = 1.97, .variance = 0.05},
+                                         .angle = {.value = pi / 2, .variance = 0.05}}}};
 
                     output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, log);
 
@@ -581,8 +580,8 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
                                                    .imag_component = {.value = 0.0, .variance = 0.05}}};
                 se_input.measured_branch_from_current = {
                     {.angle_measurement_type = AngleMeasurementType::global_angle,
-                     .measurement = {.real_component = {.value = real(1.97 * global_shift), .variance = 0.05},
-                                     .imag_component = {.value = imag(1.97 * global_shift), .variance = 0.05}}}};
+                     .measurement = {.magnitude = {.value = 1.97, .variance = 0.05},
+                                     .angle = {.value = arg(global_shift), .variance = 0.05}}}};
 
                 output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, log);
 

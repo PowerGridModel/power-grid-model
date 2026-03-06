@@ -95,20 +95,23 @@ TEST_CASE("Test current sensor") {
                         ? sym_current_sensor.get_output<symmetric_t>(i_sym, ComplexValue<symmetric_t>{1.0})
                         : sym_current_sensor.get_output<symmetric_t>(conj(i_sym), ComplexValue<symmetric_t>{1.0});
 
+                auto const decomposed =
+                    static_cast<DecomposedComplexRandVar<symmetric_t>>(sym_sensor_param.measurement);
                 // Check symmetric sensor output for symmetric parameters
                 CHECK(sym_sensor_param.angle_measurement_type == angle_measurement_type);
                 // Var(I_Re) ≈ Var(I) * cos^2(pi/4) + Var(θ) * I^2 * sin^2(pi/4)
                 //             + (1/2) * Var(θ)^2 * I^2 * cos^2(pi/4) + Var(I) * Var(θ) * sin^2(pi/4)
-                CHECK(sym_sensor_param.measurement.real_component.variance ==
+                CHECK(decomposed.real_component.variance ==
                       doctest::Approx(0.5 * (i_variance_pu + i_angle_variance_pu * i_pu * i_pu +
                                              0.5 * i_angle_variance_pu * i_angle_variance_pu * i_pu * i_pu +
                                              i_variance_pu * i_angle_variance_pu)));
                 // Var(I_Im) ≈ Var(I) * sin^2(pi/4) + Var(θ) * I^2 * cos^2(pi/4)
                 //             + (1/2) * Var(θ)^2 * I^2 * sin^2(pi/4) + Var(I) * Var(θ) * cos^2(pi/4)
-                CHECK(sym_sensor_param.measurement.imag_component.variance ==
+                CHECK(decomposed.imag_component.variance ==
                       doctest::Approx(0.5 * (i_variance_pu + i_angle_variance_pu * i_pu * i_pu +
                                              0.5 * i_angle_variance_pu * i_angle_variance_pu * i_pu * i_pu +
                                              i_variance_pu * i_angle_variance_pu)));
+
                 CHECK(real(sym_sensor_param.measurement.value()) == doctest::Approx(i_pu * cos(i_angle)));
                 CHECK(imag(sym_sensor_param.measurement.value()) == doctest::Approx(i_pu * sin(i_angle)));
 
@@ -132,21 +135,24 @@ TEST_CASE("Test current sensor") {
                         : sym_current_sensor.get_output<asymmetric_t>(conj(i_asym_local),
                                                                       ComplexValue<asymmetric_t>{1.0});
 
+                auto const asym_decomposed =
+                    static_cast<DecomposedComplexRandVar<asymmetric_t>>(asym_sensor_param.measurement);
                 // Check symmetric sensor output for asymmetric parameters
                 CHECK(asym_sensor_param.angle_measurement_type == angle_measurement_type);
 
-                CHECK(asym_sensor_param.measurement.real_component.variance[0] ==
+                CHECK(asym_decomposed.real_component.variance[0] ==
                       doctest::Approx(0.5 * (i_variance_pu + i_angle_variance_pu * i_pu * i_pu +
                                              0.5 * i_angle_variance_pu * i_angle_variance_pu * i_pu * i_pu +
                                              i_variance_pu * i_angle_variance_pu)));
                 auto const shifted_i_angle = i_angle + deg_240;
                 CHECK(
-                    asym_sensor_param.measurement.imag_component.variance[1] ==
+                    asym_decomposed.imag_component.variance[1] ==
                     doctest::Approx(i_variance_pu * sin(shifted_i_angle) * sin(shifted_i_angle) +
                                     i_angle_variance_pu * i_pu * i_pu * cos(shifted_i_angle) * cos(shifted_i_angle) +
                                     0.5 * i_angle_variance_pu * i_angle_variance_pu * i_pu * i_pu *
                                         sin(shifted_i_angle) * sin(shifted_i_angle) +
                                     i_variance_pu * i_angle_variance_pu * cos(shifted_i_angle) * cos(shifted_i_angle)));
+
                 CHECK(real(asym_sensor_param.measurement.value()[0]) == doctest::Approx(i_pu * cos(i_angle)));
                 CHECK(imag(asym_sensor_param.measurement.value()[1]) == doctest::Approx(i_pu * sin(shifted_i_angle)));
 
