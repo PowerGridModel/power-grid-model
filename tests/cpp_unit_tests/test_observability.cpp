@@ -2017,7 +2017,7 @@ TEST_CASE("Test ObservabilityResult - use_perturbation with non-observable netwo
 
     SUBCASE("Non-observable network returns false for use_perturbation") {
         // Create a meshed network with multiple voltage phasor sensors
-        // This triggers the early return at line 674-677: n_voltage_phasor_sensors > 1 && !topo.is_radial
+        // This triggers the early return for the condition n_voltage_phasor_sensors > 1 && !topo.is_radial,
         // where is_observable = false but no exception is thrown
         MathModelTopology topo;
         topo.slack_bus = 0;
