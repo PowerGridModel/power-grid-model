@@ -76,12 +76,265 @@ class ComponentType(StrEnum, metaclass=_MetaEnum):
     asym_current_sensor = "asym_current_sensor"
     fault = "fault"
 
+class ComponentAttribute(StrEnum, metaclass=_MetaEnum):
+    """
+    A ComponentAttribute is the attribute of a grid component.
+
+    - Examples:
+
+        - ComponentAttributes.p_from = "p_from"
+        - ComponentAttributes.u_pu = "u_pu"
+    """
+
+    # Base
+    id = "id"
+    energized = "energized"
+
+    # Node
+    u_rated = "u_rated"
+    u_pu = "u_pu"
+    u_angle = "u_angle"
+    u = "u"
+    p = "p"
+    q = "q"
+
+    # Branch
+    from_node = "from_node"
+    to_node = "to_node"
+    from_status = "from_status"
+    to_status = "to_status"
+    p_from = "p_from"
+    q_from = "q_from"
+    i_from = "i_from"
+    s_from = "s_from"
+    p_to = "p_to"
+    q_to = "q_to"
+    i_to = "i_to"
+    s_to = "s_to"
+    loading = "loading"
+    i_from_angle = "i_from_angle"
+    i_to_angle = "i_to_angle"
+
+    # Line
+    r1 = "r1"
+    x1 = "x1"
+    c1 = "c1"
+    tan1 = "tan1"
+    r0 = "r0"
+    x0 = "x0"
+    c0 = "c0"
+    tan0 = "tan0"
+    i_n = "i_n"
+
+    # Transformer
+    u1 = "u1"
+    u2 = "u2"
+    sn = "sn"
+    uk = "uk"
+    pk = "pk"
+    i0 = "i0"
+    p0 = "p0"
+    i0_zero_sequence = "i0_zero_sequence"
+    p0_zero_sequence = "p0_zero_sequence"
+    winding_from = "winding_from"
+    winding_to = "winding_to"
+    clock = "clock"
+    tap_side = "tap_side"
+    tap_pos = "tap_pos"
+    tap_min = "tap_min"
+    tap_max = "tap_max"
+    tap_nom = "tap_nom"
+    tap_size = "tap_size"
+    uk_min = "uk_min"
+    uk_max = "uk_max"
+    pk_min = "pk_min"
+    pk_max = "pk_max"
+    r_grounding_from = "r_grounding_from"
+    x_grounding_from = "x_grounding_from"
+    r_grounding_to = "r_grounding_to"
+    x_grounding_to = "x_grounding_to"
+
+    # Generic Branch
+    g1 = "g1"
+    b1 = "b1"
+    k = "k"
+    theta = "theta"
+
+    # Asym_line
+    r_aa = "r_aa"
+    r_ba = "r_ba"
+    r_bb = "r_bb"
+    r_ca = "r_ca"
+    r_cb = "r_cb"
+    r_cc = "r_cc"
+    r_na = "r_na"
+    r_nb = "r_nb"
+    r_nc = "r_nc"
+    r_nn = "r_nn"
+    x_aa = "x_aa"
+    x_ba = "x_ba"
+    x_bb = "x_bb"
+    x_ca = "x_ca"
+    x_cb = "x_cb"
+    x_cc = "x_cc"
+    x_na = "x_na"
+    x_nb = "x_nb"
+    x_nc = "x_nc"
+    x_nn = "x_nn"
+    c_aa = "c_aa"
+    c_ba = "c_ba"
+    c_bb = "c_bb"
+    c_ca = "c_ca"
+    c_cb = "c_cb"
+    c_cc = "c_cc"
+
+    # Branch 3
+    node_1 = "node_1"
+    node_2 = "node_2"
+    node_3 = "node_3"
+    status_1 = "status_1"
+    status_2 = "status_2"
+    status_3 = "status_3"
+    p_1 = "p_1"
+    q_1 = "q_1"
+    i_1 = "i_1"
+    s_1 = "s_1"
+    p_2 = "p_2"
+    q_2 = "q_2"
+    i_2 = "i_2"
+    s_2 = "s_2"
+    p_3 = "p_3"
+    q_3 = "q_3"
+    i_3 = "i_3"
+    s_3 = "s_3"
+    i_1_angle = "i_1_angle"
+    i_2_angle = "i_2_angle"
+    i_3_angle = "i_3_angle"
+
+    # Three Winding Transformer
+    u3 = "u3"
+    sn_1 = "sn_1"
+    sn_2 = "sn_2"
+    sn_3 = "sn_3"
+    uk_12 = "uk_12"
+    uk_13 = "uk_13"
+    uk_23 = "uk_23"
+    pk_12 = "pk_12"
+    pk_13 = "pk_13"
+    pk_23 = "pk_23"
+    winding_1 = "winding_1"
+    winding_2 = "winding_2"
+    winding_3 = "winding_3"
+    clock_12 = "clock_12"
+    clock_13 = "clock_13"
+    uk_12_min = "uk_12_min"
+    uk_12_max = "uk_12_max"
+    pk_12_min = "pk_12_min"
+    pk_12_max = "pk_12_max"
+    uk_13_min = "uk_13_min"
+    uk_13_max = "uk_13_max"
+    pk_13_min = "pk_13_min"
+    pk_13_max = "pk_13_max"
+    uk_23_min = "uk_23_min"
+    uk_23_max = "uk_23_max"
+    pk_23_min = "pk_23_min"
+    pk_23_max = "pk_23_max"
+    r_grounding_1 = "r_grounding_1"
+    x_grounding_1 = "x_grounding_1"
+    r_grounding_2 = "r_grounding_2"
+    x_grounding_2 = "x_grounding_2"
+    r_grounding_3 = "r_grounding_3"
+    x_grounding_3 = "x_grounding_3"
+
+    # Appliance
+    node = "node"
+    status = "status"
+    i = "i"
+    s = "s"
+    pf = "pf"
+    i_angle = "i_angle"
+
+    # Source
+    u_ref = "u_ref"
+    u_ref_angle = "u_ref_angle"
+    sk = "sk"
+    rx_ratio = "rx_ratio"
+    z01_ratio = "z01_ratio"
+
+    # Generic Load and Generator
+    type = "type"
+
+    # Concrete Load/ Generator Types
+    p_specified = "p_specified"
+    q_specified = "q_specified"
+
+    # Shunt
+    g0 = "g0"
+    b0 = "b0"
+
+    # Sensor
+    measured_object = "measured_object"
+
+    # Generic Voltage Sensor
+    u_sigma = "u_sigma"
+
+    # Voltage sensor
+    u_measured = "u_measured"
+    u_angle_measured = "u_angle_measured"
+    u_residual = "u_residual"
+    u_angle_residual = "u_angle_residual"
+
+    # Power sensor
+    measured_terminal_type = "measured_terminal_type"
+    power_sigma = "power_sigma"
+    p_measured = "p_measured"
+    q_measured = "q_measured"
+    p_sigma = "p_sigma"
+    q_sigma = "q_sigma"
+    p_residual = "p_residual"
+    q_residual = "q_residual"
+
+    # Current Sensor
+    angle_measurement_type = "angle_measurement_type"
+    i_sigma = "i_sigma"
+    i_angle_sigma = "i_angle_sigma"
+    i_measured = "i_measured"
+    i_angle_measured = "i_angle_measured"
+    i_residual = "i_residual"
+    i_angle_residual = "i_angle_residual"
+
+    # Fault
+    fault_type = "fault_type" # TODO: create enums for fault types
+    fault_phase = "fault_phase"
+    fault_object = "fault_object"
+    r_f = "r_f"
+    x_f = "x_f"
+    i_f = "i_f"
+    i_f_angle = "i_f_angle"
+
+    # Regulator
+    regulated_object = "regulated_object"
+
+    # Transformer Tap Regulator
+    control_side = "control_side"
+    u_set = "u_set"
+    u_band = "u_band"
+    line_drop_compensation_r = "line_drop_compensation_r"
+    line_drop_compensation_x = "line_drop_compensation_x"
+
+    # Voltage Regulator
+    q_min = "q_min"
+    q_max = "q_max"
+    limit_violated = "limit_violated"
 
 type DatasetTypeLike = DatasetType | str
 DatasetTypeVar = TypeVar("DatasetTypeVar", bound=DatasetTypeLike)  # helper used for type deduction
 
 type ComponentTypeLike = ComponentType | str
 ComponentTypeVar = TypeVar("ComponentTypeVar", bound=ComponentTypeLike)  # helper used for type deduction
+
+type ComponentAttributeLike = ComponentAttribute | str
+ComponentAttributeVar = TypeVar("ComponentAttributeVar", bound=ComponentAttributeLike)  # helper used for type deduction
 
 
 def _str_to_datatype(data_type: DatasetTypeLike) -> DatasetType:
@@ -106,5 +359,16 @@ def _str_to_component_type(component: ComponentTypeLike) -> ComponentType:
 def _map_to_component_types[K: ComponentTypeLike, V](data: Mapping[K, V]) -> dict[ComponentType, V]:
     """Helper function to map componenttype str keys to ComponentType."""
     return {_str_to_component_type(key): value for key, value in data.items()}
+
+
+def _str_to_component_attribute(attribute: ComponentAttributeLike) -> ComponentAttribute:
+    """Helper function to transform component str to ComponentType."""
+    if isinstance(attribute, ComponentAttribute):
+        return attribute
+    return ComponentAttribute[attribute]
+
+def _map_to_component_attribute[K: ComponentAttributeLike, V](data: Mapping[K, V]) -> dict[ComponentAttribute, V]:
+    """Helper function to map componenttype str keys to ComponentType."""
+    return {_str_to_component_attribute(key): value for key, value in data.items()}
 
 # fmt: on
