@@ -100,16 +100,24 @@ class CodeGenerator:
 
         # create list
         all_map = {}
+        all_attributes = set()
         for dataset in dataset_meta_data:
             prefixes = ["sym_", "asym_"] if dataset.is_template else [""]
             for prefix in prefixes:
                 all_components = {}
                 for component in dataset.components:
                     class_def: AttributeClass = self.all_classes[component.class_name]
+                    attributes = [x.names for x in class_def.full_attributes]
+                    all_attributes.update(attributes)
                     for component_name in component.names:
                         all_components[component_name] = [x.names for x in class_def.full_attributes]
                 all_map[f"{prefix}{dataset.name}"] = all_components
-        self.render_template(template_path=template_path, output_path=output_path, all_map=all_map)
+        self.render_template(
+            template_path=template_path,
+            output_path=output_path,
+            all_map=all_map,
+            attributes=all_attributes
+        )
 
     def code_gen(self):
         render_funcs = {
