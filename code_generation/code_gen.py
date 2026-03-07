@@ -116,7 +116,7 @@ class CodeGenerator:
             template_path=template_path,
             output_path=output_path,
             all_map=all_map,
-            attributes=all_attributes
+            attributes=sorted(all_attributes)
         )
 
     def code_gen(self):
