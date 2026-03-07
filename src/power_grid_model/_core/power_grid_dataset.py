@@ -18,7 +18,6 @@ from power_grid_model._core.buffer_handling import (
     get_buffer_view,
 )
 from power_grid_model._core.data_types import (
-    AttributeType,
     ColumnarData,
     ComponentData,
     Dataset,
@@ -26,7 +25,12 @@ from power_grid_model._core.data_types import (
     SingleColumnarData,
     SparseBatchColumnarData,
 )
-from power_grid_model._core.dataset_definitions import ComponentType, DatasetType, _str_to_component_type
+from power_grid_model._core.dataset_definitions import (
+    ComponentAttributeLike,
+    ComponentType,
+    DatasetType,
+    _str_to_component_type,
+)
 from power_grid_model._core.enum import ComponentAttributeFilterOptions
 from power_grid_model._core.error_handling import VALIDATOR_MSG, assert_no_error
 from power_grid_model._core.power_grid_core import (
@@ -139,7 +143,7 @@ class CDatasetInfo:
             for idx, component_name in enumerate(self.components())
         }
 
-    def attribute_indications(self) -> Mapping[ComponentType, None | list[AttributeType]]:
+    def attribute_indications(self) -> Mapping[ComponentType, None | list[ComponentAttributeLike]]:
         """
         The attribute indications in the dataset.
 
@@ -147,7 +151,7 @@ class CDatasetInfo:
             A map of component to its attribute indications.
             None means no attribute indications
         """
-        result_dict: dict[ComponentType, None | list[AttributeType]] = {}
+        result_dict: dict[ComponentType, None | list[ComponentAttributeLike]] = {}
         components = self.components()
         for component_idx, component_name in enumerate(components):
             has_indications = get_pgc().dataset_info_has_attribute_indications(self._info, component_idx)
@@ -468,7 +472,7 @@ class CWritableDataset:
     def _register_attribute_buffer(
         self,
         component: ComponentType,
-        attribute: AttributeType,
+        attribute: ComponentAttributeLike,
         buffer: CAttributeBuffer,
     ):
         get_pgc().dataset_writable_set_attribute_buffer(
@@ -532,8 +536,8 @@ class CWritableDataset:
 def _get_filtered_attributes(
     schema: ComponentMetaData,
     component_data_filter: set[str] | list[str] | None | ComponentAttributeFilterOptions,
-    attribute_indication: None | list[AttributeType],
-) -> list[AttributeType] | None:
+    attribute_indication: None | list[ComponentAttributeLike],
+) -> list[ComponentAttributeLike] | None:
     if component_data_filter is None:
         return None
 

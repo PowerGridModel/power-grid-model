@@ -12,8 +12,9 @@ from typing import Any, overload
 
 import numpy as np
 
-from power_grid_model._core.data_types import AttributeType, DenseBatchArray, SingleArray
+from power_grid_model._core.data_types import DenseBatchArray, SingleArray
 from power_grid_model._core.dataset_definitions import (
+    ComponentAttributeLike,
     ComponentTypeLike,
     ComponentTypeVar,
     DatasetType,
@@ -226,14 +227,14 @@ def initialize_array(
 
 
 def attribute_dtype(
-    data_type: DatasetTypeLike, component_type: ComponentTypeLike, attribute: AttributeType
+    data_type: DatasetTypeLike, component_type: ComponentTypeLike, attribute: ComponentAttributeLike
 ) -> np.dtype:
     """Gives out dtype of the attribute to be used in a columnar data format
 
     Args:
         data_type (DatasetTypeLike): The type of dataset (input, update, sym_output, or asym_output)
         component_type (ComponentTypeLike): The type of component (e.g., node)
-        attribute (AttributeType): The attribute whose dtype is required
+        attribute (ComponentAttributeLike): The attribute whose dtype is required
 
     Returns:
         np.dtype: The dtype of the specified attribute
@@ -244,7 +245,7 @@ def attribute_dtype(
 
 
 def attribute_empty_value(
-    data_type: DatasetTypeLike, component_type: ComponentTypeLike, attribute: AttributeType
+    data_type: DatasetTypeLike, component_type: ComponentTypeLike, attribute: ComponentAttributeLike
 ) -> np.ndarray:
     """
     Returns the empty value for a specific attribute in the Power Grid Model.
@@ -252,7 +253,7 @@ def attribute_empty_value(
     Args:
         data_type (DatasetTypeLike): The type of dataset (input, update, sym_output, or asym_output)
         component_type (ComponentTypeLike): The type of component (e.g., node)
-        attribute (AttributeType): The attribute whose empty value is required
+        attribute (ComponentAttributeLike): The attribute whose empty value is required
 
     Returns:
         np.ndarray: The empty value for the specified attribute
