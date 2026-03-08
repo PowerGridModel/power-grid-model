@@ -114,7 +114,9 @@ def _get_raw_component_data_view(
     return None
 
 
-def _get_raw_attribute_data_view(data: np.ndarray, schema: ComponentMetaData, attribute: ComponentAttributeLike) -> VoidPtr:
+def _get_raw_attribute_data_view(
+    data: np.ndarray, schema: ComponentMetaData, attribute: ComponentAttributeLike
+) -> VoidPtr:
     """
     Get a raw view on the data.
 

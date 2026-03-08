@@ -518,11 +518,11 @@ def _validate_required_power_sigma_or_p_q_sigma(
 
         result += _validate_required_in_data(
             {power_sensor: sensor_data[all_pq_sigma_missing_mask]},
-            required={power_sensor: [ComponentAttribute.power_sigma]}
+            required={power_sensor: [ComponentAttribute.power_sigma]},
         )
         result += _validate_required_in_data(
             {power_sensor: sensor_data[~all_pq_sigma_missing_mask]},
-            required={power_sensor: [ComponentAttribute.p_sigma, ComponentAttribute.q_sigma]}
+            required={power_sensor: [ComponentAttribute.p_sigma, ComponentAttribute.q_sigma]},
         )
 
     return result
@@ -655,19 +655,19 @@ def validate_asym_line(data: SingleDataset) -> list[ValidationError]:
         ComponentAttribute.x_bb,
         ComponentAttribute.x_ca,
         ComponentAttribute.x_cb,
-        ComponentAttribute.x_cc
+        ComponentAttribute.x_cc,
     ]
     optional_r_matrix_fields = [
         ComponentAttribute.r_na,
         ComponentAttribute.r_nb,
         ComponentAttribute.r_nc,
-        ComponentAttribute.r_nn
+        ComponentAttribute.r_nn,
     ]
     optional_x_matrix_fields = [
         ComponentAttribute.x_na,
         ComponentAttribute.x_nb,
         ComponentAttribute.x_nc,
-        ComponentAttribute.x_nn
+        ComponentAttribute.x_nn,
     ]
     required_c_matrix_fields = [
         ComponentAttribute.c_aa,
@@ -675,7 +675,7 @@ def validate_asym_line(data: SingleDataset) -> list[ValidationError]:
         ComponentAttribute.c_bb,
         ComponentAttribute.c_ca,
         ComponentAttribute.c_cb,
-        ComponentAttribute.c_cc
+        ComponentAttribute.c_cc,
     ]
     c_fields = [ComponentAttribute.c0, ComponentAttribute.c1]
     for field in (
@@ -705,48 +705,86 @@ def validate_transformer(data: SingleDataset) -> list[ValidationError]:
     errors += _all_greater_than_zero(data, ComponentType.transformer, ComponentAttribute.u1)
     errors += _all_greater_than_zero(data, ComponentType.transformer, ComponentAttribute.u2)
     errors += _all_greater_than_zero(data, ComponentType.transformer, ComponentAttribute.sn)
-    errors += _all_greater_or_equal(data, ComponentType.transformer, ComponentAttribute.uk,
-                                    f"{ComponentAttribute.pk}/{ComponentAttribute.sn}")
+    errors += _all_greater_or_equal(
+        data, ComponentType.transformer, ComponentAttribute.uk, f"{ComponentAttribute.pk}/{ComponentAttribute.sn}"
+    )
     errors += _all_between(data, ComponentType.transformer, ComponentAttribute.uk, 0, 1)
     errors += _all_greater_than_or_equal_to_zero(data, ComponentType.transformer, ComponentAttribute.pk)
-    errors += _all_greater_or_equal(data, ComponentType.transformer, ComponentAttribute.i0,
-                                    f"{ComponentAttribute.p0}/{ComponentAttribute.sn}")
+    errors += _all_greater_or_equal(
+        data, ComponentType.transformer, ComponentAttribute.i0, f"{ComponentAttribute.p0}/{ComponentAttribute.sn}"
+    )
     errors += _all_less_than(data, ComponentType.transformer, ComponentAttribute.i0, 1)
     errors += _all_greater_than_or_equal_to_zero(data, ComponentType.transformer, ComponentAttribute.p0)
     errors += _all_valid_enum_values(data, ComponentType.transformer, ComponentAttribute.winding_from, WindingType)
     errors += _all_valid_enum_values(data, ComponentType.transformer, ComponentAttribute.winding_to, WindingType)
     errors += _all_between_or_at(data, ComponentType.transformer, ComponentAttribute.clock, -12, 12)
-    errors += _all_valid_clocks(data, ComponentType.transformer, ComponentAttribute.clock,
-                                ComponentAttribute.winding_from, ComponentAttribute.winding_to)
+    errors += _all_valid_clocks(
+        data,
+        ComponentType.transformer,
+        ComponentAttribute.clock,
+        ComponentAttribute.winding_from,
+        ComponentAttribute.winding_to,
+    )
     errors += _all_valid_enum_values(data, ComponentType.transformer, ComponentAttribute.tap_side, BranchSide)
     errors += _all_between_or_at(
-        data, ComponentType.transformer, ComponentAttribute.tap_pos, ComponentAttribute.tap_min,
-        ComponentAttribute.tap_max, data[ComponentType.transformer][ComponentAttribute.tap_nom], 0
+        data,
+        ComponentType.transformer,
+        ComponentAttribute.tap_pos,
+        ComponentAttribute.tap_min,
+        ComponentAttribute.tap_max,
+        data[ComponentType.transformer][ComponentAttribute.tap_nom],
+        0,
     )
-    errors += _all_between_or_at(data, ComponentType.transformer, ComponentAttribute.tap_nom,
-                                 ComponentAttribute.tap_min, ComponentAttribute.tap_max, 0)
+    errors += _all_between_or_at(
+        data,
+        ComponentType.transformer,
+        ComponentAttribute.tap_nom,
+        ComponentAttribute.tap_min,
+        ComponentAttribute.tap_max,
+        0,
+    )
     errors += _all_greater_than_or_equal_to_zero(data, ComponentType.transformer, ComponentAttribute.tap_size)
     errors += _all_greater_or_equal(
-        data, ComponentType.transformer, ComponentAttribute.uk_min,
+        data,
+        ComponentType.transformer,
+        ComponentAttribute.uk_min,
         f"{ComponentAttribute.pk_min}/{ComponentAttribute.sn}",
-        data[ComponentType.transformer][ComponentAttribute.uk]
+        data[ComponentType.transformer][ComponentAttribute.uk],
     )
-    errors += _all_between(data, ComponentType.transformer, ComponentAttribute.uk_min, 0, 1,
-                           data[ComponentType.transformer][ComponentAttribute.uk])
+    errors += _all_between(
+        data,
+        ComponentType.transformer,
+        ComponentAttribute.uk_min,
+        0,
+        1,
+        data[ComponentType.transformer][ComponentAttribute.uk],
+    )
     errors += _all_greater_or_equal(
-        data, ComponentType.transformer, ComponentAttribute.uk_max,
+        data,
+        ComponentType.transformer,
+        ComponentAttribute.uk_max,
         f"{ComponentAttribute.pk_max}/{ComponentAttribute.sn}",
-        data[ComponentType.transformer][ComponentAttribute.uk]
+        data[ComponentType.transformer][ComponentAttribute.uk],
     )
-    errors += _all_between(data, ComponentType.transformer, ComponentAttribute.uk_max, 0, 1,
-                           data[ComponentType.transformer][ComponentAttribute.uk])
-    errors += _all_greater_than_or_equal_to_zero(
-        data, ComponentType.transformer, ComponentAttribute.pk_min,
-        data[ComponentType.transformer][ComponentAttribute.pk]
+    errors += _all_between(
+        data,
+        ComponentType.transformer,
+        ComponentAttribute.uk_max,
+        0,
+        1,
+        data[ComponentType.transformer][ComponentAttribute.uk],
     )
     errors += _all_greater_than_or_equal_to_zero(
-        data, ComponentType.transformer, ComponentAttribute.pk_max,
-        data[ComponentType.transformer][ComponentAttribute.pk]
+        data,
+        ComponentType.transformer,
+        ComponentAttribute.pk_min,
+        data[ComponentType.transformer][ComponentAttribute.pk],
+    )
+    errors += _all_greater_than_or_equal_to_zero(
+        data,
+        ComponentType.transformer,
+        ComponentAttribute.pk_max,
+        data[ComponentType.transformer][ComponentAttribute.pk],
     )
     return errors
 
@@ -773,45 +811,90 @@ def validate_three_winding_transformer(data: SingleDataset) -> list[ValidationEr
     errors += _all_greater_than_zero(data, ComponentType.three_winding_transformer, ComponentAttribute.sn_1)
     errors += _all_greater_than_zero(data, ComponentType.three_winding_transformer, ComponentAttribute.sn_2)
     errors += _all_greater_than_zero(data, ComponentType.three_winding_transformer, ComponentAttribute.sn_3)
-    errors += _all_greater_or_equal(data, ComponentType.three_winding_transformer, 
-                                    ComponentAttribute.uk_12, f"{ComponentAttribute.pk_12}/{ComponentAttribute.sn_1}")
-    errors += _all_greater_or_equal(data, ComponentType.three_winding_transformer,
-                                    ComponentAttribute.uk_12, f"{ComponentAttribute.pk_12}/{ComponentAttribute.sn_2}")
-    errors += _all_greater_or_equal(data, ComponentType.three_winding_transformer,
-                                    ComponentAttribute.uk_13, f"{ComponentAttribute.pk_13}/{ComponentAttribute.sn_1}")
-    errors += _all_greater_or_equal(data, ComponentType.three_winding_transformer,
-                                    ComponentAttribute.uk_13, f"{ComponentAttribute.pk_13}/{ComponentAttribute.sn_3}")
-    errors += _all_greater_or_equal(data, ComponentType.three_winding_transformer,
-                                    ComponentAttribute.uk_23, f"{ComponentAttribute.pk_23}/{ComponentAttribute.sn_2}")
-    errors += _all_greater_or_equal(data, ComponentType.three_winding_transformer,
-                                    ComponentAttribute.uk_23, f"{ComponentAttribute.pk_23}/{ComponentAttribute.sn_3}")
+    errors += _all_greater_or_equal(
+        data,
+        ComponentType.three_winding_transformer,
+        ComponentAttribute.uk_12,
+        f"{ComponentAttribute.pk_12}/{ComponentAttribute.sn_1}",
+    )
+    errors += _all_greater_or_equal(
+        data,
+        ComponentType.three_winding_transformer,
+        ComponentAttribute.uk_12,
+        f"{ComponentAttribute.pk_12}/{ComponentAttribute.sn_2}",
+    )
+    errors += _all_greater_or_equal(
+        data,
+        ComponentType.three_winding_transformer,
+        ComponentAttribute.uk_13,
+        f"{ComponentAttribute.pk_13}/{ComponentAttribute.sn_1}",
+    )
+    errors += _all_greater_or_equal(
+        data,
+        ComponentType.three_winding_transformer,
+        ComponentAttribute.uk_13,
+        f"{ComponentAttribute.pk_13}/{ComponentAttribute.sn_3}",
+    )
+    errors += _all_greater_or_equal(
+        data,
+        ComponentType.three_winding_transformer,
+        ComponentAttribute.uk_23,
+        f"{ComponentAttribute.pk_23}/{ComponentAttribute.sn_2}",
+    )
+    errors += _all_greater_or_equal(
+        data,
+        ComponentType.three_winding_transformer,
+        ComponentAttribute.uk_23,
+        f"{ComponentAttribute.pk_23}/{ComponentAttribute.sn_3}",
+    )
     errors += _all_between(data, ComponentType.three_winding_transformer, ComponentAttribute.uk_12, 0, 1)
     errors += _all_between(data, ComponentType.three_winding_transformer, ComponentAttribute.uk_13, 0, 1)
     errors += _all_between(data, ComponentType.three_winding_transformer, ComponentAttribute.uk_23, 0, 1)
-    errors += _all_greater_than_or_equal_to_zero(data, ComponentType.three_winding_transformer,
-                                                 ComponentAttribute.pk_12)
-    errors += _all_greater_than_or_equal_to_zero(data, ComponentType.three_winding_transformer,
-                                                 ComponentAttribute.pk_13)
-    errors += _all_greater_than_or_equal_to_zero(data, ComponentType.three_winding_transformer,
-                                                 ComponentAttribute.pk_23)
-    errors += _all_greater_or_equal(data, ComponentType.three_winding_transformer, ComponentAttribute.i0,
-                                    f"{ComponentAttribute.p0}/{ComponentAttribute.sn_1}")
+    errors += _all_greater_than_or_equal_to_zero(
+        data, ComponentType.three_winding_transformer, ComponentAttribute.pk_12
+    )
+    errors += _all_greater_than_or_equal_to_zero(
+        data, ComponentType.three_winding_transformer, ComponentAttribute.pk_13
+    )
+    errors += _all_greater_than_or_equal_to_zero(
+        data, ComponentType.three_winding_transformer, ComponentAttribute.pk_23
+    )
+    errors += _all_greater_or_equal(
+        data,
+        ComponentType.three_winding_transformer,
+        ComponentAttribute.i0,
+        f"{ComponentAttribute.p0}/{ComponentAttribute.sn_1}",
+    )
     errors += _all_less_than(data, ComponentType.three_winding_transformer, ComponentAttribute.i0, 1)
     errors += _all_greater_than_or_equal_to_zero(data, ComponentType.three_winding_transformer, ComponentAttribute.p0)
-    errors += _all_valid_enum_values(data, ComponentType.three_winding_transformer,
-                                     ComponentAttribute.winding_1, WindingType)
-    errors += _all_valid_enum_values(data, ComponentType.three_winding_transformer,
-                                     ComponentAttribute.winding_2, WindingType)
-    errors += _all_valid_enum_values(data, ComponentType.three_winding_transformer,
-                                     ComponentAttribute.winding_3, WindingType)
+    errors += _all_valid_enum_values(
+        data, ComponentType.three_winding_transformer, ComponentAttribute.winding_1, WindingType
+    )
+    errors += _all_valid_enum_values(
+        data, ComponentType.three_winding_transformer, ComponentAttribute.winding_2, WindingType
+    )
+    errors += _all_valid_enum_values(
+        data, ComponentType.three_winding_transformer, ComponentAttribute.winding_3, WindingType
+    )
     errors += _all_between_or_at(data, ComponentType.three_winding_transformer, ComponentAttribute.clock_12, -12, 12)
     errors += _all_between_or_at(data, ComponentType.three_winding_transformer, ComponentAttribute.clock_13, -12, 12)
-    errors += _all_valid_clocks(data, ComponentType.three_winding_transformer, ComponentAttribute.clock_12,
-                                ComponentAttribute.winding_1, ComponentAttribute.winding_2)
-    errors += _all_valid_clocks(data, ComponentType.three_winding_transformer, ComponentAttribute.clock_13,
-                                ComponentAttribute.winding_1, ComponentAttribute.winding_3)
-    errors += _all_valid_enum_values(data, ComponentType.three_winding_transformer, ComponentAttribute.tap_side,
-                                     Branch3Side)
+    errors += _all_valid_clocks(
+        data,
+        ComponentType.three_winding_transformer,
+        ComponentAttribute.clock_12,
+        ComponentAttribute.winding_1,
+        ComponentAttribute.winding_2,
+    )
+    errors += _all_valid_clocks(
+        data,
+        ComponentType.three_winding_transformer,
+        ComponentAttribute.clock_13,
+        ComponentAttribute.winding_1,
+        ComponentAttribute.winding_3,
+    )
+    errors += _all_valid_enum_values(
+        data, ComponentType.three_winding_transformer, ComponentAttribute.tap_side, Branch3Side
+    )
     errors += _all_between_or_at(
         data,
         ComponentType.three_winding_transformer,
@@ -821,10 +904,17 @@ def validate_three_winding_transformer(data: SingleDataset) -> list[ValidationEr
         data[ComponentType.three_winding_transformer][ComponentAttribute.tap_nom],
         0,
     )
-    errors += _all_between_or_at(data, ComponentType.three_winding_transformer, ComponentAttribute.tap_nom,
-                                 ComponentAttribute.tap_min, ComponentAttribute.tap_max, 0)
-    errors += _all_greater_than_or_equal_to_zero(data, ComponentType.three_winding_transformer,
-                                                 ComponentAttribute.tap_size)
+    errors += _all_between_or_at(
+        data,
+        ComponentType.three_winding_transformer,
+        ComponentAttribute.tap_nom,
+        ComponentAttribute.tap_min,
+        ComponentAttribute.tap_max,
+        0,
+    )
+    errors += _all_greater_than_or_equal_to_zero(
+        data, ComponentType.three_winding_transformer, ComponentAttribute.tap_size
+    )
     errors += _all_greater_or_equal(
         data,
         ComponentType.three_winding_transformer,
@@ -1088,8 +1178,9 @@ def validate_same_u_ref_per_node_voltage_regulator(
 
             if len(error_regulator_ids) > 0:
                 errors.append(
-                    InvalidVoltageRegulationError(ComponentType.voltage_regulator,
-                                                  ComponentAttribute.u_ref, error_regulator_ids)
+                    InvalidVoltageRegulationError(
+                        ComponentType.voltage_regulator, ComponentAttribute.u_ref, error_regulator_ids
+                    )
                 )
 
     return errors
@@ -1352,13 +1443,19 @@ def validate_fault(data: SingleDataset) -> list[ValidationError]:
     errors += _all_boolean(data, ComponentType.fault, ComponentAttribute.status)
     errors += _all_valid_enum_values(data, ComponentType.fault, ComponentAttribute.fault_type, FaultType)
     errors += _all_valid_enum_values(data, ComponentType.fault, ComponentAttribute.fault_phase, FaultPhase)
-    errors += _all_valid_fault_phases(data, ComponentType.fault, ComponentAttribute.fault_type,
-                                      ComponentAttribute.fault_phase)
-    errors += _all_valid_ids(data, ComponentType.fault, field=ComponentAttribute.fault_object,
-                             ref_components=ComponentType.node)
+    errors += _all_valid_fault_phases(
+        data, ComponentType.fault, ComponentAttribute.fault_type, ComponentAttribute.fault_phase
+    )
+    errors += _all_valid_ids(
+        data, ComponentType.fault, field=ComponentAttribute.fault_object, ref_components=ComponentType.node
+    )
     errors += _all_greater_than_or_equal_to_zero(data, ComponentType.fault, ComponentAttribute.r_f)
-    errors += _all_enabled_identical(data, ComponentType.fault, ComponentAttribute.fault_type, ComponentAttribute.status)
-    errors += _all_enabled_identical(data, ComponentType.fault, ComponentAttribute.fault_phase, ComponentAttribute.status)
+    errors += _all_enabled_identical(
+        data, ComponentType.fault, ComponentAttribute.fault_type, ComponentAttribute.status
+    )
+    errors += _all_enabled_identical(
+        data, ComponentType.fault, ComponentAttribute.fault_phase, ComponentAttribute.status
+    )
     return errors
 
 
@@ -1396,7 +1493,9 @@ def validate_transformer_tap_regulator(data: SingleDataset) -> list[ValidationEr
         [ComponentType.three_winding_transformer],
         [Branch3Side],
     )
-    errors += _all_greater_than_or_equal_to_zero(data, ComponentType.transformer_tap_regulator, ComponentAttribute.u_set)
+    errors += _all_greater_than_or_equal_to_zero(
+        data, ComponentType.transformer_tap_regulator, ComponentAttribute.u_set
+    )
     errors += _all_greater_than_zero(data, ComponentType.transformer_tap_regulator, ComponentAttribute.u_band)
     errors += _all_greater_than_or_equal_to_zero(
         data, ComponentType.transformer_tap_regulator, ComponentAttribute.line_drop_compensation_r, 0.0

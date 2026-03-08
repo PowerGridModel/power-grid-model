@@ -107,16 +107,13 @@ class CodeGenerator:
                 all_components = {}
                 for component in dataset.components:
                     class_def: AttributeClass = self.all_classes[component.class_name]
-                    attributes = [x.names for x in class_def.full_attributes]
-                    all_attributes.update(attributes)
+                    component_attributes = [x.names for x in class_def.full_attributes]
+                    all_attributes.update(component_attributes)
                     for component_name in component.names:
-                        all_components[component_name] = [x.names for x in class_def.full_attributes]
+                        all_components[component_name] = component_attributes
                 all_map[f"{prefix}{dataset.name}"] = all_components
         self.render_template(
-            template_path=template_path,
-            output_path=output_path,
-            all_map=all_map,
-            attributes=sorted(all_attributes)
+            template_path=template_path, output_path=output_path, all_map=all_map, all_attributes=sorted(all_attributes)
         )
 
     def code_gen(self):

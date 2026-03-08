@@ -65,7 +65,7 @@ class ComponentAttribute(StrEnum, metaclass=_MetaEnum):
         - ComponentAttributes.p_from = "p_from"
         - ComponentAttributes.u_pu = "u_pu"
     """
-{% for attribute in attributes %}
+{% for attribute in all_attributes %}
     {{ attribute }} = "{{ attribute }}"
 {%- endfor %}
 
