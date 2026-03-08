@@ -18,7 +18,6 @@ import numpy as np
 
 from power_grid_model._core.dataset_definitions import (
     ComponentAttribute,
-    ComponentAttributeLike,
     ComponentType,
     ComponentTypeLike,
     DatasetType,
@@ -239,7 +238,7 @@ def validate_unique_ids_across_components(data: SingleDataset) -> list[MultiComp
         An empty list if all ids are unique, or a list of MultiComponentNotUniqueErrors for all components that
         have non-unique ids
     """
-    return _all_cross_unique(data, [(component, "id") for component in data])
+    return _all_cross_unique(data, [(component, ComponentAttribute.id) for component in data])
 
 
 def validate_ids(update_data: SingleDataset, input_data: SingleDataset) -> list[IdNotInDatasetError | InvalidIdError]:
@@ -281,7 +280,7 @@ def validate_required_values(  # noqa: PLR0915
         An empty list if all required data is available, or a list of MissingValueErrors.
     """
     # Base
-    required: dict[ComponentTypeLike, list[ComponentAttributeLike]] = {"base": [ComponentAttribute.id]}
+    required: dict[ComponentTypeLike, list[ComponentAttribute]] = {"base": [ComponentAttribute.id]}
 
     # Nodes
     required[ComponentType.node] = required["base"] + [ComponentAttribute.u_rated]
@@ -464,7 +463,7 @@ def validate_required_values(  # noqa: PLR0915
     return errors
 
 
-def _validate_required_in_data(data: SingleDataset, required: dict[ComponentTypeLike, list[ComponentTypeLike]]):
+def _validate_required_in_data(data: SingleDataset, required: dict[ComponentTypeLike, list[ComponentAttribute]]):
     """
     Checks if all required data is available.
 
@@ -1475,21 +1474,21 @@ def validate_transformer_tap_regulator(data: SingleDataset) -> list[ValidationEr
     errors += _all_boolean(data, ComponentType.transformer_tap_regulator, ComponentAttribute.status)
     errors += _all_unique(data, ComponentType.transformer_tap_regulator, ComponentAttribute.regulated_object)
     errors += _all_valid_enum_values(
-        data, ComponentType.transformer_tap_regulator, "control_side", [BranchSide, Branch3Side]
+        data, ComponentType.transformer_tap_regulator, ComponentAttribute.control_side, [BranchSide, Branch3Side]
     )
     errors += _all_valid_associated_enum_values(
         data,
         ComponentType.transformer_tap_regulator,
-        "control_side",
-        "regulated_object",
+        ComponentAttribute.control_side,
+        ComponentAttribute.regulated_object,
         [ComponentType.transformer],
         [BranchSide],
     )
     errors += _all_valid_associated_enum_values(
         data,
         ComponentType.transformer_tap_regulator,
-        "control_side",
-        "regulated_object",
+        ComponentAttribute.control_side,
+        ComponentAttribute.regulated_object,
         [ComponentType.three_winding_transformer],
         [Branch3Side],
     )

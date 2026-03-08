@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 
 from power_grid_model import ComponentType, DatasetType, LoadGenType, initialize_array, power_grid_meta_data
+from power_grid_model._core.dataset_definitions import ComponentAttribute
 from power_grid_model.enum import (
     AngleMeasurementType,
     Branch3Side,
@@ -844,19 +845,22 @@ def test_all_same_current_angle_measurement_type_on_terminal(
     angle_measurement_type: AngleMeasurementType,
 ):
     current_sensor = initialize_array(DatasetType.input, current_sensor_type, 2)
-    current_sensor["id"] = [1, 2]
-    current_sensor["measured_object"] = [3, 3]
-    current_sensor["measured_terminal_type"] = [measured_terminal_type_1, measured_terminal_type_2]
-    current_sensor["angle_measurement_type"] = [AngleMeasurementType.local_angle, angle_measurement_type]
+    current_sensor[ComponentAttribute.id] = [1, 2]
+    current_sensor[ComponentAttribute.measured_object] = [3, 3]
+    current_sensor[ComponentAttribute.measured_terminal_type] = [measured_terminal_type_1, measured_terminal_type_2]
+    current_sensor[ComponentAttribute.angle_measurement_type] = [
+        AngleMeasurementType.local_angle,
+        angle_measurement_type,
+    ]
 
     data = {current_sensor_type.value: current_sensor}
 
     errors = all_same_current_angle_measurement_type_on_terminal(
         data=data,
         component=current_sensor_type,
-        measured_object_field="measured_object",
-        measured_terminal_type_field="measured_terminal_type",
-        angle_measurement_type_field="angle_measurement_type",
+        measured_object_field=ComponentAttribute.measured_object,
+        measured_terminal_type_field=ComponentAttribute.measured_terminal_type,
+        angle_measurement_type_field=ComponentAttribute.angle_measurement_type,
     )
 
     if (
@@ -869,7 +873,11 @@ def test_all_same_current_angle_measurement_type_on_terminal(
         assert (
             MixedCurrentAngleMeasurementTypeError(
                 component=current_sensor_type,
-                fields=["measured_object", "measured_terminal_type", "angle_measurement_type"],
+                fields=[
+                    ComponentAttribute.measured_object,
+                    ComponentAttribute.measured_terminal_type,
+                    ComponentAttribute.angle_measurement_type,
+                ],
                 ids=[1, 2],
             )
             in errors
