@@ -321,11 +321,11 @@ def _get_attribute_buffer_views(
     Get C API compatible views on attribute buffers.
 
     Args:
-        data (dict[ComponentAttributeLike, np.ndarray]): the data.
+        data (dict[ComponentAttribute, np.ndarray]): the data.
         schema (ComponentMetaData): the schema that the data should obey.
 
     Returns:
-        dict[ComponentAttributeLike, CAttributeBuffer]: the C API attribute buffer view per attribute.
+        dict[ComponentAttribute, CAttributeBuffer]: the C API attribute buffer view per attribute.
     """
     if isinstance(data, np.ndarray):
         return {}
