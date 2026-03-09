@@ -5,7 +5,7 @@
 import numpy as np
 
 from power_grid_model import (
-    ComponentAttribute,
+    AttributeType,
     ComponentType,
     DatasetType,
     attribute_dtype,
@@ -22,21 +22,21 @@ def test_nan_scalar():
 def test_initialize_array():
     arr = initialize_array(DatasetType.input, ComponentType.node, 3)
     assert arr.shape == (3,)
-    assert np.all(np.isnan(arr[ComponentAttribute.u_rated]))
+    assert np.all(np.isnan(arr[AttributeType.u_rated]))
     arr_2d = initialize_array(DatasetType.input, ComponentType.node, (2, 3))
     assert arr_2d.shape == (2, 3)
-    assert np.all(np.isnan(arr_2d[ComponentAttribute.u_rated]))
+    assert np.all(np.isnan(arr_2d[AttributeType.u_rated]))
 
 
 def test_attribute_dtype():
-    assert attribute_dtype(DatasetType.input, ComponentType.node, ComponentAttribute.u_rated) == np.float64
-    assert attribute_dtype(DatasetType.input, ComponentType.node, ComponentAttribute.id) == np.int32
+    assert attribute_dtype(DatasetType.input, ComponentType.node, AttributeType.u_rated) == np.float64
+    assert attribute_dtype(DatasetType.input, ComponentType.node, AttributeType.id) == np.int32
 
 
 def test_attribute_empty_value():
-    empty_value = attribute_empty_value(DatasetType.input, ComponentType.node, ComponentAttribute.u_rated)
+    empty_value = attribute_empty_value(DatasetType.input, ComponentType.node, AttributeType.u_rated)
     assert np.isnan(empty_value)
-    empty_value = attribute_empty_value(DatasetType.input, ComponentType.node, ComponentAttribute.id)
+    empty_value = attribute_empty_value(DatasetType.input, ComponentType.node, AttributeType.id)
     assert empty_value == np.iinfo(np.int32).min
 
 
@@ -47,17 +47,17 @@ def test_sensor_meta_data():
         ComponentType.sym_power_sensor,
         ComponentType.asym_power_sensor,
     ]
-    input_voltage = [ComponentAttribute.u_measured, ComponentAttribute.u_angle_measured, ComponentAttribute.u_sigma]
-    output_voltage = [ComponentAttribute.u_residual, ComponentAttribute.u_angle_residual]
-    input_power = [ComponentAttribute.p_measured, ComponentAttribute.q_measured, ComponentAttribute.power_sigma]
-    output_power = [ComponentAttribute.p_residual, ComponentAttribute.q_residual]
+    input_voltage = [AttributeType.u_measured, AttributeType.u_angle_measured, AttributeType.u_sigma]
+    output_voltage = [AttributeType.u_residual, AttributeType.u_angle_residual]
+    input_power = [AttributeType.p_measured, AttributeType.q_measured, AttributeType.power_sigma]
+    output_power = [AttributeType.p_residual, AttributeType.q_residual]
     for sensor in sensors:
         for meta_type in [DatasetType.input, DatasetType.update, DatasetType.sym_output, DatasetType.asym_output]:
             meta_data = power_grid_meta_data[meta_type]
             assert sensor in meta_data
             meta_data_sensor = meta_data[sensor]
             attr_names = meta_data_sensor.dtype_dict["names"]
-            assert ComponentAttribute.id in attr_names
+            assert AttributeType.id in attr_names
             # check specific attributes
             if "voltage" in sensor:
                 expected_attrs = output_voltage if "output" in meta_type else input_voltage

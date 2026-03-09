@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 
 from power_grid_model import (
-    ComponentAttribute,
+    AttributeType,
     ComponentType,
     DatasetType,
     LoadGenType,
@@ -23,34 +23,34 @@ from power_grid_model.validation import assert_valid_batch_data
 @pytest.fixture
 def input_data_r():
     node = initialize_array(DatasetType.input, ComponentType.node, 3)
-    node[ComponentAttribute.id] = np.array([1, 2, 6])
-    node[ComponentAttribute.u_rated] = [10.5e3, 10.5e3, 10.5e3]
+    node[AttributeType.id] = np.array([1, 2, 6])
+    node[AttributeType.u_rated] = [10.5e3, 10.5e3, 10.5e3]
 
     line = initialize_array(DatasetType.input, ComponentType.line, 3)
-    line[ComponentAttribute.id] = [3, 5, 8]
-    line[ComponentAttribute.from_node] = [1, 2, 1]
-    line[ComponentAttribute.to_node] = [2, 6, 6]
-    line[ComponentAttribute.from_status] = [1, 1, 1]
-    line[ComponentAttribute.to_status] = [1, 1, 1]
-    line[ComponentAttribute.r1] = [0.25, 0.25, 0.25]
-    line[ComponentAttribute.x1] = [0.2, 0.2, 0.2]
-    line[ComponentAttribute.c1] = [10e-6, 10e-6, 10e-6]
-    line[ComponentAttribute.tan1] = [0.0, 0.0, 0.0]
-    line[ComponentAttribute.i_n] = [1000, 1000, 1000]
+    line[AttributeType.id] = [3, 5, 8]
+    line[AttributeType.from_node] = [1, 2, 1]
+    line[AttributeType.to_node] = [2, 6, 6]
+    line[AttributeType.from_status] = [1, 1, 1]
+    line[AttributeType.to_status] = [1, 1, 1]
+    line[AttributeType.r1] = [0.25, 0.25, 0.25]
+    line[AttributeType.x1] = [0.2, 0.2, 0.2]
+    line[AttributeType.c1] = [10e-6, 10e-6, 10e-6]
+    line[AttributeType.tan1] = [0.0, 0.0, 0.0]
+    line[AttributeType.i_n] = [1000, 1000, 1000]
 
     sym_load = initialize_array(DatasetType.input, ComponentType.sym_load, 2)
-    sym_load[ComponentAttribute.id] = [4, 7]
-    sym_load[ComponentAttribute.node] = [2, 6]
-    sym_load[ComponentAttribute.status] = [1, 1]
-    sym_load[ComponentAttribute.type] = [LoadGenType.const_power, LoadGenType.const_power]
-    sym_load[ComponentAttribute.p_specified] = [20e6, 10e6]
-    sym_load[ComponentAttribute.q_specified] = [5e6, 2e6]
+    sym_load[AttributeType.id] = [4, 7]
+    sym_load[AttributeType.node] = [2, 6]
+    sym_load[AttributeType.status] = [1, 1]
+    sym_load[AttributeType.type] = [LoadGenType.const_power, LoadGenType.const_power]
+    sym_load[AttributeType.p_specified] = [20e6, 10e6]
+    sym_load[AttributeType.q_specified] = [5e6, 2e6]
 
     source = initialize_array(DatasetType.input, ComponentType.source, 1)
-    source[ComponentAttribute.id] = [10]
-    source[ComponentAttribute.node] = [1]
-    source[ComponentAttribute.status] = [1]
-    source[ComponentAttribute.u_ref] = [1.0]
+    source[AttributeType.id] = [10]
+    source[AttributeType.node] = [1]
+    source[AttributeType.status] = [1]
+    source[AttributeType.u_ref] = [1.0]
 
     return {
         ComponentType.node: node,
@@ -75,15 +75,15 @@ def input_data(request):
 @pytest.fixture
 def update_sym_load_r():
     sym_load = initialize_array(DatasetType.update, ComponentType.sym_load, (2, 2))
-    sym_load[ComponentAttribute.id] = [[4], [7]]
-    sym_load[ComponentAttribute.p_specified] = [[30e6], [15e6]]
+    sym_load[AttributeType.id] = [[4], [7]]
+    sym_load[AttributeType.p_specified] = [[30e6], [15e6]]
     return sym_load
 
 
 @pytest.fixture
 def update_sym_load_no_id_r():
     sym_load = initialize_array(DatasetType.update, ComponentType.sym_load, (2, 2))
-    sym_load[ComponentAttribute.p_specified] = [[30e6, 10e6], [30e6, 15e6]]
+    sym_load[AttributeType.p_specified] = [[30e6, 10e6], [30e6, 15e6]]
     return sym_load
 
 
@@ -91,9 +91,9 @@ def update_sym_load_no_id_r():
 def update_sym_load_c():
     source_attribute_dtypes = power_grid_meta_data[DatasetType.update][ComponentType.sym_load].dtype
     return {
-        ComponentAttribute.id: np.array([[4], [7]], dtype=source_attribute_dtypes[ComponentAttribute.id]),
-        ComponentAttribute.p_specified: np.array(
-            [[30e6], [15e6]], dtype=source_attribute_dtypes[ComponentAttribute.p_specified]
+        AttributeType.id: np.array([[4], [7]], dtype=source_attribute_dtypes[AttributeType.id]),
+        AttributeType.p_specified: np.array(
+            [[30e6], [15e6]], dtype=source_attribute_dtypes[AttributeType.p_specified]
         ),
     }
 
@@ -102,8 +102,8 @@ def update_sym_load_c():
 def update_sym_load_no_id_c():
     source_attribute_dtypes = power_grid_meta_data[DatasetType.update][ComponentType.sym_load].dtype
     return {
-        ComponentAttribute.p_specified: np.array(
-            [[30e6, 10e6], [30e6, 15e6]], dtype=source_attribute_dtypes[ComponentAttribute.p_specified]
+        AttributeType.p_specified: np.array(
+            [[30e6, 10e6], [30e6, 15e6]], dtype=source_attribute_dtypes[AttributeType.p_specified]
         ),
     }
 
@@ -123,15 +123,15 @@ def update_sym_load(request):
 @pytest.fixture
 def update_line_r():
     line = initialize_array(DatasetType.update, ComponentType.line, (2, 1))
-    line[ComponentAttribute.id] = [[3], [5]]
-    line[ComponentAttribute.from_status] = [[0], [0]]
+    line[AttributeType.id] = [[3], [5]]
+    line[AttributeType.from_status] = [[0], [0]]
     return line
 
 
 @pytest.fixture
 def update_line_no_id_r():
     line = initialize_array(DatasetType.update, ComponentType.line, (2, 3))
-    line[ComponentAttribute.from_status] = [[0, 1, 1], [0, 0, 1]]
+    line[AttributeType.from_status] = [[0, 1, 1], [0, 0, 1]]
     return line
 
 
@@ -139,9 +139,9 @@ def update_line_no_id_r():
 def update_line_c():
     source_attribute_dtypes = power_grid_meta_data[DatasetType.update][ComponentType.line].dtype
     return {
-        ComponentAttribute.id: np.array([[3], [5]], dtype=source_attribute_dtypes[ComponentAttribute.id]),
-        ComponentAttribute.from_status: np.array(
-            [[0], [0]], dtype=source_attribute_dtypes[ComponentAttribute.from_status]
+        AttributeType.id: np.array([[3], [5]], dtype=source_attribute_dtypes[AttributeType.id]),
+        AttributeType.from_status: np.array(
+            [[0], [0]], dtype=source_attribute_dtypes[AttributeType.from_status]
         ),
     }
 
@@ -150,8 +150,8 @@ def update_line_c():
 def update_line_no_id_c():
     source_attribute_dtypes = power_grid_meta_data[DatasetType.update][ComponentType.line].dtype
     return {
-        ComponentAttribute.from_status: np.array(
-            [[0, 1, 1], [0, 0, 1]], dtype=source_attribute_dtypes[ComponentAttribute.from_status]
+        AttributeType.from_status: np.array(
+            [[0, 1, 1], [0, 0, 1]], dtype=source_attribute_dtypes[AttributeType.from_status]
         ),
     }
 

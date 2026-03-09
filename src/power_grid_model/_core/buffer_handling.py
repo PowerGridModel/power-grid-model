@@ -23,7 +23,7 @@ from power_grid_model._core.data_types import (
     SparseBatchArray,
     SparseBatchData,
 )
-from power_grid_model._core.dataset_definitions import ComponentAttribute
+from power_grid_model._core.dataset_definitions import AttributeType
 from power_grid_model._core.error_handling import VALIDATOR_MSG
 from power_grid_model._core.index_integer import IdxC, IdxNp
 from power_grid_model._core.power_grid_core import IdxPtr, VoidPtr
@@ -48,7 +48,7 @@ class BufferProperties:
     batch_size: int
     n_elements_per_scenario: int
     n_total_elements: int
-    columns: list[ComponentAttribute] | None
+    columns: list[AttributeType] | None
 
 
 # prepared attribute data for c api
@@ -73,7 +73,7 @@ class CBuffer:
     n_elements_per_scenario: int
     batch_size: int
     total_elements: int
-    attribute_data: dict[ComponentAttribute, CAttributeBuffer]
+    attribute_data: dict[AttributeType, CAttributeBuffer]
 
 
 def _get_raw_data_view(data: np.ndarray, dtype: np.dtype) -> VoidPtr:
@@ -95,9 +95,9 @@ def _get_raw_data_view(data: np.ndarray, dtype: np.dtype) -> VoidPtr:
 @overload
 def _get_raw_component_data_view(data: np.ndarray, schema: ComponentMetaData) -> VoidPtr: ...
 @overload
-def _get_raw_component_data_view(data: dict[ComponentAttribute, np.ndarray], schema: ComponentMetaData) -> None: ...
+def _get_raw_component_data_view(data: dict[AttributeType, np.ndarray], schema: ComponentMetaData) -> None: ...
 def _get_raw_component_data_view(
-    data: np.ndarray | dict[ComponentAttribute, np.ndarray], schema: ComponentMetaData
+    data: np.ndarray | dict[AttributeType, np.ndarray], schema: ComponentMetaData
 ) -> VoidPtr | None:
     """
     Get a raw view on the data.
@@ -114,7 +114,7 @@ def _get_raw_component_data_view(
     return None
 
 
-def _get_raw_attribute_data_view(data: np.ndarray, schema: ComponentMetaData, attribute: ComponentAttribute) -> VoidPtr:
+def _get_raw_attribute_data_view(data: np.ndarray, schema: ComponentMetaData, attribute: AttributeType) -> VoidPtr:
     """
     Get a raw view on the data.
 
@@ -254,7 +254,7 @@ def _get_sparse_buffer_properties(
     indptr = _extract_indptr(data)
 
     ndim = 1
-    columns: list[ComponentAttribute] | None = None
+    columns: list[AttributeType] | None = None
     if not is_columnar(data):
         shape: tuple[int, ...] = contents.shape
     else:
@@ -315,8 +315,8 @@ def get_buffer_properties(
 
 
 def _get_attribute_buffer_views(
-    data: np.ndarray | dict[ComponentAttribute, np.ndarray], schema: ComponentMetaData
-) -> dict[ComponentAttribute, CAttributeBuffer]:
+    data: np.ndarray | dict[AttributeType, np.ndarray], schema: ComponentMetaData
+) -> dict[AttributeType, CAttributeBuffer]:
     """
     Get C API compatible views on attribute buffers.
 
@@ -498,7 +498,7 @@ def _create_sparse_buffer(properties: BufferProperties, schema: ComponentMetaDat
 def _create_contents_buffer(shape, dtype, columns: None) -> SingleArray | DenseBatchArray: ...
 @overload
 def _create_contents_buffer(
-    shape, dtype, columns: list[ComponentAttribute]
+    shape, dtype, columns: list[AttributeType]
 ) -> SingleColumnarData | DenseBatchColumnarData: ...
 def _create_contents_buffer(shape, dtype, columns):
     if columns is None:

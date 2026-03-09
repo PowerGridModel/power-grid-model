@@ -6,11 +6,11 @@
 Type hints for for library-internal use.
 """
 
-from power_grid_model._core.dataset_definitions import ComponentAttribute, ComponentType, ComponentTypeVar
+from power_grid_model._core.dataset_definitions import AttributeType, ComponentType, ComponentTypeVar
 from power_grid_model._core.enum import ComponentAttributeFilterOptions
 
 ComponentAttributeMappingDict = dict[
-    ComponentType, set[ComponentAttribute] | list[ComponentAttribute] | None | ComponentAttributeFilterOptions
+    ComponentType, set[AttributeType] | list[AttributeType] | None | ComponentAttributeFilterOptions
 ]
 
 ComponentAttributeMapping = (

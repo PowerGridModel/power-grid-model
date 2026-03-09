@@ -36,7 +36,7 @@ from power_grid_model._core.data_types import (
     SinglePythonDataset,
     SparseBatchData,
 )
-from power_grid_model._core.dataset_definitions import ComponentAttribute, ComponentType, DatasetType
+from power_grid_model._core.dataset_definitions import AttributeType, ComponentType, DatasetType
 from power_grid_model._core.enum import ComponentAttributeFilterOptions
 from power_grid_model._core.error_handling import VALIDATOR_MSG
 from power_grid_model._core.errors import PowerGridError
@@ -429,7 +429,7 @@ def _convert_data_to_row_or_columnar(
     data: SingleComponentData,
     comp_name: ComponentType,
     dataset_type: DatasetType,
-    attrs: set[ComponentAttribute] | list[ComponentAttribute] | None | ComponentAttributeFilterOptions,
+    attrs: set[AttributeType] | list[AttributeType] | None | ComponentAttributeFilterOptions,
 ) -> SingleComponentData:
     """Converts row or columnar component data to row or columnar component data as requested in `attrs`."""
     if attrs is None:

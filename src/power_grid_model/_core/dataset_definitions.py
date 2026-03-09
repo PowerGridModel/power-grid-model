@@ -76,7 +76,7 @@ class ComponentType(StrEnum, metaclass=_MetaEnum):
     asym_current_sensor = "asym_current_sensor"
     fault = "fault"
 
-class ComponentAttribute(StrEnum, metaclass=_MetaEnum):
+class AttributeType(StrEnum, metaclass=_MetaEnum):
     """
     A ComponentAttribute is the attribute of a grid component.
 
@@ -291,7 +291,7 @@ DatasetTypeVar = TypeVar("DatasetTypeVar", bound=DatasetTypeLike)  # helper used
 type ComponentTypeLike = ComponentType | str
 ComponentTypeVar = TypeVar("ComponentTypeVar", bound=ComponentTypeLike)  # helper used for type deduction
 
-type ComponentAttributeLike = ComponentAttribute | str
+type ComponentAttributeLike = AttributeType | str
 ComponentAttributeVar = TypeVar("ComponentAttributeVar", bound=ComponentAttributeLike)  # helper used for type deduction
 
 
@@ -319,14 +319,14 @@ def _map_to_component_types[K: ComponentTypeLike, V](data: Mapping[K, V]) -> dic
     return {_str_to_component_type(key): value for key, value in data.items()}
 
 
-def _str_to_component_attribute(attribute: ComponentAttributeLike) -> ComponentAttribute:
+def _str_to_component_attribute(attribute: ComponentAttributeLike) -> AttributeType:
     """Helper function to transform component str to ComponentType."""
-    if isinstance(attribute, ComponentAttribute):
+    if isinstance(attribute, AttributeType):
         return attribute
-    return ComponentAttribute[attribute]
+    return AttributeType[attribute]
 
 
-def _map_to_component_attribute[K: ComponentAttributeLike, V](data: Mapping[K, V]) -> dict[ComponentAttribute, V]:
+def _map_to_component_attribute[K: ComponentAttributeLike, V](data: Mapping[K, V]) -> dict[AttributeType, V]:
     """Helper function to map componenttype str keys to ComponentType."""
     return {_str_to_component_attribute(key): value for key, value in data.items()}
 

@@ -26,7 +26,7 @@ from power_grid_model._core.data_types import (
     SparseBatchColumnarData,
 )
 from power_grid_model._core.dataset_definitions import (
-    ComponentAttribute,
+    AttributeType,
     ComponentType,
     DatasetType,
     _str_to_component_attribute,
@@ -144,7 +144,7 @@ class CDatasetInfo:
             for idx, component_name in enumerate(self.components())
         }
 
-    def attribute_indications(self) -> Mapping[ComponentType, None | list[ComponentAttribute]]:
+    def attribute_indications(self) -> Mapping[ComponentType, None | list[AttributeType]]:
         """
         The attribute indications in the dataset.
 
@@ -152,7 +152,7 @@ class CDatasetInfo:
             A map of component to its attribute indications.
             None means no attribute indications
         """
-        result_dict: dict[ComponentType, None | list[ComponentAttribute]] = {}
+        result_dict: dict[ComponentType, None | list[AttributeType]] = {}
         components = self.components()
         for component_idx, component_name in enumerate(components):
             has_indications = get_pgc().dataset_info_has_attribute_indications(self._info, component_idx)
@@ -473,7 +473,7 @@ class CWritableDataset:
     def _register_attribute_buffer(
         self,
         component: ComponentType,
-        attribute: ComponentAttribute,
+        attribute: AttributeType,
         buffer: CAttributeBuffer,
     ):
         get_pgc().dataset_writable_set_attribute_buffer(
@@ -536,9 +536,9 @@ class CWritableDataset:
 
 def _get_filtered_attributes(
     schema: ComponentMetaData,
-    component_data_filter: set[ComponentAttribute] | list[ComponentAttribute] | None | ComponentAttributeFilterOptions,
-    attribute_indication: None | list[ComponentAttribute],
-) -> list[ComponentAttribute] | None:
+    component_data_filter: set[AttributeType] | list[AttributeType] | None | ComponentAttributeFilterOptions,
+    attribute_indication: None | list[AttributeType],
+) -> list[AttributeType] | None:
     if component_data_filter is None:
         return None
 
