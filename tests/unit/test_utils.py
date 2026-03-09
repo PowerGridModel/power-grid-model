@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 
 from power_grid_model import DatasetType, initialize_array
-from power_grid_model._core.dataset_definitions import AttributeType, ComponentType
+from power_grid_model._core.dataset_definitions import ComponentType
 from power_grid_model._core.power_grid_meta import power_grid_meta_data
 from power_grid_model.data_types import Dataset
 from power_grid_model.utils import (
@@ -51,11 +51,11 @@ def test_get_dataset_scenario():
 
 def test_get_data_set_batch_size():
     line = initialize_array(DatasetType.update, ComponentType.line, (3, 2))
-    line[AttributeType.id] = [[5, 6], [6, 7], [7, 5]]
-    line[AttributeType.from_status] = [[1, 1], [1, 1], [1, 1]]
+    line["id"] = [[5, 6], [6, 7], [7, 5]]
+    line["from_status"] = [[1, 1], [1, 1], [1, 1]]
 
     asym_load = initialize_array(DatasetType.update, ComponentType.asym_load, (3, 2))
-    asym_load[AttributeType.id] = [[9, 10], [9, 10], [9, 10]]
+    asym_load["id"] = [[9, 10], [9, 10], [9, 10]]
 
     batch_data = {ComponentType.line: line, ComponentType.asym_load: asym_load}
 
@@ -87,11 +87,11 @@ def test_get_dataset_batch_size_sparse():
 
 def test_get_dataset_batch_size_mixed():
     line = initialize_array(DatasetType.update, ComponentType.line, (3, 2))
-    line[AttributeType.id] = [[5, 6], [6, 7], [7, 5]]
-    line[AttributeType.from_status] = [[1, 1], [1, 1], [1, 1]]
+    line["id"] = [[5, 6], [6, 7], [7, 5]]
+    line["from_status"] = [[1, 1], [1, 1], [1, 1]]
 
     asym_load = initialize_array(DatasetType.update, ComponentType.asym_load, (2, 2))
-    asym_load[AttributeType.id] = [[9, 10], [9, 10]]
+    asym_load["id"] = [[9, 10], [9, 10]]
 
     data_dense = {ComponentType.line: line, ComponentType.asym_load: asym_load}
     data_sparse = {
@@ -116,7 +116,7 @@ def test_get_dataset_batch_size_mixed():
 
 def test_get_component_batch_size():
     asym_load = initialize_array(DatasetType.update, ComponentType.asym_load, (3, 2))
-    asym_load[AttributeType.id] = [[9, 10], [9, 10], [9, 10]]
+    asym_load["id"] = [[9, 10], [9, 10], [9, 10]]
 
     sym_load = {
         "data": np.zeros(shape=2, dtype=power_grid_meta_data[DatasetType.input][ComponentType.sym_load]),

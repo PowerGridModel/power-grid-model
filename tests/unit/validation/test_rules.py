@@ -7,8 +7,7 @@ from unittest import mock
 import numpy as np
 import pytest
 
-from power_grid_model import DatasetType, LoadGenType, initialize_array, power_grid_meta_data
-from power_grid_model._core.dataset_definitions import AttributeType, ComponentType
+from power_grid_model import ComponentType, DatasetType, LoadGenType, initialize_array, power_grid_meta_data
 from power_grid_model.enum import (
     AngleMeasurementType,
     Branch3Side,
@@ -161,34 +160,18 @@ def test_all_between_or_at():
     assert len(errors) == 1
     assert NotBetweenOrAtError("test", "value", [1, 4, 5, 6], (0.2, -0.2)) in errors
 
-    nan_value = power_grid_meta_data[DatasetType.input][ComponentType.transformer].nans[AttributeType.tap_pos]
+    nan_value = power_grid_meta_data[DatasetType.input][ComponentType.transformer].nans["tap_pos"]
     transformer_array = initialize_array(DatasetType.input, ComponentType.transformer, 3)
-    transformer_array[AttributeType.id] = [1, 2, 3]
-    transformer_array[AttributeType.tap_pos] = [nan_value, 1, nan_value]
-    transformer_array[AttributeType.tap_nom] = [2, 1, nan_value]
+    transformer_array["id"] = [1, 2, 3]
+    transformer_array["tap_pos"] = [nan_value, 1, nan_value]
+    transformer_array["tap_nom"] = [2, 1, nan_value]
     valid = {ComponentType.transformer: transformer_array}
-    errors = all_between_or_at(
-        valid,
-        ComponentType.transformer,
-        AttributeType.tap_pos,
-        0,
-        2,
-        transformer_array[AttributeType.tap_nom],
-        0,
-    )
+    errors = all_between_or_at(valid, ComponentType.transformer, "tap_pos", 0, 2, transformer_array["tap_nom"], 0)
     assert not errors
 
-    errors = all_between_or_at(
-        valid,
-        ComponentType.transformer,
-        AttributeType.tap_pos,
-        1,
-        2,
-        transformer_array[AttributeType.tap_nom],
-        0,
-    )
+    errors = all_between_or_at(valid, ComponentType.transformer, "tap_pos", 1, 2, transformer_array["tap_nom"], 0)
     assert len(errors) == 1
-    assert NotBetweenOrAtError(ComponentType.transformer, AttributeType.tap_pos, [3], (1, 2)) in errors
+    assert NotBetweenOrAtError(ComponentType.transformer, "tap_pos", [3], (1, 2)) in errors
 
 
 def test_all_greater_than():
@@ -264,25 +247,18 @@ def test_none_match_comparison():
     assert len(errors) == 1
     assert ComparisonError("test", "value", [2], 0.2) in errors
 
-    nan_value = power_grid_meta_data[DatasetType.input][ComponentType.transformer].nans[AttributeType.tap_pos]
+    nan_value = power_grid_meta_data[DatasetType.input][ComponentType.transformer].nans["tap_pos"]
     transformer_array = initialize_array(DatasetType.input, ComponentType.transformer, 3)
     transformer_array["id"] = [1, 2, 3]
-    transformer_array[AttributeType.tap_pos] = [nan_value, 0, nan_value]
-    transformer_array[AttributeType.tap_nom] = [1, 1, nan_value]
+    transformer_array["tap_pos"] = [nan_value, 0, nan_value]
+    transformer_array["tap_nom"] = [1, 1, nan_value]
     valid = {ComponentType.transformer: transformer_array}
 
     errors = none_match_comparison(
-        valid,
-        ComponentType.transformer,
-        AttributeType.tap_pos,
-        np.equal,
-        0,
-        ComparisonError,
-        transformer_array[AttributeType.tap_nom],
-        0,
+        valid, ComponentType.transformer, "tap_pos", np.equal, 0, ComparisonError, transformer_array["tap_nom"], 0
     )
     assert len(errors) == 1
-    assert ComparisonError(ComponentType.transformer, AttributeType.tap_pos, [2, 3], 0) in errors
+    assert ComparisonError(ComponentType.transformer, "tap_pos", [2, 3], 0) in errors
 
 
 def test_all_identical():
@@ -378,24 +354,24 @@ def test_all_cross_unique(cross_only):
 
 def test_all_valid_enum_values():
     valid_load = initialize_array(DatasetType.input, ComponentType.sym_load, 2)
-    valid_load[AttributeType.id] = [1, 2]
-    valid_load[AttributeType.type] = LoadGenType.const_power
+    valid_load["id"] = [1, 2]
+    valid_load["type"] = LoadGenType.const_power
     valid = {ComponentType.sym_load: valid_load}
-    errors = all_valid_enum_values(valid, ComponentType.sym_load, AttributeType.type, LoadGenType)
+    errors = all_valid_enum_values(valid, ComponentType.sym_load, "type", LoadGenType)
     assert not errors
 
     invalid_load = initialize_array(DatasetType.input, ComponentType.sym_load, 2)
-    invalid_load[AttributeType.id] = [1, 2]
-    invalid_load[AttributeType.type] = [LoadGenType.const_power, 5]
+    invalid_load["id"] = [1, 2]
+    invalid_load["type"] = [LoadGenType.const_power, 5]
     invalid = {ComponentType.sym_load: invalid_load}
-    errors = all_valid_enum_values(invalid, ComponentType.sym_load, AttributeType.type, LoadGenType)
+    errors = all_valid_enum_values(invalid, ComponentType.sym_load, "type", LoadGenType)
     assert len(errors) == 1
-    assert InvalidEnumValueError(ComponentType.sym_load, AttributeType.type, [2], LoadGenType) in errors
+    assert InvalidEnumValueError(ComponentType.sym_load, "type", [2], LoadGenType) in errors
 
     valid = {ComponentType.sym_load: initialize_array(DatasetType.input, ComponentType.sym_load, 20)}
-    valid[ComponentType.sym_load][AttributeType.id] = np.arange(20)
-    valid[ComponentType.sym_load][AttributeType.type] = 0
-    errors = all_valid_enum_values(valid, ComponentType.sym_load, AttributeType.type, LoadGenType)
+    valid[ComponentType.sym_load]["id"] = np.arange(20)
+    valid[ComponentType.sym_load]["type"] = 0
+    errors = all_valid_enum_values(valid, ComponentType.sym_load, "type", LoadGenType)
     assert not errors
 
     valid = {
@@ -403,15 +379,15 @@ def test_all_valid_enum_values():
             DatasetType.input, ComponentType.transformer_tap_regulator, 5
         )
     }
-    valid[ComponentType.transformer_tap_regulator][AttributeType.id] = np.arange(5)
-    valid[ComponentType.transformer_tap_regulator][AttributeType.control_side] = np.arange(-1, 4)
+    valid[ComponentType.transformer_tap_regulator]["id"] = np.arange(5)
+    valid[ComponentType.transformer_tap_regulator]["control_side"] = np.arange(-1, 4)
     errors = all_valid_enum_values(
-        valid, ComponentType.transformer_tap_regulator, AttributeType.control_side, [BranchSide, Branch3Side]
+        valid, ComponentType.transformer_tap_regulator, "control_side", [BranchSide, Branch3Side]
     )
     assert len(errors) == 1
     assert (
         InvalidEnumValueError(
-            ComponentType.transformer_tap_regulator, AttributeType.control_side, [0, 4], [BranchSide, Branch3Side]
+            ComponentType.transformer_tap_regulator, "control_side", [0, 4], [BranchSide, Branch3Side]
         )
         in errors
     )
@@ -421,13 +397,13 @@ def test_all_valid_ids():
     # This data is for testing purpuse
     # The values in the data do not make sense for a real grid
     node = initialize_array(DatasetType.input, ComponentType.node, 3)
-    node[AttributeType.id] = [1, 2, 3]
+    node["id"] = [1, 2, 3]
     source = initialize_array(DatasetType.input, ComponentType.source, 3)
-    source[AttributeType.id] = [4, 5, 6]
+    source["id"] = [4, 5, 6]
     line = initialize_array(DatasetType.input, ComponentType.line, 3)
-    line[AttributeType.id] = [7, 8, 9]
-    line[AttributeType.from_node] = [1, 2, 6]
-    line[AttributeType.to_node] = [0, 0, 1]
+    line["id"] = [7, 8, 9]
+    line["from_node"] = [1, 2, 6]
+    line["to_node"] = [0, 0, 1]
 
     input_data = {
         ComponentType.node: node,
@@ -435,24 +411,22 @@ def test_all_valid_ids():
         ComponentType.line: line,
     }
 
-    errors = all_valid_ids(
-        input_data, ComponentType.line, AttributeType.from_node, [ComponentType.node, ComponentType.source]
-    )
+    errors = all_valid_ids(input_data, ComponentType.line, "from_node", [ComponentType.node, ComponentType.source])
     assert not errors
 
-    errors = all_valid_ids(input_data, ComponentType.line, AttributeType.from_node, ComponentType.node, to_node=0)
+    errors = all_valid_ids(input_data, ComponentType.line, "from_node", ComponentType.node, to_node=0)
     assert not errors
 
-    errors = all_valid_ids(input_data, ComponentType.line, AttributeType.from_node, ComponentType.source, to_node=1)
+    errors = all_valid_ids(input_data, ComponentType.line, "from_node", ComponentType.source, to_node=1)
     assert not errors
 
-    errors = all_valid_ids(input_data, ComponentType.line, AttributeType.from_node, ComponentType.node)
+    errors = all_valid_ids(input_data, ComponentType.line, "from_node", ComponentType.node)
     assert len(errors) == 1
-    assert InvalidIdError(ComponentType.line, AttributeType.from_node, [9], [ComponentType.node]) in errors
+    assert InvalidIdError(ComponentType.line, "from_node", [9], [ComponentType.node]) in errors
 
-    errors = all_valid_ids(input_data, ComponentType.line, AttributeType.from_node, ComponentType.source)
+    errors = all_valid_ids(input_data, ComponentType.line, "from_node", ComponentType.source)
     assert len(errors) == 1
-    assert InvalidIdError(ComponentType.line, AttributeType.from_node, [7, 8], [ComponentType.source]) in errors
+    assert InvalidIdError(ComponentType.line, "from_node", [7, 8], [ComponentType.source]) in errors
 
 
 def test_all_boolean():
@@ -870,22 +844,19 @@ def test_all_same_current_angle_measurement_type_on_terminal(
     angle_measurement_type: AngleMeasurementType,
 ):
     current_sensor = initialize_array(DatasetType.input, current_sensor_type, 2)
-    current_sensor[AttributeType.id] = [1, 2]
-    current_sensor[AttributeType.measured_object] = [3, 3]
-    current_sensor[AttributeType.measured_terminal_type] = [measured_terminal_type_1, measured_terminal_type_2]
-    current_sensor[AttributeType.angle_measurement_type] = [
-        AngleMeasurementType.local_angle,
-        angle_measurement_type,
-    ]
+    current_sensor["id"] = [1, 2]
+    current_sensor["measured_object"] = [3, 3]
+    current_sensor["measured_terminal_type"] = [measured_terminal_type_1, measured_terminal_type_2]
+    current_sensor["angle_measurement_type"] = [AngleMeasurementType.local_angle, angle_measurement_type]
 
     data = {current_sensor_type.value: current_sensor}
 
     errors = all_same_current_angle_measurement_type_on_terminal(
         data=data,
         component=current_sensor_type,
-        measured_object_field=AttributeType.measured_object,
-        measured_terminal_type_field=AttributeType.measured_terminal_type,
-        angle_measurement_type_field=AttributeType.angle_measurement_type,
+        measured_object_field="measured_object",
+        measured_terminal_type_field="measured_terminal_type",
+        angle_measurement_type_field="angle_measurement_type",
     )
 
     if (
@@ -898,11 +869,7 @@ def test_all_same_current_angle_measurement_type_on_terminal(
         assert (
             MixedCurrentAngleMeasurementTypeError(
                 component=current_sensor_type,
-                fields=[
-                    AttributeType.measured_object,
-                    AttributeType.measured_terminal_type,
-                    AttributeType.angle_measurement_type,
-                ],
+                fields=["measured_object", "measured_terminal_type", "angle_measurement_type"],
                 ids=[1, 2],
             )
             in errors

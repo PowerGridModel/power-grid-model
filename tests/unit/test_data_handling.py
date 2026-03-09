@@ -9,7 +9,7 @@ import numpy as np
 import pytest
 
 from power_grid_model._core.data_handling import create_output_data
-from power_grid_model._core.dataset_definitions import AttributeType, ComponentType as CT, DatasetType as DT
+from power_grid_model._core.dataset_definitions import ComponentType as CT, DatasetType as DT
 from power_grid_model._core.power_grid_core import VoidPtr
 from power_grid_model._core.power_grid_dataset import CMutableDataset
 from power_grid_model._core.power_grid_meta import initialize_array, power_grid_meta_data
@@ -80,21 +80,17 @@ def batch_size(request):
             },
         ),
         pytest.param(
-            {CT.node: ComponentAttributeFilterOptions.relevant, CT.sym_load: [AttributeType.p]},
+            {CT.node: ComponentAttributeFilterOptions.relevant, CT.sym_load: ["p"]},
             {
                 CT.node: partial(columnar_array, component_type=CT.node, n_components=4, attributes=None),
-                CT.sym_load: partial(
-                    columnar_array, component_type=CT.sym_load, n_components=3, attributes=[AttributeType.p]
-                ),
+                CT.sym_load: partial(columnar_array, component_type=CT.sym_load, n_components=3, attributes=["p"]),
             },
         ),
         pytest.param(
-            {CT.node: None, CT.sym_load: [AttributeType.p]},
+            {CT.node: None, CT.sym_load: ["p"]},
             {
                 CT.node: partial(row_array, component_type=CT.node, n_components=4),
-                CT.sym_load: partial(
-                    columnar_array, component_type=CT.sym_load, n_components=3, attributes=[AttributeType.p]
-                ),
+                CT.sym_load: partial(columnar_array, component_type=CT.sym_load, n_components=3, attributes=["p"]),
             },
         ),
         pytest.param(
@@ -105,21 +101,17 @@ def batch_size(request):
             },
         ),
         pytest.param(
-            {CT.node: [], CT.sym_load: [AttributeType.p]},
+            {CT.node: [], CT.sym_load: ["p"]},
             {
                 CT.node: partial(columnar_array, component_type=CT.node, n_components=4, attributes=[]),
-                CT.sym_load: partial(
-                    columnar_array, component_type=CT.sym_load, n_components=3, attributes=[AttributeType.p]
-                ),
+                CT.sym_load: partial(columnar_array, component_type=CT.sym_load, n_components=3, attributes=["p"]),
             },
         ),
         pytest.param(
-            {CT.node: [AttributeType.u], CT.sym_load: [AttributeType.p]},
+            {CT.node: ["u"], CT.sym_load: ["p"]},
             {
-                CT.node: partial(columnar_array, component_type=CT.node, n_components=4, attributes=[AttributeType.u]),
-                CT.sym_load: partial(
-                    columnar_array, component_type=CT.sym_load, n_components=3, attributes=[AttributeType.p]
-                ),
+                CT.node: partial(columnar_array, component_type=CT.node, n_components=4, attributes=["u"]),
+                CT.sym_load: partial(columnar_array, component_type=CT.sym_load, n_components=3, attributes=["p"]),
             },
         ),
     ],
