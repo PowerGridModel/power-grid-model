@@ -2135,16 +2135,16 @@ TEST_CASE("Test ObservabilityResult - use_perturbation with non-observable netwo
 
     SUBCASE("Test use_perturbation logic directly") {
         // Test the logic of use_perturbation() method directly
-        ObservabilityResult result1{.is_observable = false, .is_possibly_ill_conditioned = false};
+        const ObservabilityResult result1{.is_observable = false, .is_possibly_ill_conditioned = false};
         CHECK(result1.use_perturbation() == false);
 
-        ObservabilityResult result2{.is_observable = false, .is_possibly_ill_conditioned = true};
+        const ObservabilityResult result2{.is_observable = false, .is_possibly_ill_conditioned = true};
         CHECK(result2.use_perturbation() == false);
 
-        ObservabilityResult result3{.is_observable = true, .is_possibly_ill_conditioned = false};
+        const ObservabilityResult result3{.is_observable = true, .is_possibly_ill_conditioned = false};
         CHECK(result3.use_perturbation() == false);
 
-        ObservabilityResult result4{.is_observable = true, .is_possibly_ill_conditioned = true};
+        const ObservabilityResult result4{.is_observable = true, .is_possibly_ill_conditioned = true};
         CHECK(result4.use_perturbation() == true);
     }
 }
