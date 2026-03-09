@@ -13,7 +13,6 @@ are defined/exposed and explained.
 # Not necessary for class, as sphinx autodoc finds their docstrings
 from power_grid_model._core.data_types import (  # noqa: F401
     AsymValue as _AsymValue,
-    AttributeType as _AttributeType,
     AttributeValue as _AttributeValue,
     BatchArray as _BatchArray,
     BatchColumn as _BatchColumn,
@@ -52,16 +51,6 @@ AsymValue = _AsymValue
 Asymmetrical values are three-phase values like p or u_measured.
 
 - Example: (10400.0, 10500.0, 10600.0)
-"""
-
-AttributeType = _AttributeType
-"""
-An attribute type is a string reprenting the attribute type of a specific component.
-
-- Examples:
-
-    - "id"
-    - "u_rated"
 """
 
 AttributeValue = _AttributeValue
@@ -189,7 +178,7 @@ DenseBatchColumnarData = _DenseBatchColumnarData
 Batch columnar data is a dictionary where the keys are the attribute types of the same component
 and the values are :class:`BatchColumn`.
 
-- Example: {"id": :class:`AttributeType`, "from_status": :class:`BatchColumn`}
+- Example: {"id": :class:`ComponentAttribute`, "from_status": :class:`BatchColumn`}
 """
 
 DenseBatchData = _DenseBatchData
@@ -277,7 +266,7 @@ SingleColumnarData = _SingleColumnarData
 Single columnar data is a dictionary where the keys are the attribute types of the same component
 and the values are :class:`SingleColumn`.
 
-- Example: {"id": :class:`AttributeType`, "u_rated": :class:`SingleColumn`}
+- Example: {"id": :class:`ComponentAttribute`, "u_rated": :class:`SingleColumn`}
 """
 
 

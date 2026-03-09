@@ -26,9 +26,10 @@ from power_grid_model._core.data_types import (
     SparseBatchColumnarData,
 )
 from power_grid_model._core.dataset_definitions import (
-    ComponentAttributeLike,
+    ComponentAttribute,
     ComponentType,
     DatasetType,
+    _str_to_component_attribute,
     _str_to_component_type,
 )
 from power_grid_model._core.enum import ComponentAttributeFilterOptions
@@ -143,7 +144,7 @@ class CDatasetInfo:
             for idx, component_name in enumerate(self.components())
         }
 
-    def attribute_indications(self) -> Mapping[ComponentType, None | list[ComponentAttributeLike]]:
+    def attribute_indications(self) -> Mapping[ComponentType, None | list[ComponentAttribute]]:
         """
         The attribute indications in the dataset.
 
@@ -151,7 +152,7 @@ class CDatasetInfo:
             A map of component to its attribute indications.
             None means no attribute indications
         """
-        result_dict: dict[ComponentType, None | list[ComponentAttributeLike]] = {}
+        result_dict: dict[ComponentType, None | list[ComponentAttribute]] = {}
         components = self.components()
         for component_idx, component_name in enumerate(components):
             has_indications = get_pgc().dataset_info_has_attribute_indications(self._info, component_idx)
@@ -472,7 +473,7 @@ class CWritableDataset:
     def _register_attribute_buffer(
         self,
         component: ComponentType,
-        attribute: ComponentAttributeLike,
+        attribute: ComponentAttribute,
         buffer: CAttributeBuffer,
     ):
         get_pgc().dataset_writable_set_attribute_buffer(
@@ -535,15 +536,19 @@ class CWritableDataset:
 
 def _get_filtered_attributes(
     schema: ComponentMetaData,
-    component_data_filter: set[str] | list[str] | None | ComponentAttributeFilterOptions,
-    attribute_indication: None | list[ComponentAttributeLike],
-) -> list[ComponentAttributeLike] | None:
+    component_data_filter: set[ComponentAttribute] | list[ComponentAttribute] | None | ComponentAttributeFilterOptions,
+    attribute_indication: None | list[ComponentAttribute],
+) -> list[ComponentAttribute] | None:
     if component_data_filter is None:
         return None
 
     if isinstance(component_data_filter, ComponentAttributeFilterOptions):
         if component_data_filter == ComponentAttributeFilterOptions.relevant and attribute_indication is not None:
             return attribute_indication
-        return [] if schema.dtype.names is None else list(schema.dtype.names)
+        return (
+            []
+            if schema.dtype.names is None
+            else list(_str_to_component_attribute(attribute) for attribute in schema.dtype.names)
+        )
 
     return list(component_data_filter)

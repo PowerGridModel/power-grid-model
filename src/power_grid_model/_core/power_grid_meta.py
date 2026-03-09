@@ -57,8 +57,8 @@ class ComponentMetaData:
     """
 
     dtype: np.dtype
-    dtype_dict: dict[str, Any]
-    nans: dict[str, float | int]
+    dtype_dict: dict[ComponentAttributeLike, Any]
+    nans: dict[ComponentAttributeLike, float | int]
     nan_scalar: np.ndarray
 
     def __getitem__(self, item):

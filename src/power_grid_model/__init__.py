@@ -4,7 +4,7 @@
 
 """Power Grid Model"""
 
-from power_grid_model._core.dataset_definitions import ComponentType, DatasetType
+from power_grid_model._core.dataset_definitions import ComponentAttribute, ComponentType, DatasetType
 from power_grid_model._core.power_grid_meta import (
     attribute_dtype,
     attribute_empty_value,
@@ -35,6 +35,7 @@ __all__ = [
     "BranchSide",
     "CalculationMethod",
     "CalculationType",
+    "ComponentAttribute",
     "ComponentAttributeFilterOptions",
     "ComponentAttributeMapping",
     "ComponentType",
