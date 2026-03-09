@@ -29,7 +29,7 @@ from power_grid_model._core.dataset_definitions import (
     AttributeType,
     ComponentType,
     DatasetType,
-    _str_to_component_attribute,
+    _str_to_attribute_type,
     _str_to_component_type,
 )
 from power_grid_model._core.enum import ComponentAttributeFilterOptions
@@ -548,7 +548,7 @@ def _get_filtered_attributes(
         return (
             []
             if schema.dtype.names is None
-            else list(_str_to_component_attribute(attribute) for attribute in schema.dtype.names)
+            else list(_str_to_attribute_type(attribute) for attribute in schema.dtype.names)
         )
 
     return list(component_data_filter)

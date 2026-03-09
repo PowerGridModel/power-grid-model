@@ -82,8 +82,8 @@ class AttributeType(StrEnum, metaclass=_MetaEnum):
 
     - Examples:
 
-        - AttributeTypes.p_from = "p_from"
-        - AttributeTypes.u_pu = "u_pu"
+        - AttributeType.p_from = "p_from"
+        - AttributeType.u_pu = "u_pu"
     """
 
     angle_measurement_type = "angle_measurement_type"
@@ -285,6 +285,9 @@ class AttributeType(StrEnum, metaclass=_MetaEnum):
     x_nn = "x_nn"
     z01_ratio = "z01_ratio"
 
+    def __repr__(self):
+        return self.value
+
 type DatasetTypeLike = DatasetType | str
 DatasetTypeVar = TypeVar("DatasetTypeVar", bound=DatasetTypeLike)  # helper used for type deduction
 
@@ -319,15 +322,15 @@ def _map_to_component_types[K: ComponentTypeLike, V](data: Mapping[K, V]) -> dic
     return {_str_to_component_type(key): value for key, value in data.items()}
 
 
-def _str_to_component_attribute(attribute: AttributeTypeLike) -> AttributeType:
-    """Helper function to transform component str to ComponentType."""
+def _str_to_attribute_type(attribute: AttributeTypeLike) -> AttributeType:
+    """Helper function to transform attribute str to AttributeType."""
     if isinstance(attribute, AttributeType):
         return attribute
     return AttributeType[attribute]
 
 
-def _map_to_component_attribute[K: AttributeTypeLike, V](data: Mapping[K, V]) -> dict[AttributeType, V]:
-    """Helper function to map componenttype str keys to ComponentType."""
-    return {_str_to_component_attribute(key): value for key, value in data.items()}
+def _map_to_attribute_types[K: AttributeTypeLike, V](data: Mapping[K, V]) -> dict[AttributeType, V]:
+    """Helper function to map AttributeType str keys to AttributeType."""
+    return {_str_to_attribute_type(key): value for key, value in data.items()}
 
 # fmt: on
