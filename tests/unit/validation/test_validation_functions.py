@@ -98,16 +98,16 @@ def test_assert_valid_data_structure():
 
 def test_validate_unique_ids_across_components():
     node = initialize_array(DatasetType.input, ComponentType.node, 3)
-    node["id"] = [1, 2, 3]
+    node[ComponentAttribute.id] = [1, 2, 3]
 
     line = initialize_array(DatasetType.input, ComponentType.line, 3)
-    line["id"] = [4, 5, 3]
+    line[ComponentAttribute.id] = [4, 5, 3]
 
     transformer = initialize_array(DatasetType.input, ComponentType.transformer, 3)
-    transformer["id"] = [1, 6, 7]
+    transformer[ComponentAttribute.id] = [1, 6, 7]
 
     source = initialize_array(DatasetType.input, ComponentType.source, 3)
-    source["id"] = [8, 9, 10]
+    source[ComponentAttribute.id] = [8, 9, 10]
 
     input_data = {
         ComponentType.node: node,
@@ -131,10 +131,10 @@ def test_validate_unique_ids_across_components():
 
 def test_validate_ids():
     source = initialize_array(DatasetType.input, ComponentType.source, 3)
-    source["id"] = [1, 2, 3]
+    source[ComponentAttribute.id] = [1, 2, 3]
 
     sym_load = initialize_array(DatasetType.input, ComponentType.sym_load, 3)
-    sym_load["id"] = [4, 5, 6]
+    sym_load[ComponentAttribute.id] = [4, 5, 6]
 
     input_data = {
         ComponentType.source: source,
@@ -142,12 +142,12 @@ def test_validate_ids():
     }
 
     source_update = initialize_array(DatasetType.update, ComponentType.source, 3)
-    source_update["id"] = [1, 2, 4]
-    source_update["u_ref"] = [1.0, 2.0, 3.0]
+    source_update[ComponentAttribute.id] = [1, 2, 4]
+    source_update[ComponentAttribute.u_ref] = [1.0, 2.0, 3.0]
 
     sym_load_update = initialize_array(DatasetType.update, ComponentType.sym_load, 3)
-    sym_load_update["id"] = [4, 5, 7]
-    sym_load_update["p_specified"] = [4.0, 5.0, 6.0]
+    sym_load_update[ComponentAttribute.id] = [4, 5, 7]
+    sym_load_update[ComponentAttribute.p_specified] = [4.0, 5.0, 6.0]
 
     update_data = {ComponentType.source: source_update, ComponentType.sym_load: sym_load_update}
 
@@ -157,7 +157,7 @@ def test_validate_ids():
     assert IdNotInDatasetError(ComponentType.sym_load, [7], DatasetType.update) in invalid_ids
 
     source_update_no_id = initialize_array(DatasetType.update, ComponentType.source, 3)
-    source_update_no_id["u_ref"] = [1.0, 2.0, 3.0]
+    source_update_no_id[ComponentAttribute.u_ref] = [1.0, 2.0, 3.0]
 
     update_data_col = compatibility_convert_row_columnar_dataset(
         data={ComponentType.source: source_update_no_id, ComponentType.sym_load: sym_load_update},
@@ -169,7 +169,7 @@ def test_validate_ids():
     assert IdNotInDatasetError(ComponentType.sym_load, [7], DatasetType.update) in invalid_ids
 
     source_update_less_no_id = initialize_array(DatasetType.update, ComponentType.source, 2)
-    source_update_less_no_id["u_ref"] = [1.0, 2.0]
+    source_update_less_no_id[ComponentAttribute.u_ref] = [1.0, 2.0]
 
     update_data_col_less_no_id = compatibility_convert_row_columnar_dataset(
         data={ComponentType.source: source_update_less_no_id, ComponentType.sym_load: sym_load_update},
@@ -182,8 +182,8 @@ def test_validate_ids():
     assert IdNotInDatasetError(ComponentType.sym_load, [7], DatasetType.update) in invalid_ids
 
     source_update_part_nan_id = initialize_array(DatasetType.update, ComponentType.source, 3)
-    source_update_part_nan_id["id"] = [1, np.iinfo(np.int32).min, 4]
-    source_update_part_nan_id["u_ref"] = [1.0, 2.0, 3.0]
+    source_update_part_nan_id[ComponentAttribute.id] = [1, np.iinfo(np.int32).min, 4]
+    source_update_part_nan_id[ComponentAttribute.u_ref] = [1.0, 2.0, 3.0]
 
     update_data_col_part_nan_id = compatibility_convert_row_columnar_dataset(
         data={ComponentType.source: source_update_part_nan_id, ComponentType.sym_load: sym_load_update},
@@ -221,19 +221,19 @@ def test_validate_required_values_sym_calculation(calculation_type, symmetric):
     sym_voltage_sensor = initialize_array(DatasetType.input, ComponentType.sym_voltage_sensor, 1)
 
     asym_voltage_sensor = initialize_array(DatasetType.input, ComponentType.asym_voltage_sensor, 1)
-    asym_voltage_sensor["u_measured"] = [[1.0, np.nan, 2.0]]
+    asym_voltage_sensor[ComponentAttribute.u_measured] = [[1.0, np.nan, 2.0]]
 
     sym_power_sensor = initialize_array(DatasetType.input, ComponentType.sym_power_sensor, 1)
 
     asym_power_sensor = initialize_array(DatasetType.input, ComponentType.asym_power_sensor, 1)
-    asym_power_sensor["p_measured"] = [[np.nan, 2.0, 1.0]]
-    asym_power_sensor["q_measured"] = [[2.0, 1.0, np.nan]]
+    asym_power_sensor[ComponentAttribute.p_measured] = [[np.nan, 2.0, 1.0]]
+    asym_power_sensor[ComponentAttribute.q_measured] = [[2.0, 1.0, np.nan]]
 
     sym_current_sensor = initialize_array(DatasetType.input, ComponentType.sym_current_sensor, 1)
 
     asym_current_sensor = initialize_array(DatasetType.input, ComponentType.asym_current_sensor, 1)
-    asym_current_sensor["i_measured"] = [[np.nan, 2.0, 1.0]]
-    asym_current_sensor["i_angle_measured"] = [[2.0, 1.0, np.nan]]
+    asym_current_sensor[ComponentAttribute.i_measured] = [[np.nan, 2.0, 1.0]]
+    asym_current_sensor[ComponentAttribute.i_angle_measured] = [[2.0, 1.0, np.nan]]
 
     fault = initialize_array(DatasetType.input, ComponentType.fault, 1)
 
@@ -504,7 +504,7 @@ def test_validate_fault_sc_calculation(fault_types):
     line = initialize_array(DatasetType.input, ComponentType.line, 1)
     shunt = initialize_array(DatasetType.input, ComponentType.shunt, 1)
     fault = initialize_array(DatasetType.input, ComponentType.fault, 2)
-    fault["fault_type"] = fault_types
+    fault[ComponentAttribute.fault_type] = fault_types
 
     data = {ComponentType.line: line, ComponentType.shunt: shunt, ComponentType.fault: fault}
     required_values_errors = validate_required_values(data=data, calculation_type=CalculationType.short_circuit)
@@ -791,16 +791,16 @@ def test_validate_values__infinite_sigmas(sensor_type, parameter):
 def test_validate_values__bad_p_q_sigma(sensor_type, values, error_types):
     def arbitrary_fill(array, sensor_type, values):
         if sensor_type == ComponentType.sym_power_sensor:
-            array["p_sigma"] = values[0][0]
-            array["q_sigma"] = values[0][1]
+            array[ComponentAttribute.p_sigma] = values[0][0]
+            array[ComponentAttribute.q_sigma] = values[0][1]
         else:
-            array["p_sigma"][0] = values[1][0]
-            array["p_sigma"][1] = values[1][1]
-            array["p_sigma"][2] = values[1][2]
-            array["q_sigma"][0] = values[2][0]
-            array["q_sigma"][1] = values[2][1]
-            array["q_sigma"][2] = values[2][2]
-        array["id"] = [123, 234, 345]
+            array[ComponentAttribute.p_sigma][0] = values[1][0]
+            array[ComponentAttribute.p_sigma][1] = values[1][1]
+            array[ComponentAttribute.p_sigma][2] = values[1][2]
+            array[ComponentAttribute.q_sigma][0] = values[2][0]
+            array[ComponentAttribute.q_sigma][1] = values[2][1]
+            array[ComponentAttribute.q_sigma][2] = values[2][2]
+        array[ComponentAttribute.id] = [123, 234, 345]
 
     sensor_array = initialize_array(DatasetType.input, sensor_type, 3)
     arbitrary_fill(sensor_array, sensor_type, values)
@@ -808,7 +808,7 @@ def test_validate_values__bad_p_q_sigma(sensor_type, values, error_types):
 
     for error in all_errors:
         assert any(isinstance(error, error_type) for error_type in error_types)
-        assert set(error.ids).issubset(set(sensor_array["id"]))
+        assert set(error.ids).issubset(set(sensor_array[ComponentAttribute.id]))
 
 
 @pytest.mark.parametrize(
@@ -839,15 +839,15 @@ def test_validate_values__bad_p_q_sigma(sensor_type, values, error_types):
 def test_validate_values__bad_p_q_sigma_both_components(values, error_types):
     def two_component_data(values):
         node = initialize_array(DatasetType.input, ComponentType.node, 1)
-        node["id"] = 123
+        node[ComponentAttribute.id] = 123
         sym_power_sensor = initialize_array(DatasetType.input, ComponentType.sym_power_sensor, 1)
-        sym_power_sensor["p_sigma"] = values[0][0]
-        sym_power_sensor["q_sigma"] = values[0][1]
-        sym_power_sensor["id"] = 456
+        sym_power_sensor[ComponentAttribute.p_sigma] = values[0][0]
+        sym_power_sensor[ComponentAttribute.q_sigma] = values[0][1]
+        sym_power_sensor[ComponentAttribute.id] = 456
         asym_power_sensor = initialize_array(DatasetType.input, ComponentType.asym_power_sensor, 1)
-        asym_power_sensor["p_measured"] = values[1][0]
-        asym_power_sensor["q_measured"] = values[1][1]
-        asym_power_sensor["id"] = 789
+        asym_power_sensor[ComponentAttribute.p_measured] = values[1][0]
+        asym_power_sensor[ComponentAttribute.q_measured] = values[1][1]
+        asym_power_sensor[ComponentAttribute.id] = 789
 
         return {
             ComponentType.node: node,
@@ -859,17 +859,17 @@ def test_validate_values__bad_p_q_sigma_both_components(values, error_types):
     all_errors = validate_values(data)
     for error in all_errors:
         assert any(isinstance(error, error_type) for error_type in error_types)
-        assert (data[error.component]["id"] == error.ids).all()
+        assert (data[error.component][ComponentAttribute.id] == error.ids).all()
 
 
 def test_validate_values__bad_p_q_sigma_single_component_twice():
     def single_component_twice_data():
         node = initialize_array(DatasetType.input, ComponentType.node, 1)
-        node["id"] = 123
+        node[ComponentAttribute.id] = 123
         sym_power_sensor = initialize_array(DatasetType.input, ComponentType.sym_power_sensor, 2)
-        sym_power_sensor["p_sigma"] = [np.nan, 0.1]
-        sym_power_sensor["q_sigma"] = [np.nan, np.nan]
-        sym_power_sensor["id"] = [456, 789]
+        sym_power_sensor[ComponentAttribute.p_sigma] = [np.nan, 0.1]
+        sym_power_sensor[ComponentAttribute.q_sigma] = [np.nan, np.nan]
+        sym_power_sensor[ComponentAttribute.id] = [456, 789]
 
         return {
             ComponentType.node: node,
@@ -881,7 +881,7 @@ def test_validate_values__bad_p_q_sigma_single_component_twice():
     for error in all_errors:
         assert any(isinstance(error, error_type) for error_type in [InvalidIdError, PQSigmaPairError])
         if isinstance(error, PQSigmaPairError):
-            assert error.ids[0] == data["sym_power_sensor"]["id"][1]
+            assert error.ids[0] == data[ComponentType.sym_power_sensor][ComponentAttribute.id][1]
 
 
 @pytest.mark.parametrize("measured_terminal_type", MeasuredTerminalType)
@@ -1010,8 +1010,8 @@ def test_validate_generic_current_sensor__only_branches_supported(
     current_sensor_type: ComponentType, measured_terminal_type: MeasuredTerminalType, supported: bool
 ):
     current_sensor_data = initialize_array(DatasetType.input, current_sensor_type, 1)
-    current_sensor_data["id"] = 1
-    current_sensor_data["measured_terminal_type"] = measured_terminal_type
+    current_sensor_data[ComponentAttribute.id] = 1
+    current_sensor_data[ComponentAttribute.measured_terminal_type] = measured_terminal_type
 
     result = validate_generic_current_sensor(
         data={current_sensor_type: current_sensor_data}, component=current_sensor_type
@@ -1177,75 +1177,95 @@ def test_no_power_and_current_sensor_on_same_terminal(
 def test_power_sigma_or_p_q_sigma():
     # node
     node = initialize_array(DatasetType.input, ComponentType.node, 2)
-    node["id"] = np.array([0, 3])
-    node["u_rated"] = [10.5e3, 10.5e3]
+    node[ComponentAttribute.id] = np.array([0, 3])
+    node[ComponentAttribute.u_rated] = [10.5e3, 10.5e3]
 
     # line
     line = initialize_array(DatasetType.input, ComponentType.line, 1)
-    line["id"] = [2]
-    line["from_node"] = [0]
-    line["to_node"] = [3]
-    line["from_status"] = [1]
-    line["to_status"] = [1]
-    line["r1"] = [0.001]
-    line["x1"] = [0.02]
-    line["c1"] = [0.0]
-    line["tan1"] = [0.0]
-    line["i_n"] = [1000.0]
+    line[ComponentAttribute.id] = [2]
+    line[ComponentAttribute.from_node] = [0]
+    line[ComponentAttribute.to_node] = [3]
+    line[ComponentAttribute.from_status] = [1]
+    line[ComponentAttribute.to_status] = [1]
+    line[ComponentAttribute.r1] = [0.001]
+    line[ComponentAttribute.x1] = [0.02]
+    line[ComponentAttribute.c1] = [0.0]
+    line[ComponentAttribute.tan1] = [0.0]
+    line[ComponentAttribute.i_n] = [1000.0]
 
     # load
     sym_load = initialize_array(DatasetType.input, ComponentType.sym_load, 2)
-    sym_load["id"] = [4, 9]
-    sym_load["node"] = [3, 0]
-    sym_load["status"] = [1, 1]
-    sym_load["type"] = [LoadGenType.const_power, LoadGenType.const_power]
-    sym_load["p_specified"] = [1e6, 1e6]
-    sym_load["q_specified"] = [-1e6, -1e6]
+    sym_load[ComponentAttribute.id] = [4, 9]
+    sym_load[ComponentAttribute.node] = [3, 0]
+    sym_load[ComponentAttribute.status] = [1, 1]
+    sym_load[ComponentAttribute.type] = [LoadGenType.const_power, LoadGenType.const_power]
+    sym_load[ComponentAttribute.p_specified] = [1e6, 1e6]
+    sym_load[ComponentAttribute.q_specified] = [-1e6, -1e6]
 
     # source
     source = initialize_array(DatasetType.input, ComponentType.source, 1)
-    source["id"] = [1]
-    source["node"] = [0]
-    source["status"] = [1]
-    source["u_ref"] = [1.0]
+    source[ComponentAttribute.id] = [1]
+    source[ComponentAttribute.node] = [0]
+    source[ComponentAttribute.status] = [1]
+    source[ComponentAttribute.u_ref] = [1.0]
 
     # voltage sensor
     voltage_sensor = initialize_array(DatasetType.input, ComponentType.sym_voltage_sensor, 1)
-    voltage_sensor["id"] = 5
-    voltage_sensor["measured_object"] = 0
-    voltage_sensor["u_sigma"] = [100.0]
-    voltage_sensor["u_measured"] = [10.5e3]
+    voltage_sensor[ComponentAttribute.id] = 5
+    voltage_sensor[ComponentAttribute.measured_object] = 0
+    voltage_sensor[ComponentAttribute.u_sigma] = [100.0]
+    voltage_sensor[ComponentAttribute.u_measured] = [10.5e3]
 
     # power sensor
     sym_power_sensor = initialize_array(DatasetType.input, ComponentType.sym_power_sensor, 3)
-    sym_power_sensor["id"] = [6, 7, 8]
-    sym_power_sensor["measured_object"] = [2, 4, 9]
-    sym_power_sensor["measured_terminal_type"] = [
+    sym_power_sensor[ComponentAttribute.id] = [6, 7, 8]
+    sym_power_sensor[ComponentAttribute.measured_object] = [2, 4, 9]
+    sym_power_sensor[ComponentAttribute.measured_terminal_type] = [
         MeasuredTerminalType.branch_from,
         MeasuredTerminalType.load,
         MeasuredTerminalType.load,
     ]
-    sym_power_sensor["p_measured"] = [1e6, -1e6, -1e6]
-    sym_power_sensor["q_measured"] = [1e6, -1e6, -1e6]
-    sym_power_sensor["power_sigma"] = [np.nan, 1e9, 1e9]
-    sym_power_sensor["p_sigma"] = [1e4, np.nan, 1e4]
-    sym_power_sensor["q_sigma"] = [1e9, np.nan, 1e9]
+    sym_power_sensor[ComponentAttribute.p_measured] = [1e6, -1e6, -1e6]
+    sym_power_sensor[ComponentAttribute.q_measured] = [1e6, -1e6, -1e6]
+    sym_power_sensor[ComponentAttribute.power_sigma] = [np.nan, 1e9, 1e9]
+    sym_power_sensor[ComponentAttribute.p_sigma] = [1e4, np.nan, 1e4]
+    sym_power_sensor[ComponentAttribute.q_sigma] = [1e9, np.nan, 1e9]
 
     # power sensor
     asym_power_sensor = initialize_array(DatasetType.input, ComponentType.asym_power_sensor, 4)
-    asym_power_sensor["id"] = [66, 77, 88, 99]
-    asym_power_sensor["measured_object"] = [2, 4, 9, 9]
-    asym_power_sensor["measured_terminal_type"] = [
+    asym_power_sensor[ComponentAttribute.id] = [66, 77, 88, 99]
+    asym_power_sensor[ComponentAttribute.measured_object] = [2, 4, 9, 9]
+    asym_power_sensor[ComponentAttribute.measured_terminal_type] = [
         MeasuredTerminalType.branch_from,
         MeasuredTerminalType.load,
         MeasuredTerminalType.load,
         MeasuredTerminalType.load,
     ]
-    asym_power_sensor["p_measured"] = [[1e6, 1e6, 1e6], [-1e6, -1e6, -1e6], [-1e6, -1e6, -1e6], [-1e6, -1e6, -1e6]]
-    asym_power_sensor["q_measured"] = [[1e6, 1e6, 1e6], [-1e6, -1e6, -1e6], [-1e6, -1e6, -1e6], [-1e6, -1e6, -1e6]]
-    asym_power_sensor["power_sigma"] = [np.nan, 1e9, 1e9, 1e9]
-    asym_power_sensor["p_sigma"] = [[1e4, 1e4, 1e4], [np.nan, np.nan, np.nan], [1e4, 1e4, 1e4], [1e4, 1e4, 1e4]]
-    asym_power_sensor["q_sigma"] = [[1e9, 1e9, 1e9], [np.nan, np.nan, np.nan], [1e9, 1e4, 1e4], [1e9, 1e4, 1e4]]
+    asym_power_sensor[ComponentAttribute.p_measured] = [
+        [1e6, 1e6, 1e6],
+        [-1e6, -1e6, -1e6],
+        [-1e6, -1e6, -1e6],
+        [-1e6, -1e6, -1e6],
+    ]
+    asym_power_sensor[ComponentAttribute.q_measured] = [
+        [1e6, 1e6, 1e6],
+        [-1e6, -1e6, -1e6],
+        [-1e6, -1e6, -1e6],
+        [-1e6, -1e6, -1e6],
+    ]
+    asym_power_sensor[ComponentAttribute.power_sigma] = [np.nan, 1e9, 1e9, 1e9]
+    asym_power_sensor[ComponentAttribute.p_sigma] = [
+        [1e4, 1e4, 1e4],
+        [np.nan, np.nan, np.nan],
+        [1e4, 1e4, 1e4],
+        [1e4, 1e4, 1e4],
+    ]
+    asym_power_sensor[ComponentAttribute.q_sigma] = [
+        [1e9, 1e9, 1e9],
+        [np.nan, np.nan, np.nan],
+        [1e9, 1e4, 1e4],
+        [1e9, 1e4, 1e4],
+    ]
 
     # all
     input_data = {
@@ -1260,23 +1280,25 @@ def test_power_sigma_or_p_q_sigma():
 
     assert_valid_input_data(input_data=input_data, calculation_type=CalculationType.state_estimation)
 
-    np.testing.assert_array_equal(sym_power_sensor["power_sigma"], [np.nan, 1e9, 1e9])
-    np.testing.assert_array_equal(sym_power_sensor["p_sigma"], [1e4, np.nan, 1e4])
-    np.testing.assert_array_equal(sym_power_sensor["q_sigma"], [1e9, np.nan, 1e9])
-    np.testing.assert_array_equal(asym_power_sensor["power_sigma"], [np.nan, 1e9, 1e9, 1e9])
+    np.testing.assert_array_equal(sym_power_sensor[ComponentAttribute.power_sigma], [np.nan, 1e9, 1e9])
+    np.testing.assert_array_equal(sym_power_sensor[ComponentAttribute.p_sigma], [1e4, np.nan, 1e4])
+    np.testing.assert_array_equal(sym_power_sensor[ComponentAttribute.q_sigma], [1e9, np.nan, 1e9])
+    np.testing.assert_array_equal(asym_power_sensor[ComponentAttribute.power_sigma], [np.nan, 1e9, 1e9, 1e9])
     np.testing.assert_array_equal(
-        asym_power_sensor["p_sigma"], [[1e4, 1e4, 1e4], [np.nan, np.nan, np.nan], [1e4, 1e4, 1e4], [1e4, 1e4, 1e4]]
+        asym_power_sensor[ComponentAttribute.p_sigma],
+        [[1e4, 1e4, 1e4], [np.nan, np.nan, np.nan], [1e4, 1e4, 1e4], [1e4, 1e4, 1e4]],
     )
     np.testing.assert_array_equal(
-        asym_power_sensor["q_sigma"], [[1e9, 1e9, 1e9], [np.nan, np.nan, np.nan], [1e9, 1e4, 1e4], [1e9, 1e4, 1e4]]
+        asym_power_sensor[ComponentAttribute.q_sigma],
+        [[1e9, 1e9, 1e9], [np.nan, np.nan, np.nan], [1e9, 1e4, 1e4], [1e9, 1e4, 1e4]],
     )
 
     # bad weather
     bad_input_data = copy.deepcopy(input_data)
     bad_sym_power_sensor = bad_input_data[ComponentType.sym_power_sensor]
-    bad_sym_power_sensor["power_sigma"] = [np.nan, np.nan, 1e9]
-    bad_sym_power_sensor["p_sigma"] = [np.nan, np.nan, 1e4]
-    bad_sym_power_sensor["q_sigma"] = [np.nan, 1e9, np.nan]
+    bad_sym_power_sensor[ComponentAttribute.power_sigma] = [np.nan, np.nan, 1e9]
+    bad_sym_power_sensor[ComponentAttribute.p_sigma] = [np.nan, np.nan, 1e4]
+    bad_sym_power_sensor[ComponentAttribute.q_sigma] = [np.nan, 1e9, np.nan]
     errors = validate_input_data(input_data=bad_input_data, calculation_type=CalculationType.state_estimation)
     n_sym_input_validation_errors = 4
     assert len(errors) == n_sym_input_validation_errors
@@ -1287,21 +1309,21 @@ def test_power_sigma_or_p_q_sigma():
         PQSigmaPairError(ComponentType.sym_power_sensor, ("p_sigma", "q_sigma"), [7, 8]),
     ]
 
-    np.testing.assert_array_equal(bad_sym_power_sensor["power_sigma"], [np.nan, np.nan, 1e9])
-    np.testing.assert_array_equal(bad_sym_power_sensor["p_sigma"], [np.nan, np.nan, 1e4])
-    np.testing.assert_array_equal(bad_sym_power_sensor["q_sigma"], [np.nan, 1e9, np.nan])
+    np.testing.assert_array_equal(bad_sym_power_sensor[ComponentAttribute.power_sigma], [np.nan, np.nan, 1e9])
+    np.testing.assert_array_equal(bad_sym_power_sensor[ComponentAttribute.p_sigma], [np.nan, np.nan, 1e4])
+    np.testing.assert_array_equal(bad_sym_power_sensor[ComponentAttribute.q_sigma], [np.nan, 1e9, np.nan])
 
     # bad weather
     bad_input_data = copy.deepcopy(input_data)
     bad_asym_power_sensor = bad_input_data[ComponentType.asym_power_sensor]
-    bad_asym_power_sensor["power_sigma"] = [np.nan, np.nan, 1e9, np.nan]
-    bad_asym_power_sensor["p_sigma"] = [
+    bad_asym_power_sensor[ComponentAttribute.power_sigma] = [np.nan, np.nan, 1e9, np.nan]
+    bad_asym_power_sensor[ComponentAttribute.p_sigma] = [
         [np.nan, np.nan, np.nan],
         [np.nan, np.nan, np.nan],
         [1e4, np.nan, np.nan],
         [1e4, np.nan, np.nan],
     ]
-    bad_asym_power_sensor["q_sigma"] = [
+    bad_asym_power_sensor[ComponentAttribute.q_sigma] = [
         [np.nan, np.nan, np.nan],
         [1e9, 1e9, 1e9],
         [np.nan, 1e4, 1e4],
@@ -1317,13 +1339,13 @@ def test_power_sigma_or_p_q_sigma():
         PQSigmaPairError(ComponentType.asym_power_sensor, ("p_sigma", "q_sigma"), [77, 88, 99]),
     ]
 
-    np.testing.assert_array_equal(bad_asym_power_sensor["power_sigma"], [np.nan, np.nan, 1e9, np.nan])
+    np.testing.assert_array_equal(bad_asym_power_sensor[ComponentAttribute.power_sigma], [np.nan, np.nan, 1e9, np.nan])
     np.testing.assert_array_equal(
-        bad_asym_power_sensor["p_sigma"],
+        bad_asym_power_sensor[ComponentAttribute.p_sigma],
         [[np.nan, np.nan, np.nan], [np.nan, np.nan, np.nan], [1e4, np.nan, np.nan], [1e4, np.nan, np.nan]],
     )
     np.testing.assert_array_equal(
-        bad_asym_power_sensor["q_sigma"],
+        bad_asym_power_sensor[ComponentAttribute.q_sigma],
         [[np.nan, np.nan, np.nan], [1e9, 1e9, 1e9], [np.nan, 1e4, 1e4], [np.nan, 1e4, 1e4]],
     )
 
@@ -1334,72 +1356,72 @@ def test_all_default_values():
     those attributes.
     """
     node = initialize_array(DatasetType.input, ComponentType.node, 3)
-    node["id"] = [0, 1, 2]
-    node["u_rated"] = [50.0e3, 20.0e3, 10.5e3]
+    node[ComponentAttribute.id] = [0, 1, 2]
+    node[ComponentAttribute.u_rated] = [50.0e3, 20.0e3, 10.5e3]
 
     source = initialize_array(DatasetType.input, ComponentType.source, 1)
-    source["id"] = [3]
-    source["node"] = [2]
-    source["status"] = [1]
-    source["u_ref"] = [1.0]
+    source[ComponentAttribute.id] = [3]
+    source[ComponentAttribute.node] = [2]
+    source[ComponentAttribute.status] = [1]
+    source[ComponentAttribute.u_ref] = [1.0]
 
     transformer = initialize_array(DatasetType.input, ComponentType.transformer, 1)
-    transformer["id"] = [4]
-    transformer["from_node"] = [0]
-    transformer["to_node"] = [2]
-    transformer["from_status"] = [1]
-    transformer["to_status"] = [1]
-    transformer["u1"] = [50e3]
-    transformer["u2"] = [10.5e3]
-    transformer["sn"] = [1e5]
-    transformer["uk"] = [0.1]
-    transformer["pk"] = [1e3]
-    transformer["i0"] = [1.0e-6]
-    transformer["p0"] = [0.1]
-    transformer["winding_from"] = [2]
-    transformer["winding_to"] = [1]
-    transformer["clock"] = [5]
-    transformer["tap_side"] = [0]
-    transformer["tap_min"] = [-11]
-    transformer["tap_max"] = [9]
-    transformer["tap_size"] = [100]
+    transformer[ComponentAttribute.id] = [4]
+    transformer[ComponentAttribute.from_node] = [0]
+    transformer[ComponentAttribute.to_node] = [2]
+    transformer[ComponentAttribute.from_status] = [1]
+    transformer[ComponentAttribute.to_status] = [1]
+    transformer[ComponentAttribute.u1] = [50e3]
+    transformer[ComponentAttribute.u2] = [10.5e3]
+    transformer[ComponentAttribute.sn] = [1e5]
+    transformer[ComponentAttribute.uk] = [0.1]
+    transformer[ComponentAttribute.pk] = [1e3]
+    transformer[ComponentAttribute.i0] = [1.0e-6]
+    transformer[ComponentAttribute.p0] = [0.1]
+    transformer[ComponentAttribute.winding_from] = [2]
+    transformer[ComponentAttribute.winding_to] = [1]
+    transformer[ComponentAttribute.clock] = [5]
+    transformer[ComponentAttribute.tap_side] = [0]
+    transformer[ComponentAttribute.tap_min] = [-11]
+    transformer[ComponentAttribute.tap_max] = [9]
+    transformer[ComponentAttribute.tap_size] = [100]
 
     three_winding_transformer = initialize_array(DatasetType.input, ComponentType.three_winding_transformer, 1)
-    three_winding_transformer["id"] = [6]
-    three_winding_transformer["node_1"] = [0]
-    three_winding_transformer["node_2"] = [1]
-    three_winding_transformer["node_3"] = [2]
-    three_winding_transformer["status_1"] = [1]
-    three_winding_transformer["status_2"] = [1]
-    three_winding_transformer["status_3"] = [1]
-    three_winding_transformer["u1"] = [50.0e3]
-    three_winding_transformer["u2"] = [20.0e3]
-    three_winding_transformer["u3"] = [10.5e3]
-    three_winding_transformer["sn_1"] = [1e5]
-    three_winding_transformer["sn_2"] = [1e5]
-    three_winding_transformer["sn_3"] = [1e5]
-    three_winding_transformer["uk_12"] = [0.09]
-    three_winding_transformer["uk_13"] = [0.06]
-    three_winding_transformer["uk_23"] = [0.06]
-    three_winding_transformer["pk_12"] = [1e3]
-    three_winding_transformer["pk_13"] = [1e3]
-    three_winding_transformer["pk_23"] = [1e3]
-    three_winding_transformer["i0"] = [0]
-    three_winding_transformer["p0"] = [0]
-    three_winding_transformer["winding_1"] = [2]
-    three_winding_transformer["winding_2"] = [1]
-    three_winding_transformer["winding_3"] = [1]
-    three_winding_transformer["clock_12"] = [5]
-    three_winding_transformer["clock_13"] = [-7]  # supports periodic clock input
-    three_winding_transformer["tap_side"] = [0]
-    three_winding_transformer["tap_min"] = [-10]
-    three_winding_transformer["tap_max"] = [10]
-    three_winding_transformer["tap_size"] = [1380]
+    three_winding_transformer[ComponentAttribute.id] = [6]
+    three_winding_transformer[ComponentAttribute.node_1] = [0]
+    three_winding_transformer[ComponentAttribute.node_2] = [1]
+    three_winding_transformer[ComponentAttribute.node_3] = [2]
+    three_winding_transformer[ComponentAttribute.status_1] = [1]
+    three_winding_transformer[ComponentAttribute.status_2] = [1]
+    three_winding_transformer[ComponentAttribute.status_3] = [1]
+    three_winding_transformer[ComponentAttribute.u1] = [50.0e3]
+    three_winding_transformer[ComponentAttribute.u2] = [20.0e3]
+    three_winding_transformer[ComponentAttribute.u3] = [10.5e3]
+    three_winding_transformer[ComponentAttribute.sn_1] = [1e5]
+    three_winding_transformer[ComponentAttribute.sn_2] = [1e5]
+    three_winding_transformer[ComponentAttribute.sn_3] = [1e5]
+    three_winding_transformer[ComponentAttribute.uk_12] = [0.09]
+    three_winding_transformer[ComponentAttribute.uk_13] = [0.06]
+    three_winding_transformer[ComponentAttribute.uk_23] = [0.06]
+    three_winding_transformer[ComponentAttribute.pk_12] = [1e3]
+    three_winding_transformer[ComponentAttribute.pk_13] = [1e3]
+    three_winding_transformer[ComponentAttribute.pk_23] = [1e3]
+    three_winding_transformer[ComponentAttribute.i0] = [0]
+    three_winding_transformer[ComponentAttribute.p0] = [0]
+    three_winding_transformer[ComponentAttribute.winding_1] = [2]
+    three_winding_transformer[ComponentAttribute.winding_2] = [1]
+    three_winding_transformer[ComponentAttribute.winding_3] = [1]
+    three_winding_transformer[ComponentAttribute.clock_12] = [5]
+    three_winding_transformer[ComponentAttribute.clock_13] = [-7]  # supports periodic clock input
+    three_winding_transformer[ComponentAttribute.tap_side] = [0]
+    three_winding_transformer[ComponentAttribute.tap_min] = [-10]
+    three_winding_transformer[ComponentAttribute.tap_max] = [10]
+    three_winding_transformer[ComponentAttribute.tap_size] = [1380]
 
     fault = initialize_array(DatasetType.input, ComponentType.fault, 1)
-    fault["id"] = [5]
-    fault["status"] = [1]
-    fault["fault_object"] = [0]
+    fault[ComponentAttribute.id] = [5]
+    fault[ComponentAttribute.status] = [1]
+    fault[ComponentAttribute.fault_object] = [0]
 
     input_data = {
         ComponentType.node: node,
@@ -1417,20 +1439,29 @@ def test_all_default_values():
 def test_validate_values__tap_regulator_control_side():
     # Create valid transformer
     transformer = initialize_array(DatasetType.input, ComponentType.transformer, 4)
-    transformer["id"] = [0, 1, 2, 3]
-    transformer["tap_side"] = [BranchSide.from_side, BranchSide.from_side, BranchSide.from_side, BranchSide.from_side]
+    transformer[ComponentAttribute.id] = [0, 1, 2, 3]
+    transformer[ComponentAttribute.tap_side] = [
+        BranchSide.from_side,
+        BranchSide.from_side,
+        BranchSide.from_side,
+        BranchSide.from_side,
+    ]
 
     # Create valid three winding transformer
     three_winding_transformer = initialize_array(DatasetType.input, ComponentType.three_winding_transformer, 3)
-    three_winding_transformer["id"] = [4, 5, 6]
-    three_winding_transformer["tap_side"] = [Branch3Side.side_1, Branch3Side.side_1, Branch3Side.side_1]
+    three_winding_transformer[ComponentAttribute.id] = [4, 5, 6]
+    three_winding_transformer[ComponentAttribute.tap_side] = [
+        Branch3Side.side_1,
+        Branch3Side.side_1,
+        Branch3Side.side_1,
+    ]
 
     # Create invalid regulator
     transformer_tap_regulator = initialize_array(DatasetType.input, ComponentType.transformer_tap_regulator, 7)
-    transformer_tap_regulator["id"] = np.arange(7, 14)
-    transformer_tap_regulator["status"] = 1
-    transformer_tap_regulator["regulated_object"] = np.arange(7)
-    transformer_tap_regulator["control_side"] = [
+    transformer_tap_regulator[ComponentAttribute.id] = np.arange(7, 14)
+    transformer_tap_regulator[ComponentAttribute.status] = 1
+    transformer_tap_regulator[ComponentAttribute.regulated_object] = np.arange(7)
+    transformer_tap_regulator[ComponentAttribute.control_side] = [
         BranchSide.to_side,  # OK
         BranchSide.from_side,  # OK
         Branch3Side.side_3,  # branch3 provided but it is a 2-winding transformer (invalid)
@@ -1464,7 +1495,7 @@ def test_validate_values__tap_regulator_control_side():
     assert (
         InvalidAssociatedEnumValueError(
             ComponentType.transformer_tap_regulator,
-            ["control_side", "regulated_object"],
+            [ComponentAttribute.control_side, ComponentAttribute.regulated_object],
             [9, 10],
             [BranchSide],
         )
@@ -1473,7 +1504,7 @@ def test_validate_values__tap_regulator_control_side():
     assert (
         InvalidAssociatedEnumValueError(
             ComponentType.transformer_tap_regulator,
-            ["control_side", "regulated_object"],
+            [ComponentAttribute.control_side, ComponentAttribute.regulated_object],
             [13],
             [Branch3Side],
         )

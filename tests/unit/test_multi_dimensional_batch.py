@@ -7,6 +7,7 @@ import json
 import numpy as np
 
 from power_grid_model import PowerGridModel
+from power_grid_model._core.dataset_definitions import ComponentAttribute, ComponentType
 from power_grid_model.utils import json_deserialize
 
 input_data = {
@@ -15,9 +16,26 @@ input_data = {
     "is_batch": False,
     "attributes": {},
     "data": {
-        "sym_load": [{"id": 2, "node": 0, "status": 1, "type": 0, "p_specified": 0, "q_specified": 0}],
-        "source": [{"id": 1, "node": 0, "status": 1, "u_ref": 1, "sk": 1e20}],
-        "node": [{"id": 0, "u_rated": 10e3}],
+        ComponentType.sym_load: [
+            {
+                ComponentAttribute.id: 2,
+                ComponentAttribute.node: 0,
+                ComponentAttribute.status: 1,
+                ComponentAttribute.type: 0,
+                ComponentAttribute.p_specified: 0,
+                ComponentAttribute.q_specified: 0,
+            }
+        ],
+        ComponentType.source: [
+            {
+                ComponentAttribute.id: 1,
+                ComponentAttribute.node: 0,
+                ComponentAttribute.status: 1,
+                ComponentAttribute.u_ref: 1,
+                ComponentAttribute.sk: 1e20,
+            }
+        ],
+        ComponentType.node: [{ComponentAttribute.id: 0, ComponentAttribute.u_rated: 10e3}],
     },
 }
 
@@ -37,12 +55,13 @@ def test_multi_dimensional_batch():
     )
     i_source_ref = i_source_ref.ravel()
 
-    u_ref_batch = {"source": {"u_ref": u_ref}}
-    p_specified_batch = {"sym_load": {"p_specified": p_specified}}
-    q_specified_batch = {"sym_load": {"q_specified": q_specified}}
+    u_ref_batch = {ComponentType.source: {ComponentAttribute.u_ref: u_ref}}
+    p_specified_batch = {ComponentType.sym_load: {ComponentAttribute.p_specified: p_specified}}
+    q_specified_batch = {ComponentType.sym_load: {ComponentAttribute.q_specified: q_specified}}
 
     result = pgm.calculate_power_flow(
-        update_data=[u_ref_batch, p_specified_batch, q_specified_batch], output_component_types={"source": ["i"]}
+        update_data=[u_ref_batch, p_specified_batch, q_specified_batch],
+        output_component_types={ComponentType.source: [ComponentAttribute.i]},
     )
 
-    assert np.allclose(result["source"]["i"].ravel(), i_source_ref)
+    assert np.allclose(result[ComponentType.source][ComponentAttribute.i].ravel(), i_source_ref)

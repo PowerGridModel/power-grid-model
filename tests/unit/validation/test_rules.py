@@ -7,8 +7,8 @@ from unittest import mock
 import numpy as np
 import pytest
 
-from power_grid_model import ComponentType, DatasetType, LoadGenType, initialize_array, power_grid_meta_data
-from power_grid_model._core.dataset_definitions import ComponentAttribute
+from power_grid_model import DatasetType, LoadGenType, initialize_array, power_grid_meta_data
+from power_grid_model._core.dataset_definitions import ComponentAttribute, ComponentType
 from power_grid_model.enum import (
     AngleMeasurementType,
     Branch3Side,
@@ -161,18 +161,34 @@ def test_all_between_or_at():
     assert len(errors) == 1
     assert NotBetweenOrAtError("test", "value", [1, 4, 5, 6], (0.2, -0.2)) in errors
 
-    nan_value = power_grid_meta_data[DatasetType.input][ComponentType.transformer].nans["tap_pos"]
+    nan_value = power_grid_meta_data[DatasetType.input][ComponentType.transformer].nans[ComponentAttribute.tap_pos]
     transformer_array = initialize_array(DatasetType.input, ComponentType.transformer, 3)
-    transformer_array["id"] = [1, 2, 3]
-    transformer_array["tap_pos"] = [nan_value, 1, nan_value]
-    transformer_array["tap_nom"] = [2, 1, nan_value]
+    transformer_array[ComponentAttribute.id] = [1, 2, 3]
+    transformer_array[ComponentAttribute.tap_pos] = [nan_value, 1, nan_value]
+    transformer_array[ComponentAttribute.tap_nom] = [2, 1, nan_value]
     valid = {ComponentType.transformer: transformer_array}
-    errors = all_between_or_at(valid, ComponentType.transformer, "tap_pos", 0, 2, transformer_array["tap_nom"], 0)
+    errors = all_between_or_at(
+        valid,
+        ComponentType.transformer,
+        ComponentAttribute.tap_pos,
+        0,
+        2,
+        transformer_array[ComponentAttribute.tap_nom],
+        0,
+    )
     assert not errors
 
-    errors = all_between_or_at(valid, ComponentType.transformer, "tap_pos", 1, 2, transformer_array["tap_nom"], 0)
+    errors = all_between_or_at(
+        valid,
+        ComponentType.transformer,
+        ComponentAttribute.tap_pos,
+        1,
+        2,
+        transformer_array[ComponentAttribute.tap_nom],
+        0,
+    )
     assert len(errors) == 1
-    assert NotBetweenOrAtError(ComponentType.transformer, "tap_pos", [3], (1, 2)) in errors
+    assert NotBetweenOrAtError(ComponentType.transformer, ComponentAttribute.tap_pos, [3], (1, 2)) in errors
 
 
 def test_all_greater_than():
@@ -248,18 +264,25 @@ def test_none_match_comparison():
     assert len(errors) == 1
     assert ComparisonError("test", "value", [2], 0.2) in errors
 
-    nan_value = power_grid_meta_data[DatasetType.input][ComponentType.transformer].nans["tap_pos"]
+    nan_value = power_grid_meta_data[DatasetType.input][ComponentType.transformer].nans[ComponentAttribute.tap_pos]
     transformer_array = initialize_array(DatasetType.input, ComponentType.transformer, 3)
     transformer_array["id"] = [1, 2, 3]
-    transformer_array["tap_pos"] = [nan_value, 0, nan_value]
-    transformer_array["tap_nom"] = [1, 1, nan_value]
+    transformer_array[ComponentAttribute.tap_pos] = [nan_value, 0, nan_value]
+    transformer_array[ComponentAttribute.tap_nom] = [1, 1, nan_value]
     valid = {ComponentType.transformer: transformer_array}
 
     errors = none_match_comparison(
-        valid, ComponentType.transformer, "tap_pos", np.equal, 0, ComparisonError, transformer_array["tap_nom"], 0
+        valid,
+        ComponentType.transformer,
+        ComponentAttribute.tap_pos,
+        np.equal,
+        0,
+        ComparisonError,
+        transformer_array[ComponentAttribute.tap_nom],
+        0,
     )
     assert len(errors) == 1
-    assert ComparisonError(ComponentType.transformer, "tap_pos", [2, 3], 0) in errors
+    assert ComparisonError(ComponentType.transformer, ComponentAttribute.tap_pos, [2, 3], 0) in errors
 
 
 def test_all_identical():
@@ -355,24 +378,24 @@ def test_all_cross_unique(cross_only):
 
 def test_all_valid_enum_values():
     valid_load = initialize_array(DatasetType.input, ComponentType.sym_load, 2)
-    valid_load["id"] = [1, 2]
-    valid_load["type"] = LoadGenType.const_power
+    valid_load[ComponentAttribute.id] = [1, 2]
+    valid_load[ComponentAttribute.type] = LoadGenType.const_power
     valid = {ComponentType.sym_load: valid_load}
-    errors = all_valid_enum_values(valid, ComponentType.sym_load, "type", LoadGenType)
+    errors = all_valid_enum_values(valid, ComponentType.sym_load, ComponentAttribute.type, LoadGenType)
     assert not errors
 
     invalid_load = initialize_array(DatasetType.input, ComponentType.sym_load, 2)
-    invalid_load["id"] = [1, 2]
-    invalid_load["type"] = [LoadGenType.const_power, 5]
+    invalid_load[ComponentAttribute.id] = [1, 2]
+    invalid_load[ComponentAttribute.type] = [LoadGenType.const_power, 5]
     invalid = {ComponentType.sym_load: invalid_load}
-    errors = all_valid_enum_values(invalid, ComponentType.sym_load, "type", LoadGenType)
+    errors = all_valid_enum_values(invalid, ComponentType.sym_load, ComponentAttribute.type, LoadGenType)
     assert len(errors) == 1
-    assert InvalidEnumValueError(ComponentType.sym_load, "type", [2], LoadGenType) in errors
+    assert InvalidEnumValueError(ComponentType.sym_load, ComponentAttribute.type, [2], LoadGenType) in errors
 
     valid = {ComponentType.sym_load: initialize_array(DatasetType.input, ComponentType.sym_load, 20)}
-    valid[ComponentType.sym_load]["id"] = np.arange(20)
-    valid[ComponentType.sym_load]["type"] = 0
-    errors = all_valid_enum_values(valid, ComponentType.sym_load, "type", LoadGenType)
+    valid[ComponentType.sym_load][ComponentAttribute.id] = np.arange(20)
+    valid[ComponentType.sym_load][ComponentAttribute.type] = 0
+    errors = all_valid_enum_values(valid, ComponentType.sym_load, ComponentAttribute.type, LoadGenType)
     assert not errors
 
     valid = {
@@ -380,15 +403,15 @@ def test_all_valid_enum_values():
             DatasetType.input, ComponentType.transformer_tap_regulator, 5
         )
     }
-    valid[ComponentType.transformer_tap_regulator]["id"] = np.arange(5)
-    valid[ComponentType.transformer_tap_regulator]["control_side"] = np.arange(-1, 4)
+    valid[ComponentType.transformer_tap_regulator][ComponentAttribute.id] = np.arange(5)
+    valid[ComponentType.transformer_tap_regulator][ComponentAttribute.control_side] = np.arange(-1, 4)
     errors = all_valid_enum_values(
-        valid, ComponentType.transformer_tap_regulator, "control_side", [BranchSide, Branch3Side]
+        valid, ComponentType.transformer_tap_regulator, ComponentAttribute.control_side, [BranchSide, Branch3Side]
     )
     assert len(errors) == 1
     assert (
         InvalidEnumValueError(
-            ComponentType.transformer_tap_regulator, "control_side", [0, 4], [BranchSide, Branch3Side]
+            ComponentType.transformer_tap_regulator, ComponentAttribute.control_side, [0, 4], [BranchSide, Branch3Side]
         )
         in errors
     )
@@ -398,13 +421,13 @@ def test_all_valid_ids():
     # This data is for testing purpuse
     # The values in the data do not make sense for a real grid
     node = initialize_array(DatasetType.input, ComponentType.node, 3)
-    node["id"] = [1, 2, 3]
+    node[ComponentAttribute.id] = [1, 2, 3]
     source = initialize_array(DatasetType.input, ComponentType.source, 3)
-    source["id"] = [4, 5, 6]
+    source[ComponentAttribute.id] = [4, 5, 6]
     line = initialize_array(DatasetType.input, ComponentType.line, 3)
-    line["id"] = [7, 8, 9]
-    line["from_node"] = [1, 2, 6]
-    line["to_node"] = [0, 0, 1]
+    line[ComponentAttribute.id] = [7, 8, 9]
+    line[ComponentAttribute.from_node] = [1, 2, 6]
+    line[ComponentAttribute.to_node] = [0, 0, 1]
 
     input_data = {
         ComponentType.node: node,
@@ -412,22 +435,26 @@ def test_all_valid_ids():
         ComponentType.line: line,
     }
 
-    errors = all_valid_ids(input_data, ComponentType.line, "from_node", [ComponentType.node, ComponentType.source])
+    errors = all_valid_ids(
+        input_data, ComponentType.line, ComponentAttribute.from_node, [ComponentType.node, ComponentType.source]
+    )
     assert not errors
 
-    errors = all_valid_ids(input_data, ComponentType.line, "from_node", ComponentType.node, to_node=0)
+    errors = all_valid_ids(input_data, ComponentType.line, ComponentAttribute.from_node, ComponentType.node, to_node=0)
     assert not errors
 
-    errors = all_valid_ids(input_data, ComponentType.line, "from_node", ComponentType.source, to_node=1)
+    errors = all_valid_ids(
+        input_data, ComponentType.line, ComponentAttribute.from_node, ComponentType.source, to_node=1
+    )
     assert not errors
 
-    errors = all_valid_ids(input_data, ComponentType.line, "from_node", ComponentType.node)
+    errors = all_valid_ids(input_data, ComponentType.line, ComponentAttribute.from_node, ComponentType.node)
     assert len(errors) == 1
-    assert InvalidIdError(ComponentType.line, "from_node", [9], [ComponentType.node]) in errors
+    assert InvalidIdError(ComponentType.line, ComponentAttribute.from_node, [9], [ComponentType.node]) in errors
 
-    errors = all_valid_ids(input_data, ComponentType.line, "from_node", ComponentType.source)
+    errors = all_valid_ids(input_data, ComponentType.line, ComponentAttribute.from_node, ComponentType.source)
     assert len(errors) == 1
-    assert InvalidIdError(ComponentType.line, "from_node", [7, 8], [ComponentType.source]) in errors
+    assert InvalidIdError(ComponentType.line, ComponentAttribute.from_node, [7, 8], [ComponentType.source]) in errors
 
 
 def test_all_boolean():
