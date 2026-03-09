@@ -31,11 +31,11 @@ from power_grid_model.typing import ComponentAttributeMapping
 
 __all__ = [
     "AngleMeasurementType",
+    "AttributeType",
     "Branch3Side",
     "BranchSide",
     "CalculationMethod",
     "CalculationType",
-    "AttributeType",
     "ComponentAttributeFilterOptions",
     "ComponentAttributeMapping",
     "ComponentType",

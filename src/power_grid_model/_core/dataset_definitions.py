@@ -78,12 +78,12 @@ class ComponentType(StrEnum, metaclass=_MetaEnum):
 
 class AttributeType(StrEnum, metaclass=_MetaEnum):
     """
-    A ComponentAttribute is the attribute of a grid component.
+    A AttributeType is the attribute of a grid component.
 
     - Examples:
 
-        - ComponentAttributes.p_from = "p_from"
-        - ComponentAttributes.u_pu = "u_pu"
+        - AttributeTypes.p_from = "p_from"
+        - AttributeTypes.u_pu = "u_pu"
     """
 
     angle_measurement_type = "angle_measurement_type"
@@ -291,8 +291,8 @@ DatasetTypeVar = TypeVar("DatasetTypeVar", bound=DatasetTypeLike)  # helper used
 type ComponentTypeLike = ComponentType | str
 ComponentTypeVar = TypeVar("ComponentTypeVar", bound=ComponentTypeLike)  # helper used for type deduction
 
-type ComponentAttributeLike = AttributeType | str
-ComponentAttributeVar = TypeVar("ComponentAttributeVar", bound=ComponentAttributeLike)  # helper used for type deduction
+type AttributeTypeLike = AttributeType | str
+AttributeTypeVar = TypeVar("AttributeTypeVar", bound=AttributeTypeLike)  # helper used for type deduction
 
 
 def _str_to_datatype(data_type: DatasetTypeLike) -> DatasetType:
@@ -319,14 +319,14 @@ def _map_to_component_types[K: ComponentTypeLike, V](data: Mapping[K, V]) -> dic
     return {_str_to_component_type(key): value for key, value in data.items()}
 
 
-def _str_to_component_attribute(attribute: ComponentAttributeLike) -> AttributeType:
+def _str_to_component_attribute(attribute: AttributeTypeLike) -> AttributeType:
     """Helper function to transform component str to ComponentType."""
     if isinstance(attribute, AttributeType):
         return attribute
     return AttributeType[attribute]
 
 
-def _map_to_component_attribute[K: ComponentAttributeLike, V](data: Mapping[K, V]) -> dict[AttributeType, V]:
+def _map_to_component_attribute[K: AttributeTypeLike, V](data: Mapping[K, V]) -> dict[AttributeType, V]:
     """Helper function to map componenttype str keys to ComponentType."""
     return {_str_to_component_attribute(key): value for key, value in data.items()}
 

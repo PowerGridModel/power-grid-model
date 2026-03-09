@@ -92,9 +92,7 @@ def update_sym_load_c():
     source_attribute_dtypes = power_grid_meta_data[DatasetType.update][ComponentType.sym_load].dtype
     return {
         AttributeType.id: np.array([[4], [7]], dtype=source_attribute_dtypes[AttributeType.id]),
-        AttributeType.p_specified: np.array(
-            [[30e6], [15e6]], dtype=source_attribute_dtypes[AttributeType.p_specified]
-        ),
+        AttributeType.p_specified: np.array([[30e6], [15e6]], dtype=source_attribute_dtypes[AttributeType.p_specified]),
     }
 
 
@@ -140,9 +138,7 @@ def update_line_c():
     source_attribute_dtypes = power_grid_meta_data[DatasetType.update][ComponentType.line].dtype
     return {
         AttributeType.id: np.array([[3], [5]], dtype=source_attribute_dtypes[AttributeType.id]),
-        AttributeType.from_status: np.array(
-            [[0], [0]], dtype=source_attribute_dtypes[AttributeType.from_status]
-        ),
+        AttributeType.from_status: np.array([[0], [0]], dtype=source_attribute_dtypes[AttributeType.from_status]),
     }
 
 

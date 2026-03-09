@@ -10,7 +10,7 @@ This includes all miscellaneous type hints not under dataset or categories.
 
 from power_grid_model._core.dataset_definitions import (  # noqa: F401
     AttributeType,
-    ComponentAttributeLike,
+    AttributeTypeLike,
     ComponentType,
     ComponentTypeVar,
     DatasetType,

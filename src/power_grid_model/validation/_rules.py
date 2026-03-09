@@ -26,7 +26,7 @@ Input data:
     component: ComponentType
         The name of the component, which should be an existing key in the data
 
-    field: ComponentAttribute
+    field: AttributeType
         The name of the column, which should be an field in the component data (numpy structured array)
 
 Output data:
@@ -87,7 +87,7 @@ def all_greater_than_zero(
     Args:
         data (SingleDataset): The input/update data set for all components
         component (ComponentType): The component of interest
-        field (ComponentAttribute): The field of interest
+        field (AttributeType): The field of interest
 
     Returns:
         A list containing zero or one NotGreaterThanErrors, listing all ids where the value in the field of interest
@@ -109,7 +109,7 @@ def all_greater_than_or_equal_to_zero(
     Args:
         data (SingleDataset): The input/update data set for all components
         component (ComponentType) The component of interest
-        field (ComponentAttribute): The field of interest
+        field (AttributeType): The field of interest
         default_value (np.ndarray | int | float | None, optional): Some values are not required, but will
             receive a default value in the C++ core. To do a proper input validation, these default values should be
             included in the validation. It can be a fixed value for the entire column (int/float) or be different for
@@ -132,7 +132,7 @@ def all_greater_than(
     Args:
         data: The input/update data set for all components
         component (ComponentType): The component of interest
-        field (ComponentAttribute): The field of interest
+        field (AttributeType): The field of interest
         ref_value: The reference value against which all values in the 'field' column are compared. If the reference
         value is a string, it is assumed to be another field (e.g. 'field_x') of the same component, or a ratio between
         two fields (e.g. 'field_x / field_y')
@@ -163,7 +163,7 @@ def all_greater_or_equal(
     Args:
         data: The input/update data set for all components
         component (ComponentType): The component of interest
-        field (ComponentAttribute): The field of interest
+        field (AttributeType): The field of interest
         ref_value: The reference value against which all values in the 'field' column are compared. If the reference
         value is a string, it is assumed to be another field (e.g. 'field_x') of the same component, or a ratio between
         two fields (e.g. 'field_x / field_y')
@@ -195,7 +195,7 @@ def all_less_than(
     Args:
         data: The input/update data set for all components
         component (ComponentType): The component of interest
-        field (ComponentAttribute): The field of interest
+        field (AttributeType): The field of interest
         ref_value: The reference value against which all values in the 'field' column are compared. If the reference
         value is a string, it is assumed to be another field (e.g. 'field_x') of the same component, or a ratio between
         two fields (e.g. 'field_x / field_y')
@@ -444,7 +444,7 @@ def all_unique(data: SingleDataset, component: ComponentType, field: AttributeTy
     Args:
         data (SingleDataset): The input/update data set for all components
         component (ComponentType): The component of interest
-        field (ComponentAttribute): The field of interest
+        field (AttributeType): The field of interest
 
     Returns:
         A list containing zero or one NotUniqueError, listing all ids where the value in the field of interest was
@@ -468,7 +468,7 @@ def all_cross_unique(
 
     Args:
         data (SingleDataset): The input/update data set for all components
-        fields (list[tuple[ComponentType, ComponentAttribute]]): The fields of interest, formatted as
+        fields (list[tuple[ComponentType, AttributeType]]): The fields of interest, formatted as
             [(component_1, field_1), (component_2, field_2)]
         cross_only (bool, optional): Do not include duplicates within a single field. It is advised that you use
             all_unique() to explicitly check uniqueness within a single field.
@@ -532,7 +532,7 @@ def all_valid_enum_values(
     Args:
         data (SingleDataset): The input/update data set for all components
         component (ComponentType): The component of interest
-        field (ComponentAttribute): The field of interest
+        field (AttributeType): The field of interest
         enum (Type[Enum] | list[Type[Enum]]): The enum type to validate against, or a list of such enum types
 
     Returns:
@@ -565,8 +565,8 @@ def all_valid_associated_enum_values(  # noqa: PLR0913
     Args:
         data (SingleDataset): The input/update data set for all components
         component (ComponentType): The component of interest
-        field (ComponentAttribute): The field of interest
-        ref_object_id_field (ComponentAttribute): The field that contains the referenced component ids
+        field (AttributeType): The field of interest
+        ref_object_id_field (AttributeType): The field that contains the referenced component ids
         ref_components (list[ComponentType]): The component or components in which we want to look for ids
         enum (Type[Enum] | list[Type[Enum]]): The enum type to validate against, or a list of such enum types
         **filters: One or more filters on the dataset. E.g. regulated_object="transformer".
@@ -989,9 +989,9 @@ def all_same_current_angle_measurement_type_on_terminal(
     Args:
         data (SingleDataset): The input/update data set for all components
         component (ComponentType): The component of interest
-        measured_object_field (ComponentAttribute): The measured object field
-        measured_terminal_type_field (ComponentAttribute): The terminal field
-        angle_measurement_type_field (ComponentAttribute): The angle measurement type field
+        measured_object_field (AttributeType): The measured object field
+        measured_terminal_type_field (AttributeType): The terminal field
+        angle_measurement_type_field (AttributeType): The angle measurement type field
 
     Returns:
         A list containing zero or more MixedCurrentAngleMeasurementTypeErrors; listing all the ids of

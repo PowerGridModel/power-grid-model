@@ -849,15 +849,9 @@ def validate_three_winding_transformer(data: SingleDataset) -> list[ValidationEr
     errors += _all_between(data, ComponentType.three_winding_transformer, AttributeType.uk_12, 0, 1)
     errors += _all_between(data, ComponentType.three_winding_transformer, AttributeType.uk_13, 0, 1)
     errors += _all_between(data, ComponentType.three_winding_transformer, AttributeType.uk_23, 0, 1)
-    errors += _all_greater_than_or_equal_to_zero(
-        data, ComponentType.three_winding_transformer, AttributeType.pk_12
-    )
-    errors += _all_greater_than_or_equal_to_zero(
-        data, ComponentType.three_winding_transformer, AttributeType.pk_13
-    )
-    errors += _all_greater_than_or_equal_to_zero(
-        data, ComponentType.three_winding_transformer, AttributeType.pk_23
-    )
+    errors += _all_greater_than_or_equal_to_zero(data, ComponentType.three_winding_transformer, AttributeType.pk_12)
+    errors += _all_greater_than_or_equal_to_zero(data, ComponentType.three_winding_transformer, AttributeType.pk_13)
+    errors += _all_greater_than_or_equal_to_zero(data, ComponentType.three_winding_transformer, AttributeType.pk_23)
     errors += _all_greater_or_equal(
         data,
         ComponentType.three_winding_transformer,
@@ -891,9 +885,7 @@ def validate_three_winding_transformer(data: SingleDataset) -> list[ValidationEr
         AttributeType.winding_1,
         AttributeType.winding_3,
     )
-    errors += _all_valid_enum_values(
-        data, ComponentType.three_winding_transformer, AttributeType.tap_side, Branch3Side
-    )
+    errors += _all_valid_enum_values(data, ComponentType.three_winding_transformer, AttributeType.tap_side, Branch3Side)
     errors += _all_between_or_at(
         data,
         ComponentType.three_winding_transformer,
@@ -911,9 +903,7 @@ def validate_three_winding_transformer(data: SingleDataset) -> list[ValidationEr
         AttributeType.tap_max,
         0,
     )
-    errors += _all_greater_than_or_equal_to_zero(
-        data, ComponentType.three_winding_transformer, AttributeType.tap_size
-    )
+    errors += _all_greater_than_or_equal_to_zero(data, ComponentType.three_winding_transformer, AttributeType.tap_size)
     errors += _all_greater_or_equal(
         data,
         ComponentType.three_winding_transformer,
@@ -1442,19 +1432,13 @@ def validate_fault(data: SingleDataset) -> list[ValidationError]:
     errors += _all_boolean(data, ComponentType.fault, AttributeType.status)
     errors += _all_valid_enum_values(data, ComponentType.fault, AttributeType.fault_type, FaultType)
     errors += _all_valid_enum_values(data, ComponentType.fault, AttributeType.fault_phase, FaultPhase)
-    errors += _all_valid_fault_phases(
-        data, ComponentType.fault, AttributeType.fault_type, AttributeType.fault_phase
-    )
+    errors += _all_valid_fault_phases(data, ComponentType.fault, AttributeType.fault_type, AttributeType.fault_phase)
     errors += _all_valid_ids(
         data, ComponentType.fault, field=AttributeType.fault_object, ref_components=ComponentType.node
     )
     errors += _all_greater_than_or_equal_to_zero(data, ComponentType.fault, AttributeType.r_f)
-    errors += _all_enabled_identical(
-        data, ComponentType.fault, AttributeType.fault_type, AttributeType.status
-    )
-    errors += _all_enabled_identical(
-        data, ComponentType.fault, AttributeType.fault_phase, AttributeType.status
-    )
+    errors += _all_enabled_identical(data, ComponentType.fault, AttributeType.fault_type, AttributeType.status)
+    errors += _all_enabled_identical(data, ComponentType.fault, AttributeType.fault_phase, AttributeType.status)
     return errors
 
 
@@ -1492,9 +1476,7 @@ def validate_transformer_tap_regulator(data: SingleDataset) -> list[ValidationEr
         [ComponentType.three_winding_transformer],
         [Branch3Side],
     )
-    errors += _all_greater_than_or_equal_to_zero(
-        data, ComponentType.transformer_tap_regulator, AttributeType.u_set
-    )
+    errors += _all_greater_than_or_equal_to_zero(data, ComponentType.transformer_tap_regulator, AttributeType.u_set)
     errors += _all_greater_than_zero(data, ComponentType.transformer_tap_regulator, AttributeType.u_band)
     errors += _all_greater_than_or_equal_to_zero(
         data, ComponentType.transformer_tap_regulator, AttributeType.line_drop_compensation_r, 0.0

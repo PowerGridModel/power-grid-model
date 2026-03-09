@@ -178,7 +178,7 @@ DenseBatchColumnarData = _DenseBatchColumnarData
 Batch columnar data is a dictionary where the keys are the attribute types of the same component
 and the values are :class:`BatchColumn`.
 
-- Example: {"id": :class:`ComponentAttribute`, "from_status": :class:`BatchColumn`}
+- Example: {"id": :class:`AttributeType`, "from_status": :class:`BatchColumn`}
 """
 
 DenseBatchData = _DenseBatchData
@@ -266,7 +266,7 @@ SingleColumnarData = _SingleColumnarData
 Single columnar data is a dictionary where the keys are the attribute types of the same component
 and the values are :class:`SingleColumn`.
 
-- Example: {"id": :class:`ComponentAttribute`, "u_rated": :class:`SingleColumn`}
+- Example: {"id": :class:`AttributeType`, "u_rated": :class:`SingleColumn`}
 """
 
 

@@ -116,9 +116,7 @@ def batch_size(request):
         pytest.param(
             {CT.node: [AttributeType.u], CT.sym_load: [AttributeType.p]},
             {
-                CT.node: partial(
-                    columnar_array, component_type=CT.node, n_components=4, attributes=[AttributeType.u]
-                ),
+                CT.node: partial(columnar_array, component_type=CT.node, n_components=4, attributes=[AttributeType.u]),
                 CT.sym_load: partial(
                     columnar_array, component_type=CT.sym_load, n_components=3, attributes=[AttributeType.p]
                 ),

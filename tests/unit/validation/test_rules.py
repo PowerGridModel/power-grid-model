@@ -443,9 +443,7 @@ def test_all_valid_ids():
     errors = all_valid_ids(input_data, ComponentType.line, AttributeType.from_node, ComponentType.node, to_node=0)
     assert not errors
 
-    errors = all_valid_ids(
-        input_data, ComponentType.line, AttributeType.from_node, ComponentType.source, to_node=1
-    )
+    errors = all_valid_ids(input_data, ComponentType.line, AttributeType.from_node, ComponentType.source, to_node=1)
     assert not errors
 
     errors = all_valid_ids(input_data, ComponentType.line, AttributeType.from_node, ComponentType.node)
