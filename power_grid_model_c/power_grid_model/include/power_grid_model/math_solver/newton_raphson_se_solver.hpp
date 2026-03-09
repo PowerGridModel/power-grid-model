@@ -347,12 +347,12 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
                             case AngleMeasurementType::local_angle:
                                 process_branch_local_current_measurement(block, diag_block, rhs_block, y_branch.yff(),
                                                                          y_branch.yft(), u_state, ij_voltage_order,
-                                                                         measurement);
+                                                                         measured_values.branch_from_current_decomposed(obj));
                                 break;
                             case AngleMeasurementType::global_angle:
                                 process_branch_global_current_measurement(block, diag_block, rhs_block, y_branch.yff(),
                                                                           y_branch.yft(), u_state, ij_voltage_order,
-                                                                          measurement);
+                                                                          measured_values.branch_from_current_decomposed(obj));
                                 break;
                             default:
                                 assert(measurement.angle_measurement_type == AngleMeasurementType::local_angle ||
@@ -367,12 +367,12 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
                             case AngleMeasurementType::local_angle:
                                 process_branch_local_current_measurement(block, diag_block, rhs_block, y_branch.ytt(),
                                                                          y_branch.ytf(), u_state, ij_voltage_order,
-                                                                         measurement);
+                                                                         measured_values.branch_to_current_decomposed(obj));
                                 break;
                             case AngleMeasurementType::global_angle:
                                 process_branch_global_current_measurement(block, diag_block, rhs_block, y_branch.ytt(),
                                                                           y_branch.ytf(), u_state, ij_voltage_order,
-                                                                          measurement);
+                                                                          measured_values.branch_to_current_decomposed(obj));
                                 break;
                             default:
                                 assert(measurement.angle_measurement_type == AngleMeasurementType::local_angle ||
@@ -528,7 +528,7 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
     void process_branch_local_current_measurement(NRSEGainBlock<sym>& block, NRSEGainBlock<sym>& diag_block,
                                                   NRSERhs<sym>& rhs_block, auto const& y_xi_xi, auto const& y_xi_mu,
                                                   auto const& u_state, Order const order,
-                                                  CurrentSensorCalcParam<sym> const& current_sensor) {
+                                                  DecomposedComplexRandVar<sym> const& current_measurement) {
         auto const hm_u_chi_u_chi_y_xi_xi = hm_complex_form(y_xi_xi, u_state.u_chi_u_chi_conj(order));
         auto const hm_hat_u_chi_u_chi_y_xi_xi = dot(hm_u_chi_u_chi_y_xi_xi, u_state.abs_u_chi_inv(order));
         auto const nl_hat_u_chi_u_chi_y_xi_xi = dot(hm_hat_u_chi_u_chi_y_xi_xi, u_state.abs_u_chi_inv(order));
@@ -546,12 +546,10 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
 
         if (order == Order::row_major) {
             multiply_add_branch_blocks(block, diag_block, rhs_block, block_rr_or_cc, block_rc_or_cr,
-                                       static_cast<DecomposedComplexRandVar<sym>>(current_sensor.measurement),
-                                       f_x_complex);
+                                       current_measurement, f_x_complex);
         } else {
             multiply_add_branch_blocks(block, diag_block, rhs_block, block_rc_or_cr, block_rr_or_cc,
-                                       static_cast<DecomposedComplexRandVar<sym>>(current_sensor.measurement),
-                                       f_x_complex);
+                                       current_measurement, f_x_complex);
         }
     }
 
@@ -559,7 +557,7 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
     void process_branch_global_current_measurement(NRSEGainBlock<sym>& block, NRSEGainBlock<sym>& diag_block,
                                                    NRSERhs<sym>& rhs_block, auto const& y_xi_xi, auto const& y_xi_mu,
                                                    auto const& u_state, Order const order,
-                                                   CurrentSensorCalcParam<sym> const& current_sensor) {
+                                                   DecomposedComplexRandVar<sym> const& current_measurement) {
         ComplexTensor<sym> const current_chi_chi = dot(y_xi_xi, ComplexDiagonalTensor<sym>{u_state.u_chi(order)});
         ComplexTensor<sym> const current_chi_psi = dot(y_xi_mu, ComplexDiagonalTensor<sym>{u_state.u_psi(order)});
         ComplexTensor<sym> const current_chi_chi_v_inv = dot(current_chi_chi, u_state.abs_u_chi_inv(order));
@@ -571,12 +569,10 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
 
         if (order == Order::row_major) {
             multiply_add_branch_blocks(block, diag_block, rhs_block, block_rr_or_cc, block_rc_or_cr,
-                                       static_cast<DecomposedComplexRandVar<sym>>(current_sensor.measurement),
-                                       f_x_complex);
+                                       current_measurement, f_x_complex);
         } else {
             multiply_add_branch_blocks(block, diag_block, rhs_block, block_rc_or_cr, block_rr_or_cc,
-                                       static_cast<DecomposedComplexRandVar<sym>>(current_sensor.measurement),
-                                       f_x_complex);
+                                       current_measurement, f_x_complex);
         }
     }
 

@@ -99,18 +99,20 @@ TEST_CASE("Test current sensor") {
                     static_cast<DecomposedComplexRandVar<symmetric_t>>(sym_sensor_param.measurement);
                 // Check symmetric sensor output for symmetric parameters
                 CHECK(sym_sensor_param.angle_measurement_type == angle_measurement_type);
-                // Var(I_Re) ≈ Var(I) * cos^2(pi/4) + Var(θ) * I^2 * sin^2(pi/4)
-                //             + (1/2) * Var(θ)^2 * I^2 * cos^2(pi/4) + Var(I) * Var(θ) * sin^2(pi/4)
-                CHECK(decomposed.real_component.variance ==
-                      doctest::Approx(0.5 * (i_variance_pu + i_angle_variance_pu * i_pu * i_pu +
-                                             0.5 * i_angle_variance_pu * i_angle_variance_pu * i_pu * i_pu +
-                                             i_variance_pu * i_angle_variance_pu)));
-                // Var(I_Im) ≈ Var(I) * sin^2(pi/4) + Var(θ) * I^2 * cos^2(pi/4)
-                //             + (1/2) * Var(θ)^2 * I^2 * sin^2(pi/4) + Var(I) * Var(θ) * cos^2(pi/4)
-                CHECK(decomposed.imag_component.variance ==
-                      doctest::Approx(0.5 * (i_variance_pu + i_angle_variance_pu * i_pu * i_pu +
-                                             0.5 * i_angle_variance_pu * i_angle_variance_pu * i_pu * i_pu +
-                                             i_variance_pu * i_angle_variance_pu)));
+                auto const exp_minus_angle_var = std::exp(-i_angle_variance_pu);
+                auto const exp_minus_2_angle_var = exp_minus_angle_var * exp_minus_angle_var;
+                auto const exp_half_angle_var = std::sqrt(exp_minus_angle_var);
+                auto const cos_2angle = std::cos(2.0 * i_angle);
+                auto const e_i2 = i_pu * i_pu + i_variance_pu;
+                auto const e_cos_theta = exp_half_angle_var * std::cos(i_angle);
+                auto const e_sin_theta = exp_half_angle_var * std::sin(i_angle);
+                auto const e_cos2_theta = 0.5 * (1.0 + exp_minus_2_angle_var * cos_2angle);
+                auto const e_sin2_theta = 0.5 * (1.0 - exp_minus_2_angle_var * cos_2angle);
+                auto const expected_real_var = e_i2 * e_cos2_theta - i_pu * i_pu * e_cos_theta * e_cos_theta;
+                auto const expected_imag_var = e_i2 * e_sin2_theta - i_pu * i_pu * e_sin_theta * e_sin_theta;
+
+                CHECK(decomposed.real_component.variance == doctest::Approx(expected_real_var));
+                CHECK(decomposed.imag_component.variance == doctest::Approx(expected_imag_var));
 
                 CHECK(real(sym_sensor_param.measurement.value()) == doctest::Approx(i_pu * cos(i_angle)));
                 CHECK(imag(sym_sensor_param.measurement.value()) == doctest::Approx(i_pu * sin(i_angle)));
@@ -140,18 +142,23 @@ TEST_CASE("Test current sensor") {
                 // Check symmetric sensor output for asymmetric parameters
                 CHECK(asym_sensor_param.angle_measurement_type == angle_measurement_type);
 
-                CHECK(asym_decomposed.real_component.variance[0] ==
-                      doctest::Approx(0.5 * (i_variance_pu + i_angle_variance_pu * i_pu * i_pu +
-                                             0.5 * i_angle_variance_pu * i_angle_variance_pu * i_pu * i_pu +
-                                             i_variance_pu * i_angle_variance_pu)));
-                auto const shifted_i_angle = i_angle + deg_240;
-                CHECK(
-                    asym_decomposed.imag_component.variance[1] ==
-                    doctest::Approx(i_variance_pu * sin(shifted_i_angle) * sin(shifted_i_angle) +
-                                    i_angle_variance_pu * i_pu * i_pu * cos(shifted_i_angle) * cos(shifted_i_angle) +
-                                    0.5 * i_angle_variance_pu * i_angle_variance_pu * i_pu * i_pu *
-                                        sin(shifted_i_angle) * sin(shifted_i_angle) +
-                                    i_variance_pu * i_angle_variance_pu * cos(shifted_i_angle) * cos(shifted_i_angle)));
+                auto const exp_minus_angle_var = std::exp(-i_angle_variance_pu);
+                auto const exp_minus_2_angle_var = exp_minus_angle_var * exp_minus_angle_var;
+                auto const exp_half_angle_var = std::sqrt(exp_minus_angle_var);
+                auto const cos_2angle = std::cos(2.0 * i_angle);
+                auto const e_i2 = i_pu * i_pu + i_variance_pu;
+                auto const e_cos_theta = exp_half_angle_var * std::cos(i_angle);
+                auto const e_cos2_theta = 0.5 * (1.0 + exp_minus_2_angle_var * cos_2angle);
+                auto const expected_real_var = e_i2 * e_cos2_theta - i_pu * i_pu * e_cos_theta * e_cos_theta;
+
+                double const shifted_i_angle = i_angle + deg_240;
+                auto const cos_2angle_shifted = std::cos(2.0 * shifted_i_angle);
+                auto const e_sin_theta_shifted = exp_half_angle_var * std::sin(shifted_i_angle);
+                auto const e_sin2_theta_shifted = 0.5 * (1.0 - exp_minus_2_angle_var * cos_2angle_shifted);
+                auto const expected_imag_var_shifted = e_i2 * e_sin2_theta_shifted - i_pu * i_pu * e_sin_theta_shifted * e_sin_theta_shifted;
+
+                CHECK(asym_decomposed.real_component.variance[0] == doctest::Approx(expected_real_var));
+                CHECK(asym_decomposed.imag_component.variance[1] == doctest::Approx(expected_imag_var_shifted));
 
                 CHECK(real(asym_sensor_param.measurement.value()[0]) == doctest::Approx(i_pu * cos(i_angle)));
                 CHECK(imag(asym_sensor_param.measurement.value()[1]) == doctest::Approx(i_pu * sin(shifted_i_angle)));
@@ -196,10 +203,18 @@ TEST_CASE("Test current sensor") {
                     auto const sym_param = sym_current_sensor.calc_param<symmetric_t>();
 
                     CHECK(sym_param.angle_measurement_type == angle_measurement_type);
-                    CHECK(sym_param.measurement.real_component.variance ==
-                          doctest::Approx(pow(1.0 / base_current, 2) * (1.0 + 0.5 * pow(0.2, 4))));
-                    CHECK(sym_param.measurement.imag_component.variance ==
-                          doctest::Approx(pow(1.0 / base_current, 2) * (pow(0.2, 2) + pow(1.0 * 0.2, 2))));
+                    auto const i_v_pu = pow(1.0 / base_current, 2);
+                    auto const i_a_v = pow(0.2, 2);
+                    auto const exp_minus_a_v = std::exp(-i_a_v);
+                    auto const exp_minus_2_a_v = exp_minus_a_v * exp_minus_a_v;
+                    auto const exp_half_a_v = std::sqrt(exp_minus_a_v);
+                    auto const e_i2 = pow(1.0 / base_current, 2) + i_v_pu;
+                    
+                    auto const expected_real_var = e_i2 * 0.5 * (1.0 + exp_minus_2_a_v) - pow(1.0 / base_current, 2) * exp_minus_a_v;
+                    auto const expected_imag_var = e_i2 * 0.5 * (1.0 - exp_minus_2_a_v);
+
+                    CHECK(sym_param.measurement.real_component.variance == doctest::Approx(expected_real_var));
+                    CHECK(sym_param.measurement.imag_component.variance == doctest::Approx(expected_imag_var));
                     CHECK(real(sym_param.measurement.value()) == doctest::Approx(1.0 / base_current));
                     CHECK(imag(sym_param.measurement.value()) == doctest::Approx(0.0 / base_current));
                 }
@@ -210,10 +225,17 @@ TEST_CASE("Test current sensor") {
                     auto const sym_param = sym_current_sensor.calc_param<symmetric_t>();
 
                     CHECK(sym_param.angle_measurement_type == angle_measurement_type);
-                    CHECK(sym_param.measurement.real_component.variance ==
-                          doctest::Approx(pow(1.0 / base_current, 2) * (pow(0.2, 2) + pow(0.2, 2))));
-                    CHECK(sym_param.measurement.imag_component.variance ==
-                          doctest::Approx(pow(1.0 / base_current, 2) * (1.0 + 0.5 * pow(0.2, 4))));
+                    auto const i_v_pu = pow(1.0 / base_current, 2);
+                    auto const i_a_v = pow(0.2, 2);
+                    auto const exp_minus_a_v = std::exp(-i_a_v);
+                    auto const exp_minus_2_a_v = exp_minus_a_v * exp_minus_a_v;
+                    auto const e_i2 = pow(1.0 / base_current, 2) + i_v_pu;
+                    
+                    auto const expected_real_var = e_i2 * 0.5 * (1.0 + exp_minus_2_a_v * std::cos(pi));
+                    auto const expected_imag_var = e_i2 * 0.5 * (1.0 - exp_minus_2_a_v * std::cos(pi)) - pow(1.0 / base_current, 2) * exp_minus_a_v;
+
+                    CHECK(sym_param.measurement.real_component.variance == doctest::Approx(expected_real_var));
+                    CHECK(sym_param.measurement.imag_component.variance == doctest::Approx(expected_imag_var));
                     CHECK(real(sym_param.measurement.value()) == doctest::Approx(0.0 / base_current));
                     CHECK(imag(sym_param.measurement.value()) == doctest::Approx(1.0 / base_current));
                 }

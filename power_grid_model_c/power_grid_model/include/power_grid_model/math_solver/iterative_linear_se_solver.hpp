@@ -162,8 +162,8 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
                                               &MeasuredValues<sym>::branch_to_power};
     static constexpr std::array has_branch_current_{&MeasuredValues<sym>::has_branch_from_current,
                                                     &MeasuredValues<sym>::has_branch_to_current};
-    static constexpr std::array branch_current_{&MeasuredValues<sym>::branch_from_current,
-                                                &MeasuredValues<sym>::branch_to_current};
+    static constexpr std::array branch_current_{&MeasuredValues<sym>::branch_from_current_independent,
+                                                &MeasuredValues<sym>::branch_to_current_independent};
 
     Idx n_bus_;
     // shared topo data
@@ -246,8 +246,12 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
                             if (std::invoke(has_branch_current_[measured_side], measured_value, obj)) {
                                 auto const& branch_current =
                                     std::invoke(branch_current_[measured_side], measured_value, obj);
+                                auto const& measurement_type =
+                                    measured_value.get_branch_current_calc_param(measured_side, obj)
+                                        .angle_measurement_type;
                                 add_branch_measurement(measured_side,
-                                                       current_to_global_current_measurement(branch_current));
+                                                       current_to_global_current_measurement(
+                                                           branch_current, measurement_type));
                             }
                         }
                     }
@@ -350,8 +354,12 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
                         if (std::invoke(has_branch_current_[measured_side], measured_value, obj)) {
                             auto const& branch_current =
                                 std::invoke(branch_current_[measured_side], measured_value, obj);
+                            auto const& measurement_type =
+                                measured_value.get_branch_current_calc_param(measured_side, obj)
+                                    .angle_measurement_type;
                             add_branch_measurement(
-                                measured_side, current_to_global_current_measurement(branch_current, u[measured_bus]));
+                                measured_side,
+                                current_to_global_current_measurement(branch_current, measurement_type, u[measured_bus]));
                         }
                     }
                 }
@@ -426,27 +434,26 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
     }
 
     IndependentComplexRandVar<sym>
-    current_to_global_current_measurement(CurrentSensorCalcParam<sym> const& current_measurement,
+    current_to_global_current_measurement(IndependentComplexRandVar<sym> const& current_measurement,
+                                          AngleMeasurementType angle_measurement_type,
                                           ComplexValue<sym> const& voltage) const {
         using statistics::scale;
 
-        auto measurement = static_cast<IndependentComplexRandVar<sym>>(current_measurement.measurement);
-
-        switch (current_measurement.angle_measurement_type) {
+        switch (angle_measurement_type) {
         case AngleMeasurementType::global_angle:
-            return measurement; // no offset
+            return current_measurement; // no offset
         case AngleMeasurementType::local_angle:
-            return scale(conj(measurement),
-                         phase_shift(voltage)); // offset with the phase shift
+            return scale(conj(current_measurement), phase_shift(voltage)); // offset with the phase shift
         default:
-            throw MissingCaseForEnumError{"AngleMeasurementType", current_measurement.angle_measurement_type};
+            throw MissingCaseForEnumError{"AngleMeasurementType", angle_measurement_type};
         }
     }
 
     // Overload when the voltage is not present: the value can't be determined, but the variance assumption still holds.
     IndependentComplexRandVar<sym>
-    current_to_global_current_measurement(CurrentSensorCalcParam<sym> const& current_measurement) const {
-        auto measurement = static_cast<IndependentComplexRandVar<sym>>(current_measurement.measurement);
+    current_to_global_current_measurement(IndependentComplexRandVar<sym> const& current_measurement,
+                                          AngleMeasurementType /*angle_measurement_type*/) const {
+        IndependentComplexRandVar<sym> measurement = current_measurement;
         measurement.value = ComplexValue<sym>{nan};
         return measurement;
     }

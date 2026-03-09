@@ -107,6 +107,36 @@ template <symmetry_tag sym> class MeasuredValues {
     constexpr auto const& branch_to_current(Idx branch) const {
         return current_main_value_[idx_branch_to_current_[branch]];
     }
+    constexpr auto const& branch_from_current_independent(Idx branch) const {
+        return independent_current_main_value_cache_[idx_branch_from_current_[branch]];
+    }
+    constexpr auto const& branch_to_current_independent(Idx branch) const {
+        return independent_current_main_value_cache_[idx_branch_to_current_[branch]];
+    }
+    constexpr auto const& branch_from_current_decomposed(Idx branch) const {
+        return decomposed_current_main_value_[idx_branch_from_current_[branch]];
+    }
+    constexpr auto const& branch_to_current_decomposed(Idx branch) const {
+        return decomposed_current_main_value_[idx_branch_to_current_[branch]];
+    }
+    constexpr auto const& get_independent_branch_current(IntS measured_side, Idx branch) const {
+        return measured_side == 0 ? branch_from_current_independent(branch)
+                                  : branch_to_current_independent(branch);
+    }
+    constexpr auto const& get_decomposed_branch_current(IntS measured_side, Idx branch) const {
+        return measured_side == 0 ? branch_from_current_decomposed(branch)
+                                  : branch_to_current_decomposed(branch);
+    }
+    constexpr auto const& get_branch_from_current_calc_param(Idx branch) const {
+        return current_main_value_[idx_branch_from_current_[branch]];
+    }
+    constexpr auto const& get_branch_to_current_calc_param(Idx branch) const {
+        return current_main_value_[idx_branch_to_current_[branch]];
+    }
+    constexpr auto const& get_branch_current_calc_param(IntS measured_side, Idx branch) const {
+        return measured_side == 0 ? get_branch_from_current_calc_param(branch)
+                                  : get_branch_to_current_calc_param(branch);
+    }
     constexpr auto const& shunt_power(Idx shunt) const { return power_main_value_[idx_shunt_power_[shunt]]; }
     constexpr auto const& load_gen_power(Idx load_gen) const { return extra_value_[idx_load_gen_power_[load_gen]]; }
     constexpr auto const& source_power(Idx source) const { return extra_value_[idx_source_power_[source]]; }
@@ -195,6 +225,8 @@ template <symmetry_tag sym> class MeasuredValues {
     std::vector<VoltageSensorCalcParam<sym>> voltage_main_value_;
     std::vector<PowerSensorCalcParam<sym>> power_main_value_;
     std::vector<CurrentSensorCalcParam<sym>> current_main_value_;
+    std::vector<DecomposedComplexRandVar<sym>> decomposed_current_main_value_;
+    std::vector<IndependentComplexRandVar<sym>> independent_current_main_value_cache_;
 
     // flat array of all the load_gen/source measurement
     // not relevant for the main calculation, as extra data for load_gen/source calculation
@@ -571,9 +603,16 @@ template <symmetry_tag sym> class MeasuredValues {
             }
         }
         for (auto const& x : current_main_value_) {
-            auto const& polar = x.measurement;
-            auto const variance =
-                polar.magnitude.variance + (polar.magnitude.value * polar.magnitude.value * polar.angle.variance);
+            // Convert to decomposed complex random variable at full precision BEFORE scaling.
+            // This ensures the non-linear polar-to-complex conversion is mathematically correct,
+            // as scaling polar variances directly (k*sigma_theta^2) does not equal scaling
+            // decomposed variances linearly due to the exponential terms in the conversion.
+            auto const decomposed = static_cast<DecomposedComplexRandVar<sym>>(x.measurement);
+            decomposed_current_main_value_.push_back(decomposed);
+            auto const independent = static_cast<IndependentComplexRandVar<sym>>(decomposed);
+            independent_current_main_value_cache_.push_back(independent);
+
+            auto const& variance = independent.variance;
             if constexpr (is_symmetric_v<sym>) {
                 unconstrained_min(variance);
             } else {
@@ -594,6 +633,11 @@ template <symmetry_tag sym> class MeasuredValues {
             x.measurement.magnitude.variance *= inv_norm_var;
             x.measurement.angle.variance *= inv_norm_var;
         });
+        std::ranges::for_each(decomposed_current_main_value_, [inv_norm_var](auto& x) {
+            x.real_component.variance *= inv_norm_var;
+            x.imag_component.variance *= inv_norm_var;
+        });
+        std::ranges::for_each(independent_current_main_value_cache_, [inv_norm_var](auto& x) { x.variance *= inv_norm_var; });
     }
 
     void calculate_non_over_determined_injection(Idx n_unmeasured, IdxRange const& load_gens, IdxRange const& sources,
