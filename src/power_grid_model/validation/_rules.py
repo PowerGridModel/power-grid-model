@@ -41,7 +41,11 @@ from typing import Any
 
 import numpy as np
 
-from power_grid_model._core.dataset_definitions import AttributeType, ComponentType, DatasetType
+from power_grid_model._core.dataset_definitions import (
+    AttributeType,
+    ComponentType,
+    DatasetType,
+)
 from power_grid_model._core.enum import AngleMeasurementType, FaultPhase, FaultType, WindingType
 from power_grid_model._core.utils import get_comp_size, is_nan_or_default
 from power_grid_model.data_types import SingleDataset
