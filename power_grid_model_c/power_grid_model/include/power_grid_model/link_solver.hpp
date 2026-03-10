@@ -31,9 +31,9 @@ enum class EdgeEvent : std::uint8_t {
 enum class EdgeDirection : IntS { Away = -1, Towards = 1 };
 
 struct COOSparseMatrix {
-    std::vector<IntS> data;
-    std::vector<uint64_t> row;
-    std::vector<uint64_t> col;
+    std::vector<IntS> data{};
+    std::vector<uint64_t> row{};
+    std::vector<uint64_t> col{};
 
     void append(IntS value, uint64_t row_idx, uint64_t col_idx) {
         data.push_back(value);
@@ -48,10 +48,10 @@ struct EdgeHistory {
 };
 
 struct EliminationResult {
-    COOSparseMatrix matrix;
-    std::vector<DoubleComplex> rhs;          // RHS value at each pivot row
-    std::vector<uint64_t> free_edge_indices; // index of degrees of freedom (self loop edges)
-    std::vector<EdgeHistory> edge_history;   // edges elimination history
+    COOSparseMatrix matrix{};
+    std::vector<DoubleComplex> rhs{};          // RHS value at each pivot row
+    std::vector<uint64_t> free_edge_indices{}; // index of degrees of freedom (self loop edges)
+    std::vector<EdgeHistory> edge_history{};   // edges elimination history
 };
 
 // convention: from node at position 0, to node at position 1
@@ -83,7 +83,8 @@ void write_edge_history(EdgeHistory& edge_history, EdgeEvent event, uint64_t row
 // we name this procedure elimination-game
 [[nodiscard]] EliminationResult forward_elimination(std::vector<BranchIdx> edges,
                                                     std::vector<DoubleComplex> node_loads) {
-    EliminationResult result{.edge_history = std::vector<EdgeHistory>(edges.size())};
+    EliminationResult result{};
+    result.edge_history.resize(edges.size());
     using enum EdgeEvent;
     using enum EdgeDirection;
 
