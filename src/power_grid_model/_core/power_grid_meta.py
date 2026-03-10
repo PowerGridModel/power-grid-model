@@ -14,11 +14,13 @@ import numpy as np
 
 from power_grid_model._core.data_types import DenseBatchArray, SingleArray
 from power_grid_model._core.dataset_definitions import (
+    AttributeType,
     AttributeTypeLike,
     ComponentTypeLike,
     ComponentTypeVar,
     DatasetType,
     DatasetTypeLike,
+    _str_to_attribute_type,
     _str_to_component_type,
     _str_to_datatype,
 )
@@ -152,7 +154,7 @@ def _generate_meta_attributes(component: ComponentPtr) -> dict:
     n_attrs = get_pgc().meta_n_attributes(component)
     for i in range(n_attrs):
         attribute: AttributePtr = get_pgc().meta_get_attribute_by_idx(component, i)
-        attr_name: str = get_pgc().meta_attribute_name(attribute)
+        attr_name: AttributeType = _str_to_attribute_type(get_pgc().meta_attribute_name(attribute))
         attr_ctype: int = get_pgc().meta_attribute_ctype(attribute)
         attr_offset: int = get_pgc().meta_attribute_offset(attribute)
         attr_np_type = f"{_ENDIANNESS}{_CTYPE_NUMPY_MAP[PGMCType(attr_ctype)]}"
@@ -241,6 +243,7 @@ def attribute_dtype(
     """
     data_type = _str_to_datatype(data_type)
     component_type = _str_to_component_type(component_type)
+    attribute = _str_to_attribute_type(attribute)
     return power_grid_meta_data[data_type][component_type].dtype[attribute]
 
 
@@ -260,4 +263,5 @@ def attribute_empty_value(
     """
     data_type = _str_to_datatype(data_type)
     component_type = _str_to_component_type(component_type)
+    attribute = _str_to_attribute_type(attribute)
     return power_grid_meta_data[data_type][component_type].nan_scalar[attribute]

@@ -161,7 +161,9 @@ class CDatasetInfo:
             else:
                 n_indications = get_pgc().dataset_info_n_attribute_indications(self._info, component_idx)
                 result_dict[component_name] = [
-                    get_pgc().dataset_info_attribute_name(self._info, component_idx, attribute_idx)
+                    _str_to_attribute_type(
+                        get_pgc().dataset_info_attribute_name(self._info, component_idx, attribute_idx)
+                    )
                     for attribute_idx in range(n_indications)
                 ]
         return result_dict
@@ -289,7 +291,7 @@ class CMutableDataset:
         for attr, attr_data in buffer.attribute_data.items():
             self._register_attribute_buffer(component, attr, attr_data)
 
-    def _register_attribute_buffer(self, component, attr, attr_data):
+    def _register_attribute_buffer(self, component: ComponentType, attr: AttributeType, attr_data: CAttributeBuffer):
         get_pgc().dataset_mutable_add_attribute_buffer(
             dataset=self._mutable_dataset,
             component=component.value,
