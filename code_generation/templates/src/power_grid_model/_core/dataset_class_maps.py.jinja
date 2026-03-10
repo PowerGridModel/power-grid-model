@@ -28,17 +28,7 @@ class _MetaEnum(EnumMeta):
         """
         return member in cls.__members__
 
-class BaseStrEnum(StrEnum, metaclass=_MetaEnum):
-    """
-    Base class for all string enums.
-    Automatically prints the enum value as string, not <Enum.MEMBER: 'value'>.
-    """
-    def __repr__(self):
-        return self.value
-
-    __str__ = __repr__  # ensures f-strings, print, etc., all use the value
-
-class DatasetType(BaseStrEnum):
+class DatasetType(StrEnum, metaclass=_MetaEnum):
     """
     A DatasetType is the type of a :class:`Dataset` in power grid model.
 
@@ -52,7 +42,7 @@ class DatasetType(BaseStrEnum):
 {%- endfor %}
 
 
-class ComponentType(BaseStrEnum):
+class ComponentType(StrEnum, metaclass=_MetaEnum):
     """
     A ComponentType is the type of a grid component.
 
@@ -65,7 +55,7 @@ class ComponentType(BaseStrEnum):
     {{ component }} = "{{ component }}"
 {%- endfor %}
 
-class AttributeType(BaseStrEnum):
+class AttributeType(StrEnum, metaclass=_MetaEnum):
     """
     A AttributeType is the attribute of a grid component.
 
