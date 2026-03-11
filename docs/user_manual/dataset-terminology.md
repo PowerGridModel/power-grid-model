@@ -150,7 +150,8 @@ Exemplary datasets attributes are given in a dataset containing a `line` compone
 
 ## Terminologies related to data structures
 
-- **Component:** The definition of a part of a grid: e.g., `node`, `source`, `line`, etc.
+- **Component:** The definition of a part of a grid: e.g., `node`, `source`, `line`, etc. They are included under the
+  enum {py:class}`ComponentType <power_grid_model.typing.ComponentType>`.
   Check highlighted section of graph in
   [Component Hierarchy](./data-model.md#component-type-hierarchy-and-graph-data-model)
 
@@ -191,7 +192,7 @@ The batch size is the number of scenarios.
 
 | Attribute    | Description                                                                                                                                                                                                                                                                                                                 |
 | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| name         | Name of the attribute. It is exactly the same as the attribute name in `power_grid_model.power_grid_meta_data`.                                                                                                                                                                                                             |
+| name         | Name of the attribute. It is exactly the same as the attribute name in `power_grid_model.power_grid_meta_data`. They are included under the enum {py:class}`AttributeType <power_grid_model.typing.AttributeType>`.                                                                                                         |
 | data type    | Data type of the attribute. It is either a type from the table in [Native Data Interface](../advanced_documentation/native-data-interface.md#basic-data-types), or an enumeration as defined above. There are two special data types that are independent from one another, namely, `RealValueInput` and `RealValueOutput`. |
 |              | `RealValueInput` is used for some input attributes. It is a `double` for a symmetric class (e.g. `sym_load`) and `double[3]` an asymmetric class (e.g. `asym_load`). It is explained in detail in the corresponding types.                                                                                                  |
 |              | `RealValueOutput` is used for many output attributes. It is a `double` in symmetric calculation and `double[3]` for asymmetric and short circuit calculations.                                                                                                                                                              |
