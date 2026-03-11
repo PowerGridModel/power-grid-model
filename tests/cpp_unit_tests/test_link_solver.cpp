@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include <power_grid_model/calculation_parameters.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/link_solver.hpp>
 
@@ -13,6 +14,59 @@
 namespace power_grid_model::link_solver {
 TEST_CASE("Test the link solver algorithm") {
     using namespace detail;
+
+    SUBCASE("Test build adjacency list") {
+
+        SUBCASE("One edge, two nodes") {
+            auto edges = std::vector<BranchIdx>{{0, 1}};
+            AdjacencyList const adjacency_list = build_adjacency_list(edges);
+
+            REQUIRE(adjacency_list.size() == 2);
+            CHECK(adjacency_list.at(0) == std::unordered_set<uint64_t>{0});
+            CHECK(adjacency_list.at(1) == std::unordered_set<uint64_t>{0});
+        }
+
+        SUBCASE("Two edges, three nodes") {
+            auto edges = std::vector<BranchIdx>{{1, 0}, {1, 2}};
+            AdjacencyList const adjacency_list = build_adjacency_list(edges);
+
+            REQUIRE(adjacency_list.size() == 3);
+            CHECK(adjacency_list.at(0) == std::unordered_set<uint64_t>{0});
+            CHECK(adjacency_list.at(1) == std::unordered_set<uint64_t>{0, 1});
+            CHECK(adjacency_list.at(2) == std::unordered_set<uint64_t>{1});
+        }
+
+        SUBCASE("Three edges, three nodes") {
+            auto edges = std::vector<BranchIdx>{{0, 1}, {1, 2}, {2, 0}};
+            AdjacencyList const adjacency_list = build_adjacency_list(edges);
+
+            REQUIRE(adjacency_list.size() == 3);
+            CHECK(adjacency_list.at(0) == std::unordered_set<uint64_t>{0, 2});
+            CHECK(adjacency_list.at(1) == std::unordered_set<uint64_t>{0, 1});
+            CHECK(adjacency_list.at(2) == std::unordered_set<uint64_t>{1, 2});
+        }
+
+        SUBCASE("Two edges, two nodes") {
+            auto edges = std::vector<BranchIdx>{{0, 1}, {0, 1}};
+            AdjacencyList const adjacency_list = build_adjacency_list(edges);
+
+            REQUIRE(adjacency_list.size() == 2);
+            CHECK(adjacency_list.at(0) == std::unordered_set<uint64_t>{0, 1});
+            CHECK(adjacency_list.at(1) == std::unordered_set<uint64_t>{0, 1});
+        }
+
+        SUBCASE("Seven edges, five nodes") {
+            auto edges = std::vector<BranchIdx>{{3, 0}, {1, 0}, {2, 0}, {3, 2}, {1, 2}, {1, 4}, {3, 4}};
+            AdjacencyList const adjacency_list = build_adjacency_list(edges);
+
+            REQUIRE(adjacency_list.size() == 5);
+            CHECK(adjacency_list.at(0) == std::unordered_set<uint64_t>{0, 1, 2});
+            CHECK(adjacency_list.at(1) == std::unordered_set<uint64_t>{1, 4, 5});
+            CHECK(adjacency_list.at(2) == std::unordered_set<uint64_t>{2, 3, 4});
+            CHECK(adjacency_list.at(3) == std::unordered_set<uint64_t>{0, 3, 6});
+            CHECK(adjacency_list.at(4) == std::unordered_set<uint64_t>{5, 6});
+        }
+    }
 
     SUBCASE("Test forward elimination - elimination game") {
         using enum EdgeEvent;
@@ -32,8 +86,7 @@ TEST_CASE("Test the link solver algorithm") {
             CHECK(result.rhs == std::vector<DoubleComplex>{{1.0, 0.0}});
             CHECK(result.free_edge_indices.empty());
             REQUIRE(result.edge_history.size() == 1);
-            CHECK(result.edge_history[0].events ==
-                  std::vector<EdgeEvent>{Deleted}); // Should this be deleted or contracted to point?
+            CHECK(result.edge_history[0].events == std::vector<EdgeEvent>{Deleted});
             CHECK(result.edge_history[0].rows == std::vector<uint64_t>{0});
         }
 
