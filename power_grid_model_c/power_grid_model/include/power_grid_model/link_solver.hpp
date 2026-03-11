@@ -9,17 +9,14 @@
 #include "common/counting_iterator.hpp"
 
 #include <array>
-#include <complex>
-#include <concepts>
-#include <ranges>
+#include <cstdint>
 #include <span>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
-namespace power_grid_model::link_solver {
-
-namespace detail {
+namespace power_grid_model::link_solver::detail {
 constexpr uint8_t starting_row{0};
 
 enum class EdgeEvent : std::uint8_t {
@@ -54,6 +51,8 @@ struct EliminationResult {
     std::vector<EdgeHistory> edge_history{};   // edges elimination history
 };
 
+using AdjacencyList = std::unordered_map<Idx, std::unordered_set<uint64_t>>;
+
 // convention: from node at position 0, to node at position 1
 [[nodiscard]] constexpr Idx from_node(BranchIdx const& edge) { return edge[0]; }
 [[nodiscard]] constexpr Idx& from_node(BranchIdx& edge) { return edge[0]; }
@@ -63,9 +62,9 @@ struct EliminationResult {
 // map from node index to the set of adjacent edge indices
 // unordered_map because node IDs may be sparse/non-contiguous
 // unordered_set for O(1) insert/erase during reattachment
-[[nodiscard]] auto build_adjacency_list(std::span<BranchIdx> edges) {
-    std::unordered_map<Idx, std::unordered_set<uint64_t>> adjacency_list{};
-    for (auto const& [raw_index, edge] : enumerate(edges)) {
+[[nodiscard]] inline auto build_adjacency_list(std::span<BranchIdx> edges) -> AdjacencyList {
+    AdjacencyList adjacency_list{};
+    for (auto const& [raw_index, edge] : enumerate(std::as_const(edges))) {
         auto const index = static_cast<uint64_t>(raw_index);
         auto const [from_node, to_node] = edge;
         adjacency_list[from_node].insert(index);
@@ -74,15 +73,47 @@ struct EliminationResult {
     return adjacency_list;
 }
 
-void write_edge_history(EdgeHistory& edge_history, EdgeEvent event, uint64_t row) {
+inline void write_edge_history(EdgeHistory& edge_history, EdgeEvent event, uint64_t row) {
     edge_history.events.push_back(event);
     edge_history.rows.push_back(row);
 }
 
+inline void re_attachment_step(Idx from_node_idx, Idx to_node_idx, uint64_t matrix_row, std::vector<BranchIdx>& edges,
+                               AdjacencyList& adjacency_list, COOSparseMatrix& matrix,
+                               std::vector<EdgeHistory>& edge_history,
+                               std::unordered_set<uint64_t>& edges_contracted_to_point) {
+    using enum EdgeDirection;
+    using enum EdgeEvent;
+
+    auto const adjacent_edges_snapshot =
+        std::vector<uint64_t>(adjacency_list[to_node_idx].begin(), adjacency_list[to_node_idx].end());
+
+    for (uint64_t const adjacent_edge_idx : adjacent_edges_snapshot) {
+        if (from_node(edges[adjacent_edge_idx]) == to_node_idx) {
+            from_node(edges[adjacent_edge_idx]) = from_node_idx; // re-attachment step
+            matrix.append(std::to_underlying(Away), matrix_row, adjacent_edge_idx);
+        } else {
+            to_node(edges[adjacent_edge_idx]) = from_node_idx; // re-attachment step
+            matrix.append(std::to_underlying(Towards), matrix_row, adjacent_edge_idx);
+        }
+
+        // update adjacency list after re-attachment
+        adjacency_list[to_node_idx].erase(adjacent_edge_idx);
+        adjacency_list[from_node_idx].insert(adjacent_edge_idx);
+
+        if (from_node(edges[adjacent_edge_idx]) == to_node(edges[adjacent_edge_idx])) {
+            write_edge_history(edge_history[adjacent_edge_idx], ContractedToPoint, matrix_row);
+            edges_contracted_to_point.insert(adjacent_edge_idx);
+        } else {
+            write_edge_history(edge_history[adjacent_edge_idx], Replaced, matrix_row);
+        }
+    }
+}
+
 // forward elimination is performed via a modified Gaussian elimination procedure
 // we name this procedure elimination-game
-[[nodiscard]] EliminationResult forward_elimination(std::vector<BranchIdx> edges,
-                                                    std::vector<DoubleComplex> node_loads) {
+[[nodiscard]] inline EliminationResult forward_elimination(std::vector<BranchIdx> edges,
+                                                           std::vector<DoubleComplex> node_loads) {
     EliminationResult result{};
     result.edge_history.resize(edges.size());
     using enum EdgeEvent;
@@ -94,7 +125,7 @@ void write_edge_history(EdgeHistory& edge_history, EdgeEvent event, uint64_t row
     uint64_t matrix_row{starting_row};
     auto adjacency_list = build_adjacency_list(edges);
 
-    for (auto const& [raw_index, edge] : enumerate(edges)) {
+    for (auto const& [raw_index, edge] : enumerate(std::as_const(edges))) {
         auto const index = static_cast<uint64_t>(raw_index);
         if (edges_contracted_to_point.contains(index)) {
             free_edge_indices.push_back(index);
@@ -113,34 +144,12 @@ void write_edge_history(EdgeHistory& edge_history, EdgeEvent event, uint64_t row
             node_loads[from_node_idx] += node_loads[to_node_idx];
             rhs.push_back(node_loads[to_node_idx]);
 
-            auto const adjacent_edges_snapshot =
-                std::vector<uint64_t>(adjacency_list[to_node_idx].begin(), adjacency_list[to_node_idx].end());
-
-            for (uint64_t const adjacent_edge_idx : adjacent_edges_snapshot) {
-                if (from_node(edges[adjacent_edge_idx]) == to_node_idx) {
-                    from_node(edges[adjacent_edge_idx]) = from_node_idx; // re-attachment step
-                    matrix.append(std::to_underlying(Away), matrix_row, adjacent_edge_idx);
-                } else {
-                    to_node(edges[adjacent_edge_idx]) = from_node_idx; // re-attachment step
-                    matrix.append(std::to_underlying(Towards), matrix_row, adjacent_edge_idx);
-                }
-
-                // update adjacency list after re-attachment
-                adjacency_list[to_node_idx].erase(adjacent_edge_idx);
-                adjacency_list[from_node_idx].insert(adjacent_edge_idx);
-
-                if (from_node(edges[adjacent_edge_idx]) == to_node(edges[adjacent_edge_idx])) {
-                    write_edge_history(edge_history[adjacent_edge_idx], ContractedToPoint, matrix_row);
-                    edges_contracted_to_point.insert(adjacent_edge_idx);
-                } else {
-                    write_edge_history(edge_history[adjacent_edge_idx], Replaced, matrix_row);
-                }
-            }
+            re_attachment_step(from_node_idx, to_node_idx, matrix_row, edges, adjacency_list, matrix, edge_history,
+                               edges_contracted_to_point);
             ++matrix_row;
         }
     }
 
     return result;
 }
-} // namespace detail
-} // namespace power_grid_model::link_solver
+} // namespace power_grid_model::link_solver::detail

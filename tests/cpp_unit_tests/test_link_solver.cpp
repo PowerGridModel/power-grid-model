@@ -2,9 +2,13 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include <power_grid_model/common/common.hpp>
 #include <power_grid_model/link_solver.hpp>
 
 #include <doctest/doctest.h>
+
+#include <cstdint>
+#include <vector>
 
 namespace power_grid_model::link_solver {
 TEST_CASE("Test the link solver algorithm") {
