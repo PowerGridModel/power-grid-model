@@ -19,6 +19,9 @@
 namespace power_grid_model::link_solver::detail {
 constexpr uint8_t starting_row{0};
 
+using AdjacencyMap = std::unordered_map<Idx, std::unordered_set<uint64_t>>;
+using ContractedEdgesSet = std::unordered_set<uint64_t>;
+
 enum class EdgeEvent : std::uint8_t {
     Deleted = 0,          // pivot edge - used as pivot row
     Replaced = 1,         // reattached to a different node
@@ -48,10 +51,8 @@ struct EliminationResult {
     COOSparseMatrix matrix{};
     std::vector<DoubleComplex> rhs{};          // RHS value at each pivot row
     std::vector<uint64_t> free_edge_indices{}; // index of degrees of freedom (self loop edges)
-    std::vector<EdgeHistory> edge_history{};   // edges elimination history
+    std::vector<EdgeHistory> edges_history{};  // edges elimination history
 };
-
-using AdjacencyList = std::unordered_map<Idx, std::unordered_set<uint64_t>>;
 
 // convention: from node at position 0, to node at position 1
 [[nodiscard]] constexpr Idx from_node(BranchIdx const& edge) { return edge[0]; }
@@ -62,8 +63,8 @@ using AdjacencyList = std::unordered_map<Idx, std::unordered_set<uint64_t>>;
 // map from node index to the set of adjacent edge indices
 // unordered_map because node IDs may be sparse/non-contiguous
 // unordered_set for O(1) insert/erase during reattachment
-[[nodiscard]] inline auto build_adjacency_list(std::span<BranchIdx> edges) -> AdjacencyList {
-    AdjacencyList adjacency_list{};
+[[nodiscard]] inline auto build_adjacency_list(std::span<BranchIdx> edges) -> AdjacencyMap {
+    AdjacencyMap adjacency_list{};
     for (auto const& [raw_index, edge] : enumerate(std::as_const(edges))) {
         auto const index = static_cast<uint64_t>(raw_index);
         auto const [from_node, to_node] = edge;
@@ -73,40 +74,33 @@ using AdjacencyList = std::unordered_map<Idx, std::unordered_set<uint64_t>>;
     return adjacency_list;
 }
 
-inline void write_edge_history(EdgeHistory& edge_history, EdgeEvent event, uint64_t row) {
-    edge_history.events.push_back(event);
-    edge_history.rows.push_back(row);
+inline void write_edge_history(EdgeHistory& edges_history, EdgeEvent event, uint64_t row) {
+    edges_history.events.push_back(event);
+    edges_history.rows.push_back(row);
 }
 
-inline void re_attachment_step(Idx from_node_idx, Idx to_node_idx, uint64_t matrix_row, std::vector<BranchIdx>& edges,
-                               AdjacencyList& adjacency_list, COOSparseMatrix& matrix,
-                               std::vector<EdgeHistory>& edge_history,
-                               std::unordered_set<uint64_t>& edges_contracted_to_point) {
+inline void replace_and_write(uint64_t edge_idx, Idx from_node_idx, Idx to_node_idx, uint64_t matrix_row,
+                              std::vector<BranchIdx>& edges, COOSparseMatrix& matrix) {
     using enum EdgeDirection;
+
+    if (from_node(edges[edge_idx]) == to_node_idx) {
+        from_node(edges[edge_idx]) = from_node_idx; // re-attachment step
+        matrix.append(std::to_underlying(Away), matrix_row, edge_idx);
+    } else {
+        to_node(edges[edge_idx]) = from_node_idx; // re-attachment step
+        matrix.append(std::to_underlying(Towards), matrix_row, edge_idx);
+    }
+}
+
+inline void update_edge_info(uint64_t edge_idx, uint64_t matrix_row, std::vector<BranchIdx>& edges,
+                             std::vector<EdgeHistory>& edges_history, ContractedEdgesSet& edges_contracted_to_point) {
     using enum EdgeEvent;
 
-    auto const adjacent_edges_snapshot =
-        std::vector<uint64_t>(adjacency_list[to_node_idx].begin(), adjacency_list[to_node_idx].end());
-
-    for (uint64_t const adjacent_edge_idx : adjacent_edges_snapshot) {
-        if (from_node(edges[adjacent_edge_idx]) == to_node_idx) {
-            from_node(edges[adjacent_edge_idx]) = from_node_idx; // re-attachment step
-            matrix.append(std::to_underlying(Away), matrix_row, adjacent_edge_idx);
-        } else {
-            to_node(edges[adjacent_edge_idx]) = from_node_idx; // re-attachment step
-            matrix.append(std::to_underlying(Towards), matrix_row, adjacent_edge_idx);
-        }
-
-        // update adjacency list after re-attachment
-        adjacency_list[to_node_idx].erase(adjacent_edge_idx);
-        adjacency_list[from_node_idx].insert(adjacent_edge_idx);
-
-        if (from_node(edges[adjacent_edge_idx]) == to_node(edges[adjacent_edge_idx])) {
-            write_edge_history(edge_history[adjacent_edge_idx], ContractedToPoint, matrix_row);
-            edges_contracted_to_point.insert(adjacent_edge_idx);
-        } else {
-            write_edge_history(edge_history[adjacent_edge_idx], Replaced, matrix_row);
-        }
+    if (from_node(edges[edge_idx]) == to_node(edges[edge_idx])) {
+        write_edge_history(edges_history[edge_idx], ContractedToPoint, matrix_row);
+        edges_contracted_to_point.insert(edge_idx);
+    } else {
+        write_edge_history(edges_history[edge_idx], Replaced, matrix_row);
     }
 }
 
@@ -115,11 +109,11 @@ inline void re_attachment_step(Idx from_node_idx, Idx to_node_idx, uint64_t matr
 [[nodiscard]] inline EliminationResult forward_elimination(std::vector<BranchIdx> edges,
                                                            std::vector<DoubleComplex> node_loads) {
     EliminationResult result{};
-    result.edge_history.resize(edges.size());
+    result.edges_history.resize(edges.size());
     using enum EdgeEvent;
     using enum EdgeDirection;
 
-    auto& [matrix, rhs, free_edge_indices, edge_history] = result;
+    auto& [matrix, rhs, free_edge_indices, edges_history] = result;
 
     std::unordered_set<uint64_t> edges_contracted_to_point{};
     uint64_t matrix_row{starting_row};
@@ -130,7 +124,7 @@ inline void re_attachment_step(Idx from_node_idx, Idx to_node_idx, uint64_t matr
         if (edges_contracted_to_point.contains(index)) {
             free_edge_indices.push_back(index);
         } else {
-            write_edge_history(edge_history[index], Deleted, matrix_row); // Delete edge -> pivot there
+            write_edge_history(edges_history[index], Deleted, matrix_row); // Delete edge -> pivot there
             matrix.append(std::to_underlying(Towards), matrix_row, index);
 
             Idx const from_node_idx = from_node(edge);
@@ -144,8 +138,20 @@ inline void re_attachment_step(Idx from_node_idx, Idx to_node_idx, uint64_t matr
             node_loads[from_node_idx] += node_loads[to_node_idx];
             rhs.push_back(node_loads[to_node_idx]);
 
-            re_attachment_step(from_node_idx, to_node_idx, matrix_row, edges, adjacency_list, matrix, edge_history,
-                               edges_contracted_to_point);
+            auto const adjacent_edges_snapshot =
+                std::vector<uint64_t>(adjacency_list[to_node_idx].begin(), adjacency_list[to_node_idx].end());
+
+            for (uint64_t const adjacent_edge_idx : adjacent_edges_snapshot) {
+                // re-attach edge and write to matrix
+                replace_and_write(adjacent_edge_idx, from_node_idx, to_node_idx, matrix_row, edges, matrix);
+
+                // update adjacency list after re-attachment
+                adjacency_list[to_node_idx].erase(adjacent_edge_idx);
+                adjacency_list[from_node_idx].insert(adjacent_edge_idx);
+
+                // update edges_history and edges_contracted_to_point (if needed) after re-attachment
+                update_edge_info(adjacent_edge_idx, matrix_row, edges, edges_history, edges_contracted_to_point);
+            }
             ++matrix_row;
         }
     }

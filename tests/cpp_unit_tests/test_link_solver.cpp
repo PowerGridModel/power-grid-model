@@ -19,7 +19,7 @@ TEST_CASE("Test the link solver algorithm") {
 
         SUBCASE("One edge, two nodes") {
             auto edges = std::vector<BranchIdx>{{0, 1}};
-            AdjacencyList const adjacency_list = build_adjacency_list(edges);
+            AdjacencyMap const adjacency_list = build_adjacency_list(edges);
 
             REQUIRE(adjacency_list.size() == 2);
             CHECK(adjacency_list.at(0) == std::unordered_set<uint64_t>{0});
@@ -28,7 +28,7 @@ TEST_CASE("Test the link solver algorithm") {
 
         SUBCASE("Two edges, three nodes") {
             auto edges = std::vector<BranchIdx>{{1, 0}, {1, 2}};
-            AdjacencyList const adjacency_list = build_adjacency_list(edges);
+            AdjacencyMap const adjacency_list = build_adjacency_list(edges);
 
             REQUIRE(adjacency_list.size() == 3);
             CHECK(adjacency_list.at(0) == std::unordered_set<uint64_t>{0});
@@ -38,7 +38,7 @@ TEST_CASE("Test the link solver algorithm") {
 
         SUBCASE("Three edges, three nodes") {
             auto edges = std::vector<BranchIdx>{{0, 1}, {1, 2}, {2, 0}};
-            AdjacencyList const adjacency_list = build_adjacency_list(edges);
+            AdjacencyMap const adjacency_list = build_adjacency_list(edges);
 
             REQUIRE(adjacency_list.size() == 3);
             CHECK(adjacency_list.at(0) == std::unordered_set<uint64_t>{0, 2});
@@ -48,7 +48,7 @@ TEST_CASE("Test the link solver algorithm") {
 
         SUBCASE("Two edges, two nodes") {
             auto edges = std::vector<BranchIdx>{{0, 1}, {0, 1}};
-            AdjacencyList const adjacency_list = build_adjacency_list(edges);
+            AdjacencyMap const adjacency_list = build_adjacency_list(edges);
 
             REQUIRE(adjacency_list.size() == 2);
             CHECK(adjacency_list.at(0) == std::unordered_set<uint64_t>{0, 1});
@@ -57,7 +57,7 @@ TEST_CASE("Test the link solver algorithm") {
 
         SUBCASE("Seven edges, five nodes") {
             auto edges = std::vector<BranchIdx>{{3, 0}, {1, 0}, {2, 0}, {3, 2}, {1, 2}, {1, 4}, {3, 4}};
-            AdjacencyList const adjacency_list = build_adjacency_list(edges);
+            AdjacencyMap const adjacency_list = build_adjacency_list(edges);
 
             REQUIRE(adjacency_list.size() == 5);
             CHECK(adjacency_list.at(0) == std::unordered_set<uint64_t>{0, 1, 2});
@@ -85,9 +85,9 @@ TEST_CASE("Test the link solver algorithm") {
             REQUIRE(result.rhs.size() == 1);
             CHECK(result.rhs == std::vector<DoubleComplex>{{1.0, 0.0}});
             CHECK(result.free_edge_indices.empty());
-            REQUIRE(result.edge_history.size() == 1);
-            CHECK(result.edge_history[0].events == std::vector<EdgeEvent>{Deleted});
-            CHECK(result.edge_history[0].rows == std::vector<uint64_t>{0});
+            REQUIRE(result.edges_history.size() == 1);
+            CHECK(result.edges_history[0].events == std::vector<EdgeEvent>{Deleted});
+            CHECK(result.edges_history[0].rows == std::vector<uint64_t>{0});
         }
 
         SUBCASE("Two edges, three nodes, two real loads") {
@@ -104,11 +104,11 @@ TEST_CASE("Test the link solver algorithm") {
             REQUIRE(result.rhs.size() == 2);
             CHECK(result.rhs == std::vector<DoubleComplex>{{-1.0, 0.0}, {0.0, 0.0}});
             CHECK(result.free_edge_indices.empty());
-            REQUIRE(result.edge_history.size() == 2);
-            CHECK(result.edge_history[0].events == std::vector<EdgeEvent>{Deleted});
-            CHECK(result.edge_history[0].rows == std::vector<uint64_t>{0});
-            CHECK(result.edge_history[1].events == std::vector<EdgeEvent>{Deleted});
-            CHECK(result.edge_history[1].rows == std::vector<uint64_t>{1});
+            REQUIRE(result.edges_history.size() == 2);
+            CHECK(result.edges_history[0].events == std::vector<EdgeEvent>{Deleted});
+            CHECK(result.edges_history[0].rows == std::vector<uint64_t>{0});
+            CHECK(result.edges_history[1].events == std::vector<EdgeEvent>{Deleted});
+            CHECK(result.edges_history[1].rows == std::vector<uint64_t>{1});
         }
 
         SUBCASE("Three edges, three nodes, two real loads") {
@@ -126,13 +126,13 @@ TEST_CASE("Test the link solver algorithm") {
             CHECK(result.rhs == std::vector<DoubleComplex>{{1.0, 0.0}, {0.0, 0.0}});
             REQUIRE(result.free_edge_indices.size() == 1);
             CHECK(result.free_edge_indices == std::vector<uint64_t>{2});
-            REQUIRE(result.edge_history.size() == 3);
-            CHECK(result.edge_history[0].events == std::vector<EdgeEvent>{Deleted});
-            CHECK(result.edge_history[0].rows == std::vector<uint64_t>{0});
-            CHECK(result.edge_history[1].events == std::vector<EdgeEvent>{Replaced, Deleted});
-            CHECK(result.edge_history[1].rows == std::vector<uint64_t>{0, 1});
-            CHECK(result.edge_history[2].events == std::vector<EdgeEvent>{ContractedToPoint});
-            CHECK(result.edge_history[2].rows == std::vector<uint64_t>{1});
+            REQUIRE(result.edges_history.size() == 3);
+            CHECK(result.edges_history[0].events == std::vector<EdgeEvent>{Deleted});
+            CHECK(result.edges_history[0].rows == std::vector<uint64_t>{0});
+            CHECK(result.edges_history[1].events == std::vector<EdgeEvent>{Replaced, Deleted});
+            CHECK(result.edges_history[1].rows == std::vector<uint64_t>{0, 1});
+            CHECK(result.edges_history[2].events == std::vector<EdgeEvent>{ContractedToPoint});
+            CHECK(result.edges_history[2].rows == std::vector<uint64_t>{1});
         }
 
         SUBCASE("Two edges, two nodes, two real loads") {
@@ -150,11 +150,11 @@ TEST_CASE("Test the link solver algorithm") {
             CHECK(result.rhs == std::vector<DoubleComplex>{{1.0, 0.0}});
             REQUIRE(result.free_edge_indices.size() == 1);
             CHECK(result.free_edge_indices == std::vector<uint64_t>{1});
-            REQUIRE(result.edge_history.size() == 2);
-            CHECK(result.edge_history[0].events == std::vector<EdgeEvent>{Deleted});
-            CHECK(result.edge_history[0].rows == std::vector<uint64_t>{0});
-            CHECK(result.edge_history[1].events == std::vector<EdgeEvent>{ContractedToPoint});
-            CHECK(result.edge_history[1].rows == std::vector<uint64_t>{0});
+            REQUIRE(result.edges_history.size() == 2);
+            CHECK(result.edges_history[0].events == std::vector<EdgeEvent>{Deleted});
+            CHECK(result.edges_history[0].rows == std::vector<uint64_t>{0});
+            CHECK(result.edges_history[1].events == std::vector<EdgeEvent>{ContractedToPoint});
+            CHECK(result.edges_history[1].rows == std::vector<uint64_t>{0});
         }
 
         SUBCASE("Complex case with complex loads") {
@@ -177,21 +177,21 @@ TEST_CASE("Test the link solver algorithm") {
             CHECK(result.rhs == std::vector<DoubleComplex>{{-1.0, -1.0}, {-1.0, -1.0}, {-2.0, -2.0}, {0.0, 0.0}});
             REQUIRE(result.free_edge_indices.size() == 3);
             CHECK(result.free_edge_indices == std::vector<uint64_t>{3, 4, 6});
-            REQUIRE(result.edge_history.size() == 7);
-            CHECK(result.edge_history[0].events == std::vector<EdgeEvent>{Deleted});
-            CHECK(result.edge_history[0].rows == std::vector<uint64_t>{0});
-            CHECK(result.edge_history[1].events == std::vector<EdgeEvent>{Replaced, Deleted});
-            CHECK(result.edge_history[1].rows == std::vector<uint64_t>{0, 1});
-            CHECK(result.edge_history[2].events == std::vector<EdgeEvent>{Replaced, Replaced, Deleted});
-            CHECK(result.edge_history[2].rows == std::vector<uint64_t>{0, 1, 2});
-            CHECK(result.edge_history[3].events == std::vector<EdgeEvent>{Replaced, ContractedToPoint});
-            CHECK(result.edge_history[3].rows == std::vector<uint64_t>{1, 2});
-            CHECK(result.edge_history[4].events == std::vector<EdgeEvent>{ContractedToPoint});
-            CHECK(result.edge_history[4].rows == std::vector<uint64_t>{2});
-            CHECK(result.edge_history[5].events == std::vector<EdgeEvent>{Replaced, Deleted});
-            CHECK(result.edge_history[5].rows == std::vector<uint64_t>{2, 3});
-            CHECK(result.edge_history[6].events == std::vector<EdgeEvent>{Replaced, Replaced, ContractedToPoint});
-            CHECK(result.edge_history[6].rows == std::vector<uint64_t>{1, 2, 3});
+            REQUIRE(result.edges_history.size() == 7);
+            CHECK(result.edges_history[0].events == std::vector<EdgeEvent>{Deleted});
+            CHECK(result.edges_history[0].rows == std::vector<uint64_t>{0});
+            CHECK(result.edges_history[1].events == std::vector<EdgeEvent>{Replaced, Deleted});
+            CHECK(result.edges_history[1].rows == std::vector<uint64_t>{0, 1});
+            CHECK(result.edges_history[2].events == std::vector<EdgeEvent>{Replaced, Replaced, Deleted});
+            CHECK(result.edges_history[2].rows == std::vector<uint64_t>{0, 1, 2});
+            CHECK(result.edges_history[3].events == std::vector<EdgeEvent>{Replaced, ContractedToPoint});
+            CHECK(result.edges_history[3].rows == std::vector<uint64_t>{1, 2});
+            CHECK(result.edges_history[4].events == std::vector<EdgeEvent>{ContractedToPoint});
+            CHECK(result.edges_history[4].rows == std::vector<uint64_t>{2});
+            CHECK(result.edges_history[5].events == std::vector<EdgeEvent>{Replaced, Deleted});
+            CHECK(result.edges_history[5].rows == std::vector<uint64_t>{2, 3});
+            CHECK(result.edges_history[6].events == std::vector<EdgeEvent>{Replaced, Replaced, ContractedToPoint});
+            CHECK(result.edges_history[6].rows == std::vector<uint64_t>{1, 2, 3});
         }
     }
 }
