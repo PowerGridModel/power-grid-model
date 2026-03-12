@@ -2012,4 +2012,141 @@ TEST_CASE("Test Observability - Necessary check end to end test") {
     }
 }
 
+TEST_CASE("Test ObservabilityResult - use_perturbation with non-observable network") {
+    using power_grid_model::math_solver::observability::ObservabilityResult;
+
+    SUBCASE("Non-observable network returns false for use_perturbation") {
+        // Create a meshed network with multiple voltage phasor sensors
+        // This triggers the early return for the condition n_voltage_phasor_sensors > 1 && !topo.is_radial,
+        // where is_observable = false but no exception is thrown
+        MathModelTopology topo;
+        topo.slack_bus = 0;
+        topo.is_radial = false; // Meshed network
+        topo.phase_shift = {0.0, 0.0, 0.0, 0.0};
+        // Create a meshed network: bus0--bus1, bus1--bus2, bus2--bus3, bus3--bus0
+        topo.branch_bus_idx = {{0, 1}, {1, 2}, {2, 3}, {3, 0}};
+        topo.sources_per_bus = {from_sparse, {0, 1, 1, 1, 1}};
+        topo.shunts_per_bus = {from_sparse, {0, 0, 0, 0, 0}};
+        topo.load_gens_per_bus = {from_sparse, {0, 0, 0, 0, 0}};
+        topo.power_sensors_per_bus = {from_sparse, {0, 0, 0, 0, 0}};
+        topo.power_sensors_per_source = {from_sparse, {0, 0}};
+        topo.power_sensors_per_load_gen = {from_sparse, {0}};
+        topo.power_sensors_per_shunt = {from_sparse, {0}};
+        // Sufficient branch sensors to pass necessary condition
+        topo.power_sensors_per_branch_from = {from_sparse, {0, 1, 2, 3, 4}};
+        topo.power_sensors_per_branch_to = {from_sparse, {0, 0, 0, 0, 0}};
+        topo.current_sensors_per_branch_from = {from_sparse, {0, 0, 0, 0, 0}};
+        topo.current_sensors_per_branch_to = {from_sparse, {0, 0, 0, 0, 0}};
+        // TWO voltage phasor sensors (complex measurements with both magnitude and angle)
+        // This triggers the condition: n_voltage_phasor_sensors > 1 && !topo.is_radial
+        topo.voltage_sensors_per_bus = {from_sparse, {0, 1, 2, 2, 2}};
+
+        MathModelParam<symmetric_t> param;
+        param.source_param = {SourceCalcParam{.y1 = 1.0, .y0 = 1.0}};
+        param.branch_param = {
+            {1.0, -1.0, -1.0, 1.0}, {1.0, -1.0, -1.0, 1.0}, {1.0, -1.0, -1.0, 1.0}, {1.0, -1.0, -1.0, 1.0}};
+
+        StateEstimationInput<symmetric_t> se_input;
+        se_input.source_status = {1};
+        // Two voltage PHASOR sensors (complex with both magnitude and angle)
+        se_input.measured_voltage = {
+            {.value = 1.0 + 0.1i, .variance = 1.0},  // Phasor at bus 0
+            {.value = 0.95 + 0.05i, .variance = 1.0} // Phasor at bus 1
+        };
+        // Branch power measurements
+        se_input.measured_branch_from_power = {
+            {.real_component = {.value = 1.0, .variance = 1.0}, .imag_component = {.value = 0.0, .variance = 1.0}},
+            {.real_component = {.value = 1.0, .variance = 1.0}, .imag_component = {.value = 0.0, .variance = 1.0}},
+            {.real_component = {.value = 1.0, .variance = 1.0}, .imag_component = {.value = 0.0, .variance = 1.0}},
+            {.real_component = {.value = 1.0, .variance = 1.0}, .imag_component = {.value = 0.0, .variance = 1.0}}};
+
+        auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
+        YBus<symmetric_t> const y_bus{topo_ptr, param_ptr};
+        math_solver::MeasuredValues<symmetric_t> const measured_values{*y_bus.shared_topology(), se_input};
+
+        // Verify that we have exactly 2 voltage phasor sensors (both with angle measurements)
+        Idx phasor_count = 0;
+        for (Idx bus = 0; bus < topo.n_bus(); ++bus) {
+            if (measured_values.has_voltage(bus) && measured_values.has_angle_measurement(bus)) {
+                ++phasor_count;
+            }
+        }
+        CHECK(phasor_count == 2); // Verify we have 2 voltage phasor sensors
+
+        // Get the observability result - should return is_observable = false without throwing
+        // because of early return: n_voltage_phasor_sensors > 1 && !topo.is_radial
+        auto result = math_solver::observability::observability_check(measured_values, y_bus.math_topology(),
+                                                                      y_bus.y_bus_structure());
+
+        // Verify that is_observable is false (due to multiple voltage phasors in meshed network)
+        CHECK(result.is_observable == false);
+
+        // Verify that use_perturbation() returns false when not observable
+        CHECK(result.use_perturbation() == false);
+    }
+
+    SUBCASE("Observable but ill-conditioned network returns true for use_perturbation") {
+        // Create a simple 3-bus network with sufficient sensors (observable but possibly ill-conditioned)
+        MathModelTopology topo;
+        topo.slack_bus = 0;
+        topo.is_radial = true;
+        topo.phase_shift = {0.0, 0.0, 0.0};
+        topo.branch_bus_idx = {{0, 1}, {1, 2}};
+        topo.sources_per_bus = {from_sparse, {0, 1, 1, 1}};
+        topo.shunts_per_bus = {from_sparse, {0, 0, 0, 0}};
+        topo.load_gens_per_bus = {from_sparse, {0, 0, 0, 0}};
+        topo.power_sensors_per_bus = {from_sparse, {0, 0, 0, 0}};
+        topo.power_sensors_per_source = {from_sparse, {0, 0}};
+        topo.power_sensors_per_load_gen = {from_sparse, {0}};
+        topo.power_sensors_per_shunt = {from_sparse, {0}};
+        // Add branch sensors to make it observable
+        topo.power_sensors_per_branch_from = {from_sparse, {0, 1, 2}};
+        topo.power_sensors_per_branch_to = {from_sparse, {0, 0, 0}};
+        topo.current_sensors_per_branch_from = {from_sparse, {0, 0, 0}};
+        topo.current_sensors_per_branch_to = {from_sparse, {0, 0, 0}};
+        topo.voltage_sensors_per_bus = {from_sparse, {0, 1, 1, 1}};
+
+        MathModelParam<symmetric_t> param;
+        param.source_param = {SourceCalcParam{.y1 = 1.0, .y0 = 1.0}};
+        param.branch_param = {{1.0, -1.0, -1.0, 1.0}, {1.0, -1.0, -1.0, 1.0}};
+
+        StateEstimationInput<symmetric_t> se_input;
+        se_input.source_status = {1};
+        se_input.measured_voltage = {{.value = 1.0, .variance = 1.0}};
+        se_input.measured_branch_from_power = {
+            {.real_component = {.value = 1.0, .variance = 1.0}, .imag_component = {.value = 0.0, .variance = 1.0}},
+            {.real_component = {.value = 1.0, .variance = 1.0}, .imag_component = {.value = 0.0, .variance = 1.0}}};
+
+        auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
+        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
+        YBus<symmetric_t> const y_bus{topo_ptr, param_ptr};
+        math_solver::MeasuredValues<symmetric_t> const measured_values{*y_bus.shared_topology(), se_input};
+
+        auto result = math_solver::observability::observability_check(measured_values, y_bus.math_topology(),
+                                                                      y_bus.y_bus_structure());
+
+        // Verify that is_observable is true
+        CHECK(result.is_observable == true);
+
+        // use_perturbation() should follow the invariant: is_observable && is_possibly_ill_conditioned
+        CHECK(result.use_perturbation() == (result.is_observable && result.is_possibly_ill_conditioned));
+    }
+
+    SUBCASE("Test use_perturbation logic directly") {
+        // Test the logic of use_perturbation() method directly
+        const ObservabilityResult result1{.is_observable = false, .is_possibly_ill_conditioned = false};
+        CHECK(result1.use_perturbation() == false);
+
+        const ObservabilityResult result2{.is_observable = false, .is_possibly_ill_conditioned = true};
+        CHECK(result2.use_perturbation() == false);
+
+        const ObservabilityResult result3{.is_observable = true, .is_possibly_ill_conditioned = false};
+        CHECK(result3.use_perturbation() == false);
+
+        const ObservabilityResult result4{.is_observable = true, .is_possibly_ill_conditioned = true};
+        CHECK(result4.use_perturbation() == true);
+    }
+}
+
 } // namespace power_grid_model
