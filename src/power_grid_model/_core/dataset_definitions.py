@@ -25,6 +25,7 @@ class _MetaEnum(EnumMeta):
         """
         return member in cls.__members__
 
+
 class DatasetType(StrEnum, metaclass=_MetaEnum):
     """
     A DatasetType is the type of a :class:`Dataset` in power grid model.
@@ -40,6 +41,9 @@ class DatasetType(StrEnum, metaclass=_MetaEnum):
     asym_output = "asym_output"
     update = "update"
     sc_output = "sc_output"
+
+    def __repr__(self):
+        return self.value
 
 
 class ComponentType(StrEnum, metaclass=_MetaEnum):
@@ -74,6 +78,9 @@ class ComponentType(StrEnum, metaclass=_MetaEnum):
     sym_current_sensor = "sym_current_sensor"
     asym_current_sensor = "asym_current_sensor"
     fault = "fault"
+
+    def __repr__(self):
+        return self.value
 
 class AttributeType(StrEnum, metaclass=_MetaEnum):
     """

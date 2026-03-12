@@ -14,6 +14,7 @@ from typing import TypedDict, TypeVar
 import numpy as np
 
 from power_grid_model._core.dataset_definitions import (
+    AttributeType,  # noqa: F401
     AttributeTypeVar,
     ComponentType,
     ComponentTypeVar,
