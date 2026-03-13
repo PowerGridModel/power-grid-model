@@ -168,6 +168,8 @@ That is to say, if there exists a tree that visits all nodes in the network, the
 
 ```{warning}
 The handling of voltage phasor sensor in the context of observability check is still work in progress.
+When there is more than 1 voltage phasor present in a meshed network, the sufficient check will pass the network
+through to the state estimation calculation directly. 
 ```
 
 In this case, the validation of the independent measurements is rather straightforward.

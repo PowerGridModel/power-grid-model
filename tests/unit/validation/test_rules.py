@@ -808,6 +808,12 @@ def test_all_valid_fault_phases():
     assert FaultPhaseError(ComponentType.fault, fields=["foo", "bar"], ids=list(range(26))) in errors
 
 
+def test_all_valid_fault_phases__empty_input():
+    valid = {ComponentType.fault: initialize_array(DatasetType.input, ComponentType.fault, 0)}
+    errors = all_valid_fault_phases(valid, ComponentType.fault, "foo", "bar")
+    assert not errors
+
+
 @pytest.mark.parametrize(
     ("current_sensor_type", "measured_terminal_type_1", "measured_terminal_type_2", "angle_measurement_type"),
     [
