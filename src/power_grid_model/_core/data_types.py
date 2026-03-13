@@ -13,16 +13,19 @@ from typing import TypedDict, TypeVar
 
 import numpy as np
 
-from power_grid_model._core.dataset_definitions import ComponentType, ComponentTypeVar
+from power_grid_model._core.dataset_definitions import (
+    AttributeType,  # noqa: F401
+    AttributeTypeVar,
+    ComponentType,
+    ComponentTypeVar,
+)
 
 type SingleArray = np.ndarray
-
-type AttributeType = str
 
 type SingleColumn = np.ndarray
 type DenseBatchArray = np.ndarray
 
-SingleColumnarData = dict[AttributeType, SingleColumn]
+SingleColumnarData = dict[AttributeTypeVar, SingleColumn]
 
 _SingleComponentData = TypeVar("_SingleComponentData", SingleArray, SingleColumnarData)  # deduction helper
 SingleComponentData = SingleArray | SingleColumnarData
@@ -35,7 +38,7 @@ BatchList = list[SingleDataset]
 
 type BatchColumn = np.ndarray
 
-DenseBatchColumnarData = dict[AttributeType, BatchColumn]
+DenseBatchColumnarData = dict[AttributeTypeVar, BatchColumn]
 
 type IndexPointer = np.ndarray
 
@@ -131,7 +134,7 @@ AsymValue = tuple[RealValue, RealValue, RealValue]
 
 AttributeValue = RealValue | NominalValue | AsymValue
 
-Component = dict[AttributeType, AttributeValue | str]
+Component = dict[AttributeTypeVar, AttributeValue | str]
 
 ComponentList = list[Component]
 

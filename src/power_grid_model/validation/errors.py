@@ -13,7 +13,7 @@ from enum import Enum
 from typing import Any
 
 from power_grid_model import ComponentType
-from power_grid_model._core.dataset_definitions import DatasetType
+from power_grid_model._core.dataset_definitions import AttributeType, DatasetType
 
 _MIN_FIELDS = 2
 _MIN_COMPONENTS = 2
@@ -43,7 +43,7 @@ class ValidationError(ABC):
     The component, or components, to which the error applies.
     """
 
-    field: str | list[str] | list[tuple[ComponentType, str]] | None = None
+    field: AttributeType | list[AttributeType] | list[tuple[ComponentType, AttributeType]] | None = None
     """
     The field, or fields, to which the error applies. A field can also be a tuple (component, field) when multiple
     components are being addressed.
@@ -78,7 +78,7 @@ class ValidationError(ABC):
         A string representation of the field to which this error applies
         """
 
-        def _unpack(field: str | tuple[ComponentType, str]) -> str:
+        def _unpack(field: AttributeType | tuple[ComponentType, AttributeType]) -> str:
             if isinstance(field, str):
                 return f"'{field}'"
             return ".".join(field)
@@ -136,10 +136,10 @@ class SingleFieldValidationError(ValidationError):
 
     _message = "Field {field} is not valid for {n} {objects}."
     component: ComponentType
-    field: str
+    field: AttributeType
     ids: list[int] | None
 
-    def __init__(self, component: ComponentType, field: str, ids: Iterable[int] | None):
+    def __init__(self, component: ComponentType, field: AttributeType, ids: Iterable[int] | None):
         """
         Args:
             component: Component name
@@ -158,10 +158,10 @@ class MultiFieldValidationError(ValidationError):
 
     _message = "Combination of fields {field} is not valid for {n} {objects}."
     component: ComponentType
-    field: list[str]
+    field: list[AttributeType]
     ids: list[int]
 
-    def __init__(self, component: ComponentType, fields: list[str], ids: list[int]):
+    def __init__(self, component: ComponentType, fields: list[AttributeType], ids: list[int]):
         """
         Args:
             component: Component name
@@ -184,11 +184,11 @@ class MultiComponentValidationError(ValidationError):
     """
 
     component: list[ComponentType]
-    field: list[tuple[ComponentType, str]]
+    field: list[tuple[ComponentType, AttributeType]]
     ids: list[tuple[ComponentType, int]]
     _message = "Fields {field} are not valid for {n} {objects}."
 
-    def __init__(self, fields: list[tuple[ComponentType, str]], ids: list[tuple[ComponentType, int]]):
+    def __init__(self, fields: list[tuple[ComponentType, AttributeType]], ids: list[tuple[ComponentType, int]]):
         """
         Args:
             fields: List of field names, formatted as tuples (component, field)
@@ -215,7 +215,7 @@ class NotIdenticalError(SingleFieldValidationError):
     unique: set[Any]
     num_unique: int
 
-    def __init__(self, component: ComponentType, field: str, ids: Iterable[int], values: list[Any]):
+    def __init__(self, component: ComponentType, field: AttributeType, ids: Iterable[int], values: list[Any]):
         super().__init__(component, field, ids)
         self.values = values
         self.unique = set(self.values)
@@ -250,7 +250,7 @@ class InvalidValueError(SingleFieldValidationError):
     values: list
     __hash__ = None  # type: ignore[assignment]
 
-    def __init__(self, component: ComponentType, field: str, ids: list[int], values: list):
+    def __init__(self, component: ComponentType, field: AttributeType, ids: list[int], values: list):
         super().__init__(component, field, ids)
         self.values = values
 
@@ -275,7 +275,9 @@ class InvalidEnumValueError(SingleFieldValidationError):
     enum: type[Enum] | list[type[Enum]]
     __hash__ = None  # type: ignore[assignment]
 
-    def __init__(self, component: ComponentType, field: str, ids: list[int], enum: type[Enum] | list[type[Enum]]):
+    def __init__(
+        self, component: ComponentType, field: AttributeType, ids: list[int], enum: type[Enum] | list[type[Enum]]
+    ):
         super().__init__(component, field, ids)
         self.enum = enum
 
@@ -330,7 +332,7 @@ class IdNotInDatasetError(SingleFieldValidationError):
     __hash__ = None  # type: ignore[assignment]
 
     def __init__(self, component: ComponentType, ids: list[int], ref_dataset: DatasetType):
-        super().__init__(component=component, field="id", ids=ids)
+        super().__init__(component=component, field=AttributeType.id, ids=ids)
         self.ref_dataset = ref_dataset
 
     def __eq__(self, other):
@@ -360,7 +362,7 @@ class InvalidIdError(SingleFieldValidationError):
     def __init__(
         self,
         component: ComponentType,
-        field: str,
+        field: AttributeType,
         ids: list[int] | None = None,
         ref_components: ComponentType | list[ComponentType] | None = None,
         filters: dict[str, Any] | None = None,
@@ -412,7 +414,9 @@ class ComparisonError(SingleFieldValidationError):
 
     __hash__ = None  # type: ignore[assignment]
 
-    def __init__(self, component: ComponentType, field: str, ids: list[int], ref_value: "ComparisonError.RefType"):
+    def __init__(
+        self, component: ComponentType, field: AttributeType, ids: list[int], ref_value: "ComparisonError.RefType"
+    ):
         super().__init__(component, field, ids)
         self.ref_value = ref_value
 
@@ -530,7 +534,7 @@ class InvalidAssociatedEnumValueError(MultiFieldValidationError):
     def __init__(
         self,
         component: ComponentType,
-        fields: list[str],
+        fields: list[AttributeType],
         ids: list[int],
         enum: type[Enum] | list[type[Enum]],
     ):

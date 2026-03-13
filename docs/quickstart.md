@@ -24,9 +24,12 @@ Before we start working on the network, we need first import the main model clas
 enumerations and meta data.
 
 ```python
+from power_grid_model import AttributeType
+from power_grid_model import ComponentType
+from power_grid_model import DatasetType
+from power_grid_model import initialize_array
 from power_grid_model import LoadGenType
 from power_grid_model import PowerGridModel
-from power_grid_model import initialize_array
 from power_grid_model.utils import self_test
 ```
 
@@ -50,48 +53,49 @@ format.
 
 ```python
 # node
-node = initialize_array('input', 'node', 2)
-node['id'] = [1, 2]
-node['u_rated'] = [10.5e3, 10.5e3]
+node = initialize_array(DatasetType.input, ComponentType.node, 2)
+node[AttributeType.id] = [1, 2]
+node[AttributeType.u_rated] = [10.5e3, 10.5e3]
 ```
 
 The code above generates a node input array with two nodes, and assigns the attributes of the nodes to the array.
-Similarly, we can create input arrays for line, load, and generation.
+Similarly, we can create input arrays for line, load, and generation. Dataset, component and attributes type can
+be strings or enums defined as DatasetType, ComponentType and AttributeType respectively.
 A dictionary of such arrays is used for `input_data` and `update_data`.
 
 ```python
 # line
-line = initialize_array('input', 'line', 1)
-line['id'] = [3]
-line['from_node'] = [1]
-line['to_node'] = [2]
-line['from_status'] = [1]
-line['to_status'] = [1]
-line['r1'] = [0.25]
-line['x1'] = [0.2]
-line['c1'] = [10e-6]
-line['tan1'] = [0.0]
-line['i_n'] = [1000]
+line = initialize_array(DatasetType.input, ComponentType.line, 1)
+line[AttributeType.id] = [3]
+line[AttributeType.from_node] = [1]
+line[AttributeType.to_node] = [2]
+line[AttributeType.from_status] = [1]
+line[AttributeType.to_status] = [1]
+line[AttributeType.r1] = [0.25]
+line[AttributeType.x1] = [0.2]
+line[AttributeType.c1] = [10e-6]
+line[AttributeType.tan1] = [0.0]
+line[AttributeType.i_n] = [1000]
 # load
-sym_load = initialize_array('input', 'sym_load', 1)
-sym_load['id'] = [4]
-sym_load['node'] = [2]
-sym_load['status'] = [1]
-sym_load['type'] = [LoadGenType.const_power]
-sym_load['p_specified'] = [2e6]
-sym_load['q_specified'] = [0.5e6]
+sym_load = initialize_array(DatasetType.input, ComponentType.sym_load, 1)
+sym_load[AttributeType.id] = [4]
+sym_load[AttributeType.node] = [2]
+sym_load[AttributeType.status] = [1]
+sym_load[AttributeType.type] = [LoadGenType.const_power]
+sym_load[AttributeType.p_specified] = [2e6]
+sym_load[AttributeType.q_specified] = [0.5e6]
 # source
-source = initialize_array('input', 'source', 1)
-source['id'] = [5]
-source['node'] = [1]
-source['status'] = [1]
-source['u_ref'] = [1.0]
+source = initialize_array(DatasetType.input, ComponentType.source, 1)
+source[AttributeType.id] = [5]
+source[AttributeType.node] = [1]
+source[AttributeType.status] = [1]
+source[AttributeType.u_ref] = [1.0]
 # all
 input_data = {
-    'node': node,
-    'line': line,
-    'sym_load': sym_load,
-    'source': source
+    ComponentType.node: node,
+    ComponentType.line: line,
+    ComponentType.sym_load: sym_load,
+    ComponentType.source: source
 }
 ```
 
@@ -128,9 +132,9 @@ We can use `pandas` to convert them to data frames and print them.
 import pandas as pd
 
 print('Node Input')
-print(pd.DataFrame(input_data['node']))
+print(pd.DataFrame(input_data[ComponentType.node]))
 print('Node Result')
-print(pd.DataFrame(result['node']))
+print(pd.DataFrame(result[ComponentType.node]))
 ```
 
 The result data can then be viewed in tabular forms.
@@ -141,9 +145,9 @@ Node Input
 0   1  10500.0
 1   2  10500.0
 Node Result
-   id  energized      u_pu             u   u_angle
-0   1          1  0.999964  10499.619561 -0.000198
-1   2          1  0.994801  10445.415523 -0.003096
+   id  energized      u_pu             u   u_angle             p              q
+0   1          1  0.999964  10499.619561 -0.000198  2.009413e+06  162978.063374
+1   2          1  0.994801  10445.415523 -0.003096 -2.000000e+06 -500000.000000
 ```
 
 ## Validation
