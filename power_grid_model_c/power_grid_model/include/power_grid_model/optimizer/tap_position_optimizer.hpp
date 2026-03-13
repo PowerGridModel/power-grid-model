@@ -6,28 +6,57 @@
 
 #include "base_optimizer.hpp"
 
-#include "../all_components.hpp"
 #include "../auxiliary/dataset.hpp"
-#include "../auxiliary/meta_gen/update.hpp"
+#include "../auxiliary/meta_data.hpp"
+#include "../calculation_parameters.hpp"
+#include "../common/common.hpp"
 #include "../common/enum.hpp"
 #include "../common/exception.hpp"
+#include "../common/three_phase_tensor.hpp"
+#include "../component/branch.hpp"
+#include "../component/branch3.hpp"
+#include "../component/component.hpp"
+#include "../component/line.hpp"
+#include "../component/link.hpp"
+#include "../component/node.hpp"
+#include "../component/source.hpp"
 #include "../component/three_winding_transformer.hpp"
 #include "../component/transformer.hpp"
 #include "../component/transformer_tap_regulator.hpp"
+#include "../component/transformer_utils.hpp"
+#include "../container.hpp"
+#include "../container_fwd.hpp"
 #include "../main_core/container_queries.hpp"
-#include "../main_core/output.hpp"
+#include "../main_core/state.hpp"
 #include "../main_core/state_queries.hpp"
 
 #include <boost/graph/compressed_sparse_row_graph.hpp>
 
 #include <algorithm>
+#include <array>
+#include <boost/graph/graph_selectors.hpp>
+#include <boost/graph/iteration_macros.hpp>
+#include <boost/pending/property.hpp>
+#include <cassert>
 #include <compare>
+#include <concepts>
+#include <cstddef>
+#include <cstdint>
+#include <cstdlib>
+#include <format>
 #include <functional>
+#include <limits>
 #include <numeric>
 #include <optional>
 #include <queue>
 #include <ranges>
+#include <set>
 #include <sstream>
+#include <string>
+#include <string_view>
+#include <tuple>
+#include <type_traits>
+#include <utility>
 #include <variant>
 #include <vector>
 

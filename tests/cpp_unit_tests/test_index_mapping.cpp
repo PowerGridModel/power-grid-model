@@ -4,7 +4,11 @@
 
 #include <power_grid_model/index_mapping.hpp>
 
+#include <power_grid_model/common/common.hpp>
+
 #include <doctest/doctest.h>
+
+#include <algorithm>
 
 namespace power_grid_model {
 

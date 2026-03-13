@@ -2,9 +2,13 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include <power_grid_model_cpp/basics.hpp>
 #include <power_grid_model_cpp/utils.hpp>
 
 #include <doctest/doctest.h>
+
+#include <array>
+#include <complex>
 
 namespace power_grid_model_cpp {
 TEST_CASE("API Utils") {

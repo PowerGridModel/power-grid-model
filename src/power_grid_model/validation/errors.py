@@ -368,7 +368,7 @@ class InvalidIdError(SingleFieldValidationError):
         super().__init__(component=component, field=field, ids=ids)
         ref_components = ref_components if ref_components is not None else []
         self.ref_components = [ref_components] if isinstance(ref_components, (str, ComponentType)) else ref_components
-        self.filters = filters if filters else None
+        self.filters = filters or None
 
     @property
     def ref_components_str(self):

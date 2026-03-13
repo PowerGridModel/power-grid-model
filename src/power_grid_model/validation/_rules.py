@@ -1082,8 +1082,12 @@ def all_valid_fault_phases(
         A list containing zero or more FaultPhaseErrors; listing all the ids of faults where the fault phase was
         invalid, given the fault phase.
     """
-    fault_types = data[component][fault_type_field]
-    fault_phases = data[component][fault_phase_field]
+    component_data = data[component]
+    if component_data.size == 0:
+        return []
+
+    fault_types = component_data[fault_type_field]
+    fault_phases = component_data[fault_phase_field]
 
     supported_combinations: dict[FaultType, list[FaultPhase]] = {
         FaultType.three_phase: [FaultPhase.abc, FaultPhase.default_value, FaultPhase.nan],

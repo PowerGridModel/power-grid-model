@@ -52,7 +52,6 @@ Nomenclature:
 
 */
 
-#include "block_matrix.hpp"
 #include "common_solver_functions.hpp"
 #include "iterative_pf_solver.hpp"
 #include "sparse_lu_solver.hpp"
@@ -60,9 +59,16 @@ Nomenclature:
 
 #include "../calculation_parameters.hpp"
 #include "../common/common.hpp"
+#include "../common/counting_iterator.hpp"
+#include "../common/enum.hpp"
 #include "../common/exception.hpp"
 #include "../common/three_phase_tensor.hpp"
-#include "../common/timer.hpp"
+
+#include <algorithm>
+#include <cmath>
+#include <complex>
+#include <memory>
+#include <vector>
 
 namespace power_grid_model::math_solver {
 

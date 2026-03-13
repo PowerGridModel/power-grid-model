@@ -7,10 +7,28 @@
 #include "common.hpp"
 
 #include "../../common/common.hpp"
+#include "../../common/enum.hpp"
 #include "../../common/exception.hpp"
+#include "../../common/three_phase_tensor.hpp"
 #include "../../common/typing.hpp"
 #include "../dataset.hpp"
 #include "../meta_data.hpp"
+
+#include <nlohmann/json_fwd.hpp>
+
+#include <algorithm>
+#include <cassert>
+#include <concepts>
+#include <cstddef>
+#include <cstdint>
+#include <exception>
+#include <format>
+#include <functional>
+#include <limits>
+#include <map>
+#include <numeric>
+#include <string>
+#include <vector>
 
 #ifdef _MSC_VER
 #pragma warning(push)

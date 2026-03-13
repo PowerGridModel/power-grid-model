@@ -1,6 +1,9 @@
 # SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+
 #
+
 # SPDX-License-Identifier: MPL-2.0
+
 ---
 Checks: '
 -*,
@@ -44,7 +47,6 @@ google-*,
 -google-default-arguments,
 misc-*,
 -misc-confusable-identifiers,
--misc-include-cleaner,
 -misc-no-recursion,
 -misc-non-private-member-variables-in-classes,
 modernize-*,
@@ -68,8 +70,10 @@ readability-*,
 
 WarningsAsErrors: '*'
 
-
 HeaderFilterRegex: '.*'
 
 FormatStyle: file
+
+CheckOptions:
+  misc-include-cleaner.IgnoreHeaders: 'Eigen/.*;nlohmann/.*;msgpack/.*;boost/.*'
 ...

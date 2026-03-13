@@ -9,6 +9,10 @@
 #include "../auxiliary/input.hpp"
 #include "../auxiliary/output.hpp"
 #include "../auxiliary/update.hpp"
+#include "power_grid_model/common/common.hpp"
+#include "power_grid_model/common/enum.hpp"
+#include <cassert>
+#include <concepts>
 
 namespace power_grid_model {
 

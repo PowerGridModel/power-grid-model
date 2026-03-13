@@ -8,14 +8,14 @@
 #include "line_utils.hpp"
 
 #include "../auxiliary/input.hpp"
-#include "../auxiliary/output.hpp"
 #include "../auxiliary/update.hpp"
 #include "../calculation_parameters.hpp"
 #include "../common/common.hpp"
+#include "../common/exception.hpp"
 #include "../common/matrix_utils.hpp"
 #include "../common/three_phase_tensor.hpp"
 
-#include <numeric>
+#include <complex>
 
 namespace power_grid_model {
 

@@ -76,6 +76,7 @@ PGM_API void PGM_buffer_set_nan(PGM_Handle* handle, PGM_MetaComponent const* com
  * You can set it to -1, the default stride of the size of the attribute type (like sizeof(double)).
  * If you set it to a positive number, the i-th set-value will retrieve the source data at
  * (void const*)((char const*)src_ptr + i * src_stride)
+ * where i ranges from buffer_offset to buffer_offset + size - 1.
  */
 PGM_API void PGM_buffer_set_value(PGM_Handle* handle, PGM_MetaAttribute const* attribute, void* buffer_ptr,
                                   void const* src_ptr, PGM_Idx buffer_offset, PGM_Idx size, PGM_Idx src_stride);
@@ -95,8 +96,9 @@ PGM_API void PGM_buffer_set_value(PGM_Handle* handle, PGM_MetaAttribute const* a
  * @param size The size of the buffer in terms of number of elements.
  * @param dest_stride The stride of the destination array in bytes.
  * You can set it to -1, the default stride of the size of the attribute type (like sizeof(double)).
- * If you set it to a positive number, the i-th get-value will retrieve the source data at
+ * If you set it to a positive number, the i-th get-value will write to the destination data at
  * (void*)((char*)dest_ptr + i * dest_stride)
+ * where i ranges from buffer_offset to buffer_offset + size - 1.
  */
 PGM_API void PGM_buffer_get_value(PGM_Handle* handle, PGM_MetaAttribute const* attribute, void const* buffer_ptr,
                                   void* dest_ptr, PGM_Idx buffer_offset, PGM_Idx size, PGM_Idx dest_stride);

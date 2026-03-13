@@ -7,8 +7,6 @@
 // clang-format off
 #pragma once
 
-#include "meta_data.hpp"
-
 #include "../common/common.hpp"
 #include "../common/enum.hpp"
 #include "../common/three_phase_tensor.hpp"

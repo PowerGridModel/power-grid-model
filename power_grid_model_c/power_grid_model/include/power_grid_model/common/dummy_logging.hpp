@@ -4,10 +4,11 @@
 
 #pragma once
 
+#include "common.hpp"
 #include "logging.hpp"
 
+#include <concepts>
 #include <string_view>
-#include <vector>
 
 namespace power_grid_model::common::logging {
 class NoLogger : public Logger {
