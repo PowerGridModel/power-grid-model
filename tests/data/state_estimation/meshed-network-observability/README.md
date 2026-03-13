@@ -10,20 +10,20 @@ The grids in tests are illustrated in the `test_network_diagrams.svg`.
 
 Test cases in this directory cover the following scenarios:
 
-1. **01-observable-with-branch-measurement**:
-2. Observable system with branch measurement.
-3. **02-unobservable-with-branch-measurement**:
-4. Unobservable system with branch measurement.
-5. **03-observable-without-branch-measurement**:
-6. Observable system without branch measurement (using only nodal measurements).
-7. **04-observable-without-branch-measurement**:
-8. Another scenario of observable system without branch measurement.
-9. **05-observable-with-branch-measurement-disconnected**:
-10. Observable system with disconnected components (multiple islands) and branch measurements.
-11. **06-unobservable-with-branch-measurement-disconnected**:
-12. Unobservable system with disconnected components (multiple islands) and branch measurements.
-13. **07-observable-2-voltage-sensors**:
-14. Observable system with 2 voltage sensors.
+**01-observable-with-branch-measurement**:
+Observable system with branch measurement.
+**02-unobservable-with-branch-measurement**:
+Unobservable system with branch measurement.
+**03-observable-without-branch-measurement**:
+Observable system without branch measurement (using only nodal measurements).
+**04-observable-without-branch-measurement**:
+Another scenario of observable system without branch measurement.
+**05-observable-with-branch-measurement-disconnected**:
+Observable system with disconnected components (multiple islands) and branch measurements.
+**06-unobservable-with-branch-measurement-disconnected**:
+Unobservable system with disconnected components (multiple islands) and branch measurements.
+**07-observable-2-voltage-sensors**:
+Observable system with 2 voltage sensors.
 
 Note: In theory, it is impossible to construct an unobservable case with only nodal measurements
 (i.e., without branch measurement).
