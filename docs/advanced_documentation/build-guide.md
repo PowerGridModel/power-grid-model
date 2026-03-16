@@ -23,6 +23,9 @@ In this repository there are three builds:
 * A separate example [CMake](https://cmake.org/) project with a small C++ program that shows how to find and use the
   installable package.
 
+```{contents}
+```
+
 ## Build Requirements
 
 To build the library from source, you need to first prepare the compiler toolchains and the build dependencies.
@@ -34,8 +37,8 @@ After this section there are examples of setup in Linux (Ubuntu 24.04), Windows 
 This library is written and tested on `x86_64` and `arm64` architectures.
 Building the library in `IA-32` might work, but this is not tested.
 
-The source code is written with the mindset of ISO standard C++ only, i.e. we avoid compiler-extension o
- platform-specific features as much as possible.
+The source code is written with the mindset of ISO standard C++ only, i.e. we avoid compiler-extension or
+platform-specific features as much as possible.
 In this way, minimum effort should be necessary to port the library to other platforms/architectures.
 
 ### Compiler Support
@@ -53,7 +56,7 @@ Below is a list of tested compilers:
   * Version 18.x tested in CI.
   * Version 18.x tested in CI with code quality checks.
 
-```{note}
+```{Admonition} Additional information
 Wheel builds for Linux are done inside containers using `cibuildwheel`:
 - **manylinux_2_28**: glibc-based Linux distributions (Ubuntu, Debian, Fedora, etc.)
 - **musllinux_1_2**: musl-based Linux distributions (Alpine Linux, etc.)
@@ -64,7 +67,8 @@ These are handled automatically in CI. For local development, use your system's 
 #### Windows
 
 * MSVC >= 19.0:
-  * Latest release tested in CI (e.g. Visual Studio 2022, IDE or build tools).* Clang CL >= 19.0:
+  * Latest release tested in CI (e.g. Visual Studio 2022, IDE or build tools).
+* Clang CL >= 19.0:
   * Latest release tested in CI (e.g. Visual Studio 2022, IDE or build tools).
 
 #### macOS
@@ -98,22 +102,12 @@ The C++ dependencies below are **build-time only**. When building the Python pac
 | [msgpack-cxx](https://github.com/msgpack/msgpack-c/tree/cpp_master) | Installed automatically              | CMake needs to be able find `msgpack-cxx`   | header-only | [Boost Software License - Version 1.0](https://github.com/msgpack/msgpack-c/blob/cpp_master/LICENSE_1_0.txt) |
 | [doctest](https://github.com/doctest/doctest)                       | None                                 | CMake needs to be able find `doctest`       | header-only | [MIT](https://github.com/doctest/doctest/blob/master/LICENSE.txt)                                            |
 
-The recommended way to install the C++ dependencies for a CMake build on any supported platform is via
-[`uv`](https://github.com/astral-sh/uv) and
-[pgm-build-dependencies](https://github.com/PowerGridModel/pgm-build-dependencies).
-`pgm-build-dependencies` is a Python package that bundles all required header-only C++ libraries.
-
-```shell
-uv tool install https://github.com/PowerGridModel/pgm-build-dependencies/releases/latest/download/pgm_build_dependencies-0.1.0-py3-none-any.whl
-pgm-build-setup-path
-```
-
-Where `pgm-build-setup-path` gives you the path where the C++ dependencies were installed.
-Then set `CMAKE_PREFIX_PATH` so CMake can locate the libraries. See the platform-specific sections below for the exact
-syntax (`export` on Linux/macOS, `$env:` on PowerShell).
+To install the C++ dependencies for a CMake build, use your platform's package manager of choice.
+In the platform-specific examples below, we will give some suggestions.
 
 ```{note}
-Alternatively, you can install the C++ dependencies using your platform's package manager (e.g. `brew` on macOS, `brew` or `apt` on Linux, `conda` on Windows). In that case, set `CMAKE_PREFIX_PATH` to the installation prefix of your package manager instead.
+Commonly used package managers include `brew` on macOS, `brew` or `apt` on Linux, and `conda` on Windows.
+Set `CMAKE_PREFIX_PATH` to the installation prefix of your package manager so CMake can locate the libraries.
 ```
 
 #### Python
@@ -160,7 +154,7 @@ self_test()
 ### User build
 
 If you are a C-API user of the library, you can build the CMake using all the default settings.
-You can specifiy a standard [CMAKE_BUILD_TYPE](https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html).
+You can specify a standard [CMAKE_BUILD_TYPE](https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html).
 This will only build the core C-API dynamic library.
 
 ```shell
@@ -200,22 +194,22 @@ In the developer build the following build targets (directories) are enabled:
 
 * `power_grid_model_c`: a dynamic library (`.so` on Linux, `.dylib` on macOS, `.dll` on Windows) with stable pure
 C API/ABI which can be used by any
-  application
+  application.
 * `tests/cpp_unit_tests_*`: the different unit test targets for the C++ core using the `doctest` framework.
-* `tests/cpp_validation_tests`: the validation test target using the `doctest` framework
-* `tests/native_api_tests`: the C API test target using the `doctest` framework
+* `tests/cpp_validation_tests`: the validation test target using the `doctest` framework.
+* `tests/native_api_tests`: the C API test target using the `doctest` framework.
 * `tests/benchmark_cpp`: the C++ benchmark target for performance measure.
-* `power_grid_model_c_example`: an example C program to call the dynamic library
+* `power_grid_model_c_example`: an example C program to call the dynamic library.
 
 On Linux/macOS, the presets will use command `clang`/`clang++` or `gcc`/`g++` to find the relevant `clang` or `gcc`
 compiler.
-It is the developer's reponsiblity to properly define symbolic links (which should be discoverable through `PATH`
+It is the developer's responsibility to properly define symbolic links (which should be discoverable through `PATH`
 environment variable) of `clang` or `gcc` compiler in your system.
 If you want to build with `clang-tidy`, you also need to define symbolic link of `clang-tidy` to point to the actual
 `clang-tidy` executable of your system.
 
-Similar also applies to Windows: the presets will use command `cl.exe` or `clang-cl.exe` to find the compiler.
-Developer needs to make sure the they are discoverable in `PATH`.
+The same also applies to Windows: the presets will use command `cl.exe` or `clang-cl.exe` to find the compiler.
+The developer needs to make sure they are discoverable in `PATH`.
 For x64 Windows native development using MSVC or Clang CL, please use the `x64 Native Command Prompt`, which uses
 `vcvarsall.bat` to set up the appropriate build environment.
 
@@ -247,23 +241,24 @@ Install the minimum required packages:
 
 ```shell
 sudo apt update && sudo apt -y upgrade
-sudo apt install -y build-essential gcc g++ clang-18 ninja-build pkg-config
+sudo apt install -y build-essential gcc g++ clang-18 make ninja-build pkg-config
 ```
 
 The following packages are optional depending on your use case:
 
 ```shell
-# For coverage reports
-sudo apt install -y gcovr lcov
-# For debugging
-sudo apt install -y gdb
-# For downloading tools or scripted setup
-sudo apt install -y wget curl zip unzip tar git
+sudo apt install -y gcovr lcov # For coverage reports
+sudo apt install -y gdb # For debugging
+sudo apt install -y wget curl zip unzip tar git # General use tools
 ```
 
 ### C++ Dependencies for CMake
 
-For CMake builds, install the C++ dependencies as described in the [C++ build dependencies](#c) section above.
+The recommended way to get the [C++ packages](#c) and `uv` is via [Homebrew](https://brew.sh):
+
+```shell
+brew install boost eigen nlohmann-json msgpack-cxx doctest cmake uv
+```
 
 ### Environment variables
 
@@ -272,7 +267,7 @@ Append the following lines into the file `${HOME}/.bashrc`.
 ```shell
 export CXX=clang++-18            # or g++-14
 export CC=clang-18               # or gcc-14
-export CMAKE_PREFIX_PATH=$(pgm-build-setup-path)  # only needed for CMake builds
+export CMAKE_PREFIX_PATH=/home/linuxbrew/.linuxbrew  # only needed for CMake builds
 export LLVM_COV=llvm-cov-18      # only if you want to use one of the llvm features
 export CLANG_TIDY=clang-tidy-18  # only if you want to use one of the clang-tidy presets
 ```
@@ -344,11 +339,10 @@ powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | ie
 
 ### C++ Dependencies for CMake
 
-For CMake builds, install the C++ dependencies as described in the [C++ build dependencies](#c) section above.
-Open a PowerShell terminal and run:
+The recommended way to get [C++ packages](#c) is via `conda`. Open a miniforge console.
 
-```powershell
-uv tool install https://github.com/PowerGridModel/pgm-build-dependencies/releases/latest/download/pgm_build_dependencies-0.1.0-py3-none-any.whl
+```shell
+conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge libboost-headers eigen nlohmann_json msgpack-cxx doctest
 ```
 
 ### Environment variables
@@ -356,35 +350,26 @@ uv tool install https://github.com/PowerGridModel/pgm-build-dependencies/release
 Set `CMAKE_PREFIX_PATH` so CMake can locate the C++ libraries. In PowerShell:
 
 ```powershell
-$env:CMAKE_PREFIX_PATH = (pgm-build-setup-path)
+$env:CMAKE_PREFIX_PATH = C:\conda_envs\cpp_pkgs\Library
 ```
 
 To make it persistent across sessions:
 
 ```powershell
-[System.Environment]::SetEnvironmentVariable("CMAKE_PREFIX_PATH", (pgm-build-setup-path), "User")
+[System.Environment]::SetEnvironmentVariable("CMAKE_PREFIX_PATH", "C:\conda_envs\cpp_pkgs\Library", "User")
 ```
-
-```{note}
-Alternatively, you can use `conda` to install C++ dependencies:
-
-```shell
-conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge libboost-headers eigen nlohmann_json msgpack-cxx doctest
-```
-
-In that case, set `CMAKE_PREFIX_PATH` to `C:\conda_envs\cpp_pkgs\Library`.
 
 ### Build Python Library from Source
 
 Clone repository, go to a root folder you prefer to save the repositories, open a Git Bash Console.
 
-```shell
+```powershell
 git clone https://github.com/PowerGridModel/power-grid-model.git
 ```
 
 Go to the repository folder in your powershell, build project from source and run `pytest`.
 
-```shell
+```powershell
 uv sync
 uv run pytest
 ```
@@ -394,14 +379,14 @@ uv run pytest
 For debugging purposes, it may be useful to build the Power Grid Model with debug symbols in the shared native library.
 To do so, the following command can be used to override the default build settings.
 
-```shell
+```powershell
 uv sync --config-settings=cmake.build-type="RelWithDebInfo"
 ```
 
 It is also possible to install the Power Grid Model as a full debug build, including extra sanity checks and with a
 lower degree of optimizations. Note this may come with a significant impact on the performance.
 
-```shell
+```powershell
 uv sync --config-settings=cmake.build-type="Debug"
 ```
 
@@ -424,21 +409,17 @@ It includes debug and release builds.
   Code, make sure to open that IDE from a terminal that does so instead (e.g. `x64 Native Tools Command Prompt`).
 ```
 
-## Example Setup for macOS (Sequoia)
+## Example Setup for macOS (Tahoe)
 
-In this section an example is given for setup in macOS Sequoia and project default python.
-
-### macOS Software Packages
-
-Install the compiler toolchain and build tools with [Homebrew](https://brew.sh/).
-
-```shell
-brew install ninja cmake uv
-```
+In this section, an example is given for setup in macOS Tahoe and the project's default Python.
 
 ### C++ Dependencies for CMake
 
-For CMake builds, install the C++ dependencies as described in the [C++ build dependencies](#c) section above.
+The recommended way to get the [C++ packages](#c) and `uv` is via [Homebrew](https://brew.sh):
+
+```shell
+brew install ninja cmake boost eigen nlohmann-json msgpack-cxx doctest uv
+```
 
 ### Environment variables
 
@@ -447,7 +428,7 @@ Append the following lines into the file `${HOME}/.zshrc` (or `${HOME}/.bashrc` 
 ```shell
 export CXX=clang++
 export CC=clang
-export CMAKE_PREFIX_PATH=$(pgm-build-setup-path)  # only needed for CMake builds
+export CMAKE_PREFIX_PATH=/usr/local  # only needed for CMake builds
 ```
 
 ### Build Python Library from Source
