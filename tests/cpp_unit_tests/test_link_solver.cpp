@@ -9,9 +9,16 @@
 #include <doctest/doctest.h>
 
 #include <cstdint>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace power_grid_model::link_solver {
+namespace {
+[[nodiscard]] IntS data_map_key_gen(uint64_t row_idx, uint64_t col_idx, uint64_t row_number) {
+    return row_idx * row_number + col_idx;
+}
+} // namespace
 TEST_CASE("Test the link solver algorithm") {
     using namespace detail;
 
@@ -19,52 +26,52 @@ TEST_CASE("Test the link solver algorithm") {
 
         SUBCASE("One edge, two nodes") {
             auto edges = std::vector<BranchIdx>{{0, 1}};
-            AdjacencyMap const adjacency_list = build_adjacency_list(edges);
+            AdjacencyMap const adjacency_map = build_adjacency_map(edges);
 
-            REQUIRE(adjacency_list.size() == 2);
-            CHECK(adjacency_list.at(0) == std::unordered_set<uint64_t>{0});
-            CHECK(adjacency_list.at(1) == std::unordered_set<uint64_t>{0});
+            REQUIRE(adjacency_map.size() == 2);
+            CHECK(adjacency_map.at(0) == std::unordered_set<uint64_t>{0});
+            CHECK(adjacency_map.at(1) == std::unordered_set<uint64_t>{0});
         }
 
         SUBCASE("Two edges, three nodes") {
             auto edges = std::vector<BranchIdx>{{1, 0}, {1, 2}};
-            AdjacencyMap const adjacency_list = build_adjacency_list(edges);
+            AdjacencyMap const adjacency_map = build_adjacency_map(edges);
 
-            REQUIRE(adjacency_list.size() == 3);
-            CHECK(adjacency_list.at(0) == std::unordered_set<uint64_t>{0});
-            CHECK(adjacency_list.at(1) == std::unordered_set<uint64_t>{0, 1});
-            CHECK(adjacency_list.at(2) == std::unordered_set<uint64_t>{1});
+            REQUIRE(adjacency_map.size() == 3);
+            CHECK(adjacency_map.at(0) == std::unordered_set<uint64_t>{0});
+            CHECK(adjacency_map.at(1) == std::unordered_set<uint64_t>{0, 1});
+            CHECK(adjacency_map.at(2) == std::unordered_set<uint64_t>{1});
         }
 
         SUBCASE("Three edges, three nodes") {
             auto edges = std::vector<BranchIdx>{{0, 1}, {1, 2}, {2, 0}};
-            AdjacencyMap const adjacency_list = build_adjacency_list(edges);
+            AdjacencyMap const adjacency_map = build_adjacency_map(edges);
 
-            REQUIRE(adjacency_list.size() == 3);
-            CHECK(adjacency_list.at(0) == std::unordered_set<uint64_t>{0, 2});
-            CHECK(adjacency_list.at(1) == std::unordered_set<uint64_t>{0, 1});
-            CHECK(adjacency_list.at(2) == std::unordered_set<uint64_t>{1, 2});
+            REQUIRE(adjacency_map.size() == 3);
+            CHECK(adjacency_map.at(0) == std::unordered_set<uint64_t>{0, 2});
+            CHECK(adjacency_map.at(1) == std::unordered_set<uint64_t>{0, 1});
+            CHECK(adjacency_map.at(2) == std::unordered_set<uint64_t>{1, 2});
         }
 
         SUBCASE("Two edges, two nodes") {
             auto edges = std::vector<BranchIdx>{{0, 1}, {0, 1}};
-            AdjacencyMap const adjacency_list = build_adjacency_list(edges);
+            AdjacencyMap const adjacency_map = build_adjacency_map(edges);
 
-            REQUIRE(adjacency_list.size() == 2);
-            CHECK(adjacency_list.at(0) == std::unordered_set<uint64_t>{0, 1});
-            CHECK(adjacency_list.at(1) == std::unordered_set<uint64_t>{0, 1});
+            REQUIRE(adjacency_map.size() == 2);
+            CHECK(adjacency_map.at(0) == std::unordered_set<uint64_t>{0, 1});
+            CHECK(adjacency_map.at(1) == std::unordered_set<uint64_t>{0, 1});
         }
 
         SUBCASE("Seven edges, five nodes") {
             auto edges = std::vector<BranchIdx>{{3, 0}, {1, 0}, {2, 0}, {3, 2}, {1, 2}, {1, 4}, {3, 4}};
-            AdjacencyMap const adjacency_list = build_adjacency_list(edges);
+            AdjacencyMap const adjacency_map = build_adjacency_map(edges);
 
-            REQUIRE(adjacency_list.size() == 5);
-            CHECK(adjacency_list.at(0) == std::unordered_set<uint64_t>{0, 1, 2});
-            CHECK(adjacency_list.at(1) == std::unordered_set<uint64_t>{1, 4, 5});
-            CHECK(adjacency_list.at(2) == std::unordered_set<uint64_t>{2, 3, 4});
-            CHECK(adjacency_list.at(3) == std::unordered_set<uint64_t>{0, 3, 6});
-            CHECK(adjacency_list.at(4) == std::unordered_set<uint64_t>{5, 6});
+            REQUIRE(adjacency_map.size() == 5);
+            CHECK(adjacency_map.at(0) == std::unordered_set<uint64_t>{0, 1, 2});
+            CHECK(adjacency_map.at(1) == std::unordered_set<uint64_t>{1, 4, 5});
+            CHECK(adjacency_map.at(2) == std::unordered_set<uint64_t>{2, 3, 4});
+            CHECK(adjacency_map.at(3) == std::unordered_set<uint64_t>{0, 3, 6});
+            CHECK(adjacency_map.at(4) == std::unordered_set<uint64_t>{5, 6});
         }
     }
 
@@ -75,14 +82,10 @@ TEST_CASE("Test the link solver algorithm") {
             auto const edges = std::vector<BranchIdx>{{0, 1}};
             auto const node_loads = std::vector<DoubleComplex>{{-1.0, 0.0}, {1.0, 0.0}};
             auto const result = forward_elimination(edges, node_loads);
+            uint64_t const node_number = node_loads.size();
 
-            REQUIRE(result.matrix.data.size() == 1);
-            CHECK(result.matrix.data == std::vector<IntS>{1});
-            REQUIRE(result.matrix.row.size() == 1);
-            CHECK(result.matrix.row == std::vector<uint64_t>{0});
-            REQUIRE(result.matrix.col.size() == 1);
-            CHECK(result.matrix.col == std::vector<uint64_t>{0});
-            REQUIRE(result.rhs.size() == 1);
+            REQUIRE(result.matrix.data_map.size() == 1);
+            CHECK(result.matrix.data_map.at(data_map_key_gen(0, 0, node_number)) == 1);
             CHECK(result.rhs == std::vector<DoubleComplex>{{1.0, 0.0}});
             CHECK(result.free_edge_indices.empty());
             REQUIRE(result.edges_history.size() == 1);
@@ -94,13 +97,11 @@ TEST_CASE("Test the link solver algorithm") {
             auto const edges = std::vector<BranchIdx>{{1, 0}, {1, 2}};
             auto const node_loads = std::vector<DoubleComplex>{{-1.0, 0.0}, {1.0, 0.0}, {0.0, 0.0}};
             auto const result = forward_elimination(edges, node_loads);
+            uint64_t const node_number = node_loads.size();
 
-            REQUIRE(result.matrix.data.size() == 2);
-            CHECK(result.matrix.data == std::vector<IntS>{1, 1});
-            REQUIRE(result.matrix.row.size() == 2);
-            CHECK(result.matrix.row == std::vector<uint64_t>{0, 1});
-            REQUIRE(result.matrix.col.size() == 2);
-            CHECK(result.matrix.col == std::vector<uint64_t>{0, 1});
+            REQUIRE(result.matrix.data_map.size() == 2);
+            CHECK(result.matrix.data_map.at(data_map_key_gen(0, 0, node_number)) == 1);
+            CHECK(result.matrix.data_map.at(data_map_key_gen(1, 1, node_number)) == 1);
             REQUIRE(result.rhs.size() == 2);
             CHECK(result.rhs == std::vector<DoubleComplex>{{-1.0, 0.0}, {0.0, 0.0}});
             CHECK(result.free_edge_indices.empty());
@@ -115,13 +116,13 @@ TEST_CASE("Test the link solver algorithm") {
             auto const edges = std::vector<BranchIdx>{{0, 1}, {1, 2}, {2, 0}};
             auto const node_loads = std::vector<DoubleComplex>{{-1.0, 0.0}, {1.0, 0.0}, {0.0, 0.0}};
             auto const result = forward_elimination(edges, node_loads);
+            uint64_t const node_number = node_loads.size();
 
-            REQUIRE(result.matrix.data.size() == 4);
-            CHECK(result.matrix.data == std::vector<IntS>{1, -1, 1, -1});
-            REQUIRE(result.matrix.row.size() == 4);
-            CHECK(result.matrix.row == std::vector<uint64_t>{0, 0, 1, 1});
-            REQUIRE(result.matrix.col.size() == 4);
-            CHECK(result.matrix.col == std::vector<uint64_t>{0, 1, 1, 2});
+            REQUIRE(result.matrix.data_map.size() == 4);
+            CHECK(result.matrix.data_map.at(data_map_key_gen(0, 0, node_number)) == 1);
+            CHECK(result.matrix.data_map.at(data_map_key_gen(0, 1, node_number)) == -1);
+            CHECK(result.matrix.data_map.at(data_map_key_gen(1, 1, node_number)) == 1);
+            CHECK(result.matrix.data_map.at(data_map_key_gen(1, 2, node_number)) == -1);
             REQUIRE(result.rhs.size() == 2);
             CHECK(result.rhs == std::vector<DoubleComplex>{{1.0, 0.0}, {0.0, 0.0}});
             REQUIRE(result.free_edge_indices.size() == 1);
@@ -139,13 +140,11 @@ TEST_CASE("Test the link solver algorithm") {
             auto const edges = std::vector<BranchIdx>{{0, 1}, {0, 1}};
             auto const node_loads = std::vector<DoubleComplex>{{-1.0, 0.0}, {1.0, 0.0}};
             auto const result = forward_elimination(edges, node_loads);
+            uint64_t const node_number = node_loads.size();
 
-            REQUIRE(result.matrix.data.size() == 2);
-            CHECK(result.matrix.data == std::vector<IntS>{1, 1});
-            REQUIRE(result.matrix.row.size() == 2);
-            CHECK(result.matrix.row == std::vector<uint64_t>{0, 0});
-            REQUIRE(result.matrix.col.size() == 2);
-            CHECK(result.matrix.col == std::vector<uint64_t>{0, 1});
+            REQUIRE(result.matrix.data_map.size() == 2);
+            CHECK(result.matrix.data_map.at(data_map_key_gen(0, 0, node_number)) == 1);
+            CHECK(result.matrix.data_map.at(data_map_key_gen(0, 1, node_number)) == 1);
             REQUIRE(result.rhs.size() == 1);
             CHECK(result.rhs == std::vector<DoubleComplex>{{1.0, 0.0}});
             REQUIRE(result.free_edge_indices.size() == 1);
@@ -162,17 +161,23 @@ TEST_CASE("Test the link solver algorithm") {
             auto const node_loads =
                 std::vector<DoubleComplex>{{-1.0, -1.0}, {-1.0, -1.0}, {2.0, 2.0}, {0.0, 0.0}, {0.0, 0.0}};
             auto const result = forward_elimination(edges, node_loads);
+            uint64_t const node_number = node_loads.size();
 
-            REQUIRE(result.matrix.data.size() == 14);
-            // TODO(figueroa1395): Some checks are commented out because the use of unordered_set in adjacency list
-            // makes the order of re-attachments non-deterministic (per-platform - locally it's fine), which affects the
-            // order of entries in the COO matrix should we use an ordered set instead to test this fine grained
-            // details, or is it enough to test overall structure and result correctness? CHECK(result.matrix.data ==
-            // std::vector<IntS>{1, 1, 1, 1, 1, -1, -1, 1, -1, -1, -1, -1, 1, 1});
-            REQUIRE(result.matrix.row.size() == 14);
-            CHECK(result.matrix.row == std::vector<uint64_t>{0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3});
-            REQUIRE(result.matrix.col.size() == 14);
-            // CHECK(result.matrix.col == std::vector<uint64_t>{0, 2, 1, 1, 2, 6, 3, 2, 3, 6, 5, 4, 5, 6});
+            REQUIRE(result.matrix.data_map.size() == 14);
+            CHECK(result.matrix.data_map.at(data_map_key_gen(0, 0, node_number)) == 1);
+            CHECK(result.matrix.data_map.at(data_map_key_gen(0, 2, node_number)) == 1);
+            CHECK(result.matrix.data_map.at(data_map_key_gen(0, 1, node_number)) == 1);
+            CHECK(result.matrix.data_map.at(data_map_key_gen(1, 1, node_number)) == 1);
+            CHECK(result.matrix.data_map.at(data_map_key_gen(1, 2, node_number)) == 1);
+            CHECK(result.matrix.data_map.at(data_map_key_gen(1, 6, node_number)) == -1);
+            CHECK(result.matrix.data_map.at(data_map_key_gen(1, 3, node_number)) == -1);
+            CHECK(result.matrix.data_map.at(data_map_key_gen(2, 2, node_number)) == 1);
+            CHECK(result.matrix.data_map.at(data_map_key_gen(2, 3, node_number)) == -1);
+            CHECK(result.matrix.data_map.at(data_map_key_gen(2, 6, node_number)) == -1);
+            CHECK(result.matrix.data_map.at(data_map_key_gen(2, 5, node_number)) == -1);
+            CHECK(result.matrix.data_map.at(data_map_key_gen(2, 4, node_number)) == -1);
+            CHECK(result.matrix.data_map.at(data_map_key_gen(3, 5, node_number)) == 1);
+            CHECK(result.matrix.data_map.at(data_map_key_gen(3, 6, node_number)) == 1);
             REQUIRE(result.rhs.size() == 4);
             CHECK(result.rhs == std::vector<DoubleComplex>{{-1.0, -1.0}, {-1.0, -1.0}, {-2.0, -2.0}, {0.0, 0.0}});
             REQUIRE(result.free_edge_indices.size() == 3);
