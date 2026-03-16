@@ -608,3 +608,15 @@ class MissingVoltageAngleMeasurementError(MultiComponentValidationError):
         "Missing voltage angle measurement for {n} {objects}. "
         "If a voltage sensor measures the voltage of a terminal, it must also measure the voltage angle."
     )
+
+
+class InvalidTapRegulatorControlSideError(SingleFieldValidationError):
+    """
+    The tap regulator has an invalid control side configuration.
+    The transformer is being controlled from non-source side towards source side.
+    """
+
+    _message = (
+        "Field {field} contains invalid control side configuration for {n} {objects}. "
+        "The transformer(s) are being controlled from non-source side towards source side."
+    )
