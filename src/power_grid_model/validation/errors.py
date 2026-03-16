@@ -12,8 +12,7 @@ from collections.abc import Iterable
 from enum import Enum
 from typing import Any
 
-from power_grid_model import ComponentType
-from power_grid_model._core.dataset_definitions import AttributeType, DatasetType
+from power_grid_model._core.dataset_definitions import AttributeType, ComponentType, DatasetType
 
 _MIN_FIELDS = 2
 _MIN_COMPONENTS = 2

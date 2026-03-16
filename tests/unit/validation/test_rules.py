@@ -7,8 +7,14 @@ from unittest import mock
 import numpy as np
 import pytest
 
-from power_grid_model import LoadGenType, initialize_array, power_grid_meta_data
-from power_grid_model._core.dataset_definitions import AttributeType, ComponentType, DatasetType
+from power_grid_model import (
+    AttributeType,
+    ComponentType,
+    DatasetType,
+    LoadGenType,
+    initialize_array,
+    power_grid_meta_data,
+)
 from power_grid_model.enum import (
     AngleMeasurementType,
     Branch3Side,

@@ -107,7 +107,7 @@ class CodeGenerator:
                 all_components = {}
                 for component in dataset.components:
                     class_def: AttributeClass = self.all_classes[component.class_name]
-                    component_attributes = [x.names for x in class_def.full_attributes]
+                    component_attributes = [attribute.names for attribute in class_def.full_attributes]
                     all_attributes.update(component_attributes)
                     for component_name in component.names:
                         all_components[component_name] = component_attributes

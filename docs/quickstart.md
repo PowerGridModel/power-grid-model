@@ -24,12 +24,7 @@ Before we start working on the network, we need first import the main model clas
 enumerations and meta data.
 
 ```python
-from power_grid_model import AttributeType
-from power_grid_model import ComponentType
-from power_grid_model import DatasetType
-from power_grid_model import initialize_array
-from power_grid_model import LoadGenType
-from power_grid_model import PowerGridModel
+from power_grid_model import AttributeType, ComponentType, DatasetType, initialize_array, LoadGenType, PowerGridModel
 from power_grid_model.utils import self_test
 ```
 
@@ -59,8 +54,6 @@ node[AttributeType.u_rated] = [10.5e3, 10.5e3]
 ```
 
 The code above generates a node input array with two nodes, and assigns the attributes of the nodes to the array.
-Similarly, we can create input arrays for line, load, and generation. Dataset, component and attributes type can
-be strings or enums defined as DatasetType, ComponentType and AttributeType respectively.
 A dictionary of such arrays is used for `input_data` and `update_data`.
 
 ```python

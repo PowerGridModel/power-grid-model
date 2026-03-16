@@ -157,7 +157,8 @@ Exemplary datasets attributes are given in a dataset containing a `line` compone
 
 - **Element:** A single instance of a node, source, line etc.
 
-- **Attribute:** The definition of `id`, `energized`, `p`, etc. of any component.
+- **Attribute:** The definition of `id`, `energized`, `p`, etc. of any component. They are included under the
+  enum {py:class}`AttributeType <power_grid_model.typing.AttributeType>`.
 
 - **Value:** The value under an attribute, i.e., id, energized, p, etc.
 

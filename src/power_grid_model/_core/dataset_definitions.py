@@ -84,7 +84,7 @@ class ComponentType(StrEnum, metaclass=_MetaEnum):
 
 class AttributeType(StrEnum, metaclass=_MetaEnum):
     """
-    A AttributeType is the attribute of a grid component.
+    An AttributeType is the attribute of a grid component.
 
     - Examples:
 
