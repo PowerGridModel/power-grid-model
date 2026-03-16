@@ -114,8 +114,8 @@ BatchDataset, but in a native python format, without using numpy. Actually it lo
 
 - Example:
 
-  [{ComponentType.line: [{"id": 3, "from_status": 0, "to_status": 0, ...}],},
-   {ComponentType.line: [{"id": 3, "from_status": 1, "to_status": 1, ...}],}]
+  [{ComponentType.line: [{AttributeType.id: 3, AttributeType.from_status: 0, AttributeType.to_status: 0, ...}],},
+   {ComponentType.line: [{AttributeType.id: 3, AttributeType.from_status: 1, AttributeType.to_status: 1, ...}],}]
 """
 
 ColumnarData = _ColumnarData
@@ -125,10 +125,10 @@ Columnar data can be :class:`SingleColumnarData` or :class:`BatchColumnarData`.
 
 Component = _Component
 """
-A component, when represented in native python format, is a dictionary, where the keys are the attributes and the values
-are the corresponding values. It is allowed to add extra fields, containing either an AttributeValue or a string.
+A component, when represented in native python format, is a dictionary, where the keys are the attribute types and the
+values are the corresponding values. It is allowed to add extra fields, containing either an AttributeValue or a string.
 
-- Example: {"id": 1, "u_rated": 10500.0, "original_id": "Busbar #1"}
+- Example: {AttributeType.id: 1, AttributeType.u_rated: 10500.0, "original_id": "Busbar #1"}
 """
 
 ComponentData = _ComponentData
@@ -141,7 +141,16 @@ ComponentList = _ComponentList
 A component list is a list containing components. In essence it stores the same information as a np.ndarray,
 but in a native python format, without using numpy.
 
-- Example: [{"id": 1, "u_rated": 10500.0}, {"id": 2, "u_rated": 10500.0}]
+- Example: [
+  {
+    AttributeType.id: 1,
+    AttributeType.u_rated: 10500.0
+  },
+  {
+    AttributeType.id: 2,
+    AttributeType.u_rated: 10500.0
+  }
+]
 """
 
 DataArray = _DataArray
@@ -178,7 +187,7 @@ DenseBatchColumnarData = _DenseBatchColumnarData
 Batch columnar data is a dictionary where the keys are the attribute types of the same component
 and the values are :class:`BatchColumn`.
 
-- Example: {"id": :class:`AttributeType`, "from_status": :class:`BatchColumn`}
+- Example: {AttributeType.id: :class:`BatchColumn`, AttributeType.from_status: :class:`BatchColumn`}
 """
 
 DenseBatchData = _DenseBatchData
@@ -213,14 +222,23 @@ A general python data set can be a single or a batch python dataset.
   - single:
 
     {
-      ComponentType.node: [{"id": 1, "u_rated": 10500.0}, {"id": 2, "u_rated": 10500.0}],
-      ComponentType.line: [{"id": 3, "from_node": 1, "to_node": 2, ...}],
+      ComponentType.node: [
+        {
+          AttributeType.id: 1,
+          AttributeType.u_rated: 10500.0
+        },
+        {
+          AttributeType.id: 2,
+          AttributeType.u_rated: 10500.0
+        }
+      ],
+      ComponentType.line: [{AttributeType.id: 3, AttributeType.from_node: 1, AttributeType.to_node: 2, ...}],
     }
 
   - batch:
 
-    [{ComponentType.line: [{"id": 3, "from_status": 0, "to_status": 0, ...}],},
-     {ComponentType.line: [{"id": 3, "from_status": 1, "to_status": 1, ...}],}]
+    [{ComponentType.line: [{AttributeType.id: 3, AttributeType.from_status: 0, AttributeType.to_status: 0, ...}],},
+     {ComponentType.line: [{AttributeType.id: 3, AttributeType.from_status: 1, AttributeType.to_status: 1, ...}],}]
 """
 
 RealValue = _RealValue
@@ -253,10 +271,13 @@ multiple components of the same type.
     - structure: <1d-array>
     - concrete:
 
-        - array([0, 1], dtype=power_grid_meta_data[DatasetType.input][ComponentType.node].dtype.fields["id"][0])
+        - array(
+          [0, 1],
+          dtype=power_grid_meta_data[DatasetType.input][ComponentType.node].dtype.fields[AttributeType.id][0]
+        )
         - array(
             [10500.0, 10500.0],
-            dtype=power_grid_meta_data[DatasetType.input][ComponentType.node].dtype.fields["u_rated"][0]
+            dtype=power_grid_meta_data[DatasetType.input][ComponentType.node].dtype.fields[AttributeType.u_rated][0]
           )
 """
 
@@ -266,7 +287,7 @@ SingleColumnarData = _SingleColumnarData
 Single columnar data is a dictionary where the keys are the attribute types of the same component
 and the values are :class:`SingleColumn`.
 
-- Example: {"id": :class:`AttributeType`, "u_rated": :class:`SingleColumn`}
+- Example: {AttributeType.id: :class:`SingleColumn`, AttributeType.u_rated: :class:`SingleColumn`}
 """
 
 
@@ -292,8 +313,17 @@ SingleDataset, but in a native python format, without using numpy.
 - Example:
 
   {
-    ComponentType.node: [{"id": 1, "u_rated": 10500.0}, {"id": 2, "u_rated": 10500.0}],
-    ComponentType.line: [{"id": 3, "from_node": 1, "to_node": 2, ...}],
+    ComponentType.node: [
+      {
+        AttributeType.id: 1,
+        AttributeType.u_rated: 10500.0
+      },
+      {
+        AttributeType.id: 2,
+        AttributeType.u_rated: 10500.0
+      }
+    ],
+    ComponentType.line: [{AttributeType.id: 3, AttributeType.from_node: 1, AttributeType.to_node: 2, ...}],
   }
 """
 
