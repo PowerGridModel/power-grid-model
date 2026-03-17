@@ -15,7 +15,7 @@
 
 namespace power_grid_model::link_solver {
 namespace {
-[[nodiscard]] IntS data_map_key_gen(uint64_t row_idx, uint64_t col_idx, uint64_t row_number) {
+[[nodiscard]] uint64_t data_map_key_gen(uint64_t row_idx, uint64_t col_idx, uint64_t row_number) {
     return row_idx * row_number + col_idx;
 }
 } // namespace

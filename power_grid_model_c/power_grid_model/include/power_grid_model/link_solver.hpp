@@ -46,8 +46,7 @@ struct COOSparseMatrix {
     // TODO(figueroa1395): maybe this is overkill - revisit after implementation is further ahead
     [[nodiscard]] bool get_value(IntS& value, uint64_t row_idx, uint64_t col_idx) const {
         assert(row_number != 0 && "row_number must be set before getting values from data_map");
-        auto const it = data_map.find(row_idx * row_number + col_idx);
-        if (it != data_map.end()) {
+        if (auto const it = data_map.find(row_idx * row_number + col_idx); it != data_map.end()) {
             value = it->second;
             return true;
         }
