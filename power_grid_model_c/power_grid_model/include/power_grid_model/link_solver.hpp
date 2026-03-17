@@ -175,4 +175,46 @@ inline void update_edge_info(uint64_t edge_idx, uint64_t matrix_row, std::vector
     }
     return result;
 }
+
+struct SolutionSet{
+	COOSparseMatrix dfs_matrix{};
+    std::vector<DoubleComplex> extended_rhs{}; 
+	
+};
+
+[[nodiscard]] inline SolutionSet set_solution_system(EliminationResult & result){
+    
+	using enum EdgeEvent;
+	IntS value;
+    constexpr uint8_t starting_row{};
+	auto& [matrix, rhs, free_edge_indices, edges_history] = result;
+	
+	SolutionSet solution_set{};
+	
+	auto& [dfs_matrix, extended_rhs] =  solution_set;
+	dfs_matrix.prepare(edges_history.size(),free_edge_indices.size());
+	
+	uint64_t matrix_row{starting_row};
+	uint64_t dfs_matrix_row{starting_row};
+	uint64_t dfs_index{starting_row};
+	for (auto edge_history : edges_history){
+		if (edge_history.events.back() == Deleted) {
+			for (uint64_t j = 0; j < free_edge_indices.size(); j++){
+				if (matrix.get_value(value, matrix_row, free_edge_indices[j])){
+					dfs_matrix.set_value(value,dfs_matrix_row,j);
+				}
+			}
+			extended_rhs.push_back(rhs[matrix_row]);
+			++matrix_row;
+		} else {
+			dfs_matrix.set_value(-1,dfs_matrix_row,dfs_index);
+			extended_rhs.push_back(0);
+			++dfs_index;
+		}
+		
+		++dfs_matrix_row;
+	}	
+	return solution_set;	
+};
+
 } // namespace power_grid_model::link_solver::detail
