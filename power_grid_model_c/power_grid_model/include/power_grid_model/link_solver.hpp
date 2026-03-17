@@ -43,14 +43,25 @@ struct COOSparseMatrix {
         assert(row_number != 0 && "row_number must be set before setting values in data_map");
         data_map[row_idx * row_number + col_idx] = value;
     }
-    // TODO(figueroa1395): maybe this is overkill - revisit after implementation is further ahead
-    [[nodiscard]] bool get_value(IntS& value, uint64_t row_idx, uint64_t col_idx) const {
+    bool get_value(IntS& value, uint64_t row_idx, uint64_t col_idx) const {
         assert(row_number != 0 && "row_number must be set before getting values from data_map");
         if (auto const it = data_map.find(row_idx * row_number + col_idx); it != data_map.end()) {
             value = it->second;
             return true;
         }
         return false;
+    }
+    void add_to_value(IntS value, uint64_t row_idx, uint64_t col_idx) {
+        assert(row_number != 0 && "row_number must be set before adding values in data_map");
+        auto const key = row_idx * row_number + col_idx;
+        if (auto const it = data_map.find(key); it != data_map.end()) {
+            it->second += value;
+            if (it->second == 0) {
+                data_map.erase(it); // maintain sparsity by erasing zero entries
+            }
+        } else if (value != 0) {
+            data_map[key] = value;
+        }
     }
 };
 
@@ -61,9 +72,10 @@ struct EdgeHistory {
 
 struct EliminationResult {
     COOSparseMatrix matrix{};
-    std::vector<DoubleComplex> rhs{};          // RHS value at each pivot row
-    std::vector<uint64_t> free_edge_indices{}; // index of degrees of freedom (self loop edges)
-    std::vector<EdgeHistory> edges_history{};  // edges elimination history
+    std::vector<DoubleComplex> rhs{};           // RHS value at each pivot row
+    std::vector<uint64_t> free_edge_indices{};  // index of degrees of freedom (self loop edges)
+    std::vector<uint64_t> pivot_edge_indices{}; // index of pivot edges
+    std::vector<EdgeHistory> edges_history{};   // edges elimination history
 };
 
 // convention: from node at position 0, to node at position 1
@@ -122,14 +134,14 @@ inline void update_edge_info(uint64_t edge_idx, uint64_t matrix_row, std::vector
 [[nodiscard]] inline EliminationResult forward_elimination(std::vector<BranchIdx> edges,
                                                            std::vector<DoubleComplex> node_loads) {
     EliminationResult result{};
-    uint64_t edge_number{edges.size()};
-    uint64_t node_number{node_loads.size()};
+    uint64_t const edge_number{edges.size()};
+    uint64_t const node_number{node_loads.size()};
 
     result.edges_history.resize(edge_number);
     using enum EdgeEvent;
     using enum EdgeDirection;
 
-    auto& [matrix, rhs, free_edge_indices, edges_history] = result;
+    auto& [matrix, rhs, free_edge_indices, pivot_edge_indices, edges_history] = result;
     matrix.prepare(edge_number, node_number);
 
     constexpr uint8_t starting_row{};
@@ -143,6 +155,7 @@ inline void update_edge_info(uint64_t edge_idx, uint64_t matrix_row, std::vector
             free_edge_indices.push_back(index);
         } else {
             write_edge_history(edges_history[index], Deleted, matrix_row); // Delete edge -> pivot there
+            pivot_edge_indices.push_back(index);
             matrix.set_value(std::to_underlying(Towards), matrix_row, index);
 
             Idx const from_node_idx = from_node(edge);
@@ -174,6 +187,37 @@ inline void update_edge_info(uint64_t edge_idx, uint64_t matrix_row, std::vector
         }
     }
     return result;
+}
+
+// backward substitution is performed in a sparse way
+// using the result from the elimination game
+inline void backward_substitution(EliminationResult& elimination_result) {
+    auto pivot_col_indices = elimination_result.pivot_edge_indices | std::views::drop(1) | std::ranges::views::reverse;
+    auto free_col_indices = std::span(elimination_result.free_edge_indices);
+
+    for (auto const pivot_col_idx : pivot_col_indices) {
+        auto const& edge_history = elimination_result.edges_history[pivot_col_idx];
+        uint64_t const pivot_row_idx = edge_history.rows.back();
+
+        for (auto const row_idx : edge_history.rows | std::views::reverse | std::views::drop(1)) {
+            IntS multiplier_value{};
+            elimination_result.matrix.get_value(multiplier_value, row_idx, pivot_col_idx);
+            elimination_result.matrix.add_to_value(
+                -multiplier_value, row_idx,
+                pivot_col_idx); // the initial pivot is always one because of the forward sweep
+
+            for (auto const backward_col_idx : std::ranges::subrange(
+                     std::ranges::upper_bound(free_col_indices, pivot_col_idx), free_col_indices.end())) {
+                IntS pivot_value{};
+                if (elimination_result.matrix.get_value(pivot_value, pivot_row_idx, backward_col_idx)) {
+                    elimination_result.matrix.add_to_value(-multiplier_value * pivot_value, row_idx, backward_col_idx);
+                }
+            }
+
+            elimination_result.rhs[row_idx] +=
+                -static_cast<DoubleComplex>(multiplier_value) * elimination_result.rhs[pivot_row_idx];
+        }
+    }
 }
 
 struct SolutionSet{
