@@ -221,6 +221,96 @@ TEST_CASE("Test the link solver algorithm") {
     SUBCASE("Test backward substitution") {
         using enum EdgeEvent;
 
+        SUBCASE("One edge, two nodes, two real loads") {
+            EliminationResult result{};
+            result.matrix.prepare(1, 2);
+            result.matrix.set_value(1, 0, 0);
+            result.rhs = std::vector<DoubleComplex>{{1.0, 0.0}};
+            result.free_edge_indices = {};
+            result.pivot_edge_indices = {0};
+            result.edges_history.resize(1);
+            result.edges_history[0].events = {Deleted};
+            result.edges_history[0].rows = {0};
+
+            backward_substitution(result);
+            REQUIRE(result.matrix.data_map.size() == 1);
+            check_value(1, 0, 0, result.matrix);
+            REQUIRE(result.rhs.size() == 1);
+            CHECK(result.rhs == std::vector<DoubleComplex>{{1.0, 0.0}});
+        }
+
+        SUBCASE("Two edges, three nodes, two real loads") {
+            EliminationResult result{};
+            result.matrix.prepare(2, 3);
+            result.matrix.set_value(1, 0, 0);
+            result.matrix.set_value(1, 1, 1);
+            result.rhs = std::vector<DoubleComplex>{{-1.0, 0.0}, {0.0, 0.0}};
+            result.free_edge_indices = {};
+            result.pivot_edge_indices = {0, 1};
+            result.edges_history.resize(2);
+            result.edges_history[0].events = {Deleted};
+            result.edges_history[0].rows = {0};
+            result.edges_history[1].events = {Deleted};
+            result.edges_history[1].rows = {1};
+
+            backward_substitution(result);
+            REQUIRE(result.matrix.data_map.size() == 2);
+            check_value(1, 0, 0, result.matrix);
+            check_value(1, 1, 1, result.matrix);
+            REQUIRE(result.rhs.size() == 2);
+            CHECK(result.rhs == std::vector<DoubleComplex>{{-1.0, 0.0}, {0.0, 0.0}});
+        }
+
+        SUBCASE("Three edges, three nodes, two real loads") {
+            EliminationResult result{};
+            result.matrix.prepare(4, 3);
+            result.matrix.set_value(1, 0, 0);
+            result.matrix.set_value(-1, 0, 1);
+            result.matrix.set_value(1, 1, 1);
+            result.matrix.set_value(-1, 1, 2);
+            result.rhs = std::vector<DoubleComplex>{{1.0, 0.0}, {0.0, 0.0}};
+            result.free_edge_indices = {2};
+            result.pivot_edge_indices = {0, 1};
+            result.edges_history.resize(3);
+            result.edges_history[0].events = {Deleted};
+            result.edges_history[0].rows = {0};
+            result.edges_history[1].events = {Replaced, Deleted};
+            result.edges_history[1].rows = {0, 1};
+            result.edges_history[2].events = {ContractedToPoint};
+            result.edges_history[2].rows = {1};
+
+            backward_substitution(result);
+            REQUIRE(result.matrix.data_map.size() == 4);
+            check_value(1, 0, 0, result.matrix);
+            check_value(1, 1, 1, result.matrix);
+            check_value(-1, 1, 2, result.matrix);
+            check_value(-1, 0, 2, result.matrix);
+            REQUIRE(result.rhs.size() == 2);
+            CHECK(result.rhs == std::vector<DoubleComplex>{{1.0, 0.0}, {0.0, 0.0}});
+        }
+
+        SUBCASE("Two edges, two nodes, two real loads") {
+            EliminationResult result{};
+            result.matrix.prepare(2, 2);
+            result.matrix.set_value(1, 0, 0);
+            result.matrix.set_value(1, 0, 1);
+            result.rhs = std::vector<DoubleComplex>{{1.0, 0.0}};
+            result.free_edge_indices = {1};
+            result.pivot_edge_indices = {0};
+            result.edges_history.resize(2);
+            result.edges_history[0].events = {Deleted};
+            result.edges_history[0].rows = {0};
+            result.edges_history[1].events = {ContractedToPoint};
+            result.edges_history[1].rows = {0};
+
+            backward_substitution(result);
+            REQUIRE(result.matrix.data_map.size() == 2);
+            check_value(1, 0, 0, result.matrix);
+            check_value(1, 0, 1, result.matrix);
+            REQUIRE(result.rhs.size() == 1);
+            CHECK(result.rhs == std::vector<DoubleComplex>{{1.0, 0.0}});
+        }
+
         SUBCASE("Complex case with complex loads") {
             EliminationResult result{};
             result.matrix.prepare(5, 7);
