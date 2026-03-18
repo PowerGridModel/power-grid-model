@@ -79,11 +79,16 @@ TEST_CASE("Test the link solver algorithm") {
 
     SUBCASE("Test forward elimination - elimination game") {
         using enum EdgeEvent;
+        EliminationResult result{};
 
         SUBCASE("One edge, two nodes, two real loads") {
             auto const edges = std::vector<BranchIdx>{{0, 1}};
             auto const node_loads = std::vector<DoubleComplex>{{-1.0, 0.0}, {1.0, 0.0}};
-            auto const result = forward_elimination(edges, node_loads);
+            uint64_t const edge_number{edges.size()};
+            uint64_t const node_number{node_loads.size()};
+            result.edges_history.resize(edge_number);
+            result.matrix.prepare(edge_number, node_number);
+            forward_elimination(result, edges, node_loads);
 
             REQUIRE(result.matrix.data_map.size() == 1);
             check_value(1, 0, 0, result.matrix);
@@ -97,7 +102,11 @@ TEST_CASE("Test the link solver algorithm") {
         SUBCASE("Two edges, three nodes, two real loads") {
             auto const edges = std::vector<BranchIdx>{{1, 0}, {1, 2}};
             auto const node_loads = std::vector<DoubleComplex>{{-1.0, 0.0}, {1.0, 0.0}, {0.0, 0.0}};
-            auto const result = forward_elimination(edges, node_loads);
+            uint64_t const edge_number{edges.size()};
+            uint64_t const node_number{node_loads.size()};
+            result.edges_history.resize(edge_number);
+            result.matrix.prepare(edge_number, node_number);
+            forward_elimination(result, edges, node_loads);
 
             REQUIRE(result.matrix.data_map.size() == 2);
             check_value(1, 0, 0, result.matrix);
@@ -115,7 +124,11 @@ TEST_CASE("Test the link solver algorithm") {
         SUBCASE("Three edges, three nodes, two real loads") {
             auto const edges = std::vector<BranchIdx>{{0, 1}, {1, 2}, {2, 0}};
             auto const node_loads = std::vector<DoubleComplex>{{-1.0, 0.0}, {1.0, 0.0}, {0.0, 0.0}};
-            auto const result = forward_elimination(edges, node_loads);
+            uint64_t const edge_number{edges.size()};
+            uint64_t const node_number{node_loads.size()};
+            result.edges_history.resize(edge_number);
+            result.matrix.prepare(edge_number, node_number);
+            forward_elimination(result, edges, node_loads);
 
             REQUIRE(result.matrix.data_map.size() == 4);
             check_value(1, 0, 0, result.matrix);
@@ -138,7 +151,11 @@ TEST_CASE("Test the link solver algorithm") {
         SUBCASE("Two edges, two nodes, two real loads") {
             auto const edges = std::vector<BranchIdx>{{0, 1}, {0, 1}};
             auto const node_loads = std::vector<DoubleComplex>{{-1.0, 0.0}, {1.0, 0.0}};
-            auto const result = forward_elimination(edges, node_loads);
+            uint64_t const edge_number{edges.size()};
+            uint64_t const node_number{node_loads.size()};
+            result.edges_history.resize(edge_number);
+            result.matrix.prepare(edge_number, node_number);
+            forward_elimination(result, edges, node_loads);
 
             REQUIRE(result.matrix.data_map.size() == 2);
             check_value(1, 0, 0, result.matrix);
@@ -158,7 +175,11 @@ TEST_CASE("Test the link solver algorithm") {
             auto const edges = std::vector<BranchIdx>{{3, 0}, {1, 0}, {2, 0}, {3, 2}, {1, 2}, {1, 4}, {3, 4}};
             auto const node_loads =
                 std::vector<DoubleComplex>{{-1.0, -1.0}, {-1.0, -1.0}, {2.0, 2.0}, {0.0, 0.0}, {0.0, 0.0}};
-            auto const result = forward_elimination(edges, node_loads);
+            uint64_t const edge_number{edges.size()};
+            uint64_t const node_number{node_loads.size()};
+            result.edges_history.resize(edge_number);
+            result.matrix.prepare(edge_number, node_number);
+            forward_elimination(result, edges, node_loads);
 
             REQUIRE(result.matrix.data_map.size() == 14);
             check_value(1, 0, 0, result.matrix);

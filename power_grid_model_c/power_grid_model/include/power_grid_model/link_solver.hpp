@@ -131,18 +131,12 @@ inline void update_edge_info(uint64_t edge_idx, uint64_t matrix_row, std::vector
 // forward elimination is performed via a modified Gaussian elimination procedure
 // we name this procedure elimination-game
 // node_loads convention: caller passes negated external loads (as in RHS of power flow equations))
-[[nodiscard]] inline EliminationResult forward_elimination(std::vector<BranchIdx> edges,
-                                                           std::vector<DoubleComplex> node_loads) {
-    EliminationResult result{};
-    uint64_t const edge_number{edges.size()};
-    uint64_t const node_number{node_loads.size()};
-
-    result.edges_history.resize(edge_number);
+inline void forward_elimination(EliminationResult& result, std::vector<BranchIdx> edges,
+                                std::vector<DoubleComplex> node_loads) {
     using enum EdgeEvent;
     using enum EdgeDirection;
 
     auto& [matrix, rhs, free_edge_indices, pivot_edge_indices, edges_history] = result;
-    matrix.prepare(edge_number, node_number);
 
     constexpr uint8_t starting_row{};
     uint64_t matrix_row{starting_row};
@@ -186,7 +180,6 @@ inline void update_edge_info(uint64_t edge_idx, uint64_t matrix_row, std::vector
             ++matrix_row;
         }
     }
-    return result;
 }
 
 // backward substitution is performed in a sparse way
@@ -219,6 +212,25 @@ inline void backward_substitution(EliminationResult& elimination_result) {
                 -static_cast<DoubleComplex>(multiplier_value) * elimination_result.rhs[pivot_row_idx];
         }
     }
+}
+
+// reduced echelon form based in custom forward elimination and backward substitution procedures
+[[nodiscard]] inline EliminationResult reduced_echelon_form(std::vector<BranchIdx> edges,
+                                                            std::vector<DoubleComplex> node_loads) {
+    EliminationResult result{};
+    uint64_t const edge_number{edges.size()};
+    uint64_t const node_number{node_loads.size()};
+
+    result.edges_history.resize(edge_number);
+    result.matrix.prepare(edge_number, node_number);
+
+    // -1 because the loads represent the RHS
+    std::ranges::transform(node_loads, node_loads.begin(), [](auto load) { return -load; });
+
+    // both edges and node_loads are modified and consumed in the forward sweep
+    forward_elimination(result, std::move(edges), std::move(node_loads));
+    backward_substitution(result);
+    return result;
 }
 
 struct SolutionSet{
