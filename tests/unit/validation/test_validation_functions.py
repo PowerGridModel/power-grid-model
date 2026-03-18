@@ -10,8 +10,16 @@ from unittest.mock import ANY, MagicMock, patch
 import numpy as np
 import pytest
 
-from power_grid_model import CalculationType, LoadGenType, MeasuredTerminalType, initialize_array, power_grid_meta_data
-from power_grid_model._core.dataset_definitions import ComponentType, DatasetType
+from power_grid_model import (
+    AttributeType,
+    CalculationType,
+    ComponentType,
+    DatasetType,
+    LoadGenType,
+    MeasuredTerminalType,
+    initialize_array,
+    power_grid_meta_data,
+)
 from power_grid_model._core.enum import AngleMeasurementType
 from power_grid_model._core.utils import compatibility_convert_row_columnar_dataset
 from power_grid_model.enum import Branch3Side, BranchSide, ComponentAttributeFilterOptions, FaultType
@@ -1023,7 +1031,7 @@ def test_validate_generic_current_sensor__only_branches_supported(
         assert result == [
             UnsupportedMeasuredTerminalType(
                 current_sensor_type,
-                "measured_terminal_type",
+                AttributeType.measured_terminal_type,
                 [1],
                 [
                     MeasuredTerminalType.branch_from,

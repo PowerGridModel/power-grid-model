@@ -7,7 +7,14 @@ from unittest import mock
 import numpy as np
 import pytest
 
-from power_grid_model import ComponentType, DatasetType, LoadGenType, initialize_array, power_grid_meta_data
+from power_grid_model import (
+    AttributeType,
+    ComponentType,
+    DatasetType,
+    LoadGenType,
+    initialize_array,
+    power_grid_meta_data,
+)
 from power_grid_model.enum import (
     AngleMeasurementType,
     Branch3Side,
@@ -854,9 +861,9 @@ def test_all_same_current_angle_measurement_type_on_terminal(
     errors = all_same_current_angle_measurement_type_on_terminal(
         data=data,
         component=current_sensor_type,
-        measured_object_field="measured_object",
-        measured_terminal_type_field="measured_terminal_type",
-        angle_measurement_type_field="angle_measurement_type",
+        measured_object_field=AttributeType.measured_object,
+        measured_terminal_type_field=AttributeType.measured_terminal_type,
+        angle_measurement_type_field=AttributeType.angle_measurement_type,
     )
 
     if (
@@ -869,7 +876,11 @@ def test_all_same_current_angle_measurement_type_on_terminal(
         assert (
             MixedCurrentAngleMeasurementTypeError(
                 component=current_sensor_type,
-                fields=["measured_object", "measured_terminal_type", "angle_measurement_type"],
+                fields=[
+                    AttributeType.measured_object,
+                    AttributeType.measured_terminal_type,
+                    AttributeType.angle_measurement_type,
+                ],
                 ids=[1, 2],
             )
             in errors
