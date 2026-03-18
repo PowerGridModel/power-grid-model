@@ -55,7 +55,7 @@ struct COOSparseMatrix {
         assert(row_number != 0 && "row_number must be set before adding values in data_map");
         auto const key = row_idx * row_number + col_idx;
         if (auto const it = data_map.find(key); it != data_map.end()) {
-            it->second += value;
+            it->second = static_cast<IntS>(it->second + value);
             if (it->second == 0) {
                 data_map.erase(it); // maintain sparsity by erasing zero entries
             }
@@ -203,14 +203,15 @@ inline void backward_substitution(EliminationResult& elimination_result) {
             IntS multiplier_value{};
             elimination_result.matrix.get_value(multiplier_value, row_idx, pivot_col_idx);
             elimination_result.matrix.add_to_value(
-                -multiplier_value, row_idx,
+                static_cast<IntS>(-multiplier_value), row_idx,
                 pivot_col_idx); // the initial pivot is always one because of the forward sweep
 
             for (auto const backward_col_idx : std::ranges::subrange(
                      std::ranges::upper_bound(free_col_indices, pivot_col_idx), free_col_indices.end())) {
                 IntS pivot_value{};
                 if (elimination_result.matrix.get_value(pivot_value, pivot_row_idx, backward_col_idx)) {
-                    elimination_result.matrix.add_to_value(-multiplier_value * pivot_value, row_idx, backward_col_idx);
+                    elimination_result.matrix.add_to_value(static_cast<IntS>(-multiplier_value * pivot_value), row_idx,
+                                                           backward_col_idx);
                 }
             }
 

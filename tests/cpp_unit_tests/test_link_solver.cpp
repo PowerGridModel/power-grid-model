@@ -15,8 +15,10 @@
 
 namespace power_grid_model::link_solver {
 namespace {
-[[nodiscard]] uint64_t data_map_key_gen(uint64_t row_idx, uint64_t col_idx, uint64_t row_number) {
-    return row_idx * row_number + col_idx;
+void check_value(IntS expected, uint64_t row_idx, uint64_t col_idx, detail::COOSparseMatrix const& matrix) {
+    IntS value{};
+    CHECK(matrix.get_value(value, row_idx, col_idx));
+    CHECK(value == expected);
 }
 } // namespace
 TEST_CASE("Test the link solver algorithm") {
@@ -82,10 +84,9 @@ TEST_CASE("Test the link solver algorithm") {
             auto const edges = std::vector<BranchIdx>{{0, 1}};
             auto const node_loads = std::vector<DoubleComplex>{{-1.0, 0.0}, {1.0, 0.0}};
             auto const result = forward_elimination(edges, node_loads);
-            uint64_t const node_number = node_loads.size();
 
             REQUIRE(result.matrix.data_map.size() == 1);
-            CHECK(result.matrix.data_map.at(data_map_key_gen(0, 0, node_number)) == 1);
+            check_value(1, 0, 0, result.matrix);
             CHECK(result.rhs == std::vector<DoubleComplex>{{1.0, 0.0}});
             CHECK(result.free_edge_indices.empty());
             REQUIRE(result.edges_history.size() == 1);
@@ -97,11 +98,10 @@ TEST_CASE("Test the link solver algorithm") {
             auto const edges = std::vector<BranchIdx>{{1, 0}, {1, 2}};
             auto const node_loads = std::vector<DoubleComplex>{{-1.0, 0.0}, {1.0, 0.0}, {0.0, 0.0}};
             auto const result = forward_elimination(edges, node_loads);
-            uint64_t const node_number = node_loads.size();
 
             REQUIRE(result.matrix.data_map.size() == 2);
-            CHECK(result.matrix.data_map.at(data_map_key_gen(0, 0, node_number)) == 1);
-            CHECK(result.matrix.data_map.at(data_map_key_gen(1, 1, node_number)) == 1);
+            check_value(1, 0, 0, result.matrix);
+            check_value(1, 1, 1, result.matrix);
             REQUIRE(result.rhs.size() == 2);
             CHECK(result.rhs == std::vector<DoubleComplex>{{-1.0, 0.0}, {0.0, 0.0}});
             CHECK(result.free_edge_indices.empty());
@@ -116,13 +116,12 @@ TEST_CASE("Test the link solver algorithm") {
             auto const edges = std::vector<BranchIdx>{{0, 1}, {1, 2}, {2, 0}};
             auto const node_loads = std::vector<DoubleComplex>{{-1.0, 0.0}, {1.0, 0.0}, {0.0, 0.0}};
             auto const result = forward_elimination(edges, node_loads);
-            uint64_t const node_number = node_loads.size();
 
             REQUIRE(result.matrix.data_map.size() == 4);
-            CHECK(result.matrix.data_map.at(data_map_key_gen(0, 0, node_number)) == 1);
-            CHECK(result.matrix.data_map.at(data_map_key_gen(0, 1, node_number)) == -1);
-            CHECK(result.matrix.data_map.at(data_map_key_gen(1, 1, node_number)) == 1);
-            CHECK(result.matrix.data_map.at(data_map_key_gen(1, 2, node_number)) == -1);
+            check_value(1, 0, 0, result.matrix);
+            check_value(-1, 0, 1, result.matrix);
+            check_value(1, 1, 1, result.matrix);
+            check_value(-1, 1, 2, result.matrix);
             REQUIRE(result.rhs.size() == 2);
             CHECK(result.rhs == std::vector<DoubleComplex>{{1.0, 0.0}, {0.0, 0.0}});
             REQUIRE(result.free_edge_indices.size() == 1);
@@ -140,11 +139,10 @@ TEST_CASE("Test the link solver algorithm") {
             auto const edges = std::vector<BranchIdx>{{0, 1}, {0, 1}};
             auto const node_loads = std::vector<DoubleComplex>{{-1.0, 0.0}, {1.0, 0.0}};
             auto const result = forward_elimination(edges, node_loads);
-            uint64_t const node_number = node_loads.size();
 
             REQUIRE(result.matrix.data_map.size() == 2);
-            CHECK(result.matrix.data_map.at(data_map_key_gen(0, 0, node_number)) == 1);
-            CHECK(result.matrix.data_map.at(data_map_key_gen(0, 1, node_number)) == 1);
+            check_value(1, 0, 0, result.matrix);
+            check_value(1, 0, 1, result.matrix);
             REQUIRE(result.rhs.size() == 1);
             CHECK(result.rhs == std::vector<DoubleComplex>{{1.0, 0.0}});
             REQUIRE(result.free_edge_indices.size() == 1);
@@ -161,23 +159,22 @@ TEST_CASE("Test the link solver algorithm") {
             auto const node_loads =
                 std::vector<DoubleComplex>{{-1.0, -1.0}, {-1.0, -1.0}, {2.0, 2.0}, {0.0, 0.0}, {0.0, 0.0}};
             auto const result = forward_elimination(edges, node_loads);
-            uint64_t const node_number = node_loads.size();
 
             REQUIRE(result.matrix.data_map.size() == 14);
-            CHECK(result.matrix.data_map.at(data_map_key_gen(0, 0, node_number)) == 1);
-            CHECK(result.matrix.data_map.at(data_map_key_gen(0, 2, node_number)) == 1);
-            CHECK(result.matrix.data_map.at(data_map_key_gen(0, 1, node_number)) == 1);
-            CHECK(result.matrix.data_map.at(data_map_key_gen(1, 1, node_number)) == 1);
-            CHECK(result.matrix.data_map.at(data_map_key_gen(1, 2, node_number)) == 1);
-            CHECK(result.matrix.data_map.at(data_map_key_gen(1, 6, node_number)) == -1);
-            CHECK(result.matrix.data_map.at(data_map_key_gen(1, 3, node_number)) == -1);
-            CHECK(result.matrix.data_map.at(data_map_key_gen(2, 2, node_number)) == 1);
-            CHECK(result.matrix.data_map.at(data_map_key_gen(2, 3, node_number)) == -1);
-            CHECK(result.matrix.data_map.at(data_map_key_gen(2, 6, node_number)) == -1);
-            CHECK(result.matrix.data_map.at(data_map_key_gen(2, 5, node_number)) == -1);
-            CHECK(result.matrix.data_map.at(data_map_key_gen(2, 4, node_number)) == -1);
-            CHECK(result.matrix.data_map.at(data_map_key_gen(3, 5, node_number)) == 1);
-            CHECK(result.matrix.data_map.at(data_map_key_gen(3, 6, node_number)) == 1);
+            check_value(1, 0, 0, result.matrix);
+            check_value(1, 0, 2, result.matrix);
+            check_value(1, 0, 1, result.matrix);
+            check_value(1, 1, 1, result.matrix);
+            check_value(1, 1, 2, result.matrix);
+            check_value(-1, 1, 6, result.matrix);
+            check_value(-1, 1, 3, result.matrix);
+            check_value(1, 2, 2, result.matrix);
+            check_value(-1, 2, 3, result.matrix);
+            check_value(-1, 2, 6, result.matrix);
+            check_value(-1, 2, 5, result.matrix);
+            check_value(-1, 2, 4, result.matrix);
+            check_value(1, 3, 5, result.matrix);
+            check_value(1, 3, 6, result.matrix);
             REQUIRE(result.rhs.size() == 4);
             CHECK(result.rhs == std::vector<DoubleComplex>{{-1.0, -1.0}, {-1.0, -1.0}, {-2.0, -2.0}, {0.0, 0.0}});
             REQUIRE(result.free_edge_indices.size() == 3);
@@ -197,6 +194,67 @@ TEST_CASE("Test the link solver algorithm") {
             CHECK(result.edges_history[5].rows == std::vector<uint64_t>{2, 3});
             CHECK(result.edges_history[6].events == std::vector<EdgeEvent>{Replaced, Replaced, ContractedToPoint});
             CHECK(result.edges_history[6].rows == std::vector<uint64_t>{1, 2, 3});
+        }
+    }
+
+    SUBCASE("Test backward substitution") {
+        using enum EdgeEvent;
+
+        SUBCASE("Complex case with complex loads") {
+            EliminationResult result{};
+            result.matrix.prepare(5, 7);
+            result.matrix.set_value(1, 0, 0);
+            result.matrix.set_value(1, 0, 1);
+            result.matrix.set_value(1, 0, 2);
+            result.matrix.set_value(1, 1, 1);
+            result.matrix.set_value(1, 1, 2);
+            result.matrix.set_value(-1, 1, 3);
+            result.matrix.set_value(-1, 1, 6);
+            result.matrix.set_value(1, 2, 2);
+            result.matrix.set_value(-1, 2, 3);
+            result.matrix.set_value(-1, 2, 4);
+            result.matrix.set_value(-1, 2, 5);
+            result.matrix.set_value(-1, 2, 6);
+            result.matrix.set_value(1, 3, 5);
+            result.matrix.set_value(1, 3, 6);
+
+            result.rhs = std::vector<DoubleComplex>{{-1.0, -1.0}, {-1.0, -1.0}, {-2.0, -2.0}, {0.0, 0.0}, {0.0, 0.0}};
+
+            result.free_edge_indices = std::vector<uint64_t>{3, 4, 6};
+            result.pivot_edge_indices = std::vector<uint64_t>{0, 1, 2, 5};
+
+            result.edges_history.resize(7);
+            result.edges_history[0].events = std::vector<EdgeEvent>{Deleted};
+            result.edges_history[0].rows = std::vector<uint64_t>{0};
+            result.edges_history[1].events = std::vector<EdgeEvent>{Replaced, Deleted};
+            result.edges_history[1].rows = std::vector<uint64_t>{0, 1};
+            result.edges_history[2].events = std::vector<EdgeEvent>{Replaced, Replaced, Deleted};
+            result.edges_history[2].rows = std::vector<uint64_t>{0, 1, 2};
+            result.edges_history[3].events = std::vector<EdgeEvent>{Replaced, ContractedToPoint};
+            result.edges_history[3].rows = std::vector<uint64_t>{1, 2};
+            result.edges_history[4].events = std::vector<EdgeEvent>{ContractedToPoint};
+            result.edges_history[4].rows = std::vector<uint64_t>{2};
+            result.edges_history[5].events = std::vector<EdgeEvent>{Replaced, Deleted};
+            result.edges_history[5].rows = std::vector<uint64_t>{2, 3};
+            result.edges_history[6].events = std::vector<EdgeEvent>{Replaced, Replaced, ContractedToPoint};
+            result.edges_history[6].rows = std::vector<uint64_t>{1, 2, 3};
+
+            backward_substitution(result);
+            REQUIRE(result.matrix.data_map.size() == 11);
+            check_value(1, 0, 0, result.matrix);
+            check_value(1, 0, 3, result.matrix);
+            check_value(1, 0, 6, result.matrix);
+            check_value(1, 1, 1, result.matrix);
+            check_value(1, 1, 4, result.matrix);
+            check_value(-1, 1, 6, result.matrix);
+            check_value(1, 2, 2, result.matrix);
+            check_value(-1, 2, 3, result.matrix);
+            check_value(-1, 2, 4, result.matrix);
+            check_value(1, 3, 5, result.matrix);
+            check_value(1, 3, 6, result.matrix);
+            REQUIRE(result.rhs.size() == 5);
+            CHECK(result.rhs ==
+                  std::vector<DoubleComplex>{{0.0, 0.0}, {1.0, 1.0}, {-2.0, -2.0}, {0.0, 0.0}, {0.0, 0.0}});
         }
     }
 }
