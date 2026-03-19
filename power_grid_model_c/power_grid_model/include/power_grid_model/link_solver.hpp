@@ -261,7 +261,7 @@ struct SolutionSet{
 					dfs_matrix.set_value(value,dfs_matrix_row,j);
 				}
 			}
-			extended_rhs.push_back(rhs[matrix_row]);
+			extended_rhs.emplace_back(rhs[matrix_row]);
 			++matrix_row;
 		} else {
 			dfs_matrix.set_value(-1,dfs_matrix_row,dfs_index);

@@ -375,8 +375,8 @@ TEST_CASE("Test the link solver algorithm") {
     std::vector<uint64_t> col = {0, 1, 2, 1, 2, 3, 6, 2, 3, 4, 5, 6, 5, 6, 4, 3, 4, 6 };
 	
 	IntS value;
-    uint64_t rows = 5;
-	uint64_t cols = 7;
+    const uint64_t rows = 5;
+	const uint64_t cols = 7;
 
     EliminationResult result{};
 	
@@ -419,7 +419,7 @@ TEST_CASE("Test the link solver algorithm") {
 	edge_history.events = {EdgeEvent::Replaced,EdgeEvent::Replaced,EdgeEvent::ContractedToPoint};
 	result.edges_history.push_back(edge_history);
 	
-	SolutionSet solution_set = set_solution_system(result);
+	const SolutionSet solution_set = set_solution_system(result);
 
     bool test = solution_set.dfs_matrix.get_value(value,0,0);
     REQUIRE(test == true);
