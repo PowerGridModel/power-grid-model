@@ -244,7 +244,7 @@ struct SolutionSet{
 	using enum EdgeEvent;
 	IntS value;
     constexpr uint8_t starting_row{};
-	auto& [matrix, rhs, free_edge_indices, edges_history] = result;
+	auto& [matrix, rhs, free_edge_indices, pivot_edge_indices, edges_history] = result;
 	
 	SolutionSet solution_set{};
 	
