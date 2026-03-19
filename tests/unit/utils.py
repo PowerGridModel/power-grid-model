@@ -11,7 +11,7 @@ from typing import Any
 import numpy as np
 import pytest
 
-from power_grid_model._core.dataset_definitions import DatasetType
+from power_grid_model._core.dataset_definitions import AttributeType, DatasetType, DatasetTypeVar
 from power_grid_model._core.power_grid_model import PowerGridModel
 from power_grid_model.data_types import Dataset, PythonDataset, SingleDataset
 from power_grid_model.errors import (
@@ -236,9 +236,9 @@ def dict_params(params: dict[Any, str], **kwargs):
         yield pytest.param(value, **kwargs, id=param_id)
 
 
-def import_case_data(data_path: Path, calculation_type: str, sym: bool):
+def import_case_data(data_path: Path, calculation_type: str, sym: bool) -> dict[DatasetTypeVar, Dataset]:
     output_prefix = get_output_type(calculation_type=calculation_type, sym=sym)
-    return_dict = {"input": json_deserialize_from_file(data_path / "input.json")}
+    return_dict = {DatasetType.input: json_deserialize_from_file(data_path / "input.json")}
     # import output if relevant
     if (data_path / f"{output_prefix}.json").exists():
         return_dict["output"] = json_deserialize_from_file(data_path / f"{output_prefix}.json")
@@ -278,7 +278,7 @@ def compare_result(actual: SingleDataset, expected: SingleDataset, rtol: float, 
             if not expect_all_nan:
                 # permute expected_col if needed
                 if expected_col.ndim == 1 and actual_col.ndim == actual_col_ndim:
-                    if col_name == "u_angle":
+                    if col_name == AttributeType.u_angle:
                         # should be 120 and 240 degree lagging
                         expected_col = np.stack(
                             (expected_col, expected_col - 2.0 / 3.0 * np.pi, expected_col + 2.0 / 3.0 * np.pi), axis=-1
@@ -289,7 +289,7 @@ def compare_result(actual: SingleDataset, expected: SingleDataset, rtol: float, 
                         expected_col = expected_col.reshape(-1, 1)
                 # for u_angle, the angle needs to be normalized
                 # because any global angle shift is acceptable
-                if col_name == "u_angle":
+                if col_name == AttributeType.u_angle:
                     # set the u_angle of 0-th entry to zero
                     actual_col = actual_col - actual_col.ravel()[0]
                     expected_col = expected_col - expected_col.ravel()[0]
