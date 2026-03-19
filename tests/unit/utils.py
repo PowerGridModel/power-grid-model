@@ -11,7 +11,7 @@ from typing import Any
 import numpy as np
 import pytest
 
-from power_grid_model._core.dataset_definitions import AttributeType, DatasetType, DatasetTypeVar
+from power_grid_model._core.dataset_definitions import AttributeType, DatasetType
 from power_grid_model._core.power_grid_model import PowerGridModel
 from power_grid_model.data_types import Dataset, PythonDataset, SingleDataset
 from power_grid_model.errors import (
@@ -236,9 +236,9 @@ def dict_params(params: dict[Any, str], **kwargs):
         yield pytest.param(value, **kwargs, id=param_id)
 
 
-def import_case_data(data_path: Path, calculation_type: str, sym: bool) -> dict[DatasetTypeVar, Dataset]:
+def import_case_data(data_path: Path, calculation_type: str, sym: bool):
     output_prefix = get_output_type(calculation_type=calculation_type, sym=sym)
-    return_dict = {DatasetType.input: json_deserialize_from_file(data_path / "input.json")}
+    return_dict = {"input": json_deserialize_from_file(data_path / "input.json")}
     # import output if relevant
     if (data_path / f"{output_prefix}.json").exists():
         return_dict["output"] = json_deserialize_from_file(data_path / f"{output_prefix}.json")
