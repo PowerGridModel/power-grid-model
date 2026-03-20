@@ -4,7 +4,7 @@
 
 """Power Grid Model"""
 
-from power_grid_model._core.dataset_definitions import ComponentType, DatasetType
+from power_grid_model._core.dataset_definitions import AttributeType, ComponentType, DatasetType
 from power_grid_model._core.power_grid_core import pgm_version
 from power_grid_model._core.power_grid_meta import (
     attribute_dtype,
@@ -34,6 +34,7 @@ __version__ = pgm_version
 
 __all__ = [
     "AngleMeasurementType",
+    "AttributeType",
     "Branch3Side",
     "BranchSide",
     "CalculationMethod",

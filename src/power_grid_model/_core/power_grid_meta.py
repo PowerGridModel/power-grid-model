@@ -12,12 +12,15 @@ from typing import Any, overload
 
 import numpy as np
 
-from power_grid_model._core.data_types import AttributeType, DenseBatchArray, SingleArray
+from power_grid_model._core.data_types import DenseBatchArray, SingleArray
 from power_grid_model._core.dataset_definitions import (
+    AttributeType,
+    AttributeTypeLike,
     ComponentTypeLike,
     ComponentTypeVar,
     DatasetType,
     DatasetTypeLike,
+    _str_to_attribute_type,
     _str_to_component_type,
     _str_to_datatype,
 )
@@ -56,8 +59,8 @@ class ComponentMetaData:
     """
 
     dtype: np.dtype
-    dtype_dict: dict[str, Any]
-    nans: dict[str, float | int]
+    dtype_dict: dict[AttributeTypeLike, Any]
+    nans: dict[AttributeTypeLike, float | int]
     nan_scalar: np.ndarray
 
     def __getitem__(self, item):
@@ -151,7 +154,7 @@ def _generate_meta_attributes(component: ComponentPtr) -> dict:
     n_attrs = get_pgc().meta_n_attributes(component)
     for i in range(n_attrs):
         attribute: AttributePtr = get_pgc().meta_get_attribute_by_idx(component, i)
-        attr_name: str = get_pgc().meta_attribute_name(attribute)
+        attr_name: AttributeType = _str_to_attribute_type(get_pgc().meta_attribute_name(attribute))
         attr_ctype: int = get_pgc().meta_attribute_ctype(attribute)
         attr_offset: int = get_pgc().meta_attribute_offset(attribute)
         attr_np_type = f"{_ENDIANNESS}{_CTYPE_NUMPY_MAP[PGMCType(attr_ctype)]}"
@@ -226,25 +229,26 @@ def initialize_array(
 
 
 def attribute_dtype(
-    data_type: DatasetTypeLike, component_type: ComponentTypeLike, attribute: AttributeType
+    data_type: DatasetTypeLike, component_type: ComponentTypeLike, attribute: AttributeTypeLike
 ) -> np.dtype:
     """Gives out dtype of the attribute to be used in a columnar data format
 
     Args:
         data_type (DatasetTypeLike): The type of dataset (input, update, sym_output, or asym_output)
         component_type (ComponentTypeLike): The type of component (e.g., node)
-        attribute (AttributeType): The attribute whose dtype is required
+        attribute (AttributeTypeLike): The attribute whose dtype is required
 
     Returns:
         np.dtype: The dtype of the specified attribute
     """
     data_type = _str_to_datatype(data_type)
     component_type = _str_to_component_type(component_type)
+    attribute = _str_to_attribute_type(attribute)
     return power_grid_meta_data[data_type][component_type].dtype[attribute]
 
 
 def attribute_empty_value(
-    data_type: DatasetTypeLike, component_type: ComponentTypeLike, attribute: AttributeType
+    data_type: DatasetTypeLike, component_type: ComponentTypeLike, attribute: AttributeTypeLike
 ) -> np.ndarray:
     """
     Returns the empty value for a specific attribute in the Power Grid Model.
@@ -252,11 +256,12 @@ def attribute_empty_value(
     Args:
         data_type (DatasetTypeLike): The type of dataset (input, update, sym_output, or asym_output)
         component_type (ComponentTypeLike): The type of component (e.g., node)
-        attribute (AttributeType): The attribute whose empty value is required
+        attribute (AttributeTypeLike): The attribute whose empty value is required
 
     Returns:
         np.ndarray: The empty value for the specified attribute
     """
     data_type = _str_to_datatype(data_type)
     component_type = _str_to_component_type(component_type)
+    attribute = _str_to_attribute_type(attribute)
     return power_grid_meta_data[data_type][component_type].nan_scalar[attribute]
