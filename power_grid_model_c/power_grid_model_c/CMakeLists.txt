@@ -31,6 +31,8 @@ file(
 
 target_link_libraries(power_grid_model_c PRIVATE power_grid_model)
 
+target_compile_definitions(power_grid_model_c PRIVATE PGM_VERSION="${PGM_VERSION}")
+
 target_sources(
     power_grid_model_c
     PUBLIC
@@ -44,7 +46,7 @@ set_target_properties(
     power_grid_model_c
     PROPERTIES
         VERSION ${PGM_VERSION}
-        SOVERSION ${PGM_VERSION}
+        SOVERSION ${PGM_VERSION_MAJOR}
         INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE
         INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE
 )
