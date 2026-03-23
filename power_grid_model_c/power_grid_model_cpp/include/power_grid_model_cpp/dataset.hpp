@@ -15,6 +15,7 @@
 #include "power_grid_model_c/dataset.h"
 
 #include <array>
+#include <functional>
 #include <map>
 #include <set>
 #include <string>
@@ -268,7 +269,7 @@ inline std::string get_output_type(PGM_CalculationType calculation_type, bool sy
     return "asym_output"s;
 }
 
-inline std::set<std::string> get_irrelevant_components(PGM_CalculationType calculation_type) {
+inline std::set<std::string, std::less<>> get_irrelevant_components(PGM_CalculationType calculation_type) {
     using namespace std::string_literals;
 
     if (calculation_type == PGM_power_flow) {
@@ -296,8 +297,7 @@ struct OwningDataset {
 
     OwningDataset(DatasetWritable& writable_dataset, bool enable_columnar_buffers = false)
         : dataset{writable_dataset.get_info().name(), writable_dataset.get_info().is_batch(),
-                  writable_dataset.get_info().batch_size()},
-          storage{} {
+                  writable_dataset.get_info().batch_size()} {
         auto const& info = writable_dataset.get_info();
         Idx const batch_size = info.batch_size();
         auto const& dataset_name = info.name();
@@ -342,7 +342,7 @@ struct OwningDataset {
         OwningDataset const& ref_dataset, PGM_CalculationType calculation_type, bool sym, bool is_batch = false,
         Idx batch_size = 1,
         std::map<MetaComponent const*, std::set<MetaAttribute const*>> const& output_component_attribute_filters = {})
-        : dataset{get_output_type(calculation_type, sym), is_batch, batch_size}, storage{} {
+        : dataset{get_output_type(calculation_type, sym), is_batch, batch_size} {
         DatasetInfo const& ref_info = ref_dataset.dataset.get_info();
         bool const enable_filters = !output_component_attribute_filters.empty();
         auto const irrelevant_components = get_irrelevant_components(calculation_type);

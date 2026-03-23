@@ -44,12 +44,6 @@
 
 namespace power_grid_model_cpp {
 namespace {
-class UnsupportedValidationCase : public PowerGridError {
-  public:
-    UnsupportedValidationCase(std::string const& calculation_type, bool sym)
-        : PowerGridError{std::format("Unsupported validation case: {} {}", sym ? "sym" : "asym", calculation_type)} {}
-};
-
 using nlohmann::json;
 
 auto read_json(std::filesystem::path const& path) {
