@@ -268,6 +268,28 @@ inline std::string get_output_type(PGM_CalculationType calculation_type, bool sy
     return "asym_output"s;
 }
 
+inline std::set<std::string> get_irrelevant_components(PGM_CalculationType calculation_type) {
+    using namespace std::string_literals;
+
+    if (calculation_type == PGM_power_flow) {
+        return {"sym_voltage_sensor"s,
+                "sym_current_sensor"s,
+                "sym_power_sensor"s,
+                "asym_voltage_sensor"s,
+                "asym_current_sensor"s,
+                "asym_power_sensor"s,
+                "fault"s};
+    }
+    if (calculation_type == PGM_state_estimation) {
+        return {"fault"s};
+    }
+    if (calculation_type == PGM_short_circuit) {
+        return {"sym_voltage_sensor"s,  "sym_current_sensor"s,  "sym_power_sensor"s,
+                "asym_voltage_sensor"s, "asym_current_sensor"s, "asym_power_sensor"s};
+    }
+    return {};
+}
+
 struct OwningDataset {
     DatasetMutable dataset;
     OwningMemory storage{};
@@ -323,6 +345,11 @@ struct OwningDataset {
         : dataset{get_output_type(calculation_type, sym), is_batch, batch_size}, storage{} {
         DatasetInfo const& ref_info = ref_dataset.dataset.get_info();
         bool const enable_filters = !output_component_attribute_filters.empty();
+        auto const irrelevant_components = get_irrelevant_components(calculation_type);
+
+        auto const filter_irrelevant_component = [&irrelevant_components](std::string const& component) {
+            return irrelevant_components.find(component) != irrelevant_components.end();
+        };
 
         for (Idx component_idx{}; component_idx != ref_info.n_components(); ++component_idx) {
             auto const& component_name = ref_info.component_name(component_idx);
@@ -330,6 +357,10 @@ struct OwningDataset {
             // skip components not in the filter
             if (enable_filters &&
                 output_component_attribute_filters.find(component_meta) == output_component_attribute_filters.end()) {
+                continue;
+            }
+            // skip irrelevant components for the calculation type
+            if (filter_irrelevant_component(component_name)) {
                 continue;
             }
 
