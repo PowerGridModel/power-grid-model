@@ -18,7 +18,6 @@ from power_grid_model._core.buffer_handling import (
     get_buffer_view,
 )
 from power_grid_model._core.data_types import (
-    AttributeType,
     ColumnarData,
     ComponentData,
     Dataset,
@@ -26,7 +25,13 @@ from power_grid_model._core.data_types import (
     SingleColumnarData,
     SparseBatchColumnarData,
 )
-from power_grid_model._core.dataset_definitions import ComponentType, DatasetType, _str_to_component_type
+from power_grid_model._core.dataset_definitions import (
+    AttributeType,
+    ComponentType,
+    DatasetType,
+    _str_to_attribute_type,
+    _str_to_component_type,
+)
 from power_grid_model._core.enum import ComponentAttributeFilterOptions
 from power_grid_model._core.error_handling import VALIDATOR_MSG, assert_no_error
 from power_grid_model._core.power_grid_core import (
@@ -156,7 +161,9 @@ class CDatasetInfo:
             else:
                 n_indications = get_pgc().dataset_info_n_attribute_indications(self._info, component_idx)
                 result_dict[component_name] = [
-                    get_pgc().dataset_info_attribute_name(self._info, component_idx, attribute_idx)
+                    _str_to_attribute_type(
+                        get_pgc().dataset_info_attribute_name(self._info, component_idx, attribute_idx)
+                    )
                     for attribute_idx in range(n_indications)
                 ]
         return result_dict
@@ -284,7 +291,7 @@ class CMutableDataset:
         for attr, attr_data in buffer.attribute_data.items():
             self._register_attribute_buffer(component, attr, attr_data)
 
-    def _register_attribute_buffer(self, component, attr, attr_data):
+    def _register_attribute_buffer(self, component: ComponentType, attr: AttributeType, attr_data: CAttributeBuffer):
         get_pgc().dataset_mutable_add_attribute_buffer(
             dataset=self._mutable_dataset,
             component=component.value,
@@ -531,7 +538,7 @@ class CWritableDataset:
 
 def _get_filtered_attributes(
     schema: ComponentMetaData,
-    component_data_filter: set[str] | list[str] | None | ComponentAttributeFilterOptions,
+    component_data_filter: set[AttributeType] | list[AttributeType] | None | ComponentAttributeFilterOptions,
     attribute_indication: None | list[AttributeType],
 ) -> list[AttributeType] | None:
     if component_data_filter is None:
@@ -540,6 +547,10 @@ def _get_filtered_attributes(
     if isinstance(component_data_filter, ComponentAttributeFilterOptions):
         if component_data_filter == ComponentAttributeFilterOptions.relevant and attribute_indication is not None:
             return attribute_indication
-        return [] if schema.dtype.names is None else list(schema.dtype.names)
+        return (
+            []
+            if schema.dtype.names is None
+            else list(_str_to_attribute_type(attribute) for attribute in schema.dtype.names)
+        )
 
     return list(component_data_filter)
