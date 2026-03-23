@@ -402,11 +402,11 @@ std::map<std::string, PGM_ExperimentalFeatures, std::less<>> const experimental_
 struct CaseParam {
     std::filesystem::path case_dir;
     std::string case_name;
-    std::string calculation_type;
-    std::string calculation_method;
-    std::string short_circuit_voltage_scaling;
-    std::string tap_changing_strategy;
-    std::string experimental_features;
+    PGM_CalculationType calculation_type;
+    PGM_CalculationMethod calculation_method;
+    PGM_ShortCircuitVoltageScaling short_circuit_voltage_scaling;
+    PGM_TapChangingStrategy tap_changing_strategy;
+    PGM_ExperimentalFeatures experimental_features;
     double err_tol = 1e-8;
     Idx max_iter = 20;
     bool sym{};
@@ -425,24 +425,24 @@ struct CaseParam {
 
 Options get_options(CaseParam const& param, Idx threading = -1) {
     Options options{};
-    options.set_calculation_type(calculation_type_mapping.at(param.calculation_type));
-    options.set_calculation_method(calculation_method_mapping.at(param.calculation_method));
+    options.set_calculation_type(param.calculation_type);
+    options.set_calculation_method(param.calculation_method);
     options.set_symmetric(param.sym ? PGM_symmetric : PGM_asymmetric);
     options.set_err_tol(param.err_tol);
     options.set_max_iter(param.max_iter);
     options.set_threading(threading);
-    options.set_short_circuit_voltage_scaling(sc_voltage_scaling_mapping.at(param.short_circuit_voltage_scaling));
-    options.set_tap_changing_strategy(optimizer_strategy_mapping.at(param.tap_changing_strategy));
-    options.set_experimental_features(experimental_features_mapping.at(param.experimental_features));
+    options.set_short_circuit_voltage_scaling(param.short_circuit_voltage_scaling);
+    options.set_tap_changing_strategy(param.tap_changing_strategy);
+    options.set_experimental_features(param.experimental_features);
     return options;
 }
 
-std::string get_output_type(std::string const& calculation_type, bool sym) {
+std::string get_output_type(PGM_CalculationType calculation_type, bool sym) {
     using namespace std::string_literals;
 
-    if (calculation_type == "short_circuit"s) {
+    if (calculation_type == PGM_short_circuit) {
         if (sym) {
-            throw UnsupportedValidationCase{calculation_type, sym};
+            throw UnsupportedValidationCase{"short_circuit", sym};
         }
         return "sc_output"s;
     }
@@ -453,11 +453,15 @@ std::string get_output_type(std::string const& calculation_type, bool sym) {
 }
 
 std::optional<CaseParam> construct_case(std::filesystem::path const& case_dir, json const& j,
-                                        std::string const& calculation_type, bool is_batch,
-                                        std::string const& calculation_method, bool sym) {
+                                        std::string const& calculation_type_str, bool is_batch,
+                                        std::string const& calculation_method_str, bool sym) {
     using namespace std::string_literals;
 
     auto const batch_suffix = is_batch ? "_batch"s : ""s;
+
+    // Convert strings to enums
+    PGM_CalculationType const calculation_type = calculation_type_mapping.at(calculation_type_str);
+    PGM_CalculationMethod const calculation_method = calculation_method_mapping.at(calculation_method_str);
 
     // add a case if output file exists
     std::filesystem::path const output_file =
@@ -484,8 +488,8 @@ std::optional<CaseParam> construct_case(std::filesystem::path const& case_dir, j
     json calculation_method_params;
     calculation_method_params.update(j, true);
     if (j.contains("extra_params")) {
-        if (json const& extra_params = j.at("extra_params"); extra_params.contains(calculation_method)) {
-            calculation_method_params.update(extra_params.at(calculation_method), true);
+        if (json const& extra_params = j.at("extra_params"); extra_params.contains(calculation_method_str)) {
+            calculation_method_params.update(extra_params.at(calculation_method_str), true);
         }
     }
 
@@ -499,14 +503,18 @@ std::optional<CaseParam> construct_case(std::filesystem::path const& case_dir, j
             param.xfail = xfail.at("raises").get<std::string>();
         }
     }
-    if (calculation_type == "short_circuit") {
-        calculation_method_params.at("short_circuit_voltage_scaling").get_to(param.short_circuit_voltage_scaling);
+    if (calculation_type == PGM_short_circuit) {
+        std::string const sc_scaling_str =
+            calculation_method_params.at("short_circuit_voltage_scaling").get<std::string>();
+        param.short_circuit_voltage_scaling = sc_voltage_scaling_mapping.at(sc_scaling_str);
     }
 
-    param.tap_changing_strategy = calculation_method_params.value("tap_changing_strategy", "disabled");
-    param.experimental_features = calculation_method_params.value("experimental_features", "disabled");
+    std::string const tap_strategy_str = calculation_method_params.value("tap_changing_strategy", "disabled");
+    param.tap_changing_strategy = optimizer_strategy_mapping.at(tap_strategy_str);
+    std::string const experimental_features_str = calculation_method_params.value("experimental_features", "disabled");
+    param.experimental_features = experimental_features_mapping.at(experimental_features_str);
     param.case_name += sym ? "-sym"s : "-asym"s;
-    param.case_name += "-"s + param.calculation_method;
+    param.case_name += "-"s + calculation_method_str;
     param.case_name += is_batch ? "_batch"s : ""s;
 
     return param;
@@ -666,7 +674,7 @@ void validate_batch_case(CaseParam const& param) {
 TEST_CASE("Validation test single - power flow") {
     std::vector<CaseParam> const& all_cases = get_all_single_cases();
     for (CaseParam const& param : all_cases) {
-        if (param.calculation_type == "power_flow") {
+        if (param.calculation_type == PGM_power_flow) {
             SUBCASE(param.case_name.c_str()) { validate_single_case(param); }
         }
     }
@@ -675,7 +683,7 @@ TEST_CASE("Validation test single - power flow") {
 TEST_CASE("Validation test single - state estimation") {
     std::vector<CaseParam> const& all_cases = get_all_single_cases();
     for (CaseParam const& param : all_cases) {
-        if (param.calculation_type == "state_estimation") {
+        if (param.calculation_type == PGM_state_estimation) {
             SUBCASE(param.case_name.c_str()) { validate_single_case(param); }
         }
     }
@@ -684,7 +692,7 @@ TEST_CASE("Validation test single - state estimation") {
 TEST_CASE("Validation test single - short circuit") {
     std::vector<CaseParam> const& all_cases = get_all_single_cases();
     for (CaseParam const& param : all_cases) {
-        if (param.calculation_type == "short_circuit") {
+        if (param.calculation_type == PGM_short_circuit) {
             SUBCASE(param.case_name.c_str()) { validate_single_case(param); }
         }
     }
@@ -694,7 +702,7 @@ TEST_CASE("Validation test batch - power flow") {
     std::vector<CaseParam> const& all_cases = get_all_batch_cases();
 
     for (CaseParam const& param : all_cases) {
-        if (param.calculation_type == "power_flow") {
+        if (param.calculation_type == PGM_power_flow) {
             SUBCASE(param.case_name.c_str()) { validate_batch_case(param); }
         }
     }
@@ -704,7 +712,7 @@ TEST_CASE("Validation test batch - state estimation") {
     std::vector<CaseParam> const& all_cases = get_all_batch_cases();
 
     for (CaseParam const& param : all_cases) {
-        if (param.calculation_type == "state_estimation") {
+        if (param.calculation_type == PGM_state_estimation) {
             SUBCASE(param.case_name.c_str()) { validate_batch_case(param); }
         }
     }
@@ -714,7 +722,7 @@ TEST_CASE("Validation test batch - short circuit") {
     std::vector<CaseParam> const& all_cases = get_all_batch_cases();
 
     for (CaseParam const& param : all_cases) {
-        if (param.calculation_type == "short_circuit") {
+        if (param.calculation_type == PGM_short_circuit) {
             SUBCASE(param.case_name.c_str()) { validate_batch_case(param); }
         }
     }
