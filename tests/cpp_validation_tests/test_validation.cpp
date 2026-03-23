@@ -437,21 +437,6 @@ Options get_options(CaseParam const& param, Idx threading = -1) {
     return options;
 }
 
-std::string get_output_type(PGM_CalculationType calculation_type, bool sym) {
-    using namespace std::string_literals;
-
-    if (calculation_type == PGM_short_circuit) {
-        if (sym) {
-            throw UnsupportedValidationCase{"short_circuit", sym};
-        }
-        return "sc_output"s;
-    }
-    if (sym) {
-        return "sym_output"s;
-    }
-    return "asym_output"s;
-}
-
 std::optional<CaseParam> construct_case(std::filesystem::path const& case_dir, json const& j,
                                         std::string const& calculation_type_str, bool is_batch,
                                         std::string const& calculation_method_str, bool sym) {
@@ -633,7 +618,7 @@ void validate_single_case(CaseParam const& param) {
     execute_test(param, [&param](Subcase& subcase) {
         auto const output_prefix = get_output_type(param.calculation_type, param.sym);
         auto const validation_case = create_validation_case(param, output_prefix);
-        OwningDataset const result{validation_case.output.value(), output_prefix};
+        OwningDataset const result{validation_case.output.value(), param.calculation_type, param.sym};
 
         // create and run model
         auto const& options = get_options(param);
@@ -651,7 +636,8 @@ void validate_batch_case(CaseParam const& param) {
         auto const validation_case = create_validation_case(param, output_prefix);
         auto const& info = validation_case.update_batch.value().dataset.get_info();
         Idx const batch_size = info.batch_size();
-        OwningDataset const batch_result{validation_case.output_batch.value(), output_prefix, true, batch_size};
+        OwningDataset const batch_result{validation_case.output_batch.value(), param.calculation_type, param.sym, true,
+                                         batch_size};
 
         // create model
         Model model{50.0, validation_case.input.dataset};

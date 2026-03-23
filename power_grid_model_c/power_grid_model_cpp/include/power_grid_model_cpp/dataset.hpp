@@ -256,6 +256,18 @@ struct OwningMemory {
     std::vector<std::vector<AttributeBuffer>> attribute_buffers;
 };
 
+inline std::string get_output_type(PGM_CalculationType calculation_type, bool sym) {
+    using namespace std::string_literals;
+
+    if (calculation_type == PGM_short_circuit) {
+        return "sc_output"s;
+    }
+    if (sym) {
+        return "sym_output"s;
+    }
+    return "asym_output"s;
+}
+
 struct OwningDataset {
     DatasetMutable dataset;
     OwningMemory storage{};
@@ -305,15 +317,16 @@ struct OwningDataset {
     }
 
     OwningDataset(
-        OwningDataset const& ref_dataset, std::string const& dataset_name, bool is_batch = false, Idx batch_size = 1,
+        OwningDataset const& ref_dataset, PGM_CalculationType calculation_type, bool sym, bool is_batch = false,
+        Idx batch_size = 1,
         std::map<MetaComponent const*, std::set<MetaAttribute const*>> const& output_component_attribute_filters = {})
-        : dataset{dataset_name, is_batch, batch_size}, storage{} {
+        : dataset{get_output_type(calculation_type, sym), is_batch, batch_size}, storage{} {
         DatasetInfo const& ref_info = ref_dataset.dataset.get_info();
         bool const enable_filters = !output_component_attribute_filters.empty();
 
         for (Idx component_idx{}; component_idx != ref_info.n_components(); ++component_idx) {
             auto const& component_name = ref_info.component_name(component_idx);
-            auto const& component_meta = MetaData::get_component_by_name(dataset_name, component_name);
+            auto const& component_meta = MetaData::get_component_by_name(dataset.get_info().name(), component_name);
             // skip components not in the filter
             if (enable_filters &&
                 output_component_attribute_filters.find(component_meta) == output_component_attribute_filters.end()) {
