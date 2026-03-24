@@ -383,7 +383,7 @@ def none_match_comparison[ErrorType: ComparisonError](  # noqa: PLR0913
     if matches.any():
         if matches.ndim > 1:
             matches = matches.any(axis=1)
-        ids = component_data["id"][matches].flatten().tolist()
+        ids = component_data[AttributeType.id][matches].flatten().tolist()
         return [error(component, field, ids, ref_value)]
     return []
 
@@ -458,7 +458,7 @@ def all_unique(data: SingleDataset, component: ComponentType, field: AttributeTy
     field_data = data[component][field]
     _, inverse, counts = np.unique(field_data, return_inverse=True, return_counts=True)
     if any(counts != 1):
-        ids = data[component]["id"][(counts != 1)[inverse]].flatten().tolist()
+        ids = data[component][AttributeType.id][(counts != 1)[inverse]].flatten().tolist()
         return [NotUniqueError(component, field, ids)]
     return []
 
@@ -484,7 +484,7 @@ def all_cross_unique(
     all_values: dict[int, list[tuple[tuple[ComponentType, AttributeType], int]]] = {}
     duplicate_ids = set()
     for component, field in fields:
-        for obj_id, value in zip(data[component]["id"], data[component][field]):
+        for obj_id, value in zip(data[component][AttributeType.id], data[component][field]):
             component_id = ((component, field), obj_id)
             if value not in all_values:
                 all_values[value] = []
@@ -521,7 +521,7 @@ def all_in_valid_values(
 
     invalid = np.isin(data[component][field], np.array(list(valid)), invert=True)
     if invalid.any():
-        ids = data[component]["id"][invalid].flatten().tolist()
+        ids = data[component][AttributeType.id][invalid].flatten().tolist()
         return [UnsupportedMeasuredTerminalType(component, field, ids, values)]
     return []
 
@@ -551,7 +551,7 @@ def all_valid_enum_values(
 
     invalid = np.isin(data[component][field], np.array(list(valid), dtype=np.int8), invert=True)
     if invalid.any():
-        ids = data[component]["id"][invalid].flatten().tolist()
+        ids = data[component][AttributeType.id][invalid].flatten().tolist()
         return [InvalidEnumValueError(component, field, ids, enum)]
     return []
 
@@ -593,7 +593,7 @@ def all_valid_associated_enum_values(  # noqa: PLR0913
 
     invalid = np.isin(data[component][field][mask], np.array(list(valid), dtype=np.int8), invert=True)
     if invalid.any():
-        ids = data[component]["id"][mask][invalid].flatten().tolist()
+        ids = data[component][AttributeType.id][mask][invalid].flatten().tolist()
         return [InvalidAssociatedEnumValueError(component, [field, ref_object_id_field], ids, enum)]
     return []
 
@@ -626,7 +626,7 @@ def all_valid_ids(
     # Find any values that can't be found in the set of ids
     invalid = np.logical_and(mask, np.isin(data[component][field], valid_ids, invert=True))
     if invalid.any():
-        ids = data[component]["id"][invalid].flatten().tolist()
+        ids = data[component][AttributeType.id][invalid].flatten().tolist()
         return [InvalidIdError(component, field, ids, ref_components, filters)]
     return []
 
@@ -673,7 +673,7 @@ def all_not_two_values_zero(
     if invalid.any():
         if invalid.ndim > 1:
             invalid = invalid.any(axis=1)
-        ids = data[component]["id"][invalid].flatten().tolist()
+        ids = data[component][AttributeType.id][invalid].flatten().tolist()
         return [TwoValuesZeroError(component, [field_1, field_2], ids)]
     return []
 
@@ -700,7 +700,7 @@ def all_not_two_values_equal(
     if invalid.any():
         if invalid.ndim > 1:
             invalid = invalid.any(axis=1)
-        ids = data[component]["id"][invalid].flatten().tolist()
+        ids = data[component][AttributeType.id][invalid].flatten().tolist()
         return [SameValueError(component, [field_1, field_2], ids)]
     return []
 
@@ -778,7 +778,7 @@ def all_finite(
 
             invalid = np.isinf(array[field])
             if invalid.any():
-                ids = array["id"][invalid].flatten().tolist()
+                ids = array[AttributeType.id][invalid].flatten().tolist()
                 errors.append(InfinityError(component, field, ids))
     return errors
 
@@ -933,7 +933,7 @@ def valid_p_q_sigma(data: SingleDataset, component: ComponentType) -> list[PQSig
         mis_match |= np.logical_xor(q_nan.any(axis=-1), q_nan.all(axis=-1))
 
     if mis_match.any():
-        ids = data[component]["id"][mis_match].flatten().tolist()
+        ids = data[component][AttributeType.id][mis_match].flatten().tolist()
         errors.append(PQSigmaPairError(component, [AttributeType.p_sigma, AttributeType.q_sigma], ids))
     return errors
 

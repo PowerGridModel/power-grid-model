@@ -97,7 +97,7 @@ Another example of how to create components can be found in
 
 ```{note}
 The keys of the dictonary of arrays are unique and should match with the respective `type name` of the component.
-See, e.g., that type name of [node](user_manual/components.md#node) is `node`.
+See, e.g., that type name of [node](user_manual/components.md#node) is `ComponentType.node`.
 ```
 
 ## Instantiate Model
