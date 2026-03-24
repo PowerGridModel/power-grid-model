@@ -9,7 +9,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from power_grid_model._core.dataset_definitions import AttributeType, ComponentType, DatasetType
+from power_grid_model._core.dataset_definitions import AttributeType as AT, ComponentType as CT, DatasetType
 from power_grid_model._core.utils import convert_batch_dataset_to_batch_list
 from power_grid_model.enum import TapChangingStrategy
 
@@ -148,20 +148,20 @@ def test_single_validation(
 
         # test get indexer
         for component_name, input_array in case_data[DatasetType.input].items():
-            ids_array = input_array[AttributeType.id].copy()
+            ids_array = input_array[AT.id].copy()
             rng = np.random.default_rng(3)
             rng.shuffle(ids_array)
             indexer_array = model.get_indexer(component_name, ids_array)
             # check
-            assert np.all(input_array[AttributeType.id][indexer_array] == ids_array)
+            assert np.all(input_array[AT.id][indexer_array] == ids_array)
 
         # test calculate with only node and source result
-        kwargs = dict(base_kwargs, output_component_types=[ComponentType.node, ComponentType.source])
+        kwargs = dict(base_kwargs, output_component_types=[CT.node, CT.source])
         result = calculation_function(model, **supported_kwargs(kwargs=kwargs, supported=calculation_args))
-        assert set(result.keys()) == {ComponentType.node, ComponentType.source}
-        kwargs = dict(base_kwargs, output_component_types={ComponentType.node, ComponentType.source})
+        assert set(result.keys()) == {CT.node, CT.source}
+        kwargs = dict(base_kwargs, output_component_types={CT.node, CT.source})
         result = calculation_function(model, **supported_kwargs(kwargs=kwargs, supported=calculation_args))
-        assert set(result.keys()) == {ComponentType.node, ComponentType.source}
+        assert set(result.keys()) == {CT.node, CT.source}
 
 
 @pytest.mark.parametrize(

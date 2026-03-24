@@ -8,9 +8,9 @@ import numpy as np
 import pytest
 
 from power_grid_model import (
-    AttributeType,
+    AttributeType as AT,
     ComponentAttributeFilterOptions,
-    ComponentType,
+    ComponentType as CT,
     DatasetType,
     PowerGridModel,
     initialize_array,
@@ -44,30 +44,30 @@ u0 = 100.0 V - (j10.0 ohm * -j3.0 A) = 70.0 V
 
 @pytest.fixture
 def input_row():
-    node = initialize_array(DatasetType.input, ComponentType.node, 1)
-    node[AttributeType.id] = 0
-    node[AttributeType.u_rated] = 100.0
+    node = initialize_array(DatasetType.input, CT.node, 1)
+    node[AT.id] = 0
+    node[AT.u_rated] = 100.0
 
-    source = initialize_array(DatasetType.input, ComponentType.source, 1)
-    source[AttributeType.id] = 1
-    source[AttributeType.node] = 0
-    source[AttributeType.status] = 1
-    source[AttributeType.u_ref] = 1.0
-    source[AttributeType.sk] = 1000.0
-    source[AttributeType.rx_ratio] = 0.0
+    source = initialize_array(DatasetType.input, CT.source, 1)
+    source[AT.id] = 1
+    source[AT.node] = 0
+    source[AT.status] = 1
+    source[AT.u_ref] = 1.0
+    source[AT.sk] = 1000.0
+    source[AT.rx_ratio] = 0.0
 
-    sym_load = initialize_array(DatasetType.input, ComponentType.sym_load, 1)
-    sym_load[AttributeType.id] = 2
-    sym_load[AttributeType.node] = 0
-    sym_load[AttributeType.status] = 1
-    sym_load[AttributeType.type] = 2
-    sym_load[AttributeType.p_specified] = 0.0
-    sym_load[AttributeType.q_specified] = 500.0
+    sym_load = initialize_array(DatasetType.input, CT.sym_load, 1)
+    sym_load[AT.id] = 2
+    sym_load[AT.node] = 0
+    sym_load[AT.status] = 1
+    sym_load[AT.type] = 2
+    sym_load[AT.p_specified] = 0.0
+    sym_load[AT.q_specified] = 500.0
 
     return {
-        ComponentType.node: node,
-        ComponentType.source: source,
-        ComponentType.sym_load: sym_load,
+        CT.node: node,
+        CT.source: source,
+        CT.sym_load: sym_load,
     }
 
 
@@ -85,31 +85,31 @@ def input(request):
 
 @pytest.fixture
 def sym_output():
-    node = initialize_array(DatasetType.sym_output, ComponentType.node, 1)
-    node[AttributeType.id] = 0
-    node[AttributeType.u] = 50.0
-    node[AttributeType.u_pu] = 0.5
-    node[AttributeType.u_angle] = 0.0
+    node = initialize_array(DatasetType.sym_output, CT.node, 1)
+    node[AT.id] = 0
+    node[AT.u] = 50.0
+    node[AT.u_pu] = 0.5
+    node[AT.u_angle] = 0.0
 
-    return {ComponentType.node: node}
+    return {CT.node: node}
 
 
 @pytest.fixture
 def update_batch_row():
-    source = initialize_array(DatasetType.update, ComponentType.source, 1)
-    source[AttributeType.id] = 1
-    source[AttributeType.u_ref] = 0.5
+    source = initialize_array(DatasetType.update, CT.source, 1)
+    source[AT.id] = 1
+    source[AT.u_ref] = 0.5
 
-    sym_load = initialize_array(DatasetType.update, ComponentType.sym_load, 2)
-    sym_load[AttributeType.id] = [2, 2]
-    sym_load[AttributeType.q_specified] = [100.0, 300.0]
+    sym_load = initialize_array(DatasetType.update, CT.sym_load, 2)
+    sym_load[AT.id] = [2, 2]
+    sym_load[AT.q_specified] = [100.0, 300.0]
 
     return {
-        ComponentType.source: {
+        CT.source: {
             "data": source,
             "indptr": np.array([0, 1, 1]),
         },
-        ComponentType.sym_load: {
+        CT.sym_load: {
             "data": sym_load,
             "indptr": np.array([0, 1, 2]),
         },
@@ -130,14 +130,14 @@ def update_batch(request):
 
 @pytest.fixture
 def sym_output_batch():
-    node = initialize_array(DatasetType.sym_output, ComponentType.node, (2, 1))
-    node[AttributeType.id] = [[0], [0]]
-    node[AttributeType.u] = [[40.0], [70.0]]
-    node[AttributeType.u_pu] = [[0.4], [0.7]]
-    node[AttributeType.u_angle] = [[0.0], [0.0]]
+    node = initialize_array(DatasetType.sym_output, CT.node, (2, 1))
+    node[AT.id] = [[0], [0]]
+    node[AT.u] = [[40.0], [70.0]]
+    node[AT.u_pu] = [[0.4], [0.7]]
+    node[AT.u_angle] = [[0.0], [0.0]]
 
     return {
-        ComponentType.node: node,
+        CT.node: node,
     }
 
 
@@ -164,9 +164,9 @@ def test_simple_permanent_update(model: PowerGridModel, update_batch, sym_output
 
 
 def test_update_error(model: PowerGridModel):
-    load_update = initialize_array(DatasetType.update, ComponentType.sym_load, 1)
-    load_update[AttributeType.id] = 5
-    update_data = {ComponentType.sym_load: load_update}
+    load_update = initialize_array(DatasetType.update, CT.sym_load, 1)
+    load_update[AT.id] = 5
+    update_data = {CT.sym_load: load_update}
     with pytest.raises(PowerGridError, match="The id cannot be found:"):
         model.update(update_data=update_data)
     update_data_col = compatibility_convert_row_columnar_dataset(
@@ -224,7 +224,7 @@ def test_repr_and_str(model: PowerGridModel, empty_model: PowerGridModel):
 def test_get_indexer(model: PowerGridModel):
     ids = np.array([2, 2])
     expected_indexer = np.array([0, 0])
-    indexer = model.get_indexer(ComponentType.sym_load, ids)
+    indexer = model.get_indexer(CT.sym_load, ids)
     np.testing.assert_allclose(expected_indexer, indexer)
 
 
@@ -234,7 +234,7 @@ def test_batch_power_flow(model: PowerGridModel, update_batch: BatchDataset, sym
 
 
 def test_construction_error(input):
-    input[ComponentType.sym_load][AttributeType.id][0] = 0
+    input[CT.sym_load][AT.id][0] = 0
     with pytest.raises(PowerGridError, match="Conflicting id detected:"):
         PowerGridModel(input)
 
@@ -252,7 +252,7 @@ def test_single_calculation_error(model: PowerGridModel):
 
 def test_batch_calculation_error(model: PowerGridModel, update_batch):
     # wrong id
-    update_batch[ComponentType.sym_load]["data"][AttributeType.id][1] = 5
+    update_batch[CT.sym_load]["data"][AT.id][1] = 5
     # with error
     with pytest.raises(PowerGridBatchError) as e:
         model.calculate_power_flow(update_data=update_batch)
@@ -264,7 +264,7 @@ def test_batch_calculation_error(model: PowerGridModel, update_batch):
 
 def test_batch_calculation_error_continue(model: PowerGridModel, update_batch, sym_output_batch):
     # wrong id
-    update_batch[ComponentType.sym_load]["data"][AttributeType.id][1] = 5
+    update_batch[CT.sym_load]["data"][AT.id][1] = 5
     result = model.calculate_power_flow(update_data=update_batch, continue_on_batch_error=True)
     # assert error
     error = model.batch_error
@@ -273,31 +273,29 @@ def test_batch_calculation_error_continue(model: PowerGridModel, update_batch, s
     np.testing.assert_allclose(error.succeeded_scenarios, [0])
     assert "The id cannot be found:" in error.error_messages[0]
     # assert value result for scenario 0
-    result = {ComponentType.node: result[ComponentType.node][error.succeeded_scenarios, :]}
-    expected_result = {ComponentType.node: sym_output_batch[ComponentType.node][error.succeeded_scenarios, :]}
+    result = {CT.node: result[CT.node][error.succeeded_scenarios, :]}
+    expected_result = {CT.node: sym_output_batch[CT.node][error.succeeded_scenarios, :]}
     compare_result(result, expected_result, rtol=0.0, atol=1e-8)
     # general error before the batch
     with pytest.raises(PowerGridError, match="The calculation method is invalid for this calculation!"):
         model.calculate_state_estimation(
             calculation_method="iterative_current",
-            update_data={
-                ComponentType.source: initialize_array(DatasetType.update, ComponentType.source, shape=(5, 0))
-            },
+            update_data={CT.source: initialize_array(DatasetType.update, CT.source, shape=(5, 0))},
             continue_on_batch_error=True,
         )
 
 
 def test_empty_input():
-    node = initialize_array(DatasetType.input, ComponentType.node, 0)
-    line = initialize_array(DatasetType.input, ComponentType.line, 0)
-    sym_load = initialize_array(DatasetType.input, ComponentType.sym_load, 0)
-    source = initialize_array(DatasetType.input, ComponentType.source, 0)
+    node = initialize_array(DatasetType.input, CT.node, 0)
+    line = initialize_array(DatasetType.input, CT.line, 0)
+    sym_load = initialize_array(DatasetType.input, CT.sym_load, 0)
+    source = initialize_array(DatasetType.input, CT.source, 0)
 
     input_data = {
-        ComponentType.node: node,
-        ComponentType.line: line,
-        ComponentType.sym_load: sym_load,
-        ComponentType.source: source,
+        CT.node: node,
+        CT.line: line,
+        CT.sym_load: sym_load,
+        CT.source: source,
     }
 
     assert_valid_input_data(input_data)
@@ -313,9 +311,9 @@ def input_sym_load_col(input_row):
     return compatibility_convert_row_columnar_dataset(
         input_row,
         {
-            ComponentType.node: None,
-            ComponentType.source: None,
-            ComponentType.sym_load: ComponentAttributeFilterOptions.relevant,
+            CT.node: None,
+            CT.source: None,
+            CT.sym_load: ComponentAttributeFilterOptions.relevant,
         },
         DatasetType.input,
     )
@@ -327,23 +325,23 @@ def minimal_input(request):
 
 
 def update_sym_load_row():
-    sym_load = initialize_array(DatasetType.update, ComponentType.sym_load, (2, 1))
-    sym_load[AttributeType.id] = [[2], [2]]
-    sym_load[AttributeType.q_specified] = [[100.0], [300.0]]
-    return {ComponentType.sym_load: sym_load}
+    sym_load = initialize_array(DatasetType.update, CT.sym_load, (2, 1))
+    sym_load[AT.id] = [[2], [2]]
+    sym_load[AT.q_specified] = [[100.0], [300.0]]
+    return {CT.sym_load: sym_load}
 
 
 def update_sym_load_row_optional_id():
-    sym_load = initialize_array(DatasetType.update, ComponentType.sym_load, (2, 1))
-    sym_load[AttributeType.q_specified] = [[100.0], [300.0]]
-    return {ComponentType.sym_load: sym_load}
+    sym_load = initialize_array(DatasetType.update, CT.sym_load, (2, 1))
+    sym_load[AT.q_specified] = [[100.0], [300.0]]
+    return {CT.sym_load: sym_load}
 
 
 def update_sym_load_row_invalid_id():
-    sym_load = initialize_array(DatasetType.update, ComponentType.sym_load, (2, 1))
-    sym_load[AttributeType.id] = [[2], [5]]
-    sym_load[AttributeType.q_specified] = [[100.0], [300.0]]
-    return {ComponentType.sym_load: sym_load}
+    sym_load = initialize_array(DatasetType.update, CT.sym_load, (2, 1))
+    sym_load[AT.id] = [[2], [5]]
+    sym_load[AT.q_specified] = [[100.0], [300.0]]
+    return {CT.sym_load: sym_load}
 
 
 def update_sym_load_col(update_sym_load_row):
@@ -354,8 +352,8 @@ def update_sym_load_col(update_sym_load_row):
 
 def update_sym_load_sparse(update_data):
     return {
-        ComponentType.sym_load: {
-            "data": update_data[ComponentType.sym_load].reshape(-1),
+        CT.sym_load: {
+            "data": update_data[CT.sym_load].reshape(-1),
             "indptr": np.array([0, 1, 2]),
         },
     }
@@ -372,7 +370,7 @@ def update_sym_load_sparse(update_data):
 )
 def test_update_ids_batch(minimal_update, minimal_input):
     output_data = PowerGridModel(minimal_input).calculate_power_flow(update_data=minimal_update)
-    np.testing.assert_almost_equal(output_data[ComponentType.node][AttributeType.u], np.array([[90.0], [70.0]]))
+    np.testing.assert_almost_equal(output_data[CT.node][AT.u], np.array([[90.0], [70.0]]))
 
 
 @pytest.mark.parametrize(
@@ -388,21 +386,21 @@ def test_update_ids_batch(minimal_update, minimal_input):
 )
 def test_update_id_optional(minimal_update, minimal_input):
     output_data = PowerGridModel(minimal_input).calculate_power_flow(update_data=minimal_update)
-    np.testing.assert_almost_equal(output_data[ComponentType.node][AttributeType.u], np.array([[90.0], [70.0]]))
+    np.testing.assert_almost_equal(output_data[CT.node][AT.u], np.array([[90.0], [70.0]]))
 
 
 def test_update_id_mixed(minimal_input):
-    update_sym_load_no_id = initialize_array(DatasetType.update, ComponentType.sym_load, (3, 1))
-    update_sym_load_no_id[AttributeType.p_specified] = [[30e6], [15e5], [0]]
+    update_sym_load_no_id = initialize_array(DatasetType.update, CT.sym_load, (3, 1))
+    update_sym_load_no_id[AT.p_specified] = [[30e6], [15e5], [0]]
 
     update_source_indptr = np.array([0, 1, 1, 2])
-    update_source = initialize_array(DatasetType.update, ComponentType.source, 2)
-    update_source[AttributeType.id] = 1
-    update_source[AttributeType.status] = 0
+    update_source = initialize_array(DatasetType.update, CT.source, 2)
+    update_source[AT.id] = 1
+    update_source[AT.status] = 0
 
     update_batch = {
-        ComponentType.sym_load: update_sym_load_no_id,
-        ComponentType.source: {"indptr": update_source_indptr, "data": update_source},
+        CT.sym_load: update_sym_load_no_id,
+        CT.source: {"indptr": update_source_indptr, "data": update_source},
     }
 
     _output_data = PowerGridModel(minimal_input).calculate_power_flow(update_data=update_batch)

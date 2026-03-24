@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 
 from power_grid_model import DatasetType, initialize_array
-from power_grid_model._core.dataset_definitions import AttributeType, ComponentType
+from power_grid_model._core.dataset_definitions import AttributeType as AT, ComponentType as CT
 from power_grid_model._core.power_grid_meta import power_grid_meta_data
 from power_grid_model.data_types import Dataset
 from power_grid_model.utils import (
@@ -50,14 +50,14 @@ def test_get_dataset_scenario():
 
 
 def test_get_data_set_batch_size():
-    line = initialize_array(DatasetType.update, ComponentType.line, (3, 2))
-    line[AttributeType.id] = [[5, 6], [6, 7], [7, 5]]
-    line[AttributeType.from_status] = [[1, 1], [1, 1], [1, 1]]
+    line = initialize_array(DatasetType.update, CT.line, (3, 2))
+    line[AT.id] = [[5, 6], [6, 7], [7, 5]]
+    line[AT.from_status] = [[1, 1], [1, 1], [1, 1]]
 
-    asym_load = initialize_array(DatasetType.update, ComponentType.asym_load, (3, 2))
-    asym_load[AttributeType.id] = [[9, 10], [9, 10], [9, 10]]
+    asym_load = initialize_array(DatasetType.update, CT.asym_load, (3, 2))
+    asym_load[AT.id] = [[9, 10], [9, 10], [9, 10]]
 
-    batch_data = {ComponentType.line: line, ComponentType.asym_load: asym_load}
+    batch_data = {CT.line: line, CT.asym_load: asym_load}
 
     n_batch_size = 3
 
@@ -66,16 +66,16 @@ def test_get_data_set_batch_size():
 
 def test_get_dataset_batch_size_sparse():
     data = {
-        ComponentType.node: {
-            "data": np.zeros(shape=3, dtype=power_grid_meta_data[DatasetType.input][ComponentType.node]),
+        CT.node: {
+            "data": np.zeros(shape=3, dtype=power_grid_meta_data[DatasetType.input][CT.node]),
             "indptr": np.array([0, 2, 3, 3]),
         },
-        ComponentType.sym_load: {
-            "data": np.zeros(shape=2, dtype=power_grid_meta_data[DatasetType.input][ComponentType.sym_load]),
+        CT.sym_load: {
+            "data": np.zeros(shape=2, dtype=power_grid_meta_data[DatasetType.input][CT.sym_load]),
             "indptr": np.array([0, 0, 1, 2]),
         },
-        ComponentType.asym_load: {
-            "data": np.zeros(shape=4, dtype=power_grid_meta_data[DatasetType.input][ComponentType.asym_load]),
+        CT.asym_load: {
+            "data": np.zeros(shape=4, dtype=power_grid_meta_data[DatasetType.input][CT.asym_load]),
             "indptr": np.array([0, 2, 3, 4]),
         },
     }
@@ -86,25 +86,25 @@ def test_get_dataset_batch_size_sparse():
 
 
 def test_get_dataset_batch_size_mixed():
-    line = initialize_array(DatasetType.update, ComponentType.line, (3, 2))
-    line[AttributeType.id] = [[5, 6], [6, 7], [7, 5]]
-    line[AttributeType.from_status] = [[1, 1], [1, 1], [1, 1]]
+    line = initialize_array(DatasetType.update, CT.line, (3, 2))
+    line[AT.id] = [[5, 6], [6, 7], [7, 5]]
+    line[AT.from_status] = [[1, 1], [1, 1], [1, 1]]
 
-    asym_load = initialize_array(DatasetType.update, ComponentType.asym_load, (2, 2))
-    asym_load[AttributeType.id] = [[9, 10], [9, 10]]
+    asym_load = initialize_array(DatasetType.update, CT.asym_load, (2, 2))
+    asym_load[AT.id] = [[9, 10], [9, 10]]
 
-    data_dense = {ComponentType.line: line, ComponentType.asym_load: asym_load}
+    data_dense = {CT.line: line, CT.asym_load: asym_load}
     data_sparse = {
-        ComponentType.node: {
-            "data": np.zeros(shape=3, dtype=power_grid_meta_data[DatasetType.input][ComponentType.node]),
+        CT.node: {
+            "data": np.zeros(shape=3, dtype=power_grid_meta_data[DatasetType.input][CT.node]),
             "indptr": np.array([0, 2, 3, 3, 5]),
         },
-        ComponentType.sym_load: {
-            "data": np.zeros(shape=2, dtype=power_grid_meta_data[DatasetType.input][ComponentType.sym_load]),
+        CT.sym_load: {
+            "data": np.zeros(shape=2, dtype=power_grid_meta_data[DatasetType.input][CT.sym_load]),
             "indptr": np.array([0, 0, 1, 2]),
         },
-        ComponentType.asym_load: {
-            "data": np.zeros(shape=4, dtype=power_grid_meta_data[DatasetType.input][ComponentType.asym_load]),
+        CT.asym_load: {
+            "data": np.zeros(shape=4, dtype=power_grid_meta_data[DatasetType.input][CT.asym_load]),
             "indptr": np.array([0, 2, 3]),
         },
     }
@@ -115,11 +115,11 @@ def test_get_dataset_batch_size_mixed():
 
 
 def test_get_component_batch_size():
-    asym_load = initialize_array(DatasetType.update, ComponentType.asym_load, (3, 2))
-    asym_load[AttributeType.id] = [[9, 10], [9, 10], [9, 10]]
+    asym_load = initialize_array(DatasetType.update, CT.asym_load, (3, 2))
+    asym_load[AT.id] = [[9, 10], [9, 10], [9, 10]]
 
     sym_load = {
-        "data": np.zeros(shape=2, dtype=power_grid_meta_data[DatasetType.input][ComponentType.sym_load]),
+        "data": np.zeros(shape=2, dtype=power_grid_meta_data[DatasetType.input][CT.sym_load]),
         "indptr": np.array([0, 0, 1, 2]),
     }
 

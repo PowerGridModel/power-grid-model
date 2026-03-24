@@ -6,7 +6,7 @@ import json
 
 import numpy as np
 
-from power_grid_model import AttributeType, ComponentType, DatasetType, PowerGridModel
+from power_grid_model import AttributeType as AT, ComponentType as CT, DatasetType, PowerGridModel
 from power_grid_model.utils import json_deserialize
 
 input_data = {
@@ -15,26 +15,26 @@ input_data = {
     "is_batch": False,
     "attributes": {},
     "data": {
-        ComponentType.sym_load: [
+        CT.sym_load: [
             {
-                AttributeType.id: 2,
-                AttributeType.node: 0,
-                AttributeType.status: 1,
-                AttributeType.type: 0,
-                AttributeType.p_specified: 0,
-                AttributeType.q_specified: 0,
+                AT.id: 2,
+                AT.node: 0,
+                AT.status: 1,
+                AT.type: 0,
+                AT.p_specified: 0,
+                AT.q_specified: 0,
             }
         ],
-        ComponentType.source: [
+        CT.source: [
             {
-                AttributeType.id: 1,
-                AttributeType.node: 0,
-                AttributeType.status: 1,
-                AttributeType.u_ref: 1,
-                AttributeType.sk: 1e20,
+                AT.id: 1,
+                AT.node: 0,
+                AT.status: 1,
+                AT.u_ref: 1,
+                AT.sk: 1e20,
             }
         ],
-        ComponentType.node: [{AttributeType.id: 0, AttributeType.u_rated: 10e3}],
+        CT.node: [{AT.id: 0, AT.u_rated: 10e3}],
     },
 }
 
@@ -54,13 +54,13 @@ def test_multi_dimensional_batch():
     )
     i_source_ref = i_source_ref.ravel()
 
-    u_ref_batch = {ComponentType.source: {AttributeType.u_ref: u_ref}}
-    p_specified_batch = {ComponentType.sym_load: {AttributeType.p_specified: p_specified}}
-    q_specified_batch = {ComponentType.sym_load: {AttributeType.q_specified: q_specified}}
+    u_ref_batch = {CT.source: {AT.u_ref: u_ref}}
+    p_specified_batch = {CT.sym_load: {AT.p_specified: p_specified}}
+    q_specified_batch = {CT.sym_load: {AT.q_specified: q_specified}}
 
     result = pgm.calculate_power_flow(
         update_data=[u_ref_batch, p_specified_batch, q_specified_batch],
-        output_component_types={ComponentType.source: [AttributeType.i]},
+        output_component_types={CT.source: [AT.i]},
     )
 
-    assert np.allclose(result[ComponentType.source][AttributeType.i].ravel(), i_source_ref)
+    assert np.allclose(result[CT.source][AT.i].ravel(), i_source_ref)
