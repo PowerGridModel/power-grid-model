@@ -365,7 +365,10 @@ def convert_single_dataset_to_python_single_dataset(
     """
 
     # Convert each numpy array to a list of objects, which contains only the non-NaN attributes:
-    # For example: {"node": [{"id": 0, ...}, {"id": 1, ...}], "line": [{"id": 2, ...}]}
+    # For example: {
+    #   ComponentType.node: [{AttributeType.id: 0, ...}, {AttributeType.id: 1, ...}],
+    #   ComponentType.line: [{AttributeType.id: 2, ...}]
+    # }
     def _convert_component(objects: SingleComponentData):
         # This should be a single data set
         if not isinstance(objects, np.ndarray) or objects.ndim != 1 or objects.dtype.names is None:
