@@ -27,13 +27,13 @@ about the validation error, e.g. which object IDs are involved.
 class ValidationError:
     
     # Component(s): e.g. "node" or ["node", "line"]
-    component: str | list[str]
+    component: ComponentType | list[ComponentType] | None = None
     
     # Field(s): e.g. "id" or ["line_from", "line_to"] or [("node", "id"), ("line", "id")]
-    field: str | list[str] | list[tuple[str, str]]
+    field: AttributeType | list[AttributeType] | list[tuple[ComponentType, AttributeType]] | None = None
 
     # IDs: e.g. [1, 2, 3] or [("node", 1), ("line", 1)]
-    ids: list[int] | list[tuple[str, int]] = []    
+    ids: list[int] | list[tuple[ComponentType, int]] | None = None    
 ```
 
 ## Validation functions

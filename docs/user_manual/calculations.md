@@ -1078,15 +1078,15 @@ See the [Performance Guide](performance-guide.md#using-independent-batches) for 
 ```py
 # 3 scenarios, 3 objects (lines)
 # for each scenario, only one line is specified
-line_update = initialize_array('update', 'line', (3, 1))
+line_update = initialize_array(DatasetType.update, ComponentType.line, (3, 1))
 
 # set the mutations for each scenario: disable one of the three lines
 for component_update, component_id in zip(line_update, (3, 5, 8)):
-    component_update['id'] = component_id
-    component_update['from_status'] = 0
-    component_update['to_status'] = 0
+    component_update[AttributeType.id] = component_id
+    component_update[AttributeType.from_status] = 0
+    component_update[AttributeType.to_status] = 0
 
-non_independent_update_data = {'line': line_update}
+non_independent_update_data = {ComponentType.line: line_update}
 ```
 
 #### Example: full batch update data
@@ -1094,20 +1094,20 @@ non_independent_update_data = {'line': line_update}
 ```py
 # 3 scenarios, 3 objects (lines)
 # for each scenario, all lines are specified
-line_update = initialize_array('update', 'line', (3, 3))
+line_update = initialize_array(DatasetType.update, ComponentType.line, (3, 3))
 
 # use broadcasting to specify the default state
-line_update['id'] = [[3, 5, 8]]
-line_update['from_status'] = 1
-line_update['to_status'] = 1
+line_update[AttributeType.id] = [[3, 5, 8]]
+line_update[AttributeType.from_status] = 1
+line_update[AttributeType.to_status] = 1
 
 # set the mutations for each scenario: disable one of the three lines
 for component_idx, scenario in enumerate(line_update):
     component = scenario[component_idx]
-    component['from_status'] = 0
-    component['to_status'] = 0
+    component[AttributeType.from_status] = 0
+    component[AttributeType.to_status] = 0
 
-independent_update_data = {'line': line_update}
+independent_update_data = {ComponentType.line: line_update}
 ```
 
 ### Cartesian product of Batch Datasets
@@ -1124,12 +1124,12 @@ The output of such calculation would be flattened with dimension $scenarios * co
 
 ```py
 # 5 scenarios of timeseries
-load_update = initialize_array('update', 'sym_load', (5, 1))
+load_update = initialize_array(DatasetType.update, ComponentType.sym_load, (5, 1))
 # (Fill load_update)
-line_update = initialize_array('update', 'line', (3, 1))
+line_update = initialize_array(DatasetType.update, ComponentType.line, (3, 1))
 # (Fill line_update)
 
-product_update_data = [{'line': load_update}, {'sym_load': line_udpate }]
+product_update_data = [{ComponentType.line: load_update}, {ComponentType.sym_load: line_udpate }]
 ```
 
 ### Parallel Computing
