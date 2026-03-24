@@ -12,7 +12,6 @@ from typing import cast, overload
 import numpy as np
 
 from power_grid_model._core.data_types import (
-    AttributeType,
     ComponentData,
     DenseBatchArray,
     DenseBatchColumnarData,
@@ -24,6 +23,7 @@ from power_grid_model._core.data_types import (
     SparseBatchArray,
     SparseBatchData,
 )
+from power_grid_model._core.dataset_definitions import AttributeType
 from power_grid_model._core.error_handling import VALIDATOR_MSG
 from power_grid_model._core.index_integer import IdxC, IdxNp
 from power_grid_model._core.power_grid_core import IdxPtr, VoidPtr
