@@ -2015,7 +2015,7 @@ TEST_CASE("Test Observability - Necessary check end to end test") {
 TEST_CASE("Test ObservabilityResult - use_perturbation with non-observable network") {
     using power_grid_model::math_solver::observability::ObservabilityResult;
 
-    SUBCASE("Non-observable network returns false for use_perturbation") {
+    SUBCASE("(Marked) Non-observable network returns false for use_perturbation") {
         // Create a meshed network with multiple voltage phasor sensors
         // This triggers the early return for the condition n_voltage_phasor_sensors > 1 && !topo.is_radial,
         // where is_observable = false but no exception is thrown
@@ -2032,8 +2032,8 @@ TEST_CASE("Test ObservabilityResult - use_perturbation with non-observable netwo
         topo.power_sensors_per_source = {from_sparse, {0, 0}};
         topo.power_sensors_per_load_gen = {from_sparse, {0}};
         topo.power_sensors_per_shunt = {from_sparse, {0}};
-        // Sufficient branch sensors to pass necessary condition
-        topo.power_sensors_per_branch_from = {from_sparse, {0, 1, 2, 3, 4}};
+        // No explicit power/current sensors are needed since there aren't any loads/gens
+        topo.power_sensors_per_branch_from = {from_sparse, {0, 0, 0, 0, 0}};
         topo.power_sensors_per_branch_to = {from_sparse, {0, 0, 0, 0, 0}};
         topo.current_sensors_per_branch_from = {from_sparse, {0, 0, 0, 0, 0}};
         topo.current_sensors_per_branch_to = {from_sparse, {0, 0, 0, 0, 0}};
@@ -2053,12 +2053,6 @@ TEST_CASE("Test ObservabilityResult - use_perturbation with non-observable netwo
             {.value = 1.0 + 0.1i, .variance = 1.0},  // Phasor at bus 0
             {.value = 0.95 + 0.05i, .variance = 1.0} // Phasor at bus 1
         };
-        // Branch power measurements
-        se_input.measured_branch_from_power = {
-            {.real_component = {.value = 1.0, .variance = 1.0}, .imag_component = {.value = 0.0, .variance = 1.0}},
-            {.real_component = {.value = 1.0, .variance = 1.0}, .imag_component = {.value = 0.0, .variance = 1.0}},
-            {.real_component = {.value = 1.0, .variance = 1.0}, .imag_component = {.value = 0.0, .variance = 1.0}},
-            {.real_component = {.value = 1.0, .variance = 1.0}, .imag_component = {.value = 0.0, .variance = 1.0}}};
 
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
         auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
@@ -2082,7 +2076,8 @@ TEST_CASE("Test ObservabilityResult - use_perturbation with non-observable netwo
         // Verify that is_observable is false (due to multiple voltage phasors in meshed network)
         CHECK(result.is_observable == false);
 
-        // Verify that use_perturbation() returns false when not observable
+        // Verify that use_perturbation() returns false when marked as non-observable, even if it may be observable (due
+        // to early out), and ill conditioned
         CHECK(result.use_perturbation() == false);
     }
 
@@ -2100,11 +2095,6 @@ TEST_CASE("Test ObservabilityResult - use_perturbation with non-observable netwo
         topo.power_sensors_per_source = {from_sparse, {0, 0}};
         topo.power_sensors_per_load_gen = {from_sparse, {0}};
         topo.power_sensors_per_shunt = {from_sparse, {0}};
-        // Add branch sensors to make it observable
-        topo.power_sensors_per_branch_from = {from_sparse, {0, 1, 2}};
-        topo.power_sensors_per_branch_to = {from_sparse, {0, 0, 0}};
-        topo.current_sensors_per_branch_from = {from_sparse, {0, 0, 0}};
-        topo.current_sensors_per_branch_to = {from_sparse, {0, 0, 0}};
         topo.voltage_sensors_per_bus = {from_sparse, {0, 1, 1, 1}};
 
         MathModelParam<symmetric_t> param;
@@ -2114,9 +2104,6 @@ TEST_CASE("Test ObservabilityResult - use_perturbation with non-observable netwo
         StateEstimationInput<symmetric_t> se_input;
         se_input.source_status = {1};
         se_input.measured_voltage = {{.value = 1.0, .variance = 1.0}};
-        se_input.measured_branch_from_power = {
-            {.real_component = {.value = 1.0, .variance = 1.0}, .imag_component = {.value = 0.0, .variance = 1.0}},
-            {.real_component = {.value = 1.0, .variance = 1.0}, .imag_component = {.value = 0.0, .variance = 1.0}}};
 
         auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
         auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
