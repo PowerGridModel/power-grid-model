@@ -233,45 +233,40 @@ inline void backward_substitution(EliminationResult& elimination_result) {
     return result;
 }
 
-struct SolutionSet{
-	COOSparseMatrix dfs_matrix{};
-    std::vector<DoubleComplex> extended_rhs{}; 
-	
+// The degrees of freedom matrix (dfs_matrix) is associated with the degrees of freedom vector according
+// internal_currents = extended_rhs - dfs_matrix * lambda
+struct SolutionSet {
+    COOSparseMatrix dfs_matrix{};
+    std::vector<DoubleComplex> extended_rhs{};
 };
 
-[[nodiscard]] inline SolutionSet set_solution_system(EliminationResult & result){
-    
-	using enum EdgeEvent;
-	IntS value;
-    constexpr uint8_t starting_row{};
-	auto& [matrix, rhs, free_edge_indices, pivot_edge_indices, edges_history] = result;
-	
-	SolutionSet solution_set{};
-	
-	auto& [dfs_matrix, extended_rhs] =  solution_set;
-	dfs_matrix.prepare(edges_history.size(),free_edge_indices.size());
-	
-	uint64_t matrix_row{starting_row};
-	uint64_t dfs_matrix_row{starting_row};
-	uint64_t dfs_index{starting_row};
-	for (auto edge_history : edges_history){
-		if (edge_history.events.back() == Deleted) {
-			for (uint64_t j = 0; j < free_edge_indices.size(); j++){
-				if (matrix.get_value(value, matrix_row, free_edge_indices[j])){
-					dfs_matrix.set_value(value,dfs_matrix_row,j);
-				}
-			}
-			extended_rhs.emplace_back(rhs[matrix_row]);
-			++matrix_row;
-		} else {
-			dfs_matrix.set_value(-1,dfs_matrix_row,dfs_index);
-			extended_rhs.push_back(0);
-			++dfs_index;
-		}
-		
-		++dfs_matrix_row;
-	}	
-	return solution_set;	
+[[nodiscard]] inline SolutionSet set_solution_system(EliminationResult& result) {
+    SolutionSet solution_set{};
+    auto& [matrix, rhs, free_edge_indices, pivot_edge_indices, edges_history] = result;
+
+
+    auto& [dfs_matrix, extended_rhs] = solution_set;
+    auto const pivot_indices_size = pivot_edge_indices.size();
+    auto const free_indices_size = free_edge_indices.size();
+    auto const total_indices_size = pivot_indices_size + free_indices_size;
+    dfs_matrix.prepare(total_indices_size, free_indices_size);
+    extended_rhs.resize(total_indices_size);
+    auto const free_matrix_element = IntS{-1};
+
+    for (auto matrix_row : std::ranges::views::iota(uint64_t{}, pivot_indices_size)) {
+        auto const pivot_edge_idx = pivot_edge_indices[matrix_row];
+        for (auto dfs_matrix_col : std::ranges::views::iota(uint64_t{}, free_indices_size)) {
+            IntS matrix_element{};
+            auto const free_edge_idx = free_edge_indices[dfs_matrix_col];
+            if (matrix.get_value(matrix_element, matrix_row, free_edge_idx)) {
+                dfs_matrix.set_value(matrix_element, pivot_edge_idx, dfs_matrix_col);
+            }
+            dfs_matrix.set_value(free_matrix_element, free_edge_idx, dfs_matrix_col);
+            extended_rhs[free_edge_indices[dfs_matrix_col]] = 0;
+        }
+        extended_rhs[pivot_edge_idx] = rhs[matrix_row];
+    }
+    return solution_set;
 };
 
 } // namespace power_grid_model::link_solver::detail
