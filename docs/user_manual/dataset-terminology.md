@@ -70,8 +70,7 @@ graph TD
 ```
 
 - **{py:class}`Dataset <power_grid_model.data_types.Dataset>`:** Either a single or a batch dataset.
-  It is a dictionary with keys as the component types (e.g., `ComponentType.line`, `ComponentType.node`, etc.) and
-   values as **ComponentData**
+  It is a dictionary with keys as the component types (e.g., `line`, `node`, etc.) and values as **ComponentData**
   - **{py:class}`SingleDataset <power_grid_model.data_types.SingleDataset>`:** A data type storing input data (i.e., all
     elements of all components) for a single scenario.
   - **{py:class}`BatchDataset <power_grid_model.data_types.BatchDataset>`:** A data type storing update and or output
@@ -129,39 +128,37 @@ The dimensions of numpy arrays and the interpretation of each dimension is as fo
 
 ### Type of Dataset
 
-The types of `Dataset` include the following: `DatasetType.input`, `DatasetType.update`, `DatasetType.sym_output`,
- `DatasetType.asym_output`, and `DatasetType.sc_output`.
+The types of `Dataset` include the following: `input`, `update`, `sym_output`, `asym_output`, and `sc_output`.
 They are included under the enum {py:class}`DatasetType <power_grid_model.typing.DatasetType>`.
-Exemplary datasets attributes are given in a dataset containing a `ComponentType.line` component.
+Exemplary datasets attributes are given in a dataset containing a `line` component.
 
 - **input:** Contains attributes relevant to configuration of grid.
-  - Example: `AttributeType.id`, `AttributeType.from_node`, `AttributeType.from_status`
+  - Example: `id`, `from_node`, `from_status`
 - **update:** Contains attributes relevant to multiple scenarios.
-  - Example: `AttributeType.from_status`,`AttributeType.to_status`
+  - Example: `from_status`,`to_status`
 - **sym_output:** Contains attributes relevant to symmetrical steady state output of power flow or state estimation
   calculation.
-  - Example: `AttributeType.p_from`, `AttributeType.p_to`
+  - Example: `p_from`, `p_to`
 - **asym_output:** Contains attributes relevant to asymmetrical steady state output of power flow or state estimation
   calculation.
   Attributes are similar to `sym_output` except some values of the asymmetrical dataset will contain detailed data for
   all 3 phases individually.
-  - Example: `AttributeType.p_from`, `AttributeType.p_to`
+  - Example: `p_from`, `p_to`
 - **sc_output:** Contains attributes relevant to symmetrical short circuit calculation output.
   Like for the `asym_output`, detailed data for all 3 phases will be provided where relevant.
-  - Example: `AttributeType.i_from`, `AttributeType.i_from_angle`
+  - Example: `i_from`, `i_from_angle`
 
 ## Terminologies related to data structures
 
-- **Component:** The definition of a part of a grid: e.g., `ComponentType.node`, `ComponentType.source`,
- `ComponentType.line`, etc. They are included under the
+- **Component:** The definition of a part of a grid: e.g., `node`, `source`, `line`, etc. They are included under the
   enum {py:class}`ComponentType <power_grid_model.typing.ComponentType>`.
   Check highlighted section of graph in
   [Component Hierarchy](./data-model.md#component-type-hierarchy-and-graph-data-model)
 
 - **Element:** A single instance of a node, source, line etc.
 
-- **Attribute:** The definition of `ComponentType.id`, `ComponentType.energized`, `ComponentType.p`, etc.
- of any component. They are included under the enum {py:class}`AttributeType <power_grid_model.typing.AttributeType>`.
+- **Attribute:** The definition of `id`, `energized`, `p`, etc. of any component. They are included under the
+  enum {py:class}`AttributeType <power_grid_model.typing.AttributeType>`.
 
 - **Value:** The value under an attribute, i.e., id, energized, p, etc.
 
