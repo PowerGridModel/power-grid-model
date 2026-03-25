@@ -282,11 +282,11 @@ inline std::set<std::string, std::less<>> get_irrelevant_components(PGM_Calculat
                 "fault"s};
     }
     if (calculation_type == PGM_state_estimation) {
-        return {"fault"s};
+        return {"fault"s, "transformer_tap_regulator"s, "voltage_regulator"s};
     }
     if (calculation_type == PGM_short_circuit) {
-        return {"sym_voltage_sensor"s,  "sym_current_sensor"s,  "sym_power_sensor"s,
-                "asym_voltage_sensor"s, "asym_current_sensor"s, "asym_power_sensor"s};
+        return {"sym_voltage_sensor"s,  "sym_current_sensor"s, "sym_power_sensor"s,          "asym_voltage_sensor"s,
+                "asym_current_sensor"s, "asym_power_sensor"s,  "transformer_tap_regulator"s, "voltage_regulator"s};
     }
     return {};
 }
@@ -347,7 +347,7 @@ struct OwningDataset {
         bool const enable_filters = !output_component_attribute_filters.empty();
         auto const irrelevant_components = get_irrelevant_components(calculation_type);
 
-        auto const filter_irrelevant_component = [&irrelevant_components](std::string const& component) {
+        auto const contains_irrelevant_component = [&irrelevant_components](std::string const& component) {
             return irrelevant_components.find(component) != irrelevant_components.end();
         };
 
@@ -360,7 +360,7 @@ struct OwningDataset {
                 continue;
             }
             // skip irrelevant components for the calculation type
-            if (filter_irrelevant_component(component_name)) {
+            if (contains_irrelevant_component(component_name)) {
                 continue;
             }
 
