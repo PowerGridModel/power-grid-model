@@ -6,6 +6,8 @@
 
 #include <power_grid_model_c/basics.h>
 #include <power_grid_model_cpp/dataset.hpp>
+#include <power_grid_model_cpp/model.hpp>
+#include <power_grid_model_cpp/options.hpp>
 
 #include <functional>
 #include <initializer_list>
@@ -28,25 +30,24 @@ constexpr auto const json_data = R"({
                 {"id": 1, "u_rated": 100},
                 {"id": 2, "u_rated": 100}
             ],
-            "source": [{"id": 2, "node": 1, "status": 1, "u_ref": 1.0, "sk": 1000}],
-            "fault": [{"id": 3, "status": 1, "fault_type": 0, "fault_object": 2}],
+            "source": [{"id": 3, "node": 1, "status": 1, "u_ref": 1.0, "sk": 1000}],
             "transformer": [
                 {"id": 4, "from_node": 1, "to_node": 2, "from_status": 1, "to_status": 1, "u1": 100, "u2": 100, "sn": 1000, "uk": 0.01, "pk": 0.0, "i0": 0.0, "p0": 0.0, "winding_from": 0, "winding_to": 1, "clock": 0, "tap_side": 0, "tap_size": 5, "tap_min": -10, "tap_max": 10}
             ],
             "sym_power_sensor": [
-                 {"id": 5, "measured_object": 4, "measured_terminal_type": 0, "p_measured": 0.0, "q_measured": 0.0, "power_sigma": 0.0}
+                 {"id": 5, "measured_object": 4, "measured_terminal_type": 0, "p_measured": 0.0, "q_measured": 0.0, "power_sigma": 1.0}
             ],
             "sym_voltage_sensor": [
-                 {"id": 6, "measured_object": 1, "measured_terminal_type": 9, "u_measured": 0.0, "u_sigma": 0.0}
+                 {"id": 6, "measured_object": 1, "measured_terminal_type": 9, "u_measured": 1.0, "u_sigma": 1.0}
             ],
             "asym_current_sensor": [
-                 {"id": 7, "measured_object": 4, "measured_terminal_type": 1, "angle_measurement_type": 0, "i_measured": [0.0, 0.0, 0.0], "i_angle_measurement": [0.0, 0.0, 0.0], "i_sigma": 0.0, "i_angle_sigma": 0.0}
+                 {"id": 7, "measured_object": 4, "measured_terminal_type": 1, "angle_measurement_type": 0, "i_measured": [0.0, 0.0, 0.0], "i_angle_measurement": [0.0, 0.0, 0.0], "i_sigma": 1.0, "i_angle_sigma": 1.0}
             ],
-            "transformer_tap_regulator": [
-                {"id": 8, "regulated_object": 4, "status": 1, "control_side": 0, "u_set": 10, "u_band": 20}
+            "sym_gen": [
+                {"id": 8, "node": 2, "status": 1, "type": 0, "p_specified": 20.0, "q_specified": 10.0}
             ],
             "voltage_regulator": [
-                {"id": 9, "regulated_object": 2, "status": 1, "u_ref": 1.0}
+                {"id": 9, "regulated_object": 8, "status": 1, "u_ref": 1.0}
             ]
         }
     })"; // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
@@ -97,7 +98,9 @@ TEST_CASE("Test get_irrelevant_components") {
 }
 
 TEST_CASE("OwningDataset - filter irrelevant components") {
-    auto const input_data = load_dataset(json_data);
+    auto const input_dataset = load_dataset(json_data);
+    auto options = Options{};
+    Model model{50.0, input_dataset.dataset};
 
     auto check_irrelevant_components = [](DatasetInfo const& info,
                                           std::initializer_list<std::string_view> irrelevant_components) {
@@ -109,25 +112,34 @@ TEST_CASE("OwningDataset - filter irrelevant components") {
     };
 
     SUBCASE("Power flow filters out faults and sensors") {
-        auto const output = OwningDataset{input_data, PGM_power_flow, true};
+        auto const output_dataset = OwningDataset{input_dataset, PGM_power_flow, true};
+        options.set_calculation_type(PGM_power_flow);
+        options.set_calculation_method(PGM_newton_raphson);
 
-        auto const& info = output.dataset.get_info();
+        CHECK_NOTHROW(model.calculate(options, output_dataset.dataset));
+        auto const& info = output_dataset.dataset.get_info();
         check_irrelevant_components(info, {"fault", "sym_power_sensor", "sym_voltage_sensor", "asym_current_sensor"});
     }
 
     SUBCASE("State estimation filters out faults") {
-        auto const output = OwningDataset{input_data, PGM_state_estimation, true};
+        auto const output_dataset = OwningDataset{input_dataset, PGM_state_estimation, true};
+        options.set_calculation_type(PGM_state_estimation);
+        options.set_calculation_method(PGM_newton_raphson);
 
-        auto const& info = output.dataset.get_info();
-        check_irrelevant_components(info, {"fault", "transformer_tap_regulator", "voltage_regulator"});
+        CHECK_NOTHROW(model.calculate(options, output_dataset.dataset));
+        auto const& info = output_dataset.dataset.get_info();
+        check_irrelevant_components(info, {"fault", "voltage_regulator"});
     }
 
     SUBCASE("Short circuit filters out sensors") {
-        auto const output = OwningDataset{input_data, PGM_short_circuit, true};
+        auto const output_dataset = OwningDataset{input_dataset, PGM_short_circuit, true};
+        options.set_calculation_type(PGM_short_circuit);
+        options.set_calculation_method(PGM_iec60909);
 
-        auto const& info = output.dataset.get_info();
-        check_irrelevant_components(info, {"sym_power_sensor", "sym_voltage_sensor", "asym_current_sensor",
-                                           "transformer_tap_regulator", "voltage_regulator"});
+        CHECK_NOTHROW(model.calculate(options, output_dataset.dataset));
+        auto const& info = output_dataset.dataset.get_info();
+        check_irrelevant_components(
+            info, {"sym_power_sensor", "sym_voltage_sensor", "asym_current_sensor", "voltage_regulator"});
     }
 }
 
