@@ -69,31 +69,26 @@ TEST_CASE("Test get_output_type") {
     }
 }
 
+// faults are treated specially because they are added to the topology at runtime (not model construction)
+// and only if the calculation type is short circuit
+// for power flow and state estimation they are never in the topology, so we shouldn't allocate buffers for them in the
+// output dataset
 TEST_CASE("Test get_irrelevant_components") {
     using namespace std::string_literals;
 
     SUBCASE("Power flow") {
-        auto const component_list = std::set<std::string, std::less<>>{"sym_voltage_sensor"s,
-                                                                       "sym_current_sensor"s,
-                                                                       "sym_power_sensor"s,
-                                                                       "asym_voltage_sensor"s,
-                                                                       "asym_current_sensor"s,
-                                                                       "asym_power_sensor"s,
-                                                                       "fault"s};
-        CHECK(component_list == get_irrelevant_components(PGM_power_flow));
+        auto const component_list = std::set<std::string, std::less<>>{"fault"s};
+        CHECK(component_list == detail::get_irrelevant_components(PGM_power_flow));
     }
     SUBCASE("State estimation") {
-        auto const component_list =
-            std::set<std::string, std::less<>>{"fault"s, "transformer_tap_regulator"s, "voltage_regulator"s};
-        CHECK(component_list == get_irrelevant_components(PGM_state_estimation));
+        auto const component_list = std::set<std::string, std::less<>>{"fault"s};
+        CHECK(component_list == detail::get_irrelevant_components(PGM_state_estimation));
     }
 
     SUBCASE("Short circuit") {
 
-        auto const component_list = std::set<std::string, std::less<>>{
-            "sym_voltage_sensor"s,  "sym_current_sensor"s, "sym_power_sensor"s,          "asym_voltage_sensor"s,
-            "asym_current_sensor"s, "asym_power_sensor"s,  "transformer_tap_regulator"s, "voltage_regulator"s};
-        CHECK(component_list == get_irrelevant_components(PGM_short_circuit));
+        auto const component_list = std::set<std::string, std::less<>>{};
+        CHECK(component_list == detail::get_irrelevant_components(PGM_short_circuit));
     }
 }
 
@@ -118,7 +113,7 @@ TEST_CASE("OwningDataset - filter irrelevant components") {
 
         CHECK_NOTHROW(model.calculate(options, output_dataset.dataset));
         auto const& info = output_dataset.dataset.get_info();
-        check_irrelevant_components(info, {"fault", "sym_power_sensor", "sym_voltage_sensor", "asym_current_sensor"});
+        check_irrelevant_components(info, {"fault"});
     }
 
     SUBCASE("State estimation filters out faults") {
@@ -128,7 +123,7 @@ TEST_CASE("OwningDataset - filter irrelevant components") {
 
         CHECK_NOTHROW(model.calculate(options, output_dataset.dataset));
         auto const& info = output_dataset.dataset.get_info();
-        check_irrelevant_components(info, {"fault", "voltage_regulator"});
+        check_irrelevant_components(info, {"fault"});
     }
 
     SUBCASE("Short circuit filters out sensors") {
@@ -138,8 +133,7 @@ TEST_CASE("OwningDataset - filter irrelevant components") {
 
         CHECK_NOTHROW(model.calculate(options, output_dataset.dataset));
         auto const& info = output_dataset.dataset.get_info();
-        check_irrelevant_components(
-            info, {"sym_power_sensor", "sym_voltage_sensor", "asym_current_sensor", "voltage_regulator"});
+        check_irrelevant_components(info, {});
     }
 }
 

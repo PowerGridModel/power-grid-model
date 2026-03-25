@@ -24,6 +24,16 @@
 #include <vector>
 
 namespace power_grid_model_cpp {
+namespace detail {
+inline std::set<std::string, std::less<>> get_irrelevant_components(PGM_CalculationType calculation_type) {
+    using namespace std::string_literals;
+
+    if (calculation_type == PGM_power_flow || calculation_type == PGM_state_estimation) {
+        return {"fault"s};
+    }
+    return {};
+}
+} // namespace detail
 class ComponentTypeNotFound : public PowerGridError {
   public:
     ComponentTypeNotFound(std::string const& component)
@@ -269,28 +279,6 @@ inline std::string get_output_type(PGM_CalculationType calculation_type, bool sy
     return "asym_output"s;
 }
 
-inline std::set<std::string, std::less<>> get_irrelevant_components(PGM_CalculationType calculation_type) {
-    using namespace std::string_literals;
-
-    if (calculation_type == PGM_power_flow) {
-        return {"sym_voltage_sensor"s,
-                "sym_current_sensor"s,
-                "sym_power_sensor"s,
-                "asym_voltage_sensor"s,
-                "asym_current_sensor"s,
-                "asym_power_sensor"s,
-                "fault"s};
-    }
-    if (calculation_type == PGM_state_estimation) {
-        return {"fault"s, "transformer_tap_regulator"s, "voltage_regulator"s};
-    }
-    if (calculation_type == PGM_short_circuit) {
-        return {"sym_voltage_sensor"s,  "sym_current_sensor"s, "sym_power_sensor"s,          "asym_voltage_sensor"s,
-                "asym_current_sensor"s, "asym_power_sensor"s,  "transformer_tap_regulator"s, "voltage_regulator"s};
-    }
-    return {};
-}
-
 struct OwningDataset {
     DatasetMutable dataset;
     OwningMemory storage{};
@@ -345,7 +333,7 @@ struct OwningDataset {
         : dataset{get_output_type(calculation_type, sym), is_batch, batch_size} {
         DatasetInfo const& ref_info = ref_dataset.dataset.get_info();
         bool const enable_filters = !output_component_attribute_filters.empty();
-        auto const irrelevant_components = get_irrelevant_components(calculation_type);
+        auto const irrelevant_components = detail::get_irrelevant_components(calculation_type);
 
         auto const contains_irrelevant_component = [&irrelevant_components](std::string const& component) {
             return irrelevant_components.find(component) != irrelevant_components.end();
