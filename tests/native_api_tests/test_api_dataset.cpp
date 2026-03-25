@@ -7,6 +7,12 @@
 #include <power_grid_model_c/basics.h>
 #include <power_grid_model_cpp/dataset.hpp>
 
+#include <functional>
+#include <initializer_list>
+#include <set>
+#include <string>
+#include <string_view>
+
 #include <doctest/doctest.h>
 
 namespace power_grid_model_cpp {
@@ -60,25 +66,25 @@ TEST_CASE("Test get_irrelevant_components") {
     using namespace std::string_literals;
 
     SUBCASE("Power flow") {
-        std::set<std::string, std::less<>> const component_list = {"sym_voltage_sensor"s,
-                                                                   "sym_current_sensor"s,
-                                                                   "sym_power_sensor"s,
-                                                                   "asym_voltage_sensor"s,
-                                                                   "asym_current_sensor"s,
-                                                                   "asym_power_sensor"s,
-                                                                   "fault"s};
+        auto const component_list = std::set<std::string, std::less<>>{"sym_voltage_sensor"s,
+                                                                       "sym_current_sensor"s,
+                                                                       "sym_power_sensor"s,
+                                                                       "asym_voltage_sensor"s,
+                                                                       "asym_current_sensor"s,
+                                                                       "asym_power_sensor"s,
+                                                                       "fault"s};
         CHECK(component_list == get_irrelevant_components(PGM_power_flow));
     }
     SUBCASE("State estimation") {
-        std::set<std::string, std::less<>> const component_list = {"fault"s};
+        auto const component_list = std::set<std::string, std::less<>>{"fault"s};
         CHECK(component_list == get_irrelevant_components(PGM_state_estimation));
     }
 
     SUBCASE("Short circuit") {
 
-        std::set<std::string, std::less<>> const component_list = {"sym_voltage_sensor"s,  "sym_current_sensor"s,
-                                                                   "sym_power_sensor"s,    "asym_voltage_sensor"s,
-                                                                   "asym_current_sensor"s, "asym_power_sensor"s};
+        auto const component_list =
+            std::set<std::string, std::less<>>{"sym_voltage_sensor"s,  "sym_current_sensor"s,  "sym_power_sensor"s,
+                                               "asym_voltage_sensor"s, "asym_current_sensor"s, "asym_power_sensor"s};
         CHECK(component_list == get_irrelevant_components(PGM_short_circuit));
     }
 }
@@ -88,7 +94,7 @@ TEST_CASE("OwningDataset - filter irrelevant components") {
 
     auto check_irrelevant_components = [](DatasetInfo const& info,
                                           std::initializer_list<std::string_view> irrelevant_components) {
-        std::set<std::string_view> expected_component_set{irrelevant_components};
+        auto const expected_component_set = std::set<std::string_view>{irrelevant_components};
         for (auto idx = 0; idx < info.n_components(); ++idx) {
             auto const component_name = info.component_name(idx);
             CHECK(!expected_component_set.contains(component_name));
@@ -96,22 +102,21 @@ TEST_CASE("OwningDataset - filter irrelevant components") {
     };
 
     SUBCASE("Power flow filters out faults and sensors") {
-        OwningDataset output{input_data, PGM_power_flow, true};
+        auto const output = OwningDataset{input_data, PGM_power_flow, true};
 
         auto const& info = output.dataset.get_info();
         check_irrelevant_components(info, {"fault", "sym_power_sensor", "sym_voltage_sensor", "asym_current_sensor"});
-        // check_relevant_components(n_components);
     }
 
     SUBCASE("State estimation filters out faults") {
-        OwningDataset output{input_data, PGM_state_estimation, true};
+        auto const output = OwningDataset{input_data, PGM_state_estimation, true};
 
         auto const& info = output.dataset.get_info();
         check_irrelevant_components(info, {"fault"});
     }
 
     SUBCASE("Short circuit filters out sensors") {
-        OwningDataset output{input_data, PGM_short_circuit, true};
+        auto const output = OwningDataset{input_data, PGM_short_circuit, true};
 
         auto const& info = output.dataset.get_info();
         check_irrelevant_components(info, {"sym_power_sensor", "sym_voltage_sensor", "asym_current_sensor"});
