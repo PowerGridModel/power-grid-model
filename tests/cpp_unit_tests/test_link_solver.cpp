@@ -369,82 +369,127 @@ TEST_CASE("Test the link solver algorithm") {
         }
     }
     SUBCASE("Testing the set_solution_system routine") {
-        std::vector<IntS> data = {1, 0, 0, 1, 0, 0, -1, 1, -1, -1, 0, 0, 1, 1, 1, 1, 0, 1};
-        std::vector<uint64_t> row = {0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 1, 0, 0, 0};
-        std::vector<uint64_t> col = {0, 1, 2, 1, 2, 3, 6, 2, 3, 4, 5, 6, 5, 6, 4, 3, 4, 6};
+        SUBCASE("Complex case with complex loads") {
+            std::vector<IntS> data = {1, 0, 0, 1, 0, 0, -1, 1, -1, -1, 0, 0, 1, 1, 1, 1, 0, 1};
+            std::vector<uint64_t> row = {0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 1, 0, 0, 0};
+            std::vector<uint64_t> col = {0, 1, 2, 1, 2, 3, 6, 2, 3, 4, 5, 6, 5, 6, 4, 3, 4, 6};
 
-        IntS value;
-        const uint64_t rows = 5;
-        const uint64_t cols = 7;
+            IntS value;
+            const uint64_t rows = 5;
+            const uint64_t cols = 7;
 
-        EliminationResult result{};
+            EliminationResult result{};
 
-        result.matrix.prepare(rows, cols);
+            result.matrix.prepare(rows, cols);
 
-        for (uint64_t i = 0; i < data.size(); i++) {
-            result.matrix.set_value(data[i], row[i], col[i]);
+            for (uint64_t i = 0; i < data.size(); i++) {
+                result.matrix.set_value(data[i], row[i], col[i]);
+            }
+
+            result.rhs = {{0, 0}, {1, 1}, {-2, -2}, {-0, -0}};
+            result.free_edge_indices = {3, 4, 6};
+            result.pivot_edge_indices = {0, 1, 2, 5};
+
+            const SolutionSet solution_set = set_solution_system(result);
+
+            bool test = solution_set.dfs_matrix.get_value(value, 0, 0);
+            CHECK(test == true);
+            CHECK(value == 1);
+            test = solution_set.dfs_matrix.get_value(value, 0, 2);
+            CHECK(value == 1);
+            test = solution_set.dfs_matrix.get_value(value, 1, 1);
+            CHECK(value == 1);
+            test = solution_set.dfs_matrix.get_value(value, 1, 2);
+            CHECK(value == -1);
+            test = solution_set.dfs_matrix.get_value(value, 2, 0);
+            CHECK(value == -1);
+            test = solution_set.dfs_matrix.get_value(value, 2, 1);
+            CHECK(value == -1);
+            test = solution_set.dfs_matrix.get_value(value, 3, 0);
+            CHECK(value == -1);
+            test = solution_set.dfs_matrix.get_value(value, 4, 1);
+            CHECK(value == -1);
+            test = solution_set.dfs_matrix.get_value(value, 5, 2);
+            CHECK(value == 1);
+            test = solution_set.dfs_matrix.get_value(value, 6, 2);
+            CHECK(value == -1);
+
+            CHECK(solution_set.extended_rhs ==
+                std::vector<DoubleComplex>({{0, 0}, {1, 1}, {-2, -2}, {0, 0}, {0, 0}, {0, 0}, {0, 0}}));
         }
 
-        result.rhs = {{0, 0}, {1, 1}, {-2, -2}, {-0, -0}};
-        result.free_edge_indices = {3, 4, 6};
-        result.pivot_edge_indices = {0, 1, 2, 5};
+        SUBCASE("Two edges, two nodes, two real loads"){
 
-        EdgeHistory edge_history{};
+            std::vector<IntS> data = {1, 0, 1, -1, -1 };
+            std::vector<uint64_t> row = {0, 0, 1, 1, 0};
+            std::vector<uint64_t> col = {0, 1, 1, 2, 2 };
 
-        edge_history.rows = {0}; // 0
-        edge_history.events = {EdgeEvent::Deleted};
-        result.edges_history.push_back(edge_history);
+            IntS value;
+            const uint64_t rows = 1;
+            const uint64_t cols = 3;
 
-        edge_history.rows = {0, 1}; // 1
-        edge_history.events = {EdgeEvent::Replaced, EdgeEvent::Deleted};
-        result.edges_history.push_back(edge_history);
+            EliminationResult result{};
 
-        edge_history.rows = {0, 1, 2}; // 2
-        edge_history.events = {EdgeEvent::Replaced, EdgeEvent::Replaced, EdgeEvent::Deleted};
-        result.edges_history.push_back(edge_history);
+            result.matrix.prepare(rows, cols);
 
-        edge_history.rows = {1, 2}; // 3
-        edge_history.events = {EdgeEvent::Replaced, EdgeEvent::ContractedToPoint};
-        result.edges_history.push_back(edge_history);
+            for (uint64_t i = 0; i < data.size(); i++) {
+                result.matrix.set_value(data[i], row[i], col[i]);
+            }
 
-        edge_history.rows = {2}; // 4
-        edge_history.events = {EdgeEvent::ContractedToPoint};
-        result.edges_history.push_back(edge_history);
+            result.rhs = {{1, 0}, {0, 0}};
+            result.free_edge_indices = {2};
+            result.pivot_edge_indices = {0, 1};
 
-        edge_history.rows = {2, 3}; // 5
-        edge_history.events = {EdgeEvent::Replaced, EdgeEvent::Deleted};
-        result.edges_history.push_back(edge_history);
+            const SolutionSet solution_set = set_solution_system(result);
 
-        edge_history.rows = {1, 2, 3}; // 6
-        edge_history.events = {EdgeEvent::Replaced, EdgeEvent::Replaced, EdgeEvent::ContractedToPoint};
-        result.edges_history.push_back(edge_history);
+            bool test = solution_set.dfs_matrix.get_value(value, 0, 0);
+            CHECK(test == true);
+            CHECK(value == -1);
+            test = solution_set.dfs_matrix.get_value(value, 1, 0);
+            CHECK(value == -1);
+            test = solution_set.dfs_matrix.get_value(value, 2, 0);
+            CHECK(value == -1);
 
-        const SolutionSet solution_set = set_solution_system(result);
+            CHECK(solution_set.extended_rhs ==
+                std::vector<DoubleComplex>({{1, 0}, {0, 0}, {0, 0}}));
+        }
 
-        bool test = solution_set.dfs_matrix.get_value(value, 0, 0);
-        CHECK(test == true);
-        CHECK(value == 1);
-        test = solution_set.dfs_matrix.get_value(value, 0, 2);
-        CHECK(value == 1);
-        test = solution_set.dfs_matrix.get_value(value, 1, 1);
-        CHECK(value == 1);
-        test = solution_set.dfs_matrix.get_value(value, 1, 2);
-        CHECK(value == -1);
-        test = solution_set.dfs_matrix.get_value(value, 2, 0);
-        CHECK(value == -1);
-        test = solution_set.dfs_matrix.get_value(value, 2, 1);
-        CHECK(value == -1);
-        test = solution_set.dfs_matrix.get_value(value, 3, 0);
-        CHECK(value == -1);
-        test = solution_set.dfs_matrix.get_value(value, 4, 1);
-        CHECK(value == -1);
-        test = solution_set.dfs_matrix.get_value(value, 5, 2);
-        CHECK(value == 1);
-        test = solution_set.dfs_matrix.get_value(value, 6, 2);
-        CHECK(value == -1);
+        SUBCASE("Four edges, four nodes, two real loads"){
+            std::vector<IntS> data = {1, 0, 0, 1, 1, 1, 1 };
+            std::vector<uint64_t> row = {0, 0, 0, 1, 1, 2, 2};
+            std::vector<uint64_t> col = {0, 1, 3, 1, 3, 2, 3};
 
-        CHECK(solution_set.extended_rhs ==
-              std::vector<DoubleComplex>({{0, 0}, {1, 1}, {-2, -2}, {0, 0}, {0, 0}, {0, 0}, {0, 0}}));
+            
+            IntS value;
+            const uint64_t rows = 1;
+            const uint64_t cols = 4;
+
+            EliminationResult result{};
+
+            result.matrix.prepare(rows, cols);
+
+            for (uint64_t i = 0; i < data.size(); i++) {
+                result.matrix.set_value(data[i], row[i], col[i]);
+            }
+
+            result.rhs = {{1, 0}, {-1,0}, {-1,0}};
+            result.free_edge_indices = {3};
+            result.pivot_edge_indices = {0, 1, 2};
+
+            const SolutionSet solution_set = set_solution_system(result);
+
+            bool test = solution_set.dfs_matrix.get_value(value, 1, 0);
+            CHECK(test == true);
+            CHECK(value == 1);
+            test = solution_set.dfs_matrix.get_value(value, 2, 0);
+            CHECK(value == 1);
+            test = solution_set.dfs_matrix.get_value(value, 3, 0);
+            CHECK(value == -1);
+
+            CHECK(solution_set.extended_rhs ==
+                std::vector<DoubleComplex>({{1, 0}, {-1, 0}, {-1, 0}, {0, 0}}));
+
+        }
     }
 }
 
