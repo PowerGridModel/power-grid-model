@@ -19,6 +19,7 @@
 
 namespace power_grid_model_cpp {
 namespace {
+using namespace std::string_literals;
 using power_grid_model_cpp_test::load_dataset;
 constexpr auto const json_data = R"({
         "version": "1.0",
@@ -53,8 +54,6 @@ constexpr auto const json_data = R"({
     })"; // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
 } // namespace
 TEST_CASE("Test get_output_type") {
-    using namespace std::string_literals;
-
     SUBCASE("Power flow") {
         CHECK(get_output_type(PGM_power_flow, true) == "sym_output"s);
         CHECK(get_output_type(PGM_power_flow, false) == "asym_output"s);
@@ -70,8 +69,6 @@ TEST_CASE("Test get_output_type") {
 }
 
 TEST_CASE("Test get_irrelevant_components") {
-    using namespace std::string_literals;
-
     SUBCASE("Power flow") {
         auto const component_list = std::set<std::string, std::less<>>{"sym_voltage_sensor"s,
                                                                        "sym_current_sensor"s,
@@ -98,7 +95,6 @@ TEST_CASE("Test get_irrelevant_components") {
 }
 
 TEST_CASE("OwningDataset - filter irrelevant components") {
-    using namespace std::string_literals;
     auto const input_dataset = load_dataset(json_data);
     auto options = Options{};
     Model model{50.0, input_dataset.dataset};
@@ -143,5 +139,4 @@ TEST_CASE("OwningDataset - filter irrelevant components") {
             info, {"sym_power_sensor", "sym_voltage_sensor", "asym_current_sensor", "voltage_regulator"});
     }
 }
-
 } // namespace power_grid_model_cpp
