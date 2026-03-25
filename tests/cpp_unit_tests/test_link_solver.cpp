@@ -415,14 +415,14 @@ TEST_CASE("Test the link solver algorithm") {
             CHECK(value == -1);
 
             CHECK(solution_set.extended_rhs ==
-                std::vector<DoubleComplex>({{0, 0}, {1, 1}, {-2, -2}, {0, 0}, {0, 0}, {0, 0}, {0, 0}}));
+                  std::vector<DoubleComplex>({{0, 0}, {1, 1}, {-2, -2}, {0, 0}, {0, 0}, {0, 0}, {0, 0}}));
         }
 
-        SUBCASE("Two edges, two nodes, two real loads"){
+        SUBCASE("Two edges, two nodes, two real loads") {
 
-            std::vector<IntS> data = {1, 0, 1, -1, -1 };
+            std::vector<IntS> data = {1, 0, 1, -1, -1};
             std::vector<uint64_t> row = {0, 0, 1, 1, 0};
-            std::vector<uint64_t> col = {0, 1, 1, 2, 2 };
+            std::vector<uint64_t> col = {0, 1, 1, 2, 2};
 
             IntS value;
             const uint64_t rows = 1;
@@ -450,16 +450,14 @@ TEST_CASE("Test the link solver algorithm") {
             test = solution_set.dfs_matrix.get_value(value, 2, 0);
             CHECK(value == -1);
 
-            CHECK(solution_set.extended_rhs ==
-                std::vector<DoubleComplex>({{1, 0}, {0, 0}, {0, 0}}));
+            CHECK(solution_set.extended_rhs == std::vector<DoubleComplex>({{1, 0}, {0, 0}, {0, 0}}));
         }
 
-        SUBCASE("Four edges, four nodes, two real loads"){
-            std::vector<IntS> data = {1, 0, 0, 1, 1, 1, 1 };
+        SUBCASE("Four edges, four nodes, two real loads") {
+            std::vector<IntS> data = {1, 0, 0, 1, 1, 1, 1};
             std::vector<uint64_t> row = {0, 0, 0, 1, 1, 2, 2};
             std::vector<uint64_t> col = {0, 1, 3, 1, 3, 2, 3};
 
-            
             IntS value;
             const uint64_t rows = 1;
             const uint64_t cols = 4;
@@ -472,7 +470,7 @@ TEST_CASE("Test the link solver algorithm") {
                 result.matrix.set_value(data[i], row[i], col[i]);
             }
 
-            result.rhs = {{1, 0}, {-1,0}, {-1,0}};
+            result.rhs = {{1, 0}, {-1, 0}, {-1, 0}};
             result.free_edge_indices = {3};
             result.pivot_edge_indices = {0, 1, 2};
 
@@ -486,9 +484,7 @@ TEST_CASE("Test the link solver algorithm") {
             test = solution_set.dfs_matrix.get_value(value, 3, 0);
             CHECK(value == -1);
 
-            CHECK(solution_set.extended_rhs ==
-                std::vector<DoubleComplex>({{1, 0}, {-1, 0}, {-1, 0}, {0, 0}}));
-
+            CHECK(solution_set.extended_rhs == std::vector<DoubleComplex>({{1, 0}, {-1, 0}, {-1, 0}, {0, 0}}));
         }
     }
 }
