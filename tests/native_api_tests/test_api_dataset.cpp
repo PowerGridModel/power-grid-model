@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+// clang-tidy complains about not including <string> for string_literals, but this is a false positive
+// NOLINTBEGIN(misc-include-cleaner)
 #include "load_dataset.hpp"
 
 #include <power_grid_model_c/basics.h>
@@ -19,7 +21,6 @@
 
 namespace power_grid_model_cpp {
 namespace {
-using namespace std::string_literals;
 using power_grid_model_cpp_test::load_dataset;
 constexpr auto const json_data = R"({
         "version": "1.0",
@@ -54,6 +55,7 @@ constexpr auto const json_data = R"({
     })"; // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
 } // namespace
 TEST_CASE("Test get_output_type") {
+    using namespace std::string_literals;
     SUBCASE("Power flow") {
         CHECK(get_output_type(PGM_power_flow, true) == "sym_output"s);
         CHECK(get_output_type(PGM_power_flow, false) == "asym_output"s);
@@ -69,6 +71,7 @@ TEST_CASE("Test get_output_type") {
 }
 
 TEST_CASE("Test get_irrelevant_components") {
+    using namespace std::string_literals;
     SUBCASE("Power flow") {
         auto const component_list = std::set<std::string, std::less<>>{"sym_voltage_sensor"s,
                                                                        "sym_current_sensor"s,
@@ -95,6 +98,7 @@ TEST_CASE("Test get_irrelevant_components") {
 }
 
 TEST_CASE("OwningDataset - filter irrelevant components") {
+    using namespace std::string_literals;
     auto const input_dataset = load_dataset(json_data);
     auto options = Options{};
     Model model{50.0, input_dataset.dataset};
@@ -115,7 +119,8 @@ TEST_CASE("OwningDataset - filter irrelevant components") {
 
         CHECK_NOTHROW(model.calculate(options, output_dataset.dataset));
         auto const& info = output_dataset.dataset.get_info();
-        check_irrelevant_components(info, {"fault", "sym_power_sensor", "sym_voltage_sensor", "asym_current_sensor"});
+        check_irrelevant_components(info,
+                                    {"fault"s, "sym_power_sensor"s, "sym_voltage_sensor"s, "asym_current_sensor"s});
     }
 
     SUBCASE("State estimation filters out faults") {
@@ -125,7 +130,7 @@ TEST_CASE("OwningDataset - filter irrelevant components") {
 
         CHECK_NOTHROW(model.calculate(options, output_dataset.dataset));
         auto const& info = output_dataset.dataset.get_info();
-        check_irrelevant_components(info, {"fault", "voltage_regulator"});
+        check_irrelevant_components(info, {"fault"s, "voltage_regulator"s});
     }
 
     SUBCASE("Short circuit filters out sensors") {
@@ -136,7 +141,8 @@ TEST_CASE("OwningDataset - filter irrelevant components") {
         CHECK_NOTHROW(model.calculate(options, output_dataset.dataset));
         auto const& info = output_dataset.dataset.get_info();
         check_irrelevant_components(
-            info, {"sym_power_sensor", "sym_voltage_sensor", "asym_current_sensor", "voltage_regulator"});
+            info, {"sym_power_sensor"s, "sym_voltage_sensor"s, "asym_current_sensor"s, "voltage_regulator"s});
     }
 }
 } // namespace power_grid_model_cpp
+// NOLINTEND(misc-include-cleaner)
