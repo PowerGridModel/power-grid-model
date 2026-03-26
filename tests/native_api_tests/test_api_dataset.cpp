@@ -2,8 +2,6 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-// clang-tidy complains about not including <string> for string_literals, but this is a false positive
-// NOLINTBEGIN(misc-include-cleaner)
 #include "load_dataset.hpp"
 
 #include <power_grid_model_c/basics.h>
@@ -57,42 +55,52 @@ constexpr auto const json_data = R"({
 TEST_CASE("Test get_output_type") {
     using namespace std::string_literals;
     SUBCASE("Power flow") {
-        CHECK(get_output_type(PGM_power_flow, true) == "sym_output"s);
-        CHECK(get_output_type(PGM_power_flow, false) == "asym_output"s);
+        CHECK(get_output_type(PGM_power_flow, true) ==
+              "sym_output"s); // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
+        CHECK(get_output_type(PGM_power_flow, false) ==
+              "asym_output"s); // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
     }
     SUBCASE("State estimation") {
-        CHECK(get_output_type(PGM_state_estimation, true) == "sym_output"s);
-        CHECK(get_output_type(PGM_state_estimation, false) == "asym_output"s);
+        CHECK(get_output_type(PGM_state_estimation, true) ==
+              "sym_output"s); // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
+        CHECK(get_output_type(PGM_state_estimation, false) ==
+              "asym_output"s); // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
     }
     SUBCASE("Short circuit") {
-        CHECK(get_output_type(PGM_short_circuit, true) == "sc_output"s);
-        CHECK(get_output_type(PGM_short_circuit, false) == "sc_output"s);
+        CHECK(get_output_type(PGM_short_circuit, true) ==
+              "sc_output"s); // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
+        CHECK(get_output_type(PGM_short_circuit, false) ==
+              "sc_output"s); // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
     }
 }
 
 TEST_CASE("Test get_irrelevant_components") {
     using namespace std::string_literals;
     SUBCASE("Power flow") {
-        auto const component_list = std::set<std::string, std::less<>>{"sym_voltage_sensor"s,
-                                                                       "sym_current_sensor"s,
-                                                                       "sym_power_sensor"s,
-                                                                       "asym_voltage_sensor"s,
-                                                                       "asym_current_sensor"s,
-                                                                       "asym_power_sensor"s,
-                                                                       "fault"s};
+        auto const component_list = std::set<std::string, std::less<>>{
+            "sym_voltage_sensor"s,
+            "sym_current_sensor"s,
+            "sym_power_sensor"s,
+            "asym_voltage_sensor"s,
+            "asym_current_sensor"s,
+            "asym_power_sensor"s,
+            "fault"s}; // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
         CHECK(component_list == get_irrelevant_components(PGM_power_flow));
     }
     SUBCASE("State estimation") {
-        auto const component_list =
-            std::set<std::string, std::less<>>{"fault"s, "transformer_tap_regulator"s, "voltage_regulator"s};
+        auto const component_list = std::set<std::string, std::less<>>{
+            "fault"s, "transformer_tap_regulator"s,
+            "voltage_regulator"s}; // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
         CHECK(component_list == get_irrelevant_components(PGM_state_estimation));
     }
 
     SUBCASE("Short circuit") {
 
         auto const component_list = std::set<std::string, std::less<>>{
-            "sym_voltage_sensor"s,  "sym_current_sensor"s, "sym_power_sensor"s,          "asym_voltage_sensor"s,
-            "asym_current_sensor"s, "asym_power_sensor"s,  "transformer_tap_regulator"s, "voltage_regulator"s};
+            "sym_voltage_sensor"s,        "sym_current_sensor"s,  "sym_power_sensor"s,
+            "asym_voltage_sensor"s,       "asym_current_sensor"s, "asym_power_sensor"s,
+            "transformer_tap_regulator"s, "voltage_regulator"s}; // NOLINT(misc-include-cleaner)
+                                                                 // https://github.com/llvm/llvm-project/issues/98122
         CHECK(component_list == get_irrelevant_components(PGM_short_circuit));
     }
 }
@@ -119,8 +127,10 @@ TEST_CASE("OwningDataset - filter irrelevant components") {
 
         CHECK_NOTHROW(model.calculate(options, output_dataset.dataset));
         auto const& info = output_dataset.dataset.get_info();
-        check_irrelevant_components(info,
-                                    {"fault"s, "sym_power_sensor"s, "sym_voltage_sensor"s, "asym_current_sensor"s});
+        check_irrelevant_components(
+            info,
+            {"fault"s, "sym_power_sensor"s, "sym_voltage_sensor"s,
+             "asym_current_sensor"s}); // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
     }
 
     SUBCASE("State estimation filters out faults") {
@@ -130,7 +140,10 @@ TEST_CASE("OwningDataset - filter irrelevant components") {
 
         CHECK_NOTHROW(model.calculate(options, output_dataset.dataset));
         auto const& info = output_dataset.dataset.get_info();
-        check_irrelevant_components(info, {"fault"s, "voltage_regulator"s});
+        check_irrelevant_components(
+            info,
+            {"fault"s,
+             "voltage_regulator"s}); // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
     }
 
     SUBCASE("Short circuit filters out sensors") {
@@ -141,8 +154,9 @@ TEST_CASE("OwningDataset - filter irrelevant components") {
         CHECK_NOTHROW(model.calculate(options, output_dataset.dataset));
         auto const& info = output_dataset.dataset.get_info();
         check_irrelevant_components(
-            info, {"sym_power_sensor"s, "sym_voltage_sensor"s, "asym_current_sensor"s, "voltage_regulator"s});
+            info,
+            {"sym_power_sensor"s, "sym_voltage_sensor"s, "asym_current_sensor"s,
+             "voltage_regulator"s}); // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
     }
 }
 } // namespace power_grid_model_cpp
-// NOLINTEND(misc-include-cleaner)
