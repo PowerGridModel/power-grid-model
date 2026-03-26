@@ -487,6 +487,43 @@ TEST_CASE("Test the link solver algorithm") {
             CHECK(solution_set.extended_rhs == std::vector<DoubleComplex>({{1, 0}, {-1, 0}, {-1, 0}, {0, 0}}));
         }
     }
+    SUBCASE("Testing the set_projection_system routine") {
+        SUBCASE("Complex case with complex loads") {
+            const uint64_t rows = 5;
+            const uint64_t cols = 7;
+
+            EliminationResult result{};
+
+            result.matrix.prepare(rows, cols);
+            result.free_edge_indices = {3, 4, 6};
+            result.pivot_edge_indices = {0, 1, 2, 5};
+
+            SolutionSet solution_set{};
+
+            uint64_t dfs_rows = 7;
+            uint64_t dfs_cols = 3;
+
+            solution_set.dfs_matrix.prepare(dfs_rows, dfs_cols);
+
+            std::vector<IntS> dfs_data = {1, 1, 1, -1, -1, -1, -1, -1, 1, -1};
+            std::vector<uint64_t> dfs_row = {0, 0, 1, 1, 2, 2, 3, 4, 5, 6};
+            std::vector<uint64_t> dfs_col = {0, 2, 1, 2, 0, 1, 0, 1, 2, 2};
+
+            for (uint64_t i = 0; i < dfs_data.size(); i++) {
+                solution_set.dfs_matrix.set_value(dfs_data[i], dfs_row[i], dfs_col[i]);
+            }
+
+            solution_set.extended_rhs = {{0, 0}, {1, 1}, {-2, -2}, {0, 0}, {0, 0}, {-0, -0}, {0, 0}};
+
+            std::vector<std::vector<DoubleComplex>> projection_system = set_projection_system(result, solution_set);
+
+            std::vector<std::vector<DoubleComplex>> test_system = {{{3, 0}, {1, 0}, {1, 0}, {2, 2}},
+                                                                   {{1, 0}, {3, 0}, {-1, 0}, {3, 3}},
+                                                                   {{1, 0}, {-1, 0}, {4, 0}, {-1, -1}}};
+
+            CHECK(projection_system == test_system);
+        }
+    }
 }
 
 } // namespace power_grid_model::link_solver
