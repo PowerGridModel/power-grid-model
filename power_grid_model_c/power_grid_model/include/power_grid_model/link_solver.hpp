@@ -244,7 +244,6 @@ struct SolutionSet {
     SolutionSet solution_set{};
     auto& [matrix, rhs, free_edge_indices, pivot_edge_indices, edges_history] = result;
 
-
     auto& [dfs_matrix, extended_rhs] = solution_set;
     auto const pivot_indices_size = pivot_edge_indices.size();
     auto const free_indices_size = free_edge_indices.size();
