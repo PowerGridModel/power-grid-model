@@ -310,53 +310,6 @@ This signal can be ignored when using linear methods.
 Similarly, having atleast some results from linear methods can aid in finding data errors or the reason
 for non convergence of newton raphson method.
 
-**When accuracy is critical:**
-
-- Use **Newton-Raphson** when you need high confidence in results
-- Required for meshed networks with significant power flows
-- Most robust algorithm that works in nearly all scenarios
-
-**When speed is critical:**
-
-- Use **Linear current** for initial screening, real-time applications, or large-scale studies with many scenarios
-- Use **Linear** only when loads are truly constant impedance (rare in practice; automatically selected when applicable)
-- Accept that approximations may have voltage errors, especially when actual voltages deviate significantly from 1 p.u.
-
-**For balanced performance:**
-
-- Use **Iterative current** for time-series analysis where you need reasonable accuracy with good performance
-- Excellent for radial networks and moderately meshed systems
-- Particularly efficient for batch calculations (e.g., time-series) as matrix factorization is reused across scenarios
-
-**Grid characteristics to consider:**
-
-- **Radial distribution networks**: All methods work well; Linear current offers good speed/accuracy
-  balance for approximations
-- **Meshed networks**: Newton-Raphson or Iterative current recommended; linear methods may be less accurate
-- **Voltage deviations > 5% from nominal**: Prefer Newton-Raphson or Iterative current for accuracy
-- **Constant impedance loads only**: Linear method is optimal (automatically selected)
-
-**Load type impact:**
-
-- **Constant power** (most common in practice): Newton-Raphson or Iterative current for accurate results;
-  Linear current for fast approximations
-- **Constant current**: Linear current provides good approximations
-- **Constant impedance**: Linear method is exact and fastest
-
-**Quick decision guide:**
-
-1. Start with **Newton-Raphson** (default) - it works reliably for all cases
-2. If calculations are too slow for your workflow (e.g., thousands of scenarios) and you can accept
-   approximations, try **Iterative current** for better accuracy or **Linear current** for maximum speed
-3. For real-time or interactive applications requiring sub-second response, use **Linear current**
-4. Only use **Linear** if you explicitly model all loads as constant impedance
-
-```{tip}
-The accuracy of linear approximation methods depends heavily on how close actual voltages are to 1 p.u.
-They are most accurate in well-regulated distribution systems with voltage control.
-For transmission systems or heavily loaded networks, iterative methods are recommended.
-```
-
 The nodal equations of a power system network can be written as:
 
 $$
