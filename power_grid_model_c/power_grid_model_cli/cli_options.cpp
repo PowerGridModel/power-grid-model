@@ -93,8 +93,12 @@ struct CLIPostCallback {
                 auto const* const component = MetaData::get_component_by_name(dataset_name, comp_name);
                 options.output_component_attribute_filters[component] = {};
             } catch (PowerGridError const&) {
-                throw CLI::ValidationError("output-component", "Component '" + comp_name + "' not found in dataset '" +
-                                                                   dataset_name + "'.");
+                std::string error_msg = "Component '";
+                error_msg += comp_name;
+                error_msg += "' not found in dataset '";
+                error_msg += dataset_name;
+                error_msg += "'.";
+                throw CLI::ValidationError("output-component", error_msg);
             }
         }
     }
@@ -113,8 +117,12 @@ struct CLIPostCallback {
             try {
                 component = MetaData::get_component_by_name(dataset_name, comp_name);
             } catch (PowerGridError const&) {
-                throw CLI::ValidationError("output-attribute", "Component '" + comp_name + "' not found in dataset '" +
-                                                                   dataset_name + "'.");
+                std::string error_msg = "Component '";
+                error_msg += comp_name;
+                error_msg += "' not found in dataset '";
+                error_msg += dataset_name;
+                error_msg += "'.";
+                throw CLI::ValidationError("output-attribute", error_msg);
             }
             MetaAttribute const* attribute = nullptr;
             try {
