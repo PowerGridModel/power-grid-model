@@ -43,7 +43,6 @@ struct ClIOptions {
     Idx output_json_indent{2};
     bool use_compact_serialization{false};
 
-    std::string output_dataset_name;
     MetaDataset const* output_dataset{nullptr};
     std::map<MetaComponent const*, std::set<MetaAttribute const*>> output_component_attribute_filters;
 

@@ -7,6 +7,7 @@
 #include <power_grid_model_c/basics.h>
 #include <power_grid_model_c/handle.h>
 #include <power_grid_model_cpp/basics.hpp>
+#include <power_grid_model_cpp/dataset.hpp>
 #include <power_grid_model_cpp/handle.hpp>
 #include <power_grid_model_cpp/meta_data.hpp>
 
@@ -81,32 +82,28 @@ struct CLIPostCallback {
     }
 
     void set_output_dataset() {
-        if (options.calculation_type == PGM_power_flow || options.calculation_type == PGM_state_estimation) {
-            if (options.symmetric_calculation) {
-                options.output_dataset_name = "sym_output";
-            } else {
-                options.output_dataset_name = "asym_output";
-            }
-        } else {
-            // options.calculation_type == PGM_short_circuit
-            options.output_dataset_name = "sc_output";
-        }
-        options.output_dataset = MetaData::get_dataset_by_name(options.output_dataset_name);
+        std::string const dataset_name =
+            get_output_type(static_cast<PGM_CalculationType>(options.calculation_type), options.symmetric_calculation);
+        options.output_dataset = MetaData::get_dataset_by_name(dataset_name);
     }
 
     void add_component_output_filter() {
+        std::string const dataset_name =
+            get_output_type(static_cast<PGM_CalculationType>(options.calculation_type), options.symmetric_calculation);
         for (auto const& comp_name : output_components) {
             try {
-                auto const* const component = MetaData::get_component_by_name(options.output_dataset_name, comp_name);
+                auto const* const component = MetaData::get_component_by_name(dataset_name, comp_name);
                 options.output_component_attribute_filters[component] = {};
             } catch (PowerGridError const&) {
                 throw CLI::ValidationError("output-component", "Component '" + comp_name + "' not found in dataset '" +
-                                                                   options.output_dataset_name + "'.");
+                                                                   dataset_name + "'.");
             }
         }
     }
 
     void add_attribute_output_filter() {
+        std::string const dataset_name =
+            get_output_type(static_cast<PGM_CalculationType>(options.calculation_type), options.symmetric_calculation);
         for (auto const& attr_full_name : output_attributes) {
             auto dot_pos = attr_full_name.find('.');
             if (dot_pos == std::string::npos || dot_pos == 0 || dot_pos == attr_full_name.size() - 1) {
@@ -117,21 +114,21 @@ struct CLIPostCallback {
             auto attr_name = attr_full_name.substr(dot_pos + 1);
             MetaComponent const* component = nullptr;
             try {
-                component = MetaData::get_component_by_name(options.output_dataset_name, comp_name);
+                component = MetaData::get_component_by_name(dataset_name, comp_name);
             } catch (PowerGridError const&) {
                 throw CLI::ValidationError("output-attribute", "Component '" + comp_name + "' not found in dataset '" +
-                                                                   options.output_dataset_name + "'.");
+                                                                   dataset_name + "'.");
             }
             MetaAttribute const* attribute = nullptr;
             try {
-                attribute = MetaData::get_attribute_by_name(options.output_dataset_name, comp_name, attr_name);
+                attribute = MetaData::get_attribute_by_name(dataset_name, comp_name, attr_name);
             } catch (PowerGridError const&) {
                 std::string error_msg = "Attribute '";
                 error_msg += attr_name;
                 error_msg += "' not found in component '";
                 error_msg += comp_name;
                 error_msg += "' of dataset '";
-                error_msg += options.output_dataset_name;
+                error_msg += dataset_name;
                 error_msg += "'.";
                 throw CLI::ValidationError("output-attribute", error_msg);
             }
