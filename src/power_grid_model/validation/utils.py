@@ -11,7 +11,7 @@ from typing import Any, cast
 
 import numpy as np
 
-from power_grid_model._core.dataset_definitions import ComponentType, DatasetType
+from power_grid_model._core.dataset_definitions import AttributeType, ComponentType, DatasetType
 from power_grid_model._core.power_grid_meta import power_grid_meta_data
 from power_grid_model.data_types import SingleArray, SingleComponentData, SingleDataset
 from power_grid_model.validation.errors import ValidationError
@@ -125,14 +125,14 @@ def _update_component_array_data(component: ComponentType, input_data: SingleArr
         raise ValueError("Invalid data format")
 
     optional_ids_active = (
-        "id" in update_data.dtype.names
-        and np.all(update_data["id"] == np.iinfo(update_data["id"].dtype).min)
-        and len(update_data["id"]) == len(input_data["id"])
+        AttributeType.id in update_data.dtype.names
+        and np.all(update_data[AttributeType.id] == np.iinfo(update_data[AttributeType.id].dtype).min)
+        and len(update_data[AttributeType.id]) == len(input_data[AttributeType.id])
     )
-    update_data_ids = input_data["id"] if optional_ids_active else update_data["id"]
+    update_data_ids = input_data[AttributeType.id] if optional_ids_active else update_data[AttributeType.id]
 
     for field in update_data.dtype.names:
-        if field == "id":
+        if field == AttributeType.id:
             continue
         nan = _nan_type(component, field, DatasetType.update)
         mask = ~np.isnan(update_data[field]) if np.isnan(nan) else np.not_equal(update_data[field], nan)
@@ -141,12 +141,12 @@ def _update_component_array_data(component: ComponentType, input_data: SingleArr
             for phase in range(mask.shape[1]):
                 # find indexers of to-be-updated object
                 sub_mask = mask[:, phase]
-                idx = _get_indexer(input_data["id"], update_data_ids[sub_mask])
+                idx = _get_indexer(input_data[AttributeType.id], update_data_ids[sub_mask])
                 # update
                 input_data[field][idx, phase] = update_data[field][sub_mask, phase]
         else:
             # find indexers of to-be-updated object
-            idx = _get_indexer(input_data["id"], update_data_ids[mask])
+            idx = _get_indexer(input_data[AttributeType.id], update_data_ids[mask])
             # update
             input_data[field][idx] = update_data[field][mask]
 
@@ -234,7 +234,7 @@ def _get_indexer(source: np.ndarray, target: np.ndarray, default_value: int | No
 
 
 def _set_default_value(
-    data: SingleDataset, component: ComponentType, field: str, default_value: int | float | np.ndarray
+    data: SingleDataset, component: ComponentType, field: AttributeType, default_value: int | float | np.ndarray
 ):
     """
     This function sets the default value in the data that is to be validated, so the default values are included in the
@@ -281,17 +281,17 @@ def _get_valid_ids(data: SingleDataset, ref_components: ComponentType | list[Com
     valid_ids = set()
     for ref_component in ref_components:
         if ref_component in data:
-            nan = _nan_type(ref_component, "id")
+            nan = _nan_type(ref_component, AttributeType.id)
             if np.isnan(nan):
-                mask = ~np.isnan(data[ref_component]["id"])
+                mask = ~np.isnan(data[ref_component][AttributeType.id])
             else:
-                mask = np.not_equal(data[ref_component]["id"], nan)
-            valid_ids.update(data[ref_component]["id"][mask])
+                mask = np.not_equal(data[ref_component][AttributeType.id], nan)
+            valid_ids.update(data[ref_component][AttributeType.id][mask])
 
     return list(valid_ids)
 
 
-def _get_mask(data: SingleDataset, component: ComponentType, field: str, **filters: Any) -> np.ndarray:
+def _get_mask(data: SingleDataset, component: ComponentType, field: AttributeType, **filters: Any) -> np.ndarray:
     """
     Get a mask based on the specified filters. E.g. measured_terminal_type=MeasuredTerminalType.source.
 
