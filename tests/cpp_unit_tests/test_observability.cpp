@@ -2025,21 +2025,21 @@ TEST_CASE("Test ObservabilityResult - use_perturbation with non-observable netwo
         topo.phase_shift = {0.0, 0.0, 0.0, 0.0};
         // Create a meshed network: bus0--bus1, bus1--bus2, bus2--bus3, bus3--bus0
         topo.branch_bus_idx = {{0, 1}, {1, 2}, {2, 3}, {3, 0}};
-        topo.sources_per_bus = {from_sparse, {0, 1, 1, 1, 1}};
-        topo.shunts_per_bus = {from_sparse, {0, 0, 0, 0, 0}};
-        topo.load_gens_per_bus = {from_sparse, {0, 0, 0, 0, 0}};
-        topo.power_sensors_per_bus = {from_sparse, {0, 0, 0, 0, 0}};
-        topo.power_sensors_per_source = {from_sparse, {0, 0}};
-        topo.power_sensors_per_load_gen = {from_sparse, {0}};
-        topo.power_sensors_per_shunt = {from_sparse, {0}};
+        topo.sources_per_bus = {from_dense, {0}, 4};
+        topo.shunts_per_bus = {from_dense, {}, 4};
+        topo.load_gens_per_bus = {from_dense, {}, 4};
+        topo.power_sensors_per_bus = {from_dense, {}, 4};
+        topo.power_sensors_per_source = {from_dense, {}, 1};
+        topo.power_sensors_per_load_gen = {from_dense, {}, 0};
+        topo.power_sensors_per_shunt = {from_dense, {}, 0};
         // No explicit power/current sensors are needed since there aren't any loads/gens
-        topo.power_sensors_per_branch_from = {from_sparse, {0, 0, 0, 0, 0}};
-        topo.power_sensors_per_branch_to = {from_sparse, {0, 0, 0, 0, 0}};
-        topo.current_sensors_per_branch_from = {from_sparse, {0, 0, 0, 0, 0}};
-        topo.current_sensors_per_branch_to = {from_sparse, {0, 0, 0, 0, 0}};
+        topo.power_sensors_per_branch_from = {from_dense, {}, 4};
+        topo.power_sensors_per_branch_to = {from_dense, {}, 4};
+        topo.current_sensors_per_branch_from = {from_dense, {}, 4};
+        topo.current_sensors_per_branch_to = {from_dense, {}, 4};
         // TWO voltage phasor sensors (complex measurements with both magnitude and angle)
         // This triggers the condition: n_voltage_phasor_sensors > 1 && !topo.is_radial
-        topo.voltage_sensors_per_bus = {from_sparse, {0, 1, 2, 2, 2}};
+        topo.voltage_sensors_per_bus = {from_dense, {0, 1}, 4};
 
         MathModelParam<symmetric_t> param;
         param.source_param = {SourceCalcParam{.y1 = 1.0, .y0 = 1.0}};
@@ -2088,14 +2088,14 @@ TEST_CASE("Test ObservabilityResult - use_perturbation with non-observable netwo
         topo.is_radial = true;
         topo.phase_shift = {0.0, 0.0, 0.0};
         topo.branch_bus_idx = {{0, 1}, {1, 2}};
-        topo.sources_per_bus = {from_sparse, {0, 1, 1, 1}};
-        topo.shunts_per_bus = {from_sparse, {0, 0, 0, 0}};
-        topo.load_gens_per_bus = {from_sparse, {0, 0, 0, 0}};
-        topo.power_sensors_per_bus = {from_sparse, {0, 0, 0, 0}};
-        topo.power_sensors_per_source = {from_sparse, {0, 0}};
-        topo.power_sensors_per_load_gen = {from_sparse, {0}};
-        topo.power_sensors_per_shunt = {from_sparse, {0}};
-        topo.voltage_sensors_per_bus = {from_sparse, {0, 1, 1, 1}};
+        topo.sources_per_bus = {from_dense, {0}, 3};
+        topo.shunts_per_bus = {from_dense, {}, 3};
+        topo.load_gens_per_bus = {from_dense, {}, 3};
+        topo.power_sensors_per_bus = {from_dense, {}, 3};
+        topo.power_sensors_per_source = {from_dense, {}, 1};
+        topo.power_sensors_per_load_gen = {from_dense, {}, 0};
+        topo.power_sensors_per_shunt = {from_dense, {}, 0};
+        topo.voltage_sensors_per_bus = {from_dense, {0}, 3};
 
         MathModelParam<symmetric_t> param;
         param.source_param = {SourceCalcParam{.y1 = 1.0, .y0 = 1.0}};
