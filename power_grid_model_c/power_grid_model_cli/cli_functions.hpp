@@ -30,14 +30,14 @@ struct ClIOptions {
 
     double system_frequency{50.0};
 
-    Idx calculation_type{PGM_power_flow};
-    Idx calculation_method{PGM_default_method};
+    PGM_CalculationType calculation_type{PGM_power_flow};
+    PGM_CalculationMethod calculation_method{PGM_default_method};
     bool symmetric_calculation{static_cast<bool>(PGM_symmetric)};
     double error_tolerance{1e-8};
     Idx max_iterations{20};
     Idx threading{-1};
-    Idx short_circuit_voltage_scaling{PGM_short_circuit_voltage_scaling_maximum};
-    Idx tap_changing_strategy{PGM_tap_changing_strategy_disabled};
+    PGM_ShortCircuitVoltageScaling short_circuit_voltage_scaling{PGM_short_circuit_voltage_scaling_maximum};
+    PGM_TapChangingStrategy tap_changing_strategy{PGM_tap_changing_strategy_disabled};
 
     bool use_msgpack_output_serialization{false};
     Idx output_json_indent{2};

@@ -82,14 +82,12 @@ struct CLIPostCallback {
     }
 
     void set_output_dataset() {
-        std::string const dataset_name =
-            get_output_type(static_cast<PGM_CalculationType>(options.calculation_type), options.symmetric_calculation);
+        std::string const dataset_name = get_output_type(options.calculation_type, options.symmetric_calculation);
         options.output_dataset = MetaData::get_dataset_by_name(dataset_name);
     }
 
     void add_component_output_filter() {
-        std::string const dataset_name =
-            get_output_type(static_cast<PGM_CalculationType>(options.calculation_type), options.symmetric_calculation);
+        std::string const dataset_name = get_output_type(options.calculation_type, options.symmetric_calculation);
         for (auto const& comp_name : output_components) {
             try {
                 auto const* const component = MetaData::get_component_by_name(dataset_name, comp_name);
@@ -102,8 +100,7 @@ struct CLIPostCallback {
     }
 
     void add_attribute_output_filter() {
-        std::string const dataset_name =
-            get_output_type(static_cast<PGM_CalculationType>(options.calculation_type), options.symmetric_calculation);
+        std::string const dataset_name = get_output_type(options.calculation_type, options.symmetric_calculation);
         for (auto const& attr_full_name : output_attributes) {
             auto dot_pos = attr_full_name.find('.');
             if (dot_pos == std::string::npos || dot_pos == 0 || dot_pos == attr_full_name.size() - 1) {
