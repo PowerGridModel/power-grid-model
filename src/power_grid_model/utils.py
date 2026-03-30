@@ -17,7 +17,12 @@ from typing import IO, Any, cast as cast_type
 import numpy as np
 
 from power_grid_model import CalculationMethod, PowerGridModel
-from power_grid_model._core.dataset_definitions import ComponentType, DatasetType, _map_to_component_types
+from power_grid_model._core.dataset_definitions import (
+    AttributeType,
+    ComponentType,
+    DatasetType,
+    _map_to_component_types,
+)
 from power_grid_model._core.serialization import (
     json_deserialize,
     json_serialize,
@@ -217,7 +222,7 @@ def msgpack_serialize_to_file(
         file_pointer.write(result)
 
 
-def import_json_data(json_file: Path, data_type: str, *args, **kwargs) -> Dataset:
+def import_json_data(json_file: Path, data_type: DatasetType, *args, **kwargs) -> Dataset:
     """
     [deprecated] Import json data.
 
@@ -371,10 +376,19 @@ def self_test():
             "is_batch": False,
             "attributes": {},
             "data": {
-                ComponentType.node: [{"id": 1, "u_rated": 10000}],
-                ComponentType.source: [{"id": 2, "node": 1, "u_ref": 1, "sk": 1e20}],
+                ComponentType.node: [{AttributeType.id: 1, AttributeType.u_rated: 10000}],
+                ComponentType.source: [
+                    {AttributeType.id: 2, AttributeType.node: 1, AttributeType.u_ref: 1, AttributeType.sk: 1e20}
+                ],
                 ComponentType.sym_load: [
-                    {"id": 3, "node": 1, "status": 1, "type": 0, "p_specified": 0, "q_specified": 0}
+                    {
+                        AttributeType.id: 3,
+                        AttributeType.node: 1,
+                        AttributeType.status: 1,
+                        AttributeType.type: 0,
+                        AttributeType.p_specified: 0,
+                        AttributeType.q_specified: 0,
+                    }
                 ],
             },
         }
@@ -404,8 +418,8 @@ def self_test():
             if output_data is None:  # pragma: no cover
                 raise ValueError("Output data should not be None")
             if not math.isclose(
-                output_data["data"][ComponentType.node][0]["u"],
-                input_data["data"][ComponentType.node][0]["u_rated"],
+                output_data["data"][ComponentType.node][0][AttributeType.u],
+                input_data["data"][ComponentType.node][0][AttributeType.u_rated],
                 abs_tol=1e-9,
             ):  # pragma: no cover
                 raise ValueError("The difference between the input and output data is too big.")

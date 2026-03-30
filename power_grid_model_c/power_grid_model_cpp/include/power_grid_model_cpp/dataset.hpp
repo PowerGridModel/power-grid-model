@@ -15,6 +15,7 @@
 #include "power_grid_model_c/dataset.h"
 
 #include <array>
+#include <functional>
 #include <map>
 #include <set>
 #include <string>
@@ -260,14 +261,46 @@ struct OwningMemory {
     std::vector<std::vector<AttributeBuffer>> attribute_buffers;
 };
 
+inline std::string get_output_type(PGM_CalculationType calculation_type, bool sym) {
+    using namespace std::string_literals;
+
+    if (calculation_type == PGM_short_circuit) {
+        return "sc_output"s;
+    }
+    if (sym) {
+        return "sym_output"s;
+    }
+    return "asym_output"s;
+}
+
+inline std::set<std::string, std::less<>> get_irrelevant_components(PGM_CalculationType calculation_type) {
+    using namespace std::string_literals;
+
+    if (calculation_type == PGM_power_flow) {
+        return {"sym_voltage_sensor"s,
+                "sym_current_sensor"s,
+                "sym_power_sensor"s,
+                "asym_voltage_sensor"s,
+                "asym_current_sensor"s,
+                "asym_power_sensor"s,
+                "fault"s};
+    }
+    if (calculation_type == PGM_state_estimation) {
+        return {"fault"s, "transformer_tap_regulator"s, "voltage_regulator"s};
+    }
+    if (calculation_type == PGM_short_circuit) {
+        return {"sym_voltage_sensor"s,  "sym_current_sensor"s, "sym_power_sensor"s,          "asym_voltage_sensor"s,
+                "asym_current_sensor"s, "asym_power_sensor"s,  "transformer_tap_regulator"s, "voltage_regulator"s};
+    }
+    return {};
+}
 struct OwningDataset {
     DatasetMutable dataset;
     OwningMemory storage{};
 
     OwningDataset(DatasetWritable& writable_dataset, bool enable_columnar_buffers = false)
         : dataset{writable_dataset.get_info().name(), writable_dataset.get_info().is_batch(),
-                  writable_dataset.get_info().batch_size()},
-          storage{} {
+                  writable_dataset.get_info().batch_size()} {
         auto const& info = writable_dataset.get_info();
         Idx const batch_size = info.batch_size();
         auto const& dataset_name = info.name();
@@ -309,18 +342,28 @@ struct OwningDataset {
     }
 
     OwningDataset(
-        OwningDataset const& ref_dataset, std::string const& dataset_name, bool is_batch = false, Idx batch_size = 1,
+        OwningDataset const& ref_dataset, PGM_CalculationType calculation_type, bool sym, bool is_batch = false,
+        Idx batch_size = 1,
         std::map<MetaComponent const*, std::set<MetaAttribute const*>> const& output_component_attribute_filters = {})
-        : dataset{dataset_name, is_batch, batch_size}, storage{} {
+        : dataset{get_output_type(calculation_type, sym), is_batch, batch_size} {
         DatasetInfo const& ref_info = ref_dataset.dataset.get_info();
         bool const enable_filters = !output_component_attribute_filters.empty();
+        auto const irrelevant_components = get_irrelevant_components(calculation_type);
+
+        auto const contains_irrelevant_component = [&irrelevant_components](std::string const& component) {
+            return irrelevant_components.find(component) != irrelevant_components.end();
+        };
 
         for (Idx component_idx{}; component_idx != ref_info.n_components(); ++component_idx) {
             auto const& component_name = ref_info.component_name(component_idx);
-            auto const& component_meta = MetaData::get_component_by_name(dataset_name, component_name);
+            auto const& component_meta = MetaData::get_component_by_name(dataset.get_info().name(), component_name);
             // skip components not in the filter
             if (enable_filters &&
                 output_component_attribute_filters.find(component_meta) == output_component_attribute_filters.end()) {
+                continue;
+            }
+            // skip irrelevant components for the calculation type
+            if (contains_irrelevant_component(component_name)) {
                 continue;
             }
 
