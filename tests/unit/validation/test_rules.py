@@ -8,8 +8,8 @@ import numpy as np
 import pytest
 
 from power_grid_model import (
-    AttributeType,
-    ComponentType,
+    AttributeType as AT,
+    ComponentType as CT,
     DatasetType,
     LoadGenType,
     initialize_array,
@@ -167,18 +167,18 @@ def test_all_between_or_at():
     assert len(errors) == 1
     assert NotBetweenOrAtError("test", "value", [1, 4, 5, 6], (0.2, -0.2)) in errors
 
-    nan_value = power_grid_meta_data[DatasetType.input][ComponentType.transformer].nans["tap_pos"]
-    transformer_array = initialize_array(DatasetType.input, ComponentType.transformer, 3)
-    transformer_array["id"] = [1, 2, 3]
-    transformer_array["tap_pos"] = [nan_value, 1, nan_value]
-    transformer_array["tap_nom"] = [2, 1, nan_value]
-    valid = {ComponentType.transformer: transformer_array}
-    errors = all_between_or_at(valid, ComponentType.transformer, "tap_pos", 0, 2, transformer_array["tap_nom"], 0)
+    nan_value = power_grid_meta_data[DatasetType.input][CT.transformer].nans[AT.tap_pos]
+    transformer_array = initialize_array(DatasetType.input, CT.transformer, 3)
+    transformer_array[AT.id] = [1, 2, 3]
+    transformer_array[AT.tap_pos] = [nan_value, 1, nan_value]
+    transformer_array[AT.tap_nom] = [2, 1, nan_value]
+    valid = {CT.transformer: transformer_array}
+    errors = all_between_or_at(valid, CT.transformer, AT.tap_pos, 0, 2, transformer_array[AT.tap_nom], 0)
     assert not errors
 
-    errors = all_between_or_at(valid, ComponentType.transformer, "tap_pos", 1, 2, transformer_array["tap_nom"], 0)
+    errors = all_between_or_at(valid, CT.transformer, AT.tap_pos, 1, 2, transformer_array[AT.tap_nom], 0)
     assert len(errors) == 1
-    assert NotBetweenOrAtError(ComponentType.transformer, "tap_pos", [3], (1, 2)) in errors
+    assert NotBetweenOrAtError(CT.transformer, AT.tap_pos, [3], (1, 2)) in errors
 
 
 def test_all_greater_than():
@@ -254,18 +254,25 @@ def test_none_match_comparison():
     assert len(errors) == 1
     assert ComparisonError("test", "value", [2], 0.2) in errors
 
-    nan_value = power_grid_meta_data[DatasetType.input][ComponentType.transformer].nans["tap_pos"]
-    transformer_array = initialize_array(DatasetType.input, ComponentType.transformer, 3)
-    transformer_array["id"] = [1, 2, 3]
-    transformer_array["tap_pos"] = [nan_value, 0, nan_value]
-    transformer_array["tap_nom"] = [1, 1, nan_value]
-    valid = {ComponentType.transformer: transformer_array}
+    nan_value = power_grid_meta_data[DatasetType.input][CT.transformer].nans[AT.tap_pos]
+    transformer_array = initialize_array(DatasetType.input, CT.transformer, 3)
+    transformer_array[AT.id] = [1, 2, 3]
+    transformer_array[AT.tap_pos] = [nan_value, 0, nan_value]
+    transformer_array[AT.tap_nom] = [1, 1, nan_value]
+    valid = {CT.transformer: transformer_array}
 
     errors = none_match_comparison(
-        valid, ComponentType.transformer, "tap_pos", np.equal, 0, ComparisonError, transformer_array["tap_nom"], 0
+        valid,
+        CT.transformer,
+        AT.tap_pos,
+        np.equal,
+        0,
+        ComparisonError,
+        transformer_array[AT.tap_nom],
+        0,
     )
     assert len(errors) == 1
-    assert ComparisonError(ComponentType.transformer, "tap_pos", [2, 3], 0) in errors
+    assert ComparisonError(CT.transformer, AT.tap_pos, [2, 3], 0) in errors
 
 
 def test_all_identical():
@@ -323,79 +330,69 @@ def test_all_unique():
 @pytest.mark.parametrize("cross_only", [pytest.param(True, id="cross_only"), pytest.param(False, id="not_cross_only")])
 def test_all_cross_unique(cross_only):
     valid = {
-        ComponentType.node: np.array([(1, 0.1), (2, 0.2), (3, 0.3)], dtype=[("id", "i4"), ("foo", "f8")]),
-        ComponentType.line: np.array([(4, 0.4), (5, 0.5), (6, 0.6), (7, 0.7)], dtype=[("id", "i4"), ("bar", "f8")]),
+        CT.node: np.array([(1, 0.1), (2, 0.2), (3, 0.3)], dtype=[("id", "i4"), ("foo", "f8")]),
+        CT.line: np.array([(4, 0.4), (5, 0.5), (6, 0.6), (7, 0.7)], dtype=[("id", "i4"), ("bar", "f8")]),
     }
-    errors = all_cross_unique(valid, [(ComponentType.node, "foo"), (ComponentType.line, "bar")], cross_only=cross_only)
+    errors = all_cross_unique(valid, [(CT.node, "foo"), (CT.line, "bar")], cross_only=cross_only)
     assert not errors
 
     invalid = {
-        ComponentType.node: np.array([(1, 0.1), (2, 0.2), (3, 0.2)], dtype=[("id", "i4"), ("foo", "f8")]),
-        ComponentType.line: np.array([(4, 0.2), (5, 0.1), (6, 0.3), (7, 0.3)], dtype=[("id", "i4"), ("bar", "f8")]),
+        CT.node: np.array([(1, 0.1), (2, 0.2), (3, 0.2)], dtype=[("id", "i4"), ("foo", "f8")]),
+        CT.line: np.array([(4, 0.2), (5, 0.1), (6, 0.3), (7, 0.3)], dtype=[("id", "i4"), ("bar", "f8")]),
     }
-    errors = all_cross_unique(
-        invalid, [(ComponentType.node, "foo"), (ComponentType.line, "bar")], cross_only=cross_only
-    )
+    errors = all_cross_unique(invalid, [(CT.node, "foo"), (CT.line, "bar")], cross_only=cross_only)
     assert len(errors) == 1
     error = errors.pop()
     assert isinstance(error, MultiComponentNotUniqueError)
-    assert (ComponentType.node, "foo") in error.field
-    assert (ComponentType.line, "bar") in error.field
-    assert (ComponentType.node, 1) in error.ids
-    assert (ComponentType.node, 2) in error.ids
-    assert (ComponentType.node, 3) in error.ids
-    assert (ComponentType.line, 4) in error.ids
-    assert (ComponentType.line, 5) in error.ids
+    assert (CT.node, "foo") in error.field
+    assert (CT.line, "bar") in error.field
+    assert (CT.node, 1) in error.ids
+    assert (CT.node, 2) in error.ids
+    assert (CT.node, 3) in error.ids
+    assert (CT.line, 4) in error.ids
+    assert (CT.line, 5) in error.ids
     assert "node.foo" in error.field_str
     assert "line.bar" in error.field_str
-    assert ComponentType.node in error.component_str
-    assert ComponentType.line in error.component_str
+    assert CT.node in error.component_str
+    assert CT.line in error.component_str
 
     if cross_only:
-        assert (ComponentType.line, 6) not in error.ids
-        assert (ComponentType.line, 7) not in error.ids
+        assert (CT.line, 6) not in error.ids
+        assert (CT.line, 7) not in error.ids
     else:
-        assert (ComponentType.line, 6) in error.ids
-        assert (ComponentType.line, 7) in error.ids
+        assert (CT.line, 6) in error.ids
+        assert (CT.line, 7) in error.ids
 
 
 def test_all_valid_enum_values():
-    valid_load = initialize_array(DatasetType.input, ComponentType.sym_load, 2)
-    valid_load["id"] = [1, 2]
-    valid_load["type"] = LoadGenType.const_power
-    valid = {ComponentType.sym_load: valid_load}
-    errors = all_valid_enum_values(valid, ComponentType.sym_load, "type", LoadGenType)
+    valid_load = initialize_array(DatasetType.input, CT.sym_load, 2)
+    valid_load[AT.id] = [1, 2]
+    valid_load[AT.type] = LoadGenType.const_power
+    valid = {CT.sym_load: valid_load}
+    errors = all_valid_enum_values(valid, CT.sym_load, AT.type, LoadGenType)
     assert not errors
 
-    invalid_load = initialize_array(DatasetType.input, ComponentType.sym_load, 2)
-    invalid_load["id"] = [1, 2]
-    invalid_load["type"] = [LoadGenType.const_power, 5]
-    invalid = {ComponentType.sym_load: invalid_load}
-    errors = all_valid_enum_values(invalid, ComponentType.sym_load, "type", LoadGenType)
+    invalid_load = initialize_array(DatasetType.input, CT.sym_load, 2)
+    invalid_load[AT.id] = [1, 2]
+    invalid_load[AT.type] = [LoadGenType.const_power, 5]
+    invalid = {CT.sym_load: invalid_load}
+    errors = all_valid_enum_values(invalid, CT.sym_load, AT.type, LoadGenType)
     assert len(errors) == 1
-    assert InvalidEnumValueError(ComponentType.sym_load, "type", [2], LoadGenType) in errors
+    assert InvalidEnumValueError(CT.sym_load, AT.type, [2], LoadGenType) in errors
 
-    valid = {ComponentType.sym_load: initialize_array(DatasetType.input, ComponentType.sym_load, 20)}
-    valid[ComponentType.sym_load]["id"] = np.arange(20)
-    valid[ComponentType.sym_load]["type"] = 0
-    errors = all_valid_enum_values(valid, ComponentType.sym_load, "type", LoadGenType)
+    valid = {CT.sym_load: initialize_array(DatasetType.input, CT.sym_load, 20)}
+    valid[CT.sym_load][AT.id] = np.arange(20)
+    valid[CT.sym_load][AT.type] = 0
+    errors = all_valid_enum_values(valid, CT.sym_load, AT.type, LoadGenType)
     assert not errors
 
-    valid = {
-        ComponentType.transformer_tap_regulator: initialize_array(
-            DatasetType.input, ComponentType.transformer_tap_regulator, 5
-        )
-    }
-    valid[ComponentType.transformer_tap_regulator]["id"] = np.arange(5)
-    valid[ComponentType.transformer_tap_regulator]["control_side"] = np.arange(-1, 4)
-    errors = all_valid_enum_values(
-        valid, ComponentType.transformer_tap_regulator, "control_side", [BranchSide, Branch3Side]
-    )
+    valid = {CT.transformer_tap_regulator: initialize_array(DatasetType.input, CT.transformer_tap_regulator, 5)}
+    valid[CT.transformer_tap_regulator][AT.id] = np.arange(5)
+    valid[CT.transformer_tap_regulator][AT.control_side] = np.arange(-1, 4)
+    errors = all_valid_enum_values(valid, CT.transformer_tap_regulator, AT.control_side, [BranchSide, Branch3Side])
     assert len(errors) == 1
     assert (
-        InvalidEnumValueError(
-            ComponentType.transformer_tap_regulator, "control_side", [0, 4], [BranchSide, Branch3Side]
-        )
+        InvalidEnumValueError(CT.transformer_tap_regulator, AT.control_side, [0, 4], [BranchSide, Branch3Side])
         in errors
     )
 
@@ -403,37 +400,37 @@ def test_all_valid_enum_values():
 def test_all_valid_ids():
     # This data is for testing purpuse
     # The values in the data do not make sense for a real grid
-    node = initialize_array(DatasetType.input, ComponentType.node, 3)
-    node["id"] = [1, 2, 3]
-    source = initialize_array(DatasetType.input, ComponentType.source, 3)
-    source["id"] = [4, 5, 6]
-    line = initialize_array(DatasetType.input, ComponentType.line, 3)
-    line["id"] = [7, 8, 9]
-    line["from_node"] = [1, 2, 6]
-    line["to_node"] = [0, 0, 1]
+    node = initialize_array(DatasetType.input, CT.node, 3)
+    node[AT.id] = [1, 2, 3]
+    source = initialize_array(DatasetType.input, CT.source, 3)
+    source[AT.id] = [4, 5, 6]
+    line = initialize_array(DatasetType.input, CT.line, 3)
+    line[AT.id] = [7, 8, 9]
+    line[AT.from_node] = [1, 2, 6]
+    line[AT.to_node] = [0, 0, 1]
 
     input_data = {
-        ComponentType.node: node,
-        ComponentType.source: source,
-        ComponentType.line: line,
+        CT.node: node,
+        CT.source: source,
+        CT.line: line,
     }
 
-    errors = all_valid_ids(input_data, ComponentType.line, "from_node", [ComponentType.node, ComponentType.source])
+    errors = all_valid_ids(input_data, CT.line, AT.from_node, [CT.node, CT.source])
     assert not errors
 
-    errors = all_valid_ids(input_data, ComponentType.line, "from_node", ComponentType.node, to_node=0)
+    errors = all_valid_ids(input_data, CT.line, AT.from_node, CT.node, to_node=0)
     assert not errors
 
-    errors = all_valid_ids(input_data, ComponentType.line, "from_node", ComponentType.source, to_node=1)
+    errors = all_valid_ids(input_data, CT.line, AT.from_node, CT.source, to_node=1)
     assert not errors
 
-    errors = all_valid_ids(input_data, ComponentType.line, "from_node", ComponentType.node)
+    errors = all_valid_ids(input_data, CT.line, AT.from_node, CT.node)
     assert len(errors) == 1
-    assert InvalidIdError(ComponentType.line, "from_node", [9], [ComponentType.node]) in errors
+    assert InvalidIdError(CT.line, AT.from_node, [9], [CT.node]) in errors
 
-    errors = all_valid_ids(input_data, ComponentType.line, "from_node", ComponentType.source)
+    errors = all_valid_ids(input_data, CT.line, AT.from_node, CT.source)
     assert len(errors) == 1
-    assert InvalidIdError(ComponentType.line, "from_node", [7, 8], [ComponentType.source]) in errors
+    assert InvalidIdError(CT.line, AT.from_node, [7, 8], [CT.source]) in errors
 
 
 def test_all_boolean():
@@ -507,7 +504,7 @@ def test_none_missing():
     dfoo = [("id", "i4"), ("foo", "f8"), ("bar", "(3,)f8"), ("baz", "i4"), ("bla", "i1"), ("ok", "i1")]
     dbar = [("id", "i4"), ("foobar", "f8")]
 
-    def _mock_nan_type(component: ComponentType, field: str):
+    def _mock_nan_type(component: CT, field: str):
         return {
             "foo_test": {
                 "id": np.iinfo("i4").min,
@@ -599,7 +596,7 @@ def test_none_missing():
 def test_no_strict_subset_missing():
     dfoo = [("id", "i4"), ("foo", "f8"), ("bar", "(3,)f8"), ("baz", "i4")]
 
-    def _mock_nan_type(component: ComponentType, field: str):
+    def _mock_nan_type(component: CT, field: str):
         return {
             "foo_test": {"id": np.iinfo("i4").min, "foo": np.nan, "bar": np.nan, "baz": np.iinfo("i4").min},
             "bar_test": {"id": np.iinfo("i4").min, "foobar": np.nan},
@@ -645,7 +642,7 @@ def test_no_strict_subset_missing():
 def test_not_all_missing():
     dfoo = [("id", "i4"), ("foo", "f8"), ("bar", "(3,)f8"), ("baz", "i4")]
 
-    def _mock_nan_type(component: ComponentType, field: str):
+    def _mock_nan_type(component: CT, field: str):
         return {
             "foo_test": {"id": np.iinfo("i4").min, "foo": np.nan, "bar": np.nan, "baz": np.iinfo("i4").min},
             "bar_test": {"id": np.iinfo("i4").min, "foobar": np.nan},
@@ -748,7 +745,7 @@ def test_all_same_sensor_type_on_same_terminal():
 def test_all_valid_fault_phases():
     dtype = [("id", "i4"), ("foo", "i4"), ("bar", "i4"), ("baz", "i4")]
     valid = {
-        ComponentType.fault: np.array(
+        CT.fault: np.array(
             [
                 (0, FaultType.three_phase, FaultPhase.abc, 100),
                 (1, FaultType.three_phase, FaultPhase.default_value, 101),
@@ -773,11 +770,11 @@ def test_all_valid_fault_phases():
         ),
         "bla": np.array([(18, FaultType.three_phase, FaultPhase.a, 118)], dtype=dtype),
     }
-    errors = all_valid_fault_phases(valid, ComponentType.fault, "foo", "bar")
+    errors = all_valid_fault_phases(valid, CT.fault, "foo", "bar")
     assert not errors
 
     invalid = {
-        ComponentType.fault: np.array(
+        CT.fault: np.array(
             [
                 (0, FaultType.three_phase, FaultPhase.a, 100),
                 (1, FaultType.three_phase, FaultPhase.b, 101),
@@ -810,27 +807,27 @@ def test_all_valid_fault_phases():
         ),
         "bar": np.array([(26, FaultType.three_phase, FaultPhase.abc, 26)], dtype=dtype),
     }
-    errors = all_valid_fault_phases(invalid, ComponentType.fault, "foo", "bar")
+    errors = all_valid_fault_phases(invalid, CT.fault, "foo", "bar")
     assert len(errors) == 1
-    assert FaultPhaseError(ComponentType.fault, fields=["foo", "bar"], ids=list(range(26))) in errors
+    assert FaultPhaseError(CT.fault, fields=["foo", "bar"], ids=list(range(26))) in errors
 
 
 def test_all_valid_fault_phases__empty_input():
-    valid = {ComponentType.fault: initialize_array(DatasetType.input, ComponentType.fault, 0)}
-    errors = all_valid_fault_phases(valid, ComponentType.fault, "foo", "bar")
+    valid = {CT.fault: initialize_array(DatasetType.input, CT.fault, 0)}
+    errors = all_valid_fault_phases(valid, CT.fault, "foo", "bar")
     assert not errors
 
 
 @pytest.mark.parametrize(
     ("current_sensor_type", "measured_terminal_type_1", "measured_terminal_type_2", "angle_measurement_type"),
     [
-        (ComponentType.sym_current_sensor, terminal_1, terminal_2, angle)
+        (CT.sym_current_sensor, terminal_1, terminal_2, angle)
         for terminal_1 in [MeasuredTerminalType.branch_from, MeasuredTerminalType.branch_to]
         for terminal_2 in [MeasuredTerminalType.branch_from, MeasuredTerminalType.branch_to]
         for angle in AngleMeasurementType
     ]
     + [
-        (ComponentType.asym_current_sensor, terminal_1, terminal_2, angle)
+        (CT.asym_current_sensor, terminal_1, terminal_2, angle)
         for terminal_1 in [
             MeasuredTerminalType.branch3_1,
             MeasuredTerminalType.branch3_2,
@@ -845,25 +842,25 @@ def test_all_valid_fault_phases__empty_input():
     ],
 )
 def test_all_same_current_angle_measurement_type_on_terminal(
-    current_sensor_type: ComponentType,
+    current_sensor_type: CT,
     measured_terminal_type_1: MeasuredTerminalType,
     measured_terminal_type_2: MeasuredTerminalType,
     angle_measurement_type: AngleMeasurementType,
 ):
     current_sensor = initialize_array(DatasetType.input, current_sensor_type, 2)
-    current_sensor["id"] = [1, 2]
-    current_sensor["measured_object"] = [3, 3]
-    current_sensor["measured_terminal_type"] = [measured_terminal_type_1, measured_terminal_type_2]
-    current_sensor["angle_measurement_type"] = [AngleMeasurementType.local_angle, angle_measurement_type]
+    current_sensor[AT.id] = [1, 2]
+    current_sensor[AT.measured_object] = [3, 3]
+    current_sensor[AT.measured_terminal_type] = [measured_terminal_type_1, measured_terminal_type_2]
+    current_sensor[AT.angle_measurement_type] = [AngleMeasurementType.local_angle, angle_measurement_type]
 
     data = {current_sensor_type.value: current_sensor}
 
     errors = all_same_current_angle_measurement_type_on_terminal(
         data=data,
         component=current_sensor_type,
-        measured_object_field=AttributeType.measured_object,
-        measured_terminal_type_field=AttributeType.measured_terminal_type,
-        angle_measurement_type_field=AttributeType.angle_measurement_type,
+        measured_object_field=AT.measured_object,
+        measured_terminal_type_field=AT.measured_terminal_type,
+        angle_measurement_type_field=AT.angle_measurement_type,
     )
 
     if (
@@ -877,9 +874,9 @@ def test_all_same_current_angle_measurement_type_on_terminal(
             MixedCurrentAngleMeasurementTypeError(
                 component=current_sensor_type,
                 fields=[
-                    AttributeType.measured_object,
-                    AttributeType.measured_terminal_type,
-                    AttributeType.angle_measurement_type,
+                    AT.measured_object,
+                    AT.measured_terminal_type,
+                    AT.angle_measurement_type,
                 ],
                 ids=[1, 2],
             )

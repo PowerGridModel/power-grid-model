@@ -6,18 +6,35 @@ import json
 
 import numpy as np
 
-from power_grid_model import PowerGridModel
+from power_grid_model import AttributeType as AT, ComponentType as CT, DatasetType, PowerGridModel
 from power_grid_model.utils import json_deserialize
 
 input_data = {
     "version": "1.0",
-    "type": "input",
+    "type": DatasetType.input,
     "is_batch": False,
     "attributes": {},
     "data": {
-        "sym_load": [{"id": 2, "node": 0, "status": 1, "type": 0, "p_specified": 0, "q_specified": 0}],
-        "source": [{"id": 1, "node": 0, "status": 1, "u_ref": 1, "sk": 1e20}],
-        "node": [{"id": 0, "u_rated": 10e3}],
+        CT.sym_load: [
+            {
+                AT.id: 2,
+                AT.node: 0,
+                AT.status: 1,
+                AT.type: 0,
+                AT.p_specified: 0,
+                AT.q_specified: 0,
+            }
+        ],
+        CT.source: [
+            {
+                AT.id: 1,
+                AT.node: 0,
+                AT.status: 1,
+                AT.u_ref: 1,
+                AT.sk: 1e20,
+            }
+        ],
+        CT.node: [{AT.id: 0, AT.u_rated: 10e3}],
     },
 }
 
@@ -37,12 +54,13 @@ def test_multi_dimensional_batch():
     )
     i_source_ref = i_source_ref.ravel()
 
-    u_ref_batch = {"source": {"u_ref": u_ref}}
-    p_specified_batch = {"sym_load": {"p_specified": p_specified}}
-    q_specified_batch = {"sym_load": {"q_specified": q_specified}}
+    u_ref_batch = {CT.source: {AT.u_ref: u_ref}}
+    p_specified_batch = {CT.sym_load: {AT.p_specified: p_specified}}
+    q_specified_batch = {CT.sym_load: {AT.q_specified: q_specified}}
 
     result = pgm.calculate_power_flow(
-        update_data=[u_ref_batch, p_specified_batch, q_specified_batch], output_component_types={"source": ["i"]}
+        update_data=[u_ref_batch, p_specified_batch, q_specified_batch],
+        output_component_types={CT.source: [AT.i]},
     )
 
-    assert np.allclose(result["source"]["i"].ravel(), i_source_ref)
+    assert np.allclose(result[CT.source][AT.i].ravel(), i_source_ref)

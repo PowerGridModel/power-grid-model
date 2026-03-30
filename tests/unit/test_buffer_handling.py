@@ -14,7 +14,7 @@ from power_grid_model._core.buffer_handling import (
     get_buffer_properties,
     get_buffer_view,
 )
-from power_grid_model._core.dataset_definitions import ComponentType, DatasetType
+from power_grid_model._core.dataset_definitions import AttributeType as AT, ComponentType as CT, DatasetType
 from power_grid_model._core.power_grid_meta import initialize_array, power_grid_meta_data
 
 SINGLE_DATASET_NDIM = 1
@@ -27,7 +27,7 @@ def load_data(component_type, is_batch, is_sparse, is_columnar):
     """Creates load data of different formats for testing"""
     shape = (BATCH_DATASET_NDIM, SCENARIO_TOTAL_ELEMENTS) if is_batch else (SCENARIO_TOTAL_ELEMENTS,)
     load = initialize_array(DatasetType.update, component_type, shape)
-    columnar_names = ["p_specified", "q_specified"]
+    columnar_names = [AT.p_specified, AT.q_specified]
 
     if is_columnar:
         if is_sparse:
@@ -44,14 +44,14 @@ def load_data(component_type, is_batch, is_sparse, is_columnar):
 @pytest.mark.parametrize(
     ("component_type", "is_batch", "is_columnar"),
     [
-        pytest.param(ComponentType.sym_load, True, True, id="sym_load-batch-columnar"),
-        pytest.param(ComponentType.sym_load, True, False, id="sym_load-batch-row_based"),
-        pytest.param(ComponentType.sym_load, False, True, id="sym_load-single-columnar"),
-        pytest.param(ComponentType.sym_load, False, False, id="sym_load-single-row_based"),
-        pytest.param(ComponentType.asym_load, True, True, id="asym_load-batch-columnar"),
-        pytest.param(ComponentType.asym_load, True, False, id="asym_load-batch-row_based"),
-        pytest.param(ComponentType.asym_load, False, True, id="asym_load-single-columnar"),
-        pytest.param(ComponentType.asym_load, False, False, id="asym_load-single-row_based"),
+        pytest.param(CT.sym_load, True, True, id="sym_load-batch-columnar"),
+        pytest.param(CT.sym_load, True, False, id="sym_load-batch-row_based"),
+        pytest.param(CT.sym_load, False, True, id="sym_load-single-columnar"),
+        pytest.param(CT.sym_load, False, False, id="sym_load-single-row_based"),
+        pytest.param(CT.asym_load, True, True, id="asym_load-batch-columnar"),
+        pytest.param(CT.asym_load, True, False, id="asym_load-batch-row_based"),
+        pytest.param(CT.asym_load, False, True, id="asym_load-single-columnar"),
+        pytest.param(CT.asym_load, False, False, id="asym_load-single-row_based"),
     ],
 )
 def test__get_dense_buffer_properties(component_type, is_batch, is_columnar):
@@ -74,10 +74,10 @@ def test__get_dense_buffer_properties(component_type, is_batch, is_columnar):
 @pytest.mark.parametrize(
     ("component_type", "is_columnar"),
     [
-        pytest.param(ComponentType.sym_load, True, id="sym_load-columnar"),
-        pytest.param(ComponentType.sym_load, False, id="sym_load-row_based"),
-        pytest.param(ComponentType.asym_load, True, id="asym_load-columnar"),
-        pytest.param(ComponentType.asym_load, False, id="asym_load-row_based"),
+        pytest.param(CT.sym_load, True, id="sym_load-columnar"),
+        pytest.param(CT.sym_load, False, id="sym_load-row_based"),
+        pytest.param(CT.asym_load, True, id="asym_load-columnar"),
+        pytest.param(CT.asym_load, False, id="asym_load-row_based"),
     ],
 )
 def test__get_sparse_buffer_properties(component_type, is_columnar):
@@ -100,10 +100,10 @@ def test__get_sparse_buffer_properties(component_type, is_columnar):
 @pytest.mark.parametrize(
     ("component_type", "is_columnar"),
     [
-        pytest.param(ComponentType.sym_load, True, id="sym_load-single-columnar"),
-        pytest.param(ComponentType.sym_load, False, id="sym_load-single-row_based"),
-        pytest.param(ComponentType.asym_load, True, id="asym_load-single-columnar"),
-        pytest.param(ComponentType.asym_load, False, id="asym_load-single-row_based"),
+        pytest.param(CT.sym_load, True, id="sym_load-single-columnar"),
+        pytest.param(CT.sym_load, False, id="sym_load-single-row_based"),
+        pytest.param(CT.asym_load, True, id="asym_load-single-columnar"),
+        pytest.param(CT.asym_load, False, id="asym_load-single-row_based"),
     ],
 )
 def test__get_buffer_properties__batch_requested_for_single_data(component_type, is_columnar):
@@ -119,14 +119,14 @@ def test__get_buffer_properties__batch_requested_for_single_data(component_type,
 @pytest.mark.parametrize(
     ("component_type", "is_sparse", "is_columnar"),
     [
-        pytest.param(ComponentType.sym_load, False, True, id="sym_load-batch-columnar"),
-        pytest.param(ComponentType.sym_load, False, False, id="sym_load-batch-row_based"),
-        pytest.param(ComponentType.asym_load, False, True, id="asym_load-batch-columnar"),
-        pytest.param(ComponentType.asym_load, False, False, id="asym_load-batch-row_based"),
-        pytest.param(ComponentType.sym_load, True, True, id="sym_load-columnar"),
-        pytest.param(ComponentType.sym_load, True, False, id="sym_load-row_based"),
-        pytest.param(ComponentType.asym_load, True, True, id="asym_load-columnar"),
-        pytest.param(ComponentType.asym_load, True, False, id="asym_load-row_based"),
+        pytest.param(CT.sym_load, False, True, id="sym_load-batch-columnar"),
+        pytest.param(CT.sym_load, False, False, id="sym_load-batch-row_based"),
+        pytest.param(CT.asym_load, False, True, id="asym_load-batch-columnar"),
+        pytest.param(CT.asym_load, False, False, id="asym_load-batch-row_based"),
+        pytest.param(CT.sym_load, True, True, id="sym_load-columnar"),
+        pytest.param(CT.sym_load, True, False, id="sym_load-row_based"),
+        pytest.param(CT.asym_load, True, True, id="asym_load-columnar"),
+        pytest.param(CT.asym_load, True, False, id="asym_load-row_based"),
     ],
 )
 def test__get_buffer_properties__single_requested_for_batch(component_type, is_sparse, is_columnar):
@@ -146,14 +146,14 @@ def test__get_buffer_properties__single_requested_for_batch(component_type, is_s
 @pytest.mark.parametrize(
     ("component_type", "is_sparse", "is_columnar"),
     [
-        pytest.param(ComponentType.sym_load, False, True, id="sym_load-batch-columnar"),
-        pytest.param(ComponentType.sym_load, False, False, id="sym_load-batch-row_based"),
-        pytest.param(ComponentType.asym_load, False, True, id="asym_load-batch-columnar"),
-        pytest.param(ComponentType.asym_load, False, False, id="asym_load-batch-row_based"),
-        pytest.param(ComponentType.sym_load, True, True, id="sym_load-columnar"),
-        pytest.param(ComponentType.sym_load, True, False, id="sym_load-row_based"),
-        pytest.param(ComponentType.asym_load, True, True, id="asym_load-columnar"),
-        pytest.param(ComponentType.asym_load, True, False, id="asym_load-row_based"),
+        pytest.param(CT.sym_load, False, True, id="sym_load-batch-columnar"),
+        pytest.param(CT.sym_load, False, False, id="sym_load-batch-row_based"),
+        pytest.param(CT.asym_load, False, True, id="asym_load-batch-columnar"),
+        pytest.param(CT.asym_load, False, False, id="asym_load-batch-row_based"),
+        pytest.param(CT.sym_load, True, True, id="sym_load-columnar"),
+        pytest.param(CT.sym_load, True, False, id="sym_load-row_based"),
+        pytest.param(CT.asym_load, True, True, id="asym_load-columnar"),
+        pytest.param(CT.asym_load, True, False, id="asym_load-row_based"),
     ],
 )
 def test__get_buffer_properties__wrong_batch_size(component_type, is_sparse, is_columnar):
@@ -176,8 +176,8 @@ def test__get_buffer_properties__wrong_batch_size(component_type, is_sparse, is_
 @pytest.mark.parametrize(
     ("component", "is_batch", "is_columnar", "is_sparse"),
     [
-        pytest.param(ComponentType.sym_load, True, True, False, id="sym_load-columnar"),
-        pytest.param(ComponentType.asym_load, True, True, False, id="asym_load-columnar"),
+        pytest.param(CT.sym_load, True, True, False, id="sym_load-columnar"),
+        pytest.param(CT.asym_load, True, True, False, id="asym_load-columnar"),
     ],
 )
 def test__get_raw_attribute_data_view(component, is_batch, is_columnar, is_sparse):
@@ -190,8 +190,8 @@ def test__get_raw_attribute_data_view(component, is_batch, is_columnar, is_spars
         is_sparse=is_sparse,
     )
     asym_dense_batch_last_dim = 3
-    if component == ComponentType.asym_load:
-        assert data["p_specified"].shape[-1] == asym_dense_batch_last_dim
+    if component == CT.asym_load:
+        assert data[AT.p_specified].shape[-1] == asym_dense_batch_last_dim
 
     buffer_view = get_buffer_view(
         data,
@@ -207,7 +207,7 @@ def test__get_raw_attribute_data_view(component, is_batch, is_columnar, is_spars
 @pytest.mark.parametrize(
     ("component", "attribute"),
     [
-        pytest.param(ComponentType.asym_load, "p_specified", id="asym_load-shape_missmatch"),
+        pytest.param(CT.asym_load, AT.p_specified, id="asym_load-shape_missmatch"),
     ],
 )
 def test__get_raw_attribute_data_view_fail(component, attribute):
@@ -240,12 +240,12 @@ def test__get_raw_attribute_data_view_fail(component, attribute):
 @pytest.mark.parametrize(
     ("component", "is_batch", "is_columnar", "is_sparse"),
     [
-        pytest.param(ComponentType.sym_load, True, True, False, id="sym_load"),
-        pytest.param(ComponentType.asym_load, True, True, False, id="asym_load-columnar"),
+        pytest.param(CT.sym_load, True, True, False, id="sym_load"),
+        pytest.param(CT.asym_load, True, True, False, id="asym_load-columnar"),
     ],
 )
 def test__get_raw_attribute_data_view_direct(component, is_batch, is_columnar, is_sparse):
-    attribute = "p_specified"
+    attribute = AT.p_specified
     schema = power_grid_meta_data[DatasetType.update][component]
 
     data = load_data(
@@ -257,36 +257,36 @@ def test__get_raw_attribute_data_view_direct(component, is_batch, is_columnar, i
 
     attribute_data = data[attribute]
 
-    _get_raw_attribute_data_view(attribute_data, schema, "p_specified")
+    _get_raw_attribute_data_view(attribute_data, schema, AT.p_specified)
 
 
 @pytest.mark.parametrize(
     ("component", "attr_data_shape", "attribute"),
     [
-        pytest.param(ComponentType.asym_load, (2, 4, 3), "p_specified", id="asym_load-columnar"),
-        pytest.param(ComponentType.asym_load, (1, 4, 3), "p_specified", id="asym_load-columnar"),
-        pytest.param(ComponentType.asym_load, (2, 5, 3), "p_specified", id="asym_load-columnar"),
-        pytest.param(ComponentType.asym_load, (2, 6, 3), "p_specified", id="asym_load-columnar"),
-        pytest.param(ComponentType.asym_load, 3, "p_specified", id="asym_load-columnar"),
-        pytest.param(ComponentType.asym_load, (3, 3), "p_specified", id="asym_load-columnar"),
-        pytest.param(ComponentType.asym_load, (2, 4, 3), "q_specified", id="asym_load-columnar"),
-        pytest.param(ComponentType.asym_load, (1, 4, 3), "q_specified", id="asym_load-columnar"),
-        pytest.param(ComponentType.asym_load, (2, 5, 3), "q_specified", id="asym_load-columnar"),
-        pytest.param(ComponentType.asym_load, (2, 6, 3), "q_specified", id="asym_load-columnar"),
-        pytest.param(ComponentType.asym_load, 3, "q_specified", id="asym_load-columnar"),
-        pytest.param(ComponentType.asym_load, (3, 3), "q_specified", id="asym_load-columnar"),
+        pytest.param(CT.asym_load, (2, 4, 3), AT.p_specified, id="asym_load-columnar"),
+        pytest.param(CT.asym_load, (1, 4, 3), AT.p_specified, id="asym_load-columnar"),
+        pytest.param(CT.asym_load, (2, 5, 3), AT.p_specified, id="asym_load-columnar"),
+        pytest.param(CT.asym_load, (2, 6, 3), AT.p_specified, id="asym_load-columnar"),
+        pytest.param(CT.asym_load, 3, AT.p_specified, id="asym_load-columnar"),
+        pytest.param(CT.asym_load, (3, 3), AT.p_specified, id="asym_load-columnar"),
+        pytest.param(CT.asym_load, (2, 4, 3), AT.q_specified, id="asym_load-columnar"),
+        pytest.param(CT.asym_load, (1, 4, 3), AT.q_specified, id="asym_load-columnar"),
+        pytest.param(CT.asym_load, (2, 5, 3), AT.q_specified, id="asym_load-columnar"),
+        pytest.param(CT.asym_load, (2, 6, 3), AT.q_specified, id="asym_load-columnar"),
+        pytest.param(CT.asym_load, 3, AT.q_specified, id="asym_load-columnar"),
+        pytest.param(CT.asym_load, (3, 3), AT.q_specified, id="asym_load-columnar"),
         # sym component
-        pytest.param(ComponentType.sym_load, 3, "p_specified", id="sym_load-columnar"),
-        pytest.param(ComponentType.sym_load, (3, 3), "p_specified", id="sym_load-columnar"),
-        pytest.param(ComponentType.sym_load, (4, 3), "p_specified", id="sym_load-columnar"),
-        pytest.param(ComponentType.sym_load, (4, 0), "p_specified", id="sym_load-columnar"),
-        pytest.param(ComponentType.sym_load, 0, "p_specified", id="sym_load-columnar"),
-        pytest.param(ComponentType.sym_load, 3, "q_specified", id="sym_load-columnar"),
-        pytest.param(ComponentType.sym_load, (3, 3), "q_specified", id="sym_load-columnar"),
-        pytest.param(ComponentType.sym_load, (4, 3), "q_specified", id="sym_load-columnar"),
-        pytest.param(ComponentType.sym_load, (4, 0), "q_specified", id="sym_load-columnar"),
-        pytest.param(ComponentType.sym_load, (0, 4), "q_specified", id="sym_load-columnar"),
-        pytest.param(ComponentType.sym_load, 0, "q_specified", id="sym_load-columnar"),
+        pytest.param(CT.sym_load, 3, AT.p_specified, id="sym_load-columnar"),
+        pytest.param(CT.sym_load, (3, 3), AT.p_specified, id="sym_load-columnar"),
+        pytest.param(CT.sym_load, (4, 3), AT.p_specified, id="sym_load-columnar"),
+        pytest.param(CT.sym_load, (4, 0), AT.p_specified, id="sym_load-columnar"),
+        pytest.param(CT.sym_load, 0, AT.p_specified, id="sym_load-columnar"),
+        pytest.param(CT.sym_load, 3, AT.q_specified, id="sym_load-columnar"),
+        pytest.param(CT.sym_load, (3, 3), AT.q_specified, id="sym_load-columnar"),
+        pytest.param(CT.sym_load, (4, 3), AT.q_specified, id="sym_load-columnar"),
+        pytest.param(CT.sym_load, (4, 0), AT.q_specified, id="sym_load-columnar"),
+        pytest.param(CT.sym_load, (0, 4), AT.q_specified, id="sym_load-columnar"),
+        pytest.param(CT.sym_load, 0, AT.q_specified, id="sym_load-columnar"),
     ],
 )
 def test__get_raw_attribute_data_view_directly(component, attr_data_shape, attribute):
@@ -299,23 +299,23 @@ def test__get_raw_attribute_data_view_directly(component, attr_data_shape, attri
 @pytest.mark.parametrize(
     ("component", "attr_data_shape", "attribute"),
     [
-        pytest.param(ComponentType.asym_load, (2, 4, 4), "p_specified", id="asym_load-columnar"),
-        pytest.param(ComponentType.asym_load, (2, 6, 4), "p_specified", id="asym_load-columnar"),
-        pytest.param(ComponentType.asym_load, 0, "p_specified", id="asym_load-columnar"),
-        pytest.param(ComponentType.asym_load, (2, 0, 0), "p_specified", id="asym_load-columnar"),
-        pytest.param(ComponentType.asym_load, (2, 4, 0), "p_specified", id="asym_load-columnar"),
-        pytest.param(ComponentType.asym_load, (2, 4, 4), "q_specified", id="asym_load-columnar"),
-        pytest.param(ComponentType.asym_load, (2, 6, 4), "q_specified", id="asym_load-columnar"),
-        pytest.param(ComponentType.asym_load, 0, "q_specified", id="asym_load-columnar"),
-        pytest.param(ComponentType.asym_load, (2, 0, 0), "q_specified", id="asym_load-columnar"),
-        pytest.param(ComponentType.asym_load, (2, 4, 0), "q_specified", id="asym_load-columnar"),
+        pytest.param(CT.asym_load, (2, 4, 4), AT.p_specified, id="asym_load-columnar"),
+        pytest.param(CT.asym_load, (2, 6, 4), AT.p_specified, id="asym_load-columnar"),
+        pytest.param(CT.asym_load, 0, AT.p_specified, id="asym_load-columnar"),
+        pytest.param(CT.asym_load, (2, 0, 0), AT.p_specified, id="asym_load-columnar"),
+        pytest.param(CT.asym_load, (2, 4, 0), AT.p_specified, id="asym_load-columnar"),
+        pytest.param(CT.asym_load, (2, 4, 4), AT.q_specified, id="asym_load-columnar"),
+        pytest.param(CT.asym_load, (2, 6, 4), AT.q_specified, id="asym_load-columnar"),
+        pytest.param(CT.asym_load, 0, AT.q_specified, id="asym_load-columnar"),
+        pytest.param(CT.asym_load, (2, 0, 0), AT.q_specified, id="asym_load-columnar"),
+        pytest.param(CT.asym_load, (2, 4, 0), AT.q_specified, id="asym_load-columnar"),
         # sym component
-        pytest.param(ComponentType.sym_load, (2, 4, 4), "p_specified", id="sym_load-columnar"),
-        pytest.param(ComponentType.sym_load, (2, 4, 3), "p_specified", id="sym_load-columnar"),
-        pytest.param(ComponentType.sym_load, (0, 0, 1), "p_specified", id="sym_load-columnar"),
-        pytest.param(ComponentType.sym_load, (2, 4, 4), "q_specified", id="sym_load-columnar"),
-        pytest.param(ComponentType.sym_load, (2, 4, 3), "q_specified", id="sym_load-columnar"),
-        pytest.param(ComponentType.sym_load, (0, 0, 1), "q_specified", id="sym_load-columnar"),
+        pytest.param(CT.sym_load, (2, 4, 4), AT.p_specified, id="sym_load-columnar"),
+        pytest.param(CT.sym_load, (2, 4, 3), AT.p_specified, id="sym_load-columnar"),
+        pytest.param(CT.sym_load, (0, 0, 1), AT.p_specified, id="sym_load-columnar"),
+        pytest.param(CT.sym_load, (2, 4, 4), AT.q_specified, id="sym_load-columnar"),
+        pytest.param(CT.sym_load, (2, 4, 3), AT.q_specified, id="sym_load-columnar"),
+        pytest.param(CT.sym_load, (0, 0, 1), AT.q_specified, id="sym_load-columnar"),
     ],
 )
 def test__get_raw_attribute_data_view_directly_fail(component, attr_data_shape, attribute):

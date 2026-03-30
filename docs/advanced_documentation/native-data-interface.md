@@ -43,7 +43,7 @@ We specify the same attributes with the same data types and memory offset.
 import numpy as np
 node_dtype = np.dtype(
     {
-        'names': ['id', 'u_rated'],
+        'names': [AttributeType.id, AttributeType.u_rated],
         'formats': ['<i4', '<f8'],  # little endian in x86-64
         'offsets': [0, 8],
         'itemsize': 16,
@@ -57,8 +57,8 @@ The `numpy` array has exactly the same data layout as the `std::vector<NodeInput
 
 ```python
 node = np.empty(shape=2, dtype=node_dtype)
-node['id'] = [1, 2]
-node['u_rated'] = [150e3, 10e3]
+node[AttributeType.id] = [1, 2]
+node[AttributeType.u_rated] = [150e3, 10e3]
 ```
 
 ## Columnar data format
@@ -84,10 +84,10 @@ To recreate this in Python using NumPy arrays, we should create it with the corr
 [Structured Array](#structured-array) - for each attribute.
 
 ```python
-node_id = np.empty(shape=2, dtype=node_dtype["id"])
-node_id['id'] = [1, 2]
-node_u_rated = np.empty(shape=2, dtype=node_dtype["u_rated"])
-node_u_rated['u_rated'] = [150e3, 10e3]
+node_id = np.empty(shape=2, dtype=node_dtype[AttributeType.id])
+node_id[AttributeType.id] = [1, 2]
+node_u_rated = np.empty(shape=2, dtype=node_dtype[AttributeType.u_rated])
+node_u_rated[AttributeType.u_rated] = [150e3, 10e3]
 ```
 
 ## Creating Dataset
@@ -99,13 +99,13 @@ With other types of components, the dictionary is a valid input dataset for the 
 For a row based data format,
 
 ```python
-input_data = {'node': node}
+input_data = {ComponentType.node: node}
 ```
 
 or for columnar data format,
 
 ```python
-input_data_columnar = {'node': {"id": node_id, "u_rated": node_u_rated}}
+input_data_columnar = {ComponentType.node: {AttributeType.id: node_id, AttributeType.u_rated: node_u_rated}}
 ```
 
 There can also be a combination of both row based and columnar data format in a dataset.

@@ -6,7 +6,7 @@ from enum import IntEnum
 
 import pytest
 
-from power_grid_model import ComponentType
+from power_grid_model import ComponentType as CT
 from power_grid_model.validation.errors import (
     ComparisonError,
     InvalidAssociatedEnumValueError,
@@ -28,32 +28,32 @@ def test_validation_error():
 
 
 def test_single_field_validation_error():
-    error = SingleFieldValidationError(component=ComponentType.node, field="bravo", ids=[0, 1, 1, 2, 3, 5])
+    error = SingleFieldValidationError(component=CT.node, field="bravo", ids=[0, 1, 1, 2, 3, 5])
     assert error.component_str == "node"
     assert error.field_str == "'bravo'"
     assert str(error) == "Field 'bravo' is not valid for 6 nodes."
 
 
 def test_multi_field_validation_error():
-    error = MultiFieldValidationError(component=ComponentType.node, fields=["delta", "echo"], ids=[0, 1, 1, 2, 3, 5])
+    error = MultiFieldValidationError(component=CT.node, fields=["delta", "echo"], ids=[0, 1, 1, 2, 3, 5])
     assert error.component_str == "node"
     assert error.field_str == "'delta' and 'echo'"
     assert str(error) == "Combination of fields 'delta' and 'echo' is not valid for 6 nodes."
 
     with pytest.raises(ValueError, match="at least 2 fields"):
-        MultiFieldValidationError(component=ComponentType.node, fields=["delta"], ids=[])
+        MultiFieldValidationError(component=CT.node, fields=["delta"], ids=[])
 
 
 def test_multi_component_validation_error():
     error = MultiComponentValidationError(
-        fields=[(ComponentType.node, "golf"), (ComponentType.line, "india")],
+        fields=[(CT.node, "golf"), (CT.line, "india")],
         ids=[
-            (ComponentType.node, 0),
-            (ComponentType.node, 1),
-            (ComponentType.node, 1),
-            (ComponentType.line, 2),
-            (ComponentType.line, 3),
-            (ComponentType.line, 5),
+            (CT.node, 0),
+            (CT.node, 1),
+            (CT.node, 1),
+            (CT.line, 2),
+            (CT.line, 3),
+            (CT.line, 5),
         ],
     )
     assert error.component_str == "line/node"
@@ -61,18 +61,18 @@ def test_multi_component_validation_error():
     assert str(error) == "Fields line.india and node.golf are not valid for 6 lines/nodes."
 
     with pytest.raises(ValueError, match="at least 2 fields"):
-        MultiComponentValidationError(fields=[(ComponentType.node, "golf")], ids=[])
+        MultiComponentValidationError(fields=[(CT.node, "golf")], ids=[])
 
     with pytest.raises(ValueError, match="at least 2 components"):
-        MultiComponentValidationError(fields=[(ComponentType.node, "golf"), (ComponentType.node, "india")], ids=[])
+        MultiComponentValidationError(fields=[(CT.node, "golf"), (CT.node, "india")], ids=[])
 
 
 def test_invalid_enum_value_error():
     class CustomType(IntEnum):
         pass
 
-    error = InvalidEnumValueError(component=ComponentType.node, field="lima", ids=[1, 2, 3], enum=CustomType)
-    assert error.component == ComponentType.node
+    error = InvalidEnumValueError(component=CT.node, field="lima", ids=[1, 2, 3], enum=CustomType)
+    assert error.component == CT.node
     assert error.field == "lima"
     assert error.ids == [1, 2, 3]
     assert error.enum is CustomType
@@ -80,8 +80,8 @@ def test_invalid_enum_value_error():
 
 
 def test_invalid_id_error():
-    error = InvalidIdError(ComponentType.node, field="november", ids=[1, 2, 3], ref_components=["oscar", "papa"])
-    assert error.component == ComponentType.node
+    error = InvalidIdError(CT.node, field="november", ids=[1, 2, 3], ref_components=["oscar", "papa"])
+    assert error.component == CT.node
     assert error.field == "november"
     assert error.ids == [1, 2, 3]
     assert error.ref_components == ["oscar", "papa"]
@@ -90,13 +90,13 @@ def test_invalid_id_error():
 
 def test_invalid_id_error_with_filters():
     error = InvalidIdError(
-        ComponentType.node,
+        CT.node,
         field="november",
         ids=[1, 2, 3],
         ref_components=["oscar", "papa"],
-        filters={"foo": "bar", "baz": ComponentType.node},
+        filters={"foo": "bar", "baz": CT.node},
     )
-    assert error.component == ComponentType.node
+    assert error.component == CT.node
     assert error.field == "november"
     assert error.ids == [1, 2, 3]
     assert error.ref_components == ["oscar", "papa"]
@@ -105,8 +105,8 @@ def test_invalid_id_error_with_filters():
 
 
 def test_comparison_error():
-    error = ComparisonError(component=ComponentType.node, field="romeo", ids=[1, 2, 3], ref_value=0)
-    assert error.component == ComponentType.node
+    error = ComparisonError(component=CT.node, field="romeo", ids=[1, 2, 3], ref_value=0)
+    assert error.component == CT.node
     assert error.field == "romeo"
     assert error.ids == [1, 2, 3]
     assert error.ref_value == 0
@@ -120,11 +120,11 @@ def test_comparison_error():
 
 
 def test_error_context():
-    error = ComparisonError(component=ComponentType.node, field="tango", ids=[1, 2, 3], ref_value=0)
+    error = ComparisonError(component=CT.node, field="tango", ids=[1, 2, 3], ref_value=0)
     context = error.get_context()
     expected_context_keys = 4
     assert len(context) == expected_context_keys
-    assert context["component"] == ComponentType.node
+    assert context["component"] == CT.node
     assert context["field"] == "'tango'"
     assert context["ids"] == [1, 2, 3]
     assert context["ref_value"] == "zero"
@@ -138,7 +138,7 @@ def test_error_context():
 
 def test_error_context_tuple_ids():
     error = MultiComponentValidationError(
-        fields=[(ComponentType.node, "x"), ("b", "y")], ids=[(ComponentType.node, 1), ("b", 2), (ComponentType.node, 3)]
+        fields=[(CT.node, "x"), ("b", "y")], ids=[(CT.node, 1), ("b", 2), (CT.node, 3)]
     )
     context = error.get_context(id_lookup={1: "Victor", 3: "Whiskey"})
     assert context["ids"] == {("node", 1): "Victor", ("b", 2): None, ("node", 3): "Whiskey"}
@@ -148,10 +148,8 @@ def test_invalid_associated_enum_value_error():
     class CustomType(IntEnum):
         pass
 
-    error = InvalidAssociatedEnumValueError(
-        component=ComponentType.node, fields=["bar", "baz"], ids=[1, 2], enum=[CustomType]
-    )
-    assert error.component == ComponentType.node
+    error = InvalidAssociatedEnumValueError(component=CT.node, fields=["bar", "baz"], ids=[1, 2], enum=[CustomType])
+    assert error.component == CT.node
     assert error.field == ["bar", "baz"]
     assert error.ids == [1, 2]
     assert len(error.enum) == 1
