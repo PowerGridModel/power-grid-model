@@ -14,13 +14,6 @@
 #include <vector>
 
 namespace power_grid_model::link_solver {
-namespace {
-void check_value(IntS expected, uint64_t row_idx, uint64_t col_idx, detail::COOSparseMatrix const& matrix) {
-    IntS value{};
-    CHECK(matrix.get_value(value, row_idx, col_idx));
-    CHECK(value == expected);
-}
-} // namespace
 TEST_CASE("Test the link solver algorithm") {
     using namespace detail;
 
@@ -91,7 +84,7 @@ TEST_CASE("Test the link solver algorithm") {
             forward_elimination(result, edges, node_loads);
 
             REQUIRE(result.matrix.data_map.size() == 1);
-            check_value(1, 0, 0, result.matrix);
+            CHECK(1 == result.matrix.get_value(0, 0));
             CHECK(result.rhs == std::vector<DoubleComplex>{{1.0, 0.0}});
             CHECK(result.free_edge_indices.empty());
             REQUIRE(result.edges_history.size() == 1);
@@ -109,8 +102,8 @@ TEST_CASE("Test the link solver algorithm") {
             forward_elimination(result, edges, node_loads);
 
             REQUIRE(result.matrix.data_map.size() == 2);
-            check_value(1, 0, 0, result.matrix);
-            check_value(1, 1, 1, result.matrix);
+            CHECK(1 == result.matrix.get_value(0, 0));
+            CHECK(1 == result.matrix.get_value(1, 1));
             REQUIRE(result.rhs.size() == 2);
             CHECK(result.rhs == std::vector<DoubleComplex>{{-1.0, 0.0}, {0.0, 0.0}});
             CHECK(result.free_edge_indices.empty());
@@ -131,10 +124,10 @@ TEST_CASE("Test the link solver algorithm") {
             forward_elimination(result, edges, node_loads);
 
             REQUIRE(result.matrix.data_map.size() == 4);
-            check_value(1, 0, 0, result.matrix);
-            check_value(-1, 0, 1, result.matrix);
-            check_value(1, 1, 1, result.matrix);
-            check_value(-1, 1, 2, result.matrix);
+            CHECK(1 == result.matrix.get_value(0, 0));
+            CHECK(-1 == result.matrix.get_value(0, 1));
+            CHECK(1 == result.matrix.get_value(1, 1));
+            CHECK(-1 == result.matrix.get_value(1, 2));
             REQUIRE(result.rhs.size() == 2);
             CHECK(result.rhs == std::vector<DoubleComplex>{{1.0, 0.0}, {0.0, 0.0}});
             REQUIRE(result.free_edge_indices.size() == 1);
@@ -158,8 +151,8 @@ TEST_CASE("Test the link solver algorithm") {
             forward_elimination(result, edges, node_loads);
 
             REQUIRE(result.matrix.data_map.size() == 2);
-            check_value(1, 0, 0, result.matrix);
-            check_value(1, 0, 1, result.matrix);
+            CHECK(1 == result.matrix.get_value(0, 0));
+            CHECK(1 == result.matrix.get_value(0, 1));
             REQUIRE(result.rhs.size() == 1);
             CHECK(result.rhs == std::vector<DoubleComplex>{{1.0, 0.0}});
             REQUIRE(result.free_edge_indices.size() == 1);
@@ -182,20 +175,20 @@ TEST_CASE("Test the link solver algorithm") {
             forward_elimination(result, edges, node_loads);
 
             REQUIRE(result.matrix.data_map.size() == 14);
-            check_value(1, 0, 0, result.matrix);
-            check_value(1, 0, 2, result.matrix);
-            check_value(1, 0, 1, result.matrix);
-            check_value(1, 1, 1, result.matrix);
-            check_value(1, 1, 2, result.matrix);
-            check_value(-1, 1, 6, result.matrix);
-            check_value(-1, 1, 3, result.matrix);
-            check_value(1, 2, 2, result.matrix);
-            check_value(-1, 2, 3, result.matrix);
-            check_value(-1, 2, 6, result.matrix);
-            check_value(-1, 2, 5, result.matrix);
-            check_value(-1, 2, 4, result.matrix);
-            check_value(1, 3, 5, result.matrix);
-            check_value(1, 3, 6, result.matrix);
+            CHECK(1 == result.matrix.get_value(0, 0));
+            CHECK(1 == result.matrix.get_value(0, 2));
+            CHECK(1 == result.matrix.get_value(0, 1));
+            CHECK(1 == result.matrix.get_value(1, 1));
+            CHECK(1 == result.matrix.get_value(1, 2));
+            CHECK(-1 == result.matrix.get_value(1, 6));
+            CHECK(-1 == result.matrix.get_value(1, 3));
+            CHECK(1 == result.matrix.get_value(2, 2));
+            CHECK(-1 == result.matrix.get_value(2, 3));
+            CHECK(-1 == result.matrix.get_value(2, 6));
+            CHECK(-1 == result.matrix.get_value(2, 5));
+            CHECK(-1 == result.matrix.get_value(2, 4));
+            CHECK(1 == result.matrix.get_value(3, 5));
+            CHECK(1 == result.matrix.get_value(3, 6));
             REQUIRE(result.rhs.size() == 4);
             CHECK(result.rhs == std::vector<DoubleComplex>{{-1.0, -1.0}, {-1.0, -1.0}, {-2.0, -2.0}, {0.0, 0.0}});
             REQUIRE(result.free_edge_indices.size() == 3);
@@ -234,7 +227,7 @@ TEST_CASE("Test the link solver algorithm") {
 
             backward_substitution(result);
             REQUIRE(result.matrix.data_map.size() == 1);
-            check_value(1, 0, 0, result.matrix);
+            CHECK(1 == result.matrix.get_value(0, 0));
             REQUIRE(result.rhs.size() == 1);
             CHECK(result.rhs == std::vector<DoubleComplex>{{1.0, 0.0}});
         }
@@ -255,8 +248,8 @@ TEST_CASE("Test the link solver algorithm") {
 
             backward_substitution(result);
             REQUIRE(result.matrix.data_map.size() == 2);
-            check_value(1, 0, 0, result.matrix);
-            check_value(1, 1, 1, result.matrix);
+            CHECK(1 == result.matrix.get_value(0, 0));
+            CHECK(1 == result.matrix.get_value(1, 1));
             REQUIRE(result.rhs.size() == 2);
             CHECK(result.rhs == std::vector<DoubleComplex>{{-1.0, 0.0}, {0.0, 0.0}});
         }
@@ -281,10 +274,10 @@ TEST_CASE("Test the link solver algorithm") {
 
             backward_substitution(result);
             REQUIRE(result.matrix.data_map.size() == 4);
-            check_value(1, 0, 0, result.matrix);
-            check_value(1, 1, 1, result.matrix);
-            check_value(-1, 1, 2, result.matrix);
-            check_value(-1, 0, 2, result.matrix);
+            CHECK(1 == result.matrix.get_value(0, 0));
+            CHECK(1 == result.matrix.get_value(1, 1));
+            CHECK(-1 == result.matrix.get_value(1, 2));
+            CHECK(-1 == result.matrix.get_value(0, 2));
             REQUIRE(result.rhs.size() == 2);
             CHECK(result.rhs == std::vector<DoubleComplex>{{1.0, 0.0}, {0.0, 0.0}});
         }
@@ -305,8 +298,8 @@ TEST_CASE("Test the link solver algorithm") {
 
             backward_substitution(result);
             REQUIRE(result.matrix.data_map.size() == 2);
-            check_value(1, 0, 0, result.matrix);
-            check_value(1, 0, 1, result.matrix);
+            CHECK(1 == result.matrix.get_value(0, 0));
+            CHECK(1 == result.matrix.get_value(0, 1));
             REQUIRE(result.rhs.size() == 1);
             CHECK(result.rhs == std::vector<DoubleComplex>{{1.0, 0.0}});
         }
@@ -352,17 +345,17 @@ TEST_CASE("Test the link solver algorithm") {
 
             backward_substitution(result);
             REQUIRE(result.matrix.data_map.size() == 11);
-            check_value(1, 0, 0, result.matrix);
-            check_value(1, 0, 3, result.matrix);
-            check_value(1, 0, 6, result.matrix);
-            check_value(1, 1, 1, result.matrix);
-            check_value(1, 1, 4, result.matrix);
-            check_value(-1, 1, 6, result.matrix);
-            check_value(1, 2, 2, result.matrix);
-            check_value(-1, 2, 3, result.matrix);
-            check_value(-1, 2, 4, result.matrix);
-            check_value(1, 3, 5, result.matrix);
-            check_value(1, 3, 6, result.matrix);
+            CHECK(1 == result.matrix.get_value(0, 0));
+            CHECK(1 == result.matrix.get_value(0, 3));
+            CHECK(1 == result.matrix.get_value(0, 6));
+            CHECK(1 == result.matrix.get_value(1, 1));
+            CHECK(1 == result.matrix.get_value(1, 4));
+            CHECK(-1 == result.matrix.get_value(1, 6));
+            CHECK(1 == result.matrix.get_value(2, 2));
+            CHECK(-1 == result.matrix.get_value(2, 3));
+            CHECK(-1 == result.matrix.get_value(2, 4));
+            CHECK(1 == result.matrix.get_value(3, 5));
+            CHECK(1 == result.matrix.get_value(3, 6));
             REQUIRE(result.rhs.size() == 5);
             CHECK(result.rhs ==
                   std::vector<DoubleComplex>{{0.0, 0.0}, {1.0, 1.0}, {-2.0, -2.0}, {0.0, 0.0}, {0.0, 0.0}});

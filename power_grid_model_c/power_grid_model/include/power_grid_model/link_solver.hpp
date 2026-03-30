@@ -7,9 +7,11 @@
 #include "calculation_parameters.hpp"
 #include "common/common.hpp"
 #include "common/counting_iterator.hpp"
+#include "common/typing.hpp"
 
 #include <array>
 #include <cstdint>
+#include <optional>
 #include <ranges>
 #include <span>
 #include <unordered_map>
@@ -30,6 +32,7 @@ enum class EdgeEvent : std::uint8_t {
 
 enum class EdgeDirection : IntS { Away = -1, Towards = 1 };
 
+// Coordinate list (COO) sparse matrix representation, optimized for incremental construction during forward elimination
 struct COOSparseMatrix {
     uint64_t row_number{};
     std::unordered_map<uint64_t, IntS> data_map{};
@@ -43,22 +46,23 @@ struct COOSparseMatrix {
         assert(row_number != 0 && "row_number must be set before setting values in data_map");
         data_map[row_idx * row_number + col_idx] = value;
     }
-    bool get_value(IntS& value, uint64_t row_idx, uint64_t col_idx) const {
+    std::optional<IntS> get_value(uint64_t row_idx, uint64_t col_idx) const {
         assert(row_number != 0 && "row_number must be set before getting values from data_map");
         if (auto const it = data_map.find(row_idx * row_number + col_idx); it != data_map.end()) {
-            value = it->second;
-            return true;
+            return it->second;
         }
-        return false;
+        return std::nullopt;
     }
     void add_to_value(IntS value, uint64_t row_idx, uint64_t col_idx) {
         assert(row_number != 0 && "row_number must be set before adding values in data_map");
         auto const key = row_idx * row_number + col_idx;
         if (auto const it = data_map.find(key); it != data_map.end()) {
-            it->second = static_cast<IntS>(it->second + value);
-            if (it->second == 0) {
+            auto const new_value = narrow_cast<IntS>(it->second + value);
+            if (new_value == 0) {
                 data_map.erase(it); // maintain sparsity by erasing zero entries
+                return;
             }
+            it->second = new_value;
         } else if (value != 0) {
             data_map[key] = value;
         }
@@ -79,17 +83,17 @@ struct EliminationResult {
 };
 
 // convention: from node at position 0, to node at position 1
-[[nodiscard]] constexpr Idx from_node(BranchIdx const& edge) { return edge[0]; }
-[[nodiscard]] constexpr Idx& from_node(BranchIdx& edge) { return edge[0]; }
-[[nodiscard]] constexpr Idx to_node(BranchIdx const& edge) { return edge[1]; }
-[[nodiscard]] constexpr Idx& to_node(BranchIdx& edge) { return edge[1]; }
+constexpr Idx from_node(BranchIdx const& edge) { return edge[0]; }
+constexpr Idx& from_node(BranchIdx& edge) { return edge[0]; }
+constexpr Idx to_node(BranchIdx const& edge) { return edge[1]; }
+constexpr Idx& to_node(BranchIdx& edge) { return edge[1]; }
 
 // map from node index to the set of adjacent edge indices
 // unordered_map because node IDs may be sparse/non-contiguous
 // unordered_set for O(1) insert/erase during reattachment
-[[nodiscard]] inline auto build_adjacency_map(std::span<BranchIdx> edges) -> AdjacencyMap {
+inline auto build_adjacency_map(std::span<BranchIdx> edges) -> AdjacencyMap {
     AdjacencyMap adjacency_map{};
-    for (auto const& [raw_index, edge] : enumerate(std::as_const(edges))) {
+    for (auto const& [raw_index, edge] : std::views::zip(std::views::iota(uint64_t{}), std::as_const(edges))) {
         auto const index = static_cast<uint64_t>(raw_index);
         auto const [from_node, to_node] = edge;
         adjacency_map[from_node].insert(index);
@@ -182,39 +186,46 @@ inline void forward_elimination(EliminationResult& result, std::vector<BranchIdx
     }
 }
 
+inline auto backward_substitution_pivots(std::span<uint64_t const> pivot_edge_indices) {
+    return pivot_edge_indices | std::views::drop(1) | std::ranges::views::reverse;
+}
+
+inline auto backward_substitution_row_indices(std::span<uint64_t const> edge_history_rows) {
+    return edge_history_rows | std::views::reverse | std::views::drop(1);
+}
+
 // backward substitution is performed in a sparse way
 // using the result from the elimination game
 inline void backward_substitution(EliminationResult& elimination_result) {
-    auto pivot_col_indices = elimination_result.pivot_edge_indices | std::views::drop(1) | std::ranges::views::reverse;
     auto free_col_indices = std::span(elimination_result.free_edge_indices);
 
-    for (auto const pivot_col_idx : pivot_col_indices) {
+    for (auto const pivot_col_idx : backward_substitution_pivots(elimination_result.pivot_edge_indices)) {
         auto const& edge_history = elimination_result.edges_history[pivot_col_idx];
         uint64_t const pivot_row_idx = edge_history.rows.back();
 
-        for (auto const row_idx : edge_history.rows | std::views::reverse | std::views::drop(1)) {
-            IntS multiplier_value{};
-            elimination_result.matrix.get_value(multiplier_value, row_idx, pivot_col_idx);
-            elimination_result.matrix.add_to_value(
-                static_cast<IntS>(-multiplier_value), row_idx,
-                pivot_col_idx); // the initial pivot is always one because of the forward sweep
+        for (auto const row_idx : backward_substitution_row_indices(edge_history.rows)) {
+            auto const multiplier_value =
+                elimination_result.matrix.get_value(row_idx, pivot_col_idx).value(); // must always exist
+            elimination_result.matrix.add_to_value(narrow_cast<IntS>(-multiplier_value), row_idx, pivot_col_idx);
 
+            // only iterate over free columns to the right of the pivot column
+            // as these are the only ones that can be affected by the backward substitution
             for (auto const backward_col_idx : std::ranges::subrange(
                      std::ranges::upper_bound(free_col_indices, pivot_col_idx), free_col_indices.end())) {
-                IntS pivot_value{};
-                if (elimination_result.matrix.get_value(pivot_value, pivot_row_idx, backward_col_idx)) {
-                    elimination_result.matrix.add_to_value(static_cast<IntS>(-multiplier_value * pivot_value), row_idx,
-                                                           backward_col_idx);
-                }
+                elimination_result.matrix.get_value(pivot_row_idx, backward_col_idx)
+                    .transform([&elimination_result, multiplier_value, row_idx, backward_col_idx](IntS pivot_value) {
+                        elimination_result.matrix.add_to_value(static_cast<IntS>(-multiplier_value * pivot_value),
+                                                               row_idx, backward_col_idx);
+                        return pivot_value;
+                    });
             }
-
-            elimination_result.rhs[row_idx] +=
-                -static_cast<DoubleComplex>(multiplier_value) * elimination_result.rhs[pivot_row_idx];
+            elimination_result.rhs[row_idx] -=
+                static_cast<DoubleComplex>(multiplier_value) * elimination_result.rhs[pivot_row_idx];
         }
     }
 }
 
-// reduced echelon form based in custom forward elimination and backward substitution procedures
+// reduced echelon form based on custom forward elimination and backward substitution procedures
 [[nodiscard]] inline EliminationResult reduced_echelon_form(std::vector<BranchIdx> edges,
                                                             std::vector<DoubleComplex> node_loads) {
     EliminationResult result{};
@@ -225,7 +236,7 @@ inline void backward_substitution(EliminationResult& elimination_result) {
     result.matrix.prepare(edge_number, node_number);
 
     // -1 because the loads represent the RHS
-    std::ranges::transform(node_loads, node_loads.begin(), [](auto load) { return -load; });
+    std::ranges::for_each(node_loads, [](auto& load) { load = -load; });
 
     // both edges and node_loads are modified and consumed in the forward sweep
     forward_elimination(result, std::move(edges), std::move(node_loads));
