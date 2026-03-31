@@ -256,12 +256,12 @@ right one.
 
 At the moment, the following power flow algorithms are implemented.
 
-| Algorithm | Default | Convergence | Typical Use Cases | Algorithm call |
-| --------- | ------- | ----------- | ----------------- | -------------- |
-| [Newton-Raphson](../algorithms/pf-algorithms.md#newton-raphson-power-flow) | &#10004; | Fast (quadratic), robust | General purpose, meshed networks, accurate results required | {py:class}`CalculationMethod.newton_raphson <power_grid_model.enum.CalculationMethod.newton_raphson>` |
-| [Iterative current](../algorithms/pf-algorithms.md#iterative-current-power-flow) | | Moderate (linear), less robust | Time-series analysis, operational studies, batch calculations, prefer radial grids | {py:class}`CalculationMethod.iterative_current <power_grid_model.enum.CalculationMethod.iterative_current>` |
-| [Linear](../algorithms/pf-algorithms.md#linear-power-flow) | | Single iteration | Constant impedance loads only, quick estimates | {py:class}`CalculationMethod.linear <power_grid_model.enum.CalculationMethod.linear>` |
-| [Linear current](../algorithms/pf-algorithms.md#linear-current-power-flow) | | Single iteration | Fast approximations, screening studies, real-time applications | {py:class}`CalculationMethod.linear_current <power_grid_model.enum.CalculationMethod.linear_current>` |
+| Algorithm                                          | Speed                       | Result                            | Convergence         | Typical Use Cases                                                       | Algorithm call                                                                                             |
+|--------------------------------------------------- |---------------------------- |---------------------------------- |-------------------- |------------------------------------------------------------------------ |----------------------------------------------------------------------------------------------------------- |
+| [Newton-Raphson](../algorithms/pf-algorithms.md#newton-raphson-power-flow)       | Medium                      | Accurate within `error_tolerance` | Quadratic, robust   | General purpose, any type of grid                                       | {py:class}`CalculationMethod.newton_raphson <power_grid_model.enum.CalculationMethod.newton_raphson>`      |
+| [Iterative current](../algorithms/pf-algorithms.md#iterative-current-power-flow) | Fast (Radial) Slow (Meshed) | Accurate within `error_tolerance` | Linear, less robust | Non-topological change batch calculations like timeseries, radial grids | {py:class}`CalculationMethod.iterative_current <power_grid_model.enum.CalculationMethod.iterative_current>`|
+| [Linear](../algorithms/pf-algorithms.md#linear-power-flow)                       | Much Faster                 | Approximate                       | Single iteration    | Large number of calculations, troubleshooting iterative methods         | {py:class}`CalculationMethod.linear <power_grid_model.enum.CalculationMethod.linear>`                      |
+| [Linear current](../algorithms/pf-algorithms.md#linear-current-power-flow)       | Much Faster                 | Approximate                       | Single iteration    | Large number of calculations                                            | {py:class}`CalculationMethod.linear_current <power_grid_model.enum.CalculationMethod.linear_current>`      |
 
 ```{note}
 By default, the [Newton-Raphson](../algorithms/pf-algorithms.md#newton-raphson-power-flow) method is used.
@@ -273,59 +273,43 @@ fastest without loss of accuracy.
 Therefore power-grid-model will use this method regardless of the input provided by the user in this case.
 ```
 
+#### Quick decision guide for power flow algorithm
+
 For detailed mathematical descriptions of each algorithm, see
 [Power Flow Algorithm Details](../algorithms/pf-algorithms.md).
 
-#### Choosing the right power flow algorithm
+The choice of algorithm depends on your specific requirements for (non)convergence, accuracy, speed,
+and grid configuration: radial or meshed.
+Accuracy and convergence should be the first consideration, followed by speed.
 
-The choice of algorithm depends on your specific requirements for accuracy, speed, and grid characteristics.
+Hence if speed is not critical or is a small concern, we recommend using the default
+[Newton-Raphson](../algorithms/pf-algorithms.md#newton-raphson-power-flow) method for its robustness across all scenarios.
+If the scenarios are mainly timeseries, you can try [Iterative current](../algorithms/pf-algorithms.md#iterative-current-power-flow)
+, this method can improve speed significantly via
+[Matrix prefactorization](performance-guide.md#matrix-prefactorization).
+There is a possibility you can face non convergence or lower performance compared to the newton raphson method if the
+network is not radial.
 
-**When accuracy is critical:**
+When speed becomes a major concern and desired performance is not achieved with the iterative methods, you can try to
+explore linear methods.
+It is recommended to limit the range of loading conditions when using linear methods to avoid unrealistic scenarios
+where the approximations can give highly inaccurate results.
 
-- Use **Newton-Raphson** when you need high confidence in results
-- Required for meshed networks with significant power flows
-- Most robust algorithm that works in nearly all scenarios
+Overall, these methods are recommended only for a range of possible voltage deviations that are close to 1 p.u.
+The linear current method will generally give better approximations than the linear method.
+However at unrealistically high load levels it can give worse approximations than the linear method.
+Check Power Flow Algorithm Comparison demonstration in
+[Power Flow Algorithm Comparisons](https://github.com/PowerGridModel/power-grid-model-workshop/blob/main/demonstrations/Power%20Flow%20Algorithm%20Comparison.ipynb)
+to know more about this behavior.
+A strategy for post calculation verification of results is also provided there.
+You can identify applicability of linear methods for your use case by experimenting with the Newton-Raphson method to
+find the range of loading conditions that are relevant for your use case and then
+only use linear methods within this range for the specific grid configuration.
 
-**When speed is critical:**
-
-- Use **Linear current** for initial screening, real-time applications, or large-scale studies with many scenarios
-- Use **Linear** only when loads are truly constant impedance (rare in practice; automatically selected when applicable)
-- Accept that approximations may have voltage errors, especially when actual voltages deviate significantly from 1 p.u.
-
-**For balanced performance:**
-
-- Use **Iterative current** for time-series analysis where you need reasonable accuracy with good performance
-- Excellent for radial networks and moderately meshed systems
-- Particularly efficient for batch calculations (e.g., time-series) as matrix factorization is reused across scenarios
-
-**Grid characteristics to consider:**
-
-- **Radial distribution networks**: All methods work well; Linear current offers good speed/accuracy
-  balance for approximations
-- **Meshed networks**: Newton-Raphson or Iterative current recommended; linear methods may be less accurate
-- **Voltage deviations > 5% from nominal**: Prefer Newton-Raphson or Iterative current for accuracy
-- **Constant impedance loads only**: Linear method is optimal (automatically selected)
-
-**Load type impact:**
-
-- **Constant power** (most common in practice): Newton-Raphson or Iterative current for accurate results;
-  Linear current for fast approximations
-- **Constant current**: Linear current provides good approximations
-- **Constant impedance**: Linear method is exact and fastest
-
-**Quick decision guide:**
-
-1. Start with **Newton-Raphson** (default) - it works reliably for all cases
-2. If calculations are too slow for your workflow (e.g., thousands of scenarios) and you can accept
-   approximations, try **Iterative current** for better accuracy or **Linear current** for maximum speed
-3. For real-time or interactive applications requiring sub-second response, use **Linear current**
-4. Only use **Linear** if you explicitly model all loads as constant impedance
-
-```{tip}
-The accuracy of linear approximation methods depends heavily on how close actual voltages are to 1 p.u.
-They are most accurate in well-regulated distribution systems with voltage control.
-For transmission systems or heavily loaded networks, iterative methods are recommended.
-```
+Non convergence of newton raphson is a good signal of unpractical or unfeasible systems.
+This signal can be ignored when using linear methods.
+Similarly, having atleast some results from linear methods can aid in finding data errors or the reason
+for non convergence of newton raphson method.
 
 ### Regulated power flow calculations
 
