@@ -7,6 +7,8 @@
 #include "common/common.hpp"
 
 #include <concepts>
+#include <cstddef>
+#include <iterator>
 
 namespace power_grid_model::common {
 

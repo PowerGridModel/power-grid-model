@@ -8,8 +8,6 @@
 #define PGM_DLL_EXPORTS
 #endif
 
-#include "forward_declarations.hpp"
-
 #include <power_grid_model/auxiliary/meta_data.hpp>
 
 power_grid_model::meta_data::MetaData const& get_meta_data();

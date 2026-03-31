@@ -4,11 +4,33 @@
 
 #pragma once
 
-#include "state_queries.hpp"
+#include "container_queries.hpp"
+#include "state.hpp"
+#include "y_bus.hpp"
 
 #include "../calculation_parameters.hpp"
+#include "../common/common.hpp"
+#include "../common/counting_iterator.hpp"
+#include "../common/enum.hpp"
+#include "../common/grouped_index_vector.hpp"
+#include "../common/three_phase_tensor.hpp"
+#include "../common/typing.hpp"
+#include "../component/component.hpp"
+#include "../component/current_sensor.hpp"
+#include "../component/fault.hpp"
+#include "../component/load_gen.hpp"
+#include "../component/node.hpp"
+#include "../component/power_sensor.hpp"
+#include "../component/shunt.hpp"
+#include "../component/source.hpp"
+#include "../component/voltage_sensor.hpp"
+#include "../index_mapping.hpp"
 
+#include <algorithm>
+#include <cassert>
 #include <concepts>
+#include <type_traits>
+#include <utility>
 #include <vector>
 
 namespace power_grid_model::main_core {
@@ -122,9 +144,10 @@ void prepare_input(main_model_state_c auto const& state, std::vector<Idx2D> cons
     }
 }
 
-template <symmetry_tag sym, IntSVector(StateEstimationInput<sym>::*component), class Component>
+template <symmetry_tag sym, class InputType, IntSVector(InputType::*component), class Component>
+    requires std::same_as<InputType, PowerFlowInput<sym>> || std::same_as<InputType, StateEstimationInput<sym>>
 void prepare_input_status(main_model_state_c auto const& state, std::vector<Idx2D> const& objects,
-                          std::vector<StateEstimationInput<sym>>& input) {
+                          std::vector<InputType>& input) {
     for (Idx i = 0, n = narrow_cast<Idx>(objects.size()); i != n; ++i) {
         Idx2D const math_idx = objects[i];
         if (math_idx.group == isolated_component) {
@@ -139,16 +162,25 @@ void prepare_input_status(main_model_state_c auto const& state, std::vector<Idx2
 template <symmetry_tag sym>
 std::vector<PowerFlowInput<sym>> prepare_power_flow_input(main_model_state_c auto const& state, Idx n_math_solvers) {
     using detail::prepare_input;
+    using detail::prepare_input_status;
 
     std::vector<PowerFlowInput<sym>> pf_input(n_math_solvers);
     for (Idx i = 0; i != n_math_solvers; ++i) {
         pf_input[i].s_injection.resize(state.math_topology[i]->n_load_gen());
         pf_input[i].source.resize(state.math_topology[i]->n_source());
+        pf_input[i].voltage_regulator.resize(state.math_topology[i]->n_load_gen_voltage_regulator());
+        pf_input[i].load_gen_status.resize(state.math_topology[i]->n_load_gen());
     }
     prepare_input<PowerFlowInput<sym>, DoubleComplex, &PowerFlowInput<sym>::source, Source>(
         state, state.topo_comp_coup->source, pf_input);
 
     prepare_input<PowerFlowInput<sym>, ComplexValue<sym>, &PowerFlowInput<sym>::s_injection, GenericLoadGen>(
+        state, state.topo_comp_coup->load_gen, pf_input);
+
+    prepare_input<PowerFlowInput<sym>, VoltageRegulatorCalcParam<sym>, &PowerFlowInput<sym>::voltage_regulator,
+                  VoltageRegulator>(state, state.topo_comp_coup->voltage_regulator, pf_input);
+
+    prepare_input_status<sym, PowerFlowInput<sym>, &PowerFlowInput<sym>::load_gen_status, GenericLoadGen>(
         state, state.topo_comp_coup->load_gen, pf_input);
 
     return pf_input;
@@ -177,12 +209,12 @@ std::vector<StateEstimationInput<sym>> prepare_state_estimation_input(main_model
         se_input[i].measured_branch_to_current.resize(state.math_topology[i]->n_branch_to_current_sensor());
     }
 
-    prepare_input_status<sym, &StateEstimationInput<sym>::shunt_status, Shunt>(state, state.topo_comp_coup->shunt,
-                                                                               se_input);
-    prepare_input_status<sym, &StateEstimationInput<sym>::load_gen_status, GenericLoadGen>(
+    prepare_input_status<sym, StateEstimationInput<sym>, &StateEstimationInput<sym>::shunt_status, Shunt>(
+        state, state.topo_comp_coup->shunt, se_input);
+    prepare_input_status<sym, StateEstimationInput<sym>, &StateEstimationInput<sym>::load_gen_status, GenericLoadGen>(
         state, state.topo_comp_coup->load_gen, se_input);
-    prepare_input_status<sym, &StateEstimationInput<sym>::source_status, Source>(state, state.topo_comp_coup->source,
-                                                                                 se_input);
+    prepare_input_status<sym, StateEstimationInput<sym>, &StateEstimationInput<sym>::source_status, Source>(
+        state, state.topo_comp_coup->source, se_input);
 
     prepare_input<StateEstimationInput<sym>, VoltageSensorCalcParam<sym>, &StateEstimationInput<sym>::measured_voltage,
                   GenericVoltageSensor>(state, state.topo_comp_coup->voltage_sensor, se_input);
@@ -248,7 +280,7 @@ std::vector<ShortCircuitInput> prepare_short_circuit_input(main_model_state_c au
     std::vector<IdxVector> topo_fault_indices(state.math_topology.size());
     std::vector<IdxVector> topo_bus_indices(state.math_topology.size());
 
-    for (Idx fault_idx{0}; fault_idx < state.components.template size<Fault>(); ++fault_idx) {
+    for (Idx const fault_idx : IdxRange{state.components.template size<Fault>()}) {
         auto const& fault = state.components.template get_item_by_seq<Fault>(fault_idx);
         if (fault.status()) {
             auto const node_idx = state.components.template get_seq<Node>(fault.get_fault_object());
@@ -265,11 +297,11 @@ std::vector<ShortCircuitInput> prepare_short_circuit_input(main_model_state_c au
                                          Idx2D{.group = isolated_component, .pos = not_connected});
     std::vector<ShortCircuitInput> sc_input(n_math_solvers);
 
-    for (Idx i = 0; i != n_math_solvers; ++i) {
+    for (Idx const i : IdxRange{n_math_solvers}) {
         auto map = build_dense_mapping(topo_bus_indices[i], state.math_topology[i]->n_bus());
 
-        for (Idx reordered_idx{0}; reordered_idx < static_cast<Idx>(map.reorder.size()); ++reordered_idx) {
-            fault_coup[topo_fault_indices[i][map.reorder[reordered_idx]]] = Idx2D{.group = i, .pos = reordered_idx};
+        for (auto&& [reordered_idx, original_idx] : enumerate(map.reorder)) {
+            fault_coup[topo_fault_indices[i][original_idx]] = Idx2D{.group = i, .pos = reordered_idx};
         }
 
         sc_input[i].fault_buses = {from_dense, std::move(map.indvector), state.math_topology[i]->n_bus()};

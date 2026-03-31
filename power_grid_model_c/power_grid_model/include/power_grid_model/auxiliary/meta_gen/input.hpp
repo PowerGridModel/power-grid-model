@@ -9,12 +9,13 @@
 
 #include "gen_getters.hpp" // NOLINT
 
-#include "../../common/common.hpp"             // NOLINT
-#include "../../common/enum.hpp"               // NOLINT
-#include "../../common/three_phase_tensor.hpp" // NOLINT
 #include "../meta_data.hpp"                    // NOLINT
+#include "../../common/common.hpp"             // NOLINT
 
 #include "../input.hpp" // NOLINT
+
+#include <array>
+#include <cstddef>
 
 
 namespace power_grid_model::meta_data {
@@ -437,6 +438,20 @@ struct get_attributes_list<TransformerTapRegulatorInput> {
             meta_data_gen::get_meta_attribute<&TransformerTapRegulatorInput::u_band>(offsetof(TransformerTapRegulatorInput, u_band), "u_band"),
             meta_data_gen::get_meta_attribute<&TransformerTapRegulatorInput::line_drop_compensation_r>(offsetof(TransformerTapRegulatorInput, line_drop_compensation_r), "line_drop_compensation_r"),
             meta_data_gen::get_meta_attribute<&TransformerTapRegulatorInput::line_drop_compensation_x>(offsetof(TransformerTapRegulatorInput, line_drop_compensation_x), "line_drop_compensation_x"),
+    };
+};
+
+template<>
+struct get_attributes_list<VoltageRegulatorInput> {
+    static constexpr std::array<MetaAttribute, 6> value{
+            // all attributes including base class
+            
+            meta_data_gen::get_meta_attribute<&VoltageRegulatorInput::id>(offsetof(VoltageRegulatorInput, id), "id"),
+            meta_data_gen::get_meta_attribute<&VoltageRegulatorInput::regulated_object>(offsetof(VoltageRegulatorInput, regulated_object), "regulated_object"),
+            meta_data_gen::get_meta_attribute<&VoltageRegulatorInput::status>(offsetof(VoltageRegulatorInput, status), "status"),
+            meta_data_gen::get_meta_attribute<&VoltageRegulatorInput::u_ref>(offsetof(VoltageRegulatorInput, u_ref), "u_ref"),
+            meta_data_gen::get_meta_attribute<&VoltageRegulatorInput::q_min>(offsetof(VoltageRegulatorInput, q_min), "q_min"),
+            meta_data_gen::get_meta_attribute<&VoltageRegulatorInput::q_max>(offsetof(VoltageRegulatorInput, q_max), "q_max"),
     };
 };
 

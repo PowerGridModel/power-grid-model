@@ -11,7 +11,7 @@ from typing import Any
 import numpy as np
 import pytest
 
-from power_grid_model._core.dataset_definitions import DatasetType
+from power_grid_model._core.dataset_definitions import AttributeType as AT, DatasetType
 from power_grid_model._core.power_grid_model import PowerGridModel
 from power_grid_model.data_types import Dataset, PythonDataset, SingleDataset
 from power_grid_model.errors import (
@@ -19,6 +19,7 @@ from power_grid_model.errors import (
     AutomaticTapInputError,
     ConflictID,
     ConflictVoltage,
+    ExperimentalFeature,
     IDNotFound,
     IDWrongType,
     InvalidBranch,
@@ -33,6 +34,8 @@ from power_grid_model.errors import (
     PowerGridError,
     PowerGridSerializationError,
     SparseMatrixError,
+    UnsupportedRegulatorCombinationError,
+    UnsupportedVoltageRegulatorSourceCombinationError,
 )
 from power_grid_model.utils import json_deserialize, json_deserialize_from_file, json_serialize_to_file
 
@@ -82,6 +85,9 @@ KNOWN_EXCEPTIONS: dict[str, type[BaseException] | None] = {
         AssertionError,
         OSError,
         MaxIterationReached,
+        UnsupportedRegulatorCombinationError,
+        UnsupportedVoltageRegulatorSourceCombinationError,
+        ExperimentalFeature,
     )
 }
 KNOWN_EXCEPTIONS["Failed"] = _Failed
@@ -272,7 +278,7 @@ def compare_result(actual: SingleDataset, expected: SingleDataset, rtol: float, 
             if not expect_all_nan:
                 # permute expected_col if needed
                 if expected_col.ndim == 1 and actual_col.ndim == actual_col_ndim:
-                    if col_name == "u_angle":
+                    if col_name == AT.u_angle:
                         # should be 120 and 240 degree lagging
                         expected_col = np.stack(
                             (expected_col, expected_col - 2.0 / 3.0 * np.pi, expected_col + 2.0 / 3.0 * np.pi), axis=-1
@@ -283,7 +289,7 @@ def compare_result(actual: SingleDataset, expected: SingleDataset, rtol: float, 
                         expected_col = expected_col.reshape(-1, 1)
                 # for u_angle, the angle needs to be normalized
                 # because any global angle shift is acceptable
-                if col_name == "u_angle":
+                if col_name == AT.u_angle:
                     # set the u_angle of 0-th entry to zero
                     actual_col = actual_col - actual_col.ravel()[0]
                     expected_col = expected_col - expected_col.ravel()[0]

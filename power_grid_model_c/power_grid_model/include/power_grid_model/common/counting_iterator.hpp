@@ -21,4 +21,12 @@ struct IdxRange : public std::ranges::iota_view<Idx, Idx> {
 };
 using IdxCount = typename IdxRange::iterator;
 
+#if __cpp_lib_ranges_enumerate >= 20202L
+using std::views::enumerate;
+#else
+constexpr auto enumerate(std::ranges::viewable_range auto&& range_to_enumerate) {
+    return std::views::zip(IdxRange{std::ssize(range_to_enumerate)}, range_to_enumerate);
+}
+#endif
+
 } // namespace power_grid_model

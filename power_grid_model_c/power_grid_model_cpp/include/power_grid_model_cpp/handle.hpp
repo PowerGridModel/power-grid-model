@@ -10,6 +10,11 @@
 
 #include "power_grid_model_c/handle.h"
 
+#include <exception>
+#include <memory>
+#include <string>
+#include <vector>
+
 namespace power_grid_model_cpp {
 class PowerGridError : public std::exception {
   public:

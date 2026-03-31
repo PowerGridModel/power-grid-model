@@ -4,17 +4,19 @@
 
 #define PGM_DLL_EXPORTS
 #include "forward_declarations.hpp"
-
-#include "power_grid_model_c/dataset.h"
-
 #include "get_meta_data.hpp"
 #include "handle.hpp"
 #include "input_sanitization.hpp"
 
+#include "power_grid_model_c/basics.h"
+#include "power_grid_model_c/dataset.h"
+
 #include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/auxiliary/meta_data.hpp>
-#include <power_grid_model/common/typing.hpp>
 
+#include <vector>
+
+namespace {
 using namespace power_grid_model;
 using namespace power_grid_model::meta_data;
 using power_grid_model_c::call_with_catch;
@@ -27,6 +29,7 @@ using power_grid_model_c::safe_ptr_maybe_nullptr;
 using power_grid_model_c::safe_str_view;
 using power_grid_model_c::to_c_bool;
 using power_grid_model_c::to_c_size;
+} // namespace
 
 // dataset info
 
@@ -132,7 +135,7 @@ void PGM_dataset_const_add_attribute_buffer(PGM_Handle* handle, PGM_ConstDataset
                                             char const* attribute, void const* data) {
     call_with_catch(handle, [dataset, component, attribute, data] {
         safe_ptr_get(cast_to_cpp(dataset))
-            .add_attribute_buffer(safe_str_view(component), safe_str_view(attribute), safe_ptr(data));
+            .add_attribute_buffer(safe_str_view(component), safe_str_view(attribute), safe_ptr_maybe_nullptr(data));
     });
 }
 void PGM_dataset_const_set_next_cartesian_product_dimension(PGM_Handle* handle, PGM_ConstDataset* dataset,
@@ -166,7 +169,7 @@ void PGM_dataset_writable_set_attribute_buffer(PGM_Handle* handle, PGM_WritableD
                                                char const* attribute, void* data) {
     call_with_catch(handle, [dataset, component, attribute, data] {
         safe_ptr_get(cast_to_cpp(dataset))
-            .set_attribute_buffer(safe_str_view(component), safe_str_view(attribute), safe_ptr(data));
+            .set_attribute_buffer(safe_str_view(component), safe_str_view(attribute), safe_ptr_maybe_nullptr(data));
     });
 }
 
@@ -198,7 +201,7 @@ void PGM_dataset_mutable_add_attribute_buffer(PGM_Handle* handle, PGM_MutableDat
                                               char const* attribute, void* data) {
     call_with_catch(handle, [dataset, component, attribute, data] {
         safe_ptr_get(cast_to_cpp(dataset))
-            .add_attribute_buffer(safe_str_view(component), safe_str_view(attribute), safe_ptr(data));
+            .add_attribute_buffer(safe_str_view(component), safe_str_view(attribute), safe_ptr_maybe_nullptr(data));
     });
 }
 

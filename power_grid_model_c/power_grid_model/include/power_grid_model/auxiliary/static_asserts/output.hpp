@@ -9,7 +9,11 @@
 
 #include "../output.hpp" // NOLINT
 
+#include "../../common/common.hpp"
+
+#include <concepts>
 #include <cstddef>
+#include <type_traits>
 
 namespace power_grid_model::test {
 
@@ -285,6 +289,15 @@ static_assert(std::same_as<decltype(TransformerTapRegulatorOutput::id), decltype
 static_assert(std::same_as<decltype(TransformerTapRegulatorOutput::energized), decltype(BaseOutput::energized)>);
 static_assert(offsetof(TransformerTapRegulatorOutput, id) == offsetof(BaseOutput, id));
 static_assert(offsetof(TransformerTapRegulatorOutput, energized) == offsetof(BaseOutput, energized));
+
+// static asserts for VoltageRegulatorOutput
+static_assert(std::is_standard_layout_v<VoltageRegulatorOutput>);
+// static asserts for conversion of VoltageRegulatorOutput to BaseOutput
+static_assert(std::alignment_of_v<VoltageRegulatorOutput> >= std::alignment_of_v<BaseOutput>);
+static_assert(std::same_as<decltype(VoltageRegulatorOutput::id), decltype(BaseOutput::id)>);
+static_assert(std::same_as<decltype(VoltageRegulatorOutput::energized), decltype(BaseOutput::energized)>);
+static_assert(offsetof(VoltageRegulatorOutput, id) == offsetof(BaseOutput, id));
+static_assert(offsetof(VoltageRegulatorOutput, energized) == offsetof(BaseOutput, energized));
 
 // static asserts for RegulatorShortCircuitOutput
 static_assert(std::is_standard_layout_v<RegulatorShortCircuitOutput>);

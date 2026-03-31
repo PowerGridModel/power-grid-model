@@ -4,17 +4,37 @@
 
 #pragma once
 
+#include "sparse_ordering.hpp"
+
 #include "calculation_parameters.hpp"
 #include "common/common.hpp"
+#include "common/counting_iterator.hpp"
 #include "common/enum.hpp"
-#include "common/exception.hpp"
+#include "common/grouped_index_vector.hpp"
 #include "index_mapping.hpp"
-#include "sparse_ordering.hpp"
 
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/compressed_sparse_row_graph.hpp>
 #include <boost/graph/depth_first_search.hpp>
+#include <boost/graph/graph_selectors.hpp>
+#include <boost/graph/graph_traits.hpp>
 #include <boost/graph/iteration_macros.hpp>
+#include <boost/graph/properties.hpp>
+#include <boost/iterator/counting_iterator.hpp>
+#include <boost/pending/property.hpp>
+
+#include <algorithm>
+#include <array>
+#include <cassert>
+#include <concepts>
+#include <cstddef>
+#include <iterator>
+#include <map>
+#include <memory>
+#include <ranges>
+#include <type_traits>
+#include <utility>
+#include <vector>
 
 // build topology of the grid
 // divide grid into several math models
@@ -121,6 +141,7 @@ class Topology {
         dfs_search();
         couple_branch();
         couple_all_appliance();
+        couple_voltage_regulators();
         couple_sensors();
         // create return pair with shared pointer
         std::pair<std::vector<std::shared_ptr<MathModelTopology const>>,
@@ -164,6 +185,7 @@ class Topology {
         comp_coup_.voltage_sensor.resize(comp_topo_.voltage_sensor_node_idx.size(), unknown_idx2d);
         comp_coup_.power_sensor.resize(comp_topo_.power_sensor_object_idx.size(), unknown_idx2d);
         comp_coup_.current_sensor.resize(comp_topo_.current_sensor_object_idx.size(), unknown_idx2d);
+        comp_coup_.voltage_regulator.resize(comp_topo_.regulated_object_idx.size(), unknown_idx2d);
     }
 
     template <typename F> static void for_all_vertices(GlobalGraph const& graph, F&& func) {
@@ -569,6 +591,14 @@ class Topology {
             [](MathModelTopology& math_topo) -> auto& { return math_topo.sources_per_bus; },
             {.component_obj_idx = comp_topo_.source_node_idx, .objects_coupling = comp_coup_.node}, comp_coup_.source,
             [this](Idx i) { return comp_conn_.source_connected[i]; });
+    }
+
+    void couple_voltage_regulators() {
+        couple_object_components<&MathModelTopology::n_load_gen>(
+            [](MathModelTopology& math_topo) -> auto& { return math_topo.voltage_regulators_per_load_gen; },
+            {.component_obj_idx = comp_topo_.regulated_object_idx, .objects_coupling = comp_coup_.load_gen},
+            comp_coup_.voltage_regulator,
+            [this](Idx i) { return comp_topo_.regulated_object_type[i] == ComponentType::generic_load_gen; });
     }
 
     void couple_sensors() {

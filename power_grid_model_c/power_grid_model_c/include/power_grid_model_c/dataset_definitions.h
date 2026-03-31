@@ -241,6 +241,15 @@ PGM_API extern PGM_MetaAttribute const* const PGM_def_input_asym_gen_status;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_asym_gen_type;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_asym_gen_p_specified;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_input_asym_gen_q_specified;
+// component voltage_regulator
+PGM_API extern PGM_MetaComponent const* const PGM_def_input_voltage_regulator;
+// attributes of input voltage_regulator
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_voltage_regulator_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_voltage_regulator_regulated_object;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_voltage_regulator_status;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_voltage_regulator_u_ref;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_voltage_regulator_q_min;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_input_voltage_regulator_q_max;
 // component shunt
 PGM_API extern PGM_MetaComponent const* const PGM_def_input_shunt;
 // attributes of input shunt
@@ -502,6 +511,12 @@ PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_source_q;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_source_i;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_source_s;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_source_pf;
+// component voltage_regulator
+PGM_API extern PGM_MetaComponent const* const PGM_def_sym_output_voltage_regulator;
+// attributes of sym_output voltage_regulator
+PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_voltage_regulator_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_voltage_regulator_energized;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_voltage_regulator_limit_violated;
 // component sym_voltage_sensor
 PGM_API extern PGM_MetaComponent const* const PGM_def_sym_output_sym_voltage_sensor;
 // attributes of sym_output sym_voltage_sensor
@@ -719,6 +734,12 @@ PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_source_q;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_source_i;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_source_s;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_source_pf;
+// component voltage_regulator
+PGM_API extern PGM_MetaComponent const* const PGM_def_asym_output_voltage_regulator;
+// attributes of asym_output voltage_regulator
+PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_voltage_regulator_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_voltage_regulator_energized;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_voltage_regulator_limit_violated;
 // component sym_voltage_sensor
 PGM_API extern PGM_MetaComponent const* const PGM_def_asym_output_sym_voltage_sensor;
 // attributes of asym_output sym_voltage_sensor
@@ -843,6 +864,14 @@ PGM_API extern PGM_MetaAttribute const* const PGM_def_update_asym_gen_id;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_update_asym_gen_status;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_update_asym_gen_p_specified;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_update_asym_gen_q_specified;
+// component voltage_regulator
+PGM_API extern PGM_MetaComponent const* const PGM_def_update_voltage_regulator;
+// attributes of update voltage_regulator
+PGM_API extern PGM_MetaAttribute const* const PGM_def_update_voltage_regulator_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_update_voltage_regulator_status;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_update_voltage_regulator_u_ref;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_update_voltage_regulator_q_min;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_update_voltage_regulator_q_max;
 // component shunt
 PGM_API extern PGM_MetaComponent const* const PGM_def_update_shunt;
 // attributes of update shunt

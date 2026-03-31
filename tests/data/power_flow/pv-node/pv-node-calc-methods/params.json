@@ -1,0 +1,9 @@
+{
+  "calculation_method": ["linear", "iterative_linear", "iterative_current", "linear_current"],
+  "rtol": 1e-5,
+  "atol": 1e-5,
+  "xfail": {
+    "raises": "InvalidCalculationMethod",
+    "reason": "The calculation method is invalid for this calculation!"
+  }
+}

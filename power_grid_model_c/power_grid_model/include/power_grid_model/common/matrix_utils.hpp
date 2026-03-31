@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "common.hpp"
 #include "three_phase_tensor.hpp"
 
 namespace power_grid_model {

@@ -7,13 +7,26 @@
 #include "batch_parameter.hpp"
 #include "job_interface.hpp"
 
+#include "common/common.hpp"
 #include "common/counting_iterator.hpp"
 #include "common/exception.hpp"
+#include "common/logging.hpp"
 #include "common/timer.hpp"
 #include "common/typing.hpp"
 
+#include <algorithm>
+#include <cassert>
+#include <concepts>
+#include <exception>
+#include <format>
+#include <iterator>
 #include <ranges>
+#include <sstream>
+#include <string>
 #include <thread>
+#include <type_traits>
+#include <utility>
+#include <vector>
 
 namespace power_grid_model {
 

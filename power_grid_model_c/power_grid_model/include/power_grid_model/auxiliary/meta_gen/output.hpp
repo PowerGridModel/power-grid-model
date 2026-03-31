@@ -9,12 +9,13 @@
 
 #include "gen_getters.hpp" // NOLINT
 
-#include "../../common/common.hpp"             // NOLINT
-#include "../../common/enum.hpp"               // NOLINT
-#include "../../common/three_phase_tensor.hpp" // NOLINT
 #include "../meta_data.hpp"                    // NOLINT
+#include "../../common/common.hpp"             // NOLINT
 
 #include "../output.hpp" // NOLINT
+
+#include <array>
+#include <cstddef>
 
 
 namespace power_grid_model::meta_data {
@@ -237,6 +238,17 @@ struct get_attributes_list<TransformerTapRegulatorOutput> {
             meta_data_gen::get_meta_attribute<&TransformerTapRegulatorOutput::id>(offsetof(TransformerTapRegulatorOutput, id), "id"),
             meta_data_gen::get_meta_attribute<&TransformerTapRegulatorOutput::energized>(offsetof(TransformerTapRegulatorOutput, energized), "energized"),
             meta_data_gen::get_meta_attribute<&TransformerTapRegulatorOutput::tap_pos>(offsetof(TransformerTapRegulatorOutput, tap_pos), "tap_pos"),
+    };
+};
+
+template<>
+struct get_attributes_list<VoltageRegulatorOutput> {
+    static constexpr std::array<MetaAttribute, 3> value{
+            // all attributes including base class
+            
+            meta_data_gen::get_meta_attribute<&VoltageRegulatorOutput::id>(offsetof(VoltageRegulatorOutput, id), "id"),
+            meta_data_gen::get_meta_attribute<&VoltageRegulatorOutput::energized>(offsetof(VoltageRegulatorOutput, energized), "energized"),
+            meta_data_gen::get_meta_attribute<&VoltageRegulatorOutput::limit_violated>(offsetof(VoltageRegulatorOutput, limit_violated), "limit_violated"),
     };
 };
 

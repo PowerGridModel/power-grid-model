@@ -7,11 +7,14 @@
 #include "common.hpp"
 #include "enum.hpp"
 
+#include <concepts>
 #include <exception>
 #include <format>
-#include <sstream>
 #include <string>
+#include <string_view>
+#include <type_traits>
 #include <utility>
+#include <vector>
 
 namespace power_grid_model {
 class PowerGridError : public std::exception {
@@ -168,6 +171,27 @@ class DuplicativelyRegulatedObject : public PowerGridError {
   public:
     DuplicativelyRegulatedObject()
         : PowerGridError{"There are objects regulated by more than one regulator. Maximum one regulator is allowed."} {}
+};
+
+class UnsupportedRegulatorCombinationError : public PowerGridError {
+  public:
+    UnsupportedRegulatorCombinationError()
+        : PowerGridError{"The combination of voltage regulators and transformer tap regulators is not supported in the "
+                         "same model."} {}
+};
+
+class ConflictingVoltageRegulatorURef : public PowerGridError {
+  public:
+    ConflictingVoltageRegulatorURef(std::string const& regulator_ids)
+        : PowerGridError{std::format("Conflicting u_ref values detected for voltage regulators {}.", regulator_ids)} {}
+};
+
+class UnsupportedVoltageRegulatorSourceCombinationError : public PowerGridError {
+  public:
+    UnsupportedVoltageRegulatorSourceCombinationError(ID id)
+        : PowerGridError{std::format("Nodes with a source and a voltage regulated load/generator are not supported "
+                                     "when both are enabled. Found at node with id {}",
+                                     id)} {}
 };
 
 class AutomaticTapCalculationError : public PowerGridError {

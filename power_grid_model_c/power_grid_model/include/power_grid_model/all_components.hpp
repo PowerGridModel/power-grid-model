@@ -4,12 +4,16 @@
 
 #pragma once
 
+// Umbrella header for all components
+
 // define all components
-#include "common/common.hpp"
 #include "common/component_list.hpp"
 // component include
 #include "component/appliance.hpp"
 #include "component/asym_line.hpp"
+#include "component/base.hpp"
+#include "component/branch.hpp"
+#include "component/branch3.hpp"
 #include "component/current_sensor.hpp"
 #include "component/fault.hpp"
 #include "component/generic_branch.hpp"
@@ -18,20 +22,22 @@
 #include "component/load_gen.hpp"
 #include "component/node.hpp"
 #include "component/power_sensor.hpp"
+#include "component/regulator.hpp"
 #include "component/sensor.hpp"
 #include "component/shunt.hpp"
 #include "component/source.hpp"
 #include "component/three_winding_transformer.hpp"
 #include "component/transformer.hpp"
 #include "component/transformer_tap_regulator.hpp"
+#include "component/voltage_regulator.hpp"
 #include "component/voltage_sensor.hpp"
 
 namespace power_grid_model {
 
-using AllComponents =
-    ComponentList<Node, Line, AsymLine, Link, GenericBranch, Transformer, ThreeWindingTransformer, Shunt, Source,
-                  SymGenerator, AsymGenerator, SymLoad, AsymLoad, SymPowerSensor, AsymPowerSensor, SymVoltageSensor,
-                  AsymVoltageSensor, SymCurrentSensor, AsymCurrentSensor, Fault, TransformerTapRegulator>;
+using AllComponents = ComponentList<Node, Line, AsymLine, Link, GenericBranch, Transformer, ThreeWindingTransformer,
+                                    Shunt, Source, SymGenerator, AsymGenerator, SymLoad, AsymLoad, SymPowerSensor,
+                                    AsymPowerSensor, SymVoltageSensor, AsymVoltageSensor, SymCurrentSensor,
+                                    AsymCurrentSensor, Fault, TransformerTapRegulator, VoltageRegulator>;
 
 using AllExtraRetrievableTypes =
     ExtraRetrievableTypes<Base, Node, Branch, Branch3, Appliance, GenericLoadGen, GenericLoad, GenericGenerator,

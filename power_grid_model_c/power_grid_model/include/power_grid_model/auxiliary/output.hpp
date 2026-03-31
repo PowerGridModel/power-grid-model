@@ -7,10 +7,7 @@
 // clang-format off
 #pragma once
 
-#include "meta_data.hpp"
-
 #include "../common/common.hpp"
-#include "../common/enum.hpp"
 #include "../common/three_phase_tensor.hpp"
 
 namespace power_grid_model {
@@ -233,6 +230,16 @@ struct TransformerTapRegulatorOutput {
     ID id{na_IntID};  // ID of the object
     IntS energized{na_IntS};  // whether the object is energized
     IntS tap_pos{na_IntS};  // result of regulated tap position
+
+    // implicit conversions to BaseOutput
+    operator BaseOutput&() { return reinterpret_cast<BaseOutput&>(*this); }
+    operator BaseOutput const&() const { return reinterpret_cast<BaseOutput const&>(*this); }
+};
+
+struct VoltageRegulatorOutput {
+    ID id{na_IntID};  // ID of the object
+    IntS energized{na_IntS};  // whether the object is energized
+    IntS limit_violated{na_IntS};  // indicates whether voltage limits are violated
 
     // implicit conversions to BaseOutput
     operator BaseOutput&() { return reinterpret_cast<BaseOutput&>(*this); }

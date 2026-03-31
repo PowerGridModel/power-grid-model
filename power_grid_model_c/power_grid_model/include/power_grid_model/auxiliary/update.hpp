@@ -7,8 +7,6 @@
 // clang-format off
 #pragma once
 
-#include "meta_data.hpp"
-
 #include "../common/common.hpp"
 #include "../common/enum.hpp"
 #include "../common/three_phase_tensor.hpp"
@@ -199,6 +197,22 @@ struct TransformerTapRegulatorUpdate {
     double u_band{nan};  // voltage bandwidth
     double line_drop_compensation_r{nan};  // line drop compensation resistance
     double line_drop_compensation_x{nan};  // line drop compensation reactance
+
+    // implicit conversions to BaseUpdate
+    operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }
+    operator BaseUpdate const&() const { return reinterpret_cast<BaseUpdate const&>(*this); }
+
+    // implicit conversions to RegulatorUpdate
+    operator RegulatorUpdate&() { return reinterpret_cast<RegulatorUpdate&>(*this); }
+    operator RegulatorUpdate const&() const { return reinterpret_cast<RegulatorUpdate const&>(*this); }
+};
+
+struct VoltageRegulatorUpdate {
+    ID id{na_IntID};  // ID of the object
+    IntS status{na_IntS};  // regulator enables
+    double u_ref{nan};  // reference voltage
+    double q_min{nan};  // reactive power limits
+    double q_max{nan};  // reactive power limits
 
     // implicit conversions to BaseUpdate
     operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }

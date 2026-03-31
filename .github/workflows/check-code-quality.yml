@@ -52,11 +52,19 @@ jobs:
         run: |
           uv run gersemi -i --warnings-as-errors src/ tests/ cmake/
 
-      - name: Install and run markdownlint
+      - name: Install npm packages
         run: |
-          npm install -g markdownlint-cli@0.47.0
+          npm ci
+
+      - name: Run markdownlint
+        run: |
           echo "Running markdownlint"
-          markdownlint --fix .
+          npx markdownlint --fix .
+
+      - name: Run Biome
+        run: |
+          echo "Running Biome"
+          npx biome format --write --files-ignore-unknown=true --no-errors-on-unmatched
 
       - name: If needed raise error
         run: |

@@ -17,6 +17,8 @@ class Buffer {
     Buffer(MetaComponent const* component, Idx size)
         : component_{component}, size_{size}, buffer_{handle_.call_with(PGM_create_buffer, component, size)} {};
 
+    Buffer() : component_{nullptr}, size_{0}, buffer_{nullptr} {};
+
     RawDataConstPtr get() const { return buffer_.get(); }
     RawDataPtr get() { return buffer_.get(); }
 

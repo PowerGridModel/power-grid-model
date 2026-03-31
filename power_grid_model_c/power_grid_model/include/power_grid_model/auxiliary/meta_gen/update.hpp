@@ -9,12 +9,13 @@
 
 #include "gen_getters.hpp" // NOLINT
 
-#include "../../common/common.hpp"             // NOLINT
-#include "../../common/enum.hpp"               // NOLINT
-#include "../../common/three_phase_tensor.hpp" // NOLINT
 #include "../meta_data.hpp"                    // NOLINT
+#include "../../common/common.hpp"             // NOLINT
 
 #include "../update.hpp" // NOLINT
+
+#include <array>
+#include <cstddef>
 
 
 namespace power_grid_model::meta_data {
@@ -194,6 +195,19 @@ struct get_attributes_list<TransformerTapRegulatorUpdate> {
             meta_data_gen::get_meta_attribute<&TransformerTapRegulatorUpdate::u_band>(offsetof(TransformerTapRegulatorUpdate, u_band), "u_band"),
             meta_data_gen::get_meta_attribute<&TransformerTapRegulatorUpdate::line_drop_compensation_r>(offsetof(TransformerTapRegulatorUpdate, line_drop_compensation_r), "line_drop_compensation_r"),
             meta_data_gen::get_meta_attribute<&TransformerTapRegulatorUpdate::line_drop_compensation_x>(offsetof(TransformerTapRegulatorUpdate, line_drop_compensation_x), "line_drop_compensation_x"),
+    };
+};
+
+template<>
+struct get_attributes_list<VoltageRegulatorUpdate> {
+    static constexpr std::array<MetaAttribute, 5> value{
+            // all attributes including base class
+            
+            meta_data_gen::get_meta_attribute<&VoltageRegulatorUpdate::id>(offsetof(VoltageRegulatorUpdate, id), "id"),
+            meta_data_gen::get_meta_attribute<&VoltageRegulatorUpdate::status>(offsetof(VoltageRegulatorUpdate, status), "status"),
+            meta_data_gen::get_meta_attribute<&VoltageRegulatorUpdate::u_ref>(offsetof(VoltageRegulatorUpdate, u_ref), "u_ref"),
+            meta_data_gen::get_meta_attribute<&VoltageRegulatorUpdate::q_min>(offsetof(VoltageRegulatorUpdate, q_min), "q_min"),
+            meta_data_gen::get_meta_attribute<&VoltageRegulatorUpdate::q_max>(offsetof(VoltageRegulatorUpdate, q_max), "q_max"),
     };
 };
 

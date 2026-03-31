@@ -13,8 +13,7 @@ import msgpack
 import numpy as np
 import pytest
 
-from power_grid_model import DatasetType
-from power_grid_model._core.dataset_definitions import ComponentType
+from power_grid_model import AttributeType as AT, ComponentType as CT, DatasetType
 from power_grid_model._core.utils import get_dataset_type, is_columnar, is_sparse
 from power_grid_model.data_types import BatchDataset, Dataset, DenseBatchData, SingleComponentData, SingleDataset
 from power_grid_model.enum import ComponentAttributeFilterOptions
@@ -131,9 +130,9 @@ def is_sparse_data_input(serialized_input_data, component):
             continue
         for scenario_comp_name_comp_idx in scenario[component]:
             if is_non_compact_list(scenario_comp_name_comp_idx):
-                scenario_ids.add(scenario_comp_name_comp_idx["id"])
+                scenario_ids.add(scenario_comp_name_comp_idx[AT.id])
             else:
-                id_attr_idx = serialized_input_data["attributes"][component].index("id")
+                id_attr_idx = serialized_input_data["attributes"][component].index(AT.id)
                 scenario_ids.add(scenario_comp_name_comp_idx[id_attr_idx])
         all_scenarios_ids.append(scenario_ids)
     first_scenario_ids = next(iter(all_scenarios_ids))
@@ -144,7 +143,7 @@ def is_sparse_data_input(serialized_input_data, component):
 def empty_dataset(dataset_type: DatasetType = DatasetType.input):
     return {
         "version": "1.0",
-        "type": dataset_type,
+        AT.type: dataset_type,
         "is_batch": False,
         "attributes": {},
         "data": {},
@@ -154,9 +153,12 @@ def empty_dataset(dataset_type: DatasetType = DatasetType.input):
 def simple_input_dataset():
     return {
         "attributes": {},
-        "data": {"node": [{"id": 5}], "source": [{"id": 6}, {"id": 7}]},
+        "data": {
+            CT.node: [{AT.id: 5}],
+            CT.source: [{AT.id: 6}, {AT.id: 7}],
+        },
         "is_batch": False,
-        "type": "input",
+        AT.type: DatasetType.input,
         "version": "1.0",
     }
 
@@ -164,9 +166,9 @@ def simple_input_dataset():
 def simple_asym_input_dataset():
     return {
         "attributes": {},
-        "data": {"asym_load": [{"id": 5, "p_specified": [10.0, 20.0, 30.0]}]},
+        "data": {CT.asym_load: [{AT.id: 5, AT.p_specified: [10.0, 20.0, 30.0]}]},
         "is_batch": False,
-        "type": "input",
+        AT.type: DatasetType.input,
         "version": "1.0",
     }
 
@@ -174,51 +176,64 @@ def simple_asym_input_dataset():
 def full_input_dataset():
     result = empty_dataset(DatasetType.input)
     result["attributes"] = {
-        "node": ["id", "u_rated"],
-        "sym_load": ["id", "node", "status", "type", "p_specified", "q_specified"],
-        "source": ["id", "node", "status", "u_ref", "sk"],
+        CT.node: [AT.id, AT.u_rated],
+        CT.sym_load: [
+            AT.id,
+            AT.node,
+            AT.status,
+            AT.type,
+            AT.p_specified,
+            AT.q_specified,
+        ],
+        CT.source: [
+            AT.id,
+            AT.node,
+            AT.status,
+            AT.u_ref,
+            AT.sk,
+        ],
     }
     result["data"] = {
-        "node": [[1, 10.5e3], [2, 10.5e3], [3, 10.5e3]],
-        "line": [
+        CT.node: [[1, 10.5e3], [2, 10.5e3], [3, 10.5e3]],
+        CT.line: [
             {
-                "id": 4,
-                "from_node": 1,
-                "to_node": 2,
-                "from_status": 1,
-                "to_status": 1,
-                "r1": 0.11,
-                "x1": 0.12,
-                "c1": 4e-05,
-                "tan1": 0.1,
-                "i_n": 500.0,
+                AT.id: 4,
+                AT.from_node: 1,
+                AT.to_node: 2,
+                AT.from_status: 1,
+                AT.to_status: 1,
+                AT.r1: 0.11,
+                AT.x1: 0.12,
+                AT.c1: 4e-05,
+                AT.tan1: 0.1,
+                AT.i_n: 500.0,
             },
             {
-                "id": 5,
-                "from_node": 2,
-                "to_node": 3,
-                "from_status": 1,
-                "to_status": 1,
-                "r1": 0.15,
-                "x1": 0.16,
-                "c1": 5e-05,
-                "tan1": 0.12,
-                "i_n": 550.0,
+                AT.id: 5,
+                AT.from_node: 2,
+                AT.to_node: 3,
+                AT.from_status: 1,
+                AT.to_status: 1,
+                AT.r1: 0.15,
+                AT.x1: 0.16,
+                AT.c1: 5e-05,
+                AT.tan1: 0.12,
+                AT.i_n: 550.0,
             },
         ],
-        "source": [
+        CT.source: [
             [15, 1, 1, 1.03, 1e20],
             [16, 1, 1, 1.04, None],
             {
-                "id": 17,
-                "node": 1,
-                "status": 1,
-                "u_ref": 1.03,
-                "sk": 1e10,
-                "rx_ratio": 0.2,
+                AT.id: 17,
+                AT.node: 1,
+                AT.status: 1,
+                AT.u_ref: 1.03,
+                AT.sk: 1e10,
+                AT.rx_ratio: 0.2,
             },
         ],
-        "sym_load": [[7, 2, 1, 0, 1.01e6, 0.21e6], [8, 3, 1, 0, 1.02e6, 0.22e6]],
+        CT.sym_load: [[7, 2, 1, 0, 1.01e6, 0.21e6], [8, 3, 1, 0, 1.02e6, 0.22e6]],
     }
     return result
 
@@ -226,13 +241,13 @@ def full_input_dataset():
 def single_update_dataset():
     result = empty_dataset(DatasetType.update)
     result["attributes"] = {
-        "sym_load": ["status", "p_specified", "q_specified"],
-        "source": ["status"],
+        CT.sym_load: [AT.status, AT.p_specified, AT.q_specified],
+        CT.source: [AT.status],
     }
     result["data"] = {
-        "line": [{}, {"from_status": 1, "to_status": 1}],
-        "source": [[1], [0], {"status": 1, "u_ref": 1.03}],
-        "sym_load": [[9, 1.01e6, 0.21e6], [10, 1.02e6, 0.22e6]],
+        CT.line: [{}, {AT.from_status: 1, AT.to_status: 1}],
+        CT.source: [[1], [0], {AT.status: 1, AT.u_ref: 1.03}],
+        CT.sym_load: [[9, 1.01e6, 0.21e6], [10, 1.02e6, 0.22e6]],
     }
     return result
 
@@ -240,18 +255,18 @@ def single_update_dataset():
 def uniform_batch_update_dataset():
     return {
         "version": "1.0",
-        "type": "update",
+        AT.type: DatasetType.update,
         "is_batch": True,
         "attributes": {
-            "sym_load": ["id", "p_specified", "q_specified"],
-            "asym_load": ["id", "p_specified"],
+            CT.sym_load: [AT.id, AT.p_specified, AT.q_specified],
+            CT.asym_load: [AT.id, AT.p_specified],
         },
         "data": [
-            {"sym_load": [[7, 20.0, 50.0]], "asym_load": [[9, [100.0, None, 200.0]]]},
-            {"sym_load": [[7, None, None]], "asym_load": [[9, None]]},
+            {CT.sym_load: [[7, 20.0, 50.0]], CT.asym_load: [[9, [100.0, None, 200.0]]]},
+            {CT.sym_load: [[7, None, None]], CT.asym_load: [[9, None]]},
             {
-                "sym_load": [{"id": 7, "status": 0}],
-                "asym_load": [{"id": 9, "q_specified": [70.0, 80.0, 90.0]}],
+                CT.sym_load: [{AT.id: 7, AT.status: 0}],
+                CT.asym_load: [{AT.id: 9, AT.q_specified: [70.0, 80.0, 90.0]}],
             },
         ],
     }
@@ -260,18 +275,18 @@ def uniform_batch_update_dataset():
 def inhomogeneous_batch_update_dataset():
     return {
         "version": "1.0",
-        "type": "update",
+        AT.type: DatasetType.update,
         "is_batch": True,
         "attributes": {
-            "sym_load": ["id", "p_specified", "q_specified"],
-            "asym_load": ["id", "p_specified"],
+            CT.sym_load: [AT.id, AT.p_specified, AT.q_specified],
+            CT.asym_load: [AT.id, AT.p_specified],
         },
         "data": [
-            {"sym_load": [[7, 20.0, 50.0]], "asym_load": [[9, [100.0, None, 200.0]]]},
-            {"asym_load": [[9, None]]},
+            {CT.sym_load: [[7, 20.0, 50.0]], CT.asym_load: [[9, [100.0, None, 200.0]]]},
+            {CT.asym_load: [[9, None]]},
             {
-                "sym_load": [[7, None, 10.0], {"id": 8, "status": 0}],
-                "asym_load": [{"id": 9, "q_specified": [70.0, 80.0, 90.0]}],
+                CT.sym_load: [[7, None, 10.0], {AT.id: 8, AT.status: 0}],
+                CT.asym_load: [{AT.id: 9, AT.q_specified: [70.0, 80.0, 90.0]}],
             },
         ],
     }
@@ -280,16 +295,16 @@ def inhomogeneous_batch_update_dataset():
 def sparse_batch_update_dataset():
     return {
         "version": "1.0",
-        "type": "update",
+        AT.type: DatasetType.update,
         "is_batch": True,
         "attributes": {},
         "data": [
-            {"sym_load": [{"id": 7, "q_specified": 50.0}]},
-            {"sym_load": [{"id": 8, "q_specified": 33.333333333333336}]},
+            {CT.sym_load: [{AT.id: 7, AT.q_specified: 50.0}]},
+            {CT.sym_load: [{AT.id: 8, AT.q_specified: 33.333333333333336}]},
             {
-                "sym_load": [
-                    {"id": 7, "q_specified": 10.0},
-                    {"id": 8, "q_specified": 2.5},
+                CT.sym_load: [
+                    {AT.id: 7, AT.q_specified: 10.0},
+                    {AT.id: 8, AT.q_specified: 2.5},
                 ]
             },
         ],
@@ -299,15 +314,15 @@ def sparse_batch_update_dataset():
 def single_sym_output_dataset():
     result = empty_dataset(DatasetType.sym_output)
     result["data"] = {
-        "node": [
+        CT.node: [
             {
-                "id": 1,
-                "energized": 1,
-                "u_pu": 1.01,
-                "u_angle": 0.21,
-                "u": 1.02e3,
-                "p": 1.01e6,
-                "q": 4.1e5,
+                AT.id: 1,
+                AT.energized: 1,
+                AT.u_pu: 1.01,
+                AT.u_angle: 0.21,
+                AT.u: 1.02e3,
+                AT.p: 1.01e6,
+                AT.q: 4.1e5,
             }
         ]
     }
@@ -319,28 +334,28 @@ def batch_sym_output_dataset():
     result["is_batch"] = True
     result["data"] = [
         {
-            "node": [
+            CT.node: [
                 {
-                    "id": 1,
-                    "energized": 1,
-                    "u_pu": 1.01,
-                    "u_angle": 0.21,
-                    "u": 1.02e3,
-                    "p": 1.01e6,
-                    "q": 4.1e5,
+                    AT.id: 1,
+                    AT.energized: 1,
+                    AT.u_pu: 1.01,
+                    AT.u_angle: 0.21,
+                    AT.u: 1.02e3,
+                    AT.p: 1.01e6,
+                    AT.q: 4.1e5,
                 }
             ]
         },
         {
-            "node": [
+            CT.node: [
                 {
-                    "id": 1,
-                    "energized": 0,
-                    "u_pu": 0.0,
-                    "u_angle": 0.0,
-                    "u": 0.0,
-                    "p": 0.0,
-                    "q": 0.0,
+                    AT.id: 1,
+                    AT.energized: 0,
+                    AT.u_pu: 0.0,
+                    AT.u_angle: 0.0,
+                    AT.u: 0.0,
+                    AT.p: 0.0,
+                    AT.q: 0.0,
                 }
             ]
         },
@@ -351,15 +366,15 @@ def batch_sym_output_dataset():
 def single_asym_output_dataset():
     result = empty_dataset(DatasetType.asym_output)
     result["data"] = {
-        "node": [
+        CT.node: [
             {
-                "id": 1,
-                "energized": 1,
-                "u_pu": [1.01, 1.06, 0.99],
-                "u_angle": [0.21, 2.01, 4.1],
-                "u": [1.02e3, 1.07e3, 9.9e2],
-                "p": [1.01e6, 1.03e6, 9.8e5],
-                "q": [4.1e5, 4.2e5, 4.0e5],
+                AT.id: 1,
+                AT.energized: 1,
+                AT.u_pu: [1.01, 1.06, 0.99],
+                AT.u_angle: [0.21, 2.01, 4.1],
+                AT.u: [1.02e3, 1.07e3, 9.9e2],
+                AT.p: [1.01e6, 1.03e6, 9.8e5],
+                AT.q: [4.1e5, 4.2e5, 4.0e5],
             }
         ]
     }
@@ -368,18 +383,18 @@ def single_asym_output_dataset():
 
 def single_sc_output_dataset():
     result = empty_dataset(DatasetType.sc_output)
-    result["attributes"] = {"fault": ["id", "i_f"]}
+    result["attributes"] = {CT.fault: [AT.id, AT.i_f]}
     result["data"] = {
-        "node": [
+        CT.node: [
             {
-                "id": 1,
-                "energized": 1,
-                "u_pu": [1.01, 1.06, 0.99],
-                "u_angle": [0.21, 2.01, 4.1],
-                "u": [1.02e3, 1.07e3, 9.9e2],
+                AT.id: 1,
+                AT.energized: 1,
+                AT.u_pu: [1.01, 1.06, 0.99],
+                AT.u_angle: [0.21, 2.01, 4.1],
+                AT.u: [1.02e3, 1.07e3, 9.9e2],
             }
         ],
-        "fault": [{"id": 1, "i_f": [3.0e3, 2.0e3, 3.4e3]}],
+        CT.fault: [{AT.id: 1, AT.i_f: [3.0e3, 2.0e3, 3.4e3]}],
     }
     return result
 
@@ -409,15 +424,15 @@ def serialized_data(request):
         pytest.param(None, id="All row filter"),
         pytest.param(ComponentAttributeFilterOptions.everything, id="All columnar filter"),
         pytest.param(ComponentAttributeFilterOptions.relevant, id="All relevant columnar filter"),
-        pytest.param({ComponentType.node: ["id"], "sym_load": ["id"]}, id="columnar filter"),
-        pytest.param({ComponentType.node: ["id"], "sym_load": None}, id="mixed columnar/row filter"),
-        pytest.param({ComponentType.node: ["id"], "shunt": None}, id="unused component filter"),
+        pytest.param({CT.node: [AT.id], CT.sym_load: [AT.id]}, id="columnar filter"),
+        pytest.param({CT.node: [AT.id], CT.sym_load: None}, id="mixed columnar/row filter"),
+        pytest.param({CT.node: [AT.id], CT.shunt: None}, id="unused component filter"),
         pytest.param(
             {
-                ComponentType.node: ["id"],
-                "line": ComponentAttributeFilterOptions.everything,
-                "sym_load": None,
-                "asym_load": ComponentAttributeFilterOptions.relevant,
+                CT.node: [AT.id],
+                CT.line: ComponentAttributeFilterOptions.everything,
+                CT.sym_load: None,
+                CT.asym_load: ComponentAttributeFilterOptions.relevant,
             },
             id="mixed filter",
         ),
@@ -681,7 +696,7 @@ def test_json_deserialize_data(serialized_data, data_filters, raw_buffer: bool):
 
     if is_serialized_data_type_deducible(serialized_data, data_filter=data_filters):
         result_type = get_dataset_type(result)
-        assert result_type == serialized_data["type"]
+        assert result_type == serialized_data[AT.type]
 
 
 def test_msgpack_deserialize_data(serialized_data, data_filters):
@@ -693,7 +708,7 @@ def test_msgpack_deserialize_data(serialized_data, data_filters):
 
     if is_serialized_data_type_deducible(serialized_data, data_filter=data_filters):
         result_type = get_dataset_type(result)
-        assert result_type == serialized_data["type"]
+        assert result_type == serialized_data[AT.type]
 
 
 @pytest.mark.parametrize(
@@ -754,7 +769,7 @@ def test_msgpack_serialize_empty_dataset(dataset_type, use_compact_list):
 )
 def test_serialize_deserialize_type_deduction(deserialize, serialize, serialized_data, data_filters, pack):
     deserialized_data = deserialize(pack(serialized_data), data_filter=data_filters)
-    full_result = serialize(deserialized_data, serialized_data["type"])
+    full_result = serialize(deserialized_data, serialized_data[AT.type])
 
     if is_serialized_data_type_deducible(serialized_data, data_filter=data_filters):
         assert serialize(deserialized_data) == full_result
@@ -777,10 +792,10 @@ def test_serialize_deserialize_double_round_trip(deserialize, serialize, seriali
     test_data = pack(serialized_data)
 
     deserialized_result_a = deserialize(test_data, data_filters)
-    serialized_result_a = serialize(deserialized_result_a, dataset_type=serialized_data["type"])
+    serialized_result_a = serialize(deserialized_result_a, dataset_type=serialized_data[AT.type])
 
     deserialized_result_b = deserialize(serialized_result_a, data_filters)
-    serialized_result_b = serialize(deserialized_result_b, dataset_type=serialized_data["type"])
+    serialized_result_b = serialize(deserialized_result_b, dataset_type=serialized_data[AT.type])
 
     assert serialized_result_a == serialized_result_b
     assert list(deserialized_result_b) == list(deserialized_result_a)
@@ -825,7 +840,7 @@ def test_messagepack_round_trip_with_stream(serialized_data):
     input_data: Dataset = msgpack_deserialize(data)
 
     io_buffer_data = BytesIO()
-    msgpack_serialize_to_stream(io_buffer_data, input_data, dataset_type=serialized_data["type"])
+    msgpack_serialize_to_stream(io_buffer_data, input_data, dataset_type=serialized_data[AT.type])
     io_buffer_data.seek(0)
     output_data = msgpack_deserialize_from_stream(io_buffer_data)
     assert str(output_data) == str(input_data)
@@ -837,7 +852,7 @@ def test_messagepack_to_stream_text_type_error(serialized_data):
 
     io_buffer_data = TextIOBase()
     with pytest.raises(TypeError, match=re.escape("Expected a binary stream.")):
-        msgpack_serialize_to_stream(io_buffer_data, input_data, dataset_type=serialized_data["type"])
+        msgpack_serialize_to_stream(io_buffer_data, input_data, dataset_type=serialized_data[AT.type])
 
 
 def test_messagepack_from_stream_text_type_error():
@@ -858,4 +873,4 @@ def test_messagepack_to_stream_writable_error(serialized_data):
 
     io_buffer_data = FakeRawIO(initial_bytes=b"bla")
     with pytest.raises(UnsupportedOperation, match=re.escape("Stream is not writable.")):
-        msgpack_serialize_to_stream(io_buffer_data, input_data, dataset_type=serialized_data["type"])
+        msgpack_serialize_to_stream(io_buffer_data, input_data, dataset_type=serialized_data[AT.type])

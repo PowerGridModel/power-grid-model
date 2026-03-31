@@ -8,9 +8,7 @@
 #define PGM_DLL_EXPORTS
 #endif
 
-#include "forward_declarations.hpp"
-
-#include "power_grid_model_c/options.h"
+#include "power_grid_model_c/basics.h"
 
 #include <power_grid_model/common/common.hpp>
 

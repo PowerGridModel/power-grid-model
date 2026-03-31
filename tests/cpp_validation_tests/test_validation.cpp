@@ -4,34 +4,46 @@
 
 #define PGM_ENABLE_EXPERIMENTAL
 
-#include <power_grid_model_cpp.hpp>
+#include <power_grid_model_c/basics.h>
+#include <power_grid_model_cpp/basics.hpp>
+#include <power_grid_model_cpp/buffer.hpp>
+#include <power_grid_model_cpp/dataset.hpp>
+#include <power_grid_model_cpp/handle.hpp>
+#include <power_grid_model_cpp/meta_data.hpp>
+#include <power_grid_model_cpp/model.hpp>
+#include <power_grid_model_cpp/options.hpp>
+#include <power_grid_model_cpp/serialization.hpp>
+#include <power_grid_model_cpp/utils.hpp>
 
 #include <doctest/doctest.h>
 #include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
 
+#include <algorithm>
+#include <array>
 #include <complex>
 #include <concepts>
 #include <cstdlib>
 #include <cstring>
+#include <exception>
 #include <filesystem>
 #include <format>
 #include <fstream>
+#include <functional>
+#include <iomanip>
 #include <iostream>
-#include <limits>
-#include <numeric>
+#include <map>
 #include <optional>
 #include <regex>
-#include <stdexcept>
+#include <sstream>
+#include <string>
+#include <string_view>
 #include <type_traits>
+#include <utility>
+#include <vector>
 
 namespace power_grid_model_cpp {
 namespace {
-class UnsupportedValidationCase : public PowerGridError {
-  public:
-    UnsupportedValidationCase(std::string const& calculation_type, bool sym)
-        : PowerGridError{std::format("Unsupported validation case: {} {}", sym ? "sym" : "asym", calculation_type)} {}
-};
-
 using nlohmann::json;
 
 auto read_json(std::filesystem::path const& path) {
@@ -39,43 +51,6 @@ auto read_json(std::filesystem::path const& path) {
     std::ifstream f{path};
     f >> j;
     return j;
-}
-
-OwningDataset create_result_dataset(OwningDataset const& input, std::string const& dataset_name, bool is_batch = false,
-                                    Idx batch_size = 1) {
-    DatasetInfo const& input_info = input.dataset.get_info();
-
-    OwningDataset result{.dataset = DatasetMutable{dataset_name, is_batch, batch_size}, .storage{}};
-
-    for (Idx component_idx{}; component_idx != input_info.n_components(); ++component_idx) {
-        auto const& component_name = input_info.component_name(component_idx);
-        auto const& component_meta = MetaData::get_component_by_name(dataset_name, component_name);
-        Idx const component_elements_per_scenario = input_info.component_elements_per_scenario(component_idx);
-        Idx const component_size = input_info.component_total_elements(component_idx);
-
-        auto& current_indptr = result.storage.indptrs.emplace_back(
-            input_info.component_elements_per_scenario(component_idx) < 0 ? batch_size + 1 : 0);
-        Idx const* const indptr = current_indptr.empty() ? nullptr : current_indptr.data();
-        auto& current_buffer = result.storage.buffers.emplace_back(component_meta, component_size);
-        result.dataset.add_buffer(component_name, component_elements_per_scenario, component_size, indptr,
-                                  current_buffer);
-    }
-    return result;
-}
-
-OwningDataset load_dataset(std::filesystem::path const& path) {
-    auto read_file = [](std::filesystem::path const& read_file_path) {
-        std::ifstream const f{read_file_path};
-        std::ostringstream buffer;
-        buffer << f.rdbuf();
-        return buffer.str();
-    };
-
-    Deserializer deserializer{read_file(path), PGM_json};
-    auto& writable_dataset = deserializer.get_dataset();
-    auto dataset = create_owning_dataset(writable_dataset);
-    deserializer.parse_to_buffer();
-    return dataset;
 }
 
 template <typename T> std::string get_as_string(T const& attribute_value) {
@@ -199,7 +174,13 @@ class Subcase {
             {"InvalidCalculationMethod", std::regex{"The calculation method is invalid for this calculation!"}},
             {"InvalidShortCircuitPhaseOrType", std::regex{"short circuit type"}}, // multiple different flavors
             {"TapStrategySearchIncompatible", std::regex{"Search method is incompatible with optimization strategy: "}},
-            {"PowerGridDatasetError", std::regex{"Dataset error: "}}, // multiple different flavors
+            {"UnsupportedRegulatorCombinationError", std::regex{"The combination of voltage regulators and transformer "
+                                                                "tap regulators is not supported in the same model."}},
+            {"UnsupportedVoltageRegulatorSourceCombinationError",
+             std::regex{"Nodes with a source and a voltage regulated load/generator are not supported when both are "
+                        "enabled. Found at node with id (-?\\d+)"}},
+            {"ExperimentalFeature", std::regex{" is an experimental feature"}}, // multiple different flavors
+            {"PowerGridDatasetError", std::regex{"Dataset error: "}},           // multiple different flavors
             {"PowerGridUnreachableHit",
              std::regex{"Unreachable code hit when executing "}}, // multiple different flavors
             {"PowerGridNotImplementedError",
@@ -346,7 +327,7 @@ void assert_result(OwningDataset const& owning_result, OwningDataset const& owni
                 auto attribute_type = MetaData::attribute_ctype(attribute_meta);
                 auto const& attribute_name = MetaData::attribute_name(attribute_meta);
                 // TODO need a way for common angle: u angle skipped for now
-                if (attribute_name == "u_angle"s) {
+                if (attribute_name == "u_angle"s) { // NOLINT(misc-include-cleaner)
                     continue;
                 }
                 // get absolute tolerance
@@ -415,11 +396,11 @@ std::map<std::string, PGM_ExperimentalFeatures, std::less<>> const experimental_
 struct CaseParam {
     std::filesystem::path case_dir;
     std::string case_name;
-    std::string calculation_type;
-    std::string calculation_method;
-    std::string short_circuit_voltage_scaling;
-    std::string tap_changing_strategy;
-    std::string experimental_features;
+    PGM_CalculationType calculation_type;
+    PGM_CalculationMethod calculation_method;
+    PGM_ShortCircuitVoltageScaling short_circuit_voltage_scaling;
+    PGM_TapChangingStrategy tap_changing_strategy;
+    PGM_ExperimentalFeatures experimental_features;
     double err_tol = 1e-8;
     Idx max_iter = 20;
     bool sym{};
@@ -438,39 +419,28 @@ struct CaseParam {
 
 Options get_options(CaseParam const& param, Idx threading = -1) {
     Options options{};
-    options.set_calculation_type(calculation_type_mapping.at(param.calculation_type));
-    options.set_calculation_method(calculation_method_mapping.at(param.calculation_method));
+    options.set_calculation_type(param.calculation_type);
+    options.set_calculation_method(param.calculation_method);
     options.set_symmetric(param.sym ? PGM_symmetric : PGM_asymmetric);
     options.set_err_tol(param.err_tol);
     options.set_max_iter(param.max_iter);
     options.set_threading(threading);
-    options.set_short_circuit_voltage_scaling(sc_voltage_scaling_mapping.at(param.short_circuit_voltage_scaling));
-    options.set_tap_changing_strategy(optimizer_strategy_mapping.at(param.tap_changing_strategy));
-    options.set_experimental_features(experimental_features_mapping.at(param.experimental_features));
+    options.set_short_circuit_voltage_scaling(param.short_circuit_voltage_scaling);
+    options.set_tap_changing_strategy(param.tap_changing_strategy);
+    options.set_experimental_features(param.experimental_features);
     return options;
 }
 
-std::string get_output_type(std::string const& calculation_type, bool sym) {
-    using namespace std::string_literals;
-
-    if (calculation_type == "short_circuit"s) {
-        if (sym) {
-            throw UnsupportedValidationCase{calculation_type, sym};
-        }
-        return "sc_output"s;
-    }
-    if (sym) {
-        return "sym_output"s;
-    }
-    return "asym_output"s;
-}
-
 std::optional<CaseParam> construct_case(std::filesystem::path const& case_dir, json const& j,
-                                        std::string const& calculation_type, bool is_batch,
-                                        std::string const& calculation_method, bool sym) {
+                                        std::string const& calculation_type_str, bool is_batch,
+                                        std::string const& calculation_method_str, bool sym) {
     using namespace std::string_literals;
 
     auto const batch_suffix = is_batch ? "_batch"s : ""s;
+
+    // Convert strings to enums
+    PGM_CalculationType const calculation_type = calculation_type_mapping.at(calculation_type_str);
+    PGM_CalculationMethod const calculation_method = calculation_method_mapping.at(calculation_method_str);
 
     // add a case if output file exists
     std::filesystem::path const output_file =
@@ -497,8 +467,8 @@ std::optional<CaseParam> construct_case(std::filesystem::path const& case_dir, j
     json calculation_method_params;
     calculation_method_params.update(j, true);
     if (j.contains("extra_params")) {
-        if (json const& extra_params = j.at("extra_params"); extra_params.contains(calculation_method)) {
-            calculation_method_params.update(extra_params.at(calculation_method), true);
+        if (json const& extra_params = j.at("extra_params"); extra_params.contains(calculation_method_str)) {
+            calculation_method_params.update(extra_params.at(calculation_method_str), true);
         }
     }
 
@@ -512,14 +482,18 @@ std::optional<CaseParam> construct_case(std::filesystem::path const& case_dir, j
             param.xfail = xfail.at("raises").get<std::string>();
         }
     }
-    if (calculation_type == "short_circuit") {
-        calculation_method_params.at("short_circuit_voltage_scaling").get_to(param.short_circuit_voltage_scaling);
+    if (calculation_type == PGM_short_circuit) {
+        std::string const sc_scaling_str =
+            calculation_method_params.at("short_circuit_voltage_scaling").get<std::string>();
+        param.short_circuit_voltage_scaling = sc_voltage_scaling_mapping.at(sc_scaling_str);
     }
 
-    param.tap_changing_strategy = calculation_method_params.value("tap_changing_strategy", "disabled");
-    param.experimental_features = calculation_method_params.value("experimental_features", "disabled");
+    std::string const tap_strategy_str = calculation_method_params.value("tap_changing_strategy", "disabled");
+    param.tap_changing_strategy = optimizer_strategy_mapping.at(tap_strategy_str);
+    std::string const experimental_features_str = calculation_method_params.value("experimental_features", "disabled");
+    param.experimental_features = experimental_features_mapping.at(experimental_features_str);
     param.case_name += sym ? "-sym"s : "-asym"s;
-    param.case_name += "-"s + param.calculation_method;
+    param.case_name += "-"s + calculation_method_str;
     param.case_name += is_batch ? "_batch"s : ""s;
 
     return param;
@@ -566,17 +540,17 @@ struct ValidationCase {
 ValidationCase create_validation_case(CaseParam const& param, std::string const& output_type) {
     // input
     ValidationCase validation_case{.param = param,
-                                   .input = load_dataset(param.case_dir / "input.json"),
+                                   .input = load_dataset(param.case_dir / "input.json", PGM_json, true),
                                    .output = std::nullopt,
                                    .update_batch = std::nullopt,
                                    .output_batch = std::nullopt};
 
     // output and update
     if (!param.is_batch) {
-        validation_case.output = load_dataset(param.case_dir / (output_type + ".json"));
+        validation_case.output = load_dataset(param.case_dir / (output_type + ".json"), PGM_json);
     } else {
-        validation_case.update_batch = load_dataset(param.case_dir / "update_batch.json");
-        validation_case.output_batch = load_dataset(param.case_dir / (output_type + "_batch.json"));
+        validation_case.update_batch = load_dataset(param.case_dir / "update_batch.json", PGM_json);
+        validation_case.output_batch = load_dataset(param.case_dir / (output_type + "_batch.json"), PGM_json);
     }
     return validation_case;
 }
@@ -638,7 +612,7 @@ void validate_single_case(CaseParam const& param) {
     execute_test(param, [&param](Subcase& subcase) {
         auto const output_prefix = get_output_type(param.calculation_type, param.sym);
         auto const validation_case = create_validation_case(param, output_prefix);
-        auto const result = create_result_dataset(validation_case.output.value(), output_prefix);
+        OwningDataset const result{validation_case.output.value(), param.calculation_type, param.sym};
 
         // create and run model
         auto const& options = get_options(param);
@@ -656,8 +630,8 @@ void validate_batch_case(CaseParam const& param) {
         auto const validation_case = create_validation_case(param, output_prefix);
         auto const& info = validation_case.update_batch.value().dataset.get_info();
         Idx const batch_size = info.batch_size();
-        auto const batch_result =
-            create_result_dataset(validation_case.output_batch.value(), output_prefix, true, batch_size);
+        OwningDataset const batch_result{validation_case.output_batch.value(), param.calculation_type, param.sym, true,
+                                         batch_size};
 
         // create model
         Model model{50.0, validation_case.input.dataset};
@@ -680,7 +654,7 @@ void validate_batch_case(CaseParam const& param) {
 TEST_CASE("Validation test single - power flow") {
     std::vector<CaseParam> const& all_cases = get_all_single_cases();
     for (CaseParam const& param : all_cases) {
-        if (param.calculation_type == "power_flow") {
+        if (param.calculation_type == PGM_power_flow) {
             SUBCASE(param.case_name.c_str()) { validate_single_case(param); }
         }
     }
@@ -689,7 +663,7 @@ TEST_CASE("Validation test single - power flow") {
 TEST_CASE("Validation test single - state estimation") {
     std::vector<CaseParam> const& all_cases = get_all_single_cases();
     for (CaseParam const& param : all_cases) {
-        if (param.calculation_type == "state_estimation") {
+        if (param.calculation_type == PGM_state_estimation) {
             SUBCASE(param.case_name.c_str()) { validate_single_case(param); }
         }
     }
@@ -698,7 +672,7 @@ TEST_CASE("Validation test single - state estimation") {
 TEST_CASE("Validation test single - short circuit") {
     std::vector<CaseParam> const& all_cases = get_all_single_cases();
     for (CaseParam const& param : all_cases) {
-        if (param.calculation_type == "short_circuit") {
+        if (param.calculation_type == PGM_short_circuit) {
             SUBCASE(param.case_name.c_str()) { validate_single_case(param); }
         }
     }
@@ -708,7 +682,7 @@ TEST_CASE("Validation test batch - power flow") {
     std::vector<CaseParam> const& all_cases = get_all_batch_cases();
 
     for (CaseParam const& param : all_cases) {
-        if (param.calculation_type == "power_flow") {
+        if (param.calculation_type == PGM_power_flow) {
             SUBCASE(param.case_name.c_str()) { validate_batch_case(param); }
         }
     }
@@ -718,7 +692,7 @@ TEST_CASE("Validation test batch - state estimation") {
     std::vector<CaseParam> const& all_cases = get_all_batch_cases();
 
     for (CaseParam const& param : all_cases) {
-        if (param.calculation_type == "state_estimation") {
+        if (param.calculation_type == PGM_state_estimation) {
             SUBCASE(param.case_name.c_str()) { validate_batch_case(param); }
         }
     }
@@ -728,7 +702,7 @@ TEST_CASE("Validation test batch - short circuit") {
     std::vector<CaseParam> const& all_cases = get_all_batch_cases();
 
     for (CaseParam const& param : all_cases) {
-        if (param.calculation_type == "short_circuit") {
+        if (param.calculation_type == PGM_short_circuit) {
             SUBCASE(param.case_name.c_str()) { validate_batch_case(param); }
         }
     }

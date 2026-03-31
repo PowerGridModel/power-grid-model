@@ -4,8 +4,13 @@
 
 #pragma once
 
+#include "../common/common.hpp"
+
 #include <array>
-#include <vector>
+#include <cstddef>
+#include <tuple>
+#include <utility>
+
 namespace power_grid_model::main_core::utils {
 
 namespace detail {

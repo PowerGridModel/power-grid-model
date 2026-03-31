@@ -168,6 +168,8 @@ That is to say, if there exists a tree that visits all nodes in the network, the
 
 ```{warning}
 The handling of voltage phasor sensor in the context of observability check is still work in progress.
+When there is more than 1 voltage phasor present in a meshed network, the sufficient check will pass the network
+through to the state estimation calculation directly. 
 ```
 
 In this case, the validation of the independent measurements is rather straightforward.
@@ -213,8 +215,8 @@ Hence, they can be constructed by PGM output attributes in the following way:
 - For  $\underline{I}$ of branches, `i_side` is the magnitude.
   Its angle can be found from `p_side` and `q_side` by:
   $\arctan(\frac{P_{side} + j \cdot Q_{side}}{\underline{U}})^{*}$.
-  The `side` here can be `from`, `to` for {hoverxreftooltip}`user_manual/components:Branch`es, `1`, `2`, `3` for
-  {hoverxreftooltip}`user_manual/components:Branch3`s.
+  The `side` here can be `from`, `to` for [Branch](../user_manual/components.md#branch)es, `1`, `2`, `3` for
+  [Branch3](../user_manual/components.md#branch3)s.
 
 #### Symmetric vs asymmetric calculations
 
@@ -317,46 +319,46 @@ $$
 Where:
 
 $$
-    \begin{eqnarray}
-        x    =  \begin{bmatrix}
-                \delta \\
-                U
-                \end{bmatrix} =
-                \begin{bmatrix}
-                \delta_2 \\
-                \vdots \\
-                \delta_N \\
-                U_2 \\
-                \vdots \\
-                U_N
-                \end{bmatrix}
-        \quad\text{and}\quad
-        y    =  \begin{bmatrix}
-                P \\
-                Q
-                \end{bmatrix} =
-                \begin{bmatrix}
-                P_2 \\
-                \vdots \\
-                P_N \\
-                Q_2 \\
-                \vdots \\
-                Q_N
-                \end{bmatrix}
-        \quad\text{and}\quad
-        f(x) =  \begin{bmatrix}
-                P(x) \\
-                Q(x)
-                \end{bmatrix} =
-                \begin{bmatrix}
-                P_{2}(x) \\
-                \vdots \\
-                P_{N}(x) \\
-                Q_{2}(x) \\
-                \vdots \\
-                Q_{N}(x)
-                \end{bmatrix}
-    \end{eqnarray}
+\begin{aligned}
+    x    =  \begin{bmatrix}
+            \delta \\
+            U
+            \end{bmatrix} =
+            \begin{bmatrix}
+            \delta_2 \\
+            \vdots \\
+            \delta_N \\
+            U_2 \\
+            \vdots \\
+            U_N
+            \end{bmatrix}
+    \quad\text{and}\quad
+    y    =  \begin{bmatrix}
+            P \\
+            Q
+            \end{bmatrix} =
+            \begin{bmatrix}
+            P_2 \\
+            \vdots \\
+            P_N \\
+            Q_2 \\
+            \vdots \\
+            Q_N
+            \end{bmatrix}
+    \quad\text{and}\quad
+    f(x) =  \begin{bmatrix}
+            P(x) \\
+            Q(x)
+            \end{bmatrix} =
+            \begin{bmatrix}
+            P_{2}(x) \\
+            \vdots \\
+            P_{N}(x) \\
+            Q_{2}(x) \\
+            \vdots \\
+            Q_{N}(x)
+            \end{bmatrix}
+\end{aligned}
 $$
 
 As can be seen in the equations above $\delta_1$ and $V_1$ are omitted, because they are known for the slack bus.
@@ -470,14 +472,14 @@ Weighted least squares (WLS) state estimation can be performed with power-grid-m
 Given a grid with $N_b$ buses the state variable column vector is defined as below.
 
 $$
-    \begin{eqnarray}
-            \underline{U}     =     \begin{bmatrix}
-                            \underline{U}_1 \\
-                            \underline{U}_2 \\
-                            \vdots \\
-                            \underline{U}_{N_{b}}
-                        \end{bmatrix}
-    \end{eqnarray}
+\begin{aligned}
+        \underline{U}     =     \begin{bmatrix}
+                        \underline{U}_1 \\
+                        \underline{U}_2 \\
+                        \vdots \\
+                        \underline{U}_{N_{b}}
+                    \end{bmatrix}
+\end{aligned}
 $$
 
 Where $\underline{U}_i$ is the complex voltage phasor of the i-th bus.
@@ -494,35 +496,35 @@ $$
 Where:
 
 $$
-    \begin{eqnarray}
-        \underline{x}     =  \begin{bmatrix}
-                \underline{x}_1 \\
-                \underline{x}_2 \\
-                \vdots \\
-                \underline{x}_{N_{m}}
-                \end{bmatrix} =
-                f(\underline{U})
-        \quad\text{and}\quad
-        \underline{z}     =  \begin{bmatrix}
-                \underline{z}_1 \\
-                \underline{z}_2 \\
-                \vdots \\
-                \underline{z}_{N_{m}}
-                \end{bmatrix}
-        \quad\text{and}\quad
-        W  = \Sigma^{-1} =  \begin{bmatrix}
-                \sigma_1^2 & 0 & \cdots & 0 \\
-                0 & \sigma_2^2 & \cdots & 0 \\
-                \vdots & \vdots & \ddots & \vdots \\
-                0 & 0 & \cdots & \sigma_{N_{m}}^2
-                \end{bmatrix} ^{-1} =
-                \begin{bmatrix}
-                w_1 & 0 & \cdots & 0 \\
-                0 & w_2 & \cdots & 0 \\
-                \vdots & \vdots & \ddots & \vdots \\
-                0 & 0 & \cdots & w_{N_{m}}
-                \end{bmatrix}
-    \end{eqnarray}
+\begin{aligned}
+    \underline{x}     =  \begin{bmatrix}
+            \underline{x}_1 \\
+            \underline{x}_2 \\
+            \vdots \\
+            \underline{x}_{N_{m}}
+            \end{bmatrix} =
+            f(\underline{U})
+    \quad\text{and}\quad
+    \underline{z}     =  \begin{bmatrix}
+            \underline{z}_1 \\
+            \underline{z}_2 \\
+            \vdots \\
+            \underline{z}_{N_{m}}
+            \end{bmatrix}
+    \quad\text{and}\quad
+    W  = \Sigma^{-1} =  \begin{bmatrix}
+            \sigma_1^2 & 0 & \cdots & 0 \\
+            0 & \sigma_2^2 & \cdots & 0 \\
+            \vdots & \vdots & \ddots & \vdots \\
+            0 & 0 & \cdots & \sigma_{N_{m}}^2
+            \end{bmatrix} ^{-1} =
+            \begin{bmatrix}
+            w_1 & 0 & \cdots & 0 \\
+            0 & w_2 & \cdots & 0 \\
+            \vdots & \vdots & \ddots & \vdots \\
+            0 & 0 & \cdots & w_{N_{m}}
+            \end{bmatrix}
+\end{aligned}
 $$
 
 Where $\underline{x}_i$ is the real value of the i-th measured quantity in complex form, $\underline{z}_i$ is the i-th
@@ -616,10 +618,22 @@ See also [the full mathematical workout](https://github.com/PowerGridModel/power
 
 $$
    \begin{eqnarray}
-        & \mathrm{Re}\left\{I\right\} = I \cos\theta \\
-        & \mathrm{Im}\left\{I\right\} = I \sin\theta \\
+        & \mathrm{Re}\left\{I\right\} = I \cos\theta
+   \end{eqnarray}
+$$
+$$
+   \begin{eqnarray}
+        & \mathrm{Im}\left\{I\right\} = I \sin\theta
+   \end{eqnarray}
+$$
+$$
+   \begin{eqnarray}
         & \text{Var}\left(\mathrm{Re}\left\{I\right\}\right) =
-            \sigma_i^2 \cos^2\theta + I^2 \sigma_{\theta}^2\sin^2\theta \\
+            \sigma_i^2 \cos^2\theta + I^2 \sigma_{\theta}^2\sin^2\theta
+   \end{eqnarray}
+$$
+$$
+   \begin{eqnarray}
         & \text{Var}\left(\mathrm{Im}\left\{I\right\}\right) =
             \sigma_i^2 \sin^2\theta + I^2 \sigma_{\theta}^2\cos^2\theta
    \end{eqnarray}
@@ -876,7 +890,8 @@ Please refer to their respective sections for detailed documentation.
 #### Power flow with automatic tap changing
 
 Some of the most important regulators in the grid affect the tap position of transformers.
-These {hoverxreftooltip}`user_manual/components:Transformer Tap Regulator`s try to regulate a control voltage
+These [Transformer Tap Regulator](../user_manual/components.md#transformer-tap-regulator)s try to regulate
+a control voltage
 $U_{\text{control}}$ such that it is within a specified voltage band.
 The $U_{\text{control}}$ may be compensated for the voltage drop during transport.
 Power flow calculations that take the behavior of these regulators into account may be toggled by providing one of the
@@ -898,17 +913,18 @@ For simplicity, we demonstrate the case where the regulator control side and the
 sides.
 
 - Regulated transformers are ranked according to how close they are to
-  {hoverxreftooltip}`sources <user_manual/components:source>` in terms of the amount of regulated transformers
+  [sources](../user_manual/components.md#source) in terms of the amount of regulated transformers
   inbetween.
   In the presence of meshed grids, transformers with conflicting ranks will be ranked the last.
   - Transformers are regulated in order according to their ranks.
-- Initialize all transformers to their starting tap position (see
-  {hoverxreftooltip}`user_manual/calculations:Initialization and exploitation of regulated transformers`)
+- Initialize all transformers to their starting tap position
+  (see [Initialization and exploitation of regulated transformers](
+    #initialization-and-exploitation-of-regulated-transformers))
 - Find the optimal state using the following procedure
   - While some transformers can still be further regulated, iterate as follows:
     - Run a power flow calculation with the current tap positions with the specified
       [calculation method](#power-flow-algorithms).
-    - Start with the transformers ranked closest to a {hoverxreftooltip}`user_manual/components:source` (because the
+    - Start with the transformers ranked closest to a [source](../user_manual/components.md#source) (because the
       source provides a relatively stable voltage level and these transformers will have a high impact on the rest of
       the grid).
     - Loop over all ranks:
@@ -928,12 +944,14 @@ sides.
         - A better combination of tap positions may have been found.
         - Step out of the loop and go to the next iteration step.
   - Exploit the neighbourhood of all transformers (see
-    {hoverxreftooltip}`user_manual/calculations:Initialization and exploitation of regulated transformers`)
+    [Initialization and exploitation of regulated transformers](
+      #initialization-and-exploitation-of-regulated-transformers))
     - Re-run the iteration in the above if any of the tap positions changed by the exploitation.
 
 In the case where the control side of the regulator and the tap side of the transformer are at the same side, the
 control logic of taps will be reverted (see
-{hoverxreftooltip}`user_manual/calculations:Initialization and exploitation of regulated transformers`).
+[Initialization and exploitation of regulated transformers](
+  #initialization-and-exploitation-of-regulated-transformers)).
 The exploitation of the neighbourhood ensures that the actual optimum is not accidentally missed due to feedback
 mechanisms in the grid.
 
@@ -950,14 +968,14 @@ method.
 The control logic assumes that changes in the voltage level at a transformer are dominated by changes in the tap
 position of the transformer itself, rather than by adjacent transformers.
 This assumption is reflected in the requirements mentioned in
-{hoverxreftooltip}`user_manual/components:Transformer Tap Regulator`.
+[Transformer Tap Regulator](../user_manual/components.md#transformer-tap-regulator).
 ```
 
 ```{note}
 If the line drop compensation impedance is high, and the control side has generator-like behavior, then this assumption
 does not hold, and the calculation may diverge.
 Hence, this assumption is reflected in the requirements mentioned in
-{hoverxreftooltip}`user_manual/components:Line drop compensation`.
+[Line drop compensation](../user_manual/components.md#line-drop-compensation).
 ```
 
 ##### Initialization and exploitation of regulated transformers
@@ -1060,15 +1078,15 @@ See the [Performance Guide](performance-guide.md#using-independent-batches) for 
 ```py
 # 3 scenarios, 3 objects (lines)
 # for each scenario, only one line is specified
-line_update = initialize_array('update', 'line', (3, 1))
+line_update = initialize_array(DatasetType.update, ComponentType.line, (3, 1))
 
 # set the mutations for each scenario: disable one of the three lines
 for component_update, component_id in zip(line_update, (3, 5, 8)):
-    component_update['id'] = component_id
-    component_update['from_status'] = 0
-    component_update['to_status'] = 0
+    component_update[AttributeType.id] = component_id
+    component_update[AttributeType.from_status] = 0
+    component_update[AttributeType.to_status] = 0
 
-non_independent_update_data = {'line': line_update}
+non_independent_update_data = {ComponentType.line: line_update}
 ```
 
 #### Example: full batch update data
@@ -1076,20 +1094,20 @@ non_independent_update_data = {'line': line_update}
 ```py
 # 3 scenarios, 3 objects (lines)
 # for each scenario, all lines are specified
-line_update = initialize_array('update', 'line', (3, 3))
+line_update = initialize_array(DatasetType.update, ComponentType.line, (3, 3))
 
 # use broadcasting to specify the default state
-line_update['id'] = [[3, 5, 8]]
-line_update['from_status'] = 1
-line_update['to_status'] = 1
+line_update[AttributeType.id] = [[3, 5, 8]]
+line_update[AttributeType.from_status] = 1
+line_update[AttributeType.to_status] = 1
 
 # set the mutations for each scenario: disable one of the three lines
 for component_idx, scenario in enumerate(line_update):
     component = scenario[component_idx]
-    component['from_status'] = 0
-    component['to_status'] = 0
+    component[AttributeType.from_status] = 0
+    component[AttributeType.to_status] = 0
 
-independent_update_data = {'line': line_update}
+independent_update_data = {ComponentType.line: line_update}
 ```
 
 ### Cartesian product of Batch Datasets
@@ -1106,12 +1124,12 @@ The output of such calculation would be flattened with dimension $scenarios * co
 
 ```py
 # 5 scenarios of timeseries
-load_update = initialize_array('update', 'sym_load', (5, 1))
+load_update = initialize_array(DatasetType.update, ComponentType.sym_load, (5, 1))
 # (Fill load_update)
-line_update = initialize_array('update', 'line', (3, 1))
+line_update = initialize_array(DatasetType.update, ComponentType.line, (3, 1))
 # (Fill line_update)
 
-product_update_data = [{'line': load_update}, {'sym_load': line_udpate }]
+product_update_data = [{ComponentType.line: load_update}, {ComponentType.sym_load: line_udpate }]
 ```
 
 ### Parallel Computing

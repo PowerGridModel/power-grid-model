@@ -2,22 +2,29 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include <power_grid_model/batch_parameter.hpp>
-#include <power_grid_model/common/common.hpp>
-#include <power_grid_model/common/dummy_logging.hpp>
-#include <power_grid_model/common/exception.hpp>
-#include <power_grid_model/common/multi_threaded_logging.hpp>
 #include <power_grid_model/job_dispatch.hpp>
 #include <power_grid_model/job_interface.hpp>
+
+#include <power_grid_model/batch_parameter.hpp>
+#include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/exception.hpp>
+#include <power_grid_model/common/logging.hpp>
+#include <power_grid_model/common/multi_threaded_logging.hpp>
 #include <power_grid_model/main_core/core_utils.hpp>
 
 #include <doctest/doctest.h>
 
 #include <algorithm>
 #include <atomic>
+#include <memory>
 #include <mutex>
 #include <ranges>
-#include <variant>
+#include <stdexcept>
+#include <string>
+#include <thread>
+#include <type_traits>
+#include <utility>
+#include <vector>
 
 namespace power_grid_model {
 namespace {
@@ -94,56 +101,6 @@ class JobAdapterMock : public JobInterface {
 class SomeTestException : public std::runtime_error {
   public:
     using std::runtime_error::runtime_error;
-};
-
-class TestLogger : public common::logging::Logger {
-  public:
-    struct EmptyEvent {};
-    static constexpr EmptyEvent empty_event{};
-
-    struct Entry {
-        LogEvent event;
-        std::variant<EmptyEvent, std::string, double, Idx> data;
-    };
-    using Data = std::vector<Entry>;
-
-    // Mock logger for testing
-    void log(LogEvent event) override { log_.emplace_back(event, empty_event); }
-    void log(LogEvent event, std::string_view message) override { log_.emplace_back(event, std::string{message}); }
-    void log(LogEvent event, double value) override { log_.emplace_back(event, value); }
-    void log(LogEvent event, Idx value) override { log_.emplace_back(event, value); }
-
-    Data const& report() const { return log_; }
-
-    template <std::derived_from<Logger> T> T& merge_into(T& destination) const {
-        if (&destination == this) {
-            return destination; // nothing to do
-        }
-        for (const auto& entry : report()) {
-            std::visit(
-                [&destination, event = entry.event](auto&& arg) {
-                    using U = std::decay_t<decltype(arg)>;
-                    if constexpr (std::same_as<U, TestLogger::EmptyEvent>) {
-                        destination.log(event);
-                    } else {
-                        destination.log(event, arg);
-                    }
-                },
-                entry.data);
-        }
-        return destination;
-    }
-
-  private:
-    Data log_;
-};
-
-class MultiThreadedTestLogger : public common::logging::MultiThreadedLoggerImpl<TestLogger> {
-  public:
-    using MultiThreadedLoggerImpl::MultiThreadedLoggerImpl;
-    using Data = TestLogger::Data;
-
-    Data const& report() const { return get().report(); }
 };
 
 using common::logging::MultiThreadedLogger;
@@ -463,7 +420,8 @@ TEST_CASE("Test job dispatch logic") {
                     } catch (BatchCalculationError const& e) {
                         using namespace std::string_literals;
                         REQUIRE(e.err_msgs().size() == 2);
-                        CHECK(e.err_msgs() == std::vector{"Error in scenario 0"s, "Error in scenario 3"s});
+                        CHECK(e.err_msgs() == std::vector{"Error in scenario 0"s,   // NOLINT(misc-include-cleaner)
+                                                          "Error in scenario 3"s}); // NOLINT(misc-include-cleaner)
                         REQUIRE(e.failed_scenarios().size() == 2);
                         CHECK(e.failed_scenarios() == std::vector{Idx{0}, Idx{3}});
                         throw;

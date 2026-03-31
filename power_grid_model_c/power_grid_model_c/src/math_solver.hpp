@@ -8,8 +8,6 @@
 #define PGM_DLL_EXPORTS
 #endif
 
-#include "forward_declarations.hpp"
-
 #include <power_grid_model/math_solver/math_solver_dispatch.hpp>
 
 namespace power_grid_model_c {

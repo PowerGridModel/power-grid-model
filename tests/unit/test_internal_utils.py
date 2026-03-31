@@ -8,8 +8,8 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 
-from power_grid_model import ComponentType, DatasetType, initialize_array
-from power_grid_model._core.dataset_definitions import ComponentType as CT, DatasetType as DT
+from power_grid_model import initialize_array
+from power_grid_model._core.dataset_definitions import AttributeType as AT, ComponentType as CT, DatasetType as DT
 from power_grid_model._core.power_grid_meta import power_grid_meta_data
 from power_grid_model._core.utils import (
     compatibility_convert_row_columnar_dataset,
@@ -34,19 +34,22 @@ from .utils import convert_python_to_numpy
 @pytest.fixture(name="two_nodes_one_line")
 def two_nodes_one_line_fixture():
     return {
-        "node": [{"id": 11, "u_rated": 10.5e3}, {"id": 12, "u_rated": 10.5e3}],
-        "line": [
+        CT.node: [
+            {AT.id: 11, AT.u_rated: 10.5e3},
+            {AT.id: 12, AT.u_rated: 10.5e3},
+        ],
+        CT.line: [
             {
-                "id": 21,
-                "from_node": 11,
-                "to_node": 12,
-                "from_status": 1,
-                "to_status": 1,
-                "r1": 0.11,
-                "x1": 0.12,
-                "c1": 4.1380285203892784e-05,
-                "tan1": 0.1076923076923077,
-                "i_n": 510.0,
+                AT.id: 21,
+                AT.from_node: 11,
+                AT.to_node: 12,
+                AT.from_status: 1,
+                AT.to_status: 1,
+                AT.r1: 0.11,
+                AT.x1: 0.12,
+                AT.c1: 4.1380285203892784e-05,
+                AT.tan1: 0.1076923076923077,
+                AT.i_n: 510.0,
             }
         ],
     }
@@ -55,31 +58,34 @@ def two_nodes_one_line_fixture():
 @pytest.fixture(name="two_nodes_two_lines")
 def two_nodes_two_lines_fixture():
     return {
-        "node": [{"id": 11, "u_rated": 10.5e3}, {"id": 12, "u_rated": 10.5e3}],
-        "line": [
+        CT.node: [
+            {AT.id: 11, AT.u_rated: 10.5e3},
+            {AT.id: 12, AT.u_rated: 10.5e3},
+        ],
+        CT.line: [
             {
-                "id": 21,
-                "from_node": 11,
-                "to_node": 12,
-                "from_status": 1,
-                "to_status": 1,
-                "r1": 0.11,
-                "x1": 0.12,
-                "c1": 4.1380285203892784e-05,
-                "tan1": 0.1076923076923077,
-                "i_n": 510.0,
+                AT.id: 21,
+                AT.from_node: 11,
+                AT.to_node: 12,
+                AT.from_status: 1,
+                AT.to_status: 1,
+                AT.r1: 0.11,
+                AT.x1: 0.12,
+                AT.c1: 4.1380285203892784e-05,
+                AT.tan1: 0.1076923076923077,
+                AT.i_n: 510.0,
             },
             {
-                "id": 31,
-                "from_node": 11,
-                "to_node": 12,
-                "from_status": 1,
-                "to_status": 1,
-                "r1": 0.11,
-                "x1": 0.12,
-                "c1": 4.1380285203892784e-05,
-                "tan1": 0.1076923076923077,
-                "i_n": 510.0,
+                AT.id: 31,
+                AT.from_node: 11,
+                AT.to_node: 12,
+                AT.from_status: 1,
+                AT.to_status: 1,
+                AT.r1: 0.11,
+                AT.x1: 0.12,
+                AT.c1: 4.1380285203892784e-05,
+                AT.tan1: 0.1076923076923077,
+                AT.i_n: 510.0,
             },
         ],
     }
@@ -131,26 +137,26 @@ def test_is_nan():
 
 
 def test_convert_json_to_numpy(two_nodes_one_line, two_nodes_two_lines):
-    pgm_data = convert_python_to_numpy(two_nodes_one_line, DatasetType.input)
+    pgm_data = convert_python_to_numpy(two_nodes_one_line, DT.input)
     assert len(pgm_data) == len(two_nodes_one_line)
-    assert len(pgm_data[ComponentType.node]) == len(two_nodes_one_line[ComponentType.node])
-    assert pgm_data[ComponentType.node][0]["id"] == two_nodes_one_line[ComponentType.node][0]["id"]
-    assert pgm_data[ComponentType.node][0]["u_rated"] == two_nodes_one_line[ComponentType.node][0]["u_rated"]
-    assert np.isclose(pgm_data[ComponentType.node][0]["u_rated"], 10.5e3, rtol=1e-09, atol=1e-09)
+    assert len(pgm_data[CT.node]) == len(two_nodes_one_line[CT.node])
+    assert pgm_data[CT.node][0][AT.id] == two_nodes_one_line[CT.node][0][AT.id]
+    assert pgm_data[CT.node][0][AT.u_rated] == two_nodes_one_line[CT.node][0][AT.u_rated]
+    assert np.isclose(pgm_data[CT.node][0][AT.u_rated], 10.5e3, rtol=1e-09, atol=1e-09)
 
     json_list = [two_nodes_one_line, two_nodes_two_lines, two_nodes_one_line]
-    pgm_data_batch = convert_python_to_numpy(json_list, DatasetType.input)
-    assert pgm_data_batch[ComponentType.node].shape == (3, 2)
-    assert np.allclose(pgm_data_batch[ComponentType.line]["indptr"], [0, 1, 3, 4])
+    pgm_data_batch = convert_python_to_numpy(json_list, DT.input)
+    assert pgm_data_batch[CT.node].shape == (3, 2)
+    assert np.allclose(pgm_data_batch[CT.line]["indptr"], [0, 1, 3, 4])
 
 
 def test_round_trip_json_numpy_json(two_nodes_one_line, two_nodes_two_lines):
-    pgm_data = convert_python_to_numpy(two_nodes_one_line, DatasetType.input)
+    pgm_data = convert_python_to_numpy(two_nodes_one_line, DT.input)
     json_dict = convert_dataset_to_python_dataset(pgm_data)
     assert json_dict == two_nodes_one_line
 
     json_list = [two_nodes_one_line, two_nodes_two_lines, two_nodes_one_line]
-    pgm_data_list = convert_python_to_numpy(json_list, DatasetType.input)
+    pgm_data_list = convert_python_to_numpy(json_list, DT.input)
     json_return_list = convert_dataset_to_python_dataset(pgm_data_list)
     assert json_return_list == json_list
 
@@ -631,10 +637,16 @@ DATA_FILTER_RELEVANT = ComponentAttributeFilterOptions.relevant
         ([CT.node, CT.sym_load], {CT.node: None, CT.sym_load: None}),
         ({CT.node, CT.sym_load}, {CT.node: None, CT.sym_load: None}),
         ({CT.node: [], CT.sym_load: []}, {CT.node: [], CT.sym_load: []}),
-        ({CT.node: [], CT.sym_load: ["p"]}, {CT.node: [], CT.sym_load: ["p"]}),
-        ({CT.node: None, CT.sym_load: ["p"]}, {CT.node: None, CT.sym_load: ["p"]}),
-        ({CT.node: DATA_FILTER_EVERYTHING, CT.sym_load: ["p"]}, {CT.node: DATA_FILTER_EVERYTHING, CT.sym_load: ["p"]}),
-        ({CT.node: DATA_FILTER_RELEVANT, CT.sym_load: ["p"]}, {CT.node: DATA_FILTER_RELEVANT, CT.sym_load: ["p"]}),
+        ({CT.node: [], CT.sym_load: [AT.p]}, {CT.node: [], CT.sym_load: [AT.p]}),
+        ({CT.node: None, CT.sym_load: [AT.p]}, {CT.node: None, CT.sym_load: [AT.p]}),
+        (
+            {CT.node: DATA_FILTER_EVERYTHING, CT.sym_load: [AT.p]},
+            {CT.node: DATA_FILTER_EVERYTHING, CT.sym_load: [AT.p]},
+        ),
+        (
+            {CT.node: DATA_FILTER_RELEVANT, CT.sym_load: [AT.p]},
+            {CT.node: DATA_FILTER_RELEVANT, CT.sym_load: [AT.p]},
+        ),
         (
             {CT.node: DATA_FILTER_EVERYTHING, CT.sym_load: DATA_FILTER_EVERYTHING},
             {CT.node: DATA_FILTER_EVERYTHING, CT.sym_load: DATA_FILTER_EVERYTHING},
@@ -643,7 +655,10 @@ DATA_FILTER_RELEVANT = ComponentAttributeFilterOptions.relevant
             {CT.node: DATA_FILTER_RELEVANT, CT.sym_load: DATA_FILTER_RELEVANT},
             {CT.node: DATA_FILTER_RELEVANT, CT.sym_load: DATA_FILTER_RELEVANT},
         ),
-        ({CT.node: ["u"], CT.sym_load: ["p"]}, {CT.node: ["u"], CT.sym_load: ["p"]}),
+        (
+            {CT.node: [AT.u], CT.sym_load: [AT.p]},
+            {CT.node: [AT.u], CT.sym_load: [AT.p]},
+        ),
     ],
 )
 def test_process_data_filter(data_filter, expected):
@@ -711,11 +726,13 @@ def sample_output_data():
         pytest.param([CT.shunt], {}, id="list/set filter-No component in filter present in data"),
         pytest.param(
             [CT.node, CT.shunt],
-            {k: v for k, v in sample_output_data().items() if k in [CT.node]},
+            {k: v for k, v in sample_output_data().items() if k == CT.node},
             id="list/set filter-Component in filter not present in data",
         ),
         pytest.param(
-            {CT.node: [], CT.shunt: ["p"]}, {CT.node: dict()}, id="dict filter-Component in filter not present in data"
+            {CT.node: [], CT.shunt: [AT.p]},
+            {CT.node: dict()},
+            id="dict filter-Component in filter not present in data",
         ),
         pytest.param(
             {CT.node: [], CT.shunt: []},
@@ -741,9 +758,9 @@ def test_copy_output_to_columnar_dataset(output_component_types, expected):
     [
         pytest.param(np.empty(shape=(1,)), None, 1, id="row based single"),
         pytest.param(np.empty(shape=(3, 2)), None, 3, id="row based batch"),
-        pytest.param({"u": np.empty(shape=(3,))}, DT.sym_output, 1, id="columnar single"),
-        pytest.param({"u": np.empty(shape=(3, 2))}, DT.sym_output, 3, id="columnar batch"),
-        pytest.param({"u": np.empty(shape=(4, 2, 3))}, DT.asym_output, 4, id="columnar asym batch"),
+        pytest.param({AT.u: np.empty(shape=(3,))}, DT.sym_output, 1, id="columnar single"),
+        pytest.param({AT.u: np.empty(shape=(3, 2))}, DT.sym_output, 3, id="columnar batch"),
+        pytest.param({AT.u: np.empty(shape=(4, 2, 3))}, DT.asym_output, 4, id="columnar asym batch"),
         pytest.param({"indptr": np.array([0, 1, 4]), "data": np.array([])}, None, 2, id="sparse data batch"),
         pytest.param({"indptr": np.array([0, 1]), "data": np.array([])}, None, 1, id="sparse data single"),
     ],
@@ -755,14 +772,18 @@ def test_get_batch_size(data, dataset_type, expected_size):
 @pytest.mark.parametrize(
     ("data", "dataset_type", "component", "error"),
     [
-        pytest.param({"u": np.empty(shape=3)}, None, None, ValueError, id="No dataset type"),
-        pytest.param({"u": np.empty(shape=3)}, DT.asym_output, None, ValueError, id="No component"),
+        pytest.param({AT.u: np.empty(shape=3)}, None, None, ValueError, id="No dataset type"),
+        pytest.param({AT.u: np.empty(shape=3)}, DT.asym_output, None, ValueError, id="No component"),
         pytest.param(np.empty(shape=(1, 2, 3)), None, None, TypeError, id="Incorrect dimension for row based sym"),
         pytest.param(
-            {"u": np.empty(shape=3)}, DT.asym_output, CT.node, TypeError, id="Incorrect dimension for columnar asym"
+            {AT.u: np.empty(shape=3)},
+            DT.asym_output,
+            CT.node,
+            TypeError,
+            id="Incorrect dimension for columnar asym",
         ),
         pytest.param(
-            {"u": np.empty(shape=(1, 2, 3))},
+            {AT.u: np.empty(shape=(1, 2, 3))},
             DT.sym_output,
             CT.node,
             TypeError,
@@ -780,8 +801,8 @@ def test_get_dataset_type(dataset_type):
     assert (
         get_dataset_type(
             data={
-                CT.node: np.zeros(1, dtype=power_grid_meta_data[dataset_type][ComponentType.node]),
-                "sym_load": np.zeros(1, dtype=power_grid_meta_data[dataset_type]["sym_load"]),
+                CT.node: np.zeros(1, dtype=power_grid_meta_data[dataset_type][CT.node]),
+                CT.sym_load: np.zeros(1, dtype=power_grid_meta_data[dataset_type][CT.sym_load]),
             }
         )
         == dataset_type
@@ -799,8 +820,8 @@ def test_get_dataset_type__conflicting_data():
         [DT.input, DT.update, DT.sym_output, DT.asym_output, DT.sc_output],
     ):
         data = {
-            ComponentType.node: np.zeros(1, dtype=power_grid_meta_data[first][ComponentType.node]),
-            "sym_load": np.zeros(1, dtype=power_grid_meta_data[second]["sym_load"]),
+            CT.node: np.zeros(1, dtype=power_grid_meta_data[first][CT.node]),
+            CT.sym_load: np.zeros(1, dtype=power_grid_meta_data[second][CT.sym_load]),
         }
         if first == second:
             assert get_dataset_type(data=data) == first
@@ -811,36 +832,36 @@ def test_get_dataset_type__conflicting_data():
 
 @pytest.fixture
 def row_dense_data():
-    source = initialize_array(DatasetType.update, ComponentType.source, (2, 3))
-    source["id"] = [[0, 2, 3], [0, 2, 3]]
-    source["u_ref"] = [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]]
+    source = initialize_array(DT.update, CT.source, (2, 3))
+    source[AT.id] = [[0, 2, 3], [0, 2, 3]]
+    source[AT.u_ref] = [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]]
 
-    sym_load = initialize_array(DatasetType.update, ComponentType.sym_load, (2, 1))
-    sym_load["id"] = [[1], [1]]
-    sym_load["p_specified"] = [[100.0], [200.0]]
+    sym_load = initialize_array(DT.update, CT.sym_load, (2, 1))
+    sym_load[AT.id] = [[1], [1]]
+    sym_load[AT.p_specified] = [[100.0], [200.0]]
 
     return {
-        ComponentType.source: source,
-        ComponentType.sym_load: sym_load,
+        CT.source: source,
+        CT.sym_load: sym_load,
     }
 
 
 @pytest.fixture
 def row_sparse_data():
-    transformer = initialize_array(DatasetType.update, ComponentType.transformer, 1)
-    transformer["id"] = 1
-    transformer["tap_pos"] = 3
+    transformer = initialize_array(DT.update, CT.transformer, 1)
+    transformer[AT.id] = 1
+    transformer[AT.tap_pos] = 3
 
-    sym_gen = initialize_array(DatasetType.update, ComponentType.sym_gen, 8)
-    sym_gen["id"] = [5, 6, 7, 8, 5, 6, 7, 8]
-    sym_gen["q_specified"] = [1.1, 2.2, 3.3, 4.4, 4.4, 3.3, 2.2, 1.1]
+    sym_gen = initialize_array(DT.update, CT.sym_gen, 8)
+    sym_gen[AT.id] = [5, 6, 7, 8, 5, 6, 7, 8]
+    sym_gen[AT.q_specified] = [1.1, 2.2, 3.3, 4.4, 4.4, 3.3, 2.2, 1.1]
 
     return {
-        ComponentType.transformer: {
+        CT.transformer: {
             "data": transformer,
             "indptr": np.array([0, 1, 1]),
         },
-        ComponentType.sym_gen: {
+        CT.sym_gen: {
             "data": sym_gen,
             "indptr": np.array([0, 4, 8]),
         },
@@ -878,7 +899,7 @@ def compare_row_data(actual_row_data, desired_row_data):
 def test_dense_row_data_to_from_col_data(row_data):
     # row data to columnar data and back
     col_data = compatibility_convert_row_columnar_dataset(
-        row_data, ComponentAttributeFilterOptions.everything, DatasetType.update
+        row_data, ComponentAttributeFilterOptions.everything, DT.update
     )
-    new_row_data = compatibility_convert_row_columnar_dataset(col_data, None, DatasetType.update)
+    new_row_data = compatibility_convert_row_columnar_dataset(col_data, None, DT.update)
     compare_row_data(row_data, new_row_data)

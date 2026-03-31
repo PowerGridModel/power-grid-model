@@ -9,10 +9,24 @@ Collect all measured Values
 */
 
 #include "../calculation_parameters.hpp"
+#include "../common/common.hpp"
+#include "../common/counting_iterator.hpp"
+#include "../common/enum.hpp"
 #include "../common/exception.hpp"
+#include "../common/grouped_index_vector.hpp"
 #include "../common/three_phase_tensor.hpp"
 
-#include <memory>
+#include <Eigen/Core>
+#include <algorithm>
+#include <cassert>
+#include <cmath>
+#include <complex>
+#include <functional>
+#include <iterator>
+#include <limits>
+#include <ranges>
+#include <utility>
+#include <vector>
 
 namespace power_grid_model::math_solver {
 // processed measurement struct
@@ -35,8 +49,8 @@ template <symmetry_tag sym> class MeasuredValues {
 
   public:
     // construct
-    MeasuredValues(std::shared_ptr<MathModelTopology const> topo, StateEstimationInput<sym> const& input)
-        : math_topology_{std::move(topo)},
+    MeasuredValues(MathModelTopology const& topo, StateEstimationInput<sym> const& input)
+        : math_topology_{topo},
           bus_appliance_injection_(math_topology().n_bus()),
           idx_voltage_(math_topology().n_bus()),
           bus_injection_(math_topology().n_bus()),
@@ -112,12 +126,13 @@ template <symmetry_tag sym> class MeasuredValues {
 
     LoadGenSourceFlow calculate_load_gen_source(ComplexValueVector<sym> const& u,
                                                 ComplexValueVector<sym> const& s) const {
-        std::vector<ApplianceSolverOutput<sym>> load_gen_flow(math_topology_->n_load_gen());
-        std::vector<ApplianceSolverOutput<sym>> source_flow(math_topology_->n_source());
+        std::vector<ApplianceSolverOutput<sym>> load_gen_flow(math_topology_.get().n_load_gen());
+        std::vector<ApplianceSolverOutput<sym>> source_flow(math_topology_.get().n_source());
 
+        auto const& topo = math_topology_.get();
         // loop all buses
         for (auto const& [bus, load_gens, sources] :
-             enumerated_zip_sequence(math_topology_->load_gens_per_bus, math_topology_->sources_per_bus)) {
+             enumerated_zip_sequence(topo.load_gens_per_bus, topo.sources_per_bus)) {
             // under-determined or exactly determined
             if (bus_injection_[bus].n_unmeasured_appliances > 0) {
                 calculate_non_over_determined_injection(bus_injection_[bus].n_unmeasured_appliances, load_gens, sources,
@@ -173,7 +188,7 @@ template <symmetry_tag sym> class MeasuredValues {
 
   private:
     // cache topology
-    std::shared_ptr<MathModelTopology const> math_topology_;
+    std::reference_wrapper<MathModelTopology const> math_topology_;
 
     // flat arrays of all the relevant measurement for the main calculation
     // branch/shunt flow, bus voltage, injection flow
@@ -214,7 +229,7 @@ template <symmetry_tag sym> class MeasuredValues {
     // the lowest bus index with a voltage measurement
     Idx first_voltage_measurement_{};
 
-    constexpr MathModelTopology const& math_topology() const { return *math_topology_; }
+    constexpr MathModelTopology const& math_topology() const { return math_topology_; }
 
     void process_bus_related_measurements(StateEstimationInput<sym> const& input) {
         /*

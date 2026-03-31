@@ -1,0 +1,36 @@
+{
+  "version": "1.0",
+  "type": "sym_output",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "node": [
+      {
+        "id": 1
+      },
+      {
+        "id": 2
+      }
+    ],
+    "line": [
+      {
+        "id": 3
+      }
+    ],
+    "sym_gen": [
+      {
+        "id": 4
+      }
+    ],
+    "voltage_regulator": [
+      {
+        "id": 5
+      }
+    ],
+    "source": [
+      {
+        "id": 6
+      }
+    ]
+  }
+}

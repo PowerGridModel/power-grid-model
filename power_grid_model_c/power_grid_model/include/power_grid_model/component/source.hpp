@@ -5,14 +5,20 @@
 #pragma once
 
 #include "appliance.hpp"
-#include "base.hpp"
 
 #include "../auxiliary/input.hpp"
-#include "../auxiliary/output.hpp"
 #include "../auxiliary/update.hpp"
 #include "../calculation_parameters.hpp"
 #include "../common/common.hpp"
+#include "../common/enum.hpp"
 #include "../common/three_phase_tensor.hpp"
+#include "base.hpp"
+#include "component.hpp"
+
+#include <cassert>
+#include <cmath>
+#include <complex>
+#include <utility>
 
 namespace power_grid_model {
 
@@ -105,6 +111,8 @@ class Source : public Appliance {
 
         return update_data;
     }
+
+    constexpr double u_ref() const { return u_ref_; }
 
   private:
     double u_ref_;

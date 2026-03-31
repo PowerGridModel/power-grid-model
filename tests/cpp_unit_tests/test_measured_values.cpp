@@ -2,9 +2,21 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include <power_grid_model/math_solver/iterative_linear_se_solver.hpp>
+#include <power_grid_model/math_solver/measured_values.hpp>
+
+#include <power_grid_model/calculation_parameters.hpp>
+#include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/counting_iterator.hpp>
+#include <power_grid_model/common/enum.hpp>
+#include <power_grid_model/common/exception.hpp>
+#include <power_grid_model/common/grouped_index_vector.hpp>
+#include <power_grid_model/common/statistics.hpp>
 
 #include <doctest/doctest.h>
+
+#include <complex>
+#include <memory>
+#include <utility>
 
 namespace power_grid_model::math_solver {
 namespace {
@@ -37,7 +49,7 @@ TEST_CASE("Measured Values") {
             {.real_component = {.value = 1.0, .variance = 0.3}, .imag_component = {.value = 0.1, .variance = 0.1}}};
         input.load_gen_status = {1};
 
-        MeasuredValues<symmetric_t> const values{std::make_shared<MathModelTopology const>(std::move(topo)), input};
+        MeasuredValues<symmetric_t> const values{*std::make_shared<MathModelTopology const>(std::move(topo)), input};
 
         REQUIRE(values.has_bus_injection(0));
         auto const& injection = values.bus_injection(0);
@@ -59,7 +71,7 @@ TEST_CASE("Measured Values") {
                                           .imag_component = {.value = {0.0, 0.1, -0.2}, .variance = {0.1, 0.2, 0.05}}}};
         input.load_gen_status = {1};
 
-        MeasuredValues<asymmetric_t> const values{std::make_shared<MathModelTopology const>(std::move(topo)), input};
+        MeasuredValues<asymmetric_t> const values{topo, input};
 
         REQUIRE(values.has_bus_injection(0));
         auto const& injection = values.bus_injection(0);
@@ -82,7 +94,7 @@ TEST_CASE("Measured Values") {
             {.real_component = {.value = 4.0, .variance = 2.0}, .imag_component = {.value = 0.7, .variance = 3.0}}};
         input.load_gen_status = {1};
 
-        MeasuredValues<symmetric_t> const values{std::make_shared<MathModelTopology const>(std::move(topo)), input};
+        MeasuredValues<symmetric_t> const values{*std::make_shared<MathModelTopology const>(std::move(topo)), input};
 
         REQUIRE(values.has_bus_injection(0));
         auto const& injection = values.bus_injection(0);
@@ -105,7 +117,7 @@ TEST_CASE("Measured Values") {
             {.real_component = {.value = 4.0, .variance = 2.0}, .imag_component = {.value = 0.7, .variance = 3.0}}};
         input.load_gen_status = {1, 1};
 
-        MeasuredValues<symmetric_t> const values{std::make_shared<MathModelTopology const>(std::move(topo)), input};
+        MeasuredValues<symmetric_t> const values{*std::make_shared<MathModelTopology const>(std::move(topo)), input};
 
         REQUIRE(values.has_bus_injection(0));
         auto const& injection = values.bus_injection(0);
@@ -129,7 +141,7 @@ TEST_CASE("Measured Values") {
                                           .imag_component = {.value = {0.7, -0.8, 2.5}, .variance = {3.0, 5.0, 0.5}}}};
         input.load_gen_status = {1, 1};
 
-        MeasuredValues<asymmetric_t> const values{std::make_shared<MathModelTopology const>(std::move(topo)), input};
+        MeasuredValues<asymmetric_t> const values{*std::make_shared<MathModelTopology const>(std::move(topo)), input};
 
         REQUIRE(values.has_bus_injection(0));
         auto const& injection = values.bus_injection(0);
@@ -201,7 +213,7 @@ TEST_CASE_TEMPLATE("Measured Values - Accumulate branch flow sensors", sym, symm
         StateEstimationInput<sym> input{};
         input.measured_branch_from_power = {measurement_a, measurement_b};
 
-        MeasuredValues<sym> const values{std::make_shared<MathModelTopology const>(std::move(topo)), input};
+        MeasuredValues<sym> const values{*std::make_shared<MathModelTopology const>(std::move(topo)), input};
 
         REQUIRE(values.has_branch_from_power(0));
         CHECK_FALSE(values.has_branch_from_current(0));
@@ -219,7 +231,7 @@ TEST_CASE_TEMPLATE("Measured Values - Accumulate branch flow sensors", sym, symm
         input.measured_branch_from_current = {{.angle_measurement_type = local_angle, .measurement = measurement_a},
                                               {.angle_measurement_type = local_angle, .measurement = measurement_b}};
 
-        MeasuredValues<sym> const values{std::make_shared<MathModelTopology const>(std::move(topo)), input};
+        MeasuredValues<sym> const values{*std::make_shared<MathModelTopology const>(std::move(topo)), input};
 
         REQUIRE(values.has_branch_from_current(0));
         CHECK_FALSE(values.has_branch_from_power(0));
@@ -248,7 +260,7 @@ TEST_CASE_TEMPLATE("Measured Values - Accumulate branch flow sensors", sym, symm
         input.measured_branch_from_current = {{.angle_measurement_type = global_angle, .measurement = measurement_a},
                                               {.angle_measurement_type = global_angle, .measurement = measurement_b}};
 
-        MeasuredValues<sym> const values{std::make_shared<MathModelTopology const>(std::move(topo)), input};
+        MeasuredValues<sym> const values{*std::make_shared<MathModelTopology const>(std::move(topo)), input};
 
         REQUIRE(values.has_branch_from_current(0));
         CHECK_FALSE(values.has_branch_from_power(0));
@@ -267,7 +279,7 @@ TEST_CASE_TEMPLATE("Measured Values - Accumulate branch flow sensors", sym, symm
         input.measured_branch_from_current = {{.angle_measurement_type = local_angle, .measurement = measurement_a},
                                               {.angle_measurement_type = local_angle, .measurement = measurement_b}};
 
-        MeasuredValues<sym> const values{std::make_shared<MathModelTopology const>(std::move(topo)), input};
+        MeasuredValues<sym> const values{*std::make_shared<MathModelTopology const>(std::move(topo)), input};
 
         REQUIRE(values.has_branch_from_current(0));
         CHECK_FALSE(values.has_branch_from_power(0));
@@ -288,7 +300,7 @@ TEST_CASE_TEMPLATE("Measured Values - Accumulate branch flow sensors", sym, symm
             {.angle_measurement_type = AngleMeasurementType::global_angle, .measurement = measurement_b}};
 
         auto const create_measured_values = [&topo, &input] {
-            return MeasuredValues<sym>{std::make_shared<MathModelTopology const>(topo), input};
+            return MeasuredValues<sym>{*std::make_shared<MathModelTopology const>(topo), input};
         };
         CHECK_THROWS_AS(create_measured_values(), ConflictingAngleMeasurementType);
     }

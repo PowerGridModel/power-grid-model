@@ -6,6 +6,7 @@
 
 #include "common.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <string_view>
 
