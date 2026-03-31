@@ -992,7 +992,7 @@ individual phases.
 
 ```{note}
 The combination of `i_measured=0` and `i_angle_measured=nπ/2` renders the current sensor invalid for PGM.
-See [State estimate sensor transformations](calculations.md#state-estimate-sensor-transformations).
+See [State estimate sensor transformations](../algorithms/se-algorithms.md#state-estimate-sensor-transformations).
 ```
 
 ##### Steady state output

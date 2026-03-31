@@ -43,7 +43,8 @@ Output:
 - Node voltage magnitude and angle
 - Power flow through branches
 
-See [Power flow algorithms](#power-flow-algorithms) for detailed documentation on the calculation methods.
+See [Power flow algorithms](../algorithms/pf-algorithms.md#power-flow-algorithms) for detailed documentation on the
+calculation methods.
 
 ##### Regulated power flow
 
@@ -52,7 +53,8 @@ However, in practice, the grid often contains regulators for certain components.
 When including those regulators in the calculations, the grid may be optimized according to the power flow results and
 the behaviour of the regulators.
 
-See [Regulated power flow calculations](#regulated-power-flow-calculations) for detailed documentation on regulated
+See [Regulated power flow calculations](../algorithms/pf-algorithms.md#regulated-power-flow-calculations) for detailed
+documentation on regulated
 power flow calculations.
 
 #### State estimation
@@ -256,12 +258,12 @@ right one.
 
 At the moment, the following power flow algorithms are implemented.
 
-| Algorithm                                          | Speed                       | Result                            | Convergence         | Typical Use Cases                                                       | Algorithm call                                                                                             |
-|--------------------------------------------------- |---------------------------- |---------------------------------- |-------------------- |------------------------------------------------------------------------ |----------------------------------------------------------------------------------------------------------- |
-| [Newton-Raphson](../algorithms/pf-algorithms.md#newton-raphson-power-flow)       | Medium                      | Accurate within `error_tolerance` | Quadratic, robust   | General purpose, any type of grid                                       | {py:class}`CalculationMethod.newton_raphson <power_grid_model.enum.CalculationMethod.newton_raphson>`      |
-| [Iterative current](../algorithms/pf-algorithms.md#iterative-current-power-flow) | Fast (Radial) Slow (Meshed) | Accurate within `error_tolerance` | Linear, less robust | Non-topological change batch calculations like timeseries, radial grids | {py:class}`CalculationMethod.iterative_current <power_grid_model.enum.CalculationMethod.iterative_current>`|
-| [Linear](../algorithms/pf-algorithms.md#linear-power-flow)                       | Much Faster                 | Approximate                       | Single iteration    | Large number of calculations, troubleshooting iterative methods         | {py:class}`CalculationMethod.linear <power_grid_model.enum.CalculationMethod.linear>`                      |
-| [Linear current](../algorithms/pf-algorithms.md#linear-current-power-flow)       | Much Faster                 | Approximate                       | Single iteration    | Large number of calculations                                            | {py:class}`CalculationMethod.linear_current <power_grid_model.enum.CalculationMethod.linear_current>`      |
+| Algorithm                                          | Speed                       | Result                            | Convergence                       | Typical Use Cases                                                                             | Algorithm call                                                                                             |
+|--------------------------------------------------- |---------------------------- |---------------------------------- |---------------------------------- |---------------------------------------------------------------------------------------------- |----------------------------------------------------------------------------------------------------------- |
+| [Newton-Raphson](../algorithms/pf-algorithms.md#newton-raphson-power-flow)       | Medium                            | Accurate within `error_tolerance` | Quadratic, robust   | General purpose, any type of grid                                       | {py:class}`CalculationMethod.newton_raphson <power_grid_model.enum.CalculationMethod.newton_raphson>`      |
+| [Iterative current](../algorithms/pf-algorithms.md#iterative-current-power-flow) | Fast (Radial) Slow (Meshed)       | Accurate within `error_tolerance` | Linear, less robust | Non-topological change batch calculations like timeseries, radial grids | {py:class}`CalculationMethod.iterative_current <power_grid_model.enum.CalculationMethod.iterative_current>`|
+| [Linear](../algorithms/pf-algorithms.md#linear-power-flow)                       | Much Faster                       | Approximate                       | Single iteration    | Large number of calculations, troubleshooting iterative methods         | {py:class}`CalculationMethod.linear <power_grid_model.enum.CalculationMethod.linear>`                      |
+| [Linear current](../algorithms/pf-algorithms.md#linear-current-power-flow)       | Much Faster                       | Approximate                       | Single iteration    | Large number of calculations                                            | {py:class}`CalculationMethod.linear_current <power_grid_model.enum.CalculationMethod.linear_current>`      |
 
 ```{note}
 By default, the [Newton-Raphson](../algorithms/pf-algorithms.md#newton-raphson-power-flow) method is used.
