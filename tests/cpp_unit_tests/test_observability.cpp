@@ -19,8 +19,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
-#include <memory>
 #include <ranges>
+#include <utility>
 #include <vector>
 
 namespace power_grid_model {

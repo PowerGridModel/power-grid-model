@@ -19,7 +19,7 @@
 #include <complex>
 #include <cstddef>
 #include <limits>
-#include <memory>
+#include <utility>
 #include <vector>
 
 namespace power_grid_model::math_solver {

@@ -6,8 +6,16 @@
 
 #pragma once
 
+#include "power_grid_model/calculation_parameters.hpp"
+#include "power_grid_model/common/common.hpp"
+#include "power_grid_model/common/exception.hpp"
+#include "power_grid_model/common/logging.hpp"
+#include "power_grid_model/common/three_phase_tensor.hpp"
 #include "test_math_solver_common.hpp"
 
+#include <complex>
+#include <cstddef>
+#include <limits>
 #include <power_grid_model/math_solver/sparse_lu_solver.hpp>
 #include <power_grid_model/math_solver/y_bus.hpp>
 

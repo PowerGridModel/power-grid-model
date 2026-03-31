@@ -6,8 +6,14 @@
 
 #pragma once
 
+#include "power_grid_model/calculation_parameters.hpp"
+#include "power_grid_model/common/enum.hpp"
+#include "power_grid_model/common/grouped_index_vector.hpp"
+#include "power_grid_model/common/logging.hpp"
+#include "power_grid_model/common/three_phase_tensor.hpp"
 #include "test_math_solver_common.hpp"
 
+#include <complex>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/dummy_logging.hpp>
 #include <power_grid_model/common/exception.hpp>
@@ -15,6 +21,8 @@
 #include <power_grid_model/math_solver/y_bus.hpp>
 
 #include <doctest/doctest.h>
+#include <ranges>
+#include <utility>
 
 namespace power_grid_model {
 template <typename SolverType>

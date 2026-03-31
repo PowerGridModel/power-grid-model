@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include "power_grid_model/common/counting_iterator.hpp"
 #include <power_grid_model/math_solver/y_bus.hpp>
 
 #include <power_grid_model/calculation_parameters.hpp>
@@ -206,8 +207,6 @@ TEST_CASE("Test y bus") {
 
 TEST_CASE("Test one bus system") {
     MathModelTopology topo{};
-    MathModelParam<symmetric_t> const param;
-
     topo.phase_shift = {0.0};
     topo.shunts_per_bus = {from_sparse, {0, 0}};
 
@@ -219,7 +218,7 @@ TEST_CASE("Test one bus system") {
     IdxVector const lu_transpose_entry = {0};
     IdxVector const y_bus_entry_indptr = {0, 0};
 
-    YBus<symmetric_t> const ybus{topo, std::move(param)};
+    YBus<symmetric_t> const ybus{topo, {}};
 
     CHECK(ybus.size() == 1);
     CHECK(ybus.nnz() == nnz);
