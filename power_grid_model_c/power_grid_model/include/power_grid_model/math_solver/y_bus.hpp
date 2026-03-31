@@ -307,7 +307,7 @@ template <symmetry_tag sym> class YBus {
         if (y_bus_struct) {
             y_bus_struct_ = y_bus_struct;
         } else {
-            y_bus_struct_ = std::make_shared<YBusStructure const>(YBusStructure{*math_topology_});
+            y_bus_struct_ = std::make_shared<YBusStructure const>(*math_topology_);
         }
         // update values
         update_admittance(param);
