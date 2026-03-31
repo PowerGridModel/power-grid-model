@@ -8,7 +8,6 @@
 
 #include <doctest/doctest.h>
 
-#include <cstdint>
 #include <ranges>
 #include <unordered_map>
 #include <unordered_set>
@@ -213,7 +212,7 @@ TEST_CASE("Test the link solver algorithm") {
     }
 
     SUBCASE("Test backward substitution auxiliary functions") {
-        std::vector<Idx> indices_vector{1, 4, 5, 10};
+        std::vector<Idx> const indices_vector{1, 4, 5, 10};
 
         SUBCASE("Test backward substitution pivots") {
             auto const result = backward_substitution_pivots(indices_vector) | std::ranges::to<std::vector<Idx>>();
@@ -228,7 +227,7 @@ TEST_CASE("Test the link solver algorithm") {
         }
 
         SUBCASE("Test backward substitution free right cols") {
-            Idx pivot_col_idx = 6;
+            auto const pivot_col_idx = Idx{6};
             auto const result = backward_substitution_free_right_cols(indices_vector, pivot_col_idx) |
                                 std::ranges::to<std::vector<Idx>>();
             CHECK(result.size() == 1);
