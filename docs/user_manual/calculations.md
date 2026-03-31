@@ -297,7 +297,7 @@ Overall, these methods are recommended only for a range of possible voltage devi
 The linear current method will generally give better approximations than the linear method.
 However at unrealistically high load levels it can give worse approximations than the linear method.
 Check Power Flow Algorithm Comparison demonstration in
-[PGM workshop demonstrations](https://github.com/PowerGridModel/power-grid-model-workshop)
+[Power Flow Algorithm Comparisons](https://github.com/PowerGridModel/power-grid-model-workshop/blob/main/demonstrations/Power%20Flow%20Algorithm%20Comparison.ipynb)
 to know more about this behavior.
 A strategy for post calculation verification of results is also provided there.
 You can identify applicability of linear methods for your use case by experimenting with the Newton-Raphson method to
