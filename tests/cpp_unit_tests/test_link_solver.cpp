@@ -511,7 +511,8 @@ TEST_CASE("Test the link solver algorithm") {
 
             solution_set.extended_rhs = {{0, 0}, {1, 1}, {-2, -2}, {0, 0}, {0, 0}, {-0, -0}, {0, 0}};
 
-            std::vector<std::vector<DoubleComplex>> projection_system = set_projection_system(result, solution_set);
+            std::vector<std::vector<DoubleComplex>> projection_system =
+                set_projection_system(result.free_edge_indices, result.pivot_edge_indices, solution_set);
 
             std::vector<std::vector<DoubleComplex>> test_system = {{{3, 0}, {1, 0}, {1, 0}, {2, 2}},
                                                                    {{1, 0}, {3, 0}, {-1, 0}, {3, 3}},
@@ -544,7 +545,8 @@ TEST_CASE("Test the link solver algorithm") {
 
             solution_set.extended_rhs = {{1, 0}, {-1, -0}, {-1, -0}, {0, 0}};
 
-            std::vector<std::vector<DoubleComplex>> projection_system = set_projection_system(result, solution_set);
+            std::vector<std::vector<DoubleComplex>> projection_system =
+                set_projection_system(result.free_edge_indices, result.pivot_edge_indices, solution_set);
 
             std::vector<std::vector<DoubleComplex>> test_system = {{{3, 0}, {-2, 0}}};
 
