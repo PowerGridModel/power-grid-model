@@ -258,8 +258,8 @@ right one.
 
 At the moment, the following power flow algorithms are implemented.
 
-| Algorithm                                          | Speed                       | Result                            | Convergence                       | Typical Use Cases                                                                             | Algorithm call                                                                                             |
-|--------------------------------------------------- |---------------------------- |---------------------------------- |---------------------------------- |---------------------------------------------------------------------------------------------- |----------------------------------------------------------------------------------------------------------- |
+| Algorithm                                                                        | Speed                             | Result                            | Convergence         | Typical Use Cases                                                       | Algorithm call                                                                                             |
+|--------------------------------------------------------------------------------- |---------------------------------- |---------------------------------- |-------------------- |------------------------------------------------------------------------ |----------------------------------------------------------------------------------------------------------- |
 | [Newton-Raphson](../algorithms/pf-algorithms.md#newton-raphson-power-flow)       | Medium                            | Accurate within `error_tolerance` | Quadratic, robust   | General purpose, any type of grid                                       | {py:class}`CalculationMethod.newton_raphson <power_grid_model.enum.CalculationMethod.newton_raphson>`      |
 | [Iterative current](../algorithms/pf-algorithms.md#iterative-current-power-flow) | Fast (Radial) Slow (Meshed)       | Accurate within `error_tolerance` | Linear, less robust | Non-topological change batch calculations like timeseries, radial grids | {py:class}`CalculationMethod.iterative_current <power_grid_model.enum.CalculationMethod.iterative_current>`|
 | [Linear](../algorithms/pf-algorithms.md#linear-power-flow)                       | Much Faster                       | Approximate                       | Single iteration    | Large number of calculations, troubleshooting iterative methods         | {py:class}`CalculationMethod.linear <power_grid_model.enum.CalculationMethod.linear>`                      |
@@ -285,8 +285,10 @@ and grid configuration: radial or meshed.
 Accuracy and convergence should be the first consideration, followed by speed.
 
 Hence if speed is not critical or is a small concern, we recommend using the default
-[Newton-Raphson](../algorithms/pf-algorithms.md#newton-raphson-power-flow) method for its robustness across all scenarios.
-If the scenarios are mainly timeseries, you can try [Iterative current](../algorithms/pf-algorithms.md#iterative-current-power-flow)
+[Newton-Raphson](../algorithms/pf-algorithms.md#newton-raphson-power-flow) method for its robustness across all
+scenarios.
+If the scenarios are mainly timeseries, you can try
+[Iterative current](../algorithms/pf-algorithms.md#iterative-current-power-flow)
 , this method can improve speed significantly via
 [Matrix prefactorization](performance-guide.md#matrix-prefactorization).
 There is a possibility you can face non convergence or lower performance compared to the newton raphson method if the
