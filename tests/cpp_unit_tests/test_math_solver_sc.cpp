@@ -181,12 +181,8 @@ TEST_CASE("Short circuit solver") {
     ComplexTensor<asymmetric_t> const yref_asym{yref};
     param_sc_asym.source_param = {SourceCalcParam{.y1 = yref, .y0 = yref}};
 
-    // topo and param ptr
-    auto param_sym_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param_sc_sym);
-    auto param_asym_ptr = std::make_shared<MathModelParam<asymmetric_t> const>(param_sc_asym);
-
     SUBCASE("Test short circuit solver 3ph") {
-        YBus<asymmetric_t> const y_bus_asym{topo_sc, param_asym_ptr};
+        YBus<asymmetric_t> const y_bus_asym{topo_sc, param_sc_asym};
         ShortCircuitSolver<asymmetric_t> solver{y_bus_asym, topo_sc};
         auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault, vref, fault_buses);
         auto sc_output_ref = create_sc_test_output<asymmetric_t>(three_phase, z_fault, z0, z0_0, vref, zref);
@@ -199,7 +195,7 @@ TEST_CASE("Short circuit solver") {
     }
 
     SUBCASE("Test short circuit solver 3ph solid fault") {
-        YBus<asymmetric_t> const y_bus_asym{topo_sc, param_asym_ptr};
+        YBus<asymmetric_t> const y_bus_asym{topo_sc, param_sc_asym};
         ShortCircuitSolver<asymmetric_t> solver{y_bus_asym, topo_sc};
         auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault_solid, vref, fault_buses);
         auto sc_output_ref = create_sc_test_output<asymmetric_t>(three_phase, z_fault_solid, z0, z0_0, vref, zref);
@@ -208,7 +204,7 @@ TEST_CASE("Short circuit solver") {
     }
 
     SUBCASE("Test short circuit solver 3ph sym params") {
-        YBus<symmetric_t> const y_bus_sym{topo_sc, param_sym_ptr};
+        YBus<symmetric_t> const y_bus_sym{topo_sc, param_sc_sym};
         ShortCircuitSolver<symmetric_t> solver{y_bus_sym, topo_sc};
         auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault, vref, fault_buses);
         auto sc_output_ref = create_sc_test_output<symmetric_t>(three_phase, z_fault, z0, z0_0, vref, zref);
@@ -221,7 +217,7 @@ TEST_CASE("Short circuit solver") {
     }
 
     SUBCASE("Test short circuit solver 3ph sym params solid fault") {
-        YBus<symmetric_t> const y_bus_sym{topo_sc, param_sym_ptr};
+        YBus<symmetric_t> const y_bus_sym{topo_sc, param_sc_sym};
         ShortCircuitSolver<symmetric_t> solver{y_bus_sym, topo_sc};
         auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault_solid, vref, fault_buses);
         auto sc_output_ref = create_sc_test_output<symmetric_t>(three_phase, z_fault_solid, z0, z0_0, vref, zref);
@@ -230,7 +226,7 @@ TEST_CASE("Short circuit solver") {
     }
 
     SUBCASE("Test short circuit solver 1phg") {
-        YBus<asymmetric_t> const y_bus_asym{topo_sc, param_asym_ptr};
+        YBus<asymmetric_t> const y_bus_asym{topo_sc, param_sc_asym};
         ShortCircuitSolver<asymmetric_t> solver{y_bus_asym, topo_sc};
         auto sc_input = create_sc_test_input(single_phase_to_ground, FaultPhase::a, y_fault, vref, fault_buses);
         auto sc_output_ref = create_sc_test_output<asymmetric_t>(single_phase_to_ground, z_fault, z0, z0_0, vref, zref);
@@ -243,7 +239,7 @@ TEST_CASE("Short circuit solver") {
     }
 
     SUBCASE("Test short circuit solver 1phg solid fault") {
-        YBus<asymmetric_t> const y_bus_asym{topo_sc, param_asym_ptr};
+        YBus<asymmetric_t> const y_bus_asym{topo_sc, param_sc_asym};
         ShortCircuitSolver<asymmetric_t> solver{y_bus_asym, topo_sc};
         auto sc_input = create_sc_test_input(single_phase_to_ground, FaultPhase::a, y_fault_solid, vref, fault_buses);
         auto sc_output_ref =
@@ -253,7 +249,7 @@ TEST_CASE("Short circuit solver") {
     }
 
     SUBCASE("Test short circuit solver 2ph") {
-        YBus<asymmetric_t> const y_bus_asym{topo_sc, param_asym_ptr};
+        YBus<asymmetric_t> const y_bus_asym{topo_sc, param_sc_asym};
         ShortCircuitSolver<asymmetric_t> solver{y_bus_asym, topo_sc};
         auto sc_input = create_sc_test_input(two_phase, FaultPhase::bc, y_fault, vref, fault_buses);
         auto sc_output_ref = create_sc_test_output<asymmetric_t>(two_phase, z_fault, z0, z0_0, vref, zref);
@@ -265,7 +261,7 @@ TEST_CASE("Short circuit solver") {
     }
 
     SUBCASE("Test short circuit solver 2ph solid fault") {
-        YBus<asymmetric_t> const y_bus_asym{topo_sc, param_asym_ptr};
+        YBus<asymmetric_t> const y_bus_asym{topo_sc, param_sc_asym};
         ShortCircuitSolver<asymmetric_t> solver{y_bus_asym, topo_sc};
         auto sc_input = create_sc_test_input(two_phase, FaultPhase::bc, y_fault_solid, vref, fault_buses);
         auto sc_output_ref = create_sc_test_output<asymmetric_t>(two_phase, z_fault_solid, z0, z0_0, vref, zref);
@@ -274,7 +270,7 @@ TEST_CASE("Short circuit solver") {
     }
 
     SUBCASE("Test short circuit solver 2phg") {
-        YBus<asymmetric_t> const y_bus_asym{topo_sc, param_asym_ptr};
+        YBus<asymmetric_t> const y_bus_asym{topo_sc, param_sc_asym};
         ShortCircuitSolver<asymmetric_t> solver{y_bus_asym, topo_sc};
         auto sc_input = create_sc_test_input(two_phase_to_ground, FaultPhase::bc, y_fault, vref, fault_buses);
         auto sc_output_ref = create_sc_test_output<asymmetric_t>(two_phase_to_ground, z_fault, z0, z0_0, vref, zref);
@@ -287,7 +283,7 @@ TEST_CASE("Short circuit solver") {
     }
 
     SUBCASE("Test short circuit solver 2phg solid") {
-        YBus<asymmetric_t> const y_bus_asym{topo_sc, param_asym_ptr};
+        YBus<asymmetric_t> const y_bus_asym{topo_sc, param_sc_asym};
         ShortCircuitSolver<asymmetric_t> solver{y_bus_asym, topo_sc};
         auto sc_input = create_sc_test_input(two_phase_to_ground, FaultPhase::bc, y_fault_solid, vref, fault_buses);
         auto sc_output_ref =
@@ -297,8 +293,8 @@ TEST_CASE("Short circuit solver") {
     }
 
     SUBCASE("Test short circuit solver no faults") {
-        YBus<symmetric_t> const y_bus_sym{topo_sc, param_sym_ptr};
-        YBus<asymmetric_t> const y_bus_asym{topo_sc, param_asym_ptr};
+        YBus<symmetric_t> const y_bus_sym{topo_sc, param_sc_sym};
+        YBus<asymmetric_t> const y_bus_asym{topo_sc, param_sc_asym};
         ShortCircuitSolver<asymmetric_t> solver_asym{y_bus_asym, topo_sc};
         ShortCircuitInput sc_input;
         sc_input.source = {vref};
@@ -328,11 +324,9 @@ TEST_CASE("Short circuit solver") {
         asym_param_comp.source_param = {SourceCalcParam{.y1 = yref, .y0 = yref}};
         MathModelParam<symmetric_t> sym_param_comp;
         sym_param_comp.source_param = {SourceCalcParam{.y1 = yref, .y0 = yref}};
-        // topo and param ptr
-        auto asym_param_comp_ptr = std::make_shared<MathModelParam<asymmetric_t> const>(asym_param_comp);
-        auto sym_param_comp_ptr = std::make_shared<MathModelParam<symmetric_t> const>(sym_param_comp);
-        YBus<asymmetric_t> const y_bus_asym{topo_comp, asym_param_comp_ptr};
-        YBus<symmetric_t> const y_bus_sym{topo_comp, sym_param_comp_ptr};
+
+        YBus<asymmetric_t> const y_bus_asym{topo_comp, std::move(asym_param_comp)};
+        YBus<symmetric_t> const y_bus_sym{topo_comp, std::move(sym_param_comp)};
         ShortCircuitSolver<asymmetric_t> solver{y_bus_asym, topo_comp};
         ShortCircuitSolver<symmetric_t> sym_solver{y_bus_sym, topo_comp};
 

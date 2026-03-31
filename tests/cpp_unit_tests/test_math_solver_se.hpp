@@ -312,11 +312,9 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE", SolverType, test_math_solver_
     SESolverTestGrid<sym> const grid;
 
     // topo and param ptr
-    auto param_ptr = std::make_shared<MathModelParam<sym> const>(grid.param());
-
     SUBCASE("Test se with power sensors") {
         auto const topo = grid.se_topo_power_sensors();
-        YBus<sym> const y_bus{topo, param_ptr};
+        YBus<sym> const y_bus{topo, grid.param()};
 
         SUBCASE("Test se with angle") {
             SolverType solver{y_bus, topo};
@@ -365,7 +363,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE", SolverType, test_math_solver_
 
     SUBCASE("se input angle with current sensors") {
         auto const topo = grid.se_topo_current_sensors();
-        YBus<sym> const y_bus{topo, param_ptr};
+        YBus<sym> const y_bus{topo, grid.param()};
 
         SUBCASE("Test se with local angle current sensors") {
             SolverType solver{y_bus, topo};
@@ -419,8 +417,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, zero variance test", SolverTyp
     topo.power_sensors_per_branch_to = {from_sparse, {0, 0}};
     MathModelParam<symmetric_t> param;
     param.branch_param = {{1.0, -1.0, -1.0, 1.0}};
-    auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
-    YBus<symmetric_t> const y_bus_sym{topo, param_ptr};
+    YBus<symmetric_t> const y_bus_sym{topo, std::move(param)};
 
     StateEstimationInput<symmetric_t> se_input;
     se_input.source_status = {1};
@@ -497,8 +494,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         se_input.measured_branch_from_power = {
             {.real_component = {.value = 1.97, .variance = 0.05}, .imag_component = {.value = 0.0, .variance = 0.05}}};
 
-        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
-        YBus<symmetric_t> const y_bus_sym{topo, param_ptr};
+        YBus<symmetric_t> const y_bus_sym{topo, param};
 
         SolverType solver{y_bus_sym, topo};
 
@@ -530,8 +526,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
             topo.current_sensors_per_branch_from = {from_sparse, {0, 1}};
             se_input.measured_voltage = {{.value = 1.0 * global_shift, .variance = 0.1}};
 
-            auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
-            YBus<symmetric_t> const y_bus_sym{topo, param_ptr};
+            YBus<symmetric_t> const y_bus_sym{topo, param};
 
             SolverType solver{y_bus_sym, topo};
 
@@ -604,8 +599,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         se_input.measured_branch_to_power = {
             {.real_component = {.value = -1.97, .variance = 0.05}, .imag_component = {.value = 0.0, .variance = 0.05}}};
 
-        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
-        YBus<symmetric_t> const y_bus_sym{topo, param_ptr};
+        YBus<symmetric_t> const y_bus_sym{topo, param};
         SolverType solver{y_bus_sym, topo};
 
         output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, log);
@@ -635,8 +629,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         se_input.measured_branch_from_power = {
             {.real_component = {.value = 1.97, .variance = 0.05}, .imag_component = {.value = 0.0, .variance = 0.05}}};
 
-        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
-        YBus<symmetric_t> const y_bus_sym{topo, param_ptr};
+        YBus<symmetric_t> const y_bus_sym{topo, param};
         SolverType solver{y_bus_sym, topo};
 
         output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, log);
@@ -666,8 +659,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         se_input.measured_branch_from_power = {
             {.real_component = {.value = 1.97, .variance = 0.05}, .imag_component = {.value = 0.0, .variance = 0.05}}};
 
-        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
-        YBus<symmetric_t> const y_bus_sym{topo, param_ptr};
+        YBus<symmetric_t> const y_bus_sym{topo, param};
         SolverType solver{y_bus_sym, topo};
 
         output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, log);
@@ -697,8 +689,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         se_input.measured_branch_to_power = {
             {.real_component = {.value = -1.97, .variance = 0.05}, .imag_component = {.value = 0.0, .variance = 0.05}}};
 
-        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
-        YBus<symmetric_t> const y_bus_sym{topo, param_ptr};
+        YBus<symmetric_t> const y_bus_sym{topo, param};
         SolverType solver{y_bus_sym, topo};
 
         output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, log);
@@ -726,8 +717,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
             {.real_component = {.value = -3.0, .variance = 0.05}, .imag_component = {.value = 0.0, .variance = 0.05}},
             {.real_component = {.value = 1.0, .variance = 0.05}, .imag_component = {.value = 0.0, .variance = 0.05}}};
 
-        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
-        YBus<symmetric_t> const y_bus_sym{topo, param_ptr};
+        YBus<symmetric_t> const y_bus_sym{topo, param};
         SolverType solver{y_bus_sym, topo};
 
         output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, log);
@@ -759,8 +749,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         se_input.measured_bus_injection = {
             {.real_component = {.value = -1.1, .variance = 0.1}, .imag_component = {.value = 0.0, .variance = 0.1}}};
 
-        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
-        YBus<symmetric_t> const y_bus_sym{topo, param_ptr};
+        YBus<symmetric_t> const y_bus_sym{topo, param};
         SolverType solver{y_bus_sym, topo};
 
         output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, log);
@@ -791,8 +780,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         se_input.measured_bus_injection = {
             {.real_component = {.value = -1.1, .variance = 0.1}, .imag_component = {.value = 0.0, .variance = 0.1}}};
 
-        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
-        YBus<symmetric_t> const y_bus_sym{topo, param_ptr};
+        YBus<symmetric_t> const y_bus_sym{topo, param};
         SolverType solver{y_bus_sym, topo};
 
         output = run_state_estimation(solver, y_bus_sym, se_input, error_tolerance, num_iter, log);

@@ -26,11 +26,9 @@
 namespace power_grid_model {
 
 namespace {
-void check_whether_observable(bool is_observable, MathModelTopology const& topo,
-                              MathModelParam<symmetric_t> const& param,
+void check_whether_observable(bool is_observable, MathModelTopology const& topo, MathModelParam<symmetric_t> param,
                               StateEstimationInput<symmetric_t> const& se_input) {
-    auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
-    YBus<symmetric_t> const y_bus{topo, param_ptr};
+    YBus<symmetric_t> const y_bus{topo, std::move(param)};
     math_solver::MeasuredValues<symmetric_t> const measured_values{y_bus.math_topology(), se_input};
 
     if (is_observable) {
@@ -43,14 +41,14 @@ void check_whether_observable(bool is_observable, MathModelTopology const& topo,
     }
 }
 
-void check_observable(MathModelTopology const& topo, MathModelParam<symmetric_t> const& param,
+void check_observable(MathModelTopology const& topo, MathModelParam<symmetric_t> param,
                       StateEstimationInput<symmetric_t> const& se_input) {
-    check_whether_observable(true, topo, param, se_input);
+    check_whether_observable(true, topo, std::move(param), se_input);
 }
 
-void check_not_observable(MathModelTopology const& topo, MathModelParam<symmetric_t> const& param,
+void check_not_observable(MathModelTopology const& topo, MathModelParam<symmetric_t> param,
                           StateEstimationInput<symmetric_t> const& se_input) {
-    check_whether_observable(false, topo, param, se_input);
+    check_whether_observable(false, topo, std::move(param), se_input);
 }
 } // namespace
 
@@ -84,7 +82,7 @@ TEST_CASE("Observable voltage sensor - basic integration test") {
         {.real_component = {.value = 1.0, .variance = 1.0}, .imag_component = {.value = 0.0, .variance = 1.0}},
         {.real_component = {.value = 1.0, .variance = 1.0}, .imag_component = {.value = 0.0, .variance = 1.0}}};
 
-    check_observable(topo, param, se_input);
+    check_observable(topo, std::move(param), se_input);
 }
 
 TEST_CASE("Test Observability - scan_network_sensors") {
@@ -129,8 +127,7 @@ TEST_CASE("Test Observability - scan_network_sensors") {
         se_input.load_gen_status = {1, 1, 1};
 
         // Create YBus and MeasuredValues
-        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
-        YBus<symmetric_t> const y_bus{topo, param_ptr};
+        YBus<symmetric_t> const y_bus{topo, std::move(param)};
         math_solver::MeasuredValues<symmetric_t> const measured_values{y_bus.math_topology(), se_input};
 
         // Test scan_network_sensors
@@ -254,8 +251,7 @@ TEST_CASE("Test Observability - scan_network_sensors") {
 
         // No source power measurements needed
 
-        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
-        YBus<symmetric_t> const y_bus{topo, param_ptr};
+        YBus<symmetric_t> const y_bus{topo, std::move(param)};
 
         math_solver::MeasuredValues<symmetric_t> const measured_values{y_bus.math_topology(), se_input};
 
@@ -321,8 +317,7 @@ TEST_CASE("Test Observability - scan_network_sensors") {
         se_input.source_status = {1};
         // No measurements
 
-        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
-        YBus<symmetric_t> const y_bus{topo, param_ptr};
+        YBus<symmetric_t> const y_bus{topo, std::move(param)};
         math_solver::MeasuredValues<symmetric_t> const measured_values{y_bus.math_topology(), se_input};
 
         std::vector<BusNeighbourhoodInfo> neighbour_results(1);
@@ -375,8 +370,7 @@ TEST_CASE("Test Observability - scan_network_sensors") {
                                                   .measurement = {.real_component = {.value = 1.0, .variance = 1.0},
                                                                   .imag_component = {.value = 0.1, .variance = 1.0}}}};
 
-        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
-        YBus<symmetric_t> const y_bus{topo, param_ptr};
+        YBus<symmetric_t> const y_bus{topo, std::move(param)};
         math_solver::MeasuredValues<symmetric_t> const measured_values{y_bus.math_topology(), se_input};
 
         std::vector<BusNeighbourhoodInfo> neighbour_results(2);
@@ -774,8 +768,7 @@ TEST_CASE("Test Observability - assign_independent_sensors_radial") {
         param.source_param = {SourceCalcParam{.y1 = 1.0, .y0 = 1.0}};
         param.branch_param = {{1.0, -1.0, -1.0, 1.0}};
 
-        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
-        YBus<symmetric_t> const y_bus{topo, param_ptr};
+        YBus<symmetric_t> const y_bus{topo, std::move(param)};
 
         // Test the function with real YBusStructure
         // First, inspect the actual YBus structure to size our vectors correctly
@@ -834,8 +827,7 @@ TEST_CASE("Test Observability - assign_independent_sensors_radial") {
         MathModelParam<symmetric_t> param;
         param.source_param = {SourceCalcParam{.y1 = 1.0, .y0 = 1.0}};
 
-        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
-        YBus<symmetric_t> const y_bus{topo, param_ptr};
+        YBus<symmetric_t> const y_bus{topo, std::move(param)};
 
         // Size vectors correctly based on actual YBus structure
         auto const& y_bus_struct = y_bus.y_bus_structure();
@@ -1222,8 +1214,7 @@ TEST_CASE("Test Observability - sufficient_condition_radial_with_voltage_phasor"
             {.real_component = {.value = 0.8, .variance = 1.0}, .imag_component = {.value = 0.1, .variance = 1.0}}};
 
         // Create YBus and scan sensors
-        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
-        YBus<symmetric_t> const y_bus{topo, param_ptr};
+        YBus<symmetric_t> const y_bus{topo, std::move(param)};
         math_solver::MeasuredValues<symmetric_t> const measured_values{y_bus.math_topology(), se_input};
 
         std::vector<BusNeighbourhoodInfo> neighbour_results(4);
@@ -1287,8 +1278,7 @@ TEST_CASE("Test Observability - sufficient_condition_radial_with_voltage_phasor"
         se_input.load_gen_status = {1};
 
         // Create YBus and scan sensors
-        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
-        YBus<symmetric_t> const y_bus{topo, param_ptr};
+        YBus<symmetric_t> const y_bus{topo, std::move(param)};
         math_solver::MeasuredValues<symmetric_t> const measured_values{y_bus.math_topology(), se_input};
 
         std::vector<BusNeighbourhoodInfo> neighbour_results(3);
@@ -1355,8 +1345,7 @@ TEST_CASE("Test Observability - sufficient_condition_radial_with_voltage_phasor"
             {.real_component = {.value = 0.8, .variance = 1.0}, .imag_component = {.value = 0.1, .variance = 1.0}}};
 
         // Create YBus and scan sensors
-        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
-        YBus<symmetric_t> const y_bus{topo, param_ptr};
+        YBus<symmetric_t> const y_bus{topo, std::move(param)};
         math_solver::MeasuredValues<symmetric_t> const measured_values{y_bus.math_topology(), se_input};
 
         std::vector<BusNeighbourhoodInfo> neighbour_results(3);
@@ -1404,8 +1393,7 @@ TEST_CASE("Test Observability - sufficient_condition_radial_with_voltage_phasor"
         };
 
         // Create YBus and scan sensors
-        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
-        YBus<symmetric_t> const y_bus{topo, param_ptr};
+        YBus<symmetric_t> const y_bus{topo, std::move(param)};
         math_solver::MeasuredValues<symmetric_t> const measured_values{y_bus.math_topology(), se_input};
 
         std::vector<BusNeighbourhoodInfo> neighbour_results(1);
@@ -2043,8 +2031,7 @@ TEST_CASE("Test ObservabilityResult - use_perturbation with non-observable netwo
             {.value = 0.95 + 0.05i, .variance = 1.0} // Phasor at bus 1
         };
 
-        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
-        YBus<symmetric_t> const y_bus{topo, param_ptr};
+        YBus<symmetric_t> const y_bus{topo, std::move(param)};
         math_solver::MeasuredValues<symmetric_t> const measured_values{y_bus.math_topology(), se_input};
 
         // Verify that we have exactly 2 voltage phasor sensors (both with angle measurements)
@@ -2093,8 +2080,7 @@ TEST_CASE("Test ObservabilityResult - use_perturbation with non-observable netwo
         se_input.source_status = {1};
         se_input.measured_voltage = {{.value = 1.0, .variance = 1.0}};
 
-        auto param_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param);
-        YBus<symmetric_t> const y_bus{topo, param_ptr};
+        YBus<symmetric_t> const y_bus{topo, std::move(param)};
         math_solver::MeasuredValues<symmetric_t> const measured_values{y_bus.math_topology(), se_input};
 
         auto result = math_solver::observability::observability_check(measured_values, y_bus.math_topology(),

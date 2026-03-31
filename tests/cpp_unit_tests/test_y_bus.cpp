@@ -126,7 +126,7 @@ TEST_CASE("Test y bus") {
     }
 
     SUBCASE("Test y bus construction (symmetrical)") {
-        YBus<symmetric_t> const ybus{topo, std::make_shared<MathModelParam<symmetric_t> const>(param_sym)};
+        YBus<symmetric_t> const ybus{topo, param_sym};
         CHECK(ybus.size() == 4);
         CHECK(ybus.nnz() == nnz);
         CHECK(row_indptr == ybus.row_indptr());
@@ -159,10 +159,9 @@ TEST_CASE("Test y bus") {
     }
 
     SUBCASE("Test y bus construction (asymmetrical)") {
-        YBus<symmetric_t> const ybus_sym{topo, std::make_shared<MathModelParam<symmetric_t> const>(param_sym)};
+        YBus<symmetric_t> const ybus_sym{topo, param_sym};
         // construct from existing structure
-        YBus<asymmetric_t> const ybus{topo, std::make_shared<MathModelParam<asymmetric_t> const>(param_asym),
-                                      ybus_sym.shared_y_bus_struct()};
+        YBus<asymmetric_t> const ybus{topo, param_asym, ybus_sym.shared_y_bus_struct()};
         CHECK(ybus.size() == 4);
         CHECK(ybus.nnz() == nnz);
         CHECK(row_indptr == ybus.row_indptr());
@@ -177,7 +176,7 @@ TEST_CASE("Test y bus") {
     }
 
     SUBCASE("Test branch flow calculation") {
-        YBus<symmetric_t> const ybus{topo, std::make_shared<MathModelParam<symmetric_t> const>(param_sym)};
+        YBus<symmetric_t> const ybus{topo, param_sym};
         ComplexVector const u{1.0, 2.0, 3.0, 4.0};
         auto branch_flow = ybus.calculate_branch_flow<BranchSolverOutput<symmetric_t>>(u);
 
@@ -193,7 +192,7 @@ TEST_CASE("Test y bus") {
     }
 
     SUBCASE("Test shunt flow calculation") {
-        YBus<symmetric_t> const ybus{topo, std::make_shared<MathModelParam<symmetric_t> const>(param_sym)};
+        YBus<symmetric_t> const ybus{topo, param_sym};
         ComplexVector const u{1.0, 2.0, 3.0, 4.0};
         auto shunt_flow = ybus.template calculate_shunt_flow<ApplianceSolverOutput<symmetric_t>>(u);
 
@@ -220,7 +219,7 @@ TEST_CASE("Test one bus system") {
     IdxVector const lu_transpose_entry = {0};
     IdxVector const y_bus_entry_indptr = {0, 0};
 
-    YBus<symmetric_t> const ybus{topo, std::make_shared<MathModelParam<symmetric_t> const>(param)};
+    YBus<symmetric_t> const ybus{topo, std::move(param)};
 
     CHECK(ybus.size() == 1);
     CHECK(ybus.nnz() == nnz);
@@ -390,15 +389,15 @@ TEST_CASE("Incremental update y-bus") {
         }
     };
     SUBCASE("Test whole scale update") {
-        YBus<symmetric_t> ybus{topo, std::make_shared<MathModelParam<symmetric_t> const>(param_sym)};
+        YBus<symmetric_t> ybus{topo, param_sym};
         verify_admittance(ybus.admittance(), admittance_sym);
 
-        ybus.update_admittance(std::make_shared<MathModelParam<symmetric_t> const>(param_sym));
+        ybus.update_admittance(param_sym);
         verify_admittance(ybus.admittance(), admittance_sym);
     }
 
     SUBCASE("Test progressive update") {
-        YBus<symmetric_t> ybus{topo, std::make_shared<MathModelParam<symmetric_t> const>(param_sym)};
+        YBus<symmetric_t> ybus{topo, param_sym};
         verify_admittance(ybus.admittance(), admittance_sym);
 
         auto branch_param_to_change_views =
@@ -421,9 +420,7 @@ TEST_CASE("Incremental update y-bus") {
         std::ranges::copy(shunt_param_to_change_views,
                           std::back_inserter(math_model_param_incrmt.shunt_param_to_change));
 
-        auto param_update_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param_sym_update);
-
-        ybus.update_admittance_increment(param_update_ptr, math_model_param_incrmt);
+        ybus.update_admittance_increment(param_sym_update, math_model_param_incrmt);
         verify_admittance(ybus.admittance(), admittance_sym_2);
     }
 }

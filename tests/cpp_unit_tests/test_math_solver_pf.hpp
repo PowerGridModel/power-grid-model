@@ -81,8 +81,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - PF", SolverType, test_math_solver_
 
     // topo and param ptr
     auto const topo = grid.topo();
-    auto param_ptr = std::make_shared<MathModelParam<sym> const>(grid.param());
-    YBus<sym> y_bus{topo, param_ptr};
+    YBus<sym> y_bus{topo, grid.param()};
 
     SUBCASE("Test pf solver") {
         constexpr auto error_tolerance{1e-12};
@@ -136,7 +135,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - PF", SolverType, test_math_solver_
         singular_param.branch_param[0] = BranchCalcParam<sym>{};
         singular_param.branch_param[1] = BranchCalcParam<sym>{};
         singular_param.shunt_param[0] = ComplexTensor<sym>{};
-        y_bus.update_admittance(std::make_shared<MathModelParam<sym> const>(singular_param));
+        y_bus.update_admittance(std::move(singular_param));
         SolverType solver{y_bus, topo};
         NoLogger log;
 
