@@ -1,5 +1,8 @@
 {
   "C_Cpp.autoAddFileAssociations": false,
+  "files.associations": {
+    ".clangd": "yaml"
+  },
   "cmake.configureOnOpen": true,
   "cmake.copyCompileCommands": "${workspaceFolder}/compile_commands.json",
   "testMate.cpp.test.executables": "${command:cmake.buildDirectory}/bin/power_grid_model_*_tests*",
