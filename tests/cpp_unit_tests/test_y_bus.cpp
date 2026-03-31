@@ -17,7 +17,6 @@
 #include <complex>
 #include <cstddef>
 #include <iterator>
-#include <memory>
 #include <ranges>
 #include <utility>
 #include <vector>
