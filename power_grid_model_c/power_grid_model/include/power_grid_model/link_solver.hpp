@@ -277,37 +277,30 @@ inline SolutionSet set_solution_system(EliminationResult& result) {
     return solution_set;
 };
 
-[[nodiscard]] inline std::vector<std::vector<DoubleComplex>>
-set_projection_system(std::vector<uint64_t> free_edge_indices, std::vector<uint64_t> pivot_edge_indices,
-                      SolutionSet& solution_set) {
+inline std::vector<std::vector<DoubleComplex>> set_projection_system(Idx free_indices_number, Idx total_indices_number,
+                                                                     SolutionSet& solution_set) {
+    std::vector<std::vector<DoubleComplex>> projection_system(free_indices_number,
+                                                              std::vector<DoubleComplex>(free_indices_number + 1));
 
-    auto const pivot_indices_size = pivot_edge_indices.size();
-    auto const free_indices_size = free_edge_indices.size();
-    auto const total_indices_size = pivot_indices_size + free_indices_size;
-
-    auto& [dfs_matrix, extended_rhs] = solution_set;
-
-    std::vector<std::vector<DoubleComplex>> projection_system(free_indices_size,
-                                                              std::vector<DoubleComplex>(free_indices_size + 1));
-
-    IntS first_value{};
-    IntS second_value{};
-
-    for (uint64_t dfs_matrix_col = 0; dfs_matrix_col < free_indices_size; dfs_matrix_col++) {
+    for (Idx dfs_matrix_col = 0; dfs_matrix_col < free_indices_number; dfs_matrix_col++) {
         DoubleComplex dot_product_rhs = 0.;
-        for (uint64_t dfs_matrix_row = 0; dfs_matrix_row < total_indices_size; dfs_matrix_row++) {
-            if (dfs_matrix.get_value(first_value, dfs_matrix_row, dfs_matrix_col)) {
-                dot_product_rhs += static_cast<DoubleComplex>(first_value) * extended_rhs[dfs_matrix_row];
-            }
+        for (Idx dfs_matrix_row = 0; dfs_matrix_row < total_indices_number; dfs_matrix_row++) {
+            solution_set.dfs_matrix.get_value(dfs_matrix_row, dfs_matrix_col)
+                .transform(
+                    [&dot_product_rhs, &extended_rhs_ = solution_set.extended_rhs, &dfs_matrix_row](IntS first_value) {
+                        dot_product_rhs += static_cast<DoubleComplex>(first_value) * extended_rhs_[dfs_matrix_row];
+                        return first_value;
+                    });
         }
-        projection_system[dfs_matrix_col][free_indices_size] = dot_product_rhs;
-        for (uint64_t second_dfs_matrix_col = dfs_matrix_col; second_dfs_matrix_col < free_indices_size;
+        projection_system[dfs_matrix_col][free_indices_number] = dot_product_rhs;
+        for (Idx second_dfs_matrix_col = dfs_matrix_col; second_dfs_matrix_col < free_indices_number;
              second_dfs_matrix_col++) {
             DoubleComplex dot_product_matrix = 0.;
-            for (uint64_t dfs_matrix_row = 0; dfs_matrix_row < total_indices_size; dfs_matrix_row++) {
-                if (dfs_matrix.get_value(first_value, dfs_matrix_row, dfs_matrix_col) &&
-                    dfs_matrix.get_value(second_value, dfs_matrix_row, second_dfs_matrix_col)) {
-                    dot_product_matrix += static_cast<DoubleComplex>(first_value * second_value);
+            for (Idx dfs_matrix_row = 0; dfs_matrix_row < total_indices_number; dfs_matrix_row++) {
+                auto const first_value = solution_set.dfs_matrix.get_value(dfs_matrix_row, dfs_matrix_col);
+                auto const second_value = solution_set.dfs_matrix.get_value(dfs_matrix_row, second_dfs_matrix_col);
+                if (first_value && second_value) {
+                    dot_product_matrix += static_cast<DoubleComplex>(first_value.value() * second_value.value());
                 }
             }
             projection_system[dfs_matrix_col][second_dfs_matrix_col] = dot_product_matrix;
