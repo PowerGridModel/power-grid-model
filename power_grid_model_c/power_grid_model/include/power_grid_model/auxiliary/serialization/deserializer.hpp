@@ -585,17 +585,51 @@ class Deserializer {
         bool has_attributes{};
         bool has_data{};
 
+        enum class Key : IntS {
+            version = 0,
+            type = 1,
+            is_batch = 2,
+            attributes = 3,
+            data = 4,
+            unknown = std::numeric_limits<IntS>::lowest(),
+        };
+
+        auto const match_key = [](std::string_view key) -> Key {
+            using enum Key;
+            if (key == "version") {
+                return version;
+            }
+            if (key == "type") {
+                return type;
+            }
+            if (key == "is_batch") {
+                return is_batch;
+            }
+            if (key == "attributes") {
+                return attributes;
+            }
+            if (key == "data") {
+                return data;
+            }
+            return unknown;
+        };
+
         while (global_map_size-- != 0) {
             std::string_view const key = parse_string();
-            if (key == "version") {
+            switch (match_key(key)) {
+            case Key::version: {
                 root_key_ = "version";
                 has_version = true;
                 version_ = parse_string();
-            } else if (key == "type") {
+                break;
+            }
+            case Key::type: {
                 root_key_ = "type";
                 has_type = true;
                 dataset = parse_string();
-            } else if (key == "is_batch") {
+                break;
+            }
+            case Key::is_batch: {
                 root_key_ = "is_batch";
                 bool const is_batch = parse_bool();
                 if (has_data && (is_batch_ != is_batch)) {
@@ -603,18 +637,26 @@ class Deserializer {
                 }
                 is_batch_ = is_batch;
                 has_is_batch = true;
-            } else if (key == "attributes") {
+                break;
+            }
+            case Key::attributes: {
                 root_key_ = "attributes";
                 has_attributes = true;
                 attributes = read_predefined_attributes();
-            } else if (key == "data") {
+                break;
+            }
+            case Key::data: {
                 root_key_ = "data";
                 has_data = true;
                 data_counts = pre_count_data(has_is_batch);
                 batch_size = static_cast<Idx>(data_counts.size());
-            } else {
+                break;
+            }
+            default: {
                 // null visitor to skip
                 parse_skip();
+                break;
+            }
             }
             root_key_ = {};
         }

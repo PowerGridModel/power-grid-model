@@ -12,6 +12,7 @@
 #include "meta_data.hpp"
 #include "utils.hpp"
 
+#include "power_grid_model_c/basics.h"
 #include "power_grid_model_c/dataset.h"
 
 #include <array>
@@ -347,15 +348,14 @@ struct OwningDataset {
         auto const irrelevant_components = get_irrelevant_components(calculation_type);
 
         auto const contains_irrelevant_component = [&irrelevant_components](std::string const& component) {
-            return irrelevant_components.find(component) != irrelevant_components.end();
+            return irrelevant_components.contains(component);
         };
 
         for (Idx component_idx{}; component_idx != ref_info.n_components(); ++component_idx) {
             auto const& component_name = ref_info.component_name(component_idx);
             auto const& component_meta = MetaData::get_component_by_name(dataset.get_info().name(), component_name);
             // skip components not in the filter
-            if (enable_filters &&
-                output_component_attribute_filters.find(component_meta) == output_component_attribute_filters.end()) {
+            if (enable_filters && !output_component_attribute_filters.contains(component_meta)) {
                 continue;
             }
             // skip irrelevant components for the calculation type
