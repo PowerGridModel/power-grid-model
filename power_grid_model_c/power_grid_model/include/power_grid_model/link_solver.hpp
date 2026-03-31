@@ -25,12 +25,12 @@ using AdjacencyMap = std::unordered_map<Idx, std::unordered_set<Idx>>;
 using ContractedEdgesSet = std::unordered_set<Idx>;
 
 enum class EdgeEvent : std::uint8_t {
-    Deleted = 0,          // pivot edge - used as pivot row
-    Replaced = 1,         // reattached to a different node
-    ContractedToPoint = 2 // from == to, becomes a degree of freedom
+    deleted = 0,            // pivot edge - used as pivot row
+    replaced = 1,           // reattached to a different node
+    contracted_to_point = 2 // from == to, becomes a degree of freedom
 };
 
-enum class EdgeDirection : IntS { Away = -1, Towards = 1 };
+enum class EdgeDirection : IntS { outgoing = -1, incoming = 1 };
 
 // Coordinate list (COO) sparse matrix representation, optimized for incremental construction during forward elimination
 struct COOSparseMatrix {
@@ -112,10 +112,10 @@ inline void replace_and_write(Idx edge_idx, Idx from_node_idx, Idx to_node_idx, 
 
     if (from_node(edges[edge_idx]) == to_node_idx) {
         re_attach_from_node(from_node_idx, edges[edge_idx]);
-        matrix.set_value(std::to_underlying(Away), matrix_row, edge_idx);
+        matrix.set_value(std::to_underlying(outgoing), matrix_row, edge_idx);
     } else {
         re_attach_to_node(from_node_idx, edges[edge_idx]);
-        matrix.set_value(std::to_underlying(Towards), matrix_row, edge_idx);
+        matrix.set_value(std::to_underlying(incoming), matrix_row, edge_idx);
     }
 }
 
@@ -124,10 +124,10 @@ inline void update_edge_info(Idx edge_idx, Idx matrix_row, std::vector<BranchIdx
     using enum EdgeEvent;
 
     if (from_node(edges[edge_idx]) == to_node(edges[edge_idx])) {
-        write_edge_history(edges_history[edge_idx], ContractedToPoint, matrix_row);
+        write_edge_history(edges_history[edge_idx], contracted_to_point, matrix_row);
         edges_contracted_to_point.insert(edge_idx);
     } else {
-        write_edge_history(edges_history[edge_idx], Replaced, matrix_row);
+        write_edge_history(edges_history[edge_idx], replaced, matrix_row);
     }
 }
 
@@ -147,9 +147,9 @@ inline void forward_elimination(EliminationResult& result, std::vector<BranchIdx
         if (edges_contracted_to_point.contains(index)) {
             result.free_edge_indices.push_back(index);
         } else {
-            write_edge_history(result.edges_history[index], Deleted, matrix_row); // Delete edge -> pivot there
+            write_edge_history(result.edges_history[index], deleted, matrix_row); // Delete edge -> pivot there
             result.pivot_edge_indices.push_back(index);
-            result.matrix.set_value(std::to_underlying(Towards), matrix_row, index);
+            result.matrix.set_value(std::to_underlying(incoming), matrix_row, index);
 
             Idx const from_node_idx = from_node(edge);
             Idx const to_node_idx = to_node(edge);
@@ -182,7 +182,7 @@ inline void forward_elimination(EliminationResult& result, std::vector<BranchIdx
 }
 
 inline auto backward_substitution_pivots(std::span<Idx const> pivot_edge_indices) {
-    return pivot_edge_indices | std::views::drop(1) | std::ranges::views::reverse;
+    return pivot_edge_indices | std::views::drop(1) | std::views::reverse;
 }
 
 inline auto backward_substitution_rows(std::span<Idx const> edge_history_rows) {
