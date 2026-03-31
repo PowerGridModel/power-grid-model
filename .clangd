@@ -11,3 +11,4 @@ Diagnostics:
   Includes:
     IgnoreHeader:
       - Eigen/.*
+      - msgpack/.*
