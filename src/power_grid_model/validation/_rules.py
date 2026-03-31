@@ -26,7 +26,7 @@ Input data:
     component: ComponentType
         The name of the component, which should be an existing key in the data
 
-    field: str
+    field: AttributeType
         The name of the column, which should be an field in the component data (numpy structured array)
 
 Output data:
@@ -41,7 +41,11 @@ from typing import Any
 
 import numpy as np
 
-from power_grid_model._core.dataset_definitions import ComponentType, DatasetType
+from power_grid_model._core.dataset_definitions import (
+    AttributeType,
+    ComponentType,
+    DatasetType,
+)
 from power_grid_model._core.enum import AngleMeasurementType, FaultPhase, FaultType, WindingType
 from power_grid_model._core.utils import get_comp_size, is_nan_or_default
 from power_grid_model.data_types import SingleDataset
@@ -77,7 +81,9 @@ from power_grid_model.validation.errors import (
 from power_grid_model.validation.utils import _eval_expression, _get_mask, _get_valid_ids, _nan_type, _set_default_value
 
 
-def all_greater_than_zero(data: SingleDataset, component: ComponentType, field: str) -> list[NotGreaterThanError]:
+def all_greater_than_zero(
+    data: SingleDataset, component: ComponentType, field: AttributeType
+) -> list[NotGreaterThanError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are greater than
     zero. Returns an empty list on success, or a list containing a single error object on failure.
@@ -85,7 +91,7 @@ def all_greater_than_zero(data: SingleDataset, component: ComponentType, field: 
     Args:
         data (SingleDataset): The input/update data set for all components
         component (ComponentType): The component of interest
-        field (str): The field of interest
+        field (AttributeType): The field of interest
 
     Returns:
         A list containing zero or one NotGreaterThanErrors, listing all ids where the value in the field of interest
@@ -97,7 +103,7 @@ def all_greater_than_zero(data: SingleDataset, component: ComponentType, field: 
 def all_greater_than_or_equal_to_zero(
     data: SingleDataset,
     component: ComponentType,
-    field: str,
+    field: AttributeType,
     default_value: np.ndarray | int | float | None = None,
 ) -> list[NotGreaterOrEqualError]:
     """
@@ -107,7 +113,7 @@ def all_greater_than_or_equal_to_zero(
     Args:
         data (SingleDataset): The input/update data set for all components
         component (ComponentType) The component of interest
-        field (str): The field of interest
+        field (AttributeType): The field of interest
         default_value (np.ndarray | int | float | None, optional): Some values are not required, but will
             receive a default value in the C++ core. To do a proper input validation, these default values should be
             included in the validation. It can be a fixed value for the entire column (int/float) or be different for
@@ -121,7 +127,7 @@ def all_greater_than_or_equal_to_zero(
 
 
 def all_greater_than(
-    data: SingleDataset, component: ComponentType, field: str, ref_value: int | float | str
+    data: SingleDataset, component: ComponentType, field: AttributeType, ref_value: int | float | str
 ) -> list[NotGreaterThanError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are greater than
@@ -129,8 +135,8 @@ def all_greater_than(
 
     Args:
         data: The input/update data set for all components
-        component: The component of interest
-        field: The field of interest
+        component (ComponentType): The component of interest
+        field (AttributeType): The field of interest
         ref_value: The reference value against which all values in the 'field' column are compared. If the reference
         value is a string, it is assumed to be another field (e.g. 'field_x') of the same component, or a ratio between
         two fields (e.g. 'field_x / field_y')
@@ -149,7 +155,7 @@ def all_greater_than(
 def all_greater_or_equal(
     data: SingleDataset,
     component: ComponentType,
-    field: str,
+    field: AttributeType,
     ref_value: int | float | str,
     default_value: np.ndarray | int | float | None = None,
 ) -> list[NotGreaterOrEqualError]:
@@ -160,8 +166,8 @@ def all_greater_or_equal(
 
     Args:
         data: The input/update data set for all components
-        component: The component of interest
-        field: The field of interest
+        component (ComponentType): The component of interest
+        field (AttributeType): The field of interest
         ref_value: The reference value against which all values in the 'field' column are compared. If the reference
         value is a string, it is assumed to be another field (e.g. 'field_x') of the same component, or a ratio between
         two fields (e.g. 'field_x / field_y')
@@ -184,7 +190,7 @@ def all_greater_or_equal(
 
 
 def all_less_than(
-    data: SingleDataset, component: ComponentType, field: str, ref_value: int | float | str
+    data: SingleDataset, component: ComponentType, field: AttributeType, ref_value: int | float | str
 ) -> list[NotLessThanError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are less than the
@@ -192,8 +198,8 @@ def all_less_than(
 
     Args:
         data: The input/update data set for all components
-        component: The component of interest
-        field: The field of interest
+        component (ComponentType): The component of interest
+        field (AttributeType): The field of interest
         ref_value: The reference value against which all values in the 'field' column are compared. If the reference
         value is a string, it is assumed to be another field (e.g. 'field_x') of the same component, or a ratio between
         two fields (e.g. 'field_x / field_y')
@@ -210,7 +216,7 @@ def all_less_than(
 
 
 def all_less_or_equal(
-    data: SingleDataset, component: ComponentType, field: str, ref_value: int | float | str
+    data: SingleDataset, component: ComponentType, field: AttributeType, ref_value: int | float | str
 ) -> list[NotLessOrEqualError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are less than,
@@ -240,7 +246,7 @@ def all_less_or_equal(
 def all_between(  # noqa: PLR0913
     data: SingleDataset,
     component: ComponentType,
-    field: str,
+    field: AttributeType,
     ref_value_1: int | float | str,
     ref_value_2: int | float | str,
     default_value: np.ndarray | int | float | None = None,
@@ -280,7 +286,7 @@ def all_between(  # noqa: PLR0913
 def all_between_or_at(  # noqa: PLR0913
     data: SingleDataset,
     component: ComponentType,
-    field: str,
+    field: AttributeType,
     ref_value_1: int | float | str,
     ref_value_2: int | float | str,
     default_value_1: np.ndarray | int | float | None = None,
@@ -330,7 +336,7 @@ def all_between_or_at(  # noqa: PLR0913
 def none_match_comparison[ErrorType: ComparisonError](  # noqa: PLR0913
     data: SingleDataset,
     component: ComponentType,
-    field: str,
+    field: AttributeType,
     compare_fn: Callable,
     ref_value: ComparisonError.RefType,
     error: type[ErrorType] = ComparisonError,  # type: ignore
@@ -377,12 +383,12 @@ def none_match_comparison[ErrorType: ComparisonError](  # noqa: PLR0913
     if matches.any():
         if matches.ndim > 1:
             matches = matches.any(axis=1)
-        ids = component_data["id"][matches].flatten().tolist()
+        ids = component_data[AttributeType.id][matches].flatten().tolist()
         return [error(component, field, ids, ref_value)]
     return []
 
 
-def all_identical(data: SingleDataset, component: ComponentType, field: str) -> list[NotIdenticalError]:
+def all_identical(data: SingleDataset, component: ComponentType, field: AttributeType) -> list[NotIdenticalError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are identical.
 
@@ -400,13 +406,13 @@ def all_identical(data: SingleDataset, component: ComponentType, field: str) -> 
     if len(field_data) > 0:
         first = field_data[0]
         if np.any(field_data != first):
-            return [NotIdenticalError(component, field, data[component]["id"], list(field_data))]
+            return [NotIdenticalError(component, field, data[component][AttributeType.id], list(field_data))]
 
     return []
 
 
 def all_enabled_identical(
-    data: SingleDataset, component: ComponentType, field: str, status_field: str
+    data: SingleDataset, component: ComponentType, field: AttributeType, status_field: str
 ) -> list[NotIdenticalError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are identical.
@@ -434,7 +440,7 @@ def all_enabled_identical(
     )
 
 
-def all_unique(data: SingleDataset, component: ComponentType, field: str) -> list[NotUniqueError]:
+def all_unique(data: SingleDataset, component: ComponentType, field: AttributeType) -> list[NotUniqueError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are unique within
     the 'field' column of that component.
@@ -442,7 +448,7 @@ def all_unique(data: SingleDataset, component: ComponentType, field: str) -> lis
     Args:
         data (SingleDataset): The input/update data set for all components
         component (ComponentType): The component of interest
-        field (str): The field of interest
+        field (AttributeType): The field of interest
 
     Returns:
         A list containing zero or one NotUniqueError, listing all ids where the value in the field of interest was
@@ -452,13 +458,13 @@ def all_unique(data: SingleDataset, component: ComponentType, field: str) -> lis
     field_data = data[component][field]
     _, inverse, counts = np.unique(field_data, return_inverse=True, return_counts=True)
     if any(counts != 1):
-        ids = data[component]["id"][(counts != 1)[inverse]].flatten().tolist()
+        ids = data[component][AttributeType.id][(counts != 1)[inverse]].flatten().tolist()
         return [NotUniqueError(component, field, ids)]
     return []
 
 
 def all_cross_unique(
-    data: SingleDataset, fields: list[tuple[ComponentType, str]], cross_only=True
+    data: SingleDataset, fields: list[tuple[ComponentType, AttributeType]], cross_only=True
 ) -> list[MultiComponentNotUniqueError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are unique within
@@ -466,7 +472,7 @@ def all_cross_unique(
 
     Args:
         data (SingleDataset): The input/update data set for all components
-        fields (list[tuple[str, str]]): The fields of interest, formatted as
+        fields (list[tuple[ComponentType, AttributeType]]): The fields of interest, formatted as
             [(component_1, field_1), (component_2, field_2)]
         cross_only (bool, optional): Do not include duplicates within a single field. It is advised that you use
             all_unique() to explicitly check uniqueness within a single field.
@@ -475,10 +481,10 @@ def all_cross_unique(
         A list containing zero or one MultiComponentNotUniqueError, listing all fields and ids where the value was not
         unique between the fields.
     """
-    all_values: dict[int, list[tuple[tuple[ComponentType, str], int]]] = {}
+    all_values: dict[int, list[tuple[tuple[ComponentType, AttributeType], int]]] = {}
     duplicate_ids = set()
     for component, field in fields:
-        for obj_id, value in zip(data[component]["id"], data[component][field]):
+        for obj_id, value in zip(data[component][AttributeType.id], data[component][field]):
             component_id = ((component, field), obj_id)
             if value not in all_values:
                 all_values[value] = []
@@ -494,7 +500,7 @@ def all_cross_unique(
 
 
 def all_in_valid_values(
-    data: SingleDataset, component: ComponentType, field: str, values: list
+    data: SingleDataset, component: ComponentType, field: AttributeType, values: list
 ) -> list[UnsupportedMeasuredTerminalType]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are valid values for
@@ -515,13 +521,13 @@ def all_in_valid_values(
 
     invalid = np.isin(data[component][field], np.array(list(valid)), invert=True)
     if invalid.any():
-        ids = data[component]["id"][invalid].flatten().tolist()
+        ids = data[component][AttributeType.id][invalid].flatten().tolist()
         return [UnsupportedMeasuredTerminalType(component, field, ids, values)]
     return []
 
 
 def all_valid_enum_values(
-    data: SingleDataset, component: ComponentType, field: str, enum: type[Enum] | list[type[Enum]]
+    data: SingleDataset, component: ComponentType, field: AttributeType, enum: type[Enum] | list[type[Enum]]
 ) -> list[InvalidEnumValueError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are valid values for
@@ -530,7 +536,7 @@ def all_valid_enum_values(
     Args:
         data (SingleDataset): The input/update data set for all components
         component (ComponentType): The component of interest
-        field (str): The field of interest
+        field (AttributeType): The field of interest
         enum (Type[Enum] | list[Type[Enum]]): The enum type to validate against, or a list of such enum types
 
     Returns:
@@ -545,7 +551,7 @@ def all_valid_enum_values(
 
     invalid = np.isin(data[component][field], np.array(list(valid), dtype=np.int8), invert=True)
     if invalid.any():
-        ids = data[component]["id"][invalid].flatten().tolist()
+        ids = data[component][AttributeType.id][invalid].flatten().tolist()
         return [InvalidEnumValueError(component, field, ids, enum)]
     return []
 
@@ -553,8 +559,8 @@ def all_valid_enum_values(
 def all_valid_associated_enum_values(  # noqa: PLR0913
     data: SingleDataset,
     component: ComponentType,
-    field: str,
-    ref_object_id_field: str,
+    field: AttributeType,
+    ref_object_id_field: AttributeType,
     ref_components: list[ComponentType],
     enum: type[Enum] | list[type[Enum]],
     **filters: Any,
@@ -563,8 +569,8 @@ def all_valid_associated_enum_values(  # noqa: PLR0913
     Args:
         data (SingleDataset): The input/update data set for all components
         component (ComponentType): The component of interest
-        field (str): The field of interest
-        ref_object_id_field (str): The field that contains the referenced component ids
+        field (AttributeType): The field of interest
+        ref_object_id_field (AttributeType): The field that contains the referenced component ids
         ref_components (list[ComponentType]): The component or components in which we want to look for ids
         enum (Type[Enum] | list[Type[Enum]]): The enum type to validate against, or a list of such enum types
         **filters: One or more filters on the dataset. E.g. regulated_object="transformer".
@@ -587,7 +593,7 @@ def all_valid_associated_enum_values(  # noqa: PLR0913
 
     invalid = np.isin(data[component][field][mask], np.array(list(valid), dtype=np.int8), invert=True)
     if invalid.any():
-        ids = data[component]["id"][mask][invalid].flatten().tolist()
+        ids = data[component][AttributeType.id][mask][invalid].flatten().tolist()
         return [InvalidAssociatedEnumValueError(component, [field, ref_object_id_field], ids, enum)]
     return []
 
@@ -595,7 +601,7 @@ def all_valid_associated_enum_values(  # noqa: PLR0913
 def all_valid_ids(
     data: SingleDataset,
     component: ComponentType,
-    field: str,
+    field: AttributeType,
     ref_components: ComponentType | list[ComponentType],
     **filters: Any,
 ) -> list[InvalidIdError]:
@@ -620,12 +626,12 @@ def all_valid_ids(
     # Find any values that can't be found in the set of ids
     invalid = np.logical_and(mask, np.isin(data[component][field], valid_ids, invert=True))
     if invalid.any():
-        ids = data[component]["id"][invalid].flatten().tolist()
+        ids = data[component][AttributeType.id][invalid].flatten().tolist()
         return [InvalidIdError(component, field, ids, ref_components, filters)]
     return []
 
 
-def all_boolean(data: SingleDataset, component: ComponentType, field: str) -> list[NotBooleanError]:
+def all_boolean(data: SingleDataset, component: ComponentType, field: AttributeType) -> list[NotBooleanError]:
     """
     Check that for all records of a particular type of component, the values in the 'field' column are valid boolean
     values, i.e. 0 or 1. Returns an empty list on success, or a list containing a single error object on failure.
@@ -641,13 +647,13 @@ def all_boolean(data: SingleDataset, component: ComponentType, field: str) -> li
     """
     invalid = np.isin(data[component][field], [0, 1], invert=True)
     if invalid.any():
-        ids = data[component]["id"][invalid].flatten().tolist()
+        ids = data[component][AttributeType.id][invalid].flatten().tolist()
         return [NotBooleanError(component, field, ids)]
     return []
 
 
 def all_not_two_values_zero(
-    data: SingleDataset, component: ComponentType, field_1: str, field_2: str
+    data: SingleDataset, component: ComponentType, field_1: AttributeType, field_2: AttributeType
 ) -> list[TwoValuesZeroError]:
     """
     Check that for all records of a particular type of component, the values in the 'field_1' and 'field_2' column are
@@ -667,13 +673,13 @@ def all_not_two_values_zero(
     if invalid.any():
         if invalid.ndim > 1:
             invalid = invalid.any(axis=1)
-        ids = data[component]["id"][invalid].flatten().tolist()
+        ids = data[component][AttributeType.id][invalid].flatten().tolist()
         return [TwoValuesZeroError(component, [field_1, field_2], ids)]
     return []
 
 
 def all_not_two_values_equal(
-    data: SingleDataset, component: ComponentType, field_1: str, field_2: str
+    data: SingleDataset, component: ComponentType, field_1: AttributeType, field_2: AttributeType
 ) -> list[SameValueError]:
     """
     Check that for all records of a particular type of component, the values in the 'field_1' and 'field_2' column are
@@ -694,7 +700,7 @@ def all_not_two_values_equal(
     if invalid.any():
         if invalid.ndim > 1:
             invalid = invalid.any(axis=1)
-        ids = data[component]["id"][invalid].flatten().tolist()
+        ids = data[component][AttributeType.id][invalid].flatten().tolist()
         return [SameValueError(component, [field_1, field_2], ids)]
     return []
 
@@ -719,28 +725,30 @@ def ids_valid_in_update_data_set(
     """
     component_data = update_data[component]
     component_ref_data = ref_data[component]
-    if component_ref_data["id"].size == 0:
-        return [InvalidIdError(component=component, field="id", ids=None)]
-    id_field_is_nan = np.array(is_nan_or_default(component_data["id"]))
+    if component_ref_data[AttributeType.id].size == 0:
+        return [InvalidIdError(component=component, field=AttributeType.id, ids=None)]
+    id_field_is_nan = np.array(is_nan_or_default(component_data[AttributeType.id]))
     # check whether id qualify for optional
-    if component_data["id"].size == 0 or np.all(id_field_is_nan):
+    if component_data[AttributeType.id].size == 0 or np.all(id_field_is_nan):
         # check if the dimension of the component_data is the same as the component_ref_data
         if get_comp_size(component_data) != get_comp_size(component_ref_data):
-            return [InvalidIdError(component=component, field="id", ids=None)]
+            return [InvalidIdError(component=component, field=AttributeType.id, ids=None)]
         return []  # supported optional id
 
     if np.all(id_field_is_nan) and not np.all(~id_field_is_nan):
-        return [InvalidIdError(component=component, field="id", ids=None)]
+        return [InvalidIdError(component=component, field=AttributeType.id, ids=None)]
 
     # normal check: exist and match with input
-    invalid = np.isin(component_data["id"], component_ref_data["id"], invert=True)
+    invalid = np.isin(component_data[AttributeType.id], component_ref_data[AttributeType.id], invert=True)
     if invalid.any():
-        ids = component_data["id"][invalid].flatten().tolist()
+        ids = component_data[AttributeType.id][invalid].flatten().tolist()
         return [IdNotInDatasetError(component, ids, ref_name)]
     return []
 
 
-def all_finite(data: SingleDataset, exceptions: dict[ComponentType, list[str]] | None = None) -> list[InfinityError]:
+def all_finite(
+    data: SingleDataset, exceptions: dict[ComponentType, list[AttributeType]] | None = None
+) -> list[InfinityError]:
     """
     Check that for all records in all component, the values in all columns are finite value, i.e. float values other
     than inf, or -inf. Nan values are ignored, as in all other comparison functions. You can use non_missing() to
@@ -770,12 +778,12 @@ def all_finite(data: SingleDataset, exceptions: dict[ComponentType, list[str]] |
 
             invalid = np.isinf(array[field])
             if invalid.any():
-                ids = array["id"][invalid].flatten().tolist()
+                ids = array[AttributeType.id][invalid].flatten().tolist()
                 errors.append(InfinityError(component, field, ids))
     return errors
 
 
-def no_strict_subset_missing(data: SingleDataset, fields: list[str], component_type: ComponentType):
+def no_strict_subset_missing(data: SingleDataset, fields: list[AttributeType], component_type: ComponentType):
     """
     Helper function that generates multi field validation errors if a subset of the supplied fields is missing.
     If for an instance of component type all fields are missing or all fields are not missing then,
@@ -820,14 +828,14 @@ def no_strict_subset_missing(data: SingleDataset, fields: list[str], component_t
 
         instances_with_invalid_data = np.logical_and(instances_with_nan_data, instances_with_non_nan_data)
 
-        ids = component_data["id"][instances_with_invalid_data]
+        ids = component_data[AttributeType.id][instances_with_invalid_data]
         if len(ids) > 0:
             errors.append(MultiFieldValidationError(component_type, fields, ids))
 
     return errors
 
 
-def not_all_missing(data: SingleDataset, fields: list[str], component_type: ComponentType):
+def not_all_missing(data: SingleDataset, fields: list[AttributeType], component_type: ComponentType):
     """
     Helper function that generates a multi field validation error if:
     all values specified by the fields parameters are missing.
@@ -863,14 +871,16 @@ def not_all_missing(data: SingleDataset, fields: list[str], component_type: Comp
                 ),
             )
 
-        ids = component_data["id"][instances_with_all_nan_data].flatten().tolist()
+        ids = component_data[AttributeType.id][instances_with_all_nan_data].flatten().tolist()
         if len(ids) > 0:
             errors.append(MultiFieldValidationError(component_type, fields, ids))
 
     return errors
 
 
-def none_missing(data: SingleDataset, component: ComponentType, fields: str | list[str]) -> list[MissingValueError]:
+def none_missing(
+    data: SingleDataset, component: ComponentType, fields: AttributeType | list[AttributeType]
+) -> list[MissingValueError]:
     """
     Check that for all records of a particular type of component, the values in the 'fields' columns are not NaN.
     Returns an empty list on success, or a list containing a single error object on failure.
@@ -894,7 +904,7 @@ def none_missing(data: SingleDataset, component: ComponentType, fields: str | li
         if invalid.any():
             # handle both symmetric and asymmetric values
             invalid = np.any(invalid, axis=tuple(range(1, invalid.ndim)))
-            ids = data[component]["id"][invalid].flatten().tolist()
+            ids = data[component][AttributeType.id][invalid].flatten().tolist()
             errors.append(MissingValueError(component, field, ids))
     return errors
 
@@ -912,8 +922,8 @@ def valid_p_q_sigma(data: SingleDataset, component: ComponentType) -> list[PQSig
         Note that with asymetric power sensors, partial assignment of p_sigma and q_sigma is also considered mismatch.
     """
     errors = []
-    p_sigma = data[component]["p_sigma"]
-    q_sigma = data[component]["q_sigma"]
+    p_sigma = data[component][AttributeType.p_sigma]
+    q_sigma = data[component][AttributeType.q_sigma]
     p_nan = np.isnan(p_sigma)
     q_nan = np.isnan(q_sigma)
     mis_match = p_nan != q_nan
@@ -923,13 +933,17 @@ def valid_p_q_sigma(data: SingleDataset, component: ComponentType) -> list[PQSig
         mis_match |= np.logical_xor(q_nan.any(axis=-1), q_nan.all(axis=-1))
 
     if mis_match.any():
-        ids = data[component]["id"][mis_match].flatten().tolist()
-        errors.append(PQSigmaPairError(component, ["p_sigma", "q_sigma"], ids))
+        ids = data[component][AttributeType.id][mis_match].flatten().tolist()
+        errors.append(PQSigmaPairError(component, [AttributeType.p_sigma, AttributeType.q_sigma], ids))
     return errors
 
 
 def all_valid_clocks(
-    data: SingleDataset, component: ComponentType, clock_field: str, winding_from_field: str, winding_to_field: str
+    data: SingleDataset,
+    component: ComponentType,
+    clock_field: AttributeType,
+    winding_from_field: AttributeType,
+    winding_to_field: AttributeType,
 ) -> list[TransformerClockError]:
     """
     Custom validation rule: Odd clock number is only allowed for Dy(n) or Y(N)d configuration.
@@ -960,7 +974,7 @@ def all_valid_clocks(
             TransformerClockError(
                 component=component,
                 fields=[clock_field, winding_from_field, winding_to_field],
-                ids=data[component]["id"][err].flatten().tolist(),
+                ids=data[component][AttributeType.id][err].flatten().tolist(),
             )
         ]
     return []
@@ -969,9 +983,9 @@ def all_valid_clocks(
 def all_same_current_angle_measurement_type_on_terminal(
     data: SingleDataset,
     component: ComponentType,
-    measured_object_field: str,
-    measured_terminal_type_field: str,
-    angle_measurement_type_field: str,
+    measured_object_field: AttributeType,
+    measured_terminal_type_field: AttributeType,
+    angle_measurement_type_field: AttributeType,
 ) -> list[MixedCurrentAngleMeasurementTypeError]:
     """
     Custom validation rule: All current angle measurement types on a terminal must be the same.
@@ -979,9 +993,9 @@ def all_same_current_angle_measurement_type_on_terminal(
     Args:
         data (SingleDataset): The input/update data set for all components
         component (ComponentType): The component of interest
-        measured_object_field (str): The measured object field
-        measured_terminal_type_field (str): The terminal field
-        angle_measurement_type_field (str): The angle measurement type field
+        measured_object_field (AttributeType): The measured object field
+        measured_terminal_type_field (AttributeType): The terminal field
+        angle_measurement_type_field (AttributeType): The angle measurement type field
 
     Returns:
         A list containing zero or more MixedCurrentAngleMeasurementTypeErrors; listing all the ids of
@@ -1009,7 +1023,7 @@ def all_same_current_angle_measurement_type_on_terminal(
             MixedCurrentAngleMeasurementTypeError(
                 component=component,
                 fields=[measured_object_field, measured_terminal_type_field, angle_measurement_type_field],
-                ids=data[component]["id"][err].flatten().tolist(),
+                ids=data[component][AttributeType.id][err].flatten().tolist(),
             )
         ]
     return []
@@ -1019,8 +1033,8 @@ def all_same_sensor_type_on_same_terminal(
     data: SingleDataset,
     power_sensor_type: ComponentType,
     current_sensor_type: ComponentType,
-    measured_object_field: str,
-    measured_terminal_type_field: str,
+    measured_object_field: AttributeType,
+    measured_terminal_type_field: AttributeType,
 ) -> list[MixedPowerCurrentSensorError]:
     """
     Custom validation rule: All sensors on a terminal must be of the same type.
@@ -1046,8 +1060,10 @@ def all_same_sensor_type_on_same_terminal(
 
     mixed_terminals = np.intersect1d(power_sensor_measured_terminals, current_sensor_measured_terminals)
     if mixed_terminals.size != 0:
-        mixed_power_sensor_ids = power_sensor_data["id"][np.isin(power_sensor_measured_terminals, mixed_terminals)]
-        mixed_current_sensor_ids = current_sensor_data["id"][
+        mixed_power_sensor_ids = power_sensor_data[AttributeType.id][
+            np.isin(power_sensor_measured_terminals, mixed_terminals)
+        ]
+        mixed_current_sensor_ids = current_sensor_data[AttributeType.id][
             np.isin(current_sensor_measured_terminals, mixed_terminals)
         ]
 
@@ -1067,7 +1083,10 @@ def all_same_sensor_type_on_same_terminal(
 
 
 def all_valid_fault_phases(
-    data: SingleDataset, component: ComponentType, fault_type_field: str, fault_phase_field: str
+    data: SingleDataset,
+    component: ComponentType,
+    fault_type_field: AttributeType,
+    fault_phase_field: AttributeType,
 ) -> list[FaultPhaseError]:
     """
     Custom validation rule: Only a subset of fault_phases is supported for each fault type.
@@ -1118,7 +1137,7 @@ def all_valid_fault_phases(
             FaultPhaseError(
                 component=component,
                 fields=[fault_type_field, fault_phase_field],
-                ids=data[component]["id"][err].flatten().tolist(),
+                ids=data[component][AttributeType.id][err].flatten().tolist(),
             )
         ]
     return []
@@ -1127,8 +1146,8 @@ def all_valid_fault_phases(
 def any_voltage_angle_measurement_if_global_current_measurement(
     data: SingleDataset,
     component: ComponentType,
-    angle_measurement_type_filter: tuple[str, AngleMeasurementType],
-    voltage_sensor_u_angle_measured: dict[ComponentType, str],
+    angle_measurement_type_filter: tuple[AttributeType, AngleMeasurementType],
+    voltage_sensor_u_angle_measured: dict[ComponentType, AttributeType],
 ) -> list[MissingVoltageAngleMeasurementError]:
     """Require a voltage angle measurement if a global angle current measurement is present.
 
@@ -1154,10 +1173,12 @@ def any_voltage_angle_measurement_if_global_current_measurement(
         if (np.isfinite(data[voltage_sensor_type][voltage_angle_field])).any():
             return []
 
-    voltage_and_current_sensor_ids = {sensor: data[sensor]["id"] for sensor in voltage_sensor_u_angle_measured}
+    voltage_and_current_sensor_ids = {
+        sensor: data[sensor][AttributeType.id] for sensor in voltage_sensor_u_angle_measured
+    }
     voltage_and_current_sensor_ids[component] = current_sensors[
         current_sensors[angle_measurement_type_field] == angle_measurement_type
-    ]["id"]
+    ][AttributeType.id]
 
     return [
         MissingVoltageAngleMeasurementError(

@@ -43,7 +43,7 @@ We specify the same attributes with the same data types and memory offset.
 import numpy as np
 node_dtype = np.dtype(
     {
-        'names': ['id', 'u_rated'],
+        'names': [AttributeType.id, AttributeType.u_rated],
         'formats': ['<i4', '<f8'],  # little endian in x86-64
         'offsets': [0, 8],
         'itemsize': 16,
@@ -57,8 +57,8 @@ The `numpy` array has exactly the same data layout as the `std::vector<NodeInput
 
 ```python
 node = np.empty(shape=2, dtype=node_dtype)
-node['id'] = [1, 2]
-node['u_rated'] = [150e3, 10e3]
+node[AttributeType.id] = [1, 2]
+node[AttributeType.u_rated] = [150e3, 10e3]
 ```
 
 ## Columnar data format
@@ -84,10 +84,10 @@ To recreate this in Python using NumPy arrays, we should create it with the corr
 [Structured Array](#structured-array) - for each attribute.
 
 ```python
-node_id = np.empty(shape=2, dtype=node_dtype["id"])
-node_id['id'] = [1, 2]
-node_u_rated = np.empty(shape=2, dtype=node_dtype["u_rated"])
-node_u_rated['u_rated'] = [150e3, 10e3]
+node_id = np.empty(shape=2, dtype=node_dtype[AttributeType.id])
+node_id[AttributeType.id] = [1, 2]
+node_u_rated = np.empty(shape=2, dtype=node_dtype[AttributeType.u_rated])
+node_u_rated[AttributeType.u_rated] = [150e3, 10e3]
 ```
 
 ## Creating Dataset
@@ -99,13 +99,13 @@ With other types of components, the dictionary is a valid input dataset for the 
 For a row based data format,
 
 ```python
-input_data = {'node': node}
+input_data = {ComponentType.node: node}
 ```
 
 or for columnar data format,
 
 ```python
-input_data_columnar = {'node': {"id": node_id, "u_rated": node_u_rated}}
+input_data_columnar = {ComponentType.node: {AttributeType.id: node_id, AttributeType.u_rated: node_u_rated}}
 ```
 
 There can also be a combination of both row based and columnar data format in a dataset.
@@ -137,15 +137,15 @@ For example, the following update dataset will set `from_status` of the line #5 
 unchanged (change not available).
 
 ```python
-from power_grid_model import ComponentType, DatasetType, power_grid_meta_data
+from power_grid_model import AttributeType, ComponentType, DatasetType, power_grid_meta_data
 import numpy as np
 
 line_update = np.empty(shape=1, dtype=power_grid_meta_data[DatasetType.update][ComponentType.line]['dtype'])
 # direct string access is supported as well:
 # line_update = np.empty(shape=1, dtype=power_grid_meta_data['update']['line']['dtype'])
-line_update['id'] = [5]
-line_update['from_status'] = [0]
-line_update['to_status'] = [-128]
+line_update[AttributeType.id] = [5]
+line_update[AttributeType.from_status] = [0]
+line_update[AttributeType.to_status] = [-128]
 ```
 
 ### Enumerations
@@ -175,13 +175,13 @@ One can import the `power_grid_meta_data` to get all the predefined `numpy.dtype
 The code below creates an array which is compatible with transformer input dataset.
 
 ```python
-from power_grid_model import ComponentType, DatasetType, power_grid_meta_data
+from power_grid_model import AttributeType. ComponentType, DatasetType, power_grid_meta_data
 
 transformer_dtype = power_grid_meta_data[DatasetType.input][ComponentType.transformer].dtype
 # Array for row based data
 transformer = np.empty(shape=5, dtype=transformer_dtype)
 # Array for columnar data
-transformer_tap_pos = np.empty(shape=5, dtype=transformer_dtype["tap_pos"])
+transformer_tap_pos = np.empty(shape=5, dtype=transformer_dtype[AttributeType.tap_pos])
 
 # direct string access is supported as well:
 # transformer = np.empty(shape=5, dtype=power_grid_meta_data[DatasetType.input][ComponentType.transformer].dtype)
@@ -197,9 +197,9 @@ It sets the `from_status` of all the lines to `1`, but leave the `to_status` unc
 `-128`).
 
 ```python
-from power_grid_model import initialize_array
+from power_grid_model import AttributeType, ComponentType, DatasetType, initialize_array
 
-line_update = initialize_array('update', 'line', 5)
-line_update['id'] = [1, 2, 3, 4, 5]
-line_update['from_status'] = 1
+line_update = initialize_array(DatasetType.update, ComponentType.line, 5)
+line_update[AttributeType.id] = [1, 2, 3, 4, 5]
+line_update[AttributeType.from_status] = 1
 ```

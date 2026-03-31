@@ -6,7 +6,7 @@ SPDX-License-Identifier: MPL-2.0
 
 # Guidelines for performance enhancement
 
-The `power-grid-model` is a library that shines in its ability to handle calculations at scale.
+The `power-grid-model` is designed to handle calculations at scale.
 It remains performant, even when doing calculations with one or a combination of the following extremes
 (non-exhaustive):
 
@@ -16,6 +16,11 @@ It remains performant, even when doing calculations with one or a combination of
 
 To achieve that high performance, several optimizations are made.
 To use those optimizations to the fullest, we recommend our users to follow the following guidelines.
+
+```{note}
+This guide focuses on system-level performance optimization (batching, caching, parallelization).
+For algorithm-level details such as calculation method selection, see the [Calculations](calculations.md) documentation.
+```
 
 ## Data validity
 

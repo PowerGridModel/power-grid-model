@@ -5,7 +5,7 @@
 import numpy as np
 import pytest
 
-from power_grid_model._core.dataset_definitions import ComponentType, DatasetType
+from power_grid_model._core.dataset_definitions import ComponentType as CT, DatasetType
 from power_grid_model._core.power_grid_dataset import CConstDataset
 from power_grid_model._core.power_grid_meta import power_grid_meta_data
 from power_grid_model.errors import PowerGridError
@@ -56,16 +56,14 @@ def test_const_dataset__conflicting_data():
     with pytest.raises(PowerGridError):
         CConstDataset(
             data={
-                ComponentType.node: np.zeros(1, dtype=power_grid_meta_data[DatasetType.input][ComponentType.node]),
-                ComponentType.sym_load: np.zeros(
-                    1, dtype=power_grid_meta_data[DatasetType.update][ComponentType.sym_load]
-                ),
+                CT.node: np.zeros(1, dtype=power_grid_meta_data[DatasetType.input][CT.node]),
+                CT.sym_load: np.zeros(1, dtype=power_grid_meta_data[DatasetType.update][CT.sym_load]),
             }
         )
 
 
 def test_const_dataset__single_data(dataset_type):
-    components = {ComponentType.node: 3, ComponentType.sym_load: 2, ComponentType.asym_load: 4}
+    components = {CT.node: 3, CT.sym_load: 2, CT.asym_load: 4}
     data = {
         component: np.zeros(shape=count, dtype=power_grid_meta_data[dataset_type][component])
         for component, count in components.items()
@@ -87,7 +85,7 @@ def test_const_dataset__single_data(dataset_type):
 
 @pytest.mark.parametrize("batch_size", [0, 1, 3])
 def test_const_dataset__uniform_batch_data(dataset_type, batch_size):
-    components = {ComponentType.node: 3, ComponentType.sym_load: 2, ComponentType.asym_load: 4}
+    components = {CT.node: 3, CT.sym_load: 2, CT.asym_load: 4}
     data = {
         component: np.zeros(shape=(batch_size, count), dtype=power_grid_meta_data[dataset_type][component])
         for component, count in components.items()
@@ -109,23 +107,21 @@ def test_const_dataset__uniform_batch_data(dataset_type, batch_size):
 
 def test_const_dataset__sparse_batch_data(dataset_type):
     batch_size = 3
-    components = {ComponentType.node: 3, ComponentType.sym_load: 2, ComponentType.asym_load: 4, ComponentType.link: 4}
+    components = {CT.node: 3, CT.sym_load: 2, CT.asym_load: 4, CT.link: 4}
     data = {
-        ComponentType.node: {
-            "data": np.zeros(shape=3, dtype=power_grid_meta_data[dataset_type][ComponentType.node]),
+        CT.node: {
+            "data": np.zeros(shape=3, dtype=power_grid_meta_data[dataset_type][CT.node]),
             "indptr": np.array([0, 2, 3, 3]),
         },
-        ComponentType.sym_load: {
-            "data": np.zeros(shape=2, dtype=power_grid_meta_data[dataset_type][ComponentType.sym_load]),
+        CT.sym_load: {
+            "data": np.zeros(shape=2, dtype=power_grid_meta_data[dataset_type][CT.sym_load]),
             "indptr": np.array([0, 0, 1, 2]),
         },
-        ComponentType.asym_load: {
-            "data": np.zeros(shape=4, dtype=power_grid_meta_data[dataset_type][ComponentType.asym_load]),
+        CT.asym_load: {
+            "data": np.zeros(shape=4, dtype=power_grid_meta_data[dataset_type][CT.asym_load]),
             "indptr": np.array([0, 2, 3, 4]),
         },
-        ComponentType.link: np.zeros(
-            shape=(batch_size, 4), dtype=power_grid_meta_data[dataset_type][ComponentType.link]
-        ),
+        CT.link: np.zeros(shape=(batch_size, 4), dtype=power_grid_meta_data[dataset_type][CT.link]),
     }
 
     dataset = CConstDataset(data, dataset_type)
@@ -139,30 +135,30 @@ def test_const_dataset__sparse_batch_data(dataset_type):
     assert info.n_components() == len(components)
     assert info.components() == list(components)
     assert info.elements_per_scenario() == {
-        ComponentType.node: -1,
-        ComponentType.sym_load: -1,
-        ComponentType.asym_load: -1,
-        ComponentType.link: 4,
+        CT.node: -1,
+        CT.sym_load: -1,
+        CT.asym_load: -1,
+        CT.link: 4,
     }
     assert info.total_elements() == {
-        ComponentType.node: 3,
-        ComponentType.sym_load: 2,
-        ComponentType.asym_load: 4,
-        ComponentType.link: batch_size * 4,
+        CT.node: 3,
+        CT.sym_load: 2,
+        CT.asym_load: 4,
+        CT.link: batch_size * 4,
     }
 
 
 def test_const_dataset__mixed_batch_type(dataset_type):
     data = {
-        ComponentType.node: np.zeros(shape=3, dtype=power_grid_meta_data[dataset_type][ComponentType.node]),
-        ComponentType.line: np.zeros(shape=(2, 3), dtype=power_grid_meta_data[dataset_type][ComponentType.line]),
+        CT.node: np.zeros(shape=3, dtype=power_grid_meta_data[dataset_type][CT.node]),
+        CT.line: np.zeros(shape=(2, 3), dtype=power_grid_meta_data[dataset_type][CT.line]),
     }
     with pytest.raises(ValueError, match=r"Dataset type \(single or batch\) must be consistent across all components."):
         CConstDataset(data, dataset_type)
 
     data = {
-        ComponentType.node: np.zeros(shape=(2, 3), dtype=power_grid_meta_data[dataset_type][ComponentType.node]),
-        ComponentType.line: np.zeros(shape=3, dtype=power_grid_meta_data[dataset_type][ComponentType.line]),
+        CT.node: np.zeros(shape=(2, 3), dtype=power_grid_meta_data[dataset_type][CT.node]),
+        CT.line: np.zeros(shape=3, dtype=power_grid_meta_data[dataset_type][CT.line]),
     }
     with pytest.raises(ValueError, match=r"Dataset type \(single or batch\) must be consistent across all components."):
         CConstDataset(data, dataset_type)
@@ -170,8 +166,8 @@ def test_const_dataset__mixed_batch_type(dataset_type):
 
 def test_const_dataset__mixed_batch_size(dataset_type):
     data = {
-        ComponentType.node: np.zeros(shape=(2, 3), dtype=power_grid_meta_data[dataset_type][ComponentType.node]),
-        ComponentType.line: np.zeros(shape=(3, 3), dtype=power_grid_meta_data[dataset_type][ComponentType.line]),
+        CT.node: np.zeros(shape=(2, 3), dtype=power_grid_meta_data[dataset_type][CT.node]),
+        CT.line: np.zeros(shape=(3, 3), dtype=power_grid_meta_data[dataset_type][CT.line]),
     }
     with pytest.raises(ValueError, match="Dataset must have a consistent batch size across all components"):
         CConstDataset(data, dataset_type)
@@ -180,8 +176,8 @@ def test_const_dataset__mixed_batch_size(dataset_type):
 @pytest.mark.parametrize("bad_indptr", [np.ndarray([0, 1]), np.ndarray([0, 3, 2]), np.ndarray([0, 1, 2, 3, 4])])
 def test_const_dataset__bad_sparse_data(dataset_type, bad_indptr):
     data = {
-        ComponentType.node: {
-            "data": np.zeros(shape=2, dtype=power_grid_meta_data[dataset_type][ComponentType.node]),
+        CT.node: {
+            "data": np.zeros(shape=2, dtype=power_grid_meta_data[dataset_type][CT.node]),
             "indptr": bad_indptr,
         },
     }
@@ -192,7 +188,7 @@ def test_const_dataset__bad_sparse_data(dataset_type, bad_indptr):
 @pytest.mark.parametrize(
     ("dtype", "supported"),
     [
-        (power_grid_meta_data[DatasetType.input][ComponentType.node].dtype["id"], True),
+        (power_grid_meta_data[DatasetType.input][CT.node].dtype["id"], True),
         ("<i4", True),
         ("<i8", False),
         ("<i1", False),
@@ -201,13 +197,13 @@ def test_const_dataset__bad_sparse_data(dataset_type, bad_indptr):
 )
 def test_const_dataset__different_dtype(dataset_type, dtype, supported):
     data = {
-        ComponentType.node: {
+        CT.node: {
             "id": np.zeros(shape=3, dtype=dtype),
         }
     }
     if supported:
         result = CConstDataset(data, dataset_type)
-        assert result.get_info().total_elements() == {ComponentType.node: 3}
+        assert result.get_info().total_elements() == {CT.node: 3}
     else:
         with pytest.raises(ValueError, match="Data type does not match schema"):
             CConstDataset(data, dataset_type)
