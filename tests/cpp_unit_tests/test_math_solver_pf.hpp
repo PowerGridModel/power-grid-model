@@ -80,12 +80,9 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - PF", SolverType, test_math_solver_
     PFSolverTestGrid<sym> const grid;
 
     // topo and param ptr
+    auto const topo = grid.topo();
     auto param_ptr = std::make_shared<MathModelParam<sym> const>(grid.param());
-    auto topo_ptr = std::make_shared<MathModelTopology const>(grid.topo());
-    YBus<sym> y_bus{topo_ptr, param_ptr};
-
-    // because YBus still requires a shared_ptr while solvers were changed to not require it anymore
-    auto const& topo = *topo_ptr;
+    YBus<sym> y_bus{topo, param_ptr};
 
     SUBCASE("Test pf solver") {
         constexpr auto error_tolerance{1e-12};

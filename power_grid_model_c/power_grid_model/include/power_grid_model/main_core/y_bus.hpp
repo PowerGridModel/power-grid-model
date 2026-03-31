@@ -87,11 +87,11 @@ void prepare_y_bus(typename MainModelType::MainModelState const& state_, Idx n_m
         for (Idx i = 0; i != n_math_solvers_; ++i) {
             // construct from existing Y_bus structure if possible
             if (other_y_bus_exist) {
-                y_bus_vec.emplace_back(state_.math_topology[i],
+                y_bus_vec.emplace_back(*state_.math_topology[i],
                                        std::make_shared<MathModelParam<sym> const>(std::move(math_params[i])),
                                        other_y_bus_vec[i].get_y_bus_structure());
             } else {
-                y_bus_vec.emplace_back(state_.math_topology[i],
+                y_bus_vec.emplace_back(*state_.math_topology[i],
                                        std::make_shared<MathModelParam<sym> const>(std::move(math_params[i])));
             }
         }
