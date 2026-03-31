@@ -91,9 +91,9 @@ constexpr void re_attach_to_node(Idx new_node, BranchIdx& edge) { edge[1] = new_
 // map from node index to the set of adjacent edge indices
 // unordered_map because node IDs may be sparse/non-contiguous
 // unordered_set for O(1) insert/erase during reattachment
-inline auto build_adjacency_map(std::span<BranchIdx> edges) -> AdjacencyMap {
+inline auto build_adjacency_map(std::span<BranchIdx const> edges) -> AdjacencyMap {
     AdjacencyMap adjacency_map{};
-    for (auto const& [index, edge] : enumerate(std::as_const(edges))) {
+    for (auto const& [index, edge] : enumerate(edges)) {
         auto const [from_node, to_node] = edge;
         adjacency_map[from_node].insert(index);
         adjacency_map[to_node].insert(index);
@@ -138,8 +138,6 @@ inline void forward_elimination(EliminationResult& result, std::vector<BranchIdx
                                 std::vector<DoubleComplex> node_loads) {
     using enum EdgeEvent;
     using enum EdgeDirection;
-
-    // auto& [matrix, rhs, free_edge_indices, pivot_edge_indices, edges_history] = result;
 
     Idx matrix_row{};
     auto adjacency_map = build_adjacency_map(edges);
@@ -198,7 +196,7 @@ inline auto backward_substitution_free_right_cols(std::span<Idx const> free_col_
 // backward substitution is performed in a sparse way
 // using the result from the elimination game
 inline void backward_substitution(EliminationResult& elimination_result) {
-    auto free_col_indices = std::span(elimination_result.free_edge_indices);
+    auto free_col_indices = std::span<Idx const>(elimination_result.free_edge_indices);
 
     for (auto const pivot_col_idx : backward_substitution_pivots(elimination_result.pivot_edge_indices)) {
         auto const& edge_history = elimination_result.edges_history[pivot_col_idx];

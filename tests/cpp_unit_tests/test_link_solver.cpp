@@ -387,5 +387,4 @@ TEST_CASE("Test the link solver algorithm") {
         }
     }
 }
-
 } // namespace power_grid_model::link_solver
