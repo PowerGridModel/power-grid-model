@@ -114,7 +114,7 @@ class ColumnarAttributeRange : public std::ranges::view_interface<ColumnarAttrib
                     if constexpr (sizeof(AttributeType) <= sizeof(value_type)) {
                         AttributeType const* buffer_ptr =
                             reinterpret_cast<AttributeType const*>(attribute_buffer.data) + idx;
-                        AttributeType& attribute_ref =
+                        auto& attribute_ref =
                             meta_attribute.template get_attribute<AttributeType>(reinterpret_cast<RawDataPtr>(&result));
                         attribute_ref = *buffer_ptr;
                     } else {
