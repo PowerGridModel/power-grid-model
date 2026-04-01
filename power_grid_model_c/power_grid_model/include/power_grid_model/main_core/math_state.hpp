@@ -45,7 +45,7 @@ template <symmetry_tag sym> inline auto& get_y_bus(MathState& math_state) {
 }
 
 template <symmetry_tag sym>
-inline void update_y_bus(MathState& math_state, std::vector<MathModelParam<sym>> const& math_model_params) {
+inline void update_y_bus(MathState& math_state, std::vector<MathModelParam<sym>> math_model_params) {
     auto& y_bus_vec = get_y_bus<sym>(math_state);
 
     assert(y_bus_vec.size() == math_model_params.size());
@@ -56,7 +56,7 @@ inline void update_y_bus(MathState& math_state, std::vector<MathModelParam<sym>>
 }
 
 template <symmetry_tag sym>
-inline void update_y_bus(MathState& math_state, std::vector<MathModelParam<sym>> const& math_model_params,
+inline void update_y_bus(MathState& math_state, std::vector<MathModelParam<sym>> math_model_params,
                          std::vector<MathModelParamIncrement> const& math_model_param_increments) {
     auto& y_bus_vec = get_y_bus<sym>(math_state);
 
