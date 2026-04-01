@@ -230,14 +230,14 @@ void prepare_solvers(typename ModelType::MainModelState& state, SolverPreparatio
                 [solver = std::ref(solvers[idx])](bool changed) { solver.get().get().parameters_changed(changed); });
         }
     } else if (!solvers_cache_status.template is_parameter_valid<sym>()) {
-        std::vector<MathModelParam<sym>> const math_params = main_core::get_math_param<sym>(state, n_math_solvers);
+        std::vector<MathModelParam<sym>> math_params = main_core::get_math_param<sym>(state, n_math_solvers);
         if (solvers_cache_status.template is_symmetry_mode_conserved<sym>()) {
             std::vector<MathModelParamIncrement> const math_param_increments =
                 main_core::get_math_param_increment<ModelType>(state, n_math_solvers,
                                                                solvers_cache_status.changed_components_indices());
-            main_core::update_y_bus(solver_context.math_state, math_params, math_param_increments);
+            main_core::update_y_bus(solver_context.math_state, std::move(math_params), math_param_increments);
         } else {
-            main_core::update_y_bus(solver_context.math_state, math_params);
+            main_core::update_y_bus(solver_context.math_state, std::move(math_params));
         }
     }
     // else do nothing, set everything up to date
