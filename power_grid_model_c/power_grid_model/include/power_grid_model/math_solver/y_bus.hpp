@@ -300,47 +300,48 @@ template <symmetry_tag sym> class YBus {
 
     YBus(MathModelTopology const& topo, MathModelParam<sym> param,
          std::shared_ptr<YBusStructure const> const& y_bus_struct = {})
-        : math_topology_{&topo} {
-        assert(math_topology_ != nullptr);
-
+        : math_topology_{topo} {
         // use existing struct or make new struct
         if (y_bus_struct) {
             y_bus_struct_ = y_bus_struct;
         } else {
-            y_bus_struct_ = std::make_shared<YBusStructure const>(*math_topology_);
+            y_bus_struct_ = std::make_shared<YBusStructure const>(math_topology_.get());
         }
         // update values
         update_admittance(param);
     }
 
     // getter
-    YBusStructure const& y_bus_structure() const { return *y_bus_struct_; }
+    YBusStructure const& y_bus_structure() const {
+        assert(y_bus_struct_ != nullptr);
+        return *y_bus_struct_;
+    }
     Idx size() const { return static_cast<Idx>(bus_entry().size()); }
     Idx nnz() const { return row_indptr().back(); }
     Idx nnz_lu() const { return row_indptr_lu().back(); }
-    IdxVector const& row_indptr() const { return y_bus_struct_->row_indptr; }
-    IdxVector const& col_indices() const { return y_bus_struct_->col_indices; }
-    IdxVector const& row_indptr_lu() const { return y_bus_struct_->row_indptr_lu; }
-    IdxVector const& col_indices_lu() const { return y_bus_struct_->col_indices_lu; }
-    IdxVector const& lu_transpose_entry() const { return y_bus_struct_->lu_transpose_entry; }
-    std::vector<YBusElement> const& y_bus_element() const { return y_bus_struct_->y_bus_element; }
-    IdxVector const& y_bus_entry_indptr() const { return y_bus_struct_->y_bus_entry_indptr; }
-    MathModelTopology const& math_topology() const { return *math_topology_; }
-    MathModelParam<sym> const& math_model_param() const { return math_model_param_; }
+    IdxVector const& row_indptr() const { return y_bus_structure().row_indptr; }
+    IdxVector const& col_indices() const { return y_bus_structure().col_indices; }
+    IdxVector const& row_indptr_lu() const { return y_bus_structure().row_indptr_lu; }
+    IdxVector const& col_indices_lu() const { return y_bus_structure().col_indices_lu; }
+    IdxVector const& lu_transpose_entry() const { return y_bus_structure().lu_transpose_entry; }
+    std::vector<YBusElement> const& y_bus_element() const { return y_bus_structure().y_bus_element; }
+    IdxVector const& y_bus_entry_indptr() const { return y_bus_structure().y_bus_entry_indptr; }
+    constexpr MathModelTopology const& math_topology() const { return math_topology_.get(); }
+    constexpr MathModelParam<sym> const& math_model_param() const { return math_model_param_; }
 
-    ComplexTensorVector<sym> const& admittance() const { return admittance_; }
-    IdxVector const& bus_entry() const { return y_bus_struct_->bus_entry; }
-    IdxVector const& lu_diag() const { return y_bus_struct_->diag_lu; }
-    IdxVector const& map_lu_y_bus() const { return y_bus_struct_->map_lu_y_bus; }
+    constexpr ComplexTensorVector<sym> const& admittance() const { return admittance_; }
+    IdxVector const& bus_entry() const { return y_bus_structure().bus_entry; }
+    IdxVector const& lu_diag() const { return y_bus_structure().diag_lu; }
+    IdxVector const& map_lu_y_bus() const { return y_bus_structure().map_lu_y_bus; }
 
-    // getter of shared ptr
-    std::shared_ptr<IdxVector const> shared_indptr() const { return {y_bus_struct_, &y_bus_struct_->row_indptr}; }
-    std::shared_ptr<IdxVector const> shared_indices() const { return {y_bus_struct_, &y_bus_struct_->col_indices}; }
-    std::shared_ptr<YBusStructure const> shared_y_bus_struct() const { return y_bus_struct_; }
-
-    constexpr auto& get_y_bus_structure() const { return y_bus_struct_; }
+    std::shared_ptr<YBusStructure const> shared_y_bus_structure() const {
+        assert(y_bus_struct_ != nullptr);
+        return y_bus_struct_;
+    }
 
     void update_admittance(MathModelParam<sym> math_model_param) {
+        assert(y_bus_struct_ != nullptr);
+
         // overwrite the old cached parameters
         math_model_param_ = std::move(math_model_param);
         // construct admittance data
@@ -404,6 +405,8 @@ template <symmetry_tag sym> class YBus {
      */
     void update_admittance_increment(MathModelParam<sym> math_model_param,
                                      MathModelParamIncrement const& math_model_param_incrmt) {
+        assert(y_bus_struct_ != nullptr);
+
         // swap the old cached parameters
         math_model_param_ = std::move(math_model_param);
 
@@ -455,9 +458,7 @@ template <symmetry_tag sym> class YBus {
     template <typename T>
         requires std::same_as<T, BranchSolverOutput<sym>> || std::same_as<T, BranchShortCircuitSolverOutput<sym>>
     std::vector<T> calculate_branch_flow(ComplexValueVector<sym> const& u) const {
-        assert(math_topology_ != nullptr);
-
-        return std::views::zip(math_topology_->branch_bus_idx, math_model_param_.branch_param) |
+        return std::views::zip(math_topology_.get().branch_bus_idx, math_model_param_.branch_param) |
                std::views::transform([&u](auto const& branch_idx_params) -> T {
                    auto const& [branch_idx, param] = branch_idx_params;
 
@@ -487,10 +488,8 @@ template <symmetry_tag sym> class YBus {
         requires std::same_as<SolverOutputType, ApplianceSolverOutput<sym>> ||
                  std::same_as<SolverOutputType, ApplianceShortCircuitSolverOutput<sym>>
     std::vector<SolverOutputType> calculate_shunt_flow(ComplexValueVector<sym> const& u) const {
-        assert(math_topology_ != nullptr);
-
-        std::vector<SolverOutputType> shunt_flow(math_topology_->n_shunt());
-        for (auto const [bus, shunts] : enumerated_zip_sequence(math_topology_->shunts_per_bus)) {
+        std::vector<SolverOutputType> shunt_flow(math_topology_.get().n_shunt());
+        for (auto const [bus, shunts] : enumerated_zip_sequence(math_topology_.get().shunts_per_bus)) {
             for (Idx const shunt : shunts) {
                 // See "Branch/Shunt Power Flow" in "State Estimation Alliander"
                 // NOTE: the negative sign for injection direction!
@@ -534,7 +533,7 @@ template <symmetry_tag sym> class YBus {
     ComplexTensorVector<sym> admittance_;
 
     // cache math topology
-    MathModelTopology const* math_topology_;
+    std::reference_wrapper<MathModelTopology const> math_topology_;
 
     // cache the math parameters
     MathModelParam<sym> math_model_param_;
