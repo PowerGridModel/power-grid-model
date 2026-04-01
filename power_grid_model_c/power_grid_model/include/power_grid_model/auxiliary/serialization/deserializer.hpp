@@ -577,7 +577,7 @@ class Deserializer {
         std::string_view dataset;
         Idx batch_size{};
         Idx global_map_size = parse_map_array<visit_map_t, move_forward>().size;
-        AttributeByteMeta attributes;
+        AttributeByteMeta attribute_meta{};
         DataByteMeta data_counts{};
         bool has_version{};
         bool has_type{};
@@ -585,36 +585,78 @@ class Deserializer {
         bool has_attributes{};
         bool has_data{};
 
-        while (global_map_size-- != 0) {
-            std::string_view const key = parse_string();
+        enum class Key : IntS {
+            version = 0,
+            type = 1,
+            is_batch = 2,
+            attributes = 3,
+            data = 4,
+            unknown = std::numeric_limits<IntS>::lowest(),
+        };
+
+        auto const match_key = [](std::string_view key) {
+            using enum Key;
             if (key == "version") {
+                return version;
+            }
+            if (key == "type") {
+                return type;
+            }
+            if (key == "is_batch") {
+                return is_batch;
+            }
+            if (key == "attributes") {
+                return attributes;
+            }
+            if (key == "data") {
+                return data;
+            }
+            return unknown;
+        };
+
+        while (global_map_size-- != 0) {
+            switch (match_key(parse_string())) {
+                using enum Key;
+            case version: {
                 root_key_ = "version";
                 has_version = true;
                 version_ = parse_string();
-            } else if (key == "type") {
+                break;
+            }
+            case type: {
                 root_key_ = "type";
                 has_type = true;
                 dataset = parse_string();
-            } else if (key == "is_batch") {
+                break;
+            }
+            case is_batch: {
                 root_key_ = "is_batch";
-                bool const is_batch = parse_bool();
-                if (has_data && (is_batch_ != is_batch)) {
+                bool const is_batch_value = parse_bool();
+                if (has_data && (is_batch_ != is_batch_value)) {
                     throw SerializationError{"Map/Array type of data does not match is_batch!\n"};
                 }
-                is_batch_ = is_batch;
+                is_batch_ = is_batch_value;
                 has_is_batch = true;
-            } else if (key == "attributes") {
+                break;
+            }
+            case attributes: {
                 root_key_ = "attributes";
                 has_attributes = true;
-                attributes = read_predefined_attributes();
-            } else if (key == "data") {
+                attribute_meta = read_predefined_attributes();
+                break;
+            }
+            case data: {
                 root_key_ = "data";
                 has_data = true;
                 data_counts = pre_count_data(has_is_batch);
                 batch_size = static_cast<Idx>(data_counts.size());
-            } else {
+                break;
+            }
+            default: {
                 // null visitor to skip
                 parse_skip();
+                break;
+            }
             }
             root_key_ = {};
         }
@@ -637,12 +679,12 @@ class Deserializer {
 
         WritableDataset handler{is_batch_, batch_size, dataset, *meta_data_};
         count_data(handler, data_counts);
-        parse_predefined_attributes(handler, attributes);
+        parse_predefined_attributes(handler, attribute_meta);
         return handler;
     }
 
     AttributeByteMeta read_predefined_attributes() {
-        AttributeByteMeta attributes;
+        AttributeByteMeta attributes{};
         Idx n_components = parse_map_array<visit_map_t, move_forward>().size;
         while (n_components-- != 0) {
             component_key_ = parse_string();
