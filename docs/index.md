@@ -117,6 +117,10 @@ examples/Asymmetric Line.ipynb
 ```{toctree}
 :caption: "Algorithms"
 :maxdepth: 2
+algorithms/pf-algorithms
+algorithms/tap-changing-algorithms
+algorithms/sc-algorithms
+algorithms/se-algorithms
 algorithms/lu-solver
 ```
 
