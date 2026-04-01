@@ -10,6 +10,7 @@ import pytest
 from power_grid_model import (
     AngleMeasurementType,
     AttributeType as AT,
+    BranchSide,
     ComponentAttributeFilterOptions,
     ComponentType as CT,
     DatasetType as DT,
@@ -424,30 +425,40 @@ def test_update_id_error(minimal_update, minimal_input):
 
 
 @pytest.fixture
-def model_for_irrelevant_components_testing():
+def input_data__irrelevant_components_test():
     node = initialize_array(DT.input, CT.node, 2)
     node[AT.id] = np.array([1, 2])
-    node[AT.u_rated] = [10.5e3, 10.5e3]
+    node[AT.u_rated] = [10000, 400]
 
-    line = initialize_array(DT.input, CT.line, 1)
-    line[AT.id] = [3]
-    line[AT.from_node] = [1]
-    line[AT.to_node] = [2]
-    line[AT.from_status] = [1]
-    line[AT.to_status] = [1]
-    line[AT.r1] = [0.25]
-    line[AT.x1] = [0.2]
-    line[AT.c1] = [10e-6]
-    line[AT.tan1] = [0.0]
-    line[AT.i_n] = [1000]
+    transformer = initialize_array(DT.input, CT.transformer, 1)
+    transformer[AT.id] = [3]
+    transformer[AT.from_node] = [1]
+    transformer[AT.to_node] = [2]
+    transformer[AT.from_status] = [1]
+    transformer[AT.to_status] = [1]
+    transformer[AT.u1] = [10000]
+    transformer[AT.u2] = [400]
+    transformer[AT.sn] = [100000]
+    transformer[AT.uk] = [0.1]
+    transformer[AT.pk] = [1000]
+    transformer[AT.i0] = [1.0e-6]
+    transformer[AT.p0] = [0.1]
+    transformer[AT.winding_from] = [2]
+    transformer[AT.winding_to] = [1]
+    transformer[AT.clock] = [5]
+    transformer[AT.tap_side] = [0]
+    transformer[AT.tap_pos] = [3]
+    transformer[AT.tap_min] = [-11]
+    transformer[AT.tap_max] = [9]
+    transformer[AT.tap_size] = [100]
 
     sym_load = initialize_array(DT.input, CT.sym_load, 1)
     sym_load[AT.id] = [4]
     sym_load[AT.node] = [2]
     sym_load[AT.status] = [1]
     sym_load[AT.type] = [LoadGenType.const_power]
-    sym_load[AT.p_specified] = [20e6]
-    sym_load[AT.q_specified] = [5e6]
+    sym_load[AT.p_specified] = [1000.0]
+    sym_load[AT.q_specified] = [200.0]
 
     source = initialize_array(DT.input, CT.source, 1)
     source[AT.id] = [5]
@@ -455,14 +466,8 @@ def model_for_irrelevant_components_testing():
     source[AT.status] = [1]
     source[AT.u_ref] = [1.0]
 
-    voltage_regulator = initialize_array(DT.input, CT.voltage_regulator, 1)
-    voltage_regulator[AT.id] = [6]
-    voltage_regulator[AT.regulated_object] = [4]
-    voltage_regulator[AT.status] = [1]
-    voltage_regulator[AT.u_ref] = [1.0]
-
     sym_current_sensor = initialize_array(DT.input, CT.sym_current_sensor, 1)
-    sym_current_sensor[AT.id] = [7]
+    sym_current_sensor[AT.id] = [6]
     sym_current_sensor[AT.measured_object] = [3]
     sym_current_sensor[AT.measured_terminal_type] = [MeasuredTerminalType.branch_to]
     sym_current_sensor[AT.angle_measurement_type] = [AngleMeasurementType.local_angle]
@@ -472,58 +477,92 @@ def model_for_irrelevant_components_testing():
     sym_current_sensor[AT.i_angle_measured] = [0.2]
 
     sym_voltage_sensor = initialize_array(DT.input, CT.sym_voltage_sensor, 1)
-    sym_voltage_sensor[AT.id] = [8]
+    sym_voltage_sensor[AT.id] = [7]
     sym_voltage_sensor[AT.measured_object] = [1]
     sym_voltage_sensor[AT.u_sigma] = [1.0]
-    sym_voltage_sensor[AT.u_measured] = [10500.0]
+    sym_voltage_sensor[AT.u_measured] = [10000.0]
 
-    input_data = {
+    return {
         CT.node: node,
-        CT.line: line,
+        CT.transformer: transformer,
         CT.sym_load: sym_load,
         CT.source: source,
-        CT.voltage_regulator: voltage_regulator,
         CT.sym_current_sensor: sym_current_sensor,
         CT.sym_voltage_sensor: sym_voltage_sensor,
     }
 
-    return PowerGridModel(input_data)
+
+@pytest.fixture
+def input_data__voltage_regulator():
+    voltage_regulator = initialize_array(DT.input, CT.voltage_regulator, 1)
+    voltage_regulator[AT.id] = [8]
+    voltage_regulator[AT.regulated_object] = [4]
+    voltage_regulator[AT.status] = [1]
+    voltage_regulator[AT.u_ref] = [1.05]
+    return {CT.voltage_regulator: voltage_regulator}
 
 
-def test_irrelevant_components__power_flow(model_for_irrelevant_components_testing):
-    model = model_for_irrelevant_components_testing
+@pytest.fixture
+def input_data__transformer_tap_regulator():
+    transformer_tap_regulator = initialize_array(DT.input, CT.transformer_tap_regulator, 1)
+    transformer_tap_regulator[AT.id] = [8]
+    transformer_tap_regulator[AT.regulated_object] = [3]
+    transformer_tap_regulator[AT.status] = [1]
+    transformer_tap_regulator[AT.control_side] = [BranchSide.to_side]
+    transformer_tap_regulator[AT.u_set] = [400.0]
+    transformer_tap_regulator[AT.u_band] = [20.0]
+    return {CT.transformer_tap_regulator: transformer_tap_regulator}
+
+
+@pytest.mark.parametrize("regulator_input", ["input_data__voltage_regulator", "input_data__transformer_tap_regulator"])
+def test_irrelevant_components__power_flow(input_data__irrelevant_components_test, regulator_input, request):
+    regulator = request.getfixturevalue(regulator_input)
+    input_data = {**input_data__irrelevant_components_test, **regulator}
+    model = PowerGridModel(input_data)
     result = model.calculate_power_flow()
 
-    assert CT.voltage_regulator in result
-    assert CT.line in result
+    assert CT.transformer in result
     assert CT.sym_load in result
     assert CT.source in result
     assert CT.node in result
     assert CT.sym_voltage_sensor not in result
     assert CT.sym_current_sensor not in result
+    if CT.voltage_regulator in regulator:
+        assert CT.voltage_regulator in result
+    else:
+        assert CT.transformer_tap_regulator in result
 
 
-def test_irrelevant_components__state_estimation(model_for_irrelevant_components_testing):
-    model = model_for_irrelevant_components_testing
+@pytest.mark.parametrize("regulator_input", ["input_data__voltage_regulator", "input_data__transformer_tap_regulator"])
+def test_irrelevant_components__state_estimation(input_data__irrelevant_components_test, regulator_input, request):
+    regulator = request.getfixturevalue(regulator_input)
+    input_data = {**input_data__irrelevant_components_test, **regulator}
+    model = PowerGridModel(input_data)
     result = model.calculate_state_estimation()
 
-    assert CT.voltage_regulator not in result
-    assert CT.line in result
+    assert CT.transformer in result
     assert CT.sym_load in result
     assert CT.source in result
     assert CT.node in result
     assert CT.sym_voltage_sensor in result
     assert CT.sym_current_sensor in result
+    assert CT.voltage_regulator not in result
+    assert CT.transformer_tap_regulator not in result
 
 
-def test_irrelevant_components__short_circuit(model_for_irrelevant_components_testing):
-    model = model_for_irrelevant_components_testing
+@pytest.mark.parametrize("regulator_input", ["input_data__voltage_regulator", "input_data__transformer_tap_regulator"])
+def test_irrelevant_components__short_circuit(input_data__irrelevant_components_test, regulator_input, request):
+    regulator = request.getfixturevalue(regulator_input)
+    input_data = {**input_data__irrelevant_components_test, **regulator}
+    model = PowerGridModel(input_data)
     result = model.calculate_short_circuit()
 
-    assert CT.voltage_regulator not in result
-    assert CT.line in result
+    assert CT.transformer in result
     assert CT.sym_load in result
     assert CT.source in result
     assert CT.node in result
+    assert CT.voltage_regulator not in result
+    assert CT.transformer_tap_regulator not in result
+    assert CT.transformer_tap_regulator not in result
     assert CT.sym_voltage_sensor not in result
     assert CT.sym_current_sensor not in result
