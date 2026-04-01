@@ -33,7 +33,7 @@ enum class EdgeEvent : std::uint8_t {
 enum class EdgeDirection : IntS { outgoing = -1, incoming = 1 };
 
 // Coordinate list (COO) sparse matrix representation, optimized for incremental construction during forward elimination
-struct COOSparseMatrix {
+struct CooSparseMatrix {
     Idx row_number{};
     std::unordered_map<Idx, IntS> data_map{};
 
@@ -75,7 +75,7 @@ struct EdgeHistory {
 };
 
 struct EliminationResult {
-    COOSparseMatrix matrix{};
+    CooSparseMatrix matrix{};
     std::vector<DoubleComplex> rhs{};         // RHS value at each pivot row
     std::vector<Idx> free_edge_indices{};     // index of degrees of freedom (self loop edges)
     std::vector<Idx> pivot_edge_indices{};    // index of pivot edges
@@ -107,7 +107,7 @@ inline void write_edge_history(EdgeHistory& edges_history, EdgeEvent event, Idx 
 }
 
 inline void replace_and_write(Idx edge_idx, Idx from_node_idx, Idx to_node_idx, Idx matrix_row,
-                              std::vector<BranchIdx>& edges, COOSparseMatrix& matrix) {
+                              std::vector<BranchIdx>& edges, CooSparseMatrix& matrix) {
     using enum EdgeDirection;
 
     if (from_node(edges[edge_idx]) == to_node_idx) {
