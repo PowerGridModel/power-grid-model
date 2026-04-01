@@ -88,7 +88,7 @@ TEST_CASE("Test the link solver algorithm") {
             CHECK(result.rhs == std::vector<DoubleComplex>{{1.0, 0.0}});
             CHECK(result.free_edge_indices.empty());
             REQUIRE(result.edges_history.size() == 1);
-            CHECK(result.edges_history[0].events == std::vector<EdgeEvent>{Deleted});
+            CHECK(result.edges_history[0].events == std::vector<EdgeEvent>{deleted});
             CHECK(result.edges_history[0].rows == std::vector<Idx>{0});
         }
 
@@ -108,9 +108,9 @@ TEST_CASE("Test the link solver algorithm") {
             CHECK(result.rhs == std::vector<DoubleComplex>{{-1.0, 0.0}, {0.0, 0.0}});
             CHECK(result.free_edge_indices.empty());
             REQUIRE(result.edges_history.size() == 2);
-            CHECK(result.edges_history[0].events == std::vector<EdgeEvent>{Deleted});
+            CHECK(result.edges_history[0].events == std::vector<EdgeEvent>{deleted});
             CHECK(result.edges_history[0].rows == std::vector<Idx>{0});
-            CHECK(result.edges_history[1].events == std::vector<EdgeEvent>{Deleted});
+            CHECK(result.edges_history[1].events == std::vector<EdgeEvent>{deleted});
             CHECK(result.edges_history[1].rows == std::vector<Idx>{1});
         }
 
@@ -133,11 +133,11 @@ TEST_CASE("Test the link solver algorithm") {
             REQUIRE(result.free_edge_indices.size() == 1);
             CHECK(result.free_edge_indices == std::vector<Idx>{2});
             REQUIRE(result.edges_history.size() == 3);
-            CHECK(result.edges_history[0].events == std::vector<EdgeEvent>{Deleted});
+            CHECK(result.edges_history[0].events == std::vector<EdgeEvent>{deleted});
             CHECK(result.edges_history[0].rows == std::vector<Idx>{0});
-            CHECK(result.edges_history[1].events == std::vector<EdgeEvent>{Replaced, Deleted});
+            CHECK(result.edges_history[1].events == std::vector<EdgeEvent>{replaced, deleted});
             CHECK(result.edges_history[1].rows == std::vector<Idx>{0, 1});
-            CHECK(result.edges_history[2].events == std::vector<EdgeEvent>{ContractedToPoint});
+            CHECK(result.edges_history[2].events == std::vector<EdgeEvent>{contracted_to_point});
             CHECK(result.edges_history[2].rows == std::vector<Idx>{1});
         }
 
@@ -158,9 +158,9 @@ TEST_CASE("Test the link solver algorithm") {
             REQUIRE(result.free_edge_indices.size() == 1);
             CHECK(result.free_edge_indices == std::vector<Idx>{1});
             REQUIRE(result.edges_history.size() == 2);
-            CHECK(result.edges_history[0].events == std::vector<EdgeEvent>{Deleted});
+            CHECK(result.edges_history[0].events == std::vector<EdgeEvent>{deleted});
             CHECK(result.edges_history[0].rows == std::vector<Idx>{0});
-            CHECK(result.edges_history[1].events == std::vector<EdgeEvent>{ContractedToPoint});
+            CHECK(result.edges_history[1].events == std::vector<EdgeEvent>{contracted_to_point});
             CHECK(result.edges_history[1].rows == std::vector<Idx>{0});
         }
 
@@ -194,19 +194,19 @@ TEST_CASE("Test the link solver algorithm") {
             REQUIRE(result.free_edge_indices.size() == 3);
             CHECK(result.free_edge_indices == std::vector<Idx>{3, 4, 6});
             REQUIRE(result.edges_history.size() == 7);
-            CHECK(result.edges_history[0].events == std::vector<EdgeEvent>{Deleted});
+            CHECK(result.edges_history[0].events == std::vector<EdgeEvent>{deleted});
             CHECK(result.edges_history[0].rows == std::vector<Idx>{0});
-            CHECK(result.edges_history[1].events == std::vector<EdgeEvent>{Replaced, Deleted});
+            CHECK(result.edges_history[1].events == std::vector<EdgeEvent>{replaced, deleted});
             CHECK(result.edges_history[1].rows == std::vector<Idx>{0, 1});
-            CHECK(result.edges_history[2].events == std::vector<EdgeEvent>{Replaced, Replaced, Deleted});
+            CHECK(result.edges_history[2].events == std::vector<EdgeEvent>{replaced, replaced, deleted});
             CHECK(result.edges_history[2].rows == std::vector<Idx>{0, 1, 2});
-            CHECK(result.edges_history[3].events == std::vector<EdgeEvent>{Replaced, ContractedToPoint});
+            CHECK(result.edges_history[3].events == std::vector<EdgeEvent>{replaced, contracted_to_point});
             CHECK(result.edges_history[3].rows == std::vector<Idx>{1, 2});
-            CHECK(result.edges_history[4].events == std::vector<EdgeEvent>{ContractedToPoint});
+            CHECK(result.edges_history[4].events == std::vector<EdgeEvent>{contracted_to_point});
             CHECK(result.edges_history[4].rows == std::vector<Idx>{2});
-            CHECK(result.edges_history[5].events == std::vector<EdgeEvent>{Replaced, Deleted});
+            CHECK(result.edges_history[5].events == std::vector<EdgeEvent>{replaced, deleted});
             CHECK(result.edges_history[5].rows == std::vector<Idx>{2, 3});
-            CHECK(result.edges_history[6].events == std::vector<EdgeEvent>{Replaced, Replaced, ContractedToPoint});
+            CHECK(result.edges_history[6].events == std::vector<EdgeEvent>{replaced, replaced, contracted_to_point});
             CHECK(result.edges_history[6].rows == std::vector<Idx>{1, 2, 3});
         }
     }
@@ -246,7 +246,7 @@ TEST_CASE("Test the link solver algorithm") {
             result.free_edge_indices = {};
             result.pivot_edge_indices = {0};
             result.edges_history.resize(1);
-            result.edges_history[0].events = {Deleted};
+            result.edges_history[0].events = {deleted};
             result.edges_history[0].rows = {0};
 
             backward_substitution(result);
@@ -265,9 +265,9 @@ TEST_CASE("Test the link solver algorithm") {
             result.free_edge_indices = {};
             result.pivot_edge_indices = {0, 1};
             result.edges_history.resize(2);
-            result.edges_history[0].events = {Deleted};
+            result.edges_history[0].events = {deleted};
             result.edges_history[0].rows = {0};
-            result.edges_history[1].events = {Deleted};
+            result.edges_history[1].events = {deleted};
             result.edges_history[1].rows = {1};
 
             backward_substitution(result);
@@ -289,11 +289,11 @@ TEST_CASE("Test the link solver algorithm") {
             result.free_edge_indices = {2};
             result.pivot_edge_indices = {0, 1};
             result.edges_history.resize(3);
-            result.edges_history[0].events = {Deleted};
+            result.edges_history[0].events = {deleted};
             result.edges_history[0].rows = {0};
-            result.edges_history[1].events = {Replaced, Deleted};
+            result.edges_history[1].events = {replaced, deleted};
             result.edges_history[1].rows = {0, 1};
-            result.edges_history[2].events = {ContractedToPoint};
+            result.edges_history[2].events = {contracted_to_point};
             result.edges_history[2].rows = {1};
 
             backward_substitution(result);
@@ -315,9 +315,9 @@ TEST_CASE("Test the link solver algorithm") {
             result.free_edge_indices = {1};
             result.pivot_edge_indices = {0};
             result.edges_history.resize(2);
-            result.edges_history[0].events = {Deleted};
+            result.edges_history[0].events = {deleted};
             result.edges_history[0].rows = {0};
-            result.edges_history[1].events = {ContractedToPoint};
+            result.edges_history[1].events = {contracted_to_point};
             result.edges_history[1].rows = {0};
 
             backward_substitution(result);
@@ -352,19 +352,19 @@ TEST_CASE("Test the link solver algorithm") {
             result.pivot_edge_indices = std::vector<Idx>{0, 1, 2, 5};
 
             result.edges_history.resize(7);
-            result.edges_history[0].events = std::vector<EdgeEvent>{Deleted};
+            result.edges_history[0].events = std::vector<EdgeEvent>{deleted};
             result.edges_history[0].rows = std::vector<Idx>{0};
-            result.edges_history[1].events = std::vector<EdgeEvent>{Replaced, Deleted};
+            result.edges_history[1].events = std::vector<EdgeEvent>{replaced, deleted};
             result.edges_history[1].rows = std::vector<Idx>{0, 1};
-            result.edges_history[2].events = std::vector<EdgeEvent>{Replaced, Replaced, Deleted};
+            result.edges_history[2].events = std::vector<EdgeEvent>{replaced, replaced, deleted};
             result.edges_history[2].rows = std::vector<Idx>{0, 1, 2};
-            result.edges_history[3].events = std::vector<EdgeEvent>{Replaced, ContractedToPoint};
+            result.edges_history[3].events = std::vector<EdgeEvent>{replaced, contracted_to_point};
             result.edges_history[3].rows = std::vector<Idx>{1, 2};
-            result.edges_history[4].events = std::vector<EdgeEvent>{ContractedToPoint};
+            result.edges_history[4].events = std::vector<EdgeEvent>{contracted_to_point};
             result.edges_history[4].rows = std::vector<Idx>{2};
-            result.edges_history[5].events = std::vector<EdgeEvent>{Replaced, Deleted};
+            result.edges_history[5].events = std::vector<EdgeEvent>{replaced, deleted};
             result.edges_history[5].rows = std::vector<Idx>{2, 3};
-            result.edges_history[6].events = std::vector<EdgeEvent>{Replaced, Replaced, ContractedToPoint};
+            result.edges_history[6].events = std::vector<EdgeEvent>{replaced, replaced, contracted_to_point};
             result.edges_history[6].rows = std::vector<Idx>{1, 2, 3};
 
             backward_substitution(result);
