@@ -8,10 +8,14 @@ import numpy as np
 import pytest
 
 from power_grid_model import (
+    AngleMeasurementType,
     AttributeType as AT,
+    BranchSide,
     ComponentAttributeFilterOptions,
     ComponentType as CT,
-    DatasetType,
+    DatasetType as DT,
+    LoadGenType,
+    MeasuredTerminalType,
     PowerGridModel,
     initialize_array,
 )
@@ -44,11 +48,11 @@ u0 = 100.0 V - (j10.0 ohm * -j3.0 A) = 70.0 V
 
 @pytest.fixture
 def input_row():
-    node = initialize_array(DatasetType.input, CT.node, 1)
+    node = initialize_array(DT.input, CT.node, 1)
     node[AT.id] = 0
     node[AT.u_rated] = 100.0
 
-    source = initialize_array(DatasetType.input, CT.source, 1)
+    source = initialize_array(DT.input, CT.source, 1)
     source[AT.id] = 1
     source[AT.node] = 0
     source[AT.status] = 1
@@ -56,7 +60,7 @@ def input_row():
     source[AT.sk] = 1000.0
     source[AT.rx_ratio] = 0.0
 
-    sym_load = initialize_array(DatasetType.input, CT.sym_load, 1)
+    sym_load = initialize_array(DT.input, CT.sym_load, 1)
     sym_load[AT.id] = 2
     sym_load[AT.node] = 0
     sym_load[AT.status] = 1
@@ -73,9 +77,7 @@ def input_row():
 
 @pytest.fixture
 def input_col(input_row):
-    return compatibility_convert_row_columnar_dataset(
-        input_row, ComponentAttributeFilterOptions.relevant, DatasetType.input
-    )
+    return compatibility_convert_row_columnar_dataset(input_row, ComponentAttributeFilterOptions.relevant, DT.input)
 
 
 @pytest.fixture(params=["input_row", "input_col"])
@@ -85,7 +87,7 @@ def input(request):
 
 @pytest.fixture
 def sym_output():
-    node = initialize_array(DatasetType.sym_output, CT.node, 1)
+    node = initialize_array(DT.sym_output, CT.node, 1)
     node[AT.id] = 0
     node[AT.u] = 50.0
     node[AT.u_pu] = 0.5
@@ -96,11 +98,11 @@ def sym_output():
 
 @pytest.fixture
 def update_batch_row():
-    source = initialize_array(DatasetType.update, CT.source, 1)
+    source = initialize_array(DT.update, CT.source, 1)
     source[AT.id] = 1
     source[AT.u_ref] = 0.5
 
-    sym_load = initialize_array(DatasetType.update, CT.sym_load, 2)
+    sym_load = initialize_array(DT.update, CT.sym_load, 2)
     sym_load[AT.id] = [2, 2]
     sym_load[AT.q_specified] = [100.0, 300.0]
 
@@ -119,7 +121,7 @@ def update_batch_row():
 @pytest.fixture
 def update_batch_col(update_batch_row):
     return compatibility_convert_row_columnar_dataset(
-        update_batch_row, ComponentAttributeFilterOptions.relevant, DatasetType.update
+        update_batch_row, ComponentAttributeFilterOptions.relevant, DT.update
     )
 
 
@@ -130,7 +132,7 @@ def update_batch(request):
 
 @pytest.fixture
 def sym_output_batch():
-    node = initialize_array(DatasetType.sym_output, CT.node, (2, 1))
+    node = initialize_array(DT.sym_output, CT.node, (2, 1))
     node[AT.id] = [[0], [0]]
     node[AT.u] = [[40.0], [70.0]]
     node[AT.u_pu] = [[0.4], [0.7]]
@@ -164,13 +166,13 @@ def test_simple_permanent_update(model: PowerGridModel, update_batch, sym_output
 
 
 def test_update_error(model: PowerGridModel):
-    load_update = initialize_array(DatasetType.update, CT.sym_load, 1)
+    load_update = initialize_array(DT.update, CT.sym_load, 1)
     load_update[AT.id] = 5
     update_data = {CT.sym_load: load_update}
     with pytest.raises(PowerGridError, match="The id cannot be found:"):
         model.update(update_data=update_data)
     update_data_col = compatibility_convert_row_columnar_dataset(
-        update_data, ComponentAttributeFilterOptions.relevant, DatasetType.update
+        update_data, ComponentAttributeFilterOptions.relevant, DT.update
     )
     with pytest.raises(PowerGridError, match="The id cannot be found:"):
         model.update(update_data=update_data_col)
@@ -280,16 +282,16 @@ def test_batch_calculation_error_continue(model: PowerGridModel, update_batch, s
     with pytest.raises(PowerGridError, match="The calculation method is invalid for this calculation!"):
         model.calculate_state_estimation(
             calculation_method="iterative_current",
-            update_data={CT.source: initialize_array(DatasetType.update, CT.source, shape=(5, 0))},
+            update_data={CT.source: initialize_array(DT.update, CT.source, shape=(5, 0))},
             continue_on_batch_error=True,
         )
 
 
 def test_empty_input():
-    node = initialize_array(DatasetType.input, CT.node, 0)
-    line = initialize_array(DatasetType.input, CT.line, 0)
-    sym_load = initialize_array(DatasetType.input, CT.sym_load, 0)
-    source = initialize_array(DatasetType.input, CT.source, 0)
+    node = initialize_array(DT.input, CT.node, 0)
+    line = initialize_array(DT.input, CT.line, 0)
+    sym_load = initialize_array(DT.input, CT.sym_load, 0)
+    source = initialize_array(DT.input, CT.source, 0)
 
     input_data = {
         CT.node: node,
@@ -315,7 +317,7 @@ def input_sym_load_col(input_row):
             CT.source: None,
             CT.sym_load: ComponentAttributeFilterOptions.relevant,
         },
-        DatasetType.input,
+        DT.input,
     )
 
 
@@ -325,20 +327,20 @@ def minimal_input(request):
 
 
 def update_sym_load_row():
-    sym_load = initialize_array(DatasetType.update, CT.sym_load, (2, 1))
+    sym_load = initialize_array(DT.update, CT.sym_load, (2, 1))
     sym_load[AT.id] = [[2], [2]]
     sym_load[AT.q_specified] = [[100.0], [300.0]]
     return {CT.sym_load: sym_load}
 
 
 def update_sym_load_row_optional_id():
-    sym_load = initialize_array(DatasetType.update, CT.sym_load, (2, 1))
+    sym_load = initialize_array(DT.update, CT.sym_load, (2, 1))
     sym_load[AT.q_specified] = [[100.0], [300.0]]
     return {CT.sym_load: sym_load}
 
 
 def update_sym_load_row_invalid_id():
-    sym_load = initialize_array(DatasetType.update, CT.sym_load, (2, 1))
+    sym_load = initialize_array(DT.update, CT.sym_load, (2, 1))
     sym_load[AT.id] = [[2], [5]]
     sym_load[AT.q_specified] = [[100.0], [300.0]]
     return {CT.sym_load: sym_load}
@@ -346,7 +348,7 @@ def update_sym_load_row_invalid_id():
 
 def update_sym_load_col(update_sym_load_row):
     return compatibility_convert_row_columnar_dataset(
-        update_sym_load_row, ComponentAttributeFilterOptions.relevant, DatasetType.update
+        update_sym_load_row, ComponentAttributeFilterOptions.relevant, DT.update
     )
 
 
@@ -390,11 +392,11 @@ def test_update_id_optional(minimal_update, minimal_input):
 
 
 def test_update_id_mixed(minimal_input):
-    update_sym_load_no_id = initialize_array(DatasetType.update, CT.sym_load, (3, 1))
+    update_sym_load_no_id = initialize_array(DT.update, CT.sym_load, (3, 1))
     update_sym_load_no_id[AT.p_specified] = [[30e6], [15e5], [0]]
 
     update_source_indptr = np.array([0, 1, 1, 2])
-    update_source = initialize_array(DatasetType.update, CT.source, 2)
+    update_source = initialize_array(DT.update, CT.source, 2)
     update_source[AT.id] = 1
     update_source[AT.status] = 0
 
@@ -420,3 +422,147 @@ def test_update_id_error(minimal_update, minimal_input):
         PowerGridModel(minimal_input).calculate_power_flow(update_data=minimal_update)
     assert e.value.failed_scenarios == [1]
     assert "The id cannot be found: 5" in e.value.error_messages[0]
+
+
+@pytest.fixture
+def input_data__irrelevant_components_test():
+    node = initialize_array(DT.input, CT.node, 2)
+    node[AT.id] = np.array([1, 2])
+    node[AT.u_rated] = [10000, 400]
+
+    transformer = initialize_array(DT.input, CT.transformer, 1)
+    transformer[AT.id] = [3]
+    transformer[AT.from_node] = [1]
+    transformer[AT.to_node] = [2]
+    transformer[AT.from_status] = [1]
+    transformer[AT.to_status] = [1]
+    transformer[AT.u1] = [10000]
+    transformer[AT.u2] = [400]
+    transformer[AT.sn] = [100000]
+    transformer[AT.uk] = [0.1]
+    transformer[AT.pk] = [1000]
+    transformer[AT.i0] = [1.0e-6]
+    transformer[AT.p0] = [0.1]
+    transformer[AT.winding_from] = [2]
+    transformer[AT.winding_to] = [1]
+    transformer[AT.clock] = [5]
+    transformer[AT.tap_side] = [0]
+    transformer[AT.tap_pos] = [3]
+    transformer[AT.tap_min] = [-11]
+    transformer[AT.tap_max] = [9]
+    transformer[AT.tap_size] = [100]
+
+    sym_load = initialize_array(DT.input, CT.sym_load, 1)
+    sym_load[AT.id] = [4]
+    sym_load[AT.node] = [2]
+    sym_load[AT.status] = [1]
+    sym_load[AT.type] = [LoadGenType.const_power]
+    sym_load[AT.p_specified] = [1000.0]
+    sym_load[AT.q_specified] = [200.0]
+
+    source = initialize_array(DT.input, CT.source, 1)
+    source[AT.id] = [5]
+    source[AT.node] = [1]
+    source[AT.status] = [1]
+    source[AT.u_ref] = [1.0]
+
+    sym_current_sensor = initialize_array(DT.input, CT.sym_current_sensor, 1)
+    sym_current_sensor[AT.id] = [6]
+    sym_current_sensor[AT.measured_object] = [3]
+    sym_current_sensor[AT.measured_terminal_type] = [MeasuredTerminalType.branch_to]
+    sym_current_sensor[AT.angle_measurement_type] = [AngleMeasurementType.local_angle]
+    sym_current_sensor[AT.i_sigma] = [100]
+    sym_current_sensor[AT.i_angle_sigma] = [0.1]
+    sym_current_sensor[AT.i_measured] = [1000.0]
+    sym_current_sensor[AT.i_angle_measured] = [0.2]
+
+    sym_voltage_sensor = initialize_array(DT.input, CT.sym_voltage_sensor, 1)
+    sym_voltage_sensor[AT.id] = [7]
+    sym_voltage_sensor[AT.measured_object] = [1]
+    sym_voltage_sensor[AT.u_sigma] = [1.0]
+    sym_voltage_sensor[AT.u_measured] = [10000.0]
+
+    return {
+        CT.node: node,
+        CT.transformer: transformer,
+        CT.sym_load: sym_load,
+        CT.source: source,
+        CT.sym_current_sensor: sym_current_sensor,
+        CT.sym_voltage_sensor: sym_voltage_sensor,
+    }
+
+
+@pytest.fixture
+def input_data__voltage_regulator():
+    voltage_regulator = initialize_array(DT.input, CT.voltage_regulator, 1)
+    voltage_regulator[AT.id] = [8]
+    voltage_regulator[AT.regulated_object] = [4]
+    voltage_regulator[AT.status] = [1]
+    voltage_regulator[AT.u_ref] = [1.05]
+    return {CT.voltage_regulator: voltage_regulator}
+
+
+@pytest.fixture
+def input_data__transformer_tap_regulator():
+    transformer_tap_regulator = initialize_array(DT.input, CT.transformer_tap_regulator, 1)
+    transformer_tap_regulator[AT.id] = [8]
+    transformer_tap_regulator[AT.regulated_object] = [3]
+    transformer_tap_regulator[AT.status] = [1]
+    transformer_tap_regulator[AT.control_side] = [BranchSide.to_side]
+    transformer_tap_regulator[AT.u_set] = [400.0]
+    transformer_tap_regulator[AT.u_band] = [20.0]
+    return {CT.transformer_tap_regulator: transformer_tap_regulator}
+
+
+@pytest.mark.parametrize("regulator_input", ["input_data__voltage_regulator", "input_data__transformer_tap_regulator"])
+def test_irrelevant_components__power_flow(input_data__irrelevant_components_test, regulator_input, request):
+    regulator = request.getfixturevalue(regulator_input)
+    input_data = {**input_data__irrelevant_components_test, **regulator}
+    model = PowerGridModel(input_data)
+    result = model.calculate_power_flow()
+
+    assert CT.transformer in result
+    assert CT.sym_load in result
+    assert CT.source in result
+    assert CT.node in result
+    assert CT.sym_voltage_sensor not in result
+    assert CT.sym_current_sensor not in result
+    if CT.voltage_regulator in regulator:
+        assert CT.voltage_regulator in result
+    else:
+        assert CT.transformer_tap_regulator in result
+
+
+@pytest.mark.parametrize("regulator_input", ["input_data__voltage_regulator", "input_data__transformer_tap_regulator"])
+def test_irrelevant_components__state_estimation(input_data__irrelevant_components_test, regulator_input, request):
+    regulator = request.getfixturevalue(regulator_input)
+    input_data = {**input_data__irrelevant_components_test, **regulator}
+    model = PowerGridModel(input_data)
+    result = model.calculate_state_estimation()
+
+    assert CT.transformer in result
+    assert CT.sym_load in result
+    assert CT.source in result
+    assert CT.node in result
+    assert CT.sym_voltage_sensor in result
+    assert CT.sym_current_sensor in result
+    assert CT.voltage_regulator not in result
+    assert CT.transformer_tap_regulator not in result
+
+
+@pytest.mark.parametrize("regulator_input", ["input_data__voltage_regulator", "input_data__transformer_tap_regulator"])
+def test_irrelevant_components__short_circuit(input_data__irrelevant_components_test, regulator_input, request):
+    regulator = request.getfixturevalue(regulator_input)
+    input_data = {**input_data__irrelevant_components_test, **regulator}
+    model = PowerGridModel(input_data)
+    result = model.calculate_short_circuit()
+
+    assert CT.transformer in result
+    assert CT.sym_load in result
+    assert CT.source in result
+    assert CT.node in result
+    assert CT.voltage_regulator not in result
+    assert CT.transformer_tap_regulator not in result
+    assert CT.transformer_tap_regulator not in result
+    assert CT.sym_voltage_sensor not in result
+    assert CT.sym_current_sensor not in result
