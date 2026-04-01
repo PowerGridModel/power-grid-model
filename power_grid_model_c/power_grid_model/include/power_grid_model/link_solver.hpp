@@ -244,7 +244,7 @@ inline EliminationResult reduced_echelon_form(std::vector<BranchIdx> edges, std:
 // The degrees of freedom matrix (dfs_matrix) is associated with the degrees of freedom vector according
 // internal_currents = extended_rhs - dfs_matrix * lambda
 struct SolutionSet {
-    COOSparseMatrix dfs_matrix{};
+    CooSparseMatrix dfs_matrix{};
     std::vector<DoubleComplex> extended_rhs{};
 };
 
