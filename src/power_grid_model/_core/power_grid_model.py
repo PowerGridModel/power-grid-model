@@ -227,14 +227,19 @@ class PowerGridModel:
                 ComponentType.asym_voltage_sensor,
                 ComponentType.sym_power_sensor,
                 ComponentType.asym_power_sensor,
+                ComponentType.sym_current_sensor,
+                ComponentType.asym_current_sensor,
                 ComponentType.fault,
             ],
-            CalculationType.state_estimation: [ComponentType.fault],
+            CalculationType.state_estimation: [ComponentType.fault, ComponentType.voltage_regulator],
             CalculationType.short_circuit: [
                 ComponentType.sym_voltage_sensor,
                 ComponentType.asym_voltage_sensor,
                 ComponentType.sym_power_sensor,
                 ComponentType.asym_power_sensor,
+                ComponentType.sym_current_sensor,
+                ComponentType.asym_current_sensor,
+                ComponentType.voltage_regulator,
             ],
         }.get(calculation_type, [])
 
