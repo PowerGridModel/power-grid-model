@@ -594,7 +594,7 @@ class Deserializer {
             unknown = std::numeric_limits<IntS>::lowest(),
         };
 
-        auto const match_key = [](std::string_view key) -> Key {
+        auto const match_key = [](std::string_view key) {
             using enum Key;
             if (key == "version") {
                 return version;
@@ -615,8 +615,7 @@ class Deserializer {
         };
 
         while (global_map_size-- != 0) {
-            std::string_view const key = parse_string();
-            switch (match_key(key)) {
+            switch (match_key(parse_string())) {
             case Key::version: {
                 root_key_ = "version";
                 has_version = true;
@@ -631,11 +630,11 @@ class Deserializer {
             }
             case Key::is_batch: {
                 root_key_ = "is_batch";
-                bool const is_batch = parse_bool();
-                if (has_data && (is_batch_ != is_batch)) {
+                bool const is_batch_value = parse_bool();
+                if (has_data && (is_batch_ != is_batch_value)) {
                     throw SerializationError{"Map/Array type of data does not match is_batch!\n"};
                 }
-                is_batch_ = is_batch;
+                is_batch_ = is_batch_value;
                 has_is_batch = true;
                 break;
             }
