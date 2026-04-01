@@ -577,7 +577,7 @@ class Deserializer {
         std::string_view dataset;
         Idx batch_size{};
         Idx global_map_size = parse_map_array<visit_map_t, move_forward>().size;
-        AttributeByteMeta attributes;
+        AttributeByteMeta attribute_meta{};
         DataByteMeta data_counts{};
         bool has_version{};
         bool has_type{};
@@ -616,19 +616,20 @@ class Deserializer {
 
         while (global_map_size-- != 0) {
             switch (match_key(parse_string())) {
-            case Key::version: {
+                using enum Key;
+            case version: {
                 root_key_ = "version";
                 has_version = true;
                 version_ = parse_string();
                 break;
             }
-            case Key::type: {
+            case type: {
                 root_key_ = "type";
                 has_type = true;
                 dataset = parse_string();
                 break;
             }
-            case Key::is_batch: {
+            case is_batch: {
                 root_key_ = "is_batch";
                 bool const is_batch_value = parse_bool();
                 if (has_data && (is_batch_ != is_batch_value)) {
@@ -638,13 +639,13 @@ class Deserializer {
                 has_is_batch = true;
                 break;
             }
-            case Key::attributes: {
+            case attributes: {
                 root_key_ = "attributes";
                 has_attributes = true;
-                attributes = read_predefined_attributes();
+                attribute_meta = read_predefined_attributes();
                 break;
             }
-            case Key::data: {
+            case data: {
                 root_key_ = "data";
                 has_data = true;
                 data_counts = pre_count_data(has_is_batch);
@@ -678,12 +679,12 @@ class Deserializer {
 
         WritableDataset handler{is_batch_, batch_size, dataset, *meta_data_};
         count_data(handler, data_counts);
-        parse_predefined_attributes(handler, attributes);
+        parse_predefined_attributes(handler, attribute_meta);
         return handler;
     }
 
     AttributeByteMeta read_predefined_attributes() {
-        AttributeByteMeta attributes;
+        AttributeByteMeta attributes{};
         Idx n_components = parse_map_array<visit_map_t, move_forward>().size;
         while (n_components-- != 0) {
             component_key_ = parse_string();
