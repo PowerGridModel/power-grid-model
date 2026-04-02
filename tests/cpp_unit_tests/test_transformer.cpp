@@ -170,12 +170,14 @@ TEST_CASE("Test transformer") {
     }
 
     SUBCASE("invalid input") {
-        input.winding_from = WindingType::delta;
-        input.winding_to = WindingType::wye_n;
+        using enum WindingType;
+
+        input.winding_from = delta;
+        input.winding_to = wye_n;
         input.clock = 12;
         CHECK_THROWS_AS(Transformer(input, 150.0e3, 10.0e3), InvalidTransformerClock);
-        input.winding_from = WindingType::wye;
-        input.winding_to = WindingType::wye_n;
+        input.winding_from = wye;
+        input.winding_to = wye_n;
         input.clock = 11;
         CHECK_THROWS_AS(Transformer(input, 150.0e3, 10.0e3), InvalidTransformerClock);
         // tap limit
