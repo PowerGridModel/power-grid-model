@@ -387,10 +387,13 @@ template <symmetry_tag sym> class YBus {
         auto const& math_param_shunt = math_model_param_.shunt_param;
         auto const& math_param_branch = math_model_param_.branch_param;
 
-        bool updated = false;
+        if (!std::ranges::empty(y_bus_entries)) {
+            parameters_changed(true);
+        }
 
         for (auto const entry : std::forward<Entries>(y_bus_entries)) {
             // start admittance accumulation with zero
+            auto& admittance_entry = admittance_[entry];
             ComplexTensor<sym> entry_admittance{0.0};
             // loop over all entries of this position
             for (Idx element : IdxRange{y_bus_entry_indptr[entry], y_bus_entry_indptr[entry + 1]}) {
@@ -406,14 +409,7 @@ template <symmetry_tag sym> class YBus {
                 }
             }
             // assign
-            if (!updated && admittance_[entry] != entry_admittance) { // all hails branch prediction
-                updated = true;
-            }
             admittance_[entry] = std::move(entry_admittance);
-        }
-
-        if (updated) {
-            parameters_changed(true);
         }
     }
 
