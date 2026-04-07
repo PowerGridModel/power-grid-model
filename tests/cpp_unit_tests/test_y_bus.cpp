@@ -414,8 +414,7 @@ TEST_CASE("Incremental update y-bus") {
         verify_admittance(ybus.admittance(), admittance_sym);
 
         auto branch_param_to_change_views =
-            IdxRange{static_cast<int>(param_sym_update.branch_param.size())} |
-            std::views::filter([&param_sym_update](Idx i) {
+            IdxRange{std::ssize(param_sym_update.branch_param)} | std::views::filter([&param_sym_update](Idx i) {
                 return param_sym_update.branch_param[i].yff() != ComplexTensor<symmetric_t>{0.0} ||
                        param_sym_update.branch_param[i].yft() != ComplexTensor<symmetric_t>{0.0} ||
                        param_sym_update.branch_param[i].ytf() != ComplexTensor<symmetric_t>{0.0} ||
@@ -423,8 +422,7 @@ TEST_CASE("Incremental update y-bus") {
             }) |
             std::ranges::to<IdxVector>();
         auto shunt_param_to_change_views =
-            IdxRange{static_cast<int>(param_sym_update.shunt_param.size())} |
-            std::views::filter([&param_sym_update](Idx i) {
+            IdxRange{std::ssize(param_sym_update.shunt_param)} | std::views::filter([&param_sym_update](Idx i) {
                 return param_sym_update.shunt_param[i] != ComplexTensor<symmetric_t>{0.0};
             }) |
             std::ranges::to<IdxVector>();
@@ -451,10 +449,9 @@ TEST_CASE("Incremental update y-bus") {
         verify_admittance(ybus.admittance(), admittance_sym);
 
         auto source_param_to_change_views =
-            IdxRange{static_cast<int>(param_sym_update.source_param.size())} |
-            std::views::filter([&param_sym_update](Idx i) {
-                return cabs(param_sym_update.source_param[i].y0()) > numerical_tolerance ||
-                       cabs(param_sym_update.source_param[i].y1()) > numerical_tolerance;
+            IdxRange{std::ssize(param_sym_update.source_param)} | std::views::filter([&param_sym_update](Idx i) {
+                return cabs(param_sym_update.source_param[i].y0) > numerical_tolerance ||
+                       cabs(param_sym_update.source_param[i].y1) > numerical_tolerance;
             }) |
             std::ranges::to<IdxVector>();
 
@@ -469,11 +466,11 @@ TEST_CASE("Incremental update y-bus") {
         ybus.update_admittance_increment(math_model_param_incrmt);
 
         verify_admittance(ybus.admittance(), admittance_sym);
-        CHECK(ybus.math_model_param().source_param.size() == param_sym.source_param.size());
+        CHECK(std::ssize(ybus.math_model_param().source_param) == std::ssize(param_sym.source_param));
         for (Idx const i : source_param_to_change_views) {
-            CHECK(cabs(ybus.math_model_param().source_param[i].y0() - param_sym_update.source_param[i].y0()) <
+            CHECK(cabs(ybus.math_model_param().source_param[i].y0 - param_sym_update.source_param[i].y0) <
                   numerical_tolerance);
-            CHECK(cabs(ybus.math_model_param().source_param[i].y1() - param_sym_update.source_param[i].y1()) <
+            CHECK(cabs(ybus.math_model_param().source_param[i].y1 - param_sym_update.source_param[i].y1) <
                   numerical_tolerance);
         }
     }
@@ -559,7 +556,7 @@ TEST_CASE("Test counting_sort_element") {
         Idx const n_bus = 10;
 
         // Add elements in reverse order to test sorting thoroughly
-        for (Idx i = n_bus * n_bus - 1; i != static_cast<Idx>(-1); --i) {
+        for (Idx i : IdxRange{n_bus * n_bus} | std::views::reverse) {
             Idx const row = i / n_bus;
             Idx const col = i % n_bus;
             if ((row + col) % 3 == 0) { // Sparse pattern
