@@ -193,7 +193,7 @@ TEST_CASE("Test MultiThreadedCalculationInfo") {
     }
 
     SUBCASE("Getters of underlying CalculationInfo") {
-        auto const n_threads = static_cast<Idx>(std::thread::hardware_concurrency());
+        auto const n_threads = static_cast<Idx>(std::jthread::hardware_concurrency());
         run_parallel_jobs(n_threads, single_thread_job);
 
         SUBCASE("Log and report - Non-const getter") {
