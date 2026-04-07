@@ -420,20 +420,29 @@ TEST_CASE("Incremental update y-bus") {
                        param_sym_update.branch_param[i].yft() != ComplexTensor<symmetric_t>{0.0} ||
                        param_sym_update.branch_param[i].ytf() != ComplexTensor<symmetric_t>{0.0} ||
                        param_sym_update.branch_param[i].ytt() != ComplexTensor<symmetric_t>{0.0};
-            });
+            }) |
+            std::ranges::to<IdxVector>();
         auto shunt_param_to_change_views =
             IdxRange{static_cast<int>(param_sym_update.shunt_param.size())} |
             std::views::filter([&param_sym_update](Idx i) {
                 return param_sym_update.shunt_param[i] != ComplexTensor<symmetric_t>{0.0};
-            });
+            }) |
+            std::ranges::to<IdxVector>();
 
-        MathModelParamIncrement math_model_param_incrmt;
-        std::ranges::copy(branch_param_to_change_views,
-                          std::back_inserter(math_model_param_incrmt.branch_param_to_change));
-        std::ranges::copy(shunt_param_to_change_views,
-                          std::back_inserter(math_model_param_incrmt.shunt_param_to_change));
+        MathModelParamIncrement<symmetric_t> math_model_param_incrmt{
+            .branch_param = branch_param_to_change_views | std::views::transform([&param_sym_update](Idx i) {
+                                return param_sym_update.branch_param[i];
+                            }) |
+                            std::ranges::to<std::vector>(),
+            .shunt_param = shunt_param_to_change_views | std::views::transform([&param_sym_update](Idx i) {
+                               return param_sym_update.shunt_param[i];
+                           }) |
+                           std::ranges::to<std::vector>(),
+            .branch_param_to_change = std::move(branch_param_to_change_views),
+            .shunt_param_to_change = std::move(shunt_param_to_change_views),
+        };
 
-        ybus.update_admittance_increment(param_sym_update, math_model_param_incrmt);
+        ybus.update_admittance_increment(math_model_param_incrmt);
         verify_admittance(ybus.admittance(), admittance_sym_2);
     }
 }

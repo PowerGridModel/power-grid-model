@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "common/counting_iterator.hpp"
 #include "main_core/topology.hpp"
 #include "main_core/y_bus.hpp"
 #include "math_solver/math_solver_dispatch.hpp"
@@ -215,7 +216,7 @@ void prepare_solvers(typename ModelType::MainModelState& state, SolverPreparatio
     }
     Idx const n_math_solvers = get_n_math_solvers<ModelType>(state);
     main_core::prepare_y_bus<sym, ModelType>(state, n_math_solvers, solver_context.math_state);
-    if (n_math_solvers != static_cast<Idx>(solvers.size())) {
+    if (n_math_solvers != std::ssize(solvers)) {
         assert(solvers.empty());
         assert(n_math_solvers == static_cast<Idx>(main_core::get_y_bus<sym>(solver_context.math_state).size()));
 
@@ -225,19 +226,17 @@ void prepare_solvers(typename ModelType::MainModelState& state, SolverPreparatio
                                [&solver_context](auto const& math_topo) {
                                    return MathSolverProxy<sym>{solver_context.math_solver_dispatcher, math_topo};
                                });
-        for (Idx idx = 0; idx < n_math_solvers; ++idx) {
+        for (Idx idx : IdxRange{n_math_solvers}) {
             main_core::get_y_bus<sym>(solver_context.math_state)[idx].register_parameters_changed_callback(
                 [solver = std::ref(solvers[idx])](bool changed) { solver.get().get().parameters_changed(changed); });
         }
     } else if (!solvers_cache_status.template is_parameter_valid<sym>()) {
-        std::vector<MathModelParam<sym>> math_params = main_core::get_math_param<sym>(state, n_math_solvers);
         if (solvers_cache_status.template is_symmetry_mode_conserved<sym>()) {
-            std::vector<MathModelParamIncrement> const math_param_increments =
-                main_core::get_math_param_increment<ModelType>(state, n_math_solvers,
-                                                               solvers_cache_status.changed_components_indices());
-            main_core::update_y_bus(solver_context.math_state, std::move(math_params), math_param_increments);
+            main_core::update_y_bus(solver_context.math_state,
+                                    main_core::get_math_param_increment<sym, ModelType>(
+                                        state, n_math_solvers, solvers_cache_status.changed_components_indices()));
         } else {
-            main_core::update_y_bus(solver_context.math_state, std::move(math_params));
+            main_core::update_y_bus(solver_context.math_state, main_core::get_math_param<sym>(state, n_math_solvers));
         }
     }
     // else do nothing, set everything up to date

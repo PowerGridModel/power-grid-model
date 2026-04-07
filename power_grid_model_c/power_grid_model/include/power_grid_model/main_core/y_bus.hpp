@@ -6,6 +6,7 @@
 
 #include "../calculation_parameters.hpp"
 #include "../common/common.hpp"
+#include "../common/counting_iterator.hpp"
 #include "../component/branch.hpp"
 #include "../component/branch3.hpp"
 #include "../component/component.hpp"
@@ -14,58 +15,121 @@
 #include "math_state.hpp"
 #include "state.hpp"
 
+#include <algorithm>
 #include <concepts>
-#include <cstddef>
 #include <vector>
 
 namespace power_grid_model::main_core {
 constexpr Idx isolated_component{-1};
 
 namespace detail {
-template <std::derived_from<Branch> ComponentType, typename ComponentContainer>
-constexpr void add_to_increment(std::vector<MathModelParamIncrement>& increments,
-                                MainModelState<ComponentContainer> const& state, Idx2D const& changed_component_idx) {
-    Idx2D const math_idx =
-        state.topo_comp_coup
-            ->branch[main_core::get_component_sequence_idx<Branch>(state.components, changed_component_idx)];
+
+template <std::derived_from<Branch> ComponentType, math_model_param_c MathModelParamType, typename ComponentContainer>
+constexpr void add_to_math_model_params(std::vector<MathModelParamType>& math_model_param,
+                                        MainModelState<ComponentContainer> const& state,
+                                        Idx const topology_sequence_idx) {
+    Idx2D const math_idx = get_math_id<Branch>(state, topology_sequence_idx);
     if (math_idx.group == isolated_component) {
         return;
     }
     // assign parameters
-    increments[math_idx.group].branch_param_to_change.push_back(math_idx.pos);
+    auto& model_params = math_model_param[math_idx.group];
+    auto branch_params = state.components.template get_item_by_seq<Branch>(topology_sequence_idx)
+                             .template calc_param<typename MathModelParamType::sym>();
+
+    if constexpr (std::derived_from<MathModelParamType, MathModelParamIncrement<typename MathModelParamType::sym>>) {
+        model_params.branch_param.push_back(std::move(branch_params));
+        model_params.branch_param_to_change.push_back(math_idx.pos);
+    } else {
+        model_params.branch_param[math_idx.pos] = std::move(branch_params);
+    }
 }
 
-template <std::derived_from<Branch3> ComponentType, typename ComponentContainer>
-constexpr void add_to_increment(std::vector<MathModelParamIncrement>& increments,
-                                MainModelState<ComponentContainer> const& state, Idx2D const& changed_component_idx) {
-    Idx2DBranch3 const math_idx =
-        state.topo_comp_coup
-            ->branch3[main_core::get_component_sequence_idx<Branch3>(state.components, changed_component_idx)];
+template <std::derived_from<Branch3> ComponentType, math_model_param_c MathModelParamType, typename ComponentContainer>
+constexpr void add_to_math_model_params(std::vector<MathModelParamType>& math_model_param,
+                                        MainModelState<ComponentContainer> const& state,
+                                        Idx const topology_sequence_idx) {
+    Idx2DBranch3 const math_idx = get_math_id<Branch3>(state, topology_sequence_idx);
     if (math_idx.group == isolated_component) {
         return;
     }
     // assign parameters, branch3 param consists of three branch parameters
-    for (size_t branch2 = 0; branch2 < 3; ++branch2) {
-        increments[math_idx.group].branch_param_to_change.push_back(math_idx.pos[branch2]);
+    auto branch3_param = state.components.template get_item_by_seq<Branch3>(topology_sequence_idx)
+                             .template calc_param<typename MathModelParamType::sym>();
+
+    auto& model_params = math_model_param[math_idx.group];
+    for (Idx branch2 : IdxRange{3}) {
+
+        if constexpr (std::derived_from<MathModelParamType,
+                                        MathModelParamIncrement<typename MathModelParamType::sym>>) {
+            model_params.branch_param.push_back(std::move(branch3_param[branch2]));
+            model_params.branch_param_to_change.push_back(math_idx.pos[branch2]);
+        } else {
+            model_params.branch_param[math_idx.pos[branch2]] = std::move(branch3_param[branch2]);
+        }
     }
 }
 
-template <std::same_as<Shunt> ComponentType, typename ComponentContainer>
-constexpr void add_to_increment(std::vector<MathModelParamIncrement>& increments,
-                                MainModelState<ComponentContainer> const& state, Idx2D const& changed_component_idx) {
-    Idx2D const math_idx =
-        state.topo_comp_coup
-            ->shunt[main_core::get_component_sequence_idx<Shunt>(state.components, changed_component_idx)];
+template <std::same_as<Shunt> ComponentType, math_model_param_c MathModelParamType, typename ComponentContainer>
+constexpr void add_to_math_model_params(std::vector<MathModelParamType>& math_model_param,
+                                        MainModelState<ComponentContainer> const& state,
+                                        Idx const topology_sequence_idx) {
+    Idx2D const math_idx = get_math_id<Shunt>(state, topology_sequence_idx);
     if (math_idx.group == isolated_component) {
         return;
     }
+
     // assign parameters
-    increments[math_idx.group].shunt_param_to_change.push_back(math_idx.pos);
+    auto shunt_params = state.components.template get_item_by_seq<Shunt>(topology_sequence_idx)
+                            .template calc_param<typename MathModelParamType::sym>();
+
+    auto& model_params = math_model_param[math_idx.group];
+
+    if constexpr (std::derived_from<MathModelParamType, MathModelParamIncrement<typename MathModelParamType::sym>>) {
+        model_params.shunt_param.push_back(std::move(shunt_params));
+        model_params.shunt_param_to_change.push_back(math_idx.pos);
+    } else {
+        model_params.shunt_param[math_idx.pos] = std::move(shunt_params);
+    }
+}
+
+template <std::same_as<Source> ComponentType, math_model_param_c MathModelParamType, typename ComponentContainer>
+    requires(!std::derived_from<MathModelParamType, MathModelParamIncrement<typename MathModelParamType::sym>>)
+constexpr void add_to_math_model_params(std::vector<MathModelParamType>& math_model_param,
+                                        MainModelState<ComponentContainer> const& state,
+                                        Idx const topology_sequence_idx) {
+    Idx2D const math_idx = get_math_id<Source>(state, topology_sequence_idx);
+
+    if (math_idx.group == isolated_component) {
+        return;
+    }
+
+    // assign parameters
+    math_model_param[math_idx.group].source_param[math_idx.pos] =
+        state.components.template get_item_by_seq<Source>(topology_sequence_idx)
+            .template math_param<typename MathModelParamType::sym>();
 }
 
 // default implementation for other components, does nothing
-template <typename ComponentType, typename ComponentContainer>
-constexpr void add_to_increment(std::vector<MathModelParamIncrement> const& /* increments */,
+template <typename ComponentType, math_model_param_c MathModelParamType, typename ComponentContainer>
+constexpr void add_to_math_model_params(std::vector<MathModelParamType> const& /* math_param */,
+                                        MainModelState<ComponentContainer> const& /* state */,
+                                        Idx const& /* topology_sequence_idx */) {
+    // default implementation is no-op
+}
+
+// default implementation for other components, does nothing
+template <typename ComponentType, symmetry_tag sym, typename ComponentContainer>
+    requires std::derived_from<ComponentType, Branch> || std::derived_from<ComponentType, Branch3> ||
+             std::derived_from<ComponentType, Shunt>
+constexpr void add_to_increment(std::vector<MathModelParamIncrement<sym>>& increments,
+                                MainModelState<ComponentContainer> const& state, Idx2D const& changed_component_idx) {
+    Idx const topo_sequence_idx = main_core::get_topology_index<ComponentType>(state.components, changed_component_idx);
+    add_to_math_model_params<ComponentType>(increments, state, topo_sequence_idx);
+}
+// default implementation for other components, does nothing
+template <typename ComponentType, symmetry_tag sym, typename ComponentContainer>
+constexpr void add_to_increment(std::vector<MathModelParamIncrement<sym>> const& /* increments */,
                                 MainModelState<ComponentContainer> const& /* state */,
                                 Idx2D const& /* changed_component_idx */) {
     // default implementation is no-op
@@ -73,7 +137,8 @@ constexpr void add_to_increment(std::vector<MathModelParamIncrement> const& /* i
 } // namespace detail
 
 template <symmetry_tag sym, typename MainModelType>
-void prepare_y_bus(typename MainModelType::MainModelState const& state_, Idx n_math_solvers_, MathState& math_state_) {
+inline void prepare_y_bus(typename MainModelType::MainModelState const& state_, Idx n_math_solvers_,
+                          MathState& math_state_) {
     std::vector<YBus<sym>>& y_bus_vec = main_core::get_y_bus<sym>(math_state_);
     // also get the vector of other Y_bus (sym -> asym, or asym -> sym)
     std::vector<YBus<other_symmetry_t<sym>>>& other_y_bus_vec =
@@ -96,18 +161,18 @@ void prepare_y_bus(typename MainModelType::MainModelState const& state_, Idx n_m
     }
 }
 
-template <typename MainModelType>
-static std::vector<MathModelParamIncrement>
+template <symmetry_tag sym, typename MainModelType>
+inline std::vector<MathModelParamIncrement<sym>>
 get_math_param_increment(typename MainModelType::MainModelState const& state, Idx n_math_solvers_,
                          typename MainModelType::SequenceIdx const& parameter_changed_components_) {
 
-    std::vector<MathModelParamIncrement> math_param_increment(n_math_solvers_);
+    std::vector<MathModelParamIncrement<sym>> math_param_increment(n_math_solvers_);
 
     MainModelType::run_functor_with_all_component_types_return_void(
         [&math_param_increment, &state, &parameter_changed_components_]<typename CompType>() {
             static constexpr auto comp_index = MainModelType::template index_of_component<CompType>;
             for (auto const& changed_component : std::get<comp_index>(parameter_changed_components_)) {
-                detail::add_to_increment<CompType, typename MainModelType::ComponentContainer>(
+                detail::add_to_increment<CompType, sym, typename MainModelType::ComponentContainer>(
                     math_param_increment, state, changed_component);
             }
         });
@@ -116,7 +181,7 @@ get_math_param_increment(typename MainModelType::MainModelState const& state, Id
 }
 
 template <symmetry_tag sym>
-std::vector<MathModelParam<sym>> get_math_param(main_model_state_c auto const& state, Idx n_math_solvers) {
+inline std::vector<MathModelParam<sym>> get_math_param(main_model_state_c auto const& state, Idx n_math_solvers) {
     std::vector<MathModelParam<sym>> math_param(n_math_solvers);
     for (Idx i = 0; i != n_math_solvers; ++i) {
         math_param[i].branch_param.resize(state.math_topology[i]->n_branch());
@@ -124,47 +189,22 @@ std::vector<MathModelParam<sym>> get_math_param(main_model_state_c auto const& s
         math_param[i].source_param.resize(state.math_topology[i]->n_source());
     }
     // loop all branch
-    for (Idx i = 0; i != static_cast<Idx>(state.comp_topo->branch_node_idx.size()); ++i) {
-        Idx2D const math_idx = state.topo_comp_coup->branch[i];
-        if (math_idx.group == isolated_component) {
-            continue;
-        }
-        // assign parameters
-        math_param[math_idx.group].branch_param[math_idx.pos] =
-            state.components.template get_item_by_seq<Branch>(i).template calc_param<sym>();
+    for (Idx i : IdxRange{std::ssize(state.comp_topo->branch_node_idx)}) {
+        detail::add_to_math_model_params<Branch>(math_param, state, i);
     }
     // loop all branch3
-    for (Idx i = 0; i != static_cast<Idx>(state.comp_topo->branch3_node_idx.size()); ++i) {
-        Idx2DBranch3 const math_idx = state.topo_comp_coup->branch3[i];
-        if (math_idx.group == isolated_component) {
-            continue;
-        }
-        // assign parameters, branch3 param consists of three branch parameters
-        auto const branch3_param = state.components.template get_item_by_seq<Branch3>(i).template calc_param<sym>();
-        for (size_t branch2 = 0; branch2 < 3; ++branch2) {
-            math_param[math_idx.group].branch_param[math_idx.pos[branch2]] = branch3_param[branch2];
-        }
+    for (Idx i : IdxRange{std::ssize(state.comp_topo->branch3_node_idx)}) {
+        detail::add_to_math_model_params<Branch3>(math_param, state, i);
     }
     // loop all shunt
-    for (Idx i = 0; i != static_cast<Idx>(state.comp_topo->shunt_node_idx.size()); ++i) {
-        Idx2D const math_idx = state.topo_comp_coup->shunt[i];
-        if (math_idx.group == isolated_component) {
-            continue;
-        }
-        // assign parameters
-        math_param[math_idx.group].shunt_param[math_idx.pos] =
-            state.components.template get_item_by_seq<Shunt>(i).template calc_param<sym>();
+    for (Idx i : IdxRange{std::ssize(state.comp_topo->shunt_node_idx)}) {
+        detail::add_to_math_model_params<Shunt>(math_param, state, i);
     }
     // loop all source
-    for (Idx i = 0; i != static_cast<Idx>(state.comp_topo->source_node_idx.size()); ++i) {
-        Idx2D const math_idx = state.topo_comp_coup->source[i];
-        if (math_idx.group == isolated_component) {
-            continue;
-        }
-        // assign parameters
-        math_param[math_idx.group].source_param[math_idx.pos] =
-            state.components.template get_item_by_seq<Source>(i).template math_param<sym>();
+    for (Idx i : IdxRange{std::ssize(state.comp_topo->source_node_idx)}) {
+        detail::add_to_math_model_params<Source>(math_param, state, i);
     }
+
     return math_param;
 }
 
