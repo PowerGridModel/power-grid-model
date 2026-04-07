@@ -13,7 +13,6 @@
 
 #include <doctest/doctest.h>
 
-#include <algorithm>
 #include <complex>
 #include <cstddef>
 #include <iterator>
@@ -427,7 +426,7 @@ TEST_CASE("Incremental update y-bus") {
             }) |
             std::ranges::to<IdxVector>();
 
-        MathModelParamIncrement<symmetric_t> math_model_param_incrmt{
+        MathModelParamIncrement<symmetric_t> const math_model_param_incrmt{
             .branch_param = branch_param_to_change_views | std::views::transform([&param_sym_update](Idx i) {
                                 return param_sym_update.branch_param[i];
                             }) |
@@ -457,7 +456,7 @@ TEST_CASE("Incremental update y-bus") {
             }) |
             std::ranges::to<IdxVector>();
 
-        MathModelParamIncrement<symmetric_t> math_model_param_incrmt{
+        MathModelParamIncrement<symmetric_t> const math_model_param_incrmt{
             .branch_param = {},
             .shunt_param = {},
             .source_param = source_param_to_change_views | std::views::transform([&param_sym_update](Idx i) {
@@ -562,7 +561,7 @@ TEST_CASE("Test counting_sort_element") {
         Idx const n_bus = 10;
 
         // Add elements in reverse order to test sorting thoroughly
-        for (Idx i : IdxRange{n_bus * n_bus} | std::views::reverse) {
+        for (Idx const i : IdxRange{n_bus * n_bus} | std::views::reverse) {
             Idx const row = i / n_bus;
             Idx const col = i % n_bus;
             if ((row + col) % 3 == 0) { // Sparse pattern

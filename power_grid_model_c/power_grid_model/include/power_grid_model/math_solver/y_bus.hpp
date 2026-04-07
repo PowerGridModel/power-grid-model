@@ -309,7 +309,7 @@ template <symmetry_tag sym> class YBus {
             y_bus_struct_ = std::make_shared<YBusStructure const>(math_topology_.get());
         }
         // update values
-        update_admittance(param);
+        update_admittance(std::move(param));
     }
 
     // getter
@@ -418,7 +418,7 @@ template <symmetry_tag sym> class YBus {
             // start admittance accumulation with zero
             ComplexTensor<sym> entry_admittance{0.0};
             // loop over all entries of this position
-            for (Idx element : IdxRange{y_bus_entry_indptr[entry], y_bus_entry_indptr[entry + 1]}) {
+            for (Idx const element : IdxRange{y_bus_entry_indptr[entry], y_bus_entry_indptr[entry + 1]}) {
                 auto const& contribution = y_bus_element[element];
 
                 if (contribution.element_type == YBusElementType::shunt) {
@@ -442,8 +442,8 @@ template <symmetry_tag sym> class YBus {
         auto const& y_bus_element = y_bus_struct_->y_bus_element;
         auto const& y_bus_entry_indptr = y_bus_struct_->y_bus_entry_indptr;
         // loop for each y bus position
-        for (Idx entry : IdxRange{nnz()}) {
-            for (Idx element : IdxRange{y_bus_entry_indptr[entry], y_bus_entry_indptr[entry + 1]}) {
+        for (Idx const entry : IdxRange{nnz()}) {
+            for (Idx const element : IdxRange{y_bus_entry_indptr[entry], y_bus_entry_indptr[entry + 1]}) {
                 auto const& contribution = y_bus_element[element];
 
                 if (contribution.element_type == YBusElementType::shunt) {

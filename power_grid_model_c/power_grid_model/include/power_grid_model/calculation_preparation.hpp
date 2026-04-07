@@ -224,7 +224,7 @@ void prepare_solvers(typename ModelType::MainModelState& state, SolverPreparatio
                                [&solver_context](auto const& math_topo) {
                                    return MathSolverProxy<sym>{solver_context.math_solver_dispatcher, math_topo};
                                });
-        for (Idx idx : IdxRange{n_math_solvers}) {
+        for (Idx const idx : IdxRange{n_math_solvers}) {
             main_core::get_y_bus<sym>(solver_context.math_state)[idx].register_parameters_changed_callback(
                 [solver = std::ref(solvers[idx])](bool changed) { solver.get().get().parameters_changed(changed); });
         }

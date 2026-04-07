@@ -51,7 +51,7 @@ inline void update_y_bus(MathState& math_state, std::vector<MathModelParam<sym>>
 
     assert(y_bus_vec.size() == math_model_params.size());
 
-    for (Idx i : IdxRange{std::ssize(y_bus_vec)}) {
+    for (Idx const i : IdxRange{std::ssize(y_bus_vec)}) {
         y_bus_vec[i].update_admittance(std::move(math_model_params[i]));
     }
 }
@@ -63,7 +63,7 @@ inline void update_y_bus(MathState& math_state,
 
     assert(y_bus_vec.size() == math_model_param_increments.size());
 
-    for (Idx i : IdxRange{std::ssize(y_bus_vec)}) {
+    for (Idx const i : IdxRange{std::ssize(y_bus_vec)}) {
         y_bus_vec[i].update_admittance_increment(math_model_param_increments[i]);
     }
 }

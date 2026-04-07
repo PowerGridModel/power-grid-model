@@ -58,7 +58,7 @@ constexpr void add_to_math_model_params(std::vector<MathModelParamType>& math_mo
                              .template calc_param<typename MathModelParamType::sym>();
 
     auto& model_params = math_model_param[math_idx.group];
-    for (Idx branch2 : IdxRange{3}) {
+    for (Idx const branch2 : IdxRange{3}) {
 
         if constexpr (std::derived_from<MathModelParamType,
                                         MathModelParamIncrement<typename MathModelParamType::sym>>) {
@@ -187,25 +187,25 @@ get_math_param_increment(typename MainModelType::MainModelState const& state, Id
 template <symmetry_tag sym>
 inline std::vector<MathModelParam<sym>> get_math_param(main_model_state_c auto const& state, Idx n_math_solvers) {
     std::vector<MathModelParam<sym>> math_param(n_math_solvers);
-    for (Idx i = 0; i != n_math_solvers; ++i) {
+    for (Idx const i : IdxRange{n_math_solvers}) {
         math_param[i].branch_param.resize(state.math_topology[i]->n_branch());
         math_param[i].shunt_param.resize(state.math_topology[i]->n_shunt());
         math_param[i].source_param.resize(state.math_topology[i]->n_source());
     }
     // loop all branch
-    for (Idx i : IdxRange{std::ssize(state.comp_topo->branch_node_idx)}) {
+    for (Idx const i : IdxRange{std::ssize(state.comp_topo->branch_node_idx)}) {
         detail::add_to_math_model_params<Branch>(math_param, state, i);
     }
     // loop all branch3
-    for (Idx i : IdxRange{std::ssize(state.comp_topo->branch3_node_idx)}) {
+    for (Idx const i : IdxRange{std::ssize(state.comp_topo->branch3_node_idx)}) {
         detail::add_to_math_model_params<Branch3>(math_param, state, i);
     }
     // loop all shunt
-    for (Idx i : IdxRange{std::ssize(state.comp_topo->shunt_node_idx)}) {
+    for (Idx const i : IdxRange{std::ssize(state.comp_topo->shunt_node_idx)}) {
         detail::add_to_math_model_params<Shunt>(math_param, state, i);
     }
     // loop all source
-    for (Idx i : IdxRange{std::ssize(state.comp_topo->source_node_idx)}) {
+    for (Idx const i : IdxRange{std::ssize(state.comp_topo->source_node_idx)}) {
         detail::add_to_math_model_params<Source>(math_param, state, i);
     }
 
