@@ -436,12 +436,14 @@ template <symmetry_tag sym> class YBus {
     }
 
     IdxVector get_affected_admittance_entries(MathModelParamIncrement<sym> const& math_model_param_incrmt) const {
-        auto affected_by_branch = math_model_param_incrmt.branch_param_to_change |
-                                  std::views::transform([this](Idx idx) { return y_bus_entries_per_branch_[idx]; }) |
-                                  std::views::join;
-        auto affected_by_shunt = math_model_param_incrmt.shunt_param_to_change |
-                                 std::views::transform([this](Idx idx) { return y_bus_entries_per_shunt_[idx]; }) |
-                                 std::views::join;
+        auto affected_by_branch =
+            math_model_param_incrmt.branch_param_to_change |
+            std::views::transform([this](Idx idx) -> IdxVector const& { return y_bus_entries_per_branch_[idx]; }) |
+            std::views::join;
+        auto affected_by_shunt =
+            math_model_param_incrmt.shunt_param_to_change |
+            std::views::transform([this](Idx idx) -> IdxVector const& { return y_bus_entries_per_shunt_[idx]; }) |
+            std::views::join;
 
         // TODO(mgovers): once C++26 is availables, we can use std::views::concat
         std::unordered_set<Idx> affected_entries;
