@@ -445,6 +445,38 @@ TEST_CASE("Incremental update y-bus") {
         ybus.update_admittance_increment(math_model_param_incrmt);
         verify_admittance(ybus.admittance(), admittance_sym_2);
     }
+
+    SUBCASE("Test source param incremental update") {
+        YBus<symmetric_t> ybus{topo, param_sym};
+        verify_admittance(ybus.admittance(), admittance_sym);
+
+        auto source_param_to_change_views =
+            IdxRange{static_cast<int>(param_sym_update.source_param.size())} |
+            std::views::filter([&param_sym_update](Idx i) {
+                return cabs(param_sym_update.source_param[i].y0()) > numerical_tolerance ||
+                       cabs(param_sym_update.source_param[i].y1()) > numerical_tolerance;
+            }) |
+            std::ranges::to<IdxVector>();
+
+        MathModelParamIncrement<symmetric_t> math_model_param_incrmt{
+            .source_param = source_param_to_change_views | std::views::transform([&param_sym_update](Idx i) {
+                                return param_sym_update.source_param[i];
+                            }) |
+                            std::ranges::to<std::vector>(),
+            .source_param_to_change = source_param_to_change_views,
+        };
+
+        ybus.update_admittance_increment(math_model_param_incrmt);
+
+        verify_admittance(ybus.admittance(), admittance_sym);
+        CHECK(ybus.math_model_param().source_param.size() == param_sym.source_param.size());
+        for (Idx const i : source_param_to_change_views) {
+            CHECK(cabs(ybus.math_model_param().source_param[i].y0() - param_sym_update.source_param[i].y0()) <
+                  numerical_tolerance);
+            CHECK(cabs(ybus.math_model_param().source_param[i].y1() - param_sym_update.source_param[i].y1()) <
+                  numerical_tolerance);
+        }
+    }
 }
 
 TEST_CASE("Test counting_sort_element") {
