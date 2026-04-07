@@ -445,8 +445,15 @@ template <symmetry_tag sym> class YBus {
 
         // TODO(mgovers): once C++26 is availables, we can use std::views::concat
         std::unordered_set<Idx> affected_entries;
-        affected_entries.insert_range(affected_by_branch);
-        affected_entries.insert_range(affected_by_shunt);
+#if __cpp_lib_containers_ranges >= 202202L
+        affected_entries.insert_range(std::move(affected_by_branch));
+        affected_entries.insert_range(std::move(affected_by_shunt));
+#else
+        affected_entries.insert(affected_by_branch.begin(), affected_by_branch).end();
+        affected_entries.insert(affected_by_shunt.begin(), affected_by_shunt).end();
+        capturing::into_the_void(affected_by_branch);
+        capturing::into_the_void(affected_by_shunt);
+#endif
         return std::move(affected_entries) | std::ranges::to<IdxVector>();
     }
 
