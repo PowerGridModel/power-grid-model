@@ -130,6 +130,7 @@ add_executable(
     "test_index_mapping.cpp"
     "test_job_dispatch.cpp"
     "test_calculation_preparation.cpp"
+    "test_link_solver.cpp"
 )
 
 target_link_libraries(

@@ -17,6 +17,7 @@
 
 #include <Eigen/Core>
 
+#include <algorithm>
 #include <cassert>
 #include <complex>
 #include <concepts>
@@ -66,7 +67,7 @@ inline void prepare_linear_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput
 
 template <symmetry_tag sym> inline void copy_y_bus(YBus<sym> const& y_bus, ComplexTensorVector<sym>& mat_data) {
     ComplexTensorVector<sym> const& ydata = y_bus.admittance();
-    std::transform(y_bus.map_lu_y_bus().cbegin(), y_bus.map_lu_y_bus().cend(), mat_data.begin(), [&](Idx k) {
+    std::ranges::transform(y_bus.map_lu_y_bus(), mat_data.begin(), [&](Idx k) {
         if (k == -1) {
             return ComplexTensor<sym>{};
         }

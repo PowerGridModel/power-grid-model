@@ -23,7 +23,7 @@ inline Idx get_component_type_index(ComponentContainer const& components) {
 template <typename ComponentType, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, ComponentType>
 constexpr auto get_component_size(ComponentContainer const& components) {
-    return components.template size<ComponentType>();
+    return components.template size<ComponentType>(); // NOSONAR(S6024)
 }
 
 template <typename ComponentType, class ComponentContainer>

@@ -115,8 +115,6 @@ class SolversCacheStatus {
 };
 
 namespace detail {
-static constexpr Idx disconnected = -1;
-
 template <class ModelType>
 void reset_solvers(typename ModelType::MainModelState& state, SolverPreparationContext& solver_context,
                    SolversCacheStatus<ModelType>& solvers_cache_status) {
@@ -176,7 +174,7 @@ void check_u_ref_per_node(typename ModelType::MainModelState const& state,
 template <class ModelType>
 void check_sources_and_voltage_regulators(
     typename ModelType::MainModelState const& state,
-    std::unordered_map<ID, ReferenceVoltageRegulator>& visited_node_to_reference_regulator) {
+    std::unordered_map<ID, ReferenceVoltageRegulator> const& visited_node_to_reference_regulator) {
     for (auto const& source : state.components.template citer<Source>()) {
         ID const source_node_id = source.node();
         // only checked against nodes with a voltage regulator that is enabled
