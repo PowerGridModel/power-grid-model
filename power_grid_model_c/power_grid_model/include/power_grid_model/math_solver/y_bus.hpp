@@ -361,12 +361,24 @@ template <symmetry_tag sym> class YBus {
      */
     void update_admittance_increment(MathModelParamIncrement<sym> const& math_model_param_incrmt) {
         assert(y_bus_struct_ != nullptr);
-        assert(std::size(math_model_param_incrmt.branch_param) ==
-               std::size(math_model_param_incrmt.branch_param_to_change));
-        assert(std::size(math_model_param_incrmt.shunt_param) ==
-               std::size(math_model_param_incrmt.shunt_param_to_change));
-        assert(std::size(math_model_param_incrmt.source_param) ==
-               std::size(math_model_param_incrmt.source_param_to_change));
+
+        assert(std::ssize(math_model_param_incrmt.branch_param) ==
+               std::ssize(math_model_param_incrmt.branch_param_to_change));
+        assert(std::ssize(math_model_param_incrmt.shunt_param) ==
+               std::ssize(math_model_param_incrmt.shunt_param_to_change));
+        assert(std::ssize(math_model_param_incrmt.source_param) ==
+               std::ssize(math_model_param_incrmt.source_param_to_change));
+
+        assert(std::ranges::all_of(math_model_param_incrmt.branch_param_to_change, [&](Idx idx) {
+            return 0 <= idx && idx < std::ssize(math_model_param_.branch_param);
+        }));
+        assert(std::ranges::all_of(math_model_param_incrmt.shunt_param_to_change, [&](Idx idx) {
+            return 0 <= idx && idx < std::ssize(math_model_param_.shunt_param);
+        }));
+        assert(std::ranges::all_of(math_model_param_incrmt.source_param_to_change, [&](Idx idx) {
+            return 0 <= idx && idx < std::ssize(math_model_param_.source_param);
+        }));
+
         assert(
             std::ranges::equal(math_model_param_incrmt.source_param,
                                math_model_param_incrmt.source_param_to_change |
@@ -456,7 +468,7 @@ template <symmetry_tag sym> class YBus {
             std::views::transform([this](Idx idx) -> IdxVector const& { return y_bus_entries_per_shunt_[idx]; }) |
             std::views::join;
 
-        // TODO(mgovers): once C++26 is availables, we can use std::views::concat
+        // TODO(mgovers): once C++26 is available, we can use std::views::concat
         std::unordered_set<Idx> affected_entries;
 #if __cpp_lib_containers_ranges >= 202202L
         affected_entries.insert_range(std::move(affected_by_branch));
