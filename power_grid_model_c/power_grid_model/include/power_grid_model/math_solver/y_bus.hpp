@@ -346,7 +346,7 @@ template <symmetry_tag sym> class YBus {
         // overwrite the old cached parameters
         math_model_param_ = std::move(math_model_param);
         // construct admittance data
-        if (admittance_.size() != nnz()) {
+        if (std::ssize(admittance_) != nnz()) {
             admittance_ = ComplexTensorVector<sym>(nnz());
         }
         register_admittance_entries();
