@@ -94,7 +94,6 @@ constexpr void add_to_math_model_params(std::vector<MathModelParamType>& math_mo
 }
 
 template <std::same_as<Source> ComponentType, math_model_param_c MathModelParamType, typename ComponentContainer>
-    requires(!std::derived_from<MathModelParamType, MathModelParamIncrement<typename MathModelParamType::sym>>)
 constexpr void add_to_math_model_params(std::vector<MathModelParamType>& math_model_param,
                                         MainModelState<ComponentContainer> const& state,
                                         Idx const topology_sequence_idx) {
@@ -105,9 +104,14 @@ constexpr void add_to_math_model_params(std::vector<MathModelParamType>& math_mo
     }
 
     // assign parameters
-    math_model_param[math_idx.group].source_param[math_idx.pos] =
-        state.components.template get_item_by_seq<Source>(topology_sequence_idx)
-            .template math_param<typename MathModelParamType::sym>();
+    auto source_params = state.components.template get_item_by_seq<Source>(topology_sequence_idx)
+                             .template math_param<typename MathModelParamType::sym>();
+    if constexpr (std::derived_from<MathModelParamType, MathModelParamIncrement<typename MathModelParamType::sym>>) {
+        math_model_param[math_idx.group].source_param.push_back(std::move(source_params));
+        math_model_param[math_idx.group].source_param_to_change.push_back(math_idx.pos);
+    } else {
+        math_model_param[math_idx.group].source_param[math_idx.pos] = source_params;
+    }
 }
 
 // default implementation for other components, does nothing
@@ -121,7 +125,7 @@ constexpr void add_to_math_model_params(std::vector<MathModelParamType> const& /
 // default implementation for other components, does nothing
 template <typename ComponentType, symmetry_tag sym, typename ComponentContainer>
     requires std::derived_from<ComponentType, Branch> || std::derived_from<ComponentType, Branch3> ||
-             std::derived_from<ComponentType, Shunt>
+             std::derived_from<ComponentType, Shunt> || std::derived_from<ComponentType, Source>
 constexpr void add_to_increment(std::vector<MathModelParamIncrement<sym>>& increments,
                                 MainModelState<ComponentContainer> const& state, Idx2D const& changed_component_idx) {
     Idx const topo_sequence_idx = main_core::get_topology_index<ComponentType>(state.components, changed_component_idx);

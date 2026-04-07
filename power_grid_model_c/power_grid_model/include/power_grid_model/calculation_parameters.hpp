@@ -243,9 +243,11 @@ template <symmetry_tag sym_type> struct MathModelParamIncrement {
 
     std::vector<BranchCalcParam<sym>> branch_param;
     ComplexTensorVector<sym> shunt_param;
+    std::vector<SourceCalcParam> source_param;
 
-    std::vector<Idx> branch_param_to_change; // indices of changed branch_param
-    std::vector<Idx> shunt_param_to_change;  // indices of changed shunt_param
+    IdxVector branch_param_to_change; // indices of changed branch_param
+    IdxVector shunt_param_to_change;  // indices of changed shunt_param
+    IdxVector source_param_to_change; // indices of changed source_param
 };
 
 template <typename T>
