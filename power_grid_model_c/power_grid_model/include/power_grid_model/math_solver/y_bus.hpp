@@ -361,6 +361,8 @@ template <symmetry_tag sym> class YBus {
      */
     void update_admittance_increment(MathModelParamIncrement<sym> const& math_model_param_incrmt) {
         assert(y_bus_struct_ != nullptr);
+        assert(std::size(math_model_param_incrmt.branch_param) == std::size(math_model_param_.branch_param));
+        assert(std::size(math_model_param_incrmt.shunt_param) == std::size(math_model_param_.shunt_param));
 
         for (auto const& [idx_to_change, params] :
              std::views::zip(math_model_param_incrmt.branch_param_to_change, math_model_param_incrmt.branch_param)) {
@@ -385,6 +387,8 @@ template <symmetry_tag sym> class YBus {
         auto const& math_param_shunt = math_model_param_.shunt_param;
         auto const& math_param_branch = math_model_param_.branch_param;
 
+        bool updated = false;
+
         for (auto const entry : std::forward<Entries>(y_bus_entries)) {
             // start admittance accumulation with zero
             ComplexTensor<sym> entry_admittance{0.0};
@@ -402,8 +406,13 @@ template <symmetry_tag sym> class YBus {
                 }
             }
             // assign
+            if (!updated && admittance_[entry] != entry_admittance) { // all hails branch prediction
+                updated = true;
+            }
             admittance_[entry] = std::move(entry_admittance);
+        }
 
+        if (updated) {
             parameters_changed(true);
         }
     }
@@ -439,13 +448,10 @@ template <symmetry_tag sym> class YBus {
                                  std::views::join;
 
         // TODO(mgovers): once C++26 is availables, we can use std::views::concat
-        IdxVector affected_entries;
-        affected_entries.reserve(std::ranges::distance(affected_by_branch) + std::ranges::distance(affected_by_shunt));
-        std::ranges::copy(std::move(affected_by_branch), std::back_inserter(affected_entries));
-        std::ranges::copy(std::move(affected_by_shunt), std::back_inserter(affected_entries));
-        auto const [duplicates_begin, duplicates_end] = std::ranges::unique(affected_entries);
-        affected_entries.erase(duplicates_begin, duplicates_end);
-        return affected_entries;
+        std::unordered_set<Idx> affected_entries;
+        affected_entries.insert_range(affected_by_branch);
+        affected_entries.insert_range(affected_by_shunt);
+        return std::move(affected_entries) | std::ranges::to<IdxVector>();
     }
 
     ComplexValue<sym> calculate_injection(ComplexValueVector<sym> const& u, Idx bus_number) const {
