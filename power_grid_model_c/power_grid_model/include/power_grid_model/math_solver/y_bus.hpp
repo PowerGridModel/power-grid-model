@@ -427,7 +427,7 @@ template <symmetry_tag sym> class YBus {
                 } else {
                     // branch
                     entry_admittance +=
-                        math_param_branch[contribution.idx].value[static_cast<Idx>(contribution.element_type)];
+                        math_param_branch[contribution.idx].value[std::to_underlying(contribution.element_type)];
                 }
             }
             // assign
