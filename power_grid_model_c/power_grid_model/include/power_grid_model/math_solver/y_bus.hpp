@@ -449,10 +449,10 @@ template <symmetry_tag sym> class YBus {
         affected_entries.insert_range(std::move(affected_by_branch));
         affected_entries.insert_range(std::move(affected_by_shunt));
 #else
-        affected_entries.insert(affected_by_branch.begin(), affected_by_branch).end();
-        affected_entries.insert(affected_by_shunt.begin(), affected_by_shunt).end();
-        capturing::into_the_void(affected_by_branch);
-        capturing::into_the_void(affected_by_shunt);
+        std::ranges::for_each(std::move(affected_by_branch),
+                              [&affected_entries](Idx idx) { affected_entries.insert(idx); });
+        std::ranges::for_each(std::move(affected_by_shunt),
+                              [&affected_entries](Idx idx) { affected_entries.insert(idx); });
 #endif
         return std::move(affected_entries) | std::ranges::to<IdxVector>();
     }
