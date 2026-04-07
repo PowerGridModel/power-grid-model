@@ -436,8 +436,10 @@ TEST_CASE("Incremental update y-bus") {
                                return param_sym_update.shunt_param[i];
                            }) |
                            std::ranges::to<std::vector>(),
+            .source_param = {},
             .branch_param_to_change = std::move(branch_param_to_change_views),
             .shunt_param_to_change = std::move(shunt_param_to_change_views),
+            .source_param_to_change = {},
         };
 
         ybus.update_admittance_increment(math_model_param_incrmt);
@@ -456,10 +458,14 @@ TEST_CASE("Incremental update y-bus") {
             std::ranges::to<IdxVector>();
 
         MathModelParamIncrement<symmetric_t> math_model_param_incrmt{
+            .branch_param = {},
+            .shunt_param = {},
             .source_param = source_param_to_change_views | std::views::transform([&param_sym_update](Idx i) {
                                 return param_sym_update.source_param[i];
                             }) |
                             std::ranges::to<std::vector>(),
+            .branch_param_to_change = {},
+            .shunt_param_to_change = {},
             .source_param_to_change = source_param_to_change_views,
         };
 
