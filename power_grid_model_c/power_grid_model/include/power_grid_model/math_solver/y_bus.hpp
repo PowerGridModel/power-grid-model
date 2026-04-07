@@ -416,7 +416,6 @@ template <symmetry_tag sym> class YBus {
 
         for (auto const entry : std::forward<Entries>(y_bus_entries)) {
             // start admittance accumulation with zero
-            auto& admittance_entry = admittance_[entry];
             ComplexTensor<sym> entry_admittance{0.0};
             // loop over all entries of this position
             for (Idx element : IdxRange{y_bus_entry_indptr[entry], y_bus_entry_indptr[entry + 1]}) {
