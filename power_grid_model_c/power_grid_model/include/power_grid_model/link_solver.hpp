@@ -255,12 +255,12 @@ inline SolutionSet set_solution_system(EliminationResult& result) {
     SolutionSet solution_set{};
 
     auto& [dfs_matrix, extended_rhs] = solution_set;
-    Idx const pivot_indices_size = result.pivot_edge_indices.size();
-    Idx const free_indices_size = result.free_edge_indices.size();
+    auto const pivot_indices_size = narrow_cast<Idx>(result.pivot_edge_indices.size());
+    auto const free_indices_size = narrow_cast<Idx>(result.free_edge_indices.size());
     Idx const total_indices_size = pivot_indices_size + free_indices_size;
     dfs_matrix.prepare(total_indices_size, free_indices_size);
     extended_rhs.resize(total_indices_size); // extended_rhs =  0
-    auto const free_matrix_element = IntS{-1};
+    constexpr auto const free_matrix_element = IntS{-1};
     Idx free_edge_idx;
 
     // The part constructed from result.matrix and result.rhs.

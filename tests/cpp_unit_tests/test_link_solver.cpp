@@ -8,7 +8,9 @@
 
 #include <doctest/doctest.h>
 
+#include <cstddef>
 #include <ranges>
+#include <span>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
