@@ -122,7 +122,6 @@ constexpr void add_to_math_model_params(std::vector<MathModelParamType> const& /
     // default implementation is no-op
 }
 
-// default implementation for other components, does nothing
 template <typename ComponentType, symmetry_tag sym, typename ComponentContainer>
     requires std::derived_from<ComponentType, Branch> || std::derived_from<ComponentType, Branch3> ||
              std::derived_from<ComponentType, Shunt> || std::derived_from<ComponentType, Source>
