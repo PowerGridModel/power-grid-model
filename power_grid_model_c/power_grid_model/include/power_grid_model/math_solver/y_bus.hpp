@@ -468,7 +468,7 @@ template <symmetry_tag sym> class YBus {
 
         // TODO(mgovers): once C++26 is available, we can use std::views::concat
         IdxVector affected_entries;
-        affected_entries.reserve(std::ssize(math_model_param_incrmt.branch_param_to_change) +
+        affected_entries.reserve(4 * std::ssize(math_model_param_incrmt.branch_param_to_change) +
                                  std::ssize(math_model_param_incrmt.shunt_param_to_change));
 #if __cpp_lib_containers_ranges >= 202202L
         affected_entries.append_range(std::move(affected_by_branch));
