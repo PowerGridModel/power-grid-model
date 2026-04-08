@@ -8,7 +8,9 @@
 
 #include <doctest/doctest.h>
 
+#include <cstddef>
 #include <ranges>
+#include <span>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -487,7 +489,7 @@ TEST_CASE("Test the link solver algorithm") {
             auto solution_set = generate_solution_set(dfs_data, dfs_row, dfs_col, Idx{7}, Idx{3});
             solution_set.extended_rhs = {{0, 0}, {1, 1}, {-2, -2}, {0, 0}, {0, 0}, {-0, -0}, {0, 0}};
 
-            std::vector<std::vector<DoubleComplex>> projection_system =
+            std::vector<std::vector<DoubleComplex>> const projection_system =
                 set_projection_system(free_indices_number, total_indices_number, solution_set);
 
             std::vector<std::vector<DoubleComplex>> test_system = {{{3, 0}, {1, 0}, {1, 0}, {2, 2}},
@@ -509,7 +511,7 @@ TEST_CASE("Test the link solver algorithm") {
             SolutionSet solution_set = generate_solution_set(dfs_data, dfs_row, dfs_col, Idx{4}, Idx{1});
             solution_set.extended_rhs = {{1, 0}, {-1, -0}, {-1, -0}, {0, 0}};
 
-            std::vector<std::vector<DoubleComplex>> projection_system =
+            std::vector<std::vector<DoubleComplex>> const projection_system =
                 set_projection_system(free_indices_number, total_indices_number, solution_set);
 
             std::vector<std::vector<DoubleComplex>> test_system = {{{3, 0}, {-2, 0}}};

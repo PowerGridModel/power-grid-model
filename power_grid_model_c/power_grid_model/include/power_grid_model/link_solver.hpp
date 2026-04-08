@@ -242,37 +242,45 @@ inline EliminationResult reduced_echelon_form(std::vector<BranchIdx> edges, std:
 }
 
 // The degrees of freedom matrix (dfs_matrix) is associated with the degrees of freedom vector according
-// internal_currents = extended_rhs - dfs_matrix * lambda
+// internal_loads = extended_rhs - dfs_matrix * lambda
 struct SolutionSet {
     CooSparseMatrix dfs_matrix{};
     std::vector<DoubleComplex> extended_rhs{};
 };
 
+// Constructs the dfs_matrix and the extended_rhs for the set of solutions.
+// The dfs_matrix is constructed from the matrix rows associated with the free column indices
+// and from negative unit elements at locations where the variables are associated with the free parameters.
 inline SolutionSet set_solution_system(EliminationResult& result) {
     SolutionSet solution_set{};
-    auto& [matrix, rhs, free_edge_indices, pivot_edge_indices, edges_history] = result;
 
     auto& [dfs_matrix, extended_rhs] = solution_set;
-    Idx const pivot_indices_size = pivot_edge_indices.size();
-    Idx const free_indices_size = free_edge_indices.size();
+    auto const pivot_indices_size = narrow_cast<Idx>(result.pivot_edge_indices.size());
+    auto const free_indices_size = narrow_cast<Idx>(result.free_edge_indices.size());
     Idx const total_indices_size = pivot_indices_size + free_indices_size;
     dfs_matrix.prepare(total_indices_size, free_indices_size);
-    extended_rhs.resize(total_indices_size);
-    auto const free_matrix_element = IntS{-1};
+    extended_rhs.resize(total_indices_size); // extended_rhs =  0
+    constexpr auto const free_matrix_element = IntS{-1};
+    Idx free_edge_idx;
 
-    for (auto matrix_row : std::ranges::views::iota(Idx{}, pivot_indices_size)) {
-        auto const pivot_edge_idx = pivot_edge_indices[matrix_row];
-        for (auto dfs_matrix_col : std::ranges::views::iota(Idx{}, free_indices_size)) {
-            auto const free_edge_idx = free_edge_indices[dfs_matrix_col];
-            matrix.get_value(matrix_row, free_edge_idx)
+    // The part constructed from result.matrix and result.rhs.
+    for (auto matrix_row : std::views::iota(Idx{}, pivot_indices_size)) {
+        auto const pivot_edge_idx = result.pivot_edge_indices[matrix_row];
+        for (auto dfs_matrix_col : std::views::iota(Idx{}, free_indices_size)) {
+            free_edge_idx = result.free_edge_indices[dfs_matrix_col];
+            result.matrix.get_value(matrix_row, free_edge_idx)
                 .transform([&dfs_matrix, pivot_edge_idx, dfs_matrix_col](IntS matrix_element) {
                     dfs_matrix.set_value(matrix_element, pivot_edge_idx, dfs_matrix_col);
                     return matrix_element;
                 });
-            dfs_matrix.set_value(free_matrix_element, free_edge_idx, dfs_matrix_col);
-            extended_rhs[free_edge_indices[dfs_matrix_col]] = 0;
         }
-        extended_rhs[pivot_edge_idx] = rhs[matrix_row];
+        extended_rhs[pivot_edge_idx] = result.rhs[matrix_row];
+    }
+
+    // The part constructed from negative unit elements.
+    for (auto dfs_matrix_col : std::views::iota(Idx{}, free_indices_size)) {
+        free_edge_idx = result.free_edge_indices[dfs_matrix_col];
+        dfs_matrix.set_value(free_matrix_element, free_edge_idx, dfs_matrix_col);
     }
     return solution_set;
 };
@@ -283,7 +291,7 @@ inline std::vector<std::vector<DoubleComplex>> set_projection_system(Idx free_in
                                                               std::vector<DoubleComplex>(free_indices_number + 1));
 
     for (Idx dfs_matrix_col = 0; dfs_matrix_col < free_indices_number; dfs_matrix_col++) {
-        DoubleComplex dot_product_rhs = 0.;
+        auto dot_product_rhs = DoubleComplex{};
         for (Idx dfs_matrix_row = 0; dfs_matrix_row < total_indices_number; dfs_matrix_row++) {
             solution_set.dfs_matrix.get_value(dfs_matrix_row, dfs_matrix_col)
                 .transform(
@@ -295,7 +303,7 @@ inline std::vector<std::vector<DoubleComplex>> set_projection_system(Idx free_in
         projection_system[dfs_matrix_col][free_indices_number] = dot_product_rhs;
         for (Idx second_dfs_matrix_col = dfs_matrix_col; second_dfs_matrix_col < free_indices_number;
              second_dfs_matrix_col++) {
-            DoubleComplex dot_product_matrix = 0.;
+            auto dot_product_matrix = DoubleComplex{};
             for (Idx dfs_matrix_row = 0; dfs_matrix_row < total_indices_number; dfs_matrix_row++) {
                 auto const first_value = solution_set.dfs_matrix.get_value(dfs_matrix_row, dfs_matrix_col);
                 auto const second_value = solution_set.dfs_matrix.get_value(dfs_matrix_row, second_dfs_matrix_col);
