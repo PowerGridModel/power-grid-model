@@ -318,4 +318,28 @@ inline std::vector<std::vector<DoubleComplex>> set_projection_system(Idx free_in
     return projection_system;
 };
 
+void gauss_elimination(std::vector<std::vector<DoubleComplex>>& system) {
+
+    auto const system_size = narrow_cast<Idx>(system.size());
+
+    for (Idx column = 0; column < system_size; column++) {
+        for (Idx row = column + 1; row < system_size; row++) {
+
+            system[row][column] = -system[row][column] / system[column][column];
+
+            for (Idx column_part = column + 1; column_part < system_size + 1; column_part++)
+                system[row][column_part] += system[row][column] * system[column][column_part];
+        }
+    }
+
+    system[system_size - 1][system_size] /= system[system_size - 1][system_size - 1];
+    for (Idx row = system_size - 1; row-- > 0;) {
+        auto element_sum = DoubleComplex{};
+        for (Idx column = row + 1; column < system_size; column++) {
+            element_sum -= system[row][column] * system[column][system_size];
+        }
+        system[row][system_size] = (system[row][system_size] + element_sum) / system[row][row];
+    }
+};
+
 } // namespace power_grid_model::link_solver::detail

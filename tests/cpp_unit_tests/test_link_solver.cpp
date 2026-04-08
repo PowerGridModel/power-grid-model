@@ -519,5 +519,36 @@ TEST_CASE("Test the link solver algorithm") {
             CHECK(projection_system == test_system);
         }
     }
+
+    SUBCASE("Testing the gauss elimination routine") {
+        auto is_small = [](std::vector<std::vector<DoubleComplex>>& system,
+                           std::vector<std::vector<DoubleComplex>>& test_system) {
+            auto const system_size = narrow_cast<Idx>(system.size());
+            double element_sum{};
+
+            for (Idx column = 0; column < system_size + 1; column++) {
+                for (Idx row = 0; row < system_size; row++) {
+                    element_sum += abs(system[row][column] - test_system[row][column]);
+                }
+            }
+
+            return element_sum;
+        };
+
+        SUBCASE("Linear system of the complex case") {
+            std::vector<std::vector<DoubleComplex>> system = {{{3, 0}, {1, 0}, {1, 0}, {2, 2}},
+                                                              {{1, 0}, {3, 0}, {-1, 0}, {3, 3}},
+                                                              {{1, 0}, {-1, 0}, {4, 0}, {-1, -1}}};
+
+            gauss_elimination(system);
+
+            std::vector<std::vector<DoubleComplex>> test_system = {
+                {{3, 0}, {1, 0}, {1, 0}, {0.458333, 0.458333}},
+                {{-0.333333, 0}, {2.66667, 0}, {-1.33333, 0}, {0.791667, 0.791667}},
+                {{-0.333333, 0}, {0.5, -0}, {3, 0}, {-0.166667, -0.166667}}};
+
+            CHECK(is_small(system, test_system) < 1.e-5);
+        }
+    }
 }
 } // namespace power_grid_model::link_solver
