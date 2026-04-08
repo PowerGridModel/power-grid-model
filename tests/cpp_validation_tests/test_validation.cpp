@@ -431,21 +431,21 @@ Options get_options(CaseParam const& param, Idx threading = -1) {
     return options;
 }
 
+std::string get_output_file(PGM_CalculationType calculation_type, bool sym, bool is_batch) {
+    return std::format("{}{}.json", get_output_type(calculation_type, sym), is_batch ? "_batch" : "");
+}
+
 std::optional<CaseParam> construct_case(std::filesystem::path const& case_dir, json const& j,
                                         std::string const& calculation_type_str, bool is_batch,
                                         std::string const& calculation_method_str, bool sym) {
     using namespace std::string_literals;
 
-    auto const batch_suffix = is_batch ? "_batch"s : ""s;
-
     // Convert strings to enums
     PGM_CalculationType const calculation_type = calculation_type_mapping.at(calculation_type_str);
     PGM_CalculationMethod const calculation_method = calculation_method_mapping.at(calculation_method_str);
 
-    // add a case if output file exists
-    std::filesystem::path const output_file =
-        case_dir / (get_output_type(calculation_type, sym) + batch_suffix + ".json"s);
-    if (!std::filesystem::exists(output_file)) {
+    // add a case only if output file exists
+    if (!std::filesystem::exists(case_dir / get_output_file(calculation_type, sym, is_batch))) {
         return std::nullopt;
     }
 
@@ -537,7 +537,7 @@ struct ValidationCase {
     std::optional<OwningDataset> output_batch;
 };
 
-ValidationCase create_validation_case(CaseParam const& param, std::string const& output_type) {
+ValidationCase create_validation_case(CaseParam const& param) {
     // input
     ValidationCase validation_case{.param = param,
                                    .input = load_dataset(param.case_dir / "input.json", PGM_json, true),
@@ -546,11 +546,12 @@ ValidationCase create_validation_case(CaseParam const& param, std::string const&
                                    .output_batch = std::nullopt};
 
     // output and update
+    auto const output_path = param.case_dir / get_output_file(param.calculation_type, param.sym, param.is_batch);
     if (!param.is_batch) {
-        validation_case.output = load_dataset(param.case_dir / (output_type + ".json"), PGM_json);
+        validation_case.output = load_dataset(output_path, PGM_json);
     } else {
         validation_case.update_batch = load_dataset(param.case_dir / "update_batch.json", PGM_json);
-        validation_case.output_batch = load_dataset(param.case_dir / (output_type + "_batch.json"), PGM_json);
+        validation_case.output_batch = load_dataset(output_path, PGM_json);
     }
     return validation_case;
 }
@@ -610,8 +611,7 @@ void execute_test(CaseParam const& param, T&& func) noexcept {
 
 void validate_single_case(CaseParam const& param) {
     execute_test(param, [&param](Subcase& subcase) {
-        auto const output_prefix = get_output_type(param.calculation_type, param.sym);
-        auto const validation_case = create_validation_case(param, output_prefix);
+        auto const validation_case = create_validation_case(param);
         OwningDataset const result{validation_case.output.value(), param.calculation_type, param.sym};
 
         // create and run model
@@ -626,8 +626,7 @@ void validate_single_case(CaseParam const& param) {
 
 void validate_batch_case(CaseParam const& param) {
     execute_test(param, [&](Subcase& subcase) {
-        auto const output_prefix = get_output_type(param.calculation_type, param.sym);
-        auto const validation_case = create_validation_case(param, output_prefix);
+        auto const validation_case = create_validation_case(param);
         auto const& info = validation_case.update_batch.value().dataset.get_info();
         Idx const batch_size = info.batch_size();
         OwningDataset const batch_result{validation_case.output_batch.value(), param.calculation_type, param.sym, true,

@@ -35,7 +35,7 @@
 #include <vector>
 
 // custom packers
-namespace msgpack { // NOLINT(modernize-concat-nested-namespaces)
+namespace msgpack { // NOLINT(modernize-concat-nested-namespaces) // NOSONAR(S5812)
 MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
     namespace adaptor {
 

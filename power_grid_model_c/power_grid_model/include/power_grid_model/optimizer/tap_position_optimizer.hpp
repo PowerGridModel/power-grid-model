@@ -52,7 +52,6 @@
 #include <ranges>
 #include <set>
 #include <sstream>
-#include <string>
 #include <string_view>
 #include <tuple>
 #include <type_traits>
@@ -991,10 +990,8 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         if (max_tap_ranges_per_rank.empty()) {
             max_tap_ranges_per_rank.reserve(regulator_order.size());
             for (auto const& same_rank_regulators : regulator_order) {
-                max_tap_ranges_per_rank.push_back(std::ranges::max_element(same_rank_regulators.begin(),
-                                                                           same_rank_regulators.end(),
-                                                                           tap_pos_range_cmp)
-                                                      ->transformer.tap_range());
+                max_tap_ranges_per_rank.push_back(
+                    std::ranges::max_element(same_rank_regulators, tap_pos_range_cmp)->transformer.tap_range());
             }
         }
 

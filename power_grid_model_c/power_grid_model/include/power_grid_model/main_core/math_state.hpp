@@ -45,27 +45,25 @@ template <symmetry_tag sym> inline auto& get_y_bus(MathState& math_state) {
 }
 
 template <symmetry_tag sym>
-inline void update_y_bus(MathState& math_state, std::vector<MathModelParam<sym>> const& math_model_params) {
+inline void update_y_bus(MathState& math_state, std::vector<MathModelParam<sym>> math_model_params) {
     auto& y_bus_vec = get_y_bus<sym>(math_state);
 
     assert(y_bus_vec.size() == math_model_params.size());
 
     for (Idx i = 0; i != static_cast<Idx>(y_bus_vec.size()); ++i) {
-        y_bus_vec[i].update_admittance(std::make_shared<MathModelParam<sym> const>(std::move(math_model_params[i])));
+        y_bus_vec[i].update_admittance(std::move(math_model_params[i]));
     }
 }
 
 template <symmetry_tag sym>
-inline void update_y_bus(MathState& math_state, std::vector<MathModelParam<sym>> const& math_model_params,
+inline void update_y_bus(MathState& math_state, std::vector<MathModelParam<sym>> math_model_params,
                          std::vector<MathModelParamIncrement> const& math_model_param_increments) {
     auto& y_bus_vec = get_y_bus<sym>(math_state);
 
     assert(y_bus_vec.size() == math_model_params.size());
 
     for (Idx i = 0; i != static_cast<Idx>(y_bus_vec.size()); ++i) {
-        y_bus_vec[i].update_admittance_increment(
-            std::make_shared<MathModelParam<sym> const>(std::move(math_model_params[i])),
-            math_model_param_increments[i]);
+        y_bus_vec[i].update_admittance_increment(std::move(math_model_params[i]), math_model_param_increments[i]);
     }
 }
 
