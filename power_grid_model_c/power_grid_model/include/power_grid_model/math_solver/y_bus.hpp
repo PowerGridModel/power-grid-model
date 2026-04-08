@@ -54,7 +54,7 @@ inline void append_element_vector(std::vector<YBusElementMap>& vec, Idx first_bu
 // counting sort element
 inline void counting_sort_element(std::vector<YBusElementMap>& vec, Idx n_bus) {
     // temp vec for swapping
-    std::vector<YBusElementMap> temp_vec(vec.size());
+    std::vector<YBusElementMap> temp_vec(std::size(vec));
     IdxVector counter(n_bus, 0);
 
     // sort column first
@@ -308,7 +308,7 @@ template <symmetry_tag sym> class YBus {
             y_bus_struct_ = std::make_shared<YBusStructure const>(math_topology_.get());
         }
         // update values
-        update_admittance(param);
+        update_admittance(std::move(param));
     }
 
     // getter
@@ -345,56 +345,11 @@ template <symmetry_tag sym> class YBus {
         // overwrite the old cached parameters
         math_model_param_ = std::move(math_model_param);
         // construct admittance data
-        admittance_ = ComplexTensorVector<sym>(nnz());
-
-        auto const& branch_param = math_model_param_.branch_param;
-        auto const& shunt_param = math_model_param_.shunt_param;
-        auto const& y_bus_element = y_bus_struct_->y_bus_element;
-        auto const& y_bus_entry_indptr = y_bus_struct_->y_bus_entry_indptr;
-        // loop for each y bus position
-        for (Idx entry = 0; entry != nnz(); ++entry) {
-            // start admittance accumulation with zero
-            ComplexTensor<sym> entry_admittance{0.0};
-            IdxVector entry_param_shunt;
-            IdxVector entry_param_branch;
-            // loop over all entries of this position
-            for (Idx element = y_bus_entry_indptr[entry]; element != y_bus_entry_indptr[entry + 1]; ++element) {
-                auto param_idx = y_bus_element[element].idx;
-                if (y_bus_element[element].element_type == YBusElementType::shunt) {
-                    entry_admittance += shunt_param[param_idx];
-                    entry_param_shunt.push_back(param_idx);
-                } else {
-                    entry_admittance +=
-                        branch_param[param_idx].value[static_cast<Idx>(y_bus_element[element].element_type)];
-                    entry_param_branch.push_back(param_idx);
-                }
-            }
-            // assign
-            admittance_[entry] = entry_admittance;
-            map_admittance_param_branch_.push_back(entry_param_branch);
-            map_admittance_param_shunt_.push_back(entry_param_shunt);
+        if (std::ssize(admittance_) != nnz()) {
+            admittance_ = ComplexTensorVector<sym>(nnz());
         }
-
-        parameters_changed(true);
-    }
-
-    IdxVector increments_to_entries(auto const& math_model_param_incrmt) {
-        // construct affected entries
-        IdxVector affected_entries;
-
-        auto query_params_in_map = [&affected_entries](auto const& params_to_change, auto const& mapping) {
-            for (size_t i = 0; i < mapping.size(); ++i) {
-                if (std::ranges::any_of(mapping[i], [&](Idx val) {
-                        return std::ranges::find(params_to_change, val) != params_to_change.end();
-                    })) {
-                    affected_entries.push_back(static_cast<int>(i));
-                }
-            }
-        };
-
-        query_params_in_map(math_model_param_incrmt.branch_param_to_change, map_admittance_param_branch_);
-        query_params_in_map(math_model_param_incrmt.shunt_param_to_change, map_admittance_param_shunt_);
-        return affected_entries;
+        register_admittance_entries();
+        update_admittance_entries(IdxRange{nnz()});
     }
 
     /**
@@ -403,39 +358,129 @@ template <symmetry_tag sym> class YBus {
      * @param math_model_param Shared pointer to the constant math_model parameters.
      * @param math_model_param_incrmt Shared pointer to the constant mathematical model parameters .
      */
-    void update_admittance_increment(MathModelParam<sym> math_model_param,
-                                     MathModelParamIncrement const& math_model_param_incrmt) {
+    void update_admittance_increment(MathModelParamIncrement<sym> const& math_model_param_incrmt) {
         assert(y_bus_struct_ != nullptr);
 
-        // swap the old cached parameters
-        math_model_param_ = std::move(math_model_param);
+        assert(std::ssize(math_model_param_incrmt.branch_param) ==
+               std::ssize(math_model_param_incrmt.branch_param_to_change));
+        assert(std::ssize(math_model_param_incrmt.shunt_param) ==
+               std::ssize(math_model_param_incrmt.shunt_param_to_change));
+        assert(std::ssize(math_model_param_incrmt.source_param) ==
+               std::ssize(math_model_param_incrmt.source_param_to_change));
+
+        assert(std::ranges::all_of(math_model_param_incrmt.branch_param_to_change, [&](Idx idx) {
+            return 0 <= idx && idx < std::ssize(math_model_param_.branch_param);
+        }));
+        assert(std::ranges::all_of(math_model_param_incrmt.shunt_param_to_change, [&](Idx idx) {
+            return 0 <= idx && idx < std::ssize(math_model_param_.shunt_param);
+        }));
+        assert(std::ranges::all_of(math_model_param_incrmt.source_param_to_change, [&](Idx idx) {
+            return 0 <= idx && idx < std::ssize(math_model_param_.source_param);
+        }));
+
+        assert(
+            std::ranges::equal(math_model_param_incrmt.source_param,
+                               math_model_param_incrmt.source_param_to_change |
+                                   std::views::transform([&](auto idx) { return math_model_param_.source_param[idx]; }),
+                               [](auto const& lhs, auto const& rhs) { return lhs.y1 == rhs.y1 && lhs.y0 == rhs.y0; }) &&
+            "updateable source params currently do not affect y1 and y0, so the new values should be the same as old "
+            "values");
+
+        for (auto const& [idx_to_change, params] :
+             std::views::zip(math_model_param_incrmt.branch_param_to_change, math_model_param_incrmt.branch_param)) {
+            math_model_param_.branch_param[idx_to_change] = params;
+        }
+        for (auto const& [idx_to_change, params] :
+             std::views::zip(math_model_param_incrmt.shunt_param_to_change, math_model_param_incrmt.shunt_param)) {
+            math_model_param_.shunt_param[idx_to_change] = params;
+        }
+
+        // process and update affected entries
+        update_admittance_entries(get_affected_admittance_entries(math_model_param_incrmt));
+    }
+
+    template <std::ranges::viewable_range Entries>
+        requires std::same_as<std::ranges::range_value_t<Entries>, Idx>
+    void update_admittance_entries(Entries&& y_bus_entries) {
+        assert(std::ssize(admittance_) == nnz());
 
         auto const& y_bus_element = y_bus_struct_->y_bus_element;
         auto const& y_bus_entry_indptr = y_bus_struct_->y_bus_entry_indptr;
         auto const& math_param_shunt = math_model_param_.shunt_param;
         auto const& math_param_branch = math_model_param_.branch_param;
 
-        // process and update affected entries
-        for (auto const affected_entries = increments_to_entries(math_model_param_incrmt);
-             auto const entry : affected_entries) {
+        if (!std::ranges::empty(y_bus_entries)) {
+            parameters_changed(true);
+        }
+
+        for (auto const entry : std::forward<Entries>(y_bus_entries)) {
             // start admittance accumulation with zero
             ComplexTensor<sym> entry_admittance{0.0};
             // loop over all entries of this position
-            for (Idx element = y_bus_entry_indptr[entry]; element != y_bus_entry_indptr[entry + 1]; ++element) {
-                if (y_bus_element[element].element_type == YBusElementType::shunt) {
+            for (Idx const element : IdxRange{y_bus_entry_indptr[entry], y_bus_entry_indptr[entry + 1]}) {
+                auto const& contribution = y_bus_element[element];
+
+                if (contribution.element_type == YBusElementType::shunt) {
                     // shunt
-                    entry_admittance += math_param_shunt[y_bus_element[element].idx];
+                    entry_admittance += math_param_shunt[contribution.idx];
                 } else {
                     // branch
-                    entry_admittance += math_param_branch[y_bus_element[element].idx]
-                                            .value[static_cast<Idx>(y_bus_element[element].element_type)];
+                    entry_admittance +=
+                        math_param_branch[contribution.idx].value[std::to_underlying(contribution.element_type)];
                 }
             }
             // assign
-            admittance_[entry] = entry_admittance;
+            admittance_[entry] = std::move(entry_admittance);
         }
+    }
 
-        parameters_changed(true);
+    void register_admittance_entries() {
+        y_bus_entries_per_branch_ = std::vector<IdxVector>(std::size(math_model_param_.branch_param));
+        y_bus_entries_per_shunt_ = std::vector<IdxVector>(std::size(math_model_param_.shunt_param));
+
+        auto const& y_bus_element = y_bus_struct_->y_bus_element;
+        auto const& y_bus_entry_indptr = y_bus_struct_->y_bus_entry_indptr;
+        // loop for each y bus position
+        for (Idx const entry : IdxRange{nnz()}) {
+            for (Idx const element : IdxRange{y_bus_entry_indptr[entry], y_bus_entry_indptr[entry + 1]}) {
+                auto const& contribution = y_bus_element[element];
+
+                if (contribution.element_type == YBusElementType::shunt) {
+                    // shunt
+                    y_bus_entries_per_shunt_[contribution.idx].push_back(entry);
+                } else {
+                    // branch
+                    y_bus_entries_per_branch_[contribution.idx].push_back(entry);
+                }
+            }
+        }
+    }
+
+    IdxVector get_affected_admittance_entries(MathModelParamIncrement<sym> const& math_model_param_incrmt) const {
+        auto affected_by_branch =
+            math_model_param_incrmt.branch_param_to_change |
+            std::views::transform([this](Idx idx) -> IdxVector const& { return y_bus_entries_per_branch_[idx]; }) |
+            std::views::join;
+        auto affected_by_shunt =
+            math_model_param_incrmt.shunt_param_to_change |
+            std::views::transform([this](Idx idx) -> IdxVector const& { return y_bus_entries_per_shunt_[idx]; }) |
+            std::views::join;
+
+        // TODO(mgovers): once C++26 is available, we can use std::views::concat
+        IdxVector affected_entries;
+        affected_entries.reserve(4 * std::ssize(math_model_param_incrmt.branch_param_to_change) +
+                                 std::ssize(math_model_param_incrmt.shunt_param_to_change));
+#if __cpp_lib_containers_ranges >= 202202L
+        affected_entries.append_range(std::move(affected_by_branch));
+        affected_entries.append_range(std::move(affected_by_shunt));
+#else
+        std::ranges::copy(std::move(affected_by_branch), std::back_inserter(affected_entries));
+        std::ranges::copy(std::move(affected_by_shunt), std::back_inserter(affected_entries));
+#endif
+        std::ranges::sort(affected_entries);
+        const auto [first, last] = std::ranges::unique(affected_entries);
+        affected_entries.erase(first, last);
+        return affected_entries;
     }
 
     ComplexValue<sym> calculate_injection(ComplexValueVector<sym> const& u, Idx bus_number) const {
@@ -538,9 +583,8 @@ template <symmetry_tag sym> class YBus {
     // cache the math parameters
     MathModelParam<sym> math_model_param_;
 
-    // map index between admittance entries and parameter entries
-    std::vector<IdxVector> map_admittance_param_branch_;
-    std::vector<IdxVector> map_admittance_param_shunt_;
+    std::vector<IdxVector> y_bus_entries_per_branch_;
+    std::vector<IdxVector> y_bus_entries_per_shunt_;
 
     std::unordered_map<uint64_t, ParamChangedCallback> parameters_changed_callbacks_;
 

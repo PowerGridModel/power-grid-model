@@ -97,6 +97,9 @@ using IntSVector = std::vector<IntS>;
 template <class T, class... Ts>
 concept is_in_list_c = (std::same_as<std::remove_const_t<T>, Ts> || ...);
 
+template <class T, class... Ts>
+concept derives_from_any_in_list_c = (std::derived_from<T, Ts> || ...);
+
 namespace capturing {
 // perfect forward into void
 template <class... T>
