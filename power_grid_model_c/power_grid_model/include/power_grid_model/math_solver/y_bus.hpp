@@ -384,8 +384,8 @@ template <symmetry_tag sym> class YBus {
                                math_model_param_incrmt.source_param_to_change |
                                    std::views::transform([&](auto idx) { return math_model_param_.source_param[idx]; }),
                                [](auto const& lhs, auto const& rhs) { return lhs.y1 == rhs.y1 && lhs.y0 == rhs.y0; }) &&
-            "updateable source params should not affect ybus entries, so the values should be the same as branch "
-            "params");
+            "updateable source params currently do not affect y1 and y0, so the new values should be the same as old "
+            "values");
 
         for (auto const& [idx_to_change, params] :
              std::views::zip(math_model_param_incrmt.branch_param_to_change, math_model_param_incrmt.branch_param)) {
