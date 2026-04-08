@@ -23,7 +23,6 @@
 #include <numeric>
 #include <ranges>
 #include <unordered_map>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -468,17 +467,18 @@ template <symmetry_tag sym> class YBus {
             std::views::join;
 
         // TODO(mgovers): once C++26 is available, we can use std::views::concat
-        std::unordered_set<Idx> affected_entries;
+        IdxVector affected_entries;
+        affected_entries.reserve(std::ssize(math_model_param_incrmt.branch_param_to_change) +
+                                 std::ssize(math_model_param_incrmt.shunt_param_to_change));
 #if __cpp_lib_containers_ranges >= 202202L
-        affected_entries.insert_range(std::move(affected_by_branch));
-        affected_entries.insert_range(std::move(affected_by_shunt));
+        affected_entries.append_range(std::move(affected_by_branch));
+        affected_entries.append_range(std::move(affected_by_shunt));
 #else
-        std::ranges::for_each(std::move(affected_by_branch),
-                              [&affected_entries](Idx idx) { affected_entries.insert(idx); });
-        std::ranges::for_each(std::move(affected_by_shunt),
-                              [&affected_entries](Idx idx) { affected_entries.insert(idx); });
+        std::ranges::copy(std::move(affected_by_branch), std::back_inserter(affected_entries));
+        std::ranges::copy(std::move(affected_by_shunt), std::back_inserter(affected_entries));
 #endif
-        return std::move(affected_entries) | std::ranges::to<IdxVector>();
+        std::ranges::sort(affected_entries);
+        return affected_entries;
     }
 
     ComplexValue<sym> calculate_injection(ComplexValueVector<sym> const& u, Idx bus_number) const {
