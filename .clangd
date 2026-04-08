@@ -9,4 +9,6 @@ Diagnostics:
   UnusedIncludes: Strict
   MissingIncludes: Strict
   Includes:
-    IgnoreHeader: Eigen/Dense
+    IgnoreHeader:
+      - Eigen/.*
+      - msgpack/.*
