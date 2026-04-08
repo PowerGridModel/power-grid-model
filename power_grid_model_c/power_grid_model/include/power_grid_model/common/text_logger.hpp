@@ -44,10 +44,12 @@ class TextLogger : public Logger {
             // only flush if there is a handler and there are contents to flush
             if (flush_handler_ && data_.rdbuf()->in_avail() > 0) { // only flush if there are contents and a handler
                 flush();
+                return;
             }
         } catch (...) { // NOSONAR(S2738)
-            clear();    // leave logger in valid state and throw away report
+            // fallthrough to clear. log is ignored
         }
+        clear();
     };
 
     void log(LogEvent tag) override { log_impl(tag, ""); }
