@@ -6,7 +6,7 @@
 
 #include "common.hpp"
 #include "logging.hpp"
-// #include "multi_threaded_logging.hpp"
+#include "multi_threaded_logging.hpp"
 
 #include <chrono>
 #include <concepts>
@@ -87,27 +87,25 @@ class TextLogger : public Logger {
         clear(); // if no handler, discard log
     }
 
-    TextLogger& merge_into(TextLogger& destination) {
+    TextLogger& merge_into(TextLogger& destination) const {
         if (&destination == this) {
             return destination; // nothing to do
         }
         destination.data_ << data_.str();
-        clear();
-
         return destination;
     }
 };
 
-// class MultiThreadedTextLogger : public MultiThreadedLoggerImpl<TextLogger> {
-//   public:
-//     using MultiThreadedLoggerImpl<TextLogger>::MultiThreadedLoggerImpl;
-//     using Report = TextLogger::Report;
+class MultiThreadedTextLogger : public MultiThreadedLoggerImpl<TextLogger> {
+  public:
+    using MultiThreadedLoggerImpl<TextLogger>::MultiThreadedLoggerImpl;
 
-//     Report report() const { return get().report(); }
-//     void clear() { get().clear(); }
-// };
+    std::string report() const { return get().report(); }
+    void clear() { get().clear(); }
+    void flush() { get().flush(); }
+};
 } // namespace common::logging
 
-// using common::logging::TextLogger;
-// using common::logging::MultiThreadedTextLogger;
+using common::logging::MultiThreadedTextLogger;
+using common::logging::TextLogger;
 } // namespace power_grid_model

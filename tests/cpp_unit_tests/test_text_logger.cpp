@@ -5,15 +5,23 @@
 #include <power_grid_model/common/text_logger.hpp>
 
 #include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/counting_iterator.hpp>
 #include <power_grid_model/common/logging.hpp>
+#include <power_grid_model/common/multi_threaded_logging.hpp>
 
 #include <doctest/doctest.h>
 
+#include <concepts>
+#include <functional>
 #include <string>
 #include <string_view>
+#include <thread>
 
 namespace power_grid_model::common::logging {
 namespace {
+constexpr Idx one_thread = Idx{1};
+constexpr Idx arbitrary_n_threads = Idx{7};
+
 void logger_helper(TextLogger& logger) {
     using enum LogEvent;
     logger.log(total);
@@ -38,6 +46,26 @@ void report_checker_helper(std::string_view report) {
     CHECK(report.find(string_matcher(unknown, "5")) != std::string_view::npos);
     CHECK(report.find(string_matcher(copy_model, "6")) != std::string_view::npos);
     CHECK(report.find(string_matcher(unknown, "7.0")) != std::string_view::npos);
+}
+
+void child_logger_helper(Idx current_thread_idx, TextLogger& logger) { logger.log(std::to_string(current_thread_idx)); }
+
+void multi_threaded_report_checker_helper(Idx n_threads, std::string_view report) {
+    for (Idx idx = 0; idx < n_threads; ++idx) {
+        CHECK(report.find(std::format("ns] Tag:{}: {}\n", std::to_underlying(LogEvent::unknown), idx)) !=
+              std::string_view::npos);
+    }
+}
+
+template <typename JobFn>
+    requires std::invocable<JobFn, Idx, MultiThreadedTextLogger&>
+void run_parallel_jobs(Idx n_threads, MultiThreadedTextLogger& logger, JobFn&& job) {
+    std::vector<std::jthread> threads;
+    threads.reserve(n_threads);
+    for (Idx idx : IdxRange{n_threads}) {
+        threads.emplace_back(job, idx, std::ref(logger));
+    }
+    capturing::into_the_void(std::forward<JobFn>(job));
 }
 } // namespace
 
@@ -107,9 +135,9 @@ TEST_CASE("Test TextLogger") {
             // new logger should have the same report as original logger
             report_checker_helper(other_report);
 
-            // original logger should be cleared
+            // original logger should be kept the same
             report = txt_logger.report();
-            CHECK(report.empty());
+            report_checker_helper(report);
         }
 
         SUBCASE("Merge into non-empty-different TextLogger") {
@@ -129,7 +157,8 @@ TEST_CASE("Test TextLogger") {
 
             txt_logger.merge_into(other_txt_logger);
             report = txt_logger.report();
-            CHECK(report.empty()); // original logger should be cleared after merging into
+            // original logger should be kept the same
+            report_checker_helper(report);
             other_report = other_txt_logger.report();
             CHECK(other_report.find(std::format("ns] Tag:{}: {}\n", std::to_underlying(unknown), "other")) !=
                   std::string_view::npos);
@@ -222,6 +251,123 @@ TEST_CASE("Test TextLogger") {
             }
             CHECK(flushed_report.empty());
         }
+    }
+}
+TEST_CASE("Test MultiThreadedTextLogger") {
+    auto single_thread_job = [](Idx n_threads, MultiThreadedTextLogger& multi_threaded_logger) {
+        // MultiThreadedTextLogger.create_child() is tested here
+        auto thread_logger_ptr = multi_threaded_logger.create_child();
+        auto& thread_logger = dynamic_cast<TextLogger&>(*thread_logger_ptr);
+
+        child_logger_helper(n_threads, thread_logger);
+    }; // when the jthread ends, the ThreadLogger is destroyed and sync is called (tested)
+
+    SUBCASE("General multi-threaded logging functionalities") {
+        MultiThreadedTextLogger multi_threaded_logger{};
+
+        SUBCASE("Log and report through child - single threaded") {
+            run_parallel_jobs(one_thread, multi_threaded_logger, single_thread_job);
+            multi_threaded_report_checker_helper(one_thread, multi_threaded_logger.report());
+        }
+
+        SUBCASE("Log and report through child - multi threaded") {
+            run_parallel_jobs(arbitrary_n_threads, multi_threaded_logger, single_thread_job);
+            multi_threaded_report_checker_helper(arbitrary_n_threads, multi_threaded_logger.report());
+        }
+
+        SUBCASE("Direct logging") {
+            using enum LogEvent;
+            multi_threaded_logger.log(total, "");
+            multi_threaded_logger.log(build_model, 1.0);
+            multi_threaded_logger.log(total_single_calculation_in_thread, Idx{2});
+            multi_threaded_logger.log(total_batch_calculation_in_thread, "4");
+
+            // TODO(figueroa1395): is this behaviour intended? Or we want to allow direct logging with these overloads?
+            auto& underlying_logger = multi_threaded_logger.get();
+            underlying_logger.log("5");
+            underlying_logger.log(copy_model, []() { return "6"; });
+            underlying_logger.log([]() { return "7.0"; });
+
+            auto report = multi_threaded_logger.report();
+            report_checker_helper(report);
+        }
+
+        SUBCASE("Clear report") {
+            auto report = multi_threaded_logger.report();
+            CHECK(report.empty());
+
+            run_parallel_jobs(arbitrary_n_threads, multi_threaded_logger, single_thread_job);
+            multi_threaded_logger.clear();
+            report = multi_threaded_logger.report();
+            CHECK(report.empty());
+        }
+    }
+
+    SUBCASE("Getters of underlying TextLogger") {
+        using enum LogEvent;
+        MultiThreadedTextLogger multi_threaded_logger{};
+        auto const n_threads = static_cast<Idx>(std::thread::hardware_concurrency());
+        run_parallel_jobs(n_threads, multi_threaded_logger, single_thread_job);
+
+        SUBCASE("Log and report - Non-const getter") {
+            auto& underlying_logger = multi_threaded_logger.get();
+            underlying_logger.log([]() { return "extra log 1"; });
+            underlying_logger.log(unknown, "extra log 2");
+
+            auto report = underlying_logger.report();
+            multi_threaded_report_checker_helper(n_threads, report);
+            CHECK(report.find(std::format("ns] Tag:{}: {}\n", std::to_underlying(unknown), "extra log 1")) !=
+                  std::string_view::npos);
+            CHECK(report.find(std::format("ns] Tag:{}: {}\n", std::to_underlying(unknown), "extra log 2")) !=
+                  std::string_view::npos);
+        }
+
+        SUBCASE("Report - Const getter") {
+            auto const& underlying_logger = multi_threaded_logger.get();
+            auto report = underlying_logger.report();
+            multi_threaded_report_checker_helper(n_threads, report);
+        }
+
+        SUBCASE("Merge into another TextLogger") {
+            auto const& underlying_logger_const = multi_threaded_logger.get();
+            auto report = underlying_logger_const.report();
+            multi_threaded_report_checker_helper(n_threads, report);
+
+            TextLogger other_logger{};
+            auto other_report = other_logger.report();
+            CHECK(other_report.empty());
+
+            underlying_logger_const.merge_into(other_logger);
+            other_report = other_logger.report();
+            multi_threaded_report_checker_helper(n_threads, other_report);
+
+            // original logger should be kept the same
+            report = underlying_logger_const.report();
+            multi_threaded_report_checker_helper(n_threads, report);
+        }
+    }
+
+    SUBCASE("Flush related tests") {
+        SUBCASE("Flush report - No handler") {
+            MultiThreadedTextLogger multi_threaded_logger{};
+            auto report = multi_threaded_logger.report();
+            CHECK(report.empty());
+
+            // flushing empty reports without a handler is okay
+            multi_threaded_logger.flush();
+            CHECK(report.empty());
+
+            run_parallel_jobs(arbitrary_n_threads, multi_threaded_logger, single_thread_job);
+            report = multi_threaded_logger.report();
+            multi_threaded_report_checker_helper(arbitrary_n_threads, report);
+
+            // flushinig non-empty report without a handler should clear the report
+            multi_threaded_logger.flush();
+            report = multi_threaded_logger.report();
+            CHECK(report.empty()); // report should be cleared after flush
+        }
+
+        // TODO(figueroa1395): add tests with flush handler. this is probably currently broken (not thread safe, etc.)
     }
 }
 } // namespace power_grid_model::common::logging
