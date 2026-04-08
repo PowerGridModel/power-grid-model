@@ -259,7 +259,7 @@ inline SolutionSet set_solution_system(EliminationResult& result) {
     auto const free_indices_size = narrow_cast<Idx>(result.free_edge_indices.size());
     Idx const total_indices_size = pivot_indices_size + free_indices_size;
     dfs_matrix.prepare(total_indices_size, free_indices_size);
-    extended_rhs.resize(total_indices_size); // extended_rhs =  0
+    extended_rhs.resize(total_indices_size);
     constexpr auto const free_matrix_element = IntS{-1};
     Idx free_edge_idx;
 
@@ -281,6 +281,7 @@ inline SolutionSet set_solution_system(EliminationResult& result) {
     for (auto dfs_matrix_col : std::views::iota(Idx{}, free_indices_size)) {
         free_edge_idx = result.free_edge_indices[dfs_matrix_col];
         dfs_matrix.set_value(free_matrix_element, free_edge_idx, dfs_matrix_col);
+        extended_rhs[result.free_edge_indices[dfs_matrix_col]] = DoubleComplex{};
     }
     return solution_set;
 };
