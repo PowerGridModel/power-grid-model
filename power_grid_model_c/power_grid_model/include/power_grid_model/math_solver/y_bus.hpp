@@ -478,6 +478,8 @@ template <symmetry_tag sym> class YBus {
         std::ranges::copy(std::move(affected_by_shunt), std::back_inserter(affected_entries));
 #endif
         std::ranges::sort(affected_entries);
+        const auto [first, last] = std::ranges::unique(affected_entries);
+        affected_entries.erase(first, last);
         return affected_entries;
     }
 
