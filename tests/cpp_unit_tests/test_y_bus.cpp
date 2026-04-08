@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include "power_grid_model/common/counting_iterator.hpp"
 #include <power_grid_model/math_solver/y_bus.hpp>
 
 #include <power_grid_model/calculation_parameters.hpp>
@@ -16,7 +17,6 @@
 #include <complex>
 #include <cstddef>
 #include <iterator>
-#include <memory>
 #include <ranges>
 #include <utility>
 #include <vector>
@@ -66,9 +66,6 @@ TEST_CASE("Test y bus") {
                               {13.0, 14.0, 15.0, 16.0}, {17.0, 18.0, 19.0, 20.0}, {1000i, 0.0, 0.0, 0.0}};
     topo.shunts_per_bus = {from_sparse, {0, 1, 1, 1, 2}}; // 4 buses, 2 shunts -> shunt connected to bus 0 and bus 3
     param_sym.shunt_param = {100.0i, 200.0i};
-
-    // get shared ptr
-    auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
 
     // output
     IdxVector const row_indptr = {0, 2, 5, 8, 10};
@@ -129,7 +126,7 @@ TEST_CASE("Test y bus") {
     }
 
     SUBCASE("Test y bus construction (symmetrical)") {
-        YBus<symmetric_t> const ybus{topo_ptr, std::make_shared<MathModelParam<symmetric_t> const>(param_sym)};
+        YBus<symmetric_t> const ybus{topo, param_sym};
         CHECK(ybus.size() == 4);
         CHECK(ybus.nnz() == nnz);
         CHECK(row_indptr == ybus.row_indptr());
@@ -147,7 +144,22 @@ TEST_CASE("Test y bus") {
 
         SUBCASE("Test y bus structure getter") {
             YBusStructure ybus_struct_ref{topo};
-            auto const& ybus_struct = ybus.get_y_bus_structure();
+            auto const& ybus_struct = ybus.y_bus_structure();
+            CHECK(ybus_struct.bus_entry == ybus_struct_ref.bus_entry);
+            CHECK(ybus_struct.col_indices == ybus_struct_ref.col_indices);
+            CHECK(ybus_struct.col_indices_lu == ybus_struct_ref.col_indices_lu);
+            CHECK(ybus_struct.diag_lu == ybus_struct_ref.diag_lu);
+            CHECK(ybus_struct.lu_transpose_entry == ybus_struct_ref.lu_transpose_entry);
+            CHECK(ybus_struct.map_lu_y_bus == ybus_struct_ref.map_lu_y_bus);
+            CHECK(ybus_struct.row_indptr == ybus_struct_ref.row_indptr);
+            CHECK(ybus_struct.row_indptr_lu == ybus_struct_ref.row_indptr_lu);
+            CHECK(ybus_struct.y_bus_element.size() == ybus_struct_ref.y_bus_element.size());
+            CHECK(ybus_struct.y_bus_entry_indptr == ybus_struct_ref.y_bus_entry_indptr);
+        }
+
+        SUBCASE("Test shared y bus structure getter") {
+            YBusStructure ybus_struct_ref{topo};
+            auto const& ybus_struct = ybus.shared_y_bus_structure();
             CHECK(ybus_struct->bus_entry == ybus_struct_ref.bus_entry);
             CHECK(ybus_struct->col_indices == ybus_struct_ref.col_indices);
             CHECK(ybus_struct->col_indices_lu == ybus_struct_ref.col_indices_lu);
@@ -162,10 +174,9 @@ TEST_CASE("Test y bus") {
     }
 
     SUBCASE("Test y bus construction (asymmetrical)") {
-        YBus<symmetric_t> const ybus_sym{topo_ptr, std::make_shared<MathModelParam<symmetric_t> const>(param_sym)};
+        YBus<symmetric_t> const ybus_sym{topo, param_sym};
         // construct from existing structure
-        YBus<asymmetric_t> const ybus{topo_ptr, std::make_shared<MathModelParam<asymmetric_t> const>(param_asym),
-                                      ybus_sym.shared_y_bus_struct()};
+        YBus<asymmetric_t> const ybus{topo, param_asym, ybus_sym.shared_y_bus_structure()};
         CHECK(ybus.size() == 4);
         CHECK(ybus.nnz() == nnz);
         CHECK(row_indptr == ybus.row_indptr());
@@ -180,7 +191,7 @@ TEST_CASE("Test y bus") {
     }
 
     SUBCASE("Test branch flow calculation") {
-        YBus<symmetric_t> const ybus{topo_ptr, std::make_shared<MathModelParam<symmetric_t> const>(param_sym)};
+        YBus<symmetric_t> const ybus{topo, param_sym};
         ComplexVector const u{1.0, 2.0, 3.0, 4.0};
         auto branch_flow = ybus.calculate_branch_flow<BranchSolverOutput<symmetric_t>>(u);
 
@@ -196,7 +207,7 @@ TEST_CASE("Test y bus") {
     }
 
     SUBCASE("Test shunt flow calculation") {
-        YBus<symmetric_t> const ybus{topo_ptr, std::make_shared<MathModelParam<symmetric_t> const>(param_sym)};
+        YBus<symmetric_t> const ybus{topo, param_sym};
         ComplexVector const u{1.0, 2.0, 3.0, 4.0};
         auto shunt_flow = ybus.template calculate_shunt_flow<ApplianceSolverOutput<symmetric_t>>(u);
 
@@ -210,8 +221,6 @@ TEST_CASE("Test y bus") {
 
 TEST_CASE("Test one bus system") {
     MathModelTopology topo{};
-    MathModelParam<symmetric_t> const param;
-
     topo.phase_shift = {0.0};
     topo.shunts_per_bus = {from_sparse, {0, 0}};
 
@@ -223,8 +232,7 @@ TEST_CASE("Test one bus system") {
     IdxVector const lu_transpose_entry = {0};
     IdxVector const y_bus_entry_indptr = {0, 0};
 
-    YBus<symmetric_t> const ybus{std::make_shared<MathModelTopology const>(topo),
-                                 std::make_shared<MathModelParam<symmetric_t> const>(param)};
+    YBus<symmetric_t> const ybus{topo, {}};
 
     CHECK(ybus.size() == 1);
     CHECK(ybus.nnz() == nnz);
@@ -325,9 +333,6 @@ TEST_CASE("Incremental update y-bus") {
     topo.shunts_per_bus = {from_sparse, {0, 1, 1, 1, 2}}; // 4 buses, 2 shunts -> shunt connected to bus 0 and bus 3
     param_sym.shunt_param = {100.0i, 200.0i};
 
-    // get shared ptr
-    auto topo_ptr = std::make_shared<MathModelTopology const>(topo);
-
     const ComplexTensorVector<symmetric_t> admittance_sym = {
         17.0 + 104.0i,  // 0, 0 -> {1, 0}tt + {0, 1}ff + shunt(0) = 4.0i + 17.0 + 100.0i
         18.0 + 3.0i,    // 0, 1 -> {0, 1}ft + {1, 0}tf = 18.0 + 3.0i
@@ -397,15 +402,15 @@ TEST_CASE("Incremental update y-bus") {
         }
     };
     SUBCASE("Test whole scale update") {
-        YBus<symmetric_t> ybus{topo_ptr, std::make_shared<MathModelParam<symmetric_t> const>(param_sym)};
+        YBus<symmetric_t> ybus{topo, param_sym};
         verify_admittance(ybus.admittance(), admittance_sym);
 
-        ybus.update_admittance(std::make_shared<MathModelParam<symmetric_t> const>(param_sym));
+        ybus.update_admittance(param_sym);
         verify_admittance(ybus.admittance(), admittance_sym);
     }
 
     SUBCASE("Test progressive update") {
-        YBus<symmetric_t> ybus{topo_ptr, std::make_shared<MathModelParam<symmetric_t> const>(param_sym)};
+        YBus<symmetric_t> ybus{topo, param_sym};
         verify_admittance(ybus.admittance(), admittance_sym);
 
         auto branch_param_to_change_views =
@@ -428,9 +433,7 @@ TEST_CASE("Incremental update y-bus") {
         std::ranges::copy(shunt_param_to_change_views,
                           std::back_inserter(math_model_param_incrmt.shunt_param_to_change));
 
-        auto param_update_ptr = std::make_shared<MathModelParam<symmetric_t> const>(param_sym_update);
-
-        ybus.update_admittance_increment(param_update_ptr, math_model_param_incrmt);
+        ybus.update_admittance_increment(param_sym_update, math_model_param_incrmt);
         verify_admittance(ybus.admittance(), admittance_sym_2);
     }
 }

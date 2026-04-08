@@ -6,8 +6,16 @@
 
 #pragma once
 
+#include "power_grid_model/calculation_parameters.hpp"
+#include "power_grid_model/common/common.hpp"
+#include "power_grid_model/common/exception.hpp"
+#include "power_grid_model/common/logging.hpp"
+#include "power_grid_model/common/three_phase_tensor.hpp"
 #include "test_math_solver_common.hpp"
 
+#include <complex>
+#include <cstddef>
+#include <limits>
 #include <power_grid_model/math_solver/sparse_lu_solver.hpp>
 #include <power_grid_model/math_solver/y_bus.hpp>
 
@@ -80,12 +88,8 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - PF", SolverType, test_math_solver_
     PFSolverTestGrid<sym> const grid;
 
     // topo and param ptr
-    auto param_ptr = std::make_shared<MathModelParam<sym> const>(grid.param());
-    auto topo_ptr = std::make_shared<MathModelTopology const>(grid.topo());
-    YBus<sym> y_bus{topo_ptr, param_ptr};
-
-    // because YBus still requires a shared_ptr while solvers were changed to not require it anymore
-    auto const& topo = *topo_ptr;
+    auto const topo = grid.topo();
+    YBus<sym> y_bus{topo, grid.param()};
 
     SUBCASE("Test pf solver") {
         constexpr auto error_tolerance{1e-12};
@@ -139,7 +143,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - PF", SolverType, test_math_solver_
         singular_param.branch_param[0] = BranchCalcParam<sym>{};
         singular_param.branch_param[1] = BranchCalcParam<sym>{};
         singular_param.shunt_param[0] = ComplexTensor<sym>{};
-        y_bus.update_admittance(std::make_shared<MathModelParam<sym> const>(singular_param));
+        y_bus.update_admittance(std::move(singular_param));
         SolverType solver{y_bus, topo};
         NoLogger log;
 
