@@ -50,10 +50,10 @@ class Source : public Appliance {
 
     template <symmetry_tag sym> SourceCalcParam math_param() const {
         // internal element_admittance
-        SourceCalcParam math_param;
-        math_param.y0 = y0_ref_;
-        math_param.y1 = y1_ref_;
-        return math_param;
+        SourceCalcParam param;
+        param.y0 = y0_ref_;
+        param.y1 = y1_ref_;
+        return param;
     }
 
     // setter

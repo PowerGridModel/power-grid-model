@@ -238,10 +238,27 @@ template <symmetry_tag sym_type> struct MathModelParam {
     std::vector<SourceCalcParam> source_param;
 };
 
-struct MathModelParamIncrement {
-    std::vector<Idx> branch_param_to_change; // indices of changed branch_param
-    std::vector<Idx> shunt_param_to_change;  // indices of changed shunt_param
+template <symmetry_tag sym_type> struct MathModelParamIncrement {
+    using sym = sym_type;
+
+    std::vector<BranchCalcParam<sym>> branch_param;
+    ComplexTensorVector<sym> shunt_param;
+    std::vector<SourceCalcParam> source_param;
+
+    IdxVector branch_param_to_change; // indices of changed branch_param
+    IdxVector shunt_param_to_change;  // indices of changed shunt_param
+    IdxVector source_param_to_change; // indices of changed source_param
 };
+
+template <typename T>
+concept math_model_param_c =
+    std::derived_from<T, MathModelParam<symmetric_t>> || std::derived_from<T, MathModelParamIncrement<symmetric_t>> ||
+    std::derived_from<T, MathModelParam<asymmetric_t>> || std::derived_from<T, MathModelParamIncrement<asymmetric_t>>;
+
+static_assert(math_model_param_c<MathModelParam<symmetric_t>>);
+static_assert(math_model_param_c<MathModelParam<asymmetric_t>>);
+static_assert(math_model_param_c<MathModelParamIncrement<symmetric_t>>);
+static_assert(math_model_param_c<MathModelParamIncrement<asymmetric_t>>);
 
 template <symmetry_tag sym_type> struct PowerFlowInput {
     using sym = sym_type;

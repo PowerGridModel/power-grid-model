@@ -10,7 +10,6 @@
 #include <doctest/doctest.h>
 
 #include <array>
-#include <cmath>
 #include <concepts>
 #include <vector>
 
