@@ -586,7 +586,8 @@ TEST_CASE("Test job dispatch logic") {
                     CHECK(stop_source.stop_requested());
                     CHECK(adapter.get_setup_counter() == expected_counter(CalculationPhase::setup));
                     CHECK(adapter.get_calculate_counter() == expected_counter(CalculationPhase::calculate));
-                    CHECK(adapter.get_winddown_counter() == expected_counter(CalculationPhase::winddown));
+                    CHECK(adapter.get_winddown_counter() >=
+                          adapter.get_setup_counter()); // winddown should be called at least once for all setup calls
                     CHECK(adapter.get_cache_calculate_counter() == 1);
                 }
             }

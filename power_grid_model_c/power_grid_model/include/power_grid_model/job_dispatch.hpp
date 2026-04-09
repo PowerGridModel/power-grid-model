@@ -215,9 +215,9 @@ class JobDispatch {
             } catch (...) { // NOSONAR(S2738)
                 handle_exception_(args...);
                 try {
-                    stop_if_requested(stop_token_);
-                    winddown_();
-                } catch (...) { // NOSONAR(S2738)
+                    winddown_(); // if possible, the main model should recover to a good state after handling any type
+                                 // of exception, also after a stop request
+                } catch (...) {  // NOSONAR(S2738)
                     recover_from_bad_();
                 }
             }
@@ -231,7 +231,7 @@ class JobDispatch {
         std::ostringstream combined_error_message;
         IdxVector failed_scenarios;
         std::vector<std::string> err_msgs;
-        for (auto const& [batch, exception] : std::views::zip(IdxRange(std::ssize(exceptions)), exceptions)) {
+        for (auto const& [batch, exception] : enumerate(exceptions)) {
             // append exception if it is not empty
             if (!exception.empty()) {
                 combined_error_message << std::format("Error in batch #{}: {}\n", batch, exception);
