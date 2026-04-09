@@ -123,7 +123,7 @@ class JobAdapterMock : public JobInterface {
     }
     void maybe_await(CalculationPhase calculation_phase) const {
         await_call_.and_then(
-            [scenario_idx = scenario_idx_, calculation_phase](AwaitCall const& func) -> std::optional<Idx> {
+            [scenario_idx = scenario_idx_, calculation_phase](auto const& func) -> std::optional<Idx> {
                 func(scenario_idx, calculation_phase);
                 return std::nullopt;
             });
@@ -155,7 +155,6 @@ constexpr auto all_scenarios_and_phases(Idx n_scenarios) {
         }
     }
 
-    return result;
     return result;
 }
 } // namespace
