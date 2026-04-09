@@ -74,14 +74,33 @@ struct CallCounter {
 };
 
 class JobAdapterMock : public JobInterface {
+    static constexpr auto valid_counter_msg = "A valid CallCounter instance is required to create a JobAdapterMock";
+
   public:
     using AwaitCall = std::function<void(Idx /*scenario_idx*/, CalculationPhase /*calculation_phase*/)>;
 
-    JobAdapterMock(std::shared_ptr<CallCounter> counter) : JobAdapterMock{std::move(counter), std::nullopt} {}
-    JobAdapterMock(std::shared_ptr<CallCounter> counter, std::optional<AwaitCall> await_call)
-        : counter_{std::move(counter)}, await_call_{std::move(await_call)} {
-        REQUIRE_MESSAGE(counter_ != nullptr, "A valid CallCounter instance is required to create a JobAdapterMock");
+    JobAdapterMock(std::shared_ptr<CallCounter> counter) : counter_{std::move(counter)}, await_call_{std::nullopt} {
+        REQUIRE_MESSAGE(counter_ != nullptr, valid_counter_msg);
     }
+    JobAdapterMock(std::shared_ptr<CallCounter> counter, AwaitCall await_call)
+        : counter_{std::move(counter)}, await_call_{std::move(await_call)} {
+        REQUIRE_MESSAGE(counter_ != nullptr, valid_counter_msg);
+    }
+    JobAdapterMock(JobAdapterMock const& other) : counter_{other.counter_} {}
+    JobAdapterMock& operator=(JobAdapterMock const& other) {
+        if (this != &other) {
+            counter_ = other.counter_;
+        }
+        return *this;
+    };
+    JobAdapterMock(JobAdapterMock&& other) noexcept : counter_{std::exchange(other.counter_, nullptr)} {}
+    JobAdapterMock& operator=(JobAdapterMock&& other) noexcept {
+        if (this != &other) {
+            counter_ = std::exchange(other.counter_, nullptr);
+        }
+        return *this;
+    }
+    ~JobAdapterMock() { counter_.reset(); };
 
     void reset_counters() const { counter_->reset_counters(); }
     Idx get_calculate_counter() const { return counter_->calculate_calls; }
@@ -119,10 +138,11 @@ class JobAdapterMock : public JobInterface {
         ++(counter_->winddown_calls);
     }
     void maybe_await(CalculationPhase calculation_phase) const {
-        await_call_.transform([scenario_idx = scenario_idx_, calculation_phase](AwaitCall const& func) {
-            func(scenario_idx, calculation_phase);
-            return func;
-        });
+        await_call_.and_then(
+            [scenario_idx = scenario_idx_, calculation_phase](AwaitCall const& func) -> std::optional<Idx> {
+                func(scenario_idx, calculation_phase);
+                return std::nullopt;
+            });
     }
 };
 
@@ -262,7 +282,7 @@ TEST_CASE("Test job dispatch logic") {
         };
         std::vector<JobArguments> calls;
         std::mutex calls_mutex;
-        auto single_job = [&calls, &calls_mutex](std::stop_token /*stop_token*/, Idx start, Idx stride,
+        auto single_job = [&calls, &calls_mutex](std::stop_token const& /*stop_token*/, Idx start, Idx stride,
                                                  Idx n_scenarios) {
             std::lock_guard<std::mutex> const lock(calls_mutex);
             calls.emplace_back(start, stride, n_scenarios);
@@ -491,8 +511,6 @@ TEST_CASE("Test job dispatch logic") {
         constexpr auto cache_delay =
             delay_per_phase; // arbitrary delay to ensure the cancel signal is sent after the caching phase is done
 
-        std::atomic<bool> cancelling_thread_started{false};
-
         auto counter = std::make_shared<CallCounter>();
 
         auto result_data = MockResultDataset{};
@@ -544,40 +562,40 @@ TEST_CASE("Test job dispatch logic") {
                 CHECK(adapter.get_cache_calculate_counter() == 1); // cache calculation is done
             }
             SUBCASE("Cancel during operations") {
-                for (auto const [cancel_during_scenario, cancel_during_phase] : all_scenarios_and_phases(n_scenarios)) {
+                for (auto const& [cancel_during_scenario, cancel_during_phase] :
+                     all_scenarios_and_phases(n_scenarios)) {
                     CAPTURE(cancel_during_scenario);
                     CAPTURE(cancel_during_phase);
                     std::atomic<bool> cancelling_phase_started = false;
                     std::atomic<bool> stop_requested = false;
 
-                    auto const check_in_expected_range = [n_scenarios, n_threads, cancel_during_scenario,
-                                                          cancel_during_phase](Idx count, CalculationPhase phase) {
-                        auto const thread_idx = narrow_cast<Idx>(cancel_during_scenario) % n_threads;
-                        auto const this_thread_scenarios = n_scenarios / n_threads;
-                        auto const other_thread_scenarios = n_scenarios - this_thread_scenarios;
-                        auto const this_thread_completed_scenarios =
-                            std::max(Idx{0}, cancel_during_scenario) / n_threads;
-                        auto const this_thread_completed_phase =
-                            (is_strictly_after(phase, cancel_during_phase) ? 0 : 1);
-                        auto const lower_bound = this_thread_completed_scenarios + this_thread_completed_phase;
-                        auto const upper_bound = lower_bound + other_thread_scenarios;
-                        REQUIRE(lower_bound <= upper_bound);
-                        CHECK(count >= lower_bound);
-                        CHECK(count <= upper_bound);
-                    };
+                    auto const check_in_expected_range =
+                        [n_scenarios, n_threads, cancel_scenario = cancel_during_scenario,
+                         cancel_phase = cancel_during_phase](Idx count, CalculationPhase phase) {
+                            auto const thread_idx = narrow_cast<Idx>(cancel_scenario % n_threads);
+                            auto const this_thread_scenarios = n_scenarios / n_threads;
+                            auto const other_thread_scenarios = n_scenarios - this_thread_scenarios;
+                            auto const this_thread_completed_scenarios = std::max(Idx{0}, cancel_scenario) / n_threads;
+                            auto const this_thread_completed_phase = (is_strictly_after(phase, cancel_phase) ? 0 : 1);
+                            auto const lower_bound = this_thread_completed_scenarios + this_thread_completed_phase;
+                            auto const upper_bound = lower_bound + other_thread_scenarios;
+                            REQUIRE(lower_bound <= upper_bound);
+                            CHECK(count >= lower_bound);
+                            CHECK(count <= upper_bound);
+                        };
 
-                    auto adapter =
-                        JobAdapterMock{counter, [&cancelling_phase_started, &stop_requested, cancel_during_scenario,
-                                                 cancel_during_phase](Idx scenario_idx, CalculationPhase phase) {
-                                           if (scenario_idx == cancel_during_scenario && phase == cancel_during_phase) {
-                                               CHECK_FALSE(stop_requested);
-                                               CHECK_FALSE(cancelling_phase_started.exchange(true));
-                                               CHECK(cancelling_phase_started);
-                                               cancelling_phase_started.notify_all();
-                                               stop_requested.wait(false);
-                                               CHECK(stop_requested);
-                                           }
-                                       }};
+                    auto adapter = JobAdapterMock{
+                        counter, [&cancelling_phase_started, &stop_requested, cancel_scenario = cancel_during_scenario,
+                                  cancel_phase = cancel_during_phase](Idx scenario_idx, CalculationPhase phase) {
+                            if (scenario_idx == cancel_scenario && phase == cancel_phase) {
+                                CHECK_FALSE(stop_requested);
+                                CHECK_FALSE(cancelling_phase_started.exchange(true));
+                                CHECK(cancelling_phase_started);
+                                cancelling_phase_started.notify_all();
+                                stop_requested.wait(false);
+                                CHECK(stop_requested);
+                            }
+                        }};
                     adapter.reset_counters();
 
                     std::stop_source stop_source;

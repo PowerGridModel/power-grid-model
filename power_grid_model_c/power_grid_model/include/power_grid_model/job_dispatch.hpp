@@ -31,7 +31,7 @@
 
 namespace power_grid_model {
 namespace detail {
-void stop_if_requested(std::stop_token const& stop_token) {
+inline void stop_if_requested(std::stop_token const& stop_token) {
     if (stop_token.stop_requested()) {
         throw OperationCanceled{};
     }
@@ -165,7 +165,7 @@ class JobDispatch {
             // create parallel threads
             std::vector<std::jthread> threads;
             threads.reserve(n_thread);
-            for (Idx thread_number : IdxRange{n_thread}) {
+            for (Idx const thread_number : IdxRange{n_thread}) {
                 // compute each single thread job with stride
                 threads.emplace_back(single_thread_job, stop_token, thread_number, n_thread, n_scenarios);
             }
