@@ -142,7 +142,7 @@ class JobDispatch {
                 std::move(stop_token), std::move(run), std::move(setup), std::move(winddown),
                 JobDispatch::scenario_exception_handler(exceptions), std::move(recover_from_bad));
 
-            for (Idx scenario_idx : std::views::iota(start, n_scenarios) | std::views::stride(stride)) {
+            for (Idx scenario_idx = start; scenario_idx < n_scenarios; scenario_idx += stride) {
                 Timer const t_total_single{thread_log, LogEvent::total_single_calculation_in_thread};
                 calculate_scenario(scenario_idx);
             }
