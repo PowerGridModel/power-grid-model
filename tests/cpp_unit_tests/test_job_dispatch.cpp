@@ -2,7 +2,6 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-#include <functional>
 #include <power_grid_model/job_dispatch.hpp>
 #include <power_grid_model/job_interface.hpp>
 
@@ -12,6 +11,7 @@
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/common/logging.hpp>
 #include <power_grid_model/common/multi_threaded_logging.hpp>
+#include <power_grid_model/common/typing.hpp>
 #include <power_grid_model/main_core/core_utils.hpp>
 
 #include <doctest/doctest.h>
@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -152,6 +153,8 @@ constexpr auto all_scenarios_and_phases(Idx n_scenarios) {
                         cache_calculate); // cache_calculate is not scenario-specific, so we use -1 as a placeholder
     return result;
 }
+
+bool is_single_threaded(Idx n_scenarios, Idx threading) { return JobDispatch::n_threads(n_scenarios, threading) == 1; }
 } // namespace
 
 TEST_CASE("Test job dispatch logic") {
@@ -499,7 +502,12 @@ TEST_CASE("Test job dispatch logic") {
         constexpr Idx n_scenarios = 3; // arbitrary non-zero value
         auto const update_data = MockUpdateDataset{has_data, n_scenarios};
 
-        SUBCASE("Single thread") {
+        for (auto const threading : {main_core::utils::sequential, main_core::utils::parallel, Idx{2}}) {
+            CAPTURE(threading);
+
+            auto const n_threads = JobDispatch::n_threads(n_scenarios, threading);
+            CAPTURE(n_threads);
+
             SUBCASE("Cancel before/during prepare") {
                 auto adapter = JobAdapterMock{counter};
                 adapter.reset_counters();
@@ -509,7 +517,7 @@ TEST_CASE("Test job dispatch logic") {
                 stop_source.request_stop();
                 REQUIRE(stop_source.stop_requested());
                 CHECK_THROWS_AS(JobDispatch::batch_calculation(stop_source.get_token(), adapter, result_data,
-                                                               update_data, main_core::utils::sequential, no_logger()),
+                                                               update_data, threading, no_logger()),
                                 OperationCanceled);
                 REQUIRE(stop_source.stop_requested());
                 CHECK(stop_source.stop_requested());
@@ -529,7 +537,7 @@ TEST_CASE("Test job dispatch logic") {
                     }};
                 REQUIRE_FALSE(stop_source.stop_requested());
                 CHECK_NOTHROW(JobDispatch::batch_calculation(stop_source.get_token(), adapter, result_data, update_data,
-                                                             main_core::utils::sequential, no_logger()));
+                                                             threading, no_logger()));
                 cancel_thread.join();
                 CHECK(stop_source.stop_requested());
                 CHECK(adapter.get_calculate_counter() == 3);       // no calculations are done
@@ -541,6 +549,22 @@ TEST_CASE("Test job dispatch logic") {
                     CAPTURE(cancel_during_phase);
                     std::atomic<bool> cancelling_phase_started = false;
                     std::atomic<bool> stop_requested = false;
+
+                    auto const check_in_expected_range = [n_scenarios, n_threads, cancel_during_scenario,
+                                                          cancel_during_phase](Idx count, CalculationPhase phase) {
+                        auto const thread_idx = narrow_cast<Idx>(cancel_during_scenario) % n_threads;
+                        auto const this_thread_scenarios = n_scenarios / n_threads;
+                        auto const other_thread_scenarios = n_scenarios - this_thread_scenarios;
+                        auto const this_thread_completed_scenarios =
+                            std::max(Idx{0}, cancel_during_scenario) / n_threads;
+                        auto const this_thread_completed_phase =
+                            (is_strictly_after(phase, cancel_during_phase) ? 0 : 1);
+                        auto const lower_bound = this_thread_completed_scenarios + this_thread_completed_phase;
+                        auto const upper_bound = lower_bound + other_thread_scenarios;
+                        REQUIRE(lower_bound <= upper_bound);
+                        CHECK(count >= lower_bound);
+                        CHECK(count <= upper_bound);
+                    };
 
                     auto adapter =
                         JobAdapterMock{counter, [&cancelling_phase_started, &stop_requested, cancel_during_scenario,
@@ -572,23 +596,17 @@ TEST_CASE("Test job dispatch logic") {
 
                     REQUIRE_FALSE(stop_source.stop_requested());
                     CHECK_THROWS_AS(JobDispatch::batch_calculation(stop_source.get_token(), adapter, result_data,
-                                                                   update_data, main_core::utils::sequential,
-                                                                   no_logger()),
+                                                                   update_data, threading, no_logger()),
                                     OperationCanceled);
                     cancel_thread.join();
 
-                    auto const expected_counter = [cancel_during_scenario,
-                                                   cancel_during_phase](CalculationPhase phase) {
-                        return std::max(Idx{0}, cancel_during_scenario) +
-                               (is_strictly_after(phase, cancel_during_phase) ? 0 : 1);
-                    };
-
                     CHECK(stop_source.stop_requested());
-                    CHECK(adapter.get_setup_counter() == expected_counter(CalculationPhase::setup));
-                    CHECK(adapter.get_calculate_counter() == expected_counter(CalculationPhase::calculate));
                     CHECK(adapter.get_winddown_counter() >=
                           adapter.get_setup_counter()); // winddown should be called at least once for all setup calls
                     CHECK(adapter.get_cache_calculate_counter() == 1);
+
+                    check_in_expected_range(adapter.get_setup_counter(), CalculationPhase::setup);
+                    check_in_expected_range(adapter.get_calculate_counter(), CalculationPhase::calculate);
                 }
             }
         }
