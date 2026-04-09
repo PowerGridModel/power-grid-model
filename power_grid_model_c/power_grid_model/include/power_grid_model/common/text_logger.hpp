@@ -10,10 +10,12 @@
 
 #include <chrono>
 #include <concepts>
+#include <format>
 #include <sstream>
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 namespace power_grid_model {
@@ -26,18 +28,29 @@ class TextLogger : public Logger {
     using Clock = std::chrono::high_resolution_clock;
     using FlushHandler = std::function<void(std::string)>;
 
-    Clock::time_point start_time_;
+    Clock::time_point start_time_{Clock::now()};
     std::stringstream data_;
     FlushHandler flush_handler_;
 
   public:
-    TextLogger() : start_time_{Clock::now()} {};
-    TextLogger(FlushHandler flush_handler) : start_time_{Clock::now()}, flush_handler_{std::move(flush_handler)} {}
+    TextLogger() {};
+    TextLogger(FlushHandler flush_handler) : flush_handler_{std::move(flush_handler)} {}
 
     TextLogger(TextLogger const&) = delete;
-    TextLogger(TextLogger&& other) noexcept = default;
+    TextLogger(TextLogger&& other) noexcept
+        : start_time_(other.start_time_),
+          data_(std::exchange(other.data_, {})),
+          flush_handler_(std::exchange(other.flush_handler_, {})) {}
+
     TextLogger& operator=(TextLogger const&) = delete;
-    TextLogger& operator=(TextLogger&& other) noexcept = default;
+    TextLogger& operator=(TextLogger&& other) noexcept {
+        if (this != &other) {
+            start_time_ = other.start_time_;
+            data_ = std::exchange(other.data_, {});
+            flush_handler_ = std::exchange(other.flush_handler_, {});
+        }
+        return *this;
+    }
     ~TextLogger() override {
         // exception swallowing: we try to flush if possible. If not possible, clear data and ignore log
         try {
@@ -46,7 +59,7 @@ class TextLogger : public Logger {
                 flush();
                 return;
             }
-        } catch (...) { // NOSONAR(S2738)
+        } catch (...) { // NOSONAR(S2738) // NOLINT
             // fallthrough to clear. log is ignored
         }
         clear();

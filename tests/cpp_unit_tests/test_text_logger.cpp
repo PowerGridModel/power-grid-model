@@ -7,18 +7,25 @@
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/counting_iterator.hpp>
 #include <power_grid_model/common/logging.hpp>
-#include <power_grid_model/common/multi_threaded_logging.hpp>
 
 #include <doctest/doctest.h>
 
 #include <concepts>
+#include <format>
 #include <functional>
 #include <string>
 #include <string_view>
 #include <thread>
+#include <utility>
+#include <vector>
 
 namespace power_grid_model::common::logging {
 namespace {
+class RuntimeFlushException : public std::runtime_error {
+  public:
+    using std::runtime_error::runtime_error;
+};
+
 constexpr Idx one_thread = Idx{1};
 constexpr Idx arbitrary_n_threads = Idx{7};
 
@@ -34,7 +41,7 @@ void logger_helper(TextLogger& logger) {
 }
 
 void report_checker_helper(std::string_view report) {
-    auto string_matcher = [](LogEvent tag, std::string_view message) -> std::string {
+    auto string_matcher = [](LogEvent tag, std::string_view message) {
         return std::format("ns] Tag:{}: {}\n", std::to_underlying(tag), message);
     };
 
@@ -62,7 +69,7 @@ template <typename JobFn>
 void run_parallel_jobs(Idx n_threads, MultiThreadedTextLogger& logger, JobFn&& job) {
     std::vector<std::jthread> threads;
     threads.reserve(n_threads);
-    for (Idx idx : IdxRange{n_threads}) {
+    for (Idx const idx : IdxRange{n_threads}) {
         threads.emplace_back(job, idx, std::ref(logger));
     }
     capturing::into_the_void(std::forward<JobFn>(job));
@@ -175,7 +182,7 @@ TEST_CASE("Test TextLogger") {
 
         SUBCASE("Lazy vs eager logging") {
             // TODO(figueroa1395): I'm not sure if this is worth testing at the moment
-            // as the difference is not really apparent at the right now, but this is an enabler for extension
+            // as the difference is not really apparent right now, but this is an enabler for extension
             auto call_count = Idx{0};
             auto expensive = [&call_count]() {
                 ++call_count;
@@ -183,13 +190,15 @@ TEST_CASE("Test TextLogger") {
             };
 
             // lazy logging: expensive is not triggered
-            if (false) {
+            if (false) { // NOSONAR(S1763) //NOLINT - intentionally unreachable to test lazy evaluation is not triggered
                 txt_logger.log(expensive);
             }
             CHECK(call_count == 0);
 
             // lazy logging: expensive is triggered when we want it to
-            txt_logger.log(expensive);
+            if (true) {
+                txt_logger.log(expensive);
+            }
             CHECK(call_count == 1);
 
             // eager logging: expensive is triggered immediately
@@ -200,8 +209,8 @@ TEST_CASE("Test TextLogger") {
 
     SUBCASE("With flush-handler") {
         auto flushed_report = std::string{};
-        auto flush_handler = [&flushed_report](std::string buffer) { flushed_report = buffer; };
-        auto throwing_flush_handler = [](std::string /*buffer*/) { throw std::runtime_error("flush failed"); };
+        auto flush_handler = [&flushed_report](std::string_view buffer) { flushed_report = buffer; };
+        auto throwing_flush_handler = [](std::string_view /*buffer*/) { throw RuntimeFlushException("flush failed"); };
 
         SUBCASE("Flush report with handler that doesn't throw") {
             TextLogger txt_logger{flush_handler};
@@ -225,7 +234,7 @@ TEST_CASE("Test TextLogger") {
             report_checker_helper(report);
 
             // flushing should throw and report should be cleared even if handler throws
-            CHECK_THROWS_AS(txt_logger.flush(), std::runtime_error);
+            CHECK_THROWS_AS(txt_logger.flush(), RuntimeFlushException);
             report = txt_logger.report();
             CHECK(report.empty()); // report should be cleared even if handler throws
         }
