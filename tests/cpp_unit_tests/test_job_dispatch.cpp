@@ -145,10 +145,17 @@ MultiThreadedLogger& no_logger() {
 constexpr auto all_scenarios_and_phases(Idx n_scenarios) {
     using enum CalculationPhase;
 
-    auto result = std::views::cartesian_product(IdxRange{n_scenarios}, std::vector{setup, calculate, winddown}) |
-                  std::ranges::to<std::vector<std::pair<Idx, CalculationPhase>>>();
+    std::vector<std::pair<Idx, CalculationPhase>> result;
     result.emplace_back(-1,
                         cache_calculate); // cache_calculate is not scenario-specific, so we use -1 as a placeholder
+
+    for (Idx const scenario_idx : IdxRange{n_scenarios}) {
+        for (CalculationPhase const phase : {setup, calculate, winddown}) {
+            result.emplace_back(scenario_idx, phase);
+        }
+    }
+
+    return result;
     return result;
 }
 } // namespace
@@ -475,11 +482,9 @@ TEST_CASE("Test job dispatch logic") {
         }
     }
     SUBCASE("Test cancel thread") {
-        using namespace std::literals::chrono_literals;
-
         constexpr auto n_phases_per_scenario = 3; // setup, calculate, winddown
 
-        constexpr auto cancel_delay = 50ms; // arbitrary delay to ensure the cancel signal is sent
+        constexpr auto cancel_delay = std::chrono::milliseconds{50}; // arbitrary delay to ensure the cancel signal is sent
                                             // after the worker has started but before it finishes
         constexpr auto delay_per_phase =
             2 * cancel_delay; // arbitrary delay to ensure the cancel signal is sent while the worker is running
@@ -505,7 +510,7 @@ TEST_CASE("Test job dispatch logic") {
                 auto adapter = JobAdapterMock{counter};
                 adapter.reset_counters();
 
-                std::stop_source stop_source;
+                std::stop_source stop_source; // NOLINT(misc-const-correctness) // false positive
                 REQUIRE_FALSE(stop_source.stop_requested());
                 stop_source.request_stop();
                 REQUIRE(stop_source.stop_requested());
@@ -545,7 +550,7 @@ TEST_CASE("Test job dispatch logic") {
                     std::atomic<bool> stop_requested = false;
 
                     auto const check_in_expected_range =
-                        [n_scenarios, n_threads, cancel_scenario = cancel_during_scenario,
+                        [n_threads, cancel_scenario = cancel_during_scenario,
                          cancel_phase = cancel_during_phase](Idx count, CalculationPhase phase) {
                             auto const this_thread_scenarios = n_scenarios / n_threads;
                             auto const other_thread_scenarios = n_scenarios - this_thread_scenarios;
