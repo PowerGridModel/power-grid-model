@@ -224,8 +224,7 @@ inline void backward_substitution(EliminationResult& elimination_result) {
 }
 
 // reduced echelon form based on custom forward elimination and backward substitution procedures
-[[nodiscard]] inline EliminationResult reduced_echelon_form(std::vector<BranchIdx> edges,
-                                                            std::vector<DoubleComplex> node_loads) {
+inline EliminationResult reduced_echelon_form(std::vector<BranchIdx> edges, std::vector<DoubleComplex> node_loads) {
     EliminationResult result{};
     auto const edge_number{edges.size()};
     auto const node_number{node_loads.size()};
@@ -241,4 +240,50 @@ inline void backward_substitution(EliminationResult& elimination_result) {
     backward_substitution(result);
     return result;
 }
+
+// The degrees of freedom matrix (dfs_matrix) is associated with the degrees of freedom vector according
+// internal_loads = extended_rhs - dfs_matrix * lambda
+struct SolutionSet {
+    CooSparseMatrix dfs_matrix{};
+    std::vector<DoubleComplex> extended_rhs{};
+};
+
+// Constructs the dfs_matrix and the extended_rhs for the set of solutions.
+// The dfs_matrix is constructed from the matrix rows associated with the free column indices
+// and from negative unit elements at locations where the variables are associated with the free parameters.
+inline SolutionSet set_solution_system(EliminationResult& result) {
+    SolutionSet solution_set{};
+
+    auto& [dfs_matrix, extended_rhs] = solution_set;
+    auto const pivot_indices_size = narrow_cast<Idx>(result.pivot_edge_indices.size());
+    auto const free_indices_size = narrow_cast<Idx>(result.free_edge_indices.size());
+    Idx const total_indices_size = pivot_indices_size + free_indices_size;
+    dfs_matrix.prepare(total_indices_size, free_indices_size);
+    extended_rhs.resize(total_indices_size);
+    constexpr auto const free_matrix_element = IntS{-1};
+    Idx free_edge_idx;
+
+    // The part constructed from result.matrix and result.rhs.
+    for (auto matrix_row : std::views::iota(Idx{}, pivot_indices_size)) {
+        auto const pivot_edge_idx = result.pivot_edge_indices[matrix_row];
+        for (auto dfs_matrix_col : std::views::iota(Idx{}, free_indices_size)) {
+            free_edge_idx = result.free_edge_indices[dfs_matrix_col];
+            result.matrix.get_value(matrix_row, free_edge_idx)
+                .transform([&dfs_matrix, pivot_edge_idx, dfs_matrix_col](IntS matrix_element) {
+                    dfs_matrix.set_value(matrix_element, pivot_edge_idx, dfs_matrix_col);
+                    return matrix_element;
+                });
+        }
+        extended_rhs[pivot_edge_idx] = result.rhs[matrix_row];
+    }
+
+    // The part constructed from negative unit elements.
+    for (auto dfs_matrix_col : std::views::iota(Idx{}, free_indices_size)) {
+        free_edge_idx = result.free_edge_indices[dfs_matrix_col];
+        dfs_matrix.set_value(free_matrix_element, free_edge_idx, dfs_matrix_col);
+        extended_rhs[result.free_edge_indices[dfs_matrix_col]] = DoubleComplex{};
+    }
+    return solution_set;
+};
+
 } // namespace power_grid_model::link_solver::detail

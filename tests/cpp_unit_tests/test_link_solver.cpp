@@ -8,7 +8,9 @@
 
 #include <doctest/doctest.h>
 
+#include <cstddef>
 #include <ranges>
+#include <span>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -346,7 +348,7 @@ TEST_CASE("Test the link solver algorithm") {
             result.matrix.set_value(1, 3, 5);
             result.matrix.set_value(1, 3, 6);
 
-            result.rhs = std::vector<DoubleComplex>{{-1.0, -1.0}, {-1.0, -1.0}, {-2.0, -2.0}, {0.0, 0.0}, {0.0, 0.0}};
+            result.rhs = std::vector<DoubleComplex>{{-1.0, -1.0}, {-1.0, -1.0}, {-2.0, -2.0}, {0.0, 0.0}};
 
             result.free_edge_indices = std::vector<Idx>{3, 4, 6};
             result.pivot_edge_indices = std::vector<Idx>{0, 1, 2, 5};
@@ -380,9 +382,86 @@ TEST_CASE("Test the link solver algorithm") {
             CHECK(-1 == result.matrix.get_value(2, 4));
             CHECK(1 == result.matrix.get_value(3, 5));
             CHECK(1 == result.matrix.get_value(3, 6));
-            REQUIRE(result.rhs.size() == 5);
-            CHECK(result.rhs ==
-                  std::vector<DoubleComplex>{{0.0, 0.0}, {1.0, 1.0}, {-2.0, -2.0}, {0.0, 0.0}, {0.0, 0.0}});
+            REQUIRE(result.rhs.size() == 4);
+
+            CHECK(result.rhs == std::vector<DoubleComplex>{{0.0, 0.0}, {1.0, 1.0}, {-2.0, -2.0}, {0.0, 0.0}});
+        }
+    }
+    SUBCASE("Testing the set_solution_system routine") {
+        auto generate_input_result = [](std::span<const IntS> data, std::span<const Idx> row, std::span<const Idx> col,
+                                        Idx row_number, Idx col_number) {
+            EliminationResult result{};
+            result.matrix.prepare(row_number, col_number);
+            for (auto idx = size_t{0}; idx < data.size(); ++idx) {
+                result.matrix.set_value(data[idx], row[idx], col[idx]);
+            }
+            return result;
+        };
+
+        SUBCASE("Complex case with complex loads") {
+            std::vector<IntS> data = {1, 0, 0, 1, 0, 0, -1, 1, -1, -1, 0, 0, 1, 1, 1, 1, 0, 1};
+            std::vector<Idx> row = {0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 1, 0, 0, 0};
+            std::vector<Idx> col = {0, 1, 2, 1, 2, 3, 6, 2, 3, 4, 5, 6, 5, 6, 4, 3, 4, 6};
+
+            auto result = generate_input_result(data, row, col, Idx{5}, Idx{7});
+
+            result.rhs = {{0, 0}, {1, 1}, {-2, -2}, {-0, -0}};
+            result.free_edge_indices = {3, 4, 6};
+            result.pivot_edge_indices = {0, 1, 2, 5};
+
+            SolutionSet const solution_set = set_solution_system(result);
+
+            CHECK(1 == solution_set.dfs_matrix.get_value(0, 0));
+            CHECK(1 == solution_set.dfs_matrix.get_value(0, 2));
+            CHECK(1 == solution_set.dfs_matrix.get_value(1, 1));
+            CHECK(-1 == solution_set.dfs_matrix.get_value(1, 2));
+            CHECK(-1 == solution_set.dfs_matrix.get_value(2, 0));
+            CHECK(-1 == solution_set.dfs_matrix.get_value(2, 1));
+            CHECK(-1 == solution_set.dfs_matrix.get_value(3, 0));
+            CHECK(-1 == solution_set.dfs_matrix.get_value(4, 1));
+            CHECK(1 == solution_set.dfs_matrix.get_value(5, 2));
+            CHECK(-1 == solution_set.dfs_matrix.get_value(6, 2));
+            CHECK(solution_set.extended_rhs ==
+                  std::vector<DoubleComplex>({{0, 0}, {1, 1}, {-2, -2}, {0, 0}, {0, 0}, {0, 0}, {0, 0}}));
+        }
+
+        SUBCASE("Two edges, two nodes, two real loads") {
+
+            std::vector<IntS> data = {1, 0, 1, -1, -1};
+            std::vector<Idx> row = {0, 0, 1, 1, 0};
+            std::vector<Idx> col = {0, 1, 1, 2, 2};
+
+            auto result = generate_input_result(data, row, col, Idx{1}, Idx{3});
+
+            result.rhs = {{1, 0}, {0, 0}};
+            result.free_edge_indices = {2};
+            result.pivot_edge_indices = {0, 1};
+
+            SolutionSet const solution_set = set_solution_system(result);
+
+            CHECK(-1 == solution_set.dfs_matrix.get_value(0, 0));
+            CHECK(-1 == solution_set.dfs_matrix.get_value(1, 0));
+            CHECK(-1 == solution_set.dfs_matrix.get_value(2, 0));
+            CHECK(solution_set.extended_rhs == std::vector<DoubleComplex>({{1, 0}, {0, 0}, {0, 0}}));
+        }
+
+        SUBCASE("Four edges, four nodes, two real loads") {
+            std::vector<IntS> data = {1, 0, 0, 1, 1, 1, 1};
+            std::vector<Idx> row = {0, 0, 0, 1, 1, 2, 2};
+            std::vector<Idx> col = {0, 1, 3, 1, 3, 2, 3};
+
+            auto result = generate_input_result(data, row, col, Idx{1}, Idx{4});
+
+            result.rhs = {{1, 0}, {-1, 0}, {-1, 0}};
+            result.free_edge_indices = {3};
+            result.pivot_edge_indices = {0, 1, 2};
+
+            const SolutionSet solution_set = set_solution_system(result);
+
+            CHECK(1 == solution_set.dfs_matrix.get_value(1, 0));
+            CHECK(1 == solution_set.dfs_matrix.get_value(2, 0));
+            CHECK(-1 == solution_set.dfs_matrix.get_value(3, 0));
+            CHECK(solution_set.extended_rhs == std::vector<DoubleComplex>({{1, 0}, {-1, 0}, {-1, 0}, {0, 0}}));
         }
     }
 }
