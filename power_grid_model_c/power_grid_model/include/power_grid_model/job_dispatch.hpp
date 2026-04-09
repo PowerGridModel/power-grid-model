@@ -22,6 +22,7 @@
 #include <iterator>
 #include <ranges>
 #include <sstream>
+#include <stop_token>
 #include <string>
 #include <thread>
 #include <type_traits>
@@ -29,14 +30,25 @@
 #include <vector>
 
 namespace power_grid_model {
+namespace detail {
+void stop_if_requested(std::stop_token const& stop_token) {
+    if (stop_token.stop_requested()) {
+        throw OperationCanceled{};
+    }
+}
+} // namespace detail
 
 class JobDispatch {
   public:
     template <typename Adapter, typename ResultDataset, typename UpdateDataset>
         requires std::is_base_of_v<JobInterface, Adapter>
-    static BatchParameter batch_calculation(Adapter& adapter, ResultDataset const& result_data,
-                                            UpdateDataset const& update_data, Idx threading,
-                                            common::logging::MultiThreadedLogger& log) {
+    static BatchParameter batch_calculation(std::stop_token const& stop_token, Adapter& adapter,
+                                            ResultDataset const& result_data, UpdateDataset const& update_data,
+                                            Idx threading, common::logging::MultiThreadedLogger& log) {
+        using detail::stop_if_requested;
+
+        stop_if_requested(stop_token);
+
         if (update_data.empty()) {
             adapter.calculate(result_data, log);
             return BatchParameter{};
@@ -60,8 +72,10 @@ class JobDispatch {
         adapter.prepare_job_dispatch(update_data);
         auto single_job = JobDispatch::single_thread_job(adapter, result_data, update_data, exceptions, log);
 
-        job_dispatch(single_job, n_scenarios, threading);
+        stop_if_requested(stop_token);
+        job_dispatch(stop_token, single_job, n_scenarios, threading);
 
+        stop_if_requested(stop_token);
         handle_batch_exceptions(exceptions);
 
         return BatchParameter{};
@@ -88,8 +102,8 @@ class JobDispatch {
     static auto single_thread_job(Adapter& base_adapter, ResultDataset const& result_data,
                                   UpdateDataset const& update_data, std::vector<std::string>& exceptions,
                                   common::logging::MultiThreadedLogger& base_log) {
-        return [&base_adapter, &exceptions, &result_data, &update_data, &base_log](Idx start, Idx stride,
-                                                                                   Idx n_scenarios) {
+        return [&base_adapter, &exceptions, &result_data, &update_data,
+                &base_log](std::stop_token stop_token, Idx start, Idx stride, Idx n_scenarios) {
             assert(n_scenarios <= narrow_cast<Idx>(exceptions.size()));
             auto thread_log_ptr = base_log.create_child();
             Logger& thread_log = *thread_log_ptr;
@@ -124,9 +138,9 @@ class JobDispatch {
                 adapter.calculate(result_data, scenario_idx, thread_log);
             };
 
-            auto calculate_scenario = JobDispatch::call_with<Idx>(std::move(run), std::move(setup), std::move(winddown),
-                                                                  JobDispatch::scenario_exception_handler(exceptions),
-                                                                  std::move(recover_from_bad));
+            auto calculate_scenario = JobDispatch::call_with<Idx>(
+                std::move(stop_token), std::move(run), std::move(setup), std::move(winddown),
+                JobDispatch::scenario_exception_handler(exceptions), std::move(recover_from_bad));
 
             for (Idx scenario_idx = start; scenario_idx < n_scenarios; scenario_idx += stride) {
                 Timer const t_total_single{thread_log, LogEvent::total_single_calculation_in_thread};
@@ -138,20 +152,22 @@ class JobDispatch {
     }
 
     template <typename RunSingleJobFn>
-        requires std::invocable<std::remove_cvref_t<RunSingleJobFn>, Idx /*start*/, Idx /*stride*/, Idx /*n_scenarios*/>
-    static void job_dispatch(RunSingleJobFn single_thread_job, Idx n_scenarios, Idx threading) {
+        requires std::invocable<std::remove_cvref_t<RunSingleJobFn>, std::stop_token /* stop_token */, Idx /*start*/,
+                                Idx /*stride*/, Idx /*n_scenarios*/>
+    static void job_dispatch(std::stop_token const& stop_token, RunSingleJobFn single_thread_job, Idx n_scenarios,
+                             Idx threading) {
         // run batches sequential or parallel
         auto const n_thread = n_threads(n_scenarios, threading);
         if (n_thread == 1) {
             // run all in sequential
-            single_thread_job(0, 1, n_scenarios);
+            single_thread_job(stop_token, 0, 1, n_scenarios);
         } else {
             // create parallel threads
             std::vector<std::jthread> threads;
             threads.reserve(n_thread);
-            for (Idx thread_number = 0; thread_number < n_thread; ++thread_number) {
+            for (Idx thread_number : IdxRange{n_thread}) {
                 // compute each single thread job with stride
-                threads.emplace_back(single_thread_job, thread_number, n_thread, n_scenarios);
+                threads.emplace_back(single_thread_job, stop_token, thread_number, n_thread, n_scenarios);
             }
             for (auto& thread : threads) {
                 thread.join();
@@ -178,22 +194,28 @@ class JobDispatch {
                  std::invocable<std::remove_cvref_t<WinddownFn>> &&
                  std::invocable<std::remove_cvref_t<HandleExceptionFn>, Args const&...> &&
                  std::invocable<std::remove_cvref_t<RecoverFromBadFn>>
-    static auto call_with(RunFn run, SetupFn setup, WinddownFn winddown, HandleExceptionFn handle_exception,
-                          RecoverFromBadFn recover_from_bad) {
+    static auto call_with(std::stop_token stop_token, RunFn run, SetupFn setup, WinddownFn winddown,
+                          HandleExceptionFn handle_exception, RecoverFromBadFn recover_from_bad) {
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable : 4702) // Unreachable if run_ is [[noreturn]]
 #endif                          // _MSC_VER
-        return [setup_ = std::move(setup), run_ = std::move(run), winddown_ = std::move(winddown),
-                handle_exception_ = std::move(handle_exception),
+        return [stop_token_ = std::move(stop_token), setup_ = std::move(setup), run_ = std::move(run),
+                winddown_ = std::move(winddown), handle_exception_ = std::move(handle_exception),
                 recover_from_bad_ = std::move(recover_from_bad)](Args const&... args) {
+            using detail::stop_if_requested;
+
             try {
+                stop_if_requested(stop_token_);
                 setup_(args...);
+                stop_if_requested(stop_token_);
                 run_(args...);
+                stop_if_requested(stop_token_);
                 winddown_();
             } catch (...) { // NOSONAR(S2738)
                 handle_exception_(args...);
                 try {
+                    stop_if_requested(stop_token_);
                     winddown_();
                 } catch (...) { // NOSONAR(S2738)
                     recover_from_bad_();

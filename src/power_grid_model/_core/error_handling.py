@@ -55,6 +55,7 @@ class _PgmCErrorCode(IntEnum):
     REGULAR_ERROR = 1
     BATCH_ERROR = 2
     SERIALIZATION_ERROR = 3
+    OPERATION_CANCELED = 4
 
 
 _MISSING_CASE_FOR_ENUM_RE = re.compile(r" is not implemented for (.+) #(-?\d+)!\n")
@@ -179,6 +180,8 @@ def find_error(batch_size: int = 1, decode_error: bool = True) -> RuntimeError |
             return error
         case _PgmCErrorCode.SERIALIZATION_ERROR:
             return PowerGridSerializationError(get_pgc().error_message())
+        case _PgmCErrorCode.OPERATION_CANCELED:
+            return PowerGridOperationCanceled(get_pgc().error_message())
         case _:
             return RuntimeError("Unknown error!")
 

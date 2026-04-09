@@ -86,6 +86,7 @@ class Handle {
         case PGM_serialization_error:
             clear_error();
             throw PowerGridSerializationError{error_message};
+        case PGM_operation_canceled:
         default:
             clear_error();
             throw PowerGridError{error_message};

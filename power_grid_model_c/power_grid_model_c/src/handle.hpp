@@ -12,6 +12,7 @@
 
 #include <power_grid_model/batch_parameter.hpp>
 #include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/exception.hpp>
 
 #include <exception>
 #include <string_view>
@@ -41,6 +42,8 @@ struct DefaultExceptionHandler {
         std::exception_ptr const ex_ptr = std::current_exception();
         try {
             std::rethrow_exception(ex_ptr);
+        } catch (power_grid_model::OperationCanceled const& ex) {
+            handle_regular_error(handle, ex, PGM_operation_canceled, extra_message);
         } catch (std::exception const& ex) { // NOSONAR(S1181)
             handle_regular_error(handle, ex, error_code, extra_message);
         } catch (...) { // NOSONAR(S2738)

@@ -7,6 +7,8 @@
 #include "common/common.hpp"
 #include "common/enum.hpp"
 
+#include "main_core/core_utils.hpp"
+
 #include <concepts>
 #include <type_traits>
 
@@ -19,7 +21,8 @@ template <typename T>
 concept cache_type_c = std::same_as<T, cached_update_t> || std::same_as<T, permanent_update_t>;
 
 struct MainModelOptions {
-    static constexpr Idx sequential = -1;
+    static constexpr Idx sequential = main_core::utils::sequential;
+    static constexpr Idx parallel = main_core::utils::parallel;
 
     CalculationType calculation_type{CalculationType::power_flow};
     CalculationSymmetry calculation_symmetry{CalculationSymmetry::symmetric};

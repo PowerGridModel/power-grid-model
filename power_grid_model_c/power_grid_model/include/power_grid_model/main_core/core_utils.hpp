@@ -42,6 +42,7 @@ constexpr auto run_functor_with_tuple_index_return_array(Functor&& functor,
 } // namespace detail
 
 constexpr Idx sequential{-1};
+constexpr Idx parallel{0};
 constexpr Idx invalid_index{-1};
 
 template <typename Tuple, class Functor> constexpr void run_functor_with_tuple_return_void(Functor&& functor) {

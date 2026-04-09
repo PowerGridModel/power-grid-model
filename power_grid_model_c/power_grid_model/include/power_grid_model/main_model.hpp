@@ -96,7 +96,7 @@ class MainModel {
                              ConstDataset const& update_data) {
         info_.clear();
         JobAdapter<Impl> adapter{std::ref(impl()), std::ref(options)};
-        return JobDispatch::batch_calculation(adapter, result_data, update_data, options.threading, info_);
+        return JobDispatch::batch_calculation({}, adapter, result_data, update_data, options.threading, info_);
     }
 
     CalculationInfo calculation_info() const { return info_.get(); }

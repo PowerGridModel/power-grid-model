@@ -179,6 +179,7 @@ enum PGM_ErrorCode {
     PGM_regular_error = 1,       /**< some error occurred which is not in the batch calculation */
     PGM_batch_error = 2,         /**< some error occurred which is in the batch calculation */
     PGM_serialization_error = 3, /**< some error occurred which is in the (de)serialization process */
+    PGM_operation_canceled = 4,  /**< the operation was canceled by an external request */
 };
 
 /**

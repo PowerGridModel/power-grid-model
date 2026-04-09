@@ -296,6 +296,11 @@ class UnreachableHit : public PowerGridError {
                           method, reason_for_assumption)} {}
 };
 
+class OperationCanceled : public PowerGridError {
+  public:
+    OperationCanceled() : PowerGridError{"Operation canceled by external request."} {}
+};
+
 class TapSearchStrategyIncompatibleError : public InvalidArguments {
   public:
     template <typename T1, typename T2>

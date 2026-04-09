@@ -2,11 +2,13 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include <functional>
 #include <power_grid_model/job_dispatch.hpp>
 #include <power_grid_model/job_interface.hpp>
 
 #include <power_grid_model/batch_parameter.hpp>
 #include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/counting_iterator.hpp>
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/common/logging.hpp>
 #include <power_grid_model/common/multi_threaded_logging.hpp>
@@ -16,10 +18,13 @@
 
 #include <algorithm>
 #include <atomic>
+#include <chrono>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <ranges>
 #include <stdexcept>
+#include <stop_token>
 #include <string>
 #include <thread>
 #include <type_traits>
@@ -28,6 +33,17 @@
 
 namespace power_grid_model {
 namespace {
+enum class CalculationPhase : IntS {
+    cache_calculate = 0,
+    setup = 1,
+    calculate = 2,
+    winddown = 3,
+};
+
+bool is_strictly_after(CalculationPhase actual, CalculationPhase target) {
+    return std::to_underlying(actual) > std::to_underlying(target);
+}
+
 struct MockUpdateDataset {
     MockUpdateDataset(bool data, Idx n_scenarios) : data{data}, n_scenarios{n_scenarios} {}
     bool data;
@@ -58,24 +74,13 @@ struct CallCounter {
 
 class JobAdapterMock : public JobInterface {
   public:
-    JobAdapterMock(std::shared_ptr<CallCounter> counter) : counter_{std::move(counter)} {
-        REQUIRE_MESSAGE(counter_ != nullptr, "Counter must not be null or all getters will fail later on");
+    using AwaitCall = std::function<void(Idx /*scenario_idx*/, CalculationPhase /*calculation_phase*/)>;
+
+    JobAdapterMock(std::shared_ptr<CallCounter> counter) : JobAdapterMock{std::move(counter), std::nullopt} {}
+    JobAdapterMock(std::shared_ptr<CallCounter> counter, std::optional<AwaitCall> await_call)
+        : counter_{std::move(counter)}, await_call_{std::move(await_call)} {
+        REQUIRE_MESSAGE(counter_ != nullptr, "A valid CallCounter instance is required to create a JobAdapterMock");
     }
-    JobAdapterMock(JobAdapterMock const& other) : counter_{other.counter_} {}
-    JobAdapterMock& operator=(JobAdapterMock const& other) {
-        if (this != &other) {
-            counter_ = other.counter_;
-        }
-        return *this;
-    };
-    JobAdapterMock(JobAdapterMock&& other) noexcept : counter_{std::exchange(other.counter_, nullptr)} {}
-    JobAdapterMock& operator=(JobAdapterMock&& other) noexcept {
-        if (this != &other) {
-            counter_ = std::exchange(other.counter_, nullptr);
-        }
-        return *this;
-    }
-    ~JobAdapterMock() noexcept { counter_ = nullptr; }
 
     void reset_counters() const { counter_->reset_counters(); }
     Idx get_calculate_counter() const { return counter_->calculate_calls; }
@@ -86,16 +91,38 @@ class JobAdapterMock : public JobInterface {
   private:
     friend class JobInterface;
 
+    static constexpr Idx no_scenario_idx = -1;
+
     std::shared_ptr<CallCounter> counter_;
+    std::optional<AwaitCall> await_call_;
+    Idx scenario_idx_{no_scenario_idx};
 
     void calculate_impl(MockResultDataset const& /*result_data*/, Idx /*scenario_idx*/,
                         Logger const& /*logger*/) const {
+        maybe_await(CalculationPhase::calculate);
         ++(counter_->calculate_calls);
     }
-    void cache_calculate_impl(Logger const& /*logger*/) const { ++(counter_->cache_calculate_calls); }
+    void cache_calculate_impl(Logger const& /*logger*/) const {
+        maybe_await(CalculationPhase::cache_calculate);
+        ++(counter_->cache_calculate_calls);
+    }
     void prepare_job_dispatch_impl(MockUpdateDataset const& /*update_data*/) const { /* patch base class function */ }
-    void setup_impl(MockUpdateDataset const& /*update_data*/, Idx /*scenario_idx*/) const { ++(counter_->setup_calls); }
-    void winddown_impl() const { ++(counter_->winddown_calls); }
+    void setup_impl(MockUpdateDataset const& /*update_data*/, Idx scenario_idx) {
+        scenario_idx_ = scenario_idx;
+        maybe_await(CalculationPhase::setup);
+        ++(counter_->setup_calls);
+    }
+    void winddown_impl() {
+        maybe_await(CalculationPhase::winddown);
+        scenario_idx_ = no_scenario_idx;
+        ++(counter_->winddown_calls);
+    }
+    void maybe_await(CalculationPhase calculation_phase) const {
+        await_call_.transform([scenario_idx = scenario_idx_, calculation_phase](AwaitCall const& func) {
+            func(scenario_idx, calculation_phase);
+            return func;
+        });
+    }
 };
 
 class SomeTestException : public std::runtime_error {
@@ -108,6 +135,22 @@ using common::logging::MultiThreadedLogger;
 MultiThreadedLogger& no_logger() {
     static common::logging::NoMultiThreadedLogger instance;
     return instance;
+}
+
+void await_geq(std::atomic<Idx>& actual_value, Idx desired_min_value) {
+    for (Idx current = actual_value; (current = actual_value) < desired_min_value;) {
+        actual_value.wait(current);
+    }
+};
+
+constexpr auto all_scenarios_and_phases(Idx n_scenarios) {
+    using enum CalculationPhase;
+
+    auto result = std::views::cartesian_product(IdxRange{n_scenarios}, std::vector{setup, calculate, winddown}) |
+                  std::ranges::to<std::vector<std::pair<Idx, CalculationPhase>>>();
+    result.emplace_back(-1,
+                        cache_calculate); // cache_calculate is not scenario-specific, so we use -1 as a placeholder
+    return result;
 }
 } // namespace
 
@@ -124,7 +167,7 @@ TEST_CASE("Test job dispatch logic") {
             Idx const n_scenarios = 9; // arbitrary non-zero value
             auto const update_data = MockUpdateDataset(has_data, n_scenarios);
             adapter.reset_counters();
-            auto const actual_result = JobDispatch::batch_calculation(adapter, result_data, update_data,
+            auto const actual_result = JobDispatch::batch_calculation({}, adapter, result_data, update_data,
                                                                       main_core::utils::sequential, no_logger());
             CHECK(expected_result == actual_result);
             CHECK(adapter.get_calculate_counter() == 1);
@@ -135,7 +178,7 @@ TEST_CASE("Test job dispatch logic") {
             Idx const n_scenarios = 0;
             auto const update_data = MockUpdateDataset(has_data, n_scenarios);
             adapter.reset_counters();
-            auto const actual_result = JobDispatch::batch_calculation(adapter, result_data, update_data,
+            auto const actual_result = JobDispatch::batch_calculation({}, adapter, result_data, update_data,
                                                                       main_core::utils::sequential, no_logger());
             CHECK(expected_result == actual_result);
             // no calculations should be done
@@ -147,7 +190,7 @@ TEST_CASE("Test job dispatch logic") {
             Idx const n_scenarios = 7; // arbitrary non-zero value
             auto const update_data = MockUpdateDataset(has_data, n_scenarios);
             adapter.reset_counters();
-            auto const actual_result = JobDispatch::batch_calculation(adapter, result_data, update_data,
+            auto const actual_result = JobDispatch::batch_calculation({}, adapter, result_data, update_data,
                                                                       main_core::utils::sequential, no_logger());
             CHECK(expected_result == actual_result);
             // n_scenarios calculations should be done as we run sequentially
@@ -189,7 +232,7 @@ TEST_CASE("Test job dispatch logic") {
         stride = 1;
         call_number = get_call_number(start, stride, n_scenarios);
         CAPTURE(call_number);
-        CHECK_NOTHROW(single_job(start, stride, n_scenarios));
+        CHECK_NOTHROW(single_job({}, start, stride, n_scenarios));
         check_call_numbers(adapter, call_number);
 
         adapter.reset_counters();
@@ -197,7 +240,7 @@ TEST_CASE("Test job dispatch logic") {
         stride = 4;
         call_number = get_call_number(start, stride, n_scenarios);
         CAPTURE(call_number);
-        CHECK_NOTHROW(single_job(start, stride, n_scenarios));
+        CHECK_NOTHROW(single_job({}, start, stride, n_scenarios));
         check_call_numbers(adapter, call_number);
 
         adapter.reset_counters();
@@ -205,7 +248,7 @@ TEST_CASE("Test job dispatch logic") {
         stride = 2;
         call_number = get_call_number(start, stride, n_scenarios);
         CAPTURE(call_number);
-        CHECK_NOTHROW(single_job(start, stride, n_scenarios));
+        CHECK_NOTHROW(single_job({}, start, stride, n_scenarios));
         check_call_numbers(adapter, call_number);
     }
     SUBCASE("Test job_dispatch") {
@@ -216,7 +259,8 @@ TEST_CASE("Test job dispatch logic") {
         };
         std::vector<JobArguments> calls;
         std::mutex calls_mutex;
-        auto single_job = [&calls, &calls_mutex](Idx start, Idx stride, Idx n_scenarios) {
+        auto single_job = [&calls, &calls_mutex](std::stop_token /*stop_token*/, Idx start, Idx stride,
+                                                 Idx n_scenarios) {
             std::lock_guard<std::mutex> const lock(calls_mutex);
             calls.emplace_back(start, stride, n_scenarios);
         };
@@ -225,7 +269,7 @@ TEST_CASE("Test job dispatch logic") {
             Idx const n_scenarios = 10; // arbitrary non-zero value
             Idx const threading = main_core::utils::sequential;
             calls.clear();
-            JobDispatch::job_dispatch(single_job, n_scenarios, threading);
+            JobDispatch::job_dispatch({}, single_job, n_scenarios, threading);
             CHECK(calls.size() == 1);
             CHECK(calls.front().start == 0);
             CHECK(calls.front().stride == 1);
@@ -243,7 +287,7 @@ TEST_CASE("Test job dispatch logic") {
                 calls.clear();
                 CAPTURE(hardware_thread);
                 CHECK(hardware_thread == JobDispatch::n_threads(n_scenarios, threading));
-                JobDispatch::job_dispatch(single_job, n_scenarios, threading);
+                JobDispatch::job_dispatch({}, single_job, n_scenarios, threading);
                 CHECK(calls.size() == hardware_thread);
                 auto const n_threads = static_cast<Idx>(calls.size());
                 CHECK(std::ranges::all_of(std::views::iota(Idx{0}, n_threads), [&calls](Idx i) {
@@ -260,7 +304,7 @@ TEST_CASE("Test job dispatch logic") {
                 calls.clear();
                 CAPTURE(hardware_thread);
                 CHECK(n_scenarios == JobDispatch::n_threads(n_scenarios, threading));
-                JobDispatch::job_dispatch(single_job, n_scenarios, threading);
+                JobDispatch::job_dispatch({}, single_job, n_scenarios, threading);
                 CHECK(calls.size() == n_scenarios);
                 auto const n_threads = static_cast<Idx>(calls.size());
                 CHECK(std::ranges::all_of(std::views::iota(0, n_threads), [&calls](Idx i) {
@@ -296,11 +340,11 @@ TEST_CASE("Test job dispatch logic") {
         }
         SUBCASE("Hardware threading") {
             if (hardware_thread < 2) {
-                CHECK(JobDispatch::n_threads(n_scenarios, 0) == 1);
+                CHECK(JobDispatch::n_threads(n_scenarios, main_core::utils::parallel) == 1);
             } else if (hardware_thread <= n_scenarios) {
-                CHECK(JobDispatch::n_threads(n_scenarios, 0) == hardware_thread);
+                CHECK(JobDispatch::n_threads(n_scenarios, main_core::utils::parallel) == hardware_thread);
             } else {
-                CHECK(JobDispatch::n_threads(n_scenarios, 0) == n_scenarios);
+                CHECK(JobDispatch::n_threads(n_scenarios, main_core::utils::parallel) == n_scenarios);
             }
         }
     }
@@ -339,7 +383,7 @@ TEST_CASE("Test job dispatch logic") {
         auto recover_from_bad_fn = [&recover_from_bad_called]() { recover_from_bad_called++; };
 
         SUBCASE("No exceptions") {
-            auto call_with = JobDispatch::call_with<Idx>(run_fn_no_throw, setup_fn, winddown_fn_no_throw,
+            auto call_with = JobDispatch::call_with<Idx>({}, run_fn_no_throw, setup_fn, winddown_fn_no_throw,
                                                          handle_exception_fn, recover_from_bad_fn);
             call_with(1);
             CHECK(setup_called == 1);
@@ -350,7 +394,7 @@ TEST_CASE("Test job dispatch logic") {
         }
         SUBCASE("With run exception") {
             auto call_with =
-                JobDispatch::call_with<Idx>(run_fn_no_optimize_noreturn_throw, setup_fn, winddown_fn_no_throw,
+                JobDispatch::call_with<Idx>({}, run_fn_no_optimize_noreturn_throw, setup_fn, winddown_fn_no_throw,
                                             handle_exception_fn, recover_from_bad_fn);
             call_with(2);
             CHECK(setup_called == 1);
@@ -360,7 +404,7 @@ TEST_CASE("Test job dispatch logic") {
             CHECK(recover_from_bad_called == 0);
         }
         SUBCASE("With run exception that is noreturn") {
-            auto call_with = JobDispatch::call_with<Idx>(run_fn_noreturn_throw, setup_fn, winddown_fn_no_throw,
+            auto call_with = JobDispatch::call_with<Idx>({}, run_fn_noreturn_throw, setup_fn, winddown_fn_no_throw,
                                                          handle_exception_fn, recover_from_bad_fn);
             call_with(2);
             CHECK(setup_called == 1);
@@ -370,7 +414,7 @@ TEST_CASE("Test job dispatch logic") {
             CHECK(recover_from_bad_called == 0);
         }
         SUBCASE("With winddown exception") {
-            auto call_with = JobDispatch::call_with<Idx>(run_fn_no_throw, setup_fn, winddown_fn_throw,
+            auto call_with = JobDispatch::call_with<Idx>({}, run_fn_no_throw, setup_fn, winddown_fn_throw,
                                                          handle_exception_fn, recover_from_bad_fn);
             call_with(3);
             CHECK(setup_called == 1);
@@ -431,5 +475,123 @@ TEST_CASE("Test job dispatch logic") {
                 BatchCalculationError);
         }
     }
+    SUBCASE("Test cancel thread") {
+        using namespace std::literals::chrono_literals;
+
+        constexpr auto n_phases_per_scenario = 3; // setup, calculate, winddown
+
+        constexpr auto cancel_delay = 50ms; // arbitrary delay to ensure the cancel signal is sent
+                                            // after the worker has started but before it finishes
+        constexpr auto delay_per_phase =
+            2 * cancel_delay; // arbitrary delay to ensure the cancel signal is sent while the worker is running
+        constexpr auto delay_per_scenario = delay_per_phase * n_phases_per_scenario;
+        constexpr auto cache_delay =
+            delay_per_phase; // arbitrary delay to ensure the cancel signal is sent after the caching phase is done
+
+        std::atomic<bool> cancelling_thread_started{false};
+
+        auto counter = std::make_shared<CallCounter>();
+
+        auto result_data = MockResultDataset{};
+        auto const expected_result = BatchParameter{};
+
+        constexpr bool has_data = true;
+        constexpr Idx n_scenarios = 3; // arbitrary non-zero value
+        auto const update_data = MockUpdateDataset{has_data, n_scenarios};
+
+        SUBCASE("Single thread") {
+            SUBCASE("Cancel before/during prepare") {
+                auto adapter = JobAdapterMock{counter};
+                adapter.reset_counters();
+
+                std::stop_source stop_source;
+                REQUIRE_FALSE(stop_source.stop_requested());
+                stop_source.request_stop();
+                REQUIRE(stop_source.stop_requested());
+                CHECK_THROWS_AS(JobDispatch::batch_calculation(stop_source.get_token(), adapter, result_data,
+                                                               update_data, main_core::utils::sequential, no_logger()),
+                                OperationCanceled);
+                REQUIRE(stop_source.stop_requested());
+                CHECK(stop_source.stop_requested());
+                CHECK(adapter.get_calculate_counter() == 0);
+                CHECK(adapter.get_cache_calculate_counter() == 0); // cache calculation is not done
+            }
+            SUBCASE("Cancel after all scenarios done") {
+                auto adapter = JobAdapterMock{counter};
+                adapter.reset_counters();
+
+                std::stop_source stop_source;
+                REQUIRE_FALSE(stop_source.stop_requested());
+                std::jthread cancel_thread{
+                    [&stop_source, delay = cache_delay + (delay_per_scenario * n_scenarios) + cancel_delay] {
+                        std::this_thread::sleep_for(delay);
+                        stop_source.request_stop();
+                    }};
+                REQUIRE_FALSE(stop_source.stop_requested());
+                CHECK_NOTHROW(JobDispatch::batch_calculation(stop_source.get_token(), adapter, result_data, update_data,
+                                                             main_core::utils::sequential, no_logger()));
+                cancel_thread.join();
+                CHECK(stop_source.stop_requested());
+                CHECK(adapter.get_calculate_counter() == 3);       // no calculations are done
+                CHECK(adapter.get_cache_calculate_counter() == 1); // cache calculation is done
+            }
+            SUBCASE("Cancel during operations") {
+                for (auto const [cancel_during_scenario, cancel_during_phase] : all_scenarios_and_phases(n_scenarios)) {
+                    CAPTURE(cancel_during_scenario);
+                    CAPTURE(cancel_during_phase);
+                    std::atomic<bool> cancelling_phase_started = false;
+                    std::atomic<bool> stop_requested = false;
+
+                    auto adapter =
+                        JobAdapterMock{counter, [&cancelling_phase_started, &stop_requested, cancel_during_scenario,
+                                                 cancel_during_phase](Idx scenario_idx, CalculationPhase phase) {
+                                           if (scenario_idx == cancel_during_scenario && phase == cancel_during_phase) {
+                                               CHECK_FALSE(stop_requested);
+                                               CHECK_FALSE(cancelling_phase_started.exchange(true));
+                                               CHECK(cancelling_phase_started);
+                                               cancelling_phase_started.notify_all();
+                                               stop_requested.wait(false);
+                                               CHECK(stop_requested);
+                                           }
+                                       }};
+                    adapter.reset_counters();
+
+                    std::stop_source stop_source;
+                    REQUIRE_FALSE(stop_source.stop_requested());
+                    std::jthread cancel_thread{[&stop_source, &cancelling_phase_started, &stop_requested] {
+                        CHECK_FALSE(stop_source.stop_requested());
+                        CHECK_FALSE(stop_requested);
+
+                        cancelling_phase_started.wait(false);
+                        CHECK(cancelling_phase_started);
+                        stop_source.request_stop();
+                        CHECK_FALSE(stop_requested.exchange(true));
+                        CHECK(stop_requested);
+                        stop_requested.notify_all();
+                    }};
+
+                    REQUIRE_FALSE(stop_source.stop_requested());
+                    CHECK_THROWS_AS(JobDispatch::batch_calculation(stop_source.get_token(), adapter, result_data,
+                                                                   update_data, main_core::utils::sequential,
+                                                                   no_logger()),
+                                    OperationCanceled);
+                    cancel_thread.join();
+
+                    auto const expected_counter = [cancel_during_scenario,
+                                                   cancel_during_phase](CalculationPhase phase) {
+                        return std::max(Idx{0}, cancel_during_scenario) +
+                               (is_strictly_after(phase, cancel_during_phase) ? 0 : 1);
+                    };
+
+                    CHECK(stop_source.stop_requested());
+                    CHECK(adapter.get_setup_counter() == expected_counter(CalculationPhase::setup));
+                    CHECK(adapter.get_calculate_counter() == expected_counter(CalculationPhase::calculate));
+                    CHECK(adapter.get_winddown_counter() == expected_counter(CalculationPhase::winddown));
+                    CHECK(adapter.get_cache_calculate_counter() == 1);
+                }
+            }
+        }
+    }
 }
+
 } // namespace power_grid_model
