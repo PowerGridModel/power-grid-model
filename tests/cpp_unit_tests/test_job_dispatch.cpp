@@ -158,12 +158,6 @@ MultiThreadedLogger& no_logger() {
     return instance;
 }
 
-void await_geq(std::atomic<Idx>& actual_value, Idx desired_min_value) {
-    for (Idx current = actual_value; (current = actual_value) < desired_min_value;) {
-        actual_value.wait(current);
-    }
-};
-
 constexpr auto all_scenarios_and_phases(Idx n_scenarios) {
     using enum CalculationPhase;
 
@@ -173,8 +167,6 @@ constexpr auto all_scenarios_and_phases(Idx n_scenarios) {
                         cache_calculate); // cache_calculate is not scenario-specific, so we use -1 as a placeholder
     return result;
 }
-
-bool is_single_threaded(Idx n_scenarios, Idx threading) { return JobDispatch::n_threads(n_scenarios, threading) == 1; }
 } // namespace
 
 TEST_CASE("Test job dispatch logic") {
@@ -514,7 +506,6 @@ TEST_CASE("Test job dispatch logic") {
         auto counter = std::make_shared<CallCounter>();
 
         auto result_data = MockResultDataset{};
-        auto const expected_result = BatchParameter{};
 
         constexpr bool has_data = true;
         constexpr Idx n_scenarios = 3; // arbitrary non-zero value
@@ -572,7 +563,6 @@ TEST_CASE("Test job dispatch logic") {
                     auto const check_in_expected_range =
                         [n_scenarios, n_threads, cancel_scenario = cancel_during_scenario,
                          cancel_phase = cancel_during_phase](Idx count, CalculationPhase phase) {
-                            auto const thread_idx = narrow_cast<Idx>(cancel_scenario % n_threads);
                             auto const this_thread_scenarios = n_scenarios / n_threads;
                             auto const other_thread_scenarios = n_scenarios - this_thread_scenarios;
                             auto const this_thread_completed_scenarios = std::max(Idx{0}, cancel_scenario) / n_threads;
