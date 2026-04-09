@@ -134,6 +134,10 @@ class PowerGridUnreachableHitError(PowerGridError):
     This usually means a failed assumption and may be caused by a bug in the PGM library."""
 
 
+class PowerGridOperationCanceled(PowerGridError):
+    """Operation canceled by external request."""
+
+
 class UnsupportedRegulatorCombinationError(PowerGridError):
     """The combination of voltage regulators and transformer tap regulators is not supported in the same model."""
 

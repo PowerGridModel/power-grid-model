@@ -32,6 +32,7 @@ from power_grid_model._core.errors import (  # noqa: F401
     PowerGridDatasetError,
     PowerGridError,
     PowerGridNotImplementedError,
+    PowerGridOperationCanceled,
     PowerGridSerializationError,
     PowerGridUnreachableHitError,
     SparseMatrixError,

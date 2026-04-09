@@ -37,6 +37,7 @@ from power_grid_model._core.errors import (
     PowerGridError,
     PowerGridIllegalOperationError,
     PowerGridNotImplementedError,
+    PowerGridOperationCanceled,
     PowerGridSerializationError,
     PowerGridUnreachableHitError,
     SparseMatrixError,

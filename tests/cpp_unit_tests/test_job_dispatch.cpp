@@ -11,7 +11,6 @@
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/common/logging.hpp>
 #include <power_grid_model/common/multi_threaded_logging.hpp>
-#include <power_grid_model/common/typing.hpp>
 #include <power_grid_model/main_core/core_utils.hpp>
 
 #include <doctest/doctest.h>
@@ -86,21 +85,6 @@ class JobAdapterMock : public JobInterface {
         : counter_{std::move(counter)}, await_call_{std::move(await_call)} {
         REQUIRE_MESSAGE(counter_ != nullptr, valid_counter_msg);
     }
-    JobAdapterMock(JobAdapterMock const& other) : counter_{other.counter_} {}
-    JobAdapterMock& operator=(JobAdapterMock const& other) {
-        if (this != &other) {
-            counter_ = other.counter_;
-        }
-        return *this;
-    };
-    JobAdapterMock(JobAdapterMock&& other) noexcept : counter_{std::exchange(other.counter_, nullptr)} {}
-    JobAdapterMock& operator=(JobAdapterMock&& other) noexcept {
-        if (this != &other) {
-            counter_ = std::exchange(other.counter_, nullptr);
-        }
-        return *this;
-    }
-    ~JobAdapterMock() { counter_.reset(); };
 
     void reset_counters() const { counter_->reset_counters(); }
     Idx get_calculate_counter() const { return counter_->calculate_calls; }
