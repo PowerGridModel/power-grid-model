@@ -15,6 +15,7 @@
 #include "calculation_preparation.hpp"
 #include "common/calculation_info.hpp"
 #include "common/common.hpp"
+#include "common/logging.hpp"
 #include "main_core/main_model_type.hpp"
 #include "main_model_fwd.hpp"
 #include "math_solver/math_solver_dispatch.hpp"
@@ -32,25 +33,31 @@ namespace power_grid_model {
 class MainModel {
   private:
     using Impl = MainModelImpl<main_core::MainModelType<AllExtraRetrievableTypes, AllComponents>>;
+    using MultiThreadedLogger = common::logging::MultiThreadedLogger;
+    using NoMultiThreadedLogger = common::logging::NoMultiThreadedLogger;
 
   public:
     using Options = MainModelOptions;
 
     explicit MainModel(double system_frequency, ConstDataset const& input_data,
-                       MathSolverDispatcher const& math_solver_dispatcher, Idx pos = 0)
+                       MathSolverDispatcher const& math_solver_dispatcher, Idx pos = 0,
+                       MultiThreadedLogger& logger = no_logger_)
         : impl_{std::make_unique<Impl>(
               system_frequency, input_data,
-              SolverPreparationContext{.math_state = {}, .math_solver_dispatcher = &math_solver_dispatcher}, pos)} {}
+              SolverPreparationContext{.math_state = {}, .math_solver_dispatcher = &math_solver_dispatcher}, pos)},
+          logger_{&logger} {}
     explicit MainModel(double system_frequency, meta_data::MetaData const& meta_data,
-                       MathSolverDispatcher const& math_solver_dispatcher)
+                       MathSolverDispatcher const& math_solver_dispatcher, MultiThreadedLogger& logger = no_logger_)
         : impl_{std::make_unique<Impl>(
               system_frequency, meta_data,
-              SolverPreparationContext{.math_state = {}, .math_solver_dispatcher = &math_solver_dispatcher})} {};
+              SolverPreparationContext{.math_state = {}, .math_solver_dispatcher = &math_solver_dispatcher})},
+          logger_{&logger} {};
 
     // deep copy
     MainModel(MainModel const& other) {
         if (other.impl_ != nullptr) {
             impl_ = std::make_unique<Impl>(*other.impl_);
+            logger_ = other.logger_;
         }
     }
     MainModel& operator=(MainModel const& other) {
@@ -58,14 +65,16 @@ class MainModel {
             impl_.reset();
             if (other.impl_ != nullptr) {
                 impl_ = std::make_unique<Impl>(*other.impl_);
+                logger_ = other.logger_;
             }
         }
         return *this;
     }
-    MainModel(MainModel&& other) noexcept : impl_{std::move(other.impl_)} {}
+    MainModel(MainModel&& other) noexcept : impl_{std::move(other.impl_)}, logger_{other.logger_} {}
     MainModel& operator=(MainModel&& other) noexcept {
         if (this != &other) {
             impl_ = std::move(other.impl_);
+            logger_ = std::move(other.logger_);
         }
         return *this;
     };
@@ -94,12 +103,15 @@ class MainModel {
     */
     BatchParameter calculate(Options const& options, MutableDataset const& result_data,
                              ConstDataset const& update_data) {
-        info_.clear();
+
+        // TODO(figueroa1395): This now becomes the caller's responsibility.
+        // logger_->clear();
         JobAdapter<Impl> adapter{std::ref(impl()), std::ref(options)};
-        return JobDispatch::batch_calculation(adapter, result_data, update_data, options.threading, info_);
+        return JobDispatch::batch_calculation(adapter, result_data, update_data, options.threading, *logger_);
     }
 
-    CalculationInfo calculation_info() const { return info_.get(); }
+    // TODO(figueroa1395): I don't think this is needed now because it is the caller's responsibility
+    // CalculationInfo calculation_info() const { return logger_.get(); }
 
     void check_no_experimental_features_used(Options const& options, ConstDataset const* batch_dataset) const {
         impl().check_no_experimental_features_used(options, batch_dataset);
@@ -116,7 +128,11 @@ class MainModel {
     }
 
     std::unique_ptr<Impl> impl_;
-    MultiThreadedCalculationInfo info_;
+    // TODO(figueroa1395): static here should be okay because NoMultiThreadedLogger doesn't do anything, does it?
+    inline static NoMultiThreadedLogger no_logger_{};
+    // TODO(figueroa1395): should we have a shared ptr instead? a unique ptr? can the same logger be shared across
+    // multiple MainModel instances?
+    MultiThreadedLogger* logger_;
 };
 
 } // namespace power_grid_model
