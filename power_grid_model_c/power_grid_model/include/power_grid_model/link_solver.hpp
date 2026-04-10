@@ -286,4 +286,37 @@ inline SolutionSet set_solution_system(EliminationResult& result) {
     return solution_set;
 };
 
+inline std::vector<std::vector<DoubleComplex>> set_projection_system(Idx free_indices_number, Idx total_indices_number,
+                                                                     SolutionSet& solution_set) {
+    std::vector<std::vector<DoubleComplex>> projection_system(free_indices_number,
+                                                              std::vector<DoubleComplex>(free_indices_number + 1));
+
+    for (Idx dfs_matrix_col = 0; dfs_matrix_col < free_indices_number; dfs_matrix_col++) {
+        auto dot_product_rhs = DoubleComplex{};
+        for (Idx dfs_matrix_row = 0; dfs_matrix_row < total_indices_number; dfs_matrix_row++) {
+            solution_set.dfs_matrix.get_value(dfs_matrix_row, dfs_matrix_col)
+                .transform(
+                    [&dot_product_rhs, &extended_rhs_ = solution_set.extended_rhs, &dfs_matrix_row](IntS first_value) {
+                        dot_product_rhs += static_cast<DoubleComplex>(first_value) * extended_rhs_[dfs_matrix_row];
+                        return first_value;
+                    });
+        }
+        projection_system[dfs_matrix_col][free_indices_number] = dot_product_rhs;
+        for (Idx second_dfs_matrix_col = dfs_matrix_col; second_dfs_matrix_col < free_indices_number;
+             second_dfs_matrix_col++) {
+            auto dot_product_matrix = DoubleComplex{};
+            for (Idx dfs_matrix_row = 0; dfs_matrix_row < total_indices_number; dfs_matrix_row++) {
+                auto const first_value = solution_set.dfs_matrix.get_value(dfs_matrix_row, dfs_matrix_col);
+                auto const second_value = solution_set.dfs_matrix.get_value(dfs_matrix_row, second_dfs_matrix_col);
+                if (first_value && second_value) {
+                    dot_product_matrix += static_cast<DoubleComplex>(first_value.value() * second_value.value());
+                }
+            }
+            projection_system[dfs_matrix_col][second_dfs_matrix_col] = dot_product_matrix;
+            projection_system[second_dfs_matrix_col][dfs_matrix_col] = dot_product_matrix;
+        }
+    }
+    return projection_system;
+};
+
 } // namespace power_grid_model::link_solver::detail

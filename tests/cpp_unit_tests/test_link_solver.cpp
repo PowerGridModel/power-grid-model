@@ -464,5 +464,60 @@ TEST_CASE("Test the link solver algorithm") {
             CHECK(solution_set.extended_rhs == std::vector<DoubleComplex>({{1, 0}, {-1, 0}, {-1, 0}, {0, 0}}));
         }
     }
+
+    SUBCASE("Testing the set_projection_system routine") {
+        auto generate_solution_set = [](std::span<const IntS> data, std::span<const Idx> row, std::span<const Idx> col,
+                                        Idx row_number, Idx col_number) {
+            SolutionSet solution_set{};
+            solution_set.dfs_matrix.prepare(row_number, col_number);
+            for (auto idx = size_t{0}; idx < data.size(); ++idx) {
+                solution_set.dfs_matrix.set_value(data[idx], row[idx], col[idx]);
+            }
+            return solution_set;
+        };
+
+        SUBCASE("Complex case with complex loads") {
+            // free_edge_indices = {3, 4, 6};
+            // pivot_edge_indices = {0, 1, 2, 5};
+            Idx const free_indices_number = 3;
+            Idx const total_indices_number = 7;
+
+            std::vector<IntS> dfs_data = {1, 1, 1, -1, -1, -1, -1, -1, 1, -1};
+            std::vector<Idx> dfs_row = {0, 0, 1, 1, 2, 2, 3, 4, 5, 6};
+            std::vector<Idx> dfs_col = {0, 2, 1, 2, 0, 1, 0, 1, 2, 2};
+
+            auto solution_set = generate_solution_set(dfs_data, dfs_row, dfs_col, Idx{7}, Idx{3});
+            solution_set.extended_rhs = {{0, 0}, {1, 1}, {-2, -2}, {0, 0}, {0, 0}, {-0, -0}, {0, 0}};
+
+            std::vector<std::vector<DoubleComplex>> const projection_system =
+                set_projection_system(free_indices_number, total_indices_number, solution_set);
+
+            std::vector<std::vector<DoubleComplex>> test_system = {{{3, 0}, {1, 0}, {1, 0}, {2, 2}},
+                                                                   {{1, 0}, {3, 0}, {-1, 0}, {3, 3}},
+                                                                   {{1, 0}, {-1, 0}, {4, 0}, {-1, -1}}};
+
+            CHECK(projection_system == test_system);
+        }
+
+        SUBCASE("Four edges, four nodes, two real loads") {
+            // result.free_edge_indices = {3};
+            // result.pivot_edge_indices = {0, 1, 2};
+            Idx const free_indices_number = 1;
+            Idx const total_indices_number = 4;
+
+            std::vector<IntS> dfs_data = {1, 1, -1};
+            std::vector<Idx> dfs_row = {1, 2, 3};
+            std::vector<Idx> dfs_col = {0, 0, 0};
+            SolutionSet solution_set = generate_solution_set(dfs_data, dfs_row, dfs_col, Idx{4}, Idx{1});
+            solution_set.extended_rhs = {{1, 0}, {-1, -0}, {-1, -0}, {0, 0}};
+
+            std::vector<std::vector<DoubleComplex>> const projection_system =
+                set_projection_system(free_indices_number, total_indices_number, solution_set);
+
+            std::vector<std::vector<DoubleComplex>> test_system = {{{3, 0}, {-2, 0}}};
+
+            CHECK(projection_system == test_system);
+        }
+    }
 }
 } // namespace power_grid_model::link_solver
