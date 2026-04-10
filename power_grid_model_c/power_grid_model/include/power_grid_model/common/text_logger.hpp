@@ -33,7 +33,7 @@ class TextLogger : public Logger {
     FlushHandler flush_handler_;
 
   public:
-    TextLogger() {};
+    TextLogger() = default;
     TextLogger(FlushHandler flush_handler) : flush_handler_{std::move(flush_handler)} {}
 
     TextLogger(TextLogger const&) = delete;

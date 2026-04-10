@@ -13,6 +13,7 @@
 #include <concepts>
 #include <format>
 #include <functional>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -28,6 +29,13 @@ class RuntimeFlushException : public std::runtime_error {
 
 constexpr Idx one_thread = Idx{1};
 constexpr Idx arbitrary_n_threads = Idx{7};
+
+constexpr std::string msg_other{"other"};
+constexpr std::string msg_after_move{"after move"};
+constexpr std::string msg_flush_failed{"flush failed"};
+constexpr std::string msg_before_flush{"before flush"};
+constexpr std::string msg_extra_log_one{"extra log 1"};
+constexpr std::string msg_extra_log_two{"extra log 2"};
 
 void logger_helper(TextLogger& logger) {
     using enum LogEvent;
@@ -77,6 +85,7 @@ void run_parallel_jobs(Idx n_threads, MultiThreadedTextLogger& logger, JobFn&& j
 } // namespace
 
 TEST_CASE("Test TextLogger") {
+    using enum LogEvent;
     SUBCASE("No flush-handler") {
         TextLogger txt_logger{};
 
@@ -148,8 +157,6 @@ TEST_CASE("Test TextLogger") {
         }
 
         SUBCASE("Merge into non-empty-different TextLogger") {
-            using enum LogEvent;
-
             logger_helper(txt_logger);
             auto report = txt_logger.report();
             report_checker_helper(report);
@@ -157,9 +164,9 @@ TEST_CASE("Test TextLogger") {
             TextLogger other_txt_logger{};
             auto other_report = other_txt_logger.report();
             CHECK(other_report.empty());
-            other_txt_logger.log("other");
+            other_txt_logger.log(msg_other);
             other_report = other_txt_logger.report();
-            CHECK(other_report.find(std::format("ns] Tag:{}: {}\n", std::to_underlying(unknown), "other")) !=
+            CHECK(other_report.find(std::format("ns] Tag:{}: {}\n", std::to_underlying(unknown), msg_other)) !=
                   std::string_view::npos);
 
             txt_logger.merge_into(other_txt_logger);
@@ -167,50 +174,70 @@ TEST_CASE("Test TextLogger") {
             // original logger should be kept the same
             report_checker_helper(report);
             other_report = other_txt_logger.report();
-            CHECK(other_report.find(std::format("ns] Tag:{}: {}\n", std::to_underlying(unknown), "other")) !=
+            CHECK(other_report.find(std::format("ns] Tag:{}: {}\n", std::to_underlying(unknown), msg_other)) !=
                   std::string_view::npos);
             report_checker_helper(other_report);
         }
 
         SUBCASE("Destructor") {
             // destructor should not throw without handler
-            {
+            CHECK_NOTHROW({
                 TextLogger scopped_txt_logger{};
                 logger_helper(scopped_txt_logger);
-            }
+            });
         }
 
-        SUBCASE("Lazy vs eager logging") {
-            // TODO(figueroa1395): I'm not sure if this is worth testing at the moment
-            // as the difference is not really apparent right now, but this is an enabler for extension
-            auto call_count = Idx{0};
-            auto expensive = [&call_count]() {
-                ++call_count;
-                return "expensive";
-            };
+        SUBCASE("Move constructor") {
+            logger_helper(txt_logger);
+            auto report = txt_logger.report();
+            report_checker_helper(report);
 
-            // lazy logging: expensive is not triggered
-            if (false) { // NOSONAR(S1763) //NOLINT - intentionally unreachable to test lazy evaluation is not triggered
-                txt_logger.log(expensive);
-            }
-            CHECK(call_count == 0);
+            // moved-to has the data
+            TextLogger other_txt_logger{std::move(txt_logger)};
+            auto other_report = other_txt_logger.report();
+            report_checker_helper(other_report);
 
-            // lazy logging: expensive is triggered when we want it to
-            if (true) {
-                txt_logger.log(expensive);
-            }
-            CHECK(call_count == 1);
+            // moved-from is valid but empty
+            report = txt_logger.report();
+            CHECK(report.empty());
+            CHECK_NOTHROW(txt_logger.log(unknown, msg_after_move));
 
-            // eager logging: expensive is triggered immediately
-            txt_logger.log(expensive());
-            CHECK(call_count == 2);
+            // moved-to didn't get any additional data after move
+            other_report = other_txt_logger.report();
+            CHECK(other_report.find(msg_after_move) == std::string::npos);
+        }
+
+        SUBCASE("Move assignment") {
+            logger_helper(txt_logger);
+            auto report = txt_logger.report();
+            report_checker_helper(report);
+
+            TextLogger other_txt_logger{};
+            auto other_report = other_txt_logger.report();
+            CHECK(other_report.empty());
+
+            // moved-to has the data
+            other_txt_logger = std::move(txt_logger);
+            other_report = other_txt_logger.report();
+            report_checker_helper(other_report);
+
+            // moved-from is valid but empty
+            report = txt_logger.report();
+            CHECK(report.empty());
+            CHECK_NOTHROW(txt_logger.log(unknown, msg_after_move));
+
+            // moved-to didn't get any additional data after move
+            other_report = other_txt_logger.report();
+            CHECK(other_report.find(msg_after_move) == std::string::npos);
         }
     }
 
     SUBCASE("With flush-handler") {
         auto flushed_report = std::string{};
         auto flush_handler = [&flushed_report](std::string_view buffer) { flushed_report = buffer; };
-        auto throwing_flush_handler = [](std::string_view /*buffer*/) { throw RuntimeFlushException("flush failed"); };
+        auto throwing_flush_handler = [](std::string_view /*buffer*/) {
+            throw RuntimeFlushException(msg_flush_failed);
+        };
 
         SUBCASE("Flush report with handler that doesn't throw") {
             TextLogger txt_logger{flush_handler};
@@ -240,29 +267,119 @@ TEST_CASE("Test TextLogger") {
         }
 
         SUBCASE("Destructor with handler that doesn't throw") {
-            {
+
+            CHECK_NOTHROW({
                 TextLogger scopped_txt_logger{flush_handler};
                 CHECK(flushed_report.empty());
                 logger_helper(scopped_txt_logger);
                 report_checker_helper(scopped_txt_logger.report());
-            }
+            });
             // after destruction, flushed report should have the contents of the original report
             report_checker_helper(flushed_report);
         }
 
         SUBCASE("Destructor with handler that throws") {
             // throwing destructor should be handled gracefully, report cleared and flushed report kept empty
-            {
+            CHECK_NOTHROW({
                 TextLogger scopped_txt_logger{throwing_flush_handler};
                 CHECK(flushed_report.empty());
                 logger_helper(scopped_txt_logger);
                 report_checker_helper(scopped_txt_logger.report());
-            }
+            });
             CHECK(flushed_report.empty());
+        }
+
+        SUBCASE("Move constructor with handler") {
+            // we don't care if the handler throws or not for move semantics
+            TextLogger txt_logger{flush_handler};
+            logger_helper(txt_logger);
+            auto report = txt_logger.report();
+            report_checker_helper(report);
+
+            // moved-to has the data and the handler
+            TextLogger other_txt_logger{std::move(txt_logger)};
+            auto other_report = other_txt_logger.report();
+            report_checker_helper(other_report);
+            CHECK_NOTHROW(other_txt_logger.flush());
+            report_checker_helper(flushed_report);
+            other_report = other_txt_logger.report();
+            CHECK(other_report.empty()); // report should be cleared after flush
+
+            // moved-from is valid but empty and has no handler
+            report = txt_logger.report();
+            CHECK(report.empty());
+            CHECK_NOTHROW(txt_logger.log(unknown, msg_after_move));
+            report = txt_logger.report();
+            CHECK(report.find(msg_after_move) != std::string::npos);
+
+            // moved-to didn't get any additional data after move
+            other_report = other_txt_logger.report();
+            CHECK(other_report.find(msg_after_move) == std::string::npos);
+
+            // flushing moved-from should still work and clear its report
+            // but not affect moved-to
+            other_report = other_txt_logger.report();
+            CHECK(other_report.empty());
+            other_txt_logger.log(unknown, msg_before_flush);
+            other_report = other_txt_logger.report();
+            CHECK(other_report.find(msg_before_flush) != std::string::npos);
+            CHECK_NOTHROW(txt_logger.flush());
+            report = txt_logger.report();
+            CHECK(report.empty());
+            other_report = other_txt_logger.report();
+            CHECK(other_report.find(msg_after_move) == std::string::npos);
+            CHECK(other_report.find(msg_before_flush) != std::string_view::npos);
+        }
+
+        SUBCASE("Move assignment with handler") {
+            // we don't care if the handler throws or not for move semantics
+            TextLogger txt_logger{flush_handler};
+            logger_helper(txt_logger);
+            auto report = txt_logger.report();
+            report_checker_helper(report);
+
+            TextLogger other_txt_logger{};
+            auto other_report = other_txt_logger.report();
+            CHECK(other_report.empty());
+
+            // moved-to has the data and the handler
+            other_txt_logger = std::move(txt_logger);
+            other_report = other_txt_logger.report();
+            report_checker_helper(other_report);
+            CHECK_NOTHROW(other_txt_logger.flush());
+            report_checker_helper(flushed_report);
+            other_report = other_txt_logger.report();
+            CHECK(other_report.empty()); // report should be cleared after flush
+
+            // moved-from is valid but empty and has no handler
+            report = txt_logger.report();
+            CHECK(report.empty());
+            CHECK_NOTHROW(txt_logger.log(unknown, msg_after_move));
+            report = txt_logger.report();
+            CHECK(report.find(msg_after_move) != std::string_view::npos);
+
+            // moved-to didn't get any additional data after move
+            other_report = other_txt_logger.report();
+            CHECK(other_report.find(msg_after_move) == std::string_view::npos);
+
+            // flushing moved-from should still work and clear its report
+            // but not affect moved-to
+            other_report = other_txt_logger.report();
+            CHECK(other_report.empty());
+            other_txt_logger.log(unknown, msg_before_flush);
+            other_report = other_txt_logger.report();
+            CHECK(other_report.find(msg_before_flush) != std::string_view::npos);
+            CHECK_NOTHROW(txt_logger.flush());
+            report = txt_logger.report();
+            CHECK(report.empty());
+            other_report = other_txt_logger.report();
+            CHECK(other_report.find(msg_after_move) == std::string_view::npos);
+            CHECK(other_report.find(msg_before_flush) != std::string_view::npos);
         }
     }
 }
 TEST_CASE("Test MultiThreadedTextLogger") {
+    using enum LogEvent;
     auto single_thread_job = [](Idx n_threads, MultiThreadedTextLogger& multi_threaded_logger) {
         // MultiThreadedTextLogger.create_child() is tested here
         auto thread_logger_ptr = multi_threaded_logger.create_child();
@@ -285,7 +402,6 @@ TEST_CASE("Test MultiThreadedTextLogger") {
         }
 
         SUBCASE("Direct logging") {
-            using enum LogEvent;
             multi_threaded_logger.log(total, "");
             multi_threaded_logger.log(build_model, 1.0);
             multi_threaded_logger.log(total_single_calculation_in_thread, Idx{2});
@@ -313,21 +429,20 @@ TEST_CASE("Test MultiThreadedTextLogger") {
     }
 
     SUBCASE("Getters of underlying TextLogger") {
-        using enum LogEvent;
         MultiThreadedTextLogger multi_threaded_logger{};
         auto const n_threads = static_cast<Idx>(std::thread::hardware_concurrency());
         run_parallel_jobs(n_threads, multi_threaded_logger, single_thread_job);
 
         SUBCASE("Log and report - Non-const getter") {
             auto& underlying_logger = multi_threaded_logger.get();
-            underlying_logger.log([]() { return "extra log 1"; });
-            underlying_logger.log(unknown, "extra log 2");
+            underlying_logger.log([]() { return msg_extra_log_one; });
+            underlying_logger.log(unknown, msg_extra_log_two);
 
             auto report = underlying_logger.report();
             multi_threaded_report_checker_helper(n_threads, report);
-            CHECK(report.find(std::format("ns] Tag:{}: {}\n", std::to_underlying(unknown), "extra log 1")) !=
+            CHECK(report.find(std::format("ns] Tag:{}: {}\n", std::to_underlying(unknown), msg_extra_log_one)) !=
                   std::string_view::npos);
-            CHECK(report.find(std::format("ns] Tag:{}: {}\n", std::to_underlying(unknown), "extra log 2")) !=
+            CHECK(report.find(std::format("ns] Tag:{}: {}\n", std::to_underlying(unknown), msg_extra_log_two)) !=
                   std::string_view::npos);
         }
 
@@ -375,8 +490,6 @@ TEST_CASE("Test MultiThreadedTextLogger") {
             report = multi_threaded_logger.report();
             CHECK(report.empty()); // report should be cleared after flush
         }
-
-        // TODO(figueroa1395): add tests with flush handler. this is probably currently broken (not thread safe, etc.)
     }
 }
 } // namespace power_grid_model::common::logging
