@@ -122,11 +122,10 @@ class JobAdapterMock : public JobInterface {
         ++(counter_->winddown_calls);
     }
     void maybe_await(CalculationPhase calculation_phase) const {
-        await_call_.and_then(
-            [scenario_idx = scenario_idx_, calculation_phase](auto const& func) -> std::optional<Idx> {
-                func(scenario_idx, calculation_phase);
-                return std::nullopt;
-            });
+        await_call_.and_then([scenario_idx = scenario_idx_, calculation_phase](auto const& func) -> std::optional<Idx> {
+            func(scenario_idx, calculation_phase);
+            return std::nullopt;
+        });
     }
 };
 
@@ -483,8 +482,9 @@ TEST_CASE("Test job dispatch logic") {
     SUBCASE("Test cancel thread") {
         constexpr auto n_phases_per_scenario = 3; // setup, calculate, winddown
 
-        constexpr auto cancel_delay = std::chrono::milliseconds{50}; // arbitrary delay to ensure the cancel signal is sent
-                                            // after the worker has started but before it finishes
+        constexpr auto cancel_delay =
+            std::chrono::milliseconds{50}; // arbitrary delay to ensure the cancel signal is sent
+                                           // after the worker has started but before it finishes
         constexpr auto delay_per_phase =
             2 * cancel_delay; // arbitrary delay to ensure the cancel signal is sent while the worker is running
         constexpr auto delay_per_scenario = delay_per_phase * n_phases_per_scenario;
@@ -548,19 +548,19 @@ TEST_CASE("Test job dispatch logic") {
                     std::atomic<bool> cancelling_phase_started = false;
                     std::atomic<bool> stop_requested = false;
 
-                    auto const check_in_expected_range =
-                        [n_threads, cancel_scenario = cancel_during_scenario,
-                         cancel_phase = cancel_during_phase](Idx count, CalculationPhase phase) {
-                            auto const this_thread_scenarios = n_scenarios / n_threads;
-                            auto const other_thread_scenarios = n_scenarios - this_thread_scenarios;
-                            auto const this_thread_completed_scenarios = std::max(Idx{0}, cancel_scenario) / n_threads;
-                            auto const this_thread_completed_phase = (is_strictly_after(phase, cancel_phase) ? 0 : 1);
-                            auto const lower_bound = this_thread_completed_scenarios + this_thread_completed_phase;
-                            auto const upper_bound = lower_bound + other_thread_scenarios;
-                            REQUIRE(lower_bound <= upper_bound);
-                            CHECK(count >= lower_bound);
-                            CHECK(count <= upper_bound);
-                        };
+                    auto const check_in_expected_range = [n_threads, cancel_scenario = cancel_during_scenario,
+                                                          cancel_phase = cancel_during_phase](Idx count,
+                                                                                              CalculationPhase phase) {
+                        auto const this_thread_scenarios = n_scenarios / n_threads;
+                        auto const other_thread_scenarios = n_scenarios - this_thread_scenarios;
+                        auto const this_thread_completed_scenarios = std::max(Idx{0}, cancel_scenario) / n_threads;
+                        auto const this_thread_completed_phase = (is_strictly_after(phase, cancel_phase) ? 0 : 1);
+                        auto const lower_bound = this_thread_completed_scenarios + this_thread_completed_phase;
+                        auto const upper_bound = lower_bound + other_thread_scenarios;
+                        REQUIRE(lower_bound <= upper_bound);
+                        CHECK(count >= lower_bound);
+                        CHECK(count <= upper_bound);
+                    };
 
                     auto adapter = JobAdapterMock{
                         counter, [&cancelling_phase_started, &stop_requested, cancel_scenario = cancel_during_scenario,
