@@ -472,6 +472,12 @@ TEST_CASE("Test MultiThreadedTextLogger") {
     }
 
     SUBCASE("Flush related tests") {
+        auto flushed_report = std::string{};
+        auto flush_handler = [&flushed_report](std::string_view buffer) { flushed_report = buffer; };
+        auto throwing_flush_handler = [](std::string_view /*buffer*/) {
+            throw RuntimeFlushException(msg_flush_failed);
+        };
+
         SUBCASE("Flush report - No handler") {
             MultiThreadedTextLogger multi_threaded_logger{};
             auto report = multi_threaded_logger.report();
@@ -489,6 +495,70 @@ TEST_CASE("Test MultiThreadedTextLogger") {
             multi_threaded_logger.flush();
             report = multi_threaded_logger.report();
             CHECK(report.empty()); // report should be cleared after flush
+        }
+
+        SUBCASE("Flush report - With handler that doesn't throw") {
+            MultiThreadedTextLogger multi_threaded_logger{flush_handler};
+            auto report = multi_threaded_logger.report();
+            CHECK(report.empty());
+
+            run_parallel_jobs(arbitrary_n_threads, multi_threaded_logger, single_thread_job);
+            report = multi_threaded_logger.report();
+            multi_threaded_report_checker_helper(arbitrary_n_threads, report);
+
+            multi_threaded_logger.flush();
+            report = multi_threaded_logger.report();
+            CHECK(report.empty()); // report should be cleared after flush
+            multi_threaded_report_checker_helper(
+                arbitrary_n_threads, flushed_report); // flushed report should have the contents of the original report
+        }
+
+        SUBCASE("Flush report - With handler that throws") {
+            MultiThreadedTextLogger multi_threaded_logger{throwing_flush_handler};
+
+            run_parallel_jobs(arbitrary_n_threads, multi_threaded_logger, single_thread_job);
+            auto report = multi_threaded_logger.report();
+            multi_threaded_report_checker_helper(arbitrary_n_threads, report);
+
+            // flushing should throw and report should be cleared even if handler throws
+            CHECK_THROWS_AS(multi_threaded_logger.flush(), RuntimeFlushException);
+            report = multi_threaded_logger.report();
+            CHECK(report.empty()); // report should be cleared even if handler throws
+        }
+
+        SUBCASE("Children can't flush with handler") {
+            MultiThreadedTextLogger multi_threaded_logger{flush_handler};
+            auto report = multi_threaded_logger.report();
+            CHECK(report.empty());
+            multi_threaded_logger.log(unknown, msg_extra_log_one);
+            report = multi_threaded_logger.report();
+            CHECK(report.find(std::format("ns] Tag:{}: {}\n", std::to_underlying(unknown), msg_extra_log_one)) !=
+                  std::string_view::npos);
+
+            auto child_logger_ptr = multi_threaded_logger.create_child();
+            auto& child_logger = dynamic_cast<TextLogger&>(*child_logger_ptr);
+            auto child_report = child_logger.report();
+            CHECK(child_report.empty());
+            child_logger.log(msg_extra_log_two);
+            child_report = child_logger.report();
+            CHECK(child_report.find(std::format("ns] Tag:{}: {}\n", std::to_underlying(unknown), msg_extra_log_two)) !=
+                  std::string_view::npos);
+
+            report = multi_threaded_logger.report();
+            CHECK(report.find(std::format("ns] Tag:{}: {}\n", std::to_underlying(unknown), msg_extra_log_one)) !=
+                  std::string_view::npos); // parent report should not be affected by child logs
+
+            // child loggers should not be able to flush with a flush handler, but instead just clear their report and
+            // not affect the parent's report or the flushed report
+            CHECK_NOTHROW(child_logger.flush());
+            child_report = child_logger.report();
+            CHECK(child_report.empty());
+            CHECK(flushed_report.empty());
+            report = multi_threaded_logger.report();
+            CHECK(report.find(std::format("ns] Tag:{}: {}\n", std::to_underlying(unknown), msg_extra_log_one)) !=
+                  std::string_view::npos);
+            CHECK(report.find(std::format("ns] Tag:{}: {}\n", std::to_underlying(unknown), msg_extra_log_two)) ==
+                  std::string_view::npos);
         }
     }
 }
