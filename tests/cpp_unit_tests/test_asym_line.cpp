@@ -54,18 +54,6 @@ void execute_subcases(const AsymLineInput& input, const ComplexTensor<asymmetric
     ComplexTensor<asymmetric_t> const ytt = y_series + 0.5 * y_shunt;
     ComplexTensor<asymmetric_t> const branch_shunt = 0.5 * y_shunt + inv(inv(y_series) + 2.0 * inv(y_shunt));
 
-    ComplexValue<asymmetric_t> const uaf{1.0};
-    ComplexValue<asymmetric_t> const uat{0.9};
-
-    // Symmetric results
-
-    // Asymmetric results
-    ComplexValue<asymmetric_t> const i_f = dot(ytt, uaf) + dot(-y_series, uat);
-    ComplexValue<asymmetric_t> const i_t = dot(-y_series, uaf) + dot(ytt, uat);
-
-    ComplexValue<asymmetric_t> const s_f_asym = uaf * conj(i_f);
-    ComplexValue<asymmetric_t> const s_t_asym = uat * conj(i_t);
-
     // Short circuit results
     DoubleComplex const if_sc{1.0, 1.0};
     DoubleComplex const it_sc{2.0, 2.0 * sqrt3};
