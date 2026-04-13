@@ -62,19 +62,9 @@ void execute_subcases(const AsymLineInput& input, const ComplexTensor<asymmetric
     // Asymmetric results
     ComplexValue<asymmetric_t> const i_f = dot(ytt, uaf) + dot(-y_series, uat);
     ComplexValue<asymmetric_t> const i_t = dot(-y_series, uaf) + dot(ytt, uat);
-    ComplexValue<asymmetric_t> const i3pf = base_i * cabs(i_f);
-    ComplexValue<asymmetric_t> const i3pt = base_i * cabs(i_t);
 
     ComplexValue<asymmetric_t> const s_f_asym = uaf * conj(i_f);
     ComplexValue<asymmetric_t> const s_t_asym = uat * conj(i_t);
-
-    RealValue<asymmetric_t> const i_from_asym = base_i * cabs(i_f);
-    RealValue<asymmetric_t> const i_to_asym = base_i * cabs(i_t);
-
-    ComplexValue<asymmetric_t> const p3pf = base_power<asymmetric_t> * real(s_f_asym);
-    ComplexValue<asymmetric_t> const p3pt = base_power<asymmetric_t> * real(s_t_asym);
-    ComplexValue<asymmetric_t> const q3pf = base_power<asymmetric_t> * imag(s_f_asym);
-    ComplexValue<asymmetric_t> const q3pt = base_power<asymmetric_t> * imag(s_t_asym);
 
     // Short circuit results
     DoubleComplex const if_sc{1.0, 1.0};
