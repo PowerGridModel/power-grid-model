@@ -7,7 +7,6 @@
 
 #include <power_grid_model/auxiliary/input.hpp>
 #include <power_grid_model/auxiliary/output.hpp>
-#include <power_grid_model/auxiliary/update.hpp>
 #include <power_grid_model/calculation_parameters.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/enum.hpp>
@@ -19,7 +18,6 @@
 #include <complex>
 #include <concepts>
 #include <cstddef>
-#include <numbers>
 
 TYPE_TO_STRING_AS("SymGenerator", power_grid_model::SymGenerator);
 TYPE_TO_STRING_AS("AsymGenerator", power_grid_model::AsymGenerator);
@@ -28,7 +26,6 @@ TYPE_TO_STRING_AS("AsymLoad", power_grid_model::AsymLoad);
 
 namespace power_grid_model {
 namespace {
-using std::numbers::sqrt2;
 
 void check_nan_preserving_equality(std::floating_point auto actual, std::floating_point auto expected) {
     if (is_nan(expected)) {

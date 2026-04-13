@@ -17,7 +17,6 @@
 
 #include <doctest/doctest.h>
 
-#include <algorithm>
 #include <complex>
 
 namespace power_grid_model {
