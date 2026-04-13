@@ -185,7 +185,6 @@ TEST_CASE("Test line") {
         CHECK(output.i_to_angle(1) == 0.0);
     }
 
-
     SUBCASE("Asym short circuit results") {
         BranchShortCircuitOutput asym_output = branch.get_sc_output(if_sc_asym, it_sc_asym);
         CHECK(asym_output.id == 1);

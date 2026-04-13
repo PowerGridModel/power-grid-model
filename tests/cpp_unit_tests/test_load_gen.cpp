@@ -173,7 +173,6 @@ TEST_CASE("Test load generator") {
         CHECK(reverse_result.pf == doctest::Approx(3.0 / cabs(3.0 + 4.0i)));
     }
 
-
     SUBCASE("Test asymmetric generator with constant addmittance; s, i as input") {
         GenericLoadGen const& load_gen = asym_gen_y;
         // sym result
