@@ -566,3 +566,41 @@ def test_irrelevant_components__short_circuit(input_data__irrelevant_components_
     assert CT.transformer_tap_regulator not in result
     assert CT.sym_voltage_sensor not in result
     assert CT.sym_current_sensor not in result
+
+
+def test_calculation_termination():
+    node = initialize_array(DT.input, CT.node, 1)
+    node[AT.id] = 0
+    node[AT.u_rated] = 100.0
+
+    source = initialize_array(DT.input, CT.source, 1)
+    source[AT.id] = 1
+    source[AT.node] = 0
+    source[AT.status] = 1
+    source[AT.u_ref] = 1.0
+    source[AT.sk] = 1000.0
+    source[AT.rx_ratio] = 0.0
+
+    sym_load = initialize_array(DT.input, CT.sym_load, 1)
+    sym_load[AT.id] = 2
+    sym_load[AT.node] = 0
+    sym_load[AT.status] = 1
+    sym_load[AT.type] = 2
+    sym_load[AT.p_specified] = 0.0
+    sym_load[AT.q_specified] = 500.0
+
+    input_data = {
+        CT.node: node,
+        CT.source: source,
+        CT.sym_load: sym_load,
+    }
+
+    source = initialize_array(DT.update, CT.source, (10000_000, 1))
+    source[AT.id] = 2
+    source[AT.u_ref] = 1
+    source[AT.u_ref][0] = 1.1
+
+    gigantic_update_data = {CT.source: source}
+
+    model = PowerGridModel(input_data)
+    result = model.calculate_power_flow(update_data=gigantic_update_data)

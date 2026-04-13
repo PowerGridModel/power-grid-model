@@ -12,19 +12,24 @@
 #include "power_grid_model_c/basics.h"
 #include "power_grid_model_c/model.h"
 
+#include <power_grid_model/auxiliary/dataset.hpp>
+#include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/counting_iterator.hpp>
+#include <power_grid_model/common/enum.hpp>
+#include <power_grid_model/common/exception.hpp>
+#include <power_grid_model/common/stop_token.hpp>
+#include <power_grid_model/main_model.hpp>
+#include <power_grid_model/main_model_fwd.hpp>
+
 #include <algorithm>
 #include <cassert>
 #include <concepts>
 #include <exception>
-#include <power_grid_model/auxiliary/dataset.hpp>
-#include <power_grid_model/common/common.hpp>
-#include <power_grid_model/common/enum.hpp>
-#include <power_grid_model/common/exception.hpp>
-#include <power_grid_model/main_model.hpp>
-#include <power_grid_model/main_model_fwd.hpp>
 #include <ranges>
+#include <stop_token>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace {
 using namespace power_grid_model;
@@ -165,7 +170,8 @@ class BadCalculationRequest : public PowerGridError {
 };
 
 void calculate_single_batch_dimension_impl(MainModel& model, MainModel::Options const& options,
-                                           MutableDataset const& output_dataset, ConstDataset const* batch_dataset) {
+                                           MutableDataset const& output_dataset, ConstDataset const* batch_dataset,
+                                           std::stop_token const& stop_token) {
     // check dataset integrity
     if ((batch_dataset != nullptr) && (!batch_dataset->is_batch() || !output_dataset.is_batch())) {
         throw BadCalculationRequest{
@@ -176,7 +182,7 @@ void calculate_single_batch_dimension_impl(MainModel& model, MainModel::Options 
                                                       ? safe_ptr_get(batch_dataset)
                                                       : ConstDataset{false, 1, "update", output_dataset.meta_data()};
 
-    model.calculate(options, output_dataset, exported_update_dataset);
+    model.calculate(options, output_dataset, exported_update_dataset, stop_token);
 }
 
 struct BatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandler {
@@ -265,10 +271,13 @@ Idx get_stride_size(ConstDataset const* batch_dataset) {
 
 // run calculation
 void calculate_multi_dimensional_impl(MainModel& model, MainModel::Options const& options,
-                                      MutableDataset const& output_dataset, ConstDataset const* batch_dataset) {
+                                      MutableDataset const& output_dataset, ConstDataset const* batch_dataset,
+                                      std::stop_token const& stop_token) {
+    stop_if_requested(stop_token);
+
     // for dimension < 2 (one-time or 1D batch), call implementation directly
     if (auto const batch_dimension = get_batch_dimension(batch_dataset); batch_dimension < 2) {
-        calculate_single_batch_dimension_impl(model, options, output_dataset, batch_dataset);
+        calculate_single_batch_dimension_impl(model, options, output_dataset, batch_dataset, stop_token);
         return;
     }
 
@@ -282,10 +291,12 @@ void calculate_multi_dimensional_impl(MainModel& model, MainModel::Options const
 
     // loop over the first dimension batch
     for (Idx i = 0; i < first_batch_size; ++i) {
+        stop_if_requested(stop_token);
+
         // a new handle
         call_with_catch(
             &local_handle,
-            [&model, &options, &output_dataset, &safe_batch_dataset, i, stride_size] {
+            [&model, &options, &output_dataset, &safe_batch_dataset, stop_token = stop_token, i, stride_size] {
                 // create sliced datasets for the rest of dimensions
                 ConstDataset const single_update_dataset = safe_batch_dataset.get_individual_scenario(i);
                 MutableDataset const sliced_output_dataset =
@@ -299,10 +310,12 @@ void calculate_multi_dimensional_impl(MainModel& model, MainModel::Options const
 
                 // recursive call
                 calculate_multi_dimensional_impl(local_model, options, sliced_output_dataset,
-                                                 safe_batch_dataset.get_next_cartesian_product_dimension());
+                                                 safe_batch_dataset.get_next_cartesian_product_dimension(), stop_token);
             },
             MDBatchExceptionHandler{i * stride_size, stride_size});
     }
+
+    stop_if_requested(stop_token);
 
     if (local_handle.err_code != PGM_no_error) {
         throw BatchCalculationError{std::move(local_handle.err_msg), std::move(local_handle.failed_scenarios),
@@ -311,7 +324,7 @@ void calculate_multi_dimensional_impl(MainModel& model, MainModel::Options const
 }
 
 void calculate_impl(MainModel& model, PGM_Options const& options, MutableDataset const& output_dataset,
-                    ConstDataset const* batch_dataset) {
+                    ConstDataset const* batch_dataset, std::stop_token const& stop_token) {
     check_calculate_valid_options(options);
     auto const extracted_options = extract_calculation_options(options);
 
@@ -319,7 +332,7 @@ void calculate_impl(MainModel& model, PGM_Options const& options, MutableDataset
         check_no_experimental_features_used(model, extracted_options, batch_dataset);
     }
 
-    calculate_multi_dimensional_impl(model, extracted_options, output_dataset, batch_dataset);
+    calculate_multi_dimensional_impl(model, extracted_options, output_dataset, batch_dataset, stop_token);
 }
 
 } // namespace
@@ -329,10 +342,10 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
                    PGM_MutableDataset const* output_dataset, PGM_ConstDataset const* batch_dataset) {
     call_with_catch(
         handle,
-        [model, opt, output_dataset, batch_dataset] {
+        [model, opt, output_dataset, batch_dataset](std::stop_token const& stop_token) {
             calculate_impl(safe_ptr_get(cast_to_cpp(model)), safe_ptr_get(opt),
                            safe_ptr_get(cast_to_cpp(output_dataset)),
-                           safe_ptr_maybe_nullptr(cast_to_cpp(batch_dataset)));
+                           safe_ptr_maybe_nullptr(cast_to_cpp(batch_dataset)), stop_token);
         },
         batch_exception_handler);
 }

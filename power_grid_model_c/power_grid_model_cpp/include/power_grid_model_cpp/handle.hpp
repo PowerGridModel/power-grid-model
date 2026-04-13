@@ -54,6 +54,12 @@ class PowerGridBatchError : public PowerGridError {
     std::vector<FailedScenario> failed_scenarios_;
 };
 
+class PowerGridOperationCanceled : public PowerGridError {
+  public:
+    using PowerGridError::PowerGridError;
+    Idx error_code() const noexcept override { return PGM_operation_canceled; }
+};
+
 class Handle {
   public:
     RawHandle* get() const { return handle_.get(); }
@@ -87,11 +93,17 @@ class Handle {
             clear_error();
             throw PowerGridSerializationError{error_message};
         case PGM_operation_canceled:
+            clear_error();
+            throw PowerGridOperationCanceled{error_message};
         default:
             clear_error();
             throw PowerGridError{error_message};
         }
     }
+
+    bool stop_requested() const { return PGM_stop_requested(get()) != 0; }
+    void request_stop() const { PGM_request_stop(get()); }
+    void clear_stop_requests() const { PGM_clear_stop_requests(get()); }
 
     template <typename Func, typename... Args> auto call_with(Func&& func, Args&&... args) const {
         if constexpr (std::is_void_v<decltype(std::forward<Func>(func)(get(), std::forward<Args>(args)...))>) {

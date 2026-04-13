@@ -14,8 +14,14 @@
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/exception.hpp>
 
+#include <concepts>
 #include <exception>
+#include <stop_token>
+#include <string>
 #include <string_view>
+#include <type_traits>
+#include <utility>
+#include <vector>
 
 // context handle
 struct PGM_Handle {
@@ -25,6 +31,7 @@ struct PGM_Handle {
     std::vector<std::string> batch_errs;
     mutable std::vector<char const*> batch_errs_c_str;
     [[no_unique_address]] power_grid_model::BatchParameter batch_parameter;
+    std::stop_source stop_source;
 };
 
 namespace power_grid_model_c {
@@ -71,10 +78,10 @@ struct DefaultExceptionHandler {
 // The handle itself is inherently unsafe, as checking for safety would then raise, which in turn would require another
 // handle, etc. Therefore, only a nullptr check can be done here.
 template <class Functor, class ExceptionHandler = DefaultExceptionHandler>
-    requires std::invocable<Functor> && std::invocable<ExceptionHandler const&, PGM_Handle&>
+    requires(std::invocable<Functor, std::stop_token const&>) && std::invocable<ExceptionHandler const&, PGM_Handle&>
 inline auto call_with_catch(PGM_Handle* handle, Functor func, ExceptionHandler const& exception_handler = {}) noexcept(
-    noexcept(exception_handler(std::declval<PGM_Handle&>()))) -> std::invoke_result_t<Functor> {
-    using ReturnValueType = std::remove_cvref_t<std::invoke_result_t<Functor>>;
+    noexcept(exception_handler(std::declval<PGM_Handle&>()))) -> std::invoke_result_t<Functor, std::stop_token const&> {
+    using ReturnValueType = std::remove_cvref_t<std::invoke_result_t<Functor, std::stop_token const&>>;
 
     static constexpr std::conditional_t<std::is_void_v<ReturnValueType>, int, ReturnValueType> empty{};
 
@@ -82,7 +89,9 @@ inline auto call_with_catch(PGM_Handle* handle, Functor func, ExceptionHandler c
         if (handle != nullptr) {
             clear_error(handle);
         }
-        return func();
+        if constexpr (std::invocable<Functor, std::stop_token const&>) {
+            return func(handle != nullptr ? handle->stop_source.get_token() : std::stop_token{});
+        }
     } catch (...) { // NOSONAR(S2738) // Lippincott pattern handles all exceptions if the handle is provided
         if (handle != nullptr) {
             exception_handler(*handle);
@@ -90,4 +99,12 @@ inline auto call_with_catch(PGM_Handle* handle, Functor func, ExceptionHandler c
         return static_cast<ReturnValueType>(empty);
     }
 }
+
+template <class Functor, class ExceptionHandler = DefaultExceptionHandler>
+    requires(std::invocable<Functor>) && std::invocable<ExceptionHandler const&, PGM_Handle&>
+inline auto call_with_catch(PGM_Handle* handle, Functor func, ExceptionHandler const& exception_handler = {}) noexcept(
+    noexcept(exception_handler(std::declval<PGM_Handle&>()))) -> std::invoke_result_t<Functor> {
+    return call_with_catch(handle, [func](std::stop_token const&) { return func(); }, exception_handler);
+}
+
 } // namespace power_grid_model_c

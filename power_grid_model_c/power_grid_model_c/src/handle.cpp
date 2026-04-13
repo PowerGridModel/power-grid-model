@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <iterator>
+#include <stop_token>
 
 namespace {
 using namespace power_grid_model;
@@ -52,3 +53,16 @@ char const** PGM_batch_errors(PGM_Handle const* handle) {
     return handle_ref.batch_errs_c_str.data();
 }
 void PGM_clear_error(PGM_Handle* handle) { clear_error(handle); }
+PGM_Idx PGM_stop_requested(PGM_Handle* handle) {
+    return handle != nullptr ? compile_time_safe_cast<PGM_Idx>(handle->stop_source.stop_requested()) : PGM_Idx{0};
+}
+void PGM_request_stop(PGM_Handle* handle) {
+    if (handle != nullptr) {
+        handle->stop_source.request_stop();
+    }
+}
+void PGM_clear_stop_requests(PGM_Handle* handle) {
+    if (handle != nullptr) {
+        handle->stop_source = std::stop_source{};
+    }
+}

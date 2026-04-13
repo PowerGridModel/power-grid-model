@@ -104,6 +104,50 @@ PGM_API char const** PGM_batch_errors(PGM_Handle const* handle);
  */
 PGM_API void PGM_clear_error(PGM_Handle* handle);
 
+/**
+ * @brief Get the stop state of the handle.
+ *
+ * Concurrent calls to PGM_stop_requested(), PGM_request_stop() and PGM_clear_stop_requests() are guaranteed to be
+ * atomic, but may still lead to unexpected behavior like ignored stop requests.
+ *
+ * The behavior is implementation-defined if the handle is NULL.
+ *
+ * @param handle The pointer to the handle.
+ * @return 1 if a stop has been requested, 0 otherwise.
+ */
+PGM_API PGM_Idx PGM_stop_requested(PGM_Handle* handle);
+
+/**
+ * @brief Request a stop for all existing and future operations using the handle.
+ *
+ * The request needs to be manually reset using PGM_clear_stop_requests().
+ *
+ * This is a cooperative mechanism to request the stop of some long-running operations, such as calculations. Contrary
+ * to other operations involving the same handle, this function is designed to be called from another thread.
+ *
+ * Concurrent calls to PGM_stop_requested(), PGM_request_stop() and PGM_clear_stop_requests() are guaranteed to be
+ * atomic, but may still lead to unexpected behavior like ignored stop requests.
+ *
+ * The behavior is implementation-defined if the handle is NULL.
+ *
+ * @param handle The pointer to the handle.
+ */
+PGM_API void PGM_request_stop(PGM_Handle* handle);
+
+/**
+ * @brief Clear the stop request for all existing and future operations using the handle.
+ *
+ * This function is designed to be called from the same thread as a long-running operation, such as calculations.
+ *
+ * Concurrent calls to PGM_stop_requested(), PGM_request_stop() and PGM_clear_stop_requests() are guaranteed to be
+ * atomic, but may still lead to unexpected behavior like ignored stop requests.
+ *
+ * The behavior is implementation-defined if the handle is NULL.
+ *
+ * @param handle The pointer to the handle.
+ */
+PGM_API void PGM_clear_stop_requests(PGM_Handle* handle);
+
 #ifdef __cplusplus
 }
 #endif

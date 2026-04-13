@@ -143,16 +143,20 @@ def _load_core() -> CDLL:
 _CDLL: CDLL = _load_core()
 
 
-def make_c_binding(func: Callable):
+def _make_c_binding_impl(func: Callable, *, interruptible: bool = False) -> Callable:
     """
     Descriptor to make the function to bind to C
 
     Args:
         func: method object from PowerGridCore
+        interruptible: if True, run the C call in a worker thread so the main
+            thread remains free to handle signals (e.g. SIGINT/KeyboardInterrupt).
+            On KeyboardInterrupt, request_stop() is called to attempt an early-out
+            for the long-running C call. The original exception is re-raised after
+            the worker thread is finished.
 
     Returns:
         Binded function
-
     """
     name = func.__name__
     sig = signature(func)
@@ -184,14 +188,66 @@ def make_c_binding(func: Callable):
             else:
                 c_inputs.append(arg)
 
-        # call
-        res = getattr(_CDLL, f"PGM_{name}")(*c_inputs)
+        if not interruptible:
+            # call
+            res: c_restype = getattr(_CDLL, f"PGM_{name}")(*c_inputs)
+        else:
+            res: c_restype = c_restype() if c_restype is not None else None
+
+            # Run the long C call in a worker thread so the main thread stays
+            # free to receive signals. Polling with a short timeout lets
+            # Python process pending signals between each wake-up.
+            def worker() -> None:
+                nonlocal res
+                res = getattr(_CDLL, f"PGM_{name}")(*c_inputs)
+
+            self.clear_stop_requests()
+            t = threading.Thread(target=worker)
+            t.start()
+            try:
+                t.join()
+            except:
+                self.request_stop()
+                raise
+            finally:
+                if t.is_alive():
+                    t.join()
+
         # convert to string for CStr
         if c_restype == CStr:
             res = res.decode() if res is not None else ""
         return res
 
     return cbind_func
+
+
+def make_c_binding(func: Callable) -> Callable:
+    """
+    Descriptor to make the function to bind to C
+
+    Args:
+        func: method object from PowerGridCore
+
+    Returns:
+        Binded function
+    """
+    return _make_c_binding_impl(func, interruptible=False)
+
+
+def make_interruptible_c_binding(func: Callable) -> Callable:
+    """
+    Descriptor to make the function to bind to C, with interruptible execution
+
+    Returns:
+        Binded function
+
+    Args:
+        func: method object from PowerGridCore
+
+    Returns:
+        Binded function
+    """
+    return _make_c_binding_impl(func, interruptible=True)
 
 
 class PowerGridCore:
@@ -239,6 +295,18 @@ class PowerGridCore:
 
     @make_c_binding
     def clear_error(self) -> None:  # type: ignore[empty-body]
+        pass  # pragma: no covercover
+
+    @make_c_binding
+    def stop_requested(self) -> int:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def request_stop(self) -> None:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def clear_stop_requests(self) -> int:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding
@@ -376,7 +444,7 @@ class PowerGridCore:
     def destroy_model(self, model: ModelPtr) -> None:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
-    @make_c_binding
+    @make_interruptible_c_binding
     def calculate(  # type: ignore[empty-body]
         self,
         model: ModelPtr,
