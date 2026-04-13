@@ -360,7 +360,7 @@ inline std::vector<DoubleComplex> compute_internal_loads(SolutionSet& solution_s
         auto sum_value = DoubleComplex{};
         for (auto column : std::views::iota(Idx{}, number_of_columns)) {
             auto const value = solution_set.dfs_matrix.get_value(row, column);
-            if (value) {
+            if (value.has_value()) {
                 sum_value += static_cast<DoubleComplex>(value.value()) * system[column].back();
             }
         }
