@@ -45,13 +45,13 @@ class MainModel {
         : impl_{std::make_unique<Impl>(
               system_frequency, input_data,
               SolverPreparationContext{.math_state = {}, .math_solver_dispatcher = &math_solver_dispatcher}, pos)},
-          logger_{&logger} {}
+          logger_{logger} {}
     explicit MainModel(double system_frequency, meta_data::MetaData const& meta_data,
                        MathSolverDispatcher const& math_solver_dispatcher, MultiThreadedLogger& logger = no_logger_)
         : impl_{std::make_unique<Impl>(
               system_frequency, meta_data,
               SolverPreparationContext{.math_state = {}, .math_solver_dispatcher = &math_solver_dispatcher})},
-          logger_{&logger} {};
+          logger_{logger} {};
 
     // deep copy
     MainModel(MainModel const& other) {
@@ -107,7 +107,7 @@ class MainModel {
         // TODO(figueroa1395): This now becomes the caller's responsibility.
         // logger_->clear();
         JobAdapter<Impl> adapter{std::ref(impl()), std::ref(options)};
-        return JobDispatch::batch_calculation(adapter, result_data, update_data, options.threading, *logger_);
+        return JobDispatch::batch_calculation(adapter, result_data, update_data, options.threading, logger_.get());
     }
 
     void check_no_experimental_features_used(Options const& options, ConstDataset const* batch_dataset) const {
@@ -128,7 +128,7 @@ class MainModel {
     inline static NoMultiThreadedLogger no_logger_{};
     // TODO(figueroa1395): should we have a shared ptr instead? a unique ptr? can the same logger be shared across
     // multiple MainModel instances?
-    MultiThreadedLogger* logger_;
+    std::reference_wrapper<MultiThreadedLogger> logger_{no_logger_};
 };
 
 } // namespace power_grid_model

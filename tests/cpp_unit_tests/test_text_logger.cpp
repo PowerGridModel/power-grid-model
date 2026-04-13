@@ -179,10 +179,12 @@ TEST_CASE("Test TextLogger") {
 
         SUBCASE("Destructor") {
             // destructor should not throw without handler
-            CHECK_NOTHROW({
+            // explicitly avoiding CHECK_NOTRHOW because of MSVC C4456 warning
+            // in any case, the test will break as expected if the destructor throws
+            {
                 TextLogger scopped_txt_logger{};
                 logger_helper(scopped_txt_logger);
-            });
+            };
         }
 
         SUBCASE("Move constructor") {
@@ -247,25 +249,28 @@ TEST_CASE("Test TextLogger") {
         }
 
         SUBCASE("Destructor with handler that doesn't throw") {
-
-            CHECK_NOTHROW({
+            // explicitly avoiding CHECK_NOTRHOW because of MSVC C4456 warning
+            // in any case, the test will break as expected if the destructor throws
+            {
                 TextLogger scopped_txt_logger{flush_handler};
                 CHECK(flushed_report.empty());
                 logger_helper(scopped_txt_logger);
                 report_checker_helper(scopped_txt_logger.report());
-            });
+            };
             // after destruction, flushed report should have the contents of the original report
             report_checker_helper(flushed_report);
         }
 
         SUBCASE("Destructor with handler that throws") {
             // throwing destructor should be handled gracefully, report cleared and flushed report kept empty
-            CHECK_NOTHROW({
+            // explicitly avoiding CHECK_NOTRHOW because of MSVC C4456 warning
+            // in any case, the test will break as expected if the destructor throws
+            {
                 TextLogger scopped_txt_logger{throwing_flush_handler};
                 CHECK(flushed_report.empty());
                 logger_helper(scopped_txt_logger);
                 report_checker_helper(scopped_txt_logger.report());
-            });
+            };
             CHECK(flushed_report.empty());
         }
 
