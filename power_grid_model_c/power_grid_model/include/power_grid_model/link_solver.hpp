@@ -319,7 +319,7 @@ inline std::vector<std::vector<DoubleComplex>> set_projection_system(Idx free_in
     return projection_system;
 };
 
-void gauss_elimination(std::vector<std::vector<DoubleComplex>>& system) {
+inline void gauss_elimination(std::vector<std::vector<DoubleComplex>>& system) {
 
     auto const system_size = narrow_cast<Idx>(system.size());
 
@@ -328,8 +328,9 @@ void gauss_elimination(std::vector<std::vector<DoubleComplex>>& system) {
 
             system[row][column] = -system[row][column] / system[column][column];
 
-            for (Idx column_part = column + 1; column_part < system_size + 1; column_part++)
+            for (Idx column_part = column + 1; column_part < system_size + 1; column_part++) {
                 system[row][column_part] += system[row][column] * system[column][column_part];
+            }
         }
     }
 

@@ -4,10 +4,12 @@
 
 #include <power_grid_model/calculation_parameters.hpp>
 #include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/typing.hpp>
 #include <power_grid_model/link_solver.hpp>
 
 #include <doctest/doctest.h>
 
+#include <cmath>
 #include <cstddef>
 #include <ranges>
 #include <span>
