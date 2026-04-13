@@ -22,7 +22,7 @@ Where $I_N$ is the $N$ vector of source currents injected into each bus and $U_N
 The complex power delivered to bus $k$ is:
 
 $$
-S_{k} =  P_k + jQ_k & = U_{k} I_{k}^{*}
+S_{k} = P_k + jQ_k = U_{k} I_{k}^{*}
 $$
 
 Power flow equations are based on solving the nodal equations above to obtain the voltage magnitude and voltage angle at
