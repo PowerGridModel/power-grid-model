@@ -74,7 +74,7 @@ class MainModel {
     MainModel& operator=(MainModel&& other) noexcept {
         if (this != &other) {
             impl_ = std::move(other.impl_);
-            logger_ = std::move(other.logger_);
+            logger_ = other.logger_;
         }
         return *this;
     };
@@ -109,9 +109,6 @@ class MainModel {
         JobAdapter<Impl> adapter{std::ref(impl()), std::ref(options)};
         return JobDispatch::batch_calculation(adapter, result_data, update_data, options.threading, *logger_);
     }
-
-    // TODO(figueroa1395): I don't think this is needed now because it is the caller's responsibility
-    // CalculationInfo calculation_info() const { return logger_.get(); }
 
     void check_no_experimental_features_used(Options const& options, ConstDataset const* batch_dataset) const {
         impl().check_no_experimental_features_used(options, batch_dataset);
