@@ -171,8 +171,8 @@ TEST_CASE("Test job dispatch logic") {
             Idx const n_scenarios = 9; // arbitrary non-zero value
             auto const update_data = MockUpdateDataset(has_data, n_scenarios);
             adapter.reset_counters();
-            auto const actual_result = JobDispatch::batch_calculation({}, adapter, result_data, update_data,
-                                                                      main_core::utils::sequential, no_logger());
+            auto const actual_result = JobDispatch::batch_calculation(adapter, result_data, update_data,
+                                                                      main_core::utils::sequential, no_logger(), {});
             CHECK(expected_result == actual_result);
             CHECK(adapter.get_calculate_counter() == 1);
             CHECK(adapter.get_cache_calculate_counter() == 0); // no cache calculation in this case
@@ -182,8 +182,8 @@ TEST_CASE("Test job dispatch logic") {
             Idx const n_scenarios = 0;
             auto const update_data = MockUpdateDataset(has_data, n_scenarios);
             adapter.reset_counters();
-            auto const actual_result = JobDispatch::batch_calculation({}, adapter, result_data, update_data,
-                                                                      main_core::utils::sequential, no_logger());
+            auto const actual_result = JobDispatch::batch_calculation(adapter, result_data, update_data,
+                                                                      main_core::utils::sequential, no_logger(), {});
             CHECK(expected_result == actual_result);
             // no calculations should be done
             CHECK(adapter.get_calculate_counter() == 0);
@@ -194,8 +194,8 @@ TEST_CASE("Test job dispatch logic") {
             Idx const n_scenarios = 7; // arbitrary non-zero value
             auto const update_data = MockUpdateDataset(has_data, n_scenarios);
             adapter.reset_counters();
-            auto const actual_result = JobDispatch::batch_calculation({}, adapter, result_data, update_data,
-                                                                      main_core::utils::sequential, no_logger());
+            auto const actual_result = JobDispatch::batch_calculation(adapter, result_data, update_data,
+                                                                      main_core::utils::sequential, no_logger(), {});
             CHECK(expected_result == actual_result);
             // n_scenarios calculations should be done as we run sequentially
             CHECK(adapter.get_calculate_counter() == n_scenarios);
@@ -513,8 +513,8 @@ TEST_CASE("Test job dispatch logic") {
                 REQUIRE_FALSE(stop_source.stop_requested());
                 stop_source.request_stop();
                 REQUIRE(stop_source.stop_requested());
-                CHECK_THROWS_AS(JobDispatch::batch_calculation(stop_source.get_token(), adapter, result_data,
-                                                               update_data, threading, no_logger()),
+                CHECK_THROWS_AS(JobDispatch::batch_calculation(adapter, result_data, update_data, threading,
+                                                               no_logger(), stop_source.get_token()),
                                 OperationCanceled);
                 REQUIRE(stop_source.stop_requested());
                 CHECK(stop_source.stop_requested());
@@ -533,8 +533,8 @@ TEST_CASE("Test job dispatch logic") {
                         stop_source.request_stop();
                     }};
                 REQUIRE_FALSE(stop_source.stop_requested());
-                CHECK_NOTHROW(JobDispatch::batch_calculation(stop_source.get_token(), adapter, result_data, update_data,
-                                                             threading, no_logger()));
+                CHECK_NOTHROW(JobDispatch::batch_calculation(adapter, result_data, update_data, threading, no_logger(),
+                                                             stop_source.get_token()));
                 cancel_thread.join();
                 CHECK(stop_source.stop_requested());
                 CHECK(adapter.get_calculate_counter() == 3);       // no calculations are done
@@ -591,8 +591,8 @@ TEST_CASE("Test job dispatch logic") {
                     }};
 
                     REQUIRE_FALSE(stop_source.stop_requested());
-                    CHECK_THROWS_AS(JobDispatch::batch_calculation(stop_source.get_token(), adapter, result_data,
-                                                                   update_data, threading, no_logger()),
+                    CHECK_THROWS_AS(JobDispatch::batch_calculation(adapter, result_data, update_data, threading,
+                                                                   no_logger(), stop_source.get_token()),
                                     OperationCanceled);
                     cancel_thread.join();
 

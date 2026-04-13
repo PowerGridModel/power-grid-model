@@ -11,6 +11,7 @@
 #include "common/counting_iterator.hpp"
 #include "common/exception.hpp"
 #include "common/logging.hpp"
+#include "common/stop_token.hpp"
 #include "common/timer.hpp"
 #include "common/typing.hpp"
 
@@ -30,23 +31,13 @@
 #include <vector>
 
 namespace power_grid_model {
-namespace detail {
-inline void stop_if_requested(std::stop_token const& stop_token) {
-    if (stop_token.stop_requested()) {
-        throw OperationCanceled{};
-    }
-}
-} // namespace detail
-
 class JobDispatch {
   public:
     template <typename Adapter, typename ResultDataset, typename UpdateDataset>
         requires std::is_base_of_v<JobInterface, Adapter>
-    static BatchParameter batch_calculation(std::stop_token const& stop_token, Adapter& adapter,
-                                            ResultDataset const& result_data, UpdateDataset const& update_data,
-                                            Idx threading, common::logging::MultiThreadedLogger& log) {
-        using detail::stop_if_requested;
-
+    static BatchParameter
+    batch_calculation(Adapter& adapter, ResultDataset const& result_data, UpdateDataset const& update_data,
+                      Idx threading, common::logging::MultiThreadedLogger& log, std::stop_token const& stop_token) {
         stop_if_requested(stop_token);
 
         if (update_data.empty()) {
@@ -103,7 +94,7 @@ class JobDispatch {
                                   UpdateDataset const& update_data, std::vector<std::string>& exceptions,
                                   common::logging::MultiThreadedLogger& base_log) {
         return [&base_adapter, &exceptions, &result_data, &update_data,
-                &base_log](std::stop_token stop_token, Idx start, Idx stride, Idx n_scenarios) {
+                &base_log](std::stop_token const& stop_token, Idx start, Idx stride, Idx n_scenarios) noexcept {
             assert(n_scenarios <= narrow_cast<Idx>(exceptions.size()));
             auto thread_log_ptr = base_log.create_child();
             Logger& thread_log = *thread_log_ptr;
@@ -139,11 +130,14 @@ class JobDispatch {
             };
 
             auto calculate_scenario = JobDispatch::call_with<Idx>(
-                std::move(stop_token), std::move(run), std::move(setup), std::move(winddown),
+                stop_token, std::move(run), std::move(setup), std::move(winddown),
                 JobDispatch::scenario_exception_handler(exceptions), std::move(recover_from_bad));
 
             for (Idx scenario_idx = start; scenario_idx < n_scenarios; scenario_idx += stride) {
                 Timer const t_total_single{thread_log, LogEvent::total_single_calculation_in_thread};
+                if (stop_token.stop_requested()) {
+                    break;
+                }
                 calculate_scenario(scenario_idx);
             }
 
@@ -203,8 +197,6 @@ class JobDispatch {
         return [stop_token_ = std::move(stop_token), setup_ = std::move(setup), run_ = std::move(run),
                 winddown_ = std::move(winddown), handle_exception_ = std::move(handle_exception),
                 recover_from_bad_ = std::move(recover_from_bad)](Args const&... args) {
-            using detail::stop_if_requested;
-
             try {
                 stop_if_requested(stop_token_);
                 setup_(args...);

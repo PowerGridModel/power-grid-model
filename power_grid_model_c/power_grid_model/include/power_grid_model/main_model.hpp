@@ -22,6 +22,7 @@
 #include <cassert>
 #include <functional>
 #include <memory>
+#include <stop_token>
 #include <string_view>
 #include <utility>
 
@@ -92,11 +93,11 @@ class MainModel {
         > 0 specify number of parallel threads
     raise a BatchCalculationError if any of the calculations in the batch raised an exception
     */
-    BatchParameter calculate(Options const& options, MutableDataset const& result_data,
-                             ConstDataset const& update_data) {
+    BatchParameter calculate(Options const& options, MutableDataset const& result_data, ConstDataset const& update_data,
+                             std::stop_token const& stop_token = {}) {
         info_.clear();
         JobAdapter<Impl> adapter{std::ref(impl()), std::ref(options)};
-        return JobDispatch::batch_calculation({}, adapter, result_data, update_data, options.threading, info_);
+        return JobDispatch::batch_calculation(adapter, result_data, update_data, options.threading, info_, stop_token);
     }
 
     CalculationInfo calculation_info() const { return info_.get(); }
