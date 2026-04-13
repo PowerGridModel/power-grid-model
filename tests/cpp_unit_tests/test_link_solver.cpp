@@ -811,7 +811,70 @@ TEST_CASE("Test the link solver algorithm") {
 
             gauss_elimination(system);
 
-            CHECK(compare_vectors(system, test_solution) < 1.e-5);
+            CHECK(compare_vectors(system, test_solution) < 1.e-7);
+        }
+    }
+
+    SUBCASE("Testing the compute_internal_loads_routine") {
+
+        auto generate_input_solution_set = [](std::span<const IntS> data, std::span<const Idx> row,
+                                              std::span<const Idx> col, Idx row_number, Idx col_number) {
+            SolutionSet solution_set{};
+            solution_set.dfs_matrix.prepare(row_number, col_number);
+            for (auto idx = size_t{0}; idx < data.size(); ++idx) {
+                solution_set.dfs_matrix.set_value(data[idx], row[idx], col[idx]);
+            }
+            return solution_set;
+        };
+
+        auto compare_vectors = [](std::vector<DoubleComplex>& load, std::vector<DoubleComplex>& test_load) {
+            auto const load_size = narrow_cast<Idx>(load.size());
+            double element_sum{};
+
+            for (Idx idx = 0; idx < load_size; idx++) {
+                element_sum += abs(load[idx] - test_load[idx]);
+            }
+
+            return element_sum;
+        };
+
+        SUBCASE("Complex case with complex loads") {
+            std::vector<IntS> data = {1, 1, 1, -1, -1, -1, -1, -1, 1, -1};
+            std::vector<Idx> row = {0, 0, 1, 1, 2, 2, 3, 4, 5, 6};
+            std::vector<Idx> col = {0, 2, 1, 2, 0, 1, 0, 1, 2, 2};
+
+            auto solution_set = generate_input_solution_set(data, row, col, Idx{7}, Idx{3});
+
+            solution_set.extended_rhs = {{0, 0}, {1, 1}, {-2, -2}, {0, 0}, {0, 0}, {0, 0}, {0, 0}};
+
+            std::vector<std::vector<DoubleComplex>> test_system = {
+                {{3, 0}, {1, 0}, {1, 0}, {0.458333, 0.458333}},
+                {{-0.333333, 0}, {2.66667, 0}, {-1.33333, 0}, {0.791667, 0.791667}},
+                {{-0.333333, 0}, {0.5, -0}, {3, 0}, {-0.166667, -0.166667}}};
+
+            std::vector<DoubleComplex> internal_loads = compute_internal_loads(solution_set, test_system);
+
+            std::vector<DoubleComplex> test_loads = {
+                {-0.291667, -0.291667}, {0.0416667, 0.0416667}, {-0.75, -0.75},        {0.458333, 0.458333},
+                {0.791667, 0.791667},   {0.166667, 0.166667},   {-0.166667, -0.166667}};
+            CHECK(compare_vectors(internal_loads, test_loads) < 1.e-5);
+        }
+
+        SUBCASE("Four edges, four nodes, two real loads") {
+
+            std::vector<IntS> data = {1, 1, -1};
+            std::vector<Idx> row = {1, 2, 3};
+            std::vector<Idx> col = {0, 0, 0};
+
+            auto solution_set = generate_input_solution_set(data, row, col, Idx{4}, Idx{1});
+            solution_set.extended_rhs = {{1, 0}, {-1, -0}, {-1, -0}, {0, 0}};
+
+            std::vector<std::vector<DoubleComplex>> test_system = {{{3, 0}, {-0.666667, 0}}};
+
+            std::vector<DoubleComplex> internal_loads = compute_internal_loads(solution_set, test_system);
+
+            std::vector<DoubleComplex> test_loads = {{1, 0}, {-0.333333, -0}, {-0.333333, -0}, {-0.666667, 0}};
+            CHECK(compare_vectors(internal_loads, test_loads) < 1.e-5);
         }
     }
 }

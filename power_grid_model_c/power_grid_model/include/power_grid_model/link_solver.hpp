@@ -343,4 +343,29 @@ void gauss_elimination(std::vector<std::vector<DoubleComplex>>& system) {
     }
 };
 
+inline std::vector<DoubleComplex> compute_internal_loads(SolutionSet& solution_set,
+                                                         std::vector<std::vector<DoubleComplex>>& system) {
+
+    std::vector<DoubleComplex> internal_loads{};
+
+    auto const number_of_rows = narrow_cast<Idx>(solution_set.extended_rhs.size());
+    auto const number_of_columns = narrow_cast<Idx>(system.size());
+
+    internal_loads.resize(number_of_rows);
+
+    for (auto row : std::views::iota(Idx{}, number_of_rows)) {
+
+        internal_loads[row] = solution_set.extended_rhs[row];
+        auto sum_value = DoubleComplex{};
+        for (auto column : std::views::iota(Idx{}, number_of_columns)) {
+            auto const value = solution_set.dfs_matrix.get_value(row, column);
+            if (value) {
+                sum_value += static_cast<DoubleComplex>(value.value()) * system[column].back();
+            }
+        }
+        internal_loads[row] -= sum_value;
+    }
+
+    return internal_loads;
+};
 } // namespace power_grid_model::link_solver::detail
