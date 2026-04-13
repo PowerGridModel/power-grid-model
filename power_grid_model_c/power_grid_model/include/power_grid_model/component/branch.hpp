@@ -95,19 +95,6 @@ class Branch : public Base {
     virtual bool is_param_mutable() const = 0;
 
     template <symmetry_tag sym>
-    BranchOutput<sym> get_output(ComplexValue<sym> const& u_f, ComplexValue<sym> const& u_t) const {
-        // calculate flow
-        BranchCalcParam<sym> const param = calc_param<sym>();
-        BranchSolverOutput<sym> branch_solver_output{};
-        branch_solver_output.i_f = dot(param.yff(), u_f) + dot(param.yft(), u_t);
-        branch_solver_output.i_t = dot(param.ytf(), u_f) + dot(param.ytt(), u_t);
-        branch_solver_output.s_f = u_f * conj(branch_solver_output.i_f);
-        branch_solver_output.s_t = u_t * conj(branch_solver_output.i_t);
-        // calculate result
-        return get_output<sym>(branch_solver_output);
-    }
-
-    template <symmetry_tag sym>
     BranchOutput<sym> get_output(BranchSolverOutput<sym> const& branch_solver_output) const {
         // result object
         BranchOutput<sym> output{};
