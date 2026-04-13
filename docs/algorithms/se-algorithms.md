@@ -32,9 +32,7 @@ The goal of WLS state estimation is to evaluate the state variable with the high
 measurement input, by solving:
 
 $$
-  \begin{eqnarray}
-    \min r(\underline{U}) = \dfrac{1}{2} (f(\underline{U}) - \underline{z})^H W (f(\underline{U}) - \underline{z})
-  \end{eqnarray}
+\min r(\underline{U}) = \dfrac{1}{2} (f(\underline{U}) - \underline{z})^H W (f(\underline{U}) - \underline{z})
 $$
 
 Where:
@@ -82,9 +80,7 @@ For example, there can be multiple voltage sensors on the same bus.
 The measurement data can be merged into one virtual measurement using a Kalman filter:
 
 $$
-    \begin{eqnarray}
-            z = \dfrac{\sum_{k=1}^{N_{sensor}} z_k \sigma_k^{-2}}{\sum_{k=1}^{N_{sensor}} \sigma_k^{-2}}
-    \end{eqnarray}
+z = \dfrac{\sum_{k=1}^{N_{sensor}} z_k \sigma_k^{-2}}{\sum_{k=1}^{N_{sensor}} \sigma_k^{-2}}
 $$
 
 Where $z_k$ and $\sigma_k$ are the measured value and standard deviation of individual measurements.
@@ -92,13 +88,13 @@ Where $z_k$ and $\sigma_k$ are the measured value and standard deviation of indi
 Multiple appliance measurements (power measurements) on one bus are aggregated as the total injection at the bus:
 
 $$
-    \begin{eqnarray}
-            \underline{S} = \sum_{k=1}^{N_{appliance}} \underline{S}_k
-            \quad\text{and}\quad
-            \sigma_P^2 = \sum_{k=1}^{N_{appliance}} \sigma_{P,k}^2
-            \quad\text{and}\quad
-            \sigma_Q^2 = \sum_{k=1}^{N_{appliance}} \sigma_{Q,k}^2
-    \end{eqnarray}
+\begin{aligned}
+    \underline{S} = \sum_{k=1}^{N_{appliance}} \underline{S}_k
+    \quad\text{and}\quad
+    \sigma_P^2 = \sum_{k=1}^{N_{appliance}} \sigma_{P,k}^2
+    \quad\text{and}\quad
+    \sigma_Q^2 = \sum_{k=1}^{N_{appliance}} \sigma_{Q,k}^2
+\end{aligned}
 $$
 
 Where $S_k$ and $\sigma_{P,k}$ and $\sigma_{Q,k}$ are the measured value and the standard deviation of the individual
@@ -150,26 +146,14 @@ The following illustrates how this works for `sym_current_sensor`s in symmetric 
 See also [the full mathematical workout](https://github.com/PowerGridModel/power-grid-model/issues/547).
 
 $$
-   \begin{eqnarray}
-        & \mathrm{Re}\left\{I\right\} = I \cos\theta
-   \end{eqnarray}
-$$
-$$
-   \begin{eqnarray}
-        & \mathrm{Im}\left\{I\right\} = I \sin\theta
-   \end{eqnarray}
-$$
-$$
-   \begin{eqnarray}
-        & \text{Var}\left(\mathrm{Re}\left\{I\right\}\right) =
-            \sigma_i^2 \cos^2\theta + I^2 \sigma_{\theta}^2\sin^2\theta
-   \end{eqnarray}
-$$
-$$
-   \begin{eqnarray}
-        & \text{Var}\left(\mathrm{Im}\left\{I\right\}\right) =
-            \sigma_i^2 \sin^2\theta + I^2 \sigma_{\theta}^2\cos^2\theta
-   \end{eqnarray}
+\begin{aligned}
+    & \mathrm{Re}\left\{I\right\} = I \cos\theta \\
+    & \mathrm{Im}\left\{I\right\} = I \sin\theta \\
+    & \text{Var}\left(\mathrm{Re}\left\{I\right\}\right) =
+        \sigma_i^2 \cos^2\theta + I^2 \sigma_{\theta}^2\sin^2\theta \\
+    & \text{Var}\left(\mathrm{Im}\left\{I\right\}\right) =
+        \sigma_i^2 \sin^2\theta + I^2 \sigma_{\theta}^2\cos^2\theta
+\end{aligned}
 $$
 
 ## Iterative linear state estimation
@@ -188,9 +172,7 @@ Therefore, traditional measurements are linearized prior to running the algorith
   $\theta_i$ is the intrinsic transformer phase shift:
 
 $$
-    \begin{eqnarray}
-            \underline{U}_i = U_i \cdot e^{j \theta_i}
-    \end{eqnarray}
+\underline{U}_i = U_i \cdot e^{j \theta_i}
 $$
 
 - Branch current with global angle: The global angle current measurement captures the phase offset relative to the same
@@ -201,9 +183,7 @@ $$
   angle).
 
 $$
-    \begin{eqnarray}
-            \underline{I} = I_i \cdot e^{j \theta_i}
-    \end{eqnarray}
+\underline{I} = I_i \cdot e^{j \theta_i}
 $$
 
 - Branch current with local angle: Sometimes, (accurate) voltage measurements are not available for a branch, which
@@ -217,10 +197,8 @@ $$
   Given the measured (linearized) voltage phasor, the current phasor is calculated as follows:
 
 $$
-    \begin{equation}
-        \underline{I} = \underline{I}_{\text{local}}^{*} \frac{\underline{U}}{|\underline{U}|}
-        = \underline{I}_{\text{local}}^{*} \cdot e^{j \theta}
-    \end{equation}
+\underline{I} = \underline{I}_{\text{local}}^{*} \frac{\underline{U}}{|\underline{U}|}
+    = \underline{I}_{\text{local}}^{*} \cdot e^{j \theta}
 $$
 
 where $\underline{U}$ is either measured voltage magnitude at the bus or assumed unity magnitude, with the intrinsic
@@ -232,9 +210,7 @@ $\theta$ is the phase angle of the voltage.
   Given the measured (linearized) voltage phasor, the current phasor is calculated as follows:
 
 $$
-    \begin{eqnarray}
-            \underline{I} = (\underline{S}/\underline{U})^*
-    \end{eqnarray}
+\underline{I} = (\underline{S}/\underline{U})^*
 $$
 
 - Bus power injection: Similar as above, to translate the power flow to a complex current phasor, if the bus voltage is
@@ -242,9 +218,7 @@ $$
   The current phasor is calculated as follows:
 
 $$
-    \begin{eqnarray}
-            \underline{I} = (\underline{S}/\underline{U})^*
-    \end{eqnarray}
+\underline{I} = (\underline{S}/\underline{U})^*
 $$
 
 The aggregated apparent power flow is considered as a single measurement, with variance
