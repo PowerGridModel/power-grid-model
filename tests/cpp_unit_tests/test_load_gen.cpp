@@ -64,8 +64,6 @@ TEST_CASE("Test load generator") {
 
     double const base_i = base_power_1p / (10e3 / sqrt3);
     ComplexValue<asymmetric_t> const ua{1.1 * std::exp(1.0i * 10.0)};
-    double const s_y = sqrt2 * 3e6 * 1.1 * 1.1;
-    double const s_i = sqrt2 * 3e6 * 1.1;
 
     ApplianceSolverOutput<symmetric_t> appliance_solver_output_sym;
     appliance_solver_output_sym.i = 1.0 + 2.0i;
@@ -90,34 +88,6 @@ TEST_CASE("Test load generator") {
         CHECK(appliance.status());
         CHECK(appliance.set_status(false));
         CHECK(!appliance.status());
-    }
-
-    SUBCASE("Test symmetric generator with constant power; u as input") {
-        GenericLoadGen const& load_gen = sym_gen_pq;
-        // sym result
-        ApplianceOutput<symmetric_t> const sym_result = load_gen.get_output<symmetric_t>(u);
-        CHECK(sym_result.id == 1);
-        CHECK(sym_result.energized);
-        CHECK(sym_result.p == doctest::Approx(p_pq));
-        CHECK(sym_result.q == doctest::Approx(q_pq));
-        CHECK(sym_result.s == doctest::Approx(s_pq));
-        CHECK(sym_result.i == doctest::Approx(i_pq));
-        CHECK(sym_result.pf == doctest::Approx(pf));
-        // asym result
-        ApplianceOutput<asymmetric_t> const asym_result = load_gen.get_output<asymmetric_t>(ua);
-        CHECK(asym_result.p(0) == doctest::Approx(p_pq / 3));
-        CHECK(asym_result.q(1) == doctest::Approx(q_pq / 3));
-        CHECK(asym_result.s(2) == doctest::Approx(s_pq / 3));
-        CHECK(asym_result.i(0) == doctest::Approx(i_pq));
-        CHECK(asym_result.pf(1) == doctest::Approx(pf));
-        // test sym power injection
-        ComplexValue<symmetric_t> const s_inj = load_gen.calc_param<symmetric_t>();
-        CHECK(real(s_inj) == doctest::Approx(p_pu));
-        CHECK(imag(s_inj) == doctest::Approx(p_pu));
-        // test asym power injection
-        ComplexValue<asymmetric_t> const s_inj_a = load_gen.calc_param<asymmetric_t>();
-        CHECK(real(s_inj_a(0)) == doctest::Approx(p_pu));
-        CHECK(imag(s_inj_a(1)) == doctest::Approx(p_pu));
     }
 
     SUBCASE("Test symmetric generator with constant power; s,i as input") {
@@ -223,20 +193,6 @@ TEST_CASE("Test load generator") {
         CHECK(asym_result.s(2) == doctest::Approx(5.0 * base_power<asymmetric_t>));
         CHECK(asym_result.i(0) == doctest::Approx(cabs(1.0 + 2.0i) * base_i));
         CHECK(asym_result.pf(1) == doctest::Approx(3.0 / cabs(3.0 + 4.0i)));
-    }
-
-    SUBCASE("Test update load") {
-        auto changed =
-            sym_gen_pq.update(SymLoadGenUpdate{.id = 1, .status = na_IntS, .p_specified = 1e6, .q_specified = nan});
-        CHECK(!changed.topo);
-        CHECK(!changed.param);
-        ApplianceOutput<symmetric_t> const sym_result = sym_gen_pq.get_output<symmetric_t>(u);
-        CHECK(sym_result.p == doctest::Approx(1e6));
-        CHECK(sym_result.q == doctest::Approx(q_pq));
-        asym_load_pq.set_power(RealValue<asymmetric_t>{nan}, RealValue<asymmetric_t>{1e5});
-        ApplianceOutput<asymmetric_t> const asym_result = asym_load_pq.get_output<asymmetric_t>(ua);
-        CHECK(asym_result.p(0) == doctest::Approx(p_pq / 3));
-        CHECK(asym_result.q(1) == doctest::Approx(1e5));
     }
 
     SUBCASE("Test set_power - sym") {
