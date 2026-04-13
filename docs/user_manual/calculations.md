@@ -197,7 +197,7 @@ Output:
 Power flowing through a branch is calculated by voltage and current for any type of calculations in the following way:
 
 $$
-\underline{S_{branch-side}} = \sqrt{3} \cdot \underline{U_{LL-side-node}} \cdot \underline{I_{branch-side}}
+\underline{S_{branch-side}} = \sqrt{3} \cdot \underline{U_{LL-side-node}} \cdot \underline{I_{branch-side}}^*
 $$
 
 These quantities are in complex form.
