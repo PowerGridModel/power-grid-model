@@ -15,7 +15,7 @@ In the short circuit calculation, the following equations are solved with border
 constraints.
 
 $$
-I_N & = Y_{bus}U_N
+I_N = Y_{bus}U_N
 $$
 
 This gives the initial symmetrical short circuit current ($I_k^{\prime\prime}$) for a fault.
