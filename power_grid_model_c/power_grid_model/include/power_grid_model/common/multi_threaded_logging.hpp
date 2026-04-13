@@ -58,7 +58,10 @@ class MultiThreadedLoggerImpl : public MultiThreadedLogger {
 
     MultiThreadedLoggerImpl() = default;
     template <typename... Args>
-        requires std::constructible_from<LoggerType, Args...>
+        requires(sizeof...(Args) > 0 &&
+                 !std::derived_from<std::remove_cvref_t<std::tuple_element_t<0, std::tuple<Args...>>>,
+                                    MultiThreadedLoggerImpl> &&
+                 std::constructible_from<LoggerType, Args...>)
     explicit MultiThreadedLoggerImpl(Args&&... args) : log_(std::forward<Args>(args)...) {}
 
     std::unique_ptr<Logger> create_child() override { return std::make_unique<ThreadLogger>(*this); }

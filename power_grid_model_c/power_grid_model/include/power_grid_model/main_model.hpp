@@ -128,7 +128,6 @@ class MainModel {
     }
 
     std::unique_ptr<Impl> impl_;
-    // TODO(figueroa1395): static here should be okay because NoMultiThreadedLogger doesn't do anything, does it?
     inline static NoMultiThreadedLogger no_logger_{};
     // TODO(figueroa1395): should we have a shared ptr instead? a unique ptr? can the same logger be shared across
     // multiple MainModel instances?
