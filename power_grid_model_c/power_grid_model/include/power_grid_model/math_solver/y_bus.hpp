@@ -386,6 +386,10 @@ template <symmetry_tag sym> class YBus {
              std::views::zip(math_model_param_incrmt.shunt_param_to_change, math_model_param_incrmt.shunt_param)) {
             math_model_param_.shunt_param[idx_to_change] = params;
         }
+        for (auto const& [idx_to_change, params] :
+             std::views::zip(math_model_param_incrmt.source_param_to_change, math_model_param_incrmt.source_param)) {
+            math_model_param_.source_param[idx_to_change] = params;
+        }
 
         // process and update affected entries
         update_admittance_entries(get_affected_admittance_entries(math_model_param_incrmt));
