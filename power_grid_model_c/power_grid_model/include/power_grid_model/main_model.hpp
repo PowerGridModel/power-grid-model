@@ -103,9 +103,6 @@ class MainModel {
     */
     BatchParameter calculate(Options const& options, MutableDataset const& result_data,
                              ConstDataset const& update_data) {
-
-        // TODO(figueroa1395): This now becomes the caller's responsibility.
-        // logger_->clear();
         JobAdapter<Impl> adapter{std::ref(impl()), std::ref(options)};
         return JobDispatch::batch_calculation(adapter, result_data, update_data, options.threading, logger_.get());
     }
@@ -126,8 +123,6 @@ class MainModel {
 
     std::unique_ptr<Impl> impl_;
     inline static NoMultiThreadedLogger no_logger_{};
-    // TODO(figueroa1395): should we have a shared ptr instead? a unique ptr? can the same logger be shared across
-    // multiple MainModel instances?
     std::reference_wrapper<MultiThreadedLogger> logger_{no_logger_};
 };
 
