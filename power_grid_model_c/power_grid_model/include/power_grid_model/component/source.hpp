@@ -47,7 +47,7 @@ class Source : public Appliance {
         return SourceCalcParam{.y1 = y1_ref, .y0 = y0_ref};
     }
 
-    // setter
+    // setter for u_ref
     bool set_u_ref(double new_u_ref, double new_u_ref_angle) {
         bool changed = false;
         if (!is_nan(new_u_ref)) {
@@ -87,10 +87,13 @@ class Source : public Appliance {
     UpdateChange update(SourceUpdate const& update_data) {
         assert(update_data.id == this->id() || is_nan(update_data.id));
         bool const topo_changed = set_status(update_data.status);
-        bool const param_changed = set_u_ref(update_data.u_ref, update_data.u_ref_angle);
+        bool const u_ref_changed = set_u_ref(update_data.u_ref, update_data.u_ref_angle);
+        bool const param_changed_impedance =
+            set_sk_rx_ratio_z01_ratio(update_data.sk, update_data.rx_ratio, update_data.z01_ratio);
         // change source connection will change both topo and param
         // change u ref will change param
-        return {.topo = topo_changed, .param = param_changed || topo_changed};
+        // change sk/rx_ratio/z01_ratio will change param
+        return {.topo = topo_changed, .param = u_ref_changed || param_changed_impedance || topo_changed};
     }
 
     SourceUpdate inverse(SourceUpdate update_data) const {
@@ -99,6 +102,9 @@ class Source : public Appliance {
         set_if_not_nan(update_data.status, status_to_int(this->status()));
         set_if_not_nan(update_data.u_ref, u_ref_);
         set_if_not_nan(update_data.u_ref_angle, u_ref_angle_);
+        set_if_not_nan(update_data.sk, sk_);
+        set_if_not_nan(update_data.rx_ratio, rx_ratio_);
+        set_if_not_nan(update_data.z01_ratio, z01_ratio_);
 
         return update_data;
     }
@@ -112,6 +118,23 @@ class Source : public Appliance {
     double sk_;
     double rx_ratio_;
     double z01_ratio_;
+
+    bool set_sk_rx_ratio_z01_ratio(double new_sk, double new_rx_ratio, double new_z01_ratio) {
+        bool changed = false;
+        if (!is_nan(new_sk)) {
+            sk_ = new_sk;
+            changed = true;
+        }
+        if (!is_nan(new_rx_ratio)) {
+            rx_ratio_ = new_rx_ratio;
+            changed = true;
+        }
+        if (!is_nan(new_z01_ratio)) {
+            z01_ratio_ = new_z01_ratio;
+            changed = true;
+        }
+        return changed;
+    }
 
     double injection_direction() const final { return 1.0; }
 };
