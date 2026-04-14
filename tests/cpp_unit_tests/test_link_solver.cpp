@@ -879,5 +879,86 @@ TEST_CASE("Test the link solver algorithm") {
             CHECK(compare_vectors(internal_loads, test_loads) < 1.e-5);
         }
     }
+    SUBCASE("Testing the compute_loads_link_elements") {
+        auto compare_vectors = [](std::vector<DoubleComplex>& load, std::vector<DoubleComplex>& test_load) {
+            auto const load_size = narrow_cast<Idx>(load.size());
+            double element_sum{};
+
+            for (Idx idx = 0; idx < load_size; idx++) {
+                element_sum += abs(load[idx] - test_load[idx]);
+            }
+
+            return element_sum;
+        };
+
+        SUBCASE("Complex case with complex loads") {
+            auto const edges = std::vector<BranchIdx>{{3, 0}, {1, 0}, {2, 0}, {3, 2}, {1, 2}, {1, 4}, {3, 4}};
+            auto const node_loads =
+                std::vector<DoubleComplex>{{1.0, 1.0}, {1.0, 1.0}, {-2.0, -2.0}, {0.0, 0.0}, {0.0, 0.0}};
+
+            std::vector<DoubleComplex> internal_loads = compute_loads_link_elements(edges, node_loads);
+
+            std::vector<DoubleComplex> test_loads = {
+                {-0.291667, -0.291667}, {0.0416667, 0.0416667}, {-0.75, -0.75},        {0.458333, 0.458333},
+                {0.791667, 0.791667},   {0.166667, 0.166667},   {-0.166667, -0.166667}};
+
+            CHECK(compare_vectors(internal_loads, test_loads) < 1.e-5);
+        }
+
+        SUBCASE("One edge, two nodes, two real loads") {
+            auto const edges = std::vector<BranchIdx>{{0, 1}};
+            auto const node_loads = std::vector<DoubleComplex>{1, -1};
+
+            std::vector<DoubleComplex> internal_loads = compute_loads_link_elements(edges, node_loads);
+
+            std::vector<DoubleComplex> test_loads = {{1, -0}};
+
+            CHECK(compare_vectors(internal_loads, test_loads) < 1.e-8);
+        }
+
+        SUBCASE("Two edges, three nodes, two real loads") {
+            auto const edges = std::vector<BranchIdx>{{1, 0}, {1, 2}};
+            auto const node_loads = std::vector<DoubleComplex>{1, -1, 0};
+
+            std::vector<DoubleComplex> internal_loads = compute_loads_link_elements(edges, node_loads);
+
+            std::vector<DoubleComplex> test_loads = {{-1, -0}, {-0, -0}};
+
+            CHECK(compare_vectors(internal_loads, test_loads) < 1.e-8);
+        }
+
+        SUBCASE("Three edges, three nodes, two real loads") {
+            auto const edges = std::vector<BranchIdx>{{0, 1}, {1, 2}, {2, 0}};
+            auto const node_loads = std::vector<DoubleComplex>{1, -1, 0};
+
+            std::vector<DoubleComplex> internal_loads = compute_loads_link_elements(edges, node_loads);
+
+            std::vector<DoubleComplex> test_loads = {{0.666667, -0}, {-0.333333, -0}, {-0.333333, 0}};
+
+            CHECK(compare_vectors(internal_loads, test_loads) < 1.e-5);
+        }
+
+        SUBCASE("Two edges, two nodes, two real loads") {
+            auto const edges = std::vector<BranchIdx>{{0, 1}, {0, 1}};
+            auto const node_loads = std::vector<DoubleComplex>{1, -1};
+
+            std::vector<DoubleComplex> internal_loads = compute_loads_link_elements(edges, node_loads);
+
+            std::vector<DoubleComplex> test_loads = {{0.5, -0}, {0.5, 0}};
+
+            CHECK(compare_vectors(internal_loads, test_loads) < 1.e-8);
+        }
+
+        SUBCASE("Four edges, four nodes, two real loads") {
+            auto const edges = std::vector<BranchIdx>{{0, 1}, {2, 1}, {3, 2}, {3, 1}};
+            auto const node_loads = std::vector<DoubleComplex>{1, 0, 0, -1};
+
+            std::vector<DoubleComplex> internal_loads = compute_loads_link_elements(edges, node_loads);
+
+            std::vector<DoubleComplex> test_loads = {{1, 0}, {-0.333333, -0}, {-0.333333, -0}, {-0.666667, 0}};
+
+            CHECK(compare_vectors(internal_loads, test_loads) < 1.e-5);
+        }
+    }
 }
 } // namespace power_grid_model::link_solver

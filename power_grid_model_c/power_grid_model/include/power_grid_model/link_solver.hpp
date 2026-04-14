@@ -230,7 +230,7 @@ inline EliminationResult reduced_echelon_form(std::vector<BranchIdx> edges, std:
     auto const node_number{node_loads.size()};
 
     result.edges_history.resize(edge_number);
-    result.matrix.prepare(edge_number, node_number);
+    result.matrix.prepare(node_number, edge_number);
 
     // -1 because the loads represent the RHS
     std::ranges::for_each(node_loads, [](auto& load) { load = -load; });
@@ -368,5 +368,29 @@ inline std::vector<DoubleComplex> compute_internal_loads(SolutionSet& solution_s
     }
 
     return internal_loads;
+};
+
+inline std::vector<DoubleComplex> compute_loads_link_elements(std::vector<BranchIdx> edges,
+                                                              std::vector<DoubleComplex> node_loads) {
+
+    EliminationResult result = reduced_echelon_form(edges, node_loads);
+    SolutionSet solution_set = set_solution_system(result);
+
+    if (solution_set.dfs_matrix.data_map.empty()) {
+        return solution_set.extended_rhs;
+    } else {
+
+        Idx const free_indices_number = result.free_edge_indices.size();
+        Idx const total_indices_number = result.free_edge_indices.size() + result.pivot_edge_indices.size();
+
+        std::vector<std::vector<DoubleComplex>> projection_system =
+            set_projection_system(free_indices_number, total_indices_number, solution_set);
+
+        gauss_elimination(projection_system);
+
+        std::vector<DoubleComplex> internal_loads = compute_internal_loads(solution_set, projection_system);
+
+        return internal_loads;
+    }
 };
 } // namespace power_grid_model::link_solver::detail
