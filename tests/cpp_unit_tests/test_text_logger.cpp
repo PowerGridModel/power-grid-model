@@ -546,6 +546,9 @@ TEST_CASE("Test MultiThreadedTextLogger integration with main model") {
         // empty update dataset
         ConstDataset update_dataset{false, 1, "update", power_grid_model::meta_data::meta_data_gen::meta_data};
 
+        // output dataset
+        MutableDataset result_dataset{false, 1, "sym_output", power_grid_model::meta_data::meta_data_gen::meta_data};
+
         // output dataset buffers
         // node outputs
         std::vector<ID> node_output_id(1);
@@ -564,9 +567,6 @@ TEST_CASE("Test MultiThreadedTextLogger integration with main model") {
         std::vector<double> source_output_i(1);
         std::vector<double> source_output_s(1);
         std::vector<double> source_output_pf(1);
-
-        // output dataset
-        MutableDataset result_dataset{false, 1, "sym_output", power_grid_model::meta_data::meta_data_gen::meta_data};
 
         // add node output buffers
         result_dataset.add_buffer("node", 1, 1, nullptr, nullptr);
@@ -632,6 +632,129 @@ TEST_CASE("Test MultiThreadedTextLogger integration with main model") {
             CHECK(flushed_report.find(std::format(
                       "ns] Tag:{}", std::to_underlying(total_batch_calculation_in_thread))) == std::string::npos);
             CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(restore_model))) ==
+                  std::string::npos);
+            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(scenario_exception))) ==
+                  std::string::npos);
+            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(recover_from_bad))) ==
+                  std::string::npos);
+            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(preprocess_measured_value))) ==
+                  std::string::npos);
+            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(initialize_voltages))) ==
+                  std::string::npos);
+            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(calculate_rhs))) ==
+                  std::string::npos);
+            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(prepare_lhs_rhs))) ==
+                  std::string::npos);
+            CHECK(flushed_report.find(
+                      std::format("ns] Tag:{}", std::to_underlying(prepare_matrix_including_prefactorization))) ==
+                  std::string::npos);
+            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(prepare_matrices))) ==
+                  std::string::npos);
+            CHECK(flushed_report.find(
+                      std::format("ns] Tag:{}", std::to_underlying(solve_sparse_linear_equation_prefactorized))) ==
+                  std::string::npos);
+            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(iterate_unknown))) ==
+                  std::string::npos);
+            CHECK(flushed_report.find(std::format(
+                      "ns] Tag:{}", std::to_underlying(iterative_pf_solver_max_num_iter))) == std::string::npos);
+            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(max_num_iter))) ==
+                  std::string::npos);
+        }
+    }
+    SUBCASE("Batch calculation produces valid text log") {
+        // batch update dataset with 2 scenarios
+        ConstDataset update_dataset{true, 2, "update", power_grid_model::meta_data::meta_data_gen::meta_data};
+
+        // add source update buffers
+        std::vector<IntS> const source_status_batch{1, 0};
+        update_dataset.add_buffer("source", 1, 2, nullptr, nullptr);
+        update_dataset.add_attribute_buffer("source", "status", source_status_batch.data());
+
+        // output dataset
+        MutableDataset result_dataset{true, 2, "sym_output", power_grid_model::meta_data::meta_data_gen::meta_data};
+
+        // output dataset buffers
+        // node outputs
+        std::vector<ID> node_output_id(2);
+        std::vector<int8_t> node_output_energized(2);
+        std::vector<double> node_output_u_pu(2);
+        std::vector<double> node_output_u_angle(2);
+        std::vector<double> node_output_u(2);
+        std::vector<double> node_output_p(2);
+        std::vector<double> node_output_q(2);
+
+        // source outputs
+        std::vector<ID> source_output_id(2);
+        std::vector<int8_t> source_output_energized(2);
+        std::vector<double> source_output_p(2);
+        std::vector<double> source_output_q(2);
+        std::vector<double> source_output_i(2);
+        std::vector<double> source_output_s(2);
+        std::vector<double> source_output_pf(2);
+
+        // add node output buffers
+        result_dataset.add_buffer("node", 1, 2, nullptr, nullptr);
+        result_dataset.add_attribute_buffer("node", "id", node_output_id.data());
+        result_dataset.add_attribute_buffer("node", "energized", node_output_energized.data());
+        result_dataset.add_attribute_buffer("node", "u_pu", node_output_u_pu.data());
+        result_dataset.add_attribute_buffer("node", "u_angle", node_output_u_angle.data());
+        result_dataset.add_attribute_buffer("node", "u", node_output_u.data());
+        result_dataset.add_attribute_buffer("node", "p", node_output_p.data());
+        result_dataset.add_attribute_buffer("node", "q", node_output_q.data());
+
+        // add source output buffers
+        result_dataset.add_buffer("source", 1, 2, nullptr, nullptr);
+        result_dataset.add_attribute_buffer("source", "id", source_output_id.data());
+        result_dataset.add_attribute_buffer("source", "energized", source_output_energized.data());
+        result_dataset.add_attribute_buffer("source", "p", source_output_p.data());
+        result_dataset.add_attribute_buffer("source", "q", source_output_q.data());
+        result_dataset.add_attribute_buffer("source", "i", source_output_i.data());
+        result_dataset.add_attribute_buffer("source", "s", source_output_s.data());
+        result_dataset.add_attribute_buffer("source", "pf", source_output_pf.data());
+
+        txt_logger.get().log([]() { return "Starting batch calculation"; });
+        model.calculate(options, result_dataset, update_dataset);
+        txt_logger.get().log([]() { return "Finished batch calculation"; });
+        txt_logger.flush();
+
+        SUBCASE("Contains expected log tags") {
+            // check that we logged tags correctly
+            CHECK(flushed_report.find("Starting batch calculation") != std::string::npos);
+            CHECK(flushed_report.find("Finished batch calculation") != std::string::npos);
+            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(unknown))) != std::string::npos);
+            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(prepare))) != std::string::npos);
+            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(update_model))) !=
+                  std::string::npos);
+            CHECK(flushed_report.find(std::format(
+                      "ns] Tag:{}", std::to_underlying(total_single_calculation_in_thread))) != std::string::npos);
+            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(create_math_solver))) !=
+                  std::string::npos);
+            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(math_calculation))) !=
+                  std::string::npos);
+            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(math_solver))) != std::string::npos);
+            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(prepare_matrix))) !=
+                  std::string::npos);
+            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(solve_sparse_linear_equation))) !=
+                  std::string::npos);
+            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(calculate_math_result))) !=
+                  std::string::npos);
+            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(produce_output))) !=
+                  std::string::npos);
+            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(produce_output))) !=
+                  std::string::npos);
+            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(calculate_math_result))) !=
+                  std::string::npos);
+            CHECK(flushed_report.find(std::format(
+                      "ns] Tag:{}", std::to_underlying(total_batch_calculation_in_thread))) != std::string::npos);
+            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(copy_model))) != std::string::npos);
+            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(restore_model))) !=
+                  std::string::npos);
+        }
+        SUBCASE("Doesn't contain unexpected log tags") {
+            // check for tags that shouldn't be present for power flow single calculation that doesn't throw
+            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(total))) == std::string::npos);
+            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(build_model))) == std::string::npos);
+            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(initialize_calculation))) ==
                   std::string::npos);
             CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(scenario_exception))) ==
                   std::string::npos);
