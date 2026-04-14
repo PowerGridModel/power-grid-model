@@ -87,13 +87,13 @@ class Source : public Appliance {
     UpdateChange update(SourceUpdate const& update_data) {
         assert(update_data.id == this->id() || is_nan(update_data.id));
         bool const topo_changed = set_status(update_data.status);
-        bool const u_ref_changed = set_u_ref(update_data.u_ref, update_data.u_ref_angle);
+        set_u_ref(update_data.u_ref, update_data.u_ref_angle);
         bool const param_changed_impedance =
             set_sk_rx_ratio_z01_ratio(update_data.sk, update_data.rx_ratio, update_data.z01_ratio);
         // change source connection will change both topo and param
-        // change u ref will change param
+        // change u ref will NOT change param
         // change sk/rx_ratio/z01_ratio will change param
-        return {.topo = topo_changed, .param = u_ref_changed || param_changed_impedance || topo_changed};
+        return {.topo = topo_changed, .param = param_changed_impedance || topo_changed};
     }
 
     SourceUpdate inverse(SourceUpdate update_data) const {

@@ -191,7 +191,7 @@ TEST_CASE("Test source") {
     SUBCASE("test update") {
         auto changed = source.update(SourceUpdate{.id = 1, .status = 1, .u_ref = 1.05, .u_ref_angle = nan});
         CHECK(!changed.topo);
-        CHECK(changed.param);
+        CHECK(!changed.param);
         changed = source.update(SourceUpdate{.id = 1, .status = 0, .u_ref = 1.05, .u_ref_angle = nan});
         CHECK(changed.topo);
         CHECK(changed.param);
@@ -200,8 +200,13 @@ TEST_CASE("Test source") {
         CHECK(!changed.param);
 
         // test updating sk, rx_ratio, z01_ratio (status remains 0)
-        changed = source.update(SourceUpdate{
-            .id = 1, .status = na_IntS, .u_ref = nan, .u_ref_angle = nan, .sk = 20e6, .rx_ratio = nan, .z01_ratio = nan});
+        changed = source.update(SourceUpdate{.id = 1,
+                                             .status = na_IntS,
+                                             .u_ref = nan,
+                                             .u_ref_angle = nan,
+                                             .sk = 20e6,
+                                             .rx_ratio = nan,
+                                             .z01_ratio = nan});
         CHECK(!changed.topo);
         CHECK(changed.param);
 
@@ -209,18 +214,33 @@ TEST_CASE("Test source") {
         DoubleComplex const y_ref_sym_updated = source.math_param<symmetric_t>().template y_ref<symmetric_t>();
         CHECK(cabs(y_ref_sym_updated - y_ref_sym) > numerical_tolerance); // should be different
 
-        changed = source.update(SourceUpdate{
-            .id = 1, .status = na_IntS, .u_ref = nan, .u_ref_angle = nan, .sk = nan, .rx_ratio = 0.2, .z01_ratio = nan});
+        changed = source.update(SourceUpdate{.id = 1,
+                                             .status = na_IntS,
+                                             .u_ref = nan,
+                                             .u_ref_angle = nan,
+                                             .sk = nan,
+                                             .rx_ratio = 0.2,
+                                             .z01_ratio = nan});
         CHECK(!changed.topo);
         CHECK(changed.param);
 
-        changed = source.update(SourceUpdate{
-            .id = 1, .status = na_IntS, .u_ref = nan, .u_ref_angle = nan, .sk = nan, .rx_ratio = nan, .z01_ratio = 4.0});
+        changed = source.update(SourceUpdate{.id = 1,
+                                             .status = na_IntS,
+                                             .u_ref = nan,
+                                             .u_ref_angle = nan,
+                                             .sk = nan,
+                                             .rx_ratio = nan,
+                                             .z01_ratio = 4.0});
         CHECK(!changed.topo);
         CHECK(changed.param);
 
-        changed = source.update(SourceUpdate{
-            .id = 1, .status = na_IntS, .u_ref = nan, .u_ref_angle = nan, .sk = nan, .rx_ratio = nan, .z01_ratio = nan});
+        changed = source.update(SourceUpdate{.id = 1,
+                                             .status = na_IntS,
+                                             .u_ref = nan,
+                                             .u_ref_angle = nan,
+                                             .sk = nan,
+                                             .rx_ratio = nan,
+                                             .z01_ratio = nan});
         CHECK(!changed.topo);
         CHECK(!changed.param);
     }
