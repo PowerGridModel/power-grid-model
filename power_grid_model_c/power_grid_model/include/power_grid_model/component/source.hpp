@@ -121,23 +121,6 @@ class Source : public Appliance {
     DoubleComplex y1_ref_;
     DoubleComplex y0_ref_;
 
-    template <symmetry_tag sym_calc> ApplianceSolverOutput<sym_calc> u2si(ComplexValue<sym_calc> const& u) const {
-        ApplianceSolverOutput<sym_calc> appliance_solver_output;
-        ComplexValue<sym_calc> const u_ref{u_ref_};
-        SourceCalcParam const source_param = math_param<sym_calc>();
-        ComplexTensor<sym_calc> const y_ref = source_param.template y_ref<sym_calc>();
-        appliance_solver_output.i = dot(y_ref, u_ref - u);
-        appliance_solver_output.s = u * conj(appliance_solver_output.i);
-        return appliance_solver_output;
-    }
-
-    ApplianceSolverOutput<symmetric_t> sym_u2si(ComplexValue<symmetric_t> const& u) const final {
-        return u2si<symmetric_t>(u);
-    }
-    ApplianceSolverOutput<asymmetric_t> asym_u2si(ComplexValue<asymmetric_t> const& u) const final {
-        return u2si<asymmetric_t>(u);
-    }
-
     double injection_direction() const final { return 1.0; }
 };
 

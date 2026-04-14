@@ -37,13 +37,7 @@ TEST_CASE("Test shunt") {
     double const base_y = base_power_3p / 10e3 / 10e3;
     DoubleComplex const y1 = (1.0 + 2.0i) / base_y;
     DoubleComplex const y0 = (3.0 + 4.0i) / base_y;
-    DoubleComplex const u{1.0};
     ComplexValue<asymmetric_t> const ua{1.0};
-    double const p = 10e3 * 10e3 * 1.0;
-    double const q = -10e3 * 10e3 * 2.0;
-    double const s = std::sqrt(p * p + q * q);
-    double const i = s / 10e3 / sqrt3;
-    double const pf = p / s;
 
     CHECK(shunt.math_model_type() == ComponentType::shunt);
 
@@ -57,23 +51,6 @@ TEST_CASE("Test shunt") {
         ya = shunt.calc_param<asymmetric_t>(false);
         CHECK(cabs(ya(0, 0)) < numerical_tolerance);
         CHECK(cabs(ya(0, 1)) < numerical_tolerance);
-    }
-
-    SUBCASE("test results; u as input") {
-        ApplianceOutput<symmetric_t> const sym_result = shunt.get_output<symmetric_t>(u);
-        CHECK(sym_result.id == 1);
-        CHECK(sym_result.energized);
-        CHECK(sym_result.p == doctest::Approx(p));
-        CHECK(sym_result.q == doctest::Approx(q));
-        CHECK(sym_result.s == doctest::Approx(s));
-        CHECK(sym_result.i == doctest::Approx(i));
-        CHECK(sym_result.pf == doctest::Approx(pf));
-        ApplianceOutput<asymmetric_t> asym_result = shunt.get_output<asymmetric_t>(ua);
-        CHECK(asym_result.p(0) == doctest::Approx(p / 3));
-        CHECK(asym_result.q(1) == doctest::Approx(q / 3));
-        CHECK(asym_result.s(2) == doctest::Approx(s / 3));
-        CHECK(asym_result.i(0) == doctest::Approx(i));
-        CHECK(asym_result.pf(1) == doctest::Approx(pf));
     }
 
     SUBCASE("Symmetric test results; s, i as input") {
