@@ -540,11 +540,11 @@ TEST_CASE("Test MultiThreadedTextLogger integration with main model") {
     MathSolverDispatcher const math_solver_dispatcher{math_solver::math_solver_tag<MathSolver>{}};
     MainModel model{50.0, input_dataset, math_solver_dispatcher, 0, txt_logger};
 
-    MainModelOptions options{}; // default options are okay as we intend to test only the text logging
+    MainModelOptions const options{}; // default options are okay as we intend to test only the text logging
 
     SUBCASE("Single calculation preduces valid text log") {
         // empty update dataset
-        ConstDataset update_dataset{false, 1, "update", power_grid_model::meta_data::meta_data_gen::meta_data};
+        ConstDataset const update_dataset{false, 1, "update", power_grid_model::meta_data::meta_data_gen::meta_data};
 
         // output dataset
         MutableDataset result_dataset{false, 1, "sym_output", power_grid_model::meta_data::meta_data_gen::meta_data};
@@ -552,7 +552,7 @@ TEST_CASE("Test MultiThreadedTextLogger integration with main model") {
         // output dataset buffers
         // node outputs
         std::vector<ID> node_output_id(1);
-        std::vector<int8_t> node_output_energized(1);
+        std::vector<IntS> node_output_energized(1);
         std::vector<double> node_output_u_pu(1);
         std::vector<double> node_output_u_angle(1);
         std::vector<double> node_output_u(1);
@@ -561,7 +561,7 @@ TEST_CASE("Test MultiThreadedTextLogger integration with main model") {
 
         // source outputs
         std::vector<ID> source_output_id(1);
-        std::vector<int8_t> source_output_energized(1);
+        std::vector<IntS> source_output_energized(1);
         std::vector<double> source_output_p(1);
         std::vector<double> source_output_q(1);
         std::vector<double> source_output_i(1);
@@ -676,7 +676,7 @@ TEST_CASE("Test MultiThreadedTextLogger integration with main model") {
         // output dataset buffers
         // node outputs
         std::vector<ID> node_output_id(2);
-        std::vector<int8_t> node_output_energized(2);
+        std::vector<IntS> node_output_energized(2);
         std::vector<double> node_output_u_pu(2);
         std::vector<double> node_output_u_angle(2);
         std::vector<double> node_output_u(2);
@@ -685,7 +685,7 @@ TEST_CASE("Test MultiThreadedTextLogger integration with main model") {
 
         // source outputs
         std::vector<ID> source_output_id(2);
-        std::vector<int8_t> source_output_energized(2);
+        std::vector<IntS> source_output_energized(2);
         std::vector<double> source_output_p(2);
         std::vector<double> source_output_q(2);
         std::vector<double> source_output_i(2);
