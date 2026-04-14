@@ -321,7 +321,7 @@ inline std::vector<std::vector<DoubleComplex>> set_projection_system(Idx free_in
 
 inline void gauss_elimination(std::vector<std::vector<DoubleComplex>>& system) {
 
-    auto const system_size = narrow_cast<Idx>(system.size());
+    auto const system_size = std::ssize(system);
 
     for (Idx column = 0; column < system_size; column++) {
         for (Idx row = column + 1; row < system_size; row++) {
@@ -354,11 +354,11 @@ inline std::vector<DoubleComplex> compute_internal_loads(SolutionSet& solution_s
 
     internal_loads.resize(number_of_rows);
 
-    for (auto row : std::views::iota(Idx{}, number_of_rows)) {
+    for (auto row : IdxRange{number_of_rows}) {
 
         internal_loads[row] = solution_set.extended_rhs[row];
         auto sum_value = DoubleComplex{};
-        for (auto column : std::views::iota(Idx{}, number_of_columns)) {
+        for (auto column : IdxRange{number_of_columns}) {
             auto const value = solution_set.dfs_matrix.get_value(row, column);
             if (value.has_value()) {
                 sum_value += static_cast<DoubleComplex>(value.value()) * system[column].back();
