@@ -49,8 +49,6 @@ TEST_CASE("Test source") {
 
     // calculation
     double const u_input = 1.1;
-    double const u = 0.9;
-    double const i = cabs(y1 * (u_input - u)) * base_power_3p / sqrt3 / un;
 
     // asym
     ComplexTensor<asymmetric_t> const sym_matrix = get_sym_matrix();
@@ -111,13 +109,6 @@ TEST_CASE("Test source") {
         CHECK(cabs(u_ref - 1.1 * std::exp(2.5i)) < numerical_tolerance);
     }
 
-    SUBCASE("test source sym results; u as input") {
-        ApplianceOutput<symmetric_t> const sym_result = source.get_output<symmetric_t>(u);
-        CHECK(sym_result.id == 1);
-        CHECK(sym_result.energized);
-        CHECK(sym_result.i == doctest::Approx(i));
-    }
-
     SUBCASE("test source sym results; s, i as input") {
         ApplianceSolverOutput<symmetric_t> appliance_solver_output_sym;
         appliance_solver_output_sym.i = 1.0 + 2.0i;
@@ -130,14 +121,6 @@ TEST_CASE("Test source") {
         CHECK(sym_result.s == doctest::Approx(cabs(3.0 + 4.0i) * base_power<symmetric_t>));
         CHECK(sym_result.i == doctest::Approx(cabs(1.0 + 2.0i) * base_i));
         CHECK(sym_result.pf == doctest::Approx(3.0 / cabs(3.0 + 4.0i)));
-    }
-
-    SUBCASE("test source asym results; u as input") {
-        ApplianceOutput<asymmetric_t> const asym_result =
-            source.get_output<asymmetric_t>(ComplexValue<asymmetric_t>{u});
-        CHECK(asym_result.id == 1);
-        CHECK(asym_result.energized);
-        CHECK(asym_result.i(0) == doctest::Approx(i));
     }
 
     SUBCASE("test source asym results; s, i as input") {

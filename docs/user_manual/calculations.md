@@ -85,17 +85,13 @@ Due to the relative nature of `u_angle` (relevant only in systems with at least 
 conditions should be met:
 
 $$
-    \begin{eqnarray}
-        n_{measurements}    & >= & n_{unknowns}
-    \end{eqnarray}
+n_{measurements} >= n_{unknowns}
 $$
 
 Where
 
 $$
-    \begin{eqnarray}
-        n_{unknowns}    & = & 2 & \cdot & n_{nodes} - 1
-    \end{eqnarray}
+n_{unknowns} = 2 \cdot n_{nodes} - 1
 $$
 
 The number of measurements can be found by taking the sum of the following:
@@ -201,9 +197,7 @@ Output:
 Power flowing through a branch is calculated by voltage and current for any type of calculations in the following way:
 
 $$
-    \begin{eqnarray}
-        \underline{S_{branch-side}} = \sqrt{3} \cdot \underline{U_{LL-side-node}} \cdot \underline{I_{branch-side}}
-    \end{eqnarray}
+\underline{S_{branch-side}} = \sqrt{3} \cdot \underline{U_{LL-side-node}} \cdot \underline{I_{branch-side}}^*
 $$
 
 These quantities are in complex form.
