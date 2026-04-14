@@ -32,28 +32,19 @@ class Source : public Appliance {
     explicit Source(SourceInput const& source_input, double u)
         : Appliance{source_input, u},
           u_ref_{source_input.u_ref},
-          u_ref_angle_{is_nan(source_input.u_ref_angle) ? 0.0 : source_input.u_ref_angle} {
-        double const sk{is_nan(source_input.sk) ? default_source_sk : source_input.sk};
-        double const rx_ratio{is_nan(source_input.rx_ratio) ? default_source_rx_ratio : source_input.rx_ratio};
-        double const z01_ratio{is_nan(source_input.z01_ratio) ? default_source_z01_ratio : source_input.z01_ratio};
-        calculate_y_ref(sk, rx_ratio, z01_ratio);
-    }
-
-    // calculate y1 y0 ref
-    void calculate_y_ref(double sk, double rx_ratio, double z01_ratio) {
-        double const z_abs = base_power_3p / sk; // s_pu = s/base_s, z = u^2/s = 1/s = base_s/s_pu
-        double const x1 = z_abs / sqrt(rx_ratio * rx_ratio + 1.0);
-        double const r1 = x1 * rx_ratio;
-        y1_ref_ = 1.0 / DoubleComplex{r1, x1};
-        y0_ref_ = y1_ref_ / z01_ratio;
-    }
+          u_ref_angle_{is_nan(source_input.u_ref_angle) ? 0.0 : source_input.u_ref_angle},
+          sk_{is_nan(source_input.sk) ? default_source_sk : source_input.sk},
+          rx_ratio_{is_nan(source_input.rx_ratio) ? default_source_rx_ratio : source_input.rx_ratio},
+          z01_ratio_{is_nan(source_input.z01_ratio) ? default_source_z01_ratio : source_input.z01_ratio} {}
 
     template <symmetry_tag sym> SourceCalcParam math_param() const {
-        // internal element_admittance
-        SourceCalcParam param;
-        param.y0 = y0_ref_;
-        param.y1 = y1_ref_;
-        return param;
+        // calculate y1 y0 ref
+        double const z_abs = base_power_3p / sk_;
+        double const x1 = z_abs / sqrt(rx_ratio_ * rx_ratio_ + 1.0);
+        double const r1 = x1 * rx_ratio_;
+        DoubleComplex const y1_ref = 1.0 / DoubleComplex{r1, x1};
+        DoubleComplex const y0_ref = y1_ref / z01_ratio_;
+        return SourceCalcParam{.y1 = y1_ref, .y0 = y0_ref};
     }
 
     // setter
@@ -117,9 +108,10 @@ class Source : public Appliance {
   private:
     double u_ref_;
     double u_ref_angle_;
-    // positive and zero sequence ref
-    DoubleComplex y1_ref_;
-    DoubleComplex y0_ref_;
+    // source short circuit power
+    double sk_;
+    double rx_ratio_;
+    double z01_ratio_;
 
     double injection_direction() const final { return 1.0; }
 };
