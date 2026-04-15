@@ -30,10 +30,12 @@ class NoLogger : public Logger {
     void log(std::string_view /*message*/) const {
         // no logging
     }
-    template <LazyLoggingFn Fn> void log(LogEvent /*tag*/, Fn&& /*fn*/) const {
+    template <LazyLoggingFn Fn>
+    void log(LogEvent /*tag*/, Fn&& /*fn*/) const { // NOLINT(cppcoreguidelines-missing-std-forward) // intentional
         // no logging
     }
-    template <LazyLoggingFn Fn> void log(Fn&& /*fn*/) const {
+    template <LazyLoggingFn Fn>
+    void log(Fn&& /*fn*/) const { // NOLINT(cppcoreguidelines-missing-std-forward) // intentional
         // no logging
     }
 
