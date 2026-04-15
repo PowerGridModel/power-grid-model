@@ -319,7 +319,7 @@ inline std::vector<std::vector<DoubleComplex>> set_projection_system(Idx free_in
     return projection_system;
 };
 
-inline void gauss_elimination(std::vector<std::vector<DoubleComplex>>& system) {
+inline void naive_gauss_elimination(std::vector<std::vector<DoubleComplex>>& system) {
     auto const system_size = narrow_cast<Idx>(std::ssize(system));
 
     // we skip pivoting since the matrix system is mostly diagonally dominant
@@ -327,38 +327,39 @@ inline void gauss_elimination(std::vector<std::vector<DoubleComplex>>& system) {
     // any numerical instabilities in practice
 
     // forward elimination
-    for (Idx column : IdxRange{system_size}) {
-        for (Idx row : IdxRange{column + Idx{1}, system_size}) {
-            system[row][column] = -system[row][column] / system[column][column];
-
-            for (Idx column_part : IdxRange{column + Idx{1}, system_size + Idx{1}}) {
-                system[row][column_part] += system[row][column] * system[column][column_part];
+    for (Idx const column : IdxRange{system_size}) {
+        auto const pivot = system[column][column];
+        for (Idx const row : IdxRange{column + Idx{1}, system_size}) {
+            auto multiplier = -system[row][column] / pivot;
+            system[row][column] = multiplier;
+            for (Idx const column_part : IdxRange{column + Idx{1}, system_size + Idx{1}}) {
+                system[row][column_part] += multiplier * system[column][column_part];
             }
         }
     }
 
     // backward substitution
     system[system_size - 1][system_size] /= system[system_size - 1][system_size - 1];
-    for (Idx row = system_size - 1; row-- > 0;) {
+    for (Idx const row : IdxRange{system_size - 1} | std::views::reverse) {
         auto element_sum = DoubleComplex{};
-        for (Idx column : IdxRange{row + Idx{1}, system_size}) {
+        for (Idx const column : IdxRange{row + Idx{1}, system_size}) {
             element_sum -= system[row][column] * system[column][system_size];
         }
         system[row][system_size] = (system[row][system_size] + element_sum) / system[row][row];
     }
 };
 
-inline std::vector<DoubleComplex> compute_internal_loads(SolutionSet& solution_set,
-                                                         std::vector<std::vector<DoubleComplex>>& system) {
+inline std::vector<DoubleComplex> compute_internal_loads(SolutionSet const& solution_set,
+                                                         std::vector<std::vector<DoubleComplex>> const& system) {
     auto const number_of_rows = narrow_cast<Idx>(solution_set.extended_rhs.size());
     auto const number_of_columns = narrow_cast<Idx>(system.size());
     std::vector<DoubleComplex> internal_loads(number_of_rows);
 
-    for (auto row : IdxRange{number_of_rows}) {
+    for (auto const row : IdxRange{number_of_rows}) {
         internal_loads[row] = solution_set.extended_rhs[row];
         auto sum_value = DoubleComplex{};
-        for (auto column : IdxRange{number_of_columns}) {
-            solution_set.dfs_matrix.get_value(row, column).transform([&sum_value, &system, &column](IntS value) {
+        for (auto const column : IdxRange{number_of_columns}) {
+            solution_set.dfs_matrix.get_value(row, column).transform([&sum_value, &system, column](IntS value) {
                 sum_value += static_cast<DoubleComplex>(value) * system[column].back();
                 return value;
             });

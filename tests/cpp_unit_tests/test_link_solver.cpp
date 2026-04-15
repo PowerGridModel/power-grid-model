@@ -4,6 +4,7 @@
 
 #include <power_grid_model/calculation_parameters.hpp>
 #include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/counting_iterator.hpp>
 #include <power_grid_model/common/typing.hpp>
 #include <power_grid_model/link_solver.hpp>
 
@@ -523,45 +524,40 @@ TEST_CASE("Test the link solver algorithm") {
     }
 
     SUBCASE("Testing the gauss elimination routine") {
-        auto compare_systems = [](std::vector<std::vector<DoubleComplex>>& system,
-                                  std::vector<std::vector<DoubleComplex>>& test_system) {
-            auto const system_size = narrow_cast<Idx>(system.size());
-            double element_sum{};
-
-            for (Idx column = 0; column < system_size + 1; column++) {
-                for (Idx row = 0; row < system_size; row++) {
-                    element_sum += abs(system[row][column] - test_system[row][column]);
+        auto compare_systems = [](std::vector<std::vector<DoubleComplex>> const& solution,
+                                  std::vector<std::vector<DoubleComplex>> const& reference, Idx col_number,
+                                  Idx row_number, double tolerance) {
+            for (Idx const col : IdxRange{col_number}) {
+                for (Idx const row : IdxRange{row_number}) {
+                    CHECK(solution[row][col].real() == doctest::Approx(reference[row][col].real()).epsilon(tolerance));
+                    CHECK(solution[row][col].imag() == doctest::Approx(reference[row][col].imag()).epsilon(tolerance));
                 }
             }
-
-            return element_sum;
         };
 
-        auto compare_vectors = [](std::vector<std::vector<DoubleComplex>>& system,
-                                  std::vector<DoubleComplex>& test_solution) {
-            auto const system_size = narrow_cast<Idx>(system.size());
-            double element_sum{};
-
-            for (Idx row = 0; row < system_size; row++) {
-                element_sum += abs(system[row][system_size] - test_solution[row]);
+        auto compare_vectors = [](std::vector<std::vector<DoubleComplex>>& solution,
+                                  std::vector<DoubleComplex>& reference, double tolerance) {
+            auto const solution_size = narrow_cast<Idx>(solution.size());
+            // we only test against the last column of the solution as this lambda is intended for large edge test cases
+            // this makes our lifes easier
+            for (Idx const row : IdxRange{solution_size}) {
+                CHECK(solution[row][solution_size].real() == doctest::Approx(reference[row].real()).epsilon(tolerance));
+                CHECK(solution[row][solution_size].imag() == doctest::Approx(reference[row].imag()).epsilon(tolerance));
             }
-
-            return element_sum;
         };
 
         SUBCASE("Linear system of the complex case") {
             std::vector<std::vector<DoubleComplex>> system = {{{3, 0}, {1, 0}, {1, 0}, {2, 2}},
                                                               {{1, 0}, {3, 0}, {-1, 0}, {3, 3}},
                                                               {{1, 0}, {-1, 0}, {4, 0}, {-1, -1}}};
-
-            gauss_elimination(system);
-
+            naive_gauss_elimination(system);
             std::vector<std::vector<DoubleComplex>> test_system = {
                 {{3, 0}, {1, 0}, {1, 0}, {0.458333, 0.458333}},
                 {{-0.333333, 0}, {2.66667, 0}, {-1.33333, 0}, {0.791667, 0.791667}},
                 {{-0.333333, 0}, {0.5, -0}, {3, 0}, {-0.166667, -0.166667}}};
 
-            CHECK(compare_systems(system, test_system) < 1.e-5);
+            // the tolerance is set to 1e-5 because that's the test system tolerance
+            compare_systems(system, test_system, Idx{4}, Idx{3}, 1e-5);
         }
 
         SUBCASE("A system that consisng of a 15 X 15 matrix with externally randomly generated elements") {
@@ -811,33 +807,37 @@ TEST_CASE("Test the link solver algorithm") {
                 {-0.03845678, 0}, {-0.00652489, 0}, {-0.08356931, 0}, {0.05730963, 0},  {0.01390954, 0},
                 {0.026622, 0},    {0.04469859, 0},  {-0.00946348, 0}, {0.08945877, 0},  {0.00377452, 0}};
 
-            gauss_elimination(system);
+            naive_gauss_elimination(system);
 
-            CHECK(compare_vectors(system, test_solution) < 1.e-7);
+            // error tolerance is increased as this is a stress test
+            // the test system solution now includes for significant digits for this reason
+            // this is important because we are using naive_gauss_elimination, which skips pivoting
+            // so this test makes sure that assumption holds
+            compare_vectors(system, test_solution, 1e-7);
         }
     }
 
     SUBCASE("Testing the compute_internal_loads_routine") {
-
-        auto generate_input_solution_set = [](std::span<const IntS> data, std::span<const Idx> row,
-                                              std::span<const Idx> col, Idx row_number, Idx col_number) {
+        auto generate_input_solution_set = [](std::span<IntS const> data, std::span<Idx const> rows,
+                                              std::span<Idx const> cols, Idx row_number, Idx col_number) {
             SolutionSet solution_set{};
             solution_set.dfs_matrix.prepare(row_number, col_number);
             for (auto idx = size_t{0}; idx < data.size(); ++idx) {
-                solution_set.dfs_matrix.set_value(data[idx], row[idx], col[idx]);
+                solution_set.dfs_matrix.set_value(data[idx], rows[idx], cols[idx]);
             }
             return solution_set;
         };
 
-        auto compare_vectors = [](std::vector<DoubleComplex>& load, std::vector<DoubleComplex>& test_load) {
-            auto const load_size = narrow_cast<Idx>(load.size());
-            double element_sum{};
+        auto compare_vectors = [](std::vector<DoubleComplex>& loads, std::vector<DoubleComplex>& test_loads,
+                                  double tolerance) {
+            auto const loads_size = narrow_cast<Idx>(loads.size());
+            auto const test_loads_size = narrow_cast<Idx>(test_loads.size());
+            REQUIRE(loads_size == test_loads_size);
 
-            for (Idx idx = 0; idx < load_size; idx++) {
-                element_sum += abs(load[idx] - test_load[idx]);
+            for (Idx const idx : IdxRange(loads_size)) {
+                CHECK(loads[idx].real() == doctest::Approx(test_loads[idx].real()).epsilon(tolerance));
+                CHECK(loads[idx].imag() == doctest::Approx(test_loads[idx].imag()).epsilon(tolerance));
             }
-
-            return element_sum;
         };
 
         SUBCASE("Complex case with complex loads") {
@@ -859,11 +859,11 @@ TEST_CASE("Test the link solver algorithm") {
             std::vector<DoubleComplex> test_loads = {
                 {-0.291667, -0.291667}, {0.0416667, 0.0416667}, {-0.75, -0.75},        {0.458333, 0.458333},
                 {0.791667, 0.791667},   {0.166667, 0.166667},   {-0.166667, -0.166667}};
-            CHECK(compare_vectors(internal_loads, test_loads) < 1.e-5);
+
+            compare_vectors(internal_loads, test_loads, 1e-5);
         }
 
         SUBCASE("Four edges, four nodes, two real loads") {
-
             std::vector<IntS> data = {1, 1, -1};
             std::vector<Idx> row = {1, 2, 3};
             std::vector<Idx> col = {0, 0, 0};
@@ -876,7 +876,8 @@ TEST_CASE("Test the link solver algorithm") {
             std::vector<DoubleComplex> internal_loads = compute_internal_loads(solution_set, test_system);
 
             std::vector<DoubleComplex> test_loads = {{1, 0}, {-0.333333, -0}, {-0.333333, -0}, {-0.666667, 0}};
-            CHECK(compare_vectors(internal_loads, test_loads) < 1.e-5);
+
+            compare_vectors(internal_loads, test_loads, 1.e-5);
         }
     }
 }
