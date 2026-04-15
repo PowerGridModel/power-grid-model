@@ -959,6 +959,18 @@ TEST_CASE("Test the link solver algorithm") {
 
             CHECK(compare_vectors(internal_loads, test_loads) < 1.e-5);
         }
+        SUBCASE("Eight edges, five nodes, two real loads") {
+            auto const edges = std::vector<BranchIdx>{{0, 1}, {1, 2}, {2, 3}, {0, 3}, {0, 4}, {1, 4}, {2, 4}, {3, 4}};
+            auto const node_loads = std::vector<DoubleComplex>{1, -1, 0, 0, 0};
+
+            std::vector<DoubleComplex> internal_loads = compute_loads_link_elements(edges, node_loads);
+
+            std::vector<DoubleComplex> test_loads = {{0.53333333, 0},  {-0.2, 0},       {-0.13333333, 0},
+                                                     {0.2, 0},         {0.26666667, 0}, {-0.26666667, 0},
+                                                     {-0.06666667, 0}, {0.06666667, 0}};
+
+            CHECK(compare_vectors(internal_loads, test_loads) < 1.e-7);
+        }
     }
 }
 } // namespace power_grid_model::link_solver
