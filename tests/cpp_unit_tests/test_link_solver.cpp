@@ -551,7 +551,7 @@ TEST_CASE("Test the link solver algorithm") {
                                                               {{1, 0}, {3, 0}, {-1, 0}, {3, 3}},
                                                               {{1, 0}, {-1, 0}, {4, 0}, {-1, -1}}};
             naive_gauss_elimination(system);
-            std::vector<std::vector<DoubleComplex>> test_system = {
+            std::vector<std::vector<DoubleComplex>> const test_system = {
                 {{3, 0}, {1, 0}, {1, 0}, {0.458333, 0.458333}},
                 {{-0.333333, 0}, {2.66667, 0}, {-1.33333, 0}, {0.791667, 0.791667}},
                 {{-0.333333, 0}, {0.5, -0}, {3, 0}, {-0.166667, -0.166667}}};
@@ -849,7 +849,7 @@ TEST_CASE("Test the link solver algorithm") {
 
             solution_set.extended_rhs = {{0, 0}, {1, 1}, {-2, -2}, {0, 0}, {0, 0}, {0, 0}, {0, 0}};
 
-            std::vector<std::vector<DoubleComplex>> test_system = {
+            std::vector<std::vector<DoubleComplex>> const test_system = {
                 {{3, 0}, {1, 0}, {1, 0}, {0.458333, 0.458333}},
                 {{-0.333333, 0}, {2.66667, 0}, {-1.33333, 0}, {0.791667, 0.791667}},
                 {{-0.333333, 0}, {0.5, -0}, {3, 0}, {-0.166667, -0.166667}}};
@@ -871,7 +871,7 @@ TEST_CASE("Test the link solver algorithm") {
             auto solution_set = generate_input_solution_set(data, row, col, Idx{4}, Idx{1});
             solution_set.extended_rhs = {{1, 0}, {-1, -0}, {-1, -0}, {0, 0}};
 
-            std::vector<std::vector<DoubleComplex>> test_system = {{{3, 0}, {-0.666667, 0}}};
+            std::vector<std::vector<DoubleComplex>> const test_system = {{{3, 0}, {-0.666667, 0}}};
 
             std::vector<DoubleComplex> internal_loads = compute_internal_loads(solution_set, test_system);
 
