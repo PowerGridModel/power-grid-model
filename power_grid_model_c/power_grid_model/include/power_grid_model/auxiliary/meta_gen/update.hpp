@@ -105,13 +105,16 @@ struct get_attributes_list<LoadGenUpdate<sym_type>> {
 
 template<>
 struct get_attributes_list<SourceUpdate> {
-    static constexpr std::array<MetaAttribute, 4> value{
+    static constexpr std::array<MetaAttribute, 7> value{
             // all attributes including base class
             
             meta_data_gen::get_meta_attribute<&SourceUpdate::id>(offsetof(SourceUpdate, id), "id"),
             meta_data_gen::get_meta_attribute<&SourceUpdate::status>(offsetof(SourceUpdate, status), "status"),
             meta_data_gen::get_meta_attribute<&SourceUpdate::u_ref>(offsetof(SourceUpdate, u_ref), "u_ref"),
             meta_data_gen::get_meta_attribute<&SourceUpdate::u_ref_angle>(offsetof(SourceUpdate, u_ref_angle), "u_ref_angle"),
+            meta_data_gen::get_meta_attribute<&SourceUpdate::sk>(offsetof(SourceUpdate, sk), "sk"),
+            meta_data_gen::get_meta_attribute<&SourceUpdate::rx_ratio>(offsetof(SourceUpdate, rx_ratio), "rx_ratio"),
+            meta_data_gen::get_meta_attribute<&SourceUpdate::z01_ratio>(offsetof(SourceUpdate, z01_ratio), "z01_ratio"),
     };
 };
 
