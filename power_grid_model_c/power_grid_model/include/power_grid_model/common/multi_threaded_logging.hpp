@@ -73,6 +73,8 @@ class MultiThreadedLoggerImpl : public MultiThreadedLogger {
     void log(LogEvent tag, double value) override { log_.log(tag, value); }
     void log(LogEvent tag, Idx value) override { log_.log(tag, value); }
 
+    using MultiThreadedLogger::log;
+
   private:
     friend class ThreadLogger;
 

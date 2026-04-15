@@ -38,6 +38,15 @@ class CalculationInfo : public Logger {
     }
     void log(LogEvent tag, double value) override { log_impl(tag, value); }
     void log(LogEvent tag, Idx value) override { log_impl(tag, static_cast<double>(value)); }
+    void log(std::string_view /*message*/) {
+        // no logging
+    }
+    template <LazyLoggingFn Fn> void log(LogEvent /*tag*/, Fn&& /*fn*/) {
+        // no logging
+    }
+    template <LazyLoggingFn Fn> void log(Fn&& /*fn*/) {
+        // no logging
+    }
 
   private:
     Data data_;

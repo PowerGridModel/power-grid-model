@@ -20,15 +20,13 @@
 
 namespace power_grid_model {
 namespace common::logging {
-template <typename Fn>
-concept LazyLoggingFn = std::invocable<Fn> && std::convertible_to<std::invoke_result_t<Fn>, std::string> &&
-                        (!std::convertible_to<Fn, std::string_view>);
+// template <typename Fn>
+// concept LazyLoggingFn = std::invocable<Fn> && std::convertible_to<std::invoke_result_t<Fn>, std::string> &&
+//                         (!std::convertible_to<Fn, std::string_view>);
 
 class TextLogger : public Logger {
-    using Clock = std::chrono::high_resolution_clock;
     using FlushHandler = std::function<void(std::string)>;
 
-    Clock::time_point start_time_{Clock::now()};
     std::stringstream data_;
     FlushHandler flush_handler_;
 
@@ -38,14 +36,11 @@ class TextLogger : public Logger {
 
     TextLogger(TextLogger const&) = delete;
     TextLogger(TextLogger&& other) noexcept
-        : start_time_(other.start_time_),
-          data_(std::exchange(other.data_, {})),
-          flush_handler_(std::exchange(other.flush_handler_, {})) {}
+        : data_(std::exchange(other.data_, {})), flush_handler_(std::exchange(other.flush_handler_, {})) {}
 
     TextLogger& operator=(TextLogger const&) = delete;
     TextLogger& operator=(TextLogger&& other) noexcept {
         if (this != &other) {
-            start_time_ = other.start_time_;
             data_ = std::exchange(other.data_, {});
             flush_handler_ = std::exchange(other.flush_handler_, {});
         }
@@ -69,15 +64,23 @@ class TextLogger : public Logger {
     void log(LogEvent tag, double value) override { log_impl(tag, std::to_string(value)); }
     void log(LogEvent tag, Idx value) override { log_impl(tag, std::to_string(value)); }
     void log(LogEvent tag, std::string_view message) override { log_impl(tag, message); }
-    void log(std::string_view message) { log_impl(LogEvent::unknown, message); }
-    template <LazyLoggingFn Fn> void log(LogEvent tag, Fn&& fn) { log_impl(tag, std::invoke(std::forward<Fn>(fn))); }
-    template <LazyLoggingFn Fn> void log(Fn&& fn) { log_impl(LogEvent::unknown, std::invoke(std::forward<Fn>(fn))); }
+
+    using Logger::log;
 
   private:
+    auto timestamp() const {
+        using namespace std::chrono;
+        const auto now = system_clock::now();
+        const auto sec = floor<seconds>(now);
+        const auto ms = duration_cast<milliseconds>(now - sec).count();
+
+        // Z stands for UTC time zone
+        // format example: 2026-04-25 14:00:00.000Z
+        return std::format("{:%F %T}.{:03}Z", sec, ms);
+    }
+
     void log_impl(LogEvent tag, std::string_view message) {
-        data_ << std::format("[{} ns] Tag:{}: {}\n",
-                             std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - start_time_).count(),
-                             std::to_underlying(tag), message);
+        data_ << std::format("[{}] Tag:{}: {}\n", timestamp(), std::to_underlying(tag), message);
     }
 
   public:

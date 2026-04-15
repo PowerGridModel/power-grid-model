@@ -53,7 +53,7 @@ void logger_helper(TextLogger& logger) {
 
 void report_checker_helper(std::string_view report) {
     auto string_matcher = [](LogEvent tag, std::string_view message) {
-        return std::format("ns] Tag:{}: {}\n", std::to_underlying(tag), message);
+        return std::format("Z] Tag:{}: {}\n", std::to_underlying(tag), message);
     };
 
     using enum LogEvent;
@@ -70,7 +70,7 @@ void child_logger_helper(Idx current_thread_idx, TextLogger& logger) { logger.lo
 
 void multi_threaded_report_checker_helper(Idx n_threads, std::string_view report) {
     for (Idx idx = 0; idx < n_threads; ++idx) {
-        CHECK(report.find(std::format("ns] Tag:{}: {}\n", std::to_underlying(LogEvent::unknown), idx)) !=
+        CHECK(report.find(std::format("Z] Tag:{}: {}\n", std::to_underlying(LogEvent::unknown), idx)) !=
               std::string_view::npos);
     }
 }
@@ -170,7 +170,7 @@ TEST_CASE("Test TextLogger") {
             CHECK(other_report.empty());
             other_txt_logger.log(msg_other);
             other_report = other_txt_logger.report();
-            CHECK(other_report.find(std::format("ns] Tag:{}: {}\n", std::to_underlying(unknown), msg_other)) !=
+            CHECK(other_report.find(std::format("Z] Tag:{}: {}\n", std::to_underlying(unknown), msg_other)) !=
                   std::string_view::npos);
 
             txt_logger.merge_into(other_txt_logger);
@@ -178,7 +178,7 @@ TEST_CASE("Test TextLogger") {
             // original logger should be kept the same
             report_checker_helper(report);
             other_report = other_txt_logger.report();
-            CHECK(other_report.find(std::format("ns] Tag:{}: {}\n", std::to_underlying(unknown), msg_other)) !=
+            CHECK(other_report.find(std::format("Z] Tag:{}: {}\n", std::to_underlying(unknown), msg_other)) !=
                   std::string_view::npos);
             report_checker_helper(other_report);
         }
@@ -348,11 +348,9 @@ TEST_CASE("Test MultiThreadedTextLogger") {
             multi_threaded_logger.log(total_single_calculation_in_thread, Idx{2});
             multi_threaded_logger.log(total_batch_calculation_in_thread, "4");
 
-            // TODO(figueroa1395): is this behaviour intended? Or we want to allow direct logging with these overloads?
-            auto& underlying_logger = multi_threaded_logger.get();
-            underlying_logger.log("5");
-            underlying_logger.log(copy_model, []() { return "6"; });
-            underlying_logger.log([]() { return "7.0"; });
+            multi_threaded_logger.log("5");
+            multi_threaded_logger.log(copy_model, []() { return "6"; });
+            multi_threaded_logger.log([]() { return "7.0"; });
 
             auto report = multi_threaded_logger.report();
             report_checker_helper(report);
@@ -375,15 +373,14 @@ TEST_CASE("Test MultiThreadedTextLogger") {
         run_parallel_jobs(n_threads, multi_threaded_logger, single_thread_job);
 
         SUBCASE("Log and report - Non-const getter") {
-            auto& underlying_logger = multi_threaded_logger.get();
-            underlying_logger.log([]() { return msg_other; });
-            underlying_logger.log(unknown, msg_other_extra);
+            multi_threaded_logger.log([]() { return msg_other; });
+            multi_threaded_logger.log(unknown, msg_other_extra);
 
-            auto report = underlying_logger.report();
+            auto report = multi_threaded_logger.report();
             multi_threaded_report_checker_helper(n_threads, report);
-            CHECK(report.find(std::format("ns] Tag:{}: {}\n", std::to_underlying(unknown), msg_other)) !=
+            CHECK(report.find(std::format("Z] Tag:{}: {}\n", std::to_underlying(unknown), msg_other)) !=
                   std::string_view::npos);
-            CHECK(report.find(std::format("ns] Tag:{}: {}\n", std::to_underlying(unknown), msg_other_extra)) !=
+            CHECK(report.find(std::format("Z] Tag:{}: {}\n", std::to_underlying(unknown), msg_other_extra)) !=
                   std::string_view::npos);
         }
 
@@ -473,7 +470,7 @@ TEST_CASE("Test MultiThreadedTextLogger") {
             CHECK(report.empty());
             multi_threaded_logger.log(unknown, msg_other);
             report = multi_threaded_logger.report();
-            CHECK(report.find(std::format("ns] Tag:{}: {}\n", std::to_underlying(unknown), msg_other)) !=
+            CHECK(report.find(std::format("Z] Tag:{}: {}\n", std::to_underlying(unknown), msg_other)) !=
                   std::string_view::npos);
 
             auto child_logger_ptr = multi_threaded_logger.create_child();
@@ -482,11 +479,11 @@ TEST_CASE("Test MultiThreadedTextLogger") {
             CHECK(child_report.empty());
             child_logger.log(msg_other_extra);
             child_report = child_logger.report();
-            CHECK(child_report.find(std::format("ns] Tag:{}: {}\n", std::to_underlying(unknown), msg_other_extra)) !=
+            CHECK(child_report.find(std::format("Z] Tag:{}: {}\n", std::to_underlying(unknown), msg_other_extra)) !=
                   std::string_view::npos);
 
             report = multi_threaded_logger.report();
-            CHECK(report.find(std::format("ns] Tag:{}: {}\n", std::to_underlying(unknown), msg_other)) !=
+            CHECK(report.find(std::format("Z] Tag:{}: {}\n", std::to_underlying(unknown), msg_other)) !=
                   std::string_view::npos); // parent report should not be affected by child logs
 
             // child loggers should not be able to flush with a flush handler, but instead just clear their report and
@@ -496,9 +493,9 @@ TEST_CASE("Test MultiThreadedTextLogger") {
             CHECK(child_report.empty());
             CHECK(flushed_report.empty());
             report = multi_threaded_logger.report();
-            CHECK(report.find(std::format("ns] Tag:{}: {}\n", std::to_underlying(unknown), msg_other)) !=
+            CHECK(report.find(std::format("Z] Tag:{}: {}\n", std::to_underlying(unknown), msg_other)) !=
                   std::string_view::npos);
-            CHECK(report.find(std::format("ns] Tag:{}: {}\n", std::to_underlying(unknown), msg_other_extra)) ==
+            CHECK(report.find(std::format("Z] Tag:{}: {}\n", std::to_underlying(unknown), msg_other_extra)) ==
                   std::string_view::npos);
         }
     }
@@ -588,77 +585,74 @@ TEST_CASE("Test MultiThreadedTextLogger integration with main model") {
         result_dataset.add_attribute_buffer("source", "s", source_output_s.data());
         result_dataset.add_attribute_buffer("source", "pf", source_output_pf.data());
 
-        // TODO(figueroa1395): is this behaviour intended?
-        txt_logger.get().log([]() { return "Starting single calculation"; });
+        txt_logger.log([]() { return "Starting single calculation"; });
         model.calculate(options, result_dataset, update_dataset);
-        txt_logger.get().log([]() { return "Finished single calculation"; });
+        txt_logger.log([]() { return "Finished single calculation"; });
         txt_logger.flush();
 
         SUBCASE("Contains expected log tags") {
             // check that we logged tags correctly
             CHECK(flushed_report.find("Starting single calculation") != std::string::npos);
             CHECK(flushed_report.find("Finished single calculation") != std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(unknown))) != std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(prepare))) != std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(create_math_solver))) !=
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(unknown))) != std::string::npos);
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(prepare))) != std::string::npos);
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(create_math_solver))) !=
                   std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(math_calculation))) !=
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(math_calculation))) !=
                   std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(math_solver))) != std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(prepare_matrix))) !=
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(math_solver))) != std::string::npos);
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(prepare_matrix))) !=
                   std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(solve_sparse_linear_equation))) !=
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(solve_sparse_linear_equation))) !=
                   std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(calculate_math_result))) !=
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(calculate_math_result))) !=
                   std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(produce_output))) !=
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(produce_output))) !=
                   std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(produce_output))) !=
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(produce_output))) !=
                   std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(calculate_math_result))) !=
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(calculate_math_result))) !=
                   std::string::npos);
         }
         SUBCASE("Doesn't contain unexpected log tags") {
             // check for tags that shouldn't be present for power flow single calculation that doesn't throw
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(total))) == std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(build_model))) == std::string::npos);
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(total))) == std::string::npos);
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(build_model))) == std::string::npos);
             CHECK(flushed_report.find(std::format(
-                      "ns] Tag:{}", std::to_underlying(total_single_calculation_in_thread))) == std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(update_model))) ==
+                      "Z] Tag:{}", std::to_underlying(total_single_calculation_in_thread))) == std::string::npos);
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(update_model))) == std::string::npos);
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(initialize_calculation))) ==
                   std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(initialize_calculation))) ==
-                  std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(copy_model))) == std::string::npos);
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(copy_model))) == std::string::npos);
             CHECK(flushed_report.find(std::format(
-                      "ns] Tag:{}", std::to_underlying(total_batch_calculation_in_thread))) == std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(restore_model))) ==
+                      "Z] Tag:{}", std::to_underlying(total_batch_calculation_in_thread))) == std::string::npos);
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(restore_model))) ==
                   std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(scenario_exception))) ==
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(scenario_exception))) ==
                   std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(recover_from_bad))) ==
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(recover_from_bad))) ==
                   std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(preprocess_measured_value))) ==
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(preprocess_measured_value))) ==
                   std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(initialize_voltages))) ==
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(initialize_voltages))) ==
                   std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(calculate_rhs))) ==
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(calculate_rhs))) ==
                   std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(prepare_lhs_rhs))) ==
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(prepare_lhs_rhs))) ==
                   std::string::npos);
             CHECK(flushed_report.find(
-                      std::format("ns] Tag:{}", std::to_underlying(prepare_matrix_including_prefactorization))) ==
+                      std::format("Z] Tag:{}", std::to_underlying(prepare_matrix_including_prefactorization))) ==
                   std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(prepare_matrices))) ==
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(prepare_matrices))) ==
                   std::string::npos);
             CHECK(flushed_report.find(
-                      std::format("ns] Tag:{}", std::to_underlying(solve_sparse_linear_equation_prefactorized))) ==
+                      std::format("Z] Tag:{}", std::to_underlying(solve_sparse_linear_equation_prefactorized))) ==
                   std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(iterate_unknown))) ==
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(iterate_unknown))) ==
                   std::string::npos);
-            CHECK(flushed_report.find(std::format(
-                      "ns] Tag:{}", std::to_underlying(iterative_pf_solver_max_num_iter))) == std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(max_num_iter))) ==
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(iterative_pf_solver_max_num_iter))) ==
                   std::string::npos);
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(max_num_iter))) == std::string::npos);
         }
     }
     SUBCASE("Batch calculation produces valid text log") {
@@ -712,76 +706,74 @@ TEST_CASE("Test MultiThreadedTextLogger integration with main model") {
         result_dataset.add_attribute_buffer("source", "s", source_output_s.data());
         result_dataset.add_attribute_buffer("source", "pf", source_output_pf.data());
 
-        txt_logger.get().log([]() { return "Starting batch calculation"; });
+        txt_logger.log([]() { return "Starting batch calculation"; });
         model.calculate(options, result_dataset, update_dataset);
-        txt_logger.get().log([]() { return "Finished batch calculation"; });
+        txt_logger.log([]() { return "Finished batch calculation"; });
         txt_logger.flush();
 
         SUBCASE("Contains expected log tags") {
             // check that we logged tags correctly
             CHECK(flushed_report.find("Starting batch calculation") != std::string::npos);
             CHECK(flushed_report.find("Finished batch calculation") != std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(unknown))) != std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(prepare))) != std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(update_model))) !=
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(unknown))) != std::string::npos);
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(prepare))) != std::string::npos);
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(update_model))) != std::string::npos);
+            CHECK(flushed_report.find(std::format(
+                      "Z] Tag:{}", std::to_underlying(total_single_calculation_in_thread))) != std::string::npos);
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(create_math_solver))) !=
+                  std::string::npos);
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(math_calculation))) !=
+                  std::string::npos);
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(math_solver))) != std::string::npos);
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(prepare_matrix))) !=
+                  std::string::npos);
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(solve_sparse_linear_equation))) !=
+                  std::string::npos);
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(calculate_math_result))) !=
+                  std::string::npos);
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(produce_output))) !=
+                  std::string::npos);
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(produce_output))) !=
+                  std::string::npos);
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(calculate_math_result))) !=
                   std::string::npos);
             CHECK(flushed_report.find(std::format(
-                      "ns] Tag:{}", std::to_underlying(total_single_calculation_in_thread))) != std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(create_math_solver))) !=
-                  std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(math_calculation))) !=
-                  std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(math_solver))) != std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(prepare_matrix))) !=
-                  std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(solve_sparse_linear_equation))) !=
-                  std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(calculate_math_result))) !=
-                  std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(produce_output))) !=
-                  std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(produce_output))) !=
-                  std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(calculate_math_result))) !=
-                  std::string::npos);
-            CHECK(flushed_report.find(std::format(
-                      "ns] Tag:{}", std::to_underlying(total_batch_calculation_in_thread))) != std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(copy_model))) != std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(restore_model))) !=
+                      "Z] Tag:{}", std::to_underlying(total_batch_calculation_in_thread))) != std::string::npos);
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(copy_model))) != std::string::npos);
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(restore_model))) !=
                   std::string::npos);
         }
         SUBCASE("Doesn't contain unexpected log tags") {
             // check for tags that shouldn't be present for power flow single calculation that doesn't throw
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(total))) == std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(build_model))) == std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(initialize_calculation))) ==
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(total))) == std::string::npos);
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(build_model))) == std::string::npos);
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(initialize_calculation))) ==
                   std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(scenario_exception))) ==
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(scenario_exception))) ==
                   std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(recover_from_bad))) ==
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(recover_from_bad))) ==
                   std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(preprocess_measured_value))) ==
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(preprocess_measured_value))) ==
                   std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(initialize_voltages))) ==
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(initialize_voltages))) ==
                   std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(calculate_rhs))) ==
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(calculate_rhs))) ==
                   std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(prepare_lhs_rhs))) ==
-                  std::string::npos);
-            CHECK(flushed_report.find(
-                      std::format("ns] Tag:{}", std::to_underlying(prepare_matrix_including_prefactorization))) ==
-                  std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(prepare_matrices))) ==
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(prepare_lhs_rhs))) ==
                   std::string::npos);
             CHECK(flushed_report.find(
-                      std::format("ns] Tag:{}", std::to_underlying(solve_sparse_linear_equation_prefactorized))) ==
+                      std::format("Z] Tag:{}", std::to_underlying(prepare_matrix_including_prefactorization))) ==
                   std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(iterate_unknown))) ==
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(prepare_matrices))) ==
                   std::string::npos);
-            CHECK(flushed_report.find(std::format(
-                      "ns] Tag:{}", std::to_underlying(iterative_pf_solver_max_num_iter))) == std::string::npos);
-            CHECK(flushed_report.find(std::format("ns] Tag:{}", std::to_underlying(max_num_iter))) ==
+            CHECK(flushed_report.find(
+                      std::format("Z] Tag:{}", std::to_underlying(solve_sparse_linear_equation_prefactorized))) ==
                   std::string::npos);
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(iterate_unknown))) ==
+                  std::string::npos);
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(iterative_pf_solver_max_num_iter))) ==
+                  std::string::npos);
+            CHECK(flushed_report.find(std::format("Z] Tag:{}", std::to_underlying(max_num_iter))) == std::string::npos);
         }
     }
 }

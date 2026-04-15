@@ -211,6 +211,7 @@ struct PowerGridBenchmark {
             run(single_scenario);
         }
         print_info(info);
+        info.clear();
 
         if (batch_size > 0) {
             info.clear();
@@ -219,6 +220,7 @@ struct PowerGridBenchmark {
             run(batch_size);
         }
         print_info(info);
+        info.clear();
 
         std::cout << "\n\n";
     }
