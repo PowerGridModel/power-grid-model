@@ -20,10 +20,6 @@
 
 namespace power_grid_model {
 namespace common::logging {
-// template <typename Fn>
-// concept LazyLoggingFn = std::invocable<Fn> && std::convertible_to<std::invoke_result_t<Fn>, std::string> &&
-//                         (!std::convertible_to<Fn, std::string_view>);
-
 class TextLogger : public Logger {
     using FlushHandler = std::function<void(std::string)>;
 
@@ -68,7 +64,7 @@ class TextLogger : public Logger {
     using Logger::log;
 
   private:
-    auto timestamp() const {
+    static auto timestamp() {
         using namespace std::chrono;
         const auto now = system_clock::now();
         const auto sec = floor<seconds>(now);

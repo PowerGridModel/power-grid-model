@@ -13,6 +13,8 @@
 namespace power_grid_model::common::logging {
 class NoLogger : public Logger {
   public:
+    using Logger::log;
+
     void log(LogEvent /*tag*/) override {
         // no logging
     }
@@ -25,13 +27,13 @@ class NoLogger : public Logger {
     void log(LogEvent /*tag*/, Idx /*value*/) override {
         // no logging
     }
-    void log(std::string_view /*message*/) {
+    void log(std::string_view /*message*/) const {
         // no logging
     }
-    template <LazyLoggingFn Fn> void log(LogEvent /*tag*/, Fn&& /*fn*/) {
+    template <LazyLoggingFn Fn> void log(LogEvent /*tag*/, Fn&& /*fn*/) const {
         // no logging
     }
-    template <LazyLoggingFn Fn> void log(Fn&& /*fn*/) {
+    template <LazyLoggingFn Fn> void log(Fn&& /*fn*/) const {
         // no logging
     }
 

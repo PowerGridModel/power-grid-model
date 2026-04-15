@@ -20,6 +20,7 @@ class CalculationInfo : public Logger {
     using Data = std::map<LogEvent, double>;
 
   public:
+    using Logger::log;
     using Report = std::add_lvalue_reference_t<std::add_const_t<Data>>;
     static_assert(std::same_as<Report, Data const&>);
 
@@ -38,13 +39,13 @@ class CalculationInfo : public Logger {
     }
     void log(LogEvent tag, double value) override { log_impl(tag, value); }
     void log(LogEvent tag, Idx value) override { log_impl(tag, static_cast<double>(value)); }
-    void log(std::string_view /*message*/) {
+    void log(std::string_view /*message*/) const {
         // no logging
     }
-    template <LazyLoggingFn Fn> void log(LogEvent /*tag*/, Fn&& /*fn*/) {
+    template <LazyLoggingFn Fn> void log(LogEvent /*tag*/, Fn&& /*fn*/) const {
         // no logging
     }
-    template <LazyLoggingFn Fn> void log(Fn&& /*fn*/) {
+    template <LazyLoggingFn Fn> void log(Fn&& /*fn*/) const {
         // no logging
     }
 
