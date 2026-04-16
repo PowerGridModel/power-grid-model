@@ -17,7 +17,6 @@
 
 #include <doctest/doctest.h>
 
-#include <algorithm>
 #include <complex>
 
 namespace power_grid_model {
@@ -59,15 +58,8 @@ TEST_CASE("Test line") {
     ComplexTensor<asymmetric_t> const yfta{(2.0 * yft1 + yft0) / 3.0, (yft0 - yft1) / 3.0};
     ComplexTensor<asymmetric_t> const ysa{(2.0 * ys1 + ys0) / 3.0, (ys0 - ys1) / 3.0};
 
-    DoubleComplex const u1f = 1.0;
-    DoubleComplex const u1t = 0.9;
     ComplexValue<asymmetric_t> const uaf{1.0};
     ComplexValue<asymmetric_t> const uat{0.9};
-    DoubleComplex const i1f = (yff1 * u1f + yft1 * u1t) * base_i;
-    DoubleComplex const i1t = (yft1 * u1f + yff1 * u1t) * base_i;
-    DoubleComplex const s_f = conj(i1f) * u1f * 10e3 * sqrt3;
-    DoubleComplex const s_t = conj(i1t) * u1t * 10e3 * sqrt3;
-    double const loading = std::max(cabs(i1f), cabs(i1t)) / 200.0;
 
     // Short circuit results
     DoubleComplex const if_sc{1.0, 1.0};
@@ -147,21 +139,6 @@ TEST_CASE("Test line") {
         CHECK((cabs(param.yft() - 0.0) < numerical_tolerance).all());
     }
 
-    SUBCASE("Symmetric results") {
-        BranchOutput<symmetric_t> const output = branch.get_output<symmetric_t>(1.0, 0.9);
-        CHECK(output.id == 1);
-        CHECK(output.energized);
-        CHECK(output.loading == doctest::Approx(loading));
-        CHECK(output.i_from == doctest::Approx(cabs(i1f)));
-        CHECK(output.i_to == doctest::Approx(cabs(i1t)));
-        CHECK(output.s_from == doctest::Approx(cabs(s_f)));
-        CHECK(output.s_to == doctest::Approx(cabs(s_t)));
-        CHECK(output.p_from == doctest::Approx(real(s_f)));
-        CHECK(output.p_to == doctest::Approx(real(s_t)));
-        CHECK(output.q_from == doctest::Approx(imag(s_f)));
-        CHECK(output.q_to == doctest::Approx(imag(s_t)));
-    }
-
     SUBCASE("Symmetric results with direct power and current output") {
         BranchSolverOutput<symmetric_t> branch_solver_output{};
         branch_solver_output.i_f = 1.0 - 2.0i;
@@ -205,21 +182,6 @@ TEST_CASE("Test line") {
         CHECK(output.i_to(1) == 0.0);
         CHECK(output.i_from_angle(0) == 0.0);
         CHECK(output.i_to_angle(1) == 0.0);
-    }
-
-    SUBCASE("Asymmetric results") {
-        BranchOutput<asymmetric_t> output = branch.get_output<asymmetric_t>(uaf, uat);
-        CHECK(output.id == 1);
-        CHECK(output.energized);
-        CHECK(output.loading == doctest::Approx(loading));
-        CHECK(output.i_from(0) == doctest::Approx(cabs(i1f)));
-        CHECK(output.i_to(1) == doctest::Approx(cabs(i1t)));
-        CHECK(output.s_from(2) == doctest::Approx(cabs(s_f) / 3.0));
-        CHECK(output.s_to(0) == doctest::Approx(cabs(s_t) / 3.0));
-        CHECK(output.p_from(1) == doctest::Approx(real(s_f) / 3.0));
-        CHECK(output.p_to(2) == doctest::Approx(real(s_t) / 3.0));
-        CHECK(output.q_from(0) == doctest::Approx(imag(s_f) / 3.0));
-        CHECK(output.q_to(1) == doctest::Approx(imag(s_t) / 3.0));
     }
 
     SUBCASE("Asym short circuit results") {
