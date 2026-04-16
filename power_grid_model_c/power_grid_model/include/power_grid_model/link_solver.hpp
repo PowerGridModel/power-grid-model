@@ -38,11 +38,7 @@ struct CooSparseMatrix {
     Idx row_number{};
     std::unordered_map<Idx, IntS> data_map{};
 
-    void prepare(auto row_size, auto col_size) {
-        row_number = col_size;
-        data_map.reserve(row_size *
-                         col_size); // worst case to guarantee O(1) insertion/retrieval, but typically much sparser
-    }
+    void prepare(Idx col_size) { row_number = col_size; }
     void set_value(IntS value, Idx row_idx, Idx col_idx) {
         assert(row_number != 0 && "row_number must be set before setting values in data_map");
         data_map[row_idx * row_number + col_idx] = value;
@@ -111,11 +107,12 @@ inline void replace_and_write(Idx edge_idx, Idx from_node_idx, Idx to_node_idx, 
                               std::vector<BranchIdx>& edges, CooSparseMatrix& matrix) {
     using enum EdgeDirection;
 
-    if (from_node(edges[edge_idx]) == to_node_idx) {
-        re_attach_from_node(from_node_idx, edges[edge_idx]);
+    auto& edge = edges[edge_idx];
+    if (from_node(edge) == to_node_idx) {
+        re_attach_from_node(from_node_idx, edge);
         matrix.set_value(std::to_underlying(outgoing), matrix_row, edge_idx);
     } else {
-        re_attach_to_node(from_node_idx, edges[edge_idx]);
+        re_attach_to_node(from_node_idx, edge);
         matrix.set_value(std::to_underlying(incoming), matrix_row, edge_idx);
     }
 }
@@ -124,7 +121,8 @@ inline void update_edge_info(Idx edge_idx, Idx matrix_row, std::vector<BranchIdx
                              std::vector<EdgeHistory>& edges_history, ContractedEdgesSet& edges_contracted_to_point) {
     using enum EdgeEvent;
 
-    if (from_node(edges[edge_idx]) == to_node(edges[edge_idx])) {
+    auto const& edge = edges[edge_idx];
+    if (from_node(edge) == to_node(edge)) {
         write_edge_history(edges_history[edge_idx], contracted_to_point, matrix_row);
         edges_contracted_to_point.insert(edge_idx);
     } else {
@@ -154,25 +152,27 @@ inline void forward_elimination(ReducedEchelonFormResult& result, std::vector<Br
 
             Idx const from_node_idx = from_node(edge);
             Idx const to_node_idx = to_node(edge);
+            auto& adjacency_map_at_from_node = adjacency_map[from_node_idx];
+            auto& adjacency_map_at_to_node = adjacency_map[to_node_idx];
 
             // update adjacency list for deleted edge
-            adjacency_map[from_node_idx].erase(index);
-            adjacency_map[to_node_idx].erase(index);
+            adjacency_map_at_from_node.erase(index);
+            adjacency_map_at_to_node.erase(index);
 
             // Gaussian elimination like steps
             node_loads[from_node_idx] += node_loads[to_node_idx];
             result.rhs.push_back(node_loads[to_node_idx]);
 
             auto const adjacent_edges_snapshot =
-                std::vector<Idx>(adjacency_map[to_node_idx].begin(), adjacency_map[to_node_idx].end());
+                std::vector<Idx>(adjacency_map_at_to_node.begin(), adjacency_map_at_to_node.end());
 
             for (Idx const adjacent_edge_idx : adjacent_edges_snapshot) {
                 // re-attach edge and write to matrix
                 replace_and_write(adjacent_edge_idx, from_node_idx, to_node_idx, matrix_row, edges, result.matrix);
 
                 // update adjacency list after re-attachment
-                adjacency_map[to_node_idx].erase(adjacent_edge_idx);
-                adjacency_map[from_node_idx].insert(adjacent_edge_idx);
+                adjacency_map_at_to_node.erase(adjacent_edge_idx);
+                adjacency_map_at_from_node.insert(adjacent_edge_idx);
 
                 // update edges_history and edges_contracted_to_point (if needed) after re-attachment
                 update_edge_info(adjacent_edge_idx, matrix_row, edges, result.edges_history, edges_contracted_to_point);
@@ -228,12 +228,11 @@ inline void backward_substitution(ReducedEchelonFormResult& elimination_result) 
 // in other words, this performs the Penrose inverse on the adjacency matrix
 inline ReducedEchelonFormResult reduced_echelon_form(std::vector<BranchIdx>& edges,
                                                      std::vector<DoubleComplex>& node_loads) {
-    ReducedEchelonFormResult result{};
     auto const edge_number{edges.size()};
-    auto const node_number{node_loads.size()};
 
+    ReducedEchelonFormResult result{};
     result.edges_history.resize(edge_number);
-    result.matrix.prepare(node_number, edge_number);
+    result.matrix.prepare(edge_number);
 
     // -1 because the loads represent the RHS
     std::ranges::for_each(node_loads, [](auto& load) { load = -load; });
@@ -261,10 +260,10 @@ inline SolutionSet set_solution_system(ReducedEchelonFormResult& result) {
     auto const pivot_indices_size = narrow_cast<Idx>(result.pivot_edge_indices.size());
     auto const free_indices_size = narrow_cast<Idx>(result.free_edge_indices.size());
     Idx const total_indices_size = pivot_indices_size + free_indices_size;
-    dfs_matrix.prepare(total_indices_size, free_indices_size);
+    dfs_matrix.prepare(free_indices_size);
     extended_rhs.resize(total_indices_size);
     constexpr auto const free_matrix_element = IntS{-1};
-    Idx free_edge_idx;
+    Idx free_edge_idx{};
 
     // The part constructed from result.matrix and result.rhs.
     for (auto matrix_row : std::views::iota(Idx{}, pivot_indices_size)) {
@@ -304,7 +303,8 @@ inline std::vector<std::vector<DoubleComplex>> set_projection_system(Idx free_in
                         return first_value;
                     });
         }
-        projection_system[dfs_matrix_col][free_indices_number] = dot_product_rhs;
+        auto& projection_system_row = projection_system[dfs_matrix_col];
+        projection_system_row[free_indices_number] = dot_product_rhs;
         for (Idx second_dfs_matrix_col = dfs_matrix_col; second_dfs_matrix_col < free_indices_number;
              second_dfs_matrix_col++) {
             auto dot_product_matrix = DoubleComplex{};
@@ -315,7 +315,7 @@ inline std::vector<std::vector<DoubleComplex>> set_projection_system(Idx free_in
                     dot_product_matrix += static_cast<DoubleComplex>(first_value.value() * second_value.value());
                 }
             }
-            projection_system[dfs_matrix_col][second_dfs_matrix_col] = dot_product_matrix;
+            projection_system_row[second_dfs_matrix_col] = dot_product_matrix;
             projection_system[second_dfs_matrix_col][dfs_matrix_col] = dot_product_matrix;
         }
     }
@@ -331,12 +331,14 @@ inline void naive_gauss_elimination(std::vector<std::vector<DoubleComplex>>& sys
 
     // forward elimination
     for (Idx const column : IdxRange{system_size}) {
-        auto const& pivot = system[column][column];
+        auto& system_column = system[column];
+        auto const& pivot = system_column[column];
         for (Idx const row : IdxRange{column + Idx{1}, system_size}) {
-            auto& row_col_value = system[row][column];
+            auto& system_row = system[row];
+            auto& row_col_value = system_row[column];
             row_col_value /= -pivot;
             for (Idx const column_part : IdxRange{column + Idx{1}, system_size + Idx{1}}) {
-                system[row][column_part] += row_col_value * system[column][column_part];
+                system_row[column_part] += row_col_value * system_column[column_part];
             }
         }
     }
@@ -345,10 +347,13 @@ inline void naive_gauss_elimination(std::vector<std::vector<DoubleComplex>>& sys
     system[system_size - 1][system_size] /= system[system_size - 1][system_size - 1];
     for (Idx const row : IdxRange{system_size - 1} | std::views::reverse) {
         auto element_sum = DoubleComplex{};
+        auto& system_row = system[row];
         for (Idx const column : IdxRange{row + Idx{1}, system_size}) {
-            element_sum -= system[row][column] * system[column][system_size];
+            element_sum -= system_row[column] * system[column][system_size];
         }
-        system[row][system_size] = (system[row][system_size] + element_sum) / system[row][row];
+        auto& last_element_of_row = system_row[system_size];
+        last_element_of_row += element_sum;
+        last_element_of_row /= system_row[row];
     }
 };
 

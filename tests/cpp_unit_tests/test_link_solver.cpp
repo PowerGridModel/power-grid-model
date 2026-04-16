@@ -31,6 +31,27 @@ void compare_vectors(std::vector<DoubleComplex>& result_vector, std::vector<Doub
         CHECK(result_vector[idx].imag() == doctest::Approx(reference_vector[idx].imag()).epsilon(tolerance));
     }
 };
+
+template <typename T>
+    requires std::same_as<T, detail::ReducedEchelonFormResult> || std::same_as<T, detail::SolutionSet>
+T generate_input_result(std::span<const IntS> data, std::span<const Idx> rows, std::span<const Idx> cols,
+                        Idx col_number) {
+    T result{};
+
+    detail::CooSparseMatrix& T_matrix = [&result]() -> detail::CooSparseMatrix& {
+        if constexpr (std::same_as<T, detail::ReducedEchelonFormResult>) {
+            return result.matrix;
+        } else if constexpr (std::same_as<T, detail::SolutionSet>) {
+            return result.dfs_matrix;
+        }
+    }();
+
+    T_matrix.prepare(col_number);
+    for (auto idx = size_t{0}; idx < data.size(); ++idx) {
+        T_matrix.set_value(data[idx], rows[idx], cols[idx]);
+    }
+    return result;
+}
 } // namespace
 
 TEST_CASE("Test the link solver algorithm") {
@@ -99,7 +120,7 @@ TEST_CASE("Test the link solver algorithm") {
             auto const edge_number{edges.size()};
             auto const node_number{node_loads.size()};
             result.edges_history.resize(edge_number);
-            result.matrix.prepare(edge_number, node_number);
+            result.matrix.prepare(node_number);
             forward_elimination(result, edges, node_loads);
 
             REQUIRE(result.matrix.data_map.size() == 1);
@@ -117,7 +138,7 @@ TEST_CASE("Test the link solver algorithm") {
             auto const edge_number{edges.size()};
             auto const node_number{node_loads.size()};
             result.edges_history.resize(edge_number);
-            result.matrix.prepare(edge_number, node_number);
+            result.matrix.prepare(node_number);
             forward_elimination(result, edges, node_loads);
 
             REQUIRE(result.matrix.data_map.size() == 2);
@@ -139,7 +160,7 @@ TEST_CASE("Test the link solver algorithm") {
             auto const edge_number{edges.size()};
             auto const node_number{node_loads.size()};
             result.edges_history.resize(edge_number);
-            result.matrix.prepare(edge_number, node_number);
+            result.matrix.prepare(node_number);
             forward_elimination(result, edges, node_loads);
 
             REQUIRE(result.matrix.data_map.size() == 4);
@@ -166,7 +187,7 @@ TEST_CASE("Test the link solver algorithm") {
             auto const edge_number{edges.size()};
             auto const node_number{node_loads.size()};
             result.edges_history.resize(edge_number);
-            result.matrix.prepare(edge_number, node_number);
+            result.matrix.prepare(node_number);
             forward_elimination(result, edges, node_loads);
 
             REQUIRE(result.matrix.data_map.size() == 2);
@@ -190,7 +211,7 @@ TEST_CASE("Test the link solver algorithm") {
             auto const edge_number{edges.size()};
             auto const node_number{node_loads.size()};
             result.edges_history.resize(edge_number);
-            result.matrix.prepare(edge_number, node_number);
+            result.matrix.prepare(node_number);
             forward_elimination(result, edges, node_loads);
 
             REQUIRE(result.matrix.data_map.size() == 14);
@@ -259,7 +280,7 @@ TEST_CASE("Test the link solver algorithm") {
 
         SUBCASE("One edge, two nodes, two real loads") {
             ReducedEchelonFormResult result{};
-            result.matrix.prepare(1, 2);
+            result.matrix.prepare(Idx{2});
             result.matrix.set_value(1, 0, 0);
             result.rhs = std::vector<DoubleComplex>{{1.0, 0.0}};
             result.free_edge_indices = {};
@@ -277,7 +298,7 @@ TEST_CASE("Test the link solver algorithm") {
 
         SUBCASE("Two edges, three nodes, two real loads") {
             ReducedEchelonFormResult result{};
-            result.matrix.prepare(2, 3);
+            result.matrix.prepare(Idx{3});
             result.matrix.set_value(1, 0, 0);
             result.matrix.set_value(1, 1, 1);
             result.rhs = std::vector<DoubleComplex>{{-1.0, 0.0}, {0.0, 0.0}};
@@ -299,7 +320,7 @@ TEST_CASE("Test the link solver algorithm") {
 
         SUBCASE("Three edges, three nodes, two real loads") {
             ReducedEchelonFormResult result{};
-            result.matrix.prepare(4, 3);
+            result.matrix.prepare(Idx{3});
             result.matrix.set_value(1, 0, 0);
             result.matrix.set_value(-1, 0, 1);
             result.matrix.set_value(1, 1, 1);
@@ -327,7 +348,7 @@ TEST_CASE("Test the link solver algorithm") {
 
         SUBCASE("Two edges, two nodes, two real loads") {
             ReducedEchelonFormResult result{};
-            result.matrix.prepare(2, 2);
+            result.matrix.prepare(Idx{2});
             result.matrix.set_value(1, 0, 0);
             result.matrix.set_value(1, 0, 1);
             result.rhs = std::vector<DoubleComplex>{{1.0, 0.0}};
@@ -349,7 +370,7 @@ TEST_CASE("Test the link solver algorithm") {
 
         SUBCASE("Complex case with complex loads") {
             ReducedEchelonFormResult result{};
-            result.matrix.prepare(5, 7);
+            result.matrix.prepare(Idx{7});
             result.matrix.set_value(1, 0, 0);
             result.matrix.set_value(1, 0, 1);
             result.matrix.set_value(1, 0, 2);
@@ -405,22 +426,12 @@ TEST_CASE("Test the link solver algorithm") {
         }
     }
     SUBCASE("Testing the set_solution_system routine") {
-        auto generate_input_result = [](std::span<const IntS> data, std::span<const Idx> row, std::span<const Idx> col,
-                                        Idx row_number, Idx col_number) {
-            ReducedEchelonFormResult result{};
-            result.matrix.prepare(row_number, col_number);
-            for (auto idx = size_t{0}; idx < data.size(); ++idx) {
-                result.matrix.set_value(data[idx], row[idx], col[idx]);
-            }
-            return result;
-        };
-
         SUBCASE("Complex case with complex loads") {
             std::vector<IntS> data = {1, 0, 0, 1, 0, 0, -1, 1, -1, -1, 0, 0, 1, 1, 1, 1, 0, 1};
             std::vector<Idx> row = {0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 1, 0, 0, 0};
             std::vector<Idx> col = {0, 1, 2, 1, 2, 3, 6, 2, 3, 4, 5, 6, 5, 6, 4, 3, 4, 6};
 
-            auto result = generate_input_result(data, row, col, Idx{5}, Idx{7});
+            auto result = generate_input_result<ReducedEchelonFormResult>(data, row, col, Idx{7});
 
             result.rhs = {{0, 0}, {1, 1}, {-2, -2}, {-0, -0}};
             result.free_edge_indices = {3, 4, 6};
@@ -448,7 +459,7 @@ TEST_CASE("Test the link solver algorithm") {
             std::vector<Idx> row = {0, 0, 1, 1, 0};
             std::vector<Idx> col = {0, 1, 1, 2, 2};
 
-            auto result = generate_input_result(data, row, col, Idx{1}, Idx{3});
+            auto result = generate_input_result<ReducedEchelonFormResult>(data, row, col, Idx{3});
 
             result.rhs = {{1, 0}, {0, 0}};
             result.free_edge_indices = {2};
@@ -467,7 +478,7 @@ TEST_CASE("Test the link solver algorithm") {
             std::vector<Idx> row = {0, 0, 0, 1, 1, 2, 2};
             std::vector<Idx> col = {0, 1, 3, 1, 3, 2, 3};
 
-            auto result = generate_input_result(data, row, col, Idx{1}, Idx{4});
+            auto result = generate_input_result<ReducedEchelonFormResult>(data, row, col, Idx{4});
 
             result.rhs = {{1, 0}, {-1, 0}, {-1, 0}};
             result.free_edge_indices = {3};
@@ -483,16 +494,6 @@ TEST_CASE("Test the link solver algorithm") {
     }
 
     SUBCASE("Testing the set_projection_system routine") {
-        auto generate_solution_set = [](std::span<const IntS> data, std::span<const Idx> row, std::span<const Idx> col,
-                                        Idx row_number, Idx col_number) {
-            SolutionSet solution_set{};
-            solution_set.dfs_matrix.prepare(row_number, col_number);
-            for (auto idx = size_t{0}; idx < data.size(); ++idx) {
-                solution_set.dfs_matrix.set_value(data[idx], row[idx], col[idx]);
-            }
-            return solution_set;
-        };
-
         SUBCASE("Complex case with complex loads") {
             // free_edge_indices = {3, 4, 6};
             // pivot_edge_indices = {0, 1, 2, 5};
@@ -503,7 +504,7 @@ TEST_CASE("Test the link solver algorithm") {
             std::vector<Idx> dfs_row = {0, 0, 1, 1, 2, 2, 3, 4, 5, 6};
             std::vector<Idx> dfs_col = {0, 2, 1, 2, 0, 1, 0, 1, 2, 2};
 
-            auto solution_set = generate_solution_set(dfs_data, dfs_row, dfs_col, Idx{7}, Idx{3});
+            auto solution_set = generate_input_result<SolutionSet>(dfs_data, dfs_row, dfs_col, Idx{3});
             solution_set.extended_rhs = {{0, 0}, {1, 1}, {-2, -2}, {0, 0}, {0, 0}, {-0, -0}, {0, 0}};
 
             std::vector<std::vector<DoubleComplex>> const projection_system =
@@ -525,7 +526,7 @@ TEST_CASE("Test the link solver algorithm") {
             std::vector<IntS> dfs_data = {1, 1, -1};
             std::vector<Idx> dfs_row = {1, 2, 3};
             std::vector<Idx> dfs_col = {0, 0, 0};
-            SolutionSet solution_set = generate_solution_set(dfs_data, dfs_row, dfs_col, Idx{4}, Idx{1});
+            auto solution_set = generate_input_result<SolutionSet>(dfs_data, dfs_row, dfs_col, Idx{1});
             solution_set.extended_rhs = {{1, 0}, {-1, -0}, {-1, -0}, {0, 0}};
 
             std::vector<std::vector<DoubleComplex>> const projection_system =
@@ -827,22 +828,12 @@ TEST_CASE("Test the link solver algorithm") {
     }
 
     SUBCASE("Testing the compute_internal_loads_routine") {
-        auto generate_input_solution_set = [](std::span<IntS const> data, std::span<Idx const> rows,
-                                              std::span<Idx const> cols, Idx row_number, Idx col_number) {
-            SolutionSet solution_set{};
-            solution_set.dfs_matrix.prepare(row_number, col_number);
-            for (auto idx = size_t{0}; idx < data.size(); ++idx) {
-                solution_set.dfs_matrix.set_value(data[idx], rows[idx], cols[idx]);
-            }
-            return solution_set;
-        };
-
         SUBCASE("Complex case with complex loads") {
             std::vector<IntS> data = {1, 1, 1, -1, -1, -1, -1, -1, 1, -1};
             std::vector<Idx> row = {0, 0, 1, 1, 2, 2, 3, 4, 5, 6};
             std::vector<Idx> col = {0, 2, 1, 2, 0, 1, 0, 1, 2, 2};
 
-            auto solution_set = generate_input_solution_set(data, row, col, Idx{7}, Idx{3});
+            auto solution_set = generate_input_result<SolutionSet>(data, row, col, Idx{3});
 
             solution_set.extended_rhs = {{0, 0}, {1, 1}, {-2, -2}, {0, 0}, {0, 0}, {0, 0}, {0, 0}};
 
@@ -865,7 +856,7 @@ TEST_CASE("Test the link solver algorithm") {
             std::vector<Idx> row = {1, 2, 3};
             std::vector<Idx> col = {0, 0, 0};
 
-            auto solution_set = generate_input_solution_set(data, row, col, Idx{4}, Idx{1});
+            auto solution_set = generate_input_result<SolutionSet>(data, row, col, Idx{1});
             solution_set.extended_rhs = {{1, 0}, {-1, -0}, {-1, -0}, {0, 0}};
 
             std::vector<std::vector<DoubleComplex>> const test_system = {{{3, 0}, {-0.666667, 0}}};
