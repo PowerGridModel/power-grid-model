@@ -19,7 +19,8 @@
 #include <utility>
 #include <vector>
 
-namespace power_grid_model::link_solver::detail {
+namespace power_grid_model::link_solver {
+namespace detail {
 
 using AdjacencyMap = std::unordered_map<Idx, std::unordered_set<Idx>>;
 using ContractedEdgesSet = std::unordered_set<Idx>;
@@ -74,7 +75,7 @@ struct EdgeHistory {
     std::vector<EdgeEvent> events{};
 };
 
-struct EliminationResult {
+struct ReducedEchelonFormResult {
     CooSparseMatrix matrix{};
     std::vector<DoubleComplex> rhs{};         // RHS value at each pivot row
     std::vector<Idx> free_edge_indices{};     // index of degrees of freedom (self loop edges)
@@ -134,7 +135,7 @@ inline void update_edge_info(Idx edge_idx, Idx matrix_row, std::vector<BranchIdx
 // forward elimination is performed via a modified Gaussian elimination procedure
 // we name this procedure elimination-game
 // node_loads convention: caller passes negated external loads (as in RHS of power flow equations))
-inline void forward_elimination(EliminationResult& result, std::vector<BranchIdx> edges,
+inline void forward_elimination(ReducedEchelonFormResult& result, std::vector<BranchIdx> edges,
                                 std::vector<DoubleComplex> node_loads) {
     using enum EdgeEvent;
     using enum EdgeDirection;
@@ -195,7 +196,7 @@ inline auto backward_substitution_free_right_cols(std::span<Idx const> free_col_
 
 // backward substitution is performed in a sparse way
 // using the result from the elimination game
-inline void backward_substitution(EliminationResult& elimination_result) {
+inline void backward_substitution(ReducedEchelonFormResult& elimination_result) {
     auto free_col_indices = std::span<Idx const>(elimination_result.free_edge_indices);
 
     for (auto const pivot_col_idx : backward_substitution_pivots(elimination_result.pivot_edge_indices)) {
@@ -224,8 +225,10 @@ inline void backward_substitution(EliminationResult& elimination_result) {
 }
 
 // reduced echelon form based on custom forward elimination and backward substitution procedures
-inline EliminationResult reduced_echelon_form(std::vector<BranchIdx> edges, std::vector<DoubleComplex> node_loads) {
-    EliminationResult result{};
+// in other words, this performs the Penrose inverse on the adjacency matrix
+inline ReducedEchelonFormResult reduced_echelon_form(std::vector<BranchIdx>& edges,
+                                                     std::vector<DoubleComplex>& node_loads) {
+    ReducedEchelonFormResult result{};
     auto const edge_number{edges.size()};
     auto const node_number{node_loads.size()};
 
@@ -251,7 +254,7 @@ struct SolutionSet {
 // Constructs the dfs_matrix and the extended_rhs for the set of solutions.
 // The dfs_matrix is constructed from the matrix rows associated with the free column indices
 // and from negative unit elements at locations where the variables are associated with the free parameters.
-inline SolutionSet set_solution_system(EliminationResult& result) {
+inline SolutionSet set_solution_system(ReducedEchelonFormResult& result) {
     SolutionSet solution_set{};
 
     auto& [dfs_matrix, extended_rhs] = solution_set;
@@ -328,7 +331,7 @@ inline void naive_gauss_elimination(std::vector<std::vector<DoubleComplex>>& sys
 
     // forward elimination
     for (Idx const column : IdxRange{system_size}) {
-        auto const pivot = system[column][column];
+        auto const& pivot = system[column][column];
         for (Idx const row : IdxRange{column + Idx{1}, system_size}) {
             auto& row_col_value = system[row][column];
             row_col_value /= -pivot;
@@ -369,28 +372,30 @@ inline std::vector<DoubleComplex> compute_internal_loads(SolutionSet const& solu
 
     return internal_loads;
 };
+} // namespace detail
 
-inline std::vector<DoubleComplex> compute_loads_link_elements(std::vector<BranchIdx> edges,
-                                                              std::vector<DoubleComplex> node_loads) {
+inline std::vector<DoubleComplex> compute_loads_link_elements(std::vector<BranchIdx>& edges,
+                                                              std::vector<DoubleComplex>& node_loads) {
+    using namespace detail;
 
-    EliminationResult result = reduced_echelon_form(edges, node_loads);
-    SolutionSet solution_set = set_solution_system(result);
+    auto reduced_echelon_result = reduced_echelon_form(edges, node_loads);
+    auto solution_set = set_solution_system(reduced_echelon_result);
 
     if (solution_set.dfs_matrix.data_map.empty()) {
         return solution_set.extended_rhs;
-    } else {
-
-        Idx const free_indices_number = result.free_edge_indices.size();
-        Idx const total_indices_number = result.free_edge_indices.size() + result.pivot_edge_indices.size();
-
-        std::vector<std::vector<DoubleComplex>> projection_system =
-            set_projection_system(free_indices_number, total_indices_number, solution_set);
-
-        gauss_elimination(projection_system);
-
-        std::vector<DoubleComplex> internal_loads = compute_internal_loads(solution_set, projection_system);
-
-        return internal_loads;
     }
+
+    auto const free_indices_number = narrow_cast<Idx>(reduced_echelon_result.free_edge_indices.size());
+    auto const total_indices_number = narrow_cast<Idx>(reduced_echelon_result.free_edge_indices.size() +
+                                                       reduced_echelon_result.pivot_edge_indices.size());
+    std::vector<std::vector<DoubleComplex>> projection_system =
+        set_projection_system(free_indices_number, total_indices_number, solution_set);
+
+    naive_gauss_elimination(projection_system);
+
+    return compute_internal_loads(solution_set, projection_system);
 };
-} // namespace power_grid_model::link_solver::detail
+
+// TODO(figueroa1395): look for cache improvements in the code
+
+} // namespace power_grid_model::link_solver
