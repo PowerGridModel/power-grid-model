@@ -330,10 +330,10 @@ inline void naive_gauss_elimination(std::vector<std::vector<DoubleComplex>>& sys
     for (Idx const column : IdxRange{system_size}) {
         auto const pivot = system[column][column];
         for (Idx const row : IdxRange{column + Idx{1}, system_size}) {
-            auto multiplier = -system[row][column] / pivot;
-            system[row][column] = multiplier;
+            auto& row_col_value = system[row][column];
+            row_col_value /= -pivot;
             for (Idx const column_part : IdxRange{column + Idx{1}, system_size + Idx{1}}) {
-                system[row][column_part] += multiplier * system[column][column_part];
+                system[row][column_part] += row_col_value * system[column][column_part];
             }
         }
     }
