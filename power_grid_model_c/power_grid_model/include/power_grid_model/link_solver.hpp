@@ -228,7 +228,7 @@ inline void backward_substitution(ReducedEchelonFormResult& elimination_result) 
 // in other words, this performs the Penrose inverse on the adjacency matrix
 inline ReducedEchelonFormResult reduced_echelon_form(std::vector<BranchIdx>& edges,
                                                      std::vector<DoubleComplex>& node_loads) {
-    auto const edge_number{edges.size()};
+    auto const edge_number{narrow_cast<Idx>(edges.size())};
 
     ReducedEchelonFormResult result{};
     result.edges_history.resize(edge_number);
@@ -400,7 +400,5 @@ inline std::vector<DoubleComplex> compute_loads_link_elements(std::vector<Branch
 
     return compute_internal_loads(solution_set, projection_system);
 };
-
-// TODO(figueroa1395): look for cache improvements in the code
 
 } // namespace power_grid_model::link_solver

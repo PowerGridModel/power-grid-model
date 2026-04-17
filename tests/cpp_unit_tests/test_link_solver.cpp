@@ -11,6 +11,7 @@
 #include <doctest/doctest.h>
 
 #include <cmath>
+#include <concepts>
 #include <cstddef>
 #include <ranges>
 #include <span>
@@ -118,7 +119,7 @@ TEST_CASE("Test the link solver algorithm") {
             auto const edges = std::vector<BranchIdx>{{0, 1}};
             auto const node_loads = std::vector<DoubleComplex>{{-1.0, 0.0}, {1.0, 0.0}};
             auto const edge_number{edges.size()};
-            auto const node_number{node_loads.size()};
+            auto const node_number{narrow_cast<Idx>(node_loads.size())};
             result.edges_history.resize(edge_number);
             result.matrix.prepare(node_number);
             forward_elimination(result, edges, node_loads);
@@ -136,7 +137,7 @@ TEST_CASE("Test the link solver algorithm") {
             auto const edges = std::vector<BranchIdx>{{1, 0}, {1, 2}};
             auto const node_loads = std::vector<DoubleComplex>{{-1.0, 0.0}, {1.0, 0.0}, {0.0, 0.0}};
             auto const edge_number{edges.size()};
-            auto const node_number{node_loads.size()};
+            auto const node_number{narrow_cast<Idx>(node_loads.size())};
             result.edges_history.resize(edge_number);
             result.matrix.prepare(node_number);
             forward_elimination(result, edges, node_loads);
@@ -158,7 +159,7 @@ TEST_CASE("Test the link solver algorithm") {
             auto const edges = std::vector<BranchIdx>{{0, 1}, {1, 2}, {2, 0}};
             auto const node_loads = std::vector<DoubleComplex>{{-1.0, 0.0}, {1.0, 0.0}, {0.0, 0.0}};
             auto const edge_number{edges.size()};
-            auto const node_number{node_loads.size()};
+            auto const node_number{narrow_cast<Idx>(node_loads.size())};
             result.edges_history.resize(edge_number);
             result.matrix.prepare(node_number);
             forward_elimination(result, edges, node_loads);
@@ -185,7 +186,7 @@ TEST_CASE("Test the link solver algorithm") {
             auto const edges = std::vector<BranchIdx>{{0, 1}, {0, 1}};
             auto const node_loads = std::vector<DoubleComplex>{{-1.0, 0.0}, {1.0, 0.0}};
             auto const edge_number{edges.size()};
-            auto const node_number{node_loads.size()};
+            auto const node_number{narrow_cast<Idx>(node_loads.size())};
             result.edges_history.resize(edge_number);
             result.matrix.prepare(node_number);
             forward_elimination(result, edges, node_loads);
@@ -209,7 +210,7 @@ TEST_CASE("Test the link solver algorithm") {
             auto const node_loads =
                 std::vector<DoubleComplex>{{-1.0, -1.0}, {-1.0, -1.0}, {2.0, 2.0}, {0.0, 0.0}, {0.0, 0.0}};
             auto const edge_number{edges.size()};
-            auto const node_number{node_loads.size()};
+            auto const node_number{narrow_cast<Idx>(node_loads.size())};
             result.edges_history.resize(edge_number);
             result.matrix.prepare(node_number);
             forward_elimination(result, edges, node_loads);
