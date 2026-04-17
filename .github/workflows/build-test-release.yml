@@ -37,7 +37,7 @@ jobs:
         uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
 
       - name: Set PyPI Version
-        uses: PowerGridModel/pgm-version-bump@17f01ca0e845c35804c8c3c2490f61d14a77ede2 # v0.1.1
+        uses: PowerGridModel/pgm-version-bump@b75ff549cae00be1ca859d181dbc460f69003643 # v0.1.2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
