@@ -46,7 +46,7 @@ class TextLogger : public Logger {
         // exception swallowing: we try to flush if possible. If not possible, clear data and ignore log
         try {
             // only flush if there is a handler and there are contents to flush
-            if (flush_handler_ && data_.rdbuf()->in_avail() > 0) { // only flush if there are contents and a handler
+            if (flush_handler_ && !data_.view().empty()) { // only flush if there are contents and a handler
                 flush();
                 return;
             }
@@ -75,8 +75,8 @@ class TextLogger : public Logger {
         return std::format("{:%F %T}.{:03}Z", sec, ms);
     }
 
-    void log_impl(LogEvent tag, std::string_view message) {
-        data_ << std::format("[{}] Tag:{}: {}\n", timestamp(), std::to_underlying(tag), message);
+    template <typename T> void log_impl(LogEvent tag, T&& value) {
+        data_ << std::format("[{}] Tag:{}: {}\n", timestamp(), std::to_underlying(tag), std::forward<T>(value));
     }
 
   public:

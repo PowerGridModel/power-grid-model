@@ -31,25 +31,15 @@ class CalculationInfo : public Logger {
     CalculationInfo& operator=(CalculationInfo&&) noexcept = default;
     ~CalculationInfo() override = default;
 
-    void log(LogEvent /*tag*/) override {
-        // ignore all such events for now
-    }
-    void log(LogEvent /*tag*/, std::string_view /*message*/) override {
-        // ignore all such events for now
-    }
+    void log(LogEvent /*tag*/) override { /* ignore all such events for now */ }
+    void log(LogEvent /*tag*/, std::string_view /*message*/) override { /* ignore all such events for now */ }
     void log(LogEvent tag, double value) override { log_impl(tag, value); }
     void log(LogEvent tag, Idx value) override { log_impl(tag, static_cast<double>(value)); }
-    void log(std::string_view /*message*/) const {
-        // no logging
+    void log(std::string_view /*message*/) const { /* ignore all such events for now */ }
+    template <LazyLoggingFn Fn> void log(LogEvent /*tag*/, Fn&& fn) const {
+        capturing::into_the_void(std::forward<Fn>(fn));
     }
-    template <LazyLoggingFn Fn>
-    void log(LogEvent /*tag*/, Fn&& /*fn*/) const { // NOLINT(cppcoreguidelines-missing-std-forward) // intentional
-        // no logging
-    }
-    template <LazyLoggingFn Fn>
-    void log(Fn&& /*fn*/) const { // NOLINT(cppcoreguidelines-missing-std-forward) // intentional
-        // no logging
-    }
+    template <LazyLoggingFn Fn> void log(Fn&& fn) const { capturing::into_the_void(std::forward<Fn>(fn)); }
 
   private:
     Data data_;
