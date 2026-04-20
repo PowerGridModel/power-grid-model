@@ -267,7 +267,7 @@ inline SolutionSet set_solution_system(ReducedEchelonForm& result) {
     for (auto matrix_row : std::views::iota(Idx{}, pivot_indices_size)) {
         auto const pivot_edge_idx = result.pivot_edge_indices[matrix_row];
         for (auto dfs_matrix_col : std::views::iota(Idx{}, free_indices_size)) {
-            Idx free_edge_idx = result.free_edge_indices[dfs_matrix_col];
+            Idx const free_edge_idx = result.free_edge_indices[dfs_matrix_col];
             result.matrix.get_value(matrix_row, free_edge_idx)
                 .transform([&dfs_matrix, pivot_edge_idx, dfs_matrix_col](IntS matrix_element) {
                     dfs_matrix.set_value(matrix_element, pivot_edge_idx, dfs_matrix_col);
