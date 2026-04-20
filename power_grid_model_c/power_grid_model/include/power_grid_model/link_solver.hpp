@@ -71,7 +71,7 @@ struct EdgeHistory {
     std::vector<EdgeEvent> events{};
 };
 
-struct ReducedEchelonFormResult {
+struct ReducedEchelonForm {
     CooSparseMatrix matrix{};
     std::vector<DoubleComplex> rhs{};         // RHS value at each pivot row
     std::vector<Idx> free_edge_indices{};     // index of degrees of freedom (self loop edges)
@@ -133,7 +133,7 @@ inline void update_edge_info(Idx edge_idx, Idx matrix_row, std::vector<BranchIdx
 // forward elimination is performed via a modified Gaussian elimination procedure
 // we name this procedure elimination-game
 // node_loads convention: caller passes negated external loads (as in RHS of power flow equations))
-inline void forward_elimination(ReducedEchelonFormResult& result, std::vector<BranchIdx> edges,
+inline void forward_elimination(ReducedEchelonForm& result, std::vector<BranchIdx> edges,
                                 std::vector<DoubleComplex> node_loads) {
     using enum EdgeEvent;
     using enum EdgeDirection;
@@ -196,7 +196,7 @@ inline auto backward_substitution_free_right_cols(std::span<Idx const> free_col_
 
 // backward substitution is performed in a sparse way
 // using the result from the elimination game
-inline void backward_substitution(ReducedEchelonFormResult& elimination_result) {
+inline void backward_substitution(ReducedEchelonForm& elimination_result) {
     auto free_col_indices = std::span<Idx const>(elimination_result.free_edge_indices);
 
     for (auto const pivot_col_idx : backward_substitution_pivots(elimination_result.pivot_edge_indices)) {
@@ -226,11 +226,10 @@ inline void backward_substitution(ReducedEchelonFormResult& elimination_result) 
 
 // reduced echelon form based on custom forward elimination and backward substitution procedures
 // in other words, this performs the Penrose inverse on the adjacency matrix
-inline ReducedEchelonFormResult reduced_echelon_form(std::vector<BranchIdx>& edges,
-                                                     std::vector<DoubleComplex>& node_loads) {
+inline ReducedEchelonForm reduced_echelon_form(std::vector<BranchIdx>& edges, std::vector<DoubleComplex>& node_loads) {
     auto const edge_number{narrow_cast<Idx>(edges.size())};
 
-    ReducedEchelonFormResult result{};
+    ReducedEchelonForm result{};
     result.edges_history.resize(edge_number);
     result.matrix.prepare(edge_number);
 
@@ -253,7 +252,7 @@ struct SolutionSet {
 // Constructs the dfs_matrix and the extended_rhs for the set of solutions.
 // The dfs_matrix is constructed from the matrix rows associated with the free column indices
 // and from negative unit elements at locations where the variables are associated with the free parameters.
-inline SolutionSet set_solution_system(ReducedEchelonFormResult& result) {
+inline SolutionSet set_solution_system(ReducedEchelonForm& result) {
     SolutionSet solution_set{};
 
     auto& [dfs_matrix, extended_rhs] = solution_set;
@@ -263,13 +262,12 @@ inline SolutionSet set_solution_system(ReducedEchelonFormResult& result) {
     dfs_matrix.prepare(free_indices_size);
     extended_rhs.resize(total_indices_size);
     constexpr auto const free_matrix_element = IntS{-1};
-    Idx free_edge_idx{};
 
     // The part constructed from result.matrix and result.rhs.
     for (auto matrix_row : std::views::iota(Idx{}, pivot_indices_size)) {
         auto const pivot_edge_idx = result.pivot_edge_indices[matrix_row];
         for (auto dfs_matrix_col : std::views::iota(Idx{}, free_indices_size)) {
-            free_edge_idx = result.free_edge_indices[dfs_matrix_col];
+            Idx free_edge_idx = result.free_edge_indices[dfs_matrix_col];
             result.matrix.get_value(matrix_row, free_edge_idx)
                 .transform([&dfs_matrix, pivot_edge_idx, dfs_matrix_col](IntS matrix_element) {
                     dfs_matrix.set_value(matrix_element, pivot_edge_idx, dfs_matrix_col);
@@ -281,7 +279,7 @@ inline SolutionSet set_solution_system(ReducedEchelonFormResult& result) {
 
     // The part constructed from negative unit elements.
     for (auto dfs_matrix_col : std::views::iota(Idx{}, free_indices_size)) {
-        free_edge_idx = result.free_edge_indices[dfs_matrix_col];
+        Idx free_edge_idx = result.free_edge_indices[dfs_matrix_col];
         dfs_matrix.set_value(free_matrix_element, free_edge_idx, dfs_matrix_col);
         extended_rhs[result.free_edge_indices[dfs_matrix_col]] = DoubleComplex{};
     }

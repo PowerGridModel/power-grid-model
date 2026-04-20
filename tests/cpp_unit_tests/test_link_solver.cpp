@@ -34,13 +34,13 @@ void compare_vectors(std::vector<DoubleComplex>& result_vector, std::vector<Doub
 };
 
 template <typename T>
-    requires std::same_as<T, detail::ReducedEchelonFormResult> || std::same_as<T, detail::SolutionSet>
+    requires std::same_as<T, detail::ReducedEchelonForm> || std::same_as<T, detail::SolutionSet>
 T generate_input_result(std::span<const IntS> data, std::span<const Idx> rows, std::span<const Idx> cols,
                         Idx col_number) {
     T result{};
 
     detail::CooSparseMatrix& T_matrix = [&result]() -> detail::CooSparseMatrix& {
-        if constexpr (std::same_as<T, detail::ReducedEchelonFormResult>) {
+        if constexpr (std::same_as<T, detail::ReducedEchelonForm>) {
             return result.matrix;
         } else if constexpr (std::same_as<T, detail::SolutionSet>) {
             return result.dfs_matrix;
@@ -113,7 +113,7 @@ TEST_CASE("Test the link solver algorithm") {
 
     SUBCASE("Test forward elimination - elimination game") {
         using enum EdgeEvent;
-        ReducedEchelonFormResult result{};
+        ReducedEchelonForm result{};
 
         SUBCASE("One edge, two nodes, two real loads") {
             auto const edges = std::vector<BranchIdx>{{0, 1}};
@@ -280,7 +280,7 @@ TEST_CASE("Test the link solver algorithm") {
         using enum EdgeEvent;
 
         SUBCASE("One edge, two nodes, two real loads") {
-            ReducedEchelonFormResult result{};
+            ReducedEchelonForm result{};
             result.matrix.prepare(Idx{2});
             result.matrix.set_value(1, 0, 0);
             result.rhs = std::vector<DoubleComplex>{{1.0, 0.0}};
@@ -298,7 +298,7 @@ TEST_CASE("Test the link solver algorithm") {
         }
 
         SUBCASE("Two edges, three nodes, two real loads") {
-            ReducedEchelonFormResult result{};
+            ReducedEchelonForm result{};
             result.matrix.prepare(Idx{3});
             result.matrix.set_value(1, 0, 0);
             result.matrix.set_value(1, 1, 1);
@@ -320,7 +320,7 @@ TEST_CASE("Test the link solver algorithm") {
         }
 
         SUBCASE("Three edges, three nodes, two real loads") {
-            ReducedEchelonFormResult result{};
+            ReducedEchelonForm result{};
             result.matrix.prepare(Idx{3});
             result.matrix.set_value(1, 0, 0);
             result.matrix.set_value(-1, 0, 1);
@@ -348,7 +348,7 @@ TEST_CASE("Test the link solver algorithm") {
         }
 
         SUBCASE("Two edges, two nodes, two real loads") {
-            ReducedEchelonFormResult result{};
+            ReducedEchelonForm result{};
             result.matrix.prepare(Idx{2});
             result.matrix.set_value(1, 0, 0);
             result.matrix.set_value(1, 0, 1);
@@ -370,7 +370,7 @@ TEST_CASE("Test the link solver algorithm") {
         }
 
         SUBCASE("Complex case with complex loads") {
-            ReducedEchelonFormResult result{};
+            ReducedEchelonForm result{};
             result.matrix.prepare(Idx{7});
             result.matrix.set_value(1, 0, 0);
             result.matrix.set_value(1, 0, 1);
@@ -432,7 +432,7 @@ TEST_CASE("Test the link solver algorithm") {
             std::vector<Idx> row = {0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 1, 0, 0, 0};
             std::vector<Idx> col = {0, 1, 2, 1, 2, 3, 6, 2, 3, 4, 5, 6, 5, 6, 4, 3, 4, 6};
 
-            auto result = generate_input_result<ReducedEchelonFormResult>(data, row, col, Idx{7});
+            auto result = generate_input_result<ReducedEchelonForm>(data, row, col, Idx{7});
 
             result.rhs = {{0, 0}, {1, 1}, {-2, -2}, {-0, -0}};
             result.free_edge_indices = {3, 4, 6};
@@ -460,7 +460,7 @@ TEST_CASE("Test the link solver algorithm") {
             std::vector<Idx> row = {0, 0, 1, 1, 0};
             std::vector<Idx> col = {0, 1, 1, 2, 2};
 
-            auto result = generate_input_result<ReducedEchelonFormResult>(data, row, col, Idx{3});
+            auto result = generate_input_result<ReducedEchelonForm>(data, row, col, Idx{3});
 
             result.rhs = {{1, 0}, {0, 0}};
             result.free_edge_indices = {2};
@@ -479,7 +479,7 @@ TEST_CASE("Test the link solver algorithm") {
             std::vector<Idx> row = {0, 0, 0, 1, 1, 2, 2};
             std::vector<Idx> col = {0, 1, 3, 1, 3, 2, 3};
 
-            auto result = generate_input_result<ReducedEchelonFormResult>(data, row, col, Idx{4});
+            auto result = generate_input_result<ReducedEchelonForm>(data, row, col, Idx{4});
 
             result.rhs = {{1, 0}, {-1, 0}, {-1, 0}};
             result.free_edge_indices = {3};
