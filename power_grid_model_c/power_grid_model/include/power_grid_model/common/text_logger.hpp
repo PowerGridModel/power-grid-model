@@ -103,7 +103,7 @@ class TextLogger : public Logger {
         if (&destination == this) {
             return destination; // nothing to do
         }
-        destination.data_ << data_.str();
+        destination.data_ << data_.view();
         return destination;
     }
 };
