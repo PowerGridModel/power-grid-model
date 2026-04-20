@@ -279,7 +279,7 @@ inline SolutionSet set_solution_system(ReducedEchelonForm& result) {
 
     // The part constructed from negative unit elements.
     for (auto dfs_matrix_col : std::views::iota(Idx{}, free_indices_size)) {
-        Idx free_edge_idx = result.free_edge_indices[dfs_matrix_col];
+        Idx const free_edge_idx = result.free_edge_indices[dfs_matrix_col];
         dfs_matrix.set_value(free_matrix_element, free_edge_idx, dfs_matrix_col);
         extended_rhs[result.free_edge_indices[dfs_matrix_col]] = DoubleComplex{};
     }
