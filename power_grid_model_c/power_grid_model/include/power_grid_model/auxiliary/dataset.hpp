@@ -10,18 +10,22 @@
 #include "meta_data.hpp"
 
 #include "../common/common.hpp"
+#include "../common/counting_iterator.hpp"
 #include "../common/exception.hpp"
 #include "../common/iterator_facade.hpp"
+#include "../common/typing.hpp"
 
 #include <algorithm>
 #include <cassert>
 #include <concepts>
 #include <cstddef>
+#include <iterator>
 #include <ranges>
 #include <span>
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 namespace power_grid_model {
@@ -215,6 +219,8 @@ template <dataset_type_tag dataset_type_> class Dataset {
         std::vector<AttributeBuffer<Data>> attributes{};
         std::span<Indptr> indptr{};
     };
+
+    template <class StructType> using SpanRange = std::span<StructType>;
 
     template <class StructType>
     using RangeObject = std::conditional_t<is_data_mutable_v<dataset_type>, mutable_range_object<StructType>,
@@ -452,7 +458,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
     // get buffer by component type
     template <class type_getter, class ComponentType,
               class StructType = DataStruct<typename type_getter::template type<ComponentType>>>
-    std::span<StructType> get_buffer_span(Idx scenario = invalid_index) const {
+    SpanRange<StructType> get_buffer_span(Idx scenario = invalid_index) const {
         assert(scenario < batch_size());
 
         if (!is_batch() && scenario > 0) {
@@ -476,27 +482,17 @@ template <dataset_type_tag dataset_type_> class Dataset {
         return get_columnar_buffer_span_impl<StructType>(scenario, idx);
     }
 
-    // get buffer by component type for all scenarios in vector span
+    // get buffer by component type for all non-empty scenarios in vector span
     template <class type_getter, class ComponentType,
               class StructType = DataStruct<typename type_getter::template type<ComponentType>>>
-    std::vector<std::span<StructType>> get_buffer_span_all_scenarios() const {
-        Idx const idx = find_component(ComponentType::name, false);
-        std::vector<std::span<StructType>> result(batch_size());
-        for (Idx scenario{}; scenario != batch_size(); scenario++) {
-            result[scenario] = get_buffer_span_impl<StructType>(scenario, idx);
-        }
-        return result;
+    std::vector<SpanRange<StructType>> get_buffer_span_all_scenarios() const {
+        return get_buffer_span_all_scenarios_impl<type_getter, ComponentType, SpanRange>();
     }
 
     template <class type_getter, class ComponentType,
               class StructType = DataStruct<typename type_getter::template type<ComponentType>>>
     std::vector<RangeObject<StructType>> get_columnar_buffer_span_all_scenarios() const {
-        Idx const idx = find_component(ComponentType::name, false);
-        std::vector<RangeObject<StructType>> result(batch_size());
-        for (Idx scenario{}; scenario != batch_size(); scenario++) {
-            result[scenario] = get_columnar_buffer_span_impl<StructType>(scenario, idx);
-        }
-        return result;
+        return get_buffer_span_all_scenarios_impl<type_getter, ComponentType, RangeObject>();
     }
 
     // get individual dataset from batch
@@ -559,7 +555,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
 
     template <class type_getter, class ComponentType, typename Func,
               class StructType = DataStruct<typename type_getter::template type<ComponentType>>>
-        requires std::invocable<Func, std::span<StructType>> && std::invocable<Func, RangeObject<StructType>>
+        requires std::invocable<Func, SpanRange<StructType>> && std::invocable<Func, RangeObject<StructType>>
     auto for_each_component(Func&& func, Idx scenario = invalid_index) const {
         if (is_columnar(ComponentType::name)) {
             return std::forward<Func>(func)(get_columnar_buffer_span<type_getter, ComponentType, StructType>(scenario));
@@ -659,31 +655,53 @@ template <dataset_type_tag dataset_type_> class Dataset {
                          std::begin(total_range) + info.elements_per_scenario * (scenario + 1)};
     }
 
-    // get non-empty row buffer
-    template <class StructType> std::span<StructType> get_buffer_span_impl(Idx scenario, Idx component_idx) const {
+    template <typename StructType, template <typename> typename RangeType>
+        requires std::ranges::view<RangeType<StructType>> &&
+                 (std::same_as<RangeType<StructType>, SpanRange<StructType>> ||
+                  std::same_as<RangeType<StructType>, RangeObject<StructType>>)
+    auto get_buffer_view_impl(Idx scenario, Idx component_idx) const {
+        using RangeType_ = RangeType<StructType>;
+
         // return empty span if the component does not exist
         if (component_idx < 0) {
-            return {};
+            return RangeType_{};
         }
         // return span based on uniform or non-uniform buffer
         ComponentInfo const& info = dataset_info_.component_info[component_idx];
         Buffer const& buffer = buffers_[component_idx];
-        auto const ptr = reinterpret_cast<StructType*>(buffer.data);
-        return get_span_impl(std::span<StructType>{ptr, ptr + info.total_elements}, scenario, buffer, info);
+
+        if constexpr (std::same_as<RangeType_, SpanRange<StructType>>) {
+            assert(is_row_based(buffer) || info.total_elements == 0);
+            auto const ptr = reinterpret_cast<StructType*>(buffer.data);
+            return get_span_impl(RangeType_{ptr, ptr + info.total_elements}, scenario, buffer, info);
+        } else if constexpr (std::same_as<RangeType_, RangeObject<StructType>>) {
+            assert(is_columnar(buffer));
+            return get_span_impl(RangeType_{info.total_elements, buffer.attributes}, scenario, buffer, info);
+        } else {
+            static_assert(false, "only span and RangeObject are supported");
+        }
+    }
+
+    // get non-empty row buffer
+    template <class StructType> SpanRange<StructType> get_buffer_span_impl(Idx scenario, Idx component_idx) const {
+        return get_buffer_view_impl<StructType, SpanRange>(scenario, component_idx);
     }
 
     // get non-empty columnar buffer
     template <class StructType>
     RangeObject<StructType> get_columnar_buffer_span_impl(Idx scenario, Idx component_idx) const {
-        // return empty span if the component does not exist
-        if (component_idx < 0) {
-            return {};
-        }
-        // return span based on uniform or non-uniform buffer
-        ComponentInfo const& info = dataset_info_.component_info[component_idx];
-        Buffer const& buffer = buffers_[component_idx];
-        assert(is_columnar(buffer));
-        return get_span_impl(RangeObject<StructType>{info.total_elements, buffer.attributes}, scenario, buffer, info);
+        return get_buffer_view_impl<StructType, RangeObject>(scenario, component_idx);
+    }
+
+    template <class type_getter, class ComponentType, template <typename> typename RangeType,
+              typename StructType = DataStruct<typename type_getter::template type<ComponentType>>>
+        requires std::ranges::view<RangeType<StructType>>
+    std::vector<RangeType<StructType>> get_buffer_span_all_scenarios_impl() const {
+        Idx const component_idx = find_component(ComponentType::name, false);
+        return IdxRange{batch_size()} | std::views::transform([this, component_idx](Idx scenario) {
+                   return get_buffer_view_impl<StructType, RangeType>(scenario, component_idx);
+               }) |
+               std::ranges::to<std::vector>();
     }
 };
 

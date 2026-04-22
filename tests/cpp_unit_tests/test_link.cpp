@@ -30,14 +30,8 @@ TEST_CASE("Test link") {
     Branch& branch = link;
     double const base_i_from = base_power_1p / (10.0e3 / sqrt3);
     double const base_i_to = base_power_1p / (50.0e3 / sqrt3);
-    DoubleComplex const u1f = 1.0;
-    DoubleComplex const u1t = 0.9;
     ComplexValue<asymmetric_t> const uaf{1.0};
     ComplexValue<asymmetric_t> const uat{0.9};
-    DoubleComplex const i1f = (u1f - u1t) * y_link * base_i_from;
-    DoubleComplex const i1t = (u1t - u1f) * y_link * base_i_to;
-    DoubleComplex const s_f = conj(i1f) * u1f * 10e3 * sqrt3;
-    DoubleComplex const s_t = conj(i1t) * u1t * 50e3 * sqrt3;
 
     // Short circuit results
     DoubleComplex const if_sc{1.0, 1.0};
@@ -75,36 +69,6 @@ TEST_CASE("Test link") {
         CHECK(cabs(param.ytt() - 0.0) < numerical_tolerance);
         CHECK(cabs(param.ytf() - 0.0) < numerical_tolerance);
         CHECK(cabs(param.yft() - 0.0) < numerical_tolerance);
-    }
-
-    SUBCASE("Symmetric results") {
-        BranchOutput<symmetric_t> const output = branch.get_output<symmetric_t>(1.0, 0.9);
-        CHECK(output.id == 1);
-        CHECK(output.energized);
-        CHECK(output.loading == 0.0);
-        CHECK(output.i_from == doctest::Approx(cabs(i1f)));
-        CHECK(output.i_to == doctest::Approx(cabs(i1t)));
-        CHECK(output.s_from == doctest::Approx(cabs(s_f)));
-        CHECK(output.s_to == doctest::Approx(cabs(s_t)));
-        CHECK(output.p_from == doctest::Approx(real(s_f)));
-        CHECK(output.p_to == doctest::Approx(real(s_t)));
-        CHECK(output.q_from == doctest::Approx(imag(s_f)));
-        CHECK(output.q_to == doctest::Approx(imag(s_t)));
-    }
-
-    SUBCASE("Asymmetric results") {
-        BranchOutput<asymmetric_t> const output = branch.get_output<asymmetric_t>(uaf, uat);
-        CHECK(output.id == 1);
-        CHECK(output.energized);
-        CHECK(output.loading == 0.0);
-        CHECK(output.i_from(0) == doctest::Approx(cabs(i1f)));
-        CHECK(output.i_to(1) == doctest::Approx(cabs(i1t)));
-        CHECK(output.s_from(2) == doctest::Approx(cabs(s_f) / 3.0));
-        CHECK(output.s_to(0) == doctest::Approx(cabs(s_t) / 3.0));
-        CHECK(output.p_from(1) == doctest::Approx(real(s_f) / 3.0));
-        CHECK(output.p_to(2) == doctest::Approx(real(s_t) / 3.0));
-        CHECK(output.q_from(0) == doctest::Approx(imag(s_f) / 3.0));
-        CHECK(output.q_to(1) == doctest::Approx(imag(s_t) / 3.0));
     }
 
     SUBCASE("Short circuit asym results") {

@@ -14,7 +14,9 @@ For a summary and guidance, see [Calculations](../user_manual/calculations.md#sh
 In the short circuit calculation, the following equations are solved with border conditions of faults added as
 constraints.
 
-$$ \begin{eqnarray} I_N & = Y_{bus}U_N \end{eqnarray} $$
+$$
+I_N = Y_{bus}U_N
+$$
 
 This gives the initial symmetrical short circuit current ($I_k^{\prime\prime}$) for a fault.
 This quantity is then used to derive almost all further calculations of short circuit studies applications.

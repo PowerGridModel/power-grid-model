@@ -15,18 +15,14 @@ For a summary and guidance on choosing the right algorithm, see
 The nodal equations of a power system network can be written as:
 
 $$
-    \begin{eqnarray}
-        I_N    & = Y_{bus}U_N
-    \end{eqnarray}
+I_N = Y_{bus}U_N
 $$
 
 Where $I_N$ is the $N$ vector of source currents injected into each bus and $U_N$ is the $N$ vector of bus voltages.
 The complex power delivered to bus $k$ is:
 
 $$
-    \begin{eqnarray}
-        S_{k}    & =  P_k + jQ_k & = U_{k} I_{k}^{*}
-    \end{eqnarray}
+S_{k} = P_k + jQ_k = U_{k} I_{k}^{*}
 $$
 
 Power flow equations are based on solving the nodal equations above to obtain the voltage magnitude and voltage angle at
@@ -47,9 +43,7 @@ This is the traditional method for power flow calculations.
 This method uses a Taylor series, ignoring the higher order terms, to solve the nonlinear set of equations iteratively:
 
 $$
-    \begin{eqnarray}
-        f(x)    & =  y
-    \end{eqnarray}
+f(x) =  y
 $$
 
 Where:
@@ -101,19 +95,17 @@ As can be seen in the equations above $\delta_1$ and $V_1$ are omitted, because 
 In each iteration $i$ the following equation is solved:
 
 $$
-    \begin{eqnarray}
-        J(i) \Delta x(i)    & =  \Delta y(i)
-    \end{eqnarray}
+J(i) \Delta x(i) =  \Delta y(i)
 $$
 
 Where
 
 $$
-    \begin{eqnarray}
-        \Delta x(i)    & =  x(i+1) - x(i)
-        \quad\text{and}\quad
-        \Delta y(i)    & =  y - f(x(i))
-    \end{eqnarray}
+\begin{aligned}
+    \Delta x(i)    & =  x(i+1) - x(i)
+    \quad\text{and}\quad
+    \Delta y(i)    & =  y - f(x(i))
+\end{aligned}
 $$
 
 $J$ is the [Jacobian](https://en.wikipedia.org/wiki/Jacobian_matrix_and_determinant), a matrix with all partial
