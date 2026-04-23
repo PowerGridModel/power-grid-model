@@ -249,7 +249,7 @@ The option affects which attributes are required and how results are exposed.
 ```{note}
 Asymmetric calculations require the network to have a reference to ground. For the definition of a grounded grid, please refer to [Short circuit calculations](calulations.md#short-circuit-calculations).
 If no such connection exists, the calculation cannot be solved and will fail with a sparse matrix error.
-Currently, power-grid-model addresses this scenario internally by adding a small admittance (implemented as a shunt) to one end of two-winding transformers to ensure the network has a reference to ground. This mechanism is not yet implemented for three-winding transformers.
+Currently, power-grid-model addresses this scenario internally by adding a small admittance (implemented as a shunt) to one end of transformers to ensure the network has a reference to ground.
 ```
 
 ```{note}
