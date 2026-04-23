@@ -75,8 +75,8 @@ This can either be identified via {py:class}`power_grid_model.power_grid_meta_da
 {py:function}`attribute_dtype` for columnar data.
 
 ```{warning}
-If the array provided do not strictly match the requirements for these dtypes, any function it is used with can lead to
-[Undefined Behavior](../advanced_documentation/terminology.md#undefined-behavior).
+If the array provided does not strictly match the requirements for these dtypes, any function it is passed with can lead
+to [Undefined Behavior](../advanced_documentation/terminology.md#undefined-behavior).
 This includes adding or removing custom attributes or modifying dtypes of structured array data or columnar data.
 ```
 
