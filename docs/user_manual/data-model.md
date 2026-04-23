@@ -69,14 +69,14 @@ source_5 (appliance)       sym_load_4 (appliance)             node_7
 * There are two appliances in the grid.
   `source_5` is coupled to `node_1` and `sym_load_4` is coupled to `node_2`.
 
-Within this data model, all component datasets are required to be strictly the same as corresponding to the PGM's numpy
-array dtype.
-This can either be identified via power_grid_model.power_grid_meta_data module for row based data or via attribute_dtype
-for columnar data.
+Within this data model, all component datasets are required to strictly match the corresponding PGM's numpy array
+dtype.
+This can either be identified via {py:class}`power_grid_model.power_grid_meta_data` module for row based data or via 
+{py:function}`attribute_dtype` for columnar data.
 
 ```{warning}
 If the array provided do not strictly match the requirements for these dtypes, any function it is used with can lead to
-[Undefined Behaviour](advanced_documentation/terminology.md#undefined-behavior).
+[Undefined Behavior](../advanced_documentation/terminology.md#undefined-behavior).
 This includes adding or removing custom attributes or modifying dtypes of structured array data or columnar data.
 ```
 
