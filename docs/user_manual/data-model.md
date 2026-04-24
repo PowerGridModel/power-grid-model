@@ -78,6 +78,7 @@ This can either be identified via {py:class}`power_grid_model.power_grid_meta_da
 If the array provided does not strictly match the requirements for these dtypes, any function it is passed to can lead
 to [Undefined Behavior](../advanced_documentation/terminology.md#undefined-behavior).
 This includes adding or removing custom attributes or modifying dtypes of structured array data or columnar data.
+You can use [power-grid-model-ds](https://github.com/PowerGridModel/power-grid-model-ds) to carry out those operations.
 ```
 
 ## Symmetry of Components and Calculation
