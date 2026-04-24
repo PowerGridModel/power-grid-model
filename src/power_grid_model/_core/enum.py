@@ -9,9 +9,49 @@ Note: these enumeration match the C++ arithmetic core, so don't change the value
 
 """
 
-from enum import IntEnum
+import warnings
+from enum import EnumMeta, IntEnum, nonmember
 
 # Value names are defined in lower case instead of upper case
+
+
+class _DeprecationAwareEnumMeta(EnumMeta):
+    """
+    Metaclass that supports deprecated enum members.
+
+    In the enum class body, define _deprecated_members as a nonmember dict
+    mapping deprecated member names to deprecation warning messages. All access
+    patterns (Foo.bar, Foo['bar'], Foo(bar_value), Foo[bar_value]) will emit a DeprecationWarning.
+    """
+
+    def _warn_if_deprecated(cls, member):
+        msg = cls.__dict__.get("_deprecated_members", {}).get(member.name)
+        if msg:
+            warnings.warn(msg, DeprecationWarning, stacklevel=3)
+
+    def __getattribute__(cls, name: str):
+        result = super().__getattribute__(name)
+        if isinstance(result, cls):
+            cls._warn_if_deprecated(result)
+        return result
+
+    def __getitem__(cls, key):
+        if isinstance(key, int):
+            member = cls._value2member_map_.get(key)
+            if member is None:
+                raise KeyError(key)
+        else:
+            member = super().__getitem__(key)
+        cls._warn_if_deprecated(member)
+        return member
+
+    def __call__(cls, value, names=None, *args, **kwargs):
+        if names is not None:
+            return super().__call__(value, names, *args, **kwargs)
+        result = super().__call__(value)
+        if isinstance(result, cls):
+            cls._warn_if_deprecated(result)
+        return result
 
 
 class CalculationType(IntEnum):
@@ -127,8 +167,20 @@ class Branch3Side(IntEnum):
     side_3 = 2
 
 
-class MeasuredTerminalType(IntEnum):
-    """The type of asset measured by a (power) sensor"""
+class MeasuredTerminalType(IntEnum, metaclass=_DeprecationAwareEnumMeta):
+    """The type of asset measured by a (power) sensor.
+
+    NOTE: MeasuredTerminalType.node is deprecated and will be removed in a future release.
+    The reason for deprecation is that, contrary to the other terminal types, it does not represent a real terminal.
+    It is a fundamentally different concept that can lead to confusion and errors.
+    Please use one of the other terminal types instead.
+    """
+
+    _deprecated_members = nonmember(
+        {
+            "node": "MeasuredTerminalType.node is deprecated and will be removed in a future release.",
+        }
+    )
 
     branch_from = 0
     """
@@ -168,7 +220,7 @@ class MeasuredTerminalType(IntEnum):
     """
     node = 9
     """
-    Measuring the total power injection into a node
+    [DEPRECATED] Measuring the total power injection into a node
     """
 
 
