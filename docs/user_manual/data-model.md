@@ -71,8 +71,8 @@ source_5 (appliance)       sym_load_4 (appliance)             node_7
 
 Within this data model, all component datasets are required to strictly match the corresponding PGM's numpy array
 dtype.
-This can either be identified via {py:class}`power_grid_model.power_grid_meta_data` module for row based data or via 
-{py:function}`attribute_dtype` for columnar data.
+This can either be identified via {py:class}`power_grid_model.power_grid_meta_data` module for row based data or via
+{py:function}`power_grid_model.attribute_dtype` for columnar data.
 
 ```{warning}
 If the array provided does not strictly match the requirements for these dtypes, any function it is passed to can lead
