@@ -69,6 +69,18 @@ source_5 (appliance)       sym_load_4 (appliance)             node_7
 * There are two appliances in the grid.
   `source_5` is coupled to `node_1` and `sym_load_4` is coupled to `node_2`.
 
+Within this data model, all component datasets are required to strictly match the corresponding PGM's numpy array
+dtype.
+This can either be identified via {py:class}`power_grid_model.power_grid_meta_data` module for row based data or via
+{py:function}`power_grid_model.attribute_dtype` for columnar data.
+
+```{warning}
+If the array provided does not strictly match the requirements for these dtypes, any function it is passed to can lead
+to [Undefined Behavior](../advanced_documentation/terminology.md#undefined-behavior).
+This includes adding or removing custom attributes or modifying dtypes of structured array data or columnar data.
+You can use [power-grid-model-ds](https://github.com/PowerGridModel/power-grid-model-ds) to carry out those operations.
+```
+
 ## Symmetry of Components and Calculation
 
 It should be emphasized that the symmetry of components and calculation are two independent concepts in the
