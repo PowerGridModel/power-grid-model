@@ -40,18 +40,18 @@ repos:
   - repo: https://github.com/BlankSpruce/gersemi-pre-commit
     rev: {{ gersemi }}
     hooks:
-    - id: gersemi
-      name: cmake-linter
-      alias: cmake-linter
+      - id: gersemi
+        name: cmake-linter
+        alias: cmake-linter
   - repo: https://github.com/igorshubovych/markdownlint-cli  # outside pypi 
     rev: v{{ markdownlint_cli }}
     hooks:
-    - id: markdownlint
-      args: ["--fix"]
+      - id: markdownlint
+        args: ["--fix"]
   # format .json and .jsonc files
   - repo: https://github.com/biomejs/pre-commit  # outside pypi 
     rev: v{{ biome }}
     hooks:
-    # configuration is located in biome.jsonc
-    - id: biome-format
-      name: biome-format
+      # configuration is located in biome.jsonc
+      - id: biome-format
+        name: biome-format
