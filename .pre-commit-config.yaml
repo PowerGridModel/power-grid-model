@@ -42,6 +42,7 @@ repos:
     hooks:
     - id: gersemi
       name: cmake-linter
+      language: system
       alias: cmake-linter
   - repo: https://github.com/igorshubovych/markdownlint-cli  # outside pypi 
     rev: v0.48.0
