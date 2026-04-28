@@ -35,6 +35,10 @@ The following bus types can be present in the system:
 - Voltage controlled bus: a bus with known $P$ and $U$.
   Note: this bus is not supported by power-grid-model yet.
 
+```{note}
+Asymmetric power flow calculations require the network to have a reference to ground. For details and internal solution of asymmetric floating grids calculations in power-grid-model, please refer to[Symmetric vs asymmetric calculations](../user_manual/calculations.md#short-circuit-calculations). 
+```
+
 ## Newton-Raphson power flow
 
 Algorithm call: {py:class}`CalculationMethod.newton_raphson <power_grid_model.enum.CalculationMethod.newton_raphson>`

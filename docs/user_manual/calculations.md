@@ -192,6 +192,17 @@ Output:
 - Node voltage magnitude and angle
 - Current flowing through branches and fault.
 
+```{note}
+Short-circuit calculations are currently implemented in the phase (abc) domain and therefore require a grounded network, similar to asymmetric power flow calculations.
+
+In power-grid-model, a network is considered grounded if at least one of the following is present:
+- A transformer with grounded neutral (e.g. `winding_from`/`winding_to` of a transformer is set to `wye_n`, `zigzag_n`).
+- A shunt connected to ground.
+- Any other component that provides a conductive path to ground.
+
+A future implementation using the sequence (0-1-2) domain is expected to remove this limitation.
+```
+
 #### Common calculations
 
 Power flowing through a branch is calculated by voltage and current for any type of calculations in the following way:
@@ -234,6 +245,12 @@ The option affects which attributes are required and how results are exposed.
   splitting their totals across the three phases.
   For asymmetric calculations voltages are given as line-to-neutral and output contains arrays with values per phase
   for all output variables.
+
+```{note}
+Asymmetric calculations require the network to have a reference to ground. For the definition of a grounded grid, please refer to [Short circuit calculations](calulations.md#short-circuit-calculations).
+If no such connection exists, the calculation cannot be solved and will fail with a sparse matrix error.
+Currently, power-grid-model addresses this scenario internally by adding a small admittance (implemented as a shunt) to one end of transformers to ensure the network has a reference to ground.
+```
 
 ```{note}
 For short-circuit calculations, a three-phase `fault_type` is calculated with a symmetric calculation, while any other
