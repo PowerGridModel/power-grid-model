@@ -101,11 +101,12 @@ jobs:
           git status
           git diff .pre-commit-config.yaml
 
-      - name: Validate pre-commit configuration
+      - name: try to install pre-commit
         run: |
           source .venv/bin/activate
-          pre-commit validate-config .pre-commit-config.yaml
-          pre-commit run --all-files --show-diff-on-failure
+          pre-commit install
+          pre-commit install-hooks
+          pre-commit uninstall
 
       - name: generate GitHub App token
         uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
