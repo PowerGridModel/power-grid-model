@@ -19,7 +19,7 @@ class _DeprecationAwareEnumMeta(EnumMeta):
     """
     Metaclass that supports deprecated enum members.
 
-    In the enum class body, define _deprecated_members as a nonmember dict
+    In the enum class body, define _deprecated_members as a dict that is explicitly marked 'nonmember'
     mapping deprecated member names to deprecation warning messages. All access
     patterns (Foo.bar, Foo['bar'], Foo(bar_value), Foo[bar_value]) will emit a DeprecationWarning.
     """

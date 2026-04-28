@@ -9,6 +9,7 @@ import pytest
 from power_grid_model.enum import MeasuredTerminalType
 
 
+# lts = long-term-support
 def lts_measured_terminal_types():
     with warnings.catch_warnings():  # backwards compatiblity
         warnings.simplefilter("ignore")
