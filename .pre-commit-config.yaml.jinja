@@ -37,12 +37,11 @@ repos:
     hooks:
       - id: clang-format
         types_or: [ c++, c ]
-  - repo: https://github.com/BlankSpruce/gersemi
+  - repo: https://github.com/BlankSpruce/gersemi-pre-commit
     rev: {{ gersemi }}
     hooks:
     - id: gersemi
       name: cmake-linter
-      language: system
       alias: cmake-linter
   - repo: https://github.com/igorshubovych/markdownlint-cli  # outside pypi 
     rev: v{{ markdownlint_cli }}
