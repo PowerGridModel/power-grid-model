@@ -105,7 +105,6 @@ jobs:
         run: |
           source .venv/bin/activate
           pre-commit validate-config .pre-commit-config.yaml
-          pre-commit run --all-files --show-diff-on-failure
 
       - name: generate GitHub App token
         uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
