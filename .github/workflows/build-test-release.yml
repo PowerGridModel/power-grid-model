@@ -138,7 +138,7 @@ jobs:
           install\${{ env.PRESET }}\bin\power_grid_model_package_test; if(!$?) { Exit $LASTEXITCODE }
 
   build-cpp-test-macos:
-    runs-on: macos-15
+    runs-on: macos-26
     strategy:
       matrix:
         build-option: [debug, release]
@@ -177,7 +177,7 @@ jobs:
             os: ubuntu-24.04-arm
             cibw_build: "*_aarch64"
           - platform: macos
-            os: macos-15
+            os: macos-26
             cibw_build: "*"
           - platform: windows
             os: windows-latest
@@ -198,7 +198,7 @@ jobs:
         if: runner.os == 'Windows'
 
       - name: Set up XCode
-        if: matrix.os == 'macos-15'
+        if: matrix.os == 'macos-26'
         uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
         with:
           xcode-version: latest-stable
