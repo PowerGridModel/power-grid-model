@@ -130,6 +130,8 @@ void reset_solvers(typename ModelType::MainModelState& state, SolverPreparationC
 template <class ModelType>
 void rebuild_topology(typename ModelType::MainModelState& state, SolverPreparationContext& solver_context,
                       SolversCacheStatus<ModelType>& solvers_cache_status) {
+    using topology::Topology;
+
     // clear old solvers
     reset_solvers(state, solver_context, solvers_cache_status);
     ComponentConnections const comp_conn = main_core::construct_components_connections<ModelType>(state.components);

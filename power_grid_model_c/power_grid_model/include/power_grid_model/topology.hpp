@@ -41,7 +41,7 @@
 // start search from a source
 // using DFS search
 
-namespace power_grid_model {
+namespace power_grid_model::topology {
 
 class Topology {
     using GraphIdx = size_t;
@@ -699,4 +699,4 @@ class Topology {
     }
 };
 
-} // namespace power_grid_model
+} // namespace power_grid_model::topology
