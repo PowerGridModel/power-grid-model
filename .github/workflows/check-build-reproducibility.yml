@@ -17,15 +17,15 @@ concurrency:
 
 jobs:
   check-power-grid-model-c-linux:
-    runs-on: ubuntu-latest
     strategy:
       matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm]
         compiler: [gcc, clang]
         include:
-          - c_compiler: gcc-14
-            cxx_compiler: g++-14
-          - c_compiler: clang-18
-            cxx_compiler: clang++-18
+          - compiler: gcc
+          - compiler: clang
+
+    runs-on: ${{ matrix.os }}
 
     env:
       CMAKE_PREFIX_PATH: /home/linuxbrew/.linuxbrew
