@@ -171,7 +171,7 @@ jobs:
   build-and-test-python:
     strategy:
       matrix:
-        platform: [linux-x64, linux-aarch64, macos-aarch64, macos-x64, windows]
+        platform: [linux-x64, linux-aarch64, macos-arm64, macos-x64, windows]
         include:
           - platform: linux-x64
             os: ubuntu-24.04
