@@ -21,9 +21,6 @@ jobs:
       matrix:
         os: [ubuntu-latest, ubuntu-24.04-arm]
         compiler: [gcc, clang]
-        include:
-          - compiler: gcc
-          - compiler: clang
 
     runs-on: ${{ matrix.os }}
 
