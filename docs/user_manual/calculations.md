@@ -193,13 +193,8 @@ Output:
 - Current flowing through branches and fault.
 
 ```{note}
-Short-circuit calculations are currently implemented in the phase (abc) domain and therefore require a grounded network, similar to asymmetric power flow calculations.
-
-In power-grid-model, a network is considered grounded if at least one of the following is present:
-- A transformer with grounded neutral (e.g. `winding_from`/`winding_to` of a transformer is set to `wye_n`, `zigzag_n`).
-- A shunt connected to ground.
-- Any other component that provides a conductive path to ground.
-```
+Short-circuit calculations are currently implemented in the phase (abc) domain and therefore require a grounded configurations in certain cases, similar to asymmetric power flow calculations.
+For details on how floating grids are treated in power-grid-model, please refer to[Floating grid handling](calulations.md#floating-grid-handling).
 
 #### Common calculations
 
@@ -245,9 +240,7 @@ The option affects which attributes are required and how results are exposed.
   for all output variables.
 
 ```{note}
-Asymmetric calculations require the network to have a reference to ground. For the definition of a grounded grid, please refer to [Short circuit calculations](calulations.md#short-circuit-calculations).
-If no such connection exists, the calculation cannot be solved and will fail with a sparse matrix error.
-Currently, power-grid-model addresses this scenario internally by adding a small admittance (implemented as a shunt) to one end of transformers to ensure the network has a reference to ground.
+In power-grid model, asymmetric calculations with certain configurations require the network to have a reference to ground. For details on how floating grids are treated in power-grid-model, please refer to[Floating grid handling](calulations.md#floating-grid-handling).
 ```
 
 ```{note}
@@ -255,6 +248,24 @@ For short-circuit calculations, a three-phase `fault_type` is calculated with a 
 `fault_type` (e.g. single- or two-phase faults) automatically triggers the asymmetric calculation.
 Outputs for short circuit calculations always give asymmetric output, independent of the fault type present.
 ```
+
+#### Floating grid handling
+In power-grid-model, two different concepts should be distinguished:
+
+- Physical grounding of the network
+  Whether the electrical system has an explicit path to ground (e.g. via transformer winding connection, shunts, or grounding elements).
+- Numerical solvability in PGM
+  Whether the formulation provides enough reference to compute a unique solution, even if the physical system is not explicitly grounded.
+
+A floating grid issue only arises in specific configurations where:
+
+- A transformer is present, and
+- All involved windings are ungrounded (no star-point grounding, no delta grounding reference, etc.), and
+- No other grounding path (shunt, source grounding, etc.) exists in the network.
+
+In this case, the system may lack a reference for certain sequence components (typically zero-sequence), leading to an ill-posed or singular system.
+
+In current power-grid-model, a shunt with small admittance is added only in transformer-related configurations where a grounding reference is missing. This shunt is connected to one side of the transformer. This is intended to ensure numerical stability in cases where the transformer topology introduces an ungrounded subsystem.
 
 ### Power flow algorithms
 

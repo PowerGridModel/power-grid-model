@@ -23,7 +23,7 @@ This quantity is then used to derive almost all further calculations of short ci
 
 ```{note}
 Short-circuit calculations are currently implemented in the phase (abc) domain and therefore require a grounded network, similar to asymmetric power flow calculations.
-A future implementation using the sequence (0-1-2) domain is expected to remove this limitation.
+A potential implementation using the sequence (0-1-2) domain is expected to remove this limitation.
 ```
 
 ## IEC 60909 short circuit calculation
