@@ -179,12 +179,12 @@ jobs:
           - platform: linux-aarch64
             os: ubuntu-24.04-arm
             cibw_build: "*_aarch64"
-          - platform: macos-aarch64
+          - platform: macos-arm64
             os: macos-26
-            cibw_build: "*"
+            cibw_build: "*_arm64"
           - platform: macos-x64
             os: macos-26-intel
-            cibw_build: "*"
+            cibw_build: "*_x86_64"
           - platform: windows
             os: windows-latest
             cibw_build: "*"
