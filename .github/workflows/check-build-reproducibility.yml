@@ -126,7 +126,11 @@ jobs:
           Write-Host "Builds are identical"
 
   check-reproducibility-c-macos:
-    runs-on: macos-26
+    strategy:
+      matrix:
+        os: [macos-26, macos-26-intel]
+
+    runs-on: ${{ matrix.os }}
     env:
       CMAKE_PREFIX_PATH: /usr/local
       PRESET: ci-apple-clang-reproducible
