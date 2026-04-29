@@ -200,7 +200,7 @@ In power-grid-model, a network is considered grounded if at least one of the fol
 - A shunt connected to ground.
 - Any other component that provides a conductive path to ground.
 
-A future implementation using the sequence (0-1-2) domain is expected to remove this limitation.
+A future implementation using the sequence (0-1-2) domain is expected to remove this limitation for short circuit calculations.
 ```
 
 #### Common calculations
