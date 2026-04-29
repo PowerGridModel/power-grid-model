@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-name: Build and Test C++ and Python
+name: Check build reproducibility
 
 # Controls when the workflow will run
 on:
