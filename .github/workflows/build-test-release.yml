@@ -138,10 +138,13 @@ jobs:
           install\${{ env.PRESET }}\bin\power_grid_model_package_test; if(!$?) { Exit $LASTEXITCODE }
 
   build-cpp-test-macos:
-    runs-on: macos-26
     strategy:
       matrix:
         build-option: [debug, release]
+        os: [macos-26, macos-26-intel]
+
+    runs-on: ${{ matrix.os }}
+  
     env:
       CMAKE_PREFIX_PATH: /usr/local
       PRESET: ci-clang-${{ matrix.build-option }}
@@ -176,8 +179,11 @@ jobs:
           - platform: linux-aarch64
             os: ubuntu-24.04-arm
             cibw_build: "*_aarch64"
-          - platform: macos
+          - platform: macos-arm64
             os: macos-26
+            cibw_build: "*"
+          - platform: macos-x64
+            os: macos-26-intel
             cibw_build: "*"
           - platform: windows
             os: windows-latest
@@ -198,7 +204,7 @@ jobs:
         if: runner.os == 'Windows'
 
       - name: Set up XCode
-        if: matrix.os == 'macos-26'
+        if: matrix.os == 'macos-26' || matrix.os == 'macos-26-intel'
         uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
         with:
           xcode-version: latest-stable
