@@ -20,7 +20,7 @@ on:
         required: false
         default: false
   schedule:
-    - cron: "0 2 * * 0" # Every Sunday at 2:00 UTC
+    - cron: "0 2 * * 1" # Every Monday at 2:00 UTC
 
 
 concurrency:
