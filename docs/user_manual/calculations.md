@@ -265,7 +265,7 @@ A floating grid issue only arises in specific configurations where:
 
 In this case, the system may lack a reference for certain sequence components (typically zero-sequence), leading to an ill-posed or singular system.
 
-In current power-grid-model, a shunt with small admittance is added only in transformer-related configurations where a grounding reference is missing. This shunt is connected to one side of the transformer. This is intended to ensure numerical stability in cases where the transformer topology introduces an ungrounded subsystem.
+Currently in power-grid-model, a shunt with small admittance is added only in transformer-related configurations where a grounding reference is missing. This shunt is connected to one side of the transformer. This is intended to ensure numerical stability in cases where the transformer topology introduces an ungrounded subsystem.
 
 ### Power flow algorithms
 
