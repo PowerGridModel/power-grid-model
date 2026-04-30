@@ -240,7 +240,7 @@ The option affects which attributes are required and how results are exposed.
   for all output variables.
 
 ```{note}
-In power-grid model, asymmetric calculations with certain configurations require the network to have a reference to ground. For details on how floating grids are treated in power-grid-model, please refer to[Floating grid handling](calulations.md#floating-grid-handling).
+In power-grid model, asymmetric calculations with certain configurations require the network to have a reference to ground. For details on how floating grids are treated in power-grid-model, please refer to [Floating grid handling](calulations.md#floating-grid-handling).
 ```
 
 ```{note}
