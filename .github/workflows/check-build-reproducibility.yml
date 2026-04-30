@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-name: Build and Test C++ and Python
+name: Check build reproducibility
 
 # Controls when the workflow will run
 on:
@@ -17,15 +17,12 @@ concurrency:
 
 jobs:
   check-power-grid-model-c-linux:
-    runs-on: ubuntu-latest
     strategy:
       matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm]
         compiler: [gcc, clang]
-        include:
-          - c_compiler: gcc-14
-            cxx_compiler: g++-14
-          - c_compiler: clang-18
-            cxx_compiler: clang++-18
+
+    runs-on: ${{ matrix.os }}
 
     env:
       CMAKE_PREFIX_PATH: /home/linuxbrew/.linuxbrew
@@ -126,7 +123,11 @@ jobs:
           Write-Host "Builds are identical"
 
   check-reproducibility-c-macos:
-    runs-on: macos-latest
+    strategy:
+      matrix:
+        os: [macos-26, macos-26-intel]
+
+    runs-on: ${{ matrix.os }}
     env:
       CMAKE_PREFIX_PATH: /usr/local
       PRESET: ci-apple-clang-reproducible
