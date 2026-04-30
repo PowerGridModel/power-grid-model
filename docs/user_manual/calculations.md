@@ -253,7 +253,8 @@ Outputs for short circuit calculations always give asymmetric output, independen
 In power-grid-model, two different concepts should be distinguished:
 
 - Physical grounding of the network
-  Whether the electrical system has an explicit path to ground (e.g. via transformer winding connection, shunts, or grounding elements).
+  Whether the electrical system has an explicit path to ground 
+  (e.g. via transformer winding connection, shunts, or grounding elements).
 - Numerical solvability in PGM
   Whether the formulation provides enough reference to compute a unique solution, 
   even if the physical system is not explicitly grounded.
