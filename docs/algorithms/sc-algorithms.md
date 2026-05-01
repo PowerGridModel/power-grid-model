@@ -81,9 +81,9 @@ Let $z_k$ and $z_t$ denote the source and transformer impedances, respectively.
 ```{tikz}
 :alt: transformer
 
-\draw (0,3) node[gridnode, anchor=west]{} to (1,3);
+\draw (0,3) node[gridnode, anchor=east]{} to (1,3);
 \draw [black, ultra thick] (1,2) -- (1,4);
-\draw (1,3) to (2,3) [oosourcetrans] to (4,3) to (5,3);
+\draw (1,3) to (2,3) [oosourcetrans] to (5,3);
 \draw [black, ultra thick] (5,2) -- (5,4);
 \draw[thick, ->] (5,1.4) +(0.05,0.5) -- +(-0.1,-0.1) -- +(0.1,0.1) -- +(0,-0.5);
 ```
