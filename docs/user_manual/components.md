@@ -721,6 +721,10 @@ It behaves similar to a load/generator with type `const_impedance`.
 | `b0` | `double`  | siemens (S) | zero-sequence shunt susceptance     | &#10024; only for asymmetric calculation | &#10004; |
 
 ```{note}
+In power-grid-model, shunts may also be used to introduce a ground reference in an otherwise floating grid. 
+```
+
+```{note}
 In case of short circuit calculations, the zero-sequence parameters are required only if any of the faults in any of the
 scenarios within a batch are not three-phase faults (i.e. `fault_type` is not `FaultType.three_phase`).
 ```

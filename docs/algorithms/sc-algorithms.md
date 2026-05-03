@@ -21,6 +21,11 @@ $$
 This gives the initial symmetrical short circuit current ($I_k^{\prime\prime}$) for a fault.
 This quantity is then used to derive almost all further calculations of short circuit studies applications.
 
+```{note}
+Short-circuit calculations are currently implemented in the phase (abc) domain and therefore require a grounded network, similar to asymmetric power flow calculations.
+Note that this limitation does not exist in the sequence (0-1-2) domain but is present in the phase domain calculation.
+```
+
 ## IEC 60909 short circuit calculation
 
 Algorithm call: {py:class}`CalculationMethod.iec60909 <power_grid_model.enum.CalculationMethod.iec60909>`
