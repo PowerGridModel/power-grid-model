@@ -59,3 +59,44 @@ with the following possible combinations of the {py:class}`associated phases <po
 - Single phase to ground: `a`, `b`, `c`
 - Two phase: `ab`, `bc`, `ac`
 - Two phase to ground: `ab`, `bc`, `ac`
+
+## Prefault voltages
+
+IEC 60909 prescribes use of rated voltage of the fault node on the Thevenin equivalent of the grid impedance for
+calculation of $I_k^{\prime\prime}$.
+This isolates the short circuit calculations from the actual loading conditions of the grid.
+
+PGM extends IEC 60909 to support simulation of multiple simultaneous faults for advanced use cases.
+Since IEC 60909 does not prescribe a method for this scenario,
+PGM deviates slightly from the standard to accommodate it.
+Prefault voltages and corresponding $I_k^{\prime\prime}$ deviate by an
+"equivalent transformation ratio" from all transformers.
+
+An example is shown below to demonstrate this effect.
+In the following grid, lets say we assumed the rated voltage of the source and fault node is $u_{rated-1}$ and
+$u_{rated-2}$ respectively.
+The transformer has a $u1$/$u2$ transformation ratio.
+Let $z_k$ and $z_t$ denote the source and transformer impedances, respectively.
+
+```{tikz}
+:alt: transformer
+
+\draw (0,3) node[gridnode, anchor=east]{} to (1,3);
+\draw [black, ultra thick] (1,2) -- (1,4);
+\draw (1,3) to (2,3) [oosourcetrans] to (5,3);
+\draw [black, ultra thick] (5,2) -- (5,4);
+\draw[thick, ->] (5,1.4) +(0.05,0.5) -- +(-0.1,-0.1) -- +(0.1,0.1) -- +(0,-0.5);
+```
+
+IEC 60909 calculation should give $I_k^{\prime\prime} = \frac{u_{rated-2}}{ \sqrt{3} \cdot (z_k + z_t)}$
+
+PGM calculates short circuit by setting source voltage as $u_{rated-1}$ instead. Hence
+$I_k^{\prime\prime} = \frac{u_{rated-1} \cdot k}{ \sqrt{3} \cdot (z_k + z_t)}$
+where $k =\frac{u1 \cdot u_{rated-2}}{u2 \cdot u_{rated-1}} $
+
+When the voltage rating of the transformer matches the rated voltage of the nodes, this factor is exactly `1.0`.
+In radial grids, it can be easily accumulated by multiplying the transformation ratios of all transformers
+($k_{t1} \cdot k_{t2} \cdot k_{t3} ...$) along the fault path to the source.
+However, when multiple sources and meshed networks are involved, the calculation becomes complex.
+This factor is roughly `0.97` to `1.03` on a practical grid.
+An easy approach is then to simply leave a margin of ~`1.03` in the maximal short circuit current.
