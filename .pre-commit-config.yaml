@@ -9,7 +9,7 @@ repos:
       - id: reuse
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
-    rev: v0.15.9
+    rev: v0.15.12
     hooks:
       # Run the linter.
       - id: ruff-check
@@ -19,7 +19,7 @@ repos:
       - id: ruff-format
         name: ruff-format
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.20.0
+    rev: v1.20.2
     hooks:
       - id: mypy
         additional_dependencies:
@@ -37,21 +37,21 @@ repos:
     hooks:
       - id: clang-format
         types_or: [ c++, c ]
-  - repo: https://github.com/BlankSpruce/gersemi
-    rev: 0.26.1
+  - repo: https://github.com/BlankSpruce/gersemi-pre-commit
+    rev: 0.27.2
     hooks:
-    - id: gersemi
-      name: cmake-linter
-      alias: cmake-linter
+      - id: gersemi
+        name: cmake-linter
+        alias: cmake-linter
   - repo: https://github.com/igorshubovych/markdownlint-cli  # outside pypi 
     rev: v0.48.0
     hooks:
-    - id: markdownlint
-      args: ["--fix"]
+      - id: markdownlint
+        args: ["--fix"]
   # format .json and .jsonc files
   - repo: https://github.com/biomejs/pre-commit  # outside pypi 
-    rev: v2.4.10
+    rev: v2.4.13
     hooks:
-    # configuration is located in biome.jsonc
-    - id: biome-format
-      name: biome-format
+      # configuration is located in biome.jsonc
+      - id: biome-format
+        name: biome-format

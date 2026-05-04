@@ -9,7 +9,7 @@ Main power grid model class
 import itertools
 from enum import IntEnum
 from math import prod
-from typing import Any, overload
+from typing import Any, Literal, overload
 
 import numpy as np
 
@@ -258,9 +258,9 @@ class PowerGridModel:
         output_component_types: ComponentAttributeMapping,
         calculation_type: CalculationType,
         symmetric: bool,
-        is_batch: bool,
+        is_batch: Literal[True, False],
         batch_size: int,
-    ):
+    ) -> Dataset:
         all_component_count = self._get_output_component_count(calculation_type=calculation_type)
         return create_output_data(
             output_component_types=output_component_types,
@@ -877,7 +877,7 @@ class PowerGridModel:
         output_component_types: None | set[ComponentTypeVar] | list[ComponentTypeVar] = ...,
         continue_on_batch_error: bool = ...,
         decode_error: bool = ...,
-        short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str,
+        short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str = ...,
     ) -> SingleRowBasedDataset: ...
     @overload
     def calculate_short_circuit(
@@ -889,7 +889,7 @@ class PowerGridModel:
         output_component_types: ComponentAttributeFilterOptions = ...,
         continue_on_batch_error: bool = ...,
         decode_error: bool = ...,
-        short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str,
+        short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str = ...,
     ) -> SingleColumnarOutputDataset: ...
     @overload
     def calculate_short_circuit(
@@ -901,7 +901,7 @@ class PowerGridModel:
         output_component_types: ComponentAttributeMappingDict = ...,
         continue_on_batch_error: bool = ...,
         decode_error: bool = ...,
-        short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str,
+        short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str = ...,
     ) -> SingleOutputDataset: ...
     @overload
     def calculate_short_circuit(
@@ -913,7 +913,7 @@ class PowerGridModel:
         output_component_types: None | set[ComponentTypeVar] | list[ComponentTypeVar] = ...,
         continue_on_batch_error: bool = ...,
         decode_error: bool = ...,
-        short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str,
+        short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str = ...,
     ) -> DenseBatchRowBasedOutputDataset: ...
     @overload
     def calculate_short_circuit(
@@ -925,7 +925,7 @@ class PowerGridModel:
         output_component_types: ComponentAttributeFilterOptions = ...,
         continue_on_batch_error: bool = ...,
         decode_error: bool = ...,
-        short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str,
+        short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str = ...,
     ) -> DenseBatchColumnarOutputDataset: ...
     @overload
     def calculate_short_circuit(
@@ -937,7 +937,7 @@ class PowerGridModel:
         output_component_types: ComponentAttributeMappingDict = ...,
         continue_on_batch_error: bool = ...,
         decode_error: bool = ...,
-        short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str,
+        short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str = ...,
     ) -> DenseBatchOutputDataset: ...
     def calculate_short_circuit(  # noqa: PLR0913
         self,

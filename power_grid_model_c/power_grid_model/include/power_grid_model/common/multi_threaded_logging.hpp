@@ -56,6 +56,14 @@ class MultiThreadedLoggerImpl : public MultiThreadedLogger {
         MultiThreadedLoggerImpl* parent_;
     };
 
+    MultiThreadedLoggerImpl() = default;
+    template <typename... Args>
+        requires(sizeof...(Args) > 0 &&
+                 !std::derived_from<std::remove_cvref_t<std::tuple_element_t<0, std::tuple<Args...>>>,
+                                    MultiThreadedLoggerImpl> &&
+                 std::constructible_from<LoggerType, Args...>)
+    explicit MultiThreadedLoggerImpl(Args&&... args) : log_(std::forward<Args>(args)...) {}
+
     std::unique_ptr<Logger> create_child() override { return std::make_unique<ThreadLogger>(*this); }
     LoggerType& get() { return log_; }
     LoggerType const& get() const { return log_; }
@@ -64,6 +72,8 @@ class MultiThreadedLoggerImpl : public MultiThreadedLogger {
     void log(LogEvent tag, std::string_view message) override { log_.log(tag, message); }
     void log(LogEvent tag, double value) override { log_.log(tag, value); }
     void log(LogEvent tag, Idx value) override { log_.log(tag, value); }
+
+    using MultiThreadedLogger::log;
 
   private:
     friend class ThreadLogger;

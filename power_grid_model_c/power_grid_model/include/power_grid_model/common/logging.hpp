@@ -44,12 +44,20 @@ enum class LogEvent : int16_t {
     max_num_iter = 2248,                     // TODO(mgovers): find other error code
 };
 
+template <typename Fn>
+concept LazyLoggingFn = std::invocable<Fn> && std::convertible_to<std::invoke_result_t<Fn>, std::string> &&
+                        (!std::convertible_to<Fn, std::string_view>);
+
 class Logger {
   public:
     virtual void log(LogEvent tag) = 0;
     virtual void log(LogEvent tag, std::string_view message) = 0;
     virtual void log(LogEvent tag, double value) = 0;
     virtual void log(LogEvent tag, Idx value) = 0;
+
+    void log(std::string_view message) { log(LogEvent::unknown, message); }
+    template <LazyLoggingFn Fn> void log(LogEvent tag, Fn&& fn) { log(tag, std::invoke(std::forward<Fn>(fn))); }
+    template <LazyLoggingFn Fn> void log(Fn&& fn) { log(LogEvent::unknown, std::invoke(std::forward<Fn>(fn))); }
 
     Logger(Logger&&) noexcept = default;
     Logger& operator=(Logger&&) noexcept = default;

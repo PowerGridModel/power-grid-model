@@ -100,13 +100,6 @@ class Appliance : public Base {
         ComplexValue<asymmetric_t> const iabc{i};
         return get_sc_output(iabc);
     }
-    template <symmetry_tag sym> ApplianceOutput<sym> get_output(ComplexValue<sym> const& u) const {
-        if constexpr (is_symmetric_v<sym>) {
-            return get_output<symmetric_t>(sym_u2si(u));
-        } else {
-            return get_output<asymmetric_t>(asym_u2si(u));
-        }
-    }
     template <symmetry_tag sym>
     ApplianceShortCircuitOutput
     get_sc_output(ApplianceShortCircuitSolverOutput<sym> const& appliance_solver_output) const {
@@ -117,10 +110,6 @@ class Appliance : public Base {
     ID node_;
     bool status_;
     double base_i_;
-
-    // pure virtual functions for translate from u to s/i
-    virtual ApplianceSolverOutput<symmetric_t> sym_u2si(ComplexValue<symmetric_t> const& u) const = 0;
-    virtual ApplianceSolverOutput<asymmetric_t> asym_u2si(ComplexValue<asymmetric_t> const& u) const = 0;
 
     virtual double injection_direction() const = 0;
 };

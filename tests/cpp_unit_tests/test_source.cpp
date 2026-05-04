@@ -49,8 +49,6 @@ TEST_CASE("Test source") {
 
     // calculation
     double const u_input = 1.1;
-    double const u = 0.9;
-    double const i = cabs(y1 * (u_input - u)) * base_power_3p / sqrt3 / un;
 
     // asym
     ComplexTensor<asymmetric_t> const sym_matrix = get_sym_matrix();
@@ -111,13 +109,6 @@ TEST_CASE("Test source") {
         CHECK(cabs(u_ref - 1.1 * std::exp(2.5i)) < numerical_tolerance);
     }
 
-    SUBCASE("test source sym results; u as input") {
-        ApplianceOutput<symmetric_t> const sym_result = source.get_output<symmetric_t>(u);
-        CHECK(sym_result.id == 1);
-        CHECK(sym_result.energized);
-        CHECK(sym_result.i == doctest::Approx(i));
-    }
-
     SUBCASE("test source sym results; s, i as input") {
         ApplianceSolverOutput<symmetric_t> appliance_solver_output_sym;
         appliance_solver_output_sym.i = 1.0 + 2.0i;
@@ -130,14 +121,6 @@ TEST_CASE("Test source") {
         CHECK(sym_result.s == doctest::Approx(cabs(3.0 + 4.0i) * base_power<symmetric_t>));
         CHECK(sym_result.i == doctest::Approx(cabs(1.0 + 2.0i) * base_i));
         CHECK(sym_result.pf == doctest::Approx(3.0 / cabs(3.0 + 4.0i)));
-    }
-
-    SUBCASE("test source asym results; u as input") {
-        ApplianceOutput<asymmetric_t> const asym_result =
-            source.get_output<asymmetric_t>(ComplexValue<asymmetric_t>{u});
-        CHECK(asym_result.id == 1);
-        CHECK(asym_result.energized);
-        CHECK(asym_result.i(0) == doctest::Approx(i));
     }
 
     SUBCASE("test source asym results; s, i as input") {
@@ -208,17 +191,63 @@ TEST_CASE("Test source") {
     SUBCASE("test update") {
         auto changed = source.update(SourceUpdate{.id = 1, .status = 1, .u_ref = 1.05, .u_ref_angle = nan});
         CHECK(!changed.topo);
-        CHECK(changed.param);
+        CHECK(!changed.param);
         changed = source.update(SourceUpdate{.id = 1, .status = 0, .u_ref = 1.05, .u_ref_angle = nan});
         CHECK(changed.topo);
         CHECK(changed.param);
         changed = source.update(SourceUpdate{.id = 1, .status = 0, .u_ref = nan, .u_ref_angle = nan});
         CHECK(!changed.topo);
         CHECK(!changed.param);
+
+        // test updating sk, rx_ratio, z01_ratio (status remains 0)
+        changed = source.update(SourceUpdate{.id = 1,
+                                             .status = na_IntS,
+                                             .u_ref = nan,
+                                             .u_ref_angle = nan,
+                                             .sk = 20e6,
+                                             .rx_ratio = nan,
+                                             .z01_ratio = nan});
+        CHECK(!changed.topo);
+        CHECK(changed.param);
+
+        // verify the new impedance affects math_param
+        DoubleComplex const y_ref_sym_updated = source.math_param<symmetric_t>().template y_ref<symmetric_t>();
+        CHECK(cabs(y_ref_sym_updated - y_ref_sym) > numerical_tolerance); // should be different
+
+        changed = source.update(SourceUpdate{.id = 1,
+                                             .status = na_IntS,
+                                             .u_ref = nan,
+                                             .u_ref_angle = nan,
+                                             .sk = nan,
+                                             .rx_ratio = 0.2,
+                                             .z01_ratio = nan});
+        CHECK(!changed.topo);
+        CHECK(changed.param);
+
+        changed = source.update(SourceUpdate{.id = 1,
+                                             .status = na_IntS,
+                                             .u_ref = nan,
+                                             .u_ref_angle = nan,
+                                             .sk = nan,
+                                             .rx_ratio = nan,
+                                             .z01_ratio = 4.0});
+        CHECK(!changed.topo);
+        CHECK(changed.param);
+
+        changed = source.update(SourceUpdate{.id = 1,
+                                             .status = na_IntS,
+                                             .u_ref = nan,
+                                             .u_ref_angle = nan,
+                                             .sk = nan,
+                                             .rx_ratio = nan,
+                                             .z01_ratio = nan});
+        CHECK(!changed.topo);
+        CHECK(!changed.param);
     }
 
     SUBCASE("Update inverse") {
-        SourceUpdate source_update{.id = 1, .status = na_IntS, .u_ref = nan, .u_ref_angle = nan};
+        SourceUpdate source_update{
+            .id = 1, .status = na_IntS, .u_ref = nan, .u_ref_angle = nan, .sk = nan, .rx_ratio = nan, .z01_ratio = nan};
         auto expected = source_update;
 
         SUBCASE("Identical") {
@@ -242,13 +271,37 @@ TEST_CASE("Test source") {
             expected.u_ref_angle = nan;
         }
 
+        SUBCASE("sk") {
+            SUBCASE("same") { source_update.sk = sk; }
+            SUBCASE("different") { source_update.sk = 20e6; }
+            expected.sk = sk;
+        }
+
+        SUBCASE("rx_ratio") {
+            SUBCASE("same") { source_update.rx_ratio = rx_ratio; }
+            SUBCASE("different") { source_update.rx_ratio = 0.2; }
+            expected.rx_ratio = rx_ratio;
+        }
+
+        SUBCASE("z01_ratio") {
+            SUBCASE("same") { source_update.z01_ratio = z01_ratio; }
+            SUBCASE("different") { source_update.z01_ratio = 4.0; }
+            expected.z01_ratio = z01_ratio;
+        }
+
         SUBCASE("multiple") {
             source_update.status = IntS{0};
             source_update.u_ref = 0.0;
             source_update.u_ref_angle = 0.1;
+            source_update.sk = 20e6;
+            source_update.rx_ratio = 0.2;
+            source_update.z01_ratio = 4.0;
             expected.status = status_to_int(source.status());
             expected.u_ref = u_input;
             expected.u_ref_angle = nan;
+            expected.sk = sk;
+            expected.rx_ratio = rx_ratio;
+            expected.z01_ratio = z01_ratio;
         }
 
         auto const inv = source.inverse(source_update);
@@ -257,6 +310,9 @@ TEST_CASE("Test source") {
         CHECK(inv.status == expected.status);
         check_nan_preserving_equality(inv.u_ref, expected.u_ref);
         check_nan_preserving_equality(inv.u_ref_angle, expected.u_ref_angle);
+        check_nan_preserving_equality(inv.sk, expected.sk);
+        check_nan_preserving_equality(inv.rx_ratio, expected.rx_ratio);
+        check_nan_preserving_equality(inv.z01_ratio, expected.z01_ratio);
     }
 }
 

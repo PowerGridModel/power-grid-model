@@ -145,6 +145,7 @@ add_executable(
     "test_entry_point.cpp"
     "test_calculation_info.cpp"
     "test_timer.cpp"
+    "test_text_logger.cpp"
 )
 
 target_link_libraries(

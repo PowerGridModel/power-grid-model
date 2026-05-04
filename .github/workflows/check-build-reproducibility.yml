@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-name: Build and Test C++ and Python
+name: Check build reproducibility
 
 # Controls when the workflow will run
 on:
@@ -17,15 +17,12 @@ concurrency:
 
 jobs:
   check-power-grid-model-c-linux:
-    runs-on: ubuntu-latest
     strategy:
       matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm]
         compiler: [gcc, clang]
-        include:
-          - c_compiler: gcc-14
-            cxx_compiler: g++-14
-          - c_compiler: clang-18
-            cxx_compiler: clang++-18
+
+    runs-on: ${{ matrix.os }}
 
     env:
       CMAKE_PREFIX_PATH: /home/linuxbrew/.linuxbrew
@@ -33,7 +30,7 @@ jobs:
       HOMEBREW_FORCE_BREWED_CURL: 1
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Install packages
         run: |
           sudo apt-get update
@@ -44,7 +41,7 @@ jobs:
           sudo ln -s /usr/bin/g++-14 /usr/local/bin/g++
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
 
       - name: Install pgm-build-dependencies
         run: |
@@ -83,10 +80,10 @@ jobs:
       PRESET: ci-${{ matrix.compiler }}-reproducible
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
 
       - name: Install pgm-build-dependencies
         run: |
@@ -126,21 +123,25 @@ jobs:
           Write-Host "Builds are identical"
 
   check-reproducibility-c-macos:
-    runs-on: macos-latest
+    strategy:
+      matrix:
+        os: [macos-26, macos-26-intel]
+
+    runs-on: ${{ matrix.os }}
     env:
       CMAKE_PREFIX_PATH: /usr/local
       PRESET: ci-apple-clang-reproducible
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Set up XCode
-        uses: maxim-lobanov/setup-xcode@v1
+        uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
         with:
           xcode-version: latest-stable
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
 
       - name: Install pgm-build-dependencies
         run: |
