@@ -32,7 +32,6 @@ classifiers = [
 requires-python = ">=3.12"
 dependencies = ["numpy>=2.0.0"]
 dynamic = ["version"]
-homepage = "https://lfenergy.org/projects/power-grid-model/"
 
 [dependency-groups]
 
@@ -72,7 +71,7 @@ doc = [
 ]
 
 [project.urls]
-Home-page = "https://lfenergy.org/projects/power-grid-model/"
+homepage = "https://lfenergy.org/projects/power-grid-model/"
 GitHub = "https://github.com/PowerGridModel/power-grid-model"
 Documentation = "https://power-grid-model.readthedocs.io/en/stable/"
 Mailing-list = "https://lists.lfenergy.org/g/powergridmodel"
