@@ -32,6 +32,7 @@ classifiers = [
 requires-python = ">=3.12"
 dependencies = ["numpy>=2.0.0"]
 dynamic = ["version"]
+homepage = "https://lfenergy.org/projects/power-grid-model/"
 
 [dependency-groups]
 
