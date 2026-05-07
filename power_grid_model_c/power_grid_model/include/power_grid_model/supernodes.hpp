@@ -119,9 +119,6 @@ inline IdxVector find_link_connected_components(Idx n_nodes, std::vector<BranchI
 //   [N0, SN1, SN1, SN1, N4, SN1]
 //   [TN0, TN1, TN1, TN1, TN4, TN1]
 inline TopologicalNodeMapping create_map(ComponentTopology const& comp_topo, ComponentConnections const& comp_conn) {
-    std::vector<IdxVector> node_groups;
-    std::unordered_map<Idx, Idx> node_to_group;
-
     auto mapping = build_dense_mapping(
         find_link_connected_components(comp_topo.n_node, comp_topo.link_node_idx, comp_conn.link_connected),
         comp_topo.n_node);
