@@ -51,13 +51,28 @@ class TopologicalNode {
     }
 };
 
-struct TopologicalNodeMapping {
+class TopologicalNodeMapping {
   public:
-    DenseGroupedIdxVector mapping;
-    IdxVector reorder;
+    TopologicalNodeMapping() = default;
+    explicit TopologicalNodeMapping(Idx n_topo_nodes_, IdxVector mapping)
+        : mapping_{std::move(mapping)}, n_topo_nodes_{n_topo_nodes_} {
+        check_sanity();
+    }
 
-    constexpr Idx n_topo_nodes() const { return mapping.size(); }
-    constexpr Idx n_user_nodes() const { return mapping.element_size(); }
+    auto mapping() const& -> IdxVector const& { return mapping_; }
+    auto mapping() && -> IdxVector { return std::move(mapping_); }
+
+    constexpr Idx n_topo_nodes() const { return n_topo_nodes_; }
+    constexpr Idx n_user_nodes() const { return mapping_.size(); }
+
+  private:
+    IdxVector mapping_;
+    Idx n_topo_nodes_{};
+
+    constexpr void check_sanity() const noexcept {
+        // the mapping should be a valid partition of user nodes into topological nodes
+        assert(n_topo_nodes_ == 0 || (n_topo_nodes_ == std::ranges::max(mapping_) + 1));
+    }
 };
 
 struct ReducedTopology {
@@ -67,8 +82,8 @@ struct ReducedTopology {
 
 namespace detail {
 
-inline IdxVector find_link_connected_components(Idx n_nodes, std::vector<BranchIdx> const& edges,
-                                                std::vector<BranchConnected> const& edge_connections) {
+inline TopologicalNodeMapping find_link_connected_components(Idx n_nodes, std::vector<BranchIdx> const& edges,
+                                                             std::vector<BranchConnected> const& edge_connections) {
     struct GlobalEdge {};
     struct GlobalVertex {};
 
@@ -97,8 +112,8 @@ inline IdxVector find_link_connected_components(Idx n_nodes, std::vector<BranchI
     auto const global_graph_ =
         GlobalGraph{boost::edges_are_unsorted_multi_pass, internal_edges.cbegin(), internal_edges.cend(), n_nodes};
 
-    boost::connected_components(global_graph_, vertices.data());
-    return vertices;
+    Idx const num_connected_components = boost::connected_components(global_graph_, vertices.data());
+    return TopologicalNodeMapping{num_connected_components, std::move(vertices)};
 }
 
 // Union-find algorithm:
@@ -112,35 +127,36 @@ inline IdxVector find_link_connected_components(Idx n_nodes, std::vector<BranchI
 //   Fixing this retroactively is O(N_links^2)
 //   Unless we use counting sort, which is O(N_nodes + N_links)
 // Result:
-//     indvector = [0, 1, 1, 1, 1, 4]
-//     reorder   = [0, 1, 2, 3, 5, 4]
-//   (user nodes -> TN)
+//   [0, 1, 1, 1, 4, 1]
 // Mapping (explanation):
 //   [N0, SN1, SN1, SN1, N4, SN1]
-//   [TN0, TN1, TN1, TN1, TN4, TN1]
+//   [TN0, TN1, TN1, TN1, TN2, TN1]
 inline TopologicalNodeMapping create_map(ComponentTopology const& comp_topo, ComponentConnections const& comp_conn) {
-    auto mapping = build_dense_mapping(
-        find_link_connected_components(comp_topo.n_node, comp_topo.link_node_idx, comp_conn.link_connected),
-        comp_topo.n_node);
-    auto const n_topo_nodes = comp_topo.n_node_total() > 0 ? mapping.indvector.back() + 1 : 0;
-    return TopologicalNodeMapping{.mapping =
-                                      DenseGroupedIdxVector{from_dense, std::move(mapping.indvector), n_topo_nodes},
-                                  .reorder = std::move(mapping.reorder)};
+    return find_link_connected_components(comp_topo.n_node, comp_topo.link_node_idx, comp_conn.link_connected);
 };
 
-inline std::vector<TopologicalNode> create_topological_nodes(ComponentTopology const& /*comp_topo*/,
+inline std::vector<TopologicalNode> create_topological_nodes(ComponentTopology const& comp_topo,
                                                              ComponentConnections const& /*comp_conn*/,
                                                              TopologicalNodeMapping const& topo_node_mapping) {
-    std::vector<TopologicalNode> topo_nodes(
-        topo_node_mapping.n_topo_nodes()); // TODO(mgovers): replace with real implementation
+    // auto topo_nodes = std::ranges::transform(topo_node_mapping.mapping(),
+    //                                          [](IdxRange const& user_nodes) {
+    //                                              return TopologicalNode{user_nodes | std::ranges::to<IdxVector>(),
+    //                                              {}};
+    //                                          }) |
+    //                   std::ranges::to<std::vector<TopologicalNode>>();
 
-    // TODO(marcvanraalte): the implementation goes here
+    // std::ranges::for_each(comp_topo.link_node_idx, [&topo_nodes](Idx2D const& link) {
+    //     auto& [i, j] = link;
+    //     topo_nodes[i].user_links_.push_back(link);
+    //     topo_nodes[j].user_links_.push_back(link);
+    // });
 
-    return topo_nodes;
+    // return topo_nodes;
+    return {};
 };
 
-// Use the topo_node_mapping to remap every part of comp_topo such that the output nodes are the topological nodes; not
-// the user nodes. This effectively removes all link-related stuff from the math topology.
+// Use the topo_node_mapping to remap every part of comp_topo such that the output nodes are the topological nodes;
+// not the user nodes. This effectively removes all link-related stuff from the math topology.
 inline ComponentTopology construct_reduced_topology(ComponentTopology const& comp_topo,
                                                     TopologicalNodeMapping const& /*topo_node_mapping*/) {
     // TODO(mgovers): do we really require a full deep-copy of comp_topo here?

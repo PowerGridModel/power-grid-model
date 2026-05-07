@@ -19,17 +19,6 @@ using namespace power_grid_model;
 using namespace power_grid_model::supernodes;
 namespace detail = power_grid_model::supernodes::detail;
 
-void check_equal(DenseGroupedIdxVector const& mapping, IdxVector const& expected_mapping) {
-    CHECK(mapping.size() == std::ranges::max(expected_mapping) + 1);
-    CHECK(mapping.element_size() == expected_mapping.size());
-    CHECK(mapping.get_group(0) == expected_mapping[0]);
-    CHECK(mapping.get_group(expected_mapping.size() - 1) == expected_mapping.back());
-    std::ranges::for_each(enumerate(expected_mapping), [&mapping](auto const& pair) {
-        auto const [idx, expected_group] = pair;
-        CHECK(mapping.get_group(idx) == expected_group);
-    });
-}
-
 TEST_CASE("Test Supernodes") {
     SUBCASE("create_map") {
         SUBCASE("No links => no remapping") {
@@ -42,10 +31,10 @@ TEST_CASE("Test Supernodes") {
             };
             auto const topo_node_mapping = detail::create_map(comp_topo, comp_conn);
             CHECK(topo_node_mapping.n_topo_nodes() == 3);
-            REQUIRE(topo_node_mapping.n_topo_nodes() == topo_node_mapping.mapping.size());
+            REQUIRE(std::ranges::max(topo_node_mapping.mapping()) + 1 == topo_node_mapping.n_topo_nodes());
+            REQUIRE(topo_node_mapping.n_user_nodes() == topo_node_mapping.mapping().size());
             REQUIRE(topo_node_mapping.n_user_nodes() == comp_topo.n_node);
-            check_equal(topo_node_mapping.mapping, IdxVector{0, 1, 2});
-            CHECK(topo_node_mapping.reorder == IdxVector{0, 1, 2});
+            CHECK(topo_node_mapping.mapping() == IdxVector{0, 1, 2});
         }
         SUBCASE("One link between node 0 and 1 => node 0 and 1 are remapped to the same topological node") {
             ComponentTopology const comp_topo{
@@ -59,10 +48,10 @@ TEST_CASE("Test Supernodes") {
             };
             auto const topo_node_mapping = detail::create_map(comp_topo, comp_conn);
             CHECK(topo_node_mapping.n_topo_nodes() == 2);
-            REQUIRE(topo_node_mapping.n_topo_nodes() == topo_node_mapping.mapping.size());
+            REQUIRE(std::ranges::max(topo_node_mapping.mapping()) + 1 == topo_node_mapping.n_topo_nodes());
+            REQUIRE(topo_node_mapping.n_user_nodes() == topo_node_mapping.mapping().size());
             REQUIRE(topo_node_mapping.n_user_nodes() == comp_topo.n_node);
-            check_equal(topo_node_mapping.mapping, IdxVector{0, 0, 1});
-            CHECK(topo_node_mapping.reorder == IdxVector{0, 1, 2});
+            CHECK(topo_node_mapping.mapping() == IdxVector{0, 0, 1});
         }
         SUBCASE("Disconnected link => not remapped") {
             for (auto const disconnected :
@@ -78,10 +67,10 @@ TEST_CASE("Test Supernodes") {
                 };
                 auto const topo_node_mapping = detail::create_map(comp_topo, comp_conn);
                 CHECK(topo_node_mapping.n_topo_nodes() == 3);
-                REQUIRE(topo_node_mapping.n_topo_nodes() == topo_node_mapping.mapping.size());
+                REQUIRE(std::ranges::max(topo_node_mapping.mapping()) + 1 == topo_node_mapping.n_topo_nodes());
+                REQUIRE(topo_node_mapping.n_user_nodes() == topo_node_mapping.mapping().size());
                 REQUIRE(topo_node_mapping.n_user_nodes() == comp_topo.n_node);
-                check_equal(topo_node_mapping.mapping, IdxVector{0, 1, 2});
-                CHECK(topo_node_mapping.reorder == IdxVector{0, 1, 2});
+                CHECK(topo_node_mapping.mapping() == IdxVector{0, 1, 2});
             }
         }
         SUBCASE("Multiple links => all connected nodes are remapped to the same topological node") {
@@ -94,10 +83,10 @@ TEST_CASE("Test Supernodes") {
             };
             auto const topo_node_mapping = detail::create_map(comp_topo, comp_conn);
             CHECK(topo_node_mapping.n_topo_nodes() == 3);
-            REQUIRE(topo_node_mapping.n_topo_nodes() == topo_node_mapping.mapping.size());
+            REQUIRE(std::ranges::max(topo_node_mapping.mapping()) + 1 == topo_node_mapping.n_topo_nodes());
+            REQUIRE(topo_node_mapping.n_user_nodes() == topo_node_mapping.mapping().size());
             REQUIRE(topo_node_mapping.n_user_nodes() == comp_topo.n_node);
-            check_equal(topo_node_mapping.mapping, IdxVector{0, 1, 1, 1, 1, 2});
-            CHECK(topo_node_mapping.reorder == IdxVector{0, 1, 2, 3, 5, 4});
+            CHECK(topo_node_mapping.mapping() == IdxVector{0, 1, 1, 1, 2, 1});
         }
         SUBCASE("Multiple connected components map to different topological nodes") {
             ComponentTopology const comp_topo{
@@ -109,10 +98,10 @@ TEST_CASE("Test Supernodes") {
             };
             auto const topo_node_mapping = detail::create_map(comp_topo, comp_conn);
             CHECK(topo_node_mapping.n_topo_nodes() == 3);
-            REQUIRE(topo_node_mapping.n_topo_nodes() == topo_node_mapping.mapping.size());
+            REQUIRE(std::ranges::max(topo_node_mapping.mapping()) + 1 == topo_node_mapping.n_topo_nodes());
+            REQUIRE(topo_node_mapping.n_user_nodes() == topo_node_mapping.mapping().size());
             REQUIRE(topo_node_mapping.n_user_nodes() == comp_topo.n_node);
-            check_equal(topo_node_mapping.mapping, IdxVector{0, 0, 1, 1, 2, 2});
-            CHECK(topo_node_mapping.reorder == IdxVector{0, 1, 2, 4, 3, 5});
+            CHECK(topo_node_mapping.mapping() == IdxVector{0, 0, 1, 2, 1, 2});
         }
     }
     SUBCASE("create_topological_nodes") {
