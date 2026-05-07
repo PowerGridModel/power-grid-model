@@ -67,37 +67,35 @@ struct ReducedTopology {
 
 namespace detail {
 
-inline IdxVector find_link_connected_components(ComponentTopology const& comp_topo,
-                                                ComponentConnections const& comp_conn) {
-    using GraphIdx = size_t;
-
+inline IdxVector find_link_connected_components(Idx n_nodes, std::vector<BranchIdx> const& edges,
+                                                std::vector<BranchConnected> const& edge_connections) {
     struct GlobalEdge {};
     struct GlobalVertex {};
 
     // sparse directed graph
     // edge i -> j
     using GlobalGraph = boost::compressed_sparse_row_graph<boost::bidirectionalS, GlobalVertex, GlobalEdge,
-                                                           boost::no_property, GraphIdx, GraphIdx>;
+                                                           boost::no_property, Idx, Idx>;
 
-    IdxVector vertices = IdxRange{comp_topo.n_node_total()} | std::ranges::to<IdxVector>();
+    IdxVector vertices = IdxRange{n_nodes} | std::ranges::to<IdxVector>();
 
-    std::vector<std::pair<GraphIdx, GraphIdx>> edges;
-    edges.reserve(2 * comp_topo.link_node_idx.size());
-    std::ranges::for_each(std::views::zip(comp_topo.link_node_idx, comp_conn.link_connected),
-                          [&edges](auto const& vertices_and_connectivity) {
+    std::vector<std::pair<Idx, Idx>> internal_edges;
+    internal_edges.reserve(2 * edges.size());
+    std::ranges::for_each(std::views::zip(edges, edge_connections),
+                          [&internal_edges](auto const& vertices_and_connectivity) {
                               if (BranchConnected const& connectivity = std::get<1>(vertices_and_connectivity);
                                   connectivity[0] == 0 || connectivity[1] == 0) {
                                   return; // only add edge if both sides are connected
                               }
                               BranchIdx const& vertices = std::get<0>(vertices_and_connectivity);
-                              auto const from = narrow_cast<GraphIdx>(vertices[0]);
-                              auto const to = narrow_cast<GraphIdx>(vertices[1]);
-                              edges.emplace_back(from, to);
-                              edges.emplace_back(to, from);
+                              auto const from = vertices[0];
+                              auto const to = vertices[1];
+                              internal_edges.emplace_back(from, to);
+                              internal_edges.emplace_back(to, from);
                           });
 
-    auto const global_graph_ = GlobalGraph{boost::edges_are_unsorted_multi_pass, edges.cbegin(), edges.cend(),
-                                           narrow_cast<GraphIdx>(comp_topo.n_node_total())};
+    auto const global_graph_ =
+        GlobalGraph{boost::edges_are_unsorted_multi_pass, internal_edges.cbegin(), internal_edges.cend(), n_nodes};
 
     boost::connected_components(global_graph_, vertices.data());
     return vertices;
@@ -124,7 +122,9 @@ inline TopologicalNodeMapping create_map(ComponentTopology const& comp_topo, Com
     std::vector<IdxVector> node_groups;
     std::unordered_map<Idx, Idx> node_to_group;
 
-    auto mapping = build_dense_mapping(find_link_connected_components(comp_topo, comp_conn), comp_topo.n_node);
+    auto mapping = build_dense_mapping(
+        find_link_connected_components(comp_topo.n_node, comp_topo.link_node_idx, comp_conn.link_connected),
+        comp_topo.n_node);
     auto const n_topo_nodes = comp_topo.n_node_total() > 0 ? mapping.indvector.back() + 1 : 0;
     return TopologicalNodeMapping{.mapping =
                                       DenseGroupedIdxVector{from_dense, std::move(mapping.indvector), n_topo_nodes},
