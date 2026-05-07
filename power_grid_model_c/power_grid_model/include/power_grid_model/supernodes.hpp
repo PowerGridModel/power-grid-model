@@ -8,8 +8,19 @@
 #include "common/common.hpp"
 #include "common/counting_iterator.hpp"
 #include "common/grouped_index_vector.hpp"
+#include "common/typing.hpp"
+#include "index_mapping.hpp"
 
+#include <boost/graph/compressed_sparse_row_graph.hpp>
+#include <boost/graph/connected_components.hpp>
+#include <boost/graph/graph_selectors.hpp>
+#include <boost/graph/properties.hpp>
+#include <boost/pending/property.hpp>
+
+#include <algorithm>
 #include <cassert>
+#include <cstddef>
+#include <iterator>
 #include <ranges>
 #include <utility>
 #include <vector>
@@ -20,21 +31,33 @@ class TopologicalNode {
     TopologicalNode() = default;
     TopologicalNode(IdxVector user_nodes, std::vector<Idx2D> user_links)
         : user_nodes_{std::move(user_nodes)}, user_links_{std::move(user_links)} {
-        assert(!std::ranges::empty(user_nodes_));
-        assert(user_nodes_.size() > 1 || std::ranges::empty(user_links_));
+        check_sanity();
     }
 
-    constexpr bool is_supernode() const noexcept { return std::ranges::empty(user_links_); }
+    constexpr bool is_supernode() const noexcept {
+        check_sanity();
+        return !std::ranges::empty(user_links_);
+    }
 
   private:
     IdxVector user_nodes_;
     std::vector<Idx2D> user_links_;
+
+    constexpr void check_sanity() const noexcept {
+        // a supernode has multiple user nodes and at least one user link; a non-supernode only contains one user node
+        assert(!std::ranges::empty(user_nodes_));
+        assert(is_supernode() ? (user_nodes_.size() > 1 && !std::ranges::empty(user_links_))
+                              : (user_nodes_.size() == 1 && std::ranges::empty(user_links_)));
+    }
 };
 
-struct TopologicalNodeMapping : DenseGroupedIdxVector {
-    using DenseGroupedIdxVector::DenseGroupedIdxVector;
+struct TopologicalNodeMapping {
+  public:
+    DenseGroupedIdxVector mapping;
+    IdxVector reorder;
 
-    constexpr Idx n_topo_nodes() const { return size(); }
+    constexpr Idx n_topo_nodes() const { return mapping.size(); }
+    constexpr Idx n_user_nodes() const { return mapping.element_size(); }
 };
 
 struct ReducedTopology {
@@ -43,23 +66,69 @@ struct ReducedTopology {
 };
 
 namespace detail {
+
+inline IdxVector find_link_connected_components(ComponentTopology const& comp_topo,
+                                                ComponentConnections const& comp_conn) {
+    using GraphIdx = size_t;
+
+    struct GlobalEdge {};
+    struct GlobalVertex {};
+
+    // sparse directed graph
+    // edge i -> j
+    using GlobalGraph = boost::compressed_sparse_row_graph<boost::bidirectionalS, GlobalVertex, GlobalEdge,
+                                                           boost::no_property, GraphIdx, GraphIdx>;
+
+    IdxVector vertices = IdxRange{comp_topo.n_node_total()} | std::ranges::to<IdxVector>();
+
+    std::vector<std::pair<GraphIdx, GraphIdx>> edges;
+    edges.reserve(2 * comp_topo.link_node_idx.size());
+    std::ranges::for_each(std::views::zip(comp_topo.link_node_idx, comp_conn.link_connected),
+                          [&edges](auto const& vertices_and_connectivity) {
+                              if (BranchConnected const& connectivity = std::get<1>(vertices_and_connectivity);
+                                  connectivity[0] == 0 || connectivity[1] == 0) {
+                                  return; // only add edge if both sides are connected
+                              }
+                              BranchIdx const& vertices = std::get<0>(vertices_and_connectivity);
+                              auto const from = narrow_cast<GraphIdx>(vertices[0]);
+                              auto const to = narrow_cast<GraphIdx>(vertices[1]);
+                              edges.emplace_back(from, to);
+                              edges.emplace_back(to, from);
+                          });
+
+    auto const global_graph_ = GlobalGraph{boost::edges_are_unsorted_multi_pass, edges.cbegin(), edges.cend(),
+                                           narrow_cast<GraphIdx>(comp_topo.n_node_total())};
+
+    boost::connected_components(global_graph_, vertices.data());
+    return vertices;
+}
+
 // Union-find algorithm:
-// n nodes = 4
-// Start: [0, 1, 2, 3]
+//   n nodes = 6
+//   lines/trafos = [[0, 1], [3, 4], [5, 4]]
+//   links = [[1, 3], [5, 2], [2, 1]]
+//
+// Start: [0, 1, 2, 3, 4, 5]
 //   Process links in comp topo and comp conn
-// Result: [0, 1, 1, 2]  => this is fed into the dense_group_elements of the DenseGroupedIdxVector
+// NAIVE (WRONG): [0, 1, 1, 1, 4, 2]  (2 should be super node)
+//   Fixing this retroactively is O(N_links^2)
+//   Unless we use counting sort, which is O(N_nodes + N_links)
+// Result:
+//     indvector = [0, 1, 1, 1, 1, 4]
+//     reorder   = [0, 1, 2, 3, 5, 4]
 //   (user nodes -> TN)
-// Mapping:
-//   [N0, SN1, SN1, N2]
-//   [TN0, TN1, TN1, TN2]
-inline TopologicalNodeMapping create_map(ComponentTopology const& comp_topo,
-                                         ComponentConnections const& /*comp_conn*/) {
-    IdxVector node_mapping =
-        IdxRange{comp_topo.n_node} | std::ranges::to<std::vector>(); // TODO(mgovers): replace with real implementation
+// Mapping (explanation):
+//   [N0, SN1, SN1, SN1, N4, SN1]
+//   [TN0, TN1, TN1, TN1, TN4, TN1]
+inline TopologicalNodeMapping create_map(ComponentTopology const& comp_topo, ComponentConnections const& comp_conn) {
+    std::vector<IdxVector> node_groups;
+    std::unordered_map<Idx, Idx> node_to_group;
 
-    // TODO(marcvanraalte): the implementation goes here
-
-    return TopologicalNodeMapping{from_dense, std::move(node_mapping), comp_topo.n_node};
+    auto mapping = build_dense_mapping(find_link_connected_components(comp_topo, comp_conn), comp_topo.n_node);
+    auto const n_topo_nodes = comp_topo.n_node_total() > 0 ? mapping.indvector.back() + 1 : 0;
+    return TopologicalNodeMapping{.mapping =
+                                      DenseGroupedIdxVector{from_dense, std::move(mapping.indvector), n_topo_nodes},
+                                  .reorder = std::move(mapping.reorder)};
 };
 
 inline std::vector<TopologicalNode> create_topological_nodes(ComponentTopology const& /*comp_topo*/,
@@ -86,8 +155,7 @@ inline ComponentTopology construct_reduced_topology(ComponentTopology const& com
 }
 } // namespace detail
 
-inline ReducedTopology reduce_topology(ComponentTopology const& comp_topo,
-                                              ComponentConnections const& comp_conn) {
+inline ReducedTopology reduce_topology(ComponentTopology const& comp_topo, ComponentConnections const& comp_conn) {
     using namespace detail;
 
     auto topo_node_mapping = create_map(comp_topo, comp_conn);
