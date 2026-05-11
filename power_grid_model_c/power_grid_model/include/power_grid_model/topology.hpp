@@ -173,8 +173,9 @@ class Topology {
     TopologicalComponentToMathCoupling comp_coup_;
 
     void reset_topology() {
-        constexpr auto unknown_idx2d = Idx2D{.group = -1, .pos = -1};
-        constexpr auto unknown_idx2d_branch3 = Idx2DBranch3{.group = -1, .pos = {-1, -1, -1}};
+        constexpr auto unknown_idx2d = Idx2D{.group = disconnected, .pos = disconnected};
+        constexpr auto unknown_idx2d_branch3 =
+            Idx2DBranch3{.group = disconnected, .pos = {disconnected, disconnected, disconnected}};
 
         comp_coup_.node.resize(comp_topo_.n_node_total(), unknown_idx2d);
         comp_coup_.branch.resize(comp_topo_.branch_node_idx.size(), unknown_idx2d);

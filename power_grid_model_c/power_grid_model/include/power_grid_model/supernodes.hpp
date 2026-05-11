@@ -7,9 +7,6 @@
 #include "calculation_parameters.hpp"
 #include "common/common.hpp"
 #include "common/counting_iterator.hpp"
-#include "common/grouped_index_vector.hpp"
-#include "common/typing.hpp"
-#include "index_mapping.hpp"
 
 #include <boost/graph/compressed_sparse_row_graph.hpp>
 #include <boost/graph/connected_components.hpp>
@@ -19,38 +16,12 @@
 
 #include <algorithm>
 #include <cassert>
-#include <cstddef>
 #include <iterator>
 #include <ranges>
 #include <utility>
 #include <vector>
 
 namespace power_grid_model::supernodes {
-class TopologicalNode {
-  public:
-    TopologicalNode() = default;
-    TopologicalNode(IdxVector user_nodes, std::vector<Idx2D> user_links)
-        : user_nodes_{std::move(user_nodes)}, user_links_{std::move(user_links)} {
-        check_sanity();
-    }
-
-    constexpr bool is_supernode() const noexcept {
-        check_sanity();
-        return !std::ranges::empty(user_links_);
-    }
-
-  private:
-    IdxVector user_nodes_;
-    std::vector<Idx2D> user_links_;
-
-    constexpr void check_sanity() const noexcept {
-        // a supernode has multiple user nodes and at least one user link; a non-supernode only contains one user node
-        assert(!std::ranges::empty(user_nodes_));
-        assert(is_supernode() ? (user_nodes_.size() > 1 && !std::ranges::empty(user_links_))
-                              : (user_nodes_.size() == 1 && std::ranges::empty(user_links_)));
-    }
-};
-
 class TopologicalNodeMapping {
   public:
     TopologicalNodeMapping() = default;
@@ -63,7 +34,7 @@ class TopologicalNodeMapping {
     auto mapping() && -> IdxVector { return std::move(mapping_); }
 
     constexpr Idx n_topo_nodes() const { return n_topo_nodes_; }
-    constexpr Idx n_user_nodes() const { return mapping_.size(); }
+    constexpr Idx n_user_nodes() const { return std::ssize(mapping_); }
 
   private:
     IdxVector mapping_;
@@ -75,9 +46,27 @@ class TopologicalNodeMapping {
     }
 };
 
+struct TopologicalNode {
+    IdxVector user_nodes;
+    std::vector<BranchIdx> user_links;
+
+    constexpr auto is_supernode() const noexcept -> bool { return user_nodes.size() > 1 && !user_links.empty(); }
+};
+
+struct ComponentToTopoNodeCoupling {
+    Idx n_topo_nodes{};
+    std::vector<Idx2D> user_nodes_to_topo_nodes;
+    std::vector<Idx2D> user_links_to_topo_nodes;
+};
+
+struct TopologicalNodesAndCoupling {
+    std::vector<TopologicalNode> topo_nodes;
+    ComponentToTopoNodeCoupling coupling;
+};
+
 struct ReducedTopology {
-    ComponentTopology comp_topo;
-    std::vector<TopologicalNode> topological_nodes;
+    ComponentTopology reduced_comp_topo;
+    TopologicalNodesAndCoupling topo_node_coup;
 };
 
 namespace detail {
@@ -135,24 +124,43 @@ inline TopologicalNodeMapping create_map(ComponentTopology const& comp_topo, Com
     return find_link_connected_components(comp_topo.n_node, comp_topo.link_node_idx, comp_conn.link_connected);
 };
 
-inline std::vector<TopologicalNode> create_topological_nodes(ComponentTopology const& comp_topo,
-                                                             ComponentConnections const& /*comp_conn*/,
-                                                             TopologicalNodeMapping const& topo_node_mapping) {
-    // auto topo_nodes = std::ranges::transform(topo_node_mapping.mapping(),
-    //                                          [](IdxRange const& user_nodes) {
-    //                                              return TopologicalNode{user_nodes | std::ranges::to<IdxVector>(),
-    //                                              {}};
-    //                                          }) |
-    //                   std::ranges::to<std::vector<TopologicalNode>>();
+inline TopologicalNodesAndCoupling create_topological_nodes(ComponentTopology const& comp_topo,
+                                                            ComponentConnections const& comp_conn,
+                                                            TopologicalNodeMapping const& topo_node_mapping) {
+    auto const& node_mapping = topo_node_mapping.mapping();
 
-    // std::ranges::for_each(comp_topo.link_node_idx, [&topo_nodes](Idx2D const& link) {
-    //     auto& [i, j] = link;
-    //     topo_nodes[i].user_links_.push_back(link);
-    //     topo_nodes[j].user_links_.push_back(link);
-    // });
+    std::vector<TopologicalNode> topo_nodes(topo_node_mapping.n_topo_nodes());
+    std::vector<Idx2D> user_node_topo_node_coup = enumerate(node_mapping) |
+                                                  std::views::transform([&topo_nodes](auto const& idx_and_topo) {
+                                                      auto const& [user_node, topo_node] = idx_and_topo;
+                                                      topo_nodes[topo_node].user_nodes.push_back(user_node);
+                                                      return Idx2D{.group = topo_node, .pos = user_node};
+                                                  }) |
+                                                  std::ranges::to<std::vector>();
 
-    // return topo_nodes;
-    return {};
+    std::vector<Idx2D> user_link_topo_node_coup =
+        enumerate(std::views::zip(comp_topo.link_node_idx, comp_conn.link_connected)) |
+        std::views::transform([&node_mapping, &topo_nodes](auto const& idx_link_and_connectivity) {
+            auto const& [link_idx, link_nodes_and_connectivity] = idx_link_and_connectivity;
+            auto const& [link_nodes, link_connected] = link_nodes_and_connectivity;
+            if (link_connected[0] == 0 || link_connected[1] == 0) {
+                return Idx2D{.group = disconnected, .pos = disconnected};
+            }
+            auto const [from, to] = link_nodes;
+            auto const topo_from = node_mapping[from];
+            assert(topo_from == node_mapping[to]); // sanity check: links should be merged at this point
+
+            auto& user_links = topo_nodes[topo_from].user_links;
+            Idx const pos = std::ssize(user_links);
+            user_links.push_back(BranchIdx{from, to}); // can't emplace_back because it's std::array
+            return Idx2D{.group = topo_from, .pos = pos};
+        }) |
+        std::ranges::to<std::vector>();
+
+    return TopologicalNodesAndCoupling{.topo_nodes = std::move(topo_nodes),
+                                       .coupling = {.n_topo_nodes = topo_node_mapping.n_topo_nodes(),
+                                                    .user_nodes_to_topo_nodes = std::move(user_node_topo_node_coup),
+                                                    .user_links_to_topo_nodes = std::move(user_link_topo_node_coup)}};
 };
 
 // Use the topo_node_mapping to remap every part of comp_topo such that the output nodes are the topological nodes;
@@ -172,8 +180,8 @@ inline ReducedTopology reduce_topology(ComponentTopology const& comp_topo, Compo
     using namespace detail;
 
     auto topo_node_mapping = create_map(comp_topo, comp_conn);
-    return ReducedTopology{.comp_topo = construct_reduced_topology(comp_topo, topo_node_mapping),
-                           .topological_nodes = create_topological_nodes(comp_topo, comp_conn, topo_node_mapping)};
+    return ReducedTopology{.reduced_comp_topo = construct_reduced_topology(comp_topo, topo_node_mapping),
+                           .topo_node_coup = create_topological_nodes(comp_topo, comp_conn, topo_node_mapping)};
 }
 
 } // namespace power_grid_model::supernodes
