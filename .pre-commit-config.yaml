@@ -19,7 +19,7 @@ repos:
       - id: ruff-format
         name: ruff-format
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.20.2
+    rev: v2.0.0
     hooks:
       - id: mypy
         additional_dependencies:
@@ -38,7 +38,7 @@ repos:
       - id: clang-format
         types_or: [ c++, c ]
   - repo: https://github.com/BlankSpruce/gersemi-pre-commit
-    rev: 0.27.2
+    rev: 0.27.4
     hooks:
       - id: gersemi
         name: cmake-linter
@@ -50,7 +50,7 @@ repos:
         args: ["--fix"]
   # format .json and .jsonc files
   - repo: https://github.com/biomejs/pre-commit  # outside pypi 
-    rev: v2.4.13
+    rev: v2.4.15
     hooks:
       # configuration is located in biome.jsonc
       - id: biome-format
