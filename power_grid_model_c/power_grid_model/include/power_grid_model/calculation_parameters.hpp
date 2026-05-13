@@ -12,6 +12,7 @@
 
 #include <array>
 #include <concepts>
+#include <span>
 #include <vector>
 
 namespace power_grid_model {
@@ -427,6 +428,24 @@ struct ComponentTopology {
     std::vector<ComponentType> regulated_object_type;
 
     constexpr Idx n_node_total() const { return n_node + std::ssize(branch3_node_idx); }
+};
+
+struct ReducedComponentTopology {
+    Idx n_node{}; // num of topological nodes (with reduced links), plus internal nodes for 3-way branches
+    std::vector<BranchIdx> branch_node_idx;
+    std::vector<Branch3Idx> branch3_node_idx;
+    IdxVector shunt_node_idx;
+    IdxVector source_node_idx;
+    IdxVector load_gen_node_idx;
+    std::span<LoadGenType const> load_gen_type;
+    IdxVector voltage_sensor_node_idx;
+    std::span<Idx const> power_sensor_object_idx; // the index is relative to branch, source, shunt or load_gen
+    std::span<MeasuredTerminalType const> power_sensor_terminal_type;
+    std::span<Idx const> current_sensor_object_idx; // the index is relative to branch
+    std::span<MeasuredTerminalType const> current_sensor_terminal_type;
+    std::span<ComponentType const> regulator_type;
+    std::span<Idx const> regulated_object_idx; // the index is relative to branch or branch3
+    std::span<ComponentType const> regulated_object_type;
 };
 
 // connection property

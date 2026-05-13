@@ -15,9 +15,13 @@
 #include <boost/pending/property.hpp>
 
 #include <algorithm>
+#include <array>
 #include <cassert>
+#include <concepts>
+#include <cstddef>
 #include <iterator>
 #include <ranges>
+#include <span>
 #include <utility>
 #include <vector>
 
@@ -65,7 +69,7 @@ struct TopologicalNodesAndCoupling {
 };
 
 struct ReducedTopology {
-    ComponentTopology reduced_comp_topo;
+    ReducedComponentTopology reduced_comp_topo;
     TopologicalNodesAndCoupling topo_node_coup;
 };
 
@@ -165,14 +169,39 @@ inline TopologicalNodesAndCoupling create_topological_nodes(ComponentTopology co
 
 // Use the topo_node_mapping to remap every part of comp_topo such that the output nodes are the topological nodes;
 // not the user nodes. This effectively removes all link-related stuff from the math topology.
-inline ComponentTopology construct_reduced_topology(ComponentTopology const& comp_topo,
-                                                    TopologicalNodeMapping const& /*topo_node_mapping*/) {
-    // TODO(mgovers): do we really require a full deep-copy of comp_topo here?
-    ComponentTopology comp_topo_reduced{comp_topo}; // TODO(mgovers):  replace with real implementation
+inline ReducedComponentTopology construct_reduced_topology(ComponentTopology const& comp_topo,
+                                                           TopologicalNodeMapping const& topo_node_mapping) {
+    auto remap_nodes = [&topo_node_mapping]<typename IdxType>(std::vector<IdxType> const& user_nodes) {
+        return user_nodes | std::views::transform([&mapping = topo_node_mapping.mapping()](IdxType const& user_node) {
+                   if constexpr (std::same_as<IdxType, Idx>) {
+                       return mapping[user_node];
+                   } else {
+                       static_assert(
+                           requires { std::tuple_size_v<IdxType>; },
+                           "IdxType must have a static size (e.g. std::array)");
+                       return [&]<std::size_t... I>(std::index_sequence<I...>) {
+                           return IdxType{mapping[user_node[I]]...};
+                       }(std::make_index_sequence<std::tuple_size_v<IdxType>>{});
+                   }
+               }) |
+               std::ranges::to<std::vector<IdxType>>();
+    };
 
-    // TODO(marcvanraalte): the implementation goes here
-
-    return comp_topo_reduced;
+    return ReducedComponentTopology{
+        .n_node = topo_node_mapping.n_topo_nodes(),
+        .branch_node_idx = remap_nodes(comp_topo.branch_node_idx),
+        .branch3_node_idx = remap_nodes(comp_topo.branch3_node_idx),
+        .shunt_node_idx = remap_nodes(comp_topo.shunt_node_idx),
+        .source_node_idx = remap_nodes(comp_topo.source_node_idx),
+        .load_gen_node_idx = remap_nodes(comp_topo.load_gen_node_idx),
+        .load_gen_type = std::span{comp_topo.load_gen_type},
+        .voltage_sensor_node_idx = remap_nodes(comp_topo.voltage_sensor_node_idx),
+        .power_sensor_object_idx = std::span{comp_topo.power_sensor_object_idx},
+        .power_sensor_terminal_type = std::span{comp_topo.power_sensor_terminal_type},
+        .current_sensor_object_idx = std::span{comp_topo.current_sensor_object_idx},
+        .current_sensor_terminal_type = std::span{comp_topo.current_sensor_terminal_type},
+        .regulated_object_idx = std::span{comp_topo.regulated_object_idx},
+    };
 }
 } // namespace detail
 
