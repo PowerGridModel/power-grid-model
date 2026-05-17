@@ -59,22 +59,22 @@ decltype(auto) calculation_type_func_selector(CalculationType calculation_type, 
 
 template <class Functor, class... Args>
 decltype(auto) calculation_type_symmetry_func_selector(CalculationType calculation_type,
-                                                       CalculationSymmetry calculation_symmetry, Functor&& f,
+                                                       CalculationSymmetry calculation_symmetry, Functor f,
                                                        Args&&... args) {
     calculation_type_func_selector(
         calculation_type,
         []<calculation_type_tag calculation_type, typename Functor_, typename... Args_>(
-            CalculationSymmetry calculation_symmetry_, Functor_&& f_, Args_&&... args_) {
+            CalculationSymmetry calculation_symmetry_, Functor_ f_, Args_&&... args_) {
             calculation_symmetry_func_selector(
                 calculation_symmetry_,
-                []<symmetry_tag sym, typename SubFunctor, typename... SubArgs>(SubFunctor&& sub_f,
+                []<symmetry_tag sym, typename SubFunctor, typename... SubArgs>(SubFunctor sub_f,
                                                                                SubArgs&&... sub_args) {
-                    std::forward<SubFunctor>(sub_f).template operator()<calculation_type, sym>(
+                    sub_f.template operator()<calculation_type, sym>(
                         std::forward<SubArgs>(sub_args)...);
                 },
-                std::forward<Functor_>(f_), std::forward<Args_>(args_)...);
+                f_, std::forward<Args_>(args_)...);
         },
-        calculation_symmetry, std::forward<Functor>(f), std::forward<Args>(args)...);
+        calculation_symmetry, f, std::forward<Args>(args)...);
 }
 
 template <typename T, typename sym> struct Calculator;
