@@ -284,14 +284,14 @@ class MainModelImpl {
                  solver_output_type<std::invoke_result_t<
                      SolveFn, MathSolverType&, YBus const&,
                      typename std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>::const_reference>>
-    auto calculate_(PrepareInputFn&& prepare_input, SolveFn&& solve, Logger& logger) {
+    auto calculate_(PrepareInputFn prepare_input, SolveFn solve, Logger& logger) {
         using InputType = typename std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>::const_reference;
         using SolverOutputType = typename std::invoke_result_t<SolveFn, MathSolverType&, YBus const&, InputType>;
         using sym = typename SolverOutputType::sym;
 
         assert(construction_complete_);
         // prepare
-        auto const& input = [this, &logger, prepare_input_ = std::forward<PrepareInputFn>(prepare_input)] {
+        auto const& input = [this, &logger, prepare_input_ = prepare_input] {
             Timer const timer{logger, LogEvent::prepare};
             assert(construction_complete_);
             prepare_solvers<sym>(state_, solver_preparation_context_, solvers_cache_status_);
@@ -300,7 +300,7 @@ class MainModelImpl {
             return prepare_input_(get_n_math_solvers<ModelType>(state_));
         }();
         // calculate
-        return [this, &logger, &input, solve_ = std::forward<SolveFn>(solve)] {
+        return [this, &logger, &input, solve_ = solve] {
             Timer const timer{logger, LogEvent::math_calculation};
             auto& solvers = main_core::get_solvers<sym>(solver_preparation_context_.math_state);
             auto& y_bus_vec = main_core::get_y_bus<sym>(solver_preparation_context_.math_state);
