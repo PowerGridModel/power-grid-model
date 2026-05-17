@@ -36,7 +36,7 @@ class IteratorFacade {
     using iterator_category = std::random_access_iterator_tag;
 
     template <typename Self> constexpr decltype(auto) operator->(this Self&& self) {
-        return &(*std::forward<Self>(self));
+        return &(*self);
     }
 
     template <typename Self, typename Other>
@@ -94,12 +94,12 @@ class IteratorFacade {
     template <typename Self, std::integral Int>
         requires std::derived_from<std::remove_cvref_t<Self>, IteratorFacade> //&& detail::iterator_facadeable_c<Self>
     friend constexpr std::remove_cvref_t<Self> operator+(Int offset, Self&& self) {
-        return std::forward<Self>(self) + offset;
+        return self + offset;
     }
     template <typename Self, std::integral Int>
         requires std::derived_from<std::remove_cvref_t<Self>, IteratorFacade> //&& detail::iterator_facadeable_c<Self>
     friend constexpr std::remove_cvref_t<Self> operator-(Self&& self, Int idx) {
-        return (std::forward<Self>(self)) + (-idx);
+        return self + (-idx);
     }
 
     template <typename Self>
