@@ -126,9 +126,9 @@ template <typename Component, typename IndexType, class ComponentContainer, std:
              std::convertible_to<IndexType, std::ranges::range_value_t<decltype(comp_base_sequence<Component>(
                                                 MainModelState<ComponentContainer>{}))>>
 constexpr void produce_output(MainModelState<ComponentContainer> const& state, ComponentOutput&& output,
-                              ResFunc&& func) {
+                              ResFunc func) {
     std::ranges::transform(get_component_citer<Component>(state.components), comp_base_sequence<Component>(state),
-                           std::ranges::begin(std::forward<ComponentOutput>(output)), std::forward<ResFunc>(func));
+                           std::ranges::begin(std::forward<ComponentOutput>(output)), func);
 }
 
 } // namespace detail
