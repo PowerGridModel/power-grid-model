@@ -109,10 +109,7 @@ template <class... T> constexpr void into_the_void(T&&... /*ignored*/) {
 
 // functor to include all
 struct IncludeAll {
-    template <class... T> consteval bool operator()(T&&... args) const {
-        capturing::into_the_void(std::forward<T>(args)...);
-        return true;
-    }
+    template <class... T> consteval bool operator()(T&&... /* args */) const { return true; }
 };
 constexpr IncludeAll include_all{};
 
