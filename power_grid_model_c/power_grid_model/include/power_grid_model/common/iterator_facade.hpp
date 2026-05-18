@@ -35,9 +35,7 @@ class IteratorFacade {
   public:
     using iterator_category = std::random_access_iterator_tag;
 
-    template <typename Self> constexpr decltype(auto) operator->(this Self&& self) {
-        return &(*self);
-    }
+    template <typename Self> constexpr decltype(auto) operator->(this Self&& self) { return &(*self); }
 
     template <typename Self, typename Other>
         requires std::same_as<std::remove_cvref_t<Self>, std::remove_cvref_t<Other>>

@@ -26,12 +26,9 @@ constexpr void run_functor_with_tuple_index_return_void(Functor functor, std::in
 }
 
 template <typename Tuple, class Functor, std::size_t... Indices>
-constexpr auto run_functor_with_tuple_index_return_array(Functor functor,
-                                                         std::index_sequence<Indices...> /*unused*/) {
+constexpr auto run_functor_with_tuple_index_return_array(Functor functor, std::index_sequence<Indices...> /*unused*/) {
     if constexpr (sizeof...(Indices) == 1) {
-        return std::array {
-            functor.template operator()<std::tuple_element_t<Indices, Tuple>>()...
-        };
+        return std::array { functor.template operator()<std::tuple_element_t<Indices, Tuple>>()... };
     } else {
         auto result = std::array { functor.template operator()<std::tuple_element_t<Indices, Tuple>>()... };
         capturing::into_the_void(functor);

@@ -420,7 +420,7 @@ inline void update_real_value(RealValue<sym> const& new_value, Proxy&& current_v
     if constexpr (is_symmetric_v<sym>) {
         if (!is_nan(new_value)) {
             current_value = scalar * new_value;
-        } 
+        }
     } else {
         for (size_t i = 0; i != 3; ++i) {
             if (!is_nan(new_value(i))) {
