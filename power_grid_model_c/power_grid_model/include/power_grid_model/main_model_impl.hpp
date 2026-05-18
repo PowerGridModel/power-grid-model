@@ -118,7 +118,7 @@ class MainModelImpl {
     template <std::derived_from<Base> CompType, std::ranges::viewable_range Inputs>
     void add_component(Inputs&& components) {
         assert(!construction_complete_);
-        main_core::add_component<CompType>(state_.components, std::forward<Inputs>(components), system_frequency_);
+        main_core::add_component<CompType>(state_.components, components, system_frequency_);
     }
 
     void add_components(ConstDataset const& input_data, Idx pos = 0) {
@@ -150,7 +150,7 @@ class MainModelImpl {
         }
 
         UpdateChange const changed = main_core::update::update_component<CompType>(
-            state_.components, std::forward<Updates>(updates),
+            state_.components, updates,
             std::back_inserter(std::get<comp_index>(solvers_cache_status_.changed_components_indices())), sequence_idx);
 
         // update, get changed variable

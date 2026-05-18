@@ -39,7 +39,7 @@ namespace detail {
 template <std::ranges::viewable_range ElementGroups>
 constexpr auto sparse_encode(ElementGroups&& element_groups, Idx num_groups) {
     IdxVector result(num_groups + 1);
-    auto element_groups_view = std::views::all(std::forward<ElementGroups>(element_groups));
+    auto element_groups_view = std::views::all(element_groups);
     auto next_group = std::begin(element_groups_view);
     for (auto const group : IdxRange{num_groups}) {
         next_group = std::upper_bound(next_group, std::end(element_groups_view), group);
@@ -49,7 +49,7 @@ constexpr auto sparse_encode(ElementGroups&& element_groups, Idx num_groups) {
 }
 
 template <std::ranges::viewable_range IndPtr> constexpr auto sparse_decode(IndPtr&& indptr) {
-    auto indptr_view = std::views::all(std::forward<IndPtr>(indptr));
+    auto indptr_view = std::views::all(indptr);
     auto result = IdxVector(indptr_view.back());
     for (Idx const group : IdxRange{static_cast<Idx>(indptr_view.size()) - 1}) {
         std::fill(std::begin(result) + indptr_view[group], std::begin(result) + indptr_view[group + 1], group);
