@@ -58,7 +58,7 @@ inline void add_component(ComponentContainer& components, Inputs&& component_inp
     std::vector<Idx2D> regulated_objects;
     // loop to add component
 
-    for (auto const& input_proxy : std::views::all(std::forward<Inputs>(component_inputs))) {
+    for (auto const& input_proxy : std::views::all(component_inputs)) {
         ComponentView const input = [&input_proxy]() -> ComponentView { return input_proxy; }();
 
         ID const id = input.id;

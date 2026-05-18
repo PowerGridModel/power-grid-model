@@ -408,17 +408,14 @@ template <symmetry_tag sym, class Proxy>
 inline void update_real_value(RealValue<sym> const& new_value, Proxy&& current_value, RealValue<symmetric_t> scalar) {
     if constexpr (is_symmetric_v<sym>) {
         if (!is_nan(new_value)) {
-            std::forward<Proxy>(current_value) = scalar * new_value;
-        } else {
-            capturing::into_the_void<Proxy>(std::forward<Proxy>(current_value));
-        }
+            current_value = scalar * new_value;
+        } 
     } else {
         for (size_t i = 0; i != 3; ++i) {
             if (!is_nan(new_value(i))) {
                 current_value(i) = scalar * new_value(i); // can't forward due to runtime element access
             }
         }
-        capturing::into_the_void<Proxy>(std::forward<Proxy>(current_value));
     }
 }
 
