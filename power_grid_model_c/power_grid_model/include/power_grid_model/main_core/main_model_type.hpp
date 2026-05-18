@@ -120,8 +120,7 @@ class MainModelType<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     template <class Functor> static constexpr void run_functor_with_all_component_types_return_void(Functor functor) {
         return utils::run_functor_with_tuple_return_void<ComponentTypesTuple>(functor);
     }
-    template <class Functor>
-    static constexpr auto run_functor_with_all_component_types_return_array(Functor functor) {
+    template <class Functor> static constexpr auto run_functor_with_all_component_types_return_array(Functor functor) {
         return utils::run_functor_with_tuple_return_array<ComponentTypesTuple>(functor);
     }
 };

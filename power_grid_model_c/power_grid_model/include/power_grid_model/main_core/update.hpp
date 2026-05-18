@@ -210,8 +210,7 @@ inline std::vector<Idx2D> get_component_sequence_by_iter(ComponentContainer cons
                                                          Idx n_comp_elements = na_Idx) {
     std::vector<Idx2D> result;
     result.reserve(std::ranges::size(elements));
-    get_component_sequence_impl<Component>(components, elements, std::back_inserter(result),
-                                           n_comp_elements);
+    get_component_sequence_impl<Component>(components, elements, std::back_inserter(result), n_comp_elements);
     return result;
 }
 
@@ -316,9 +315,8 @@ template <component_c Component, class ComponentContainer, std::ranges::viewable
           std::output_iterator<typename Component::UpdateType> OutputIterator>
     requires common::component_container_c<ComponentContainer, Component>
 inline void update_inverse(ComponentContainer const& components, Updates&& updates, OutputIterator destination) {
-    return update_inverse<Component>(
-        components, updates, destination,
-        detail::get_component_sequence_by_iter<Component>(components, updates));
+    return update_inverse<Component>(components, updates, destination,
+                                     detail::get_component_sequence_by_iter<Component>(components, updates));
 }
 
 } // namespace power_grid_model::main_core::update

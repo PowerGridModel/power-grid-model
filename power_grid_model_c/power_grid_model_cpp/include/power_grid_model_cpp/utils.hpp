@@ -72,8 +72,7 @@ decltype(auto) pgm_type_func_selector(enum PGM_CType type, Functor f, Args&&... 
 
 template <class Functor, class... Args>
 decltype(auto) pgm_type_func_selector(MetaAttribute const* attribute, Functor f, Args&&... args) {
-    return pgm_type_func_selector(MetaData::attribute_ctype(attribute), f,
-                                  std::forward<Args>(args)...);
+    return pgm_type_func_selector(MetaData::attribute_ctype(attribute), f, std::forward<Args>(args)...);
 }
 
 } // namespace power_grid_model_cpp
