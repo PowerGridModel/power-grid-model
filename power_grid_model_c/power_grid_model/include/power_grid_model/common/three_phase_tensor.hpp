@@ -344,8 +344,8 @@ template <rk2_tensor DerivedA, column_vector DerivedB>
 inline void add_diag(Eigen::ArrayBase<DerivedA>& x, Eigen::ArrayBase<DerivedB> const& y) {
     x.matrix().diagonal() += y.matrix();
 }
-// NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved)
 template <rk2_tensor DerivedA, column_vector DerivedB>
+// NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved)
 inline void add_diag(Eigen::ArrayBase<DerivedA>&& x, Eigen::ArrayBase<DerivedB> const& y) {
     x.matrix().diagonal() += y.matrix();
 }
