@@ -7,6 +7,8 @@
 
 #include <doctest/doctest.h>
 
+#include <ranges>
+
 namespace power_grid_model {
 TEST_CASE("Counting Iterator") {
     CHECK(IdxRange{}.size() == 0);
@@ -44,5 +46,18 @@ TEST_CASE("Enumerate") {
     ++it;
     CHECK(std::get<0>(*it) == 2);
     CHECK(std::get<1>(*it) == 30);
+}
+
+TEST_CASE("Pairwise") {
+    IdxVector vec{10, 20, 30};
+    auto paired = pairwise(vec);
+    auto it = paired.begin();
+    CHECK(std::get<0>(*it) == 10);
+    CHECK(std::get<1>(*it) == 20);
+    ++it;
+    CHECK(std::get<0>(*it) == 20);
+    CHECK(std::get<1>(*it) == 30);
+
+    CHECK(std::ranges::empty(pairwise(IdxVector{})));
 }
 } // namespace power_grid_model

@@ -131,6 +131,7 @@ add_executable(
     "test_job_dispatch.cpp"
     "test_calculation_preparation.cpp"
     "test_link_solver.cpp"
+    "test_supernodes.cpp"
 )
 
 target_link_libraries(

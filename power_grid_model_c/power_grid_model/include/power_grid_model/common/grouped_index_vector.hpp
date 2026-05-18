@@ -266,7 +266,7 @@ class DenseGroupedIdxVector {
     constexpr auto begin() const { return group_iterator(Idx{}); }
     constexpr auto end() const { return group_iterator(size()); }
 
-    constexpr auto element_size() const { return static_cast<Idx>(dense_vector_.size()); }
+    constexpr Idx element_size() const { return std::ssize(dense_vector_); }
     constexpr auto get_group(Idx element) const { return dense_vector_[element]; }
     constexpr auto get_element_range(Idx group) const { return *group_iterator(group); }
 
