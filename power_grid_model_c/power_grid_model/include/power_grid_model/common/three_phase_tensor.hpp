@@ -334,9 +334,10 @@ template <rk2_tensor DerivedA, column_vector DerivedB>
 inline void add_diag(Eigen::ArrayBase<DerivedA>& x, Eigen::ArrayBase<DerivedB> const& y) {
     x.matrix().diagonal() += y.matrix();
 }
+// NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved)
 template <rk2_tensor DerivedA, column_vector DerivedB>
 inline void add_diag(Eigen::ArrayBase<DerivedA>&& x, Eigen::ArrayBase<DerivedB> const& y) {
-    std::move(x).matrix().diagonal() += y.matrix();
+    x.matrix().diagonal() += y.matrix();
 }
 
 // zero tensor
@@ -413,7 +414,7 @@ inline void update_real_value(RealValue<sym> const& new_value, Proxy&& current_v
     } else {
         for (size_t i = 0; i != 3; ++i) {
             if (!is_nan(new_value(i))) {
-                current_value(i) = scalar * new_value(i); // can't forward due to runtime element access
+                current_value(i) = scalar * new_value(i);
             }
         }
     }
