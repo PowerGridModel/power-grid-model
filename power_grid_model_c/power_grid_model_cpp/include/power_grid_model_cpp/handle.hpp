@@ -92,12 +92,12 @@ class Handle {
         }
     }
 
-    template <typename Func, typename... Args> auto call_with(Func&& func, Args&&... args) const {
-        if constexpr (std::is_void_v<decltype(std::forward<Func>(func)(get(), std::forward<Args>(args)...))>) {
-            std::forward<Func>(func)(get(), std::forward<Args>(args)...);
+    template <typename Func, typename... Args> auto call_with(Func func, Args&&... args) const {
+        if constexpr (std::is_void_v<decltype(func(get(), std::forward<Args>(args)...))>) {
+            func(get(), std::forward<Args>(args)...);
             check_error();
         } else {
-            auto result = std::forward<Func>(func)(get(), std::forward<Args>(args)...);
+            auto result = func(get(), std::forward<Args>(args)...);
             check_error();
             return result;
         }
