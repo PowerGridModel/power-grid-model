@@ -146,10 +146,29 @@ class WindingType(IntEnum):
     """Transformer Winding Types"""
 
     wye = 0
+    """
+    Star connection without an explicit neutral reference.
+    This winding does **not** provide a connection to neutral/ground.
+    """
     wye_n = 1
+    """
+    Star connection with an explicit neutral reference.
+    This winding provides a connection to neutral/ground.
+    """
     delta = 2
+    """Delta connection.
+    This winding does **not** provide a connection to neutral/ground.
+    """
     zigzag = 3
+    """
+    Zigzag/Interconnected connection.
+    This winding does **not** provide a connection to neutral/ground
+    """
     zigzag_n = 4
+    """
+    Zigzag/Interconnected connection with neutral.
+    This winding provides a reference to neutral/ground.
+    """
 
 
 class BranchSide(IntEnum):

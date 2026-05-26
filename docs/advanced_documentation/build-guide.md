@@ -73,7 +73,7 @@ These are handled automatically in CI. For local development, use your system's 
 
 #### macOS
 
-* Apple Clang >= 17.0:
+* Apple Clang >= 21.0:
   * Latest XCode release tested in CI.
 
 ```{note}

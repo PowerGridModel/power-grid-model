@@ -18,6 +18,8 @@ using namespace power_grid_model;
 
 using power_grid_model_c::clear_error;
 using power_grid_model_c::compile_time_safe_cast;
+
+constexpr char const* version = PGM_VERSION;
 } // namespace
 
 // create and destroy handle
@@ -52,3 +54,4 @@ char const** PGM_batch_errors(PGM_Handle const* handle) {
     return handle_ref.batch_errs_c_str.data();
 }
 void PGM_clear_error(PGM_Handle* handle) { clear_error(handle); }
+char const* PGM_version(void) { return version; }

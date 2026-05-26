@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
-name: Build and Test C++ and Python
+name: Check build reproducibility
 
 # Controls when the workflow will run
 on:
@@ -17,15 +17,12 @@ concurrency:
 
 jobs:
   check-power-grid-model-c-linux:
-    runs-on: ubuntu-latest
     strategy:
       matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm]
         compiler: [gcc, clang]
-        include:
-          - c_compiler: gcc-14
-            cxx_compiler: g++-14
-          - c_compiler: clang-18
-            cxx_compiler: clang++-18
+
+    runs-on: ${{ matrix.os }}
 
     env:
       CMAKE_PREFIX_PATH: /home/linuxbrew/.linuxbrew
@@ -46,9 +43,9 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
 
-      - name: Install pgm-build-dependencies
+      - name: Install pgm-build-deps
         run: |
-          uv tool install https://github.com/PowerGridModel/pgm-build-dependencies/releases/latest/download/pgm_build_dependencies-0.1.0-py3-none-any.whl
+          uv tool install pgm-build-deps
           pgm-build-setup-ga-ci
 
       - name: Build twice
@@ -63,6 +60,12 @@ jobs:
           cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install
           mv install/${{ env.PRESET }} install/${{ env.PRESET }}-2
           mv cpp_build/ cpp_build_2/
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: install-${{ matrix.os }}-${{ env.PRESET }}
+          path: install/
 
       - name: Compare builds
         run: |
@@ -88,9 +91,9 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
 
-      - name: Install pgm-build-dependencies
+      - name: Install pgm-build-deps
         run: |
-          uv tool install https://github.com/PowerGridModel/pgm-build-dependencies/releases/latest/download/pgm_build_dependencies-0.1.0-py3-none-any.whl
+          uv tool install pgm-build-deps
           pgm-build-setup-ga-ci
 
       - uses: ./.github/actions/enable-msvc
@@ -107,6 +110,12 @@ jobs:
           cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install; if(!$?) { Exit $LASTEXITCODE }
           mv install/${{ env.PRESET }} install/${{ env.PRESET }}-2; if(!$?) { Exit $LASTEXITCODE }
           mv cpp_build/ cpp_build_2/; if(!$?) { Exit $LASTEXITCODE }
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: install-windows-${{ env.PRESET }}
+          path: install/
 
       - name: Compare builds
         run: |
@@ -126,7 +135,11 @@ jobs:
           Write-Host "Builds are identical"
 
   check-reproducibility-c-macos:
-    runs-on: macos-latest
+    strategy:
+      matrix:
+        os: [macos-26, macos-26-intel]
+
+    runs-on: ${{ matrix.os }}
     env:
       CMAKE_PREFIX_PATH: /usr/local
       PRESET: ci-apple-clang-reproducible
@@ -142,9 +155,9 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
 
-      - name: Install pgm-build-dependencies
+      - name: Install pgm-build-deps
         run: |
-          uv tool install https://github.com/PowerGridModel/pgm-build-dependencies/releases/latest/download/pgm_build_dependencies-0.1.0-py3-none-any.whl
+          uv tool install pgm-build-deps
           pgm-build-setup-ga-ci
 
       - name: Build twice
@@ -159,6 +172,12 @@ jobs:
           cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install
           mv install/${{ env.PRESET }} install/${{ env.PRESET }}-2
           mv cpp_build/ cpp_build_2
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: install-${{ matrix.os }}-${{ env.PRESET }}
+          path: install/
 
       - name: Compare builds
         run: |
