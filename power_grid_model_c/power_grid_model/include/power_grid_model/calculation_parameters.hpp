@@ -431,7 +431,7 @@ struct ComponentTopology {
 };
 
 struct ReducedComponentTopology {
-    Idx n_node{}; // num of topological nodes (with reduced links), plus internal nodes for 3-way branches
+    Idx n_node{}; // num of topological nodes, including internal nodes for 3-way branches
     std::vector<BranchIdx> branch_node_idx;
     std::vector<Branch3Idx> branch3_node_idx;
     IdxVector shunt_node_idx;
