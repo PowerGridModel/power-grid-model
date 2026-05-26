@@ -29,8 +29,8 @@ namespace power_grid_model::supernodes {
 class TopologicalNodeMapping {
   public:
     TopologicalNodeMapping() = default;
-    explicit TopologicalNodeMapping(Idx n_topo_nodes_, IdxVector mapping)
-        : mapping_{std::move(mapping)}, n_topo_nodes_{n_topo_nodes_} {
+    explicit TopologicalNodeMapping(Idx n_topo_nodes, IdxVector mapping)
+        : mapping_{std::move(mapping)}, n_topo_nodes_{n_topo_nodes} {
         check_sanity();
     }
 
