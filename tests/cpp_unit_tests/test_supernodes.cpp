@@ -153,10 +153,113 @@ TEST_CASE("Test Supernodes") {
         }
     }
     SUBCASE("construct_reduced_topology") {
-        // TODO: Add test implementation
+        SUBCASE("No links => identity mapping, no remapping") {
+            ComponentTopology const comp_topo{
+                .n_node = 3,
+                .branch_node_idx = {{0, 1}, {1, 2}, {2, 0}},
+            };
+            TopologicalNodeMapping const topo_node_mapping{3, IdxVector{0, 1, 2}};
+            auto const reduced = detail::construct_reduced_topology(comp_topo, topo_node_mapping);
+            CHECK(reduced.n_node == 3);
+            CHECK(reduced.branch_node_idx == std::vector<BranchIdx>{{0, 1}, {1, 2}, {2, 0}});
+        }
+        SUBCASE("Link merging => branch, shunt and source nodes remapped") {
+            ComponentTopology const comp_topo{
+                .n_node = 3,
+                .branch_node_idx = {{0, 2}},
+                .link_node_idx = {{0, 1}},
+                .shunt_node_idx = {2},
+                .source_node_idx = {1},
+            };
+            // node 0 and 1 are merged into topo node 0, node 2 becomes topo node 1
+            TopologicalNodeMapping const topo_node_mapping{2, IdxVector{0, 0, 1}};
+            auto const reduced = detail::construct_reduced_topology(comp_topo, topo_node_mapping);
+            CHECK(reduced.n_node == 2);
+            CHECK(reduced.branch_node_idx == std::vector<BranchIdx>{{0, 1}});
+            CHECK(reduced.shunt_node_idx == IdxVector{1});
+            CHECK(reduced.source_node_idx == IdxVector{0});
+        }
+        SUBCASE("Multiple links merging => all node index vectors remapped") {
+            ComponentTopology const comp_topo{
+                .n_node = 6,
+                .branch_node_idx = {{0, 4}},
+                .link_node_idx = {{2, 1}, {5, 3}, {5, 2}},
+                .shunt_node_idx = {3},
+                .source_node_idx = {0},
+                .load_gen_node_idx = {4},
+                .voltage_sensor_node_idx = {1},
+            };
+            // nodes 1, 2, 3, 5 are merged into topo node 1; node 0 => topo 0; node 4 => topo 2
+            TopologicalNodeMapping const topo_node_mapping{3, IdxVector{0, 1, 1, 1, 2, 1}};
+            auto const reduced = detail::construct_reduced_topology(comp_topo, topo_node_mapping);
+            CHECK(reduced.n_node == 3);
+            CHECK(reduced.branch_node_idx == std::vector<BranchIdx>{{0, 2}});
+            CHECK(reduced.source_node_idx == IdxVector{0});
+            CHECK(reduced.shunt_node_idx == IdxVector{1});
+            CHECK(reduced.load_gen_node_idx == IdxVector{2});
+            CHECK(reduced.voltage_sensor_node_idx == IdxVector{1});
+        }
     }
     SUBCASE("reduce_topology") {
-        // TODO: Add test implementation
+        SUBCASE("No links => no remapping, no supernodes") {
+            ComponentTopology const comp_topo{
+                .n_node = 3,
+                .branch_node_idx = {{0, 1}, {1, 2}},
+                .source_node_idx = {0},
+            };
+            ComponentConnections const comp_conn{
+                .branch_connected = {{1, 1}, {1, 1}},
+            };
+            auto const result = reduce_topology(comp_topo, comp_conn);
+            CHECK(result.reduced_comp_topo.n_node == 3);
+            CHECK(result.reduced_comp_topo.branch_node_idx == std::vector<BranchIdx>{{0, 1}, {1, 2}});
+            CHECK(result.reduced_comp_topo.source_node_idx == IdxVector{0});
+            REQUIRE(std::ssize(result.topo_node_coup.topo_nodes) == 3);
+            CHECK(std::ranges::none_of(result.topo_node_coup.topo_nodes,
+                                       [](TopologicalNode const& node) { return node.is_supernode(); }));
+            CHECK(result.topo_node_coup.coupling.n_topo_nodes == 3);
+        }
+        SUBCASE("One link => supernode created, nodes and branches remapped") {
+            ComponentTopology const comp_topo{
+                .n_node = 3,
+                .branch_node_idx = {{0, 2}},
+                .link_node_idx = {{0, 1}},
+                .shunt_node_idx = {2},
+                .source_node_idx = {0},
+            };
+            ComponentConnections const comp_conn{
+                .branch_connected = {{1, 1}},
+                .link_connected = {{1, 1}},
+            };
+            auto const result = reduce_topology(comp_topo, comp_conn);
+            CHECK(result.reduced_comp_topo.n_node == 2);
+            CHECK(result.reduced_comp_topo.branch_node_idx == std::vector<BranchIdx>{{0, 1}});
+            CHECK(result.reduced_comp_topo.source_node_idx == IdxVector{0});
+            CHECK(result.reduced_comp_topo.shunt_node_idx == IdxVector{1});
+            REQUIRE(std::ssize(result.topo_node_coup.topo_nodes) == 2);
+            CHECK(result.topo_node_coup.topo_nodes[0].is_supernode());
+            CHECK(!result.topo_node_coup.topo_nodes[1].is_supernode());
+            CHECK(result.topo_node_coup.topo_nodes[0].user_nodes == IdxVector{0, 1});
+            CHECK(result.topo_node_coup.topo_nodes[1].user_nodes == IdxVector{2});
+            CHECK(result.topo_node_coup.coupling.n_topo_nodes == 2);
+        }
+        SUBCASE("Disconnected link => not merged, no supernode") {
+            ComponentTopology const comp_topo{
+                .n_node = 3,
+                .branch_node_idx = {{0, 2}},
+                .link_node_idx = {{0, 1}},
+            };
+            ComponentConnections const comp_conn{
+                .branch_connected = {{1, 1}},
+                .link_connected = {{1, 0}},
+            };
+            auto const result = reduce_topology(comp_topo, comp_conn);
+            CHECK(result.reduced_comp_topo.n_node == 3);
+            CHECK(result.reduced_comp_topo.branch_node_idx == std::vector<BranchIdx>{{0, 2}});
+            REQUIRE(std::ssize(result.topo_node_coup.topo_nodes) == 3);
+            CHECK(std::ranges::none_of(result.topo_node_coup.topo_nodes,
+                                       [](TopologicalNode const& node) { return node.is_supernode(); }));
+        }
     }
 }
 } // namespace

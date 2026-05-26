@@ -28,7 +28,6 @@
 namespace power_grid_model::supernodes {
 class TopologicalNodeMapping {
   public:
-    TopologicalNodeMapping() = default;
     explicit TopologicalNodeMapping(Idx n_topo_nodes, IdxVector mapping)
         : mapping_{std::move(mapping)}, n_topo_nodes_{n_topo_nodes} {
         check_sanity();
@@ -46,7 +45,7 @@ class TopologicalNodeMapping {
 
     constexpr void check_sanity() const noexcept {
         // the mapping should be a valid partition of user nodes into topological nodes
-        assert(n_topo_nodes_ == 0 || (n_topo_nodes_ == std::ranges::max(mapping_) + 1));
+        assert(n_topo_nodes_ == (std::ranges::empty(mapping_) ? 0 : std::ranges::max(mapping_) + 1));
     }
 };
 
@@ -59,7 +58,9 @@ struct TopologicalNode {
 
 struct ComponentToTopoNodeCoupling {
     Idx n_topo_nodes{};
+    // for every user node: which topo node it belongs to and which index it has within that topo node
     std::vector<Idx2D> user_nodes_to_topo_nodes;
+    // for every user link: which topo node it belongs to and which index it has within that topo node
     std::vector<Idx2D> user_links_to_topo_nodes;
 };
 
@@ -102,6 +103,11 @@ inline TopologicalNodeMapping find_link_connected_components(Idx n_nodes, std::v
                               internal_edges.emplace_back(to, from);
                           });
 
+    assert(std::ranges::all_of(internal_edges, [n_nodes](auto const& edge) {
+        auto const& [from, to] = edge;
+        return 0 <= from && from < n_nodes && 0 <= to && to < n_nodes;
+    }));
+
     auto const global_graph_ =
         GlobalGraph{boost::edges_are_unsorted_multi_pass, internal_edges.cbegin(), internal_edges.cend(), n_nodes};
 
@@ -109,21 +115,23 @@ inline TopologicalNodeMapping find_link_connected_components(Idx n_nodes, std::v
     return TopologicalNodeMapping{num_connected_components, std::move(vertices)};
 }
 
-// Union-find algorithm:
+// Find connected components in the link-only grid (similar to union-find)
 //   n nodes = 6
 //   lines/trafos = [[0, 1], [3, 4], [5, 4]]
 //   links = [[1, 3], [5, 2], [2, 1]]
 //
 // Start: [0, 1, 2, 3, 4, 5]
 //   Process links in comp topo and comp conn
-// NAIVE (WRONG): [0, 1, 1, 1, 4, 2]  (2 should be super node)
-//   Fixing this retroactively is O(N_links^2)
-//   Unless we use counting sort, which is O(N_nodes + N_links)
 // Result:
 //   [0, 1, 1, 1, 4, 1]
 // Mapping (explanation):
 //   [N0, SN1, SN1, SN1, N4, SN1]
 //   [TN0, TN1, TN1, TN1, TN2, TN1]
+//
+// Note: we can't use a naive forward-sweep union-find approach as that would result in
+//   [0, 1, 1, 1, 4, 2]  (2 should be part of the super node)
+//   Fixing this retroactively is O(N_links^2)
+//   The solution is to use the boost connected components algorithm, which is linear
 inline TopologicalNodeMapping create_map(ComponentTopology const& comp_topo, ComponentConnections const& comp_conn) {
     return find_link_connected_components(comp_topo.n_node, comp_topo.link_node_idx, comp_conn.link_connected);
 };
