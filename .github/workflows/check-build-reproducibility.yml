@@ -64,7 +64,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: install-${{ matrix.platform }}-${{ env.PRESET }}
+          name: install-${{ matrix.os }}-${{ env.PRESET }}
           path: install/
 
       - name: Compare builds
@@ -114,7 +114,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: install-${{ matrix.platform }}-${{ env.PRESET }}
+          name: install-windows-${{ env.PRESET }}
           path: install/
 
       - name: Compare builds
@@ -176,7 +176,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: install-${{ matrix.platform }}-${{ env.PRESET }}
+          name: install-${{ matrix.os }}-${{ env.PRESET }}
           path: install/
 
       - name: Compare builds
