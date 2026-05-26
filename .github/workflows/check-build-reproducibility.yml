@@ -61,6 +61,12 @@ jobs:
           mv install/${{ env.PRESET }} install/${{ env.PRESET }}-2
           mv cpp_build/ cpp_build_2/
 
+      - name: Upload artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: install-${{ matrix.platform }}-${{ env.PRESET }}
+          path: install/
+
       - name: Compare builds
         run: |
           diff -qr install/${{ env.PRESET }}-1 install/${{ env.PRESET }}-2
@@ -104,6 +110,12 @@ jobs:
           cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install; if(!$?) { Exit $LASTEXITCODE }
           mv install/${{ env.PRESET }} install/${{ env.PRESET }}-2; if(!$?) { Exit $LASTEXITCODE }
           mv cpp_build/ cpp_build_2/; if(!$?) { Exit $LASTEXITCODE }
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: install-${{ matrix.platform }}-${{ env.PRESET }}
+          path: install/
 
       - name: Compare builds
         run: |
@@ -160,6 +172,12 @@ jobs:
           cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install
           mv install/${{ env.PRESET }} install/${{ env.PRESET }}-2
           mv cpp_build/ cpp_build_2
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: install-${{ matrix.platform }}-${{ env.PRESET }}
+          path: install/
 
       - name: Compare builds
         run: |
