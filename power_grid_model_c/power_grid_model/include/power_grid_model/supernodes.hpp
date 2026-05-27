@@ -155,17 +155,32 @@ inline TopologicalNodesAndCoupling create_topological_nodes(ComponentTopology co
         std::views::transform([&node_mapping, &topo_nodes](auto const& idx_link_and_connectivity) {
             auto const& [link_idx, link_nodes_and_connectivity] = idx_link_and_connectivity;
             auto const& [link_nodes, link_connected] = link_nodes_and_connectivity;
-            if (link_connected[0] == 0 || link_connected[1] == 0) {
+
+            auto const [from, to] = link_nodes;
+            auto const from_conn = link_connected[0] == 0 ? disconnected : from;
+            auto const to_conn = link_connected[1] == 0 ? disconnected : to;
+
+            assert((from_conn == disconnected || to_conn == disconnected || node_mapping[from] == node_mapping[to]) &&
+                   "if both sides are connected, they should belong to the same topo node");
+
+            auto const topo_node = [from_conn, to_conn, &node_mapping] {
+                if (from_conn != disconnected) {
+                    return node_mapping[from_conn];
+                }
+                if (to_conn != disconnected) {
+                    return node_mapping[to_conn];
+                }
+                return disconnected;
+            }();
+
+            if (topo_node == disconnected) {
                 return Idx2D{.group = disconnected, .pos = disconnected};
             }
-            auto const [from, to] = link_nodes;
-            auto const topo_from = node_mapping[from];
-            assert(topo_from == node_mapping[to]); // sanity check: links should be merged at this point
 
-            auto& user_links = topo_nodes[topo_from].user_links;
+            auto& user_links = topo_nodes[topo_node].user_links;
             Idx const pos = std::ssize(user_links);
-            user_links.push_back(BranchIdx{from, to}); // can't emplace_back because it's std::array
-            return Idx2D{.group = topo_from, .pos = pos};
+            user_links.push_back(BranchIdx{from_conn, to_conn}); // can't emplace_back because BranchIdx is std::array
+            return Idx2D{.group = topo_node, .pos = pos};
         }) |
         std::ranges::to<std::vector>();
 

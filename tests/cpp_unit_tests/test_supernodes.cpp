@@ -110,38 +110,49 @@ TEST_CASE("Test Supernodes") {
         SUBCASE("Multiple connected components map to different topological nodes") {
             ComponentTopology const comp_topo{
                 .n_node = 6,
-                .link_node_idx = {{0, 1}, {2, 4}, {3, 5}},
+                .link_node_idx = {{0, 1}, {2, 4}, {3, 5}, {5, 3}, {3, 5}},
             };
             ComponentConnections const comp_conn{
-                .link_connected = {{1, 1}, {1, 1}, {1, 1}},
+                .link_connected = {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}},
             };
             auto const topo_node_mapping = detail::create_map(comp_topo, comp_conn);
             auto const topo_nodes = detail::create_topological_nodes(comp_topo, comp_conn, topo_node_mapping);
+
             REQUIRE(std::ssize(topo_nodes.topo_nodes) == topo_node_mapping.n_topo_nodes());
             CHECK(std::ranges::all_of(topo_nodes.topo_nodes,
                                       [](TopologicalNode const& node) { return node.is_supernode(); }));
+
             CHECK(topo_nodes.topo_nodes[0].user_nodes == IdxVector{0, 1});
             CHECK(topo_nodes.topo_nodes[1].user_nodes == IdxVector{2, 4});
             CHECK(topo_nodes.topo_nodes[2].user_nodes == IdxVector{3, 5});
             CHECK(topo_nodes.topo_nodes[0].user_links == std::vector<BranchIdx>{{0, 1}});
             CHECK(topo_nodes.topo_nodes[1].user_links == std::vector<BranchIdx>{{2, 4}});
-            CHECK(topo_nodes.topo_nodes[2].user_links == std::vector<BranchIdx>{{3, 5}});
+            CHECK(topo_nodes.topo_nodes[2].user_links == std::vector<BranchIdx>{{3, 5}, {5, 3}, {3, 5}});
+
+            CHECK(std::ranges::equal(topo_nodes.coupling.user_links_to_topo_nodes,
+                                     std::vector<Idx2D>{{.group = 0, .pos = 0},
+                                                        {.group = 1, .pos = 0},
+                                                        {.group = 2, .pos = 0},
+                                                        {.group = 2, .pos = 1},
+                                                        {.group = 2, .pos = 2}}));
         }
-        SUBCASE("Disconnected link => not included in user links") {
+        SUBCASE("Disconnected link => included in user link on connected side, abandoned if fully disconnected") {
             ComponentTopology const comp_topo{
                 .n_node = 6,
-                .link_node_idx = {{0, 1}, {2, 4}, {3, 5}},
+                .link_node_idx = {{0, 1}, {2, 4}, {3, 5}, {0, 1}},
             };
             ComponentConnections const comp_conn{
-                .link_connected = {{1, 0}, {1, 1}, {0, 0}},
+                .link_connected = {{1, 0}, {1, 1}, {0, 0}, {0, 1}},
             };
             auto const topo_node_mapping = detail::create_map(comp_topo, comp_conn);
             auto const topo_nodes = detail::create_topological_nodes(comp_topo, comp_conn, topo_node_mapping);
+
             REQUIRE(std::ssize(topo_nodes.topo_nodes) == topo_node_mapping.n_topo_nodes());
             CHECK(std::ranges::equal(topo_nodes.topo_nodes | std::views::transform([](TopologicalNode const& node) {
                                          return node.is_supernode();
                                      }),
                                      std::array{false, false, true, false, false}));
+
             CHECK(std::ranges::equal(
                 topo_nodes.topo_nodes |
                     std::views::transform([](TopologicalNode const& node) -> auto& { return node.user_nodes; }),
@@ -149,7 +160,13 @@ TEST_CASE("Test Supernodes") {
             CHECK(std::ranges::equal(
                 topo_nodes.topo_nodes |
                     std::views::transform([](TopologicalNode const& node) -> auto& { return node.user_links; }),
-                std::vector<std::vector<BranchIdx>>{{}, {}, {{2, 4}}, {}, {}}));
+                std::vector<std::vector<BranchIdx>>{{{0, disconnected}}, {{disconnected, 1}}, {{2, 4}}, {}, {}}));
+
+            CHECK(std::ranges::equal(topo_nodes.coupling.user_links_to_topo_nodes,
+                                     std::vector<Idx2D>{{.group = 0, .pos = 0},
+                                                        {.group = 2, .pos = 0},
+                                                        {.group = disconnected, .pos = disconnected},
+                                                        {.group = 1, .pos = 0}}));
         }
     }
     SUBCASE("construct_reduced_topology") {
