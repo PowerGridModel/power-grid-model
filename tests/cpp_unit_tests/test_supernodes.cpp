@@ -56,7 +56,7 @@ TEST_CASE("Test Supernodes") {
             CHECK(topo_node_mapping.mapping() == IdxVector{0, 0, 1});
         }
         SUBCASE("Disconnected link => not remapped") {
-            for (auto const disconnected :
+            for (auto const disconnection :
                  std::array{BranchConnected{1, 0}, BranchConnected{0, 1}, BranchConnected{0, 0}}) {
                 ComponentTopology const comp_topo{
                     .n_node = 3,
@@ -65,7 +65,7 @@ TEST_CASE("Test Supernodes") {
                 };
                 ComponentConnections const comp_conn{
                     .branch_connected = {{1, 1}, {1, 1}, {1, 1}},
-                    .link_connected = {disconnected},
+                    .link_connected = {disconnection},
                 };
                 auto const topo_node_mapping = detail::create_map(comp_topo, comp_conn);
                 CHECK(topo_node_mapping.n_topo_nodes() == 3);
