@@ -223,7 +223,9 @@ inline ReducedComponentTopology construct_reduced_topology(ComponentTopology con
         .power_sensor_terminal_type = std::span{comp_topo.power_sensor_terminal_type},
         .current_sensor_object_idx = std::span{comp_topo.current_sensor_object_idx},
         .current_sensor_terminal_type = std::span{comp_topo.current_sensor_terminal_type},
+        .regulator_type = std::span{comp_topo.regulator_type},
         .regulated_object_idx = std::span{comp_topo.regulated_object_idx},
+        .regulated_object_type = std::span{comp_topo.regulated_object_type},
     };
 }
 } // namespace detail
