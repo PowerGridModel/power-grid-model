@@ -43,7 +43,7 @@ class TopologicalNodeMapping {
     IdxVector mapping_;
     Idx n_topo_nodes_{};
 
-    constexpr void check_sanity() const noexcept {
+    constexpr void check_sanity() const noexcept { // NOLINT(readability-convert-member-functions-to-static)
         // the mapping should be a valid partition of user nodes into topological nodes
         assert(n_topo_nodes_ == (std::ranges::empty(mapping_) ? 0 : std::ranges::max(mapping_) + 1));
     }
