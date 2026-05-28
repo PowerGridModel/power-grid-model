@@ -11,6 +11,88 @@ attribute.
 For detailed data types used throughout `power-grid-model`, please refer to
  [Python API Reference](../api_reference/python-api-reference.md).
 
+## Buffer Type
+
+Defines how component data is ordered in memory.
+
+### Row-based (row-major)
+
+Attributes of the same component are stored contiguously before moving to the next component.
+
+### Columnar (column-major)
+
+Attributes are grouped across components by attribute type.
+
+## Buffer Representation
+
+Defines whether component data can be interpreted as a dense 2D matrix.
+
+### Dense
+
+Dense buffers represent data as a rectangular matrix.
+This representation implies that all scenarios contain the same number of component entries.
+
+### Sparse
+
+Component data is stored as a flattened 1D buffer.
+
+Scenario boundaries are defined using an index pointer (`indptr`).
+The `indptr` defines how the flattened buffer is segmented into per-scenario ranges.
+
+Sparse buffers may be either uniform or non-uniform.
+
+## Component Dataset Independency
+
+Defines whether all scenarios operate on the same component IDs.
+
+### Independent
+
+All scenarios modify the same component IDs in the same order.
+
+A reset is required between scenarios.
+
+### Dependent
+
+Different scenarios may modify different components.
+
+A reset is required between scenarios.
+
+## Component Data Uniformity
+
+Defines whether all scenarios contain the same number of component entries, independent of buffer representation.
+Uniformity is independent of buffer representation.
+
+### Uniform
+
+All scenarios contain the same number of component entries.
+
+- Dense buffers are always uniform (by construction)
+- Sparse buffers may also be uniform
+
+### Non-uniform
+
+Scenarios contain different numbers of component entries.
+
+- Only possible in sparse representation
+
+## Serialization Representation
+
+Defines how datasets are serialized.
+
+### Compact List
+
+Uses positional arrays instead of named attributes.
+
+Generated when using `compact_list=True`.
+
+### Named Map
+
+Uses explicit attribute names per component.
+
+### Mixed
+
+Combination of compact list and named map (only possible in manual construction, e.g. validation datasets).
+
 ## Data structures
 
 ```{mermaid}
@@ -75,7 +157,7 @@ graph TD
     elements of all components) for a single scenario.
   - **{py:class}`BatchDataset <power_grid_model.data_types.BatchDataset>`:** A data type storing update and or output
     data for one or more scenarios.
-    A batch dataset can contain sparse or dense data, depending on the component.
+    A batch dataset can contain dense or sparse representations per component.
 
 - **{py:class}`ComponentData <power_grid_model.data_types.ComponentData>`:** The data corresponding to the component.
   - **{py:class}`DataArray <power_grid_model.data_types.DataArray>`:** A data array can be a single or a batch array.
@@ -85,10 +167,11 @@ graph TD
     - **{py:class}`BatchArray <power_grid_model.data_types.BatchArray>`:** Multiple batches of data can be represented
       in sparse or dense forms.
       - **{py:class}`DenseBatchArray <power_grid_model.data_types.DenseBatchArray>`:** A 2D structured numpy array
-        containing a list of components of the same type for each scenario.
+        containing a list of components of the same type for each scenario. This implies all scenarios contain the
+        same number of components (uniform structure).
       - **{py:class}`SparseBatchArray <power_grid_model.data_types.SparseBatchArray>`:** A typed dictionary with a 1D
         numpy array of `Indexpointer` type under `indptr` key and `SingleArray` under `data` key which is all components
-        flattened over all batches.
+        flattened across scenarios, with scenario boundaries defined by `indptr`.
   - **{py:class}`ColumnarData <power_grid_model.data_types.ColumnarData>`:** A dictionary of attributes as keys and
     individual numpy arrays as values.
     This format is described in more detail in
@@ -183,9 +266,10 @@ The batch size is the number of scenarios.
 - **n_scenarios:** The total number of scenarios in the batch.
   (Same as Batch Size)
 
-- **n_component_elements_per_scenario:** The number of elements of a specific component for each scenario.
-  This can be an integer (for dense batches), or a list of integers for sparse batches, where each integer in the list
-  represents the number of elements of a specific component for the scenario corresponding to the index of the integer.
+- **n_component_elements_per_scenario:** The number of component instances per scenario, independent of representation
+  format (dense or sparse). This can be an integer (for dense batches), or a list of integers for sparse batches,
+  where each integer in the list represents the number of elements of a specific component for the scenario
+  corresponding to the index of the integer.
 
 - **Sub-batch:** When computing in parallel, all scenarios in batch calculation are distributed over threads.
   Each thread handles a subset of the `Batch`, called a `Sub-batch`.

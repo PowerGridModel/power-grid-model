@@ -40,16 +40,15 @@ data.
 
 #### JSON schema attributes object
 
-[`Attributes`](#json-schema-attributes-object) contains specified attributes per [`Component`](#json-schema-component)
-type (e.g.: `"node"`).
-It is only required for those components that contain `HomogeneousComponentData` objects and that data needs to follow
-the attributes listed in this object.
-It may be empty if for data for all instances certain component is `InhomogeneousComponentData`.
-It reduces compression when a dataset largely follows the exact same pattern.
+[`Attributes`](#json-schema-attributes-object) defines the attribute ordering
+for each [`Component`](#json-schema-component) (e.g.: `"node"`).
+It is required when a component uses `DenseComponentData`, since dense representation relies on a fixed attribute order.
+
+It may be omitted for components that only use `SparseComponentData`.
 
 - [`Attributes`](#json-schema-attributes-object): `Object`
-  - [`Component`](#json-schema-component): [`ComponentAttributes`](#json-schema-component-attributes) containing the
-    desired [`Attribute`](#json-schema-attribute)s for that [`Component`](#json-schema-component).
+  - [`Component`](#json-schema-component): [`ComponentAttributes`](#json-schema-component-attributes)
+    defining the ordered list of [`Attribute`](#json-schema-attribute)s for that component.
 
 For example, for an `"update"` dataset that contains only updates to the `"from_status"` attribute of `"branch"`
 components, it may be `{"branch": ["from_status"]}`.
@@ -124,33 +123,30 @@ remains the same.
 
 #### JSON schema component data object
 
-A [`ComponentData`](#json-schema-component-data-object) object is either a
-[`HomogeneousComponentData`](#json-schema-homogeneous-component-data-object) object or an
-[`InhomogeneousComponentData`](#json-schema-inhomogeneous-component-data-object) object
+A [`ComponentData`](#json-schema-component-data-object) represents the data of a single component instance.
 
-- [`ComponentData`](#json-schema-component-data-object):
-  [`HomogeneousComponentData`](#json-schema-homogeneous-component-data-object) |
-  [`InhomogeneousComponentData`](#json-schema-inhomogeneous-component-data-object)
+It can be stored in either dense or sparse representation:
 
-#### JSON schema homogeneous component data object
+- [`DenseComponentData`](#json-schema-component-data-object-dense-representation)
+- [`SparseComponentData`](#json-schema-component-data-object-sparse-representation)
 
-A [`HomogeneousComponentData`](#json-schema-homogeneous-component-data-object) object contains the actual values of a
-certain component following the exact order of the attributes listed in the [`attributes`](#json-schema-root-object)
-field in the [`PowerGridModelRoot`](#json-schema-root-object) object.
+#### JSON schema component data object (dense representation)
 
-- [`HomogeneousComponentData`](#json-schema-homogeneous-component-data-object): `Array`
-  - [`AttributeValue`](#json-schema-attribute-value): the value of each attribute.
+A dense component data object stores values in a fixed positional order defined by the `attributes` field
+in the root object.
 
-#### JSON schema inhomogeneous component data object
+- [`DenseComponentData`](#json-schema-component-data-object-dense-representation): `Array`
+  - [`AttributeValue`](#json-schema-attribute-value): values in the exact order defined by the component's attribute
+    list.
 
-An [`InhomogeneousComponentData`](#json-schema-inhomogeneous-component-data-object) object contains actual values per
-attribute of a certain component.
-Contrary to the [`HomogeneousComponentData`](#json-schema-homogeneous-component-data-object), it lists the names of the
-attributes for which the values are specified, so the attributes may be in arbitrary order and do not have to follow the
-schema listed in the [`attributes`](#json-schema-root-object) field in the
-[`PowerGridModelRoot`](#json-schema-root-object) object.
+#### JSON schema component data object (sparse representation)
 
-- [`InhomogeneousComponentData`](#json-schema-inhomogeneous-component-data-object): `Object`
+A component data object in sparse representation contains values grouped per attribute.
+It stores values grouped by attribute, with explicit attribute names and no fixed ordering.
+Unlike dense representation, it explicitly stores attribute names, allowing attributes to appear in arbitrary order
+and vary between components or scenarios.
+
+- [`SparseComponentData`](#json-schema-component-data-object-sparse-representation): `Object`
   - [`Attribute`](#json-schema-attribute): [`AttributeValue`](#json-schema-attribute-value): the value of each attribute
     per attribute.
 
@@ -255,11 +251,11 @@ The type is listed for each attribute in [Components](components.md).
 
 The following example contains an input dataset.
 The nodes and sym_loads are represented using
-[`HomogeneousComponentData`](#json-schema-homogeneous-component-data-object),
-the lines are represented using [`InomogeneousComponentData`](#json-schema-inhomogeneous-component-data-object),
+[`DenseComponentData`](#json-schema-component-data-object-dense-representation),
+the lines are represented using [`SparseComponentData`](#json-schema-component-data-object-sparse-representation),
 while the sources are represented using a mixture of
-[`HomogeneousComponentData`](#json-schema-homogeneous-component-data-object) and
-[`InomogeneousComponentData`](#json-schema-inhomogeneous-component-data-object).
+[`DenseComponentData`](#json-schema-component-data-object-dense-representation) and
+[`SparseComponentData`](#json-schema-component-data-object-sparse-representation).
 
 ```json
 {
