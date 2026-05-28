@@ -55,6 +55,11 @@ node[AttributeType.u_rated] = [10.5e3, 10.5e3]
 
 The code above generates a node input array with two nodes, and assigns the attributes of the nodes to the array.
 A dictionary of such arrays is used for `input_data` and `update_data`.
+This row based format is the most common way to start, but the same dataset can also use a columnar format where each
+component maps to a dictionary of attribute arrays.
+Columnar data can be useful when a component has many optional attributes, for example in large batch calculations.
+See [Dataset Terminology](user_manual/dataset-terminology.md#data-structures) and
+[Native Data Interface](advanced_documentation/native-data-interface.md#columnar-data-format) for details.
 
 ```python
 # line
