@@ -244,6 +244,14 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         }
     }
 
+    void inplace_selective_inverse_with_prefactorized_matrix(
+        std::vector<Tensor>& data, // pre-factoirzed data, will be in-place modified to store selective inverse
+        BlockPermArray const& block_perm_array // pre-calculated permutation, const ref
+    ) {
+        // TODO(plusero) implement this method, it will be used in the future for preconditioning in iterative solver
+        // throw sparse matrix error if pivot pertubation happens, this is not supported
+    }
+
     // prefactorize in-place
     // the LU matrix has the form A = L * U
     // diagonals of L are one
