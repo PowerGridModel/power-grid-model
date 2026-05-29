@@ -175,7 +175,11 @@ TEST_CASE("LU solver with ill-conditioned system") {
             check_result(x, x_ref);
         }
 
-        // TODO(plusero) add test to call selective inversion, it should throw sparse matrix error
+        SUBCASE("Selective inversion error with perturbation") {
+            solver.prefactorize(data, perm, true);
+            CHECK_THROWS_AS(solver.inplace_selective_inverse_with_prefactorized_matrix(data, perm),
+                            SparseMatrixError);
+        }
     }
 
     SUBCASE("Block variant") {
@@ -205,7 +209,11 @@ TEST_CASE("LU solver with ill-conditioned system") {
             check_result(x, x_ref);
         }
 
-        // TODO(plusero) add test to call selective inversion, it should throw sparse matrix error
+        SUBCASE("Selective inversion error with perturbation") {
+            solver.prefactorize(data, block_perm, true);
+            CHECK_THROWS_AS(solver.inplace_selective_inverse_with_prefactorized_matrix(data, block_perm),
+                            SparseMatrixError);
+        }
     }
 }
 
