@@ -15,6 +15,7 @@ SPDX-License-Identifier: MPL-2.0
 `power-grid-model` is a library for steady-state distribution power system analysis.
 It is distributed for Python and C.
 The core of the library is written in C++.
+Power Grid Model is an LF Energy project; see the [LF Energy landing page](https://lfenergy.org/projects/power-grid-model/).
 Currently, it supports both symmetric and asymmetric calculations for the following calculation types:
 
 * Power Flow
