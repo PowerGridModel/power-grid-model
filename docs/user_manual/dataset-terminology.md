@@ -81,7 +81,8 @@ Defines how datasets are serialized.
 
 ### Compact List
 
-Uses positional arrays instead of named attributes. The attributes present in the dataset are stored separately.
+Uses positional arrays instead of named attributes.
+The attributes present in the dataset are stored separately.
 
 Generated when using `compact_list=True`.
 
