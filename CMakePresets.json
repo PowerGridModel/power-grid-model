@@ -267,6 +267,7 @@
       },
       "cacheVariables": {
         "PGM_ENABLE_DEV_BUILD": "OFF",
+        "CMAKE_INTERPROCEDURAL_OPTIMIZATION": "OFF",
         "CMAKE_SHARED_LINKER_FLAGS": "/debug:None /Brepro /INCREMENTAL:NO /NOCOFFGRPINFO"
       }
     },
