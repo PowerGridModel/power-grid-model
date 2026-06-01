@@ -245,7 +245,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     }
 
     void inplace_selective_inverse_with_prefactorized_matrix(
-        std::vector<Tensor>& data, // pre-factoirzed data, will be in-place modified to store selective inverse
+        std::vector<Tensor>& data, // pre-factorized data, will be in-place modified to store selective inverse
         BlockPermArray const& block_perm_array // pre-calculated permutation, const ref
     ) {
         capturing::into_the_void(data, block_perm_array); // prevent compiler from complaining about unused variables
