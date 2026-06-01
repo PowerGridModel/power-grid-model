@@ -41,14 +41,14 @@ TEST_CASE("Test y bus") {
 
     //     Topology:
 
-    //   --- 4 ---               ----- 3 -----
-    //  |         |             |             |
-    //  |         v             v             |
+    //   --- 4 ---            /-3-\  }
+    //  |         |           |   |  } loop from 2 to 2
+    //  |         v           v   |  }
     // [0]       [1] --- 1 --> [2] --- 2 --> [3]
-    //  ^         |             |
-    //  |         |             5
-    //   --- 0 ---              |
-    //                          X
+    //  ^         |           /  ^            |
+    //  |         |           5  |            |
+    //   --- 0 ---            |   \--- 6 ----/
+    //                        X
     MathModelTopology topo{};
     MathModelParam<symmetric_t> param_sym;
     topo.phase_shift.resize(4, 0.0);
@@ -56,13 +56,16 @@ TEST_CASE("Test y bus") {
         {1, 0}, // branch 0 from node 1 to 0
         {1, 2}, // branch 1 from node 1 to 2
         {2, 3}, // branch 2 from node 2 to 3
+        {2, 2}, // branch 6 from node 2 to 2 (loop into itself)
         {3, 2}, // branch 3 from node 3 to 2
         {0, 1}, // branch 4 from node 0 to 1
         {2, -1} // branch 5 from node 2 to "not connected"
     };
-    param_sym.branch_param = {// ff, ft, tf, tt
-                              {1.0i, 2.0i, 3.0i, 4.0i}, {5.0, 6.0, 7.0, 8.0},     {9.0i, 10.0i, 11.0i, 12.0i},
-                              {13.0, 14.0, 15.0, 16.0}, {17.0, 18.0, 19.0, 20.0}, {1000i, 0.0, 0.0, 0.0}};
+    param_sym.branch_param = {
+        // ff, ft, tf, tt
+        {1.0i, 2.0i, 3.0i, 4.0i}, {5.0, 6.0, 7.0, 8.0},     {9.0i, 10.0i, 11.0i, 12.0i}, {21.0i, 22.0i, 22.0i, 21.0i},
+        {13.0, 14.0, 15.0, 16.0}, {17.0, 18.0, 19.0, 20.0}, {1000i, 0.0, 0.0, 0.0},
+    };
     topo.shunts_per_bus = {from_sparse, {0, 1, 1, 1, 2}}; // 4 buses, 2 shunts -> shunt connected to bus 0 and bus 3
     param_sym.shunt_param = {100.0i, 200.0i};
 
@@ -75,7 +78,7 @@ TEST_CASE("Test y bus") {
     //	x, x
     //   x, 0
     // ]
-    IdxVector const col_indices = {// Culumn col_indices for each non-zero element in Y bus.
+    IdxVector const col_indices = {// Column col_indices for each non-zero element in Y bus.
                                    0, 1, 0, 1, 2, 1, 2, 3, 2, 3};
     Idx nnz = 10; // Number of non-zero elements in Y bus
     IdxVector const bus_entry = {0, 3, 6, 9};
@@ -83,21 +86,23 @@ TEST_CASE("Test y bus") {
                                           0, 2, 1, 3, 5, 4, 6, 8, 7, 9};
     IdxVector const y_bus_entry_indptr = {0,  3,      // 0, 1, 2 belong to element [0,0] in Ybus /  3,4 to element [0,1]
                                           5,  7,  10, // 5,6 to [1,0] / 7, 8, 9 to [1,1] / 10 to [1,2]
-                                          11, 12, 16, // 11 to [2,1] / 12, 13, 14, 15 to [2,2] / 16, 17 to [2,3]
-                                          18, 20,     // 18, 19 to [3,2] / 20, 21, 22  to [3,3]
-                                          23};
+                                          11, 12,     // 11 to [2,1] / 12, 13, 14, 15, 16, 17, 18, 19 to [2,2]
+                                          20, 22,     // 20, 21 to [2,3] / 22, 23 to [3, 2]
+                                          24, 27};    // 24, 25, 26  to [3,3]
     IdxVector map_lu_y_bus = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     ComplexTensorVector<symmetric_t> admittance_sym = {
-        17.0 + 104.0i,  // 0, 0 -> {1, 0}tt + {0, 1}ff + shunt(0) = 4.0i + 17.0 + 100.0i
-        18.0 + 3.0i,    // 0, 1 -> {0, 1}ft + {1, 0}tf = 18.0 + 3.0i
-        19.0 + 2.0i,    // 1, 0 -> {0, 1}tf + {1, 0}ft = 19.0 + 2.0i
-        25.0 + 1.0i,    // 1, 1 -> {0, 1}tt + {1, 0}ff + {1,2}ff = 20.0 + 1.0i + 5.0
-        6.0,            // 1, 2 -> {1,2}ft = 6.0
-        7.0,            // 2, 1 -> {1,2}tf = 7.0
-        24.0 + 1009.0i, // 2, 2 -> {1,2}tt + {2,3}ff + {3, 2}tt + {2,-1}ff = 8.0 + 9.0i + 16.0 + 1000.0i = 24.0 + 1009i
-        15.0 + 10.0i,   // 2, 3 -> {2,3}ft + {3,2}tf = 10.0i + 15.0
-        14.0 + 11.0i,   // 3, 2 -> {2,3}tf + {3,2}ft = 11.0i + 14.0
-        13.0 + 212.0i   // 3, 3 -> {2,3}tt + {3,2}ff + shunt(1) = 12.0i + 13.0 + 200.0i
+        4.0i + 17.0 + 100.0i, // 0, 0 -> {1, 0}tt + {0, 1}ff + shunt(0)
+        18.0 + 3.0i,          // 0, 1 -> {0, 1}ft + {1, 0}tf
+        19.0 + 2.0i,          // 1, 0 -> {0, 1}tf + {1, 0}ft
+        20.0 + 1.0i + 5.0,    // 1, 1 -> {0, 1}tt + {1, 0}ff + {1,2}ff
+        6.0,                  // 1, 2 -> {1,2}ft
+        7.0,                  // 2, 1 -> {1,2}tf
+        8.0 + (21.0i + 22.0i + 22.0i + 21.0i) + 9.0i + 16.0 + 1000.0i,
+        // 2, 2 -> {1,2}tt + ({3,3}ff + {3,3}ft + {3,3}{tf} + {3,3}tt)
+        //            + {2,3}ff + {3, 2}tt + {2,-1}ff
+        10.0i + 15.0,         // 2, 3 -> {2,3}ft + {3,2}tf
+        11.0i + 14.0,         // 3, 2 -> {2,3}tf + {3,2}ft
+        12.0i + 13.0 + 200.0i // 3, 3 -> {2,3}tt + {3,2}ff + shunt(1)
     };
 
     // asym input
@@ -135,6 +140,7 @@ TEST_CASE("Test y bus") {
         CHECK(y_bus_entry_indptr == ybus.y_bus_entry_indptr());
         CHECK(ybus.admittance().size() == admittance_sym.size());
         for (size_t i = 0; i < admittance_sym.size(); i++) {
+            CAPTURE(i);
             CHECK(cabs(ybus.admittance()[i] - admittance_sym[i]) < numerical_tolerance);
         }
 
@@ -220,26 +226,47 @@ TEST_CASE("Test y bus") {
 
 TEST_CASE("Test one bus system") {
     MathModelTopology topo{};
+    MathModelParam<symmetric_t> param_sym;
     topo.phase_shift = {0.0};
-    topo.shunts_per_bus = {from_sparse, {0, 0}};
 
     // output
     IdxVector const indptr = {0, 1};
     IdxVector const col_indices = {0};
-    Idx nnz = 1;
+    Idx const nnz = 1;
     IdxVector const bus_entry = {0};
     IdxVector const lu_transpose_entry = {0};
-    IdxVector const y_bus_entry_indptr = {0, 0};
 
-    YBus<symmetric_t> const ybus{topo, {}};
+    SUBCASE("One shunt") {
+        topo.shunts_per_bus = {from_sparse, {0, 0}};
+        IdxVector const y_bus_entry_indptr = {0, 0};
 
-    CHECK(ybus.size() == 1);
-    CHECK(ybus.nnz() == nnz);
-    CHECK(indptr == ybus.row_indptr());
-    CHECK(col_indices == ybus.col_indices());
-    CHECK(bus_entry == ybus.bus_entry());
-    CHECK(lu_transpose_entry == ybus.lu_transpose_entry());
-    CHECK(y_bus_entry_indptr == ybus.y_bus_entry_indptr());
+        YBus<symmetric_t> const ybus{topo, param_sym};
+
+        CHECK(ybus.size() == 1);
+        CHECK(ybus.nnz() == nnz);
+        CHECK(indptr == ybus.row_indptr());
+        CHECK(col_indices == ybus.col_indices());
+        CHECK(bus_entry == ybus.bus_entry());
+        CHECK(lu_transpose_entry == ybus.lu_transpose_entry());
+        CHECK(y_bus_entry_indptr == ybus.y_bus_entry_indptr());
+    }
+    SUBCASE("Branch into itself") {
+        topo.branch_bus_idx = {{0, 0}};
+        param_sym.branch_param = {// ff, ft,   tf,   tt
+                                  {1.0i, 2.0i, 2.0i, 1.0i}};
+
+        IdxVector const y_bus_entry_indptr = {0, 4};
+
+        YBus<symmetric_t> const ybus{topo, param_sym};
+
+        CHECK(ybus.size() == 1);
+        CHECK(ybus.nnz() == nnz);
+        CHECK(indptr == ybus.row_indptr());
+        CHECK(col_indices == ybus.col_indices());
+        CHECK(bus_entry == ybus.bus_entry());
+        CHECK(lu_transpose_entry == ybus.lu_transpose_entry());
+        CHECK(y_bus_entry_indptr == ybus.y_bus_entry_indptr());
+    }
 }
 
 TEST_CASE("Test fill-in y bus") {
