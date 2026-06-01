@@ -91,6 +91,8 @@ graph TD
         flattened over all batches.
   - **{py:class}`ColumnarData <power_grid_model.data_types.ColumnarData>`:** A dictionary of attributes as keys and
     individual numpy arrays as values.
+    This format is described in more detail in
+    [Native Data Interface](../advanced_documentation/native-data-interface.md#columnar-data-format).
     - **{py:class}`SingleColumnarData <power_grid_model.data_types.SingleColumnarData>`:** A dictionary of attributes as
       keys and `SingleColumn` as values in a single dataset.
     - **{py:class}`BatchColumnarData <power_grid_model.data_types.BatchColumnarData>`:** Multiple batches of data can be
