@@ -177,8 +177,7 @@ TEST_CASE("LU solver with ill-conditioned system") {
 
         SUBCASE("Selective inversion error with perturbation") {
             solver.prefactorize(data, perm, true);
-            CHECK_THROWS_AS(solver.inplace_selective_inverse_with_prefactorized_matrix(data, perm),
-                            SparseMatrixError);
+            CHECK_THROWS_AS(solver.inplace_selective_inverse_with_prefactorized_matrix(data, perm), SparseMatrixError);
         }
     }
 
