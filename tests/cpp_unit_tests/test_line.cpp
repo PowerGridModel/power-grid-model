@@ -61,6 +61,10 @@ TEST_CASE("Test line") {
     ComplexValue<asymmetric_t> const uaf{1.0};
     ComplexValue<asymmetric_t> const uat{0.9};
 
+    // regular result
+    BranchSolverOutput<symmetric_t> const branch_solver_output{
+        .s_f = 1.0 - 1.5i, .s_t = 1.5 - 1.5i, .i_f = 1.0 - 2.0i, .i_t = 2.0 - 1.0i};
+
     // Short circuit results
     DoubleComplex const if_sc{1.0, 1.0};
     DoubleComplex const it_sc{2.0, 2.0 * sqrt3};
@@ -69,7 +73,7 @@ TEST_CASE("Test line") {
 
     CHECK(line.math_model_type() == ComponentType::branch);
 
-    SUBCASE("Voltge error") { CHECK_THROWS_AS(Line(input, 50.0, 10.0e3, 50.0e3), ConflictVoltage); }
+    SUBCASE("Voltage error") { CHECK_THROWS_AS(Line(input, 50.0, 10.0e3, 50.0e3), ConflictVoltage); }
 
     SUBCASE("General") {
         CHECK(branch.from_node() == 2);
@@ -140,11 +144,6 @@ TEST_CASE("Test line") {
     }
 
     SUBCASE("Symmetric results with direct power and current output") {
-        BranchSolverOutput<symmetric_t> branch_solver_output{};
-        branch_solver_output.i_f = 1.0 - 2.0i;
-        branch_solver_output.i_t = 2.0 - 1.0i;
-        branch_solver_output.s_f = 1.0 - 1.5i;
-        branch_solver_output.s_t = 1.5 - 1.5i;
         BranchOutput<symmetric_t> const output = branch.get_output<symmetric_t>(branch_solver_output);
         CHECK(output.id == 1);
         CHECK(output.energized);
@@ -245,6 +244,56 @@ TEST_CASE("Test line") {
         CHECK(inv.id == expected.id);
         CHECK(inv.from_status == expected.from_status);
         CHECK(inv.to_status == expected.to_status);
+    }
+
+    SUBCASE("Lines into itself") {
+        auto line_into_itself_input = input;
+        line_into_itself_input.to_node = 2;
+        Line line_into_itself{line_into_itself_input, 50.0, 10.0e3, 10.0e3};
+        Branch& branch_into_itself = line_into_itself;
+
+        CHECK(branch_into_itself.from_node() == branch.from_node());
+        CHECK(branch_into_itself.to_node() == branch_into_itself.from_node());
+
+        CHECK(branch_into_itself.from_status() == branch.from_status());
+        CHECK(branch_into_itself.to_status() == branch.to_status());
+        CHECK(branch_into_itself.branch_status() == branch.branch_status());
+        CHECK(branch_into_itself.status(BranchSide::from) == branch.status(BranchSide::from));
+        CHECK(branch_into_itself.status(BranchSide::to) == branch.status(BranchSide::to));
+        CHECK(branch_into_itself.base_i_from() == branch.base_i_from());
+        CHECK(branch_into_itself.base_i_to() == branch.base_i_to());
+        CHECK(branch_into_itself.phase_shift() == branch.phase_shift());
+        CHECK(branch_into_itself.is_param_mutable() == branch.is_param_mutable());
+
+        SUBCASE("Symmetric parameters") {
+            auto const params = branch_into_itself.calc_param<symmetric_t>();
+            auto const ref_params = branch.calc_param<symmetric_t>();
+            CHECK(params.yff() == ref_params.yff());
+            CHECK(params.ytt() == ref_params.ytt());
+            CHECK(params.ytf() == ref_params.ytf());
+            CHECK(params.yft() == ref_params.yft());
+        }
+        SUBCASE("Asymmetric parameters") {
+            auto const params = branch_into_itself.calc_param<asymmetric_t>();
+            auto const ref_params = branch.calc_param<asymmetric_t>();
+            CHECK((cabs(params.yff() - ref_params.yff()) < numerical_tolerance).all());
+            CHECK((cabs(params.ytt() - ref_params.ytt()) < numerical_tolerance).all());
+            CHECK((cabs(params.ytf() - ref_params.ytf()) < numerical_tolerance).all());
+            CHECK((cabs(params.yft() - ref_params.yft()) < numerical_tolerance).all());
+        }
+        SUBCASE("Sym output") {
+            auto const branch_into_itself_solver_output =
+                BranchSolverOutput<symmetric_t>{.s_f = branch_solver_output.s_f,
+                                                .s_t = branch_solver_output.s_f, // same node, so should be s_f
+                                                .i_f = branch_solver_output.i_f,
+                                                .i_t = branch_solver_output.i_f};
+            auto const branch_into_itself_output =
+                branch_into_itself.get_output<symmetric_t>(branch_into_itself_solver_output);
+            CHECK(branch_into_itself_output.s_from == branch.get_output<symmetric_t>(branch_solver_output).s_from);
+            CHECK(branch_into_itself_output.s_to == branch_into_itself_output.s_from);
+            CHECK(branch_into_itself_output.i_from == branch.get_output<symmetric_t>(branch_solver_output).i_from);
+            CHECK(branch_into_itself_output.i_to == branch_into_itself_output.i_from);
+        }
     }
 }
 
