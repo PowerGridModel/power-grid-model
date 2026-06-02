@@ -45,8 +45,9 @@
  *     \          +p16/                 /           $1 $2                      [10]                        [11:lg1+p6]
  *      1 -->+p2+p10 [3+v3:s3X,h0] -- 2              \  \
  *                    |         |                     [12]
- *                    |         |
- *                    \----8----/                                   [9:s2X+p3,h2]
+ *                    |         |                                                                 /--$0--\
+ *                    \----8----/                                   [9:s2X+p3,h2]          [13:s3]---$1---(b4)
+ *                                                                                                \--$2--/
  *
  *
  * Math model #0:                       Math model #1:
@@ -63,6 +64,11 @@
  *                    |     |                       \ \
  *                    |     |                        [2]
  *                    \--4--/
+ *
+ *                                      Math model #2:
+ *                                                       /--0-->
+ *                                                 [1:s0]---1-->[0]
+ *                                                       \--2-->
  *
  * Extra fill-in:
  * (3, 4)  by removing node 1
@@ -119,7 +125,7 @@ template <grouped_idx_vector_type T> void check_equal(T const& first, T const& s
 TEST_CASE("Test topology") {
     // component topology
     ComponentTopology comp_topo{};
-    comp_topo.n_node = 13;
+    comp_topo.n_node = 14;
 
     comp_topo.branch_node_idx = {
         {0, 1}, // 0
@@ -133,12 +139,13 @@ TEST_CASE("Test topology") {
         {1, 1}  // 8 (branch into itself)
     };
     comp_topo.branch3_node_idx = {
-        {1, 3, 2},  // b0
-        {11, 7, 8}, // b1
-        {10, 6, 5}, // b2
-        {4, 12, 12} // b3 (branch3 into itself)
+        {1, 3, 2},   // b0
+        {11, 7, 8},  // b1
+        {10, 6, 5},  // b2
+        {4, 12, 12}, // b3 (branch3 with 2 branches into itself)
+        {13, 13, 13} // b4 (branch3 with 3 branches into itself)
     };
-    comp_topo.source_node_idx = {0, 5, 9, 3};
+    comp_topo.source_node_idx = {0, 5, 9, 3, 13};
     comp_topo.load_gen_node_idx = {0, 11, 5, 1};
     comp_topo.load_gen_type = {LoadGenType::const_pq, LoadGenType::const_pq, LoadGenType::const_i,
                                LoadGenType::const_y};
@@ -185,15 +192,13 @@ TEST_CASE("Test topology") {
         {1, 1, 1}, // b1
         {0, 1, 1}, // b2
         {1, 1, 1}, // b3
+        {1, 1, 1}, // b4
     };
     comp_conn.branch_phase_shift = {0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     comp_conn.branch3_phase_shift = {
-        {0.0, -1.0, 0.0},
-        {0.0, 0.0, 0.0},
-        {0.0, 0.0, 0.0},
-        {0.0, 0.0, 0.0},
+        {0.0, -1.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0},
     };
-    comp_conn.source_connected = {1, 1, 0, 0};
+    comp_conn.source_connected = {1, 1, 0, 0, 1};
 
     // result
     TopologicalComponentToMathCoupling comp_coup_ref{};
@@ -207,7 +212,7 @@ TEST_CASE("Test topology") {
         {.group = 1, .pos = 4}, // Topological node 4 has become node 2 in mathematical model (group) 1
         {.group = 1, .pos = 5},
         {.group = 1, .pos = 0},
-        // 7, 8, 9, 10, 11
+        // 7, 8, 9, 10, 11, 13
         {.group = -1, .pos = -1}, // Topological node 7 is not included in the mathematical model, because it was not
                                   // connected to any power source
         {.group = -1, .pos = -1},
@@ -215,16 +220,21 @@ TEST_CASE("Test topology") {
         {.group = -1, .pos = -1},
         {.group = -1, .pos = -1},
         {.group = 1, .pos = 2},
-        // b0, b1, b2, b3
+        // 13
+        {.group = 2, .pos = 1},
+        // b0, b1, b2, b3, b4
         {.group = 0, .pos = 3}, // Branch3 b0 is replaced by a virtual node 3, in mathematical model 0
         {.group = -1, .pos = -1},
         {.group = 1, .pos = 1},
-        {.group = 1, .pos = 3}};
+        {.group = 1, .pos = 3},
+        {.group = 2, .pos = 0},
+    };
     comp_coup_ref.source = {
         {.group = 0, .pos = 0},   // 0
         {.group = 1, .pos = 0},   // 1
         {.group = -1, .pos = -1}, // 2
         {.group = -1, .pos = -1}, // 3
+        {.group = 2, .pos = 0},   // 4
     };
     comp_coup_ref.branch = {
         {.group = 0, .pos = 0},   // 0
@@ -242,6 +252,7 @@ TEST_CASE("Test topology") {
         {.group = -1, .pos = {-1, -1, -1}}, // b1
         {.group = 1, .pos = {2, 3, 4}},     // b2
         {.group = 1, .pos = {5, 6, 7}},     // b3
+        {.group = 2, .pos = {0, 1, 2}},     // b4
     };
     comp_coup_ref.load_gen = {
         {.group = 0, .pos = 0}, {.group = -1, .pos = -1}, {.group = 1, .pos = 0}, {.group = 0, .pos = 1}};
@@ -307,7 +318,24 @@ TEST_CASE("Test topology") {
     math1.power_sensors_per_branch_from = {from_dense, {}, 8};
     math1.power_sensors_per_branch_to = {from_dense, {}, 8};
 
-    std::vector<MathModelTopology> math_topology_ref = {math0, math1};
+    // Sub graph / math model 2
+    MathModelTopology math2;
+    math2.slack_bus = 1;
+    math2.sources_per_bus = {from_dense, {1}, 2};
+    math2.branch_bus_idx = {{1, 0}, {1, 0}, {1, 0}};
+    math2.phase_shift = {0, 0};
+    math2.load_gens_per_bus = {from_dense, {}, 2};
+    math2.load_gen_type = {};
+    math2.shunts_per_bus = {from_dense, {}, 2};
+    math2.voltage_sensors_per_bus = {from_dense, {}, 2};
+    math2.power_sensors_per_bus = {from_dense, {}, 2};
+    math2.power_sensors_per_source = {from_dense, {}, 1};
+    math2.power_sensors_per_shunt = {from_dense, {}, 0};
+    math2.power_sensors_per_load_gen = {from_dense, {}, 0};
+    math2.power_sensors_per_branch_from = {from_dense, {}, 3};
+    math2.power_sensors_per_branch_to = {from_dense, {}, 3};
+
+    std::vector<MathModelTopology> math_topology_ref = {math0, math1, math2};
 
     SUBCASE("Test topology result") {
         Topology topo{comp_topo, comp_conn};
@@ -316,7 +344,7 @@ TEST_CASE("Test topology") {
         REQUIRE(topo_comp_coup_ptr != nullptr);
         auto const& topo_comp_coup = *topo_comp_coup_ptr;
 
-        CHECK(math_topology.size() == 2);
+        CHECK(math_topology.size() == math_topology_ref.size());
         // test component coupling
         CHECK(topo_comp_coup.node == comp_coup_ref.node);
         CHECK(topo_comp_coup.source == comp_coup_ref.source);
