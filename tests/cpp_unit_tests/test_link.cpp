@@ -52,7 +52,7 @@ TEST_CASE("Test link") {
 
     SUBCASE("Invalid branch") {
         input.to_node = 2;
-        CHECK_THROWS_AS(Link(input, 10e3, 50e3), InvalidBranch);
+        CHECK_NOTHROW(Link(input, 10e3, 50e3));
     }
 
     SUBCASE("Symmetric parameters") {

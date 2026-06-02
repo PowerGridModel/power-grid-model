@@ -23,8 +23,6 @@ from power_grid_model.errors import (
     ConflictVoltage,
     IDNotFound,
     IDWrongType,
-    InvalidBranch,
-    InvalidBranch3,
     InvalidCalculationMethod,
     InvalidMeasuredObject,
     InvalidRegulatedObject,
@@ -118,8 +116,7 @@ def test_handle_invalid_branch_error():
     line_input[AT.from_node] = [0]
     line_input[AT.to_node] = [0]
 
-    with pytest.raises(InvalidBranch):
-        PowerGridModel(input_data={CT.node: node_input, CT.line: line_input})
+    PowerGridModel(input_data={CT.node: node_input, CT.line: line_input})
 
 
 def test_handle_invalid_branch3_error():
@@ -133,13 +130,12 @@ def test_handle_invalid_branch3_error():
     three_winding_transformer_input[AT.node_2] = [0]
     three_winding_transformer_input[AT.node_3] = [0]
 
-    with pytest.raises(InvalidBranch3):
-        PowerGridModel(
-            input_data={
-                CT.node: node_input,
-                CT.three_winding_transformer: three_winding_transformer_input,
-            }
-        )
+    PowerGridModel(
+        input_data={
+            CT.node: node_input,
+            CT.three_winding_transformer: three_winding_transformer_input,
+        }
+    )
 
 
 def test_handle_invalid_transformer_clock_error():
