@@ -43,6 +43,9 @@
  *    \                $1                /         [9:s2X+p3,h2]               X                           |
  *     \          +p16/                 /                                     [10]                        [11:lg1+p6]
  *      1 -->+p2+p10 [3+v3:s3X,h0] -- 2
+ *                    |         |
+ *                    |         |
+ *                    \----8----/
  *
  *
  * Math model #0:                       Math model #1:
@@ -56,6 +59,9 @@
  *    \                5                                                                  2
  *     \          +pf3/                                                                 X
  *      1 ->+pt1+pt2 [1+v2:h0] -- 2 --X
+ *                    |     |
+ *                    |     |
+ *                    \--7--/
  *
  * Extra fill-in:
  * (3, 4)  by removing node 1
@@ -122,7 +128,8 @@ TEST_CASE("Test topology") {
         {6, 7}, // 4
         {4, 2}, // 5
         {5, 4}, // 6
-        {4, 5}  // 7
+        {4, 5}, // 7
+        {1, 1}  // 8
     };
     comp_topo.branch3_node_idx = {
         {1, 3, 2},  // b0
@@ -169,13 +176,14 @@ TEST_CASE("Test topology") {
         {0, 1}, // 5
         {1, 1}, // 6
         {1, 1}, // 7
+        {1, 1}, // 8
     };
     comp_conn.branch3_connected = {
         {1, 1, 1}, // b0
         {1, 1, 1}, // b1
         {0, 1, 1}, // b2
     };
-    comp_conn.branch_phase_shift = {0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    comp_conn.branch_phase_shift = {0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     comp_conn.branch3_phase_shift = {
         {0.0, -1.0, 0.0},
         {0.0, 0.0, 0.0},
@@ -221,9 +229,10 @@ TEST_CASE("Test topology") {
         {.group = 0, .pos = 3},   // 5
         {.group = 1, .pos = 0},   // 6
         {.group = 1, .pos = 1},   // 7
+        {.group = 0, .pos = 4},   // 8
     };
     comp_coup_ref.branch3 = {
-        {.group = 0, .pos = {4, 5, 6}},     // b0
+        {.group = 0, .pos = {5, 6, 7}},     // b0
         {.group = -1, .pos = {-1, -1, -1}}, // b1
         {.group = 1, .pos = {2, 3, 4}},     // b2
     };
@@ -257,7 +266,7 @@ TEST_CASE("Test topology") {
     MathModelTopology math0;
     math0.slack_bus = 1;
     math0.sources_per_bus = {from_dense, {1}, 5};
-    math0.branch_bus_idx = {{1, 2}, {1, 4}, {4, -1}, {-1, 0}, {2, 3}, {4, 3}, {0, 3}};
+    math0.branch_bus_idx = {{1, 2}, {1, 4}, {4, -1}, {-1, 0}, {2, 2}, {2, 3}, {4, 3}, {0, 3}};
     math0.phase_shift = {0.0, 0.0, 0.0, 0.0, -1.0};
     math0.load_gens_per_bus = {from_dense, {1, 2}, 5};
     math0.load_gen_type = {LoadGenType::const_pq, LoadGenType::const_y};
@@ -267,11 +276,11 @@ TEST_CASE("Test topology") {
     math0.power_sensors_per_source = {from_dense, {}, 1};
     math0.power_sensors_per_shunt = {from_dense, {}, 1};
     math0.power_sensors_per_load_gen = {from_dense, {1}, 2};
-    math0.power_sensors_per_branch_from = {from_dense, {1, 1, 4, 5, 6}, 7};
+    math0.power_sensors_per_branch_from = {from_dense, {1, 1, 5, 6, 7}, 8};
     // 7 branches, 3 branch-to power sensors
     // sensor 0 is connected to branch 0
     // sensor 1 and 2 are connected to branch 1
-    math0.power_sensors_per_branch_to = {from_dense, {0, 1, 1}, 7};
+    math0.power_sensors_per_branch_to = {from_dense, {0, 1, 1}, 8};
     math0.fill_in = {{2, 4}};
 
     // Sub graph / math model 1
