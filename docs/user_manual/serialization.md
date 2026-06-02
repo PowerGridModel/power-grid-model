@@ -40,11 +40,12 @@ data.
 
 #### JSON schema attributes object
 
-[`Attributes`](#json-schema-attributes-object) defines the attribute ordering
-for each [`Component`](#json-schema-component) (e.g.: `"node"`).
-It is required when a component uses `DenseComponentData`, since dense representation relies on a fixed attribute order.
+[`Attributes`](#json-schema-attributes-object) defines the attribute list and ordering
+for each [`Component`](#json-schema-component) (e.g.: `"node"`)when component data is represented
+using the compact list format (`use_compact_list=True`).
 
-It may be omitted for components that only use `SparseComponentData`.
+The order of attributes in this section determines the order of values in the compact list representation.
+This is independent of whether the component data is stored as `DenseComponentData` or `SparseComponentData`.
 
 - [`Attributes`](#json-schema-attributes-object): `Object`
   - [`Component`](#json-schema-component): [`ComponentAttributes`](#json-schema-component-attributes)
@@ -58,6 +59,7 @@ components, it may be `{"branch": ["from_status"]}`.
 A [`Component`](#json-schema-component) string contains the component name (see also the [Components](components.md)
 reference).
 E.g.: `"node"`
+Fis
 
 - [`Component`](#json-schema-component): `string`
 
