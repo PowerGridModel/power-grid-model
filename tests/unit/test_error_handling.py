@@ -8,6 +8,7 @@ import pytest
 
 from power_grid_model import PowerGridModel
 from power_grid_model._core.dataset_definitions import AttributeType as AT, ComponentType as CT, DatasetType
+from power_grid_model._core.errors import InvalidBranch, InvalidBranch3
 from power_grid_model._core.power_grid_meta import initialize_array
 from power_grid_model.enum import (
     AngleMeasurementType,
@@ -498,3 +499,13 @@ def test_handle_power_grid_dataset_error():
 @pytest.mark.skip(reason="TODO")
 def test_handle_power_grid_unreachable_error():
     pass
+
+
+def test_deprecated_invalid_branch_error():
+    with pytest.deprecated_call():
+        InvalidBranch()
+
+
+def test_deprecated_invalid_branch3_error():
+    with pytest.deprecated_call():
+        InvalidBranch3()

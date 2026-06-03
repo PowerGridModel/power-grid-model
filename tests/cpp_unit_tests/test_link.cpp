@@ -11,13 +11,11 @@
 #include <power_grid_model/calculation_parameters.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/enum.hpp>
-#include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/common/three_phase_tensor.hpp>
 #include <power_grid_model/component/base.hpp>
 
 #include <doctest/doctest.h>
 
-#include <cmath>
 #include <complex>
 
 namespace power_grid_model {

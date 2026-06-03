@@ -187,6 +187,16 @@ inline ComplexValue<asymmetric_t> piecewise_complex_value(T<Derived> const& x) {
 // piecewise factory construction for complex vector
 inline ComplexValue<asymmetric_t> piecewise_complex_value(ComplexValue<asymmetric_t> const& x) { return x; }
 
+// basic operations
+using Eigen::arg;
+using Eigen::conj;
+using Eigen::imag;
+using Eigen::real;
+using std::arg;
+using std::conj;
+using std::imag;
+using std::real;
+
 // abs
 template <std::floating_point Float> inline Float cabs(Float x) { return std::abs(x); }
 template <std::floating_point Float> inline Float abs2(Float x) { return x * x; }

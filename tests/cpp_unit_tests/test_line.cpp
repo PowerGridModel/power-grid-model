@@ -249,8 +249,8 @@ TEST_CASE("Test line") {
     SUBCASE("Lines into itself") {
         auto line_into_itself_input = input;
         line_into_itself_input.to_node = 2;
-        Line line_into_itself{line_into_itself_input, 50.0, 10.0e3, 10.0e3};
-        Branch& branch_into_itself = line_into_itself;
+        Line const line_into_itself{line_into_itself_input, 50.0, 10.0e3, 10.0e3};
+        Branch const& branch_into_itself = line_into_itself;
 
         CHECK(branch_into_itself.from_node() == branch.from_node());
         CHECK(branch_into_itself.to_node() == branch_into_itself.from_node());
