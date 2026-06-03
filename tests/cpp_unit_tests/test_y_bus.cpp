@@ -88,9 +88,9 @@ TEST_CASE("Test y bus") {
         {1, 2}, // branch 1 from node 1 to 2
         {2, 3}, // branch 2 from node 2 to 3
         {2, 2}, // branch 3 from node 2 to 2 (loop into itself)
-        {3, 2}, // branch 4 from node 3 to 2
-        {0, 1}, // branch 5 from node 0 to 1
-        {2, -1} // branch 6 from node 2 to "not connected"
+        {3, 2}, // branch 6 from node 3 to 2
+        {0, 1}, // branch 4 from node 0 to 1
+        {2, -1} // branch 5 from node 2 to "not connected"
     };
     param_sym.branch_param = {
         // ff, ft, tf, tt
