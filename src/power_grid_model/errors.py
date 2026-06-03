@@ -16,6 +16,8 @@ from power_grid_model._core.errors import (  # noqa: F401
     IDNotFound,
     IDWrongType,
     InvalidArguments,
+    InvalidBranch,
+    InvalidBranch3,
     InvalidCalculationMethod,
     InvalidID,
     InvalidMeasuredObject,

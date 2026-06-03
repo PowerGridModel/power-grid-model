@@ -8,7 +8,6 @@ import pytest
 
 from power_grid_model import PowerGridModel
 from power_grid_model._core.dataset_definitions import AttributeType as AT, ComponentType as CT, DatasetType
-from power_grid_model._core.errors import InvalidBranch, InvalidBranch3
 from power_grid_model._core.power_grid_meta import initialize_array
 from power_grid_model.enum import (
     AngleMeasurementType,
@@ -24,6 +23,8 @@ from power_grid_model.errors import (
     ConflictVoltage,
     IDNotFound,
     IDWrongType,
+    InvalidBranch,
+    InvalidBranch3,
     InvalidCalculationMethod,
     InvalidMeasuredObject,
     InvalidRegulatedObject,
@@ -107,7 +108,7 @@ def test_handle_missing_case_for_enum_error():
         )
 
 
-def test_handle_invalid_branch_error():
+def test_handle_branch_into_itself_is_valid():
     node_input = initialize_array(DatasetType.input, CT.node, 1)
     node_input[AT.id] = [0]
     node_input[AT.u_rated] = [0.0]
@@ -120,7 +121,7 @@ def test_handle_invalid_branch_error():
     PowerGridModel(input_data={CT.node: node_input, CT.line: line_input})
 
 
-def test_handle_invalid_branch3_error():
+def test_handle_branch3_into_itself_is_valid():
     node_input = initialize_array(DatasetType.input, CT.node, 1)
     node_input[AT.id] = [0]
     node_input[AT.u_rated] = [0.0]
