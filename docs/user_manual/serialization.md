@@ -59,7 +59,6 @@ components, it may be `{"branch": ["from_status"]}`.
 A [`Component`](#json-schema-component) string contains the component name (see also the [Components](components.md)
 reference).
 E.g.: `"node"`
-Fis
 
 - [`Component`](#json-schema-component): `string`
 

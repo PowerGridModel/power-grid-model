@@ -13,13 +13,13 @@ For detailed data types used throughout `power-grid-model`, please refer to
 
 ## Buffer Type
 
-Defines how component data is ordered in memory.
+Defines how component data is ordered in memory. Two buffer types are supported: row-based and columnar-based.
 
 ### Row-based (row-major)
 
 Attributes of the same component are stored contiguously before moving to the next component.
 
-### Columnar (column-major)
+### Columnar-based (column-major)
 
 Attributes are grouped across components by attribute type.
 
@@ -49,13 +49,15 @@ Defines whether all scenarios operate on the same component IDs.
 
 All scenarios modify the same component IDs in the same order.
 
-A reset is required between scenarios.
+Each scenario starts from the original input dataset, without carrying over changes from previous scenarios, therefore
+a reset is required between scenarios.
 
 ### Dependent
 
 Different scenarios may modify different components.
 
-A reset is required between scenarios.
+Each scenario starts from the original input dataset, without carrying over changes from previous scenarios, therefore
+a reset is required between scenarios.
 
 ## Component Data Uniformity
 
@@ -77,7 +79,8 @@ Scenarios contain different numbers of component entries.
 
 ## Serialization Representation
 
-Defines how datasets are serialized.
+Defines how datasets are serialized. Three serialization representations are supported: compact list, named map,
+and mixed.
 
 ### Compact List
 
