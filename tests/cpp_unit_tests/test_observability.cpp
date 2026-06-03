@@ -1989,19 +1989,19 @@ TEST_CASE("Test Observability - Necessary check end to end test") {
     }
 }
 
-TEST_CASE("Test Observability - one node, one source, one load, one branch into itself") {
+TEST_CASE("Test Observability - one node, one source, one load") {
     MathModelTopology topo;
     topo.slack_bus = 0;
     topo.phase_shift = {0.0};
     topo.branch_bus_idx = {{0, 0}};
     topo.sources_per_bus = {from_dense, {0}, 1};
     topo.shunts_per_bus = {from_dense, {}, 1};
-    topo.load_gens_per_bus = {from_dense, {1}, 1};
+    topo.load_gens_per_bus = {from_dense, {0}, 1};
     topo.power_sensors_per_bus = {from_dense, {}, 1};
     topo.power_sensors_per_source = {from_dense, {}, 1};
     topo.power_sensors_per_load_gen = {from_dense, {}, 1};
     topo.power_sensors_per_shunt = {from_dense, {}, 1};
-    topo.power_sensors_per_branch_from = {from_dense, {0}, 1};
+    topo.power_sensors_per_branch_from = {from_dense, {}, 1};
     topo.power_sensors_per_branch_to = {from_dense, {}, 1};
     topo.current_sensors_per_branch_from = {from_dense, {}, 1};
     topo.current_sensors_per_branch_to = {from_dense, {}, 1};
@@ -2013,11 +2013,88 @@ TEST_CASE("Test Observability - one node, one source, one load, one branch into 
 
     StateEstimationInput<symmetric_t> se_input;
     se_input.source_status = {1};
+    se_input.load_gen_status = {1};
     se_input.measured_voltage = {{.value = 1.0, .variance = 1.0}};
-    se_input.measured_branch_from_power = {
-        {.real_component = {.value = 1.0, .variance = 1.0}, .imag_component = {.value = 0.0, .variance = 1.0}}};
 
-    check_observable(topo, std::move(param), se_input);
+    SUBCASE("No power sensor or current sensor, no branch into itself") {
+        topo.branch_bus_idx.clear();
+        topo.power_sensors_per_branch_from = {from_dense, {}, 0};
+        topo.current_sensors_per_branch_from = {from_dense, {}, 0};
+        check_observable(topo, std::move(param), se_input);
+    }
+    SUBCASE("No power sensor or current sensor, with branch into itself") {
+        check_observable(topo, std::move(param), se_input);
+    }
+    SUBCASE("With branch into itself with power sensor") {
+        topo.power_sensors_per_branch_from = {from_dense, {0}, 1};
+        se_input.measured_branch_from_power = {
+            {.real_component = {.value = 1.0, .variance = 1.0}, .imag_component = {.value = 0.0, .variance = 1.0}}};
+        check_observable(topo, param, se_input);
+    }
+    SUBCASE("With branch into itself with current sensor") {
+        topo.current_sensors_per_branch_from = {from_dense, {0}, 1};
+        se_input.measured_branch_from_current = {
+            {.angle_measurement_type = AngleMeasurementType::local_angle,
+             .measurement = {.real_component = {.value = 10.0, .variance = 100.0},
+                             .imag_component = {.value = 0.0, .variance = 200.0}}}};
+        check_observable(topo, std::move(param), se_input);
+    }
+}
+
+TEST_CASE("Test Observability - two nodes, one source, one load, one branch") {
+    MathModelTopology topo;
+    topo.slack_bus = 0;
+    topo.phase_shift = {0.0, 0.0};
+    topo.branch_bus_idx = {{0, 1}};
+    topo.sources_per_bus = {from_dense, {0}, 2};
+    topo.shunts_per_bus = {from_dense, {}, 2};
+    topo.load_gens_per_bus = {from_dense, {1}, 2};
+    topo.power_sensors_per_bus = {from_dense, {}, 2};
+    topo.power_sensors_per_source = {from_dense, {}, 2};
+    topo.power_sensors_per_load_gen = {from_dense, {}, 2};
+    topo.power_sensors_per_shunt = {from_dense, {}, 2};
+    topo.power_sensors_per_branch_from = {from_dense, {}, 1};
+    topo.power_sensors_per_branch_to = {from_dense, {}, 1};
+    topo.current_sensors_per_branch_from = {from_dense, {}, 1};
+    topo.current_sensors_per_branch_to = {from_dense, {}, 1};
+    topo.voltage_sensors_per_bus = {from_dense, {0}, 2};
+
+    MathModelParam<symmetric_t> param;
+    param.source_param = {SourceCalcParam{.y1 = 1.0, .y0 = 1.0}};
+    param.branch_param = {{1.0, 2.0, 2.0, 1.0}};
+
+    StateEstimationInput<symmetric_t> se_input;
+    se_input.source_status = {1};
+    se_input.load_gen_status = {1};
+    se_input.measured_voltage = {{.value = 1.0, .variance = 1.0}};
+
+    SUBCASE("No power sensor or current sensor") { check_not_observable(topo, std::move(param), se_input); }
+    SUBCASE("With branch power sensor") {
+        topo.power_sensors_per_branch_from = {from_dense, {0}, 1};
+        se_input.measured_branch_from_power = {
+            {.real_component = {.value = 1.0, .variance = 1.0}, .imag_component = {.value = 0.0, .variance = 1.0}}};
+        check_observable(topo, param, se_input);
+    }
+    SUBCASE("With current sensor") {
+        topo.current_sensors_per_branch_from = {from_dense, {0}, 1};
+        se_input.measured_branch_from_current = {
+            {.angle_measurement_type = AngleMeasurementType::local_angle,
+             .measurement = {.real_component = {.value = 10.0, .variance = 100.0},
+                             .imag_component = {.value = 0.0, .variance = 200.0}}}};
+        check_observable(topo, std::move(param), se_input);
+    }
+    SUBCASE("Power or current sensor only on branch into itself does not 'fix' the unobservability of the network") {
+        topo.branch_bus_idx = {{0, 1}, {1, 1}};
+        param.branch_param = {{1.0, 2.0, 2.0, 1.0}, {2.0, 4.0, 4.0, 2.0}};
+        topo.power_sensors_per_branch_from = {from_dense, {1}, 2};
+        topo.power_sensors_per_branch_to = {from_dense, {}, 2};
+        topo.current_sensors_per_branch_from = {from_dense, {}, 2};
+        topo.current_sensors_per_branch_to = {from_dense, {}, 2};
+
+        se_input.measured_branch_from_power = {
+            {.real_component = {.value = 1.0, .variance = 1.0}, .imag_component = {.value = 0.0, .variance = 1.0}}};
+        check_not_observable(topo, param, se_input);
+    }
 }
 
 TEST_CASE("Test ObservabilityResult - use_perturbation with non-observable network") {
