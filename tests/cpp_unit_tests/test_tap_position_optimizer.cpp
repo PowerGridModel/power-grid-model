@@ -491,7 +491,7 @@ TEST_CASE("Test Transformer ranking") {
                 {{Idx2D{.group = 3, .pos = 0}, Idx2D{.group = 3, .pos = 1}, Idx2D{.group = 4, .pos = 0}},
                  {Idx2D{.group = 3, .pos = 2}},
                  {Idx2D{.group = 3, .pos = 3}, Idx2D{.group = 3, .pos = 4}}}};
-            CHECK(order == ref_order);
+            CHECK(std::ranges::equal(order, ref_order));
         }
     }
 
@@ -566,7 +566,7 @@ TEST_CASE("Test Transformer ranking") {
             {{Idx2D{.group = 3, .pos = 0}, Idx2D{.group = 3, .pos = 1}, Idx2D{.group = 4, .pos = 0},
               Idx2D{.group = 3, .pos = 4}},
              {Idx2D{.group = 3, .pos = 2}, Idx2D{.group = 3, .pos = 3}, Idx2D{.group = 3, .pos = 5}}}};
-        CHECK(order == ref_order);
+        CHECK(std::ranges::equal(order, ref_order));
     }
 
     SUBCASE("Full grid 3 - For Meshed grid with low priority ranks") {
@@ -614,7 +614,7 @@ TEST_CASE("Test Transformer ranking") {
         pgm_tap::RankedTransformerGroups const order = pgm_tap::rank_transformers(state);
         pgm_tap::RankedTransformerGroups const ref_order{{{Idx2D{.group = 3, .pos = 0}}, {Idx2D{.group = 3, .pos = 2}}},
                                                          {{Idx2D{.group = 3, .pos = 1}}}};
-        CHECK(order == ref_order);
+        CHECK(std::ranges::equal(order, ref_order));
     }
 
     SUBCASE("Controlling from non source to source transformer") {
@@ -743,6 +743,47 @@ TEST_CASE("Test Transformer ranking") {
                                "being controlled from non-source side towards "
                                "source side:\n  Transformer IDs: 10");
         }
+    }
+
+    SUBCASE("Transformer into itself") {
+        // Test that a transformer with an edge to itself is handled correctly
+        // ========Test Grid========
+        //      [source 0]
+        //          |
+        //     [trafo 10] (WRONG: has an edge to itself)
+        //          |
+        //      [node 1] ==== [trafo 11] (into itself)
+        //          |
+        //     [trafo 12]
+        //          |
+        //      [node 2]
+
+        TestState state;
+        std::vector<NodeInput> const nodes{
+            {.id = 0, .u_rated = 150e3}, {.id = 1, .u_rated = 10e3}, {.id = 2, .u_rated = 10e3}};
+        main_core::add_component<Node>(state.components, nodes, 50.0);
+
+        std::vector<TransformerInput> const transformers{get_transformer(10, 0, 1, BranchSide::from)
+                                                         // Transformer with an edge to itself (wrong)
+                                                         ,
+                                                         get_transformer(11, 1, 1, BranchSide::from),
+                                                         get_transformer(12, 1, 2, BranchSide::from)};
+        main_core::add_component<Transformer>(state.components, transformers, 50.0);
+
+        std::vector<SourceInput> const sources{SourceInput{.id = 20, .node = 0, .status = IntS{1}, .u_ref = 1.0}};
+        main_core::add_component<Source>(state.components, sources, 50.0);
+
+        std::vector<TransformerTapRegulatorInput> const regulators{get_regulator(30, 10, ControlSide::to),
+                                                                   get_regulator(31, 11, ControlSide::to),
+                                                                   get_regulator(32, 12, ControlSide::to)};
+        main_core::add_component<TransformerTapRegulator>(state.components, regulators, 50.0);
+
+        state.components.set_construction_complete();
+
+        pgm_tap::RankedTransformerGroups const order = pgm_tap::rank_transformers(state);
+        pgm_tap::RankedTransformerGroups const ref_order{
+            {Idx2D{.group = 3, .pos = 0}}, {Idx2D{.group = 3, .pos = 2}}, {{Idx2D{.group = 3, .pos = 1}}}};
+        CHECK(std::ranges::equal(order, ref_order));
     }
 }
 

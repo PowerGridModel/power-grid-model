@@ -2020,11 +2020,9 @@ TEST_CASE("Test Observability - one node, one source, one load") {
         topo.branch_bus_idx.clear();
         topo.power_sensors_per_branch_from = {from_dense, {}, 0};
         topo.current_sensors_per_branch_from = {from_dense, {}, 0};
-        check_observable(topo, std::move(param), se_input);
+        check_observable(topo, param, se_input);
     }
-    SUBCASE("No power sensor or current sensor, with branch into itself") {
-        check_observable(topo, std::move(param), se_input);
-    }
+    SUBCASE("No power sensor or current sensor, with branch into itself") { check_observable(topo, param, se_input); }
     SUBCASE("With branch into itself with power sensor") {
         topo.power_sensors_per_branch_from = {from_dense, {0}, 1};
         se_input.measured_branch_from_power = {
@@ -2037,7 +2035,7 @@ TEST_CASE("Test Observability - one node, one source, one load") {
             {.angle_measurement_type = AngleMeasurementType::local_angle,
              .measurement = {.real_component = {.value = 10.0, .variance = 100.0},
                              .imag_component = {.value = 0.0, .variance = 200.0}}}};
-        check_observable(topo, std::move(param), se_input);
+        check_observable(topo, param, se_input);
     }
 }
 
@@ -2068,7 +2066,7 @@ TEST_CASE("Test Observability - two nodes, one source, one load, one branch") {
     se_input.load_gen_status = {1};
     se_input.measured_voltage = {{.value = 1.0, .variance = 1.0}};
 
-    SUBCASE("No power sensor or current sensor") { check_not_observable(topo, std::move(param), se_input); }
+    SUBCASE("No power sensor or current sensor") { check_not_observable(topo, param, se_input); }
     SUBCASE("With branch power sensor") {
         topo.power_sensors_per_branch_from = {from_dense, {0}, 1};
         se_input.measured_branch_from_power = {
@@ -2081,7 +2079,7 @@ TEST_CASE("Test Observability - two nodes, one source, one load, one branch") {
             {.angle_measurement_type = AngleMeasurementType::local_angle,
              .measurement = {.real_component = {.value = 10.0, .variance = 100.0},
                              .imag_component = {.value = 0.0, .variance = 200.0}}}};
-        check_observable(topo, std::move(param), se_input);
+        check_observable(topo, param, se_input);
     }
     SUBCASE("Power or current sensor only on branch into itself does not 'fix' the unobservability of the network") {
         topo.branch_bus_idx = {{0, 1}, {1, 1}};
