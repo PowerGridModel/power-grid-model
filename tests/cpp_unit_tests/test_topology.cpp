@@ -209,7 +209,7 @@ TEST_CASE("Test topology") {
         {.group = 0, .pos = 0},
         {.group = 0, .pos = 4},
         // 4 5 6
-        {.group = 1, .pos = 4}, // Topological node 4 has become node 2 in mathematical model (group) 1
+        {.group = 1, .pos = 4}, // Topological node 4 has become node 4 in mathematical model (group) 1
         {.group = 1, .pos = 5},
         {.group = 1, .pos = 0},
         // 7, 8, 9, 10, 11, 13

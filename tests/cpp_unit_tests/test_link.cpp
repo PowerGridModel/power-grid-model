@@ -48,7 +48,7 @@ TEST_CASE("Test link") {
         CHECK(branch.phase_shift() == 0.0);
     }
 
-    SUBCASE("Invalid branch") {
+    SUBCASE("Branch into itself is supported") {
         input.to_node = 2;
         CHECK_NOTHROW(Link(input, 10e3, 50e3));
     }
