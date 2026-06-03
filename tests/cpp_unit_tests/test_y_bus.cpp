@@ -24,6 +24,37 @@ namespace power_grid_model {
 
 namespace {
 using math_solver::YBusStructure;
+
+// asym input
+// Symmetrical parameters and admittances are converted to asymmetrical tensors,
+// i.e. each parameter/admittance x is converted to:
+//   x 0 0
+//   0 x 0
+//   0 0 x
+auto convert_to_asymmetrical(MathModelParam<symmetric_t> const& param_sym,
+                             ComplexTensorVector<symmetric_t> const& admittance_sym) {
+    std::pair<MathModelParam<asymmetric_t>, ComplexTensorVector<asymmetric_t>> result{
+        {}, ComplexTensorVector<asymmetric_t>(admittance_sym.size())};
+
+    auto& [param_asym, admittance_asym] = result;
+
+    // value
+    param_asym.branch_param.resize(param_sym.branch_param.size());
+    for (size_t i = 0; i < param_sym.branch_param.size(); i++) {
+        for (size_t j = 0; j < 4; j++) {
+            param_asym.branch_param[i].value[j] = ComplexTensor<asymmetric_t>{param_sym.branch_param[i].value[j]};
+        }
+    }
+    param_asym.shunt_param.resize(param_sym.shunt_param.size());
+    for (size_t i = 0; i < param_sym.shunt_param.size(); i++) {
+        param_asym.shunt_param[i] = ComplexTensor<asymmetric_t>{param_sym.shunt_param[i]};
+    }
+    // admittance_sym
+    for (size_t i = 0; i < admittance_sym.size(); i++) {
+        admittance_asym[i] = ComplexTensor<asymmetric_t>{admittance_sym[i]};
+    }
+    return result;
+}
 } // namespace
 
 TEST_CASE("Test y bus") {
@@ -105,29 +136,7 @@ TEST_CASE("Test y bus") {
         12.0i + 13.0 + 200.0i // 3, 3 -> {2,3}tt + {3,2}ff + shunt(1)
     };
 
-    // asym input
-    // Symmetrical parameters and admittances are converted to asymmetrical tensors,
-    // i.e. each parameter/admittance x is converted to:
-    //   x 0 0
-    //   0 x 0
-    //   0 0 x
-    MathModelParam<asymmetric_t> param_asym;
-    // value
-    param_asym.branch_param.resize(param_sym.branch_param.size());
-    for (size_t i = 0; i < param_sym.branch_param.size(); i++) {
-        for (size_t j = 0; j < 4; j++) {
-            param_asym.branch_param[i].value[j] = ComplexTensor<asymmetric_t>{param_sym.branch_param[i].value[j]};
-        }
-    }
-    param_asym.shunt_param.resize(param_sym.shunt_param.size());
-    for (size_t i = 0; i < param_sym.shunt_param.size(); i++) {
-        param_asym.shunt_param[i] = ComplexTensor<asymmetric_t>{param_sym.shunt_param[i]};
-    }
-    // admittance_sym
-    ComplexTensorVector<asymmetric_t> admittance_asym(admittance_sym.size());
-    for (size_t i = 0; i < admittance_sym.size(); i++) {
-        admittance_asym[i] = ComplexTensor<asymmetric_t>{admittance_sym[i]};
-    }
+    auto const [param_asym, admittance_asym] = convert_to_asymmetrical(param_sym, admittance_sym);
 
     SUBCASE("Test y bus construction (symmetrical)") {
         YBus<symmetric_t> const ybus{topo, param_sym};
@@ -266,6 +275,108 @@ TEST_CASE("Test one bus system") {
         CHECK(bus_entry == ybus.bus_entry());
         CHECK(lu_transpose_entry == ybus.lu_transpose_entry());
         CHECK(y_bus_entry_indptr == ybus.y_bus_entry_indptr());
+    }
+}
+
+TEST_CASE("Test cyclic three bus system with branch into itself") {
+
+    //     test Y bus struct
+    //     [
+    //             x, x, x
+    //             x, x, x
+    //             x, x, x
+    //     ]
+
+    //      [0]   = Node
+    // --0--> = Branch (from --id--> to)
+    //  -X-   = Open switch / not connected
+
+    //     Topology:
+
+    //                  /- 3 -\  }
+    //                  |     |  } loop from 1 to 1
+    //      /--- 0 --> [1] <--/  }
+    //      |           |
+    //     [0]          1
+    //      ^           v
+    //      \--- 2 --- [2] <--\  }
+    //                  |     |  } loop from 2 to 2
+    //                  \- 4 -/  }
+    MathModelTopology topo{};
+    MathModelParam<symmetric_t> param_sym;
+    topo.phase_shift.resize(3, 0.0);
+    topo.branch_bus_idx = {
+        {0, 1}, // branch 0 from node 0 to 1
+        {1, 2}, // branch 1 from node 1 to 2
+        {2, 0}, // branch 2 from node 2 to 0
+        {1, 1}, // branch 3 from node 1 to 1 (loop into itself)
+        {2, 2}, // branch 4 from node 2 to 2 (loop into itself)
+    };
+    param_sym.branch_param = {
+        // ff, ft, tf, tt
+        {1.0i, 2.0i, 3.0i, 4.0i},     // 0 -> 1
+        {5.0, 6.0, 7.0, 8.0},         // 1 -> 2
+        {9.0i, 10.0i, 11.0i, 12.0i},  // 2 -> 0
+        {21.0i, 22.0i, 22.0i, 21.0i}, // 1 -> 1
+        {13.0, 14.0, 15.0, 16.0},     // 2 -> 2
+    };
+    topo.shunts_per_bus = {from_dense, {}, 3};
+    param_sym.shunt_param = {};
+
+    // output
+    IdxVector const row_indptr = {0, 3, 6, 9};
+
+    // Use col_indices to find the location in Y bus
+    //  e.g. col_indices = {0, 1, 0} results in Y bus:
+    // [
+    //	x, x
+    //   x, 0
+    // ]
+    IdxVector const col_indices = {// Column col_indices for each non-zero element in Y bus.
+                                   0, 1, 2, 0, 1, 2, 0, 1, 2};
+    Idx const nnz = 9; // Number of non-zero elements in Y bus
+    IdxVector const bus_entry = {0, 4, 8};
+    IdxVector const lu_transpose_entry = {// Flip the id's of non-diagonal elements
+                                          0, 3, 6, 1, 4, 7, 2, 5, 8};
+    IdxVector const y_bus_entry_indptr = {
+        0,  2, // 0, 1 belong to element [0,0] in Ybus
+        3,     // 2 to element [0,1]
+        4,     // 3 to [0, 2]
+        5,     // 4 to [1, 0]
+        11,    // 5, 6, (7, 8, 9, 10) to [1,1]
+        12,    // 11 to [1,2]
+        13,    // 12 to [2,0]
+        14,    // 13 to [2,1]
+        20,    // 14, 15, (16, 17, 18, 19) to [2,2]
+    };
+    IdxVector const map_lu_y_bus = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    ComplexTensorVector<symmetric_t> const admittance_sym = {
+        1.0i + 12.0i, // 0, 0 -> {0, 1}ff + {2, 0}tt
+        2.0i,         // 0, 1 -> {0, 1}ft
+        11.0i,        // 0, 2 -> {2, 0}tf
+        3.0i,         // 1, 0 -> {0, 1}tf
+        4.0i + 5.0 +
+            (21.0i + 22.0i + 22.0i + 21.0i), // 1, 1 -> {0, 1}tt + {1, 2}ff + ({1,1}ff + {1,1}ft + {1,1}tf + {1,1}tt)
+        6.0,                                 // 1, 2 -> {1,2}ft
+        10.0i,                               // 2, 0 -> {2, 0}ft
+        7.0,                                 // 2, 1 -> {1,2}tf
+        8.0 + 9.0i +
+            (13.0 + 14.0 + 15.0 + 16.0), // 2, 2 -> {1, 2}tt + {2, 0}ff + ({2,2}ff + {2,2}ft + {2,2}tf + {2,2}tt)
+    };
+
+    YBus<symmetric_t> const ybus{topo, param_sym};
+
+    CHECK(ybus.size() == 3);
+    CHECK(ybus.nnz() == nnz);
+    CHECK(row_indptr == ybus.row_indptr());
+    CHECK(col_indices == ybus.col_indices());
+    CHECK(bus_entry == ybus.bus_entry());
+    CHECK(lu_transpose_entry == ybus.lu_transpose_entry());
+    CHECK(y_bus_entry_indptr == ybus.y_bus_entry_indptr());
+    CHECK(ybus.admittance().size() == admittance_sym.size());
+    for (size_t i = 0; i < admittance_sym.size(); i++) {
+        CAPTURE(i);
+        CHECK(cabs(ybus.admittance()[i] - admittance_sym[i]) < numerical_tolerance);
     }
 }
 
