@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 import copy
+import warnings
 from itertools import product
 from typing import cast
 from unittest.mock import ANY, MagicMock, patch
@@ -869,6 +870,12 @@ def test_validate_generic_power_sensor__all_terminal_types(
     )
 
 
+def _deprecated_measured_terminal_type_node():
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        return MeasuredTerminalType.node
+
+
 @pytest.mark.parametrize(
     ("ref_component", "measured_terminal_type"),
     [
@@ -887,7 +894,7 @@ def test_validate_generic_power_sensor__all_terminal_types(
         (CT.three_winding_transformer, MeasuredTerminalType.branch3_1),
         (CT.three_winding_transformer, MeasuredTerminalType.branch3_2),
         (CT.three_winding_transformer, MeasuredTerminalType.branch3_3),
-        (CT.node, MeasuredTerminalType.node),
+        (CT.node, _deprecated_measured_terminal_type_node()),
     ],
 )
 @patch("power_grid_model.validation._validation.validate_base", new=MagicMock())
@@ -957,7 +964,7 @@ def test_validate_generic_current_sensor__all_terminal_types(
         (MeasuredTerminalType.shunt, False),
         (MeasuredTerminalType.load, False),
         (MeasuredTerminalType.generator, False),
-        (MeasuredTerminalType.node, False),
+        (_deprecated_measured_terminal_type_node(), False),
     ],
 )
 @patch("power_grid_model.validation._validation._all_greater_than_zero", new=MagicMock(return_value=[]))

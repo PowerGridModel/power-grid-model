@@ -10,6 +10,7 @@ Although all functions are 'public', you probably only need validate_input_data(
 """
 
 import copy
+import warnings
 from collections.abc import Sized as ABCSized
 from itertools import chain
 from typing import Literal
@@ -1303,13 +1304,15 @@ def validate_generic_power_sensor(data: SingleDataset, component: CT) -> list[Va
         ref_components=CT.three_winding_transformer,
         measured_terminal_type=MeasuredTerminalType.branch3_3,
     )
-    errors += _all_valid_ids(
-        data,
-        component,
-        field=AT.measured_object,
-        ref_components=CT.node,
-        measured_terminal_type=MeasuredTerminalType.node,
-    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=DeprecationWarning)
+        errors += _all_valid_ids(
+            data,
+            component,
+            field=AT.measured_object,
+            ref_components=CT.node,
+            measured_terminal_type=MeasuredTerminalType.node,
+        )
     if component in (CT.sym_power_sensor, CT.asym_power_sensor):
         errors += _valid_p_q_sigma(data, component)
 
