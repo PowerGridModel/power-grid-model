@@ -29,18 +29,4 @@ constexpr auto enumerate(std::ranges::viewable_range auto&& range_to_enumerate) 
 }
 #endif
 
-#if __cpp_lib_ranges_pairwise >= 202110L
-using std::views::pairwise;
-#else
-constexpr auto pairwise(std::ranges::viewable_range auto&& range_to_pair) {
-    auto const all = std::forward<decltype(range_to_pair)>(range_to_pair) | std::views::all;
-    auto const begin = std::ranges::begin(all);
-    auto const end = std::ranges::end(all);
-    if (begin == end) {
-        return std::views::zip(std::ranges::subrange(begin, begin), std::ranges::subrange(begin, begin));
-    }
-    return std::views::zip(std::ranges::subrange(begin, end - 1), std::ranges::subrange(begin + 1, end));
-}
-#endif
-
 } // namespace power_grid_model
