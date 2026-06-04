@@ -158,8 +158,7 @@ TEST_CASE("Test Supernodes") {
         SUBCASE("Single node => no remapping, no supernodes") {
             ComponentTopology comp_topo;
             comp_topo.n_node = 1;
-            ComponentConnections comp_conn;
-            auto const topo_node_mapping = detail::create_map(comp_topo, comp_conn);
+            auto const topo_node_mapping = detail::create_map(comp_topo, ComponentConnections{});
             auto const reduced = detail::construct_reduced_topology(comp_topo, topo_node_mapping);
             CHECK(reduced.n_node == 1);
             CHECK(reduced.branch_node_idx.empty());
