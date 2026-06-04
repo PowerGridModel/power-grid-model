@@ -105,19 +105,6 @@ TEST_CASE("Exceptions") {
                               .what()} ==
               "Conflicting voltage for line 0\n voltage at from node 0 is inf\n voltage at to node 0 is -inf\n");
     }
-    SUBCASE("InvalidBranch") {
-        CHECK(std::string{InvalidBranch{ID{0}, ID{1}}.what()} ==
-              "Branch 0 has the same from- and to-node 1,\n This is not allowed!\n");
-        CHECK(std::string{InvalidBranch{na_IntID, na_IntID}.what()} ==
-              "Branch -2147483648 has the same from- and to-node -2147483648,\n This is not allowed!\n");
-    }
-    SUBCASE("InvalidBranch3") {
-        CHECK(std::string{InvalidBranch3{ID{0}, ID{4}, ID{5}, ID{6}}.what()} ==
-              "Branch3 0 is connected to the same node at least twice. Node 1/2/3: 4/5/6,\n This is not allowed!\n");
-        CHECK(std::string{InvalidBranch3{na_IntID, na_IntID, na_IntID, na_IntID}.what()} ==
-              "Branch3 -2147483648 is connected to the same node at least twice. Node 1/2/3: "
-              "-2147483648/-2147483648/-2147483648,\n This is not allowed!\n");
-    }
     SUBCASE("InvalidTransformerClock") {
         CHECK(std::string{InvalidTransformerClock{ID{0}, IntS{1}}.what()} ==
               "Invalid clock for transformer 0, clock 1\n");

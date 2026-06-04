@@ -41,11 +41,7 @@ class Branch : public Base {
           from_node_{branch_input.from_node},
           to_node_{branch_input.to_node},
           from_status_{static_cast<bool>(branch_input.from_status)},
-          to_status_{static_cast<bool>(branch_input.to_status)} {
-        if (from_node_ == to_node_) {
-            throw InvalidBranch{id(), from_node_};
-        }
-    }
+          to_status_{static_cast<bool>(branch_input.to_status)} {}
 
     // getter
     constexpr ID from_node() const { return from_node_; }

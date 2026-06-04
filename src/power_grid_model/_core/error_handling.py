@@ -21,8 +21,6 @@ from power_grid_model._core.errors import (
     IDNotFound,
     IDWrongType,
     InvalidArguments,
-    InvalidBranch,
-    InvalidBranch3,
     InvalidCalculationMethod,
     InvalidMeasuredObject,
     InvalidRegulatedObject,
@@ -63,11 +61,6 @@ _CONFLICT_VOLTAGE_RE = re.compile(
     r"Conflicting voltage for line (-?\d+)\n voltage at from node (-?\d+) is (.*)\n"
     r" voltage at to node (-?\d+) is (.*)\n"
 )
-_INVALID_BRANCH_RE = re.compile(r"Branch (-?\d+) has the same from- and to-node (-?\d+),\n This is not allowed!\n")
-_INVALID_BRANCH3_RE = re.compile(
-    r"Branch3 (-?\d+) is connected to the same node at least twice. Node 1\/2\/3: (-?\d+)\/(-?\d+)\/(-?\d+),\n"
-    r" This is not allowed!\n"
-)
 _INVALID_TRANSFORMER_CLOCK_RE = re.compile(r"Invalid clock for transformer (-?\d+), clock (-?\d+)\n")
 _SPARSE_MATRIX_ERROR_RE = re.compile(r"Sparse matrix error")  # multiple different flavors
 _NOT_OBSERVABLE_ERROR_RE = re.compile(r"Not enough measurements available for state estimation.\n")
@@ -107,8 +100,6 @@ _ERROR_MESSAGE_PATTERNS = {
     _MISSING_CASE_FOR_ENUM_RE: MissingCaseForEnumError,
     _INVALID_ARGUMENTS_RE: InvalidArguments,
     _CONFLICT_VOLTAGE_RE: ConflictVoltage,
-    _INVALID_BRANCH_RE: InvalidBranch,
-    _INVALID_BRANCH3_RE: InvalidBranch3,
     _INVALID_TRANSFORMER_CLOCK_RE: InvalidTransformerClock,
     _SPARSE_MATRIX_ERROR_RE: SparseMatrixError,
     _NOT_OBSERVABLE_ERROR_RE: NotObservableError,

@@ -11,13 +11,11 @@
 #include <power_grid_model/calculation_parameters.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/enum.hpp>
-#include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/common/three_phase_tensor.hpp>
 #include <power_grid_model/component/base.hpp>
 
 #include <doctest/doctest.h>
 
-#include <cmath>
 #include <complex>
 
 namespace power_grid_model {
@@ -50,9 +48,9 @@ TEST_CASE("Test link") {
         CHECK(branch.phase_shift() == 0.0);
     }
 
-    SUBCASE("Invalid branch") {
+    SUBCASE("Branch into itself is supported") {
         input.to_node = 2;
-        CHECK_THROWS_AS(Link(input, 10e3, 50e3), InvalidBranch);
+        CHECK_NOTHROW(Link(input, 10e3, 50e3));
     }
 
     SUBCASE("Symmetric parameters") {
