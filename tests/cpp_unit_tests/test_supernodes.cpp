@@ -4,6 +4,7 @@
 
 #include "power_grid_model/calculation_parameters.hpp"
 #include "power_grid_model/common/common.hpp"
+#include "power_grid_model/common/enum.hpp"
 #include "power_grid_model/supernodes.hpp"
 
 #include <doctest/doctest.h>
@@ -154,6 +155,15 @@ TEST_CASE("Test Supernodes") {
         }
     }
     SUBCASE("construct_reduced_topology") {
+        SUBCASE("Single node => no remapping, no supernodes") {
+            ComponentTopology comp_topo;
+            comp_topo.n_node = 1;
+            ComponentConnections comp_conn;
+            auto const topo_node_mapping = detail::create_map(comp_topo, comp_conn);
+            auto const reduced = detail::construct_reduced_topology(comp_topo, topo_node_mapping);
+            CHECK(reduced.n_node == 1);
+            CHECK(reduced.branch_node_idx.empty());
+        }
         SUBCASE("No links => identity mapping, no remapping") {
             ComponentTopology comp_topo;
             comp_topo.n_node = 3;
@@ -162,6 +172,15 @@ TEST_CASE("Test Supernodes") {
             auto const reduced = detail::construct_reduced_topology(comp_topo, topo_node_mapping);
             CHECK(reduced.n_node == 3);
             CHECK(reduced.branch_node_idx == std::vector<BranchIdx>{{0, 1}, {1, 2}, {2, 0}});
+        }
+        SUBCASE("Only links => one supernode") {
+            ComponentTopology comp_topo;
+            comp_topo.n_node = 3;
+            comp_topo.link_node_idx = {{0, 1}, {1, 2}, {2, 0}};
+            TopologicalNodeMapping const topo_node_mapping{1, IdxVector{0, 0, 0}};
+            auto const reduced = detail::construct_reduced_topology(comp_topo, topo_node_mapping);
+            CHECK(reduced.n_node == 1);
+            CHECK(reduced.branch_node_idx.empty());
         }
         SUBCASE("Link merging => branch, shunt and source nodes remapped") {
             ComponentTopology comp_topo;
@@ -196,6 +215,30 @@ TEST_CASE("Test Supernodes") {
             CHECK(reduced.shunt_node_idx == IdxVector{1});
             CHECK(reduced.load_gen_node_idx == IdxVector{2});
             CHECK(reduced.voltage_sensor_node_idx == IdxVector{1});
+        }
+        SUBCASE("Complicated wheel grid with branches and links") {
+            ComponentTopology comp_topo;
+            comp_topo.n_node = 6;
+            comp_topo.branch_node_idx = {{0, 1}, {2, 3}, {5, 1}, {5, 3}};
+            comp_topo.link_node_idx = {{1, 2}, {3, 4}, {5, 0}, {5, 2}};
+            comp_topo.source_node_idx = {0};
+            comp_topo.shunt_node_idx = {4};
+            comp_topo.load_gen_node_idx = {3};
+            comp_topo.voltage_sensor_node_idx = {2};
+            comp_topo.power_sensor_object_idx = {1};
+            comp_topo.power_sensor_terminal_type = {MeasuredTerminalType::branch_from};
+            // all nodes are connected by links and should be merged into a single supernode
+            TopologicalNodeMapping const topo_node_mapping{1, IdxVector{0, 0, 0, 0, 0, 0}};
+            auto const reduced = detail::construct_reduced_topology(comp_topo, topo_node_mapping);
+            CHECK(reduced.n_node == 1);
+            CHECK(reduced.branch_node_idx == std::vector<BranchIdx>{{0, 0}, {0, 0}, {0, 0}, {0, 0}});
+            CHECK(reduced.source_node_idx == IdxVector{0});
+            CHECK(reduced.shunt_node_idx == IdxVector{0});
+            CHECK(reduced.load_gen_node_idx == IdxVector{0});
+            CHECK(reduced.voltage_sensor_node_idx == IdxVector{0});
+            CHECK(std::ranges::equal(reduced.power_sensor_object_idx, IdxVector{1}));
+            CHECK(std::ranges::equal(reduced.power_sensor_terminal_type,
+                                     std::vector<MeasuredTerminalType>{MeasuredTerminalType::branch_from}));
         }
     }
     SUBCASE("reduce_topology") {
