@@ -750,7 +750,7 @@ TEST_CASE("Test Transformer ranking") {
         // ========Test Grid========
         //      [source 0]
         //          |
-        //     [trafo 10] (WRONG: has an edge to itself)
+        //     [trafo 10]
         //          |
         //      [node 1] ==== [trafo 11] (into itself)
         //          |
@@ -763,9 +763,7 @@ TEST_CASE("Test Transformer ranking") {
             {.id = 0, .u_rated = 150e3}, {.id = 1, .u_rated = 10e3}, {.id = 2, .u_rated = 10e3}};
         main_core::add_component<Node>(state.components, nodes, 50.0);
 
-        std::vector<TransformerInput> const transformers{get_transformer(10, 0, 1, BranchSide::from)
-                                                         // Transformer with an edge to itself (wrong)
-                                                         ,
+        std::vector<TransformerInput> const transformers{get_transformer(10, 0, 1, BranchSide::from),
                                                          get_transformer(11, 1, 1, BranchSide::from),
                                                          get_transformer(12, 1, 2, BranchSide::from)};
         main_core::add_component<Transformer>(state.components, transformers, 50.0);
