@@ -73,21 +73,6 @@ class ConflictVoltage : public PowerGridError {
               id1, u1, id2, u2)} {}
 };
 
-class InvalidBranch : public PowerGridError {
-  public:
-    InvalidBranch(ID branch_id, ID node_id)
-        : PowerGridError{std::format("Branch {} has the same from- and to-node {},\n This is not allowed!\n", branch_id,
-                                     node_id)} {}
-};
-
-class InvalidBranch3 : public PowerGridError {
-  public:
-    InvalidBranch3(ID branch3_id, ID node_1_id, ID node_2_id, ID node_3_id)
-        : PowerGridError{std::format(
-              "Branch3 {} is connected to the same node at least twice. Node 1/2/3: {}/{}/{},\n This is not allowed!\n",
-              branch3_id, node_1_id, node_2_id, node_3_id)} {}
-};
-
 class InvalidTransformerClock : public PowerGridError {
   public:
     InvalidTransformerClock(ID id, IntS clock)

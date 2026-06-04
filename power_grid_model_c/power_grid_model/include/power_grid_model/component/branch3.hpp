@@ -41,11 +41,7 @@ class Branch3 : public Base {
           node_3_{branch3_input.node_3},
           status_1_{static_cast<bool>(branch3_input.status_1)},
           status_2_{static_cast<bool>(branch3_input.status_2)},
-          status_3_{static_cast<bool>(branch3_input.status_3)} {
-        if (node_1_ == node_2_ || node_1_ == node_3_ || node_2_ == node_3_) {
-            throw InvalidBranch3{id(), node_1_, node_2_, node_3_};
-        }
-    }
+          status_3_{static_cast<bool>(branch3_input.status_3)} {}
 
     // getter
     constexpr ID node_1() const { return node_1_; }

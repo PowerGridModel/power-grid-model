@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "common/typing.hpp"
 #include "sparse_ordering.hpp"
 
 #include "calculation_parameters.hpp"
@@ -129,7 +130,7 @@ class Topology {
           phase_shift_(comp_topo_.n_node_total(), 0.0),
           predecessors_(
               boost::counting_iterator<GraphIdx>{0}, // Predecessors is initialized as 0, 1, 2, ..., n_node_total() - 1
-              boost::counting_iterator<GraphIdx>{(GraphIdx)comp_topo_.n_node_total()}),
+              boost::counting_iterator<GraphIdx>{narrow_cast<GraphIdx>(comp_topo_.n_node_total())}),
           node_status_(comp_topo_.n_node_total(), not_processed) {}
 
     // build topology
@@ -202,12 +203,12 @@ class Topology {
             auto const [i, j] = branch_node_idx;
             auto const [i_status, j_status] = branch_connected;
             // node_i - node_j
-            if (i_status != 0 && j_status != 0) {
+            if (i_status != 0 && j_status != 0 && i != j) {
                 // node_j - node_i
-                edges.emplace_back((GraphIdx)i, (GraphIdx)j);
+                edges.emplace_back(narrow_cast<GraphIdx>(i), narrow_cast<GraphIdx>(j));
                 edge_props.push_back({-phase_shift});
                 // node_i - node_j
-                edges.emplace_back((GraphIdx)j, (GraphIdx)i);
+                edges.emplace_back(narrow_cast<GraphIdx>(j), narrow_cast<GraphIdx>(i));
                 edge_props.push_back({phase_shift});
             }
         }
@@ -219,17 +220,17 @@ class Topology {
             for (Idx m = 0; m != 3; ++m) {
                 if (i_status[m] != 0) {
                     // node_internal - node_i
-                    edges.emplace_back((GraphIdx)i[m], (GraphIdx)j_internal);
+                    edges.emplace_back(narrow_cast<GraphIdx>(i[m]), narrow_cast<GraphIdx>(j_internal));
                     edge_props.push_back({-phase_shift[m]});
                     // node_i - node_internal
-                    edges.emplace_back((GraphIdx)j_internal, (GraphIdx)i[m]);
+                    edges.emplace_back(narrow_cast<GraphIdx>(j_internal), narrow_cast<GraphIdx>(i[m]));
                     edge_props.push_back({phase_shift[m]});
                 }
             }
         }
         // build graph
         global_graph_ = GlobalGraph{boost::edges_are_unsorted_multi_pass, edges.cbegin(), edges.cend(),
-                                    edge_props.cbegin(), (GraphIdx)comp_topo_.n_node_total()};
+                                    edge_props.cbegin(), narrow_cast<GraphIdx>(comp_topo_.n_node_total())};
         for_all_vertices(global_graph_, [this](boost::graph_traits<GlobalGraph>::vertex_descriptor const& v) {
             global_graph_[v].color = boost::default_color_type::white_color;
         });
@@ -256,7 +257,7 @@ class Topology {
             std::vector<std::pair<GraphIdx, GraphIdx>> back_edges;
             // start dfs search
             boost::depth_first_visit(
-                global_graph_, (GraphIdx)source_node,
+                global_graph_, narrow_cast<GraphIdx>(source_node),
                 GlobalDFSVisitor{math_solver_idx, comp_coup_.node, phase_shift_, dfs_node, predecessors_, back_edges},
                 boost::get(&GlobalVertex::color, global_graph_));
 
