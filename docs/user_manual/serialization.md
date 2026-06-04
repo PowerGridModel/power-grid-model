@@ -80,8 +80,8 @@ E.g.: `"id"`.
 
 #### JSON schema dataset object
 
-The [`Dataset`](#json-schema-dataset-object) object is either a [`SingleDataset`](#json-schema-single-dataset-object) if
-the [`is_batch`](#json-schema-root-object) field in the [`PowerGridModelRoot`](#json-schema-root-object) object is
+The [`Dataset`](#json-schema-dataset-object) object is either a [`SingleDataset`](#json-schema-single-dataset-object)
+if the [`is_batch`](#json-schema-root-object) field in the [`PowerGridModelRoot`](#json-schema-root-object) object is
 `false`, or a [`BatchDataset`](#json-schema-batch-dataset-object) otherwise.
 
 - [`Dataset`](#json-schema-dataset-object): [`SingleDataset`](#json-schema-single-dataset-object) |
