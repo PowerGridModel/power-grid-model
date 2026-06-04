@@ -150,11 +150,6 @@ class Subcase {
             {"ConflictVoltage",
              std::regex{"Conflicting voltage for line (-?\\d+)\n voltage at from node (-?\\d+) is (.*)\n "
                         "voltage at to node (-?\\d+) is (.*)\n"}},
-            {"InvalidBranch",
-             std::regex{"Branch (-?\\d+) has the same from- and to-node (-?\\d+),\n This is not allowed!\n"}},
-            {"InvalidBranch3",
-             std::regex{"Branch3 (-?\\d+) is connected to the same node at least twice. Node 1\\/2\\/3: "
-                        "(-?\\d+)\\/(-?\\d+)\\/(-?\\d+),\n This is not allowed!\n"}},
             {"InvalidTransformerClock", std::regex{"Invalid clock for transformer (-?\\d+), clock (-?\\d+)\n"}},
             {"SparseMatrixError", std::regex{"Sparse matrix error"}}, // multiple different flavors
             {"NotObservableError", std::regex{"Not enough measurements available for state estimation.\n"}},

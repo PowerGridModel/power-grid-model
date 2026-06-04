@@ -6,7 +6,11 @@
 This file contains error classes for library-internal use.
 """
 
+import warnings
+
 import numpy as np
+
+_DEPRECATED_ERROR_MSG = "This error type is deprecated and may be reduced in a future release."
 
 
 class PowerGridError(RuntimeError):
@@ -37,11 +41,23 @@ class ConflictVoltage(PowerGridError):
 
 
 class InvalidBranch(PowerGridError):
-    """A branch is invalid."""
+    """A branch is invalid.
+
+    [DEPRECATED] This error is no longer relevant and may be reduced in a future release."""
+
+    def __init__(self, *args, **kwargs):
+        warnings.warn(_DEPRECATED_ERROR_MSG, DeprecationWarning)
+        super().__init__(*args, **kwargs)
 
 
 class InvalidBranch3(PowerGridError):
-    """A branch3 is invalid."""
+    """A branch3 is invalid.
+
+    [DEPRECATED] This error is no longer relevant and may be reduced in a future release."""
+
+    def __init__(self, *args, **kwargs):
+        warnings.warn(_DEPRECATED_ERROR_MSG, DeprecationWarning)
+        super().__init__(*args, **kwargs)
 
 
 class InvalidTransformerClock(PowerGridError):

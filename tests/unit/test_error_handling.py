@@ -108,7 +108,7 @@ def test_handle_missing_case_for_enum_error():
         )
 
 
-def test_handle_invalid_branch_error():
+def test_handle_branch_into_itself_is_valid():
     node_input = initialize_array(DatasetType.input, CT.node, 1)
     node_input[AT.id] = [0]
     node_input[AT.u_rated] = [0.0]
@@ -118,11 +118,10 @@ def test_handle_invalid_branch_error():
     line_input[AT.from_node] = [0]
     line_input[AT.to_node] = [0]
 
-    with pytest.raises(InvalidBranch):
-        PowerGridModel(input_data={CT.node: node_input, CT.line: line_input})
+    PowerGridModel(input_data={CT.node: node_input, CT.line: line_input})
 
 
-def test_handle_invalid_branch3_error():
+def test_handle_branch3_into_itself_is_valid():
     node_input = initialize_array(DatasetType.input, CT.node, 1)
     node_input[AT.id] = [0]
     node_input[AT.u_rated] = [0.0]
@@ -133,13 +132,12 @@ def test_handle_invalid_branch3_error():
     three_winding_transformer_input[AT.node_2] = [0]
     three_winding_transformer_input[AT.node_3] = [0]
 
-    with pytest.raises(InvalidBranch3):
-        PowerGridModel(
-            input_data={
-                CT.node: node_input,
-                CT.three_winding_transformer: three_winding_transformer_input,
-            }
-        )
+    PowerGridModel(
+        input_data={
+            CT.node: node_input,
+            CT.three_winding_transformer: three_winding_transformer_input,
+        }
+    )
 
 
 def test_handle_invalid_transformer_clock_error():
@@ -502,3 +500,13 @@ def test_handle_power_grid_dataset_error():
 @pytest.mark.skip(reason="TODO")
 def test_handle_power_grid_unreachable_error():
     pass
+
+
+def test_deprecated_invalid_branch_error():
+    with pytest.deprecated_call():
+        InvalidBranch()
+
+
+def test_deprecated_invalid_branch3_error():
+    with pytest.deprecated_call():
+        InvalidBranch3()
