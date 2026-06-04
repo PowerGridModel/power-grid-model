@@ -174,6 +174,11 @@ TEST_CASE("LU solver with ill-conditioned system") {
             solver.solve_with_prefactorized_matrix(data, perm, rhs, x);
             check_result(x, x_ref);
         }
+
+        SUBCASE("Selective inversion error with perturbation") {
+            solver.prefactorize(data, perm, true);
+            CHECK_THROWS_AS(solver.inplace_selective_inverse_with_prefactorized_matrix(data, perm), SparseMatrixError);
+        }
     }
 
     SUBCASE("Block variant") {
@@ -201,6 +206,12 @@ TEST_CASE("LU solver with ill-conditioned system") {
             CHECK_NOTHROW(solver.prefactorize(data, block_perm, true));
             solver.solve_with_prefactorized_matrix(data, block_perm, rhs, x);
             check_result(x, x_ref);
+        }
+
+        SUBCASE("Selective inversion error with perturbation") {
+            solver.prefactorize(data, block_perm, true);
+            CHECK_THROWS_AS(solver.inplace_selective_inverse_with_prefactorized_matrix(data, block_perm),
+                            SparseMatrixError);
         }
     }
 }
