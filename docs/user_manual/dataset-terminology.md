@@ -15,11 +15,11 @@ For detailed data types used throughout `power-grid-model`, please refer to
 
 Defines how component data is ordered in memory. Two buffer types are supported: row-based and columnar-based.
 
-### Row-based (row-major)
+### Row (row-based, row-major)
 
 Attributes of the same component are stored contiguously before moving to the next component.
 
-### Columnar-based (column-major)
+### Columnar (column-based, column-major)
 
 Attributes are grouped across components by attribute type.
 

@@ -126,15 +126,14 @@ remains the same.
 
 A [`ComponentData`](#json-schema-component-data-object) represents the data of a single component instance.
 
-It can be stored in either dense or sparse representation:
-
-- [`DenseComponentData`](#json-schema-component-data-object-dense-representation)
-- [`SparseComponentData`](#json-schema-component-data-object-sparse-representation)
+- [`ComponentData`](#json-schema-component-data-object):
+  [`DenseComponentData`](#json-schema-component-data-object-dense-representation) |
+  [`SparseComponentData`](#json-schema-component-data-object-sparse-representation)
 
 #### JSON schema component data object (dense representation)
 
-A dense component data object stores values in a fixed positional order defined by the `attributes` field
-in the root object.
+A [`DenseComponentData`](#json-schema-component-data-object-dense-representation) object
+stores values in a fixed positional order defined by the `attributes` field in the root object.
 
 - [`DenseComponentData`](#json-schema-component-data-object-dense-representation): `Array`
   - [`AttributeValue`](#json-schema-attribute-value): values in the exact order defined by the component's attribute
@@ -142,14 +141,16 @@ in the root object.
 
 #### JSON schema component data object (sparse representation)
 
-A component data object in sparse representation contains values grouped per attribute.
-It stores values grouped by attribute, with explicit attribute names and no fixed ordering.
-Unlike dense representation, it explicitly stores attribute names, allowing attributes to appear in arbitrary order
-and vary between components or scenarios.
+A [`SparseComponentData`](#json-schema-component-data-object-sparse-representation) object
+stores values grouped by attribute.
+
+Unlike [`DenseComponentData`](#json-schema-component-data-object-dense-representation),
+it explicitly stores attribute names, allowing attributes to appear in arbitrary order and vary between components or
+scenarios.
 
 - [`SparseComponentData`](#json-schema-component-data-object-sparse-representation): `Object`
-  - [`Attribute`](#json-schema-attribute): [`AttributeValue`](#json-schema-attribute-value): the value of each attribute
-    per attribute.
+  - [`Attribute`](#json-schema-attribute):
+    [`AttributeValue`](#json-schema-attribute-value)
 
 #### JSON schema attribute value
 
