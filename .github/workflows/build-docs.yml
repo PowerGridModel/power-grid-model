@@ -1,0 +1,37 @@
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+name: Build Documentation
+
+on:
+  push:
+    paths:
+      - "docs/**"
+      - "scripts/**"
+  pull_request:
+    paths:
+      - "docs/**"
+      - "scripts/**"
+
+jobs:
+  build-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Build docs
+        run: python scripts/build_docs.py
+
+      - name: Upload generated docs
+        uses: actions/upload-artifact@v4
+        with:
+          name: user-manual-docs
+          path: docs/user_manual/components.md

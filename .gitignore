@@ -520,3 +520,5 @@ docs/jupyter_execute/
 .vscode/
 
 wheelhouse/
+
+docs/user_manual/components.md
