@@ -41,7 +41,7 @@ data.
 #### JSON schema attributes object
 
 [`Attributes`](#json-schema-attributes-object) defines the attribute list and ordering
-for each [`Component`](#json-schema-component) (e.g.: `"node"`)when component data is represented
+for each [`Component`](#json-schema-component) (e.g.: `"node"`), e.g., when component data is represented
 using the compact list format (`use_compact_list=True`).
 
 The order of attributes in this section determines the order of values in the compact list representation.
