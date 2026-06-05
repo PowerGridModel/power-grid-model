@@ -327,7 +327,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
                     // TODO(figueroa1395): Unit test this
                     if (input.voltage_regulator[voltage_regulator_idx].status != 0) {
                         auto const& regulator = input.voltage_regulator[voltage_regulator_idx];
-                        u[bus_idx] = ComplexValue<sym>{regulator.u_ref};
+                        u[bus_idx] = regulator.u_ref * phase_shift(u[bus_idx]);
                         bus_types_[bus_idx] = BusType::pv;
                         break;
                     }

@@ -11,7 +11,6 @@
 #include <power_grid_model/calculation_parameters.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/enum.hpp>
-#include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/common/three_phase_tensor.hpp>
 #include <power_grid_model/component/base.hpp>
 
@@ -502,10 +501,18 @@ TEST_CASE("Test three winding transformer") {
         CHECK(output.i_3_angle(1) == 0);
     }
 
-    SUBCASE("invalid input") {
+    SUBCASE("Branch3 partially into itself") {
         input.node_2 = 2;
-        CHECK_THROWS_AS(ThreeWindingTransformer(input, 138e3, 69e3, 13.8e3), InvalidBranch3);
+        CHECK_NOTHROW(ThreeWindingTransformer(input, 138e3, 69e3, 13.8e3));
         input.node_2 = 3;
+    }
+
+    SUBCASE("Branch3 fully into itself") {
+        input.node_2 = 2;
+        input.node_3 = 2;
+        CHECK_NOTHROW(ThreeWindingTransformer(input, 138e3, 69e3, 13.8e3));
+        input.node_2 = 3;
+        input.node_3 = 4;
     }
 
     SUBCASE("Periodic clock input") {

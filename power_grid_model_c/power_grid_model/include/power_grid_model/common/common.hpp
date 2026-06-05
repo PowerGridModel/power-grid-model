@@ -31,7 +31,7 @@ struct Idx2D {
     Idx group; // sequence number of outer module/groups
     Idx pos;   // sequence number inside the group
 
-    friend constexpr bool operator==(Idx2D x, Idx2D y) = default;
+    friend constexpr bool operator==(Idx2D x, Idx2D y) { return x.group == y.group && x.pos == y.pos; }
 };
 
 struct Idx2DHash {

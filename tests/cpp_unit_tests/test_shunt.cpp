@@ -13,7 +13,6 @@
 #include <power_grid_model/common/three_phase_tensor.hpp>
 #include <power_grid_model/component/base.hpp>
 
-#include <cmath>
 #include <complex>
 #include <concepts>
 
