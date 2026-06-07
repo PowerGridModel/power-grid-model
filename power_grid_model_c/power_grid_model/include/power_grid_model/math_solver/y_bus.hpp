@@ -397,7 +397,7 @@ template <symmetry_tag sym> class YBus {
 
     template <std::ranges::viewable_range Entries>
         requires std::same_as<std::ranges::range_value_t<Entries>, Idx>
-    void update_admittance_entries(Entries&& y_bus_entries) {
+    void update_admittance_entries(Entries const& y_bus_entries) {
         assert(std::ssize(admittance_) == nnz());
 
         auto const& y_bus_element = y_bus_struct_->y_bus_element;
