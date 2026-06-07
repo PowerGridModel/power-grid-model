@@ -36,14 +36,14 @@ The input, i.e., [0, 1, 3] should be strictly increasing
 namespace power_grid_model {
 
 namespace detail {
-template <std::ranges::viewable_range ElementGroups>
-constexpr auto sparse_encode(ElementGroups&& element_groups, Idx num_groups) {
+constexpr auto sparse_encode(IdxVector const& element_groups, Idx num_groups) {
     IdxVector result(num_groups + 1);
-    auto element_groups_view = std::views::all(element_groups);
-    auto next_group = std::begin(element_groups_view);
+    auto next_group = std::begin(element_groups);
+    auto const begin = std::begin(element_groups);
+    auto const end = std::end(element_groups);
     for (auto const group : IdxRange{num_groups}) {
-        next_group = std::upper_bound(next_group, std::end(element_groups_view), group);
-        result[group + 1] = std::distance(std::begin(element_groups_view), next_group);
+        next_group = std::upper_bound(next_group, end, group);
+        result[group + 1] = std::distance(begin, next_group);
     }
     return result;
 }
