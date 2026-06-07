@@ -116,7 +116,7 @@ class MainModelImpl {
     // using forward interators
     // different selection based on component type
     template <std::derived_from<Base> CompType, std::ranges::viewable_range Inputs>
-    void add_component(Inputs&& components) {
+    void add_component(Inputs const& components) {
         assert(!construction_complete_);
         main_core::add_component<CompType>(state_.components, components, system_frequency_);
     }
@@ -137,7 +137,7 @@ class MainModelImpl {
     // different selection based on component type
     // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
     template <class CompType, cache_type_c CacheType, std::ranges::viewable_range Updates>
-    void update_component(Updates&& updates, std::span<Idx2D const> sequence_idx) {
+    void update_component(Updates const& updates, std::span<Idx2D const> sequence_idx) {
         constexpr auto comp_index = ModelType::template index_of_component<CompType>;
 
         assert(construction_complete_);
