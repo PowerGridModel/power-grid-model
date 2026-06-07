@@ -191,7 +191,6 @@ class Topology {
 
     template <typename F> static void for_all_vertices(GlobalGraph const& graph, F func) {
         BGL_FORALL_VERTICES(v, graph, GlobalGraph) { func(v); }
-        capturing::into_the_void(func);
     }
 
     void build_sparse_graph() {
