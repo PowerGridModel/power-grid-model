@@ -47,7 +47,7 @@ TEST_CASE("Test main core output") {
 
         std::vector<TransformerTapRegulatorOutput> output_buffer(
             state.components.template size<TransformerTapRegulator>());
-        std::span<TransformerTapRegulatorOutput> output{output_buffer};
+        std::span<TransformerTapRegulatorOutput> const output{output_buffer};
 
         SUBCASE("No regulation") {
             SUBCASE("Symmetric") {
