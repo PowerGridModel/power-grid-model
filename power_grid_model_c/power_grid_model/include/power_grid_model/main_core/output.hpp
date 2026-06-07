@@ -125,7 +125,8 @@ template <typename Component, typename IndexType, class ComponentContainer, std:
                            std::ranges::range_reference_t<ComponentOutput>> &&
              std::convertible_to<IndexType, std::ranges::range_value_t<decltype(comp_base_sequence<Component>(
                                                 MainModelState<ComponentContainer>{}))>>
-constexpr void produce_output(MainModelState<ComponentContainer> const& state, ComponentOutput&& output, ResFunc func) {
+constexpr void produce_output(MainModelState<ComponentContainer> const& state, ComponentOutput const& output,
+                              ResFunc func) {
     std::ranges::transform(get_component_citer<Component>(state.components), comp_base_sequence<Component>(state),
                            std::ranges::begin(output), func);
 }
@@ -506,7 +507,8 @@ template <std::derived_from<Base> Component, class ComponentContainer, solver_ou
                  } -> detail::assignable_to<std::ranges::range_reference_t<ComponentOutput>>;
              }
 constexpr void output_result(MainModelState<ComponentContainer> const& state,
-                             MathOutput<std::vector<SolverOutputType>> const& math_output, ComponentOutput&& output) {
+                             MathOutput<std::vector<SolverOutputType>> const& math_output,
+                             ComponentOutput const& output) {
     detail::produce_output<Component, Idx2D>(state, output, [&math_output](Component const& component, Idx2D math_id) {
         return output_result<Component>(component, math_output.solver_output, math_id);
     });
@@ -521,7 +523,8 @@ template <std::derived_from<Base> Component, class ComponentContainer, solver_ou
                  } -> detail::assignable_to<std::ranges::range_reference_t<ComponentOutput>>;
              }
 constexpr void output_result(MainModelState<ComponentContainer> const& state,
-                             MathOutput<std::vector<SolverOutputType>> const& math_output, ComponentOutput&& output) {
+                             MathOutput<std::vector<SolverOutputType>> const& math_output,
+                             ComponentOutput const& output) {
     detail::produce_output<Component, Idx2D>(
         state, output, [&state, &math_output](Component const& component, Idx2D const math_id) {
             return output_result<Component>(component, state, math_output.solver_output, math_id);
@@ -537,7 +540,8 @@ template <std::derived_from<Base> Component, class ComponentContainer, solver_ou
                  } -> detail::assignable_to<std::ranges::range_reference_t<ComponentOutput>>;
              }
 constexpr void output_result(MainModelState<ComponentContainer> const& state,
-                             MathOutput<std::vector<SolverOutputType>> const& math_output, ComponentOutput&& output) {
+                             MathOutput<std::vector<SolverOutputType>> const& math_output,
+                             ComponentOutput const& output) {
     detail::produce_output<Component, Idx>(
         state, output, [&state, &math_output](Component const& component, Idx const obj_seq) {
             return output_result<Component, ComponentContainer>(component, state, math_output.solver_output, obj_seq);
@@ -553,7 +557,8 @@ template <std::derived_from<Base> Component, class ComponentContainer, solver_ou
                  } -> detail::assignable_to<std::ranges::range_reference_t<ComponentOutput>>;
              }
 constexpr void output_result(MainModelState<ComponentContainer> const& state,
-                             MathOutput<std::vector<SolverOutputType>> const& math_output, ComponentOutput&& output) {
+                             MathOutput<std::vector<SolverOutputType>> const& math_output,
+                             ComponentOutput const& output) {
     detail::produce_output<Component, Idx2DBranch3>(
         state, output, [&math_output](Component const& component, Idx2DBranch3 const& math_id) {
             return output_result<Component>(component, math_output.solver_output, math_id);
@@ -569,7 +574,7 @@ template <std::derived_from<Base> Component, class ComponentContainer, typename 
                  } -> detail::assignable_to<std::ranges::range_reference_t<ComponentOutput>>;
              }
 constexpr void output_result(MainModelState<ComponentContainer> const& state,
-                             MathOutput<SolverOutputType> const& math_output, ComponentOutput&& output) {
+                             MathOutput<SolverOutputType> const& math_output, ComponentOutput const& output) {
     detail::produce_output<Component, Idx>(
         state, output, [&state, &math_output](Component const& component, Idx const obj_seq) {
             return output_result<Component, ComponentContainer>(component, state, math_output, obj_seq);
