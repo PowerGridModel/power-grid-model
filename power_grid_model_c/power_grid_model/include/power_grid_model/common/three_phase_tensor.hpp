@@ -416,6 +416,7 @@ inline auto all_zero(RealValue<asymmetric_t> const& value) { return (value == Re
 //
 // The function assumes that the current value is normalized and new value should be normalized with scalar
 template <symmetry_tag sym, class Proxy>
+// NOLINTNEXTLINE(cppcoreguidelines-missing-std-forward)
 inline void update_real_value(RealValue<sym> const& new_value, Proxy&& current_value, RealValue<symmetric_t> scalar) {
     if constexpr (is_symmetric_v<sym>) {
         if (!is_nan(new_value)) {
