@@ -186,7 +186,7 @@ namespace detail {
 template <component_c Component, class ComponentContainer, std::ranges::viewable_range Elements,
           std::output_iterator<Idx2D> OutputIterator>
     requires common::component_container_c<ComponentContainer, Component>
-inline void get_component_sequence_impl(ComponentContainer const& components, Elements&& elements,
+inline void get_component_sequence_impl(ComponentContainer const& components, Elements const& elements,
                                         OutputIterator destination, Idx n_comp_elements) {
     using UpdateType = typename Component::UpdateType;
 
@@ -206,7 +206,7 @@ inline void get_component_sequence_impl(ComponentContainer const& components, El
 
 template <component_c Component, class ComponentContainer, std::ranges::viewable_range Elements>
     requires common::component_container_c<ComponentContainer, Component>
-inline std::vector<Idx2D> get_component_sequence_by_iter(ComponentContainer const& components, Elements&& elements,
+inline std::vector<Idx2D> get_component_sequence_by_iter(ComponentContainer const& components, Elements const& elements,
                                                          Idx n_comp_elements = na_Idx) {
     std::vector<Idx2D> result;
     result.reserve(std::ranges::size(elements));
@@ -262,7 +262,7 @@ get_all_sequence_idx_map(typename ModelType::ComponentContainer const& component
 template <component_c Component, class ComponentContainer, std::ranges::viewable_range Updates,
           std::output_iterator<Idx2D> OutputIterator>
     requires common::component_container_c<ComponentContainer, Component>
-inline UpdateChange update_component(ComponentContainer& components, Updates&& component_updates,
+inline UpdateChange update_component(ComponentContainer& components, Updates const& component_updates,
                                      OutputIterator changed_it, std::span<Idx2D const> sequence_idx) {
     using UpdateType = typename Component::UpdateType;
 
@@ -286,7 +286,7 @@ inline UpdateChange update_component(ComponentContainer& components, Updates&& c
 template <component_c Component, class ComponentContainer, std::ranges::viewable_range ComponentUpdates,
           std::output_iterator<Idx2D> OutputIterator>
     requires common::component_container_c<ComponentContainer, Component>
-inline UpdateChange update_component(ComponentContainer& components, ComponentUpdates&& component_updates,
+inline UpdateChange update_component(ComponentContainer& components, ComponentUpdates const& component_updates,
                                      OutputIterator changed_it) {
     return update_component<Component>(
         components, component_updates, changed_it,
@@ -300,7 +300,7 @@ inline UpdateChange update_component(ComponentContainer& components, ComponentUp
 template <component_c Component, class ComponentContainer, std::ranges::viewable_range Updates,
           std::output_iterator<typename Component::UpdateType> OutputIterator>
     requires common::component_container_c<ComponentContainer, Component>
-inline void update_inverse(ComponentContainer const& components, Updates&& updates, OutputIterator destination,
+inline void update_inverse(ComponentContainer const& components, Updates const& updates, OutputIterator destination,
                            std::span<Idx2D const> sequence_idx) {
     using UpdateType = typename Component::UpdateType;
 
@@ -314,7 +314,7 @@ inline void update_inverse(ComponentContainer const& components, Updates&& updat
 template <component_c Component, class ComponentContainer, std::ranges::viewable_range Updates,
           std::output_iterator<typename Component::UpdateType> OutputIterator>
     requires common::component_container_c<ComponentContainer, Component>
-inline void update_inverse(ComponentContainer const& components, Updates&& updates, OutputIterator destination) {
+inline void update_inverse(ComponentContainer const& components, Updates const& updates, OutputIterator destination) {
     return update_inverse<Component>(components, updates, destination,
                                      detail::get_component_sequence_by_iter<Component>(components, updates));
 }
