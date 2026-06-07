@@ -66,7 +66,6 @@ readability-*,
 -readability-redundant-member-init,
 -readability-uppercase-literal-suffix,
 -bugprone-unchecked-optional-access,
--cppcoreguidelines-missing-std-forward,
 '
 
 WarningsAsErrors: '*'
