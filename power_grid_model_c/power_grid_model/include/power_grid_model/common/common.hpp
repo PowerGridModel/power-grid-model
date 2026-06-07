@@ -101,9 +101,8 @@ template <class T, class... Ts>
 concept derives_from_any_in_list_c = (std::derived_from<T, Ts> || ...);
 
 namespace capturing {
-// perfect forward into void
-// NOLINTNEXTLINE(cppcoreguidelines-missing-std-forward)
-template <class... T> constexpr void into_the_void(T&&... /*ignored*/) {
+// capture into void
+template <class... T> constexpr void into_the_void(T const&... /*ignored*/) {
     // do nothing; the constexpr allows all compilers to optimize this away
 }
 } // namespace capturing
