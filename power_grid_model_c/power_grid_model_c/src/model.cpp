@@ -222,7 +222,7 @@ constexpr BatchExceptionHandler batch_exception_handler{};
 
 template <typename T, std::ranges::input_range R>
     requires std::convertible_to<std::ranges::range_value_t<R>, T>
-void append_range(std::vector<T>& vec, R&& range) {
+void append_range(std::vector<T>& vec, R const& range) {
     std::ranges::move(range, std::back_inserter(vec));
 }
 
