@@ -48,11 +48,10 @@ constexpr auto sparse_encode(ElementGroups&& element_groups, Idx num_groups) {
     return result;
 }
 
-template <std::ranges::viewable_range IndPtr> constexpr auto sparse_decode(IndPtr&& indptr) {
-    auto indptr_view = std::views::all(indptr);
-    auto result = IdxVector(indptr_view.back());
-    for (Idx const group : IdxRange{static_cast<Idx>(indptr_view.size()) - 1}) {
-        std::fill(std::begin(result) + indptr_view[group], std::begin(result) + indptr_view[group + 1], group);
+constexpr auto sparse_decode(IdxVector const& indptr) {
+    auto result = IdxVector(indptr.back());
+    for (Idx const group : IdxRange{static_cast<Idx>(indptr.size()) - 1}) {
+        std::fill(std::begin(result) + indptr[group], std::begin(result) + indptr[group + 1], group);
     }
     return result;
 }
