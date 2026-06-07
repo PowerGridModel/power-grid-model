@@ -20,6 +20,7 @@
 #include <doctest/doctest.h>
 
 #include <memory>
+#include <span>
 #include <utility>
 #include <vector>
 
@@ -44,7 +45,9 @@ TEST_CASE("Test main core output") {
         comp_topo->regulated_object_idx = {2, 3};
         state.comp_topo = std::make_shared<ComponentTopology const>(std::move(*comp_topo));
 
-        std::vector<TransformerTapRegulatorOutput> output(state.components.template size<TransformerTapRegulator>());
+        std::vector<TransformerTapRegulatorOutput> output_buffer(
+            state.components.template size<TransformerTapRegulator>());
+        std::span<TransformerTapRegulatorOutput> output{output_buffer};
 
         SUBCASE("No regulation") {
             SUBCASE("Symmetric") {
