@@ -17,6 +17,14 @@ It remains performant, even when doing calculations with one or a combination of
 To achieve that high performance, several optimizations are made.
 To use those optimizations to the fullest, we recommend our users to follow the following guidelines.
 
+## Scalability
+
+The calculation workload generally depends on the number of connected grid elements and on the network topology.
+For radial distribution grids, most calculation steps scale close to linearly with grid size.
+Meshed grids require more coupling between buses and branches, so some steps can scale less favorably.
+In both cases, runtime and memory usage are also affected by the number of batch scenarios, the amount of update data per
+scenario, and whether the topology can be reused between scenarios.
+
 ```{note}
 This guide focuses on system-level performance optimization (batching, caching, parallelization).
 For algorithm-level details such as calculation method selection, see the [Calculations](calculations.md) documentation.
