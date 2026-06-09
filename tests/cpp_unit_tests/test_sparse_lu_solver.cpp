@@ -84,6 +84,12 @@ TEST_CASE("Test Sparse LU solver") {
             solver.solve_with_prefactorized_matrix((std::vector<double> const&)data, block_perm, rhs, x);
             check_result(x, x_ref);
         }
+        // our use case only need selective inversion for block sparse matrices
+        SUBCASE("Selective inversion error with scalar sparse matrix") {
+            solver.prefactorize(data, block_perm);
+            CHECK_THROWS_AS(solver.inplace_selective_inverse_with_prefactorized_matrix(data, block_perm),
+                            SparseMatrixError);
+        }
 
         SUBCASE("Data is prefactorized by solve") {
             auto prefactorized_data = data;
