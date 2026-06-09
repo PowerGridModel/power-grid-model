@@ -251,8 +251,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         capturing::into_the_void(data, block_perm_array); // prevent compiler from complaining about unused variables
         if constexpr (!is_block) {
             throw SparseMatrixError{};
-        }
-        if (has_pivot_perturbation_) {
+        } else if (has_pivot_perturbation_) {
             throw SparseMatrixError{};
         }
     }
