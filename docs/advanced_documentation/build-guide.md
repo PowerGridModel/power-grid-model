@@ -30,7 +30,7 @@ In this repository there are three builds:
 
 To build the library from source, you need to first prepare the compiler toolchains and the build dependencies.
 In this section a list of general requirements are given.
-After this section there are examples of setup in Linux (Ubuntu 24.04), Windows 11, and macOS (Tahoe).
+After this section there are examples of setup in Linux (Ubuntu 26.04), Windows 11, and macOS (Tahoe).
 
 ### Architecture Support
 
@@ -230,46 +230,37 @@ Usage: ./build.sh -p <preset> [-c] [-e] [-i] [-t]
 
 To list the available presets, run `./build.sh -h`.
 
-## Example Setup for Ubuntu 24.04 (in WSL or physical/virtual machine)
+## Example Setup for Ubuntu 26.04 (in WSL or physical/virtual machine)
 
-In this section an example is given for setup in Ubuntu 24.04.
+In this section an example is given for setup in Ubuntu 26.04.
 You can use this example in Windows Subsystem for Linux (WSL), or in a physical/virtual machine.
 
-### Ubuntu Software Packages
+While you can use `apt`, setup via [Homebrew](https://brew.sh) has proved to be much simpler.
+In addition, the recommended way to get the [C++ packages](#c) and `uv` is via [Homebrew](https://brew.sh).
 
-Install the minimum required packages:
+### Set-up Homebrew
+
+Follow the setup guidelines in [Homebrew](https://brew.sh).
+For optimal user experience on Linux, also consider installing the
+[requirements](https://docs.brew.sh/Homebrew-on-Linux#requirements) as well.
+
+At the time of writing, the set-up is done as follows:
 
 ```shell
-sudo apt update && sudo apt -y upgrade
-sudo apt install -y build-essential gcc g++ clang-18 make ninja-build pkg-config
+sudo apt update && sudo apt -y upgrade                     # make sure you're up to date
+sudo apt install build-essential procps curl file git  # install the requirements for Homebrew
 ```
 
-The following packages are optional depending on your use case:
+Then install Homebrew using the setup recommendations in [Homebrew](https://brew.sh).
 
-```shell
-sudo apt install -y gcovr lcov # For coverage reports
-sudo apt install -y gdb # For debugging
-sudo apt install -y wget curl zip unzip tar git # General use tools
-```
-
-### C++ Dependencies for CMake
+### C++ Dependencies + Build Requirements
 
 The recommended way to get the [C++ packages](#c) and `uv` is via [Homebrew](https://brew.sh):
 
 ```shell
-brew install boost eigen nlohmann-json msgpack-cxx doctest cmake uv
-```
-
-### Environment variables
-
-Append the following lines into the file `${HOME}/.bashrc`.
-
-```shell
-export CXX=clang++-18            # or g++-14
-export CC=clang-18               # or gcc-14
-export CMAKE_PREFIX_PATH=/home/linuxbrew/.linuxbrew  # only needed for CMake builds
-export LLVM_COV=llvm-cov-18      # only if you want to use one of the llvm features
-export CLANG_TIDY=clang-tidy-18  # only if you want to use one of the clang-tidy presets
+brew install \
+    gcc llvm gdb gcovr lcov lld cmake ninja \
+    boost eigen nlohmann-json msgpack-cxx doctest cmake uv
 ```
 
 ### Build Python Library from Source
