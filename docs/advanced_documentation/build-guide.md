@@ -263,6 +263,13 @@ brew install \
     boost eigen nlohmann-json msgpack-cxx doctest cmake uv
 ```
 
+Append the following lines into the file `${HOME}/.bashrc` (required for `scikit-build` for the Python installation):
+
+```shell
+export CXX=clang++  # or g++ or g++-15 or ...
+export CC=clang     # or gcc or gcc-15 or ...
+```
+
 ### Build Python Library from Source
 
 Go to the root folder you prefer to save the repositories.
