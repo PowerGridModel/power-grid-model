@@ -260,7 +260,7 @@ The recommended way to get the [C++ packages](#c) and `uv` is via [Homebrew](htt
 ```shell
 brew install \
     gcc llvm gdb gcovr lcov lld cmake ninja \
-    boost eigen nlohmann-json msgpack-cxx doctest cmake uv
+    boost eigen nlohmann-json msgpack-cxx doctest uv
 ```
 
 Append the following lines into the file `${HOME}/.bashrc` (required for `scikit-build` for the Python installation):
