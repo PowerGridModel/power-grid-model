@@ -20,7 +20,6 @@
 #include <doctest/doctest.h>
 
 #include <memory>
-#include <span>
 #include <utility>
 #include <vector>
 
@@ -45,16 +44,14 @@ TEST_CASE("Test main core output") {
         comp_topo->regulated_object_idx = {2, 3};
         state.comp_topo = std::make_shared<ComponentTopology const>(std::move(*comp_topo));
 
-        std::vector<TransformerTapRegulatorOutput> output_buffer(
-            state.components.template size<TransformerTapRegulator>());
-        std::span<TransformerTapRegulatorOutput> const output{output_buffer};
+        std::vector<TransformerTapRegulatorOutput> output(state.components.template size<TransformerTapRegulator>());
 
         SUBCASE("No regulation") {
             SUBCASE("Symmetric") {
-                output_result<TransformerTapRegulator, ComponentContainer>(state, SymOutput{}, output);
+                output_result<TransformerTapRegulator, ComponentContainer>(state, SymOutput{}, by_ref(output));
             }
             SUBCASE("Asymmetric") {
-                output_result<TransformerTapRegulator, ComponentContainer>(state, AsymOutput{}, output);
+                output_result<TransformerTapRegulator, ComponentContainer>(state, AsymOutput{}, by_ref(output));
             }
             CHECK(output[0].id == 0);
             CHECK(output[0].energized == 0);
@@ -68,11 +65,11 @@ TEST_CASE("Test main core output") {
                 .transformer_tap_positions = {{.transformer_id = 3, .tap_position = 1}}};
             SUBCASE("Symmetric") {
                 output_result<TransformerTapRegulator, ComponentContainer>(
-                    state, SymOutput{.solver_output = {}, .optimizer_output = optimizer_output}, output);
+                    state, SymOutput{.solver_output = {}, .optimizer_output = optimizer_output}, by_ref(output));
             }
             SUBCASE("Asymmetric") {
                 output_result<TransformerTapRegulator, ComponentContainer>(
-                    state, AsymOutput{.solver_output = {}, .optimizer_output = optimizer_output}, output);
+                    state, AsymOutput{.solver_output = {}, .optimizer_output = optimizer_output}, by_ref(output));
             }
             CHECK(output[0].id == 0);
             CHECK(output[0].energized == 0);
@@ -88,11 +85,11 @@ TEST_CASE("Test main core output") {
                                               {.transformer_id = 2, .tap_position = 3}}};
             SUBCASE("Symmetric") {
                 output_result<TransformerTapRegulator, ComponentContainer>(
-                    state, SymOutput{.solver_output = {}, .optimizer_output = optimizer_output}, output);
+                    state, SymOutput{.solver_output = {}, .optimizer_output = optimizer_output}, by_ref(output));
             }
             SUBCASE("Asymmetric") {
                 output_result<TransformerTapRegulator, ComponentContainer>(
-                    state, AsymOutput{.solver_output = {}, .optimizer_output = optimizer_output}, output);
+                    state, AsymOutput{.solver_output = {}, .optimizer_output = optimizer_output}, by_ref(output));
             }
             CHECK(output[0].id == 0);
             CHECK(output[0].energized == 1);
