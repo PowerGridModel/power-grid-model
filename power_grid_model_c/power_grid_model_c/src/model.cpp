@@ -198,9 +198,9 @@ struct BatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandle
 
 constexpr BatchExceptionHandler batch_exception_handler{};
 
-template <typename T, std::ranges::input_range R>
+template <typename T, std::ranges::view R>
     requires std::convertible_to<std::ranges::range_value_t<R>, T>
-void append_range(std::vector<T>& vec, R const& range) {
+void append_range(std::vector<T>& vec, R range) {
     std::ranges::move(range, std::back_inserter(vec));
 }
 
@@ -225,7 +225,7 @@ class MDBatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandl
                              return idx + scenario_offset;
                          }));
 
-            append_range(handle.batch_errs, ex.err_msgs());
+            append_range(handle.batch_errs, by_ref(ex.err_msgs()));
         } catch (std::exception const& ex) {
             handle_regular_error(handle, ex, PGM_batch_error);
             append_range(handle.failed_scenarios, IdxRange{stride_size_});
