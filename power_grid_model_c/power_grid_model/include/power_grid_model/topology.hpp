@@ -42,7 +42,7 @@
 // start search from a source
 // using DFS search
 
-namespace power_grid_model {
+namespace power_grid_model::topology {
 
 class Topology {
     using GraphIdx = size_t;
@@ -131,7 +131,7 @@ class Topology {
           predecessors_(
               boost::counting_iterator<GraphIdx>{0}, // Predecessors is initialized as 0, 1, 2, ..., n_node_total() - 1
               boost::counting_iterator<GraphIdx>{narrow_cast<GraphIdx>(comp_topo_.n_node_total())}),
-          node_status_(comp_topo_.n_node_total(), -1) {}
+          node_status_(comp_topo_.n_node_total(), not_processed) {}
 
     // build topology
     std::pair<std::vector<std::shared_ptr<MathModelTopology const>>,
@@ -165,17 +165,17 @@ class Topology {
     DoubleVector phase_shift_;
     std::vector<GraphIdx> predecessors_;
     // node status
-    // -1, node not processed, assuming that node in the far end of a tree structure
-    // -2, node in cycles or between the source and cycles, reordering not yet happened
-    // >=0, temporary internal bus number for minimum degree reordering
-    std::vector<Idx> node_status_;
+    static constexpr Idx not_processed{-1};                        // assume node in the far end of a tree structure
+    static constexpr Idx in_cycle_or_between_source_and_cycle{-2}; // reordering not yet happened
+    std::vector<Idx> node_status_; // >=0, temporary internal bus number for minimum degree reordering
     // output
     std::vector<MathModelTopology> math_topology_;
     TopologicalComponentToMathCoupling comp_coup_;
 
     void reset_topology() {
-        constexpr auto unknown_idx2d = Idx2D{.group = -1, .pos = -1};
-        constexpr auto unknown_idx2d_branch3 = Idx2DBranch3{.group = -1, .pos = {-1, -1, -1}};
+        constexpr auto unknown_idx2d = Idx2D{.group = disconnected, .pos = disconnected};
+        constexpr auto unknown_idx2d_branch3 =
+            Idx2DBranch3{.group = disconnected, .pos = {disconnected, disconnected, disconnected}};
 
         comp_coup_.node.resize(comp_topo_.n_node_total(), unknown_idx2d);
         comp_coup_.branch.resize(comp_topo_.branch_node_idx.size(), unknown_idx2d);
@@ -246,7 +246,7 @@ class Topology {
                 continue;
             }
             // if the source node is already part of a graph
-            if (comp_coup_.node[source_node].group != -1) {
+            if (comp_coup_.node[source_node].group != disconnected) {
                 // skip the source
                 continue;
             }
@@ -311,21 +311,21 @@ class Topology {
 
             // loop back from source in the predecessor tree
             // stop if it is already marked as in cycle
-            while (node_status_[node_in_cycle] != -2) {
+            while (node_status_[node_in_cycle] != in_cycle_or_between_source_and_cycle) {
                 // assign cycle status and go to predecessor
-                node_status_[node_in_cycle] = -2;
+                node_status_[node_in_cycle] = in_cycle_or_between_source_and_cycle;
                 node_in_cycle = predecessors_[node_in_cycle];
             }
         }
 
         // copy all the far-end non-cyclic node, in reverse order
         std::ranges::copy_if(std::views::reverse(dfs_node_copy), std::back_inserter(dfs_node),
-                             [this](Idx x) { return node_status_[x] == -1; });
+                             [this](Idx x) { return node_status_[x] == not_processed; });
 
         // copy all cyclic node
         std::vector<Idx> cyclic_node;
         std::ranges::copy_if(dfs_node_copy, std::back_inserter(cyclic_node),
-                             [this](Idx x) { return node_status_[x] == -2; });
+                             [this](Idx x) { return node_status_[x] == in_cycle_or_between_source_and_cycle; });
 
         // reorder does not make sense if number of cyclic nodes in a sub graph is smaller than 4
         if (cyclic_node.size() < 4) {
@@ -369,7 +369,7 @@ class Topology {
     void couple_branch() {
         auto const get_group_pos_if = []([[maybe_unused]] Idx math_group, IntS status, Idx2D const& math_idx) {
             if (status == 0) {
-                return Idx{-1};
+                return disconnected;
             }
             assert(math_group == math_idx.group);
             return math_idx.pos;
@@ -386,16 +386,16 @@ class Topology {
             Idx2D const i_math = comp_coup_.node[i];
             Idx2D const j_math = comp_coup_.node[j];
             Idx const math_group = [&]() {
-                if (i_status != 0 && i_math.group != -1) {
+                if (i_status != 0 && i_math.group != disconnected) {
                     return i_math.group;
                 }
-                if (j_status != 0 && j_math.group != -1) {
+                if (j_status != 0 && j_math.group != disconnected) {
                     return j_math.group;
                 }
-                return Idx{-1};
+                return disconnected;
             }();
             // skip if no math model connected
-            if (math_group == -1) {
+            if (math_group == disconnected) {
                 continue;
             }
             assert(i_status || j_status);
@@ -421,18 +421,18 @@ class Topology {
             };
             // internal node number as j
             Idx const math_group = [&]() {
-                Idx group = -1;
+                Idx group = disconnected;
                 // loop 3 way as indices n
                 for (size_t n = 0; n != 3; ++n) {
-                    if (i_status[n] != 0 && i_math[n].group != -1) {
+                    if (i_status[n] != 0 && i_math[n].group != disconnected) {
                         group = i_math[n].group;
                     }
                 }
                 return group;
             }();
             // skip if no math model connected
-            if (math_group == -1) {
-                assert(j_math.group == -1);
+            if (math_group == disconnected) {
+                assert(j_math.group == disconnected);
                 continue;
             }
             assert(i_status[0] || i_status[1] || i_status[2]);
@@ -580,7 +580,7 @@ class Topology {
         // assign load type
         for (auto const& [idx_math, load_gen_type] :
              std::views::zip(std::as_const(comp_coup_.load_gen), std::as_const(comp_topo_.load_gen_type))) {
-            if (idx_math.group == -1) {
+            if (idx_math.group == disconnected) {
                 continue;
             }
             math_topology_[idx_math.group].load_gen_type[idx_math.pos] = load_gen_type;
@@ -699,4 +699,4 @@ class Topology {
     }
 };
 
-} // namespace power_grid_model
+} // namespace power_grid_model::topology

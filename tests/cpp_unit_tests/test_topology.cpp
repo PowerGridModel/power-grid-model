@@ -109,7 +109,7 @@
  * (4, 6)  by removing node 2
  */
 
-namespace power_grid_model {
+namespace power_grid_model::topology {
 
 namespace {
 
@@ -468,4 +468,4 @@ TEST_CASE("Test cycle reorder") {
     }
 }
 
-} // namespace power_grid_model
+} // namespace power_grid_model::topology

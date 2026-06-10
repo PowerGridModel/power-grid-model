@@ -234,7 +234,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
 
     // solve with existing pre-factorization
     void
-    solve_with_prefactorized_matrix(std::vector<Tensor> const& data,        // pre-factoirzed data, const ref
+    solve_with_prefactorized_matrix(std::vector<Tensor> const& data,        // pre-factorized data, const ref
                                     BlockPermArray const& block_perm_array, // pre-calculated permutation, const ref
                                     std::vector<RHSVector> const& rhs, std::vector<XVector>& x) {
         if (has_pivot_perturbation_) {
@@ -249,8 +249,12 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         BlockPermArray const& block_perm_array // pre-calculated permutation, const ref
     ) const {
         capturing::into_the_void(data, block_perm_array); // prevent compiler from complaining about unused variables
-        if (has_pivot_perturbation_) {
+        if constexpr (!is_block) {
             throw SparseMatrixError{};
+        } else {
+            if (has_pivot_perturbation_) {
+                throw SparseMatrixError{};
+            }
         }
     }
 
@@ -395,7 +399,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
                 //       A(l_row, u_col) = A(l_row, u_col) - l * U(pivot_row_col, u_col),
                 //          for u_col > pivot_row_col
                 // it can create fill-ins, but the fill-ins are pre-allocated
-                // it is garanteed to have an entry at (l_row, u_col), if (pivot_row_col, u_col) is non-zero
+                // it is guaranteed to have an entry at (l_row, u_col), if (pivot_row_col, u_col) is non-zero
                 // starting A index from (l_row, pivot_row_col)
                 Idx a_idx = l_idx;
                 // loop all columns in the right of (pivot_row_col, pivot_row_col), at pivot_row
@@ -439,7 +443,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     std::optional<std::vector<RHSVector>> residual_;
     std::optional<std::vector<RHSVector>> rhs_;
 
-    void solve_with_refinement(std::vector<Tensor> const& data,        // pre-factoirzed data, const ref
+    void solve_with_refinement(std::vector<Tensor> const& data,        // pre-factorized data, const ref
                                BlockPermArray const& block_perm_array, // pre-calculated permutation, const ref
                                std::vector<RHSVector> const& rhs, std::vector<XVector>& x) {
         // initialize refinement
@@ -582,7 +586,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         original_matrix_.reset();
     }
 
-    void solve_once(std::vector<Tensor> const& data,        // pre-factoirzed data, const ref
+    void solve_once(std::vector<Tensor> const& data,        // pre-factorized data, const ref
                     BlockPermArray const& block_perm_array, // pre-calculated permutation, const ref
                     std::vector<RHSVector> const& rhs, std::vector<XVector>& x) const {
         // local reference
