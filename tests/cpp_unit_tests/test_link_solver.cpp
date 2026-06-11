@@ -10,7 +10,6 @@
 
 #include <doctest/doctest.h>
 
-#include <cmath>
 #include <concepts>
 #include <cstddef>
 #include <ranges>
