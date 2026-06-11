@@ -228,84 +228,8 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
           bus_types_(y_bus.size(), BusType::pq),
           voltage_regulators_per_load_gen_{std::ref(topo.voltage_regulators_per_load_gen)} {}
 
-    // Initialize the unknown variable in polar form using a linear voltage guess solved in the real domain.
-    // This implementation reuses the class-level Jacobian matrix (data_jac_) and RHS vector (del_x_pq_)
-    // to eliminate temporary memory allocations.
-    // The complex system (G + jB)(Ur + jUi) = Ir + jIi is mapped to the real system:
-    // [[-B, G], [-G, -B]] [Ui, Ur]^T = [Ir, -Ii]^T
-    // This mapping ensures that H/N/M/L sub-blocks align with the NR Jacobian at flat start.
-    void initialize_derived_solver(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
-                                   SolverOutput<sym>& output) {
-        // Reset reused buffers to zero
-        std::fill(data_jac_.begin(), data_jac_.end(), PFJacBlock<sym>{});
-        std::fill(del_x_pq_.begin(), del_x_pq_.end(), ComplexPower<sym>{});
-
-        // Map network admittance to real-domain system
-        IdxVector const& map_lu_y_bus = y_bus.map_lu_y_bus();
-        ComplexTensorVector<sym> const& ydata = y_bus.admittance();
-        for (Idx k = 0; k < data_jac_.size(); ++k) {
-            Idx const k_y_bus = map_lu_y_bus[k];
-            if (k_y_bus != -1) {
-                set_linear_block(data_jac_[k], ydata[k_y_bus]);
-            }
-        }
-
-        IdxVector const& bus_entry = y_bus.lu_diag();
-        auto const& load_gens_per_bus = this->load_gens_per_bus_.get();
-        auto const& sources_per_bus = this->sources_per_bus_.get();
-        for (auto const& [bus_number, load_gens, sources] :
-             enumerated_zip_sequence(load_gens_per_bus, sources_per_bus)) {
-            Idx const diagonal_position = bus_entry[bus_number];
-
-            // Add constant impedance loads. Y_load = P - jQ -> G=P, B=-Q
-            // Diagonal mapping: H+= -B_load = Q, L+= -B_load = Q, N+= G_load = P, M+= -G_load = -P
-            for (Idx const load_number : load_gens) {
-                auto const& s = input.s_injection[load_number];
-                auto const p = real(s);
-                auto const q = imag(s);
-                add_diag(data_jac_[diagonal_position].h(), q);
-                add_diag(data_jac_[diagonal_position].l(), q);
-                add_diag(data_jac_[diagonal_position].n(), p);
-                add_diag(data_jac_[diagonal_position].m(), -p);
-            }
-
-            // Add sources to diagonal and RHS. Equation: (Y_net + Y_src) * U = Y_src * U_src
-            // Contribution to LHS: Y_src * U
-            // RHS: [Ir_src, -Ii_src]^T
-            for (Idx const source_number : sources) {
-                ComplexTensor<sym> const y_source =
-                    y_bus.math_model_param().source_param[source_number].template y_ref<sym>();
-                ComplexValue<sym> const u_source{input.source[source_number]};
-
-                data_jac_[diagonal_position].h() -= imag(y_source);
-                data_jac_[diagonal_position].n() += real(y_source);
-                data_jac_[diagonal_position].m() -= real(y_source);
-                data_jac_[diagonal_position].l() -= imag(y_source);
-
-                add_linear_rhs(del_x_pq_[bus_number], y_source, u_source);
-            }
-        }
-
-        // Solve: [Ui, Ur] result in [p, q]
-        sparse_solver_.prefactorize_and_solve(data_jac_, perm_, del_x_pq_, del_x_pq_);
-
-        for (Idx i = 0; i != this->n_bus_; ++i) {
-            if constexpr (is_symmetric_v<sym>) {
-                output.u[i] = {del_x_pq_[i].q(), del_x_pq_[i].p()};
-            } else {
-                output.u[i] = ComplexValue<asymmetric_t>{RealValue<asymmetric_t>{del_x_pq_[i].q()},
-                                                         RealValue<asymmetric_t>{del_x_pq_[i].p()}};
-            }
-        }
-
-        set_u_ref_and_bus_types(input, output.u);
-
-        for (Idx i = 0; i != this->n_bus_; ++i) {
-            x_[i].v() = cabs(output.u[i]);
-            x_[i].theta() = arg(output.u[i]);
-        }
-    }
-
+    
+          
     // Calculate the Jacobian and deviation
     void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                 ComplexValueVector<sym> const& u) {
@@ -473,6 +397,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
                     data_jac_[k].m() = RealTensor<sym>{0.0};
                     if (row == j) {
                         auto const& v = x_[j].v();
+                        //single-phase
                         if constexpr (is_symmetric_v<sym>) {
                             data_jac_[k].l() = v;
                         } else {
@@ -573,23 +498,22 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         }
     }
 
-    // Helper to map complex admittance to real-domain block matrix [[-B, G], [-G, -B]].
-    // This mapping ensures H/N/M/L sub-blocks align with the NR Jacobian at flat start.
+    // Helper to map complex admittance to real-domain block matrix [[G, -B], [B, G]].
     static void set_linear_block(PFJacBlock<sym>& block, ComplexTensor<sym> const& y) {
-        block.h() = -imag(y);
-        block.n() = real(y);
-        block.m() = -real(y);
-        block.l() = -imag(y);
+        block.h() = real(y);
+        block.n() = -imag(y);
+        block.m() = imag(y);
+        block.l() = real(y);
     }
 
-    // Helper to map complex injection I = Y * U to real-domain RHS [Ir, -Ii]^T.
+    // Helper to map complex injection I = Y * U to real/imaginary components.
     static void add_linear_rhs(ComplexPower<sym>& rhs, ComplexTensor<sym> const& y, ComplexValue<sym> const& u) {
         auto const g = real(y);
         auto const b = imag(y);
         auto const ur = real(u);
         auto const ui = imag(u);
-        rhs.p() += (dot(g, ur) - dot(b, ui)); // Ir
-        rhs.q() -= (dot(b, ur) + dot(g, ui)); // -Ii
+        rhs.p() += dot(g, ur) - dot(b, ui);
+        rhs.q() += dot(b, ur) + dot(g, ui);
     }
 };
 
