@@ -397,7 +397,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
                     data_jac_[k].m() = RealTensor<sym>{0.0};
                     if (row == j) {
                         auto const& v = x_[j].v();
-                        //single-phase
+                        //single-phase signal
                         if constexpr (is_symmetric_v<sym>) {
                             data_jac_[k].l() = v;
                         } else {
