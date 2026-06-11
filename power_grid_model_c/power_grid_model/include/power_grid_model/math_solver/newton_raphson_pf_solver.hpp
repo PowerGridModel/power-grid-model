@@ -160,6 +160,7 @@ J.L -= -dQ_cal_m/dV
 #include <algorithm>
 #include <complex>
 #include <functional>
+#include <ranges>
 #include <vector>
 
 namespace power_grid_model::math_solver {
@@ -167,8 +168,8 @@ namespace power_grid_model::math_solver {
 // hide implementation in inside namespace
 namespace newton_raphson_pf {
 
-// class for phasor in polar coordinate and/or complex power
-template <symmetry_tag sym> struct PolarPhasor : public Block<double, sym, false, 2> {
+// class for phasor in polar coordinate and/or complex power (formerly PolarPhasor/ComplexPower)
+template <symmetry_tag sym> struct NRPFRhs : public Block<double, sym, false, 2> {
     template <int r, int c> using GetterType = typename Block<double, sym, false, 2>::template GetterType<r, c>;
 
     // eigen expression
@@ -180,10 +181,11 @@ template <symmetry_tag sym> struct PolarPhasor : public Block<double, sym, false
 
     GetterType<0, 0> p() { return this->template get_val<0, 0>(); }
     GetterType<1, 0> q() { return this->template get_val<1, 0>(); }
-};
 
-// class for complex power
-template <symmetry_tag sym> using ComplexPower = PolarPhasor<sym>;
+    // linear solve path getters: x0 = Ui, x1 = Ur and Eq0 = Real, Eq1 = Imag
+    GetterType<0, 0> i_real() { return this->template get_val<0, 0>(); }
+    GetterType<1, 0> i_imag() { return this->template get_val<1, 0>(); }
+};
 
 // class of pf block
 // block of incomplete power flow jacobian
@@ -192,7 +194,7 @@ template <symmetry_tag sym> using ComplexPower = PolarPhasor<sym>;
 // [M = dQ/dTheta = -N, L = V * dQ/dV = H] ]
 // Hij = Gij .* sij - Bij .* cij = L
 // Nij = Gij .* cij + Bij .* sij = -M
-template <symmetry_tag sym> class PFJacBlock : public Block<double, sym, true, 2> {
+template <symmetry_tag sym> class NRPFBlock : public Block<double, sym, true, 2> {
   public:
     template <int r, int c> using GetterType = typename Block<double, sym, true, 2>::template GetterType<r, c>;
 
@@ -204,6 +206,12 @@ template <symmetry_tag sym> class PFJacBlock : public Block<double, sym, true, 2
     GetterType<0, 1> n() { return this->template get_val<0, 1>(); }
     GetterType<1, 0> m() { return this->template get_val<1, 0>(); }
     GetterType<1, 1> l() { return this->template get_val<1, 1>(); }
+
+    // linear solve path getters: x0 = Ui, x1 = Ur and Eq0 = Real, Eq1 = Imag
+    GetterType<0, 0> real_imag() { return this->template get_val<0, 0>(); }
+    GetterType<0, 1> real_real() { return this->template get_val<0, 1>(); }
+    GetterType<1, 0> imag_imag() { return this->template get_val<1, 0>(); }
+    GetterType<1, 1> imag_real() { return this->template get_val<1, 1>(); }
 };
 
 // solver
@@ -212,9 +220,8 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
   public:
     using sym = sym_type;
 
-    using SparseSolverType = SparseLUSolver<PFJacBlock<sym>, ComplexPower<sym>, PolarPhasor<sym>>;
-    using BlockPermArray =
-        typename SparseLUSolver<PFJacBlock<sym>, ComplexPower<sym>, PolarPhasor<sym>>::BlockPermArray;
+    using SparseSolverType = SparseLUSolver<NRPFBlock<sym>, NRPFRhs<sym>, NRPFRhs<sym>>;
+    using BlockPermArray = typename SparseLUSolver<NRPFBlock<sym>, NRPFRhs<sym>, NRPFRhs<sym>>::BlockPermArray;
 
     static constexpr auto is_iterative = true;
 
@@ -232,21 +239,21 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
     // This implementation reuses the class-level Jacobian matrix (data_jac_) and RHS vector (del_x_pq_)
     // to eliminate temporary memory allocations.
     // The complex system (G + jB)(Ur + jUi) = Ir + jIi is mapped to the real system:
-    // [[-B, G], [-G, -B]] [Ui, Ur]^T = [Ir, -Ii]^T
-    // This mapping ensures that H/N/M/L sub-blocks align with the NR Jacobian at flat start.
+    // [[-B, G], [G, B]] [Ui, Ur]^T = [Ir, Ii]^T
+    // This mapping ensures that G aligns with the N/M sub-blocks as in the NR Jacobian.
     void initialize_derived_solver(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                    SolverOutput<sym>& output) {
         // Reset reused buffers to zero
-        std::fill(data_jac_.begin(), data_jac_.end(), PFJacBlock<sym>{});
-        std::fill(del_x_pq_.begin(), del_x_pq_.end(), ComplexPower<sym>{});
+        std::ranges::fill(data_jac_, NRPFBlock<sym>{});
+        std::ranges::fill(del_x_pq_, NRPFRhs<sym>{});
 
         // Map network admittance to real-domain system
         IdxVector const& map_lu_y_bus = y_bus.map_lu_y_bus();
         ComplexTensorVector<sym> const& ydata = y_bus.admittance();
-        for (Idx k = 0; k < data_jac_.size(); ++k) {
-            Idx const k_y_bus = map_lu_y_bus[k];
+        for (Idx jac_idx = 0; jac_idx < std::ssize(data_jac_); ++jac_idx) {
+            Idx const k_y_bus = map_lu_y_bus[jac_idx];
             if (k_y_bus != -1) {
-                set_linear_block(data_jac_[k], ydata[k_y_bus]);
+                set_linear_block(data_jac_[jac_idx], ydata[k_y_bus]);
             }
         }
 
@@ -256,47 +263,16 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         for (auto const& [bus_number, load_gens, sources] :
              enumerated_zip_sequence(load_gens_per_bus, sources_per_bus)) {
             Idx const diagonal_position = bus_entry[bus_number];
-
-            // Add constant impedance loads. Y_load = P - jQ -> G=P, B=-Q
-            // Diagonal mapping: H+= -B_load = Q, L+= -B_load = Q, N+= G_load = P, M+= -G_load = -P
-            for (Idx const load_number : load_gens) {
-                auto const& s = input.s_injection[load_number];
-                auto const p = real(s);
-                auto const q = imag(s);
-                add_diag(data_jac_[diagonal_position].h(), q);
-                add_diag(data_jac_[diagonal_position].l(), q);
-                add_diag(data_jac_[diagonal_position].n(), p);
-                add_diag(data_jac_[diagonal_position].m(), -p);
-            }
-
-            // Add sources to diagonal and RHS. Equation: (Y_net + Y_src) * U = Y_src * U_src
-            // Contribution to LHS: Y_src * U
-            // RHS: [Ir_src, -Ii_src]^T
-            for (Idx const source_number : sources) {
-                ComplexTensor<sym> const y_source =
-                    y_bus.math_model_param().source_param[source_number].template y_ref<sym>();
-                ComplexValue<sym> const u_source{input.source[source_number]};
-
-                data_jac_[diagonal_position].h() -= imag(y_source);
-                data_jac_[diagonal_position].n() += real(y_source);
-                data_jac_[diagonal_position].m() -= real(y_source);
-                data_jac_[diagonal_position].l() -= imag(y_source);
-
-                add_linear_rhs(del_x_pq_[bus_number], y_source, u_source);
-            }
+            add_linear_initial_guess_loads(load_gens, diagonal_position, input);
+            add_linear_initial_guess_sources(sources, bus_number, diagonal_position, y_bus, input);
         }
 
         // Solve: [Ui, Ur] result in [p, q]
         sparse_solver_.prefactorize_and_solve(data_jac_, perm_, del_x_pq_, del_x_pq_);
 
-        for (Idx i = 0; i != this->n_bus_; ++i) {
-            //single phase
-            if constexpr (is_symmetric_v<sym>) {
-                output.u[i] = {del_x_pq_[i].q(), del_x_pq_[i].p()};
-            } else {
-                output.u[i] = ComplexValue<asymmetric_t>{RealValue<asymmetric_t>{del_x_pq_[i].q()},
-                                                         RealValue<asymmetric_t>{del_x_pq_[i].p()}};
-            }
+        for (Idx const i : std::views::iota(Idx{}, this->n_bus_)) {
+            output.u[i] = ComplexValue<sym>{RealValue<sym>{del_x_pq_[i].i_imag()},
+                                            RealValue<sym>{del_x_pq_[i].i_real()}};
         }
 
         set_u_ref_and_bus_types(input, output.u);
@@ -351,14 +327,14 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
 
   private:
     // data for jacobian
-    std::vector<PFJacBlock<sym>> data_jac_;
+    std::vector<NRPFBlock<sym>> data_jac_;
     // calculation data
-    std::vector<PolarPhasor<sym>> x_; // unknown
+    std::vector<NRPFRhs<sym>> x_; // unknown
     // this stores in different steps
     // 1. negative power injection: - p/q_calculated
     // 2. power unbalance: p/q_specified - p/q_calculated
     // 3. unknown iterative
-    std::vector<ComplexPower<sym>> del_x_pq_;
+    std::vector<NRPFRhs<sym>> del_x_pq_;
 
     SparseSolverType sparse_solver_;
     // permutation array
@@ -399,9 +375,9 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
     /// = real(power_flow_ij)
     /// Mij = -Nij
     /// Lij = Hij
-    static PFJacBlock<sym> calculate_hnml(ComplexTensor<sym> const& yij, ComplexValue<sym> const& ui,
+    static NRPFBlock<sym> calculate_hnml(ComplexTensor<sym> const& yij, ComplexValue<sym> const& ui,
                                           ComplexValue<sym> const& uj) {
-        PFJacBlock<sym> block{};
+        NRPFBlock<sym> block{};
         ComplexTensor<sym> const power_flow_ij = vector_outer_product(ui, conj(uj)) * conj(yij);
         block.h() = imag(power_flow_ij);
         block.n() = real(power_flow_ij);
@@ -428,7 +404,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
                 // set to zero and skip if it is a fill-in
                 Idx const k_y_bus = map_lu_y_bus[k];
                 if (k_y_bus == -1) {
-                    data_jac_[k] = PFJacBlock<sym>{};
+                    data_jac_[k] = NRPFBlock<sym>{};
                     continue;
                 }
                 Idx const j = indices[k];
@@ -485,6 +461,44 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
                     }
                 }
             }
+        }
+    }
+
+    void add_linear_initial_guess_loads(IdxRange const& load_gens, Idx diagonal_position,
+                                        PowerFlowInput<sym> const& input) {
+        for (Idx const load_number : load_gens) {
+            auto const& s = input.s_injection[load_number];
+            // Y_load = P - jQ -> G=P, B=-Q
+            // System: [[-B, G], [G, B]] [Ui, Ur]^T = [Ir, Ii]^T
+            // Diagonal mapping: coeff of Ui in Real Eq = -B = imag(Y_load) = Q
+            //                   coeff of Ur in Real Eq = G = real(Y_load) = P
+            //                   coeff of Ui in Imag Eq = G = real(Y_load) = P
+            //                   coeff of Ur in Imag Eq = B = -imag(Y_load) = -Q
+            auto const y_load = -conj(s);
+            add_diag(data_jac_[diagonal_position].real_imag(), -imag(y_load));
+            add_diag(data_jac_[diagonal_position].real_real(), real(y_load));
+            add_diag(data_jac_[diagonal_position].imag_imag(), real(y_load));
+            add_diag(data_jac_[diagonal_position].imag_real(), imag(y_load));
+        }
+    }
+
+    void add_linear_initial_guess_sources(IdxRange const& sources, Idx bus_number, Idx diagonal_position,
+                                          YBus<sym> const& y_bus, PowerFlowInput<sym> const& input) {
+        for (Idx const source_number : sources) {
+            ComplexTensor<sym> const y_source =
+                y_bus.math_model_param().source_param[source_number].template y_ref<sym>();
+            ComplexValue<sym> const u_source{input.source[source_number]};
+
+            // coeff of Ui in Real Eq = -B
+            data_jac_[diagonal_position].real_imag() -= imag(y_source);
+            // coeff of Ur in Real Eq = G
+            data_jac_[diagonal_position].real_real() += real(y_source);
+            // coeff of Ui in Imag Eq = G
+            data_jac_[diagonal_position].imag_imag() += real(y_source);
+            // coeff of Ur in Imag Eq = B
+            data_jac_[diagonal_position].imag_real() += imag(y_source);
+
+            add_linear_rhs(del_x_pq_[bus_number], y_source, u_source);
         }
     }
 
@@ -550,8 +564,8 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
             ComplexTensor<sym> const y_ref = y_bus.math_model_param().source_param[source_number].template y_ref<sym>();
             ComplexValue<sym> const u_ref{input.source[source_number]};
             // calculate block, um = ui, us = uref
-            PFJacBlock<sym> block_mm = calculate_hnml(y_ref, u[bus_number], u[bus_number]);
-            PFJacBlock<sym> block_ms = calculate_hnml(-y_ref, u[bus_number], u_ref);
+            NRPFBlock<sym> block_mm = calculate_hnml(y_ref, u[bus_number], u[bus_number]);
+            NRPFBlock<sym> block_ms = calculate_hnml(-y_ref, u[bus_number], u_ref);
             // P_cal_m = (Nmm + Nms) * I
             RealValue<sym> const p_cal = sum_row(block_mm.n() + block_ms.n());
             // Q_cal_m = (Hmm + Hms) * I
@@ -574,23 +588,22 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         }
     }
 
-    // Helper to map complex admittance to real-domain block matrix [[-B, G], [-G, -B]].
-    // This mapping ensures H/N/M/L sub-blocks align with the NR Jacobian at flat start.
-    static void set_linear_block(PFJacBlock<sym>& block, ComplexTensor<sym> const& y) {
-        block.h() = -imag(y);
-        block.n() = real(y);
-        block.m() = -real(y);
-        block.l() = -imag(y);
-    }
-
-    // Helper to map complex injection I = Y * U to real-domain RHS [Ir, -Ii]^T.
-    static void add_linear_rhs(ComplexPower<sym>& rhs, ComplexTensor<sym> const& y, ComplexValue<sym> const& u) {
+    // Helper to map complex admittance to real-domain block matrix using NRPFBlock getters.
+    // This mapping ensures G aligns with the N/M sub-blocks as in the NR Jacobian.
+    static void set_linear_block(NRPFBlock<sym>& block, ComplexTensor<sym> const& y) {
         auto const g = real(y);
         auto const b = imag(y);
-        auto const ur = real(u);
-        auto const ui = imag(u);
-        rhs.p() += (dot(g, ur) - dot(b, ui)); // Ir
-        rhs.q() -= (dot(b, ur) + dot(g, ui)); // -Ii
+        block.real_imag() = -b;
+        block.real_real() = g;
+        block.imag_imag() = g;
+        block.imag_real() = b;
+    }
+
+    // Helper to map complex injection I = Y * U to real-domain RHS [Ir, Ii]^T using NRPFRhs getters.
+    static void add_linear_rhs(NRPFRhs<sym>& rhs, ComplexTensor<sym> const& y, ComplexValue<sym> const& u) {
+        auto const i_rhs = dot(y, u);
+        rhs.i_real() += real(i_rhs);
+        rhs.i_imag() += imag(i_rhs);
     }
 };
 
