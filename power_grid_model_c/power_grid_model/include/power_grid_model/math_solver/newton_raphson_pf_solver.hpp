@@ -290,7 +290,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         sparse_solver_.prefactorize_and_solve(data_jac_, perm_, del_x_pq_, del_x_pq_);
 
         for (Idx i = 0; i != this->n_bus_; ++i) {
-            //single phase signal
+            //single phase
             if constexpr (is_symmetric_v<sym>) {
                 output.u[i] = {del_x_pq_[i].q(), del_x_pq_[i].p()};
             } else {
