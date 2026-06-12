@@ -182,11 +182,11 @@ template <symmetry_tag sym> struct PolarPhasor : public Block<double, sym, false
     GetterType<0, 0> p() { return this->template get_val<0, 0>(); }
     GetterType<1, 0> q() { return this->template get_val<1, 0>(); }
 
-    // linear solve path getters: x0 = Ui, x1 = Ur and Eq0 = Real, Eq1 = Imag
+    // linear solve path getters: x0 = Ur, x1 = Ui and Eq0 = Real, Eq1 = Imag
     GetterType<0, 0> i_real() { return this->template get_val<0, 0>(); }
     GetterType<1, 0> i_imag() { return this->template get_val<1, 0>(); }
-    GetterType<0, 0> u_imag() { return this->template get_val<0, 0>(); }
-    GetterType<1, 0> u_real() { return this->template get_val<1, 0>(); }
+    GetterType<0, 0> u_real() { return this->template get_val<0, 0>(); }
+    GetterType<1, 0> u_imag() { return this->template get_val<1, 0>(); }
 };
 
 template <symmetry_tag sym> using ComplexPower = PolarPhasor<sym>;
@@ -211,12 +211,12 @@ template <symmetry_tag sym> class PFJacBlock : public Block<double, sym, true, 2
     GetterType<1, 0> m() { return this->template get_val<1, 0>(); }
     GetterType<1, 1> l() { return this->template get_val<1, 1>(); }
 
-    // linear solve path getters: x0 = Ui, x1 = Ur and Eq0 = Real, Eq1 = Imag
-    // System: [[-B, G], [G, B]] * [Ui, Ur]^T = [Ir, Ii]^T
-    GetterType<0, 0> real_imag() { return this->template get_val<0, 0>(); }
-    GetterType<0, 1> real_real() { return this->template get_val<0, 1>(); }
-    GetterType<1, 0> imag_imag() { return this->template get_val<1, 0>(); }
-    GetterType<1, 1> imag_real() { return this->template get_val<1, 1>(); }
+    // linear solve path getters: x0 = Ur, x1 = Ui and Eq0 = Real, Eq1 = Imag
+    // System: [[G, -B], [B, G]] * [Ur, Ui]^T = [Ir, Ii]^T
+    GetterType<0, 0> real_real() { return this->template get_val<0, 0>(); }
+    GetterType<0, 1> real_imag() { return this->template get_val<0, 1>(); }
+    GetterType<1, 0> imag_real() { return this->template get_val<1, 0>(); }
+    GetterType<1, 1> imag_imag() { return this->template get_val<1, 1>(); }
 };
 
 // solver
