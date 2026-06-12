@@ -409,6 +409,18 @@ class MainModelImpl {
         }
     }
 
+    void check_no_future_deprecations(Options const& /*options*/, ConstDataset const* /*batch_dataset*/) const {
+        ModelType::run_functor_with_all_component_types_return_void([this]<typename CT>() {
+            if constexpr (requires(CT c) { c.get_terminal_type(); }) {
+                if (std::ranges::any_of(state_.components.template citer<CT>(), [](auto const& sensor) {
+                        return sensor.get_terminal_type() == MeasuredTerminalType::node;
+                    })) {
+                    throw InvalidMeasuredTerminalType{MeasuredTerminalType::node, CT::name};
+                }
+            }
+        });
+    }
+
   private:
     template <solver_output_type SolverOutputType>
     void output_result(MathOutput<std::vector<SolverOutputType>> const& math_output, MutableDataset const& result_data,
