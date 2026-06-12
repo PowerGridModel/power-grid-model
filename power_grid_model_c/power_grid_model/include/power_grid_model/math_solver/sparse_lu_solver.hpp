@@ -152,6 +152,37 @@ template <rk2_tensor Matrix> class DenseLUFactor {
         }
         capturing::into_the_void(std::move(matrix));
     }
+
+    // Forward substitution with the L matrix. The diagonal entries of L are implicit 1.0,
+    template <class LUDerived, class RHSDerived>
+    static void forward_substitute_inplace(Eigen::MatrixBase<LUDerived> const& lu_matrix, RHSDerived& rhs)
+        requires(std::same_as<typename LUDerived::Scalar, Scalar> &&
+                 std::same_as<typename RHSDerived::Scalar, Scalar> && rk2_tensor<LUDerived> &&
+                 (LUDerived::RowsAtCompileTime == size) && (LUDerived::ColsAtCompileTime == size) &&
+                 (RHSDerived::RowsAtCompileTime == size))
+    {
+        for (int8_t row = 0; row != size; ++row) {
+            for (int8_t col = 0; col != row; ++col) {
+                rhs.row(row) -= lu_matrix(row, col) * rhs.row(col);
+            }
+        }
+    }
+
+    // Backward substitution with the U matrix stored in lu_matrix.
+    template <class LUDerived, class RHSDerived>
+    static void backward_substitute_inplace(Eigen::MatrixBase<LUDerived> const& lu_matrix, RHSDerived& rhs)
+        requires(std::same_as<typename LUDerived::Scalar, Scalar> &&
+                 std::same_as<typename RHSDerived::Scalar, Scalar> && rk2_tensor<LUDerived> &&
+                 (LUDerived::RowsAtCompileTime == size) && (LUDerived::ColsAtCompileTime == size) &&
+                 (RHSDerived::RowsAtCompileTime == size))
+    {
+        for (int8_t row = size - 1; row != -1; --row) {
+            for (int8_t col = size - 1; col != row; --col) {
+                rhs.row(row) -= lu_matrix(row, col) * rhs.row(col);
+            }
+            rhs.row(row) /= lu_matrix(row, row);
+        }
+    }
 };
 
 template <class Tensor, class RHSVector, class XVector> struct sparse_lu_entry_trait;
@@ -614,11 +645,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
             if constexpr (is_block) {
                 XVector& xb = x[row];
                 Tensor const& pivot = lu_matrix[diag_lu[row]];
-                for (Idx br = 0; br < block_size; ++br) {
-                    for (Idx bc = 0; bc < br; ++bc) {
-                        xb(br) -= pivot(br, bc) * xb(bc);
-                    }
-                }
+                LUFactor::forward_substitute_inplace(pivot.matrix(), x[row]);
             }
         }
 
@@ -637,12 +664,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
                 // backward substitution inside block
                 XVector& xb = x[row];
                 Tensor const& pivot = lu_matrix[diag_lu[row]];
-                for (Idx br = block_size - 1; br != -1; --br) {
-                    for (Idx bc = block_size - 1; bc > br; --bc) {
-                        xb(br) -= pivot(br, bc) * xb(bc);
-                    }
-                    xb(br) = xb(br) / pivot(br, br);
-                }
+                LUFactor::backward_substitute_inplace(pivot.matrix(), x[row]);
             } else {
                 x[row] = x[row] / lu_matrix[diag_lu[row]];
             }
