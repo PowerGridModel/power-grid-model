@@ -244,7 +244,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
     // This implementation reuses the class-level Jacobian matrix (data_jac_) and RHS vector (del_x_pq_)
     // to eliminate temporary memory allocations.
     // The complex system (G + jB)(Ur + jUi) = Ir + jIi is mapped to the real system:
-    // [[-B, G], [G, B]] [Ui, Ur]^T = [Ir, Ii]^T
+    // [[G, -B], [B, G]] [Ur, Ui]^T = [Ir, Ii]^T
     // This mapping ensures that G aligns with the N/M sub-blocks as in the NR Jacobian.
     void initialize_derived_solver(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                    SolverOutput<sym>& output) {
@@ -475,11 +475,11 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         for (Idx const load_number : load_gens) {
             auto const& s = input.s_injection[load_number];
             // Y_load = P - jQ -> G=P, B=-Q
-            // System: [[-B, G], [G, B]] [Ui, Ur]^T = [Ir, Ii]^T
-            // Diagonal mapping: coeff of Ui in Real Eq = -B = imag(Y_load) = Q
-            //                   coeff of Ur in Real Eq = G = real(Y_load) = P
-            //                   coeff of Ui in Imag Eq = G = real(Y_load) = P
+            // System: [[G, -B], [B, G]] [Ur, Ui]^T = [Ir, Ii]^T
+            // Diagonal mapping: coeff of Ur in Real Eq = G = real(Y_load) = P
+            //                   coeff of Ui in Real Eq = -B = imag(Y_load) = Q
             //                   coeff of Ur in Imag Eq = B = -imag(Y_load) = -Q
+            //                   coeff of Ui in Imag Eq = G = real(Y_load) = P
             auto const y_load = -conj(s);
             add_diag(block.real_imag(), -imag(y_load));
             add_diag(block.real_real(), real(y_load));
