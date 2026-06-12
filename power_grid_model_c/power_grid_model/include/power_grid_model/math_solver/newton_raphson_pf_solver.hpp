@@ -161,7 +161,6 @@ J.L -= -dQ_cal_m/dV
 #include <complex>
 #include <functional>
 #include <ranges>
-#include <span>
 #include <vector>
 
 namespace power_grid_model::math_solver {
@@ -169,36 +168,11 @@ namespace power_grid_model::math_solver {
 // hide implementation in inside namespace
 namespace newton_raphson_pf {
 
-// Types for linear initial guess phase (intuitive getters for readability)
-template <symmetry_tag sym> struct RealLinearCalcRhs : public Block<double, sym, false, 2> {
-    template <int r, int c> using GetterType = typename Block<double, sym, false, 2>::template GetterType<r, c>;
-    using Block<double, sym, false, 2>::Block;
-    using Block<double, sym, false, 2>::operator=;
-
-    // Mapping: Eq0 = Real(I), Eq1 = Imag(I)
-    GetterType<0, 0> i_real() { return this->template get_val<0, 0>(); }
-    GetterType<1, 0> i_imag() { return this->template get_val<1, 0>(); }
-
-    // Mapping: Var0 = Ui, Var1 = Ur
-    GetterType<0, 0> u_imag() { return this->template get_val<0, 0>(); }
-    GetterType<1, 0> u_real() { return this->template get_val<1, 0>(); }
-};
-
-template <symmetry_tag sym> struct RealLinearCalcBlock : public Block<double, sym, true, 2> {
-    template <int r, int c> using GetterType = typename Block<double, sym, true, 2>::template GetterType<r, c>;
-    using Block<double, sym, true, 2>::Block;
-    using Block<double, sym, true, 2>::operator=;
-
-    // System: [[-B, G], [G, B]] * [Ui, Ur]^T = [Ir, Ii]^T
-    GetterType<0, 0> real_imag() { return this->template get_val<0, 0>(); }
-    GetterType<0, 1> real_real() { return this->template get_val<0, 1>(); }
-    GetterType<1, 0> imag_imag() { return this->template get_val<1, 0>(); }
-    GetterType<1, 1> imag_real() { return this->template get_val<1, 1>(); }
-};
-
-// Original types for NR iteration (kept for test compatibility)
+// class for phasor in polar coordinate and/or complex power
 template <symmetry_tag sym> struct PolarPhasor : public Block<double, sym, false, 2> {
     template <int r, int c> using GetterType = typename Block<double, sym, false, 2>::template GetterType<r, c>;
+
+    // eigen expression
     using Block<double, sym, false, 2>::Block;
     using Block<double, sym, false, 2>::operator=;
 
@@ -207,13 +181,28 @@ template <symmetry_tag sym> struct PolarPhasor : public Block<double, sym, false
 
     GetterType<0, 0> p() { return this->template get_val<0, 0>(); }
     GetterType<1, 0> q() { return this->template get_val<1, 0>(); }
+
+    // linear solve path getters: x0 = Ui, x1 = Ur and Eq0 = Real, Eq1 = Imag
+    GetterType<0, 0> i_real() { return this->template get_val<0, 0>(); }
+    GetterType<1, 0> i_imag() { return this->template get_val<1, 0>(); }
+    GetterType<0, 0> u_imag() { return this->template get_val<0, 0>(); }
+    GetterType<1, 0> u_real() { return this->template get_val<1, 0>(); }
 };
 
 template <symmetry_tag sym> using ComplexPower = PolarPhasor<sym>;
 
+// class of pf block
+// block of incomplete power flow jacobian
+// non-diagonal H, N, M, L
+// [ [H = dP/dTheta, N = V * dP/dV],
+// [M = dQ/dTheta = -N, L = V * dQ/dV = H] ]
+// Hij = Gij .* sij - Bij .* cij = L
+// Nij = Gij .* cij + Bij .* sij = -M
 template <symmetry_tag sym> class PFJacBlock : public Block<double, sym, true, 2> {
   public:
     template <int r, int c> using GetterType = typename Block<double, sym, true, 2>::template GetterType<r, c>;
+
+    // eigen expression
     using Block<double, sym, true, 2>::Block;
     using Block<double, sym, true, 2>::operator=;
 
@@ -221,6 +210,13 @@ template <symmetry_tag sym> class PFJacBlock : public Block<double, sym, true, 2
     GetterType<0, 1> n() { return this->template get_val<0, 1>(); }
     GetterType<1, 0> m() { return this->template get_val<1, 0>(); }
     GetterType<1, 1> l() { return this->template get_val<1, 1>(); }
+
+    // linear solve path getters: x0 = Ui, x1 = Ur and Eq0 = Real, Eq1 = Imag
+    // System: [[-B, G], [G, B]] * [Ui, Ur]^T = [Ir, Ii]^T
+    GetterType<0, 0> real_imag() { return this->template get_val<0, 0>(); }
+    GetterType<0, 1> real_real() { return this->template get_val<0, 1>(); }
+    GetterType<1, 0> imag_imag() { return this->template get_val<1, 0>(); }
+    GetterType<1, 1> imag_real() { return this->template get_val<1, 1>(); }
 };
 
 // solver
@@ -245,17 +241,16 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
           voltage_regulators_per_load_gen_{std::ref(topo.voltage_regulators_per_load_gen)} {}
 
     // Initialize the unknown variable in polar form using a linear voltage guess solved in the real domain.
-    // Reuses class buffers data_jac_ and del_x_pq_ by reinterpreting them as RealLinearCalc types.
+    // This implementation reuses the class-level Jacobian matrix (data_jac_) and RHS vector (del_x_pq_)
+    // to eliminate temporary memory allocations.
+    // The complex system (G + jB)(Ur + jUi) = Ir + jIi is mapped to the real system:
+    // [[-B, G], [G, B]] [Ui, Ur]^T = [Ir, Ii]^T
+    // This mapping ensures that G aligns with the N/M sub-blocks as in the NR Jacobian.
     void initialize_derived_solver(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                    SolverOutput<sym>& output) {
         // Reset reused buffers to zero
         std::ranges::fill(data_jac_, PFJacBlock<sym>{});
         std::ranges::fill(del_x_pq_, PolarPhasor<sym>{});
-
-        // Use span views to treat buffers as linear solve calculation blocks
-        auto const jac_view =
-            std::span{reinterpret_cast<RealLinearCalcBlock<sym>*>(data_jac_.data()), data_jac_.size()};
-        auto const rhs_view = std::span{reinterpret_cast<RealLinearCalcRhs<sym>*>(del_x_pq_.data()), del_x_pq_.size()};
 
         // Map network admittance to real-domain system
         IdxVector const& map_lu_y_bus = y_bus.map_lu_y_bus();
@@ -263,7 +258,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         for (Idx jac_idx = 0; jac_idx < std::ssize(data_jac_); ++jac_idx) {
             Idx const k_y_bus = map_lu_y_bus[jac_idx];
             if (k_y_bus != -1) {
-                set_linear_block(jac_view[jac_idx], ydata[k_y_bus]);
+                set_linear_block(data_jac_[jac_idx], ydata[k_y_bus]);
             }
         }
 
@@ -273,8 +268,8 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         for (auto const& [bus_number, load_gens, sources] :
              enumerated_zip_sequence(load_gens_per_bus, sources_per_bus)) {
             Idx const diagonal_position = bus_entry[bus_number];
-            add_linear_initial_guess_loads(load_gens, jac_view[diagonal_position], input);
-            add_linear_initial_guess_sources(sources, bus_number, jac_view[diagonal_position], rhs_view[bus_number],
+            add_linear_initial_guess_loads(load_gens, data_jac_[diagonal_position], input);
+            add_linear_initial_guess_sources(sources, bus_number, data_jac_[diagonal_position], del_x_pq_[bus_number],
                                              y_bus, input);
         }
 
@@ -282,7 +277,8 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         sparse_solver_.prefactorize_and_solve(data_jac_, perm_, del_x_pq_, del_x_pq_);
 
         for (Idx const i : std::views::iota(Idx{}, this->n_bus_)) {
-            output.u[i] = ComplexValue<sym>{RealValue<sym>{rhs_view[i].u_real()}, RealValue<sym>{rhs_view[i].u_imag()}};
+            output.u[i] =
+                ComplexValue<sym>{RealValue<sym>{del_x_pq_[i].u_real()}, RealValue<sym>{del_x_pq_[i].u_imag()}};
         }
 
         set_u_ref_and_bus_types(input, output.u);
@@ -474,7 +470,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         }
     }
 
-    void add_linear_initial_guess_loads(IdxRange const& load_gens, RealLinearCalcBlock<sym>& block,
+    void add_linear_initial_guess_loads(IdxRange const& load_gens, PFJacBlock<sym>& block,
                                         PowerFlowInput<sym> const& input) {
         for (Idx const load_number : load_gens) {
             auto const& s = input.s_injection[load_number];
@@ -492,8 +488,8 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         }
     }
 
-    void add_linear_initial_guess_sources(IdxRange const& sources, Idx bus_number, RealLinearCalcBlock<sym>& block,
-                                          RealLinearCalcRhs<sym>& rhs, YBus<sym> const& y_bus,
+    void add_linear_initial_guess_sources(IdxRange const& sources, Idx bus_number, PFJacBlock<sym>& block,
+                                          PolarPhasor<sym>& rhs, YBus<sym> const& y_bus,
                                           PowerFlowInput<sym> const& input) {
         for (Idx const source_number : sources) {
             ComplexTensor<sym> const y_source =
@@ -599,9 +595,9 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         }
     }
 
-    // Helper to map complex admittance to real-domain block matrix using RealLinearCalcBlock getters.
+    // Helper to map complex admittance to real-domain block matrix using PFJacBlock getters.
     // This mapping ensures G aligns with the N/M sub-blocks as in the NR Jacobian.
-    static void set_linear_block(RealLinearCalcBlock<sym>& block, ComplexTensor<sym> const& y) {
+    static void set_linear_block(PFJacBlock<sym>& block, ComplexTensor<sym> const& y) {
         auto const g = real(y);
         auto const b = imag(y);
         block.real_imag() = -b;
@@ -610,8 +606,8 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         block.imag_real() = b;
     }
 
-    // Helper to map complex injection I = Y * U to real-domain RHS [Ir, Ii]^T using RealLinearCalcRhs getters.
-    static void add_linear_rhs(RealLinearCalcRhs<sym>& rhs, ComplexTensor<sym> const& y, ComplexValue<sym> const& u) {
+    // Helper to map complex injection I = Y * U to real-domain RHS [Ir, Ii]^T using PolarPhasor getters.
+    static void add_linear_rhs(PolarPhasor<sym>& rhs, ComplexTensor<sym> const& y, ComplexValue<sym> const& u) {
         auto const i_rhs = dot(y, u);
         rhs.i_real() += real(i_rhs);
         rhs.i_imag() += imag(i_rhs);
