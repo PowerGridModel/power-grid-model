@@ -7,6 +7,8 @@
 
 #include <doctest/doctest.h>
 
+#include <ranges>
+
 namespace power_grid_model {
 TEST_CASE("Counting Iterator") {
     CHECK(IdxRange{}.size() == 0);
@@ -45,4 +47,5 @@ TEST_CASE("Enumerate") {
     CHECK(std::get<0>(*it) == 2);
     CHECK(std::get<1>(*it) == 30);
 }
+
 } // namespace power_grid_model

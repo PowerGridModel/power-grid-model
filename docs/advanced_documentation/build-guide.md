@@ -193,9 +193,9 @@ Supported presets for your development platform can be listed using `cmake --lis
 In the developer build the following build targets (directories) are enabled:
 
 * `power_grid_model_c`: a dynamic library (`.so` on Linux, `.dylib` on macOS, `.dll` on Windows) with stable pure
-C API/ABI which can be used by any
-  application.
-* `tests/cpp_unit_tests_*`: the different unit test targets for the C++ core using the `doctest` framework.
+  C API/ABI which can be used by any application.
+* `tests/cpp_unit_tests_*`: (including subdirectories) the different unit test targets for the C++ core using the
+  `doctest` framework.
 * `tests/cpp_validation_tests`: the validation test target using the `doctest` framework.
 * `tests/native_api_tests`: the C API test target using the `doctest` framework.
 * `tests/benchmark_cpp`: the C++ benchmark target for performance measure.
