@@ -556,11 +556,11 @@ template <dataset_type_tag dataset_type_> class Dataset {
     template <class type_getter, class ComponentType, typename Func,
               class StructType = DataStruct<typename type_getter::template type<ComponentType>>>
         requires std::invocable<Func, SpanRange<StructType>> && std::invocable<Func, RangeObject<StructType>>
-    auto for_each_component(Func&& func, Idx scenario = invalid_index) const {
+    auto for_each_component(Func func, Idx scenario = invalid_index) const {
         if (is_columnar(ComponentType::name)) {
-            return std::forward<Func>(func)(get_columnar_buffer_span<type_getter, ComponentType, StructType>(scenario));
+            return func(get_columnar_buffer_span<type_getter, ComponentType, StructType>(scenario));
         }
-        return std::forward<Func>(func)(get_buffer_span<type_getter, ComponentType, StructType>(scenario));
+        return func(get_buffer_span<type_getter, ComponentType, StructType>(scenario));
     }
 
     void set_next_cartesian_product_dimension(Dataset const* next) {

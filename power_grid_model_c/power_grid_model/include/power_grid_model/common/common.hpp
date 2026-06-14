@@ -13,7 +13,9 @@
 #include <functional>
 #include <limits>
 #include <numbers>
+#include <ranges>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 namespace power_grid_model {
@@ -101,21 +103,34 @@ template <class T, class... Ts>
 concept derives_from_any_in_list_c = (std::derived_from<T, Ts> || ...);
 
 namespace capturing {
-// perfect forward into void
-template <class... T>
-constexpr void into_the_void(T&&... /*ignored*/) { // NOLINT(cppcoreguidelines-missing-std-forward)
+// capture into void
+template <class... T> constexpr void into_the_void(T const&... /*ignored*/) {
     // do nothing; the constexpr allows all compilers to optimize this away
 }
 } // namespace capturing
 
 // functor to include all
 struct IncludeAll {
-    template <class... T> consteval bool operator()(T&&... args) const {
-        capturing::into_the_void(std::forward<T>(args)...);
-        return true;
-    }
+    template <class... T> consteval bool operator()(T const&... /* args */) const { return true; }
 };
 constexpr IncludeAll include_all{};
+
+// by ref adaptor to pass to functions which accepts std::ranges::view
+template <class R>
+    requires(std::ranges::viewable_range<R> && !std::ranges::view<R>)
+constexpr auto by_ref(R& r) noexcept {
+    return std::ranges::ref_view(r);
+}
+template <class R>
+    requires(std::ranges::viewable_range<R> && !std::ranges::view<R>)
+constexpr auto by_ref(R const& r) noexcept {
+    return std::ranges::ref_view(r);
+}
+template <class R>
+    requires(std::ranges::viewable_range<R> && !std::ranges::view<R>)
+constexpr auto by_const_ref(R& r) noexcept {
+    return by_ref(std::as_const(r));
+}
 
 // function to handle periodic mapping
 template <typename T> constexpr T map_to_cyclic_range(T value, T period) {

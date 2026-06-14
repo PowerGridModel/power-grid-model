@@ -392,12 +392,12 @@ template <symmetry_tag sym> class YBus {
         }
 
         // process and update affected entries
-        update_admittance_entries(get_affected_admittance_entries(math_model_param_incrmt));
+        update_admittance_entries(by_ref(get_affected_admittance_entries(math_model_param_incrmt)));
     }
 
-    template <std::ranges::viewable_range Entries>
+    template <std::ranges::view Entries>
         requires std::same_as<std::ranges::range_value_t<Entries>, Idx>
-    void update_admittance_entries(Entries&& y_bus_entries) {
+    void update_admittance_entries(Entries y_bus_entries) {
         assert(std::ssize(admittance_) == nnz());
 
         auto const& y_bus_element = y_bus_struct_->y_bus_element;
@@ -409,7 +409,7 @@ template <symmetry_tag sym> class YBus {
             parameters_changed(true);
         }
 
-        for (auto const entry : std::forward<Entries>(y_bus_entries)) {
+        for (auto const entry : y_bus_entries) {
             // start admittance accumulation with zero
             ComplexTensor<sym> entry_admittance{0.0};
             // loop over all entries of this position
