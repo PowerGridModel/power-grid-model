@@ -262,8 +262,8 @@ get_all_sequence_idx_map(typename ModelType::ComponentContainer const& component
 template <component_c Component, class ComponentContainer, std::ranges::view Updates,
           std::output_iterator<Idx2D> OutputIterator>
     requires common::component_container_c<ComponentContainer, Component>
-inline UpdateChange update_component(ComponentContainer& components, Updates component_updates, OutputIterator changed_it,
-                                     std::span<Idx2D const> sequence_idx) {
+inline UpdateChange update_component(ComponentContainer& components, Updates component_updates,
+                                     OutputIterator changed_it, std::span<Idx2D const> sequence_idx) {
     using UpdateType = typename Component::UpdateType;
 
     UpdateChange state_changed;

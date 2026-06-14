@@ -119,12 +119,12 @@ constexpr IncludeAll include_all{};
 template <class R>
     requires(std::ranges::viewable_range<R> && !std::ranges::view<R>)
 constexpr auto by_ref(R& r) noexcept {
-    return std::views::all(r);
+    return std::ranges::ref_view(r);
 }
 template <class R>
     requires(std::ranges::viewable_range<R> && !std::ranges::view<R>)
 constexpr auto by_ref(R const& r) noexcept {
-    return std::views::all(r);
+    return std::ranges::ref_view(r);
 }
 template <class R>
     requires(std::ranges::viewable_range<R> && !std::ranges::view<R>)
