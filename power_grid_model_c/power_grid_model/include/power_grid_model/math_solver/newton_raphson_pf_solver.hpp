@@ -189,6 +189,7 @@ template <symmetry_tag sym> struct PolarPhasor : public Block<double, sym, false
     GetterType<1, 0> u_imag() { return this->template get_val<1, 0>(); }
 };
 
+// class for complex power
 template <symmetry_tag sym> using ComplexPower = PolarPhasor<sym>;
 
 // class of pf block
@@ -225,8 +226,9 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
   public:
     using sym = sym_type;
 
-    using SparseSolverType = SparseLUSolver<PFJacBlock<sym>, PolarPhasor<sym>, PolarPhasor<sym>>;
-    using BlockPermArray = typename SparseLUSolver<PFJacBlock<sym>, PolarPhasor<sym>, PolarPhasor<sym>>::BlockPermArray;
+    using SparseSolverType = SparseLUSolver<PFJacBlock<sym>, ComplexPower<sym>, PolarPhasor<sym>>;
+    using BlockPermArray =
+        typename SparseLUSolver<PFJacBlock<sym>, ComplexPower<sym>, PolarPhasor<sym>>::BlockPermArray;
 
     static constexpr auto is_iterative = true;
 
@@ -283,6 +285,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
 
         set_u_ref_and_bus_types(input, output.u);
 
+        // get magnitude and angle of start voltage
         for (Idx i = 0; i != this->n_bus_; ++i) {
             x_[i].v() = cabs(output.u[i]);
             x_[i].theta() = arg(output.u[i]);
