@@ -28,7 +28,7 @@ jobs:
           python-version: "3.11"
 
       - name: Build docs
-        run: python scripts/build_docs.py
+        run: python scripts/build-docs.py
 
       - name: Upload generated docs
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
