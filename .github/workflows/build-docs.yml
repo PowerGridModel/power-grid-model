@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
       - name: Setup Python
-        uses: actions/setup-python@REPLACE_WITH_SHA
+        uses: actions/setup-python@a309ff8b50ed95fcb0a0dbff1373a8df3c7c7f36
         with:
           python-version: "3.11"
 
