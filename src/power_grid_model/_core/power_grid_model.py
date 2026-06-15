@@ -613,11 +613,11 @@ class PowerGridModel:
                     - key: Component type name to be updated in batch.
                     - value:
 
-                        - For homogeneous update batch (a 2D numpy structured array):
+                        - For dense (uniform) update batch (a 2D numpy structured array):
 
                             - Dimension 0: Each batch.
                             - Dimension 1: Each updated element per batch for this component type.
-                        - For inhomogeneous update batch (a dictionary containing two keys):
+                        - For sparse (non-uniform) update batch (a dictionary containing two keys)::
 
                             - indptr: A 1D numpy int64 array with length n_batch + 1. Given batch number k, the
                               update array for this batch is data[indptr[k]:indptr[k + 1]]. This is the concept of
@@ -800,11 +800,11 @@ class PowerGridModel:
                     - key: Component type name to be updated in batch.
                     - value:
 
-                        - For homogeneous update batch (a 2D numpy structured array):
+                        - For dense (uniform) update batch (a 2D numpy structured array):
 
                             - Dimension 0: Each batch.
                             - Dimension 1: Each updated element per batch for this component type.
-                        - For inhomogeneous update batch (a dictionary containing two keys):
+                        - For sparse (non-uniform) update batch (a dictionary containing two keys)::
 
                             - indptr: A 1D numpy int64 array with length n_batch + 1. Given batch number k, the
                               update array for this batch is data[indptr[k]:indptr[k + 1]]. This is the concept of
@@ -964,11 +964,11 @@ class PowerGridModel:
                     - key: Component type name to be updated in batch
                     - value:
 
-                        - For homogeneous update batch (a 2D numpy structured array):
+                        - For dense (uniform) update batch (a 2D numpy structured array):
 
                             - Dimension 0: each batch
                             - Dimension 1: each updated element per batch for this component type
-                        - For inhomogeneous update batch (a dictionary containing two keys):
+                        - For sparse (non-uniform) update batch (a dictionary containing two keys)::
 
                             - indptr: A 1D numpy int64 array with length n_batch + 1. Given batch number k, the
                               update array for this batch is data[indptr[k]:indptr[k + 1]]. This is the concept of
