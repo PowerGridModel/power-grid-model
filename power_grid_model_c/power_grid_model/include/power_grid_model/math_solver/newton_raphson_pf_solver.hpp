@@ -271,8 +271,8 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
              enumerated_zip_sequence(load_gens_per_bus, sources_per_bus)) {
             Idx const diagonal_position = bus_entry[bus_number];
             add_linear_initial_guess_loads(load_gens, data_jac_[diagonal_position], input);
-            add_linear_initial_guess_sources(sources, bus_number, data_jac_[diagonal_position], del_x_pq_[bus_number],
-                                             y_bus, input);
+            add_linear_initial_guess_sources(sources, data_jac_[diagonal_position], del_x_pq_[bus_number], y_bus,
+                                             input);
         }
 
         // Solve: [Ui, Ur] result in [p, q]
@@ -491,9 +491,8 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         }
     }
 
-    void add_linear_initial_guess_sources(IdxRange const& sources, Idx bus_number, PFJacBlock<sym>& block,
-                                          PolarPhasor<sym>& rhs, YBus<sym> const& y_bus,
-                                          PowerFlowInput<sym> const& input) {
+    void add_linear_initial_guess_sources(IdxRange const& sources, PFJacBlock<sym>& block, PolarPhasor<sym>& rhs,
+                                          YBus<sym> const& y_bus, PowerFlowInput<sym> const& input) {
         for (Idx const source_number : sources) {
             ComplexTensor<sym> const y_source =
                 y_bus.math_model_param().source_param[source_number].template y_ref<sym>();
