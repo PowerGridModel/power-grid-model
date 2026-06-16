@@ -153,7 +153,8 @@ template <rk2_tensor Matrix> class DenseLUFactor {
         capturing::into_the_void(std::move(matrix));
     }
 
-    // Forward substitution with the L matrix. The diagonal entries of L are implicit 1.0,
+    // Forward substitution with the L matrix. The diagonal entries of L are implicit 1.0
+    // The rhs may be a vector or a matrix; matrix rhs columns are solved simultaneously.
     template <class LUDerived, class RHSDerived>
     static void forward_substitute_inplace(Eigen::MatrixBase<LUDerived> const& lu_matrix, RHSDerived& rhs)
         requires(std::same_as<typename LUDerived::Scalar, Scalar> &&
@@ -161,7 +162,7 @@ template <rk2_tensor Matrix> class DenseLUFactor {
                  (LUDerived::RowsAtCompileTime == size) && (LUDerived::ColsAtCompileTime == size) &&
                  (RHSDerived::RowsAtCompileTime == size))
     {
-        for (int8_t row = 0; row != size; ++row) {
+        for (int8_t row = 0; row < size; ++row) {
             for (int8_t col = 0; col < row; ++col) {
                 rhs.row(row) -= lu_matrix(row, col) * rhs.row(col);
             }
@@ -169,6 +170,7 @@ template <rk2_tensor Matrix> class DenseLUFactor {
     }
 
     // Backward substitution with the U matrix stored in lu_matrix.
+    // The rhs may be a vector or a matrix; matrix rhs columns are solved simultaneously.
     template <class LUDerived, class RHSDerived>
     static void backward_substitute_inplace(Eigen::MatrixBase<LUDerived> const& lu_matrix, RHSDerived& rhs)
         requires(std::same_as<typename LUDerived::Scalar, Scalar> &&
@@ -176,7 +178,7 @@ template <rk2_tensor Matrix> class DenseLUFactor {
                  (LUDerived::RowsAtCompileTime == size) && (LUDerived::ColsAtCompileTime == size) &&
                  (RHSDerived::RowsAtCompileTime == size))
     {
-        for (int8_t row = size - 1; row != -1; --row) {
+        for (int8_t row = size - 1; row > -1; --row) {
             for (int8_t col = size - 1; col > row; --col) {
                 rhs.row(row) -= lu_matrix(row, col) * rhs.row(col);
             }
