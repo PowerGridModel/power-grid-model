@@ -39,7 +39,7 @@ template <class T> void check_result(std::vector<T> const& x, std::vector<T> con
     }
 }
 
-std::vector<double> scalar_test_data() {
+std::vector<double> scalar_lu_test_data() {
     // [4 1 5
     //  3 7 f
     //  2 f 6]
@@ -69,7 +69,7 @@ TEST_CASE("Test Sparse LU solver") {
         // [4 1 5        3          21
         //  3 7 f     * [-1]   =  [ 2 ]
         //  2 f 6]       2          18
-        std::vector<double> data = scalar_test_data();
+        std::vector<double> data = scalar_lu_test_data();
         std::vector<double> const rhs = {21, 2, 18};
         std::vector<double> const x_ref = {3, -1, 2};
         std::vector<double> x(3, 0.0);
