@@ -2,9 +2,9 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+import re
 import sys
 from pathlib import Path
-import re
 
 BASE_DIR = Path("docs/user_manual")
 OUTPUT_FILE = BASE_DIR / "components.md"
