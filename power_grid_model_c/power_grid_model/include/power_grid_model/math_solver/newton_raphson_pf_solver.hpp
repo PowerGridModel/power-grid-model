@@ -275,7 +275,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
                                              input);
         }
 
-        // Solve: [Ui, Ur] result in [p, q]
+        // Solve: [Ur, Ui] result in [p, q]
         sparse_solver_.prefactorize_and_solve(data_jac_, perm_, del_x_pq_, del_x_pq_);
 
         for (Idx const i : std::views::iota(Idx{}, this->n_bus_)) {
@@ -483,7 +483,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
             //                   coeff of Ui in Real Eq = -B = imag(Y_load) = Q
             //                   coeff of Ur in Imag Eq = B = -imag(Y_load) = -Q
             //                   coeff of Ui in Imag Eq = G = real(Y_load) = P
-            auto const y_load = -conj(s);
+            ComplexValue<sym> const y_load = -conj(s);
             add_diag(block.real_imag(), -imag(y_load));
             add_diag(block.real_real(), real(y_load));
             add_diag(block.imag_imag(), real(y_load));
@@ -600,8 +600,8 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
     // Helper to map complex admittance to real-domain block matrix using PFJacBlock getters.
     // This mapping ensures G aligns with the N/M sub-blocks as in the NR Jacobian.
     static void set_linear_block(PFJacBlock<sym>& block, ComplexTensor<sym> const& y) {
-        auto const g = real(y);
-        auto const b = imag(y);
+        RealTensor<sym> const g = real(y);
+        RealTensor<sym> const b = imag(y);
         block.real_imag() = -b;
         block.real_real() = g;
         block.imag_imag() = g;
@@ -610,7 +610,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
 
     // Helper to map complex injection I = Y * U to real-domain RHS [Ir, Ii]^T using PolarPhasor getters.
     static void add_linear_rhs(PolarPhasor<sym>& rhs, ComplexTensor<sym> const& y, ComplexValue<sym> const& u) {
-        auto const i_rhs = dot(y, u);
+        ComplexValue<sym> const i_rhs = dot(y, u);
         rhs.i_real() += real(i_rhs);
         rhs.i_imag() += imag(i_rhs);
     }
