@@ -39,6 +39,17 @@ template <class T> void check_result(std::vector<T> const& x, std::vector<T> con
     }
 }
 
+std::vector<double> scalar_test_data() {
+    // [4 1 5
+    //  3 7 f
+    //  2 f 6]
+    return {
+        4.0, 1.0, 5.0, // row 0
+        3.0, 7.0, 0.0, // row 1
+        2.0, 0.0, 6.0  // row 2
+    };
+}
+
 // test block calculation with 2*2
 using Tensor = Eigen::Array<double, 2, 2, Eigen::ColMajor>;
 using Array = Eigen::Array<double, 2, 1, Eigen::ColMajor>;
@@ -58,11 +69,7 @@ TEST_CASE("Test Sparse LU solver") {
         // [4 1 5        3          21
         //  3 7 f     * [-1]   =  [ 2 ]
         //  2 f 6]       2          18
-        std::vector<double> data = {
-            4, 1, 5, // row 0
-            3, 7, 0, // row 1
-            2, 0, 6  // row 2
-        };
+        std::vector<double> data = scalar_test_data();
         std::vector<double> const rhs = {21, 2, 18};
         std::vector<double> const x_ref = {3, -1, 2};
         std::vector<double> x(3, 0.0);
