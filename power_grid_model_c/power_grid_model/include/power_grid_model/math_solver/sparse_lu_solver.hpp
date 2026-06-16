@@ -162,7 +162,7 @@ template <rk2_tensor Matrix> class DenseLUFactor {
                  (RHSDerived::RowsAtCompileTime == size))
     {
         for (int8_t row = 0; row != size; ++row) {
-            for (int8_t col = 0; col != row; ++col) {
+            for (int8_t col = 0; col < row; ++col) {
                 rhs.row(row) -= lu_matrix(row, col) * rhs.row(col);
             }
         }
@@ -177,7 +177,7 @@ template <rk2_tensor Matrix> class DenseLUFactor {
                  (RHSDerived::RowsAtCompileTime == size))
     {
         for (int8_t row = size - 1; row != -1; --row) {
-            for (int8_t col = size - 1; col != row; --col) {
+            for (int8_t col = size - 1; col > row; --col) {
                 rhs.row(row) -= lu_matrix(row, col) * rhs.row(col);
             }
             rhs.row(row) /= lu_matrix(row, row);
