@@ -185,6 +185,33 @@ template <rk2_tensor Matrix> class DenseLUFactor {
             rhs.row(row) /= lu_matrix(row, row);
         }
     }
+
+    // given the factorized block satisfies L * U = P * A * Q
+    // compute the inverse of the factorized L * U * X = I
+    // returns X = (L * U)^-1 = (P * A * Q)^-1
+    template <class Derived>
+    static Matrix inverse_factorized_block(Eigen::MatrixBase<Derived> const& lu_matrix)
+        requires(std::same_as<typename Derived::Scalar, Scalar> && rk2_tensor<Derived> &&
+                 (Derived::RowsAtCompileTime == size) && (Derived::ColsAtCompileTime == size))
+    {
+        Matrix inverse = Matrix::Identity();
+        forward_substitute_inplace(lu_matrix, inverse);
+        backward_substitute_inplace(lu_matrix, inverse);
+        return inverse;
+    }
+
+    template <class Derived>
+    static Matrix dense_inverse(Eigen::MatrixBase<Derived> const& lu_matrix, BlockPerm const& block_perm)
+        requires(std::same_as<typename Derived::Scalar, Scalar> && rk2_tensor<Derived> &&
+                 (Derived::RowsAtCompileTime == size) && (Derived::ColsAtCompileTime == size))
+    {
+        // given the factorized block satisfies L * U = P * A * Q
+        // return A^-1 = Q * (L * U)^-1 * P
+        // lu_matrix is read-only: the packed L/U factor is preserved.
+        // inverse_factorized_block() performs in-place substitutions only on
+        // its local Identity() RHS, not on lu_matrix.
+        return block_perm.q * inverse_factorized_block(lu_matrix) * block_perm.p;
+    }
 };
 
 template <class Tensor, class RHSVector, class XVector> struct sparse_lu_entry_trait;
