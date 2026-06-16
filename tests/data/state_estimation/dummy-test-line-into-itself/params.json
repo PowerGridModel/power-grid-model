@@ -1,0 +1,9 @@
+{
+  "calculation_method": ["newton_raphson", "iterative_linear"],
+  "rtol": 1e-9,
+  "atol": 1e-9,
+  "xfail": {
+    "raises": "AssertionError",
+    "reason": "Needs investigation"
+  }
+}
