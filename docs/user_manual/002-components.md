@@ -9,7 +9,7 @@ SPDX-License-Identifier: MPL-2.0
 ## Fault
 
 * type name: `fault`
-* base: [base](#base)
+* base: [base](001-components.md#base)
 
 `fault` defines a short circuit location in the grid.
 A fault can only happen at a `node`.
@@ -67,7 +67,7 @@ The supported values of `fault_phase`, as well as its default value, are listed 
 ## Regulator
 
 * type name: `regulator`
-* base: [base](#base)
+* base: [base](001-components.md#base)
 
 `regulator` is an abstract regulator that is coupled to a given `regulated_object`. For each `regulator`, a switch is
 defined between the `regulator` and the `regulated_object`.
@@ -83,12 +83,12 @@ Which object types are supported as `regulated_object` is regulator type-depende
 ### Transformer tap regulator
 
 * type name: `transformer_tap_regulator`
-* base: [regulator](#regulator)
+* base: [regulator](001-components.md#regulator)
 
 `transformer_tap_regulator` defines a regulator for transformers in the grid.
 A transformer tap regulator regulates a component that is either a
-[transformer](#transformer) or a
-[Three-Winding Transformer](#three-winding-transformer).
+[transformer](001-components.md#transformer) or a
+[Three-Winding Transformer](001-components.md#three-winding-transformer).
 
 The transformer tap regulator changes the `tap_pos` of the transformer it regulates in the range set by the user via
 `tap_min` and `tap_max` (i.e., `(tap_min <= tap_pos <= tap_max)` or `(tap_min >= tap_pos >= tap_max)`).
@@ -107,7 +107,7 @@ The actual grid state is not changed after calculations are done.
 
 | name                       | data type                                                                                                                                                                                                                                                                  | unit     | description                                                                                             |           required           |  update  |                           valid values                           |
 |----------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|---------------------------------------------------------------------------------------------------------|:----------------------------:|:--------:|:----------------------------------------------------------------:|
-| `control_side`             | {py:class}`BranchSide <power_grid_model.enum.BranchSide>` if the regulated object is a [transformer](#transformer) and {py:class}`Branch3Side <power_grid_model.enum.Branch3Side>` if it the regulated object is a [Three-Winding Transformer](#three-winding-transformer) | -        | the controlled side of the transformer                                                                  | &#10024; only for power flow | &#10060; | `control_side` should be the relatively further side to a source |
+| `control_side`             | {py:class}`BranchSide <power_grid_model.enum.BranchSide>` if the regulated object is a [transformer](001-components.md#transformer) and {py:class}`Branch3Side <power_grid_model.enum.Branch3Side>` if it the regulated object is a [Three-Winding Transformer](001-components.md#three-winding-transformer) | -        | the controlled side of the transformer                                                                  | &#10024; only for power flow | &#10060; | `control_side` should be the relatively further side to a source |
 | `u_set`                    | `double`                                                                                                                                                                                                                                                                   | volt (V) | the voltage setpoint (at the center of the band)                                                        | &#10024; only for power flow | &#10004; |                              `>= 0`                              |
 | `u_band`                   | `double`                                                                                                                                                                                                                                                                   | volt (V) | the width of the voltage band ($=2*\left(\Delta U\right)_{\text{acceptable}}$)                          | &#10024; only for power flow | &#10004; |                        `> 0` (see below)                         |
 | `line_drop_compensation_r` | `double`                                                                                                                                                                                                                                                                   | ohm (Ω)  | compensation for voltage drop due to resistance during transport (see [below](#line-drop-compensation)) |    &#10060; default `0.0`    | &#10004; |                              `>= 0`                              |
