@@ -9,7 +9,8 @@
       "binaryDir": "${sourceDir}/cpp_build/${presetName}",
       "installDir": "${sourceDir}/install/${presetName}",
       "cacheVariables": {
-        "PGM_ENABLE_DEV_BUILD": "ON"
+        "PGM_ENABLE_DEV_BUILD": "ON",
+        "PGM_MSVC_REPRODUCIBLE_BUILD": "OFF"
       },
       "environment": {
         "PLATFORM_C_FLAGS": "",
@@ -267,6 +268,7 @@
       },
       "cacheVariables": {
         "PGM_ENABLE_DEV_BUILD": "OFF",
+        "PGM_MSVC_REPRODUCIBLE_BUILD": "ON",
         "CMAKE_INTERPROCEDURAL_OPTIMIZATION": "OFF",
         "CMAKE_SHARED_LINKER_FLAGS": "/debug:None /Brepro /INCREMENTAL:NO /LTCG /NOCOFFGRPINFO"
       }
