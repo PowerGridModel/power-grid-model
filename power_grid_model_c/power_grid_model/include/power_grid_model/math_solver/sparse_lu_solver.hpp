@@ -645,7 +645,6 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
             }
             // forward substitution inside block, for block matrix
             if constexpr (is_block) {
-                XVector& xb = x[row];
                 Tensor const& pivot = lu_matrix[diag_lu[row]];
                 LUFactor::forward_substitute_inplace(pivot.matrix(), x[row]);
             }
@@ -664,7 +663,6 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
             // solve the diagonal pivot
             if constexpr (is_block) {
                 // backward substitution inside block
-                XVector& xb = x[row];
                 Tensor const& pivot = lu_matrix[diag_lu[row]];
                 LUFactor::backward_substitute_inplace(pivot.matrix(), x[row]);
             } else {
