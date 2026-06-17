@@ -9,14 +9,13 @@ from pathlib import Path
 BASE_DIR = Path("docs/user_manual")
 OUTPUT_FILE = BASE_DIR / "components.md"
 
+
 def extract_index(path: Path):
     match = re.match(r"(\d+)", path.name)
     return int(match.group(1)) if match else 9999
 
-files = sorted(
-    BASE_DIR.glob("*components*.md"),
-    key=extract_index
-)
+
+files = sorted(BASE_DIR.glob("*components*.md"), key=extract_index)
 
 if not files:
     print("No component files found.")
