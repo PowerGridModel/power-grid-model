@@ -76,11 +76,12 @@ TEST_CASE("Dense LU factor") {
         using LUFactor = DenseLUFactor<Matrix3>;
 
         Matrix3 const matrix = scalar_lu_test_matrix();
-        Matrix3 const expected_inverse{
-            {42.0 / 80.0, -6.0 / 80.0, -35.0 / 80.0},
-            {-18.0 / 80.0, 14.0 / 80.0, 15.0 / 80.0},
-            {-14.0 / 80.0, 2.0 / 80.0, 25.0 / 80.0},
-        }; // cofactor matrix divided by determinant
+        Matrix3 const expected_inverse = (Matrix3{
+                                              {42.0, -6.0, -35.0},
+                                              {-18.0, 14.0, 15.0},
+                                              {-14.0, 2.0, 25.0},
+                                          } /
+                                          80.0); // cofactor matrix divided by determinant
         Matrix3 lu_matrix = matrix;
         LUFactor::BlockPerm block_perm{};
         bool has_pivot_perturbation = false;
