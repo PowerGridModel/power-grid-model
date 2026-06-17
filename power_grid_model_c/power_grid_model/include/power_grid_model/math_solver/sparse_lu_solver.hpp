@@ -71,7 +71,7 @@ template <rk2_tensor Matrix> class DenseLUFactor {
     // put permutation in block_perm in place
     // put pivot perturbation in has_pivot_perturbation in place
     template <class Derived>
-    static void factorize_block_in_place(Eigen::MatrixBase<Derived>&& matrix, BlockPerm& block_perm,
+    static void factorize_block_in_place(Eigen::MatrixBase<Derived>& matrix, BlockPerm& block_perm,
                                          double perturb_threshold, bool use_pivot_perturbation,
                                          bool& has_pivot_perturbation)
         requires(std::same_as<typename Derived::Scalar, Scalar> && rk2_tensor<Derived> &&
@@ -150,7 +150,6 @@ template <rk2_tensor Matrix> class DenseLUFactor {
                 throw SparseMatrixError{}; // can not specify error code
             }
         }
-        capturing::into_the_void(std::move(matrix));
     }
 
     // Forward substitution with the L matrix. The diagonal entries of L are implicit 1.0
@@ -351,9 +350,9 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
                 if constexpr (is_block) {
                     // use machine precision by default
                     // record block permutation
-                    LUFactor::factorize_block_in_place(lu_matrix[pivot_idx].matrix(), block_perm_array[pivot_row_col],
-                                                       perturb_threshold, use_pivot_perturbation,
-                                                       has_pivot_perturbation_);
+                    auto pivot_matrix = lu_matrix[pivot_idx].matrix();
+                    LUFactor::factorize_block_in_place(pivot_matrix, block_perm_array[pivot_row_col], perturb_threshold,
+                                                       use_pivot_perturbation, has_pivot_perturbation_);
                     return block_perm_array[pivot_row_col];
                 } else {
                     if (use_pivot_perturbation) {
