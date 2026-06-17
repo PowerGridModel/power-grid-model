@@ -84,9 +84,11 @@ TEST_CASE("Dense LU factor") {
                                           80.0); // cofactor matrix divided by determinant
         Matrix3 lu_matrix = matrix;
         LUFactor::BlockPerm block_perm{};
+        bool use_pivot_perturbation = false;
         bool has_pivot_perturbation = false;
 
-        LUFactor::factorize_block_in_place(lu_matrix, block_perm, epsilon, false, has_pivot_perturbation);
+        LUFactor::factorize_block_in_place(lu_matrix, block_perm, epsilon, use_pivot_perturbation,
+                                           has_pivot_perturbation);
         Matrix3 const factorized_lu_matrix = lu_matrix;
         Matrix3 const inverse = LUFactor::dense_inverse(lu_matrix, block_perm);
 
