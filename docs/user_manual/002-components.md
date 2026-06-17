@@ -106,12 +106,13 @@ The actual grid state is not changed after calculations are done.
 #### Input
 
 | name | data type | unit | description | required | update | valid values |
-|------|-----------|------|-------------|----------|---------|--------------|
+| ------ | ----------- | ------ | ------------- | ---------- | --------- | -------------- |
 | `control_side` | {py:class}`BranchSide <power_grid_model.enum.BranchSide>` / {py:class}`Branch3Side <power_grid_model.enum.Branch3Side>` | - | controlled side of transformer | &#10024; only for power flow | &#10060; | control_side should be further from source |
 | `u_set` | `double` | volt (V) | voltage setpoint | &#10024; only for power flow | &#10004; | `>= 0` |
 | `u_band` | `double` | volt (V) | voltage band width | &#10024; only for power flow | &#10004; | `> 0` |
 | `line_drop_compensation_r` | `double` | ohm (Ω) | resistance compensation | &#10060; default `0.0` | &#10004; | `>= 0` |
 | `line_drop_compensation_x` | `double` | ohm (Ω) | reactance compensation | &#10060; default `0.0` | &#10004; | `>= 0` |
+
 The following additional requirements exist on the input parameters.
 
 * Depending on the resultant voltage being transformed, the voltage band must be sufficiently large: At zero line drop
