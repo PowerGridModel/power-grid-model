@@ -478,20 +478,6 @@ class PowerGridModel:
         error_tolerance: float = ...,
         max_iterations: int = ...,
         calculation_method: CalculationMethod | str = ...,
-        threading: int = ...,
-        output_component_types: None | set[ComponentTypeVar] | list[ComponentTypeVar] = ...,
-        continue_on_batch_error: bool = ...,
-        decode_error: bool = ...,
-        tap_changing_strategy: TapChangingStrategy | str = ...,
-    ) -> SingleRowBasedDataset: ...
-    @overload
-    def calculate_power_flow(
-        self,
-        *,
-        symmetric: bool = ...,
-        error_tolerance: float = ...,
-        max_iterations: int = ...,
-        calculation_method: CalculationMethod | str = ...,
         update_data: None = ...,
         threading: int = ...,
         output_component_types: None | set[ComponentTypeVar] | list[ComponentTypeVar] = ...,
