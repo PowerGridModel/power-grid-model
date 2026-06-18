@@ -39,10 +39,65 @@ template <class T> void check_result(std::vector<T> const& x, std::vector<T> con
     }
 }
 
+template <class MatrixActual, class MatrixExpected>
+void check_matrix_result(MatrixActual const& actual, MatrixExpected const& expected) {
+    REQUIRE(actual.rows() == expected.rows());
+    REQUIRE(actual.cols() == expected.cols());
+    CHECK((actual - expected).cwiseAbs().maxCoeff() < numerical_tolerance);
+}
+
+using Matrix3 = Eigen::Matrix<double, 3, 3, Eigen::ColMajor>;
+using RowMajorMatrix3 = Eigen::Matrix<double, 3, 3, Eigen::RowMajor>;
+
+std::vector<double> scalar_lu_test_data() {
+    // [4 1 5
+    //  3 7 f
+    //  2 f 6]
+    return {
+        4.0, 1.0, 5.0, // row 0
+        3.0, 7.0, 0.0, // row 1
+        2.0, 0.0, 6.0  // row 2
+    };
+}
+
+Matrix3 scalar_lu_test_matrix() {
+    auto const data = scalar_lu_test_data();
+    Eigen::Map<RowMajorMatrix3 const> const matrix{data.data()};
+    return matrix;
+}
+
 // test block calculation with 2*2
 using Tensor = Eigen::Array<double, 2, 2, Eigen::ColMajor>;
 using Array = Eigen::Array<double, 2, 1, Eigen::ColMajor>;
 } // namespace
+
+TEST_CASE("Dense LU factor") {
+    SUBCASE("Dense inverse") {
+        using LUFactor = DenseLUFactor<Matrix3>;
+
+        Matrix3 const matrix = scalar_lu_test_matrix();
+        Matrix3 const expected_inverse = (Matrix3{
+                                              {42.0, -6.0, -35.0},
+                                              {-18.0, 14.0, 15.0},
+                                              {-14.0, 2.0, 25.0},
+                                          } /
+                                          80.0); // cofactor matrix divided by determinant
+        Matrix3 lu_matrix = matrix;
+        LUFactor::BlockPerm block_perm{};
+        bool const use_pivot_perturbation = false;
+        bool has_pivot_perturbation = false;
+
+        LUFactor::factorize_block_in_place(lu_matrix, block_perm, epsilon, use_pivot_perturbation,
+                                           has_pivot_perturbation);
+        Matrix3 const factorized_lu_matrix = lu_matrix;
+        Matrix3 const inverse = LUFactor::dense_inverse(lu_matrix, block_perm);
+
+        CHECK(has_pivot_perturbation == false);
+        check_matrix_result(lu_matrix, factorized_lu_matrix);
+        check_matrix_result(inverse, expected_inverse);
+        check_matrix_result(matrix * inverse, Matrix3::Identity());
+    }
+}
 
 TEST_CASE("Test Sparse LU solver") {
     // 3 * 3 matrix, with diagonal, two fill-ins
@@ -58,11 +113,7 @@ TEST_CASE("Test Sparse LU solver") {
         // [4 1 5        3          21
         //  3 7 f     * [-1]   =  [ 2 ]
         //  2 f 6]       2          18
-        std::vector<double> data = {
-            4, 1, 5, // row 0
-            3, 7, 0, // row 1
-            2, 0, 6  // row 2
-        };
+        std::vector<double> data = scalar_lu_test_data();
         std::vector<double> const rhs = {21, 2, 18};
         std::vector<double> const x_ref = {3, -1, 2};
         std::vector<double> x(3, 0.0);
