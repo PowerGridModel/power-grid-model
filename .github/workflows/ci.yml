@@ -44,9 +44,11 @@ jobs:
     # true if the event that triggered this workflow is "workflow_dispatch" and inputs.create_release is true
     # true if the event that triggered this workflow is "push" on main
     # otherwise false
-    if: (github.event_name == 'workflow_dispatch' && inputs.create_release) || github.event_name == 'push'
+    # TODO uncomment this once test is done
+    # if: (github.event_name == 'workflow_dispatch' && inputs.create_release) || github.event_name == 'push'
     runs-on: ubuntu-latest
-    environment: release
+    # TODO uncomment this once test is done
+    # environment: release
 
     steps:
 
