@@ -302,8 +302,6 @@ jobs:
     # always run publish job but fail at the first step if previous jobs have been failed
     if: always()
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
 
     steps:
       - name: Fail fast

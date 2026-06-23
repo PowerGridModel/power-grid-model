@@ -36,8 +36,7 @@ jobs:
   build-test-release:
     name: build-test-release
     uses: "./.github/workflows/build-test-release.yml"
-    permissions:
-      contents: write
+
     with:
       # create_release becomes true if the event that triggered this workflow is "workflow_dispatch" and inputs.create_release is true
       # create_release becomes true if the event that triggered this workflow is "push" on main
@@ -77,7 +76,6 @@ jobs:
     name: Publish to PyPI
     runs-on: ubuntu-latest
     permissions:
-      contents: write
       id-token: write # Required for Trusted Publishing
     needs: build-test-release
     if: (github.event_name == 'workflow_dispatch') || github.event_name == 'push'

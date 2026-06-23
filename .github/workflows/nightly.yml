@@ -17,8 +17,6 @@ concurrency:
 jobs:
   build-test-release:
     uses: "./.github/workflows/build-test-release.yml"
-    permissions:
-      contents: write
     with:
       create_release: false
 

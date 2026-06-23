@@ -32,9 +32,6 @@ jobs:
   refresh-lock-and-linter-dependencies:
     name: Refresh lock and linter Dependencies
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
 
     steps:
       - name: Checkout
