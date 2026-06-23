@@ -32,9 +32,6 @@ jobs:
   refresh-lock-and-linter-dependencies:
     name: Refresh lock and linter Dependencies
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
 
     steps:
       - name: Checkout
@@ -112,7 +109,7 @@ jobs:
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         id: generate-token
         with:
-          app-id: ${{ secrets.CI_BOT_APP_ID }}
+          client-id: ${{ secrets.CI_BOT_APP_ID }}
           private-key: ${{ secrets.CI_BOT_PRIVATE_KEY }}
 
       - name: create pull request

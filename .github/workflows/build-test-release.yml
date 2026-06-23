@@ -299,18 +299,11 @@ jobs:
         build-and-test-python,
         build-and-test-conda,
       ]
-    # always run publish job but fail at the first step if previous jobs have been failed
-    if: always()
+    if: (inputs.create_release)
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    environment: release
 
     steps:
-      - name: Fail fast
-        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
-        run: |
-          echo "Previous jobs have failures!"
-          exit 1
 
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
@@ -333,10 +326,16 @@ jobs:
 
       - name: Display tag
         run: echo "${{ steps.tag.outputs.tag }}"
+      
+      - name: generate GitHub App token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        id: generate-token
+        with:
+          client-id: ${{ secrets.RELEASE_BOT_APP_ID }}
+          private-key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
-        if: (inputs.create_release)
         with:
           files: |
             ./wheelhouse/*
@@ -344,3 +343,4 @@ jobs:
           prerelease: ${{ github.ref != 'refs/heads/main'}}
           generate_release_notes: true
           target_commitish: ${{ github.sha }}
+          token: ${{ steps.generate-token.outputs.token }}
