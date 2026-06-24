@@ -258,8 +258,11 @@ inline void complete_bidirectional_neighbourhood_info(std::vector<BusNeighbourho
 
 inline void prepare_starting_nodes(std::vector<BusNeighbourhoodInfo> const& neighbour_list, Idx n_bus,
                                    std::vector<Idx>& starting_candidates) {
-    // First find a list of starting points. These are nodes without measurements and all edges connecting to it has no
-    // edge measurements.
+    // First collect nodes without nodal measurements and no measured incident edges.
+    // Then append nodes without nodal measurements that do have measured incident edges.
+    std::vector<Idx> secondary_candidates;
+    secondary_candidates.reserve(static_cast<std::size_t>(n_bus));
+
     for (Idx bus = 0; bus < n_bus; ++bus) {
         if (neighbour_list[bus].status == ConnectivityStatus::has_no_measurement) {
             bool all_neighbours_no_edge_measurement = true;
@@ -271,18 +274,13 @@ inline void prepare_starting_nodes(std::vector<BusNeighbourhoodInfo> const& neig
             }
             if (all_neighbours_no_edge_measurement) {
                 starting_candidates.push_back(bus);
+            } else {
+                secondary_candidates.push_back(bus);
             }
         }
     }
 
-    // If no such starting point, find nodes without measurements
-    if (starting_candidates.empty()) {
-        for (Idx bus = 0; bus < n_bus; ++bus) {
-            if (neighbour_list[bus].status == ConnectivityStatus::has_no_measurement) {
-                starting_candidates.push_back(bus);
-            }
-        }
-    }
+    starting_candidates.insert(starting_candidates.end(), secondary_candidates.begin(), secondary_candidates.end());
 
     // If no nodes without measurements, start from first node
     // (but network should be observable, so this is just a fallback)
