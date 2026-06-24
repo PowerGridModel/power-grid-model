@@ -111,6 +111,10 @@ class MainModel {
         impl().check_no_experimental_features_used(options, batch_dataset);
     }
 
+    void check_no_future_deprecations(Options const& options, ConstDataset const* batch_dataset) const {
+        impl().check_no_future_deprecations(options, batch_dataset);
+    }
+
   private:
     Impl& impl() {
         assert(impl_ != nullptr);
