@@ -46,7 +46,7 @@ jobs:
 
       - name: Run clang-format
         run: |
-          find . -regex '.*\.\(h\|c\|cpp\|hpp\|cc\|cxx\)' -exec uv run clang-format -style=file -i {} \;
+          git ls-files -z -- *.h *.c *.cpp *.hpp *.cc *.cxx | xargs -0 -r uv run clang-format -style=file -i
 
       - name: Run cmake-linter
         run: |
