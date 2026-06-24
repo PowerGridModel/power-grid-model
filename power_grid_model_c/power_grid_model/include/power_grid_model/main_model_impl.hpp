@@ -412,7 +412,9 @@ class MainModelImpl {
     void check_no_future_deprecations(Options const& /*options*/, ConstDataset const* /*batch_dataset*/) const {
         ModelType::run_functor_with_all_component_types_return_void([this]<typename CT>() {
             // only flow sensors have get_terminal_type() so we can filter on it
-            if constexpr (requires(CT c) { { c.get_terminal_type() } -> std::same_as<MeasuredTerminalType>; }) {
+            if constexpr (requires(CT c) {
+                { c.get_terminal_type() } -> std::same_as<MeasuredTerminalType>;
+            }) {
                 if (std::ranges::any_of(state_.components.template citer<CT>(), [](auto const& sensor) {
                         return sensor.get_terminal_type() == MeasuredTerminalType::node;
                     })) {
