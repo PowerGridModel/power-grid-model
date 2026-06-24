@@ -413,8 +413,8 @@ class MainModelImpl {
         ModelType::run_functor_with_all_component_types_return_void([this]<typename CT>() {
             // only flow sensors have get_terminal_type() so we can filter on it
             if constexpr (requires(CT c) {
-                { c.get_terminal_type() } -> std::same_as<MeasuredTerminalType>;
-            }) {
+                              { c.get_terminal_type() } -> std::same_as<MeasuredTerminalType>;
+                          }) {
                 if (std::ranges::any_of(state_.components.template citer<CT>(), [](auto const& sensor) {
                         return sensor.get_terminal_type() == MeasuredTerminalType::node;
                     })) {
