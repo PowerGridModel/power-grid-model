@@ -518,7 +518,3 @@ docs/jupyter_execute/
 # please type
 #    git add .vscode/ --force
 .vscode/
-
-wheelhouse/
-
-docs/user_manual/components.md
