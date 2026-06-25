@@ -4,8 +4,6 @@ SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridm
 SPDX-License-Identifier: MPL-2.0
 -->
 
-# Components
-
 The attributes of components are listed below.
 
 ## Base
