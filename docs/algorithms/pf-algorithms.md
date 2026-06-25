@@ -33,8 +33,9 @@ The following bus types can be present in the system:
   [source](../user_manual/components.md#source).
   See also [selection of slack bus](../advanced_documentation/terminology.md#slack-bus-pgm-internal).
 - Load bus: a bus with known $P$ and $Q$.
-- Voltage controlled bus: a bus with known $P$ and $U$.
-  Note: this bus is not supported by power-grid-model yet.
+- Voltage-controlled bus: a bus with known active power $P$ and voltage magnitude $U$. In power-grid-model this is
+  modeled by an active `voltage_regulator` on a regulated load or generator and is supported by the Newton-Raphson
+  power-flow method.
 
 ```{note}
 Asymmetric power flow calculations require the network to have a reference to ground. For details and internal solution of asymmetric floating grids calculations in power-grid-model, please refer to [Floating grid handling](../user_manual/calculations.md#floating-grid-handling). 
@@ -125,6 +126,15 @@ For each iteration the following steps are executed:
 - Compute the Jacobian $J(i)$
 - Using LU decomposition, solve $J(i) \Delta x(i)  =  \Delta y(i)$ for $\Delta x(i)$
 - Compute $x(i+1)$ from $\Delta x(i) =  x(i+1) - x(i)$
+
+### PV nodes and reactive-power limits
+
+In Newton-Raphson power flow, an active `voltage_regulator` replaces the reactive-power equation of the regulated node by
+a voltage-magnitude constraint. The solver therefore treats the node as a PV node.
+
+If the reactive power required to keep the voltage at `u_ref` exceeds the configured `q_min` or `q_max`, the regulated
+object is clamped to the violated limit and the node is switched to PQ. The final effective node type is reported in
+`node.bus_type`, and the violated limit direction is reported in `voltage_regulator.limit_violated`.
 
 ## Iterative current power flow
 
