@@ -18,25 +18,27 @@ TEST_CASE("Test node") {
     CHECK(node.math_model_type() == ComponentType::node);
     CHECK(node.u_rated() == 10.0e3);
 
-    auto sym_res = node.get_output<symmetric_t>(1.0, 2.0);
+    auto sym_res = node.get_output<symmetric_t>(1.0, 2.0, BusType::pq);
     CHECK(sym_res.u == 10.0e3);
     CHECK(sym_res.u_angle == 0.0);
     CHECK(sym_res.u_pu == 1.0);
     CHECK(sym_res.p == 2.0e6);
     CHECK(sym_res.q == 0.0);
     CHECK(sym_res.id == 1);
+    CHECK(sym_res.bus_type == 0);
 
     ComplexValue<asymmetric_t> u;
     ComplexValue<asymmetric_t> s;
     u << 1.0, a2, a;
     s << 0.0, DoubleComplex(2.1, 2.2), DoubleComplex(3.1, 3.2);
     DoubleComplex const u_sym = 1.0;
-    auto asym_res = node.get_output<asymmetric_t>(u, s);
+    auto asym_res = node.get_output<asymmetric_t>(u, s, BusType::pv);
     CHECK(asym_res.u(1) == doctest::Approx(10.0e3 / sqrt3));
     CHECK(asym_res.u_angle(2) == doctest::Approx(-deg_240 + 2 * pi));
     CHECK(asym_res.u_pu(0) == doctest::Approx(1.0));
     CHECK(asym_res.p(1) == doctest::Approx(2.1e6 / 3.0));
     CHECK(asym_res.q(2) == doctest::Approx(3.2e6 / 3.0));
+    CHECK(asym_res.bus_type == 1);
 
     auto sym_sc_res = node.get_sc_output(u_sym);
     auto asym_sc_res = node.get_sc_output(u);

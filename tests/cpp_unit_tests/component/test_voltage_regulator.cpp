@@ -66,24 +66,15 @@ TEST_CASE("Test voltage regulator") {
     }
 
     SUBCASE("Test calc param") {
-        SUBCASE("symmetric") {
-            VoltageRegulatorCalcParam<symmetric_t> const param = voltage_regulator.calc_param<symmetric_t>();
-
+        auto test_calc_param = []<symmetry_tag sym>(VoltageRegulator const& vr) {
+            auto const param = vr.calc_param<sym>();
             CHECK(param.u_ref == 1.05);
             CHECK(param.q_min == 1);
-            CHECK(param.q_max == 100);
+            CHECK(param.q_max == 100.0);
             CHECK(param.status);
-        }
-        SUBCASE("asymmetric") {
-            VoltageRegulatorCalcParam<asymmetric_t> const param = voltage_regulator.calc_param<asymmetric_t>();
-
-            CHECK(param.u_ref == 1.05);
-            for (size_t i = 0; i != 3; i++) {
-                CHECK(param.q_min(i) == 1);
-                CHECK(param.q_max(i) == 100);
-            }
-            CHECK(param.status);
-        }
+        };
+        SUBCASE("symmetric") { test_calc_param.operator()<symmetric_t>(voltage_regulator); }
+        SUBCASE("asymmetric") { test_calc_param.operator()<asymmetric_t>(voltage_regulator); }
     }
 
     SUBCASE("Test short circuit output") {
@@ -97,59 +88,32 @@ TEST_CASE("Test voltage regulator") {
             VoltageRegulatorUpdate const update{.id = 1, .status = 0, .u_ref = 0.97, .q_min = 10e6, .q_max = 110e6};
             voltage_regulator.update(update);
 
-            SUBCASE("symmetric") {
-                VoltageRegulatorCalcParam<symmetric_t> const param = voltage_regulator.calc_param<symmetric_t>();
-
+            auto test_updated_values = []<symmetry_tag sym>(VoltageRegulator const& vr) {
+                auto const param = vr.calc_param<sym>();
                 CHECK(param.u_ref == 0.97);
                 CHECK(param.q_min == 10.0);
                 CHECK(param.q_max == 110.0);
                 CHECK_FALSE(param.status);
-                CHECK_FALSE(voltage_regulator.is_energized(true));
-                CHECK_FALSE(voltage_regulator.is_energized(false));
-            }
-            SUBCASE("asymmetric") {
-                VoltageRegulatorCalcParam<asymmetric_t> const param = voltage_regulator.calc_param<asymmetric_t>();
-
-                CHECK(param.u_ref == 0.97);
-                for (size_t i = 0; i != 3; i++) {
-                    CHECK(param.q_min(i) == 10.0);
-                    CHECK(param.q_max(i) == 110.0);
-                }
-                CHECK_FALSE(param.status);
-                CHECK_FALSE(voltage_regulator.is_energized(true));
-                CHECK_FALSE(voltage_regulator.is_energized(false));
-            }
+                CHECK_FALSE(vr.is_energized(true));
+                CHECK_FALSE(vr.is_energized(false));
+            };
+            SUBCASE("symmetric") { test_updated_values.operator()<symmetric_t>(voltage_regulator); }
+            SUBCASE("asymmetric") { test_updated_values.operator()<asymmetric_t>(voltage_regulator); }
         }
         SUBCASE("Set nan values") {
-            SUBCASE("symmetric") {
-                VoltageRegulatorCalcParam<symmetric_t> const before_param = voltage_regulator.calc_param<symmetric_t>();
-
+            auto test_nan_update = []<symmetry_tag sym>(VoltageRegulator& vr) {
+                auto const before_param = vr.calc_param<sym>();
                 VoltageRegulatorUpdate const update{.id = 1};
-                voltage_regulator.update(update);
-
-                VoltageRegulatorCalcParam<symmetric_t> const param = voltage_regulator.calc_param<symmetric_t>();
+                vr.update(update);
+                auto const param = vr.calc_param<sym>();
 
                 CHECK(cabs(param.u_ref - before_param.u_ref) < numerical_tolerance);
                 CHECK(param.q_min == doctest::Approx(before_param.q_min));
                 CHECK(param.q_max == doctest::Approx(before_param.q_max));
                 CHECK(param.status == before_param.status);
-            }
-            SUBCASE("asymmetric") {
-                VoltageRegulatorCalcParam<asymmetric_t> const before_param =
-                    voltage_regulator.calc_param<asymmetric_t>();
-
-                VoltageRegulatorUpdate const update{.id = 1};
-                voltage_regulator.update(update);
-
-                VoltageRegulatorCalcParam<asymmetric_t> const param = voltage_regulator.calc_param<asymmetric_t>();
-
-                CHECK(cabs(param.u_ref - before_param.u_ref) < numerical_tolerance);
-                for (size_t i = 0; i != 3; i++) {
-                    CHECK(param.q_min(i) == doctest::Approx(before_param.q_min(i)));
-                    CHECK(param.q_max(i) == doctest::Approx(before_param.q_max(i)));
-                }
-                CHECK(param.status == before_param.status);
-            }
+            };
+            SUBCASE("symmetric") { test_nan_update.operator()<symmetric_t>(voltage_regulator); }
+            SUBCASE("asymmetric") { test_nan_update.operator()<asymmetric_t>(voltage_regulator); }
         }
     }
 
