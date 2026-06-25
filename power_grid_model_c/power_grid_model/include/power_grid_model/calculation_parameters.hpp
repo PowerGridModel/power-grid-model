@@ -42,6 +42,13 @@ template <symmetry_tag sym_type> struct BranchCalcParam {
     ComplexTensor<sym> const& ytt() const { return value[3]; }
 };
 
+struct BusSolverOutput {
+    // initialize with BusType::pq, set calculated value in newton_raphson solver
+    BusType bus_type{BusType::pq};
+    // 0: no violation, -1: q_min violated, 1: q_max violated
+    IntS q_limit_violated{0};
+};
+
 template <symmetry_tag sym_type> struct BranchSolverOutput {
     using sym = sym_type;
 
@@ -224,8 +231,8 @@ template <symmetry_tag sym_type> struct VoltageRegulatorCalcParam {
 
     IntS status{};
     DoubleComplex u_ref;
-    RealValue<sym> q_min{};
-    RealValue<sym> q_max{};
+    double q_min{};
+    double q_max{};
 
     // add generator id for later lookup
     ID generator_id{};
@@ -335,6 +342,7 @@ template <symmetry_tag sym_type> struct SolverOutput {
 
     std::vector<ComplexValue<sym>> u;
     std::vector<ComplexValue<sym>> bus_injection;
+    std::vector<BusSolverOutput> bus;
     std::vector<BranchSolverOutput<sym>> branch;
     std::vector<ApplianceSolverOutput<sym>> source;
     std::vector<ApplianceSolverOutput<sym>> shunt;

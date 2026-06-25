@@ -68,8 +68,8 @@ class VoltageRegulator : public Regulator {
     template <symmetry_tag sym> VoltageRegulatorCalcParam<sym> calc_param() const {
         return VoltageRegulatorCalcParam<sym>{.status = static_cast<IntS>(status()),
                                               .u_ref = {u_ref_, 0.0},
-                                              .q_min = RealValue<sym>{q_min_ / base_power_3p},
-                                              .q_max = RealValue<sym>{q_max_ / base_power_3p},
+                                              .q_min = q_min_ / base_power_3p,
+                                              .q_max = q_max_ / base_power_3p,
                                               .generator_id = this->regulated_object()};
     }
 

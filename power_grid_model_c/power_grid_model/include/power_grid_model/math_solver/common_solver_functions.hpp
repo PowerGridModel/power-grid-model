@@ -159,12 +159,29 @@ inline void calculate_source_result(IdxRange const& sources, Idx const& bus_numb
     }
 }
 
+template <symmetry_tag sym> struct RegulatorQState {
+    RealValue<sym> q_allocated{0.0};
+    bool has_available_capacity{false};
+};
+
 template <symmetry_tag sym>
 inline void calculate_voltage_regulator_result(Idx const& bus_number, PowerFlowInput<sym> const& input,
                                                SolverOutput<sym>& output, IdxRange const& load_gens,
                                                std::map<Idx, Idx> const& loadgen_to_regulator) {
     if (load_gens.empty()) {
         return;
+    }
+
+    // initialize output
+    for (Idx const load_gen : load_gens) {
+        if (!loadgen_to_regulator.contains(load_gen)) {
+            continue;
+        }
+        auto const regulator = loadgen_to_regulator.at(load_gen);
+        auto& output_regulator = output.voltage_regulator[regulator];
+        output_regulator.generator_id = input.voltage_regulator[regulator].generator_id;
+        output_regulator.generator_status = input.load_gen_status[load_gen];
+        output_regulator.limit_violated = 0; // Default: no violation
     }
 
     auto non_regulating_load_gens =
@@ -181,57 +198,210 @@ inline void calculate_voltage_regulator_result(Idx const& bus_number, PowerFlowI
                               std::plus{}, [&](Idx const load_gen) { return output.load_gen[load_gen].s; });
 
     ComplexValue<sym> const s_remaining = output.bus_injection[bus_number] - s_load_gen_bus;
+    auto const q_remaining = imag(s_remaining);
 
     auto regulating_gens = load_gens | std::views::filter([&](Idx lg) { return loadgen_to_regulator.contains(lg); }) |
                            std::views::filter([&](Idx lg) {
                                auto const regulator = loadgen_to_regulator.at(lg);
                                return input.load_gen_status[lg] != 0 && input.voltage_regulator[regulator].status != 0;
                            });
+
+    // auto num_regulating_gens = static_cast<double>(std::ranges::distance(regulating_gens)); // <- fails in windows
+    // build
     double num_regulating_gens = 0.0;
     for ([[maybe_unused]] auto const& _ : regulating_gens) {
         ++num_regulating_gens;
     }
+
     if (num_regulating_gens == 0.0) {
         return;
     }
 
-    auto const& q_remaining = imag(s_remaining);
-    for (Idx const load_gen : load_gens) {
+    std::vector<RegulatorQState<sym>> q_state(load_gens.size(), RegulatorQState<sym>{});
+
+    IntS const bus_limit_violated = output.bus[bus_number].q_limit_violated;
+    if (bus_limit_violated == 0) {
+        // no bus limit violation, but there maybe a violation if individual regulator limits
+        allocate_q_iterative_distribution<sym>(load_gens, num_regulating_gens, q_remaining, input, output,
+                                               loadgen_to_regulator, q_state);
+    } else {
+        // bus limit violation, and therefore violation of all inidividual regulator limits
+        allocate_q_bus_limit_violated<sym>(load_gens, bus_limit_violated, input, output, loadgen_to_regulator, q_state);
+    }
+
+    // apply distributed Q to load_gens
+    for (auto const& [idx, load_gen] : enumerate(load_gens)) {
         if (!loadgen_to_regulator.contains(load_gen)) {
             continue;
         }
         auto const regulator = loadgen_to_regulator.at(load_gen);
 
-        auto const& input_regulator = input.voltage_regulator[regulator];
-        auto& output_regulator = output.voltage_regulator[regulator];
-        output_regulator.generator_id = input_regulator.generator_id;
-        output_regulator.generator_status = input.load_gen_status[load_gen];
-        output_regulator.limit_violated = 0;
-
         if (input.load_gen_status[load_gen] == 0 || input.voltage_regulator[regulator].status == 0) {
             continue;
         }
 
-        // TODO(scud-soptim): #185 consider Q Limits (PV to PQ conversion)
-        // TODO(scud-soptim): #185 equal distribution for now, later consider proportional distribution based on Q
-        // limits
+        auto const& s_load_gen = output.load_gen[load_gen].s;
+        auto const p_load_gen = real(s_load_gen);
+        auto const idx_size = static_cast<size_t>(idx); // because msvc
         if constexpr (is_symmetric_v<sym>) {
-            auto const q_regulator = q_remaining / num_regulating_gens;
-            output_regulator.limit_violated = 0; // no violation
-
-            auto const& s_load_gen = output.load_gen[load_gen].s;
-            output.load_gen[load_gen].s = ComplexValue<sym>{real(s_load_gen), q_regulator};
+            output.load_gen[load_gen].s = ComplexValue<symmetric_t>{p_load_gen, q_state[idx_size].q_allocated};
         } else {
-            output.voltage_regulator[regulator].limit_violated = 0; // no violation
-
-            auto const& s_load_gen = output.load_gen[load_gen].s;
-            auto const& p_load_gen = real(s_load_gen);
-            output.load_gen[load_gen].s =
-                ComplexValue<asymmetric_t>{{p_load_gen[0], q_remaining[0] / num_regulating_gens},
-                                           {p_load_gen[1], q_remaining[1] / num_regulating_gens},
-                                           {p_load_gen[2], q_remaining[2] / num_regulating_gens}};
+            output.load_gen[load_gen].s = ComplexValue<asymmetric_t>{{p_load_gen[0], q_state[idx_size].q_allocated[0]},
+                                                                     {p_load_gen[1], q_state[idx_size].q_allocated[1]},
+                                                                     {p_load_gen[2], q_state[idx_size].q_allocated[2]}};
         }
         output.load_gen[load_gen].i = conj(output.load_gen[load_gen].s / output.u[bus_number]);
+    }
+}
+
+template <symmetry_tag sym>
+inline void allocate_q_bus_limit_violated(IdxRange const& load_gens, IntS bus_limit_violated,
+                                          PowerFlowInput<sym> const& input, SolverOutput<sym>& output,
+                                          std::map<Idx, Idx> const& loadgen_to_regulator,
+                                          std::vector<RegulatorQState<sym>>& q_state) {
+
+    // bus limit is violated, therefore each individual regulator limit is violated as well
+    for (auto const& [idx, load_gen] : enumerate(load_gens)) {
+        if (!loadgen_to_regulator.contains(load_gen)) {
+            continue;
+        }
+
+        auto const regulator = loadgen_to_regulator.at(load_gen);
+        auto const& input_regulator = input.voltage_regulator[regulator];
+        auto& output_regulator = output.voltage_regulator[regulator];
+        auto const idx_size = static_cast<size_t>(idx);
+
+        if (input.load_gen_status[load_gen] == 0 || input_regulator.status == 0) {
+            continue;
+        }
+
+        // TODO: maybe later use enum (Limit::no_limit (0), Limit::lower (1), Limit::upper (2))
+        output_regulator.limit_violated = bus_limit_violated;
+
+        if constexpr (is_symmetric_v<sym>) {
+            if (bus_limit_violated > 0) {
+                q_state[idx_size].q_allocated = is_nan(input_regulator.q_max) ? 0.0 : input_regulator.q_max;
+            } else { // bus_limit_violated < 0
+                q_state[idx_size].q_allocated = is_nan(input_regulator.q_min) ? 0.0 : input_regulator.q_min;
+            }
+            // TODO(frie-soptim): Needs testing by setting up a generator and load with inverted poewr values and
+            //                    then switch between them. The result is expected to be identical, i.e. no
+            //                    inversion/negation needed.
+        } else {
+            double const limit_value = bus_limit_violated > 0 ? input_regulator.q_max : input_regulator.q_min;
+            double const q_limit_scalar = is_nan(limit_value) ? 0.0 : limit_value;
+
+            RealValue<asymmetric_t> const base_q = imag(output.load_gen[load_gen].s);
+            double const base_q_total = base_q(0) + base_q(1) + base_q(2);
+
+            if (std::abs(base_q_total) > numerical_tolerance) {
+                // distribute proportionally to specified phase distribution
+                double const scale = q_limit_scalar / base_q_total;
+                q_state[idx_size].q_allocated =
+                    RealValue<asymmetric_t>{base_q(0) * scale, base_q(1) * scale, base_q(2) * scale};
+            } else {
+                // equal distribution if base Q is near zero
+                q_state[idx_size].q_allocated =
+                    RealValue<asymmetric_t>{q_limit_scalar / 3.0, q_limit_scalar / 3.0, q_limit_scalar / 3.0};
+            }
+        }
+        q_state[idx_size].has_available_capacity = false;
+    }
+}
+
+template <symmetry_tag sym>
+inline void allocate_q_iterative_distribution(IdxRange const& load_gens, double num_regulating_gens,
+                                              RealValue<sym> q_remaining, PowerFlowInput<sym> const& input,
+                                              SolverOutput<sym>& output, std::map<Idx, Idx> const& loadgen_to_regulator,
+                                              std::vector<RegulatorQState<sym>>& q_state) {
+
+    // setup active load_gens with active regulators as having available capacity for allocation
+    for (auto const& [idx, load_gen] : enumerate(load_gens)) {
+        auto const idx_size = static_cast<size_t>(idx);
+        if (loadgen_to_regulator.contains(load_gen)) {
+            auto const regulator = loadgen_to_regulator.at(load_gen);
+            if (input.load_gen_status[load_gen] != 0 && input.voltage_regulator[regulator].status != 0) {
+                q_state[idx_size].has_available_capacity = true;
+            }
+        }
+    }
+
+    auto total_q = [](RealValue<sym> const& q) -> double {
+        if constexpr (is_symmetric_v<sym>) {
+            return q;
+        } else {
+            return q(0) + q(1) + q(2); // sum phases
+        }
+    };
+
+    auto distribute_q = [](double q_scalar,
+                           [[maybe_unused]] RealValue<sym> const& base_distribution) -> RealValue<sym> {
+        if constexpr (is_symmetric_v<sym>) {
+            return q_scalar;
+        } else {
+            // preserve per-phase proportions, or divide equally if base distribution is near zero
+            double const base_total = base_distribution(0) + base_distribution(1) + base_distribution(2);
+            if (std::abs(base_total) > numerical_tolerance) {
+                double const scale = q_scalar / base_total;
+                return RealValue<asymmetric_t>{base_distribution(0) * scale, base_distribution(1) * scale,
+                                               base_distribution(2) * scale};
+            }
+            return RealValue<asymmetric_t>{q_scalar / 3.0, q_scalar / 3.0, q_scalar / 3.0};
+        }
+    };
+
+    // Iterative equal distribution of Q with limit checking on the regulators with available capacity.
+    // When a regulator hits its limit, it is removed from the active set and the unallocated Q is
+    // redistributed among the remaining regulators. Unallocated Q remaining after all regulators hit
+    // their limits should not occur, as then the bus would have been switched to a PQ bus.
+    while (std::abs(total_q(q_remaining)) > numerical_tolerance && num_regulating_gens > 0.0) {
+        RealValue<sym> const q_per_regulator = q_remaining / num_regulating_gens;
+        RealValue<sym> q_unallocated{0.0};
+
+        for (auto const& [idx, load_gen] : enumerate(load_gens)) {
+            auto const idx_size = static_cast<size_t>(idx);
+            if (!q_state[idx_size].has_available_capacity) {
+                continue;
+            }
+
+            auto const regulator = loadgen_to_regulator.at(load_gen);
+            auto const& input_regulator = input.voltage_regulator[regulator];
+            auto& output_regulator = output.voltage_regulator[regulator];
+
+            RealValue<sym> const q_prev_allocated = q_state[idx_size].q_allocated;
+            RealValue<sym> const q_next_allocated = q_prev_allocated + q_per_regulator;
+
+            // check individual limits
+            double const q_next_allocated_scalar = total_q(q_next_allocated);
+
+            if (!is_nan(input_regulator.q_max) &&
+                q_next_allocated_scalar > input_regulator.q_max + numerical_tolerance) {
+                // hit upper limit
+                q_state[idx_size].q_allocated = distribute_q(input_regulator.q_max, q_next_allocated);
+                q_state[idx_size].has_available_capacity = false;
+                q_unallocated += q_per_regulator - (q_state[idx_size].q_allocated - q_prev_allocated);
+                num_regulating_gens -= 1.0;
+                output_regulator.limit_violated = 1;
+            } else if (!is_nan(input_regulator.q_min) &&
+                       q_next_allocated_scalar < input_regulator.q_min - numerical_tolerance) {
+                // hit lower limit
+                q_state[idx_size].q_allocated = distribute_q(input_regulator.q_min, q_next_allocated);
+                q_state[idx_size].has_available_capacity = false;
+                q_unallocated += q_per_regulator - (q_state[idx_size].q_allocated - q_prev_allocated);
+                num_regulating_gens -= 1.0;
+                output_regulator.limit_violated = -1;
+            } else {
+                // within limits
+                q_state[idx_size].q_allocated = q_next_allocated;
+                output_regulator.limit_violated = 0;
+            }
+        }
+
+        q_remaining = q_unallocated;
+
+        if (std::abs(total_q(q_unallocated)) < numerical_tolerance) {
+            break;
+        }
     }
 }
 

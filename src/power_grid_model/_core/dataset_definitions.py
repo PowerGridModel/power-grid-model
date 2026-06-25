@@ -95,6 +95,7 @@ class AttributeType(StrEnum, metaclass=_MetaEnum):
     angle_measurement_type = "angle_measurement_type"
     b0 = "b0"
     b1 = "b1"
+    bus_type = "bus_type"
     c0 = "c0"
     c1 = "c1"
     c_aa = "c_aa"

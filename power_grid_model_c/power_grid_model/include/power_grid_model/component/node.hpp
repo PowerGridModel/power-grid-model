@@ -34,7 +34,8 @@ class Node final : public Base {
 
     // energized
     template <symmetry_tag sym>
-    NodeOutput<sym> get_output(ComplexValue<sym> const& u_pu, ComplexValue<sym> const& bus_injection) const {
+    NodeOutput<sym> get_output(ComplexValue<sym> const& u_pu, ComplexValue<sym> const& bus_injection,
+                               BusType const& bus_type) const {
         NodeOutput<sym> output{};
         static_cast<BaseOutput&>(output) = base_output(true);
         output.u_pu = cabs(u_pu);
@@ -42,6 +43,7 @@ class Node final : public Base {
         output.u_angle = arg(u_pu);
         output.p = base_power<sym> * real(bus_injection);
         output.q = base_power<sym> * imag(bus_injection);
+        output.bus_type = static_cast<IntS>(bus_type);
         return output;
     }
 

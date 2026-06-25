@@ -161,6 +161,10 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCur
 
     void parameters_changed(bool changed) { parameters_changed_ = parameters_changed_ || changed; }
 
+    void finalize_derived_result(PowerFlowInput<sym> const& /*input*/, SolverOutput<sym>& /*output*/) {
+        // nothing to finalize for this solver
+    }
+
   private:
     ComplexValueVector<sym> rhs_u_;
     std::shared_ptr<ComplexTensorVector<sym> const> mat_data_;

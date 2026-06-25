@@ -343,6 +343,7 @@ PGM_MetaAttribute const* const PGM_def_sym_output_node_u = PGM_meta_get_attribut
 PGM_MetaAttribute const* const PGM_def_sym_output_node_u_angle = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "node", "u_angle");
 PGM_MetaAttribute const* const PGM_def_sym_output_node_p = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "node", "p");
 PGM_MetaAttribute const* const PGM_def_sym_output_node_q = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "node", "q");
+PGM_MetaAttribute const* const PGM_def_sym_output_node_bus_type = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "node", "bus_type");
 // component line
 PGM_MetaComponent const* const PGM_def_sym_output_line = PGM_meta_get_component_by_name(nullptr, "sym_output", "line");
 // attributes of sym_output line
@@ -566,6 +567,7 @@ PGM_MetaAttribute const* const PGM_def_asym_output_node_u = PGM_meta_get_attribu
 PGM_MetaAttribute const* const PGM_def_asym_output_node_u_angle = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "node", "u_angle");
 PGM_MetaAttribute const* const PGM_def_asym_output_node_p = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "node", "p");
 PGM_MetaAttribute const* const PGM_def_asym_output_node_q = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "node", "q");
+PGM_MetaAttribute const* const PGM_def_asym_output_node_bus_type = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "node", "bus_type");
 // component line
 PGM_MetaComponent const* const PGM_def_asym_output_line = PGM_meta_get_component_by_name(nullptr, "asym_output", "line");
 // attributes of asym_output line

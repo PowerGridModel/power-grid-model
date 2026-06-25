@@ -381,7 +381,8 @@ class MainModelImpl {
         auto sub_opt = options; // copy
         sub_opt.err_tol = cache_run ? std::numeric_limits<double>::max() : options.err_tol;
         sub_opt.max_iter = cache_run ? 1 : options.max_iter;
-
+        // TODO(frie-soptim): sets max_iter to 1, which must handled in the newton-raphson solver for batch mode. Is
+        // there a better solution?
         model.calculate(sub_opt, target_data, logger);
     }
 
@@ -407,6 +408,8 @@ class MainModelImpl {
              }))) {
             throw ExperimentalFeature{"Voltage Regulator with Qmin/Qmax limits is an experimental feature"};
         }
+        // TODO(frie-soptim): remove experimental feature, but add option to globally disable q-limit handling even if
+        // limits are set?!
     }
 
     void check_no_future_deprecations(Options const& /*options*/, ConstDataset const* /*batch_dataset*/) const {

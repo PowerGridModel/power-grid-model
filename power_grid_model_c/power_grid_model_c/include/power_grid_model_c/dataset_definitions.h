@@ -354,6 +354,7 @@ PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_node_u;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_node_u_angle;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_node_p;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_node_q;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_node_bus_type;
 // component line
 PGM_API extern PGM_MetaComponent const* const PGM_def_sym_output_line;
 // attributes of sym_output line
@@ -577,6 +578,7 @@ PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_node_u;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_node_u_angle;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_node_p;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_node_q;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_node_bus_type;
 // component line
 PGM_API extern PGM_MetaComponent const* const PGM_def_asym_output_line;
 // attributes of asym_output line
