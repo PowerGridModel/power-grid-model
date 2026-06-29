@@ -16,6 +16,7 @@
 #include "../common/exception.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
@@ -416,6 +417,169 @@ inline ContractedNetwork build_contracted_network(std::vector<BusNeighbourhoodIn
     }
 
     return result;
+}
+
+// Graphic-matroid independence: do the given candidate edges form a forest over
+// the components?
+inline bool contracted_edges_form_forest(ContractedNetwork const& net, std::vector<Idx> const& edge_indices) {
+    DisjointSet components{net.n_components};
+    for (Idx const idx : edge_indices) {
+        auto const& edge = net.candidate_edges[idx];
+        if (!components.merge(edge.from_component, edge.to_component)) {
+            return false; // closing a cycle
+        }
+    }
+    return true;
+}
+
+// Transversal-matroid augmenting step: try to assign the given candidate edge to
+// an injection bus at one of its two endpoints, reassigning earlier edges along
+// an alternating path if necessary.
+inline bool assign_edge_to_injection(ContractedNetwork const& net, Idx edge_idx, std::vector<Idx>& bus_to_edge,
+                                     std::vector<std::uint8_t>& visited_bus) {
+    auto const& edge = net.candidate_edges[edge_idx];
+    std::array<Idx, 2> const endpoint_buses{edge.from_bus, edge.to_bus};
+    for (Idx const bus : endpoint_buses) {
+        if (net.bus_has_injection[bus] == 0 || visited_bus[bus] != 0) {
+            continue;
+        }
+        visited_bus[bus] = 1;
+        if (bus_to_edge[bus] == -1 || assign_edge_to_injection(net, bus_to_edge[bus], bus_to_edge, visited_bus)) {
+            bus_to_edge[bus] = edge_idx;
+            return true;
+        }
+    }
+    return false;
+}
+
+// Transversal-matroid independence: can every candidate edge be matched to a
+// distinct injection bus at one of its endpoints?
+inline bool contracted_edges_transversal_independent(ContractedNetwork const& net,
+                                                     std::vector<Idx> const& edge_indices) {
+    auto const n_bus = static_cast<Idx>(net.component_of_bus.size());
+    std::vector<Idx> bus_to_edge(static_cast<std::size_t>(n_bus), -1);
+    for (Idx const idx : edge_indices) {
+        std::vector<std::uint8_t> visited_bus(static_cast<std::size_t>(n_bus), 0);
+        if (!assign_edge_to_injection(net, idx, bus_to_edge, visited_bus)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// Try to enlarge the current common independent set I (candidate edges that
+// simultaneously form a forest over the components and can be matched to
+// distinct injection buses) by one element, using a shortest augmenting path in
+// the matroid-intersection exchange graph. Returns true and updates in_set on
+// success.
+inline bool grow_assignable_forest(ContractedNetwork const& net, std::vector<std::uint8_t>& in_set) {
+    auto const n_edges = static_cast<Idx>(net.candidate_edges.size());
+
+    // Build the edge-index set I, optionally adding one edge and removing one.
+    auto edge_set_with = [&](Idx add_edge, Idx remove_edge) {
+        std::vector<Idx> result;
+        for (Idx e = 0; e < n_edges; ++e) {
+            if (e != remove_edge && (in_set[e] != 0 || e == add_edge)) {
+                result.push_back(e);
+            }
+        }
+        return result;
+    };
+
+    // Sources X1: edges that can extend the forest; sinks X2: edges that can
+    // extend the injection assignment.
+    std::vector<std::uint8_t> can_extend_forest(static_cast<std::size_t>(n_edges), 0);
+    std::vector<std::uint8_t> can_extend_assignment(static_cast<std::size_t>(n_edges), 0);
+    for (Idx x = 0; x < n_edges; ++x) {
+        if (in_set[x] != 0) {
+            continue;
+        }
+        can_extend_forest[x] = contracted_edges_form_forest(net, edge_set_with(x, -1)) ? 1 : 0;
+        can_extend_assignment[x] = contracted_edges_transversal_independent(net, edge_set_with(x, -1)) ? 1 : 0;
+    }
+
+    // Length-zero augmentation: an edge independent in both matroids.
+    for (Idx x = 0; x < n_edges; ++x) {
+        if (in_set[x] == 0 && can_extend_forest[x] != 0 && can_extend_assignment[x] != 0) {
+            in_set[x] = 1;
+            return true;
+        }
+    }
+
+    // Shortest path from X1 to X2 in the exchange graph. Arcs leaving an edge x
+    // not in I go to edges y in I such that I - y + x stays assignable; arcs
+    // leaving an edge y in I go to edges x not in I such that I - y + x stays a
+    // forest.
+    std::vector<Idx> predecessor(static_cast<std::size_t>(n_edges), -1);
+    std::vector<std::uint8_t> visited(static_cast<std::size_t>(n_edges), 0);
+    std::vector<Idx> queue;
+    for (Idx x = 0; x < n_edges; ++x) {
+        if (in_set[x] == 0 && can_extend_forest[x] != 0) {
+            visited[x] = 1;
+            queue.push_back(x);
+        }
+    }
+
+    Idx sink = -1;
+    for (std::size_t head = 0; head < queue.size() && sink == -1; ++head) {
+        Idx const current = queue[head];
+        if (in_set[current] == 0) {
+            // Edge not in I: a sink if it can extend the assignment and was
+            // actually reached (pure sources are already known not to be sinks).
+            if (can_extend_assignment[current] != 0 && predecessor[current] != -1) {
+                sink = current;
+                break;
+            }
+            for (Idx y = 0; y < n_edges; ++y) {
+                if (in_set[y] != 0 && visited[y] == 0 &&
+                    contracted_edges_transversal_independent(net, edge_set_with(current, y))) {
+                    visited[y] = 1;
+                    predecessor[y] = current;
+                    queue.push_back(y);
+                }
+            }
+        } else {
+            for (Idx x = 0; x < n_edges; ++x) {
+                if (in_set[x] == 0 && visited[x] == 0 && contracted_edges_form_forest(net, edge_set_with(x, current))) {
+                    visited[x] = 1;
+                    predecessor[x] = current;
+                    queue.push_back(x);
+                }
+            }
+        }
+    }
+
+    if (sink == -1) {
+        return false;
+    }
+    for (Idx node = sink; node != -1; node = predecessor[node]) {
+        in_set[node] ^= 1;
+    }
+    return true;
+}
+
+// Decide observability of the contracted network: does a spanning tree over the
+// components exist whose every edge can be assigned a distinct injection bus?
+inline bool is_contracted_network_observable(ContractedNetwork const& net) {
+    if (net.n_components <= 1) {
+        return true;
+    }
+    std::vector<std::uint8_t> in_set(net.candidate_edges.size(), 0);
+    Idx const target = net.n_components - 1;
+    Idx selected = 0;
+    while (selected < target && grow_assignable_forest(net, in_set)) {
+        ++selected;
+    }
+    return selected == target;
+}
+
+// Order-independent meshed observability check based on matroid intersection of
+// the network's graphic matroid and the measurement-assignment transversal
+// matroid.
+inline bool meshed_observable_matroid_intersection(std::vector<BusNeighbourhoodInfo> const& neighbour_list) {
+    auto components = contract_branch_measured_edges(neighbour_list);
+    auto const net = build_contracted_network(neighbour_list, components);
+    return is_contracted_network_observable(net);
 }
 
 inline void prepare_starting_nodes(std::vector<BusNeighbourhoodInfo> const& neighbour_list, Idx n_bus,

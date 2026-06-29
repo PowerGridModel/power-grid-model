@@ -915,6 +915,116 @@ TEST_CASE("Test Observability - build_contracted_network") {
     }
 }
 
+TEST_CASE("Test Observability - meshed_observable_matroid_intersection") {
+    using power_grid_model::math_solver::detail::BusNeighbourhoodInfo;
+    using power_grid_model::math_solver::detail::complete_bidirectional_neighbourhood_info;
+    using power_grid_model::math_solver::detail::meshed_observable_matroid_intersection;
+    using enum power_grid_model::math_solver::detail::ConnectivityStatus;
+
+    SUBCASE("All branches measured and connected is observable") {
+        std::vector<BusNeighbourhoodInfo> neighbour_list(3);
+        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = branch_native_measurement_unused}};
+        neighbour_list[1].direct_neighbours = {{.bus = 2, .status = branch_native_measurement_unused}};
+        complete_bidirectional_neighbourhood_info(neighbour_list);
+        CHECK(meshed_observable_matroid_intersection(neighbour_list) == true);
+    }
+
+    SUBCASE("Line of unmeasured branches with enough injections is observable") {
+        // 0 -- 1 -- 2, injections at buses 0 and 1
+        std::vector<BusNeighbourhoodInfo> neighbour_list(3);
+        neighbour_list[0].status = node_measured;
+        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = has_no_measurement}};
+        neighbour_list[1].status = node_measured;
+        neighbour_list[1].direct_neighbours = {{.bus = 2, .status = has_no_measurement}};
+        complete_bidirectional_neighbourhood_info(neighbour_list);
+        CHECK(meshed_observable_matroid_intersection(neighbour_list) == true);
+    }
+
+    SUBCASE("Injection reassignment is found") {
+        // 0 -- 1 -- 2, injections at buses 1 and 2: bus 1 must hand its injection
+        // to edge 0--1 while edge 1--2 takes the injection at bus 2
+        std::vector<BusNeighbourhoodInfo> neighbour_list(3);
+        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = has_no_measurement}};
+        neighbour_list[1].status = node_measured;
+        neighbour_list[1].direct_neighbours = {{.bus = 2, .status = has_no_measurement}};
+        neighbour_list[2].status = node_measured;
+        complete_bidirectional_neighbourhood_info(neighbour_list);
+        CHECK(meshed_observable_matroid_intersection(neighbour_list) == true);
+    }
+
+    SUBCASE("Too few injections is not observable") {
+        // 0 -- 1 -- 2, single injection at bus 1 but two merges are needed
+        std::vector<BusNeighbourhoodInfo> neighbour_list(3);
+        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = has_no_measurement}};
+        neighbour_list[1].status = node_measured;
+        neighbour_list[1].direct_neighbours = {{.bus = 2, .status = has_no_measurement}};
+        complete_bidirectional_neighbourhood_info(neighbour_list);
+        CHECK(meshed_observable_matroid_intersection(neighbour_list) == false);
+    }
+
+    SUBCASE("Measured triangle with an uncovered pendant is not observable") {
+        // measured triangle 0-1-2; pendant bus 3 hangs off bus 0 by an unmeasured
+        // branch and no injection can cover it
+        std::vector<BusNeighbourhoodInfo> neighbour_list(4);
+        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = branch_native_measurement_unused},
+                                               {.bus = 2, .status = branch_native_measurement_unused},
+                                               {.bus = 3, .status = has_no_measurement}};
+        neighbour_list[1].direct_neighbours = {{.bus = 2, .status = branch_native_measurement_unused}};
+        complete_bidirectional_neighbourhood_info(neighbour_list);
+        CHECK(meshed_observable_matroid_intersection(neighbour_list) == false);
+    }
+
+    SUBCASE("Contracted component keeps both internal injections for two ports") {
+        // A=B=C blob (measured branches 0-1 and 1-2) with injections at A(0) and
+        // C(2). Bus 3 hangs off A and bus 4 hangs off C via unmeasured branches.
+        // Both injections must survive the merge to cover the two external ports.
+        std::vector<BusNeighbourhoodInfo> neighbour_list(5);
+        neighbour_list[0].status = node_measured;
+        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = branch_native_measurement_unused},
+                                               {.bus = 3, .status = has_no_measurement}};
+        neighbour_list[1].direct_neighbours = {{.bus = 2, .status = branch_native_measurement_unused}};
+        neighbour_list[2].status = node_measured;
+        neighbour_list[2].direct_neighbours = {{.bus = 4, .status = has_no_measurement}};
+        complete_bidirectional_neighbourhood_info(neighbour_list);
+        CHECK(meshed_observable_matroid_intersection(neighbour_list) == true);
+    }
+
+    SUBCASE("A single internal injection cannot serve two ports") {
+        // Same blob as above but only A(0) carries an injection: the port at C
+        // can no longer be covered.
+        std::vector<BusNeighbourhoodInfo> neighbour_list(5);
+        neighbour_list[0].status = node_measured;
+        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = branch_native_measurement_unused},
+                                               {.bus = 3, .status = has_no_measurement}};
+        neighbour_list[1].direct_neighbours = {{.bus = 2, .status = branch_native_measurement_unused}};
+        neighbour_list[2].direct_neighbours = {{.bus = 4, .status = has_no_measurement}};
+        complete_bidirectional_neighbourhood_info(neighbour_list);
+        CHECK(meshed_observable_matroid_intersection(neighbour_list) == false);
+    }
+
+    SUBCASE("Verdict is independent of neighbour ordering") {
+
+        auto build = [](bool reversed) {
+            std::vector<BusNeighbourhoodInfo> neighbour_list(3);
+            neighbour_list[1].status = node_measured;
+            neighbour_list[2].status = node_measured;
+            if (reversed) {
+                neighbour_list[1].direct_neighbours = {{.bus = 2, .status = has_no_measurement},
+                                                       {.bus = 0, .status = has_no_measurement}};
+            } else {
+                neighbour_list[1].direct_neighbours = {{.bus = 0, .status = has_no_measurement},
+                                                       {.bus = 2, .status = has_no_measurement}};
+            }
+            complete_bidirectional_neighbourhood_info(neighbour_list);
+            return neighbour_list;
+        };
+        auto ascending = build(false);
+        auto reversed = build(true);
+        CHECK(meshed_observable_matroid_intersection(ascending) == true);
+        CHECK(meshed_observable_matroid_intersection(ascending) == meshed_observable_matroid_intersection(reversed));
+    }
+}
+
 // TODO: properly clean up after y-bus access refactoring
 TEST_CASE("Test Observability - assign_independent_sensors_radial") {
     using power_grid_model::math_solver::YBusStructure;
