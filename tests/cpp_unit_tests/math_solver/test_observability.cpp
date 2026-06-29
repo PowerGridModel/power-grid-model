@@ -826,6 +826,95 @@ TEST_CASE("Test Observability - contract_branch_measured_edges") {
     }
 }
 
+TEST_CASE("Test Observability - build_contracted_network") {
+    using power_grid_model::math_solver::detail::build_contracted_network;
+    using power_grid_model::math_solver::detail::BusNeighbourhoodInfo;
+    using power_grid_model::math_solver::detail::contract_branch_measured_edges;
+    using enum power_grid_model::math_solver::detail::ConnectivityStatus;
+
+    SUBCASE("Square with no measured branches keeps every bus as its own component") {
+        // 0--1--2--3--0 ring, injections at bus 0 and bus 2
+        std::vector<BusNeighbourhoodInfo> neighbour_list(4);
+        neighbour_list[0].status = node_measured;
+        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = has_no_measurement},
+                                               {.bus = 3, .status = has_no_measurement}};
+        neighbour_list[1].direct_neighbours = {{.bus = 0, .status = has_no_measurement},
+                                               {.bus = 2, .status = has_no_measurement}};
+        neighbour_list[2].status = node_measured;
+        neighbour_list[2].direct_neighbours = {{.bus = 1, .status = has_no_measurement},
+                                               {.bus = 3, .status = has_no_measurement}};
+        neighbour_list[3].direct_neighbours = {{.bus = 2, .status = has_no_measurement},
+                                               {.bus = 0, .status = has_no_measurement}};
+
+        auto components = contract_branch_measured_edges(neighbour_list);
+        auto const net = build_contracted_network(neighbour_list, components);
+
+        CHECK(net.n_components == 4);
+        CHECK(net.candidate_edges.size() == 4); // the four ring branches
+        CHECK(net.bus_has_injection[0] == 1);
+        CHECK(net.bus_has_injection[1] == 0);
+        CHECK(net.bus_has_injection[2] == 1);
+        CHECK(net.bus_has_injection[3] == 0);
+        // every candidate edge joins two distinct components
+        for (auto const& edge : net.candidate_edges) {
+            CHECK(edge.from_component != edge.to_component);
+            CHECK(net.component_of_bus[edge.from_bus] == edge.from_component);
+            CHECK(net.component_of_bus[edge.to_bus] == edge.to_component);
+        }
+    }
+
+    SUBCASE("Measured branches contract endpoints and reduce candidate edges") {
+        // 0 =meas= 1 --- 2 =meas= 3, injection at bus 1
+        std::vector<BusNeighbourhoodInfo> neighbour_list(4);
+        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = branch_native_measurement_unused}};
+        neighbour_list[1].status = node_measured;
+        neighbour_list[1].direct_neighbours = {{.bus = 0, .status = branch_native_measurement_unused},
+                                               {.bus = 2, .status = has_no_measurement}};
+        neighbour_list[2].direct_neighbours = {{.bus = 1, .status = has_no_measurement},
+                                               {.bus = 3, .status = branch_native_measurement_unused}};
+        neighbour_list[3].direct_neighbours = {{.bus = 2, .status = branch_native_measurement_unused}};
+
+        auto components = contract_branch_measured_edges(neighbour_list);
+        auto const net = build_contracted_network(neighbour_list, components);
+
+        CHECK(net.n_components == 2);
+        CHECK(net.component_of_bus[0] == net.component_of_bus[1]);
+        CHECK(net.component_of_bus[2] == net.component_of_bus[3]);
+        CHECK(net.component_of_bus[1] != net.component_of_bus[2]);
+        // only the unmeasured 1--2 branch remains as a candidate edge
+        REQUIRE(net.candidate_edges.size() == 1);
+        CHECK(net.candidate_edges[0].from_bus == 1);
+        CHECK(net.candidate_edges[0].to_bus == 2);
+        CHECK(net.bus_has_injection[1] == 1);
+    }
+
+    SUBCASE("Unmeasured branch inside a single component is dropped") {
+        // triangle: 0 =meas= 1 =meas= 2, plus unmeasured 0--2 (a self-loop after contraction)
+        std::vector<BusNeighbourhoodInfo> neighbour_list(3);
+        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = branch_native_measurement_unused},
+                                               {.bus = 2, .status = has_no_measurement}};
+        neighbour_list[1].direct_neighbours = {{.bus = 0, .status = branch_native_measurement_unused},
+                                               {.bus = 2, .status = branch_native_measurement_unused}};
+        neighbour_list[2].direct_neighbours = {{.bus = 1, .status = branch_native_measurement_unused},
+                                               {.bus = 0, .status = has_no_measurement}};
+
+        auto components = contract_branch_measured_edges(neighbour_list);
+        auto const net = build_contracted_network(neighbour_list, components);
+
+        CHECK(net.n_components == 1);
+        CHECK(net.candidate_edges.empty());
+    }
+
+    SUBCASE("Empty network") {
+        std::vector<BusNeighbourhoodInfo> const neighbour_list;
+        auto components = contract_branch_measured_edges(neighbour_list);
+        auto const net = build_contracted_network(neighbour_list, components);
+        CHECK(net.n_components == 0);
+        CHECK(net.candidate_edges.empty());
+        CHECK(net.component_of_bus.empty());
+    }
+}
+
 // TODO: properly clean up after y-bus access refactoring
 TEST_CASE("Test Observability - assign_independent_sensors_radial") {
     using power_grid_model::math_solver::YBusStructure;

@@ -347,6 +347,77 @@ inline Idx count_components(DisjointSet& components, Idx n_bus) {
     return count;
 }
 
+// An unmeasured branch that still connects two distinct observable components.
+// It can be added to the spanning tree only by consuming a nodal (injection)
+// measurement at one of its two end buses. Branches that carry their own flow
+// measurement do not appear here: they were already contracted into components.
+struct CandidateEdge {
+    Idx from_bus;       // original from-bus
+    Idx to_bus;         // original to-bus
+    Idx from_component; // compact component index of from_bus
+    Idx to_component;   // compact component index of to_bus
+};
+
+// The network reduced to its observable components. Branch-measured edges have
+// been contracted away, leaving the super-nodes (components), the unmeasured
+// branches that still join distinct components, and the buses that hold an
+// unused nodal measurement available for assignment.
+struct ContractedNetwork {
+    Idx n_components{};
+    std::vector<Idx> component_of_bus; // bus -> compact component index in [0, n_components)
+    std::vector<CandidateEdge> candidate_edges;
+    std::vector<std::uint8_t> bus_has_injection; // 1 if the bus has an unused nodal measurement
+};
+
+// Reduce the network to its observable components: compact the contracted
+// component representatives to dense indices, record per-bus injection
+// availability, and collect the unmeasured branches that join distinct
+// components. The result depends only on the graph and its measurements, not on
+// bus or neighbour ordering.
+inline ContractedNetwork build_contracted_network(std::vector<BusNeighbourhoodInfo> const& neighbour_list,
+                                                  DisjointSet& components) {
+    auto const n_bus = static_cast<Idx>(neighbour_list.size());
+    ContractedNetwork result;
+    result.component_of_bus.assign(static_cast<std::size_t>(n_bus), -1);
+    result.bus_has_injection.assign(static_cast<std::size_t>(n_bus), 0);
+
+    // Compact component representatives to dense indices [0, n_components).
+    std::vector<Idx> representative_to_compact(static_cast<std::size_t>(n_bus), -1);
+    for (Idx bus = 0; bus < n_bus; ++bus) {
+        Idx const representative = components.find(bus);
+        if (representative_to_compact[representative] == -1) {
+            representative_to_compact[representative] = result.n_components++;
+        }
+        result.component_of_bus[bus] = representative_to_compact[representative];
+        if (neighbour_list[bus].status == ConnectivityStatus::node_measured) {
+            result.bus_has_injection[bus] = 1;
+        }
+    }
+
+    // Collect candidate edges. The neighbour list is bidirectional, so each
+    // undirected branch is taken once (from the lower-indexed bus). Branches
+    // whose endpoints already share a component would be self-loops in the
+    // contracted graph and are dropped.
+    for (Idx bus = 0; bus < n_bus; ++bus) {
+        for (auto const& neighbour : neighbour_list[bus].direct_neighbours) {
+            if (bus >= neighbour.bus || branch_has_native_measurement(neighbour.status)) {
+                continue;
+            }
+            Idx const from_component = result.component_of_bus[bus];
+            Idx const to_component = result.component_of_bus[neighbour.bus];
+            if (from_component == to_component) {
+                continue;
+            }
+            result.candidate_edges.push_back({.from_bus = bus,
+                                              .to_bus = neighbour.bus,
+                                              .from_component = from_component,
+                                              .to_component = to_component});
+        }
+    }
+
+    return result;
+}
+
 inline void prepare_starting_nodes(std::vector<BusNeighbourhoodInfo> const& neighbour_list, Idx n_bus,
                                    std::vector<Idx>& starting_candidates) {
     // First collect nodes without nodal measurements and no measured incident edges.
