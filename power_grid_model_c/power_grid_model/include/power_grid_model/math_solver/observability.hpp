@@ -298,9 +298,9 @@ class DisjointSet {
     }
 
     // Merge the sets containing a and b. Returns true if they were distinct.
-    bool merge(Idx a, Idx b) {
-        Idx const root_a = find(a);
-        Idx const root_b = find(b);
+    bool merge(Idx node_a, Idx node_b) {
+        Idx const root_a = find(node_a);
+        Idx const root_b = find(node_b);
         if (root_a == root_b) {
             return false;
         }
