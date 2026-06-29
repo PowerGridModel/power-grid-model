@@ -1009,8 +1009,11 @@ inline ObservabilityResult observability_check(MeasuredValues<sym> const& measur
         is_sufficient_condition_met = detail::sufficient_condition_radial_with_voltage_phasor(
             y_bus_structure, observability_sensors, n_voltage_phasor_sensors);
     } else {
-        is_sufficient_condition_met =
-            detail::sufficient_condition_meshed_without_voltage_phasor(bus_neighbourhood_info);
+        // Order-independent meshed sufficient condition based on matroid intersection.
+        if (!detail::meshed_observable_matroid_intersection(bus_neighbourhood_info)) {
+            throw NotObservableError{"Meshed observability check fail. Network unobservable.\n"};
+        }
+        is_sufficient_condition_met = true;
     }
 
     return ObservabilityResult{.is_observable = is_necessary_condition_met && is_sufficient_condition_met,
