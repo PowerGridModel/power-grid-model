@@ -256,6 +256,97 @@ inline void complete_bidirectional_neighbourhood_info(std::vector<BusNeighbourho
     }
 }
 
+// Robust meshed observability check (work in progress).
+//
+// The greedy spanning-tree walk further below is order-dependent: whether it
+// succeeds can depend on the order in which neighbours happen to be stored. The
+// routines in this section build an order-independent replacement based on
+// matroid intersection: the graphic matroid of the network (the spanning-tree
+// / forest constraint) intersected with the transversal matroid of the
+// measurement-to-branch assignment (every tree branch needs a distinct
+// measurement).
+//
+// First we need to contract every branch that carries its own flow measurement. Such a
+// branch is always self-assignable, so its two end buses can be merged into a
+// single observable component without affecting the rest of the assignment. The
+// resulting partition is exactly the connected components of the branch-measured
+// subgraph and is therefore independent of bus or neighbour ordering.
+
+// A branch carries its own (native) flow measurement, regardless of whether it
+// has already been used by the spanning-tree construction.
+inline bool branch_has_native_measurement(ConnectivityStatus status) {
+    return status == ConnectivityStatus::branch_native_measurement_unused ||
+           status == ConnectivityStatus::branch_native_measurement_consumed;
+}
+
+// Disjoint-set (union-find) over bus indices, used to group buses into
+// observable components.
+class DisjointSet {
+  public:
+    explicit DisjointSet(Idx n) : parent_(static_cast<std::size_t>(n)), rank_(static_cast<std::size_t>(n), Idx{0}) {
+        std::iota(parent_.begin(), parent_.end(), Idx{0});
+    }
+
+    // Find the representative of x, applying path compression.
+    Idx find(Idx x) {
+        while (parent_[x] != x) {
+            parent_[x] = parent_[parent_[x]];
+            x = parent_[x];
+        }
+        return x;
+    }
+
+    // Merge the sets containing a and b. Returns true if they were distinct.
+    bool merge(Idx a, Idx b) {
+        Idx const root_a = find(a);
+        Idx const root_b = find(b);
+        if (root_a == root_b) {
+            return false;
+        }
+        // union by rank
+        if (rank_[root_a] < rank_[root_b]) {
+            parent_[root_a] = root_b;
+        } else if (rank_[root_a] > rank_[root_b]) {
+            parent_[root_b] = root_a;
+        } else {
+            parent_[root_b] = root_a;
+            ++rank_[root_a];
+        }
+        return true;
+    }
+
+  private:
+    std::vector<Idx> parent_;
+    std::vector<Idx> rank_;
+};
+
+// Contract every branch that carries its own native flow measurement, merging
+// its two end buses. The resulting partition is the set of observable
+// components and is independent of bus or neighbour ordering.
+inline DisjointSet contract_branch_measured_edges(std::vector<BusNeighbourhoodInfo> const& neighbour_list) {
+    auto const n_bus = static_cast<Idx>(neighbour_list.size());
+    DisjointSet components{n_bus};
+    for (Idx bus = 0; bus < n_bus; ++bus) {
+        for (auto const& neighbour : neighbour_list[bus].direct_neighbours) {
+            if (branch_has_native_measurement(neighbour.status)) {
+                components.merge(bus, neighbour.bus);
+            }
+        }
+    }
+    return components;
+}
+
+// Count the number of distinct components in the disjoint set over [0, n_bus).
+inline Idx count_components(DisjointSet& components, Idx n_bus) {
+    Idx count = 0;
+    for (Idx bus = 0; bus < n_bus; ++bus) {
+        if (components.find(bus) == bus) {
+            ++count;
+        }
+    }
+    return count;
+}
+
 inline void prepare_starting_nodes(std::vector<BusNeighbourhoodInfo> const& neighbour_list, Idx n_bus,
                                    std::vector<Idx>& starting_candidates) {
     // First collect nodes without nodal measurements and no measured incident edges.

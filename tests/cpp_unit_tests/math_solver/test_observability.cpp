@@ -740,6 +740,92 @@ TEST_CASE("Test Observability - complete_bidirectional_neighbourhood_info") {
     }
 }
 
+// Robust (order-independent) meshed observability check:
+// contracting branch-measured edges into observable components via union-find.
+TEST_CASE("Test Observability - contract_branch_measured_edges") {
+    using power_grid_model::math_solver::detail::BusNeighbourhoodInfo;
+    using power_grid_model::math_solver::detail::contract_branch_measured_edges;
+    using power_grid_model::math_solver::detail::count_components;
+    using enum power_grid_model::math_solver::detail::ConnectivityStatus;
+
+    SUBCASE("No branch measurements - every bus is its own component") {
+        std::vector<BusNeighbourhoodInfo> neighbour_list(3);
+        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = has_no_measurement}};
+        neighbour_list[1].direct_neighbours = {{.bus = 0, .status = has_no_measurement},
+                                               {.bus = 2, .status = has_no_measurement}};
+        neighbour_list[2].direct_neighbours = {{.bus = 1, .status = has_no_measurement}};
+
+        auto components = contract_branch_measured_edges(neighbour_list);
+        CHECK(count_components(components, 3) == 3);
+        CHECK(components.find(0) != components.find(1));
+        CHECK(components.find(1) != components.find(2));
+    }
+
+    SUBCASE("Measured edges merge their end buses") {
+        // 0 =meas= 1 --- 2 =meas= 3
+        std::vector<BusNeighbourhoodInfo> neighbour_list(4);
+        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = branch_native_measurement_unused}};
+        neighbour_list[1].direct_neighbours = {{.bus = 0, .status = branch_native_measurement_unused},
+                                               {.bus = 2, .status = has_no_measurement}};
+        neighbour_list[2].direct_neighbours = {{.bus = 1, .status = has_no_measurement},
+                                               {.bus = 3, .status = branch_native_measurement_unused}};
+        neighbour_list[3].direct_neighbours = {{.bus = 2, .status = branch_native_measurement_unused}};
+
+        auto components = contract_branch_measured_edges(neighbour_list);
+        CHECK(count_components(components, 4) == 2);
+        CHECK(components.find(0) == components.find(1));
+        CHECK(components.find(2) == components.find(3));
+        CHECK(components.find(1) != components.find(2));
+    }
+
+    SUBCASE("Chain of measured edges collapses to a single component") {
+        std::vector<BusNeighbourhoodInfo> neighbour_list(4);
+        neighbour_list[0].direct_neighbours = {{.bus = 1, .status = branch_native_measurement_unused}};
+        neighbour_list[1].direct_neighbours = {{.bus = 0, .status = branch_native_measurement_unused},
+                                               {.bus = 2, .status = branch_native_measurement_unused}};
+        neighbour_list[2].direct_neighbours = {{.bus = 1, .status = branch_native_measurement_unused},
+                                               {.bus = 3, .status = branch_native_measurement_unused}};
+        neighbour_list[3].direct_neighbours = {{.bus = 2, .status = branch_native_measurement_unused}};
+
+        auto components = contract_branch_measured_edges(neighbour_list);
+        CHECK(count_components(components, 4) == 1);
+    }
+
+    SUBCASE("Partition is independent of neighbour ordering") {
+        // Same graph (0 =meas= 1, 2 =meas= 3, plain edge 0--2), but neighbours
+        // listed in ascending vs. shuffled order. The contraction must agree.
+        std::vector<BusNeighbourhoodInfo> ascending(4);
+        ascending[0].direct_neighbours = {{.bus = 1, .status = branch_native_measurement_unused},
+                                          {.bus = 2, .status = has_no_measurement}};
+        ascending[1].direct_neighbours = {{.bus = 0, .status = branch_native_measurement_unused}};
+        ascending[2].direct_neighbours = {{.bus = 0, .status = has_no_measurement},
+                                          {.bus = 3, .status = branch_native_measurement_unused}};
+        ascending[3].direct_neighbours = {{.bus = 2, .status = branch_native_measurement_unused}};
+
+        std::vector<BusNeighbourhoodInfo> shuffled(4);
+        shuffled[0].direct_neighbours = {{.bus = 2, .status = has_no_measurement},
+                                         {.bus = 1, .status = branch_native_measurement_unused}};
+        shuffled[1].direct_neighbours = {{.bus = 0, .status = branch_native_measurement_unused}};
+        shuffled[2].direct_neighbours = {{.bus = 3, .status = branch_native_measurement_unused},
+                                         {.bus = 0, .status = has_no_measurement}};
+        shuffled[3].direct_neighbours = {{.bus = 2, .status = branch_native_measurement_unused}};
+
+        auto comp_a = contract_branch_measured_edges(ascending);
+        auto comp_b = contract_branch_measured_edges(shuffled);
+
+        CHECK(count_components(comp_a, 4) == count_components(comp_b, 4));
+        CHECK((comp_a.find(0) == comp_a.find(1)) == (comp_b.find(0) == comp_b.find(1)));
+        CHECK((comp_a.find(2) == comp_a.find(3)) == (comp_b.find(2) == comp_b.find(3)));
+        CHECK((comp_a.find(0) == comp_a.find(2)) == (comp_b.find(0) == comp_b.find(2)));
+    }
+
+    SUBCASE("Empty network") {
+        std::vector<BusNeighbourhoodInfo> const neighbour_list;
+        auto components = contract_branch_measured_edges(neighbour_list);
+        CHECK(count_components(components, 0) == 0);
+    }
+}
+
 // TODO: properly clean up after y-bus access refactoring
 TEST_CASE("Test Observability - assign_independent_sensors_radial") {
     using power_grid_model::math_solver::YBusStructure;
