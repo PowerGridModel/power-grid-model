@@ -467,6 +467,110 @@ inline bool contracted_edges_transversal_independent(ContractedNetwork const& ne
     return true;
 }
 
+// Build the edge-index set I, optionally adding one edge and removing one.
+inline std::vector<Idx> edge_set_with(std::vector<std::uint8_t> const& in_set, Idx n_edges, Idx add_edge,
+                                      Idx remove_edge) {
+    std::vector<Idx> result;
+    for (Idx e = 0; e < n_edges; ++e) {
+        if (e != remove_edge && (in_set[e] != 0 || e == add_edge)) {
+            result.push_back(e);
+        }
+    }
+    return result;
+}
+
+// Sources X1: edges that can extend the forest; sinks X2: edges that can extend
+// the injection assignment.
+struct ExchangeGraphSources {
+    std::vector<std::uint8_t> can_extend_forest;
+    std::vector<std::uint8_t> can_extend_assignment;
+};
+
+// Classify every edge not in I by whether adding it keeps a forest and/or a
+// valid injection assignment.
+inline ExchangeGraphSources classify_exchange_edges(ContractedNetwork const& net,
+                                                    std::vector<std::uint8_t> const& in_set, Idx n_edges) {
+    ExchangeGraphSources sources{.can_extend_forest = std::vector<std::uint8_t>(static_cast<std::size_t>(n_edges), 0),
+                                 .can_extend_assignment =
+                                     std::vector<std::uint8_t>(static_cast<std::size_t>(n_edges), 0)};
+    for (Idx x = 0; x < n_edges; ++x) {
+        if (in_set[x] != 0) {
+            continue;
+        }
+        sources.can_extend_forest[x] = contracted_edges_form_forest(net, edge_set_with(in_set, n_edges, x, -1)) ? 1 : 0;
+        sources.can_extend_assignment[x] =
+            contracted_edges_transversal_independent(net, edge_set_with(in_set, n_edges, x, -1)) ? 1 : 0;
+    }
+    return sources;
+}
+
+// Length-zero augmentation: directly add an edge independent in both matroids.
+// Returns true and updates in_set if such an edge exists.
+inline bool try_length_zero_augmentation(std::vector<std::uint8_t>& in_set, Idx n_edges,
+                                         ExchangeGraphSources const& sources) {
+    for (Idx x = 0; x < n_edges; ++x) {
+        if (in_set[x] == 0 && sources.can_extend_forest[x] != 0 && sources.can_extend_assignment[x] != 0) {
+            in_set[x] = 1;
+            return true;
+        }
+    }
+    return false;
+}
+
+// Breadth-first search for a shortest augmenting path from X1 to X2 in the
+// exchange graph. Arcs leaving an edge x not in I go to edges y in I such that
+// I - y + x stays assignable; arcs leaving an edge y in I go to edges x not in I
+// such that I - y + x stays a forest. Fills predecessor and returns the sink
+// edge index, or -1 if no augmenting path exists.
+inline Idx find_augmenting_sink(ContractedNetwork const& net, std::vector<std::uint8_t> const& in_set, Idx n_edges,
+                                ExchangeGraphSources const& sources, std::vector<Idx>& predecessor) {
+    std::vector<std::uint8_t> visited(static_cast<std::size_t>(n_edges), 0);
+    std::vector<Idx> bfs_queue;
+    for (Idx x = 0; x < n_edges; ++x) {
+        if (in_set[x] == 0 && sources.can_extend_forest[x] != 0) {
+            visited[x] = 1;
+            bfs_queue.push_back(x);
+        }
+    }
+
+    // Whether an arc current -> other exists in the exchange graph.
+    auto is_reachable = [&](Idx current, Idx other) {
+        if (in_set[current] == 0) {
+            return in_set[other] != 0 &&
+                   contracted_edges_transversal_independent(net, edge_set_with(in_set, n_edges, current, other));
+        }
+        return in_set[other] == 0 && contracted_edges_form_forest(net, edge_set_with(in_set, n_edges, other, current));
+    };
+
+    // An out-of-set edge that can extend the assignment and was actually reached
+    // (pure sources are already known not to be sinks) terminates the path.
+    auto is_sink = [&](Idx current) {
+        return in_set[current] == 0 && sources.can_extend_assignment[current] != 0 && predecessor[current] != -1;
+    };
+
+    for (std::size_t head = 0; head < bfs_queue.size(); ++head) {
+        Idx const current = bfs_queue[head];
+        if (is_sink(current)) {
+            return current;
+        }
+        for (Idx other = 0; other < n_edges; ++other) {
+            if (visited[other] == 0 && is_reachable(current, other)) {
+                visited[other] = 1;
+                predecessor[other] = current;
+                bfs_queue.push_back(other);
+            }
+        }
+    }
+    return -1;
+}
+
+// Flip membership of every edge along the augmenting path ending at sink.
+inline void flip_augmenting_path(std::vector<std::uint8_t>& in_set, std::vector<Idx> const& predecessor, Idx sink) {
+    for (Idx node = sink; node != -1; node = predecessor[node]) {
+        in_set[node] = (in_set[node] == 0) ? std::uint8_t{1} : std::uint8_t{0};
+    }
+}
+
 // Try to enlarge the current common independent set I (candidate edges that
 // simultaneously form a forest over the components and can be matched to
 // distinct injection buses) by one element, using a shortest augmenting path in
@@ -474,87 +578,20 @@ inline bool contracted_edges_transversal_independent(ContractedNetwork const& ne
 // success.
 inline bool grow_assignable_forest(ContractedNetwork const& net, std::vector<std::uint8_t>& in_set) {
     auto const n_edges = static_cast<Idx>(net.candidate_edges.size());
+    ExchangeGraphSources const sources = classify_exchange_edges(net, in_set, n_edges);
 
-    // Build the edge-index set I, optionally adding one edge and removing one.
-    auto edge_set_with = [&](Idx add_edge, Idx remove_edge) {
-        std::vector<Idx> result;
-        for (Idx e = 0; e < n_edges; ++e) {
-            if (e != remove_edge && (in_set[e] != 0 || e == add_edge)) {
-                result.push_back(e);
-            }
-        }
-        return result;
-    };
-
-    // Sources X1: edges that can extend the forest; sinks X2: edges that can
-    // extend the injection assignment.
-    std::vector<std::uint8_t> can_extend_forest(static_cast<std::size_t>(n_edges), 0);
-    std::vector<std::uint8_t> can_extend_assignment(static_cast<std::size_t>(n_edges), 0);
-    for (Idx x = 0; x < n_edges; ++x) {
-        if (in_set[x] != 0) {
-            continue;
-        }
-        can_extend_forest[x] = contracted_edges_form_forest(net, edge_set_with(x, -1)) ? 1 : 0;
-        can_extend_assignment[x] = contracted_edges_transversal_independent(net, edge_set_with(x, -1)) ? 1 : 0;
+    // First try a direct (length-zero) augmentation.
+    if (try_length_zero_augmentation(in_set, n_edges, sources)) {
+        return true;
     }
 
-    // Length-zero augmentation: an edge independent in both matroids.
-    for (Idx x = 0; x < n_edges; ++x) {
-        if (in_set[x] == 0 && can_extend_forest[x] != 0 && can_extend_assignment[x] != 0) {
-            in_set[x] = 1;
-            return true;
-        }
-    }
-
-    // Shortest path from X1 to X2 in the exchange graph. Arcs leaving an edge x
-    // not in I go to edges y in I such that I - y + x stays assignable; arcs
-    // leaving an edge y in I go to edges x not in I such that I - y + x stays a
-    // forest.
+    // Otherwise search for a shortest augmenting path and flip it.
     std::vector<Idx> predecessor(static_cast<std::size_t>(n_edges), -1);
-    std::vector<std::uint8_t> visited(static_cast<std::size_t>(n_edges), 0);
-    std::vector<Idx> queue;
-    for (Idx x = 0; x < n_edges; ++x) {
-        if (in_set[x] == 0 && can_extend_forest[x] != 0) {
-            visited[x] = 1;
-            queue.push_back(x);
-        }
-    }
-
-    Idx sink = -1;
-    for (std::size_t head = 0; head < queue.size() && sink == -1; ++head) {
-        Idx const current = queue[head];
-        if (in_set[current] == 0) {
-            // Edge not in I: a sink if it can extend the assignment and was
-            // actually reached (pure sources are already known not to be sinks).
-            if (can_extend_assignment[current] != 0 && predecessor[current] != -1) {
-                sink = current;
-                break;
-            }
-            for (Idx y = 0; y < n_edges; ++y) {
-                if (in_set[y] != 0 && visited[y] == 0 &&
-                    contracted_edges_transversal_independent(net, edge_set_with(current, y))) {
-                    visited[y] = 1;
-                    predecessor[y] = current;
-                    queue.push_back(y);
-                }
-            }
-        } else {
-            for (Idx x = 0; x < n_edges; ++x) {
-                if (in_set[x] == 0 && visited[x] == 0 && contracted_edges_form_forest(net, edge_set_with(x, current))) {
-                    visited[x] = 1;
-                    predecessor[x] = current;
-                    queue.push_back(x);
-                }
-            }
-        }
-    }
-
+    Idx const sink = find_augmenting_sink(net, in_set, n_edges, sources, predecessor);
     if (sink == -1) {
         return false;
     }
-    for (Idx node = sink; node != -1; node = predecessor[node]) {
-        in_set[node] ^= 1;
-    }
+    flip_augmenting_path(in_set, predecessor, sink);
     return true;
 }
 
