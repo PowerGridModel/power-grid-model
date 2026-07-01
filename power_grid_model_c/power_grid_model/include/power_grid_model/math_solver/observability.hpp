@@ -24,6 +24,7 @@
 #include <iterator>
 #include <limits>
 #include <numeric>
+#include <queue>
 #include <span>
 #include <utility>
 #include <vector>
@@ -525,11 +526,11 @@ inline bool try_length_zero_augmentation(std::vector<std::uint8_t>& in_set, Idx 
 inline Idx find_augmenting_sink(ContractedNetwork const& net, std::vector<std::uint8_t> const& in_set, Idx n_edges,
                                 ExchangeGraphSources const& sources, std::vector<Idx>& predecessor) {
     std::vector<std::uint8_t> visited(static_cast<std::size_t>(n_edges), 0);
-    std::vector<Idx> bfs_queue;
+    std::queue<Idx> bfs_queue;
     for (Idx x = 0; x < n_edges; ++x) {
         if (in_set[x] == 0 && sources.can_extend_forest[x] != 0) {
             visited[x] = 1;
-            bfs_queue.push_back(x);
+            bfs_queue.push(x);
         }
     }
 
@@ -548,8 +549,9 @@ inline Idx find_augmenting_sink(ContractedNetwork const& net, std::vector<std::u
         return in_set[current] == 0 && sources.can_extend_assignment[current] != 0 && predecessor[current] != -1;
     };
 
-    for (std::size_t head = 0; head < bfs_queue.size(); ++head) {
-        Idx const current = bfs_queue[head];
+    while (!bfs_queue.empty()) {
+        Idx const current = bfs_queue.front();
+        bfs_queue.pop();
         if (is_sink(current)) {
             return current;
         }
@@ -557,7 +559,7 @@ inline Idx find_augmenting_sink(ContractedNetwork const& net, std::vector<std::u
             if (visited[other] == 0 && is_reachable(current, other)) {
                 visited[other] = 1;
                 predecessor[other] = current;
-                bfs_queue.push_back(other);
+                bfs_queue.push(other);
             }
         }
     }
@@ -619,6 +621,7 @@ inline bool meshed_observable_matroid_intersection(std::vector<BusNeighbourhoodI
     return is_contracted_network_observable(net);
 }
 
+// To be deprecated post matroid intersection implementation.
 inline void prepare_starting_nodes(std::vector<BusNeighbourhoodInfo> const& neighbour_list, Idx n_bus,
                                    std::vector<Idx>& starting_candidates) {
     // First collect nodes without nodal measurements and no measured incident edges.
@@ -661,6 +664,7 @@ struct StatusModification {
     ConnectivityStatus old_value; // original value before modification
 };
 
+// To be deprecated post matroid intersection implementation.
 // Context struct to hold shared state during spanning tree search
 struct SpanningTreeContext {
     std::vector<BusNeighbourhoodInfo>* neighbour_list;
@@ -680,6 +684,7 @@ struct SpanningTreeContext {
     }
 };
 
+// To be deprecated post matroid intersection implementation.
 // Helper function: Try to traverse edges with native measurements
 inline bool try_native_edge_measurements(SpanningTreeContext& ctx, bool& step_success) {
     if ((*ctx.visited)[ctx.current_bus] == std::to_underlying(BusVisited::NotVisited)) {
@@ -713,6 +718,7 @@ inline bool try_native_edge_measurements(SpanningTreeContext& ctx, bool& step_su
     return false;
 }
 
+// To be deprecated post matroid intersection implementation.
 // Helper function: Try to use downwind measurement
 inline bool try_downwind_measurement(SpanningTreeContext& ctx, bool& step_success, bool current_bus_no_measurement) {
     if (!current_bus_no_measurement && ctx.downwind) {
@@ -750,6 +756,7 @@ inline bool try_downwind_measurement(SpanningTreeContext& ctx, bool& step_succes
     return false;
 }
 
+// To be deprecated post matroid intersection implementation.
 // Helper function: Process a single edge during general connection rules
 inline bool process_edge(SpanningTreeContext& ctx, BusNeighbourhoodInfo::neighbour& neighbour,
                          ConnectivityStatus neighbour_status, ConnectivityStatus reverse_status, bool use_current_node,
@@ -786,6 +793,7 @@ inline bool process_edge(SpanningTreeContext& ctx, BusNeighbourhoodInfo::neighbo
     return true;
 }
 
+// To be deprecated post matroid intersection implementation.
 // Helper function: Try general connection rules
 inline bool try_general_connection_rules(SpanningTreeContext& ctx, bool& step_success,
                                          bool current_bus_no_measurement) {
@@ -811,6 +819,7 @@ inline bool try_general_connection_rules(SpanningTreeContext& ctx, bool& step_su
     return false;
 }
 
+// To be deprecated post matroid intersection implementation.
 // Helper function: Reassign nodal measurement between two connected nodes
 inline void reassign_nodal_measurement(SpanningTreeContext& ctx, Idx from_node, Idx to_node) {
     // no reassignment possible if reached via edge measurement
@@ -848,6 +857,7 @@ inline void reassign_nodal_measurement(SpanningTreeContext& ctx, Idx from_node, 
     }
 }
 
+// To be deprecated post matroid intersection implementation.
 // Helper function: Try backtracking
 inline bool try_backtrack(SpanningTreeContext& ctx, bool& step_success) {
     if (!ctx.edge_track->empty()) {
@@ -877,6 +887,7 @@ inline bool try_backtrack(SpanningTreeContext& ctx, bool& step_success) {
     return false;
 }
 
+// To be deprecated post matroid intersection implementation.
 inline bool find_spanning_tree_from_node_impl(Idx start_bus, Idx n_bus,
                                               std::vector<BusNeighbourhoodInfo>& neighbour_list,
                                               std::vector<StatusModification>& modifications,
@@ -942,6 +953,7 @@ inline bool find_spanning_tree_from_node_impl(Idx start_bus, Idx n_bus,
     return ctx.visited_count == n_bus;
 }
 
+// To be deprecated post matroid intersection implementation.
 // Backward-compatible overload for tests - makes a copy and creates modification tracker
 inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus,
                                          std::vector<BusNeighbourhoodInfo> const& neighbour_list) {
@@ -955,6 +967,7 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus,
                                              edge_track_buffer);
 }
 
+// To be deprecated post matroid intersection implementation.
 inline bool sufficient_condition_meshed_without_voltage_phasor(std::vector<BusNeighbourhoodInfo>& neighbour_list) {
     auto const n_bus = static_cast<Idx>(neighbour_list.size());
     std::vector<Idx> starting_candidates;
@@ -987,6 +1000,7 @@ inline bool sufficient_condition_meshed_without_voltage_phasor(std::vector<BusNe
     throw NotObservableError{"Meshed observability check fail. Network unobservable.\n"};
 }
 
+// To be deprecated post matroid intersection implementation.
 // Backward-compatible overload for tests - makes a copy
 inline bool
 sufficient_condition_meshed_without_voltage_phasor(std::vector<BusNeighbourhoodInfo> const& neighbour_list) {
