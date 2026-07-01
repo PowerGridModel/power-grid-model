@@ -6,6 +6,11 @@ SPDX-License-Identifier: MPL-2.0
 
 # Components
 
+```{note}
+This document is about components supported by PGM.
+For documentation on modeling grid components not listed here, please refer to [Grid Modeling](./non-pgm-components.md).
+```
+
 The attributes of components are listed below.
 
 ## Base
@@ -166,6 +171,9 @@ It has a very high admittance (small impedance) which is set to a fixed per-unit
 10kV network).
 Therefore, it is chosen by design that no sensors can be coupled to a `link`.
 There is no additional attribute for `link`.
+
+It is explicitly allowed to connect a link between nodes with different voltage levels to allow modeling
+[ideal transformers](./non-pgm-components.md#ideal-transformer).
 
 #### Electric Model
 
@@ -1321,3 +1329,9 @@ $$
 
 In this case, `limit_violated` will indicate which limit was exceeded, and the actual voltage at the node may differ
 from `u_ref`.
+
+## Other components
+
+The list of components explicitly supported by the power-grid-model is a subset of all possible power system components.
+If you did not find the component you're trying to model, you may find what you are looking for
+in [Grid Modeling](./non-pgm-components.md).
