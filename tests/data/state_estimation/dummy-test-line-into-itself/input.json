@@ -123,7 +123,7 @@
     "sym_power_sensor": [
       {
         "id": 12,
-        "measured_object": 10,
+        "measured_object": 9,
         "measured_terminal_type": 4,
         "power_sigma": 10.0,
         "p_measured": 659667.41990631132,
@@ -133,7 +133,7 @@
     "asym_power_sensor": [
       {
         "id": 13,
-        "measured_object": 11,
+        "measured_object": 10,
         "measured_terminal_type": 4,
         "power_sigma": 100.0,
         "p_measured": [220051.05458955461, 110006.70218988275, 329405.04135438218],

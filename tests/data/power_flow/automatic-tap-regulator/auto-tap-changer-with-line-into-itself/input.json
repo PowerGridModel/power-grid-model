@@ -71,31 +71,31 @@
         "from_status": 1,
         "to_status": 1,
         "u1": 10000,
-        "u2": 400,
-        "sn": 100000,
-        "uk": 0.04,
-        "pk": 1000,
-        "i0": 0.01,
-        "p0": 100,
-        "winding_from": 2,
-        "winding_to": 2,
+        "u2": 10000,
+        "sn": 1000000,
+        "uk": 0.06,
+        "pk": 8000,
+        "i0": 0.003,
+        "p0": 1200,
+        "winding_from": 0,
+        "winding_to": 0,
         "clock": 0,
         "tap_side": 0,
-        "tap_pos": 2,
-        "tap_min": 1,
-        "tap_max": 5,
-        "tap_nom": 3,
-        "tap_size": 250
+        "tap_pos": 1,
+        "tap_min": -10,
+        "tap_max": 10,
+        "tap_nom": 1,
+        "tap_size": 125
       }
     ],
     "transformer_tap_regulator": [
       {
         "id": 8,
-        "regulated_object": 5,
+        "regulated_object": 7,
         "status": 1,
         "control_side": 1,
-        "u_set": 400,
-        "u_band": 0.00001
+        "u_set": 10000,
+        "u_band": 300
       }
     ]
   }
