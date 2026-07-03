@@ -119,6 +119,7 @@ struct JsonSAXVisitor {
     static bool binary(json::binary_t const& /* val */) { return true; }
 
     bool start_object(size_t /* elements */) {
+        check_depth();
         data_buffers.emplace();
         return true;
     }
@@ -140,6 +141,7 @@ struct JsonSAXVisitor {
         return true;
     }
     bool start_array(size_t /* elements */) {
+        check_depth();
         data_buffers.emplace();
         return true;
     }
@@ -162,6 +164,12 @@ struct JsonSAXVisitor {
                             ? std::format("{}...[truncated]", last_token.substr(0, max_error_message_token_length))
                             : last_token,
                         ex.what())};
+    }
+
+    void check_depth() const {
+        if (data_buffers.size() > 10) {
+            throw SerializationError{"Json depth exceeds the limit of 10!\n"};
+        }
     }
 
     std::stack<JsonMapArrayData> data_buffers;
