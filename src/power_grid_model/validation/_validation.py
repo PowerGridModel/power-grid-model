@@ -643,19 +643,24 @@ def validate_line(data: SingleDataset) -> list[ValidationError]:
 def validate_asym_line(data: SingleDataset) -> list[ValidationError]:
     errors = validate_branch(data, CT.asym_line)
     errors += _all_greater_than_zero(data, CT.asym_line, AT.i_n)
-    required_fields = [
+    # Self (diagonal) impedances/capacitances of a physical conductor cannot be zero.
+    self_fields = [
         AT.r_aa,
-        AT.r_ba,
         AT.r_bb,
-        AT.r_ca,
-        AT.r_cb,
         AT.r_cc,
         AT.x_aa,
-        AT.x_ba,
         AT.x_bb,
+        AT.x_cc,
+    ]
+    # Mutual (off-diagonal) impedances/capacitances between conductors can be zero, e.g. when the conductors are
+    # sufficiently far apart or decoupled.
+    mutual_fields = [
+        AT.r_ba,
+        AT.r_ca,
+        AT.r_cb,
+        AT.x_ba,
         AT.x_ca,
         AT.x_cb,
-        AT.x_cc,
     ]
     optional_r_matrix_fields = [
         AT.r_na,
@@ -669,19 +674,22 @@ def validate_asym_line(data: SingleDataset) -> list[ValidationError]:
         AT.x_nc,
         AT.x_nn,
     ]
-    required_c_matrix_fields = [
+    self_c_matrix_fields = [
         AT.c_aa,
-        AT.c_ba,
         AT.c_bb,
-        AT.c_ca,
-        AT.c_cb,
         AT.c_cc,
     ]
+    mutual_c_matrix_fields = [
+        AT.c_ba,
+        AT.c_ca,
+        AT.c_cb,
+    ]
+    required_c_matrix_fields = self_c_matrix_fields + mutual_c_matrix_fields
     c_fields = [AT.c0, AT.c1]
-    for field in (
-        required_fields + optional_r_matrix_fields + optional_x_matrix_fields + required_c_matrix_fields + c_fields
-    ):
+    for field in self_fields + self_c_matrix_fields + c_fields:
         errors += _all_greater_than_zero(data, CT.asym_line, field)
+    for field in mutual_fields + optional_r_matrix_fields + optional_x_matrix_fields + mutual_c_matrix_fields:
+        errors += _all_greater_than_or_equal_to_zero(data, CT.asym_line, field)
 
     errors += _no_strict_subset_missing(data, optional_r_matrix_fields + optional_x_matrix_fields, CT.asym_line)
     errors += _no_strict_subset_missing(data, required_c_matrix_fields, CT.asym_line)
