@@ -1111,30 +1111,30 @@ def test_asym_line_input_data(input_data):
     validation_errors = validate_input_data(input_data, symmetric=True)
     assert validation_errors is not None
     assert NotGreaterThanError(CT.asym_line, AT.r_aa, [55], 0) in validation_errors
-    assert NotGreaterThanError(CT.asym_line, AT.r_ba, [55], 0) in validation_errors
+    assert NotGreaterOrEqualError(CT.asym_line, AT.r_ba, [55], 0) in validation_errors
     assert NotGreaterThanError(CT.asym_line, AT.r_bb, [55], 0) in validation_errors
-    assert NotGreaterThanError(CT.asym_line, AT.r_ca, [55], 0) in validation_errors
-    assert NotGreaterThanError(CT.asym_line, AT.r_cb, [55], 0) in validation_errors
+    assert NotGreaterOrEqualError(CT.asym_line, AT.r_ca, [55], 0) in validation_errors
+    assert NotGreaterOrEqualError(CT.asym_line, AT.r_cb, [55], 0) in validation_errors
     assert NotGreaterThanError(CT.asym_line, AT.r_cc, [55], 0) in validation_errors
-    assert NotGreaterThanError(CT.asym_line, AT.r_na, [55], 0) in validation_errors
-    assert NotGreaterThanError(CT.asym_line, AT.r_nb, [55], 0) in validation_errors
-    assert NotGreaterThanError(CT.asym_line, AT.r_nc, [55], 0) in validation_errors
+    assert NotGreaterOrEqualError(CT.asym_line, AT.r_na, [55], 0) in validation_errors
+    assert NotGreaterOrEqualError(CT.asym_line, AT.r_nb, [55], 0) in validation_errors
+    assert NotGreaterOrEqualError(CT.asym_line, AT.r_nc, [55], 0) in validation_errors
     assert NotGreaterThanError(CT.asym_line, AT.r_nn, [55], 0) in validation_errors
     assert NotGreaterThanError(CT.asym_line, AT.x_aa, [55], 0) in validation_errors
-    assert NotGreaterThanError(CT.asym_line, AT.x_ba, [55], 0) in validation_errors
+    assert NotGreaterOrEqualError(CT.asym_line, AT.x_ba, [55], 0) in validation_errors
     assert NotGreaterThanError(CT.asym_line, AT.x_bb, [55], 0) in validation_errors
-    assert NotGreaterThanError(CT.asym_line, AT.x_ca, [55], 0) in validation_errors
-    assert NotGreaterThanError(CT.asym_line, AT.x_cb, [55], 0) in validation_errors
+    assert NotGreaterOrEqualError(CT.asym_line, AT.x_ca, [55], 0) in validation_errors
+    assert NotGreaterOrEqualError(CT.asym_line, AT.x_cb, [55], 0) in validation_errors
     assert NotGreaterThanError(CT.asym_line, AT.x_cc, [55], 0) in validation_errors
-    assert NotGreaterThanError(CT.asym_line, AT.x_na, [55], 0) in validation_errors
-    assert NotGreaterThanError(CT.asym_line, AT.x_nb, [55], 0) in validation_errors
-    assert NotGreaterThanError(CT.asym_line, AT.x_nc, [55], 0) in validation_errors
+    assert NotGreaterOrEqualError(CT.asym_line, AT.x_na, [55], 0) in validation_errors
+    assert NotGreaterOrEqualError(CT.asym_line, AT.x_nb, [55], 0) in validation_errors
+    assert NotGreaterOrEqualError(CT.asym_line, AT.x_nc, [55], 0) in validation_errors
     assert NotGreaterThanError(CT.asym_line, AT.x_nn, [55], 0) in validation_errors
     assert NotGreaterThanError(CT.asym_line, AT.c_aa, [55], 0) in validation_errors
-    assert NotGreaterThanError(CT.asym_line, AT.c_ba, [55], 0) in validation_errors
+    assert NotGreaterOrEqualError(CT.asym_line, AT.c_ba, [55], 0) in validation_errors
     assert NotGreaterThanError(CT.asym_line, AT.c_bb, [55], 0) in validation_errors
-    assert NotGreaterThanError(CT.asym_line, AT.c_ca, [55], 0) in validation_errors
-    assert NotGreaterThanError(CT.asym_line, AT.c_cb, [55], 0) in validation_errors
+    assert NotGreaterOrEqualError(CT.asym_line, AT.c_ca, [55], 0) in validation_errors
+    assert NotGreaterOrEqualError(CT.asym_line, AT.c_cb, [55], 0) in validation_errors
     assert NotGreaterThanError(CT.asym_line, AT.c_cc, [55], 0) in validation_errors
     assert NotGreaterThanError(CT.asym_line, AT.c0, [55], 0) in validation_errors
     assert NotGreaterThanError(CT.asym_line, AT.c1, [55], 0) in validation_errors
@@ -1187,6 +1187,33 @@ def test_asym_line_input_data(input_data):
         )
         in validation_errors
     )
+
+
+def test_asym_line_input_data__zero_mutual_impedances_are_valid():
+    node = initialize_array(DatasetType.input, CT.node, 2)
+    node[AT.id] = [1, 2]
+    node[AT.u_rated] = [10.5e3, 10.5e3]
+
+    asym_line = initialize_array(DatasetType.input, CT.asym_line, 1)
+    asym_line[AT.id] = [3]
+    asym_line[AT.from_node] = [1]
+    asym_line[AT.to_node] = [2]
+    asym_line[AT.from_status] = [1]
+    asym_line[AT.to_status] = [1]
+    asym_line[AT.i_n] = [50]
+
+    for field in [AT.r_aa, AT.r_bb, AT.r_cc, AT.r_nn, AT.x_aa, AT.x_bb, AT.x_cc, AT.x_nn]:
+        asym_line[field] = [1]
+    for field in [AT.r_ba, AT.r_ca, AT.r_cb, AT.r_na, AT.r_nb, AT.r_nc]:
+        asym_line[field] = [0]
+    for field in [AT.x_ba, AT.x_ca, AT.x_cb, AT.x_na, AT.x_nb, AT.x_nc]:
+        asym_line[field] = [0]
+    for field in [AT.c_aa, AT.c_bb, AT.c_cc]:
+        asym_line[field] = [1e-9]
+    for field in [AT.c_ba, AT.c_ca, AT.c_cb]:
+        asym_line[field] = [0]
+
+    assert_valid_input_data({CT.node: node, CT.asym_line: asym_line})
 
 
 @pytest.mark.parametrize("component_type", CT)
