@@ -1122,6 +1122,10 @@ def test_asym_line_input_data(input_data):
     assert NotGreaterThanError(CT.asym_line, AT.c_cc, [55], 0) in validation_errors
     assert NotGreaterThanError(CT.asym_line, AT.c0, [55], 0) in validation_errors
     assert NotGreaterThanError(CT.asym_line, AT.c1, [55], 0) in validation_errors
+    # r_nn/x_nn (self neutral impedance) must also be strictly greater than zero: the C++ core does not yet
+    # support a zero self neutral impedance.
+    assert NotGreaterThanError(CT.asym_line, AT.r_nn, [55], 0) in validation_errors
+    assert NotGreaterThanError(CT.asym_line, AT.x_nn, [55], 0) in validation_errors
     # Mutual (off-diagonal) impedances/capacitances are allowed to be zero, but not negative.
     assert NotGreaterOrEqualError(CT.asym_line, AT.r_ba, [55], 0) in validation_errors
     assert NotGreaterOrEqualError(CT.asym_line, AT.r_ca, [55], 0) in validation_errors
@@ -1129,14 +1133,12 @@ def test_asym_line_input_data(input_data):
     assert NotGreaterOrEqualError(CT.asym_line, AT.r_na, [55], 0) in validation_errors
     assert NotGreaterOrEqualError(CT.asym_line, AT.r_nb, [55], 0) in validation_errors
     assert NotGreaterOrEqualError(CT.asym_line, AT.r_nc, [55], 0) in validation_errors
-    assert NotGreaterOrEqualError(CT.asym_line, AT.r_nn, [55], 0) in validation_errors
     assert NotGreaterOrEqualError(CT.asym_line, AT.x_ba, [55], 0) in validation_errors
     assert NotGreaterOrEqualError(CT.asym_line, AT.x_ca, [55], 0) in validation_errors
     assert NotGreaterOrEqualError(CT.asym_line, AT.x_cb, [55], 0) in validation_errors
     assert NotGreaterOrEqualError(CT.asym_line, AT.x_na, [55], 0) in validation_errors
     assert NotGreaterOrEqualError(CT.asym_line, AT.x_nb, [55], 0) in validation_errors
     assert NotGreaterOrEqualError(CT.asym_line, AT.x_nc, [55], 0) in validation_errors
-    assert NotGreaterOrEqualError(CT.asym_line, AT.x_nn, [55], 0) in validation_errors
     assert NotGreaterOrEqualError(CT.asym_line, AT.c_ba, [55], 0) in validation_errors
     assert NotGreaterOrEqualError(CT.asym_line, AT.c_ca, [55], 0) in validation_errors
     assert NotGreaterOrEqualError(CT.asym_line, AT.c_cb, [55], 0) in validation_errors

@@ -662,6 +662,21 @@ def validate_asym_line(data: SingleDataset) -> list[ValidationError]:
         AT.x_ca,
         AT.x_cb,
     ]
+    # r_nn/x_nn (self neutral impedance) cannot be zero, unlike the other neutral fields below: the C++ core
+    # does not yet support a zero self neutral impedance.
+    self_neutral_fields = [
+        AT.r_nn,
+        AT.x_nn,
+    ]
+    # Mutual neutral-to-phase impedances can be zero, same as the other mutual fields above.
+    mutual_neutral_fields = [
+        AT.r_na,
+        AT.r_nb,
+        AT.r_nc,
+        AT.x_na,
+        AT.x_nb,
+        AT.x_nc,
+    ]
     optional_r_matrix_fields = [
         AT.r_na,
         AT.r_nb,
@@ -686,9 +701,9 @@ def validate_asym_line(data: SingleDataset) -> list[ValidationError]:
     ]
     required_c_matrix_fields = self_c_matrix_fields + mutual_c_matrix_fields
     c_fields = [AT.c0, AT.c1]
-    for field in self_fields + self_c_matrix_fields + c_fields:
+    for field in self_fields + self_neutral_fields + self_c_matrix_fields + c_fields:
         errors += _all_greater_than_zero(data, CT.asym_line, field)
-    for field in mutual_fields + optional_r_matrix_fields + optional_x_matrix_fields + mutual_c_matrix_fields:
+    for field in mutual_fields + mutual_neutral_fields + mutual_c_matrix_fields:
         errors += _all_greater_than_or_equal_to_zero(data, CT.asym_line, field)
 
     errors += _no_strict_subset_missing(data, optional_r_matrix_fields + optional_x_matrix_fields, CT.asym_line)
