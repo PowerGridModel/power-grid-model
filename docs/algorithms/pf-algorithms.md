@@ -31,6 +31,7 @@ The following bus types can be present in the system:
 
 - Slack bus: the reference bus with known voltage and angle; in power-grid-model referred to as the
   [source](../user_manual/components.md#source).
+  See also [selection of slack bus](../user_manual/calculations.md#slack-bus-selection).
 - Load bus: a bus with known $P$ and $Q$.
 - Voltage controlled bus: a bus with known $P$ and $U$.
   Note: this bus is not supported by power-grid-model yet.
