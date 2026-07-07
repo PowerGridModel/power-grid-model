@@ -1,5 +1,17 @@
 {
   "calculation_method": ["newton_raphson", "iterative_current"],
   "rtol": 1e-9,
-  "atol": 1e-9
+  "atol": {
+    "default": 1e-9,
+    "p": 0.02,
+    "q": 0.02,
+    "p_from": 0.01,
+    "q_from": 0.02,
+    "p_to": 0.01,
+    "q_to": 0.02,
+    "i_from": 1e-5,
+    "i_to": 1e-5,
+    "s_from": 0.01,
+    "s_to": 0.01
+  }
 }
