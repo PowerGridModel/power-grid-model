@@ -526,16 +526,6 @@ computing.
 
 ## Slack bus and slack bus selection
 
-In principle, all calculation methods treat all nodes in the grid the same.
-That also means that even slack buses don't get "special treatment".
-The reason behind this is clear: if there are multiple slack buses in the grid, it is not uniquely determined which one
-should get priority.
-However, it is still useful to select a slack bus for multiple reasons.
-Firstly, because the grid state is only determined up to a constant complex phase, the slack bus can resolve the
-ambiguity by choosing the gauge.
-Secondly, because isolated islands in the grid (i.e., connected components in the topological meaning of the word) can
-most easily be determined using depth-first or breadth-first search from some "starting node".
-
 In PGM, slack buses are selected as follows.
 
 1. [Source](./components.md#source) nodes are slack buses.
@@ -545,3 +535,8 @@ In PGM, slack buses are selected as follows.
    selected as the slack bus.
    The simplest choice is to select the first-occuring source in the input data, but note that this behavior may change
    over time.
+
+```{note}
+The slack bus used by PGM internally differs from the slack bus in the sense of an ideal source.
+For documentation on ideal source modeling, please refer to [its documentation](./non-pgm-components.md#ideal-source).
+```
