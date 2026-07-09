@@ -1,0 +1,10 @@
+{
+  "calculation_method": ["iterative_linear", "newton_raphson"],
+  "rtol": 1e-8,
+  "atol": 1e-8,
+  "experimental_features": "enabled",
+  "raises": {
+    "raises": "InvalidMeasuredObject",
+    "reason": "Node injection sensors are no longer supported starting with version 2.0."
+  }
+}

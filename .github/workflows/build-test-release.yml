@@ -8,19 +8,10 @@ name: Build and Test C++ and Python
 on:
   # run pipeline from another workflow
   workflow_call:
-    inputs:
-      create_release:
-        type: boolean
-        description: Create a (pre-)release when CI passes
-        required: true
+
   # run this workflow manually from the Actions tab
   workflow_dispatch:
-    inputs:
-      create_release:
-        type: boolean
-        description: Create a (pre-)release when CI passes
-        default: false
-        required: true
+
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-main
@@ -31,13 +22,13 @@ jobs:
     name: Build sdist and set version
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Install uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+        uses: astral-sh/setup-uv@d31148d669074a8d0a63714ba94f3201e7020bc3 # v8.3.0
 
       - name: Set PyPI Version
-        uses: PowerGridModel/pgm-version-bump@b75ff549cae00be1ca859d181dbc460f69003643 # v0.1.2
+        uses: PowerGridModel/pgm-version-bump@00b541a2eeb64ac1537e3a531b50a3175313822d # v0.1.4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -75,7 +66,7 @@ jobs:
       HOMEBREW_FORCE_BREWED_CURL: 1
 
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Install packages
         run: |
           sudo apt-get update
@@ -86,7 +77,7 @@ jobs:
           sudo ln -s /usr/bin/g++-14 /usr/local/bin/g++
 
       - name: Install uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+        uses: astral-sh/setup-uv@d31148d669074a8d0a63714ba94f3201e7020bc3 # v8.3.0
 
       - name: Install pgm-build-deps
         run: |
@@ -107,10 +98,10 @@ jobs:
       PRESET: ${{ matrix.compiler }}-${{ matrix.build-option }}
 
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Install uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+        uses: astral-sh/setup-uv@d31148d669074a8d0a63714ba94f3201e7020bc3 # v8.3.0
 
       - name: Install pgm-build-deps
         run: |
@@ -150,7 +141,7 @@ jobs:
       PRESET: ci-clang-${{ matrix.build-option }}
 
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Set up XCode
         uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
@@ -158,7 +149,7 @@ jobs:
           xcode-version: latest-stable
 
       - name: Install uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+        uses: astral-sh/setup-uv@d31148d669074a8d0a63714ba94f3201e7020bc3 # v8.3.0
 
       - name: Install pgm-build-deps
         run: |
@@ -193,7 +184,7 @@ jobs:
     needs: [acquire-python-version-build-sdist]
 
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
@@ -210,7 +201,7 @@ jobs:
           xcode-version: latest-stable
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@f03ac7617d6cff873ccf24cc0d567ef5ba5a9e6d # v4.0.0
+        uses: pypa/cibuildwheel@294735312765b09d24a2fbec22660ce817587d55 # v4.1.0
         # GitHub Actions specific build parameters
         env:
           # pass GitHub runner info into Linux container
@@ -244,7 +235,7 @@ jobs:
       run:
         shell: ${{ matrix.shell }}
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - uses: conda-incubator/setup-miniconda@8ee1f361103df19b6f8c8655fd3967a8ecb162d5 # v4.0.1
         with:
@@ -288,59 +279,3 @@ jobs:
 
       - name: Test
         run: pytest
-
-  github-release:
-    name: Create and release assets to GitHub
-    needs:
-      [
-        build-cpp-test-linux,
-        build-cpp-test-windows,
-        build-cpp-test-macos,
-        build-and-test-python,
-        build-and-test-conda,
-      ]
-    # always run publish job but fail at the first step if previous jobs have been failed
-    if: always()
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
-    steps:
-      - name: Fail fast
-        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
-        run: |
-          echo "Previous jobs have failures!"
-          exit 1
-
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
-
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: version
-          path: .
-
-      - name: Combine wheelhouses
-        run: mv wheelhouse-*/* wheelhouse
-
-      - name: List assets
-        run: ls ./wheelhouse/ -al
-
-      - name: Get tag
-        id: tag
-        run: echo "tag=v$(cat VERSION)" >> $GITHUB_OUTPUT
-
-      - name: Display tag
-        run: echo "${{ steps.tag.outputs.tag }}"
-
-      - name: Create GitHub release
-        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
-        if: (inputs.create_release)
-        with:
-          files: |
-            ./wheelhouse/*
-          tag_name: ${{ steps.tag.outputs.tag }}
-          prerelease: ${{ github.ref != 'refs/heads/main'}}
-          generate_release_notes: true
-          target_commitish: ${{ github.sha }}
