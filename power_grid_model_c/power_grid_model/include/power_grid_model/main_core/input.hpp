@@ -46,7 +46,7 @@ constexpr std::array<Branch3Side, 3> const branch3_sides = {Branch3Side::side_1,
 // template to construct components
 // using forward interators
 // different selection based on component type
-template <std::derived_from<Base> Component, class ComponentContainer, std::ranges::view Inputs>
+template <std::derived_from<Base> Component, class ComponentContainer, non_owning_view_c Inputs>
     requires common::component_container_c<ComponentContainer, Component>
 inline void add_component(ComponentContainer& components, Inputs component_inputs, double system_frequency) {
     using ComponentView =

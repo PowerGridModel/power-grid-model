@@ -115,7 +115,7 @@ class MainModelImpl {
     // template to construct components
     // using forward interators
     // different selection based on component type
-    template <std::derived_from<Base> CompType, std::ranges::view Inputs> void add_component(Inputs components) {
+    template <std::derived_from<Base> CompType, non_owning_view_c Inputs> void add_component(Inputs components) {
         assert(!construction_complete_);
         main_core::add_component<CompType>(state_.components, components, system_frequency_);
     }
@@ -135,7 +135,7 @@ class MainModelImpl {
     // using forward interators
     // different selection based on component type
     // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
-    template <class CompType, cache_type_c CacheType, std::ranges::view Updates>
+    template <class CompType, cache_type_c CacheType, non_owning_view_c Updates>
     void update_component(Updates updates, std::span<Idx2D const> sequence_idx) {
         constexpr auto comp_index = ModelType::template index_of_component<CompType>;
 

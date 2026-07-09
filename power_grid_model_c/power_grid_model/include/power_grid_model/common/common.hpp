@@ -115,19 +115,27 @@ struct IncludeAll {
 };
 constexpr IncludeAll include_all{};
 
+// define a non-owning view
+namespace detail {
+template <class> struct is_owning_view : std::false_type {};
+template <class R> struct is_owning_view<std::ranges::owning_view<R>> : std::true_type {};
+} // namespace detail
+template <class R>
+concept non_owning_view_c = std::ranges::view<R> && !detail::is_owning_view<std::remove_cvref_t<R>>::value;
+
 // by ref adaptor to pass to functions which accepts std::ranges::view
 template <class R>
-    requires(std::ranges::viewable_range<R> && !std::ranges::view<R>)
+    requires(std::ranges::viewable_range<R> && !std::ranges::view<R> && !std::ranges::borrowed_range<R>)
 constexpr auto by_ref(R& r) noexcept {
     return std::ranges::ref_view(r);
 }
 template <class R>
-    requires(std::ranges::viewable_range<R> && !std::ranges::view<R>)
+    requires(std::ranges::viewable_range<R> && !std::ranges::view<R> && !std::ranges::borrowed_range<R>)
 constexpr auto by_ref(R const& r) noexcept {
     return std::ranges::ref_view(r);
 }
 template <class R>
-    requires(std::ranges::viewable_range<R> && !std::ranges::view<R>)
+    requires(std::ranges::viewable_range<R> && !std::ranges::view<R> && !std::ranges::borrowed_range<R>)
 constexpr auto by_const_ref(R& r) noexcept {
     return by_ref(std::as_const(r));
 }

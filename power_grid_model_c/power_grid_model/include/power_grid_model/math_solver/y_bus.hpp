@@ -395,7 +395,7 @@ template <symmetry_tag sym> class YBus {
         update_admittance_entries(by_ref(get_affected_admittance_entries(math_model_param_incrmt)));
     }
 
-    template <std::ranges::view Entries>
+    template <non_owning_view_c Entries>
         requires std::same_as<std::ranges::range_value_t<Entries>, Idx>
     void update_admittance_entries(Entries y_bus_entries) {
         assert(std::ssize(admittance_) == nnz());

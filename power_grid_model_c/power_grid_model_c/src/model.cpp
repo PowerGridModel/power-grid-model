@@ -220,7 +220,7 @@ struct BatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandle
 
 constexpr BatchExceptionHandler batch_exception_handler{};
 
-template <typename T, std::ranges::view R>
+template <typename T, non_owning_view_c R>
     requires std::convertible_to<std::ranges::range_value_t<R>, T>
 void append_range(std::vector<T>& vec, R range) {
     std::ranges::move(range, std::back_inserter(vec));

@@ -27,7 +27,7 @@
 namespace power_grid_model::main_core::update {
 
 namespace detail {
-template <component_c Component, std::ranges::view Elements, typename Func>
+template <component_c Component, non_owning_view_c Elements, typename Func>
     requires std::invocable<std::remove_cvref_t<Func>, typename Component::UpdateType, Idx2D const&> &&
              std::ranges::forward_range<Elements>
 inline void iterate_component_sequence(Func func, Elements elements, std::span<Idx2D const> sequence_idx) {
@@ -183,7 +183,7 @@ check_update_independence(typename ModelType::ComponentContainer const& componen
 } // namespace independence
 namespace detail {
 
-template <component_c Component, class ComponentContainer, std::ranges::view Elements,
+template <component_c Component, class ComponentContainer, non_owning_view_c Elements,
           std::output_iterator<Idx2D> OutputIterator>
     requires common::component_container_c<ComponentContainer, Component>
 inline void get_component_sequence_impl(ComponentContainer const& components, Elements elements,
@@ -204,7 +204,7 @@ inline void get_component_sequence_impl(ComponentContainer const& components, El
     }
 }
 
-template <component_c Component, class ComponentContainer, std::ranges::view Elements>
+template <component_c Component, class ComponentContainer, non_owning_view_c Elements>
     requires common::component_container_c<ComponentContainer, Component>
 inline std::vector<Idx2D> get_component_sequence_by_iter(ComponentContainer const& components, Elements elements,
                                                          Idx n_comp_elements = na_Idx) {
@@ -259,7 +259,7 @@ get_all_sequence_idx_map(typename ModelType::ComponentContainer const& component
 // using forward interators
 // different selection based on component type
 // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
-template <component_c Component, class ComponentContainer, std::ranges::view Updates,
+template <component_c Component, class ComponentContainer, non_owning_view_c Updates,
           std::output_iterator<Idx2D> OutputIterator>
     requires common::component_container_c<ComponentContainer, Component>
 inline UpdateChange update_component(ComponentContainer& components, Updates component_updates,
@@ -283,7 +283,7 @@ inline UpdateChange update_component(ComponentContainer& components, Updates com
 
     return state_changed;
 }
-template <component_c Component, class ComponentContainer, std::ranges::view ComponentUpdates,
+template <component_c Component, class ComponentContainer, non_owning_view_c ComponentUpdates,
           std::output_iterator<Idx2D> OutputIterator>
     requires common::component_container_c<ComponentContainer, Component>
 inline UpdateChange update_component(ComponentContainer& components, ComponentUpdates component_updates,
@@ -297,7 +297,7 @@ inline UpdateChange update_component(ComponentContainer& components, ComponentUp
 // using forward interators
 // different selection based on component type
 // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
-template <component_c Component, class ComponentContainer, std::ranges::view Updates,
+template <component_c Component, class ComponentContainer, non_owning_view_c Updates,
           std::output_iterator<typename Component::UpdateType> OutputIterator>
     requires common::component_container_c<ComponentContainer, Component>
 inline void update_inverse(ComponentContainer const& components, Updates updates, OutputIterator destination,
@@ -311,7 +311,7 @@ inline void update_inverse(ComponentContainer const& components, Updates updates
         },
         updates, sequence_idx);
 }
-template <component_c Component, class ComponentContainer, std::ranges::view Updates,
+template <component_c Component, class ComponentContainer, non_owning_view_c Updates,
           std::output_iterator<typename Component::UpdateType> OutputIterator>
     requires common::component_container_c<ComponentContainer, Component>
 inline void update_inverse(ComponentContainer const& components, Updates updates, OutputIterator destination) {

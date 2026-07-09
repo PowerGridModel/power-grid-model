@@ -117,7 +117,7 @@ constexpr auto comp_base_sequence(MainModelState<ComponentContainer> const& stat
     return std::ranges::subrange{start, start + get_component_size<Component>(state.components)};
 }
 
-template <typename Component, typename IndexType, class ComponentContainer, std::ranges::view ComponentOutput,
+template <typename Component, typename IndexType, class ComponentContainer, non_owning_view_c ComponentOutput,
           typename ResFunc>
     requires model_component_state_c<MainModelState, ComponentContainer, Component> &&
              std::invocable<std::remove_cvref_t<ResFunc>, Component const&, IndexType> &&
@@ -498,7 +498,7 @@ constexpr auto output_result(Component const& voltage_regulator, MainModelState<
 
 // output base component
 template <std::derived_from<Base> Component, class ComponentContainer, solver_output_type SolverOutputType,
-          std::ranges::view ComponentOutput>
+          non_owning_view_c ComponentOutput>
     requires model_component_state_c<MainModelState, ComponentContainer, Component> &&
              requires(Component const& component, std::vector<SolverOutputType> const& solver_output, Idx2D math_id) {
                  {
@@ -512,7 +512,7 @@ constexpr void output_result(MainModelState<ComponentContainer> const& state,
     });
 }
 template <std::derived_from<Base> Component, class ComponentContainer, solver_output_type SolverOutputType,
-          std::ranges::view ComponentOutput>
+          non_owning_view_c ComponentOutput>
     requires model_component_state_c<MainModelState, ComponentContainer, Component> &&
              requires(Component const& component, MainModelState<ComponentContainer> const& state,
                       std::vector<SolverOutputType> const& solver_output, Idx2D math_id) {
@@ -528,7 +528,7 @@ constexpr void output_result(MainModelState<ComponentContainer> const& state,
         });
 }
 template <std::derived_from<Base> Component, class ComponentContainer, solver_output_type SolverOutputType,
-          std::ranges::view ComponentOutput>
+          non_owning_view_c ComponentOutput>
     requires model_component_state_c<MainModelState, ComponentContainer, Component> &&
              requires(Component const& component, MainModelState<ComponentContainer> const& state,
                       std::vector<SolverOutputType> const& solver_output, Idx obj_seq) {
@@ -544,7 +544,7 @@ constexpr void output_result(MainModelState<ComponentContainer> const& state,
         });
 }
 template <std::derived_from<Base> Component, class ComponentContainer, solver_output_type SolverOutputType,
-          std::ranges::view ComponentOutput>
+          non_owning_view_c ComponentOutput>
     requires model_component_state_c<MainModelState, ComponentContainer, Component> &&
              requires(Component const& component, std::vector<SolverOutputType> const& solver_output,
                       Idx2DBranch3 const& math_id) {
@@ -560,7 +560,7 @@ constexpr void output_result(MainModelState<ComponentContainer> const& state,
         });
 }
 template <std::derived_from<Base> Component, class ComponentContainer, typename SolverOutputType,
-          std::ranges::view ComponentOutput>
+          non_owning_view_c ComponentOutput>
     requires model_component_state_c<MainModelState, ComponentContainer, Component> &&
              requires(Component const& component, MainModelState<ComponentContainer> const& state,
                       MathOutput<SolverOutputType> const& math_output, Idx const obj_seq) {
