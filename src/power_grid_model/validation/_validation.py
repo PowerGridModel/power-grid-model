@@ -626,7 +626,6 @@ def validate_branch(data: SingleDataset, component: CT) -> list[ValidationError]
     errors = validate_base(data, component)
     errors += _all_valid_ids(data, component, AT.from_node, CT.node)
     errors += _all_valid_ids(data, component, AT.to_node, CT.node)
-    errors += _all_not_two_values_equal(data, component, AT.to_node, AT.from_node)
     errors += _all_boolean(data, component, AT.from_status)
     errors += _all_boolean(data, component, AT.to_status)
     return errors
