@@ -5,6 +5,7 @@
 #include "fictional_grid_generator.hpp"
 
 #include <power_grid_model/auxiliary/meta_data_gen.hpp>
+#include <power_grid_model/common/calculation_info.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/timer.hpp>
 #include <power_grid_model/main_model.hpp>
@@ -134,13 +135,13 @@ auto get_benchmark_run_title(Option const& option, MainModelOptions const& model
 
 struct PowerGridBenchmark {
     static constexpr auto single_scenario = -1;
+    power_grid_model::common::logging::MultiThreadedCalculationInfo info{};
 
     PowerGridBenchmark()
-        : main_model{
-              std::make_unique<MainModel>(50.0, meta_data::meta_data_gen::meta_data, get_math_solver_dispatcher())} {}
+        : main_model{std::make_unique<MainModel>(50.0, meta_data::meta_data_gen::meta_data,
+                                                 get_math_solver_dispatcher(), info)} {}
 
-    template <typename OutputDataType>
-    void run_calculation(MainModelOptions model_options, Idx batch_size, CalculationInfo& info) noexcept {
+    template <typename OutputDataType> void run_calculation(MainModelOptions model_options, Idx batch_size) noexcept {
         if (!main_model) {
             std::cout << "\nNo main model available: skipping benchmark.\n";
             return;
@@ -153,7 +154,6 @@ struct PowerGridBenchmark {
         try {
             // calculate
             main_model->calculate(model_options, output.get_dataset(), batch_data.get_dataset());
-            main_model->calculation_info().merge_into(info);
         } catch (std::exception const& e) {
             std::cout << std::format("\nAn exception was raised during execution: {}\n", e.what());
         }
@@ -162,27 +162,25 @@ struct PowerGridBenchmark {
     void run_benchmark(Option const& option, MainModelOptions const& model_options, Idx batch_size = single_scenario) {
         using enum CalculationType;
         using enum CalculationMethod;
-
-        CalculationInfo info;
         generator.generate_grid(option, 0);
         InputData const& input = generator.input_data();
 
         std::cout << get_benchmark_run_title(option, model_options) << '\n';
 
-        auto const run = [this, &model_options, &info](Idx batch_size_) {
+        auto const run = [this, &model_options](Idx batch_size_) {
             switch (model_options.calculation_type) {
             case short_circuit:
-                run_calculation<ShortCircuitOutputData>(model_options, batch_size_, info);
+                run_calculation<ShortCircuitOutputData>(model_options, batch_size_);
                 break;
             case power_flow:
                 [[fallthrough]];
             case state_estimation: {
                 switch (model_options.calculation_symmetry) {
                 case CalculationSymmetry::symmetric:
-                    run_calculation<OutputData<symmetric_t>>(model_options, batch_size_, info);
+                    run_calculation<OutputData<symmetric_t>>(model_options, batch_size_);
                     break;
                 case CalculationSymmetry::asymmetric:
-                    run_calculation<OutputData<asymmetric_t>>(model_options, batch_size_, info);
+                    run_calculation<OutputData<asymmetric_t>>(model_options, batch_size_);
                     break;
                 default:
                     throw MissingCaseForEnumError{"run_benchmark<calculation_symmetry>",
@@ -200,7 +198,8 @@ struct PowerGridBenchmark {
             Timer const t_total{info, LogEvent::total};
             {
                 Timer const t_build{info, LogEvent::build_model};
-                main_model = std::make_unique<MainModel>(50.0, input.get_dataset(), get_math_solver_dispatcher());
+                main_model =
+                    std::make_unique<MainModel>(50.0, input.get_dataset(), get_math_solver_dispatcher(), 0, info);
             }
             run(single_scenario);
         }
@@ -212,6 +211,7 @@ struct PowerGridBenchmark {
             run(single_scenario);
         }
         print_info(info);
+        info.clear();
 
         if (batch_size > 0) {
             info.clear();
@@ -220,11 +220,12 @@ struct PowerGridBenchmark {
             run(batch_size);
         }
         print_info(info);
+        info.clear();
 
         std::cout << "\n\n";
     }
 
-    static void print_info(CalculationInfo const& info) {
+    static void print_info(MultiThreadedCalculationInfo const& info) {
         for (auto const& [key, val] : info.report()) {
             std::cout << make_key(key) << ": " << val << '\n';
         }

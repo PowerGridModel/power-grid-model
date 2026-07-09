@@ -21,6 +21,7 @@
 #include <cstdint>
 #include <functional>
 #include <iterator>
+#include <limits>
 #include <numeric>
 #include <span>
 #include <utility>
@@ -312,7 +313,7 @@ struct SpanningTreeContext {
     // Helper to modify status and track changes for rollback
     void modify_status(ConnectivityStatus& status_ref, ConnectivityStatus new_value) const {
         if (status_ref != new_value) {
-            modifications->push_back({&status_ref, status_ref});
+            modifications->push_back({.ptr = &status_ref, .old_value = status_ref});
             status_ref = new_value;
         }
     }

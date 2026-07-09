@@ -32,30 +32,43 @@
  *          (f = branch_from, t = branch_to, s = source, h = shunt, l = load, g = generator, b = bus)
  *
  * Topology:
+ *
  *                                               7 -> [5+v4+p17:          ]
  *                                              /     [s1+p1+p12,lg2+p4+p8]     [6:h1+p5+p9] -X-4-> [7] -3-> [8+v5]
  *      0 ----->+p13 [1+v1:lg3+p7]             /     /                     \        /                  \        /
- *     /          +p14\            5 ---X--- [4] <- 6                       $2     $1                   $1     $2
- *    /                $0         /          ^                               \    /                      \    /
- *   /                  \        v          /                                 (b2)                        (b1)
- *  [0:s0,lg0]         (b0)-$2- [2+v0+v2]  /                                   |                           |
- *   +p0+p11            /    +p15         X                                    $0                          $0
- *    \                $1                /         [9:s2X+p3,h2]               X                           |
- *     \          +p16/                 /                                     [10]                        [11:lg1+p6]
- *      1 -->+p2+p10 [3+v3:s3X,h0] -- 2
+ *     /          +p14\            5 ---X--- [4] <- 6                      $2     $1                   $1     $2
+ *    /                $0         /          ^  \                            \    /                      \    /
+ *   /                  \        v          /    $0                           (b2)                        (b1)
+ *  [0:s0,lg0]         (b0)-$2- [2+v0+v2]  /      \                            |                           |
+ *   +p0+p11            /    +p15         X       (b3)                         $0                          $0
+ *    \                $1                /         \  \                        X                           |
+ *     \          +p16/                 /           $1 $2                      [10]                        [11:lg1+p6]
+ *      1 -->+p2+p10 [3+v3:s3X,h0] -- 2              \  \
+ *                    |         |                     [12]
+ *                    |         |                                                                 /--$0--\
+ *                    \----8----/                                   [9:s2X+p3,h2]          [13:s3]---$1---(b4)
+ *                                                                                                \--$2--/
  *
  *
  * Math model #0:                       Math model #1:
  *
- *      0 ----->+pt0 [2+v3:lg0+pg0]             1 -> [3+v0+pb0:s0+ps0+ps1,lg0+pl0+pl1]         [0:h1+ps0+ps1]
+ *      0 ----->+pt0 [2+v3:lg0+pg0]             1 -> [5+v0+pb0:s0+ps0+ps1,lg0+pl0+pl1]         [0:h1+ps0+ps1]
  *     /          +pf2\             3 --X      /     /                                \       /
- *    /                4           /         [2] <- 0                                  3     4
- *   /                  v         v                                                     v   v
- *  [4:s0,lg1]          [3] <-6- [0+v0+v1]                                               [1]
- *   +pf0+pf1           ^     +pf4                                                        ^
- *    \                5                                                                  2
- *     \          +pf3/                                                                 X
- *      1 ->+pt1+pt2 [1+v2:h0] -- 2 --X
+ *    /                5           /         [4] <- 0                                  4     3
+ *   /                  v         v            \                                        v   v
+ *  [4:s0,lg1]          [3] <-7- [0+v0+v1]      5                                        [1]
+ *   +pf0+pf1           ^     +pf4               v                                        ^
+ *    \                6                         [3]                                      2
+ *     \          +pf3/                           ^ ^                                     X
+ *      1 ->+pt1+pt2 [1+v2:h0] -- 2 --X            6 7
+ *                    |     |                       \ \
+ *                    |     |                        [2]
+ *                    \--4--/
+ *
+ *                                      Math model #2:
+ *                                                       /--0-->
+ *                                                 [1:s0]---1-->[0]
+ *                                                       \--2-->
  *
  * Extra fill-in:
  * (3, 4)  by removing node 1
@@ -96,7 +109,7 @@
  * (4, 6)  by removing node 2
  */
 
-namespace power_grid_model {
+namespace power_grid_model::topology {
 
 namespace {
 
@@ -112,7 +125,7 @@ template <grouped_idx_vector_type T> void check_equal(T const& first, T const& s
 TEST_CASE("Test topology") {
     // component topology
     ComponentTopology comp_topo{};
-    comp_topo.n_node = 12;
+    comp_topo.n_node = 14;
 
     comp_topo.branch_node_idx = {
         {0, 1}, // 0
@@ -122,14 +135,17 @@ TEST_CASE("Test topology") {
         {6, 7}, // 4
         {4, 2}, // 5
         {5, 4}, // 6
-        {4, 5}  // 7
+        {4, 5}, // 7
+        {1, 1}  // 8 (branch into itself)
     };
     comp_topo.branch3_node_idx = {
-        {1, 3, 2},  // b0
-        {11, 7, 8}, // b1
-        {10, 6, 5}  // b2
+        {1, 3, 2},   // b0
+        {11, 7, 8},  // b1
+        {10, 6, 5},  // b2
+        {4, 12, 12}, // b3 (branch3 with 2 branches into itself)
+        {13, 13, 13} // b4 (branch3 with 3 branches into itself)
     };
-    comp_topo.source_node_idx = {0, 5, 9, 3};
+    comp_topo.source_node_idx = {0, 5, 9, 3, 13};
     comp_topo.load_gen_node_idx = {0, 11, 5, 1};
     comp_topo.load_gen_type = {LoadGenType::const_pq, LoadGenType::const_pq, LoadGenType::const_i,
                                LoadGenType::const_y};
@@ -169,19 +185,20 @@ TEST_CASE("Test topology") {
         {0, 1}, // 5
         {1, 1}, // 6
         {1, 1}, // 7
+        {1, 1}, // 8
     };
     comp_conn.branch3_connected = {
         {1, 1, 1}, // b0
         {1, 1, 1}, // b1
         {0, 1, 1}, // b2
+        {1, 1, 1}, // b3
+        {1, 1, 1}, // b4
     };
-    comp_conn.branch_phase_shift = {0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    comp_conn.branch_phase_shift = {0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     comp_conn.branch3_phase_shift = {
-        {0.0, -1.0, 0.0},
-        {0.0, 0.0, 0.0},
-        {0.0, 0.0, 0.0},
+        {0.0, -1.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0},
     };
-    comp_conn.source_connected = {1, 1, 0, 0};
+    comp_conn.source_connected = {1, 1, 0, 0, 1};
 
     // result
     TopologicalComponentToMathCoupling comp_coup_ref{};
@@ -192,25 +209,32 @@ TEST_CASE("Test topology") {
         {.group = 0, .pos = 0},
         {.group = 0, .pos = 4},
         // 4 5 6
-        {.group = 1, .pos = 2}, // Topological node 4 has become node 2 in mathematical model (group) 1
-        {.group = 1, .pos = 3},
+        {.group = 1, .pos = 4}, // Topological node 4 has become node 4 in mathematical model (group) 1
+        {.group = 1, .pos = 5},
         {.group = 1, .pos = 0},
-        // 7, 8, 9, 10, 11
+        // 7, 8, 9, 10, 11, 13
         {.group = -1, .pos = -1}, // Topological node 7 is not included in the mathematical model, because it was not
                                   // connected to any power source
         {.group = -1, .pos = -1},
         {.group = -1, .pos = -1},
         {.group = -1, .pos = -1},
         {.group = -1, .pos = -1},
-        // b0, b1, b2
+        {.group = 1, .pos = 2},
+        // 13
+        {.group = 2, .pos = 1},
+        // b0, b1, b2, b3, b4
         {.group = 0, .pos = 3}, // Branch3 b0 is replaced by a virtual node 3, in mathematical model 0
         {.group = -1, .pos = -1},
-        {.group = 1, .pos = 1}};
+        {.group = 1, .pos = 1},
+        {.group = 1, .pos = 3},
+        {.group = 2, .pos = 0},
+    };
     comp_coup_ref.source = {
         {.group = 0, .pos = 0},   // 0
         {.group = 1, .pos = 0},   // 1
         {.group = -1, .pos = -1}, // 2
         {.group = -1, .pos = -1}, // 3
+        {.group = 2, .pos = 0},   // 4
     };
     comp_coup_ref.branch = {
         {.group = 0, .pos = 0},   // 0
@@ -221,11 +245,14 @@ TEST_CASE("Test topology") {
         {.group = 0, .pos = 3},   // 5
         {.group = 1, .pos = 0},   // 6
         {.group = 1, .pos = 1},   // 7
+        {.group = 0, .pos = 4},   // 8
     };
     comp_coup_ref.branch3 = {
-        {.group = 0, .pos = {4, 5, 6}},     // b0
+        {.group = 0, .pos = {5, 6, 7}},     // b0
         {.group = -1, .pos = {-1, -1, -1}}, // b1
         {.group = 1, .pos = {2, 3, 4}},     // b2
+        {.group = 1, .pos = {5, 6, 7}},     // b3
+        {.group = 2, .pos = {0, 1, 2}},     // b4
     };
     comp_coup_ref.load_gen = {
         {.group = 0, .pos = 0}, {.group = -1, .pos = -1}, {.group = 1, .pos = 0}, {.group = 0, .pos = 1}};
@@ -257,7 +284,7 @@ TEST_CASE("Test topology") {
     MathModelTopology math0;
     math0.slack_bus = 1;
     math0.sources_per_bus = {from_dense, {1}, 5};
-    math0.branch_bus_idx = {{1, 2}, {1, 4}, {4, -1}, {-1, 0}, {2, 3}, {4, 3}, {0, 3}};
+    math0.branch_bus_idx = {{1, 2}, {1, 4}, {4, -1}, {-1, 0}, {2, 2}, {2, 3}, {4, 3}, {0, 3}};
     math0.phase_shift = {0.0, 0.0, 0.0, 0.0, -1.0};
     math0.load_gens_per_bus = {from_dense, {1, 2}, 5};
     math0.load_gen_type = {LoadGenType::const_pq, LoadGenType::const_y};
@@ -267,31 +294,48 @@ TEST_CASE("Test topology") {
     math0.power_sensors_per_source = {from_dense, {}, 1};
     math0.power_sensors_per_shunt = {from_dense, {}, 1};
     math0.power_sensors_per_load_gen = {from_dense, {1}, 2};
-    math0.power_sensors_per_branch_from = {from_dense, {1, 1, 4, 5, 6}, 7};
+    math0.power_sensors_per_branch_from = {from_dense, {1, 1, 5, 6, 7}, 8};
     // 7 branches, 3 branch-to power sensors
     // sensor 0 is connected to branch 0
     // sensor 1 and 2 are connected to branch 1
-    math0.power_sensors_per_branch_to = {from_dense, {0, 1, 1}, 7};
+    math0.power_sensors_per_branch_to = {from_dense, {0, 1, 1}, 8};
     math0.fill_in = {{2, 4}};
 
     // Sub graph / math model 1
     MathModelTopology math1;
-    math1.slack_bus = 3;
-    math1.sources_per_bus = {from_dense, {3}, 4};
-    math1.branch_bus_idx = {{3, 2}, {2, 3}, {-1, 1}, {0, 1}, {3, 1}};
-    math1.phase_shift = {0, 0, 0, 0};
-    math1.load_gens_per_bus = {from_dense, {3}, 4};
+    math1.slack_bus = 5;
+    math1.sources_per_bus = {from_dense, {5}, 6};
+    math1.branch_bus_idx = {{5, 4}, {4, 5}, {-1, 1}, {0, 1}, {5, 1}, {4, 3}, {2, 3}, {2, 3}};
+    math1.phase_shift = {0, 0, 0, 0, 0, 0};
+    math1.load_gens_per_bus = {from_dense, {5}, 6};
     math1.load_gen_type = {LoadGenType::const_i};
-    math1.shunts_per_bus = {from_dense, {0}, 4};
-    math1.voltage_sensors_per_bus = {from_dense, {3}, 4};
-    math1.power_sensors_per_bus = {from_dense, {3}, 4};
+    math1.shunts_per_bus = {from_dense, {0}, 6};
+    math1.voltage_sensors_per_bus = {from_dense, {5}, 6};
+    math1.power_sensors_per_bus = {from_dense, {5}, 6};
     math1.power_sensors_per_source = {from_dense, {0, 0}, 1};
     math1.power_sensors_per_shunt = {from_dense, {0, 0}, 1};
     math1.power_sensors_per_load_gen = {from_dense, {0, 0}, 1};
-    math1.power_sensors_per_branch_from = {from_dense, {}, 5};
-    math1.power_sensors_per_branch_to = {from_dense, {}, 5};
+    math1.power_sensors_per_branch_from = {from_dense, {}, 8};
+    math1.power_sensors_per_branch_to = {from_dense, {}, 8};
 
-    std::vector<MathModelTopology> math_topology_ref = {math0, math1};
+    // Sub graph / math model 2
+    MathModelTopology math2;
+    math2.slack_bus = 1;
+    math2.sources_per_bus = {from_dense, {1}, 2};
+    math2.branch_bus_idx = {{1, 0}, {1, 0}, {1, 0}};
+    math2.phase_shift = {0, 0};
+    math2.load_gens_per_bus = {from_dense, {}, 2};
+    math2.load_gen_type = {};
+    math2.shunts_per_bus = {from_dense, {}, 2};
+    math2.voltage_sensors_per_bus = {from_dense, {}, 2};
+    math2.power_sensors_per_bus = {from_dense, {}, 2};
+    math2.power_sensors_per_source = {from_dense, {}, 1};
+    math2.power_sensors_per_shunt = {from_dense, {}, 0};
+    math2.power_sensors_per_load_gen = {from_dense, {}, 0};
+    math2.power_sensors_per_branch_from = {from_dense, {}, 3};
+    math2.power_sensors_per_branch_to = {from_dense, {}, 3};
+
+    std::vector<MathModelTopology> math_topology_ref = {math0, math1, math2};
 
     SUBCASE("Test topology result") {
         Topology topo{comp_topo, comp_conn};
@@ -300,7 +344,7 @@ TEST_CASE("Test topology") {
         REQUIRE(topo_comp_coup_ptr != nullptr);
         auto const& topo_comp_coup = *topo_comp_coup_ptr;
 
-        CHECK(math_topology.size() == 2);
+        CHECK(math_topology.size() == math_topology_ref.size());
         // test component coupling
         CHECK(topo_comp_coup.node == comp_coup_ref.node);
         CHECK(topo_comp_coup.source == comp_coup_ref.source);
@@ -424,4 +468,4 @@ TEST_CASE("Test cycle reorder") {
     }
 }
 
-} // namespace power_grid_model
+} // namespace power_grid_model::topology

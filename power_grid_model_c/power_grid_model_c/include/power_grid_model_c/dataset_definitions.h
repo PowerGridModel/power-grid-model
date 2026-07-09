@@ -884,6 +884,9 @@ PGM_API extern PGM_MetaAttribute const* const PGM_def_update_source_id;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_update_source_status;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_update_source_u_ref;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_update_source_u_ref_angle;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_update_source_sk;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_update_source_rx_ratio;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_update_source_z01_ratio;
 // component sym_voltage_sensor
 PGM_API extern PGM_MetaComponent const* const PGM_def_update_sym_voltage_sensor;
 // attributes of update sym_voltage_sensor

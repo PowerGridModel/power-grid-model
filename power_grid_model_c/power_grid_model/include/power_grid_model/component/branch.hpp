@@ -41,11 +41,7 @@ class Branch : public Base {
           from_node_{branch_input.from_node},
           to_node_{branch_input.to_node},
           from_status_{static_cast<bool>(branch_input.from_status)},
-          to_status_{static_cast<bool>(branch_input.to_status)} {
-        if (from_node_ == to_node_) {
-            throw InvalidBranch{id(), from_node_};
-        }
-    }
+          to_status_{static_cast<bool>(branch_input.to_status)} {}
 
     // getter
     constexpr ID from_node() const { return from_node_; }
@@ -93,19 +89,6 @@ class Branch : public Base {
     virtual double loading(double max_s, double max_i) const = 0;
     virtual double phase_shift() const = 0; // shift theta_from - theta_to
     virtual bool is_param_mutable() const = 0;
-
-    template <symmetry_tag sym>
-    BranchOutput<sym> get_output(ComplexValue<sym> const& u_f, ComplexValue<sym> const& u_t) const {
-        // calculate flow
-        BranchCalcParam<sym> const param = calc_param<sym>();
-        BranchSolverOutput<sym> branch_solver_output{};
-        branch_solver_output.i_f = dot(param.yff(), u_f) + dot(param.yft(), u_t);
-        branch_solver_output.i_t = dot(param.ytf(), u_f) + dot(param.ytt(), u_t);
-        branch_solver_output.s_f = u_f * conj(branch_solver_output.i_f);
-        branch_solver_output.s_t = u_t * conj(branch_solver_output.i_t);
-        // calculate result
-        return get_output<sym>(branch_solver_output);
-    }
 
     template <symmetry_tag sym>
     BranchOutput<sym> get_output(BranchSolverOutput<sym> const& branch_solver_output) const {

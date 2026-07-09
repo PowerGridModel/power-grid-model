@@ -873,6 +873,9 @@ PGM_MetaAttribute const* const PGM_def_update_source_id = PGM_meta_get_attribute
 PGM_MetaAttribute const* const PGM_def_update_source_status = PGM_meta_get_attribute_by_name(nullptr, "update", "source", "status");
 PGM_MetaAttribute const* const PGM_def_update_source_u_ref = PGM_meta_get_attribute_by_name(nullptr, "update", "source", "u_ref");
 PGM_MetaAttribute const* const PGM_def_update_source_u_ref_angle = PGM_meta_get_attribute_by_name(nullptr, "update", "source", "u_ref_angle");
+PGM_MetaAttribute const* const PGM_def_update_source_sk = PGM_meta_get_attribute_by_name(nullptr, "update", "source", "sk");
+PGM_MetaAttribute const* const PGM_def_update_source_rx_ratio = PGM_meta_get_attribute_by_name(nullptr, "update", "source", "rx_ratio");
+PGM_MetaAttribute const* const PGM_def_update_source_z01_ratio = PGM_meta_get_attribute_by_name(nullptr, "update", "source", "z01_ratio");
 // component sym_voltage_sensor
 PGM_MetaComponent const* const PGM_def_update_sym_voltage_sensor = PGM_meta_get_component_by_name(nullptr, "update", "sym_voltage_sensor");
 // attributes of update sym_voltage_sensor

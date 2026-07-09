@@ -233,9 +233,9 @@ TEST_CASE("Test job dispatch logic") {
         }
 
         SUBCASE("Multi-threaded") {
-            static_assert(std::is_unsigned_v<decltype(std::thread::hardware_concurrency())>);
+            static_assert(std::is_unsigned_v<decltype(std::jthread::hardware_concurrency())>);
 
-            auto const hardware_thread = static_cast<Idx>(std::thread::hardware_concurrency());
+            auto const hardware_thread = static_cast<Idx>(std::jthread::hardware_concurrency());
             Idx const threading = 0;
 
             SUBCASE("More scenarios than hardware threads") {
@@ -274,9 +274,9 @@ TEST_CASE("Test job dispatch logic") {
         }
     }
     SUBCASE("Test n_threads") {
-        static_assert(std::is_unsigned_v<decltype(std::thread::hardware_concurrency())>);
+        static_assert(std::is_unsigned_v<decltype(std::jthread::hardware_concurrency())>);
 
-        auto const hardware_thread = static_cast<Idx>(std::thread::hardware_concurrency());
+        auto const hardware_thread = static_cast<Idx>(std::jthread::hardware_concurrency());
         CAPTURE(hardware_thread);
         Idx const n_scenarios = 14; // arbitrary non-zero value
 

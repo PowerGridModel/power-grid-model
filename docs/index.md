@@ -86,6 +86,7 @@ user_manual/data-model
 user_manual/dataset-terminology
 user_manual/components
 user_manual/calculations
+user_manual/non-pgm-components
 user_manual/performance-guide
 user_manual/data-validator
 user_manual/model-validation
@@ -106,6 +107,7 @@ examples/Power Flow Example.ipynb
 examples/Serialization Example.ipynb
 examples/State Estimation Example.ipynb
 examples/Short Circuit Example.ipynb
+examples/Multi-dimensional batch calculation example.ipynb
 examples/Validation Examples.ipynb
 examples/Make Test Dataset.ipynb
 examples/Asymmetric Calculation Example.ipynb
@@ -117,6 +119,10 @@ examples/Asymmetric Line.ipynb
 ```{toctree}
 :caption: "Algorithms"
 :maxdepth: 2
+algorithms/pf-algorithms
+algorithms/tap-changing-algorithms
+algorithms/sc-algorithms
+algorithms/se-algorithms
 algorithms/lu-solver
 ```
 
@@ -125,6 +131,7 @@ algorithms/lu-solver
 :maxdepth: 2
 advanced_documentation/native-data-interface
 advanced_documentation/build-guide
+working_with_containers/container-setup.md
 advanced_documentation/c-api
 advanced_documentation/high-level-design
 advanced_documentation/core-design

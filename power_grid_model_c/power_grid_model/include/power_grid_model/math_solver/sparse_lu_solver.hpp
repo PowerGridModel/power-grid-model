@@ -71,7 +71,7 @@ template <rk2_tensor Matrix> class DenseLUFactor {
     // put permutation in block_perm in place
     // put pivot perturbation in has_pivot_perturbation in place
     template <class Derived>
-    static void factorize_block_in_place(Eigen::MatrixBase<Derived>&& matrix, BlockPerm& block_perm,
+    static void factorize_block_in_place(Eigen::MatrixBase<Derived>& matrix, BlockPerm& block_perm,
                                          double perturb_threshold, bool use_pivot_perturbation,
                                          bool& has_pivot_perturbation)
         requires(std::same_as<typename Derived::Scalar, Scalar> && rk2_tensor<Derived> &&
@@ -150,7 +150,66 @@ template <rk2_tensor Matrix> class DenseLUFactor {
                 throw SparseMatrixError{}; // can not specify error code
             }
         }
-        capturing::into_the_void(std::move(matrix));
+    }
+
+    // Forward substitution with the L matrix. The diagonal entries of L are implicit 1.0
+    // The rhs may be a vector or a matrix; matrix rhs columns are solved simultaneously.
+    template <class LUDerived, class RHSDerived>
+    static void forward_substitute_inplace(Eigen::MatrixBase<LUDerived> const& lu_matrix, RHSDerived& rhs)
+        requires(std::same_as<typename LUDerived::Scalar, Scalar> &&
+                 std::same_as<typename RHSDerived::Scalar, Scalar> && rk2_tensor<LUDerived> &&
+                 (LUDerived::RowsAtCompileTime == size) && (LUDerived::ColsAtCompileTime == size) &&
+                 (RHSDerived::RowsAtCompileTime == size))
+    {
+        for (int8_t row = 0; row < size; ++row) {
+            for (int8_t col = 0; col < row; ++col) {
+                rhs.row(row) -= lu_matrix(row, col) * rhs.row(col);
+            }
+        }
+    }
+
+    // Backward substitution with the U matrix stored in lu_matrix.
+    // The rhs may be a vector or a matrix; matrix rhs columns are solved simultaneously.
+    template <class LUDerived, class RHSDerived>
+    static void backward_substitute_inplace(Eigen::MatrixBase<LUDerived> const& lu_matrix, RHSDerived& rhs)
+        requires(std::same_as<typename LUDerived::Scalar, Scalar> &&
+                 std::same_as<typename RHSDerived::Scalar, Scalar> && rk2_tensor<LUDerived> &&
+                 (LUDerived::RowsAtCompileTime == size) && (LUDerived::ColsAtCompileTime == size) &&
+                 (RHSDerived::RowsAtCompileTime == size))
+    {
+        for (int8_t row = size - 1; row > -1; --row) {
+            for (int8_t col = size - 1; col > row; --col) {
+                rhs.row(row) -= lu_matrix(row, col) * rhs.row(col);
+            }
+            rhs.row(row) /= lu_matrix(row, row);
+        }
+    }
+
+    // given the factorized block satisfies L * U = P * A * Q
+    // compute the inverse of the factorized L * U * X = I
+    // returns X = (L * U)^-1 = (P * A * Q)^-1
+    template <class Derived>
+    static Matrix inverse_factorized_block(Eigen::MatrixBase<Derived> const& lu_matrix)
+        requires(std::same_as<typename Derived::Scalar, Scalar> && rk2_tensor<Derived> &&
+                 (Derived::RowsAtCompileTime == size) && (Derived::ColsAtCompileTime == size))
+    {
+        Matrix inverse = Matrix::Identity();
+        forward_substitute_inplace(lu_matrix, inverse);
+        backward_substitute_inplace(lu_matrix, inverse);
+        return inverse;
+    }
+
+    template <class Derived>
+    static Matrix dense_inverse(Eigen::MatrixBase<Derived> const& lu_matrix, BlockPerm const& block_perm)
+        requires(std::same_as<typename Derived::Scalar, Scalar> && rk2_tensor<Derived> &&
+                 (Derived::RowsAtCompileTime == size) && (Derived::ColsAtCompileTime == size))
+    {
+        // given the factorized block satisfies L * U = P * A * Q
+        // return A^-1 = Q * (L * U)^-1 * P
+        // lu_matrix is read-only: the packed L/U factor is preserved.
+        // inverse_factorized_block() performs in-place substitutions only on
+        // its local Identity() RHS, not on lu_matrix.
+        return block_perm.q * inverse_factorized_block(lu_matrix) * block_perm.p;
     }
 };
 
@@ -234,13 +293,27 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
 
     // solve with existing pre-factorization
     void
-    solve_with_prefactorized_matrix(std::vector<Tensor> const& data,        // pre-factoirzed data, const ref
+    solve_with_prefactorized_matrix(std::vector<Tensor> const& data,        // pre-factorized data, const ref
                                     BlockPermArray const& block_perm_array, // pre-calculated permutation, const ref
                                     std::vector<RHSVector> const& rhs, std::vector<XVector>& x) {
         if (has_pivot_perturbation_) {
             solve_with_refinement(data, block_perm_array, rhs, x);
         } else {
             solve_once(data, block_perm_array, rhs, x);
+        }
+    }
+
+    void inplace_selective_inverse_with_prefactorized_matrix(
+        std::vector<Tensor>& data, // pre-factorized data, will be in-place modified to store selective inverse
+        BlockPermArray const& block_perm_array // pre-calculated permutation, const ref
+    ) const {
+        capturing::into_the_void(data, block_perm_array); // prevent compiler from complaining about unused variables
+        if constexpr (!is_block) {
+            throw SparseMatrixError{};
+        } else {
+            if (has_pivot_perturbation_) {
+                throw SparseMatrixError{};
+            }
         }
     }
 
@@ -277,9 +350,9 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
                 if constexpr (is_block) {
                     // use machine precision by default
                     // record block permutation
-                    LUFactor::factorize_block_in_place(lu_matrix[pivot_idx].matrix(), block_perm_array[pivot_row_col],
-                                                       perturb_threshold, use_pivot_perturbation,
-                                                       has_pivot_perturbation_);
+                    auto pivot_matrix = lu_matrix[pivot_idx].matrix();
+                    LUFactor::factorize_block_in_place(pivot_matrix, block_perm_array[pivot_row_col], perturb_threshold,
+                                                       use_pivot_perturbation, has_pivot_perturbation_);
                     return block_perm_array[pivot_row_col];
                 } else {
                     if (use_pivot_perturbation) {
@@ -385,7 +458,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
                 //       A(l_row, u_col) = A(l_row, u_col) - l * U(pivot_row_col, u_col),
                 //          for u_col > pivot_row_col
                 // it can create fill-ins, but the fill-ins are pre-allocated
-                // it is garanteed to have an entry at (l_row, u_col), if (pivot_row_col, u_col) is non-zero
+                // it is guaranteed to have an entry at (l_row, u_col), if (pivot_row_col, u_col) is non-zero
                 // starting A index from (l_row, pivot_row_col)
                 Idx a_idx = l_idx;
                 // loop all columns in the right of (pivot_row_col, pivot_row_col), at pivot_row
@@ -429,7 +502,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     std::optional<std::vector<RHSVector>> residual_;
     std::optional<std::vector<RHSVector>> rhs_;
 
-    void solve_with_refinement(std::vector<Tensor> const& data,        // pre-factoirzed data, const ref
+    void solve_with_refinement(std::vector<Tensor> const& data,        // pre-factorized data, const ref
                                BlockPermArray const& block_perm_array, // pre-calculated permutation, const ref
                                std::vector<RHSVector> const& rhs, std::vector<XVector>& x) {
         // initialize refinement
@@ -572,7 +645,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         original_matrix_.reset();
     }
 
-    void solve_once(std::vector<Tensor> const& data,        // pre-factoirzed data, const ref
+    void solve_once(std::vector<Tensor> const& data,        // pre-factorized data, const ref
                     BlockPermArray const& block_perm_array, // pre-calculated permutation, const ref
                     std::vector<RHSVector> const& rhs, std::vector<XVector>& x) const {
         // local reference
@@ -598,13 +671,8 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
             }
             // forward substitution inside block, for block matrix
             if constexpr (is_block) {
-                XVector& xb = x[row];
                 Tensor const& pivot = lu_matrix[diag_lu[row]];
-                for (Idx br = 0; br < block_size; ++br) {
-                    for (Idx bc = 0; bc < br; ++bc) {
-                        xb(br) -= pivot(br, bc) * xb(bc);
-                    }
-                }
+                LUFactor::forward_substitute_inplace(pivot.matrix(), x[row]);
             }
         }
 
@@ -621,14 +689,8 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
             // solve the diagonal pivot
             if constexpr (is_block) {
                 // backward substitution inside block
-                XVector& xb = x[row];
                 Tensor const& pivot = lu_matrix[diag_lu[row]];
-                for (Idx br = block_size - 1; br != -1; --br) {
-                    for (Idx bc = block_size - 1; bc > br; --bc) {
-                        xb(br) -= pivot(br, bc) * xb(bc);
-                    }
-                    xb(br) = xb(br) / pivot(br, br);
-                }
+                LUFactor::backward_substitute_inplace(pivot.matrix(), x[row]);
             } else {
                 x[row] = x[row] / lu_matrix[diag_lu[row]];
             }

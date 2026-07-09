@@ -135,7 +135,7 @@ inline void save_dataset(std::filesystem::path const& path, DatasetConst const& 
         f << serialized_data;
     } else {
         throw std::runtime_error{"Failed to open file for writing: " + path.string()};
-    };
+    }
 }
 
 } // namespace power_grid_model_cpp

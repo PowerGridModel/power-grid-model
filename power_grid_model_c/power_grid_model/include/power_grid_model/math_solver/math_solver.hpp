@@ -20,6 +20,7 @@
 #include "../common/logging.hpp"
 #include "../common/timer.hpp"
 
+#include <algorithm>
 #include <limits>
 #include <memory>
 #include <optional>
@@ -32,8 +33,8 @@ template <symmetry_tag sym> class MathSolver : public MathSolverBase<sym> {
   public:
     explicit MathSolver(std::shared_ptr<MathModelTopology const> const& topo_ptr)
         : topo_ptr_{topo_ptr},
-          all_const_y_{std::all_of(topo_ptr->load_gen_type.cbegin(), topo_ptr->load_gen_type.cend(),
-                                   [](LoadGenType x) { return x == LoadGenType::const_y; })} {}
+          all_const_y_{
+              std::ranges::all_of(topo_ptr->load_gen_type, [](LoadGenType x) { return x == LoadGenType::const_y; })} {}
 
     MathSolver<sym>* clone() const final {
         return new MathSolver<sym>(*this); // NOSONAR(S5025)

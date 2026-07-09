@@ -10,6 +10,7 @@ Although all functions are 'public', you probably only need validate_input_data(
 """
 
 import copy
+import warnings
 from collections.abc import Sized as ABCSized
 from itertools import chain
 from typing import Literal
@@ -642,19 +643,39 @@ def validate_line(data: SingleDataset) -> list[ValidationError]:
 def validate_asym_line(data: SingleDataset) -> list[ValidationError]:
     errors = validate_branch(data, CT.asym_line)
     errors += _all_greater_than_zero(data, CT.asym_line, AT.i_n)
-    required_fields = [
+    # Self (diagonal) impedances/capacitances of a physical conductor cannot be zero.
+    self_fields = [
         AT.r_aa,
-        AT.r_ba,
         AT.r_bb,
-        AT.r_ca,
-        AT.r_cb,
         AT.r_cc,
         AT.x_aa,
-        AT.x_ba,
         AT.x_bb,
+        AT.x_cc,
+    ]
+    # Mutual (off-diagonal) impedances/capacitances between conductors can be zero, e.g. when the conductors are
+    # sufficiently far apart or decoupled.
+    mutual_fields = [
+        AT.r_ba,
+        AT.r_ca,
+        AT.r_cb,
+        AT.x_ba,
         AT.x_ca,
         AT.x_cb,
-        AT.x_cc,
+    ]
+    # r_nn/x_nn (self neutral impedance) cannot be zero, unlike the other neutral fields below: the C++ core
+    # does not yet support a zero self neutral impedance.
+    self_neutral_fields = [
+        AT.r_nn,
+        AT.x_nn,
+    ]
+    # Mutual neutral-to-phase impedances can be zero, same as the other mutual fields above.
+    mutual_neutral_fields = [
+        AT.r_na,
+        AT.r_nb,
+        AT.r_nc,
+        AT.x_na,
+        AT.x_nb,
+        AT.x_nc,
     ]
     optional_r_matrix_fields = [
         AT.r_na,
@@ -668,19 +689,22 @@ def validate_asym_line(data: SingleDataset) -> list[ValidationError]:
         AT.x_nc,
         AT.x_nn,
     ]
-    required_c_matrix_fields = [
+    self_c_matrix_fields = [
         AT.c_aa,
-        AT.c_ba,
         AT.c_bb,
-        AT.c_ca,
-        AT.c_cb,
         AT.c_cc,
     ]
+    mutual_c_matrix_fields = [
+        AT.c_ba,
+        AT.c_ca,
+        AT.c_cb,
+    ]
+    required_c_matrix_fields = self_c_matrix_fields + mutual_c_matrix_fields
     c_fields = [AT.c0, AT.c1]
-    for field in (
-        required_fields + optional_r_matrix_fields + optional_x_matrix_fields + required_c_matrix_fields + c_fields
-    ):
+    for field in self_fields + self_neutral_fields + self_c_matrix_fields + c_fields:
         errors += _all_greater_than_zero(data, CT.asym_line, field)
+    for field in mutual_fields + mutual_neutral_fields + mutual_c_matrix_fields:
+        errors += _all_greater_than_or_equal_to_zero(data, CT.asym_line, field)
 
     errors += _no_strict_subset_missing(data, optional_r_matrix_fields + optional_x_matrix_fields, CT.asym_line)
     errors += _no_strict_subset_missing(data, required_c_matrix_fields, CT.asym_line)
@@ -1303,13 +1327,15 @@ def validate_generic_power_sensor(data: SingleDataset, component: CT) -> list[Va
         ref_components=CT.three_winding_transformer,
         measured_terminal_type=MeasuredTerminalType.branch3_3,
     )
-    errors += _all_valid_ids(
-        data,
-        component,
-        field=AT.measured_object,
-        ref_components=CT.node,
-        measured_terminal_type=MeasuredTerminalType.node,
-    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=DeprecationWarning)
+        errors += _all_valid_ids(
+            data,
+            component,
+            field=AT.measured_object,
+            ref_components=CT.node,
+            measured_terminal_type=MeasuredTerminalType.node,
+        )
     if component in (CT.sym_power_sensor, CT.asym_power_sensor):
         errors += _valid_p_q_sigma(data, component)
 

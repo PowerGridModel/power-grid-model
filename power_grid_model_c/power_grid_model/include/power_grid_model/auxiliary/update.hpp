@@ -104,6 +104,9 @@ struct SourceUpdate {
     IntS status{na_IntS};  // whether the appliance is connected
     double u_ref{nan};  // reference voltage
     double u_ref_angle{nan};  // reference voltage
+    double sk{nan};  // short circuit capacity
+    double rx_ratio{nan};  // short circuit capacity
+    double z01_ratio{nan};  // short circuit capacity
 
     // implicit conversions to BaseUpdate
     operator BaseUpdate&() { return reinterpret_cast<BaseUpdate&>(*this); }

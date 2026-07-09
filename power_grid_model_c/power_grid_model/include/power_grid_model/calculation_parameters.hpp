@@ -12,9 +12,11 @@
 
 #include <array>
 #include <concepts>
+#include <span>
 #include <vector>
 
 namespace power_grid_model {
+constexpr Idx disconnected = -1;
 
 // Entry of YBus, node addmittance matrix
 struct YBusElement {
@@ -143,10 +145,10 @@ struct TransformerTapPosition {
 using TransformerTapPositionOutput = std::vector<TransformerTapPosition>;
 
 // from side, to side
-// in case of indices for math model, -1 means the branch is not connected to that side
+// in case of indices for math model, -1/disconnected means the branch is not connected to that side
 using BranchIdx = std::array<Idx, 2>;
 // node 0, 1, 2 side
-// in case of indices for math model, -1 means the branch is not connected to that side
+// in case of indices for math model, -1/disconnected means the branch is not connected to that side
 using Branch3Idx = std::array<Idx, 3>;
 
 struct MathModelTopology {
@@ -237,10 +239,27 @@ template <symmetry_tag sym_type> struct MathModelParam {
     std::vector<SourceCalcParam> source_param;
 };
 
-struct MathModelParamIncrement {
-    std::vector<Idx> branch_param_to_change; // indices of changed branch_param
-    std::vector<Idx> shunt_param_to_change;  // indices of changed shunt_param
+template <symmetry_tag sym_type> struct MathModelParamIncrement {
+    using sym = sym_type;
+
+    std::vector<BranchCalcParam<sym>> branch_param;
+    ComplexTensorVector<sym> shunt_param;
+    std::vector<SourceCalcParam> source_param;
+
+    IdxVector branch_param_to_change; // indices of changed branch_param
+    IdxVector shunt_param_to_change;  // indices of changed shunt_param
+    IdxVector source_param_to_change; // indices of changed source_param
 };
+
+template <typename T>
+concept math_model_param_c =
+    std::derived_from<T, MathModelParam<symmetric_t>> || std::derived_from<T, MathModelParamIncrement<symmetric_t>> ||
+    std::derived_from<T, MathModelParam<asymmetric_t>> || std::derived_from<T, MathModelParamIncrement<asymmetric_t>>;
+
+static_assert(math_model_param_c<MathModelParam<symmetric_t>>);
+static_assert(math_model_param_c<MathModelParam<asymmetric_t>>);
+static_assert(math_model_param_c<MathModelParamIncrement<symmetric_t>>);
+static_assert(math_model_param_c<MathModelParamIncrement<asymmetric_t>>);
 
 template <symmetry_tag sym_type> struct PowerFlowInput {
     using sym = sym_type;
@@ -394,6 +413,7 @@ struct ComponentTopology {
     Idx n_node{};
     std::vector<BranchIdx> branch_node_idx;
     std::vector<Branch3Idx> branch3_node_idx;
+    std::vector<BranchIdx> link_node_idx;
     IdxVector shunt_node_idx;
     IdxVector source_node_idx;
     IdxVector load_gen_node_idx;
@@ -407,7 +427,25 @@ struct ComponentTopology {
     IdxVector regulated_object_idx; // the index is relative to branch or branch3
     std::vector<ComponentType> regulated_object_type;
 
-    Idx n_node_total() const { return n_node + static_cast<Idx>(branch3_node_idx.size()); }
+    constexpr Idx n_node_total() const { return n_node + std::ssize(branch3_node_idx); }
+};
+
+struct ReducedComponentTopology {
+    Idx n_node{}; // num of topological nodes, including internal nodes for 3-way branches
+    std::vector<BranchIdx> branch_node_idx;
+    std::vector<Branch3Idx> branch3_node_idx;
+    IdxVector shunt_node_idx;
+    IdxVector source_node_idx;
+    IdxVector load_gen_node_idx;
+    std::span<LoadGenType const> load_gen_type;
+    IdxVector voltage_sensor_node_idx;
+    std::span<Idx const> power_sensor_object_idx; // the index is relative to branch, source, shunt or load_gen
+    std::span<MeasuredTerminalType const> power_sensor_terminal_type;
+    std::span<Idx const> current_sensor_object_idx; // the index is relative to branch
+    std::span<MeasuredTerminalType const> current_sensor_terminal_type;
+    std::span<ComponentType const> regulator_type;
+    std::span<Idx const> regulated_object_idx; // the index is relative to branch or branch3
+    std::span<ComponentType const> regulated_object_type;
 };
 
 // connection property
@@ -418,6 +456,7 @@ using Branch3Connected = std::array<IntS, 3>;
 struct ComponentConnections {
     std::vector<BranchConnected> branch_connected;
     std::vector<Branch3Connected> branch3_connected;
+    std::vector<BranchConnected> link_connected;
     DoubleVector branch_phase_shift;
     // 3-way branch, phase shift = phase_node_x - phase_internal_node
     std::vector<std::array<double, 3>> branch3_phase_shift;
@@ -440,9 +479,9 @@ struct Idx2DBranch3 {
 // couple component to math model
 // use Idx2D to map component to math model
 //		group = math model sequence number,
-//		group = -1 means isolated component
+//		group = -1/disconnected means isolated component
 //		pos = sequence number in math model,
-//		pos = -1 means not connected at that side, only applicable for branches
+//		pos = -1/disconnected means not connected at that side, only applicable for branches
 struct ComponentToMathCoupling {
     std::vector<Idx2D> fault;
 };
@@ -451,9 +490,9 @@ struct ComponentToMathCoupling {
 // like ComponentToMathCoupling but for components that are immutable after the topology is fixed
 // use Idx2D to map component to math model
 //		group = math model sequence number,
-//		group = -1 means isolated component
+//		group = -1/disconnected means isolated component
 //		pos = sequence number in math model,
-//		pos = -1 means not connected at that side, only applicable for branches
+//		pos = -1/disconnected means not connected at that side, only applicable for branches
 struct TopologicalComponentToMathCoupling {
     std::vector<Idx2D> node;
     std::vector<Idx2D> branch;

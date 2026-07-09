@@ -1,0 +1,17 @@
+{
+  "version": "1.0",
+  "type": "input",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "source": [
+      {"id": 2, "node": 1, "status": 1, "u_ref": 1, "sk": 100000000, "rx_ratio": 0.10000000000000001, "z01_ratio": 1}
+    ],
+    "node": [
+      {"id": 1, "u_rated": 10000}
+    ],
+    "asym_load": [
+      {"id": 3, "node": 1, "status": 1, "type": 0, "p_specified": [3000000, 5000000, 7000000], "q_specified": [800000, 400000, 200000]}
+    ]
+  }
+}

@@ -87,6 +87,11 @@
           "data_type": "double",
           "names": ["u_ref", "u_ref_angle"],
           "description": "reference voltage"
+        },
+        {
+          "data_type": "double",
+          "names": ["sk", "rx_ratio", "z01_ratio"],
+          "description": "short circuit capacity"
         }
       ]
     },

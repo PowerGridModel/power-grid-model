@@ -31,6 +31,11 @@ file(
 
 target_link_libraries(power_grid_model_c PRIVATE power_grid_model)
 
+target_compile_definitions(
+    power_grid_model_c
+    PRIVATE PGM_VERSION="${PGM_VERSION}"
+)
+
 target_sources(
     power_grid_model_c
     PUBLIC
@@ -42,11 +47,7 @@ target_sources(
 
 set_target_properties(
     power_grid_model_c
-    PROPERTIES
-        VERSION ${PGM_VERSION}
-        SOVERSION ${PGM_VERSION}
-        INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE
-        INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE
+    PROPERTIES VERSION ${PGM_VERSION} SOVERSION ${PGM_VERSION_MAJOR}
 )
 
 if(PGM_ENABLE_HARDENING)
@@ -73,6 +74,15 @@ if(PGM_ENABLE_HARDENING)
             "$<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-fstack-protector;-fsanitize=undefined;-fno-sanitize-recover=undefined>"
             "$<$<CXX_COMPILER_ID:GNU>:-static-libubsan>"
             "$<$<CXX_COMPILER_ID:Clang>:-lubsan>"
+    )
+endif()
+
+if(NOT PGM_MSVC_REPRODUCIBLE_BUILD)
+    set_target_properties(
+        power_grid_model_c
+        PROPERTIES
+            INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE
+            INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE
     )
 endif()
 

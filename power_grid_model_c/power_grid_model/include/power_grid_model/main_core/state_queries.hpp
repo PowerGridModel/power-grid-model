@@ -12,6 +12,8 @@
 #include "../component/branch3.hpp"
 #include "../component/node.hpp"
 #include "../component/regulator.hpp"
+#include "../component/shunt.hpp"
+#include "../component/source.hpp"
 #include "../component/transformer_utils.hpp"
 
 #include <cassert>
@@ -62,6 +64,18 @@ template <std::derived_from<Branch3> ComponentType, class ComponentContainer>
     requires model_component_state_c<MainModelState, ComponentContainer, ComponentType>
 constexpr auto get_math_id(MainModelState<ComponentContainer> const& state, Idx topology_sequence_idx) {
     return state.topo_comp_coup->branch3[topology_sequence_idx];
+}
+
+template <std::derived_from<Shunt> ComponentType, class ComponentContainer>
+    requires model_component_state_c<MainModelState, ComponentContainer, ComponentType>
+constexpr auto get_math_id(MainModelState<ComponentContainer> const& state, Idx topology_sequence_idx) {
+    return state.topo_comp_coup->shunt[topology_sequence_idx];
+}
+
+template <std::derived_from<Source> ComponentType, class ComponentContainer>
+    requires model_component_state_c<MainModelState, ComponentContainer, ComponentType>
+constexpr auto get_math_id(MainModelState<ComponentContainer> const& state, Idx topology_sequence_idx) {
+    return state.topo_comp_coup->source[topology_sequence_idx];
 }
 
 template <std::derived_from<Regulator> ComponentType, class ComponentContainer>

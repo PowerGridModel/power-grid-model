@@ -6,6 +6,11 @@ SPDX-License-Identifier: MPL-2.0
 
 # Components
 
+```{note}
+This document is about components supported by PGM.
+For documentation on modeling grid components not listed here, please refer to [Grid Modeling](./non-pgm-components.md).
+```
+
 The attributes of components are listed below.
 
 ## Base
@@ -151,8 +156,8 @@ scenarios within a batch are not three-phase faults (i.e. `fault_type` is not `F
 
 $$
 \begin{aligned}
-   & Z_{\text{series}} = r + \mathrm{j}x \\
-   & Y_{\text{shunt}} = 2 \pi fc (\tan \delta +\mathrm{j})
+   Z_{\text{series}} &= r + \mathrm{j}x \\
+   Y_{\text{shunt}} &= 2 \pi fc (\tan \delta +\mathrm{j})
 \end{aligned}
 $$
 
@@ -167,14 +172,15 @@ It has a very high admittance (small impedance) which is set to a fixed per-unit
 Therefore, it is chosen by design that no sensors can be coupled to a `link`.
 There is no additional attribute for `link`.
 
+It is explicitly allowed to connect a link between nodes with different voltage levels to allow modeling
+[ideal transformers](./non-pgm-components.md#ideal-transformer).
+
 #### Electric Model
 
 `link` is modeled by a constant admittance $Y_{\text{series}}$, where
 
 $$
-   \begin{eqnarray}
-      Y_{\text{series}} = (1 + \mathrm{j}) \cdot 10^6 \,\mathrm{p.u.}
-    \end{eqnarray}
+Y_{\text{series}} = (1 + \mathrm{j}) \cdot 10^6 \,\mathrm{p.u.}
 $$
 
 ### Transformer
@@ -238,18 +244,18 @@ for detailed explanation.
 
 $$
 \begin{aligned}
-   & |Z_{\text{series}}| = u_k p.u. \\
-   & \mathrm{Re}(Z_{\text{series}}) = \frac{p_k}{s_n} p.u. \\
-   & \mathrm{Im}(Z_{\text{series}}) = \sqrt{|Z_{\text{series}}|^2-\mathrm{Re}(Z_{\text{series}})^2} \\
+    |Z_{\text{series}}| &= u_k p.u. \\
+    \mathrm{Re}(Z_{\text{series}}) &= \frac{p_k}{s_n} p.u. \\
+    \mathrm{Im}(Z_{\text{series}}) &= \sqrt{|Z_{\text{series}}|^2-\mathrm{Re}(Z_{\text{series}})^2} \\
 \end{aligned}
 $$
 and $Y_{\text{shunt}}$ can be computed as
 
 $$
 \begin{aligned}
-   & |Y_{\text{shunt}}| = i_0 p.u. \\
-   & \mathrm{Re}(Y_{\text{shunt}}) = \frac{p_0}{s_n} p.u. \\
-   & \mathrm{Im}(Y_{\text{shunt}}) = -\sqrt{|Y_{\text{shunt}}|^2-\mathrm{Re}(Y_{\text{shunt}})^2} \\
+    |Y_{\text{shunt}}| &= i_0 p.u. \\
+    \mathrm{Re}(Y_{\text{shunt}}) &= \frac{p_0}{s_n} p.u. \\
+    \mathrm{Im}(Y_{\text{shunt}}) &= -\sqrt{|Y_{\text{shunt}}|^2-\mathrm{Re}(Y_{\text{shunt}})^2} \\
 \end{aligned}
 $$
 
@@ -307,9 +313,9 @@ Asymmetric calculation is not supported for `generic_branch`.
 
 $$
 \begin{aligned}
-   & Y_{\text{series}} = \frac{1}{r + \mathrm{j}x} \\
-   & Y_{\text{shunt}} =  g + \mathrm{j}b \\
-   & N = k \cdot e^{\mathrm{j} \theta}
+    Y_{\text{series}} &= \frac{1}{r + \mathrm{j}x} \\
+    Y_{\text{shunt}} &=  g + \mathrm{j}b \\
+    N &= k \cdot e^{\mathrm{j} \theta}
 \end{aligned}
 $$
 
@@ -341,30 +347,30 @@ If the neutral values are not provided, the last row and column from the above m
 | name   | data type | unit       | description                       | required                     |  update  | valid values |
 |--------|-----------|------------|-----------------------------------|------------------------------|:--------:|:------------:|
 | `r_aa` | `double`  | ohm (Ω)    | Series serial resistance aa       | &#10004;                     | &#10060; |    `> 0`     |
-| `r_ba` | `double`  | ohm (Ω)    | Series serial resistance ba       | &#10004;                     | &#10060; |    `> 0`     |
+| `r_ba` | `double`  | ohm (Ω)    | Series serial resistance ba       | &#10004;                     | &#10060; |    `>= 0`    |
 | `r_bb` | `double`  | ohm (Ω)    | Series serial resistance bb       | &#10004;                     | &#10060; |    `> 0`     |
-| `r_ca` | `double`  | ohm (Ω)    | Series serial resistance ca       | &#10004;                     | &#10060; |    `> 0`     |
-| `r_cb` | `double`  | ohm (Ω)    | Series serial resistance cb       | &#10004;                     | &#10060; |    `> 0`     |
+| `r_ca` | `double`  | ohm (Ω)    | Series serial resistance ca       | &#10004;                     | &#10060; |    `>= 0`    |
+| `r_cb` | `double`  | ohm (Ω)    | Series serial resistance cb       | &#10004;                     | &#10060; |    `>= 0`    |
 | `r_cc` | `double`  | ohm (Ω)    | Series serial resistance cc       | &#10004;                     | &#10060; |    `> 0`     |
-| `r_na` | `double`  | ohm (Ω)    | Series serial resistance na       | &#10024; for a neutral phase | &#10060; |    `> 0`     |
-| `r_nb` | `double`  | ohm (Ω)    | Series serial resistance nb       | &#10024; for a neutral phase | &#10060; |    `> 0`     |
-| `r_nc` | `double`  | ohm (Ω)    | Series serial resistance nc       | &#10024; for a neutral phase | &#10060; |    `> 0`     |
+| `r_na` | `double`  | ohm (Ω)    | Series serial resistance na       | &#10024; for a neutral phase | &#10060; |    `>= 0`    |
+| `r_nb` | `double`  | ohm (Ω)    | Series serial resistance nb       | &#10024; for a neutral phase | &#10060; |    `>= 0`    |
+| `r_nc` | `double`  | ohm (Ω)    | Series serial resistance nc       | &#10024; for a neutral phase | &#10060; |    `>= 0`    |
 | `r_nn` | `double`  | ohm (Ω)    | Series serial resistance nn       | &#10024; for a neutral phase | &#10060; |    `> 0`     |
 | `x_aa` | `double`  | ohm (Ω)    | Series serial reactance aa        | &#10004;                     | &#10060; |    `> 0`     |
-| `x_ba` | `double`  | ohm (Ω)    | Series serial reactance ba        | &#10004;                     | &#10060; |    `> 0`     |
+| `x_ba` | `double`  | ohm (Ω)    | Series serial reactance ba        | &#10004;                     | &#10060; |    `>= 0`    |
 | `x_bb` | `double`  | ohm (Ω)    | Series serial reactance bb        | &#10004;                     | &#10060; |    `> 0`     |
-| `x_ca` | `double`  | ohm (Ω)    | Series serial reactance ca        | &#10004;                     | &#10060; |    `> 0`     |
-| `x_cb` | `double`  | ohm (Ω)    | Series serial reactance cb        | &#10004;                     | &#10060; |    `> 0`     |
+| `x_ca` | `double`  | ohm (Ω)    | Series serial reactance ca        | &#10004;                     | &#10060; |    `>= 0`    |
+| `x_cb` | `double`  | ohm (Ω)    | Series serial reactance cb        | &#10004;                     | &#10060; |    `>= 0`    |
 | `x_cc` | `double`  | ohm (Ω)    | Series serial reactance cc        | &#10004;                     | &#10060; |    `> 0`     |
-| `x_na` | `double`  | ohm (Ω)    | Series serial reactance na        | &#10024; for a neutral phase | &#10060; |    `> 0`     |
-| `x_nb` | `double`  | ohm (Ω)    | Series serial reactance nb        | &#10024; for a neutral phase | &#10060; |    `> 0`     |
-| `x_nc` | `double`  | ohm (Ω)    | Series serial reactance nc        | &#10024; for a neutral phase | &#10060; |    `> 0`     |
+| `x_na` | `double`  | ohm (Ω)    | Series serial reactance na        | &#10024; for a neutral phase | &#10060; |    `>= 0`    |
+| `x_nb` | `double`  | ohm (Ω)    | Series serial reactance nb        | &#10024; for a neutral phase | &#10060; |    `>= 0`    |
+| `x_nc` | `double`  | ohm (Ω)    | Series serial reactance nc        | &#10024; for a neutral phase | &#10060; |    `>= 0`    |
 | `x_nn` | `double`  | ohm (Ω)    | Series serial reactance nn        | &#10024; for a neutral phase | &#10060; |    `> 0`     |
 | `c_aa` | `double`  | farad (F)  | Shunt nodal capacitance matrix aa | &#10024; for a full c matrix | &#10060; |    `> 0`     |
-| `c_ba` | `double`  | farad (F)  | Shunt nodal capacitance matrix ba | &#10024; for a full c matrix | &#10060; |    `> 0`     |
+| `c_ba` | `double`  | farad (F)  | Shunt nodal capacitance matrix ba | &#10024; for a full c matrix | &#10060; |    `>= 0`    |
 | `c_bb` | `double`  | farad (F)  | Shunt nodal capacitance matrix bb | &#10024; for a full c matrix | &#10060; |    `> 0`     |
-| `c_ca` | `double`  | farad (F)  | Shunt nodal capacitance matrix ca | &#10024; for a full c matrix | &#10060; |    `> 0`     |
-| `c_cb` | `double`  | farad (F)  | Shunt nodal capacitance matrix cb | &#10024; for a full c matrix | &#10060; |    `> 0`     |
+| `c_ca` | `double`  | farad (F)  | Shunt nodal capacitance matrix ca | &#10024; for a full c matrix | &#10060; |    `>= 0`    |
+| `c_cb` | `double`  | farad (F)  | Shunt nodal capacitance matrix cb | &#10024; for a full c matrix | &#10060; |    `>= 0`    |
 | `c_cc` | `double`  | farad (F)  | Shunt nodal capacitance matrix cc | &#10024; for a full c matrix | &#10060; |    `> 0`     |
 | `c0`   | `double`  | farad (F)  | zero-sequence shunt capacitance   | &#10024; without a c matrix  | &#10060; |    `> 0`     |
 | `c1`   | `double`  | farad (F)  | Series shunt capacitance          | &#10024; without a c matrix  | &#10060; |    `> 0`     |
@@ -616,9 +622,9 @@ The impedance is specified by convention as short circuit power.
 |---------------|-----------|------------------|----------------------------------------------------|:----------------------------:|:--------:|:------------:|
 | `u_ref`       | `double`  | -                | reference voltage in per-unit                      | &#10024; only for power flow | &#10004; |    `> 0`     |
 | `u_ref_angle` | `double`  | rad              | reference voltage angle                            |    &#10060; default `0.0`    | &#10004; |              |
-| `sk`          | `double`  | volt-ampere (VA) | short circuit power                                |   &#10060; default `1e10`    | &#10060; |    `> 0`     |
-| `rx_ratio`    | `double`  | -                | R to X ratio                                       |    &#10060; default `0.1`    | &#10060; |    `>= 0`    |
-| `z01_ratio`   | `double`  | -                | zero-sequence to positive sequence impedance ratio |    &#10060; default `1.0`    | &#10060; |    `> 0`     |
+| `sk`          | `double`  | volt-ampere (VA) | short circuit power                                |   &#10060; default `1e10`    | &#10004; |    `> 0`     |
+| `rx_ratio`    | `double`  | -                | R to X ratio                                       |    &#10060; default `0.1`    | &#10004; |    `>= 0`    |
+| `z01_ratio`   | `double`  | -                | zero-sequence to positive sequence impedance ratio |    &#10060; default `1.0`    | &#10004; |    `> 0`     |
 
 #### Electric Model
 
@@ -629,9 +635,9 @@ Its value can be computed using following equations:
 
 $$
 \begin{aligned}
-      & z_{\text{source}} = \frac{1}{s_k} p.u. \\
-      & x_1 = \frac{z_{\text{source}}}{\sqrt{1+ \left(\frac{r}{x}\right)^2}} p.u. \\
-      & r_1 = x_1 \cdot \left(\frac{r}{x}\right) p.u.
+    z_{\text{source}} &= \frac{1}{s_k} p.u. \\
+    x_1 &= \frac{z_{\text{source}}}{\sqrt{1+ \left(\frac{r}{x}\right)^2}} p.u. \\
+    r_1 &= x_1 \cdot \left(\frac{r}{x}\right) p.u.
 \end{aligned}
 $$
 
@@ -641,9 +647,9 @@ where $\frac{r}{x}$ indicates `rx_ratio` as input.
 
 $$
 \begin{aligned}
-      & z_{\text{source,0}} = z_{\text{source}} \cdot \frac{z_0}{z_1} \\
-      & x_0 = \frac{z_{\text{source,0}}}{\sqrt{1 + \left(\frac{r}{x}\right)^2}} \\
-      & r_0 = x_0 \cdot \left(\frac{r}{x}\right)
+    z_{\text{source,0}} &= z_{\text{source}} \cdot \frac{z_0}{z_1} \\
+    x_0 &= \frac{z_{\text{source,0}}}{\sqrt{1 + \left(\frac{r}{x}\right)^2}} \\
+    r_0 &= x_0 \cdot \left(\frac{r}{x}\right)
 \end{aligned}
 $$
 
@@ -688,25 +694,19 @@ The injection of each ZIP model type can be computed as follows:
 * for a constant impedance (Z) load/generator,
 
 $$
-   \begin{eqnarray}
-        S = S_{\text{specified}} \cdot \bar{u}^2
-   \end{eqnarray}
+S = S_{\text{specified}} \cdot \bar{u}^2
 $$
 
 * for a constant current (I) load/generator,
 
 $$
-   \begin{eqnarray}
-        S = S_{\text{specified}} \cdot \bar{u}
-   \end{eqnarray}
+S = S_{\text{specified}} \cdot \bar{u}
 $$
 
 * for a constant power (P) load/generator:,
 
 $$
-   \begin{eqnarray}
-        S = S_{\text{specified}}
-   \end{eqnarray}
+S = S_{\text{specified}}
 $$
 
 where $\bar{u}$ is the calculated node voltage.
@@ -727,6 +727,10 @@ It behaves similar to a load/generator with type `const_impedance`.
 | `b1` | `double`  | siemens (S) | positive-sequence shunt susceptance |                 &#10004;                 | &#10004; |
 | `g0` | `double`  | siemens (S) | zero-sequence shunt conductance     | &#10024; only for asymmetric calculation | &#10004; |
 | `b0` | `double`  | siemens (S) | zero-sequence shunt susceptance     | &#10024; only for asymmetric calculation | &#10004; |
+
+```{note}
+In power-grid-model, shunts may also be used to introduce a ground reference in an otherwise floating grid. 
+```
 
 ```{note}
 In case of short circuit calculations, the zero-sequence parameters are required only if any of the faults in any of the
@@ -814,8 +818,8 @@ For other calculation types, sensor output is undefined.
 
 $$
 \begin{aligned}
-      & u_{\text{residual}} = u_{\text{measured}} - u_{\text{state}} \\
-      & \theta_{\text{residual}} = \theta_{\text{measured}} - \theta_{\text{state}} \pmod{2 \pi}
+    u_{\text{residual}} &= u_{\text{measured}} - u_{\text{state}} \\
+    \theta_{\text{residual}} &= \theta_{\text{measured}} - \theta_{\text{state}} \pmod{2 \pi}
 \end{aligned}
 $$
 
@@ -929,8 +933,8 @@ For other calculation types, sensor output is undefined.
 
 $$
 \begin{aligned}
-      & p_{\text{residual}} = p_{\text{measured}} - p_{\text{state}} \\
-         & q_{\text{residual}} = q_{\text{measured}} - q_{\text{state}}
+    p_{\text{residual}} &= p_{\text{measured}} - p_{\text{state}} \\
+    q_{\text{residual}} &= q_{\text{measured}} - q_{\text{state}}
 \end{aligned}
 $$
 
@@ -990,7 +994,7 @@ individual phases.
 
 ```{note}
 The combination of `i_measured=0` and `i_angle_measured=nπ/2` renders the current sensor invalid for PGM.
-See [State estimate sensor transformations](calculations.md#state-estimate-sensor-transformations).
+See [State estimate sensor transformations](../algorithms/se-algorithms.md#state-estimate-sensor-transformations).
 ```
 
 ##### Steady state output
@@ -1024,9 +1028,7 @@ Global angle current measurements require at least one voltage angle measurement
 As a sign convention, the angle is the phase shift of the current relative to the reference angle, i.e.,
 
 $$
-   \begin{eqnarray}
-      \underline{I} = \text{i}_{\text{measured}} \cdot e^{j \text{i}_{\text{angle,measured}}} \text{ .}
-   \end{eqnarray}
+\underline{I} = \text{i}_{\text{measured}} \cdot e^{j \text{i}_{\text{angle,measured}}} \text{ .}
 $$
 
 ##### Local angle current sensors
@@ -1054,10 +1056,10 @@ As a result, the local angle current sensors have a different sign convention fr
 
 $$
 \begin{aligned}
-      & i_{\text{residual}}
-            = i_{\text{measured}} - i_{\text{state}} \\
-      & i_{\text{angle},\text{residual}}
-            = i_{\text{angle},\text{measured}} - i_{\text{angle},\text{state}} \pmod{2 \pi}
+    i_{\text{residual}}
+            &= i_{\text{measured}} - i_{\text{state}} \\
+    i_{\text{angle},\text{residual}}
+            &= i_{\text{angle},\text{measured}} - i_{\text{angle},\text{state}} \pmod{2 \pi}
 \end{aligned}
 $$
 
@@ -1200,10 +1202,8 @@ Instead, it regulates the tap position of the regulated object until the voltage
 voltage band:
 
 $$
-   \begin{eqnarray}
-      U_{\text{control}} \in
-         \left[U_{\text{set}} - \frac{U_{\text{band}}}{2}, U_{\text{set}} + \frac{U_{\text{band}}}{2}\right]
-   \end{eqnarray}
+U_{\text{control}} \in
+    \left[U_{\text{set}} - \frac{U_{\text{band}}}{2}, U_{\text{set}} + \frac{U_{\text{band}}}{2}\right]
 $$
 
 ##### Line drop compensation
@@ -1224,8 +1224,8 @@ drop compensation.
 
 $$
 \begin{aligned}
-   & Z_{\text{compensation}} = r_{\text{compensation}} + \mathrm{j} x_{\text{compensation}} \\
-   & U_{\text{control}} = \left|\underline{U}_{\text{node}} - \underline{I}_{\text{transformer,out}}
+    Z_{\text{compensation}} &= r_{\text{compensation}} + \mathrm{j} x_{\text{compensation}} \\
+    U_{\text{control}} &= \left|\underline{U}_{\text{node}} - \underline{I}_{\text{transformer,out}}
                               \cdot \underline{Z}_{\text{compensation}}\right|
                         = \left|\underline{U}_{\text{node}} + \underline{I}_{\text{transformer}}
                               \cdot \underline{Z}_{\text{compensation}}\right|
@@ -1304,9 +1304,9 @@ The voltage regulator controls the generator to behave as a **PV node** in power
 
 $$
 \begin{aligned}
-   & P_{\text{gen}} = P_{\text{specified}} \\
-   & |U_{\text{node}}| = U_{\text{ref}} \\
-   & Q_{\text{gen}} = \text{calculated to satisfy } U_{\text{ref}}
+    P_{\text{gen}} &= P_{\text{specified}} \\
+    \left|U_{\text{node}}\right| &= U_{\text{ref}} \\
+    Q_{\text{gen}} &= \text{calculated to satisfy } U_{\text{ref}}
 \end{aligned}
 $$
 
@@ -1321,11 +1321,17 @@ node becomes a PQ node:
 
 $$
 \begin{aligned}
-   & P_{\text{gen}} = P_{\text{specified}} \\
-   & Q_{\text{gen}} = Q_{\text{min}} \text{ or } Q_{\text{max}} \\
-   & |U_{\text{node}}| = \text{calculated from power flow}
+    P_{\text{gen}} &= P_{\text{specified}} \\
+    Q_{\text{gen}} &= Q_{\text{min}} \text{ or } Q_{\text{max}} \\
+    \left|U_{\text{node}}\right| &= \text{calculated from power flow}
 \end{aligned}
 $$
 
 In this case, `limit_violated` will indicate which limit was exceeded, and the actual voltage at the node may differ
 from `u_ref`.
+
+## Other components
+
+The list of components explicitly supported by the power-grid-model is a subset of all possible power system components.
+If you did not find the component you're trying to model, you may find what you are looking for
+in [Grid Modeling](./non-pgm-components.md).

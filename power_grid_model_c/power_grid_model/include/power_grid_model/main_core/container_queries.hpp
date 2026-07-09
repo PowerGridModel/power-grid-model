@@ -10,6 +10,7 @@
 #include "../component/component.hpp"
 
 #include <concepts>
+#include <type_traits>
 
 namespace power_grid_model::main_core {
 
@@ -22,7 +23,7 @@ inline Idx get_component_type_index(ComponentContainer const& components) {
 template <typename ComponentType, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, ComponentType>
 constexpr auto get_component_size(ComponentContainer const& components) {
-    return components.template size<ComponentType>();
+    return components.template size<ComponentType>(); // NOSONAR(S6024)
 }
 
 template <typename ComponentType, class ComponentContainer>
@@ -97,22 +98,31 @@ constexpr auto get_component_citer(ComponentContainer const& components) {
     return components.template citer<ComponentType>();
 }
 
-template <std::derived_from<Branch> ComponentType, class ComponentContainer>
-    requires common::component_container_c<ComponentContainer, ComponentType>
-constexpr auto get_topology_index(ComponentContainer const& components, auto const& id_or_index) {
-    return get_component_sequence_idx<Branch>(components, id_or_index);
-}
+namespace detail {
+template <typename Component> struct topology_base_type;
+template <std::derived_from<Branch> Component> struct topology_base_type<Component> {
+    using type = Branch;
+};
+template <std::derived_from<Branch3> Component> struct topology_base_type<Component> {
+    using type = Branch3;
+};
+template <std::derived_from<Shunt> Component> struct topology_base_type<Component> {
+    using type = Shunt;
+};
+template <std::derived_from<Source> Component> struct topology_base_type<Component> {
+    using type = Source;
+};
+template <std::derived_from<Regulator> Component> struct topology_base_type<Component> {
+    using type = Regulator;
+};
+template <typename Component>
+using topology_base_type_t = typename topology_base_type<std::remove_cvref_t<Component>>::type;
+} // namespace detail
 
-template <std::derived_from<Branch3> ComponentType, class ComponentContainer>
+template <typename ComponentType, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, ComponentType>
 constexpr auto get_topology_index(ComponentContainer const& components, auto const& id_or_index) {
-    return get_component_sequence_idx<Branch3>(components, id_or_index);
-}
-
-template <std::derived_from<Regulator> ComponentType, class ComponentContainer>
-    requires common::component_container_c<ComponentContainer, ComponentType>
-constexpr auto get_topology_index(ComponentContainer const& components, auto const& id_or_index) {
-    return get_component_sequence_idx<Regulator>(components, id_or_index);
+    return get_component_sequence_idx<detail::topology_base_type_t<ComponentType>>(components, id_or_index);
 }
 
 } // namespace power_grid_model::main_core

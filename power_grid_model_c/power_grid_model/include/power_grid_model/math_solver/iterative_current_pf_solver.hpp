@@ -128,7 +128,7 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCur
         std::vector<LoadGenType> const& load_gen_type = this->load_gen_type_.get();
 
         // set rhs to zero for iteration start
-        std::fill(rhs_u_.begin(), rhs_u_.end(), ComplexValue<sym>{0.0});
+        std::ranges::fill(rhs_u_, ComplexValue<sym>{0.0});
 
         auto const& sources_per_bus = this->sources_per_bus_.get();
         auto const& load_gens_per_bus = this->load_gens_per_bus_.get();

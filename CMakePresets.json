@@ -9,7 +9,8 @@
       "binaryDir": "${sourceDir}/cpp_build/${presetName}",
       "installDir": "${sourceDir}/install/${presetName}",
       "cacheVariables": {
-        "PGM_ENABLE_DEV_BUILD": "ON"
+        "PGM_ENABLE_DEV_BUILD": "ON",
+        "PGM_MSVC_REPRODUCIBLE_BUILD": "OFF"
       },
       "environment": {
         "PLATFORM_C_FLAGS": "",
@@ -32,7 +33,7 @@
     {
       "name": "release",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+        "CMAKE_BUILD_TYPE": "Release"
       },
       "hidden": true
     },
@@ -40,6 +41,13 @@
       "name": "debug",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
+      },
+      "hidden": true
+    },
+    {
+      "name": "relwithdebinfo",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
       },
       "hidden": true
     },
@@ -151,7 +159,7 @@
     {
       "name": "msvc-release",
       "displayName": "Release (MSVC)",
-      "inherits": ["msvc-base", "release"]
+      "inherits": ["msvc-base", "relwithdebinfo"]
     },
     {
       "name": "clang-cl-debug",
@@ -161,7 +169,7 @@
     {
       "name": "clang-cl-release",
       "displayName": "Release (Clang CL)",
-      "inherits": ["clang-cl-base", "release"]
+      "inherits": ["clang-cl-base", "relwithdebinfo"]
     },
     {
       "name": "clang-base",
@@ -178,7 +186,7 @@
     },
     {
       "name": "clang-release",
-      "inherits": ["release", "clang-base"]
+      "inherits": ["relwithdebinfo", "clang-base"]
     },
     {
       "name": "clang-tidy-debug",
@@ -186,7 +194,7 @@
     },
     {
       "name": "clang-tidy-release",
-      "inherits": ["release", "clang-tidy-unix-base"]
+      "inherits": ["relwithdebinfo", "clang-tidy-unix-base"]
     },
     {
       "name": "clang-tidy-windows-debug",
@@ -196,7 +204,7 @@
     {
       "name": "clang-tidy-windows-release",
       "displayName": "Release (Clang CL + Clang Tidy)",
-      "inherits": ["release", "clang-tidy-windows-base"]
+      "inherits": ["relwithdebinfo", "clang-tidy-windows-base"]
     },
     {
       "name": "gcc-base",
@@ -216,7 +224,7 @@
     },
     {
       "name": "gcc-release",
-      "inherits": ["release", "gcc-base"]
+      "inherits": ["relwithdebinfo", "gcc-base"]
     },
     {
       "name": "ci-clang-debug",
@@ -260,18 +268,20 @@
     },
     {
       "name": "ci-msvc-reproducible",
-      "inherits": "msvc-release",
+      "inherits": ["msvc-base", "release"],
       "environment": {
         "REPRODUCIBILITY_COMMON_FLAGS": "/d1nodatetime /experimental:deterministic"
       },
       "cacheVariables": {
         "PGM_ENABLE_DEV_BUILD": "OFF",
-        "CMAKE_SHARED_LINKER_FLAGS": "/Brepro /INCREMENTAL:NO"
+        "PGM_MSVC_REPRODUCIBLE_BUILD": "ON",
+        "CMAKE_INTERPROCEDURAL_OPTIMIZATION": "OFF",
+        "CMAKE_SHARED_LINKER_FLAGS": "/debug:None /Brepro /INCREMENTAL:NO /LTCG /NOCOFFGRPINFO"
       }
     },
     {
       "name": "ci-clang-cl-reproducible",
-      "inherits": "clang-cl-release",
+      "inherits": ["clang-cl-base", "release"],
       "cacheVariables": {
         "PGM_ENABLE_DEV_BUILD": "OFF",
         "CMAKE_SHARED_LINKER_FLAGS": "/Brepro /INCREMENTAL:NO"
@@ -279,7 +289,7 @@
     },
     {
       "name": "ci-gcc-reproducible",
-      "inherits": "gcc-release",
+      "inherits": ["gcc-base", "release"],
       "environment": {
         "REPRODUCIBILITY_COMMON_FLAGS": "$penv{REPRODUCIBILITY_COMMON_FLAGS} -frandom-seed=0 -Wdate-time"
       },
@@ -289,7 +299,7 @@
     },
     {
       "name": "ci-clang-reproducible",
-      "inherits": "clang-release",
+      "inherits": ["clang-base", "release"],
       "environment": {
         "REPRODUCIBILITY_COMMON_FLAGS": "$penv{REPRODUCIBILITY_COMMON_FLAGS} -frandom-seed=0 -Wdate-time"
       },

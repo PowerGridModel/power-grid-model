@@ -9,7 +9,7 @@ Main power grid model class
 import itertools
 from enum import IntEnum
 from math import prod
-from typing import Any, overload
+from typing import Any, Literal, overload
 
 import numpy as np
 
@@ -227,14 +227,24 @@ class PowerGridModel:
                 ComponentType.asym_voltage_sensor,
                 ComponentType.sym_power_sensor,
                 ComponentType.asym_power_sensor,
+                ComponentType.sym_current_sensor,
+                ComponentType.asym_current_sensor,
                 ComponentType.fault,
             ],
-            CalculationType.state_estimation: [ComponentType.fault],
+            CalculationType.state_estimation: [
+                ComponentType.fault,
+                ComponentType.transformer_tap_regulator,
+                ComponentType.voltage_regulator,
+            ],
             CalculationType.short_circuit: [
                 ComponentType.sym_voltage_sensor,
                 ComponentType.asym_voltage_sensor,
                 ComponentType.sym_power_sensor,
                 ComponentType.asym_power_sensor,
+                ComponentType.sym_current_sensor,
+                ComponentType.asym_current_sensor,
+                ComponentType.transformer_tap_regulator,
+                ComponentType.voltage_regulator,
             ],
         }.get(calculation_type, [])
 
@@ -248,9 +258,9 @@ class PowerGridModel:
         output_component_types: ComponentAttributeMapping,
         calculation_type: CalculationType,
         symmetric: bool,
-        is_batch: bool,
+        is_batch: Literal[True, False],
         batch_size: int,
-    ):
+    ) -> Dataset:
         all_component_count = self._get_output_component_count(calculation_type=calculation_type)
         return create_output_data(
             output_component_types=output_component_types,
@@ -468,20 +478,6 @@ class PowerGridModel:
         error_tolerance: float = ...,
         max_iterations: int = ...,
         calculation_method: CalculationMethod | str = ...,
-        threading: int = ...,
-        output_component_types: None | set[ComponentTypeVar] | list[ComponentTypeVar] = ...,
-        continue_on_batch_error: bool = ...,
-        decode_error: bool = ...,
-        tap_changing_strategy: TapChangingStrategy | str = ...,
-    ) -> SingleRowBasedDataset: ...
-    @overload
-    def calculate_power_flow(
-        self,
-        *,
-        symmetric: bool = ...,
-        error_tolerance: float = ...,
-        max_iterations: int = ...,
-        calculation_method: CalculationMethod | str = ...,
         update_data: None = ...,
         threading: int = ...,
         output_component_types: None | set[ComponentTypeVar] | list[ComponentTypeVar] = ...,
@@ -603,11 +599,11 @@ class PowerGridModel:
                     - key: Component type name to be updated in batch.
                     - value:
 
-                        - For homogeneous update batch (a 2D numpy structured array):
+                        - For dense (uniform) update batch (a 2D numpy structured array):
 
                             - Dimension 0: Each batch.
                             - Dimension 1: Each updated element per batch for this component type.
-                        - For inhomogeneous update batch (a dictionary containing two keys):
+                        - For sparse (non-uniform) update batch (a dictionary containing two keys)::
 
                             - indptr: A 1D numpy int64 array with length n_batch + 1. Given batch number k, the
                               update array for this batch is data[indptr[k]:indptr[k + 1]]. This is the concept of
@@ -790,11 +786,11 @@ class PowerGridModel:
                     - key: Component type name to be updated in batch.
                     - value:
 
-                        - For homogeneous update batch (a 2D numpy structured array):
+                        - For dense (uniform) update batch (a 2D numpy structured array):
 
                             - Dimension 0: Each batch.
                             - Dimension 1: Each updated element per batch for this component type.
-                        - For inhomogeneous update batch (a dictionary containing two keys):
+                        - For sparse (non-uniform) update batch (a dictionary containing two keys)::
 
                             - indptr: A 1D numpy int64 array with length n_batch + 1. Given batch number k, the
                               update array for this batch is data[indptr[k]:indptr[k + 1]]. This is the concept of
@@ -867,7 +863,7 @@ class PowerGridModel:
         output_component_types: None | set[ComponentTypeVar] | list[ComponentTypeVar] = ...,
         continue_on_batch_error: bool = ...,
         decode_error: bool = ...,
-        short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str,
+        short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str = ...,
     ) -> SingleRowBasedDataset: ...
     @overload
     def calculate_short_circuit(
@@ -879,7 +875,7 @@ class PowerGridModel:
         output_component_types: ComponentAttributeFilterOptions = ...,
         continue_on_batch_error: bool = ...,
         decode_error: bool = ...,
-        short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str,
+        short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str = ...,
     ) -> SingleColumnarOutputDataset: ...
     @overload
     def calculate_short_circuit(
@@ -891,7 +887,7 @@ class PowerGridModel:
         output_component_types: ComponentAttributeMappingDict = ...,
         continue_on_batch_error: bool = ...,
         decode_error: bool = ...,
-        short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str,
+        short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str = ...,
     ) -> SingleOutputDataset: ...
     @overload
     def calculate_short_circuit(
@@ -903,7 +899,7 @@ class PowerGridModel:
         output_component_types: None | set[ComponentTypeVar] | list[ComponentTypeVar] = ...,
         continue_on_batch_error: bool = ...,
         decode_error: bool = ...,
-        short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str,
+        short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str = ...,
     ) -> DenseBatchRowBasedOutputDataset: ...
     @overload
     def calculate_short_circuit(
@@ -915,7 +911,7 @@ class PowerGridModel:
         output_component_types: ComponentAttributeFilterOptions = ...,
         continue_on_batch_error: bool = ...,
         decode_error: bool = ...,
-        short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str,
+        short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str = ...,
     ) -> DenseBatchColumnarOutputDataset: ...
     @overload
     def calculate_short_circuit(
@@ -927,7 +923,7 @@ class PowerGridModel:
         output_component_types: ComponentAttributeMappingDict = ...,
         continue_on_batch_error: bool = ...,
         decode_error: bool = ...,
-        short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str,
+        short_circuit_voltage_scaling: ShortCircuitVoltageScaling | str = ...,
     ) -> DenseBatchOutputDataset: ...
     def calculate_short_circuit(  # noqa: PLR0913
         self,
@@ -954,11 +950,11 @@ class PowerGridModel:
                     - key: Component type name to be updated in batch
                     - value:
 
-                        - For homogeneous update batch (a 2D numpy structured array):
+                        - For dense (uniform) update batch (a 2D numpy structured array):
 
                             - Dimension 0: each batch
                             - Dimension 1: each updated element per batch for this component type
-                        - For inhomogeneous update batch (a dictionary containing two keys):
+                        - For sparse (non-uniform) update batch (a dictionary containing two keys)::
 
                             - indptr: A 1D numpy int64 array with length n_batch + 1. Given batch number k, the
                               update array for this batch is data[indptr[k]:indptr[k + 1]]. This is the concept of

@@ -5,7 +5,7 @@
 [build-system]
 requires = [
     "scikit-build-core",
-    "pgm-build-dependencies@https://github.com/PowerGridModel/pgm-build-dependencies/releases/latest/download/pgm_build_dependencies-0.1.0-py3-none-any.whl",
+    "pgm-build-deps",
 ]
 build-backend = "scikit_build_core.build"
 
@@ -71,7 +71,7 @@ doc = [
 ]
 
 [project.urls]
-Home-page = "https://lfenergy.org/projects/power-grid-model/"
+Homepage = "https://lfenergy.org/projects/power-grid-model/"
 GitHub = "https://github.com/PowerGridModel/power-grid-model"
 Documentation = "https://power-grid-model.readthedocs.io/en/stable/"
 Mailing-list = "https://lists.lfenergy.org/g/powergridmodel"
@@ -198,9 +198,6 @@ ignore_missing_imports = true
 show_column_numbers = true
 non_interactive = true
 install_types = true
-disable_error_code = [
-    "call-overload",
-] # mypy 1.14.0 does not like PGM's data_types
 
 # CI build options
 [tool.cibuildwheel]

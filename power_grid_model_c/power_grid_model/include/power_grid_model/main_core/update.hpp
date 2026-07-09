@@ -42,7 +42,7 @@ inline void iterate_component_sequence(Func func, Elements elements, std::span<I
     }
 }
 
-template <typename T> bool check_id_na(T const& obj) {
+template <typename T> inline bool check_id_na(T const& obj) {
     if constexpr (requires { obj.id; }) {
         return is_nan(obj.id);
     } else if constexpr (requires { obj.get().id; }) {
@@ -83,38 +83,38 @@ struct UpdateCompProperties {
     }
 };
 
-template <typename CompType> void process_buffer_span(auto const& all_spans, UpdateCompProperties& properties) {
-    properties.ids_all_na = std::ranges::all_of(all_spans, [](auto const& vec) {
+inline bool get_all_ids_na(auto const& all_spans) {
+    return std::ranges::all_of(all_spans, [](auto const& vec) {
         return std::ranges::all_of(vec, [](auto const& item) { return detail::check_id_na(item); });
     });
-    properties.ids_part_na = std::ranges::any_of(all_spans,
-                                                 [](auto const& vec) {
-                                                     return std::ranges::any_of(vec, [](auto const& item) {
-                                                         return detail::check_id_na(item);
-                                                     });
-                                                 }) &&
-                             !properties.ids_all_na;
+}
 
+inline bool get_any_ids_na(auto const& all_spans) {
+    return std::ranges::any_of(all_spans, [](auto const& vec) {
+        return std::ranges::any_of(vec, [](auto const& item) { return detail::check_id_na(item); });
+    });
+}
+
+template <typename CompType> inline bool get_update_ids_match(auto const& all_spans) {
     if (all_spans.empty()) {
-        properties.update_ids_match = true;
-        return;
+        return true; // if there are no elements, we can consider the ids to match
     }
+
     // Remember the begin iterator of the first scenario, then loop over the remaining scenarios and
     // check the ids
     auto const first_span = all_spans.front();
     // check the subsequent scenarios
     // only return true if ids of all scenarios match the ids of the first batch
 
-    properties.update_ids_match =
-        std::ranges::all_of(all_spans.cbegin() + 1, all_spans.cend(), [&first_span](auto const& current_span) {
-            return std::ranges::equal(current_span, first_span,
-                                      [](typename CompType::UpdateType const& obj,
-                                         typename CompType::UpdateType const& first) { return obj.id == first.id; });
-        });
+    return std::ranges::all_of(all_spans.cbegin() + 1, all_spans.cend(), [&first_span](auto const& current_span) {
+        return std::ranges::equal(current_span, first_span,
+                                  [](typename CompType::UpdateType const& obj,
+                                     typename CompType::UpdateType const& first) { return obj.id == first.id; });
+    });
 }
 
 template <class CompType>
-UpdateCompProperties check_component_independence(ConstDataset const& update_data, Idx n_component) {
+inline UpdateCompProperties check_component_independence(ConstDataset const& update_data, Idx n_component) {
     UpdateCompProperties properties;
     auto const component_idx = update_data.find_component(CompType::name, false);
     properties.is_columnar = update_data.is_columnar(CompType::name);
@@ -126,13 +126,25 @@ UpdateCompProperties check_component_independence(ConstDataset const& update_dat
         properties.uniform ? update_data.uniform_elements_per_scenario(CompType::name) : utils::invalid_index;
     properties.elements_in_base = n_component;
 
-    if (properties.is_columnar) {
-        process_buffer_span<CompType>(
-            update_data.template get_columnar_buffer_span_all_scenarios<meta_data::update_getter_s, CompType>(),
-            properties);
+    if (!properties.has_any_elements) {
+        properties.ids_all_na = true; // if there are no elements, we can consider all ids to be NA
+        properties.ids_part_na =
+            false; // if there are no elements, we cannot have some ids that are NA and some that are not
+        properties.update_ids_match = true; // if there are no elements, we can consider the
     } else {
-        process_buffer_span<CompType>(
-            update_data.template get_buffer_span_all_scenarios<meta_data::update_getter_s, CompType>(), properties);
+        auto const process_buffer_span = [&properties](auto const& all_spans) {
+            assert(!all_spans.empty());
+            properties.ids_all_na = get_all_ids_na(all_spans);
+            properties.ids_part_na = (!properties.ids_all_na) && get_any_ids_na(all_spans);
+            properties.update_ids_match = properties.uniform && get_update_ids_match<CompType>(all_spans);
+        };
+        if (properties.is_columnar) {
+            process_buffer_span(
+                update_data.template get_columnar_buffer_span_all_scenarios<meta_data::update_getter_s, CompType>());
+        } else {
+            process_buffer_span(
+                update_data.template get_buffer_span_all_scenarios<meta_data::update_getter_s, CompType>());
+        }
     }
 
     return properties;

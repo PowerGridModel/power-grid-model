@@ -147,7 +147,7 @@ class JobDispatch {
             single_thread_job(0, 1, n_scenarios);
         } else {
             // create parallel threads
-            std::vector<std::thread> threads;
+            std::vector<std::jthread> threads;
             threads.reserve(n_thread);
             for (Idx thread_number = 0; thread_number < n_thread; ++thread_number) {
                 // compute each single thread job with stride
@@ -164,7 +164,7 @@ class JobDispatch {
     //    use hardware threads, but it is either unknown (0) or only has one thread (1)
     //    specified threading = 1
     static Idx n_threads(Idx n_scenarios, Idx threading) {
-        auto const hardware_thread = static_cast<Idx>(std::thread::hardware_concurrency());
+        auto const hardware_thread = static_cast<Idx>(std::jthread::hardware_concurrency());
         if (threading < 0 || threading == 1 || (threading == 0 && hardware_thread < 2)) {
             return 1; // sequential
         }

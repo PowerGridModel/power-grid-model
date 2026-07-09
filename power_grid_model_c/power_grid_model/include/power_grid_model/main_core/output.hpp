@@ -36,7 +36,6 @@
 namespace power_grid_model::main_core {
 
 namespace detail {
-
 template <typename T, typename U>
 concept assignable_to = std::assignable_from<U, T>;
 
@@ -139,7 +138,7 @@ template <std::derived_from<Node> Component, steady_state_solver_output_type Sol
 constexpr auto output_result(Component const& node, std::vector<SolverOutputType> const& solver_output, Idx2D math_id) {
     using sym = typename SolverOutputType::sym;
 
-    if (math_id.group == -1) {
+    if (math_id.group == disconnected) {
         return node.template get_null_output<sym>();
     }
     return node.template get_output<sym>(solver_output[math_id.group].u[math_id.pos],
@@ -147,7 +146,7 @@ constexpr auto output_result(Component const& node, std::vector<SolverOutputType
 }
 template <std::derived_from<Node> Component, short_circuit_solver_output_type SolverOutputType>
 inline auto output_result(Component const& node, std::vector<SolverOutputType> const& solver_output, Idx2D math_id) {
-    if (math_id.group == -1) {
+    if (math_id.group == disconnected) {
         return node.get_null_sc_output();
     }
     return node.get_sc_output(solver_output[math_id.group].u_bus[math_id.pos]);
@@ -159,14 +158,14 @@ constexpr auto output_result(Component const& branch, std::vector<SolverOutputTy
                              Idx2D math_id) {
     using sym = typename SolverOutputType::sym;
 
-    if (math_id.group == -1) {
+    if (math_id.group == disconnected) {
         return branch.template get_null_output<sym>();
     }
     return branch.template get_output<sym>(solver_output[math_id.group].branch[math_id.pos]);
 }
 template <std::derived_from<Branch> Component, short_circuit_solver_output_type SolverOutputType>
 inline auto output_result(Component const& branch, std::vector<SolverOutputType> const& solver_output, Idx2D math_id) {
-    if (math_id.group == -1) {
+    if (math_id.group == disconnected) {
         return branch.get_null_sc_output();
     }
     return branch.get_sc_output(solver_output[math_id.group].branch[math_id.pos]);
@@ -178,7 +177,7 @@ constexpr auto output_result(Component const& branch3, std::vector<SolverOutputT
                              Idx2DBranch3 const& math_id) {
     using sym = typename SolverOutputType::sym;
 
-    if (math_id.group == -1) {
+    if (math_id.group == disconnected) {
         return branch3.template get_null_output<sym>();
     }
 
@@ -189,7 +188,7 @@ constexpr auto output_result(Component const& branch3, std::vector<SolverOutputT
 template <std::derived_from<Branch3> Component, short_circuit_solver_output_type SolverOutputType>
 inline auto output_result(Component const& branch3, std::vector<SolverOutputType> const& solver_output,
                           Idx2DBranch3 const& math_id) {
-    if (math_id.group == -1) {
+    if (math_id.group == disconnected) {
         return branch3.get_null_sc_output();
     }
 
@@ -203,7 +202,7 @@ constexpr auto output_result(Component const& source, std::vector<SolverOutputTy
                              Idx2D const& math_id) {
     using sym = typename SolverOutputType::sym;
 
-    if (math_id.group == -1) {
+    if (math_id.group == disconnected) {
         return source.template get_null_output<sym>();
     }
     return source.template get_output<sym>(solver_output[math_id.group].source[math_id.pos]);
@@ -211,7 +210,7 @@ constexpr auto output_result(Component const& source, std::vector<SolverOutputTy
 template <std::derived_from<Source> Component, short_circuit_solver_output_type SolverOutputType>
 inline auto output_result(Component const& source, std::vector<SolverOutputType> const& solver_output,
                           Idx2D const& math_id) {
-    if (math_id.group == -1) {
+    if (math_id.group == disconnected) {
         return source.get_null_sc_output();
     }
     return source.get_sc_output(solver_output[math_id.group].source[math_id.pos]);
@@ -223,7 +222,7 @@ constexpr auto output_result(Component const& load_gen, std::vector<SolverOutput
                              Idx2D const& math_id) {
     using sym = typename SolverOutputType::sym;
 
-    if (math_id.group == -1) {
+    if (math_id.group == disconnected) {
         return load_gen.template get_null_output<sym>();
     }
     return load_gen.template get_output<sym>(solver_output[math_id.group].load_gen[math_id.pos]);
@@ -240,7 +239,7 @@ constexpr auto output_result(Component const& shunt, std::vector<SolverOutputTyp
                              Idx2D const& math_id) {
     using sym = typename SolverOutputType::sym;
 
-    if (math_id.group == -1) {
+    if (math_id.group == disconnected) {
         return shunt.template get_null_output<sym>();
     }
     return shunt.template get_output<sym>(solver_output[math_id.group].shunt[math_id.pos]);
@@ -248,7 +247,7 @@ constexpr auto output_result(Component const& shunt, std::vector<SolverOutputTyp
 template <std::derived_from<Shunt> Component, short_circuit_solver_output_type SolverOutputType>
 inline auto output_result(Component const& shunt, std::vector<SolverOutputType> const& solver_output,
                           Idx2D const& math_id) {
-    if (math_id.group == -1) {
+    if (math_id.group == disconnected) {
         return shunt.get_null_sc_output();
     }
     return shunt.get_sc_output(solver_output[math_id.group].shunt[math_id.pos]);
@@ -263,7 +262,7 @@ constexpr auto output_result(Component const& voltage_sensor, MainModelState<Com
     using sym = typename SolverOutputType::sym;
 
     Idx2D const node_math_id = state.topo_comp_coup->node[node_seq];
-    if (node_math_id.group == -1) {
+    if (node_math_id.group == disconnected) {
         return voltage_sensor.template get_null_output<sym>();
     }
     return voltage_sensor.template get_output<sym>(solver_output[node_math_id.group].u[node_math_id.pos]);
@@ -315,7 +314,7 @@ constexpr auto output_result(Component const& power_sensor, MainModelState<Compo
         }
     }();
 
-    if (obj_math_id.group == -1) {
+    if (obj_math_id.group == disconnected) {
         return power_sensor.template get_null_output<sym>();
     }
 
@@ -385,7 +384,7 @@ constexpr auto output_result(Component const& current_sensor, MainModelState<Com
         }
     }();
 
-    if (obj_math_id.group == -1) {
+    if (obj_math_id.group == disconnected) {
         return current_sensor.template get_null_output<sym>();
     }
 
@@ -438,7 +437,7 @@ template <std::derived_from<Fault> Component, class ComponentContainer,
              model_component_state_c<MainModelState, ComponentContainer, Node>
 inline auto output_result(Component const& fault, MainModelState<ComponentContainer> const& state,
                           std::vector<SolverOutputType> const& solver_output, Idx2D math_id) {
-    if (math_id.group == -1) {
+    if (math_id.group == disconnected) {
         return fault.get_null_sc_output();
     }
 
@@ -478,8 +477,8 @@ template <std::derived_from<VoltageRegulator> Component, class ComponentContaine
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr auto output_result(Component const& voltage_regulator, MainModelState<ComponentContainer> const& state,
                              MathOutput<std::vector<SolverOutputType>> const& math_output, Idx const obj_seq) {
-    Idx2D const load_gen_math_id = [&]() { return state.topo_comp_coup->load_gen[obj_seq]; }();
-    if (load_gen_math_id.group != -1) {
+    if (Idx2D const load_gen_math_id = state.topo_comp_coup->load_gen[obj_seq];
+        load_gen_math_id.group != disconnected) {
         for (auto const& vr_output : math_output.solver_output[load_gen_math_id.group].voltage_regulator) {
             if (vr_output.generator_id == voltage_regulator.regulated_object()) {
                 return voltage_regulator.get_output(vr_output);

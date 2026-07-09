@@ -200,7 +200,7 @@ TEST_CASE_TEMPLATE(
     }();
     std::vector<ID> const source_updates_id = {1};
 
-    Buffer source_update_buffer{PGM_def_update_sym_load, 1};
+    Buffer source_update_buffer{PGM_def_update_source, 1};
     source_update_buffer.set_nan();
     source_update_buffer.set_value(PGM_def_update_source_id, source_updates_id.data(), -1);
 

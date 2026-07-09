@@ -83,6 +83,28 @@ void check_no_experimental_features_used(MainModel const& model, MainModel::Opti
     model.check_no_experimental_features_used(opt, batch_dataset);
 }
 
+void check_no_future_deprecations(MainModel const& model, MainModel::Options const& opt,
+                                  ConstDataset const* batch_dataset) {
+    // optionally add deprecation checks here
+    using namespace std::string_literals;
+
+    model.check_no_future_deprecations(opt, batch_dataset);
+}
+
+void check_experimental_support(Idx experimental_features, MainModel const& model, MainModel::Options const& opt,
+                                ConstDataset const* batch_dataset) {
+    switch (experimental_features) {
+    case PGM_experimental_features_disabled:
+        check_no_experimental_features_used(model, opt, batch_dataset);
+        break;
+    case PGM_experimental_features_enabled:
+        check_no_future_deprecations(model, opt, batch_dataset);
+        break;
+    default:
+        throw MissingCaseForEnumError{"calculate_impl", experimental_features};
+    }
+}
+
 void check_calculate_valid_options(PGM_Options const& opt) {
     if (opt.tap_changing_strategy != PGM_tap_changing_strategy_disabled && opt.calculation_type != PGM_power_flow) {
         // illegal combination of options
@@ -315,9 +337,7 @@ void calculate_impl(MainModel& model, PGM_Options const& options, MutableDataset
     check_calculate_valid_options(options);
     auto const extracted_options = extract_calculation_options(options);
 
-    if (options.experimental_features == PGM_experimental_features_disabled) {
-        check_no_experimental_features_used(model, extracted_options, batch_dataset);
-    }
+    check_experimental_support(options.experimental_features, model, extracted_options, batch_dataset);
 
     calculate_multi_dimensional_impl(model, extracted_options, output_dataset, batch_dataset);
 }

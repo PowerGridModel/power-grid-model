@@ -550,7 +550,7 @@ def _get_filtered_attributes(
         return (
             []
             if schema.dtype.names is None
-            else list(_str_to_attribute_type(attribute) for attribute in schema.dtype.names)
+            else [_str_to_attribute_type(attribute) for attribute in schema.dtype.names]
         )
 
     return list(component_data_filter)

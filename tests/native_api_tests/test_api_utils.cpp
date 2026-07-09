@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#include <power_grid_model_c/handle.h>
 #include <power_grid_model_cpp/basics.hpp>
 #include <power_grid_model_cpp/utils.hpp>
 
@@ -29,4 +30,6 @@ TEST_CASE("API Utils") {
         CHECK(is_nan(nan_value<IntS>()));
     }
 }
+
+TEST_CASE("Check version") { CHECK(std::string{PGM_VERSION} == std::string{PGM_version()}); }
 } // namespace power_grid_model_cpp

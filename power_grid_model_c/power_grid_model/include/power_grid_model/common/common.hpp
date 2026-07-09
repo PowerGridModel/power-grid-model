@@ -31,7 +31,7 @@ struct Idx2D {
     Idx group; // sequence number of outer module/groups
     Idx pos;   // sequence number inside the group
 
-    friend constexpr bool operator==(Idx2D x, Idx2D y) = default;
+    friend constexpr bool operator==(Idx2D x, Idx2D y) { return x.group == y.group && x.pos == y.pos; }
 };
 
 struct Idx2DHash {
@@ -96,6 +96,9 @@ using IntSVector = std::vector<IntS>;
 
 template <class T, class... Ts>
 concept is_in_list_c = (std::same_as<std::remove_const_t<T>, Ts> || ...);
+
+template <class T, class... Ts>
+concept derives_from_any_in_list_c = (std::derived_from<T, Ts> || ...);
 
 namespace capturing {
 // perfect forward into void

@@ -30,9 +30,9 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
     - name: checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
     - name: Install R
       run: |
         sudo apt-get update && sudo apt-get install -y r-base
     - name: Validate CITATION.cff
-      uses: dieghernan/cff-validator@v4
+      uses: dieghernan/cff-validator@54c8e737314b948f25c0e5524a9d8ae3f39b207b # v5.0.1
