@@ -143,7 +143,7 @@
         "id": 15,
         "measured_object": 4,
         "measured_terminal_type": 0,
-        "power_sigma": 7.071067811865475,
+        "power_sigma": 5.0,
         "p_measured": [1154.0, 1153.0, 1155.0],
         "q_measured": [-11540.0, -11530.0, -11550.0],
         "extra": "The power sensor on the line into itself on the source node (see readme)"
@@ -152,7 +152,7 @@
         "id": 16,
         "measured_object": 5,
         "measured_terminal_type": 0,
-        "power_sigma": 7.071067811865475,
+        "power_sigma": 5.0,
         "p_measured": [1152.0, 1155.0, 1148.0],
         "q_measured": [-11520.0, -11520.0, -11500.0],
         "extra": "The power sensor on the line into itself on the load node (see readme)"

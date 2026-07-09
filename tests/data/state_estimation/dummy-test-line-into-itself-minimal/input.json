@@ -64,13 +64,13 @@
         "id": 16,
         "measured_object": 5,
         "measured_terminal_type": 0,
-        "power_sigma": 7.071067811865475,
+        "power_sigma": 5.0,
         "p_measured": [1154.0, 1153.0, 1155.0],
         "q_measured": [-11540.0, -11550.0, -11550.0],
         "extra": "The power sensor on the line into itself on the source node (see readme)"
       },
       {
-        "id": 18,
+        "id": 17,
         "measured_object": 7,
         "measured_terminal_type": 3,
         "power_sigma": 10.0,

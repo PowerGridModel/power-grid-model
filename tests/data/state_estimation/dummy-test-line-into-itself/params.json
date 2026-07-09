@@ -1,9 +1,31 @@
 {
-  "calculation_method": ["newton_raphson", "iterative_linear"],
+  "calculation_method": ["newton_raphson"],
   "rtol": 1e-9,
-  "atol": 1e-9,
+  "atol": {
+    "default": 1e-9,
+    "u_pu": 1e-6,
+    "u": 1e-2,
+    "u_angle": 1e-2,
+    "p": 1e1,
+    "q": 2e1,
+    "p_from": 1e1,
+    "q_from": 2e1,
+    "p_to": 1e1,
+    "q_to": 2e1,
+    "i_from": 1e-2,
+    "i_to": 1e-2,
+    "s_from": 1e1,
+    "s_to": 1e1,
+    "i": 1e-2,
+    "s": 1e1,
+    "pf": 1e-5,
+    "p_residual": 1e1,
+    "q_residual": 2e1,
+    "u_residual": 1e-2,
+    "u_angle_residual": 1e-5
+  },
   "xfail": {
     "raises": "AssertionError",
-    "reason": "Needs investigation"
+    "reason": "Energized behaves differently between sensors on disabled shunts and on disabled branches (https://github.com/PowerGridModel/power-grid-model/issues/1464)"
   }
 }

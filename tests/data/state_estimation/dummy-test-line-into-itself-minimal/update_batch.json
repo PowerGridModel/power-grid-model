@@ -41,7 +41,7 @@
           ],
           "asym_power_sensor": [
               {
-                  "id": 18,
+                  "id": 17,
                   "power_sigma": "inf"
               }
           ]
