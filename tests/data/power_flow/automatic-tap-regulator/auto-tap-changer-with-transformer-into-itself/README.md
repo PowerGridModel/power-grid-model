@@ -27,7 +27,8 @@ This is tested as follows:
    1. Benchmark case: the transformers are fully disconnected, the shunts are connected.
    2. Actual test case: the transformers into itself are connected on both ends, the shunts are disconnected.
 4. The output of both scenarios should be the same, except for the transformers into itself and shunts.
-   For those, it is true that $p_{\text{transformer},\text{from}} = p_{\text{transformer},\text{to}} = \frac{1}{2}p_{\text{shunt}}$,
+   For those, it is true that
+   $p_{\text{transformer},\text{from}} = p_{\text{transformer},\text{to}} = \frac{1}{2}p_{\text{shunt}}$,
    $q_{\text{transformer},\text{from}} = q_{\text{transformer},\text{to}} = \frac{1}{2}q_{\text{shunt}}$,
    $s_{\text{transformer},\text{from}} = s_{\text{transformer},\text{to}} = \frac{1}{2}s_{\text{shunt}}$ and
    $i_{\text{transformer},\text{from}} = i_{\text{transformer},\text{to}} = \frac{1}{2}i_{\text{shunt}}$.
