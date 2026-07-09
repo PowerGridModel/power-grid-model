@@ -15,6 +15,29 @@ glossary of the terminology used within the power grid model knowledge base.
 ```{contents}
 ```
 
+## Conventions
+
+### Slack bus (PGM internal)
+
+PGM does not have the common notion of a slack bus in the sense of an ideal source, both for computational and
+ambiguity reasons when there are multiple sources in the grid.
+However, it is still useful to select a slack bus to fix the otherwise ambiguous complex phase.
+
+In PGM, slack buses are selected as follows.
+
+1. [Source](./components.md#source) nodes are slack buses.
+2. If there are multiple isolated islands, each island's source is selected as the slack bus.
+3. If there are multiple sources within an isolated island, it is
+   [implementation-defined](../advanced_documentation/terminology.md#implementation-defined) which source node is
+   selected as the slack bus.
+   The simplest choice is to select the first-occuring source in the input data, but note that this behavior may change
+   over time.
+
+```{note}
+The slack bus used by PGM internally differs from the slack bus in the sense of an ideal source.
+For documentation on ideal source modeling, please refer to [its documentation](./non-pgm-components.md#ideal-source).
+```
+
 ## Programming terminology
 
 ### Bug

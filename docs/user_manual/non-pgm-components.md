@@ -62,3 +62,16 @@ for symmetric calculations.
 ## Cable
 
 A cable is equivalent to a line.
+
+## Ideal source
+
+An ideal source  (a.k.a. slack bus) can be modeled using a regular PGM [source](./components.md#source) with a high
+`sk`, e.g. $s_k = 10^{50}\,\text{VA}$.
+
+```{warning}
+At the time of writing, very high `sk` can result in unresolved infinities.
+The value mentioned here is a safe middle ground, as it is high enough for practical purposes but not so high that it
+would lead to those edge cases.
+For details, please refer to [PGM issue #733](https://github.com/PowerGridModel/power-grid-model/issues/733), which is
+a `good-first-issue` and can be picked up by anyone who would like to.
+```
