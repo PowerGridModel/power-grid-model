@@ -50,7 +50,7 @@ repos:
         args: ["--fix"]
   # format .json and .jsonc files
   - repo: https://github.com/biomejs/pre-commit  # outside pypi 
-    rev: v2.5.1
+    rev: v2.5.2
     hooks:
       # configuration is located in biome.jsonc
       - id: biome-format

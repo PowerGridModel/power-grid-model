@@ -231,7 +231,8 @@ In each iteration, the resulted voltage phase angle will be applied as the phase
 for the next iteration:
 
 - Initialization: let $\underline{U}^{(k)}$ be the column vector of the estimated voltage phasor in the k-th iteration.
-  Let Bus $s$ be the slack bus, which is connected to the external network (source).
+  Let Bus $s$ be the [slack bus](../advanced_documentation/terminology.md#slack-bus-pgm-internal), which is connected to
+  the external network (source).
   $\underline{U}^{(0)}$ is initialized as follows:
   - For bus $i$, if there is no voltage measurement, assign $\underline{U}^{(0)} = e^{j \theta_i}$, where $\theta_i$ is
     the intrinsic transformer phase shift between Bus $i$ and Bus $s$.
@@ -299,7 +300,8 @@ Consequently, the iteration process differs slightly from that of
 
 - Initialization: let $\boldsymbol{U}^{(k)}$ be the column vector of the estimated voltage magnitude and
   $\boldsymbol{\theta}^{(k)}$ the column vector of the estimated voltage angle in k-th iteration.
-  Let Bus $s$ be the slack bus which is connected to external network (source).
+  Let Bus $s$ be the [slack bus](../advanced_documentation/terminology.md#slack-bus-pgm-internal) which is connected to
+  external network (source).
   We initialize $\boldsymbol{U}^{(0)}$ and $\boldsymbol{\theta}^{(k)}$ as follows:
   - For Bus $i$, if there is no voltage measurement, assign $U_i^{(0)} = 1$ and $\theta_i^{(0)} = 0$, where $\theta_i$
     is the intrinsic transformer phase shift between Bus $i$ and Bus $s$.
