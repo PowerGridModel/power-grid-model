@@ -86,6 +86,7 @@ user_manual/data-model
 user_manual/dataset-terminology
 user_manual/components
 user_manual/calculations
+user_manual/non-pgm-components
 user_manual/performance-guide
 user_manual/data-validator
 user_manual/model-validation
