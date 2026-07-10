@@ -314,7 +314,34 @@ constexpr auto output_result(Component const& power_sensor, MainModelState<Compo
         }
     }();
 
-    if (obj_math_id.group == disconnected) {
+    auto const measured_object_active = [&]() {
+        switch (terminal_type) {
+            using enum MeasuredTerminalType;
+        case branch_from:
+            return get_component_by_sequence<Branch>(state.components, obj_seq).from_status();
+        case branch_to:
+            return get_component_by_sequence<Branch>(state.components, obj_seq).to_status();
+        case source:
+            return get_component_by_sequence<Source>(state.components, obj_seq).status();
+        case shunt:
+            return get_component_by_sequence<Shunt>(state.components, obj_seq).status();
+        case load:
+        case generator:
+            return get_component_by_sequence<GenericLoadGen>(state.components, obj_seq).status();
+        case branch3_1:
+            return get_component_by_sequence<Branch3>(state.components, obj_seq).status_1();
+        case branch3_2:
+            return get_component_by_sequence<Branch3>(state.components, obj_seq).status_2();
+        case branch3_3:
+            return get_component_by_sequence<Branch3>(state.components, obj_seq).status_3();
+        case node:
+            return true;
+        default:
+            throw MissingCaseForEnumError{std::format("{} output_result()", Component::name), terminal_type};
+        }
+    }();
+
+    if (!measured_object_active || obj_math_id.group == disconnected) {
         return power_sensor.template get_null_output<sym>();
     }
 
@@ -384,7 +411,25 @@ constexpr auto output_result(Component const& current_sensor, MainModelState<Com
         }
     }();
 
-    if (obj_math_id.group == disconnected) {
+    auto const measured_object_active = [&]() {
+        switch (terminal_type) {
+            using enum MeasuredTerminalType;
+        case branch_from:
+            return get_component_by_sequence<Branch>(state.components, obj_seq).from_status();
+        case branch_to:
+            return get_component_by_sequence<Branch>(state.components, obj_seq).to_status();
+        case branch3_1:
+            return get_component_by_sequence<Branch3>(state.components, obj_seq).status_1();
+        case branch3_2:
+            return get_component_by_sequence<Branch3>(state.components, obj_seq).status_2();
+        case branch3_3:
+            return get_component_by_sequence<Branch3>(state.components, obj_seq).status_3();
+        default:
+            throw MissingCaseForEnumError{std::format("{} output_result()", Component::name), terminal_type};
+        }
+    }();
+
+    if (!measured_object_active || obj_math_id.group == disconnected) {
         return current_sensor.template get_null_output<sym>();
     }
 
