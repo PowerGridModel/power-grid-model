@@ -274,7 +274,7 @@ inline auto retrieve_regulator_info(State const& state) -> RegulatedObjects {
     return regulated_objects;
 }
 
-template <functor_c F> inline void for_all_vertices(TransformerGraph const& graph, F func) {
+inline void for_all_vertices(TransformerGraph const& graph, functor_c auto func) {
     BGL_FORALL_VERTICES(v, graph, TransformerGraph) { func(v); }
     capturing::into_the_void(func);
 }

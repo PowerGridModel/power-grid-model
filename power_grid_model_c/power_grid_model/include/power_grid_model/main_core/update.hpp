@@ -28,8 +28,7 @@ namespace power_grid_model::main_core::update {
 
 namespace detail {
 template <component_c Component, non_owning_view_c Elements, functor_c Func>
-    requires std::invocable<std::remove_cvref_t<Func>, typename Component::UpdateType, Idx2D const&> &&
-             std::ranges::forward_range<Elements>
+    requires std::ranges::forward_range<Elements> && std::invocable<Func, typename Component::UpdateType, Idx2D const&>
 inline void iterate_component_sequence(Func func, Elements elements, std::span<Idx2D const> sequence_idx) {
     assert(std::ranges::ssize(elements) == std::ranges::ssize(sequence_idx));
 

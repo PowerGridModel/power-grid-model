@@ -26,8 +26,9 @@ struct short_circuit_t : calculation_type_t {};
 template <typename T>
 concept calculation_type_tag = std::derived_from<T, calculation_type_t>;
 
-template <functor_c Functor, class... Args>
-decltype(auto) calculation_symmetry_func_selector(CalculationSymmetry calculation_symmetry, Functor f, Args&&... args) {
+template <class... Args>
+decltype(auto) calculation_symmetry_func_selector(CalculationSymmetry calculation_symmetry, functor_c auto f,
+                                                  Args&&... args) {
     using enum CalculationSymmetry;
 
     switch (calculation_symmetry) {
@@ -40,8 +41,8 @@ decltype(auto) calculation_symmetry_func_selector(CalculationSymmetry calculatio
     }
 }
 
-template <functor_c Functor, class... Args>
-decltype(auto) calculation_type_func_selector(CalculationType calculation_type, Functor f, Args&&... args) {
+template <class... Args>
+decltype(auto) calculation_type_func_selector(CalculationType calculation_type, functor_c auto f, Args&&... args) {
     using enum CalculationType;
 
     switch (calculation_type) {
@@ -56,18 +57,17 @@ decltype(auto) calculation_type_func_selector(CalculationType calculation_type, 
     }
 }
 
-template <functor_c Functor, class... Args>
+template <class... Args>
 decltype(auto) calculation_type_symmetry_func_selector(CalculationType calculation_type,
-                                                       CalculationSymmetry calculation_symmetry, Functor f,
+                                                       CalculationSymmetry calculation_symmetry, functor_c auto f,
                                                        Args&&... args) {
     calculation_type_func_selector(
         calculation_type,
-        []<calculation_type_tag calculation_type, functor_c Functor_, typename... Args_>(
-            CalculationSymmetry calculation_symmetry_, Functor_ f_, Args_&&... args_) {
+        []<calculation_type_tag calculation_type, typename... Args_>(CalculationSymmetry calculation_symmetry_,
+                                                                     functor_c auto f_, Args_&&... args_) {
             calculation_symmetry_func_selector(
                 calculation_symmetry_,
-                []<symmetry_tag sym, functor_c SubFunctor, typename... SubArgs>(SubFunctor sub_f,
-                                                                                SubArgs&&... sub_args) {
+                []<symmetry_tag sym, typename... SubArgs>(functor_c auto sub_f, SubArgs&&... sub_args) {
                     sub_f.template operator()<calculation_type, sym>(std::forward<SubArgs>(sub_args)...);
                 },
                 f_, std::forward<Args_>(args_)...);

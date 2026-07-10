@@ -120,7 +120,7 @@ constexpr auto comp_base_sequence(MainModelState<ComponentContainer> const& stat
 template <typename Component, typename IndexType, class ComponentContainer, non_owning_view_c ComponentOutput,
           functor_c ResFunc>
     requires model_component_state_c<MainModelState, ComponentContainer, Component> &&
-             std::invocable<std::remove_cvref_t<ResFunc>, Component const&, IndexType> &&
+             std::invocable<ResFunc, Component const&, IndexType> &&
              assignable_to<std::invoke_result_t<ResFunc, Component const&, IndexType>,
                            std::ranges::range_reference_t<ComponentOutput>> &&
              std::convertible_to<IndexType, std::ranges::range_value_t<decltype(comp_base_sequence<Component>(

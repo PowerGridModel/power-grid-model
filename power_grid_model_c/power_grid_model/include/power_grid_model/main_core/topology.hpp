@@ -33,7 +33,7 @@ namespace detail {
 
 template <typename Component, class ComponentContainer, typename ResType, functor_c ResFunc>
     requires common::component_container_c<ComponentContainer, Component> &&
-             std::invocable<std::remove_cvref_t<ResFunc>, Component const&> &&
+             std::invocable<ResFunc, Component const&> &&
              std::convertible_to<std::invoke_result_t<ResFunc, Component const&>, ResType>
 constexpr void apply_registration(ComponentContainer const& components, std::vector<ResType>& target, ResFunc func) {
     auto const begin = components.template citer<Component>().begin();

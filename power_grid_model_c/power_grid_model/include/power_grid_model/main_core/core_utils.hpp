@@ -15,8 +15,9 @@ namespace power_grid_model::main_core::utils {
 
 namespace detail {
 
-template <typename Tuple, functor_c Functor, std::size_t... Indices>
-constexpr void run_functor_with_tuple_index_return_void(Functor functor, std::index_sequence<Indices...> /*unused*/) {
+template <typename Tuple, std::size_t... Indices>
+constexpr void run_functor_with_tuple_index_return_void(functor_c auto functor,
+                                                        std::index_sequence<Indices...> /*unused*/) {
     if constexpr (sizeof...(Indices) == 1) {
         (functor.template operator()<std::tuple_element_t<Indices, Tuple>>(), ...);
     } else {
@@ -25,8 +26,9 @@ constexpr void run_functor_with_tuple_index_return_void(Functor functor, std::in
     }
 }
 
-template <typename Tuple, functor_c Functor, std::size_t... Indices>
-constexpr auto run_functor_with_tuple_index_return_array(Functor functor, std::index_sequence<Indices...> /*unused*/) {
+template <typename Tuple, std::size_t... Indices>
+constexpr auto run_functor_with_tuple_index_return_array(functor_c auto functor,
+                                                         std::index_sequence<Indices...> /*unused*/) {
     if constexpr (sizeof...(Indices) == 1) {
         return std::array { functor.template operator()<std::tuple_element_t<Indices, Tuple>>()... };
     } else {
@@ -41,12 +43,12 @@ constexpr auto run_functor_with_tuple_index_return_array(Functor functor, std::i
 constexpr Idx sequential{-1};
 constexpr Idx invalid_index{-1};
 
-template <typename Tuple, functor_c Functor> constexpr void run_functor_with_tuple_return_void(Functor functor) {
+template <typename Tuple> constexpr void run_functor_with_tuple_return_void(functor_c auto functor) {
     detail::run_functor_with_tuple_index_return_void<Tuple>(functor,
                                                             std::make_index_sequence<std::tuple_size_v<Tuple>>{});
 }
 
-template <typename Tuple, functor_c Functor> constexpr auto run_functor_with_tuple_return_array(Functor functor) {
+template <typename Tuple> constexpr auto run_functor_with_tuple_return_array(functor_c auto functor) {
     return detail::run_functor_with_tuple_index_return_array<Tuple>(
         functor, std::make_index_sequence<std::tuple_size_v<Tuple>>{});
 }
