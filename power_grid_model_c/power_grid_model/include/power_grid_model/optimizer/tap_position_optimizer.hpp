@@ -274,7 +274,7 @@ inline auto retrieve_regulator_info(State const& state) -> RegulatedObjects {
     return regulated_objects;
 }
 
-template <typename F> inline void for_all_vertices(TransformerGraph const& graph, F func) {
+template <functor_c F> inline void for_all_vertices(TransformerGraph const& graph, F func) {
     BGL_FORALL_VERTICES(v, graph, TransformerGraph) { func(v); }
     capturing::into_the_void(func);
 }
@@ -1333,7 +1333,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         get<std::remove_cvref_t<decltype(transformer)>>(update_data).push_back(result);
     }
 
-    template <typename Func>
+    template <functor_c Func>
         requires((std::invocable<Func, TransformerTypes const&, bool> &&
                   std::same_as<std::invoke_result_t<Func, TransformerTypes const&, bool>, IntS>) &&
                  ...)

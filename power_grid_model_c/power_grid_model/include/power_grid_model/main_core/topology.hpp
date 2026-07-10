@@ -31,7 +31,7 @@ namespace power_grid_model::main_core {
 
 namespace detail {
 
-template <typename Component, class ComponentContainer, typename ResType, typename ResFunc>
+template <typename Component, class ComponentContainer, typename ResType, functor_c ResFunc>
     requires common::component_container_c<ComponentContainer, Component> &&
              std::invocable<std::remove_cvref_t<ResFunc>, Component const&> &&
              std::convertible_to<std::invoke_result_t<ResFunc, Component const&>, ResType>

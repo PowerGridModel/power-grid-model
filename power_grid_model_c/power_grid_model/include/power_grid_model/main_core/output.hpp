@@ -118,7 +118,7 @@ constexpr auto comp_base_sequence(MainModelState<ComponentContainer> const& stat
 }
 
 template <typename Component, typename IndexType, class ComponentContainer, non_owning_view_c ComponentOutput,
-          typename ResFunc>
+          functor_c ResFunc>
     requires model_component_state_c<MainModelState, ComponentContainer, Component> &&
              std::invocable<std::remove_cvref_t<ResFunc>, Component const&, IndexType> &&
              assignable_to<std::invoke_result_t<ResFunc, Component const&, IndexType>,

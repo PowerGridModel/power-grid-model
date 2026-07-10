@@ -140,6 +140,11 @@ constexpr auto by_const_ref(R& r) noexcept {
     return by_ref(std::as_const(r));
 }
 
+// pgm functor concept
+// it should be cheap to copy, so it should be trivially copyable and small in size
+template <class T>
+concept functor_c = std::is_trivially_copyable_v<T> && (sizeof(T) <= 256);
+
 // function to handle periodic mapping
 template <typename T> constexpr T map_to_cyclic_range(T value, T period) {
     static_assert(std::is_arithmetic_v<T>, "T must be an arithmetic type (integral or floating-point)");

@@ -613,7 +613,7 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
             y_bus);
     }
 
-    template <typename Func>
+    template <functor_c Func>
         requires std::invocable<Func, Idx /*row*/, Idx /*col*/, Idx /*data_idx*/, Idx /*data_idx_transpose*/>
     void iterate_matrix_skip_fills(Func func, YBus<sym> const& y_bus) const {
         auto const& row_indptr = y_bus.row_indptr_lu();

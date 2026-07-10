@@ -189,7 +189,7 @@ class Topology {
         comp_coup_.voltage_regulator.resize(comp_topo_.regulated_object_idx.size(), unknown_idx2d);
     }
 
-    template <typename F> static void for_all_vertices(GlobalGraph const& graph, F func) {
+    template <functor_c F> static void for_all_vertices(GlobalGraph const& graph, F func) {
         BGL_FORALL_VERTICES(v, graph, GlobalGraph) { func(v); }
     }
 
