@@ -104,7 +104,7 @@ class Subcase {
     template <typename T>
         requires std::invocable<std::remove_cvref_t<T>, Subcase&>
     auto maybe_with_raises(T statement) noexcept {
-        return [this, statement_ = std::move(statement)](Subcase& subcase) {
+        return [this, statement_ = statement](Subcase& subcase) {
             if (!raises_) {
                 return statement_(subcase);
             }
@@ -126,7 +126,7 @@ class Subcase {
     template <typename T>
         requires std::invocable<std::remove_cvref_t<T>, Subcase&>
     auto maybe_mark_xfail(T statement) noexcept {
-        return [this, statement_ = std::move(statement)](Subcase& subcase) {
+        return [this, statement_ = statement](Subcase& subcase) {
             if (!xfail_raises_) {
                 return statement_(subcase);
             }
