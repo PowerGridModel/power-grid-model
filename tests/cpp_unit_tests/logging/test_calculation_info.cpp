@@ -56,9 +56,7 @@ void report_checker_helper(auto& report, Idx n_threads = Idx{1}) {
     }
 }
 
-template <typename JobFn>
-    requires std::invocable<JobFn, Idx>
-void run_parallel_jobs(Idx n_threads, JobFn job) {
+void run_parallel_jobs(Idx n_threads, functor_c auto job) {
     std::vector<std::jthread> threads;
     threads.reserve(n_threads);
     for ([[maybe_unused]] Idx const i : IdxRange{n_threads}) {
