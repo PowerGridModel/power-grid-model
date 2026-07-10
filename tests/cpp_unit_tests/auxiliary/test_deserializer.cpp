@@ -754,6 +754,23 @@ true}]}]})";
         constexpr std::string_view json_invalid = R"({"data":[[[[[[[[[[[[]]]]]]]]]]]]})";
         check_error(json_invalid, "Json depth exceeds the limit of 10!\n");
     }
+
+    SUBCASE("Deeply nested msgpack") {
+        constexpr std::string_view msgpack_invalid =
+            "\x81\xa4"
+            "data"
+            "\x91\x91\x91\x91\x91\x91\x91\x91\x91\x91\x91\x90"sv;
+  
+        std::vector<NodeInput> node(1);
+
+        auto const run = [&]() {
+            Deserializer deserializer{from_msgpack, msgpack_invalid, meta_data_gen::meta_data};
+            deserializer.get_dataset_info().set_buffer("node", nullptr, node.data());
+            deserializer.parse();
+        };
+
+        CHECK_THROWS_WITH_AS(run(), doctest::Contains("Map expected."), std::exception);
+    }
 }
 
 } // namespace power_grid_model::meta_data
