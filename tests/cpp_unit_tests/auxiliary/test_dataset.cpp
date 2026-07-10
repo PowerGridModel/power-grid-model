@@ -1001,6 +1001,12 @@ TEST_CASE_TEMPLATE("Test dataset (common)", DatasetType, ConstDataset, MutableDa
                                                          static_cast<void*>(a_buffer.data())),
                                 DatasetError);
             }
+            SUBCASE("Decreasing indptr") {
+                auto other_indptr = std::vector<Idx>{0, 1, 0, 1};
+                CHECK_THROWS_AS(add_inhomogeneous_buffer(dataset, A::name, other_indptr.size(), other_indptr.data(),
+                                                         static_cast<void*>(a_buffer.data())),
+                                DatasetError);
+            }
         }
     }
 

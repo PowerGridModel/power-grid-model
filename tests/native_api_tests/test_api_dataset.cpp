@@ -159,4 +159,63 @@ TEST_CASE("OwningDataset - filter irrelevant components") {
              "voltage_regulator"s}); // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
     }
 }
+
+namespace {
+constexpr auto indptr_bounds_error_message =
+    "The last element of indptr must be equal to the total number of elements!\n";
+}
+
+TEST_CASE_TEMPLATE("Native readable dataset - indptr sanitization", DatasetType, DatasetMutable, DatasetConst) {
+    DatasetType dataset{"input", true, 3};
+
+    SUBCASE("add_buffer with too low starting point indptr") {
+        std::vector<Idx> const indptr{-1, 1, 1, 3};
+        CHECK_THROWS_AS_MESSAGE(dataset.add_buffer("node", -1, indptr.back(), indptr.data(), nullptr),
+                                PowerGridRegularError, doctest::Contains(indptr_bounds_error_message));
+    }
+    SUBCASE("add_buffer with too high starting point indptr") {
+        std::vector<Idx> const indptr{1, 1, 1, 3};
+        CHECK_THROWS_AS_MESSAGE(dataset.add_buffer("node", -1, indptr.back(), indptr.data(), nullptr),
+                                PowerGridRegularError, doctest::Contains(indptr_bounds_error_message));
+    }
+    SUBCASE("add_buffer with too few elements") {
+        std::vector<Idx> const indptr{0, 1, 1, 3};
+        CHECK_THROWS_AS_MESSAGE(dataset.add_buffer("node", -1, indptr.back() + 1, indptr.data(), nullptr),
+                                PowerGridRegularError, doctest::Contains(indptr_bounds_error_message));
+    }
+    SUBCASE("add_buffer with too many elements") {
+        std::vector<Idx> const indptr{0, 1, 1, 3};
+        CHECK_THROWS_AS_MESSAGE(dataset.add_buffer("node", -1, indptr.back() - 1, indptr.data(), nullptr),
+                                PowerGridRegularError, doctest::Contains(indptr_bounds_error_message));
+    }
+    SUBCASE("add_buffer with non-monotonic indptr") {
+        std::vector<Idx> const indptr{0, 2, 1, 3};
+        CHECK_THROWS_AS_MESSAGE(dataset.add_buffer("node", -1, indptr.back(), indptr.data(), nullptr),
+                                PowerGridRegularError,
+                                doctest::Contains("For a non-uniform buffer, indptr should be non-decreasing!\n"));
+    }
+}
+
+TEST_CASE("Native writable dataset - indptr sanitization") {
+    auto const update_json = R"({
+    "version": "1.0",
+    "type": "update",
+    "is_batch": true,
+    "attributes": {},
+    "data": [
+        {"node": []},
+        {"node": [{}, {}]},
+        {"node": [{}]}
+    ]
+})";
+
+    power_grid_model_cpp::Deserializer deserializer{update_json, PGM_json};
+    DatasetWritable& dataset = deserializer.get_dataset();
+
+    for (auto& indptr :
+         std::array{std::vector<Idx>{-1, 1, 1, 3}, std::vector<Idx>{1, 1, 1, 3}, std::vector<Idx>{-1, 1, 1, 2},
+                    std::vector<Idx>{-1, 1, 1, 4}, std::vector<Idx>{0, 2, 1, 3}}) {
+        CHECK_NOTHROW(dataset.set_buffer("node", indptr.data(), nullptr));
+    }
+}
 } // namespace power_grid_model_cpp
