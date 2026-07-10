@@ -757,10 +757,8 @@ true}]}]})";
 
     SUBCASE("Deeply nested msgpack") {
         constexpr std::string_view msgpack_invalid =
-            "\x81\xa4"
-            "data"
-            "\x91\x91\x91\x91\x91\x91\x91\x91\x91\x91\x91\x90"sv;
-  
+            "\x{81}\x{a4}data\x{91}\x{91}\x{91}\x{91}\x{91}\x{91}\x{91}\x{91}\x{91}\x{91}\x{91}\x{90}"sv;
+
         std::vector<NodeInput> node(1);
 
         auto const run = [&]() {
