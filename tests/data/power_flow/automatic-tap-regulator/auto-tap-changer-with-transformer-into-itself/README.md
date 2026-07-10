@@ -9,7 +9,11 @@ SPDX-License-Identifier: MPL-2.0
 A transformer into itself is a transformer that is connected to the same node on both ends. It acts as a shunt:
 
 $$
-Y_{\text{shunt}} = 2 \pi f c \left(\tan \delta +\mathrm{j}\right)
+\begin{aligned}
+   |Y_{\text{shunt}}| &= i_0 p.u. \\
+   \mathrm{Re}(Y_{\text{shunt}}) &= \frac{p_0}{s_n} p.u. \\
+   \mathrm{Im}(Y_{\text{shunt}}) &= -\sqrt{|Y_{\text{shunt}}|^2-\mathrm{Re}(Y_{\text{shunt}})^2} \\
+\end{aligned}
 $$
 
 Note that $Z_{\text{series}}$ is equivalent to $0$ (no net power flow).
