@@ -303,16 +303,35 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         }
     }
 
+    // Compute Takahashi dependency blocks over the solver's stored sparse pattern
+    // row_indptr_/col_indices_. This pattern includes fill-ins and can be larger
+    // than the downstream target pattern, e.g. the original y_bus pattern.
     void inplace_selective_inverse_with_prefactorized_matrix(
         std::vector<Tensor>& data, // pre-factorized data, will be in-place modified to store selective inverse
         BlockPermArray const& block_perm_array // pre-calculated permutation, const ref
     ) const {
-        capturing::into_the_void(data, block_perm_array); // prevent compiler from complaining about unused variables
         if constexpr (!is_block) {
+            // our use case only needs selective inversion for block sparse matrices
+            capturing::into_the_void(data, block_perm_array);
             throw SparseMatrixError{};
         } else {
+            // we first handle the case without pivot perturbation
             if (has_pivot_perturbation_) {
                 throw SparseMatrixError{};
+            }
+        }
+        if constexpr (is_block) {
+            // First compute Z = (P * A * Q)^-1 = U^-1 * L^-1.
+            for (Idx pivot_row_col = size_ - 1; pivot_row_col > -1; --pivot_row_col) {
+                update_selective_inverse_pivot_row_and_column(data, pivot_row_col);
+            }
+
+            // Restore A^-1_ij per sparse entry: Z_ij = Q_i * Z_ij * P_j.
+            for (Idx row = 0; row < size_; ++row) {
+                for (Idx idx = row_indptr_[row]; idx < row_indptr_[row + 1]; ++idx) {
+                    data[idx] =
+                        (block_perm_array[row].q * data[idx].matrix() * block_perm_array[col_indices_[idx]].p).array();
+                }
             }
         }
     }
@@ -643,6 +662,88 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         has_pivot_perturbation_ = false;
         matrix_norm_ = 0.0;
         original_matrix_.reset();
+    }
+
+    // Update selected inverse blocks for pivot p: column below p, row right of p, and diagonal.
+    // Trailing Z_ij blocks with i,j > p are already available from the reverse pivot sweep.
+    void update_selective_inverse_pivot_row_and_column(std::vector<Tensor>& data, Idx pivot_row_col) const
+        requires is_block
+    {
+        Idx const pivot_idx = diag_lu_[pivot_row_col];
+        Idx const u_start = pivot_idx + 1;
+        Idx const u_end = row_indptr_[pivot_row_col + 1];
+        Idx const n_off_diagonal = u_end - u_start;
+
+        // Buffer LU values from row/column p before overwriting them with Z blocks.
+        Tensor const pivot = data[pivot_idx];
+        std::vector<Tensor> const u_row(data.begin() + u_start, data.begin() + u_end); // u_row is contagious.
+        std::vector<Tensor> l_col(n_off_diagonal); // l column is scattered we need to extract them.
+        IdxVector l_indices(n_off_diagonal);
+        for (Idx offset = 0; offset < n_off_diagonal; ++offset) {
+            l_indices[offset] = find_entry(col_indices_[u_start + offset], pivot_row_col);
+            l_col[offset] = data[l_indices[offset]];
+        }
+
+        // Column below pivot: replace L_kp with Z_kp = -(sum_m Z_km * L_mp) * L_p^-1.
+        for (Idx k_offset = 0; k_offset < n_off_diagonal; ++k_offset) {
+            Idx const z_row = col_indices_[u_start + k_offset];
+            Tensor sum = Tensor::Zero();
+            for (Idx m_offset = 0; m_offset < n_off_diagonal; ++m_offset) {
+                Idx const z_col = col_indices_[u_start + m_offset];
+                sum += dot(data[find_entry(z_row, z_col)], l_col[m_offset]);
+            }
+            data[l_indices[k_offset]] = -multiply_inverse_unit_lower_right(pivot, sum);
+        }
+
+        // Row right of pivot: replace U_pj with Z_pj = -U_p^-1 * sum_m U_pm * Z_mj.
+        for (Idx j_offset = 0; j_offset < n_off_diagonal; ++j_offset) {
+            Idx const z_col = col_indices_[u_start + j_offset];
+            Tensor sum = Tensor::Zero();
+            for (Idx m_offset = 0; m_offset < n_off_diagonal; ++m_offset) {
+                Idx const z_row = col_indices_[u_start + m_offset];
+                sum += dot(u_row[m_offset], data[find_entry(z_row, z_col)]);
+            }
+            data[u_start + j_offset] = -multiply_inverse_upper_left(pivot, sum);
+        }
+
+        // Diagonal last: Z_pp = (L_p * U_p)^-1 - U_p^-1 * sum_m U_pm * Z_mp.
+        Tensor sum = Tensor::Zero();
+        for (Idx m_offset = 0; m_offset < n_off_diagonal; ++m_offset) {
+            sum += dot(u_row[m_offset], data[l_indices[m_offset]]);
+        }
+        data[pivot_idx] =
+            LUFactor::inverse_factorized_block(pivot.matrix()).array() - multiply_inverse_upper_left(pivot, sum);
+    }
+
+    // Find the data index of entry (row, col), which must exist in the filled LU pattern.
+    Idx find_entry(Idx row, Idx col) const {
+        auto const found =
+            std::lower_bound(col_indices_.begin() + row_indptr_[row], col_indices_.begin() + row_indptr_[row + 1], col);
+        assert(found != col_indices_.begin() + row_indptr_[row + 1]);
+        assert(*found == col);
+        return narrow_cast<Idx>(std::distance(col_indices_.begin(), found));
+    }
+
+    // Compute U_pivot^-1 * block, with U stored in the upper triangle of the packed pivot block.
+    static Tensor multiply_inverse_upper_left(Tensor const& pivot, Tensor block)
+        requires is_block
+    {
+        LUFactor::backward_substitute_inplace(pivot.matrix(), block);
+        return block;
+    }
+
+    // Compute block * L_pivot^-1, with L stored in the lower triangle and implicit unit diagonal.
+    // This is a right solve (xA=b); the existing forward/backward substitution helpers
+    // are left solves (Ax=b), so they cannot be reused here.
+    static Tensor multiply_inverse_unit_lower_right(Tensor const& pivot, Tensor block)
+        requires is_block
+    {
+        for (Idx block_col = block_size - 1; block_col > -1; --block_col) {
+            for (Idx other_col = block_size - 1; other_col > block_col; --other_col) {
+                block.col(block_col) -= pivot(other_col, block_col) * block.col(other_col);
+            }
+        }
+        return block;
     }
 
     void solve_once(std::vector<Tensor> const& data,        // pre-factorized data, const ref
