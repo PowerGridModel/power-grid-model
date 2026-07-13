@@ -235,39 +235,39 @@ To list the available presets, run `./build.sh -h`.
 In this section an example is given for setup in Ubuntu 24.04.
 You can use this example in Windows Subsystem for Linux (WSL), or in a physical/virtual machine.
 
-### Ubuntu Software Packages
+While you can use `apt`, setup via [Homebrew](https://brew.sh) has proved to be much simpler.
+In addition, the recommended way to get the [C++ packages](#c) and `uv` is via [Homebrew](https://brew.sh).
 
-Install the minimum required packages:
+### Set-up Homebrew
+
+Follow the setup guidelines in [Homebrew](https://brew.sh).
+For optimal user experience on Linux, also consider installing the
+[requirements](https://docs.brew.sh/Homebrew-on-Linux#requirements) as well.
+
+At the time of writing, the set-up is done as follows:
 
 ```shell
-sudo apt update && sudo apt -y upgrade
-sudo apt install -y build-essential gcc g++ clang-18 make ninja-build pkg-config
+sudo apt update && sudo apt -y upgrade                     # make sure you're up to date
+sudo apt install build-essential gcc g++ clang-18 procps curl file git # install initial dependencies
 ```
 
-The following packages are optional depending on your use case:
+Then install Homebrew using the setup recommendations in [Homebrew](https://brew.sh).
 
-```shell
-sudo apt install -y gcovr lcov # For coverage reports
-sudo apt install -y gdb # For debugging
-sudo apt install -y wget curl zip unzip tar git # General use tools
-```
-
-### C++ Dependencies for CMake
+### C++ Dependencies + Build Requirements
 
 The recommended way to get the [C++ packages](#c) and `uv` is via [Homebrew](https://brew.sh):
 
 ```shell
-brew install boost eigen nlohmann-json msgpack-cxx doctest cmake uv
+brew install \
+    gdb gcovr lcov lld cmake ninja \
+    boost eigen nlohmann-json msgpack-cxx doctest uv
 ```
 
-### Environment variables
-
-Append the following lines into the file `${HOME}/.bashrc`.
+Append the following lines into the file `${HOME}/.bashrc` (required for `scikit-build` for the Python installation):
 
 ```shell
-export CXX=clang++-18            # or g++-14
-export CC=clang-18               # or gcc-14
-export CMAKE_PREFIX_PATH=/home/linuxbrew/.linuxbrew  # only needed for CMake builds
+export CXX=clang++  # or g++ or g++-14 or ...
+export CC=clang     # or gcc or gcc-14 or ...
 export LLVM_COV=llvm-cov-18      # only if you want to use one of the llvm features
 export CLANG_TIDY=clang-tidy-18  # only if you want to use one of the clang-tidy presets
 ```
@@ -458,7 +458,6 @@ As a quick start, from the root of the repository:
 
 ```{note}
 Test coverage is not supported on macOS.
-```
 
 ## Package tests
 
