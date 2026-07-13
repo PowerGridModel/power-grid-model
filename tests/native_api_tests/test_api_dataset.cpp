@@ -5,6 +5,7 @@
 #include "load_dataset.hpp"
 
 #include <power_grid_model_c/basics.h>
+#include <power_grid_model_cpp/basics.hpp>
 #include <power_grid_model_cpp/dataset.hpp>
 #include <power_grid_model_cpp/handle.hpp>
 #include <power_grid_model_cpp/model.hpp>
