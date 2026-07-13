@@ -11,7 +11,6 @@
 
 #include <doctest/doctest.h>
 
-#include <concepts>
 #include <thread>
 #include <utility>
 #include <vector>
