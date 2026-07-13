@@ -36,7 +36,7 @@ The input, i.e., [0, 1, 3] should be strictly increasing
 namespace power_grid_model {
 
 namespace detail {
-constexpr auto sparse_encode(IdxVector const& element_groups, Idx num_groups) {
+constexpr auto sparse_encode(non_owning_view_c auto element_groups, Idx num_groups) {
     IdxVector result(num_groups + 1);
     auto next_group = std::begin(element_groups);
     auto const begin = std::begin(element_groups);
@@ -47,14 +47,18 @@ constexpr auto sparse_encode(IdxVector const& element_groups, Idx num_groups) {
     }
     return result;
 }
+constexpr auto sparse_encode(IdxVector const& element_groups, Idx num_groups) {
+    return sparse_encode(by_ref(element_groups), num_groups);
+}
 
-constexpr auto sparse_decode(IdxVector const& indptr) {
+constexpr auto sparse_decode(non_owning_view_c auto indptr) {
     auto result = IdxVector(indptr.back());
     for (Idx const group : IdxRange{static_cast<Idx>(indptr.size()) - 1}) {
         std::fill(std::begin(result) + indptr[group], std::begin(result) + indptr[group + 1], group);
     }
     return result;
 }
+constexpr auto sparse_decode(IdxVector const& indptr) { return sparse_decode(by_ref(indptr)); }
 
 template <typename T, typename ElementType>
 concept iterator_of = std::input_or_output_iterator<T> && requires(T const t) {
