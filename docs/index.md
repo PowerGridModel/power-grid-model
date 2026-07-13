@@ -124,6 +124,7 @@ algorithms/tap-changing-algorithms
 algorithms/sc-algorithms
 algorithms/se-algorithms
 algorithms/lu-solver
+algorithms/dense-and-selective-inverse
 ```
 
 ```{toctree}
