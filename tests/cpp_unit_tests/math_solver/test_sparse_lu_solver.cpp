@@ -106,6 +106,20 @@ void check_selective_inverse_result(BlockSparseMatrix const& actual_inverse, Mat
     }
 }
 
+void check_selective_inverse_fill_in_nonzero(BlockSparseMatrix const& matrix_data, Idx row, Idx col) {
+    auto const first = matrix_data.col_indices.begin() + matrix_data.row_indptr[row];
+    auto const last = matrix_data.col_indices.begin() + matrix_data.row_indptr[row + 1];
+    auto const found = std::lower_bound(first, last, col);
+    REQUIRE_MESSAGE(found != last, "Fill-in block must exist in the sparse pattern");
+    REQUIRE_MESSAGE(*found == col, "Fill-in block must exist in the sparse pattern");
+
+    Idx const idx = narrow_cast<Idx>(std::distance(matrix_data.col_indices.begin(), found));
+    CAPTURE(row);
+    CAPTURE(col);
+    CHECK_MESSAGE(cabs(matrix_data.data[idx]).maxCoeff() > numerical_tolerance,
+                  "Selective inverse should populate preallocated fill-in block");
+}
+
 void calculate_selective_inverse(BlockSparseMatrix& matrix_data) {
     SparseLUSolver<Tensor, Array, Array> matrix_solver{matrix_data.row_indptr, matrix_data.col_indices,
                                                        matrix_data.diag_lu};
@@ -113,6 +127,16 @@ void calculate_selective_inverse(BlockSparseMatrix& matrix_data) {
 
     matrix_solver.prefactorize(matrix_data.data, matrix_block_perm);
     matrix_solver.inplace_selective_inverse_with_prefactorized_matrix(matrix_data.data, matrix_block_perm);
+}
+
+BlockSparseMatrix one_block_requiring_row_and_column_pivoting_lu_test_matrix() {
+    return {
+        .row_indptr = IdxVector{0, 1},
+        .col_indices = IdxVector{0},
+        .diag_lu = IdxVector{0},
+        // 100 at (1, 1) forces both a row and column swap, so P and Q are not identity.
+        .data = std::vector<Tensor>{{{1, 2}, {3, 100}}},
+    };
 }
 
 BlockSparseMatrix three_block_rows_with_preallocated_fill_ins_lu_test_matrix() {
@@ -328,6 +352,23 @@ TEST_CASE("Test Sparse LU solver") {
         }
 
         SUBCASE("Selective inverse with prefactorized matrix") {
+            SUBCASE("One block agrees with dense inverse") {
+                auto matrix_data = one_block_requiring_row_and_column_pivoting_lu_test_matrix();
+
+                using DenseMatrix = Eigen::Matrix<double, 2, 2, Eigen::ColMajor>;
+                using LUFactor = DenseLUFactor<DenseMatrix>;
+                DenseMatrix dense_lu = matrix_data.data[0].matrix();
+                LUFactor::BlockPerm dense_block_perm{};
+                bool has_pivot_perturbation = false;
+                LUFactor::factorize_block_in_place(dense_lu, dense_block_perm, epsilon, false, has_pivot_perturbation);
+                DenseMatrix const expected_inverse = LUFactor::dense_inverse(dense_lu, dense_block_perm);
+
+                calculate_selective_inverse(matrix_data);
+
+                CHECK_FALSE(has_pivot_perturbation);
+                check_matrix_result(matrix_data.data[0].matrix(), expected_inverse);
+            }
+
             SUBCASE("Three block rows with preallocated fill-ins") {
                 auto matrix_data = three_block_rows_with_preallocated_fill_ins_lu_test_matrix();
                 Eigen::MatrixXd const expected_inverse =
@@ -335,6 +376,8 @@ TEST_CASE("Test Sparse LU solver") {
 
                 calculate_selective_inverse(matrix_data);
 
+                check_selective_inverse_fill_in_nonzero(matrix_data, 1, 2);
+                check_selective_inverse_fill_in_nonzero(matrix_data, 2, 1);
                 check_selective_inverse_result(matrix_data, expected_inverse);
             }
 
@@ -355,6 +398,8 @@ TEST_CASE("Test Sparse LU solver") {
 
                 calculate_selective_inverse(matrix_data);
 
+                check_selective_inverse_fill_in_nonzero(matrix_data, 1, 3);
+                check_selective_inverse_fill_in_nonzero(matrix_data, 3, 1);
                 check_selective_inverse_result(matrix_data, expected_inverse);
             }
         }
