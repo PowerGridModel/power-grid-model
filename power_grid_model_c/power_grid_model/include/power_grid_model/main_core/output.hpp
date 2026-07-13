@@ -575,4 +575,11 @@ constexpr void output_result(MainModelState<ComponentContainer> const& state,
             return output_result<Component, ComponentContainer>(component, state, math_output, obj_seq);
         });
 }
+// vector overload
+template <std::derived_from<Base> Component, class ComponentContainer, typename SolverOutputType, class T>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
+constexpr void output_result(MainModelState<ComponentContainer> const& state,
+                             MathOutput<SolverOutputType> const& math_output, std::vector<T>& output) {
+    return output_result<Component>(state, math_output, by_ref(output));
+}
 } // namespace power_grid_model::main_core

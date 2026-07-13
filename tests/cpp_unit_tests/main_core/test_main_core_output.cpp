@@ -48,10 +48,10 @@ TEST_CASE("Test main core output") {
 
         SUBCASE("No regulation") {
             SUBCASE("Symmetric") {
-                output_result<TransformerTapRegulator, ComponentContainer>(state, SymOutput{}, by_ref(output));
+                output_result<TransformerTapRegulator, ComponentContainer>(state, SymOutput{}, output);
             }
             SUBCASE("Asymmetric") {
-                output_result<TransformerTapRegulator, ComponentContainer>(state, AsymOutput{}, by_ref(output));
+                output_result<TransformerTapRegulator, ComponentContainer>(state, AsymOutput{}, output);
             }
             CHECK(output[0].id == 0);
             CHECK(output[0].energized == 0);
@@ -65,11 +65,11 @@ TEST_CASE("Test main core output") {
                 .transformer_tap_positions = {{.transformer_id = 3, .tap_position = 1}}};
             SUBCASE("Symmetric") {
                 output_result<TransformerTapRegulator, ComponentContainer>(
-                    state, SymOutput{.solver_output = {}, .optimizer_output = optimizer_output}, by_ref(output));
+                    state, SymOutput{.solver_output = {}, .optimizer_output = optimizer_output}, output);
             }
             SUBCASE("Asymmetric") {
                 output_result<TransformerTapRegulator, ComponentContainer>(
-                    state, AsymOutput{.solver_output = {}, .optimizer_output = optimizer_output}, by_ref(output));
+                    state, AsymOutput{.solver_output = {}, .optimizer_output = optimizer_output}, output);
             }
             CHECK(output[0].id == 0);
             CHECK(output[0].energized == 0);
@@ -85,11 +85,11 @@ TEST_CASE("Test main core output") {
                                               {.transformer_id = 2, .tap_position = 3}}};
             SUBCASE("Symmetric") {
                 output_result<TransformerTapRegulator, ComponentContainer>(
-                    state, SymOutput{.solver_output = {}, .optimizer_output = optimizer_output}, by_ref(output));
+                    state, SymOutput{.solver_output = {}, .optimizer_output = optimizer_output}, output);
             }
             SUBCASE("Asymmetric") {
                 output_result<TransformerTapRegulator, ComponentContainer>(
-                    state, AsymOutput{.solver_output = {}, .optimizer_output = optimizer_output}, by_ref(output));
+                    state, AsymOutput{.solver_output = {}, .optimizer_output = optimizer_output}, output);
             }
             CHECK(output[0].id == 0);
             CHECK(output[0].energized == 1);
