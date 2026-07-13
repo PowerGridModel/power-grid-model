@@ -206,8 +206,9 @@ def test_const_dataset__bad_sparse_data(dataset_type, bad_indptr, expected_excep
         CConstDataset(data, dataset_type)
 
     # regression test: check that error type and message are independent of the order of the components
+    reverse_order_data = dict(reversed(data.items()))
     with pytest.raises(expected_exception, match=expected_message):
-        CConstDataset(dict(reversed(data.items())), dataset_type)
+        CConstDataset(reverse_order_data, dataset_type)
 
 
 @pytest.mark.parametrize(
