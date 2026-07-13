@@ -298,14 +298,14 @@ class DisjointSet {
         return x;
     }
 
-    // Merge the sets containing a and b. Returns true if they were distinct.
-    bool merge(Idx node_a, Idx node_b) {
+    // Unite the sets containing a and b. Returns true if they were distinct.
+    bool unite(Idx node_a, Idx node_b) {
         Idx const root_a = find(node_a);
         Idx const root_b = find(node_b);
         if (root_a == root_b) {
             return false;
         }
-        // union by rank
+        // form union by rank
         if (rank_[root_a] < rank_[root_b]) {
             parent_[root_a] = root_b;
         } else if (rank_[root_a] > rank_[root_b]) {
@@ -331,7 +331,7 @@ inline DisjointSet contract_branch_measured_edges(std::vector<BusNeighbourhoodIn
     for (Idx bus = 0; bus < n_bus; ++bus) {
         for (auto const& neighbour : neighbour_list[bus].direct_neighbours) {
             if (branch_has_native_measurement(neighbour.status)) {
-                components.merge(bus, neighbour.bus);
+                components.unite(bus, neighbour.bus);
             }
         }
     }
@@ -426,7 +426,7 @@ inline bool contracted_edges_form_forest(ContractedNetwork const& net, std::vect
     DisjointSet components{net.n_components};
     for (Idx const idx : edge_indices) {
         auto const& edge = net.candidate_edges[idx];
-        if (!components.merge(edge.from_component, edge.to_component)) {
+        if (!components.unite(edge.from_component, edge.to_component)) {
             return false; // closing a cycle
         }
     }
