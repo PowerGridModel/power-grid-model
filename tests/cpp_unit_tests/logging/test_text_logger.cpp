@@ -16,7 +16,6 @@
 
 #include <doctest/doctest.h>
 
-#include <concepts>
 #include <format>
 #include <functional>
 #include <stdexcept>
