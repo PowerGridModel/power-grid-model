@@ -7,6 +7,7 @@
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/common/three_phase_tensor.hpp>
+#include <power_grid_model/common/typing.hpp>
 
 #include <Eigen/Core>
 #include <doctest/doctest.h>
