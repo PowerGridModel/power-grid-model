@@ -406,3 +406,15 @@ The type is listed for each attribute in [Components](components.md).
 
 **NOTE:** the special value `nan` represents absence of value and may also be represented by
 [`nil`](#msgpack-schema-nil-absence-of-value) in the [msgpack schema](#msgpack-serialization-format-specification).
+
+## Known limitations
+
+The current serialization functionality has some limitations.
+
+### Memory limitations
+
+Hardware limitations and availability of free contiguous memory may result in failing serialization and deserialization.
+Often, this will lead to a [`bad_alloc`](https://en.cppreference.com/cpp/memory/new/bad_alloc).
+Due to the nature of the issue, we consider this a [non-spurious edge case](./terminology.md#non-spurious-edge-cases).
+Wherever possible, the Power Grid Model catches and wraps such low-level exceptions thrown during (de-)serialization.
+Regardlessly, caution is still adviced when handling large datasets.
