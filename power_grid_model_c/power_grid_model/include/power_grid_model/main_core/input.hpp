@@ -241,4 +241,12 @@ inline void add_component(ComponentContainer& components, Inputs component_input
     }
 }
 
+// vector overload
+template <std::derived_from<Base> Component, class ComponentContainer>
+    requires common::component_container_c<ComponentContainer, Component>
+inline void add_component(ComponentContainer& components,
+                          std::vector<typename Component::InputType> const& component_inputs, double system_frequency) {
+    add_component<Component>(components, by_ref(component_inputs), system_frequency);
+}
+
 } // namespace power_grid_model::main_core
