@@ -11,7 +11,9 @@
 #include <Eigen/Core>
 #include <doctest/doctest.h>
 
+#include <algorithm>
 #include <cstddef>
+#include <iterator>
 #include <type_traits>
 #include <vector>
 
