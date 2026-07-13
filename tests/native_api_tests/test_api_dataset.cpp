@@ -6,14 +6,18 @@
 
 #include <power_grid_model_c/basics.h>
 #include <power_grid_model_cpp/dataset.hpp>
+#include <power_grid_model_cpp/handle.hpp>
 #include <power_grid_model_cpp/model.hpp>
 #include <power_grid_model_cpp/options.hpp>
+#include <power_grid_model_cpp/serialization.hpp>
 
+#include <array>
 #include <functional>
 #include <initializer_list>
 #include <set>
 #include <string>
 #include <string_view>
+#include <vector>
 
 #include <doctest/doctest.h>
 
@@ -163,7 +167,7 @@ TEST_CASE("OwningDataset - filter irrelevant components") {
 namespace {
 constexpr auto indptr_bounds_error_message =
     "The last element of indptr must be equal to the total number of elements!\n";
-}
+} // namespace
 
 TEST_CASE_TEMPLATE("Native readable dataset - indptr sanitization", DatasetType, DatasetMutable, DatasetConst) {
     DatasetType dataset{"input", true, 3};
@@ -197,7 +201,7 @@ TEST_CASE_TEMPLATE("Native readable dataset - indptr sanitization", DatasetType,
 }
 
 TEST_CASE("Native writable dataset - indptr sanitization") {
-    auto const update_json = R"({
+    auto const* const update_json = R"({
     "version": "1.0",
     "type": "update",
     "is_batch": true,
