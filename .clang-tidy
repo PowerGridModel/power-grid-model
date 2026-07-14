@@ -71,8 +71,7 @@ readability-*,
 -bugprone-unchecked-optional-access,
 
 -google-runtime-float,
--readability-redundant-typename,
--readability-container-contains
+-readability-redundant-typename
 '
 
 WarningsAsErrors: '*'
