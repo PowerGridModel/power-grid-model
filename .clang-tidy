@@ -77,7 +77,6 @@ readability-*,
 -modernize-use-designated-initializers,
 -misc-use-internal-linkage,
 -bugprone-derived-method-shadowing-base-method,
--bugprone-unhandled-exception-at-new
 '
 
 WarningsAsErrors: '*'

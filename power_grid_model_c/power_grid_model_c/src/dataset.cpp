@@ -99,7 +99,7 @@ char const* PGM_dataset_info_attribute_name(PGM_Handle* handle, PGM_DatasetInfo 
 PGM_ConstDataset* PGM_create_dataset_const(PGM_Handle* handle, char const* dataset, PGM_Idx is_batch,
                                            PGM_Idx batch_size) noexcept {
     return call_with_catch(handle, [dataset, is_batch, batch_size] {
-        return cast_to_c(new ConstDataset{// NOSONAR(S5025)
+        return cast_to_c(new ConstDataset{// NOSONAR(S5025) // NOLINT(bugprone-unhandled-exception-at-new) // false positive
                                           safe_bool(is_batch), batch_size, safe_str_view(dataset), get_meta_data()});
     });
 }
@@ -107,13 +107,15 @@ PGM_ConstDataset* PGM_create_dataset_const(PGM_Handle* handle, char const* datas
 PGM_ConstDataset* PGM_create_dataset_const_from_writable(PGM_Handle* handle,
                                                          PGM_WritableDataset const* writable_dataset) noexcept {
     return call_with_catch(handle, [writable_dataset] {
-        return cast_to_c(new ConstDataset{safe_ptr_get(cast_to_cpp(writable_dataset))}); // NOSONAR(S5025)
+        return cast_to_c(new ConstDataset{ // NOSONAR(S5025) // NOLINT(bugprone-unhandled-exception-at-new) // false positive
+            safe_ptr_get(cast_to_cpp(writable_dataset))}); 
     });
 }
 
 PGM_ConstDataset* PGM_create_dataset_const_from_mutable(PGM_Handle* handle, PGM_MutableDataset const* mutable_dataset) noexcept {
     return call_with_catch(handle, [mutable_dataset] {
-        return cast_to_c(new ConstDataset{safe_ptr_get(cast_to_cpp(mutable_dataset))}); // NOSONAR(S5025)
+        return cast_to_c(new ConstDataset{// NOSONAR(S5025) // NOLINT(bugprone-unhandled-exception-at-new) // false positive
+            safe_ptr_get(cast_to_cpp(mutable_dataset))});
     });
 }
 
@@ -178,7 +180,7 @@ void PGM_dataset_writable_set_attribute_buffer(PGM_Handle* handle, PGM_WritableD
 PGM_MutableDataset* PGM_create_dataset_mutable(PGM_Handle* handle, char const* dataset, PGM_Idx is_batch,
                                                PGM_Idx batch_size) noexcept {
     return call_with_catch(handle, [dataset, is_batch, batch_size] {
-        return cast_to_c(new MutableDataset{// NOSONAR(S5025)
+        return cast_to_c(new MutableDataset{// NOSONAR(S5025)// NOSONAR(S5025) // NOLINT(bugprone-unhandled-exception-at-new) // false positive
                                             safe_bool(is_batch), batch_size, safe_str_view(dataset), get_meta_data()});
     });
 }
