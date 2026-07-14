@@ -319,20 +319,7 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
             if (has_pivot_perturbation_) {
                 throw SparseMatrixError{};
             }
-        }
-        if constexpr (is_block) {
-            // First compute Z = (P * A * Q)^-1 = U^-1 * L^-1.
-            for (Idx pivot_row_col = size_ - 1; pivot_row_col > -1; --pivot_row_col) {
-                update_selective_inverse_pivot_row_and_column(data, pivot_row_col);
-            }
-
-            // Restore A^-1_ij per sparse entry: Z_ij = Q_i * Z_ij * P_j.
-            for (Idx row = 0; row < size_; ++row) {
-                for (Idx idx = row_indptr_[row]; idx < row_indptr_[row + 1]; ++idx) {
-                    data[idx] =
-                        (block_perm_array[row].q * data[idx].matrix() * block_perm_array[col_indices_[idx]].p).array();
-                }
-            }
+            inplace_selective_inverse_block_matrix(data, block_perm_array);
         }
     }
 
@@ -662,6 +649,23 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         has_pivot_perturbation_ = false;
         matrix_norm_ = 0.0;
         original_matrix_.reset();
+    }
+
+    void inplace_selective_inverse_block_matrix(std::vector<Tensor>& data, BlockPermArray const& block_perm_array) const
+        requires is_block
+    {
+        // First compute Z = (P * A * Q)^-1 = U^-1 * L^-1.
+        for (Idx pivot_row_col = size_ - 1; pivot_row_col > -1; --pivot_row_col) {
+            update_selective_inverse_pivot_row_and_column(data, pivot_row_col);
+        }
+
+        // Restore A^-1_ij per sparse entry: Z_ij = Q_i * Z_ij * P_j.
+        for (Idx row = 0; row < size_; ++row) {
+            for (Idx idx = row_indptr_[row]; idx < row_indptr_[row + 1]; ++idx) {
+                data[idx] =
+                    (block_perm_array[row].q * data[idx].matrix() * block_perm_array[col_indices_[idx]].p).array();
+            }
+        }
     }
 
     // Update selected inverse blocks for pivot p: column below p, row right of p, and diagonal.
