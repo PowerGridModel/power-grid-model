@@ -16,7 +16,7 @@ template <typename T>
 concept iterator_facadeable_c = std::integral<typename T::difference_type> && std::is_pointer_v<typename T::pointer> &&
                                 std::is_lvalue_reference_v<typename T::reference> &&
                                 requires(T t, std::remove_cvref_t<T> mt, std::add_const_t<T> ct,
-                                         std::add_const_t<T> ct2, typename std::remove_cvref_t<T>::difference_type d) {
+                                         std::add_const_t<T> ct2, std::remove_cvref_t<T>::difference_type d) {
                                     typename T::value_type;
                                     { *t } -> std::same_as<typename T::reference>;
                                     { &*t } -> std::same_as<typename T::pointer>;
@@ -103,7 +103,7 @@ class IteratorFacade {
     }
 
     template <typename Self>
-    constexpr decltype(auto) operator[](this Self const& self, typename Self::difference_type idx) {
+    constexpr decltype(auto) operator[](this Self const& self, Self::difference_type idx) {
         return *(self + idx);
     }
 

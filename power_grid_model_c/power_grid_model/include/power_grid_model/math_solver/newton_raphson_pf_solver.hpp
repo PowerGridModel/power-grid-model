@@ -170,7 +170,7 @@ namespace newton_raphson_pf {
 
 // class for phasor in polar coordinate and/or complex power
 template <symmetry_tag sym> struct PolarPhasor : public Block<double, sym, false, 2> {
-    template <int r, int c> using GetterType = typename Block<double, sym, false, 2>::template GetterType<r, c>;
+    template <int r, int c> using GetterType = Block<double, sym, false, 2>::template GetterType<r, c>;
 
     // eigen expression
     using Block<double, sym, false, 2>::Block;
@@ -201,7 +201,7 @@ template <symmetry_tag sym> using ComplexPower = PolarPhasor<sym>;
 // Nij = Gij .* cij + Bij .* sij = -M
 template <symmetry_tag sym> class PFJacBlock : public Block<double, sym, true, 2> {
   public:
-    template <int r, int c> using GetterType = typename Block<double, sym, true, 2>::template GetterType<r, c>;
+    template <int r, int c> using GetterType = Block<double, sym, true, 2>::template GetterType<r, c>;
 
     // eigen expression
     using Block<double, sym, true, 2>::Block;
@@ -228,7 +228,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
 
     using SparseSolverType = SparseLUSolver<PFJacBlock<sym>, ComplexPower<sym>, PolarPhasor<sym>>;
     using BlockPermArray =
-        typename SparseLUSolver<PFJacBlock<sym>, ComplexPower<sym>, PolarPhasor<sym>>::BlockPermArray;
+        SparseLUSolver<PFJacBlock<sym>, ComplexPower<sym>, PolarPhasor<sym>>::BlockPermArray;
 
     static constexpr auto is_iterative = true;
 

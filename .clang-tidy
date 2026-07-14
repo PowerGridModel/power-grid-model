@@ -70,8 +70,7 @@ readability-*,
 -readability-uppercase-literal-suffix,
 -bugprone-unchecked-optional-access,
 
--google-runtime-float,
--readability-redundant-typename
+-google-runtime-float
 '
 
 WarningsAsErrors: '*'

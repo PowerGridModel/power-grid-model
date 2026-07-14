@@ -240,8 +240,8 @@ TEST_CASE("Test load generator") {
 }
 
 TEST_CASE_TEMPLATE("Test load generator", LoadGeneratorType, SymLoad, AsymLoad, SymGenerator, AsymGenerator) {
-    using InputType = typename LoadGeneratorType::InputType;
-    using UpdateType = typename LoadGeneratorType::UpdateType;
+    using InputType = LoadGeneratorType::InputType;
+    using UpdateType = LoadGeneratorType::UpdateType;
     using RealValueType = decltype(InputType::p_specified);
 
     auto const r_nan = RealValueType{nan};

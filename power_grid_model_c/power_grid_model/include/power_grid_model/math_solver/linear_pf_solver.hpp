@@ -53,7 +53,7 @@ template <symmetry_tag sym_type> class LinearPFSolver {
 
     using SparseSolverType = SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>;
     using BlockPermArray =
-        typename SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>::BlockPermArray;
+        SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>::BlockPermArray;
 
     static constexpr auto is_iterative = false;
 

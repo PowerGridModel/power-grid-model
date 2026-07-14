@@ -136,7 +136,7 @@ constexpr void produce_output(MainModelState<ComponentContainer> const& state, C
 // output node
 template <std::derived_from<Node> Component, steady_state_solver_output_type SolverOutputType>
 constexpr auto output_result(Component const& node, std::vector<SolverOutputType> const& solver_output, Idx2D math_id) {
-    using sym = typename SolverOutputType::sym;
+    using sym = SolverOutputType::sym;
 
     if (math_id.group == disconnected) {
         return node.template get_null_output<sym>();
@@ -156,7 +156,7 @@ inline auto output_result(Component const& node, std::vector<SolverOutputType> c
 template <std::derived_from<Branch> Component, steady_state_solver_output_type SolverOutputType>
 constexpr auto output_result(Component const& branch, std::vector<SolverOutputType> const& solver_output,
                              Idx2D math_id) {
-    using sym = typename SolverOutputType::sym;
+    using sym = SolverOutputType::sym;
 
     if (math_id.group == disconnected) {
         return branch.template get_null_output<sym>();
@@ -175,7 +175,7 @@ inline auto output_result(Component const& branch, std::vector<SolverOutputType>
 template <std::derived_from<Branch3> Component, steady_state_solver_output_type SolverOutputType>
 constexpr auto output_result(Component const& branch3, std::vector<SolverOutputType> const& solver_output,
                              Idx2DBranch3 const& math_id) {
-    using sym = typename SolverOutputType::sym;
+    using sym = SolverOutputType::sym;
 
     if (math_id.group == disconnected) {
         return branch3.template get_null_output<sym>();
@@ -200,7 +200,7 @@ inline auto output_result(Component const& branch3, std::vector<SolverOutputType
 template <std::derived_from<Source> Component, steady_state_solver_output_type SolverOutputType>
 constexpr auto output_result(Component const& source, std::vector<SolverOutputType> const& solver_output,
                              Idx2D const& math_id) {
-    using sym = typename SolverOutputType::sym;
+    using sym = SolverOutputType::sym;
 
     if (math_id.group == disconnected) {
         return source.template get_null_output<sym>();
@@ -220,7 +220,7 @@ inline auto output_result(Component const& source, std::vector<SolverOutputType>
 template <std::derived_from<GenericLoadGen> Component, steady_state_solver_output_type SolverOutputType>
 constexpr auto output_result(Component const& load_gen, std::vector<SolverOutputType> const& solver_output,
                              Idx2D const& math_id) {
-    using sym = typename SolverOutputType::sym;
+    using sym = SolverOutputType::sym;
 
     if (math_id.group == disconnected) {
         return load_gen.template get_null_output<sym>();
@@ -237,7 +237,7 @@ inline auto output_result(Component const& load_gen, std::vector<SolverOutputTyp
 template <std::derived_from<Shunt> Component, steady_state_solver_output_type SolverOutputType>
 constexpr auto output_result(Component const& shunt, std::vector<SolverOutputType> const& solver_output,
                              Idx2D const& math_id) {
-    using sym = typename SolverOutputType::sym;
+    using sym = SolverOutputType::sym;
 
     if (math_id.group == disconnected) {
         return shunt.template get_null_output<sym>();
@@ -259,7 +259,7 @@ template <std::derived_from<GenericVoltageSensor> Component, class ComponentCont
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr auto output_result(Component const& voltage_sensor, MainModelState<ComponentContainer> const& state,
                              std::vector<SolverOutputType> const& solver_output, Idx const node_seq) {
-    using sym = typename SolverOutputType::sym;
+    using sym = SolverOutputType::sym;
 
     Idx2D const node_math_id = state.topo_comp_coup->node[node_seq];
     if (node_math_id.group == disconnected) {
@@ -281,7 +281,7 @@ template <std::derived_from<GenericPowerSensor> Component, class ComponentContai
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr auto output_result(Component const& power_sensor, MainModelState<ComponentContainer> const& state,
                              std::vector<SolverOutputType> const& solver_output, Idx const obj_seq) {
-    using sym = typename SolverOutputType::sym;
+    using sym = SolverOutputType::sym;
 
     auto const terminal_type = power_sensor.get_terminal_type();
     Idx2D const obj_math_id = [&]() {
@@ -361,7 +361,7 @@ template <std::derived_from<GenericCurrentSensor> Component, class ComponentCont
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr auto output_result(Component const& current_sensor, MainModelState<ComponentContainer> const& state,
                              std::vector<SolverOutputType> const& solver_output, Idx const obj_seq) {
-    using sym = typename SolverOutputType::sym;
+    using sym = SolverOutputType::sym;
 
     auto const terminal_type = current_sensor.get_terminal_type();
     Idx2D const obj_math_id = [&]() {

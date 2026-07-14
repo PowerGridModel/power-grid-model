@@ -122,10 +122,10 @@ TEST_CASE_TEMPLATE(
     TypeCombo<row_t, columnar_t, dense_t, invalid_id_t>, TypeCombo<row_t, columnar_t, sparse_t, invalid_id_t>) {
 
     using namespace std::string_literals;
-    using input_type = typename T::input_type;
-    using update_type = typename T::update_type;
-    using sparsity_type = typename T::sparsity_type;
-    using id_check_type = typename T::id_check_type;
+    using input_type = T::input_type;
+    using update_type = T::update_type;
+    using sparsity_type = T::sparsity_type;
+    using id_check_type = T::id_check_type;
 
     DatasetConst input_dataset{"input", false, 1};
     DatasetConst update_dataset{"update", true, 2};

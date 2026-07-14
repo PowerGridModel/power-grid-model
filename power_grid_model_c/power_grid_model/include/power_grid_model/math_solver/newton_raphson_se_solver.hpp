@@ -37,7 +37,7 @@ namespace newton_raphson_se {
 
 // block class for the unknown vector and/or right-hand side in state estimation equation
 template <symmetry_tag sym> struct NRSEUnknown : public Block<double, sym, false, 4> {
-    template <int r, int c> using GetterType = typename Block<double, sym, false, 4>::template GetterType<r, c>;
+    template <int r, int c> using GetterType = Block<double, sym, false, 4>::template GetterType<r, c>;
 
     // eigen expression
     using Block<double, sym, false, 4>::Block;
@@ -64,9 +64,9 @@ template <symmetry_tag sym> using NRSERhs = NRSEUnknown<sym>;
 // ]
 template <symmetry_tag sym> class NRSEGainBlock : public Block<double, sym, true, 4> {
   public:
-    template <int r, int c> using GetterType = typename Block<double, sym, true, 4>::template GetterType<r, c>;
+    template <int r, int c> using GetterType = Block<double, sym, true, 4>::template GetterType<r, c>;
     template <int r, int c, int r_size, int c_size>
-    using BlockGetterType = typename Block<double, sym, true, 4>::template BlockGetterType<r, c, r_size, c_size>;
+    using BlockGetterType = Block<double, sym, true, 4>::template BlockGetterType<r, c, r_size, c_size>;
 
     // eigen expression
     using Block<double, sym, true, 4>::Block;
@@ -227,7 +227,7 @@ template <symmetry_tag sym_type> class NewtonRaphsonSESolver {
     std::vector<NRSERhs<sym>> x_;
     // solver
     SparseLUSolver<NRSEGainBlock<sym>, NRSERhs<sym>, NRSEUnknown<sym>> sparse_solver_;
-    typename SparseLUSolver<NRSEGainBlock<sym>, NRSERhs<sym>, NRSEUnknown<sym>>::BlockPermArray perm_;
+    SparseLUSolver<NRSEGainBlock<sym>, NRSERhs<sym>, NRSEUnknown<sym>>::BlockPermArray perm_;
 
     void initialize_unknown(ComplexValueVector<sym>& initial_u, MeasuredValues<sym> const& measured_values) {
         using statistics::detail::cabs_or_real;

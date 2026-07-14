@@ -116,7 +116,7 @@ template <std::derived_from<Regulator> Component> struct topology_base_type<Comp
     using type = Regulator;
 };
 template <typename Component>
-using topology_base_type_t = typename topology_base_type<std::remove_cvref_t<Component>>::type;
+using topology_base_type_t = topology_base_type<std::remove_cvref_t<Component>>::type;
 } // namespace detail
 
 template <typename ComponentType, class ComponentContainer>

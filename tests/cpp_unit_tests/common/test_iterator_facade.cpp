@@ -104,11 +104,11 @@ template <advance_type_c advance_type_t, typename UnderlyingType> class BaseTest
     }
 };
 
-using TestIdxVectorIterator = BaseTestIterator<without_increment_decrement_t, typename IdxVector::iterator>;
-using TestIdxVectorConstIterator = BaseTestIterator<without_increment_decrement_t, typename IdxVector::const_iterator>;
-using TestIdxVectorIteratorWithIncDec = BaseTestIterator<with_increment_decrement_t, typename IdxVector::iterator>;
+using TestIdxVectorIterator = BaseTestIterator<without_increment_decrement_t, IdxVector::iterator>;
+using TestIdxVectorConstIterator = BaseTestIterator<without_increment_decrement_t, IdxVector::const_iterator>;
+using TestIdxVectorIteratorWithIncDec = BaseTestIterator<with_increment_decrement_t, IdxVector::iterator>;
 using TestIdxVectorConstIteratorWithIncDec =
-    BaseTestIterator<with_increment_decrement_t, typename IdxVector::const_iterator>;
+    BaseTestIterator<with_increment_decrement_t, IdxVector::const_iterator>;
 
 static_assert(iterator_facadeable_c<TestIdxVectorIterator>);
 static_assert(iterator_facadeable_c<TestIdxVectorConstIterator>);
