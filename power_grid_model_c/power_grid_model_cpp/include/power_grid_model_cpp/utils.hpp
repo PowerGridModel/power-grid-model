@@ -11,7 +11,6 @@
 #include "handle.hpp"
 #include "meta_data.hpp"
 
-#include <algorithm>
 #include <array>
 #include <complex>
 #include <limits>
