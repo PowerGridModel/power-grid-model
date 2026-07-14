@@ -600,9 +600,13 @@ template <dataset_type_tag dataset_type_> class Dataset {
                 throw DatasetError{"For a non-uniform buffer, indptr should be supplied!\n"};
             }
             if constexpr (std::same_as<check_indptr_content, immutable_t>) {
-                if (indptr[0] != 0 || indptr[batch_size()] != total_elements) {
+                auto const indptr_span = std::span{indptr, static_cast<size_t>(batch_size() + 1)};
+                if (indptr_span.front() != 0 || indptr_span.back() != total_elements) {
                     throw DatasetError{
                         "For a non-uniform buffer, indptr should begin with 0 and end with total_elements!\n"};
+                }
+                if (std::ranges::adjacent_find(indptr_span, std::greater{}) != indptr_span.end()) {
+                    throw DatasetError{"For a non-uniform buffer, indptr should be non-decreasing!\n"};
                 }
             }
         } else if (indptr) {

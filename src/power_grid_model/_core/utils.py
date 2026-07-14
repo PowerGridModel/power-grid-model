@@ -38,7 +38,6 @@ from power_grid_model._core.data_types import (
 )
 from power_grid_model._core.dataset_definitions import AttributeType, ComponentType, DatasetType
 from power_grid_model._core.enum import ComponentAttributeFilterOptions
-from power_grid_model._core.error_handling import VALIDATOR_MSG
 from power_grid_model._core.errors import PowerGridError
 from power_grid_model._core.power_grid_meta import initialize_array, power_grid_meta_data
 from power_grid_model._core.typing import ComponentAttributeMapping, ComponentAttributeMappingDict
@@ -714,30 +713,6 @@ def _extract_data_from_component_data(data: ComponentData, is_batch: bool | None
 
 def _extract_contents_from_data(data: ComponentData):
     return data["data"] if is_sparse(data) else data
-
-
-def check_indptr_consistency(indptr: IndexPointer, batch_size: int | None, contents_size: int):
-    """checks if an indptr is valid. Batch size check is optional.
-
-    Args:
-        indptr (IndexPointer): The indptr array
-        batch_size (int | None): number of scenarios
-        contents_size (int): total number of elements in all scenarios
-
-    Raises:
-        ValueError: If indptr is invalid
-    """
-    if indptr[0] != 0 or indptr[-1] != contents_size:
-        raise ValueError(f"indptr should start from zero and end at size of data array. {VALIDATOR_MSG}")
-    if np.any(np.diff(indptr) < 0):
-        raise ValueError(f"indptr should be increasing. {VALIDATOR_MSG}")
-
-    actual_batch_size = indptr.size - 1
-    if batch_size is not None and batch_size != actual_batch_size:
-        raise ValueError(
-            f"Incorrect/inconsistent batch size provided: {actual_batch_size} scenarios provided "
-            f"but {batch_size} scenarios expected. {VALIDATOR_MSG}"
-        )
 
 
 def get_dataset_type(data: Dataset) -> DatasetType:

@@ -84,7 +84,7 @@ The `p` and `q` output of injection follows the `generator` reference direction 
 * type name: `branch`
 * base: [base](#base)
 
-`branch` is the abstract base type for the component which connects two *different* nodes.
+`branch` is the abstract base type for the component which connects two (possibly identical) nodes.
 For each branch two switches are always defined at from- and to-side of the branch.
 In reality such switches may not exist.
 For example, a cable usually permanently connects two joints.
@@ -460,7 +460,7 @@ Where $Z_{\text{i,j}}$ denotes the row and column of the $Z_{\text{series}}$ mat
 * type name: `branch3`
 * base: [base](#base)
 
-`branch3` is the abstract base type for the component which connects three *different* nodes.
+`branch3` is the abstract base type for the component which connects three (possibly identical) nodes.
 For each branch3 three switches are always defined at side 1, 2, or 3 of the branch.
 In reality such switches may not exist.
 
