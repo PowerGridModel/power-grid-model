@@ -7,8 +7,9 @@ SPDX-License-Identifier: MPL-2.0
 # Dense and selective matrix inverses
 
 An existing LU factorization can be used either to compute every entry of a matrix inverse or only selected entries.
-Lowercase italic symbols denote scalars, bold lowercase symbols denote vectors, and bold uppercase symbols denote
-matrices, including dense blocks.
+Lowercase italic symbols denote scalars.
+Bold lowercase symbols denote vectors.
+Bold uppercase symbols denote matrices, including dense blocks.
 
 ## Dense inverse
 
@@ -18,13 +19,13 @@ $$
 \mathbf{A}\mathbf{X}=\mathbf{I}.
 $$
 
-Substituting the LU factorization gives
+Substituting the LU factorization gives:
 
 $$
 \mathbf{L}\mathbf{U}\mathbf{X}=\mathbf{I}.
 $$
 
-Introduce $\mathbf{Y}=\mathbf{U}\mathbf{X}$. First, solve the lower-triangular system by forward substitution:
+Let $\mathbf{Y}=\mathbf{U}\mathbf{X}$. First, solve the lower-triangular system by forward substitution:
 
 $$
 \mathbf{L}\mathbf{Y}=\mathbf{I}
@@ -42,19 +43,19 @@ $$
 
 For every column $\mathbf{e}_j$ of $\mathbf{I}$, this means first solving
 $\mathbf{L}\mathbf{y}_j=\mathbf{e}_j$ by forward substitution and then
-$\mathbf{U}\mathbf{x}_j=\mathbf{y}_j$ by backward substitution. The resulting columns $\mathbf{x}_j$ form the dense
-inverse $\mathbf{X}$. In the block-sparse algorithm, the same dense procedure is applied locally to obtain the diagonal
-contribution $(\mathbf{L}_p\mathbf{U}_p)^{-1}$ of each pivot block. The Takahashi equations below avoid applying it to
-the complete sparse matrix by computing only inverse entries in the filled LU pattern.
+$\mathbf{U}\mathbf{x}_j=\mathbf{y}_j$ by backward substitution.
+The resulting columns $\mathbf{x}_j$ form the dense inverse $\mathbf{X}$.
+In the block-sparse algorithm, the same dense procedure is applied locally to obtain the diagonal contribution
+$(\mathbf{L}_p\mathbf{U}_p)^{-1}$ of each pivot block.
 
 ## Selective inverse
 
-The selective inverse computes only the entries of $\mathbf{A}^{-1}$ that belong to the filled sparsity pattern of an
-existing LU factorization. It uses the Takahashi equations, introduced by Takahashi[^takahashi1973] and further
-described by Erisman and Tinney,[^erisman1975].
+The selective inverse computes entries of $\mathbf{A}^{-1}$ matching the sparsity pattern of an existing LU factor.
+We use the Takahashi equations for selective inverse in PGM.
+It was introduced by Takahashi[^takahashi1973] and further described by Erisman and Tinney[^erisman1975].
 
-The sections below derive the Takahashi equations for scalar-sparse and block-sparse matrices, then describe their
-numerical implementation in PGM.
+The following sections derive the Takahashi equations for scalar-sparse and block-sparse matrices.
+They then describe their numerical implementation in PGM.
 
 ### Scalar-sparse matrices
 
@@ -96,19 +97,19 @@ u_{pp}z_{pp}+\sum_{m>p}u_{pm}z_{mp}=1
 z_{pp}=\frac{1}{u_{pp}}-\frac{1}{u_{pp}}\sum_{m>p}u_{pm}z_{mp}.
 $$
 
-Intuitively, computing entries in the upper or lower triangular part of $\mathbf{Z}$ requires already-computed entries
-$z_{mj}$ below them or $z_{km}$ to their right, respectively, where $m>p$. We refer to these dependencies as "looking
-down" and "looking right."
+Intuitively, an upper-triangular entry of $\mathbf{Z}$ depends on previously computed entries $z_{mj}(m>p)$ below it.
+An entry in the lower triangular part depends on previously computed entries $z_{km}(m>p)$ to its right.
+We call these dependencies "looking down" and "looking
+right," respectively.
 
-These equations are evaluated for $p=n-1,\ldots,0$. The sums only visit structurally non-zero entries in the filled LU
-pattern.
+These equations are evaluated for $p=n-1,\ldots,0$.
+The sums only visit structurally non-zero entries in the filled LU pattern.
 
 ### Block-sparse matrices
 
-Now let every sparse entry be a dense block. At block pivot $p$, the packed diagonal block contains a unit lower
-triangular factor $\mathbf{L}_p$ and an upper triangular factor $\mathbf{U}_p$. Off-diagonal factor blocks are denoted
-by $\mathbf{L}_{mp}$ and $\mathbf{U}_{pm}$. The inverse is again
-$\mathbf{Z}=\mathbf{U}^{-1}\mathbf{L}^{-1}$, so the identities
+Now consider block sparse matrices, where each non-zero entry is a dense block of size $b\times b$.
+
+The inverse is again $\mathbf{Z}=\mathbf{U}^{-1}\mathbf{L}^{-1}$, so the identities
 
 $$
 \mathbf{U}\mathbf{Z}=\mathbf{L}^{-1}, \qquad
@@ -146,77 +147,73 @@ $$
 -\mathbf{U}_p^{-1}\sum_{m>p}\mathbf{U}_{pm}\mathbf{Z}_{mp}.
 $$
 
-These are the scalar equations with division replaced by dense triangular solves. Multiplication order must be
-preserved: $\mathbf{U}_p^{-1}$ acts from the left, while $\mathbf{L}_p^{-1}$ acts from the right. For block size one,
-$\mathbf{L}_p=[1]$ and $\mathbf{U}_p=[u_{pp}]$, so the block equations reduce exactly to the scalar equations.
+These are the scalar equations with division replaced by dense inversions.
+
+For block size $1\times 1$, $\mathbf{L}_p=[1]$ and $\mathbf{U}_p=[u_{pp}]$, so the block equations reduce exactly to the
+scalar equations.
 
 ### Numerical implementation
 
 #### Dependency blocks and target blocks
 
-For power-grid use cases, the target blocks are often only those in the original `y_bus` pattern. In radial networks,
-the LU pattern and the original `y_bus` pattern are the same, so dependency blocks and target blocks coincide. In meshed
-networks, factorization introduces fill-ins. The dependency block set is then the complete filled LU pattern and is
-larger than the target block set.
+For the use-case of state estimation, the target blocks are often only those in the original `y_bus` pattern.
+In radial networks, the LU pattern and the original `y_bus` pattern are the same.
+In meshed networks, factorization introduces fill-ins.
+The dependency block set is then the complete filled LU pattern.
 
-A fill-in cannot be skipped merely because it is not part of the final `y_bus` target pattern; target blocks are
-extracted only after all pivot updates have completed.
+A fill-in cannot be skipped merely because it is not part of the final `y_bus` target pattern.
+Target blocks are extracted only after all pivot updates have completed.
 
 #### Reverse pivot traversal
 
-Each update at pivot $p$ refers only to inverse blocks whose row and column indices are greater than $p$. The sweep
-therefore starts at the last pivot, where all off-diagonal sums are empty, and proceeds in reverse order,
-$p=n-1,\ldots,0$. When pivot $p$ is reached, the trailing inverse blocks $\mathbf{Z}_{km}$ with $k,m>p$ are already
-final and will not be modified again.
+Each update at pivot $p$ refers only to inverse blocks whose row and column indices are greater than $p$.
+The sweep therefore starts at the last pivot, i.e, the bottom-rightmost block, and proceeds in reverse order,
+$p=n-1,\ldots,0$.
 
 #### Pivot step order
 
-With the reverse-traversal invariant, each pivot step performs the following operations:
+Each pivot step performs the following operations:
 
-1. Buffer the packed pivot block, the original $\mathbf{U}_{pm}$ blocks, and the original $\mathbf{L}_{mp}$
-   blocks.
+1. Buffer the packed pivot block, the original $\mathbf{U}_{pm}$ blocks, and the original $\mathbf{L}_{mp}$ blocks.
 2. Compute the lower blocks $\mathbf{Z}_{kp}$.
 3. Compute the upper blocks $\mathbf{Z}_{pj}$.
 4. Compute $\mathbf{Z}_{pp}$ last, using the newly computed lower blocks.
 
 This order permits the LU storage to be overwritten in place without losing values needed by the current step.
 
-#### Why row/column buffers are needed
+#### Why buffers are needed?
 
-At pivot $p$, the sparse data array still contains the original $\mathbf{U}_{pm}$ blocks in row $p$ and the original
-$\mathbf{L}_{mp}$ blocks in column $p$. The pivot step overwrites those same locations with $\mathbf{Z}_{pj}$ and
-$\mathbf{Z}_{kp}$. However, every row and column update needs the complete original pivot row or column. Without
-buffers, an early update could make a later sum read an inverse block where an LU factor block is required.
+Each pivot step overwrites packed LU blocks in `data` with inverse blocks.
+The implementation first buffers every LU value that a later update still needs.
 
-The implementation therefore copies the off-diagonal pivot row and column before updating either one. Column entries
-are scattered in the row-oriented sparse storage, so their data indices are buffered as well. The diagonal update can
-then use the buffered $\mathbf{U}_{pm}$ blocks together with the newly computed $\mathbf{Z}_{mp}$ blocks. This requires
-temporary storage only for the active pivot row and column, while the full sparse inverse remains in place.
+##### Off-diagonal row and column buffers
 
-#### Pivot block lifetime
+`u_row` copies the contiguous $\mathbf{U}_{pm}$ blocks.
+`l_col` gathers the scattered $\mathbf{L}_{mp}$ blocks, and `l_indices` records their locations in `data`.
+Lower and upper updates write $\mathbf{Z}_{kp}$ and $\mathbf{Z}_{pj}$ in place while preserving factors for later sums.
+The diagonal update reuses `u_row` with the newly computed $\mathbf{Z}_{mp}$ blocks.
 
-The packed pivot block stores $\mathbf{L}_p$ below the diagonal and $\mathbf{U}_p$ on and above the diagonal. A
-factorized copy must remain available for the entire pivot step because the lower, upper, and diagonal updates all
-use it. Only after those operations are complete may the stored pivot location be replaced by $\mathbf{Z}_{pp}$.
+##### Factorized pivot-block buffer
 
-#### Why the pivot must stay factorized
+`pivot` copies the packed $\mathbf{L}_p$ and $\mathbf{U}_p$ block and remains factorized throughout the pivot step.
+The lower and upper updates use it for triangular solves.
+The diagonal update uses it to compute $(\mathbf{L}_p\mathbf{U}_p)^{-1}$.
+The pivot location is overwritten with $\mathbf{Z}_{pp}$ only after these operations finish.
 
-Overwriting $\mathbf{U}_p$ with its inverse would destroy the upper factor in the packed pivot representation. The
-remaining row and column updates would then no longer have the factors required for their triangular solves or for the
-local diagonal contribution $(\mathbf{L}_p\mathbf{U}_p)^{-1}$. Keeping one factorized pivot copy alive avoids this
-dependency while still allowing the sparse data array to be overwritten in place.
+Temporary storage is therefore limited to `u_row`, `l_col`, `l_indices`, and `pivot`; the selective inverse remains in
+`data` and is produced in place.
 
 #### Restoring dense block permutations
 
-The sparse LU solver in PGM uses dense full pivoting inside each block. It therefore produces the factorization
+The sparse LU solver in PGM uses dense full pivoting inside each block.
+It therefore produces the factorization
 
 $$
 \mathbf{P}\mathbf{A}\mathbf{Q}=\mathbf{L}\mathbf{U},
 $$
 
-where $\mathbf{P}=\operatorname{blockdiag}(\mathbf{P}_i)$ and
-$\mathbf{Q}=\operatorname{blockdiag}(\mathbf{Q}_i)$. The selective inverse sweep operates directly on the stored
-$\mathbf{L}$ and $\mathbf{U}$ factors and computes
+where $\mathbf{P}=\operatorname{blockdiag}(\mathbf{P}_i)$ and $\mathbf{Q}=\operatorname{blockdiag}(\mathbf{Q}_i)$.
+The selective inverse sweep operates directly on the stored $\mathbf{L}$ and $\mathbf{U}$ factors and computes
 
 $$
 \mathbf{Z}=(\mathbf{L}\mathbf{U})^{-1}
@@ -224,9 +221,10 @@ $$
 =\mathbf{U}^{-1}\mathbf{L}^{-1}
 $$
 
-on the filled pattern. This is the inverse in the permuted ordering, not yet $\mathbf{A}^{-1}$. Rearranging the
-factorization shows that the original ordering is restored by applying $\mathbf{Q}$ from the left and $\mathbf{P}$ from
-the right:
+on the filled pattern.
+This is the inverse in the permuted ordering, not yet $\mathbf{A}^{-1}$.
+Rearranging the factorization shows that the original ordering is restored by applying $\mathbf{Q}$ from the left and
+$\mathbf{P}$ from the right:
 
 $$
 \mathbf{A}^{-1}=\mathbf{Q}\mathbf{Z}\mathbf{P}.
