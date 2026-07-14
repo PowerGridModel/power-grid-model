@@ -7,6 +7,7 @@
 #include "get_meta_data.hpp"
 #include "handle.hpp"
 #include "input_sanitization.hpp"
+#include "safe_memory_handling.hpp"
 
 #include "power_grid_model_c/basics.h"
 #include "power_grid_model_c/serialization.h"
@@ -16,6 +17,7 @@
 #include <power_grid_model/common/enum.hpp>
 
 #include <cstddef>
+#include <span>
 #include <vector>
 
 namespace {
@@ -30,6 +32,8 @@ using power_grid_model_c::safe_ptr;
 using power_grid_model_c::safe_ptr_get;
 using power_grid_model_c::safe_size;
 using power_grid_model_c::to_c_size;
+using power_grid_model_c::create;
+using power_grid_model_c::destroy;
 
 struct SerializationExceptionHandler : public power_grid_model_c::DefaultExceptionHandler {
     void operator()(PGM_Handle& handle) const noexcept { // NOLINT(bugprone-derived-method-shadowing-base-method)
@@ -45,11 +49,11 @@ PGM_Deserializer* PGM_create_deserializer_from_binary_buffer(PGM_Handle* handle,
     return call_with_catch(
         handle,
         [data, size, serialization_format] {
-            return cast_to_c(new Deserializer{// NOSONAR(S5025) // NOLINT(bugprone-unhandled-exception-at-new) // false positive
+            return cast_to_c(create<Deserializer>(
                                               from_buffer,
-                                              {safe_ptr(data), safe_size<size_t>(size)},
+                                              std::span{safe_ptr(data), safe_size<size_t>(size)},
                                               safe_enum<power_grid_model::SerializationFormat>(serialization_format),
-                                              get_meta_data()});
+                                              get_meta_data()));
         },
         serialization_exception_handler);
 }
@@ -59,10 +63,10 @@ PGM_Deserializer* PGM_create_deserializer_from_null_terminated_string(PGM_Handle
     return call_with_catch(
         handle,
         [data_string, serialization_format] {
-            return cast_to_c(new Deserializer{// NOSONAR(S5025) // NOLINT(bugprone-unhandled-exception-at-new) // false positive
+            return cast_to_c(create<Deserializer>(
                                               from_string, safe_ptr(data_string),
                                               safe_enum<power_grid_model::SerializationFormat>(serialization_format),
-                                              get_meta_data()});
+                                              get_meta_data()));
         },
         serialization_exception_handler);
 }
@@ -80,7 +84,7 @@ void PGM_deserializer_parse_to_buffer(PGM_Handle* handle, PGM_Deserializer* dese
 // false warning from clang-tidy
 // NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDelete)
 void PGM_destroy_deserializer(PGM_Deserializer* deserializer) noexcept {
-    delete cast_to_cpp(deserializer); // NOSONAR(S5025)
+    destroy(cast_to_cpp(deserializer));
 }
 
 PGM_Serializer* PGM_create_serializer(PGM_Handle* handle, PGM_ConstDataset const* dataset,
@@ -88,9 +92,9 @@ PGM_Serializer* PGM_create_serializer(PGM_Handle* handle, PGM_ConstDataset const
     return call_with_catch(
         handle,
         [dataset, serialization_format] {
-            return cast_to_c(new Serializer{// NOSONAR(S5025) // NOLINT(bugprone-unhandled-exception-at-new) // false positive
+            return cast_to_c(create<Serializer>(
                                             safe_ptr_get(cast_to_cpp(dataset)),
-                                            safe_enum<power_grid_model::SerializationFormat>(serialization_format)});
+                                            safe_enum<power_grid_model::SerializationFormat>(serialization_format)));
         },
         serialization_exception_handler);
 }
@@ -119,5 +123,5 @@ char const* PGM_serializer_get_to_zero_terminated_string(PGM_Handle* handle, PGM
 }
 
 void PGM_destroy_serializer(PGM_Serializer* serializer) noexcept {
-    delete cast_to_cpp(serializer); // NOSONAR(S5025)
+    destroy(cast_to_cpp(serializer));
 }

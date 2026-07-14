@@ -7,6 +7,7 @@
 #include "options.hpp"
 #include "handle.hpp"
 #include "input_sanitization.hpp"
+#include "safe_memory_handling.hpp"
 
 #include "power_grid_model_c/basics.h"
 #include "power_grid_model_c/options.h"
@@ -16,16 +17,18 @@ using namespace power_grid_model;
 
 using power_grid_model_c::call_with_catch;
 using power_grid_model_c::safe_ptr_get;
+using power_grid_model_c::create;
+using power_grid_model_c::destroy;
 } // namespace
 
 // options
 PGM_Options* PGM_create_options(PGM_Handle* handle) noexcept {
     return call_with_catch(handle, [] {
-        return new PGM_Options{}; // NOSONAR(S5025) // NOLINT(bugprone-unhandled-exception-at-new) // false positive
+        return create<PGM_Options>();
     });
 }
 void PGM_destroy_options(PGM_Options* opt) noexcept {
-    delete opt; // NOSONAR(S5025)
+    destroy(opt);
 }
 void PGM_set_calculation_type(PGM_Handle* handle, PGM_Options* opt, PGM_Idx type) noexcept {
     call_with_catch(handle, [opt, type] { safe_ptr_get(opt).calculation_type = type; });

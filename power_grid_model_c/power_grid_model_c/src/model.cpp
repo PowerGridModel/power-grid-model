@@ -8,20 +8,22 @@
 #include "input_sanitization.hpp"
 #include "math_solver.hpp"
 #include "options.hpp" // NOLINT(misc-include-cleaner)
+#include "safe_memory_handling.hpp"
 
 #include "power_grid_model_c/basics.h"
 #include "power_grid_model_c/model.h"
 
-#include <algorithm>
-#include <cassert>
-#include <concepts>
-#include <exception>
 #include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/main_model.hpp>
 #include <power_grid_model/main_model_fwd.hpp>
+
+#include <algorithm>
+#include <cassert>
+#include <concepts>
+#include <exception>
 #include <ranges>
 #include <string>
 #include <utility>
@@ -38,6 +40,8 @@ using power_grid_model_c::safe_ptr;
 using power_grid_model_c::safe_ptr_get;
 using power_grid_model_c::safe_ptr_maybe_nullptr;
 using power_grid_model_c::safe_str_view;
+using power_grid_model_c::create;
+using power_grid_model_c::destroy;
 } // namespace
 
 // create model
@@ -45,12 +49,12 @@ PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency
                                      PGM_ConstDataset const* input_dataset) noexcept {
     return call_with_catch(handle, [system_frequency, input_dataset] {
         return cast_to_c(
-            new MainModel{// NOSONAR(S5025) // NOLINT(bugprone-unhandled-exception-at-new) // false positive
+            create<MainModel>(
                           system_frequency,
                           safe_ptr_get(cast_to_cpp(input_dataset)),
                           get_math_solver_dispatcher(),
                           0
-            }
+            )
         );
     });
 }
@@ -67,9 +71,9 @@ void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_ConstDa
 PGM_PowerGridModel* PGM_copy_model(PGM_Handle* handle, PGM_PowerGridModel const* model) noexcept {
     return call_with_catch(handle, [model] {
         return cast_to_c(
-            new MainModel{ // NOSONAR(S5025) // NOLINT(bugprone-unhandled-exception-at-new) // false positive
+            create<MainModel>(
                 safe_ptr_get(cast_to_cpp(model))
-            }
+            )
         );
     });
 }
@@ -368,5 +372,5 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
 
 // destroy model
 void PGM_destroy_model(PGM_PowerGridModel* model) noexcept {
-    delete cast_to_cpp(model); // NOSONAR(S5025)
+    destroy(cast_to_cpp(model));
 }
