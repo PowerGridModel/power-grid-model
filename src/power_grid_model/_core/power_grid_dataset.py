@@ -186,6 +186,20 @@ class CMutableDataset:
     _buffer_views: list[CBuffer]
 
     def __new__(cls, data: Dataset, dataset_type: Any = None):
+        """Create a new CMutableDataset instance.
+
+        Args:
+            data: the data to be added to the dataset.
+            dataset_type: the type of the dataset (optional).
+
+        Returns:
+            CMutableDataset: a new instance of CMutableDataset.
+
+        Raises:
+            ValueError: if the component is unknown.
+            ValueError: if the data is inconsistent with the rest of the dataset.
+            PowerGridError: if there was an internal error.
+        """
         instance = super().__new__(cls)
         instance._mutable_dataset = MutableDatasetPtr()
         instance._buffer_views = []
@@ -201,6 +215,8 @@ class CMutableDataset:
         else:
             instance._is_batch = False
             instance._batch_size = 1
+
+        instance._validate(data)
 
         instance._mutable_dataset = get_pgc().create_dataset_mutable(
             instance._dataset_type.value, instance._is_batch, instance._batch_size
@@ -244,36 +260,22 @@ class CMutableDataset:
         Add Power Grid Model data to the mutable dataset view.
 
         Args:
-            data: the data.
-
-        Raises:
-            ValueError: if the component is unknown.
-            ValueError: if the data is inconsistent with the rest of the dataset.
-            PowerGridError: if there was an internal error.
+            data: the data to be added to the dataset.
         """
         for component, component_data in data.items():
-            self._add_component_data(component, component_data, allow_unknown=False)
+            self._add_component_data(component, component_data)
 
-    def _add_component_data(self, component: ComponentType, data: ComponentData, allow_unknown: bool = False):
+    def _add_component_data(self, component: ComponentType, data: ComponentData):
         """
         Add Power Grid Model data for a single component to the mutable dataset view.
 
         Args:
             component: the name of the component
             data: the data of the component
-            allow_unknown (optional): ignore any unknown components. Defaults to False.
 
         Raises:
-            ValueError: if the component is unknown and allow_unknown is False.
-            ValueError: if the data is inconsistent with the rest of the dataset.
             PowerGridError: if there was an internal error.
         """
-        if component not in self._schema:
-            if not allow_unknown:
-                raise ValueError(f"Unknown component {component} in schema. {VALIDATOR_MSG}")
-            return
-
-        self._validate_properties(data, self._schema[component])
         c_buffer = get_buffer_view(data, self._schema[component], self._is_batch, self._batch_size)
         self._buffer_views.append(c_buffer)
         self._register_buffer(component, c_buffer)
@@ -300,7 +302,34 @@ class CMutableDataset:
         )
         assert_no_error()
 
+    def _validate(self, data: Dataset):
+        """
+        Validate Power Grid Model data.
+
+        Args:
+            data: the data.
+
+        Raises:
+            ValueError: if the component is unknown.
+            ValueError: if the data is inconsistent with the rest of the dataset.
+        """
+        for component, component_data in data.items():
+            if component not in self._schema:
+                raise ValueError(f"Unknown component {component} in schema. {VALIDATOR_MSG}")
+
+            self._validate_properties(component_data, self._schema[component])
+
     def _validate_properties(self, data: ComponentData, schema: ComponentMetaData):
+        """
+        Validate the properties of a component.
+
+        Args:
+            data: the data of the component.
+            schema: the schema of the component.
+
+        Raises:
+            ValueError: if the data is inconsistent with the rest of the dataset.
+        """
         properties = get_buffer_properties(data, schema=schema, is_batch=None, batch_size=None)
         if properties.is_batch != self._is_batch:
             raise ValueError(
