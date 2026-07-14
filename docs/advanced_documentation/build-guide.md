@@ -23,6 +23,12 @@ In this repository there are three builds:
 * A separate example [CMake](https://cmake.org/) project with a small C++ program that shows how to find and use the
   installable package.
 
+```{note}
+If you just want to develop the _Python_ side of `power-grid-model`, you can use the
+[provided development container](./devcontainer-setup.md).
+It automatically sets up the entire environment so you can start developing immediately.
+```
+
 ```{contents}
 ```
 
@@ -522,7 +528,7 @@ in `docs/_build/html` directory.
 cd docs/doxygen
 doxygen
 cd ..
-sphinx-build -b html . _build/html
+uv run sphinx-build -b html . _build/html
 ```
 
 ```{note}
