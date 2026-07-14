@@ -23,6 +23,8 @@ using namespace power_grid_model::meta_data;
 using power_grid_model_c::call_with_catch;
 using power_grid_model_c::cast_to_c;
 using power_grid_model_c::cast_to_cpp;
+using power_grid_model_c::create;
+using power_grid_model_c::destroy;
 using power_grid_model_c::safe_bool;
 using power_grid_model_c::safe_ptr;
 using power_grid_model_c::safe_ptr_get;
@@ -30,8 +32,6 @@ using power_grid_model_c::safe_ptr_maybe_nullptr;
 using power_grid_model_c::safe_str_view;
 using power_grid_model_c::to_c_bool;
 using power_grid_model_c::to_c_size;
-using power_grid_model_c::create;
-using power_grid_model_c::destroy;
 } // namespace
 
 // dataset info
@@ -53,19 +53,22 @@ PGM_Idx PGM_dataset_info_n_components(PGM_Handle* handle, PGM_DatasetInfo const*
                            [info] { return to_c_size(std::ssize(safe_ptr_get(cast_to_cpp(info)).component_info)); });
 }
 
-char const* PGM_dataset_info_component_name(PGM_Handle* handle, PGM_DatasetInfo const* info, PGM_Idx component_idx) noexcept {
+char const* PGM_dataset_info_component_name(PGM_Handle* handle, PGM_DatasetInfo const* info,
+                                            PGM_Idx component_idx) noexcept {
     return call_with_catch(handle, [info, component_idx] {
         return safe_ptr_get(safe_ptr_get(cast_to_cpp(info)).component_info.at(component_idx).component).name;
     });
 }
 
-PGM_Idx PGM_dataset_info_elements_per_scenario(PGM_Handle* handle, PGM_DatasetInfo const* info, PGM_Idx component_idx) noexcept {
+PGM_Idx PGM_dataset_info_elements_per_scenario(PGM_Handle* handle, PGM_DatasetInfo const* info,
+                                               PGM_Idx component_idx) noexcept {
     return call_with_catch(handle, [info, component_idx] {
         return safe_ptr_get(cast_to_cpp(info)).component_info.at(component_idx).elements_per_scenario;
     });
 }
 
-PGM_Idx PGM_dataset_info_total_elements(PGM_Handle* handle, PGM_DatasetInfo const* info, PGM_Idx component_idx) noexcept {
+PGM_Idx PGM_dataset_info_total_elements(PGM_Handle* handle, PGM_DatasetInfo const* info,
+                                        PGM_Idx component_idx) noexcept {
     return call_with_catch(handle, [info, component_idx] {
         return safe_ptr_get(cast_to_cpp(info)).component_info.at(component_idx).total_elements;
     });
@@ -110,21 +113,18 @@ PGM_ConstDataset* PGM_create_dataset_const(PGM_Handle* handle, char const* datas
 PGM_ConstDataset* PGM_create_dataset_const_from_writable(PGM_Handle* handle,
                                                          PGM_WritableDataset const* writable_dataset) noexcept {
     return call_with_catch(handle, [writable_dataset] {
-        return cast_to_c(create<ConstDataset>(
-            safe_ptr_get(cast_to_cpp(writable_dataset)))); 
+        return cast_to_c(create<ConstDataset>(safe_ptr_get(cast_to_cpp(writable_dataset))));
     });
 }
 
-PGM_ConstDataset* PGM_create_dataset_const_from_mutable(PGM_Handle* handle, PGM_MutableDataset const* mutable_dataset) noexcept {
+PGM_ConstDataset* PGM_create_dataset_const_from_mutable(PGM_Handle* handle,
+                                                        PGM_MutableDataset const* mutable_dataset) noexcept {
     return call_with_catch(handle, [mutable_dataset] {
-        return cast_to_c(create<ConstDataset>(
-            safe_ptr_get(cast_to_cpp(mutable_dataset))));
+        return cast_to_c(create<ConstDataset>(safe_ptr_get(cast_to_cpp(mutable_dataset))));
     });
 }
 
-void PGM_destroy_dataset_const(PGM_ConstDataset* dataset) noexcept {
-    destroy(cast_to_cpp(dataset));
-}
+void PGM_destroy_dataset_const(PGM_ConstDataset* dataset) noexcept { destroy(cast_to_cpp(dataset)); }
 
 void PGM_dataset_const_add_buffer(PGM_Handle* handle, PGM_ConstDataset* dataset, char const* component,
                                   PGM_Idx elements_per_scenario, PGM_Idx total_elements, PGM_Idx const* indptr,
@@ -183,14 +183,12 @@ void PGM_dataset_writable_set_attribute_buffer(PGM_Handle* handle, PGM_WritableD
 PGM_MutableDataset* PGM_create_dataset_mutable(PGM_Handle* handle, char const* dataset, PGM_Idx is_batch,
                                                PGM_Idx batch_size) noexcept {
     return call_with_catch(handle, [dataset, is_batch, batch_size] {
-        return cast_to_c(create<MutableDataset>(
-                                            safe_bool(is_batch), batch_size, safe_str_view(dataset), get_meta_data()));
+        return cast_to_c(
+            create<MutableDataset>(safe_bool(is_batch), batch_size, safe_str_view(dataset), get_meta_data()));
     });
 }
 
-void PGM_destroy_dataset_mutable(PGM_MutableDataset* dataset) noexcept {
-    destroy(cast_to_cpp(dataset));
-}
+void PGM_destroy_dataset_mutable(PGM_MutableDataset* dataset) noexcept { destroy(cast_to_cpp(dataset)); }
 
 void PGM_dataset_mutable_add_buffer(PGM_Handle* handle, PGM_MutableDataset* dataset, char const* component,
                                     PGM_Idx elements_per_scenario, PGM_Idx total_elements, PGM_Idx const* indptr,

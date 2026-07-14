@@ -255,8 +255,8 @@ struct sparse_lu_entry_trait<Tensor, RHSVector, XVector> {
     static constexpr Idx block_size = Tensor::RowsAtCompileTime;
     using Scalar = Tensor::Scalar;
     using Matrix = Eigen::Matrix<Scalar, block_size, block_size, Tensor::Options>;
-    using LUFactor = DenseLUFactor<Matrix>;         // LU decomposition with full pivoting in place
-    using BlockPerm = LUFactor::BlockPerm; // Extract permutation matrices p and q from LUFactor
+    using LUFactor = DenseLUFactor<Matrix>; // LU decomposition with full pivoting in place
+    using BlockPerm = LUFactor::BlockPerm;  // Extract permutation matrices p and q from LUFactor
     using BlockPermArray = std::vector<BlockPerm>;
 };
 

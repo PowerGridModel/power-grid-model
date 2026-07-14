@@ -67,8 +67,8 @@ template <advance_type_c advance_type_t, typename UnderlyingType> class BaseTest
         return *it_;
     }
 
-    friend constexpr auto operator<=>(BaseTestIterator const& first,
-                                      BaseTestIterator const& second) -> std::strong_ordering {
+    friend constexpr auto operator<=>(BaseTestIterator const& first, BaseTestIterator const& second)
+        -> std::strong_ordering {
         first.last_call_ = IteratorFacadeableCalls::distance_to;
         return *first.it_ <=> *second.it_;
     }
@@ -107,8 +107,7 @@ template <advance_type_c advance_type_t, typename UnderlyingType> class BaseTest
 using TestIdxVectorIterator = BaseTestIterator<without_increment_decrement_t, IdxVector::iterator>;
 using TestIdxVectorConstIterator = BaseTestIterator<without_increment_decrement_t, IdxVector::const_iterator>;
 using TestIdxVectorIteratorWithIncDec = BaseTestIterator<with_increment_decrement_t, IdxVector::iterator>;
-using TestIdxVectorConstIteratorWithIncDec =
-    BaseTestIterator<with_increment_decrement_t, IdxVector::const_iterator>;
+using TestIdxVectorConstIteratorWithIncDec = BaseTestIterator<with_increment_decrement_t, IdxVector::const_iterator>;
 
 static_assert(iterator_facadeable_c<TestIdxVectorIterator>);
 static_assert(iterator_facadeable_c<TestIdxVectorConstIterator>);

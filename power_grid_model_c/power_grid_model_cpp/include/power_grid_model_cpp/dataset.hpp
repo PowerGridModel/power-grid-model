@@ -24,9 +24,7 @@
 #include <vector>
 
 namespace power_grid_model_cpp {
-inline bool contains(auto const& set, auto const& value) {
-    return set.find(value) != set.end();
-}
+inline bool contains(auto const& set, auto const& value) { return set.find(value) != set.end(); }
 
 class ComponentTypeNotFound : public PowerGridError {
   public:
@@ -138,8 +136,8 @@ class DatasetWritable {
 class DatasetMutable {
   public:
     explicit DatasetMutable(std::string const& dataset, bool is_batch, Idx batch_size)
-        : dataset_{handle_.call_with(PGM_create_dataset_mutable, dataset.c_str(), (is_batch ? Idx{1} : Idx{0}),
-                                     batch_size)},
+        : dataset_{
+              handle_.call_with(PGM_create_dataset_mutable, dataset.c_str(), (is_batch ? Idx{1} : Idx{0}), batch_size)},
           info_{handle_.call_with(PGM_dataset_mutable_get_info, get())} {}
 
     RawMutableDataset const* get() const { return dataset_.get(); }
@@ -177,8 +175,8 @@ class DatasetMutable {
 class DatasetConst {
   public:
     explicit DatasetConst(std::string const& dataset, bool is_batch, Idx batch_size)
-        : dataset_{handle_.call_with(PGM_create_dataset_const, dataset.c_str(), (is_batch ? Idx{1} : Idx{0}),
-                                     batch_size)},
+        : dataset_{
+              handle_.call_with(PGM_create_dataset_const, dataset.c_str(), (is_batch ? Idx{1} : Idx{0}), batch_size)},
           info_{handle_.call_with(PGM_dataset_const_get_info, get())} {}
 
     DatasetConst(DatasetWritable const& writable_dataset)
@@ -358,8 +356,7 @@ struct OwningDataset {
             auto const& component_name = ref_info.component_name(component_idx);
             auto const& component_meta = MetaData::get_component_by_name(dataset.get_info().name(), component_name);
             // skip components not in the filter
-            if (enable_filters &&
-                contains(output_component_attribute_filters, component_meta)) {
+            if (enable_filters && contains(output_component_attribute_filters, component_meta)) {
                 continue;
             }
             // skip irrelevant components for the calculation type

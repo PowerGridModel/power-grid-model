@@ -16,20 +16,16 @@ namespace {
 using namespace power_grid_model;
 
 using power_grid_model_c::call_with_catch;
-using power_grid_model_c::safe_ptr_get;
 using power_grid_model_c::create;
 using power_grid_model_c::destroy;
+using power_grid_model_c::safe_ptr_get;
 } // namespace
 
 // options
 PGM_Options* PGM_create_options(PGM_Handle* handle) noexcept {
-    return call_with_catch(handle, [] {
-        return create<PGM_Options>();
-    });
+    return call_with_catch(handle, [] { return create<PGM_Options>(); });
 }
-void PGM_destroy_options(PGM_Options* opt) noexcept {
-    destroy(opt);
-}
+void PGM_destroy_options(PGM_Options* opt) noexcept { destroy(opt); }
 void PGM_set_calculation_type(PGM_Handle* handle, PGM_Options* opt, PGM_Idx type) noexcept {
     call_with_catch(handle, [opt, type] { safe_ptr_get(opt).calculation_type = type; });
 }

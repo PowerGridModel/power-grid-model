@@ -37,9 +37,9 @@ PGM_API PGM_Deserializer* PGM_create_deserializer_from_binary_buffer(PGM_Handle*
  * @return A pointer to the deserializer instance. Should be freed by PGM_destroy_deserializer().
  *     Returns NULL if errors occured (check the handle for error information).
  */
-PGM_API PGM_Deserializer* PGM_create_deserializer_from_null_terminated_string(PGM_Handle* handle,
-                                                                              char const* data_string,
-                                                                              PGM_Idx serialization_format) PGM_NOEXCEPT;
+PGM_API PGM_Deserializer*
+PGM_create_deserializer_from_null_terminated_string(PGM_Handle* handle, char const* data_string,
+                                                    PGM_Idx serialization_format) PGM_NOEXCEPT;
 
 /**
  * @brief Get the PGM_WritableDataset object from the deserializer.
@@ -50,7 +50,8 @@ PGM_API PGM_Deserializer* PGM_create_deserializer_from_null_terminated_string(PG
  *     Use PGM_writable_dataset_get_info() to get the information of the dataset.
  *     Use PGM_writable_dataset_set_buffer() to set buffer.
  */
-PGM_API PGM_WritableDataset* PGM_deserializer_get_dataset(PGM_Handle* handle, PGM_Deserializer* deserializer) PGM_NOEXCEPT;
+PGM_API PGM_WritableDataset* PGM_deserializer_get_dataset(PGM_Handle* handle,
+                                                          PGM_Deserializer* deserializer) PGM_NOEXCEPT;
 
 /**
  * @brief Parse the dataset and write to the user-provided buffers.
@@ -89,7 +90,8 @@ PGM_API PGM_Serializer* PGM_create_serializer(PGM_Handle* handle, PGM_ConstDatas
  * @return No return value; check handle for error.
  */
 PGM_API void PGM_serializer_get_to_binary_buffer(PGM_Handle* handle, PGM_Serializer* serializer,
-                                                 PGM_Idx use_compact_list, char const** data, PGM_Idx* size) PGM_NOEXCEPT;
+                                                 PGM_Idx use_compact_list, char const** data,
+                                                 PGM_Idx* size) PGM_NOEXCEPT;
 
 /**
  * @brief Serialize the dataset into a zero terminated C string.

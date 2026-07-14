@@ -33,7 +33,7 @@ PGM_Handle* PGM_create_handle() noexcept {
 void PGM_destroy_handle(PGM_Handle* handle) noexcept {
     try {
         delete handle; // NOSONAR(S5025)
-    } catch (...) { // NOLINT(bugprone-empty-catch)
+    } catch (...) {    // NOLINT(bugprone-empty-catch)
         // ignore
     }
 }

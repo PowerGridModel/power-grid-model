@@ -31,8 +31,7 @@ inline T* create(Args&&... args) {
         throw FailedConstruction{ex};
     }
 }
-template <class T>
-inline void destroy(T* ptr) {
+template <class T> inline void destroy(T* ptr) {
     delete ptr; // NOSONAR(S5025)
 }
 } // namespace power_grid_model_c

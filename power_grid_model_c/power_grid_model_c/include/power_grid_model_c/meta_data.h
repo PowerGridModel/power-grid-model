@@ -150,7 +150,8 @@ PGM_API PGM_MetaAttribute const* PGM_meta_get_attribute_by_idx(PGM_Handle* handl
  * Or a NULL if your input is out of bound.
  */
 PGM_API PGM_MetaAttribute const* PGM_meta_get_attribute_by_name(PGM_Handle* handle, char const* dataset,
-                                                                char const* component, char const* attribute) PGM_NOEXCEPT;
+                                                                char const* component,
+                                                                char const* attribute) PGM_NOEXCEPT;
 
 /**
  * @brief Get attribute name.

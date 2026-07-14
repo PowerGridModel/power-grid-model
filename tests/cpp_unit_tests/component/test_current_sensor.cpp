@@ -26,9 +26,7 @@ TEST_SUITE_BEGIN("test_current_sensor");
 
 namespace power_grid_model {
 namespace {
-auto r_nan(){
-    return RealValue<asymmetric_t>{nan};
-}
+auto r_nan() { return RealValue<asymmetric_t>{nan}; }
 
 void check_nan_preserving_equality(std::floating_point auto actual, std::floating_point auto expected) {
     if (is_nan(expected)) {

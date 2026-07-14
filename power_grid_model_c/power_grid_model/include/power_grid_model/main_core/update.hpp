@@ -107,9 +107,9 @@ template <typename CompType> inline bool get_update_ids_match(auto const& all_sp
     // only return true if ids of all scenarios match the ids of the first batch
 
     return std::ranges::all_of(all_spans.cbegin() + 1, all_spans.cend(), [&first_span](auto const& current_span) {
-        return std::ranges::equal(current_span, first_span,
-                                  [](CompType::UpdateType const& obj,
-                                     CompType::UpdateType const& first) { return obj.id == first.id; });
+        return std::ranges::equal(
+            current_span, first_span,
+            [](CompType::UpdateType const& obj, CompType::UpdateType const& first) { return obj.id == first.id; });
     });
 }
 
@@ -171,8 +171,8 @@ inline void validate_update_data_independence(UpdateCompProperties const& comp, 
 }
 
 template <typename ModelType>
-ModelType::UpdateIndependence
-check_update_independence(typename ModelType::ComponentContainer const& components, ConstDataset const& update_data) {
+ModelType::UpdateIndependence check_update_independence(typename ModelType::ComponentContainer const& components,
+                                                        ConstDataset const& update_data) {
     return ModelType::run_functor_with_all_component_types_return_array(
         [&components, &update_data]<typename CompType>() {
             auto const n_component = components.template size<CompType>();

@@ -106,7 +106,7 @@ void check_throws_with(Func&& func, PGM_ErrorCode const& reference_error, std::s
     }
 }
 
-auto complete_state_json(){
+auto complete_state_json() {
     return R"json({
   "version": "1.0",
   "type": "input",

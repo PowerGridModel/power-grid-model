@@ -119,7 +119,8 @@ PGM_API void PGM_set_short_circuit_voltage_scaling(PGM_Handle* handle, PGM_Optio
  * @param opt pointer to option instance
  * @param tap_changing_strategy See #PGM_TapChangingStrategy
  */
-PGM_API void PGM_set_tap_changing_strategy(PGM_Handle* handle, PGM_Options* opt, PGM_Idx tap_changing_strategy) PGM_NOEXCEPT;
+PGM_API void PGM_set_tap_changing_strategy(PGM_Handle* handle, PGM_Options* opt,
+                                           PGM_Idx tap_changing_strategy) PGM_NOEXCEPT;
 
 /**
  * @brief Enable/disable experimental features.
@@ -133,7 +134,8 @@ PGM_API void PGM_set_tap_changing_strategy(PGM_Handle* handle, PGM_Options* opt,
  * @param opt pointer to option instance
  * @param experimental_features See #PGM_ExperimentalFeatures
  */
-PGM_API void PGM_set_experimental_features(PGM_Handle* handle, PGM_Options* opt, PGM_Idx experimental_features) PGM_NOEXCEPT;
+PGM_API void PGM_set_experimental_features(PGM_Handle* handle, PGM_Options* opt,
+                                           PGM_Idx experimental_features) PGM_NOEXCEPT;
 
 #ifdef __cplusplus
 }

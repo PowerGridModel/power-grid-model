@@ -45,7 +45,8 @@ PGM_API PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_f
  * @param update_dataset Pointer to an instance of PGM_ConstDataset. It should have data type "update".
  * @return
  */
-PGM_API void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_ConstDataset const* update_dataset) PGM_NOEXCEPT;
+PGM_API void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model,
+                              PGM_ConstDataset const* update_dataset) PGM_NOEXCEPT;
 
 /**
  * @brief Make a copy of an existing model.
@@ -114,7 +115,8 @@ PGM_API void PGM_get_indexer(PGM_Handle* handle, PGM_PowerGridModel const* model
  * @return
  */
 PGM_API void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options const* opt,
-                           PGM_MutableDataset const* output_dataset, PGM_ConstDataset const* batch_dataset) PGM_NOEXCEPT;
+                           PGM_MutableDataset const* output_dataset,
+                           PGM_ConstDataset const* batch_dataset) PGM_NOEXCEPT;
 
 /**
  * @brief Destroy the model returned by PGM_create_model() or PGM_copy_model().

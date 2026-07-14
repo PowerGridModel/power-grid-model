@@ -34,28 +34,22 @@ using namespace power_grid_model;
 using power_grid_model_c::call_with_catch;
 using power_grid_model_c::cast_to_c;
 using power_grid_model_c::cast_to_cpp;
+using power_grid_model_c::create;
+using power_grid_model_c::destroy;
 using power_grid_model_c::get_math_solver_dispatcher;
 using power_grid_model_c::safe_enum;
 using power_grid_model_c::safe_ptr;
 using power_grid_model_c::safe_ptr_get;
 using power_grid_model_c::safe_ptr_maybe_nullptr;
 using power_grid_model_c::safe_str_view;
-using power_grid_model_c::create;
-using power_grid_model_c::destroy;
 } // namespace
 
 // create model
 PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency,
                                      PGM_ConstDataset const* input_dataset) noexcept {
     return call_with_catch(handle, [system_frequency, input_dataset] {
-        return cast_to_c(
-            create<MainModel>(
-                          system_frequency,
-                          safe_ptr_get(cast_to_cpp(input_dataset)),
-                          get_math_solver_dispatcher(),
-                          0
-            )
-        );
+        return cast_to_c(create<MainModel>(system_frequency, safe_ptr_get(cast_to_cpp(input_dataset)),
+                                           get_math_solver_dispatcher(), 0));
     });
 }
 
@@ -69,13 +63,7 @@ void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_ConstDa
 
 // copy model
 PGM_PowerGridModel* PGM_copy_model(PGM_Handle* handle, PGM_PowerGridModel const* model) noexcept {
-    return call_with_catch(handle, [model] {
-        return cast_to_c(
-            create<MainModel>(
-                safe_ptr_get(cast_to_cpp(model))
-            )
-        );
-    });
+    return call_with_catch(handle, [model] { return cast_to_c(create<MainModel>(safe_ptr_get(cast_to_cpp(model)))); });
 }
 
 // get indexer
@@ -371,6 +359,4 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
 }
 
 // destroy model
-void PGM_destroy_model(PGM_PowerGridModel* model) noexcept {
-    destroy(cast_to_cpp(model));
-}
+void PGM_destroy_model(PGM_PowerGridModel* model) noexcept { destroy(cast_to_cpp(model)); }

@@ -102,8 +102,7 @@ class IteratorFacade {
         return (std::forward<Self>(self)) + (-idx);
     }
 
-    template <typename Self>
-    constexpr decltype(auto) operator[](this Self const& self, Self::difference_type idx) {
+    template <typename Self> constexpr decltype(auto) operator[](this Self const& self, Self::difference_type idx) {
         return *(self + idx);
     }
 

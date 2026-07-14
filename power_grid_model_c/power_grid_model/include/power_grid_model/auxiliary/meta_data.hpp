@@ -82,7 +82,7 @@ template <typename T>
     requires requires(T t) {
         { set_nan(t) };
     }
-constexpr T nan_value(){
+constexpr T nan_value() {
     T v{};
     set_nan(v);
     return v;

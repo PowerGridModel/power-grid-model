@@ -370,27 +370,29 @@ inline std::filesystem::path data_dir() {
 }
 
 // method map
-constexpr std::map<std::string, PGM_CalculationType, std::less<>> calculation_type_mapping(){
-    return {{"power_flow", PGM_power_flow}, {"state_estimation", PGM_state_estimation}, {"short_circuit", PGM_short_circuit}};
+constexpr std::map<std::string, PGM_CalculationType, std::less<>> calculation_type_mapping() {
+    return {{"power_flow", PGM_power_flow},
+            {"state_estimation", PGM_state_estimation},
+            {"short_circuit", PGM_short_circuit}};
 }
-constexpr std::map<std::string, PGM_CalculationMethod, std::less<>> calculation_method_mapping (){
+constexpr std::map<std::string, PGM_CalculationMethod, std::less<>> calculation_method_mapping() {
     return {{"newton_raphson", PGM_newton_raphson},       {"linear", PGM_linear},
-    {"iterative_current", PGM_iterative_current}, {"iterative_linear", PGM_iterative_linear},
-    {"linear_current", PGM_linear_current},       {"iec60909", PGM_iec60909}};
+            {"iterative_current", PGM_iterative_current}, {"iterative_linear", PGM_iterative_linear},
+            {"linear_current", PGM_linear_current},       {"iec60909", PGM_iec60909}};
 }
-constexpr std::map<std::string, PGM_ShortCircuitVoltageScaling, std::less<>> sc_voltage_scaling_mapping (){
+constexpr std::map<std::string, PGM_ShortCircuitVoltageScaling, std::less<>> sc_voltage_scaling_mapping() {
     return {{"", PGM_short_circuit_voltage_scaling_maximum}, // not provided returns default value
-    {"minimum", PGM_short_circuit_voltage_scaling_minimum},
-    {"maximum", PGM_short_circuit_voltage_scaling_maximum}};
+            {"minimum", PGM_short_circuit_voltage_scaling_minimum},
+            {"maximum", PGM_short_circuit_voltage_scaling_maximum}};
 }
-constexpr std::map<std::string, PGM_TapChangingStrategy, std::less<>> optimizer_strategy_mapping (){
+constexpr std::map<std::string, PGM_TapChangingStrategy, std::less<>> optimizer_strategy_mapping() {
     return {{"disabled", PGM_tap_changing_strategy_disabled},
-    {"any_valid_tap", PGM_tap_changing_strategy_any_valid_tap},
-    {"min_voltage_tap", PGM_tap_changing_strategy_min_voltage_tap},
-    {"max_voltage_tap", PGM_tap_changing_strategy_max_voltage_tap},
-    {"fast_any_tap", PGM_tap_changing_strategy_fast_any_tap}};
+            {"any_valid_tap", PGM_tap_changing_strategy_any_valid_tap},
+            {"min_voltage_tap", PGM_tap_changing_strategy_min_voltage_tap},
+            {"max_voltage_tap", PGM_tap_changing_strategy_max_voltage_tap},
+            {"fast_any_tap", PGM_tap_changing_strategy_fast_any_tap}};
 }
-constexpr std::map<std::string, PGM_ExperimentalFeatures, std::less<>> experimental_features_mapping (){
+constexpr std::map<std::string, PGM_ExperimentalFeatures, std::less<>> experimental_features_mapping() {
     return {{"disabled", PGM_experimental_features_disabled}, {"enabled", PGM_experimental_features_enabled}};
 }
 
