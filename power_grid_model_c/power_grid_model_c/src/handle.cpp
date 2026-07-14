@@ -23,27 +23,35 @@ constexpr char const* version = PGM_VERSION;
 } // namespace
 
 // create and destroy handle
-PGM_Handle* PGM_create_handle() {
-    return new PGM_Handle{}; // NOSONAR(S5025)
+PGM_Handle* PGM_create_handle() noexcept {
+    try {
+        return new PGM_Handle{}; // NOSONAR(S5025)
+    } catch (...) {
+        return nullptr;
+    }
 }
-void PGM_destroy_handle(PGM_Handle* handle) {
-    delete handle; // NOSONAR(S5025)
+void PGM_destroy_handle(PGM_Handle* handle) noexcept {
+    try {
+        delete handle; // NOSONAR(S5025)
+    } catch (...) { // NOLINT(bugprone-empty-catch)
+        // ignore
+    }
 }
 
 // error handling
-PGM_Idx PGM_error_code(PGM_Handle const* handle) {
+PGM_Idx PGM_error_code(PGM_Handle const* handle) noexcept {
     return handle != nullptr ? compile_time_safe_cast<PGM_Idx>(handle->err_code) : PGM_Idx{0};
 }
-char const* PGM_error_message(PGM_Handle const* handle) {
+char const* PGM_error_message(PGM_Handle const* handle) noexcept {
     return handle != nullptr ? handle->err_msg.c_str() : nullptr;
 }
-PGM_Idx PGM_n_failed_scenarios(PGM_Handle const* handle) {
+PGM_Idx PGM_n_failed_scenarios(PGM_Handle const* handle) noexcept {
     return handle != nullptr ? compile_time_safe_cast<PGM_Idx>(std::ssize(handle->failed_scenarios)) : PGM_Idx{0};
 }
-PGM_Idx const* PGM_failed_scenarios(PGM_Handle const* handle) {
+PGM_Idx const* PGM_failed_scenarios(PGM_Handle const* handle) noexcept {
     return handle != nullptr ? compile_time_safe_cast<PGM_Idx const*>(handle->failed_scenarios.data()) : nullptr;
 }
-char const** PGM_batch_errors(PGM_Handle const* handle) {
+char const** PGM_batch_errors(PGM_Handle const* handle) noexcept {
     if (handle == nullptr) {
         return nullptr;
     }
@@ -53,5 +61,5 @@ char const** PGM_batch_errors(PGM_Handle const* handle) {
                            [](auto const& x) { return x.c_str(); });
     return handle_ref.batch_errs_c_str.data();
 }
-void PGM_clear_error(PGM_Handle* handle) { clear_error(handle); }
-char const* PGM_version(void) { return version; }
+void PGM_clear_error(PGM_Handle* handle) noexcept { clear_error(handle); }
+char const* PGM_version(void) noexcept { return version; }

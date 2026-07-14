@@ -26,14 +26,14 @@ extern "C" {
  *
  * @return A pointer to the created handle.
  */
-PGM_API PGM_Handle* PGM_create_handle(void);
+PGM_API PGM_Handle* PGM_create_handle(void) PGM_NOEXCEPT;
 
 /**
  * @brief Destroy the handle.
  *
  * @param handle The pointer to the handle created by PGM_create_handle().
  */
-PGM_API void PGM_destroy_handle(PGM_Handle* handle);
+PGM_API void PGM_destroy_handle(PGM_Handle* handle) PGM_NOEXCEPT;
 
 /**
  * @brief Get error code of last operation.
@@ -43,7 +43,7 @@ PGM_API void PGM_destroy_handle(PGM_Handle* handle);
  * @param handle The pointer to the handle you just used for an operation.
  * @return The error code, see #PGM_ErrorCode .
  */
-PGM_API PGM_Idx PGM_error_code(PGM_Handle const* handle);
+PGM_API PGM_Idx PGM_error_code(PGM_Handle const* handle) PGM_NOEXCEPT;
 
 /**
  * @brief Get error message of last operation.
@@ -58,7 +58,7 @@ PGM_API PGM_Idx PGM_error_code(PGM_Handle const* handle);
  * The pointer is not valid if you execute another operation.
  * You need to copy the string in your own data.
  */
-PGM_API char const* PGM_error_message(PGM_Handle const* handle);
+PGM_API char const* PGM_error_message(PGM_Handle const* handle) PGM_NOEXCEPT;
 
 /**
  * @brief Get the number of failed scenarios. Only applicable when you just executed a batch calculation.
@@ -68,7 +68,7 @@ PGM_API char const* PGM_error_message(PGM_Handle const* handle);
  * @param handle The pointer to the handle you just used for a batch calculation.
  * @return The number of failed scenarios.
  */
-PGM_API PGM_Idx PGM_n_failed_scenarios(PGM_Handle const* handle);
+PGM_API PGM_Idx PGM_n_failed_scenarios(PGM_Handle const* handle) PGM_NOEXCEPT;
 
 /**
  * @brief Get the list of failed scenarios, Only applicable when you just execute a batch calculation.
@@ -80,7 +80,7 @@ PGM_API PGM_Idx PGM_n_failed_scenarios(PGM_Handle const* handle);
  * The pointer is not valid if you execute another operation.
  * You need to copy the array in your own data.
  */
-PGM_API PGM_Idx const* PGM_failed_scenarios(PGM_Handle const* handle);
+PGM_API PGM_Idx const* PGM_failed_scenarios(PGM_Handle const* handle) PGM_NOEXCEPT;
 
 /**
  * @brief Get the list of batch errors. Only applicable when you just execute a batch calculation.
@@ -93,7 +93,7 @@ PGM_API PGM_Idx const* PGM_failed_scenarios(PGM_Handle const* handle);
  * The pointer is not valid if you execute another operation.
  * You need to copy the array (and the string) in your own data.
  */
-PGM_API char const** PGM_batch_errors(PGM_Handle const* handle);
+PGM_API char const** PGM_batch_errors(PGM_Handle const* handle) PGM_NOEXCEPT;
 
 /**
  * @brief Clear and reset the handle.
@@ -102,14 +102,14 @@ PGM_API char const** PGM_batch_errors(PGM_Handle const* handle);
  *
  * @param handle The pointer to the handle.
  */
-PGM_API void PGM_clear_error(PGM_Handle* handle);
+PGM_API void PGM_clear_error(PGM_Handle* handle) PGM_NOEXCEPT;
 
 /**
  * @brief Get the version of the Power Grid Model library.
  *
  * @return A pointer to a zero-terminated string representing the version.
  */
-PGM_API char const* PGM_version(void);
+PGM_API char const* PGM_version(void) PGM_NOEXCEPT;
 
 #ifdef __cplusplus
 }

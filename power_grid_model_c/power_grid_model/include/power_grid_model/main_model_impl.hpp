@@ -73,13 +73,13 @@ class MainModelImpl {
 
   private:
     // internal type traits
-    using MainModelState = typename ModelType::MainModelState;
+    using MainModelState = ModelType::MainModelState;
 
-    using SequenceIdx = typename ModelType::SequenceIdx;
+    using SequenceIdx = ModelType::SequenceIdx;
     using SequenceIdxRefWrappers = ModelType::SequenceIdxRefWrappers;
-    using SequenceIdxView = typename ModelType::SequenceIdxView;
-    using OwnedUpdateDataset = typename ModelType::OwnedUpdateDataset;
-    using ComponentFlags = typename ModelType::ComponentFlags;
+    using SequenceIdxView = ModelType::SequenceIdxView;
+    using OwnedUpdateDataset = ModelType::OwnedUpdateDataset;
+    using ComponentFlags = ModelType::ComponentFlags;
 
   public:
     using ImplType = ModelType;
@@ -285,9 +285,9 @@ class MainModelImpl {
                      SolveFn, MathSolverType&, YBus const&,
                      typename std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>::const_reference>>
     auto calculate_(PrepareInputFn&& prepare_input, SolveFn&& solve, Logger& logger) {
-        using InputType = typename std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>::const_reference;
-        using SolverOutputType = typename std::invoke_result_t<SolveFn, MathSolverType&, YBus const&, InputType>;
-        using sym = typename SolverOutputType::sym;
+        using InputType = std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>::const_reference;
+        using SolverOutputType = std::invoke_result_t<SolveFn, MathSolverType&, YBus const&, InputType>;
+        using sym = SolverOutputType::sym;
 
         assert(construction_complete_);
         // prepare

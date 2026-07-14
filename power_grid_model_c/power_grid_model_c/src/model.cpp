@@ -42,16 +42,21 @@ using power_grid_model_c::safe_str_view;
 
 // create model
 PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency,
-                                     PGM_ConstDataset const* input_dataset) {
+                                     PGM_ConstDataset const* input_dataset) noexcept {
     return call_with_catch(handle, [system_frequency, input_dataset] {
         return cast_to_c(
-            new MainModel{// NOSONAR(S5025)
-                          system_frequency, safe_ptr_get(cast_to_cpp(input_dataset)), get_math_solver_dispatcher(), 0});
+            new MainModel{// NOSONAR(S5025) // NOLINT(bugprone-unhandled-exception-at-new) // false positive
+                          system_frequency,
+                          safe_ptr_get(cast_to_cpp(input_dataset)),
+                          get_math_solver_dispatcher(),
+                          0
+            }
+        );
     });
 }
 
 // update model
-void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_ConstDataset const* update_dataset) {
+void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_ConstDataset const* update_dataset) noexcept {
     call_with_catch(handle, [model, update_dataset] {
         safe_ptr_get(cast_to_cpp(model))
             .update_components<permanent_update_t>(safe_ptr_get(cast_to_cpp(update_dataset)));
@@ -59,15 +64,19 @@ void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_ConstDa
 }
 
 // copy model
-PGM_PowerGridModel* PGM_copy_model(PGM_Handle* handle, PGM_PowerGridModel const* model) {
+PGM_PowerGridModel* PGM_copy_model(PGM_Handle* handle, PGM_PowerGridModel const* model) noexcept {
     return call_with_catch(handle, [model] {
-        return cast_to_c(new MainModel{safe_ptr_get(cast_to_cpp(model))}); // NOSONAR(S5025)
+        return cast_to_c(
+            new MainModel{ // NOSONAR(S5025) // NOLINT(bugprone-unhandled-exception-at-new) // false positive
+                safe_ptr_get(cast_to_cpp(model))
+            }
+        );
     });
 }
 
 // get indexer
 void PGM_get_indexer(PGM_Handle* handle, PGM_PowerGridModel const* model, char const* component, PGM_Idx size,
-                     PGM_ID const* ids, PGM_Idx* indexer) {
+                     PGM_ID const* ids, PGM_Idx* indexer) noexcept {
     call_with_catch(handle, [model, component, size, ids, indexer] {
         safe_ptr_get(cast_to_cpp(model)).get_indexer(safe_str_view(component), safe_ptr(ids), size, safe_ptr(indexer));
     });
@@ -202,7 +211,7 @@ void calculate_single_batch_dimension_impl(MainModel& model, MainModel::Options 
 }
 
 struct BatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandler {
-    void operator()(PGM_Handle& handle) const {
+    void operator()(PGM_Handle& handle) const { // NOLINT(bugprone-derived-method-shadowing-base-method)
         std::exception_ptr const ex_ptr = std::current_exception();
         try {
             std::rethrow_exception(ex_ptr);
@@ -234,7 +243,7 @@ class MDBatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandl
         assert(stride_size_ > 0);
     }
 
-    void operator()(PGM_Handle& handle) const noexcept {
+    void operator()(PGM_Handle& handle) const noexcept { // NOLINT(bugprone-derived-method-shadowing-base-method)
         using namespace std::string_literals;
 
         std::exception_ptr const ex_ptr = std::current_exception();
@@ -346,7 +355,7 @@ void calculate_impl(MainModel& model, PGM_Options const& options, MutableDataset
 
 // run calculation
 void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options const* opt,
-                   PGM_MutableDataset const* output_dataset, PGM_ConstDataset const* batch_dataset) {
+                   PGM_MutableDataset const* output_dataset, PGM_ConstDataset const* batch_dataset) noexcept {
     call_with_catch(
         handle,
         [model, opt, output_dataset, batch_dataset] {
@@ -358,6 +367,6 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
 }
 
 // destroy model
-void PGM_destroy_model(PGM_PowerGridModel* model) {
+void PGM_destroy_model(PGM_PowerGridModel* model) noexcept {
     delete cast_to_cpp(model); // NOSONAR(S5025)
 }

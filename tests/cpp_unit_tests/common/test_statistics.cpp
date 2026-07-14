@@ -1335,9 +1335,9 @@ TEST_CASE("Test statistics - combine") {
     SUBCASE("UniformComplexRandVar<symmetric_t> | IndependentComplexRandVar<symmetric_t>") {
         // using a template lambda to avoid code duplication and to avoid having to create a separate test case
         auto const check = []<typename T>() {
-            std::vector<T> const measurements{T{.value = 1.0 + 5.0i, .variance = 0.2},
-                                              T{.value = 2.0 + 6.0i, .variance = 0.3},
-                                              T{.value = 4.0 + 3.0i, .variance = 0.6}};
+            std::vector<T> const measurements{T{.value = DoubleComplex{1.0, 5.0}, .variance = 0.2},
+                                              T{.value = DoubleComplex{2.0, 6.0}, .variance = 0.3},
+                                              T{.value = DoubleComplex{4.0, 3.0}, .variance = 0.6}};
 
             CHECK(combine(measurements | take(0)).value.real() == 0.0);
             CHECK(combine(measurements | take(0)).value.imag() == 0.0);

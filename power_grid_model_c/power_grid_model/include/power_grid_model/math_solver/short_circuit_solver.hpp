@@ -31,7 +31,7 @@ namespace short_circuit {
 // solver
 template <symmetry_tag sym> class ShortCircuitSolver {
     using BlockPermArray =
-        typename SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>::BlockPermArray;
+        SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>::BlockPermArray;
 
   public:
     ShortCircuitSolver(YBus<sym> const& y_bus, MathModelTopology const& topo)

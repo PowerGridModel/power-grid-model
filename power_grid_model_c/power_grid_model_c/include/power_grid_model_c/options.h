@@ -34,14 +34,14 @@ extern "C" {
  * @param handle
  * @return The pointer to the option instance. Should be freed by PGM_destroy_options().
  */
-PGM_API PGM_Options* PGM_create_options(PGM_Handle* handle);
+PGM_API PGM_Options* PGM_create_options(PGM_Handle* handle) PGM_NOEXCEPT;
 
 /**
  * @brief Free an option instance.
  *
  * @param opt The pointer to the option instance created by PGM_create_options().
  */
-PGM_API void PGM_destroy_options(PGM_Options* opt);
+PGM_API void PGM_destroy_options(PGM_Options* opt) PGM_NOEXCEPT;
 
 /**
  * @brief Specify type of calculation.
@@ -50,7 +50,7 @@ PGM_API void PGM_destroy_options(PGM_Options* opt);
  * @param opt The pointer to the option instance.
  * @param type See #PGM_CalculationType .
  */
-PGM_API void PGM_set_calculation_type(PGM_Handle* handle, PGM_Options* opt, PGM_Idx type);
+PGM_API void PGM_set_calculation_type(PGM_Handle* handle, PGM_Options* opt, PGM_Idx type) PGM_NOEXCEPT;
 
 /**
  * @brief Specify method of calculation.
@@ -59,7 +59,7 @@ PGM_API void PGM_set_calculation_type(PGM_Handle* handle, PGM_Options* opt, PGM_
  * @param opt The pointer to the option instance.
  * @param method See #PGM_CalculationMethod .
  */
-PGM_API void PGM_set_calculation_method(PGM_Handle* handle, PGM_Options* opt, PGM_Idx method);
+PGM_API void PGM_set_calculation_method(PGM_Handle* handle, PGM_Options* opt, PGM_Idx method) PGM_NOEXCEPT;
 
 /**
  * @brief Specify if we are calculating symmetrically or asymmetrically.
@@ -68,7 +68,7 @@ PGM_API void PGM_set_calculation_method(PGM_Handle* handle, PGM_Options* opt, PG
  * @param opt The pointer to the option instance.
  * @param sym See #PGM_CalculationSymmetry . 1 for symmetric calculation; 0 for asymmetric calculation.
  */
-PGM_API void PGM_set_symmetric(PGM_Handle* handle, PGM_Options* opt, PGM_Idx sym);
+PGM_API void PGM_set_symmetric(PGM_Handle* handle, PGM_Options* opt, PGM_Idx sym) PGM_NOEXCEPT;
 
 /**
  * @brief Specify the error tolerance to stop iterations. Only applicable if using iterative method.
@@ -79,7 +79,7 @@ PGM_API void PGM_set_symmetric(PGM_Handle* handle, PGM_Options* opt, PGM_Idx sym
  * @param opt The pointer to the option instance.
  * @param err_tol The relative votlage deviation tolerance.
  */
-PGM_API void PGM_set_err_tol(PGM_Handle* handle, PGM_Options* opt, double err_tol);
+PGM_API void PGM_set_err_tol(PGM_Handle* handle, PGM_Options* opt, double err_tol) PGM_NOEXCEPT;
 
 /**
  * @brief Specify maximum number of iterations. Only applicable if using iterative method.
@@ -88,7 +88,7 @@ PGM_API void PGM_set_err_tol(PGM_Handle* handle, PGM_Options* opt, double err_to
  * @param opt The pointer to the option instance.
  * @param max_iter The maximum number of iterations.
  */
-PGM_API void PGM_set_max_iter(PGM_Handle* handle, PGM_Options* opt, PGM_Idx max_iter);
+PGM_API void PGM_set_max_iter(PGM_Handle* handle, PGM_Options* opt, PGM_Idx max_iter) PGM_NOEXCEPT;
 
 /**
  * @brief Specify the multi-threading strategy. Only applicable for batch calculation.
@@ -100,7 +100,7 @@ PGM_API void PGM_set_max_iter(PGM_Handle* handle, PGM_Options* opt, PGM_Idx max_
  *   - 0: use number of machine available threads.
  *   - >0: specify number of threads you want to calculate in parallel.
  */
-PGM_API void PGM_set_threading(PGM_Handle* handle, PGM_Options* opt, PGM_Idx threading);
+PGM_API void PGM_set_threading(PGM_Handle* handle, PGM_Options* opt, PGM_Idx threading) PGM_NOEXCEPT;
 
 /**
  * @brief Specify the voltage scaling min/max for short circuit calculations
@@ -110,7 +110,7 @@ PGM_API void PGM_set_threading(PGM_Handle* handle, PGM_Options* opt, PGM_Idx thr
  * @param short_circuit_voltage_scaling See #PGM_ShortCircuitVoltageScaling
  */
 PGM_API void PGM_set_short_circuit_voltage_scaling(PGM_Handle* handle, PGM_Options* opt,
-                                                   PGM_Idx short_circuit_voltage_scaling);
+                                                   PGM_Idx short_circuit_voltage_scaling) PGM_NOEXCEPT;
 
 /**
  * @brief Specify the tap changing strategy for power flow calculations
@@ -119,7 +119,7 @@ PGM_API void PGM_set_short_circuit_voltage_scaling(PGM_Handle* handle, PGM_Optio
  * @param opt pointer to option instance
  * @param tap_changing_strategy See #PGM_TapChangingStrategy
  */
-PGM_API void PGM_set_tap_changing_strategy(PGM_Handle* handle, PGM_Options* opt, PGM_Idx tap_changing_strategy);
+PGM_API void PGM_set_tap_changing_strategy(PGM_Handle* handle, PGM_Options* opt, PGM_Idx tap_changing_strategy) PGM_NOEXCEPT;
 
 /**
  * @brief Enable/disable experimental features.
@@ -133,7 +133,7 @@ PGM_API void PGM_set_tap_changing_strategy(PGM_Handle* handle, PGM_Options* opt,
  * @param opt pointer to option instance
  * @param experimental_features See #PGM_ExperimentalFeatures
  */
-PGM_API void PGM_set_experimental_features(PGM_Handle* handle, PGM_Options* opt, PGM_Idx experimental_features);
+PGM_API void PGM_set_experimental_features(PGM_Handle* handle, PGM_Options* opt, PGM_Idx experimental_features) PGM_NOEXCEPT;
 
 #ifdef __cplusplus
 }

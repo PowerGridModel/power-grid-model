@@ -32,18 +32,20 @@ using power_grid_model_c::safe_size;
 using power_grid_model_c::to_c_size;
 
 struct SerializationExceptionHandler : public power_grid_model_c::DefaultExceptionHandler {
-    void operator()(PGM_Handle& handle) const noexcept { handle_all_errors(handle, PGM_serialization_error); }
+    void operator()(PGM_Handle& handle) const noexcept { // NOLINT(bugprone-derived-method-shadowing-base-method)
+        handle_all_errors(handle, PGM_serialization_error);
+    }
 };
 
 constexpr SerializationExceptionHandler serialization_exception_handler{};
 } // namespace
 
 PGM_Deserializer* PGM_create_deserializer_from_binary_buffer(PGM_Handle* handle, char const* data, PGM_Idx size,
-                                                             PGM_Idx serialization_format) {
+                                                             PGM_Idx serialization_format) noexcept {
     return call_with_catch(
         handle,
         [data, size, serialization_format] {
-            return cast_to_c(new Deserializer{// NOSONAR(S5025)
+            return cast_to_c(new Deserializer{// NOSONAR(S5025) // NOLINT(bugprone-unhandled-exception-at-new) // false positive
                                               from_buffer,
                                               {safe_ptr(data), safe_size<size_t>(size)},
                                               safe_enum<power_grid_model::SerializationFormat>(serialization_format),
@@ -53,11 +55,11 @@ PGM_Deserializer* PGM_create_deserializer_from_binary_buffer(PGM_Handle* handle,
 }
 
 PGM_Deserializer* PGM_create_deserializer_from_null_terminated_string(PGM_Handle* handle, char const* data_string,
-                                                                      PGM_Idx serialization_format) {
+                                                                      PGM_Idx serialization_format) noexcept {
     return call_with_catch(
         handle,
         [data_string, serialization_format] {
-            return cast_to_c(new Deserializer{// NOSONAR(S5025)
+            return cast_to_c(new Deserializer{// NOSONAR(S5025) // NOLINT(bugprone-unhandled-exception-at-new) // false positive
                                               from_string, safe_ptr(data_string),
                                               safe_enum<power_grid_model::SerializationFormat>(serialization_format),
                                               get_meta_data()});
@@ -65,28 +67,28 @@ PGM_Deserializer* PGM_create_deserializer_from_null_terminated_string(PGM_Handle
         serialization_exception_handler);
 }
 
-PGM_WritableDataset* PGM_deserializer_get_dataset(PGM_Handle* handle, PGM_Deserializer* deserializer) {
+PGM_WritableDataset* PGM_deserializer_get_dataset(PGM_Handle* handle, PGM_Deserializer* deserializer) noexcept {
     return call_with_catch(
         handle, [deserializer] { return cast_to_c(&safe_ptr_get(cast_to_cpp(deserializer)).get_dataset_info()); });
 }
 
-void PGM_deserializer_parse_to_buffer(PGM_Handle* handle, PGM_Deserializer* deserializer) {
+void PGM_deserializer_parse_to_buffer(PGM_Handle* handle, PGM_Deserializer* deserializer) noexcept {
     call_with_catch(
         handle, [deserializer] { safe_ptr_get(cast_to_cpp(deserializer)).parse(); }, serialization_exception_handler);
 }
 
 // false warning from clang-tidy
 // NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDelete)
-void PGM_destroy_deserializer(PGM_Deserializer* deserializer) {
+void PGM_destroy_deserializer(PGM_Deserializer* deserializer) noexcept {
     delete cast_to_cpp(deserializer); // NOSONAR(S5025)
 }
 
 PGM_Serializer* PGM_create_serializer(PGM_Handle* handle, PGM_ConstDataset const* dataset,
-                                      PGM_Idx serialization_format) {
+                                      PGM_Idx serialization_format) noexcept {
     return call_with_catch(
         handle,
         [dataset, serialization_format] {
-            return cast_to_c(new Serializer{// NOSONAR(S5025)
+            return cast_to_c(new Serializer{// NOSONAR(S5025) // NOLINT(bugprone-unhandled-exception-at-new) // false positive
                                             safe_ptr_get(cast_to_cpp(dataset)),
                                             safe_enum<power_grid_model::SerializationFormat>(serialization_format)});
         },
@@ -94,7 +96,7 @@ PGM_Serializer* PGM_create_serializer(PGM_Handle* handle, PGM_ConstDataset const
 }
 
 void PGM_serializer_get_to_binary_buffer(PGM_Handle* handle, PGM_Serializer* serializer, PGM_Idx use_compact_list,
-                                         char const** data, PGM_Idx* size) {
+                                         char const** data, PGM_Idx* size) noexcept {
     call_with_catch(
         handle,
         [serializer, use_compact_list, data, size] {
@@ -107,7 +109,7 @@ void PGM_serializer_get_to_binary_buffer(PGM_Handle* handle, PGM_Serializer* ser
 }
 
 char const* PGM_serializer_get_to_zero_terminated_string(PGM_Handle* handle, PGM_Serializer* serializer,
-                                                         PGM_Idx use_compact_list, PGM_Idx indent) {
+                                                         PGM_Idx use_compact_list, PGM_Idx indent) noexcept {
     return call_with_catch(
         handle,
         [serializer, use_compact_list, indent] {
@@ -116,6 +118,6 @@ char const* PGM_serializer_get_to_zero_terminated_string(PGM_Handle* handle, PGM
         serialization_exception_handler);
 }
 
-void PGM_destroy_serializer(PGM_Serializer* serializer) {
+void PGM_destroy_serializer(PGM_Serializer* serializer) noexcept {
     delete cast_to_cpp(serializer); // NOSONAR(S5025)
 }

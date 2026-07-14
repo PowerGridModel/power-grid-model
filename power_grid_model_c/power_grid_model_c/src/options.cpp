@@ -19,41 +19,43 @@ using power_grid_model_c::safe_ptr_get;
 } // namespace
 
 // options
-PGM_Options* PGM_create_options(PGM_Handle* /* handle */) {
-    return new PGM_Options{}; // NOSONAR(S5025)
+PGM_Options* PGM_create_options(PGM_Handle* handle) noexcept {
+    return call_with_catch(handle, [] {
+        return new PGM_Options{}; // NOSONAR(S5025) // NOLINT(bugprone-unhandled-exception-at-new) // false positive
+    });
 }
-void PGM_destroy_options(PGM_Options* opt) {
+void PGM_destroy_options(PGM_Options* opt) noexcept {
     delete opt; // NOSONAR(S5025)
 }
-void PGM_set_calculation_type(PGM_Handle* handle, PGM_Options* opt, PGM_Idx type) {
+void PGM_set_calculation_type(PGM_Handle* handle, PGM_Options* opt, PGM_Idx type) noexcept {
     call_with_catch(handle, [opt, type] { safe_ptr_get(opt).calculation_type = type; });
 }
-void PGM_set_calculation_method(PGM_Handle* handle, PGM_Options* opt, PGM_Idx method) {
+void PGM_set_calculation_method(PGM_Handle* handle, PGM_Options* opt, PGM_Idx method) noexcept {
     call_with_catch(handle, [opt, method] { safe_ptr_get(opt).calculation_method = method; });
 }
-void PGM_set_symmetric(PGM_Handle* handle, PGM_Options* opt, PGM_Idx sym) {
+void PGM_set_symmetric(PGM_Handle* handle, PGM_Options* opt, PGM_Idx sym) noexcept {
     call_with_catch(handle, [opt, sym] { safe_ptr_get(opt).symmetric = sym; });
 }
-void PGM_set_err_tol(PGM_Handle* handle, PGM_Options* opt, double err_tol) {
+void PGM_set_err_tol(PGM_Handle* handle, PGM_Options* opt, double err_tol) noexcept {
     call_with_catch(handle, [opt, err_tol] { safe_ptr_get(opt).err_tol = err_tol; });
 }
-void PGM_set_max_iter(PGM_Handle* handle, PGM_Options* opt, PGM_Idx max_iter) {
+void PGM_set_max_iter(PGM_Handle* handle, PGM_Options* opt, PGM_Idx max_iter) noexcept {
     call_with_catch(handle, [opt, max_iter] { safe_ptr_get(opt).max_iter = max_iter; });
 }
-void PGM_set_threading(PGM_Handle* handle, PGM_Options* opt, PGM_Idx threading) {
+void PGM_set_threading(PGM_Handle* handle, PGM_Options* opt, PGM_Idx threading) noexcept {
     call_with_catch(handle, [opt, threading] { safe_ptr_get(opt).threading = threading; });
 }
 void PGM_set_short_circuit_voltage_scaling(PGM_Handle* handle, PGM_Options* opt,
-                                           PGM_Idx short_circuit_voltage_scaling) {
+                                           PGM_Idx short_circuit_voltage_scaling) noexcept {
     call_with_catch(handle, [opt, short_circuit_voltage_scaling] {
         safe_ptr_get(opt).short_circuit_voltage_scaling = short_circuit_voltage_scaling;
     });
 }
-void PGM_set_tap_changing_strategy(PGM_Handle* handle, PGM_Options* opt, PGM_Idx tap_changing_strategy) {
+void PGM_set_tap_changing_strategy(PGM_Handle* handle, PGM_Options* opt, PGM_Idx tap_changing_strategy) noexcept {
     call_with_catch(handle,
                     [opt, tap_changing_strategy] { safe_ptr_get(opt).tap_changing_strategy = tap_changing_strategy; });
 }
-void PGM_set_experimental_features(PGM_Handle* handle, PGM_Options* opt, PGM_Idx experimental_features) {
+void PGM_set_experimental_features(PGM_Handle* handle, PGM_Options* opt, PGM_Idx experimental_features) noexcept {
     call_with_catch(handle,
                     [opt, experimental_features] { safe_ptr_get(opt).experimental_features = experimental_features; });
 }

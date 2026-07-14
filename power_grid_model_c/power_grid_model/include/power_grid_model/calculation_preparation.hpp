@@ -34,7 +34,7 @@ template <class ModelType>
     requires(main_core::is_main_model_type_v<ModelType>)
 class SolversCacheStatus {
   public:
-    using SequenceIdx = typename ModelType::SequenceIdx;
+    using SequenceIdx = ModelType::SequenceIdx;
 
   private:
     struct YBusParameterCacheValidity {

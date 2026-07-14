@@ -33,43 +33,43 @@ using power_grid_model_c::to_c_size;
 
 // dataset info
 
-char const* PGM_dataset_info_name(PGM_Handle* handle, PGM_DatasetInfo const* info) {
+char const* PGM_dataset_info_name(PGM_Handle* handle, PGM_DatasetInfo const* info) noexcept {
     return call_with_catch(handle, [info] { return safe_ptr_get(safe_ptr_get(cast_to_cpp(info)).dataset).name; });
 }
 
-PGM_Idx PGM_dataset_info_is_batch(PGM_Handle* handle, PGM_DatasetInfo const* info) {
+PGM_Idx PGM_dataset_info_is_batch(PGM_Handle* handle, PGM_DatasetInfo const* info) noexcept {
     return call_with_catch(handle, [info] { return to_c_bool<PGM_Idx>(safe_ptr_get(cast_to_cpp(info)).is_batch); });
 }
 
-PGM_Idx PGM_dataset_info_batch_size(PGM_Handle* handle, PGM_DatasetInfo const* info) {
+PGM_Idx PGM_dataset_info_batch_size(PGM_Handle* handle, PGM_DatasetInfo const* info) noexcept {
     return call_with_catch(handle, [info] { return safe_ptr_get(cast_to_cpp(info)).batch_size; });
 }
 
-PGM_Idx PGM_dataset_info_n_components(PGM_Handle* handle, PGM_DatasetInfo const* info) {
+PGM_Idx PGM_dataset_info_n_components(PGM_Handle* handle, PGM_DatasetInfo const* info) noexcept {
     return call_with_catch(handle,
                            [info] { return to_c_size(std::ssize(safe_ptr_get(cast_to_cpp(info)).component_info)); });
 }
 
-char const* PGM_dataset_info_component_name(PGM_Handle* handle, PGM_DatasetInfo const* info, PGM_Idx component_idx) {
+char const* PGM_dataset_info_component_name(PGM_Handle* handle, PGM_DatasetInfo const* info, PGM_Idx component_idx) noexcept {
     return call_with_catch(handle, [info, component_idx] {
         return safe_ptr_get(safe_ptr_get(cast_to_cpp(info)).component_info.at(component_idx).component).name;
     });
 }
 
-PGM_Idx PGM_dataset_info_elements_per_scenario(PGM_Handle* handle, PGM_DatasetInfo const* info, PGM_Idx component_idx) {
+PGM_Idx PGM_dataset_info_elements_per_scenario(PGM_Handle* handle, PGM_DatasetInfo const* info, PGM_Idx component_idx) noexcept {
     return call_with_catch(handle, [info, component_idx] {
         return safe_ptr_get(cast_to_cpp(info)).component_info.at(component_idx).elements_per_scenario;
     });
 }
 
-PGM_Idx PGM_dataset_info_total_elements(PGM_Handle* handle, PGM_DatasetInfo const* info, PGM_Idx component_idx) {
+PGM_Idx PGM_dataset_info_total_elements(PGM_Handle* handle, PGM_DatasetInfo const* info, PGM_Idx component_idx) noexcept {
     return call_with_catch(handle, [info, component_idx] {
         return safe_ptr_get(cast_to_cpp(info)).component_info.at(component_idx).total_elements;
     });
 }
 
 PGM_Idx PGM_dataset_info_has_attribute_indications(PGM_Handle* handle, PGM_DatasetInfo const* info,
-                                                   PGM_Idx component_idx) {
+                                                   PGM_Idx component_idx) noexcept {
     return call_with_catch(handle, [info, component_idx] {
         return to_c_bool<PGM_Idx>(
             safe_ptr_get(cast_to_cpp(info)).component_info.at(component_idx).has_attribute_indications);
@@ -77,7 +77,7 @@ PGM_Idx PGM_dataset_info_has_attribute_indications(PGM_Handle* handle, PGM_Datas
 }
 
 PGM_Idx PGM_dataset_info_n_attribute_indications(PGM_Handle* handle, PGM_DatasetInfo const* info,
-                                                 PGM_Idx component_idx) {
+                                                 PGM_Idx component_idx) noexcept {
     return call_with_catch(handle, [info, component_idx] {
         return to_c_size(
             std::ssize(safe_ptr_get(cast_to_cpp(info)).component_info.at(component_idx).attribute_indications));
@@ -85,7 +85,7 @@ PGM_Idx PGM_dataset_info_n_attribute_indications(PGM_Handle* handle, PGM_Dataset
 }
 
 char const* PGM_dataset_info_attribute_name(PGM_Handle* handle, PGM_DatasetInfo const* info, PGM_Idx component_idx,
-                                            PGM_Idx attribute_idx) {
+                                            PGM_Idx attribute_idx) noexcept {
     return call_with_catch(handle, [info, component_idx, attribute_idx] {
         return safe_ptr_get(safe_ptr_get(cast_to_cpp(info))
                                 .component_info.at(component_idx)
@@ -97,7 +97,7 @@ char const* PGM_dataset_info_attribute_name(PGM_Handle* handle, PGM_DatasetInfo 
 // const dataset
 
 PGM_ConstDataset* PGM_create_dataset_const(PGM_Handle* handle, char const* dataset, PGM_Idx is_batch,
-                                           PGM_Idx batch_size) {
+                                           PGM_Idx batch_size) noexcept {
     return call_with_catch(handle, [dataset, is_batch, batch_size] {
         return cast_to_c(new ConstDataset{// NOSONAR(S5025)
                                           safe_bool(is_batch), batch_size, safe_str_view(dataset), get_meta_data()});
@@ -105,25 +105,25 @@ PGM_ConstDataset* PGM_create_dataset_const(PGM_Handle* handle, char const* datas
 }
 
 PGM_ConstDataset* PGM_create_dataset_const_from_writable(PGM_Handle* handle,
-                                                         PGM_WritableDataset const* writable_dataset) {
+                                                         PGM_WritableDataset const* writable_dataset) noexcept {
     return call_with_catch(handle, [writable_dataset] {
         return cast_to_c(new ConstDataset{safe_ptr_get(cast_to_cpp(writable_dataset))}); // NOSONAR(S5025)
     });
 }
 
-PGM_ConstDataset* PGM_create_dataset_const_from_mutable(PGM_Handle* handle, PGM_MutableDataset const* mutable_dataset) {
+PGM_ConstDataset* PGM_create_dataset_const_from_mutable(PGM_Handle* handle, PGM_MutableDataset const* mutable_dataset) noexcept {
     return call_with_catch(handle, [mutable_dataset] {
         return cast_to_c(new ConstDataset{safe_ptr_get(cast_to_cpp(mutable_dataset))}); // NOSONAR(S5025)
     });
 }
 
-void PGM_destroy_dataset_const(PGM_ConstDataset* dataset) {
+void PGM_destroy_dataset_const(PGM_ConstDataset* dataset) noexcept {
     delete cast_to_cpp(dataset); // NOSONAR(S5025)
 }
 
 void PGM_dataset_const_add_buffer(PGM_Handle* handle, PGM_ConstDataset* dataset, char const* component,
                                   PGM_Idx elements_per_scenario, PGM_Idx total_elements, PGM_Idx const* indptr,
-                                  void const* data) {
+                                  void const* data) noexcept {
     call_with_catch(handle, [dataset, component, elements_per_scenario, total_elements, indptr, data] {
         safe_ptr_get(cast_to_cpp(dataset))
             .add_buffer(safe_str_view(component), elements_per_scenario, total_elements, safe_ptr_maybe_nullptr(indptr),
@@ -132,33 +132,33 @@ void PGM_dataset_const_add_buffer(PGM_Handle* handle, PGM_ConstDataset* dataset,
 }
 
 void PGM_dataset_const_add_attribute_buffer(PGM_Handle* handle, PGM_ConstDataset* dataset, char const* component,
-                                            char const* attribute, void const* data) {
+                                            char const* attribute, void const* data) noexcept {
     call_with_catch(handle, [dataset, component, attribute, data] {
         safe_ptr_get(cast_to_cpp(dataset))
             .add_attribute_buffer(safe_str_view(component), safe_str_view(attribute), safe_ptr_maybe_nullptr(data));
     });
 }
 void PGM_dataset_const_set_next_cartesian_product_dimension(PGM_Handle* handle, PGM_ConstDataset* dataset,
-                                                            PGM_ConstDataset const* next_dataset) {
+                                                            PGM_ConstDataset const* next_dataset) noexcept {
     call_with_catch(handle, [dataset, next_dataset] {
         safe_ptr_get(cast_to_cpp(dataset)).set_next_cartesian_product_dimension(safe_ptr(cast_to_cpp(next_dataset)));
     });
 }
 
-PGM_DatasetInfo const* PGM_dataset_const_get_info(PGM_Handle* handle, PGM_ConstDataset const* dataset) {
+PGM_DatasetInfo const* PGM_dataset_const_get_info(PGM_Handle* handle, PGM_ConstDataset const* dataset) noexcept {
     return call_with_catch(handle,
                            [dataset] { return cast_to_c(&safe_ptr_get(cast_to_cpp(dataset)).get_description()); });
 }
 
 // writable dataset
 
-PGM_DatasetInfo const* PGM_dataset_writable_get_info(PGM_Handle* handle, PGM_WritableDataset const* dataset) {
+PGM_DatasetInfo const* PGM_dataset_writable_get_info(PGM_Handle* handle, PGM_WritableDataset const* dataset) noexcept {
     return call_with_catch(handle,
                            [dataset] { return cast_to_c(&safe_ptr_get(cast_to_cpp(dataset)).get_description()); });
 }
 
 void PGM_dataset_writable_set_buffer(PGM_Handle* handle, PGM_WritableDataset* dataset, char const* component,
-                                     PGM_Idx* indptr, void* data) {
+                                     PGM_Idx* indptr, void* data) noexcept {
     call_with_catch(handle, [dataset, component, indptr, data] {
         safe_ptr_get(cast_to_cpp(dataset))
             .set_buffer(safe_str_view(component), safe_ptr_maybe_nullptr(indptr), safe_ptr_maybe_nullptr(data));
@@ -166,7 +166,7 @@ void PGM_dataset_writable_set_buffer(PGM_Handle* handle, PGM_WritableDataset* da
 }
 
 void PGM_dataset_writable_set_attribute_buffer(PGM_Handle* handle, PGM_WritableDataset* dataset, char const* component,
-                                               char const* attribute, void* data) {
+                                               char const* attribute, void* data) noexcept {
     call_with_catch(handle, [dataset, component, attribute, data] {
         safe_ptr_get(cast_to_cpp(dataset))
             .set_attribute_buffer(safe_str_view(component), safe_str_view(attribute), safe_ptr_maybe_nullptr(data));
@@ -176,20 +176,20 @@ void PGM_dataset_writable_set_attribute_buffer(PGM_Handle* handle, PGM_WritableD
 // mutable dataset
 
 PGM_MutableDataset* PGM_create_dataset_mutable(PGM_Handle* handle, char const* dataset, PGM_Idx is_batch,
-                                               PGM_Idx batch_size) {
+                                               PGM_Idx batch_size) noexcept {
     return call_with_catch(handle, [dataset, is_batch, batch_size] {
         return cast_to_c(new MutableDataset{// NOSONAR(S5025)
                                             safe_bool(is_batch), batch_size, safe_str_view(dataset), get_meta_data()});
     });
 }
 
-void PGM_destroy_dataset_mutable(PGM_MutableDataset* dataset) {
+void PGM_destroy_dataset_mutable(PGM_MutableDataset* dataset) noexcept {
     delete cast_to_cpp(dataset); // NOSONAR(S5025)
 }
 
 void PGM_dataset_mutable_add_buffer(PGM_Handle* handle, PGM_MutableDataset* dataset, char const* component,
                                     PGM_Idx elements_per_scenario, PGM_Idx total_elements, PGM_Idx const* indptr,
-                                    void* data) {
+                                    void* data) noexcept {
     call_with_catch(handle, [dataset, component, elements_per_scenario, total_elements, indptr, data] {
         safe_ptr_get(cast_to_cpp(dataset))
             .add_buffer(safe_str_view(component), elements_per_scenario, total_elements, safe_ptr_maybe_nullptr(indptr),
@@ -198,14 +198,14 @@ void PGM_dataset_mutable_add_buffer(PGM_Handle* handle, PGM_MutableDataset* data
 }
 
 void PGM_dataset_mutable_add_attribute_buffer(PGM_Handle* handle, PGM_MutableDataset* dataset, char const* component,
-                                              char const* attribute, void* data) {
+                                              char const* attribute, void* data) noexcept {
     call_with_catch(handle, [dataset, component, attribute, data] {
         safe_ptr_get(cast_to_cpp(dataset))
             .add_attribute_buffer(safe_str_view(component), safe_str_view(attribute), safe_ptr_maybe_nullptr(data));
     });
 }
 
-PGM_DatasetInfo const* PGM_dataset_mutable_get_info(PGM_Handle* handle, PGM_MutableDataset const* dataset) {
+PGM_DatasetInfo const* PGM_dataset_mutable_get_info(PGM_Handle* handle, PGM_MutableDataset const* dataset) noexcept {
     return call_with_catch(handle,
                            [dataset] { return cast_to_c(&safe_ptr_get(cast_to_cpp(dataset)).get_description()); });
 }

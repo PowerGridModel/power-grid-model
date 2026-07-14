@@ -203,23 +203,23 @@ constexpr bool is_little_endian() { return std::endian::native == std::endian::l
 // list of all dataset names
 struct input_getter_s {
     static constexpr char const* name = "input";
-    template <class T> using type = typename T::InputType;
+    template <class T> using type = T::InputType;
 };
 struct update_getter_s {
     static constexpr char const* name = "update";
-    template <class T> using type = typename T::UpdateType;
+    template <class T> using type = T::UpdateType;
 };
 struct sym_output_getter_s {
     static constexpr char const* name = "sym_output";
-    template <class T> using type = typename T::template OutputType<symmetric_t>;
+    template <class T> using type = T::template OutputType<symmetric_t>;
 };
 struct asym_output_getter_s {
     static constexpr char const* name = "asym_output";
-    template <class T> using type = typename T::template OutputType<asymmetric_t>;
+    template <class T> using type = T::template OutputType<asymmetric_t>;
 };
 struct sc_output_getter_s {
     static constexpr char const* name = "sc_output";
-    template <class T> using type = typename T::ShortCircuitOutputType;
+    template <class T> using type = T::ShortCircuitOutputType;
 };
 
 } // namespace power_grid_model::meta_data
