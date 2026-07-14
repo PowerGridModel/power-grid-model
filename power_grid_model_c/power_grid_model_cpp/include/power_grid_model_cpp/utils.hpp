@@ -22,10 +22,10 @@ inline bool is_nan(ID const x) { return x == std::numeric_limits<ID>::min(); }
 inline bool is_nan(double const x) { return std::isnan(x); }
 inline bool is_nan(std::complex<double> const& x) { return is_nan(x.real()) || is_nan(x.imag()); }
 inline bool is_nan(std::array<double, 3> const& array) {
-    return std::ranges::any_of(array, [](double const x) { return is_nan(x); });
+    return is_nan(array[0]) || is_nan(array[1]) || is_nan(array[2]);
 }
 inline bool is_nan(std::array<std::complex<double>, 3> const& array) {
-    return std::ranges::any_of(array, [](std::complex<double> const& x) { return is_nan(x); });
+    return is_nan(array[0]) || is_nan(array[1]) || is_nan(array[2]);
 }
 
 constexpr double nan = std::numeric_limits<double>::quiet_NaN();

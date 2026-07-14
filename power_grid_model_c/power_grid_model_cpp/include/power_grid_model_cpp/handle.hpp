@@ -10,11 +10,8 @@
 
 #include "power_grid_model_c/handle.h"
 
-#include <algorithm>
 #include <exception>
 #include <memory>
-#include <ranges>
-#include <span>
 #include <string>
 #include <vector>
 
@@ -75,16 +72,14 @@ class Handle {
             throw PowerGridRegularError{error_message};
         case PGM_batch_error: {
             Idx const n_failed_scenarios = PGM_n_failed_scenarios(handle_ptr);
-            auto const failed_scenario_seqs =
-                std::span{PGM_failed_scenarios(handle_ptr), static_cast<size_t>(n_failed_scenarios)};
-            auto const failed_scenario_messages =
-                std::span{PGM_batch_errors(handle_ptr), static_cast<size_t>(n_failed_scenarios)};
-            auto failed_scenarios = std::views::zip(failed_scenario_seqs, failed_scenario_messages) |
-                    std::views::transform([](auto const& zipped) {
-                        return PowerGridBatchError::FailedScenario{// NOLINT(modernize-use-designated-initializers)
-                                                                std::get<0>(zipped), std::get<1>(zipped)};
-                    }) |
-                    std::ranges::to<std::vector>();
+            std::vector<PowerGridBatchError::FailedScenario> failed_scenarios(n_failed_scenarios);
+            auto const* const failed_scenario_seqs = PGM_failed_scenarios(handle_ptr);
+            auto const* const failed_scenario_messages = PGM_batch_errors(handle_ptr);
+            for (Idx i = 0; i < n_failed_scenarios; ++i) {
+                failed_scenarios[i] =
+                    PowerGridBatchError::FailedScenario{// NOLINT(modernize-use-designated-initializers)
+                                                        failed_scenario_seqs[i], failed_scenario_messages[i]};
+            }
             clear_error();
             throw PowerGridBatchError{error_message, std::move(failed_scenarios)};
         }

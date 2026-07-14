@@ -24,6 +24,10 @@
 #include <vector>
 
 namespace power_grid_model_cpp {
+inline bool contains(auto const& set, auto const& value) {
+    return set.find(value) != set.end();
+}
+
 class ComponentTypeNotFound : public PowerGridError {
   public:
     ComponentTypeNotFound(std::string const& component)
@@ -347,7 +351,7 @@ struct OwningDataset {
         auto const irrelevant_components = get_irrelevant_components(calculation_type);
 
         auto const contains_irrelevant_component = [&irrelevant_components](std::string const& component) {
-            return irrelevant_components.contains(component);
+            return contains(irrelevant_components, component);
         };
 
         for (Idx component_idx{}; component_idx != ref_info.n_components(); ++component_idx) {
@@ -355,7 +359,7 @@ struct OwningDataset {
             auto const& component_meta = MetaData::get_component_by_name(dataset.get_info().name(), component_name);
             // skip components not in the filter
             if (enable_filters &&
-                !output_component_attribute_filters.contains(component_meta)) {
+                contains(output_component_attribute_filters, component_meta)) {
                 continue;
             }
             // skip irrelevant components for the calculation type

@@ -68,8 +68,6 @@ readability-*,
 -readability-math-missing-parentheses,
 -readability-redundant-member-init,
 -readability-uppercase-literal-suffix,
--bugprone-unchecked-optional-access,
-
 -google-runtime-float
 '
 
@@ -80,5 +78,6 @@ HeaderFilterRegex: '.*'
 FormatStyle: file
 
 CheckOptions:
+  bugprone-unchecked-optional-access.IgnoreValueCalls: true
   misc-include-cleaner.IgnoreHeaders: 'Eigen/.*;nlohmann/.*;msgpack/.*;boost/.*'
 ...
