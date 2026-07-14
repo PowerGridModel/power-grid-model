@@ -20,7 +20,9 @@
 
 namespace power_grid_model {
 namespace {
-auto const r_nan = RealValue<asymmetric_t>{nan};
+auto r_nan() {
+    return RealValue<asymmetric_t>{nan};
+}
 
 void check_nan_preserving_equality(std::floating_point auto actual, std::floating_point auto expected) {
     if (is_nan(expected)) {
@@ -323,8 +325,8 @@ TEST_CASE("Test power sensor") {
             asym_power_sensor_input.power_sigma = 1.0 * 1e5;
             asym_power_sensor_input.p_measured = 1.0 * 1e3 * RealValue<asymmetric_t>{1.0};
             asym_power_sensor_input.q_measured = 0.8 * 1e3 * RealValue<asymmetric_t>{1.0};
-            asym_power_sensor_input.p_sigma = r_nan;
-            asym_power_sensor_input.q_sigma = r_nan;
+            asym_power_sensor_input.p_sigma = r_nan();
+            asym_power_sensor_input.q_sigma = r_nan();
 
             ComplexValue<symmetric_t> const s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
             ComplexValue<asymmetric_t> const s_asym = s_sym * RealValue<asymmetric_t>{1.0};
@@ -367,8 +369,8 @@ TEST_CASE("Test power sensor") {
             asym_power_sensor_update.power_sigma = 2.0 * 1e5;
             asym_power_sensor_update.p_measured = 3.0 * 1e3 * RealValue<asymmetric_t>{1.0};
             asym_power_sensor_update.q_measured = 4.0 * 1e3 * RealValue<asymmetric_t>{1.0};
-            asym_power_sensor_update.p_sigma = r_nan;
-            asym_power_sensor_update.q_sigma = r_nan;
+            asym_power_sensor_update.p_sigma = r_nan();
+            asym_power_sensor_update.q_sigma = r_nan();
             asym_power_sensor.update(asym_power_sensor_update);
 
             sym_sensor_param = asym_power_sensor.calc_param<symmetric_t>();
@@ -446,8 +448,8 @@ TEST_CASE("Test power sensor") {
             asym_power_sensor_input.power_sigma = 1.0 * 1e5;
             asym_power_sensor_input.p_measured = 1.0 * 1e3 * RealValue<asymmetric_t>{1.0};
             asym_power_sensor_input.q_measured = 0.8 * 1e3 * RealValue<asymmetric_t>{1.0};
-            asym_power_sensor_input.p_sigma = r_nan;
-            asym_power_sensor_input.q_sigma = r_nan;
+            asym_power_sensor_input.p_sigma = r_nan();
+            asym_power_sensor_input.q_sigma = r_nan();
 
             ComplexValue<symmetric_t> const s_sym = (0.9 * 1e3 + 1i * 0.7 * 1e3) / 1e6;
             ComplexValue<asymmetric_t> const s_asym = s_sym * RealValue<asymmetric_t>{1.0};
@@ -490,8 +492,8 @@ TEST_CASE("Test power sensor") {
             asym_power_sensor_update.power_sigma = 2.0 * 1e5;
             asym_power_sensor_update.p_measured = 3.0 * 1e3 * RealValue<asymmetric_t>{1.0};
             asym_power_sensor_update.q_measured = 4.0 * 1e3 * RealValue<asymmetric_t>{1.0};
-            asym_power_sensor_update.p_sigma = r_nan;
-            asym_power_sensor_update.q_sigma = r_nan;
+            asym_power_sensor_update.p_sigma = r_nan();
+            asym_power_sensor_update.q_sigma = r_nan();
             asym_power_sensor.update(asym_power_sensor_update);
 
             sym_sensor_param = asym_power_sensor.calc_param<symmetric_t>();
@@ -560,27 +562,27 @@ TEST_CASE("Test power sensor") {
 
     SUBCASE("Asymmetric Power Sensor - Partial initialization and full update") {
         PowerSensorInput<asymmetric_t> asym_power_sensor_input{};
-        asym_power_sensor_input.p_measured = r_nan;
+        asym_power_sensor_input.p_measured = r_nan();
         asym_power_sensor_input.q_measured = RealValue<asymmetric_t>{1.0};
-        asym_power_sensor_input.p_sigma = r_nan;
-        asym_power_sensor_input.q_sigma = r_nan;
+        asym_power_sensor_input.p_sigma = r_nan();
+        asym_power_sensor_input.q_sigma = r_nan();
 
         PowerSensorUpdate<asymmetric_t> asym_power_sensor_update{};
         asym_power_sensor_update.p_measured = RealValue<asymmetric_t>{1.0};
-        asym_power_sensor_update.q_measured = r_nan;
-        asym_power_sensor_update.p_sigma = r_nan;
-        asym_power_sensor_update.q_sigma = r_nan;
+        asym_power_sensor_update.q_measured = r_nan();
+        asym_power_sensor_update.p_sigma = r_nan();
+        asym_power_sensor_update.q_sigma = r_nan();
 
         PowerSensor<asymmetric_t> asym_power_sensor{asym_power_sensor_input};
         asym_power_sensor.update(asym_power_sensor_update);
 
         auto const result = asym_power_sensor.get_output<asymmetric_t>({});
-        CHECK(result.p_residual[0] != r_nan[0]);
-        CHECK(result.p_residual[1] != r_nan[1]);
-        CHECK(result.p_residual[2] != r_nan[2]);
-        CHECK(result.q_residual[0] != r_nan[0]);
-        CHECK(result.q_residual[1] != r_nan[1]);
-        CHECK(result.q_residual[2] != r_nan[2]);
+        CHECK(result.p_residual[0] != r_nan()[0]);
+        CHECK(result.p_residual[1] != r_nan()[1]);
+        CHECK(result.p_residual[2] != r_nan()[2]);
+        CHECK(result.q_residual[0] != r_nan()[0]);
+        CHECK(result.q_residual[1] != r_nan()[1]);
+        CHECK(result.q_residual[2] != r_nan()[2]);
     }
 
     SUBCASE("Construction and update") {
@@ -694,7 +696,7 @@ TEST_CASE("Test power sensor") {
         RealValue<asymmetric_t> const q_sigma{10.0, 11.0, 12.0};
 
         PowerSensorUpdate<asymmetric_t> ps_update{
-            .id = 1, .power_sigma = nan, .p_measured = r_nan, .q_measured = r_nan, .p_sigma = r_nan, .q_sigma = r_nan};
+            .id = 1, .power_sigma = nan, .p_measured = r_nan(), .q_measured = r_nan(), .p_sigma = r_nan(), .q_sigma = r_nan()};
         auto expected = ps_update;
 
         SUBCASE("Identical") {

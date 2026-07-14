@@ -1110,7 +1110,7 @@ class Deserializer {
                 ctype_func_selector(attribute_buffer.meta_attribute->ctype, [&attribute_buffer, &info]<typename T> {
                     std::ranges::fill(std::span{reinterpret_cast<T*>(attribute_buffer.data),
                                                 narrow_cast<size_t>(info.total_elements)},
-                                      nan_value<T>);
+                                      nan_value<T>());
                 });
             }
         }

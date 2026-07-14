@@ -72,8 +72,7 @@ readability-*,
 
 -google-runtime-float,
 -readability-redundant-typename,
--readability-container-contains,
--bugprone-throwing-static-initialization,
+-readability-container-contains
 '
 
 WarningsAsErrors: '*'

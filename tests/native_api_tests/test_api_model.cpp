@@ -106,7 +106,8 @@ void check_throws_with(Func&& func, PGM_ErrorCode const& reference_error, std::s
     }
 }
 
-auto const complete_state_json = R"json({
+auto complete_state_json(){
+    return R"json({
   "version": "1.0",
   "type": "input",
   "is_batch": false,
@@ -127,9 +128,11 @@ auto const complete_state_json = R"json({
       {"id": 6, "from_node": 4, "to_node": 0, "from_status": 0, "to_status": 0}
     ]
   }
-})json"s; // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
+})json"s;
+}
 
-auto const single_update_json = R"json({
+auto single_update_json() {
+    return R"json({
   "version": "1.0",
   "type": "update",
   "is_batch": false,
@@ -146,9 +149,11 @@ auto const single_update_json = R"json({
       {"id": 6, "from_status": 0, "to_status": 0}
     ]
   }
-})json"s; // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
+})json"s;
+}
 
-auto const batch_update_json = R"json({
+auto batch_update_json() {
+    return R"json({
   "version": "1.0",
   "type": "update",
   "is_batch": true,
@@ -176,7 +181,8 @@ auto const batch_update_json = R"json({
       ]
     }
   ]
-})json"s; // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
+})json"s;
+}
 } // namespace
 
 TEST_CASE("API Model") {
@@ -184,13 +190,13 @@ TEST_CASE("API Model") {
 
     Options options{};
 
-    auto const owning_input_dataset = load_dataset(complete_state_json);
+    auto const owning_input_dataset = load_dataset(complete_state_json());
     auto const& input_dataset = owning_input_dataset.dataset;
 
-    auto const single_owning_update_dataset = load_dataset(single_update_json);
+    auto const single_owning_update_dataset = load_dataset(single_update_json());
     auto const& single_update_dataset = single_owning_update_dataset.dataset;
 
-    auto const batch_owning_update_dataset = load_dataset(batch_update_json);
+    auto const batch_owning_update_dataset = load_dataset(batch_update_json());
     auto const& batch_update_dataset = batch_owning_update_dataset.dataset;
 
     // output data

@@ -28,8 +28,6 @@ constexpr auto sqrt3_2 = std::numbers::sqrt3 * 0.5;
 constexpr auto deg_90 = std::numbers::pi / 2.0;
 constexpr auto deg_45 = deg_90 / 2.0;
 constexpr auto deg_60 = deg_30 * 2.0;
-const ComplexValue<asymmetric_t> unit_sym_phasor{1.0};
-
 } // namespace
 
 TEST_SUITE_BEGIN("Statistics module tests");

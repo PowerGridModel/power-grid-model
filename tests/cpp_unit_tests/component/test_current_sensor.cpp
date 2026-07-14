@@ -26,7 +26,9 @@ TEST_SUITE_BEGIN("test_current_sensor");
 
 namespace power_grid_model {
 namespace {
-auto const r_nan = RealValue<asymmetric_t>{nan};
+auto r_nan(){
+    return RealValue<asymmetric_t>{nan};
+}
 
 void check_nan_preserving_equality(std::floating_point auto actual, std::floating_point auto expected) {
     if (is_nan(expected)) {
@@ -43,7 +45,7 @@ void check_nan_preserving_equality(RealValue<asymmetric_t> const& actual, RealVa
 }
 using TerminalAndAngleTypePair = std::pair<MeasuredTerminalType, AngleMeasurementType>;
 
-auto const terminal_and_angle_measurement_types = [] {
+auto terminal_and_angle_measurement_types() {
     std::vector<TerminalAndAngleTypePair> result;
     for (auto const terminal_type :
          {MeasuredTerminalType::branch_from, MeasuredTerminalType::branch_to, MeasuredTerminalType::branch3_1,
@@ -54,12 +56,12 @@ auto const terminal_and_angle_measurement_types = [] {
         }
     }
     return result;
-}();
+};
 } // namespace
 
 TEST_CASE("Test current sensor") {
     SUBCASE("Symmetric Current Sensor") {
-        for (auto const& [terminal_type, angle_measurement_type] : terminal_and_angle_measurement_types) {
+        for (auto const& [terminal_type, angle_measurement_type] : terminal_and_angle_measurement_types()) {
             CAPTURE(terminal_type);
             CAPTURE(angle_measurement_type);
 
@@ -177,7 +179,7 @@ TEST_CASE("Test current sensor") {
         SUBCASE("Symmetric calculation parameters") {
             double const u_rated = 10.0e3;
             double const base_current = base_power_3p / u_rated / sqrt3;
-            for (auto const& [terminal_type, angle_measurement_type] : terminal_and_angle_measurement_types) {
+            for (auto const& [terminal_type, angle_measurement_type] : terminal_and_angle_measurement_types()) {
                 CurrentSensor<symmetric_t> sym_current_sensor{{.id = 1,
                                                                .measured_object = 1,
                                                                .measured_terminal_type = terminal_type,
@@ -307,7 +309,7 @@ TEST_CASE("Test current sensor") {
         constexpr auto u_rated = 10.0e3;
 
         CurrentSensorUpdate<asymmetric_t> cs_update{
-            .id = 1, .i_sigma = nan, .i_angle_sigma = nan, .i_measured = r_nan, .i_angle_measured = r_nan};
+            .id = 1, .i_sigma = nan, .i_angle_sigma = nan, .i_measured = r_nan(), .i_angle_measured = r_nan()};
         auto expected = cs_update;
 
         SUBCASE("Identical") {

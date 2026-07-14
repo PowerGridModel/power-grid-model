@@ -283,7 +283,8 @@ constexpr double i_shunt = 0.015 / 0.025 * i;
 constexpr double i_load = 0.005 / 0.025 * i;
 } // namespace test
 
-auto const complete_state_json = R"json({
+auto complete_state_json() {
+    return R"json({
   "version": "1.0",
   "type": "input",
   "is_batch": false,
@@ -314,9 +315,11 @@ auto const complete_state_json = R"json({
       {"id": 9, "node": 3, "status": 1, "g1": 0.015, "b1": 0, "g0": 0.015, "b0": 0}
     ]
   }
-})json"s; // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
+})json"s;
+}
 
-auto const update_json = R"json({
+auto update_json() {
+    return R"json({
   "version": "1.0",
   "type": "update",
   "is_batch": true,
@@ -340,9 +343,11 @@ auto const update_json = R"json({
       ]
     }
   ]
-})json"s; // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
+})json"s;
+}
 
-auto const update_vector_json = R"json({
+auto update_vector_json() {
+    return R"json({
   "version": "1.0",
   "type": "update",
   "is_batch": true,
@@ -360,17 +365,18 @@ auto const update_vector_json = R"json({
       ]
     }
   ]
-})json"s; // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
+})json"s;
+}
 } // namespace
 
 TEST_CASE("API model - all updates") {
-    auto const owning_input_dataset = load_dataset(complete_state_json);
+    auto const owning_input_dataset = load_dataset(complete_state_json());
     auto const& input_dataset = owning_input_dataset.dataset;
 
     auto const& input_info = input_dataset.get_info();
     auto model = Model{50.0, input_dataset};
 
-    auto const owning_update_dataset = load_dataset(update_json);
+    auto const owning_update_dataset = load_dataset(update_json());
     auto const& update_data = owning_update_dataset.dataset;
 
     auto const output_dataset_type = "sym_output"s;
@@ -421,7 +427,7 @@ TEST_CASE("API model - all updates") {
 }
 
 TEST_CASE("API model - updates w/ alternating compute mode") {
-    auto const owning_input_dataset = load_dataset(complete_state_json);
+    auto const owning_input_dataset = load_dataset(complete_state_json());
     auto const& input_dataset = owning_input_dataset.dataset;
 
     auto model = Model{50.0, input_dataset};
@@ -505,7 +511,7 @@ TEST_CASE("API model - updates w/ alternating compute mode") {
         CHECK(asym_shunt_output_i[2] == doctest::Approx(0.0));
     };
 
-    auto const owning_update_dataset = load_dataset(update_vector_json);
+    auto const owning_update_dataset = load_dataset(update_vector_json());
     auto const& update_data = owning_update_dataset.dataset;
 
     // This will lead to no topo change but param change
@@ -527,7 +533,8 @@ TEST_CASE("API model - updates w/ alternating compute mode") {
 }
 
 namespace {
-auto const incomplete_state_json = R"json({
+auto incomplete_state_json() {
+    return R"json({
   "version": "1.0",
   "type": "input",
   "is_batch": false,
@@ -559,8 +566,10 @@ auto const incomplete_state_json = R"json({
     ]
   }
 })json"s;
+}
 
-auto const incomplete_update_json = R"json({
+auto incomplete_update_json() {
+    return R"json({
   "version": "1.0",
   "type": "update",
   "is_batch": true,
@@ -580,8 +589,10 @@ auto const incomplete_update_json = R"json({
     }
   ]
 })json"s;
+}
 
-auto const complete_update_json = R"json({
+auto complete_update_json() {
+    return R"json({
   "version": "1.0",
   "type": "update",
   "is_batch": true,
@@ -601,13 +612,14 @@ auto const complete_update_json = R"json({
     }
   ]
 })json"s;
+}
 } // namespace
 
 TEST_CASE("API model - incomplete input") {
-    auto const complete_owning_input_dataset = load_dataset(complete_state_json);
+    auto const complete_owning_input_dataset = load_dataset(complete_state_json());
     auto const& complete_input_data = complete_owning_input_dataset.dataset;
 
-    auto const incomplete_owning_input_dataset = load_dataset(incomplete_state_json);
+    auto const incomplete_owning_input_dataset = load_dataset(incomplete_state_json());
     auto const& incomplete_input_data = incomplete_owning_input_dataset.dataset;
 
     auto const& input_info = complete_input_data.get_info();
@@ -651,7 +663,7 @@ TEST_CASE("API model - incomplete input") {
                 }
             }
             SUBCASE("Incomplete update dataset") {
-                auto const owning_update_dataset = load_dataset(incomplete_update_json);
+                auto const owning_update_dataset = load_dataset(incomplete_update_json());
                 auto const& incomplete_update_data = owning_update_dataset.dataset;
 
                 SUBCASE("Single update") {
@@ -667,7 +679,7 @@ TEST_CASE("API model - incomplete input") {
                 }
             }
             SUBCASE("Complete update dataset") {
-                auto const owning_update_dataset = load_dataset(complete_update_json);
+                auto const owning_update_dataset = load_dataset(complete_update_json());
                 auto const& complete_update_data = owning_update_dataset.dataset;
 
                 auto ref_model = Model{50.0, complete_input_data};
@@ -716,7 +728,9 @@ TEST_CASE("API model - incomplete input") {
     }
 }
 
-auto const mixed_update_json = R"json({
+namespace {
+auto mixed_update_json() {
+    return R"json({
   "version": "1.0",
   "type": "update",
   "is_batch": true,
@@ -748,8 +762,10 @@ auto const mixed_update_json = R"json({
     }
   ]
 })json"s;
+}
 
-auto const second_scenario_update_json = R"json({
+auto second_scenario_update_json() {
+    return R"json({
   "version": "1.0",
   "type": "update",
   "is_batch": true,
@@ -769,10 +785,12 @@ auto const second_scenario_update_json = R"json({
     }
   ]
 })json"s;
+}
+} // namespace
 
 TEST_CASE("API model - Incomplete scenario update followed by complete") {
-    auto const complete_owning_input_dataset = load_dataset(complete_state_json);
-    auto const incomplete_owning_input_dataset = load_dataset(incomplete_state_json);
+    auto const complete_owning_input_dataset = load_dataset(complete_state_json());
+    auto const incomplete_owning_input_dataset = load_dataset(incomplete_state_json());
 
     auto const& complete_input_data = complete_owning_input_dataset.dataset;
     auto const& incomplete_input_data = incomplete_owning_input_dataset.dataset;
@@ -784,12 +802,12 @@ TEST_CASE("API model - Incomplete scenario update followed by complete") {
     auto const n_nodes = input_info.component_elements_per_scenario(input_info.component_idx("node"));
     REQUIRE(n_nodes == 3);
 
-    auto const mixed_owning_update_dataset = load_dataset(mixed_update_json);
+    auto const mixed_owning_update_dataset = load_dataset(mixed_update_json());
     auto const& mixed_update_data = mixed_owning_update_dataset.dataset;
     auto const batch_size = mixed_update_data.get_info().batch_size();
     REQUIRE(batch_size == 2);
 
-    auto const second_scenario_owning_update_dataset = load_dataset(second_scenario_update_json);
+    auto const second_scenario_owning_update_dataset = load_dataset(second_scenario_update_json());
     auto const& second_scenario_update_data = second_scenario_owning_update_dataset.dataset;
 
     for (auto symmetry : {PGM_symmetric, PGM_asymmetric}) {

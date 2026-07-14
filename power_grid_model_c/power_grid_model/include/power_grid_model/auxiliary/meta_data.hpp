@@ -82,11 +82,11 @@ template <typename T>
     requires requires(T t) {
         { set_nan(t) };
     }
-inline T const nan_value = [] {
+constexpr T nan_value(){
     T v{};
     set_nan(v);
     return v;
-}();
+};
 
 using RawDataPtr = void*;            // raw mutable data ptr
 using RawDataConstPtr = void const*; // raw read-only data ptr
