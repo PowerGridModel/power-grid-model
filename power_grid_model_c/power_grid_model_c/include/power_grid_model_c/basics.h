@@ -133,6 +133,15 @@ typedef struct PGM_WritableDataset PGM_WritableDataset;
  */
 typedef struct PGM_DatasetInfo PGM_DatasetInfo;
 
+/**
+ * @brief Opaque struct for a logger object.
+ *
+ * A logger captures diagnostic output (text or benchmark timings) produced during calculations.
+ * Loggers are created with PGM_create_logger(), registered to a handle with PGM_register_logger(),
+ * and must be destroyed with PGM_destroy_logger() after unregistering.
+ */
+typedef struct PGM_Logger PGM_Logger;
+
 // NOLINTEND(modernize-use-using)
 
 // NOLINTBEGIN(performance-enum-size)
@@ -238,6 +247,19 @@ enum PGM_TapChangingStrategy {
 enum PGM_ExperimentalFeatures {
     PGM_experimental_features_disabled = 0, /**< disable experimental features */
     PGM_experimental_features_enabled = 1,  /**< enable experimental features */
+};
+
+/**
+ * @brief Enumeration of logger types.
+ *
+ * Selects which kind of diagnostic output a logger captures.
+ * Calling output/clear operations on a do-nothing logger is a no-op.
+ *
+ */
+enum PGM_LoggerType {
+    PGM_do_nothing_logger = 0, /**< logger that discards all output (no-op) */
+    PGM_text_logger = 1,       /**< logger that captures timestamped text messages */
+    PGM_benchmark_logger = 2,  /**< logger that captures timing information per calculation phase */
 };
 
 // NOLINTEND(performance-enum-size)

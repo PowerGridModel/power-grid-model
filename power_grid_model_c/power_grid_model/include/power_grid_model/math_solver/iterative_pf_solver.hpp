@@ -20,6 +20,7 @@
 #include "../common/logging.hpp"
 #include "../common/timer.hpp"
 
+#include <format>
 #include <functional>
 #include <limits>
 #include <vector>
@@ -71,6 +72,10 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
                 Timer const sub_timer{log, LogEvent::iterate_unknown};
                 max_dev = derived_solver.iterate_unknown(output.u);
             }
+            // Lazy text log: only materialised for TextLogger; free for NoLogger / CalculationInfo.
+            log.log(LogEvent::iterate_unknown, [num_iter, max_dev] {
+                return std::format("Iteration {:3}: max voltage deviation = {:.6e} p.u.", num_iter, max_dev);
+            });
         }
 
         // calculate math result

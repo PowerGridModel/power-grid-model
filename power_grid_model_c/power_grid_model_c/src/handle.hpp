@@ -13,23 +13,32 @@
 #include <power_grid_model/batch_parameter.hpp>
 #include <power_grid_model/common/common.hpp>
 
+#include <algorithm>
 #include <exception>
 #include <string_view>
+#include <vector>
 
 // context handle
 struct PGM_Handle {
-    power_grid_model::Idx err_code;
+    power_grid_model::Idx err_code{};
     std::string err_msg;
     power_grid_model::IdxVector failed_scenarios;
     std::vector<std::string> batch_errs;
     mutable std::vector<char const*> batch_errs_c_str;
     [[no_unique_address]] power_grid_model::BatchParameter batch_parameter;
+    std::vector<PGM_Logger*> loggers; // non-owning; registered loggers survive clear_error
 };
 
 namespace power_grid_model_c {
-constexpr void clear_error(PGM_Handle* handle) {
+inline void clear_error(PGM_Handle* handle) {
     if (handle != nullptr) {
-        *handle = PGM_Handle{};
+        // Intentionally reset only error-related fields; loggers are preserved.
+        handle->err_code = {};
+        handle->err_msg.clear();
+        handle->failed_scenarios.clear();
+        handle->batch_errs.clear();
+        handle->batch_errs_c_str.clear();
+        handle->batch_parameter = {};
     }
 }
 

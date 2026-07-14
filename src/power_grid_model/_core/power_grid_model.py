@@ -49,6 +49,7 @@ from power_grid_model._core.enum import (
 )
 from power_grid_model._core.error_handling import PowerGridBatchError, assert_no_error, handle_errors
 from power_grid_model._core.index_integer import IdNp, IdxNp
+from power_grid_model._core.logger import Logger
 from power_grid_model._core.options import Options
 from power_grid_model._core.power_grid_core import (
     ConstDatasetPtr,
@@ -219,6 +220,33 @@ class PowerGridModel:
         get_pgc().get_indexer(self._model, component_type, size, ids_c, indexer_c)
         assert_no_error()
         return indexer
+
+    def attach_logger(self, logger: Logger) -> None:
+        """Register a logger to receive diagnostic output from subsequent calculations.
+
+        Multiple loggers of different types may be registered simultaneously.
+        The logger must not be destroyed while attached (UB).
+        Attaching the same logger instance more than once is UB.
+
+        Loggers are registered on the thread-local handle, so attach and calculate
+        should be called from the same thread.
+
+        Args:
+            logger: The logger to attach.
+        """
+        get_pgc().register_logger(logger._ptr)
+        assert_no_error()
+
+    def detach_logger(self, logger: Logger) -> None:
+        """Unregister a previously attached logger.
+
+        Detaching a logger that is not registered is a no-op.
+
+        Args:
+            logger: The logger to detach.
+        """
+        get_pgc().unregister_logger(logger._ptr)
+        assert_no_error()
 
     def _get_output_component_count(self, calculation_type: CalculationType):
         exclude_types = {

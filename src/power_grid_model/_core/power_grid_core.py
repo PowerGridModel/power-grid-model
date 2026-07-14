@@ -122,6 +122,12 @@ class SerializerPtr(c_void_p):
     """
 
 
+class LoggerPtr(c_void_p):
+    """
+    Pointer to logger
+    """
+
+
 def _load_core() -> CDLL:
     """
 
@@ -569,6 +575,30 @@ class PowerGridCore:
 
     @make_c_binding
     def destroy_serializer(self, serializer: SerializerPtr) -> None:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def create_logger(self, logger_type: int) -> LoggerPtr:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def destroy_logger(self, logger: LoggerPtr) -> None:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def register_logger(self, logger: LoggerPtr) -> None:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def unregister_logger(self, logger: LoggerPtr) -> None:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def logger_get_output(self, logger: LoggerPtr) -> str:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def logger_clear(self, logger: LoggerPtr) -> None:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
 

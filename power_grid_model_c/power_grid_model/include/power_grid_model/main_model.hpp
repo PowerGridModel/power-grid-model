@@ -107,6 +107,14 @@ class MainModel {
         return JobDispatch::batch_calculation(adapter, result_data, update_data, options.threading, logger_.get());
     }
 
+    // Overload that uses an explicitly provided logger instead of the model's stored one.
+    // Used by the C API to inject a per-call composite logger built from handle-registered loggers.
+    BatchParameter calculate(Options const& options, MutableDataset const& result_data,
+                             ConstDataset const& update_data, MultiThreadedLogger& logger) {
+        JobAdapter<Impl> adapter{std::ref(impl()), std::ref(options)};
+        return JobDispatch::batch_calculation(adapter, result_data, update_data, options.threading, logger);
+    }
+
     void check_no_experimental_features_used(Options const& options, ConstDataset const* batch_dataset) const {
         impl().check_no_experimental_features_used(options, batch_dataset);
     }
