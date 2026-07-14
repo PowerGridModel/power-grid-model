@@ -39,7 +39,7 @@ static_assert(std::is_same_v<PGM_Idx, Idx>);
 static_assert(std::is_same_v<PGM_ID, ID>);
 
 struct RangedExceptionHandler : public power_grid_model_c::DefaultExceptionHandler {
-    void operator()(PGM_Handle& handle) const noexcept {
+    void operator()(PGM_Handle& handle) const noexcept { // NOLINT(bugprone-derived-method-shadowing-base-method)
         using namespace std::string_literals;
 
         std::exception_ptr const ex_ptr = std::current_exception();
