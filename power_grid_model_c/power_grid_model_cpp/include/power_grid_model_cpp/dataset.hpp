@@ -24,11 +24,12 @@
 #include <vector>
 
 namespace power_grid_model_cpp {
-
+namespace detail {
 template <typename ContainerType, typename ValueType>
 inline bool contains(ContainerType const& container, ValueType const& value) {
     return container.find(value) != container.end();
 }
+} // namespace detail
 
 class ComponentTypeNotFound : public PowerGridError {
   public:
