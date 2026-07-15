@@ -36,8 +36,8 @@ class CalculationInfo : public Logger {
     void log(LogEvent tag, double value) override { log_impl(tag, value); }
     void log(LogEvent tag, Idx value) override { log_impl(tag, static_cast<double>(value)); }
     void log(std::string_view /*message*/) const { /* ignore all such events for now */ }
-    template <LazyLoggingFn Fn> void log(LogEvent /*tag*/, Fn fn) const { capturing::into_the_void(fn); }
-    template <LazyLoggingFn Fn> void log(Fn fn) const { capturing::into_the_void(fn); }
+    template <LazyLoggingFn Fn> void log(LogEvent /*tag*/, Fn /*fn*/) const {}
+    template <LazyLoggingFn Fn> void log(Fn /*fn*/) const {}
 
   private:
     Data data_;
