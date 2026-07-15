@@ -483,19 +483,11 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
                 //          for u_col > pivot_row_col
                 // it can create fill-ins, but the fill-ins are pre-allocated
                 // it is guaranteed to have an entry at (l_row, u_col), if (pivot_row_col, u_col) is non-zero
-                // starting A index from (l_row, pivot_row_col)
-                Idx a_idx = l_idx;
                 // loop all columns in the right of (pivot_row_col, pivot_row_col), at pivot_row
                 for (Idx u_idx = pivot_idx + 1; u_idx < row_indptr_[pivot_row_col + 1]; ++u_idx) {
                     Idx const u_col = col_indices_[u_idx];
                     assert(u_col > pivot_row_col);
-                    // search the a_idx to the u_col,
-                    auto const found = std::lower_bound(col_indices_.begin() + a_idx,
-                                                        col_indices_.begin() + row_indptr_[l_row + 1], u_col);
-                    // should always found
-                    assert(found != col_indices_.begin() + row_indptr_[l_row + 1]);
-                    assert(*found == u_col);
-                    a_idx = narrow_cast<Idx>(std::distance(col_indices_.begin(), found));
+                    Idx const a_idx = find_entry(l_row, u_col);
                     // subtract
                     lu_matrix[a_idx] -= dot(l, lu_matrix[u_idx]);
                 }
