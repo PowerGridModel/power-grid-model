@@ -251,6 +251,31 @@ BlockSparseMatrix four_node_meshed_with_preallocated_fill_in_lu_test_matrix() {
 } // namespace
 
 TEST_CASE("Dense LU factor") {
+    SUBCASE("Right solve with unit lower factor") {
+        using LUFactor = DenseLUFactor<Matrix3>;
+
+        Matrix3 const lu_matrix{
+            {11.0, 12.0, 13.0},
+            {2.0, 22.0, 23.0},
+            {3.0, 4.0, 33.0},
+        };
+        Matrix3 const unit_lower{
+            {1.0, 0.0, 0.0},
+            {2.0, 1.0, 0.0},
+            {3.0, 4.0, 1.0},
+        };
+        Matrix3 const original_rhs{
+            {1.0, 2.0, 3.0},
+            {4.0, 5.0, 6.0},
+            {7.0, 8.0, 9.0},
+        };
+        Matrix3 rhs = original_rhs;
+
+        LUFactor::right_solve_unit_lower_inplace(lu_matrix, rhs); //  computes rhs = original_rhs * unit_lower.inverse()
+
+        check_matrix_result(rhs * unit_lower, original_rhs);
+    }
+
     SUBCASE("Dense inverse") {
         using LUFactor = DenseLUFactor<Matrix3>;
 

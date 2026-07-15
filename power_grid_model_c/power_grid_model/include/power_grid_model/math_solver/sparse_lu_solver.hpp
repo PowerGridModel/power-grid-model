@@ -152,7 +152,8 @@ template <rk2_tensor Matrix> class DenseLUFactor {
         }
     }
 
-    // Forward substitution with the L matrix. The diagonal entries of L are implicit 1.0
+    // Forward substitution with the L matrix. The diagonal entries of L are implicit 1.0.
+    // Computes L^-1 * rhs in place.
     // The rhs may be a vector or a matrix; matrix rhs columns are solved simultaneously.
     template <class LUDerived, class RHSDerived>
     static void forward_substitute_inplace(Eigen::MatrixBase<LUDerived> const& lu_matrix, RHSDerived& rhs)
@@ -169,6 +170,7 @@ template <rk2_tensor Matrix> class DenseLUFactor {
     }
 
     // Backward substitution with the U matrix stored in lu_matrix.
+    // Computes U^-1 * rhs in place.
     // The rhs may be a vector or a matrix; matrix rhs columns are solved simultaneously.
     template <class LUDerived, class RHSDerived>
     static void backward_substitute_inplace(Eigen::MatrixBase<LUDerived> const& lu_matrix, RHSDerived& rhs)
@@ -182,6 +184,22 @@ template <rk2_tensor Matrix> class DenseLUFactor {
                 rhs.row(row) -= lu_matrix(row, col) * rhs.row(col);
             }
             rhs.row(row) /= lu_matrix(row, row);
+        }
+    }
+
+    // Right-side substitution with the L matrix. The diagonal entries of L are implicit 1.0.
+    // Computes rhs * L^-1 in place.
+    template <class LUDerived, class RHSDerived>
+    static void right_solve_unit_lower_inplace(Eigen::MatrixBase<LUDerived> const& lu_matrix, RHSDerived& rhs)
+        requires(std::same_as<typename LUDerived::Scalar, Scalar> &&
+                 std::same_as<typename RHSDerived::Scalar, Scalar> && rk2_tensor<LUDerived> && rk2_tensor<RHSDerived> &&
+                 (LUDerived::RowsAtCompileTime == size) && (LUDerived::ColsAtCompileTime == size) &&
+                 (RHSDerived::ColsAtCompileTime == size))
+    {
+        for (int8_t col = size - 1; col > -1; --col) {
+            for (int8_t other_col = size - 1; other_col > col; --other_col) {
+                rhs.col(col) -= lu_matrix(other_col, col) * rhs.col(other_col);
+            }
         }
     }
 
@@ -737,16 +755,13 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     }
 
     // Compute block * L_pivot^-1, with L stored in the lower triangle and implicit unit diagonal.
-    // This is a right solve (xA=b); the existing forward/backward substitution helpers
-    // are left solves (Ax=b), so they cannot be reused here.
+
     static Tensor multiply_inverse_unit_lower_right(Tensor const& pivot, Tensor block)
         requires is_block
     {
-        for (Idx block_col = block_size - 1; block_col > -1; --block_col) {
-            for (Idx other_col = block_size - 1; other_col > block_col; --other_col) {
-                block.col(block_col) -= pivot(other_col, block_col) * block.col(other_col);
-            }
-        }
+        // This is a right solve (xL=b); the existing forward substitution helper
+        // is a left solve (Lx=b), so it cannot be reused here.
+        LUFactor::right_solve_unit_lower_inplace(pivot.matrix(), block);
         return block;
     }
 
