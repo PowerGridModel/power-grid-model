@@ -296,8 +296,8 @@ struct StringVisitor : DefaultErrorVisitor {
     static constexpr std::string_view static_err_msg = "String expected.";
 
     std::string_view str;
-    bool visit_str(const char* v,
-                   uint32_t size) { // NOSONAR(S1242) // NOLINT(bugprone-derived-method-shadowing-base-method)
+    bool visit_str(const char* v, // NOSONAR(S1242) // NOLINT(bugprone-derived-method-shadowing-base-method)
+                   uint32_t size) {
         str = {v, size};
         return true;
     }
