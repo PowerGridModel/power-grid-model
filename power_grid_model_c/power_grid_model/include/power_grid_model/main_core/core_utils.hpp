@@ -32,7 +32,6 @@ constexpr auto run_functor_with_tuple_index_return_array(functor_c auto functor,
         return std::array { functor.template operator()<std::tuple_element_t<Indices, Tuple>>()... };
     } else {
         auto result = std::array { functor.template operator()<std::tuple_element_t<Indices, Tuple>>()... };
-        capturing::into_the_void(functor);
         return result;
     }
 }
