@@ -691,12 +691,15 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         // Buffer LU values from row/column p before overwriting them with Z blocks.
         Tensor const pivot = data[pivot_idx];
         std::vector<Tensor> const u_row(data.begin() + u_start, data.begin() + u_end); // u_row is contagious.
-        std::vector<Tensor> l_col(n_off_diagonal); // l column is scattered we need to extract them.
-        IdxVector l_indices(n_off_diagonal);
-        for (Idx offset = 0; offset < n_off_diagonal; ++offset) {
-            l_indices[offset] = find_entry(col_indices_[u_start + offset], pivot_row_col);
-            l_col[offset] = data[l_indices[offset]];
-        }
+        auto const [l_col, l_indices] = [&]() {
+            std::vector<Tensor> values(n_off_diagonal); // l column is scattered we need to extract them.
+            IdxVector indices(n_off_diagonal);
+            for (Idx offset = 0; offset < n_off_diagonal; ++offset) {
+                indices[offset] = find_entry(col_indices_[u_start + offset], pivot_row_col);
+                values[offset] = data[indices[offset]];
+            }
+            return std::pair{std::move(values), std::move(indices)};
+        }();
 
         // Column below pivot: replace L_kp with Z_kp = -(sum_m Z_km * L_mp) * L_p^-1.
         for (Idx k_offset = 0; k_offset < n_off_diagonal; ++k_offset) {
