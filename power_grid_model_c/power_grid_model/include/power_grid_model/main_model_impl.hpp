@@ -299,7 +299,7 @@ class MainModelImpl {
             return prepare_input_(get_n_math_solvers<ModelType>(state_));
         }();
         // calculate
-        return [this, &logger, &input, solve_ = solve] {
+        return [this, &logger, &input, &solve_ = solve] {
             Timer const timer{logger, LogEvent::math_calculation};
             auto& solvers = main_core::get_solvers<sym>(solver_preparation_context_.math_state);
             auto& y_bus_vec = main_core::get_y_bus<sym>(solver_preparation_context_.math_state);
