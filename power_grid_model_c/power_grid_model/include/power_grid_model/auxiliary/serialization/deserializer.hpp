@@ -296,7 +296,8 @@ struct StringVisitor : DefaultErrorVisitor {
     static constexpr std::string_view static_err_msg = "String expected.";
 
     std::string_view str;
-    bool visit_str(const char* v, uint32_t size) { // NOLINT(bugprone-derived-method-shadowing-base-method)
+    bool visit_str(const char* v,
+                   uint32_t size) { // NOSONAR(S1242) // NOLINT(bugprone-derived-method-shadowing-base-method)
         str = {v, size};
         return true;
     }
@@ -308,7 +309,7 @@ struct BoolVisitor : DefaultErrorVisitor {
     static constexpr std::string_view static_err_msg = "Boolean expected.";
 
     bool value{};
-    bool visit_boolean(bool v) { // NOLINT(bugprone-derived-method-shadowing-base-method)
+    bool visit_boolean(bool v) { // NOSONAR(S1242) // NOLINT(bugprone-derived-method-shadowing-base-method)
         value = v;
         return true;
     }

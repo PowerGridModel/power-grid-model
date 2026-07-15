@@ -132,7 +132,7 @@ TEST_CASE("Test Sparse LU solver") {
 
         SUBCASE("Test prefactorize") {
             solver.prefactorize(data, block_perm);
-            auto& data_ref = data;
+            auto const& data_ref = data;
             solver.solve_with_prefactorized_matrix(data_ref, block_perm, rhs, x);
             check_result(x, x_ref);
         }
@@ -189,7 +189,7 @@ TEST_CASE("Test Sparse LU solver") {
 
         SUBCASE("Test prefactorize") {
             solver.prefactorize(data, block_perm);
-            auto& data_ref = data;
+            auto const& data_ref = data;
             solver.solve_with_prefactorized_matrix(data_ref, block_perm, rhs, x);
             check_result(x, x_ref);
         }
