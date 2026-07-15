@@ -20,8 +20,8 @@ class NoLogger : public Logger {
     void log(LogEvent /*tag*/, double /*value*/) override { /* no logging */ }
     void log(LogEvent /*tag*/, Idx /*value*/) override { /* no logging */ }
     void log(std::string_view /*message*/) const { /* no logging */ }
-    template <LazyLoggingFn Fn> void log(LogEvent /*tag*/, Fn /* fn */) const {}
-    template <LazyLoggingFn Fn> void log(Fn /* fn */) const {}
+    template <LazyLoggingFn Fn> void log(LogEvent /*tag*/, Fn /* fn */) const { /*do nothing*/ }
+    template <LazyLoggingFn Fn> void log(Fn /* fn */) const { /*do nothing*/ }
     template <std::derived_from<Logger> T> T& merge_into(T& destination) const { return destination; }
 };
 
