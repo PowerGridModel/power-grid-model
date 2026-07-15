@@ -22,7 +22,6 @@ constexpr void run_functor_with_tuple_index_return_void(functor_c auto functor,
         (functor.template operator()<std::tuple_element_t<Indices, Tuple>>(), ...);
     } else {
         (functor.template operator()<std::tuple_element_t<Indices, Tuple>>(), ...);
-        capturing::into_the_void(functor);
     }
 }
 
