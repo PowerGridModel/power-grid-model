@@ -24,7 +24,11 @@
 #include <vector>
 
 namespace power_grid_model_cpp {
-inline bool contains(auto const& set, auto const& value) { return set.find(value) != set.end(); }
+
+template <typename ContainerType, typename ValueType>
+inline bool contains(ContainerType const& container, ValueType const& value) {
+    return container.find(value) != container.end();
+}
 
 class ComponentTypeNotFound : public PowerGridError {
   public:
