@@ -553,7 +553,7 @@ template <dataset_type_tag dataset_type_> class Dataset {
         return result;
     }
 
-    template <class type_getter, class ComponentType, typename Func,
+    template <class type_getter, class ComponentType, functor_c Func,
               class StructType = DataStruct<typename type_getter::template type<ComponentType>>>
         requires std::invocable<Func, SpanRange<StructType>> && std::invocable<Func, RangeObject<StructType>>
     auto for_each_component(Func func, Idx scenario = invalid_index) const {

@@ -278,7 +278,7 @@ inline UpdateChange update_component(ComponentContainer& components, Updates com
                 *changed_it++ = sequence_single;
             }
         },
-        std::views::all(component_updates), sequence_idx);
+        component_updates, sequence_idx);
 
     return state_changed;
 }

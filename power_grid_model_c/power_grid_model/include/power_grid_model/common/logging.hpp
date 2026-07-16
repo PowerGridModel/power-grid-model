@@ -46,7 +46,7 @@ enum class LogEvent : int16_t {
 
 template <typename Fn>
 concept LazyLoggingFn = std::invocable<Fn> && std::convertible_to<std::invoke_result_t<Fn>, std::string> &&
-                        (!std::convertible_to<Fn, std::string_view>);
+                        (!std::convertible_to<Fn, std::string_view>) && functor_c<Fn>;
 
 class Logger {
   public:
