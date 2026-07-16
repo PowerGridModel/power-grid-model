@@ -125,20 +125,10 @@ concept non_owning_view_c = std::ranges::view<R> && !detail::is_owning_view<std:
 
 // by ref adaptor to pass to functions which accepts std::ranges::view
 template <class R>
-    requires(std::ranges::viewable_range<R> && !std::ranges::view<R> && !std::ranges::borrowed_range<R>)
-constexpr auto by_ref(R& r) noexcept {
-    return std::ranges::ref_view(r);
-}
-template <class R>
-    requires(std::ranges::viewable_range<R> && !std::ranges::view<R> && !std::ranges::borrowed_range<R>)
-constexpr auto by_ref(R const& r) noexcept {
-    return std::ranges::ref_view(r);
-}
-template <class R>
-    requires(std::ranges::viewable_range<R> && !std::ranges::view<R> && !std::ranges::borrowed_range<R>)
-constexpr auto by_const_ref(R& r) noexcept {
-    return by_ref(std::as_const(r));
-}
+concept owning_container_c = std::ranges::viewable_range<R> && !std::ranges::view<R> && !std::ranges::borrowed_range<R>;
+constexpr auto by_ref(owning_container_c auto& r) noexcept { return std::ranges::ref_view(r); }
+constexpr auto by_ref(owning_container_c auto const& r) noexcept { return std::ranges::ref_view(r); }
+constexpr auto by_const_ref(owning_container_c auto& r) noexcept { return by_ref(std::as_const(r)); }
 
 // pgm functor concept
 // it should be cheap to copy, so it should be trivially copyable and small in size
