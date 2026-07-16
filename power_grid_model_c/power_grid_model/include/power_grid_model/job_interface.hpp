@@ -17,53 +17,53 @@ class JobInterface {
   public:
     // the multiple  NOSONARs are used to avoid the complaints about the unnamed concepts
     template <typename Self, typename ResultDataset>
-    void calculate(this Self&& self, ResultDataset const& result_data, Idx pos, Logger& logger)
+    void calculate(this Self& self, ResultDataset const& result_data, Idx pos, Logger& logger)
         requires requires { // NOSONAR
-            { std::forward<Self>(self).calculate_impl(result_data, pos, logger) } -> std::same_as<void>;
+            { self.calculate_impl(result_data, pos, logger) } -> std::same_as<void>;
         }
     {
-        return std::forward<Self>(self).calculate_impl(result_data, pos, logger);
+        return self.calculate_impl(result_data, pos, logger);
     }
 
     template <typename Self, typename ResultDataset>
-    void calculate(this Self&& self, ResultDataset const& result_data, Logger& logger) {
-        std::forward<Self>(self).calculate(result_data, Idx{}, logger);
+    void calculate(this Self& self, ResultDataset const& result_data, Logger& logger) {
+        self.calculate(result_data, Idx{}, logger);
     }
 
     template <typename Self>
-    void cache_calculate(this Self&& self, Logger& logger)
+    void cache_calculate(this Self& self, Logger& logger)
         requires requires { // NOSONAR
-            { std::forward<Self>(self).cache_calculate_impl(logger) } -> std::same_as<void>;
+            { self.cache_calculate_impl(logger) } -> std::same_as<void>;
         }
     {
-        return std::forward<Self>(self).cache_calculate_impl(logger);
+        return self.cache_calculate_impl(logger);
     }
 
     template <typename Self, typename UpdateDataset>
-    void prepare_job_dispatch(this Self&& self, UpdateDataset const& update_data)
+    void prepare_job_dispatch(this Self& self, UpdateDataset const& update_data)
         requires requires { // NOSONAR
-            { std::forward<Self>(self).prepare_job_dispatch_impl(update_data) } -> std::same_as<void>;
+            { self.prepare_job_dispatch_impl(update_data) } -> std::same_as<void>;
         }
     {
-        return std::forward<Self>(self).prepare_job_dispatch_impl(update_data);
+        return self.prepare_job_dispatch_impl(update_data);
     }
 
     template <typename Self, typename UpdateDataset>
-    void setup(this Self&& self, UpdateDataset const& update_data, Idx scenario_idx)
+    void setup(this Self& self, UpdateDataset const& update_data, Idx scenario_idx)
         requires requires { // NOSONAR
-            { std::forward<Self>(self).setup_impl(update_data, scenario_idx) } -> std::same_as<void>;
+            { self.setup_impl(update_data, scenario_idx) } -> std::same_as<void>;
         }
     {
-        return std::forward<Self>(self).setup_impl(update_data, scenario_idx);
+        return self.setup_impl(update_data, scenario_idx);
     }
 
     template <typename Self>
-    void winddown(this Self&& self)
+    void winddown(this Self& self)
         requires requires { // NOSONAR
-            { std::forward<Self>(self).winddown_impl() } -> std::same_as<void>;
+            { self.winddown_impl() } -> std::same_as<void>;
         }
     {
-        return std::forward<Self>(self).winddown_impl();
+        return self.winddown_impl();
     }
 
   protected:

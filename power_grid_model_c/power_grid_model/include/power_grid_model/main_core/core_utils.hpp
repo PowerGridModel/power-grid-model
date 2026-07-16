@@ -15,26 +15,23 @@ namespace power_grid_model::main_core::utils {
 
 namespace detail {
 
-template <typename Tuple, class Functor, std::size_t... Indices>
-constexpr void run_functor_with_tuple_index_return_void(Functor&& functor, std::index_sequence<Indices...> /*unused*/) {
+template <typename Tuple, std::size_t... Indices>
+constexpr void run_functor_with_tuple_index_return_void(functor_c auto functor,
+                                                        std::index_sequence<Indices...> /*unused*/) {
     if constexpr (sizeof...(Indices) == 1) {
-        (std::forward<Functor>(functor).template operator()<std::tuple_element_t<Indices, Tuple>>(), ...);
+        (functor.template operator()<std::tuple_element_t<Indices, Tuple>>(), ...);
     } else {
         (functor.template operator()<std::tuple_element_t<Indices, Tuple>>(), ...);
-        capturing::into_the_void(std::forward<Functor>(functor));
     }
 }
 
-template <typename Tuple, class Functor, std::size_t... Indices>
-constexpr auto run_functor_with_tuple_index_return_array(Functor&& functor,
+template <typename Tuple, std::size_t... Indices>
+constexpr auto run_functor_with_tuple_index_return_array(functor_c auto functor,
                                                          std::index_sequence<Indices...> /*unused*/) {
     if constexpr (sizeof...(Indices) == 1) {
-        return std::array {
-            std::forward<Functor>(functor).template operator()<std::tuple_element_t<Indices, Tuple>>()...
-        };
+        return std::array { functor.template operator()<std::tuple_element_t<Indices, Tuple>>()... };
     } else {
         auto result = std::array { functor.template operator()<std::tuple_element_t<Indices, Tuple>>()... };
-        capturing::into_the_void(std::forward<Functor>(functor));
         return result;
     }
 }
@@ -44,14 +41,14 @@ constexpr auto run_functor_with_tuple_index_return_array(Functor&& functor,
 constexpr Idx sequential{-1};
 constexpr Idx invalid_index{-1};
 
-template <typename Tuple, class Functor> constexpr void run_functor_with_tuple_return_void(Functor&& functor) {
-    detail::run_functor_with_tuple_index_return_void<Tuple>(std::forward<Functor>(functor),
+template <typename Tuple> constexpr void run_functor_with_tuple_return_void(functor_c auto functor) {
+    detail::run_functor_with_tuple_index_return_void<Tuple>(functor,
                                                             std::make_index_sequence<std::tuple_size_v<Tuple>>{});
 }
 
-template <typename Tuple, class Functor> constexpr auto run_functor_with_tuple_return_array(Functor&& functor) {
+template <typename Tuple> constexpr auto run_functor_with_tuple_return_array(functor_c auto functor) {
     return detail::run_functor_with_tuple_index_return_array<Tuple>(
-        std::forward<Functor>(functor), std::make_index_sequence<std::tuple_size_v<Tuple>>{});
+        functor, std::make_index_sequence<std::tuple_size_v<Tuple>>{});
 }
 
 } // namespace power_grid_model::main_core::utils
