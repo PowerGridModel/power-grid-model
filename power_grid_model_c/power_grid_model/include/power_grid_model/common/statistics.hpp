@@ -314,7 +314,7 @@ inline auto scale(DecomposedComplexRandVar<sym> const& var, ScaleType const& sca
 }
 
 // combine multiple random variables of one quantity using Kalman filter
-template <std::ranges::view RandVarsView>
+template <non_owning_view_c RandVarsView>
     requires std::same_as<std::ranges::range_value_t<RandVarsView>,
                           UniformRealRandVar<typename std::ranges::range_value_t<RandVarsView>::sym>> ||
              std::same_as<std::ranges::range_value_t<RandVarsView>,
@@ -345,7 +345,7 @@ constexpr auto combine(RandVarsView rand_vars) {
                        .variance = VarianceType{1.0} / accumulated_inverse_variance};
 }
 
-template <std::ranges::view RandVarsView>
+template <non_owning_view_c RandVarsView>
     requires std::same_as<std::ranges::range_value_t<RandVarsView>,
                           DecomposedComplexRandVar<typename std::ranges::range_value_t<RandVarsView>::sym>>
 constexpr auto combine(RandVarsView rand_vars) {
@@ -373,7 +373,7 @@ template <symmetry_tag sym> inline RealValue<sym> cabs_or_real(ComplexValue<sym>
 }
 } // namespace detail
 
-template <std::ranges::view RandVarsView>
+template <non_owning_view_c RandVarsView>
     requires std::same_as<std::ranges::range_value_t<RandVarsView>,
                           UniformComplexRandVar<typename std::ranges::range_value_t<RandVarsView>::sym>>
 constexpr auto combine_magnitude(RandVarsView rand_vars) {

@@ -117,12 +117,11 @@ class MainModelType<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     using SequenceIdxRefWrappers = std::array<std::reference_wrapper<std::vector<Idx2D> const>, n_types>;
     using ComponentFlags = std::array<bool, n_types>;
 
-    template <class Functor> static constexpr void run_functor_with_all_component_types_return_void(Functor&& functor) {
-        return utils::run_functor_with_tuple_return_void<ComponentTypesTuple>(std::forward<Functor>(functor));
+    static constexpr void run_functor_with_all_component_types_return_void(functor_c auto functor) {
+        return utils::run_functor_with_tuple_return_void<ComponentTypesTuple>(functor);
     }
-    template <class Functor>
-    static constexpr auto run_functor_with_all_component_types_return_array(Functor&& functor) {
-        return utils::run_functor_with_tuple_return_array<ComponentTypesTuple>(std::forward<Functor>(functor));
+    static constexpr auto run_functor_with_all_component_types_return_array(functor_c auto functor) {
+        return utils::run_functor_with_tuple_return_array<ComponentTypesTuple>(functor);
     }
 };
 

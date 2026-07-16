@@ -46,7 +46,7 @@ enum class LogEvent : int16_t {
 
 template <typename Fn>
 concept LazyLoggingFn = std::invocable<Fn> && std::convertible_to<std::invoke_result_t<Fn>, std::string> &&
-                        (!std::convertible_to<Fn, std::string_view>);
+                        (!std::convertible_to<Fn, std::string_view>) && functor_c<Fn>;
 
 class Logger {
   public:
@@ -56,8 +56,8 @@ class Logger {
     virtual void log(LogEvent tag, Idx value) = 0;
 
     void log(std::string_view message) { log(LogEvent::unknown, message); }
-    template <LazyLoggingFn Fn> void log(LogEvent tag, Fn&& fn) { log(tag, std::invoke(std::forward<Fn>(fn))); }
-    template <LazyLoggingFn Fn> void log(Fn&& fn) { log(LogEvent::unknown, std::invoke(std::forward<Fn>(fn))); }
+    template <LazyLoggingFn Fn> void log(LogEvent tag, Fn fn) { log(tag, std::invoke(fn)); }
+    template <LazyLoggingFn Fn> void log(Fn fn) { log(LogEvent::unknown, std::invoke(fn)); }
 
     Logger(Logger&&) noexcept = default;
     Logger& operator=(Logger&&) noexcept = default;
