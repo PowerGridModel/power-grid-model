@@ -174,7 +174,8 @@ template <rk2_tensor Matrix> class DenseLUFactor {
                  ((side == TriangularSolveSide::left && RHSDerived::RowsAtCompileTime == size) ||
                   (side == TriangularSolveSide::right && RHSDerived::ColsAtCompileTime == size)))
     {
-        constexpr bool forward_traversal = (side == TriangularSolveSide::left) == (factor == TriangularFactor::lower);
+        static constexpr bool forward_traversal =
+            (side == TriangularSolveSide::left) == (factor == TriangularFactor::lower);
 
         for (int8_t step = 0; step < size; ++step) {
             int8_t const index = static_cast<int8_t>(forward_traversal ? step : size - 1 - step);
