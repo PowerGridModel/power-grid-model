@@ -46,6 +46,17 @@ inline void perturb_pivot_if_needed(double perturb_threshold, Scalar& value, dou
     }
 }
 
+// Triangular solve variants:
+// | Side  | Factor | Traversal | Updated RHS view | Operation  | Divide by diagonal?      |
+// |-------|--------|-----------|------------------|------------|--------------------------|
+// | Left  | L      | Forward   | Row              | L^-1 * rhs | No; L has unit diagonal  |
+// | Left  | U      | Backward  | Row              | U^-1 * rhs | Yes                      |
+// | Right | L      | Backward  | Column           | rhs * L^-1 | No; L has unit diagonal  |
+// | Right | U      | Forward   | Column           | rhs * U^-1 | Yes                      |
+// Left-lower and left-upper solves are commonly called forward and backward substitution, respectively.
+enum class TriangularSolveSide : bool { left, right };
+enum class TriangularFactor : bool { lower, upper }; // L or U
+
 // Dense LU factorization class
 // The implementation of the Dense LU factorization was derived from the Eigen library
 // https://gitlab.com/libeigen/eigen/-/blob/3.4/Eigen/src/LU/FullPivLU.h
@@ -152,53 +163,35 @@ template <rk2_tensor Matrix> class DenseLUFactor {
         }
     }
 
-    // Forward substitution with the L matrix. The diagonal entries of L are implicit 1.0.
-    // Computes L^-1 * rhs in place.
-    // The rhs may be a vector or a matrix; matrix rhs columns are solved simultaneously.
-    template <class LUDerived, class RHSDerived>
-    static void forward_substitute_inplace(Eigen::MatrixBase<LUDerived> const& lu_matrix, RHSDerived& rhs)
+    // Solve with one of the triangular factors stored in lu_matrix.
+    // The lower factor has an implicit unit diagonal; the upper factor has an explicit diagonal.
+    // Forward substituion is left-lower solve. Backward substitution is left-upper solve.
+    template <TriangularSolveSide side, TriangularFactor factor, class LUDerived, class RHSDerived>
+    static void triangular_solve_inplace(Eigen::MatrixBase<LUDerived> const& lu_matrix, RHSDerived& rhs)
         requires(std::same_as<typename LUDerived::Scalar, Scalar> &&
                  std::same_as<typename RHSDerived::Scalar, Scalar> && rk2_tensor<LUDerived> &&
                  (LUDerived::RowsAtCompileTime == size) && (LUDerived::ColsAtCompileTime == size) &&
-                 (RHSDerived::RowsAtCompileTime == size))
+                 ((side == TriangularSolveSide::left && RHSDerived::RowsAtCompileTime == size) ||
+                  (side == TriangularSolveSide::right && RHSDerived::ColsAtCompileTime == size)))
     {
-        for (int8_t row = 0; row < size; ++row) {
-            for (int8_t col = 0; col < row; ++col) {
-                rhs.row(row) -= lu_matrix(row, col) * rhs.row(col);
-            }
-        }
-    }
+        constexpr bool forward_traversal = (side == TriangularSolveSide::left) == (factor == TriangularFactor::lower);
 
-    // Backward substitution with the U matrix stored in lu_matrix.
-    // Computes U^-1 * rhs in place.
-    // The rhs may be a vector or a matrix; matrix rhs columns are solved simultaneously.
-    template <class LUDerived, class RHSDerived>
-    static void backward_substitute_inplace(Eigen::MatrixBase<LUDerived> const& lu_matrix, RHSDerived& rhs)
-        requires(std::same_as<typename LUDerived::Scalar, Scalar> &&
-                 std::same_as<typename RHSDerived::Scalar, Scalar> && rk2_tensor<LUDerived> &&
-                 (LUDerived::RowsAtCompileTime == size) && (LUDerived::ColsAtCompileTime == size) &&
-                 (RHSDerived::RowsAtCompileTime == size))
-    {
-        for (int8_t row = size - 1; row > -1; --row) {
-            for (int8_t col = size - 1; col > row; --col) {
-                rhs.row(row) -= lu_matrix(row, col) * rhs.row(col);
+        for (int step = 0; step < size; ++step) {
+            int const index = forward_traversal ? step : size - 1 - step;
+            for (int previous_step = 0; previous_step < step; ++previous_step) {
+                int const previous_index = forward_traversal ? previous_step : size - 1 - previous_step;
+                if constexpr (side == TriangularSolveSide::left) {
+                    rhs.row(index) -= lu_matrix(index, previous_index) * rhs.row(previous_index);
+                } else {
+                    rhs.col(index) -= lu_matrix(previous_index, index) * rhs.col(previous_index);
+                }
             }
-            rhs.row(row) /= lu_matrix(row, row);
-        }
-    }
-
-    // Right-side substitution with the L matrix. The diagonal entries of L are implicit 1.0.
-    // Computes rhs * L^-1 in place.
-    template <class LUDerived, class RHSDerived>
-    static void right_solve_unit_lower_inplace(Eigen::MatrixBase<LUDerived> const& lu_matrix, RHSDerived& rhs)
-        requires(std::same_as<typename LUDerived::Scalar, Scalar> &&
-                 std::same_as<typename RHSDerived::Scalar, Scalar> && rk2_tensor<LUDerived> && rk2_tensor<RHSDerived> &&
-                 (LUDerived::RowsAtCompileTime == size) && (LUDerived::ColsAtCompileTime == size) &&
-                 (RHSDerived::ColsAtCompileTime == size))
-    {
-        for (int8_t col = size - 1; col > -1; --col) {
-            for (int8_t other_col = size - 1; other_col > col; --other_col) {
-                rhs.col(col) -= lu_matrix(other_col, col) * rhs.col(other_col);
+            if constexpr (factor == TriangularFactor::upper) {
+                if constexpr (side == TriangularSolveSide::left) {
+                    rhs.row(index) /= lu_matrix(index, index);
+                } else {
+                    rhs.col(index) /= lu_matrix(index, index);
+                }
             }
         }
     }
@@ -212,8 +205,8 @@ template <rk2_tensor Matrix> class DenseLUFactor {
                  (Derived::RowsAtCompileTime == size) && (Derived::ColsAtCompileTime == size))
     {
         Matrix inverse = Matrix::Identity();
-        forward_substitute_inplace(lu_matrix, inverse);
-        backward_substitute_inplace(lu_matrix, inverse);
+        triangular_solve_inplace<TriangularSolveSide::left, TriangularFactor::lower>(lu_matrix, inverse);
+        triangular_solve_inplace<TriangularSolveSide::left, TriangularFactor::upper>(lu_matrix, inverse);
         return inverse;
     }
 
@@ -426,13 +419,9 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
                     Tensor& u = lu_matrix[u_idx];
                     // permutation
                     u = (block_perm.p * u.matrix()).array();
-                    // forward substitution, per row in u
-                    for (Idx block_row = 0; block_row < block_size; ++block_row) {
-                        for (Idx block_col = 0; block_col < block_row; ++block_col) {
-                            // forward substract
-                            u.row(block_row) -= pivot(block_row, block_col) * u.row(block_col);
-                        }
-                    }
+                    // forward substitution (left,lower solve), per row in u
+                    LUFactor::template triangular_solve_inplace<TriangularSolveSide::left, TriangularFactor::lower>(
+                        pivot.matrix(), u);
                 }
             }
 
@@ -464,13 +453,8 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
                     // l * u = a
                     // l0 * u00 = a0
                     // l0 * u01 + l1 * u11 = a1
-                    for (Idx block_col = 0; block_col < block_size; ++block_col) {
-                        for (Idx block_row = 0; block_row < block_col; ++block_row) {
-                            l.col(block_col) -= pivot(block_row, block_col) * l.col(block_row);
-                        }
-                        // divide diagonal
-                        l.col(block_col) = l.col(block_col) / pivot(block_col, block_col);
-                    }
+                    LUFactor::template triangular_solve_inplace<TriangularSolveSide::right, TriangularFactor::upper>(
+                        pivot.matrix(), l);
                 } else {
                     // for scalar matrix, just divide
                     // L_k,pivot = A_k,pivot / U_pivot    k > pivot
@@ -745,7 +729,8 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     static Tensor multiply_inverse_upper_left(Tensor const& pivot, Tensor block)
         requires is_block
     {
-        LUFactor::backward_substitute_inplace(pivot.matrix(), block);
+        LUFactor::template triangular_solve_inplace<TriangularSolveSide::left, TriangularFactor::upper>(pivot.matrix(),
+                                                                                                        block);
         return block;
     }
 
@@ -754,9 +739,8 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     static Tensor multiply_inverse_unit_lower_right(Tensor const& pivot, Tensor block)
         requires is_block
     {
-        // This is a right solve (xL=b); the existing forward substitution helper
-        // is a left solve (Lx=b), so it cannot be reused here.
-        LUFactor::right_solve_unit_lower_inplace(pivot.matrix(), block);
+        LUFactor::template triangular_solve_inplace<TriangularSolveSide::right, TriangularFactor::lower>(pivot.matrix(),
+                                                                                                         block);
         return block;
     }
 
@@ -787,7 +771,8 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
             // forward substitution inside block, for block matrix
             if constexpr (is_block) {
                 Tensor const& pivot = lu_matrix[diag_lu[row]];
-                LUFactor::forward_substitute_inplace(pivot.matrix(), x[row]);
+                LUFactor::template triangular_solve_inplace<TriangularSolveSide::left, TriangularFactor::lower>(
+                    pivot.matrix(), x[row]);
             }
         }
 
@@ -805,7 +790,8 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
             if constexpr (is_block) {
                 // backward substitution inside block
                 Tensor const& pivot = lu_matrix[diag_lu[row]];
-                LUFactor::backward_substitute_inplace(pivot.matrix(), x[row]);
+                LUFactor::template triangular_solve_inplace<TriangularSolveSide::left, TriangularFactor::upper>(
+                    pivot.matrix(), x[row]);
             } else {
                 x[row] = x[row] / lu_matrix[diag_lu[row]];
             }

@@ -251,34 +251,62 @@ BlockSparseMatrix four_node_meshed_with_preallocated_fill_in_lu_test_matrix() {
 } // namespace
 
 TEST_CASE("Dense LU factor") {
-    SUBCASE("Right solve with unit lower factor") {
-        using LUFactor = DenseLUFactor<Matrix3>;
+    using LUFactor = DenseLUFactor<Matrix3>;
 
-        Matrix3 const lu_matrix{
-            {11.0, 12.0, 13.0},
-            {2.0, 22.0, 23.0},
-            {3.0, 4.0, 33.0},
-        };
-        Matrix3 const unit_lower{
-            {1.0, 0.0, 0.0},
-            {2.0, 1.0, 0.0},
-            {3.0, 4.0, 1.0},
-        };
-        Matrix3 const original_rhs{
-            {1.0, 2.0, 3.0},
-            {4.0, 5.0, 6.0},
-            {7.0, 8.0, 9.0},
-        };
+    Matrix3 const lu_matrix{
+        {11.0, 12.0, 13.0},
+        {2.0, 22.0, 23.0},
+        {3.0, 4.0, 33.0},
+    };
+    Matrix3 const unit_lower{
+        {1.0, 0.0, 0.0},
+        {2.0, 1.0, 0.0},
+        {3.0, 4.0, 1.0},
+    };
+    Matrix3 const upper{
+        {11.0, 12.0, 13.0},
+        {0.0, 22.0, 23.0},
+        {0.0, 0.0, 33.0},
+    };
+    Matrix3 const original_rhs{
+        {1.0, 2.0, 3.0},
+        {4.0, 5.0, 6.0},
+        {7.0, 8.0, 9.0},
+    };
+
+    SUBCASE("Left solve with unit lower factor") {
         Matrix3 rhs = original_rhs;
 
-        LUFactor::right_solve_unit_lower_inplace(lu_matrix, rhs); //  computes rhs = original_rhs * unit_lower.inverse()
+        LUFactor::triangular_solve_inplace<TriangularSolveSide::left, TriangularFactor::lower>(lu_matrix, rhs);
+
+        check_matrix_result(unit_lower * rhs, original_rhs);
+    }
+
+    SUBCASE("Left solve with upper factor") {
+        Matrix3 rhs = original_rhs;
+
+        LUFactor::triangular_solve_inplace<TriangularSolveSide::left, TriangularFactor::upper>(lu_matrix, rhs);
+
+        check_matrix_result(upper * rhs, original_rhs);
+    }
+
+    SUBCASE("Right solve with unit lower factor") {
+        Matrix3 rhs = original_rhs;
+
+        LUFactor::triangular_solve_inplace<TriangularSolveSide::right, TriangularFactor::lower>(lu_matrix, rhs);
 
         check_matrix_result(rhs * unit_lower, original_rhs);
     }
 
-    SUBCASE("Dense inverse") {
-        using LUFactor = DenseLUFactor<Matrix3>;
+    SUBCASE("Right solve with upper factor") {
+        Matrix3 rhs = original_rhs;
 
+        LUFactor::triangular_solve_inplace<TriangularSolveSide::right, TriangularFactor::upper>(lu_matrix, rhs);
+
+        check_matrix_result(rhs * upper, original_rhs);
+    }
+
+    SUBCASE("Dense inverse") {
         Matrix3 const matrix = scalar_lu_test_matrix();
         Matrix3 const expected_inverse = (Matrix3{
                                               {42.0, -6.0, -35.0},
