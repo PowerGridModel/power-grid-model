@@ -154,11 +154,32 @@ scalar equations.
 
 ### Numerical implementation
 
+#### Similarities and differences with the LU solver
+
+The numerical implementation consumes the LU factors produced by PGM's
+[block-sparse LU factorization](lu-solver.md#block-sparse-lu-factorization).
+
+Block-sparse LU factorization and selective inversion have the following similarities:
+
+* They use the same [filled block-sparse indexing](lu-solver.md#block-sparse-indexing).
+* They operate in place.
+* At each pivot step, they both update one pivot block row and block column.
+* They use the packed dense diagonal factor and triangular solves at each pivot.
+
+The main differences are the direction and result of the sweep:
+
+* LU factorization proceeds from the top-left to the bottom-right.
+  At each pivot step, one column of $\mathbf{L}$ and one row of $\mathbf{U}$ are computed.
+  This $\mathbf{L}$ column and $\mathbf{U}$ row are then used to update the trailing Schur complement.
+* Selective inversion proceeds from the bottom-right to the top-left.
+  At each pivot step, selected blocks in one column and one row of the inverse are computed.
+  Each pivot step uses previously computed inverse blocks at the bottom-right, which are already final.
+
 #### Dependency blocks and target blocks
 
 For the use-case of state estimation, the target blocks are often only those in the original `y_bus` pattern.
 In radial networks, the LU pattern and the original `y_bus` pattern are the same.
-In meshed networks, factorization introduces fill-ins.
+In meshed networks, [factorization introduces fill-ins](lu-solver.md#pivot-operations).
 The dependency block set is then the complete filled LU pattern.
 
 A fill-in cannot be skipped merely because it is not part of the final `y_bus` target pattern.
@@ -205,7 +226,7 @@ Temporary storage is therefore limited to `u_row`, `l_col`, `l_indices`, and `pi
 
 #### Restoring dense block permutations
 
-The sparse LU solver in PGM uses dense full pivoting inside each block.
+The sparse LU solver in PGM uses [dense full pivoting](lu-solver.md#dense-lu-factorization) inside each block.
 It therefore produces the factorization
 
 $$
