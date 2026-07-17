@@ -51,18 +51,18 @@ template <class T> constexpr CType ctype_v = ctype_t<T>::value;
 // function selector based on ctype
 // the operator() of the functor should have a single template parameter
 // the selector will instantiate the operator() with relevant type
-template <class Functor, class... Args> decltype(auto) ctype_func_selector(CType ctype, Functor&& f, Args&&... args) {
+template <functor_c Functor, class... Args> decltype(auto) ctype_func_selector(CType ctype, Functor f, Args&&... args) {
     using enum CType;
 
     switch (ctype) {
     case c_double:
-        return std::forward<Functor>(f).template operator()<double>(std::forward<Args>(args)...);
+        return f.template operator()<double>(std::forward<Args>(args)...);
     case c_double3:
-        return std::forward<Functor>(f).template operator()<RealValue<asymmetric_t>>(std::forward<Args>(args)...);
+        return f.template operator()<RealValue<asymmetric_t>>(std::forward<Args>(args)...);
     case c_int8:
-        return std::forward<Functor>(f).template operator()<int8_t>(std::forward<Args>(args)...);
+        return f.template operator()<int8_t>(std::forward<Args>(args)...);
     case c_int32:
-        return std::forward<Functor>(f).template operator()<int32_t>(std::forward<Args>(args)...);
+        return f.template operator()<int32_t>(std::forward<Args>(args)...);
     default:
         throw MissingCaseForEnumError{"CType selector", ctype};
     }

@@ -92,8 +92,8 @@ class Subcase {
     // The structure of this function is similar to how pytest.raises and pytest.mark.xfail work.
     template <typename T>
         requires std::invocable<std::remove_cvref_t<T>, Subcase&>
-    void execute_case(T&& statement) noexcept {
-        CHECK_NOTHROW(maybe_mark_xfail(maybe_with_raises(std::forward<T>(statement)))(*this));
+    void execute_case(T statement) noexcept {
+        CHECK_NOTHROW(maybe_mark_xfail(maybe_with_raises(statement))(*this));
     }
 
   private:
@@ -103,8 +103,8 @@ class Subcase {
 
     template <typename T>
         requires std::invocable<std::remove_cvref_t<T>, Subcase&>
-    auto maybe_with_raises(T&& statement) noexcept {
-        return [this, statement_ = std::forward<T>(statement)](Subcase& subcase) {
+    auto maybe_with_raises(T statement) noexcept {
+        return [this, statement_ = statement](Subcase& subcase) {
             if (!raises_) {
                 return statement_(subcase);
             }
@@ -125,8 +125,8 @@ class Subcase {
 
     template <typename T>
         requires std::invocable<std::remove_cvref_t<T>, Subcase&>
-    auto maybe_mark_xfail(T&& statement) noexcept {
-        return [this, statement_ = std::forward<T>(statement)](Subcase& subcase) {
+    auto maybe_mark_xfail(T statement) noexcept {
+        return [this, statement_ = statement](Subcase& subcase) {
             if (!xfail_raises_) {
                 return statement_(subcase);
             }
@@ -611,7 +611,7 @@ constexpr bool should_skip_test(CaseParam const& /*param*/) { return false; }
 
 template <typename T>
     requires std::invocable<std::remove_cvref_t<T>, Subcase&>
-void execute_test(CaseParam const& param, T&& func) noexcept {
+void execute_test(CaseParam const& param, T func) noexcept {
     Subcase subcase{param.raises, param.xfail};
     bool const skip = should_skip_test(param);
     std::cout << std::format("Validation test: {}{}{}\n", param.case_name, skip ? " [skipped]" : "",
@@ -620,7 +620,7 @@ void execute_test(CaseParam const& param, T&& func) noexcept {
         return;
     }
 
-    subcase.execute_case(std::forward<T>(func));
+    subcase.execute_case(func);
 }
 
 void validate_single_case(CaseParam const& param) {

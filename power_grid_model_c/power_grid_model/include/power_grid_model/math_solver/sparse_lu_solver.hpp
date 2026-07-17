@@ -554,9 +554,9 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     }
 
     void calculate_residual(std::vector<XVector> const& x) {
-        auto const& original_matrix = original_matrix_.value(); // NOLINT(bugprone-unchecked-optional-access)
-        auto const& rhs = rhs_.value();                         // NOLINT(bugprone-unchecked-optional-access)
-        auto& residual = residual_.value();                     // NOLINT(bugprone-unchecked-optional-access)
+        auto const& original_matrix = original_matrix_.value();
+        auto const& rhs = rhs_.value();                        
+        auto& residual = residual_.value();                    
         // calculate residual
         for (Idx row = 0; row != size_; ++row) {
             residual[row] = rhs[row];
@@ -569,10 +569,10 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     }
 
     double iterate_and_backward_error(std::vector<XVector>& x) {
-        auto const& original_matrix = original_matrix_.value(); // NOLINT(bugprone-unchecked-optional-access)
-        auto const& rhs = rhs_.value();                         // NOLINT(bugprone-unchecked-optional-access)
-        auto const& residual = residual_.value();               // NOLINT(bugprone-unchecked-optional-access)
-        auto const& dx = dx_.value();                           // NOLINT(bugprone-unchecked-optional-access)
+        auto const& original_matrix = original_matrix_.value();
+        auto const& rhs = rhs_.value();                        
+        auto const& residual = residual_.value();              
+        auto const& dx = dx_.value();                          
         using RealValueType = std::conditional_t<is_block, Eigen::Array<double, block_size, 1>, double>;
         std::vector<RealValueType> all_denominators(size_);
         double max_denominator{};

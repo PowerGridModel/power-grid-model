@@ -131,7 +131,7 @@ algorithms/lu-solver
 :maxdepth: 2
 advanced_documentation/native-data-interface
 advanced_documentation/build-guide
-working_with_containers/container-setup.md
+advanced_documentation/devcontainer-setup.md
 advanced_documentation/c-api
 advanced_documentation/high-level-design
 advanced_documentation/core-design

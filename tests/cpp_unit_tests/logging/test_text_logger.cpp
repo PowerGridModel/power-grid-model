@@ -16,7 +16,6 @@
 
 #include <doctest/doctest.h>
 
-#include <concepts>
 #include <format>
 #include <functional>
 #include <stdexcept>
@@ -75,15 +74,12 @@ void multi_threaded_report_checker_helper(Idx n_threads, std::string_view report
     }
 }
 
-template <typename JobFn>
-    requires std::invocable<JobFn, Idx, MultiThreadedTextLogger&>
-void run_parallel_jobs(Idx n_threads, MultiThreadedTextLogger& logger, JobFn&& job) {
+void run_parallel_jobs(Idx n_threads, MultiThreadedTextLogger& logger, functor_c auto job) {
     std::vector<std::jthread> threads;
     threads.reserve(n_threads);
     for (Idx const idx : IdxRange{n_threads}) {
         threads.emplace_back(job, idx, std::ref(logger));
     }
-    capturing::into_the_void(std::forward<JobFn>(job));
 }
 } // namespace
 

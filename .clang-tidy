@@ -68,7 +68,8 @@ readability-*,
 -readability-math-missing-parentheses,
 -readability-redundant-member-init,
 -readability-uppercase-literal-suffix,
--google-runtime-float
+-bugprone-unchecked-optional-access,
+-google-runtime-float,
 '
 
 WarningsAsErrors: '*'
@@ -78,6 +79,7 @@ HeaderFilterRegex: '.*'
 FormatStyle: file
 
 CheckOptions:
-  bugprone-unchecked-optional-access.IgnoreValueCalls: true
+  bugprone-unchecked-optional-access.IgnoreValueCalls: true # this configuration is only available starting clang-tidy-22.1.0
+                                                            # until that is available, we will have to ignore the warning
   misc-include-cleaner.IgnoreHeaders: 'Eigen/.*;nlohmann/.*;msgpack/.*;boost/.*'
 ...

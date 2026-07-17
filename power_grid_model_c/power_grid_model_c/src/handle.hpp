@@ -67,7 +67,7 @@ struct DefaultExceptionHandler {
 //
 // The handle itself is inherently unsafe, as checking for safety would then raise, which in turn would require another
 // handle, etc. Therefore, only a nullptr check can be done here.
-template <class Functor, class ExceptionHandler = DefaultExceptionHandler>
+template <power_grid_model::functor_c Functor, class ExceptionHandler = DefaultExceptionHandler>
     requires std::invocable<Functor> && std::invocable<ExceptionHandler const&, PGM_Handle&>
 inline auto call_with_catch(PGM_Handle* handle, Functor func, ExceptionHandler const& exception_handler = {}) noexcept(
     noexcept(exception_handler(std::declval<PGM_Handle&>()))) -> std::invoke_result_t<Functor> {
