@@ -124,9 +124,10 @@ class Logger:
         """
         if self._python_logger is None:
             return
-        for line in self.output.splitlines():
-            if line:
-                self._python_logger.log(self._level, line)
+        get_pgc().logger_get_output_lines(
+            self._logger_ptr,
+            lambda line: self._python_logger.log(self._level, line),  # type: ignore[union-attr]
+        )
         self.clear()
 
     @property

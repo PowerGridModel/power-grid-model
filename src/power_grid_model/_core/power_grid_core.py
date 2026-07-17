@@ -8,7 +8,7 @@ Loader for the dynamic library
 
 import threading
 from collections.abc import Callable
-from ctypes import CDLL, POINTER, c_char, c_char_p, c_double, c_size_t, c_void_p
+from ctypes import CDLL, CFUNCTYPE, POINTER, c_char, c_char_p, c_double, c_size_t, c_void_p
 from inspect import signature
 from itertools import chain
 
@@ -36,6 +36,10 @@ CharPtr = POINTER(c_char)
 """Raw pointer to char."""
 CharDoublePtr = POINTER(CharPtr)
 """Double pointer to char."""
+
+# callback type for PGM_logger_get_output
+_LogOutputCallbackType = CFUNCTYPE(None, CharPtr, IdxC, c_void_p)
+"""C callback: void(*)(char const* data, PGM_Idx size, void* user_data)"""
 
 # raw data
 VoidPtr = c_void_p
@@ -147,6 +151,10 @@ def _load_core() -> CDLL:
 
 # load dll once
 _CDLL: CDLL = _load_core()
+
+# manual argtypes for functions that use callback parameters (not handled by make_c_binding)
+_CDLL.PGM_logger_get_output.argtypes = [HandlePtr, LoggerPtr, _LogOutputCallbackType, c_void_p]
+_CDLL.PGM_logger_get_output.restype = None
 
 
 def make_c_binding(func: Callable):
@@ -594,12 +602,34 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
-    def logger_get_output(self, logger: LoggerPtr) -> str:  # type: ignore[empty-body]
-        pass  # pragma: no cover
-
-    @make_c_binding
     def logger_clear(self, logger: LoggerPtr) -> None:  # type: ignore[empty-body]
         pass  # pragma: no cover
+
+    def logger_get_output(self, logger: LoggerPtr) -> str:
+        """Call PGM_logger_get_output and return the log content as a str."""
+        result: list[str] = []
+
+        @_LogOutputCallbackType
+        def _cb(data: CharPtr, size: IdxC, _user_data: c_void_p) -> None:  # type: ignore[misc]
+            if size > 0:
+                result.append(data[:size].decode())
+
+        _CDLL.PGM_logger_get_output(self._handle, logger, _cb, None)
+        return result[0] if result else ""
+
+    def logger_get_output_lines(self, logger: LoggerPtr, line_callback: Callable[[str], None]) -> None:
+        """Call PGM_logger_get_output and invoke line_callback for each non-empty line.
+
+        Splits in bytes-space before decoding, so no intermediate full-content str is built.
+        """
+
+        @_LogOutputCallbackType
+        def _cb(data: CharPtr, size: IdxC, _user_data: c_void_p) -> None:  # type: ignore[misc]
+            for line_bytes in data[:size].split(b"\n"):
+                if line_bytes:
+                    line_callback(line_bytes.decode())
+
+        _CDLL.PGM_logger_get_output(self._handle, logger, _cb, None)
 
 
 # make one instance
