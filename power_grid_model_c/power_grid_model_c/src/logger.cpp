@@ -32,18 +32,13 @@ void PGM_destroy_logger(PGM_Logger* logger) {
 
 void PGM_register_logger(PGM_Handle* handle, PGM_Logger* logger) {
     call_with_catch(handle, [handle, logger] {
-        safe_ptr_get(logger); // null check
-        handle->loggers.push_back(logger);
+        handle->composite_logger.add(safe_ptr_get(logger).logger.get());
     });
 }
 
 void PGM_unregister_logger(PGM_Handle* handle, PGM_Logger* logger) {
     call_with_catch(handle, [handle, logger] {
-        auto& loggers = handle->loggers;
-        auto it = std::ranges::find(loggers, logger);
-        if (it != loggers.end()) {
-            loggers.erase(it);
-        }
+        handle->composite_logger.remove(safe_ptr_get(logger).logger.get());
         // TODO (nitbharambe): not found, no-op for now, but should we throw an error? (like in unregistering a dataset)
     });
 }

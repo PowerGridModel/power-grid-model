@@ -60,6 +60,13 @@ class MainModel {
             logger_ = other.logger_;
         }
     }
+    // deep copy bound to a different logger (used by PGM_copy_model to bind the copy to a new handle's composite)
+    MainModel(MainModel const& other, MultiThreadedLogger& logger) {
+        if (other.impl_ != nullptr) {
+            impl_ = std::make_unique<Impl>(*other.impl_);
+        }
+        logger_ = logger;
+    }
     MainModel& operator=(MainModel const& other) {
         if (this != &other) {
             impl_.reset();
@@ -105,14 +112,6 @@ class MainModel {
                              ConstDataset const& update_data) {
         JobAdapter<Impl> adapter{std::ref(impl()), std::ref(options)};
         return JobDispatch::batch_calculation(adapter, result_data, update_data, options.threading, logger_.get());
-    }
-
-    // Overload that uses an explicitly provided logger instead of the model's stored one.
-    // Used by the C API to inject a per-call composite logger built from handle-registered loggers.
-    BatchParameter calculate(Options const& options, MutableDataset const& result_data,
-                             ConstDataset const& update_data, MultiThreadedLogger& logger) {
-        JobAdapter<Impl> adapter{std::ref(impl()), std::ref(options)};
-        return JobDispatch::batch_calculation(adapter, result_data, update_data, options.threading, logger);
     }
 
     void check_no_experimental_features_used(Options const& options, ConstDataset const* batch_dataset) const {

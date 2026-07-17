@@ -6,7 +6,9 @@
 
 #include "logging.hpp"
 
+#include <algorithm>
 #include <memory>
+#include <ranges>
 #include <string_view>
 #include <vector>
 
@@ -18,31 +20,21 @@ class CompositeChildLogger : public Logger {
   public:
     explicit CompositeChildLogger(std::vector<std::unique_ptr<Logger>> children) : children_{std::move(children)} {}
 
-    void log(LogEvent tag) override {
-        for (auto& child : children_) {
-            child->log(tag);
-        }
-    }
-    void log(LogEvent tag, std::string_view message) override {
-        for (auto& child : children_) {
-            child->log(tag, message);
-        }
-    }
-    void log(LogEvent tag, double value) override {
-        for (auto& child : children_) {
-            child->log(tag, value);
-        }
-    }
-    void log(LogEvent tag, Idx value) override {
-        for (auto& child : children_) {
-            child->log(tag, value);
-        }
-    }
+    void log(LogEvent tag) override                       { log_all(tag); }
+    void log(LogEvent tag, std::string_view message) override { log_all(tag, message); }
+    void log(LogEvent tag, double value) override             { log_all(tag, value); }
+    void log(LogEvent tag, Idx value) override                { log_all(tag, value); }
 
     using Logger::log;
 
   private:
     std::vector<std::unique_ptr<Logger>> children_;
+
+    template <typename... Args> void log_all(Args&&... args) {
+        for (auto& child : children_) {
+            child->log(std::forward<Args>(args)...);
+        }
+    }
 };
 
 // Non-owning fan-out MultiThreadedLogger. Holds non-owning pointers to MultiThreadedLogger instances and forwards
@@ -52,37 +44,31 @@ class CompositeChildLogger : public Logger {
 // UB: registering the same logger twice, modifying the logger list while calculate is in progress.
 class MultiThreadedCompositeLogger : public MultiThreadedLogger {
   public:
+    MultiThreadedCompositeLogger() = default;
     explicit MultiThreadedCompositeLogger(std::vector<MultiThreadedLogger*> loggers) : loggers_{std::move(loggers)} {}
 
-    std::unique_ptr<Logger> create_child() override {
-        std::vector<std::unique_ptr<Logger>> children;
-        children.reserve(loggers_.size());
-        for (auto* l : loggers_) {
-            children.push_back(l->create_child());
+    // Add/remove a logger. The object address is unchanged so any existing reference_wrapper
+    // pointing to this composite remains valid. Do not call while a calculation is in progress.
+    void add(MultiThreadedLogger* logger) { loggers_.push_back(logger); }
+    void remove(MultiThreadedLogger* logger) {
+        if (auto it = std::ranges::find(loggers_, logger); it != loggers_.end()) {
+            loggers_.erase(it);
         }
-        return std::make_unique<CompositeChildLogger>(std::move(children));
     }
 
-    void log(LogEvent tag) override {
-        for (auto* l : loggers_) {
-            l->log(tag);
+    std::unique_ptr<Logger> create_child() override {
+        std::vector<std::unique_ptr<Logger>> child_loggers;
+        child_loggers.reserve(loggers_.size());
+        for (auto* logger : loggers_) {
+            child_loggers.push_back(logger->create_child());
         }
+        return std::make_unique<CompositeChildLogger>(std::move(child_loggers));
     }
-    void log(LogEvent tag, std::string_view message) override {
-        for (auto* l : loggers_) {
-            l->log(tag, message);
-        }
-    }
-    void log(LogEvent tag, double value) override {
-        for (auto* l : loggers_) {
-            l->log(tag, value);
-        }
-    }
-    void log(LogEvent tag, Idx value) override {
-        for (auto* l : loggers_) {
-            l->log(tag, value);
-        }
-    }
+
+    void log(LogEvent tag) override                       { log_all(tag); }
+    void log(LogEvent tag, std::string_view message) override { log_all(tag, message); }
+    void log(LogEvent tag, double value) override             { log_all(tag, value); }
+    void log(LogEvent tag, Idx value) override                { log_all(tag, value); }
 
     using MultiThreadedLogger::log;
 
@@ -90,6 +76,12 @@ class MultiThreadedCompositeLogger : public MultiThreadedLogger {
 
   private:
     std::vector<MultiThreadedLogger*> loggers_; // non-owning
+
+    template <typename... Args> void log_all(Args&&... args) {
+        for (auto* logger : loggers_) {
+            logger->log(std::forward<Args>(args)...);
+        }
+    }
 };
 
 } // namespace power_grid_model::common::logging

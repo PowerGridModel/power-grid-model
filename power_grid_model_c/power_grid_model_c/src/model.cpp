@@ -19,7 +19,6 @@
 #include <exception>
 #include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/common/common.hpp>
-#include <power_grid_model/common/composite_logging.hpp>
 #include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/main_model.hpp>
@@ -45,10 +44,15 @@ using power_grid_model_c::safe_str_view;
 // create model
 PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency,
                                      PGM_ConstDataset const* input_dataset) {
-    return call_with_catch(handle, [system_frequency, input_dataset] {
+    return call_with_catch(handle, [handle, system_frequency, input_dataset] {
+        // The handle's composite_logger is kept current by PGM_register/unregister_logger.
+        // Bind the model to it so all models from this handle log to the same loggers.
+        // The composite lives as long as the handle, satisfying MainModel's requirement that
+        // its logger reference outlives it.
         return cast_to_c(
             new MainModel{// NOSONAR(S5025)
-                          system_frequency, safe_ptr_get(cast_to_cpp(input_dataset)), get_math_solver_dispatcher(), 0});
+                          system_frequency, safe_ptr_get(cast_to_cpp(input_dataset)),
+                          get_math_solver_dispatcher(), 0, safe_ptr_get(handle).composite_logger});
     });
 }
 
@@ -62,8 +66,8 @@ void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_ConstDa
 
 // copy model
 PGM_PowerGridModel* PGM_copy_model(PGM_Handle* handle, PGM_PowerGridModel const* model) {
-    return call_with_catch(handle, [model] {
-        return cast_to_c(new MainModel{safe_ptr_get(cast_to_cpp(model))}); // NOSONAR(S5025)
+    return call_with_catch(handle, [handle, model] {
+        return cast_to_c(new MainModel{safe_ptr_get(cast_to_cpp(model)), safe_ptr_get(handle).composite_logger}); // NOSONAR(S5025)
     });
 }
 
@@ -189,8 +193,7 @@ class BadCalculationRequest : public PowerGridError {
 };
 
 void calculate_single_batch_dimension_impl(MainModel& model, MainModel::Options const& options,
-                                           MutableDataset const& output_dataset, ConstDataset const* batch_dataset,
-                                           common::logging::MultiThreadedLogger& logger) {
+                                           MutableDataset const& output_dataset, ConstDataset const* batch_dataset) {
     // check dataset integrity
     if ((batch_dataset != nullptr) && (!batch_dataset->is_batch() || !output_dataset.is_batch())) {
         throw BadCalculationRequest{
@@ -201,7 +204,7 @@ void calculate_single_batch_dimension_impl(MainModel& model, MainModel::Options 
                                                       ? safe_ptr_get(batch_dataset)
                                                       : ConstDataset{false, 1, "update", output_dataset.meta_data()};
 
-    model.calculate(options, output_dataset, exported_update_dataset, logger);
+    model.calculate(options, output_dataset, exported_update_dataset);
 }
 
 struct BatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandler {
@@ -290,11 +293,10 @@ Idx get_stride_size(ConstDataset const* batch_dataset) {
 
 // run calculation
 void calculate_multi_dimensional_impl(MainModel& model, MainModel::Options const& options,
-                                      MutableDataset const& output_dataset, ConstDataset const* batch_dataset,
-                                      common::logging::MultiThreadedLogger& logger) {
+                                      MutableDataset const& output_dataset, ConstDataset const* batch_dataset) {
     // for dimension < 2 (one-time or 1D batch), call implementation directly
     if (auto const batch_dimension = get_batch_dimension(batch_dataset); batch_dimension < 2) {
-        calculate_single_batch_dimension_impl(model, options, output_dataset, batch_dataset, logger);
+        calculate_single_batch_dimension_impl(model, options, output_dataset, batch_dataset);
         return;
     }
 
@@ -311,7 +313,7 @@ void calculate_multi_dimensional_impl(MainModel& model, MainModel::Options const
         // a new handle
         call_with_catch(
             &local_handle,
-            [&model, &options, &output_dataset, &safe_batch_dataset, &logger, i, stride_size] {
+            [&model, &options, &output_dataset, &safe_batch_dataset, i, stride_size] {
                 // create sliced datasets for the rest of dimensions
                 ConstDataset const single_update_dataset = safe_batch_dataset.get_individual_scenario(i);
                 MutableDataset const sliced_output_dataset =
@@ -325,8 +327,7 @@ void calculate_multi_dimensional_impl(MainModel& model, MainModel::Options const
 
                 // recursive call
                 calculate_multi_dimensional_impl(local_model, options, sliced_output_dataset,
-                                                 safe_batch_dataset.get_next_cartesian_product_dimension(),
-                                                 logger);
+                                                 safe_batch_dataset.get_next_cartesian_product_dimension());
             },
             MDBatchExceptionHandler{i * stride_size, stride_size});
     }
@@ -338,13 +339,13 @@ void calculate_multi_dimensional_impl(MainModel& model, MainModel::Options const
 }
 
 void calculate_impl(MainModel& model, PGM_Options const& options, MutableDataset const& output_dataset,
-                    ConstDataset const* batch_dataset, common::logging::MultiThreadedLogger& logger) {
+                    ConstDataset const* batch_dataset) {
     check_calculate_valid_options(options);
     auto const extracted_options = extract_calculation_options(options);
 
     check_experimental_support(options.experimental_features, model, extracted_options, batch_dataset);
 
-    calculate_multi_dimensional_impl(model, extracted_options, output_dataset, batch_dataset, logger);
+    calculate_multi_dimensional_impl(model, extracted_options, output_dataset, batch_dataset);
 }
 
 } // namespace
@@ -352,23 +353,12 @@ void calculate_impl(MainModel& model, PGM_Options const& options, MutableDataset
 // run calculation
 void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options const* opt,
                    PGM_MutableDataset const* output_dataset, PGM_ConstDataset const* batch_dataset) {
-    // Build a composite logger from all loggers registered on this handle.
-    // If no loggers are registered (or handle is null), the composite is empty and does nothing.
-    std::vector<power_grid_model::common::logging::MultiThreadedLogger*> logger_ptrs;
-    if (handle != nullptr) {
-        logger_ptrs.reserve(handle->loggers.size());
-        for (auto* l : handle->loggers) {
-            logger_ptrs.push_back(l->logger.get());
-        }
-    }
-    power_grid_model::common::logging::MultiThreadedCompositeLogger composite{std::move(logger_ptrs)};
-
     call_with_catch(
         handle,
-        [&composite, model, opt, output_dataset, batch_dataset] {
+        [model, opt, output_dataset, batch_dataset] {
             calculate_impl(safe_ptr_get(cast_to_cpp(model)), safe_ptr_get(opt),
                            safe_ptr_get(cast_to_cpp(output_dataset)),
-                           safe_ptr_maybe_nullptr(cast_to_cpp(batch_dataset)), composite);
+                           safe_ptr_maybe_nullptr(cast_to_cpp(batch_dataset)));
         },
         batch_exception_handler);
 }
