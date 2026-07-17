@@ -4,20 +4,20 @@
 
 #pragma once
 
-#include "common/counting_iterator.hpp"
-#include "main_core/topology.hpp"
-#include "main_core/y_bus.hpp"
-#include "math_solver/math_solver_dispatch.hpp"
-#include "topology.hpp"
-
 #include "calculation_parameters.hpp"
 #include "common/common.hpp"
+#include "common/counting_iterator.hpp"
 #include "common/exception.hpp"
 #include "component/component.hpp"
 #include "component/load_gen.hpp"
 #include "component/source.hpp"
 #include "main_core/main_model_type.hpp"
 #include "main_core/math_state.hpp"
+#include "main_core/topology.hpp"
+#include "main_core/y_bus.hpp"
+#include "math_solver/math_solver_dispatch.hpp"
+#include "supernodes.hpp"
+#include "topology.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -135,8 +135,11 @@ void rebuild_topology(typename ModelType::MainModelState& state, SolverPreparati
     // clear old solvers
     reset_solvers(state, solver_context, solvers_cache_status);
     ComponentConnections const comp_conn = main_core::construct_components_connections<ModelType>(state.components);
+
     // re build
-    Topology topology{*state.comp_topo, comp_conn};
+    state.reduced_topology =
+        std::make_shared<ReducedTopology const>(supernodes::reduce_topology(*state.comp_topo, comp_conn));
+    Topology topology{state.reduced_topology->reduced_comp_topo, comp_conn};
     std::tie(state.math_topology, state.topo_comp_coup) = topology.build_topology();
     solvers_cache_status.set_topology_status(true);
     solvers_cache_status.template set_parameter_status<symmetric_t>(false);

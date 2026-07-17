@@ -125,6 +125,8 @@ class Topology {
 
   public:
     Topology(ComponentTopology const& comp_topo, ComponentConnections const& comp_conn)
+        : Topology(ReducedComponentTopology::from_component_topology(comp_topo), comp_conn) {}
+    Topology(ReducedComponentTopology const& comp_topo, ComponentConnections const& comp_conn)
         : comp_topo_{comp_topo},
           comp_conn_{comp_conn},
           phase_shift_(comp_topo_.n_node_total(), 0.0),
@@ -157,7 +159,7 @@ class Topology {
 
   private:
     // input
-    ComponentTopology const& comp_topo_;    // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+    ReducedComponentTopology const& comp_topo_;    // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
     ComponentConnections const& comp_conn_; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
 
     // intermediate

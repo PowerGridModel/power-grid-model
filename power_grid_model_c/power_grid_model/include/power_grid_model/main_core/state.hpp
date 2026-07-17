@@ -20,6 +20,7 @@ template <class CompContainer> struct MainModelState {
 
     // calculation parameters
     std::shared_ptr<ComponentTopology const> comp_topo;
+    std::shared_ptr<ReducedTopology const> reduced_topology;
 
     std::vector<std::shared_ptr<MathModelTopology const>> math_topology;
     std::shared_ptr<TopologicalComponentToMathCoupling const> topo_comp_coup;

@@ -49,31 +49,6 @@ class TopologicalNodeMapping {
     }
 };
 
-struct TopologicalNode {
-    IdxVector user_nodes;
-    std::vector<BranchIdx> user_links;
-
-    constexpr auto is_supernode() const noexcept -> bool { return user_nodes.size() > 1 && !user_links.empty(); }
-};
-
-struct ComponentToTopoNodeCoupling {
-    Idx n_topo_nodes{};
-    // for every user node: which topo node it belongs to and which index it has within that topo node
-    std::vector<Idx2D> user_nodes_to_topo_nodes;
-    // for every user link: which topo node it belongs to and which index it has within that topo node
-    std::vector<Idx2D> user_links_to_topo_nodes;
-};
-
-struct TopologicalNodesAndCoupling {
-    std::vector<TopologicalNode> topo_nodes;
-    ComponentToTopoNodeCoupling coupling;
-};
-
-struct ReducedTopology {
-    ReducedComponentTopology reduced_comp_topo;
-    TopologicalNodesAndCoupling topo_node_coup;
-};
-
 namespace detail {
 
 inline TopologicalNodeMapping find_link_connected_components(Idx n_nodes, std::vector<BranchIdx> const& edges,
@@ -228,7 +203,34 @@ inline ReducedComponentTopology construct_reduced_topology(ComponentTopology con
         .regulated_object_type = std::span{comp_topo.regulated_object_type},
     };
 }
+
 } // namespace detail
+
+inline ReducedTopology dont_reduce_topology(ComponentTopology const& comp_topo,
+                                            ComponentConnections const& /*comp_conn*/) {
+    using namespace detail;
+
+    return ReducedTopology{
+        .reduced_comp_topo = ReducedComponentTopology::from_component_topology(comp_topo),
+        .topo_node_coup = {
+            .topo_nodes = IdxRange{comp_topo.n_node_total()} | std::views::transform([](Idx idx) {
+                              return TopologicalNode{
+                                  .user_nodes = std::vector{idx},
+                                  .user_links = {},
+                              };
+                          }) |
+                          std::ranges::to<std::vector>(),
+            .coupling =
+                {
+                    .n_topo_nodes = comp_topo.n_node_total(),
+                    .user_nodes_to_topo_nodes = IdxRange{comp_topo.n_node_total()} | std::views::transform([](Idx idx) {
+                                                    return Idx2D{.group = idx, .pos = 0};
+                                                }) |
+                                                std::ranges::to<std::vector>(),
+                    .user_links_to_topo_nodes = {},
+                },
+        }};
+}
 
 inline ReducedTopology reduce_topology(ComponentTopology const& comp_topo, ComponentConnections const& comp_conn) {
     using namespace detail;

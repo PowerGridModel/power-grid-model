@@ -7,6 +7,7 @@
 #include "common/common.hpp"
 #include "common/enum.hpp"
 #include "common/grouped_index_vector.hpp"
+#include "common/maybe_owning_view.hpp"
 #include "common/statistics.hpp"
 #include "common/three_phase_tensor.hpp"
 
@@ -432,13 +433,13 @@ struct ComponentTopology {
 
 struct ReducedComponentTopology {
     Idx n_node{}; // num of topological nodes, including internal nodes for 3-way branches
-    std::vector<BranchIdx> branch_node_idx;
-    std::vector<Branch3Idx> branch3_node_idx;
-    IdxVector shunt_node_idx;
-    IdxVector source_node_idx;
-    IdxVector load_gen_node_idx;
+    MaybeOwningConstVector<BranchIdx> branch_node_idx;
+    MaybeOwningConstVector<Branch3Idx> branch3_node_idx;
+    MaybeOwningConstVector<Idx> shunt_node_idx;
+    MaybeOwningConstVector<Idx> source_node_idx;
+    MaybeOwningConstVector<Idx> load_gen_node_idx;
     std::span<LoadGenType const> load_gen_type;
-    IdxVector voltage_sensor_node_idx;
+    MaybeOwningConstVector<Idx> voltage_sensor_node_idx;
     std::span<Idx const> power_sensor_object_idx; // the index is relative to branch, source, shunt or load_gen
     std::span<MeasuredTerminalType const> power_sensor_terminal_type;
     std::span<Idx const> current_sensor_object_idx; // the index is relative to branch
@@ -446,6 +447,54 @@ struct ReducedComponentTopology {
     std::span<ComponentType const> regulator_type;
     std::span<Idx const> regulated_object_idx; // the index is relative to branch or branch3
     std::span<ComponentType const> regulated_object_type;
+
+    constexpr Idx n_node_total() const { return n_node + std::ssize(branch3_node_idx); }
+
+    static ReducedComponentTopology from_component_topology(ComponentTopology const& comp_topo) {
+        assert(comp_topo.link_node_idx.empty() && "link is not supported in reduced topology");
+        return ReducedComponentTopology{
+                .n_node = comp_topo.n_node_total(),
+                .branch_node_idx = std::span{comp_topo.branch_node_idx},
+                .branch3_node_idx = std::span{comp_topo.branch3_node_idx},
+                .shunt_node_idx = std::span{comp_topo.shunt_node_idx},
+                .source_node_idx = std::span{comp_topo.source_node_idx},
+                .load_gen_node_idx = std::span{comp_topo.load_gen_node_idx},
+                .load_gen_type = std::span{comp_topo.load_gen_type},
+                .voltage_sensor_node_idx = std::span{comp_topo.voltage_sensor_node_idx},
+                .power_sensor_object_idx = std::span{comp_topo.power_sensor_object_idx},
+                .power_sensor_terminal_type = std::span{comp_topo.power_sensor_terminal_type},
+                .current_sensor_object_idx = std::span{comp_topo.current_sensor_object_idx},
+                .current_sensor_terminal_type = std::span{comp_topo.current_sensor_terminal_type},
+                .regulator_type = std::span{comp_topo.regulator_type},
+                .regulated_object_idx = std::span{comp_topo.regulated_object_idx},
+                .regulated_object_type = std::span{comp_topo.regulated_object_type},
+            };
+        }
+};
+
+struct TopologicalNode {
+    IdxVector user_nodes;
+    std::vector<BranchIdx> user_links;
+
+    constexpr auto is_supernode() const noexcept -> bool { return user_nodes.size() > 1 && !user_links.empty(); }
+};
+
+struct ComponentToTopoNodeCoupling {
+    Idx n_topo_nodes{};
+    // for every user node: which topo node it belongs to and which index it has within that topo node
+    std::vector<Idx2D> user_nodes_to_topo_nodes;
+    // for every user link: which topo node it belongs to and which index it has within that topo node
+    std::vector<Idx2D> user_links_to_topo_nodes;
+};
+
+struct TopologicalNodesAndCoupling {
+    std::vector<TopologicalNode> topo_nodes;
+    ComponentToTopoNodeCoupling coupling;
+};
+
+struct ReducedTopology {
+    ReducedComponentTopology reduced_comp_topo;
+    TopologicalNodesAndCoupling topo_node_coup;
 };
 
 // connection property
