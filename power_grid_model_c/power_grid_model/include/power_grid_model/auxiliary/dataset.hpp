@@ -553,14 +553,14 @@ template <dataset_type_tag dataset_type_> class Dataset {
         return result;
     }
 
-    template <class type_getter, class ComponentType, typename Func,
+    template <class type_getter, class ComponentType, functor_c Func,
               class StructType = DataStruct<typename type_getter::template type<ComponentType>>>
         requires std::invocable<Func, SpanRange<StructType>> && std::invocable<Func, RangeObject<StructType>>
-    auto for_each_component(Func&& func, Idx scenario = invalid_index) const {
+    auto for_each_component(Func func, Idx scenario = invalid_index) const {
         if (is_columnar(ComponentType::name)) {
-            return std::forward<Func>(func)(get_columnar_buffer_span<type_getter, ComponentType, StructType>(scenario));
+            return func(get_columnar_buffer_span<type_getter, ComponentType, StructType>(scenario));
         }
-        return std::forward<Func>(func)(get_buffer_span<type_getter, ComponentType, StructType>(scenario));
+        return func(get_buffer_span<type_getter, ComponentType, StructType>(scenario));
     }
 
     void set_next_cartesian_product_dimension(Dataset const* next) {
@@ -600,9 +600,13 @@ template <dataset_type_tag dataset_type_> class Dataset {
                 throw DatasetError{"For a non-uniform buffer, indptr should be supplied!\n"};
             }
             if constexpr (std::same_as<check_indptr_content, immutable_t>) {
-                if (indptr[0] != 0 || indptr[batch_size()] != total_elements) {
+                auto const indptr_span = std::span{indptr, static_cast<size_t>(batch_size() + 1)};
+                if (indptr_span.front() != 0 || indptr_span.back() != total_elements) {
                     throw DatasetError{
                         "For a non-uniform buffer, indptr should begin with 0 and end with total_elements!\n"};
+                }
+                if (std::ranges::adjacent_find(indptr_span, std::greater{}) != indptr_span.end()) {
+                    throw DatasetError{"For a non-uniform buffer, indptr should be non-decreasing!\n"};
                 }
             }
         } else if (indptr) {

@@ -13,7 +13,9 @@
 #include <functional>
 #include <limits>
 #include <numbers>
+#include <ranges>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 namespace power_grid_model {
@@ -101,21 +103,37 @@ template <class T, class... Ts>
 concept derives_from_any_in_list_c = (std::derived_from<T, Ts> || ...);
 
 namespace capturing {
-// perfect forward into void
-template <class... T>
-constexpr void into_the_void(T&&... /*ignored*/) { // NOLINT(cppcoreguidelines-missing-std-forward)
+// capture into void
+template <class... T> constexpr void into_the_void(T const&... /*ignored*/) {
     // do nothing; the constexpr allows all compilers to optimize this away
 }
 } // namespace capturing
 
 // functor to include all
 struct IncludeAll {
-    template <class... T> consteval bool operator()(T&&... args) const {
-        capturing::into_the_void(std::forward<T>(args)...);
-        return true;
-    }
+    template <class... T> consteval bool operator()(T const&... /* args */) const { return true; }
 };
 constexpr IncludeAll include_all{};
+
+// define a non-owning view
+namespace detail {
+template <class> struct is_owning_view : std::false_type {};
+template <class R> struct is_owning_view<std::ranges::owning_view<R>> : std::true_type {};
+} // namespace detail
+template <class R>
+concept non_owning_view_c = std::ranges::view<R> && !detail::is_owning_view<std::remove_cvref_t<R>>::value;
+
+// by ref adaptor to pass to functions which accepts std::ranges::view
+template <class R>
+concept owning_container_c = std::ranges::viewable_range<R> && !std::ranges::view<R> && !std::ranges::borrowed_range<R>;
+constexpr non_owning_view_c auto by_ref(owning_container_c auto& r) noexcept { return std::ranges::ref_view(r); }
+constexpr non_owning_view_c auto by_ref(owning_container_c auto const& r) noexcept { return std::ranges::ref_view(r); }
+constexpr non_owning_view_c auto by_const_ref(owning_container_c auto& r) noexcept { return by_ref(std::as_const(r)); }
+
+// pgm functor concept
+// it should be cheap to copy, so it should be trivially copyable and small in size
+template <class T>
+concept functor_c = std::is_trivially_copyable_v<T> && (sizeof(T) <= 256);
 
 // function to handle periodic mapping
 template <typename T> constexpr T map_to_cyclic_range(T value, T period) {

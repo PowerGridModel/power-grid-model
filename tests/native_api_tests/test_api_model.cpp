@@ -95,11 +95,13 @@ void check_exception(PowerGridError const& e, PGM_ErrorCode const& reference_err
     REQUIRE(err_msg.c_str() == doctest::Contains(ref_err_msg));
 }
 
+// we pass functor by value
+// it should be cheap to copy
 template <typename Func, class... Args>
-void check_throws_with(Func&& func, PGM_ErrorCode const& reference_error, std::string_view reference_err_msg,
+void check_throws_with(Func func, PGM_ErrorCode const& reference_error, std::string_view reference_err_msg,
                        Args&&... args) {
     try {
-        std::forward<Func>(func)(std::forward<Args>(args)...);
+        func(std::forward<Args>(args)...);
         FAIL("Expected error not thrown.");
     } catch (PowerGridError const& e) {
         check_exception(e, reference_error, reference_err_msg);

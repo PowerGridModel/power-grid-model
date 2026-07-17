@@ -749,6 +749,26 @@ true}]}]})";
             check_error(json_invalid, std::format("Last token: {}. Exception message:", full_token_string));
         }
     }
+
+    SUBCASE("Deeply nested json") {
+        constexpr std::string_view json_invalid = R"({"data":[[[[[[[[[[[[]]]]]]]]]]]]})";
+        check_error(json_invalid, "Json depth exceeds the limit of 10!\n");
+    }
+
+    SUBCASE("Deeply nested msgpack") {
+        constexpr std::string_view msgpack_invalid =
+            "\x{81}\x{a4}data\x{91}\x{91}\x{91}\x{91}\x{91}\x{91}\x{91}\x{91}\x{91}\x{91}\x{91}\x{90}"sv;
+
+        std::vector<NodeInput> node(1);
+
+        auto const run = [&]() {
+            Deserializer deserializer{from_msgpack, msgpack_invalid, meta_data_gen::meta_data};
+            deserializer.get_dataset_info().set_buffer("node", nullptr, node.data());
+            deserializer.parse();
+        };
+
+        CHECK_THROWS_WITH_AS(run(), doctest::Contains("Map expected."), std::exception);
+    }
 }
 
 } // namespace power_grid_model::meta_data

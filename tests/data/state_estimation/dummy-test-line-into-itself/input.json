@@ -1,0 +1,180 @@
+{
+  "version": "1.0",
+  "type": "input",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "node": [
+      {
+        "id": 1,
+        "u_rated": 10e3
+      },
+      {
+        "id": 2,
+        "u_rated": 10e3
+      }
+    ],
+    "line": [
+      {
+        "id": 3,
+        "from_node": 1,
+        "to_node": 2,
+        "from_status": 1,
+        "to_status": 1,
+        "r1": 0.2,
+        "x1": 0.1,
+        "c1": 0.0001,
+        "tan1": 0.002,
+        "r0": 0.1,
+        "x0": 0.3,
+        "c0": 0.001,
+        "tan0": 0.005
+      },
+      {
+        "id": 4,
+        "from_node": 1,
+        "to_node": 1,
+        "from_status": 0,
+        "to_status": 0,
+        "r1": 1000.0,
+        "x1": 1000.0,
+        "c1": 2.0e-5,
+        "tan1": 0.1,
+        "r0": 1000.0,
+        "x0": 1000.0,
+        "c0": 1.0e-6,
+        "tan0": 0.2,
+        "extra": "Line connected to itself on the source node (see readme)"
+      },
+      {
+        "id": 5,
+        "from_node": 2,
+        "to_node": 2,
+        "from_status": 0,
+        "to_status": 0,
+        "r1": 1000.0,
+        "x1": 1000.0,
+        "c1": 2.0e-5,
+        "tan1": 0.1,
+        "r0": 1000.0,
+        "x0": 1000.0,
+        "c0": 1.0e-6,
+        "tan0": 0.2,
+        "extra": "Line connected to itself on the load node (see readme)"
+      }
+    ],
+    "shunt": [
+      {
+        "id": 6,
+        "node": 1,
+        "status": 0,
+        "g1": 6.283185307179587e-4,
+        "b1": 6.283185307179587e-3,
+        "g0": 6.283185307179587e-5,
+        "b0": 3.141592653589793e-4,
+        "extra": "The shunt that mimics the line into itself on the source node and acts as a benchmark (see readme)"
+      },
+      {
+        "id": 7,
+        "node": 2,
+        "status": 0,
+        "g1": 6.283185307179587e-4,
+        "b1": 6.283185307179587e-3,
+        "g0": 6.283185307179587e-5,
+        "b0": 3.141592653589793e-4,
+        "extra": "The shunt that mimics the line into itself on the load node and acts as a benchmark (see readme)"
+      }
+    ],
+    "source": [
+      {
+        "id": 8,
+        "node": 1,
+        "status": 1,
+        "u_ref": 1.05,
+        "sk": 1e12
+      }
+    ],
+    "sym_load": [
+      {
+        "id": 9,
+        "node": 2,
+        "status": 1,
+        "type": 1
+      }
+    ],
+    "asym_load": [
+      {
+        "id": 10,
+        "node": 2,
+        "status": 1,
+        "type": 1
+      }
+    ],
+    "asym_voltage_sensor": [
+      {
+        "id": 11,
+        "measured_object": 1,
+        "u_measured": [6062.1931942119563, 6062.1933348205348, 6062.1929095894375],
+        "u_sigma": 0.01,
+        "u_angle_measured": [-1.4832085023115637e-06, -2.0943962754744163, 2.0943933209409984],
+        "u_angle_sigma": 0.1
+      }
+    ],
+    "sym_power_sensor": [
+      {
+        "id": 12,
+        "measured_object": 9,
+        "measured_terminal_type": 4,
+        "power_sigma": 10.0,
+        "p_measured": 659667.41990631132,
+        "q_measured": 329833.70995315566
+      }
+    ],
+    "asym_power_sensor": [
+      {
+        "id": 13,
+        "measured_object": 10,
+        "measured_terminal_type": 4,
+        "power_sigma": 100.0,
+        "p_measured": [220051.05458955461, 110006.70218988275, 329405.04135438218],
+        "q_measured": [110025.5272947773, 110006.70218988275, 109801.68045146071]
+      },
+      {
+        "id": 15,
+        "measured_object": 4,
+        "measured_terminal_type": 0,
+        "power_sigma": 5.0,
+        "p_measured": [1154.0, 1153.0, 1155.0],
+        "q_measured": [-11540.0, -11530.0, -11550.0],
+        "extra": "The power sensor on the line into itself on the source node (see readme)"
+      },
+      {
+        "id": 16,
+        "measured_object": 5,
+        "measured_terminal_type": 0,
+        "power_sigma": 5.0,
+        "p_measured": [1152.0, 1155.0, 1148.0],
+        "q_measured": [-11520.0, -11520.0, -11500.0],
+        "extra": "The power sensor on the line into itself on the load node (see readme)"
+      },
+      {
+        "id": 17,
+        "measured_object": 6,
+        "measured_terminal_type": 3,
+        "power_sigma": 10.0,
+        "p_measured": [2308.0, 2306.0, 2310.0],
+        "q_measured": [-23090.0, -23090.0, -23090.0],
+        "extra": "The power sensor on the benchmark shunt on the source node (see readme)"
+      },
+      {
+        "id": 18,
+        "measured_object": 7,
+        "measured_terminal_type": 3,
+        "power_sigma": 10.0,
+        "p_measured": [2304.0, 2310.0, 2296.0],
+        "q_measured": [-23040.0, -23040.0, -23000.0],
+        "extra": "The power sensor on the benchmark shunt on the load node (see readme)"
+      }
+    ]
+  }
+}
