@@ -18,11 +18,9 @@
 #include <doctest/doctest.h>
 
 #include <string>
-#include <string_view>
 
 namespace {
 using namespace std::string_literals;
-using namespace std::string_view_literals;
 using power_grid_model_cpp::Buffer;
 using power_grid_model_cpp::DatasetConst;
 using power_grid_model_cpp::DatasetMutable;
@@ -96,6 +94,17 @@ PGM_PowerGridModel* run_calculate(PGM_Handle* handle) {
     PGM_calculate(handle, model, opt.get(), output_ds.get(), nullptr);
     return model;
 }
+// Helper: call PGM_logger_get_output and collect the result into a std::string.
+auto get_output(PGM_Handle* h, PGM_Logger* l) {
+    std::string result;
+    PGM_logger_get_output(
+        h, l,
+        [](char const* data, PGM_Idx size, void* ctx) {
+            static_cast<std::string*>(ctx)->assign(data, static_cast<std::size_t>(size));
+        },
+        &result);
+    return result;
+}
 } // namespace
 
 TEST_CASE("Logger - create and destroy do-nothing logger") {
@@ -129,10 +138,9 @@ TEST_CASE("Logger - invalid type returns error") {
 TEST_CASE("Logger - get_output on do-nothing logger is empty") {
     HandleGuard g;
     LoggerGuard lg{g.h, PGM_do_nothing_logger};
-    char const* out = PGM_logger_get_output(g.h, lg.l);
+    std::string out = get_output(g.h, lg.l);
     CHECK(PGM_error_code(g.h) == PGM_no_error);
-    CHECK(out != nullptr);
-    CHECK(std::string_view{out}.empty());
+    CHECK(out.empty());
 }
 
 TEST_CASE("Logger - register / unregister preserves handle error state") {
@@ -163,10 +171,10 @@ TEST_CASE("Logger - text logger captures output after calculate") {
     PGM_PowerGridModel* model = run_calculate(g.h);
     CHECK(PGM_error_code(g.h) == PGM_no_error);
 
-    char const* out = PGM_logger_get_output(g.h, lg.l);
+    std::string out = get_output(g.h, lg.l);
     CHECK(PGM_error_code(g.h) == PGM_no_error);
     // Text logger should have written something; cannot assert exact content but must be non-empty.
-    CHECK(!std::string_view{out}.empty());
+    CHECK(!out.empty());
 
     PGM_unregister_logger(g.h, lg.l);
     PGM_destroy_model(model);
@@ -181,12 +189,11 @@ TEST_CASE("Logger - benchmark logger captures output after calculate") {
     PGM_PowerGridModel* model = run_calculate(g.h);
     CHECK(PGM_error_code(g.h) == PGM_no_error);
 
-    char const* out = PGM_logger_get_output(g.h, lg.l);
+    std::string out = get_output(g.h, lg.l);
     CHECK(PGM_error_code(g.h) == PGM_no_error);
     // Benchmark output must be non-empty and contain TAB-separated fields.
-    std::string_view sv{out};
-    CHECK(!sv.empty());
-    CHECK(sv.find('\t') != std::string_view::npos);
+    CHECK(!out.empty());
+    CHECK(out.find('\t') != std::string::npos);
 
     PGM_unregister_logger(g.h, lg.l);
     PGM_destroy_model(model);
@@ -203,8 +210,8 @@ TEST_CASE("Logger - text logger clear wipes output") {
     // Clear and verify empty
     PGM_logger_clear(g.h, lg.l);
     CHECK(PGM_error_code(g.h) == PGM_no_error);
-    char const* out = PGM_logger_get_output(g.h, lg.l);
-    CHECK(std::string_view{out}.empty());
+    std::string out = get_output(g.h, lg.l);
+    CHECK(out.empty());
 
     PGM_unregister_logger(g.h, lg.l);
     PGM_destroy_model(model);
@@ -216,8 +223,8 @@ TEST_CASE("Logger - do-nothing logger clear is no-op") {
 
     PGM_logger_clear(g.h, lg.l);
     CHECK(PGM_error_code(g.h) == PGM_no_error);
-    char const* out = PGM_logger_get_output(g.h, lg.l);
-    CHECK(std::string_view{out}.empty());
+    std::string out = get_output(g.h, lg.l);
+    CHECK(out.empty());
 }
 
 TEST_CASE("Logger - loggers persist across clear_error on handle") {
@@ -233,8 +240,8 @@ TEST_CASE("Logger - loggers persist across clear_error on handle") {
     PGM_PowerGridModel* model = run_calculate(g.h);
     CHECK(PGM_error_code(g.h) == PGM_no_error);
 
-    char const* out = PGM_logger_get_output(g.h, lg.l);
-    CHECK(!std::string_view{out}.empty());
+    std::string out = get_output(g.h, lg.l);
+    CHECK(!out.empty());
 
     PGM_unregister_logger(g.h, lg.l);
     PGM_destroy_model(model);
@@ -251,10 +258,10 @@ TEST_CASE("Logger - text and benchmark loggers registered simultaneously") {
     PGM_PowerGridModel* model = run_calculate(g.h);
     CHECK(PGM_error_code(g.h) == PGM_no_error);
 
-    char const* text_out = PGM_logger_get_output(g.h, text_lg.l);
-    char const* bench_out = PGM_logger_get_output(g.h, bench_lg.l);
-    CHECK(!std::string_view{text_out}.empty());
-    CHECK(!std::string_view{bench_out}.empty());
+    std::string text_out = get_output(g.h, text_lg.l);
+    std::string bench_out = get_output(g.h, bench_lg.l);
+    CHECK(!text_out.empty());
+    CHECK(!bench_out.empty());
 
     PGM_unregister_logger(g.h, text_lg.l);
     PGM_unregister_logger(g.h, bench_lg.l);

@@ -77,21 +77,36 @@ PGM_API void PGM_register_logger(PGM_Handle* handle, PGM_Logger* logger);
 PGM_API void PGM_unregister_logger(PGM_Handle* handle, PGM_Logger* logger);
 
 /**
- * @brief Retrieve the current output of a logger as a null-terminated string.
+ * @brief Callback type for receiving logger output.
  *
- * For #PGM_text_logger: returns timestamped log lines.
- * For #PGM_benchmark_logger: returns one line per logged event in the format
- *   EVENT_CODE<TAB>EVENT_NAME<TAB>VALUE
- * For #PGM_do_nothing_logger: always returns an empty string.
+ * Called exactly once by PGM_logger_get_output().
+ * The @p data pointer and @p size describe the log content and are valid only
+ * for the duration of the callback. Do not store @p data beyond the callback.
  *
- * The returned pointer is valid until the next operation on this logger object.
- * Copy the string if you need it to persist longer.
- *
- * @param handle The handle used to report errors.
- * @param logger The logger whose output to retrieve.
- * @return A null-terminated string, or NULL on error.
+ * @param data  Pointer to the log content (not necessarily null-terminated).
+ * @param size  Length of the log content in bytes.
+ * @param user_data  Opaque pointer passed through from PGM_logger_get_output().
  */
-PGM_API char const* PGM_logger_get_output(PGM_Handle* handle, PGM_Logger* logger);
+typedef void (*PGM_LogOutputCallback)(char const* data, PGM_Idx size, void* user_data);
+
+/**
+ * @brief Deliver the current output of a logger to a caller-supplied callback.
+ *
+ * The callback is called exactly once, synchronously, before this function returns.
+ * The data pointer passed to the callback is valid only for the duration of that call.
+ *
+ * For #PGM_text_logger: delivers timestamped log lines.
+ * For #PGM_benchmark_logger: delivers one line per logged event in the format
+ *   EVENT_CODE<TAB>VALUE
+ * For #PGM_do_nothing_logger: delivers an empty buffer (size 0).
+ *
+ * @param handle     The handle used to report errors.
+ * @param logger     The logger whose output to retrieve.
+ * @param callback   Function called with the log data.
+ * @param user_data  Passed through unchanged to @p callback.
+ */
+PGM_API void PGM_logger_get_output(PGM_Handle* handle, PGM_Logger* logger, PGM_LogOutputCallback callback,
+                                   void* user_data);
 
 /**
  * @brief Clear the accumulated output of a logger.

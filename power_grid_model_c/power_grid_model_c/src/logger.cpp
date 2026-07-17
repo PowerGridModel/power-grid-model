@@ -16,7 +16,6 @@ using power_grid_model_c::logger_clear;
 using power_grid_model_c::logger_get_output;
 using power_grid_model_c::make_logger;
 using power_grid_model_c::safe_enum;
-using power_grid_model_c::safe_ptr;
 using power_grid_model_c::safe_ptr_get;
 } // namespace
 
@@ -43,9 +42,10 @@ void PGM_unregister_logger(PGM_Handle* handle, PGM_Logger* logger) {
     });
 }
 
-char const* PGM_logger_get_output(PGM_Handle* handle, PGM_Logger* logger) {
-    return call_with_catch(handle, [logger]() -> char const* {
-        return logger_get_output(safe_ptr_get(logger));
+void PGM_logger_get_output(PGM_Handle* handle, PGM_Logger* logger, PGM_LogOutputCallback callback,
+                           void* user_data) {
+    call_with_catch(handle, [logger, callback, user_data] {
+        logger_get_output(safe_ptr_get(logger), callback, user_data);
     });
 }
 

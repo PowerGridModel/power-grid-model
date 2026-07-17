@@ -85,6 +85,7 @@ class TextLogger : public Logger {
         data_.clear(); // reset error flags
     }
     std::string report() const { return data_.str(); }
+    std::string_view report_view() const { return data_.view(); }
     void flush() {
         if (flush_handler_) {
             // exception swallowing: if the handler throws, we leave the logger in valid state and the caller handles it
@@ -113,6 +114,7 @@ class MultiThreadedTextLogger : public MultiThreadedLoggerImpl<TextLogger> {
     using MultiThreadedLoggerImpl<TextLogger>::MultiThreadedLoggerImpl;
 
     std::string report() const { return get().report(); }
+    std::string_view report_view() const { return get().report_view(); }
     void clear() { get().clear(); }
     void flush() { get().flush(); }
 };
