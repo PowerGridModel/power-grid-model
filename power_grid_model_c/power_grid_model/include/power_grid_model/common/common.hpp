@@ -115,10 +115,14 @@ struct IncludeAll {
 };
 constexpr IncludeAll include_all{};
 
+template <class R>
+class MaybeOwningView;
+
 // define a non-owning view
 namespace detail {
 template <class> struct is_owning_view : std::false_type {};
 template <class R> struct is_owning_view<std::ranges::owning_view<R>> : std::true_type {};
+template <class R> struct is_owning_view<MaybeOwningView<R>> : std::true_type {};
 } // namespace detail
 template <class R>
 concept non_owning_view_c = std::ranges::view<R> && !detail::is_owning_view<std::remove_cvref_t<R>>::value;
