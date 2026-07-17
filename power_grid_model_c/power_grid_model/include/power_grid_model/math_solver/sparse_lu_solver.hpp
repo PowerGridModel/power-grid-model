@@ -54,8 +54,8 @@ inline void perturb_pivot_if_needed(double perturb_threshold, Scalar& value, dou
 // | Right | L      | Backward  | Column           | rhs * L^-1 | No; L has unit diagonal  |
 // | Right | U      | Forward   | Column           | rhs * U^-1 | Yes                      |
 // Left-lower and left-upper solves are commonly called forward and backward substitution, respectively.
-enum class TriangularSolveSide : bool { left, right };
-enum class TriangularFactor : bool { lower, upper }; // L or U
+enum class TriangularSolveSide : int8_t { left, right };
+enum class TriangularFactor : int8_t { lower, upper };
 
 // Dense LU factorization class
 // The implementation of the Dense LU factorization was derived from the Eigen library
