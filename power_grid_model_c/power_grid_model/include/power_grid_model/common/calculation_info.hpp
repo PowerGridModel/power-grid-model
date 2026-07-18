@@ -122,7 +122,11 @@ class MultiThreadedCalculationInfo : public MultiThreadedLoggerImpl<CalculationI
     using Report = CalculationInfo::Report;
 
     Report report() const { return get().report(); }
-    void clear() { get().clear(); }
+    void get_output(std::function<void(std::string_view)> const& callback) const override {
+        auto const output = get().string_report();
+        callback(output);
+    }
+    void clear() override { get().clear(); }
     std::string string_report() const { return get().string_report(); }
 };
 } // namespace common::logging

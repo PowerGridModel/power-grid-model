@@ -65,12 +65,19 @@ class MultiThreadedCompositeLogger : public MultiThreadedLogger {
         return std::make_unique<CompositeChildLogger>(std::move(child_loggers));
     }
 
-    void log(LogEvent tag) override                       { log_all(tag); }
+    void log(LogEvent tag) override                           { log_all(tag); }
     void log(LogEvent tag, std::string_view message) override { log_all(tag, message); }
     void log(LogEvent tag, double value) override             { log_all(tag, value); }
     void log(LogEvent tag, Idx value) override                { log_all(tag, value); }
 
     using MultiThreadedLogger::log;
+
+    // Fan out clear() to every registered logger.
+    void clear() override {
+        for (auto* logger : loggers_) {
+            logger->clear();
+        }
+    }
 
     [[nodiscard]] bool empty() const { return loggers_.empty(); }
 

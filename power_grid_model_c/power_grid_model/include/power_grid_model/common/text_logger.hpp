@@ -115,7 +115,10 @@ class MultiThreadedTextLogger : public MultiThreadedLoggerImpl<TextLogger> {
 
     std::string report() const { return get().report(); }
     std::string_view report_view() const { return get().report_view(); }
-    void clear() { get().clear(); }
+    void get_output(std::function<void(std::string_view)> const& callback) const override {
+        callback(get().report_view());
+    }
+    void clear() override { get().clear(); }
     void flush() { get().flush(); }
 };
 } // namespace common::logging
