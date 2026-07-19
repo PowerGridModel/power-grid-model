@@ -41,7 +41,8 @@ class CompositeChildLogger : public Logger {
 // all log calls to each. create_child() creates a CompositeChildLogger that owns one child per registered logger.
 //
 // Lifetime contract: all loggers in the list must outlive this composite.
-// UB: registering the same logger twice, modifying the logger list while calculate is in progress.
+// Dedupe: registering the same logger twice is a no-op (idempotent, consistent with logging conventions).
+// UB: modifying the logger list while a calculation is in progress.
 class MultiThreadedCompositeLogger : public MultiThreadedLogger {
   public:
     MultiThreadedCompositeLogger() = default;
@@ -49,7 +50,12 @@ class MultiThreadedCompositeLogger : public MultiThreadedLogger {
 
     // Add/remove a logger. The object address is unchanged so any existing reference_wrapper
     // pointing to this composite remains valid. Do not call while a calculation is in progress.
-    void add(MultiThreadedLogger* logger) { loggers_.push_back(logger); }
+    void add(MultiThreadedLogger* logger) {
+        if (std::ranges::contains(loggers_, logger)) {
+            return; // already registered — dedupe silently, consistent with logging API conventions
+        }
+        loggers_.push_back(logger);
+    }
     void remove(MultiThreadedLogger* logger) {
         if (auto it = std::ranges::find(loggers_, logger); it != loggers_.end()) {
             loggers_.erase(it);

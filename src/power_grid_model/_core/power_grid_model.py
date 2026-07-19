@@ -226,7 +226,7 @@ class PowerGridModel:
 
         Multiple loggers of different types may be registered simultaneously.
         The logger must not be destroyed while attached (UB).
-        Attaching the same logger instance more than once is UB.
+        Attaching the same logger instance more than once is a no-op (idempotent).
 
         Loggers are registered on the thread-local handle, so attach and calculate
         should be called from the same thread.

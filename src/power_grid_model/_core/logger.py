@@ -38,7 +38,8 @@ Python logging module integration::
 
 Using the same logger from multiple user threads simultaneously is UB (internal batch
 threads spawned by the C core are safe). Registering the same logger to the same model
-more than once, or destroying a logger while it is still attached, is also UB.
+more than once is a no-op (idempotent). Destroying a logger while it is still
+attached is UB.
 """
 
 import logging as _logging

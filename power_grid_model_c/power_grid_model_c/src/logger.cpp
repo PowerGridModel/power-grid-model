@@ -38,7 +38,7 @@ void PGM_register_logger(PGM_Handle* handle, PGM_Logger* logger) {
 void PGM_unregister_logger(PGM_Handle* handle, PGM_Logger* logger) {
     call_with_catch(handle, [handle, logger] {
         handle->composite_logger.remove(safe_ptr_get(logger).logger.get());
-        // TODO (nitbharambe): not found, no-op for now, but should we throw an error? (like in unregistering a dataset)
+        // Intentional no-op when the logger is not registered (documented in logger.h).
     });
 }
 

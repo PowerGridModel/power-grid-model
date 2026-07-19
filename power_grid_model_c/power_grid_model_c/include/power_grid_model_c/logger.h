@@ -18,10 +18,13 @@
  *   7. Destroy it:        PGM_destroy_logger()
  *
  * Undefined behaviour:
- *   - Registering the same logger to the same handle more than once.
  *   - Calling PGM_destroy_logger() while the logger is still registered.
  *   - Using the same logger from multiple user threads simultaneously
  *     (internal batch threads spawned by the calculation core are safe).
+ *
+ * Idempotent operations:
+ *   - Registering the same logger to the same handle more than once is a no-op.
+ *   - Unregistering a logger that is not registered is a no-op.
  *
  * Multiple loggers of different types may be registered to the same handle simultaneously.
  */
@@ -59,7 +62,7 @@ PGM_API void PGM_destroy_logger(PGM_Logger* logger);
  * @brief Register a logger to a handle so it receives output from subsequent calculations.
  *
  * Multiple loggers of different types may be registered simultaneously.
- * Registering the same logger instance twice to the same handle is UB.
+ * Registering the same logger instance twice to the same handle is a no-op (idempotent).
  *
  * @param handle The handle to register to.
  * @param logger The logger to register.
