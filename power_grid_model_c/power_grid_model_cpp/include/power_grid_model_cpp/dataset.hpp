@@ -361,7 +361,7 @@ struct OwningDataset {
             auto const& component_name = ref_info.component_name(component_idx);
             auto const& component_meta = MetaData::get_component_by_name(dataset.get_info().name(), component_name);
             // skip components not in the filter
-            if (enable_filters && detail::contains(output_component_attribute_filters, component_meta)) {
+            if (enable_filters && !detail::contains(output_component_attribute_filters, component_meta)) {
                 continue;
             }
             // skip irrelevant components for the calculation type
