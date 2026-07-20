@@ -148,6 +148,9 @@
     {
       "name": "msvc-debug",
       "displayName": "Debug (MSVC)",
+      "environment": {
+        "SANITIZER_FLAGS": "/RTC1"
+      },
       "inherits": ["msvc-base", "debug"]
     },
     {
