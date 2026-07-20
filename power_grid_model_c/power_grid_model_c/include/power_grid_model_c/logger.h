@@ -112,6 +112,17 @@ PGM_API void PGM_logger_get_output(PGM_Handle* handle, PGM_Logger* logger, PGM_L
                                    void* user_data);
 
 /**
+ * @brief Unregister all loggers from a handle in one call.
+ *
+ * Equivalent to calling PGM_unregister_logger() for every currently registered logger.
+ * Does not affect any log data already accumulated in the individual loggers.
+ * Useful for bulk cleanup before destroying the handle or before a new set of calculations.
+ *
+ * @param handle The handle to clear all loggers from.
+ */
+PGM_API void PGM_unregister_all_loggers(PGM_Handle* handle);
+
+/**
  * @brief Clear the accumulated output of a logger.
  *
  * For #PGM_do_nothing_logger this is a no-op.

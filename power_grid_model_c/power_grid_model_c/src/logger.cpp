@@ -42,6 +42,10 @@ void PGM_unregister_logger(PGM_Handle* handle, PGM_Logger* logger) {
     });
 }
 
+void PGM_unregister_all_loggers(PGM_Handle* handle) {
+    call_with_catch(handle, [handle] { safe_ptr_get(handle).composite_logger.reset(); });
+}
+
 void PGM_logger_get_output(PGM_Handle* handle, PGM_Logger* logger, PGM_LogOutputCallback callback,
                            void* user_data) {
     call_with_catch(handle, [logger, callback, user_data] {

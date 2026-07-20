@@ -61,6 +61,7 @@ class MultiThreadedCompositeLogger : public MultiThreadedLogger {
             loggers_.erase(it);
         }
     }
+    void reset() { loggers_.clear(); }
 
     std::unique_ptr<Logger> create_child() override {
         std::vector<std::unique_ptr<Logger>> child_loggers;
