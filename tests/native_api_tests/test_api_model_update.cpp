@@ -315,7 +315,7 @@ auto complete_state_json() {
       {"id": 9, "node": 3, "status": 1, "g1": 0.015, "b1": 0, "g0": 0.015, "b0": 0}
     ]
   }
-})json"s;
+})json"s; // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
 }
 
 auto update_json() {
@@ -343,7 +343,7 @@ auto update_json() {
       ]
     }
   ]
-})json"s;
+})json"s; // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
 }
 
 auto update_vector_json() {
@@ -365,7 +365,7 @@ auto update_vector_json() {
       ]
     }
   ]
-})json"s;
+})json"s; // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
 }
 } // namespace
 
