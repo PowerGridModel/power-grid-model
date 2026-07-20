@@ -802,7 +802,7 @@ template <typename ContainerType>
 class MockSolverOutput : public SolverOutput<symmetric_t> {
   public:
     using type = solver_output_t;
-    using sym = typename SolverOutput<symmetric_t>::sym;
+    using sym = SolverOutput<symmetric_t>::sym;
 
     Idx call_index{-1};
     CalculationMethod method;
@@ -889,7 +889,7 @@ struct MockTransformerState {
 struct MockTransformer {
     using InputType = StubTransformerInput;
     using UpdateType = StubTransformerUpdate;
-    using SideType = typename MockTransformerState::SideType;
+    using SideType = MockTransformerState::SideType;
 
     MockTransformer() = default;
     MockTransformer(MockTransformerState state_) : state{std::move(state_)} {}

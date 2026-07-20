@@ -23,7 +23,7 @@ struct UpdateChange {
 };
 
 template <typename T>
-concept component_c = requires(T t, T const& ct, typename T::UpdateType u, typename T::UpdateType const& cu) {
+concept component_c = requires(T t, T const& ct, T::UpdateType u, T::UpdateType const& cu) {
     typename T::InputType;
     typename T::UpdateType;
 

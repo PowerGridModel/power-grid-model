@@ -30,7 +30,7 @@ template <typename... Ts> struct tuple_type_identities_to_tuple_types<std::tuple
 };
 
 template <typename Tuple>
-using tuple_type_identities_to_tuple_types_t = typename tuple_type_identities_to_tuple_types<Tuple>::type;
+using tuple_type_identities_to_tuple_types_t = tuple_type_identities_to_tuple_types<Tuple>::type;
 
 template <typename... Types, typename... SelectTypes>
 constexpr auto filter_tuple_types(std::tuple<std::type_identity<Types>...> const& /*unused*/,

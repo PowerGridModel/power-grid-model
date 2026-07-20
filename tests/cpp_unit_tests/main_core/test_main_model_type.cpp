@@ -59,11 +59,11 @@ TEST_CASE("MainModelType") {
     SUBCASE("Node Source") {
         using ModelType = MainModelType<ExtraRetrievableTypes<Base, Node, Appliance>, ComponentList<Node, Source>>;
 
-        static_assert(std::is_same_v<typename ModelType::ComponentContainer,
+        static_assert(std::is_same_v<ModelType::ComponentContainer,
                                      Container<ExtraRetrievableTypes<Base, Node, Appliance>, Node, Source>>);
-        static_assert(std::is_same_v<typename ModelType::ComponentTypesTuple, std::tuple<Node, Source>>);
-        static_assert(std::is_same_v<typename ModelType::TopologyTypesTuple, std::tuple<Node, Source>>);
-        static_assert(std::is_same_v<typename ModelType::TopologyConnectionTypesTuple, std::tuple<Source>>);
+        static_assert(std::is_same_v<ModelType::ComponentTypesTuple, std::tuple<Node, Source>>);
+        static_assert(std::is_same_v<ModelType::TopologyTypesTuple, std::tuple<Node, Source>>);
+        static_assert(std::is_same_v<ModelType::TopologyConnectionTypesTuple, std::tuple<Source>>);
         static_assert(ModelType::index_of_component<Node> == 0);
         static_assert(ModelType::index_of_component<Source> == 1);
         static_assert(ModelType::n_types == 2);
@@ -81,7 +81,7 @@ TEST_CASE("MainModelType") {
         CHECK(calls == std::vector<std::string_view>{"node", "source"});
 
         calls.clear();
-        utils::run_functor_with_tuple_return_void<typename ModelType::TopologyTypesTuple>(
+        utils::run_functor_with_tuple_return_void<ModelType::TopologyTypesTuple>(
             [&calls]<typename CompType>() { calls.push_back(std::string_view(CompType::name)); });
         CHECK(calls == std::vector<std::string_view>{"node", "source"});
     }
@@ -90,11 +90,11 @@ TEST_CASE("MainModelType") {
             MainModelType<ExtraRetrievableTypes<Base, Node, Branch, Appliance>, ComponentList<Node, Line, Source>>;
 
         static_assert(
-            std::is_same_v<typename ModelType::ComponentContainer,
+            std::is_same_v<ModelType::ComponentContainer,
                            Container<ExtraRetrievableTypes<Base, Node, Branch, Appliance>, Node, Line, Source>>);
-        static_assert(std::is_same_v<typename ModelType::ComponentTypesTuple, std::tuple<Node, Line, Source>>);
-        static_assert(std::is_same_v<typename ModelType::TopologyTypesTuple, std::tuple<Node, Branch, Source>>);
-        static_assert(std::is_same_v<typename ModelType::TopologyConnectionTypesTuple, std::tuple<Branch, Source>>);
+        static_assert(std::is_same_v<ModelType::ComponentTypesTuple, std::tuple<Node, Line, Source>>);
+        static_assert(std::is_same_v<ModelType::TopologyTypesTuple, std::tuple<Node, Branch, Source>>);
+        static_assert(std::is_same_v<ModelType::TopologyConnectionTypesTuple, std::tuple<Branch, Source>>);
         static_assert(ModelType::index_of_component<Node> == 0);
         static_assert(ModelType::index_of_component<Line> == 1);
         static_assert(ModelType::index_of_component<Source> == 2);
@@ -113,7 +113,7 @@ TEST_CASE("MainModelType") {
         CHECK(calls == std::vector<std::string_view>{"node", "line", "source"});
         calls.clear();
 
-        utils::run_functor_with_tuple_return_void<typename ModelType::TopologyTypesTuple>(
+        utils::run_functor_with_tuple_return_void<ModelType::TopologyTypesTuple>(
             [&calls]<typename CompType>() { calls.push_back(std::string_view(CompType::name)); });
         CHECK(calls == std::vector<std::string_view>{"node", "branch", "source"});
     }
@@ -122,11 +122,11 @@ TEST_CASE("MainModelType") {
             MainModelType<ExtraRetrievableTypes<Base, Node, Branch, Appliance>, ComponentList<Line, Source, Node>>;
 
         static_assert(
-            std::is_same_v<typename ModelType::ComponentContainer,
+            std::is_same_v<ModelType::ComponentContainer,
                            Container<ExtraRetrievableTypes<Base, Node, Branch, Appliance>, Line, Source, Node>>);
-        static_assert(std::is_same_v<typename ModelType::ComponentTypesTuple, std::tuple<Line, Source, Node>>);
-        static_assert(std::is_same_v<typename ModelType::TopologyTypesTuple, std::tuple<Node, Branch, Source>>);
-        static_assert(std::is_same_v<typename ModelType::TopologyConnectionTypesTuple, std::tuple<Branch, Source>>);
+        static_assert(std::is_same_v<ModelType::ComponentTypesTuple, std::tuple<Line, Source, Node>>);
+        static_assert(std::is_same_v<ModelType::TopologyTypesTuple, std::tuple<Node, Branch, Source>>);
+        static_assert(std::is_same_v<ModelType::TopologyConnectionTypesTuple, std::tuple<Branch, Source>>);
         static_assert(ModelType::index_of_component<Line> == 0);
         static_assert(ModelType::index_of_component<Source> == 1);
         static_assert(ModelType::index_of_component<Node> == 2);
@@ -146,7 +146,7 @@ TEST_CASE("MainModelType") {
         CHECK(calls == std::vector<std::string_view>{"line", "source", "node"});
         calls.clear();
 
-        utils::run_functor_with_tuple_return_void<typename ModelType::TopologyTypesTuple>(
+        utils::run_functor_with_tuple_return_void<ModelType::TopologyTypesTuple>(
             [&calls]<typename CompType>() { calls.push_back(std::string_view(CompType::name)); });
         CHECK(calls == std::vector<std::string_view>{"node", "branch", "source"});
     }
@@ -156,11 +156,11 @@ TEST_CASE("MainModelType") {
             MainModelType<ExtraRetrievableTypes<Base, Node, Appliance>, ComponentList<Node, AComponent, Source>>;
 
         static_assert(
-            std::is_same_v<typename ModelType::ComponentContainer,
+            std::is_same_v<ModelType::ComponentContainer,
                            Container<ExtraRetrievableTypes<Base, Node, Appliance>, Node, AComponent, Source>>);
-        static_assert(std::is_same_v<typename ModelType::ComponentTypesTuple, std::tuple<Node, AComponent, Source>>);
-        static_assert(std::is_same_v<typename ModelType::TopologyTypesTuple, std::tuple<Node, Source>>);
-        static_assert(std::is_same_v<typename ModelType::TopologyConnectionTypesTuple, std::tuple<Source>>);
+        static_assert(std::is_same_v<ModelType::ComponentTypesTuple, std::tuple<Node, AComponent, Source>>);
+        static_assert(std::is_same_v<ModelType::TopologyTypesTuple, std::tuple<Node, Source>>);
+        static_assert(std::is_same_v<ModelType::TopologyConnectionTypesTuple, std::tuple<Source>>);
         static_assert(ModelType::index_of_component<Node> == 0);
         static_assert(ModelType::index_of_component<AComponent> == 1);
         static_assert(ModelType::index_of_component<Source> == 2);
@@ -179,7 +179,7 @@ TEST_CASE("MainModelType") {
         CHECK(calls == std::vector<std::string_view>{"node", "a_component", "source"});
 
         calls.clear();
-        utils::run_functor_with_tuple_return_void<typename ModelType::TopologyTypesTuple>(
+        utils::run_functor_with_tuple_return_void<ModelType::TopologyTypesTuple>(
             [&calls]<typename CompType>() { calls.push_back(std::string_view(CompType::name)); });
         CHECK(calls == std::vector<std::string_view>{"node", "source"});
     }

@@ -19,7 +19,7 @@ concept enum_c = std::is_enum_v<T>;
 } // namespace detail
 
 template <typename T>
-concept transformer_c = component_c<T> && requires(T const& t, typename T::UpdateType u, typename T::SideType s) {
+concept transformer_c = component_c<T> && requires(T const& t, T::UpdateType u, T::SideType s) {
     { t.node(s) } -> std::same_as<ID>;
     { t.status(s) } -> std::convertible_to<bool>;
 

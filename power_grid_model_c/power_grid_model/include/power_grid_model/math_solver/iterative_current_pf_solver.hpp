@@ -82,7 +82,7 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCur
     using sym = sym_type;
 
     using SparseSolverType = SparseLUSolver<ComplexTensor<sym>, ComplexValue<sym>, ComplexValue<sym>>;
-    using BlockPermArray = typename SparseSolverType::BlockPermArray;
+    using BlockPermArray = SparseSolverType::BlockPermArray;
 
     static constexpr auto is_iterative = true;
 

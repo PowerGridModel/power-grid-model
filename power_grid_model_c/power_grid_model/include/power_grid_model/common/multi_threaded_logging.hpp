@@ -84,7 +84,7 @@ class MultiThreadedLoggerImpl : public MultiThreadedLogger {
     void sync(ThreadLogger const& logger) {
         assert(&logger != &log_);
 
-        std::lock_guard const lock{mutex_};
+        std::scoped_lock const lock{mutex_};
         logger.merge_into(log_);
     }
 };

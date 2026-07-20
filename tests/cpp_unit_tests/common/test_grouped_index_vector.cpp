@@ -82,8 +82,8 @@ TEST_CASE_TEMPLATE("Grouped idx data structure", IdxVectorConstructor, TypePair<
                    TypePair<SparseGroupedIdxVector, from_dense_t>, TypePair<SparseGroupedIdxVector, from_natural_t>,
                    TypePair<DenseGroupedIdxVector, from_sparse_t>, TypePair<DenseGroupedIdxVector, from_dense_t>,
                    TypePair<DenseGroupedIdxVector, from_natural_t>) {
-    using IdxVectorType = typename IdxVectorConstructor::A;
-    using ConstructFromTag = typename IdxVectorConstructor::B;
+    using IdxVectorType = IdxVectorConstructor::A;
+    using ConstructFromTag = IdxVectorConstructor::B;
 
     IdxVector const groups{1, 1, 1, 3, 3, 3, 4};
     Idx const num_groups{6};
@@ -143,9 +143,9 @@ TEST_CASE_TEMPLATE("Enumerated zip iterator for grouped index data structures", 
                    TypePair<SparseGroupedIdxVector, DenseGroupedIdxVector>,
                    TypePair<DenseGroupedIdxVector, SparseGroupedIdxVector>,
                    TypePair<DenseGroupedIdxVector, DenseGroupedIdxVector>) {
-    using A = typename IdxVectorTypes::A;
-    using B = typename IdxVectorTypes::B;
-    using C = typename IdxVectorTypes::A; // reusing for brevity
+    using A = IdxVectorTypes::A;
+    using B = IdxVectorTypes::B;
+    using C = IdxVectorTypes::A; // reusing for brevity
 
     // Number of groups need to be equal
     Idx const num_groups{6};

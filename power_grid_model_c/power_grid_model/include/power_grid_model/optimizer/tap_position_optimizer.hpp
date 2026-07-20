@@ -561,10 +561,10 @@ template <typename T, typename... Ts> struct transformer_types_s<std::tuple<T, T
                            typename transformer_types_s<std::tuple<Ts...>>::type>;
 };
 template <typename... Ts> struct transformer_types_s<std::tuple<std::tuple<Ts...>>> {
-    using type = typename transformer_types_s<std::tuple<Ts...>>::type;
+    using type = transformer_types_s<std::tuple<Ts...>>::type;
 };
 
-template <typename... Ts> using transformer_types_t = typename transformer_types_s<std::tuple<Ts...>>::type;
+template <typename... Ts> using transformer_types_t = transformer_types_s<std::tuple<Ts...>>::type;
 
 template <transformer_c... TransformerTypes, typename State>
     requires(common::component_container_c<typename State::ComponentContainer, TransformerTypes> && ...)
@@ -784,7 +784,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
   private:
     std::vector<uint64_t> max_tap_ranges_per_rank;
-    using ComponentContainer = typename State::ComponentContainer;
+    using ComponentContainer = State::ComponentContainer;
     using RegulatedTransformer = TapRegulatorRef<TransformerTypes...>;
     using UpdateBuffer = std::tuple<std::vector<typename TransformerTypes::UpdateType>...>;
 
@@ -1117,7 +1117,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
     template <typename TransformerType, typename Regulator, typename State, typename ResultType>
     auto compute_node_state_and_param(Regulator const& regulator, State const& state, ResultType const& solver_output) {
-        using sym = typename ResultType::value_type::sym;
+        using sym = ResultType::value_type::sym;
 
         auto const param = regulator.regulator.get().template calc_param<sym>();
         auto const node_state =
@@ -1404,7 +1404,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
     }
 
     static constexpr auto get_nan_update(auto const& component) {
-        using UpdateType = typename std::remove_cvref_t<decltype(component)>::UpdateType;
+        using UpdateType = std::remove_cvref_t<decltype(component)>::UpdateType;
         return UpdateType{};
     }
 

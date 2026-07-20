@@ -123,6 +123,7 @@ struct JsonConverter : NullVisitor<JsonConverter> {
         ss << sep_char;
     }
 
+    // NOLINTBEGIN(bugprone-derived-method-shadowing-base-method)
     bool visit_nil() {
         ss << "null";
         return true;
@@ -212,6 +213,7 @@ struct JsonConverter : NullVisitor<JsonConverter> {
         ss << '}';
         return true;
     }
+    // NOLINTEND(bugprone-derived-method-shadowing-base-method)
 
     JsonConverter(Idx indent_, Idx max_indent_level_)
         : NullVisitor<JsonConverter>{}, indent{indent_}, max_indent_level{max_indent_level_} {}
