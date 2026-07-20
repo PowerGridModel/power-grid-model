@@ -57,7 +57,7 @@ class PowerGridBatchError : public PowerGridError {
 class Handle {
   public:
     Handle() {
-        if (handle == nullptr) {
+        if (get() == nullptr) {
             throw PowerGridRegularError{"Failed to create handle. This usually points to a severe system issue, such "
                                         "as insufficient or corrupted memory."};
         }
