@@ -5,6 +5,7 @@
 #pragma once
 
 #include "../common/common.hpp"
+#include "../common/counting_iterator.hpp"
 #include "../common/exception.hpp"
 #include "../common/three_phase_tensor.hpp"
 #include "../common/typing.hpp"
@@ -45,6 +46,17 @@ inline void perturb_pivot_if_needed(double perturb_threshold, Scalar& value, dou
         abs_value = perturb_threshold;
     }
 }
+
+// Triangular solve variants:
+// | Side  | Factor | Traversal | Updated RHS view | Operation  | Divide by diagonal?      |
+// |-------|--------|-----------|------------------|------------|--------------------------|
+// | Left  | L      | Forward   | Row              | L^-1 * rhs | No; L has unit diagonal  |
+// | Left  | U      | Backward  | Row              | U^-1 * rhs | Yes                      |
+// | Right | L      | Backward  | Column           | rhs * L^-1 | No; L has unit diagonal  |
+// | Right | U      | Forward   | Column           | rhs * U^-1 | Yes                      |
+// Left-lower and left-upper solves are commonly called forward and backward substitution, respectively.
+enum class TriangularSolveSide : int8_t { left, right };
+enum class TriangularFactor : int8_t { lower, upper };
 
 // Dense LU factorization class
 // The implementation of the Dense LU factorization was derived from the Eigen library
@@ -152,36 +164,38 @@ template <rk2_tensor Matrix> class DenseLUFactor {
         }
     }
 
-    // Forward substitution with the L matrix. The diagonal entries of L are implicit 1.0
-    // The rhs may be a vector or a matrix; matrix rhs columns are solved simultaneously.
-    template <class LUDerived, class RHSDerived>
-    static void forward_substitute_inplace(Eigen::MatrixBase<LUDerived> const& lu_matrix, RHSDerived& rhs)
+    // Solve with one of the triangular factors stored in lu_matrix.
+    // The lower factor has an implicit unit diagonal; the upper factor has an explicit diagonal.
+    // Forward substituion is left-lower solve. Backward substitution is left-upper solve.
+    template <TriangularSolveSide side, TriangularFactor factor, class LUDerived, class RHSDerived>
+    static void triangular_solve_inplace(Eigen::MatrixBase<LUDerived> const& lu_matrix, RHSDerived& rhs)
         requires(std::same_as<typename LUDerived::Scalar, Scalar> &&
                  std::same_as<typename RHSDerived::Scalar, Scalar> && rk2_tensor<LUDerived> &&
                  (LUDerived::RowsAtCompileTime == size) && (LUDerived::ColsAtCompileTime == size) &&
-                 (RHSDerived::RowsAtCompileTime == size))
+                 ((side == TriangularSolveSide::left && RHSDerived::RowsAtCompileTime == size) ||
+                  (side == TriangularSolveSide::right && RHSDerived::ColsAtCompileTime == size)))
     {
-        for (int8_t row = 0; row < size; ++row) {
-            for (int8_t col = 0; col < row; ++col) {
-                rhs.row(row) -= lu_matrix(row, col) * rhs.row(col);
-            }
-        }
-    }
+        static constexpr bool forward_traversal =
+            (side == TriangularSolveSide::left) == (factor == TriangularFactor::lower);
 
-    // Backward substitution with the U matrix stored in lu_matrix.
-    // The rhs may be a vector or a matrix; matrix rhs columns are solved simultaneously.
-    template <class LUDerived, class RHSDerived>
-    static void backward_substitute_inplace(Eigen::MatrixBase<LUDerived> const& lu_matrix, RHSDerived& rhs)
-        requires(std::same_as<typename LUDerived::Scalar, Scalar> &&
-                 std::same_as<typename RHSDerived::Scalar, Scalar> && rk2_tensor<LUDerived> &&
-                 (LUDerived::RowsAtCompileTime == size) && (LUDerived::ColsAtCompileTime == size) &&
-                 (RHSDerived::RowsAtCompileTime == size))
-    {
-        for (int8_t row = size - 1; row > -1; --row) {
-            for (int8_t col = size - 1; col > row; --col) {
-                rhs.row(row) -= lu_matrix(row, col) * rhs.row(col);
+        for (auto const step : IdxRange{size}) {
+            auto const index = static_cast<int8_t>(forward_traversal ? step : size - 1 - step);
+            for (auto const previous_step : IdxRange{step}) {
+                auto const previous_index =
+                    static_cast<int8_t>(forward_traversal ? previous_step : size - 1 - previous_step);
+                if constexpr (side == TriangularSolveSide::left) {
+                    rhs.row(index) -= lu_matrix(index, previous_index) * rhs.row(previous_index);
+                } else {
+                    rhs.col(index) -= lu_matrix(previous_index, index) * rhs.col(previous_index);
+                }
             }
-            rhs.row(row) /= lu_matrix(row, row);
+            if constexpr (factor == TriangularFactor::upper) {
+                if constexpr (side == TriangularSolveSide::left) {
+                    rhs.row(index) /= lu_matrix(index, index);
+                } else {
+                    rhs.col(index) /= lu_matrix(index, index);
+                }
+            }
         }
     }
 
@@ -194,8 +208,8 @@ template <rk2_tensor Matrix> class DenseLUFactor {
                  (Derived::RowsAtCompileTime == size) && (Derived::ColsAtCompileTime == size))
     {
         Matrix inverse = Matrix::Identity();
-        forward_substitute_inplace(lu_matrix, inverse);
-        backward_substitute_inplace(lu_matrix, inverse);
+        triangular_solve_inplace<TriangularSolveSide::left, TriangularFactor::lower>(lu_matrix, inverse);
+        triangular_solve_inplace<TriangularSolveSide::left, TriangularFactor::upper>(lu_matrix, inverse);
         return inverse;
     }
 
@@ -303,17 +317,23 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         }
     }
 
+    // Compute Takahashi dependency blocks over the solver's stored sparse pattern
+    // row_indptr_/col_indices_. This pattern includes fill-ins and can be larger
+    // than the downstream target pattern, e.g. the original y_bus pattern.
     void inplace_selective_inverse_with_prefactorized_matrix(
         std::vector<Tensor>& data, // pre-factorized data, will be in-place modified to store selective inverse
         BlockPermArray const& block_perm_array // pre-calculated permutation, const ref
     ) const {
-        capturing::into_the_void(data, block_perm_array); // prevent compiler from complaining about unused variables
         if constexpr (!is_block) {
+            // our use case only needs selective inversion for block sparse matrices
+            capturing::into_the_void(data, block_perm_array);
             throw SparseMatrixError{};
         } else {
+            // we first handle the case without pivot perturbation
             if (has_pivot_perturbation_) {
                 throw SparseMatrixError{};
             }
+            inplace_selective_inverse_block_matrix(data, block_perm_array);
         }
     }
 
@@ -402,18 +422,16 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
                     Tensor& u = lu_matrix[u_idx];
                     // permutation
                     u = (block_perm.p * u.matrix()).array();
-                    // forward substitution, per row in u
-                    for (Idx block_row = 0; block_row < block_size; ++block_row) {
-                        for (Idx block_col = 0; block_col < block_row; ++block_col) {
-                            // forward substract
-                            u.row(block_row) -= pivot(block_row, block_col) * u.row(block_col);
-                        }
-                    }
+                    // forward substitution (left,lower solve), per row in u
+                    LUFactor::template triangular_solve_inplace<TriangularSolveSide::left, TriangularFactor::lower>(
+                        pivot.matrix(), u);
                 }
             }
 
-            // start to calculate L below the pivot and U at the right of the pivot column
-            // because the matrix is symmetric,
+            // Calculate L blocks below the pivot and apply the sparse Schur-complement update:
+            // A_k,j = A_k,j - L_k,pivot * U_pivot,j    k, j > pivot
+            // The outer and inner loops visit only structurally non-zero blocks of L_k,pivot and U_pivot,j.
+            // Because the matrix is symmetric,
             //    looking for col_indices at pivot_row_col, starting from the diagonal (pivot_row_col, pivot_row_col)
             //    we get also the non-zero row indices under the pivot
             for (Idx l_ref_idx = pivot_idx + 1; l_ref_idx < row_indptr_[pivot_row_col + 1]; ++l_ref_idx) {
@@ -440,13 +458,8 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
                     // l * u = a
                     // l0 * u00 = a0
                     // l0 * u01 + l1 * u11 = a1
-                    for (Idx block_col = 0; block_col < block_size; ++block_col) {
-                        for (Idx block_row = 0; block_row < block_col; ++block_row) {
-                            l.col(block_col) -= pivot(block_row, block_col) * l.col(block_row);
-                        }
-                        // divide diagonal
-                        l.col(block_col) = l.col(block_col) / pivot(block_col, block_col);
-                    }
+                    LUFactor::template triangular_solve_inplace<TriangularSolveSide::right, TriangularFactor::upper>(
+                        pivot.matrix(), l);
                 } else {
                     // for scalar matrix, just divide
                     // L_k,pivot = A_k,pivot / U_pivot    k > pivot
@@ -454,24 +467,18 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
                 }
                 Tensor const& l = lu_matrix[l_idx];
 
-                // for all entries in the right of (l_row, u_col)
-                //       A(l_row, u_col) = A(l_row, u_col) - l * U(pivot_row_col, u_col),
-                //          for u_col > pivot_row_col
-                // it can create fill-ins, but the fill-ins are pre-allocated
-                // it is guaranteed to have an entry at (l_row, u_col), if (pivot_row_col, u_col) is non-zero
-                // starting A index from (l_row, pivot_row_col)
+                // Perform Schur-complement update for row l_row of the trailing unfactorized block. For each
+                // structurally non-zero U entry to the right of the pivot, find the corresponding entry in l_row and
+                // apply A(l_row, u_col) -= l * U(pivot_row_col, u_col). it can create fill-ins, but the fill-ins are
+                // pre-allocated it is guaranteed to have an entry at (l_row, u_col), if (pivot_row_col, u_col) is
+                // non-zero
                 Idx a_idx = l_idx;
                 // loop all columns in the right of (pivot_row_col, pivot_row_col), at pivot_row
                 for (Idx u_idx = pivot_idx + 1; u_idx < row_indptr_[pivot_row_col + 1]; ++u_idx) {
                     Idx const u_col = col_indices_[u_idx];
                     assert(u_col > pivot_row_col);
-                    // search the a_idx to the u_col,
-                    auto const found = std::lower_bound(col_indices_.begin() + a_idx,
-                                                        col_indices_.begin() + row_indptr_[l_row + 1], u_col);
-                    // should always found
-                    assert(found != col_indices_.begin() + row_indptr_[l_row + 1]);
-                    assert(*found == u_col);
-                    a_idx = narrow_cast<Idx>(std::distance(col_indices_.begin(), found));
+                    // u_col is strictly increasing, so continue after the previous match.
+                    a_idx = find_entry(l_row, u_col, a_idx + 1, row_indptr_[l_row + 1]);
                     // subtract
                     lu_matrix[a_idx] -= dot(l, lu_matrix[u_idx]);
                 }
@@ -488,6 +495,8 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
     }
 
   private:
+    static constexpr Idx linear_search_threshold = 16;
+
     Idx size_;
     Idx nnz_; // number of non zeroes (in block)
     std::span<Idx const> row_indptr_;
@@ -645,6 +654,118 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
         original_matrix_.reset();
     }
 
+    void inplace_selective_inverse_block_matrix(std::vector<Tensor>& data, BlockPermArray const& block_perm_array) const
+        requires is_block
+    {
+        // First compute Z = (P * A * Q)^-1 = U^-1 * L^-1.
+        for (Idx pivot_row_col = size_ - 1; pivot_row_col > -1; --pivot_row_col) {
+            update_selective_inverse_pivot_row_and_column(data, pivot_row_col);
+        }
+
+        // Restore A^-1_ij per sparse entry: Z_ij = Q_i * Z_ij * P_j.
+        for (Idx row = 0; row < size_; ++row) {
+            for (Idx idx = row_indptr_[row]; idx < row_indptr_[row + 1]; ++idx) {
+                data[idx] =
+                    (block_perm_array[row].q * data[idx].matrix() * block_perm_array[col_indices_[idx]].p).array();
+            }
+        }
+    }
+
+    // Update selected inverse blocks for pivot p: column below p, row right of p, and diagonal.
+    // Trailing Z_ij blocks with i,j > p are already available from the reverse pivot sweep.
+    void update_selective_inverse_pivot_row_and_column(std::vector<Tensor>& data, Idx pivot_row_col) const
+        requires is_block
+    {
+        Idx const pivot_idx = diag_lu_[pivot_row_col];
+        Idx const u_start = pivot_idx + 1;
+        Idx const u_end = row_indptr_[pivot_row_col + 1];
+        Idx const n_off_diagonal = u_end - u_start;
+
+        // Buffer LU values from row/column p before overwriting them with Z blocks.
+        Tensor const pivot = data[pivot_idx];
+        std::vector<Tensor> const u_row(data.begin() + u_start, data.begin() + u_end); // u_row is contagious.
+        auto const [l_col, l_indices] = [&]() {
+            std::vector<Tensor> values(n_off_diagonal); // l column is scattered we need to extract them.
+            IdxVector indices(n_off_diagonal);
+            for (Idx offset = 0; offset < n_off_diagonal; ++offset) {
+                Idx const l_row = col_indices_[u_start + offset];
+                indices[offset] = find_entry(l_row, pivot_row_col, row_indptr_[l_row], diag_lu_[l_row]);
+                values[offset] = data[indices[offset]];
+            }
+            return std::pair{std::move(values), std::move(indices)};
+        }();
+
+        // Column below pivot: replace L_kp with Z_kp = -(sum_m Z_km * L_mp) * L_p^-1.
+        for (Idx k_offset = 0; k_offset < n_off_diagonal; ++k_offset) {
+            Idx const z_row = col_indices_[u_start + k_offset];
+            Tensor sum = Tensor::Zero();
+            Idx z_idx = l_indices[k_offset];
+            for (Idx m_offset = 0; m_offset < n_off_diagonal; ++m_offset) {
+                Idx const z_col = col_indices_[u_start + m_offset];
+                z_idx = find_entry(z_row, z_col, z_idx + 1, row_indptr_[z_row + 1]);
+                sum += dot(data[z_idx], l_col[m_offset]);
+            }
+            data[l_indices[k_offset]] = -multiply_inverse_unit_lower_right(pivot, sum);
+        }
+
+        // Row right of pivot: replace U_pj with Z_pj = -U_p^-1 * sum_m U_pm * Z_mj.
+        for (Idx j_offset = 0; j_offset < n_off_diagonal; ++j_offset) {
+            Idx const z_col = col_indices_[u_start + j_offset];
+            Tensor sum = Tensor::Zero();
+            for (Idx m_offset = 0; m_offset < n_off_diagonal; ++m_offset) {
+                Idx const z_row = col_indices_[u_start + m_offset];
+                Idx const z_idx = find_entry(z_row, z_col, l_indices[m_offset] + 1, row_indptr_[z_row + 1]);
+                sum += dot(u_row[m_offset], data[z_idx]);
+            }
+            data[u_start + j_offset] = -multiply_inverse_upper_left(pivot, sum);
+        }
+
+        // Diagonal last: Z_pp = (L_p * U_p)^-1 - U_p^-1 * sum_m U_pm * Z_mp.
+        Tensor sum = Tensor::Zero();
+        for (Idx m_offset = 0; m_offset < n_off_diagonal; ++m_offset) {
+            sum += dot(u_row[m_offset], data[l_indices[m_offset]]);
+        }
+        data[pivot_idx] =
+            LUFactor::inverse_factorized_block(pivot.matrix()).array() - multiply_inverse_upper_left(pivot, sum);
+    }
+
+    // Find the data index of entry (row, col), which must exist in the filled LU pattern. Optional bounds restrict
+    // the search to a caller-known subrange and default to the whole row.
+    Idx find_entry(Idx row, Idx col, std::optional<Idx> search_begin = std::nullopt,
+                   std::optional<Idx> search_end = std::nullopt) const {
+        Idx const begin_idx = search_begin.value_or(row_indptr_[row]);
+        Idx const end_idx = search_end.value_or(row_indptr_[row + 1]);
+        assert(row_indptr_[row] <= begin_idx);
+        assert(begin_idx < end_idx);
+        assert(end_idx <= row_indptr_[row + 1]);
+        auto const first = col_indices_.begin() + begin_idx;
+        auto const last = col_indices_.begin() + end_idx;
+        auto const found = end_idx - begin_idx < linear_search_threshold ? std::find(first, last, col)
+                                                                         : std::lower_bound(first, last, col);
+        assert(found != last);
+        assert(*found == col);
+        return narrow_cast<Idx>(std::distance(col_indices_.begin(), found));
+    }
+
+    // Compute U_pivot^-1 * block, with U stored in the upper triangle of the packed pivot block.
+    static Tensor multiply_inverse_upper_left(Tensor const& pivot, Tensor block)
+        requires is_block
+    {
+        LUFactor::template triangular_solve_inplace<TriangularSolveSide::left, TriangularFactor::upper>(pivot.matrix(),
+                                                                                                        block);
+        return block;
+    }
+
+    // Compute block * L_pivot^-1, with L stored in the lower triangle and implicit unit diagonal.
+
+    static Tensor multiply_inverse_unit_lower_right(Tensor const& pivot, Tensor block)
+        requires is_block
+    {
+        LUFactor::template triangular_solve_inplace<TriangularSolveSide::right, TriangularFactor::lower>(pivot.matrix(),
+                                                                                                         block);
+        return block;
+    }
+
     void solve_once(std::vector<Tensor> const& data,        // pre-factorized data, const ref
                     BlockPermArray const& block_perm_array, // pre-calculated permutation, const ref
                     std::vector<RHSVector> const& rhs, std::vector<XVector>& x) const {
@@ -672,7 +793,8 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
             // forward substitution inside block, for block matrix
             if constexpr (is_block) {
                 Tensor const& pivot = lu_matrix[diag_lu[row]];
-                LUFactor::forward_substitute_inplace(pivot.matrix(), x[row]);
+                LUFactor::template triangular_solve_inplace<TriangularSolveSide::left, TriangularFactor::lower>(
+                    pivot.matrix(), x[row]);
             }
         }
 
@@ -690,7 +812,8 @@ template <class Tensor, class RHSVector, class XVector> class SparseLUSolver {
             if constexpr (is_block) {
                 // backward substitution inside block
                 Tensor const& pivot = lu_matrix[diag_lu[row]];
-                LUFactor::backward_substitute_inplace(pivot.matrix(), x[row]);
+                LUFactor::template triangular_solve_inplace<TriangularSolveSide::left, TriangularFactor::upper>(
+                    pivot.matrix(), x[row]);
             } else {
                 x[row] = x[row] / lu_matrix[diag_lu[row]];
             }
