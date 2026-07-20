@@ -56,6 +56,13 @@ class PowerGridBatchError : public PowerGridError {
 
 class Handle {
   public:
+    Handle() {
+        if (handle == nullptr) {
+            throw PowerGridRegularError{"Failed to create handle. This usually points to a severe system issue, such "
+                                        "as insufficient or corrupted memory."};
+        }
+    }
+
     RawHandle* get() const { return handle_.get(); }
 
     void clear_error() const { PGM_clear_error(get()); }

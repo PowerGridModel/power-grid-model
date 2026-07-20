@@ -34,7 +34,8 @@ extern "C" {
  * @param handle
  * @param component A component pointer.
  * @param size The size of the buffer in terms of number of elements.
- * @return A pointer to the buffer, or NULL if the input is invalid.
+ * @return A pointer to the created buffer. The instance must be freed by PGM_destroy_buffer().
+ *     Returns NULL if errors occured (check the handle for error information).
  */
 PGM_API void* PGM_create_buffer(PGM_Handle* handle, PGM_MetaComponent const* component, PGM_Idx size) PGM_NOEXCEPT;
 

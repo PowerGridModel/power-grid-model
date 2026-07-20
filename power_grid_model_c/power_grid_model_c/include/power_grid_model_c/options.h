@@ -33,6 +33,7 @@ extern "C" {
  *
  * @param handle
  * @return The pointer to the option instance. Should be freed by PGM_destroy_options().
+ *     Returns NULL if errors occured (check the handle for error information).
  */
 PGM_API PGM_Options* PGM_create_options(PGM_Handle* handle) PGM_NOEXCEPT;
 

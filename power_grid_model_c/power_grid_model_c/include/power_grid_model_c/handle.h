@@ -24,7 +24,10 @@ extern "C" {
  * If you run it in multi-threading at user side, each thread should have unique handle.
  * The handle should be destroyed by PGM_destroy_handle().
  *
- * @return A pointer to the created handle.
+ * @return A pointer to the created PGM_Handle. The instance must be freed by PGM_destroy_handle().
+ *     Returns NULL if errors occured.
+ *     Due to the nature of the handle, no diagnostics can be provided.
+ *     An error during creation usually points to a severe system issue, e.g., insufficient or corrupted memory.
  */
 PGM_API PGM_Handle* PGM_create_handle(void) PGM_NOEXCEPT;
 

@@ -134,8 +134,8 @@ PGM_API char const* PGM_dataset_info_attribute_name(PGM_Handle* handle, PGM_Data
  * @param dataset The name of the dataset.
  * @param is_batch 1 if the dataset is a batch, 0 if the dataset is single.
  * @param batch_size The size of the batch. For single datasets, this must be 1.
- * @return A pointer to the created PGM_ConstDataset, or NULL if errors occur. Check the handle for error.
- *    The instance must be freed by PGM_destroy_dataset_const().
+ * @return A pointer to the created PGM_ConstDataset. The instance must be freed by PGM_destroy_dataset_const().
+ *     Returns NULL if errors occured (check the handle for error information).
  */
 PGM_API PGM_ConstDataset* PGM_create_dataset_const(PGM_Handle* handle, char const* dataset, PGM_Idx is_batch,
                                                    PGM_Idx batch_size) PGM_NOEXCEPT;
@@ -156,8 +156,8 @@ PGM_create_dataset_const_from_writable(PGM_Handle* handle, PGM_WritableDataset c
  *     They share the same buffer memory.
  * @param handle
  * @param mutable_dataset pointer to an instance of PGM_MutableDataset
- * @return A pointer to the created PGM_ConstDataset, or NULL if errors occur. Check the handle for error.
- *    The instance must be freed by PGM_destroy_dataset_const().
+ * @return A pointer to the created PGM_ConstDataset. The instance must be freed by PGM_destroy_dataset_const().
+ *     Returns NULL if errors occured (check the handle for error information).
  */
 PGM_API PGM_ConstDataset* PGM_create_dataset_const_from_mutable(PGM_Handle* handle,
                                                                 PGM_MutableDataset const* mutable_dataset) PGM_NOEXCEPT;
@@ -274,8 +274,8 @@ PGM_API void PGM_dataset_writable_set_attribute_buffer(PGM_Handle* handle, PGM_W
  * @param dataset The name of the dataset.
  * @param is_batch 1 if the dataset is a batch, 0 if the dataset is single.
  * @param batch_size The size of the batch. For single datasets, this must be 1.
- * @return A pointer to the created PGM_MutableDataset, or NULL if errors occur. Check the handle for error.
- *    The instance must be freed by PGM_destroy_dataset_mutable().
+ * @return A pointer to the created PGM_MutableDataset. The instance must be freed by PGM_destroy_dataset_mutable().
+ *     Returns NULL if errors occured (check the handle for error information).
  */
 PGM_API PGM_MutableDataset* PGM_create_dataset_mutable(PGM_Handle* handle, char const* dataset, PGM_Idx is_batch,
                                                        PGM_Idx batch_size) PGM_NOEXCEPT;

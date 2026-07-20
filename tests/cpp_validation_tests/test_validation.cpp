@@ -361,7 +361,7 @@ void assert_result(OwningDataset const& owning_result, OwningDataset const& owni
 // root path
 inline std::filesystem::path data_dir() {
 #ifdef POWER_GRID_MODEL_VALIDATION_TEST_DATA_DIR
-    // use marco definition input
+    // use macro definition input
     return {POWER_GRID_MODEL_VALIDATION_TEST_DATA_DIR};
 #else
     // use relative path to this file

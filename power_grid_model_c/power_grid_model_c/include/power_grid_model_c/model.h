@@ -27,9 +27,8 @@ extern "C" {
  * @param handle
  * @param system_frequency The frequency of the system, usually 50 or 60 Hz
  * @param input_dataset Pointer to an instance of PGM_ConstDataset. It should have data type "input".
- * @return The opaque pointer to the created model.
- * If there are errors during the creation, a NULL is returned.
- * Use PGM_error_code() and PGM_error_message() to check the error.
+ * @return A pointer to the created PGM_PowerGridModel. The instance must be freed by PGM_destroy_model().
+ *     Returns NULL if errors occured (check the handle for error information).
  */
 PGM_API PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency,
                                              PGM_ConstDataset const* input_dataset) PGM_NOEXCEPT;
