@@ -43,7 +43,7 @@ auto complete_state_json() {
       {"id": 0, "u_rated": 10e3}
     ]
   }
-})json"s;
+})json"s; // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
 }
 
 } // namespace
