@@ -602,6 +602,10 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
+    def unregister_all_loggers(self) -> None:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
     def logger_clear(self, logger: LoggerPtr) -> None:  # type: ignore[empty-body]
         pass  # pragma: no cover
 

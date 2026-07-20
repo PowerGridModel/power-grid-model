@@ -9,40 +9,35 @@ Loggers capture non-conclusive hints produced during calculations (e.g. sparse-m
 debug text or per-phase benchmark timings). They are opt-in: no logger is active by
 default, so there is zero performance cost unless you register one.
 
-Lifecycle::
+Basic usage::
 
-    logger = Logger(LoggerType.text)
-    model.attach_logger(logger)
-    model.calculate(...)
-    print(logger.output)
-    logger.clear()
-    model.detach_logger(logger)
+    with Logger() as log:
+        model.calculate(...)
+    print(log.output)
+
+Multiple loggers simultaneously::
+
+    with Logger(LoggerType.text) as text_log, Logger(LoggerType.benchmark) as bench_log:
+        model.calculate(...)
+    print(text_log.output)
+    print(bench_log.output)
 
 Python logging module integration::
 
     import logging
     py_logger = logging.getLogger("power_grid_model")
 
-    # Option 1: context manager — flushes to py_logger automatically on exit
-    with Logger(python_logger=py_logger) as logger:
-        model.attach_logger(logger)
+    with Logger(python_logger=py_logger):
         model.calculate(...)
-        model.detach_logger(logger)
-
-    # Option 2: manual flush
-    logger = Logger(python_logger=py_logger)
-    model.attach_logger(logger)
-    model.calculate(...)
-    logger.flush_to_python_logger()
-    model.detach_logger(logger)
+    # output is flushed to py_logger automatically on exit
 
 Using the same logger from multiple user threads simultaneously is UB (internal batch
-threads spawned by the C core are safe). Registering the same logger to the same model
-more than once is a no-op (idempotent). Destroying a logger while it is still
-attached is UB.
+threads spawned by the C core are safe). Destroying a logger while it is still
+inside a ``with`` block triggers a :exc:`ResourceWarning`.
 """
 
 import logging as _logging
+import warnings as _warnings
 
 from power_grid_model._core.enum import LoggerType
 from power_grid_model._core.error_handling import assert_no_error
@@ -54,17 +49,16 @@ __all__ = ["Logger", "LoggerType"]
 class Logger:
     """Wrapper around an opaque PGM_Logger object.
 
-    Create a logger with the desired :class:`LoggerType`, attach it to a
-    :class:`~power_grid_model.PowerGridModel` via ``model.attach_logger()``, run
-    calculations, then read :attr:`output` or call :meth:`clear`.
+    Use as a context manager: the logger is registered on ``__enter__`` and
+    unregistered on ``__exit__``. The output buffer is preserved after the
+    ``with`` block and is accessible via :attr:`output`.
 
-    When *python_logger* is supplied, :meth:`flush_to_python_logger` routes all
-    accumulated lines to it (and clears the buffer). Use the instance as a context
-    manager to have this happen automatically on exit.
+    If *python_logger* is supplied, accumulated output is flushed to it (and
+    cleared) automatically on ``__exit__``.
 
     Args:
         logger_type: The type of logger to create. Defaults to :attr:`LoggerType.text`.
-        python_logger: An optional :class:`logging.Logger` to route output to.
+        python_logger: An optional :class:`logging.Logger` to route output to on exit.
         level: The log level used when routing to *python_logger*. Defaults to
             :data:`logging.DEBUG`.
     """
@@ -82,15 +76,29 @@ class Logger:
         assert_no_error()
         self._python_logger = python_logger
         self._level = level
+        self._active: bool = False
 
     def __del__(self) -> None:
+        if self._active:
+            _warnings.warn(
+                f"{self!r} is being destroyed inside an active 'with' block. "
+                "Ensure the 'with Logger()' block has exited before the logger is garbage-collected.",
+                ResourceWarning,
+                stacklevel=2,
+            )
         if self._logger_ptr:
             get_pgc().destroy_logger(self._logger_ptr)
 
     def __enter__(self) -> "Logger":
+        get_pgc().register_logger(self._logger_ptr)
+        assert_no_error()
+        self._active = True
         return self
 
     def __exit__(self, *_: object) -> None:
+        self._active = False
+        get_pgc().unregister_logger(self._logger_ptr)
+        assert_no_error()
         self.flush_to_python_logger()
 
     @property
@@ -102,8 +110,9 @@ class Logger:
         format ``EVENT_CODE\\tVALUE``.
         For :attr:`LoggerType.do_nothing`: always empty string.
 
-        The value is copied into Python on each access, so the returned string is
-        independent of the logger's internal buffer.
+        Accessible both inside and after the ``with`` block. The value is copied
+        into Python on each access, so the returned string is independent of the
+        logger's internal buffer.
         """
         result = get_pgc().logger_get_output(self._logger_ptr)
         assert_no_error()
@@ -122,6 +131,7 @@ class Logger:
 
         Each non-empty line of :attr:`output` is emitted as a single log record at
         the configured *level*. Does nothing if no Python logger was supplied.
+        Called automatically by ``__exit__``.
         """
         if self._python_logger is None:
             return
@@ -130,8 +140,3 @@ class Logger:
             lambda line: self._python_logger.log(self._level, line),  # type: ignore[union-attr]
         )
         self.clear()
-
-    @property
-    def _ptr(self) -> LoggerPtr:
-        """Internal pointer used by PowerGridModel to register/unregister."""
-        return self._logger_ptr
