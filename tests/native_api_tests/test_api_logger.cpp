@@ -267,3 +267,55 @@ TEST_CASE("Logger - text and benchmark loggers registered simultaneously") {
     PGM_unregister_logger(g.h, bench_lg.l);
     PGM_destroy_model(model);
 }
+
+TEST_CASE("Logger - registering the same logger twice is idempotent") {
+    HandleGuard g;
+    LoggerGuard lg{g.h, PGM_text_logger};
+
+    PGM_register_logger(g.h, lg.l);
+    PGM_register_logger(g.h, lg.l); // second registration — must be a silent no-op
+    CHECK(PGM_error_code(g.h) == PGM_no_error);
+
+    PGM_PowerGridModel* model = run_calculate(g.h);
+    CHECK(PGM_error_code(g.h) == PGM_no_error);
+
+    // Output must not be doubled — compare line count with a single registration
+    std::string out_double = get_output(g.h, lg.l);
+    PGM_unregister_logger(g.h, lg.l);
+    PGM_destroy_model(model);
+
+    // Fresh run with a single registration for reference
+    HandleGuard g2;
+    LoggerGuard lg2{g2.h, PGM_text_logger};
+    PGM_register_logger(g2.h, lg2.l);
+    PGM_PowerGridModel* model2 = run_calculate(g2.h);
+    std::string out_single = get_output(g2.h, lg2.l);
+    PGM_unregister_logger(g2.h, lg2.l);
+    PGM_destroy_model(model2);
+
+    CHECK(out_double == out_single);
+}
+
+TEST_CASE("Logger - PGM_unregister_all_loggers removes all loggers") {
+    HandleGuard g;
+    LoggerGuard text_lg{g.h, PGM_text_logger};
+    LoggerGuard bench_lg{g.h, PGM_benchmark_logger};
+
+    PGM_register_logger(g.h, text_lg.l);
+    PGM_register_logger(g.h, bench_lg.l);
+
+    PGM_unregister_all_loggers(g.h);
+    CHECK(PGM_error_code(g.h) == PGM_no_error);
+
+    // After unregistering all, a calculation should produce no output in either logger
+    PGM_PowerGridModel* model = run_calculate(g.h);
+    CHECK(PGM_error_code(g.h) == PGM_no_error);
+
+    std::string text_out = get_output(g.h, text_lg.l);
+    std::string bench_out = get_output(g.h, bench_lg.l);
+    CHECK(text_out.empty());
+    CHECK(bench_out.empty());
+
+    PGM_destroy_model(model);
+    // loggers are already unregistered; safe to destroy them via LoggerGuard
+}
