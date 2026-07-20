@@ -130,7 +130,7 @@ auto complete_state_json() {
       {"id": 6, "from_node": 4, "to_node": 0, "from_status": 0, "to_status": 0}
     ]
   }
-})json"s;
+})json"s; // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
 }
 
 auto single_update_json() {
@@ -151,7 +151,7 @@ auto single_update_json() {
       {"id": 6, "from_status": 0, "to_status": 0}
     ]
   }
-})json"s;
+})json"s; // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
 }
 
 auto batch_update_json() {
@@ -183,7 +183,7 @@ auto batch_update_json() {
       ]
     }
   ]
-})json"s;
+})json"s; // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
 }
 } // namespace
 
@@ -366,7 +366,7 @@ TEST_CASE("API Model") {
       {"id": 6, "from_node": 4, "to_node": 0, "from_status": 0, "to_status": 0}
     ]
   }
-})json"s;
+})json"s; // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
 
             auto const bad_owning_input_dataset = load_dataset(bad_load_id_state_json);
             auto const& bad_input_dataset = bad_owning_input_dataset.dataset;
@@ -394,7 +394,7 @@ TEST_CASE("API Model") {
       {"id": 6, "from_status": 0, "to_status": 0}
     ]
   }
-})json"s;
+})json"s; // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
 
             auto const bad_single_owning_update_dataset = load_dataset(bad_source_id_single_update_json);
             auto const bad_update_lambda = [&model, &bad_single_owning_update_dataset]() {
@@ -433,7 +433,7 @@ TEST_CASE("API Model") {
       ]
     }
   ]
-})json"s;
+})json"s; // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
 
             auto const bad_batch_owning_update_dataset = load_dataset(bad_load_id_batch_update_json);
             auto const bad_calc_with_update_lambda = [&model, &options, &batch_output_dataset,
@@ -514,7 +514,7 @@ TEST_CASE("API Model") {
       ]
     }
   ]
-})json"s;
+})json"s; // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
 
                 auto const bad_batch_owning_update_dataset = load_dataset(bad_line_id_batch_update_json);
 
@@ -921,7 +921,7 @@ TEST_CASE("API Model") {
       {"id": 4, "measured_object": 3, "measured_terminal_type": 0}
     ]
   }
-})json"s;
+})json"s; // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
 
             auto const owning_input_dataset_se = load_dataset(input_data_se_json);
             auto const& input_dataset_se = owning_input_dataset_se.dataset;
@@ -950,7 +950,7 @@ TEST_CASE("API Model") {
       {"id": 4, "measured_object": 3, "measured_terminal_type": 0}
     ]
   }
-})json"s;
+})json"s; // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
 
             auto const owning_input_dataset_se = load_dataset(input_data_se_json);
             auto const& input_dataset_se = owning_input_dataset_se.dataset;
@@ -975,7 +975,7 @@ TEST_CASE("API Model") {
       {"id": 3}
     ]
   }
-})json"s;
+})json"s; // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
 
         auto const owning_input_dataset_2 = load_dataset(input_data_2_json);
         auto const& input_dataset_2 = owning_input_dataset_2.dataset;
@@ -999,7 +999,7 @@ TEST_CASE("API Model") {
       {"id": 5, "from_node": 99, "to_node": 2}
     ]
   }
-})json"s;
+})json"s; // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
         auto const owning_input_dataset_2 = load_dataset(input_data_2_json);
         auto const& input_dataset_2 = owning_input_dataset_2.dataset;
 
