@@ -137,7 +137,14 @@ void rebuild_topology(typename ModelType::MainModelState& state, SolverPreparati
     ComponentConnections const comp_conn = main_core::construct_components_connections<ModelType>(state.components);
 
     // re build
-    assert(state.comp_topo->link_node_idx.empty() && "v1: links need to be treated as regular branches");
+    assert(state.comp_topo->link_node_idx.empty() ||
+           std::ranges::none_of(state.comp_topo->power_sensor_terminal_type,
+                                [](auto const& x) { return x == MeasuredTerminalType::node; }) &&
+               std::ranges::none_of(state.comp_topo->current_sensor_terminal_type,
+                                    [](auto const& x) { return x == MeasuredTerminalType::node; }) &&
+               "either opt-in to v2 behavior (no node injection sensors) or use old v1 behavior (links are treated as "
+               "regular branches) but not both");
+
     state.reduced_topology =
         std::make_shared<ReducedTopology const>(supernodes::reduce_topology(*state.comp_topo, comp_conn));
     Topology topology{state.reduced_topology->reduced_comp_topo, comp_conn};

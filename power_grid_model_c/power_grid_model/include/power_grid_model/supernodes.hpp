@@ -204,8 +204,6 @@ inline ReducedComponentTopology construct_reduced_topology(ComponentTopology con
     };
 }
 
-} // namespace detail
-
 inline ReducedTopology dont_reduce_topology(ComponentTopology const& comp_topo,
                                             ComponentConnections const& /*comp_conn*/) {
     using namespace detail;
@@ -231,9 +229,14 @@ inline ReducedTopology dont_reduce_topology(ComponentTopology const& comp_topo,
                 },
         }};
 }
+} // namespace detail
 
 inline ReducedTopology reduce_topology(ComponentTopology const& comp_topo, ComponentConnections const& comp_conn) {
     using namespace detail;
+
+    if (std::ranges::empty(comp_topo.link_node_idx)) {
+        return dont_reduce_topology(comp_topo, comp_conn);
+    }
 
     auto topo_node_mapping = create_map(comp_topo, comp_conn);
     return ReducedTopology{.reduced_comp_topo = construct_reduced_topology(comp_topo, topo_node_mapping),
