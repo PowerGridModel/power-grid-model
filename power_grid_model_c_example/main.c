@@ -37,8 +37,8 @@ We do batch calculation with 3 scenarios, with the following mutation
 #include <stdlib.h>
 
 int main(int argc, char** argv) {
-    (void)(argc);
-    (void)(argv);
+    (void)argc;
+    (void)argv;
     printf("%s", "\nThis is an example to call the C API of Power Grid Model.\n");
 
     // create handle

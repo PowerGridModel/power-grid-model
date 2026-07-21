@@ -106,9 +106,9 @@ template <typename CompType> inline bool get_update_ids_match(auto const& all_sp
     // only return true if ids of all scenarios match the ids of the first batch
 
     return std::ranges::all_of(all_spans.cbegin() + 1, all_spans.cend(), [&first_span](auto const& current_span) {
-        return std::ranges::equal(current_span, first_span,
-                                  [](typename CompType::UpdateType const& obj,
-                                     typename CompType::UpdateType const& first) { return obj.id == first.id; });
+        return std::ranges::equal(
+            current_span, first_span,
+            [](CompType::UpdateType const& obj, CompType::UpdateType const& first) { return obj.id == first.id; });
     });
 }
 
@@ -170,8 +170,8 @@ inline void validate_update_data_independence(UpdateCompProperties const& comp, 
 }
 
 template <typename ModelType>
-typename ModelType::UpdateIndependence
-check_update_independence(typename ModelType::ComponentContainer const& components, ConstDataset const& update_data) {
+ModelType::UpdateIndependence check_update_independence(typename ModelType::ComponentContainer const& components,
+                                                        ConstDataset const& update_data) {
     return ModelType::run_functor_with_all_component_types_return_array(
         [&components, &update_data]<typename CompType>() {
             auto const n_component = components.template size<CompType>();
@@ -187,7 +187,7 @@ template <component_c Component, class ComponentContainer, non_owning_view_c Ele
     requires common::component_container_c<ComponentContainer, Component>
 inline void get_component_sequence_impl(ComponentContainer const& components, Elements elements,
                                         OutputIterator destination, Idx n_comp_elements) {
-    using UpdateType = typename Component::UpdateType;
+    using UpdateType = Component::UpdateType;
 
     if (n_comp_elements < 0) {
         std::ranges::transform(elements, destination, [&components](UpdateType const& update) {
@@ -232,7 +232,7 @@ std::vector<Idx2D> get_component_sequence(ComponentContainer const& components, 
 } // namespace detail
 
 template <class ModelType>
-typename ModelType::SequenceIdx
+ModelType::SequenceIdx
 get_all_sequence_idx_map(typename ModelType::ComponentContainer const& components, ConstDataset const& update_data,
                          Idx scenario_idx, typename ModelType::ComponentFlags const& components_to_store,
                          typename ModelType::UpdateIndependence const& independence, bool cached) {
@@ -263,7 +263,7 @@ template <component_c Component, class ComponentContainer, non_owning_view_c Upd
     requires common::component_container_c<ComponentContainer, Component>
 inline UpdateChange update_component(ComponentContainer& components, Updates component_updates,
                                      OutputIterator changed_it, std::span<Idx2D const> sequence_idx) {
-    using UpdateType = typename Component::UpdateType;
+    using UpdateType = Component::UpdateType;
 
     UpdateChange state_changed;
 
@@ -301,7 +301,7 @@ template <component_c Component, class ComponentContainer, non_owning_view_c Upd
     requires common::component_container_c<ComponentContainer, Component>
 inline void update_inverse(ComponentContainer const& components, Updates updates, OutputIterator destination,
                            std::span<Idx2D const> sequence_idx) {
-    using UpdateType = typename Component::UpdateType;
+    using UpdateType = Component::UpdateType;
 
     detail::iterate_component_sequence<Component>(
         [&destination, &components](UpdateType const& update_data, Idx2D const& sequence_single) {

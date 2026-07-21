@@ -369,6 +369,6 @@ template <class... TR, class... T> struct container_trait<ExtraRetrievableTypes<
 
 } // namespace container_impl
 
-template <class... T> using Container = typename container_impl::container_trait<T...>::type;
+template <class... T> using Container = container_impl::container_trait<T...>::type;
 
 } // namespace power_grid_model

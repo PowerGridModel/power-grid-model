@@ -234,7 +234,7 @@ template <typename ModelType>
                                            GenericCurrentSensor, Regulator>
 ComponentTopology construct_topology(typename ModelType::ComponentContainer const& components) {
     ComponentTopology comp_topo;
-    using TopologyTypesTuple = typename ModelType::TopologyTypesTuple;
+    using TopologyTypesTuple = ModelType::TopologyTypesTuple;
     main_core::utils::run_functor_with_tuple_return_void<TopologyTypesTuple>(
         [&components, &comp_topo]<typename CompType>() {
             detail::register_topology_components<CompType>(components, comp_topo);
@@ -246,7 +246,7 @@ template <typename ModelType>
     requires common::component_container_c<typename ModelType::ComponentContainer, Branch, Branch3, Source>
 ComponentConnections construct_components_connections(typename ModelType::ComponentContainer const& components) {
     ComponentConnections comp_conn;
-    using TopologyConnectionTypesTuple = typename ModelType::TopologyConnectionTypesTuple;
+    using TopologyConnectionTypesTuple = ModelType::TopologyConnectionTypesTuple;
     main_core::utils::run_functor_with_tuple_return_void<TopologyConnectionTypesTuple>(
         [&components, &comp_conn]<typename CompType>() {
             detail::register_connections_components<CompType>(components, comp_conn);

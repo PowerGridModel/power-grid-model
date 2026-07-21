@@ -365,7 +365,8 @@ TEST_CASE("Test Sparse LU solver") {
 
         SUBCASE("Test prefactorize") {
             solver.prefactorize(data, block_perm);
-            solver.solve_with_prefactorized_matrix((std::vector<double> const&)data, block_perm, rhs, x);
+            auto const& data_ref = data;
+            solver.solve_with_prefactorized_matrix(data_ref, block_perm, rhs, x);
             check_result(x, x_ref);
         }
         // our use case only need selective inversion for block sparse matrices
@@ -404,7 +405,8 @@ TEST_CASE("Test Sparse LU solver") {
 
         SUBCASE("Test prefactorize") {
             solver.prefactorize(data, block_perm);
-            solver.solve_with_prefactorized_matrix((std::vector<Tensor> const&)data, block_perm, rhs, x);
+            auto const& data_ref = data;
+            solver.solve_with_prefactorized_matrix(data_ref, block_perm, rhs, x);
             check_result(x, x_ref);
         }
 

@@ -24,7 +24,7 @@ extern "C" {
  * @return A pointer to null null-terminated string of the dataset name.
  *     The pointer is permanently valid.
  */
-PGM_API char const* PGM_dataset_info_name(PGM_Handle* handle, PGM_DatasetInfo const* info);
+PGM_API char const* PGM_dataset_info_name(PGM_Handle* handle, PGM_DatasetInfo const* info) PGM_NOEXCEPT;
 
 /**
  * @brief Get the flag whether the dataset is a batch dataset.
@@ -32,7 +32,7 @@ PGM_API char const* PGM_dataset_info_name(PGM_Handle* handle, PGM_DatasetInfo co
  * @param info A pointer to the info object.
  * @return 1 if the dataset is a batch, 0 if it is not.
  */
-PGM_API PGM_Idx PGM_dataset_info_is_batch(PGM_Handle* handle, PGM_DatasetInfo const* info);
+PGM_API PGM_Idx PGM_dataset_info_is_batch(PGM_Handle* handle, PGM_DatasetInfo const* info) PGM_NOEXCEPT;
 
 /**
  * @brief Get the batch size of the dataset.
@@ -40,7 +40,7 @@ PGM_API PGM_Idx PGM_dataset_info_is_batch(PGM_Handle* handle, PGM_DatasetInfo co
  * @param info A pointer to the info object.
  * @return Size of the batch. For a single-dataset, the batch size is always 1.
  */
-PGM_API PGM_Idx PGM_dataset_info_batch_size(PGM_Handle* handle, PGM_DatasetInfo const* info);
+PGM_API PGM_Idx PGM_dataset_info_batch_size(PGM_Handle* handle, PGM_DatasetInfo const* info) PGM_NOEXCEPT;
 
 /**
  * @brief Get the number of components in the dataset.
@@ -48,7 +48,7 @@ PGM_API PGM_Idx PGM_dataset_info_batch_size(PGM_Handle* handle, PGM_DatasetInfo 
  * @param info A pointer to the info object.
  * @return The number of components.
  */
-PGM_API PGM_Idx PGM_dataset_info_n_components(PGM_Handle* handle, PGM_DatasetInfo const* info);
+PGM_API PGM_Idx PGM_dataset_info_n_components(PGM_Handle* handle, PGM_DatasetInfo const* info) PGM_NOEXCEPT;
 
 /**
  * @brief Get the name of i-th component.
@@ -59,7 +59,7 @@ PGM_API PGM_Idx PGM_dataset_info_n_components(PGM_Handle* handle, PGM_DatasetInf
  *     The pointer is permanently valid.
  */
 PGM_API char const* PGM_dataset_info_component_name(PGM_Handle* handle, PGM_DatasetInfo const* info,
-                                                    PGM_Idx component_idx);
+                                                    PGM_Idx component_idx) PGM_NOEXCEPT;
 
 /**
  * @brief Get the elements per scenario for the i-th component.
@@ -70,7 +70,7 @@ PGM_API char const* PGM_dataset_info_component_name(PGM_Handle* handle, PGM_Data
  *     or -1 if the scenario is not uniform (different number per scenario).
  */
 PGM_API PGM_Idx PGM_dataset_info_elements_per_scenario(PGM_Handle* handle, PGM_DatasetInfo const* info,
-                                                       PGM_Idx component_idx);
+                                                       PGM_Idx component_idx) PGM_NOEXCEPT;
 
 /**
  * @brief Get the total number of elements for the i-th component.
@@ -81,7 +81,8 @@ PGM_API PGM_Idx PGM_dataset_info_elements_per_scenario(PGM_Handle* handle, PGM_D
  *     If the number of elements per scenario is uniform,
  *     this value must equal to PGM_dataset_info_batch_size() * PGM_dataset_info_elements_per_scenario().
  */
-PGM_API PGM_Idx PGM_dataset_info_total_elements(PGM_Handle* handle, PGM_DatasetInfo const* info, PGM_Idx component_idx);
+PGM_API PGM_Idx PGM_dataset_info_total_elements(PGM_Handle* handle, PGM_DatasetInfo const* info,
+                                                PGM_Idx component_idx) PGM_NOEXCEPT;
 
 /**
  * @brief Return whether a component has attribute indications.
@@ -99,7 +100,7 @@ PGM_API PGM_Idx PGM_dataset_info_total_elements(PGM_Handle* handle, PGM_DatasetI
  * @return 1 if the component has attribute indications, 0 if it does not.
  */
 PGM_API PGM_Idx PGM_dataset_info_has_attribute_indications(PGM_Handle* handle, PGM_DatasetInfo const* info,
-                                                           PGM_Idx component_idx);
+                                                           PGM_Idx component_idx) PGM_NOEXCEPT;
 
 /**
  * @brief Return the number of attribute indications for a component.
@@ -111,7 +112,7 @@ PGM_API PGM_Idx PGM_dataset_info_has_attribute_indications(PGM_Handle* handle, P
  * It returns 0 if PGM_dataset_info_has_attribute_indications() returns zero.
  */
 PGM_API PGM_Idx PGM_dataset_info_n_attribute_indications(PGM_Handle* handle, PGM_DatasetInfo const* info,
-                                                         PGM_Idx component_idx);
+                                                         PGM_Idx component_idx) PGM_NOEXCEPT;
 
 /**
  * @brief Return the name of the i-th attribute indication for a component.
@@ -125,7 +126,7 @@ PGM_API PGM_Idx PGM_dataset_info_n_attribute_indications(PGM_Handle* handle, PGM
  * It is UB if PGM_dataset_info_has_attribute_indications() returns zero, or if attribute_idx is out of bounds.
  */
 PGM_API char const* PGM_dataset_info_attribute_name(PGM_Handle* handle, PGM_DatasetInfo const* info,
-                                                    PGM_Idx component_idx, PGM_Idx attribute_idx);
+                                                    PGM_Idx component_idx, PGM_Idx attribute_idx) PGM_NOEXCEPT;
 
 /**
  * @brief Create an instance of PGM_ConstDataset.
@@ -133,11 +134,11 @@ PGM_API char const* PGM_dataset_info_attribute_name(PGM_Handle* handle, PGM_Data
  * @param dataset The name of the dataset.
  * @param is_batch 1 if the dataset is a batch, 0 if the dataset is single.
  * @param batch_size The size of the batch. For single datasets, this must be 1.
- * @return A pointer to the created PGM_ConstDataset, or NULL if errors occur. Check the handle for error.
- *    The instance must be freed by PGM_destroy_dataset_const().
+ * @return A pointer to the created PGM_ConstDataset. The instance must be freed by PGM_destroy_dataset_const().
+ *     Returns NULL if errors occured (check the handle for error information).
  */
 PGM_API PGM_ConstDataset* PGM_create_dataset_const(PGM_Handle* handle, char const* dataset, PGM_Idx is_batch,
-                                                   PGM_Idx batch_size);
+                                                   PGM_Idx batch_size) PGM_NOEXCEPT;
 
 /**
  * @brief Create an instance of PGM_ConstDataset from a PGM_WritableDataset
@@ -147,19 +148,19 @@ PGM_API PGM_ConstDataset* PGM_create_dataset_const(PGM_Handle* handle, char cons
  * @return A pointer to the created PGM_ConstDataset, or NULL if errors occur. Check the handle for error.
  *    The instance must be freed by PGM_destroy_dataset_const().
  */
-PGM_API PGM_ConstDataset* PGM_create_dataset_const_from_writable(PGM_Handle* handle,
-                                                                 PGM_WritableDataset const* writable_dataset);
+PGM_API PGM_ConstDataset*
+PGM_create_dataset_const_from_writable(PGM_Handle* handle, PGM_WritableDataset const* writable_dataset) PGM_NOEXCEPT;
 
 /**
  * @brief Create an instance of PGM_ConstDataset from a PGM_MutableDataset
  *     They share the same buffer memory.
  * @param handle
  * @param mutable_dataset pointer to an instance of PGM_MutableDataset
- * @return A pointer to the created PGM_ConstDataset, or NULL if errors occur. Check the handle for error.
- *    The instance must be freed by PGM_destroy_dataset_const().
+ * @return A pointer to the created PGM_ConstDataset. The instance must be freed by PGM_destroy_dataset_const().
+ *     Returns NULL if errors occured (check the handle for error information).
  */
 PGM_API PGM_ConstDataset* PGM_create_dataset_const_from_mutable(PGM_Handle* handle,
-                                                                PGM_MutableDataset const* mutable_dataset);
+                                                                PGM_MutableDataset const* mutable_dataset) PGM_NOEXCEPT;
 
 /**
  * @brief Destroy an instance of PGM_ConstDataset.
@@ -167,7 +168,7 @@ PGM_API PGM_ConstDataset* PGM_create_dataset_const_from_mutable(PGM_Handle* hand
  * PGM_create_dataset_const_from_writable(), or PGM_create_dataset_const_from_mutable().
  * @return
  */
-PGM_API void PGM_destroy_dataset_const(PGM_ConstDataset* dataset);
+PGM_API void PGM_destroy_dataset_const(PGM_ConstDataset* dataset) PGM_NOEXCEPT;
 
 /**
  * @brief Add a component buffer to an instance of PGM_ConstDataset.
@@ -189,7 +190,7 @@ PGM_API void PGM_destroy_dataset_const(PGM_ConstDataset* dataset);
  */
 PGM_API void PGM_dataset_const_add_buffer(PGM_Handle* handle, PGM_ConstDataset* dataset, char const* component,
                                           PGM_Idx elements_per_scenario, PGM_Idx total_elements, PGM_Idx const* indptr,
-                                          void const* data);
+                                          void const* data) PGM_NOEXCEPT;
 
 /**
  * @brief Add a attribute buffer to an instance of PGM_ConstDataset/component.
@@ -201,7 +202,8 @@ PGM_API void PGM_dataset_const_add_buffer(PGM_Handle* handle, PGM_ConstDataset* 
  * @return
  */
 PGM_API void PGM_dataset_const_add_attribute_buffer(PGM_Handle* handle, PGM_ConstDataset* dataset,
-                                                    char const* component, char const* attribute, void const* data);
+                                                    char const* component, char const* attribute,
+                                                    void const* data) PGM_NOEXCEPT;
 
 /**
  * @brief Get the dataset info of the instance PGM_ConstDataset.
@@ -210,7 +212,8 @@ PGM_API void PGM_dataset_const_add_attribute_buffer(PGM_Handle* handle, PGM_Cons
  * @return A pointer to the instance of PGM_DatasetInfo.
  *     The pointer has the same lifetime as the input dataset pointer.
  */
-PGM_API PGM_DatasetInfo const* PGM_dataset_const_get_info(PGM_Handle* handle, PGM_ConstDataset const* dataset);
+PGM_API PGM_DatasetInfo const* PGM_dataset_const_get_info(PGM_Handle* handle,
+                                                          PGM_ConstDataset const* dataset) PGM_NOEXCEPT;
 
 /**
  * @brief Set the next const dataset as cartesian product dimension.
@@ -226,7 +229,7 @@ PGM_API PGM_DatasetInfo const* PGM_dataset_const_get_info(PGM_Handle* handle, PG
  * @param next_dataset The next dataset in the linked list.
  */
 PGM_API void PGM_dataset_const_set_next_cartesian_product_dimension(PGM_Handle* handle, PGM_ConstDataset* dataset,
-                                                                    PGM_ConstDataset const* next_dataset);
+                                                                    PGM_ConstDataset const* next_dataset) PGM_NOEXCEPT;
 
 /**
  * @brief Get the dataset info of the instance PGM_WritableDataset.
@@ -235,7 +238,8 @@ PGM_API void PGM_dataset_const_set_next_cartesian_product_dimension(PGM_Handle* 
  * @return A pointer to the instance of PGM_DatasetInfo.
  *     The pointer has the same lifetime as the input dataset pointer.
  */
-PGM_API PGM_DatasetInfo const* PGM_dataset_writable_get_info(PGM_Handle* handle, PGM_WritableDataset const* dataset);
+PGM_API PGM_DatasetInfo const* PGM_dataset_writable_get_info(PGM_Handle* handle,
+                                                             PGM_WritableDataset const* dataset) PGM_NOEXCEPT;
 
 /**
  * @brief Set buffer into the instance PGM_WritableDataset.
@@ -249,7 +253,7 @@ PGM_API PGM_DatasetInfo const* PGM_dataset_writable_get_info(PGM_Handle* handle,
  * @return
  */
 PGM_API void PGM_dataset_writable_set_buffer(PGM_Handle* handle, PGM_WritableDataset* dataset, char const* component,
-                                             PGM_Idx* indptr, void* data);
+                                             PGM_Idx* indptr, void* data) PGM_NOEXCEPT;
 
 /**
  * @brief Set buffer into the instance PGM_WritableDataset.
@@ -261,7 +265,8 @@ PGM_API void PGM_dataset_writable_set_buffer(PGM_Handle* handle, PGM_WritableDat
  * @return
  */
 PGM_API void PGM_dataset_writable_set_attribute_buffer(PGM_Handle* handle, PGM_WritableDataset* dataset,
-                                                       char const* component, char const* attribute, void* data);
+                                                       char const* component, char const* attribute,
+                                                       void* data) PGM_NOEXCEPT;
 
 /**
  * @brief Create an instance of PGM_MutableDataset.
@@ -269,18 +274,18 @@ PGM_API void PGM_dataset_writable_set_attribute_buffer(PGM_Handle* handle, PGM_W
  * @param dataset The name of the dataset.
  * @param is_batch 1 if the dataset is a batch, 0 if the dataset is single.
  * @param batch_size The size of the batch. For single datasets, this must be 1.
- * @return A pointer to the created PGM_MutableDataset, or NULL if errors occur. Check the handle for error.
- *    The instance must be freed by PGM_destroy_dataset_mutable().
+ * @return A pointer to the created PGM_MutableDataset. The instance must be freed by PGM_destroy_dataset_mutable().
+ *     Returns NULL if errors occured (check the handle for error information).
  */
 PGM_API PGM_MutableDataset* PGM_create_dataset_mutable(PGM_Handle* handle, char const* dataset, PGM_Idx is_batch,
-                                                       PGM_Idx batch_size);
+                                                       PGM_Idx batch_size) PGM_NOEXCEPT;
 
 /**
  * @brief Destroy an instance of PGM_MutableDataset.
  * @param dataset The pointer to the PGM_MutableDataset created by PGM_create_dataset_mutable().
  * @return
  */
-PGM_API void PGM_destroy_dataset_mutable(PGM_MutableDataset* dataset);
+PGM_API void PGM_destroy_dataset_mutable(PGM_MutableDataset* dataset) PGM_NOEXCEPT;
 
 /**
  * @brief Add a component buffer to an instance of PGM_MutableDataset.
@@ -302,7 +307,7 @@ PGM_API void PGM_destroy_dataset_mutable(PGM_MutableDataset* dataset);
  */
 PGM_API void PGM_dataset_mutable_add_buffer(PGM_Handle* handle, PGM_MutableDataset* dataset, char const* component,
                                             PGM_Idx elements_per_scenario, PGM_Idx total_elements,
-                                            PGM_Idx const* indptr, void* data);
+                                            PGM_Idx const* indptr, void* data) PGM_NOEXCEPT;
 
 /**
  * @brief Add a attribute buffer to an instance of PGM_MutableDataset/component.
@@ -314,7 +319,8 @@ PGM_API void PGM_dataset_mutable_add_buffer(PGM_Handle* handle, PGM_MutableDatas
  * @return
  */
 PGM_API void PGM_dataset_mutable_add_attribute_buffer(PGM_Handle* handle, PGM_MutableDataset* dataset,
-                                                      char const* component, char const* attribute, void* data);
+                                                      char const* component, char const* attribute,
+                                                      void* data) PGM_NOEXCEPT;
 
 /**
  * @brief Get the dataset info of the instance PGM_MutableDataset.
@@ -323,7 +329,8 @@ PGM_API void PGM_dataset_mutable_add_attribute_buffer(PGM_Handle* handle, PGM_Mu
  * @return A pointer to the instance of PGM_DatasetInfo.
  *     The pointer has the same lifetime as the input dataset pointer.
  */
-PGM_API PGM_DatasetInfo const* PGM_dataset_mutable_get_info(PGM_Handle* handle, PGM_MutableDataset const* dataset);
+PGM_API PGM_DatasetInfo const* PGM_dataset_mutable_get_info(PGM_Handle* handle,
+                                                            PGM_MutableDataset const* dataset) PGM_NOEXCEPT;
 
 #ifdef __cplusplus
 }
