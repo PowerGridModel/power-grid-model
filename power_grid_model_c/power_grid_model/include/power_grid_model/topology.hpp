@@ -124,8 +124,6 @@ class Topology {
     };
 
   public:
-    Topology(ComponentTopology const& comp_topo, ComponentConnections const& comp_conn)
-        : Topology(ReducedComponentTopology::from_component_topology(comp_topo), comp_conn) {}
     Topology(ReducedComponentTopology const& comp_topo, ComponentConnections const& comp_conn)
         : comp_topo_{comp_topo},
           comp_conn_{comp_conn},
@@ -159,8 +157,8 @@ class Topology {
 
   private:
     // input
-    ReducedComponentTopology const& comp_topo_;    // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
-    ComponentConnections const& comp_conn_; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+    ReducedComponentTopology const& comp_topo_; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+    ComponentConnections const& comp_conn_;     // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
 
     // intermediate
     GlobalGraph global_graph_;
@@ -200,7 +198,8 @@ class Topology {
         std::vector<GlobalEdge> edge_props;
         // k as branch number for 2-way branch
         for (auto const& [branch_node_idx, branch_connected, phase_shift] :
-             std::views::zip(comp_topo_.branch_node_idx, comp_conn_.branch_connected, comp_conn_.branch_phase_shift)) {
+             std::views::zip(by_const_ref(comp_topo_.branch_node_idx), comp_conn_.branch_connected,
+                             comp_conn_.branch_phase_shift)) {
             auto const [i, j] = branch_node_idx;
             auto const [i_status, j_status] = branch_connected;
             // node_i - node_j
@@ -215,8 +214,8 @@ class Topology {
         }
         // k as branch number for 3-way branch
         for (auto const& [i, i_status, phase_shift, j_internal] :
-             std::views::zip(comp_topo_.branch3_node_idx, comp_conn_.branch3_connected, comp_conn_.branch3_phase_shift,
-                             std::views::iota(comp_topo_.n_node))) {
+             std::views::zip(by_const_ref(comp_topo_.branch3_node_idx), comp_conn_.branch3_connected,
+                             comp_conn_.branch3_phase_shift, std::views::iota(comp_topo_.n_node))) {
             // loop 3 way as indices m
             for (Idx m = 0; m != 3; ++m) {
                 if (i_status[m] != 0) {
@@ -242,7 +241,7 @@ class Topology {
         Idx math_solver_idx = 0;
         // loop all source as k
         for (auto const& [source_connected, source_node] :
-             std::views::zip(comp_conn_.source_connected, comp_topo_.source_node_idx)) {
+             std::views::zip(comp_conn_.source_connected, by_const_ref(comp_topo_.source_node_idx))) {
             // skip disconnected source
             if (source_connected == IntS{0}) {
                 continue;
@@ -378,7 +377,7 @@ class Topology {
         };
         // k as branch number for 2-way branch
         for (auto&& [idx, branch_node_idx, branch_connected] :
-             std::views::zip(std::views::iota(0), std::as_const(comp_topo_.branch_node_idx),
+             std::views::zip(std::views::iota(0), by_const_ref(comp_topo_.branch_node_idx),
                              std::as_const(comp_conn_.branch_connected))) {
             assert( // NOSONAR(R354) // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert)
                 std::ssize(branch_connected) == 2);
@@ -414,7 +413,7 @@ class Topology {
         }
         // k as branch number for 3-way branch
         for (auto&& [idx, i, i_status, j_math] :
-             std::views::zip(std::views::iota(0), std::as_const(comp_topo_.branch3_node_idx),
+             std::views::zip(std::views::iota(0), by_const_ref(comp_topo_.branch3_node_idx),
                              std::as_const(comp_conn_.branch3_connected),
                              std::views::drop(std::as_const(comp_coup_.node), std::as_const(comp_topo_.n_node)))) {
             std::array<Idx2D, 3> const i_math{
@@ -468,10 +467,8 @@ class Topology {
         Idx size() const { return static_cast<Idx>(component_obj_idx.size()); }
         Idx2D find_math_object(Idx component_i) const { return objects_coupling[component_obj_idx[component_i]]; }
 
-        // NOLINTBEGIN(cppcoreguidelines-avoid-const-or-ref-data-members)
-        IdxVector const& component_obj_idx;
-        std::vector<Idx2D> const& objects_coupling;
-        // NOLINTEND(cppcoreguidelines-avoid-const-or-ref-data-members)
+        std::span<Idx const> component_obj_idx;
+        std::span<Idx2D const> objects_coupling;
     };
 
     // proxy class to find coupled branch in math model for sensor measured at from side, or at 1/2/3 side of branch3
@@ -499,12 +496,10 @@ class Topology {
             }
         }
 
-        // NOLINTBEGIN(cppcoreguidelines-avoid-const-or-ref-data-members)
-        IdxVector const& sensor_obj_idx;
-        std::vector<MeasuredTerminalType> const& sensor_terminal_type;
-        std::vector<Idx2D> const& branch_coupling;
-        std::vector<Idx2DBranch3> const& branch3_coupling;
-        // NOLINTEND(cppcoreguidelines-avoid-const-or-ref-data-members)
+        std::span<Idx const> sensor_obj_idx;
+        std::span<MeasuredTerminalType const> sensor_terminal_type;
+        std::span<Idx2D const> branch_coupling;
+        std::span<Idx2DBranch3 const> branch3_coupling;
     };
 
     // Couple one type of components (e.g. appliances or sensors)
@@ -582,7 +577,7 @@ class Topology {
                               [](MathModelTopology& topo) { topo.load_gen_type.resize(topo.n_load_gen()); });
         // assign load type
         for (auto const& [idx_math, load_gen_type] :
-             std::views::zip(std::as_const(comp_coup_.load_gen), std::as_const(comp_topo_.load_gen_type))) {
+             std::views::zip(by_const_ref(comp_coup_.load_gen), by_const_ref(comp_topo_.load_gen_type))) {
             if (idx_math.group == disconnected) {
                 continue;
             }

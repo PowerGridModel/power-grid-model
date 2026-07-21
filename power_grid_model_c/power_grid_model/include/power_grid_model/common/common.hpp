@@ -115,24 +115,23 @@ struct IncludeAll {
 };
 constexpr IncludeAll include_all{};
 
-template <class R>
-class MaybeOwningView;
-
 // define a non-owning view
 namespace detail {
 template <class> struct is_owning_view : std::false_type {};
 template <class R> struct is_owning_view<std::ranges::owning_view<R>> : std::true_type {};
-template <class R> struct is_owning_view<MaybeOwningView<R>> : std::true_type {};
 } // namespace detail
 template <class R>
 concept non_owning_view_c = std::ranges::view<R> && !detail::is_owning_view<std::remove_cvref_t<R>>::value;
 
 // by ref adaptor to pass to functions which accepts std::ranges::view
 template <class R>
-concept owning_container_c = std::ranges::viewable_range<R> && !std::ranges::view<R> && !std::ranges::borrowed_range<R>;
+concept owning_container_c = std::ranges::viewable_range<R> && !non_owning_view_c<R> && !std::ranges::borrowed_range<R>;
 constexpr non_owning_view_c auto by_ref(owning_container_c auto& r) noexcept { return std::ranges::ref_view(r); }
 constexpr non_owning_view_c auto by_ref(owning_container_c auto const& r) noexcept { return std::ranges::ref_view(r); }
 constexpr non_owning_view_c auto by_const_ref(owning_container_c auto& r) noexcept { return by_ref(std::as_const(r)); }
+constexpr non_owning_view_c auto by_const_ref(owning_container_c auto const& r) noexcept {
+    return by_ref(std::as_const(r));
+}
 
 // pgm functor concept
 // it should be cheap to copy, so it should be trivially copyable and small in size

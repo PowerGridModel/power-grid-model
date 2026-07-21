@@ -137,6 +137,7 @@ void rebuild_topology(typename ModelType::MainModelState& state, SolverPreparati
     ComponentConnections const comp_conn = main_core::construct_components_connections<ModelType>(state.components);
 
     // re build
+    assert(state.comp_topo->link_node_idx.empty() && "v1: links need to be treated as regular branches");
     state.reduced_topology =
         std::make_shared<ReducedTopology const>(supernodes::reduce_topology(*state.comp_topo, comp_conn));
     Topology topology{state.reduced_topology->reduced_comp_topo, comp_conn};

@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "common.hpp"
+
 #include <concepts>
 #include <ranges>
 #include <variant>
@@ -38,6 +40,8 @@ class maybe_owning_view : public std::ranges::view_interface<maybe_owning_view<U
         _view = std::move(view);
         return *this;
     }
+
+    constexpr operator View() const { return _view; }
 
     constexpr auto begin() { return std::ranges::begin(_view); }
     constexpr auto end() { return std::ranges::end(_view); }
@@ -76,12 +80,16 @@ class maybe_owning_view : public std::ranges::view_interface<maybe_owning_view<U
     {
         return _view.data();
     }
-    constexpr auto* const& data() const
+    constexpr auto const* data() const
         requires std::ranges::contiguous_range<View>
     {
         return _view.data();
     }
 };
+
+template <class R, std::ranges::view V>
+    requires std::ranges::view<maybe_owning_view<R, V>>
+struct detail::is_owning_view<maybe_owning_view<R, V>> : std::true_type {}; // customization point
 
 template <typename T> using MaybeOwningVector = maybe_owning_view<std::vector<T>, std::span<T>>;
 template <typename T>

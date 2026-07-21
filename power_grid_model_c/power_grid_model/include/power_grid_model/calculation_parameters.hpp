@@ -438,38 +438,38 @@ struct ReducedComponentTopology {
     MaybeOwningConstVector<Idx> shunt_node_idx;
     MaybeOwningConstVector<Idx> source_node_idx;
     MaybeOwningConstVector<Idx> load_gen_node_idx;
-    std::span<LoadGenType const> load_gen_type;
+    MaybeOwningConstVector<LoadGenType> load_gen_type;
     MaybeOwningConstVector<Idx> voltage_sensor_node_idx;
-    std::span<Idx const> power_sensor_object_idx; // the index is relative to branch, source, shunt or load_gen
-    std::span<MeasuredTerminalType const> power_sensor_terminal_type;
-    std::span<Idx const> current_sensor_object_idx; // the index is relative to branch
-    std::span<MeasuredTerminalType const> current_sensor_terminal_type;
-    std::span<ComponentType const> regulator_type;
-    std::span<Idx const> regulated_object_idx; // the index is relative to branch or branch3
-    std::span<ComponentType const> regulated_object_type;
+    MaybeOwningConstVector<Idx> power_sensor_object_idx; // the index is relative to branch, source, shunt or load_gen
+    MaybeOwningConstVector<MeasuredTerminalType> power_sensor_terminal_type;
+    MaybeOwningConstVector<Idx> current_sensor_object_idx; // the index is relative to branch
+    MaybeOwningConstVector<MeasuredTerminalType> current_sensor_terminal_type;
+    MaybeOwningConstVector<ComponentType> regulator_type;
+    MaybeOwningConstVector<Idx> regulated_object_idx; // the index is relative to branch or branch3
+    MaybeOwningConstVector<ComponentType> regulated_object_type;
 
     constexpr Idx n_node_total() const { return n_node + std::ssize(branch3_node_idx); }
 
     static ReducedComponentTopology from_component_topology(ComponentTopology const& comp_topo) {
         assert(comp_topo.link_node_idx.empty() && "link is not supported in reduced topology");
         return ReducedComponentTopology{
-                .n_node = comp_topo.n_node_total(),
-                .branch_node_idx = std::span{comp_topo.branch_node_idx},
-                .branch3_node_idx = std::span{comp_topo.branch3_node_idx},
-                .shunt_node_idx = std::span{comp_topo.shunt_node_idx},
-                .source_node_idx = std::span{comp_topo.source_node_idx},
-                .load_gen_node_idx = std::span{comp_topo.load_gen_node_idx},
-                .load_gen_type = std::span{comp_topo.load_gen_type},
-                .voltage_sensor_node_idx = std::span{comp_topo.voltage_sensor_node_idx},
-                .power_sensor_object_idx = std::span{comp_topo.power_sensor_object_idx},
-                .power_sensor_terminal_type = std::span{comp_topo.power_sensor_terminal_type},
-                .current_sensor_object_idx = std::span{comp_topo.current_sensor_object_idx},
-                .current_sensor_terminal_type = std::span{comp_topo.current_sensor_terminal_type},
-                .regulator_type = std::span{comp_topo.regulator_type},
-                .regulated_object_idx = std::span{comp_topo.regulated_object_idx},
-                .regulated_object_type = std::span{comp_topo.regulated_object_type},
-            };
-        }
+            .n_node = comp_topo.n_node_total(),
+            .branch_node_idx = std::span{comp_topo.branch_node_idx},
+            .branch3_node_idx = std::span{comp_topo.branch3_node_idx},
+            .shunt_node_idx = std::span{comp_topo.shunt_node_idx},
+            .source_node_idx = std::span{comp_topo.source_node_idx},
+            .load_gen_node_idx = std::span{comp_topo.load_gen_node_idx},
+            .load_gen_type = std::span{comp_topo.load_gen_type},
+            .voltage_sensor_node_idx = std::span{comp_topo.voltage_sensor_node_idx},
+            .power_sensor_object_idx = std::span{comp_topo.power_sensor_object_idx},
+            .power_sensor_terminal_type = std::span{comp_topo.power_sensor_terminal_type},
+            .current_sensor_object_idx = std::span{comp_topo.current_sensor_object_idx},
+            .current_sensor_terminal_type = std::span{comp_topo.current_sensor_terminal_type},
+            .regulator_type = std::span{comp_topo.regulator_type},
+            .regulated_object_idx = std::span{comp_topo.regulated_object_idx},
+            .regulated_object_type = std::span{comp_topo.regulated_object_type},
+        };
+    }
 };
 
 struct TopologicalNode {
