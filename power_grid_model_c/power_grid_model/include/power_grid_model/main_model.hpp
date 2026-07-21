@@ -13,7 +13,6 @@
 #include "auxiliary/meta_data.hpp"
 #include "batch_parameter.hpp"
 #include "calculation_preparation.hpp"
-#include "common/calculation_info.hpp"
 #include "common/common.hpp"
 #include "common/logging.hpp"
 #include "main_core/main_model_type.hpp"
