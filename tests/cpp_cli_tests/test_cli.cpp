@@ -7,6 +7,7 @@
 #include <power_grid_model_c/basics.h>
 #include <power_grid_model_c/dataset_definitions.h>
 #include <power_grid_model_c/handle.h>
+#include <power_grid_model_cli_backend/cli_main.h>
 #include <power_grid_model_cpp/basics.hpp>
 #include <power_grid_model_cpp/buffer.hpp>
 #include <power_grid_model_cpp/dataset.hpp>
@@ -35,6 +36,21 @@ namespace power_grid_model_cpp {
 namespace {
 namespace fs = std::filesystem;
 using std::numbers::sqrt3;
+
+struct OutputCapture {
+    std::string stdout_message;
+    std::string stderr_message;
+};
+
+void capture_stdout(char const* msg, void* user_data) {
+    auto* capture = static_cast<OutputCapture*>(user_data);
+    capture->stdout_message += msg;
+}
+
+void capture_stderr(char const* msg, void* user_data) {
+    auto* capture = static_cast<OutputCapture*>(user_data);
+    capture->stderr_message += msg;
+}
 
 // namespace for hardcode json
 namespace {
@@ -144,8 +160,6 @@ constexpr std::string_view batch_q_json = R"json({
   ]
 })json";
 
-constexpr std::string_view cli_executable = POWER_GRID_MODEL_CLI_EXECUTABLE;
-
 } // namespace
 
 fs::path tmp_path() {
@@ -163,7 +177,6 @@ fs::path batch_p_path_msgpack() { return tmp_path() / "batch_p.pgmb"; }
 fs::path output_path(PGM_SerializationFormat format) {
     return format == PGM_json ? tmp_path() / "output.json" : tmp_path() / "output.pgmb";
 }
-fs::path stdout_path() { return tmp_path() / "stdout.txt"; }
 
 void clear_and_create_tmp_path() {
     fs::path const cli_test_dir = tmp_path();
@@ -203,22 +216,6 @@ void prepare_data() {
     save_data(batch_p_json, batch_p_path(), PGM_json);
     save_data(batch_p_json, batch_p_path_msgpack(), PGM_msgpack);
     save_data(batch_q_json, batch_q_path(), PGM_json);
-}
-
-std::string read_stdout_content() {
-    fs::path const file_name = stdout_path();
-    std::ifstream version_ifs(file_name);
-    REQUIRE(version_ifs);
-
-    // Get file size
-    version_ifs.seekg(0, std::ios::end);
-    std::streamsize const size = version_ifs.tellg();
-    version_ifs.seekg(0, std::ios::beg);
-
-    // Read the entire file
-    std::string file_content(size, '\0');
-    version_ifs.read(file_content.data(), size);
-    return file_content;
 }
 
 std::vector<double> get_i_source_ref(bool is_batch) {
@@ -328,63 +325,76 @@ struct CLITestCase {
         return get_output_format() == PGM_msgpack;
     }
 
-    std::string build_command() const {
-        std::stringstream command;
-        command << cli_executable;
-        command << " -i " << input_path();
+    std::vector<std::string> build_argv() const {
+        std::vector<std::string> argv;
+        argv.emplace_back("power-grid-model");
+        argv.emplace_back("-i");
+        argv.emplace_back(input_path().string());
         if (is_batch) {
-            command << " -b " << batch_u_ref_path();
-            command << " -b " << (batch_p_msgpack ? batch_p_path_msgpack() : batch_p_path());
-            command << " -b " << batch_q_path();
+            argv.emplace_back("-b");
+            argv.emplace_back(batch_u_ref_path().string());
+            argv.emplace_back("-b");
+            argv.emplace_back((batch_p_msgpack ? batch_p_path_msgpack() : batch_p_path()).string());
+            argv.emplace_back("-b");
+            argv.emplace_back(batch_q_path().string());
         }
-        command << " -o " << output_path(get_output_format());
+        argv.emplace_back("-o");
+        argv.emplace_back(output_path(get_output_format()).string());
         if (has_frequency) {
-            command << " --system-frequency 50.0";
+            argv.emplace_back("--system-frequency");
+            argv.emplace_back("50.0");
         }
         if (has_calculation_type) {
-            command << " --calculation-type " << "power_flow";
+            argv.emplace_back("--calculation-type");
+            argv.emplace_back("power_flow");
         }
         if (has_calculation_method) {
-            command << " --calculation-method " << "newton_raphson";
+            argv.emplace_back("--calculation-method");
+            argv.emplace_back("newton_raphson");
         }
         if (symmetry.has_value()) {
-            command << (symmetry.value() == PGM_symmetric ? " -s" : " -a");
+            argv.emplace_back(symmetry.value() == PGM_symmetric ? "-s" : "-a");
         }
         if (has_error_tolerance) {
-            command << " --error-tolerance 1e-8";
+            argv.emplace_back("--error-tolerance");
+            argv.emplace_back("1e-8");
         }
         if (has_max_iterations) {
-            command << " --max-iterations 20";
+            argv.emplace_back("--max-iterations");
+            argv.emplace_back("20");
         }
         if (has_threading) {
-            command << " --threading -1";
+            argv.emplace_back("--threading");
+            argv.emplace_back("-1");
         }
         if (output_serialization.has_value()) {
             if (output_serialization.value() == PGM_msgpack) {
-                command << " --msgpack";
+                argv.emplace_back("--msgpack");
             } else {
-                command << " --json";
+                argv.emplace_back("--json");
             }
         }
         if (output_json_indent.has_value()) {
-            command << " --indent " << output_json_indent.value();
+            argv.emplace_back("--indent");
+            argv.emplace_back(std::to_string(output_json_indent.value()));
         }
         if (output_compact_serialization.has_value()) {
             if (output_compact_serialization.value()) {
-                command << " --compact";
+                argv.emplace_back("--compact");
             } else {
-                command << " --no-compact";
+                argv.emplace_back("--no-compact");
             }
         }
         if (component_filter) {
-            command << " --oc source";
+            argv.emplace_back("--oc");
+            argv.emplace_back("source");
         }
         if (attribute_filter) {
-            command << " --oa source.i";
+            argv.emplace_back("--oa");
+            argv.emplace_back("source.i");
         }
-        command << " --verbose";
-        command << " > " << stdout_path() << " 2>&1";
-        return command.str();
+        argv.emplace_back("--verbose");
+        return argv;
     }
 
     BufferRef get_source_buffer(OwningDataset const& dataset) const {
@@ -437,12 +447,18 @@ struct CLITestCase {
 
     void run_command_and_check() const {
         prepare_data();
-        std::string const command = build_command();
-        INFO("CLI command: ", command);
-        // NOLINTNEXTLINE(cert-env33-c,concurrency-mt-unsafe)
-        int const ret = std::system(command.c_str());
-        std::string const stdout_content = read_stdout_content();
-        INFO("CLI stdout content: ", stdout_content);
+        std::vector<std::string> argv_storage = build_argv();
+        std::vector<char*> argv;
+        argv.reserve(argv_storage.size());
+        for (auto& arg : argv_storage) {
+            argv.push_back(arg.data());
+        }
+        OutputCapture capture;
+        INFO("CLI argc: ", argv.size());
+        int const ret =
+            PGM_cli_main(static_cast<int>(argv.size()), argv.data(), &capture_stdout, &capture_stderr, &capture);
+        INFO("CLI stdout content: ", capture.stdout_message);
+        INFO("CLI stderr content: ", capture.stderr_message);
         REQUIRE(ret == 0);
         check_results();
     }
@@ -452,14 +468,19 @@ struct CLITestCase {
 
 TEST_CASE("Test CLI version") {
     prepare_data();
-    std::string const command = std::string{cli_executable} + " --version" + " > " + stdout_path().string();
-    // NOLINTNEXTLINE(cert-env33-c,concurrency-mt-unsafe)
-    int const ret = std::system(command.c_str());
-    std::string const file_content = read_stdout_content();
-    INFO("CLI stdout content: ", file_content);
+    std::vector<std::string> argv_storage{"power-grid-model", "--version"};
+    std::vector<char*> argv;
+    argv.reserve(argv_storage.size());
+    for (auto& arg : argv_storage) {
+        argv.push_back(arg.data());
+    }
+    OutputCapture capture;
+    int const ret =
+        PGM_cli_main(static_cast<int>(argv.size()), argv.data(), &capture_stdout, &capture_stderr, &capture);
+    INFO("CLI stdout content: ", capture.stdout_message);
     REQUIRE(ret == 0);
     // Extract the first line
-    std::string const first_line = file_content.substr(0, file_content.find('\n'));
+    std::string const first_line = capture.stdout_message.substr(0, capture.stdout_message.find('\n'));
     CHECK(first_line == PGM_version());
 }
 
@@ -494,7 +515,7 @@ TEST_CASE("Test run CLI") {
                     .attribute_filter = true},
     };
     for (auto const& test_case : test_cases) {
-        SUBCASE(test_case.build_command().c_str()) { test_case.run_command_and_check(); }
+        SUBCASE(test_case.build_argv().front().c_str()) { test_case.run_command_and_check(); }
     }
 }
 
