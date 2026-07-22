@@ -2,60 +2,54 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+import ctypes
 import os
 import platform
 import sys
-from importlib.resources import files
 from pathlib import Path
+
+from power_grid_model._core.power_grid_model_c.get_pgm_dll_path import get_pgm_dll_path
 
 
 def get_pgm_cli_path() -> Path:
     """
-    Returns the path to PGM CLI executable.
+    Returns the path to the PGM CLI backend shared library.
     """
-    package_dir = Path(str(files(__package__)))
-    bin_dir = package_dir / "bin"
-    platform_name = platform.uname().system
-
-    # determine executable file name
-    if platform_name == "Windows":
-        exe_file = Path("power-grid-model.exe")
-    elif platform_name == "Darwin" or platform.system() == "Linux":
-        exe_file = Path("power-grid-model")
-    else:
-        raise NotImplementedError(f"Unsupported platform: {platform_name}")
-    bin_path = bin_dir / exe_file
-
-    # determine editable path to the executable
-    # __file__
-    #   -> power_grid_model_c (..)
-    #     -> _core (..)
-    #       -> power_grid_model (..)
-    #         -> src (..)
-    #           -> repo_root (..)
-    #             -> build
-    #               -> bin
-    editable_dir = Path(__file__).resolve().parent.parent.parent.parent.parent / "build" / "bin"
-    editable_bin_path = editable_dir / exe_file
-
-    # first try to load from bin_path
-    # then editable_bin_path
-    # then if it is inside conda, this Python shim should never be called, instead user calls the exe directly
-    # then for anything else, raise an error
-    if bin_path.exists():
-        final_bin_path = bin_path
-    elif editable_bin_path.exists():
-        final_bin_path = editable_bin_path
-    elif os.environ.get("CONDA_PREFIX"):
+    if os.environ.get("CONDA_PREFIX"):
         raise ImportError(
             "PGM CLI Python shim should not be called inside conda environment. Please call the executable directly."
         )
+
+    dll_path = get_pgm_dll_path()
+    cli_dll_file: Path
+    platform_name = platform.uname().system
+    if platform_name == "Windows":
+        cli_dll_file = Path("power_grid_model_cli_backend.dll")
+    elif platform_name == "Darwin":
+        cli_dll_file = Path("libpower_grid_model_cli_backend.dylib")
+    elif platform_name == "Linux":
+        cli_dll_file = Path("libpower_grid_model_cli_backend.so")
     else:
-        raise ImportError(f"Could not find executable: {exe_file}. Your PGM installation may be broken.")
+        raise NotImplementedError(f"Unsupported platform: {platform_name}")
 
-    return final_bin_path
+    return dll_path.parent / cli_dll_file
 
 
-def main():
-    exe_path = get_pgm_cli_path()
-    os.execv(str(exe_path), [str(exe_path), *sys.argv[1:]])  # noqa: S606
+def _load_cli_backend() -> ctypes.CDLL:
+    cli_path = get_pgm_cli_path()
+    return ctypes.CDLL(str(cli_path))
+
+
+def _build_argv() -> tuple[int, ctypes.Array[ctypes.c_char_p]]:
+    argv = [arg.encode() for arg in sys.argv]
+    c_argv = (ctypes.c_char_p * len(argv))(*argv)
+    return len(argv), c_argv
+
+
+def main() -> int:
+    backend = _load_cli_backend()
+    backend.PGM_cli_main.argtypes = [ctypes.c_int, ctypes.POINTER(ctypes.c_char_p)]
+    backend.PGM_cli_main.restype = ctypes.c_int
+
+    argc, argv = _build_argv()
+    return backend.PGM_cli_main(argc, argv)
