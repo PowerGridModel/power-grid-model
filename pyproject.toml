@@ -206,7 +206,7 @@ test-command = "pytest {package}/tests"
 # we do not support 
 #    PyPy
 #    disable Python 3.15 for now until it is released
-skip = ["pp*"]
+skip = ["pp*", "cp315-*"]
 
 [tool.cibuildwheel.linux]
 archs = ["x86_64", "aarch64"]
