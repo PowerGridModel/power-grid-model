@@ -231,10 +231,16 @@ CLIResult parse_cli_options(int argc, char** argv, ClIOptions& options) {
     try {
         app.parse(argc, argv);
     } catch (CLI::ParseError const& e) {
-        return {.exit_code = app.exit(e), .should_exit = true};
+        std::ostringstream stdout_stream;
+        std::ostringstream stderr_stream;
+        int const exit_code = app.exit(e, stdout_stream, stderr_stream);
+        return {.exit_code = exit_code,
+                .should_exit = true,
+                .stdout_message = stdout_stream.str(),
+                .stderr_message = stderr_stream.str()};
     }
 
-    return {.exit_code = 0, .should_exit = false};
+    return {.exit_code = 0, .should_exit = false, .stdout_message = {}, .stderr_message = {}};
 }
 
 std::ostream& operator<<(std::ostream& os, ClIOptions const& options) {

@@ -17,6 +17,8 @@ namespace power_grid_model_cpp {
 struct CLIResult {
     int exit_code;
     bool should_exit;
+    std::string stdout_message;
+    std::string stderr_message;
 
     operator bool() const { return should_exit || exit_code != 0; }
 };
