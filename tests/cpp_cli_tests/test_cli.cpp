@@ -498,8 +498,21 @@ TEST_CASE("Test run CLI") {
     std::vector<CLITestCase> const test_cases = {
         // basic non-batch, symmetric, json
         CLITestCase{},
-        // basic batch, symmetric, json
+        // explicit single-attribute defaults
         CLITestCase{.is_batch = true},
+        CLITestCase{.is_batch = true, .batch_p_msgpack = true},
+        CLITestCase{.has_frequency = true},
+        CLITestCase{.has_calculation_type = true},
+        CLITestCase{.has_calculation_method = true},
+        CLITestCase{.symmetry = PGM_asymmetric},
+        CLITestCase{.has_error_tolerance = true},
+        CLITestCase{.has_max_iterations = true},
+        CLITestCase{.has_threading = true},
+        CLITestCase{.output_serialization = PGM_msgpack},
+        CLITestCase{.output_json_indent = 4},
+        CLITestCase{.output_compact_serialization = true},
+        CLITestCase{.component_filter = true},
+        CLITestCase{.attribute_filter = true},
         // batch, asymmetric, msgpack
         CLITestCase{.is_batch = true, .symmetry = PGM_asymmetric, .output_serialization = PGM_msgpack},
         // batch, symmetric, json, with all options set
