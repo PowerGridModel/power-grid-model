@@ -42,6 +42,12 @@ struct OutputCapture {
     std::string stderr_message;
 };
 
+struct CLIArguments {
+    std::vector<std::string> storage;
+    std::vector<char*> argv;
+    int argc{0};
+};
+
 void capture_stdout(char const* msg, void* user_data) {
     auto* capture = static_cast<OutputCapture*>(user_data);
     capture->stdout_message += msg;
@@ -325,8 +331,9 @@ struct CLITestCase {
         return get_output_format() == PGM_msgpack;
     }
 
-    std::vector<std::string> build_argv() const {
-        std::vector<std::string> argv;
+    CLIArguments build_argv() const {
+        CLIArguments args;
+        auto& argv = args.storage;
         argv.emplace_back("power-grid-model");
         argv.emplace_back("-i");
         argv.emplace_back(input_path().string());
@@ -394,7 +401,12 @@ struct CLITestCase {
             argv.emplace_back("source.i");
         }
         argv.emplace_back("--verbose");
-        return argv;
+        args.argv.reserve(argv.size());
+        for (auto& arg : argv) {
+            args.argv.push_back(arg.data());
+        }
+        args.argc = static_cast<int>(args.argv.size());
+        return args;
     }
 
     BufferRef get_source_buffer(OwningDataset const& dataset) const {
@@ -447,16 +459,10 @@ struct CLITestCase {
 
     void run_command_and_check() const {
         prepare_data();
-        std::vector<std::string> argv_storage = build_argv();
-        std::vector<char*> argv;
-        argv.reserve(argv_storage.size());
-        for (auto& arg : argv_storage) {
-            argv.push_back(arg.data());
-        }
+        CLIArguments args = build_argv();
         OutputCapture capture;
-        INFO("CLI argc: ", argv.size());
-        int const ret =
-            PGM_cli_main(static_cast<int>(argv.size()), argv.data(), &capture_stdout, &capture_stderr, &capture);
+        INFO("CLI argc: ", args.argc);
+        int const ret = PGM_cli_main(args.argc, args.argv.data(), &capture_stdout, &capture_stderr, &capture);
         INFO("CLI stdout content: ", capture.stdout_message);
         INFO("CLI stderr content: ", capture.stderr_message);
         REQUIRE(ret == 0);
@@ -468,15 +474,19 @@ struct CLITestCase {
 
 TEST_CASE("Test CLI version") {
     prepare_data();
-    std::vector<std::string> argv_storage{"power-grid-model", "--version"};
-    std::vector<char*> argv;
-    argv.reserve(argv_storage.size());
-    for (auto& arg : argv_storage) {
-        argv.push_back(arg.data());
-    }
+    CLIArguments args = [] {
+        CLIArguments cli_args;
+        auto& argv = cli_args.storage;
+        argv = {"power-grid-model", "--version"};
+        cli_args.argv.reserve(argv.size());
+        for (auto& arg : argv) {
+            cli_args.argv.push_back(arg.data());
+        }
+        cli_args.argc = static_cast<int>(cli_args.argv.size());
+        return cli_args;
+    }();
     OutputCapture capture;
-    int const ret =
-        PGM_cli_main(static_cast<int>(argv.size()), argv.data(), &capture_stdout, &capture_stderr, &capture);
+    int const ret = PGM_cli_main(args.argc, args.argv.data(), &capture_stdout, &capture_stderr, &capture);
     INFO("CLI stdout content: ", capture.stdout_message);
     REQUIRE(ret == 0);
     // Extract the first line
@@ -515,7 +525,8 @@ TEST_CASE("Test run CLI") {
                     .attribute_filter = true},
     };
     for (auto const& test_case : test_cases) {
-        SUBCASE(test_case.build_argv().front().c_str()) { test_case.run_command_and_check(); }
+        auto args = test_case.build_argv();
+        SUBCASE(args.storage.front().c_str()) { test_case.run_command_and_check(); }
     }
 }
 
