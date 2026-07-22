@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+#pragma once
+
 #include <power_grid_model_cpp.hpp>
 
 #include <filesystem>

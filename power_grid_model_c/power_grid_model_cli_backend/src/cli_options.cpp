@@ -54,28 +54,22 @@ struct CLIPostCallback {
         if (!file) {
             throw CLI::ValidationError(argument_type, "Unable to read from file: " + path.string());
         }
-        // Check for fixmap (0x80-0x8f), map16 (0xde), or map32 (0xdf)
         bool const is_msgpack = (header >= 0x80 && header <= 0x8f) || header == 0xde || header == 0xdf;
         return is_msgpack ? PGM_msgpack : PGM_json;
     }
 
     void set_default_values() {
-        // detect if input file is msgpack
         options.input_serialization_format = get_serialization_format("input", options.input_file);
-        // detect if batch update file is provided
         options.is_batch = !options.batch_update_file.empty();
-        // detect if batch update file is msgpack
         options.batch_update_serialization_format.resize(options.batch_update_file.size());
         std::transform(options.batch_update_file.cbegin(), options.batch_update_file.cend(),
                        options.batch_update_serialization_format.begin(),
                        [](auto const& path) { return get_serialization_format("batch-update", path); });
-        // default msgpack output if input or any of the batch updates is msgpack and user did not specify output format
         if (msgpack_flag.count() == 0 && (options.input_serialization_format == PGM_msgpack ||
                                           std::ranges::any_of(options.batch_update_serialization_format,
                                                               [](auto format) { return format == PGM_msgpack; }))) {
             options.use_msgpack_output_serialization = true;
         }
-        // default compact serialization if msgpack output and user did not specify compact option
         if (compact_flag.count() == 0 && options.use_msgpack_output_serialization) {
             options.use_compact_serialization = true;
         }

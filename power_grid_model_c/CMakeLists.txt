@@ -5,4 +5,5 @@
 add_subdirectory("power_grid_model")
 add_subdirectory("power_grid_model_c")
 add_subdirectory("power_grid_model_cpp")
+add_subdirectory("power_grid_model_cli_backend")
 add_subdirectory("power_grid_model_cli")
