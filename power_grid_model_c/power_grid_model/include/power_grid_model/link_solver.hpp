@@ -388,9 +388,9 @@ inline std::vector<DoubleComplex> compute_loads_link_elements(std::vector<Branch
         return solution_set.extended_rhs;
     }
 
-    auto const free_indices_number = narrow_cast<Idx>(reduced_echelon_result.free_edge_indices.size());
-    auto const total_indices_number = narrow_cast<Idx>(reduced_echelon_result.free_edge_indices.size() +
-                                                       reduced_echelon_result.pivot_edge_indices.size());
+    auto const free_indices_number = narrow_cast<Idx>(std::ranges::ssize(reduced_echelon_result.free_edge_indices));
+    auto const total_indices_number = narrow_cast<Idx>(std::ranges::ssize(reduced_echelon_result.free_edge_indices) +
+                                                       std::ranges::ssize(reduced_echelon_result.pivot_edge_indices));
     std::vector<std::vector<DoubleComplex>> projection_system =
         set_projection_system(free_indices_number, total_indices_number, solution_set);
 

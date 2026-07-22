@@ -369,8 +369,7 @@ class MainModelImpl {
             []<calculation_type_tag calculation_type, symmetry_tag sym>(
                 MainModelImpl& main_model_, Options const& options_, MutableDataset const& result_data_,
                 Logger& logger) {
-                auto const math_output = main_model_.calculate_with_optimizer<calculation_type, sym>(options_, logger);
-                main_model_.output_result(math_output, result_data_, logger);
+                main_model_.output_result(main_model_.calculate_with_optimizer<calculation_type, sym>(options_, logger), result_data_, logger);
             },
             *this, options, result_data, logger);
     }
@@ -426,21 +425,24 @@ class MainModelImpl {
 
   private:
     template <solver_output_type SolverOutputType>
-    void output_result(MathOutput<std::vector<SolverOutputType>> const& math_output, MutableDataset const& result_data,
+    void output_result(MathOutput<std::vector<SolverOutputType>> math_output, MutableDataset const& result_data,
                        Logger& logger) const {
         assert(!result_data.is_batch());
 
-        auto const output_func = [this, &math_output, &result_data]<typename CT>() {
+        Timer const t_output{logger, LogEvent::produce_output};
+
+        TopoMathOutput topo_math_output{state_.reduced_topology->topo_node_coup, std::move(math_output)};
+
+        auto const output_func = [this, &topo_math_output, &result_data]<typename CT>() {
             result_data.for_each_component<typename output_type_getter<SolverOutputType>::type, CT>(
-                [this, &math_output](auto const& span) {
+                [this, &topo_math_output](auto const& span) {
                     if (std::empty(span)) {
                         return;
                     }
-                    main_core::output_result<CT>(state_, math_output, span);
+                    main_core::output_result<CT>(state_, topo_math_output, span);
                 });
         };
 
-        Timer const t_output{logger, LogEvent::produce_output};
         ModelType::run_functor_with_all_component_types_return_void(output_func);
     }
 
