@@ -11,10 +11,25 @@
 #include <exception>
 #include <iostream>
 #include <mutex>
+#include <sstream>
+#include <string>
 
 using namespace power_grid_model_cpp;
 
-int PGM_cli_main(int argc, char** argv) noexcept {
+namespace {
+
+void write_output(PGM_CLIMessageCallback callback, void* user_data, std::ostream& stream, std::string const& message) {
+    if (callback != nullptr) {
+        callback(message.c_str(), user_data);
+    } else {
+        stream << message;
+    }
+}
+
+} // namespace
+
+int PGM_cli_main(int argc, char** argv, PGM_CLIMessageCallback cout_callback, PGM_CLIMessageCallback cerr_callback,
+                 void* user_data) noexcept {
     static std::mutex cli_mutex;
     std::lock_guard<std::mutex> const lock{cli_mutex};
 
@@ -24,19 +39,21 @@ int PGM_cli_main(int argc, char** argv) noexcept {
     }
 
     if (cli_options.verbose) {
-        std::cout << cli_options << '\n';
+        std::ostringstream output_stream;
+        output_stream << cli_options << '\n';
+        write_output(cout_callback, user_data, std::cout, output_stream.str());
     }
 
     try {
         pgm_calculation(cli_options);
     } catch (PowerGridError const& e) {
-        std::cerr << "PowerGridError: " << e.what() << '\n';
+        write_output(cerr_callback, user_data, std::cerr, std::string{"PowerGridError: "} + e.what() + '\n');
         return static_cast<int>(e.error_code());
     } catch (std::exception const& e) {
-        std::cerr << "Exception: " << e.what() << '\n';
+        write_output(cerr_callback, user_data, std::cerr, std::string{"Exception: "} + e.what() + '\n');
         return 1;
     } catch (...) {
-        std::cerr << "Unknown exception caught." << '\n';
+        write_output(cerr_callback, user_data, std::cerr, "Unknown exception caught.\n");
         return 1;
     }
 

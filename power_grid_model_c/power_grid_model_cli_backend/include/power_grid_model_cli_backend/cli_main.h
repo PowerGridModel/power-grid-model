@@ -39,14 +39,20 @@
 extern "C" {
 #endif
 
+typedef void (*PGM_CLIMessageCallback)(char const* msg, void* user_data);
+
 /**
  * @brief CLI entry point for the Power Grid Model command line interface.
  *
  * @param argc Number of command line arguments.
  * @param argv Command line arguments.
+ * @param cout_callback Callback used for standard output. When null, std::cout is used.
+ * @param cerr_callback Callback used for standard error. When null, std::cerr is used.
+ * @param user_data Opaque user data forwarded to the callbacks.
  * @return Process exit code.
  */
-PGM_CLI_API int PGM_cli_main(int argc, char** argv) PGM_CLI_NOEXCEPT;
+PGM_CLI_API int PGM_cli_main(int argc, char** argv, PGM_CLIMessageCallback cout_callback,
+                             PGM_CLIMessageCallback cerr_callback, void* user_data) PGM_CLI_NOEXCEPT;
 
 #ifdef __cplusplus
 }

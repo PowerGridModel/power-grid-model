@@ -4,4 +4,6 @@
 
 #include <power_grid_model_cli_backend/cli_main.h>
 
-int main(int argc, char** argv) { return PGM_cli_main(argc, argv); }
+int main(int argc, char** argv) {
+	return PGM_cli_main(argc, argv, nullptr, nullptr, nullptr);
+}
