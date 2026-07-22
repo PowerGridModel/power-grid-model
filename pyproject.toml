@@ -205,9 +205,8 @@ test-groups = ["test"]
 test-command = "pytest {package}/tests"
 # we do not support 
 #    PyPy
-#    musllinux in aarch64
-#    disable Python 3.14 for now until it is released
-skip = ["pp*", "*-musllinux_aarch64"]
+#    disable Python 3.15 for now until it is released
+skip = ["pp*", "cp315-*"]
 
 [tool.cibuildwheel.linux]
 archs = ["x86_64", "aarch64"]
@@ -215,6 +214,7 @@ environment = { CC = "gcc", CXX = "g++" }
 manylinux-x86_64-image = "manylinux_2_28"
 manylinux-aarch64-image = "manylinux_2_28"
 musllinux-x86_64-image = "musllinux_1_2"
+musllinux-aarch64-image = "musllinux_1_2"
 
 [tool.cibuildwheel.macos]
 archs = ["x86_64", "arm64"]
