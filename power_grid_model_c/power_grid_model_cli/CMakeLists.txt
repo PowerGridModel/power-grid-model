@@ -31,3 +31,4 @@ install(
     EXPORT power_grid_modelTargets
     COMPONENT power_grid_model
 )
+
