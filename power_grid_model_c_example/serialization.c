@@ -70,8 +70,8 @@ int main(int argc, char** argv) {
     assert(PGM_error_code(handle) == PGM_no_error);
 
     // allocate memory for input and output buffers for each component with NULL initialization
-    void** input_buffers = calloc((size_t)n_components, sizeof(void*));
-    void** output_buffers = calloc((size_t)n_components, sizeof(void*));
+    void** input_buffers = (void**)calloc((size_t)n_components, sizeof(void*));
+    void** output_buffers = (void**)calloc((size_t)n_components, sizeof(void*));
 
     // create output dataset
     PGM_MutableDataset* output_dataset = PGM_create_dataset_mutable(handle, output_dataset_name, is_batch, batch_size);
@@ -148,8 +148,8 @@ int main(int argc, char** argv) {
             PGM_destroy_buffer(output_buffers[component_idx]);
         }
     }
-    free(input_buffers);
-    free(output_buffers);
+    free((void*)input_buffers);
+    free((void*)output_buffers);
     PGM_destroy_deserializer(deserializer);
     assert(PGM_error_code(handle) == PGM_no_error);
     PGM_destroy_handle(handle);
