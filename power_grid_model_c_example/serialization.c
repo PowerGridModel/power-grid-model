@@ -12,6 +12,8 @@ The dummy network consists of 1 source, 1 node, and 1 load:
 source_1 - node_0 - load_2
 */
 
+// IWYU pragma: begin_keep
+// NOLINTBEGIN(misc-include-cleaner)
 #include "power_grid_model_c.h"
 #include "power_grid_model_c/dataset_definitions.h"
 
@@ -67,9 +69,9 @@ int main(int argc, char** argv) {
     char const* output_dataset_name = PGM_meta_dataset_name(handle, PGM_def_sym_output);
     assert(PGM_error_code(handle) == PGM_no_error);
 
-    // create input and output buffers
-    void* input_buffers[n_components];
-    void* output_buffers[n_components];
+    // allocate memory for input and output buffers for each component with NULL initialization
+    void** input_buffers = calloc((size_t)n_components, sizeof(void*));
+    void** output_buffers = calloc((size_t)n_components, sizeof(void*));
 
     // create output dataset
     PGM_MutableDataset* output_dataset = PGM_create_dataset_mutable(handle, output_dataset_name, is_batch, batch_size);
@@ -146,9 +148,13 @@ int main(int argc, char** argv) {
             PGM_destroy_buffer(output_buffers[component_idx]);
         }
     }
+    free(input_buffers);
+    free(output_buffers);
     PGM_destroy_deserializer(deserializer);
     assert(PGM_error_code(handle) == PGM_no_error);
     PGM_destroy_handle(handle);
 
     return 0;
 }
+// NOLINTEND(misc-include-cleaner)
+// IWYU pragma: end_keep
