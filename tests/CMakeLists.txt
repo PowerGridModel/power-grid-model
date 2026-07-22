@@ -11,3 +11,9 @@ add_subdirectory("cpp_unit_tests")
 add_subdirectory("cpp_validation_tests")
 add_subdirectory("benchmark_cpp")
 add_subdirectory("cpp_cli_tests")
+
+add_test(
+	PGMCLI
+	$<TARGET_FILE:power_grid_model_cli>
+	--version
+)
