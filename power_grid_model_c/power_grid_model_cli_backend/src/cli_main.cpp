@@ -10,10 +10,14 @@
 
 #include <exception>
 #include <iostream>
+#include <mutex>
 
 using namespace power_grid_model_cpp;
 
 int PGM_cli_main(int argc, char** argv) noexcept {
+    static std::mutex cli_mutex;
+    std::lock_guard<std::mutex> const lock{cli_mutex};
+
     ClIOptions cli_options;
     if (auto const parse_result = parse_cli_options(argc, argv, cli_options); parse_result) {
         return parse_result.exit_code;
