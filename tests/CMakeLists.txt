@@ -14,6 +14,6 @@ add_subdirectory("cpp_cli_tests")
 
 add_test(
 	PGMCLI
-	$<TARGET_FILE:power_grid_model_cli>
+	${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/power-grid-model
 	--version
 )
