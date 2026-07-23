@@ -39,6 +39,7 @@
 extern "C" {
 #endif
 
+// NOLINTNEXTLINE(modernize-use-using)
 typedef void (*PGM_CLIMessageCallback)(char const* msg, void* user_data);
 
 /**

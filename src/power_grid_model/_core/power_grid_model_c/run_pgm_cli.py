@@ -48,7 +48,13 @@ def _build_argv() -> tuple[int, ctypes.Array[ctypes.c_char_p]]:
 
 def main() -> int:
     backend = _load_cli_backend()
-    backend.PGM_cli_main.argtypes = [ctypes.c_int, ctypes.POINTER(ctypes.c_char_p), ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
+    backend.PGM_cli_main.argtypes = [
+        ctypes.c_int,
+        ctypes.POINTER(ctypes.c_char_p),
+        ctypes.c_void_p,
+        ctypes.c_void_p,
+        ctypes.c_void_p,
+    ]
     backend.PGM_cli_main.restype = ctypes.c_int
 
     argc, argv = _build_argv()
