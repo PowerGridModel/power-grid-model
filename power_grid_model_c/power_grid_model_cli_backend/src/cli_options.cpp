@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <functional>
 #include <ios>
 #include <map>
 #include <ostream>
@@ -25,7 +26,7 @@
 
 namespace power_grid_model_cpp {
 
-using EnumMap = std::map<std::string, Idx>;
+using EnumMap = std::map<std::string, Idx, std::less<>>;
 
 struct CLIPostCallback {
     // NOLINTBEGIN(cppcoreguidelines-avoid-const-or-ref-data-members)
@@ -65,12 +66,12 @@ struct CLIPostCallback {
         std::transform(options.batch_update_file.cbegin(), options.batch_update_file.cend(),
                        options.batch_update_serialization_format.begin(),
                        [](auto const& path) { return get_serialization_format("batch-update", path); });
-        if (msgpack_flag.count() == 0 && (options.input_serialization_format == PGM_msgpack ||
-                                          std::ranges::any_of(options.batch_update_serialization_format,
-                                                              [](auto format) { return format == PGM_msgpack; }))) {
+        if (msgpack_flag.empty() && (options.input_serialization_format == PGM_msgpack ||
+                                     std::ranges::any_of(options.batch_update_serialization_format,
+                                                         [](auto format) { return format == PGM_msgpack; }))) {
             options.use_msgpack_output_serialization = true;
         }
-        if (compact_flag.count() == 0 && options.use_msgpack_output_serialization) {
+        if (compact_flag.empty() && options.use_msgpack_output_serialization) {
             options.use_compact_serialization = true;
         }
     }
@@ -141,13 +142,13 @@ CLIResult parse_cli_options(int argc, char** argv, ClIOptions& options) {
     CLI::App app{version_str};
 
     CLI::Validator const existing_parent_dir_validator{
-        [](std::string& input) {
+        [](std::string const& input) -> std::string {
             std::filesystem::path const p{input};
-            auto parent = p.has_parent_path() ? p.parent_path() : std::filesystem::path{"."};
-            if (parent.empty() || !std::filesystem::exists(parent) || !std::filesystem::is_directory(parent)) {
-                return std::string("The parent directory of the specified path does not exist or is not a directory.");
+            if (auto const parent = p.has_parent_path() ? p.parent_path() : std::filesystem::path{"."};
+                parent.empty() || !std::filesystem::exists(parent) || !std::filesystem::is_directory(parent)) {
+                return "The parent directory of the specified path does not exist or is not a directory.";
             }
-            return std::string{};
+            return "";
         },
         "ExistingParentDirectory"};
 
@@ -243,7 +244,7 @@ CLIResult parse_cli_options(int argc, char** argv, ClIOptions& options) {
     return {.exit_code = 0, .should_exit = false, .stdout_message = {}, .stderr_message = {}};
 }
 
-std::ostream& operator<<(std::ostream& os, ClIOptions const& options) {
+std::ostream& operator<<(std::ostream& os, ClIOptions const& options) { // NOSONAR(S2807)
     os << "Run PGM with following CLI Options:\n";
     os << "Input file: " << options.input_file << "\n";
     os << "Batch update file: \n";

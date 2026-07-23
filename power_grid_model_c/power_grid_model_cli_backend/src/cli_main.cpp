@@ -18,7 +18,8 @@ using namespace power_grid_model_cpp;
 
 namespace {
 
-void write_output(PGM_CLIMessageCallback callback, void* user_data, std::ostream& stream, std::string const& message) {
+void write_output(PGM_CLIMessageCallback callback, void* user_data, std::ostream& stream,
+                  std::string const& message) { // NOSONAR(S5008,S5205)
     if (callback != nullptr) {
         callback(message.c_str(), user_data);
     } else {
@@ -29,9 +30,9 @@ void write_output(PGM_CLIMessageCallback callback, void* user_data, std::ostream
 } // namespace
 
 int PGM_cli_main(int argc, char** argv, PGM_CLIMessageCallback cout_callback, PGM_CLIMessageCallback cerr_callback,
-                 void* user_data) noexcept {
+                 void* user_data) noexcept { // NOSONAR(S5008,S5205)
     static std::mutex cli_mutex;
-    std::lock_guard<std::mutex> const lock{cli_mutex};
+    std::scoped_lock<std::mutex> const lock{cli_mutex};
 
     ClIOptions cli_options;
     if (auto const parse_result = parse_cli_options(argc, argv, cli_options); parse_result) {

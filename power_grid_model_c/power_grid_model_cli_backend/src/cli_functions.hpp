@@ -24,7 +24,7 @@ struct CLIResult {
 };
 
 // NOLINTNEXTLINE(clang-analyzer-optin.performance.Padding)
-struct ClIOptions {
+struct ClIOptions { // NOSONAR(S1820)
     std::filesystem::path input_file;
     std::vector<std::filesystem::path> batch_update_file;
     std::filesystem::path output_file;
