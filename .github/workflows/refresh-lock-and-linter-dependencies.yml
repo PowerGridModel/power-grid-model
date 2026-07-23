@@ -111,6 +111,7 @@ jobs:
         with:
           client-id: ${{ secrets.CI_BOT_APP_ID }}
           private-key: ${{ secrets.CI_BOT_PRIVATE_KEY }}
+          repositories: ${{ github.repository }}
 
       - name: create pull request
         if: ${{ inputs.create-pr || github.event_name == 'schedule' }}
