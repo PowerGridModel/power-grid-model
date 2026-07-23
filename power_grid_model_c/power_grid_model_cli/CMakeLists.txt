@@ -5,6 +5,7 @@
 add_executable(power_grid_model_cli main.c)
 
 target_link_libraries(power_grid_model_cli PRIVATE power_grid_model_cli_backend)
+set_property(TARGET power_grid_model_cli PROPERTY LINKER_LANGUAGE CXX)
 
 set_property(TARGET power_grid_model_cli PROPERTY INSTALL_RPATH_USE_LINK_PATH FALSE)
 set_property(TARGET power_grid_model_cli PROPERTY OUTPUT_NAME "power-grid-model")
