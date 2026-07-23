@@ -353,10 +353,11 @@
     },
     {
       "name": "ci-apple-clang-reproducible",
-      "inherits": "ci-clang-reproducible",
+      "inherits": ["apple-clang-base", "release"],
       "environment": {
         "SOURCE_DATE_EPOCH": "1",
         "DSYMUTIL": "",
+        "REPRODUCIBILITY_COMMON_FLAGS": "$penv{REPRODUCIBILITY_COMMON_FLAGS} -frandom-seed=0 -Wdate-time",
         "REPRODUCIBILITY_LINKER_FLAGS": "-Wl,-no_uuid -Wl,-S"
       }
     }
