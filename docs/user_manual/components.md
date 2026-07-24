@@ -271,6 +271,9 @@ The PI model can be used to avoid the need to convert parameters into transforme
 Another use case is modeling a line when connecting two nodes with approximately the same voltage levels (in that case,
 the off-nominal ratio must be given to adapt the electrical parameters).
 
+See [Phase-shifting transformer](./non-pgm-components.md#phase-shifting-transformer) for an example of modeling one
+using a `generic_branch`.
+
 #### Input
 
 | name    | data type | unit             | description                   |        required        |  update  | valid values |
