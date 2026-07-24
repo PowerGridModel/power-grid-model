@@ -140,8 +140,12 @@ constexpr auto output_result(Component const& node, std::vector<SolverOutputType
     if (math_id.group == disconnected) {
         return node.template get_null_output<sym>();
     }
+    auto bus_type = BusType::pq;
+    if (solver_output[math_id.group].bus.size() == solver_output[math_id.group].u.size()) {
+        bus_type = solver_output[math_id.group].bus[math_id.pos].bus_type;
+    }
     return node.template get_output<sym>(solver_output[math_id.group].u[math_id.pos],
-                                         solver_output[math_id.group].bus_injection[math_id.pos]);
+                                         solver_output[math_id.group].bus_injection[math_id.pos], bus_type);
 }
 template <std::derived_from<Node> Component, short_circuit_solver_output_type SolverOutputType>
 inline auto output_result(Component const& node, std::vector<SolverOutputType> const& solver_output, Idx2D math_id) {

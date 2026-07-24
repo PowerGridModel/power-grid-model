@@ -36,7 +36,7 @@ template <symmetry_tag sym_type>
 struct get_attributes_list<NodeOutput<sym_type>> {
     using sym = sym_type;
 
-    static constexpr std::array<MetaAttribute, 7> value{
+    static constexpr std::array<MetaAttribute, 8> value{
             // all attributes including base class
             
             meta_data_gen::get_meta_attribute<&NodeOutput<sym>::id>(offsetof(NodeOutput<sym>, id), "id"),
@@ -46,6 +46,7 @@ struct get_attributes_list<NodeOutput<sym_type>> {
             meta_data_gen::get_meta_attribute<&NodeOutput<sym>::u_angle>(offsetof(NodeOutput<sym>, u_angle), "u_angle"),
             meta_data_gen::get_meta_attribute<&NodeOutput<sym>::p>(offsetof(NodeOutput<sym>, p), "p"),
             meta_data_gen::get_meta_attribute<&NodeOutput<sym>::q>(offsetof(NodeOutput<sym>, q), "q"),
+            meta_data_gen::get_meta_attribute<&NodeOutput<sym>::bus_type>(offsetof(NodeOutput<sym>, bus_type), "bus_type"),
     };
 };
 

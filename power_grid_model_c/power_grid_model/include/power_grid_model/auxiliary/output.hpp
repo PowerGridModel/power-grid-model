@@ -28,6 +28,7 @@ struct NodeOutput {
     RealValue<sym> u_angle{nan};  // voltage magnitude and angle
     RealValue<sym> p{nan};  // node injection
     RealValue<sym> q{nan};  // node injection
+    IntS bus_type{na_IntS};  // effective bus type after calculation
 
     // implicit conversions to BaseOutput
     operator BaseOutput&() { return reinterpret_cast<BaseOutput&>(*this); }

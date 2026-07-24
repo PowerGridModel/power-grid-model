@@ -168,6 +168,10 @@ namespace power_grid_model::math_solver {
 // hide implementation in inside namespace
 namespace newton_raphson_pf {
 
+constexpr Idx no_limit_check = -1;
+constexpr Idx do_limit_check = 0;
+constexpr Idx limit_check_at_iteration = 2; // TODO(frie-soptim): maybe consider making this a parameter in the future
+
 // class for phasor in polar coordinate and/or complex power
 template <symmetry_tag sym> struct PolarPhasor : public Block<double, sym, false, 2> {
     template <int r, int c> using GetterType = Block<double, sym, false, 2>::template GetterType<r, c>;
@@ -238,8 +242,9 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
           del_x_pq_(y_bus.size()),
           sparse_solver_{y_bus.row_indptr_lu(), y_bus.col_indices_lu(), y_bus.lu_diag()},
           perm_(y_bus.size()),
-          bus_types_(y_bus.size(), BusType::pq),
-          voltage_regulators_per_load_gen_{std::ref(topo.voltage_regulators_per_load_gen)} {}
+          bus_control_(y_bus.size()),
+          voltage_regulators_per_load_gen_{std::ref(topo.voltage_regulators_per_load_gen)},
+          clamped_regulators_per_load_gen_(topo.load_gen_type.size(), RealValue<sym>{nan}) {}
 
     // Initialize the unknown variable in polar form using a linear voltage guess solved in the real domain.
     // This implementation reuses the class-level Jacobian matrix (data_jac_) and RHS vector (del_x_pq_)
@@ -252,6 +257,12 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         // Reset reused buffers to zero
         std::ranges::fill(data_jac_, PFJacBlock<sym>{});
         std::ranges::fill(del_x_pq_, PolarPhasor<sym>{});
+
+        // initialize bus state, in case solver instance is reused in batching
+        std::ranges::fill(bus_control_, BusControlState{});
+
+        const bool has_usable_limits = set_bus_types_and_q_limits(input);
+        limit_check_countdown_ = has_usable_limits ? limit_check_at_iteration : no_limit_check;
 
         // Map network admittance to real-domain system
         IdxVector const& map_lu_y_bus = y_bus.map_lu_y_bus();
@@ -282,7 +293,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
                 ComplexValue<sym>{RealValue<sym>{del_x_pq_[i].u_real()}, RealValue<sym>{del_x_pq_[i].u_imag()}};
         }
 
-        set_u_ref_and_bus_types(input, output.u);
+        set_reference_voltage_for_pv_buses(output.u);
 
         // get magnitude and angle of start voltage
         for (Idx i = 0; i != this->n_bus_; ++i) {
@@ -294,26 +305,24 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
     // Calculate the Jacobian and deviation
     void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                 ComplexValueVector<sym> const& u) {
-        std::vector<LoadGenType> const& load_gen_type = this->load_gen_type_.get();
-        IdxVector const& bus_entry = y_bus.lu_diag();
+        build_jacobian_and_rhs(y_bus, input, u, false);
 
-        prepare_matrix_and_rhs_from_network_perspective(y_bus, u, bus_entry);
-
-        auto const& load_gens_per_bus = this->load_gens_per_bus_.get();
-        auto const& sources_per_bus = this->sources_per_bus_.get();
-        for (auto const& [bus_number, load_gens, sources] :
-             enumerated_zip_sequence(load_gens_per_bus, sources_per_bus)) {
-            Idx const diagonal_position = bus_entry[bus_number];
-            add_loads(load_gens, bus_number, diagonal_position, input, load_gen_type);
-            add_sources(sources, bus_number, diagonal_position, y_bus, input, u);
+        if (limit_check_countdown_ > do_limit_check) {
+            --limit_check_countdown_;
         }
+        const bool buses_switched = (limit_check_countdown_ == do_limit_check) && enforce_q_limits(input);
+        if (buses_switched) {
+            // rebuild jacobian and del_pq after PV -> PQ switching
+            build_jacobian_and_rhs(y_bus, input, u, true);
+        }
+        apply_pv_constraints(y_bus);
     }
 
     // Solve the linear Equations
     void solve_matrix() { sparse_solver_.prefactorize_and_solve(data_jac_, perm_, del_x_pq_, del_x_pq_); }
 
     // Get maximum deviation among all bus voltages
-    double iterate_unknown(ComplexValueVector<sym>& u) {
+    double iterate_unknown(ComplexValueVector<sym>& u, double err_tol, bool cache_run) {
         double max_dev = 0.0;
         // loop each bus as i
         for (Idx i = 0; i != this->n_bus_; ++i) {
@@ -330,7 +339,25 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
             // assign
             u[i] = u_tmp;
         }
+
+        if (max_dev <= err_tol && (limit_check_countdown_ > do_limit_check) && !cache_run) {
+            // force a limit check if it did not happen yet, but the solution has already converged
+            limit_check_countdown_ = do_limit_check;
+            return std::numeric_limits<double>::infinity();
+        }
         return max_dev;
+    }
+
+    void finalize_result(PowerFlowInput<sym> const& /*input*/, SolverOutput<sym>& output) {
+        // pass on values needed for distribution of reactive power among voltage regulators in common_solver_function
+        output.bus.resize(this->n_bus_);
+        for (Idx i = 0; i != this->n_bus_; ++i) {
+            auto& bus_output = output.bus[i];
+            auto const& q_limit = bus_control_[i].q_limit;
+
+            bus_output.bus_type = bus_control_[i].type;
+            bus_output.q_limit_violated = q_limit.limit_violated;
+        }
     }
 
   private:
@@ -348,30 +375,80 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
     // permutation array
     BlockPermArray perm_;
 
-    std::vector<BusType> bus_types_;
+    struct QLimitState {
+        bool has_q_limits{false};                 // check before using limits
+        bool recalc_after_limit_violation{false}; // re-calculate jacobian and del_x_pq_ after bus type switch if true
+        LimitViolation limit_violated{LimitViolation::none};
+        double bus_q_min{0}; // start with 0, unspecified limit on regulator should change this to NaN
+        double bus_q_max{0};
+    };
+
+    struct BusControlState {
+        BusType type{BusType::pq};
+        DoubleComplex u_ref{};
+        QLimitState q_limit{};
+    };
+
+    std::vector<BusControlState> bus_control_;
     std::reference_wrapper<DenseGroupedIdxVector const> voltage_regulators_per_load_gen_;
 
-    void set_u_ref_and_bus_types(PowerFlowInput<sym> const& input, ComplexValueVector<sym>& u) {
+    // limit check control: -1 = no limit check, 0 = check limit, >0 = wait this many iterations before checking
+    Idx limit_check_countdown_{-1};
+
+    // store clamped Q-value for a load_gen in case of a limit violation to avoid recalculation in add_loads()
+    std::vector<RealValue<sym>> clamped_regulators_per_load_gen_;
+
+    auto set_bus_types_and_q_limits(PowerFlowInput<sym> const& input) {
         auto const& voltage_regulators_per_load_gen = voltage_regulators_per_load_gen_.get();
 
+        auto has_usable_q_limits = false;
         for (auto const& [bus_idx, load_gens, sources] :
              enumerated_zip_sequence(this->load_gens_per_bus_.get(), this->sources_per_bus_.get())) {
+            auto& bus_control = bus_control_[bus_idx];
             if (!sources.empty()) {
-                bus_types_[bus_idx] = BusType::slack;
+                bus_control.type = BusType::slack;
+                // don't need to calculate bus limits for slack buses, as active sources and regulators on the same node
+                // are disallowed
                 continue;
             }
 
             for (Idx const load_gen_idx : load_gens) {
+                if (input.load_gen_status.empty() || input.load_gen_status[load_gen_idx] == status_off) {
+                    continue;
+                }
                 for (Idx const voltage_regulator_idx :
                      voltage_regulators_per_load_gen.get_element_range(load_gen_idx)) {
                     // TODO(figueroa1395): Unit test this
-                    if (input.voltage_regulator[voltage_regulator_idx].status != 0) {
-                        auto const& regulator = input.voltage_regulator[voltage_regulator_idx];
-                        u[bus_idx] = regulator.u_ref * phase_shift(u[bus_idx]);
-                        bus_types_[bus_idx] = BusType::pv;
-                        break;
+                    auto const& regulator = input.voltage_regulator[voltage_regulator_idx];
+                    if (regulator.status != status_off) {
+
+                        bus_control.type = BusType::pv;
+                        bus_control.u_ref = regulator.u_ref; // all regulators on the bus must have the same u_ref
+
+                        // unlimited load_gen/regulator on a bus makes the whole bus unlimited,
+                        // because `bus_limit = limit_reg1 + NaN = NaN`
+                        bus_control.q_limit.bus_q_min += regulator.q_min;
+                        bus_control.q_limit.bus_q_max += regulator.q_max;
                     }
                 }
+            }
+
+            if (bus_control.type == BusType::pv) {
+                // bus has limits if q_min or q_max is not NaN
+                bus_control.q_limit.has_q_limits =
+                    !is_nan(bus_control.q_limit.bus_q_min) || !is_nan(bus_control.q_limit.bus_q_max);
+                if (bus_control.q_limit.has_q_limits) {
+                    has_usable_q_limits = true;
+                }
+            }
+        }
+        return has_usable_q_limits;
+    }
+
+    void set_reference_voltage_for_pv_buses(ComplexValueVector<sym>& u) {
+        for (Idx i = 0; i != this->n_bus_; ++i) {
+            if (bus_control_[i].type == BusType::pv) {
+                u[i] = bus_control_[i].u_ref * phase_shift(u[i]);
             }
         }
     }
@@ -395,13 +472,18 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
     }
 
     void prepare_matrix_and_rhs_from_network_perspective(YBus<sym> const& y_bus, ComplexValueVector<sym> const& u,
-                                                         IdxVector const& bus_entry) {
+                                                         IdxVector const& bus_entry, bool partial_rebuild) {
         IdxVector const& indptr = y_bus.row_indptr_lu();
         IdxVector const& indices = y_bus.col_indices_lu();
         IdxVector const& map_lu_y_bus = y_bus.map_lu_y_bus();
         ComplexTensorVector<sym> const& ydata = y_bus.admittance();
 
         for (Idx row = 0; row != this->n_bus_; ++row) {
+            if (partial_rebuild && !bus_control_[row].q_limit.recalc_after_limit_violation) {
+                // only re-calculate rows in jacobian for buses that have switched from PV to PQ due to Q-limit
+                // violation
+                continue;
+            }
             // reset power injection
             del_x_pq_[row].p() = RealValue<sym>{0.0};
             del_x_pq_[row].q() = RealValue<sym>{0.0};
@@ -437,6 +519,40 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
             // L -= (-Q)
             add_diag(data_jac_[k].l(), -del_x_pq_[row].q());
         }
+    }
+
+    void build_jacobian_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
+                                ComplexValueVector<sym> const& u, bool partial_rebuild) {
+        std::vector<LoadGenType> const& load_gen_type = this->load_gen_type_.get();
+        IdxVector const& bus_entry = y_bus.lu_diag();
+
+        auto const& load_gens_per_bus = this->load_gens_per_bus_.get();
+        auto const& sources_per_bus = this->sources_per_bus_.get();
+
+        prepare_matrix_and_rhs_from_network_perspective(y_bus, u, bus_entry, partial_rebuild);
+
+        for (auto const& [bus_number, load_gens, sources] :
+             enumerated_zip_sequence(load_gens_per_bus, sources_per_bus)) {
+
+            if (partial_rebuild) {
+                if (!bus_control_[bus_number].q_limit.recalc_after_limit_violation) {
+                    // add only for buses that have switched from PV to PQ due to Q-limit violation
+                    continue;
+                }
+                bus_control_[bus_number].q_limit.recalc_after_limit_violation = false;
+            }
+            Idx const diagonal_position = bus_entry[bus_number];
+            add_loads(load_gens, bus_number, diagonal_position, input, load_gen_type);
+            add_sources(sources, bus_number, diagonal_position, y_bus, input, u);
+        }
+    }
+
+    void apply_pv_constraints(YBus<sym> const& y_bus) {
+        // Apply PV constraints after calculation of Jacobian and potential recalculation of Jacobian
+        // in case of PV/PQ switching due to Q-limit violation, but before solving the linear equation.
+
+        IdxVector const& indptr = y_bus.row_indptr_lu();
+        IdxVector const& indices = y_bus.col_indices_lu();
 
         // PV-bus voltage identity row:
         // For PV buses, the Q-equation is replaced by the algebraic constraint
@@ -449,33 +565,205 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         //   - only the diagonal L entry is set to V.
         // This removes the Q-equation and enforces the PV voltage constraint in the NR step.
         for (Idx row = 0; row != this->n_bus_; ++row) {
-            if (bus_types_[row] == BusType::pv) {
-                for (Idx k = indptr[row]; k != indptr[row + 1]; ++k) {
-                    Idx const j = indices[k];
-                    // If there are pv generators on a bus with type ::slack, then these generators
-                    // will be considered as ::pq and the jacobian row will not be modified.
-                    // TODO: #185 or should the slack behave like a pv bus too?
-                    data_jac_[k].m() = RealTensor<sym>{0.0};
-                    if (row == j) {
-                        auto const& v = x_[j].v();
-                        if constexpr (is_symmetric_v<sym>) {
-                            data_jac_[k].l() = v;
-                        } else {
-                            data_jac_[k].l() = RealTensor<asymmetric_t>{{v[0], v[1], v[2]}};
-                        }
-
+            if (bus_control_[row].type != BusType::pv) {
+                continue;
+            }
+            for (Idx k = indptr[row]; k != indptr[row + 1]; ++k) {
+                Idx const column = indices[k];
+                data_jac_[k].m() = RealTensor<sym>{0.0};
+                if (row == column) {
+                    auto const& v = x_[column].v();
+                    if constexpr (is_symmetric_v<sym>) {
+                        data_jac_[k].l() = v;
                     } else {
-                        data_jac_[k].l() = RealTensor<sym>{0.0};
+                        data_jac_[k].l() = RealTensor<asymmetric_t>{{v[0], v[1], v[2]}};
+                    }
+                } else {
+                    data_jac_[k].l() = RealTensor<sym>{0.0};
+                }
+            }
+            // Replace the reactive-power mismatch with the voltage-magnitude constraint.
+            del_x_pq_[row].q() = 0.0;
+        }
+    }
+
+    /**
+     * Calculate total specified Q from regulated load/generators
+     *
+     * For voltage-regulated generators, the "specified Q" is typically ~0 because the regulator
+     * controls voltage and provides whatever Q is needed. For const_i/const_y types, we scale
+     * by voltage to get the voltage-dependent specified value.
+     */
+    RealValue<sym> specified_q(Idx load_gen, Idx bus, PowerFlowInput<sym> const& input) {
+        RealValue<sym> const q = imag(input.s_injection[load_gen]);
+        switch (this->load_gen_type_.get()[load_gen]) {
+            using enum LoadGenType;
+        case const_pq:
+            return q;
+        case const_i:
+            return q * x_[bus].v();
+        case const_y:
+            return q * x_[bus].v() * x_[bus].v();
+        default:
+            throw MissingCaseForEnumError("Reactive power limit calculation", this->load_gen_type_.get()[load_gen]);
+        }
+    }
+
+    static LimitViolation violated_limit(RealValue<sym> const& q, double const& q_min, double const& q_max) {
+        double q_total;
+        if constexpr (is_symmetric_v<sym>) {
+            q_total = q;
+        } else {
+            q_total = q(0) + q(1) + q(2);
+        }
+
+        if (!is_nan(q_max) && q_total > q_max + numerical_tolerance) {
+            return LimitViolation::upper;
+        }
+        if (!is_nan(q_min) && q_total < q_min - numerical_tolerance) {
+            return LimitViolation::lower;
+        }
+        return LimitViolation::none;
+    }
+
+    bool enforce_q_limits(PowerFlowInput<sym> const& input) {
+        bool switched = false;
+        auto const& regulators_per_load_gen = voltage_regulators_per_load_gen_.get();
+
+        for (auto const& [bus, load_gens] : enumerated_zip_sequence(this->load_gens_per_bus_.get())) {
+            if (bus_control_[bus].type != BusType::pv || !bus_control_[bus].q_limit.has_q_limits) {
+                continue;
+            }
+
+            // === Calculate total specified Q from regulated load/generators ===
+            // For voltage-regulated generators, the "specified Q" is typically ~0 because the regulator
+            // controls voltage and provides whatever Q is needed. For const_i/const_y types, we scale
+            // by voltage to get the voltage-dependent specified value.
+            RealValue<sym> specified_regulating_q{};
+            for (Idx const load_gen : load_gens) {
+                if (input.load_gen_status[load_gen] == status_off) {
+                    continue;
+                }
+                for (Idx const regulator : regulators_per_load_gen.get_element_range(load_gen)) {
+                    if (input.voltage_regulator[regulator].status != status_off) {
+                        specified_regulating_q += specified_q(load_gen, bus, input);
                     }
                 }
             }
+
+            // === Calculate q_required: the ACTUAL reactive power from regulated devices ===
+            //
+            // At this point in the algorithm, del_x_pq_[bus].q() contains the reactive power mismatch:
+            //     del_x_pq_[bus].q() = Q_specified_all - Q_calc_network
+            //
+            // Where:
+            //   - Q_specified_all = sum of specified Q from ALL load/gens at this bus (regulating + non-regulating)
+            //                       This was accumulated in add_loads() by summing input.s_injection[load_gen]
+            //   - Q_calc_network  = actual reactive power calculated from network equations (Y*U voltages)
+            //                       This includes: branch flows, shunt elements, and ALL device injections
+            //
+            // Rearranging the mismatch equation:
+            //     Q_calc_network = Q_specified_all - del_x_pq_[bus].q()
+            //
+            // The ACTUAL reactive power provided by regulated devices is:
+            //     q_required = Q_calc_network - Q_from_nonregulated_devices
+            //                = (Q_specified_all - del_x_pq_[bus].q()) - Q_specified_nonregulating
+            //
+            // Since Q_specified_all = Q_specified_regulating + Q_specified_nonregulating:
+            //                = (Q_specified_regulating + Q_specified_nonregulating - del_x_pq_[bus].q())
+            //                  - Q_specified_nonregulating
+            //                = Q_specified_regulating - del_x_pq_[bus].q()
+            //
+            // Why we need to include specified_regulating_q:
+            //   The specified Q values from regulating generators were already added to del_x_pq_[bus].q()
+            //   in add_loads(). To extract the ACTUAL Q that regulators are providing (including their
+            //   contribution to voltage control), we must "subtract back out" this mismatch term.
+            //   This works because: actual = specified - mismatch.
+            //
+            // The result q_required represents the TOTAL reactive power that the regulated generators
+            // are actually providing to the bus, which is what we must compare against the combined
+            // bus Q-limits (bus_q_min, bus_q_max).
+            //
+
+            RealValue<sym> const q_required = specified_regulating_q - del_x_pq_[bus].q();
+            // RealValue<sym> const q_required = -del_x_pq_[bus].q();
+
+            auto const limit =
+                violated_limit(q_required, bus_control_[bus].q_limit.bus_q_min, bus_control_[bus].q_limit.bus_q_max);
+            if (limit != LimitViolation::none) {
+                for (Idx const load_gen : load_gens) {
+                    for (Idx const regulator : regulators_per_load_gen.get_element_range(load_gen)) {
+                        if (input.load_gen_status[load_gen] != status_off &&
+                            input.voltage_regulator[regulator].status != status_off) {
+                            double const q_limit_scalar = (limit == LimitViolation::upper)
+                                                              ? input.voltage_regulator[regulator].q_max
+                                                              : input.voltage_regulator[regulator].q_min;
+
+                            if constexpr (is_symmetric_v<sym>) {
+                                clamped_regulators_per_load_gen_[load_gen] = q_limit_scalar;
+                            } else {
+                                // preserve interphase scaling from specified Q
+                                RealValue<asymmetric_t> const base_q = imag(input.s_injection[load_gen]);
+                                double const base_q_total = base_q(0) + base_q(1) + base_q(2);
+
+                                if (std::abs(base_q_total) > numerical_tolerance) {
+                                    double const scale = q_limit_scalar / base_q_total;
+                                    clamped_regulators_per_load_gen_[load_gen] = RealValue<asymmetric_t>{
+                                        base_q(0) * scale, base_q(1) * scale, base_q(2) * scale};
+                                } else {
+                                    // divide equally if input values are (close to) 0
+                                    clamped_regulators_per_load_gen_[load_gen] = RealValue<asymmetric_t>{
+                                        q_limit_scalar / 3.0, q_limit_scalar / 3.0, q_limit_scalar / 3.0};
+                                }
+                            }
+                        }
+                    }
+                }
+                // TODO(frie-soptim): don't forget to reset regulators if the bus is switched back to PV in the future
+                // clamped_regulators_per_load_gen_[load_gen] = RealValue<sym>{nan};
+
+                bus_control_[bus].q_limit.limit_violated = limit;
+                bus_control_[bus].q_limit.recalc_after_limit_violation = true;
+                bus_control_[bus].type = BusType::pq;
+                switched = true;
+            }
+        }
+        return switched;
+    }
+
+    static bool is_value_nan(RealValue<sym> const& value) {
+        if constexpr (is_symmetric_v<sym>) {
+            return is_nan(value);
+        } else {
+            // all three phases are set together, need to check only one phase for NaN
+            return is_nan(value(0));
         }
     }
 
     void add_linear_initial_guess_loads(IdxRange const& load_gens, PFJacBlock<sym>& block,
                                         PowerFlowInput<sym> const& input) {
         for (Idx const load_number : load_gens) {
-            auto const& s = input.s_injection[load_number];
+            auto const& s_input = input.s_injection[load_number];
+
+            bool is_regulated = false;
+            for (Idx const regulator : voltage_regulators_per_load_gen_.get().get_element_range(load_number)) {
+                if (input.voltage_regulator[regulator].status != status_off &&
+                    input.load_gen_status[load_number] != status_off) {
+                    is_regulated = true;
+                    break;
+                }
+            }
+
+            // Ignore specified Q for regulated load_gens, otherwise it might lead to the calculation of
+            // an incorrect initial voltage/angle. The voltage at the regulated bus will be set to the
+            // reference voltage after the linear solver, but the "wrong" angle remains. And, importantly,
+            // the "wrong" voltages at PQ buses remain as well. All this might then lead to a situation
+            // that triggers a q-limit violation and a (potentially unnecessary) bus type switch.
+            // TODO(frie-soptim): this might "fix itself" when the switch back to PV is implemented, but
+            // the solver would then still need more iterations to converge.
+            ComplexValue<sym> const& s =
+                is_regulated ? ComplexValue<sym>{RealValue<sym>{real(s_input)}, RealValue<sym>{0.0}} : s_input;
+
             // Y_load = P - jQ -> G=P, B=-Q
             // System: [[G, -B], [B, G]] [Ur, Ui]^T = [Ir, Ii]^T
             // Diagonal mapping: coeff of Ur in Real Eq = G = real(Y_load) = P
@@ -514,6 +802,15 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
                    std::vector<LoadGenType> const& load_gen_type) {
         using enum LoadGenType;
         for (Idx const load_number : load_gens) {
+            RealValue<sym> const& clamped_q = clamped_regulators_per_load_gen_[load_number];
+            if (!is_value_nan(clamped_q)) {
+                // load_gen hit a Q-limit, use the clamped value
+                del_x_pq_[bus_number].p() += real(input.s_injection[load_number]);
+                del_x_pq_[bus_number].q() += clamped_q;
+                // TODO(frie-soptim): prevent regulation of const_i/const_y load_gens in validation
+                continue;
+            }
+
             LoadGenType const type = load_gen_type[load_number];
             // modify jacobian and del_pq based on type
             switch (type) {
@@ -529,11 +826,6 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
             default:
                 throw MissingCaseForEnumError("Jacobian and deviation calculation", type);
             }
-        }
-        if (bus_types_[bus_number] == BusType::pv) {
-            // Set deltaQ = 0 to enforce voltage magnitude constraint V = V_set (see Jacobian modification above).
-            // This forces deltaV = 0 in the NR step, keeping |U| constant.
-            del_x_pq_[bus_number].q() = 0.0;
         }
     }
 
