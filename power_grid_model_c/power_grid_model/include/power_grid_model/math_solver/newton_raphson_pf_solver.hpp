@@ -743,7 +743,27 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
     void add_linear_initial_guess_loads(IdxRange const& load_gens, PFJacBlock<sym>& block,
                                         PowerFlowInput<sym> const& input) {
         for (Idx const load_number : load_gens) {
-            auto const& s = input.s_injection[load_number];
+            auto const& s_input = input.s_injection[load_number];
+
+            bool is_regulated = false;
+            for (Idx const regulator : voltage_regulators_per_load_gen_.get().get_element_range(load_number)) {
+                if (input.voltage_regulator[regulator].status != status_off &&
+                    input.load_gen_status[load_number] != status_off) {
+                    is_regulated = true;
+                    break;
+                }
+            }
+
+            // Ignore specified Q for regulated load_gens, otherwise it might lead to the calculation of
+            // an incorrect initial voltage/angle. The voltage at the regulated bus will be set to the
+            // reference voltage after the linear solver, but the "wrong" angle remains. And, importantly,
+            // the "wrong" voltages at PQ buses remain as well. All this might then lead to a situation
+            // that triggers a q-limit violation and a (potentially unnecessary) bus type switch.
+            // TODO(frie-soptim): this might "fix itself" when the switch back to PV is implemented, but
+            // the solver would then still need more iterations to converge.
+            ComplexValue<sym> const& s =
+                is_regulated ? ComplexValue<sym>{RealValue<sym>{real(s_input)}, RealValue<sym>{0.0}} : s_input;
+
             // Y_load = P - jQ -> G=P, B=-Q
             // System: [[G, -B], [B, G]] [Ur, Ui]^T = [Ir, Ii]^T
             // Diagonal mapping: coeff of Ur in Real Eq = G = real(Y_load) = P
