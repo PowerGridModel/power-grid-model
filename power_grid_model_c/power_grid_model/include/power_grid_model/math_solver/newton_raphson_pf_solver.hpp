@@ -311,7 +311,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
     void solve_matrix() { sparse_solver_.prefactorize_and_solve(data_jac_, perm_, del_x_pq_, del_x_pq_); }
 
     // Get maximum deviation among all bus voltages
-    double iterate_unknown(ComplexValueVector<sym>& u) {
+    double iterate_unknown(ComplexValueVector<sym>& u, bool cache_run) {
         double max_dev = 0.0;
         // loop each bus as i
         for (Idx i = 0; i != this->n_bus_; ++i) {
@@ -328,10 +328,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
             // assign
             u[i] = u_tmp;
         }
-        // todo(frie-soptim): use "max_iter == 1" to indicate that this is the base case for a batch run,
-        //                    and thus q-limit handling does not apply here
-        //                    => maybe find a better solution
-        if (q_limits_need_initial_check_ && this->max_iter_ > 1) {
+        if (q_limits_need_initial_check_ && !cache_run) {
             // Evaluate limits only after the first Newton update, never from the linear initialization.
             q_limits_need_initial_check_ = false;
             return std::numeric_limits<double>::infinity();

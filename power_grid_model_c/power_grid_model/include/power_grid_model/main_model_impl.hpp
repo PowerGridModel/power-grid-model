@@ -315,21 +315,21 @@ class MainModelImpl {
 
     // Calculate with optimization, e.g., automatic tap changer
     template <calculation_type_tag calculation_type, symmetry_tag sym>
-    auto calculate_with_optimizer(Options const& options, Logger& logger) {
-        auto const get_calculator = [this, &options, &logger] {
+    auto calculate_with_optimizer(Options const& options, bool cache_run, Logger& logger) {
+        auto const get_calculator = [this, &options, cache_run, &logger] {
             using Calc = Calculator<calculation_type, sym>;
 
             assert(options.optimizer_type == OptimizerType::no_optimization ||
                    (std::derived_from<calculation_type, power_flow_t>));
 
-            return [this, &mutable_comp_coup = state_.comp_coup, &options,
+            return [this, &mutable_comp_coup = state_.comp_coup, &options, cache_run,
                     &logger](MainModelState const& state, CalculationMethod calculation_method) {
                 (void)state; // to avoid unused-lambda-capture when in Release build
                 assert(&state == &state_);
 
-                return calculate_<MathSolverProxy<sym>, YBus<sym>>(Calc::preparer(state, mutable_comp_coup, options),
-                                                                   Calc::solver(calculation_method, options, logger),
-                                                                   logger);
+                return calculate_<MathSolverProxy<sym>, YBus<sym>>(
+                    Calc::preparer(state, mutable_comp_coup, options),
+                    Calc::solver(calculation_method, options, cache_run, logger), logger);
             };
         };
 
@@ -347,7 +347,7 @@ class MainModelImpl {
     }
 
     // Single calculation, propagating the results to result_data
-    void calculate(Options options, MutableDataset const& result_data, Logger& logger) {
+    void calculate(Options options, bool cache_run, MutableDataset const& result_data, Logger& logger) {
         assert(construction_complete_);
 
         if (options.calculation_type == CalculationType::short_circuit) {
@@ -366,10 +366,11 @@ class MainModelImpl {
 
         calculation_type_symmetry_func_selector(
             options.calculation_type, options.calculation_symmetry,
-            []<calculation_type_tag calculation_type, symmetry_tag sym>(
+            [cache_run]<calculation_type_tag calculation_type, symmetry_tag sym>(
                 MainModelImpl& main_model_, Options const& options_, MutableDataset const& result_data_,
                 Logger& logger) {
-                auto const math_output = main_model_.calculate_with_optimizer<calculation_type, sym>(options_, logger);
+                auto const math_output =
+                    main_model_.calculate_with_optimizer<calculation_type, sym>(options_, cache_run, logger);
                 main_model_.output_result(math_output, result_data_, logger);
             },
             *this, options, result_data, logger);
@@ -381,9 +382,7 @@ class MainModelImpl {
         auto sub_opt = options; // copy
         sub_opt.err_tol = cache_run ? std::numeric_limits<double>::max() : options.err_tol;
         sub_opt.max_iter = cache_run ? 1 : options.max_iter;
-        // TODO(frie-soptim): sets max_iter to 1, which must handled in the newton-raphson solver for batch mode. Is
-        // there a better solution?
-        model.calculate(sub_opt, target_data, logger);
+        model.calculate(sub_opt, cache_run, target_data, logger);
     }
 
     auto const& state() const {
