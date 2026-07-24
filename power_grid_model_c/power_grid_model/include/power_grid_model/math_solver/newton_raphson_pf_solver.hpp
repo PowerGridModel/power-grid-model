@@ -305,14 +305,15 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
     // Calculate the Jacobian and deviation
     void prepare_matrix_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                 ComplexValueVector<sym> const& u) {
-        build_jacobian_and_rhs(y_bus, input, u);
+        build_jacobian_and_rhs(y_bus, input, u, false);
+
         if (limit_check_countdown_ > do_limit_check) {
             --limit_check_countdown_;
         }
         const bool buses_switched = (limit_check_countdown_ == do_limit_check) && enforce_q_limits(input);
         if (buses_switched) {
             // rebuild jacobian and del_pq after PV -> PQ switching
-            build_jacobian_and_rhs(y_bus, input, u);
+            build_jacobian_and_rhs(y_bus, input, u, true);
         }
         apply_pv_constraints(y_bus);
     }
@@ -376,6 +377,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
 
     struct QLimitState {
         bool has_q_limits{false};                 // check before using limits
+        bool recalc_after_limit_violation{false}; // re-calculate jacobian and del_x_pq_ after bus type switch if true
         LimitViolation limit_violated{LimitViolation::none};
         double bus_q_min{0}; // start with 0, unspecified limit on regulator should change this to NaN
         double bus_q_max{0};
@@ -470,13 +472,18 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
     }
 
     void prepare_matrix_and_rhs_from_network_perspective(YBus<sym> const& y_bus, ComplexValueVector<sym> const& u,
-                                                         IdxVector const& bus_entry) {
+                                                         IdxVector const& bus_entry, bool partial_rebuild) {
         IdxVector const& indptr = y_bus.row_indptr_lu();
         IdxVector const& indices = y_bus.col_indices_lu();
         IdxVector const& map_lu_y_bus = y_bus.map_lu_y_bus();
         ComplexTensorVector<sym> const& ydata = y_bus.admittance();
 
         for (Idx row = 0; row != this->n_bus_; ++row) {
+            if (partial_rebuild && !bus_control_[row].q_limit.recalc_after_limit_violation) {
+                // only re-calculate rows in jacobian for buses that have switched from PV to PQ due to Q-limit
+                // violation
+                continue;
+            }
             // reset power injection
             del_x_pq_[row].p() = RealValue<sym>{0.0};
             del_x_pq_[row].q() = RealValue<sym>{0.0};
@@ -515,17 +522,25 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
     }
 
     void build_jacobian_and_rhs(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
-                                ComplexValueVector<sym> const& u) {
+                                ComplexValueVector<sym> const& u, bool partial_rebuild) {
         std::vector<LoadGenType> const& load_gen_type = this->load_gen_type_.get();
         IdxVector const& bus_entry = y_bus.lu_diag();
 
         auto const& load_gens_per_bus = this->load_gens_per_bus_.get();
         auto const& sources_per_bus = this->sources_per_bus_.get();
 
-        prepare_matrix_and_rhs_from_network_perspective(y_bus, u, bus_entry);
+        prepare_matrix_and_rhs_from_network_perspective(y_bus, u, bus_entry, partial_rebuild);
 
         for (auto const& [bus_number, load_gens, sources] :
              enumerated_zip_sequence(load_gens_per_bus, sources_per_bus)) {
+
+            if (partial_rebuild) {
+                if (!bus_control_[bus_number].q_limit.recalc_after_limit_violation) {
+                    // add only for buses that have switched from PV to PQ due to Q-limit violation
+                    continue;
+                }
+                bus_control_[bus_number].q_limit.recalc_after_limit_violation = false;
+            }
             Idx const diagonal_position = bus_entry[bus_number];
             add_loads(load_gens, bus_number, diagonal_position, input, load_gen_type);
             add_sources(sources, bus_number, diagonal_position, y_bus, input, u);
@@ -708,6 +723,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
                 // clamped_regulators_per_load_gen_[load_gen] = RealValue<sym>{nan};
 
                 bus_control_[bus].q_limit.limit_violated = limit;
+                bus_control_[bus].q_limit.recalc_after_limit_violation = true;
                 bus_control_[bus].type = BusType::pq;
                 switched = true;
             }
