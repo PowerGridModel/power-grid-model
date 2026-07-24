@@ -31,6 +31,24 @@ This directly conflicts with the properties of an ideal transformer, so the PGM
 [transformer](./components.md#transformer) cannot be used to model ideal transformers.
 ```
 
+## Phase-shifting transformer
+
+A [generic branch](./components.md#generic-branch) can represent a static phase-shifting transformer with finite series
+impedance. For the tap position being calculated, use:
+
+* `k` for the transformer magnitude ratio;
+* `theta` for the fixed and tap-dependent phase shift, in radians;
+* `r1` and `x1` for the transformer series resistance and reactance; and
+* `g1` and `b1` for the magnetizing conductance and susceptance.
+
+For example, a lossless phase-shifting transformer that still has finite series reactance can use `r1 = 0`, `x1 > 0`,
+`g1 = 0`, `b1 = 0`, `k = 1`, and `theta` equal to the desired phase shift.
+
+```{warning}
+An impedance-free ideal phase link cannot be represented by setting both `r1` and `x1` to zero. The branch model uses
+`1 / (r1 + j x1)` for its series admittance, so zero series impedance would make the model singular.
+```
+
 ## Grounding transformer
 
 A grounding transformer (a.k.a. earthing transformer) can be modeled as a [shunt](./components.md#shunt) with only
