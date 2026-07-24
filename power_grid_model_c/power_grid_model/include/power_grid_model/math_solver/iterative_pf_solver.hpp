@@ -32,7 +32,6 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
     friend DerivedSolver;
     SolverOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
                                      Idx max_iter, bool cache_run, Logger& log) {
-        this->max_iter_ = max_iter;
         // keep copy, as reference might break batching
         auto derived_solver = static_cast<DerivedSolver&>(*this);
 
@@ -97,14 +96,12 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
 
   private:
     Idx n_bus_;
-    Idx max_iter_;
     std::reference_wrapper<DoubleVector const> phase_shift_;
     std::reference_wrapper<SparseGroupedIdxVector const> load_gens_per_bus_;
     std::reference_wrapper<DenseGroupedIdxVector const> sources_per_bus_;
     std::reference_wrapper<std::vector<LoadGenType> const> load_gen_type_;
     IterativePFSolver(YBus<sym> const& y_bus, MathModelTopology const& topo)
         : n_bus_{y_bus.size()},
-          max_iter_{0},
           phase_shift_{std::cref(topo.phase_shift)},
           load_gens_per_bus_{std::cref(topo.load_gens_per_bus)},
           sources_per_bus_{std::cref(topo.sources_per_bus)},

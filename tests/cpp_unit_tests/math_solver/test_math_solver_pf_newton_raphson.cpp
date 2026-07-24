@@ -342,7 +342,7 @@ TEST_CASE("Newton-Raphson handling with one-sided Q-limits") {
         REQUIRE(output_finite.voltage_regulator[0].limit_violated != LimitViolation::none);
         REQUIRE(output_finite.voltage_regulator[1].limit_violated != LimitViolation::none);
 
-        double total_q_finite = imag(output_finite.load_gen[0].s) + imag(output_finite.load_gen[1].s);
+        const double total_q_finite = imag(output_finite.load_gen[0].s) + imag(output_finite.load_gen[1].s);
         REQUIRE(total_q_finite == 0.1); // Clamped at combined limit
 
         // Step 2: Make one regulator unlimited, load stays unchanged -> no pq switch or bus violation
@@ -363,7 +363,7 @@ TEST_CASE("Newton-Raphson handling with one-sided Q-limits") {
         // Regulator 1 (limited) still reports violation
         CHECK(output_mixed.voltage_regulator[1].limit_violated == LimitViolation::upper);
 
-        double total_q_mixed = imag(output_mixed.load_gen[0].s) + imag(output_mixed.load_gen[1].s);
+        const double total_q_mixed = imag(output_mixed.load_gen[0].s) + imag(output_mixed.load_gen[1].s);
         CHECK(total_q_mixed > 0.1); // Exceeds previous finite combined limit
     }
 
@@ -400,7 +400,7 @@ TEST_CASE("Newton-Raphson handling with one-sided Q-limits") {
         CHECK(output_onesided.voltage_regulator[0].limit_violated == LimitViolation::none);
         CHECK(output_onesided.voltage_regulator[1].limit_violated == LimitViolation::upper);
 
-        double total_q = imag(output_onesided.load_gen[0].s) + imag(output_onesided.load_gen[1].s);
+        const double total_q = imag(output_onesided.load_gen[0].s) + imag(output_onesided.load_gen[1].s);
         CHECK(total_q > 0.1); // total Q exceeds previous finite combined limit
     }
 
@@ -433,7 +433,7 @@ TEST_CASE("Newton-Raphson handling with one-sided Q-limits") {
         CHECK(output_completed.voltage_regulator[0].limit_violated == LimitViolation::upper);
         CHECK(output_completed.voltage_regulator[1].limit_violated == LimitViolation::upper);
 
-        double total_q = imag(output_completed.load_gen[0].s) + imag(output_completed.load_gen[1].s);
+        const double total_q = imag(output_completed.load_gen[0].s) + imag(output_completed.load_gen[1].s);
         CHECK(cabs(total_q) == doctest::Approx(0.1).epsilon(numerical_tolerance)); // Clamped at combined limit
     }
 
@@ -470,7 +470,7 @@ TEST_CASE("Newton-Raphson handling with one-sided Q-limits") {
         CHECK(output.voltage_regulator[0].limit_violated == LimitViolation::none);
         CHECK(output.voltage_regulator[1].limit_violated == LimitViolation::none);
 
-        double total_q = imag(output.load_gen[0].s) + imag(output.load_gen[1].s);
+        const double total_q = imag(output.load_gen[0].s) + imag(output.load_gen[1].s);
         CHECK(total_q < 2.0); // Within combined limit
     }
 }

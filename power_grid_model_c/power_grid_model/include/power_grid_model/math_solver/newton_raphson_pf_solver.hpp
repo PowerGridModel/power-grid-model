@@ -261,7 +261,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         // initialize bus state, in case solver instance is reused in batching
         std::ranges::fill(bus_control_, BusControlState{});
 
-        bool has_usable_limits = set_bus_types_and_q_limits(input);
+        const bool has_usable_limits = set_bus_types_and_q_limits(input);
         limit_check_countdown_ = has_usable_limits ? limit_check_at_iteration : no_limit_check;
 
         // Map network admittance to real-domain system

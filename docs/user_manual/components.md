@@ -81,7 +81,6 @@ as a PV node, but it can be reported as PQ if reactive-power limits force PV→P
 `bus_type` output is available only for the [Newton-Raphson power flow](./calculations.md#newton-raphson-power-flow) method; for other methods, `bus_type` is set to `0` (PQ) by default.
 ```
 
-
 #### Short circuit output
 
 | name      | data type         | unit     | description                      |
@@ -1264,8 +1263,8 @@ source_6     |                                    load_7
 * base: {hoverxreftooltip}`user_manual/components:regulator`
 
 `voltage_regulator` defines voltage control for a regulated load or generator. In Newton-Raphson power-flow
-calculations, an active voltage regulator makes the connection node a voltage-controlled PV node. The active power of the
-regulated object remains specified by the load/generator input, while the reactive power is calculated so that the
+calculations, an active voltage regulator makes the connection node a voltage-controlled PV node. The active power of
+the regulated object remains specified by the load/generator input, while the reactive power is calculated so that the
 voltage magnitude at the node follows `u_ref`.
 
 Voltage regulation is supported only by the [Newton-Raphson power flow](./calculations.md#newton-raphson-power-flow)
@@ -1295,16 +1294,16 @@ the same node, they should all specify the same `u_ref` value to avoid conflicti
 
 #### Input
 
-| name     | data type | unit                       | description                                         |           required           |  update  | valid values |
-| -------- | --------- | -------------------------- | --------------------------------------------------- | :--------------------------: | :------: | :----------: |
+| name     | data type | unit                       | description                                                |           required           |  update  | valid values |
+| -------- | --------- | -------------------------- | ---------------------------------------------------------- | :--------------------------: | :------: | :----------: |
 | `u_ref`  | `double`  | -                          | reference voltage in per-unit at the regulated object node | &#10024; only for power flow | &#10004; |    `> 0`     |
 | `q_min`  | `double`  | volt-ampere-reactive (var) | minimum reactive power limit of the regulated object       | &#10060;                     | &#10004; |              |
 | `q_max`  | `double`  | volt-ampere-reactive (var) | maximum reactive power limit of the regulated object       | &#10060;                     | &#10004; |              |
 
 #### Steady state output
 
-| name             | data type | unit | description                                                                                         |
-|------------------|-----------|------|-----------------------------------------------------------------------------------------------------|
+| name             | data type | unit | description                                                                                             |
+|------------------|-----------|------|---------------------------------------------------------------------------------------------------------|
 | `limit_violated` | `int8_t`  | -    | reactive-power limit indicator: `-1` = `q_min` reached, `0` = no limit violation, `1` = `q_max` reached |
 
 ```{note}
@@ -1329,8 +1328,8 @@ $$
 \end{aligned}
 $$
 
-When the reactive power constraints are violated, the regulated object operates at the violated limit and the node becomes
-a PQ node:
+When the reactive power constraints are violated, the regulated object operates at the violated limit and the node
+becomes a PQ node:
 
 $$
 \begin{aligned}

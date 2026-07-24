@@ -38,7 +38,7 @@ The following bus types can be present in the system:
   power-flow method.
 
 ```{note}
-Asymmetric power flow calculations require the network to have a reference to ground. For details and internal solution of asymmetric floating grids calculations in power-grid-model, please refer to [Floating grid handling](../user_manual/calculations.md#floating-grid-handling). 
+Asymmetric power flow calculations require the network to have a reference to ground. For details and internal solution of asymmetric floating grids calculations in power-grid-model, please refer to [Floating grid handling](../user_manual/calculations.md#floating-grid-handling).
 ```
 
 ## Newton-Raphson power flow
@@ -129,8 +129,8 @@ For each iteration the following steps are executed:
 
 ### PV nodes and reactive-power limits
 
-In Newton-Raphson power flow, an active `voltage_regulator` replaces the reactive-power equation of the regulated node by
-a voltage-magnitude constraint. The solver therefore treats the node as a PV node.
+In Newton-Raphson power flow, an active `voltage_regulator` replaces the reactive-power equation of the regulated node
+by a voltage-magnitude constraint. The solver therefore treats the node as a PV node.
 
 If the reactive power required to keep the voltage at `u_ref` exceeds the configured `q_min` or `q_max`, the regulated
 object is clamped to the violated limit and the node is switched to PQ. The final effective node type is reported in
