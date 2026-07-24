@@ -10,3 +10,10 @@ add_subdirectory("native_api_tests")
 add_subdirectory("cpp_unit_tests")
 add_subdirectory("cpp_validation_tests")
 add_subdirectory("benchmark_cpp")
+add_subdirectory("cpp_cli_tests")
+
+add_test(
+	PGMCLI
+	${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/power-grid-model
+	--version
+)
