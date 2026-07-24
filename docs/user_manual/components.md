@@ -67,7 +67,7 @@ Physically a node can be a busbar, a joint, or other similar component.
 | `q`       | `RealValueOutput` | volt-ampere-reactive (var) | reactive power injection                                                                        |
 
 ```{note}
-The `p` and `q` output of injection follows the `generator` reference direction as mentioned in  
+The `p` and `q` output of injection follows the `generator` reference direction as mentioned in
 [Reference Direction](data-model.md#reference-direction)
 ```
 
@@ -321,6 +321,150 @@ $$
     N &= k \cdot e^{\mathrm{j} \theta}
 \end{aligned}
 $$
+
+#### Modeling a phase-shifting transformer
+
+A phase-shifting transformer (PST) can be modeled directly with `generic_branch`.
+The complex ratio
+
+$$
+N = k \cdot e^{\mathrm{j} \theta}
+$$
+
+already contains the phase shift; the series impedance and the magnetizing branch are given by
+`r1`, `x1`, `g1`, `b1` as for any transformer. No dedicated PST component is required.
+
+The angle `theta` must be provided explicitly by the user.
+For a transformer with a tap changer, `theta` (and in general also `k` and `x1`, see below) has to
+be calculated from the tap position and the transformer data, i.e. from the additional (boost)
+voltage injected per tap step and its injection angle.
+
+Let
+
+* $m = \text{tap\_pos} - \text{tap\_neutral}$ be the tap position relative to the neutral position,
+* $\Delta u$ be the additional voltage per tap step in per-unit of the winding voltage,
+* $\psi$ be the injection angle of the additional voltage relative to the winding voltage
+  (e.g. $\psi = 90^{\circ}$ for pure quadrature/phase regulation).
+
+The tap-dependent complex ratio is then
+
+$$
+\rho = 1 + m \, \Delta u \, e^{\mathrm{j} \psi}
+$$
+
+so that
+
+$$
+\begin{aligned}
+k_{\text{tap}} &= |\rho| = \sqrt{\left(1 + m \, \Delta u \cos\psi\right)^2
+                                 + \left(m \, \Delta u \sin\psi\right)^2} \\
+\theta_{\text{tap}} &= \operatorname{atan2}\!\left(m \, \Delta u \sin\psi,\;
+                                                  1 + m \, \Delta u \cos\psi\right)
+\end{aligned}
+$$
+
+The `generic_branch` input attributes follow as
+
+$$
+\begin{aligned}
+k      &= k_{\text{off-nominal}} \cdot k_{\text{tap}} \\
+\theta &= \theta_{\text{fixed}} + \theta_{\text{tap}}
+\end{aligned}
+$$
+
+where $k_{\text{off-nominal}}$ is the off-nominal ratio of the transformer at the neutral tap
+position and $\theta_{\text{fixed}}$ is the fixed phase shift of the winding configuration
+(e.g. from the clock number).
+
+**Special case: ideal phase-shifting tap changer.**
+Some tools (e.g. pandapower with `tap_changer_type="Ideal"`) model a tap changer that changes only
+the phase angle, while the voltage magnitude ratio stays constant.
+Note that "ideal" refers to the tap changer, not to a zero-impedance transformer: the series
+impedance and the magnetizing branch are still modeled through `r1`, `x1`, `g1`, `b1`.
+In this case the attributes reduce to
+
+$$
+\begin{aligned}
+k      &= k_{\text{off-nominal}} \\
+\theta &= \theta_{\text{fixed}} + m \cdot \theta_{\text{step}}
+\end{aligned}
+$$
+
+with $\theta_{\text{step}}$ the angle shift per tap step
+(pandapower: `tap_step_degree`, converted to radian).
+
+A lossless but not impedance-free PST is obtained with `r1 = 0`, `x1 > 0`, `g1 = 0`, `b1 = 0`.
+
+##### Mapping from CGMES / ENTSO-E PST models
+<!-- markdownlint-disable-next-line MD013 -->
+The [ENTSO-E PST modelling document (CGMES v2.4)](https://eepublicdownloads.entsoe.eu/clean-documents/CIM_documents/Grid_Model_CIM/ENTSOE_CGMES_v2.4_28May2014_PSTmodelling.pdf)
+describes the standard PST types and their mapping to CIM classes.
+All of these types can be represented with `generic_branch`.
+In the ENTSO-E models the resistances and magnetizing currents are neglected, which corresponds to
+`r1 = 0`, `g1 = 0`, `b1 = 0`; only `x1`, `k` and `theta` remain.
+With $m = n - n_0$ (CIM: `step` − `neutralStep`), $\Delta u$ = `voltageStepIncrement` and
+$\psi$ = `windingConnectionAngle`, the per-tap values are:
+
+| CIM class                                | angle $\alpha$ per tap                                                                       | magnitude ratio                                                                   |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `PhaseTapChangerLinear`                  | $\alpha = m \cdot \delta$ (`stepPhaseShiftIncrement`)                                        | constant                                                                          |
+| `PhaseTapChangerSymmetrical`             | $\alpha = 2 \operatorname{atan}\!\left(\tfrac{m \, \Delta u}{2}\right)$                      | constant ($r = 1$)                                                                |
+| `PhaseTapChangerAsymmetrical`            | $\alpha = \operatorname{atan2}\!\left(m \Delta u \sin\psi,\, 1 + m \Delta u \cos\psi\right)$ | $\lvert\rho\rvert = \sqrt{(1 + m \Delta u \cos\psi)^2 + (m \Delta u \sin\psi)^2}$ |
+| quadrature booster ($\psi = 90^{\circ}$) | $\alpha = \operatorname{atan}(m \, \Delta u)$                                                | $\lvert\rho\rvert = \sqrt{1 + (m \, \Delta u)^2}$                                 |
+| `PhaseTapChangerTabular`                 | $\alpha$ = `angle` per tap (from table)                                                      | `ratio` per tap (from table)                                                      |
+
+The symmetrical phase shifter changes only the angle ($r = 1$); it is therefore the physical
+counterpart of the "ideal phase-shifting tap changer" described above.
+
+**Tap-dependent series reactance.**
+The ENTSO-E document also specifies that the equivalent series reactance of a PST depends on the
+phase shift angle, exchanged in CIM via `xMin` (at neutral tap) and `xMax` (at maximum phase shift
+$\alpha_{\max}$):
+
+$$
+\begin{aligned}
+\text{symmetrical:} \quad
+  X(\alpha) &= X_{\min} + \left(X_{\max} - X_{\min}\right)
+               \left(\frac{\sin(\alpha/2)}{\sin(\alpha_{\max}/2)}\right)^{2} \\
+\text{quadrature booster:} \quad
+  X(\alpha) &= X_{\min} + \left(X_{\max} - X_{\min}\right)
+               \left(\frac{\tan\alpha}{\tan\alpha_{\max}}\right)^{2} \\
+\text{asymmetrical:} \quad
+  X(\alpha) &= X_{\min} + \left(X_{\max} - X_{\min}\right)
+               \left(\frac{\tan\alpha}{\tan\alpha_{\max}} \cdot
+                     \frac{\sin\psi - \tan\alpha_{\max}\cos\psi}
+                          {\sin\psi - \tan\alpha\cos\psi}\right)^{2}
+\end{aligned}
+$$
+
+For `generic_branch` this means that a tap change on a CGMES PST in general requires recalculating
+**three** attributes: `k`, `theta` and `x1`.
+When `PhaseTapChangerTabular` data is available (recommended by ENTSO-E), `k`, `theta` and `x1` can
+be taken directly from the per-tap table columns `ratio`, `angle` and `x` without evaluating the
+formulas above.
+
+```{note}
+Mind the direction convention: the ENTSO-E document defines the ratio as
+$r = 1 / \lvert\rho\rvert$ (referenced from the opposite side).
+Depending on which side of the `generic_branch` the tap winding is located, either
+$\lvert\rho\rvert$ or its reciprocal must be used for `k`, consistent with the fact that `r1`,
+`x1`, `g1`, `b1` are referenced to the "to" side of the branch.
+```
+
+```{warning}
+A fully impedance-free ideal phase link (`r1 = x1 = 0`) cannot be modeled, because the series
+admittance $Y_{\text{series}} = 1 / (r_1 + \mathrm{j} x_1)$ would become singular.
+```
+
+```{note}
+The attributes `k`, `theta` and `x1` are not updatable.
+Changing the tap position of a phase-shifting transformer therefore requires recalculating these
+attributes and rebuilding the model.
+Automatic tap control via the transformer tap regulator is not available for `generic_branch`.
+```
+
+An example of the usage of `generic_branch` is given in
+[Generic Branch Example](../examples/Generic%20Branch%20Example.ipynb).
 
 ### Asym Line
 
@@ -732,7 +876,7 @@ It behaves similar to a load/generator with type `const_impedance`.
 | `b0` | `double`  | siemens (S) | zero-sequence shunt susceptance     | &#10024; only for asymmetric calculation | &#10004; |
 
 ```{note}
-In power-grid-model, shunts may also be used to introduce a ground reference in an otherwise floating grid. 
+In power-grid-model, shunts may also be used to introduce a ground reference in an otherwise floating grid.
 ```
 
 ```{note}
