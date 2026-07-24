@@ -145,7 +145,7 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCur
     void solve_matrix() { sparse_solver_.solve_with_prefactorized_matrix(*mat_data_, *perm_, rhs_u_, rhs_u_); }
 
     // Find maximum deviation in voltage among all buses
-    double iterate_unknown(ComplexValueVector<sym>& u, bool /*cache_run*/) {
+    double iterate_unknown(ComplexValueVector<sym>& u, double /*err_tol*/, bool /*cache_run*/) {
         double max_dev = 0.0;
         // loop all buses
         for (Idx bus_number = 0; bus_number != this->n_bus_; ++bus_number) {
@@ -160,10 +160,6 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCur
     }
 
     void parameters_changed(bool changed) { parameters_changed_ = parameters_changed_ || changed; }
-
-    void finalize_derived_result(PowerFlowInput<sym> const& /*input*/, SolverOutput<sym>& /*output*/) {
-        // nothing to finalize for this solver
-    }
 
   private:
     ComplexValueVector<sym> rhs_u_;

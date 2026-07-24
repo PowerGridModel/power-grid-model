@@ -61,7 +61,7 @@ class VoltageRegulator : public Regulator {
     VoltageRegulatorOutput get_output(VoltageRegulatorSolverOutput const& solver_output) const {
         VoltageRegulatorOutput output{};
         static_cast<BaseOutput&>(output) = base_output(is_energized(true) && solver_output.generator_status != 0);
-        output.limit_violated = solver_output.limit_violated;
+        output.limit_violated = static_cast<IntS>(solver_output.limit_violated);
         return output;
     }
 

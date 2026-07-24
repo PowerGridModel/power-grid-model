@@ -70,19 +70,16 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
             {
                 // Calculate maximum deviation of voltage at any bus
                 Timer const sub_timer{log, LogEvent::iterate_unknown};
-                max_dev = derived_solver.iterate_unknown(output.u, cache_run);
+                max_dev = derived_solver.iterate_unknown(output.u, err_tol, cache_run);
             }
-        }
-
-        // finalize
-        {
-            // Timer const sub_timer{log, LogEvent::calculate_math_result}; // TODO(mgovers): need new event ?!?
-            derived_solver.finalize_derived_result(input, output);
         }
 
         // calculate math result
         {
             Timer const sub_timer{log, LogEvent::calculate_math_result};
+            if constexpr (requires { derived_solver.finalize_result(input, output); }) {
+                derived_solver.finalize_result(input, output);
+            }
             calculate_result(y_bus, input, output);
         }
         // Manually stop timers to avoid "Max number of iterations" to be included in the timing.

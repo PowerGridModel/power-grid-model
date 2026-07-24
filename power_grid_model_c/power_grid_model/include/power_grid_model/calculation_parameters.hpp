@@ -17,6 +17,7 @@
 
 namespace power_grid_model {
 constexpr Idx disconnected = -1;
+constexpr Idx status_off = 0;
 
 // Entry of YBus, node addmittance matrix
 struct YBusElement {
@@ -45,8 +46,7 @@ template <symmetry_tag sym_type> struct BranchCalcParam {
 struct BusSolverOutput {
     // initialize with BusType::pq, set calculated value in newton_raphson solver
     BusType bus_type{BusType::pq};
-    // 0: no violation, -1: q_min violated, 1: q_max violated
-    IntS q_limit_violated{0};
+    LimitViolation q_limit_violated{LimitViolation::none};
 };
 
 template <symmetry_tag sym_type> struct BranchSolverOutput {
@@ -93,7 +93,7 @@ template <symmetry_tag sym_type> struct ApplianceShortCircuitSolverOutput {
 };
 
 struct VoltageRegulatorSolverOutput {
-    IntS limit_violated{};
+    LimitViolation limit_violated{};
 
     // provide generator info, as the regulator component has no other access to it
     ID generator_id{};
