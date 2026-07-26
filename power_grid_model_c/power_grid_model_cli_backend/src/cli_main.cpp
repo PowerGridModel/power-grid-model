@@ -18,8 +18,9 @@ using namespace power_grid_model_cpp;
 
 namespace {
 
-void write_output(PGM_CLIMessageCallback callback, void* user_data, std::ostream& stream,
-                  std::string const& message) { // NOSONAR(S5008,S5205)
+void write_output(PGM_CLIMessageCallback callback, // NOSONAR(S5205)
+                  void* user_data,                 // NOSONAR(S5008)
+                  std::ostream& stream, std::string const& message) {
     if (callback != nullptr) {
         callback(message.c_str(), user_data);
     } else {
@@ -29,8 +30,9 @@ void write_output(PGM_CLIMessageCallback callback, void* user_data, std::ostream
 
 } // namespace
 
-int PGM_cli_main(int argc, char** argv, PGM_CLIMessageCallback cout_callback, PGM_CLIMessageCallback cerr_callback,
-                 void* user_data) noexcept { // NOSONAR(S5008,S5205)
+int PGM_cli_main(int argc, char** argv,                                                      // CLI argument
+                 PGM_CLIMessageCallback cout_callback, PGM_CLIMessageCallback cerr_callback, // NOSONAR(S5205)
+                 void* user_data) noexcept {                                                 // NOSONAR(S5008)
     static std::mutex cli_mutex;
     std::scoped_lock<std::mutex> const lock{cli_mutex};
 
