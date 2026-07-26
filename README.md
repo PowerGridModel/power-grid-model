@@ -79,6 +79,15 @@ Please refer to [Examples](https://github.com/PowerGridModel/power-grid-model-wo
 detailed examples for power flow and state estimation.
 Notebooks for validating the input data and exporting input/output data are also included.
 
+## Community projects
+
+The following are community-maintained projects built on top of Power Grid Model.
+These are not officially maintained by the Power Grid Model project.
+
+* [power-grid-model-ai](https://github.com/BrightCubes/power-grid-model-ai) — AI agent skills for working with the power-grid-model ecosystem.
+  These skills help coding agents run complete PGM workflows — loading and converting grid data, performing power flow, state estimation and short-circuit calculations, and validating results.
+  They can also help you debug failures or errors by diagnosing the issue and producing a minimal reproducible case.
+ 
 ## License
 
 This project is licensed under the Mozilla Public License, version 2.0 - see
