@@ -355,7 +355,6 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
             auto& bus_output = output.bus[i];
             auto const& q_limit = bus_control_[i].q_limit;
 
-            bus_output.bus_type = bus_control_[i].type;
             bus_output.q_limit_violated = q_limit.limit_violated;
         }
     }

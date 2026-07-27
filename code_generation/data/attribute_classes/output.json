@@ -31,11 +31,6 @@
           "data_type": "RealValue<sym>",
           "names": ["p", "q"],
           "description": "node injection"
-        },
-        {
-          "data_type": "IntS",
-          "names": ["bus_type"],
-          "description": "effective bus type after calculation"
         }
       ]
     },

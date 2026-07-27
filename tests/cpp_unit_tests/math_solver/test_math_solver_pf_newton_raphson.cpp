@@ -99,9 +99,8 @@ TEST_CASE("Newton-Raphson PV reactive-power limits switch one-way to PQ") {
         NewtonRaphsonPFSolver<symmetric_t> solver{y_bus, topo};
         auto const output = solver.run_power_flow(y_bus, input(-1.0, 1.0), 1e-12, 20, cache_run, log);
 
-        CHECK(output.bus[1].bus_type == BusType::pv);
         CHECK(cabs(output.u[1]) == doctest::Approx(1.0));
-        CHECK(output.voltage_regulator[0].limit_violated == LimitViolation::none);
+        CHECK(output.voltage_regulator[0].limit_violated == LimitViolation::none); // pv bus
         CHECK(imag(output.load_gen[0].s) > -1.0);
         CHECK(imag(output.load_gen[0].s) < 1.0);
     }
@@ -111,9 +110,8 @@ TEST_CASE("Newton-Raphson PV reactive-power limits switch one-way to PQ") {
         constexpr double q_max = -0.3;
         auto const output = solver.run_power_flow(y_bus, input(-1.0, q_max), 1e-12, 20, cache_run, log);
 
-        CHECK(output.voltage_regulator[0].limit_violated == LimitViolation::upper);
+        CHECK(output.voltage_regulator[0].limit_violated == LimitViolation::upper); // pq bus
         CHECK(imag(output.load_gen[0].s) == doctest::Approx(q_max));
-        CHECK(output.bus[1].bus_type == BusType::pq);
         CHECK(cabs(output.u[1]) != doctest::Approx(1.0));
     }
 
@@ -122,9 +120,8 @@ TEST_CASE("Newton-Raphson PV reactive-power limits switch one-way to PQ") {
         constexpr double q_min = -0.2;
         auto const output = solver.run_power_flow(y_bus, input(q_min, 1.0), 1e-12, 20, cache_run, log);
 
-        CHECK(output.voltage_regulator[0].limit_violated == LimitViolation::lower);
+        CHECK(output.voltage_regulator[0].limit_violated == LimitViolation::lower); // pq bus
         CHECK(imag(output.load_gen[0].s) == doctest::Approx(q_min));
-        CHECK(output.bus[1].bus_type == BusType::pq);
         CHECK(cabs(output.u[1]) != doctest::Approx(1.0));
     }
 }
@@ -220,19 +217,18 @@ TEST_CASE("Newton-Raphson bus types and Q-limits") {
     NewtonRaphsonPFSolver<symmetric_t> solver{y_bus, topo};
     constexpr bool cache_run = false;
 
-    SUBCASE("Bus type determination") {
-        auto output = solver.run_power_flow(y_bus, input, 1e-12, 20, cache_run, log);
+    auto base_output = solver.run_power_flow(y_bus, input, 1e-12, 20, cache_run, log);
 
-        CHECK(output.bus[0].bus_type == BusType::slack);
-        CHECK(output.bus[1].bus_type == BusType::pq); // No regulator
-        CHECK(output.bus[2].bus_type == BusType::pv); // Single regulator
-        CHECK(output.bus[3].bus_type == BusType::pv); // Two regulators
-    }
+    CHECK(cabs(base_output.u[0]) == doctest::Approx(1.0).epsilon(0.001));   // slack bus
+    CHECK(cabs(base_output.u[1]) == doctest::Approx(1.026).epsilon(0.001)); // pq bus
+    CHECK(cabs(base_output.u[2]) == doctest::Approx(1.05).epsilon(0.001));  // pv bus
+    CHECK(cabs(base_output.u[3]) == doctest::Approx(1.05).epsilon(0.001));  // pv bus
+
 
     SUBCASE("Single regulator controls voltage") {
         auto output = solver.run_power_flow(y_bus, input, 1e-12, 20, cache_run, log);
 
-        CHECK(cabs(output.u[2]) == doctest::Approx(1.05).epsilon(0.01));
+        CHECK(cabs(output.u[2]) == doctest::Approx(1.05).epsilon(0.005));
         CHECK(output.voltage_regulator[0].limit_violated == LimitViolation::none);
     }
 
@@ -240,13 +236,12 @@ TEST_CASE("Newton-Raphson bus types and Q-limits") {
         auto output = solver.run_power_flow(y_bus, input, 1e-12, 20, cache_run, log);
 
         // Bus 3: combined limits q_min = -0.5-0.7 = -1.2, q_max = 0.5+0.8 = 1.3
-        CHECK(output.bus[3].bus_type == BusType::pv);
-        CHECK(cabs(output.u[3]) == doctest::Approx(1.05).epsilon(0.01));
+        CHECK(cabs(output.u[3]) == doctest::Approx(1.05).epsilon(0.001));
 
         double const total_q = imag(output.load_gen[2].s) + imag(output.load_gen[3].s);
         CHECK(total_q > -1.2);
         CHECK(total_q < 1.3);
-        CHECK(output.voltage_regulator[1].limit_violated == LimitViolation::none);
+        CHECK(output.voltage_regulator[1].limit_violated == LimitViolation::none); // pv bus
         CHECK(output.voltage_regulator[2].limit_violated == LimitViolation::none);
     }
 
@@ -256,7 +251,10 @@ TEST_CASE("Newton-Raphson bus types and Q-limits") {
 
         auto output = solver.run_power_flow(y_bus, input_disabled, 1e-12, 20, cache_run, log);
 
-        CHECK(output.bus[2].bus_type == BusType::pq);
+        CHECK(cabs(output.u[0]) == doctest::Approx(1.0).epsilon(0.001));   // slack bus
+        CHECK(cabs(output.u[1]) == doctest::Approx(1.02).epsilon(0.001));  // pq bus
+        CHECK(cabs(output.u[2]) == doctest::Approx(1.038).epsilon(0.001)); // pv -> pq switch
+        CHECK(cabs(output.u[3]) == doctest::Approx(1.05).epsilon(0.001));  // pv bus
     }
 
     SUBCASE("Inactive load_gen ignores its regulator") {
@@ -265,7 +263,10 @@ TEST_CASE("Newton-Raphson bus types and Q-limits") {
 
         auto output = solver.run_power_flow(y_bus, input_inactive, 1e-12, 20, cache_run, log);
 
-        CHECK(output.bus[2].bus_type == BusType::pq);
+        CHECK(cabs(output.u[0]) == doctest::Approx(1.0).epsilon(0.001));   // slack bus
+        CHECK(cabs(output.u[1]) == doctest::Approx(1.02).epsilon(0.001));  // pq bus
+        CHECK(cabs(output.u[2]) == doctest::Approx(1.038).epsilon(0.001)); // pv -> pq switch
+        CHECK(cabs(output.u[3]) == doctest::Approx(1.05).epsilon(0.001));  // pv bus
     }
 
     SUBCASE("Partially inactive load_gens: one active keeps bus PV") {
@@ -274,9 +275,12 @@ TEST_CASE("Newton-Raphson bus types and Q-limits") {
 
         auto output = solver.run_power_flow(y_bus, input_partial, 1e-12, 20, cache_run, log);
 
-        // One regulator still active → bus stays PV
-        CHECK(output.bus[3].bus_type == BusType::pv);
-        CHECK(cabs(output.u[3]) == doctest::Approx(1.05).epsilon(0.01));
+        // One regulator still active -> bus stays PV
+        CHECK(cabs(output.u[0]) == doctest::Approx(1.0).epsilon(0.001));   // slack bus
+        CHECK(cabs(output.u[1]) == doctest::Approx(1.026).epsilon(0.001)); // pq bus
+        CHECK(cabs(output.u[2]) == doctest::Approx(1.05).epsilon(0.001));  // pv bus
+        CHECK(cabs(output.u[3]) == doctest::Approx(1.05).epsilon(0.001));  // stays pv bus
+
     }
 
     SUBCASE("All load_gens inactive: bus becomes PQ") {
@@ -286,8 +290,11 @@ TEST_CASE("Newton-Raphson bus types and Q-limits") {
 
         auto output = solver.run_power_flow(y_bus, input_all_inactive, 1e-12, 20, cache_run, log);
 
-        // No active regulators → bus becomes PQ
-        CHECK(output.bus[3].bus_type == BusType::pq);
+        // No active regulators -> bus becomes PQ
+        CHECK(cabs(output.u[0]) == doctest::Approx(1.0).epsilon(0.001));   // slack bus
+        CHECK(cabs(output.u[1]) == doctest::Approx(1.026).epsilon(0.001)); // pq bus
+        CHECK(cabs(output.u[2]) == doctest::Approx(1.05).epsilon(0.001));  // pv bus
+        CHECK(cabs(output.u[3]) == doctest::Approx(1.057).epsilon(0.001)); // pv -> pq switch
     }
 }
 
@@ -322,7 +329,7 @@ TEST_CASE("Newton-Raphson handling with one-sided Q-limits") {
     common::logging::NoLogger log;
     constexpr bool cache_run = false;
 
-    // Test cases with difference combinations of Q-Limits
+    // Test cases with different combinations of Q-Limits
 
     SUBCASE("Limited and unlimited regulator") {
         // Step 1: establish base case with finite limits and high load -> pq switch
@@ -338,14 +345,13 @@ TEST_CASE("Newton-Raphson handling with one-sided Q-limits") {
         NewtonRaphsonPFSolver<symmetric_t> solver{y_bus, topo};
         auto output_finite = solver.run_power_flow(y_bus, input_finite, 1e-12, 20, cache_run, log);
 
-        REQUIRE(output_finite.bus[1].bus_type == BusType::pq);
-        REQUIRE(output_finite.voltage_regulator[0].limit_violated != LimitViolation::none);
-        REQUIRE(output_finite.voltage_regulator[1].limit_violated != LimitViolation::none);
+        REQUIRE(output_finite.voltage_regulator[0].limit_violated == LimitViolation::upper); // pq bus
+        REQUIRE(output_finite.voltage_regulator[1].limit_violated == LimitViolation::upper);
 
         const double total_q_finite = imag(output_finite.load_gen[0].s) + imag(output_finite.load_gen[1].s);
         REQUIRE(total_q_finite == 0.1); // Clamped at combined limit
 
-        // Step 2: Make one regulator unlimited, load stays unchanged -> no pq switch or bus violation
+        // Step 2: Make one regulator unlimited, load stays unchanged -> no pq switch or limit violation
         auto input_mixed = input_finite;
         input_mixed.voltage_regulator[0].q_min = nan;
         input_mixed.voltage_regulator[0].q_max = nan;
@@ -354,14 +360,11 @@ TEST_CASE("Newton-Raphson handling with one-sided Q-limits") {
         auto output_mixed = solver.run_power_flow(y_bus, input_mixed, 1e-12, 20, cache_run, log);
 
         // no pq switching anymore
-        CHECK(output_mixed.bus[1].bus_type == BusType::pv); // Bus stays PV
-        CHECK(cabs(output_mixed.u[1]) == doctest::Approx(1.05).epsilon(0.01));
+        CHECK(cabs(output_mixed.u[1]) == doctest::Approx(1.05).epsilon(0.01)); // pv bus
 
-        // Regulator 0 (unlimited) should not report violation
+        // stays PV Bus -> Regulator 0 (unlimited) and Regulator 1 (limited) should not report a violation
         CHECK(output_mixed.voltage_regulator[0].limit_violated == LimitViolation::none);
-
-        // Regulator 1 (limited) still reports violation
-        CHECK(output_mixed.voltage_regulator[1].limit_violated == LimitViolation::upper);
+        CHECK(output_mixed.voltage_regulator[1].limit_violated == LimitViolation::none);
 
         const double total_q_mixed = imag(output_mixed.load_gen[0].s) + imag(output_mixed.load_gen[1].s);
         CHECK(total_q_mixed > 0.1); // Exceeds previous finite combined limit
@@ -380,9 +383,8 @@ TEST_CASE("Newton-Raphson handling with one-sided Q-limits") {
         NewtonRaphsonPFSolver<symmetric_t> solver{y_bus, topo};
         auto output_finite = solver.run_power_flow(y_bus, input_finite, 1e-12, 20, cache_run, log);
 
-        REQUIRE(output_finite.bus[1].bus_type == BusType::pq);
-        REQUIRE(output_finite.voltage_regulator[0].limit_violated != LimitViolation::none);
-        REQUIRE(output_finite.voltage_regulator[1].limit_violated != LimitViolation::none);
+        REQUIRE(output_finite.voltage_regulator[0].limit_violated == LimitViolation::upper); // pq bus
+        REQUIRE(output_finite.voltage_regulator[1].limit_violated == LimitViolation::upper);
 
         // Step 2: make limits one-sided -> no pq switching
         auto input_onesided = input_finite;
@@ -393,12 +395,11 @@ TEST_CASE("Newton-Raphson handling with one-sided Q-limits") {
         auto output_onesided = solver.run_power_flow(y_bus, input_onesided, 1e-12, 20, cache_run, log);
 
         // Bus stays PV
-        CHECK(output_onesided.bus[1].bus_type == BusType::pv);
         CHECK(cabs(output_onesided.u[1]) == doctest::Approx(1.05).epsilon(0.01));
 
-        // Individual violation for regulator that kept its q_max limit
-        CHECK(output_onesided.voltage_regulator[0].limit_violated == LimitViolation::none);
-        CHECK(output_onesided.voltage_regulator[1].limit_violated == LimitViolation::upper);
+        // No Individual violation for regulators
+        CHECK(output_onesided.voltage_regulator[0].limit_violated == LimitViolation::none); // pv bus
+        CHECK(output_onesided.voltage_regulator[1].limit_violated == LimitViolation::none);
 
         const double total_q = imag(output_onesided.load_gen[0].s) + imag(output_onesided.load_gen[1].s);
         CHECK(total_q > 0.1); // total Q exceeds previous finite combined limit
@@ -417,9 +418,9 @@ TEST_CASE("Newton-Raphson handling with one-sided Q-limits") {
         NewtonRaphsonPFSolver<symmetric_t> solver{y_bus, topo};
         auto output_onesided = solver.run_power_flow(y_bus, input_onesided, 1e-12, 20, cache_run, log);
 
-        REQUIRE(output_onesided.bus[1].bus_type == BusType::pv);
-        REQUIRE(output_onesided.voltage_regulator[0].limit_violated == LimitViolation::none);
-        REQUIRE(output_onesided.voltage_regulator[1].limit_violated == LimitViolation::upper);
+        // PV bus reports no limit violation
+        REQUIRE(output_onesided.voltage_regulator[0].limit_violated == LimitViolation::none); // pv bus
+        REQUIRE(output_onesided.voltage_regulator[1].limit_violated == LimitViolation::none);
 
         // Step 2: add missing limits -> expect pq switching
         auto input_completed = input_onesided;
@@ -429,8 +430,7 @@ TEST_CASE("Newton-Raphson handling with one-sided Q-limits") {
 
         auto output_completed = solver.run_power_flow(y_bus, input_completed, 1e-12, 20, cache_run, log);
 
-        CHECK(output_completed.bus[1].bus_type == BusType::pq);
-        CHECK(output_completed.voltage_regulator[0].limit_violated == LimitViolation::upper);
+        CHECK(output_completed.voltage_regulator[0].limit_violated == LimitViolation::upper); // pq bus
         CHECK(output_completed.voltage_regulator[1].limit_violated == LimitViolation::upper);
 
         const double total_q = imag(output_completed.load_gen[0].s) + imag(output_completed.load_gen[1].s);
@@ -448,8 +448,7 @@ TEST_CASE("Newton-Raphson handling with one-sided Q-limits") {
         NewtonRaphsonPFSolver<symmetric_t> solver{y_bus, topo};
         auto output = solver.run_power_flow(y_bus, input, 1e-12, 20, cache_run, log);
 
-        CHECK(output.bus[1].bus_type == BusType::pv);
-        CHECK(cabs(output.u[1]) == doctest::Approx(1.05).epsilon(0.01));
+        CHECK(cabs(output.u[1]) == doctest::Approx(1.05).epsilon(0.01)); // pv bus
         CHECK(output.voltage_regulator[0].limit_violated == LimitViolation::none);
         CHECK(output.voltage_regulator[1].limit_violated == LimitViolation::none);
     }
@@ -465,8 +464,7 @@ TEST_CASE("Newton-Raphson handling with one-sided Q-limits") {
         NewtonRaphsonPFSolver<symmetric_t> solver{y_bus, topo};
         auto output = solver.run_power_flow(y_bus, input, 1e-12, 20, cache_run, log);
 
-        CHECK(output.bus[1].bus_type == BusType::pv);
-        CHECK(cabs(output.u[1]) == doctest::Approx(1.05).epsilon(0.01));
+        CHECK(cabs(output.u[1]) == doctest::Approx(1.05).epsilon(0.01)); // pv bus
         CHECK(output.voltage_regulator[0].limit_violated == LimitViolation::none);
         CHECK(output.voltage_regulator[1].limit_violated == LimitViolation::none);
 

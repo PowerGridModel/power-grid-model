@@ -65,20 +65,10 @@ Physically a node can be a busbar, a joint, or other similar component.
 | `u`       | `RealValueOutput` | volt (V)                   | voltage magnitude, line-line for symmetric calculation, line-neutral for asymmetric calculation |
 | `p`       | `RealValueOutput` | watt (W)                   | active power injection                                                                          |
 | `q`       | `RealValueOutput` | volt-ampere-reactive (var) | reactive power injection                                                                        |
-| `bus_type`| `int8_t`          | -                          | effective node type in the solved steady-state result: `0` = PQ, `1` = PV, `2` = Source/Slack   |
 
 ```{note}
 The `p` and `q` output of injection follows the `generator` reference direction as mentioned in
 [Reference Direction](data-model.md#reference-direction)
-```
-
-```{note}
-`bus_type` reports the effective node type after the power-flow calculation. A node with active voltage regulation starts
-as a PV node, but it can be reported as PQ if reactive-power limits force PV→PQ switching.
-```
-
-```{warning}
-`bus_type` output is available only for the [Newton-Raphson power flow](./calculations.md#newton-raphson-power-flow) method; for other methods, `bus_type` is set to `0` (PQ) by default.
 ```
 
 #### Short circuit output
@@ -1270,9 +1260,11 @@ voltage magnitude at the node follows `u_ref`.
 Voltage regulation is supported only by the [Newton-Raphson power flow](./calculations.md#newton-raphson-power-flow)
 method.
 
+```{note}
 If `q_min` and/or `q_max` are specified, the calculated reactive power is checked against these limits. If the required
 reactive power exceeds a limit, the regulated object is clamped to the violated limit and the effective node type is
 switched from PV to PQ. In that case, the voltage magnitude may deviate from `u_ref`.
+```
 
 ```{note}
 When multiple active voltage regulators are connected to the same node, they jointly regulate the same node voltage. The

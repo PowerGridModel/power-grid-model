@@ -353,10 +353,6 @@ inline void allocate_q_iterative_distribution(int num_regulating_gens, RealValue
                 reg_state.has_available_capacity = false;
                 q_unallocated += q_per_regulator - (reg_state.q_allocated - q_prev_allocated);
                 num_regulating_gens -= 1;
-                // TODO(frie-soptim): change to no violation if bus limit itself is not violated, simply set Q to limit
-                //                    -> then limit_violated on the regulator strictly implies that correcponding bus
-                //                    was switched to PQ
-                output_regulator.limit_violated = LimitViolation::upper;
             } else if (!is_nan(input_regulator.q_min) &&
                        q_next_allocated_scalar < input_regulator.q_min - numerical_tolerance) {
                 // hit lower limit
@@ -364,12 +360,13 @@ inline void allocate_q_iterative_distribution(int num_regulating_gens, RealValue
                 reg_state.has_available_capacity = false;
                 q_unallocated += q_per_regulator - (reg_state.q_allocated - q_prev_allocated);
                 num_regulating_gens -= 1;
-                output_regulator.limit_violated = LimitViolation::lower;
             } else {
                 // within limits
                 reg_state.q_allocated = q_next_allocated;
-                output_regulator.limit_violated = LimitViolation::none;
             }
+            // regulator capacity may be exhausted (set to max/min), but limit is not violated,
+            // unless bus limit is violated
+            output_regulator.limit_violated = LimitViolation::none;
         }
 
         if (std::abs(total_q<sym>(q_remaining - q_unallocated)) < numerical_tolerance) {

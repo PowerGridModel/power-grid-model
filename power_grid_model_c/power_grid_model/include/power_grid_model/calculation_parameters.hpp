@@ -44,8 +44,6 @@ template <symmetry_tag sym_type> struct BranchCalcParam {
 };
 
 struct BusSolverOutput {
-    // initialize with BusType::pq, set calculated value in newton_raphson solver
-    BusType bus_type{BusType::pq};
     LimitViolation q_limit_violated{LimitViolation::none};
 };
 

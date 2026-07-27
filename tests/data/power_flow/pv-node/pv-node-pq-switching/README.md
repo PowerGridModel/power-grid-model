@@ -20,6 +20,10 @@ Source(10) ──line51── Gen(20) ──line52── Gen(30) ──line53─
 
 ## Test Scenarios
 
+### Scenario 0: Base Case
+
+- Expected: No Violations
+
 ### Scenario 1: Single regulator q_max violation
 
 - Decrease Reg 29 q_max to 11 MVAr
@@ -38,7 +42,7 @@ Source(10) ──line51── Gen(20) ──line52── Gen(30) ──line53─
 ### Scenario 4: Single regulator violation with compensation
 
 - Decrease only Reg 38 q_max to 3 MVAr
-- Expected: Node 30 stays PV, only Reg 38 violates (Reg 39 compensates)
+- Expected: Node 30 stays PV, only Reg 38 at max (Reg 39 compensates)
 
 ### Scenario 5: Selective violation (Node 30 only)
 
@@ -48,7 +52,7 @@ Source(10) ──line51── Gen(20) ──line52── Gen(30) ──line53─
 ### Scenario 6: Effectively unlimited regulator
 
 - Set Reg 38 to +/- 100^100 MVAr (unlimited, can't set NaN) + increase load to 25 MVAr
-- Expected: Node 30 stays PV, Reg 39 violates but Reg 38 provides capacity
+- Expected: Node 30 stays PV, Reg 39 at max but Reg 38 provides capacity
 
 ### Scenario 7: One regulator disabled
 
