@@ -5,6 +5,10 @@
 // example file for power grid model C API
 
 /*
+This is a demonstration example only and it is NOT intended to be used in production. The example uses a dummy network
+that is not representative of a real power grid, and errors are NOT properly handled. It is the user's responsibility to
+handle errors and validate the input data in a real application.
+
 This example will calculate the following network,
 consisting 1 source, 1 node, 2 sym_load
 
@@ -36,6 +40,12 @@ We do batch calculation with 3 scenarios, with the following mutation
 #include <stdio.h>
 #include <stdlib.h>
 
+#define CHECK_NO_ERROR(handle)                                                                                         \
+    if (PGM_error_code(handle) != PGM_no_error) {                                                                      \
+        (void)printf("PGM error: %s\n", PGM_error_message(handle));                                                    \
+        abort();                                                                                                       \
+    }
+
 int main(int argc, char** argv) {
     (void)argc;
     (void)argv;
@@ -48,9 +58,9 @@ int main(int argc, char** argv) {
     // we create input buffer data using two ways of creating buffer
     // use PGM function to create node and sym_load buffer
     void* node_input = PGM_create_buffer(handle, PGM_def_input_node, 1);
-    assert(PGM_error_code(handle) == PGM_no_error);
+    CHECK_NO_ERROR(handle);
     void* sym_load_input = PGM_create_buffer(handle, PGM_def_input_sym_load, 2);
-    assert(PGM_error_code(handle) == PGM_no_error);
+    CHECK_NO_ERROR(handle);
     // allocate source buffer in the caller
     size_t source_size = PGM_meta_component_size(handle, PGM_def_input_source);
     size_t source_alignment = PGM_meta_component_alignment(handle, PGM_def_input_source);
@@ -88,7 +98,7 @@ int main(int argc, char** argv) {
     PGM_buffer_set_value(handle, PGM_def_input_source_status, source_input, &status, 0, 1, -1);
     PGM_buffer_set_value(handle, PGM_def_input_source_u_ref, source_input, &u_ref, 0, 1, -1);
     PGM_buffer_set_value(handle, PGM_def_input_source_sk, source_input, &sk, 0, 1, -1);
-    assert(PGM_error_code(handle) == PGM_no_error);
+    CHECK_NO_ERROR(handle);
 
     // sym_load attribute, we use helper function
     PGM_ID sym_load_id[] = {2, 3};
@@ -102,7 +112,7 @@ int main(int argc, char** argv) {
     // the stride of p and q input is 2 double value, i.e. 16 bytes
     PGM_buffer_set_value(handle, PGM_def_input_sym_load_p_specified, sym_load_input, pq_specified, 0, 2, 16);
     PGM_buffer_set_value(handle, PGM_def_input_sym_load_q_specified, sym_load_input, pq_specified + 1, 0, 2, 16);
-    assert(PGM_error_code(handle) == PGM_no_error);
+    CHECK_NO_ERROR(handle);
 
     /**** initialize model ****/
     // input dataset
@@ -110,10 +120,10 @@ int main(int argc, char** argv) {
     PGM_dataset_const_add_buffer(handle, input_dataset, "node", 1, 1, NULL, node_input);
     PGM_dataset_const_add_buffer(handle, input_dataset, "source", 1, 1, NULL, source_input);
     PGM_dataset_const_add_buffer(handle, input_dataset, "sym_load", 2, 2, NULL, sym_load_input);
-    assert(PGM_error_code(handle) == PGM_no_error);
+    CHECK_NO_ERROR(handle);
     // create model
     PGM_PowerGridModel* model = PGM_create_model(handle, 50.0, input_dataset);
-    assert(PGM_error_code(handle) == PGM_no_error);
+    CHECK_NO_ERROR(handle);
 
     /**** create output buffer ****/
     // we only create output buffer for node
@@ -121,24 +131,24 @@ int main(int argc, char** argv) {
     // for one-time calculation, we only need one
     // for batch calculation, we need buffer size of 3 because we are going to run 3 scenarios
     void* node_output = PGM_create_buffer(handle, PGM_def_sym_output_node, 3);
-    assert(PGM_error_code(handle) == PGM_no_error);
+    CHECK_NO_ERROR(handle);
     // value arrays to retrieve, for three scenarios
     double u_pu[3];
     double u_angle[3];
     // dataset single
     PGM_MutableDataset* single_output_dataset = PGM_create_dataset_mutable(handle, "sym_output", 0, 1);
     PGM_dataset_mutable_add_buffer(handle, single_output_dataset, "node", 1, 1, NULL, node_output);
-    assert(PGM_error_code(handle) == PGM_no_error);
+    CHECK_NO_ERROR(handle);
     // dataset batch
     PGM_MutableDataset* batch_output_dataset = PGM_create_dataset_mutable(handle, "sym_output", 1, 3);
     PGM_dataset_mutable_add_buffer(handle, batch_output_dataset, "node", 1, 3, NULL, node_output);
-    assert(PGM_error_code(handle) == PGM_no_error);
+    CHECK_NO_ERROR(handle);
 
     /**** one time calculation ****/
     // create options with default value
     PGM_Options* opt = PGM_create_options(handle);
     PGM_calculate(handle, model, opt, single_output_dataset, NULL);
-    assert(PGM_error_code(handle) == PGM_no_error);
+    CHECK_NO_ERROR(handle);
     // get value and print
     PGM_buffer_get_value(handle, PGM_def_sym_output_node_u_pu, node_output, u_pu, 0, 1, -1);
     PGM_buffer_get_value(handle, PGM_def_sym_output_node_u_angle, node_output, u_angle, 0, 1, -1);
@@ -162,7 +172,7 @@ int main(int argc, char** argv) {
 
     // 1 source update per scenario
     void* source_update = PGM_create_buffer(handle, PGM_def_update_source, 3);
-    assert(PGM_error_code(handle) == PGM_no_error);
+    CHECK_NO_ERROR(handle);
     // set to NaN for all values, it is recommended for input and update buffers
     PGM_buffer_set_nan(handle, PGM_def_update_source, source_update, 0, 3);
     double u_ref_update[] = {0.95, 1.05, 1.1};
@@ -183,11 +193,11 @@ int main(int argc, char** argv) {
     PGM_ConstDataset* batch_update_dataset = PGM_create_dataset_const(handle, "update", 1, 3);
     PGM_dataset_const_add_buffer(handle, batch_update_dataset, "source", 1, 3, NULL, source_update);
     PGM_dataset_const_add_buffer(handle, batch_update_dataset, "sym_load", -1, 4, indptr_load, load_update);
-    assert(PGM_error_code(handle) == PGM_no_error);
+    CHECK_NO_ERROR(handle);
 
     /**** Batch calculation ****/
     PGM_calculate(handle, model, opt, batch_output_dataset, batch_update_dataset);
-    assert(PGM_error_code(handle) == PGM_no_error);
+    CHECK_NO_ERROR(handle);
     // get node result and print
     PGM_buffer_get_value(handle, PGM_def_sym_output_node_u_pu, node_output, u_pu, 0, 3, -1);
     PGM_buffer_get_value(handle, PGM_def_sym_output_node_u_angle, node_output, u_angle, 0, 3, -1);
