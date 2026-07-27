@@ -634,10 +634,36 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
                 continue;
             }
 
-            // === Calculate total specified Q from regulated load/generators ===
-            // For voltage-regulated generators, the "specified Q" is typically ~0 because the regulator
-            // controls voltage and provides whatever Q is needed. For const_i/const_y types, we scale
-            // by voltage to get the voltage-dependent specified value.
+            // Calculate actual Q from regulated devices to be checked againt bus Q-limits:
+            //
+            // The value in `del_x_pq_[bus].q()` is calculated in `prepare_matrix_and_rhs_from_network_perspective()` as
+            // the negative of the total reactive power injection at the bus using the calculated voltage from the
+            // previous iteration. In `add_loads()`, the specified Q from all load/gens at this bus is added to
+            // `del_x_pq_[bus].q()`.
+            //
+            // (1) del_x_pq_[bus].q() = -q_calc_network + q_specified_all
+            //                        = q_specified_all - q_calc_network
+            //
+            // (2) q_calc_network = q_specified_all - del_x_pq_[bus].q()                            , with (1)
+            //
+            // (3) q_specified_all = del_x_pq_[bus].q() + q_calc_network                            , with (1)
+            //                     = q_specified_nonregulating + q_specified_regulating
+            //
+            // => q_required = q_calc_network - q_specified_nonregulating
+            //    [with (2)] = (q_specified_all - del_x_pq_[bus].q()) - q_specified_nonregulating
+            //    [with (3)] = q_specified_all - del_x_pq_[bus].q() - (q_specified_all - q_specified_regulating)
+            //               = (q_specified_all - q_specified_all + q_specified_regulating) - del_x_pq_[bus].q()
+            //               = q_specified_regulating - del_x_pq_[bus].q()
+            //
+            // Q_specified for regulating devides should have no effect on the result, as its Q is calculated. But these
+            // values are added in `add_loads()` and therefore need to be subtracted again.
+            //
+            // Note: Q_specified for regulating devices is typically ~0. But when it is not 0, it has to be considered
+            // correctly.
+            //       That is, it is added in `add_loads()` and then subtracted here. But they have to be ignored for the
+            //       initial linear solver as well, otherwise the initial voltage/angle guess might lead to a larger Q
+            //       mismatch and then potentially to an undesired bus type switch.
+
             RealValue<sym> specified_regulating_q{};
             for (Idx const load_gen : load_gens) {
                 if (input.load_gen_status[load_gen] == status_off) {
@@ -650,42 +676,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
                 }
             }
 
-            // === Calculate q_required: the ACTUAL reactive power from regulated devices ===
-            //
-            // At this point in the algorithm, del_x_pq_[bus].q() contains the reactive power mismatch:
-            //     del_x_pq_[bus].q() = Q_specified_all - Q_calc_network
-            //
-            // Where:
-            //   - Q_specified_all = sum of specified Q from ALL load/gens at this bus (regulating + non-regulating)
-            //                       This was accumulated in add_loads() by summing input.s_injection[load_gen]
-            //   - Q_calc_network  = actual reactive power calculated from network equations (Y*U voltages)
-            //                       This includes: branch flows, shunt elements, and ALL device injections
-            //
-            // Rearranging the mismatch equation:
-            //     Q_calc_network = Q_specified_all - del_x_pq_[bus].q()
-            //
-            // The ACTUAL reactive power provided by regulated devices is:
-            //     q_required = Q_calc_network - Q_from_nonregulated_devices
-            //                = (Q_specified_all - del_x_pq_[bus].q()) - Q_specified_nonregulating
-            //
-            // Since Q_specified_all = Q_specified_regulating + Q_specified_nonregulating:
-            //                = (Q_specified_regulating + Q_specified_nonregulating - del_x_pq_[bus].q())
-            //                  - Q_specified_nonregulating
-            //                = Q_specified_regulating - del_x_pq_[bus].q()
-            //
-            // Why we need to include specified_regulating_q:
-            //   The specified Q values from regulating generators were already added to del_x_pq_[bus].q()
-            //   in add_loads(). To extract the ACTUAL Q that regulators are providing (including their
-            //   contribution to voltage control), we must "subtract back out" this mismatch term.
-            //   This works because: actual = specified - mismatch.
-            //
-            // The result q_required represents the TOTAL reactive power that the regulated generators
-            // are actually providing to the bus, which is what we must compare against the combined
-            // bus Q-limits (bus_q_min, bus_q_max).
-            //
-
             RealValue<sym> const q_required = specified_regulating_q - del_x_pq_[bus].q();
-            // RealValue<sym> const q_required = -del_x_pq_[bus].q();
 
             auto const limit =
                 violated_limit(q_required, bus_control_[bus].q_limit.bus_q_min, bus_control_[bus].q_limit.bus_q_max);

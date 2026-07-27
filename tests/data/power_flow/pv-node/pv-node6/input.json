@@ -203,8 +203,8 @@
             "id": 32,
             "node": 30,
             "status": 1,
-            "type": 2,
-            "p_specified": 400e6,
+            "type": 0,
+            "p_specified": 416e6,
             "q_specified": 40e6
         },
         {
@@ -239,16 +239,16 @@
             "id": 12,
             "node": 10,
             "status": 1,
-            "type": 2,
-            "p_specified": 1000e6,
-            "q_specified": 10e6
+            "type": 0,
+            "p_specified": 1050e6,
+            "q_specified": 10.5e6
         },
         {
             "id": 21,
             "node": 20,
             "status": 1,
-            "type": 1,
-            "p_specified": 100e6,
+            "type": 0,
+            "p_specified": 109.2025e6,
             "q_specified": 0.0
         },
         {
@@ -264,9 +264,9 @@
             "id": 42,
             "node": 40,
             "status": 1,
-            "type": 2,
+            "type": 0,
             "u_ref": 1.0475,
-            "p_specified": 75e6,
+            "p_specified": 78.5625e6,
             "q_specified": 20e6
         },
         {
@@ -284,8 +284,8 @@
             "id": 31,
             "node": 30,
             "status": 1,
-            "type": 1,
-            "p_specified": [40e6, 50e6, 60e6],
+            "type": 0,
+            "p_specified": [43.264e6, 54.08e6, 64.896e6],
             "q_specified": [0.0, 0.0, 0.0]
         }
     ],

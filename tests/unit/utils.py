@@ -32,6 +32,7 @@ from power_grid_model.errors import (
     PowerGridError,
     PowerGridSerializationError,
     SparseMatrixError,
+    UnsupportedLoadGenTypeForVoltageRegulator,
     UnsupportedRegulatorCombinationError,
     UnsupportedVoltageRegulatorSourceCombinationError,
 )
@@ -81,6 +82,7 @@ KNOWN_EXCEPTIONS: dict[str, type[BaseException] | None] = {
         AssertionError,
         OSError,
         MaxIterationReached,
+        UnsupportedLoadGenTypeForVoltageRegulator,
         UnsupportedRegulatorCombinationError,
         UnsupportedVoltageRegulatorSourceCombinationError,
         ExperimentalFeature,
