@@ -31,7 +31,7 @@ void PGM_destroy_logger(PGM_Logger* logger) {
 
 void PGM_register_logger(PGM_Handle* handle, PGM_Logger* logger) {
     call_with_catch(handle, [handle, logger] {
-        handle->composite_logger.add(safe_ptr_get(logger).logger.get());
+        handle->composite_logger.add(safe_ptr_get(logger).logger);
     });
 }
 

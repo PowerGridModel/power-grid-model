@@ -37,27 +37,34 @@ class CompositeChildLogger : public Logger {
     }
 };
 
-// Non-owning fan-out MultiThreadedLogger. Holds non-owning pointers to MultiThreadedLogger instances and forwards
+// Owning fan-out MultiThreadedLogger. Holds shared ownership of MultiThreadedLogger instances and forwards
 // all log calls to each. create_child() creates a CompositeChildLogger that owns one child per registered logger.
 //
-// Lifetime contract: all loggers in the list must outlive this composite.
+// Lifetime contract: each registered logger is kept alive by this composite for as long as it remains
+// registered (shared ownership), regardless of whether any other owner (e.g. a C API wrapper) has released
+// its own reference. This is what makes destroying the wrapper while still registered safe.
 // Dedupe: registering the same logger twice is a no-op (idempotent, consistent with logging conventions).
 // UB: modifying the logger list while a calculation is in progress.
 class MultiThreadedCompositeLogger : public MultiThreadedLogger {
   public:
     MultiThreadedCompositeLogger() = default;
-    explicit MultiThreadedCompositeLogger(std::vector<MultiThreadedLogger*> loggers) : loggers_{std::move(loggers)} {}
+    explicit MultiThreadedCompositeLogger(std::vector<std::shared_ptr<MultiThreadedLogger>> loggers)
+        : loggers_{std::move(loggers)} {}
 
     // Add/remove a logger. The object address is unchanged so any existing reference_wrapper
     // pointing to this composite remains valid. Do not call while a calculation is in progress.
-    void add(MultiThreadedLogger* logger) {
-        if (std::ranges::contains(loggers_, logger)) {
+    void add(std::shared_ptr<MultiThreadedLogger> logger) {
+        if (logger == nullptr) {
+            return; // defensively ignore null registrations
+        }
+        if (std::ranges::any_of(loggers_, [&](auto const& existing) { return existing.get() == logger.get(); })) {
             return; // already registered — dedupe silently, consistent with logging API conventions
         }
-        loggers_.push_back(logger);
+        loggers_.push_back(std::move(logger));
     }
-    void remove(MultiThreadedLogger* logger) {
-        if (auto it = std::ranges::find(loggers_, logger); it != loggers_.end()) {
+    void remove(MultiThreadedLogger const* logger) {
+        if (auto it = std::ranges::find_if(loggers_, [&](auto const& existing) { return existing.get() == logger; });
+            it != loggers_.end()) {
             loggers_.erase(it);
         }
     }
@@ -66,7 +73,7 @@ class MultiThreadedCompositeLogger : public MultiThreadedLogger {
     std::unique_ptr<Logger> create_child() override {
         std::vector<std::unique_ptr<Logger>> child_loggers;
         child_loggers.reserve(loggers_.size());
-        for (auto* logger : loggers_) {
+        for (auto const& logger : loggers_) {
             child_loggers.push_back(logger->create_child());
         }
         return std::make_unique<CompositeChildLogger>(std::move(child_loggers));
@@ -81,7 +88,7 @@ class MultiThreadedCompositeLogger : public MultiThreadedLogger {
 
     // Fan out clear() to every registered logger.
     void clear() override {
-        for (auto* logger : loggers_) {
+        for (auto const& logger : loggers_) {
             logger->clear();
         }
     }
@@ -89,10 +96,10 @@ class MultiThreadedCompositeLogger : public MultiThreadedLogger {
     [[nodiscard]] bool empty() const { return loggers_.empty(); }
 
   private:
-    std::vector<MultiThreadedLogger*> loggers_; // non-owning
+    std::vector<std::shared_ptr<MultiThreadedLogger>> loggers_; // owning
 
     template <typename... Args> void log_all(Args&&... args) {
-        for (auto* logger : loggers_) {
+        for (auto const& logger : loggers_) {
             logger->log(std::forward<Args>(args)...);
         }
     }

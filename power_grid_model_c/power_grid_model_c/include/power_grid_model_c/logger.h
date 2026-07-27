@@ -17,10 +17,20 @@
  *   6. Unregister it:     PGM_unregister_logger()
  *   7. Destroy it:        PGM_destroy_logger()
  *
+ * Lifetime and safety:
+ *   - The underlying logging implementation is shared between the PGM_Logger returned by
+ *     PGM_create_logger() and every handle it is registered to. Calling PGM_destroy_logger()
+ *     while the logger is still registered to one or more handles is safe: the implementation
+ *     stays alive and keeps collecting output for those handles.
+ *   - After PGM_destroy_logger() is called, the caller no longer has a PGM_Logger* to target
+ *     that specific registration individually. PGM_unregister_all_loggers() (which detaches
+ *     everything on a handle) or destroying the handle itself is the only way to release it.
+ *
  * Undefined behaviour:
- *   - Calling PGM_destroy_logger() while the logger is still registered.
- *   - Using the same logger from multiple user threads simultaneously
- *     (internal batch threads spawned by the calculation core are safe).
+ *   - Concurrently registering, unregistering, destroying, reading, or clearing a logger while
+ *     a calculation using that same handle/logger is in progress. This applies to concurrent
+ *     use from multiple user threads only; internal batch threads spawned by the calculation
+ *     core are safe and expected.
  *
  * Idempotent operations:
  *   - Registering the same logger to the same handle more than once is a no-op.
@@ -52,7 +62,11 @@ PGM_API PGM_Logger* PGM_create_logger(PGM_Handle* handle, PGM_Idx logger_type);
 /**
  * @brief Destroy a logger created by PGM_create_logger().
  *
- * The logger must not be registered to any handle when this is called (UB otherwise).
+ * Safe to call even while the logger is still registered to one or more handles: the
+ * underlying implementation is shared and remains alive for those registrations. However,
+ * this PGM_Logger* can then no longer be used to target that registration individually
+ * (see the lifetime notes above); use PGM_unregister_all_loggers() or destroy the handle
+ * to release it.
  *
  * @param logger The logger to destroy.
  */

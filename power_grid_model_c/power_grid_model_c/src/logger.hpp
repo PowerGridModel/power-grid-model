@@ -23,8 +23,11 @@
 
 // The PGM_Logger struct is the C API wrapper for a polymorphic multi-threaded logger.
 // It is heap-allocated by PGM_create_logger and freed by PGM_destroy_logger.
+// The underlying logger implementation is shared with any handle it is registered to (see
+// MultiThreadedCompositeLogger), so destroying this wrapper while still registered does not
+// invalidate the implementation: it stays alive as long as any registration references it.
 struct PGM_Logger {
-    std::unique_ptr<power_grid_model::common::logging::MultiThreadedLogger> logger;
+    std::shared_ptr<power_grid_model::common::logging::MultiThreadedLogger> logger;
 };
 
 namespace power_grid_model_c {
@@ -34,11 +37,11 @@ inline PGM_Logger* make_logger(PGM_LoggerType type) {
 
     switch (type) {
     case PGM_do_nothing_logger:
-        return new PGM_Logger{std::make_unique<NoMultiThreadedLogger>()}; // NOSONAR(S5025)
+        return new PGM_Logger{std::make_shared<NoMultiThreadedLogger>()}; // NOSONAR(S5025)
     case PGM_text_logger:
-        return new PGM_Logger{std::make_unique<MultiThreadedTextLogger>()}; // NOSONAR(S5025)
+        return new PGM_Logger{std::make_shared<MultiThreadedTextLogger>()}; // NOSONAR(S5025)
     case PGM_benchmark_logger:
-        return new PGM_Logger{std::make_unique<MultiThreadedCalculationInfo>()}; // NOSONAR(S5025)
+        return new PGM_Logger{std::make_shared<MultiThreadedCalculationInfo>()}; // NOSONAR(S5025)
     default:
         throw IllegalOperationError{std::format("Unknown logger type: {}", static_cast<int>(type))};
     }

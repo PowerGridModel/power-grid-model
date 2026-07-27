@@ -9,6 +9,7 @@
 #include "basics.hpp"
 
 #include "power_grid_model_c/handle.h"
+#include "power_grid_model_c/logger.h"
 
 #include <exception>
 #include <memory>
@@ -102,6 +103,13 @@ class Handle {
             return result;
         }
     }
+
+    // Registration surface reused by every module that supports attaching loggers (e.g. Model,
+    // and future modules such as Serializer). Registering/unregistering the same logger more
+    // than once is idempotent; see power_grid_model_c/logger.h for full lifetime semantics.
+    void register_logger(PGM_Logger* logger) const { call_with(PGM_register_logger, logger); }
+    void unregister_logger(PGM_Logger* logger) const { call_with(PGM_unregister_logger, logger); }
+    void unregister_all_loggers() const { call_with(PGM_unregister_all_loggers); }
 
   private:
     // For handle the const semantics are not needed.
