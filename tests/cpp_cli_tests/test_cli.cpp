@@ -306,6 +306,9 @@ struct CLITestCase {
     std::optional<bool> output_compact_serialization{};
     bool component_filter{false};
     bool attribute_filter{false};
+    std::string unknown_component{};
+    std::string unknown_attribute{};
+    std::string expected_error_substring{};
 
     PGM_SerializationFormat get_output_format() const {
         if (output_serialization.has_value()) {
@@ -391,13 +394,21 @@ struct CLITestCase {
                 argv.emplace_back("--no-compact");
             }
         }
-        if (component_filter) {
+        if (component_filter && unknown_component.empty()) {
             argv.emplace_back("--oc");
             argv.emplace_back("source");
         }
-        if (attribute_filter) {
+        if (!unknown_component.empty()) {
+            argv.emplace_back("--oc");
+            argv.emplace_back(unknown_component);
+        }
+        if (attribute_filter && unknown_attribute.empty()) {
             argv.emplace_back("--oa");
             argv.emplace_back("source.i");
+        }
+        if (!unknown_attribute.empty()) {
+            argv.emplace_back("--oa");
+            argv.emplace_back(unknown_attribute);
         }
         argv.emplace_back("--verbose");
         args.argv.reserve(argv.size());
@@ -464,8 +475,16 @@ struct CLITestCase {
         int const ret = PGM_cli_main(args.argc, args.argv.data(), &capture_stdout, &capture_stderr, &capture);
         INFO("CLI stdout content: ", capture.stdout_message);
         INFO("CLI stderr content: ", capture.stderr_message);
-        REQUIRE(ret == 0);
-        check_results();
+        if (!expected_error_substring.empty()) {
+            // Error case: expecting non-zero exit code
+            CHECK(ret != 0);
+            std::string const full_output = capture.stdout_message + capture.stderr_message;
+            CHECK(full_output.find(expected_error_substring) != std::string::npos);
+        } else {
+            // Success case: expecting zero exit code
+            REQUIRE(ret == 0);
+            check_results();
+        }
     }
 };
 
@@ -539,6 +558,32 @@ TEST_CASE("Test run CLI") {
     for (auto const& test_case : test_cases) {
         auto args = test_case.build_argv();
         SUBCASE(args.storage.front().c_str()) { test_case.run_command_and_check(); }
+    }
+}
+
+TEST_CASE("Test CLI error handling") {
+    std::vector<CLITestCase> const error_test_cases = {
+        // Error case: Unknown component
+        CLITestCase{.unknown_component = "unknown_component",
+                    .expected_error_substring = "Component 'unknown_component' not found in dataset"},
+        // Error case: Unknown attribute with unknown component
+        CLITestCase{.unknown_attribute = "unknown_component.some_attribute",
+                    .expected_error_substring = "Component 'unknown_component' not found in dataset"},
+        // Error case: Unknown attribute with known component
+        CLITestCase{.unknown_attribute = "source.unknown_attribute",
+                    .expected_error_substring = "Attribute 'unknown_attribute' not found in component 'source'"},
+        // Error case: Malformed attribute (missing dot)
+        CLITestCase{.unknown_attribute = "invalid_format_no_dot",
+                    .expected_error_substring = "not in the format 'component.attribute'"},
+        // Error case: Malformed attribute (empty component)
+        CLITestCase{.unknown_attribute = ".attribute",
+                    .expected_error_substring = "not in the format 'component.attribute'"},
+        // Error case: Malformed attribute (empty attribute)
+        CLITestCase{.unknown_attribute = "component.",
+                    .expected_error_substring = "not in the format 'component.attribute'"},
+    };
+    for (auto const& error_test_case : error_test_cases) {
+        SUBCASE(error_test_case.expected_error_substring.c_str()) { error_test_case.run_command_and_check(); }
     }
 }
 
