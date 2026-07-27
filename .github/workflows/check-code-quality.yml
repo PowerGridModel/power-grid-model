@@ -36,21 +36,21 @@ jobs:
 
       - name: Run mypy
         run: |
-          uv run mypy .
+          uv run --frozen mypy .
 
       - name: Run ruff
         run: |
-          uv run ruff check .
-          uv run ruff format .
+          uv run --frozen ruff check .
+          uv run --frozen ruff format .
           git restore README.md
 
       - name: Run clang-format
         run: |
-          git ls-files -z -- '*.h' '*.c' '*.cpp' '*.hpp' '*.cc' '*.cxx' | xargs -0 -r uv run clang-format -style=file -i
+          git ls-files -z -- '*.h' '*.c' '*.cpp' '*.hpp' '*.cc' '*.cxx' | xargs -0 -r uv run --frozen clang-format -style=file -i
 
       - name: Run cmake-linter
         run: |
-          uv run gersemi -i --warnings-as-errors src/ tests/ cmake/
+          uv run --frozen gersemi -i --warnings-as-errors src/ tests/ cmake/
 
       - name: Install npm packages
         run: |
@@ -78,7 +78,7 @@ jobs:
         if: success()
         run: |
           uv sync --group code-generation
-          uv run code_generation/code_gen.py
+          uv run --frozen code_generation/code_gen.py
           if [ -n "$(git status --porcelain)" ]; then
             echo
             echo "The following files are outdated or were manually updated:"
