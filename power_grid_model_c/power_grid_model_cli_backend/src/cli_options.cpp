@@ -13,7 +13,6 @@
 
 #include <CLI/CLI.hpp>
 
-#include <algorithm>
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
@@ -21,6 +20,7 @@
 #include <ios>
 #include <map>
 #include <ostream>
+#include <ranges>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -64,9 +64,8 @@ struct CLIPostCallback {
         options.input_serialization_format = get_serialization_format("input", options.input_file);
         options.is_batch = !options.batch_update_file.empty();
         options.batch_update_serialization_format.resize(options.batch_update_file.size());
-        std::transform(options.batch_update_file.cbegin(), options.batch_update_file.cend(),
-                       options.batch_update_serialization_format.begin(),
-                       [](auto const& path) { return get_serialization_format("batch-update", path); });
+        std::ranges::transform(options.batch_update_file, options.batch_update_serialization_format.begin(),
+                               [](auto const& path) { return get_serialization_format("batch-update", path); });
         if (msgpack_flag.empty() && (options.input_serialization_format == PGM_msgpack ||
                                      std::ranges::any_of(options.batch_update_serialization_format,
                                                          [](auto format) { return format == PGM_msgpack; }))) {
