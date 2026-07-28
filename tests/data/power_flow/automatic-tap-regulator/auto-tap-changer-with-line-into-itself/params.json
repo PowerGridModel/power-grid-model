@@ -1,6 +1,9 @@
 {
-  "calculation_method": ["newton_raphson", "iterative_current"],
+  "calculation_method": [
+    "newton_raphson",
+    "iterative_current"
+  ],
   "tap_changing_strategy": "fast_any_tap",
-  "rtol": 1e-9,
-  "atol": 1e-9
+  "rtol": 1e-09,
+  "atol": 1e-09
 }

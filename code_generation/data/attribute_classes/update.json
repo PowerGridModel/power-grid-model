@@ -18,7 +18,10 @@
       "attributes": [
         {
           "data_type": "IntS",
-          "names": ["from_status", "to_status"],
+          "names": [
+            "from_status",
+            "to_status"
+          ],
           "description": "whether the branch is connected at each side"
         }
       ]
@@ -29,7 +32,11 @@
       "attributes": [
         {
           "data_type": "IntS",
-          "names": ["status_1", "status_2", "status_3"],
+          "names": [
+            "status_1",
+            "status_2",
+            "status_3"
+          ],
           "description": "whether the branch is connected at each side"
         }
       ]
@@ -74,7 +81,10 @@
       "attributes": [
         {
           "data_type": "RealValue<sym>",
-          "names": ["p_specified", "q_specified"],
+          "names": [
+            "p_specified",
+            "q_specified"
+          ],
           "description": "specified active/reactive power"
         }
       ]
@@ -85,12 +95,19 @@
       "attributes": [
         {
           "data_type": "double",
-          "names": ["u_ref", "u_ref_angle"],
+          "names": [
+            "u_ref",
+            "u_ref_angle"
+          ],
           "description": "reference voltage"
         },
         {
           "data_type": "double",
-          "names": ["sk", "rx_ratio", "z01_ratio"],
+          "names": [
+            "sk",
+            "rx_ratio",
+            "z01_ratio"
+          ],
           "description": "short circuit capacity"
         }
       ]
@@ -101,12 +118,18 @@
       "attributes": [
         {
           "data_type": "double",
-          "names": ["g1", "b1"],
+          "names": [
+            "g1",
+            "b1"
+          ],
           "description": "positive sequence admittance"
         },
         {
           "data_type": "double",
-          "names": ["g0", "b0"],
+          "names": [
+            "g0",
+            "b0"
+          ],
           "description": "zero sequence admittance"
         }
       ]
@@ -123,7 +146,10 @@
         },
         {
           "data_type": "RealValue<sym>",
-          "names": ["u_measured", "u_angle_measured"],
+          "names": [
+            "u_measured",
+            "u_angle_measured"
+          ],
           "description": "measured voltage magnitude and angle"
         }
       ]
@@ -140,12 +166,18 @@
         },
         {
           "data_type": "RealValue<sym>",
-          "names": ["p_measured", "q_measured"],
+          "names": [
+            "p_measured",
+            "q_measured"
+          ],
           "description": "measured active/reactive power"
         },
         {
           "data_type": "RealValue<sym>",
-          "names": ["p_sigma", "q_sigma"],
+          "names": [
+            "p_sigma",
+            "q_sigma"
+          ],
           "description": "sigma of error margin of active/reactive power measurement"
         }
       ]
@@ -176,7 +208,10 @@
         },
         {
           "data_type": "double",
-          "names": ["r_f", "x_f"],
+          "names": [
+            "r_f",
+            "x_f"
+          ],
           "description": "short circuit impedance"
         }
       ]
@@ -229,7 +264,10 @@
         },
         {
           "data_type": "double",
-          "names": ["q_min", "q_max"],
+          "names": [
+            "q_min",
+            "q_max"
+          ],
           "description": "reactive power limits"
         }
       ]
@@ -241,12 +279,18 @@
       "attributes": [
         {
           "data_type": "double",
-          "names": ["i_sigma", "i_angle_sigma"],
+          "names": [
+            "i_sigma",
+            "i_angle_sigma"
+          ],
           "description": "sigma of error margin of current (angle) measurement"
         },
         {
           "data_type": "RealValue<sym>",
-          "names": ["i_measured", "i_angle_measured"],
+          "names": [
+            "i_measured",
+            "i_angle_measured"
+          ],
           "description": "measured current and current angle"
         }
       ]

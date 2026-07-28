@@ -61,10 +61,10 @@ jobs:
           echo "Running markdownlint"
           npx markdownlint --fix .
 
-      - name: Run Biome
+      - name: Run Json formatter
         run: |
-          echo "Running Biome"
-          npx biome format --write --files-ignore-unknown=true --no-errors-on-unmatched
+          echo "Running Json formatter"
+          git ls-files -z -- '*.json' '*.jsonc' | xargs -0 -r uv run --frozen scripts/format_json.py
 
       - name: If needed raise error
         run: |

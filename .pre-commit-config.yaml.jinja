@@ -47,15 +47,9 @@ repos:
         language: system
         pass_filenames: true
         types: [ cmake ]
-  - repo: https://github.com/igorshubovych/markdownlint-cli  # outside pypi 
-    rev: v{{ markdownlint_cli }}
-    hooks:
-      - id: markdownlint
-        args: ["--fix"]
-  # format .json and .jsonc files
-  - repo: https://github.com/biomejs/pre-commit  # outside pypi 
-    rev: v{{ biome }}
-    hooks:
-      # configuration is located in biome.jsonc
-      - id: biome-format
-        name: biome-format
+      - id: format-json
+        name: format-json
+        entry: uv run --frozen python scripts/format_json.py
+        language: system
+        pass_filenames: true
+        types_or: [ json ]

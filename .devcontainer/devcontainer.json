@@ -35,9 +35,7 @@
         "ms-vscode.test-adapter-converter",
         "njpwerner.autodocstring",
         "cschlosser.doxdocgen",
-        "davidanson.vscode-markdownlint",
-        // version pinned (for now) since an old version (1.6.2) is installed otherwise
-        "biomejs.biome@3.3.0"
+        "davidanson.vscode-markdownlint"
       ],
       "settings": {
         "python.defaultInterpreterPath": ".venv/bin/python",
