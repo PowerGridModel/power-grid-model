@@ -303,6 +303,7 @@ where $i,j = 0..(N-1)$.
 For readbility, we use $:$ to denote a range slicing operation to along a dimension of matrix $\mathbf{M}$, e.g.
 $\mathbf{M}\left[0:3, j\right]$.
 
+<!-- pyml disable line-length-->
 1. Initialize the permutations $\mathbf{P}$ and $\mathbf{Q}$ to the identity permutation.
 2. Initialize fill-in elements to $0$.
 3. Loop over all rows: $p = 0..(N-1)$:
@@ -326,11 +327,12 @@ $\mathbf{M}\left[0:3, j\right]$.
       2. $\mathbf{M}_p\left[0:N_p,0\right] \leftrightarrow \mathbf{M}\left[0:N_p,j_p\right]$
    6. Apply Gaussian elimination for the current pivot element:
       1. $\mathbf{M}_p\left[0,0:N_p\right] \gets \frac{1}{\mathbf{M}_p[0,0]}\mathbf{M}_p\left[0,0:N_p\right]$
-      2. $\mathbf{M}_p\left[1:N_p,0:N_p\right] \gets \mathbf{M}_p\left[1:N_p,0:N_p\right] - \mathbf{M}_p\left[1:N_p,0\right] \otimes \mathbf{M}_p\left[0,0:N_p\right]$  <!-- markdownlint-disable-line line-length -->
+      2. $\mathbf{M}_p\left[1:N_p,0:N_p\right] \gets \mathbf{M}_p\left[1:N_p,0:N_p\right] - \mathbf{M}_p\left[1:N_p,0\right] \otimes \mathbf{M}_p\left[0,0:N_p\right]$
    7. Accumulate the permutation matrices:
       1. In $\mathbf{P}$: swap $p \leftrightarrow p + i_p$
       2. In $\mathbf{Q}$: swap $p \leftrightarrow p + j_p$
    8. Continue with the next $p$ to factorize the the bottom-right block.
+<!-- pyml enable line-length-->
 
 $\mathbf{L}$ is now the matrix containing the lower triangle of $\mathbf{M}$, ones on the diagonal and zeros in the
 upper triangle.
@@ -801,7 +803,7 @@ The equation $\mathbf{L}\boldsymbol{y} = \mathbf{P}\boldsymbol{b}$ is solved as 
 
 1. Loop over all block-rows: $i=0..(N-1)$:
    1. Loop over all lower-triangle off-diagonal columns (beware of sparsity): $j=0..(i-1)$:
-      1. $\boldsymbol{b}\left[i\right] \gets \boldsymbol{b}\left[i\right] - \mathbf{L}\left[i,j\right] \cdot \boldsymbol{b}\left[j\right]$.  <!-- markdownlint-disable-line line-length -->
+      1. $\boldsymbol{b}\left[i\right] \gets \boldsymbol{b}\left[i\right] - \mathbf{L}\left[i,j\right] \cdot \boldsymbol{b}\left[j\right]$.
       2. Continue with next block-column.
    2. If the matrix is a block matrix:
       1. Follow the same steps within the block.
@@ -815,7 +817,7 @@ The equation $Uz = y$ is solved as follows.
 
 1. Loop over all block-rows in reverse order: $i=(N-1)..0$:
    1. Loop over all upper-triangle off-diagonal columns (beware of sparsity): $j=(i+1)..0$:
-      1. $\boldsymbol{b}\left[i\right] \gets \boldsymbol{b}\left[i\right] - \mathbf{U}\left[i,j\right] \cdot \boldsymbol{b}\left[j\right]$.  <!-- markdownlint-disable-line line-length -->
+      1. $\boldsymbol{b}\left[i\right] \gets \boldsymbol{b}\left[i\right] - \mathbf{U}\left[i,j\right] \cdot \boldsymbol{b}\left[j\right]$.
       2. Continue with next block-column.
    2. Handle the diagonal element:
       1. If the matrix is a block matrix:
@@ -1131,7 +1133,7 @@ with dimensions $N_i\times N_j$.
          3. Loop over all rows of the current block: $k = 0..(N_{i,j} - 1)$:
             1. $\text{block\_row\_norm} \gets 0$.
             2. Loop over all columns of the current block: $l = 0..(N_{i,j} - 1)$:
-               1. $\text{block\_row\_norm} \gets \text{block\_row\_norm} + \left\|\mathbf{M}_{i,j}\left[k,l\right]\right\|$.  <!-- markdownlint-disable-line line-length -->
+               1. $\text{block\_row\_norm} \gets \text{block\_row\_norm} + \left\|\mathbf{M}_{i,j}\left[k,l\right]\right\|$.
             3. Calculate the new block norm: set
                $\text{block\_norm} \gets \max\left\{\text{block\_norm}, \text{block\_row\_norm}\right\}$.
             4. Continue with the next row of the current block.
@@ -1186,10 +1188,11 @@ $$
 \end{bmatrix}
 $$
 
+<!-- pyml disable line-length-->
 * The regular $L_{\infty}$-norm is $\max\left\{1+3, 3, 5, \frac{1}{2}, 1, 1\right\} = 5$.
 * The block-wise off-diagonal infinity $L_{\infty ,\text{bwod}}$-norm is
-  <!-- markdownlint-disable-next-line line-length -->
   $\max\left\{\max\left\{1, 3\right\}+\max\left\{3, 0\right\},\max\left\{5, 0\right\} + \max\left\{0, \frac{1}{2}\right\}, 1\right\} = \max\left\{3+3, 5+\frac{1}{2}, 1, 1\right\} = 6$.
+<!-- pyml enable line-length-->
 
 The two norms clearly differ and even the elements that contribute most to the norm are different.
 
@@ -1214,9 +1217,10 @@ $$
 \end{bmatrix}
 $$
 
+<!-- pyml disable line-length-->
 * The regular $L_{\infty}$-norm is $\max\left\{20+20+2+2,30+3,100,3+1\right\} = \max\left\{44,33,100,4\right\} = 100$.
 * The block-wise infinity norm with diagonals would be
-  <!-- markdownlint-disable-next-line line-length -->
   $\max\left\{\max\left\{20+20, 30\right\}+\max\left\{2+2, 3\right\},\max\left\{0,3\right\} + \max\left\{100, 1\right\}\right\} = \max\left\{40+4, 3+100\right\} = \max\left\{44, 103\right\} = 103$.
 * The $L_{\infty ,\text{bwod}}$-norm is
   $\max\left\{\max\left\{2+2, 3\right\},\max\left\{0,3\right\}\right\} = \max\left\{4, 3\right\} = 4$.
+<!-- pyml enable line-length-->

@@ -124,7 +124,8 @@ However, such mixing of sensor types is allowed as long as they are on different
 ```
 
 ```{warning}
-The [iterative linear](../algorithms/se-algorithms.md#iterative-linear-state-estimation) and [Newton-Raphson](../algorithms/se-algorithms.md#newton-raphson-state-estimation) state
+The [iterative linear](../algorithms/se-algorithms.md#iterative-linear-state-estimation) and
+[Newton-Raphson](../algorithms/se-algorithms.md#newton-raphson-state-estimation) state
 estimation algorithms will assume angles to be zero by default (see the details about voltage sensors).
 In observable systems this helps better outputting correct results.
 On the other hand with unobservable systems, exceptions raised from calculations due to faulty results will be
@@ -193,8 +194,11 @@ Output:
 - Current flowing through branches and fault.
 
 ```{note}
-Short-circuit calculations are currently implemented in the phase (abc) domain and therefore require a grounded configurations in certain cases, similar to asymmetric power flow calculations.
-For details on how floating grids are treated in power-grid-model, please refer to[Floating grid handling](calulations.md#floating-grid-handling).
+Short-circuit calculations are currently implemented in the phase (abc) domain and therefore require a grounded
+configurations in certain cases, similar to asymmetric power flow calculations.
+For details on how floating grids are treated in power-grid-model, please refer to
+[Floating grid handling](calulations.md#floating-grid-handling).
+```
 
 #### Common calculations
 
@@ -240,7 +244,10 @@ The option affects which attributes are required and how results are exposed.
   for all output variables.
 
 ```{note}
-In power-grid model, asymmetric calculations with certain configurations require the network to have a reference to ground. For details on how floating grids are treated in power-grid-model, please refer to [Floating grid handling](calulations.md#floating-grid-handling).
+In power-grid model, asymmetric calculations with certain configurations require the network to have a reference to
+ground.
+For details on how floating grids are treated in power-grid-model, please refer to
+[Floating grid handling](calulations.md#floating-grid-handling).
 ```
 
 ```{note}
@@ -287,20 +294,22 @@ right one.
 
 At the moment, the following power flow algorithms are implemented.
 
+<!-- pyml disable line-length-->
 | Algorithm                                                                        | Speed                             | Result                            | Convergence         | Typical Use Cases                                                       | Algorithm call                                                                                             |
 |--------------------------------------------------------------------------------- |---------------------------------- |---------------------------------- |-------------------- |------------------------------------------------------------------------ |----------------------------------------------------------------------------------------------------------- |
 | [Newton-Raphson](../algorithms/pf-algorithms.md#newton-raphson-power-flow)       | Medium                            | Accurate within `error_tolerance` | Quadratic, robust   | General purpose, any type of grid                                       | {py:class}`CalculationMethod.newton_raphson <power_grid_model.enum.CalculationMethod.newton_raphson>`      |
 | [Iterative current](../algorithms/pf-algorithms.md#iterative-current-power-flow) | Fast (Radial) Slow (Meshed)       | Accurate within `error_tolerance` | Linear, less robust | Non-topological change batch calculations like timeseries, radial grids | {py:class}`CalculationMethod.iterative_current <power_grid_model.enum.CalculationMethod.iterative_current>`|
 | [Linear](../algorithms/pf-algorithms.md#linear-power-flow)                       | Much Faster                       | Approximate                       | Single iteration    | Large number of calculations, troubleshooting iterative methods         | {py:class}`CalculationMethod.linear <power_grid_model.enum.CalculationMethod.linear>`                      |
 | [Linear current](../algorithms/pf-algorithms.md#linear-current-power-flow)       | Much Faster                       | Approximate                       | Single iteration    | Large number of calculations                                            | {py:class}`CalculationMethod.linear_current <power_grid_model.enum.CalculationMethod.linear_current>`      |
+<!-- pyml enable line-length-->
 
 ```{note}
 By default, the [Newton-Raphson](../algorithms/pf-algorithms.md#newton-raphson-power-flow) method is used.
 ```
 
 ```{note}
-When all the load/generation types are of constant impedance, the [Linear](../algorithms/pf-algorithms.md#linear-power-flow) method will be the
-fastest without loss of accuracy.
+When all the load/generation types are of constant impedance, the
+[Linear](../algorithms/pf-algorithms.md#linear-power-flow) method will be the fastest without loss of accuracy.
 Therefore power-grid-model will use this method regardless of the input provided by the user in this case.
 ```
 
@@ -351,9 +360,11 @@ Regulated power flow calculations are disabled by default.
 At the time of writing, the following regulated power flow calculation types are implemented.
 Please refer to their respective sections for detailed documentation.
 
+<!-- pyml disable line-length-->
 | Regulation type                                                   | Setting                                                                                 | Enum values                                                                 |
 | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
 | [Automatic tap changing](#power-flow-with-automatic-tap-changing) | {py:meth}`tap_changing_strategy <power_grid_model.PowerGridModel.calculate_power_flow>` | {py:class}`TapChangingStrategy <power_grid_model.enum.TapChangingStrategy>` |
+<!-- pyml enable line-length-->
 
 #### Power flow with automatic tap changing
 
@@ -366,6 +377,7 @@ Power flow calculations that take the behavior of these regulators into account 
 following strategies to the {py:meth}`tap_changing_strategy <power_grid_model.PowerGridModel.calculate_power_flow>`
 option.
 
+<!-- pyml disable line-length-->
 | Algorithm                                                                   | Default  | Speed    | Algorithm call                                                                                              |
 | --------------------------------------------------------------------------- | -------- | -------- | ----------------------------------------------------------------------------------------------------------- |
 | No automatic tap changing (regular power flow)                              | &#10004; | &#10004; | {py:class}`TapChangingStrategy.disabled <power_grid_model.enum.TapChangingStrategy.disabled>`               |
@@ -373,6 +385,7 @@ option.
 | Optimize tap positions for lowest possible voltage in the voltage band      |          |          | {py:class}`TapChangingStrategy.min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>` |
 | Optimize tap positions for lowest possible voltage in the voltage band      |          |          | {py:class}`TapChangingStrategy.max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>` |
 | Optimize tap positions for any value in the voltage band with binary search |          | &#10004; | {py:class}`TapChangingStrategy.fast_any_tap <power_grid_model.enum.TapChangingStrategy.fast_any_tap>`       |
+<!-- pyml enable line-length-->
 
 For detailed control logic, initialization behavior, search methods, and error handling for automatic tap changing,
 see [Automatic Tap Changing Algorithm Details](../algorithms/tap-changing-algorithms.md).
@@ -384,10 +397,12 @@ the highest likelihood given (pseudo) measurement input.
 
 At the moment, the following state estimation algorithms are implemented.
 
+<!-- pyml disable line-length-->
 | Algorithm | Default | Speed | Accuracy | Algorithm call |
 | --------- | ------- | ----- | -------- | -------------- |
 | [Iterative linear](../algorithms/se-algorithms.md#iterative-linear-state-estimation) | &#10004; | &#10004; | | {py:class}`CalculationMethod.iterative_linear <power_grid_model.enum.CalculationMethod.iterative_linear>` |
 | [Newton-Raphson](../algorithms/se-algorithms.md#newton-raphson-state-estimation) | | | &#10004; | {py:class}`CalculationMethod.newton_raphson <power_grid_model.enum.CalculationMethod.newton_raphson>` |
+<!-- pyml enable line-length-->
 
 ```{note}
 By default, the [Iterative linear](../algorithms/se-algorithms.md#iterative-linear-state-estimation) method is used.
@@ -404,9 +419,11 @@ of short circuit studies applications.
 
 At the moment, the following short circuit algorithms are implemented.
 
+<!-- pyml disable line-length-->
 | Algorithm | Default | Speed | Accuracy | Algorithm call |
 | --------- | ------- | ----- | -------- | -------------- |
 | [IEC 60909](../algorithms/sc-algorithms.md#iec-60909-short-circuit-calculation) | &#10004; | &#10004; | | {py:class}`CalculationMethod.iec60909 <power_grid_model.enum.CalculationMethod.iec60909>` |
+<!-- pyml enable line-length-->
 
 For detailed mathematical descriptions including the short circuit equations and IEC 60909 implementation details,
 see [Short Circuit Algorithm Details](../algorithms/sc-algorithms.md).

@@ -204,12 +204,14 @@ graph TD
 
 The dimensions of numpy arrays and the interpretation of each dimension is as follows.
 
+<!-- pyml disable line-length-->
 | **Data Type**       | **1D**                           | **2D**                                               | **3D**                                                                     |
 | ------------------- | -------------------------------- | ---------------------------------------------------- | -------------------------------------------------------------------------- |
 | **SingleArray**     | Corresponds to a single dataset. | &#10060;                                             | &#10060;                                                                   |
 | **DenseBatchArray** | &#10060;                         | Batch number $\times$ Component within that batch    | &#10060;                                                                   |
 | **SingleColumn**    | Component within that batch.     | Component within that batch $\times$ Phases &#10024; | &#10060;                                                                   |
 | **BatchColumn**     | &#10060;                         | Batch number $\times$ Component within that batch    | Batch number $\times$ Component within that batch $\times$ Phases &#10024; |
+<!-- pyml enable line-length-->
 
 ```{note}
 &#10024; The "Phases" dimension is optional and is available only when the attributes are asymmetric.
@@ -281,6 +283,7 @@ The batch size is the number of scenarios.
 
 ## Attributes of Components
 
+<!-- pyml disable line-length-->
 | Attribute    | Description                                                                                                                                                                                                                                                                                                                 |
 | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | name         | Name of the attribute. It is exactly the same as the attribute name in `power_grid_model.power_grid_meta_data`. They are included under the enum {py:class}`AttributeType <power_grid_model.typing.AttributeType>`.                                                                                                         |
@@ -292,3 +295,4 @@ The batch size is the number of scenarios.
 | required     | Whether the attribute is required. If not, then it is optional. Note if you choose not to specify an optional attribute, it should have the null value as defined in [](../advanced_documentation/native-data-interface.md#basic-data-types).                                                                               |
 | update       | Whether the attribute can be mutated by the update call `PowerGridModel.update` on an existing instance, only applicable when this attribute is part of an input dataset.                                                                                                                                                   |
 | valid values | Whether applicable or not; an indication of value validity for the input data.                                                                                                                                                                                                                                              |
+<!-- pyml enable line-length-->

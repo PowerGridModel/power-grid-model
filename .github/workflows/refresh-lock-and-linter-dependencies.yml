@@ -78,7 +78,6 @@ jobs:
             echo "${nospecialchars_pkg}=$version" >> "$GITHUB_OUTPUT"
           }
           grab_installed_version_npm "@biomejs/biome"
-          grab_installed_version_npm "markdownlint-cli"
 
       - name: Update .pre-commit-config.yaml
         uses: cuchi/jinja2-action@8bd801365a8d36a0b20f45ee969161685de7785a # v1.3.0
@@ -91,7 +90,6 @@ jobs:
             mypy=${{ steps.versions_uv.outputs.mypy }}
             gersemi=${{ steps.versions_uv.outputs.gersemi }}
             biome=${{ steps.versions_npm.outputs.biomejsbiome }}
-            markdownlint_cli=${{ steps.versions_npm.outputs.markdownlint-cli }}
 
       - name: show changed files
         run: |

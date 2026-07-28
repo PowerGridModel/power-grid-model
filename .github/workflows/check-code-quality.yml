@@ -52,14 +52,14 @@ jobs:
         run: |
           uv run --frozen gersemi -i --warnings-as-errors src/ tests/ cmake/
 
+      - name: Run pymarkdown
+        run: |
+          echo "Running pymarkdown"
+          git ls-files -z -- '*.md' | xargs -0 -r uv run --frozen pymarkdown fix
+
       - name: Install npm packages
         run: |
           npm ci
-
-      - name: Run markdownlint
-        run: |
-          echo "Running markdownlint"
-          npx markdownlint --fix .
 
       - name: Run Biome
         run: |

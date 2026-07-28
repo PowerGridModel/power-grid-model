@@ -30,7 +30,9 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Physics",
 ]
 requires-python = ">=3.12"
-dependencies = ["numpy>=2.0.0"]
+dependencies = [
+    "numpy>=2.0.0",
+]
 dynamic = ["version"]
 
 [dependency-groups]
@@ -44,6 +46,7 @@ lint = [
     "numpy",                             # needed for mypy
     "gersemi",                           # CMake linter
     "clang-format ~= 18.0",              # C/C++ formatter
+    "pymarkdownlnt",                     # Markdown linter
     "reuse[charset-normalizer,chardet]", # license check
 ]
 
@@ -197,6 +200,13 @@ ignore_missing_imports = true
 show_column_numbers = true
 non_interactive = true
 install_types = true
+
+[tool.pymarkdown]
+plugins.heading-increment.enabled = false
+plugins.no-duplicate-heading.enabled = false
+plugins.line-length.line_length = 120
+plugins.line-length.heading_line_length = 120
+plugins.line-length.code_block_line_length = 120
 
 # CI build options
 [tool.cibuildwheel]
