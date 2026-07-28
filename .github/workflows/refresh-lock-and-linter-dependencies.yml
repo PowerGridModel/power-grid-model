@@ -61,35 +61,35 @@ jobs:
           grab_installed_version_uv "mypy"
           grab_installed_version_uv "gersemi"
 
-      - name: update npm packages
-        run: |
-          npm update
+      # - name: update npm packages
+      #   run: |
+      #     npm update
 
-      - name: retrieve npm development package versions
-        id: versions_npm
-        run: |
-          grab_installed_version_npm() {
-            local pkg="$1"
-            local nospecialchars_pkg
-            local version
-            # remove characters `@` and `/`
-            nospecialchars_pkg=$(echo $pkg | tr -d '@/')
-            version=$(npm ls --json --package-lock-only $pkg | grep -i '"version": ' | cut -d\" -f4)
-            echo "${nospecialchars_pkg}=$version" >> "$GITHUB_OUTPUT"
-          }
-          grab_installed_version_npm "@biomejs/biome"
+      # - name: retrieve npm development package versions
+      #   id: versions_npm
+      #   run: |
+      #     grab_installed_version_npm() {
+      #       local pkg="$1"
+      #       local nospecialchars_pkg
+      #       local version
+      #       # remove characters `@` and `/`
+      #       nospecialchars_pkg=$(echo $pkg | tr -d '@/')
+      #       version=$(npm ls --json --package-lock-only $pkg | grep -i '"version": ' | cut -d\" -f4)
+      #       echo "${nospecialchars_pkg}=$version" >> "$GITHUB_OUTPUT"
+      #     }
+      #     grab_installed_version_npm "@biomejs/biome"
 
-      - name: Update .pre-commit-config.yaml
-        uses: cuchi/jinja2-action@8bd801365a8d36a0b20f45ee969161685de7785a # v1.3.0
-        with:
-          template: .pre-commit-config.yaml.jinja
-          output_file: .pre-commit-config.yaml
-          variables: |
-            ruff=${{ steps.versions_uv.outputs.ruff }}
-            clang_format=${{ steps.versions_uv.outputs.clang-format }}
-            mypy=${{ steps.versions_uv.outputs.mypy }}
-            gersemi=${{ steps.versions_uv.outputs.gersemi }}
-            biome=${{ steps.versions_npm.outputs.biomejsbiome }}
+      # - name: Update .pre-commit-config.yaml
+      #   uses: cuchi/jinja2-action@8bd801365a8d36a0b20f45ee969161685de7785a # v1.3.0
+      #   with:
+      #     template: .pre-commit-config.yaml.jinja
+      #     output_file: .pre-commit-config.yaml
+      #     variables: |
+      #       ruff=${{ steps.versions_uv.outputs.ruff }}
+      #       clang_format=${{ steps.versions_uv.outputs.clang-format }}
+      #       mypy=${{ steps.versions_uv.outputs.mypy }}
+      #       gersemi=${{ steps.versions_uv.outputs.gersemi }}
+      #       biome=${{ steps.versions_npm.outputs.biomejsbiome }}
 
       - name: show changed files
         run: |
