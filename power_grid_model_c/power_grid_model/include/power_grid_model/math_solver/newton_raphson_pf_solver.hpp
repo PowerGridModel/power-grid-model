@@ -633,7 +633,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
             //               = (q_specified_all - q_specified_all + q_specified_regulating) - del_x_pq_[bus].q()
             //               = q_specified_regulating - del_x_pq_[bus].q()
             //
-            // Q_specified for regulating devides should have no effect on the result, as its Q is calculated. But these
+            // Q_specified for regulating devices should have no effect on the result, as its Q is calculated. But these
             // values are added in `add_loads()` and therefore need to be subtracted again.
             //
             // Note: Q_specified for regulating devices is typically ~0. But when it is not 0, it has to be considered
