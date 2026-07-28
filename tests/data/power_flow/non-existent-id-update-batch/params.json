@@ -1,7 +1,7 @@
 {
   "calculation_method": "linear",
-  "rtol": 1e-5,
-  "atol": 1e-5,
+  "rtol": 1e-05,
+  "atol": 1e-05,
   "raises": {
     "raises": "IDNotFound",
     "reason": "Same invalid ID in update data set"

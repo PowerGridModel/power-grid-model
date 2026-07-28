@@ -77,7 +77,6 @@ jobs:
             version=$(npm ls --json --package-lock-only $pkg | grep -i '"version": ' | cut -d\" -f4)
             echo "${nospecialchars_pkg}=$version" >> "$GITHUB_OUTPUT"
           }
-          grab_installed_version_npm "@biomejs/biome"
           grab_installed_version_npm "markdownlint-cli"
 
       - name: Update .pre-commit-config.yaml
@@ -90,7 +89,6 @@ jobs:
             clang_format=${{ steps.versions_uv.outputs.clang-format }}
             mypy=${{ steps.versions_uv.outputs.mypy }}
             gersemi=${{ steps.versions_uv.outputs.gersemi }}
-            biome=${{ steps.versions_npm.outputs.biomejsbiome }}
             markdownlint_cli=${{ steps.versions_npm.outputs.markdownlint-cli }}
 
       - name: show changed files

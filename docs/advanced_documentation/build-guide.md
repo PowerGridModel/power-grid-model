@@ -493,12 +493,12 @@ For optimal usage, open the folder using `code <project_dir>` from a terminal th
 See the platform-specific setup sections above for guidance.
 ```
 
-For automatic formatting of JSON(C) files, you will need to have [Node.js](https://nodejs.org/) installed.
-You may also need to update the recommended extension Biome to the latest version using
-`manage > install specific version` for optimal up-to-date support.
+For automatic formatting of JSON(C) files, we use a custom formatter in `scripts/format_json.py`.
 Alternatively, as usual, you can also use
 {{ "[`pre-commit`]({}/CONTRIBUTING.md#pre-commit-hooks)".format(gh_link_head_blob) }} to keep all files
 correctly formatted before committing.
+You can use a formatter of your choice as well, but be aware that our CI may reject the format, so we always recommend
+using {{ "[`pre-commit`]({}/CONTRIBUTING.md#pre-commit-hooks)".format(gh_link_head_blob) }} before you commit.
 
 ## Documentation
 
