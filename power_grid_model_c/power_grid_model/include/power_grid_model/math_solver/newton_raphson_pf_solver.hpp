@@ -586,28 +586,6 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         }
     }
 
-    /**
-     * Calculate total specified Q from regulated load/generators
-     *
-     * For voltage-regulated generators, the "specified Q" is typically ~0 because the regulator
-     * controls voltage and provides whatever Q is needed. For const_i/const_y types, we scale
-     * by voltage to get the voltage-dependent specified value.
-     */
-    RealValue<sym> specified_q(Idx load_gen, Idx bus, PowerFlowInput<sym> const& input) {
-        RealValue<sym> const q = imag(input.s_injection[load_gen]);
-        switch (this->load_gen_type_.get()[load_gen]) {
-            using enum LoadGenType;
-        case const_pq:
-            return q;
-        case const_i:
-            return q * x_[bus].v();
-        case const_y:
-            return q * x_[bus].v() * x_[bus].v();
-        default:
-            throw MissingCaseForEnumError("Reactive power limit calculation", this->load_gen_type_.get()[load_gen]);
-        }
-    }
-
     static LimitViolation violated_limit(RealValue<sym> const& q, double const& q_min, double const& q_max) {
         double q_total;
         if constexpr (is_symmetric_v<sym>) {
@@ -671,7 +649,11 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
                 }
                 for (Idx const regulator : regulators_per_load_gen.get_element_range(load_gen)) {
                     if (input.voltage_regulator[regulator].status != status_off) {
-                        specified_regulating_q += specified_q(load_gen, bus, input);
+                        if (this->load_gen_type_.get()[load_gen] == LoadGenType::const_pq) {
+                            specified_regulating_q += imag(input.s_injection[load_gen]);
+                        } else {
+                            throw UnsupportedLoadGenTypeForVoltageRegulator{std::format("{}", regulator)};
+                        }
                     }
                 }
             }
@@ -719,15 +701,6 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
             }
         }
         return switched;
-    }
-
-    static bool is_value_nan(RealValue<sym> const& value) {
-        if constexpr (is_symmetric_v<sym>) {
-            return is_nan(value);
-        } else {
-            // all three phases are set together, need to check only one phase for NaN
-            return is_nan(value(0));
-        }
     }
 
     void add_linear_initial_guess_loads(IdxRange const& load_gens, PFJacBlock<sym>& block,
@@ -793,11 +766,11 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         using enum LoadGenType;
         for (Idx const load_number : load_gens) {
             RealValue<sym> const& clamped_q = clamped_regulators_per_load_gen_[load_number];
-            if (!is_value_nan(clamped_q)) {
+            if (!is_nan(clamped_q)) {
                 // load_gen hit a Q-limit, use the clamped value
                 del_x_pq_[bus_number].p() += real(input.s_injection[load_number]);
                 del_x_pq_[bus_number].q() += clamped_q;
-                // TODO(frie-soptim): prevent regulation of const_i/const_y load_gens in validation
+                // This should only happen for const_pq load_gens, other types are disallowed during construction.
                 continue;
             }
 

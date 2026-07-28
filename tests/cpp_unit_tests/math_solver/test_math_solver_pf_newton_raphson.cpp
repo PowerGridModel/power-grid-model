@@ -101,8 +101,7 @@ TEST_CASE("Newton-Raphson PV - Q limit violation with switch to PQ") {
 
         CHECK(cabs(output.u[1]) == doctest::Approx(1.0));
         CHECK(output.voltage_regulator[0].limit_violated == LimitViolation::none); // pv bus
-        CHECK(imag(output.load_gen[0].s) > -1.0);
-        CHECK(imag(output.load_gen[0].s) < 1.0);
+        CHECK(imag(output.load_gen[0].s) == doctest::Approx(-0.2423));
     }
 
     SUBCASE("Qmax violation and switch to PQ") {
