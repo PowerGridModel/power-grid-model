@@ -41,24 +41,28 @@ regulator is automatic.
 The following table specifies the behaviour of regulated transformers based on the
 {py:class}`TapChangingStrategy <power_grid_model.enum.TapChangingStrategy>` chosen and whether `tap_pos` is regulated.
 
+<!-- pyml disable line-length-->
 |TapChangingStrategy|tap_pos is regulated?|Initialization phase|Exploitation phase|
 |---|---|---|---|
 |{py:class}`any_valid_tap <power_grid_model.enum.TapChangingStrategy.any_valid_tap>`|Yes|Set the tap position to `tap_nom` (default middle tap position)|Binary search (default)|
 |{py:class}`any_valid_tap <power_grid_model.enum.TapChangingStrategy.any_valid_tap>`|No|Clamp the tap position to stay within `tap_min` and `tap_max`|Do not regulate|
 |{py:class}`min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>` / {py:class}`max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>`|Yes|Set the tap position to `tap_min` or `tap_max` respectively|Do not regulate|
 |{py:class}`min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>` / {py:class}`max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>`|No|Clamp the tap position to stay within `tap_min` and `tap_max`|Do not regulate|
+<!-- pyml enable line-length-->
 
 Some transformer configurations require clamping due to `regulated_object` and `tap_side` pointing to different sides of
 the transformer.
 For a three-winding transformer the requirements are similar to a regular transformer with the additional consideration
 that the primary side tap changer regulates only the secondary or tertiary side voltages:
 
+<!-- pyml disable line-length-->
 |Tapping on side|Regulated object|Voltage control side|`tap_side`|`regulated_object`|`control_side`|
 |---|---|---|---|---|---|
 |HV (0)|LV (1)|LV (1)|`BranchSide.from_side` / `Branch3Side.side_1`|`TransformerTapSide.side_1` / `Branch3Side.side_2`|`BranchSide.to_side` / `Branch3Side.side_2`|
 |HV (0)|LV (1)|HV (0)|`BranchSide.from_side` / `Branch3Side.side_1`|`TransformerTapSide.side_1` / `Branch3Side.side_2`|`BranchSide.from_side` / `Branch3Side.side_1`|
 |LV (1)|HV (0)|LV (1)|`BranchSide.to_side` / `Branch3Side.side_2`|`TransformerTapSide.side_2` / `Branch3Side.side_1`|`BranchSide.to_side` / `Branch3Side.side_2`|
 |LV (1)|HV (0)|HV (0)|`BranchSide.to_side` / `Branch3Side.side_2`|`TransformerTapSide.side_2` / `Branch3Side.side_1`|`BranchSide.from_side` / `Branch3Side.side_1`|
+<!-- pyml enable line-length-->
 
 ## Search methods used for tap changing optimization
 
@@ -66,11 +70,13 @@ By default, the algorithm uses binary search to find the optimal tap position to
 Users can also choose other search methods via
 {py:class}`TapChangingStrategy <power_grid_model.enum.TapChangingStrategy>`:
 
+<!-- pyml disable line-length-->
 |{py:class}`TapChangingStrategy <power_grid_model.enum.TapChangingStrategy>`|Description|
 |---|---|
 |{py:class}`fast_any_tap <power_grid_model.enum.TapChangingStrategy.fast_any_tap>`|Very fast search (single step per iteration)|
 |{py:class}`any_valid_tap <power_grid_model.enum.TapChangingStrategy.any_valid_tap>`|Binary search (default)|
 |{py:class}`min_voltage_tap <power_grid_model.enum.TapChangingStrategy.min_voltage_tap>` / {py:class}`max_voltage_tap <power_grid_model.enum.TapChangingStrategy.max_voltage_tap>`|Set to extreme tap and do not regulate|
+<!-- pyml enable line-length-->
 
 ## Regulatable voltage range outside `u_band`
 

@@ -21,9 +21,11 @@ The base type for all power-grid-model components.
 
 #### Input
 
+<!-- pyml disable line-length-->
 | name | data type | unit | description                                                                                                                                                       | required |        update        |
 |------|-----------|------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------:|:--------------------:|
 | `id` | `int32_t` | -    | ID of a component. The ID should be unique across all components within the same scenario, e.g., you cannot have a node with `id=5` and another line with `id=5`. | &#10004; | &#10060; (see below) |
+<!-- pyml enable line-length-->
 
 If a component update is uniform and is updating all the elements with the same component type, IDs can be omitted or
 set to `nan`s.
@@ -37,10 +39,12 @@ An example of the usage of optional IDs is given in [Power Flow Example](./Power
 
 #### Steady state output and Short circuit output
 
+<!-- pyml disable line-length-->
 | name        | data type | unit | description                                                                                                                        |
 |-------------|-----------|------|------------------------------------------------------------------------------------------------------------------------------------|
 | `id`        | `int32_t` | -    | ID of a component, the ID should be unique across all components, e.g., you cannot have a node with `id=5` and a line with `id=5`. |
 | `energized` | `int8_t`  | -    | Indicates if a component is energized, i.e. connected to a source                                                                  |
+<!-- pyml enable line-length-->
 
 ## Node
 
@@ -58,6 +62,7 @@ Physically a node can be a busbar, a joint, or other similar component.
 
 #### Steady state output
 
+<!-- pyml disable line-length-->
 | name      | data type         | unit                       | description                                                                                     |
 |-----------|-------------------|----------------------------|-------------------------------------------------------------------------------------------------|
 | `u_pu`    | `RealValueOutput` | -                          | per-unit voltage magnitude                                                                      |
@@ -65,9 +70,10 @@ Physically a node can be a busbar, a joint, or other similar component.
 | `u`       | `RealValueOutput` | volt (V)                   | voltage magnitude, line-line for symmetric calculation, line-neutral for asymmetric calculation |
 | `p`       | `RealValueOutput` | watt (W)                   | active power injection                                                                          |
 | `q`       | `RealValueOutput` | volt-ampere-reactive (var) | reactive power injection                                                                        |
+<!-- pyml enable line-length-->
 
 ```{note}
-The `p` and `q` output of injection follows the `generator` reference direction as mentioned in  
+The `p` and `q` output of injection follows the `generator` reference direction as mentioned in
 [Reference Direction](data-model.md#reference-direction)
 ```
 
@@ -101,6 +107,7 @@ In this case, the attribute `from_status` and `to_status` is always 1.
 
 #### Steady state output
 
+<!-- pyml disable line-length-->
 | name      | data type         | unit                       | description                                                |
 |-----------|-------------------|----------------------------|------------------------------------------------------------|
 | `p_from`  | `RealValueOutput` | watt (W)                   | active power flowing into the branch at from-side          |
@@ -112,6 +119,7 @@ In this case, the attribute `from_status` and `to_status` is always 1.
 | `i_to`    | `RealValueOutput` | ampere (A)                 | magnitude of current at to-side                            |
 | `s_to`    | `RealValueOutput` | volt-ampere (VA)           | apparent power flowing at to-side                          |
 | `loading` | `double`          | -                          | relative loading of the branch, `1.0` meaning 100% loaded. |
+<!-- pyml enable line-length-->
 
 #### Short circuit output
 
@@ -133,6 +141,7 @@ If `i_n` is not provided, `loading` of line will be a `nan` value.
 
 #### Input
 
+<!-- pyml disable line-length-->
 | name   | data type | unit       | description                                        |                 required                  |  update  |            valid values            |
 |--------|-----------|------------|----------------------------------------------------|:-----------------------------------------:|:--------:|:----------------------------------:|
 | `r1`   | `double`  | ohm (Ω)    | positive-sequence serial resistance                |                 &#10004;                  | &#10060; | `r1` and `x1` cannot be both `0.0` |
@@ -144,6 +153,7 @@ If `i_n` is not provided, `loading` of line will be a `nan` value.
 | `c0`   | `double`  | farad (F)  | zero-sequence shunt capacitance                    | &#10024; only for asymmetric calculations | &#10060; |                                    |
 | `tan0` | `double`  | -          | zero-sequence shunt loss factor (tan &#x03B4;)     | &#10024; only for asymmetric calculations | &#10060; |                                    |
 | `i_n`  | `double`  | ampere (A) | rated current                                      |                 &#10060;                  | &#10060; |               `> 0`                |
+<!-- pyml enable line-length-->
 
 ```{note}
 In case of short circuit calculations, the zero-sequence parameters are required only if any of the faults in any of the
@@ -191,6 +201,7 @@ An example of usage of transformer is given in [Transformer Examples](../example
 
 #### Input
 
+<!-- pyml disable line-length-->
 | name               | data type                                                   | unit             | description                                                                                                                                                                                                                 |                         required                         |  update  |                              valid values                              |
 |--------------------|-------------------------------------------------------------|------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------------------------------------------------------:|:--------:|:----------------------------------------------------------------------:|
 | `u1`               | `double`                                                    | volt (V)         | rated voltage at from-side                                                                                                                                                                                                  |                         &#10004;                         | &#10060; |                                 `> 0`                                  |
@@ -219,6 +230,7 @@ An example of usage of transformer is given in [Transformer Examples](../example
 | `x_grounding_from` | `double`                                                    | ohm (Ω)          | grounding reactance at from-side, if relevant                                                                                                                                                                               |                   &#10060; default `0`                   | &#10060; |                                                                        |
 | `r_grounding_to`   | `double`                                                    | ohm (Ω)          | grounding resistance at to-side, if relevant                                                                                                                                                                                |                   &#10060; default `0`                   | &#10060; |                                                                        |
 | `x_grounding_to`   | `double`                                                    | ohm (Ω)          | grounding reactance at to-side, if relevant                                                                                                                                                                                 |                   &#10060; default `0`                   | &#10060; |                                                                        |
+<!-- pyml enable line-length-->
 
 ```{note}
 It can happen that `tap_min > tap_max`.
@@ -276,6 +288,7 @@ using a `generic_branch`.
 
 #### Input
 
+<!-- pyml disable line-length-->
 | name    | data type | unit             | description                   |        required        |  update  | valid values |
 |---------|-----------|------------------|-------------------------------|:----------------------:|:--------:|:------------:|
 | `r1`    | `double`  | ohm              | positive-sequence resistance  |        &#10004;        | &#10060; |              |
@@ -285,6 +298,7 @@ using a `generic_branch`.
 | `k`     | `double`  | -                | off-nominal ratio             | &#10060; default `1.0` | &#10060; |    `> 0`     |
 | `theta` | `double`  | radian           | angle shift                   | &#10060; default `0.0` | &#10060; |              |
 | `sn`    | `double`  | volt-ampere (VA) | rated power                   | &#10060; default `0.0` | &#10060; |    `>= 0`    |
+<!-- pyml enable line-length-->
 
 ```{note}
 The impedance (`r1`, `x1`) and admittance (`g1`, `b1`) attributes are calculated with reference to the "to" side of the
@@ -347,6 +361,7 @@ $$
 This representation holds for all values `r_aa` ... `r_nn`, `x_aa` ... `x_nn` and `c_aa` ... `c_cc`.
 If the neutral values are not provided, the last row and column from the above matrix are omitted.
 
+<!-- pyml disable line-length-->
 | name   | data type | unit       | description                       | required                     |  update  | valid values |
 |--------|-----------|------------|-----------------------------------|------------------------------|:--------:|:------------:|
 | `r_aa` | `double`  | ohm (Ω)    | Series serial resistance aa       | &#10004;                     | &#10060; |    `> 0`     |
@@ -378,6 +393,7 @@ If the neutral values are not provided, the last row and column from the above m
 | `c0`   | `double`  | farad (F)  | zero-sequence shunt capacitance   | &#10024; without a c matrix  | &#10060; |    `> 0`     |
 | `c1`   | `double`  | farad (F)  | Series shunt capacitance          | &#10024; without a c matrix  | &#10060; |    `> 0`     |
 | `i_n`  | `double`  | ampere (A) | rated current                     | &#10060;                     | &#10060; |    `> 0`     |
+<!-- pyml enable line-length-->
 
 For the r and x matrices providing values for the neutral phase is optional.
 To clarify which input values are required, please consult the tables below:
@@ -480,6 +496,7 @@ In reality such switches may not exist.
 
 #### Steady state output
 
+<!-- pyml disable line-length-->
 | name      | data type         | unit                       | description                                                |
 |-----------|-------------------|----------------------------|------------------------------------------------------------|
 | `p_1`     | `RealValueOutput` | watt (W)                   | active power flowing into the branch at side 1             |
@@ -495,6 +512,7 @@ In reality such switches may not exist.
 | `i_3`     | `RealValueOutput` | ampere (A)                 | current at side 3                                          |
 | `s_3`     | `RealValueOutput` | volt-ampere (VA)           | apparent power flowing at side 3                           |
 | `loading` | `double`          | -                          | relative loading of the branch, `1.0` meaning 100% loaded. |
+<!-- pyml enable line-length-->
 
 #### Short circuit output
 
@@ -516,6 +534,7 @@ An example of usage of three-winding transformer is given in
 
 #### Input
 
+<!-- pyml disable line-length-->
 | name            | data type                                                   | unit             | description                                                                                               |                        required                         |  update  |                              valid values                              |
 |-----------------|-------------------------------------------------------------|------------------|-----------------------------------------------------------------------------------------------------------|:-------------------------------------------------------:|:--------:|:----------------------------------------------------------------------:|
 | `u1`            | `double`                                                    | volt (V)         | rated voltage at side 1                                                                                   |                        &#10004;                         | &#10060; |                                 `> 0`                                  |
@@ -561,6 +580,7 @@ An example of usage of three-winding transformer is given in
 | `x_grounding_2` | `double`                                                    | ohm (Ω)          | grounding reactance at side 2, if relevant                                                                |                  &#10060; default `0`                   | &#10060; |                                                                        |
 | `r_grounding_3` | `double`                                                    | ohm (Ω)          | grounding resistance at side 3, if relevant                                                               |                  &#10060; default `0`                   | &#10060; |                                                                        |
 | `x_grounding_3` | `double`                                                    | ohm (Ω)          | grounding reactance at side 3, if relevant                                                                |                  &#10060; default `0`                   | &#10060; |                                                                        |
+<!-- pyml enable line-length-->
 
 ```{note}
 It can happen that `tap_min > tap_max`.
@@ -621,6 +641,7 @@ The impedance is specified by convention as short circuit power.
 
 #### Input
 
+<!-- pyml disable line-length-->
 | name          | data type | unit             | description                                        |           required           |  update  | valid values |
 |---------------|-----------|------------------|----------------------------------------------------|:----------------------------:|:--------:|:------------:|
 | `u_ref`       | `double`  | -                | reference voltage in per-unit                      | &#10024; only for power flow | &#10004; |    `> 0`     |
@@ -628,6 +649,7 @@ The impedance is specified by convention as short circuit power.
 | `sk`          | `double`  | volt-ampere (VA) | short circuit power                                |   &#10060; default `1e10`    | &#10004; |    `> 0`     |
 | `rx_ratio`    | `double`  | -                | R to X ratio                                       |    &#10060; default `0.1`    | &#10004; |    `>= 0`    |
 | `z01_ratio`   | `double`  | -                | zero-sequence to positive sequence impedance ratio |    &#10060; default `1.0`    | &#10004; |    `> 0`     |
+<!-- pyml enable line-length-->
 
 #### Electric Model
 
@@ -663,9 +685,11 @@ $$
 `generic_load_gen` is an abstract load/generation [appliance](#appliance) which contains
 only the type of the load/generation with response to voltage.
 
+<!-- pyml disable line-length-->
 | name   | data type                                                   | unit | description                                     | required |  update  |
 |--------|-------------------------------------------------------------|------|-------------------------------------------------|:--------:|:--------:|
 | `type` | {py:class}`LoadGenType <power_grid_model.enum.LoadGenType>` | -    | type of load/generator with response to voltage | &#10004; | &#10060; |
+<!-- pyml enable line-length-->
 
 #### Load/Generator Concrete Types
 
@@ -682,10 +706,12 @@ However, the reference direction and meaning of `RealValueInput` is different, a
 
 ##### Input
 
+<!-- pyml disable line-length-->
 | name          | data type        | unit                       | description              |           required           |  update  |
 |---------------|------------------|----------------------------|--------------------------|:----------------------------:|:--------:|
 | `p_specified` | `RealValueInput` | watt (W)                   | specified active power   | &#10024; only for power flow | &#10004; |
 | `q_specified` | `RealValueInput` | volt-ampere-reactive (var) | specified reactive power | &#10024; only for power flow | &#10004; |
+<!-- pyml enable line-length-->
 
 ##### Electric model
 
@@ -724,12 +750,14 @@ It behaves similar to a load/generator with type `const_impedance`.
 
 #### Input
 
+<!-- pyml disable line-length-->
 | name | data type | unit        | description                         |                 required                 |  update  |
 |------|-----------|-------------|-------------------------------------|:----------------------------------------:|:--------:|
 | `g1` | `double`  | siemens (S) | positive-sequence shunt conductance |                 &#10004;                 | &#10004; |
 | `b1` | `double`  | siemens (S) | positive-sequence shunt susceptance |                 &#10004;                 | &#10004; |
 | `g0` | `double`  | siemens (S) | zero-sequence shunt conductance     | &#10024; only for asymmetric calculation | &#10004; |
 | `b0` | `double`  | siemens (S) | zero-sequence shunt susceptance     | &#10024; only for asymmetric calculation | &#10004; |
+<!-- pyml enable line-length-->
 
 ```{note}
 In power-grid-model, shunts may also be used to introduce a ground reference in an otherwise floating grid. 
@@ -775,9 +803,11 @@ It measures the magnitude and (optionally) the angle of the voltage of a `node`.
 
 #### Input
 
+<!-- pyml disable line-length-->
 | name      | data type | unit     | description                                                                                                     |              required              |  update  | valid values |
 |-----------|-----------|----------|-----------------------------------------------------------------------------------------------------------------|:----------------------------------:|:--------:|:------------:|
 | `u_sigma` | `double`  | volt (V) | standard deviation of the measurement error. Usually this is the absolute measurement error range divided by 3. | &#10024; only for state estimation | &#10004; |    `> 0`     |
+<!-- pyml enable line-length-->
 
 #### Voltage Sensor Concrete Types
 
@@ -793,10 +823,12 @@ In a `asym_voltage_sensor` the measured voltage is a 3-phase line-to-ground volt
 
 ##### Input
 
+<!-- pyml disable line-length-->
 | name               | data type        | unit     | description                                                          |                                                     required                                                     |  update  | valid values |
 |--------------------|------------------|----------|----------------------------------------------------------------------|:----------------------------------------------------------------------------------------------------------------:|:--------:|:------------:|
 | `u_measured`       | `RealValueInput` | volt (V) | measured voltage magnitude                                           |                                        &#10024; only for state estimation                                        | &#10004; |    `> 0`     |
 | `u_angle_measured` | `RealValueInput` | rad      | measured voltage angle (only possible with phasor measurement units) | &#10024; only for state estimation when a current sensor with `global_angle` `angle_measurement_type` is present | &#10004; |              |
+<!-- pyml enable line-length-->
 
 ```{note}
 When a current sensor with `global_angle` `angle_measurement_type` is present there needs to be a voltage sensor with
@@ -810,10 +842,12 @@ A sensor only has output for state estimation.
 For other calculation types, sensor output is undefined.
 ```
 
+<!-- pyml disable line-length-->
 | name               | data type         | unit     | description                                                                                                              |
 |--------------------|-------------------|----------|--------------------------------------------------------------------------------------------------------------------------|
 | `u_residual`       | `RealValueOutput` | volt (V) | residual value between measured voltage magnitude and calculated voltage magnitude                                       |
 | `u_angle_residual` | `RealValueOutput` | rad      | residual value between measured voltage angle and calculated voltage angle (only possible with phasor measurement units) |
+<!-- pyml enable line-length-->
 
 #### Electric Model
 
@@ -866,10 +900,12 @@ However, such mixing of sensor types is allowed as long as they are on different
 
 ##### Input
 
+<!-- pyml disable line-length-->
 | name                     | data type                                                                     | unit             | description                                                                                                                                                                      |                                                           required                                                            |  update  |                     valid values                     |
 |--------------------------|-------------------------------------------------------------------------------|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:-----------------------------------------------------------------------------------------------------------------------------:|:--------:|:----------------------------------------------------:|
 | `measured_terminal_type` | {py:class}`MeasuredTerminalType <power_grid_model.enum.MeasuredTerminalType>` | -                | indicate if it measures an `appliance` or a `branch`                                                                                                                             |                                                           &#10004;                                                            | &#10060; | the terminal type should match the `measured_object` |
 | `power_sigma`            | `double`                                                                      | volt-ampere (VA) | standard deviation of the measurement error. Usually this is the absolute measurement error range divided by 3. See [Power Sensor Concrete Types](#power-sensor-concrete-types). | &#10024; in certain cases for state estimation. See the explanation for [concrete types](#power-sensor-concrete-types) below. | &#10004; |                        `> 0`                         |
+<!-- pyml enable line-length-->
 
 #### Power Sensor Concrete Types
 
@@ -883,12 +919,14 @@ They share similar attributes: the meaning of `RealValueInput` is different, as 
 
 ##### Input
 
+<!-- pyml disable line-length-->
 | name         | data type        | unit                       | description                                                                                                                    |              required               |  update  | valid values |
 |--------------|------------------|----------------------------|--------------------------------------------------------------------------------------------------------------------------------|:-----------------------------------:|:--------:|:------------:|
 | `p_measured` | `RealValueInput` | watt (W)                   | measured active power                                                                                                          | &#10024; only for state estimation  | &#10004; |              |
 | `q_measured` | `RealValueInput` | volt-ampere-reactive (var) | measured reactive power                                                                                                        | &#10024; only for state estimation  | &#10004; |              |
 | `p_sigma`    | `RealValueInput` | watt (W)                   | standard deviation of the active power measurement error. Usually this is the absolute measurement error range divided by 3.   | &#10060; see the explanation below. | &#10004; |    `> 0`     |
 | `q_sigma`    | `RealValueInput` | volt-ampere-reactive (var) | standard deviation of the reactive power measurement error. Usually this is the absolute measurement error range divided by 3. | &#10060; see the explanation below. | &#10004; |    `> 0`     |
+<!-- pyml enable line-length-->
 
 Valid combinations of `power_sigma`, `p_sigma` and `q_sigma` are:
 
@@ -910,6 +948,7 @@ measurement.
 
 2. If neither `p_sigma` nor `q_sigma` are provided, `power_sigma` represents the standard deviation of the apparent
 power. In this case, infinite value of `power_sigma` disables the entire measurement.
+<!-- pyml enable line-length-->
 
 3. Providing only one of `p_sigma` and `q_sigma` results in undefined behaviour.
 ```
@@ -925,10 +964,12 @@ A sensor only has output for state estimation.
 For other calculation types, sensor output is undefined.
 ```
 
+<!-- pyml disable line-length-->
 | name         | data type         | unit                       | description                                                                  |
 |--------------|-------------------|----------------------------|------------------------------------------------------------------------------|
 | `p_residual` | `RealValueOutput` | watt (W)                   | residual value between measured active power and calculated active power     |
 | `q_residual` | `RealValueOutput` | volt-ampere-reactive (var) | residual value between measured reactive power and calculated reactive power |
+<!-- pyml enable line-length-->
 
 #### Electric Model
 
@@ -967,12 +1008,14 @@ However, such mixing of sensor types is allowed as long as they are on different
 
 ##### Input
 
+<!-- pyml disable line-length-->
 | name                     | data type                                                                     | unit       | description                                                                                                                               |              required              |  update  |                     valid values                     |
 |--------------------------|-------------------------------------------------------------------------------|------------|-------------------------------------------------------------------------------------------------------------------------------------------|:----------------------------------:|:--------:|:----------------------------------------------------:|
 | `measured_terminal_type` | {py:class}`MeasuredTerminalType <power_grid_model.enum.MeasuredTerminalType>` | -          | indicate the side of the `branch`                                                                                                         |              &#10004;              | &#10060; | the terminal type should match the `measured_object` |
 | `angle_measurement_type` | {py:class}`AngleMeasurementType <power_grid_model.enum.AngleMeasurementType>` | -          | indicate whether the measured angle is a global angle or a local angle; (see the [electric model](#local-angle-current-sensors) below)    |              &#10004;              | &#10060; |                                                      |
 | `i_sigma`                | `double`                                                                      | ampere (A) | standard deviation of the current (`i`) measurement error. Usually this is the absolute measurement error range divided by 3.             | &#10024; only for state estimation | &#10004; |                        `> 0`                         |
 | `i_angle_sigma`          | `double`                                                                      | rad        | standard deviation of the current (`i`) phase angle measurement error. Usually this is the absolute measurement error range divided by 3. | &#10024; only for state estimation | &#10004; |                        `> 0`                         |
+<!-- pyml enable line-length-->
 
 #### Current Sensor Concrete Types
 
@@ -986,10 +1029,12 @@ They share similar attributes: the meaning of `RealValueInput` is different, as 
 
 ##### Input
 
+<!-- pyml disable line-length-->
 | name               | data type        | unit       | description                                                                                             |              required              |  update  |
 |--------------------|------------------|------------|---------------------------------------------------------------------------------------------------------|:----------------------------------:|:--------:|
 | `i_measured`       | `RealValueInput` | ampere (A) | measured current (`i`) magnitude                                                                        | &#10024; only for state estimation | &#10004; |
 | `i_angle_measured` | `RealValueInput` | rad        | measured phase angle of the current (`i`; see the [electric model](#local-angle-current-sensors) below) | &#10024; only for state estimation | &#10004; |
+<!-- pyml enable line-length-->
 
 See the documentation on [state estimation calculation methods](calculations.md#state-estimation-algorithms) for details
 per method on how the variances are taken into account for both the global and local angle measurement types and for the
@@ -1007,10 +1052,12 @@ A sensor only has output for state estimation.
 For other calculation types, sensor output is undefined.
 ```
 
+<!-- pyml disable line-length-->
 | name               | data type         | unit       | description                                                                                 |
 |--------------------|-------------------|------------|---------------------------------------------------------------------------------------------|
 | `i_residual`       | `RealValueOutput` | ampere (A) | residual value between measured current (`i`) and calculated current (`i`)                  |
 | `i_angle_residual` | `RealValueOutput` | rad        | residual value between measured phase angle and calculated phase angle of the current (`i`) |
+<!-- pyml enable line-length-->
 
 #### Electric Model
 
@@ -1078,6 +1125,7 @@ A fault can only happen at a `node`.
 
 #### Input
 
+<!-- pyml disable line-length-->
 | name           | data type                                                 | unit    | description                                         |                                                required                                                 |  update  |   valid values    |
 |----------------|-----------------------------------------------------------|---------|-----------------------------------------------------|:-------------------------------------------------------------------------------------------------------:|:--------:|:-----------------:|
 | `status`       | `int8_t`                                                  | -       | whether the fault is active                         |                                                &#10004;                                                 | &#10004; |    `0` or `1`     |
@@ -1086,6 +1134,7 @@ A fault can only happen at a `node`.
 | `fault_object` | `int32_t`                                                 | -       | ID of the component where the short circuit happens |                                                &#10004;                                                 | &#10004; | A valid `node` ID |
 | `r_f`          | `double`                                                  | ohm (Ω) | short circuit resistance                            |                                         &#10060; default `0.0`                                          | &#10004; |                   |
 | `x_f`          | `double`                                                  | ohm (Ω) | short circuit reactance                             |                                         &#10060; default `0.0`                                          | &#10004; |                   |
+<!-- pyml enable line-length-->
 
 ```{note}
 Multiple faults may exist within one calculation.
@@ -1119,12 +1168,14 @@ In case the `fault_phase` is not specified or is equal to `FaultPhase.default_va
 `fault_type`-dependent set of fault phases.
 The supported values of `fault_phase`, as well as its default value, are listed in the table below.
 
+<!-- pyml disable line-length-->
 | `fault_type`                       | supported values of `fault_phase`                 | `FaultPhase.default_value` | description                                                            |
 |------------------------------------|---------------------------------------------------|----------------------------|------------------------------------------------------------------------|
 | `FaultType.three_phase`            | `FaultPhase.abc`                                  | `FaultPhase.abc`           | Three phases are connected with fault impedance.                       |
 | `FaultType.single_phase_to_ground` | `FaultPhase.a`, `FaultPhase.b`, `FaultPhase.c`    | `FaultPhase.a`             | One phase is grounded with fault impedance, and other phases are open. |
 | `FaultType.two_phase`              | `FaultPhase.bc`, `FaultPhase.ac`, `FaultPhase.ab` | `FaultPhase.bc`            | Two phases are connected with fault impedance.                         |
 | `FaultType.two_phase_to_ground`    | `FaultPhase.bc`, `FaultPhase.ac`, `FaultPhase.ab` | `FaultPhase.bc`            | Two phases are connected with fault impedance then grounded.           |
+<!-- pyml enable line-length-->
 
 ## Regulator
 
@@ -1137,10 +1188,12 @@ Which object types are supported as `regulated_object` is regulator type-depende
 
 #### Input
 
+<!-- pyml disable line-length-->
 | name               | data type | unit | description                               | required |  update  |        valid values         |
 |--------------------|-----------|------|-------------------------------------------|:--------:|:--------:|:---------------------------:|
 | `regulated_object` | `int32_t` | -    | ID of the regulated object                | &#10004; | &#10060; | a valid regulated object ID |
 | `status`           | `int8_t`  | -    | connection status to the regulated object | &#10004; | &#10004; |         `0` or `1`          |
+<!-- pyml enable line-length-->
 
 ### Transformer tap regulator
 
@@ -1167,6 +1220,7 @@ The actual grid state is not changed after calculations are done.
 
 #### Input
 
+<!-- pyml disable line-length-->
 | name                       | data type                                                                                                                                                                                                                                                                  | unit     | description                                                                                             |           required           |  update  |                           valid values                           |
 |----------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|---------------------------------------------------------------------------------------------------------|:----------------------------:|:--------:|:----------------------------------------------------------------:|
 | `control_side`             | {py:class}`BranchSide <power_grid_model.enum.BranchSide>` if the regulated object is a [transformer](#transformer) and {py:class}`Branch3Side <power_grid_model.enum.Branch3Side>` if it the regulated object is a [Three-Winding Transformer](#three-winding-transformer) | -        | the controlled side of the transformer                                                                  | &#10024; only for power flow | &#10060; | `control_side` should be the relatively further side to a source |
@@ -1174,6 +1228,7 @@ The actual grid state is not changed after calculations are done.
 | `u_band`                   | `double`                                                                                                                                                                                                                                                                   | volt (V) | the width of the voltage band ($=2*\left(\Delta U\right)_{\text{acceptable}}$)                          | &#10024; only for power flow | &#10004; |                        `> 0` (see below)                         |
 | `line_drop_compensation_r` | `double`                                                                                                                                                                                                                                                                   | ohm (Ω)  | compensation for voltage drop due to resistance during transport (see [below](#line-drop-compensation)) |    &#10060; default `0.0`    | &#10004; |                              `>= 0`                              |
 | `line_drop_compensation_x` | `double`                                                                                                                                                                                                                                                                   | ohm (Ω)  | compensation for voltage drop due to reactance during transport (see [below](#line-drop-compensation))  |    &#10060; default `0.0`    | &#10004; |                              `>= 0`                              |
+<!-- pyml enable line-length-->
 
 The following additional requirements exist on the input parameters.
 
@@ -1284,18 +1339,22 @@ the voltage regulator should operate at the limit and the voltage may deviate fr
 
 #### Input
 
+<!-- pyml disable line-length-->
 | name     | data type | unit                       | description                                         |           required           |  update  | valid values |
 | -------- | --------- | -------------------------- | --------------------------------------------------- | :--------------------------: | :------: | :----------: |
 | `u_ref`  | `double`  | -                          | reference voltage in per-unit at the generator node | &#10024; only for power flow | &#10004; |    `> 0`     |
 | `q_min`  | `double`  | volt-ampere-reactive (var) | minimum reactive power limit of the generator       | &#10060;                     | &#10004; |              |
 | `q_max`  | `double`  | volt-ampere-reactive (var) | maximum reactive power limit of the generator       | &#10060;                     | &#10004; |              |
+<!-- pyml enable line-length-->
 
 #### Steady state output
 
+<!-- pyml disable line-length-->
 | name              | data type         | unit                       | description                                                          |
 | ----------------- | ----------------- | -------------------------- | -------------------------------------------------------------------- |
 | `q`               | `RealValueOutput` | volt-ampere-reactive (var) | reactive power provided by the voltage regulator                     |
 | `limit_violated`  | `int8_t`          | -                          | reactive power limit violation indicator (not yet fully implemented) |
+<!-- pyml enable line-length-->
 
 #### Short circuit output
 

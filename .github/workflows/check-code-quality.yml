@@ -32,7 +32,7 @@ jobs:
 
       - name: Install most linters from uv
         run: |
-          CC=gcc-14 CXX=g++-14 uv sync --group lint
+          CC=gcc-14 CXX=g++-14 uv sync --locked --group lint
 
       - name: Run mypy
         run: |
@@ -52,14 +52,14 @@ jobs:
         run: |
           uv run --frozen gersemi -i --warnings-as-errors src/ tests/ cmake/
 
+      - name: Run pymarkdown
+        run: |
+          echo "Running pymarkdown"
+          git ls-files -z -- '*.md' | xargs -0 -r uv run --frozen pymarkdown fix
+
       - name: Install npm packages
         run: |
           npm ci
-
-      - name: Run markdownlint
-        run: |
-          echo "Running markdownlint"
-          npx markdownlint --fix .
 
       - name: Run Biome
         run: |
@@ -77,7 +77,7 @@ jobs:
       - name: Check generated code
         if: success()
         run: |
-          uv sync --group code-generation
+          uv sync --locked --group code-generation
           uv run --frozen code_generation/code_gen.py
           if [ -n "$(git status --porcelain)" ]; then
             echo

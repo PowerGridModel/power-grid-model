@@ -105,8 +105,8 @@ It is not possible to mix [power sensors](../user_manual/components.md#generic-p
 [current sensors](../user_manual/components.md#generic-current-sensor) on the same terminal of the same component.
 It is also not possible to mix
 [current sensors with global angle measurement type](../user_manual/components.md#global-angle-current-sensors) with
-[current sensors with local angle measurement type](../user_manual/components.md#local-angle-current-sensors) on the same terminal
-of the same component.
+[current sensors with local angle measurement type](../user_manual/components.md#local-angle-current-sensors) on the
+same terminal of the same component.
 However, such mixing of sensor types is allowed as long as they are on different terminals.
 ```
 
@@ -313,7 +313,7 @@ Consequently, the iteration process differs slightly from that of
     $\widetilde{\boldsymbol{U}}^{(k)}$ and $\widetilde{\boldsymbol{\theta}}^{(k)}$, using the prefactorized matrix.
     See also [Matrix-prefactorization](../user_manual/performance-guide.md#matrix-prefactorization)
   - Normalize the result voltage phasor angle by setting angle of slack bus to zero:
-    $\underline{U}_i^{(k)} = \widetilde{\underline{U}}_i^{(k)} \times |\widetilde{\underline{U}}_s^{(k)}| / \widetilde{\underline{U}}_s^{(k)}$. <!-- markdownlint-disable-line line-length -->
+    $\underline{U}_i^{(k)} = \widetilde{\underline{U}}_i^{(k)} \times |\widetilde{\underline{U}}_s^{(k)}| / \widetilde{\underline{U}}_s^{(k)}$.
   - If the maximum deviation between $\underline{\boldsymbol{U}}^{(k)}$ and $\underline{\boldsymbol{U}}^{(k-1)}$ is
     smaller than the tolerance $\epsilon$, stop the iteration, otherwise continue until the maximum number of iterations
     is reached.
