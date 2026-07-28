@@ -395,21 +395,7 @@ class MainModelImpl {
         return *meta_data_;
     }
 
-    void check_no_experimental_features_used(Options const& /*options*/, ConstDataset const* batch_dataset) const {
-        if (!std::ranges::all_of(
-                state_.components.template citer<VoltageRegulator>(),
-                [](auto const& regulator) { return is_nan(regulator.q_min()) && is_nan(regulator.q_max()); }) ||
-            (batch_dataset != nullptr &&
-             batch_dataset->for_each_component<meta_data::update_getter_s, VoltageRegulator>([](auto const& span) {
-                 return !std::ranges::all_of(span, [](VoltageRegulatorUpdate const& regulator) {
-                     return is_nan(regulator.q_min) && is_nan(regulator.q_max);
-                 });
-             }))) {
-            throw ExperimentalFeature{"Voltage Regulator with Qmin/Qmax limits is an experimental feature"};
-        }
-        // TODO(frie-soptim): remove experimental feature, but add option to globally disable q-limit handling even if
-        // limits are set?!
-    }
+    void check_no_experimental_features_used(Options const& /*options*/, ConstDataset const* /*batch_dataset*/) const {}
 
     void check_no_future_deprecations(Options const& /*options*/, ConstDataset const* /*batch_dataset*/) const {
         ModelType::run_functor_with_all_component_types_return_void([this]<typename CT>() {
