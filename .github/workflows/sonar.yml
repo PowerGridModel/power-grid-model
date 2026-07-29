@@ -48,7 +48,7 @@ jobs:
 
       - name: Python test and coverage
         run: |
-          CC=clang CXX=clang++ uv sync --no-default-groups --group test
+          CC=clang CXX=clang++ uv sync --locked --no-default-groups --group test
           uv run --frozen pytest
 
       - name: Run build-wrapper for C++

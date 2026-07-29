@@ -45,7 +45,7 @@ jobs:
 
       - name: Install linters from uv
         run: |
-          uv sync --only-group lint
+          uv sync --locked --only-group lint
       
       - name: retrieve uv package versions
         id: versions_uv
