@@ -63,7 +63,6 @@ repos:
         pass_filenames: true
         types: [ markdown ]
         require_serial: true
-        # format .json and .jsonc files
   # format .json and .jsonc files
   - repo: https://github.com/biomejs/pre-commit  # outside pypi 
     rev: v2.5.6
