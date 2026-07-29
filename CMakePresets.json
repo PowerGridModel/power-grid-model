@@ -422,7 +422,10 @@
     },
     {
       "name": "ci-apple-clang-reproducible",
-      "inherits": ["apple-clang-base", "release"],
+      "inherits": [
+        "apple-clang-base",
+        "release"
+      ],
       "environment": {
         "SOURCE_DATE_EPOCH": "1",
         "DSYMUTIL": "",
