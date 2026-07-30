@@ -42,7 +42,7 @@ class Logger {
         PGM_LogOutputCallback const cb = [](char const* data, PGM_Idx size, void* user_data) {
             *static_cast<std::string*>(user_data) = std::string(data, static_cast<std::size_t>(size));
         };
-      handle_.call_with(PGM_logger_get_output, logger_.get(), cb, static_cast<void*>(&output));
+        handle_.call_with(PGM_logger_get_output, logger_.get(), cb, static_cast<void*>(&output));
         return output;
     }
 
@@ -55,9 +55,9 @@ class Logger {
     detail::UniquePtr<PGM_Logger, &PGM_destroy_logger> logger_;
 };
 
-  inline void Handle::register_logger(Logger& logger) const { call_with(PGM_register_logger, logger.logger_.get()); }
+inline void Handle::register_logger(Logger& logger) const { call_with(PGM_register_logger, logger.logger_.get()); }
 
-  inline void Handle::unregister_logger(Logger& logger) const { call_with(PGM_unregister_logger, logger.logger_.get()); }
+inline void Handle::unregister_logger(Logger& logger) const { call_with(PGM_unregister_logger, logger.logger_.get()); }
 } // namespace power_grid_model_cpp
 
 #endif // POWER_GRID_MODEL_CPP_LOGGER_HPP
