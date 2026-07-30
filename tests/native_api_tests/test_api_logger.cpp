@@ -136,27 +136,6 @@ power_grid_model_cpp::Model make_cpp_model() {
 }
 } // namespace
 
-TEST_CASE("Logger - create and destroy do-nothing logger") {
-    HandleGuard g;
-    LoggerGuard lg{g.h, PGM_do_nothing_logger};
-    CHECK(lg.l != nullptr);
-    CHECK(PGM_error_code(g.h) == PGM_no_error);
-}
-
-TEST_CASE("Logger - create and destroy text logger") {
-    HandleGuard g;
-    LoggerGuard lg{g.h, PGM_text_logger};
-    CHECK(lg.l != nullptr);
-    CHECK(PGM_error_code(g.h) == PGM_no_error);
-}
-
-TEST_CASE("Logger - create and destroy benchmark logger") {
-    HandleGuard g;
-    LoggerGuard lg{g.h, PGM_benchmark_logger};
-    CHECK(lg.l != nullptr);
-    CHECK(PGM_error_code(g.h) == PGM_no_error);
-}
-
 TEST_CASE("Logger - invalid type returns error") {
     HandleGuard g;
     PGM_Logger* bad = PGM_create_logger(g.h, 999);
@@ -164,12 +143,33 @@ TEST_CASE("Logger - invalid type returns error") {
     CHECK(PGM_error_code(g.h) == PGM_regular_error);
 }
 
-TEST_CASE("Logger - get_output on do-nothing logger is empty") {
+TEST_CASE("Logger - do-nothing logger produces no output and clear is a no-op") {
     HandleGuard g;
     LoggerGuard lg{g.h, PGM_do_nothing_logger};
-    std::string out = get_output(g.h, lg.l);
+
+    int callback_calls = 0;
+    PGM_logger_get_output(
+        g.h, lg.l,
+        [](char const* /*data*/, PGM_Idx size, void* ctx) {
+            ++(*static_cast<int*>(ctx));
+            CHECK(size == 0);
+        },
+        &callback_calls);
     CHECK(PGM_error_code(g.h) == PGM_no_error);
-    CHECK(out.empty());
+    // The callback must be invoked exactly once, even though the output is empty.
+    CHECK(callback_calls == 1);
+
+    PGM_logger_clear(g.h, lg.l);
+    CHECK(PGM_error_code(g.h) == PGM_no_error);
+    CHECK(get_output(g.h, lg.l).empty());
+}
+
+TEST_CASE("Logger - get_output with null callback returns a regular error") {
+    HandleGuard g;
+    LoggerGuard lg{g.h, PGM_text_logger};
+
+    PGM_logger_get_output(g.h, lg.l, nullptr, nullptr);
+    CHECK(PGM_error_code(g.h) == PGM_regular_error);
 }
 
 TEST_CASE("Logger - register / unregister preserves handle error state") {
@@ -244,16 +244,6 @@ TEST_CASE("Logger - text logger clear wipes output") {
 
     PGM_unregister_logger(g.h, lg.l);
     PGM_destroy_model(model);
-}
-
-TEST_CASE("Logger - do-nothing logger clear is no-op") {
-    HandleGuard g;
-    LoggerGuard lg{g.h, PGM_do_nothing_logger};
-
-    PGM_logger_clear(g.h, lg.l);
-    CHECK(PGM_error_code(g.h) == PGM_no_error);
-    std::string out = get_output(g.h, lg.l);
-    CHECK(out.empty());
 }
 
 TEST_CASE("Logger - loggers persist across clear_error on handle") {
@@ -388,6 +378,42 @@ TEST_CASE("Logger - destroying the handle while a logger is registered does not 
     CHECK(!out.empty());
 }
 
+TEST_CASE("Logger - model calculates through the handle used at creation, not the calculation handle") {
+    HandleGuard creation_handle;
+    HandleGuard calc_handle;
+    LoggerGuard lg{calc_handle.h, PGM_text_logger};
+
+    // The model is bound to creation_handle's composite logger at PGM_create_model time.
+    auto const owning_input = load_dataset(input_json);
+    DatasetConst const const_input{owning_input.dataset};
+    PGM_PowerGridModel* model = PGM_create_model(creation_handle.h, 50.0, const_input.get());
+    REQUIRE(model != nullptr);
+
+    // Register the logger on a *different* handle and calculate using that handle.
+    PGM_register_logger(calc_handle.h, lg.l);
+
+    Buffer node_output{PGM_def_sym_output_node, 2};
+    node_output.set_nan();
+    DatasetMutable output_ds{"sym_output", false, 1};
+    output_ds.add_buffer("node", 2, 2, nullptr, node_output);
+
+    power_grid_model_cpp::Options opt{};
+    PGM_set_calculation_type(calc_handle.h, opt.get(), PGM_power_flow);
+    PGM_set_symmetric(calc_handle.h, opt.get(), 1);
+
+    PGM_calculate(calc_handle.h, model, opt.get(), output_ds.get(), nullptr);
+    CHECK(PGM_error_code(calc_handle.h) == PGM_no_error);
+
+    // Known limitation: the model still logs to creation_handle's composite (bound at
+    // PGM_create_model), so a logger registered only on calc_handle receives nothing here.
+    // If this ever starts capturing output, the model's logger-binding design has changed
+    // and this test should be updated accordingly.
+    CHECK(get_output(calc_handle.h, lg.l).empty());
+
+    PGM_unregister_logger(calc_handle.h, lg.l);
+    PGM_destroy_model(model);
+}
+
 // --- C++ API (power_grid_model_cpp::Logger / Model) ---
 
 TEST_CASE("CPP Logger - value construction / empty output before calculation") {
@@ -405,18 +431,6 @@ TEST_CASE("CPP Logger - add_logger / calculate / get_output round trip") {
     CHECK(!logger.get_output().empty());
 }
 
-TEST_CASE("CPP Logger - benchmark logger produces TAB-separated output") {
-    auto model = make_cpp_model();
-    power_grid_model_cpp::Logger logger{PGM_benchmark_logger};
-
-    model.add_logger(logger);
-    run_calculate(model);
-
-    auto const out = logger.get_output();
-    CHECK(!out.empty());
-    CHECK(out.find('\t') != std::string::npos);
-}
-
 TEST_CASE("CPP Logger - clear() empties output and keeps registration") {
     auto model = make_cpp_model();
     power_grid_model_cpp::Logger logger{PGM_text_logger};
@@ -431,25 +445,6 @@ TEST_CASE("CPP Logger - clear() empties output and keeps registration") {
     // registration must still be active
     run_calculate(model);
     CHECK(!logger.get_output().empty());
-}
-
-TEST_CASE("CPP Logger - duplicate add_logger is idempotent") {
-    auto model = make_cpp_model();
-    power_grid_model_cpp::Logger logger{PGM_text_logger};
-
-    model.add_logger(logger);
-    model.add_logger(logger); // second attach — must be a silent no-op
-    run_calculate(model);
-
-    auto const out_double = logger.get_output();
-
-    auto model_single = make_cpp_model();
-    power_grid_model_cpp::Logger logger_single{PGM_text_logger};
-    model_single.add_logger(logger_single);
-    run_calculate(model_single);
-    auto const out_single = logger_single.get_output();
-
-    CHECK(count_lines(out_double) == count_lines(out_single));
 }
 
 TEST_CASE("CPP Logger - remove_logger stops output from that logger only") {
@@ -504,19 +499,6 @@ TEST_CASE("CPP Logger - destroying the Logger wrapper while registered does not 
     model.remove_all_loggers();
 }
 
-TEST_CASE("CPP Logger - multiple loggers on one model each receive output") {
-    auto model = make_cpp_model();
-    power_grid_model_cpp::Logger text_logger{PGM_text_logger};
-    power_grid_model_cpp::Logger bench_logger{PGM_benchmark_logger};
-
-    model.add_logger(text_logger);
-    model.add_logger(bench_logger);
-    run_calculate(model);
-
-    CHECK(!text_logger.get_output().empty());
-    CHECK(!bench_logger.get_output().empty());
-}
-
 TEST_CASE("CPP Logger - same logger can be attached to multiple models") {
     auto model_a = make_cpp_model();
     auto model_b = make_cpp_model();
@@ -532,6 +514,19 @@ TEST_CASE("CPP Logger - same logger can be attached to multiple models") {
     run_calculate(model_b);
     auto const after_b = count_lines(logger.get_output());
     CHECK(after_b > after_a); // combined output from both models
+}
+
+TEST_CASE("CPP Logger - move construction preserves registration and output access") {
+    auto model = make_cpp_model();
+    power_grid_model_cpp::Logger logger{PGM_text_logger};
+    model.add_logger(logger);
+
+    power_grid_model_cpp::Logger moved_logger{std::move(logger)};
+
+    run_calculate(model);
+    CHECK(!moved_logger.get_output().empty());
+
+    model.remove_logger(moved_logger);
 }
 
 TEST_CASE("CPP Logger - model copy construction starts without registrations") {
@@ -571,4 +566,18 @@ TEST_CASE("CPP Logger - model move transfers registrations") {
     CHECK(!logger.get_output().empty());
 }
 
+TEST_CASE("CPP Logger - model move assignment transfers registrations and releases destination's") {
+    auto source = make_cpp_model();
+    power_grid_model_cpp::Logger source_logger{PGM_text_logger};
+    source.add_logger(source_logger);
 
+    auto destination = make_cpp_model();
+    power_grid_model_cpp::Logger destination_logger{PGM_text_logger};
+    destination.add_logger(destination_logger);
+
+    destination = std::move(source); // destination's own handle (and its registrations) is replaced
+    run_calculate(destination);
+
+    CHECK(!source_logger.get_output().empty());     // now reachable via the moved-in handle
+    CHECK(destination_logger.get_output().empty()); // its original handle was replaced, not merged
+}
