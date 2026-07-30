@@ -64,10 +64,10 @@ class Model {
     // Attaching the same logger twice is a no-op. See logger.hpp for lifetime notes: the
     // logger may safely be destroyed while still registered, but it can then no longer be
     // targeted individually via remove_logger() (use remove_all_loggers() instead).
-    void add_logger(Logger& logger) { handle_.register_logger(logger.get()); }
+    void add_logger(Logger& logger) { handle_.register_logger(logger); }
 
     // Detach a specific logger from this model. A no-op if it is not registered.
-    void remove_logger(Logger& logger) { handle_.unregister_logger(logger.get()); }
+    void remove_logger(Logger& logger) { handle_.unregister_logger(logger); }
 
     // Detach every logger currently registered to this model.
     void remove_all_loggers() { handle_.unregister_all_loggers(); }

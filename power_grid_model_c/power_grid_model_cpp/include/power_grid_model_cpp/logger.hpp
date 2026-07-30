@@ -37,24 +37,27 @@ class Logger {
     Logger& operator=(Logger&&) noexcept = default;
     ~Logger() = default;
 
-    PGM_Logger* get() { return logger_.get(); }
-    PGM_Logger const* get() const { return logger_.get(); }
-
     std::string get_output() {
         std::string output;
         PGM_LogOutputCallback const cb = [](char const* data, PGM_Idx size, void* user_data) {
             *static_cast<std::string*>(user_data) = std::string(data, static_cast<std::size_t>(size));
         };
-        handle_.call_with(PGM_logger_get_output, get(), cb, static_cast<void*>(&output));
+      handle_.call_with(PGM_logger_get_output, logger_.get(), cb, static_cast<void*>(&output));
         return output;
     }
 
-    void clear() { handle_.call_with(PGM_logger_clear, get()); }
+    void clear() { handle_.call_with(PGM_logger_clear, logger_.get()); }
 
   private:
+    friend class Handle;
+
     Handle handle_{}; // used only for exception propagation from calls on this logger
     detail::UniquePtr<PGM_Logger, &PGM_destroy_logger> logger_;
 };
+
+  inline void Handle::register_logger(Logger& logger) const { call_with(PGM_register_logger, logger.logger_.get()); }
+
+  inline void Handle::unregister_logger(Logger& logger) const { call_with(PGM_unregister_logger, logger.logger_.get()); }
 } // namespace power_grid_model_cpp
 
 #endif // POWER_GRID_MODEL_CPP_LOGGER_HPP

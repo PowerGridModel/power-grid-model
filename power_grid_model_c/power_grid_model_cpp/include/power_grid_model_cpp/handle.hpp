@@ -17,6 +17,8 @@
 #include <vector>
 
 namespace power_grid_model_cpp {
+class Logger;
+
 class PowerGridError : public std::exception {
   public:
     PowerGridError(std::string message) : message_(std::move(message)) {}
@@ -107,8 +109,8 @@ class Handle {
     // Registration surface reused by every module that supports attaching loggers (e.g. Model,
     // and future modules such as Serializer). Registering/unregistering the same logger more
     // than once is idempotent; see power_grid_model_c/logger.h for full lifetime semantics.
-    void register_logger(PGM_Logger* logger) const { call_with(PGM_register_logger, logger); }
-    void unregister_logger(PGM_Logger* logger) const { call_with(PGM_unregister_logger, logger); }
+    void register_logger(Logger& logger) const;
+    void unregister_logger(Logger& logger) const;
     void unregister_all_loggers() const { call_with(PGM_unregister_all_loggers); }
 
   private:
