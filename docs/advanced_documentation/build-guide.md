@@ -104,7 +104,6 @@ are automatically downloaded and used during the build — you do not need to in
 Manual installation is only required for standalone CMake builds.
 ```
 
-<!-- pyml disable line-length-->
 | Library name                                                        | Requirements to build Python package | Requirements to build CMake project         | Remark      | License                                                                                                      |
 | ------------------------------------------------------------------- | ------------------------------------ | ------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------ |
 | [boost](https://www.boost.org/)                                     | Installed automatically              | CMake needs to be able find `boost`         | header-only | [Boost Software License - Version 1.0](https://www.boost.org/LICENSE_1_0.txt)                                |
@@ -112,7 +111,6 @@ Manual installation is only required for standalone CMake builds.
 | [nlohmann-json](https://github.com/nlohmann/json)                   | Installed automatically              | CMake needs to be able find `nlohmann_json` | header-only | [MIT](https://github.com/nlohmann/json/blob/develop/LICENSE.MIT)                                             |
 | [msgpack-cxx](https://github.com/msgpack/msgpack-c/tree/cpp_master) | Installed automatically              | CMake needs to be able find `msgpack-cxx`   | header-only | [Boost Software License - Version 1.0](https://github.com/msgpack/msgpack-c/blob/cpp_master/LICENSE_1_0.txt) |
 | [doctest](https://github.com/doctest/doctest)                       | None                                 | CMake needs to be able find `doctest`       | header-only | [MIT](https://github.com/doctest/doctest/blob/master/LICENSE.txt)                                            |
-<!-- pyml enable line-length-->
 
 To install the C++ dependencies for a CMake build, use your platform's package manager of choice.
 In the platform-specific examples below, we will give some suggestions.
@@ -126,7 +124,6 @@ Set `CMAKE_PREFIX_PATH` to the installation prefix of your package manager so CM
 
 The table below shows the Python dependencies.
 
-<!-- pyml disable line-length-->
 | Library name                                                           | Remark                 | License                                                                                    |
 |------------------------------------------------------------------------|------------------------|--------------------------------------------------------------------------------------------|
 | [numpy](https://numpy.org/)                                            | Runtime dependency     | [BSD-3](https://github.com/numpy/numpy/blob/main/LICENSE.txt)                              |
@@ -135,7 +132,6 @@ The table below shows the Python dependencies.
 | [pytest-cov](https://github.com/pytest-dev/pytest-cov)                 | Development dependency | [MIT](https://github.com/pytest-dev/pytest-cov/blob/master/LICENSE)                        |
 | [msgpack-python](https://github.com/msgpack/msgpack-python)            | Development dependency | [Apache License, Version 2.0](https://github.com/msgpack/msgpack-python/blob/main/COPYING) |
 | [uv](https://github.com/astral-sh/uv)                                  | Development dependency | [Apache License, Version 2.0](https://github.com/astral-sh/uv/blob/main/LICENSE-APACHE)    |
-<!-- pyml enable line-length-->
 
 ## Build Python Package
 

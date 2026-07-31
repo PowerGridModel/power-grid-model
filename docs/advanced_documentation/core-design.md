@@ -17,7 +17,6 @@ The `MainModel` itself can be deconstructed into an API part, a dispatch part, t
 The logic involved in power grid calculations in turn can be devided in a number of separate modules.
 Coincidentally, those phases also translate to fields of expertise, which enables a reasonably clean architecture.
 
-<!-- pyml disable line-length-->
 | Logic/control module                               | Description                                                                                                       | Expertise              |
 | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ---------------------- |
 | I/O                                                | Constructing, updating and outputting components in the power grid                                                | Software Engineering   |
@@ -25,7 +24,6 @@ Coincidentally, those phases also translate to fields of expertise, which enable
 | $Y_{\text{bus}}$ construction/Component extraction | Constructing $Y_{\text{bus}}$ from the power grid components and topology                                         | Electrical Engineering |
 | Solver construction/Grid extraction                | Translation from $Y_{\text{bus}}$ to a solvable system of equations and from the solution back to physical values | Physics                |
 | Solving                                            | Abstract solution to the system of equations                                                                      | Mathematics            |
-<!-- pyml enable line-length-->
 
 ```{note}
 Software Engineering obviously also plays a role in the general design, but that general design does not involve the

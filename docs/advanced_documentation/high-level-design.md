@@ -34,21 +34,18 @@ abstraction.
 
 The following library interfaces are currently included in the power-grid-model.
 
-<!-- pyml disable line-length-->
 | Interface type | Status       | Layer              | Explanation                                                     | Supported by                                        |
 | -------------- | ------------ | ------------------ | --------------------------------------------------------------- | --------------------------------------------------- |
 | C API          | Stable       | Raw interface      | Shared object / DLL that contains the core implementation       | All programming languages with dynamic load support |
 | C headers      | Stable       | Exposition-only    | Exposition-only library using dynamic linking                   | C and C++                                           |
 | C++ headers    | Experimental | Wrapper            | Handles memory management and basic error handling              | C++                                                 |
 | Python library | Stable       | Feature-rich layer | Library with useful functions, conversions and extensive checks | Python                                              |
-<!-- pyml enable line-length-->
 
 Note that the Python library in turn also follows the pattern of a feature-rich library that uses a module-internal
 wrapper layer core module, that wraps the exposition-only core module, that exposes the raw interface.
 
 This can be visualized graphically as follows.
 
-<!-- pyml disable line-length-->
 ```{mermaid}
     :title: Full design
 
@@ -96,7 +93,6 @@ flowchart TD
     cpp_user -->|experimental<br>links +<br>includes| power_grid_model_cpp -->|links +<br>includes| power_grid_model_c
     python_user -->|import| power_grid_model_python -->|internal import| power_grid_model_core_python -->|internal import| power_grid_core_python -->|"CDLL<br>(dynamic loading)"| power_grid_model_c_dll
 ```
-<!-- pyml enable line-length-->
 
 ## Creating a custom library or interface
 

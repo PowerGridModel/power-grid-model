@@ -56,6 +56,7 @@ jobs:
         run: |
           echo "Running pymarkdown"
           git ls-files -z -- '*.md' | xargs -0 -r uv run --frozen pymarkdown fix
+          git ls-files -z -- '*.md' | xargs -0 -r uv run --frozen pymarkdown scan
 
       - name: Install npm packages
         run: |

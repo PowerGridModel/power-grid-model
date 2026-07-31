@@ -121,7 +121,6 @@ versions, compilers, operating systems and architectures.
 * an aligned size of 8 bytes
 * a 4 bytes alignment
 
-<!-- pyml disable line-length-->
 ```txt
 <line_0><line_1><line_2>   <-- 3 lines.
 |   |   |   |   |   |   |  <-- alignment: a line may start every 4 bytes.
@@ -129,7 +128,6 @@ iiiift  iiiift  iiiift     <-- data: 6 bytes per line: 4 bytes for the ID, 1 for
 |     ..|     ..|     ..|  <-- padding: (4 - (6 mod 4) = 2) bytes after every line.
 |       |       |       |  <-- aligned size: (6 + 2 = 8) bytes every line.
 ```
-<!-- pyml enable line-length-->
 
 #### Create and destroy buffer
 

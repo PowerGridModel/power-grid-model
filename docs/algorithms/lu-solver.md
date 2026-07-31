@@ -303,7 +303,6 @@ where $i,j = 0..(N-1)$.
 For readbility, we use $:$ to denote a range slicing operation to along a dimension of matrix $\mathbf{M}$, e.g.
 $\mathbf{M}\left[0:3, j\right]$.
 
-<!-- pyml disable line-length-->
 1. Initialize the permutations $\mathbf{P}$ and $\mathbf{Q}$ to the identity permutation.
 2. Initialize fill-in elements to $0$.
 3. Loop over all rows: $p = 0..(N-1)$:
@@ -332,7 +331,6 @@ $\mathbf{M}\left[0:3, j\right]$.
       1. In $\mathbf{P}$: swap $p \leftrightarrow p + i_p$
       2. In $\mathbf{Q}$: swap $p \leftrightarrow p + j_p$
    8. Continue with the next $p$ to factorize the the bottom-right block.
-<!-- pyml enable line-length-->
 
 $\mathbf{L}$ is now the matrix containing the lower triangle of $\mathbf{M}$, ones on the diagonal and zeros in the
 upper triangle.
@@ -1188,11 +1186,9 @@ $$
 \end{bmatrix}
 $$
 
-<!-- pyml disable line-length-->
 * The regular $L_{\infty}$-norm is $\max\left\{1+3, 3, 5, \frac{1}{2}, 1, 1\right\} = 5$.
 * The block-wise off-diagonal infinity $L_{\infty ,\text{bwod}}$-norm is
   $\max\left\{\max\left\{1, 3\right\}+\max\left\{3, 0\right\},\max\left\{5, 0\right\} + \max\left\{0, \frac{1}{2}\right\}, 1\right\} = \max\left\{3+3, 5+\frac{1}{2}, 1, 1\right\} = 6$.
-<!-- pyml enable line-length-->
 
 The two norms clearly differ and even the elements that contribute most to the norm are different.
 
@@ -1217,10 +1213,8 @@ $$
 \end{bmatrix}
 $$
 
-<!-- pyml disable line-length-->
 * The regular $L_{\infty}$-norm is $\max\left\{20+20+2+2,30+3,100,3+1\right\} = \max\left\{44,33,100,4\right\} = 100$.
 * The block-wise infinity norm with diagonals would be
   $\max\left\{\max\left\{20+20, 30\right\}+\max\left\{2+2, 3\right\},\max\left\{0,3\right\} + \max\left\{100, 1\right\}\right\} = \max\left\{40+4, 3+100\right\} = \max\left\{44, 103\right\} = 103$.
 * The $L_{\infty ,\text{bwod}}$-norm is
   $\max\left\{\max\left\{2+2, 3\right\},\max\left\{0,3\right\}\right\} = \max\left\{4, 3\right\} = 4$.
-<!-- pyml enable line-length-->

@@ -111,7 +111,6 @@ references.
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8054429.svg)](https://zenodo.org/record/8054429)
 
-<!-- pyml disable line-length-->
 ```bibtex
 @software{Xiang_PowerGridModel_power-grid-model,
   author = {Xiang, Yu and Salemink, Peter and van Westering, Werner and Bharambe, Nitish and Govers, Martinus G.H. and van den Bogaard, Jonas and Stoeller, Bram and Wang, Zhen and Guo, Jerry Jinfeng and Figueroa Manrique, Santiago and Jagutis, Laurynas and Wang, Chenguang and van Raalte, Marc and {Contributors to the LF Energy project Power Grid Model}},
@@ -132,7 +131,6 @@ references.
   doi={10.1049/icp.2023.0633}
 }
 ```
-<!-- pyml enable line-length-->
 
 ## Contact
 
