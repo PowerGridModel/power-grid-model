@@ -152,6 +152,7 @@ deserialization.
 
 ```python
 from power_grid_model.utils import self_test
+
 self_test()
 ```
 
