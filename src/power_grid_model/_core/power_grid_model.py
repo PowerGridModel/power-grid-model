@@ -297,6 +297,7 @@ class PowerGridModel:
 
     def _calculate_impl(  # noqa: PLR0913
         self,
+        *,
         calculation_type: CalculationType,
         symmetric: bool,
         update_data: Dataset | list[Dataset] | None,
