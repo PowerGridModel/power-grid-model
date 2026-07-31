@@ -46,6 +46,7 @@ wrapper layer core module, that wraps the exposition-only core module, that expo
 
 This can be visualized graphically as follows.
 
+<!-- pyml disable line-length -->
 ```{mermaid}
     :title: Full design
 
@@ -93,6 +94,7 @@ flowchart TD
     cpp_user -->|experimental<br>links +<br>includes| power_grid_model_cpp -->|links +<br>includes| power_grid_model_c
     python_user -->|import| power_grid_model_python -->|internal import| power_grid_model_core_python -->|internal import| power_grid_core_python -->|"CDLL<br>(dynamic loading)"| power_grid_model_c_dll
 ```
+<!-- pyml enable line-length -->
 
 ## Creating a custom library or interface
 

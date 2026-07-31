@@ -204,21 +204,6 @@ show_column_numbers = true
 non_interactive = true
 install_types = true
 
-[tool.pymarkdown]
-plugins.heading-increment.enabled = false
-plugins.no-duplicate-heading.enabled = false
-plugins.line-length.enabled = true
-plugins.line-length.line_length = 120
-plugins.line-length.heading_line_length = 120
-plugins.line-length.code_block_line_length = 120
-plugins.line-length.table_line_length = 1000000
-extensions.front-matter.enabled = true
-extensions.linter-pragmas.enabled = true
-extensions.markdown-tables.enabled = true
-extensions.markdown-task-list-items.enabled = true
-extensions.markdown-strikethrough.enabled = true
-extensions.markdown-disallow-raw-html.enabled = true
-
 # CI build options
 [tool.cibuildwheel]
 build-frontend = "build[uv]"

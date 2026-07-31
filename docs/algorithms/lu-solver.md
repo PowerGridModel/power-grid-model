@@ -303,6 +303,7 @@ where $i,j = 0..(N-1)$.
 For readbility, we use $:$ to denote a range slicing operation to along a dimension of matrix $\mathbf{M}$, e.g.
 $\mathbf{M}\left[0:3, j\right]$.
 
+<!-- pyml disable line-length -->
 1. Initialize the permutations $\mathbf{P}$ and $\mathbf{Q}$ to the identity permutation.
 2. Initialize fill-in elements to $0$.
 3. Loop over all rows: $p = 0..(N-1)$:
@@ -331,6 +332,7 @@ $\mathbf{M}\left[0:3, j\right]$.
       1. In $\mathbf{P}$: swap $p \leftrightarrow p + i_p$
       2. In $\mathbf{Q}$: swap $p \leftrightarrow p + j_p$
    8. Continue with the next $p$ to factorize the the bottom-right block.
+<!-- pyml enable line-length -->
 
 $\mathbf{L}$ is now the matrix containing the lower triangle of $\mathbf{M}$, ones on the diagonal and zeros in the
 upper triangle.
@@ -871,16 +873,16 @@ as well as the well-known
 
 #### Pivot perturbation algorithm
 
-Let $\mathbf{M}$ be the matrix, $\left\|\mathbf{M}\right\|_{\infty ,\text{bwod}}$ the
+Let $\mathbf{M}$ be the matrix, $\lvert\mathbf{M}\rvert _{\infty ,\text{bwod}}$ the
 [block-wise off-diagonal infinite norm](#block-wise-off-diagonal-infinite-matrix-norm) of the matrix.
 
-1. $\epsilon \gets \text{perturbation\_threshold} * \left\|\mathbf{M}\right\|_{\text{bwod}}$.
-2. If $|\text{pivot\_element}| \lt \epsilon$, then:
-   1. If $|\text{pivot\_element}| = 0$, then:
+1. $\epsilon \gets \text{perturbation\_threshold} * \lvert\mathbf{M}\rvert _{\text{bwod}}$.
+2. If $\lvert\text{pivot\_element}\rvert \lt \epsilon$, then:
+   1. If $\lvert\text{pivot\_element}\rvert = 0$, then:
       1. $\text{phase\_shift} \gets 1$.
       2. Proceed.
    2. Else:
-      1. $\text{phase\_shift} \gets \text{pivot\_element} / |\text{pivot\_element}|$.
+      1. $\text{phase\_shift} \gets \text{pivot\_element} / \lvert\text{pivot\_element}\rvert$.
       2. Proceed.
    3. $\text{pivot\_element} \gets \epsilon * \text{phase\_shift}$.
 
@@ -909,7 +911,7 @@ The residual $\boldsymbol{r}$ can be calculated.
 An estimation for the left-hand side can be obtained by using the pivot-perturbed matrix $\tilde{\mathbf{M}}$ instead of
 the original matrix $\mathbf{M}$.
 Convergence is reached when $\boldsymbol{r} \to \boldsymbol{0}$, which implies
-$\left\|\boldsymbol{\Delta x}\right\| \to 0$.
+$\lvert\boldsymbol{\Delta x}\rvert \to 0$.
 Solving for $\boldsymbol{\Delta x}$ and substituting back into
 $\boldsymbol{x}_{i+1} = \boldsymbol{x}_i + \boldsymbol{\Delta x}$ provides the next best approximation
 $\boldsymbol{x}_{i+1}$ for $\boldsymbol{x}$.
@@ -969,12 +971,12 @@ with a few modifications described [below](#improved-backward-error-calculation)
 $$
 \begin{aligned}
 D_{\text{max}} &= \max_i\left\{
-    \left(\left|\mathbf{M}\right|\cdot\left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i
+    \left(\lvert\mathbf{M}\rvert\cdot\lvert\boldsymbol{x}\rvert + \lvert\boldsymbol{b}\rvert\right)_i
 \right\} \\
 \text{backward\_error} &= \max_i \left\{
-    \frac{\left|\boldsymbol{r}\right|_i}{
+    \frac{\lvert\boldsymbol{r}\rvert_i}{
         \max\left\{
-            \left(\left|\mathbf{M}\right|\cdot\left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i,
+            \left(\lvert\mathbf{M}\rvert\cdot\lvert\boldsymbol{x}\rvert + \lvert\boldsymbol{b}\rvert\right)_i,
             \epsilon_{\text{backward\_error}} D_{\text{max}}
         \right\}
     }
@@ -1024,8 +1026,8 @@ In power system equations, the matrix $\mathbf{M}$ in equation $\mathbf{M} \bold
 very discrepant entries: some may be very large while others are zero or very small (see also the
 [documentation on calculations](../user_manual/calculations.md)).
 The same may be true for the right-hand side of the equation $\boldsymbol{b}$, as well as its solution $\boldsymbol{x}$.
-In fact, there may be certain rows $i$ for which both $\left|\boldsymbol{b}\left[i\right]\right|$ and
-$\sum_j \left|\mathbf{M}\left[i,j\right]\right| \left|\boldsymbol{x}\left[j\right]\right|$ are small and, therefore,
+In fact, there may be certain rows $i$ for which both $\lvert\boldsymbol{b}\left[i\right]\rvert$ and
+$\sum_j \lvert\mathbf{M}\left[i,j\right]\rvert \lvert\boldsymbol{x}\left[j\right]\rvert$ are small and, therefore,
 their sum is prone to rounding errors, which may be several orders larger than machine precision.
 
 [Li99](https://www.semanticscholar.org/paper/A-Scalable-Sparse-Direct-Solver-Using-Static-Li-Demmel/7ea1c3360826ad3996f387eeb6d70815e1eb3761)
@@ -1036,27 +1038,27 @@ $$
 \begin{aligned}
 \text{backward\_error}_{\text{Li}}
    &= \max_i \frac{
-         \left|\boldsymbol{r}_i\right|
+         \lvert\boldsymbol{r}_i\rvert
       }{
-         \sum_j \left|\mathbf{M}_{i,j}\right| \left|\boldsymbol{x}_j\right| + \left|\boldsymbol{b}_i\right|
+         \sum_j \lvert\mathbf{M}_{i,j}\rvert \lvert\boldsymbol{x}_j\rvert + \lvert\boldsymbol{b}_i\rvert
       } \\
    &= \max_i \frac{
-         \left|\boldsymbol{b}_i - \sum_j \mathbf{M}_{i,j} \boldsymbol{x}_j\right|
+         \lvert\boldsymbol{b}_i - \sum_j \mathbf{M}_{i,j} \boldsymbol{x}_j\rvert
       }{
-         \sum_j \left|\mathbf{M}_{i,j}\right| \left|\boldsymbol{x}_j\right| + \left|\boldsymbol{b}_i\right|
+         \sum_j \lvert\mathbf{M}_{i,j}\rvert \lvert\boldsymbol{x}_j\rvert + \lvert\boldsymbol{b}_i\rvert
       } \\
    &= \max_i \frac{
-         \left|\boldsymbol{r}_i\right|
+         \lvert\boldsymbol{r}_i\rvert
       }{
-         \left(\left|\mathbf{M}\right| \cdot \left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i
+         \left(\lvert\mathbf{M}\rvert \cdot \lvert\boldsymbol{x}\rvert + \lvert\boldsymbol{b}\rvert\right)_i
       }
 \end{aligned}
 $$
 
-In this equation, the symbolic notation $\left|\mathbf{M}\right|$ and $\left|\boldsymbol{x}\right|$ are the matrix and
+In this equation, the symbolic notation $\lvert\mathbf{M}\rvert$ and $\lvert\boldsymbol{x}\rvert$ are the matrix and
 vector with absolute values of the elements of $\mathbf{M}$ and $\boldsymbol{x}$ as elements, i.e.,
-$\left|\mathbf{M}\right|_{i,j} := \left|\mathbf{M}_{i,j}\right|$ and
-$\left|\boldsymbol{x}\right|_i := \left|\boldsymbol{x}_i\right|$, as defined in
+$\lvert\mathbf{M}\rvert_{i,j} := \lvert\mathbf{M}_{i,j}\rvert$ and
+$\lvert\boldsymbol{x}\rvert_i := \lvert\boldsymbol{x}_i\rvert$, as defined in
 [Arioli89](https://epubs.siam.org/doi/10.1137/0610013).
 
 Due to the aforementioned, this is prone to rounding errors, and a single row with rounding errors may cause the entire
@@ -1067,12 +1069,12 @@ determined by the maximum across all denominators:
 $$
 \begin{aligned}
 D_{\text{max}} &= \max_i\left\{
-   \left(\left|\mathbf{M}\right|\cdot\left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i
+   \left(\lvert\mathbf{M}\rvert\cdot\lvert\boldsymbol{x}\rvert + \lvert\boldsymbol{b}\rvert\right)_i
 \right\} \\
 \text{backward\_error} &= \max_i \left\{
-   \frac{\left|\boldsymbol{r}\right|_i}{
+   \frac{\lvert\boldsymbol{r}\rvert_i}{
       \max\left\{
-         \left(\left|\mathbf{M}\right|\cdot\left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i,
+         \left(\lvert\mathbf{M}\rvert\cdot\lvert\boldsymbol{x}\rvert + \lvert\boldsymbol{b}\rvert\right)_i,
          \epsilon_{\text{backward\_error}} D_{\text{max}}
       \right\}
    }
@@ -1131,7 +1133,7 @@ with dimensions $N_i\times N_j$.
          3. Loop over all rows of the current block: $k = 0..(N_{i,j} - 1)$:
             1. $\text{block\_row\_norm} \gets 0$.
             2. Loop over all columns of the current block: $l = 0..(N_{i,j} - 1)$:
-               1. $\text{block\_row\_norm} \gets \text{block\_row\_norm} + \left\|\mathbf{M}_{i,j}\left[k,l\right]\right\|$.
+               1. $\text{block\_row\_norm} \gets \text{block\_row\_norm} + \lvert\mathbf{M}_{i,j}\left[k,l\right]\rvert$.
             3. Calculate the new block norm: set
                $\text{block\_norm} \gets \max\left\{\text{block\_norm}, \text{block\_row\_norm}\right\}$.
             4. Continue with the next row of the current block.
@@ -1186,9 +1188,11 @@ $$
 \end{bmatrix}
 $$
 
+<!-- pyml disable line-length -->
 * The regular $L_{\infty}$-norm is $\max\left\{1+3, 3, 5, \frac{1}{2}, 1, 1\right\} = 5$.
 * The block-wise off-diagonal infinity $L_{\infty ,\text{bwod}}$-norm is
   $\max\left\{\max\left\{1, 3\right\}+\max\left\{3, 0\right\},\max\left\{5, 0\right\} + \max\left\{0, \frac{1}{2}\right\}, 1\right\} = \max\left\{3+3, 5+\frac{1}{2}, 1, 1\right\} = 6$.
+<!-- pyml enable line-length -->
 
 The two norms clearly differ and even the elements that contribute most to the norm are different.
 
@@ -1213,8 +1217,10 @@ $$
 \end{bmatrix}
 $$
 
+<!-- pyml disable line-length -->
 * The regular $L_{\infty}$-norm is $\max\left\{20+20+2+2,30+3,100,3+1\right\} = \max\left\{44,33,100,4\right\} = 100$.
 * The block-wise infinity norm with diagonals would be
   $\max\left\{\max\left\{20+20, 30\right\}+\max\left\{2+2, 3\right\},\max\left\{0,3\right\} + \max\left\{100, 1\right\}\right\} = \max\left\{40+4, 3+100\right\} = \max\left\{44, 103\right\} = 103$.
 * The $L_{\infty ,\text{bwod}}$-norm is
   $\max\left\{\max\left\{2+2, 3\right\},\max\left\{0,3\right\}\right\} = \max\left\{4, 3\right\} = 4$.
+<!-- pyml enable line-length -->

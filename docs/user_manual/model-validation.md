@@ -221,7 +221,7 @@ The circuit diagram is as follows (The node 6 is same in both lines):
                        Gen(_22)---|_2--transformer(_31)--|_4            |_5-------line(_15)----|_6
                                                                         |         shunt(_29)---|
                                                            shunt(_28)---|-load(_24)
-
+                                                         
 
     |----line(_16)-------|               |---line(_19)---|_9---transformer(_32)---|_11---source(_20)
     |                    |---line(_18)---|

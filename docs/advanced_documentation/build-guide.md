@@ -392,14 +392,14 @@ For debugging purposes, it may be useful to build the Power Grid Model with debu
 To do so, the following command can be used to override the default build settings.
 
 ```powershell
-uv sync --locked --config-settings=cmake.build-type="RelWithDebInfo"
+uv sync --config-settings=cmake.build-type="RelWithDebInfo"
 ```
 
 It is also possible to install the Power Grid Model as a full debug build, including extra sanity checks and with a
 lower degree of optimizations. Note this may come with a significant impact on the performance.
 
 ```powershell
-uv sync --locked --config-settings=cmake.build-type="Debug"
+uv sync --config-settings=cmake.build-type="Debug"
 ```
 
 ### Build CMake Project
@@ -517,7 +517,7 @@ In addition, the `power-grid-model` Python package needs to be built by followin
 After that, the documentation specific packages can be installed via:
 
 ```shell
-uv sync --locked --group doc
+uv sync --group doc
 ```
 
 ```{note}

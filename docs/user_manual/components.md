@@ -67,7 +67,7 @@ Physically a node can be a busbar, a joint, or other similar component.
 | `q`       | `RealValueOutput` | volt-ampere-reactive (var) | reactive power injection                                                                        |
 
 ```{note}
-The `p` and `q` output of injection follows the `generator` reference direction as mentioned in
+The `p` and `q` output of injection follows the `generator` reference direction as mentioned in  
 [Reference Direction](data-model.md#reference-direction)
 ```
 
