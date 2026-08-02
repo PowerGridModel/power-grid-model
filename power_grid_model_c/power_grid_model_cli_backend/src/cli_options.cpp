@@ -13,6 +13,7 @@
 
 #include <CLI/CLI.hpp>
 
+#include <algorithm>
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
@@ -20,7 +21,6 @@
 #include <ios>
 #include <map>
 #include <ostream>
-#include <ranges>
 #include <sstream>
 #include <string>
 #include <vector>
