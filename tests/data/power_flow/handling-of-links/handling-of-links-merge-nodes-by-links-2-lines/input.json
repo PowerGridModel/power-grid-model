@@ -1,7 +1,7 @@
 {
     "version": "1.0",
     "type": "input",
-    "is_batch": true,
+    "is_batch": false,
     "attributes": {},
     "data": {
         "node": [
