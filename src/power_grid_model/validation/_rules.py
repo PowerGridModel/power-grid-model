@@ -720,12 +720,12 @@ def ids_valid_in_update_data_set(
         ref_name: The name of the reference data set type
 
     Returns:
-        A list containing zero or one IdNotInDatasetError, listing all ids of the objects in the data set which do not
-        exist in the reference data set.
+        A list containing zero or one IdNotInDatasetError or InvalidIdError, listing ids that do not exist in the
+        reference data set or indicating that the component does not exist in the reference data set.
     """
     component_data = update_data[component]
-    component_ref_data = ref_data[component]
-    if component_ref_data[AttributeType.id].size == 0:
+    component_ref_data = ref_data.get(component)
+    if component_ref_data is None or component_ref_data[AttributeType.id].size == 0:
         return [InvalidIdError(component=component, field=AttributeType.id, ids=None)]
     id_field_is_nan = np.array(is_nan_or_default(component_data[AttributeType.id]))
     # check whether id qualify for optional

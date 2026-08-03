@@ -28,6 +28,7 @@ from power_grid_model._core.power_grid_meta import power_grid_meta_data
 from power_grid_model._core.utils import (
     compatibility_convert_row_columnar_dataset as _compatibility_convert_row_columnar_dataset,
     convert_batch_dataset_to_batch_list as _convert_batch_dataset_to_batch_list,
+    get_comp_size as _get_comp_size,
 )
 from power_grid_model.data_types import BatchDataset, Dataset, SingleDataset
 from power_grid_model.enum import (
@@ -171,6 +172,12 @@ def validate_batch_data(
     for batch, batch_update_data in enumerate(batch_data):
         row_update_data = _compatibility_convert_row_columnar_dataset(batch_update_data, None, DatasetType.update)
         assert_valid_data_structure(row_update_data, DatasetType.update)
+        # A zero-width component is a no-op, regardless of whether the batch uses row or columnar data.
+        row_update_data = {
+            component: component_data
+            for component, component_data in row_update_data.items()
+            if _get_comp_size(component_data) > 0
+        }
         id_errors: list[IdNotInDatasetError | InvalidIdError] = validate_ids(row_update_data, input_data_copy)
 
         batch_errors = input_errors + id_errors
