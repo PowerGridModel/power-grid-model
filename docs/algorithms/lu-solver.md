@@ -303,7 +303,7 @@ where $i,j = 0..(N-1)$.
 For readbility, we use $:$ to denote a range slicing operation to along a dimension of matrix $\mathbf{M}$, e.g.
 $\mathbf{M}\left[0:3, j\right]$.
 
-```{math}
+$$
 \begin{algorithm}
 \caption{Dense LU factorization with pivot perturbation}
 \begin{algorithmic}
@@ -332,7 +332,7 @@ $\mathbf{M}\left[0:3, j\right]$.
 \EndFor
 \end{algorithmic}
 \end{algorithm}
-```
+$$
 
 $\mathbf{L}$ is now the matrix containing the lower triangle of $\mathbf{M}$, ones on the diagonal and zeros in the
 upper triangle.
@@ -1121,7 +1121,7 @@ $\mathbf{M}\left[i,j\right]$ its block element at (0-based) indices $(i,j)$, whe
 In turn, let $\mathbf{M}\left[i,j\right] \equiv \mathbf{M}_{i,j}\left[0:N_{i,j},0:N_{i,j}\right]$ be the dense block
 with dimensions $N_i\times N_j$.
 
-```{math}
+$$
 \begin{algorithm}
 \caption{Block-wise off-diagonal infinite matrix norm}
 \begin{algorithmic}
@@ -1148,7 +1148,7 @@ with dimensions $N_i\times N_j$.
 \EndFor
 \end{algorithmic}
 \end{algorithm}
-```
+$$
 
 ##### Illustration of the block-wise off-diagonal infinite matrix norm calculation
 
