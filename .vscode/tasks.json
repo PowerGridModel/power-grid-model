@@ -54,7 +54,7 @@
     {
       "label": "markdownlint",
       "type": "shell",
-      "command": "npx markdownlint --fix .",
+      "command": "pymarkdown fix .",
       "group": {
         "kind": "build",
         "isDefault": false

@@ -50,7 +50,7 @@ repos:
       - id: pymarkdown-fix
         name: pymarkdown-fix
         alias: markdown-fix
-        entry: uv run --frozen pymarkdown fix
+        entry: uv run --frozen pymarkdown --strict-config fix
         language: system
         pass_filenames: true
         types: [ markdown ]
@@ -58,7 +58,7 @@ repos:
       - id: pymarkdown-scan
         name: pymarkdown-scan
         alias: markdown-check
-        entry: uv run --frozen pymarkdown scan
+        entry: uv run --frozen pymarkdown --strict-config scan
         language: system
         pass_filenames: true
         types: [ markdown ]
