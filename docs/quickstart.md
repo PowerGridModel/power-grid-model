@@ -93,7 +93,7 @@ input_data = {
     ComponentType.node: node,
     ComponentType.line: line,
     ComponentType.sym_load: sym_load,
-    ComponentType.source: source
+    ComponentType.source: source,
 }
 ```
 
@@ -129,9 +129,9 @@ We can use `pandas` to convert them to data frames and print them.
 ```python
 import pandas as pd
 
-print('Node Input')
+print("Node Input")
 print(pd.DataFrame(input_data[ComponentType.node]))
-print('Node Result')
+print("Node Result")
 print(pd.DataFrame(result[ComponentType.node]))
 ```
 
