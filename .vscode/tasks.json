@@ -64,7 +64,7 @@
     {
       "label": "json linter",
       "type": "shell",
-      "command": "npx biome format --write --files-ignore-unknown=true --no-errors-on-unmatched",
+      "command": "git ls-files -z -- '*.json' | xargs -0 -r uv run --frozen scripts/format_json.py",
       "group": {
         "kind": "build",
         "isDefault": false
