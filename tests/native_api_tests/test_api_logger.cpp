@@ -58,7 +58,12 @@ auto const input_json = R"json({
 
 struct HandleGuard {
     PGM_Handle* h = PGM_create_handle();
-    ~HandleGuard() { PGM_destroy_handle(h); }
+    ~HandleGuard() { destroy(); }
+
+    void destroy() {
+        PGM_destroy_handle(h);
+        h = nullptr;
+    }
 };
 
 struct LoggerGuard {
@@ -104,7 +109,12 @@ auto get_output(PGM_Handle* h, PGM_Logger* l) {
     PGM_logger_get_output(
         h, l,
         [](char const* data, PGM_Idx size, void* ctx) {
-            static_cast<std::string*>(ctx)->assign(data, static_cast<std::size_t>(size));
+            auto& output = *static_cast<std::string*>(ctx);
+            if (size == 0) {
+                output.clear();
+                return;
+            }
+            output.assign(data, static_cast<std::size_t>(size));
         },
         &result);
     return result;
@@ -172,15 +182,24 @@ TEST_CASE("Logger - get_output with null callback returns a regular error") {
     CHECK(PGM_error_code(g.h) == PGM_regular_error);
 }
 
-TEST_CASE("Logger - register / unregister preserves handle error state") {
+TEST_CASE("Logger - unregister stops subsequent output") {
     HandleGuard g;
     LoggerGuard lg{g.h, PGM_text_logger};
 
     PGM_register_logger(g.h, lg.l);
+    PGM_PowerGridModel* first_model = run_calculate(g.h);
     CHECK(PGM_error_code(g.h) == PGM_no_error);
+    CHECK(!get_output(g.h, lg.l).empty());
 
+    PGM_logger_clear(g.h, lg.l);
     PGM_unregister_logger(g.h, lg.l);
     CHECK(PGM_error_code(g.h) == PGM_no_error);
+    PGM_destroy_model(first_model);
+
+    PGM_PowerGridModel* second_model = run_calculate(g.h);
+    CHECK(PGM_error_code(g.h) == PGM_no_error);
+    CHECK(get_output(g.h, lg.l).empty());
+    PGM_destroy_model(second_model);
 }
 
 TEST_CASE("Logger - unregister non-registered logger is no-op") {
@@ -378,19 +397,25 @@ TEST_CASE("Logger - destroying the handle while a logger is registered does not 
     CHECK(!out.empty());
 }
 
-TEST_CASE("Logger - model calculates through the handle used at creation, not the calculation handle") {
+TEST_CASE("Logger - model logs through the handle passed to PGM_calculate, not the creation handle") {
     HandleGuard creation_handle;
     HandleGuard calc_handle;
-    LoggerGuard lg{calc_handle.h, PGM_text_logger};
+    LoggerGuard creation_lg{creation_handle.h, PGM_text_logger};
+    LoggerGuard calc_lg{calc_handle.h, PGM_text_logger};
 
     // The model is bound to creation_handle's composite logger at PGM_create_model time.
+    PGM_register_logger(creation_handle.h, creation_lg.l);
     auto const owning_input = load_dataset(input_json);
     DatasetConst const const_input{owning_input.dataset};
     PGM_PowerGridModel* model = PGM_create_model(creation_handle.h, 50.0, const_input.get());
     REQUIRE(model != nullptr);
 
-    // Register the logger on a *different* handle and calculate using that handle.
-    PGM_register_logger(calc_handle.h, lg.l);
+    // Destroy the creation handle before calculating. PGM_calculate must reseat the model's
+    // logger without dereferencing the now-stale reference to creation_handle's composite.
+    creation_handle.destroy();
+
+    // Register a different logger on a different handle and calculate using that handle.
+    PGM_register_logger(calc_handle.h, calc_lg.l);
 
     Buffer node_output{PGM_def_sym_output_node, 2};
     node_output.set_nan();
@@ -404,13 +429,12 @@ TEST_CASE("Logger - model calculates through the handle used at creation, not th
     PGM_calculate(calc_handle.h, model, opt.get(), output_ds.get(), nullptr);
     CHECK(PGM_error_code(calc_handle.h) == PGM_no_error);
 
-    // Known limitation: the model still logs to creation_handle's composite (bound at
-    // PGM_create_model), so a logger registered only on calc_handle receives nothing here.
-    // If this ever starts capturing output, the model's logger-binding design has changed
-    // and this test should be updated accordingly.
-    CHECK(get_output(calc_handle.h, lg.l).empty());
+    // PGM_calculate reseats the model's logger to the handle passed to that call, so output
+    // is captured by calc_handle's logger, not the destroyed creation handle's logger.
+    CHECK(!get_output(calc_handle.h, calc_lg.l).empty());
+    CHECK(get_output(calc_handle.h, creation_lg.l).empty());
 
-    PGM_unregister_logger(calc_handle.h, lg.l);
+    PGM_unregister_logger(calc_handle.h, calc_lg.l);
     PGM_destroy_model(model);
 }
 
@@ -522,6 +546,20 @@ TEST_CASE("CPP Logger - move construction preserves registration and output acce
     model.add_logger(logger);
 
     power_grid_model_cpp::Logger moved_logger{std::move(logger)};
+
+    run_calculate(model);
+    CHECK(!moved_logger.get_output().empty());
+
+    model.remove_logger(moved_logger);
+}
+
+TEST_CASE("CPP Logger - move assignment preserves registration and output access") {
+    auto model = make_cpp_model();
+    power_grid_model_cpp::Logger logger{PGM_text_logger};
+    power_grid_model_cpp::Logger moved_logger{PGM_benchmark_logger};
+    model.add_logger(logger);
+
+    moved_logger = std::move(logger);
 
     run_calculate(model);
     CHECK(!moved_logger.get_output().empty());

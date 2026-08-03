@@ -40,7 +40,12 @@ class Logger {
     std::string get_output() {
         std::string output;
         PGM_LogOutputCallback const cb = [](char const* data, PGM_Idx size, void* user_data) {
-            *static_cast<std::string*>(user_data) = std::string(data, static_cast<std::size_t>(size));
+            auto& result = *static_cast<std::string*>(user_data);
+            if (size == 0) {
+                result.clear();
+                return;
+            }
+            result.assign(data, static_cast<std::size_t>(size));
         };
         handle_.call_with(PGM_logger_get_output, logger_.get(), cb, static_cast<void*>(&output));
         return output;

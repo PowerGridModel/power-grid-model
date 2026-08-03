@@ -355,9 +355,11 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
                    PGM_MutableDataset const* output_dataset, PGM_ConstDataset const* batch_dataset) {
     call_with_catch(
         handle,
-        [model, opt, output_dataset, batch_dataset] {
-            calculate_impl(safe_ptr_get(cast_to_cpp(model)), safe_ptr_get(opt),
-                           safe_ptr_get(cast_to_cpp(output_dataset)),
+        [handle, model, opt, output_dataset, batch_dataset] {
+            auto& cpp_model = safe_ptr_get(cast_to_cpp(model));
+            // Log to the handle passed to this call, not the handle the model was created with.
+            cpp_model.set_logger(safe_ptr_get(handle).composite_logger);
+            calculate_impl(cpp_model, safe_ptr_get(opt), safe_ptr_get(cast_to_cpp(output_dataset)),
                            safe_ptr_maybe_nullptr(cast_to_cpp(batch_dataset)));
         },
         batch_exception_handler);

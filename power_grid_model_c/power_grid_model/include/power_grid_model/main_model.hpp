@@ -90,6 +90,10 @@ class MainModel {
         impl().get_indexer(component_type, id_begin, size, indexer_begin);
     }
 
+    // Reseat the logger this model logs to. The caller must ensure logger outlives this model,
+    // or is reseated again (e.g. via a subsequent call to this function) before it is destroyed.
+    void set_logger(MultiThreadedLogger& logger) { logger_ = logger; }
+
     template <cache_type_c CacheType> void update_components(ConstDataset const& update_data) {
         impl().update_components<CacheType>(update_data.get_individual_scenario(0));
     }
