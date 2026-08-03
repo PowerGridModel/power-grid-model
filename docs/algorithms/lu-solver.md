@@ -303,36 +303,36 @@ where $i,j = 0..(N-1)$.
 For readbility, we use $:$ to denote a range slicing operation to along a dimension of matrix $\mathbf{M}$, e.g.
 $\mathbf{M}\left[0:3, j\right]$.
 
-<!-- pyml disable line-length -->
-1. Initialize the permutations $\mathbf{P}$ and $\mathbf{Q}$ to the identity permutation.
-2. Initialize fill-in elements to $0$.
-3. Loop over all rows: $p = 0..(N-1)$:
-   1. Set the remaining matrix: $\mathbf{M}_p \gets \mathbf{M}\left[p:N,p:N\right]$ with size $N_p\times N_p$, where
-      $N_p := N - p$.
-   2. Find largest element $\mathbf{M}_p\left[i_p,j_p\right]$ in $\mathbf{M}_p$ by magnitude.
-      This is the pivot element.
-   3. If the magnitude of the pivot element is too small:
-      1. If pivot perturbation is enabled, then:
-         1. Apply [pivot perturbation](#pivot-perturbation).
-         2. Proceed.
-      2. Else, if the matrix is singular (pivot element is identically $0$), then:
-         1. Raise a `SparseMatrixError`.
-      3. Else:
-         1. Proceed.
-   4. Else:
-      1. Proceed.
-   5. Swap the first and pivot row and column of $\mathbf{M}_p$, so that the pivot element is in the top-left corner of
-      the remaining matrix:
-      1. $\mathbf{M}_p\left[0,0:N_p\right] \leftrightarrow \mathbf{M}\left[i_p,0:N_p\right]$
-      2. $\mathbf{M}_p\left[0:N_p,0\right] \leftrightarrow \mathbf{M}\left[0:N_p,j_p\right]$
-   6. Apply Gaussian elimination for the current pivot element:
-      1. $\mathbf{M}_p\left[0,0:N_p\right] \gets \frac{1}{\mathbf{M}_p[0,0]}\mathbf{M}_p\left[0,0:N_p\right]$
-      2. $\mathbf{M}_p\left[1:N_p,0:N_p\right] \gets \mathbf{M}_p\left[1:N_p,0:N_p\right] - \mathbf{M}_p\left[1:N_p,0\right] \otimes \mathbf{M}_p\left[0,0:N_p\right]$
-   7. Accumulate the permutation matrices:
-      1. In $\mathbf{P}$: swap $p \leftrightarrow p + i_p$
-      2. In $\mathbf{Q}$: swap $p \leftrightarrow p + j_p$
-   8. Continue with the next $p$ to factorize the the bottom-right block.
-<!-- pyml enable line-length -->
+```{math}
+\begin{algorithm}
+\caption{Dense LU factorization with pivot perturbation}
+\begin{algorithmic}
+\State Initialize permutations $\mathbf{P}$ and $\mathbf{Q}$ to the identity permutation
+\State Initialize fill-in elements to $0$
+\For{$p = 0$ \textbf{to} $N-1$} \Comment{Loop over all rows}
+    \State $N_p \gets N - p$
+    \State $\mathbf{M}_p \gets \mathbf{M}\left[p:N,p:N\right]$ \Comment{Set the remaining matrix of size $N_p\times N_p$}
+    \State Find largest element $\mathbf{M}_p\left[i_p,j_p\right]$ in $\mathbf{M}_p$ by magnitude \Comment{Pivot element}
+    \If{magnitude of pivot element is too small}
+        \If{pivot perturbation is enabled}
+            \State Apply pivot perturbation
+        \ElsIf{matrix is singular (pivot element is identically $0$)}
+            \State \textbf{raise} SparseMatrixError
+        \EndIf
+    \EndIf
+    \State \Comment{Swap first and pivot row and column of $\mathbf{M}_p$}
+    \State $\mathbf{M}_p\left[0,0:N_p\right] \leftrightarrow \mathbf{M}_p\left[i_p,0:N_p\right]$
+    \State $\mathbf{M}_p\left[0:N_p,0\right] \leftrightarrow \mathbf{M}_p\left[0:N_p,j_p\right]$
+    \State \Comment{Apply Gaussian elimination for the current pivot element}
+    \State $\mathbf{M}_p\left[0,0:N_p\right] \gets \frac{1}{\mathbf{M}_p[0,0]}\mathbf{M}_p\left[0,0:N_p\right]$
+    \State $\mathbf{M}_p\left[1:N_p,0:N_p\right] \gets \mathbf{M}_p\left[1:N_p,0:N_p\right] - \mathbf{M}_p\left[1:N_p,0\right] \otimes \mathbf{M}_p\left[0,0:N_p\right]$
+    \State \Comment{Accumulate the permutation matrices}
+    \State In $\mathbf{P}$: swap $p \leftrightarrow p + i_p$
+    \State In $\mathbf{Q}$: swap $p \leftrightarrow p + j_p$
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+```
 
 $\mathbf{L}$ is now the matrix containing the lower triangle of $\mathbf{M}$, ones on the diagonal and zeros in the
 upper triangle.
@@ -873,16 +873,16 @@ as well as the well-known
 
 #### Pivot perturbation algorithm
 
-Let $\mathbf{M}$ be the matrix, $\lvert\mathbf{M}\rvert _{\infty ,\text{bwod}}$ the
+Let $\mathbf{M}$ be the matrix, $\left|\mathbf{M}\right|_{\infty ,\text{bwod}}$ the
 [block-wise off-diagonal infinite norm](#block-wise-off-diagonal-infinite-matrix-norm) of the matrix.
 
-1. $\epsilon \gets \text{perturbation\_threshold} * \lvert\mathbf{M}\rvert _{\text{bwod}}$.
-2. If $\lvert\text{pivot\_element}\rvert \lt \epsilon$, then:
-   1. If $\lvert\text{pivot\_element}\rvert = 0$, then:
+1. $\epsilon \gets \text{perturbation\_threshold} * \left|\mathbf{M}\right|_{\text{bwod}}$.
+2. If $\left|\text{pivot\_element}\right| \lt \epsilon$, then:
+   1. If $\left|\text{pivot\_element}\right| = 0$, then:
       1. $\text{phase\_shift} \gets 1$.
       2. Proceed.
    2. Else:
-      1. $\text{phase\_shift} \gets \text{pivot\_element} / \lvert\text{pivot\_element}\rvert$.
+      1. $\text{phase\_shift} \gets \text{pivot\_element} / \left|\text{pivot\_element}\right|$.
       2. Proceed.
    3. $\text{pivot\_element} \gets \epsilon * \text{phase\_shift}$.
 
@@ -911,7 +911,7 @@ The residual $\boldsymbol{r}$ can be calculated.
 An estimation for the left-hand side can be obtained by using the pivot-perturbed matrix $\tilde{\mathbf{M}}$ instead of
 the original matrix $\mathbf{M}$.
 Convergence is reached when $\boldsymbol{r} \to \boldsymbol{0}$, which implies
-$\lvert\boldsymbol{\Delta x}\rvert \to 0$.
+$\left|\boldsymbol{\Delta x}\right| \to 0$.
 Solving for $\boldsymbol{\Delta x}$ and substituting back into
 $\boldsymbol{x}_{i+1} = \boldsymbol{x}_i + \boldsymbol{\Delta x}$ provides the next best approximation
 $\boldsymbol{x}_{i+1}$ for $\boldsymbol{x}$.
@@ -971,12 +971,12 @@ with a few modifications described [below](#improved-backward-error-calculation)
 $$
 \begin{aligned}
 D_{\text{max}} &= \max_i\left\{
-    \left(\lvert\mathbf{M}\rvert\cdot\lvert\boldsymbol{x}\rvert + \lvert\boldsymbol{b}\rvert\right)_i
+    \left(\left|\mathbf{M}\right|\cdot\left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i
 \right\} \\
 \text{backward\_error} &= \max_i \left\{
-    \frac{\lvert\boldsymbol{r}\rvert_i}{
+    \frac{\left|\boldsymbol{r}\right|_i}{
         \max\left\{
-            \left(\lvert\mathbf{M}\rvert\cdot\lvert\boldsymbol{x}\rvert + \lvert\boldsymbol{b}\rvert\right)_i,
+            \left(\left|\mathbf{M}\right|\cdot\left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i,
             \epsilon_{\text{backward\_error}} D_{\text{max}}
         \right\}
     }
@@ -1026,8 +1026,8 @@ In power system equations, the matrix $\mathbf{M}$ in equation $\mathbf{M} \bold
 very discrepant entries: some may be very large while others are zero or very small (see also the
 [documentation on calculations](../user_manual/calculations.md)).
 The same may be true for the right-hand side of the equation $\boldsymbol{b}$, as well as its solution $\boldsymbol{x}$.
-In fact, there may be certain rows $i$ for which both $\lvert\boldsymbol{b}\left[i\right]\rvert$ and
-$\sum_j \lvert\mathbf{M}\left[i,j\right]\rvert \lvert\boldsymbol{x}\left[j\right]\rvert$ are small and, therefore,
+In fact, there may be certain rows $i$ for which both $\left|\boldsymbol{b}\left[i\right]\right|$ and
+$\sum_j \left|\mathbf{M}\left[i,j\right]\right| \left|\boldsymbol{x}\left[j\right]\right|$ are small and, therefore,
 their sum is prone to rounding errors, which may be several orders larger than machine precision.
 
 [Li99](https://www.semanticscholar.org/paper/A-Scalable-Sparse-Direct-Solver-Using-Static-Li-Demmel/7ea1c3360826ad3996f387eeb6d70815e1eb3761)
@@ -1038,27 +1038,27 @@ $$
 \begin{aligned}
 \text{backward\_error}_{\text{Li}}
    &= \max_i \frac{
-         \lvert\boldsymbol{r}_i\rvert
+         \left|\boldsymbol{r}_i\right|
       }{
-         \sum_j \lvert\mathbf{M}_{i,j}\rvert \lvert\boldsymbol{x}_j\rvert + \lvert\boldsymbol{b}_i\rvert
+         \sum_j \left|\mathbf{M}_{i,j}\right| \left|\boldsymbol{x}_j\right| + \left|\boldsymbol{b}_i\right|
       } \\
    &= \max_i \frac{
-         \lvert\boldsymbol{b}_i - \sum_j \mathbf{M}_{i,j} \boldsymbol{x}_j\rvert
+         \left|\boldsymbol{b}_i - \sum_j \mathbf{M}_{i,j} \boldsymbol{x}_j\right|
       }{
-         \sum_j \lvert\mathbf{M}_{i,j}\rvert \lvert\boldsymbol{x}_j\rvert + \lvert\boldsymbol{b}_i\rvert
+         \sum_j \left|\mathbf{M}_{i,j}\right| \left|\boldsymbol{x}_j\right| + \left|\boldsymbol{b}_i\right|
       } \\
    &= \max_i \frac{
-         \lvert\boldsymbol{r}_i\rvert
+         \left|\boldsymbol{r}_i\right|
       }{
-         \left(\lvert\mathbf{M}\rvert \cdot \lvert\boldsymbol{x}\rvert + \lvert\boldsymbol{b}\rvert\right)_i
+         \left(\left|\mathbf{M}\right| \cdot \left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i
       }
 \end{aligned}
 $$
 
-In this equation, the symbolic notation $\lvert\mathbf{M}\rvert$ and $\lvert\boldsymbol{x}\rvert$ are the matrix and
+In this equation, the symbolic notation $\left|\mathbf{M}\right|$ and $\left|\boldsymbol{x}\right|$ are the matrix and
 vector with absolute values of the elements of $\mathbf{M}$ and $\boldsymbol{x}$ as elements, i.e.,
-$\lvert\mathbf{M}\rvert_{i,j} := \lvert\mathbf{M}_{i,j}\rvert$ and
-$\lvert\boldsymbol{x}\rvert_i := \lvert\boldsymbol{x}_i\rvert$, as defined in
+$\left|\mathbf{M}\right|_{i,j} := \left|\mathbf{M}_{i,j}\right|$ and
+$\left|\boldsymbol{x}\right|_i := \left|\boldsymbol{x}_i\right|$, as defined in
 [Arioli89](https://epubs.siam.org/doi/10.1137/0610013).
 
 Due to the aforementioned, this is prone to rounding errors, and a single row with rounding errors may cause the entire
@@ -1069,12 +1069,12 @@ determined by the maximum across all denominators:
 $$
 \begin{aligned}
 D_{\text{max}} &= \max_i\left\{
-   \left(\lvert\mathbf{M}\rvert\cdot\lvert\boldsymbol{x}\rvert + \lvert\boldsymbol{b}\rvert\right)_i
+   \left(\left|\mathbf{M}\right|\cdot\left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i
 \right\} \\
 \text{backward\_error} &= \max_i \left\{
-   \frac{\lvert\boldsymbol{r}\rvert_i}{
+   \frac{\left|\boldsymbol{r}\right|_i}{
       \max\left\{
-         \left(\lvert\mathbf{M}\rvert\cdot\lvert\boldsymbol{x}\rvert + \lvert\boldsymbol{b}\rvert\right)_i,
+         \left(\left|\mathbf{M}\right|\cdot\left|\boldsymbol{x}\right| + \left|\boldsymbol{b}\right|\right)_i,
          \epsilon_{\text{backward\_error}} D_{\text{max}}
       \right\}
    }
@@ -1121,27 +1121,34 @@ $\mathbf{M}\left[i,j\right]$ its block element at (0-based) indices $(i,j)$, whe
 In turn, let $\mathbf{M}\left[i,j\right] \equiv \mathbf{M}_{i,j}\left[0:N_{i,j},0:N_{i,j}\right]$ be the dense block
 with dimensions $N_i\times N_j$.
 
-1. $\text{norm} \gets 0$.
-2. Loop over all block-rows: $i = 0..(N-1)$:
-   1. $\text{row\_norm} \gets 0$.
-   2. Loop over all block-columns: $j = 0..(N-1)$ (beware of sparse structure):
-      1. If $i = j$, then:
-         1. Skip this block: continue with the next block-column.
-      2. Else, calculate the $L_{\infty}$ norm of the current block and add to the current row norm:
-         1. the current block: $\mathbf{M}_{i,j} \gets \mathbf{M}\left[i,j\right]$.
-         2. $\text{block\_norm} \gets 0$.
-         3. Loop over all rows of the current block: $k = 0..(N_{i,j} - 1)$:
-            1. $\text{block\_row\_norm} \gets 0$.
-            2. Loop over all columns of the current block: $l = 0..(N_{i,j} - 1)$:
-               1. $\text{block\_row\_norm} \gets \text{block\_row\_norm} + \lvert\mathbf{M}_{i,j}\left[k,l\right]\rvert$.
-            3. Calculate the new block norm: set
-               $\text{block\_norm} \gets \max\left\{\text{block\_norm}, \text{block\_row\_norm}\right\}$.
-            4. Continue with the next row of the current block.
-         4. $\text{row\_norm} \gets \text{row\_norm} + \text{block\_norm}$.
-         5. Continue with the next block-column.
-   3. Calculate the new norm: set
-      $\text{norm} \gets \max\left\{\text{norm}, \text{row\_norm}\right\}$.
-   4. Continue with the next block-row.
+```{math}
+\begin{algorithm}
+\caption{Block-wise off-diagonal infinite matrix norm}
+\begin{algorithmic}
+\State $\text{norm} \gets 0$
+\For{$i = 0$ \textbf{to} $N-1$} \Comment{Loop over all block-rows}
+    \State $\text{row\_norm} \gets 0$
+    \For{$j = 0$ \textbf{to} $N-1$} \Comment{Loop over all block-columns (beware of sparse structure)}
+        \If{$i = j$}
+            \State \textbf{continue} \Comment{Skip this block}
+        \Else \Comment{Calculate the $L_{\infty}$ norm of the current block}
+            \State $\mathbf{M}_{i,j} \gets \mathbf{M}\left[i,j\right]$ \Comment{Get the current block}
+            \State $\text{block\_norm} \gets 0$
+            \For{$k = 0$ \textbf{to} $N_{i,j} - 1$} \Comment{Loop over all rows of the current block}
+                \State $\text{block\_row\_norm} \gets 0$
+                \For{$l = 0$ \textbf{to} $N_{i,j} - 1$} \Comment{Loop over all columns of the current block}
+                    \State $\text{block\_row\_norm} \gets \text{block\_row\_norm} + \left|\mathbf{M}_{i,j}\left[k,l\right]\right|$
+                \EndFor
+                \State $\text{block\_norm} \gets \max\left\{\text{block\_norm}, \text{block\_row\_norm}\right\}$
+            \EndFor
+            \State $\text{row\_norm} \gets \text{row\_norm} + \text{block\_norm}$
+        \EndIf
+    \EndFor
+    \State $\text{norm} \gets \max\left\{\text{norm}, \text{row\_norm}\right\}$
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+```
 
 ##### Illustration of the block-wise off-diagonal infinite matrix norm calculation
 
