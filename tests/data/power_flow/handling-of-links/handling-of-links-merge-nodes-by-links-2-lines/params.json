@@ -5,6 +5,7 @@
     "rtol": 3e-07,
     "atol": 1e-07,
     "xfail": {
+        "raises": "AssertionError",
         "reason": "The handling of links is not fully implemented."
     }
 }

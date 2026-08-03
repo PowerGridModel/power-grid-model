@@ -8,8 +8,6 @@
             "link": [
                 {
                     "id": 11,
-                    "from_node": 6,
-                    "to_node": 7,
                     "from_status": 1,
                     "to_status": 1
                 }
@@ -19,8 +17,6 @@
             "link": [
                 {
                     "id": 11,
-                    "from_node": 6,
-                    "to_node": 7,
                     "from_status": 1,
                     "to_status": 0
                 }
