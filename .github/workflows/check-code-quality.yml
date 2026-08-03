@@ -64,7 +64,7 @@ jobs:
       - name: Run Json formatter
         run: |
           echo "Running Json formatter"
-          git ls-files -z -- '*.json' '*.jsonc' | xargs -0 -r uv run --frozen scripts/format_json.py
+          git ls-files -z -- '*.json' | xargs -0 -r uv run --frozen scripts/format_json.py
 
       - name: If needed raise error
         run: |

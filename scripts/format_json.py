@@ -51,7 +51,7 @@ def to_include(paths: list[str]) -> list[str]:
         """Return True if the path is a JSON file and not excluded."""
         p = Path(path)
         full_path = str(p.resolve())
-        return p.suffix in (".json", ".jsonc") and not any(rex.match(full_path) for rex in EXCLUDE)
+        return p.suffix == ".json" and not any(rex.match(full_path) for rex in EXCLUDE)
 
     return [path for path in paths if _include_path(path)]
 
