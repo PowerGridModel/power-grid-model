@@ -20,7 +20,7 @@ New contributions and ideas for modeling grid components are very welcome!
 
 ## Ideal transformer
 
-An ideal transformer can be modeled as a [link](./components.md#link). <!-- markdownlint-disable-line descriptive-link-text line-length -->
+An ideal transformer can be modeled as a [link](./components.md#link).
 To this end, it is explicitly allowed to place a link between two different voltage levels.
 Trivially, no additional electrical parameters need to be specified.
 

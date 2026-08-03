@@ -124,8 +124,9 @@ However, such mixing of sensor types is allowed as long as they are on different
 ```
 
 ```{warning}
-The [iterative linear](../algorithms/se-algorithms.md#iterative-linear-state-estimation) and [Newton-Raphson](../algorithms/se-algorithms.md#newton-raphson-state-estimation) state
-estimation algorithms will assume angles to be zero by default (see the details about voltage sensors).
+The [iterative linear](../algorithms/se-algorithms.md#iterative-linear-state-estimation) and
+[Newton-Raphson](../algorithms/se-algorithms.md#newton-raphson-state-estimation) state estimation algorithms will assume
+angles to be zero by default (see the details about voltage sensors).
 In observable systems this helps better outputting correct results.
 On the other hand with unobservable systems, exceptions raised from calculations due to faulty results will be
 prevented.
@@ -193,8 +194,11 @@ Output:
 - Current flowing through branches and fault.
 
 ```{note}
-Short-circuit calculations are currently implemented in the phase (abc) domain and therefore require a grounded configurations in certain cases, similar to asymmetric power flow calculations.
-For details on how floating grids are treated in power-grid-model, please refer to[Floating grid handling](calulations.md#floating-grid-handling).
+Short-circuit calculations are currently implemented in the phase (abc) domain and therefore require a grounded
+configurations in certain cases, similar to asymmetric power flow calculations.
+For details on how floating grids are treated in power-grid-model, please refer to
+[Floating grid handling](calulations.md#floating-grid-handling).
+```
 
 #### Common calculations
 
@@ -240,7 +244,10 @@ The option affects which attributes are required and how results are exposed.
   for all output variables.
 
 ```{note}
-In power-grid model, asymmetric calculations with certain configurations require the network to have a reference to ground. For details on how floating grids are treated in power-grid-model, please refer to [Floating grid handling](calulations.md#floating-grid-handling).
+In power-grid model, asymmetric calculations with certain configurations require the network to have a reference to
+ground.
+For details on how floating grids are treated in power-grid-model, please refer to
+[Floating grid handling](calulations.md#floating-grid-handling).
 ```
 
 ```{note}
@@ -299,8 +306,8 @@ By default, the [Newton-Raphson](../algorithms/pf-algorithms.md#newton-raphson-p
 ```
 
 ```{note}
-When all the load/generation types are of constant impedance, the [Linear](../algorithms/pf-algorithms.md#linear-power-flow) method will be the
-fastest without loss of accuracy.
+When all the load/generation types are of constant impedance, the
+[Linear](../algorithms/pf-algorithms.md#linear-power-flow) method will be the fastest without loss of accuracy.
 Therefore power-grid-model will use this method regardless of the input provided by the user in this case.
 ```
 

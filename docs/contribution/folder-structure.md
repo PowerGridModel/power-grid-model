@@ -8,8 +8,9 @@ SPDX-License-Identifier: MPL-2.0
 
 The repository folder structure is as follows. The `docs` and `scripts` folders are self-explanatory.
 
+<!-- pyml disable line-length -->
 - The C++ calculation core is inside
-  {{ "[power_grid_model_c/power_grid_model/include/power_grid_model]({}/power_grid_model_c/power_grid_model/include/power_grid_model)".format(gh_link_head_tree) }}.  <!-- markdownlint-disable-line line-length -->
+  {{ "[power_grid_model_c/power_grid_model/include/power_grid_model]({}/power_grid_model_c/power_grid_model/include/power_grid_model)".format(gh_link_head_tree) }}.
 - The C API is inside
   {{ "[power_grid_model_c/power_grid_model_c]({}/power_grid_model_c/power_grid_model_c)".format(gh_link_head_tree) }}.
 - The C program example to use the C API is inside
@@ -29,3 +30,4 @@ The repository folder structure is as follows. The `docs` and `scripts` folders 
   - `data` contains validation test cases designed for every component and algorithm.
     Some sample network types are also included.
     The validation is either against popular power system analysis software or hand calculation.
+<!-- pyml enable line-length -->

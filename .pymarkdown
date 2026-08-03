@@ -8,10 +8,10 @@
     },
     "line-length": {
       "enabled": true,
+      "tables": false,
       "line_length": 120,
       "heading_line_length": 120,
-      "code_block_line_length": 120,
-      "table_line_length": 1000000
+      "code_block_line_length": 120
     }
   },
   "extensions": {

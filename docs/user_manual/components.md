@@ -732,7 +732,7 @@ It behaves similar to a load/generator with type `const_impedance`.
 | `b0` | `double`  | siemens (S) | zero-sequence shunt susceptance     | &#10024; only for asymmetric calculation | &#10004; |
 
 ```{note}
-In power-grid-model, shunts may also be used to introduce a ground reference in an otherwise floating grid. 
+In power-grid-model, shunts may also be used to introduce a ground reference in an otherwise floating grid.
 ```
 
 ```{note}

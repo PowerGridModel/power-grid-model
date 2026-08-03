@@ -14,6 +14,7 @@ The components types are organized in an inheritance-like hierarchy.
 A sub-type has all the attributes from its parent type.
 The hierarchy tree of the component types is shown below.
 
+<!-- pyml disable line-length -->
 ```{mermaid}
 graph LR
     base-->node
@@ -43,6 +44,7 @@ graph LR
    classDef green fill:#9f6,stroke:#333,stroke-width:2px
    class node,line,link,generic_branch,transformer,three_winding_transformer,source,shunt,sym_load,sym_gen,asym_load,asym_gen,sym_voltage_sensor,asym_voltage_sensor,sym_power_sensor,asym_power_sensor green
 ```
+<!-- pyml enable line-length -->
 
 ```{note}
 The type names in the hierarchy are exactly the same as the component type names in
