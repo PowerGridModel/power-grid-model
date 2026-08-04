@@ -94,6 +94,117 @@ flowchart TD
     python_user -->|import| power_grid_model_python -->|internal import| power_grid_model_core_python -->|internal import| power_grid_core_python -->|"CDLL<br>(dynamic loading)"| power_grid_model_c_dll
 ```
 
+## Logger architecture
+
+Logging is opt-in. All three public APIs use the same C API implementation and calculation-core logger hierarchy.
+Creating a logger selects one of `NoMultiThreadedLogger`, `MultiThreadedTextLogger`, or
+`MultiThreadedCalculationInfo`. Registering it adds a shared pointer to the `MultiThreadedCompositeLogger` owned by a
+`PGM_Handle`. At the start of each calculation, the model is pointed at the composite logger of the handle used for
+that call.
+
+For batch calculations, the composite creates one child logger per registered logger for each worker. The child
+loggers collect without sharing mutable state between workers and merge their results into their parent loggers. The
+text logger returns timestamped diagnostic lines; the benchmark logger aggregates numeric events and returns
+tab-separated event/value lines.
+
+### C API logger flow
+
+```{mermaid}
+    :title: C API logger flow
+
+flowchart LR
+    user(["C caller"])
+    handle["PGM_Handle<br>MultiThreadedCompositeLogger"]
+    wrapper["PGM_Logger<br>shared_ptr"]
+    logger["No-op, text, or<br>benchmark logger"]
+    model[PGM_PowerGridModel]
+    calculation["MainModel::calculate<br>JobDispatch"]
+    children["Per-worker<br>child loggers"]
+    callback[PGM_LogOutputCallback]
+
+    user -->|PGM_create_logger| wrapper
+    wrapper -->|owns| logger
+    user -->|PGM_register_logger| handle
+    wrapper -->|shared ownership| handle
+    user -->|PGM_calculate with handle| model
+    handle -->|set_logger before each call| model
+    model --> calculation
+    calculation -->|create_child| children
+    children -->|collect and merge| logger
+    user -->|PGM_logger_get_output| wrapper
+    logger -->|string_view valid during call| callback
+    callback --> user
+```
+
+Destroying `PGM_Logger` releases only the caller's wrapper and shared pointer. Each handle registration keeps the
+underlying logger alive until it is unregistered, all handle loggers are reset, or the handle is destroyed.
+
+### C++ API logger flow
+
+```{mermaid}
+    :title: C++ API logger flow
+
+flowchart LR
+    user(["C++ caller"])
+    cpp_logger["power_grid_model_cpp::Logger<br>RAII wrapper"]
+    cpp_model["power_grid_model_cpp::Model<br>owns Handle"]
+    c_logger[PGM_Logger]
+    c_handle["PGM_Handle<br>composite logger"]
+    core["MainModel calculation<br>and worker loggers"]
+    output["std::string"]
+
+    user -->|construct| cpp_logger
+    cpp_logger -->|PGM_create_logger| c_logger
+    user -->|Model::add_logger| cpp_model
+    cpp_model -->|PGM_register_logger| c_handle
+    c_logger -->|shared registration| c_handle
+    user -->|Model::calculate| cpp_model
+    cpp_model -->|PGM_calculate| core
+    c_handle -->|fan out events| core
+    user -->|Logger::get_output| cpp_logger
+    cpp_logger -->|callback copies bytes| output
+    output --> user
+```
+
+The logger's private `Handle` is used for C API error propagation. Registrations belong to each model's `Handle`, so a
+copied model starts without registrations, copy assignment preserves the target model's registrations, and moving a
+model transfers them.
+
+### Python API logger flow
+
+```{mermaid}
+    :title: Python API logger flow
+
+flowchart LR
+    user(["Python caller"])
+    context["Logger context manager"]
+    pgc["thread-local PowerGridCore<br>owns PGM_Handle"]
+    ctypes["ctypes C bindings"]
+    c_logger[PGM_Logger]
+    composite["Handle composite logger"]
+    core["PGM_calculate<br>calculation core"]
+    text["Python str"]
+    pylog["logging.Logger"]
+
+    user -->|with Logger ctx mgr| context
+    context -->|create/register| pgc
+    pgc --> ctypes
+    ctypes --> c_logger
+    c_logger -->|shared registration| composite
+    user -->|model.calculate| pgc
+    pgc -->|same thread-local handle| core
+    composite -->|fan out events| core
+    user -->|Logger.output| context
+    context -->|PGM_logger_get_output callback| text
+    text --> user
+    context -->|optional on context exit| pylog
+    context -->|unregister and optionally clear| pgc
+```
+
+`PowerGridCore` and its native handle are thread-local. The context manager registers on entry and unregisters on exit.
+When a Python `logging.Logger` is supplied, each non-empty native output line is emitted as a Python log record and the
+native logger is cleared.
+
 ## Creating a custom library or interface
 
 We seek to provide an optimal user experience, but with the sheer amount of programming languages and features, it would
