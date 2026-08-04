@@ -720,8 +720,8 @@ def ids_valid_in_update_data_set(
         ref_name: The name of the reference data set type
 
     Returns:
-        A list containing zero or one IdNotInDatasetError or InvalidIdError, listing ids that do not exist in the
-        reference data set or indicating that the component does not exist in the reference data set.
+        A list containing zero or one IdNotInDatasetError or InvalidIdError, listing ids of components that do not
+        exist in the data set or indicating that the component does not exist in the reference data set.
     """
     component_data = update_data[component]
     component_ref_data = ref_data.get(component)
