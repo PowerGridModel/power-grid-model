@@ -9,6 +9,7 @@
 #include "../common/counting_iterator.hpp"
 #include "../common/enum.hpp"
 #include "../common/grouped_index_vector.hpp"
+#include "../common/logging.hpp"
 #include "../common/three_phase_tensor.hpp"
 
 #include <algorithm>
@@ -22,6 +23,8 @@
 #include <memory>
 #include <numeric>
 #include <ranges>
+#include <span>
+#include <sstream>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -591,8 +594,97 @@ template <symmetry_tag sym> class YBus {
     }
 };
 
+// Log a Y-bus matrix to the given logger.
+// One lazy log call per invocation: if the logger is a no-op, nothing is computed.
+// node_coupling[user_seq_idx] = {group, internal_bus_idx} — the full coupling array for all nodes.
+// group identifies which connected-component (math model) this Y-bus belongs to.
+// Output format (newline-separated fields in a single log message):
+//   group=G n_bus=N nnz=M is_sym=S
+//   bus_map=<user_seq_idx per internal_bus_idx, space-separated>
+//   row_indptr=<CSR row pointers, space-separated>
+//   col_indices=<CSR column indices, space-separated>
+//   admittance_re=<real parts; 1 value per nnz entry (sym), or 9 row-major values per entry (asym)>
+//   admittance_im=<imaginary parts; same layout as admittance_re>
+template <symmetry_tag sym>
+void log_y_bus(Logger& logger, YBus<sym> const& y_bus, std::span<Idx2D const> node_coupling, Idx group) {
+    logger.log(LogEvent::y_bus_matrix, [&]() -> std::string {
+        Idx const n_bus = y_bus.size();
+        Idx const nnz = y_bus.nnz();
+
+        // Build internal_bus -> user_seq_idx map for this group
+        IdxVector internal_to_user(n_bus, -1);
+        for (Idx user_seq = 0; user_seq < static_cast<Idx>(node_coupling.size()); ++user_seq) {
+            auto const& idx2d = node_coupling[user_seq];
+            if (idx2d.group == group) {
+                internal_to_user[idx2d.pos] = user_seq;
+            }
+        }
+
+        std::ostringstream oss;
+
+        // Header
+        oss << "group=" << group << " n_bus=" << n_bus << " nnz=" << nnz
+            << " is_sym=" << (is_symmetric_v<sym> ? 1 : 0);
+
+        // Bus map: internal bus index -> user sequence index
+        oss << "\nbus_map=";
+        for (Idx i = 0; i < n_bus; ++i) {
+            if (i > 0) oss << ' ';
+            oss << internal_to_user[i];
+        }
+
+        // CSR row_indptr
+        oss << "\nrow_indptr=";
+        for (Idx i = 0; i <= n_bus; ++i) {
+            if (i > 0) oss << ' ';
+            oss << y_bus.row_indptr()[i];
+        }
+
+        // CSR col_indices
+        oss << "\ncol_indices=";
+        for (Idx i = 0; i < nnz; ++i) {
+            if (i > 0) oss << ' ';
+            oss << y_bus.col_indices()[i];
+        }
+
+        // Admittance real and imaginary parts
+        auto const& adm = y_bus.admittance();
+        oss << "\nadmittance_re=";
+        for (Idx i = 0; i < nnz; ++i) {
+            if (i > 0) oss << ' ';
+            if constexpr (is_symmetric_v<sym>) {
+                oss << adm[i].real();
+            } else {
+                for (Idx r = 0; r < 3; ++r) {
+                    for (Idx c = 0; c < 3; ++c) {
+                        if (r > 0 || c > 0) oss << ' ';
+                        oss << adm[i](r, c).real();
+                    }
+                }
+            }
+        }
+        oss << "\nadmittance_im=";
+        for (Idx i = 0; i < nnz; ++i) {
+            if (i > 0) oss << ' ';
+            if constexpr (is_symmetric_v<sym>) {
+                oss << adm[i].imag();
+            } else {
+                for (Idx r = 0; r < 3; ++r) {
+                    for (Idx c = 0; c < 3; ++c) {
+                        if (r > 0 || c > 0) oss << ' ';
+                        oss << adm[i](r, c).imag();
+                    }
+                }
+            }
+        }
+
+        return oss.str();
+    });
+}
+
 } // namespace math_solver
 
 using math_solver::YBus;
+using math_solver::log_y_bus;
 
 } // namespace power_grid_model

@@ -297,6 +297,11 @@ class MainModelImpl {
             prepare_solvers<sym>(state_, solver_preparation_context_, solvers_cache_status_);
             assert(solvers_cache_status_.is_topology_valid());
             assert(solvers_cache_status_.template is_parameter_valid<sym>());
+            // Log Y-bus matrices (one per connected component / math model group)
+            auto const& y_bus_vec = main_core::get_y_bus<sym>(solver_preparation_context_.math_state);
+            for (Idx g = 0; g < static_cast<Idx>(y_bus_vec.size()); ++g) {
+                log_y_bus(logger, y_bus_vec[g], std::span{state_.topo_comp_coup->node}, g);
+            }
             return prepare_input_(get_n_math_solvers<ModelType>(state_));
         }();
         // calculate
