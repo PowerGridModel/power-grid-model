@@ -1182,9 +1182,9 @@ def validate_same_u_ref_per_node_voltage_regulator(
 
     return errors
 
+
 def validate_compatible_load_gen_type(data: SingleDataset) -> list[ValidationError]:
-    """Ensure that the regulated object of a voltage regulator is of type const_power.
-    """
+    """Ensure that the regulated object of a voltage regulator is of type const_power."""
     errors: list[ValidationError] = []
     if CT.voltage_regulator in data:
         vr_data = data[CT.voltage_regulator]
@@ -1210,6 +1210,7 @@ def validate_compatible_load_gen_type(data: SingleDataset) -> list[ValidationErr
                                     )
 
     return errors
+
 
 def _init_node_u_ref_from_sources(data: SingleDataset):
     """Initialize a mapping of node IDs to u_ref values defined by sources connected to those nodes.
