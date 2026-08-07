@@ -1125,12 +1125,7 @@ def validate_voltage_regulator(data: SingleDataset) -> list[ValidationError]:
     errors += _all_greater_than_zero(data, CT.voltage_regulator, AT.u_ref)
     errors += validate_same_u_ref_per_node_voltage_regulator(data)
     errors += validate_compatible_load_gen_type(data)
-    errors += _all_greater_or_equal(
-        data,
-        CT.voltage_regulator,
-        AT.q_max,
-        f"{AT.q_min}"
-    )
+    errors += _all_greater_or_equal(data, CT.voltage_regulator, AT.q_max, f"{AT.q_min}")
     return errors
 
 
