@@ -44,6 +44,7 @@ enum class LogEvent : int16_t {
     iterative_pf_solver_max_num_iter = 2246, // TODO(mgovers): find other error code
     max_num_iter = 2248,                     // TODO(mgovers): find other error code
     y_bus_matrix = 4000,
+    jacobian = 4001,
 };
 
 template <typename Fn>

@@ -161,6 +161,7 @@ J.L -= -dQ_cal_m/dV
 #include <complex>
 #include <functional>
 #include <ranges>
+#include <sstream>
 #include <vector>
 
 namespace power_grid_model::math_solver {
@@ -332,6 +333,69 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
             u[i] = u_tmp;
         }
         return max_dev;
+    }
+
+    // Log the assembled Jacobian for the given iteration (lazy: zero cost when no text logger is active).
+    // Output format (newline-separated fields in a single log message):
+    //   iteration=K n_bus=N nnz_lu=M is_sym=S
+    //   row_indptr_lu=<LU row pointers, space-separated>
+    //   col_indices_lu=<LU column indices, space-separated>
+    //   jac_h=<H block values; 1 per entry (sym) or 9 row-major values per entry (asym)>
+    //   jac_n=<N block values; same layout>
+    //   jac_m=<M block values; same layout>
+    //   jac_l=<L block values; same layout>
+    // Row/column indices are the same internal bus indices used in the Y-bus log (bus_map applies).
+    // Fill-in entries (not present in Y-bus) appear as zeros in the assembled Jacobian.
+    void log_matrix(Logger& log, YBus<sym> const& y_bus, Idx iter) {
+        log.log(LogEvent::jacobian, [this, &y_bus, iter]() -> std::string {
+            Idx const n_bus = y_bus.size();
+            Idx const nnz_lu = static_cast<Idx>(data_jac_.size());
+            auto const& indptr = y_bus.row_indptr_lu();
+            auto const& col_idx = y_bus.col_indices_lu();
+
+            std::ostringstream oss;
+            oss << "iteration=" << iter << " n_bus=" << n_bus << " nnz_lu=" << nnz_lu
+                << " is_sym=" << (is_symmetric_v<sym> ? 1 : 0);
+
+            oss << "\nrow_indptr_lu=";
+            for (Idx i = 0; i <= n_bus; ++i) {
+                if (i > 0) oss << ' ';
+                oss << indptr[i];
+            }
+
+            oss << "\ncol_indices_lu=";
+            for (Idx k = 0; k < nnz_lu; ++k) {
+                if (k > 0) oss << ' ';
+                oss << col_idx[k];
+            }
+
+            // Each PFJacBlock<sym> is a (2*sub_sz) x (2*sub_sz) array:
+            //   sub-block [0,0]=H  [0,1]=N
+            //             [1,0]=M  [1,1]=L
+            // For sym: sub_sz=1 (scalar); for asym: sub_sz=3 (3x3 real matrix).
+            constexpr int sub_sz = is_symmetric_v<sym> ? 1 : 3;
+            auto write_block = [&](std::string_view name, int block_row, int block_col) {
+                oss << '\n' << name << '=';
+                int const row_off = block_row * sub_sz;
+                int const col_off = block_col * sub_sz;
+                for (Idx k = 0; k < nnz_lu; ++k) {
+                    if (k > 0) oss << ' ';
+                    for (int r = 0; r < sub_sz; ++r) {
+                        for (int c = 0; c < sub_sz; ++c) {
+                            if (r > 0 || c > 0) oss << ' ';
+                            oss << data_jac_[k](row_off + r, col_off + c);
+                        }
+                    }
+                }
+            };
+
+            write_block("jac_h", 0, 0);
+            write_block("jac_n", 0, 1);
+            write_block("jac_m", 1, 0);
+            write_block("jac_l", 1, 1);
+
+            return oss.str();
+        });
     }
 
   private:

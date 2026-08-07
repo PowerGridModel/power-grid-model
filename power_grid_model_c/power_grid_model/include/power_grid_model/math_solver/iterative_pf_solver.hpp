@@ -31,6 +31,9 @@ namespace power_grid_model::math_solver {
 template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
   public:
     friend DerivedSolver;
+    // Default no-op; derived solvers may override to emit their internal matrix state.
+    void log_matrix(Logger& /*log*/, YBus<sym> const& /*y_bus*/, Idx /*iter*/) {}
+
     SolverOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
                                      Idx max_iter, Logger& log) {
         // get derived reference for derived solver class
@@ -62,6 +65,8 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
                 Timer const sub_timer{log, LogEvent::prepare_matrices};
                 derived_solver.prepare_matrix_and_rhs(y_bus, input, output.u);
             }
+            // Log matrix state after assembly, before solve (lazy: free when no text logger)
+            derived_solver.log_matrix(log, y_bus, num_iter);
             {
                 // Solve the linear equations
                 Timer const sub_timer{log, LogEvent::solve_sparse_linear_equation};
