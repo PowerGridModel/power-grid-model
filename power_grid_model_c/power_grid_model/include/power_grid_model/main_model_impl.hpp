@@ -395,7 +395,31 @@ class MainModelImpl {
         return *meta_data_;
     }
 
-    void check_no_experimental_features_used(Options const& /*options*/, ConstDataset const* /*batch_dataset*/) const {}
+    void check_no_experimental_features_used(Options const& options, ConstDataset const* batch_dataset) const {
+        bool const is_asymmetric_power_flow = options.calculation_type == CalculationType::power_flow &&
+                                              options.calculation_symmetry == CalculationSymmetry::asymmetric;
+
+        auto const regulator_has_q_limits = [](auto const& regulator) {
+            return !is_nan(regulator.q_min()) || !is_nan(regulator.q_max());
+        };
+        auto const regulator_update_has_q_limits = [](VoltageRegulatorUpdate const& regulator) {
+            return !is_nan(regulator.q_min) || !is_nan(regulator.q_max);
+        };
+
+        bool const state_has_q_limits =
+            std::ranges::any_of(state_.components.template citer<VoltageRegulator>(), regulator_has_q_limits);
+
+        bool const batch_has_q_limits =
+            batch_dataset != nullptr && batch_dataset->for_each_component<meta_data::update_getter_s, VoltageRegulator>(
+                                            [&regulator_update_has_q_limits](auto const& span) {
+                                                return std::ranges::any_of(span, regulator_update_has_q_limits);
+                                            });
+
+        if (is_asymmetric_power_flow && (state_has_q_limits || batch_has_q_limits)) {
+            throw ExperimentalFeature{
+                "Voltage Regulator with Qmin/Qmax limits for asymmetric calculations is an experimental feature"};
+        }
+    }
 
     void check_no_future_deprecations(Options const& /*options*/, ConstDataset const* /*batch_dataset*/) const {
         ModelType::run_functor_with_all_component_types_return_void([this]<typename CT>() {
