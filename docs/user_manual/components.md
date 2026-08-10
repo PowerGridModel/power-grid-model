@@ -390,7 +390,7 @@ k      &= k_{\text{off-nominal}} \\
 $$
 
 with $\theta_{\text{step}}$ the angle shift per tap step
-(pandapower: `tap_step_degree`, converted to radian).
+(equivalent to `tap_step_degree` in pandapower: converted to radian).
 
 A lossless but not impedance-free PST is obtained with `r1 = 0`, `x1 > 0`, `g1 = 0`, `b1 = 0`.
 
