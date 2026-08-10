@@ -376,7 +376,7 @@ position and $\theta_{\text{fixed}}$ is the fixed phase shift of the winding con
 (e.g., from the clock number).
 
 **Special case: ideal phase-shifting tap changer.**
-Some tools (e.g. pandapower with `tap_changer_type="Ideal"`) model a tap changer that changes only
+Some tools (e.g., pandapower with `tap_changer_type="Ideal"`) model tap changers that change only
 the phase angle, while the voltage magnitude ratio stays constant.
 Note that "ideal" refers to the tap changer, not to a zero-impedance transformer: the series
 impedance and the magnetizing branch are still modeled through `r1`, `x1`, `g1`, `b1`.
