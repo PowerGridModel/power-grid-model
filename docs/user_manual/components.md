@@ -333,7 +333,7 @@ $$
 
 already contains the phase shift; the series impedance (`r1` and `x1`) and the magnetizing branch (`g1` and `b1`) are given as input for any transformer. No dedicated PST component is needed.
 
-The angle `theta` must be provided explicitly by the user.
+Note that the angle `theta` must be provided explicitly by user.
 For a transformer with a tap changer, `theta` (and in general also `k` and `x1`, see below) has to
 be calculated from the tap position and the transformer data, i.e. from the additional (boost)
 voltage injected per tap step and its injection angle.
