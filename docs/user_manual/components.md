@@ -271,9 +271,6 @@ The PI model can be used to avoid the need to convert parameters into transforme
 Another use case is modeling a line when connecting two nodes with approximately the same voltage levels (in that case,
 the off-nominal ratio must be given to adapt the electrical parameters).
 
-See [Phase-shifting transformer](./non-pgm-components.md#phase-shifting-transformer) for an example of modeling one
-using a `generic_branch`.
-
 #### Input
 
 | name    | data type | unit             | description                   |        required        |  update  | valid values |
@@ -393,6 +390,11 @@ with $\theta_{\text{step}}$ the angle shift per tap step
 (equivalent to `tap_step_degree` in pandapower: converted to radian).
 
 A lossless but not impedance-free PST is obtained with `r1 = 0`, `x1 > 0`, `g1 = 0`, `b1 = 0`.
+
+```{warning}
+An impedance-free ideal phase link cannot be represented by setting both `r1` and `x1` to zero. The branch model uses
+`1 / (r1 + j x1)` for its series admittance, so zero series impedance would make the model singular.
+```
 
 ##### Mapping from CGMES / ENTSO-E PST models
 <!-- markdownlint-disable-next-line MD013 -->
