@@ -373,7 +373,7 @@ $$
 
 where $k_{\text{off-nominal}}$ is the off-nominal ratio of the transformer at the neutral tap
 position and $\theta_{\text{fixed}}$ is the fixed phase shift of the winding configuration
-(e.g. from the clock number).
+(e.g., from the clock number).
 
 **Special case: ideal phase-shifting tap changer.**
 Some tools (e.g. pandapower with `tap_changer_type="Ideal"`) model a tap changer that changes only
