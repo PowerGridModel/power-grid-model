@@ -1296,7 +1296,7 @@ the same node, they should all specify the same `u_ref` value to avoid conflicti
 
 | name             | data type | unit | description                                                                                             |
 |------------------|-----------|------|---------------------------------------------------------------------------------------------------------|
-| `limit_violated` | `int8_t`  | -    | reactive-power limit indicator: `0` = no limit violation, `1` = `q_min` reached, `2` = `q_max` reached |
+| `limit_violated` | `int8_t`  | -    | reactive-power limit indicator: `0` = no limit violation, `1` = `q_min` reached, `2` = `q_max` reached  |
 
 ```{note}
 The reactive-power value is reported on the regulated load or generator output. The `voltage_regulator` output reports
