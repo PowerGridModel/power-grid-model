@@ -328,7 +328,9 @@ $$
 N = k \cdot e^{\mathrm{j} \theta}
 $$
 
-already contains the phase shift; the series impedance (`r1` and `x1`) and the magnetizing branch (`g1` and `b1`) are given as input for any transformer. No dedicated PST component is needed.
+already contains the phase shift;
+the series impedance (`r1` and `x1`) and the magnetizing branch (`g1` and `b1`) are given as input for any transformer.
+No dedicated PST component is needed.
 
 Note that the angle `theta` must be provided explicitly by user.
 For transformers with tap changers, the parameters `k`, `theta`, and `x1` are dynamic.
@@ -402,8 +404,10 @@ The [ENTSO-E PST modelling document (CGMES v2.4)](https://eepublicdownloads.ents
 describes the standard PST types and their mapping to CIM classes.
 All of these types can be represented with `generic_branch`.
 In ENTSO-E models, the windings resistance and core magnetizing components are neglected (`r1 = 0`, `g1 = 0`, `b1 = 0`);
-consequently, the transformer is defined solely by its reactance (`x1`), tap ratio (`k`), and phase shift angle (`theta`).
-With $m = n - n_0$ (in CIM: `step` − `neutralStep`), $\Delta u$ = `voltageStepIncrement`, $\theta_{\text{step}}$ = `stepPhaseShiftIncrement` and
+consequently, the transformer is defined solely by its reactance (`x1`), tap ratio (`k`),
+and phase shift angle (`theta`).
+With $m = n - n_0$ (in CIM: `step` − `neutralStep`), $\Delta u$ = `voltageStepIncrement`,
+$\theta_{\text{step}}$ = `stepPhaseShiftIncrement` and
 $\psi$ = `windingConnectionAngle`, the per-tap values are:
 
 | CIM class                                | angle $\alpha$ per tap                                                                       | magnitude ratio                                                                   |
