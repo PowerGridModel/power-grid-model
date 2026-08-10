@@ -331,8 +331,7 @@ $$
 N = k \cdot e^{\mathrm{j} \theta}
 $$
 
-already contains the phase shift; the series impedance and the magnetizing branch are given by
-`r1`, `x1`, `g1`, `b1` as for any transformer. No dedicated PST component is required.
+already contains the phase shift; the series impedance (`r1` and `x1`) and the magnetizing branch (`g1` and `b1`) are given as input for any transformer. No dedicated PST component is needed.
 
 The angle `theta` must be provided explicitly by the user.
 For a transformer with a tap changer, `theta` (and in general also `k` and `x1`, see below) has to
