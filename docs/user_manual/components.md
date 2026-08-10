@@ -399,8 +399,8 @@ A lossless but not impedance-free PST is obtained with `r1 = 0`, `x1 > 0`, `g1 =
 The [ENTSO-E PST modelling document (CGMES v2.4)](https://eepublicdownloads.entsoe.eu/clean-documents/CIM_documents/Grid_Model_CIM/ENTSOE_CGMES_v2.4_28May2014_PSTmodelling.pdf)
 describes the standard PST types and their mapping to CIM classes.
 All of these types can be represented with `generic_branch`.
-In the ENTSO-E models the resistances and magnetizing currents are neglected, which corresponds to
-`r1 = 0`, `g1 = 0`, `b1 = 0`; only `x1`, `k` and `theta` remain.
+In ENTSO-E models, the windings resistance and core magnetizing components are neglected (`r1 = 0`, `g1 = 0`, `b1 = 0`);
+consequently, the transformer is defined solely by its reactance (`x1`), tap ratio (`k`), and phase shift angle (`theta`).
 With $m = n - n_0$ (in CIM: `step` − `neutralStep`), $\Delta u$ = `voltageStepIncrement` and
 $\psi$ = `windingConnectionAngle`, the per-tap values are:
 
