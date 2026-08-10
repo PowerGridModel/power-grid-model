@@ -462,7 +462,7 @@ attributes and rebuilding the model.
 Automatic tap control via the transformer tap regulator is not available for `generic_branch`.
 ```
 
-An example of the usage of `generic_branch` is given in
+A use case of `generic_branch` as PST can be found in
 [Generic Branch Example](../examples/Generic%20Branch%20Example.ipynb).
 
 ### Asym Line
