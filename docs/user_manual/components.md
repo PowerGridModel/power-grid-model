@@ -343,7 +343,7 @@ Let
 * $m = \text{tap\_pos} - \text{tap\_neutral}$ be the tap position relative to the neutral position,
 * $\Delta u$ be the additional voltage per tap step in per-unit of the winding voltage,
 * $\psi$ be the injection angle of the additional voltage relative to the winding voltage
-  (e.g. $\psi = 90^{\circ}$ for pure quadrature/phase regulation).
+  (e.g., $\psi = 90^{\circ}$ for pure quadrature/phase regulation).
 
 The tap-dependent complex ratio is then
 
