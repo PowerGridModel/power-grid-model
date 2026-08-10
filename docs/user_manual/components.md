@@ -403,12 +403,12 @@ describes the standard PST types and their mapping to CIM classes.
 All of these types can be represented with `generic_branch`.
 In ENTSO-E models, the windings resistance and core magnetizing components are neglected (`r1 = 0`, `g1 = 0`, `b1 = 0`);
 consequently, the transformer is defined solely by its reactance (`x1`), tap ratio (`k`), and phase shift angle (`theta`).
-With $m = n - n_0$ (in CIM: `step` − `neutralStep`), $\Delta u$ = `voltageStepIncrement` and
+With $m = n - n_0$ (in CIM: `step` − `neutralStep`), $\Delta u$ = `voltageStepIncrement`, $\theta_{\text{step}}$ = `stepPhaseShiftIncrement` and
 $\psi$ = `windingConnectionAngle`, the per-tap values are:
 
 | CIM class                                | angle $\alpha$ per tap                                                                       | magnitude ratio                                                                   |
 | ---------------------------------------- | -------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| `PhaseTapChangerLinear`                  | $\alpha = m \cdot \delta$ (`stepPhaseShiftIncrement`)                                        | constant                                                                          |
+| `PhaseTapChangerLinear`                  | $\alpha = m \cdot \delta\theta_{\text{step}}$                                                | constant ($k_{\text{off-nominal}}$)                                               |
 | `PhaseTapChangerSymmetrical`             | $\alpha = 2 \operatorname{atan}\!\left(\tfrac{m \, \Delta u}{2}\right)$                      | constant ($r = 1$)                                                                |
 | `PhaseTapChangerAsymmetrical`            | $\alpha = \operatorname{atan2}\!\left(m \Delta u \sin\psi,\, 1 + m \Delta u \cos\psi\right)$ | $\lvert\rho\rvert = \sqrt{(1 + m \Delta u \cos\psi)^2 + (m \Delta u \sin\psi)^2}$ |
 | quadrature booster ($\psi = 90^{\circ}$) | $\alpha = \operatorname{atan}(m \, \Delta u)$                                                | $\lvert\rho\rvert = \sqrt{1 + (m \, \Delta u)^2}$                                 |
@@ -461,6 +461,9 @@ admittance $Y_{\text{series}} = 1 / (r_1 + \mathrm{j} x_1)$ would become singula
 The attributes `k`, `theta` and `x1` are not updatable.
 Changing the tap position of a phase-shifting transformer therefore requires recalculating these
 attributes and rebuilding the model.
+```
+
+```{warning}
 Automatic tap control via the transformer tap regulator is not available for `generic_branch`.
 ```
 
