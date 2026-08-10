@@ -380,7 +380,7 @@ Some tools (e.g., pandapower with `tap_changer_type="Ideal"`) model tap changers
 the phase angle, while the voltage magnitude ratio stays constant.
 Note that "ideal" refers to the tap changer, not to a zero-impedance transformer: the series
 impedance and the magnetizing branch are still modeled through `r1`, `x1`, `g1`, `b1`.
-In this case the attributes reduce to
+In this case, `k` and `theta` reduce to
 
 $$
 \begin{aligned}
