@@ -362,7 +362,7 @@ k_{\text{tap}} &= |\rho| = \sqrt{\left(1 + m \, \Delta u \cos\psi\right)^2
 \end{aligned}
 $$
 
-The `generic_branch` input attributes follow as
+The `generic_branch` input attributes `k` and `theta` follow as
 
 $$
 \begin{aligned}
