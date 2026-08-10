@@ -401,7 +401,7 @@ describes the standard PST types and their mapping to CIM classes.
 All of these types can be represented with `generic_branch`.
 In the ENTSO-E models the resistances and magnetizing currents are neglected, which corresponds to
 `r1 = 0`, `g1 = 0`, `b1 = 0`; only `x1`, `k` and `theta` remain.
-With $m = n - n_0$ (CIM: `step` − `neutralStep`), $\Delta u$ = `voltageStepIncrement` and
+With $m = n - n_0$ (in CIM: `step` − `neutralStep`), $\Delta u$ = `voltageStepIncrement` and
 $\psi$ = `windingConnectionAngle`, the per-tap values are:
 
 | CIM class                                | angle $\alpha$ per tap                                                                       | magnitude ratio                                                                   |
