@@ -144,7 +144,7 @@ class CDatasetInfo:
             for idx, component_name in enumerate(self.components())
         }
 
-    def attribute_indications(self) -> Mapping[ComponentType, None | list[AttributeType]]:
+    def attribute_indications(self) -> Mapping[ComponentType, list[AttributeType] | None]:
         """
         The attribute indications in the dataset.
 
@@ -152,7 +152,7 @@ class CDatasetInfo:
             A map of component to its attribute indications.
             None means no attribute indications
         """
-        result_dict: dict[ComponentType, None | list[AttributeType]] = {}
+        result_dict: dict[ComponentType, list[AttributeType] | None] = {}
         components = self.components()
         for component_idx, component_name in enumerate(components):
             has_indications = get_pgc().dataset_info_has_attribute_indications(self._info, component_idx)
@@ -567,8 +567,8 @@ class CWritableDataset:
 
 def _get_filtered_attributes(
     schema: ComponentMetaData,
-    component_data_filter: set[AttributeType] | list[AttributeType] | None | ComponentAttributeFilterOptions,
-    attribute_indication: None | list[AttributeType],
+    component_data_filter: set[AttributeType] | list[AttributeType] | ComponentAttributeFilterOptions | None,
+    attribute_indication: list[AttributeType] | None,
 ) -> list[AttributeType] | None:
     if component_data_filter is None:
         return None

@@ -97,7 +97,7 @@ def prepare_output_view(output_data: Dataset, output_type: DatasetType) -> CMuta
 
 @overload
 def create_output_data(
-    output_component_types: None | set[ComponentTypeVar] | list[ComponentTypeVar],
+    output_component_types: set[ComponentTypeVar] | list[ComponentTypeVar] | None,
     output_type: DatasetType,
     all_component_count: dict[ComponentType, int],
     is_batch: Literal[False],
@@ -105,7 +105,7 @@ def create_output_data(
 ) -> dict[ComponentType, SingleArray]: ...
 @overload
 def create_output_data(
-    output_component_types: None | set[ComponentTypeVar] | list[ComponentTypeVar],
+    output_component_types: set[ComponentTypeVar] | list[ComponentTypeVar] | None,
     output_type: DatasetType,
     all_component_count: dict[ComponentType, int],
     is_batch: Literal[True],

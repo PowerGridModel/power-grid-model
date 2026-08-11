@@ -139,6 +139,7 @@ def get_test_case_paths(calculation_type: str, test_cases: list[str] | None = No
 
 
 def add_case(
+    *,
     case_name: str,
     case_dir: Path,
     params: dict,
