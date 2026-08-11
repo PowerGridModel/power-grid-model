@@ -24,9 +24,9 @@ class maybe_owning_view : public std::ranges::view_interface<maybe_owning_view<U
     constexpr maybe_owning_view(Underlying&& underlying) : underlying_(std::move(underlying)), view_{underlying_} {}
     constexpr maybe_owning_view(View view) : underlying_{/*default is empty*/}, view_{std::move(view)} {}
 
-    maybe_owning_view(maybe_owning_view&&) = default;
+    maybe_owning_view(maybe_owning_view&&) noexcept = default;
     constexpr maybe_owning_view(maybe_owning_view const&) = delete;
-    maybe_owning_view& operator=(maybe_owning_view&&) = default;
+    maybe_owning_view& operator=(maybe_owning_view&&) noexcept = default;
     constexpr maybe_owning_view& operator=(maybe_owning_view const&) = delete;
     ~maybe_owning_view() = default;
 
