@@ -106,10 +106,10 @@ inline auto calculate_param(auto const& c, auto const&... extra_args)
  * 	    The default lambda `include_all` always returns `true`.
  */
 template <calculation_input_type CalcStructOut, typename CalcParamOut,
-          std::vector<CalcParamOut>(CalcStructOut::*comp_vect), class ComponentIn,
+          std::vector<CalcParamOut>(CalcStructOut::* comp_vect), class ComponentIn,
           std::invocable<Idx> PredicateIn = IncludeAll>
     requires std::convertible_to<std::invoke_result_t<PredicateIn, Idx>, bool>
-void prepare_input(main_model_state_c auto const& state, std::vector<Idx2D> const& components,
+inline void prepare_input(main_model_state_c auto const& state, std::vector<Idx2D> const& components,
                    std::vector<CalcStructOut>& calc_input, PredicateIn include = include_all) {
     for (Idx i = 0, n = narrow_cast<Idx>(components.size()); i != n; ++i) {
         if (include(i)) {
@@ -125,10 +125,10 @@ void prepare_input(main_model_state_c auto const& state, std::vector<Idx2D> cons
 }
 
 template <calculation_input_type CalcStructOut, typename CalcParamOut,
-          std::vector<CalcParamOut>(CalcStructOut::*comp_vect), class ComponentIn,
+          std::vector<CalcParamOut>(CalcStructOut::* comp_vect), class ComponentIn,
           std::invocable<Idx> PredicateIn = IncludeAll>
     requires std::convertible_to<std::invoke_result_t<PredicateIn, Idx>, bool>
-void prepare_input(main_model_state_c auto const& state, std::vector<Idx2D> const& components,
+inline void prepare_input(main_model_state_c auto const& state, std::vector<Idx2D> const& components,
                    std::vector<CalcStructOut>& calc_input, std::invocable<ComponentIn const&> auto extra_args,
                    PredicateIn include = include_all) {
     for (Idx i = 0, n = narrow_cast<Idx>(components.size()); i != n; ++i) {
@@ -144,9 +144,9 @@ void prepare_input(main_model_state_c auto const& state, std::vector<Idx2D> cons
     }
 }
 
-template <symmetry_tag sym, class InputType, IntSVector(InputType::*component), class Component>
+template <symmetry_tag sym, class InputType, IntSVector(InputType::* component), class Component>
     requires std::same_as<InputType, PowerFlowInput<sym>> || std::same_as<InputType, StateEstimationInput<sym>>
-void prepare_input_status(main_model_state_c auto const& state, std::vector<Idx2D> const& objects,
+inline void prepare_input_status(main_model_state_c auto const& state, std::vector<Idx2D> const& objects,
                           std::vector<InputType>& input) {
     for (Idx i = 0, n = narrow_cast<Idx>(objects.size()); i != n; ++i) {
         Idx2D const math_idx = objects[i];
@@ -160,7 +160,7 @@ void prepare_input_status(main_model_state_c auto const& state, std::vector<Idx2
 } // namespace detail
 
 template <symmetry_tag sym>
-std::vector<PowerFlowInput<sym>> prepare_power_flow_input(main_model_state_c auto const& state, Idx n_math_solvers) {
+inline std::vector<PowerFlowInput<sym>> prepare_power_flow_input(main_model_state_c auto const& state, Idx n_math_solvers) {
     using detail::prepare_input;
     using detail::prepare_input_status;
 
@@ -187,7 +187,7 @@ std::vector<PowerFlowInput<sym>> prepare_power_flow_input(main_model_state_c aut
 }
 
 template <symmetry_tag sym>
-std::vector<StateEstimationInput<sym>> prepare_state_estimation_input(main_model_state_c auto const& state,
+inline std::vector<StateEstimationInput<sym>> prepare_state_estimation_input(main_model_state_c auto const& state,
                                                                       Idx n_math_solvers) {
     using detail::prepare_input;
     using detail::prepare_input_status;
@@ -271,7 +271,7 @@ std::vector<StateEstimationInput<sym>> prepare_state_estimation_input(main_model
 }
 
 template <symmetry_tag sym>
-std::vector<ShortCircuitInput> prepare_short_circuit_input(main_model_state_c auto const& state,
+inline std::vector<ShortCircuitInput> prepare_short_circuit_input(main_model_state_c auto const& state,
                                                            ComponentToMathCoupling& comp_coup, Idx n_math_solvers,
                                                            ShortCircuitVoltageScaling voltage_scaling) {
     using detail::prepare_input;

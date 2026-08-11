@@ -27,7 +27,7 @@ template <typename T>
 concept calculation_type_tag = std::derived_from<T, calculation_type_t>;
 
 template <class... Args>
-decltype(auto) calculation_symmetry_func_selector(CalculationSymmetry calculation_symmetry, functor_c auto f,
+decltype(auto) inline calculation_symmetry_func_selector(CalculationSymmetry calculation_symmetry, functor_c auto f,
                                                   Args&&... args) {
     using enum CalculationSymmetry;
 
@@ -42,7 +42,7 @@ decltype(auto) calculation_symmetry_func_selector(CalculationSymmetry calculatio
 }
 
 template <class... Args>
-decltype(auto) calculation_type_func_selector(CalculationType calculation_type, functor_c auto f, Args&&... args) {
+decltype(auto) inline calculation_type_func_selector(CalculationType calculation_type, functor_c auto f, Args&&... args) {
     using enum CalculationType;
 
     switch (calculation_type) {
@@ -58,7 +58,7 @@ decltype(auto) calculation_type_func_selector(CalculationType calculation_type, 
 }
 
 template <class... Args>
-decltype(auto) calculation_type_symmetry_func_selector(CalculationType calculation_type,
+decltype(auto) inline calculation_type_symmetry_func_selector(CalculationType calculation_type,
                                                        CalculationSymmetry calculation_symmetry, functor_c auto f,
                                                        Args&&... args) {
     calculation_type_func_selector(

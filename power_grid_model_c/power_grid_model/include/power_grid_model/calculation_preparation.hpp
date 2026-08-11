@@ -116,7 +116,7 @@ class SolversCacheStatus {
 
 namespace detail {
 template <class ModelType>
-void reset_solvers(typename ModelType::MainModelState& state, SolverPreparationContext& solver_context,
+inline void reset_solvers(typename ModelType::MainModelState& state, SolverPreparationContext& solver_context,
                    SolversCacheStatus<ModelType>& solvers_cache_status) {
     solvers_cache_status.set_topology_status(false);
     solvers_cache_status.template set_parameter_status<symmetric_t>(false);
@@ -128,7 +128,7 @@ void reset_solvers(typename ModelType::MainModelState& state, SolverPreparationC
 }
 
 template <class ModelType>
-void rebuild_topology(typename ModelType::MainModelState& state, SolverPreparationContext& solver_context,
+inline void rebuild_topology(typename ModelType::MainModelState& state, SolverPreparationContext& solver_context,
                       SolversCacheStatus<ModelType>& solvers_cache_status) {
     using topology::Topology;
 
@@ -149,7 +149,7 @@ struct ReferenceVoltageRegulator {
 };
 
 template <class ModelType>
-void check_u_ref_per_node(typename ModelType::MainModelState const& state,
+inline void check_u_ref_per_node(typename ModelType::MainModelState const& state,
                           std::unordered_map<ID, ReferenceVoltageRegulator>& visited_node_to_reference_regulator) {
     for (auto const& voltage_regulator : state.components.template citer<VoltageRegulator>()) {
         if (!voltage_regulator.status()) {
@@ -174,7 +174,7 @@ void check_u_ref_per_node(typename ModelType::MainModelState const& state,
 }
 
 template <class ModelType>
-void check_sources_and_voltage_regulators(
+inline void check_sources_and_voltage_regulators(
     typename ModelType::MainModelState const& state,
     std::unordered_map<ID, ReferenceVoltageRegulator> const& visited_node_to_reference_regulator) {
     for (auto const& source : state.components.template citer<Source>()) {
@@ -187,7 +187,7 @@ void check_sources_and_voltage_regulators(
 }
 
 // TODO(figueroa1395): Unit test this function
-template <class ModelType> void check_state_validity(typename ModelType::MainModelState const& state) {
+template <class ModelType> inline void check_state_validity(typename ModelType::MainModelState const& state) {
     if (state.components.template size<VoltageRegulator>() > 0) {
         if (state.components.template size<TransformerTapRegulator>() > 0) {
             throw UnsupportedRegulatorCombinationError{};
@@ -202,12 +202,12 @@ template <class ModelType> void check_state_validity(typename ModelType::MainMod
 }
 } // namespace detail
 
-template <class ModelType> Idx get_n_math_solvers(typename ModelType::MainModelState const& state) {
+template <class ModelType> inline Idx get_n_math_solvers(typename ModelType::MainModelState const& state) {
     return static_cast<Idx>(state.math_topology.size());
 }
 
 template <symmetry_tag sym, class ModelType>
-void prepare_solvers(typename ModelType::MainModelState& state, SolverPreparationContext& solver_context,
+inline void prepare_solvers(typename ModelType::MainModelState& state, SolverPreparationContext& solver_context,
                      SolversCacheStatus<ModelType>& solvers_cache_status) {
     std::vector<MathSolverProxy<sym>>& solvers = main_core::get_solvers<sym>(solver_context.math_state);
     // rebuild topology if needed

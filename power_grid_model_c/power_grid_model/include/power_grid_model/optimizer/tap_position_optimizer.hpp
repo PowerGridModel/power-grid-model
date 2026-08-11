@@ -536,7 +536,7 @@ template <transformer_c... TransformerTypes> struct TapRegulatorRef {
 
 template <typename State>
     requires common::component_container_c<typename State::ComponentContainer, TransformerTapRegulator>
-TransformerTapRegulator const& find_regulator(State const& state, ID regulated_object) {
+inline TransformerTapRegulator const& find_regulator(State const& state, ID regulated_object) {
     auto const regulators = main_core::get_component_citer<TransformerTapRegulator>(state.components);
 
     auto result_it = std::ranges::find_if(regulators, [regulated_object](auto const& regulator) {
