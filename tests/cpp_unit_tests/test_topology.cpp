@@ -124,7 +124,7 @@ template <grouped_idx_vector_type T> void check_equal(T const& first, T const& s
 
 TEST_CASE("Test topology") {
     // component topology
-    ComponentTopology comp_topo{};
+    ReducedComponentTopology comp_topo{};
     comp_topo.n_node = 14;
 
     comp_topo.branch_node_idx = {
@@ -391,7 +391,7 @@ TEST_CASE("Test cycle reorder") {
         // }
 
         // component topology
-        ComponentTopology comp_topo{};
+        ReducedComponentTopology comp_topo{};
         comp_topo.n_node = 10;
         comp_topo.branch_node_idx = {
             {0, 3}, {0, 5}, {1, 4}, {1, 5}, {1, 8}, {2, 4}, {2, 5}, {2, 6}, {3, 6},
@@ -429,7 +429,7 @@ TEST_CASE("Test cycle reorder") {
         // }
 
         // component topology
-        ComponentTopology comp_topo{};
+        ReducedComponentTopology comp_topo{};
         comp_topo.n_node = 7;
         comp_topo.branch_node_idx = {
             {0, 1}, // 0
