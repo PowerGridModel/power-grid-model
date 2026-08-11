@@ -117,7 +117,7 @@ class SolversCacheStatus {
 namespace detail {
 template <class ModelType>
 inline void reset_solvers(typename ModelType::MainModelState& state, SolverPreparationContext& solver_context,
-                   SolversCacheStatus<ModelType>& solvers_cache_status) {
+                          SolversCacheStatus<ModelType>& solvers_cache_status) {
     solvers_cache_status.set_topology_status(false);
     solvers_cache_status.template set_parameter_status<symmetric_t>(false);
     solvers_cache_status.template set_parameter_status<asymmetric_t>(false);
@@ -129,7 +129,7 @@ inline void reset_solvers(typename ModelType::MainModelState& state, SolverPrepa
 
 template <class ModelType>
 inline void rebuild_topology(typename ModelType::MainModelState& state, SolverPreparationContext& solver_context,
-                      SolversCacheStatus<ModelType>& solvers_cache_status) {
+                             SolversCacheStatus<ModelType>& solvers_cache_status) {
     using topology::Topology;
 
     // clear old solvers
@@ -149,8 +149,9 @@ struct ReferenceVoltageRegulator {
 };
 
 template <class ModelType>
-inline void check_u_ref_per_node(typename ModelType::MainModelState const& state,
-                          std::unordered_map<ID, ReferenceVoltageRegulator>& visited_node_to_reference_regulator) {
+inline void
+check_u_ref_per_node(typename ModelType::MainModelState const& state,
+                     std::unordered_map<ID, ReferenceVoltageRegulator>& visited_node_to_reference_regulator) {
     for (auto const& voltage_regulator : state.components.template citer<VoltageRegulator>()) {
         if (!voltage_regulator.status()) {
             continue;
@@ -208,7 +209,7 @@ template <class ModelType> inline Idx get_n_math_solvers(typename ModelType::Mai
 
 template <symmetry_tag sym, class ModelType>
 inline void prepare_solvers(typename ModelType::MainModelState& state, SolverPreparationContext& solver_context,
-                     SolversCacheStatus<ModelType>& solvers_cache_status) {
+                            SolversCacheStatus<ModelType>& solvers_cache_status) {
     std::vector<MathSolverProxy<sym>>& solvers = main_core::get_solvers<sym>(solver_context.math_state);
     // rebuild topology if needed
     if (!solvers_cache_status.is_topology_valid()) {

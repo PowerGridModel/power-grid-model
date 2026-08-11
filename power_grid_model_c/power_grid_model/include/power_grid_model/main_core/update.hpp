@@ -171,7 +171,7 @@ inline void validate_update_data_independence(UpdateCompProperties const& comp, 
 
 template <typename ModelType>
 inline ModelType::UpdateIndependence check_update_independence(typename ModelType::ComponentContainer const& components,
-                                                        ConstDataset const& update_data) {
+                                                               ConstDataset const& update_data) {
     return ModelType::run_functor_with_all_component_types_return_array(
         [&components, &update_data]<typename CompType>() {
             auto const n_component = components.template size<CompType>();
@@ -216,8 +216,8 @@ inline std::vector<Idx2D> get_component_sequence_by_iter(ComponentContainer cons
 // get sequence idx map of a certain batch scenario
 template <typename CompType, class ComponentContainer>
 inline std::vector<Idx2D> get_component_sequence(ComponentContainer const& components, ConstDataset const& update_data,
-                                          Idx scenario_idx,
-                                          independence::UpdateCompProperties const& comp_independence = {}) {
+                                                 Idx scenario_idx,
+                                                 independence::UpdateCompProperties const& comp_independence = {}) {
     auto const get_sequence = [&components, n_comp_elements = comp_independence.get_n_elements()](auto const& span) {
         return get_component_sequence_by_iter<CompType>(components, span, n_comp_elements);
     };
