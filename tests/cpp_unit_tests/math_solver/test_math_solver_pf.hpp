@@ -27,7 +27,8 @@ inline auto run_power_flow(SolverType& solver, YBus<typename SolverType::sym> co
                            PowerFlowInput<typename SolverType::sym> const& input, double err_tol, Idx max_iter,
                            Logger& log) {
     if constexpr (SolverType::is_iterative) {
-        return solver.run_power_flow(y_bus, input, err_tol, max_iter, log);
+        constexpr auto cache_run = false;
+        return solver.run_power_flow(y_bus, input, err_tol, max_iter, cache_run, log);
     } else {
         return solver.run_power_flow(y_bus, input, log);
     }

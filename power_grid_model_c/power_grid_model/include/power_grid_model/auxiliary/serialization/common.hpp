@@ -35,7 +35,7 @@ template <typename BufferType>
     requires requires(BufferType const& b) {
         { b.attributes } -> std::convertible_to<std::vector<AttributeBuffer<typename BufferType::Data>>>;
     }
-std::vector<AttributeBuffer<typename BufferType::Data>>
+inline std::vector<AttributeBuffer<typename BufferType::Data>>
 reordered_attribute_buffers(BufferType& buffer, std::span<MetaAttribute const* const> attribute_order) {
     using Data = BufferType::Data;
     using AttributeBufferType = AttributeBuffer<Data>;

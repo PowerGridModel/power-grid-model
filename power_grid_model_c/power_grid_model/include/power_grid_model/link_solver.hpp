@@ -226,7 +226,7 @@ inline void backward_substitution(ReducedEchelonForm& elimination_result) {
 
 // reduced echelon form based on custom forward elimination and backward substitution procedures
 // in other words, this performs the Penrose inverse on the adjacency matrix
-inline ReducedEchelonForm reduced_echelon_form(std::vector<BranchIdx>& edges, std::vector<DoubleComplex>& node_loads) {
+inline ReducedEchelonForm reduced_echelon_form(std::vector<BranchIdx> edges, std::vector<DoubleComplex> node_loads) {
     auto const edge_number{narrow_cast<Idx>(edges.size())};
 
     ReducedEchelonForm result{};
@@ -356,9 +356,9 @@ inline void naive_gauss_elimination(std::vector<std::vector<DoubleComplex>>& sys
 };
 
 inline std::vector<DoubleComplex> compute_internal_loads(SolutionSet const& solution_set,
-                                                         std::vector<std::vector<DoubleComplex>> const& system) {
-    auto const number_of_rows = narrow_cast<Idx>(solution_set.extended_rhs.size());
-    auto const number_of_columns = narrow_cast<Idx>(system.size());
+                                                         std::span<std::vector<DoubleComplex> const> system) {
+    auto const number_of_rows = narrow_cast<Idx>(std::ranges::ssize(solution_set.extended_rhs));
+    auto const number_of_columns = narrow_cast<Idx>(std::ranges::ssize(system));
     std::vector<DoubleComplex> internal_loads(number_of_rows);
 
     for (auto const row : IdxRange{number_of_rows}) {
@@ -377,20 +377,20 @@ inline std::vector<DoubleComplex> compute_internal_loads(SolutionSet const& solu
 };
 } // namespace detail
 
-inline std::vector<DoubleComplex> compute_loads_link_elements(std::vector<BranchIdx>& edges,
-                                                              std::vector<DoubleComplex>& node_loads) {
+inline std::vector<DoubleComplex> compute_loads_link_elements(std::vector<BranchIdx> edges,
+                                                              std::vector<DoubleComplex> node_loads) {
     using namespace detail;
 
-    auto reduced_echelon_result = reduced_echelon_form(edges, node_loads);
+    auto reduced_echelon_result = reduced_echelon_form(std::move(edges), std::move(node_loads));
     auto solution_set = set_solution_system(reduced_echelon_result);
 
     if (solution_set.dfs_matrix.data_map.empty()) {
         return solution_set.extended_rhs;
     }
 
-    auto const free_indices_number = narrow_cast<Idx>(reduced_echelon_result.free_edge_indices.size());
-    auto const total_indices_number = narrow_cast<Idx>(reduced_echelon_result.free_edge_indices.size() +
-                                                       reduced_echelon_result.pivot_edge_indices.size());
+    auto const free_indices_number = narrow_cast<Idx>(std::ranges::ssize(reduced_echelon_result.free_edge_indices));
+    auto const total_indices_number = narrow_cast<Idx>(std::ranges::ssize(reduced_echelon_result.free_edge_indices) +
+                                                       std::ranges::ssize(reduced_echelon_result.pivot_edge_indices));
     std::vector<std::vector<DoubleComplex>> projection_system =
         set_projection_system(free_indices_number, total_indices_number, solution_set);
 

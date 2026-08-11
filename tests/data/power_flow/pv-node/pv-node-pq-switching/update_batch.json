@@ -1,0 +1,131 @@
+{
+    "version": "1.0",
+    "type": "update",
+    "is_batch": true,
+    "attributes": {},
+    "data": [
+        {
+            "voltage_regulator": [
+                {
+                    "id": 29,
+                    "q_max": 11.0e6
+                }
+            ]
+        },
+        {
+            "source": [
+                {
+                    "id": 11,
+                    "u_ref": 1.025
+                }
+            ],
+            "voltage_regulator": [
+                {
+                    "id": 29,
+                    "q_min": -15.0e6
+                }
+            ]
+        },
+        {
+            "voltage_regulator": [
+                {
+                    "id": 39,
+                    "q_max": 3.0e6
+                },
+                {
+                    "id": 38,
+                    "q_max": 3.0e6
+                }
+            ]
+        },
+        {
+            "voltage_regulator": [
+                {
+                    "id": 38,
+                    "q_max": 3.0e6
+                }
+            ]
+        },
+        {
+            "voltage_regulator": [
+                {
+                    "id": 29,
+                    "q_max": 50.0e6
+                },
+                {
+                    "id": 39,
+                    "q_max": 5.0e6
+                },
+                {
+                    "id": 38,
+                    "q_max": 5.0e6
+                }
+            ],
+            "sym_load": [
+                {
+                    "id": 41,
+                    "q_specified": 25.0e6
+                }
+            ]
+        },
+        {
+            "voltage_regulator": [
+                {
+                    "id": 29,
+                    "q_max": 50.0e6
+                },
+                {
+                    "id": 39,
+                    "q_max": 5.0e6
+                },
+                {
+                    "id": 38,
+                    "q_min": -100e100,
+                    "q_max": 100e100
+                }
+            ],
+            "sym_load": [
+                {
+                    "id": 41,
+                    "q_specified": 25.0e6
+                }
+            ]
+        },
+        {
+            "voltage_regulator": [
+                {
+                    "id": 39,
+                    "status": 0
+                }
+            ]
+        },
+        {
+            "voltage_regulator": [
+                {
+                    "id": 39,
+                    "status": 0
+                },
+                {
+                    "id": 38,
+                    "status": 0
+                }
+            ]
+        },
+        {
+            "voltage_regulator": [
+                {
+                    "id": 29,
+                    "q_max": 11.0e6
+                },
+                {
+                    "id": 39,
+                    "q_max": 5.0e6
+                },
+                {
+                    "id": 38,
+                    "q_max": 5.0e6
+                }
+            ]
+        }
+    ]
+}

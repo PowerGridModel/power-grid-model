@@ -67,9 +67,9 @@ struct BusNeighbourhoodInfo {
 //      a vector of voltage phasor sensor count
 //      a boolean indicating if the system is possibly ill-conditioned
 template <symmetry_tag sym>
-ObservabilitySensorsResult scan_network_sensors(MeasuredValues<sym> const& measured_values,
-                                                MathModelTopology const& topo, YBusStructure const& y_bus_structure,
-                                                std::vector<BusNeighbourhoodInfo>& bus_neighbourhood_info) {
+inline ObservabilitySensorsResult
+scan_network_sensors(MeasuredValues<sym> const& measured_values, MathModelTopology const& topo,
+                     YBusStructure const& y_bus_structure, std::vector<BusNeighbourhoodInfo>& bus_neighbourhood_info) {
     Idx const n_bus{topo.n_bus()};
 
     ObservabilitySensorsResult result{.flow_sensors = std::vector<int8_t>(y_bus_structure.row_indptr.back(), 0),
