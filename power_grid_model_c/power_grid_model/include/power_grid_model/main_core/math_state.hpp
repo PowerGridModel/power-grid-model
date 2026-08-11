@@ -29,7 +29,7 @@ inline void clear(MathState& math_state) {
     math_state.y_bus_vec_asym.clear();
 }
 
-template <symmetry_tag sym> std::vector<MathSolverProxy<sym>>& get_solvers(MathState& math_state) {
+template <symmetry_tag sym> inline std::vector<MathSolverProxy<sym>>& get_solvers(MathState& math_state) {
     if constexpr (is_symmetric_v<sym>) {
         return math_state.math_solvers_sym;
     } else {
