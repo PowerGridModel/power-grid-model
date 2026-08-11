@@ -145,7 +145,7 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCur
     void solve_matrix() { sparse_solver_.solve_with_prefactorized_matrix(*mat_data_, *perm_, rhs_u_, rhs_u_); }
 
     // Find maximum deviation in voltage among all buses
-    double iterate_unknown(ComplexValueVector<sym>& u) {
+    double iterate_unknown(ComplexValueVector<sym>& u, double /*err_tol*/, bool /*cache_run*/) {
         double max_dev = 0.0;
         // loop all buses
         for (Idx bus_number = 0; bus_number != this->n_bus_; ++bus_number) {

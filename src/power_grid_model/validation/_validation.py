@@ -1131,6 +1131,8 @@ def validate_voltage_regulator(data: SingleDataset) -> list[ValidationError]:
     errors += _all_unique(data, CT.voltage_regulator, AT.regulated_object)
     errors += _all_greater_than_zero(data, CT.voltage_regulator, AT.u_ref)
     errors += validate_same_u_ref_per_node_voltage_regulator(data)
+    errors += validate_compatible_load_gen_type(data)
+    errors += _all_greater_or_equal(data, CT.voltage_regulator, AT.q_max, f"{AT.q_min}")
     return errors
 
 
@@ -1185,6 +1187,35 @@ def validate_same_u_ref_per_node_voltage_regulator(
 
             if len(error_regulator_ids) > 0:
                 errors.append(InvalidVoltageRegulationError(CT.voltage_regulator, AT.u_ref, error_regulator_ids))
+
+    return errors
+
+
+def validate_compatible_load_gen_type(data: SingleDataset) -> list[ValidationError]:
+    """Ensure that the regulated object of a voltage regulator is of type const_power."""
+    errors: list[ValidationError] = []
+    if CT.voltage_regulator in data:
+        vr_data = data[CT.voltage_regulator]
+        if vr_data.size != 0:
+            regulator_ids = vr_data[AT.id]
+            appliance_ids = vr_data[AT.regulated_object]
+
+            for appliance_id, regulator_id in zip(appliance_ids, regulator_ids):
+                # check if the regulated object is of type const_power
+                for component_type in [CT.sym_gen, CT.asym_gen, CT.sym_load, CT.asym_load]:
+                    if component_type in data:
+                        component_data = data[component_type]
+                        for idx, comp_id in enumerate(component_data[AT.id]):
+                            if comp_id == appliance_id:
+                                comp_type = component_data[AT.type][idx]
+                                if comp_type != LoadGenType.const_power:
+                                    errors.append(
+                                        InvalidVoltageRegulationError(
+                                            CT.voltage_regulator,
+                                            AT.regulated_object,
+                                            [regulator_id],
+                                        )
+                                    )
 
     return errors
 

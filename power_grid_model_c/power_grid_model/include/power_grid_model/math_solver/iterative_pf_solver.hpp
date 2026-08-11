@@ -31,8 +31,8 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
   public:
     friend DerivedSolver;
     SolverOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
-                                     Idx max_iter, Logger& log) {
-        // get derived reference for derived solver class
+                                     Idx max_iter, bool cache_run, Logger& log) {
+        // keep copy, as reference might break batching
         auto derived_solver = static_cast<DerivedSolver&>(*this);
 
         // prepare
@@ -69,13 +69,16 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
             {
                 // Calculate maximum deviation of voltage at any bus
                 Timer const sub_timer{log, LogEvent::iterate_unknown};
-                max_dev = derived_solver.iterate_unknown(output.u);
+                max_dev = derived_solver.iterate_unknown(output.u, err_tol, cache_run);
             }
         }
 
         // calculate math result
         {
             Timer const sub_timer{log, LogEvent::calculate_math_result};
+            if constexpr (requires { derived_solver.finalize_result(input, output); }) {
+                derived_solver.finalize_result(input, output);
+            }
             calculate_result(y_bus, input, output);
         }
         // Manually stop timers to avoid "Max number of iterations" to be included in the timing.
