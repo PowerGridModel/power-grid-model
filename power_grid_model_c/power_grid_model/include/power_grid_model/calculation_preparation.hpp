@@ -187,6 +187,21 @@ check_u_ref_per_node(typename ModelType::MainModelState const& state,
 }
 
 template <class ModelType>
+inline void check_load_gen_typefor_voltage_regulator(typename ModelType::MainModelState const& state) {
+    for (auto const& voltage_regulator : state.components.template citer<VoltageRegulator>()) {
+        if (!voltage_regulator.status()) {
+            continue;
+        }
+
+        auto const& load_gen_type =
+            main_core::get_component<GenericLoadGen>(state.components, voltage_regulator.regulated_object()).type();
+        if (load_gen_type != LoadGenType::const_pq) {
+            throw UnsupportedLoadGenTypeForVoltageRegulator{std::format("{}", voltage_regulator.id())};
+        }
+    }
+}
+
+template <class ModelType>
 inline void check_sources_and_voltage_regulators(
     typename ModelType::MainModelState const& state,
     std::unordered_map<ID, ReferenceVoltageRegulator> const& visited_node_to_reference_regulator) {
@@ -209,6 +224,8 @@ template <class ModelType> inline void check_state_validity(typename ModelType::
         std::unordered_map<ID, ReferenceVoltageRegulator> visited_node_to_reference_regulator;
 
         check_u_ref_per_node<ModelType>(state, visited_node_to_reference_regulator);
+
+        check_load_gen_typefor_voltage_regulator<ModelType>(state);
 
         check_sources_and_voltage_regulators<ModelType>(state, visited_node_to_reference_regulator);
     }

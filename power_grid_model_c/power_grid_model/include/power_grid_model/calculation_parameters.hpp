@@ -18,6 +18,7 @@
 
 namespace power_grid_model {
 constexpr Idx disconnected = -1;
+constexpr Idx status_off = 0;
 
 // Entry of YBus, node addmittance matrix
 struct YBusElement {
@@ -41,6 +42,10 @@ template <symmetry_tag sym_type> struct BranchCalcParam {
     ComplexTensor<sym> const& ytf() const { return value[2]; }
     ComplexTensor<sym>& ytt() { return value[3]; }
     ComplexTensor<sym> const& ytt() const { return value[3]; }
+};
+
+struct BusSolverOutput {
+    LimitViolation q_limit_violated{LimitViolation::none};
 };
 
 template <symmetry_tag sym_type> struct BranchSolverOutput {
@@ -87,7 +92,7 @@ template <symmetry_tag sym_type> struct ApplianceShortCircuitSolverOutput {
 };
 
 struct VoltageRegulatorSolverOutput {
-    IntS limit_violated{};
+    LimitViolation limit_violated{};
 
     // provide generator info, as the regulator component has no other access to it
     ID generator_id{};
@@ -225,8 +230,8 @@ template <symmetry_tag sym_type> struct VoltageRegulatorCalcParam {
 
     IntS status{};
     DoubleComplex u_ref;
-    RealValue<sym> q_min{};
-    RealValue<sym> q_max{};
+    double q_min{};
+    double q_max{};
 
     // add generator id for later lookup
     ID generator_id{};
@@ -336,6 +341,7 @@ template <symmetry_tag sym_type> struct SolverOutput {
 
     std::vector<ComplexValue<sym>> u;
     std::vector<ComplexValue<sym>> bus_injection;
+    std::vector<BusSolverOutput> bus;
     std::vector<BranchSolverOutput<sym>> branch;
     std::vector<ApplianceSolverOutput<sym>> source;
     std::vector<ApplianceSolverOutput<sym>> shunt;
