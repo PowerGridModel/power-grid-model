@@ -41,9 +41,10 @@ lint = [
     "pre-commit",
     "ruff",
     "mypy",
-    "numpy",                # needed for mypy
-    "gersemi",              # CMake linter
-    "clang-format ~= 18.0", # C++ formatter
+    "numpy",                             # needed for mypy
+    "gersemi",                           # CMake linter
+    "clang-format>=18,<23",              # C/C++ formatter
+    "reuse[charset-normalizer,chardet]", # license check
 ]
 
 example = ["ipykernel"]
@@ -79,6 +80,9 @@ Discussion = "https://github.com/orgs/PowerGridModel/discussions"
 
 [project.entry-points."cmake.root"]
 power_grid_model = "power_grid_model._core.power_grid_model_c"
+
+[tool.uv]
+exclude-newer = "7 days"
 
 [tool.scikit-build]
 logging.level = "INFO"
