@@ -8,7 +8,7 @@ SPDX-License-Identifier: MPL-2.0
 
 ```{note}
 This document is about components supported by PGM.
-For documentation on modeling grid components not listed here, please refer to [Grid Modeling](./non-pgm-components.md).
+For documentation on modeling grid components not listed here, please refer to [Grid Modeling](./non-native-components.md).
 ```
 
 The attributes of components are listed below.
@@ -173,7 +173,7 @@ Therefore, it is chosen by design that no sensors can be coupled to a `link`.
 There is no additional attribute for `link`.
 
 It is explicitly allowed to connect a link between nodes with different voltage levels to allow modeling
-[ideal transformers](./non-pgm-components.md#ideal-transformer).
+[ideal transformers](./non-native-components.md#ideal-transformer).
 
 #### Electric Model
 
@@ -271,7 +271,7 @@ The PI model can be used to avoid the need to convert parameters into transforme
 Another use case is modeling a line when connecting two nodes with approximately the same voltage levels (in that case,
 the off-nominal ratio must be given to adapt the electrical parameters).
 
-See [Phase-shifting transformer](./non-pgm-components.md#phase-shifting-transformer) for details on how to model
+See [Phase-shifting transformer](./non-native-components.md#phase-shifting-transformer) for details on how to model
 a phase-shifting transformer using a `generic_branch`.
 
 #### Input
@@ -1337,4 +1337,4 @@ from `u_ref`.
 
 The list of components explicitly supported by the power-grid-model is a subset of all possible power system components.
 If you did not find the component you're trying to model, you may find what you are looking for
-in [Grid Modeling](./non-pgm-components.md).
+in [Grid Modeling](./non-native-components.md).
