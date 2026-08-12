@@ -41,3 +41,15 @@ install(
         "${CMAKE_CURRENT_BINARY_DIR}/power_grid_model/power_grid_modelConfigVersion.cmake"
     DESTINATION "lib/cmake/power_grid_model"
 )
+
+# packaging: produces a `package` target that archives the install() output
+set(CPACK_PACKAGE_NAME "libpower-grid-model")
+set(CPACK_PACKAGE_VERSION ${PGM_VERSION})
+# CI renames the resulting archive to a stable, platform-specific name
+set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
+if(WIN32)
+    set(CPACK_GENERATOR "ZIP")
+else()
+    set(CPACK_GENERATOR "TGZ")
+endif()
+include(CPack)

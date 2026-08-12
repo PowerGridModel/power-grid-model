@@ -90,7 +90,9 @@ jobs:
       # only gcc release build is shipped, one variant per OS/arch is enough
       - name: Package binary
         if: matrix.compiler == 'gcc' && matrix.build-option == 'release'
-        run: tar -czf power_grid_model_c-linux-x64.tar.gz -C install/${{ env.PRESET }} .
+        run: |
+          cmake --build --preset ${{ env.PRESET }} --target package
+          mv cpp_build/${{ env.PRESET }}/libpower-grid-model-*.tar.gz power_grid_model_c-linux-x64.tar.gz
 
       - name: Upload binary
         if: matrix.compiler == 'gcc' && matrix.build-option == 'release'
@@ -143,7 +145,9 @@ jobs:
       # only msvc release build is shipped, one variant per OS/arch is enough
       - name: Package binary
         if: matrix.compiler == 'msvc' && matrix.build-option == 'release'
-        run: Compress-Archive -Path install\${{ env.PRESET }}\* -DestinationPath power_grid_model_c-windows-x64.zip
+        run: |
+          cmake --build --preset ${{ env.PRESET }} --target package; if(!$?) { Exit $LASTEXITCODE }
+          Move-Item cpp_build\${{ env.PRESET }}\libpower-grid-model-*.zip power_grid_model_c-windows-x64.zip
 
       - name: Upload binary
         if: matrix.compiler == 'msvc' && matrix.build-option == 'release'
@@ -190,7 +194,9 @@ jobs:
 
       - name: Package binary
         if: matrix.build-option == 'release'
-        run: tar -czf power_grid_model_c-macos-${{ matrix.arch }}.tar.gz -C install/${{ env.PRESET }} .
+        run: |
+          cmake --build --preset ${{ env.PRESET }} --target package
+          mv cpp_build/${{ env.PRESET }}/libpower-grid-model-*.tar.gz power_grid_model_c-macos-${{ matrix.arch }}.tar.gz
 
       - name: Upload binary
         if: matrix.build-option == 'release'
