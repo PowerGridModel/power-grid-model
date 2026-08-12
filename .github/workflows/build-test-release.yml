@@ -87,6 +87,18 @@ jobs:
       - name: Build and test
         run: ./build.sh -p ${{ env.PRESET }} -e -i -t
 
+      # only gcc release build is shipped, one variant per OS/arch is enough
+      - name: Package binary
+        if: matrix.compiler == 'gcc' && matrix.build-option == 'release'
+        run: tar -czf power_grid_model_c-linux-x64.tar.gz -C install/${{ env.PRESET }} .
+
+      - name: Upload binary
+        if: matrix.compiler == 'gcc' && matrix.build-option == 'release'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: power_grid_model_c-linux-x64
+          path: power_grid_model_c-linux-x64.tar.gz
+
   build-cpp-test-windows:
     runs-on: windows-latest
     strategy:
@@ -128,11 +140,28 @@ jobs:
           cmake --build --preset ${{ env.PRESET }} --verbose -j 1 --target install; if(!$?) { Exit $LASTEXITCODE }
           install\${{ env.PRESET }}\bin\power_grid_model_package_test; if(!$?) { Exit $LASTEXITCODE }
 
+      # only msvc release build is shipped, one variant per OS/arch is enough
+      - name: Package binary
+        if: matrix.compiler == 'msvc' && matrix.build-option == 'release'
+        run: Compress-Archive -Path install\${{ env.PRESET }}\* -DestinationPath power_grid_model_c-windows-x64.zip
+
+      - name: Upload binary
+        if: matrix.compiler == 'msvc' && matrix.build-option == 'release'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: power_grid_model_c-windows-x64
+          path: power_grid_model_c-windows-x64.zip
+
   build-cpp-test-macos:
     strategy:
       matrix:
         build-option: [debug, release]
         os: [macos-26, macos-26-intel]
+        include:
+          - os: macos-26
+            arch: arm64
+          - os: macos-26-intel
+            arch: x64
 
     runs-on: ${{ matrix.os }}
   
@@ -158,6 +187,17 @@ jobs:
 
       - name: Build and test
         run: ./build.sh -p ${{ env.PRESET }} -e -i -t
+
+      - name: Package binary
+        if: matrix.build-option == 'release'
+        run: tar -czf power_grid_model_c-macos-${{ matrix.arch }}.tar.gz -C install/${{ env.PRESET }} .
+
+      - name: Upload binary
+        if: matrix.build-option == 'release'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: power_grid_model_c-macos-${{ matrix.arch }}
+          path: power_grid_model_c-macos-${{ matrix.arch }}.tar.gz
 
   build-and-test-python:
     strategy:
