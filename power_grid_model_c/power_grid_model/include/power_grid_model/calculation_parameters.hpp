@@ -340,7 +340,7 @@ template <symmetry_tag sym_type> struct SolverOutput {
     using sym = sym_type;
 
     std::vector<ComplexValue<sym>> u;
-    std::vector<ComplexValue<sym>> bus_injection;
+    std::vector<ComplexValue<sym>> bus_injection; // TODO(mgovers): remove this for v2
     std::vector<BusSolverOutput> bus;
     std::vector<BranchSolverOutput<sym>> branch;
     std::vector<ApplianceSolverOutput<sym>> source;
@@ -405,11 +405,28 @@ struct OptimizerOutput {
     TransformerTapPositionOutput transformer_tap_positions;
 };
 
+template <typename T> struct SupernodeOutput;
+
+template <steady_state_solver_output_type SolverOutputType> struct SupernodeOutput<SolverOutputType> {
+    using sym = decode_symmetry_v<SolverOutputType>;
+
+    ComplexValueVector<sym> bus_injection; // user bus output
+    BranchSolverOutput<sym> branch;        // user link
+};
+template <short_circuit_solver_output_type SolverOutputType> struct SupernodeOutput<SolverOutputType> {
+    using sym = decode_symmetry_v<SolverOutputType>;
+
+    BranchShortCircuitSolverOutput<sym> branch; // user link
+};
+
 template <typename T> struct MathOutput {
     using SolverOutputType = T;
+    using UnderlyingSolverOutputType = underlying_value_t<SolverOutputType>;
+    using sym = decode_symmetry_v<SolverOutputType>;
 
     SolverOutputType solver_output;
     OptimizerOutput optimizer_output;
+    std::vector<SupernodeOutput<UnderlyingSolverOutputType>> supernode_output;
 };
 
 // component indices at physical model side

@@ -315,7 +315,7 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE", SolverType, test_math_solver_
     constexpr auto error_tolerance{1e-10};
     constexpr auto num_iter{20};
 
-    using sym = SolverType::sym;
+    using sym = decode_symmetry_v<SolverType>;
 
     SESolverTestGrid<sym> const grid;
 

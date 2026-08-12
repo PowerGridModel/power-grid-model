@@ -802,7 +802,7 @@ template <typename ContainerType>
 class MockSolverOutput : public SolverOutput<symmetric_t> {
   public:
     using type = solver_output_t;
-    using sym = SolverOutput<symmetric_t>::sym;
+    using sym = decode_symmetry_v<SolverOutput<symmetric_t>>;
 
     Idx call_index{-1};
     CalculationMethod method;

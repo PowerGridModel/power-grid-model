@@ -44,6 +44,17 @@ struct Idx2DHash {
     }
 };
 
+namespace detail {
+template <typename T> struct underlying_value {
+    using type = T;
+};
+template <std::ranges::range T> struct underlying_value<T> {
+    using type = underlying_value<std::ranges::range_value_t<T>>::type;
+};
+} // namespace detail
+
+template <typename T> using underlying_value_t = detail::underlying_value<std::remove_cvref_t<T>>::type;
+
 struct symmetric_t {};
 struct asymmetric_t {};
 
@@ -54,6 +65,10 @@ template <symmetry_tag T> constexpr bool is_symmetric_v = std::derived_from<T, s
 template <symmetry_tag T> constexpr bool is_asymmetric_v = std::derived_from<T, asymmetric_t>;
 
 template <symmetry_tag T> using other_symmetry_t = std::conditional_t<is_symmetric_v<T>, asymmetric_t, symmetric_t>;
+
+template <typename T>
+    requires symmetry_tag<typename underlying_value_t<T>::sym>
+using decode_symmetry_v = underlying_value_t<T>::sym;
 
 // math constant
 using namespace std::complex_literals;
