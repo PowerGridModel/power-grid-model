@@ -49,7 +49,7 @@ inline PGM_Logger* make_logger(PGM_LoggerType type) {
 
 inline void logger_get_output(PGM_Logger& pgm_logger, PGM_LogOutputCallback callback, void* user_data) {
     pgm_logger.logger->get_output([&](std::string_view sv) {
-        callback(sv.data(), static_cast<PGM_Idx>(sv.size()), user_data);
+        callback(sv.data(), safe_cast<PGM_Idx>(sv.size()), user_data);
     });
 }
 
