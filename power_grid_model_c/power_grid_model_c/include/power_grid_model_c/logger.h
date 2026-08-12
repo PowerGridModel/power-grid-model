@@ -100,11 +100,35 @@ PGM_API void PGM_unregister_logger(PGM_Handle* handle, PGM_Logger* logger);
  * The @p data pointer and @p size describe the log content and are valid only
  * for the duration of the callback. Do not store @p data beyond the callback.
  *
- * @param data  Pointer to the log content (not necessarily null-terminated).
- * @param size  Length of the log content in bytes.
- * @param user_data  Opaque pointer passed through from PGM_logger_get_output().
+ * @param data  Pointer to the log content. Not null-terminated; always use @p size
+ *              to determine the buffer length. Never pass @p data to functions that
+ *              expect a null-terminated string (e.g. strlen, printf("%s")).
+ * @param size  Length of the log content in bytes. Always non-negative.
+ * @param user_data  Opaque pointer passed through unchanged from PGM_logger_get_output().
+ *
+ * @warning The @p user_data pointer is not type-checked by the library. The caller is
+ *          solely responsible for ensuring the pointer passed to PGM_logger_get_output()
+ *          and the cast performed inside this callback refer to the same type. A mismatch
+ *          is silent undefined behaviour. Prefer the C++ wrapper (power_grid_model_cpp::Logger)
+ *          which removes this hazard entirely: it owns the callback and does not expose
+ *          user_data to callers. If you must use the C API, a common defensive pattern is
+ *          to embed a known sentinel constant (sometimes called a "magic number") as the
+ *          first field of your context struct and assert it at the top of the callback:
+ * @code
+ *   #define MY_CTX_MAGIC 0x50474D4C  // "PGML"
+ *   struct MyCtx { uint32_t magic; std::string* out; };
+ *   void cb(char const* data, PGM_Idx size, void* user_data) {
+ *       assert(((MyCtx*)user_data)->magic == MY_CTX_MAGIC);
+ *       ((MyCtx*)user_data)->out->assign(data, (size_t)size);
+ *   }
+ * @endcode
  */
+#ifdef __cplusplus
+// noexcept is part of the function type in C++17; callbacks must not throw across the C ABI boundary.
+typedef void (*PGM_LogOutputCallback)(char const* data, PGM_Idx size, void* user_data) noexcept;
+#else
 typedef void (*PGM_LogOutputCallback)(char const* data, PGM_Idx size, void* user_data);
+#endif
 
 /**
  * @brief Deliver the current output of a logger to a caller-supplied callback.

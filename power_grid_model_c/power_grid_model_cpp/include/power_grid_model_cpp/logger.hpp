@@ -39,7 +39,7 @@ class Logger {
 
     std::string get_output() {
         std::string output;
-        PGM_LogOutputCallback const cb = [](char const* data, PGM_Idx size, void* user_data) {
+        PGM_LogOutputCallback const cb = [](char const* data, PGM_Idx size, void* user_data) noexcept {
             auto& result = *static_cast<std::string*>(user_data);
             if (size == 0) {
                 result.clear();
