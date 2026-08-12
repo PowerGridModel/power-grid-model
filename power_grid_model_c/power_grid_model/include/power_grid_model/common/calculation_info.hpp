@@ -125,10 +125,7 @@ class MultiThreadedCalculationInfo : public MultiThreadedLoggerImpl<CalculationI
     std::string string_report() const { return get().string_report(); }
 
   protected:
-    void get_output_locked(std::function<void(std::string_view)> const& callback) const override {
-        auto const output = get().string_report();
-        callback(output);
-    }
+    std::string snapshot_locked() const override { return get().string_report(); }
     void clear_locked() override { get().clear(); }
 };
 } // namespace common::logging

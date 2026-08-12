@@ -76,10 +76,16 @@ class MultiThreadedLoggerImpl : public MultiThreadedLogger {
     using MultiThreadedLogger::log;
 
     // Lock-safe overrides. Marked final so subclasses cannot bypass the lock; override
-    // get_output_locked / clear_locked instead to add type-specific behaviour.
+    // snapshot_locked / clear_locked instead to add type-specific behaviour.
     void get_output(std::function<void(std::string_view)> const& fn) const final {
-        std::lock_guard const lock{mutex_};
-        get_output_locked(fn);
+        // Snapshot under the lock, then call fn without the lock so user callbacks
+        // cannot re-enter logger APIs and deadlock on the non-recursive mutex.
+        std::string snapshot;
+        {
+            std::lock_guard const lock{mutex_};
+            snapshot = snapshot_locked();
+        }
+        fn(snapshot);
     }
     void clear() final {
         std::lock_guard const lock{mutex_};
@@ -88,7 +94,7 @@ class MultiThreadedLoggerImpl : public MultiThreadedLogger {
 
   protected:
     // Subclass hooks called while mutex_ is held.
-    virtual void get_output_locked(std::function<void(std::string_view)> const& fn) const { fn({}); }
+    virtual std::string snapshot_locked() const { return {}; }
     virtual void clear_locked() {}
 
   private:

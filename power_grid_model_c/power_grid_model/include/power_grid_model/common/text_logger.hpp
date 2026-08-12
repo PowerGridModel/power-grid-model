@@ -118,9 +118,7 @@ class MultiThreadedTextLogger : public MultiThreadedLoggerImpl<TextLogger> {
     void flush() { get().flush(); }
 
   protected:
-    void get_output_locked(std::function<void(std::string_view)> const& callback) const override {
-        callback(get().report_view());
-    }
+    std::string snapshot_locked() const override { return get().report(); }
     void clear_locked() override { get().clear(); }
 };
 } // namespace common::logging
