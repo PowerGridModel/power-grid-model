@@ -607,12 +607,64 @@
       "configurePreset": "apple-clang-release"
     },
     {
+      "name": "clang-tidy-debug",
+      "configurePreset": "clang-tidy-debug"
+    },
+    {
+      "name": "clang-tidy-release",
+      "configurePreset": "clang-tidy-release"
+    },
+    {
+      "name": "clang-tidy-windows-debug",
+      "configurePreset": "clang-tidy-windows-debug"
+    },
+    {
+      "name": "clang-tidy-windows-release",
+      "configurePreset": "clang-tidy-windows-release"
+    },
+    {
       "name": "gcc-debug",
       "configurePreset": "gcc-debug"
     },
     {
       "name": "gcc-release",
       "configurePreset": "gcc-release"
+    },
+    {
+      "name": "ci-clang-debug",
+      "configurePreset": "ci-clang-debug"
+    },
+    {
+      "name": "ci-clang-release",
+      "configurePreset": "ci-clang-release"
+    },
+    {
+      "name": "ci-apple-clang-debug",
+      "configurePreset": "ci-apple-clang-debug"
+    },
+    {
+      "name": "ci-apple-clang-release",
+      "configurePreset": "ci-apple-clang-release"
+    },
+    {
+      "name": "ci-gcc-debug",
+      "configurePreset": "ci-gcc-debug"
+    },
+    {
+      "name": "ci-gcc-release",
+      "configurePreset": "ci-gcc-release"
+    },
+    {
+      "name": "ci-sonar",
+      "configurePreset": "ci-sonar"
+    },
+    {
+      "name": "ci-clang-tidy-release",
+      "configurePreset": "ci-clang-tidy-release"
+    },
+    {
+      "name": "ci-clang-tidy-debug",
+      "configurePreset": "ci-clang-tidy-debug"
     }
   ],
   "workflowPresets": [

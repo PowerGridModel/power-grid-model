@@ -91,7 +91,7 @@ jobs:
       - name: Package binary
         if: matrix.compiler == 'gcc' && matrix.build-option == 'release'
         run: |
-          cmake --build --preset ${{ env.PRESET }} --target package
+          cpack --preset ${{ env.PRESET }}
           mv cpp_build/${{ env.PRESET }}/libpower-grid-model-*.tar.gz power_grid_model_c-linux-x64.tar.gz
 
       - name: Upload binary
@@ -146,7 +146,7 @@ jobs:
       - name: Package binary
         if: matrix.compiler == 'msvc' && matrix.build-option == 'release'
         run: |
-          cmake --build --preset ${{ env.PRESET }} --target package; if(!$?) { Exit $LASTEXITCODE }
+          cpack --preset ${{ env.PRESET }}; if(!$?) { Exit $LASTEXITCODE }
           Move-Item cpp_build\${{ env.PRESET }}\libpower-grid-model-*.zip power_grid_model_c-windows-x64.zip
 
       - name: Upload binary
@@ -195,7 +195,7 @@ jobs:
       - name: Package binary
         if: matrix.build-option == 'release'
         run: |
-          cmake --build --preset ${{ env.PRESET }} --target package
+          cpack --preset ${{ env.PRESET }}
           mv cpp_build/${{ env.PRESET }}/libpower-grid-model-*.tar.gz power_grid_model_c-macos-${{ matrix.arch }}.tar.gz
 
       - name: Upload binary
