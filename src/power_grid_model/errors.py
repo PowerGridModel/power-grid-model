@@ -6,7 +6,7 @@
 Error classes used by the power-grid-model library.
 """
 
-from power_grid_model._core.errors import (  # noqa: F401
+from power_grid_model._core.errors import (
     AutomaticTapCalculationError,
     AutomaticTapInputError,
     ConflictID,
@@ -39,3 +39,37 @@ from power_grid_model._core.errors import (  # noqa: F401
     UnsupportedRegulatorCombinationError,
     UnsupportedVoltageRegulatorSourceCombinationError,
 )
+
+__all__ = [
+    "AutomaticTapCalculationError",
+    "AutomaticTapInputError",
+    "ConflictID",
+    "ConflictVoltage",
+    "ConflictingAngleMeasurementType",
+    "ExperimentalFeature",
+    "IDNotFound",
+    "IDWrongType",
+    "InvalidArguments",
+    "InvalidBranch",
+    "InvalidBranch3",
+    "InvalidCalculationMethod",
+    "InvalidID",
+    "InvalidMeasuredObject",
+    "InvalidRegulatedObject",
+    "InvalidShortCircuitPhaseOrType",
+    "InvalidTransformerClock",
+    "IterationDiverge",
+    "MaxIterationReached",
+    "MissingCaseForEnumError",
+    "NotObservableError",
+    "PowerGridBatchError",
+    "PowerGridDatasetError",
+    "PowerGridError",
+    "PowerGridNotImplementedError",
+    "PowerGridSerializationError",
+    "PowerGridUnreachableHitError",
+    "SparseMatrixError",
+    "UnsupportedLoadGenTypeForVoltageRegulator",
+    "UnsupportedRegulatorCombinationError",
+    "UnsupportedVoltageRegulatorSourceCombinationError",
+]

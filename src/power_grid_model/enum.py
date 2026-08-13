@@ -9,7 +9,7 @@ Note: these enumeration match the C++ arithmetic core, so don't change the value
 
 """
 
-from power_grid_model._core.enum import (  # noqa: F401
+from power_grid_model._core.enum import (
     AngleMeasurementType,
     Branch3Side,
     BranchSide,
@@ -25,3 +25,20 @@ from power_grid_model._core.enum import (  # noqa: F401
     WindingType,
     _ExperimentalFeatures,
 )
+
+__all__ = [
+    "AngleMeasurementType",
+    "Branch3Side",
+    "BranchSide",
+    "CalculationMethod",
+    "CalculationType",
+    "ComponentAttributeFilterOptions",
+    "FaultPhase",
+    "FaultType",
+    "LoadGenType",
+    "MeasuredTerminalType",
+    "ShortCircuitVoltageScaling",
+    "TapChangingStrategy",
+    "WindingType",
+    "_ExperimentalFeatures",
+]
