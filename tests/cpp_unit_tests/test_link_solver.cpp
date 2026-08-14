@@ -16,19 +16,20 @@
 #include <span>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 namespace power_grid_model::link_solver {
 namespace {
-void compare_vectors(std::vector<DoubleComplex>& result_vector, std::vector<DoubleComplex>& reference_vector,
+void compare_vectors(std::span<DoubleComplex const> result, std::span<DoubleComplex const> reference,
                      double tolerance) {
-    auto const loads_size = narrow_cast<Idx>(result_vector.size());
-    auto const test_loads_size = narrow_cast<Idx>(reference_vector.size());
+    auto const loads_size = narrow_cast<Idx>(result.size());
+    auto const test_loads_size = narrow_cast<Idx>(reference.size());
     REQUIRE(loads_size == test_loads_size);
 
     for (Idx const idx : IdxRange(loads_size)) {
-        CHECK(result_vector[idx].real() == doctest::Approx(reference_vector[idx].real()).epsilon(tolerance));
-        CHECK(result_vector[idx].imag() == doctest::Approx(reference_vector[idx].imag()).epsilon(tolerance));
+        CHECK(result[idx].real() == doctest::Approx(reference[idx].real()).epsilon(tolerance));
+        CHECK(result[idx].imag() == doctest::Approx(reference[idx].imag()).epsilon(tolerance));
     }
 };
 
@@ -61,7 +62,7 @@ TEST_CASE("Test the link solver algorithm") {
 
         SUBCASE("One edge, two nodes") {
             auto edges = std::vector<BranchIdx>{{0, 1}};
-            AdjacencyMap const adjacency_map = build_adjacency_map(edges);
+            AdjacencyMap const adjacency_map = build_adjacency_map(std::move(edges));
 
             REQUIRE(adjacency_map.size() == 2);
             CHECK(adjacency_map.at(0) == std::unordered_set<Idx>{0});
@@ -70,7 +71,7 @@ TEST_CASE("Test the link solver algorithm") {
 
         SUBCASE("Two edges, three nodes") {
             auto edges = std::vector<BranchIdx>{{1, 0}, {1, 2}};
-            AdjacencyMap const adjacency_map = build_adjacency_map(edges);
+            AdjacencyMap const adjacency_map = build_adjacency_map(std::move(edges));
 
             REQUIRE(adjacency_map.size() == 3);
             CHECK(adjacency_map.at(0) == std::unordered_set<Idx>{0});
@@ -80,7 +81,7 @@ TEST_CASE("Test the link solver algorithm") {
 
         SUBCASE("Three edges, three nodes") {
             auto edges = std::vector<BranchIdx>{{0, 1}, {1, 2}, {2, 0}};
-            AdjacencyMap const adjacency_map = build_adjacency_map(edges);
+            AdjacencyMap const adjacency_map = build_adjacency_map(std::move(edges));
 
             REQUIRE(adjacency_map.size() == 3);
             CHECK(adjacency_map.at(0) == std::unordered_set<Idx>{0, 2});
@@ -90,7 +91,7 @@ TEST_CASE("Test the link solver algorithm") {
 
         SUBCASE("Two edges, two nodes") {
             auto edges = std::vector<BranchIdx>{{0, 1}, {0, 1}};
-            AdjacencyMap const adjacency_map = build_adjacency_map(edges);
+            AdjacencyMap const adjacency_map = build_adjacency_map(std::move(edges));
 
             REQUIRE(adjacency_map.size() == 2);
             CHECK(adjacency_map.at(0) == std::unordered_set<Idx>{0, 1});
@@ -99,7 +100,7 @@ TEST_CASE("Test the link solver algorithm") {
 
         SUBCASE("Seven edges, five nodes") {
             auto edges = std::vector<BranchIdx>{{3, 0}, {1, 0}, {2, 0}, {3, 2}, {1, 2}, {1, 4}, {3, 4}};
-            AdjacencyMap const adjacency_map = build_adjacency_map(edges);
+            AdjacencyMap const adjacency_map = build_adjacency_map(std::move(edges));
 
             REQUIRE(adjacency_map.size() == 5);
             CHECK(adjacency_map.at(0) == std::unordered_set<Idx>{0, 1, 2});
@@ -115,13 +116,13 @@ TEST_CASE("Test the link solver algorithm") {
         ReducedEchelonForm result{};
 
         SUBCASE("One edge, two nodes, two real loads") {
-            auto const edges = std::vector<BranchIdx>{{0, 1}};
-            auto const node_loads = std::vector<DoubleComplex>{{-1.0, 0.0}, {1.0, 0.0}};
+            auto edges = std::vector<BranchIdx>{{0, 1}};
+            auto node_loads = std::vector<DoubleComplex>{{-1.0, 0.0}, {1.0, 0.0}};
             auto const edge_number{edges.size()};
             auto const node_number{narrow_cast<Idx>(node_loads.size())};
             result.edges_history.resize(edge_number);
             result.matrix.prepare(node_number);
-            forward_elimination(result, edges, node_loads);
+            forward_elimination(result, std::move(edges), std::move(node_loads));
 
             REQUIRE(result.matrix.data_map.size() == 1);
             CHECK(1 == result.matrix.get_value(0, 0));
@@ -133,13 +134,13 @@ TEST_CASE("Test the link solver algorithm") {
         }
 
         SUBCASE("Two edges, three nodes, two real loads") {
-            auto const edges = std::vector<BranchIdx>{{1, 0}, {1, 2}};
-            auto const node_loads = std::vector<DoubleComplex>{{-1.0, 0.0}, {1.0, 0.0}, {0.0, 0.0}};
+            auto edges = std::vector<BranchIdx>{{1, 0}, {1, 2}};
+            auto node_loads = std::vector<DoubleComplex>{{-1.0, 0.0}, {1.0, 0.0}, {0.0, 0.0}};
             auto const edge_number{edges.size()};
             auto const node_number{narrow_cast<Idx>(node_loads.size())};
             result.edges_history.resize(edge_number);
             result.matrix.prepare(node_number);
-            forward_elimination(result, edges, node_loads);
+            forward_elimination(result, std::move(edges), std::move(node_loads));
 
             REQUIRE(result.matrix.data_map.size() == 2);
             CHECK(1 == result.matrix.get_value(0, 0));
@@ -155,13 +156,13 @@ TEST_CASE("Test the link solver algorithm") {
         }
 
         SUBCASE("Three edges, three nodes, two real loads") {
-            auto const edges = std::vector<BranchIdx>{{0, 1}, {1, 2}, {2, 0}};
-            auto const node_loads = std::vector<DoubleComplex>{{-1.0, 0.0}, {1.0, 0.0}, {0.0, 0.0}};
+            auto edges = std::vector<BranchIdx>{{0, 1}, {1, 2}, {2, 0}};
+            auto node_loads = std::vector<DoubleComplex>{{-1.0, 0.0}, {1.0, 0.0}, {0.0, 0.0}};
             auto const edge_number{edges.size()};
             auto const node_number{narrow_cast<Idx>(node_loads.size())};
             result.edges_history.resize(edge_number);
             result.matrix.prepare(node_number);
-            forward_elimination(result, edges, node_loads);
+            forward_elimination(result, std::move(edges), std::move(node_loads));
 
             REQUIRE(result.matrix.data_map.size() == 4);
             CHECK(1 == result.matrix.get_value(0, 0));
@@ -182,13 +183,13 @@ TEST_CASE("Test the link solver algorithm") {
         }
 
         SUBCASE("Two edges, two nodes, two real loads") {
-            auto const edges = std::vector<BranchIdx>{{0, 1}, {0, 1}};
-            auto const node_loads = std::vector<DoubleComplex>{{-1.0, 0.0}, {1.0, 0.0}};
+            auto edges = std::vector<BranchIdx>{{0, 1}, {0, 1}};
+            auto node_loads = std::vector<DoubleComplex>{{-1.0, 0.0}, {1.0, 0.0}};
             auto const edge_number{edges.size()};
             auto const node_number{narrow_cast<Idx>(node_loads.size())};
             result.edges_history.resize(edge_number);
             result.matrix.prepare(node_number);
-            forward_elimination(result, edges, node_loads);
+            forward_elimination(result, std::move(edges), std::move(node_loads));
 
             REQUIRE(result.matrix.data_map.size() == 2);
             CHECK(1 == result.matrix.get_value(0, 0));
@@ -205,14 +206,14 @@ TEST_CASE("Test the link solver algorithm") {
         }
 
         SUBCASE("Complex case with complex loads") {
-            auto const edges = std::vector<BranchIdx>{{3, 0}, {1, 0}, {2, 0}, {3, 2}, {1, 2}, {1, 4}, {3, 4}};
-            auto const node_loads =
+            auto edges = std::vector<BranchIdx>{{3, 0}, {1, 0}, {2, 0}, {3, 2}, {1, 2}, {1, 4}, {3, 4}};
+            auto node_loads =
                 std::vector<DoubleComplex>{{-1.0, -1.0}, {-1.0, -1.0}, {2.0, 2.0}, {0.0, 0.0}, {0.0, 0.0}};
             auto const edge_number{edges.size()};
             auto const node_number{narrow_cast<Idx>(node_loads.size())};
             result.edges_history.resize(edge_number);
             result.matrix.prepare(node_number);
-            forward_elimination(result, edges, node_loads);
+            forward_elimination(result, std::move(edges), std::move(node_loads));
 
             REQUIRE(result.matrix.data_map.size() == 14);
             CHECK(1 == result.matrix.get_value(0, 0));

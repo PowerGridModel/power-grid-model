@@ -61,15 +61,15 @@ class VoltageRegulator : public Regulator {
     VoltageRegulatorOutput get_output(VoltageRegulatorSolverOutput const& solver_output) const {
         VoltageRegulatorOutput output{};
         static_cast<BaseOutput&>(output) = base_output(is_energized(true) && solver_output.generator_status != 0);
-        output.limit_violated = solver_output.limit_violated;
+        output.limit_violated = static_cast<IntS>(solver_output.limit_violated);
         return output;
     }
 
     template <symmetry_tag sym> VoltageRegulatorCalcParam<sym> calc_param() const {
         return VoltageRegulatorCalcParam<sym>{.status = static_cast<IntS>(status()),
                                               .u_ref = {u_ref_, 0.0},
-                                              .q_min = RealValue<sym>{q_min_ / base_power_3p},
-                                              .q_max = RealValue<sym>{q_max_ / base_power_3p},
+                                              .q_min = q_min_ / base_power_3p,
+                                              .q_max = q_max_ / base_power_3p,
                                               .generator_id = this->regulated_object()};
     }
 

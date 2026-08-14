@@ -22,6 +22,10 @@ This guide focuses on system-level performance optimization (batching, caching, 
 For algorithm-level details such as calculation method selection, see the [Calculations](calculations.md) documentation.
 ```
 
+## Scalability
+
+PGM scales linearly with respect to the problem size.
+
 ## Data validity
 
 Many of our optimizations assume input data validity and rely on the fact that the provided grid is reasonably close to

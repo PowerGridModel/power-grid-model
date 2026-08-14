@@ -8,7 +8,7 @@ SPDX-License-Identifier: MPL-2.0
 
 ```{note}
 This document is about components supported by PGM.
-For documentation on modeling grid components not listed here, please refer to [Grid Modeling](./non-pgm-components.md).
+For documentation on modeling grid components not listed here, please refer to [Grid Modeling](./non-native-components.md).
 ```
 
 The attributes of components are listed below.
@@ -67,7 +67,7 @@ Physically a node can be a busbar, a joint, or other similar component.
 | `q`       | `RealValueOutput` | volt-ampere-reactive (var) | reactive power injection                                                                        |
 
 ```{note}
-The `p` and `q` output of injection follows the `generator` reference direction as mentioned in  
+The `p` and `q` output of injection follows the `generator` reference direction as mentioned in
 [Reference Direction](data-model.md#reference-direction)
 ```
 
@@ -173,7 +173,7 @@ Therefore, it is chosen by design that no sensors can be coupled to a `link`.
 There is no additional attribute for `link`.
 
 It is explicitly allowed to connect a link between nodes with different voltage levels to allow modeling
-[ideal transformers](./non-pgm-components.md#ideal-transformer).
+[ideal transformers](./non-native-components.md#ideal-transformer).
 
 #### Electric Model
 
@@ -271,8 +271,8 @@ The PI model can be used to avoid the need to convert parameters into transforme
 Another use case is modeling a line when connecting two nodes with approximately the same voltage levels (in that case,
 the off-nominal ratio must be given to adapt the electrical parameters).
 
-See [Phase-shifting transformer](./non-pgm-components.md#phase-shifting-transformer) for an example of modeling one
-using a `generic_branch`.
+See [Phase-shifting transformer](./non-native-components.md#phase-shifting-transformer) for details on how to model
+a phase-shifting transformer using a `generic_branch`.
 
 #### Input
 
@@ -732,7 +732,7 @@ It behaves similar to a load/generator with type `const_impedance`.
 | `b0` | `double`  | siemens (S) | zero-sequence shunt susceptance     | &#10024; only for asymmetric calculation | &#10004; |
 
 ```{note}
-In power-grid-model, shunts may also be used to introduce a ground reference in an otherwise floating grid. 
+In power-grid-model, shunts may also be used to introduce a ground reference in an otherwise floating grid.
 ```
 
 ```{note}
@@ -1255,47 +1255,56 @@ source_6     |                                    load_7
 * type name: `voltage_regulator`
 * base: {hoverxreftooltip}`user_manual/components:regulator`
 
-`voltage_regulator` defines a regulator for voltage-controlled generators in the grid.
-A voltage regulator adjusts the reactive power output of a generator to maintain the voltage at its connection node
-at a specified setpoint.
+`voltage_regulator` defines voltage control for a regulated load or generator. In Newton-Raphson power-flow
+calculations, an active voltage regulator makes the connection node a voltage-controlled PV node. The active power of
+the regulated object remains specified by the load/generator input, while the reactive power is calculated so that the
+voltage magnitude at the node follows `u_ref`.
 
-The voltage regulator changes the reactive power output of the generator it regulates to achieve the reference voltage
-`u_ref` at the generator's node.
-If `q_min` and `q_max` are provided, the reactive power is constrained within this range (i.e., `q_min <= q <= q_max` or
-`q_min >= q >= q_max`).
-If these limits are not provided, the reactive power can take any value needed to maintain the voltage setpoint.
+Voltage regulation is supported only by the [Newton-Raphson power flow](./calculations.md#newton-raphson-power-flow)
+method.
 
-```{warning}
-Voltage regulation is only supported by the [Newton-Raphson power flow](./calculations.md#newton-raphson-power-flow) method.
+```{note}
+If `q_min` and/or `q_max` are specified, the calculated reactive power is checked against these limits. If the required
+reactive power exceeds a limit, the regulated object is clamped to the violated limit and the effective node type is
+switched from PV to PQ. In that case, the voltage magnitude may deviate from `u_ref`.
+```
+
+```{note}
+When multiple active voltage regulators are connected to the same node, they jointly regulate the same node voltage. The
+required reactive power is first distributed equally over the active regulated objects. If one regulator reaches its
+individual `q_min` or `q_max`, it is clamped at that limit and removed from the remaining allocation. The unallocated
+reactive power is then redistributed over the remaining regulators until all required reactive power has been allocated
+or all available regulators have reached a limit.
+
+For asymmetric calculations, the allocation uses the total three-phase reactive power for limit checks. The phase
+distribution follows the available phase proportions where possible; if no usable phase proportion is available, the
+value is distributed equally over the three phases.
 ```
 
 ```{note}
 The `regulated_object` must reference a generator (`sym_gen` or `asym_gen`) or a load (`sym_load` or `asym_load`).
-Each generator or load can have at most one voltage regulator.
-When multiple voltage-regulated generators are connected to the same node, they should all specify the same `u_ref`
-value to avoid conflicting voltage setpoints.
-```
-
-```{warning}
-Reactive power limit checking is not yet fully implemented. When `q_min` and `q_max` are specified,
-the intended behavior is that if the required reactive power to maintain `u_ref` exceeds these limits,
-the voltage regulator should operate at the limit and the voltage may deviate from `u_ref`.
+Each generator or load can have at most one voltage regulator. When multiple voltage-regulated objects are connected to
+the same node, they should all specify the same `u_ref` value to avoid conflicting voltage setpoints.
 ```
 
 #### Input
 
-| name     | data type | unit                       | description                                         |           required           |  update  | valid values |
-| -------- | --------- | -------------------------- | --------------------------------------------------- | :--------------------------: | :------: | :----------: |
-| `u_ref`  | `double`  | -                          | reference voltage in per-unit at the generator node | &#10024; only for power flow | &#10004; |    `> 0`     |
-| `q_min`  | `double`  | volt-ampere-reactive (var) | minimum reactive power limit of the generator       | &#10060;                     | &#10004; |              |
-| `q_max`  | `double`  | volt-ampere-reactive (var) | maximum reactive power limit of the generator       | &#10060;                     | &#10004; |              |
+| name     | data type | unit                       | description                                                |           required           |  update  | valid values |
+| -------- | --------- | -------------------------- | ---------------------------------------------------------- | :--------------------------: | :------: | :----------: |
+| `u_ref`  | `double`  | -                          | reference voltage in per-unit at the regulated object node | &#10024; only for power flow | &#10004; |    `> 0`     |
+| `q_min`  | `double`  | volt-ampere-reactive (var) | minimum reactive power limit of the regulated object       | &#10060;                     | &#10004; |              |
+| `q_max`  | `double`  | volt-ampere-reactive (var) | maximum reactive power limit of the regulated object       | &#10060;                     | &#10004; |              |
 
 #### Steady state output
 
-| name              | data type         | unit                       | description                                                          |
-| ----------------- | ----------------- | -------------------------- | -------------------------------------------------------------------- |
-| `q`               | `RealValueOutput` | volt-ampere-reactive (var) | reactive power provided by the voltage regulator                     |
-| `limit_violated`  | `int8_t`          | -                          | reactive power limit violation indicator (not yet fully implemented) |
+| name             | data type | unit | description                                                                                             |
+|------------------|-----------|------|---------------------------------------------------------------------------------------------------------|
+| `limit_violated` | `int8_t`  | -    | reactive-power limit indicator: `0` = no limit violation, `1` = `q_min` reached, `2` = `q_max` reached  |
+
+```{note}
+The reactive-power value is reported on the regulated load or generator output. The `voltage_regulator` output reports
+only whether a reactive-power limit was reached.
+```
 
 #### Short circuit output
 
@@ -1303,29 +1312,24 @@ A `voltage_regulator` has no short circuit output.
 
 #### Electric Model
 
-The voltage regulator controls the generator to behave as a **PV node** in power flow calculations:
+The voltage regulator controls the regulated load or generator to behave as a **PV node** in Newton-Raphson power flow
+calculations:
 
 $$
 \begin{aligned}
-    P_{\text{gen}} &= P_{\text{specified}} \\
+    P_{\text{regulated}} &= P_{\text{specified}} \\
     \left|U_{\text{node}}\right| &= U_{\text{ref}} \\
-    Q_{\text{gen}} &= \text{calculated to satisfy } U_{\text{ref}}
+    Q_{\text{regulated}} &= \text{calculated to satisfy } U_{\text{ref}}
 \end{aligned}
 $$
 
-When `q_min` and `q_max` are provided, the reactive power should be constrained:
-
-$$
-   Q_{\text{min}} \leq Q_{\text{gen}} \leq Q_{\text{max}}
-$$
-
-When fully implemented, if the reactive power constraints are violated, the generator will operate at the limit and the
-node becomes a PQ node:
+When the reactive power constraints are violated, the regulated object operates at the violated limit and the node
+becomes a PQ node:
 
 $$
 \begin{aligned}
-    P_{\text{gen}} &= P_{\text{specified}} \\
-    Q_{\text{gen}} &= Q_{\text{min}} \text{ or } Q_{\text{max}} \\
+    P_{\text{regulated}} &= P_{\text{specified}} \\
+    Q_{\text{regulated}} &= Q_{\text{min}} \text{ or } Q_{\text{max}} \\
     \left|U_{\text{node}}\right| &= \text{calculated from power flow}
 \end{aligned}
 $$
@@ -1337,4 +1341,4 @@ from `u_ref`.
 
 The list of components explicitly supported by the power-grid-model is a subset of all possible power system components.
 If you did not find the component you're trying to model, you may find what you are looking for
-in [Grid Modeling](./non-pgm-components.md).
+in [Grid Modeling](./non-native-components.md).

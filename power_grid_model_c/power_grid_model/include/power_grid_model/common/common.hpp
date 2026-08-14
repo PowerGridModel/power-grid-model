@@ -44,6 +44,17 @@ struct Idx2DHash {
     }
 };
 
+namespace detail {
+template <typename T> struct underlying_value {
+    using type = T;
+};
+template <std::ranges::range T> struct underlying_value<T> {
+    using type = underlying_value<std::ranges::range_value_t<T>>::type;
+};
+} // namespace detail
+
+template <typename T> using underlying_value_t = detail::underlying_value<std::remove_cvref_t<T>>::type;
+
 struct symmetric_t {};
 struct asymmetric_t {};
 
@@ -54,6 +65,10 @@ template <symmetry_tag T> constexpr bool is_symmetric_v = std::derived_from<T, s
 template <symmetry_tag T> constexpr bool is_asymmetric_v = std::derived_from<T, asymmetric_t>;
 
 template <symmetry_tag T> using other_symmetry_t = std::conditional_t<is_symmetric_v<T>, asymmetric_t, symmetric_t>;
+
+template <typename T>
+    requires symmetry_tag<typename underlying_value_t<T>::sym>
+using decode_symmetry_v = underlying_value_t<T>::sym;
 
 // math constant
 using namespace std::complex_literals;
@@ -125,10 +140,13 @@ concept non_owning_view_c = std::ranges::view<R> && !detail::is_owning_view<std:
 
 // by ref adaptor to pass to functions which accepts std::ranges::view
 template <class R>
-concept owning_container_c = std::ranges::viewable_range<R> && !std::ranges::view<R> && !std::ranges::borrowed_range<R>;
+concept owning_container_c = std::ranges::viewable_range<R> && !non_owning_view_c<R> && !std::ranges::borrowed_range<R>;
 constexpr non_owning_view_c auto by_ref(owning_container_c auto& r) noexcept { return std::ranges::ref_view(r); }
 constexpr non_owning_view_c auto by_ref(owning_container_c auto const& r) noexcept { return std::ranges::ref_view(r); }
 constexpr non_owning_view_c auto by_const_ref(owning_container_c auto& r) noexcept { return by_ref(std::as_const(r)); }
+constexpr non_owning_view_c auto by_const_ref(owning_container_c auto const& r) noexcept {
+    return by_ref(std::as_const(r));
+}
 
 // pgm functor concept
 // it should be cheap to copy, so it should be trivially copyable and small in size
