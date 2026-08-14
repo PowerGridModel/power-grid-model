@@ -349,8 +349,7 @@ template <non_owning_view_c RandVarsView>
     requires std::same_as<std::ranges::range_value_t<RandVarsView>,
                           DecomposedComplexRandVar<typename std::ranges::range_value_t<RandVarsView>::sym>>
 constexpr auto combine(RandVarsView rand_vars) {
-    using sym = decode_symmetry_v<RandVarsView>;
-    static_assert(symmetry_tag<sym>);
+    using sym = std::ranges::range_value_t<RandVarsView>::sym;
 
     DecomposedComplexRandVar<sym> result{
         .real_component =
@@ -378,7 +377,7 @@ template <non_owning_view_c RandVarsView>
     requires std::same_as<std::ranges::range_value_t<RandVarsView>,
                           UniformComplexRandVar<typename std::ranges::range_value_t<RandVarsView>::sym>>
 constexpr auto combine_magnitude(RandVarsView rand_vars) {
-    using sym = decode_symmetry_v<RandVarsView>;
+    using sym = std::ranges::range_value_t<RandVarsView>::sym;
 
     auto const weighted_average_magnitude_measurement =
         statistics::combine(rand_vars | std::views::transform([](auto const& measurement) {

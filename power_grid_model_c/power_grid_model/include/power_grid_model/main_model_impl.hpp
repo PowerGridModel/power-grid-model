@@ -37,7 +37,6 @@
 #include "main_core/input.hpp"
 #include "main_core/main_model_type.hpp"
 #include "main_core/output.hpp"
-#include "main_core/topological_node_output.hpp"
 #include "main_core/topology.hpp"
 #include "main_core/update.hpp"
 
@@ -288,7 +287,7 @@ class MainModelImpl {
     auto calculate_(PrepareInputFn prepare_input, SolveFn solve, Logger& logger) {
         using InputType = std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>::const_reference;
         using SolverOutputType = std::invoke_result_t<SolveFn, MathSolverType&, YBus const&, InputType>;
-        using sym = decode_symmetry_v<SolverOutputType>;
+        using sym = SolverOutputType::sym;
 
         assert(construction_complete_);
         // prepare
@@ -370,9 +369,9 @@ class MainModelImpl {
             [cache_run]<calculation_type_tag calculation_type, symmetry_tag sym>(
                 MainModelImpl& main_model_, Options const& options_, MutableDataset const& result_data_,
                 Logger& logger) {
-                main_model_.output_result(
-                    main_model_.calculate_with_optimizer<calculation_type, sym>(options_, cache_run, logger),
-                    result_data_, logger);
+                auto const math_output =
+                    main_model_.calculate_with_optimizer<calculation_type, sym>(options_, cache_run, logger);
+                main_model_.output_result(math_output, result_data_, logger);
             },
             *this, options, result_data, logger);
     }
@@ -439,13 +438,9 @@ class MainModelImpl {
 
   private:
     template <solver_output_type SolverOutputType>
-    void output_result(MathOutput<std::vector<SolverOutputType>> math_output, MutableDataset const& result_data,
+    void output_result(MathOutput<std::vector<SolverOutputType>> const& math_output, MutableDataset const& result_data,
                        Logger& logger) const {
         assert(!result_data.is_batch());
-
-        Timer const t_output{logger, LogEvent::produce_output};
-
-        main_core::solve_topological_nodes(state_, math_output);
 
         auto const output_func = [this, &math_output, &result_data]<typename CT>() {
             result_data.for_each_component<typename output_type_getter<SolverOutputType>::type, CT>(
@@ -457,6 +452,7 @@ class MainModelImpl {
                 });
         };
 
+        Timer const t_output{logger, LogEvent::produce_output};
         ModelType::run_functor_with_all_component_types_return_void(output_func);
     }
 

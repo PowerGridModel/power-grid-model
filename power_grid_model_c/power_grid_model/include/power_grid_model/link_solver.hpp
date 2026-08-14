@@ -9,7 +9,6 @@
 #include "common/counting_iterator.hpp"
 #include "common/typing.hpp"
 
-#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <optional>
@@ -212,14 +211,12 @@ inline void backward_substitution(ReducedEchelonForm& elimination_result) {
             // only iterate over free columns to the right of the pivot column
             // as these are the only ones that can be affected by the backward substitution
             for (auto const backward_col_idx : backward_substitution_free_right_cols(free_col_indices, pivot_col_idx)) {
-                std::ignore =
-                    elimination_result.matrix.get_value(pivot_row_idx, backward_col_idx)
-                        .transform([&elimination_result, multiplier_value, row_idx,
-                                    backward_col_idx](IntS pivot_value) {
-                            elimination_result.matrix.add_to_value(static_cast<IntS>(-multiplier_value * pivot_value),
-                                                                   row_idx, backward_col_idx);
-                            return pivot_value;
-                        });
+                elimination_result.matrix.get_value(pivot_row_idx, backward_col_idx)
+                    .transform([&elimination_result, multiplier_value, row_idx, backward_col_idx](IntS pivot_value) {
+                        elimination_result.matrix.add_to_value(static_cast<IntS>(-multiplier_value * pivot_value),
+                                                               row_idx, backward_col_idx);
+                        return pivot_value;
+                    });
             }
             elimination_result.rhs[row_idx] -=
                 static_cast<DoubleComplex>(multiplier_value) * elimination_result.rhs[pivot_row_idx];
@@ -271,11 +268,11 @@ inline SolutionSet set_solution_system(ReducedEchelonForm& result) {
         auto const pivot_edge_idx = result.pivot_edge_indices[matrix_row];
         for (auto dfs_matrix_col : std::views::iota(Idx{}, free_indices_size)) {
             Idx const free_edge_idx = result.free_edge_indices[dfs_matrix_col];
-            std::ignore = result.matrix.get_value(matrix_row, free_edge_idx)
-                              .transform([&dfs_matrix, pivot_edge_idx, dfs_matrix_col](IntS matrix_element) {
-                                  dfs_matrix.set_value(matrix_element, pivot_edge_idx, dfs_matrix_col);
-                                  return matrix_element;
-                              });
+            result.matrix.get_value(matrix_row, free_edge_idx)
+                .transform([&dfs_matrix, pivot_edge_idx, dfs_matrix_col](IntS matrix_element) {
+                    dfs_matrix.set_value(matrix_element, pivot_edge_idx, dfs_matrix_col);
+                    return matrix_element;
+                });
         }
         extended_rhs[pivot_edge_idx] = result.rhs[matrix_row];
     }
@@ -297,13 +294,12 @@ inline std::vector<std::vector<DoubleComplex>> set_projection_system(Idx free_in
     for (Idx dfs_matrix_col = 0; dfs_matrix_col < free_indices_number; dfs_matrix_col++) {
         auto dot_product_rhs = DoubleComplex{};
         for (Idx dfs_matrix_row = 0; dfs_matrix_row < total_indices_number; dfs_matrix_row++) {
-            std::ignore = solution_set.dfs_matrix.get_value(dfs_matrix_row, dfs_matrix_col)
-                              .transform([&dot_product_rhs, &extended_rhs_ = solution_set.extended_rhs,
-                                          &dfs_matrix_row](IntS first_value) {
-                                  dot_product_rhs +=
-                                      static_cast<DoubleComplex>(first_value) * extended_rhs_[dfs_matrix_row];
-                                  return first_value;
-                              });
+            solution_set.dfs_matrix.get_value(dfs_matrix_row, dfs_matrix_col)
+                .transform(
+                    [&dot_product_rhs, &extended_rhs_ = solution_set.extended_rhs, &dfs_matrix_row](IntS first_value) {
+                        dot_product_rhs += static_cast<DoubleComplex>(first_value) * extended_rhs_[dfs_matrix_row];
+                        return first_value;
+                    });
         }
         auto& projection_system_row = projection_system[dfs_matrix_col];
         projection_system_row[free_indices_number] = dot_product_rhs;
@@ -369,11 +365,10 @@ inline std::vector<DoubleComplex> compute_internal_loads(SolutionSet const& solu
         internal_loads[row] = solution_set.extended_rhs[row];
         auto sum_value = DoubleComplex{};
         for (auto const column : IdxRange{number_of_columns}) {
-            std::ignore =
-                solution_set.dfs_matrix.get_value(row, column).transform([&sum_value, &system, column](IntS value) {
-                    sum_value += static_cast<DoubleComplex>(value) * system[column].back();
-                    return value;
-                });
+            solution_set.dfs_matrix.get_value(row, column).transform([&sum_value, &system, column](IntS value) {
+                sum_value += static_cast<DoubleComplex>(value) * system[column].back();
+                return value;
+            });
         }
         internal_loads[row] -= sum_value;
     }

@@ -1041,8 +1041,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
         }
 
         return {.solver_output = {std::move(solver_output)},
-                .optimizer_output = {std::move(transformer_tap_positions)},
-                .supernode_output = {}};
+                .optimizer_output = {std::move(transformer_tap_positions)}};
     }
 
     auto iterate_with_fallback(State const& state,
@@ -1118,7 +1117,7 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
     template <typename TransformerType, typename Regulator, typename State, typename ResultType>
     auto compute_node_state_and_param(Regulator const& regulator, State const& state, ResultType const& solver_output) {
-        using sym = decode_symmetry_v<typename ResultType::value_type>;
+        using sym = ResultType::value_type::sym;
 
         auto const param = regulator.regulator.get().template calc_param<sym>();
         auto const node_state =
