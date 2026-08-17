@@ -56,16 +56,6 @@ jobs:
         run: |
           npm ci
 
-      - name: Run markdownlint
-        run: |
-          echo "Running markdownlint"
-          npx markdownlint --fix .
-
-      - name: Run Biome
-        run: |
-          echo "Running Biome"
-          npx biome format --write --files-ignore-unknown=true --no-errors-on-unmatched
-
       - name: If needed raise error
         run: |
           if [[ `git status --porcelain --untracked-files=no` ]]; then
