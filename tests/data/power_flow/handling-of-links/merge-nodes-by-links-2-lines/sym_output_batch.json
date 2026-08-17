@@ -320,16 +320,16 @@
                 },
                 {
                     "id": 11,
-                    "energized": 0,
-                    "loading": null,
-                    "p_from": null,
-                    "q_from": null,
-                    "i_from": null,
-                    "s_from": null,
-                    "p_to": null,
-                    "q_to": null,
-                    "i_to": null,
-                    "s_to": null
+                    "energized": 1,
+                    "loading": 0,
+                    "p_from": 0,
+                    "q_from": 0,
+                    "i_from": 0,
+                    "s_from": 0,
+                    "p_to": 0,
+                    "q_to": 0,
+                    "i_to": 0,
+                    "s_to": 0
                 }
             ],
             "sym_load": [
