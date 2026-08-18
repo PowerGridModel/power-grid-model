@@ -336,6 +336,9 @@ TEST_CASE_TEMPLATE("Test main core power sensor output with reduced component co
     // A reduced main-core state must not instantiate lookups for appliance types that its container omits.
     using ComponentContainer =
         Container<ExtraRetrievableTypes<Branch, GenericPowerSensor>, GenericBranch, SymPowerSensor>;
+    static_assert(!common::component_container_c<ComponentContainer, Source>);
+    static_assert(!common::component_container_c<ComponentContainer, Shunt>);
+    static_assert(!common::component_container_c<ComponentContainer, GenericLoadGen>);
 
     MainModelState<ComponentContainer> state;
     auto coupling = std::make_shared<TopologicalComponentToMathCoupling>();
