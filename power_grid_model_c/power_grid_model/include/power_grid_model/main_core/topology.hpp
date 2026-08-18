@@ -13,6 +13,8 @@
 #include "../component/branch.hpp"
 #include "../component/branch3.hpp"
 #include "../component/current_sensor.hpp"
+#include "../component/edge.hpp"
+#include "../component/link.hpp"
 #include "../component/load_gen.hpp"
 #include "../component/node.hpp"
 #include "../component/power_sensor.hpp"
@@ -52,9 +54,19 @@ constexpr void register_topology_components(ComponentContainer const& components
 template <std::same_as<Branch> Component, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, Component, Node>
 constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
-    apply_registration<Component>(components, comp_topo.branch_node_idx, [&components](Branch const& branch) {
-        return BranchIdx{get_component_sequence_idx<Node>(components, branch.from_node()),
-                         get_component_sequence_idx<Node>(components, branch.to_node())};
+    apply_registration<Component>(components, comp_topo.branch_node_idx,
+                                  [&components](Branch const& edge) {
+                                      return BranchIdx{get_component_sequence_idx<Node>(components, edge.from_node()),
+                                                       get_component_sequence_idx<Node>(components, edge.to_node())};
+                                  });
+}
+
+template <std::same_as<Link> Component, class ComponentContainer>
+    requires common::component_container_c<ComponentContainer, Component, Node>
+constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
+    apply_registration<Component>(components, comp_topo.link_node_idx, [&components](Link const& edge) {
+        return BranchIdx{get_component_sequence_idx<Node>(components, edge.from_node()),
+                         get_component_sequence_idx<Node>(components, edge.to_node())};
     });
 }
 
@@ -208,6 +220,14 @@ constexpr void register_connections_components(ComponentContainer const& compone
     apply_registration<Component>(components, comp_conn.branch_phase_shift,
                                   [](Branch const& branch) { return branch.phase_shift(); });
 }
+
+template <std::same_as<Link> Component, class ComponentContainer>
+    requires common::component_container_c<ComponentContainer, Component>
+constexpr void register_connections_components(ComponentContainer const& components, ComponentConnections& comp_conn) {
+    apply_registration<Component>(components, comp_conn.link_connected, [](Link const& link) {
+        return BranchConnected{status_to_int(link.from_status()), status_to_int(link.to_status())};
+    });
+}
 template <std::same_as<Branch3> Component, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, Component>
 constexpr void register_connections_components(ComponentContainer const& components, ComponentConnections& comp_conn) {
@@ -229,9 +249,8 @@ constexpr void register_connections_components(ComponentContainer const& compone
 } // namespace detail
 
 template <typename ModelType>
-    requires common::component_container_c<typename ModelType::ComponentContainer, Node, Branch, Branch3, Source, Shunt,
-                                           GenericLoadGen, GenericVoltageSensor, GenericPowerSensor,
-                                           GenericCurrentSensor, Regulator>
+    requires common::component_container_c<typename ModelType::ComponentContainer, Node, Branch, Link, Branch3, Source, Shunt, GenericLoadGen,
+                                           GenericVoltageSensor, GenericPowerSensor, GenericCurrentSensor, Regulator>
 ComponentTopology construct_topology(typename ModelType::ComponentContainer const& components) {
     ComponentTopology comp_topo;
     using TopologyTypesTuple = ModelType::TopologyTypesTuple;
@@ -243,7 +262,7 @@ ComponentTopology construct_topology(typename ModelType::ComponentContainer cons
 }
 
 template <typename ModelType>
-    requires common::component_container_c<typename ModelType::ComponentContainer, Branch, Branch3, Source>
+    requires common::component_container_c<typename ModelType::ComponentContainer, Branch, Link, Branch3, Source>
 ComponentConnections construct_components_connections(typename ModelType::ComponentContainer const& components) {
     ComponentConnections comp_conn;
     using TopologyConnectionTypesTuple = ModelType::TopologyConnectionTypesTuple;

@@ -25,7 +25,7 @@ using namespace std::complex_literals;
 TEST_CASE("Test link") {
     LinkInput input{.id = 1, .from_node = 2, .to_node = 3, .from_status = 1, .to_status = 1};
     Link link{input, 10e3, 50e3};
-    Branch& branch = link;
+    Edge& branch = link;
     double const base_i_from = base_power_1p / (10.0e3 / sqrt3);
     double const base_i_to = base_power_1p / (50.0e3 / sqrt3);
     ComplexValue<asymmetric_t> const uaf{1.0};
@@ -37,14 +37,13 @@ TEST_CASE("Test link") {
     ComplexValue<asymmetric_t> const if_sc_asym{1.0 + 1.0i};
     ComplexValue<asymmetric_t> const it_sc_asym{2.0 + (2.0i * sqrt3)};
 
-    CHECK(link.math_model_type() == ComponentType::branch);
+    CHECK(link.math_model_type() == ComponentType::link);
 
     SUBCASE("General") {
         CHECK(branch.status(BranchSide::from) == branch.from_status());
         CHECK(branch.status(BranchSide::to) == branch.to_status());
         CHECK(branch.base_i_from() == doctest::Approx(base_i_from));
         CHECK(branch.base_i_to() == doctest::Approx(base_i_to));
-        CHECK(!branch.is_param_mutable());
         CHECK(branch.phase_shift() == 0.0);
     }
 

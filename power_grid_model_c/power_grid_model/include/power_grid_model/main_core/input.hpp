@@ -15,6 +15,7 @@
 #include "../component/branch.hpp"
 #include "../component/branch3.hpp"
 #include "../component/current_sensor.hpp"
+#include "../component/edge.hpp"
 #include "../component/fault.hpp"
 #include "../component/line.hpp"
 #include "../component/link.hpp"
