@@ -764,8 +764,9 @@ The state estimator uses the data to evaluate the state of the grid with the hig
 
 A sensor only has output for state estimation.
 For other calculation types, sensor output is undefined.
-The sensor output attribute `energized` is derived from the energized state of the measured object and is independent
-of whether the measurement is included in state estimation. When `energized == 0`, all residual values are zero.
+The sensor output attribute `energized` is derived from the energized state of the measured object, regardless
+of whether the measurement is included in state estimation.
+If the measured object is not energized, all residual values are zero.
 
 ### Generic Voltage Sensor
 
