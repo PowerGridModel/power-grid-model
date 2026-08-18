@@ -63,7 +63,7 @@ jobs:
       
       - name: Install pgm-build-deps
         run: |
-          uv tool install pgm-build-deps
+          uv tool install pgm-build-deps@2026.08.10.64
           pgm-build-setup-ga-ci
 
       - name: Set build target in case of workflow dispatch
