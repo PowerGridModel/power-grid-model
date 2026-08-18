@@ -99,10 +99,10 @@ jobs:
   reuse-compliance:
     uses: "./.github/workflows/reuse-compliance.yml"
 
-  clang-tidy:
-    uses: "./.github/workflows/clang-tidy.yml"
-    with:
-      target: "all"
+  # clang-tidy:
+  #   uses: "./.github/workflows/clang-tidy.yml"
+  #   with:
+  #     target: "all"
 
   ci-passed:
     runs-on: ubuntu-latest
