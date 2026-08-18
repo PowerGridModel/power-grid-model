@@ -246,7 +246,36 @@ constexpr auto output_result(Component const& power_sensor, MainModelState<Compo
         }
     }();
 
-    if (obj_math_id.group == disconnected) {
+    auto const measured_object_active = [&]() {
+        switch (terminal_type) {
+            using enum MeasuredTerminalType;
+
+        case source:
+            return get_component_by_sequence<Source>(state.components, obj_seq).status();
+        case shunt:
+            return get_component_by_sequence<Shunt>(state.components, obj_seq).status();
+        case load:
+            [[fallthrough]];
+        case generator:
+            return get_component_by_sequence<GenericLoadGen>(state.components, obj_seq).status();
+        case branch_from:
+            [[fallthrough]];
+        case branch_to:
+            [[fallthrough]];
+        case branch3_1:
+            [[fallthrough]];
+        case branch3_2:
+            [[fallthrough]];
+        case branch3_3:
+            [[fallthrough]];
+        case node:
+            return true;
+        default:
+            throw MissingCaseForEnumError{std::format("{} output_result()", Component::name), terminal_type};
+        }
+    };
+
+    if (obj_math_id.group == disconnected || !measured_object_active()) {
         return power_sensor.template get_null_output<sym>();
     }
 

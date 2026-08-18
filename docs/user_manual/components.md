@@ -764,6 +764,8 @@ The state estimator uses the data to evaluate the state of the grid with the hig
 
 A sensor only has output for state estimation.
 For other calculation types, sensor output is undefined.
+Residual values are calculated only when the sensor output is marked as energized (`energized == 1`). When
+`energized == 0`, all residual values are zero.
 
 ### Generic Voltage Sensor
 
