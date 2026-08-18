@@ -246,18 +246,27 @@ constexpr auto output_result(Component const& power_sensor, MainModelState<Compo
         }
     }();
 
+    auto const measured_appliance_active = [&]<typename ApplianceType>() {
+        if constexpr (common::component_container_c<ComponentContainer, ApplianceType>) {
+            return get_component_by_sequence<ApplianceType>(state.components, obj_seq).status();
+        }
+        // A missing appliance type makes this terminal type unreachable in a valid model. Keep reduced containers
+        // compatible with the previous topology-only behavior.
+        return true;
+    };
+
     auto const measured_object_active = [&]() {
         switch (terminal_type) {
             using enum MeasuredTerminalType;
 
         case source:
-            return get_component_by_sequence<Source>(state.components, obj_seq).status();
+            return measured_appliance_active.template operator()<Source>();
         case shunt:
-            return get_component_by_sequence<Shunt>(state.components, obj_seq).status();
+            return measured_appliance_active.template operator()<Shunt>();
         case load:
             [[fallthrough]];
         case generator:
-            return get_component_by_sequence<GenericLoadGen>(state.components, obj_seq).status();
+            return measured_appliance_active.template operator()<GenericLoadGen>();
         case branch_from:
             [[fallthrough]];
         case branch_to:

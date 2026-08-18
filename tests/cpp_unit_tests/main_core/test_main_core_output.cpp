@@ -331,6 +331,30 @@ TEST_CASE_TEMPLATE("Test main core power sensor output energized state", sym, sy
     }
 }
 
+TEST_CASE_TEMPLATE("Test main core power sensor output with reduced component container", sym, symmetric_t,
+                   asymmetric_t) {
+    // A reduced main-core state must not instantiate lookups for appliance types that its container omits.
+    using ComponentContainer =
+        Container<ExtraRetrievableTypes<Branch, GenericPowerSensor>, GenericBranch, SymPowerSensor>;
+
+    MainModelState<ComponentContainer> state;
+    auto coupling = std::make_shared<TopologicalComponentToMathCoupling>();
+    coupling->branch = {{.group = 0, .pos = 0}};
+    state.topo_comp_coup = std::move(coupling);
+
+    std::vector<SolverOutput<sym>> solver_output(1);
+    solver_output[0].branch.resize(1);
+
+    SymPowerSensor const sensor{{.id = 23,
+                                 .measured_object = 9,
+                                 .measured_terminal_type = MeasuredTerminalType::branch_from,
+                                 .power_sigma = 1.0,
+                                 .p_measured = 1.0,
+                                 .q_measured = 2.0}};
+
+    CHECK(output_result(sensor, state, solver_output, 0).energized == 1);
+}
+
 TEST_CASE_TEMPLATE("Test main core current sensor output uses branch topology group", sym, symmetric_t, asymmetric_t) {
     constexpr double u_rated = 10e3;
 
