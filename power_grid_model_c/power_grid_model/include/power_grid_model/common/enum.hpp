@@ -10,6 +10,8 @@ namespace power_grid_model {
 
 enum class BusType : IntS { pq = 0, pv = 1, slack = 2 };
 
+enum class LimitViolation : IntS { none = 0, lower = 1, upper = 2 };
+
 enum class LoadGenType : IntS {
     const_pq = 0, // constant power
     const_y = 1,  // constant element_admittance (impedance)

@@ -41,9 +41,10 @@ lint = [
     "pre-commit",
     "ruff",
     "mypy",
-    "numpy",                # needed for mypy
-    "gersemi",              # CMake linter
-    "clang-format ~= 18.0", # C++ formatter
+    "numpy",                             # needed for mypy
+    "gersemi",                           # CMake linter
+    "clang-format>=18,<23",              # C/C++ formatter
+    "reuse[charset-normalizer,chardet]", # license check
 ]
 
 example = ["ipykernel"]
@@ -82,6 +83,9 @@ power_grid_model = "power_grid_model._core.power_grid_model_c"
 
 [project.scripts]
 power-grid-model = "power_grid_model._core.power_grid_model_c.run_pgm_cli:main"
+
+[tool.uv]
+exclude-newer = "7 days"
 
 [tool.scikit-build]
 logging.level = "INFO"
@@ -209,7 +213,7 @@ test-command = "pytest {package}/tests"
 # we do not support 
 #    PyPy
 #    disable Python 3.15 for now until it is released
-skip = ["pp*", "cp315-*"]
+skip = ["pp*", "cp315-*", "cp315t-*"]
 
 [tool.cibuildwheel.linux]
 archs = ["x86_64", "aarch64"]

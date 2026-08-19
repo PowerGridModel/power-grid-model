@@ -9,6 +9,7 @@
 #include "common/counting_iterator.hpp"
 #include "common/typing.hpp"
 
+#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <optional>
@@ -211,12 +212,14 @@ inline void backward_substitution(ReducedEchelonForm& elimination_result) {
             // only iterate over free columns to the right of the pivot column
             // as these are the only ones that can be affected by the backward substitution
             for (auto const backward_col_idx : backward_substitution_free_right_cols(free_col_indices, pivot_col_idx)) {
-                elimination_result.matrix.get_value(pivot_row_idx, backward_col_idx)
-                    .transform([&elimination_result, multiplier_value, row_idx, backward_col_idx](IntS pivot_value) {
-                        elimination_result.matrix.add_to_value(static_cast<IntS>(-multiplier_value * pivot_value),
-                                                               row_idx, backward_col_idx);
-                        return pivot_value;
-                    });
+                std::ignore =
+                    elimination_result.matrix.get_value(pivot_row_idx, backward_col_idx)
+                        .transform([&elimination_result, multiplier_value, row_idx,
+                                    backward_col_idx](IntS pivot_value) {
+                            elimination_result.matrix.add_to_value(static_cast<IntS>(-multiplier_value * pivot_value),
+                                                                   row_idx, backward_col_idx);
+                            return pivot_value;
+                        });
             }
             elimination_result.rhs[row_idx] -=
                 static_cast<DoubleComplex>(multiplier_value) * elimination_result.rhs[pivot_row_idx];
@@ -226,7 +229,7 @@ inline void backward_substitution(ReducedEchelonForm& elimination_result) {
 
 // reduced echelon form based on custom forward elimination and backward substitution procedures
 // in other words, this performs the Penrose inverse on the adjacency matrix
-inline ReducedEchelonForm reduced_echelon_form(std::vector<BranchIdx>& edges, std::vector<DoubleComplex>& node_loads) {
+inline ReducedEchelonForm reduced_echelon_form(std::vector<BranchIdx> edges, std::vector<DoubleComplex> node_loads) {
     auto const edge_number{narrow_cast<Idx>(edges.size())};
 
     ReducedEchelonForm result{};
@@ -268,11 +271,11 @@ inline SolutionSet set_solution_system(ReducedEchelonForm& result) {
         auto const pivot_edge_idx = result.pivot_edge_indices[matrix_row];
         for (auto dfs_matrix_col : std::views::iota(Idx{}, free_indices_size)) {
             Idx const free_edge_idx = result.free_edge_indices[dfs_matrix_col];
-            result.matrix.get_value(matrix_row, free_edge_idx)
-                .transform([&dfs_matrix, pivot_edge_idx, dfs_matrix_col](IntS matrix_element) {
-                    dfs_matrix.set_value(matrix_element, pivot_edge_idx, dfs_matrix_col);
-                    return matrix_element;
-                });
+            std::ignore = result.matrix.get_value(matrix_row, free_edge_idx)
+                              .transform([&dfs_matrix, pivot_edge_idx, dfs_matrix_col](IntS matrix_element) {
+                                  dfs_matrix.set_value(matrix_element, pivot_edge_idx, dfs_matrix_col);
+                                  return matrix_element;
+                              });
         }
         extended_rhs[pivot_edge_idx] = result.rhs[matrix_row];
     }
@@ -294,12 +297,13 @@ inline std::vector<std::vector<DoubleComplex>> set_projection_system(Idx free_in
     for (Idx dfs_matrix_col = 0; dfs_matrix_col < free_indices_number; dfs_matrix_col++) {
         auto dot_product_rhs = DoubleComplex{};
         for (Idx dfs_matrix_row = 0; dfs_matrix_row < total_indices_number; dfs_matrix_row++) {
-            solution_set.dfs_matrix.get_value(dfs_matrix_row, dfs_matrix_col)
-                .transform(
-                    [&dot_product_rhs, &extended_rhs_ = solution_set.extended_rhs, &dfs_matrix_row](IntS first_value) {
-                        dot_product_rhs += static_cast<DoubleComplex>(first_value) * extended_rhs_[dfs_matrix_row];
-                        return first_value;
-                    });
+            std::ignore = solution_set.dfs_matrix.get_value(dfs_matrix_row, dfs_matrix_col)
+                              .transform([&dot_product_rhs, &extended_rhs_ = solution_set.extended_rhs,
+                                          &dfs_matrix_row](IntS first_value) {
+                                  dot_product_rhs +=
+                                      static_cast<DoubleComplex>(first_value) * extended_rhs_[dfs_matrix_row];
+                                  return first_value;
+                              });
         }
         auto& projection_system_row = projection_system[dfs_matrix_col];
         projection_system_row[free_indices_number] = dot_product_rhs;
@@ -356,19 +360,20 @@ inline void naive_gauss_elimination(std::vector<std::vector<DoubleComplex>>& sys
 };
 
 inline std::vector<DoubleComplex> compute_internal_loads(SolutionSet const& solution_set,
-                                                         std::vector<std::vector<DoubleComplex>> const& system) {
-    auto const number_of_rows = narrow_cast<Idx>(solution_set.extended_rhs.size());
-    auto const number_of_columns = narrow_cast<Idx>(system.size());
+                                                         std::span<std::vector<DoubleComplex> const> system) {
+    auto const number_of_rows = narrow_cast<Idx>(std::ranges::ssize(solution_set.extended_rhs));
+    auto const number_of_columns = narrow_cast<Idx>(std::ranges::ssize(system));
     std::vector<DoubleComplex> internal_loads(number_of_rows);
 
     for (auto const row : IdxRange{number_of_rows}) {
         internal_loads[row] = solution_set.extended_rhs[row];
         auto sum_value = DoubleComplex{};
         for (auto const column : IdxRange{number_of_columns}) {
-            solution_set.dfs_matrix.get_value(row, column).transform([&sum_value, &system, column](IntS value) {
-                sum_value += static_cast<DoubleComplex>(value) * system[column].back();
-                return value;
-            });
+            std::ignore =
+                solution_set.dfs_matrix.get_value(row, column).transform([&sum_value, &system, column](IntS value) {
+                    sum_value += static_cast<DoubleComplex>(value) * system[column].back();
+                    return value;
+                });
         }
         internal_loads[row] -= sum_value;
     }
@@ -377,20 +382,20 @@ inline std::vector<DoubleComplex> compute_internal_loads(SolutionSet const& solu
 };
 } // namespace detail
 
-inline std::vector<DoubleComplex> compute_loads_link_elements(std::vector<BranchIdx>& edges,
-                                                              std::vector<DoubleComplex>& node_loads) {
+inline std::vector<DoubleComplex> compute_loads_link_elements(std::vector<BranchIdx> edges,
+                                                              std::vector<DoubleComplex> node_loads) {
     using namespace detail;
 
-    auto reduced_echelon_result = reduced_echelon_form(edges, node_loads);
+    auto reduced_echelon_result = reduced_echelon_form(std::move(edges), std::move(node_loads));
     auto solution_set = set_solution_system(reduced_echelon_result);
 
     if (solution_set.dfs_matrix.data_map.empty()) {
         return solution_set.extended_rhs;
     }
 
-    auto const free_indices_number = narrow_cast<Idx>(reduced_echelon_result.free_edge_indices.size());
-    auto const total_indices_number = narrow_cast<Idx>(reduced_echelon_result.free_edge_indices.size() +
-                                                       reduced_echelon_result.pivot_edge_indices.size());
+    auto const free_indices_number = narrow_cast<Idx>(std::ranges::ssize(reduced_echelon_result.free_edge_indices));
+    auto const total_indices_number = narrow_cast<Idx>(std::ranges::ssize(reduced_echelon_result.free_edge_indices) +
+                                                       std::ranges::ssize(reduced_echelon_result.pivot_edge_indices));
     std::vector<std::vector<DoubleComplex>> projection_system =
         set_projection_system(free_indices_number, total_indices_number, solution_set);
 

@@ -37,6 +37,7 @@
 #include "main_core/input.hpp"
 #include "main_core/main_model_type.hpp"
 #include "main_core/output.hpp"
+#include "main_core/topological_node_output.hpp"
 #include "main_core/topology.hpp"
 #include "main_core/update.hpp"
 
@@ -287,7 +288,7 @@ class MainModelImpl {
     auto calculate_(PrepareInputFn prepare_input, SolveFn solve, Logger& logger) {
         using InputType = std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>::const_reference;
         using SolverOutputType = std::invoke_result_t<SolveFn, MathSolverType&, YBus const&, InputType>;
-        using sym = SolverOutputType::sym;
+        using sym = decode_symmetry_v<SolverOutputType>;
 
         assert(construction_complete_);
         // prepare
@@ -315,21 +316,21 @@ class MainModelImpl {
 
     // Calculate with optimization, e.g., automatic tap changer
     template <calculation_type_tag calculation_type, symmetry_tag sym>
-    auto calculate_with_optimizer(Options const& options, Logger& logger) {
-        auto const get_calculator = [this, &options, &logger] {
+    auto calculate_with_optimizer(Options const& options, bool cache_run, Logger& logger) {
+        auto const get_calculator = [this, &options, cache_run, &logger] {
             using Calc = Calculator<calculation_type, sym>;
 
             assert(options.optimizer_type == OptimizerType::no_optimization ||
                    (std::derived_from<calculation_type, power_flow_t>));
 
-            return [this, &mutable_comp_coup = state_.comp_coup, &options,
+            return [this, &mutable_comp_coup = state_.comp_coup, &options, cache_run,
                     &logger](MainModelState const& state, CalculationMethod calculation_method) {
                 (void)state; // to avoid unused-lambda-capture when in Release build
                 assert(&state == &state_);
 
-                return calculate_<MathSolverProxy<sym>, YBus<sym>>(Calc::preparer(state, mutable_comp_coup, options),
-                                                                   Calc::solver(calculation_method, options, logger),
-                                                                   logger);
+                return calculate_<MathSolverProxy<sym>, YBus<sym>>(
+                    Calc::preparer(state, mutable_comp_coup, options),
+                    Calc::solver(calculation_method, options, cache_run, logger), logger);
             };
         };
 
@@ -347,7 +348,7 @@ class MainModelImpl {
     }
 
     // Single calculation, propagating the results to result_data
-    void calculate(Options options, MutableDataset const& result_data, Logger& logger) {
+    void calculate(Options options, bool cache_run, MutableDataset const& result_data, Logger& logger) {
         assert(construction_complete_);
 
         if (options.calculation_type == CalculationType::short_circuit) {
@@ -366,11 +367,12 @@ class MainModelImpl {
 
         calculation_type_symmetry_func_selector(
             options.calculation_type, options.calculation_symmetry,
-            []<calculation_type_tag calculation_type, symmetry_tag sym>(
+            [cache_run]<calculation_type_tag calculation_type, symmetry_tag sym>(
                 MainModelImpl& main_model_, Options const& options_, MutableDataset const& result_data_,
                 Logger& logger) {
-                auto const math_output = main_model_.calculate_with_optimizer<calculation_type, sym>(options_, logger);
-                main_model_.output_result(math_output, result_data_, logger);
+                main_model_.output_result(
+                    main_model_.calculate_with_optimizer<calculation_type, sym>(options_, cache_run, logger),
+                    result_data_, logger);
             },
             *this, options, result_data, logger);
     }
@@ -381,8 +383,7 @@ class MainModelImpl {
         auto sub_opt = options; // copy
         sub_opt.err_tol = cache_run ? std::numeric_limits<double>::max() : options.err_tol;
         sub_opt.max_iter = cache_run ? 1 : options.max_iter;
-
-        model.calculate(sub_opt, target_data, logger);
+        model.calculate(sub_opt, cache_run, target_data, logger);
     }
 
     auto const& state() const {
@@ -395,17 +396,29 @@ class MainModelImpl {
         return *meta_data_;
     }
 
-    void check_no_experimental_features_used(Options const& /*options*/, ConstDataset const* batch_dataset) const {
-        if (!std::ranges::all_of(
-                state_.components.template citer<VoltageRegulator>(),
-                [](auto const& regulator) { return is_nan(regulator.q_min()) && is_nan(regulator.q_max()); }) ||
-            (batch_dataset != nullptr &&
-             batch_dataset->for_each_component<meta_data::update_getter_s, VoltageRegulator>([](auto const& span) {
-                 return !std::ranges::all_of(span, [](VoltageRegulatorUpdate const& regulator) {
-                     return is_nan(regulator.q_min) && is_nan(regulator.q_max);
-                 });
-             }))) {
-            throw ExperimentalFeature{"Voltage Regulator with Qmin/Qmax limits is an experimental feature"};
+    void check_no_experimental_features_used(Options const& options, ConstDataset const* batch_dataset) const {
+        bool const is_asymmetric_power_flow = options.calculation_type == CalculationType::power_flow &&
+                                              options.calculation_symmetry == CalculationSymmetry::asymmetric;
+
+        auto const regulator_has_q_limits = [](auto const& regulator) {
+            return !is_nan(regulator.q_min()) || !is_nan(regulator.q_max());
+        };
+        auto const regulator_update_has_q_limits = [](VoltageRegulatorUpdate const& regulator) {
+            return !is_nan(regulator.q_min) || !is_nan(regulator.q_max);
+        };
+
+        bool const state_has_q_limits =
+            std::ranges::any_of(state_.components.template citer<VoltageRegulator>(), regulator_has_q_limits);
+
+        bool const batch_has_q_limits =
+            batch_dataset != nullptr && batch_dataset->for_each_component<meta_data::update_getter_s, VoltageRegulator>(
+                                            [&regulator_update_has_q_limits](auto const& span) {
+                                                return std::ranges::any_of(span, regulator_update_has_q_limits);
+                                            });
+
+        if (is_asymmetric_power_flow && (state_has_q_limits || batch_has_q_limits)) {
+            throw ExperimentalFeature{
+                "Voltage Regulator with Qmin/Qmax limits for asymmetric calculations is an experimental feature"};
         }
     }
 
@@ -426,9 +439,13 @@ class MainModelImpl {
 
   private:
     template <solver_output_type SolverOutputType>
-    void output_result(MathOutput<std::vector<SolverOutputType>> const& math_output, MutableDataset const& result_data,
+    void output_result(MathOutput<std::vector<SolverOutputType>> math_output, MutableDataset const& result_data,
                        Logger& logger) const {
         assert(!result_data.is_batch());
+
+        Timer const t_output{logger, LogEvent::produce_output};
+
+        main_core::solve_topological_nodes(state_, math_output);
 
         auto const output_func = [this, &math_output, &result_data]<typename CT>() {
             result_data.for_each_component<typename output_type_getter<SolverOutputType>::type, CT>(
@@ -440,7 +457,6 @@ class MainModelImpl {
                 });
         };
 
-        Timer const t_output{logger, LogEvent::produce_output};
         ModelType::run_functor_with_all_component_types_return_void(output_func);
     }
 

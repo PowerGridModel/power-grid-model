@@ -32,6 +32,7 @@ from power_grid_model.errors import (
     PowerGridError,
     PowerGridSerializationError,
     SparseMatrixError,
+    UnsupportedLoadGenTypeForVoltageRegulator,
     UnsupportedRegulatorCombinationError,
     UnsupportedVoltageRegulatorSourceCombinationError,
 )
@@ -81,6 +82,7 @@ KNOWN_EXCEPTIONS: dict[str, type[BaseException] | None] = {
         AssertionError,
         OSError,
         MaxIterationReached,
+        UnsupportedLoadGenTypeForVoltageRegulator,
         UnsupportedRegulatorCombinationError,
         UnsupportedVoltageRegulatorSourceCombinationError,
         ExperimentalFeature,
@@ -139,6 +141,7 @@ def get_test_case_paths(calculation_type: str, test_cases: list[str] | None = No
 
 
 def add_case(
+    *,
     case_name: str,
     case_dir: Path,
     params: dict,

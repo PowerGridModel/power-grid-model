@@ -70,7 +70,7 @@ concept optimizer_c =
         {
             optimizer.optimize(state, method)
         } -> std::same_as<
-              MathOutput<detail::state_calculator_result_t<typename Optimizer::Calculator, typename Optimizer::State>>>;
+            MathOutput<detail::state_calculator_result_t<typename Optimizer::Calculator, typename Optimizer::State>>>;
     };
 
 template <typename StateCalculator, typename State_>
@@ -84,7 +84,7 @@ class NoOptimizer : public detail::BaseOptimizer<StateCalculator, State_> {
     NoOptimizer(Calculator func) : func_{std::move(func)} {}
 
     auto optimize(State const& state, CalculationMethod method) -> MathOutput<ResultType> final {
-        return {.solver_output = func_(state, method), .optimizer_output = {}};
+        return {.solver_output = func_(state, method), .optimizer_output = {}, .supernode_output = {}};
     }
 
   private:

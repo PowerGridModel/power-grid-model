@@ -28,7 +28,7 @@ jobs:
         uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
 
       - name: Set PyPI Version
-        uses: PowerGridModel/pgm-version-bump@00b541a2eeb64ac1537e3a531b50a3175313822d # v0.1.4
+        uses: PowerGridModel/pgm-version-bump@65909ad17d7dd3d5330b31894bb17b57024d593f # v0.1.5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -201,7 +201,7 @@ jobs:
           xcode-version: latest-stable
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@4726cd35bb13f7bde50cf2761f2499ac7b3aa32c # v4.1.1
+        uses: pypa/cibuildwheel@1828c10ab37f080699c7b81cea34097c684a7074 # v4.2.0
         # GitHub Actions specific build parameters
         env:
           # pass GitHub runner info into Linux container
