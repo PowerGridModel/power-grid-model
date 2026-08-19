@@ -33,12 +33,5 @@
   "C_Cpp.clang_format_fallbackStyle": "LLVM",
   "[python]": {
     "editor.defaultFormatter": "charliermarsh.ruff"
-  },
-  "[markdown]": {
-    "editor.defaultFormatter": "DavidAnson.vscode-markdownlint",
-    "editor.rulers": [120]
-  },
-  "[json][jsonc]": {
-    "editor.defaultFormatter": "biomejs.biome"
   }
 }

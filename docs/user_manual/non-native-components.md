@@ -20,7 +20,7 @@ New contributions and ideas for modeling grid components are very welcome!
 
 ## Ideal transformer
 
-An ideal transformer can be modeled as a [link](./components.md#link). <!-- markdownlint-disable-line descriptive-link-text line-length -->
+An ideal transformer can be modeled as a [link](./components.md#link).
 To this end, it is explicitly allowed to place a link between two different voltage levels.
 Trivially, no additional electrical parameters need to be specified.
 
@@ -126,7 +126,6 @@ An impedance-free ideal phase link cannot be represented by setting both `r1` an
 ```
 
 ### Mapping from CGMES / ENTSO-E PST models
-<!-- markdownlint-disable-next-line MD013 -->
 The [ENTSO-E PST modelling document (CGMES v2.4)](https://eepublicdownloads.entsoe.eu/clean-documents/CIM_documents/Grid_Model_CIM/ENTSOE_CGMES_v2.4_28May2014_PSTmodelling.pdf)
 describes the standard PST types and their mapping to CIM classes.
 All of these types can be represented with `generic_branch`.

@@ -262,7 +262,7 @@ For optimal user experience on Linux, also consider installing the
 At the time of writing, the set-up is done as follows:
 
 ```shell
-sudo apt update && sudo apt -y upgrade                     # make sure you're up to date
+sudo apt update && sudo apt upgrade                     # make sure you're up to date
 sudo apt install build-essential gcc g++ clang-18 procps curl file git # install initial dependencies
 ```
 
