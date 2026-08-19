@@ -410,13 +410,13 @@ template <typename T> struct SupernodeOutput;
 template <steady_state_solver_output_type SolverOutputType> struct SupernodeOutput<SolverOutputType> {
     using sym = decode_symmetry_v<SolverOutputType>;
 
-    ComplexValueVector<sym> bus_injection; // user bus output
-    BranchSolverOutput<sym> branch;        // user link
+    ComplexValueVector<sym> bus_injection;     // user bus output
+    std::vector<BranchSolverOutput<sym>> link; // user link
 };
 template <short_circuit_solver_output_type SolverOutputType> struct SupernodeOutput<SolverOutputType> {
     using sym = decode_symmetry_v<SolverOutputType>;
 
-    BranchShortCircuitSolverOutput<sym> branch; // user link
+    std::vector<BranchShortCircuitSolverOutput<sym>> link; // user link
 };
 
 template <typename T> struct MathOutput {

@@ -18,8 +18,19 @@
 namespace power_grid_model::main_core {
 namespace detail {
 template <symmetry_tag sym> struct SuperNodeSolverInput {
-    ComplexValueVector<sym> bus_injection;
-    ComplexValueVector<sym> bus_flow_from_branch;
+    std::span<BranchIdx const> links;
+    ComplexValueVector<sym> node_injection;
+    ComplexValueVector<sym> node_flow_from_branch;
+
+    ComplexValueVector<sym> get_total_injection_per_node() const {
+        assert(node_injection.size() == node_flow_from_branch.size());
+
+        return std::views::zip(node_injection, node_flow_from_branch) | std::views::transform([](auto const& pair) {
+                   auto const& [node_inj, branch_flow] = pair;
+                   return node_inj + branch_flow;
+               }) |
+               std::ranges::to<ComplexValueVector<sym>>();
+    }
 };
 
 template <typename Callable> Callable unwrap_callable(Callable callable) { return callable; }
@@ -153,29 +164,83 @@ inline void add_flows(State const& state, MathOutput<std::vector<SolverOutput>> 
         });
 }
 
+template <symmetry_tag sym, typename LinkSolver>
+    requires std::invocable<LinkSolver, std::vector<BranchIdx>, ComplexVector>
+ComplexValueVector<sym> compute_link_solver(LinkSolver link_solver,
+                                            SuperNodeSolverInput<sym> const& super_node_solver_input) {
+    if constexpr (is_symmetric_v<sym>) {
+        return link_solver(super_node_solver_input.links | std::ranges::to<std::vector>(),
+                           super_node_solver_input.get_total_injection_per_node());
+    } else {
+        auto constexpr phase_number = Idx{3};
+        auto const injection_per_node = super_node_solver_input.get_total_injection_per_node();
+        auto const node_number = injection_per_node.size();
+        std::array<ComplexVector, phase_number> injection_per_phase;
+
+        std::ranges::for_each(injection_per_phase, [node_number](auto& injection) { injection.reserve(node_number); });
+
+        for (auto const& node_injection : injection_per_node) {
+            for (Idx phase = 0; phase < phase_number; ++phase) {
+                injection_per_phase[phase].emplace_back(node_injection(phase));
+            }
+        }
+
+        auto const links = super_node_solver_input.links | std::ranges::to<std::vector>();
+        auto result = ComplexValueVector<asymmetric_t>(links.size());
+        for (Idx phase = 0; phase < phase_number; ++phase) {
+            auto const phase_result = link_solver(links, injection_per_phase[phase]);
+            assert(phase_result.size() == result.size());
+
+            for (auto&& [node_result, node_phase_value] : std::views::zip(result, phase_result)) {
+                node_result(phase) = node_phase_value;
+            }
+        }
+        return result;
+    }
+}
+
+template <symmetry_tag sym, typename BranchSolverOutputType>
+    requires symmetry_tag<decode_symmetry_v<BranchSolverOutputType>> &&
+             (std::same_as<BranchSolverOutputType, BranchSolverOutput<decode_symmetry_v<BranchSolverOutputType>>> ||
+              std::same_as<BranchSolverOutputType,
+                           BranchShortCircuitSolverOutput<decode_symmetry_v<BranchSolverOutputType>>>)
+std::vector<BranchSolverOutputType> get_link_output(ComplexValueVector<sym> const& link_solver_result) {
+    std::vector<BranchSolverOutputType> link_output;
+    link_output.reserve(link_solver_result.size());
+
+    for (auto const& result : link_solver_result) {
+        if constexpr (std::same_as<BranchSolverOutputType,
+                                   BranchSolverOutput<decode_symmetry_v<BranchSolverOutputType>>>) {
+            link_output.emplace_back(BranchSolverOutputType{.s_f = result, .s_t = -result}); // i conversion missing
+        } else
+            link_output.emplace_back(BranchSolverOutputType{.i_f = result, .i_t = -result});
+    }
+    return link_output;
+}
+
 template <typename LinkSolver, main_model_state_c State, solver_output_type SolverOutput>
-    requires std::invocable<LinkSolver, std::vector<BranchIdx>, std::vector<DoubleComplex>>
+    requires std::invocable<LinkSolver, std::vector<BranchIdx>, ComplexVector>
 inline std::vector<SupernodeOutput<SolverOutput>>
 solve_topological_nodes(LinkSolver link_solver, State const& state,
                         MathOutput<std::vector<SolverOutput>> const& math_output) {
     using sym = decode_symmetry_v<SolverOutput>;
 
-    (void)link_solver; // suppress unused variable warning until link_solver is used for link output
-
-    std::vector<detail::SuperNodeSolverInput<sym>> link_solver_input =
+    std::vector<SuperNodeSolverInput<sym>> link_solver_input =
         state.reduced_topology->topo_node_coup.topo_nodes |
-        std::views::transform([](auto const& topo_node) -> detail::SuperNodeSolverInput<sym> {
-            return {.bus_injection = ComplexValueVector<sym>(topo_node.user_nodes.size()),
-                    .bus_flow_from_branch = std::vector<ComplexValue<sym>>(topo_node.user_nodes.size())};
+        std::views::transform([](auto const& topo_node) -> SuperNodeSolverInput<sym> {
+            auto const node_number = topo_node.user_nodes.size();
+            return {.links = std::span(topo_node.user_links),
+                    .node_injection = ComplexValueVector<sym>(node_number),
+                    .node_flow_from_branch = std::vector<ComplexValue<sym>>(node_number)};
         }) |
         std::ranges::to<std::vector>();
 
     auto const accumulate_injection = [&link_solver_input]<typename ComponentType>(Idx2D const& user_topo_id,
                                                                                    ComplexValue<sym> const& injection) {
         if constexpr (std::derived_from<ComponentType, Branch>) {
-            link_solver_input[user_topo_id.group].bus_flow_from_branch[user_topo_id.pos] += injection;
+            link_solver_input[user_topo_id.group].node_flow_from_branch[user_topo_id.pos] += injection;
         } else {
-            link_solver_input[user_topo_id.group].bus_injection[user_topo_id.pos] += injection;
+            link_solver_input[user_topo_id.group].node_injection[user_topo_id.pos] += injection;
         }
     };
 
@@ -188,18 +253,22 @@ solve_topological_nodes(LinkSolver link_solver, State const& state,
         add_flows<InjectionComponentTypesTuple>(state, math_output, accumulate_injection);
     }
 
-    std::vector<SupernodeOutput<SolverOutput>> supernode_output =
-        link_solver_input | std::views::transform([](auto const& super_node_solver_input) {
-            (void)super_node_solver_input; // suppress unused variable warning until link_solver is used for link output
-            if constexpr (steady_state_solver_output_type<SolverOutput>) {
-                return SupernodeOutput<SolverOutput>{.bus_injection = super_node_solver_input.bus_injection,
-                                                     .branch = {}};
-            } else if constexpr (short_circuit_solver_output_type<SolverOutput>) {
-                return SupernodeOutput<SolverOutput>{.branch = {}};
-            }
-        }) |
-        std::ranges::to<std::vector>();
-    return supernode_output;
+    return link_solver_input |
+           std::views::transform([link_solver](auto const& super_node_solver_input) -> SupernodeOutput<SolverOutput> {
+               (void)super_node_solver_input; // suppress unused variable warning until link_solver is used for link
+                                              // output
+               if constexpr (steady_state_solver_output_type<SolverOutput>) {
+                   return SupernodeOutput<SolverOutput>{
+                       .bus_injection = super_node_solver_input.node_injection,
+                       .link = get_link_output<sym, BranchSolverOutput<sym>>(
+                           compute_link_solver<sym>(link_solver, super_node_solver_input))};
+               } else if constexpr (short_circuit_solver_output_type<SolverOutput>) {
+                   return SupernodeOutput<SolverOutput>{
+                       .link = get_link_output<sym, BranchShortCircuitSolverOutput<sym>>(
+                           compute_link_solver<sym>(link_solver, super_node_solver_input))};
+               }
+           }) |
+           std::ranges::to<std::vector>();
 }
 } // namespace detail
 
