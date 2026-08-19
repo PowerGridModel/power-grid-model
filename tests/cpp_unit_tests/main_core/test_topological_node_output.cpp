@@ -8,16 +8,17 @@
 #include <power_grid_model/calculation_parameters.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/component_list.hpp>
+#include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/common/three_phase_tensor.hpp>
 #include <power_grid_model/component/appliance.hpp>
 #include <power_grid_model/component/base.hpp>
+#include <power_grid_model/component/branch.hpp>
 #include <power_grid_model/component/fault.hpp>
 #include <power_grid_model/component/line.hpp>
 #include <power_grid_model/component/load_gen.hpp>
 #include <power_grid_model/component/node.hpp>
 #include <power_grid_model/component/shunt.hpp>
 #include <power_grid_model/component/source.hpp>
-#include <power_grid_model/component/three_winding_transformer.hpp>
 #include <power_grid_model/container.hpp>
 #include <power_grid_model/main_core/container_queries.hpp>
 #include <power_grid_model/main_core/state.hpp>
@@ -25,10 +26,10 @@
 
 #include <doctest/doctest.h>
 
+#include <concepts>
 #include <functional>
 #include <memory>
 #include <unordered_map>
-#include <utility>
 #include <vector>
 
 namespace power_grid_model::main_core {
@@ -37,9 +38,9 @@ using ComponentContainer = Container<ExtraRetrievableTypes<Appliance, Base, Bran
                                      Fault, Line, Node, Source, Shunt>;
 using State = MainModelState<ComponentContainer>;
 
-double constexpr dummy_value = 0.0;
-ComplexValue<symmetric_t> constexpr dummy_complex_value_sym{3.14, 2.71};
-ComplexValue<asymmetric_t> const dummy_complex_value_asym{{0.0, 1.0}, {-2.0, -3.0}, {4.0, -5.0}};
+double constexpr dummy_value = 123.321;
+ComplexValue<symmetric_t> constexpr dummy_complex_value_sym{2.14, 3.71};
+ComplexValue<asymmetric_t> const dummy_complex_value_asym{{1.0, 2.0}, {-3.0, -4.0}, {5.0, -6.0}};
 
 inline State make_state() {
     State state;
@@ -63,7 +64,7 @@ inline State make_state() {
                                {.group = 0, .pos = 1},
                                {.group = disconnected, .pos = 0},
                                {.group = disconnected, .pos = 1}};
-        topo_comp_coup.shunt = {{.group = 0, .pos = 0}},
+        topo_comp_coup.shunt = {{.group = 0, .pos = 0}};
         topo_comp_coup.load_gen = {{.group = 0, .pos = 0}, {.group = 0, .pos = 1}};
         topo_comp_coup.source = {{.group = 0, .pos = 0}, {.group = disconnected, .pos = disconnected}};
         topo_comp_coup.branch = {{.group = 0, .pos = 0},
@@ -153,8 +154,6 @@ template <symmetry_tag sym> struct InjectionAccumulator {
     std::unordered_map<Idx2D, ComplexValue<sym>, Idx2DHash> branch_flow_into_nodes{};
 };
 } // namespace
-
-// TODO(figueroa1395): are branch3s relevant at this point? I don't think so, but I could be wrong
 
 TEST_CASE("Test topological node output") {
 
