@@ -364,89 +364,53 @@ TEST_CASE("Test topological node output") {
         }
     }
     SUBCASE("compute_link_solver") {
-        SUBCASE("with mocked link solver") {
-            // the mock lets us verify how compute_link_solver forwards its input to the link solver and assembles
-            // the returned result, independently of the real link solver implementation
-            SUBCASE("symmetric") {
-                // a single call is made with the links and the total injection per node
-                std::vector<BranchIdx> const links{{0, 1}};
-                detail::SuperNodeSolverInput<symmetric_t> const input{
-                    .links = links,
-                    .node_injection = {DoubleComplex{1.0, 2.0}, DoubleComplex{3.0, 4.0}},
-                    .node_flow_from_branch = {DoubleComplex{0.5, 0.5}, DoubleComplex{-1.0, -2.0}}};
+        // the mock verifies how compute_link_solver forwards its input to the link solver and assembles the result
+        SUBCASE("symmetric") {
+            // a single call is made with the links and the total injection per node
+            std::vector<BranchIdx> const links{{0, 1}};
+            detail::SuperNodeSolverInput<symmetric_t> const input{
+                .links = links,
+                .node_injection = {DoubleComplex{1.0, 2.0}, DoubleComplex{3.0, 4.0}},
+                .node_flow_from_branch = {DoubleComplex{0.5, 0.5}, DoubleComplex{-1.0, -2.0}}};
 
-                LinkSolverMock mock{.return_values = {{DoubleComplex{7.0, 8.0}}}};
+            LinkSolverMock mock{.return_values = {{DoubleComplex{7.0, 8.0}}}};
 
-                auto const result = detail::compute_link_solver<symmetric_t>(std::ref(mock), input);
+            auto const result = detail::compute_link_solver<symmetric_t>(std::ref(mock), input);
 
-                REQUIRE(mock.call_count == 1);
-                CHECK(mock.recorded_edges[0] == links);
-                REQUIRE(mock.recorded_loads[0].size() == 2);
-                CHECK(mock.recorded_loads[0][0] == DoubleComplex{1.5, 2.5});
-                CHECK(mock.recorded_loads[0][1] == DoubleComplex{2.0, 2.0});
+            REQUIRE(mock.call_count == 1);
+            CHECK(mock.recorded_edges[0] == links);
+            REQUIRE(mock.recorded_loads[0].size() == 2);
+            CHECK(mock.recorded_loads[0][0] == DoubleComplex{1.5, 2.5});
+            CHECK(mock.recorded_loads[0][1] == DoubleComplex{2.0, 2.0});
 
-                REQUIRE(result.size() == 1);
-                CHECK(result[0] == DoubleComplex{7.0, 8.0});
-            }
-            SUBCASE("asymmetric") {
-                // one call is made per phase and the per-phase results are recombined into the asymmetric output
-                std::vector<BranchIdx> const links{{0, 1}};
-                ComplexValue<asymmetric_t> const injection{DoubleComplex{1.0, 0.0}, DoubleComplex{2.0, 0.0},
-                                                           DoubleComplex{3.0, 0.0}};
-                ComplexValue<asymmetric_t> const zero{DoubleComplex{}, DoubleComplex{}, DoubleComplex{}};
-                detail::SuperNodeSolverInput<asymmetric_t> const input{.links = links,
-                                                                       .node_injection = {injection, zero},
-                                                                       .node_flow_from_branch = {zero, zero}};
-
-                LinkSolverMock mock{.return_values = {{DoubleComplex{10.0, 0.0}},
-                                                      {DoubleComplex{20.0, 0.0}},
-                                                      {DoubleComplex{30.0, 0.0}}}};
-
-                auto const result = detail::compute_link_solver<asymmetric_t>(std::ref(mock), input);
-
-                REQUIRE(mock.call_count == 3);
-                for (Idx phase = 0; phase < 3; ++phase) {
-                    CHECK(mock.recorded_edges[phase] == links);
-                    REQUIRE(mock.recorded_loads[phase].size() == 2);
-                    CHECK(mock.recorded_loads[phase][0] == DoubleComplex{static_cast<double>(phase + 1), 0.0});
-                    CHECK(mock.recorded_loads[phase][1] == DoubleComplex{});
-                }
-
-                REQUIRE(result.size() == 1);
-                CHECK(result[0].isApprox(ComplexValue<asymmetric_t>{DoubleComplex{10.0, 0.0}, DoubleComplex{20.0, 0.0},
-                                                                    DoubleComplex{30.0, 0.0}}));
-            }
+            REQUIRE(result.size() == 1);
+            CHECK(result[0] == DoubleComplex{7.0, 8.0});
         }
-        SUBCASE("with real link solver") {
-            // minimal sanity checks that the real link solver is wired in correctly; a single link between two nodes
-            // with opposite injections carries the full injection
-            SUBCASE("symmetric") {
-                std::vector<BranchIdx> const links{{0, 1}};
-                detail::SuperNodeSolverInput<symmetric_t> const input{
-                    .links = links,
-                    .node_injection = {DoubleComplex{1.0, 0.0}, DoubleComplex{0.0, 0.0}},
-                    .node_flow_from_branch = {DoubleComplex{0.0, 0.0}, DoubleComplex{-1.0, 0.0}}};
+        SUBCASE("asymmetric") {
+            // one call is made per phase and the per-phase results are recombined into the asymmetric output
+            std::vector<BranchIdx> const links{{0, 1}};
+            ComplexValue<asymmetric_t> const injection{DoubleComplex{1.0, 0.0}, DoubleComplex{2.0, 0.0},
+                                                       DoubleComplex{3.0, 0.0}};
+            ComplexValue<asymmetric_t> const zero{DoubleComplex{}, DoubleComplex{}, DoubleComplex{}};
+            detail::SuperNodeSolverInput<asymmetric_t> const input{
+                .links = links, .node_injection = {injection, zero}, .node_flow_from_branch = {zero, zero}};
 
-                auto const result =
-                    detail::compute_link_solver<symmetric_t>(link_solver::compute_loads_link_elements, input);
-                REQUIRE(result.size() == 1);
-                CHECK(result[0].real() == doctest::Approx(1.0));
-                CHECK(result[0].imag() == doctest::Approx(0.0));
-            }
-            SUBCASE("asymmetric") {
-                ComplexValue<asymmetric_t> const injection{DoubleComplex{1.0, 0.0}, DoubleComplex{2.0, 0.0},
-                                                           DoubleComplex{3.0, 0.0}};
-                ComplexValue<asymmetric_t> const zero{DoubleComplex{}, DoubleComplex{}, DoubleComplex{}};
-                std::vector<BranchIdx> const links{{0, 1}};
-                detail::SuperNodeSolverInput<asymmetric_t> const input{.links = links,
-                                                                       .node_injection = {injection, zero},
-                                                                       .node_flow_from_branch = {zero, -injection}};
+            LinkSolverMock mock{
+                .return_values = {{DoubleComplex{10.0, 0.0}}, {DoubleComplex{20.0, 0.0}}, {DoubleComplex{30.0, 0.0}}}};
 
-                auto const result =
-                    detail::compute_link_solver<asymmetric_t>(link_solver::compute_loads_link_elements, input);
-                REQUIRE(result.size() == 1);
-                CHECK(result[0].isApprox(injection));
+            auto const result = detail::compute_link_solver<asymmetric_t>(std::ref(mock), input);
+
+            REQUIRE(mock.call_count == 3);
+            for (Idx phase = 0; phase < 3; ++phase) {
+                CHECK(mock.recorded_edges[phase] == links);
+                REQUIRE(mock.recorded_loads[phase].size() == 2);
+                CHECK(mock.recorded_loads[phase][0] == DoubleComplex{static_cast<double>(phase + 1), 0.0});
+                CHECK(mock.recorded_loads[phase][1] == DoubleComplex{});
             }
+
+            REQUIRE(result.size() == 1);
+            CHECK(result[0].isApprox(
+                ComplexValue<asymmetric_t>{DoubleComplex{10.0, 0.0}, DoubleComplex{20.0, 0.0}, DoubleComplex{30.0, 0.0}}));
         }
     }
     SUBCASE("get_link_output") {
