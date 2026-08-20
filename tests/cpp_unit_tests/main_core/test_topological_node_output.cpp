@@ -409,16 +409,15 @@ TEST_CASE("Test topological node output") {
             }
 
             REQUIRE(result.size() == 1);
-            CHECK(result[0].isApprox(
-                ComplexValue<asymmetric_t>{DoubleComplex{10.0, 0.0}, DoubleComplex{20.0, 0.0}, DoubleComplex{30.0, 0.0}}));
+            CHECK(result[0].isApprox(ComplexValue<asymmetric_t>{DoubleComplex{10.0, 0.0}, DoubleComplex{20.0, 0.0},
+                                                                DoubleComplex{30.0, 0.0}}));
         }
     }
     SUBCASE("get_link_output") {
         SUBCASE("BranchSolverOutput") {
             ComplexValueVector<symmetric_t> const link_result{dummy_complex_value_sym, 0.5 * dummy_complex_value_sym};
 
-            auto const link_output =
-                detail::get_link_output<symmetric_t, BranchSolverOutput<symmetric_t>>(link_result);
+            auto const link_output = detail::get_link_output<symmetric_t, BranchSolverOutput<symmetric_t>>(link_result);
             REQUIRE(link_output.size() == 2);
             CHECK(link_output[0].s_f == dummy_complex_value_sym);
             CHECK(link_output[0].s_t == -dummy_complex_value_sym);

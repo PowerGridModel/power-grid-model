@@ -6,6 +6,8 @@
 
 #include "core_utils.hpp"
 
+#include "../common/common.hpp"
+
 #include "../calculation_parameters.hpp"
 #include "../link_solver.hpp"
 #include "../main_core/math_output_queries.hpp"
@@ -27,7 +29,7 @@ template <symmetry_tag sym> struct SuperNodeSolverInput {
 
         return std::views::zip(node_injection, node_flow_from_branch) | std::views::transform([](auto const& pair) {
                    auto const& [node_inj, branch_flow] = pair;
-                   return node_inj + branch_flow;
+                   return ComplexValue<sym>(node_inj + branch_flow);
                }) |
                std::ranges::to<ComplexValueVector<sym>>();
     }
@@ -92,9 +94,7 @@ inline Idx get_node_sequence_idx(main_model_state_c auto const& state, Idx compo
     } else if constexpr (std::same_as<ComponentType, Fault>) {
         auto const& fault = get_component_by_sequence<Fault>(state.components, component_idx);
         return get_component_sequence_idx<Node>(state.components, fault.get_fault_object());
-    }
-
-    else {
+    } else {
         static_assert(false, "Unsupported component type for node sequence index retrieval");
     }
 }
@@ -107,9 +107,7 @@ inline Idx get_node_sequence_idx(main_model_state_c auto const& state, Idx compo
 
 template <typename ComponentType, typename SolverOutputType, typename AddToTarget>
     requires flow_accumulator_c<AddToTarget, ComponentType, SolverOutputType> &&
-             (std::same_as<ComponentType, Source> || std::same_as<ComponentType, SymLoad> ||
-              std::same_as<ComponentType, SymGenerator> || std::same_as<ComponentType, AsymLoad> ||
-              std::same_as<ComponentType, AsymGenerator> ||
+             (is_in_list_c<ComponentType, Source, SymLoad, SymGenerator, AsymLoad, AsymGenerator> ||
               (std::same_as<ComponentType, Fault> && short_circuit_solver_output_type<SolverOutputType>))
 inline void add_appliance_injection(main_model_state_c auto const& state,
                                     MathOutput<std::vector<SolverOutputType>> const& math_output,
@@ -212,8 +210,9 @@ std::vector<BranchSolverOutputType> get_link_output(ComplexValueVector<sym> cons
         if constexpr (std::same_as<BranchSolverOutputType,
                                    BranchSolverOutput<decode_symmetry_v<BranchSolverOutputType>>>) {
             link_output.emplace_back(BranchSolverOutputType{.s_f = result, .s_t = -result}); // i conversion missing
-        } else
+        } else {
             link_output.emplace_back(BranchSolverOutputType{.i_f = result, .i_t = -result});
+        }
     }
     return link_output;
 }
