@@ -254,8 +254,6 @@ solve_topological_nodes(LinkSolver link_solver, State const& state,
 
     return link_solver_input |
            std::views::transform([link_solver](auto const& super_node_solver_input) -> SupernodeOutput<SolverOutput> {
-               (void)super_node_solver_input; // suppress unused variable warning until link_solver is used for link
-                                              // output
                if constexpr (steady_state_solver_output_type<SolverOutput>) {
                    return SupernodeOutput<SolverOutput>{
                        .bus_injection = super_node_solver_input.node_injection,
