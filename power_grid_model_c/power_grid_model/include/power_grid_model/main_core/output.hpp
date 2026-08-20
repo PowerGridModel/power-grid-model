@@ -249,10 +249,11 @@ constexpr auto output_result(Component const& power_sensor, MainModelState<Compo
     auto const measured_appliance_active = [&]<typename ApplianceType>() {
         if constexpr (common::component_container_c<ComponentContainer, ApplianceType>) {
             return get_component_by_sequence<ApplianceType>(state.components, obj_seq).status();
+        } else {
+            // A missing appliance type makes this terminal type unreachable in a valid model. Keep reduced containers
+            // compatible with the previous topology-only behavior.
+            return true;
         }
-        // A missing appliance type makes this terminal type unreachable in a valid model. Keep reduced containers
-        // compatible with the previous topology-only behavior.
-        return true;
     };
 
     auto const measured_object_active = [&]() {

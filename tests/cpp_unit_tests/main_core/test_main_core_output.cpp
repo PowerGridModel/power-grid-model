@@ -12,6 +12,7 @@
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/component_list.hpp>
 #include <power_grid_model/common/enum.hpp>
+#include <power_grid_model/common/three_phase_tensor.hpp>
 #include <power_grid_model/component/appliance.hpp>
 #include <power_grid_model/component/base.hpp>
 #include <power_grid_model/component/branch.hpp>
@@ -25,6 +26,7 @@
 #include <power_grid_model/component/source.hpp>
 #include <power_grid_model/component/transformer_tap_regulator.hpp>
 #include <power_grid_model/container.hpp>
+#include <power_grid_model/container_fwd.hpp>
 
 #include <doctest/doctest.h>
 
