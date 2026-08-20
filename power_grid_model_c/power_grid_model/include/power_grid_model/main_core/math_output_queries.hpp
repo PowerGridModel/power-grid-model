@@ -19,6 +19,29 @@
 
 namespace power_grid_model::main_core {
 
+template <solver_output_type SolverOutputType>
+constexpr auto get_voltage_output(MathOutput<std::vector<SolverOutputType>> const& math_output, Idx2D const& math_id) {
+    if constexpr (steady_state_solver_output_type<SolverOutputType>) {
+        return math_output.solver_output[math_id.group].u[math_id.pos];
+    } else if constexpr (short_circuit_solver_output_type<SolverOutputType>) {
+        return math_output.solver_output[math_id.group].u_bus[math_id.pos];
+    } else {
+        static_assert(false, "Unsupported solver output type for voltage output retrieval");
+    }
+}
+
+template <steady_state_solver_output_type SolverOutputType>
+constexpr auto get_bus_injection_output_from_topo_id(MathOutput<std::vector<SolverOutputType>> const& math_output,
+                                                     Idx2D const& topo_id) {
+    return math_output.supernode_output[topo_id.group].bus_injection[topo_id.pos];
+}
+
+template <steady_state_solver_output_type SolverOutputType>
+constexpr auto get_bus_injection_output_from_math_id(MathOutput<std::vector<SolverOutputType>> const& math_output,
+                                                     Idx2D const& math_id) {
+    return math_output.solver_output[math_id.group].bus_injection[math_id.pos];
+}
+
 template <typename Component, solver_output_type SolverOutputType>
 constexpr auto get_component_output(MathOutput<std::vector<SolverOutputType>> const& math_output,
                                     Idx2D const& math_id) {
