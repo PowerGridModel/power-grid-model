@@ -84,8 +84,31 @@ constexpr auto output_result(Component const& node, MainModelState<ComponentCont
     return node.get_sc_output(math_output.solver_output[math_id.group].u_bus[math_id.pos]);
 }
 
+// output link
+template <std::same_as<Link> Component, class ComponentContainer, steady_state_solver_output_type SolverOutputType>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
+constexpr auto output_result(Component const& link, MainModelState<ComponentContainer> const& /* state */,
+                             MathOutput<std::vector<SolverOutputType>> const& math_output, Idx2D const& topo_id) {
+    using sym = decode_symmetry_v<SolverOutputType>;
+
+    if (!link.branch_status() || topo_id.group == disconnected) {
+        return link.template get_null_output<sym>();
+    }
+    return link.template get_output<sym>(math_output.supernode_output[topo_id.group].link[topo_id.pos]);
+}
+template <std::same_as<Link> Component, class ComponentContainer, short_circuit_solver_output_type SolverOutputType>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
+inline auto output_result(Component const& link, MainModelState<ComponentContainer> const& /* state */,
+                          MathOutput<std::vector<SolverOutputType>> const& math_output, Idx2D const& topo_id) {
+    if (!link.branch_status() || topo_id.group == disconnected) {
+        return link.get_null_sc_output();
+    }
+    return link.get_sc_output(math_output.supernode_output[topo_id.group].link[topo_id.pos]);
+}
+
 // output branch
 template <std::derived_from<Branch> Component, steady_state_solver_output_type SolverOutputType>
+    requires(!std::same_as<Component, Link>)
 constexpr auto output_result(Component const& branch, std::vector<SolverOutputType> const& solver_output,
                              Idx2D math_id) {
     using sym = decode_symmetry_v<SolverOutputType>;
@@ -96,6 +119,7 @@ constexpr auto output_result(Component const& branch, std::vector<SolverOutputTy
     return branch.template get_output<sym>(solver_output[math_id.group].branch[math_id.pos]);
 }
 template <std::derived_from<Branch> Component, short_circuit_solver_output_type SolverOutputType>
+    requires(!std::same_as<Component, Link>)
 inline auto output_result(Component const& branch, std::vector<SolverOutputType> const& solver_output, Idx2D math_id) {
     if (math_id.group == disconnected) {
         return branch.get_null_sc_output();
@@ -427,6 +451,27 @@ constexpr auto output_result(Component const& voltage_regulator, MainModelState<
                              MathOutput<std::vector<SolverOutputType>> const& /* math_output */,
                              Idx const /* obj_seq */) {
     return voltage_regulator.get_null_sc_output();
+}
+
+template <std::same_as<Link> Component, class ComponentContainer, solver_output_type SolverOutputType,
+          non_owning_view_c ComponentOutput>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
+constexpr void output_result(MainModelState<ComponentContainer> const& state,
+                             MathOutput<std::vector<SolverOutputType>> const& math_output, ComponentOutput output) {
+    auto const& link_topo_ids = state.reduced_topology->topo_node_coup.coupling.user_links_to_topo_nodes;
+    if (std::ranges::ssize(link_topo_ids) == get_component_size<Component>(state.components)) {
+        std::ranges::transform(
+            get_component_citer<Component>(state.components), link_topo_ids, std::ranges::begin(output),
+            [&state, &math_output](Component const& link, Idx2D const& topo_id) {
+                return output_result<Component, ComponentContainer>(link, state, math_output, topo_id);
+            });
+        return;
+    }
+
+    detail::produce_output<Component, Idx2D>(state, output,
+                                             [&math_output](Component const& link, Idx2D const& math_id) {
+                                                 return output_result<Branch>(link, math_output.solver_output, math_id);
+                                             });
 }
 
 // output base component
