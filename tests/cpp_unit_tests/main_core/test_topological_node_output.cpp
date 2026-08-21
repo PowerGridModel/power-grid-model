@@ -14,11 +14,13 @@
 #include <power_grid_model/component/base.hpp>
 #include <power_grid_model/component/branch.hpp>
 #include <power_grid_model/component/fault.hpp>
+#include <power_grid_model/component/generic_branch.hpp>
 #include <power_grid_model/component/line.hpp>
 #include <power_grid_model/component/load_gen.hpp>
 #include <power_grid_model/component/node.hpp>
 #include <power_grid_model/component/shunt.hpp>
 #include <power_grid_model/component/source.hpp>
+#include <power_grid_model/component/transformer.hpp>
 #include <power_grid_model/container.hpp>
 #include <power_grid_model/main_core/container_queries.hpp>
 #include <power_grid_model/main_core/state.hpp>
@@ -26,10 +28,13 @@
 
 #include <doctest/doctest.h>
 
+#include <algorithm>
 #include <concepts>
 #include <functional>
 #include <memory>
+#include <tuple>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace power_grid_model::main_core {
@@ -39,8 +44,12 @@ using ComponentContainer = Container<ExtraRetrievableTypes<Appliance, Base, Bran
 using State = MainModelState<ComponentContainer>;
 
 double constexpr dummy_value = 123.321;
-ComplexValue<symmetric_t> constexpr dummy_complex_value_sym{2.14, 3.71};
-ComplexValue<asymmetric_t> const dummy_complex_value_asym{{1.0, 2.0}, {-3.0, -4.0}, {5.0, -6.0}};
+constexpr ComplexValue<symmetric_t> dummy_complex_value_sym() {
+    return {2.14, 3.71};
+}
+ComplexValue<asymmetric_t> dummy_complex_value_asym() {
+    return {{1.0, 2.0}, {-3.0, -4.0}, {5.0, -6.0}};
+}
 
 inline State make_state() {
     State state;
@@ -55,7 +64,11 @@ inline State make_state() {
         return comp_topo;
     }());
 
-    ComponentConnections const comp_conn{.link_connected = {{1, 1}, {1, 1}}};
+    ComponentConnections const comp_conn = [] {
+        ComponentConnections conn;
+        conn.link_connected = {{1, 1}, {1, 1}};
+        return conn;
+    }();
     state.reduced_topology =
         std::make_shared<ReducedTopology const>(supernodes::reduce_topology(*state.comp_topo, comp_conn));
 
@@ -104,20 +117,20 @@ inline MathOutput<std::vector<SolverOutput<symmetric_t>>> make_steady_state_math
         SolverOutput<symmetric_t>{.u = {},
                                   .bus_injection = {},
                                   .bus = {},
-                                  .branch = {{.s_f = dummy_complex_value_sym,
-                                              .s_t = dummy_complex_value_sym,
-                                              .i_f = dummy_complex_value_sym,
-                                              .i_t = dummy_complex_value_sym},
-                                             {.s_f = 0.5 * dummy_complex_value_sym,
-                                              .s_t = 0.5 * dummy_complex_value_sym,
-                                              .i_f = 0.5 * dummy_complex_value_sym,
-                                              .i_t = 0.5 * dummy_complex_value_sym},
+                                  .branch = {{.s_f = dummy_complex_value_sym(),
+                                              .s_t = dummy_complex_value_sym(),
+                                              .i_f = dummy_complex_value_sym(),
+                                              .i_t = dummy_complex_value_sym()},
+                                             {.s_f = 0.5 * dummy_complex_value_sym(),
+                                              .s_t = 0.5 * dummy_complex_value_sym(),
+                                              .i_f = 0.5 * dummy_complex_value_sym(),
+                                              .i_t = 0.5 * dummy_complex_value_sym()},
                                              {},
                                              {}},
-                                  .source = {{.s = dummy_complex_value_sym, .i = dummy_complex_value_sym}, {}},
-                                  .shunt = {{.s = dummy_complex_value_sym, .i = dummy_complex_value_sym}},
-                                  .load_gen = {{.s = dummy_complex_value_sym, .i = dummy_complex_value_sym},
-                                               {.s = dummy_complex_value_sym, .i = dummy_complex_value_sym}},
+                                  .source = {{.s = dummy_complex_value_sym(), .i = dummy_complex_value_sym()}, {}},
+                                  .shunt = {{.s = dummy_complex_value_sym(), .i = dummy_complex_value_sym()}},
+                                  .load_gen = {{.s = dummy_complex_value_sym(), .i = dummy_complex_value_sym()},
+                                               {.s = dummy_complex_value_sym(), .i = dummy_complex_value_sym()}},
                                   .voltage_regulator = {}});
     return math_output;
 }
@@ -126,13 +139,13 @@ inline MathOutput<std::vector<ShortCircuitSolverOutput<symmetric_t>>> make_short
     MathOutput<std::vector<ShortCircuitSolverOutput<symmetric_t>>> math_output{};
     math_output.solver_output.emplace_back(ShortCircuitSolverOutput<symmetric_t>{
         .u_bus = {},
-        .fault = {{.i_fault = dummy_complex_value_sym}, {.i_fault = dummy_complex_value_sym}},
-        .branch = {{.i_f = dummy_complex_value_sym, .i_t = dummy_complex_value_sym},
-                   {.i_f = 0.5 * dummy_complex_value_sym, .i_t = 0.5 * dummy_complex_value_sym},
+        .fault = {{.i_fault = dummy_complex_value_sym()}, {.i_fault = dummy_complex_value_sym()}},
+        .branch = {{.i_f = dummy_complex_value_sym(), .i_t = dummy_complex_value_sym()},
+                   {.i_f = 0.5 * dummy_complex_value_sym(), .i_t = 0.5 * dummy_complex_value_sym()},
                    {},
                    {}},
-        .source = {{.i = dummy_complex_value_sym}, {}},
-        .shunt = {{.i = dummy_complex_value_sym}}});
+        .source = {{.i = dummy_complex_value_sym()}, {}},
+        .shunt = {{.i = dummy_complex_value_sym()}}});
     return math_output;
 }
 
@@ -176,63 +189,63 @@ TEST_CASE("Test topological node output") {
     SUBCASE("get_injection") {
         SUBCASE("ApplianceSolverOutput") {
             ApplianceSolverOutput<symmetric_t> appliance_output;
-            appliance_output.s = dummy_complex_value_sym;
-            CHECK(detail::get_injection(appliance_output) == dummy_complex_value_sym);
+            appliance_output.s = dummy_complex_value_sym();
+            CHECK(detail::get_injection(appliance_output) == dummy_complex_value_sym());
 
             // asym
             ApplianceSolverOutput<asymmetric_t> appliance_output_asym;
-            appliance_output_asym.s = dummy_complex_value_asym;
-            CHECK((detail::get_injection(appliance_output_asym)).isApprox(dummy_complex_value_asym));
+            appliance_output_asym.s = dummy_complex_value_asym();
+            CHECK((detail::get_injection(appliance_output_asym)).isApprox(dummy_complex_value_asym()));
         }
         SUBCASE("ApplianceShortCircuitSolverOutput") {
             ApplianceShortCircuitSolverOutput<symmetric_t> appliance_short_circuit_output;
-            appliance_short_circuit_output.i = dummy_complex_value_sym;
-            CHECK(detail::get_injection(appliance_short_circuit_output) == dummy_complex_value_sym);
+            appliance_short_circuit_output.i = dummy_complex_value_sym();
+            CHECK(detail::get_injection(appliance_short_circuit_output) == dummy_complex_value_sym());
 
             // asym
             ApplianceShortCircuitSolverOutput<asymmetric_t> appliance_short_circuit_output_asym;
-            appliance_short_circuit_output_asym.i = dummy_complex_value_asym;
-            CHECK((detail::get_injection(appliance_short_circuit_output_asym)).isApprox(dummy_complex_value_asym));
+            appliance_short_circuit_output_asym.i = dummy_complex_value_asym();
+            CHECK((detail::get_injection(appliance_short_circuit_output_asym)).isApprox(dummy_complex_value_asym()));
         }
         SUBCASE("FaultShortCircuitSolverOutput") {
             FaultShortCircuitSolverOutput<symmetric_t> fault_short_circuit_output;
-            fault_short_circuit_output.i_fault = dummy_complex_value_sym;
-            CHECK(detail::get_injection(fault_short_circuit_output) == dummy_complex_value_sym);
+            fault_short_circuit_output.i_fault = dummy_complex_value_sym();
+            CHECK(detail::get_injection(fault_short_circuit_output) == dummy_complex_value_sym());
 
             // asym
             FaultShortCircuitSolverOutput<asymmetric_t> fault_short_circuit_output_asym;
-            fault_short_circuit_output_asym.i_fault = dummy_complex_value_asym;
-            CHECK((detail::get_injection(fault_short_circuit_output_asym)).isApprox(dummy_complex_value_asym));
+            fault_short_circuit_output_asym.i_fault = dummy_complex_value_asym();
+            CHECK((detail::get_injection(fault_short_circuit_output_asym)).isApprox(dummy_complex_value_asym()));
         }
         SUBCASE("BranchSolverOutput") {
             BranchSolverOutput<symmetric_t> branch_output;
-            branch_output.s_f = dummy_complex_value_sym;
-            CHECK(detail::get_injection(branch_output, BranchSide::from) == -dummy_complex_value_sym);
-            branch_output.s_t = dummy_complex_value_sym;
-            CHECK(detail::get_injection(branch_output, BranchSide::to) == -dummy_complex_value_sym);
+            branch_output.s_f = dummy_complex_value_sym();
+            CHECK(detail::get_injection(branch_output, BranchSide::from) == -dummy_complex_value_sym());
+            branch_output.s_t = dummy_complex_value_sym();
+            CHECK(detail::get_injection(branch_output, BranchSide::to) == -dummy_complex_value_sym());
 
             // asym
             BranchSolverOutput<asymmetric_t> branch_output_asym;
-            branch_output_asym.s_f = dummy_complex_value_asym;
-            CHECK((detail::get_injection(branch_output_asym, BranchSide::from)).isApprox(-dummy_complex_value_asym));
-            branch_output_asym.s_t = dummy_complex_value_asym;
-            CHECK((detail::get_injection(branch_output_asym, BranchSide::to)).isApprox(-dummy_complex_value_asym));
+            branch_output_asym.s_f = dummy_complex_value_asym();
+            CHECK((detail::get_injection(branch_output_asym, BranchSide::from)).isApprox(-dummy_complex_value_asym()));
+            branch_output_asym.s_t = dummy_complex_value_asym();
+            CHECK((detail::get_injection(branch_output_asym, BranchSide::to)).isApprox(-dummy_complex_value_asym()));
         }
         SUBCASE("BranchShortCircuitSolverOutput") {
             BranchShortCircuitSolverOutput<symmetric_t> branch_short_circuit_output;
-            branch_short_circuit_output.i_f = dummy_complex_value_sym;
-            CHECK(detail::get_injection(branch_short_circuit_output, BranchSide::from) == -dummy_complex_value_sym);
-            branch_short_circuit_output.i_t = dummy_complex_value_sym;
-            CHECK(detail::get_injection(branch_short_circuit_output, BranchSide::to) == -dummy_complex_value_sym);
+            branch_short_circuit_output.i_f = dummy_complex_value_sym();
+            CHECK(detail::get_injection(branch_short_circuit_output, BranchSide::from) == -dummy_complex_value_sym());
+            branch_short_circuit_output.i_t = dummy_complex_value_sym();
+            CHECK(detail::get_injection(branch_short_circuit_output, BranchSide::to) == -dummy_complex_value_sym());
 
             // asym
             BranchShortCircuitSolverOutput<asymmetric_t> branch_short_circuit_output_asym;
-            branch_short_circuit_output_asym.i_f = dummy_complex_value_asym;
+            branch_short_circuit_output_asym.i_f = dummy_complex_value_asym();
             CHECK((detail::get_injection(branch_short_circuit_output_asym, BranchSide::from))
-                      .isApprox(-dummy_complex_value_asym));
-            branch_short_circuit_output_asym.i_t = dummy_complex_value_asym;
+                      .isApprox(-dummy_complex_value_asym()));
+            branch_short_circuit_output_asym.i_t = dummy_complex_value_asym();
             CHECK((detail::get_injection(branch_short_circuit_output_asym, BranchSide::to))
-                      .isApprox(-dummy_complex_value_asym));
+                      .isApprox(-dummy_complex_value_asym()));
         }
     }
     SUBCASE("get_node_sequence_idx") {
@@ -270,38 +283,38 @@ TEST_CASE("Test topological node output") {
 
             detail::add_appliance_injection<Source>(state, math_output, std::ref(accumulator));
             CHECK(accumulator.net_node_injections.size() == 1);
-            CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == dummy_complex_value_sym);
+            CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == dummy_complex_value_sym());
             CHECK(!accumulator.net_node_injections.contains(Idx2D{.group = 0, .pos = 1}));
             CHECK(!accumulator.net_node_injections.contains(Idx2D{.group = 1, .pos = 0}));
 
             detail::add_appliance_injection<AsymLoad>(state, math_output, std::ref(accumulator));
             CHECK(accumulator.net_node_injections.size() == 2);
-            CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == dummy_complex_value_sym);
-            CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 1}) == dummy_complex_value_sym);
+            CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == dummy_complex_value_sym());
+            CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 1}) == dummy_complex_value_sym());
             CHECK(!accumulator.net_node_injections.contains(Idx2D{.group = 0, .pos = 2}));
             CHECK(!accumulator.net_node_injections.contains(Idx2D{.group = 1, .pos = 0}));
             CHECK(accumulator.branch_flow_into_nodes.empty());
 
             detail::add_appliance_injection<SymLoad>(state, math_output, std::ref(accumulator));
             CHECK(accumulator.net_node_injections.size() == 3);
-            CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == dummy_complex_value_sym);
-            CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 1}) == dummy_complex_value_sym);
-            CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 2}) == dummy_complex_value_sym);
+            CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == dummy_complex_value_sym());
+            CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 1}) == dummy_complex_value_sym());
+            CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 2}) == dummy_complex_value_sym());
             CHECK(!accumulator.net_node_injections.contains(Idx2D{.group = 0, .pos = 3}));
             CHECK(!accumulator.net_node_injections.contains(Idx2D{.group = 1, .pos = 0}));
             CHECK(accumulator.branch_flow_into_nodes.empty());
 
             detail::add_appliance_injection<Line>(state, math_output, std::ref(accumulator));
             CHECK(accumulator.net_node_injections.size() == 3);
-            CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == dummy_complex_value_sym);
-            CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 1}) == dummy_complex_value_sym);
-            CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 2}) == dummy_complex_value_sym);
+            CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == dummy_complex_value_sym());
+            CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 1}) == dummy_complex_value_sym());
+            CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 2}) == dummy_complex_value_sym());
             CHECK(!accumulator.net_node_injections.contains(Idx2D{.group = 0, .pos = 3}));
             CHECK(!accumulator.net_node_injections.contains(Idx2D{.group = 1, .pos = 0}));
 
             CHECK(accumulator.branch_flow_into_nodes.size() == 2);
-            CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 0}) == -dummy_complex_value_sym);
-            CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 1}) == -2.0 * dummy_complex_value_sym);
+            CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 0}) == -dummy_complex_value_sym());
+            CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 1}) == -2.0 * dummy_complex_value_sym());
             CHECK(!accumulator.branch_flow_into_nodes.contains(Idx2D{.group = 0, .pos = 2}));
             CHECK(!accumulator.branch_flow_into_nodes.contains(Idx2D{.group = 1, .pos = 0}));
         }
@@ -311,29 +324,29 @@ TEST_CASE("Test topological node output") {
 
             detail::add_appliance_injection<Source>(state, math_output, std::ref(accumulator));
             CHECK(accumulator.net_node_injections.size() == 1);
-            CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == dummy_complex_value_sym);
+            CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == dummy_complex_value_sym());
             CHECK(!accumulator.net_node_injections.contains(Idx2D{.group = 0, .pos = 1}));
             CHECK(!accumulator.net_node_injections.contains(Idx2D{.group = 1, .pos = 0}));
             CHECK(accumulator.branch_flow_into_nodes.empty());
 
             detail::add_appliance_injection<Fault>(state, math_output, std::ref(accumulator));
             CHECK(accumulator.net_node_injections.size() == 2);
-            CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == 2.0 * dummy_complex_value_sym);
-            CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 1}) == dummy_complex_value_sym);
+            CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == 2.0 * dummy_complex_value_sym());
+            CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 1}) == dummy_complex_value_sym());
             CHECK(!accumulator.net_node_injections.contains(Idx2D{.group = 0, .pos = 2}));
             CHECK(!accumulator.net_node_injections.contains(Idx2D{.group = 1, .pos = 0}));
             CHECK(accumulator.branch_flow_into_nodes.empty());
 
             detail::add_appliance_injection<Line>(state, math_output, std::ref(accumulator));
             CHECK(accumulator.net_node_injections.size() == 2);
-            CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == 2.0 * dummy_complex_value_sym);
-            CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 1}) == dummy_complex_value_sym);
+            CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == 2.0 * dummy_complex_value_sym());
+            CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 1}) == dummy_complex_value_sym());
             CHECK(!accumulator.net_node_injections.contains(Idx2D{.group = 0, .pos = 2}));
             CHECK(!accumulator.net_node_injections.contains(Idx2D{.group = 1, .pos = 0}));
 
             CHECK(accumulator.branch_flow_into_nodes.size() == 2);
-            CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 0}) == -dummy_complex_value_sym);
-            CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 1}) == -2.0 * dummy_complex_value_sym);
+            CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 0}) == -dummy_complex_value_sym());
+            CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 1}) == -2.0 * dummy_complex_value_sym());
             CHECK(!accumulator.branch_flow_into_nodes.contains(Idx2D{.group = 0, .pos = 2}));
             CHECK(!accumulator.branch_flow_into_nodes.contains(Idx2D{.group = 1, .pos = 0}));
         }
@@ -350,13 +363,13 @@ TEST_CASE("Test topological node output") {
             detail::add_flows<ComponentTypes>(state, math_output, std::ref(accumulator));
 
             CHECK(accumulator.net_node_injections.size() == 3);
-            CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == dummy_complex_value_sym);
-            CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 1}) == dummy_complex_value_sym);
-            CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 2}) == dummy_complex_value_sym);
+            CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == dummy_complex_value_sym());
+            CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 1}) == dummy_complex_value_sym());
+            CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 2}) == dummy_complex_value_sym());
 
             CHECK(accumulator.branch_flow_into_nodes.size() == 2);
-            CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 0}) == -dummy_complex_value_sym);
-            CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 1}) == -2.0 * dummy_complex_value_sym);
+            CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 0}) == -dummy_complex_value_sym());
+            CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 1}) == -2.0 * dummy_complex_value_sym());
         }
 
         SUBCASE("Short circuit output") {
@@ -366,12 +379,12 @@ TEST_CASE("Test topological node output") {
             detail::add_flows<ComponentTypes>(state, math_output, std::ref(accumulator));
 
             CHECK(accumulator.net_node_injections.size() == 2);
-            CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == 2.0 * dummy_complex_value_sym);
-            CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 1}) == dummy_complex_value_sym);
+            CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == 2.0 * dummy_complex_value_sym());
+            CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 1}) == dummy_complex_value_sym());
 
             CHECK(accumulator.branch_flow_into_nodes.size() == 2);
-            CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 0}) == -dummy_complex_value_sym);
-            CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 1}) == -2.0 * dummy_complex_value_sym);
+            CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 0}) == -dummy_complex_value_sym());
+            CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 1}) == -2.0 * dummy_complex_value_sym());
         }
     }
     SUBCASE("SuperNodeSolverInput::get_total_injection_per_node") {
@@ -381,24 +394,24 @@ TEST_CASE("Test topological node output") {
         SUBCASE("symmetric") {
             detail::SuperNodeSolverInput<symmetric_t> const input{
                 .links = links,
-                .node_injection = {dummy_complex_value_sym, dummy_complex_value_sym, dummy_complex_value_sym},
-                .node_flow_from_branch = {dummy_complex_value_sym, dummy_complex_value_sym, dummy_complex_value_sym}};
+                .node_injection = {dummy_complex_value_sym(), dummy_complex_value_sym(), dummy_complex_value_sym()},
+                .node_flow_from_branch = {dummy_complex_value_sym(), dummy_complex_value_sym(), dummy_complex_value_sym()}};
 
             auto const total = input.get_total_injection_per_node();
             REQUIRE(total.size() == 3);
-            CHECK(std::ranges::all_of(total, [](auto const& value) { return value == 2.0 * dummy_complex_value_sym; }));
+            CHECK(std::ranges::all_of(total, [](auto const& value) { return value == 2.0 * dummy_complex_value_sym(); }));
         }
         SUBCASE("asymmetric") {
             detail::SuperNodeSolverInput<asymmetric_t> const input{
                 .links = links,
-                .node_injection = {dummy_complex_value_asym, dummy_complex_value_asym, dummy_complex_value_asym},
-                .node_flow_from_branch = {dummy_complex_value_asym, dummy_complex_value_asym,
-                                          dummy_complex_value_asym}};
+                .node_injection = {dummy_complex_value_asym(), dummy_complex_value_asym(), dummy_complex_value_asym()},
+                .node_flow_from_branch = {dummy_complex_value_asym(), dummy_complex_value_asym(),
+                                          dummy_complex_value_asym()}};
 
             auto const total = input.get_total_injection_per_node();
             REQUIRE(total.size() == 3);
             CHECK(std::ranges::all_of(
-                total, [](auto const& value) { return value.isApprox(2.0 * dummy_complex_value_asym); }));
+                total, [](auto const& value) { return value.isApprox(2.0 * dummy_complex_value_asym()); }));
         }
     }
     SUBCASE("compute_link_solver") {
@@ -408,11 +421,11 @@ TEST_CASE("Test topological node output") {
         SUBCASE("symmetric") {
             detail::SuperNodeSolverInput<symmetric_t> const input{
                 .links = links,
-                .node_injection = {dummy_complex_value_sym, DoubleComplex{}, 2.0 * dummy_complex_value_sym},
-                .node_flow_from_branch = {DoubleComplex{}, 3.0 * dummy_complex_value_sym, -dummy_complex_value_sym}};
+                .node_injection = {dummy_complex_value_sym(), DoubleComplex{}, 2.0 * dummy_complex_value_sym()},
+                .node_flow_from_branch = {DoubleComplex{}, 3.0 * dummy_complex_value_sym(), -dummy_complex_value_sym()}};
 
             LinkSolverMock mock{.return_values = {
-                                    {2.0 * dummy_complex_value_sym, -dummy_complex_value_sym},
+                                    {2.0 * dummy_complex_value_sym(), -dummy_complex_value_sym()},
                                 }};
 
             auto const result = detail::compute_link_solver<symmetric_t>(std::ref(mock), input);
@@ -420,76 +433,76 @@ TEST_CASE("Test topological node output") {
             REQUIRE(mock.call_count == 1);
             CHECK(mock.recorded_edges[0] == links);
             CHECK(mock.recorded_loads[0] ==
-                  ComplexVector{dummy_complex_value_sym, 3.0 * dummy_complex_value_sym, dummy_complex_value_sym});
+                  ComplexVector{dummy_complex_value_sym(), 3.0 * dummy_complex_value_sym(), dummy_complex_value_sym()});
 
             REQUIRE(result.size() == 2);
-            CHECK(result[0] == 2.0 * dummy_complex_value_sym);
-            CHECK(result[1] == -dummy_complex_value_sym);
+            CHECK(result[0] == 2.0 * dummy_complex_value_sym());
+            CHECK(result[1] == -dummy_complex_value_sym());
         }
         SUBCASE("asymmetric") {
             detail::SuperNodeSolverInput<asymmetric_t> const input{
                 .links = links,
-                .node_injection = {dummy_complex_value_asym, ComplexValue<asymmetric_t>{},
-                                   2.0 * dummy_complex_value_asym},
-                .node_flow_from_branch = {ComplexValue<asymmetric_t>{}, 3.0 * dummy_complex_value_asym,
-                                          -dummy_complex_value_asym}};
+                .node_injection = {dummy_complex_value_asym(), ComplexValue<asymmetric_t>{},
+                                   2.0 * dummy_complex_value_asym()},
+                .node_flow_from_branch = {ComplexValue<asymmetric_t>{}, 3.0 * dummy_complex_value_asym(),
+                                          -dummy_complex_value_asym()}};
 
-            LinkSolverMock mock{.return_values = {{dummy_complex_value_asym(0), 2.0 * dummy_complex_value_asym(0)},
-                                                  {-dummy_complex_value_asym(1), 3.0 * dummy_complex_value_asym(1)},
-                                                  {4.0 * dummy_complex_value_asym(2), DoubleComplex{}}}};
+            LinkSolverMock mock{.return_values = {{dummy_complex_value_asym()(0), 2.0 * dummy_complex_value_asym()(0)},
+                                                  {-dummy_complex_value_asym()(1), 3.0 * dummy_complex_value_asym()(1)},
+                                                  {4.0 * dummy_complex_value_asym()(2), DoubleComplex{}}}};
 
             auto const result = detail::compute_link_solver<asymmetric_t>(std::ref(mock), input);
 
             REQUIRE(mock.call_count == 3);
             for (Idx phase = 0; phase < 3; ++phase) {
                 CHECK(mock.recorded_edges[phase] == links);
-                CHECK(mock.recorded_loads[phase] == ComplexVector{dummy_complex_value_asym(phase),
-                                                                  3.0 * dummy_complex_value_asym(phase),
-                                                                  dummy_complex_value_asym(phase)});
+                CHECK(mock.recorded_loads[phase] == ComplexVector{dummy_complex_value_asym()(phase),
+                                                                  3.0 * dummy_complex_value_asym()(phase),
+                                                                  dummy_complex_value_asym()(phase)});
             }
 
             REQUIRE(result.size() == 2);
             CHECK(result[0].isApprox(ComplexValue<asymmetric_t>{
-                dummy_complex_value_asym(0), -dummy_complex_value_asym(1), 4.0 * dummy_complex_value_asym(2)}));
-            CHECK(result[1].isApprox(ComplexValue<asymmetric_t>{2.0 * dummy_complex_value_asym(0),
-                                                                3.0 * dummy_complex_value_asym(1), DoubleComplex{}}));
+                dummy_complex_value_asym()(0), -dummy_complex_value_asym()(1), 4.0 * dummy_complex_value_asym()(2)}));
+            CHECK(result[1].isApprox(ComplexValue<asymmetric_t>{2.0 * dummy_complex_value_asym()(0),
+                                                                3.0 * dummy_complex_value_asym()(1), DoubleComplex{}}));
         }
     }
     SUBCASE("get_link_output") {
         SUBCASE("BranchSolverOutput") {
-            ComplexValueVector<symmetric_t> const link_result{dummy_complex_value_sym, dummy_complex_value_sym};
+            ComplexValueVector<symmetric_t> const link_result{dummy_complex_value_sym(), dummy_complex_value_sym()};
 
             auto const link_output = detail::get_link_output<symmetric_t, BranchSolverOutput<symmetric_t>>(link_result);
             REQUIRE(link_output.size() == 2);
-            CHECK(link_output[0].s_f == dummy_complex_value_sym);
-            CHECK(link_output[0].s_t == -dummy_complex_value_sym);
-            CHECK(link_output[1].s_f == dummy_complex_value_sym);
-            CHECK(link_output[1].s_t == -dummy_complex_value_sym);
+            CHECK(link_output[0].s_f == dummy_complex_value_sym());
+            CHECK(link_output[0].s_t == -dummy_complex_value_sym());
+            CHECK(link_output[1].s_f == dummy_complex_value_sym());
+            CHECK(link_output[1].s_t == -dummy_complex_value_sym());
 
             // asym
-            ComplexValueVector<asymmetric_t> const link_result_asym{dummy_complex_value_asym};
+            ComplexValueVector<asymmetric_t> const link_result_asym{dummy_complex_value_asym()};
             auto const link_output_asym =
                 detail::get_link_output<asymmetric_t, BranchSolverOutput<asymmetric_t>>(link_result_asym);
             REQUIRE(link_output_asym.size() == 1);
-            CHECK(link_output_asym[0].s_f.isApprox(dummy_complex_value_asym));
-            CHECK(link_output_asym[0].s_t.isApprox(-dummy_complex_value_asym));
+            CHECK(link_output_asym[0].s_f.isApprox(dummy_complex_value_asym()));
+            CHECK(link_output_asym[0].s_t.isApprox(-dummy_complex_value_asym()));
         }
         SUBCASE("BranchShortCircuitSolverOutput") {
-            ComplexValueVector<symmetric_t> const link_result{dummy_complex_value_sym};
+            ComplexValueVector<symmetric_t> const link_result{dummy_complex_value_sym()};
 
             auto const link_output =
                 detail::get_link_output<symmetric_t, BranchShortCircuitSolverOutput<symmetric_t>>(link_result);
             REQUIRE(link_output.size() == 1);
-            CHECK(link_output[0].i_f == dummy_complex_value_sym);
-            CHECK(link_output[0].i_t == -dummy_complex_value_sym);
+            CHECK(link_output[0].i_f == dummy_complex_value_sym());
+            CHECK(link_output[0].i_t == -dummy_complex_value_sym());
 
             // asym
-            ComplexValueVector<asymmetric_t> const link_result_asym{dummy_complex_value_asym};
+            ComplexValueVector<asymmetric_t> const link_result_asym{dummy_complex_value_asym()};
             auto const link_output_asym =
                 detail::get_link_output<asymmetric_t, BranchShortCircuitSolverOutput<asymmetric_t>>(link_result_asym);
             REQUIRE(link_output_asym.size() == 1);
-            CHECK(link_output_asym[0].i_f.isApprox(dummy_complex_value_asym));
-            CHECK(link_output_asym[0].i_t.isApprox(-dummy_complex_value_asym));
+            CHECK(link_output_asym[0].i_f.isApprox(dummy_complex_value_asym()));
+            CHECK(link_output_asym[0].i_t.isApprox(-dummy_complex_value_asym()));
         }
     }
     SUBCASE("solve_topological_nodes") {
@@ -499,7 +512,7 @@ TEST_CASE("Test topological node output") {
         SUBCASE("Steady state output") {
             auto const math_output = make_steady_state_math_output_sym();
             LinkSolverMock mock{.return_values = {
-                                    {dummy_complex_value_sym, dummy_complex_value_sym},
+                                    {dummy_complex_value_sym(), dummy_complex_value_sym()},
                                     {},
                                 }};
 
@@ -509,25 +522,25 @@ TEST_CASE("Test topological node output") {
             CHECK(mock.recorded_edges[0] == links);
             CHECK(mock.recorded_edges[1].empty());
             CHECK(mock.recorded_loads[0] ==
-                  ComplexVector{DoubleComplex{}, -dummy_complex_value_sym, dummy_complex_value_sym});
+                  ComplexVector{DoubleComplex{}, -dummy_complex_value_sym(), dummy_complex_value_sym()});
             CHECK(mock.recorded_loads[1] == ComplexVector{DoubleComplex{}});
 
             REQUIRE(result.size() == 2);
             CHECK(result[0].bus_injection ==
-                  ComplexVector{dummy_complex_value_sym, dummy_complex_value_sym, dummy_complex_value_sym});
+                  ComplexVector{dummy_complex_value_sym(), dummy_complex_value_sym(), dummy_complex_value_sym()});
             CHECK(result[1].bus_injection == ComplexVector{DoubleComplex{}});
             REQUIRE(result[0].link.size() == 2);
-            CHECK(result[0].link[0].s_f == dummy_complex_value_sym);
-            CHECK(result[0].link[0].s_t == -dummy_complex_value_sym);
-            CHECK(result[0].link[1].s_f == dummy_complex_value_sym);
-            CHECK(result[0].link[1].s_t == -dummy_complex_value_sym);
+            CHECK(result[0].link[0].s_f == dummy_complex_value_sym());
+            CHECK(result[0].link[0].s_t == -dummy_complex_value_sym());
+            CHECK(result[0].link[1].s_f == dummy_complex_value_sym());
+            CHECK(result[0].link[1].s_t == -dummy_complex_value_sym());
             CHECK(result[1].link.empty());
         }
 
         SUBCASE("Short circuit output") {
             auto const math_output = make_short_circuit_math_output_sym();
             LinkSolverMock mock{.return_values = {
-                                    {dummy_complex_value_sym, dummy_complex_value_sym},
+                                    {dummy_complex_value_sym(), dummy_complex_value_sym()},
                                     {},
                                 }};
 
@@ -537,15 +550,15 @@ TEST_CASE("Test topological node output") {
             CHECK(mock.recorded_edges[0] == links);
             CHECK(mock.recorded_edges[1].empty());
             CHECK(mock.recorded_loads[0] ==
-                  ComplexVector{dummy_complex_value_sym, -dummy_complex_value_sym, DoubleComplex{}});
+                  ComplexVector{dummy_complex_value_sym(), -dummy_complex_value_sym(), DoubleComplex{}});
             CHECK(mock.recorded_loads[1] == ComplexVector{DoubleComplex{}});
 
             REQUIRE(result.size() == 2);
             REQUIRE(result[0].link.size() == 2);
-            CHECK(result[0].link[0].i_f == dummy_complex_value_sym);
-            CHECK(result[0].link[0].i_t == -dummy_complex_value_sym);
-            CHECK(result[0].link[1].i_f == dummy_complex_value_sym);
-            CHECK(result[0].link[1].i_t == -dummy_complex_value_sym);
+            CHECK(result[0].link[0].i_f == dummy_complex_value_sym());
+            CHECK(result[0].link[0].i_t == -dummy_complex_value_sym());
+            CHECK(result[0].link[1].i_f == dummy_complex_value_sym());
+            CHECK(result[0].link[1].i_t == -dummy_complex_value_sym());
             CHECK(result[1].link.empty());
         }
     }
