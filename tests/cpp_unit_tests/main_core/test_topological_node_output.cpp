@@ -44,12 +44,8 @@ using ComponentContainer = Container<ExtraRetrievableTypes<Appliance, Base, Bran
 using State = MainModelState<ComponentContainer>;
 
 double constexpr dummy_value = 123.321;
-constexpr ComplexValue<symmetric_t> dummy_complex_value_sym() {
-    return {2.14, 3.71};
-}
-ComplexValue<asymmetric_t> dummy_complex_value_asym() {
-    return {{1.0, 2.0}, {-3.0, -4.0}, {5.0, -6.0}};
-}
+constexpr ComplexValue<symmetric_t> dummy_complex_value_sym() { return {2.14, 3.71}; }
+ComplexValue<asymmetric_t> dummy_complex_value_asym() { return {{1.0, 2.0}, {-3.0, -4.0}, {5.0, -6.0}}; }
 
 inline State make_state() {
     State state;
@@ -314,7 +310,8 @@ TEST_CASE("Test topological node output") {
 
             CHECK(accumulator.branch_flow_into_nodes.size() == 2);
             CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 0}) == -dummy_complex_value_sym());
-            CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 1}) == -2.0 * dummy_complex_value_sym());
+            CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 1}) ==
+                  -2.0 * dummy_complex_value_sym());
             CHECK(!accumulator.branch_flow_into_nodes.contains(Idx2D{.group = 0, .pos = 2}));
             CHECK(!accumulator.branch_flow_into_nodes.contains(Idx2D{.group = 1, .pos = 0}));
         }
@@ -346,7 +343,8 @@ TEST_CASE("Test topological node output") {
 
             CHECK(accumulator.branch_flow_into_nodes.size() == 2);
             CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 0}) == -dummy_complex_value_sym());
-            CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 1}) == -2.0 * dummy_complex_value_sym());
+            CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 1}) ==
+                  -2.0 * dummy_complex_value_sym());
             CHECK(!accumulator.branch_flow_into_nodes.contains(Idx2D{.group = 0, .pos = 2}));
             CHECK(!accumulator.branch_flow_into_nodes.contains(Idx2D{.group = 1, .pos = 0}));
         }
@@ -369,7 +367,8 @@ TEST_CASE("Test topological node output") {
 
             CHECK(accumulator.branch_flow_into_nodes.size() == 2);
             CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 0}) == -dummy_complex_value_sym());
-            CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 1}) == -2.0 * dummy_complex_value_sym());
+            CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 1}) ==
+                  -2.0 * dummy_complex_value_sym());
         }
 
         SUBCASE("Short circuit output") {
@@ -384,7 +383,8 @@ TEST_CASE("Test topological node output") {
 
             CHECK(accumulator.branch_flow_into_nodes.size() == 2);
             CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 0}) == -dummy_complex_value_sym());
-            CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 1}) == -2.0 * dummy_complex_value_sym());
+            CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 1}) ==
+                  -2.0 * dummy_complex_value_sym());
         }
     }
     SUBCASE("SuperNodeSolverInput::get_total_injection_per_node") {
@@ -395,11 +395,13 @@ TEST_CASE("Test topological node output") {
             detail::SuperNodeSolverInput<symmetric_t> const input{
                 .links = links,
                 .node_injection = {dummy_complex_value_sym(), dummy_complex_value_sym(), dummy_complex_value_sym()},
-                .node_flow_from_branch = {dummy_complex_value_sym(), dummy_complex_value_sym(), dummy_complex_value_sym()}};
+                .node_flow_from_branch = {dummy_complex_value_sym(), dummy_complex_value_sym(),
+                                          dummy_complex_value_sym()}};
 
             auto const total = input.get_total_injection_per_node();
             REQUIRE(total.size() == 3);
-            CHECK(std::ranges::all_of(total, [](auto const& value) { return value == 2.0 * dummy_complex_value_sym(); }));
+            CHECK(
+                std::ranges::all_of(total, [](auto const& value) { return value == 2.0 * dummy_complex_value_sym(); }));
         }
         SUBCASE("asymmetric") {
             detail::SuperNodeSolverInput<asymmetric_t> const input{
@@ -422,7 +424,8 @@ TEST_CASE("Test topological node output") {
             detail::SuperNodeSolverInput<symmetric_t> const input{
                 .links = links,
                 .node_injection = {dummy_complex_value_sym(), DoubleComplex{}, 2.0 * dummy_complex_value_sym()},
-                .node_flow_from_branch = {DoubleComplex{}, 3.0 * dummy_complex_value_sym(), -dummy_complex_value_sym()}};
+                .node_flow_from_branch = {DoubleComplex{}, 3.0 * dummy_complex_value_sym(),
+                                          -dummy_complex_value_sym()}};
 
             LinkSolverMock mock{.return_values = {
                                     {2.0 * dummy_complex_value_sym(), -dummy_complex_value_sym()},
