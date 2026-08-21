@@ -13,6 +13,8 @@
 #include <power_grid_model/common/component_list.hpp>
 #include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/component/base.hpp>
+#include <power_grid_model/component/branch.hpp>
+#include <power_grid_model/component/link.hpp>
 #include <power_grid_model/component/regulator.hpp>
 #include <power_grid_model/component/transformer_tap_regulator.hpp>
 #include <power_grid_model/container.hpp>
@@ -25,6 +27,62 @@
 
 namespace power_grid_model::main_core {
 TEST_CASE("Test main core output") {
+    SUBCASE("Link") {
+        using ComponentContainer = Container<ExtraRetrievableTypes<Base, Branch>, Link>;
+        using State = MainModelState<ComponentContainer>;
+
+        State state;
+        emplace_component<Link>(state.components, 0, LinkInput{.id = 0, .from_status = IntS{1}, .to_status = IntS{1}},
+                                10e3, 20e3);
+        emplace_component<Link>(state.components, 1,
+                                LinkInput{.id = 1, .from_status = IntS{1}, .to_status = status_off}, 10e3, 20e3);
+        emplace_component<Link>(state.components, 2,
+                                LinkInput{.id = 2, .from_status = status_off, .to_status = status_off}, 10e3, 20e3);
+        state.components.set_construction_complete();
+
+        auto reduced_topology = std::make_shared<ReducedTopology>();
+        reduced_topology->topo_node_coup.coupling.user_links_to_topo_nodes = {
+            {.group = 0, .pos = 0}, {.group = 0, .pos = 1}, {.group = disconnected, .pos = disconnected}};
+        state.reduced_topology = std::make_shared<ReducedTopology const>(std::move(*reduced_topology));
+
+        SUBCASE("Steady state output") {
+            MathOutput<std::vector<SolverOutput<symmetric_t>>> const math_output{
+                .supernode_output = {
+                    {.bus_injection = {},
+                     .link = {{.s_f = {1.0, 2.0}, .s_t = {-1.0, -2.0}}, {.s_f = {3.0, 4.0}, .s_t = {-3.0, -4.0}}}}}};
+            std::vector<SymBranchOutput> output(3);
+
+            output_result<Link>(state, math_output, output);
+
+            CHECK(output[0].id == 0);
+            CHECK(output[0].energized == IntS{1});
+            CHECK(output[0].p_from == doctest::Approx(base_power_3p));
+            CHECK(output[0].q_from == doctest::Approx(2.0 * base_power_3p));
+            CHECK(output[1].id == 1);
+            CHECK(output[1].energized == status_off);
+            CHECK(output[2].id == 2);
+            CHECK(output[2].energized == status_off);
+        }
+
+        SUBCASE("Short circuit output") {
+            MathOutput<std::vector<ShortCircuitSolverOutput<symmetric_t>>> const math_output{
+                .supernode_output = {
+                    {.link = {{.i_f = {1.0, 0.0}, .i_t = {-2.0, 0.0}}, {.i_f = {3.0, 0.0}, .i_t = {-4.0, 0.0}}}}}};
+            std::vector<BranchShortCircuitOutput> output(3);
+
+            output_result<Link>(state, math_output, output);
+
+            CHECK(output[0].id == 0);
+            CHECK(output[0].energized == IntS{1});
+            CHECK(output[0].i_from(0) == doctest::Approx(base_power_3p / 10e3 / sqrt3));
+            CHECK(output[0].i_to(0) == doctest::Approx(2.0 * base_power_3p / 20e3 / sqrt3));
+            CHECK(output[1].id == 1);
+            CHECK(output[1].energized == status_off);
+            CHECK(output[2].id == 2);
+            CHECK(output[2].energized == status_off);
+        }
+    }
+
     SUBCASE("TransformerTapRegulator") {
         using ComponentContainer = Container<ExtraRetrievableTypes<Base, Regulator>, TransformerTapRegulator>;
         using State = MainModelState<ComponentContainer>;
