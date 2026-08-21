@@ -52,13 +52,13 @@ constexpr void register_topology_components(ComponentContainer const& components
 }
 
 template <std::same_as<Branch> Component, class ComponentContainer>
-    requires common::component_container_c<ComponentContainer, Component, Node>
+    requires common::component_container_c<ComponentContainer, Component, Edge, Node>
 constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
-    apply_registration<Component>(components, comp_topo.branch_node_idx,
-                                  [&components](Branch const& edge) {
-                                      return BranchIdx{get_component_sequence_idx<Node>(components, edge.from_node()),
-                                                       get_component_sequence_idx<Node>(components, edge.to_node())};
-                                  });
+    apply_registration<Edge>(components, comp_topo.branch_node_idx,
+                             [&components](Edge const& edge) {
+                                 return BranchIdx{get_component_sequence_idx<Node>(components, edge.from_node()),
+                                                  get_component_sequence_idx<Node>(components, edge.to_node())};
+                             });
 }
 
 template <std::same_as<Link> Component, class ComponentContainer>
@@ -212,13 +212,13 @@ constexpr void register_topology_components(ComponentContainer const& components
 }
 
 template <std::same_as<Branch> Component, class ComponentContainer>
-    requires common::component_container_c<ComponentContainer, Component>
+    requires common::component_container_c<ComponentContainer, Component, Edge>
 constexpr void register_connections_components(ComponentContainer const& components, ComponentConnections& comp_conn) {
-    apply_registration<Component>(components, comp_conn.branch_connected, [](Branch const& branch) {
-        return BranchConnected{status_to_int(branch.from_status()), status_to_int(branch.to_status())};
+    apply_registration<Edge>(components, comp_conn.branch_connected, [](Edge const& edge) {
+        return BranchConnected{status_to_int(edge.from_status()), status_to_int(edge.to_status())};
     });
-    apply_registration<Component>(components, comp_conn.branch_phase_shift,
-                                  [](Branch const& branch) { return branch.phase_shift(); });
+    apply_registration<Edge>(components, comp_conn.branch_phase_shift,
+                             [](Edge const& edge) { return edge.phase_shift(); });
 }
 
 template <std::same_as<Link> Component, class ComponentContainer>

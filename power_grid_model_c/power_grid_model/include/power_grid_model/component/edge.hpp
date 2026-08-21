@@ -34,6 +34,7 @@ class Edge : public Base {
     using SideType = BranchSide;
 
     static constexpr char const* name = "edge";
+    // ComponentType math_model_type() const { return ComponentType::edge; }
 
     explicit Edge(BranchInput const& edge_input)
         : Base{edge_input},
