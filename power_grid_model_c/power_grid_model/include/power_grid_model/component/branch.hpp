@@ -35,7 +35,7 @@ class Branch : public Edge {
     static constexpr char const* name = "branch";
     ComponentType math_model_type() const final { return ComponentType::branch; }
 
-    explicit Branch(BranchInput const& branch_input): Edge{branch_input} {}
+    explicit Branch(BranchInput const& branch_input) : Edge{branch_input} {}
 };
 
 } // namespace power_grid_model

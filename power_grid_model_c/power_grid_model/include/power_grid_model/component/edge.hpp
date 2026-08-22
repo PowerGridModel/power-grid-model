@@ -90,8 +90,7 @@ class Edge : public Base {
     virtual double loading(double max_s, double max_i) const = 0;
     virtual double phase_shift() const = 0; // shift theta_from - theta_to
 
-    template <symmetry_tag sym>
-    BranchOutput<sym> get_output(BranchSolverOutput<sym> const& edge_solver_output) const {
+    template <symmetry_tag sym> BranchOutput<sym> get_output(BranchSolverOutput<sym> const& edge_solver_output) const {
         // result object
         BranchOutput<sym> output{};
         static_cast<BaseOutput&>(output) = base_output(true);

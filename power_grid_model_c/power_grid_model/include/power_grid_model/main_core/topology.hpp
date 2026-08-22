@@ -54,11 +54,10 @@ constexpr void register_topology_components(ComponentContainer const& components
 template <std::same_as<Branch> Component, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, Component, Edge, Node>
 constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
-    apply_registration<Edge>(components, comp_topo.branch_node_idx,
-                             [&components](Edge const& edge) {
-                                 return BranchIdx{get_component_sequence_idx<Node>(components, edge.from_node()),
-                                                  get_component_sequence_idx<Node>(components, edge.to_node())};
-                             });
+    apply_registration<Edge>(components, comp_topo.branch_node_idx, [&components](Edge const& edge) {
+        return BranchIdx{get_component_sequence_idx<Node>(components, edge.from_node()),
+                         get_component_sequence_idx<Node>(components, edge.to_node())};
+    });
 }
 
 template <std::same_as<Link> Component, class ComponentContainer>
@@ -249,8 +248,9 @@ constexpr void register_connections_components(ComponentContainer const& compone
 } // namespace detail
 
 template <typename ModelType>
-    requires common::component_container_c<typename ModelType::ComponentContainer, Node, Branch, Link, Branch3, Source, Shunt, GenericLoadGen,
-                                           GenericVoltageSensor, GenericPowerSensor, GenericCurrentSensor, Regulator>
+    requires common::component_container_c<typename ModelType::ComponentContainer, Node, Branch, Link, Branch3, Source,
+                                           Shunt, GenericLoadGen, GenericVoltageSensor, GenericPowerSensor,
+                                           GenericCurrentSensor, Regulator>
 ComponentTopology construct_topology(typename ModelType::ComponentContainer const& components) {
     ComponentTopology comp_topo;
     using TopologyTypesTuple = ModelType::TopologyTypesTuple;
