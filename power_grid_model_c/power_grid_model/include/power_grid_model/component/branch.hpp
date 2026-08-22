@@ -26,7 +26,7 @@
 
 namespace power_grid_model {
 
-class Branch : public Edge {
+class Branch : public Edge { // TODO: not yet unit tested
   public:
     using InputType = BranchInput;
     using UpdateType = BranchUpdate;
