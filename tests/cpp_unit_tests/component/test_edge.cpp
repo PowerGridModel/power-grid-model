@@ -217,7 +217,7 @@ TEST_CASE("Test edge") {
         BranchSolverOutput<symmetric_t> const solver_output{
             .s_f = 1.0 - 1.5i, .s_t = 1.5 - 1.5i, .i_f = 1.0 - 2.0i, .i_t = 2.0 - 1.0i};
 
-        BranchOutput<symmetric_t> output = edge_ref.get_output<symmetric_t>(solver_output);
+        BranchOutput<symmetric_t> const output = edge_ref.get_output<symmetric_t>(solver_output);
 
         CHECK(output.id == 1);
         CHECK(output.energized == 1);
@@ -232,7 +232,7 @@ TEST_CASE("Test edge") {
         DoubleComplex const if_sc{1.0, 1.0};
         DoubleComplex const it_sc{2.0, 2.0 * sqrt3};
 
-        BranchShortCircuitOutput sc_output = edge_ref.get_sc_output(if_sc, it_sc);
+        BranchShortCircuitOutput const sc_output = edge_ref.get_sc_output(if_sc, it_sc);
         CHECK(sc_output.id == 1);
         CHECK(sc_output.energized == 1);
         CHECK(sc_output.i_from(0) == doctest::Approx(cabs(if_sc) * base_i));
@@ -242,20 +242,20 @@ TEST_CASE("Test edge") {
     }
 
     SUBCASE("Null Outputs") {
-        BranchOutput<symmetric_t> null_output = edge_ref.get_null_output<symmetric_t>();
+        BranchOutput<symmetric_t> const null_output = edge_ref.get_null_output<symmetric_t>();
         CHECK(null_output.id == 1);
         CHECK(null_output.energized == 0);
         CHECK(null_output.loading == 0.0);
         CHECK(null_output.i_from == 0.0);
 
-        BranchShortCircuitOutput null_sc_output = edge_ref.get_null_sc_output();
+        BranchShortCircuitOutput const null_sc_output = edge_ref.get_null_sc_output();
         CHECK(null_sc_output.energized == 0);
         CHECK(null_sc_output.i_from(0) == 0.0);
     }
 
     SUBCASE("Enum Violations") {
-        CHECK_THROWS_AS(edge_ref.node(static_cast<BranchSide>(99)), MissingCaseForEnumError);
-        CHECK_THROWS_AS(edge_ref.status(static_cast<BranchSide>(99)), MissingCaseForEnumError);
+        CHECK_THROWS_AS(edge_ref.node(static_cast<BranchSide>(2)), MissingCaseForEnumError);
+        CHECK_THROWS_AS(edge_ref.status(static_cast<BranchSide>(2)), MissingCaseForEnumError);
     }
 }
 
