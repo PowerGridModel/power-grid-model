@@ -40,7 +40,6 @@ class Line final : public Branch {
     double base_i_to() const override { return base_i_; }
     double loading(double /* max_s */, double max_i) const override { return max_i / i_n_; };
     double phase_shift() const override { return 0.0; }
-    bool is_param_mutable() const override { return false; }
 
   private:
     double i_n_;
