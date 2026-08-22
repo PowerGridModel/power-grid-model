@@ -97,99 +97,99 @@ TEST_CASE("Test Edge") {
         CHECK(edge_ref.id() == 1);
         CHECK(edge_ref.from_node() == 2);
         CHECK(edge_ref.to_node() == 3);
-        CHECK(edge_ref.from_status() == true);
-        CHECK(edge_ref.to_status() == true);
+        CHECK(edge_ref.from_status() == 1);
+        CHECK(edge_ref.to_status() == 1);
         CHECK(Edge::name == std::string{"edge"});
     }
 
     SUBCASE("Status Flags") {
-        CHECK(edge_ref.from_status() == true);
-        CHECK(edge_ref.to_status() == true);
-        CHECK(edge_ref.edge_status() == true);
+        CHECK(edge_ref.from_status() == 1);
+        CHECK(edge_ref.to_status() == 1);
+        CHECK(edge_ref.edge_status() == 1);
 
-        edge_ref.set_status(true, false);
-        CHECK(edge_ref.edge_status() == false);
+        edge_ref.set_status(1, 0);
+        CHECK(edge_ref.edge_status() == 0);
 
-        edge_ref.set_status(false, true);
-        CHECK(edge_ref.edge_status() == false);
+        edge_ref.set_status(0, 1);
+        CHECK(edge_ref.edge_status() == 0);
 
-        edge_ref.set_status(false, false);
-        CHECK(edge_ref.edge_status() == false);
+        edge_ref.set_status(0, 0);
+        CHECK(edge_ref.edge_status() == 0);
 
-        edge_ref.set_status(true, true);
+        edge_ref.set_status(1, 1);
     }
 
     SUBCASE("Status Updates") {
         // Reset to known state
-        edge_ref.set_status(true, true);
+        edge_ref.set_status(1, 1);
 
         CHECK(!edge_ref.set_status(na_IntS, na_IntS));
-        CHECK(edge_ref.from_status() == true);
-        CHECK(edge_ref.to_status() == true);
+        CHECK(edge_ref.from_status() == 1);
+        CHECK(edge_ref.to_status() == 1);
 
-        CHECK(edge_ref.set_status(false, na_IntS));
-        CHECK(edge_ref.from_status() == false);
+        CHECK(edge_ref.set_status(0, na_IntS));
+        CHECK(edge_ref.from_status() == 0);
 
-        CHECK(!edge_ref.set_status(false, na_IntS));
+        CHECK(!edge_ref.set_status(0, na_IntS));
 
         BranchUpdate update{.id = 1, .from_status = 1, .to_status = na_IntS};
         UpdateChange change = edge_ref.update(update);
-        CHECK(change.topo == true);
-        CHECK(change.param == true);
+        CHECK(change.topo == 1);
+        CHECK(change.param == 1);
     }
 
     SUBCASE("Inverse State") {
         // Reset to known state
-        edge_ref.set_status(true, true);
+        edge_ref.set_status(1, 1);
 
         BranchUpdate update{.id = 1, .from_status = 0, .to_status = 0};
         auto const inv = edge_ref.inverse(update);
-        CHECK(inv.from_status == status_to_int(true));
-        CHECK(inv.to_status == status_to_int(true));
+        CHECK(inv.from_status == status_to_int(1));
+        CHECK(inv.to_status == status_to_int(1));
     }
 
     SUBCASE("Energization") {
-        edge_ref.set_status(true, true);
-        CHECK(edge_ref.energized(false) == false);
-        CHECK(edge_ref.energized(true) == true);
+        edge_ref.set_status(1, 1);
+        CHECK(edge_ref.energized(0) == 0);
+        CHECK(edge_ref.energized(1) == 1);
 
-        edge_ref.set_status(false, true);
-        CHECK(edge_ref.energized(true) == true);
+        edge_ref.set_status(0, 1);
+        CHECK(edge_ref.energized(1) == 1);
 
-        edge_ref.set_status(false, false);
-        CHECK(edge_ref.energized(true) == false);
+        edge_ref.set_status(0, 0);
+        CHECK(edge_ref.energized(1) == 0);
 
-        edge_ref.set_status(true, true);
+        edge_ref.set_status(1, 1);
     }
 
     SUBCASE("Symmetric Parameters") {
-        edge_ref.set_status(true, true);
+        edge_ref.set_status(1, 1);
 
         // Not energized
-        BranchCalcParam<symmetric_t> param = edge_ref.calc_param<symmetric_t>(false);
+        BranchCalcParam<symmetric_t> param = edge_ref.calc_param<symmetric_t>(0);
         CHECK(cabs(param.yff() - 0.0) < numerical_tolerance);
 
         // Both disconnected
-        edge_ref.set_status(false, false);
-        param = edge_ref.calc_param<symmetric_t>(true);
+        edge_ref.set_status(0, 0);
+        param = edge_ref.calc_param<symmetric_t>(1);
         CHECK(cabs(param.yff() - 0.0) < numerical_tolerance);
         CHECK(cabs(param.ytt() - 0.0) < numerical_tolerance);
 
         // From connected only
-        edge_ref.set_status(true, false);
-        param = edge_ref.calc_param<symmetric_t>(true);
+        edge_ref.set_status(1, 0);
+        param = edge_ref.calc_param<symmetric_t>(1);
         CHECK(cabs(param.yff() - ys1) < numerical_tolerance);
         CHECK(cabs(param.ytt() - 0.0) < numerical_tolerance);
 
         // To connected only
-        edge_ref.set_status(false, true);
-        param = edge_ref.calc_param<symmetric_t>(true);
+        edge_ref.set_status(0, 1);
+        param = edge_ref.calc_param<symmetric_t>(1);
         CHECK(cabs(param.yff() - 0.0) < numerical_tolerance);
         CHECK(cabs(param.ytt() - ys1) < numerical_tolerance);
 
         // Both connected
-        edge_ref.set_status(true, true);
-        param = edge_ref.calc_param<symmetric_t>(true);
+        edge_ref.set_status(1, 1);
+        param = edge_ref.calc_param<symmetric_t>(1);
         CHECK(cabs(param.yff() - yff1) < numerical_tolerance);
         CHECK(cabs(param.ytt() - yff1) < numerical_tolerance);
         CHECK(cabs(param.ytf() - yft1) < numerical_tolerance);
@@ -197,22 +197,22 @@ TEST_CASE("Test Edge") {
     }
 
     SUBCASE("Asymmetric Parameters") {
-        edge_ref.set_status(true, true);
-        BranchCalcParam<asymmetric_t> param = edge_ref.calc_param<asymmetric_t>(true);
+        edge_ref.set_status(1, 1);
+        BranchCalcParam<asymmetric_t> param = edge_ref.calc_param<asymmetric_t>(1);
 
         CHECK((cabs(param.yff() - yffa) < numerical_tolerance).all());
         CHECK((cabs(param.ytt() - yffa) < numerical_tolerance).all());
         CHECK((cabs(param.ytf() - yfta) < numerical_tolerance).all());
         CHECK((cabs(param.yft() - yfta) < numerical_tolerance).all());
 
-        edge_ref.set_status(true, false);
-        param = edge_ref.calc_param<asymmetric_t>(true);
+        edge_ref.set_status(1, 0);
+        param = edge_ref.calc_param<asymmetric_t>(1);
         CHECK((cabs(param.yff() - ysa) < numerical_tolerance).all());
         CHECK((cabs(param.ytt() - 0.0) < numerical_tolerance).all());
     }
 
     SUBCASE("Output Generation") {
-        edge_ref.set_status(true, true);
+        edge_ref.set_status(1, 1);
         BranchSolverOutput<symmetric_t> const solver_output{
             .s_f = 1.0 - 1.5i, .s_t = 1.5 - 1.5i, .i_f = 1.0 - 2.0i, .i_t = 2.0 - 1.0i};
 
@@ -227,7 +227,7 @@ TEST_CASE("Test Edge") {
     }
 
     SUBCASE("Short Circuit Output") {
-        edge_ref.set_status(true, true);
+        edge_ref.set_status(1, 1);
         DoubleComplex const if_sc{1.0, 1.0};
         DoubleComplex const it_sc{2.0, 2.0 * sqrt3};
 
