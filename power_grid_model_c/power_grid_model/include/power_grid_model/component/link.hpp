@@ -19,7 +19,7 @@ class Link final : public Edge {
     using UpdateType = BranchUpdate;
     static constexpr char const* name = "link";
 
-    ComponentType math_model_type() const final { return ComponentType::link; }
+    ComponentType math_model_type() const override { return ComponentType::link; }
 
     explicit Link(LinkInput const& link_input, double u1, double u2)
         : Edge{link_input}, base_i_from_{base_power_3p / u1 / sqrt3}, base_i_to_{base_power_3p / u2 / sqrt3} {}

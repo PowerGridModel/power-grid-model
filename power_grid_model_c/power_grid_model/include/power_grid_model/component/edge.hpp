@@ -33,8 +33,7 @@ class Edge : public Base {
     using ShortCircuitOutputType = BranchShortCircuitOutput;
     using SideType = BranchSide;
 
-    static constexpr char const* name = "edge";
-    // ComponentType math_model_type() const { return ComponentType::edge; }
+    static constexpr char const* name = "edge"; // possibly redundant
 
     explicit Edge(BranchInput const& edge_input)
         : Base{edge_input},

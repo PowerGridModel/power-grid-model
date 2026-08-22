@@ -354,20 +354,6 @@ PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_node_u;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_node_u_angle;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_node_p;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_node_q;
-// component link
-PGM_API extern PGM_MetaComponent const* const PGM_def_sym_output_link;
-// attributes of sym_output link
-PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_link_id;
-PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_link_energized;
-PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_link_loading;
-PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_link_p_from;
-PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_link_q_from;
-PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_link_i_from;
-PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_link_s_from;
-PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_link_p_to;
-PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_link_q_to;
-PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_link_i_to;
-PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_link_s_to;
 // component line
 PGM_API extern PGM_MetaComponent const* const PGM_def_sym_output_line;
 // attributes of sym_output line
@@ -382,6 +368,20 @@ PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_line_p_to;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_line_q_to;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_line_i_to;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_line_s_to;
+// component link
+PGM_API extern PGM_MetaComponent const* const PGM_def_sym_output_link;
+// attributes of sym_output link
+PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_link_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_link_energized;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_link_loading;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_link_p_from;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_link_q_from;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_link_i_from;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_link_s_from;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_link_p_to;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_link_q_to;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_link_i_to;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_sym_output_link_s_to;
 // component transformer
 PGM_API extern PGM_MetaComponent const* const PGM_def_sym_output_transformer;
 // attributes of sym_output transformer
@@ -577,20 +577,6 @@ PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_node_u;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_node_u_angle;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_node_p;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_node_q;
-// component link
-PGM_API extern PGM_MetaComponent const* const PGM_def_asym_output_link;
-// attributes of asym_output link
-PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_link_id;
-PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_link_energized;
-PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_link_loading;
-PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_link_p_from;
-PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_link_q_from;
-PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_link_i_from;
-PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_link_s_from;
-PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_link_p_to;
-PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_link_q_to;
-PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_link_i_to;
-PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_link_s_to;
 // component line
 PGM_API extern PGM_MetaComponent const* const PGM_def_asym_output_line;
 // attributes of asym_output line
@@ -605,6 +591,20 @@ PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_line_p_to;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_line_q_to;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_line_i_to;
 PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_line_s_to;
+// component link
+PGM_API extern PGM_MetaComponent const* const PGM_def_asym_output_link;
+// attributes of asym_output link
+PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_link_id;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_link_energized;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_link_loading;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_link_p_from;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_link_q_from;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_link_i_from;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_link_s_from;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_link_p_to;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_link_q_to;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_link_i_to;
+PGM_API extern PGM_MetaAttribute const* const PGM_def_asym_output_link_s_to;
 // component transformer
 PGM_API extern PGM_MetaComponent const* const PGM_def_asym_output_transformer;
 // attributes of asym_output transformer

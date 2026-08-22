@@ -343,20 +343,6 @@ PGM_MetaAttribute const* const PGM_def_sym_output_node_u = PGM_meta_get_attribut
 PGM_MetaAttribute const* const PGM_def_sym_output_node_u_angle = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "node", "u_angle");
 PGM_MetaAttribute const* const PGM_def_sym_output_node_p = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "node", "p");
 PGM_MetaAttribute const* const PGM_def_sym_output_node_q = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "node", "q");
-// component link
-PGM_MetaComponent const* const PGM_def_sym_output_link = PGM_meta_get_component_by_name(nullptr, "sym_output", "link");
-// attributes of sym_output link
-PGM_MetaAttribute const* const PGM_def_sym_output_link_id = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "link", "id");
-PGM_MetaAttribute const* const PGM_def_sym_output_link_energized = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "link", "energized");
-PGM_MetaAttribute const* const PGM_def_sym_output_link_loading = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "link", "loading");
-PGM_MetaAttribute const* const PGM_def_sym_output_link_p_from = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "link", "p_from");
-PGM_MetaAttribute const* const PGM_def_sym_output_link_q_from = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "link", "q_from");
-PGM_MetaAttribute const* const PGM_def_sym_output_link_i_from = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "link", "i_from");
-PGM_MetaAttribute const* const PGM_def_sym_output_link_s_from = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "link", "s_from");
-PGM_MetaAttribute const* const PGM_def_sym_output_link_p_to = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "link", "p_to");
-PGM_MetaAttribute const* const PGM_def_sym_output_link_q_to = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "link", "q_to");
-PGM_MetaAttribute const* const PGM_def_sym_output_link_i_to = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "link", "i_to");
-PGM_MetaAttribute const* const PGM_def_sym_output_link_s_to = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "link", "s_to");
 // component line
 PGM_MetaComponent const* const PGM_def_sym_output_line = PGM_meta_get_component_by_name(nullptr, "sym_output", "line");
 // attributes of sym_output line
@@ -371,6 +357,20 @@ PGM_MetaAttribute const* const PGM_def_sym_output_line_p_to = PGM_meta_get_attri
 PGM_MetaAttribute const* const PGM_def_sym_output_line_q_to = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "line", "q_to");
 PGM_MetaAttribute const* const PGM_def_sym_output_line_i_to = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "line", "i_to");
 PGM_MetaAttribute const* const PGM_def_sym_output_line_s_to = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "line", "s_to");
+// component link
+PGM_MetaComponent const* const PGM_def_sym_output_link = PGM_meta_get_component_by_name(nullptr, "sym_output", "link");
+// attributes of sym_output link
+PGM_MetaAttribute const* const PGM_def_sym_output_link_id = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "link", "id");
+PGM_MetaAttribute const* const PGM_def_sym_output_link_energized = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "link", "energized");
+PGM_MetaAttribute const* const PGM_def_sym_output_link_loading = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "link", "loading");
+PGM_MetaAttribute const* const PGM_def_sym_output_link_p_from = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "link", "p_from");
+PGM_MetaAttribute const* const PGM_def_sym_output_link_q_from = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "link", "q_from");
+PGM_MetaAttribute const* const PGM_def_sym_output_link_i_from = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "link", "i_from");
+PGM_MetaAttribute const* const PGM_def_sym_output_link_s_from = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "link", "s_from");
+PGM_MetaAttribute const* const PGM_def_sym_output_link_p_to = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "link", "p_to");
+PGM_MetaAttribute const* const PGM_def_sym_output_link_q_to = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "link", "q_to");
+PGM_MetaAttribute const* const PGM_def_sym_output_link_i_to = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "link", "i_to");
+PGM_MetaAttribute const* const PGM_def_sym_output_link_s_to = PGM_meta_get_attribute_by_name(nullptr, "sym_output", "link", "s_to");
 // component transformer
 PGM_MetaComponent const* const PGM_def_sym_output_transformer = PGM_meta_get_component_by_name(nullptr, "sym_output", "transformer");
 // attributes of sym_output transformer
@@ -566,20 +566,6 @@ PGM_MetaAttribute const* const PGM_def_asym_output_node_u = PGM_meta_get_attribu
 PGM_MetaAttribute const* const PGM_def_asym_output_node_u_angle = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "node", "u_angle");
 PGM_MetaAttribute const* const PGM_def_asym_output_node_p = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "node", "p");
 PGM_MetaAttribute const* const PGM_def_asym_output_node_q = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "node", "q");
-// component link
-PGM_MetaComponent const* const PGM_def_asym_output_link = PGM_meta_get_component_by_name(nullptr, "asym_output", "link");
-// attributes of asym_output link
-PGM_MetaAttribute const* const PGM_def_asym_output_link_id = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "link", "id");
-PGM_MetaAttribute const* const PGM_def_asym_output_link_energized = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "link", "energized");
-PGM_MetaAttribute const* const PGM_def_asym_output_link_loading = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "link", "loading");
-PGM_MetaAttribute const* const PGM_def_asym_output_link_p_from = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "link", "p_from");
-PGM_MetaAttribute const* const PGM_def_asym_output_link_q_from = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "link", "q_from");
-PGM_MetaAttribute const* const PGM_def_asym_output_link_i_from = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "link", "i_from");
-PGM_MetaAttribute const* const PGM_def_asym_output_link_s_from = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "link", "s_from");
-PGM_MetaAttribute const* const PGM_def_asym_output_link_p_to = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "link", "p_to");
-PGM_MetaAttribute const* const PGM_def_asym_output_link_q_to = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "link", "q_to");
-PGM_MetaAttribute const* const PGM_def_asym_output_link_i_to = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "link", "i_to");
-PGM_MetaAttribute const* const PGM_def_asym_output_link_s_to = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "link", "s_to");
 // component line
 PGM_MetaComponent const* const PGM_def_asym_output_line = PGM_meta_get_component_by_name(nullptr, "asym_output", "line");
 // attributes of asym_output line
@@ -594,6 +580,20 @@ PGM_MetaAttribute const* const PGM_def_asym_output_line_p_to = PGM_meta_get_attr
 PGM_MetaAttribute const* const PGM_def_asym_output_line_q_to = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "line", "q_to");
 PGM_MetaAttribute const* const PGM_def_asym_output_line_i_to = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "line", "i_to");
 PGM_MetaAttribute const* const PGM_def_asym_output_line_s_to = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "line", "s_to");
+// component link
+PGM_MetaComponent const* const PGM_def_asym_output_link = PGM_meta_get_component_by_name(nullptr, "asym_output", "link");
+// attributes of asym_output link
+PGM_MetaAttribute const* const PGM_def_asym_output_link_id = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "link", "id");
+PGM_MetaAttribute const* const PGM_def_asym_output_link_energized = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "link", "energized");
+PGM_MetaAttribute const* const PGM_def_asym_output_link_loading = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "link", "loading");
+PGM_MetaAttribute const* const PGM_def_asym_output_link_p_from = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "link", "p_from");
+PGM_MetaAttribute const* const PGM_def_asym_output_link_q_from = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "link", "q_from");
+PGM_MetaAttribute const* const PGM_def_asym_output_link_i_from = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "link", "i_from");
+PGM_MetaAttribute const* const PGM_def_asym_output_link_s_from = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "link", "s_from");
+PGM_MetaAttribute const* const PGM_def_asym_output_link_p_to = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "link", "p_to");
+PGM_MetaAttribute const* const PGM_def_asym_output_link_q_to = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "link", "q_to");
+PGM_MetaAttribute const* const PGM_def_asym_output_link_i_to = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "link", "i_to");
+PGM_MetaAttribute const* const PGM_def_asym_output_link_s_to = PGM_meta_get_attribute_by_name(nullptr, "asym_output", "link", "s_to");
 // component transformer
 PGM_MetaComponent const* const PGM_def_asym_output_transformer = PGM_meta_get_component_by_name(nullptr, "asym_output", "transformer");
 // attributes of asym_output transformer
