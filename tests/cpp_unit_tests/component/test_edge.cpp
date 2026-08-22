@@ -13,6 +13,7 @@
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/common/three_phase_tensor.hpp>
 #include <power_grid_model/component/base.hpp>
+#include <power_grid_model/component/component.hpp>
 
 #include <doctest/doctest.h>
 
@@ -62,7 +63,7 @@ class TestEdge : public Edge {
 };
 } // namespace
 
-TEST_CASE("Test Edge") {
+TEST_CASE("Test edge") {
     BranchInput const input{.id = 1, .from_node = 2, .to_node = 3, .from_status = 1, .to_status = 1};
 
     double const u_rated = 10.0e3;
@@ -132,8 +133,8 @@ TEST_CASE("Test Edge") {
 
         CHECK(!edge_ref.set_status(0, na_IntS));
 
-        BranchUpdate update{.id = 1, .from_status = 1, .to_status = na_IntS};
-        UpdateChange change = edge_ref.update(update);
+        BranchUpdate const update{.id = 1, .from_status = 1, .to_status = na_IntS};
+        UpdateChange const change = edge_ref.update(update);
         CHECK(change.topo == 1);
         CHECK(change.param == 1);
     }
@@ -142,7 +143,7 @@ TEST_CASE("Test Edge") {
         // Reset to known state
         edge_ref.set_status(1, 1);
 
-        BranchUpdate update{.id = 1, .from_status = 0, .to_status = 0};
+        BranchUpdate const update{.id = 1, .from_status = 0, .to_status = 0};
         auto const inv = edge_ref.inverse(update);
         CHECK(inv.from_status == status_to_int(1));
         CHECK(inv.to_status == status_to_int(1));
@@ -166,30 +167,30 @@ TEST_CASE("Test Edge") {
         edge_ref.set_status(1, 1);
 
         // Not energized
-        BranchCalcParam<symmetric_t> param = edge_ref.calc_param<symmetric_t>(0);
+        BranchCalcParam<symmetric_t> param = edge_ref.calc_param<symmetric_t>(false);
         CHECK(cabs(param.yff() - 0.0) < numerical_tolerance);
 
         // Both disconnected
         edge_ref.set_status(0, 0);
-        param = edge_ref.calc_param<symmetric_t>(1);
+        param = edge_ref.calc_param<symmetric_t>(true);
         CHECK(cabs(param.yff() - 0.0) < numerical_tolerance);
         CHECK(cabs(param.ytt() - 0.0) < numerical_tolerance);
 
         // From connected only
         edge_ref.set_status(1, 0);
-        param = edge_ref.calc_param<symmetric_t>(1);
+        param = edge_ref.calc_param<symmetric_t>(true);
         CHECK(cabs(param.yff() - ys1) < numerical_tolerance);
         CHECK(cabs(param.ytt() - 0.0) < numerical_tolerance);
 
         // To connected only
         edge_ref.set_status(0, 1);
-        param = edge_ref.calc_param<symmetric_t>(1);
+        param = edge_ref.calc_param<symmetric_t>(true);
         CHECK(cabs(param.yff() - 0.0) < numerical_tolerance);
         CHECK(cabs(param.ytt() - ys1) < numerical_tolerance);
 
         // Both connected
         edge_ref.set_status(1, 1);
-        param = edge_ref.calc_param<symmetric_t>(1);
+        param = edge_ref.calc_param<symmetric_t>(true);
         CHECK(cabs(param.yff() - yff1) < numerical_tolerance);
         CHECK(cabs(param.ytt() - yff1) < numerical_tolerance);
         CHECK(cabs(param.ytf() - yft1) < numerical_tolerance);
@@ -198,7 +199,7 @@ TEST_CASE("Test Edge") {
 
     SUBCASE("Asymmetric Parameters") {
         edge_ref.set_status(1, 1);
-        BranchCalcParam<asymmetric_t> param = edge_ref.calc_param<asymmetric_t>(1);
+        BranchCalcParam<asymmetric_t> param = edge_ref.calc_param<asymmetric_t>(true);
 
         CHECK((cabs(param.yff() - yffa) < numerical_tolerance).all());
         CHECK((cabs(param.ytt() - yffa) < numerical_tolerance).all());
@@ -206,7 +207,7 @@ TEST_CASE("Test Edge") {
         CHECK((cabs(param.yft() - yfta) < numerical_tolerance).all());
 
         edge_ref.set_status(1, 0);
-        param = edge_ref.calc_param<asymmetric_t>(1);
+        param = edge_ref.calc_param<asymmetric_t>(true);
         CHECK((cabs(param.yff() - ysa) < numerical_tolerance).all());
         CHECK((cabs(param.ytt() - 0.0) < numerical_tolerance).all());
     }

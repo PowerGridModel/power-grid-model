@@ -12,6 +12,7 @@
 #include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/common/three_phase_tensor.hpp>
 #include <power_grid_model/component/base.hpp>
+#include <power_grid_model/component/edge.hpp>
 
 #include <doctest/doctest.h>
 
