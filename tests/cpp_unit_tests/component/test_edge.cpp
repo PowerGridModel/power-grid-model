@@ -254,8 +254,9 @@ TEST_CASE("Test edge") {
     }
 
     SUBCASE("Enum Violations") {
-        CHECK_THROWS_AS(edge_ref.node(static_cast<BranchSide>(2)), MissingCaseForEnumError);
-        CHECK_THROWS_AS(edge_ref.status(static_cast<BranchSide>(2)), MissingCaseForEnumError);
+        IntS const invalid_side = 2;
+        CHECK_THROWS_AS(edge_ref.node(static_cast<BranchSide>(invalid_side)), MissingCaseForEnumError);
+        CHECK_THROWS_AS(edge_ref.status(static_cast<BranchSide>(invalid_side)), MissingCaseForEnumError);
     }
 }
 
