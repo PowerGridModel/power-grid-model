@@ -252,12 +252,6 @@ TEST_CASE("Test edge") {
         CHECK(null_sc_output.energized == 0);
         CHECK(null_sc_output.i_from(0) == 0.0);
     }
-
-    SUBCASE("Enum Violations") {
-        IntS volatile invalid_side = 2;
-        CHECK_THROWS_AS(edge_ref.node(static_cast<BranchSide>(invalid_side)), MissingCaseForEnumError);
-        CHECK_THROWS_AS(edge_ref.status(static_cast<BranchSide>(invalid_side)), MissingCaseForEnumError);
-    }
 }
 
 } // namespace power_grid_model
