@@ -146,18 +146,20 @@ inline MathOutput<std::vector<ShortCircuitSolverOutput<symmetric_t>>> make_short
 }
 
 template <symmetry_tag sym> struct InjectionAccumulator {
-    template <typename ComponentType> void operator()(Idx2D const& math_id, ComplexValue<sym> const& injection) {
-        auto& target_map = [&]() -> std::unordered_map<Idx2D, ComplexValue<sym>, Idx2DHash>& {
-            if constexpr (std::derived_from<ComponentType, Branch>) {
-                return branch_flow_into_nodes;
-            } else {
-                return net_node_injections;
-            }
-        }();
+    auto accumulator() {
+        return [this]<typename ComponentType>(Idx2D const& math_id, ComplexValue<sym> const& injection) {
+            auto& target_map = [&]() -> std::unordered_map<Idx2D, ComplexValue<sym>, Idx2DHash>& {
+                if constexpr (std::derived_from<ComponentType, Branch>) {
+                    return branch_flow_into_nodes;
+                } else {
+                    return net_node_injections;
+                }
+            }();
 
-        if (auto [it, inserted] = target_map.try_emplace(math_id, injection); !inserted) {
-            it->second += injection;
-        }
+            if (auto [it, inserted] = target_map.try_emplace(math_id, injection); !inserted) {
+                it->second += injection;
+            }
+        };
     }
 
     std::unordered_map<Idx2D, ComplexValue<sym>, Idx2DHash> net_node_injections{};
@@ -277,13 +279,13 @@ TEST_CASE("Test topological node output") {
         SUBCASE("Steady state output") {
             auto const math_output = make_steady_state_math_output_sym();
 
-            detail::add_appliance_injection<Source>(state, math_output, std::ref(accumulator));
+            detail::add_appliance_injection.template operator()<Source>(state, math_output, accumulator.accumulator());
             CHECK(accumulator.net_node_injections.size() == 1);
             CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == dummy_complex_value_sym());
             CHECK(!accumulator.net_node_injections.contains(Idx2D{.group = 0, .pos = 1}));
             CHECK(!accumulator.net_node_injections.contains(Idx2D{.group = 1, .pos = 0}));
 
-            detail::add_appliance_injection<AsymLoad>(state, math_output, std::ref(accumulator));
+            detail::add_appliance_injection.template operator()<AsymLoad>(state, math_output, accumulator.accumulator());
             CHECK(accumulator.net_node_injections.size() == 2);
             CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == dummy_complex_value_sym());
             CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 1}) == dummy_complex_value_sym());
@@ -291,7 +293,7 @@ TEST_CASE("Test topological node output") {
             CHECK(!accumulator.net_node_injections.contains(Idx2D{.group = 1, .pos = 0}));
             CHECK(accumulator.branch_flow_into_nodes.empty());
 
-            detail::add_appliance_injection<SymLoad>(state, math_output, std::ref(accumulator));
+            detail::add_appliance_injection.template operator()<SymLoad>(state, math_output, accumulator.accumulator());
             CHECK(accumulator.net_node_injections.size() == 3);
             CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == dummy_complex_value_sym());
             CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 1}) == dummy_complex_value_sym());
@@ -300,7 +302,7 @@ TEST_CASE("Test topological node output") {
             CHECK(!accumulator.net_node_injections.contains(Idx2D{.group = 1, .pos = 0}));
             CHECK(accumulator.branch_flow_into_nodes.empty());
 
-            detail::add_appliance_injection<Line>(state, math_output, std::ref(accumulator));
+            detail::add_appliance_injection.template operator()<Line>(state, math_output, accumulator.accumulator());
             CHECK(accumulator.net_node_injections.size() == 3);
             CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == dummy_complex_value_sym());
             CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 1}) == dummy_complex_value_sym());
@@ -319,14 +321,14 @@ TEST_CASE("Test topological node output") {
         SUBCASE("Short circuit output") {
             auto const math_output = make_short_circuit_math_output_sym();
 
-            detail::add_appliance_injection<Source>(state, math_output, std::ref(accumulator));
+            detail::add_appliance_injection.template operator()<Source>(state, math_output, accumulator.accumulator());
             CHECK(accumulator.net_node_injections.size() == 1);
             CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == dummy_complex_value_sym());
             CHECK(!accumulator.net_node_injections.contains(Idx2D{.group = 0, .pos = 1}));
             CHECK(!accumulator.net_node_injections.contains(Idx2D{.group = 1, .pos = 0}));
             CHECK(accumulator.branch_flow_into_nodes.empty());
 
-            detail::add_appliance_injection<Fault>(state, math_output, std::ref(accumulator));
+            detail::add_appliance_injection.template operator()<Fault>(state, math_output, accumulator.accumulator());
             CHECK(accumulator.net_node_injections.size() == 2);
             CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == 2.0 * dummy_complex_value_sym());
             CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 1}) == dummy_complex_value_sym());
@@ -334,7 +336,7 @@ TEST_CASE("Test topological node output") {
             CHECK(!accumulator.net_node_injections.contains(Idx2D{.group = 1, .pos = 0}));
             CHECK(accumulator.branch_flow_into_nodes.empty());
 
-            detail::add_appliance_injection<Line>(state, math_output, std::ref(accumulator));
+            detail::add_appliance_injection.template operator()<Line>(state, math_output, accumulator.accumulator());
             CHECK(accumulator.net_node_injections.size() == 2);
             CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == 2.0 * dummy_complex_value_sym());
             CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 1}) == dummy_complex_value_sym());
@@ -358,7 +360,7 @@ TEST_CASE("Test topological node output") {
             using ComponentTypes =
                 std::tuple<Source, SymLoad, SymGenerator, AsymLoad, AsymGenerator, Line, GenericBranch, Transformer>;
 
-            detail::add_flows<ComponentTypes>(state, math_output, std::ref(accumulator));
+            detail::add_flows<ComponentTypes>(state, math_output, accumulator.accumulator());
 
             CHECK(accumulator.net_node_injections.size() == 3);
             CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == dummy_complex_value_sym());
@@ -375,7 +377,7 @@ TEST_CASE("Test topological node output") {
             auto const math_output = make_short_circuit_math_output_sym();
             using ComponentTypes = std::tuple<Source, Line, GenericBranch, Transformer, Fault>;
 
-            detail::add_flows<ComponentTypes>(state, math_output, std::ref(accumulator));
+            detail::add_flows<ComponentTypes>(state, math_output, accumulator.accumulator());
 
             CHECK(accumulator.net_node_injections.size() == 2);
             CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == 2.0 * dummy_complex_value_sym());

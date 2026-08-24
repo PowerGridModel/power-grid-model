@@ -35,16 +35,10 @@ template <symmetry_tag sym> struct SuperNodeSolverInput {
     }
 };
 
-template <typename Callable> Callable unwrap_callable(Callable callable) { return callable; }
-
-template <typename Callable> Callable& unwrap_callable(std::reference_wrapper<Callable> callable_ref) {
-    return callable_ref.get();
-}
-
 template <typename AddToTarget, typename ComponentType, typename SolverOutputType>
 concept flow_accumulator_c = requires(AddToTarget accumulator, Idx2D const& user_topo_id,
                                       ComplexValue<decode_symmetry_v<SolverOutputType>> const& injection) {
-    unwrap_callable(accumulator).template operator()<ComponentType>(user_topo_id, injection);
+    accumulator.template operator()<ComponentType>(user_topo_id, injection);
 };
 
 template <typename ComponentSolverOutputType>
@@ -105,50 +99,51 @@ inline Idx get_node_sequence_idx(main_model_state_c auto const& state, Idx compo
                                             component_idx][std::to_underlying(side)];
 }
 
-template <typename ComponentType, typename SolverOutputType, typename AddToTarget>
-    requires flow_accumulator_c<AddToTarget, ComponentType, SolverOutputType> &&
-             (is_in_list_c<ComponentType, Source, SymLoad, SymGenerator, AsymLoad, AsymGenerator> ||
-              (std::same_as<ComponentType, Fault> && short_circuit_solver_output_type<SolverOutputType>))
-inline void add_appliance_injection(main_model_state_c auto const& state,
-                                    MathOutput<std::vector<SolverOutputType>> const& math_output,
-                                    AddToTarget accumulate_injection) {
-    for (auto const& [component_idx, component_math_id] : enumerate(comp_base_sequence<ComponentType>(state))) {
-        if (component_math_id.group == disconnected) {
-            continue;
-        }
-        auto const& component_output = get_component_output<ComponentType>(math_output, component_math_id);
+struct AddApplianceInjection {
+    template <typename ComponentType, typename SolverOutputType, typename AddToTarget>
+        requires flow_accumulator_c<AddToTarget, ComponentType, SolverOutputType> &&
+                 (is_in_list_c<ComponentType, Source, SymLoad, SymGenerator, AsymLoad, AsymGenerator> ||
+                  (std::same_as<ComponentType, Fault> && short_circuit_solver_output_type<SolverOutputType>))
+    void operator()(main_model_state_c auto const& state, MathOutput<std::vector<SolverOutputType>> const& math_output,
+                    AddToTarget accumulate_injection) const {
+        for (auto const& [component_idx, component_math_id] : enumerate(comp_base_sequence<ComponentType>(state))) {
+            if (component_math_id.group == disconnected) {
+                continue;
+            }
+            auto const& component_output = get_component_output<ComponentType>(math_output, component_math_id);
 
-        auto const& user_node_idx = get_node_sequence_idx<ComponentType>(state, component_idx);
-        auto const& user_topo_id =
-            state.reduced_topology->topo_node_coup.coupling.user_nodes_to_topo_nodes[user_node_idx];
-        unwrap_callable(accumulate_injection)
-            .template operator()<ComponentType>(user_topo_id, get_injection(component_output));
-    }
-}
-
-template <typename ComponentType, typename SolverOutputType, typename AddToTarget>
-    requires flow_accumulator_c<AddToTarget, ComponentType, SolverOutputType> &&
-             std::derived_from<ComponentType, Branch>
-inline void add_appliance_injection(main_model_state_c auto const& state,
-                                    MathOutput<std::vector<SolverOutputType>> const& math_output,
-                                    AddToTarget accumulate_injection) {
-    static_assert(!std::same_as<ComponentType, Link>);
-
-    for (auto const& [component_idx, component_math_id] : enumerate(comp_base_sequence<ComponentType>(state))) {
-        if (component_math_id.group == disconnected || component_math_id.pos == disconnected) {
-            continue;
-        }
-        auto const& component_output = get_component_output<ComponentType>(math_output, component_math_id);
-
-        for (auto const side : {BranchSide::from, BranchSide::to}) {
-            auto const& user_node_idx = get_node_sequence_idx<ComponentType>(state, component_idx, side);
+            auto const& user_node_idx = get_node_sequence_idx<ComponentType>(state, component_idx);
             auto const& user_topo_id =
                 state.reduced_topology->topo_node_coup.coupling.user_nodes_to_topo_nodes[user_node_idx];
-            unwrap_callable(accumulate_injection)
-                .template operator()<ComponentType>(user_topo_id, get_injection(component_output, side));
+            accumulate_injection.template operator()<ComponentType>(user_topo_id, get_injection(component_output));
         }
     }
-}
+
+    template <typename ComponentType, typename SolverOutputType, typename AddToTarget>
+        requires flow_accumulator_c<AddToTarget, ComponentType, SolverOutputType> &&
+                 std::derived_from<ComponentType, Branch>
+    void operator()(main_model_state_c auto const& state, MathOutput<std::vector<SolverOutputType>> const& math_output,
+                    AddToTarget accumulate_injection) const {
+        static_assert(!std::same_as<ComponentType, Link>);
+
+        for (auto const& [component_idx, component_math_id] : enumerate(comp_base_sequence<ComponentType>(state))) {
+            if (component_math_id.group == disconnected || component_math_id.pos == disconnected) {
+                continue;
+            }
+            auto const& component_output = get_component_output<ComponentType>(math_output, component_math_id);
+
+            for (auto const side : {BranchSide::from, BranchSide::to}) {
+                auto const& user_node_idx = get_node_sequence_idx<ComponentType>(state, component_idx, side);
+                auto const& user_topo_id =
+                    state.reduced_topology->topo_node_coup.coupling.user_nodes_to_topo_nodes[user_node_idx];
+                accumulate_injection.template operator()<ComponentType>(user_topo_id,
+                                                                        get_injection(component_output, side));
+            }
+        }
+    }
+};
+
+constexpr auto add_appliance_injection = AddApplianceInjection{};
 
 template <typename InjectionComponentTypesTuple, main_model_state_c State, solver_output_type SolverOutput,
           typename AddToTarget>
@@ -157,7 +152,7 @@ inline void add_flows(State const& state, MathOutput<std::vector<SolverOutput>> 
     utils::run_functor_with_tuple_return_void<InjectionComponentTypesTuple>(
         [&state, &math_output, &accumulate_injection]<typename ComponentType>() {
             if constexpr (decltype(state.components)::template is_storageable_v<ComponentType>) {
-                add_appliance_injection<ComponentType>(state, math_output, accumulate_injection);
+                add_appliance_injection.template operator()<ComponentType>(state, math_output, accumulate_injection);
             }
         });
 }
