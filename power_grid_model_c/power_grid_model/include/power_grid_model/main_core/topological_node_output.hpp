@@ -226,7 +226,7 @@ solve_topological_nodes(LinkSolver link_solver, State const& state,
             auto const node_number = topo_node.user_nodes.size();
             return {.links = std::span(topo_node.user_links),
                     .node_injection = ComplexValueVector<sym>(node_number),
-                    .node_flow_from_branch = std::vector<ComplexValue<sym>>(node_number)};
+                    .node_flow_from_branch = ComplexValueVector<sym>>(node_number)};
         }) |
         std::ranges::to<std::vector>();
 
