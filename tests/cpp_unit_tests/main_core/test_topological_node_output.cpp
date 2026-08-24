@@ -47,6 +47,11 @@ double constexpr dummy_value = 123.321;
 constexpr ComplexValue<symmetric_t> dummy_complex_value_sym() { return {2.14, 3.71}; }
 ComplexValue<asymmetric_t> dummy_complex_value_asym() { return {{1.0, 2.0}, {-3.0, -4.0}, {5.0, -6.0}}; }
 
+void check_close(ComplexValue<symmetric_t> const& a, ComplexValue<symmetric_t> const& b) {
+    CHECK(a.real() == doctest::Approx(b.real()));
+    CHECK(a.imag() == doctest::Approx(b.imag()));
+}
+
 inline State make_state() {
     State state;
     state.comp_topo = std::make_shared<ComponentTopology const>([]() {
@@ -536,16 +541,16 @@ TEST_CASE("Test topological node output") {
                   ComplexVector{dummy_complex_value_sym(), dummy_complex_value_sym(), dummy_complex_value_sym()});
             CHECK(result[1].bus_injection == ComplexVector{DoubleComplex{}});
             REQUIRE(result[0].link.size() == 2);
-            CHECK(result[0].link[0].s_f == 2.0 * dummy_complex_value_sym());
-            CHECK(result[0].link[0].s_t == -2.0 * dummy_complex_value_sym());
-            CHECK(result[0].link[1].s_f == 3.0 * dummy_complex_value_sym());
-            CHECK(result[0].link[1].s_t == -3.0 * dummy_complex_value_sym());
+            check_close(result[0].link[0].s_f, 2.0 * dummy_complex_value_sym());
+            check_close(result[0].link[0].s_t, -2.0 * dummy_complex_value_sym());
+            check_close(result[0].link[1].s_f, 3.0 * dummy_complex_value_sym());
+            check_close(result[0].link[1].s_t, -3.0 * dummy_complex_value_sym());
             // i_f/i_t are derived from the power flow and the topological node voltage: i = conj(s / u)
             auto const topo_node_u = math_output.solver_output[0].u[0];
-            CHECK(result[0].link[0].i_f == conj(2.0 * dummy_complex_value_sym() / topo_node_u));
-            CHECK(result[0].link[0].i_t == conj(-2.0 * dummy_complex_value_sym() / topo_node_u));
-            CHECK(result[0].link[1].i_f == conj(3.0 * dummy_complex_value_sym() / topo_node_u));
-            CHECK(result[0].link[1].i_t == conj(-3.0 * dummy_complex_value_sym() / topo_node_u));
+            check_close(result[0].link[0].i_f, conj(2.0 * dummy_complex_value_sym() / topo_node_u));
+            check_close(result[0].link[0].i_t, conj(-2.0 * dummy_complex_value_sym() / topo_node_u));
+            check_close(result[0].link[1].i_f, conj(3.0 * dummy_complex_value_sym() / topo_node_u));
+            check_close(result[0].link[1].i_t, conj(-3.0 * dummy_complex_value_sym() / topo_node_u));
             CHECK(result[1].link.empty());
         }
 
@@ -567,10 +572,10 @@ TEST_CASE("Test topological node output") {
 
             REQUIRE(result.size() == 2);
             REQUIRE(result[0].link.size() == 2);
-            CHECK(result[0].link[0].i_f == dummy_complex_value_sym());
-            CHECK(result[0].link[0].i_t == -dummy_complex_value_sym());
-            CHECK(result[0].link[1].i_f == dummy_complex_value_sym());
-            CHECK(result[0].link[1].i_t == -dummy_complex_value_sym());
+            check_close(result[0].link[0].i_f, dummy_complex_value_sym());
+            check_close(result[0].link[0].i_t, -dummy_complex_value_sym());
+            check_close(result[0].link[1].i_f, dummy_complex_value_sym());
+            check_close(result[0].link[1].i_t, -dummy_complex_value_sym());
             CHECK(result[1].link.empty());
         }
     }
