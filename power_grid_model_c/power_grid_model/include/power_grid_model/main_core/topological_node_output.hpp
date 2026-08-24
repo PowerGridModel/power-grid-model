@@ -205,7 +205,7 @@ std::vector<BranchSolverOutputType> get_link_output(ComplexValueVector<sym> cons
     for (auto const& result : link_solver_result) {
         if constexpr (std::same_as<BranchSolverOutputType,
                                    BranchSolverOutput<decode_symmetry_v<BranchSolverOutputType>>>) {
-            link_output.emplace_back(BranchSolverOutputType{.s_f = result, .s_t = -result}); // i conversion missing
+            link_output.emplace_back(BranchSolverOutputType{.s_f = result, .s_t = -result});
         } else {
             link_output.emplace_back(BranchSolverOutputType{.i_f = result, .i_t = -result});
         }
