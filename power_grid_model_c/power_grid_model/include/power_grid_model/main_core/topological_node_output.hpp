@@ -95,9 +95,9 @@ inline Idx get_node_sequence_idx(main_model_state_c auto const& state, Idx compo
 }
 
 template <std::derived_from<Branch> ComponentType>
-inline Idx get_node_sequence_idx(main_model_state_c auto const& state, Idx component_idx, BranchSide side) {
+inline Idx get_branch_sequence_idx(main_model_state_c auto const& state, Idx component_idx) {
     return state.comp_topo->branch_node_idx[get_component_sequence_offset<Branch, ComponentType>(state.components) +
-                                            component_idx][std::to_underlying(side)];
+                                            component_idx];
 }
 
 struct AddApplianceInjection {
@@ -133,8 +133,9 @@ struct AddApplianceInjection {
             }
             auto const& component_output = get_component_output<ComponentType>(math_output, component_math_id);
 
+            auto const& branch_node_idx = get_branch_sequence_idx<ComponentType>(state, component_idx);
             for (auto const side : {BranchSide::from, BranchSide::to}) {
-                auto const& user_node_idx = get_node_sequence_idx<ComponentType>(state, component_idx, side);
+                auto const& user_node_idx = branch_node_idx[std::to_underlying(side)];
                 auto const& user_topo_id =
                     state.reduced_topology->topo_node_coup.coupling.user_nodes_to_topo_nodes[user_node_idx];
                 accumulate_injection.template operator()<ComponentType>(user_topo_id,
