@@ -51,19 +51,10 @@ constexpr void register_topology_components(ComponentContainer const& components
     comp_topo.n_node = get_component_size<Node>(components);
 }
 
-template <std::same_as<Branch> Component, class ComponentContainer>
+template <std::same_as<Edge> Component, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, Component, Edge, Node>
 constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
     apply_registration<Edge>(components, comp_topo.branch_node_idx, [&components](Edge const& edge) {
-        return BranchIdx{get_component_sequence_idx<Node>(components, edge.from_node()),
-                         get_component_sequence_idx<Node>(components, edge.to_node())};
-    });
-}
-
-template <std::same_as<Link> Component, class ComponentContainer>
-    requires common::component_container_c<ComponentContainer, Component, Node>
-constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
-    apply_registration<Component>(components, comp_topo.link_node_idx, [&components](Link const& edge) {
         return BranchIdx{get_component_sequence_idx<Node>(components, edge.from_node()),
                          get_component_sequence_idx<Node>(components, edge.to_node())};
     });
@@ -210,7 +201,7 @@ constexpr void register_topology_components(ComponentContainer const& components
                                   [](Regulator const& regulator) { return regulator.regulated_object_type(); });
 }
 
-template <std::same_as<Branch> Component, class ComponentContainer>
+template <std::same_as<Edge> Component, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, Component, Edge>
 constexpr void register_connections_components(ComponentContainer const& components, ComponentConnections& comp_conn) {
     apply_registration<Edge>(components, comp_conn.branch_connected, [](Edge const& edge) {
@@ -220,13 +211,6 @@ constexpr void register_connections_components(ComponentContainer const& compone
                              [](Edge const& edge) { return edge.phase_shift(); });
 }
 
-template <std::same_as<Link> Component, class ComponentContainer>
-    requires common::component_container_c<ComponentContainer, Component>
-constexpr void register_connections_components(ComponentContainer const& components, ComponentConnections& comp_conn) {
-    apply_registration<Component>(components, comp_conn.link_connected, [](Link const& link) {
-        return BranchConnected{status_to_int(link.from_status()), status_to_int(link.to_status())};
-    });
-}
 template <std::same_as<Branch3> Component, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, Component>
 constexpr void register_connections_components(ComponentContainer const& components, ComponentConnections& comp_conn) {
@@ -248,7 +232,7 @@ constexpr void register_connections_components(ComponentContainer const& compone
 } // namespace detail
 
 template <typename ModelType>
-    requires common::component_container_c<typename ModelType::ComponentContainer, Node, Branch, Link, Branch3, Source,
+    requires common::component_container_c<typename ModelType::ComponentContainer, Node, Edge, Branch3, Source,
                                            Shunt, GenericLoadGen, GenericVoltageSensor, GenericPowerSensor,
                                            GenericCurrentSensor, Regulator>
 ComponentTopology construct_topology(typename ModelType::ComponentContainer const& components) {
@@ -262,7 +246,7 @@ ComponentTopology construct_topology(typename ModelType::ComponentContainer cons
 }
 
 template <typename ModelType>
-    requires common::component_container_c<typename ModelType::ComponentContainer, Branch, Link, Branch3, Source>
+    requires common::component_container_c<typename ModelType::ComponentContainer, Edge, Branch3, Source>
 ComponentConnections construct_components_connections(typename ModelType::ComponentContainer const& components) {
     ComponentConnections comp_conn;
     using TopologyConnectionTypesTuple = ModelType::TopologyConnectionTypesTuple;
