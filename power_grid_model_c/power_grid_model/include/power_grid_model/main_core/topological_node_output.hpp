@@ -224,7 +224,7 @@ solve_topological_nodes(LinkSolver link_solver, State const& state,
         state.reduced_topology->topo_node_coup.topo_nodes |
         std::views::transform([](auto const& topo_node) -> SuperNodeSolverInput<sym> {
             auto const node_number = topo_node.user_nodes.size();
-            return {.links = std::span(topo_node.user_links),
+            return {.links = std::span{topo_node.user_links},
                     .node_injection = ComplexValueVector<sym>(node_number),
                     .node_flow_from_branch = ComplexValueVector<sym>(node_number)};
         }) |
@@ -269,6 +269,9 @@ solve_topological_nodes(LinkSolver link_solver, State const& state,
     if constexpr (steady_state_solver_output_type<SolverOutput>) {
         std::ranges::for_each(std::views::zip(result, state.topo_comp_coup->node), [&math_output](auto&& pair) {
             auto& [supernode_output, topo_node_idx] = pair;
+            if (topo_node_idx.group == disconnected || topo_node_idx.pos == disconnected) {
+                return;
+            }
             auto const topo_node_u = math_output.solver_output[topo_node_idx.group].u[topo_node_idx.pos];
             std::ranges::for_each(supernode_output.link, [&topo_node_u](auto& link) {
                 link.i_f = conj(link.s_f / topo_node_u);

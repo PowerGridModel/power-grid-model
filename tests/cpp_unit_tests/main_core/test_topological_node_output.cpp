@@ -110,8 +110,8 @@ inline State make_state() {
 inline MathOutput<std::vector<SolverOutput<symmetric_t>>> make_steady_state_math_output_sym() {
     MathOutput<std::vector<SolverOutput<symmetric_t>>> math_output{};
     math_output.solver_output.emplace_back(
-        SolverOutput<symmetric_t>{.u = {},
-                                  .bus_injection = {},
+        SolverOutput<symmetric_t>{.u = {dummy_complex_value_sym(), dummy_complex_value_sym()},
+                                  .bus_injection = {dummy_complex_value_sym(), dummy_complex_value_sym()},
                                   .bus = {},
                                   .branch = {{.s_f = dummy_complex_value_sym(),
                                               .s_t = dummy_complex_value_sym(),
