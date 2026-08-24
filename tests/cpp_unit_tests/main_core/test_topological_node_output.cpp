@@ -258,14 +258,14 @@ TEST_CASE("Test topological node output") {
             CHECK(detail::get_node_sequence_idx<SymLoad>(state, 0) == Idx{2});
         }
         SUBCASE("Line") {
-            CHECK(detail::get_node_sequence_idx<Line>(state, 0, BranchSide::from) == Idx{0});
-            CHECK(detail::get_node_sequence_idx<Line>(state, 0, BranchSide::to) == Idx{1});
-            CHECK(detail::get_node_sequence_idx<Line>(state, 1, BranchSide::from) == Idx{1});
-            CHECK(detail::get_node_sequence_idx<Line>(state, 1, BranchSide::to) == Idx{1});
-            CHECK(detail::get_node_sequence_idx<Line>(state, 2, BranchSide::from) == Idx{1});
-            CHECK(detail::get_node_sequence_idx<Line>(state, 2, BranchSide::to) == Idx{0});
-            CHECK(detail::get_node_sequence_idx<Line>(state, 3, BranchSide::from) == Idx{2});
-            CHECK(detail::get_node_sequence_idx<Line>(state, 3, BranchSide::to) == Idx{3});
+            CHECK(detail::get_branch_sequence_idx<Line>(state, 0)[std::to_underlying(BranchSide::from)] == Idx{0});
+            CHECK(detail::get_branch_sequence_idx<Line>(state, 0)[std::to_underlying(BranchSide::to)] == Idx{1});
+            CHECK(detail::get_branch_sequence_idx<Line>(state, 1)[std::to_underlying(BranchSide::from)] == Idx{1});
+            CHECK(detail::get_branch_sequence_idx<Line>(state, 1)[std::to_underlying(BranchSide::to)] == Idx{1});
+            CHECK(detail::get_branch_sequence_idx<Line>(state, 2)[std::to_underlying(BranchSide::from)] == Idx{1});
+            CHECK(detail::get_branch_sequence_idx<Line>(state, 2)[std::to_underlying(BranchSide::to)] == Idx{0});
+            CHECK(detail::get_branch_sequence_idx<Line>(state, 3)[std::to_underlying(BranchSide::from)] == Idx{2});
+            CHECK(detail::get_branch_sequence_idx<Line>(state, 3)[std::to_underlying(BranchSide::to)] == Idx{3});
         }
         SUBCASE("Fault") {
             CHECK(detail::get_node_sequence_idx<Fault>(state, 0) == Idx{0});
