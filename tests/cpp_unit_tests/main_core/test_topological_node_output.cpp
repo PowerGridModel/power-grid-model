@@ -285,7 +285,8 @@ TEST_CASE("Test topological node output") {
             CHECK(!accumulator.net_node_injections.contains(Idx2D{.group = 0, .pos = 1}));
             CHECK(!accumulator.net_node_injections.contains(Idx2D{.group = 1, .pos = 0}));
 
-            detail::add_appliance_injection.template operator()<AsymLoad>(state, math_output, accumulator.accumulator());
+            detail::add_appliance_injection.template operator()<AsymLoad>(state, math_output,
+                                                                          accumulator.accumulator());
             CHECK(accumulator.net_node_injections.size() == 2);
             CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == dummy_complex_value_sym());
             CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 1}) == dummy_complex_value_sym());
