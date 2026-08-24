@@ -49,7 +49,8 @@ TEST_CASE("Test main core output") {
             MathOutput<std::vector<SolverOutput<symmetric_t>>> const math_output{
                 .supernode_output = {
                     {.bus_injection = {},
-                     .link = {{.s_f = {1.0, 2.0}, .s_t = {-1.0, -2.0}}, {.s_f = {3.0, 4.0}, .s_t = {-3.0, -4.0}}}}}};
+                     .link = {{.s_f = {1.0, 2.0}, .s_t = {-1.0, -1.5}, .i_f = {3.0, 4.0}, .i_t = {-3.0, -4.0}},
+                              {.s_f = {3.0, 4.0}, .s_t = {-3.0, -4.0}, .i_f = {5.0, 6.0}, .i_t = {-5.0, -5.5}}}}}};
             std::vector<SymBranchOutput> output(3);
 
             output_result<Link>(state, math_output, output);
@@ -58,6 +59,10 @@ TEST_CASE("Test main core output") {
             CHECK(output[0].energized == IntS{1});
             CHECK(output[0].p_from == doctest::Approx(base_power_3p));
             CHECK(output[0].q_from == doctest::Approx(2.0 * base_power_3p));
+            CHECK(output[0].p_to == doctest::Approx(-1.0 * base_power_3p));
+            CHECK(output[0].q_to == doctest::Approx(-1.5 * base_power_3p));
+            CHECK(output[0].i_from == doctest::Approx(5.0 * base_power_3p / 10e3 / sqrt3));
+            CHECK(output[0].i_to == doctest::Approx(5.0 * base_power_3p / 20e3 / sqrt3));
             CHECK(output[1].id == 1);
             CHECK(output[1].energized == status_off);
             CHECK(output[2].id == 2);
