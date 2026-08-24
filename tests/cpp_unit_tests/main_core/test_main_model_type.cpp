@@ -86,8 +86,8 @@ TEST_CASE("MainModelType") {
         CHECK(calls == std::vector<std::string_view>{"node", "source"});
     }
     SUBCASE("Node Line Source") {
-        using ModelType =
-            MainModelType<ExtraRetrievableTypes<Base, Node, Edge, Branch, Appliance>, ComponentList<Node, Line, Source>>;
+        using ModelType = MainModelType<ExtraRetrievableTypes<Base, Node, Edge, Branch, Appliance>,
+                                        ComponentList<Node, Line, Source>>;
 
         static_assert(
             std::is_same_v<ModelType::ComponentContainer,
@@ -118,8 +118,8 @@ TEST_CASE("MainModelType") {
         CHECK(calls == std::vector<std::string_view>{"node", "edge", "source"});
     }
     SUBCASE("Different component order: Line Source Node") {
-        using ModelType =
-            MainModelType<ExtraRetrievableTypes<Base, Node, Edge, Branch, Appliance>, ComponentList<Line, Source, Node>>;
+        using ModelType = MainModelType<ExtraRetrievableTypes<Base, Node, Edge, Branch, Appliance>,
+                                        ComponentList<Line, Source, Node>>;
 
         static_assert(
             std::is_same_v<ModelType::ComponentContainer,
