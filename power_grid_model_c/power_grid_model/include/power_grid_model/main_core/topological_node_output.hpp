@@ -20,6 +20,7 @@
 namespace power_grid_model::main_core {
 namespace detail {
 template <symmetry_tag sym> struct SuperNodeSolverInput {
+    ComplexValue<sym> u;
     std::span<BranchIdx const> links;
     ComplexValueVector<sym> node_injection;
     ComplexValueVector<sym> node_flow_from_branch;
@@ -173,14 +174,14 @@ ComplexValueVector<sym> compute_link_solver(LinkSolver link_solver,
         std::ranges::for_each(injection_per_phase, [node_number](auto& injection) { injection.reserve(node_number); });
 
         for (auto const& node_injection : injection_per_node) {
-            for (Idx phase = 0; phase < phase_number; ++phase) {
+            for (Idx phase : IdxRange{phase_number}) {
                 injection_per_phase[phase].emplace_back(node_injection(phase));
             }
         }
 
         auto const links = super_node_solver_input.links | std::ranges::to<std::vector>();
         auto result = ComplexValueVector<asymmetric_t>(links.size());
-        for (Idx phase = 0; phase < phase_number; ++phase) {
+        for (Idx phase : IdxRange{phase_number}) {
             auto const phase_result = link_solver(links, injection_per_phase[phase]);
             assert(phase_result.size() == result.size());
 
@@ -247,20 +248,36 @@ solve_topological_nodes(LinkSolver link_solver, State const& state,
         add_flows<InjectionComponentTypesTuple>(state, math_output, accumulate_injection);
     }
 
-    return link_solver_input |
-           std::views::transform([link_solver](auto const& super_node_solver_input) -> SupernodeOutput<SolverOutput> {
-               if constexpr (steady_state_solver_output_type<SolverOutput>) {
-                   return SupernodeOutput<SolverOutput>{
-                       .bus_injection = super_node_solver_input.node_injection,
-                       .link = get_link_output<sym, BranchSolverOutput<sym>>(
-                           compute_link_solver<sym>(link_solver, super_node_solver_input))};
-               } else if constexpr (short_circuit_solver_output_type<SolverOutput>) {
-                   return SupernodeOutput<SolverOutput>{
-                       .link = get_link_output<sym, BranchShortCircuitSolverOutput<sym>>(
-                           compute_link_solver<sym>(link_solver, super_node_solver_input))};
-               }
-           }) |
-           std::ranges::to<std::vector>();
+    auto result =
+        link_solver_input |
+        std::views::transform([link_solver](auto const& super_node_solver_input) -> SupernodeOutput<SolverOutput> {
+            if constexpr (steady_state_solver_output_type<SolverOutput>) {
+                return SupernodeOutput<SolverOutput>{
+                    .bus_injection = super_node_solver_input.node_injection,
+                    .link = get_link_output<sym, BranchSolverOutput<sym>>(
+                        compute_link_solver<sym>(link_solver, super_node_solver_input))};
+            } else if constexpr (short_circuit_solver_output_type<SolverOutput>) {
+                return SupernodeOutput<SolverOutput>{
+                    .link = get_link_output<sym, BranchShortCircuitSolverOutput<sym>>(
+                        compute_link_solver<sym>(link_solver, super_node_solver_input))};
+            }
+        }) |
+        std::ranges::to<std::vector>();
+
+    // TODO(mgovers): cleanup v2: solver output should be in current domain for all solvers; offload power output to
+    // main_core/output.hpp branch output conversion function
+    if constexpr (steady_state_solver_output_type<SolverOutput>) {
+        std::ranges::for_each(std::views::zip(result, state.topo_comp_coup->node), [&math_output](auto&& pair) {
+            auto& [supernode_output, topo_node_idx] = pair;
+            auto const topo_node_u = math_output.solver_output[topo_node_idx.group].u[topo_node_idx.pos];
+            std::ranges::for_each(supernode_output.link, [&topo_node_u](auto& link) {
+                link.i_f = conj(link.s_f / topo_node_u);
+                link.i_t = conj(link.s_t / topo_node_u);
+            });
+        });
+    }
+
+    return result;
 }
 } // namespace detail
 
