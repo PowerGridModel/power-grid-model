@@ -20,7 +20,6 @@
 namespace power_grid_model::main_core {
 namespace detail {
 template <symmetry_tag sym> struct SuperNodeSolverInput {
-    ComplexValue<sym> u;
     std::span<BranchIdx const> links;
     ComplexValueVector<sym> node_injection;
     ComplexValueVector<sym> node_flow_from_branch;
