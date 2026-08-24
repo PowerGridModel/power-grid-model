@@ -175,14 +175,14 @@ ComplexValueVector<sym> compute_link_solver(LinkSolver link_solver,
         std::ranges::for_each(injection_per_phase, [node_number](auto& injection) { injection.reserve(node_number); });
 
         for (auto const& node_injection : injection_per_node) {
-            for (Idx phase : IdxRange{phase_number}) {
+            for (Idx const phase : IdxRange{phase_number}) {
                 injection_per_phase[phase].emplace_back(node_injection(phase));
             }
         }
 
         auto const links = super_node_solver_input.links | std::ranges::to<std::vector>();
         auto result = ComplexValueVector<asymmetric_t>(links.size());
-        for (Idx phase : IdxRange{phase_number}) {
+        for (Idx const phase : IdxRange{phase_number}) {
             auto const phase_result = link_solver(links, injection_per_phase[phase]);
             assert(phase_result.size() == result.size());
 
