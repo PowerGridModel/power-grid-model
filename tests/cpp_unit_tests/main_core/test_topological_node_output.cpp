@@ -110,8 +110,8 @@ inline State make_state() {
 inline MathOutput<std::vector<SolverOutput<symmetric_t>>> make_steady_state_math_output_sym() {
     MathOutput<std::vector<SolverOutput<symmetric_t>>> math_output{};
     math_output.solver_output.emplace_back(
-        SolverOutput<symmetric_t>{.u = {},
-                                  .bus_injection = {},
+        SolverOutput<symmetric_t>{.u = {dummy_complex_value_sym(), dummy_complex_value_sym()},
+                                  .bus_injection = {dummy_complex_value_sym(), dummy_complex_value_sym()},
                                   .bus = {},
                                   .branch = {{.s_f = dummy_complex_value_sym(),
                                               .s_t = dummy_complex_value_sym(),
@@ -146,18 +146,20 @@ inline MathOutput<std::vector<ShortCircuitSolverOutput<symmetric_t>>> make_short
 }
 
 template <symmetry_tag sym> struct InjectionAccumulator {
-    template <typename ComponentType> void operator()(Idx2D const& math_id, ComplexValue<sym> const& injection) {
-        auto& target_map = [&]() -> std::unordered_map<Idx2D, ComplexValue<sym>, Idx2DHash>& {
-            if constexpr (std::derived_from<ComponentType, Branch>) {
-                return branch_flow_into_nodes;
-            } else {
-                return net_node_injections;
-            }
-        }();
+    auto accumulator() {
+        return [this]<typename ComponentType>(Idx2D const& math_id, ComplexValue<sym> const& injection) {
+            auto& target_map = [&]() -> std::unordered_map<Idx2D, ComplexValue<sym>, Idx2DHash>& {
+                if constexpr (std::derived_from<ComponentType, Branch>) {
+                    return branch_flow_into_nodes;
+                } else {
+                    return net_node_injections;
+                }
+            }();
 
-        if (auto [it, inserted] = target_map.try_emplace(math_id, injection); !inserted) {
-            it->second += injection;
-        }
+            if (auto [it, inserted] = target_map.try_emplace(math_id, injection); !inserted) {
+                it->second += injection;
+            }
+        };
     }
 
     std::unordered_map<Idx2D, ComplexValue<sym>, Idx2DHash> net_node_injections{};
@@ -277,13 +279,14 @@ TEST_CASE("Test topological node output") {
         SUBCASE("Steady state output") {
             auto const math_output = make_steady_state_math_output_sym();
 
-            detail::add_appliance_injection<Source>(state, math_output, std::ref(accumulator));
+            detail::add_appliance_injection.template operator()<Source>(state, math_output, accumulator.accumulator());
             CHECK(accumulator.net_node_injections.size() == 1);
             CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == dummy_complex_value_sym());
             CHECK(!accumulator.net_node_injections.contains(Idx2D{.group = 0, .pos = 1}));
             CHECK(!accumulator.net_node_injections.contains(Idx2D{.group = 1, .pos = 0}));
 
-            detail::add_appliance_injection<AsymLoad>(state, math_output, std::ref(accumulator));
+            detail::add_appliance_injection.template operator()<AsymLoad>(state, math_output,
+                                                                          accumulator.accumulator());
             CHECK(accumulator.net_node_injections.size() == 2);
             CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == dummy_complex_value_sym());
             CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 1}) == dummy_complex_value_sym());
@@ -291,7 +294,7 @@ TEST_CASE("Test topological node output") {
             CHECK(!accumulator.net_node_injections.contains(Idx2D{.group = 1, .pos = 0}));
             CHECK(accumulator.branch_flow_into_nodes.empty());
 
-            detail::add_appliance_injection<SymLoad>(state, math_output, std::ref(accumulator));
+            detail::add_appliance_injection.template operator()<SymLoad>(state, math_output, accumulator.accumulator());
             CHECK(accumulator.net_node_injections.size() == 3);
             CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == dummy_complex_value_sym());
             CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 1}) == dummy_complex_value_sym());
@@ -300,7 +303,7 @@ TEST_CASE("Test topological node output") {
             CHECK(!accumulator.net_node_injections.contains(Idx2D{.group = 1, .pos = 0}));
             CHECK(accumulator.branch_flow_into_nodes.empty());
 
-            detail::add_appliance_injection<Line>(state, math_output, std::ref(accumulator));
+            detail::add_appliance_injection.template operator()<Line>(state, math_output, accumulator.accumulator());
             CHECK(accumulator.net_node_injections.size() == 3);
             CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == dummy_complex_value_sym());
             CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 1}) == dummy_complex_value_sym());
@@ -319,14 +322,14 @@ TEST_CASE("Test topological node output") {
         SUBCASE("Short circuit output") {
             auto const math_output = make_short_circuit_math_output_sym();
 
-            detail::add_appliance_injection<Source>(state, math_output, std::ref(accumulator));
+            detail::add_appliance_injection.template operator()<Source>(state, math_output, accumulator.accumulator());
             CHECK(accumulator.net_node_injections.size() == 1);
             CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == dummy_complex_value_sym());
             CHECK(!accumulator.net_node_injections.contains(Idx2D{.group = 0, .pos = 1}));
             CHECK(!accumulator.net_node_injections.contains(Idx2D{.group = 1, .pos = 0}));
             CHECK(accumulator.branch_flow_into_nodes.empty());
 
-            detail::add_appliance_injection<Fault>(state, math_output, std::ref(accumulator));
+            detail::add_appliance_injection.template operator()<Fault>(state, math_output, accumulator.accumulator());
             CHECK(accumulator.net_node_injections.size() == 2);
             CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == 2.0 * dummy_complex_value_sym());
             CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 1}) == dummy_complex_value_sym());
@@ -334,7 +337,7 @@ TEST_CASE("Test topological node output") {
             CHECK(!accumulator.net_node_injections.contains(Idx2D{.group = 1, .pos = 0}));
             CHECK(accumulator.branch_flow_into_nodes.empty());
 
-            detail::add_appliance_injection<Line>(state, math_output, std::ref(accumulator));
+            detail::add_appliance_injection.template operator()<Line>(state, math_output, accumulator.accumulator());
             CHECK(accumulator.net_node_injections.size() == 2);
             CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == 2.0 * dummy_complex_value_sym());
             CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 1}) == dummy_complex_value_sym());
@@ -358,7 +361,7 @@ TEST_CASE("Test topological node output") {
             using ComponentTypes =
                 std::tuple<Source, SymLoad, SymGenerator, AsymLoad, AsymGenerator, Line, GenericBranch, Transformer>;
 
-            detail::add_flows<ComponentTypes>(state, math_output, std::ref(accumulator));
+            detail::add_flows<ComponentTypes>(state, math_output, accumulator.accumulator());
 
             CHECK(accumulator.net_node_injections.size() == 3);
             CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == dummy_complex_value_sym());
@@ -375,7 +378,7 @@ TEST_CASE("Test topological node output") {
             auto const math_output = make_short_circuit_math_output_sym();
             using ComponentTypes = std::tuple<Source, Line, GenericBranch, Transformer, Fault>;
 
-            detail::add_flows<ComponentTypes>(state, math_output, std::ref(accumulator));
+            detail::add_flows<ComponentTypes>(state, math_output, accumulator.accumulator());
 
             CHECK(accumulator.net_node_injections.size() == 2);
             CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == 2.0 * dummy_complex_value_sym());
@@ -515,7 +518,7 @@ TEST_CASE("Test topological node output") {
         SUBCASE("Steady state output") {
             auto const math_output = make_steady_state_math_output_sym();
             LinkSolverMock mock{.return_values = {
-                                    {dummy_complex_value_sym(), dummy_complex_value_sym()},
+                                    {2.0 * dummy_complex_value_sym(), 3.0 * dummy_complex_value_sym()},
                                     {},
                                 }};
 
@@ -533,10 +536,16 @@ TEST_CASE("Test topological node output") {
                   ComplexVector{dummy_complex_value_sym(), dummy_complex_value_sym(), dummy_complex_value_sym()});
             CHECK(result[1].bus_injection == ComplexVector{DoubleComplex{}});
             REQUIRE(result[0].link.size() == 2);
-            CHECK(result[0].link[0].s_f == dummy_complex_value_sym());
-            CHECK(result[0].link[0].s_t == -dummy_complex_value_sym());
-            CHECK(result[0].link[1].s_f == dummy_complex_value_sym());
-            CHECK(result[0].link[1].s_t == -dummy_complex_value_sym());
+            CHECK(result[0].link[0].s_f == 2.0 * dummy_complex_value_sym());
+            CHECK(result[0].link[0].s_t == -2.0 * dummy_complex_value_sym());
+            CHECK(result[0].link[1].s_f == 3.0 * dummy_complex_value_sym());
+            CHECK(result[0].link[1].s_t == -3.0 * dummy_complex_value_sym());
+            // i_f/i_t are derived from the power flow and the topological node voltage: i = conj(s / u)
+            auto const topo_node_u = math_output.solver_output[0].u[0];
+            CHECK(result[0].link[0].i_f == conj(2.0 * dummy_complex_value_sym() / topo_node_u));
+            CHECK(result[0].link[0].i_t == conj(-2.0 * dummy_complex_value_sym() / topo_node_u));
+            CHECK(result[0].link[1].i_f == conj(3.0 * dummy_complex_value_sym() / topo_node_u));
+            CHECK(result[0].link[1].i_t == conj(-3.0 * dummy_complex_value_sym() / topo_node_u));
             CHECK(result[1].link.empty());
         }
 

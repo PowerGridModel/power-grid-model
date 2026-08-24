@@ -20,6 +20,7 @@
 namespace power_grid_model::main_core {
 namespace detail {
 template <symmetry_tag sym> struct SuperNodeSolverInput {
+    ComplexValue<sym> u;
     std::span<BranchIdx const> links;
     ComplexValueVector<sym> node_injection;
     ComplexValueVector<sym> node_flow_from_branch;
@@ -35,16 +36,10 @@ template <symmetry_tag sym> struct SuperNodeSolverInput {
     }
 };
 
-template <typename Callable> Callable unwrap_callable(Callable callable) { return callable; }
-
-template <typename Callable> Callable& unwrap_callable(std::reference_wrapper<Callable> callable_ref) {
-    return callable_ref.get();
-}
-
 template <typename AddToTarget, typename ComponentType, typename SolverOutputType>
 concept flow_accumulator_c = requires(AddToTarget accumulator, Idx2D const& user_topo_id,
                                       ComplexValue<decode_symmetry_v<SolverOutputType>> const& injection) {
-    unwrap_callable(accumulator).template operator()<ComponentType>(user_topo_id, injection);
+    accumulator.template operator()<ComponentType>(user_topo_id, injection);
 };
 
 template <typename ComponentSolverOutputType>
@@ -100,55 +95,57 @@ inline Idx get_node_sequence_idx(main_model_state_c auto const& state, Idx compo
 }
 
 template <std::derived_from<Branch> ComponentType>
-inline Idx get_node_sequence_idx(main_model_state_c auto const& state, Idx component_idx, BranchSide side) {
-    return state.comp_topo->branch_node_idx[get_component_sequence_offset<Branch, ComponentType>(state.components) +
-                                            component_idx][std::to_underlying(side)];
+inline Idx get_branch_sequence_idx(main_model_state_c auto const& state, Idx component_idx) {
+    return state.comp_topo
+        ->branch_node_idx[get_component_sequence_offset<Branch, ComponentType>(state.components) + component_idx];
 }
 
-template <typename ComponentType, typename SolverOutputType, typename AddToTarget>
-    requires flow_accumulator_c<AddToTarget, ComponentType, SolverOutputType> &&
-             (is_in_list_c<ComponentType, Source, SymLoad, SymGenerator, AsymLoad, AsymGenerator> ||
-              (std::same_as<ComponentType, Fault> && short_circuit_solver_output_type<SolverOutputType>))
-inline void add_appliance_injection(main_model_state_c auto const& state,
-                                    MathOutput<std::vector<SolverOutputType>> const& math_output,
-                                    AddToTarget accumulate_injection) {
-    for (auto const& [component_idx, component_math_id] : enumerate(comp_base_sequence<ComponentType>(state))) {
-        if (component_math_id.group == disconnected) {
-            continue;
-        }
-        auto const& component_output = get_component_output<ComponentType>(math_output, component_math_id);
+struct AddApplianceInjection {
+    template <typename ComponentType, typename SolverOutputType, typename AddToTarget>
+        requires flow_accumulator_c<AddToTarget, ComponentType, SolverOutputType> &&
+                 (is_in_list_c<ComponentType, Source, SymLoad, SymGenerator, AsymLoad, AsymGenerator> ||
+                  (std::same_as<ComponentType, Fault> && short_circuit_solver_output_type<SolverOutputType>))
+    void operator()(main_model_state_c auto const& state, MathOutput<std::vector<SolverOutputType>> const& math_output,
+                    AddToTarget accumulate_injection) const {
+        for (auto const& [component_idx, component_math_id] : enumerate(comp_base_sequence<ComponentType>(state))) {
+            if (component_math_id.group == disconnected) {
+                continue;
+            }
+            auto const& component_output = get_component_output<ComponentType>(math_output, component_math_id);
 
-        auto const& user_node_idx = get_node_sequence_idx<ComponentType>(state, component_idx);
-        auto const& user_topo_id =
-            state.reduced_topology->topo_node_coup.coupling.user_nodes_to_topo_nodes[user_node_idx];
-        unwrap_callable(accumulate_injection)
-            .template operator()<ComponentType>(user_topo_id, get_injection(component_output));
-    }
-}
-
-template <typename ComponentType, typename SolverOutputType, typename AddToTarget>
-    requires flow_accumulator_c<AddToTarget, ComponentType, SolverOutputType> &&
-             std::derived_from<ComponentType, Branch>
-inline void add_appliance_injection(main_model_state_c auto const& state,
-                                    MathOutput<std::vector<SolverOutputType>> const& math_output,
-                                    AddToTarget accumulate_injection) {
-    static_assert(!std::same_as<ComponentType, Link>);
-
-    for (auto const& [component_idx, component_math_id] : enumerate(comp_base_sequence<ComponentType>(state))) {
-        if (component_math_id.group == disconnected || component_math_id.pos == disconnected) {
-            continue;
-        }
-        auto const& component_output = get_component_output<ComponentType>(math_output, component_math_id);
-
-        for (auto const side : {BranchSide::from, BranchSide::to}) {
-            auto const& user_node_idx = get_node_sequence_idx<ComponentType>(state, component_idx, side);
+            auto const& user_node_idx = get_node_sequence_idx<ComponentType>(state, component_idx);
             auto const& user_topo_id =
                 state.reduced_topology->topo_node_coup.coupling.user_nodes_to_topo_nodes[user_node_idx];
-            unwrap_callable(accumulate_injection)
-                .template operator()<ComponentType>(user_topo_id, get_injection(component_output, side));
+            accumulate_injection.template operator()<ComponentType>(user_topo_id, get_injection(component_output));
         }
     }
-}
+
+    template <typename ComponentType, typename SolverOutputType, typename AddToTarget>
+        requires flow_accumulator_c<AddToTarget, ComponentType, SolverOutputType> &&
+                 std::derived_from<ComponentType, Branch>
+    void operator()(main_model_state_c auto const& state, MathOutput<std::vector<SolverOutputType>> const& math_output,
+                    AddToTarget accumulate_injection) const {
+        static_assert(!std::same_as<ComponentType, Link>);
+
+        for (auto const& [component_idx, component_math_id] : enumerate(comp_base_sequence<ComponentType>(state))) {
+            if (component_math_id.group == disconnected || component_math_id.pos == disconnected) {
+                continue;
+            }
+            auto const& component_output = get_component_output<ComponentType>(math_output, component_math_id);
+
+            auto const& branch_node_idx = get_branch_sequence_idx<ComponentType>(state, component_idx);
+            for (auto const side : {BranchSide::from, BranchSide::to}) {
+                auto const& user_node_idx = branch_node_idx[std::to_underlying(side)];
+                auto const& user_topo_id =
+                    state.reduced_topology->topo_node_coup.coupling.user_nodes_to_topo_nodes[user_node_idx];
+                accumulate_injection.template operator()<ComponentType>(user_topo_id,
+                                                                        get_injection(component_output, side));
+            }
+        }
+    }
+};
+
+constexpr auto add_appliance_injection = AddApplianceInjection{};
 
 template <typename InjectionComponentTypesTuple, main_model_state_c State, solver_output_type SolverOutput,
           typename AddToTarget>
@@ -157,7 +154,7 @@ inline void add_flows(State const& state, MathOutput<std::vector<SolverOutput>> 
     utils::run_functor_with_tuple_return_void<InjectionComponentTypesTuple>(
         [&state, &math_output, &accumulate_injection]<typename ComponentType>() {
             if constexpr (decltype(state.components)::template is_storageable_v<ComponentType>) {
-                add_appliance_injection<ComponentType>(state, math_output, accumulate_injection);
+                add_appliance_injection.template operator()<ComponentType>(state, math_output, accumulate_injection);
             }
         });
 }
@@ -178,14 +175,14 @@ ComplexValueVector<sym> compute_link_solver(LinkSolver link_solver,
         std::ranges::for_each(injection_per_phase, [node_number](auto& injection) { injection.reserve(node_number); });
 
         for (auto const& node_injection : injection_per_node) {
-            for (Idx phase = 0; phase < phase_number; ++phase) {
+            for (Idx phase : IdxRange{phase_number}) {
                 injection_per_phase[phase].emplace_back(node_injection(phase));
             }
         }
 
         auto const links = super_node_solver_input.links | std::ranges::to<std::vector>();
         auto result = ComplexValueVector<asymmetric_t>(links.size());
-        for (Idx phase = 0; phase < phase_number; ++phase) {
+        for (Idx phase : IdxRange{phase_number}) {
             auto const phase_result = link_solver(links, injection_per_phase[phase]);
             assert(phase_result.size() == result.size());
 
@@ -209,7 +206,7 @@ std::vector<BranchSolverOutputType> get_link_output(ComplexValueVector<sym> cons
     for (auto const& result : link_solver_result) {
         if constexpr (std::same_as<BranchSolverOutputType,
                                    BranchSolverOutput<decode_symmetry_v<BranchSolverOutputType>>>) {
-            link_output.emplace_back(BranchSolverOutputType{.s_f = result, .s_t = -result}); // i conversion missing
+            link_output.emplace_back(BranchSolverOutputType{.s_f = result, .s_t = -result});
         } else {
             link_output.emplace_back(BranchSolverOutputType{.i_f = result, .i_t = -result});
         }
@@ -228,9 +225,9 @@ solve_topological_nodes(LinkSolver link_solver, State const& state,
         state.reduced_topology->topo_node_coup.topo_nodes |
         std::views::transform([](auto const& topo_node) -> SuperNodeSolverInput<sym> {
             auto const node_number = topo_node.user_nodes.size();
-            return {.links = std::span(topo_node.user_links),
+            return {.links = std::span{topo_node.user_links},
                     .node_injection = ComplexValueVector<sym>(node_number),
-                    .node_flow_from_branch = std::vector<ComplexValue<sym>>(node_number)};
+                    .node_flow_from_branch = ComplexValueVector<sym>(node_number)};
         }) |
         std::ranges::to<std::vector>();
 
@@ -252,20 +249,40 @@ solve_topological_nodes(LinkSolver link_solver, State const& state,
         add_flows<InjectionComponentTypesTuple>(state, math_output, accumulate_injection);
     }
 
-    return link_solver_input |
-           std::views::transform([link_solver](auto const& super_node_solver_input) -> SupernodeOutput<SolverOutput> {
-               if constexpr (steady_state_solver_output_type<SolverOutput>) {
-                   return SupernodeOutput<SolverOutput>{
-                       .bus_injection = super_node_solver_input.node_injection,
-                       .link = get_link_output<sym, BranchSolverOutput<sym>>(
-                           compute_link_solver<sym>(link_solver, super_node_solver_input))};
-               } else if constexpr (short_circuit_solver_output_type<SolverOutput>) {
-                   return SupernodeOutput<SolverOutput>{
-                       .link = get_link_output<sym, BranchShortCircuitSolverOutput<sym>>(
-                           compute_link_solver<sym>(link_solver, super_node_solver_input))};
-               }
-           }) |
-           std::ranges::to<std::vector>();
+    auto result =
+        link_solver_input |
+        std::views::transform([link_solver](auto const& super_node_solver_input) -> SupernodeOutput<SolverOutput> {
+            if constexpr (steady_state_solver_output_type<SolverOutput>) {
+                return SupernodeOutput<SolverOutput>{
+                    .bus_injection = super_node_solver_input.node_injection,
+                    .link = get_link_output<sym, BranchSolverOutput<sym>>(
+                        compute_link_solver<sym>(link_solver, super_node_solver_input))};
+            } else if constexpr (short_circuit_solver_output_type<SolverOutput>) {
+                return SupernodeOutput<SolverOutput>{
+                    .link = get_link_output<sym, BranchShortCircuitSolverOutput<sym>>(
+                        compute_link_solver<sym>(link_solver, super_node_solver_input))};
+            }
+        }) |
+        std::ranges::to<std::vector>();
+
+    // TODO(mgovers): cleanup v2: solver output should be in current domain for all solvers; offload power output to
+    // main_core/output.hpp branch output conversion function
+    if constexpr (steady_state_solver_output_type<SolverOutput>) {
+        std::ranges::for_each(std::views::zip(result, state.topo_comp_coup->node), [&math_output](auto&& pair) {
+            auto& [supernode_output, topo_node_idx] = pair;
+            if (topo_node_idx.group == disconnected || topo_node_idx.pos == disconnected) {
+                return;
+            }
+            ComplexValue<sym> const topo_node_u_inv =
+                ComplexValue<sym>{1.0} / math_output.solver_output[topo_node_idx.group].u[topo_node_idx.pos];
+            std::ranges::for_each(supernode_output.link, [&topo_node_u_inv](auto& link) {
+                link.i_f = conj(link.s_f * topo_node_u_inv);
+                link.i_t = conj(link.s_t * topo_node_u_inv);
+            });
+        });
+    }
+
+    return result;
 }
 } // namespace detail
 
