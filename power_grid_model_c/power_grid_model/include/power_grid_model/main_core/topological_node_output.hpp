@@ -96,8 +96,8 @@ inline Idx get_node_sequence_idx(main_model_state_c auto const& state, Idx compo
 
 template <std::derived_from<Branch> ComponentType>
 inline Idx get_branch_sequence_idx(main_model_state_c auto const& state, Idx component_idx) {
-    return state.comp_topo->branch_node_idx[get_component_sequence_offset<Branch, ComponentType>(state.components) +
-                                            component_idx];
+    return state.comp_topo
+        ->branch_node_idx[get_component_sequence_offset<Branch, ComponentType>(state.components) + component_idx];
 }
 
 struct AddApplianceInjection {
@@ -273,10 +273,11 @@ solve_topological_nodes(LinkSolver link_solver, State const& state,
             if (topo_node_idx.group == disconnected || topo_node_idx.pos == disconnected) {
                 return;
             }
-            auto const topo_node_u = math_output.solver_output[topo_node_idx.group].u[topo_node_idx.pos];
-            std::ranges::for_each(supernode_output.link, [&topo_node_u](auto& link) {
-                link.i_f = conj(link.s_f / topo_node_u);
-                link.i_t = conj(link.s_t / topo_node_u);
+            ComplexValue<sym> const topo_node_u_inv =
+                ComplexValue<sym>{1.0} / math_output.solver_output[topo_node_idx.group].u[topo_node_idx.pos];
+            std::ranges::for_each(supernode_output.link, [&topo_node_u_inv](auto& link) {
+                link.i_f = conj(link.s_f * topo_node_u_inv);
+                link.i_t = conj(link.s_t * topo_node_u_inv);
             });
         });
     }
