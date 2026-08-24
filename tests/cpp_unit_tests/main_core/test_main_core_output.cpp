@@ -16,6 +16,7 @@
 #include <power_grid_model/component/appliance.hpp>
 #include <power_grid_model/component/base.hpp>
 #include <power_grid_model/component/branch.hpp>
+#include <power_grid_model/component/branch3.hpp>
 #include <power_grid_model/component/current_sensor.hpp>
 #include <power_grid_model/component/generic_branch.hpp>
 #include <power_grid_model/component/load_gen.hpp>
@@ -24,6 +25,7 @@
 #include <power_grid_model/component/regulator.hpp>
 #include <power_grid_model/component/shunt.hpp>
 #include <power_grid_model/component/source.hpp>
+#include <power_grid_model/component/three_winding_transformer.hpp>
 #include <power_grid_model/component/transformer_tap_regulator.hpp>
 #include <power_grid_model/container.hpp>
 #include <power_grid_model/container_fwd.hpp>
@@ -39,16 +41,53 @@ namespace power_grid_model::main_core {
 namespace {
 
 using PowerSensorOutputComponents =
-    Container<ExtraRetrievableTypes<Base, Branch, Appliance, GenericLoadGen, GenericPowerSensor>, GenericBranch, Source,
-              Shunt, SymGenerator, SymLoad, SymPowerSensor>;
+    Container<ExtraRetrievableTypes<Base, Branch, Branch3, Appliance, GenericLoadGen, GenericPowerSensor>,
+              GenericBranch, ThreeWindingTransformer, Source, Shunt, SymGenerator, SymLoad, SymPowerSensor>;
 using PowerSensorOutputState = MainModelState<PowerSensorOutputComponents>;
+
+auto make_partially_connected_branch3_input() -> ThreeWindingTransformerInput {
+    constexpr double u_rated = 10e3;
+    constexpr double rated_power = 10e6;
+
+    return {.id = 14,
+            .node_1 = 100,
+            .node_2 = 101,
+            .node_3 = 102,
+            .status_1 = 1,
+            .status_2 = 0,
+            .status_3 = 1,
+            .u1 = u_rated,
+            .u2 = u_rated,
+            .u3 = u_rated,
+            .sn_1 = rated_power,
+            .sn_2 = rated_power,
+            .sn_3 = rated_power,
+            .uk_12 = 0.1,
+            .uk_13 = 0.1,
+            .uk_23 = 0.1,
+            .pk_12 = 10e3,
+            .pk_13 = 10e3,
+            .pk_23 = 10e3,
+            .i0 = 0.0,
+            .p0 = 0.0,
+            .winding_1 = WindingType::wye_n,
+            .winding_2 = WindingType::wye_n,
+            .winding_3 = WindingType::wye_n,
+            .clock_12 = 0,
+            .clock_13 = 0,
+            .tap_side = Branch3Side::side_1,
+            .tap_pos = 0,
+            .tap_min = 0,
+            .tap_max = 0,
+            .tap_nom = 0,
+            .tap_size = 0.0};
+}
 
 auto make_power_sensor_output_state() -> PowerSensorOutputState {
     constexpr double u_rated = 10e3;
     PowerSensorOutputState state;
 
-    // This branch is connected on only one side. Its topology group, rather than the open terminal, determines
-    // whether output from a sensor on either terminal is energized.
+    // These branches remain in the energized topology while one measured terminal is disconnected.
     emplace_component<GenericBranch>(state.components, 9,
                                      GenericBranchInput{.id = 9,
                                                         .from_node = 100,
@@ -60,6 +99,8 @@ auto make_power_sensor_output_state() -> PowerSensorOutputState {
                                                         .g1 = 0.0,
                                                         .b1 = 0.0},
                                      u_rated, u_rated);
+    emplace_component<ThreeWindingTransformer>(state.components, 14, make_partially_connected_branch3_input(), u_rated,
+                                               u_rated, u_rated);
 
     emplace_component<Source>(state.components, 10, SourceInput{.id = 10, .node = 100, .status = 1, .u_ref = 1.0},
                               u_rated);
@@ -81,7 +122,7 @@ auto make_power_sensor_output_state() -> PowerSensorOutputState {
 
     auto coupling = std::make_shared<TopologicalComponentToMathCoupling>();
     coupling->branch = {{.group = 0, .pos = 0}};
-    coupling->branch3 = {{.group = 0, .pos = {0, 1, 2}}};
+    coupling->branch3 = {{.group = 0, .pos = {1, 2, 3}}};
     coupling->source = {{.group = 0, .pos = 0}};
     coupling->shunt = {{.group = 0, .pos = 0}};
     coupling->load_gen = {{.group = 0, .pos = 0}, {.group = 0, .pos = 1}};
@@ -95,7 +136,7 @@ template <symmetry_tag sym> auto make_power_sensor_solver_output() {
     std::vector<SolverOutput<sym>> output(1);
     output[0].u.resize(1);
     output[0].bus_injection.resize(1);
-    output[0].branch.resize(3);
+    output[0].branch.resize(4);
     output[0].source.resize(1);
     output[0].shunt.resize(1);
     output[0].load_gen.resize(2);
@@ -120,7 +161,8 @@ template <symmetry_tag sym> void check_null_power_sensor_output(PowerSensorOutpu
 }
 
 using CurrentSensorOutputComponents =
-    Container<ExtraRetrievableTypes<Base, Node, Branch, GenericCurrentSensor>, GenericBranch, Node, SymCurrentSensor>;
+    Container<ExtraRetrievableTypes<Base, Node, Branch, Branch3, GenericCurrentSensor>, GenericBranch,
+              ThreeWindingTransformer, Node, SymCurrentSensor>;
 using CurrentSensorOutputState = MainModelState<CurrentSensorOutputComponents>;
 
 auto make_current_sensor_output_state() -> CurrentSensorOutputState {
@@ -138,17 +180,24 @@ auto make_current_sensor_output_state() -> CurrentSensorOutputState {
                                                         .g1 = 0.0,
                                                         .b1 = 0.0},
                                      u_rated, u_rated);
+    emplace_component<ThreeWindingTransformer>(state.components, 14, make_partially_connected_branch3_input(), u_rated,
+                                               u_rated, u_rated);
     emplace_component<Node>(state.components, 100, NodeInput{.id = 100, .u_rated = u_rated});
     emplace_component<Node>(state.components, 101, NodeInput{.id = 101, .u_rated = u_rated});
+    emplace_component<Node>(state.components, 102, NodeInput{.id = 102, .u_rated = u_rated});
     state.components.set_construction_complete();
 
     auto topology = std::make_shared<ComponentTopology>();
     topology->branch_node_idx = {{0, 1}};
+    topology->branch3_node_idx = {{0, 1, 2}};
     state.comp_topo = std::move(topology);
 
     auto coupling = std::make_shared<TopologicalComponentToMathCoupling>();
     coupling->branch = {{.group = 0, .pos = 0}};
-    coupling->node = {{.group = 0, .pos = 0}, {.group = 0, .pos = 1}};
+    // The branch position is not consumed when the disconnected-terminal guard returns. Reusing position 0 makes
+    // the regression fail with an energized output, rather than invalid indexing, if that guard is removed.
+    coupling->branch3 = {{.group = 0, .pos = {0, 0, 0}}};
+    coupling->node = {{.group = 0, .pos = 0}, {.group = 0, .pos = 1}, {.group = 0, .pos = 2}};
     state.topo_comp_coup = std::move(coupling);
 
     return state;
@@ -284,19 +333,8 @@ TEST_CASE_TEMPLATE("Test main core power sensor output energized state", sym, sy
                     get_component_sequence_idx<GenericLoadGen>(state.components, ID{13}),
                     get_component<SymLoad>(state.components, ID{13}));
 
-    // At this overload, topology construction has already resolved the measured object to obj_seq. Its precomputed
-    // coupling is the unit input; topology construction and object-ID resolution are tested separately.
-    // A connected topology group keeps every terminal of a partially connected branch or branch3 energized.
-    for (auto const terminal_type :
-         {MeasuredTerminalType::branch_from, MeasuredTerminalType::branch_to, MeasuredTerminalType::branch3_1,
-          MeasuredTerminalType::branch3_2, MeasuredTerminalType::branch3_3}) {
-        CAPTURE(terminal_type);
-
-        auto const measured_object =
-            terminal_type == MeasuredTerminalType::branch_from || terminal_type == MeasuredTerminalType::branch_to
-                ? ID{9}
-                : ID{14};
-
+    auto check_branch_terminal = [&](MeasuredTerminalType const terminal_type, ID const measured_object,
+                                     bool const expected_energized) {
         SymPowerSensor const sensor{{.id = 21,
                                      .measured_object = measured_object,
                                      .measured_terminal_type = terminal_type,
@@ -304,8 +342,21 @@ TEST_CASE_TEMPLATE("Test main core power sensor output energized state", sym, sy
                                      .p_measured = 1.0,
                                      .q_measured = 2.0}};
 
-        CHECK(output_result(sensor, state, solver_output, 0).energized == 1);
-    }
+        auto const output = output_result(sensor, state, solver_output, 0);
+        if (expected_energized) {
+            CHECK(output.energized == 1);
+        } else {
+            check_null_power_sensor_output(output);
+        }
+    };
+
+    // Topology construction has already resolved the measured object to obj_seq. The component remains in an
+    // energized topology group, but output on a disconnected measured terminal is null.
+    check_branch_terminal(MeasuredTerminalType::branch_from, 9, false);
+    check_branch_terminal(MeasuredTerminalType::branch_to, 9, true);
+    check_branch_terminal(MeasuredTerminalType::branch3_1, 14, true);
+    check_branch_terminal(MeasuredTerminalType::branch3_2, 14, false);
+    check_branch_terminal(MeasuredTerminalType::branch3_3, 14, true);
 
     auto disconnected_coupling = std::make_shared<TopologicalComponentToMathCoupling>(*state.topo_comp_coup);
     disconnected_coupling->branch = {{.group = disconnected, .pos = disconnected}};
@@ -338,11 +389,25 @@ TEST_CASE_TEMPLATE("Test main core power sensor output with reduced component co
     // A reduced main-core state must not instantiate lookups for appliance types that its container omits.
     using ComponentContainer =
         Container<ExtraRetrievableTypes<Branch, GenericPowerSensor>, GenericBranch, SymPowerSensor>;
+    static_assert(!common::component_container_c<ComponentContainer, Branch3>);
     static_assert(!common::component_container_c<ComponentContainer, Source>);
     static_assert(!common::component_container_c<ComponentContainer, Shunt>);
     static_assert(!common::component_container_c<ComponentContainer, GenericLoadGen>);
 
     MainModelState<ComponentContainer> state;
+    emplace_component<GenericBranch>(state.components, 9,
+                                     GenericBranchInput{.id = 9,
+                                                        .from_node = 100,
+                                                        .to_node = 101,
+                                                        .from_status = 1,
+                                                        .to_status = 1,
+                                                        .r1 = 1.0,
+                                                        .x1 = 1.0,
+                                                        .g1 = 0.0,
+                                                        .b1 = 0.0},
+                                     10e3, 10e3);
+    state.components.set_construction_complete();
+
     auto coupling = std::make_shared<TopologicalComponentToMathCoupling>();
     coupling->branch = {{.group = 0, .pos = 0}};
     state.topo_comp_coup = std::move(coupling);
@@ -360,14 +425,12 @@ TEST_CASE_TEMPLATE("Test main core power sensor output with reduced component co
     CHECK(output_result(sensor, state, solver_output, 0).energized == 1);
 }
 
-TEST_CASE_TEMPLATE("Test main core current sensor output uses branch topology group", sym, symmetric_t, asymmetric_t) {
+TEST_CASE_TEMPLATE("Test main core current sensor output energized state", sym, symmetric_t, asymmetric_t) {
     constexpr double u_rated = 10e3;
 
     auto state = make_current_sensor_output_state();
     auto const solver_output = make_current_sensor_solver_output<sym>();
 
-    // The branch is open at from and closed at to, but it still belongs to a mathematical group; both terminal
-    // sensors therefore remain energized.
     for (auto const terminal_type : {MeasuredTerminalType::branch_from, MeasuredTerminalType::branch_to}) {
         CAPTURE(terminal_type);
 
@@ -381,18 +444,42 @@ TEST_CASE_TEMPLATE("Test main core current sensor output uses branch topology gr
                                        .i_angle_measured = 0.0},
                                       u_rated};
 
-        CHECK(output_result(sensor, state, solver_output, 0).energized == 1);
+        auto const output = output_result(sensor, state, solver_output, 0);
+        if (terminal_type == MeasuredTerminalType::branch_from) {
+            check_null_current_sensor_output(output);
+        } else {
+            CHECK(output.energized == 1);
+        }
     }
+
+    // The branch3 remains connected through sides 1 and 3, but a sensor on disconnected side 2 has null output.
+    SymCurrentSensor const branch3_sensor{{.id = 31,
+                                           .measured_object = 14,
+                                           .measured_terminal_type = MeasuredTerminalType::branch3_2,
+                                           .angle_measurement_type = AngleMeasurementType::local_angle,
+                                           .i_sigma = 1.0,
+                                           .i_angle_sigma = 1.0,
+                                           .i_measured = 1.0,
+                                           .i_angle_measured = 0.0},
+                                          u_rated};
+    check_null_current_sensor_output(output_result(branch3_sensor, state, solver_output, 0));
 
     auto disconnected_coupling = std::make_shared<TopologicalComponentToMathCoupling>(*state.topo_comp_coup);
     disconnected_coupling->branch = {{.group = disconnected, .pos = disconnected}};
+    disconnected_coupling->branch3 = {{.group = disconnected, .pos = {disconnected, disconnected, disconnected}}};
     state.topo_comp_coup = std::move(disconnected_coupling);
 
-    for (auto const terminal_type : {MeasuredTerminalType::branch_from, MeasuredTerminalType::branch_to}) {
+    for (auto const terminal_type :
+         {MeasuredTerminalType::branch_from, MeasuredTerminalType::branch_to, MeasuredTerminalType::branch3_1,
+          MeasuredTerminalType::branch3_2, MeasuredTerminalType::branch3_3}) {
         CAPTURE(terminal_type);
 
-        SymCurrentSensor const sensor{{.id = 31,
-                                       .measured_object = 9,
+        auto const measured_object =
+            terminal_type == MeasuredTerminalType::branch_from || terminal_type == MeasuredTerminalType::branch_to
+                ? ID{9}
+                : ID{14};
+        SymCurrentSensor const sensor{{.id = 32,
+                                       .measured_object = measured_object,
                                        .measured_terminal_type = terminal_type,
                                        .angle_measurement_type = AngleMeasurementType::local_angle,
                                        .i_sigma = 1.0,
