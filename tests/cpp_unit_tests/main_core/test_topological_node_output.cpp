@@ -517,7 +517,7 @@ TEST_CASE("Test topological node output") {
         SUBCASE("Steady state output") {
             auto const math_output = make_steady_state_math_output_sym();
             LinkSolverMock mock{.return_values = {
-                                    {dummy_complex_value_sym(), dummy_complex_value_sym()},
+                                    {2.0 * dummy_complex_value_sym(), 3.0 * dummy_complex_value_sym()},
                                     {},
                                 }};
 
@@ -535,10 +535,16 @@ TEST_CASE("Test topological node output") {
                   ComplexVector{dummy_complex_value_sym(), dummy_complex_value_sym(), dummy_complex_value_sym()});
             CHECK(result[1].bus_injection == ComplexVector{DoubleComplex{}});
             REQUIRE(result[0].link.size() == 2);
-            CHECK(result[0].link[0].s_f == dummy_complex_value_sym());
-            CHECK(result[0].link[0].s_t == -dummy_complex_value_sym());
-            CHECK(result[0].link[1].s_f == dummy_complex_value_sym());
-            CHECK(result[0].link[1].s_t == -dummy_complex_value_sym());
+            CHECK(result[0].link[0].s_f == 2.0 * dummy_complex_value_sym());
+            CHECK(result[0].link[0].s_t == -2.0 * dummy_complex_value_sym());
+            CHECK(result[0].link[1].s_f == 3.0 * dummy_complex_value_sym());
+            CHECK(result[0].link[1].s_t == -3.0 * dummy_complex_value_sym());
+            // i_f/i_t are derived from the power flow and the topological node voltage: i = conj(s / u)
+            auto const topo_node_u = math_output.solver_output[0].u[0];
+            CHECK(result[0].link[0].i_f == conj(2.0 * dummy_complex_value_sym() / topo_node_u));
+            CHECK(result[0].link[0].i_t == conj(-2.0 * dummy_complex_value_sym() / topo_node_u));
+            CHECK(result[0].link[1].i_f == conj(3.0 * dummy_complex_value_sym() / topo_node_u));
+            CHECK(result[0].link[1].i_t == conj(-3.0 * dummy_complex_value_sym() / topo_node_u));
             CHECK(result[1].link.empty());
         }
 
