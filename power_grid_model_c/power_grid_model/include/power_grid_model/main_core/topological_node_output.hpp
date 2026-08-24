@@ -95,7 +95,7 @@ inline Idx get_node_sequence_idx(main_model_state_c auto const& state, Idx compo
 }
 
 template <std::derived_from<Branch> ComponentType>
-inline Idx get_branch_sequence_idx(main_model_state_c auto const& state, Idx component_idx) {
+inline BranchIdx const& get_branch_sequence_idx(main_model_state_c auto const& state, Idx component_idx) {
     return state.comp_topo
         ->branch_node_idx[get_component_sequence_offset<Branch, ComponentType>(state.components) + component_idx];
 }
