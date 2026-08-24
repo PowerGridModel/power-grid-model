@@ -92,10 +92,28 @@ template <symmetry_tag sym> class ShortCircuitSolver {
             auto& diagonal_element = mat_data_[diagonal_position];
             auto& u_bus = output.u_bus[bus_number];
 
-            detail::add_sources<sym>(sources, bus_number, y_bus, input.source, diagonal_element, u_bus);
+            add_sources(sources, y_bus, input, diagonal_element, u_bus);
 
             add_faults(faults, bus_number, y_bus, input, diagonal_element, u_bus, infinite_admittance_fault_counter,
                        fault_type, phase_1, phase_2);
+        }
+    }
+
+    static ComplexTensor<sym> source_admittance(YBus<sym> const& y_bus, ShortCircuitInput const& input,
+                                                Idx source_number) {
+        assert(input.source_admittance_scaling.empty() ||
+               input.source_admittance_scaling.size() == input.source.size());
+        double const scaling =
+            input.source_admittance_scaling.empty() ? 1.0 : input.source_admittance_scaling[source_number];
+        return scaling * y_bus.math_model_param().source_param[source_number].template y_ref<sym>();
+    }
+
+    static void add_sources(IdxRange const& sources, YBus<sym> const& y_bus, ShortCircuitInput const& input,
+                            ComplexTensor<sym>& diagonal_element, ComplexValue<sym>& u_bus) {
+        for (Idx const source_number : sources) {
+            ComplexTensor<sym> const y_source = source_admittance(y_bus, input, source_number);
+            diagonal_element += y_source;
+            u_bus += dot(y_source, ComplexValue<sym>{input.source[source_number]});
         }
     }
 
@@ -303,8 +321,7 @@ template <symmetry_tag sym> class ShortCircuitSolver {
             ComplexValue<sym> i_source_bus{};    // total source current in to the bus
             ComplexValue<sym> i_source_inject{}; // total raw source current as a Norton equivalent
             for (Idx const source_number : sources) {
-                ComplexTensor<sym> const y_source =
-                    y_bus.math_model_param().source_param[source_number].template y_ref<sym>();
+                ComplexTensor<sym> const y_source = source_admittance(y_bus, input, source_number);
                 ComplexValue<sym> const i_source_inject_single =
                     dot(y_source, ComplexValue<sym>{input.source[source_number]});
                 output.source[source_number].i = i_source_inject_single - dot(y_source, output.u_bus[bus_number]);

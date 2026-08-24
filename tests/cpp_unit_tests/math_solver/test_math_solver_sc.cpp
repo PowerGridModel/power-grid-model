@@ -462,4 +462,43 @@ TEST_CASE("Short circuit solver") {
     }
 }
 
+TEST_CASE("Short circuit source admittance follows the voltage factor") {
+    MathModelTopology topology;
+    topology.slack_bus = 0;
+    topology.phase_shift = {0.0};
+    topology.sources_per_bus = {from_sparse, {0, 1}};
+    topology.shunts_per_bus = {from_sparse, {0, 0}};
+    topology.load_gens_per_bus = {from_sparse, {0, 0}};
+
+    DoubleComplex const source_admittance{10.0 - 50.0i};
+    MathModelParam<symmetric_t> parameters;
+    parameters.source_param = {SourceCalcParam{.y1 = source_admittance, .y0 = source_admittance}};
+
+    YBus<symmetric_t> const y_bus{topology, std::move(parameters)};
+    ShortCircuitSolver<symmetric_t> solver{y_bus, topology};
+
+    DoubleComplex const solid_fault_admittance{std::numeric_limits<double>::infinity(),
+                                               std::numeric_limits<double>::infinity()};
+    auto const run_with_voltage_factor = [&](double voltage_factor) {
+        ShortCircuitInput input;
+        input.source = {voltage_factor};
+        input.source_admittance_scaling = {1.0 / voltage_factor};
+        input.fault_buses = {from_sparse, {0, 1}};
+        input.faults = {
+            {.y_fault = solid_fault_admittance, .fault_type = FaultType::three_phase, .fault_phase = FaultPhase::abc}};
+        return solver.run_short_circuit(y_bus, input);
+    };
+
+    auto const low_voltage_minimum_output = run_with_voltage_factor(0.95);
+    auto const high_voltage_minimum_output = run_with_voltage_factor(1.0);
+    auto const maximum_output = run_with_voltage_factor(1.1);
+
+    CHECK(cabs(low_voltage_minimum_output.fault[0].i_fault - source_admittance) < numerical_tolerance);
+    CHECK(cabs(high_voltage_minimum_output.fault[0].i_fault - source_admittance) < numerical_tolerance);
+    CHECK(cabs(maximum_output.fault[0].i_fault - source_admittance) < numerical_tolerance);
+    CHECK(cabs(maximum_output.source[0].i - source_admittance) < numerical_tolerance);
+    CHECK(cabs(maximum_output.fault[0].i_fault - low_voltage_minimum_output.fault[0].i_fault) < numerical_tolerance);
+    CHECK(cabs(maximum_output.fault[0].i_fault - high_voltage_minimum_output.fault[0].i_fault) < numerical_tolerance);
+}
+
 } // namespace power_grid_model::math_solver
