@@ -20,11 +20,11 @@
 namespace power_grid_model::main_core {
 
 template <typename Component, solver_output_type SolverOutputType>
-constexpr auto get_component_output(MathOutput<std::vector<SolverOutputType>> const& math_output,
-                                    Idx2D const& math_id) {
+constexpr auto const& get_component_output(MathOutput<std::vector<SolverOutputType>> const& math_output,
+                                           Idx2D const& math_id) {
     auto const& solver_output = math_output.solver_output[math_id.group];
 
-    auto const& component_type_output = [&solver_output] {
+    auto const& component_type_output = [&solver_output]() -> auto const& {
         if constexpr (std::derived_from<Component, Branch> || std::derived_from<Component, Branch3>) {
             return solver_output.branch;
         } else if constexpr (std::same_as<Component, Source> && requires { solver_output.source; }) {

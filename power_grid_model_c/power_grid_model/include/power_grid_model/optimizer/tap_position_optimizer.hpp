@@ -16,6 +16,7 @@
 #include "../component/branch.hpp"
 #include "../component/branch3.hpp"
 #include "../component/component.hpp"
+#include "../component/edge.hpp"
 #include "../component/line.hpp"
 #include "../component/link.hpp"
 #include "../component/node.hpp"
@@ -233,7 +234,7 @@ constexpr void add_edge(main_core::MainModelState<ComponentContainer> const& sta
     }
 }
 
-template <std::derived_from<Branch> Component, class ComponentContainer>
+template <std::derived_from<Edge> Component, class ComponentContainer>
     requires main_core::model_component_state_c<main_core::MainModelState, ComponentContainer, Component> &&
              (!transformer_c<Component>)
 constexpr void add_edge(main_core::MainModelState<ComponentContainer> const& state,
@@ -625,7 +626,7 @@ inline auto regulator_mapping(State const& state, RankedTransformerGroups const&
     return result;
 }
 
-template <std::derived_from<Branch> ComponentType, steady_state_solver_output_type SolverOutputType>
+template <std::derived_from<Edge> ComponentType, steady_state_solver_output_type SolverOutputType>
 inline auto i_pu(std::vector<SolverOutputType> const& solver_output, Idx2D const& math_id, ControlSide control_side) {
     using enum ControlSide;
 

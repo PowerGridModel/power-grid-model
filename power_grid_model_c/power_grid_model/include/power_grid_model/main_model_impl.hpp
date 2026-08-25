@@ -207,6 +207,7 @@ class MainModelImpl {
         construction_complete_ = true;
 #endif // !NDEBUG
         state_.components.set_construction_complete();
+
         state_.comp_topo =
             std::make_shared<ComponentTopology const>(main_core::construct_topology<ModelType>(state_.components));
     }
@@ -423,6 +424,8 @@ class MainModelImpl {
     }
 
     void check_no_future_deprecations(Options const& /*options*/, ConstDataset const* /*batch_dataset*/) const {
+        // TODO(mgovers): cleanup v2: remove this function, as power sensor creation itself should always throw after
+        // node injection sensors removal
         ModelType::run_functor_with_all_component_types_return_void([this]<typename CT>() {
             // only flow sensors have get_terminal_type() so we can filter on it
             if constexpr (requires(CT c) {

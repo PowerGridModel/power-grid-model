@@ -79,13 +79,13 @@ The `p` and `q` output of injection follows the `generator` reference direction 
 | `u_angle` | `RealValueOutput` | rad      | voltage angle                    |
 | `u`       | `RealValueOutput` | volt (V) | voltage magnitude (line-neutral) |
 
-## Branch
+## Edge
 
-* type name: `branch`
+* type name: `edge`
 * base: [base](#base)
 
-`branch` is the abstract base type for the component which connects two (possibly identical) nodes.
-For each branch two switches are always defined at from- and to-side of the branch.
+`edge` is the abstract base type for the component which connects two (possibly identical) nodes.
+For each edge two switches are always defined at from- and to-side of the edge.
 In reality such switches may not exist.
 For example, a cable usually permanently connects two joints.
 In this case, the attribute `from_status` and `to_status` is always 1.
@@ -121,6 +121,15 @@ In this case, the attribute `from_status` and `to_status` is always 1.
 | `i_from_angle` | `RealValueOutput` | rad        | current angle at from-side        |
 | `i_to`         | `RealValueOutput` | ampere (A) | magnitude of current at to-side   |
 | `i_to_angle`   | `RealValueOutput` | rad        | current angle at to-side          |
+
+## Branch
+
+* type name: `branch`
+* base: [edge](#edge)
+
+`branch` is the abstract base type for the component which connects two (possibly identical) nodes with finite
+impedance.
+All input, update and output attributes are identical to the ones for [Edges](#edge).
 
 ### Line
 
@@ -165,19 +174,38 @@ $$
 
 * type name: `link`
 
-`link` is a [branch](#branch) which usually represents a short internal cable/connection
-between two busbars inside a substation.
-It has a very high admittance (small impedance) which is set to a fixed per-unit value (equivalent to 10e6 siemens for
-10kV network).
-Therefore, it is chosen by design that no sensors can be coupled to a `link`.
-There is no additional attribute for `link`.
+`link` is an [edge](#edge) which usually represents a short internal cable/connection between two busbars inside a
+substation.
+In reality, it has a very high admittance (small impedance).
+
+Because of this, the power-grid-model choses to model this accordingly:
+
+* If there are no node injection sensors in the grid, links are modeled as infinite (but equal) admittance connections.
+* If there are node injection sensors in the grid, link admittances are modeled with a fixed per-unit value, equivalent
+  to 10e6 siemens for a 10kV network.
+
+```{note}
+New in version [`v1.13.142`](https://github.com/PowerGridModel/power-grid-model/releases/tag/v1.13.142): links may be modeled as infinite (but equal) admittance connections.
+In the old behavior, link admittances were always modeled with the same fixed per-unit value.
+Starting with version `v2.0.0`, link admittances are always modeled as infinite-admittance connections.
+```
+
+Because links have very high admittance, it also is chosen by design that no sensors can be coupled to a `link`.
+There are no additional attributes for `link`.
 
 It is explicitly allowed to connect a link between nodes with different voltage levels to allow modeling
 [ideal transformers](./non-native-components.md#ideal-transformer).
 
 #### Electric Model
 
-`link` is modeled by a constant admittance $Y_{\text{series}}$, where
+`link` is modeled by a constant admittance $Y_{\text{series}}$.
+If there are no node injection sensors in the grid:
+
+$$
+Y_{\text{series}}\rightarrow \infty
+$$
+
+If there are node injection sensors in the grid:
 
 $$
 Y_{\text{series}} = (1 + \mathrm{j}) \cdot 10^6 \,\mathrm{p.u.}
@@ -764,6 +792,9 @@ The state estimator uses the data to evaluate the state of the grid with the hig
 
 A sensor only has output for state estimation.
 For other calculation types, sensor output is undefined.
+The sensor output attribute `energized` is derived from whether the measured object is energized at the measured
+terminal, regardless of whether the measurement is included in state estimation.
+If the measured object is not energized at the measured terminal, all residual values are zero.
 
 ### Generic Voltage Sensor
 
