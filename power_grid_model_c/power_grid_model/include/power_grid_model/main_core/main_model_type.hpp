@@ -94,13 +94,13 @@ class MainModelType<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         std::tuple<std::type_identity<ComponentType>..., std::type_identity<ExtraRetrievableType>...>{};
 
     static constexpr auto topology_types_tuple_v_ =
-        std::tuple<std::type_identity<Node>, std::type_identity<Branch>, std::type_identity<Branch3>,
+        std::tuple<std::type_identity<Node>, std::type_identity<Edge>, std::type_identity<Branch3>,
                    std::type_identity<Source>, std::type_identity<Shunt>, std::type_identity<GenericLoadGen>,
                    std::type_identity<GenericVoltageSensor>, std::type_identity<GenericPowerSensor>,
                    std::type_identity<GenericCurrentSensor>, std::type_identity<Regulator>>{};
 
     static constexpr auto topology_connection_types_tuple_v_ =
-        std::tuple<std::type_identity<Branch>, std::type_identity<Branch3>, std::type_identity<Source>>{};
+        std::tuple<std::type_identity<Edge>, std::type_identity<Branch3>, std::type_identity<Source>>{};
 
   public:
     using TopologyTypesTuple = detail::tuple_type_identities_to_tuple_types_t<decltype(detail::filter_tuple_types(
