@@ -467,13 +467,12 @@ constexpr void output_result(MainModelState<ComponentContainer> const& state,
             [&state, &math_output](Component const& link, Idx2D const& topo_id) {
                 return output_result<Component, ComponentContainer>(link, state, math_output, topo_id);
             });
-        return;
+    } else {
+        detail::produce_output<Component, Idx2D>(
+            state, output, [&math_output](Component const& link, Idx2D const& math_id) {
+                return output_result<Branch>(link, math_output.solver_output, math_id);
+            });
     }
-
-    detail::produce_output<Component, Idx2D>(state, output,
-                                             [&math_output](Component const& link, Idx2D const& math_id) {
-                                                 return output_result<Branch>(link, math_output.solver_output, math_id);
-                                             });
 }
 
 // output base component
