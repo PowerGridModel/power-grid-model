@@ -201,6 +201,26 @@ constexpr void register_topology_components(ComponentContainer const& components
                                   [](Regulator const& regulator) { return regulator.regulated_object_type(); });
 }
 
+// new path: only Branch-derived types (not Link) in branch_node_idx
+template <std::same_as<Branch> Component, class ComponentContainer>
+    requires common::component_container_c<ComponentContainer, Component, Node>
+constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
+    apply_registration<Component>(components, comp_topo.branch_node_idx, [&components](Branch const& branch) {
+        return BranchIdx{get_component_sequence_idx<Node>(components, branch.from_node()),
+                         get_component_sequence_idx<Node>(components, branch.to_node())};
+    });
+}
+
+// new path: Link in link_node_idx so topology builder can create super-nodes
+template <std::same_as<Link> Component, class ComponentContainer>
+    requires common::component_container_c<ComponentContainer, Component, Node>
+constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
+    apply_registration<Component>(components, comp_topo.link_node_idx, [&components](Link const& link) {
+        return BranchIdx{get_component_sequence_idx<Node>(components, link.from_node()),
+                         get_component_sequence_idx<Node>(components, link.to_node())};
+    });
+}
+
 template <std::same_as<Edge> Component, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, Component, Edge>
 constexpr void register_connections_components(ComponentContainer const& components, ComponentConnections& comp_conn) {
@@ -232,16 +252,27 @@ constexpr void register_connections_components(ComponentContainer const& compone
 } // namespace detail
 
 template <typename ModelType>
-    requires common::component_container_c<typename ModelType::ComponentContainer, Node, Edge, Branch3, Source, Shunt,
-                                           GenericLoadGen, GenericVoltageSensor, GenericPowerSensor,
-                                           GenericCurrentSensor, Regulator>
-ComponentTopology construct_topology(typename ModelType::ComponentContainer const& components) {
+    requires common::component_container_c<typename ModelType::ComponentContainer, Node, Edge, Branch, Branch3, Source,
+                                           Shunt, GenericLoadGen, GenericVoltageSensor, GenericPowerSensor,
+                                           GenericCurrentSensor, Regulator, Link>
+ComponentTopology construct_topology(typename ModelType::ComponentContainer const& components,
+                                     bool has_node_injection_sensors = false) {
     ComponentTopology comp_topo;
     using TopologyTypesTuple = ModelType::TopologyTypesTuple;
     main_core::utils::run_functor_with_tuple_return_void<TopologyTypesTuple>(
-        [&components, &comp_topo]<typename CompType>() {
-            detail::register_topology_components<CompType>(components, comp_topo);
+        [&components, &comp_topo, has_node_injection_sensors]<typename CompType>() {
+            if constexpr (!std::same_as<CompType, Edge>) {
+                detail::register_topology_components<CompType>(components, comp_topo);
+            } else if (has_node_injection_sensors) {
+                // old path: all edges (branches + links) in branch_node_idx
+                detail::register_topology_components<Edge>(components, comp_topo);
+            }
         });
+    if (!has_node_injection_sensors) {
+        // new path: branches only in branch_node_idx, links in link_node_idx
+        detail::register_topology_components<Branch>(components, comp_topo);
+        detail::register_topology_components<Link>(components, comp_topo);
+    }
     return comp_topo;
 }
 
