@@ -47,6 +47,8 @@ TEST_CASE("Test main core output") {
 
         SUBCASE("Steady state output") {
             MathOutput<std::vector<SolverOutput<symmetric_t>>> const math_output{
+                .solver_output = {},
+                .optimizer_output = {},
                 .supernode_output = {
                     {.bus_injection = {},
                      .link = {{.s_f = {1.0, 2.0}, .s_t = {-1.0, -1.5}, .i_f = {3.0, 4.0}, .i_t = {-3.0, -4.0}},
@@ -71,6 +73,8 @@ TEST_CASE("Test main core output") {
 
         SUBCASE("Short circuit output") {
             MathOutput<std::vector<ShortCircuitSolverOutput<symmetric_t>>> const math_output{
+                .solver_output = {},
+                .optimizer_output = {},
                 .supernode_output = {
                     {.link = {{.i_f = {1.0, 0.0}, .i_t = {-2.0, 0.0}}, {.i_f = {3.0, 0.0}, .i_t = {-4.0, 0.0}}}}}};
             std::vector<BranchShortCircuitOutput> output(3);
