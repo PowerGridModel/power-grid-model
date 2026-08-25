@@ -47,9 +47,9 @@ double constexpr dummy_value = 123.321;
 constexpr ComplexValue<symmetric_t> dummy_complex_value_sym() { return {2.14, 3.71}; }
 ComplexValue<asymmetric_t> dummy_complex_value_asym() { return {{1.0, 2.0}, {-3.0, -4.0}, {5.0, -6.0}}; }
 
-void check_close(ComplexValue<symmetric_t> const& a, ComplexValue<symmetric_t> const& b) {
-    CHECK(a.real() == doctest::Approx(b.real()));
-    CHECK(a.imag() == doctest::Approx(b.imag()));
+void check_close(ComplexValue<symmetric_t> const& x, ComplexValue<symmetric_t> const& y) {
+    CHECK(x.real() == doctest::Approx(y.real()));
+    CHECK(x.imag() == doctest::Approx(y.imag()));
 }
 
 inline State make_state() {
@@ -153,13 +153,7 @@ inline MathOutput<std::vector<ShortCircuitSolverOutput<symmetric_t>>> make_short
 template <symmetry_tag sym> struct InjectionAccumulator {
     auto accumulator() {
         return [this]<typename ComponentType>(Idx2D const& math_id, ComplexValue<sym> const& injection) {
-            auto& target_map = [&]() -> std::unordered_map<Idx2D, ComplexValue<sym>, Idx2DHash>& {
-                if constexpr (std::derived_from<ComponentType, Branch>) {
-                    return branch_flow_into_nodes;
-                } else {
-                    return net_node_injections;
-                }
-            }();
+            auto& target_map = std::derived_from<ComponentType, Branch> ? branch_flow_into_nodes : net_node_injections;
 
             if (auto [it, inserted] = target_map.try_emplace(math_id, injection); !inserted) {
                 it->second += injection;
