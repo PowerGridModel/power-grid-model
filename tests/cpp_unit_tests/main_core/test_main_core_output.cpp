@@ -18,6 +18,7 @@
 #include <power_grid_model/component/branch.hpp>
 #include <power_grid_model/component/branch3.hpp>
 #include <power_grid_model/component/current_sensor.hpp>
+#include <power_grid_model/component/edge.hpp>
 #include <power_grid_model/component/generic_branch.hpp>
 #include <power_grid_model/component/load_gen.hpp>
 #include <power_grid_model/component/node.hpp>
@@ -161,7 +162,7 @@ template <symmetry_tag sym> void check_null_power_sensor_output(PowerSensorOutpu
 }
 
 using CurrentSensorOutputComponents =
-    Container<ExtraRetrievableTypes<Base, Node, Branch, Branch3, GenericCurrentSensor>, GenericBranch,
+    Container<ExtraRetrievableTypes<Base, Node, Edge, Branch, Branch3, GenericCurrentSensor>, GenericBranch,
               ThreeWindingTransformer, Node, SymCurrentSensor>;
 using CurrentSensorOutputState = MainModelState<CurrentSensorOutputComponents>;
 
