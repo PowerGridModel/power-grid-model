@@ -39,8 +39,8 @@
 
 namespace power_grid_model::main_core {
 namespace {
-using ComponentContainer = Container<ExtraRetrievableTypes<Appliance, Base, Branch, GenericLoadGen>, AsymLoad, SymLoad,
-                                     Fault, Line, Node, Source, Shunt>;
+using ComponentContainer = Container<ExtraRetrievableTypes<Appliance, Base, Edge, Branch, GenericLoadGen>, AsymLoad,
+                                     SymLoad, Fault, Line, Node, Source, Shunt>;
 using State = MainModelState<ComponentContainer>;
 
 double constexpr dummy_value = 123.321;

@@ -16,6 +16,7 @@
 #include "../component/branch.hpp"
 #include "../component/branch3.hpp"
 #include "../component/current_sensor.hpp"
+#include "../component/edge.hpp"
 #include "../component/fault.hpp"
 #include "../component/load_gen.hpp"
 #include "../component/node.hpp"
@@ -108,7 +109,6 @@ inline auto output_result(Component const& link, MainModelState<ComponentContain
 
 // output branch
 template <std::derived_from<Branch> Component, steady_state_solver_output_type SolverOutputType>
-    requires(!std::same_as<Component, Link>)
 constexpr auto output_result(Component const& branch, std::vector<SolverOutputType> const& solver_output,
                              Idx2D math_id) {
     using sym = decode_symmetry_v<SolverOutputType>;
@@ -119,7 +119,6 @@ constexpr auto output_result(Component const& branch, std::vector<SolverOutputTy
     return branch.template get_output<sym>(solver_output[math_id.group].branch[math_id.pos]);
 }
 template <std::derived_from<Branch> Component, short_circuit_solver_output_type SolverOutputType>
-    requires(!std::same_as<Component, Link>)
 inline auto output_result(Component const& branch, std::vector<SolverOutputType> const& solver_output, Idx2D math_id) {
     if (math_id.group == disconnected) {
         return branch.get_null_sc_output();
