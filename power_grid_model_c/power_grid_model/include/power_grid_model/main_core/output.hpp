@@ -458,8 +458,8 @@ template <std::same_as<Link> Component, class ComponentContainer, solver_output_
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr void output_result(MainModelState<ComponentContainer> const& state,
                              MathOutput<std::vector<SolverOutputType>> const& math_output, ComponentOutput output) {
-    auto const& link_topo_ids = state.reduced_topology->topo_node_coup.coupling.user_links_to_topo_nodes;
-    if (std::ranges::ssize(link_topo_ids) ==
+    if (auto const& link_topo_ids = state.reduced_topology->topo_node_coup.coupling.user_links_to_topo_nodes;
+        std::ranges::ssize(link_topo_ids) ==
         get_component_size<Component>(
             state.components)) { // TODO(mgovers): cleanup v2: this should be the only code path remaining
         std::ranges::transform(
