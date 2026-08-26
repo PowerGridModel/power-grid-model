@@ -198,14 +198,14 @@ It is explicitly allowed to connect a link between nodes with different voltage 
 
 #### Electric Model
 
-`link` is modeled by a constant admittance $Y_{\text{series}}$.
-If there are no node injection sensors in the grid:
+`link` is modeled by a constant series admittance $Y_{\text{series}}$.
+If there are no node injection sensors in the grid, the link is an ideal (lossless) connection:
 
 $$
 Y_{\text{series}}\rightarrow \infty
 $$
 
-If there are node injection sensors in the grid:
+If there are node injection sensors in the grid, a large but finite admittance is used:
 
 $$
 Y_{\text{series}} = (1 + \mathrm{j}) \cdot 10^6 \,\mathrm{p.u.}
@@ -213,14 +213,15 @@ $$
 
 ##### Handling infinite admittances
 
-Because an admittance matrix with infinities is ill-conditioned, the power-grid-model runs a multi-scale calculation.
+An admittance matrix that contains infinities is ill-conditioned and cannot be solved directly, so the power-grid-model
+runs a multi-scale calculation.
 
 To set up this multi-scale calculation, any nodes connected by links are merged into topological nodes.
-The remaining grid is a topologically well-conditioned grid with finite impedance branches.
-At the same time, each topological node have a substructure of infinite-admittance links and "external"
-finite-impedance branches and appliances.
+The remaining grid is a topologically well-conditioned grid with finite-impedance branches.
+Each topological node in turn has a substructure of infinite-admittance links together with the "external"
+finite-impedance branches and appliances connected to it.
 
-The calculation itself is done as follows.
+The calculation itself is done in two steps.
 
 1. Solve the topological grid using the [user-specified calculation type and method](./calculations.md).
    This yields a complete mathematical calculation output for all components except link flows and node injections,
