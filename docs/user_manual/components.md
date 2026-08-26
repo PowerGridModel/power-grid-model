@@ -211,6 +211,24 @@ $$
 Y_{\text{series}} = (1 + \mathrm{j}) \cdot 10^6 \,\mathrm{p.u.}
 $$
 
+##### Handling infinite admittances
+
+Because an admittance matrix with infinities is ill-conditioned, the power-grid-model runs a multi-scale calculation.
+
+To set up this multi-scale calculation, any nodes connected by links are merged into topological nodes.
+The remaining grid is a topologically well-conditioned grid with finite impedance branches.
+At the same time, each topological node have a substructure of infinite-admittance links and "external"
+finite-impedance branches and appliances.
+
+The calculation itself is done as follows.
+
+1. Solve the topological grid using the [user-specified calculation type and method](./calculations.md).
+   This yields a complete mathematical calculation output for all components except link flows and node injections,
+   including node voltages, branch flows and admittance flows.
+2. Solve each topological node separately to obtain the node injection sums and link flows, using the mathematical
+   calculation outputs from the previous step as inputs.
+   This fills in the remaining gaps in the output.
+
 ### Transformer
 
 `transformer` is a [branch](#branch) which connects two nodes with possibly different
