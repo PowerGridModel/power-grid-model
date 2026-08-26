@@ -14,7 +14,7 @@ The `MainModel` itself can be deconstructed into an API part, a dispatch part, t
 
 ## Calculation logic and data flow
 
-The logic involved in power grid calculations in turn can be devided in a number of separate modules.
+The logic involved in power grid calculations in turn can be divided in a number of separate modules.
 Coincidentally, those phases also translate to fields of expertise, which enables a reasonably clean architecture.
 
 | Logic/control module                               | Description                                                                                                       | Expertise              |
@@ -39,16 +39,16 @@ The data flow can be visualized as such:
 ```{mermaid}
 graph TD
     ComponentInput(Input/Update data) -->|Input| Components[Power Grid Components]
-    Components -->|Static topology construction| GeneralTopo[General Topology (including disabled components)]
+    Components -->|Static topology construction| GeneralTopo["General Topology (including disabled components)"]
 
-    GeneralTopo -->|Topology reduction| ReducedTopo[Reduced Topology (split into topological nodes and substructures)]
+    GeneralTopo -->|Topology reduction| ReducedTopo["Reduced Topology (split into topological nodes and substructures)"]
 
     ReducedTopo -->|Mathematical topology construction| MathTopo[Mathematical topology]
 
     MathTopo -->|Ybus construction| Ybus(Ybus)
     Components --> Ybus
 
-    Ybus -->|Solver construction/extraction| Equations(Solvable system of equations)
+    Ybus -->|Solver construction| Equations(Solvable system of equations)
     Equations -->|Math solving| Solution(Solution)
 
     Solution -->|Grid extraction| MacroGridResult(Macro-grid result)
