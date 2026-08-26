@@ -185,7 +185,8 @@ Because of this, the power-grid-model choses to model this accordingly:
   to 10e6 siemens for a 10kV network.
 
 ```{note}
-New in version [`v1.13.142`](https://github.com/PowerGridModel/power-grid-model/releases/tag/v1.13.142): links may be modeled as infinite (but equal) admittance connections.
+New in version [`v1.13.142`](https://github.com/PowerGridModel/power-grid-model/releases/tag/v1.13.142): links may be
+modeled as infinite (but equal) admittance connections.
 In the old behavior, link admittances were always modeled with the same fixed per-unit value.
 Starting with version `v2.0.0`, link admittances are always modeled as infinite-admittance connections.
 ```
@@ -216,7 +217,7 @@ $$
 An admittance matrix that contains infinities is ill-conditioned and cannot be solved directly, so the power-grid-model
 runs a multi-scale calculation.
 
-To set up this multi-scale calculation, any nodes connected by links are merged into topological nodes.
+To set up this multi-scale calculation, nodes are grouped into clusters internally connected by links, called topological nodes.
 The remaining grid is a topologically well-conditioned grid with finite-impedance branches.
 Each topological node in turn has a substructure of infinite-admittance links together with the "external"
 finite-impedance branches and appliances connected to it.
@@ -226,8 +227,8 @@ The calculation itself is done in two steps.
 1. Solve the topological grid using the [user-specified calculation type and method](./calculations.md).
    This yields a complete mathematical calculation output for all components except link flows and node injections,
    including node voltages, branch flows and admittance flows.
-2. Solve each topological node separately to obtain the node injection sums and link flows, using the mathematical
-   calculation outputs from the previous step as inputs.
+2. Solve for the flows within each topological node separately to obtain the node injection sums and link flows, using the
+   mathematical calculation outputs from the previous step as inputs.
    This fills in the remaining gaps in the output.
 
 ### Transformer
