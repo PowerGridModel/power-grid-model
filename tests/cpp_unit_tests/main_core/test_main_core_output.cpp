@@ -224,7 +224,7 @@ template <symmetry_tag sym> void check_null_current_sensor_output(CurrentSensorO
 
 TEST_CASE("Test main core output") {
     SUBCASE("Link") {
-        using ComponentContainer = Container<ExtraRetrievableTypes<Base, Branch>, Link>;
+        using ComponentContainer = Container<ExtraRetrievableTypes<Base, Edge, Branch>, Link>;
         using State = MainModelState<ComponentContainer>;
 
         State state;
