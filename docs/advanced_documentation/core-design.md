@@ -20,10 +20,14 @@ Coincidentally, those phases also translate to fields of expertise, which enable
 | Logic/control module                               | Description                                                                                                       | Expertise              |
 | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ---------------------- |
 | I/O                                                | Constructing, updating and outputting components in the power grid                                                | Software Engineering   |
-| Topology construction                              | Constructing the topological graph of the grid                                                                    | Topology               |
+| General topology construction                      | Constructing the overall topological layout of the grid, including open connections and disabled components       | Topology               |
+| Topology reduction                                 | Splitting the general topological layout into a multi-scale topological representation by merging nodes on links  | Topology               |
+| Mathematical topology construction                 | Constructing a topological representation of the grid optimized for efficient matrix solving                      | Topology               |
 | $Y_{\text{bus}}$ construction/Component extraction | Constructing $Y_{\text{bus}}$ from the power grid components and topology                                         | Electrical Engineering |
 | Solver construction/Grid extraction                | Translation from $Y_{\text{bus}}$ to a solvable system of equations and from the solution back to physical values | Physics                |
-| Solving                                            | Abstract solution to the system of equations                                                                      | Mathematics            |
+| Math solving                                       | Abstract solution to the macro-scale system of equations                                                          | Mathematics            |
+| Optimization                                       | Abstract optimization of parameters to ensure optimal grid configuration                                          | Mathematics            |
+| Topological node solving                           | Abstract solution to the micro-scale power/current flow (within a topological node)                               | Mathematics            |
 
 ```{note}
 Software Engineering obviously also plays a role in the general design, but that general design does not involve the
@@ -35,18 +39,27 @@ The data flow can be visualized as such:
 ```{mermaid}
 graph TD
     ComponentInput(Input/Update data) -->|Input| Components[Power Grid Components]
-    Components -->|Topology construction| Topo[Topology]
+    Components -->|Static topology construction| GeneralTopo[General Topology (including disabled components)]
 
-    Topo -->|Ybus construction| Ybus(Ybus)
+    GeneralTopo -->|Topology reduction| ReducedTopo[Reduced Topology (split into topological nodes and substructures)]
+
+    ReducedTopo -->|Mathematical topology construction| MathTopo[Mathematical topology]
+
+    MathTopo -->|Ybus construction| Ybus(Ybus)
     Components --> Ybus
 
     Ybus -->|Solver construction/extraction| Equations(Solvable system of equations)
-    Equations -->|Solving| Solution(Solution)
+    Equations -->|Math solving| Solution(Solution)
 
-    Solution -->|Grid extraction| GridResult(Grid result)
-    Ybus --> GridResult
+    Solution -->|Grid extraction| MacroGridResult(Macro-grid result)
+    Ybus --> MacroGridResult
 
-    GridResult -->|Component extraction| ComponentsOutput(Components result)
+    MacroGridResult -->|Optimization| MacroGridResult
+
+    MacroGridResult -->|Topological node solving| FullGridResult(Full grid result)
+    ReducedTopo --> FullGridResult
+
+    FullGridResult -->|Component extraction| ComponentsOutput(Components result)
     Components --> ComponentsOutput
 
     ComponentsOutput -->|Output| Output(Output data)
