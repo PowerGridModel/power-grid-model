@@ -48,6 +48,8 @@ struct BusSolverOutput {
     LimitViolation q_limit_violated{LimitViolation::none};
 };
 
+// TODO(mgovers): cleanup v2: branch solver output should always be in current domain; conversion to power domain should
+// be done in main_core/output.hpp
 template <symmetry_tag sym_type> struct BranchSolverOutput {
     using sym = sym_type;
 
@@ -82,7 +84,8 @@ template <symmetry_tag sym_type> struct FaultShortCircuitSolverOutput {
 template <symmetry_tag sym_type> struct ApplianceSolverOutput {
     using sym = sym_type;
 
-    ComplexValue<sym> s{};
+    ComplexValue<sym> s{}; // TODO(mgovers): cleanup v2: appliance solver output should always be in current domain;
+                           // conversion to power domain should be done in main_core/output.hpp
     ComplexValue<sym> i{};
 };
 template <symmetry_tag sym_type> struct ApplianceShortCircuitSolverOutput {
@@ -410,13 +413,13 @@ template <typename T> struct SupernodeOutput;
 template <steady_state_solver_output_type SolverOutputType> struct SupernodeOutput<SolverOutputType> {
     using sym = decode_symmetry_v<SolverOutputType>;
 
-    ComplexValueVector<sym> bus_injection; // user bus output
-    BranchSolverOutput<sym> branch;        // user link
+    ComplexValueVector<sym> bus_injection;     // user bus output
+    std::vector<BranchSolverOutput<sym>> link; // user link
 };
 template <short_circuit_solver_output_type SolverOutputType> struct SupernodeOutput<SolverOutputType> {
     using sym = decode_symmetry_v<SolverOutputType>;
 
-    BranchShortCircuitSolverOutput<sym> branch; // user link
+    std::vector<BranchShortCircuitSolverOutput<sym>> link; // user link
 };
 
 template <typename T> struct MathOutput {
