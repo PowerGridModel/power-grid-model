@@ -13,6 +13,7 @@
 #include <power_grid_model/component/appliance.hpp>
 #include <power_grid_model/component/base.hpp>
 #include <power_grid_model/component/branch.hpp>
+#include <power_grid_model/component/edge.hpp>
 #include <power_grid_model/component/fault.hpp>
 #include <power_grid_model/component/generic_branch.hpp>
 #include <power_grid_model/component/line.hpp>
