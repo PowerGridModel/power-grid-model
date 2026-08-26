@@ -39,6 +39,9 @@ The data flow can be visualized as such:
 ```{mermaid}
 graph TD
     ComponentInput(Input/Update data) -->|Input| Components[Power Grid Components]
+
+    Params[Electrical parameters]
+    Components -->|Electrical parameter construction| Params
     Components -->|Static topology construction| GeneralTopo["General Topology (including disabled components)"]
 
     GeneralTopo -->|Topology reduction| ReducedTopo["Reduced Topology (split into topological nodes and substructures)"]
@@ -46,17 +49,17 @@ graph TD
     ReducedTopo -->|Mathematical topology construction| MathTopo[Mathematical topology]
 
     MathTopo -->|Ybus construction| Ybus(Ybus)
-    Components --> Ybus
+    Params --> Ybus
 
     Ybus -->|Solver construction| Equations(Solvable system of equations)
-    Equations -->|Math solving| Solution(Solution)
+    Equations -->|Math solving| Solution(Mathematical solution)
 
     Solution -->|Grid extraction| MacroGridResult(Macro-grid result)
     Ybus --> MacroGridResult
 
-    MacroGridResult -->|Optimization| MacroGridResult
+    MacroGridResult -->|Optional optimization| Params
 
-    MacroGridResult -->|Topological node solving| FullGridResult(Full grid result)
+    MacroGridResult -->|Topological node solving| FullGridResult("Full grid result")
     ReducedTopo --> FullGridResult
 
     FullGridResult -->|Component extraction| ComponentsOutput(Components result)
