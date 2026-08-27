@@ -162,6 +162,10 @@ template <symmetry_tag sym, typename LinkSolver>
     requires std::invocable<LinkSolver, std::vector<BranchIdx>, ComplexVector>
 ComplexValueVector<sym> compute_link_solver(LinkSolver link_solver,
                                             SuperNodeSolverInput<sym> const& super_node_solver_input) {
+    if (std::ranges::empty(super_node_solver_input.links)) {
+        return {};
+    }
+
     if constexpr (is_symmetric_v<sym>) {
         return link_solver(super_node_solver_input.links | std::ranges::to<std::vector>(),
                            super_node_solver_input.get_total_injection_per_node());
@@ -199,18 +203,15 @@ template <symmetry_tag sym, typename BranchSolverOutputType>
               std::same_as<BranchSolverOutputType,
                            BranchShortCircuitSolverOutput<decode_symmetry_v<BranchSolverOutputType>>>)
 std::vector<BranchSolverOutputType> get_link_output(ComplexValueVector<sym> const& link_solver_result) {
-    std::vector<BranchSolverOutputType> link_output;
-    link_output.reserve(link_solver_result.size());
-
-    for (auto const& result : link_solver_result) {
-        if constexpr (std::same_as<BranchSolverOutputType,
-                                   BranchSolverOutput<decode_symmetry_v<BranchSolverOutputType>>>) {
-            link_output.emplace_back(BranchSolverOutputType{.s_f = result, .s_t = -result});
-        } else {
-            link_output.emplace_back(BranchSolverOutputType{.i_f = result, .i_t = -result});
-        }
-    }
-    return link_output;
+    return link_solver_result | std::views::transform([](auto const& result) -> BranchSolverOutputType {
+               if constexpr (std::same_as<BranchSolverOutputType,
+                                          BranchSolverOutput<decode_symmetry_v<BranchSolverOutputType>>>) {
+                   return BranchSolverOutputType{.s_f = result, .s_t = -result};
+               } else {
+                   return BranchSolverOutputType{.i_f = result, .i_t = -result};
+               }
+           }) |
+           std::ranges::to<std::vector>();
 }
 
 template <typename LinkSolver, main_model_state_c State, solver_output_type SolverOutput>
