@@ -228,8 +228,8 @@ TEST_CASE("Test main core output") {
         using State = MainModelState<ComponentContainer>;
 
         State state;
-        emplace_component<Link>(state.components, 0, LinkInput{.id = 0, .from_status = status_on, .to_status = status_on},
-                                10e3, 20e3);
+        emplace_component<Link>(state.components, 0,
+                                LinkInput{.id = 0, .from_status = status_on, .to_status = status_on}, 10e3, 20e3);
         emplace_component<Link>(state.components, 1,
                                 LinkInput{.id = 1, .from_status = status_on, .to_status = status_off}, 10e3, 20e3);
         emplace_component<Link>(state.components, 2,
