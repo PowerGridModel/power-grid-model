@@ -1,0 +1,156 @@
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+# libFuzzer/AFL++ dictionary for Power Grid Model JSON/msgpack input format
+#
+# Helps AFL++ generate structurally valid PGM inputs, increasing the ratio
+# of payloads that survive past the top-level JSON parser and reach the
+# component parsing, model construction, and solver code.
+
+# ── JSON structural tokens ───────────────────────────────────────────────────
+"{"
+"}"
+"["
+"]"
+":"
+","
+"true"
+"false"
+"null"
+
+# ── Top-level PGM envelope keys ──────────────────────────────────────────────
+"\"version\""
+"\"type\""
+"\"is_batch\""
+"\"attributes\""
+"\"data\""
+
+# ── Known version strings ────────────────────────────────────────────────────
+"\"1.0\""
+
+# ── Dataset type values ──────────────────────────────────────────────────────
+"\"input\""
+"\"update\""
+"\"sym_output\""
+"\"asym_output\""
+"\"sc_output\""
+
+# ── Component names ──────────────────────────────────────────────────────────
+"\"node\""
+"\"source\""
+"\"line\""
+"\"asym_line\""
+"\"link\""
+"\"generic_branch\""
+"\"transformer\""
+"\"three_winding_transformer\""
+"\"transformer_tap_regulator\""
+"\"voltage_regulator\""
+"\"sym_load\""
+"\"asym_load\""
+"\"sym_gen\""
+"\"asym_gen\""
+"\"shunt\""
+"\"sym_voltage_sensor\""
+"\"asym_voltage_sensor\""
+"\"sym_power_sensor\""
+"\"asym_power_sensor\""
+"\"sym_current_sensor\""
+"\"asym_current_sensor\""
+"\"fault\""
+
+# ── Universal attributes ─────────────────────────────────────────────────────
+"\"id\""
+"\"node\""
+"\"status\""
+"\"type\""
+
+# ── Node attributes ──────────────────────────────────────────────────────────
+"\"u_rated\""
+
+# ── Source attributes ────────────────────────────────────────────────────────
+"\"u_ref\""
+"\"u_ref_angle\""
+"\"sk\""
+"\"rx_ratio\""
+"\"z01_ratio\""
+
+# ── Branch attributes (line, link, transformer) ──────────────────────────────
+"\"from_node\""
+"\"to_node\""
+"\"from_status\""
+"\"to_status\""
+
+# ── Line attributes ──────────────────────────────────────────────────────────
+"\"r1\""
+"\"x1\""
+"\"c1\""
+"\"tan1\""
+"\"r0\""
+"\"x0\""
+"\"c0\""
+"\"tan0\""
+"\"i_n\""
+
+# ── Transformer attributes ───────────────────────────────────────────────────
+"\"u1\""
+"\"u2\""
+"\"uk\""
+"\"pk\""
+"\"i0\""
+"\"p0\""
+"\"winding_from\""
+"\"winding_to\""
+"\"clock\""
+"\"tap_side\""
+"\"tap_pos\""
+"\"tap_min\""
+"\"tap_max\""
+"\"tap_nom\""
+"\"tap_size\""
+
+# ── Load/gen attributes ──────────────────────────────────────────────────────
+"\"p_specified\""
+"\"q_specified\""
+
+# ── Shunt attributes ─────────────────────────────────────────────────────────
+"\"g1\""
+"\"b1\""
+"\"g0\""
+"\"b0\""
+
+# ── Sensor attributes ────────────────────────────────────────────────────────
+"\"measured_object\""
+"\"measured_terminal_type\""
+"\"power_sigma\""
+"\"u_sigma\""
+"\"u_measured\""
+"\"p_measured\""
+"\"q_measured\""
+"\"i_sigma\""
+"\"i_angle_sigma\""
+
+# ── Fault attributes ─────────────────────────────────────────────────────────
+"\"fault_type\""
+"\"fault_phase\""
+"\"fault_object\""
+"\"r_f\""
+"\"x_f\""
+
+# ── Common numeric values ────────────────────────────────────────────────────
+"0"
+"1"
+"-1"
+"50.0"
+"60.0"
+"0.0"
+"1.0"
+"1e3"
+"1e6"
+"1e9"
+"0.1"
+"0.01"
+"10000.0"
+"110000.0"
+"400.0"
