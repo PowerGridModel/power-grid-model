@@ -11,6 +11,7 @@
 #include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/common/three_phase_tensor.hpp>
 #include <power_grid_model/component/appliance.hpp>
+#include <power_grid_model/component/asym_line.hpp>
 #include <power_grid_model/component/base.hpp>
 #include <power_grid_model/component/branch.hpp>
 #include <power_grid_model/component/edge.hpp>
@@ -43,6 +44,30 @@ namespace {
 using ComponentContainer = Container<ExtraRetrievableTypes<Appliance, Base, Edge, Branch, GenericLoadGen>, AsymLoad,
                                      SymLoad, Fault, Line, Node, Source, Shunt>;
 using State = MainModelState<ComponentContainer>;
+
+static_assert(detail::ContributesToSteadyStateUserNodeInjection::template value<Source>);
+static_assert(detail::ContributesToSteadyStateUserNodeInjection::template value<SymLoad>);
+static_assert(detail::ContributesToSteadyStateUserNodeInjection::template value<SymGenerator>);
+static_assert(detail::ContributesToSteadyStateUserNodeInjection::template value<AsymLoad>);
+static_assert(detail::ContributesToSteadyStateUserNodeInjection::template value<AsymGenerator>);
+static_assert(detail::ContributesToSteadyStateUserNodeInjection::template value<Line>);
+static_assert(detail::ContributesToSteadyStateUserNodeInjection::template value<GenericBranch>);
+static_assert(detail::ContributesToSteadyStateUserNodeInjection::template value<Transformer>);
+static_assert(detail::ContributesToSteadyStateUserNodeInjection::template value<AsymLine>);
+static_assert(!detail::ContributesToSteadyStateUserNodeInjection::template value<Shunt>);
+static_assert(!detail::ContributesToSteadyStateUserNodeInjection::template value<Fault>);
+
+static_assert(detail::ContributesToShortCircuitUserNodeInjection::template value<Source>);
+static_assert(detail::ContributesToShortCircuitUserNodeInjection::template value<Line>);
+static_assert(detail::ContributesToShortCircuitUserNodeInjection::template value<GenericBranch>);
+static_assert(detail::ContributesToShortCircuitUserNodeInjection::template value<Transformer>);
+static_assert(detail::ContributesToShortCircuitUserNodeInjection::template value<AsymLine>);
+static_assert(detail::ContributesToShortCircuitUserNodeInjection::template value<Fault>);
+static_assert(!detail::ContributesToShortCircuitUserNodeInjection::template value<Shunt>);
+static_assert(!detail::ContributesToShortCircuitUserNodeInjection::template value<SymLoad>);
+static_assert(!detail::ContributesToShortCircuitUserNodeInjection::template value<AsymLoad>);
+static_assert(!detail::ContributesToShortCircuitUserNodeInjection::template value<SymGenerator>);
+static_assert(!detail::ContributesToShortCircuitUserNodeInjection::template value<AsymGenerator>);
 
 double constexpr dummy_value = 123.321;
 constexpr ComplexValue<symmetric_t> dummy_complex_value_sym() { return {2.14, 3.71}; }
@@ -358,10 +383,9 @@ TEST_CASE("Test topological node output") {
 
         SUBCASE("Steady state output") {
             auto const math_output = make_steady_state_math_output_sym();
-            using ComponentTypes =
-                std::tuple<Source, SymLoad, SymGenerator, AsymLoad, AsymGenerator, Line, GenericBranch, Transformer>;
 
-            detail::add_flows<ComponentTypes>(state, math_output, accumulator.accumulator());
+            detail::add_flows<detail::ContributesToSteadyStateUserNodeInjection>(state, math_output,
+                                                                                 accumulator.accumulator());
 
             CHECK(accumulator.net_node_injections.size() == 3);
             CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == dummy_complex_value_sym());
@@ -376,9 +400,9 @@ TEST_CASE("Test topological node output") {
 
         SUBCASE("Short circuit output") {
             auto const math_output = make_short_circuit_math_output_sym();
-            using ComponentTypes = std::tuple<Source, Line, GenericBranch, Transformer, Fault>;
 
-            detail::add_flows<ComponentTypes>(state, math_output, accumulator.accumulator());
+            detail::add_flows<detail::ContributesToShortCircuitUserNodeInjection>(state, math_output,
+                                                                                  accumulator.accumulator());
 
             CHECK(accumulator.net_node_injections.size() == 2);
             CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == 2.0 * dummy_complex_value_sym());

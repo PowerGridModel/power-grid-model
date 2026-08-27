@@ -144,15 +144,30 @@ struct AddApplianceInjection {
     }
 };
 
+struct user_node_contribution_tag_t {};
+struct ContributesToSteadyStateUserNodeInjection : public user_node_contribution_tag_t {
+    template <typename ComponentType>
+    static constexpr bool value =
+        std::derived_from<ComponentType, Source> || std::derived_from<ComponentType, GenericLoadGen> ||
+        std::derived_from<ComponentType, Branch>;
+};
+struct ContributesToShortCircuitUserNodeInjection : public user_node_contribution_tag_t {
+    template <typename ComponentType>
+    static constexpr bool value = std::derived_from<ComponentType, Source> ||
+                                  std::derived_from<ComponentType, Branch> || std::derived_from<ComponentType, Fault>;
+};
+
 constexpr auto add_appliance_injection = AddApplianceInjection{};
 
-template <typename InjectionComponentTypesTuple, main_model_state_c State, solver_output_type SolverOutput,
-          typename AddToTarget>
+template <std::derived_from<user_node_contribution_tag_t> ContributesToUserNodeInjection, main_model_state_c State,
+          solver_output_type SolverOutput, typename AddToTarget>
 inline void add_flows(State const& state, MathOutput<std::vector<SolverOutput>> const& math_output,
                       AddToTarget accumulate_injection) {
-    utils::run_functor_with_tuple_return_void<InjectionComponentTypesTuple>(
+    using Container = decltype(state.components);
+
+    utils::run_functor_with_tuple_return_void<typename Container::storageable_types>(
         [&state, &math_output, &accumulate_injection]<typename ComponentType>() {
-            if constexpr (decltype(state.components)::template is_storageable_v<ComponentType>) {
+            if constexpr (ContributesToUserNodeInjection::template value<ComponentType>) {
                 add_appliance_injection.template operator()<ComponentType>(state, math_output, accumulate_injection);
             }
         });
@@ -240,12 +255,9 @@ solve_topological_nodes(LinkSolver link_solver, State const& state,
     };
 
     if constexpr (steady_state_solver_output_type<SolverOutput>) {
-        using InjectionComponentTypesTuple =
-            std::tuple<Source, SymLoad, SymGenerator, AsymLoad, AsymGenerator, Line, GenericBranch, Transformer>;
-        add_flows<InjectionComponentTypesTuple>(state, math_output, accumulate_injection);
+        add_flows<ContributesToSteadyStateUserNodeInjection>(state, math_output, accumulate_injection);
     } else if constexpr (short_circuit_solver_output_type<SolverOutput>) {
-        using InjectionComponentTypesTuple = std::tuple<Source, Line, GenericBranch, Transformer, Fault>;
-        add_flows<InjectionComponentTypesTuple>(state, math_output, accumulate_injection);
+        add_flows<ContributesToShortCircuitUserNodeInjection>(state, math_output, accumulate_injection);
     }
 
     auto result =
