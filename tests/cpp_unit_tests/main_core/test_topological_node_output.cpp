@@ -533,8 +533,8 @@ TEST_CASE("Test topological node output") {
 
             REQUIRE(result.size() == 2);
             CHECK(result[0].bus_injection == UserNodeValueVector<symmetric_t>{dummy_complex_value_sym(),
-                                                                               dummy_complex_value_sym(),
-                                                                               dummy_complex_value_sym()});
+                                                                              dummy_complex_value_sym(),
+                                                                              dummy_complex_value_sym()});
             CHECK(result[1].bus_injection == UserNodeValueVector<symmetric_t>{DoubleComplex{}});
             REQUIRE(result[0].link.size() == 2);
             check_close(result[0].link[0].s_f, 2.0 * dummy_complex_value_sym());
