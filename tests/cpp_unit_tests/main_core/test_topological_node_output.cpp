@@ -424,8 +424,8 @@ TEST_CASE("Test topological node output") {
             detail::SuperNodeSolverInput<symmetric_t> const input{
                 .links = links,
                 .node_injection = {dummy_complex_value_sym(), dummy_complex_value_sym(), dummy_complex_value_sym()},
-                .node_flow_from_branch = {dummy_complex_value_sym(), dummy_complex_value_sym(),
-                                          dummy_complex_value_sym()}};
+                .node_flow_through_grid = {dummy_complex_value_sym(), dummy_complex_value_sym(),
+                                           dummy_complex_value_sym()}};
 
             auto const total = input.get_total_injection_per_node();
             REQUIRE(total.size() == 3);
@@ -436,8 +436,8 @@ TEST_CASE("Test topological node output") {
             detail::SuperNodeSolverInput<asymmetric_t> const input{
                 .links = links,
                 .node_injection = {dummy_complex_value_asym(), dummy_complex_value_asym(), dummy_complex_value_asym()},
-                .node_flow_from_branch = {dummy_complex_value_asym(), dummy_complex_value_asym(),
-                                          dummy_complex_value_asym()}};
+                .node_flow_through_grid = {dummy_complex_value_asym(), dummy_complex_value_asym(),
+                                           dummy_complex_value_asym()}};
 
             auto const total = input.get_total_injection_per_node();
             REQUIRE(total.size() == 3);
@@ -453,8 +453,8 @@ TEST_CASE("Test topological node output") {
             detail::SuperNodeSolverInput<symmetric_t> const input{
                 .links = links,
                 .node_injection = {dummy_complex_value_sym(), DoubleComplex{}, 2.0 * dummy_complex_value_sym()},
-                .node_flow_from_branch = {DoubleComplex{}, 3.0 * dummy_complex_value_sym(),
-                                          -dummy_complex_value_sym()}};
+                .node_flow_through_grid = {DoubleComplex{}, 3.0 * dummy_complex_value_sym(),
+                                           -dummy_complex_value_sym()}};
 
             LinkSolverMock mock{.return_values = {
                                     {2.0 * dummy_complex_value_sym(), -dummy_complex_value_sym()},
@@ -476,8 +476,8 @@ TEST_CASE("Test topological node output") {
                 .links = links,
                 .node_injection = {dummy_complex_value_asym(), ComplexValue<asymmetric_t>{},
                                    2.0 * dummy_complex_value_asym()},
-                .node_flow_from_branch = {ComplexValue<asymmetric_t>{}, 3.0 * dummy_complex_value_asym(),
-                                          -dummy_complex_value_asym()}};
+                .node_flow_through_grid = {ComplexValue<asymmetric_t>{}, 3.0 * dummy_complex_value_asym(),
+                                           -dummy_complex_value_asym()}};
 
             LinkSolverMock mock{.return_values = {{dummy_complex_value_asym()(0), 2.0 * dummy_complex_value_asym()(0)},
                                                   {-dummy_complex_value_asym()(1), 3.0 * dummy_complex_value_asym()(1)},
