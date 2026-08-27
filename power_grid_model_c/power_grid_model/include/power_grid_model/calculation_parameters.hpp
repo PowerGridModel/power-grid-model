@@ -8,6 +8,7 @@
 #include "common/enum.hpp"
 #include "common/grouped_index_vector.hpp"
 #include "common/maybe_owning_view.hpp"
+#include "common/small_vector.hpp"
 #include "common/statistics.hpp"
 #include "common/three_phase_tensor.hpp"
 
@@ -410,10 +411,14 @@ struct OptimizerOutput {
 
 template <typename T> struct SupernodeOutput;
 
+// One entry per user node of a topological node. Only link-merged supernodes hold more than one, so
+// inline room for a single element keeps the ordinary node from allocating at all.
+template <symmetry_tag sym> using UserNodeValueVector = SmallVector<ComplexValue<sym>, 1>;
+
 template <steady_state_solver_output_type SolverOutputType> struct SupernodeOutput<SolverOutputType> {
     using sym = decode_symmetry_v<SolverOutputType>;
 
-    ComplexValueVector<sym> bus_injection;     // user bus output
+    UserNodeValueVector<sym> bus_injection;    // user bus output
     std::vector<BranchSolverOutput<sym>> link; // user link
 };
 template <short_circuit_solver_output_type SolverOutputType> struct SupernodeOutput<SolverOutputType> {
