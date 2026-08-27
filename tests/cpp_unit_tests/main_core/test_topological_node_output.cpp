@@ -22,6 +22,7 @@
 #include <power_grid_model/component/node.hpp>
 #include <power_grid_model/component/shunt.hpp>
 #include <power_grid_model/component/source.hpp>
+#include <power_grid_model/component/three_winding_transformer.hpp>
 #include <power_grid_model/component/transformer.hpp>
 #include <power_grid_model/container.hpp>
 #include <power_grid_model/main_core/container_queries.hpp>
@@ -34,7 +35,6 @@
 #include <concepts>
 #include <functional>
 #include <memory>
-#include <tuple>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -54,7 +54,8 @@ static_assert(detail::ContributesToSteadyStateUserNodeInjection::template value<
 static_assert(detail::ContributesToSteadyStateUserNodeInjection::template value<GenericBranch>);
 static_assert(detail::ContributesToSteadyStateUserNodeInjection::template value<Transformer>);
 static_assert(detail::ContributesToSteadyStateUserNodeInjection::template value<AsymLine>);
-static_assert(!detail::ContributesToSteadyStateUserNodeInjection::template value<Shunt>);
+static_assert(detail::ContributesToSteadyStateUserNodeInjection::template value<Shunt>);
+static_assert(detail::ContributesToSteadyStateUserNodeInjection::template value<ThreeWindingTransformer>);
 static_assert(!detail::ContributesToSteadyStateUserNodeInjection::template value<Fault>);
 
 static_assert(detail::ContributesToShortCircuitUserNodeInjection::template value<Source>);
@@ -63,7 +64,8 @@ static_assert(detail::ContributesToShortCircuitUserNodeInjection::template value
 static_assert(detail::ContributesToShortCircuitUserNodeInjection::template value<Transformer>);
 static_assert(detail::ContributesToShortCircuitUserNodeInjection::template value<AsymLine>);
 static_assert(detail::ContributesToShortCircuitUserNodeInjection::template value<Fault>);
-static_assert(!detail::ContributesToShortCircuitUserNodeInjection::template value<Shunt>);
+static_assert(detail::ContributesToShortCircuitUserNodeInjection::template value<Shunt>);
+static_assert(detail::ContributesToShortCircuitUserNodeInjection::template value<ThreeWindingTransformer>);
 static_assert(!detail::ContributesToShortCircuitUserNodeInjection::template value<SymLoad>);
 static_assert(!detail::ContributesToShortCircuitUserNodeInjection::template value<AsymLoad>);
 static_assert(!detail::ContributesToShortCircuitUserNodeInjection::template value<SymGenerator>);
