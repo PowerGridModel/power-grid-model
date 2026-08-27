@@ -524,12 +524,10 @@ TEST_CASE("Test topological node output") {
 
             auto const result = detail::solve_topological_nodes(std::ref(mock), state, math_output);
 
-            REQUIRE(mock.call_count == 2);
+            REQUIRE(mock.call_count == 1);
             CHECK(mock.recorded_edges[0] == links);
-            CHECK(mock.recorded_edges[1].empty());
             CHECK(mock.recorded_loads[0] ==
                   ComplexVector{DoubleComplex{}, -dummy_complex_value_sym(), dummy_complex_value_sym()});
-            CHECK(mock.recorded_loads[1] == ComplexVector{DoubleComplex{}});
 
             REQUIRE(result.size() == 2);
             CHECK(result[0].bus_injection ==
@@ -558,12 +556,10 @@ TEST_CASE("Test topological node output") {
 
             auto const result = detail::solve_topological_nodes(std::ref(mock), state, math_output);
 
-            REQUIRE(mock.call_count == 2);
+            REQUIRE(mock.call_count == 1);
             CHECK(mock.recorded_edges[0] == links);
-            CHECK(mock.recorded_edges[1].empty());
             CHECK(mock.recorded_loads[0] ==
                   ComplexVector{dummy_complex_value_sym(), -dummy_complex_value_sym(), DoubleComplex{}});
-            CHECK(mock.recorded_loads[1] == ComplexVector{DoubleComplex{}});
 
             REQUIRE(result.size() == 2);
             REQUIRE(result[0].link.size() == 2);
