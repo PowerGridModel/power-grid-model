@@ -85,6 +85,9 @@ inline Idx get_node_sequence_idx(main_model_state_c auto const& state, Idx compo
         return state.comp_topo
             ->load_gen_node_idx[get_component_sequence_offset<GenericLoadGen, ComponentType>(state.components) +
                                 component_idx];
+    } else if constexpr (std::derived_from<ComponentType, Shunt>) {
+        return state.comp_topo
+            ->shunt_node_idx[get_component_sequence_offset<Shunt, ComponentType>(state.components) + component_idx];
     } else if constexpr (std::same_as<ComponentType, Fault>) {
         auto const& fault = get_component_by_sequence<Fault>(state.components, component_idx);
         return get_component_sequence_idx<Node>(state.components, fault.get_fault_object());
@@ -99,10 +102,16 @@ inline BranchIdx const& get_branch_sequence_idx(main_model_state_c auto const& s
         ->branch_node_idx[get_component_sequence_offset<Branch, ComponentType>(state.components) + component_idx];
 }
 
+template <std::derived_from<Branch3> ComponentType>
+inline Branch3Idx const& get_branch3_sequence_idx(main_model_state_c auto const& state, Idx component_idx) {
+    return state.comp_topo
+        ->branch3_node_idx[get_component_sequence_offset<Branch3, ComponentType>(state.components) + component_idx];
+}
+
 struct AddApplianceInjection {
     template <typename ComponentType, typename SolverOutputType, typename AddToTarget>
         requires flow_accumulator_c<AddToTarget, ComponentType, SolverOutputType> &&
-                 (is_in_list_c<ComponentType, Source, SymLoad, SymGenerator, AsymLoad, AsymGenerator> ||
+                 (std::derived_from<ComponentType, Appliance> ||
                   (std::same_as<ComponentType, Fault> && short_circuit_solver_output_type<SolverOutputType>))
     void operator()(main_model_state_c auto const& state, MathOutput<std::vector<SolverOutputType>> const& math_output,
                     AddToTarget accumulate_injection) const {
@@ -133,8 +142,8 @@ struct AddApplianceInjection {
             auto const& component_output = get_component_output<ComponentType>(math_output, component_math_id);
 
             auto const& branch_node_idx = get_branch_sequence_idx<ComponentType>(state, component_idx);
-            for (auto const side : {BranchSide::from, BranchSide::to}) {
-                auto const& user_node_idx = branch_node_idx[std::to_underlying(side)];
+            for (auto&& [side, user_node_idx] :
+                 std::views::zip(std::array{BranchSide::from, BranchSide::to}, branch_node_idx)) {
                 auto const& user_topo_id =
                     state.reduced_topology->topo_node_coup.coupling.user_nodes_to_topo_nodes[user_node_idx];
                 accumulate_injection.template operator()<ComponentType>(user_topo_id,
@@ -142,7 +151,34 @@ struct AddApplianceInjection {
             }
         }
     }
+
+    template <typename ComponentType, typename SolverOutputType, typename AddToTarget>
+        requires flow_accumulator_c<AddToTarget, ComponentType, SolverOutputType> &&
+                 std::derived_from<ComponentType, Branch3>
+    void operator()(main_model_state_c auto const& state, MathOutput<std::vector<SolverOutputType>> const& math_output,
+                    AddToTarget accumulate_injection) const {
+        for (auto const& [component_idx, component_math_id] : enumerate(comp_base_sequence<ComponentType>(state))) {
+            if (component_math_id.group == disconnected) {
+                continue;
+            }
+
+            auto const& branch3_node_idx = get_branch3_sequence_idx<ComponentType>(state, component_idx);
+            for (auto&& [side_pos, user_node_idx] : std::views::zip(component_math_id.pos, branch3_node_idx)) {
+                if (side_pos == disconnected) {
+                    continue;
+                }
+                auto const& component_output =
+                    get_component_output<ComponentType>(math_output, {component_math_id.group, side_pos});
+                auto const& user_topo_id =
+                    state.reduced_topology->topo_node_coup.coupling.user_nodes_to_topo_nodes[user_node_idx];
+                accumulate_injection.template operator()<ComponentType>(
+                    user_topo_id, get_injection(component_output, BranchSide::from));
+            }
+        }
+    }
 };
+
+constexpr auto add_appliance_injection = AddApplianceInjection{};
 
 struct user_node_contribution_tag_t {};
 struct ContributesToSteadyStateUserNodeInjection : public user_node_contribution_tag_t {
@@ -156,8 +192,6 @@ struct ContributesToShortCircuitUserNodeInjection : public user_node_contributio
                                   std::derived_from<ComponentType, Branch> ||
                                   std::derived_from<ComponentType, Branch3> || std::derived_from<ComponentType, Fault>;
 };
-
-constexpr auto add_appliance_injection = AddApplianceInjection{};
 
 template <std::derived_from<user_node_contribution_tag_t> ContributesToUserNodeInjection, main_model_state_c State,
           solver_output_type SolverOutput, typename AddToTarget>

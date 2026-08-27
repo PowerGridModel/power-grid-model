@@ -14,6 +14,7 @@
 #include <power_grid_model/component/asym_line.hpp>
 #include <power_grid_model/component/base.hpp>
 #include <power_grid_model/component/branch.hpp>
+#include <power_grid_model/component/branch3.hpp>
 #include <power_grid_model/component/edge.hpp>
 #include <power_grid_model/component/fault.hpp>
 #include <power_grid_model/component/generic_branch.hpp>
@@ -41,8 +42,8 @@
 
 namespace power_grid_model::main_core {
 namespace {
-using ComponentContainer = Container<ExtraRetrievableTypes<Appliance, Base, Edge, Branch, GenericLoadGen>, AsymLoad,
-                                     SymLoad, Fault, Line, Node, Source, Shunt>;
+using ComponentContainer = Container<ExtraRetrievableTypes<Appliance, Base, Edge, Branch, Branch3, GenericLoadGen>,
+                                     AsymLoad, SymLoad, Fault, Line, Node, Source, Shunt, ThreeWindingTransformer>;
 using State = MainModelState<ComponentContainer>;
 
 static_assert(detail::ContributesToSteadyStateUserNodeInjection::template value<Source>);
@@ -80,6 +81,41 @@ void check_close(ComplexValue<symmetric_t> const& x, ComplexValue<symmetric_t> c
     CHECK(x.imag() == doctest::Approx(y.imag()));
 }
 
+inline ThreeWindingTransformerInput make_three_winding_transformer_input() {
+    return {.id = 11,
+            .node_1 = 101,
+            .node_2 = 102,
+            .node_3 = 103,
+            .status_1 = 1,
+            .status_2 = 1,
+            .status_3 = 1,
+            .u1 = 10e3,
+            .u2 = 10e3,
+            .u3 = 10e3,
+            .sn_1 = 10e6,
+            .sn_2 = 10e6,
+            .sn_3 = 10e6,
+            .uk_12 = 0.1,
+            .uk_13 = 0.1,
+            .uk_23 = 0.1,
+            .pk_12 = 10e3,
+            .pk_13 = 10e3,
+            .pk_23 = 10e3,
+            .i0 = 0.0,
+            .p0 = 0.0,
+            .winding_1 = WindingType::wye_n,
+            .winding_2 = WindingType::wye_n,
+            .winding_3 = WindingType::wye_n,
+            .clock_12 = 0,
+            .clock_13 = 0,
+            .tap_side = Branch3Side::side_1,
+            .tap_pos = 0,
+            .tap_min = 0,
+            .tap_max = 0,
+            .tap_nom = 0,
+            .tap_size = 0.0};
+}
+
 inline State make_state() {
     State state;
     state.comp_topo = std::make_shared<ComponentTopology const>([]() {
@@ -89,6 +125,7 @@ inline State make_state() {
         comp_topo.shunt_node_idx = {Idx{1}};
         comp_topo.load_gen_node_idx = {Idx{1}, Idx{2}};
         comp_topo.branch_node_idx = {{Idx{0}, Idx{1}}, {Idx{1}, Idx{1}}, {Idx{1}, Idx{0}}, {Idx{2}, Idx{3}}};
+        comp_topo.branch3_node_idx = {{Idx{1}, Idx{2}, Idx{3}}};
         comp_topo.link_node_idx = {{Idx{0}, Idx{1}}, {Idx{1}, Idx{2}}};
         return comp_topo;
     }());
@@ -114,6 +151,7 @@ inline State make_state() {
                                  {.group = 0, .pos = 1},
                                  {.group = 0, .pos = disconnected},
                                  {.group = disconnected, .pos = disconnected}};
+        topo_comp_coup.branch3 = {{.group = 0, .pos = {4, 5, 6}}};
         return topo_comp_coup;
     }());
 
@@ -136,6 +174,8 @@ inline State make_state() {
     emplace_component<Line>(state.components, 8, LineInput{}, dummy_value, dummy_value, dummy_value);
     emplace_component<Line>(state.components, 9, LineInput{}, dummy_value, dummy_value, dummy_value);
     emplace_component<Line>(state.components, 10, LineInput{}, dummy_value, dummy_value, dummy_value);
+    emplace_component<ThreeWindingTransformer>(state.components, 11, make_three_winding_transformer_input(),
+                                               dummy_value, dummy_value, dummy_value);
     state.components.set_construction_complete();
     return state;
 };
@@ -155,7 +195,10 @@ inline MathOutput<std::vector<SolverOutput<symmetric_t>>> make_steady_state_math
                                               .i_f = 0.5 * dummy_complex_value_sym(),
                                               .i_t = 0.5 * dummy_complex_value_sym()},
                                              {},
-                                             {}},
+                                             {},
+                                             {.s_f = dummy_complex_value_sym()},
+                                             {.s_f = 2.0 * dummy_complex_value_sym()},
+                                             {.s_f = 3.0 * dummy_complex_value_sym()}},
                                   .source = {{.s = dummy_complex_value_sym(), .i = dummy_complex_value_sym()}, {}},
                                   .shunt = {{.s = dummy_complex_value_sym(), .i = dummy_complex_value_sym()}},
                                   .load_gen = {{.s = dummy_complex_value_sym(), .i = dummy_complex_value_sym()},
@@ -172,7 +215,10 @@ inline MathOutput<std::vector<ShortCircuitSolverOutput<symmetric_t>>> make_short
         .branch = {{.i_f = dummy_complex_value_sym(), .i_t = dummy_complex_value_sym()},
                    {.i_f = 0.5 * dummy_complex_value_sym(), .i_t = 0.5 * dummy_complex_value_sym()},
                    {},
-                   {}},
+                   {},
+                   {.i_f = dummy_complex_value_sym()},
+                   {.i_f = 2.0 * dummy_complex_value_sym()},
+                   {.i_f = 3.0 * dummy_complex_value_sym()}},
         .source = {{.i = dummy_complex_value_sym()}, {}},
         .shunt = {{.i = dummy_complex_value_sym()}}});
     return math_output;
@@ -181,7 +227,10 @@ inline MathOutput<std::vector<ShortCircuitSolverOutput<symmetric_t>>> make_short
 template <symmetry_tag sym> struct InjectionAccumulator {
     auto accumulator() {
         return [this]<typename ComponentType>(Idx2D const& math_id, ComplexValue<sym> const& injection) {
-            auto& target_map = std::derived_from<ComponentType, Branch> ? branch_flow_into_nodes : net_node_injections;
+            auto& target_map = (std::derived_from<ComponentType, Branch> || std::derived_from<ComponentType, Branch3> ||
+                                std::derived_from<ComponentType, Shunt>)
+                                   ? branch_flow_into_nodes
+                                   : net_node_injections;
 
             if (auto [it, inserted] = target_map.try_emplace(math_id, injection); !inserted) {
                 it->second += injection;
@@ -298,6 +347,13 @@ TEST_CASE("Test topological node output") {
             CHECK(detail::get_node_sequence_idx<Fault>(state, 0) == Idx{0});
             CHECK(detail::get_node_sequence_idx<Fault>(state, 1) == Idx{1});
         }
+        SUBCASE("Shunt") { CHECK(detail::get_node_sequence_idx<Shunt>(state, 0) == Idx{1}); }
+        SUBCASE("ThreeWindingTransformer") {
+            auto const& branch3_node_idx = detail::get_branch3_sequence_idx<ThreeWindingTransformer>(state, 0);
+            CHECK(branch3_node_idx[0] == Idx{1});
+            CHECK(branch3_node_idx[1] == Idx{2});
+            CHECK(branch3_node_idx[2] == Idx{3});
+        }
     }
     SUBCASE("add_appliance_injection") {
         auto const state = make_state();
@@ -378,6 +434,54 @@ TEST_CASE("Test topological node output") {
             CHECK(!accumulator.branch_flow_into_nodes.contains(Idx2D{.group = 0, .pos = 2}));
             CHECK(!accumulator.branch_flow_into_nodes.contains(Idx2D{.group = 1, .pos = 0}));
         }
+
+        // Shunt and ThreeWindingTransformer feed the link accumulation, never the node injection
+        SUBCASE("Shunt steady state output") {
+            auto const math_output = make_steady_state_math_output_sym();
+
+            detail::add_appliance_injection.template operator()<Shunt>(state, math_output, accumulator.accumulator());
+
+            CHECK(accumulator.net_node_injections.empty());
+            CHECK(accumulator.branch_flow_into_nodes.size() == 1);
+            CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 1}) == dummy_complex_value_sym());
+        }
+        SUBCASE("Shunt short circuit output") {
+            auto const math_output = make_short_circuit_math_output_sym();
+
+            detail::add_appliance_injection.template operator()<Shunt>(state, math_output, accumulator.accumulator());
+
+            CHECK(accumulator.net_node_injections.empty());
+            CHECK(accumulator.branch_flow_into_nodes.size() == 1);
+            CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 1}) == dummy_complex_value_sym());
+        }
+        SUBCASE("ThreeWindingTransformer steady state output") {
+            auto const math_output = make_steady_state_math_output_sym();
+
+            detail::add_appliance_injection.template operator()<ThreeWindingTransformer>(state, math_output,
+                                                                                         accumulator.accumulator());
+
+            CHECK(accumulator.net_node_injections.empty());
+            CHECK(accumulator.branch_flow_into_nodes.size() == 3);
+            CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 1}) == -dummy_complex_value_sym());
+            CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 2}) ==
+                  -2.0 * dummy_complex_value_sym());
+            CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 1, .pos = 0}) ==
+                  -3.0 * dummy_complex_value_sym());
+        }
+        SUBCASE("ThreeWindingTransformer short circuit output") {
+            auto const math_output = make_short_circuit_math_output_sym();
+
+            detail::add_appliance_injection.template operator()<ThreeWindingTransformer>(state, math_output,
+                                                                                         accumulator.accumulator());
+
+            CHECK(accumulator.net_node_injections.empty());
+            CHECK(accumulator.branch_flow_into_nodes.size() == 3);
+            CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 1}) == -dummy_complex_value_sym());
+            CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 2}) ==
+                  -2.0 * dummy_complex_value_sym());
+            CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 1, .pos = 0}) ==
+                  -3.0 * dummy_complex_value_sym());
+        }
     }
     SUBCASE("add_flows") {
         auto const state = make_state();
@@ -394,10 +498,15 @@ TEST_CASE("Test topological node output") {
             CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 1}) == dummy_complex_value_sym());
             CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 2}) == dummy_complex_value_sym());
 
-            CHECK(accumulator.branch_flow_into_nodes.size() == 2);
+            // {0,1} = lines (-2) + shunt (+1) + 3w side 1 (-1); {0,2} and {1,0} are 3w-only
+            CHECK(accumulator.branch_flow_into_nodes.size() == 4);
             CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 0}) == -dummy_complex_value_sym());
             CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 1}) ==
                   -2.0 * dummy_complex_value_sym());
+            CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 2}) ==
+                  -2.0 * dummy_complex_value_sym());
+            CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 1, .pos = 0}) ==
+                  -3.0 * dummy_complex_value_sym());
         }
 
         SUBCASE("Short circuit output") {
@@ -410,10 +519,15 @@ TEST_CASE("Test topological node output") {
             CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 0}) == 2.0 * dummy_complex_value_sym());
             CHECK(accumulator.net_node_injections.at(Idx2D{.group = 0, .pos = 1}) == dummy_complex_value_sym());
 
-            CHECK(accumulator.branch_flow_into_nodes.size() == 2);
+            // {0,1} = lines (-2) + shunt (+1) + 3w side 1 (-1); {0,2} and {1,0} are 3w-only
+            CHECK(accumulator.branch_flow_into_nodes.size() == 4);
             CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 0}) == -dummy_complex_value_sym());
             CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 1}) ==
                   -2.0 * dummy_complex_value_sym());
+            CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 0, .pos = 2}) ==
+                  -2.0 * dummy_complex_value_sym());
+            CHECK(accumulator.branch_flow_into_nodes.at(Idx2D{.group = 1, .pos = 0}) ==
+                  -3.0 * dummy_complex_value_sym());
         }
     }
     SUBCASE("SuperNodeSolverInput::get_total_injection_per_node") {
@@ -554,8 +668,8 @@ TEST_CASE("Test topological node output") {
             CHECK(mock.recorded_edges[0] == links);
             CHECK(mock.recorded_edges[1].empty());
             CHECK(mock.recorded_loads[0] ==
-                  ComplexVector{DoubleComplex{}, -dummy_complex_value_sym(), dummy_complex_value_sym()});
-            CHECK(mock.recorded_loads[1] == ComplexVector{DoubleComplex{}});
+                  ComplexVector{DoubleComplex{}, -dummy_complex_value_sym(), -dummy_complex_value_sym()});
+            CHECK(mock.recorded_loads[1] == ComplexVector{-3.0 * dummy_complex_value_sym()});
 
             REQUIRE(result.size() == 2);
             CHECK(result[0].bus_injection ==
@@ -587,9 +701,9 @@ TEST_CASE("Test topological node output") {
             REQUIRE(mock.call_count == 2);
             CHECK(mock.recorded_edges[0] == links);
             CHECK(mock.recorded_edges[1].empty());
-            CHECK(mock.recorded_loads[0] ==
-                  ComplexVector{dummy_complex_value_sym(), -dummy_complex_value_sym(), DoubleComplex{}});
-            CHECK(mock.recorded_loads[1] == ComplexVector{DoubleComplex{}});
+            CHECK(mock.recorded_loads[0] == ComplexVector{dummy_complex_value_sym(), -dummy_complex_value_sym(),
+                                                          -2.0 * dummy_complex_value_sym()});
+            CHECK(mock.recorded_loads[1] == ComplexVector{-3.0 * dummy_complex_value_sym()});
 
             REQUIRE(result.size() == 2);
             REQUIRE(result[0].link.size() == 2);
