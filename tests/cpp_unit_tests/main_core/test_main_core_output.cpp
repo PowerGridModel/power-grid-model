@@ -228,10 +228,10 @@ TEST_CASE("Test main core output") {
         using State = MainModelState<ComponentContainer>;
 
         State state;
-        emplace_component<Link>(state.components, 0, LinkInput{.id = 0, .from_status = IntS{1}, .to_status = IntS{1}},
-                                10e3, 20e3);
+        emplace_component<Link>(state.components, 0,
+                                LinkInput{.id = 0, .from_status = status_on, .to_status = status_on}, 10e3, 20e3);
         emplace_component<Link>(state.components, 1,
-                                LinkInput{.id = 1, .from_status = IntS{1}, .to_status = status_off}, 10e3, 20e3);
+                                LinkInput{.id = 1, .from_status = status_on, .to_status = status_off}, 10e3, 20e3);
         emplace_component<Link>(state.components, 2,
                                 LinkInput{.id = 2, .from_status = status_off, .to_status = status_off}, 10e3, 20e3);
         state.components.set_construction_complete();
@@ -262,9 +262,9 @@ TEST_CASE("Test main core output") {
             CHECK(output[0].i_from == doctest::Approx(5.0 * base_power_3p / 10e3 / sqrt3));
             CHECK(output[0].i_to == doctest::Approx(5.0 * base_power_3p / 20e3 / sqrt3));
             CHECK(output[1].id == 1);
-            CHECK(output[1].energized == status_off);
+            CHECK(output[1].energized == status_on); // connected rest of grid but one of the ends is off
             CHECK(output[2].id == 2);
-            CHECK(output[2].energized == status_off);
+            CHECK(output[2].energized == status_off); // completely disconnected from rest of grid
         }
 
         SUBCASE("Short circuit output") {

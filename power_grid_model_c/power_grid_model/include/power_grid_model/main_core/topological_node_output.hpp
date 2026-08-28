@@ -21,13 +21,13 @@ namespace power_grid_model::main_core {
 namespace detail {
 template <symmetry_tag sym> struct SuperNodeSolverInput {
     std::span<BranchIdx const> links;
-    ComplexValueVector<sym> node_injection;
-    ComplexValueVector<sym> node_flow_from_branch;
+    UserNodeValueVector<sym> node_injection;
+    UserNodeValueVector<sym> node_flow_through_grid;
 
     ComplexValueVector<sym> get_total_injection_per_node() const {
-        assert(node_injection.size() == node_flow_from_branch.size());
+        assert(node_injection.size() == node_flow_through_grid.size());
 
-        return std::views::zip(node_injection, node_flow_from_branch) | std::views::transform([](auto const& pair) {
+        return std::views::zip(node_injection, node_flow_through_grid) | std::views::transform([](auto const& pair) {
                    auto const& [node_inj, branch_flow] = pair;
                    return ComplexValue<sym>(node_inj + branch_flow);
                }) |
@@ -85,6 +85,9 @@ inline Idx get_node_sequence_idx(main_model_state_c auto const& state, Idx compo
         return state.comp_topo
             ->load_gen_node_idx[get_component_sequence_offset<GenericLoadGen, ComponentType>(state.components) +
                                 component_idx];
+    } else if constexpr (std::derived_from<ComponentType, Shunt>) {
+        return state.comp_topo
+            ->shunt_node_idx[get_component_sequence_offset<Shunt, ComponentType>(state.components) + component_idx];
     } else if constexpr (std::same_as<ComponentType, Fault>) {
         auto const& fault = get_component_by_sequence<Fault>(state.components, component_idx);
         return get_component_sequence_idx<Node>(state.components, fault.get_fault_object());
@@ -99,10 +102,16 @@ inline BranchIdx const& get_branch_sequence_idx(main_model_state_c auto const& s
         ->branch_node_idx[get_component_sequence_offset<Branch, ComponentType>(state.components) + component_idx];
 }
 
+template <std::derived_from<Branch3> ComponentType>
+inline Branch3Idx const& get_branch3_sequence_idx(main_model_state_c auto const& state, Idx component_idx) {
+    return state.comp_topo
+        ->branch3_node_idx[get_component_sequence_offset<Branch3, ComponentType>(state.components) + component_idx];
+}
+
 struct AddApplianceInjection {
     template <typename ComponentType, typename SolverOutputType, typename AddToTarget>
         requires flow_accumulator_c<AddToTarget, ComponentType, SolverOutputType> &&
-                 (is_in_list_c<ComponentType, Source, SymLoad, SymGenerator, AsymLoad, AsymGenerator> ||
+                 (std::derived_from<ComponentType, Appliance> ||
                   (std::same_as<ComponentType, Fault> && short_circuit_solver_output_type<SolverOutputType>))
     void operator()(main_model_state_c auto const& state, MathOutput<std::vector<SolverOutputType>> const& math_output,
                     AddToTarget accumulate_injection) const {
@@ -133,8 +142,8 @@ struct AddApplianceInjection {
             auto const& component_output = get_component_output<ComponentType>(math_output, component_math_id);
 
             auto const& branch_node_idx = get_branch_sequence_idx<ComponentType>(state, component_idx);
-            for (auto const side : {BranchSide::from, BranchSide::to}) {
-                auto const& user_node_idx = branch_node_idx[std::to_underlying(side)];
+            for (auto&& [side, user_node_idx] :
+                 std::views::zip(std::array{BranchSide::from, BranchSide::to}, branch_node_idx)) {
                 auto const& user_topo_id =
                     state.reduced_topology->topo_node_coup.coupling.user_nodes_to_topo_nodes[user_node_idx];
                 accumulate_injection.template operator()<ComponentType>(user_topo_id,
@@ -142,17 +151,57 @@ struct AddApplianceInjection {
             }
         }
     }
+
+    template <typename ComponentType, typename SolverOutputType, typename AddToTarget>
+        requires flow_accumulator_c<AddToTarget, ComponentType, SolverOutputType> &&
+                 std::derived_from<ComponentType, Branch3>
+    void operator()(main_model_state_c auto const& state, MathOutput<std::vector<SolverOutputType>> const& math_output,
+                    AddToTarget accumulate_injection) const {
+        for (auto const& [component_idx, component_math_id] : enumerate(comp_base_sequence<ComponentType>(state))) {
+            if (component_math_id.group == disconnected) {
+                continue;
+            }
+
+            auto const& branch3_node_idx = get_branch3_sequence_idx<ComponentType>(state, component_idx);
+            for (auto&& [side_pos, user_node_idx] : std::views::zip(component_math_id.pos, branch3_node_idx)) {
+                if (side_pos == disconnected) {
+                    continue;
+                }
+                auto const& component_output =
+                    get_component_output<ComponentType>(math_output, {component_math_id.group, side_pos});
+                auto const& user_topo_id =
+                    state.reduced_topology->topo_node_coup.coupling.user_nodes_to_topo_nodes[user_node_idx];
+                accumulate_injection.template operator()<ComponentType>(
+                    user_topo_id, get_injection(component_output, BranchSide::from));
+            }
+        }
+    }
 };
 
 constexpr auto add_appliance_injection = AddApplianceInjection{};
 
-template <typename InjectionComponentTypesTuple, main_model_state_c State, solver_output_type SolverOutput,
-          typename AddToTarget>
+struct user_node_contribution_tag_t {};
+struct ContributesToSteadyStateUserNodeInjection : public user_node_contribution_tag_t {
+    template <typename ComponentType>
+    static constexpr bool value = std::derived_from<ComponentType, Appliance> ||
+                                  std::derived_from<ComponentType, Branch> || std::derived_from<ComponentType, Branch3>;
+};
+struct ContributesToShortCircuitUserNodeInjection : public user_node_contribution_tag_t {
+    template <typename ComponentType>
+    static constexpr bool value = std::derived_from<ComponentType, Source> || std::derived_from<ComponentType, Shunt> ||
+                                  std::derived_from<ComponentType, Branch> ||
+                                  std::derived_from<ComponentType, Branch3> || std::derived_from<ComponentType, Fault>;
+};
+
+template <std::derived_from<user_node_contribution_tag_t> ContributesToUserNodeInjection, main_model_state_c State,
+          solver_output_type SolverOutput, typename AddToTarget>
 inline void add_flows(State const& state, MathOutput<std::vector<SolverOutput>> const& math_output,
                       AddToTarget accumulate_injection) {
-    utils::run_functor_with_tuple_return_void<InjectionComponentTypesTuple>(
+    using Container = decltype(state.components);
+
+    utils::run_functor_with_tuple_return_void<typename Container::storageable_types>(
         [&state, &math_output, &accumulate_injection]<typename ComponentType>() {
-            if constexpr (decltype(state.components)::template is_storageable_v<ComponentType>) {
+            if constexpr (ContributesToUserNodeInjection::template value<ComponentType>) {
                 add_appliance_injection.template operator()<ComponentType>(state, math_output, accumulate_injection);
             }
         });
@@ -162,6 +211,10 @@ template <symmetry_tag sym, typename LinkSolver>
     requires std::invocable<LinkSolver, std::vector<BranchIdx>, ComplexVector>
 ComplexValueVector<sym> compute_link_solver(LinkSolver link_solver,
                                             SuperNodeSolverInput<sym> const& super_node_solver_input) {
+    if (std::ranges::empty(super_node_solver_input.links)) {
+        return {};
+    }
+
     if constexpr (is_symmetric_v<sym>) {
         return link_solver(super_node_solver_input.links | std::ranges::to<std::vector>(),
                            super_node_solver_input.get_total_injection_per_node());
@@ -199,18 +252,15 @@ template <symmetry_tag sym, typename BranchSolverOutputType>
               std::same_as<BranchSolverOutputType,
                            BranchShortCircuitSolverOutput<decode_symmetry_v<BranchSolverOutputType>>>)
 std::vector<BranchSolverOutputType> get_link_output(ComplexValueVector<sym> const& link_solver_result) {
-    std::vector<BranchSolverOutputType> link_output;
-    link_output.reserve(link_solver_result.size());
-
-    for (auto const& result : link_solver_result) {
-        if constexpr (std::same_as<BranchSolverOutputType,
-                                   BranchSolverOutput<decode_symmetry_v<BranchSolverOutputType>>>) {
-            link_output.emplace_back(BranchSolverOutputType{.s_f = result, .s_t = -result});
-        } else {
-            link_output.emplace_back(BranchSolverOutputType{.i_f = result, .i_t = -result});
-        }
-    }
-    return link_output;
+    return link_solver_result | std::views::transform([](auto const& result) -> BranchSolverOutputType {
+               if constexpr (std::same_as<BranchSolverOutputType,
+                                          BranchSolverOutput<decode_symmetry_v<BranchSolverOutputType>>>) {
+                   return BranchSolverOutputType{.s_f = result, .s_t = -result};
+               } else {
+                   return BranchSolverOutputType{.i_f = result, .i_t = -result};
+               }
+           }) |
+           std::ranges::to<std::vector>();
 }
 
 template <typename LinkSolver, main_model_state_c State, solver_output_type SolverOutput>
@@ -225,27 +275,25 @@ solve_topological_nodes(LinkSolver link_solver, State const& state,
         std::views::transform([](auto const& topo_node) -> SuperNodeSolverInput<sym> {
             auto const node_number = topo_node.user_nodes.size();
             return {.links = std::span{topo_node.user_links},
-                    .node_injection = ComplexValueVector<sym>(node_number),
-                    .node_flow_from_branch = ComplexValueVector<sym>(node_number)};
+                    .node_injection = UserNodeValueVector<sym>(node_number),
+                    .node_flow_through_grid = UserNodeValueVector<sym>(node_number)};
         }) |
         std::ranges::to<std::vector>();
 
     auto const accumulate_injection = [&link_solver_input]<typename ComponentType>(Idx2D const& user_topo_id,
                                                                                    ComplexValue<sym> const& injection) {
-        if constexpr (std::derived_from<ComponentType, Branch>) {
-            link_solver_input[user_topo_id.group].node_flow_from_branch[user_topo_id.pos] += injection;
+        if constexpr (std::derived_from<ComponentType, Branch> || std::derived_from<ComponentType, Branch3> ||
+                      std::derived_from<ComponentType, Shunt>) {
+            link_solver_input[user_topo_id.group].node_flow_through_grid[user_topo_id.pos] += injection;
         } else {
             link_solver_input[user_topo_id.group].node_injection[user_topo_id.pos] += injection;
         }
     };
 
     if constexpr (steady_state_solver_output_type<SolverOutput>) {
-        using InjectionComponentTypesTuple =
-            std::tuple<Source, SymLoad, SymGenerator, AsymLoad, AsymGenerator, Line, GenericBranch, Transformer>;
-        add_flows<InjectionComponentTypesTuple>(state, math_output, accumulate_injection);
+        add_flows<ContributesToSteadyStateUserNodeInjection>(state, math_output, accumulate_injection);
     } else if constexpr (short_circuit_solver_output_type<SolverOutput>) {
-        using InjectionComponentTypesTuple = std::tuple<Source, Line, GenericBranch, Transformer, Fault>;
-        add_flows<InjectionComponentTypesTuple>(state, math_output, accumulate_injection);
+        add_flows<ContributesToShortCircuitUserNodeInjection>(state, math_output, accumulate_injection);
     }
 
     auto result =
