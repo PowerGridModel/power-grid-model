@@ -1,0 +1,68 @@
+{
+  "version": "1.0",
+  "type": "sym_output",
+  "is_batch": true,
+  "attributes": {},
+  "data": [
+    {
+      "node": [
+        {"id": 1, "energized": 1, "u_pu": 1.05, "u": 10500, "u_angle": 0, "p": 661500, "q": 330750},
+        {"id": 2, "energized": 1, "u_pu": 1.05, "u": 10500, "u_angle": 0, "p": -661500, "q": -330750}
+      ],
+      "link": [
+        {"id": 3, "energized": 1, "loading": 0, "p_from": 661500, "q_from": 330750, "p_to": -661500, "q_to": -330750}
+      ],
+      "source": [
+        {"id": 4, "energized": 1, "p": 661500, "q": 330750}
+      ],
+      "asym_load": [
+        {"id": 5, "energized": 1, "p": 661500, "q": 330750}
+      ]
+    },
+    {
+      "node": [
+        {"id": 1, "energized": 1, "u_pu": 1.05, "u": 10500, "u_angle": 0, "p": 0, "q": 0},
+        {"id": 2, "energized": 0, "u_pu": 0, "u": 0, "u_angle": 0}
+      ],
+      "link": [
+        {"id": 3, "energized": 1, "loading": 0, "p_from": 0, "q_from": 0, "p_to": 0, "q_to": 0}
+      ],
+      "source": [
+        {"id": 4, "energized": 1, "p": 0, "q": 0}
+      ],
+      "asym_load": [
+        {"id": 5, "energized": 0, "p": 0, "q": 0}
+      ]
+    },
+    {
+      "node": [
+        {"id": 1, "energized": 1, "u_pu": 1.05, "u": 10500, "u_angle": 0, "p": 0, "q": 0},
+        {"id": 2, "energized": 0, "u_pu": 0, "u": 0, "u_angle": 0}
+      ],
+      "link": [
+        {"id": 3, "energized": 0, "loading": 0, "p_from": 0, "q_from": 0, "p_to": 0, "q_to": 0}
+      ],
+      "source": [
+        {"id": 4, "energized": 1, "p": 0, "q": 0}
+      ],
+      "asym_load": [
+        {"id": 5, "energized": 0, "p": 0, "q": 0}
+      ]
+    },
+    {
+      "node": [
+        {"id": 1, "energized": 1, "u_pu": 1.05, "u": 10500, "u_angle": 0, "p": 0, "q": 0},
+        {"id": 2, "energized": 0, "u_pu": 0, "u": 0, "u_angle": 0}
+      ],
+      "link": [
+        {"id": 3, "energized": 0, "loading": 0, "p_from": 0, "q_from": 0, "p_to": 0, "q_to": 0}
+      ],
+      "source": [
+        {"id": 4, "energized": 1, "p": 0, "q": 0}
+      ],
+      "asym_load": [
+        {"id": 5, "energized": 0, "p": 0, "q": 0}
+      ]
+    }
+  ]
+}
