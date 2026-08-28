@@ -211,16 +211,20 @@ def _add_cases(case_dir: Path, calculation_type: str, **kwargs):
 def pytest_cases(get_batch_cases: bool = False, data_dir: str | None = None, test_cases: list[str] | None = None):
     relevant_calculations = [data_dir] if data_dir is not None else ["power_flow", "state_estimation", "short_circuit"]
 
+    cases = []
     for calculation_type in relevant_calculations:
         test_case_paths = get_test_case_paths(calculation_type=calculation_type, test_cases=test_cases)
 
         for case_name, case_dir in test_case_paths.items():
-            yield from _add_cases(
-                case_name=case_name,
-                case_dir=case_dir,
-                calculation_type=calculation_type,
-                is_batch=get_batch_cases,
+            cases.extend(
+                _add_cases(
+                    case_name=case_name,
+                    case_dir=case_dir,
+                    calculation_type=calculation_type,
+                    is_batch=get_batch_cases,
+                )
             )
+    return cases
 
 
 def bool_params(true_id: str, false_id: str | None = None, **kwargs):
