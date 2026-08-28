@@ -17,6 +17,7 @@
 #include "../component/branch.hpp"
 #include "../component/branch3.hpp"
 #include "../component/current_sensor.hpp"
+#include "../component/edge.hpp"
 #include "../component/fault.hpp"
 #include "../component/load_gen.hpp"
 #include "../component/node.hpp"
@@ -39,6 +40,49 @@ namespace power_grid_model::main_core {
 namespace detail {
 template <typename T, typename U>
 concept assignable_to = std::assignable_from<U, T>;
+
+template <typename MeasuredComponent, class ComponentContainer, typename... StatusArgs>
+constexpr bool measured_component_active(MainModelState<ComponentContainer> const& state, Idx const obj_seq,
+                                         StatusArgs... status_args) {
+    if constexpr (common::component_container_c<ComponentContainer, MeasuredComponent>) {
+        return get_component_by_sequence<MeasuredComponent>(state.components, obj_seq).status(status_args...);
+    } else {
+        // A missing component type makes its terminal type unreachable in a valid model. Keep reduced containers
+        // compatible with the previous topology-only behavior.
+        return true;
+    }
+}
+
+template <class ComponentContainer>
+constexpr bool measured_terminal_active(MeasuredTerminalType const terminal_type,
+                                        MainModelState<ComponentContainer> const& state, Idx const obj_seq) {
+    switch (terminal_type) {
+        using enum MeasuredTerminalType;
+
+    case branch_from:
+        return measured_component_active<Branch>(state, obj_seq, BranchSide::from);
+    case branch_to:
+        return measured_component_active<Branch>(state, obj_seq, BranchSide::to);
+    case source:
+        return measured_component_active<Source>(state, obj_seq);
+    case shunt:
+        return measured_component_active<Shunt>(state, obj_seq);
+    case load:
+        [[fallthrough]];
+    case generator:
+        return measured_component_active<GenericLoadGen>(state, obj_seq);
+    case branch3_1:
+        return measured_component_active<Branch3>(state, obj_seq, Branch3Side::side_1);
+    case branch3_2:
+        return measured_component_active<Branch3>(state, obj_seq, Branch3Side::side_2);
+    case branch3_3:
+        return measured_component_active<Branch3>(state, obj_seq, Branch3Side::side_3);
+    case node:
+        return true;
+    default:
+        throw MissingCaseForEnumError{"measured_terminal_active()", terminal_type};
+    }
+}
 
 template <typename Component, typename IndexType, class ComponentContainer, non_owning_view_c ComponentOutput,
           functor_c ResFunc>
@@ -86,7 +130,7 @@ constexpr auto output_result(Component const& node, MainModelState<ComponentCont
 }
 
 // output branch
-template <std::derived_from<Branch> Component, steady_state_solver_output_type SolverOutputType>
+template <std::derived_from<Edge> Component, steady_state_solver_output_type SolverOutputType>
 constexpr auto output_result(Component const& branch, MathOutput<std::vector<SolverOutputType>> const& math_output,
                              Idx2D math_id) {
     using sym = decode_symmetry_v<SolverOutputType>;
@@ -96,7 +140,7 @@ constexpr auto output_result(Component const& branch, MathOutput<std::vector<Sol
     }
     return branch.template get_output<sym>(get_component_output<Component>(math_output, math_id));
 }
-template <std::derived_from<Branch> Component, short_circuit_solver_output_type SolverOutputType>
+template <std::derived_from<Edge> Component, short_circuit_solver_output_type SolverOutputType>
 inline auto output_result(Component const& branch, MathOutput<std::vector<SolverOutputType>> const& math_output,
                           Idx2D math_id) {
     if (math_id.group == disconnected) {
@@ -252,7 +296,7 @@ constexpr auto output_result(Component const& power_sensor, MainModelState<Compo
         }
     }();
 
-    if (obj_math_id.group == disconnected) {
+    if (obj_math_id.group == disconnected || !detail::measured_terminal_active(terminal_type, state, obj_seq)) {
         return power_sensor.template get_null_output<sym>();
     }
 
@@ -322,7 +366,7 @@ constexpr auto output_result(Component const& current_sensor, MainModelState<Com
         }
     }();
 
-    if (obj_math_id.group == disconnected) {
+    if (obj_math_id.group == disconnected || !detail::measured_terminal_active(terminal_type, state, obj_seq)) {
         return current_sensor.template get_null_output<sym>();
     }
 

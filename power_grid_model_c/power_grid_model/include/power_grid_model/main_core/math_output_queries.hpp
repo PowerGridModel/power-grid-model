@@ -43,12 +43,13 @@ constexpr auto get_bus_injection_output_from_math_id(MathOutput<std::vector<Solv
 }
 
 template <typename Component, solver_output_type SolverOutputType>
-constexpr auto get_component_output(MathOutput<std::vector<SolverOutputType>> const& math_output,
-                                    Idx2D const& math_id) {
+constexpr auto const& get_component_output(MathOutput<std::vector<SolverOutputType>> const& math_output,
+                                           Idx2D const& math_id) {
     auto const& solver_output = math_output.solver_output[math_id.group];
 
-    auto const& component_type_output = [&solver_output] {
-        if constexpr (std::derived_from<Component, Branch> || std::derived_from<Component, Branch3>) {
+    auto const& component_type_output = [&solver_output]() -> auto const& {
+        // TODO(mgovers): cleanup v2: change back to std::derived_from<Component, Branch>
+        if constexpr (std::derived_from<Component, Edge> || std::derived_from<Component, Branch3>) {
             return solver_output.branch;
         } else if constexpr (std::same_as<Component, Source> && requires { solver_output.source; }) {
             return solver_output.source;

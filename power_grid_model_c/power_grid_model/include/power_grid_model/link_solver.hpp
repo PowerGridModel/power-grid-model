@@ -74,7 +74,7 @@ struct EdgeHistory {
 
 struct ReducedEchelonForm {
     CooSparseMatrix matrix{};
-    std::vector<DoubleComplex> rhs{};         // RHS value at each pivot row
+    ComplexVector rhs{};                      // RHS value at each pivot row
     std::vector<Idx> free_edge_indices{};     // index of degrees of freedom (self loop edges)
     std::vector<Idx> pivot_edge_indices{};    // index of pivot edges
     std::vector<EdgeHistory> edges_history{}; // edges elimination history
@@ -134,8 +134,7 @@ inline void update_edge_info(Idx edge_idx, Idx matrix_row, std::vector<BranchIdx
 // forward elimination is performed via a modified Gaussian elimination procedure
 // we name this procedure elimination-game
 // node_loads convention: caller passes negated external loads (as in RHS of power flow equations))
-inline void forward_elimination(ReducedEchelonForm& result, std::vector<BranchIdx> edges,
-                                std::vector<DoubleComplex> node_loads) {
+inline void forward_elimination(ReducedEchelonForm& result, std::vector<BranchIdx> edges, ComplexVector node_loads) {
     using enum EdgeEvent;
     using enum EdgeDirection;
 
@@ -229,7 +228,7 @@ inline void backward_substitution(ReducedEchelonForm& elimination_result) {
 
 // reduced echelon form based on custom forward elimination and backward substitution procedures
 // in other words, this performs the Penrose inverse on the adjacency matrix
-inline ReducedEchelonForm reduced_echelon_form(std::vector<BranchIdx> edges, std::vector<DoubleComplex> node_loads) {
+inline ReducedEchelonForm reduced_echelon_form(std::vector<BranchIdx> edges, ComplexVector node_loads) {
     auto const edge_number{narrow_cast<Idx>(edges.size())};
 
     ReducedEchelonForm result{};
@@ -249,7 +248,7 @@ inline ReducedEchelonForm reduced_echelon_form(std::vector<BranchIdx> edges, std
 // internal_loads = extended_rhs - dfs_matrix * lambda
 struct SolutionSet {
     CooSparseMatrix dfs_matrix{};
-    std::vector<DoubleComplex> extended_rhs{};
+    ComplexVector extended_rhs{};
 };
 
 // Constructs the dfs_matrix and the extended_rhs for the set of solutions.
@@ -289,10 +288,9 @@ inline SolutionSet set_solution_system(ReducedEchelonForm& result) {
     return solution_set;
 };
 
-inline std::vector<std::vector<DoubleComplex>> set_projection_system(Idx free_indices_number, Idx total_indices_number,
-                                                                     SolutionSet& solution_set) {
-    std::vector<std::vector<DoubleComplex>> projection_system(free_indices_number,
-                                                              std::vector<DoubleComplex>(free_indices_number + 1));
+inline std::vector<ComplexVector> set_projection_system(Idx free_indices_number, Idx total_indices_number,
+                                                        SolutionSet& solution_set) {
+    std::vector<ComplexVector> projection_system(free_indices_number, ComplexVector(free_indices_number + 1));
 
     for (Idx dfs_matrix_col = 0; dfs_matrix_col < free_indices_number; dfs_matrix_col++) {
         auto dot_product_rhs = DoubleComplex{};
@@ -324,7 +322,7 @@ inline std::vector<std::vector<DoubleComplex>> set_projection_system(Idx free_in
     return projection_system;
 };
 
-inline void naive_gauss_elimination(std::vector<std::vector<DoubleComplex>>& system) {
+inline void naive_gauss_elimination(std::vector<ComplexVector>& system) {
     auto const system_size = narrow_cast<Idx>(std::ssize(system));
 
     // we skip pivoting since the matrix system is mostly diagonally dominant
@@ -359,11 +357,10 @@ inline void naive_gauss_elimination(std::vector<std::vector<DoubleComplex>>& sys
     }
 };
 
-inline std::vector<DoubleComplex> compute_internal_loads(SolutionSet const& solution_set,
-                                                         std::span<std::vector<DoubleComplex> const> system) {
+inline ComplexVector compute_internal_loads(SolutionSet const& solution_set, std::span<ComplexVector const> system) {
     auto const number_of_rows = narrow_cast<Idx>(std::ranges::ssize(solution_set.extended_rhs));
     auto const number_of_columns = narrow_cast<Idx>(std::ranges::ssize(system));
-    std::vector<DoubleComplex> internal_loads(number_of_rows);
+    ComplexVector internal_loads(number_of_rows);
 
     for (auto const row : IdxRange{number_of_rows}) {
         internal_loads[row] = solution_set.extended_rhs[row];
@@ -382,8 +379,7 @@ inline std::vector<DoubleComplex> compute_internal_loads(SolutionSet const& solu
 };
 } // namespace detail
 
-inline std::vector<DoubleComplex> compute_loads_link_elements(std::vector<BranchIdx> edges,
-                                                              std::vector<DoubleComplex> node_loads) {
+inline ComplexVector compute_loads_link_elements(std::vector<BranchIdx> edges, ComplexVector node_loads) {
     using namespace detail;
 
     auto reduced_echelon_result = reduced_echelon_form(std::move(edges), std::move(node_loads));
@@ -396,7 +392,7 @@ inline std::vector<DoubleComplex> compute_loads_link_elements(std::vector<Branch
     auto const free_indices_number = narrow_cast<Idx>(std::ranges::ssize(reduced_echelon_result.free_edge_indices));
     auto const total_indices_number = narrow_cast<Idx>(std::ranges::ssize(reduced_echelon_result.free_edge_indices) +
                                                        std::ranges::ssize(reduced_echelon_result.pivot_edge_indices));
-    std::vector<std::vector<DoubleComplex>> projection_system =
+    std::vector<ComplexVector> projection_system =
         set_projection_system(free_indices_number, total_indices_number, solution_set);
 
     naive_gauss_elimination(projection_system);
