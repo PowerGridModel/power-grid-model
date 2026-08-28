@@ -21,7 +21,7 @@ namespace power_grid_model::main_core {
 
 template <typename Component, solver_output_type SolverOutputType>
 constexpr auto const& get_component_output(MathOutput<std::vector<SolverOutputType>> const& math_output,
-                                           Idx2D const& math_id) {
+                                           Idx2D math_id) {
     auto const& solver_output = math_output.solver_output[math_id.group];
 
     // TODO(mgovers): cleanup v2: change back to std::derived_from<Component, Branch>

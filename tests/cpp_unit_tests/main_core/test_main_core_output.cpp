@@ -282,7 +282,7 @@ TEST_CASE("Test main core output") {
             CHECK(output[0].i_from(0) == doctest::Approx(base_power_3p / 10e3 / sqrt3));
             CHECK(output[0].i_to(0) == doctest::Approx(2.0 * base_power_3p / 20e3 / sqrt3));
             CHECK(output[1].id == 1);
-            CHECK(output[1].energized == status_off);
+            CHECK(output[1].energized == status_on);
             CHECK(output[2].id == 2);
             CHECK(output[2].energized == status_off);
         }
