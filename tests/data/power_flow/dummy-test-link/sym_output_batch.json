@@ -22,7 +22,7 @@
     {
       "node": [
         {"id": 1, "energized": 1, "u_pu": 1.05, "u": 10500, "u_angle": 0, "p": 0, "q": 0},
-        {"id": 2, "energized": 0, "u_pu": 0, "u": 0, "u_angle": 0}
+        {"id": 2, "energized": 0, "u_pu": 0, "u": 0, "u_angle": 0, "p": 0, "q": 0}
       ],
       "link": [
         {"id": 3, "energized": 1, "loading": 0, "p_from": 0, "q_from": 0, "p_to": 0, "q_to": 0}
@@ -37,7 +37,7 @@
     {
       "node": [
         {"id": 1, "energized": 1, "u_pu": 1.05, "u": 10500, "u_angle": 0, "p": 0, "q": 0},
-        {"id": 2, "energized": 0, "u_pu": 0, "u": 0, "u_angle": 0}
+        {"id": 2, "energized": 0, "u_pu": 0, "u": 0, "u_angle": 0, "p": 0, "q": 0}
       ],
       "link": [
         {"id": 3, "energized": 0, "loading": 0, "p_from": 0, "q_from": 0, "p_to": 0, "q_to": 0}
@@ -52,7 +52,7 @@
     {
       "node": [
         {"id": 1, "energized": 1, "u_pu": 1.05, "u": 10500, "u_angle": 0, "p": 0, "q": 0},
-        {"id": 2, "energized": 0, "u_pu": 0, "u": 0, "u_angle": 0}
+        {"id": 2, "energized": 0, "u_pu": 0, "u": 0, "u_angle": 0, "p": 0, "q": 0}
       ],
       "link": [
         {"id": 3, "energized": 0, "loading": 0, "p_from": 0, "q_from": 0, "p_to": 0, "q_to": 0}
