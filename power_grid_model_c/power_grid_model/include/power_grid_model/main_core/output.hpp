@@ -135,11 +135,11 @@ constexpr auto output_result(Component const& link, MainModelState<ComponentCont
                              MathOutput<std::vector<SolverOutputType>> const& math_output, Idx2D const& topo_id) {
     using sym = decode_symmetry_v<SolverOutputType>;
 
-    if (!link.edge_status()) {
-        return link.template get_energized_zero_output<sym>();
-    }
     if (topo_id.group == disconnected) {
         return link.template get_null_output<sym>();
+    }
+    if (!link.edge_status()) {
+        return link.template get_energized_zero_output<sym>();
     }
     return link.template get_output<sym>(math_output.supernode_output[topo_id.group].link[topo_id.pos]);
 }
@@ -147,11 +147,11 @@ template <std::same_as<Link> Component, class ComponentContainer, short_circuit_
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 inline auto output_result(Component const& link, MainModelState<ComponentContainer> const& /* state */,
                           MathOutput<std::vector<SolverOutputType>> const& math_output, Idx2D const& topo_id) {
-    if (!link.edge_status()) {
-        return link.get_energized_zero_sc_output();
-    }
     if (topo_id.group == disconnected) {
         return link.get_null_sc_output();
+    }
+    if (!link.edge_status()) {
+        return link.get_energized_zero_sc_output();
     }
     return link.get_sc_output(math_output.supernode_output[topo_id.group].link[topo_id.pos]);
 }
