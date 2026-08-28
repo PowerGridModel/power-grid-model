@@ -513,6 +513,8 @@ template <symmetry_tag sym> class YBus {
                    output.i_f = dot(param.yff(), uf) + dot(param.yft(), ut);
                    output.i_t = dot(param.ytf(), uf) + dot(param.ytt(), ut);
 
+                   // TODO(mgovers): cleanup v2: branch solver output should always be in current domain; conversion to
+                   // power domain should be done in main_core/output.hpp
                    if constexpr (std::same_as<T, BranchSolverOutput<sym>>) {
                        // See "Shunt Injection Flow Calculation" in "State Estimation Alliander"
                        output.s_f = uf * conj(output.i_f);
@@ -536,6 +538,8 @@ template <symmetry_tag sym> class YBus {
                 // NOTE: the negative sign for injection direction!
                 shunt_flow[shunt].i = -dot(math_model_param_.shunt_param[shunt], u[bus]);
 
+                // TODO(mgovers): cleanup v2: appliance solver output should always be in current domain;
+                // conversion to power domain should be done in main_core/output.hpp
                 if constexpr (std::same_as<SolverOutputType, ApplianceSolverOutput<sym>>) {
                     // See "Branch/Shunt Power Flow" in "State Estimation Alliander"
                     shunt_flow[shunt].s = u[bus] * conj(shunt_flow[shunt].i);

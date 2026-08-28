@@ -25,7 +25,8 @@ constexpr auto const& get_component_output(MathOutput<std::vector<SolverOutputTy
     auto const& solver_output = math_output.solver_output[math_id.group];
 
     auto const& component_type_output = [&solver_output]() -> auto const& {
-        if constexpr (std::derived_from<Component, Branch> || std::derived_from<Component, Branch3>) {
+        // TODO(mgovers): cleanup v2: change back to std::derived_from<Component, Branch>
+        if constexpr (std::derived_from<Component, Edge> || std::derived_from<Component, Branch3>) {
             return solver_output.branch;
         } else if constexpr (std::same_as<Component, Source> && requires { solver_output.source; }) {
             return solver_output.source;
