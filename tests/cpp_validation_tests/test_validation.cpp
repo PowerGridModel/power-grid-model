@@ -670,9 +670,6 @@ TEST_CASE("Validation test single - power flow") {
     std::vector<CaseParam> const& all_cases = get_all_single_cases();
     for (CaseParam const& param : all_cases) {
         if (param.calculation_type == PGM_power_flow) {
-            if (param.case_name != "power_flow/dummy-test-sym-linear") {
-                continue;
-            }
             SUBCASE(param.case_name.c_str()) { validate_single_case(param); }
         }
     }
