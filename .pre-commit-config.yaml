@@ -15,7 +15,7 @@ repos:
         entry: uv run --frozen pytest
         language: system
         pass_filenames: false
-        types_or: [ python, c++, c ]
+        types_or: [ python, c++, c, json ]
       - id: ruff-format
         name: ruff-format
         entry: uv run --frozen ruff format

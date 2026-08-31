@@ -21,27 +21,23 @@ namespace power_grid_model::main_core {
 
 template <typename Component, solver_output_type SolverOutputType>
 constexpr auto const& get_component_output(MathOutput<std::vector<SolverOutputType>> const& math_output,
-                                           Idx2D const& math_id) {
+                                           Idx2D math_id) {
     auto const& solver_output = math_output.solver_output[math_id.group];
 
-    auto const& component_type_output = [&solver_output]() -> auto const& {
-        // TODO(mgovers): cleanup v2: change back to std::derived_from<Component, Branch>
-        if constexpr (std::derived_from<Component, Edge> || std::derived_from<Component, Branch3>) {
-            return solver_output.branch;
-        } else if constexpr (std::same_as<Component, Source> && requires { solver_output.source; }) {
-            return solver_output.source;
-        } else if constexpr (std::same_as<Component, Shunt> && requires { solver_output.shunt; }) {
-            return solver_output.shunt;
-        } else if constexpr (std::derived_from<Component, GenericLoadGen> && requires { solver_output.load_gen; }) {
-            return solver_output.load_gen;
-        } else if constexpr (std::same_as<Component, Fault> && requires { solver_output.fault; }) {
-            return solver_output.fault;
-        } else {
-            static_assert(false, "Unsupported component type for output retrieval");
-        }
-    }();
-
-    return component_type_output[math_id.pos];
+    // TODO(mgovers): cleanup v2: change back to std::derived_from<Component, Branch>
+    if constexpr (std::derived_from<Component, Edge> || std::derived_from<Component, Branch3>) {
+        return solver_output.branch[math_id.pos];
+    } else if constexpr (std::same_as<Component, Source> && requires { solver_output.source; }) {
+        return solver_output.source[math_id.pos];
+    } else if constexpr (std::same_as<Component, Shunt> && requires { solver_output.shunt; }) {
+        return solver_output.shunt[math_id.pos];
+    } else if constexpr (std::derived_from<Component, GenericLoadGen> && requires { solver_output.load_gen; }) {
+        return solver_output.load_gen[math_id.pos];
+    } else if constexpr (std::same_as<Component, Fault> && requires { solver_output.fault; }) {
+        return solver_output.fault[math_id.pos];
+    } else {
+        static_assert(false, "Unsupported component type for output retrieval");
+    }
 }
 
 } // namespace power_grid_model::main_core
