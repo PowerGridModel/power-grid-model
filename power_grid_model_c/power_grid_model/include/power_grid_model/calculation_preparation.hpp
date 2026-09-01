@@ -134,7 +134,12 @@ inline void rebuild_topology(typename ModelType::MainModelState& state, SolverPr
 
     // clear old solvers
     reset_solvers(state, solver_context, solvers_cache_status);
-    ComponentConnections const comp_conn = main_core::construct_components_connections<ModelType>(state.components);
+    // Determine the path based on whether link_node_idx is populated (new path) or empty (old path)
+    // link_node_idx being non-empty means new path where links are separated (no node injection sensors)
+    // link_node_idx being empty means old path where all edges treated as branches (has node injection sensors)
+    bool const has_node_injection_sensors = state.comp_topo->link_node_idx.empty();
+    ComponentConnections const comp_conn =
+        main_core::construct_components_connections<ModelType>(state.components, has_node_injection_sensors);
 
     // re build
     assert((state.comp_topo->link_node_idx.empty() ||

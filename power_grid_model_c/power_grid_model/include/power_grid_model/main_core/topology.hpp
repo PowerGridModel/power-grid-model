@@ -249,6 +249,27 @@ constexpr void register_connections_components(ComponentContainer const& compone
                                   [](Source const& source) { return source.status(); });
 }
 
+// new path: only Branch-derived types (not Link) in branch_connected
+template <std::same_as<Branch> Component, class ComponentContainer>
+    requires common::component_container_c<ComponentContainer, Component>
+constexpr void register_connections_components(ComponentContainer const& components, ComponentConnections& comp_conn) {
+    apply_registration<Branch>(components, comp_conn.branch_connected, [](Branch const& branch) {
+        return BranchConnected{status_to_int(branch.from_status()), status_to_int(branch.to_status())};
+    });
+    apply_registration<Branch>(components, comp_conn.branch_phase_shift,
+                               [](Branch const& branch) { return branch.phase_shift(); });
+}
+
+// new path: Link in link_connected so topology builder can handle super-nodes
+template <std::same_as<Link> Component, class ComponentContainer>
+    requires common::component_container_c<ComponentContainer, Component>
+constexpr void register_connections_components(ComponentContainer const& components, ComponentConnections& comp_conn) {
+    apply_registration<Link>(components, comp_conn.link_connected, [](Link const& link) {
+        return BranchConnected{status_to_int(link.from_status()), status_to_int(link.to_status())};
+    });
+    // Note: Links always have zero phase shift, so no phase_shift registration needed
+}
+
 } // namespace detail
 
 template <typename ModelType>
@@ -277,14 +298,25 @@ ComponentTopology construct_topology(typename ModelType::ComponentContainer cons
 }
 
 template <typename ModelType>
-    requires common::component_container_c<typename ModelType::ComponentContainer, Edge, Branch3, Source>
-ComponentConnections construct_components_connections(typename ModelType::ComponentContainer const& components) {
+    requires common::component_container_c<typename ModelType::ComponentContainer, Edge, Branch, Branch3, Source, Link>
+ComponentConnections construct_components_connections(typename ModelType::ComponentContainer const& components,
+                                                      bool has_node_injection_sensors = false) {
     ComponentConnections comp_conn;
     using TopologyConnectionTypesTuple = ModelType::TopologyConnectionTypesTuple;
     main_core::utils::run_functor_with_tuple_return_void<TopologyConnectionTypesTuple>(
-        [&components, &comp_conn]<typename CompType>() {
-            detail::register_connections_components<CompType>(components, comp_conn);
+        [&components, &comp_conn, has_node_injection_sensors]<typename CompType>() {
+            if constexpr (!std::same_as<CompType, Edge>) {
+                detail::register_connections_components<CompType>(components, comp_conn);
+            } else if (has_node_injection_sensors) {
+                // old path: all edges (branches + links) in branch_connected
+                detail::register_connections_components<Edge>(components, comp_conn);
+            }
         });
+    if (!has_node_injection_sensors) {
+        // new path: branches only in branch_connected, links in link_connected
+        detail::register_connections_components<Branch>(components, comp_conn);
+        detail::register_connections_components<Link>(components, comp_conn);
+    }
     return comp_conn;
 }
 
