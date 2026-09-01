@@ -117,7 +117,7 @@ TEST_CASE("Test the link solver algorithm") {
 
         SUBCASE("One edge, two nodes, two real loads") {
             auto edges = std::vector<BranchIdx>{{0, 1}};
-            auto node_loads = std::vector<DoubleComplex>{{-1.0, 0.0}, {1.0, 0.0}};
+            auto node_loads = ComplexVector{{-1.0, 0.0}, {1.0, 0.0}};
             auto const edge_number{edges.size()};
             auto const node_number{narrow_cast<Idx>(node_loads.size())};
             result.edges_history.resize(edge_number);
@@ -126,7 +126,7 @@ TEST_CASE("Test the link solver algorithm") {
 
             REQUIRE(result.matrix.data_map.size() == 1);
             CHECK(1 == result.matrix.get_value(0, 0));
-            CHECK(result.rhs == std::vector<DoubleComplex>{{1.0, 0.0}});
+            CHECK(result.rhs == ComplexVector{{1.0, 0.0}});
             CHECK(result.free_edge_indices.empty());
             REQUIRE(result.edges_history.size() == 1);
             CHECK(result.edges_history[0].events == std::vector<EdgeEvent>{deleted});
@@ -135,7 +135,7 @@ TEST_CASE("Test the link solver algorithm") {
 
         SUBCASE("Two edges, three nodes, two real loads") {
             auto edges = std::vector<BranchIdx>{{1, 0}, {1, 2}};
-            auto node_loads = std::vector<DoubleComplex>{{-1.0, 0.0}, {1.0, 0.0}, {0.0, 0.0}};
+            auto node_loads = ComplexVector{{-1.0, 0.0}, {1.0, 0.0}, {0.0, 0.0}};
             auto const edge_number{edges.size()};
             auto const node_number{narrow_cast<Idx>(node_loads.size())};
             result.edges_history.resize(edge_number);
@@ -146,7 +146,7 @@ TEST_CASE("Test the link solver algorithm") {
             CHECK(1 == result.matrix.get_value(0, 0));
             CHECK(1 == result.matrix.get_value(1, 1));
             REQUIRE(result.rhs.size() == 2);
-            CHECK(result.rhs == std::vector<DoubleComplex>{{-1.0, 0.0}, {0.0, 0.0}});
+            CHECK(result.rhs == ComplexVector{{-1.0, 0.0}, {0.0, 0.0}});
             CHECK(result.free_edge_indices.empty());
             REQUIRE(result.edges_history.size() == 2);
             CHECK(result.edges_history[0].events == std::vector<EdgeEvent>{deleted});
@@ -157,7 +157,7 @@ TEST_CASE("Test the link solver algorithm") {
 
         SUBCASE("Three edges, three nodes, two real loads") {
             auto edges = std::vector<BranchIdx>{{0, 1}, {1, 2}, {2, 0}};
-            auto node_loads = std::vector<DoubleComplex>{{-1.0, 0.0}, {1.0, 0.0}, {0.0, 0.0}};
+            auto node_loads = ComplexVector{{-1.0, 0.0}, {1.0, 0.0}, {0.0, 0.0}};
             auto const edge_number{edges.size()};
             auto const node_number{narrow_cast<Idx>(node_loads.size())};
             result.edges_history.resize(edge_number);
@@ -170,7 +170,7 @@ TEST_CASE("Test the link solver algorithm") {
             CHECK(1 == result.matrix.get_value(1, 1));
             CHECK(-1 == result.matrix.get_value(1, 2));
             REQUIRE(result.rhs.size() == 2);
-            CHECK(result.rhs == std::vector<DoubleComplex>{{1.0, 0.0}, {0.0, 0.0}});
+            CHECK(result.rhs == ComplexVector{{1.0, 0.0}, {0.0, 0.0}});
             REQUIRE(result.free_edge_indices.size() == 1);
             CHECK(result.free_edge_indices == std::vector<Idx>{2});
             REQUIRE(result.edges_history.size() == 3);
@@ -184,7 +184,7 @@ TEST_CASE("Test the link solver algorithm") {
 
         SUBCASE("Two edges, two nodes, two real loads") {
             auto edges = std::vector<BranchIdx>{{0, 1}, {0, 1}};
-            auto node_loads = std::vector<DoubleComplex>{{-1.0, 0.0}, {1.0, 0.0}};
+            auto node_loads = ComplexVector{{-1.0, 0.0}, {1.0, 0.0}};
             auto const edge_number{edges.size()};
             auto const node_number{narrow_cast<Idx>(node_loads.size())};
             result.edges_history.resize(edge_number);
@@ -195,7 +195,7 @@ TEST_CASE("Test the link solver algorithm") {
             CHECK(1 == result.matrix.get_value(0, 0));
             CHECK(1 == result.matrix.get_value(0, 1));
             REQUIRE(result.rhs.size() == 1);
-            CHECK(result.rhs == std::vector<DoubleComplex>{{1.0, 0.0}});
+            CHECK(result.rhs == ComplexVector{{1.0, 0.0}});
             REQUIRE(result.free_edge_indices.size() == 1);
             CHECK(result.free_edge_indices == std::vector<Idx>{1});
             REQUIRE(result.edges_history.size() == 2);
@@ -207,8 +207,7 @@ TEST_CASE("Test the link solver algorithm") {
 
         SUBCASE("Complex case with complex loads") {
             auto edges = std::vector<BranchIdx>{{3, 0}, {1, 0}, {2, 0}, {3, 2}, {1, 2}, {1, 4}, {3, 4}};
-            auto node_loads =
-                std::vector<DoubleComplex>{{-1.0, -1.0}, {-1.0, -1.0}, {2.0, 2.0}, {0.0, 0.0}, {0.0, 0.0}};
+            auto node_loads = ComplexVector{{-1.0, -1.0}, {-1.0, -1.0}, {2.0, 2.0}, {0.0, 0.0}, {0.0, 0.0}};
             auto const edge_number{edges.size()};
             auto const node_number{narrow_cast<Idx>(node_loads.size())};
             result.edges_history.resize(edge_number);
@@ -231,7 +230,7 @@ TEST_CASE("Test the link solver algorithm") {
             CHECK(1 == result.matrix.get_value(3, 5));
             CHECK(1 == result.matrix.get_value(3, 6));
             REQUIRE(result.rhs.size() == 4);
-            CHECK(result.rhs == std::vector<DoubleComplex>{{-1.0, -1.0}, {-1.0, -1.0}, {-2.0, -2.0}, {0.0, 0.0}});
+            CHECK(result.rhs == ComplexVector{{-1.0, -1.0}, {-1.0, -1.0}, {-2.0, -2.0}, {0.0, 0.0}});
             REQUIRE(result.free_edge_indices.size() == 3);
             CHECK(result.free_edge_indices == std::vector<Idx>{3, 4, 6});
             REQUIRE(result.edges_history.size() == 7);
@@ -283,7 +282,7 @@ TEST_CASE("Test the link solver algorithm") {
             ReducedEchelonForm result{};
             result.matrix.prepare(Idx{2});
             result.matrix.set_value(1, 0, 0);
-            result.rhs = std::vector<DoubleComplex>{{1.0, 0.0}};
+            result.rhs = ComplexVector{{1.0, 0.0}};
             result.free_edge_indices = {};
             result.pivot_edge_indices = {0};
             result.edges_history.resize(1);
@@ -294,7 +293,7 @@ TEST_CASE("Test the link solver algorithm") {
             REQUIRE(result.matrix.data_map.size() == 1);
             CHECK(1 == result.matrix.get_value(0, 0));
             REQUIRE(result.rhs.size() == 1);
-            CHECK(result.rhs == std::vector<DoubleComplex>{{1.0, 0.0}});
+            CHECK(result.rhs == ComplexVector{{1.0, 0.0}});
         }
 
         SUBCASE("Two edges, three nodes, two real loads") {
@@ -302,7 +301,7 @@ TEST_CASE("Test the link solver algorithm") {
             result.matrix.prepare(Idx{3});
             result.matrix.set_value(1, 0, 0);
             result.matrix.set_value(1, 1, 1);
-            result.rhs = std::vector<DoubleComplex>{{-1.0, 0.0}, {0.0, 0.0}};
+            result.rhs = ComplexVector{{-1.0, 0.0}, {0.0, 0.0}};
             result.free_edge_indices = {};
             result.pivot_edge_indices = {0, 1};
             result.edges_history.resize(2);
@@ -316,7 +315,7 @@ TEST_CASE("Test the link solver algorithm") {
             CHECK(1 == result.matrix.get_value(0, 0));
             CHECK(1 == result.matrix.get_value(1, 1));
             REQUIRE(result.rhs.size() == 2);
-            CHECK(result.rhs == std::vector<DoubleComplex>{{-1.0, 0.0}, {0.0, 0.0}});
+            CHECK(result.rhs == ComplexVector{{-1.0, 0.0}, {0.0, 0.0}});
         }
 
         SUBCASE("Three edges, three nodes, two real loads") {
@@ -326,7 +325,7 @@ TEST_CASE("Test the link solver algorithm") {
             result.matrix.set_value(-1, 0, 1);
             result.matrix.set_value(1, 1, 1);
             result.matrix.set_value(-1, 1, 2);
-            result.rhs = std::vector<DoubleComplex>{{1.0, 0.0}, {0.0, 0.0}};
+            result.rhs = ComplexVector{{1.0, 0.0}, {0.0, 0.0}};
             result.free_edge_indices = {2};
             result.pivot_edge_indices = {0, 1};
             result.edges_history.resize(3);
@@ -344,7 +343,7 @@ TEST_CASE("Test the link solver algorithm") {
             CHECK(-1 == result.matrix.get_value(1, 2));
             CHECK(-1 == result.matrix.get_value(0, 2));
             REQUIRE(result.rhs.size() == 2);
-            CHECK(result.rhs == std::vector<DoubleComplex>{{1.0, 0.0}, {0.0, 0.0}});
+            CHECK(result.rhs == ComplexVector{{1.0, 0.0}, {0.0, 0.0}});
         }
 
         SUBCASE("Two edges, two nodes, two real loads") {
@@ -352,7 +351,7 @@ TEST_CASE("Test the link solver algorithm") {
             result.matrix.prepare(Idx{2});
             result.matrix.set_value(1, 0, 0);
             result.matrix.set_value(1, 0, 1);
-            result.rhs = std::vector<DoubleComplex>{{1.0, 0.0}};
+            result.rhs = ComplexVector{{1.0, 0.0}};
             result.free_edge_indices = {1};
             result.pivot_edge_indices = {0};
             result.edges_history.resize(2);
@@ -366,7 +365,7 @@ TEST_CASE("Test the link solver algorithm") {
             CHECK(1 == result.matrix.get_value(0, 0));
             CHECK(1 == result.matrix.get_value(0, 1));
             REQUIRE(result.rhs.size() == 1);
-            CHECK(result.rhs == std::vector<DoubleComplex>{{1.0, 0.0}});
+            CHECK(result.rhs == ComplexVector{{1.0, 0.0}});
         }
 
         SUBCASE("Complex case with complex loads") {
@@ -387,7 +386,7 @@ TEST_CASE("Test the link solver algorithm") {
             result.matrix.set_value(1, 3, 5);
             result.matrix.set_value(1, 3, 6);
 
-            result.rhs = std::vector<DoubleComplex>{{-1.0, -1.0}, {-1.0, -1.0}, {-2.0, -2.0}, {0.0, 0.0}};
+            result.rhs = ComplexVector{{-1.0, -1.0}, {-1.0, -1.0}, {-2.0, -2.0}, {0.0, 0.0}};
 
             result.free_edge_indices = std::vector<Idx>{3, 4, 6};
             result.pivot_edge_indices = std::vector<Idx>{0, 1, 2, 5};
@@ -423,7 +422,7 @@ TEST_CASE("Test the link solver algorithm") {
             CHECK(1 == result.matrix.get_value(3, 6));
             REQUIRE(result.rhs.size() == 4);
 
-            CHECK(result.rhs == std::vector<DoubleComplex>{{0.0, 0.0}, {1.0, 1.0}, {-2.0, -2.0}, {0.0, 0.0}});
+            CHECK(result.rhs == ComplexVector{{0.0, 0.0}, {1.0, 1.0}, {-2.0, -2.0}, {0.0, 0.0}});
         }
     }
     SUBCASE("Testing the set_solution_system routine") {
@@ -451,7 +450,7 @@ TEST_CASE("Test the link solver algorithm") {
             CHECK(1 == solution_set.dfs_matrix.get_value(5, 2));
             CHECK(-1 == solution_set.dfs_matrix.get_value(6, 2));
             CHECK(solution_set.extended_rhs ==
-                  std::vector<DoubleComplex>({{0, 0}, {1, 1}, {-2, -2}, {0, 0}, {0, 0}, {0, 0}, {0, 0}}));
+                  ComplexVector({{0, 0}, {1, 1}, {-2, -2}, {0, 0}, {0, 0}, {0, 0}, {0, 0}}));
         }
 
         SUBCASE("Two edges, two nodes, two real loads") {
@@ -471,7 +470,7 @@ TEST_CASE("Test the link solver algorithm") {
             CHECK(-1 == solution_set.dfs_matrix.get_value(0, 0));
             CHECK(-1 == solution_set.dfs_matrix.get_value(1, 0));
             CHECK(-1 == solution_set.dfs_matrix.get_value(2, 0));
-            CHECK(solution_set.extended_rhs == std::vector<DoubleComplex>({{1, 0}, {0, 0}, {0, 0}}));
+            CHECK(solution_set.extended_rhs == ComplexVector({{1, 0}, {0, 0}, {0, 0}}));
         }
 
         SUBCASE("Four edges, four nodes, two real loads") {
@@ -490,7 +489,7 @@ TEST_CASE("Test the link solver algorithm") {
             CHECK(1 == solution_set.dfs_matrix.get_value(1, 0));
             CHECK(1 == solution_set.dfs_matrix.get_value(2, 0));
             CHECK(-1 == solution_set.dfs_matrix.get_value(3, 0));
-            CHECK(solution_set.extended_rhs == std::vector<DoubleComplex>({{1, 0}, {-1, 0}, {-1, 0}, {0, 0}}));
+            CHECK(solution_set.extended_rhs == ComplexVector({{1, 0}, {-1, 0}, {-1, 0}, {0, 0}}));
         }
     }
 
@@ -508,12 +507,12 @@ TEST_CASE("Test the link solver algorithm") {
             auto solution_set = generate_input_result<SolutionSet>(dfs_data, dfs_row, dfs_col, Idx{3});
             solution_set.extended_rhs = {{0, 0}, {1, 1}, {-2, -2}, {0, 0}, {0, 0}, {-0, -0}, {0, 0}};
 
-            std::vector<std::vector<DoubleComplex>> const projection_system =
+            std::vector<ComplexVector> const projection_system =
                 set_projection_system(free_indices_number, total_indices_number, solution_set);
 
-            std::vector<std::vector<DoubleComplex>> test_system = {{{3, 0}, {1, 0}, {1, 0}, {2, 2}},
-                                                                   {{1, 0}, {3, 0}, {-1, 0}, {3, 3}},
-                                                                   {{1, 0}, {-1, 0}, {4, 0}, {-1, -1}}};
+            std::vector<ComplexVector> test_system = {{{3, 0}, {1, 0}, {1, 0}, {2, 2}},
+                                                      {{1, 0}, {3, 0}, {-1, 0}, {3, 3}},
+                                                      {{1, 0}, {-1, 0}, {4, 0}, {-1, -1}}};
 
             CHECK(projection_system == test_system);
         }
@@ -530,19 +529,19 @@ TEST_CASE("Test the link solver algorithm") {
             auto solution_set = generate_input_result<SolutionSet>(dfs_data, dfs_row, dfs_col, Idx{1});
             solution_set.extended_rhs = {{1, 0}, {-1, -0}, {-1, -0}, {0, 0}};
 
-            std::vector<std::vector<DoubleComplex>> const projection_system =
+            std::vector<ComplexVector> const projection_system =
                 set_projection_system(free_indices_number, total_indices_number, solution_set);
 
-            std::vector<std::vector<DoubleComplex>> test_system = {{{3, 0}, {-2, 0}}};
+            std::vector<ComplexVector> test_system = {{{3, 0}, {-2, 0}}};
 
             CHECK(projection_system == test_system);
         }
     }
 
     SUBCASE("Testing the gauss elimination routine") {
-        auto compare_systems = [](std::vector<std::vector<DoubleComplex>> const& solution,
-                                  std::vector<std::vector<DoubleComplex>> const& reference, Idx col_number,
-                                  Idx row_number, double tolerance) {
+        auto compare_systems = [](std::vector<ComplexVector> const& solution,
+                                  std::vector<ComplexVector> const& reference, Idx col_number, Idx row_number,
+                                  double tolerance) {
             for (Idx const col : IdxRange{col_number}) {
                 for (Idx const row : IdxRange{row_number}) {
                     CHECK(solution[row][col].real() == doctest::Approx(reference[row][col].real()).epsilon(tolerance));
@@ -552,11 +551,11 @@ TEST_CASE("Test the link solver algorithm") {
         };
 
         SUBCASE("Linear system of the complex case") {
-            std::vector<std::vector<DoubleComplex>> system = {{{3, 0}, {1, 0}, {1, 0}, {2, 2}},
-                                                              {{1, 0}, {3, 0}, {-1, 0}, {3, 3}},
-                                                              {{1, 0}, {-1, 0}, {4, 0}, {-1, -1}}};
+            std::vector<ComplexVector> system = {{{3, 0}, {1, 0}, {1, 0}, {2, 2}},
+                                                 {{1, 0}, {3, 0}, {-1, 0}, {3, 3}},
+                                                 {{1, 0}, {-1, 0}, {4, 0}, {-1, -1}}};
             naive_gauss_elimination(system);
-            std::vector<std::vector<DoubleComplex>> const test_system = {
+            std::vector<ComplexVector> const test_system = {
                 {{3, 0}, {1, 0}, {1, 0}, {0.458333, 0.458333}},
                 {{-0.333333, 0}, {2.66667, 0}, {-1.33333, 0}, {0.791667, 0.791667}},
                 {{-0.333333, 0}, {0.5, -0}, {3, 0}, {-0.166667, -0.166667}}};
@@ -566,251 +565,251 @@ TEST_CASE("Test the link solver algorithm") {
         }
 
         SUBCASE("A system that consisng of a 15 X 15 matrix with externally randomly generated elements") {
-            std::vector<std::vector<DoubleComplex>> system = {{{7, 0},
-                                                               {4, 0},
-                                                               {7, 0},
-                                                               {2, 0},
-                                                               {14, 0},
-                                                               {5, 0},
-                                                               {2, 0},
-                                                               {4, 0},
-                                                               {14, 0},
-                                                               {2, 0},
-                                                               {6, 0},
-                                                               {7, 0},
-                                                               {7, 0},
-                                                               {0, 0},
-                                                               {3, 0},
-                                                               {1, 0}},
-                                                              {{7, 0},
-                                                               {11, 0},
-                                                               {9, 0},
-                                                               {7, 0},
-                                                               {0, 0},
-                                                               {12, 0},
-                                                               {1, 0},
-                                                               {14, 0},
-                                                               {7, 0},
-                                                               {12, 0},
-                                                               {0, 0},
-                                                               {4, 0},
-                                                               {4, 0},
-                                                               {14, 0},
-                                                               {13, 0},
-                                                               {1, 0}},
-                                                              {{6, 0},
-                                                               {0, 0},
-                                                               {13, 0},
-                                                               {0, 0},
-                                                               {0, 0},
-                                                               {2, 0},
-                                                               {4, 0},
-                                                               {8, 0},
-                                                               {8, 0},
-                                                               {14, 0},
-                                                               {9, 0},
-                                                               {8, 0},
-                                                               {0, 0},
-                                                               {3, 0},
-                                                               {11, 0},
-                                                               {1, 0}},
-                                                              {{9, 0},
-                                                               {2, 0},
-                                                               {2, 0},
-                                                               {14, 0},
-                                                               {5, 0},
-                                                               {4, 0},
-                                                               {14, 0},
-                                                               {7, 0},
-                                                               {4, 0},
-                                                               {8, 0},
-                                                               {4, 0},
-                                                               {5, 0},
-                                                               {11, 0},
-                                                               {10, 0},
-                                                               {4, 0},
-                                                               {1, 0}},
-                                                              {{10, 0},
-                                                               {7, 0},
-                                                               {12, 0},
-                                                               {12, 0},
-                                                               {12, 0},
-                                                               {7, 0},
-                                                               {13, 0},
-                                                               {7, 0},
-                                                               {14, 0},
-                                                               {2, 0},
-                                                               {14, 0},
-                                                               {5, 0},
-                                                               {2, 0},
-                                                               {1, 0},
-                                                               {0, 0},
-                                                               {1, 0}},
-                                                              {{1, 0},
-                                                               {3, 0},
-                                                               {0, 0},
-                                                               {7, 0},
-                                                               {3, 0},
-                                                               {14, 0},
-                                                               {11, 0},
-                                                               {5, 0},
-                                                               {6, 0},
-                                                               {11, 0},
-                                                               {3, 0},
-                                                               {7, 0},
-                                                               {0, 0},
-                                                               {12, 0},
-                                                               {1, 0},
-                                                               {1, 0}},
-                                                              {{2, 0},
-                                                               {11, 0},
-                                                               {9, 0},
-                                                               {2, 0},
-                                                               {0, 0},
-                                                               {3, 0},
-                                                               {0, 0},
-                                                               {8, 0},
-                                                               {0, 0},
-                                                               {12, 0},
-                                                               {8, 0},
-                                                               {5, 0},
-                                                               {14, 0},
-                                                               {10, 0},
-                                                               {4, 0},
-                                                               {1, 0}},
-                                                              {{9, 0},
-                                                               {12, 0},
-                                                               {2, 0},
-                                                               {13, 0},
-                                                               {0, 0},
-                                                               {11, 0},
-                                                               {8, 0},
-                                                               {1, 0},
-                                                               {1, 0},
-                                                               {13, 0},
-                                                               {2, 0},
-                                                               {8, 0},
-                                                               {10, 0},
-                                                               {2, 0},
-                                                               {13, 0},
-                                                               {1, 0}},
-                                                              {{14, 0},
-                                                               {9, 0},
-                                                               {13, 0},
-                                                               {13, 0},
-                                                               {13, 0},
-                                                               {12, 0},
-                                                               {11, 0},
-                                                               {2, 0},
-                                                               {0, 0},
-                                                               {3, 0},
-                                                               {11, 0},
-                                                               {3, 0},
-                                                               {6, 0},
-                                                               {6, 0},
-                                                               {13, 0},
-                                                               {1, 0}},
-                                                              {{3, 0},
-                                                               {14, 0},
-                                                               {4, 0},
-                                                               {7, 0},
-                                                               {10, 0},
-                                                               {14, 0},
-                                                               {6, 0},
-                                                               {13, 0},
-                                                               {11, 0},
-                                                               {12, 0},
-                                                               {6, 0},
-                                                               {7, 0},
-                                                               {14, 0},
-                                                               {12, 0},
-                                                               {0, 0},
-                                                               {1, 0}},
-                                                              {{13, 0},
-                                                               {11, 0},
-                                                               {9, 0},
-                                                               {14, 0},
-                                                               {14, 0},
-                                                               {14, 0},
-                                                               {12, 0},
-                                                               {13, 0},
-                                                               {1, 0},
-                                                               {10, 0},
-                                                               {8, 0},
-                                                               {8, 0},
-                                                               {11, 0},
-                                                               {14, 0},
-                                                               {14, 0},
-                                                               {1, 0}},
-                                                              {{10, 0},
-                                                               {14, 0},
-                                                               {9, 0},
-                                                               {3, 0},
-                                                               {7, 0},
-                                                               {11, 0},
-                                                               {8, 0},
-                                                               {8, 0},
-                                                               {11, 0},
-                                                               {3, 0},
-                                                               {0, 0},
-                                                               {6, 0},
-                                                               {12, 0},
-                                                               {5, 0},
-                                                               {2, 0},
-                                                               {1, 0}},
-                                                              {{7, 0},
-                                                               {13, 0},
-                                                               {8, 0},
-                                                               {7, 0},
-                                                               {0, 0},
-                                                               {12, 0},
-                                                               {4, 0},
-                                                               {9, 0},
-                                                               {8, 0},
-                                                               {13, 0},
-                                                               {3, 0},
-                                                               {8, 0},
-                                                               {0, 0},
-                                                               {5, 0},
-                                                               {2, 0},
-                                                               {1, 0}},
-                                                              {{2, 0},
-                                                               {2, 0},
-                                                               {3, 0},
-                                                               {10, 0},
-                                                               {10, 0},
-                                                               {14, 0},
-                                                               {0, 0},
-                                                               {5, 0},
-                                                               {7, 0},
-                                                               {5, 0},
-                                                               {6, 0},
-                                                               {10, 0},
-                                                               {8, 0},
-                                                               {11, 0},
-                                                               {6, 0},
-                                                               {1, 0}},
-                                                              {{9, 0},
-                                                               {6, 0},
-                                                               {0, 0},
-                                                               {2, 0},
-                                                               {2, 0},
-                                                               {12, 0},
-                                                               {13, 0},
-                                                               {13, 0},
-                                                               {12, 0},
-                                                               {9, 0},
-                                                               {8, 0},
-                                                               {5, 0},
-                                                               {12, 0},
-                                                               {9, 0},
-                                                               {7, 0},
-                                                               {1, 0}}};
+            std::vector<ComplexVector> system = {{{7, 0},
+                                                  {4, 0},
+                                                  {7, 0},
+                                                  {2, 0},
+                                                  {14, 0},
+                                                  {5, 0},
+                                                  {2, 0},
+                                                  {4, 0},
+                                                  {14, 0},
+                                                  {2, 0},
+                                                  {6, 0},
+                                                  {7, 0},
+                                                  {7, 0},
+                                                  {0, 0},
+                                                  {3, 0},
+                                                  {1, 0}},
+                                                 {{7, 0},
+                                                  {11, 0},
+                                                  {9, 0},
+                                                  {7, 0},
+                                                  {0, 0},
+                                                  {12, 0},
+                                                  {1, 0},
+                                                  {14, 0},
+                                                  {7, 0},
+                                                  {12, 0},
+                                                  {0, 0},
+                                                  {4, 0},
+                                                  {4, 0},
+                                                  {14, 0},
+                                                  {13, 0},
+                                                  {1, 0}},
+                                                 {{6, 0},
+                                                  {0, 0},
+                                                  {13, 0},
+                                                  {0, 0},
+                                                  {0, 0},
+                                                  {2, 0},
+                                                  {4, 0},
+                                                  {8, 0},
+                                                  {8, 0},
+                                                  {14, 0},
+                                                  {9, 0},
+                                                  {8, 0},
+                                                  {0, 0},
+                                                  {3, 0},
+                                                  {11, 0},
+                                                  {1, 0}},
+                                                 {{9, 0},
+                                                  {2, 0},
+                                                  {2, 0},
+                                                  {14, 0},
+                                                  {5, 0},
+                                                  {4, 0},
+                                                  {14, 0},
+                                                  {7, 0},
+                                                  {4, 0},
+                                                  {8, 0},
+                                                  {4, 0},
+                                                  {5, 0},
+                                                  {11, 0},
+                                                  {10, 0},
+                                                  {4, 0},
+                                                  {1, 0}},
+                                                 {{10, 0},
+                                                  {7, 0},
+                                                  {12, 0},
+                                                  {12, 0},
+                                                  {12, 0},
+                                                  {7, 0},
+                                                  {13, 0},
+                                                  {7, 0},
+                                                  {14, 0},
+                                                  {2, 0},
+                                                  {14, 0},
+                                                  {5, 0},
+                                                  {2, 0},
+                                                  {1, 0},
+                                                  {0, 0},
+                                                  {1, 0}},
+                                                 {{1, 0},
+                                                  {3, 0},
+                                                  {0, 0},
+                                                  {7, 0},
+                                                  {3, 0},
+                                                  {14, 0},
+                                                  {11, 0},
+                                                  {5, 0},
+                                                  {6, 0},
+                                                  {11, 0},
+                                                  {3, 0},
+                                                  {7, 0},
+                                                  {0, 0},
+                                                  {12, 0},
+                                                  {1, 0},
+                                                  {1, 0}},
+                                                 {{2, 0},
+                                                  {11, 0},
+                                                  {9, 0},
+                                                  {2, 0},
+                                                  {0, 0},
+                                                  {3, 0},
+                                                  {0, 0},
+                                                  {8, 0},
+                                                  {0, 0},
+                                                  {12, 0},
+                                                  {8, 0},
+                                                  {5, 0},
+                                                  {14, 0},
+                                                  {10, 0},
+                                                  {4, 0},
+                                                  {1, 0}},
+                                                 {{9, 0},
+                                                  {12, 0},
+                                                  {2, 0},
+                                                  {13, 0},
+                                                  {0, 0},
+                                                  {11, 0},
+                                                  {8, 0},
+                                                  {1, 0},
+                                                  {1, 0},
+                                                  {13, 0},
+                                                  {2, 0},
+                                                  {8, 0},
+                                                  {10, 0},
+                                                  {2, 0},
+                                                  {13, 0},
+                                                  {1, 0}},
+                                                 {{14, 0},
+                                                  {9, 0},
+                                                  {13, 0},
+                                                  {13, 0},
+                                                  {13, 0},
+                                                  {12, 0},
+                                                  {11, 0},
+                                                  {2, 0},
+                                                  {0, 0},
+                                                  {3, 0},
+                                                  {11, 0},
+                                                  {3, 0},
+                                                  {6, 0},
+                                                  {6, 0},
+                                                  {13, 0},
+                                                  {1, 0}},
+                                                 {{3, 0},
+                                                  {14, 0},
+                                                  {4, 0},
+                                                  {7, 0},
+                                                  {10, 0},
+                                                  {14, 0},
+                                                  {6, 0},
+                                                  {13, 0},
+                                                  {11, 0},
+                                                  {12, 0},
+                                                  {6, 0},
+                                                  {7, 0},
+                                                  {14, 0},
+                                                  {12, 0},
+                                                  {0, 0},
+                                                  {1, 0}},
+                                                 {{13, 0},
+                                                  {11, 0},
+                                                  {9, 0},
+                                                  {14, 0},
+                                                  {14, 0},
+                                                  {14, 0},
+                                                  {12, 0},
+                                                  {13, 0},
+                                                  {1, 0},
+                                                  {10, 0},
+                                                  {8, 0},
+                                                  {8, 0},
+                                                  {11, 0},
+                                                  {14, 0},
+                                                  {14, 0},
+                                                  {1, 0}},
+                                                 {{10, 0},
+                                                  {14, 0},
+                                                  {9, 0},
+                                                  {3, 0},
+                                                  {7, 0},
+                                                  {11, 0},
+                                                  {8, 0},
+                                                  {8, 0},
+                                                  {11, 0},
+                                                  {3, 0},
+                                                  {0, 0},
+                                                  {6, 0},
+                                                  {12, 0},
+                                                  {5, 0},
+                                                  {2, 0},
+                                                  {1, 0}},
+                                                 {{7, 0},
+                                                  {13, 0},
+                                                  {8, 0},
+                                                  {7, 0},
+                                                  {0, 0},
+                                                  {12, 0},
+                                                  {4, 0},
+                                                  {9, 0},
+                                                  {8, 0},
+                                                  {13, 0},
+                                                  {3, 0},
+                                                  {8, 0},
+                                                  {0, 0},
+                                                  {5, 0},
+                                                  {2, 0},
+                                                  {1, 0}},
+                                                 {{2, 0},
+                                                  {2, 0},
+                                                  {3, 0},
+                                                  {10, 0},
+                                                  {10, 0},
+                                                  {14, 0},
+                                                  {0, 0},
+                                                  {5, 0},
+                                                  {7, 0},
+                                                  {5, 0},
+                                                  {6, 0},
+                                                  {10, 0},
+                                                  {8, 0},
+                                                  {11, 0},
+                                                  {6, 0},
+                                                  {1, 0}},
+                                                 {{9, 0},
+                                                  {6, 0},
+                                                  {0, 0},
+                                                  {2, 0},
+                                                  {2, 0},
+                                                  {12, 0},
+                                                  {13, 0},
+                                                  {13, 0},
+                                                  {12, 0},
+                                                  {9, 0},
+                                                  {8, 0},
+                                                  {5, 0},
+                                                  {12, 0},
+                                                  {9, 0},
+                                                  {7, 0},
+                                                  {1, 0}}};
 
-            std::vector<DoubleComplex> test_solution = {
-                {0.05461404, 0},  {0.03584441, 0},  {-0.00895461, 0}, {-0.00979037, 0}, {-0.01083266, 0},
-                {-0.03845678, 0}, {-0.00652489, 0}, {-0.08356931, 0}, {0.05730963, 0},  {0.01390954, 0},
-                {0.026622, 0},    {0.04469859, 0},  {-0.00946348, 0}, {0.08945877, 0},  {0.00377452, 0}};
+            ComplexVector test_solution = {{0.05461404, 0},  {0.03584441, 0},  {-0.00895461, 0}, {-0.00979037, 0},
+                                           {-0.01083266, 0}, {-0.03845678, 0}, {-0.00652489, 0}, {-0.08356931, 0},
+                                           {0.05730963, 0},  {0.01390954, 0},  {0.026622, 0},    {0.04469859, 0},
+                                           {-0.00946348, 0}, {0.08945877, 0},  {0.00377452, 0}};
 
             naive_gauss_elimination(system);
 
@@ -823,7 +822,7 @@ TEST_CASE("Test the link solver algorithm") {
             auto const system_size = narrow_cast<Idx>(system.size());
             auto last_column = system |
                                std::views::transform([system_size](auto const& row) { return row[system_size]; }) |
-                               std::ranges::to<std::vector<DoubleComplex>>();
+                               std::ranges::to<ComplexVector>();
             compare_vectors(last_column, test_solution, 1e-7);
         }
     }
@@ -838,16 +837,16 @@ TEST_CASE("Test the link solver algorithm") {
 
             solution_set.extended_rhs = {{0, 0}, {1, 1}, {-2, -2}, {0, 0}, {0, 0}, {0, 0}, {0, 0}};
 
-            std::vector<std::vector<DoubleComplex>> const test_system = {
+            std::vector<ComplexVector> const test_system = {
                 {{3, 0}, {1, 0}, {1, 0}, {0.458333, 0.458333}},
                 {{-0.333333, 0}, {2.66667, 0}, {-1.33333, 0}, {0.791667, 0.791667}},
                 {{-0.333333, 0}, {0.5, -0}, {3, 0}, {-0.166667, -0.166667}}};
 
-            std::vector<DoubleComplex> internal_loads = compute_internal_loads(solution_set, test_system);
+            ComplexVector internal_loads = compute_internal_loads(solution_set, test_system);
 
-            std::vector<DoubleComplex> test_loads = {
-                {-0.291667, -0.291667}, {0.0416667, 0.0416667}, {-0.75, -0.75},        {0.458333, 0.458333},
-                {0.791667, 0.791667},   {0.166667, 0.166667},   {-0.166667, -0.166667}};
+            ComplexVector test_loads = {{-0.291667, -0.291667}, {0.0416667, 0.0416667}, {-0.75, -0.75},
+                                        {0.458333, 0.458333},   {0.791667, 0.791667},   {0.166667, 0.166667},
+                                        {-0.166667, -0.166667}};
 
             compare_vectors(internal_loads, test_loads, 1e-5);
         }
@@ -860,11 +859,11 @@ TEST_CASE("Test the link solver algorithm") {
             auto solution_set = generate_input_result<SolutionSet>(data, row, col, Idx{1});
             solution_set.extended_rhs = {{1, 0}, {-1, -0}, {-1, -0}, {0, 0}};
 
-            std::vector<std::vector<DoubleComplex>> const test_system = {{{3, 0}, {-0.666667, 0}}};
+            std::vector<ComplexVector> const test_system = {{{3, 0}, {-0.666667, 0}}};
 
-            std::vector<DoubleComplex> internal_loads = compute_internal_loads(solution_set, test_system);
+            ComplexVector internal_loads = compute_internal_loads(solution_set, test_system);
 
-            std::vector<DoubleComplex> test_loads = {{1, 0}, {-0.333333, -0}, {-0.333333, -0}, {-0.666667, 0}};
+            ComplexVector test_loads = {{1, 0}, {-0.333333, -0}, {-0.333333, -0}, {-0.666667, 0}};
 
             compare_vectors(internal_loads, test_loads, 1.e-5);
         }
@@ -873,80 +872,79 @@ TEST_CASE("Test the link solver algorithm") {
     SUBCASE("Testing the compute_loads_link_elements - end to end test") {
         SUBCASE("Complex case with complex loads") {
             auto edges = std::vector<BranchIdx>{{3, 0}, {1, 0}, {2, 0}, {3, 2}, {1, 2}, {1, 4}, {3, 4}};
-            auto node_loads = std::vector<DoubleComplex>{{1.0, 1.0}, {1.0, 1.0}, {-2.0, -2.0}, {0.0, 0.0}, {0.0, 0.0}};
+            auto node_loads = ComplexVector{{1.0, 1.0}, {1.0, 1.0}, {-2.0, -2.0}, {0.0, 0.0}, {0.0, 0.0}};
 
-            std::vector<DoubleComplex> internal_loads = compute_loads_link_elements(edges, node_loads);
+            ComplexVector internal_loads = compute_loads_link_elements(edges, node_loads);
 
-            std::vector<DoubleComplex> test_loads = {
-                {-0.291667, -0.291667}, {0.0416667, 0.0416667}, {-0.75, -0.75},        {0.458333, 0.458333},
-                {0.791667, 0.791667},   {0.166667, 0.166667},   {-0.166667, -0.166667}};
+            ComplexVector test_loads = {{-0.291667, -0.291667}, {0.0416667, 0.0416667}, {-0.75, -0.75},
+                                        {0.458333, 0.458333},   {0.791667, 0.791667},   {0.166667, 0.166667},
+                                        {-0.166667, -0.166667}};
 
             compare_vectors(internal_loads, test_loads, 1.e-6);
         }
 
         SUBCASE("One edge, two nodes, two real loads") {
             auto edges = std::vector<BranchIdx>{{0, 1}};
-            auto node_loads = std::vector<DoubleComplex>{1, -1};
+            auto node_loads = ComplexVector{1, -1};
 
-            std::vector<DoubleComplex> internal_loads = compute_loads_link_elements(edges, node_loads);
+            ComplexVector internal_loads = compute_loads_link_elements(edges, node_loads);
 
-            std::vector<DoubleComplex> test_loads = {{1, -0}};
+            ComplexVector test_loads = {{1, -0}};
 
             compare_vectors(internal_loads, test_loads, 1.e-8);
         }
 
         SUBCASE("Two edges, three nodes, two real loads") {
             auto edges = std::vector<BranchIdx>{{1, 0}, {1, 2}};
-            auto node_loads = std::vector<DoubleComplex>{1, -1, 0};
+            auto node_loads = ComplexVector{1, -1, 0};
 
-            std::vector<DoubleComplex> internal_loads = compute_loads_link_elements(edges, node_loads);
+            ComplexVector internal_loads = compute_loads_link_elements(edges, node_loads);
 
-            std::vector<DoubleComplex> test_loads = {{-1, -0}, {-0, -0}};
+            ComplexVector test_loads = {{-1, -0}, {-0, -0}};
 
             compare_vectors(internal_loads, test_loads, 1.e-8);
         }
 
         SUBCASE("Three edges, three nodes, two real loads") {
             auto edges = std::vector<BranchIdx>{{0, 1}, {1, 2}, {2, 0}};
-            auto node_loads = std::vector<DoubleComplex>{1, -1, 0};
+            auto node_loads = ComplexVector{1, -1, 0};
 
-            std::vector<DoubleComplex> internal_loads = compute_loads_link_elements(edges, node_loads);
+            ComplexVector internal_loads = compute_loads_link_elements(edges, node_loads);
 
-            std::vector<DoubleComplex> test_loads = {{0.666667, -0}, {-0.333333, -0}, {-0.333333, 0}};
+            ComplexVector test_loads = {{0.666667, -0}, {-0.333333, -0}, {-0.333333, 0}};
 
             compare_vectors(internal_loads, test_loads, 1.e-6);
         }
 
         SUBCASE("Two edges, two nodes, two real loads") {
             auto edges = std::vector<BranchIdx>{{0, 1}, {0, 1}};
-            auto node_loads = std::vector<DoubleComplex>{1, -1};
+            auto node_loads = ComplexVector{1, -1};
 
-            std::vector<DoubleComplex> internal_loads = compute_loads_link_elements(edges, node_loads);
+            ComplexVector internal_loads = compute_loads_link_elements(edges, node_loads);
 
-            std::vector<DoubleComplex> test_loads = {{0.5, -0}, {0.5, 0}};
+            ComplexVector test_loads = {{0.5, -0}, {0.5, 0}};
 
             compare_vectors(internal_loads, test_loads, 1.e-8);
         }
 
         SUBCASE("Four edges, four nodes, two real loads") {
             auto edges = std::vector<BranchIdx>{{0, 1}, {2, 1}, {3, 2}, {3, 1}};
-            auto node_loads = std::vector<DoubleComplex>{1, 0, 0, -1};
+            auto node_loads = ComplexVector{1, 0, 0, -1};
 
-            std::vector<DoubleComplex> internal_loads = compute_loads_link_elements(edges, node_loads);
+            ComplexVector internal_loads = compute_loads_link_elements(edges, node_loads);
 
-            std::vector<DoubleComplex> test_loads = {{1, 0}, {-0.333333, -0}, {-0.333333, -0}, {-0.666667, 0}};
+            ComplexVector test_loads = {{1, 0}, {-0.333333, -0}, {-0.333333, -0}, {-0.666667, 0}};
 
             compare_vectors(internal_loads, test_loads, 1.e-6);
         }
         SUBCASE("Eight edges, five nodes, two real loads") {
             auto edges = std::vector<BranchIdx>{{0, 1}, {1, 2}, {2, 3}, {0, 3}, {0, 4}, {1, 4}, {2, 4}, {3, 4}};
-            auto node_loads = std::vector<DoubleComplex>{1, -1, 0, 0, 0};
+            auto node_loads = ComplexVector{1, -1, 0, 0, 0};
 
-            std::vector<DoubleComplex> internal_loads = compute_loads_link_elements(edges, node_loads);
+            ComplexVector internal_loads = compute_loads_link_elements(edges, node_loads);
 
-            std::vector<DoubleComplex> test_loads = {{0.53333333, 0},  {-0.2, 0},       {-0.13333333, 0},
-                                                     {0.2, 0},         {0.26666667, 0}, {-0.26666667, 0},
-                                                     {-0.06666667, 0}, {0.06666667, 0}};
+            ComplexVector test_loads = {{0.53333333, 0}, {-0.2, 0},        {-0.13333333, 0}, {0.2, 0},
+                                        {0.26666667, 0}, {-0.26666667, 0}, {-0.06666667, 0}, {0.06666667, 0}};
 
             compare_vectors(internal_loads, test_loads, 1.e-8);
         }

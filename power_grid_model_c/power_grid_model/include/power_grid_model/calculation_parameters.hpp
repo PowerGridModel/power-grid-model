@@ -8,6 +8,7 @@
 #include "common/enum.hpp"
 #include "common/grouped_index_vector.hpp"
 #include "common/maybe_owning_view.hpp"
+#include "common/small_vector.hpp"
 #include "common/statistics.hpp"
 #include "common/three_phase_tensor.hpp"
 
@@ -18,7 +19,8 @@
 
 namespace power_grid_model {
 constexpr Idx disconnected = -1;
-constexpr Idx status_off = 0;
+constexpr IntS status_on = 1;
+constexpr IntS status_off = 0;
 
 // Entry of YBus, node addmittance matrix
 struct YBusElement {
@@ -48,6 +50,8 @@ struct BusSolverOutput {
     LimitViolation q_limit_violated{LimitViolation::none};
 };
 
+// TODO(mgovers): cleanup v2: branch solver output should always be in current domain; conversion to power domain should
+// be done in main_core/output.hpp
 template <symmetry_tag sym_type> struct BranchSolverOutput {
     using sym = sym_type;
 
@@ -82,7 +86,8 @@ template <symmetry_tag sym_type> struct FaultShortCircuitSolverOutput {
 template <symmetry_tag sym_type> struct ApplianceSolverOutput {
     using sym = sym_type;
 
-    ComplexValue<sym> s{};
+    ComplexValue<sym> s{}; // TODO(mgovers): cleanup v2: appliance solver output should always be in current domain;
+                           // conversion to power domain should be done in main_core/output.hpp
     ComplexValue<sym> i{};
 };
 template <symmetry_tag sym_type> struct ApplianceShortCircuitSolverOutput {
@@ -407,10 +412,14 @@ struct OptimizerOutput {
 
 template <typename T> struct SupernodeOutput;
 
+// One entry per user node of a topological node. Only link-merged supernodes hold more than one, so
+// inline room for a single element keeps the ordinary node from allocating at all.
+template <symmetry_tag sym> using UserNodeValueVector = SmallVector<ComplexValue<sym>, 1>;
+
 template <steady_state_solver_output_type SolverOutputType> struct SupernodeOutput<SolverOutputType> {
     using sym = decode_symmetry_v<SolverOutputType>;
 
-    ComplexValueVector<sym> bus_injection;     // user bus output
+    UserNodeValueVector<sym> bus_injection;    // user bus output
     std::vector<BranchSolverOutput<sym>> link; // user link
 };
 template <short_circuit_solver_output_type SolverOutputType> struct SupernodeOutput<SolverOutputType> {
