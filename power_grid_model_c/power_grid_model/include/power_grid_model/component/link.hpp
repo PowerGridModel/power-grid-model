@@ -31,7 +31,7 @@ class Link final : public Edge {
     double phase_shift() const override { return 0.0; }
 
     template <symmetry_tag sym> BranchOutput<sym> get_energized_zero_output() const {
-        BranchOutput<sym> output{};
+        BranchOutput<sym> output = get_null_output<sym>();
         static_cast<BaseOutput&>(output) = base_output(true);
         return output;
     }
