@@ -410,13 +410,13 @@ template <typename T> struct SupernodeOutput;
 template <steady_state_solver_output_type SolverOutputType> struct SupernodeOutput<SolverOutputType> {
     using sym = decode_symmetry_v<SolverOutputType>;
 
-    ComplexValueVector<sym> bus_injection; // user bus output
-    BranchSolverOutput<sym> branch;        // user link
+    ComplexValueVector<sym> bus_injection;     // user bus output
+    std::vector<BranchSolverOutput<sym>> link; // user link
 };
 template <short_circuit_solver_output_type SolverOutputType> struct SupernodeOutput<SolverOutputType> {
     using sym = decode_symmetry_v<SolverOutputType>;
 
-    BranchShortCircuitSolverOutput<sym> branch; // user link
+    std::vector<BranchShortCircuitSolverOutput<sym>> link; // user link
 };
 
 template <typename T> struct MathOutput {
@@ -568,6 +568,7 @@ struct ComponentToMathCoupling {
 struct TopologicalComponentToMathCoupling {
     std::vector<Idx2D> node;
     std::vector<Idx2D> branch;
+    std::vector<Idx2D> link; // NEW path: links have topo-node coupling instead of math coupling
     std::vector<Idx2DBranch3> branch3;
     std::vector<Idx2D> shunt;
     std::vector<Idx2D> load_gen;

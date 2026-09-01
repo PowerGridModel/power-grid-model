@@ -57,9 +57,18 @@ constexpr auto get_math_id(MainModelState<ComponentContainer> const& state, Idx 
 }
 
 template <std::derived_from<Edge> ComponentType, class ComponentContainer>
-    requires model_component_state_c<MainModelState, ComponentContainer, ComponentType>
+    requires model_component_state_c<MainModelState, ComponentContainer, ComponentType> &&
+             (!std::same_as<ComponentType, Link>)
 constexpr auto get_math_id(MainModelState<ComponentContainer> const& state, Idx topology_sequence_idx) {
     return state.topo_comp_coup->branch[topology_sequence_idx];
+}
+
+template <std::same_as<Link> ComponentType, class ComponentContainer>
+    requires model_component_state_c<MainModelState, ComponentContainer, ComponentType>
+constexpr auto get_math_id(MainModelState<ComponentContainer> const& state, Idx topology_sequence_idx) {
+    // Links don't have math IDs; they map to topological nodes instead
+    // Return the topo-node coupling for this link
+    return state.reduced_topology->topo_node_coup.coupling.user_links_to_topo_nodes[topology_sequence_idx];
 }
 
 template <std::derived_from<Branch3> ComponentType, class ComponentContainer>
@@ -93,9 +102,15 @@ constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> cons
 }
 
 template <std::derived_from<Edge> Component, class ComponentContainer>
-    requires model_component_state_c<MainModelState, ComponentContainer, Component>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component> && (!std::same_as<Component, Link>)
 constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
     return state.topo_comp_coup->branch.cbegin() + get_component_sequence_offset<Edge, Component>(state.components);
+}
+
+template <std::same_as<Link> Component, class ComponentContainer>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
+constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
+    return state.reduced_topology->topo_node_coup.coupling.user_links_to_topo_nodes.cbegin();
 }
 
 template <std::derived_from<Branch3> Component, class ComponentContainer>

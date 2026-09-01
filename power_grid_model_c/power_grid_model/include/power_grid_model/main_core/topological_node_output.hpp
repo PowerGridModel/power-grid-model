@@ -75,9 +75,13 @@ solve_topological_nodes(State const& state, MathOutput<std::vector<SolverOutput>
     std::vector<SupernodeOutput<SolverOutput>> supernode_output =
         state.reduced_topology->topo_node_coup.topo_nodes |
         std::views::transform([](auto const& topo_node) -> SupernodeOutput<SolverOutput> {
-            (void)topo_node; // suppress unused variable warning when not steady-state solver output
             if constexpr (steady_state_solver_output_type<SolverOutput>) {
-                return {.bus_injection = ComplexValueVector<sym>(topo_node.user_nodes.size()), .branch = {}};
+                auto const n_links = narrow_cast<Idx>(std::ranges::ssize(topo_node.user_links));
+                return {.bus_injection = ComplexValueVector<sym>(topo_node.user_nodes.size()),
+                        .link = std::vector<BranchSolverOutput<sym>>(n_links)};
+            } else if constexpr (short_circuit_solver_output_type<SolverOutput>) {
+                auto const n_links = narrow_cast<Idx>(std::ranges::ssize(topo_node.user_links));
+                return {.link = std::vector<BranchShortCircuitSolverOutput<sym>>(n_links)};
             } else {
                 return {};
             }
@@ -104,6 +108,78 @@ solve_topological_nodes(State const& state, MathOutput<std::vector<SolverOutput>
                     add_appliance_injection<ComponentType>(state, math_output, accumulate_injection);
                 }
             });
+
+        // Solve for link flows within each topological node
+        for (auto const& [topo_idx, topo_node] : enumerate(state.reduced_topology->topo_node_coup.topo_nodes)) {
+            if (topo_node.user_links.empty()) {
+                continue; // No links in this topological node
+            }
+
+            // Build mapping from global user node index to local index within this topological node
+            std::unordered_map<Idx, Idx> global_to_local;
+            for (auto const& [local_idx, global_idx] : enumerate(topo_node.user_nodes)) {
+                global_to_local[global_idx] = local_idx;
+            }
+
+            // Remap user_links to use local indices, filtering out disconnected links
+            std::vector<BranchIdx> local_links;
+            std::vector<Idx> link_mapping; // Maps local_links indices to original user_links indices
+            local_links.reserve(topo_node.user_links.size());
+            link_mapping.reserve(topo_node.user_links.size());
+
+            for (auto const& [link_idx, link] : enumerate(topo_node.user_links)) {
+                auto const& [from_global, to_global] = link;
+                // Skip links where either side is disconnected
+                if (from_global == disconnected || to_global == disconnected) {
+                    continue;
+                }
+                local_links.push_back(BranchIdx{global_to_local.at(from_global), global_to_local.at(to_global)});
+                link_mapping.push_back(link_idx);
+            }
+
+            // If all links are disconnected, set null outputs and continue
+            if (local_links.empty()) {
+                for (auto& link_output : supernode_output[topo_idx].link) {
+                    link_output = BranchSolverOutput<sym>{}; // Zero/null output
+                }
+                continue;
+            }
+
+            // Prepare node loads for link solver (always uses DoubleComplex = std::complex<double>)
+            std::vector<DoubleComplex> node_loads;
+            node_loads.reserve(topo_node.user_nodes.size());
+
+            if constexpr (is_symmetric_v<sym>) {
+                // Symmetric: direct copy
+                for (auto const& injection : supernode_output[topo_idx].bus_injection) {
+                    node_loads.push_back(injection);
+                }
+            } else {
+                // Asymmetric: use average of 3 phases
+                for (auto const& injection : supernode_output[topo_idx].bus_injection) {
+                    node_loads.push_back((injection(0) + injection(1) + injection(2)) / 3.0);
+                }
+            }
+
+            // Call link solver with local indices
+            auto const link_flows = link_solver::compute_loads_link_elements(local_links, node_loads);
+
+            // Convert link solver output to BranchSolverOutput format, placing them at correct indices
+            for (auto const& [local_idx, flow] : enumerate(link_flows)) {
+                auto const original_link_idx = link_mapping[local_idx];
+                if constexpr (is_symmetric_v<sym>) {
+                    // Symmetric: direct assignment
+                    supernode_output[topo_idx].link[original_link_idx] = BranchSolverOutput<sym>{
+                        .s_f = flow,
+                        .s_t = -flow // Power out at to-side is negative of power in at from-side
+                    };
+                } else {
+                    // Asymmetric: replicate to 3 phases
+                    supernode_output[topo_idx].link[original_link_idx] = BranchSolverOutput<sym>{
+                        .s_f = ComplexValue<sym>{flow, flow, flow}, .s_t = ComplexValue<sym>{-flow, -flow, -flow}};
+                }
+            }
+        }
     }
 
     return supernode_output;

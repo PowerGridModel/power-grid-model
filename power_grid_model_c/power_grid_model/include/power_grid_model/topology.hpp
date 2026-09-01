@@ -141,6 +141,7 @@ class Topology {
         build_sparse_graph();
         dfs_search();
         couple_branch();
+        // Links are not coupled here; they're merged into topological nodes in supernodes.hpp
         couple_all_appliance();
         couple_voltage_regulators();
         couple_sensors();
@@ -179,6 +180,9 @@ class Topology {
 
         comp_coup_.node.resize(comp_topo_.n_node_total(), unknown_idx2d);
         comp_coup_.branch.resize(comp_topo_.branch_node_idx.size(), unknown_idx2d);
+        // Link coupling is not populated here; links are merged into topological nodes
+        // and accessed via reduced_topology->topo_node_coup.coupling.user_links_to_topo_nodes
+        comp_coup_.link.clear();
         comp_coup_.branch3.resize(comp_topo_.branch3_node_idx.size(), unknown_idx2d_branch3);
         comp_coup_.shunt.resize(comp_topo_.shunt_node_idx.size(), unknown_idx2d);
         comp_coup_.load_gen.resize(comp_topo_.load_gen_node_idx.size(), unknown_idx2d);
