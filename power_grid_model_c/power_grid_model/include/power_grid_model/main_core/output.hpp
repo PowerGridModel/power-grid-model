@@ -180,28 +180,28 @@ inline auto output_result(Component const& branch, MathOutput<std::vector<Solver
     return branch.get_sc_output(get_component_output<Component>(math_output, math_id));
 }
 
-// output link - uses supernode output
-template <std::same_as<Link> Component, class ComponentContainer, steady_state_solver_output_type SolverOutputType>
-    requires model_component_state_c<MainModelState, ComponentContainer, Component>
-constexpr auto output_result(Component const& link, MainModelState<ComponentContainer> const& /* state */,
-                             MathOutput<std::vector<SolverOutputType>> const& math_output, Idx2D const& topo_id) {
-    using sym = decode_symmetry_v<SolverOutputType>;
+// // output link - uses supernode output
+// template <std::same_as<Link> Component, class ComponentContainer, steady_state_solver_output_type SolverOutputType>
+//     requires model_component_state_c<MainModelState, ComponentContainer, Component>
+// constexpr auto output_result(Component const& link, MainModelState<ComponentContainer> const& /* state */,
+//                              MathOutput<std::vector<SolverOutputType>> const& math_output, Idx2D const& topo_id) {
+//     using sym = decode_symmetry_v<SolverOutputType>;
 
-    if (topo_id.group == disconnected) {
-        return link.template get_null_output<sym>();
-    }
-    // Access link output from supernode_output, not solver_output.branch
-    return link.template get_output<sym>(math_output.supernode_output[topo_id.group].link[topo_id.pos]);
-}
-template <std::same_as<Link> Component, class ComponentContainer, short_circuit_solver_output_type SolverOutputType>
-    requires model_component_state_c<MainModelState, ComponentContainer, Component>
-inline auto output_result(Component const& link, MainModelState<ComponentContainer> const& /* state */,
-                          MathOutput<std::vector<SolverOutputType>> const& math_output, Idx2D const& topo_id) {
-    if (topo_id.group == disconnected) {
-        return link.get_null_sc_output();
-    }
-    return link.get_sc_output(math_output.supernode_output[topo_id.group].link[topo_id.pos]);
-}
+//     if (topo_id.group == disconnected) {
+//         return link.template get_null_output<sym>();
+//     }
+//     // Access link output from supernode_output, not solver_output.branch
+//     return link.template get_output<sym>(math_output.supernode_output[topo_id.group].link[topo_id.pos]);
+// }
+// template <std::same_as<Link> Component, class ComponentContainer, short_circuit_solver_output_type SolverOutputType>
+//     requires model_component_state_c<MainModelState, ComponentContainer, Component>
+// inline auto output_result(Component const& link, MainModelState<ComponentContainer> const& /* state */,
+//                           MathOutput<std::vector<SolverOutputType>> const& math_output, Idx2D const& topo_id) {
+//     if (topo_id.group == disconnected) {
+//         return link.get_null_sc_output();
+//     }
+//     return link.get_sc_output(math_output.supernode_output[topo_id.group].link[topo_id.pos]);
+// }
 
 // output branch3
 template <std::derived_from<Branch3> Component, steady_state_solver_output_type SolverOutputType>
