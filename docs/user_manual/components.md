@@ -886,7 +886,7 @@ The $\pmod{2\pi}$ is handled such that $-\pi \lt \theta_{\text{angle},\text{resi
 `power_sensor` is an abstract class for symmetric and asymmetric power sensor and is derived from
 [sensor](#sensor).
 It measures the active/reactive power flow of a terminal.
-The terminal is either connecting an `appliance` and a `node`, or connecting the from/to end of a `branch` and a `node`.
+The terminal is always connected to a `node` on the one side, and either `appliance`, or the from/to end of a `branch` on the other.
 In case of a terminal between an `appliance` and a `node`, the power
 [Reference Direction](data-model.md#reference-direction) in the measurement data is the same as the reference
 direction of the `appliance`.
@@ -894,7 +894,7 @@ For example, if a `power_sensor` is measuring a `source`, a positive `p_measured
 from the source to the node.
 
 ```{note}
-1. Due to the high admittance of a `link` it is chosen that a power sensor cannot be coupled to a `link`.
+1. Due to the high admittance of a `link`, it is chosen that a power sensor cannot be coupled to a `link`.
 
 2. The node injection power sensor gets placed on a node.
 In the state estimation result, the power from this injection is distributed equally among the connected appliances at
