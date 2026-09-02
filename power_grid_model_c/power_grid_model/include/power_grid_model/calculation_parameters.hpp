@@ -506,7 +506,7 @@ struct ReducedComponentTopology {
 
 struct TopologicalNode {
     IdxVector user_nodes;
-    std::vector<BranchIdx> user_links;
+    std::vector<BranchIdx> user_links; // TODO(figueroa1395): temporarily doesn't have user nodes, but internal nodes while exploring
 
     constexpr auto is_supernode() const noexcept -> bool { return user_nodes.size() > 1 && !user_links.empty(); }
 };
@@ -577,7 +577,6 @@ struct ComponentToMathCoupling {
 struct TopologicalComponentToMathCoupling {
     std::vector<Idx2D> node;
     std::vector<Idx2D> branch;
-    std::vector<Idx2D> link; // NEW path: links have topo-node coupling instead of math coupling
     std::vector<Idx2DBranch3> branch3;
     std::vector<Idx2D> shunt;
     std::vector<Idx2D> load_gen;
