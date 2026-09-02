@@ -305,7 +305,8 @@ template <symmetry_tag sym_type> struct StateEstimationInput {
 struct ShortCircuitInput {
     DenseGroupedIdxVector fault_buses;
     std::vector<FaultCalcParam> faults;
-    ComplexVector source; // Complex u_ref of each source
+    ComplexVector source;                   // Complex u_ref of each source
+    DoubleVector source_admittance_scaling; // Multiplier for source y_ref in short-circuit calculations
 };
 
 template <typename T>

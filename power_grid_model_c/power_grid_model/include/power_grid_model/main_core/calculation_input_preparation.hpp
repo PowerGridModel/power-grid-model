@@ -311,6 +311,7 @@ prepare_short_circuit_input(main_model_state_c auto const& state, ComponentToMat
         sc_input[i].faults.resize(state.components.template size<Fault>());
 
         sc_input[i].source.resize(state.math_topology[i]->n_source());
+        sc_input[i].source_admittance_scaling.resize(state.math_topology[i]->n_source());
     }
 
     comp_coup = ComponentToMathCoupling{.fault = std::move(fault_coup)};
@@ -323,6 +324,13 @@ prepare_short_circuit_input(main_model_state_c auto const& state, ComponentToMat
         state, state.topo_comp_coup->source, sc_input, [&state, voltage_scaling](Source const& source) {
             return std::pair{state.components.template get_item<Node>(source.node()).u_rated(), voltage_scaling};
         });
+
+    // Source::calc_param() returns c * exp(j * angle). sk is defined at rated voltage, so its source-equivalent
+    // impedance scales with c and the corresponding admittance scales with 1 / c.
+    for (auto& input : sc_input) {
+        std::ranges::transform(input.source, input.source_admittance_scaling.begin(),
+                               [](DoubleComplex const& u_ref) { return 1.0 / cabs(u_ref); });
+    }
 
     // only now do we know where the fault objects are placed => resize to used only
     for (auto& input : sc_input) {
