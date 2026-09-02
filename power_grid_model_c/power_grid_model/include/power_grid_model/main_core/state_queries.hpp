@@ -101,7 +101,15 @@ constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> cons
 template <std::same_as<Link> Component, class ComponentContainer>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
-    return state.reduced_topology->topo_node_coup.coupling.user_links_to_topo_nodes.cbegin();
+    auto const& link_topo_ids = state.reduced_topology->topo_node_coup.coupling.user_links_to_topo_nodes;
+
+    if (std::ranges::ssize(link_topo_ids) == get_component_size<Link>(state.components)) {
+        // new path: links are not branches
+        return link_topo_ids.cbegin();
+    } else {
+        // legacy path: links are branches
+        return state.topo_comp_coup->branch.cbegin() + get_component_sequence_offset<Edge, Link>(state.components);
+    }
 }
 
 template <std::derived_from<Branch3> Component, class ComponentContainer>

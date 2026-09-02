@@ -132,11 +132,11 @@ constexpr auto output_result(Component const& node, MainModelState<ComponentCont
 // output link
 template <std::same_as<Link> Component, class ComponentContainer, steady_state_solver_output_type SolverOutputType>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
-constexpr auto output_result(Component const& link, MainModelState<ComponentContainer> const& /* state */,
+constexpr auto output_result(Component const& link, MainModelState<ComponentContainer> const& state,
                              MathOutput<std::vector<SolverOutputType>> const& math_output, Idx2D const& topo_id) {
     using sym = decode_symmetry_v<SolverOutputType>;
 
-    if (topo_id.group == disconnected) {
+    if (topo_id.group == disconnected || state.topo_comp_coup->node[topo_id.group].group == disconnected) {
         return link.template get_null_output<sym>();
     }
     if (!link.edge_status()) {
@@ -146,9 +146,9 @@ constexpr auto output_result(Component const& link, MainModelState<ComponentCont
 }
 template <std::same_as<Link> Component, class ComponentContainer, short_circuit_solver_output_type SolverOutputType>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
-inline auto output_result(Component const& link, MainModelState<ComponentContainer> const& /* state */,
+inline auto output_result(Component const& link, MainModelState<ComponentContainer> const& state,
                           MathOutput<std::vector<SolverOutputType>> const& math_output, Idx2D const& topo_id) {
-    if (topo_id.group == disconnected) {
+    if (topo_id.group == disconnected || state.topo_comp_coup->node[topo_id.group].group == disconnected) {
         return link.get_null_sc_output();
     }
     if (!link.edge_status()) {
