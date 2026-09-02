@@ -129,8 +129,23 @@ template <typename ComponentType, symmetry_tag sym, typename ComponentContainer>
              std::derived_from<ComponentType, Shunt> || std::derived_from<ComponentType, Source>
 constexpr void add_to_increment(std::vector<MathModelParamIncrement<sym>>& increments,
                                 MainModelState<ComponentContainer> const& state, Idx2D const& changed_component_idx) {
-    Idx const topo_sequence_idx = main_core::get_topology_index<ComponentType>(state.components, changed_component_idx);
-    add_to_math_model_params<ComponentType>(increments, state, topo_sequence_idx);
+    if constexpr (std::derived_from<ComponentType, Branch>) {
+        if (state.comp_topo->link_node_idx.empty()) {
+            // legacy branch_node_idx is registered from Edge
+            Idx const topology_idx = get_component_sequence_idx<Edge>(state.components, changed_component_idx);
+
+            add_to_math_model_params<Edge>(increments, state, topology_idx);
+        } else {
+            // new branch_node_idx is registered from Branch
+            Idx const topology_idx = get_topology_index<ComponentType>(state.components, changed_component_idx);
+
+            add_to_math_model_params<Branch>(increments, state, topology_idx);
+        }
+    } else {
+        Idx const topology_idx = get_topology_index<ComponentType>(state.components, changed_component_idx);
+
+        add_to_math_model_params<ComponentType>(increments, state, topology_idx);
+    }
 }
 // default implementation for other components, does nothing
 template <typename ComponentType, symmetry_tag sym, typename ComponentContainer>
