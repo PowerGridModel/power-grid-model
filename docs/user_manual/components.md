@@ -122,6 +122,67 @@ In this case, the attribute `from_status` and `to_status` is always 1.
 | `i_to`         | `RealValueOutput` | ampere (A) | magnitude of current at to-side   |
 | `i_to_angle`   | `RealValueOutput` | rad        | current angle at to-side          |
 
+### Link
+
+* type name: `link`
+
+`link` is an [edge](#edge) which usually represents a short internal cable/connection between two busbars inside a
+substation.
+In reality, it has a very high admittance (small impedance).
+
+Because of this, the power-grid-model choses to model this accordingly:
+
+* If there are no node injection sensors in the grid, links are modeled as infinite (but equal) admittance connections.
+* If there are node injection sensors in the grid, link admittances are modeled with a fixed per-unit value, equivalent
+  to 10e6 siemens for a 10kV network.
+
+```{note}
+New in version [`v1.13.156`](https://github.com/PowerGridModel/power-grid-model/releases/tag/v1.13.156): links may be
+modeled as infinite (but equal) admittance connections.
+In the old behavior, link admittances were always modeled with the same fixed per-unit value.
+Starting with version `v2.0.0`, link admittances are always modeled as infinite-admittance connections.
+```
+
+Because links have very high admittance, it also is chosen by design that no sensors can be coupled to a `link`.
+There are no additional attributes for `link`.
+
+It is explicitly allowed to connect a link between nodes with different voltage levels to allow modeling
+[ideal transformers](./non-native-components.md#ideal-transformer).
+
+#### Electric Model
+
+`link` is modeled by a constant series admittance $Y_{\text{series}}$.
+If there are no node injection sensors in the grid, the link is an ideal (lossless) connection:
+
+$$
+Y_{\text{series}}\rightarrow \infty
+$$
+
+If there are node injection sensors in the grid, a large but finite admittance is used:
+
+$$
+Y_{\text{series}} = (1 + \mathrm{j}) \cdot 10^6 \,\mathrm{p.u.}
+$$
+
+##### Handling infinite admittances
+
+An admittance matrix that contains infinities is ill-conditioned and cannot be solved directly, so the power-grid-model
+runs a multi-scale calculation.
+
+To set up this multi-scale calculation, nodes are grouped into clusters internally connected by links, called topological nodes.
+The remaining grid is a topologically well-conditioned grid with finite-impedance branches.
+Each topological node in turn has a substructure of infinite-admittance links together with the "external"
+finite-impedance branches and appliances connected to it.
+
+The calculation itself is done in two steps.
+
+1. Solve the topological grid using the [user-specified calculation type and method](./calculations.md).
+   This yields a complete mathematical calculation output for all components except link flows and node injections,
+   including node voltages, branch flows and admittance flows.
+2. Solve for the flows within each topological node separately to obtain the node injection sums and link flows, using the
+   mathematical calculation outputs from the previous step as inputs.
+   This fills in the remaining gaps in the output.
+   
 ## Branch
 
 * type name: `branch`
@@ -168,47 +229,6 @@ $$
    Z_{\text{series}} &= r + \mathrm{j}x \\
    Y_{\text{shunt}} &= 2 \pi fc (\tan \delta +\mathrm{j})
 \end{aligned}
-$$
-
-### Link
-
-* type name: `link`
-
-`link` is an [edge](#edge) which usually represents a short internal cable/connection between two busbars inside a
-substation.
-In reality, it has a very high admittance (small impedance).
-
-Because of this, the power-grid-model choses to model this accordingly:
-
-* If there are no node injection sensors in the grid, links are modeled as infinite (but equal) admittance connections.
-* If there are node injection sensors in the grid, link admittances are modeled with a fixed per-unit value, equivalent
-  to 10e6 siemens for a 10kV network.
-
-```{note}
-New in version [`v1.13.142`](https://github.com/PowerGridModel/power-grid-model/releases/tag/v1.13.142): links may be modeled as infinite (but equal) admittance connections.
-In the old behavior, link admittances were always modeled with the same fixed per-unit value.
-Starting with version `v2.0.0`, link admittances are always modeled as infinite-admittance connections.
-```
-
-Because links have very high admittance, it also is chosen by design that no sensors can be coupled to a `link`.
-There are no additional attributes for `link`.
-
-It is explicitly allowed to connect a link between nodes with different voltage levels to allow modeling
-[ideal transformers](./non-native-components.md#ideal-transformer).
-
-#### Electric Model
-
-`link` is modeled by a constant admittance $Y_{\text{series}}$.
-If there are no node injection sensors in the grid:
-
-$$
-Y_{\text{series}}\rightarrow \infty
-$$
-
-If there are node injection sensors in the grid:
-
-$$
-Y_{\text{series}} = (1 + \mathrm{j}) \cdot 10^6 \,\mathrm{p.u.}
 $$
 
 ### Transformer
@@ -866,8 +886,7 @@ The $\pmod{2\pi}$ is handled such that $-\pi \lt \theta_{\text{angle},\text{resi
 `power_sensor` is an abstract class for symmetric and asymmetric power sensor and is derived from
 [sensor](#sensor).
 It measures the active/reactive power flow of a terminal.
-The terminal is either connecting an `appliance` and a `node`, or connecting the from/to end of a `branch` (except
-`link`) and a `node`.
+The terminal is always connected to a `node` on the one side, and either `appliance`, or the from/to end of a `branch` on the other.
 In case of a terminal between an `appliance` and a `node`, the power
 [Reference Direction](data-model.md#reference-direction) in the measurement data is the same as the reference
 direction of the `appliance`.
@@ -875,8 +894,7 @@ For example, if a `power_sensor` is measuring a `source`, a positive `p_measured
 from the source to the node.
 
 ```{note}
-1. Due to the high admittance of a `link` it is chosen that a power sensor cannot be coupled to a `link`, even though a
-link is a `branch`
+1. Due to the high admittance of a `link`, it is chosen that a power sensor cannot be coupled to a `link`.
 
 2. The node injection power sensor gets placed on a node.
 In the state estimation result, the power from this injection is distributed equally among the connected appliances at
@@ -979,11 +997,10 @@ $$
 `current_sensor` is an abstract class for symmetric and asymmetric current sensor and is derived from
 [sensor](#sensor).
 It measures the magnitude and angle of the current flow of a terminal.
-The terminal is connecting the from/to end of a `branch` (except `link`) and a `node`.
+The terminal is connecting the from/to end of a `branch` and a `node`.
 
 ```{note}
-Due to the high admittance of a `link` it is chosen that a current sensor cannot be coupled to a `link`, even though a
-link is a `branch`.
+Due to the high admittance of a `link` it is chosen that a current sensor cannot be coupled to a `link`.
 ```
 
 ```{note}
