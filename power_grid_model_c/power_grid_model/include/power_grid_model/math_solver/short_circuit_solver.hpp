@@ -103,19 +103,23 @@ template <symmetry_tag sym> class ShortCircuitSolver {
                     ComplexTensor<sym>& diagonal_element, ComplexValue<sym>& u_bus,
                     IdxVector& infinite_admittance_fault_counter, FaultType const& fault_type, IntS phase_1,
                     IntS phase_2) {
+        bool infinite_added = false;
         for (Idx const fault_number : faults) {
             DoubleComplex const y_fault = input.faults[fault_number].y_fault;
             if (std::isinf(y_fault.real())) {
                 assert(std::isinf(y_fault.imag()));
                 infinite_admittance_fault_counter[bus_number] += 1;
-                add_fault_with_infinite_impedance(bus_number, y_bus, diagonal_element, u_bus, fault_type, phase_1,
-                                                  phase_2);
-                // If there is a fault with infinite admittance, there is no need to add other faults to that
-                // bus
-                break;
+                if (!infinite_added) {
+                    // If there is a fault with infinite admittance, there is no need to add other faults to that
+                    // bus
+                    add_fault_with_infinite_impedance(bus_number, y_bus, diagonal_element, u_bus, fault_type, phase_1,
+                                                      phase_2);
+                    infinite_added = true;
+                }
+            } else {
+                assert(!std::isinf(y_fault.imag()));
+                add_fault(y_fault, bus_number, y_bus, diagonal_element, u_bus, fault_type, phase_1, phase_2);
             }
-            assert(!std::isinf(y_fault.imag()));
-            add_fault(y_fault, bus_number, y_bus, diagonal_element, u_bus, fault_type, phase_1, phase_2);
         }
     }
 
