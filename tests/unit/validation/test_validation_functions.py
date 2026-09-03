@@ -33,6 +33,7 @@ from power_grid_model.validation._validation import (
     validate_input_data,
     validate_required_values,
     validate_unique_ids_across_components,
+    validate_unique_ids_in_scenario,
     validate_values,
 )
 from power_grid_model.validation.errors import (
@@ -203,6 +204,52 @@ def test_validate_ids():
     n_invalid_ids_source_update = 2
     assert len(invalid_ids) == n_invalid_ids_source_update
     assert IdNotInDatasetError(CT.sym_load, [7], DatasetType.update) in invalid_ids
+
+
+def test_validate_unique_ids_in_scenario():
+    source_update = initialize_array(DatasetType.update, CT.source, 4)
+    source_update[AT.id] = [1, 2, 1, 1]
+    source_update[AT.u_ref] = [1.0, 2.0, 3.0, 4.0]
+
+    sym_load_update = initialize_array(DatasetType.update, CT.sym_load, 3)
+    sym_load_update[AT.id] = [4, 5, 6]
+    sym_load_update[AT.p_specified] = [4.0, 5.0, 6.0]
+
+    not_unique_ids = validate_unique_ids_in_scenario({CT.source: source_update, CT.sym_load: sym_load_update})
+
+    # the id is repeated as often as it occurs, to maintain object counts
+    assert not_unique_ids == [NotUniqueError(CT.source, AT.id, [1, 1, 1])]
+
+
+def test_validate_unique_ids_in_scenario_all_unique():
+    source_update = initialize_array(DatasetType.update, CT.source, 3)
+    source_update[AT.id] = [1, 2, 3]
+    source_update[AT.u_ref] = [1.0, 2.0, 3.0]
+
+    assert validate_unique_ids_in_scenario({CT.source: source_update}) == []
+
+
+def test_validate_unique_ids_in_scenario_optional_ids():
+    """Unset ids indicate an update by position; the repeated 'not available' value is not a duplicate id."""
+    source_update = initialize_array(DatasetType.update, CT.source, 3)
+    source_update[AT.u_ref] = [1.0, 2.0, 3.0]
+
+    assert np.all(source_update[AT.id] == NaN)
+    assert validate_unique_ids_in_scenario({CT.source: source_update}) == []
+
+
+def test_validate_unique_ids_in_scenario_columnar():
+    source_update = initialize_array(DatasetType.update, CT.source, 3)
+    source_update[AT.id] = [1, 1, 2]
+    source_update[AT.u_ref] = [1.0, 2.0, 3.0]
+
+    update_data_col = compatibility_convert_row_columnar_dataset(
+        data={CT.source: source_update},
+        data_filter=ComponentAttributeFilterOptions.relevant,
+        dataset_type=DatasetType.update,
+    )
+
+    assert validate_unique_ids_in_scenario(update_data_col) == [NotUniqueError(CT.source, AT.id, [1, 1])]
 
 
 @pytest.mark.parametrize(
