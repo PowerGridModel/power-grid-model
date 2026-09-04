@@ -5,5 +5,5 @@
     "default": 1e-9,
     "i_(.+)?": 1e-5
   },
-  "short_circuit_voltage_scaling": "minimum"
+  "short_circuit_voltage_scaling": "maximum"
 }
