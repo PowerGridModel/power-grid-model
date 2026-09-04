@@ -108,7 +108,7 @@ auto get_output(PGM_Handle* h, PGM_Logger* l) {
     std::string result;
     PGM_logger_get_output(
         h, l,
-        [](char const* data, PGM_Idx size, void* ctx) {
+        [](char const* data, PGM_Idx size, void* ctx) noexcept {
             auto& output = *static_cast<std::string*>(ctx);
             if (size == 0) {
                 output.clear();
@@ -160,7 +160,7 @@ TEST_CASE("Logger - do-nothing logger produces no output and clear is a no-op") 
     int callback_calls = 0;
     PGM_logger_get_output(
         g.h, lg.l,
-        [](char const* /*data*/, PGM_Idx size, void* ctx) {
+        [](char const* /*data*/, PGM_Idx size, void* ctx) noexcept {
             ++(*static_cast<int*>(ctx));
             CHECK(size == 0);
         },
