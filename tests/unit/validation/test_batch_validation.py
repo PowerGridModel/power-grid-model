@@ -15,6 +15,7 @@ from power_grid_model.validation.errors import (
     MultiComponentNotUniqueError,
     NotBetweenOrAtError,
     NotBooleanError,
+    NotUniqueError,
 )
 
 
@@ -168,6 +169,50 @@ def test_validate_batch_data_update_error(input_data, batch_data):
     assert len(errors[2]) == 1
     assert errors[0] == [NotBooleanError(CT.line, AT.from_status, [5, 6])]
     assert errors[2] == [NotBooleanError(CT.line, AT.from_status, [5, 7])]
+
+
+def test_validate_batch_data_duplicate_ids_in_scenario(input_data, batch_data):
+    """An object may be updated at most once per scenario; a duplicate id silently drops all but the last update."""
+    batch_data[CT.line][AT.id][0] = [5, 5]
+    errors = validate_batch_data(input_data, batch_data)
+
+    assert errors is not None
+    # only the offending scenario is reported; id 5 is also updated in scenario 2, which stays valid
+    assert list(errors) == [0]
+    assert errors[0] == [NotUniqueError(CT.line, AT.id, [5, 5])]
+
+    with pytest.raises(ValidationException):
+        assert_valid_batch_data(input_data, batch_data)
+
+
+def test_validate_batch_data_duplicate_ids_in_multiple_scenarios(input_data, batch_data):
+    """Every scenario is checked independently."""
+    batch_data[CT.line][AT.id][0] = [5, 5]
+    batch_data[CT.asym_load][AT.id][2] = [10, 10]
+    errors = validate_batch_data(input_data, batch_data)
+
+    assert errors is not None
+    assert sorted(errors) == [0, 2]
+    assert errors[0] == [NotUniqueError(CT.line, AT.id, [5, 5])]
+    assert errors[2] == [NotUniqueError(CT.asym_load, AT.id, [10, 10])]
+
+
+def test_validate_batch_data_same_id_in_different_scenarios(input_data, batch_data):
+    """Updating the same objects again in another scenario is normal and must remain valid."""
+    batch_data[CT.line][AT.id][:] = [[5, 6], [5, 6], [5, 6]]
+    batch_data[CT.asym_load][AT.id][:] = [[9, 10], [9, 10], [9, 10]]
+
+    assert validate_batch_data(input_data, batch_data) is None
+    assert_valid_batch_data(input_data, batch_data)
+
+
+def test_validate_batch_data_unset_ids_are_not_duplicates(input_data):
+    """Unset ids mean 'update by position'; the repeated 'not available' value is not a duplicate id."""
+    line = initialize_array(DatasetType.update, CT.line, (2, 4))
+    line[AT.from_status] = 1
+
+    assert np.all(line[AT.id] == np.iinfo(line[AT.id].dtype).min)
+    assert validate_batch_data(input_data, {CT.line: line}) is None
 
 
 @pytest.mark.parametrize("columnar_input", [False, True])

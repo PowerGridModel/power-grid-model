@@ -65,6 +65,7 @@ from power_grid_model.validation._rules import (
     all_valid_fault_phases as _all_valid_fault_phases,
     all_valid_ids as _all_valid_ids,
     any_voltage_angle_measurement_if_global_current_measurement as _any_voltage_angle_measurement_if_global_current_measurement,  # noqa: E501
+    ids_unique_in_update_data_set as _ids_unique_in_update_data_set,
     ids_valid_in_update_data_set as _ids_valid_in_update_data_set,
     no_strict_subset_missing as _no_strict_subset_missing,
     none_missing as _none_missing,
@@ -77,6 +78,7 @@ from power_grid_model.validation.errors import (
     InvalidVoltageRegulationError,
     MissingValueError,
     MultiComponentNotUniqueError,
+    NotUniqueError,
     ValidationError,
 )
 from power_grid_model.validation.utils import _update_input_data
@@ -135,7 +137,8 @@ def validate_batch_data(
 
     For each batch the update data is validated:
         3. Is the update data structure correct? (checking data types and numpy array shapes)
-        4. Are all update ID's valid? (checking object identifiers across update and input data)
+        4. Are all update ID's valid? (checking object identifiers across update and input data, and checking that
+           each object is updated at most once within the scenario)
 
     Then (for each batch independently) the input dataset is updated with the batch's update data and validated:
         5. Are all required values provided? (checking NaNs)
@@ -178,7 +181,10 @@ def validate_batch_data(
             for component, component_data in row_update_data.items()
             if _get_comp_size(component_data) > 0
         }
-        id_errors: list[IdNotInDatasetError | InvalidIdError] = validate_ids(row_update_data, input_data_copy)
+        id_errors: list[IdNotInDatasetError | InvalidIdError | NotUniqueError] = list(
+            validate_ids(row_update_data, input_data_copy)
+        )
+        id_errors += validate_unique_ids_in_scenario(row_update_data)
 
         batch_errors = input_errors + id_errors
 
@@ -270,6 +276,28 @@ def validate_ids(update_data: SingleDataset, input_data: SingleDataset) -> list[
         _ids_valid_in_update_data_set(update_data, input_data, component, DatasetType.update)
         for component in update_data
     )
+    return list(chain(*errors))
+
+
+def validate_unique_ids_in_scenario(update_data: SingleDataset) -> list[NotUniqueError]:
+    """
+    Checks if all ids of the components in a single update scenario are unique within that scenario.
+
+    An update is applied by id lookup, so a duplicate id within a scenario would silently result in only the last of
+    the duplicated records being applied. Reusing the same id in another scenario of the batch is perfectly valid and
+    is not reported here.
+
+    This function should be called for every update dataset in a batch set
+
+    Args:
+        update_data: A single update dataset
+
+    Returns:
+        An empty list if all ids within the scenario are unique, or a list of NotUniqueErrors for all update
+        components that contain duplicate ids
+
+    """
+    errors = (_ids_unique_in_update_data_set(update_data, component) for component in update_data)
     return list(chain(*errors))
 
 

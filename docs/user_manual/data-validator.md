@@ -62,6 +62,13 @@ In such cases, the latter is leading when only running batch calculations.
 Running single calculations on an incomplete input data set is, of course, unsupported.
 ```
 
+```{note}
+Within a single scenario, every component may be updated at most once: an update is applied by id lookup, so a
+duplicate id would silently result in only the last of the duplicated records being applied. `validate_batch_data`
+reports such duplicates as a `NotUniqueError` for the scenario in question. Updating the same component again in
+another scenario of the same batch is of course perfectly valid.
+```
+
 Validating a Cartesian product of datasets used in PGM's `update_data` via providing it with `list[BatchDataset]`is
 done by validating each individual `BatchDataset` that conforms the Cartesian product.
 

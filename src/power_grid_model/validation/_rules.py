@@ -746,6 +746,31 @@ def ids_valid_in_update_data_set(
     return []
 
 
+def ids_unique_in_update_data_set(update_data: SingleDataset, component: ComponentType) -> list[NotUniqueError]:
+    """
+    Check that for all records of a particular type of component, the ids are unique within a single scenario.
+
+    An id may be updated at most once per scenario: the update of a component is applied by an id lookup, so a
+    duplicate id would silently result in only the last of the duplicated records being applied. Note that the same
+    id may of course be updated again in any of the other scenarios of a batch.
+
+    Args:
+        update_data: A single scenario of the update data set for all components
+        component: The component of interest
+
+    Returns:
+        A list containing zero or one NotUniqueError, listing all ids that occur more than once within the scenario.
+    """
+    ids = update_data[component][AttributeType.id]
+    # Unset ids are not actual ids: they either mark an update-by-position scenario, or they are already reported
+    # by ids_valid_in_update_data_set. Either way they are not duplicates and are excluded from this check.
+    ids = ids[~is_nan_or_default(ids)]
+    _, inverse, counts = np.unique(ids, return_inverse=True, return_counts=True)
+    if np.any(counts != 1):
+        return [NotUniqueError(component, AttributeType.id, ids[(counts != 1)[inverse]].flatten().tolist())]
+    return []
+
+
 def all_finite(
     data: SingleDataset, exceptions: dict[ComponentType, list[AttributeType]] | None = None
 ) -> list[InfinityError]:

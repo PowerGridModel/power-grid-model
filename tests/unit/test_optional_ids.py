@@ -74,7 +74,9 @@ def input_data(request):
 
 @pytest.fixture
 def update_sym_load_r():
-    sym_load = initialize_array(DatasetType.update, CT.sym_load, (2, 2))
+    # one object per scenario, mirroring update_sym_load_c; a (2, 2) array would broadcast the values and
+    # thereby update the same id twice per scenario, which is not a valid update
+    sym_load = initialize_array(DatasetType.update, CT.sym_load, (2, 1))
     sym_load[AT.id] = [[4], [7]]
     sym_load[AT.p_specified] = [[30e6], [15e6]]
     return sym_load
