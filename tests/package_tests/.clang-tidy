@@ -1,0 +1,33 @@
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+
+#
+
+# SPDX-License-Identifier: MPL-2.0
+
+---
+Checks: '
+-*,
+boost-*,
+bugprone-*,
+cert-*,
+clang-analyzer-*,
+concurrency-*,
+cppcoreguidelines-*,
+darwin-*,
+hicpp-*,
+llvm-*,
+google-*,
+misc-*,
+-misc-include-cleaner,
+modernize-*,
+performance-*,
+portability-*,
+readability-*,
+'
+
+WarningsAsErrors: '*'
+
+HeaderFilterRegex: '.*'
+
+FormatStyle: file
+...

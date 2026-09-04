@@ -13,7 +13,7 @@
 
 // Generic helper definitions for shared library support
 // API_MACRO_BLOCK
-#if defined _WIN32
+#ifdef _WIN32
 #define PGM_HELPER_DLL_IMPORT __declspec(dllimport)
 #define PGM_HELPER_DLL_EXPORT __declspec(dllexport)
 #define PGM_HELPER_DLL_LOCAL
@@ -36,6 +36,14 @@
 #endif // PGM_DLL_EXPORTS
 #define PGM_LOCAL PGM_HELPER_DLL_LOCAL
 // API_MACRO_BLOCK
+
+// Function attributes for more restricted user interface
+#ifdef __cplusplus
+#define PGM_NOEXCEPT noexcept
+#else
+#define PGM_NOEXCEPT
+#endif
+// Function attributes for more restricted user interface
 
 // integers
 #ifdef __cplusplus
@@ -144,7 +152,7 @@ typedef struct PGM_Logger PGM_Logger;
 
 // NOLINTEND(modernize-use-using)
 
-// NOLINTBEGIN(performance-enum-size)
+// NOLINTBEGIN(performance-enum-size,cppcoreguidelines-use-enum-class)
 
 // enums
 /**

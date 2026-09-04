@@ -84,7 +84,7 @@ TEST_CASE("Test source") {
         // uref with angle
         source.set_u_ref(nan, 2.5);
         u_ref = source.calc_param();
-        CHECK(cabs(u_ref - 1.0 * std::exp(2.5i)) < numerical_tolerance);
+        CHECK(cabs(u_ref - std::polar(1.0, 2.5)) < numerical_tolerance);
 
         // yref
         DoubleComplex const y_ref_sym_cal = source.math_param<symmetric_t>().template y_ref<symmetric_t>();
@@ -98,15 +98,15 @@ TEST_CASE("Test source") {
         source.set_u_ref(2.0, 2.5);
         auto voltage_scaling_parameters = std::pair{1000.0, ShortCircuitVoltageScaling::minimum};
         ComplexValue<symmetric_t> u_ref = source.calc_param(voltage_scaling_parameters);
-        CHECK(cabs(u_ref - 0.95 * std::exp(2.5i)) < numerical_tolerance);
+        CHECK(cabs(u_ref - std::polar(0.95, 2.5)) < numerical_tolerance);
 
         voltage_scaling_parameters.first = 1001.0;
         u_ref = source.calc_param(voltage_scaling_parameters);
-        CHECK(cabs(u_ref - 1.0 * std::exp(2.5i)) < numerical_tolerance);
+        CHECK(cabs(u_ref - std::polar(1.0, 2.5)) < numerical_tolerance);
 
         voltage_scaling_parameters.second = ShortCircuitVoltageScaling::maximum;
         u_ref = source.calc_param(voltage_scaling_parameters);
-        CHECK(cabs(u_ref - 1.1 * std::exp(2.5i)) < numerical_tolerance);
+        CHECK(cabs(u_ref - std::polar(1.1, 2.5)) < numerical_tolerance);
     }
 
     SUBCASE("test source sym results; s, i as input") {

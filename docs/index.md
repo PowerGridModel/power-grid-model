@@ -86,7 +86,7 @@ user_manual/data-model
 user_manual/dataset-terminology
 user_manual/components
 user_manual/calculations
-user_manual/non-pgm-components
+user_manual/non-native-components
 user_manual/performance-guide
 user_manual/data-validator
 user_manual/model-validation
@@ -124,6 +124,7 @@ algorithms/tap-changing-algorithms
 algorithms/sc-algorithms
 algorithms/se-algorithms
 algorithms/lu-solver
+algorithms/dense-and-selective-inverse
 ```
 
 ```{toctree}
@@ -131,7 +132,7 @@ algorithms/lu-solver
 :maxdepth: 2
 advanced_documentation/native-data-interface
 advanced_documentation/build-guide
-working_with_containers/container-setup.md
+advanced_documentation/devcontainer-setup.md
 advanced_documentation/c-api
 advanced_documentation/high-level-design
 advanced_documentation/core-design

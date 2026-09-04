@@ -3,55 +3,47 @@
 # SPDX-License-Identifier: MPL-2.0
 
 repos:
-  - repo: https://github.com/fsfe/reuse-tool  # outside pypi
-    rev: v6.2.0
-    hooks:
-      - id: reuse
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    # Ruff version.
-    rev: v0.15.21
-    hooks:
-      # Run the linter.
-      - id: ruff-check
-        name: ruff-check
-        args: [ --fix ]
-      # Run the formatter.
-      - id: ruff-format
-        name: ruff-format
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v2.2.0
-    hooks:
-      - id: mypy
-        additional_dependencies:
-          - numpy
   - repo: local
     hooks:
-      - id: pytest
-        name: pytest
-        entry: uv run pytest
+      - id: reuse
+        name: reuse
+        entry: uv run --frozen reuse lint
         language: system
         pass_filenames: false
-        always_run: true
-  - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: v18.1.8
-    hooks:
+      - id: pytest
+        name: pytest
+        entry: uv run --frozen pytest
+        language: system
+        pass_filenames: false
+        types_or: [ python, c++, c, json ]
+      - id: ruff-format
+        name: ruff-format
+        entry: uv run --frozen ruff format
+        language: system
+        pass_filenames: false
+        types: [ python ]
+      - id: ruff-check
+        name: ruff-check
+        entry: uv run --frozen ruff check
+        language: system
+        pass_filenames: false
+        types: [ python ]
+      - id: mypy
+        name: mypy
+        entry: uv run --frozen mypy .
+        language: system
+        pass_filenames: false
+        types: [ python ]
       - id: clang-format
+        name: clang-format
+        entry: uv run --frozen clang-format -style=file -i
+        language: system
+        pass_filenames: true
         types_or: [ c++, c ]
-  - repo: https://github.com/BlankSpruce/gersemi-pre-commit
-    rev: 0.27.7
-    hooks:
       - id: gersemi
         name: cmake-linter
         alias: cmake-linter
-  - repo: https://github.com/igorshubovych/markdownlint-cli  # outside pypi 
-    rev: v0.49.0
-    hooks:
-      - id: markdownlint
-        args: ["--fix"]
-  # format .json and .jsonc files
-  - repo: https://github.com/biomejs/pre-commit  # outside pypi 
-    rev: v2.5.3
-    hooks:
-      # configuration is located in biome.jsonc
-      - id: biome-format
-        name: biome-format
+        entry: uv run --frozen gersemi -i --warnings-as-errors
+        language: system
+        pass_filenames: true
+        types: [ cmake ]

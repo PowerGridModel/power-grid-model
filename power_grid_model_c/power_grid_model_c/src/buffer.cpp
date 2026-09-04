@@ -31,7 +31,7 @@ using power_grid_model_c::to_c_size;
 } // namespace
 
 // buffer control
-RawDataPtr PGM_create_buffer(PGM_Handle* handle, PGM_MetaComponent const* component, PGM_Idx size) {
+RawDataPtr PGM_create_buffer(PGM_Handle* handle, PGM_MetaComponent const* component, PGM_Idx size) noexcept {
     return call_with_catch(handle, [component, size] {
         auto const& safe_component = safe_ptr_get(cast_to_cpp(component));
 
@@ -47,7 +47,7 @@ RawDataPtr PGM_create_buffer(PGM_Handle* handle, PGM_MetaComponent const* compon
 #endif
     });
 }
-void PGM_destroy_buffer(RawDataPtr ptr) {
+void PGM_destroy_buffer(RawDataPtr ptr) noexcept {
 #ifdef _WIN32
     _aligned_free(ptr); // NOLINT(hicpp-no-malloc)
 #else
@@ -56,7 +56,7 @@ void PGM_destroy_buffer(RawDataPtr ptr) {
 }
 
 void PGM_buffer_set_nan(PGM_Handle* handle, PGM_MetaComponent const* component, void* ptr, PGM_Idx buffer_offset,
-                        PGM_Idx size) {
+                        PGM_Idx size) noexcept {
     call_with_catch(handle, [component, ptr, buffer_offset, size] {
         safe_ptr_get(cast_to_cpp(component)).set_nan(safe_ptr(ptr), buffer_offset, size);
     });
@@ -92,14 +92,14 @@ void buffer_get_set_value(meta_data::MetaAttribute const& attribute, BufferPtr b
 }
 } // namespace
 void PGM_buffer_set_value(PGM_Handle* handle, PGM_MetaAttribute const* attribute, RawDataPtr buffer_ptr,
-                          RawDataConstPtr src_ptr, PGM_Idx buffer_offset, PGM_Idx size, PGM_Idx src_stride) {
+                          RawDataConstPtr src_ptr, PGM_Idx buffer_offset, PGM_Idx size, PGM_Idx src_stride) noexcept {
     call_with_catch(handle, [attribute, buffer_ptr, src_ptr, buffer_offset, size, src_stride] {
         buffer_get_set_value<false>(safe_ptr_get(cast_to_cpp(attribute)), safe_ptr_maybe_nullptr(buffer_ptr),
                                     safe_ptr_maybe_nullptr(src_ptr), buffer_offset, size, src_stride);
     });
 }
 void PGM_buffer_get_value(PGM_Handle* handle, PGM_MetaAttribute const* attribute, RawDataConstPtr buffer_ptr,
-                          RawDataPtr dest_ptr, PGM_Idx buffer_offset, PGM_Idx size, PGM_Idx dest_stride) {
+                          RawDataPtr dest_ptr, PGM_Idx buffer_offset, PGM_Idx size, PGM_Idx dest_stride) noexcept {
     call_with_catch(handle, [attribute, buffer_ptr, dest_ptr, buffer_offset, size, dest_stride] {
         buffer_get_set_value<true>(safe_ptr_get(cast_to_cpp(attribute)), safe_ptr_maybe_nullptr(buffer_ptr),
                                    safe_ptr_maybe_nullptr(dest_ptr), buffer_offset, size, dest_stride);

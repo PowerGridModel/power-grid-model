@@ -31,7 +31,6 @@ from power_grid_model._core.power_grid_meta import ComponentMetaData
 from power_grid_model._core.utils import (
     _extract_data_from_component_data,
     _extract_indptr,
-    check_indptr_consistency,
     is_columnar,
     is_sparse,
 )
@@ -268,7 +267,13 @@ def _get_sparse_buffer_properties(
                 raise ValueError(f"Data buffers must be consistent. {VALIDATOR_MSG}")
 
     contents_size = shape[0]
-    check_indptr_consistency(indptr, batch_size, contents_size)
+
+    actual_batch_size = indptr.size - 1
+    if batch_size is not None and batch_size != actual_batch_size:
+        raise ValueError(
+            f"Incorrect/inconsistent batch size provided: {actual_batch_size} scenarios provided "
+            f"but {batch_size} scenarios expected. {VALIDATOR_MSG}"
+        )
 
     is_batch = True
     n_elements_per_scenario = -1
@@ -277,7 +282,7 @@ def _get_sparse_buffer_properties(
     return BufferProperties(
         is_sparse=is_sparse_property,
         is_batch=is_batch,
-        batch_size=indptr.size - 1,
+        batch_size=actual_batch_size,
         n_elements_per_scenario=n_elements_per_scenario,
         n_total_elements=n_total_elements,
         columns=columns,

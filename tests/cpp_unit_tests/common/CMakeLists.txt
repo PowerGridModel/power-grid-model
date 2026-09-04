@@ -14,6 +14,7 @@ add_executable(
     "test_three_phase_tensor.cpp"
     "test_typing.cpp"
     "test_iterator_facade.cpp"
+    "test_maybe_owning_view.cpp"
 )
 
 target_link_libraries(

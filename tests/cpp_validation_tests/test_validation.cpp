@@ -92,8 +92,8 @@ class Subcase {
     // The structure of this function is similar to how pytest.raises and pytest.mark.xfail work.
     template <typename T>
         requires std::invocable<std::remove_cvref_t<T>, Subcase&>
-    void execute_case(T&& statement) noexcept {
-        CHECK_NOTHROW(maybe_mark_xfail(maybe_with_raises(std::forward<T>(statement)))(*this));
+    void execute_case(T statement) noexcept {
+        CHECK_NOTHROW(maybe_mark_xfail(maybe_with_raises(statement))(*this));
     }
 
   private:
@@ -103,8 +103,8 @@ class Subcase {
 
     template <typename T>
         requires std::invocable<std::remove_cvref_t<T>, Subcase&>
-    auto maybe_with_raises(T&& statement) noexcept {
-        return [this, statement_ = std::forward<T>(statement)](Subcase& subcase) {
+    auto maybe_with_raises(T statement) noexcept {
+        return [this, statement_ = statement](Subcase& subcase) {
             if (!raises_) {
                 return statement_(subcase);
             }
@@ -125,8 +125,8 @@ class Subcase {
 
     template <typename T>
         requires std::invocable<std::remove_cvref_t<T>, Subcase&>
-    auto maybe_mark_xfail(T&& statement) noexcept {
-        return [this, statement_ = std::forward<T>(statement)](Subcase& subcase) {
+    auto maybe_mark_xfail(T statement) noexcept {
+        return [this, statement_ = statement](Subcase& subcase) {
             if (!xfail_raises_) {
                 return statement_(subcase);
             }
@@ -171,6 +171,8 @@ class Subcase {
             {"TapStrategySearchIncompatible", std::regex{"Search method is incompatible with optimization strategy: "}},
             {"UnsupportedRegulatorCombinationError", std::regex{"The combination of voltage regulators and transformer "
                                                                 "tap regulators is not supported in the same model."}},
+            {"UnsupportedLoadGenTypeForVoltageRegulator",
+             std::regex{"Unsupported load_gen type for voltage regulators (.+)\\."}},
             {"UnsupportedVoltageRegulatorSourceCombinationError",
              std::regex{"Nodes with a source and a voltage regulated load/generator are not supported when both are "
                         "enabled. Found at node with id (-?\\d+)"}},
@@ -359,33 +361,52 @@ void assert_result(OwningDataset const& owning_result, OwningDataset const& owni
 }
 
 // root path
+inline std::filesystem::path data_dir() {
 #ifdef POWER_GRID_MODEL_VALIDATION_TEST_DATA_DIR
-// use marco definition input
-std::filesystem::path const data_dir{POWER_GRID_MODEL_VALIDATION_TEST_DATA_DIR};
+    // use macro definition input
+    return {POWER_GRID_MODEL_VALIDATION_TEST_DATA_DIR};
 #else
-// use relative path to this file
-std::filesystem::path const data_dir = std::filesystem::path{__FILE__}.parent_path().parent_path() / "data";
+    // use relative path to this file
+    return std::filesystem::path{__FILE__}.parent_path().parent_path() / "data";
 #endif
+}
 
 // method map
-std::map<std::string, PGM_CalculationType, std::less<>> const calculation_type_mapping = {
-    {"power_flow", PGM_power_flow}, {"state_estimation", PGM_state_estimation}, {"short_circuit", PGM_short_circuit}};
-std::map<std::string, PGM_CalculationMethod, std::less<>> const calculation_method_mapping = {
-    {"newton_raphson", PGM_newton_raphson},       {"linear", PGM_linear},
-    {"iterative_current", PGM_iterative_current}, {"iterative_linear", PGM_iterative_linear},
-    {"linear_current", PGM_linear_current},       {"iec60909", PGM_iec60909}};
-std::map<std::string, PGM_ShortCircuitVoltageScaling, std::less<>> const sc_voltage_scaling_mapping = {
-    {"", PGM_short_circuit_voltage_scaling_maximum}, // not provided returns default value
-    {"minimum", PGM_short_circuit_voltage_scaling_minimum},
-    {"maximum", PGM_short_circuit_voltage_scaling_maximum}};
-std::map<std::string, PGM_TapChangingStrategy, std::less<>> const optimizer_strategy_mapping = {
-    {"disabled", PGM_tap_changing_strategy_disabled},
-    {"any_valid_tap", PGM_tap_changing_strategy_any_valid_tap},
-    {"min_voltage_tap", PGM_tap_changing_strategy_min_voltage_tap},
-    {"max_voltage_tap", PGM_tap_changing_strategy_max_voltage_tap},
-    {"fast_any_tap", PGM_tap_changing_strategy_fast_any_tap}};
-std::map<std::string, PGM_ExperimentalFeatures, std::less<>> const experimental_features_mapping = {
-    {"disabled", PGM_experimental_features_disabled}, {"enabled", PGM_experimental_features_enabled}};
+inline auto& calculation_type_mapping() {
+    static std::map<std::string, PGM_CalculationType, std::less<>> const mapping{
+        {"power_flow", PGM_power_flow},
+        {"state_estimation", PGM_state_estimation},
+        {"short_circuit", PGM_short_circuit}};
+    return mapping;
+}
+inline auto& calculation_method_mapping() {
+    static std::map<std::string, PGM_CalculationMethod, std::less<>> const mapping{
+        {"newton_raphson", PGM_newton_raphson},       {"linear", PGM_linear},
+        {"iterative_current", PGM_iterative_current}, {"iterative_linear", PGM_iterative_linear},
+        {"linear_current", PGM_linear_current},       {"iec60909", PGM_iec60909}};
+    return mapping;
+}
+inline auto& sc_voltage_scaling_mapping() {
+    static std::map<std::string, PGM_ShortCircuitVoltageScaling, std::less<>> const mapping{
+        {"", PGM_short_circuit_voltage_scaling_maximum}, // not provided returns default value
+        {"minimum", PGM_short_circuit_voltage_scaling_minimum},
+        {"maximum", PGM_short_circuit_voltage_scaling_maximum}};
+    return mapping;
+}
+inline auto& optimizer_strategy_mapping() {
+    static std::map<std::string, PGM_TapChangingStrategy, std::less<>> const mapping{
+        {"disabled", PGM_tap_changing_strategy_disabled},
+        {"any_valid_tap", PGM_tap_changing_strategy_any_valid_tap},
+        {"min_voltage_tap", PGM_tap_changing_strategy_min_voltage_tap},
+        {"max_voltage_tap", PGM_tap_changing_strategy_max_voltage_tap},
+        {"fast_any_tap", PGM_tap_changing_strategy_fast_any_tap}};
+    return mapping;
+}
+inline auto& experimental_features_mapping() {
+    static std::map<std::string, PGM_ExperimentalFeatures, std::less<>> const mapping{
+        {"disabled", PGM_experimental_features_disabled}, {"enabled", PGM_experimental_features_enabled}};
+    return mapping;
+}
 
 // case parameters
 struct CaseParam {
@@ -436,8 +457,8 @@ std::optional<CaseParam> construct_case(std::filesystem::path const& case_dir, j
     using namespace std::string_literals;
 
     // Convert strings to enums
-    PGM_CalculationType const calculation_type = calculation_type_mapping.at(calculation_type_str);
-    PGM_CalculationMethod const calculation_method = calculation_method_mapping.at(calculation_method_str);
+    PGM_CalculationType const calculation_type = calculation_type_mapping().at(calculation_type_str);
+    PGM_CalculationMethod const calculation_method = calculation_method_mapping().at(calculation_method_str);
 
     // add a case only if output file exists
     if (!std::filesystem::exists(case_dir / get_output_file(calculation_type, sym, is_batch))) {
@@ -446,7 +467,7 @@ std::optional<CaseParam> construct_case(std::filesystem::path const& case_dir, j
 
     CaseParam param{};
     param.case_dir = case_dir;
-    param.case_name = CaseParam::replace_backslash(std::filesystem::relative(case_dir, data_dir).string());
+    param.case_name = CaseParam::replace_backslash(std::filesystem::relative(case_dir, data_dir()).string());
     param.calculation_type = calculation_type;
     param.calculation_method = calculation_method;
     param.sym = sym;
@@ -480,13 +501,13 @@ std::optional<CaseParam> construct_case(std::filesystem::path const& case_dir, j
     if (calculation_type == PGM_short_circuit) {
         std::string const sc_scaling_str =
             calculation_method_params.at("short_circuit_voltage_scaling").get<std::string>();
-        param.short_circuit_voltage_scaling = sc_voltage_scaling_mapping.at(sc_scaling_str);
+        param.short_circuit_voltage_scaling = sc_voltage_scaling_mapping().at(sc_scaling_str);
     }
 
     std::string const tap_strategy_str = calculation_method_params.value("tap_changing_strategy", "disabled");
-    param.tap_changing_strategy = optimizer_strategy_mapping.at(tap_strategy_str);
+    param.tap_changing_strategy = optimizer_strategy_mapping().at(tap_strategy_str);
     std::string const experimental_features_str = calculation_method_params.value("experimental_features", "disabled");
-    param.experimental_features = experimental_features_mapping.at(experimental_features_str);
+    param.experimental_features = experimental_features_mapping().at(experimental_features_str);
     param.case_name += sym ? "-sym"s : "-asym"s;
     param.case_name += "-"s + calculation_method_str;
     param.case_name += is_batch ? "_batch"s : ""s;
@@ -556,7 +577,7 @@ std::vector<CaseParam> read_all_cases(bool is_batch) {
     // detect all test cases
     for (std::string const calculation_type : {"power_flow", "state_estimation", "short_circuit"}) {
         // loop all sub-directories
-        for (auto const& dir_entry : std::filesystem::recursive_directory_iterator(data_dir / calculation_type)) {
+        for (auto const& dir_entry : std::filesystem::recursive_directory_iterator(data_dir() / calculation_type)) {
             std::filesystem::path const& case_dir = dir_entry.path();
             if (!std::filesystem::exists(case_dir / "params.json")) {
                 continue;
@@ -583,8 +604,8 @@ std::vector<CaseParam> const& get_all_batch_cases() {
 } // namespace
 
 TEST_CASE("Check existence of validation data path") {
-    REQUIRE(std::filesystem::exists(data_dir));
-    std::cout << "Validation test dataset: " << data_dir << '\n';
+    REQUIRE(std::filesystem::exists(data_dir()));
+    std::cout << "Validation test dataset: " << data_dir() << '\n';
 }
 
 namespace {
@@ -592,7 +613,7 @@ constexpr bool should_skip_test(CaseParam const& /*param*/) { return false; }
 
 template <typename T>
     requires std::invocable<std::remove_cvref_t<T>, Subcase&>
-void execute_test(CaseParam const& param, T&& func) noexcept {
+void execute_test(CaseParam const& param, T func) noexcept {
     Subcase subcase{param.raises, param.xfail};
     bool const skip = should_skip_test(param);
     std::cout << std::format("Validation test: {}{}{}\n", param.case_name, skip ? " [skipped]" : "",
@@ -601,7 +622,7 @@ void execute_test(CaseParam const& param, T&& func) noexcept {
         return;
     }
 
-    subcase.execute_case(std::forward<T>(func));
+    subcase.execute_case(func);
 }
 
 void validate_single_case(CaseParam const& param) {

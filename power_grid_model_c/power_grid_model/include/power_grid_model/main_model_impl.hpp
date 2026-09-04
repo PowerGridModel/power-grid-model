@@ -37,6 +37,7 @@
 #include "main_core/input.hpp"
 #include "main_core/main_model_type.hpp"
 #include "main_core/output.hpp"
+#include "main_core/topological_node_output.hpp"
 #include "main_core/topology.hpp"
 #include "main_core/update.hpp"
 
@@ -73,13 +74,13 @@ class MainModelImpl {
 
   private:
     // internal type traits
-    using MainModelState = typename ModelType::MainModelState;
+    using MainModelState = ModelType::MainModelState;
 
-    using SequenceIdx = typename ModelType::SequenceIdx;
+    using SequenceIdx = ModelType::SequenceIdx;
     using SequenceIdxRefWrappers = ModelType::SequenceIdxRefWrappers;
-    using SequenceIdxView = typename ModelType::SequenceIdxView;
-    using OwnedUpdateDataset = typename ModelType::OwnedUpdateDataset;
-    using ComponentFlags = typename ModelType::ComponentFlags;
+    using SequenceIdxView = ModelType::SequenceIdxView;
+    using OwnedUpdateDataset = ModelType::OwnedUpdateDataset;
+    using ComponentFlags = ModelType::ComponentFlags;
 
   public:
     using ImplType = ModelType;
@@ -115,10 +116,9 @@ class MainModelImpl {
     // template to construct components
     // using forward interators
     // different selection based on component type
-    template <std::derived_from<Base> CompType, std::ranges::viewable_range Inputs>
-    void add_component(Inputs&& components) {
+    template <std::derived_from<Base> CompType, non_owning_view_c Inputs> void add_component(Inputs components) {
         assert(!construction_complete_);
-        main_core::add_component<CompType>(state_.components, std::forward<Inputs>(components), system_frequency_);
+        main_core::add_component<CompType>(state_.components, components, system_frequency_);
     }
 
     void add_components(ConstDataset const& input_data, Idx pos = 0) {
@@ -136,8 +136,8 @@ class MainModelImpl {
     // using forward interators
     // different selection based on component type
     // if sequence_idx is given, it will be used to load the object instead of using IDs via hash map.
-    template <class CompType, cache_type_c CacheType, std::ranges::viewable_range Updates>
-    void update_component(Updates&& updates, std::span<Idx2D const> sequence_idx) {
+    template <class CompType, cache_type_c CacheType, non_owning_view_c Updates>
+    void update_component(Updates updates, std::span<Idx2D const> sequence_idx) {
         constexpr auto comp_index = ModelType::template index_of_component<CompType>;
 
         assert(construction_complete_);
@@ -150,7 +150,7 @@ class MainModelImpl {
         }
 
         UpdateChange const changed = main_core::update::update_component<CompType>(
-            state_.components, std::forward<Updates>(updates),
+            state_.components, updates,
             std::back_inserter(std::get<comp_index>(solvers_cache_status_.changed_components_indices())), sequence_idx);
 
         // update, get changed variable
@@ -207,6 +207,7 @@ class MainModelImpl {
         construction_complete_ = true;
 #endif // !NDEBUG
         state_.components.set_construction_complete();
+
         state_.comp_topo =
             std::make_shared<ComponentTopology const>(main_core::construct_topology<ModelType>(state_.components));
     }
@@ -244,7 +245,7 @@ class MainModelImpl {
         auto const& component_sequence = std::get<component_index>(sequence_idx);
 
         if (!cached_inverse_update.empty()) {
-            update_component<CompType, permanent_update_t>(cached_inverse_update, component_sequence);
+            update_component<CompType, permanent_update_t>(by_ref(cached_inverse_update), component_sequence);
             cached_inverse_update.clear();
         }
     }
@@ -284,14 +285,15 @@ class MainModelImpl {
                  solver_output_type<std::invoke_result_t<
                      SolveFn, MathSolverType&, YBus const&,
                      typename std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>::const_reference>>
-    auto calculate_(PrepareInputFn&& prepare_input, SolveFn&& solve, Logger& logger) {
-        using InputType = typename std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>::const_reference;
-        using SolverOutputType = typename std::invoke_result_t<SolveFn, MathSolverType&, YBus const&, InputType>;
-        using sym = typename SolverOutputType::sym;
+
+    auto calculate_(PrepareInputFn prepare_input, SolveFn solve, Logger& logger) {
+        using InputType = std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>::const_reference;
+        using SolverOutputType = std::invoke_result_t<SolveFn, MathSolverType&, YBus const&, InputType>;
+        using sym = decode_symmetry_v<SolverOutputType>;
 
         assert(construction_complete_);
         // prepare
-        auto const& input = [this, &logger, prepare_input_ = std::forward<PrepareInputFn>(prepare_input)] {
+        auto const& input = [this, &logger, prepare_input_ = prepare_input] {
             Timer const timer{logger, LogEvent::prepare};
             assert(construction_complete_);
             prepare_solvers<sym>(state_, solver_preparation_context_, solvers_cache_status_);
@@ -300,7 +302,7 @@ class MainModelImpl {
             return prepare_input_(get_n_math_solvers<ModelType>(state_));
         }();
         // calculate
-        return [this, &logger, &input, solve_ = std::forward<SolveFn>(solve)] {
+        return [this, &logger, &input, &solve_ = solve] {
             Timer const timer{logger, LogEvent::math_calculation};
             auto& solvers = main_core::get_solvers<sym>(solver_preparation_context_.math_state);
             auto& y_bus_vec = main_core::get_y_bus<sym>(solver_preparation_context_.math_state);
@@ -315,21 +317,21 @@ class MainModelImpl {
 
     // Calculate with optimization, e.g., automatic tap changer
     template <calculation_type_tag calculation_type, symmetry_tag sym>
-    auto calculate_with_optimizer(Options const& options, Logger& logger) {
-        auto const get_calculator = [this, &options, &logger] {
+    auto calculate_with_optimizer(Options const& options, bool cache_run, Logger& logger) {
+        auto const get_calculator = [this, &options, cache_run, &logger] {
             using Calc = Calculator<calculation_type, sym>;
 
             assert(options.optimizer_type == OptimizerType::no_optimization ||
                    (std::derived_from<calculation_type, power_flow_t>));
 
-            return [this, &mutable_comp_coup = state_.comp_coup, &options,
+            return [this, &mutable_comp_coup = state_.comp_coup, &options, cache_run,
                     &logger](MainModelState const& state, CalculationMethod calculation_method) {
                 (void)state; // to avoid unused-lambda-capture when in Release build
                 assert(&state == &state_);
 
-                return calculate_<MathSolverProxy<sym>, YBus<sym>>(Calc::preparer(state, mutable_comp_coup, options),
-                                                                   Calc::solver(calculation_method, options, logger),
-                                                                   logger);
+                return calculate_<MathSolverProxy<sym>, YBus<sym>>(
+                    Calc::preparer(state, mutable_comp_coup, options),
+                    Calc::solver(calculation_method, options, cache_run, logger), logger);
             };
         };
 
@@ -347,7 +349,7 @@ class MainModelImpl {
     }
 
     // Single calculation, propagating the results to result_data
-    void calculate(Options options, MutableDataset const& result_data, Logger& logger) {
+    void calculate(Options options, bool cache_run, MutableDataset const& result_data, Logger& logger) {
         assert(construction_complete_);
 
         if (options.calculation_type == CalculationType::short_circuit) {
@@ -366,11 +368,12 @@ class MainModelImpl {
 
         calculation_type_symmetry_func_selector(
             options.calculation_type, options.calculation_symmetry,
-            []<calculation_type_tag calculation_type, symmetry_tag sym>(
+            [cache_run]<calculation_type_tag calculation_type, symmetry_tag sym>(
                 MainModelImpl& main_model_, Options const& options_, MutableDataset const& result_data_,
                 Logger& logger) {
-                auto const math_output = main_model_.calculate_with_optimizer<calculation_type, sym>(options_, logger);
-                main_model_.output_result(math_output, result_data_, logger);
+                main_model_.output_result(
+                    main_model_.calculate_with_optimizer<calculation_type, sym>(options_, cache_run, logger),
+                    result_data_, logger);
             },
             *this, options, result_data, logger);
     }
@@ -381,8 +384,7 @@ class MainModelImpl {
         auto sub_opt = options; // copy
         sub_opt.err_tol = cache_run ? std::numeric_limits<double>::max() : options.err_tol;
         sub_opt.max_iter = cache_run ? 1 : options.max_iter;
-
-        model.calculate(sub_opt, target_data, logger);
+        model.calculate(sub_opt, cache_run, target_data, logger);
     }
 
     auto const& state() const {
@@ -395,21 +397,35 @@ class MainModelImpl {
         return *meta_data_;
     }
 
-    void check_no_experimental_features_used(Options const& /*options*/, ConstDataset const* batch_dataset) const {
-        if (!std::ranges::all_of(
-                state_.components.template citer<VoltageRegulator>(),
-                [](auto const& regulator) { return is_nan(regulator.q_min()) && is_nan(regulator.q_max()); }) ||
-            (batch_dataset != nullptr &&
-             batch_dataset->for_each_component<meta_data::update_getter_s, VoltageRegulator>([](auto const& span) {
-                 return !std::ranges::all_of(span, [](VoltageRegulatorUpdate const& regulator) {
-                     return is_nan(regulator.q_min) && is_nan(regulator.q_max);
-                 });
-             }))) {
-            throw ExperimentalFeature{"Voltage Regulator with Qmin/Qmax limits is an experimental feature"};
+    void check_no_experimental_features_used(Options const& options, ConstDataset const* batch_dataset) const {
+        bool const is_asymmetric_power_flow = options.calculation_type == CalculationType::power_flow &&
+                                              options.calculation_symmetry == CalculationSymmetry::asymmetric;
+
+        auto const regulator_has_q_limits = [](auto const& regulator) {
+            return !is_nan(regulator.q_min()) || !is_nan(regulator.q_max());
+        };
+        auto const regulator_update_has_q_limits = [](VoltageRegulatorUpdate const& regulator) {
+            return !is_nan(regulator.q_min) || !is_nan(regulator.q_max);
+        };
+
+        bool const state_has_q_limits =
+            std::ranges::any_of(state_.components.template citer<VoltageRegulator>(), regulator_has_q_limits);
+
+        bool const batch_has_q_limits =
+            batch_dataset != nullptr && batch_dataset->for_each_component<meta_data::update_getter_s, VoltageRegulator>(
+                                            [&regulator_update_has_q_limits](auto const& span) {
+                                                return std::ranges::any_of(span, regulator_update_has_q_limits);
+                                            });
+
+        if (is_asymmetric_power_flow && (state_has_q_limits || batch_has_q_limits)) {
+            throw ExperimentalFeature{
+                "Voltage Regulator with Qmin/Qmax limits for asymmetric calculations is an experimental feature"};
         }
     }
 
     void check_no_future_deprecations(Options const& /*options*/, ConstDataset const* /*batch_dataset*/) const {
+        // TODO(mgovers): cleanup v2: remove this function, as power sensor creation itself should always throw after
+        // node injection sensors removal
         ModelType::run_functor_with_all_component_types_return_void([this]<typename CT>() {
             // only flow sensors have get_terminal_type() so we can filter on it
             if constexpr (requires(CT c) {
@@ -426,9 +442,13 @@ class MainModelImpl {
 
   private:
     template <solver_output_type SolverOutputType>
-    void output_result(MathOutput<std::vector<SolverOutputType>> const& math_output, MutableDataset const& result_data,
+    void output_result(MathOutput<std::vector<SolverOutputType>> math_output, MutableDataset const& result_data,
                        Logger& logger) const {
         assert(!result_data.is_batch());
+
+        Timer const t_output{logger, LogEvent::produce_output};
+
+        main_core::solve_topological_nodes(state_, math_output);
 
         auto const output_func = [this, &math_output, &result_data]<typename CT>() {
             result_data.for_each_component<typename output_type_getter<SolverOutputType>::type, CT>(
@@ -440,7 +460,6 @@ class MainModelImpl {
                 });
         };
 
-        Timer const t_output{logger, LogEvent::produce_output};
         ModelType::run_functor_with_all_component_types_return_void(output_func);
     }
 

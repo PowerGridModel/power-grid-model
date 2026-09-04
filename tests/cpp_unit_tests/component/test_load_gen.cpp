@@ -60,7 +60,7 @@ TEST_CASE("Test load generator") {
     AsymGenerator const asym_gen_y{asym_load_gen_input, 10e3};
 
     double const base_i = base_power_1p / (10e3 / sqrt3);
-    ComplexValue<asymmetric_t> const ua{1.1 * std::exp(1.0i * 10.0)};
+    ComplexValue<asymmetric_t> const ua{std::polar(1.1, 10.0)};
 
     ApplianceSolverOutput<symmetric_t> appliance_solver_output_sym;
     appliance_solver_output_sym.i = 1.0 + 2.0i;
@@ -240,8 +240,8 @@ TEST_CASE("Test load generator") {
 }
 
 TEST_CASE_TEMPLATE("Test load generator", LoadGeneratorType, SymLoad, AsymLoad, SymGenerator, AsymGenerator) {
-    using InputType = typename LoadGeneratorType::InputType;
-    using UpdateType = typename LoadGeneratorType::UpdateType;
+    using InputType = LoadGeneratorType::InputType;
+    using UpdateType = LoadGeneratorType::UpdateType;
     using RealValueType = decltype(InputType::p_specified);
 
     auto const r_nan = RealValueType{nan};

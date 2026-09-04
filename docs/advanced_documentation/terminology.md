@@ -35,7 +35,7 @@ In PGM, slack buses are selected as follows.
 
 ```{note}
 The slack bus used by PGM internally differs from the slack bus in the sense of an ideal source.
-For documentation on ideal source modeling, please refer to [its documentation](./non-pgm-components.md#ideal-source).
+For documentation on ideal source modeling, please refer to [its documentation](./non-native-components.md#ideal-source).
 ```
 
 ## Programming terminology
@@ -221,7 +221,10 @@ Please always double-check that the data is valid before reporting an issue, e.g
 Please also check whether your input data is correctly created and contains no obvious errors like sensors that are
 marked as measuring a node while, in fact, they are actually measuring branch flow.
 
-Other examples of non-spurious edge cases are cases in which the power grid model reports a `NotObservableError`.
+Other examples of non-spurious edge cases are:
+
+* Cases in which the power grid model reports a `NotObservableError`;
+* Cases in which a `PowerGridError` is thrown that wraps a `bad_alloc` (running out of available contiguous memory).
 
 #### Spurious edge cases
 

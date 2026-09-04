@@ -30,7 +30,7 @@ template <typename... Ts> struct tuple_type_identities_to_tuple_types<std::tuple
 };
 
 template <typename Tuple>
-using tuple_type_identities_to_tuple_types_t = typename tuple_type_identities_to_tuple_types<Tuple>::type;
+using tuple_type_identities_to_tuple_types_t = tuple_type_identities_to_tuple_types<Tuple>::type;
 
 template <typename... Types, typename... SelectTypes>
 constexpr auto filter_tuple_types(std::tuple<std::type_identity<Types>...> const& /*unused*/,
@@ -94,13 +94,13 @@ class MainModelType<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
         std::tuple<std::type_identity<ComponentType>..., std::type_identity<ExtraRetrievableType>...>{};
 
     static constexpr auto topology_types_tuple_v_ =
-        std::tuple<std::type_identity<Node>, std::type_identity<Branch>, std::type_identity<Branch3>,
+        std::tuple<std::type_identity<Node>, std::type_identity<Edge>, std::type_identity<Branch3>,
                    std::type_identity<Source>, std::type_identity<Shunt>, std::type_identity<GenericLoadGen>,
                    std::type_identity<GenericVoltageSensor>, std::type_identity<GenericPowerSensor>,
                    std::type_identity<GenericCurrentSensor>, std::type_identity<Regulator>>{};
 
     static constexpr auto topology_connection_types_tuple_v_ =
-        std::tuple<std::type_identity<Branch>, std::type_identity<Branch3>, std::type_identity<Source>>{};
+        std::tuple<std::type_identity<Edge>, std::type_identity<Branch3>, std::type_identity<Source>>{};
 
   public:
     using TopologyTypesTuple = detail::tuple_type_identities_to_tuple_types_t<decltype(detail::filter_tuple_types(
@@ -117,12 +117,11 @@ class MainModelType<ExtraRetrievableTypes<ExtraRetrievableType...>, ComponentLis
     using SequenceIdxRefWrappers = std::array<std::reference_wrapper<std::vector<Idx2D> const>, n_types>;
     using ComponentFlags = std::array<bool, n_types>;
 
-    template <class Functor> static constexpr void run_functor_with_all_component_types_return_void(Functor&& functor) {
-        return utils::run_functor_with_tuple_return_void<ComponentTypesTuple>(std::forward<Functor>(functor));
+    static constexpr void run_functor_with_all_component_types_return_void(functor_c auto functor) {
+        return utils::run_functor_with_tuple_return_void<ComponentTypesTuple>(functor);
     }
-    template <class Functor>
-    static constexpr auto run_functor_with_all_component_types_return_array(Functor&& functor) {
-        return utils::run_functor_with_tuple_return_array<ComponentTypesTuple>(std::forward<Functor>(functor));
+    static constexpr auto run_functor_with_all_component_types_return_array(functor_c auto functor) {
+        return utils::run_functor_with_tuple_return_array<ComponentTypesTuple>(functor);
     }
 };
 

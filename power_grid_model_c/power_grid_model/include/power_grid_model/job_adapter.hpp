@@ -26,7 +26,7 @@ template <class MainModel> class JobAdapter;
 
 template <class MainModel> class JobAdapter : public JobInterface {
   public:
-    using ModelType = typename MainModel::ImplType;
+    using ModelType = MainModel::ImplType;
 
     JobAdapter(std::reference_wrapper<MainModel> model_reference,
                std::reference_wrapper<MainModelOptions const> options)
@@ -80,12 +80,12 @@ template <class MainModel> class JobAdapter : public JobInterface {
     std::reference_wrapper<MainModel> model_reference_;
     std::reference_wrapper<MainModelOptions const> options_;
 
-    typename ModelType::ComponentFlags components_to_update_{};
-    typename ModelType::UpdateIndependence update_independence_{};
-    typename ModelType::ComponentFlags independence_flags_{};
+    ModelType::ComponentFlags components_to_update_{};
+    ModelType::UpdateIndependence update_independence_{};
+    ModelType::ComponentFlags independence_flags_{};
     std::shared_ptr<typename ModelType::SequenceIdx> all_scenarios_sequence_;
     // current_scenario_sequence_cache_ is calculated per scenario, so it is excluded from the constructors.
-    typename ModelType::SequenceIdx current_scenario_sequence_cache_{};
+    ModelType::SequenceIdx current_scenario_sequence_cache_{};
 
     void calculate_impl(MutableDataset const& result_data, Idx scenario_idx, Logger& logger) const {
         MainModel::calculator(options_.get(), model_reference_.get(), result_data.get_individual_scenario(scenario_idx),

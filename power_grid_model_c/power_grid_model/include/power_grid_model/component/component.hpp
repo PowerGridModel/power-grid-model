@@ -23,7 +23,7 @@ struct UpdateChange {
 };
 
 template <typename T>
-concept component_c = requires(T t, T const& ct, typename T::UpdateType u, typename T::UpdateType const& cu) {
+concept component_c = requires(T t, T const& ct, T::UpdateType u, T::UpdateType const& cu) {
     typename T::InputType;
     typename T::UpdateType;
 
@@ -51,6 +51,7 @@ static_assert(is_generator_v<gen_appliance_t>);
 // Forward declarations of all components
 class Base;
 class Node;
+class Edge;
 class Branch;
 class Branch3;
 class Appliance;

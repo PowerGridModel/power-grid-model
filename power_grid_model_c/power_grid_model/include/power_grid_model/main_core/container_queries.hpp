@@ -100,8 +100,8 @@ constexpr auto get_component_citer(ComponentContainer const& components) {
 
 namespace detail {
 template <typename Component> struct topology_base_type;
-template <std::derived_from<Branch> Component> struct topology_base_type<Component> {
-    using type = Branch;
+template <std::derived_from<Edge> Component> struct topology_base_type<Component> {
+    using type = Edge;
 };
 template <std::derived_from<Branch3> Component> struct topology_base_type<Component> {
     using type = Branch3;
@@ -115,8 +115,7 @@ template <std::derived_from<Source> Component> struct topology_base_type<Compone
 template <std::derived_from<Regulator> Component> struct topology_base_type<Component> {
     using type = Regulator;
 };
-template <typename Component>
-using topology_base_type_t = typename topology_base_type<std::remove_cvref_t<Component>>::type;
+template <typename Component> using topology_base_type_t = topology_base_type<std::remove_cvref_t<Component>>::type;
 } // namespace detail
 
 template <typename ComponentType, class ComponentContainer>

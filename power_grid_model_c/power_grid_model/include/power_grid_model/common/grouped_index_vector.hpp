@@ -36,26 +36,29 @@ The input, i.e., [0, 1, 3] should be strictly increasing
 namespace power_grid_model {
 
 namespace detail {
-template <std::ranges::viewable_range ElementGroups>
-constexpr auto sparse_encode(ElementGroups&& element_groups, Idx num_groups) {
+constexpr auto sparse_encode(non_owning_view_c auto element_groups, Idx num_groups) {
     IdxVector result(num_groups + 1);
-    auto element_groups_view = std::views::all(std::forward<ElementGroups>(element_groups));
-    auto next_group = std::begin(element_groups_view);
+    auto next_group = std::begin(element_groups);
+    auto const begin = std::begin(element_groups);
+    auto const end = std::end(element_groups);
     for (auto const group : IdxRange{num_groups}) {
-        next_group = std::upper_bound(next_group, std::end(element_groups_view), group);
-        result[group + 1] = std::distance(std::begin(element_groups_view), next_group);
+        next_group = std::upper_bound(next_group, end, group);
+        result[group + 1] = std::distance(begin, next_group);
     }
     return result;
+}
+constexpr auto sparse_encode(IdxVector const& element_groups, Idx num_groups) {
+    return sparse_encode(by_ref(element_groups), num_groups);
 }
 
-template <std::ranges::viewable_range IndPtr> constexpr auto sparse_decode(IndPtr&& indptr) {
-    auto indptr_view = std::views::all(std::forward<IndPtr>(indptr));
-    auto result = IdxVector(indptr_view.back());
-    for (Idx const group : IdxRange{static_cast<Idx>(indptr_view.size()) - 1}) {
-        std::fill(std::begin(result) + indptr_view[group], std::begin(result) + indptr_view[group + 1], group);
+constexpr auto sparse_decode(non_owning_view_c auto indptr) {
+    auto result = IdxVector(indptr.back());
+    for (Idx const group : IdxRange{static_cast<Idx>(indptr.size()) - 1}) {
+        std::fill(std::begin(result) + indptr[group], std::begin(result) + indptr[group + 1], group);
     }
     return result;
 }
+constexpr auto sparse_decode(IdxVector const& indptr) { return sparse_decode(by_ref(indptr)); }
 
 template <typename T, typename ElementType>
 concept iterator_of = std::input_or_output_iterator<T> && requires(T const t) {

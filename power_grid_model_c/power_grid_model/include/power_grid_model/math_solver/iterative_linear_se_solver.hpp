@@ -37,7 +37,7 @@ namespace iterative_linear_se {
 
 // block class for the unknown vector and/or right-hand side in state estimation equation
 template <symmetry_tag sym> struct ILSEUnknown : public Block<DoubleComplex, sym, false, 2> {
-    template <int r, int c> using GetterType = typename Block<DoubleComplex, sym, false, 2>::template GetterType<r, c>;
+    template <int r, int c> using GetterType = Block<DoubleComplex, sym, false, 2>::template GetterType<r, c>;
 
     // eigen expression
     using Block<DoubleComplex, sym, false, 2>::Block;
@@ -60,7 +60,7 @@ template <symmetry_tag sym> using ILSERhs = ILSEUnknown<sym>;
 // ]
 template <symmetry_tag sym> class ILSEGainBlock : public Block<DoubleComplex, sym, true, 2> {
   public:
-    template <int r, int c> using GetterType = typename Block<DoubleComplex, sym, true, 2>::template GetterType<r, c>;
+    template <int r, int c> using GetterType = Block<DoubleComplex, sym, true, 2>::template GetterType<r, c>;
 
     // eigen expression
     using Block<DoubleComplex, sym, true, 2>::Block;
@@ -175,7 +175,7 @@ template <symmetry_tag sym_type> class IterativeLinearSESolver {
     std::vector<ILSERhs<sym>> x_rhs_;
     // solver
     SparseLUSolver<ILSEGainBlock<sym>, ILSERhs<sym>, ILSEUnknown<sym>> sparse_solver_;
-    typename SparseLUSolver<ILSEGainBlock<sym>, ILSERhs<sym>, ILSEUnknown<sym>>::BlockPermArray perm_;
+    SparseLUSolver<ILSEGainBlock<sym>, ILSERhs<sym>, ILSEUnknown<sym>>::BlockPermArray perm_;
 
     static auto diagonal_inverse(RealValue<sym> const& value) {
         return ComplexDiagonalTensor<sym>{static_cast<ComplexValue<sym>>(RealValue<sym>{1.0} / value)};

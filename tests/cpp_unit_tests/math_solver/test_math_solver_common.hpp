@@ -32,7 +32,7 @@ inline void check_close(auto const& x, auto const& y) { check_close<symmetric_t>
 template <symmetry_tag sym>
 inline void assert_output(SolverOutput<sym> const& output, SolverOutput<sym> const& output_ref,
                           bool normalize_phase = false, double tolerance = numerical_tolerance) {
-    DoubleComplex const phase_offset = normalize_phase ? std::exp(1.0i / 180.0 * pi) : 1.0;
+    DoubleComplex const phase_offset = normalize_phase ? std::polar(1.0, pi / 180.0) : 1.0;
     for (size_t i = 0; i != output.u.size(); ++i) {
         check_close<sym>(output.u[i], output_ref.u[i] * phase_offset, tolerance);
     }
@@ -106,11 +106,11 @@ template <symmetry_tag sym_type> struct SteadyStateSolverTestGrid {
     static constexpr double deg = deg_30 / 30.0;
     // NOLINTBEGIN(cppcoreguidelines-avoid-const-or-ref-data-members) // NOSONAR // should be constexpr but cant due to
     // std::exp
-    DoubleComplex const u0 = v0 * std::exp(-1.0i * deg);
-    DoubleComplex const u1 = v1 * std::exp(-4.0i * deg);
-    DoubleComplex const u2 = v2 * std::exp(-37.0i * deg);
+    DoubleComplex const u0 = v0 * std::polar(1.0, -deg);
+    DoubleComplex const u1 = v1 * std::polar(1.0, -4.0 * deg);
+    DoubleComplex const u2 = v2 * std::polar(1.0, -37.0 * deg);
     // branch
-    DoubleComplex const shift = std::exp(1.0i * shift_val);
+    DoubleComplex const shift = std::polar(1.0, shift_val);
     DoubleComplex const y0 = 1.0 - 2.0i;
     DoubleComplex const ys0 = 0.05 + 0.2i;
     DoubleComplex const y1 = 3.0 - 4.0i;

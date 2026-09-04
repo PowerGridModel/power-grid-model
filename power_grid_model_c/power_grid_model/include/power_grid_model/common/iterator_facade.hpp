@@ -16,7 +16,7 @@ template <typename T>
 concept iterator_facadeable_c = std::integral<typename T::difference_type> && std::is_pointer_v<typename T::pointer> &&
                                 std::is_lvalue_reference_v<typename T::reference> &&
                                 requires(T t, std::remove_cvref_t<T> mt, std::add_const_t<T> ct,
-                                         std::add_const_t<T> ct2, typename std::remove_cvref_t<T>::difference_type d) {
+                                         std::add_const_t<T> ct2, std::remove_cvref_t<T>::difference_type d) {
                                     typename T::value_type;
                                     { *t } -> std::same_as<typename T::reference>;
                                     { &*t } -> std::same_as<typename T::pointer>;
@@ -35,9 +35,7 @@ class IteratorFacade {
   public:
     using iterator_category = std::random_access_iterator_tag;
 
-    template <typename Self> constexpr decltype(auto) operator->(this Self&& self) {
-        return &(*std::forward<Self>(self));
-    }
+    template <typename Self> constexpr decltype(auto) operator->(this Self const& self) { return &(*self); }
 
     template <typename Self, typename Other>
         requires std::same_as<std::remove_cvref_t<Self>, std::remove_cvref_t<Other>>
@@ -83,27 +81,25 @@ class IteratorFacade {
     }
 
     template <typename Self, std::integral Int>
-    friend constexpr std::remove_cvref_t<Self> operator+(Self&& self, Int offset)
-        requires std::derived_from<std::remove_cvref_t<Self>, IteratorFacade> //&& detail::iterator_facadeable_c<Self>
+    friend constexpr Self operator+(Self const& self, Int offset)
+        requires std::derived_from<Self, IteratorFacade> //&& detail::iterator_facadeable_c<Self>
     {
-        using Result = std::remove_cvref_t<Self>;
-        Result result{std::forward<Self>(self)};
+        Self result{self};
         result += offset;
         return result;
     }
     template <typename Self, std::integral Int>
-        requires std::derived_from<std::remove_cvref_t<Self>, IteratorFacade> //&& detail::iterator_facadeable_c<Self>
-    friend constexpr std::remove_cvref_t<Self> operator+(Int offset, Self&& self) {
-        return std::forward<Self>(self) + offset;
+        requires std::derived_from<Self, IteratorFacade> //&& detail::iterator_facadeable_c<Self>
+    friend constexpr Self operator+(Int offset, Self const& self) {
+        return self + offset;
     }
     template <typename Self, std::integral Int>
-        requires std::derived_from<std::remove_cvref_t<Self>, IteratorFacade> //&& detail::iterator_facadeable_c<Self>
-    friend constexpr std::remove_cvref_t<Self> operator-(Self&& self, Int idx) {
-        return (std::forward<Self>(self)) + (-idx);
+        requires std::derived_from<Self, IteratorFacade> //&& detail::iterator_facadeable_c<Self>
+    friend constexpr Self operator-(Self const& self, Int idx) {
+        return self + (-idx);
     }
 
-    template <typename Self>
-    constexpr decltype(auto) operator[](this Self const& self, typename Self::difference_type idx) {
+    template <typename Self> constexpr decltype(auto) operator[](this Self const& self, Self::difference_type idx) {
         return *(self + idx);
     }
 

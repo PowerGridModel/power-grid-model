@@ -11,7 +11,6 @@
 
 #include <doctest/doctest.h>
 
-#include <concepts>
 #include <thread>
 #include <utility>
 #include <vector>
@@ -56,15 +55,13 @@ void report_checker_helper(auto& report, Idx n_threads = Idx{1}) {
     }
 }
 
-template <typename JobFn>
-    requires std::invocable<JobFn, Idx>
-void run_parallel_jobs(Idx n_threads, JobFn&& job) {
+void run_parallel_jobs(Idx n_threads, functor_c auto job) {
     std::vector<std::jthread> threads;
     threads.reserve(n_threads);
     for ([[maybe_unused]] Idx const i : IdxRange{n_threads}) {
         threads.emplace_back(job, n_threads);
     }
-    capturing::into_the_void(std::forward<JobFn>(job));
+    capturing::into_the_void(job);
 }
 } // namespace
 

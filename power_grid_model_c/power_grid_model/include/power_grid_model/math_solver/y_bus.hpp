@@ -392,12 +392,12 @@ template <symmetry_tag sym> class YBus {
         }
 
         // process and update affected entries
-        update_admittance_entries(get_affected_admittance_entries(math_model_param_incrmt));
+        update_admittance_entries(by_ref(get_affected_admittance_entries(math_model_param_incrmt)));
     }
 
-    template <std::ranges::viewable_range Entries>
+    template <non_owning_view_c Entries>
         requires std::same_as<std::ranges::range_value_t<Entries>, Idx>
-    void update_admittance_entries(Entries&& y_bus_entries) {
+    void update_admittance_entries(Entries y_bus_entries) {
         assert(std::ssize(admittance_) == nnz());
 
         auto const& y_bus_element = y_bus_struct_->y_bus_element;
@@ -409,7 +409,7 @@ template <symmetry_tag sym> class YBus {
             parameters_changed(true);
         }
 
-        for (auto const entry : std::forward<Entries>(y_bus_entries)) {
+        for (auto const entry : y_bus_entries) {
             // start admittance accumulation with zero
             ComplexTensor<sym> entry_admittance{0.0};
             // loop over all entries of this position
@@ -513,6 +513,8 @@ template <symmetry_tag sym> class YBus {
                    output.i_f = dot(param.yff(), uf) + dot(param.yft(), ut);
                    output.i_t = dot(param.ytf(), uf) + dot(param.ytt(), ut);
 
+                   // TODO(mgovers): cleanup v2: branch solver output should always be in current domain; conversion to
+                   // power domain should be done in main_core/output.hpp
                    if constexpr (std::same_as<T, BranchSolverOutput<sym>>) {
                        // See "Shunt Injection Flow Calculation" in "State Estimation Alliander"
                        output.s_f = uf * conj(output.i_f);
@@ -536,6 +538,8 @@ template <symmetry_tag sym> class YBus {
                 // NOTE: the negative sign for injection direction!
                 shunt_flow[shunt].i = -dot(math_model_param_.shunt_param[shunt], u[bus]);
 
+                // TODO(mgovers): cleanup v2: appliance solver output should always be in current domain;
+                // conversion to power domain should be done in main_core/output.hpp
                 if constexpr (std::same_as<SolverOutputType, ApplianceSolverOutput<sym>>) {
                     // See "Branch/Shunt Power Flow" in "State Estimation Alliander"
                     shunt_flow[shunt].s = u[bus] * conj(shunt_flow[shunt].i);
