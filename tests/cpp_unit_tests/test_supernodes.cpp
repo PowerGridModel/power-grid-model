@@ -165,7 +165,7 @@ TEST_CASE("Test Supernodes") {
             CHECK(std::ranges::equal(
                 topo_nodes.topo_nodes |
                     std::views::transform([](TopologicalNode const& node) -> auto& { return node.user_links; }),
-                std::vector<std::vector<BranchIdx>>{{{0, disconnected}}, {{disconnected, 0}}, {{0, 1}}, {}, {}}));
+                std::vector<std::vector<BranchIdx>>{{}, {}, {{0, 1}}, {}, {}}));
 
             CHECK(std::ranges::equal(topo_nodes.coupling.user_nodes_to_topo_nodes,
                                      std::vector<Idx2D>{{.group = 0, .pos = 0},
@@ -176,10 +176,10 @@ TEST_CASE("Test Supernodes") {
                                                         {.group = 4, .pos = 0}}));
 
             CHECK(std::ranges::equal(topo_nodes.coupling.user_links_to_topo_nodes,
-                                     std::vector<Idx2D>{{.group = 0, .pos = 0},
+                                     std::vector<Idx2D>{{.group = 0, .pos = disconnected},
                                                         {.group = 2, .pos = 0},
                                                         {.group = disconnected, .pos = disconnected},
-                                                        {.group = 1, .pos = 0}}));
+                                                        {.group = 1, .pos = disconnected}}));
         }
     }
     SUBCASE("construct_reduced_topology") {
