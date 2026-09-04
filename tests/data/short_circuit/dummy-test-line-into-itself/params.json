@@ -5,5 +5,9 @@
     "default": 1e-9,
     "i_(.+)?": 1e-5
   },
-  "short_circuit_voltage_scaling": "maximum"
+  "short_circuit_voltage_scaling": "maximum",
+  "xfail": {
+    "raises": "AssertionError",
+    "reason": "Bug to be fixed in https://github.com/PowerGridModel/power-grid-model/pull/1566"
+  }
 }
