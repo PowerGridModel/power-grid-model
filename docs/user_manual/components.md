@@ -1291,6 +1291,7 @@ calculations, an active voltage regulator makes the connection node a voltage-co
 the regulated object remains specified by the load/generator input, while the reactive power is calculated so that the
 voltage magnitude at the node follows `u_ref`.
 
+```{warning}
 Voltage regulation is supported only by the [Newton-Raphson power flow](./calculations.md#newton-raphson-power-flow)
 method.
 
