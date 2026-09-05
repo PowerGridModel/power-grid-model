@@ -1294,6 +1294,7 @@ voltage magnitude at the node follows `u_ref`.
 ```{warning}
 Voltage regulation is supported only by the [Newton-Raphson power flow](./calculations.md#newton-raphson-power-flow)
 method.
+```
 
 ```{note}
 If `q_min` and/or `q_max` are specified, the calculated reactive power is checked against these limits. If the required
