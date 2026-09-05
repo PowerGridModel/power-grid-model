@@ -22,7 +22,7 @@
 #include <concepts>
 
 namespace power_grid_model::main_core {
-template <std::derived_from<Edge> ComponentType, class ComponentContainer>
+template <std::derived_from<Branch> ComponentType, class ComponentContainer>
     requires model_component_state_c<MainModelState, ComponentContainer, ComponentType>
 constexpr auto get_branch_nodes(MainModelState<ComponentContainer> const& state, Idx topology_sequence_idx) {
     return state.comp_topo->branch_node_idx[topology_sequence_idx];
@@ -56,7 +56,7 @@ constexpr auto get_math_id(MainModelState<ComponentContainer> const& state, Idx 
     return state.topo_comp_coup->node[topology_sequence_idx];
 }
 
-template <std::derived_from<Edge> ComponentType, class ComponentContainer>
+template <std::derived_from<Branch> ComponentType, class ComponentContainer>
     requires model_component_state_c<MainModelState, ComponentContainer, ComponentType>
 constexpr auto get_math_id(MainModelState<ComponentContainer> const& state, Idx topology_sequence_idx) {
     return state.topo_comp_coup->branch[topology_sequence_idx];
@@ -92,10 +92,24 @@ constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> cons
     return state.reduced_topology->topo_node_coup.coupling.user_nodes_to_topo_nodes.cbegin();
 }
 
-template <std::derived_from<Edge> Component, class ComponentContainer>
+template <std::derived_from<Branch> Component, class ComponentContainer>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
-    return state.topo_comp_coup->branch.cbegin() + get_component_sequence_offset<Edge, Component>(state.components);
+    return state.topo_comp_coup->branch.cbegin() + get_component_sequence_offset<Branch, Component>(state.components);
+}
+
+template <std::same_as<Link> Component, class ComponentContainer>
+    requires model_component_state_c<MainModelState, ComponentContainer, Component>
+constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
+    auto const& link_topo_ids = state.reduced_topology->topo_node_coup.coupling.user_links_to_topo_nodes;
+
+    if (std::ranges::ssize(link_topo_ids) == get_component_size<Link>(state.components)) {
+        // new path: links are not branches
+        return link_topo_ids.cbegin();
+    } else {
+        // legacy path: links are branches
+        return state.topo_comp_coup->branch.cbegin() + get_component_sequence_offset<Edge, Link>(state.components);
+    }
 }
 
 template <std::derived_from<Branch3> Component, class ComponentContainer>

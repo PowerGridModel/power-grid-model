@@ -10,6 +10,7 @@
 #include "../component/branch.hpp"
 #include "../component/branch3.hpp"
 #include "../component/component.hpp"
+#include "../component/edge.hpp"
 #include "../math_solver/y_bus.hpp"
 #include "container_queries.hpp"
 #include "math_state.hpp"
@@ -24,17 +25,18 @@ constexpr Idx isolated_component{-1};
 
 namespace detail {
 
-template <std::derived_from<Edge> ComponentType, math_model_param_c MathModelParamType, typename ComponentContainer>
+template <typename ComponentType, math_model_param_c MathModelParamType, typename ComponentContainer>
+    requires std::same_as<ComponentType, Edge> || std::same_as<ComponentType, Branch>
 constexpr void add_to_math_model_params(std::vector<MathModelParamType>& math_model_param,
                                         MainModelState<ComponentContainer> const& state,
                                         Idx const topology_sequence_idx) {
-    Idx2D const math_idx = get_math_id<Edge>(state, topology_sequence_idx);
+    Idx2D const math_idx = get_math_id<Branch>(state, topology_sequence_idx);
     if (math_idx.group == isolated_component) {
         return;
     }
     // assign parameters
     auto& model_params = math_model_param[math_idx.group];
-    auto branch_params = state.components.template get_item_by_seq<Edge>(topology_sequence_idx)
+    auto branch_params = state.components.template get_item_by_seq<ComponentType>(topology_sequence_idx)
                              .template calc_param<typename MathModelParamType::sym>();
 
     if constexpr (std::derived_from<MathModelParamType, MathModelParamIncrement<typename MathModelParamType::sym>>) {
@@ -123,12 +125,27 @@ constexpr void add_to_math_model_params(std::vector<MathModelParamType> const& /
 }
 
 template <typename ComponentType, symmetry_tag sym, typename ComponentContainer>
-    requires std::derived_from<ComponentType, Edge> || std::derived_from<ComponentType, Branch3> ||
+    requires std::derived_from<ComponentType, Branch> || std::derived_from<ComponentType, Branch3> ||
              std::derived_from<ComponentType, Shunt> || std::derived_from<ComponentType, Source>
 constexpr void add_to_increment(std::vector<MathModelParamIncrement<sym>>& increments,
                                 MainModelState<ComponentContainer> const& state, Idx2D const& changed_component_idx) {
-    Idx const topo_sequence_idx = main_core::get_topology_index<ComponentType>(state.components, changed_component_idx);
-    add_to_math_model_params<ComponentType>(increments, state, topo_sequence_idx);
+    if constexpr (std::derived_from<ComponentType, Branch>) {
+        if (state.comp_topo->link_node_idx.empty()) {
+            // legacy branch_node_idx is registered from Edge
+            Idx const topology_idx = get_component_sequence_idx<Edge>(state.components, changed_component_idx);
+
+            add_to_math_model_params<Edge>(increments, state, topology_idx);
+        } else {
+            // new branch_node_idx is registered from Branch
+            Idx const topology_idx = get_topology_index<ComponentType>(state.components, changed_component_idx);
+
+            add_to_math_model_params<Branch>(increments, state, topology_idx);
+        }
+    } else {
+        Idx const topology_idx = get_topology_index<ComponentType>(state.components, changed_component_idx);
+
+        add_to_math_model_params<ComponentType>(increments, state, topology_idx);
+    }
 }
 // default implementation for other components, does nothing
 template <typename ComponentType, symmetry_tag sym, typename ComponentContainer>
@@ -192,8 +209,16 @@ inline std::vector<MathModelParam<sym>> get_math_param(main_model_state_c auto c
         math_param[i].source_param.resize(state.math_topology[i]->n_source());
     }
     // loop all branch
-    for (Idx const i : IdxRange{std::ssize(state.comp_topo->branch_node_idx)}) {
-        detail::add_to_math_model_params<Edge>(math_param, state, i);
+    if (state.comp_topo->link_node_idx.empty()) {
+        // legacy topology: branch_node_idx contains every Edge, including Link
+        for (Idx const i : IdxRange{std::ssize(state.comp_topo->branch_node_idx)}) {
+            detail::add_to_math_model_params<Edge>(math_param, state, i);
+        }
+    } else {
+        // reduced topology: Links are separate and branch_node_idx contains only Branch
+        for (Idx const i : IdxRange{std::ssize(state.comp_topo->branch_node_idx)}) {
+            detail::add_to_math_model_params<Branch>(math_param, state, i);
+        }
     }
     // loop all branch3
     for (Idx const i : IdxRange{std::ssize(state.comp_topo->branch3_node_idx)}) {

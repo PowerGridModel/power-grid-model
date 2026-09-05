@@ -207,9 +207,15 @@ class MainModelImpl {
         construction_complete_ = true;
 #endif // !NDEBUG
         state_.components.set_construction_complete();
+        has_node_injection_sensors_ = detect_node_injection_sensors();
+        state_.comp_topo = std::make_shared<ComponentTopology const>(
+            main_core::construct_topology<ModelType>(state_.components, has_node_injection_sensors_));
+    }
 
-        state_.comp_topo =
-            std::make_shared<ComponentTopology const>(main_core::construct_topology<ModelType>(state_.components));
+    bool detect_node_injection_sensors() const {
+        return std::ranges::any_of(
+            state_.components.template citer<GenericPowerSensor>(),
+            [](GenericPowerSensor const& sensor) { return sensor.get_terminal_type() == MeasuredTerminalType::node; });
     }
 
   public:
@@ -474,6 +480,7 @@ class MainModelImpl {
 
     OwnedUpdateDataset cached_inverse_update_{};
     UpdateChange cached_state_changes_{};
+    bool has_node_injection_sensors_{false};
 #ifndef NDEBUG
     // construction_complete is used for debug assertions only
     bool construction_complete_{false};

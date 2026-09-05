@@ -52,7 +52,7 @@ constexpr void register_topology_components(ComponentContainer const& components
 }
 
 template <std::same_as<Edge> Component, class ComponentContainer>
-    requires common::component_container_c<ComponentContainer, Component, Edge, Node>
+    requires common::component_container_c<ComponentContainer, Component, Node>
 constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
     apply_registration<Edge>(components, comp_topo.branch_node_idx, [&components](Edge const& edge) {
         return BranchIdx{get_component_sequence_idx<Node>(components, edge.from_node()),
@@ -201,8 +201,28 @@ constexpr void register_topology_components(ComponentContainer const& components
                                   [](Regulator const& regulator) { return regulator.regulated_object_type(); });
 }
 
+// new path: only Branch-derived types (not Link) in branch_node_idx
+template <std::same_as<Branch> Component, class ComponentContainer>
+    requires common::component_container_c<ComponentContainer, Component, Node>
+constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
+    apply_registration<Component>(components, comp_topo.branch_node_idx, [&components](Component const& branch) {
+        return BranchIdx{get_component_sequence_idx<Node>(components, branch.from_node()),
+                         get_component_sequence_idx<Node>(components, branch.to_node())};
+    });
+}
+
+// new path: Link in link_node_idx so topology builder can create super-nodes
+template <std::same_as<Link> Component, class ComponentContainer>
+    requires common::component_container_c<ComponentContainer, Component, Node>
+constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
+    apply_registration<Component>(components, comp_topo.link_node_idx, [&components](Component const& link) {
+        return BranchIdx{get_component_sequence_idx<Node>(components, link.from_node()),
+                         get_component_sequence_idx<Node>(components, link.to_node())};
+    });
+}
+
 template <std::same_as<Edge> Component, class ComponentContainer>
-    requires common::component_container_c<ComponentContainer, Component, Edge>
+    requires common::component_container_c<ComponentContainer, Component>
 constexpr void register_connections_components(ComponentContainer const& components, ComponentConnections& comp_conn) {
     apply_registration<Edge>(components, comp_conn.branch_connected, [](Edge const& edge) {
         return BranchConnected{status_to_int(edge.from_status()), status_to_int(edge.to_status())};
@@ -229,31 +249,75 @@ constexpr void register_connections_components(ComponentContainer const& compone
                                   [](Source const& source) { return source.status(); });
 }
 
+// new path: only Branch-derived types (not Link) in branch_connected
+template <std::same_as<Branch> Component, class ComponentContainer>
+    requires common::component_container_c<ComponentContainer, Component>
+constexpr void register_connections_components(ComponentContainer const& components, ComponentConnections& comp_conn) {
+    apply_registration<Component>(components, comp_conn.branch_connected, [](Component const& branch) {
+        return BranchConnected{status_to_int(branch.from_status()), status_to_int(branch.to_status())};
+    });
+    apply_registration<Component>(components, comp_conn.branch_phase_shift,
+                                  [](Branch const& branch) { return branch.phase_shift(); });
+}
+
+// new path: Link in link_connected so topology builder can handle super-nodes
+template <std::same_as<Link> Component, class ComponentContainer>
+    requires common::component_container_c<ComponentContainer, Component>
+constexpr void register_connections_components(ComponentContainer const& components, ComponentConnections& comp_conn) {
+    apply_registration<Component>(components, comp_conn.link_connected, [](Component const& link) {
+        return BranchConnected{status_to_int(link.from_status()), status_to_int(link.to_status())};
+    });
+    // Note: Links always have zero phase shift, so no phase_shift registration needed
+}
+
 } // namespace detail
 
+// entry point -> how to differentiate when a component is a sensor on a node? can i do it here?
 template <typename ModelType>
     requires common::component_container_c<typename ModelType::ComponentContainer, Node, Edge, Branch3, Source, Shunt,
                                            GenericLoadGen, GenericVoltageSensor, GenericPowerSensor,
-                                           GenericCurrentSensor, Regulator>
-ComponentTopology construct_topology(typename ModelType::ComponentContainer const& components) {
+                                           GenericCurrentSensor, Regulator, Branch, Link>
+ComponentTopology construct_topology(typename ModelType::ComponentContainer const& components,
+                                     bool has_node_injection_sensors = false) {
     ComponentTopology comp_topo;
     using TopologyTypesTuple = ModelType::TopologyTypesTuple;
     main_core::utils::run_functor_with_tuple_return_void<TopologyTypesTuple>(
         [&components, &comp_topo]<typename CompType>() {
-            detail::register_topology_components<CompType>(components, comp_topo);
+            if constexpr (!std::same_as<CompType, Edge>) {
+                detail::register_topology_components<CompType>(components, comp_topo);
+            }
         });
+    if (has_node_injection_sensors) {
+        // old path: all edges (branches + links) in branch_node_idx
+        detail::register_topology_components<Edge>(components, comp_topo);
+    } else {
+        // new path: branches only in branch_node_idx, links in link_node_idx
+        detail::register_topology_components<Branch>(components, comp_topo);
+        detail::register_topology_components<Link>(components, comp_topo);
+    }
     return comp_topo;
 }
 
 template <typename ModelType>
-    requires common::component_container_c<typename ModelType::ComponentContainer, Edge, Branch3, Source>
-ComponentConnections construct_components_connections(typename ModelType::ComponentContainer const& components) {
+    requires common::component_container_c<typename ModelType::ComponentContainer, Edge, Branch, Branch3, Source, Link>
+ComponentConnections construct_components_connections(typename ModelType::ComponentContainer const& components,
+                                                      bool has_node_injection_sensors = false) {
     ComponentConnections comp_conn;
     using TopologyConnectionTypesTuple = ModelType::TopologyConnectionTypesTuple;
     main_core::utils::run_functor_with_tuple_return_void<TopologyConnectionTypesTuple>(
         [&components, &comp_conn]<typename CompType>() {
-            detail::register_connections_components<CompType>(components, comp_conn);
+            if constexpr (!std::same_as<CompType, Edge>) {
+                detail::register_connections_components<CompType>(components, comp_conn);
+            }
         });
+    if (has_node_injection_sensors) {
+        // old path: all edges (branches + links) in branch_connected
+        detail::register_connections_components<Edge>(components, comp_conn);
+    } else {
+        // new path: branches only in branch_connected, links in link_connected
+        detail::register_connections_components<Branch>(components, comp_conn);
+        detail::register_connections_components<Link>(components, comp_conn);
+    }
     return comp_conn;
 }
 

@@ -244,6 +244,9 @@ TEST_CASE("Test main core output") {
         reduced_topology->topo_node_coup.coupling.user_links_to_topo_nodes = {
             {.group = 0, .pos = 0}, {.group = 0, .pos = 1}, {.group = disconnected, .pos = disconnected}};
         state.reduced_topology = std::make_shared<ReducedTopology const>(std::move(*reduced_topology));
+        auto topo_comp_coup = std::make_shared<TopologicalComponentToMathCoupling>();
+        topo_comp_coup->node = {{.group = 0, .pos = 0}};
+        state.topo_comp_coup = std::move(topo_comp_coup);
 
         SUBCASE("Steady state output") {
             MathOutput<std::vector<SolverOutput<symmetric_t>>> const math_output{
