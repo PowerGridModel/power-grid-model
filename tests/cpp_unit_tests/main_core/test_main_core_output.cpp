@@ -20,6 +20,7 @@
 #include <power_grid_model/component/current_sensor.hpp>
 #include <power_grid_model/component/edge.hpp>
 #include <power_grid_model/component/generic_branch.hpp>
+#include <power_grid_model/component/link.hpp>
 #include <power_grid_model/component/load_gen.hpp>
 #include <power_grid_model/component/node.hpp>
 #include <power_grid_model/component/power_sensor.hpp>
@@ -219,9 +220,78 @@ template <symmetry_tag sym> void check_null_current_sensor_output(CurrentSensorO
     check_zero<sym>(output.i_angle_residual);
 }
 
+template <typename SolverOutputType> auto make_math_output(std::vector<SolverOutputType> solver_output) {
+    return MathOutput{.solver_output = std::move(solver_output), .optimizer_output = {}, .supernode_output = {}};
+}
+
 } // namespace
 
 TEST_CASE("Test main core output") {
+    SUBCASE("Link") {
+        using ComponentContainer = Container<ExtraRetrievableTypes<Base, Edge, Branch>, Link>;
+        using State = MainModelState<ComponentContainer>;
+
+        State state;
+        emplace_component<Link>(state.components, 0,
+                                LinkInput{.id = 0, .from_status = status_on, .to_status = status_on}, 10e3, 20e3);
+        emplace_component<Link>(state.components, 1,
+                                LinkInput{.id = 1, .from_status = status_on, .to_status = status_off}, 10e3, 20e3);
+        emplace_component<Link>(state.components, 2,
+                                LinkInput{.id = 2, .from_status = status_off, .to_status = status_off}, 10e3, 20e3);
+        state.components.set_construction_complete();
+
+        auto reduced_topology = std::make_shared<ReducedTopology>();
+        reduced_topology->topo_node_coup.coupling.user_links_to_topo_nodes = {
+            {.group = 0, .pos = 0}, {.group = 0, .pos = 1}, {.group = disconnected, .pos = disconnected}};
+        state.reduced_topology = std::make_shared<ReducedTopology const>(std::move(*reduced_topology));
+
+        SUBCASE("Steady state output") {
+            MathOutput<std::vector<SolverOutput<symmetric_t>>> const math_output{
+                .solver_output = {},
+                .optimizer_output = {},
+                .supernode_output = {
+                    {.bus_injection = {},
+                     .link = {{.s_f = {1.0, 2.0}, .s_t = {-1.0, -1.5}, .i_f = {3.0, 4.0}, .i_t = {-3.0, -4.0}},
+                              {.s_f = {3.0, 4.0}, .s_t = {-3.0, -4.0}, .i_f = {5.0, 6.0}, .i_t = {-5.0, -5.5}}}}}};
+            std::vector<SymBranchOutput> output(3);
+
+            output_result<Link>(state, math_output, output);
+
+            CHECK(output[0].id == 0);
+            CHECK(output[0].energized == IntS{1});
+            CHECK(output[0].p_from == doctest::Approx(base_power_3p));
+            CHECK(output[0].q_from == doctest::Approx(2.0 * base_power_3p));
+            CHECK(output[0].p_to == doctest::Approx(-1.0 * base_power_3p));
+            CHECK(output[0].q_to == doctest::Approx(-1.5 * base_power_3p));
+            CHECK(output[0].i_from == doctest::Approx(5.0 * base_power_3p / 10e3 / sqrt3));
+            CHECK(output[0].i_to == doctest::Approx(5.0 * base_power_3p / 20e3 / sqrt3));
+            CHECK(output[1].id == 1);
+            CHECK(output[1].energized == status_on); // connected rest of grid but one of the ends is off
+            CHECK(output[2].id == 2);
+            CHECK(output[2].energized == status_off); // completely disconnected from rest of grid
+        }
+
+        SUBCASE("Short circuit output") {
+            MathOutput<std::vector<ShortCircuitSolverOutput<symmetric_t>>> const math_output{
+                .solver_output = {},
+                .optimizer_output = {},
+                .supernode_output = {
+                    {.link = {{.i_f = {1.0, 0.0}, .i_t = {-2.0, 0.0}}, {.i_f = {3.0, 0.0}, .i_t = {-4.0, 0.0}}}}}};
+            std::vector<BranchShortCircuitOutput> output(3);
+
+            output_result<Link>(state, math_output, output);
+
+            CHECK(output[0].id == 0);
+            CHECK(output[0].energized == IntS{1});
+            CHECK(output[0].i_from(0) == doctest::Approx(base_power_3p / 10e3 / sqrt3));
+            CHECK(output[0].i_to(0) == doctest::Approx(2.0 * base_power_3p / 20e3 / sqrt3));
+            CHECK(output[1].id == 1);
+            CHECK(output[1].energized == status_on);
+            CHECK(output[2].id == 2);
+            CHECK(output[2].energized == status_off);
+        }
+    }
+
     SUBCASE("TransformerTapRegulator") {
         using ComponentContainer = Container<ExtraRetrievableTypes<Base, Regulator>, TransformerTapRegulator>;
         using State = MainModelState<ComponentContainer>;
@@ -306,7 +376,7 @@ TEST_CASE("Test main core output") {
 
 TEST_CASE_TEMPLATE("Test main core power sensor output energized state", sym, symmetric_t, asymmetric_t) {
     auto state = make_power_sensor_output_state();
-    auto const solver_output = make_power_sensor_solver_output<sym>();
+    auto const math_output = make_math_output(make_power_sensor_solver_output<sym>());
 
     auto check_appliance = [&](MeasuredTerminalType terminal_type, ID object_id, Idx object_sequence,
                                Appliance& appliance) {
@@ -318,11 +388,11 @@ TEST_CASE_TEMPLATE("Test main core power sensor output energized state", sym, sy
                                      .q_measured = 2.0}};
 
         // An excluded measurement remains energized while its measured object is active.
-        CHECK(output_result(sensor, state, solver_output, object_sequence).energized == 1);
+        CHECK(output_result(sensor, state, math_output, object_sequence).energized == 1);
 
         appliance.set_status(0);
 
-        check_null_power_sensor_output(output_result(sensor, state, solver_output, object_sequence));
+        check_null_power_sensor_output(output_result(sensor, state, math_output, object_sequence));
     };
 
     check_appliance(MeasuredTerminalType::source, 10, 0, get_component<Source>(state.components, ID{10}));
@@ -343,7 +413,7 @@ TEST_CASE_TEMPLATE("Test main core power sensor output energized state", sym, sy
                                      .p_measured = 1.0,
                                      .q_measured = 2.0}};
 
-        auto const output = output_result(sensor, state, solver_output, 0);
+        auto const output = output_result(sensor, state, math_output, 0);
         if (expected_energized) {
             CHECK(output.energized == 1);
         } else {
@@ -381,7 +451,7 @@ TEST_CASE_TEMPLATE("Test main core power sensor output energized state", sym, sy
                                      .p_measured = 1.0,
                                      .q_measured = 2.0}};
 
-        check_null_power_sensor_output(output_result(sensor, state, solver_output, 0));
+        check_null_power_sensor_output(output_result(sensor, state, math_output, 0));
     }
 }
 
@@ -415,6 +485,7 @@ TEST_CASE_TEMPLATE("Test main core power sensor output with reduced component co
 
     std::vector<SolverOutput<sym>> solver_output(1);
     solver_output[0].branch.resize(1);
+    auto const math_output = make_math_output(std::move(solver_output));
 
     SymPowerSensor const sensor{{.id = 23,
                                  .measured_object = 9,
@@ -423,14 +494,14 @@ TEST_CASE_TEMPLATE("Test main core power sensor output with reduced component co
                                  .p_measured = 1.0,
                                  .q_measured = 2.0}};
 
-    CHECK(output_result(sensor, state, solver_output, 0).energized == 1);
+    CHECK(output_result(sensor, state, math_output, 0).energized == 1);
 }
 
 TEST_CASE_TEMPLATE("Test main core current sensor output energized state", sym, symmetric_t, asymmetric_t) {
     constexpr double u_rated = 10e3;
 
     auto state = make_current_sensor_output_state();
-    auto const solver_output = make_current_sensor_solver_output<sym>();
+    auto const math_output = make_math_output(make_current_sensor_solver_output<sym>());
 
     for (auto const terminal_type : {MeasuredTerminalType::branch_from, MeasuredTerminalType::branch_to}) {
         CAPTURE(terminal_type);
@@ -445,7 +516,7 @@ TEST_CASE_TEMPLATE("Test main core current sensor output energized state", sym, 
                                        .i_angle_measured = 0.0},
                                       u_rated};
 
-        auto const output = output_result(sensor, state, solver_output, 0);
+        auto const output = output_result(sensor, state, math_output, 0);
         if (terminal_type == MeasuredTerminalType::branch_from) {
             check_null_current_sensor_output(output);
         } else {
@@ -463,7 +534,7 @@ TEST_CASE_TEMPLATE("Test main core current sensor output energized state", sym, 
                                            .i_measured = 1.0,
                                            .i_angle_measured = 0.0},
                                           u_rated};
-    check_null_current_sensor_output(output_result(branch3_sensor, state, solver_output, 0));
+    check_null_current_sensor_output(output_result(branch3_sensor, state, math_output, 0));
 
     auto disconnected_coupling = std::make_shared<TopologicalComponentToMathCoupling>(*state.topo_comp_coup);
     disconnected_coupling->branch = {{.group = disconnected, .pos = disconnected}};
@@ -489,7 +560,7 @@ TEST_CASE_TEMPLATE("Test main core current sensor output energized state", sym, 
                                        .i_angle_measured = 0.0},
                                       u_rated};
 
-        check_null_current_sensor_output(output_result(sensor, state, solver_output, 0));
+        check_null_current_sensor_output(output_result(sensor, state, math_output, 0));
     }
 }
 } // namespace power_grid_model::main_core
