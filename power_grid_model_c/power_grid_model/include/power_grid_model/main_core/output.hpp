@@ -276,10 +276,15 @@ template <std::derived_from<GenericVoltageSensor> Component, class ComponentCont
           steady_state_solver_output_type SolverOutputType>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr auto output_result(Component const& voltage_sensor, MainModelState<ComponentContainer> const& state,
-                             MathOutput<std::vector<SolverOutputType>> const& math_output, Idx const node_seq) {
+                             MathOutput<std::vector<SolverOutputType>> const& math_output, Idx const /* node_seq */) {
     using sym = decode_symmetry_v<SolverOutputType>;
 
-    Idx2D const node_math_id = state.topo_comp_coup->node[node_seq];
+    Idx const sensor_seq = get_component_sequence_offset<GenericVoltageSensor, Component>(state.components) +
+                           get_component_sequence_idx<Component>(state.components, voltage_sensor.id());
+    Idx const node_seq = state.comp_topo->voltage_sensor_node_idx[sensor_seq];
+    auto const& node_math_id = node_seq < std::ranges::ssize(state.topo_comp_coup->node)
+                                   ? state.topo_comp_coup->node[node_seq]
+                                   : state.topo_comp_coup->voltage_sensor[sensor_seq];
     if (node_math_id.group == disconnected) {
         return voltage_sensor.template get_null_output<sym>();
     }
