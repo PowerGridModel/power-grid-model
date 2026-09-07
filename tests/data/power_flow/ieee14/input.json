@@ -1,0 +1,77 @@
+{
+  "version": "1.0",
+  "type": "input",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "node": [
+      {"id": 1, "u_rated": 100000.0},
+      {"id": 2, "u_rated": 100000.0},
+      {"id": 3, "u_rated": 100000.0},
+      {"id": 4, "u_rated": 100000.0},
+      {"id": 5, "u_rated": 100000.0},
+      {"id": 6, "u_rated": 100000.0},
+      {"id": 7, "u_rated": 100000.0},
+      {"id": 8, "u_rated": 100000.0},
+      {"id": 9, "u_rated": 100000.0},
+      {"id": 10, "u_rated": 100000.0},
+      {"id": 11, "u_rated": 100000.0},
+      {"id": 12, "u_rated": 100000.0},
+      {"id": 13, "u_rated": 100000.0},
+      {"id": 14, "u_rated": 100000.0}
+    ],
+    "generic_branch": [
+      {"id": 101, "from_node": 1, "to_node": 2, "from_status": 1, "to_status": 1, "r1": 1.938, "x1": 5.917, "g1": 0.0, "b1": 0.000264, "k": 1.0, "theta": 0.0},
+      {"id": 102, "from_node": 1, "to_node": 5, "from_status": 1, "to_status": 1, "r1": 5.403, "x1": 22.304, "g1": 0.0, "b1": 0.000246, "k": 1.0, "theta": 0.0},
+      {"id": 103, "from_node": 2, "to_node": 3, "from_status": 1, "to_status": 1, "r1": 4.699, "x1": 19.797, "g1": 0.0, "b1": 0.000219, "k": 1.0, "theta": 0.0},
+      {"id": 104, "from_node": 2, "to_node": 4, "from_status": 1, "to_status": 1, "r1": 5.811, "x1": 17.632, "g1": 0.0, "b1": 0.00017, "k": 1.0, "theta": 0.0},
+      {"id": 105, "from_node": 2, "to_node": 5, "from_status": 1, "to_status": 1, "r1": 5.695, "x1": 17.388, "g1": 0.0, "b1": 0.000173, "k": 1.0, "theta": 0.0},
+      {"id": 106, "from_node": 3, "to_node": 4, "from_status": 1, "to_status": 1, "r1": 6.701, "x1": 17.103, "g1": 0.0, "b1": 0.000064, "k": 1.0, "theta": 0.0},
+      {"id": 107, "from_node": 4, "to_node": 5, "from_status": 1, "to_status": 1, "r1": 1.335, "x1": 4.211, "g1": 0.0, "b1": 0.0, "k": 1.0, "theta": 0.0},
+      {"id": 108, "from_node": 4, "to_node": 7, "from_status": 1, "to_status": 1, "r1": 0.0, "x1": 20.912, "g1": 0.0, "b1": 0.0, "k": 0.978, "theta": 0.0},
+      {"id": 109, "from_node": 4, "to_node": 9, "from_status": 1, "to_status": 1, "r1": 0.0, "x1": 55.618, "g1": 0.0, "b1": 0.0, "k": 0.969, "theta": 0.0},
+      {"id": 110, "from_node": 5, "to_node": 6, "from_status": 1, "to_status": 1, "r1": 0.0, "x1": 25.202, "g1": 0.0, "b1": 0.0, "k": 0.932, "theta": 0.0},
+      {"id": 111, "from_node": 6, "to_node": 11, "from_status": 1, "to_status": 1, "r1": 9.498, "x1": 19.89, "g1": 0.0, "b1": 0.0, "k": 1.0, "theta": 0.0},
+      {"id": 112, "from_node": 6, "to_node": 12, "from_status": 1, "to_status": 1, "r1": 12.291, "x1": 25.581, "g1": 0.0, "b1": 0.0, "k": 1.0, "theta": 0.0},
+      {"id": 113, "from_node": 6, "to_node": 13, "from_status": 1, "to_status": 1, "r1": 6.615, "x1": 13.027, "g1": 0.0, "b1": 0.0, "k": 1.0, "theta": 0.0},
+      {"id": 114, "from_node": 7, "to_node": 8, "from_status": 1, "to_status": 1, "r1": 0.0, "x1": 17.615, "g1": 0.0, "b1": 0.0, "k": 1.0, "theta": 0.0},
+      {"id": 115, "from_node": 7, "to_node": 9, "from_status": 1, "to_status": 1, "r1": 0.0, "x1": 11.001, "g1": 0.0, "b1": 0.0, "k": 1.0, "theta": 0.0},
+      {"id": 116, "from_node": 9, "to_node": 10, "from_status": 1, "to_status": 1, "r1": 3.181, "x1": 8.45, "g1": 0.0, "b1": 0.0, "k": 1.0, "theta": 0.0},
+      {"id": 117, "from_node": 9, "to_node": 14, "from_status": 1, "to_status": 1, "r1": 12.711, "x1": 27.038, "g1": 0.0, "b1": 0.0, "k": 1.0, "theta": 0.0},
+      {"id": 118, "from_node": 10, "to_node": 11, "from_status": 1, "to_status": 1, "r1": 8.205, "x1": 19.207, "g1": 0.0, "b1": 0.0, "k": 1.0, "theta": 0.0},
+      {"id": 119, "from_node": 12, "to_node": 13, "from_status": 1, "to_status": 1, "r1": 22.092, "x1": 19.988, "g1": 0.0, "b1": 0.0, "k": 1.0, "theta": 0.0},
+      {"id": 120, "from_node": 13, "to_node": 14, "from_status": 1, "to_status": 1, "r1": 17.093, "x1": 34.802, "g1": 0.0, "b1": 0.0, "k": 1.0, "theta": 0.0}
+    ],
+    "sym_load": [
+      {"id": 201, "node": 2, "status": 1, "type": 0, "p_specified": 21700000.0, "q_specified": 12700000.0},
+      {"id": 202, "node": 3, "status": 1, "type": 0, "p_specified": 94200000.0, "q_specified": 19000000.0},
+      {"id": 203, "node": 4, "status": 1, "type": 0, "p_specified": 47800000.0, "q_specified": -3900000.0},
+      {"id": 204, "node": 5, "status": 1, "type": 0, "p_specified": 7600000.0, "q_specified": 1600000.0},
+      {"id": 205, "node": 6, "status": 1, "type": 0, "p_specified": 11200000.0, "q_specified": 7500000.0},
+      {"id": 206, "node": 9, "status": 1, "type": 0, "p_specified": 29500000.0, "q_specified": 16600000.0},
+      {"id": 207, "node": 10, "status": 1, "type": 0, "p_specified": 9000000.0, "q_specified": 5800000.0},
+      {"id": 208, "node": 11, "status": 1, "type": 0, "p_specified": 3500000.0, "q_specified": 1800000.0},
+      {"id": 209, "node": 12, "status": 1, "type": 0, "p_specified": 6100000.0, "q_specified": 1600000.0},
+      {"id": 210, "node": 13, "status": 1, "type": 0, "p_specified": 13500000.0, "q_specified": 5800000.0},
+      {"id": 211, "node": 14, "status": 1, "type": 0, "p_specified": 14900000.0, "q_specified": 5000000.0}
+    ],
+    "sym_gen": [
+      {"id": 301, "node": 2, "status": 1, "type": 0, "p_specified": 40000000.0, "q_specified": 0.0},
+      {"id": 302, "node": 3, "status": 1, "type": 0, "p_specified": 0.0, "q_specified": 0.0},
+      {"id": 303, "node": 6, "status": 1, "type": 0, "p_specified": 0.0, "q_specified": 0.0},
+      {"id": 304, "node": 8, "status": 1, "type": 0, "p_specified": 0.0, "q_specified": 0.0}
+    ],
+    "voltage_regulator": [
+      {"id": 401, "regulated_object": 301, "status": 1, "u_ref": 1.045},
+      {"id": 402, "regulated_object": 302, "status": 1, "u_ref": 1.01},
+      {"id": 403, "regulated_object": 303, "status": 1, "u_ref": 1.07},
+      {"id": 404, "regulated_object": 304, "status": 1, "u_ref": 1.09}
+    ],
+    "shunt": [
+      {"id": 501, "node": 9, "status": 1, "g1": 0.0, "b1": 0.0019, "g0": 0.0, "b0": 0.0019}
+    ],
+    "source": [
+      {"id": 601, "node": 1, "status": 1, "u_ref": 1.06, "sk": 1e40, "rx_ratio": 0.1, "z01_ratio": 1.0}
+    ]
+  }
+}
