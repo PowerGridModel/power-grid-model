@@ -102,7 +102,7 @@ template <std::same_as<Link> Component, class ComponentContainer>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
 constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
     auto const& link_topo_ids = state.reduced_topology->topo_node_coup.coupling.user_links_to_topo_nodes;
-
+    // TODO(jguo): cleanup v2 node single link registration path
     if (std::ranges::ssize(link_topo_ids) == get_component_size<Link>(state.components)) {
         // new path: links are not branches
         return link_topo_ids.cbegin();

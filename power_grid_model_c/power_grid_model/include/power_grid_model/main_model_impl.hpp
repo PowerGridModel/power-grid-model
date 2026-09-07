@@ -207,6 +207,7 @@ class MainModelImpl {
         construction_complete_ = true;
 #endif // !NDEBUG
         state_.components.set_construction_complete();
+        // TODO(jguo): cleanup v2 node single link registration path
         has_node_injection_sensors_ = detect_node_injection_sensors();
         state_.comp_topo = std::make_shared<ComponentTopology const>(
             main_core::construct_topology<ModelType>(state_.components, has_node_injection_sensors_));
@@ -480,7 +481,7 @@ class MainModelImpl {
 
     OwnedUpdateDataset cached_inverse_update_{};
     UpdateChange cached_state_changes_{};
-    bool has_node_injection_sensors_{false};
+    bool has_node_injection_sensors_{false}; // TODO(jguo): cleanup v2 node single link registration path
 #ifndef NDEBUG
     // construction_complete is used for debug assertions only
     bool construction_complete_{false};

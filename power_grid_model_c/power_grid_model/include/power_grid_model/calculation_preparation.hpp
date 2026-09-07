@@ -134,6 +134,7 @@ inline void rebuild_topology(typename ModelType::MainModelState& state, SolverPr
 
     // clear old solvers
     reset_solvers(state, solver_context, solvers_cache_status);
+    // TODO(jguo): cleanup v2 node single link registration path
     // Determine the path based on whether link_node_idx is populated (new path) or empty (old path)
     // link_node_idx being non-empty means new path where links are separated (no node injection sensors)
     // link_node_idx being empty means old path where all edges treated as branches (has node injection sensors)

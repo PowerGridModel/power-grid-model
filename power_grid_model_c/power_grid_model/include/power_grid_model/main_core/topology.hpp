@@ -201,6 +201,7 @@ constexpr void register_topology_components(ComponentContainer const& components
                                   [](Regulator const& regulator) { return regulator.regulated_object_type(); });
 }
 
+// TODO(jguo): cleanup v2 node single link registration path
 // new path: only Branch-derived types (not Link) in branch_node_idx
 template <std::same_as<Branch> Component, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, Component, Node>
@@ -211,6 +212,7 @@ constexpr void register_topology_components(ComponentContainer const& components
     });
 }
 
+// TODO(jguo): cleanup v2 node single link registration path
 // new path: Link in link_node_idx so topology builder can create super-nodes
 template <std::same_as<Link> Component, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, Component, Node>
@@ -249,6 +251,7 @@ constexpr void register_connections_components(ComponentContainer const& compone
                                   [](Source const& source) { return source.status(); });
 }
 
+// TODO(jguo): cleanup v2 node single link registration path
 // new path: only Branch-derived types (not Link) in branch_connected
 template <std::same_as<Branch> Component, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, Component>
@@ -260,6 +263,7 @@ constexpr void register_connections_components(ComponentContainer const& compone
                                   [](Branch const& branch) { return branch.phase_shift(); });
 }
 
+// TODO(jguo): cleanup v2 node single link registration path
 // new path: Link in link_connected so topology builder can handle super-nodes
 template <std::same_as<Link> Component, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, Component>
@@ -273,6 +277,7 @@ constexpr void register_connections_components(ComponentContainer const& compone
 } // namespace detail
 
 // entry point -> how to differentiate when a component is a sensor on a node? can i do it here?
+// TODO(jguo): cleanup v2 node single link registration path
 template <typename ModelType>
     requires common::component_container_c<typename ModelType::ComponentContainer, Node, Edge, Branch3, Source, Shunt,
                                            GenericLoadGen, GenericVoltageSensor, GenericPowerSensor,
@@ -298,6 +303,7 @@ ComponentTopology construct_topology(typename ModelType::ComponentContainer cons
     return comp_topo;
 }
 
+// TODO(jguo): cleanup v2 node single link registration path
 template <typename ModelType>
     requires common::component_container_c<typename ModelType::ComponentContainer, Edge, Branch, Branch3, Source, Link>
 ComponentConnections construct_components_connections(typename ModelType::ComponentContainer const& components,
