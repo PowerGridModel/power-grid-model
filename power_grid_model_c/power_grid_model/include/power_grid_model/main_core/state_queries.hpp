@@ -106,10 +106,8 @@ constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> cons
     if (std::ranges::ssize(link_topo_ids) == get_component_size<Link>(state.components)) {
         // new path: links are not branches
         return link_topo_ids.cbegin();
-    } else {
-        // legacy path: links are branches
-        return state.topo_comp_coup->branch.cbegin() + get_component_sequence_offset<Edge, Link>(state.components);
     }
+    return state.topo_comp_coup->branch.cbegin() + get_component_sequence_offset<Edge, Link>(state.components);
 }
 
 template <std::derived_from<Branch3> Component, class ComponentContainer>
