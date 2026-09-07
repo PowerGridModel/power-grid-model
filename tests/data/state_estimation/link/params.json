@@ -1,12 +1,7 @@
 {
-  "calculation_method": ["iterative_linear", "newton_raphson"],
-  "rtol": 1e-3,
+  "calculation_method": "newton_raphson",
+  "rtol": 1e-5,
   "atol": {
-    "default": 1e-5,
-    ".+_residual": 0.15
-  },
-  "xfail": {
-    "raises": "SparseMatrixError",
-    "reason": "Bug in https://github.com/PowerGridModel/power-grid-model/issues/1567"
+    "default": 1e-5
   }
 }
