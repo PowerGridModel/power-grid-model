@@ -335,19 +335,20 @@ ComponentConnections construct_components_connections(typename ModelType::Compon
     ComponentConnections comp_conn;
     using TopologyConnectionTypesTuple = ModelType::TopologyConnectionTypesTuple;
     main_core::utils::run_functor_with_tuple_return_void<TopologyConnectionTypesTuple>(
-        [&components, &comp_conn]<typename CompType>() {
-            if constexpr (!std::same_as<CompType, Edge>) {
+        [&components, &comp_conn, has_node_injection_sensors]<typename CompType>() {
+            if constexpr (std::same_as<CompType, Edge>) {
+                if (has_node_injection_sensors) {
+                    // old path: all edges (branches + links) in branch_connected
+                    detail::register_connections_components<Edge>(components, comp_conn);
+                } else {
+                    // new path: branches only in branch_connected, links in link_connected
+                    detail::register_connections_components<Branch>(components, comp_conn);
+                    detail::register_connections_components<Link>(components, comp_conn);
+                }
+            } else {
                 detail::register_connections_components<CompType>(components, comp_conn);
             }
         });
-    if (has_node_injection_sensors) {
-        // old path: all edges (branches + links) in branch_connected
-        detail::register_connections_components<Edge>(components, comp_conn);
-    } else {
-        // new path: branches only in branch_connected, links in link_connected
-        detail::register_connections_components<Branch>(components, comp_conn);
-        detail::register_connections_components<Link>(components, comp_conn);
-    }
     return comp_conn;
 }
 
