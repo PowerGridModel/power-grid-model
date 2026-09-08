@@ -10,7 +10,7 @@
     "q_from": 1e-2,
     "i_from": 1e-4,
     "s_from": 2e-2,
-    "p_to": 1e-2,
+    "p_to": 2e-2,
     "q_to": 1e-2,
     "i_to": 1e-4,
     "s_to": 2e-2,
