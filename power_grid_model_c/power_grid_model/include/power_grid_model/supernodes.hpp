@@ -164,9 +164,9 @@ inline TopologicalNodesAndCoupling create_topological_nodes(ComponentTopology co
                 return Idx2D{.group = topo_node, .pos = disconnected};
             }
 
-            auto& user_links = topo_nodes[topo_node].user_links;
-            Idx const pos = std::ssize(user_links);
-            user_links.push_back(BranchIdx{from_pos, to_pos}); // can't emplace_back because BranchIdx is std::array
+            auto& internal_links = topo_nodes[topo_node].internal_links;
+            Idx const pos = std::ssize(internal_links);
+            internal_links.push_back(BranchIdx{from_pos, to_pos}); // can't emplace_back because BranchIdx is std::array
             return Idx2D{.group = topo_node, .pos = pos};
         }) |
         std::ranges::to<std::vector>();
@@ -226,7 +226,7 @@ inline ReducedTopology dont_reduce_topology(ComponentTopology const& comp_topo,
             .topo_nodes = IdxRange{comp_topo.n_node_total()} | std::views::transform([](Idx idx) {
                               return TopologicalNode{
                                   .user_nodes = std::vector{idx},
-                                  .user_links = {},
+                                  .internal_links = {},
                               };
                           }) |
                           std::ranges::to<std::vector>(),
