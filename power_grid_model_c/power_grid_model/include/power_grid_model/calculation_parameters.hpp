@@ -506,8 +506,7 @@ struct ReducedComponentTopology {
 
 struct TopologicalNode {
     IdxVector user_nodes;
-    std::vector<BranchIdx>
-        internal_links;
+    std::vector<BranchIdx> internal_links;
 
     constexpr auto is_supernode() const noexcept -> bool { return user_nodes.size() > 1 && !internal_links.empty(); }
 };
