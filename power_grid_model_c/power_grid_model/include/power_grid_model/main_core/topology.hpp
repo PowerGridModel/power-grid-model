@@ -287,19 +287,20 @@ ComponentTopology construct_topology(typename ModelType::ComponentContainer cons
     ComponentTopology comp_topo;
     using TopologyTypesTuple = ModelType::TopologyTypesTuple;
     main_core::utils::run_functor_with_tuple_return_void<TopologyTypesTuple>(
-        [&components, &comp_topo]<typename CompType>() {
-            if constexpr (!std::same_as<CompType, Edge>) {
+        [&components, &comp_topo, has_node_injection_sensors]<typename CompType>() {
+            if constexpr (std::same_as<CompType, Edge>) {
+                if (has_node_injection_sensors) {
+                    // old path: all edges (branches + links) in branch_node_idx
+                    detail::register_topology_components<Edge>(components, comp_topo);
+                } else {
+                    // new path: branches only in branch_node_idx, links in link_node_idx
+                    detail::register_topology_components<Branch>(components, comp_topo);
+                    detail::register_topology_components<Link>(components, comp_topo);
+                }
+            } else {
                 detail::register_topology_components<CompType>(components, comp_topo);
             }
         });
-    if (has_node_injection_sensors) {
-        // old path: all edges (branches + links) in branch_node_idx
-        detail::register_topology_components<Edge>(components, comp_topo);
-    } else {
-        // new path: branches only in branch_node_idx, links in link_node_idx
-        detail::register_topology_components<Branch>(components, comp_topo);
-        detail::register_topology_components<Link>(components, comp_topo);
-    }
     return comp_topo;
 }
 
