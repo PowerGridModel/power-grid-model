@@ -6,7 +6,7 @@
     "p": 1e-2,
     "q": 1e-2,
     "s": 1e-2,
-    "p_from": 1e-2,
+    "p_from": 2e-2,
     "q_from": 1e-2,
     "i_from": 1e-4,
     "s_from": 2e-2,
