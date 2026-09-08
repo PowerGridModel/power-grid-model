@@ -15,6 +15,6 @@
     "i_to": 1e-4,
     "s_to": 2e-2,
     "p_residual": 1e-2,
-    "q_residual": 1e-2
+    "q_residual": 2e-2
   }
 }
