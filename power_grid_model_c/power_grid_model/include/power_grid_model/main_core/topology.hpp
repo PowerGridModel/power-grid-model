@@ -121,7 +121,8 @@ constexpr void register_topology_components(ComponentContainer const& components
             case branch_from:
                 [[fallthrough]];
             case branch_to:
-                return get_component_sequence_idx<Branch>(components, measured_object);
+                return get_component_sequence_idx<Edge>(
+                    components, measured_object); // TODO(mgovers): cleanup v2: change back to Branch
             case source:
                 return get_component_sequence_idx<Source>(components, measured_object);
             case shunt:
@@ -152,28 +153,29 @@ constexpr void register_topology_components(ComponentContainer const& components
 template <std::same_as<GenericCurrentSensor> Component, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, Component, Branch, Branch3>
 constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
-    apply_registration<Component>(components, comp_topo.current_sensor_object_idx,
-                                  [&components](GenericCurrentSensor const& current_sensor) {
-                                      using enum MeasuredTerminalType;
+    apply_registration<Component>(
+        components, comp_topo.current_sensor_object_idx, [&components](GenericCurrentSensor const& current_sensor) {
+            using enum MeasuredTerminalType;
 
-                                      auto const measured_object = current_sensor.measured_object();
+            auto const measured_object = current_sensor.measured_object();
 
-                                      switch (current_sensor.get_terminal_type()) {
-                                      case branch_from:
-                                          [[fallthrough]];
-                                      case branch_to:
-                                          return get_component_sequence_idx<Branch>(components, measured_object);
-                                      case branch3_1:
-                                          [[fallthrough]];
-                                      case branch3_2:
-                                          [[fallthrough]];
-                                      case branch3_3:
-                                          return get_component_sequence_idx<Branch3>(components, measured_object);
-                                      default:
-                                          throw MissingCaseForEnumError("Current sensor idx to seq transformation",
-                                                                        current_sensor.get_terminal_type());
-                                      }
-                                  });
+            switch (current_sensor.get_terminal_type()) {
+            case branch_from:
+                [[fallthrough]];
+            case branch_to:
+                return get_component_sequence_idx<Edge>(
+                    components, measured_object); // TODO(mgovers): cleanup v2: change back to Branch
+            case branch3_1:
+                [[fallthrough]];
+            case branch3_2:
+                [[fallthrough]];
+            case branch3_3:
+                return get_component_sequence_idx<Branch3>(components, measured_object);
+            default:
+                throw MissingCaseForEnumError("Current sensor idx to seq transformation",
+                                              current_sensor.get_terminal_type());
+            }
+        });
 
     apply_registration<Component>(
         components, comp_topo.current_sensor_terminal_type,
@@ -187,7 +189,8 @@ constexpr void register_topology_components(ComponentContainer const& components
         components, comp_topo.regulated_object_idx, [&components](Regulator const& regulator) {
             switch (regulator.regulated_object_type()) {
             case ComponentType::branch:
-                return get_component_sequence_idx<Branch>(components, regulator.regulated_object());
+                return get_component_sequence_idx<Edge>(
+                    components, regulator.regulated_object()); // TODO(mgovers): cleanup v2: change back to Branch
             case ComponentType::branch3:
                 return get_component_sequence_idx<Branch3>(components, regulator.regulated_object());
             case ComponentType::generic_load_gen:

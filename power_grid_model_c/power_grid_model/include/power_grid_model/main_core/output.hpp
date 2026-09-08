@@ -60,9 +60,11 @@ constexpr bool measured_terminal_active(MeasuredTerminalType const terminal_type
         using enum MeasuredTerminalType;
 
     case branch_from:
-        return measured_component_active<Branch>(state, obj_seq, BranchSide::from);
+        return measured_component_active<Edge>(state, obj_seq,
+                                               BranchSide::from); // TODO(mgovers): cleanup v2: change back to Branch
     case branch_to:
-        return measured_component_active<Branch>(state, obj_seq, BranchSide::to);
+        return measured_component_active<Edge>(state, obj_seq,
+                                               BranchSide::to); // TODO(mgovers): cleanup v2: change back to Branch
     case source:
         return measured_component_active<Source>(state, obj_seq);
     case shunt:
