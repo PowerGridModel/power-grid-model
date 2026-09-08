@@ -43,7 +43,7 @@ namespace power_grid_model::main_core {
 namespace {
 
 using PowerSensorOutputComponents =
-    Container<ExtraRetrievableTypes<Base, Branch, Branch3, Appliance, GenericLoadGen, GenericPowerSensor>,
+    Container<ExtraRetrievableTypes<Base, Edge, Branch, Branch3, Appliance, GenericLoadGen, GenericPowerSensor>,
               GenericBranch, ThreeWindingTransformer, Source, Shunt, SymGenerator, SymLoad, SymPowerSensor>;
 using PowerSensorOutputState = MainModelState<PowerSensorOutputComponents>;
 

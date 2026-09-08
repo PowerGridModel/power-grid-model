@@ -121,7 +121,7 @@ constexpr void register_topology_components(ComponentContainer const& components
             case branch_from:
                 [[fallthrough]];
             case branch_to:
-                return get_component_sequence_idx<Branch>(components, measured_object);
+                return get_component_sequence_idx<Edge>(components, measured_object);
             case source:
                 return get_component_sequence_idx<Source>(components, measured_object);
             case shunt:
@@ -162,7 +162,7 @@ constexpr void register_topology_components(ComponentContainer const& components
                                       case branch_from:
                                           [[fallthrough]];
                                       case branch_to:
-                                          return get_component_sequence_idx<Branch>(components, measured_object);
+                                          return get_component_sequence_idx<Edge>(components, measured_object);
                                       case branch3_1:
                                           [[fallthrough]];
                                       case branch3_2:
@@ -187,7 +187,7 @@ constexpr void register_topology_components(ComponentContainer const& components
         components, comp_topo.regulated_object_idx, [&components](Regulator const& regulator) {
             switch (regulator.regulated_object_type()) {
             case ComponentType::branch:
-                return get_component_sequence_idx<Branch>(components, regulator.regulated_object());
+                return get_component_sequence_idx<Edge>(components, regulator.regulated_object());
             case ComponentType::branch3:
                 return get_component_sequence_idx<Branch3>(components, regulator.regulated_object());
             case ComponentType::generic_load_gen:
