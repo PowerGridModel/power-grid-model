@@ -34,7 +34,6 @@ jobs:
 
       - name: Build SDist
         run: |
-          cp PYPI_VERSION VERSION
           cat VERSION
           uv build --sdist --no-create-gitignore --out-dir wheelhouse .
 
