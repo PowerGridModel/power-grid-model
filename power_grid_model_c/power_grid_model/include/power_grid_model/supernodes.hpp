@@ -158,7 +158,8 @@ inline TopologicalNodesAndCoupling create_topological_nodes(ComponentTopology co
                 return Idx2D{.group = disconnected, .pos = disconnected};
             }
 
-            // early out if either is disconnected since the link solver doesn't consume semi-disconnected links
+            // early out if either side is disconnected since the link solver can't consume semi-disconnected links
+            // the output in this case should be handled as null
             if (from_conn == disconnected || to_conn == disconnected) {
                 return Idx2D{.group = topo_node, .pos = disconnected};
             }
