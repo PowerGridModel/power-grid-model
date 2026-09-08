@@ -289,8 +289,7 @@ constexpr auto output_result(Component const& voltage_sensor, MainModelState<Com
                              MathOutput<std::vector<SolverOutputType>> const& math_output, Idx const node_seq) {
     using sym = decode_symmetry_v<SolverOutputType>;
 
-    assert(node_seq < std::ranges::ssize(state.topo_comp_coup->node));
-    Idx2D const node_math_id = state.topo_comp_coup->node[node_seq];
+    Idx2D const node_math_id = get_math_id<Node>(state, comp_base_sequence<Node>(state)[node_seq].group);
     if (node_math_id.group == disconnected) {
         return voltage_sensor.template get_null_output<sym>();
     }
