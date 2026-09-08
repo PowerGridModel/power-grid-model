@@ -51,6 +51,7 @@ static_assert(is_generator_v<gen_appliance_t>);
 // Forward declarations of all components
 class Base;
 class Node;
+class Edge;
 class Branch;
 class Branch3;
 class Appliance;
