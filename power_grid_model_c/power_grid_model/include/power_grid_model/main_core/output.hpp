@@ -59,15 +59,16 @@ constexpr bool measured_terminal_active(MeasuredTerminalType const terminal_type
     switch (terminal_type) {
         using enum MeasuredTerminalType;
 
-    // there is an issue here -> we need to differentiate edge for old code path and branch for new
     case branch_from:
-        if (state.comp_topo->link_node_idx.empty()) {
+        // TODO(mgovers): cleanup v2: only keep Branch code path
+        if (state.comp_topo != nullptr && state.comp_topo->link_node_idx.empty()) {
             return measured_component_active<Edge>(state, obj_seq, BranchSide::from);
         } else {
             return measured_component_active<Branch>(state, obj_seq, BranchSide::from);
         }
     case branch_to:
-        if (state.comp_topo->link_node_idx.empty()) {
+        // TODO(mgovers): cleanup v2: only keep Branch code path
+        if (state.comp_topo != nullptr && state.comp_topo->link_node_idx.empty()) {
             return measured_component_active<Edge>(state, obj_seq, BranchSide::to);
         } else {
             return measured_component_active<Branch>(state, obj_seq, BranchSide::to);

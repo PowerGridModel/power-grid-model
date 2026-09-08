@@ -45,6 +45,7 @@ constexpr void apply_registration(ComponentContainer const& components, std::vec
     std::transform(begin, end, target.begin(), func);
 }
 
+// TODO(mgovers): cleanup v2: remove use_legacy_topology path
 template <std::same_as<Node> Component, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, Component>
 constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo,
@@ -52,6 +53,7 @@ constexpr void register_topology_components(ComponentContainer const& components
     comp_topo.n_node = get_component_size<Node>(components);
 }
 
+// TODO(mgovers): cleanup v2: remove use_legacy_topology path
 template <std::same_as<Edge> Component, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, Component, Node>
 constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo,
@@ -62,6 +64,7 @@ constexpr void register_topology_components(ComponentContainer const& components
     });
 }
 
+// TODO(mgovers): cleanup v2: remove use_legacy_topology path
 template <std::same_as<Branch3> Component, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, Component, Node>
 constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo,
@@ -73,6 +76,7 @@ constexpr void register_topology_components(ComponentContainer const& components
     });
 }
 
+// TODO(mgovers): cleanup v2: remove use_legacy_topology path
 template <std::same_as<Source> Component, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, Component, Node>
 constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo,
@@ -82,6 +86,7 @@ constexpr void register_topology_components(ComponentContainer const& components
     });
 }
 
+// TODO(mgovers): cleanup v2: remove use_legacy_topology path
 template <std::same_as<Shunt> Component, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, Component, Node>
 constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo,
@@ -91,6 +96,7 @@ constexpr void register_topology_components(ComponentContainer const& components
     });
 }
 
+// TODO(mgovers): cleanup v2: remove use_legacy_topology path
 template <std::same_as<GenericLoadGen> Component, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, Component, Node>
 constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo,
@@ -104,6 +110,7 @@ constexpr void register_topology_components(ComponentContainer const& components
                                   [](GenericLoadGen const& load_gen) { return load_gen.type(); });
 }
 
+// TODO(mgovers): cleanup v2: remove use_legacy_topology path
 template <std::same_as<GenericVoltageSensor> Component, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, Component, Node>
 constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo,
@@ -114,6 +121,7 @@ constexpr void register_topology_components(ComponentContainer const& components
         });
 }
 
+// TODO(mgovers): cleanup v2: remove use_legacy_topology path
 template <std::same_as<GenericPowerSensor> Component, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, Component, Branch, Source, Shunt, GenericLoadGen,
                                            Branch3, Node>
@@ -162,6 +170,7 @@ constexpr void register_topology_components(ComponentContainer const& components
         [](GenericPowerSensor const& power_sensor) { return power_sensor.get_terminal_type(); });
 }
 
+// TODO(mgovers): cleanup v2: remove use_legacy_topology path
 template <std::same_as<GenericCurrentSensor> Component, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, Component, Branch, Branch3>
 constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo,
@@ -198,6 +207,7 @@ constexpr void register_topology_components(ComponentContainer const& components
         [](GenericCurrentSensor const& current_sensor) { return current_sensor.get_terminal_type(); });
 }
 
+// TODO(mgovers): cleanup v2: remove use_legacy_topology path
 template <std::derived_from<Regulator> Component, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, Component, Branch, Branch3>
 constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo,
@@ -317,10 +327,10 @@ ComponentTopology construct_topology(typename ModelType::ComponentContainer cons
             }
         });
     if (has_node_injection_sensors) {
-        // old path: all edges (branches + links) in branch_node_idx
+        // TODO(mgovers): cleanup v2: remove (old code path)
         detail::register_topology_components<Edge>(components, comp_topo, has_node_injection_sensors);
     } else {
-        // new path: branches only in branch_node_idx, links in link_node_idx
+        // TODO(mgovers): cleanup v2: new code path: branches only in branch_node_idx, links in link_node_idx
         detail::register_topology_components<Branch>(components, comp_topo);
         detail::register_topology_components<Link>(components, comp_topo);
     }
@@ -338,10 +348,10 @@ ComponentConnections construct_components_connections(typename ModelType::Compon
         [&components, &comp_conn, has_node_injection_sensors]<typename CompType>() {
             if constexpr (std::same_as<CompType, Edge>) {
                 if (has_node_injection_sensors) {
-                    // old path: all edges (branches + links) in branch_connected
+                    // TODO(mgovers): cleanup v2: old path: all edges (branches + links) in branch_connected
                     detail::register_connections_components<Edge>(components, comp_conn);
                 } else {
-                    // new path: branches only in branch_connected, links in link_connected
+                    // TODO(mgovers): cleanup v2: new path: branches only in branch_connected, links in link_connected
                     detail::register_connections_components<Branch>(components, comp_conn);
                     detail::register_connections_components<Link>(components, comp_conn);
                 }

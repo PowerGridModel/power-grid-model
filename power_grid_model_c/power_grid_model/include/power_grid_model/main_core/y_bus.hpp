@@ -131,12 +131,12 @@ constexpr void add_to_increment(std::vector<MathModelParamIncrement<sym>>& incre
                                 MainModelState<ComponentContainer> const& state, Idx2D const& changed_component_idx) {
     if constexpr (std::derived_from<ComponentType, Branch>) {
         if (state.comp_topo->link_node_idx.empty()) {
-            // legacy branch_node_idx is registered from Edge
+            // TODO(mgovers): cleanup v2: legacy branch_node_idx is registered from Edge
             Idx const topology_idx = get_component_sequence_idx<Edge>(state.components, changed_component_idx);
 
             add_to_math_model_params<Edge>(increments, state, topology_idx);
         } else {
-            // new branch_node_idx is registered from Branch
+            // TODO(mgovers): cleanup v2: new branch_node_idx is registered from Branch
             Idx const topology_idx = get_topology_index<ComponentType>(state.components, changed_component_idx);
 
             add_to_math_model_params<Branch>(increments, state, topology_idx);
@@ -210,12 +210,12 @@ inline std::vector<MathModelParam<sym>> get_math_param(main_model_state_c auto c
     }
     // loop all branch
     if (state.comp_topo->link_node_idx.empty()) {
-        // legacy topology: branch_node_idx contains every Edge, including Link
+        // TODO(mgovers): cleanup v2: legacy topology: branch_node_idx contains every Edge, including Link
         for (Idx const i : IdxRange{std::ssize(state.comp_topo->branch_node_idx)}) {
             detail::add_to_math_model_params<Edge>(math_param, state, i);
         }
     } else {
-        // reduced topology: Links are separate and branch_node_idx contains only Branch
+        // TODO(mgovers): cleanup v2: reduced topology: Links are separate and branch_node_idx contains only Branch
         for (Idx const i : IdxRange{std::ssize(state.comp_topo->branch_node_idx)}) {
             detail::add_to_math_model_params<Branch>(math_param, state, i);
         }

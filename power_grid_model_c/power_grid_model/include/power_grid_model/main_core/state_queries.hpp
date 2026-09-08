@@ -104,7 +104,7 @@ constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> cons
     auto const& link_topo_ids = state.reduced_topology->topo_node_coup.coupling.user_links_to_topo_nodes;
     // TODO(jguo): cleanup v2 node single link registration path
     if (std::ranges::ssize(link_topo_ids) == get_component_size<Link>(state.components)) {
-        // new path: links are not branches
+        // TODO(mgovers): cleanup v2: keep only this path: links are not branches
         return link_topo_ids.cbegin();
     }
     return state.topo_comp_coup->branch.cbegin() + get_component_sequence_offset<Edge, Link>(state.components);
