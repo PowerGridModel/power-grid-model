@@ -19,8 +19,7 @@
       {"id": 229, "from_node": 30, "to_node": 112, "from_status": 1, "to_status": 1}
     ],
     "asym_voltage_sensor": [
-      {"id": 329, "measured_object": 30, "u_sigma": 2.3094000000000001, "u_measured": [230.94011, 230.94011, 230.94011]}
-
+      {"id": 329, "measured_object": 30, "u_sigma": 2.3094, "u_measured": [230.94011, 230.94011, 230.94011]}
     ],
     "asym_power_sensor": [
        {"id": 466, "measured_object": 208, "measured_terminal_type": 1, "p_measured": [0, 0, 0], "q_measured": [0, 0, 0], "p_sigma": [1000, 1000, 1000], "q_sigma": [1000, 1000, 1000]},
