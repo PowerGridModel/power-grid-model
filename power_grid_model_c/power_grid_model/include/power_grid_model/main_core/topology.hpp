@@ -309,7 +309,6 @@ constexpr void register_connections_components(ComponentContainer const& compone
 
 } // namespace detail
 
-// entry point -> how to differentiate when a component is a sensor on a node? can i do it here?
 // TODO(jguo): cleanup v2 node single link registration path
 template <typename ModelType>
     requires common::component_container_c<typename ModelType::ComponentContainer, Node, Edge, Branch3, Source, Shunt,

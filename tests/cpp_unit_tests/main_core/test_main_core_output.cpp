@@ -119,7 +119,7 @@ auto make_power_sensor_output_state() -> PowerSensorOutputState {
         SymLoadGenInput{
             .id = 13, .node = 100, .status = 1, .type = LoadGenType::const_pq, .p_specified = 0.0, .q_specified = 0.0},
         u_rated);
-
+    state.comp_topo = std::make_shared<ComponentTopology>();
     state.components.set_construction_complete();
 
     auto coupling = std::make_shared<TopologicalComponentToMathCoupling>();
@@ -480,6 +480,7 @@ TEST_CASE_TEMPLATE("Test main core power sensor output with reduced component co
                                                         .g1 = 0.0,
                                                         .b1 = 0.0},
                                      10e3, 10e3);
+    state.comp_topo = std::make_shared<ComponentTopology>();
     state.components.set_construction_complete();
 
     auto coupling = std::make_shared<TopologicalComponentToMathCoupling>();

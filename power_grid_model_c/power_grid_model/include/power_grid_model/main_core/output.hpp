@@ -61,14 +61,14 @@ constexpr bool measured_terminal_active(MeasuredTerminalType const terminal_type
 
     case branch_from:
         // TODO(mgovers): cleanup v2: only keep Branch code path
-        if (state.comp_topo != nullptr && state.comp_topo->link_node_idx.empty()) {
+        if (state.comp_topo->link_node_idx.empty()) {
             return measured_component_active<Edge>(state, obj_seq, BranchSide::from);
         } else {
             return measured_component_active<Branch>(state, obj_seq, BranchSide::from);
         }
     case branch_to:
         // TODO(mgovers): cleanup v2: only keep Branch code path
-        if (state.comp_topo != nullptr && state.comp_topo->link_node_idx.empty()) {
+        if (state.comp_topo->link_node_idx.empty()) {
             return measured_component_active<Edge>(state, obj_seq, BranchSide::to);
         } else {
             return measured_component_active<Branch>(state, obj_seq, BranchSide::to);
