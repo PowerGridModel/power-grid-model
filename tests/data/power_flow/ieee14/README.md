@@ -23,7 +23,7 @@ The expected output validates bus voltage magnitude and angle. The reference sol
 
 The tabular case does not provide physical nominal bus voltages (`BASE_KV` is zero). A common nominal voltage of 100 kV is therefore used for all PGM nodes. This does not change the per-unit power-flow solution when all per-unit network quantities are converted consistently.
 
-With a 100 MVA source base and 100 kV nominal voltage, the impedance base is 100 ohm. Branch series resistance and reactance are converted from per unit to ohm with this base. IEEE branch charging susceptance is a total branch value, so half is assigned to each end through `generic_branch.b1`. Off-nominal transformer ratios are represented by `generic_branch.k`.
+With a 100 MVA source base and 100 kV nominal voltage, the impedance base is 100 ohm. Branch series resistance and reactance are converted from per unit to ohm with this base. IEEE branch charging susceptance is provided as the total branch value through `generic_branch.b1`; PGM accounts for its distribution across the branch ends. Off-nominal transformer ratios are represented by `generic_branch.k`.
 
 PQ demands are represented by `sym_load`. The slack bus is represented by a stiff `source` at bus 1. Generators at buses 2, 3, 6, and 8 are represented by `sym_gen` together with active `voltage_regulator` components so that Newton-Raphson treats those buses as voltage-controlled PV nodes. The fixed shunt at bus 9 is represented by a `shunt`.
 
