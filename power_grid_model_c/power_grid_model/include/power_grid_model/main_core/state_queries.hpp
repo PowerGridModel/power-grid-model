@@ -103,11 +103,12 @@ template <std::same_as<Link> Component, class ComponentContainer>
 constexpr auto comp_base_sequence_cbegin(MainModelState<ComponentContainer> const& state) {
     auto const& link_topo_ids = state.reduced_topology->topo_node_coup.coupling.user_links_to_topo_nodes;
     // TODO(jguo): cleanup v2 node single link registration path
-    if (std::ranges::ssize(link_topo_ids) == get_component_size<Link>(state.components)) {
-        // TODO(mgovers): cleanup v2: keep only this path: links are not branches
-        return link_topo_ids.cbegin();
+    if (std::ranges::empty(link_topo_ids)) {
+        return state.topo_comp_coup->branch.cbegin() + get_component_sequence_offset<Edge, Link>(state.components);
     }
-    return state.topo_comp_coup->branch.cbegin() + get_component_sequence_offset<Edge, Link>(state.components);
+    // TODO(mgovers): cleanup v2: keep only this path: links are not branches
+    assert(std::ranges::ssize(link_topo_ids) == get_component_size<Link>(state.components));
+    return link_topo_ids.cbegin();
 }
 
 template <std::derived_from<Branch3> Component, class ComponentContainer>

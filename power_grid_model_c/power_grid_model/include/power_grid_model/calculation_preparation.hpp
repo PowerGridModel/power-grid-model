@@ -138,7 +138,8 @@ inline void rebuild_topology(typename ModelType::MainModelState& state, SolverPr
     // Determine the path based on whether link_node_idx is populated (new path) or empty (old path)
     // link_node_idx being non-empty means new path where links are separated (no node injection sensors)
     // link_node_idx being empty means old path where all edges treated as branches (has node injection sensors)
-    bool const has_node_injection_sensors = state.comp_topo->link_node_idx.empty();
+    bool const has_node_injection_sensors = state.comp_topo->link_node_idx.empty() &&
+                                            !std::ranges::empty(main_core::get_component_citer<Link>(state.components));
     ComponentConnections const comp_conn =
         main_core::construct_components_connections<ModelType>(state.components, has_node_injection_sensors);
 
