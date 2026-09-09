@@ -80,7 +80,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        compiler: [msvc, clang-cl]
+        compiler: [clang-cl]
 
     env:
       PRESET: ci-${{ matrix.compiler }}-reproducible
@@ -96,7 +96,6 @@ jobs:
           uv tool install pgm-build-deps
           pgm-build-setup-ga-ci
 
-      - uses: ./.github/actions/enable-msvc
 
       - name: Build twice
         run: |

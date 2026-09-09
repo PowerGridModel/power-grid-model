@@ -13,6 +13,8 @@
 #include "../component/branch.hpp"
 #include "../component/branch3.hpp"
 #include "../component/current_sensor.hpp"
+#include "../component/edge.hpp"
+#include "../component/link.hpp"
 #include "../component/load_gen.hpp"
 #include "../component/node.hpp"
 #include "../component/power_sensor.hpp"
@@ -49,12 +51,12 @@ constexpr void register_topology_components(ComponentContainer const& components
     comp_topo.n_node = get_component_size<Node>(components);
 }
 
-template <std::same_as<Branch> Component, class ComponentContainer>
-    requires common::component_container_c<ComponentContainer, Component, Node>
+template <std::same_as<Edge> Component, class ComponentContainer>
+    requires common::component_container_c<ComponentContainer, Component, Edge, Node>
 constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
-    apply_registration<Component>(components, comp_topo.branch_node_idx, [&components](Branch const& branch) {
-        return BranchIdx{get_component_sequence_idx<Node>(components, branch.from_node()),
-                         get_component_sequence_idx<Node>(components, branch.to_node())};
+    apply_registration<Edge>(components, comp_topo.branch_node_idx, [&components](Edge const& edge) {
+        return BranchIdx{get_component_sequence_idx<Node>(components, edge.from_node()),
+                         get_component_sequence_idx<Node>(components, edge.to_node())};
     });
 }
 
@@ -119,7 +121,8 @@ constexpr void register_topology_components(ComponentContainer const& components
             case branch_from:
                 [[fallthrough]];
             case branch_to:
-                return get_component_sequence_idx<Branch>(components, measured_object);
+                return get_component_sequence_idx<Edge>(
+                    components, measured_object); // TODO(mgovers): cleanup v2: change back to Branch
             case source:
                 return get_component_sequence_idx<Source>(components, measured_object);
             case shunt:
@@ -150,28 +153,29 @@ constexpr void register_topology_components(ComponentContainer const& components
 template <std::same_as<GenericCurrentSensor> Component, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, Component, Branch, Branch3>
 constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
-    apply_registration<Component>(components, comp_topo.current_sensor_object_idx,
-                                  [&components](GenericCurrentSensor const& current_sensor) {
-                                      using enum MeasuredTerminalType;
+    apply_registration<Component>(
+        components, comp_topo.current_sensor_object_idx, [&components](GenericCurrentSensor const& current_sensor) {
+            using enum MeasuredTerminalType;
 
-                                      auto const measured_object = current_sensor.measured_object();
+            auto const measured_object = current_sensor.measured_object();
 
-                                      switch (current_sensor.get_terminal_type()) {
-                                      case branch_from:
-                                          [[fallthrough]];
-                                      case branch_to:
-                                          return get_component_sequence_idx<Branch>(components, measured_object);
-                                      case branch3_1:
-                                          [[fallthrough]];
-                                      case branch3_2:
-                                          [[fallthrough]];
-                                      case branch3_3:
-                                          return get_component_sequence_idx<Branch3>(components, measured_object);
-                                      default:
-                                          throw MissingCaseForEnumError("Current sensor idx to seq transformation",
-                                                                        current_sensor.get_terminal_type());
-                                      }
-                                  });
+            switch (current_sensor.get_terminal_type()) {
+            case branch_from:
+                [[fallthrough]];
+            case branch_to:
+                return get_component_sequence_idx<Edge>(
+                    components, measured_object); // TODO(mgovers): cleanup v2: change back to Branch
+            case branch3_1:
+                [[fallthrough]];
+            case branch3_2:
+                [[fallthrough]];
+            case branch3_3:
+                return get_component_sequence_idx<Branch3>(components, measured_object);
+            default:
+                throw MissingCaseForEnumError("Current sensor idx to seq transformation",
+                                              current_sensor.get_terminal_type());
+            }
+        });
 
     apply_registration<Component>(
         components, comp_topo.current_sensor_terminal_type,
@@ -185,7 +189,8 @@ constexpr void register_topology_components(ComponentContainer const& components
         components, comp_topo.regulated_object_idx, [&components](Regulator const& regulator) {
             switch (regulator.regulated_object_type()) {
             case ComponentType::branch:
-                return get_component_sequence_idx<Branch>(components, regulator.regulated_object());
+                return get_component_sequence_idx<Edge>(
+                    components, regulator.regulated_object()); // TODO(mgovers): cleanup v2: change back to Branch
             case ComponentType::branch3:
                 return get_component_sequence_idx<Branch3>(components, regulator.regulated_object());
             case ComponentType::generic_load_gen:
@@ -199,15 +204,16 @@ constexpr void register_topology_components(ComponentContainer const& components
                                   [](Regulator const& regulator) { return regulator.regulated_object_type(); });
 }
 
-template <std::same_as<Branch> Component, class ComponentContainer>
-    requires common::component_container_c<ComponentContainer, Component>
+template <std::same_as<Edge> Component, class ComponentContainer>
+    requires common::component_container_c<ComponentContainer, Component, Edge>
 constexpr void register_connections_components(ComponentContainer const& components, ComponentConnections& comp_conn) {
-    apply_registration<Component>(components, comp_conn.branch_connected, [](Branch const& branch) {
-        return BranchConnected{status_to_int(branch.from_status()), status_to_int(branch.to_status())};
+    apply_registration<Edge>(components, comp_conn.branch_connected, [](Edge const& edge) {
+        return BranchConnected{status_to_int(edge.from_status()), status_to_int(edge.to_status())};
     });
-    apply_registration<Component>(components, comp_conn.branch_phase_shift,
-                                  [](Branch const& branch) { return branch.phase_shift(); });
+    apply_registration<Edge>(components, comp_conn.branch_phase_shift,
+                             [](Edge const& edge) { return edge.phase_shift(); });
 }
+
 template <std::same_as<Branch3> Component, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, Component>
 constexpr void register_connections_components(ComponentContainer const& components, ComponentConnections& comp_conn) {
@@ -229,7 +235,7 @@ constexpr void register_connections_components(ComponentContainer const& compone
 } // namespace detail
 
 template <typename ModelType>
-    requires common::component_container_c<typename ModelType::ComponentContainer, Node, Branch, Branch3, Source, Shunt,
+    requires common::component_container_c<typename ModelType::ComponentContainer, Node, Edge, Branch3, Source, Shunt,
                                            GenericLoadGen, GenericVoltageSensor, GenericPowerSensor,
                                            GenericCurrentSensor, Regulator>
 ComponentTopology construct_topology(typename ModelType::ComponentContainer const& components) {
@@ -243,7 +249,7 @@ ComponentTopology construct_topology(typename ModelType::ComponentContainer cons
 }
 
 template <typename ModelType>
-    requires common::component_container_c<typename ModelType::ComponentContainer, Branch, Branch3, Source>
+    requires common::component_container_c<typename ModelType::ComponentContainer, Edge, Branch3, Source>
 ComponentConnections construct_components_connections(typename ModelType::ComponentContainer const& components) {
     ComponentConnections comp_conn;
     using TopologyConnectionTypesTuple = ModelType::TopologyConnectionTypesTuple;

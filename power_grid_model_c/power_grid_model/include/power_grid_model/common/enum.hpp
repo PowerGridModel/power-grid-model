@@ -68,6 +68,7 @@ enum class ComponentType : IntS {
     regulator = 11,
     transformer_tap_regulator = 12,
     voltage_regulator = 13,
+    link = 14,
     test = -128 // any stub or mock may use this. do not use this in production
 };
 
