@@ -60,11 +60,19 @@ constexpr bool measured_terminal_active(MeasuredTerminalType const terminal_type
         using enum MeasuredTerminalType;
 
     case branch_from:
-        return measured_component_active<Edge>(state, obj_seq,
-                                               BranchSide::from); // TODO(mgovers): cleanup v2: change back to Branch
+        // TODO(mgovers): cleanup v2: only keep Branch code path
+        if (state.comp_topo->link_node_idx.empty()) {
+            return measured_component_active<Edge>(state, obj_seq, BranchSide::from);
+        } else {
+            return measured_component_active<Branch>(state, obj_seq, BranchSide::from);
+        }
     case branch_to:
-        return measured_component_active<Edge>(state, obj_seq,
-                                               BranchSide::to); // TODO(mgovers): cleanup v2: change back to Branch
+        // TODO(mgovers): cleanup v2: only keep Branch code path
+        if (state.comp_topo->link_node_idx.empty()) {
+            return measured_component_active<Edge>(state, obj_seq, BranchSide::to);
+        } else {
+            return measured_component_active<Branch>(state, obj_seq, BranchSide::to);
+        }
     case source:
         return measured_component_active<Source>(state, obj_seq);
     case shunt:
@@ -134,12 +142,15 @@ constexpr auto output_result(Component const& node, MainModelState<ComponentCont
 // output link
 template <std::same_as<Link> Component, class ComponentContainer, steady_state_solver_output_type SolverOutputType>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
-constexpr auto output_result(Component const& link, MainModelState<ComponentContainer> const& /* state */,
+constexpr auto output_result(Component const& link, MainModelState<ComponentContainer> const& state,
                              MathOutput<std::vector<SolverOutputType>> const& math_output, Idx2D const& topo_id) {
     using sym = decode_symmetry_v<SolverOutputType>;
 
-    if (topo_id.group == disconnected) {
+    if (topo_id.group == disconnected || state.topo_comp_coup->node[topo_id.group].group == disconnected) {
         return link.template get_null_output<sym>();
+    }
+    if (topo_id.pos == disconnected) {
+        return link.template get_energized_zero_output<sym>();
     }
     if (!link.edge_status()) {
         return link.template get_energized_zero_output<sym>();
@@ -148,10 +159,13 @@ constexpr auto output_result(Component const& link, MainModelState<ComponentCont
 }
 template <std::same_as<Link> Component, class ComponentContainer, short_circuit_solver_output_type SolverOutputType>
     requires model_component_state_c<MainModelState, ComponentContainer, Component>
-inline auto output_result(Component const& link, MainModelState<ComponentContainer> const& /* state */,
+inline auto output_result(Component const& link, MainModelState<ComponentContainer> const& state,
                           MathOutput<std::vector<SolverOutputType>> const& math_output, Idx2D const& topo_id) {
-    if (topo_id.group == disconnected) {
+    if (topo_id.group == disconnected || state.topo_comp_coup->node[topo_id.group].group == disconnected) {
         return link.get_null_sc_output();
+    }
+    if (topo_id.pos == disconnected) {
+        return link.get_energized_zero_sc_output();
     }
     if (!link.edge_status()) {
         return link.get_energized_zero_sc_output();
@@ -275,7 +289,7 @@ constexpr auto output_result(Component const& voltage_sensor, MainModelState<Com
                              MathOutput<std::vector<SolverOutputType>> const& math_output, Idx const node_seq) {
     using sym = decode_symmetry_v<SolverOutputType>;
 
-    Idx2D const node_math_id = state.topo_comp_coup->node[node_seq];
+    Idx2D const node_math_id = get_math_id<Node>(state, comp_base_sequence<Node>(state)[node_seq].group);
     if (node_math_id.group == disconnected) {
         return voltage_sensor.template get_null_output<sym>();
     }

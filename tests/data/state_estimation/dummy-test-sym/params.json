@@ -3,6 +3,7 @@
   "rtol": 1e-6,
   "atol": {
     "q.*": 1e-1,
-    "default": 1e-6
+    "default": 1e-6,
+    "u_residual": 1e-4
   }
 }

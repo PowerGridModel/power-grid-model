@@ -45,24 +45,30 @@ constexpr void apply_registration(ComponentContainer const& components, std::vec
     std::transform(begin, end, target.begin(), func);
 }
 
+// TODO(mgovers): cleanup v2: remove use_legacy_topology path
 template <std::same_as<Node> Component, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, Component>
-constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
+constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo,
+                                            bool /*use_legacy_topology*/) {
     comp_topo.n_node = get_component_size<Node>(components);
 }
 
+// TODO(mgovers): cleanup v2: remove use_legacy_topology path
 template <std::same_as<Edge> Component, class ComponentContainer>
-    requires common::component_container_c<ComponentContainer, Component, Edge, Node>
-constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
+    requires common::component_container_c<ComponentContainer, Component, Node>
+constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo,
+                                            bool /*use_legacy_topology*/) {
     apply_registration<Edge>(components, comp_topo.branch_node_idx, [&components](Edge const& edge) {
         return BranchIdx{get_component_sequence_idx<Node>(components, edge.from_node()),
                          get_component_sequence_idx<Node>(components, edge.to_node())};
     });
 }
 
+// TODO(mgovers): cleanup v2: remove use_legacy_topology path
 template <std::same_as<Branch3> Component, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, Component, Node>
-constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
+constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo,
+                                            bool /*use_legacy_topology*/) {
     apply_registration<Component>(components, comp_topo.branch3_node_idx, [&components](Branch3 const& branch3) {
         return Branch3Idx{get_component_sequence_idx<Node>(components, branch3.node_1()),
                           get_component_sequence_idx<Node>(components, branch3.node_2()),
@@ -70,25 +76,31 @@ constexpr void register_topology_components(ComponentContainer const& components
     });
 }
 
+// TODO(mgovers): cleanup v2: remove use_legacy_topology path
 template <std::same_as<Source> Component, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, Component, Node>
-constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
+constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo,
+                                            bool /*use_legacy_topology*/) {
     apply_registration<Component>(components, comp_topo.source_node_idx, [&components](Source const& source) {
         return get_component_sequence_idx<Node>(components, source.node());
     });
 }
 
+// TODO(mgovers): cleanup v2: remove use_legacy_topology path
 template <std::same_as<Shunt> Component, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, Component, Node>
-constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
+constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo,
+                                            bool /*use_legacy_topology*/) {
     apply_registration<Component>(components, comp_topo.shunt_node_idx, [&components](Shunt const& shunt) {
         return get_component_sequence_idx<Node>(components, shunt.node());
     });
 }
 
+// TODO(mgovers): cleanup v2: remove use_legacy_topology path
 template <std::same_as<GenericLoadGen> Component, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, Component, Node>
-constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
+constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo,
+                                            bool /*use_legacy_topology*/) {
     apply_registration<Component>(components, comp_topo.load_gen_node_idx,
                                   [&components](GenericLoadGen const& load_gen) {
                                       return get_component_sequence_idx<Node>(components, load_gen.node());
@@ -98,99 +110,117 @@ constexpr void register_topology_components(ComponentContainer const& components
                                   [](GenericLoadGen const& load_gen) { return load_gen.type(); });
 }
 
+// TODO(mgovers): cleanup v2: remove use_legacy_topology path
 template <std::same_as<GenericVoltageSensor> Component, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, Component, Node>
-constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
+constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo,
+                                            bool /*use_legacy_topology*/) {
     apply_registration<Component>(
         components, comp_topo.voltage_sensor_node_idx, [&components](GenericVoltageSensor const& voltage_sensor) {
             return get_component_sequence_idx<Node>(components, voltage_sensor.measured_object());
         });
 }
 
+// TODO(mgovers): cleanup v2: remove use_legacy_topology path
 template <std::same_as<GenericPowerSensor> Component, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, Component, Branch, Source, Shunt, GenericLoadGen,
                                            Branch3, Node>
-constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
-    apply_registration<Component>(
-        components, comp_topo.power_sensor_object_idx, [&components](GenericPowerSensor const& power_sensor) {
-            using enum MeasuredTerminalType;
+constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo,
+                                            bool use_legacy_topology) {
+    apply_registration<Component>(components, comp_topo.power_sensor_object_idx,
+                                  [&components, use_legacy_topology](GenericPowerSensor const& power_sensor) {
+                                      using enum MeasuredTerminalType;
 
-            auto const measured_object = power_sensor.measured_object();
+                                      auto const measured_object = power_sensor.measured_object();
 
-            switch (power_sensor.get_terminal_type()) {
-            case branch_from:
-                [[fallthrough]];
-            case branch_to:
-                return get_component_sequence_idx<Edge>(
-                    components, measured_object); // TODO(mgovers): cleanup v2: change back to Branch
-            case source:
-                return get_component_sequence_idx<Source>(components, measured_object);
-            case shunt:
-                return get_component_sequence_idx<Shunt>(components, measured_object);
-            case load:
-                [[fallthrough]];
-            case generator:
-                return get_component_sequence_idx<GenericLoadGen>(components, measured_object);
-            case branch3_1:
-                [[fallthrough]];
-            case branch3_2:
-                [[fallthrough]];
-            case branch3_3:
-                return get_component_sequence_idx<Branch3>(components, measured_object);
-            case node:
-                return get_component_sequence_idx<Node>(components, measured_object);
-            default:
-                throw MissingCaseForEnumError("Power sensor idx to seq transformation",
-                                              power_sensor.get_terminal_type());
-            }
-        });
+                                      switch (power_sensor.get_terminal_type()) {
+                                      case branch_from:
+                                          [[fallthrough]];
+                                      case branch_to:
+                                          if (use_legacy_topology) {
+                                              return get_component_sequence_idx<Edge>(components, measured_object);
+                                          } else {
+                                              return get_component_sequence_idx<Branch>(components, measured_object);
+                                          }
+                                      case source:
+                                          return get_component_sequence_idx<Source>(components, measured_object);
+                                      case shunt:
+                                          return get_component_sequence_idx<Shunt>(components, measured_object);
+                                      case load:
+                                          [[fallthrough]];
+                                      case generator:
+                                          return get_component_sequence_idx<GenericLoadGen>(components,
+                                                                                            measured_object);
+                                      case branch3_1:
+                                          [[fallthrough]];
+                                      case branch3_2:
+                                          [[fallthrough]];
+                                      case branch3_3:
+                                          return get_component_sequence_idx<Branch3>(components, measured_object);
+                                      case node:
+                                          return get_component_sequence_idx<Node>(components, measured_object);
+                                      default:
+                                          throw MissingCaseForEnumError("Power sensor idx to seq transformation",
+                                                                        power_sensor.get_terminal_type());
+                                      }
+                                  });
 
     apply_registration<Component>(
         components, comp_topo.power_sensor_terminal_type,
         [](GenericPowerSensor const& power_sensor) { return power_sensor.get_terminal_type(); });
 }
 
+// TODO(mgovers): cleanup v2: remove use_legacy_topology path
 template <std::same_as<GenericCurrentSensor> Component, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, Component, Branch, Branch3>
-constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
-    apply_registration<Component>(
-        components, comp_topo.current_sensor_object_idx, [&components](GenericCurrentSensor const& current_sensor) {
-            using enum MeasuredTerminalType;
+constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo,
+                                            bool use_legacy_topology) {
+    apply_registration<Component>(components, comp_topo.current_sensor_object_idx,
+                                  [&components, use_legacy_topology](GenericCurrentSensor const& current_sensor) {
+                                      using enum MeasuredTerminalType;
 
-            auto const measured_object = current_sensor.measured_object();
+                                      auto const measured_object = current_sensor.measured_object();
 
-            switch (current_sensor.get_terminal_type()) {
-            case branch_from:
-                [[fallthrough]];
-            case branch_to:
-                return get_component_sequence_idx<Edge>(
-                    components, measured_object); // TODO(mgovers): cleanup v2: change back to Branch
-            case branch3_1:
-                [[fallthrough]];
-            case branch3_2:
-                [[fallthrough]];
-            case branch3_3:
-                return get_component_sequence_idx<Branch3>(components, measured_object);
-            default:
-                throw MissingCaseForEnumError("Current sensor idx to seq transformation",
-                                              current_sensor.get_terminal_type());
-            }
-        });
+                                      switch (current_sensor.get_terminal_type()) {
+                                      case branch_from:
+                                          [[fallthrough]];
+                                      case branch_to:
+                                          if (use_legacy_topology) {
+                                              return get_component_sequence_idx<Edge>(components, measured_object);
+                                          } else {
+                                              return get_component_sequence_idx<Branch>(components, measured_object);
+                                          }
+                                      case branch3_1:
+                                          [[fallthrough]];
+                                      case branch3_2:
+                                          [[fallthrough]];
+                                      case branch3_3:
+                                          return get_component_sequence_idx<Branch3>(components, measured_object);
+                                      default:
+                                          throw MissingCaseForEnumError("Current sensor idx to seq transformation",
+                                                                        current_sensor.get_terminal_type());
+                                      }
+                                  });
 
     apply_registration<Component>(
         components, comp_topo.current_sensor_terminal_type,
         [](GenericCurrentSensor const& current_sensor) { return current_sensor.get_terminal_type(); });
 }
 
+// TODO(mgovers): cleanup v2: remove use_legacy_topology path
 template <std::derived_from<Regulator> Component, class ComponentContainer>
     requires common::component_container_c<ComponentContainer, Component, Branch, Branch3>
-constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
+constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo,
+                                            bool use_legacy_topology) {
     apply_registration<Component>(
-        components, comp_topo.regulated_object_idx, [&components](Regulator const& regulator) {
+        components, comp_topo.regulated_object_idx, [&components, use_legacy_topology](Regulator const& regulator) {
             switch (regulator.regulated_object_type()) {
             case ComponentType::branch:
-                return get_component_sequence_idx<Edge>(
-                    components, regulator.regulated_object()); // TODO(mgovers): cleanup v2: change back to Branch
+                if (use_legacy_topology) {
+                    return get_component_sequence_idx<Edge>(components, regulator.regulated_object());
+                } else {
+                    return get_component_sequence_idx<Branch>(components, regulator.regulated_object());
+                }
             case ComponentType::branch3:
                 return get_component_sequence_idx<Branch3>(components, regulator.regulated_object());
             case ComponentType::generic_load_gen:
@@ -204,8 +234,30 @@ constexpr void register_topology_components(ComponentContainer const& components
                                   [](Regulator const& regulator) { return regulator.regulated_object_type(); });
 }
 
+// TODO(jguo): cleanup v2 node single link registration path
+// new path: only Branch-derived types (not Link) in branch_node_idx
+template <std::same_as<Branch> Component, class ComponentContainer>
+    requires common::component_container_c<ComponentContainer, Component, Node>
+constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
+    apply_registration<Component>(components, comp_topo.branch_node_idx, [&components](Component const& branch) {
+        return BranchIdx{get_component_sequence_idx<Node>(components, branch.from_node()),
+                         get_component_sequence_idx<Node>(components, branch.to_node())};
+    });
+}
+
+// TODO(jguo): cleanup v2 node single link registration path
+// new path: Link in link_node_idx so topology builder can create super-nodes
+template <std::same_as<Link> Component, class ComponentContainer>
+    requires common::component_container_c<ComponentContainer, Component, Node>
+constexpr void register_topology_components(ComponentContainer const& components, ComponentTopology& comp_topo) {
+    apply_registration<Component>(components, comp_topo.link_node_idx, [&components](Component const& link) {
+        return BranchIdx{get_component_sequence_idx<Node>(components, link.from_node()),
+                         get_component_sequence_idx<Node>(components, link.to_node())};
+    });
+}
+
 template <std::same_as<Edge> Component, class ComponentContainer>
-    requires common::component_container_c<ComponentContainer, Component, Edge>
+    requires common::component_container_c<ComponentContainer, Component>
 constexpr void register_connections_components(ComponentContainer const& components, ComponentConnections& comp_conn) {
     apply_registration<Edge>(components, comp_conn.branch_connected, [](Edge const& edge) {
         return BranchConnected{status_to_int(edge.from_status()), status_to_int(edge.to_status())};
@@ -232,30 +284,79 @@ constexpr void register_connections_components(ComponentContainer const& compone
                                   [](Source const& source) { return source.status(); });
 }
 
+// TODO(jguo): cleanup v2 node single link registration path
+// new path: only Branch-derived types (not Link) in branch_connected
+template <std::same_as<Branch> Component, class ComponentContainer>
+    requires common::component_container_c<ComponentContainer, Component>
+constexpr void register_connections_components(ComponentContainer const& components, ComponentConnections& comp_conn) {
+    apply_registration<Component>(components, comp_conn.branch_connected, [](Component const& branch) {
+        return BranchConnected{status_to_int(branch.from_status()), status_to_int(branch.to_status())};
+    });
+    apply_registration<Component>(components, comp_conn.branch_phase_shift,
+                                  [](Branch const& branch) { return branch.phase_shift(); });
+}
+
+// TODO(jguo): cleanup v2 node single link registration path
+// new path: Link in link_connected so topology builder can handle super-nodes
+template <std::same_as<Link> Component, class ComponentContainer>
+    requires common::component_container_c<ComponentContainer, Component>
+constexpr void register_connections_components(ComponentContainer const& components, ComponentConnections& comp_conn) {
+    apply_registration<Component>(components, comp_conn.link_connected, [](Component const& link) {
+        return BranchConnected{status_to_int(link.from_status()), status_to_int(link.to_status())};
+    });
+    // Note: Links always have zero phase shift, so no phase_shift registration needed
+}
+
 } // namespace detail
 
+// TODO(jguo): cleanup v2 node single link registration path
 template <typename ModelType>
     requires common::component_container_c<typename ModelType::ComponentContainer, Node, Edge, Branch3, Source, Shunt,
                                            GenericLoadGen, GenericVoltageSensor, GenericPowerSensor,
-                                           GenericCurrentSensor, Regulator>
-ComponentTopology construct_topology(typename ModelType::ComponentContainer const& components) {
+                                           GenericCurrentSensor, Regulator, Branch, Link>
+ComponentTopology construct_topology(typename ModelType::ComponentContainer const& components,
+                                     bool has_node_injection_sensors = false) {
     ComponentTopology comp_topo;
     using TopologyTypesTuple = ModelType::TopologyTypesTuple;
+
     main_core::utils::run_functor_with_tuple_return_void<TopologyTypesTuple>(
-        [&components, &comp_topo]<typename CompType>() {
-            detail::register_topology_components<CompType>(components, comp_topo);
+        [&components, &comp_topo, has_node_injection_sensors]<typename CompType>() {
+            if constexpr (!std::same_as<CompType, Edge>) {
+                detail::register_topology_components<CompType>(components, comp_topo, has_node_injection_sensors);
+            }
         });
+    if (has_node_injection_sensors) {
+        // TODO(mgovers): cleanup v2: remove (old code path)
+        detail::register_topology_components<Edge>(components, comp_topo, has_node_injection_sensors);
+    } else {
+        // TODO(mgovers): cleanup v2: new code path: branches only in branch_node_idx, links in link_node_idx
+        detail::register_topology_components<Branch>(components, comp_topo);
+        detail::register_topology_components<Link>(components, comp_topo);
+    }
     return comp_topo;
 }
 
+// TODO(jguo): cleanup v2 node single link registration path
 template <typename ModelType>
-    requires common::component_container_c<typename ModelType::ComponentContainer, Edge, Branch3, Source>
-ComponentConnections construct_components_connections(typename ModelType::ComponentContainer const& components) {
+    requires common::component_container_c<typename ModelType::ComponentContainer, Edge, Branch, Branch3, Source, Link>
+ComponentConnections construct_components_connections(typename ModelType::ComponentContainer const& components,
+                                                      bool has_node_injection_sensors = false) {
     ComponentConnections comp_conn;
     using TopologyConnectionTypesTuple = ModelType::TopologyConnectionTypesTuple;
     main_core::utils::run_functor_with_tuple_return_void<TopologyConnectionTypesTuple>(
-        [&components, &comp_conn]<typename CompType>() {
-            detail::register_connections_components<CompType>(components, comp_conn);
+        [&components, &comp_conn, has_node_injection_sensors]<typename CompType>() {
+            if constexpr (std::same_as<CompType, Edge>) {
+                if (has_node_injection_sensors) {
+                    // TODO(mgovers): cleanup v2: old path: all edges (branches + links) in branch_connected
+                    detail::register_connections_components<Edge>(components, comp_conn);
+                } else {
+                    // TODO(mgovers): cleanup v2: new path: branches only in branch_connected, links in link_connected
+                    detail::register_connections_components<Branch>(components, comp_conn);
+                    detail::register_connections_components<Link>(components, comp_conn);
+                }
+            } else {
+                detail::register_connections_components<CompType>(components, comp_conn);
+            }
         });
     return comp_conn;
 }

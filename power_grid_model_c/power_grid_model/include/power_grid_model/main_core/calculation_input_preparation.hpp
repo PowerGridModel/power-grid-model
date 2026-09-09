@@ -284,8 +284,10 @@ prepare_short_circuit_input(main_model_state_c auto const& state, ComponentToMat
     for (Idx const fault_idx : IdxRange{state.components.template size<Fault>()}) {
         auto const& fault = state.components.template get_item_by_seq<Fault>(fault_idx);
         if (fault.status()) {
-            auto const node_idx = state.components.template get_seq<Node>(fault.get_fault_object());
-            auto const topo_bus_idx = state.topo_comp_coup->node[node_idx];
+            auto const user_node_idx = state.components.template get_seq<Node>(fault.get_fault_object());
+            auto const topo_node_idx =
+                state.reduced_topology->topo_node_coup.coupling.user_nodes_to_topo_nodes[user_node_idx].group;
+            auto const topo_bus_idx = state.topo_comp_coup->node[topo_node_idx];
 
             if (topo_bus_idx.group >= 0) { // Consider non-isolated objects only
                 topo_fault_indices[topo_bus_idx.group].push_back(fault_idx);
