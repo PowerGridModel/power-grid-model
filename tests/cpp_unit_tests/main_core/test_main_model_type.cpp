@@ -37,6 +37,7 @@ class AComponent {
 
 } // namespace
 
+// Tests related to AllComponents and actual model creation
 static_assert(is_main_model_type_v<MainModelType<AllExtraRetrievableTypes, AllComponents>>);
 static_assert(!is_main_model_type_v<MainModelType<AllComponents, AllComponents>>);
 static_assert(!is_main_model_type_v<MainModelType<AType, AllComponents>>);
@@ -46,6 +47,7 @@ static_assert(std::constructible_from<MainModelImpl<MainModelType<AllExtraRetrie
 
 static_assert(detail::validate_component_types_c<AllComponents>);
 
+// Unit tests on validate_component_types_c
 static_assert(detail::validate_component_types_c<ComponentList<Node, Source>>);
 static_assert(detail::validate_component_types_c<ComponentList<Node, Line>>);
 static_assert(detail::validate_component_types_c<ComponentList<Node, Line, AComponent>>);
