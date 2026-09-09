@@ -100,7 +100,7 @@ class MultiThreadedLoggerImpl : public MultiThreadedLogger {
     friend class ThreadLogger;
 
     LoggerType log_;
-    std::mutex mutex_;
+    mutable std::mutex mutex_;
 
     void sync(ThreadLogger const& logger) {
         assert(&logger != &log_);
