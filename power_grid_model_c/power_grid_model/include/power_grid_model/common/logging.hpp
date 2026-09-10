@@ -7,6 +7,7 @@
 #include "common.hpp"
 
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <string_view>
 
@@ -71,6 +72,13 @@ class Logger {
 
 struct MultiThreadedLogger : public Logger {
     virtual std::unique_ptr<Logger> create_child() = 0;
+
+    // The function is called exactly once with a string_view valid only for the duration of the call.
+    // Default: no op / delivers an empty view
+    virtual void get_output(std::function<void(std::string_view)> const& callback) const { callback({}); }
+
+    // Clear accumulated output. Default: no-op.
+    virtual void clear() {}
 };
 
 } // namespace common::logging
