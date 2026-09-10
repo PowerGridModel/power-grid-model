@@ -274,7 +274,7 @@ solve_topological_nodes(LinkSolver link_solver, State const& state,
         state.reduced_topology->topo_node_coup.topo_nodes |
         std::views::transform([](auto const& topo_node) -> SuperNodeSolverInput<sym> {
             auto const node_number = topo_node.user_nodes.size();
-            return {.links = std::span{topo_node.user_links},
+            return {.links = std::span{topo_node.internal_links},
                     .node_injection = UserNodeValueVector<sym>(node_number),
                     .node_flow_through_grid = UserNodeValueVector<sym>(node_number)};
         }) |

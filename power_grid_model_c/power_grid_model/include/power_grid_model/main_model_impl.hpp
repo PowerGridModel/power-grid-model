@@ -207,9 +207,10 @@ class MainModelImpl {
         construction_complete_ = true;
 #endif // !NDEBUG
         state_.components.set_construction_complete();
-
-        state_.comp_topo =
-            std::make_shared<ComponentTopology const>(main_core::construct_topology<ModelType>(state_.components));
+        // TODO(jguo): cleanup v2 node single link registration path
+        constexpr bool use_legacy_code_path = true;
+        state_.comp_topo = std::make_shared<ComponentTopology const>(
+            main_core::construct_topology<ModelType>(state_.components, use_legacy_code_path));
     }
 
   public:
@@ -474,6 +475,7 @@ class MainModelImpl {
 
     OwnedUpdateDataset cached_inverse_update_{};
     UpdateChange cached_state_changes_{};
+
 #ifndef NDEBUG
     // construction_complete is used for debug assertions only
     bool construction_complete_{false};

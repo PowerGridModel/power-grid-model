@@ -141,6 +141,7 @@ class Topology {
         build_sparse_graph();
         dfs_search();
         couple_branch();
+        // Links are not coupled here; they're merged into topological nodes in supernodes.hpp
         couple_all_appliance();
         couple_voltage_regulators();
         couple_sensors();
