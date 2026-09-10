@@ -137,7 +137,7 @@ Because of this, the power-grid-model choses to model this accordingly:
   to 10e6 siemens for a 10kV network.
 
 ```{note}
-New in version [`v1.13.156`](https://github.com/PowerGridModel/power-grid-model/releases/tag/v1.13.156): links may be
+New in version [`v1.13.167`](https://github.com/PowerGridModel/power-grid-model/releases/tag/v1.13.167): links may be
 modeled as infinite (but equal) admittance connections.
 In the old behavior, link admittances were always modeled with the same fixed per-unit value.
 Starting with version `v2.0.0`, link admittances are always modeled as infinite-admittance connections.
