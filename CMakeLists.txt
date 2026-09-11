@@ -54,6 +54,14 @@ endif()
 # add C library
 add_subdirectory("power_grid_model_c")
 
+# fuzz harnesses (opt-in). Kept independent of PGM_ENABLE_DEV_BUILD so building
+# a harness only needs the C API target above — it does not pull in doctest or
+# the rest of the test tree. Defaults to the AFL++ engine; see tests/fuzzer.
+option(PGM_ENABLE_FUZZER "Build fuzz harnesses (AFL++ by default; see tests/fuzzer)" OFF)
+if(PGM_ENABLE_FUZZER)
+    add_subdirectory("tests/fuzzer")
+endif()
+
 # dev build
 if(${PGM_ENABLE_DEV_BUILD})
     include(CTest)
