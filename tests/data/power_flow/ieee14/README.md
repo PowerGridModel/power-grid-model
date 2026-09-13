@@ -13,8 +13,8 @@ This validation case models the public IEEE 14-bus power-flow test system as a s
 The source data are the IEEE 14-bus test case from the University of Washington Power Systems Test Case Archive, distributed in IEEE Common Data Format. The tabular values used for the conversion are the CC0 `caseformat/ieee14` representation, while the expected voltage magnitudes and angles are taken from a public PSS/E RAW representation of the same IEEE 14-bus solution.
 
 - Original archive: https://labs.ece.uw.edu/pstca/pf14/ieee14cdf.txt
-- Tabular conversion: https://github.com/caseformat/ieee14
-- Reference solution: https://github.com/ITI/models/blob/master/electric-grid/physical/reference/ieee-14bus/models/ieee-14-bus.raw
+- Tabular conversion (version 2): https://github.com/caseformat/ieee14/commit/a9e12bb3f08037785631e0a5e5006b07e01e05c9
+- Reference solution: https://github.com/ITI/models/blob/1d0d1e137dccb01f7f5e5c442c8acf35ce17d474/electric-grid/physical/reference/ieee-14bus/models/ieee-14-bus.raw
 - System base power: 100 MVA
 
 The expected output validates bus voltage magnitude and angle. The reference solution provides five decimal places for voltage magnitude and four decimal places for voltage angle in degrees.
