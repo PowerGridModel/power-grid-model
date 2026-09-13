@@ -21,7 +21,9 @@
 
 #include <algorithm>
 #include <string>
+#include <thread>
 #include <utility>
+#include <vector>
 
 namespace {
 using namespace std::string_literals;
@@ -538,6 +540,56 @@ TEST_CASE("CPP Logger - same logger can be attached to multiple models") {
     run_calculate(model_b);
     auto const after_b = count_lines(logger.get_output());
     CHECK(after_b > after_a); // combined output from both models
+}
+
+TEST_CASE("CPP Logger - concurrent calculations on separate models sharing one logger are thread-safe") {
+    // A single listener registered to multiple handles, written concurrently: exercises the
+    // cross-handle merge path (per-thread children merging into the one shared logger under its lock).
+    constexpr int num_models = 8;
+
+    // Reference: number of log lines a single calculation produces (deterministic for fixed input).
+    std::ptrdiff_t reference_lines = 0;
+    {
+        auto model = make_cpp_model();
+        power_grid_model_cpp::Logger reference_logger{PGM_text_logger};
+        model.add_logger(reference_logger);
+        run_calculate(model);
+        reference_lines = count_lines(reference_logger.get_output());
+    }
+    REQUIRE(reference_lines > 0);
+
+    std::vector<power_grid_model_cpp::Model> models;
+    models.reserve(num_models);
+    for (int i = 0; i < num_models; ++i) {
+        models.push_back(make_cpp_model());
+    }
+
+    power_grid_model_cpp::Logger logger{PGM_text_logger};
+    for (auto& model : models) {
+        model.add_logger(logger);
+    }
+
+    {
+        std::vector<std::jthread> threads;
+        threads.reserve(num_models);
+        for (auto& model : models) {
+            threads.emplace_back([&model] { run_calculate(model); });
+        }
+    } // all threads joined here
+
+    auto const output = logger.get_output();
+
+    // No torn/interleaved lines: every line must start with the text logger's '[' timestamp prefix.
+    bool well_formed = output.empty() || output.front() == '[';
+    for (std::size_t i = 0; i + 1 < output.size(); ++i) {
+        if (output[i] == '\n' && output[i + 1] != '\n') {
+            well_formed = well_formed && output[i + 1] == '[';
+        }
+    }
+    CHECK(well_formed);
+
+    // Every calculation's output is present exactly once, none lost or duplicated.
+    CHECK(count_lines(output) == num_models * reference_lines);
 }
 
 TEST_CASE("CPP Logger - move construction preserves registration and output access") {

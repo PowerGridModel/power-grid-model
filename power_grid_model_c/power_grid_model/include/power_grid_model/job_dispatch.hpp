@@ -37,8 +37,12 @@ class JobDispatch {
     static BatchParameter batch_calculation(Adapter& adapter, ResultDataset const& result_data,
                                             UpdateDataset const& update_data, Idx threading,
                                             common::logging::MultiThreadedLogger& log) {
+        // Log through a per-driver-thread child so the shared logger only receives on-demand merges
+        // (once, on child destruction) instead of a lock per call. This mirrors the per-worker children
+        // created in single_thread_job and keeps the hot logging path lock-free.
         if (update_data.empty()) {
-            adapter.calculate(result_data, log);
+            auto driver_log = log.create_child();
+            adapter.calculate(result_data, *driver_log);
             return BatchParameter{};
         }
 
@@ -51,8 +55,10 @@ class JobDispatch {
             return BatchParameter{};
         }
 
+        auto driver_log = log.create_child();
         // calculate once to cache, ignore results
-        adapter.cache_calculate(log);
+        adapter.cache_calculate(*driver_log);
+        driver_log.reset(); // merge the cache-run log before the scenario logs, preserving order
 
         // error messages
         std::vector<std::string> exceptions(n_scenarios, "");

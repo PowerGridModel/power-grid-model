@@ -68,10 +68,12 @@ class MultiThreadedLoggerImpl : public MultiThreadedLogger {
     LoggerType& get() { return log_; }
     LoggerType const& get() const { return log_; }
 
-    void log(LogEvent tag) override { log_.log(tag); }
-    void log(LogEvent tag, std::string_view message) override { log_.log(tag, message); }
-    void log(LogEvent tag, double value) override { log_.log(tag, value); }
-    void log(LogEvent tag, Idx value) override { log_.log(tag, value); }
+    // Direct logging writes to the shared log_, so it must take the same lock as sync()/get_output()/clear();
+    // otherwise a logger shared across handles races on log_ (direct log vs. concurrent child merge).
+    void log(LogEvent tag) override { log_locked(tag); }
+    void log(LogEvent tag, std::string_view message) override { log_locked(tag, message); }
+    void log(LogEvent tag, double value) override { log_locked(tag, value); }
+    void log(LogEvent tag, Idx value) override { log_locked(tag, value); }
 
     using MultiThreadedLogger::log;
 
@@ -102,6 +104,11 @@ class MultiThreadedLoggerImpl : public MultiThreadedLogger {
 
     LoggerType log_;
     mutable std::mutex mutex_; // mutable: locked in const get_output_locked callers
+
+    template <typename... Args> void log_locked(Args&&... args) {
+        std::lock_guard const lock{mutex_};
+        log_.log(std::forward<Args>(args)...);
+    }
 
     void sync(ThreadLogger const& logger) {
         assert(&logger != &log_);
