@@ -214,25 +214,6 @@
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++"
       },
-      "condition": {
-        "type": "notEquals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Darwin"
-      },
-      "inherits": "unix-thread-sanitizer",
-      "hidden": true
-    },
-    {
-      "name": "apple-clang-tsan-base",
-      "cacheVariables": {
-        "CMAKE_C_COMPILER": "clang",
-        "CMAKE_CXX_COMPILER": "clang++"
-      },
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Darwin"
-      },
       "inherits": "unix-thread-sanitizer",
       "hidden": true
     },
@@ -254,13 +235,11 @@
     },
     {
       "name": "clang-tsan-debug",
-      "displayName": "Debug + ThreadSanitizer (Clang)",
       "inherits": ["debug", "clang-linux-tsan-base"]
     },
     {
-      "name": "apple-clang-tsan-debug",
-      "displayName": "Debug + ThreadSanitizer (Apple Clang)",
-      "inherits": ["debug", "apple-clang-tsan-base"]
+      "name": "clang-tsan-release",
+      "inherits": ["release", "clang-linux-tsan-base"]
     },
     {
       "name": "clang-tidy-debug",
@@ -530,8 +509,8 @@
       "configurePreset": "clang-tsan-debug"
     },
     {
-      "name": "apple-clang-tsan-debug",
-      "configurePreset": "apple-clang-tsan-debug"
+      "name": "clang-tsan-release",
+      "configurePreset": "clang-tsan-release"
     }
   ],
   "testPresets": [
@@ -635,8 +614,8 @@
       }
     },
     {
-      "name": "apple-clang-tsan-debug",
-      "configurePreset": "apple-clang-tsan-debug",
+      "name": "clang-tsan-release",
+      "configurePreset": "clang-tsan-release",
       "environment": {
         "TSAN_OPTIONS": "halt_on_error=1"
       }
@@ -780,19 +759,19 @@
       ]
     },
     {
-      "name": "apple-clang-tsan-debug",
+      "name": "clang-tsan-release",
       "steps": [
         {
           "type": "configure",
-          "name": "apple-clang-tsan-debug"
+          "name": "clang-tsan-release"
         },
         {
           "type": "build",
-          "name": "apple-clang-tsan-debug"
+          "name": "clang-tsan-release"
         },
         {
           "type": "test",
-          "name": "apple-clang-tsan-debug"
+          "name": "clang-tsan-release"
         }
       ]
     },
