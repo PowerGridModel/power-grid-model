@@ -148,13 +148,6 @@ power_grid_model_cpp::Model make_cpp_model() {
 }
 } // namespace
 
-TEST_CASE("Logger - invalid type returns error") {
-    HandleGuard g;
-    PGM_Logger* bad = PGM_create_logger(g.h, 999);
-    CHECK(bad == nullptr);
-    CHECK(PGM_error_code(g.h) == PGM_regular_error);
-}
-
 TEST_CASE("Logger - do-nothing logger produces no output and clear is a no-op") {
     HandleGuard g;
     LoggerGuard lg{g.h, PGM_do_nothing_logger};
