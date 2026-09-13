@@ -10,6 +10,9 @@
 #include <doctest/doctest.h>
 
 #include <memory>
+#include <string>
+#include <thread>
+#include <vector>
 
 namespace power_grid_model::common::logging {
 namespace {
@@ -137,6 +140,26 @@ TEST_CASE("Test MultiThreadedCompositeLogger") {
 
         CHECK_FALSE(logger_a->report().empty());
         CHECK_FALSE(logger_b->report().empty());
+    }
+
+    SUBCASE("Concurrent create_child and log on a stable list is safe") {
+        auto logger = make_text_logger();
+        composite.add(logger);
+
+        constexpr int num_threads = 8;
+        std::vector<std::thread> threads;
+        threads.reserve(num_threads);
+        for (int i = 0; i != num_threads; ++i) {
+            threads.emplace_back([&composite] {
+                auto child = composite.create_child();
+                child->log(LogEvent::total, Idx{1});
+            });
+        }
+        for (auto& thread : threads) {
+            thread.join();
+        }
+
+        CHECK_FALSE(logger->report().empty());
     }
 }
 } // namespace power_grid_model::common::logging

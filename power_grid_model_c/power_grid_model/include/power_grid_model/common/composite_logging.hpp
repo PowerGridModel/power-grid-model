@@ -20,10 +20,10 @@ class CompositeChildLogger : public Logger {
   public:
     explicit CompositeChildLogger(std::vector<std::unique_ptr<Logger>> children) : children_{std::move(children)} {}
 
-    void log(LogEvent tag) override                       { log_all(tag); }
+    void log(LogEvent tag) override { log_all(tag); }
     void log(LogEvent tag, std::string_view message) override { log_all(tag, message); }
-    void log(LogEvent tag, double value) override             { log_all(tag, value); }
-    void log(LogEvent tag, Idx value) override                { log_all(tag, value); }
+    void log(LogEvent tag, double value) override { log_all(tag, value); }
+    void log(LogEvent tag, Idx value) override { log_all(tag, value); }
 
     using Logger::log;
 
@@ -57,16 +57,15 @@ class MultiThreadedCompositeLogger : public MultiThreadedLogger {
         if (logger == nullptr) {
             return; // defensively ignore null registrations
         }
-        if (std::ranges::any_of(loggers_, [&](auto const& existing) { return existing.get() == logger.get(); })) {
+
+        if (std::ranges::any_of(
+                loggers_, [raw_logger = logger.get()](auto const& existing) { return existing.get() == raw_logger; })) {
             return; // already registered — dedupe silently, consistent with logging API conventions
         }
-        loggers_.push_back(std::move(logger));
+        loggers_.emplace_back(std::move(logger));
     }
     void remove(MultiThreadedLogger const* logger) {
-        if (auto it = std::ranges::find_if(loggers_, [&](auto const& existing) { return existing.get() == logger; });
-            it != loggers_.end()) {
-            loggers_.erase(it);
-        }
+        std::erase_if(loggers_, [logger](auto const& existing) { return existing.get() == logger; });
     }
     void reset() { loggers_.clear(); }
 
@@ -79,10 +78,10 @@ class MultiThreadedCompositeLogger : public MultiThreadedLogger {
         return std::make_unique<CompositeChildLogger>(std::move(child_loggers));
     }
 
-    void log(LogEvent tag) override                           { log_all(tag); }
+    void log(LogEvent tag) override { log_all(tag); }
     void log(LogEvent tag, std::string_view message) override { log_all(tag, message); }
-    void log(LogEvent tag, double value) override             { log_all(tag, value); }
-    void log(LogEvent tag, Idx value) override                { log_all(tag, value); }
+    void log(LogEvent tag, double value) override { log_all(tag, value); }
+    void log(LogEvent tag, Idx value) override { log_all(tag, value); }
 
     using MultiThreadedLogger::log;
 
@@ -96,6 +95,7 @@ class MultiThreadedCompositeLogger : public MultiThreadedLogger {
     [[nodiscard]] bool empty() const { return loggers_.empty(); }
 
   private:
+    // The list is modified only while no calculation is in progress (see class contract), so no need for atomic
     std::vector<std::shared_ptr<MultiThreadedLogger>> loggers_; // owning
 
     template <typename... Args> void log_all(Args&&... args) {
