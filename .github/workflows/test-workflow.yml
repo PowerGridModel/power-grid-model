@@ -18,3 +18,6 @@ jobs:
     steps:
       - name: Test step
         run: echo "Test workflow running"
+
+  thread-sanitizer:
+    uses: "./.github/workflows/thread-sanitizer.yml"
