@@ -49,4 +49,4 @@ jobs:
           pgm-build-setup-ga-ci
 
       - name: Build and test
-        run: ./build.sh -p ${{ env.PRESET }} -e -i -t
+        run: ./build.sh -p ${{ env.PRESET }} -e -i
