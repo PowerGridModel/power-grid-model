@@ -556,7 +556,7 @@ template <symmetry_tag sym> class YBus {
     uint64_t register_parameters_changed_callback(ParamChangedCallback callback) {
         static std::atomic<uint64_t> num_added = 0;
 
-        auto const new_key = num_added.fetch_add(1, std::memory_order_relaxed);
+        auto const new_key = num_added.fetch_add(1);
 
         assert(!parameters_changed_callbacks_.contains(new_key));
         parameters_changed_callbacks_.emplace_hint(parameters_changed_callbacks_.cend(), new_key, std::move(callback));

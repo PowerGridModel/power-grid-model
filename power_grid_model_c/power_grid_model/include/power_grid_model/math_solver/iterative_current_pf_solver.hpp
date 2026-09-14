@@ -101,7 +101,7 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCur
           perm_{other.perm_},
           parameters_changed_{// atomic bool parameters_changed_ cannot be implicitly copied
                               other.parameters_changed_.load(std::memory_order_relaxed)} {}
-    IterativeCurrentPFSolver(IterativeCurrentPFSolver&& /*other*/) = default;
+    IterativeCurrentPFSolver(IterativeCurrentPFSolver&& /*other*/) noexcept = default;
     IterativeCurrentPFSolver& operator=(IterativeCurrentPFSolver const& other) {
         if (this == &other) {
             return *this;
@@ -114,8 +114,8 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCur
             other.parameters_changed_.load(); // atomic bool parameters_changed_ cannot be implicitly copied
         return *this;
     }
-    IterativeCurrentPFSolver& operator=(IterativeCurrentPFSolver&& other) = default;
-    ~IterativeCurrentPFSolver() = default;
+    IterativeCurrentPFSolver& operator=(IterativeCurrentPFSolver&& other) noexcept = default;
+    ~IterativeCurrentPFSolver() noexcept {}
 
     // Add source admittance to Y bus and set variable for prepared y bus to true
     void initialize_derived_solver(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
