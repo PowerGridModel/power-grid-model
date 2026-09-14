@@ -115,7 +115,7 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCur
         return *this;
     }
     IterativeCurrentPFSolver& operator=(IterativeCurrentPFSolver&& other) noexcept = default;
-    ~IterativeCurrentPFSolver() noexcept {}
+    ~IterativeCurrentPFSolver() noexcept = default;
 
     // Add source admittance to Y bus and set variable for prepared y bus to true
     void initialize_derived_solver(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
