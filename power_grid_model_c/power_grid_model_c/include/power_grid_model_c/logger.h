@@ -123,12 +123,7 @@ PGM_API void PGM_unregister_logger(PGM_Handle* handle, PGM_Logger* logger);
  *   }
  * @endcode
  */
-#ifdef __cplusplus
-// noexcept is part of the function type in C++17; callbacks must not throw across the C ABI boundary.
-typedef void (*PGM_LogOutputCallback)(char const* data, PGM_Idx size, void* user_data) noexcept;
-#else
 typedef void (*PGM_LogOutputCallback)(char const* data, PGM_Idx size, void* user_data);
-#endif
 
 /**
  * @brief Deliver the current output of a logger to a caller-supplied callback.
