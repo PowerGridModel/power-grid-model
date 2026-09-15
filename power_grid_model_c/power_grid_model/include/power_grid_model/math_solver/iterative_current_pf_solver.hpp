@@ -65,6 +65,7 @@ Nomenclature:
 #include "../common/three_phase_tensor.hpp"
 
 #include <algorithm>
+#include <atomic>
 #include <cmath>
 #include <complex>
 #include <memory>
@@ -91,6 +92,31 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCur
           rhs_u_(y_bus.size()),
           sparse_solver_{y_bus.row_indptr_lu(), y_bus.col_indices_lu(), y_bus.lu_diag()} {}
 
+    // atomic bool parameters_changed_ cannot be implicitly copied
+    IterativeCurrentPFSolver(IterativeCurrentPFSolver const& other)
+        : IterativePFSolver<sym, IterativeCurrentPFSolver>{static_cast<IterativeCurrentPFSolver const&>(other)},
+          rhs_u_{other.rhs_u_},
+          mat_data_{other.mat_data_},
+          sparse_solver_{other.sparse_solver_},
+          perm_{other.perm_},
+          parameters_changed_{// atomic bool parameters_changed_ cannot be implicitly copied
+                              other.parameters_changed_.load(std::memory_order_relaxed)} {}
+    IterativeCurrentPFSolver(IterativeCurrentPFSolver&& /*other*/) noexcept = default;
+    IterativeCurrentPFSolver& operator=(IterativeCurrentPFSolver const& other) {
+        if (this == &other) {
+            return *this;
+        }
+        rhs_u_ = other.rhs_u_;
+        mat_data_ = other.mat_data_;
+        sparse_solver_ = other.sparse_solver_;
+        perm_ = other.perm_;
+        parameters_changed_ =
+            other.parameters_changed_.load(); // atomic bool parameters_changed_ cannot be implicitly copied
+        return *this;
+    }
+    IterativeCurrentPFSolver& operator=(IterativeCurrentPFSolver&& other) noexcept = default;
+    ~IterativeCurrentPFSolver() noexcept {}
+
     // Add source admittance to Y bus and set variable for prepared y bus to true
     void initialize_derived_solver(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                    SolverOutput<sym>& output) {
@@ -100,7 +126,7 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCur
         IdxVector const& bus_entry = y_bus.lu_diag();
         // if Y bus is not up to date
         // re-build matrix and prefactorize Build y bus data with source admittance
-        if (parameters_changed_) {
+        while (parameters_changed_.exchange(false, std::memory_order_acquire)) {
             ComplexTensorVector<sym> mat_data(y_bus.nnz_lu());
             detail::copy_y_bus<sym>(y_bus, mat_data);
 
@@ -119,7 +145,6 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCur
             mat_data_ = std::make_shared<ComplexTensorVector<sym> const>(std::move(mat_data));
             perm_ = std::make_shared<BlockPermArray const>(std::move(perm));
         }
-        parameters_changed_ = false;
     }
 
     // Prepare matrix calculates injected current, i.e., RHS of solver for each iteration.
@@ -159,7 +184,11 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCur
         return max_dev;
     }
 
-    void parameters_changed(bool changed) { parameters_changed_ = parameters_changed_ || changed; }
+    void parameters_changed(bool changed) {
+        if (changed) {
+            parameters_changed_.store(true, std::memory_order_release);
+        }
+    }
 
   private:
     ComplexValueVector<sym> rhs_u_;
@@ -167,7 +196,7 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCur
     // sparse solver
     SparseSolverType sparse_solver_;
     std::shared_ptr<BlockPermArray const> perm_;
-    bool parameters_changed_ = true;
+    std::atomic_bool parameters_changed_ = true;
 
     void add_loads(IdxRange const& load_gens, Idx bus_number, PowerFlowInput<sym> const& input,
                    std::vector<LoadGenType> const& load_gen_type, ComplexValueVector<sym> const& u) {

@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <cassert>
 #include <concepts>
 #include <cstddef>
@@ -553,10 +554,9 @@ template <symmetry_tag sym> class YBus {
     /// @param callback the callback to register
     /// @return the unique key referencing this callback (used for unregistering)
     uint64_t register_parameters_changed_callback(ParamChangedCallback callback) {
-        static uint64_t num_added = 0;
+        static std::atomic<uint64_t> num_added = 0;
 
-        auto const new_key = num_added;
-        ++num_added;
+        auto const new_key = num_added.fetch_add(1);
 
         assert(!parameters_changed_callbacks_.contains(new_key));
         parameters_changed_callbacks_.emplace_hint(parameters_changed_callbacks_.cend(), new_key, std::move(callback));
