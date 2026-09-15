@@ -158,6 +158,7 @@ TEST_CASE("Short circuit solver") {
     double const vref = 1.1;
     DoubleComplex const yref{10.0 - 50.0i};
     DoubleComplex const zref{1.0 / yref};
+    DoubleComplex const zref_scaled{vref * zref};
     // line
     DoubleComplex const y0{1.0 - 2.0i};
     DoubleComplex const y0_0{0.5 + 0.5i};
@@ -185,7 +186,7 @@ TEST_CASE("Short circuit solver") {
         YBus<asymmetric_t> const y_bus_asym{topo_sc, param_sc_asym};
         ShortCircuitSolver<asymmetric_t> solver{y_bus_asym, topo_sc};
         auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault, vref, fault_buses);
-        auto sc_output_ref = create_sc_test_output<asymmetric_t>(three_phase, z_fault, z0, z0_0, vref, zref);
+        auto sc_output_ref = create_sc_test_output<asymmetric_t>(three_phase, z_fault, z0, z0_0, vref, zref_scaled);
         auto output = solver.run_short_circuit(y_bus_asym, sc_input);
         assert_sc_output<asymmetric_t>(output, sc_output_ref);
 
@@ -198,7 +199,8 @@ TEST_CASE("Short circuit solver") {
         YBus<asymmetric_t> const y_bus_asym{topo_sc, param_sc_asym};
         ShortCircuitSolver<asymmetric_t> solver{y_bus_asym, topo_sc};
         auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault_solid, vref, fault_buses);
-        auto sc_output_ref = create_sc_test_output<asymmetric_t>(three_phase, z_fault_solid, z0, z0_0, vref, zref);
+        auto sc_output_ref =
+            create_sc_test_output<asymmetric_t>(three_phase, z_fault_solid, z0, z0_0, vref, zref_scaled);
         auto output = solver.run_short_circuit(y_bus_asym, sc_input);
         assert_sc_output<asymmetric_t>(output, sc_output_ref);
     }
@@ -207,7 +209,7 @@ TEST_CASE("Short circuit solver") {
         YBus<symmetric_t> const y_bus_sym{topo_sc, param_sc_sym};
         ShortCircuitSolver<symmetric_t> solver{y_bus_sym, topo_sc};
         auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault, vref, fault_buses);
-        auto sc_output_ref = create_sc_test_output<symmetric_t>(three_phase, z_fault, z0, z0_0, vref, zref);
+        auto sc_output_ref = create_sc_test_output<symmetric_t>(three_phase, z_fault, z0, z0_0, vref, zref_scaled);
         auto output = solver.run_short_circuit(y_bus_sym, sc_input);
         assert_sc_output<symmetric_t>(output, sc_output_ref);
 
@@ -220,7 +222,8 @@ TEST_CASE("Short circuit solver") {
         YBus<symmetric_t> const y_bus_sym{topo_sc, param_sc_sym};
         ShortCircuitSolver<symmetric_t> solver{y_bus_sym, topo_sc};
         auto sc_input = create_sc_test_input(three_phase, FaultPhase::abc, y_fault_solid, vref, fault_buses);
-        auto sc_output_ref = create_sc_test_output<symmetric_t>(three_phase, z_fault_solid, z0, z0_0, vref, zref);
+        auto sc_output_ref =
+            create_sc_test_output<symmetric_t>(three_phase, z_fault_solid, z0, z0_0, vref, zref_scaled);
         auto output = solver.run_short_circuit(y_bus_sym, sc_input);
         assert_sc_output<symmetric_t>(output, sc_output_ref);
     }
@@ -229,7 +232,8 @@ TEST_CASE("Short circuit solver") {
         YBus<asymmetric_t> const y_bus_asym{topo_sc, param_sc_asym};
         ShortCircuitSolver<asymmetric_t> solver{y_bus_asym, topo_sc};
         auto sc_input = create_sc_test_input(single_phase_to_ground, FaultPhase::a, y_fault, vref, fault_buses);
-        auto sc_output_ref = create_sc_test_output<asymmetric_t>(single_phase_to_ground, z_fault, z0, z0_0, vref, zref);
+        auto sc_output_ref =
+            create_sc_test_output<asymmetric_t>(single_phase_to_ground, z_fault, z0, z0_0, vref, zref_scaled);
         auto output = solver.run_short_circuit(y_bus_asym, sc_input);
         assert_sc_output<asymmetric_t>(output, sc_output_ref);
 
@@ -243,7 +247,7 @@ TEST_CASE("Short circuit solver") {
         ShortCircuitSolver<asymmetric_t> solver{y_bus_asym, topo_sc};
         auto sc_input = create_sc_test_input(single_phase_to_ground, FaultPhase::a, y_fault_solid, vref, fault_buses);
         auto sc_output_ref =
-            create_sc_test_output<asymmetric_t>(single_phase_to_ground, z_fault_solid, z0, z0_0, vref, zref);
+            create_sc_test_output<asymmetric_t>(single_phase_to_ground, z_fault_solid, z0, z0_0, vref, zref_scaled);
         auto output = solver.run_short_circuit(y_bus_asym, sc_input);
         assert_sc_output<asymmetric_t>(output, sc_output_ref);
     }
@@ -252,7 +256,7 @@ TEST_CASE("Short circuit solver") {
         YBus<asymmetric_t> const y_bus_asym{topo_sc, param_sc_asym};
         ShortCircuitSolver<asymmetric_t> solver{y_bus_asym, topo_sc};
         auto sc_input = create_sc_test_input(two_phase, FaultPhase::bc, y_fault, vref, fault_buses);
-        auto sc_output_ref = create_sc_test_output<asymmetric_t>(two_phase, z_fault, z0, z0_0, vref, zref);
+        auto sc_output_ref = create_sc_test_output<asymmetric_t>(two_phase, z_fault, z0, z0_0, vref, zref_scaled);
         auto output = solver.run_short_circuit(y_bus_asym, sc_input);
         assert_sc_output<asymmetric_t>(output, sc_output_ref);
 
@@ -264,7 +268,7 @@ TEST_CASE("Short circuit solver") {
         YBus<asymmetric_t> const y_bus_asym{topo_sc, param_sc_asym};
         ShortCircuitSolver<asymmetric_t> solver{y_bus_asym, topo_sc};
         auto sc_input = create_sc_test_input(two_phase, FaultPhase::bc, y_fault_solid, vref, fault_buses);
-        auto sc_output_ref = create_sc_test_output<asymmetric_t>(two_phase, z_fault_solid, z0, z0_0, vref, zref);
+        auto sc_output_ref = create_sc_test_output<asymmetric_t>(two_phase, z_fault_solid, z0, z0_0, vref, zref_scaled);
         auto output = solver.run_short_circuit(y_bus_asym, sc_input);
         assert_sc_output<asymmetric_t>(output, sc_output_ref);
     }
@@ -273,7 +277,8 @@ TEST_CASE("Short circuit solver") {
         YBus<asymmetric_t> const y_bus_asym{topo_sc, param_sc_asym};
         ShortCircuitSolver<asymmetric_t> solver{y_bus_asym, topo_sc};
         auto sc_input = create_sc_test_input(two_phase_to_ground, FaultPhase::bc, y_fault, vref, fault_buses);
-        auto sc_output_ref = create_sc_test_output<asymmetric_t>(two_phase_to_ground, z_fault, z0, z0_0, vref, zref);
+        auto sc_output_ref =
+            create_sc_test_output<asymmetric_t>(two_phase_to_ground, z_fault, z0, z0_0, vref, zref_scaled);
         auto output = solver.run_short_circuit(y_bus_asym, sc_input);
         assert_sc_output<asymmetric_t>(output, sc_output_ref);
 
@@ -287,7 +292,7 @@ TEST_CASE("Short circuit solver") {
         ShortCircuitSolver<asymmetric_t> solver{y_bus_asym, topo_sc};
         auto sc_input = create_sc_test_input(two_phase_to_ground, FaultPhase::bc, y_fault_solid, vref, fault_buses);
         auto sc_output_ref =
-            create_sc_test_output<asymmetric_t>(two_phase_to_ground, z_fault_solid, z0, z0_0, vref, zref);
+            create_sc_test_output<asymmetric_t>(two_phase_to_ground, z_fault_solid, z0, z0_0, vref, zref_scaled);
         auto output = solver.run_short_circuit(y_bus_asym, sc_input);
         assert_sc_output<asymmetric_t>(output, sc_output_ref);
     }
@@ -330,25 +335,25 @@ TEST_CASE("Short circuit solver") {
         ShortCircuitSolver<asymmetric_t> solver{y_bus_asym, topo_comp};
         ShortCircuitSolver<symmetric_t> sym_solver{y_bus_sym, topo_comp};
 
-        DoubleComplex const if_comp = vref / (zref + z_fault);
-        DoubleComplex const uf_comp = vref - if_comp * zref;
-        DoubleComplex const if_comp_solid = vref / (zref + z_fault_solid);
-        DoubleComplex const uf_comp_solid = vref - if_comp_solid * zref;
+        DoubleComplex const if_comp = vref / (zref_scaled + z_fault);
+        DoubleComplex const uf_comp = vref - if_comp * zref_scaled;
+        DoubleComplex const if_comp_solid = vref / (zref_scaled + z_fault_solid);
+        DoubleComplex const uf_comp_solid = vref - if_comp_solid * zref_scaled;
 
-        DoubleComplex const if_b_comp = (vref * (a * a - a)) / (2.0 * zref + z_fault);
-        DoubleComplex const uf_b_comp = vref * a * a - if_b_comp * zref;
-        DoubleComplex const uf_c_comp = vref * a + if_b_comp * zref;
+        DoubleComplex const if_b_comp = (vref * (a * a - a)) / (2.0 * zref_scaled + z_fault);
+        DoubleComplex const uf_b_comp = vref * a * a - if_b_comp * zref_scaled;
+        DoubleComplex const uf_c_comp = vref * a + if_b_comp * zref_scaled;
 
-        DoubleComplex const if_b_comp_solid = (vref * (a * a - a)) / (2.0 * zref + z_fault_solid);
-        DoubleComplex const uf_b_comp_solid = vref * a * a - if_b_comp_solid * zref;
-        DoubleComplex const uf_c_comp_solid = vref * a + if_b_comp_solid * zref;
+        DoubleComplex const if_b_comp_solid = (vref * (a * a - a)) / (2.0 * zref_scaled + z_fault_solid);
+        DoubleComplex const uf_b_comp_solid = vref * a * a - if_b_comp_solid * zref_scaled;
+        DoubleComplex const uf_c_comp_solid = vref * a + if_b_comp_solid * zref_scaled;
 
-        DoubleComplex const uf_b_2phg = (vref * (a * a + a)) * z_fault / (zref + 2.0 * z_fault);
-        DoubleComplex const if_b_2phg = (vref * a * a - uf_b_2phg) / zref;
-        DoubleComplex const if_c_2phg = (vref * a - uf_b_2phg) / zref;
+        DoubleComplex const uf_b_2phg = (vref * (a * a + a)) * z_fault / (zref_scaled + 2.0 * z_fault);
+        DoubleComplex const if_b_2phg = (vref * a * a - uf_b_2phg) / zref_scaled;
+        DoubleComplex const if_c_2phg = (vref * a - uf_b_2phg) / zref_scaled;
         DoubleComplex const uf_b_2phg_solid = 0.0 + 0.0i;
-        DoubleComplex const if_b_2phg_solid = vref * a * a / zref;
-        DoubleComplex const if_c_2phg_solid = vref * a / zref;
+        DoubleComplex const if_b_2phg_solid = vref * a * a / zref_scaled;
+        DoubleComplex const if_c_2phg_solid = vref * a / zref_scaled;
 
         SUBCASE("Source on 3ph sym fault") {
             ShortCircuitSolverOutput<symmetric_t> sc_output_ref;
@@ -460,6 +465,44 @@ TEST_CASE("Short circuit solver") {
             assert_sc_output<asymmetric_t>(output, sc_output_ref);
         }
     }
+}
+
+TEST_CASE("Short circuit source admittance follows the voltage factor") {
+    MathModelTopology topology;
+    topology.slack_bus = 0;
+    topology.phase_shift = {0.0};
+    topology.sources_per_bus = {from_sparse, {0, 1}};
+    topology.shunts_per_bus = {from_sparse, {0, 0}};
+    topology.load_gens_per_bus = {from_sparse, {0, 0}};
+
+    DoubleComplex const source_admittance{10.0 - 50.0i};
+    MathModelParam<symmetric_t> parameters;
+    parameters.source_param = {SourceCalcParam{.y1 = source_admittance, .y0 = source_admittance}};
+
+    YBus<symmetric_t> const y_bus{topology, std::move(parameters)};
+    ShortCircuitSolver<symmetric_t> solver{y_bus, topology};
+
+    DoubleComplex const solid_fault_admittance{std::numeric_limits<double>::infinity(),
+                                               std::numeric_limits<double>::infinity()};
+    auto const run_with_voltage_factor = [&](double voltage_factor) {
+        ShortCircuitInput input;
+        input.source = {{voltage_factor, 0.0}};
+        input.fault_buses = {from_sparse, {0, 1}};
+        input.faults = {
+            {.y_fault = solid_fault_admittance, .fault_type = FaultType::three_phase, .fault_phase = FaultPhase::abc}};
+        return solver.run_short_circuit(y_bus, input);
+    };
+
+    auto const low_voltage_minimum_output = run_with_voltage_factor(0.95);
+    auto const high_voltage_minimum_output = run_with_voltage_factor(1.0);
+    auto const maximum_output = run_with_voltage_factor(1.1);
+
+    CHECK(cabs(low_voltage_minimum_output.fault[0].i_fault - source_admittance) < numerical_tolerance);
+    CHECK(cabs(high_voltage_minimum_output.fault[0].i_fault - source_admittance) < numerical_tolerance);
+    CHECK(cabs(maximum_output.fault[0].i_fault - source_admittance) < numerical_tolerance);
+    CHECK(cabs(maximum_output.source[0].i - source_admittance) < numerical_tolerance);
+    CHECK(cabs(maximum_output.fault[0].i_fault - low_voltage_minimum_output.fault[0].i_fault) < numerical_tolerance);
+    CHECK(cabs(maximum_output.fault[0].i_fault - high_voltage_minimum_output.fault[0].i_fault) < numerical_tolerance);
 }
 
 } // namespace power_grid_model::math_solver
