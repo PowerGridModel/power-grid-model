@@ -532,7 +532,7 @@ TEST_CASE("Test topological node output") {
     }
     SUBCASE("SuperNodeSolverInput::get_total_injection_per_node") {
         auto const state = make_state();
-        auto const& links = state.reduced_topology->topo_node_coup.topo_nodes[0].user_links;
+        auto const& links = state.reduced_topology->topo_node_coup.topo_nodes[0].internal_links;
 
         SUBCASE("symmetric") {
             detail::SuperNodeSolverInput<symmetric_t> const input{
@@ -561,7 +561,7 @@ TEST_CASE("Test topological node output") {
     }
     SUBCASE("compute_link_solver") {
         auto const state = make_state();
-        auto const& links = state.reduced_topology->topo_node_coup.topo_nodes[0].user_links;
+        auto const& links = state.reduced_topology->topo_node_coup.topo_nodes[0].internal_links;
 
         SUBCASE("symmetric") {
             detail::SuperNodeSolverInput<symmetric_t> const input{
@@ -653,7 +653,7 @@ TEST_CASE("Test topological node output") {
     }
     SUBCASE("solve_topological_nodes") {
         auto const state = make_state();
-        auto const& links = state.reduced_topology->topo_node_coup.topo_nodes[0].user_links;
+        auto const& links = state.reduced_topology->topo_node_coup.topo_nodes[0].internal_links;
 
         SUBCASE("Steady state output") {
             auto const math_output = make_steady_state_math_output_sym();
