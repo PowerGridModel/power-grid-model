@@ -1,0 +1,138 @@
+{
+  "version": "1.0",
+  "type": "input",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "node": [
+      {
+        "id": 0,
+        "u_rated": 10000.0
+      },
+      {
+        "id": 1,
+        "u_rated": 10000.0
+      },
+      {
+        "id": 2,
+        "u_rated": 10000.0
+      },
+      {
+        "id": 3,
+        "u_rated": 10000.0
+      }
+    ],
+    "source": [
+      {
+        "id": 10,
+        "node": 0,
+        "status": 1,
+        "u_ref": 1.0,
+        "u_ref_angle": 0.0,
+        "sk": 200000000.0,
+        "rx_ratio": 0.1,
+        "z01_ratio": 1.0
+      }
+    ],
+    "line": [
+      {
+        "id": 11,
+        "from_node": 0,
+        "to_node": 1,
+        "from_status": 1,
+        "to_status": 1,
+        "r1": 0.1,
+        "x1": 0.1,
+        "c1": 1e-09,
+        "tan1": 0.0,
+        "r0": 0.3,
+        "x0": 0.3,
+        "c0": 1e-09,
+        "tan0": 0.0,
+        "i_n": 400.0
+      },
+      {
+        "id": 12,
+        "from_node": 1,
+        "to_node": 2,
+        "from_status": 1,
+        "to_status": 1,
+        "r1": 0.1,
+        "x1": 0.1,
+        "c1": 1e-09,
+        "tan1": 0.0,
+        "r0": 0.3,
+        "x0": 0.3,
+        "c0": 1e-09,
+        "tan0": 0.0,
+        "i_n": 400.0
+      },
+      {
+        "id": 13,
+        "from_node": 2,
+        "to_node": 3,
+        "from_status": 1,
+        "to_status": 1,
+        "r1": 0.1,
+        "x1": 0.1,
+        "c1": 1e-09,
+        "tan1": 0.0,
+        "r0": 0.3,
+        "x0": 0.3,
+        "c0": 1e-09,
+        "tan0": 0.0,
+        "i_n": 400.0
+      },
+      {
+        "id": 14,
+        "from_node": 3,
+        "to_node": 0,
+        "from_status": 1,
+        "to_status": 1,
+        "r1": 0.1,
+        "x1": 0.1,
+        "c1": 1e-09,
+        "tan1": 0.0,
+        "r0": 0.3,
+        "x0": 0.3,
+        "c0": 1e-09,
+        "tan0": 0.0,
+        "i_n": 400.0
+      }
+    ],
+    "sym_load": [
+      {
+        "id": 20,
+        "node": 0,
+        "status": 1,
+        "type": 0,
+        "p_specified": 2000.0,
+        "q_specified": 5000.0
+      },
+      {
+        "id": 21,
+        "node": 1,
+        "status": 1,
+        "type": 0,
+        "p_specified": 2000.0,
+        "q_specified": 5000.0
+      },
+      {
+        "id": 22,
+        "node": 2,
+        "status": 1,
+        "type": 0,
+        "p_specified": 2000.0,
+        "q_specified": 5000.0
+      },
+      {
+        "id": 23,
+        "node": 3,
+        "status": 1,
+        "type": 0,
+        "p_specified": 2000.0,
+        "q_specified": 5000.0
+      }
+    ]
+  }
+}
