@@ -12,24 +12,36 @@
 
 #include <power_grid_model/batch_parameter.hpp>
 #include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/composite_logging.hpp>
 
+#include <algorithm>
 #include <exception>
 #include <string_view>
+#include <vector>
 
 // context handle
 struct PGM_Handle {
-    power_grid_model::Idx err_code;
+    power_grid_model::Idx err_code{};
     std::string err_msg;
     power_grid_model::IdxVector failed_scenarios;
     std::vector<std::string> batch_errs;
     mutable std::vector<char const*> batch_errs_c_str;
     [[no_unique_address]] power_grid_model::BatchParameter batch_parameter;
+    // Loggers registered on this handle. Owned by the caller; the composite forwards to them.
+    // Survives clear_error. Do not modify while a calculation is in progress.
+    power_grid_model::common::logging::MultiThreadedCompositeLogger composite_logger;
 };
 
 namespace power_grid_model_c {
-constexpr void clear_error(PGM_Handle* handle) {
+inline void clear_error(PGM_Handle* handle) {
     if (handle != nullptr) {
-        *handle = PGM_Handle{};
+        // Intentionally reset only error-related fields; composite_logger is preserved.
+        handle->err_code = {};
+        handle->err_msg.clear();
+        handle->failed_scenarios.clear();
+        handle->batch_errs.clear();
+        handle->batch_errs_c_str.clear();
+        handle->batch_parameter = {};
     }
 }
 
