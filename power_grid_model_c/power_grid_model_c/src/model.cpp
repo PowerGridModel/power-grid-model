@@ -6,6 +6,7 @@
 #include "forward_declarations.hpp"
 #include "handle.hpp"
 #include "input_sanitization.hpp"
+#include "logger.hpp"
 #include "math_solver.hpp"
 #include "options.hpp" // NOLINT(misc-include-cleaner)
 #include "safe_memory_handling.hpp"
@@ -24,6 +25,7 @@
 #include <cassert>
 #include <concepts>
 #include <exception>
+#include <memory>
 #include <ranges>
 #include <string>
 #include <utility>
@@ -47,9 +49,9 @@ using power_grid_model_c::safe_str_view;
 // create model
 PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency,
                                      PGM_ConstDataset const* input_dataset) noexcept {
-    return call_with_catch(handle, [system_frequency, input_dataset] {
+    return call_with_catch(handle, [system_frequency, input_dataset, handle] {
         return cast_to_c(create<MainModel>(system_frequency, safe_ptr_get(cast_to_cpp(input_dataset)),
-                                           get_math_solver_dispatcher(), 0));
+                                           get_math_solver_dispatcher(), 0, safe_ptr_get(handle).composite_logger));
     });
 }
 
@@ -63,7 +65,11 @@ void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_ConstDa
 
 // copy model
 PGM_PowerGridModel* PGM_copy_model(PGM_Handle* handle, PGM_PowerGridModel const* model) noexcept {
-    return call_with_catch(handle, [model] { return cast_to_c(create<MainModel>(safe_ptr_get(cast_to_cpp(model)))); });
+    return call_with_catch(handle, [model, handle] {
+        auto copied_model = std::unique_ptr<MainModel>{create<MainModel>(safe_ptr_get(cast_to_cpp(model)))};
+        copied_model->set_logger(safe_ptr_get(handle).composite_logger);
+        return cast_to_c(copied_model.release());
+    });
 }
 
 // get indexer
@@ -350,9 +356,11 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
                    PGM_MutableDataset const* output_dataset, PGM_ConstDataset const* batch_dataset) noexcept {
     call_with_catch(
         handle,
-        [model, opt, output_dataset, batch_dataset] {
-            calculate_impl(safe_ptr_get(cast_to_cpp(model)), safe_ptr_get(opt),
-                           safe_ptr_get(cast_to_cpp(output_dataset)),
+        [handle, model, opt, output_dataset, batch_dataset] {
+            auto& cpp_model = safe_ptr_get(cast_to_cpp(model));
+            // Log to the handle passed to this call, not the handle the model was created with.
+            cpp_model.set_logger(safe_ptr_get(handle).composite_logger);
+            calculate_impl(cpp_model, safe_ptr_get(opt), safe_ptr_get(cast_to_cpp(output_dataset)),
                            safe_ptr_maybe_nullptr(cast_to_cpp(batch_dataset)));
         },
         batch_exception_handler);
