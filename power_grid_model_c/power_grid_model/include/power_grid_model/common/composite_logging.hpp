@@ -20,19 +20,19 @@ class CompositeChildLogger : public Logger {
   public:
     explicit CompositeChildLogger(std::vector<std::unique_ptr<Logger>> children) : children_{std::move(children)} {}
 
-    void log(LogEvent tag) override                       { log_all(tag); }
+    void log(LogEvent tag) override { log_all(tag); }
     void log(LogEvent tag, std::string_view message) override { log_all(tag, message); }
-    void log(LogEvent tag, double value) override             { log_all(tag, value); }
-    void log(LogEvent tag, Idx value) override                { log_all(tag, value); }
+    void log(LogEvent tag, double value) override { log_all(tag, value); }
+    void log(LogEvent tag, Idx value) override { log_all(tag, value); }
 
     using Logger::log;
 
   private:
     std::vector<std::unique_ptr<Logger>> children_;
 
-    template <typename... Args> void log_all(Args&&... args) {
+    template <typename... Args> void log_all(Args const&... args) {
         for (auto& child : children_) {
-            child->log(std::forward<Args>(args)...);
+            child->log(args...);
         }
     }
 };
@@ -79,10 +79,10 @@ class MultiThreadedCompositeLogger : public MultiThreadedLogger {
         return std::make_unique<CompositeChildLogger>(std::move(child_loggers));
     }
 
-    void log(LogEvent tag) override                           { log_all(tag); }
+    void log(LogEvent tag) override { log_all(tag); }
     void log(LogEvent tag, std::string_view message) override { log_all(tag, message); }
-    void log(LogEvent tag, double value) override             { log_all(tag, value); }
-    void log(LogEvent tag, Idx value) override                { log_all(tag, value); }
+    void log(LogEvent tag, double value) override { log_all(tag, value); }
+    void log(LogEvent tag, Idx value) override { log_all(tag, value); }
 
     using MultiThreadedLogger::log;
 
@@ -98,9 +98,9 @@ class MultiThreadedCompositeLogger : public MultiThreadedLogger {
   private:
     std::vector<std::shared_ptr<MultiThreadedLogger>> loggers_; // owning
 
-    template <typename... Args> void log_all(Args&&... args) {
+    template <typename... Args> void log_all(Args const&... args) {
         for (auto const& logger : loggers_) {
-            logger->log(std::forward<Args>(args)...);
+            logger->log(args...);
         }
     }
 };
