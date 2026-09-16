@@ -1,0 +1,172 @@
+// SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+//
+// SPDX-License-Identifier: MPL-2.0
+
+/**
+ * @brief Header file which includes logger functions.
+ *
+ * Loggers provide opt-in diagnostic output from Power Grid Model calculations.
+ * They are designed for advanced users: output is non-conclusive and intended as debugging hints.
+ *
+ * Lifecycle:
+ *   1. Create a logger:   PGM_create_logger()
+ *   2. Register it:       PGM_register_logger()
+ *   3. Run calculations.
+ *   4. Read output:       PGM_logger_get_output()
+ *   5. Optionally clear:  PGM_logger_clear()
+ *   6. Unregister it:     PGM_unregister_logger()
+ *   7. Destroy it:        PGM_destroy_logger()
+ *
+ * Lifetime and safety:
+ *   - The underlying logging implementation is shared between the PGM_Logger returned by
+ *     PGM_create_logger() and every handle it is registered to. Calling PGM_destroy_logger()
+ *     while the logger is still registered to one or more handles is safe: the implementation
+ *     stays alive and keeps collecting output for those handles.
+ *   - After PGM_destroy_logger() is called, the caller no longer has a PGM_Logger* to target
+ *     that specific registration individually. PGM_unregister_all_loggers() (which detaches
+ *     everything on a handle) or destroying the handle itself is the only way to release it.
+ *
+ * Undefined behaviour:
+ *   - Concurrently registering, unregistering, destroying, reading, or clearing a logger while
+ *     a calculation using that same handle/logger is in progress. This applies to concurrent
+ *     use from multiple user threads only; internal batch threads spawned by the calculation
+ *     core are safe and expected.
+ *
+ * Idempotent operations:
+ *   - Registering the same logger to the same handle more than once is a no-op.
+ *   - Unregistering a logger that is not registered is a no-op.
+ *
+ * Multiple loggers of different types may be registered to the same handle simultaneously.
+ */
+
+#pragma once
+#ifndef POWER_GRID_MODEL_C_LOGGER_H
+#define POWER_GRID_MODEL_C_LOGGER_H
+
+#include "basics.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * @brief Create a new logger of the specified type.
+ *
+ * @param handle The handle used to report errors.
+ * @param logger_type The type of logger to create (see #PGM_LoggerType).
+ * @return A pointer to the created logger, or NULL on error.
+ *   Destroy with PGM_destroy_logger().
+ */
+PGM_API PGM_Logger* PGM_create_logger(PGM_Handle* handle, PGM_Idx logger_type);
+
+/**
+ * @brief Destroy a logger created by PGM_create_logger().
+ *
+ * Safe to call even while the logger is still registered to one or more handles: the
+ * underlying implementation is shared and remains alive for those registrations. However,
+ * this PGM_Logger* can then no longer be used to target that registration individually
+ * (see the lifetime notes above); use PGM_unregister_all_loggers() or destroy the handle
+ * to release it.
+ *
+ * @param logger The logger to destroy.
+ */
+PGM_API void PGM_destroy_logger(PGM_Logger* logger);
+
+/**
+ * @brief Register a logger to a handle so it receives output from subsequent calculations.
+ *
+ * Multiple loggers of different types may be registered simultaneously.
+ * Registering the same logger instance twice to the same handle is a no-op (idempotent).
+ *
+ * @param handle The handle to register to.
+ * @param logger The logger to register.
+ */
+PGM_API void PGM_register_logger(PGM_Handle* handle, PGM_Logger* logger);
+
+/**
+ * @brief Unregister a logger from a handle.
+ *
+ * Unregistering a logger that is not registered to the handle is a no-op.
+ *
+ * @param handle The handle to unregister from.
+ * @param logger The logger to unregister.
+ */
+PGM_API void PGM_unregister_logger(PGM_Handle* handle, PGM_Logger* logger);
+
+/**
+ * @brief Callback type for receiving logger output.
+ *
+ * Called exactly once by PGM_logger_get_output().
+ * The @p data pointer and @p size describe the log content and are valid only
+ * for the duration of the callback. Do not store @p data beyond the callback.
+ *
+ * @param data  Pointer to the log content. Not null-terminated; always use @p size
+ *              to determine the buffer length. Never pass @p data to functions that
+ *              expect a null-terminated string (e.g. strlen, printf("%s")).
+ * @param size  Length of the log content in bytes. Always non-negative.
+ * @param user_data  Opaque pointer passed through unchanged from PGM_logger_get_output().
+ *
+ * @warning The @p user_data pointer is not type-checked by the library. The caller is
+ *          solely responsible for ensuring the pointer passed to PGM_logger_get_output()
+ *          and the cast performed inside this callback refer to the same type. A mismatch
+ *          is silent undefined behaviour. Prefer the C++ wrapper (power_grid_model_cpp::Logger)
+ *          which removes this hazard entirely: it owns the callback and does not expose
+ *          user_data to callers. If you must use the C API, a common defensive pattern is
+ *          to embed a known sentinel constant (sometimes called a "magic number") as the
+ *          first field of your context struct and assert it at the top of the callback:
+ * @code
+ *   #define MY_CTX_MAGIC 0x50474D4C  // "PGML"
+ *   struct MyCtx { uint32_t magic; std::string* out; };
+ *   void cb(char const* data, PGM_Idx size, void* user_data) {
+ *       assert(((MyCtx*)user_data)->magic == MY_CTX_MAGIC);
+ *       ((MyCtx*)user_data)->out->assign(data, (size_t)size);
+ *   }
+ * @endcode
+ */
+typedef void (*PGM_LogOutputCallback)(char const* data, PGM_Idx size, void* user_data);
+
+/**
+ * @brief Deliver the current output of a logger to a caller-supplied callback.
+ *
+ * The callback is called exactly once, synchronously, before this function returns.
+ * The data pointer passed to the callback is valid only for the duration of that call.
+ *
+ * For #PGM_text_logger: delivers timestamped log lines.
+ * For #PGM_benchmark_logger: delivers one line per logged event in the format
+ *   EVENT_CODE<TAB>VALUE
+ * For #PGM_do_nothing_logger: delivers an empty buffer (size 0).
+ *
+ * @param handle     The handle used to report errors.
+ * @param logger     The logger whose output to retrieve.
+ * @param callback   Function called with the log data.
+ * @param user_data  Passed through unchanged to @p callback.
+ */
+PGM_API void PGM_logger_get_output(PGM_Handle* handle, PGM_Logger* logger, PGM_LogOutputCallback callback,
+                                   void* user_data);
+
+/**
+ * @brief Unregister all loggers from a handle in one call.
+ *
+ * Equivalent to calling PGM_unregister_logger() for every currently registered logger.
+ * Does not affect any log data already accumulated in the individual loggers.
+ * Useful for bulk cleanup before destroying the handle or before a new set of calculations.
+ *
+ * @param handle The handle to clear all loggers from.
+ */
+PGM_API void PGM_unregister_all_loggers(PGM_Handle* handle);
+
+/**
+ * @brief Clear the accumulated output of a logger.
+ *
+ * For #PGM_do_nothing_logger this is a no-op.
+ *
+ * @param handle The handle used to report errors.
+ * @param logger The logger to clear.
+ */
+PGM_API void PGM_logger_clear(PGM_Handle* handle, PGM_Logger* logger);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
