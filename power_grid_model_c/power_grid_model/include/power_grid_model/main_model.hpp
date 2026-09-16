@@ -13,7 +13,6 @@
 #include "auxiliary/meta_data.hpp"
 #include "batch_parameter.hpp"
 #include "calculation_preparation.hpp"
-#include "common/calculation_info.hpp"
 #include "common/common.hpp"
 #include "common/logging.hpp"
 #include "main_core/main_model_type.hpp"
@@ -83,6 +82,8 @@ class MainModel {
     void get_indexer(std::string_view component_type, ID const* id_begin, Idx size, Idx* indexer_begin) const {
         impl().get_indexer(component_type, id_begin, size, indexer_begin);
     }
+
+    void set_logger(MultiThreadedLogger& logger) { logger_ = logger; }
 
     template <cache_type_c CacheType> void update_components(ConstDataset const& update_data) {
         impl().update_components<CacheType>(update_data.get_individual_scenario(0));
