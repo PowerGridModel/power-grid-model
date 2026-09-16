@@ -33,7 +33,7 @@ struct PGM_Logger {
 
 namespace power_grid_model_c {
 
-inline PGM_Logger* make_logger(PGM_LoggerType type) {
+inline PGM_Logger* make_logger(PGM_Idx type) {
     using namespace power_grid_model::common::logging;
 
     switch (type) {
