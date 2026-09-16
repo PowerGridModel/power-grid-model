@@ -15,13 +15,12 @@ using power_grid_model_c::call_with_catch;
 using power_grid_model_c::logger_clear;
 using power_grid_model_c::logger_get_output;
 using power_grid_model_c::make_logger;
-using power_grid_model_c::safe_enum;
 using power_grid_model_c::safe_ptr;
 using power_grid_model_c::safe_ptr_get;
 } // namespace
 
 PGM_Logger* PGM_create_logger(PGM_Handle* handle, PGM_Idx logger_type) {
-    return call_with_catch(handle, [logger_type] { return make_logger(safe_enum<PGM_LoggerType>(logger_type)); });
+    return call_with_catch(handle, [logger_type] { return make_logger(logger_type); });
 }
 
 void PGM_destroy_logger(PGM_Logger* logger) {
