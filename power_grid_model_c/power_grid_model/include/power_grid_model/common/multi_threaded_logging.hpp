@@ -93,8 +93,14 @@ class MultiThreadedLoggerImpl : public MultiThreadedLogger {
 
   protected:
     // Snapshot implementation. Thread-safety must be handled by the caller
-    virtual std::string snapshot_thread_unsafe_impl() const { return {}; }
-    virtual void clear_thread_unsafe_impl() {}
+    virtual std::string snapshot_thread_unsafe_impl() const {
+        return {
+            // The default logger has no state to snapshot; stateful loggers override this hook.
+        };
+    }
+    virtual void clear_thread_unsafe_impl() {
+        // The default logger has no state to clear; stateful loggers override this hook.
+    }
 
   private:
     friend class ThreadLogger;

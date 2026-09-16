@@ -31,7 +31,7 @@ class CompositeChildLogger : public Logger {
     std::vector<std::unique_ptr<Logger>> children_;
 
     template <typename... Args> void log_all(Args const&... args) {
-        for (auto& child : children_) {
+        for (auto const& child : children_) {
             child->log(args...);
         }
     }
