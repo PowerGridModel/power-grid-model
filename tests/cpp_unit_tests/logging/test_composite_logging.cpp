@@ -4,6 +4,7 @@
 
 #include <power_grid_model/common/composite_logging.hpp>
 
+#include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/logging.hpp>
 #include <power_grid_model/common/text_logger.hpp>
 
