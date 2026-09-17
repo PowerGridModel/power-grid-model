@@ -6,6 +6,7 @@
 
 #include <atomic>
 #include <concepts>
+#include <type_traits>
 
 namespace power_grid_model {
 namespace {
