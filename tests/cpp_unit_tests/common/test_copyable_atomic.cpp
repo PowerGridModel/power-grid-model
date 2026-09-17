@@ -10,9 +10,9 @@
 namespace power_grid_model {
 namespace {
 static_assert(std::derived_from<power_grid_model::common::atomic::CopyableAtomic<int>, std::atomic<int>>);
-static_assert(std::is_nothrow_move_constructible<power_grid_model::common::atomic::CopyableAtomic<int>>);
-static_assert(std::is_nothrow_move_assignable<power_grid_model::common::atomic::CopyableAtomic<int>>);
-static_assert(std::is_copy_constructible<power_grid_model::common::atomic::CopyableAtomic<int>>);
-static_assert(std::is_copy_assignable<power_grid_model::common::atomic::CopyableAtomic<int>>);
+static_assert(std::is_nothrow_move_constructible_v<power_grid_model::common::atomic::CopyableAtomic<int>>);
+static_assert(std::is_nothrow_move_assignable_v<power_grid_model::common::atomic::CopyableAtomic<int>>);
+static_assert(std::is_copy_constructible_v<power_grid_model::common::atomic::CopyableAtomic<int>>);
+static_assert(std::is_copy_assignable_v<power_grid_model::common::atomic::CopyableAtomic<int>>);
 } // namespace
 } // namespace power_grid_model

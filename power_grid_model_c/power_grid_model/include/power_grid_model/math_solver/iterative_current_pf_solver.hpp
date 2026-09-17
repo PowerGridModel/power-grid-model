@@ -59,13 +59,13 @@ Nomenclature:
 
 #include "../calculation_parameters.hpp"
 #include "../common/common.hpp"
+#include "../common/copyable_atomic.hpp"
 #include "../common/counting_iterator.hpp"
 #include "../common/enum.hpp"
 #include "../common/exception.hpp"
 #include "../common/three_phase_tensor.hpp"
 
 #include <algorithm>
-#include <atomic>
 #include <cmath>
 #include <complex>
 #include <memory>
@@ -91,31 +91,6 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCur
         : IterativePFSolver<sym, IterativeCurrentPFSolver>{y_bus, topo},
           rhs_u_(y_bus.size()),
           sparse_solver_{y_bus.row_indptr_lu(), y_bus.col_indices_lu(), y_bus.lu_diag()} {}
-
-    // atomic bool parameters_changed_ cannot be implicitly copied
-    IterativeCurrentPFSolver(IterativeCurrentPFSolver const& other)
-        : IterativePFSolver<sym, IterativeCurrentPFSolver>{static_cast<IterativeCurrentPFSolver const&>(other)},
-          rhs_u_{other.rhs_u_},
-          mat_data_{other.mat_data_},
-          sparse_solver_{other.sparse_solver_},
-          perm_{other.perm_},
-          parameters_changed_{// atomic bool parameters_changed_ cannot be implicitly copied
-                              other.parameters_changed_.load(std::memory_order_relaxed)} {}
-    IterativeCurrentPFSolver(IterativeCurrentPFSolver&& /*other*/) noexcept = default;
-    IterativeCurrentPFSolver& operator=(IterativeCurrentPFSolver const& other) {
-        if (this == &other) {
-            return *this;
-        }
-        rhs_u_ = other.rhs_u_;
-        mat_data_ = other.mat_data_;
-        sparse_solver_ = other.sparse_solver_;
-        perm_ = other.perm_;
-        parameters_changed_ =
-            other.parameters_changed_.load(); // atomic bool parameters_changed_ cannot be implicitly copied
-        return *this;
-    }
-    IterativeCurrentPFSolver& operator=(IterativeCurrentPFSolver&& other) noexcept = default;
-    ~IterativeCurrentPFSolver() noexcept = default;
 
     // Add source admittance to Y bus and set variable for prepared y bus to true
     void initialize_derived_solver(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
@@ -196,7 +171,7 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCur
     // sparse solver
     SparseSolverType sparse_solver_;
     std::shared_ptr<BlockPermArray const> perm_;
-    std::atomic_bool parameters_changed_ = true;
+    common::atomic::CopyableAtomic<bool> parameters_changed_ = true;
 
     void add_loads(IdxRange const& load_gens, Idx bus_number, PowerFlowInput<sym> const& input,
                    std::vector<LoadGenType> const& load_gen_type, ComplexValueVector<sym> const& u) {

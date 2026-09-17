@@ -6,6 +6,7 @@ add_executable(
     power_grid_model_unit_tests_common
     "../test_entry_point.cpp"
     "test_common.cpp"
+    "test_copyable_atomic.cpp"
     "test_exceptions.cpp"
     "test_component_list.cpp"
     "test_grouped_index_vector.cpp"
