@@ -18,8 +18,10 @@ class CopyableAtomic : public std::atomic<T> {
 
   public:
     CopyableAtomic() noexcept = default;
-    template <typename... Args> CopyableAtomic(Args&&... args) noexcept : std::atomic<T>{std::forward<Args>(args)...} {}
-    CopyableAtomic(CopyableAtomic const& other) noexcept : std::atomic<T>{other.load(copy_order)} {}
+    template <typename... Args>
+        requires(std::constructible_from<T, Args...> && !std::same_as<std::remove_cvref_t<T>, CopyableAtomic<T>>)
+    CopyableAtomic(Args&&... args) noexcept : std::atomic<T>{std::forward<Args>(args)...} {}
+    CopyableAtomic(CopyableAtomic const& other) noexcept : std::atomic<T>{other.load(copy_order)} {} // NOSONAR(S3642)
     CopyableAtomic(CopyableAtomic&& other) noexcept = default;
     CopyableAtomic& operator=(CopyableAtomic const& other) noexcept {
         if (this != &other) {
