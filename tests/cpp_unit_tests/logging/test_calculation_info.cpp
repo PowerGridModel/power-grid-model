@@ -197,7 +197,7 @@ TEST_CASE("Test MultiThreadedCalculationInfo") {
 
         // Re-enter from the callback to verify get_output releases its mutex before
         // invoking user code and that the callback receives a pre-clear snapshot.
-        multi_threaded_info.get_output([&](std::string_view snapshot) {
+        multi_threaded_info.get_output([&output, &multi_threaded_info](std::string_view snapshot) {
             output = snapshot;
             multi_threaded_info.clear();
         });
@@ -213,7 +213,7 @@ TEST_CASE("Test MultiThreadedCalculationInfo") {
 
         // Re-enter from the callback to verify get_output releases its mutex before
         // invoking user code and that the callback receives a pre-clear snapshot.
-        multi_threaded_info.get_output([&](std::string_view snapshot) {
+        multi_threaded_info.get_output([&output, &multi_threaded_info](std::string_view snapshot) {
             output = snapshot;
             multi_threaded_info.clear();
         });

@@ -77,8 +77,9 @@ struct MultiThreadedLogger : public Logger {
     // Default: no op / delivers an empty view
     virtual void get_output(std::function<void(std::string_view)> const& callback) const { callback({}); }
 
-    // Clear accumulated output. Default: no-op.
-    virtual void clear() {}
+    virtual void clear() {
+        // Clear accumulated output. Default: no-op.
+    }
 };
 
 } // namespace common::logging
