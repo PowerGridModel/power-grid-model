@@ -270,7 +270,7 @@ enum PGM_LoggerType {
     PGM_benchmark_logger = 2,  /**< logger that captures timing information per calculation phase */
 };
 
-// NOLINTEND(performance-enum-size)
+// NOLINTEND(performance-enum-size,cppcoreguidelines-use-enum-class)
 
 #ifdef __cplusplus
 }
