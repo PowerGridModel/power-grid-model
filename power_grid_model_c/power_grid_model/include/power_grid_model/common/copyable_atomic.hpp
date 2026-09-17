@@ -18,8 +18,7 @@ class CopyableAtomic : public std::atomic<T> {
 
   public:
     CopyableAtomic() noexcept = default;
-    template <typename... Args>
-    CopyableAtomic(Args&&... args) noexcept : std::atomic<T>{std::forward<Args>(args)...} {}
+    template <typename... Args> CopyableAtomic(Args&&... args) noexcept : std::atomic<T>{std::forward<Args>(args)...} {}
     CopyableAtomic(CopyableAtomic const& other) noexcept : std::atomic<T>{other.load(copy_order)} {}
     CopyableAtomic(CopyableAtomic&& other) noexcept = default;
     CopyableAtomic& operator=(CopyableAtomic const& other) noexcept {
