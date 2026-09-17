@@ -14,7 +14,7 @@ on:
 
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-main
+  group: ${{ github.workflow }}-${{ github.ref }}-thread-sanitizer
   cancel-in-progress: true
 
 jobs:
