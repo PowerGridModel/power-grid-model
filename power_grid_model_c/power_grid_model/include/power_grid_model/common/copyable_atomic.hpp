@@ -10,9 +10,8 @@
 
 namespace power_grid_model::common::atomic {
 template <typename T>
-    requires(std::is_trivially_copyable<T>::value && std::copy_constructible<T> && std::move_constructible<T> &&
-             std::is_copy_assignable<T>::value && std::is_move_assignable<T>::value &&
-             std::same_as<T, typename std::remove_cv<T>::type>)
+    requires(std::is_trivially_copyable_v<T> && std::copy_constructible<T> && std::move_constructible<T> &&
+             std::is_copy_assignable_v<T> && std::is_move_assignable_v<T> && std::same_as<T, std::remove_cv_t<T>>)
 class CopyableAtomic : public std::atomic<T> {
   private:
     static constexpr std::memory_order copy_order = std::memory_order::seq_cst;
@@ -23,7 +22,9 @@ class CopyableAtomic : public std::atomic<T> {
     CopyableAtomic(CopyableAtomic const& other) noexcept : std::atomic<T>{other.load(copy_order)} {}
     CopyableAtomic(CopyableAtomic&& other) noexcept = default;
     CopyableAtomic& operator=(CopyableAtomic const& other) noexcept {
-        this->store(other.load(copy_order));
+        if (this != &other) {
+            this->store(other.load(copy_order));
+        }
         return *this;
     }
     CopyableAtomic& operator=(CopyableAtomic&& other) noexcept = default;
