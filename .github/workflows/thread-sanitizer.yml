@@ -1,0 +1,50 @@
+# SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+#
+# SPDX-License-Identifier: MPL-2.0
+
+name: Thread Sanitizer
+
+# Controls when the workflow will run
+on:
+  # run pipeline from another workflow
+  workflow_call:
+
+  # run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-thread-sanitizer
+  cancel-in-progress: true
+
+jobs:
+  thread-sanitizer-linux:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        build-option: [debug, release]
+
+    env:
+      CMAKE_PREFIX_PATH: /home/linuxbrew/.linuxbrew
+      PRESET: clang-tsan-${{ matrix.build-option }}
+      HOMEBREW_FORCE_BREWED_CURL: 1
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build clang-18
+          sudo ln -s /usr/bin/clang-18 /usr/local/bin/clang
+          sudo ln -s /usr/bin/clang++-18 /usr/local/bin/clang++
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+
+      - name: Install pgm-build-deps
+        run: |
+          uv tool install pgm-build-deps
+          pgm-build-setup-ga-ci
+
+      - name: Build and test
+        run: ./build.sh -p ${{ env.PRESET }} -e -i
