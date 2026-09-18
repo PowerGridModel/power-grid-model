@@ -147,7 +147,7 @@ std::ptrdiff_t count_lines(std::string const& text) { return std::ranges::count(
 
 // Run a minimal single-scenario power flow using the C++ Model API.
 // Loggers registered on `model` (via Model::add_logger) will receive output from this call.
-void run_calculate(power_grid_model_cpp::Model& model) {
+void run_calculate_cpp(power_grid_model_cpp::Model& model) {
     Buffer node_output{PGM_def_sym_output_node, 2};
     node_output.set_nan();
     DatasetMutable output_ds{"sym_output", false, 1};
@@ -457,7 +457,7 @@ TEST_CASE("CPP Logger - add_logger / calculate / get_output round trip") {
     power_grid_model_cpp::Logger logger{PGM_text_logger};
 
     model.add_logger(logger);
-    run_calculate(model);
+    run_calculate_cpp(model);
 
     CHECK(!logger.get_output().empty());
 }
@@ -467,14 +467,14 @@ TEST_CASE("CPP Logger - clear() empties output and keeps registration") {
     power_grid_model_cpp::Logger logger{PGM_text_logger};
 
     model.add_logger(logger);
-    run_calculate(model);
+    run_calculate_cpp(model);
     CHECK(!logger.get_output().empty());
 
     logger.clear();
     CHECK(logger.get_output().empty());
 
     // registration must still be active
-    run_calculate(model);
+    run_calculate_cpp(model);
     CHECK(!logger.get_output().empty());
 }
 
@@ -487,7 +487,7 @@ TEST_CASE("CPP Logger - remove_logger stops output from that logger only") {
     model.add_logger(logger_b);
     model.remove_logger(logger_a);
 
-    run_calculate(model);
+    run_calculate_cpp(model);
 
     CHECK(logger_a.get_output().empty());
     CHECK(!logger_b.get_output().empty());
@@ -502,7 +502,7 @@ TEST_CASE("CPP Logger - remove_all_loggers detaches everything") {
     model.add_logger(bench_logger);
     model.remove_all_loggers();
 
-    run_calculate(model);
+    run_calculate_cpp(model);
 
     CHECK(text_logger.get_output().empty());
     CHECK(bench_logger.get_output().empty());
@@ -513,7 +513,7 @@ TEST_CASE("CPP Logger - logger wrapper survives model destruction and retains re
     {
         auto model = make_cpp_model();
         model.add_logger(logger);
-        run_calculate(model);
+        run_calculate_cpp(model);
     } // model destroyed here; logger wrapper must remain valid and readable
     CHECK(!logger.get_output().empty());
 }
@@ -526,7 +526,7 @@ TEST_CASE("CPP Logger - destroying the Logger wrapper while registered does not 
     } // logger wrapper destroyed here while still registered on `model`
 
     // Must not crash; there is no wrapper left to read output from individually.
-    run_calculate(model);
+    run_calculate_cpp(model);
     model.remove_all_loggers();
 }
 
@@ -538,11 +538,11 @@ TEST_CASE("CPP Logger - same logger can be attached to multiple models") {
     model_a.add_logger(logger);
     model_b.add_logger(logger);
 
-    run_calculate(model_a);
+    run_calculate_cpp(model_a);
     auto const after_a = count_lines(logger.get_output());
     CHECK(after_a > 0);
 
-    run_calculate(model_b);
+    run_calculate_cpp(model_b);
     auto const after_b = count_lines(logger.get_output());
     CHECK(after_b > after_a); // combined output from both models
 }
@@ -554,7 +554,7 @@ TEST_CASE("CPP Logger - move construction preserves registration and output acce
 
     power_grid_model_cpp::Logger moved_logger{std::move(logger)};
 
-    run_calculate(model);
+    run_calculate_cpp(model);
     CHECK(!moved_logger.get_output().empty());
 
     model.remove_logger(moved_logger);
@@ -568,7 +568,7 @@ TEST_CASE("CPP Logger - move assignment preserves registration and output access
 
     moved_logger = std::move(logger);
 
-    run_calculate(model);
+    run_calculate_cpp(model);
     CHECK(!moved_logger.get_output().empty());
 
     model.remove_logger(moved_logger);
@@ -580,11 +580,11 @@ TEST_CASE("CPP Logger - model copy construction starts without registrations") {
     model.add_logger(logger);
 
     power_grid_model_cpp::Model model_copy{model}; // copy construction: fresh handle, no registrations
-    run_calculate(model_copy);                     // must not reach `logger`
+    run_calculate_cpp(model_copy);                     // must not reach `logger`
 
     CHECK(logger.get_output().empty());
 
-    run_calculate(model); // the original model's registration is unaffected
+    run_calculate_cpp(model); // the original model's registration is unaffected
     CHECK(!logger.get_output().empty());
 }
 
@@ -595,7 +595,7 @@ TEST_CASE("CPP Logger - model copy assignment retains destination registrations"
     model.add_logger(logger);
 
     model = source; // copy assignment: destination handle (and its registrations) is kept
-    run_calculate(model);
+    run_calculate_cpp(model);
 
     CHECK(!logger.get_output().empty());
 }
@@ -606,7 +606,7 @@ TEST_CASE("CPP Logger - model move transfers registrations") {
     model.add_logger(logger);
 
     power_grid_model_cpp::Model moved{std::move(model)};
-    run_calculate(moved);
+    run_calculate_cpp(moved);
 
     CHECK(!logger.get_output().empty());
 }
@@ -621,7 +621,7 @@ TEST_CASE("CPP Logger - model move assignment transfers registrations and releas
     destination.add_logger(destination_logger);
 
     destination = std::move(source); // destination's own handle (and its registrations) is replaced
-    run_calculate(destination);
+    run_calculate_cpp(destination);
 
     CHECK(!source_logger.get_output().empty());     // now reachable via the moved-in handle
     CHECK(destination_logger.get_output().empty()); // its original handle was replaced, not merged
