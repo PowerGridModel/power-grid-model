@@ -28,18 +28,21 @@ void PGM_destroy_logger(PGM_Logger* logger) {
 }
 
 void PGM_register_logger(PGM_Handle* handle, PGM_Logger* logger) {
-    call_with_catch(handle, [handle, logger] { handle->composite_logger.add(safe_ptr_get(logger).logger); });
+    call_with_catch(handle,
+                    [handle, logger] { safe_ptr_get(handle).composite_logger.add(safe_ptr_get(logger).logger); });
 }
 
 void PGM_unregister_logger(PGM_Handle* handle, PGM_Logger* logger) {
-    call_with_catch(handle, [handle, logger] { handle->composite_logger.remove(safe_ptr_get(logger).logger.get()); });
+    call_with_catch(
+        handle, [handle, logger] { safe_ptr_get(handle).composite_logger.remove(safe_ptr_get(logger).logger.get()); });
 }
 
 void PGM_unregister_all_loggers(PGM_Handle* handle) {
     call_with_catch(handle, [handle] { safe_ptr_get(handle).composite_logger.reset(); });
 }
 
-void PGM_logger_get_output(PGM_Handle* handle, PGM_Logger* logger, PGM_LogOutputCallback callback, void* user_data) {
+void PGM_logger_get_output(PGM_Handle* handle, PGM_Logger* logger, PGM_LogOutputCallback callback, // NOSONAR(S5205)
+                           void* user_data) {
     call_with_catch(handle, [logger, callback, user_data] {
         logger_get_output(safe_ptr_get(logger), safe_ptr(callback), user_data);
     });

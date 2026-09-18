@@ -48,11 +48,12 @@ inline PGM_Logger* make_logger(PGM_Idx type) {
     }
 }
 
-inline void logger_get_output(PGM_Logger& pgm_logger, PGM_LogOutputCallback callback, void* user_data) {
+template <typename Callback, typename UserData>
+inline void logger_get_output(PGM_Logger const& pgm_logger, Callback callback, UserData user_data) {
     pgm_logger.logger->get_output(
-        [&](std::string_view sv) { callback(sv.data(), safe_cast<PGM_Idx>(sv.size()), user_data); });
+        [callback, user_data](std::string_view sv) { callback(sv.data(), safe_cast<PGM_Idx>(sv.size()), user_data); });
 }
 
-inline void logger_clear(PGM_Logger& pgm_logger) { pgm_logger.logger->clear(); }
+inline void logger_clear(PGM_Logger const& pgm_logger) { pgm_logger.logger->clear(); }
 
 } // namespace power_grid_model_c
