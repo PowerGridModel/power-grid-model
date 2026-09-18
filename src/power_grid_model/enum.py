@@ -19,6 +19,7 @@ from power_grid_model._core.enum import (
     FaultPhase,
     FaultType,
     LoadGenType,
+    LoggerType,
     MeasuredTerminalType,
     ShortCircuitVoltageScaling,
     TapChangingStrategy,
