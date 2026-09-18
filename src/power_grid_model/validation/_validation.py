@@ -551,6 +551,7 @@ def validate_values(data: SingleDataset, calculation_type: CalculationType | Non
         _all_finite(
             data=data,
             exceptions={
+                CT.source: [AT.sk],
                 CT.sym_power_sensor: [
                     AT.power_sigma,
                     AT.p_sigma,

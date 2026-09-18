@@ -15,6 +15,7 @@
 #include "base.hpp"
 #include "component.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <complex>
@@ -27,13 +28,14 @@ class Source : public Appliance {
     using InputType = SourceInput;
     using UpdateType = SourceUpdate;
     static constexpr char const* name = "source";
+    static constexpr double ideal_source_sk = 10e50;
     ComponentType math_model_type() const final { return ComponentType::source; }
 
     explicit Source(SourceInput const& source_input, double u)
         : Appliance{source_input, u},
           u_ref_{source_input.u_ref},
           u_ref_angle_{is_nan(source_input.u_ref_angle) ? 0.0 : source_input.u_ref_angle},
-          sk_{is_nan(source_input.sk) ? default_source_sk : source_input.sk},
+          sk_{is_nan(source_input.sk) ? default_source_sk : std::min(source_input.sk, ideal_source_sk)},
           rx_ratio_{is_nan(source_input.rx_ratio) ? default_source_rx_ratio : source_input.rx_ratio},
           z01_ratio_{is_nan(source_input.z01_ratio) ? default_source_z01_ratio : source_input.z01_ratio} {}
 
@@ -122,7 +124,7 @@ class Source : public Appliance {
     bool set_sk_rx_ratio_z01_ratio(double new_sk, double new_rx_ratio, double new_z01_ratio) {
         bool changed = false;
         if (!is_nan(new_sk)) {
-            sk_ = new_sk;
+            sk_ = std::min(new_sk, ideal_source_sk);
             changed = true;
         }
         if (!is_nan(new_rx_ratio)) {
