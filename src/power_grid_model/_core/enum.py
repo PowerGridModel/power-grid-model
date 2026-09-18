@@ -295,3 +295,17 @@ class FaultPhase(IntEnum):
     """
     Unspecified fault phase. Needs to be overloaded at the latest in the update_data
     """
+
+
+class LoggerType(IntEnum):
+    """Logger types for opt-in diagnostic output from calculations.
+
+    Output is non-conclusive and intended as debugging hints for advanced users.
+    """
+
+    do_nothing = 0
+    """Logger that discards all output (no-op). Useful as a typed placeholder."""
+    text = 1
+    """Logger that captures timestamped text messages, including sparse-matrix hints."""
+    benchmark = 2
+    """Logger that captures timing information per calculation phase."""
