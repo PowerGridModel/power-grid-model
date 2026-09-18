@@ -8,6 +8,7 @@ add_library(
     SHARED
     "src/buffer.cpp"
     "src/handle.cpp"
+    "src/logger.cpp"
     "src/meta_data.cpp"
     "src/model.cpp"
     "src/options.cpp"

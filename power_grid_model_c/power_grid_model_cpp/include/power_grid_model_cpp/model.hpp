@@ -9,6 +9,7 @@
 #include "basics.hpp"
 #include "dataset.hpp"
 #include "handle.hpp"
+#include "logger.hpp"
 #include "options.hpp"
 
 #include "power_grid_model_c/model.h"
@@ -53,6 +54,18 @@ class Model {
     void calculate(Options const& opt, DatasetMutable const& output_dataset) {
         handle_.call_with(PGM_calculate, get(), opt.get(), output_dataset.get(), nullptr);
     }
+
+    // Attach a logger so it receives output from calculations performed on this model.
+    // Attaching the same logger twice is a no-op. See logger.hpp for lifetime notes: the
+    // logger may safely be destroyed while still registered, but it can then no longer be
+    // targeted individually via remove_logger() (use remove_all_loggers() instead).
+    void add_logger(Logger& logger) const { handle_.register_logger(logger); }
+
+    // Detach a specific logger from this model. A no-op if it is not registered.
+    void remove_logger(Logger& logger) const { handle_.unregister_logger(logger); }
+
+    // Detach every logger currently registered to this model.
+    void remove_all_loggers() const { handle_.unregister_all_loggers(); }
 
   private:
     Handle handle_{};
