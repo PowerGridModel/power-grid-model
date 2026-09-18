@@ -58,6 +58,17 @@ auto const input_json = R"json({
 
 struct HandleGuard {
     PGM_Handle* h = PGM_create_handle();
+    HandleGuard() = default;
+    HandleGuard(HandleGuard const&) = delete;
+    HandleGuard& operator=(HandleGuard const&) = delete;
+    HandleGuard(HandleGuard&& other) noexcept : h{std::exchange(other.h, nullptr)} {}
+    HandleGuard& operator=(HandleGuard&& other) noexcept {
+        if (this != &other) {
+            destroy();
+            h = std::exchange(other.h, nullptr);
+        }
+        return *this;
+    }
     ~HandleGuard() { destroy(); }
 
     void destroy() {
@@ -69,6 +80,18 @@ struct HandleGuard {
 struct LoggerGuard {
     PGM_Logger* l;
     explicit LoggerGuard(PGM_Handle* handle, PGM_Idx type) : l{PGM_create_logger(handle, type)} {}
+    LoggerGuard(LoggerGuard const&) = delete;
+    LoggerGuard& operator=(LoggerGuard const&) = delete;
+    LoggerGuard(LoggerGuard&& other) noexcept : l{std::exchange(other.l, nullptr)} {}
+    LoggerGuard& operator=(LoggerGuard&& other) noexcept {
+        if (this != &other) {
+            if (l) {
+                PGM_destroy_logger(l);
+            }
+            l = std::exchange(other.l, nullptr);
+        }
+        return *this;
+    }
     ~LoggerGuard() {
         if (l) {
             PGM_destroy_logger(l);
@@ -108,7 +131,7 @@ auto get_output(PGM_Handle* h, PGM_Logger* l) {
     std::string result;
     PGM_logger_get_output(
         h, l,
-        [](char const* data, PGM_Idx size, void* ctx) {
+        [](char const* data, PGM_Idx size, auto ctx) {
             auto& output = *static_cast<std::string*>(ctx);
             if (size == 0) {
                 output.clear();
@@ -160,7 +183,7 @@ TEST_CASE("Logger - do-nothing logger produces no output and clear is a no-op") 
     int callback_calls = 0;
     PGM_logger_get_output(
         g.h, lg.l,
-        [](char const* /*data*/, PGM_Idx size, void* ctx) {
+        [](char const* /*data*/, PGM_Idx size, auto ctx) {
             ++(*static_cast<int*>(ctx));
             CHECK(size == 0);
         },
