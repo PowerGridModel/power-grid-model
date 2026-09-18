@@ -23,8 +23,8 @@
  *     while the logger is still registered to one or more handles is safe: the implementation
  *     stays alive and keeps collecting output for those handles.
  *   - After PGM_destroy_logger() is called, the caller no longer has a PGM_Logger* to target
- *     that specific registration individually. PGM_unregister_logger() or 
- *     PGM_unregister_all_loggers() (which detaches everything on a handle) or destroying the 
+ *     that specific registration individually. PGM_unregister_logger() or
+ *     PGM_unregister_all_loggers() (which detaches everything on a handle) or destroying the
  *     handle itself is the only way to release it.
  *
  * Undefined behaviour:
