@@ -580,7 +580,7 @@ TEST_CASE("CPP Logger - model copy construction starts without registrations") {
     model.add_logger(logger);
 
     power_grid_model_cpp::Model model_copy{model}; // copy construction: fresh handle, no registrations
-    run_calculate_cpp(model_copy);                     // must not reach `logger`
+    run_calculate_cpp(model_copy);                 // must not reach `logger`
 
     CHECK(logger.get_output().empty());
 
