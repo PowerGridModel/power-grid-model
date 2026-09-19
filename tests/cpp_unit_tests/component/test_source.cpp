@@ -334,7 +334,7 @@ TEST_CASE("Test ideal source short circuit power handling") {
                                           .status = 1,
                                           .u_ref = 1.0,
                                           .u_ref_angle = 0.0,
-                                          .sk = Source::ideal_source_sk,
+                                          .sk = ideal_source_sk,
                                           .rx_ratio = 0.1,
                                           .z01_ratio = 3.0};
 
@@ -360,7 +360,7 @@ TEST_CASE("Test ideal source short circuit power handling") {
                                           .status = 1,
                                           .u_ref = 1.0,
                                           .u_ref_angle = 0.0,
-                                          .sk = Source::ideal_source_sk * 10.0,
+                                          .sk = ideal_source_sk * 10.0,
                                           .rx_ratio = 0.1,
                                           .z01_ratio = 3.0};
 

@@ -790,13 +790,34 @@ def test_validate_ideal_source_sk():
         CT.source: source,
     }
 
+    # Ideal source is supported for power flow.
     validation_errors = validate_input_data(
         data,
         calculation_type=CalculationType.power_flow,
     )
-
     assert validation_errors is None
 
+    # Ideal source is supported for state estimation.
+    validation_errors = validate_input_data(
+        data,
+        calculation_type=CalculationType.state_estimation,
+    )
+    assert validation_errors is None
+
+    # Ideal source is not supported for short-circuit calculations.
+    validation_errors = validate_input_data(
+        data,
+        calculation_type=CalculationType.short_circuit,
+    )
+    assert validation_errors is not None
+
+    # Values above the ideal-source cap are also invalid for short circuit.
+    source[AT.sk] = [10e51]
+    validation_errors = validate_input_data(
+        data,
+        calculation_type=CalculationType.short_circuit,
+    )
+    assert validation_errors is not None
 
 def test_validate_three_winding_transformer(input_data):
     validation_errors = validate_input_data(input_data, symmetric=True)

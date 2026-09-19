@@ -28,7 +28,6 @@ class Source : public Appliance {
     using InputType = SourceInput;
     using UpdateType = SourceUpdate;
     static constexpr char const* name = "source";
-    static constexpr double ideal_source_sk = 10e50;
     ComponentType math_model_type() const final { return ComponentType::source; }
 
     explicit Source(SourceInput const& source_input, double u)
