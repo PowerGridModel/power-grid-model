@@ -16,6 +16,7 @@
 #include <cmath>
 #include <complex>
 #include <concepts>
+#include <limits>
 #include <utility>
 
 #include <doctest/doctest.h>
@@ -315,5 +316,98 @@ TEST_CASE("Test source") {
         check_nan_preserving_equality(inv.z01_ratio, expected.z01_ratio);
     }
 }
+TEST_CASE("Test ideal source short circuit power handling") {
+    double const un = 10e3;
+    double const infinity = std::numeric_limits<double>::infinity();
 
+    SourceInput const ideal_source_input{.id = 1,
+                                         .node = 2,
+                                         .status = 1,
+                                         .u_ref = 1.0,
+                                         .u_ref_angle = 0.0,
+                                         .sk = infinity,
+                                         .rx_ratio = 0.1,
+                                         .z01_ratio = 3.0};
+
+    SourceInput const capped_source_input{.id = 1,
+                                          .node = 2,
+                                          .status = 1,
+                                          .u_ref = 1.0,
+                                          .u_ref_angle = 0.0,
+                                          .sk = ideal_source_sk,
+                                          .rx_ratio = 0.1,
+                                          .z01_ratio = 3.0};
+
+    Source ideal_source{ideal_source_input, un};
+    Source capped_source{capped_source_input, un};
+
+    SUBCASE("Infinite sk is equivalent to ideal source cap") {
+        auto const ideal_param = ideal_source.math_param<symmetric_t>();
+        auto const capped_param = capped_source.math_param<symmetric_t>();
+
+        DoubleComplex const ideal_y = ideal_param.template y_ref<symmetric_t>();
+        DoubleComplex const capped_y = capped_param.template y_ref<symmetric_t>();
+
+        CHECK(std::isfinite(ideal_y.real()));
+        CHECK(std::isfinite(ideal_y.imag()));
+        CHECK(ideal_y.real() == doctest::Approx(capped_y.real()));
+        CHECK(ideal_y.imag() == doctest::Approx(capped_y.imag()));
+    }
+
+    SUBCASE("sk above ideal source cap is capped") {
+        SourceInput const above_cap_input{.id = 1,
+                                          .node = 2,
+                                          .status = 1,
+                                          .u_ref = 1.0,
+                                          .u_ref_angle = 0.0,
+                                          .sk = ideal_source_sk * 10.0,
+                                          .rx_ratio = 0.1,
+                                          .z01_ratio = 3.0};
+
+        Source above_cap_source{above_cap_input, un};
+
+        DoubleComplex const above_cap_y =
+            above_cap_source.math_param<symmetric_t>().template y_ref<symmetric_t>();
+        DoubleComplex const capped_y =
+            capped_source.math_param<symmetric_t>().template y_ref<symmetric_t>();
+
+        CHECK(above_cap_y.real() == doctest::Approx(capped_y.real()));
+        CHECK(above_cap_y.imag() == doctest::Approx(capped_y.imag()));
+    }
+
+    SUBCASE("Updating sk to infinity uses ideal source cap") {
+        SourceInput const regular_source_input{.id = 1,
+                                               .node = 2,
+                                               .status = 1,
+                                               .u_ref = 1.0,
+                                               .u_ref_angle = 0.0,
+                                               .sk = 10e6,
+                                               .rx_ratio = 0.1,
+                                               .z01_ratio = 3.0};
+
+        Source updated_source{regular_source_input, un};
+
+        auto const changed =
+            updated_source.update(SourceUpdate{.id = 1,
+                                               .status = na_IntS,
+                                               .u_ref = nan,
+                                               .u_ref_angle = nan,
+                                               .sk = infinity,
+                                               .rx_ratio = nan,
+                                               .z01_ratio = nan});
+
+        CHECK(!changed.topo);
+        CHECK(changed.param);
+
+        DoubleComplex const updated_y =
+            updated_source.math_param<symmetric_t>().template y_ref<symmetric_t>();
+        DoubleComplex const capped_y =
+            capped_source.math_param<symmetric_t>().template y_ref<symmetric_t>();
+
+        CHECK(std::isfinite(updated_y.real()));
+        CHECK(std::isfinite(updated_y.imag()));
+        CHECK(updated_y.real() == doctest::Approx(capped_y.real()));
+        CHECK(updated_y.imag() == doctest::Approx(capped_y.imag()));
+    }
+}
 } // namespace power_grid_model

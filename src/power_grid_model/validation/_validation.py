@@ -54,6 +54,7 @@ from power_grid_model.validation._rules import (
     all_greater_than_zero as _all_greater_than_zero,
     all_in_valid_values as _all_in_valid_values,
     all_less_than as _all_less_than,
+    all_less_or_equal as _all_less_or_equal,
     all_not_two_values_equal as _all_not_two_values_equal,
     all_not_two_values_zero as _all_not_two_values_zero,
     all_same_current_angle_measurement_type_on_terminal as _all_same_current_angle_measurement_type_on_terminal,
@@ -551,6 +552,7 @@ def validate_values(data: SingleDataset, calculation_type: CalculationType | Non
         _all_finite(
             data=data,
             exceptions={
+                CT.source: [AT.sk] if calculation_type != CalculationType.short_circuit else [],
                 CT.sym_power_sensor: [
                     AT.power_sigma,
                     AT.p_sigma,
@@ -608,6 +610,9 @@ def validate_values(data: SingleDataset, calculation_type: CalculationType | Non
             errors += validate_generic_current_sensor(data, CT.asym_current_sensor)
 
         errors += validate_no_mixed_sensors_on_same_terminal(data)
+
+    if calculation_type == CalculationType.short_circuit and CT.source in data:
+    errors += _all_less_or_equal(data, CT.source, AT.sk, 10e50)
 
     if calculation_type in (None, CalculationType.short_circuit) and CT.fault in data:
         errors += validate_fault(data)
