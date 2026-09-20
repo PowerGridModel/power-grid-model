@@ -612,7 +612,7 @@ def validate_values(data: SingleDataset, calculation_type: CalculationType | Non
         errors += validate_no_mixed_sensors_on_same_terminal(data)
 
     if calculation_type == CalculationType.short_circuit and CT.source in data:
-    errors += _all_less_or_equal(data, CT.source, AT.sk, 10e50)
+        errors += _all_less_or_equal(data, CT.source, AT.sk, 10e50)
 
     if calculation_type in (None, CalculationType.short_circuit) and CT.fault in data:
         errors += validate_fault(data)
