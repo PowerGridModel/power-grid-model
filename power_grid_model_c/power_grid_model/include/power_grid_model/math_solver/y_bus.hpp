@@ -320,8 +320,18 @@ template <symmetry_tag sym> class YBus {
           y_bus_entries_per_shunt_{other.y_bus_entries_per_shunt_},
           parameters_changed_callbacks_{/*do not register callbacks for the copied instance*/} {}
     YBus(YBus&& other) noexcept = default;
-    YBus& operator=(YBus const& other) =
-        delete; // because it is ambiguous whether to keep the original parameters changed callbacks or not
+    YBus& operator=(YBus const& other) {
+        if (this != &other) {
+            y_bus_struct_ = other.y_bus_struct_;
+            admittance_ = other.admittance_;
+            math_topology_ = other.math_topology_;
+            math_model_param_ = other.math_model_param_;
+            y_bus_entries_per_branch_ = other.y_bus_entries_per_branch_;
+            y_bus_entries_per_shunt_ = other.y_bus_entries_per_shunt_;
+            // do not register callbacks for the copied instance; instead, keep the existing callbacks intact
+        }
+        return *this;
+    }
     YBus& operator=(YBus&& other) noexcept = default;
     ~YBus() { parameters_changed_callbacks_.clear(); }
 
