@@ -322,7 +322,7 @@ template <symmetry_tag sym> class YBus {
     YBus(YBus&& other) noexcept
         : y_bus_struct_{std::move(other.y_bus_struct_)},
           admittance_{std::move(other.admittance_)},
-          math_topology_{std::move(other.math_topology_)},
+          math_topology_{other.math_topology_}, // reference_wrapper is not movable
           math_model_param_{std::move(other.math_model_param_)},
           y_bus_entries_per_branch_{std::move(other.y_bus_entries_per_branch_)},
           y_bus_entries_per_shunt_{std::move(other.y_bus_entries_per_shunt_)},
@@ -345,7 +345,7 @@ template <symmetry_tag sym> class YBus {
         if (this != &other) {
             y_bus_struct_ = std::move(other.y_bus_struct_);
             admittance_ = std::move(other.admittance_);
-            math_topology_ = std::move(other.math_topology_);
+            math_topology_ = other.math_topology_; // reference_wrapper is not movable
             math_model_param_ = std::move(other.math_model_param_);
             y_bus_entries_per_branch_ = std::move(other.y_bus_entries_per_branch_);
             y_bus_entries_per_shunt_ = std::move(other.y_bus_entries_per_shunt_);
