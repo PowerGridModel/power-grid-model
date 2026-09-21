@@ -19,6 +19,7 @@ using namespace power_grid_model;
 
 using power_grid_model_c::clear_error;
 using power_grid_model_c::compile_time_safe_cast;
+using power_grid_model_c::create;
 using power_grid_model_c::destroy;
 
 constexpr char const* version = PGM_VERSION;
@@ -27,7 +28,7 @@ constexpr char const* version = PGM_VERSION;
 // create and destroy handle
 PGM_Handle* PGM_create_handle() noexcept {
     try {
-        return new PGM_Handle{}; // NOSONAR(S5025)
+        return create<PGM_Handle>();
     } catch (...) {
         return nullptr;
     }
