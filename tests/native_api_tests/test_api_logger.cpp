@@ -16,22 +16,23 @@
 #include <power_grid_model_c/handle.h>
 #include <power_grid_model_c/logger.h>
 #include <power_grid_model_c/model.h>
+#include <power_grid_model_c/options.h>
 
 #include <doctest/doctest.h>
 
 #include <algorithm>
+#include <cstddef>
 #include <string>
 #include <utility>
 
 namespace {
-using namespace std::string_literals;
 using power_grid_model_cpp::Buffer;
 using power_grid_model_cpp::DatasetConst;
 using power_grid_model_cpp::DatasetMutable;
 using power_grid_model_cpp_test::load_dataset;
 
 // Minimal 2-node network JSON.
-auto const input_json = R"json({
+constexpr auto const input_json = R"json({
   "version": "1.0",
   "type": "input",
   "is_batch": false,
@@ -52,7 +53,7 @@ auto const input_json = R"json({
       {"id": 6, "from_node": 4, "to_node": 0, "from_status": 0, "to_status": 0}
     ]
   }
-})json"s;
+})json";
 
 // Minimal RAII wrappers so tests don't leak on CHECK failures.
 
@@ -85,7 +86,7 @@ struct LoggerGuard {
     LoggerGuard(LoggerGuard&& other) noexcept : l{std::exchange(other.l, nullptr)} {}
     LoggerGuard& operator=(LoggerGuard&& other) noexcept {
         if (this != &other) {
-            if (l) {
+            if (l != nullptr) {
                 PGM_destroy_logger(l);
             }
             l = std::exchange(other.l, nullptr);
@@ -93,7 +94,7 @@ struct LoggerGuard {
         return *this;
     }
     ~LoggerGuard() {
-        if (l) {
+        if (l != nullptr) {
             PGM_destroy_logger(l);
         }
     }
@@ -168,15 +169,15 @@ power_grid_model_cpp::Model make_cpp_model() {
 } // namespace
 
 TEST_CASE("Logger - invalid type returns error") {
-    HandleGuard g;
-    PGM_Logger* bad = PGM_create_logger(g.h, 999);
+    HandleGuard const g;
+    PGM_Logger const* bad = PGM_create_logger(g.h, 999);
     CHECK(bad == nullptr);
     CHECK(PGM_error_code(g.h) == PGM_regular_error);
 }
 
 TEST_CASE("Logger - do-nothing logger produces no output and clear is a no-op") {
-    HandleGuard g;
-    LoggerGuard lg{g.h, PGM_do_nothing_logger};
+    HandleGuard const g;
+    LoggerGuard const lg{g.h, PGM_do_nothing_logger};
 
     int callback_calls = 0;
     PGM_logger_get_output(
@@ -196,16 +197,16 @@ TEST_CASE("Logger - do-nothing logger produces no output and clear is a no-op") 
 }
 
 TEST_CASE("Logger - get_output with null callback returns a regular error") {
-    HandleGuard g;
-    LoggerGuard lg{g.h, PGM_text_logger};
+    HandleGuard const g;
+    LoggerGuard const lg{g.h, PGM_text_logger};
 
     PGM_logger_get_output(g.h, lg.l, nullptr, nullptr);
     CHECK(PGM_error_code(g.h) == PGM_regular_error);
 }
 
 TEST_CASE("Logger - unregister stops subsequent output") {
-    HandleGuard g;
-    LoggerGuard lg{g.h, PGM_text_logger};
+    HandleGuard const g;
+    LoggerGuard const lg{g.h, PGM_text_logger};
 
     PGM_register_logger(g.h, lg.l);
     run_calculate(g.h);
@@ -222,23 +223,23 @@ TEST_CASE("Logger - unregister stops subsequent output") {
 }
 
 TEST_CASE("Logger - unregister non-registered logger is no-op") {
-    HandleGuard g;
-    LoggerGuard lg{g.h, PGM_text_logger};
+    HandleGuard const g;
+    LoggerGuard const lg{g.h, PGM_text_logger};
 
     PGM_unregister_logger(g.h, lg.l); // never registered
     CHECK(PGM_error_code(g.h) == PGM_no_error);
 }
 
 TEST_CASE("Logger - text logger captures output after calculate") {
-    HandleGuard g;
-    LoggerGuard lg{g.h, PGM_text_logger};
+    HandleGuard const g;
+    LoggerGuard const lg{g.h, PGM_text_logger};
 
     PGM_register_logger(g.h, lg.l);
 
     run_calculate(g.h);
     CHECK(PGM_error_code(g.h) == PGM_no_error);
 
-    std::string out = get_output(g.h, lg.l);
+    std::string const out = get_output(g.h, lg.l);
     CHECK(PGM_error_code(g.h) == PGM_no_error);
     // Text logger should have written something; not asserting exact content but must be non-empty.
     CHECK(!out.empty());
@@ -247,15 +248,15 @@ TEST_CASE("Logger - text logger captures output after calculate") {
 }
 
 TEST_CASE("Logger - benchmark logger captures output after calculate") {
-    HandleGuard g;
-    LoggerGuard lg{g.h, PGM_benchmark_logger};
+    HandleGuard const g;
+    LoggerGuard const lg{g.h, PGM_benchmark_logger};
 
     PGM_register_logger(g.h, lg.l);
 
     run_calculate(g.h);
     CHECK(PGM_error_code(g.h) == PGM_no_error);
 
-    std::string out = get_output(g.h, lg.l);
+    std::string const out = get_output(g.h, lg.l);
     CHECK(PGM_error_code(g.h) == PGM_no_error);
     // Benchmark output must be non-empty and contain TAB-separated fields.
     CHECK(!out.empty());
@@ -265,8 +266,8 @@ TEST_CASE("Logger - benchmark logger captures output after calculate") {
 }
 
 TEST_CASE("Logger - text logger clear wipes output") {
-    HandleGuard g;
-    LoggerGuard lg{g.h, PGM_text_logger};
+    HandleGuard const g;
+    LoggerGuard const lg{g.h, PGM_text_logger};
 
     PGM_register_logger(g.h, lg.l);
     run_calculate(g.h);
@@ -275,15 +276,15 @@ TEST_CASE("Logger - text logger clear wipes output") {
     // Clear and verify empty
     PGM_logger_clear(g.h, lg.l);
     CHECK(PGM_error_code(g.h) == PGM_no_error);
-    std::string out = get_output(g.h, lg.l);
+    std::string const out = get_output(g.h, lg.l);
     CHECK(out.empty());
 
     PGM_unregister_logger(g.h, lg.l);
 }
 
 TEST_CASE("Logger - loggers persist across clear_error on handle") {
-    HandleGuard g;
-    LoggerGuard lg{g.h, PGM_text_logger};
+    HandleGuard const g;
+    LoggerGuard const lg{g.h, PGM_text_logger};
 
     PGM_register_logger(g.h, lg.l);
 
@@ -294,16 +295,16 @@ TEST_CASE("Logger - loggers persist across clear_error on handle") {
     run_calculate(g.h);
     CHECK(PGM_error_code(g.h) == PGM_no_error);
 
-    std::string out = get_output(g.h, lg.l);
+    std::string const out = get_output(g.h, lg.l);
     CHECK(!out.empty());
 
     PGM_unregister_logger(g.h, lg.l);
 }
 
 TEST_CASE("Logger - text and benchmark loggers registered simultaneously") {
-    HandleGuard g;
-    LoggerGuard text_lg{g.h, PGM_text_logger};
-    LoggerGuard bench_lg{g.h, PGM_benchmark_logger};
+    HandleGuard const g;
+    LoggerGuard const text_lg{g.h, PGM_text_logger};
+    LoggerGuard const bench_lg{g.h, PGM_benchmark_logger};
 
     PGM_register_logger(g.h, text_lg.l);
     PGM_register_logger(g.h, bench_lg.l);
@@ -311,8 +312,8 @@ TEST_CASE("Logger - text and benchmark loggers registered simultaneously") {
     run_calculate(g.h);
     CHECK(PGM_error_code(g.h) == PGM_no_error);
 
-    std::string text_out = get_output(g.h, text_lg.l);
-    std::string bench_out = get_output(g.h, bench_lg.l);
+    std::string const text_out = get_output(g.h, text_lg.l);
+    std::string const bench_out = get_output(g.h, bench_lg.l);
     CHECK(!text_out.empty());
     CHECK(!bench_out.empty());
 
@@ -321,8 +322,8 @@ TEST_CASE("Logger - text and benchmark loggers registered simultaneously") {
 }
 
 TEST_CASE("Logger - registering the same logger twice is idempotent") {
-    HandleGuard g;
-    LoggerGuard lg{g.h, PGM_text_logger};
+    HandleGuard const g;
+    LoggerGuard const lg{g.h, PGM_text_logger};
 
     PGM_register_logger(g.h, lg.l);
     PGM_register_logger(g.h, lg.l); // second registration — must be a silent no-op
@@ -333,24 +334,24 @@ TEST_CASE("Logger - registering the same logger twice is idempotent") {
 
     // Output must not be doubled — compare line count with a single registration
     // (exact text equality is not usable: each line carries an independent millisecond timestamp).
-    std::string out_double = get_output(g.h, lg.l);
+    std::string const out_double = get_output(g.h, lg.l);
     PGM_unregister_logger(g.h, lg.l);
 
     // Fresh run with a single registration for reference
-    HandleGuard g2;
-    LoggerGuard lg2{g2.h, PGM_text_logger};
+    HandleGuard const g2;
+    LoggerGuard const lg2{g2.h, PGM_text_logger};
     PGM_register_logger(g2.h, lg2.l);
     run_calculate(g2.h);
-    std::string out_single = get_output(g2.h, lg2.l);
+    std::string const out_single = get_output(g2.h, lg2.l);
     PGM_unregister_logger(g2.h, lg2.l);
 
     CHECK(count_lines(out_double) == count_lines(out_single));
 }
 
 TEST_CASE("Logger - PGM_unregister_all_loggers removes all loggers") {
-    HandleGuard g;
-    LoggerGuard text_lg{g.h, PGM_text_logger};
-    LoggerGuard bench_lg{g.h, PGM_benchmark_logger};
+    HandleGuard const g;
+    LoggerGuard const text_lg{g.h, PGM_text_logger};
+    LoggerGuard const bench_lg{g.h, PGM_benchmark_logger};
 
     PGM_register_logger(g.h, text_lg.l);
     PGM_register_logger(g.h, bench_lg.l);
@@ -362,15 +363,15 @@ TEST_CASE("Logger - PGM_unregister_all_loggers removes all loggers") {
     run_calculate(g.h);
     CHECK(PGM_error_code(g.h) == PGM_no_error);
 
-    std::string text_out = get_output(g.h, text_lg.l);
-    std::string bench_out = get_output(g.h, bench_lg.l);
+    std::string const text_out = get_output(g.h, text_lg.l);
+    std::string const bench_out = get_output(g.h, bench_lg.l);
     CHECK(text_out.empty());
     CHECK(bench_out.empty());
     // loggers are already unregistered; safe to destroy them via LoggerGuard
 }
 
 TEST_CASE("Logger - destroying a registered logger does not crash a subsequent calculation") {
-    HandleGuard g;
+    HandleGuard const g;
     PGM_Logger* logger = PGM_create_logger(g.h, PGM_text_logger);
     PGM_register_logger(g.h, logger);
 
@@ -389,7 +390,7 @@ TEST_CASE("Logger - destroying a registered logger does not crash a subsequent c
 
 TEST_CASE("Logger - destroying the handle while a logger is registered does not crash") {
     PGM_Handle* h = PGM_create_handle();
-    LoggerGuard lg{h, PGM_text_logger};
+    LoggerGuard const lg{h, PGM_text_logger};
 
     PGM_register_logger(h, lg.l);
     run_calculate(h);
@@ -399,16 +400,16 @@ TEST_CASE("Logger - destroying the handle while a logger is registered does not 
     // is still alive. Must not crash; the logger wrapper itself remains usable afterwards.
     PGM_destroy_handle(h);
 
-    HandleGuard g2;
-    std::string out = get_output(g2.h, lg.l);
+    HandleGuard const g2;
+    std::string const out = get_output(g2.h, lg.l);
     CHECK(!out.empty());
 }
 
 TEST_CASE("Logger - model logs through the handle passed to PGM_calculate, not the model creation handle") {
     HandleGuard creation_handle;
-    HandleGuard calc_handle;
-    LoggerGuard creation_lg{creation_handle.h, PGM_text_logger};
-    LoggerGuard calc_lg{calc_handle.h, PGM_text_logger};
+    HandleGuard const calc_handle;
+    LoggerGuard const creation_lg{creation_handle.h, PGM_text_logger};
+    LoggerGuard const calc_lg{calc_handle.h, PGM_text_logger};
 
     // The model is bound to creation_handle's composite logger at PGM_create_model time.
     PGM_register_logger(creation_handle.h, creation_lg.l);
