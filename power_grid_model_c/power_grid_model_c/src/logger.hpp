@@ -9,6 +9,7 @@
 #endif
 
 #include "input_sanitization.hpp"
+#include "safe_memory_handling.hpp"
 
 #include "power_grid_model_c/basics.h"
 #include "power_grid_model_c/logger.h"
@@ -38,11 +39,11 @@ inline PGM_Logger* make_logger(PGM_Idx type) {
 
     switch (type) {
     case PGM_do_nothing_logger:
-        return new PGM_Logger{std::make_shared<NoMultiThreadedLogger>()}; // NOSONAR(S5025)
+        return create<PGM_Logger>(std::make_shared<NoMultiThreadedLogger>());
     case PGM_text_logger:
-        return new PGM_Logger{std::make_shared<MultiThreadedTextLogger>()}; // NOSONAR(S5025)
+        return create<PGM_Logger>(std::make_shared<MultiThreadedTextLogger>());
     case PGM_benchmark_logger:
-        return new PGM_Logger{std::make_shared<MultiThreadedCalculationInfo>()}; // NOSONAR(S5025)
+        return create<PGM_Logger>(std::make_shared<MultiThreadedCalculationInfo>());
     default:
         throw power_grid_model::MissingCaseForEnumError{"make_logger", type};
     }
@@ -50,10 +51,10 @@ inline PGM_Logger* make_logger(PGM_Idx type) {
 
 template <typename Callback, typename UserData>
 inline void logger_get_output(PGM_Logger const& pgm_logger, Callback callback, UserData user_data) {
-    pgm_logger.logger->get_output(
-        [callback, user_data](std::string_view sv) {
-            callback(sv.data(), safe_cast<PGM_Idx>(sv.size()), user_data); // NOLINT(bugprone-suspicious-stringview-data-usage)
-        });
+    pgm_logger.logger->get_output([callback, user_data](std::string_view sv) {
+        callback(sv.data(), safe_cast<PGM_Idx>(sv.size()),
+                 user_data); // NOLINT(bugprone-suspicious-stringview-data-usage)
+    });
 }
 
 inline void logger_clear(PGM_Logger const& pgm_logger) { pgm_logger.logger->clear(); }
