@@ -42,7 +42,7 @@ struct MathState {
     }
     MathState(MathState&&) noexcept = default;
     MathState& operator=(MathState&&) noexcept = default;
-    ~MathState() = default;
+    ~MathState() { clear(*this); }
 
     // register a parameter-change callback from each Y-bus to its corresponding solver
     template <symmetry_tag sym>
