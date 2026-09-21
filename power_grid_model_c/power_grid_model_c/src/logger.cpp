@@ -11,6 +11,8 @@
 #include "power_grid_model_c/basics.h"
 #include "power_grid_model_c/logger.h"
 
+#include <power_grid_model/common/composite_logging.hpp>
+
 namespace {
 using power_grid_model_c::call_with_catch;
 using power_grid_model_c::destroy;
@@ -29,16 +31,16 @@ void PGM_destroy_logger(PGM_Logger* logger) { destroy(logger); }
 
 void PGM_register_logger(PGM_Handle* handle, PGM_Logger* logger) {
     call_with_catch(handle,
-                    [handle, logger] { safe_ptr_get(handle).composite_logger.add(safe_ptr_get(logger).logger); });
+                    [handle, logger] { safe_ptr_get(handle).composite_logger->add(safe_ptr_get(logger).logger); });
 }
 
 void PGM_unregister_logger(PGM_Handle* handle, PGM_Logger* logger) {
     call_with_catch(
-        handle, [handle, logger] { safe_ptr_get(handle).composite_logger.remove(safe_ptr_get(logger).logger.get()); });
+        handle, [handle, logger] { safe_ptr_get(handle).composite_logger->remove(safe_ptr_get(logger).logger.get()); });
 }
 
 void PGM_unregister_all_loggers(PGM_Handle* handle) {
-    call_with_catch(handle, [handle] { safe_ptr_get(handle).composite_logger.reset(); });
+    call_with_catch(handle, [handle] { safe_ptr_get(handle).composite_logger->reset(); });
 }
 
 void PGM_logger_get_output(PGM_Handle* handle, PGM_Logger* logger, PGM_LogOutputCallback callback, // NOSONAR(S5205)
