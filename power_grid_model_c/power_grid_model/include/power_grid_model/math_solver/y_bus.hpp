@@ -301,9 +301,22 @@ template <symmetry_tag sym> class YBus {
         using std::unordered_map<Key, Value>::unordered_map; // inherit constructors
 
         // The copy-constructor does not copy any elements, making it localized
-        LocalizedPersistentLookup(LocalizedPersistentLookup const&) : std::unordered_map<Key, Value>{} {}
+        LocalizedPersistentLookup(LocalizedPersistentLookup const& /*other*/) : std::unordered_map<Key, Value>{} {}
+        LocalizedPersistentLookup(LocalizedPersistentLookup&& other) noexcept
+            : std::unordered_map<Key, Value>{std::move(other)} {}
         // The copy-assignment operator does not copy or change any elements, making it persistent
-        LocalizedPersistentLookup& operator=(LocalizedPersistentLookup const&) { return *this; }
+        LocalizedPersistentLookup& operator=(LocalizedPersistentLookup const& other) {
+            if (this != &other) {
+                // do nothing; persists current state
+            }
+            return *this;
+        }
+        LocalizedPersistentLookup& operator=(LocalizedPersistentLookup&& other) noexcept {
+            if (this != &other) {
+                std::unordered_map<Key, Value>::operator=(std::move(other));
+            }
+            return *this;
+        }
         ~LocalizedPersistentLookup() { this->clear(); }
     };
 
