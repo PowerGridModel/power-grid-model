@@ -6,12 +6,14 @@
 
 #include "logger.hpp"
 #include "handle.hpp"
+#include "safe_memory_handling.hpp"
 
 #include "power_grid_model_c/basics.h"
 #include "power_grid_model_c/logger.h"
 
 namespace {
 using power_grid_model_c::call_with_catch;
+using power_grid_model_c::destroy;
 using power_grid_model_c::logger_clear;
 using power_grid_model_c::logger_get_output;
 using power_grid_model_c::make_logger;
@@ -23,9 +25,7 @@ PGM_Logger* PGM_create_logger(PGM_Handle* handle, PGM_Idx logger_type) {
     return call_with_catch(handle, [logger_type] { return make_logger(logger_type); });
 }
 
-void PGM_destroy_logger(PGM_Logger* logger) {
-    delete logger; // NOSONAR(S5025)
-}
+void PGM_destroy_logger(PGM_Logger* logger) { destroy(logger); }
 
 void PGM_register_logger(PGM_Handle* handle, PGM_Logger* logger) {
     call_with_catch(handle,
