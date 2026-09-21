@@ -21,7 +21,7 @@
 
 // context handle
 struct PGM_Handle {
-    power_grid_model::Idx err_code{};
+    power_grid_model::Idx err_code{PGM_no_error};
     std::string err_msg;
     power_grid_model::IdxVector failed_scenarios;
     std::vector<std::string> batch_errs;
@@ -36,7 +36,7 @@ namespace power_grid_model_c {
 inline void clear_error(PGM_Handle* handle) {
     if (handle != nullptr) {
         // Intentionally reset only error-related fields; composite_logger is preserved.
-        handle->err_code = {};
+        handle->err_code = {PGM_no_error};
         handle->err_msg.clear();
         handle->failed_scenarios.clear();
         handle->batch_errs.clear();
