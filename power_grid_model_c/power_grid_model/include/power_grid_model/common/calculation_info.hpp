@@ -10,8 +10,8 @@
 
 #include <algorithm>
 #include <concepts>
-#include <format>
 #include <map>
+#include <sstream>
 #include <string>
 #include <type_traits>
 
@@ -94,12 +94,12 @@ class CalculationInfo : public Logger {
     void clear() { data_.clear(); }
 
     std::string string_report() const {
-        std::string result;
+        std::ostringstream result;
         for (auto const& [tag, value] : data_) {
             // Each line has format: EVENT_CODE\tVALUE
-            result += std::format("{}\t{}\n", std::to_underlying(tag), value);
+            result << std::to_underlying(tag) << '\t' << value << '\n';
         }
-        return result;
+        return result.str();
     }
 
     template <std::derived_from<Logger> T> T& merge_into(T& destination) const {
