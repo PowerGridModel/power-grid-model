@@ -323,7 +323,7 @@ template <symmetry_tag sym> class YBus {
     YBus& operator=(YBus const& other) =
         delete; // because it is ambiguous whether to keep the original parameters changed callbacks or not
     YBus& operator=(YBus&& other) noexcept = default;
-    ~YBus() = default;
+    ~YBus() { parameters_changed_callbacks_.clear(); }
 
     // getter
     YBusStructure const& y_bus_structure() const {
