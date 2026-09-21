@@ -296,6 +296,17 @@ struct YBusStructure {
 
 // See also "Node Admittance Matrix" in "State Estimation Alliander"
 template <symmetry_tag sym> class YBus {
+    template <typename Key, typename Value> class LocalizedPersistentLookup : public std::unordered_map<Key, Value> {
+      public:
+        using std::unordered_map<Key, Value>::unordered_map; // inherit constructors
+
+        // The copy-constructor does not copy any elements, making it localized
+        LocalizedPersistentLookup(LocalizedPersistentLookup const&) : std::unordered_map<Key, Value>{} {}
+        // The copy-assignment operator does not copy or change any elements, making it persistent
+        LocalizedPersistentLookup& operator=(LocalizedPersistentLookup const&) { return *this; }
+        ~LocalizedPersistentLookup() { this->clear(); }
+    };
+
   public:
     using ParamChangedCallback = std::function<void(bool param_changed)>;
 
@@ -311,49 +322,6 @@ template <symmetry_tag sym> class YBus {
         // update values
         update_admittance(std::move(param));
     }
-    YBus(YBus const& other)
-        : y_bus_struct_{other.y_bus_struct_},
-          admittance_{other.admittance_},
-          math_topology_{other.math_topology_},
-          math_model_param_{other.math_model_param_},
-          y_bus_entries_per_branch_{other.y_bus_entries_per_branch_},
-          y_bus_entries_per_shunt_{other.y_bus_entries_per_shunt_},
-          parameters_changed_callbacks_{/*do not register callbacks for the copied instance*/} {}
-    YBus(YBus&& other) noexcept
-        : y_bus_struct_{std::move(other.y_bus_struct_)},
-          admittance_{std::move(other.admittance_)},
-          math_topology_{other.math_topology_}, // reference_wrapper is not movable
-          math_model_param_{std::move(other.math_model_param_)},
-          y_bus_entries_per_branch_{std::move(other.y_bus_entries_per_branch_)},
-          y_bus_entries_per_shunt_{std::move(other.y_bus_entries_per_shunt_)},
-          parameters_changed_callbacks_{
-              std::move(other.parameters_changed_callbacks_) // as usual
-          } {}
-    YBus& operator=(YBus const& other) {
-        if (this != &other) {
-            y_bus_struct_ = other.y_bus_struct_;
-            admittance_ = other.admittance_;
-            math_topology_ = other.math_topology_;
-            math_model_param_ = other.math_model_param_;
-            y_bus_entries_per_branch_ = other.y_bus_entries_per_branch_;
-            y_bus_entries_per_shunt_ = other.y_bus_entries_per_shunt_;
-            // do not register callbacks for the copied instance; instead, keep the existing callbacks intact
-        }
-        return *this;
-    }
-    YBus& operator=(YBus&& other) noexcept {
-        if (this != &other) {
-            y_bus_struct_ = std::move(other.y_bus_struct_);
-            admittance_ = std::move(other.admittance_);
-            math_topology_ = other.math_topology_; // reference_wrapper is not movable
-            math_model_param_ = std::move(other.math_model_param_);
-            y_bus_entries_per_branch_ = std::move(other.y_bus_entries_per_branch_);
-            y_bus_entries_per_shunt_ = std::move(other.y_bus_entries_per_shunt_);
-            parameters_changed_callbacks_ = std::move(other.parameters_changed_callbacks_); // as usual
-        }
-        return *this;
-    }
-    ~YBus() { parameters_changed_callbacks_.clear(); }
 
     // getter
     YBusStructure const& y_bus_structure() const {
@@ -630,7 +598,7 @@ template <symmetry_tag sym> class YBus {
     std::vector<IdxVector> y_bus_entries_per_branch_;
     std::vector<IdxVector> y_bus_entries_per_shunt_;
 
-    std::unordered_map<uint64_t, ParamChangedCallback> parameters_changed_callbacks_;
+    LocalizedPersistentLookup<uint64_t, ParamChangedCallback> parameters_changed_callbacks_;
 
     void parameters_changed(bool param_changed) const {
         std::ranges::for_each(parameters_changed_callbacks_, [param_changed](auto const& key_and_callback) {
