@@ -124,7 +124,7 @@ PGM_API void PGM_unregister_logger(PGM_Handle* handle, PGM_Logger* logger);
  *   }
  * @endcode
  */
-typedef void (*PGM_LogOutputCallback)(char const* data, PGM_Idx size, void* user_data);
+typedef void (*PGM_LogOutputCallback)(char const* data, PGM_Idx size, void* user_data); // NOLINT(modernize-use-using)
 
 /**
  * @brief Deliver the current output of a logger to a caller-supplied callback.

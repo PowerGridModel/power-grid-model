@@ -6,7 +6,6 @@
 #include "forward_declarations.hpp"
 #include "handle.hpp"
 #include "input_sanitization.hpp"
-#include "logger.hpp"
 #include "math_solver.hpp"
 #include "options.hpp" // NOLINT(misc-include-cleaner)
 #include "safe_memory_handling.hpp"
