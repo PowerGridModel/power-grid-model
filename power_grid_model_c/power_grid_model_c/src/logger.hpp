@@ -15,7 +15,6 @@
 #include "power_grid_model_c/logger.h"
 
 #include <power_grid_model/common/calculation_info.hpp>
-#include <power_grid_model/common/dummy_logging.hpp>
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/common/logging.hpp>
 #include <power_grid_model/common/multi_threaded_logging.hpp>
@@ -38,8 +37,6 @@ inline PGM_Logger* make_logger(PGM_Idx type) {
     using namespace power_grid_model::common::logging;
 
     switch (type) {
-    case PGM_do_nothing_logger:
-        return create<PGM_Logger>(std::make_shared<NoMultiThreadedLogger>());
     case PGM_text_logger:
         return create<PGM_Logger>(std::make_shared<MultiThreadedTextLogger>());
     case PGM_benchmark_logger:

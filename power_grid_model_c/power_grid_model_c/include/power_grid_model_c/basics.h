@@ -261,13 +261,11 @@ enum PGM_ExperimentalFeatures {
  * @brief Enumeration of logger types.
  *
  * Selects which kind of diagnostic output a logger captures.
- * Calling output/clear operations on a do-nothing logger is a no-op.
  *
  */
 enum PGM_LoggerType {
-    PGM_do_nothing_logger = 0, /**< logger that discards all output (no-op) */
-    PGM_text_logger = 1,       /**< logger that captures timestamped text messages */
-    PGM_benchmark_logger = 2,  /**< logger that captures timing information per calculation phase */
+    PGM_text_logger = 0,      /**< logger that captures timestamped text messages */
+    PGM_benchmark_logger = 1, /**< logger that captures timing information per calculation phase */
 };
 
 // NOLINTEND(performance-enum-size,cppcoreguidelines-use-enum-class)
