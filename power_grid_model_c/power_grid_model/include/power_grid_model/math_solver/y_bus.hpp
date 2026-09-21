@@ -13,17 +13,14 @@
 
 #include <algorithm>
 #include <array>
-#include <atomic>
 #include <cassert>
 #include <concepts>
 #include <cstddef>
-#include <cstdint>
 #include <functional>
 #include <iterator>
 #include <memory>
 #include <numeric>
 #include <ranges>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -296,32 +293,38 @@ struct YBusStructure {
 
 // See also "Node Admittance Matrix" in "State Estimation Alliander"
 template <symmetry_tag sym> class YBus {
-    template <typename Key, typename Value> class LocalizedPersistentLookup : public std::unordered_map<Key, Value> {
-      public:
-        using std::unordered_map<Key, Value>::unordered_map; // inherit constructors
-
-        // The copy-constructor does not copy any elements, making the callbacks local to each instance: a copied
-        // Y-bus must have its callbacks re-registered against the copied solvers (see main_core::MathState).
-        LocalizedPersistentLookup(LocalizedPersistentLookup const& /*other*/) : std::unordered_map<Key, Value>{} {}
-        LocalizedPersistentLookup(LocalizedPersistentLookup&& other) noexcept
-            : std::unordered_map<Key, Value>{std::move(other)} {}
-        // The copy-assignment operator does not copy or change any elements, making it persistent: an in-place updated
-        // Y-bus keeps the callbacks it already holds.
-        LocalizedPersistentLookup& operator=(LocalizedPersistentLookup const& /*other*/) { return *this; }
-        LocalizedPersistentLookup& operator=(LocalizedPersistentLookup&& other) noexcept {
-            if (this != &other) {
-                // move the contents from the other map to this one; in this case, no persistence is required, as the
-                // original object is fully replaced
-                std::unordered_map<Key, Value>::operator=(std::move(other));
-            }
-            return *this;
-        }
-        ~LocalizedPersistentLookup() { this->clear(); }
-    };
-
   public:
     using ParamChangedCallback = std::function<void(bool param_changed)>;
 
+  private:
+    // Parameter-change callbacks link this Y-bus to the solver(s) that consume its admittance. A single Y-bus may feed
+    // multiple solvers (e.g. when neither parameters nor topology changed, or when several solver types are run
+    // consecutively). The callbacks are deliberately dropped on copy so a copied Y-bus does not notify another
+    // instance's solvers; they are re-established afterwards (see main_core::MathState). Moving transfers them.
+    class SolverLinks {
+      public:
+        SolverLinks() = default;
+        SolverLinks(SolverLinks const& /*other*/) {}
+        SolverLinks& operator=(SolverLinks const& /*other*/) {
+            callbacks_.clear();
+            return *this;
+        }
+        SolverLinks(SolverLinks&&) noexcept = default;
+        SolverLinks& operator=(SolverLinks&&) noexcept = default;
+        ~SolverLinks() = default;
+
+        void add(ParamChangedCallback callback) { callbacks_.push_back(std::move(callback)); }
+        void notify(bool param_changed) const {
+            for (auto const& callback : callbacks_) {
+                callback(param_changed);
+            }
+        }
+
+      private:
+        std::vector<ParamChangedCallback> callbacks_;
+    };
+
+  public:
     YBus(MathModelTopology const& topo, MathModelParam<sym> param,
          std::shared_ptr<YBusStructure const> const& y_bus_struct = {})
         : math_topology_{topo} {
@@ -579,25 +582,13 @@ template <symmetry_tag sym> class YBus {
         return shunt_flow;
     }
 
-    /// @brief register a new callback to signal a parameter change
-    /// @param callback the callback to register
-    /// @return the unique key referencing this callback (used for unregistering)
-    uint64_t register_parameters_changed_callback(ParamChangedCallback callback) {
-        static std::atomic<uint64_t> num_added = 0;
-
-        // any thread may register its own solvers on the cached, so obtaining unique id must be atomic
-        auto const new_key = num_added.fetch_add(1);
-
-        assert(!parameters_changed_callbacks_.contains(new_key));
-        parameters_changed_callbacks_.emplace_hint(parameters_changed_callbacks_.cend(), new_key, std::move(callback));
-        return new_key;
-    }
-
-    /// @brief unregister a callback to signal a parameter change
-    /// @param key the unique key referencing the callback (returned by register_parameters_changed_callback)
-    void unregister_parameters_changed_callback(uint64_t key) {
-        assert(parameters_changed_callbacks_.contains(key));
-        parameters_changed_callbacks_.erase(key);
+    /// @brief add a callback used to signal a parameter change to a solver linked to this Y-bus
+    ///
+    /// A Y-bus may be linked to more than one solver. The callbacks are not carried over when the Y-bus is copied, so
+    /// they must be (re-)established after every copy (see main_core::MathState).
+    /// @param callback the callback to invoke on a parameter change
+    void add_parameters_changed_callback(ParamChangedCallback callback) {
+        parameters_changed_callbacks_.add(std::move(callback));
     }
 
   private:
@@ -616,13 +607,9 @@ template <symmetry_tag sym> class YBus {
     std::vector<IdxVector> y_bus_entries_per_branch_;
     std::vector<IdxVector> y_bus_entries_per_shunt_;
 
-    LocalizedPersistentLookup<uint64_t, ParamChangedCallback> parameters_changed_callbacks_;
+    SolverLinks parameters_changed_callbacks_;
 
-    void parameters_changed(bool param_changed) const {
-        std::ranges::for_each(parameters_changed_callbacks_, [param_changed](auto const& key_and_callback) {
-            key_and_callback.second(param_changed);
-        });
-    }
+    void parameters_changed(bool param_changed) const { parameters_changed_callbacks_.notify(param_changed); }
 };
 
 } // namespace math_solver

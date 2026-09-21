@@ -29,7 +29,7 @@ struct MathState {
           math_solvers_sym{other.math_solvers_sym},
           math_solvers_asym{other.math_solvers_asym} {
         // Copy-constructing a Y-bus drops its (instance-local) parameter-change callbacks; re-link each copied Y-bus to
-        // its own copied solver so that the copy contains exactly and only callbacks to the new solvers.
+        // its own copied solver(s) so that the copy contains exactly and only callbacks to the new solvers.
         link_solvers(y_bus_vec_sym, math_solvers_sym);
         link_solvers(y_bus_vec_asym, math_solvers_asym);
     }
@@ -49,7 +49,7 @@ struct MathState {
     static void link_solvers(std::vector<YBus<sym>>& y_bus_vec, std::vector<MathSolverProxy<sym>>& solvers) {
         assert(y_bus_vec.size() == solvers.size());
         for (Idx idx = 0; idx != std::ssize(y_bus_vec); ++idx) {
-            y_bus_vec[idx].register_parameters_changed_callback(
+            y_bus_vec[idx].add_parameters_changed_callback(
                 [solver = std::ref(solvers[idx])](bool changed) { solver.get().get().parameters_changed(changed); });
         }
     }
