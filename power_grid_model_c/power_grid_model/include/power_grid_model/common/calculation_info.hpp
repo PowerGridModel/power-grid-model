@@ -99,7 +99,7 @@ class CalculationInfo : public Logger {
             // Each line has format: EVENT_CODE\tVALUE
             result << std::to_underlying(tag) << '\t' << value << '\n';
         }
-        return result.str();
+        return std::move(result).str();
     }
 
     template <std::derived_from<Logger> T> T& merge_into(T& destination) const {
