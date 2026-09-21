@@ -59,7 +59,6 @@ Nomenclature:
 
 #include "../calculation_parameters.hpp"
 #include "../common/common.hpp"
-#include "../common/copyable_atomic.hpp"
 #include "../common/counting_iterator.hpp"
 #include "../common/enum.hpp"
 #include "../common/exception.hpp"
@@ -101,7 +100,7 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCur
         IdxVector const& bus_entry = y_bus.lu_diag();
         // if Y bus is not up to date
         // re-build matrix and prefactorize Build y bus data with source admittance
-        while (parameters_changed_.exchange(false, std::memory_order_acquire)) {
+        if (parameters_changed_) {
             ComplexTensorVector<sym> mat_data(y_bus.nnz_lu());
             detail::copy_y_bus<sym>(y_bus, mat_data);
 
@@ -120,6 +119,7 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCur
             mat_data_ = std::make_shared<ComplexTensorVector<sym> const>(std::move(mat_data));
             perm_ = std::make_shared<BlockPermArray const>(std::move(perm));
         }
+        parameters_changed_ = false;
     }
 
     // Prepare matrix calculates injected current, i.e., RHS of solver for each iteration.
@@ -159,11 +159,7 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCur
         return max_dev;
     }
 
-    void parameters_changed(bool changed) {
-        if (changed) {
-            parameters_changed_.store(true, std::memory_order_release);
-        }
-    }
+    void parameters_changed(bool changed) { parameters_changed_ = parameters_changed_ || changed; }
 
   private:
     ComplexValueVector<sym> rhs_u_;
@@ -171,7 +167,7 @@ class IterativeCurrentPFSolver : public IterativePFSolver<sym_type, IterativeCur
     // sparse solver
     SparseSolverType sparse_solver_;
     std::shared_ptr<BlockPermArray const> perm_;
-    common::atomic::CopyableAtomic<bool> parameters_changed_ = true;
+    bool parameters_changed_ = true;
 
     void add_loads(IdxRange const& load_gens, Idx bus_number, PowerFlowInput<sym> const& input,
                    std::vector<LoadGenType> const& load_gen_type, ComplexValueVector<sym> const& u) {

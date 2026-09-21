@@ -311,6 +311,19 @@ template <symmetry_tag sym> class YBus {
         // update values
         update_admittance(std::move(param));
     }
+    YBus(YBus const& other)
+        : y_bus_struct_{other.y_bus_struct_},
+          admittance_{other.admittance_},
+          math_topology_{other.math_topology_},
+          math_model_param_{other.math_model_param_},
+          y_bus_entries_per_branch_{other.y_bus_entries_per_branch_},
+          y_bus_entries_per_shunt_{other.y_bus_entries_per_shunt_},
+          parameters_changed_callbacks_{/*do not register callbacks for the copied instance*/} {}
+    YBus(YBus&& other) noexcept = default;
+    YBus& operator=(YBus const& other) =
+        delete; // because it is ambiguous whether to keep the original parameters changed callbacks or not
+    YBus& operator=(YBus&& other) noexcept = default;
+    ~YBus() = default;
 
     // getter
     YBusStructure const& y_bus_structure() const {
@@ -556,6 +569,7 @@ template <symmetry_tag sym> class YBus {
     uint64_t register_parameters_changed_callback(ParamChangedCallback callback) {
         static std::atomic<uint64_t> num_added = 0;
 
+        // any thread may register its own solvers on the cached, so obtaining unique id must be atomic
         auto const new_key = num_added.fetch_add(1);
 
         assert(!parameters_changed_callbacks_.contains(new_key));
