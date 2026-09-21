@@ -15,6 +15,7 @@
 #include "calculation_preparation.hpp"
 #include "common/common.hpp"
 #include "common/logging.hpp"
+#include "common/multi_threaded_logging.hpp"
 #include "main_core/main_model_type.hpp"
 #include "main_model_fwd.hpp"
 #include "math_solver/math_solver_dispatch.hpp"

@@ -81,13 +81,13 @@ class MultiThreadedLoggerImpl : public MultiThreadedLogger {
         // Snapshot under the lock, then call fn without the lock so user callbacks
         // cannot re-enter logger APIs and deadlock on the non-recursive mutex.
         std::string const snapshot = [&] {
-            std::lock_guard const lock{mutex_};
+            std::scoped_lock const lock{mutex_};
             return snapshot_thread_unsafe_impl();
         }();
         fn(snapshot);
     }
     void clear() final {
-        std::lock_guard const lock{mutex_};
+        std::scoped_lock const lock{mutex_};
         clear_thread_unsafe_impl();
     }
 
