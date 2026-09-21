@@ -135,7 +135,6 @@ typedef void (*PGM_LogOutputCallback)(char const* data, PGM_Idx size, void* user
  * For #PGM_text_logger: delivers timestamped log lines.
  * For #PGM_benchmark_logger: delivers one line per logged event in the format
  *   EVENT_CODE<TAB>VALUE
- * For #PGM_do_nothing_logger: delivers an empty buffer (size 0).
  *
  * @param handle     The handle used to report errors.
  * @param logger     The logger whose output to retrieve.
@@ -158,8 +157,6 @@ PGM_API void PGM_unregister_all_loggers(PGM_Handle* handle);
 
 /**
  * @brief Clear the accumulated output of a logger.
- *
- * For #PGM_do_nothing_logger this is a no-op.
  *
  * @param handle The handle used to report errors.
  * @param logger The logger to clear.

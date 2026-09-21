@@ -175,27 +175,6 @@ TEST_CASE("Logger - invalid type returns error") {
     CHECK(PGM_error_code(g.h) == PGM_regular_error);
 }
 
-TEST_CASE("Logger - do-nothing logger produces no output and clear is a no-op") {
-    HandleGuard const g;
-    LoggerGuard const lg{g.h, PGM_do_nothing_logger};
-
-    int callback_calls = 0;
-    PGM_logger_get_output(
-        g.h, lg.l,
-        [](char const* /*data*/, PGM_Idx size, auto ctx) {
-            ++(*static_cast<int*>(ctx));
-            CHECK(size == 0);
-        },
-        &callback_calls);
-    CHECK(PGM_error_code(g.h) == PGM_no_error);
-    // The callback must be invoked exactly once, even though the output is empty.
-    CHECK(callback_calls == 1);
-
-    PGM_logger_clear(g.h, lg.l);
-    CHECK(PGM_error_code(g.h) == PGM_no_error);
-    CHECK(get_output(g.h, lg.l).empty());
-}
-
 TEST_CASE("Logger - get_output with null callback returns a regular error") {
     HandleGuard const g;
     LoggerGuard const lg{g.h, PGM_text_logger};
