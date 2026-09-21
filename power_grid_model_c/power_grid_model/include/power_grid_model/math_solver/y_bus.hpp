@@ -304,14 +304,24 @@ template <symmetry_tag sym> class YBus {
     class SolverLinks {
       public:
         SolverLinks() = default;
-        SolverLinks(SolverLinks const& /*other*/) {}
-        SolverLinks& operator=(SolverLinks const& /*other*/) {
+        SolverLinks(SolverLinks const& /*other*/) {
+            // Copy constructor drops the callbacks to avoid notifying solvers of another instance.
+        }
+        SolverLinks(SolverLinks&& other) noexcept : callbacks_{std::move(other.callbacks_)} {}
+        SolverLinks& operator=(SolverLinks const& other) {
+            if (this != &other) {
+                // Copy assignment drops the callbacks to avoid notifying solvers of another instance.
+            }
             callbacks_.clear();
             return *this;
         }
-        SolverLinks(SolverLinks&&) noexcept = default;
-        SolverLinks& operator=(SolverLinks&&) noexcept = default;
-        ~SolverLinks() = default;
+        SolverLinks& operator=(SolverLinks&& other) noexcept {
+            if (this != &other) {
+                callbacks_ = std::move(other.callbacks_);
+            }
+            return *this;
+        };
+        ~SolverLinks() { callbacks_.clear(); };
 
         void add(ParamChangedCallback callback) { callbacks_.push_back(std::move(callback)); }
         void notify(bool param_changed) const {
