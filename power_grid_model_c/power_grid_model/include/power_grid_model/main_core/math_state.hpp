@@ -11,6 +11,7 @@
 #include "../math_solver/y_bus.hpp"
 
 #include <cassert>
+#include <functional>
 #include <vector>
 
 namespace power_grid_model::main_core {
@@ -20,6 +21,38 @@ struct MathState {
     std::vector<YBus<asymmetric_t>> y_bus_vec_asym;
     std::vector<MathSolverProxy<symmetric_t>> math_solvers_sym;
     std::vector<MathSolverProxy<asymmetric_t>> math_solvers_asym;
+
+    MathState() = default;
+    MathState(MathState const& other)
+        : y_bus_vec_sym{other.y_bus_vec_sym},
+          y_bus_vec_asym{other.y_bus_vec_asym},
+          math_solvers_sym{other.math_solvers_sym},
+          math_solvers_asym{other.math_solvers_asym} {
+        // Copy-constructing a Y-bus drops its (instance-local) parameter-change callbacks; re-link each copied Y-bus to
+        // its own copied solver so that the copy contains exactly and only callbacks to the new solvers.
+        link_solvers(y_bus_vec_sym, math_solvers_sym);
+        link_solvers(y_bus_vec_asym, math_solvers_asym);
+    }
+    MathState& operator=(MathState const& other) {
+        if (this != &other) {
+            // copy-and-move: the copy constructor performs the re-linking; the move preserves element addresses
+            *this = MathState{other};
+        }
+        return *this;
+    }
+    MathState(MathState&&) noexcept = default;
+    MathState& operator=(MathState&&) noexcept = default;
+    ~MathState() = default;
+
+    // register a parameter-change callback from each Y-bus to its corresponding solver
+    template <symmetry_tag sym>
+    static void link_solvers(std::vector<YBus<sym>>& y_bus_vec, std::vector<MathSolverProxy<sym>>& solvers) {
+        assert(y_bus_vec.size() == solvers.size());
+        for (Idx idx = 0; idx != std::ssize(y_bus_vec); ++idx) {
+            y_bus_vec[idx].register_parameters_changed_callback(
+                [solver = std::ref(solvers[idx])](bool changed) { solver.get().get().parameters_changed(changed); });
+        }
+    }
 };
 
 inline void clear(MathState& math_state) {

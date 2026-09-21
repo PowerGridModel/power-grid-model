@@ -300,19 +300,18 @@ template <symmetry_tag sym> class YBus {
       public:
         using std::unordered_map<Key, Value>::unordered_map; // inherit constructors
 
-        // The copy-constructor does not copy any elements, making it localized
+        // The copy-constructor does not copy any elements, making the callbacks local to each instance: a copied
+        // Y-bus must have its callbacks re-registered against the copied solvers (see main_core::MathState).
         LocalizedPersistentLookup(LocalizedPersistentLookup const& /*other*/) : std::unordered_map<Key, Value>{} {}
         LocalizedPersistentLookup(LocalizedPersistentLookup&& other) noexcept
             : std::unordered_map<Key, Value>{std::move(other)} {}
-        // The copy-assignment operator does not copy or change any elements, making it persistent
-        LocalizedPersistentLookup& operator=(LocalizedPersistentLookup const& other) {
-            if (this != &other) {
-                // do nothing; persists current state
-            }
-            return *this;
-        }
+        // The copy-assignment operator does not copy or change any elements, making it persistent: an in-place updated
+        // Y-bus keeps the callbacks it already holds.
+        LocalizedPersistentLookup& operator=(LocalizedPersistentLookup const& /*other*/) { return *this; }
         LocalizedPersistentLookup& operator=(LocalizedPersistentLookup&& other) noexcept {
             if (this != &other) {
+                // move the contents from the other map to this one; in this case, no persistence is required, as the
+                // original object is fully replaced
                 std::unordered_map<Key, Value>::operator=(std::move(other));
             }
             return *this;
@@ -414,6 +413,12 @@ template <symmetry_tag sym> class YBus {
         for (auto const& [idx_to_change, params] :
              std::views::zip(math_model_param_incrmt.source_param_to_change, math_model_param_incrmt.source_param)) {
             math_model_param_.source_param[idx_to_change] = params;
+        }
+
+        // source admittance is not part of the y_bus admittance entries but is folded into the solver matrix,
+        // so a source change must be signalled explicitly (update_admittance_entries only covers branch/shunt)
+        if (!std::ranges::empty(math_model_param_incrmt.source_param_to_change)) {
+            parameters_changed(true);
         }
 
         // process and update affected entries
