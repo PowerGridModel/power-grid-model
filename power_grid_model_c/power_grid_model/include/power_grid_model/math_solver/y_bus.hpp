@@ -319,7 +319,16 @@ template <symmetry_tag sym> class YBus {
           y_bus_entries_per_branch_{other.y_bus_entries_per_branch_},
           y_bus_entries_per_shunt_{other.y_bus_entries_per_shunt_},
           parameters_changed_callbacks_{/*do not register callbacks for the copied instance*/} {}
-    YBus(YBus&& other) noexcept = default;
+    YBus(YBus&& other) noexcept
+        : y_bus_struct_{std::move(other.y_bus_struct_)},
+          admittance_{std::move(other.admittance_)},
+          math_topology_{std::move(other.math_topology_)},
+          math_model_param_{std::move(other.math_model_param_)},
+          y_bus_entries_per_branch_{std::move(other.y_bus_entries_per_branch_)},
+          y_bus_entries_per_shunt_{std::move(other.y_bus_entries_per_shunt_)},
+          parameters_changed_callbacks_{
+              std::move(other.parameters_changed_callbacks_) // as usual
+          } {}
     YBus& operator=(YBus const& other) {
         if (this != &other) {
             y_bus_struct_ = other.y_bus_struct_;
@@ -332,7 +341,18 @@ template <symmetry_tag sym> class YBus {
         }
         return *this;
     }
-    YBus& operator=(YBus&& other) noexcept = default;
+    YBus& operator=(YBus&& other) noexcept {
+        if (this != &other) {
+            y_bus_struct_ = std::move(other.y_bus_struct_);
+            admittance_ = std::move(other.admittance_);
+            math_topology_ = std::move(other.math_topology_);
+            math_model_param_ = std::move(other.math_model_param_);
+            y_bus_entries_per_branch_ = std::move(other.y_bus_entries_per_branch_);
+            y_bus_entries_per_shunt_ = std::move(other.y_bus_entries_per_shunt_);
+            parameters_changed_callbacks_ = std::move(other.parameters_changed_callbacks_); // as usual
+        }
+        return *this;
+    }
     ~YBus() { parameters_changed_callbacks_.clear(); }
 
     // getter
