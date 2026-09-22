@@ -93,6 +93,21 @@ TEST_CASE("Test TextLogger") {
             report_checker_helper(report);
         }
 
+        SUBCASE("Preserve empty and special-character messages") {
+            using enum LogEvent;
+            std::string message{"quotes=\"' brackets=[]{} punctuation=!@#$%^&*()_+-=,./<>?| tab\tline\n"};
+            message.push_back('\0');
+            message += "after-null";
+
+            txt_logger.log(total, std::string_view{});
+            txt_logger.log(unknown, message);
+
+            auto const report = txt_logger.report();
+            CHECK(report.find(std::format("Tag:{}: \n", std::to_underlying(total))) != std::string_view::npos);
+            CHECK(report.find(std::format("Tag:{}: {}\n", std::to_underlying(unknown), message)) !=
+                  std::string_view::npos);
+        }
+
         SUBCASE("Clear report") {
             txt_logger.clear();
             auto clean_report = txt_logger.report();
