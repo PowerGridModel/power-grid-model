@@ -60,6 +60,7 @@ class MainModel {
             logger_ = other.logger_;
         }
     }
+    MainModel(MainModel const& other, MultiThreadedLogger& logger) : MainModel{other} { logger_ = logger; }
     MainModel& operator=(MainModel const& other) {
         if (this != &other) {
             impl_.reset();
@@ -85,6 +86,10 @@ class MainModel {
     }
 
     void set_logger(MultiThreadedLogger& logger) { logger_ = logger; }
+
+    bool logger_empty() const noexcept { return std::addressof(logger_.get()) == std::addressof(no_logger_); }
+
+    void reset_logger() noexcept { logger_ = no_logger_; }
 
     template <cache_type_c CacheType> void update_components(ConstDataset const& update_data) {
         impl().update_components<CacheType>(update_data.get_individual_scenario(0));
