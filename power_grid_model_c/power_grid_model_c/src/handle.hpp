@@ -8,6 +8,8 @@
 #define PGM_DLL_EXPORTS
 #endif
 
+#include "logger.hpp"
+
 #include "power_grid_model_c/basics.h"
 
 #include <power_grid_model/batch_parameter.hpp>
@@ -18,14 +20,6 @@
 #include <memory>
 #include <string_view>
 #include <vector>
-
-namespace power_grid_model::common::logging {
-class MultiThreadedLogger;
-} // namespace power_grid_model::common::logging
-
-namespace power_grid_model_c {
-using power_grid_model::common::logging::MultiThreadedLogger;
-} // namespace power_grid_model_c
 
 // context handle
 struct PGM_Handle {
@@ -44,7 +38,7 @@ struct PGM_Handle {
     [[no_unique_address]] power_grid_model::BatchParameter batch_parameter;
     // Loggers registered on this handle. Owned by the caller; the composite forwards to them.
     // Survives clear_error. Do not modify while a calculation is in progress.
-    std::unique_ptr<power_grid_model_c::MultiThreadedLogger> logger;
+    power_grid_model_c::HandleLogger logger;
 };
 
 namespace power_grid_model_c {

@@ -16,8 +16,6 @@
 #include <power_grid_model/common/calculation_info.hpp>
 #include <power_grid_model/common/composite_logging.hpp>
 #include <power_grid_model/common/exception.hpp>
-#include <power_grid_model/common/logging.hpp>
-#include <power_grid_model/common/multi_threaded_logging.hpp>
 #include <power_grid_model/common/text_logger.hpp>
 
 #include <memory>
@@ -40,17 +38,20 @@ using power_grid_model_c::safe_ptr;
 using power_grid_model_c::safe_ptr_get;
 
 using power_grid_model::common::logging::MultiThreadedCompositeLogger;
-using power_grid_model_c::MultiThreadedLogger;
+using power_grid_model_c::HandleLogger;
 } // namespace
 
 namespace power_grid_model_c {
-std::unique_ptr<MultiThreadedLogger> make_handle_logger() { return std::make_unique<MultiThreadedCompositeLogger>(); }
+[[nodiscard]] MultiThreadedLogger& get_logger(HandleLogger& handle_logger) { return safe_ptr_get(handle_logger.get()); }
 
+[[nodiscard]] HandleLogger make_handle_logger() {
+    return HandleLogger{create<MultiThreadedCompositeLogger>(), [](MultiThreadedLogger* logger) { destroy(logger); }};
+}
 } // namespace power_grid_model_c
 
 namespace {
-MultiThreadedCompositeLogger& extract_handle_logger(std::unique_ptr<MultiThreadedLogger>& logger) {
-    return static_cast<MultiThreadedCompositeLogger&>(*logger);
+MultiThreadedCompositeLogger& extract_handle_logger(HandleLogger& handle_logger) {
+    return dynamic_cast<MultiThreadedCompositeLogger&>(power_grid_model_c::get_logger(handle_logger));
 }
 
 PGM_Logger* make_logger(PGM_Idx type) {

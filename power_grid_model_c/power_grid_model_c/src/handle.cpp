@@ -10,14 +10,10 @@
 #include "handle.hpp"
 #include "input_sanitization.hpp"
 #include "logger.hpp"
-#include "logger_fwd.hpp"
 #include "safe_memory_handling.hpp"
-
-#include <power_grid_model/common/composite_logging.hpp>
 
 #include <algorithm>
 #include <iterator>
-#include <memory>
 
 namespace {
 using namespace power_grid_model;
