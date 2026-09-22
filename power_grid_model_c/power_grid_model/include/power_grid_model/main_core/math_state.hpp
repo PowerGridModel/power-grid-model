@@ -33,6 +33,12 @@ struct MathState {
         link_solvers(y_bus_vec_sym, math_solvers_sym);
         link_solvers(y_bus_vec_asym, math_solvers_asym);
     }
+    MathState(MathState&& other) noexcept
+        : // Move-construct each vector; the moved-from vectors are left in a valid but unspecified state
+          y_bus_vec_sym{std::move(other.y_bus_vec_sym)},
+          y_bus_vec_asym{std::move(other.y_bus_vec_asym)},
+          math_solvers_sym{std::move(other.math_solvers_sym)},
+          math_solvers_asym{std::move(other.math_solvers_asym)} {}
     MathState& operator=(MathState const& other) {
         if (this != &other) {
             // copy-and-move: the copy constructor performs the re-linking; the move preserves element addresses
@@ -40,8 +46,15 @@ struct MathState {
         }
         return *this;
     }
-    MathState(MathState&&) noexcept = default;            // NOSONAR(S3624) // false positive
-    MathState& operator=(MathState&&) noexcept = default; // NOSONAR(S3624) // false positive
+    MathState& operator=(MathState&& other) noexcept {
+        if (this != &other) {
+            y_bus_vec_sym = std::move(other.y_bus_vec_sym);
+            y_bus_vec_asym = std::move(other.y_bus_vec_asym);
+            math_solvers_sym = std::move(other.math_solvers_sym);
+            math_solvers_asym = std::move(other.math_solvers_asym);
+        }
+        return *this;
+    }
     ~MathState() { clear(*this); }
 
     // register a parameter-change callback from each Y-bus to its corresponding solver
