@@ -57,47 +57,13 @@ constexpr auto const input_json = R"json({
 
 // Minimal RAII wrappers so tests don't leak on CHECK failures.
 
-struct HandleGuard {
-    PGM_Handle* h = PGM_create_handle();
-    HandleGuard() = default;
-    HandleGuard(HandleGuard const&) = delete;
-    HandleGuard& operator=(HandleGuard const&) = delete;
-    HandleGuard(HandleGuard&& other) noexcept : h{std::exchange(other.h, nullptr)} {}
-    HandleGuard& operator=(HandleGuard&& other) noexcept {
-        if (this != &other) {
-            destroy();
-            h = std::exchange(other.h, nullptr);
-        }
-        return *this;
-    }
-    ~HandleGuard() { destroy(); }
-
-    void destroy() {
-        PGM_destroy_handle(h);
-        h = nullptr;
-    }
+struct HandleGuard : public std::unique_ptr<PGM_Handle, void (*)(PGM_Handle*)> {
+    HandleGuard() : std::unique_ptr<PGM_Handle, void (*)(PGM_Handle*)>(PGM_create_handle(), PGM_destroy_handle) {}
 };
 
-struct LoggerGuard {
-    PGM_Logger* l;
-    explicit LoggerGuard(PGM_Handle* handle, PGM_Idx type) : l{PGM_create_logger(handle, type)} {}
-    LoggerGuard(LoggerGuard const&) = delete;
-    LoggerGuard& operator=(LoggerGuard const&) = delete;
-    LoggerGuard(LoggerGuard&& other) noexcept : l{std::exchange(other.l, nullptr)} {}
-    LoggerGuard& operator=(LoggerGuard&& other) noexcept {
-        if (this != &other) {
-            if (l != nullptr) {
-                PGM_destroy_logger(l);
-            }
-            l = std::exchange(other.l, nullptr);
-        }
-        return *this;
-    }
-    ~LoggerGuard() {
-        if (l != nullptr) {
-            PGM_destroy_logger(l);
-        }
-    }
+struct LoggerGuard : public std::unique_ptr<PGM_Logger, void (*)(PGM_Logger*)> {
+    LoggerGuard(PGM_Handle* handle, PGM_Idx type)
+        : std::unique_ptr<PGM_Logger, void (*)(PGM_Logger*)>(PGM_create_logger(handle, type), PGM_destroy_logger) {}
 };
 
 // Run a minimal single-scenario power flow using the provided handle.
