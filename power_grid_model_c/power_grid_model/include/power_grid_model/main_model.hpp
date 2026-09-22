@@ -60,7 +60,7 @@ class MainModel {
             logger_ = other.logger_;
         }
     }
-    MainModel(MainModel const& other, MultiThreadedLogger& logger) : MainModel{other} { logger_ = logger; }
+    MainModel(MainModel other, MultiThreadedLogger& logger) : MainModel{std::move(other)} { logger_ = logger; }
     MainModel& operator=(MainModel const& other) {
         if (this != &other) {
             impl_.reset();
