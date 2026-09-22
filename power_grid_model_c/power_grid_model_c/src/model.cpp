@@ -44,7 +44,7 @@ using power_grid_model_c::safe_ptr_get;
 using power_grid_model_c::safe_ptr_maybe_nullptr;
 using power_grid_model_c::safe_str_view;
 
-auto& get_logger(PGM_Handle& handle) { return safe_ptr_get(handle.logger.get()); }
+auto& get_logger(PGM_Handle const& handle) { return safe_ptr_get(handle.logger.get()); }
 } // namespace
 
 // create model
