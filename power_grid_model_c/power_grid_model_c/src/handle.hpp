@@ -23,6 +23,10 @@ namespace power_grid_model::common::logging {
 class MultiThreadedLogger;
 } // namespace power_grid_model::common::logging
 
+namespace power_grid_model_c {
+using power_grid_model::common::logging::MultiThreadedLogger;
+} // namespace power_grid_model_c
+
 // context handle
 struct PGM_Handle {
     PGM_Handle();
@@ -40,13 +44,13 @@ struct PGM_Handle {
     [[no_unique_address]] power_grid_model::BatchParameter batch_parameter;
     // Loggers registered on this handle. Owned by the caller; the composite forwards to them.
     // Survives clear_error. Do not modify while a calculation is in progress.
-    std::unique_ptr<power_grid_model::common::logging::MultiThreadedLogger> composite_logger;
+    std::unique_ptr<power_grid_model_c::MultiThreadedLogger> logger;
 };
 
 namespace power_grid_model_c {
 inline void clear_error(PGM_Handle* handle) {
     if (handle != nullptr) {
-        // Intentionally reset only error-related fields; composite_logger is preserved.
+        // Intentionally reset only error-related fields; logger is preserved.
         handle->err_code = {PGM_no_error};
         handle->err_msg.clear();
         handle->failed_scenarios.clear();
