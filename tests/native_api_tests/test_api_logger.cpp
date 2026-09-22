@@ -22,9 +22,12 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
+#include <initializer_list>
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace {
 using power_grid_model_cpp::Buffer;
@@ -113,6 +116,29 @@ auto get_output(PGM_Handle* h, PGM_Logger* l) {
 // exact text equality (individual lines carry independent millisecond timestamps).
 std::ptrdiff_t count_lines(std::string const& text) { return std::ranges::count(text, '\n'); }
 
+void check_tag_presence(std::string const& output, std::initializer_list<int> tags, bool should_be_present) {
+    for (auto const tag : tags) {
+        auto marker = std::string{"Z] Tag:"};
+        marker += std::to_string(tag);
+        marker += ':';
+        CHECK_MESSAGE((output.find(marker) != std::string::npos) == should_be_present, marker);
+    }
+}
+
+void check_text_output(std::string const& output, bool is_batch) {
+    CHECK(output.starts_with('['));
+    CHECK(output.ends_with('\n'));
+
+    check_tag_presence(output, {2100, 2210, 2200, 2220, 2221, 2242, 2225, 2226, 2227, 2246, 3000}, true);
+    check_tag_presence(output, {-1, 0, 1000, 2222, 1300, 1400, 2231, 2223, 2224, 2244, 2232, 2235, 2248}, false);
+
+    if (is_batch) {
+        check_tag_presence(output, {64, 1200, 128, 1100, 1201}, true);
+    } else {
+        check_tag_presence(output, {64, 1200, 128, 1100, 1201}, false);
+    }
+}
+
 // Run a minimal single-scenario power flow using the C++ Model API.
 // Loggers registered on `model` (via Model::add_logger) will receive output from this call.
 void run_calculate_cpp(power_grid_model_cpp::Model& model) {
@@ -126,6 +152,24 @@ void run_calculate_cpp(power_grid_model_cpp::Model& model) {
     opt.set_symmetric(1);
 
     model.calculate(opt, output_ds);
+}
+
+void run_batch_calculate_cpp(power_grid_model_cpp::Model& model) {
+    std::vector<std::int8_t> const source_status{1, 0};
+    DatasetConst update_dataset{"update", true, 2};
+    update_dataset.add_buffer("source", 1, 2, nullptr, nullptr);
+    update_dataset.add_attribute_buffer("source", "status", source_status.data());
+
+    Buffer node_output{PGM_def_sym_output_node, 4};
+    node_output.set_nan();
+    DatasetMutable output_dataset{"sym_output", true, 2};
+    output_dataset.add_buffer("node", 2, 4, nullptr, node_output);
+
+    power_grid_model_cpp::Options opt{};
+    opt.set_calculation_type(PGM_power_flow);
+    opt.set_symmetric(1);
+
+    model.calculate(opt, output_dataset, update_dataset);
 }
 
 power_grid_model_cpp::Model make_cpp_model() {
@@ -399,14 +443,23 @@ TEST_CASE("CPP Logger - value construction / empty output before calculation") {
     CHECK(logger.get_output().empty());
 }
 
-TEST_CASE("CPP Logger - add_logger / calculate / get_output round trip") {
+TEST_CASE("CPP Logger - model calculations produce text output") {
     auto model = make_cpp_model();
     power_grid_model_cpp::Logger logger{PGM_text_logger};
 
     model.add_logger(logger);
-    run_calculate_cpp(model);
 
-    CHECK(!logger.get_output().empty());
+    SUBCASE("single calculation") {
+        run_calculate_cpp(model);
+        auto const output = logger.get_output();
+        check_text_output(output, false);
+    }
+
+    SUBCASE("batch calculation") {
+        run_batch_calculate_cpp(model);
+        auto const output = logger.get_output();
+        check_text_output(output, true);
+    }
 }
 
 TEST_CASE("CPP Logger - clear() empties output and keeps registration") {
