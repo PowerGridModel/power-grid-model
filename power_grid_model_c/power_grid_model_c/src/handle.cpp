@@ -9,6 +9,8 @@
 
 #include "handle.hpp"
 #include "input_sanitization.hpp"
+#include "logger.hpp"
+#include "logger_fwd.hpp"
 #include "safe_memory_handling.hpp"
 
 #include <power_grid_model/common/composite_logging.hpp>
@@ -28,8 +30,7 @@ using power_grid_model_c::destroy;
 constexpr char const* version = PGM_VERSION;
 } // namespace
 
-PGM_Handle::PGM_Handle()
-    : composite_logger{std::make_unique<power_grid_model::common::logging::MultiThreadedCompositeLogger>()} {}
+PGM_Handle::PGM_Handle() : logger{power_grid_model_c::make_handle_logger()} {}
 
 PGM_Handle::~PGM_Handle() noexcept = default;
 PGM_Handle::PGM_Handle(PGM_Handle&&) noexcept = default;

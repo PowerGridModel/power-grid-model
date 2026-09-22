@@ -375,7 +375,7 @@ TEST_CASE("Logger - destroying the handle while a logger is registered does not 
     run_calculate(h);
     CHECK(PGM_error_code(h) == PGM_no_error);
 
-    // Destroy the handle (and its composite_logger registrations) while the logger wrapper
+    // Destroy the handle (and its logger registrations) while the logger wrapper
     // is still alive. Must not crash; the logger wrapper itself remains usable afterwards.
     PGM_destroy_handle(h);
 
