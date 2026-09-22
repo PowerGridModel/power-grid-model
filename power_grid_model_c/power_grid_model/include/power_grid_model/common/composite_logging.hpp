@@ -20,12 +20,12 @@ class CompositeChildLogger : public Logger {
   public:
     explicit CompositeChildLogger(std::vector<std::unique_ptr<Logger>> children) : children_{std::move(children)} {}
 
+    using Logger::log;
+
     void log(LogEvent tag) override { log_all(tag); }
     void log(LogEvent tag, std::string_view message) override { log_all(tag, message); }
     void log(LogEvent tag, double value) override { log_all(tag, value); }
     void log(LogEvent tag, Idx value) override { log_all(tag, value); }
-
-    using Logger::log;
 
   private:
     std::vector<std::unique_ptr<Logger>> children_;
@@ -63,6 +63,9 @@ class MultiThreadedCompositeLogger : public MultiThreadedLogger {
         loggers_.push_back(std::move(logger));
     }
     void remove(MultiThreadedLogger const* logger) {
+        if (logger == nullptr) {
+            return; // defensively ignore null removals but it should be unreachable.
+        }
         if (auto it = std::ranges::find_if(loggers_, [&](auto const& existing) { return existing.get() == logger; });
             it != loggers_.end()) {
             loggers_.erase(it);
