@@ -53,14 +53,16 @@ struct MathState {
                 [solver = std::ref(solvers[idx])](bool changed) { solver.get().get().parameters_changed(changed); });
         }
     }
+
+    static void clear(MathState& math_state) {
+        math_state.math_solvers_sym.clear();
+        math_state.math_solvers_asym.clear();
+        math_state.y_bus_vec_sym.clear();
+        math_state.y_bus_vec_asym.clear();
+    }
 };
 
-inline void clear(MathState& math_state) {
-    math_state.math_solvers_sym.clear();
-    math_state.math_solvers_asym.clear();
-    math_state.y_bus_vec_sym.clear();
-    math_state.y_bus_vec_asym.clear();
-}
+inline void clear(MathState& math_state) { MathState::clear(math_state); }
 
 template <symmetry_tag sym> inline std::vector<MathSolverProxy<sym>>& get_solvers(MathState& math_state) {
     if constexpr (is_symmetric_v<sym>) {
