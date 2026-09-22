@@ -95,6 +95,32 @@ void run_calculate(PGM_Handle* handle) {
     PGM_calculate(handle, model, opt.get(), output_ds.get(), nullptr);
     PGM_destroy_model(model);
 }
+
+void run_batch_calculate(PGM_Handle* handle) {
+    auto const owning_input = load_dataset(input_json);
+    DatasetConst const const_input{owning_input.dataset};
+
+    PGM_PowerGridModel* model = PGM_create_model(handle, 50.0, const_input.get());
+    REQUIRE(PGM_error_code(handle) == PGM_no_error);
+    REQUIRE(model != nullptr);
+
+    std::vector<std::int8_t> const source_status{1, 0};
+    DatasetConst update_dataset{"update", true, 2};
+    update_dataset.add_buffer("source", 1, 2, nullptr, nullptr);
+    update_dataset.add_attribute_buffer("source", "status", source_status.data());
+
+    Buffer node_output{PGM_def_sym_output_node, 4};
+    node_output.set_nan();
+    DatasetMutable output_dataset{"sym_output", true, 2};
+    output_dataset.add_buffer("node", 2, 4, nullptr, node_output);
+
+    power_grid_model_cpp::Options opt{};
+    PGM_set_calculation_type(handle, opt.get(), PGM_power_flow);
+    PGM_set_symmetric(handle, opt.get(), 1);
+
+    PGM_calculate(handle, model, opt.get(), output_dataset.get(), update_dataset.get());
+    PGM_destroy_model(model);
+}
 // Helper: call PGM_logger_get_output and collect the result into a std::string.
 auto get_output(PGM_Handle* h, PGM_Logger* l) {
     std::string result;
@@ -152,24 +178,6 @@ void run_calculate_cpp(power_grid_model_cpp::Model& model) {
     opt.set_symmetric(1);
 
     model.calculate(opt, output_ds);
-}
-
-void run_batch_calculate_cpp(power_grid_model_cpp::Model& model) {
-    std::vector<std::int8_t> const source_status{1, 0};
-    DatasetConst update_dataset{"update", true, 2};
-    update_dataset.add_buffer("source", 1, 2, nullptr, nullptr);
-    update_dataset.add_attribute_buffer("source", "status", source_status.data());
-
-    Buffer node_output{PGM_def_sym_output_node, 4};
-    node_output.set_nan();
-    DatasetMutable output_dataset{"sym_output", true, 2};
-    output_dataset.add_buffer("node", 2, 4, nullptr, node_output);
-
-    power_grid_model_cpp::Options opt{};
-    opt.set_calculation_type(PGM_power_flow);
-    opt.set_symmetric(1);
-
-    model.calculate(opt, output_dataset, update_dataset);
 }
 
 power_grid_model_cpp::Model make_cpp_model() {
@@ -233,6 +241,27 @@ TEST_CASE("Logger - text logger captures output after calculate") {
     CHECK(PGM_error_code(g.get()) == PGM_no_error);
     // Text logger should have written something; not asserting exact content but must be non-empty.
     CHECK(!out.empty());
+
+    PGM_unregister_logger(g.get(), lg.get());
+}
+
+TEST_CASE("Logger - model calculations produce text output") {
+    HandleGuard const g;
+    LoggerGuard const lg{g.get(), PGM_text_logger};
+
+    PGM_register_logger(g.get(), lg.get());
+
+    SUBCASE("single calculation") {
+        run_calculate(g.get());
+        CHECK(PGM_error_code(g.get()) == PGM_no_error);
+        check_text_output(get_output(g.get(), lg.get()), false);
+    }
+
+    SUBCASE("batch calculation") {
+        run_batch_calculate(g.get());
+        CHECK(PGM_error_code(g.get()) == PGM_no_error);
+        check_text_output(get_output(g.get(), lg.get()), true);
+    }
 
     PGM_unregister_logger(g.get(), lg.get());
 }
@@ -441,25 +470,6 @@ TEST_CASE("Logger - model logs through the handle passed to PGM_calculate, not t
 TEST_CASE("CPP Logger - value construction / empty output before calculation") {
     power_grid_model_cpp::Logger logger{PGM_text_logger};
     CHECK(logger.get_output().empty());
-}
-
-TEST_CASE("CPP Logger - model calculations produce text output") {
-    auto model = make_cpp_model();
-    power_grid_model_cpp::Logger logger{PGM_text_logger};
-
-    model.add_logger(logger);
-
-    SUBCASE("single calculation") {
-        run_calculate_cpp(model);
-        auto const output = logger.get_output();
-        check_text_output(output, false);
-    }
-
-    SUBCASE("batch calculation") {
-        run_batch_calculate_cpp(model);
-        auto const output = logger.get_output();
-        check_text_output(output, true);
-    }
 }
 
 TEST_CASE("CPP Logger - clear() empties output and keeps registration") {
