@@ -16,12 +16,8 @@
 
 namespace power_grid_model::main_core {
 
-struct MathState {
-    std::vector<YBus<symmetric_t>> y_bus_vec_sym;
-    std::vector<YBus<asymmetric_t>> y_bus_vec_asym;
-    std::vector<MathSolverProxy<symmetric_t>> math_solvers_sym;
-    std::vector<MathSolverProxy<asymmetric_t>> math_solvers_asym;
-
+class MathState {
+  public:
     MathState() = default;
     MathState(MathState const& other)
         : y_bus_vec_sym{other.y_bus_vec_sym},
@@ -73,24 +69,38 @@ struct MathState {
         math_state.y_bus_vec_sym.clear();
         math_state.y_bus_vec_asym.clear();
     }
+
+    template <symmetry_tag sym> static std::vector<MathSolverProxy<sym>>& get_solvers(MathState& math_state) {
+        if constexpr (is_symmetric_v<sym>) {
+            return math_state.math_solvers_sym;
+        } else {
+            return math_state.math_solvers_asym;
+        }
+    }
+
+    template <symmetry_tag sym> static auto& get_y_bus(MathState& math_state) {
+        if constexpr (is_symmetric_v<sym>) {
+            return math_state.y_bus_vec_sym;
+        } else {
+            return math_state.y_bus_vec_asym;
+        }
+    }
+
+  private:
+    std::vector<YBus<symmetric_t>> y_bus_vec_sym;
+    std::vector<YBus<asymmetric_t>> y_bus_vec_asym;
+    std::vector<MathSolverProxy<symmetric_t>> math_solvers_sym;
+    std::vector<MathSolverProxy<asymmetric_t>> math_solvers_asym;
 };
 
 inline void clear(MathState& math_state) { MathState::clear(math_state); }
 
 template <symmetry_tag sym> inline std::vector<MathSolverProxy<sym>>& get_solvers(MathState& math_state) {
-    if constexpr (is_symmetric_v<sym>) {
-        return math_state.math_solvers_sym;
-    } else {
-        return math_state.math_solvers_asym;
-    }
+    return MathState::get_solvers<sym>(math_state);
 }
 
 template <symmetry_tag sym> inline auto& get_y_bus(MathState& math_state) {
-    if constexpr (is_symmetric_v<sym>) {
-        return math_state.y_bus_vec_sym;
-    } else {
-        return math_state.y_bus_vec_asym;
-    }
+    return MathState::get_y_bus<sym>(math_state);
 }
 
 template <symmetry_tag sym>
