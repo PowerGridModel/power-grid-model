@@ -79,10 +79,10 @@ TEST_CASE("Test SolverPreparationContext") {
         SolverPreparationContext const context{};
 
         CHECK(context.math_solver_dispatcher == nullptr);
-        CHECK(context.math_state.y_bus_vec_sym.empty());
-        CHECK(context.math_state.y_bus_vec_asym.empty());
-        CHECK(context.math_state.math_solvers_sym.empty());
-        CHECK(context.math_state.math_solvers_asym.empty());
+        CHECK(get_y_bus<symmetric_t>(context.math_state).empty());
+        CHECK(get_y_bus<asymmetric_t>(context.math_state).empty());
+        CHECK(get_solvers<symmetric_t>(context.math_state).empty());
+        CHECK(get_solvers<asymmetric_t>(context.math_state).empty());
     }
 
     SUBCASE("Dummy construction") {
@@ -90,10 +90,10 @@ TEST_CASE("Test SolverPreparationContext") {
         SolverPreparationContext const context{.math_state = {}, .math_solver_dispatcher = &dispatcher};
 
         CHECK(context.math_solver_dispatcher == &dispatcher);
-        CHECK(context.math_state.y_bus_vec_sym.empty());
-        CHECK(context.math_state.y_bus_vec_asym.empty());
-        CHECK(context.math_state.math_solvers_sym.empty());
-        CHECK(context.math_state.math_solvers_asym.empty());
+        CHECK(get_y_bus<symmetric_t>(context.math_state).empty());
+        CHECK(get_y_bus<asymmetric_t>(context.math_state).empty());
+        CHECK(get_solvers<symmetric_t>(context.math_state).empty());
+        CHECK(get_solvers<asymmetric_t>(context.math_state).empty());
     }
 }
 

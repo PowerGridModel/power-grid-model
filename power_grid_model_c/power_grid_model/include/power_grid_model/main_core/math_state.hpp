@@ -11,7 +11,9 @@
 #include "../math_solver/y_bus.hpp"
 
 #include <cassert>
+#include <concepts>
 #include <functional>
+#include <type_traits>
 #include <vector>
 
 namespace power_grid_model::main_core {
@@ -70,7 +72,9 @@ class MathState {
         math_state.y_bus_vec_asym.clear();
     }
 
-    template <symmetry_tag sym> static std::vector<MathSolverProxy<sym>>& get_solvers(MathState& math_state) {
+    template <symmetry_tag sym, typename State>
+        requires std::same_as<std::remove_const_t<State>, MathState>
+    static auto& get_solvers(State& math_state) {
         if constexpr (is_symmetric_v<sym>) {
             return math_state.math_solvers_sym;
         } else {
@@ -78,7 +82,9 @@ class MathState {
         }
     }
 
-    template <symmetry_tag sym> static auto& get_y_bus(MathState& math_state) {
+    template <symmetry_tag sym, typename State>
+        requires std::same_as<std::remove_const_t<State>, MathState>
+    static auto& get_y_bus(State& math_state) {
         if constexpr (is_symmetric_v<sym>) {
             return math_state.y_bus_vec_sym;
         } else {
@@ -95,11 +101,15 @@ class MathState {
 
 inline void clear(MathState& math_state) { MathState::clear(math_state); }
 
-template <symmetry_tag sym> inline std::vector<MathSolverProxy<sym>>& get_solvers(MathState& math_state) {
+template <symmetry_tag sym, typename State>
+    requires std::same_as<std::remove_const_t<State>, MathState>
+inline auto& get_solvers(State& math_state) {
     return MathState::get_solvers<sym>(math_state);
 }
 
-template <symmetry_tag sym> inline auto& get_y_bus(MathState& math_state) {
+template <symmetry_tag sym, typename State>
+    requires std::same_as<std::remove_const_t<State>, MathState>
+inline auto& get_y_bus(State& math_state) {
     return MathState::get_y_bus<sym>(math_state);
 }
 
