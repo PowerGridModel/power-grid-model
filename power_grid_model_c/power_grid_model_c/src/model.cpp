@@ -366,7 +366,7 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
         [handle, model, opt, output_dataset, batch_dataset] {
             auto& cpp_model = safe_ptr_get(cast_to_cpp(model));
             // Log to the handle passed to this call, not the handle the model was created with.
-            ScopedModuleLogger logger_guard{cpp_model, get_logger(safe_ptr_get(handle).logger)};
+            ScopedModuleLogger const logger_guard{cpp_model, get_logger(safe_ptr_get(handle).logger)};
             calculate_impl(cpp_model, safe_ptr_get(opt), safe_ptr_get(cast_to_cpp(output_dataset)),
                            safe_ptr_maybe_nullptr(cast_to_cpp(batch_dataset)));
         },
