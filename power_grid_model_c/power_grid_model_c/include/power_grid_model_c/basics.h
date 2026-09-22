@@ -147,6 +147,8 @@ typedef struct PGM_DatasetInfo PGM_DatasetInfo;
  * A logger captures diagnostic output (text or benchmark timings) produced during calculations.
  * Loggers are created with PGM_create_logger(), registered to a handle with PGM_register_logger(),
  * and must be destroyed with PGM_destroy_logger() after unregistering with PGM_unregister_logger().
+ * Do not register the same logger to handles that are used concurrently by different user threads unless synchronized
+ * externally.
  */
 typedef struct PGM_Logger PGM_Logger;
 

@@ -38,6 +38,11 @@
  *   - Unregistering a logger that is not registered is a no-op.
  *
  * Multiple loggers of different types may be registered to the same handle simultaneously.
+ *
+ * Threading:
+ *   - A PGM_Handle is confined to the user thread that owns it. Use a separate handle for each
+ *     user thread that calls the C API concurrently.
+ *   - Usage of the logger across multiple user threads is not safe unless externally synchronized.
  */
 
 #pragma once
@@ -78,6 +83,9 @@ PGM_API void PGM_destroy_logger(PGM_Logger* logger);
  *
  * Multiple loggers of different types may be registered simultaneously.
  * Registering the same logger instance twice to the same handle is a no-op (idempotent).
+ *
+ * @warning Do not register the same logger instance to handles that are used concurrently by
+ *          different user threads. Use a separate logger for each concurrently used handle.
  *
  * @param handle The handle to register to.
  * @param logger The logger to register.
