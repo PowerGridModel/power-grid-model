@@ -20,7 +20,7 @@
 #include <vector>
 
 namespace power_grid_model::common::logging {
-class MultiThreadedCompositeLogger;
+class MultiThreadedLogger;
 } // namespace power_grid_model::common::logging
 
 // context handle
@@ -40,7 +40,7 @@ struct PGM_Handle {
     [[no_unique_address]] power_grid_model::BatchParameter batch_parameter;
     // Loggers registered on this handle. Owned by the caller; the composite forwards to them.
     // Survives clear_error. Do not modify while a calculation is in progress.
-    std::unique_ptr<power_grid_model::common::logging::MultiThreadedCompositeLogger> composite_logger;
+    std::unique_ptr<power_grid_model::common::logging::MultiThreadedLogger> composite_logger;
 };
 
 namespace power_grid_model_c {

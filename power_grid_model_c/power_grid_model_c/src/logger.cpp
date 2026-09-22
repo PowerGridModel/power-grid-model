@@ -13,6 +13,8 @@
 
 #include <power_grid_model/common/composite_logging.hpp>
 
+#include <memory>
+
 namespace {
 using power_grid_model_c::call_with_catch;
 using power_grid_model_c::destroy;
@@ -21,6 +23,13 @@ using power_grid_model_c::logger_get_output;
 using power_grid_model_c::make_logger;
 using power_grid_model_c::safe_ptr;
 using power_grid_model_c::safe_ptr_get;
+
+using power_grid_model::common::logging::MultiThreadedCompositeLogger;
+using power_grid_model::common::logging::MultiThreadedLogger;
+
+MultiThreadedCompositeLogger& to_composite_logger(std::unique_ptr<MultiThreadedLogger>& composite_logger) {
+    return *dynamic_cast<MultiThreadedCompositeLogger*>(composite_logger.get());
+}
 } // namespace
 
 PGM_Logger* PGM_create_logger(PGM_Handle* handle, PGM_Idx logger_type) {
@@ -30,17 +39,19 @@ PGM_Logger* PGM_create_logger(PGM_Handle* handle, PGM_Idx logger_type) {
 void PGM_destroy_logger(PGM_Logger* logger) { destroy(logger); }
 
 void PGM_register_logger(PGM_Handle* handle, PGM_Logger* logger) {
-    call_with_catch(handle,
-                    [handle, logger] { safe_ptr_get(handle).composite_logger->add(safe_ptr_get(logger).logger); });
+    call_with_catch(handle, [handle, logger] {
+        to_composite_logger(safe_ptr_get(handle).composite_logger).add(safe_ptr_get(logger).logger);
+    });
 }
 
 void PGM_unregister_logger(PGM_Handle* handle, PGM_Logger* logger) {
-    call_with_catch(
-        handle, [handle, logger] { safe_ptr_get(handle).composite_logger->remove(safe_ptr_get(logger).logger.get()); });
+    call_with_catch(handle, [handle, logger] {
+        to_composite_logger(safe_ptr_get(handle).composite_logger).remove(safe_ptr_get(logger).logger.get());
+    });
 }
 
 void PGM_unregister_all_loggers(PGM_Handle* handle) {
-    call_with_catch(handle, [handle] { safe_ptr_get(handle).composite_logger->reset(); });
+    call_with_catch(handle, [handle] { to_composite_logger(safe_ptr_get(handle).composite_logger).reset(); });
 }
 
 void PGM_logger_get_output(PGM_Handle* handle, PGM_Logger* logger, PGM_LogOutputCallback callback, // NOSONAR(S5205)
