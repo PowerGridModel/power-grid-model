@@ -40,8 +40,8 @@ struct MathState {
         }
         return *this;
     }
-    MathState(MathState&&) noexcept = default;
-    MathState& operator=(MathState&&) noexcept = default;
+    MathState(MathState&&) noexcept = default;            // NOSONAR(S3624) // false positive
+    MathState& operator=(MathState&&) noexcept = default; // NOSONAR(S3624) // false positive
     ~MathState() { clear(*this); }
 
     // register a parameter-change callback from each Y-bus to its corresponding solver
