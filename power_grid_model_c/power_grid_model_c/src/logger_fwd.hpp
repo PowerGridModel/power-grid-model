@@ -8,8 +8,6 @@
 #define PGM_DLL_EXPORTS
 #endif
 
-#include "handle.hpp"
-
 #include <memory>
 
 namespace power_grid_model::common::logging {
