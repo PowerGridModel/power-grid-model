@@ -220,6 +220,33 @@ TEST_CASE("Logger - unregister stops subsequent output") {
     CHECK(get_output(g.get(), lg.get()).empty());
 }
 
+TEST_CASE("Logger - unregistering and registering again restores output without duplication") {
+    HandleGuard const g;
+    LoggerGuard const lg{g.get(), PGM_text_logger};
+
+    PGM_register_logger(g.get(), lg.get());
+    run_calculate(g.get());
+    CHECK(PGM_error_code(g.get()) == PGM_no_error);
+    std::string const first_output = get_output(g.get(), lg.get());
+    CHECK(!first_output.empty());
+
+    PGM_logger_clear(g.get(), lg.get());
+    CHECK(PGM_error_code(g.get()) == PGM_no_error);
+    PGM_unregister_logger(g.get(), lg.get());
+    CHECK(PGM_error_code(g.get()) == PGM_no_error);
+
+    PGM_register_logger(g.get(), lg.get());
+    CHECK(PGM_error_code(g.get()) == PGM_no_error);
+    run_calculate(g.get());
+    CHECK(PGM_error_code(g.get()) == PGM_no_error);
+
+    auto const second_output = get_output(g.get(), lg.get());
+    CHECK(!second_output.empty());
+    CHECK(count_lines(second_output) == count_lines(first_output));
+
+    PGM_unregister_logger(g.get(), lg.get());
+}
+
 TEST_CASE("Logger - unregister non-registered logger is no-op") {
     HandleGuard const g;
     LoggerGuard const lg{g.get(), PGM_text_logger};
@@ -479,6 +506,9 @@ TEST_CASE("CPP Logger - clear() empties output and keeps registration") {
     model.add_logger(logger);
     run_calculate_cpp(model);
     CHECK(!logger.get_output().empty());
+
+    logger.clear();
+    CHECK(logger.get_output().empty());
 
     logger.clear();
     CHECK(logger.get_output().empty());
