@@ -98,8 +98,10 @@ PGM_API void PGM_unregister_logger(PGM_Handle* handle, PGM_Logger* logger);
  * @brief Callback type for receiving logger output.
  *
  * Called exactly once by PGM_logger_get_output().
- * The @p data pointer and @p size describe the log content and are valid only
- * for the duration of the callback. Do not store @p data beyond the callback.
+ * The @p data pointer and @p size describe the log content and are valid only for the duration of the callback.
+ * The behavior is undefined if the @p data pointer is accessed outside the callback.
+ *
+ * The behavior is undefined if the callback throws an exception (unwinding across the C ABI boundary is undefined).
  *
  * @param data  Pointer to the log content. Not null-terminated; always use @p size
  *              to determine the buffer length. Never pass @p data to functions that
@@ -131,6 +133,15 @@ typedef void (*PGM_LogOutputCallback)(char const* data, PGM_Idx size, void* user
  *
  * The callback is called exactly once, synchronously, before this function returns.
  * The data pointer passed to the callback is valid only for the duration of that call.
+ *
+ * The behavior is undefined if
+ * - the @p callback is not a valid callback with the correct signature; or
+ * - the @p data pointer is accessed outside the callback; or
+ * - the @p user_data pointer does not point to a valid context for the callback; or
+ * - the callback throws an exception (unwinding across the C ABI boundary is undefined)
+ *
+ * If you supply a NULL callback or if the internal logger encounters an error while retrieving the output, an error
+ * will be raised. Use PGM_error_code() and PGM_error_message() to check the error.
  *
  * For #PGM_text_logger: delivers timestamped log lines.
  * For #PGM_benchmark_logger: delivers one line per logged event in the format
