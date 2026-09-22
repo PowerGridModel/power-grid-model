@@ -9,5 +9,5 @@
 #include <memory>
 
 namespace power_grid_model_c {
-std::unique_ptr<MultiThreadedLogger> make_handle_logger();
+[[nodiscard]] HandleLogger make_handle_logger();
 } // namespace power_grid_model_c
