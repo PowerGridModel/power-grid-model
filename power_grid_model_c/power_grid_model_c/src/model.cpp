@@ -63,9 +63,10 @@ PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency
 
 // update model
 void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_ConstDataset const* update_dataset) noexcept {
-    call_with_catch(handle, [model, update_dataset] {
-        safe_ptr_get(cast_to_cpp(model))
-            .update_components<permanent_update_t>(safe_ptr_get(cast_to_cpp(update_dataset)));
+    call_with_catch(handle, [handle, model, update_dataset] {
+        auto& cpp_model = safe_ptr_get(cast_to_cpp(model));
+        ScopedModuleLogger const logger_guard{cpp_model, get_logger(safe_ptr_get(handle).logger)};
+        cpp_model.update_components<permanent_update_t>(safe_ptr_get(cast_to_cpp(update_dataset)));
     });
 }
 
