@@ -11,6 +11,7 @@
 
 #include <doctest/doctest.h>
 
+#include <string>
 #include <thread>
 #include <utility>
 #include <vector>
@@ -187,6 +188,38 @@ TEST_CASE("Test MultiThreadedCalculationInfo") {
         multi_threaded_info.clear();
         clean_report = multi_threaded_info.report();
         CHECK(clean_report.empty());
+    }
+
+    SUBCASE("Get output snapshot") {
+        logger_helper(multi_threaded_info);
+        auto const expected_output = multi_threaded_info.string_report();
+        std::string output;
+
+        // Re-enter from the callback to verify get_output releases its mutex before
+        // invoking user code and that the callback receives a pre-clear snapshot.
+        multi_threaded_info.get_output([&output, &multi_threaded_info](std::string_view snapshot) {
+            output = snapshot;
+            multi_threaded_info.clear();
+        });
+
+        CHECK(output == expected_output);
+        CHECK(multi_threaded_info.report().empty());
+    }
+
+    SUBCASE("Get output snapshot - multi threaded") {
+        run_parallel_jobs(arbitrary_n_threads, single_thread_job);
+        auto const expected_output = multi_threaded_info.string_report();
+        std::string output;
+
+        // Re-enter from the callback to verify get_output releases its mutex before
+        // invoking user code and that the callback receives a pre-clear snapshot.
+        multi_threaded_info.get_output([&output, &multi_threaded_info](std::string_view snapshot) {
+            output = snapshot;
+            multi_threaded_info.clear();
+        });
+
+        CHECK(output == expected_output);
+        CHECK(multi_threaded_info.report().empty());
     }
 
     SUBCASE("Getters of underlying CalculationInfo") {
