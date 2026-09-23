@@ -19,5 +19,5 @@ using power_grid_model::common::logging::MultiThreadedLogger;
 
 using HandleLogger = std::unique_ptr<MultiThreadedLogger, void (*)(MultiThreadedLogger*)>;
 
-[[nodiscard]] MultiThreadedLogger& get_logger(HandleLogger& handle_logger);
+[[nodiscard]] MultiThreadedLogger& get_logger(HandleLogger const& handle_logger);
 } // namespace power_grid_model_c

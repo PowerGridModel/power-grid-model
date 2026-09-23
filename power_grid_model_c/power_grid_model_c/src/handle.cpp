@@ -26,7 +26,7 @@ using power_grid_model_c::destroy;
 constexpr char const* version = PGM_VERSION;
 } // namespace
 
-PGM_Handle::PGM_Handle() : logger{power_grid_model_c::make_handle_logger()} {}
+PGM_Handle::PGM_Handle() = default;
 
 PGM_Handle::~PGM_Handle() noexcept = default;
 PGM_Handle::PGM_Handle(PGM_Handle&&) noexcept = default;

@@ -62,12 +62,12 @@ constexpr auto const input_json = R"json({
 // Minimal RAII wrappers so tests don't leak on CHECK failures.
 
 struct HandleGuard : public std::unique_ptr<PGM_Handle, void (*)(PGM_Handle*)> {
-    HandleGuard() : std::unique_ptr<PGM_Handle, void (*)(PGM_Handle*)>(PGM_create_handle(), PGM_destroy_handle) {}
+    HandleGuard() : std::unique_ptr<PGM_Handle, void (*)(PGM_Handle*)>(PGM_create_handle(), &PGM_destroy_handle) {}
 };
 
 struct LoggerGuard : public std::unique_ptr<PGM_Logger, void (*)(PGM_Logger*)> {
     LoggerGuard(PGM_Handle* handle, PGM_Idx type)
-        : std::unique_ptr<PGM_Logger, void (*)(PGM_Logger*)>(PGM_create_logger(handle, type), PGM_destroy_logger) {}
+        : std::unique_ptr<PGM_Logger, void (*)(PGM_Logger*)>(PGM_create_logger(handle, type), &PGM_destroy_logger) {}
 };
 
 // Run a minimal single-scenario power flow using the provided handle.
@@ -140,7 +140,7 @@ auto get_output(PGM_Handle* h, PGM_Logger* l) {
 
 // Count newline-terminated lines, used to compare logger output volume without relying on
 // exact text equality (individual lines carry independent millisecond timestamps).
-std::ptrdiff_t count_lines(std::string const& text) { return std::ranges::count(text, '\n'); }
+std::ptrdiff_t count_lines(std::string_view text) { return std::ranges::count(text, '\n'); }
 
 void check_tag_presence(std::string const& output, std::initializer_list<int> tags, bool should_be_present) {
     for (auto const tag : tags) {
