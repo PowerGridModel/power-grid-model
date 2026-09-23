@@ -42,7 +42,9 @@ using power_grid_model_c::HandleLogger;
 } // namespace
 
 namespace power_grid_model_c {
-[[nodiscard]] MultiThreadedLogger& get_logger(HandleLogger& handle_logger) { return safe_ptr_get(handle_logger.get()); }
+[[nodiscard]] MultiThreadedLogger& get_logger(HandleLogger const& handle_logger) {
+    return safe_ptr_get(handle_logger.get());
+}
 
 [[nodiscard]] HandleLogger make_handle_logger() {
     return HandleLogger{create<MultiThreadedCompositeLogger>(), [](MultiThreadedLogger* logger) { destroy(logger); }};

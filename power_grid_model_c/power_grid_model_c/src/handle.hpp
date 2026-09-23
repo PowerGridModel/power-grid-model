@@ -38,7 +38,7 @@ struct PGM_Handle {
     [[no_unique_address]] power_grid_model::BatchParameter batch_parameter;
     // Loggers registered on this handle. Owned by the caller; the composite forwards to them.
     // Survives clear_error. Do not modify while a calculation is in progress.
-    power_grid_model_c::HandleLogger logger;
+    power_grid_model_c::HandleLogger logger{power_grid_model_c::make_handle_logger()};
 };
 
 namespace power_grid_model_c {

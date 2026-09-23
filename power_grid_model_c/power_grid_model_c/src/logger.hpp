@@ -13,31 +13,31 @@
 namespace power_grid_model_c {
 [[nodiscard]] HandleLogger make_handle_logger();
 
-template <typename Module, typename Logger>
-concept logger_scoped_module_c = requires(Module& module, Logger& logger) {
-    module.set_logger(logger);
-    { module.reset_logger() } noexcept;
-    { module.logger_empty() } noexcept;
+template <typename PGMModule, typename Logger>
+concept logger_scoped_module_c = requires(PGMModule& pgm_module, Logger& logger) {
+    pgm_module.set_logger(logger);
+    { pgm_module.reset_logger() } noexcept;
+    { pgm_module.logger_empty() } noexcept;
 };
 
-template <typename Module, typename Logger>
-    requires logger_scoped_module_c<Module, Logger>
+template <typename PGMModule, typename Logger>
+    requires logger_scoped_module_c<PGMModule, Logger>
 class ScopedModuleLogger {
   public:
-    ScopedModuleLogger(Module& module, Logger& logger) : module_{module}, logger_{logger} {
-        if (!module_.logger_empty()) {
+    ScopedModuleLogger(PGMModule& pgm_module, Logger& logger) : pgm_module_{pgm_module}, logger_{logger} {
+        if (!pgm_module_.logger_empty()) {
             throw power_grid_model::UnreachableHit{"ScopedModuleLogger", "module has no logger set"};
         }
-        module_.set_logger(logger_);
+        pgm_module_.set_logger(logger_);
     }
     ScopedModuleLogger(ScopedModuleLogger const&) = delete;
     ScopedModuleLogger& operator=(ScopedModuleLogger const&) = delete;
     ScopedModuleLogger(ScopedModuleLogger&&) = delete;
     ScopedModuleLogger& operator=(ScopedModuleLogger&&) = delete;
-    ~ScopedModuleLogger() noexcept { module_.reset_logger(); }
+    ~ScopedModuleLogger() noexcept { pgm_module_.reset_logger(); }
 
   private:
-    Module& module_;
+    PGMModule& pgm_module_;
     Logger& logger_;
 };
 } // namespace power_grid_model_c
