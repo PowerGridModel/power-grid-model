@@ -22,21 +22,21 @@ class MathState {
   public:
     MathState() = default;
     MathState(MathState const& other)
-        : y_bus_vec_sym{other.y_bus_vec_sym},
-          y_bus_vec_asym{other.y_bus_vec_asym},
-          math_solvers_sym{other.math_solvers_sym},
-          math_solvers_asym{other.math_solvers_asym} {
+        : y_bus_vec_sym_{other.y_bus_vec_sym_},
+          y_bus_vec_asym_{other.y_bus_vec_asym_},
+          math_solvers_sym_{other.math_solvers_sym_},
+          math_solvers_asym_{other.math_solvers_asym_} {
         // Copy-constructing a Y-bus drops its (instance-local) parameter-change callbacks; re-link each copied Y-bus to
         // its own copied solver(s) so that the copy contains exactly and only callbacks to the new solvers.
-        link_solvers(y_bus_vec_sym, math_solvers_sym);
-        link_solvers(y_bus_vec_asym, math_solvers_asym);
+        link_solvers(y_bus_vec_sym_, math_solvers_sym_);
+        link_solvers(y_bus_vec_asym_, math_solvers_asym_);
     }
     MathState(MathState&& other) noexcept
         : // Move-construct each vector; the moved-from vectors are left in a valid but unspecified state
-          y_bus_vec_sym{std::move(other.y_bus_vec_sym)},
-          y_bus_vec_asym{std::move(other.y_bus_vec_asym)},
-          math_solvers_sym{std::move(other.math_solvers_sym)},
-          math_solvers_asym{std::move(other.math_solvers_asym)} {}
+          y_bus_vec_sym_{std::move(other.y_bus_vec_sym_)},
+          y_bus_vec_asym_{std::move(other.y_bus_vec_asym_)},
+          math_solvers_sym_{std::move(other.math_solvers_sym_)},
+          math_solvers_asym_{std::move(other.math_solvers_asym_)} {}
     MathState& operator=(MathState const& other) {
         if (this != &other) {
             // copy-and-move: the copy constructor performs the re-linking; the move preserves element addresses
@@ -46,71 +46,70 @@ class MathState {
     }
     MathState& operator=(MathState&& other) noexcept {
         if (this != &other) {
-            y_bus_vec_sym = std::move(other.y_bus_vec_sym);
-            y_bus_vec_asym = std::move(other.y_bus_vec_asym);
-            math_solvers_sym = std::move(other.math_solvers_sym);
-            math_solvers_asym = std::move(other.math_solvers_asym);
+            y_bus_vec_sym_ = std::move(other.y_bus_vec_sym_);
+            y_bus_vec_asym_ = std::move(other.y_bus_vec_asym_);
+            math_solvers_sym_ = std::move(other.math_solvers_sym_);
+            math_solvers_asym_ = std::move(other.math_solvers_asym_);
         }
         return *this;
     }
-    ~MathState() { clear(*this); }
+    ~MathState() { clear(); }
 
     // register a parameter-change callback from each Y-bus to its corresponding solver
     template <symmetry_tag sym>
     static void link_solvers(std::vector<YBus<sym>>& y_bus_vec, std::vector<MathSolverProxy<sym>>& solvers) {
         assert(y_bus_vec.size() == solvers.size());
         for (Idx idx = 0; idx != std::ssize(y_bus_vec); ++idx) {
-            y_bus_vec[idx].add_parameters_changed_callback(
-                [solver = std::ref(solvers[idx])](bool changed) { solver.get().get().parameters_changed(changed); });
+            y_bus_vec[idx].add_parameters_changed_callback([solver = std::ref(solvers[idx])](bool changed) {
+                auto& solver_proxy = solver.get();
+                auto& underlying_solver = solver_proxy.get();
+                underlying_solver.parameters_changed(changed);
+            });
         }
     }
 
-    static void clear(MathState& math_state) {
-        math_state.math_solvers_sym.clear();
-        math_state.math_solvers_asym.clear();
-        math_state.y_bus_vec_sym.clear();
-        math_state.y_bus_vec_asym.clear();
+    void clear() {
+        math_solvers_sym_.clear();
+        math_solvers_asym_.clear();
+        y_bus_vec_sym_.clear();
+        y_bus_vec_asym_.clear();
     }
 
-    template <symmetry_tag sym, typename State>
-        requires std::same_as<std::remove_const_t<State>, MathState>
-    static auto& get_solvers(State& math_state) {
+    template <symmetry_tag sym> auto& get_solvers(this auto& math_state) {
         if constexpr (is_symmetric_v<sym>) {
-            return math_state.math_solvers_sym;
+            return math_state.math_solvers_sym_;
         } else {
-            return math_state.math_solvers_asym;
+            return math_state.math_solvers_asym_;
         }
     }
 
-    template <symmetry_tag sym, typename State>
-        requires std::same_as<std::remove_const_t<State>, MathState>
-    static auto& get_y_bus(State& math_state) {
+    template <symmetry_tag sym> auto& get_y_bus(this auto& math_state) {
         if constexpr (is_symmetric_v<sym>) {
-            return math_state.y_bus_vec_sym;
+            return math_state.y_bus_vec_sym_;
         } else {
-            return math_state.y_bus_vec_asym;
+            return math_state.y_bus_vec_asym_;
         }
     }
 
   private:
-    std::vector<YBus<symmetric_t>> y_bus_vec_sym;
-    std::vector<YBus<asymmetric_t>> y_bus_vec_asym;
-    std::vector<MathSolverProxy<symmetric_t>> math_solvers_sym;
-    std::vector<MathSolverProxy<asymmetric_t>> math_solvers_asym;
+    std::vector<YBus<symmetric_t>> y_bus_vec_sym_;
+    std::vector<YBus<asymmetric_t>> y_bus_vec_asym_;
+    std::vector<MathSolverProxy<symmetric_t>> math_solvers_sym_;
+    std::vector<MathSolverProxy<asymmetric_t>> math_solvers_asym_;
 };
 
-inline void clear(MathState& math_state) { MathState::clear(math_state); }
+inline void clear(MathState& math_state) { math_state.clear(); }
 
 template <symmetry_tag sym, typename State>
     requires std::same_as<std::remove_const_t<State>, MathState>
 inline auto& get_solvers(State& math_state) {
-    return MathState::get_solvers<sym>(math_state);
+    return math_state.template get_solvers<sym>();
 }
 
 template <symmetry_tag sym, typename State>
     requires std::same_as<std::remove_const_t<State>, MathState>
 inline auto& get_y_bus(State& math_state) {
-    return MathState::get_y_bus<sym>(math_state);
+    return math_state.template get_y_bus<sym>();
 }
 
 template <symmetry_tag sym>

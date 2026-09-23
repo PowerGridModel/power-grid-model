@@ -301,27 +301,28 @@ template <symmetry_tag sym> class YBus {
     // multiple solvers (e.g. when neither parameters nor topology changed, or when several solver types are run
     // consecutively). The callbacks are deliberately dropped on copy so a copied Y-bus does not notify another
     // instance's solvers; they are re-established afterwards (see main_core::MathState). Moving transfers them.
-    class SolverLinks {
+    class ParameterChangeSubscribers {
       public:
-        SolverLinks() = default;
-        SolverLinks(SolverLinks const& /*other*/) {
+        ParameterChangeSubscribers() = default;
+        ParameterChangeSubscribers(ParameterChangeSubscribers const& /*other*/) {
             // Copy constructor drops the callbacks to avoid notifying solvers of another instance.
         }
-        SolverLinks(SolverLinks&& other) noexcept : callbacks_{std::move(other.callbacks_)} {}
-        SolverLinks& operator=(SolverLinks const& other) {
+        ParameterChangeSubscribers(ParameterChangeSubscribers&& other) noexcept
+            : callbacks_{std::move(other.callbacks_)} {}
+        ParameterChangeSubscribers& operator=(ParameterChangeSubscribers const& other) {
             if (this != &other) {
                 // Copy assignment drops the callbacks to avoid notifying solvers of another instance.
             }
             callbacks_.clear();
             return *this;
         }
-        SolverLinks& operator=(SolverLinks&& other) noexcept {
+        ParameterChangeSubscribers& operator=(ParameterChangeSubscribers&& other) noexcept {
             if (this != &other) {
                 callbacks_ = std::move(other.callbacks_);
             }
             return *this;
         };
-        ~SolverLinks() { callbacks_.clear(); };
+        ~ParameterChangeSubscribers() { callbacks_.clear(); };
 
         void add(ParamChangedCallback callback) { callbacks_.push_back(std::move(callback)); }
         void notify(bool param_changed) const {
@@ -617,7 +618,7 @@ template <symmetry_tag sym> class YBus {
     std::vector<IdxVector> y_bus_entries_per_branch_;
     std::vector<IdxVector> y_bus_entries_per_shunt_;
 
-    SolverLinks parameters_changed_callbacks_;
+    ParameterChangeSubscribers parameters_changed_callbacks_;
 
     void parameters_changed(bool param_changed) const { parameters_changed_callbacks_.notify(param_changed); }
 };
