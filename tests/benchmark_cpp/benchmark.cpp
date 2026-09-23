@@ -590,14 +590,14 @@ int main(int /* argc */, char** /* argv */) {
                                .optimizer_type = automatic_tap_adjustment,
                                .optimizer_strategy = power_grid_model::OptimizerStrategy::global_maximum},
                               batch_size);
-    benchmarker.run_benchmark(option,
+    benchmarker.run_benchmark(option, // TODO(mgovers): local_minimum is not exposed as a public API yet
                               {.calculation_type = power_flow,
                                .calculation_symmetry = symmetric,
                                .calculation_method = newton_raphson,
                                .optimizer_type = automatic_tap_adjustment,
                                .optimizer_strategy = power_grid_model::OptimizerStrategy::local_minimum},
                               batch_size);
-    benchmarker.run_benchmark(option,
+    benchmarker.run_benchmark(option, // TODO(mgovers): local_minimum is not exposed as a public API yet
                               {.calculation_type = power_flow,
                                .calculation_symmetry = symmetric,
                                .calculation_method = newton_raphson,
