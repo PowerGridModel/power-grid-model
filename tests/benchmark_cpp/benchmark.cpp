@@ -7,12 +7,25 @@
 #include <power_grid_model/auxiliary/meta_data_gen.hpp>
 #include <power_grid_model/common/calculation_info.hpp>
 #include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/enum.hpp>
+#include <power_grid_model/common/exception.hpp>
+#include <power_grid_model/common/logging.hpp>
 #include <power_grid_model/common/timer.hpp>
 #include <power_grid_model/main_model.hpp>
+#include <power_grid_model/main_model_fwd.hpp>
 #include <power_grid_model/math_solver/math_solver.hpp>
+#include <power_grid_model/math_solver/math_solver_dispatch.hpp>
 
+#include <cstddef>
+#include <exception>
+#include <format>
 #include <iomanip>
 #include <iostream>
+#include <memory>
+#include <sstream>
+#include <string>
+#include <type_traits>
+#include <xstring>
 
 namespace power_grid_model::benchmark {
 namespace {
