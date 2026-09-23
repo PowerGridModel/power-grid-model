@@ -6,10 +6,12 @@
 
 #include <power_grid_model_cpp/dataset.hpp>
 #include <power_grid_model_cpp/logger.hpp>
+#include <power_grid_model_cpp/meta_data.hpp>
 #include <power_grid_model_cpp/model.hpp>
 #include <power_grid_model_cpp/options.hpp>
 
 #include <power_grid_model_c/basics.h>
+#include <power_grid_model_c/dataset_definitions.h>
 
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/enum.hpp>
@@ -29,7 +31,6 @@
 #include <memory>
 #include <sstream>
 #include <string>
-#include <string_view>
 #include <type_traits>
 
 namespace power_grid_model::benchmark {
@@ -37,6 +38,7 @@ namespace {
 using power_grid_model_cpp::DatasetConst;
 using power_grid_model_cpp::DatasetMutable;
 using power_grid_model_cpp::Logger;
+using power_grid_model_cpp::MetaData;
 using power_grid_model_cpp::Model;
 using power_grid_model_cpp::Options;
 
@@ -165,65 +167,103 @@ class ScopedTimer {
     std::chrono::steady_clock::time_point start_{std::chrono::steady_clock::now()};
 };
 
-template <typename OutputDataType> constexpr std::string_view output_dataset_name() {
+// the output components the fictional grid generator produces, per output dataset flavor
+struct OutputComponents {
+    PGM_MetaDataset const* dataset{};
+    PGM_MetaComponent const* node{};
+    PGM_MetaComponent const* transformer{};
+    PGM_MetaComponent const* line{};
+    PGM_MetaComponent const* source{};
+    PGM_MetaComponent const* sym_load{};
+    PGM_MetaComponent const* asym_load{};
+    PGM_MetaComponent const* shunt{};
+};
+
+template <typename OutputDataType> OutputComponents output_components() {
     if constexpr (std::same_as<OutputDataType, ShortCircuitOutputData>) {
-        return "sc_output";
+        return {.dataset = PGM_def_sc_output,
+                .node = PGM_def_sc_output_node,
+                .transformer = PGM_def_sc_output_transformer,
+                .line = PGM_def_sc_output_line,
+                .source = PGM_def_sc_output_source,
+                .sym_load = PGM_def_sc_output_sym_load,
+                .asym_load = PGM_def_sc_output_asym_load,
+                .shunt = PGM_def_sc_output_shunt};
     } else if constexpr (std::same_as<OutputDataType, OutputData<symmetric_t>>) {
-        return "sym_output";
+        return {.dataset = PGM_def_sym_output,
+                .node = PGM_def_sym_output_node,
+                .transformer = PGM_def_sym_output_transformer,
+                .line = PGM_def_sym_output_line,
+                .source = PGM_def_sym_output_source,
+                .sym_load = PGM_def_sym_output_sym_load,
+                .asym_load = PGM_def_sym_output_asym_load,
+                .shunt = PGM_def_sym_output_shunt};
     } else {
         static_assert(std::same_as<OutputDataType, OutputData<asymmetric_t>>);
-        return "asym_output";
+        return {.dataset = PGM_def_asym_output,
+                .node = PGM_def_asym_output_node,
+                .transformer = PGM_def_asym_output_transformer,
+                .line = PGM_def_asym_output_line,
+                .source = PGM_def_asym_output_source,
+                .sym_load = PGM_def_asym_output_sym_load,
+                .asym_load = PGM_def_asym_output_asym_load,
+                .shunt = PGM_def_asym_output_shunt};
     }
 }
 
 DatasetConst make_input_dataset(InputData const& input) {
-    DatasetConst dataset{"input", false, 1};
-    auto const add = [&dataset](std::string const& component, auto const& buffer) {
-        dataset.add_buffer(component, std::ssize(buffer), std::ssize(buffer), nullptr, buffer.data());
+    DatasetConst dataset{MetaData::dataset_name(PGM_def_input), false, 1};
+    auto const add = [&dataset](PGM_MetaComponent const* component, auto const& buffer) {
+        dataset.add_buffer(MetaData::component_name(component), std::ssize(buffer), std::ssize(buffer), nullptr,
+                           buffer.data());
     };
-    add("node", input.node);
-    add("transformer", input.transformer);
-    add("line", input.line);
-    add("source", input.source);
-    add("sym_load", input.sym_load);
-    add("asym_load", input.asym_load);
-    add("shunt", input.shunt);
-    add("sym_voltage_sensor", input.sym_voltage_sensor);
-    add("asym_voltage_sensor", input.asym_voltage_sensor);
-    add("sym_power_sensor", input.sym_power_sensor);
-    add("asym_power_sensor", input.asym_power_sensor);
-    add("fault", input.fault);
-    add("transformer_tap_regulator", input.transformer_tap_regulator);
+    add(PGM_def_input_node, input.node);
+    add(PGM_def_input_transformer, input.transformer);
+    add(PGM_def_input_line, input.line);
+    add(PGM_def_input_source, input.source);
+    add(PGM_def_input_sym_load, input.sym_load);
+    add(PGM_def_input_asym_load, input.asym_load);
+    add(PGM_def_input_shunt, input.shunt);
+    add(PGM_def_input_sym_voltage_sensor, input.sym_voltage_sensor);
+    add(PGM_def_input_asym_voltage_sensor, input.asym_voltage_sensor);
+    add(PGM_def_input_sym_power_sensor, input.sym_power_sensor);
+    add(PGM_def_input_asym_power_sensor, input.asym_power_sensor);
+    add(PGM_def_input_fault, input.fault);
+    add(PGM_def_input_transformer_tap_regulator, input.transformer_tap_regulator);
     return dataset;
 }
 
 template <typename OutputDataType> DatasetMutable make_output_dataset(OutputDataType& output) {
-    DatasetMutable dataset{std::string{output_dataset_name<OutputDataType>()}, true, output.batch_size};
-    auto const add = [&dataset, batch_size = output.batch_size](std::string const& component, auto& buffer) {
-        dataset.add_buffer(component, std::ssize(buffer) / batch_size, std::ssize(buffer), nullptr, buffer.data());
+    auto const components = output_components<OutputDataType>();
+    DatasetMutable dataset{MetaData::dataset_name(components.dataset), true, output.batch_size};
+    auto const add = [&dataset, batch_size = output.batch_size](PGM_MetaComponent const* component, auto& buffer) {
+        dataset.add_buffer(MetaData::component_name(component), std::ssize(buffer) / batch_size, std::ssize(buffer),
+                           nullptr, buffer.data());
     };
-    add("node", output.node);
-    add("transformer", output.transformer);
-    add("line", output.line);
-    add("source", output.source);
-    add("sym_load", output.sym_load);
-    add("asym_load", output.asym_load);
-    add("shunt", output.shunt);
+    add(components.node, output.node);
+    add(components.transformer, output.transformer);
+    add(components.line, output.line);
+    add(components.source, output.source);
+    add(components.sym_load, output.sym_load);
+    add(components.asym_load, output.asym_load);
+    add(components.shunt, output.shunt);
     return dataset;
 }
 
 DatasetConst make_update_dataset(BatchData const& batch_data) {
-    DatasetConst dataset{"update", true, batch_data.batch_size};
+    DatasetConst dataset{MetaData::dataset_name(PGM_def_update), true, batch_data.batch_size};
     if (batch_data.batch_size == 0) {
         return dataset;
     }
-    auto const add = [&dataset, batch_size = batch_data.batch_size](std::string const& component, auto const& buffer) {
-        dataset.add_buffer(component, std::ssize(buffer) / batch_size, std::ssize(buffer), nullptr, buffer.data());
+    auto const add = [&dataset, batch_size = batch_data.batch_size](PGM_MetaComponent const* component,
+                                                                    auto const& buffer) {
+        dataset.add_buffer(MetaData::component_name(component), std::ssize(buffer) / batch_size, std::ssize(buffer),
+                           nullptr, buffer.data());
     };
-    add("sym_load", batch_data.sym_load);
-    add("asym_load", batch_data.asym_load);
-    add("sym_power_sensor", batch_data.sym_power_sensor);
-    add("asym_power_sensor", batch_data.asym_power_sensor);
+    add(PGM_def_update_sym_load, batch_data.sym_load);
+    add(PGM_def_update_asym_load, batch_data.asym_load);
+    add(PGM_def_update_sym_power_sensor, batch_data.sym_power_sensor);
+    add(PGM_def_update_asym_power_sensor, batch_data.asym_power_sensor);
     return dataset;
 }
 
@@ -550,7 +590,20 @@ int main(int /* argc */, char** /* argv */) {
                                .optimizer_type = automatic_tap_adjustment,
                                .optimizer_strategy = power_grid_model::OptimizerStrategy::global_maximum},
                               batch_size);
-    // TODO(mgovers): benchmark the local_minimum/local_maximum optimizer strategies once the public API exposes them.
+    benchmarker.run_benchmark(option,
+                              {.calculation_type = power_flow,
+                               .calculation_symmetry = symmetric,
+                               .calculation_method = newton_raphson,
+                               .optimizer_type = automatic_tap_adjustment,
+                               .optimizer_strategy = power_grid_model::OptimizerStrategy::local_minimum},
+                              batch_size);
+    benchmarker.run_benchmark(option,
+                              {.calculation_type = power_flow,
+                               .calculation_symmetry = symmetric,
+                               .calculation_method = newton_raphson,
+                               .optimizer_type = automatic_tap_adjustment,
+                               .optimizer_strategy = power_grid_model::OptimizerStrategy::local_maximum},
+                              batch_size);
 
     // with meshed ring
     option.has_mv_ring = true;
