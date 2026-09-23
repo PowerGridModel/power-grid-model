@@ -9,7 +9,6 @@
 
 #include "handle.hpp"
 #include "input_sanitization.hpp"
-#include "logger.hpp"
 #include "safe_memory_handling.hpp"
 
 #include <algorithm>
