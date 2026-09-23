@@ -4,35 +4,46 @@
 
 #include "fictional_grid_generator.hpp"
 
-#include <power_grid_model/auxiliary/meta_data_gen.hpp>
-#include <power_grid_model/common/calculation_info.hpp>
+#include <power_grid_model_cpp/dataset.hpp>
+#include <power_grid_model_cpp/logger.hpp>
+#include <power_grid_model_cpp/model.hpp>
+#include <power_grid_model_cpp/options.hpp>
+
+#include <power_grid_model_c/basics.h>
+
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/common/logging.hpp>
-#include <power_grid_model/common/timer.hpp>
-#include <power_grid_model/main_model.hpp>
 #include <power_grid_model/main_model_fwd.hpp>
-#include <power_grid_model/math_solver/math_solver.hpp>
-#include <power_grid_model/math_solver/math_solver_dispatch.hpp>
 
+#include <chrono>
+#include <concepts>
 #include <cstddef>
 #include <exception>
 #include <format>
 #include <iomanip>
 #include <iostream>
+#include <iterator>
+#include <map>
 #include <memory>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <type_traits>
-#include <xstring>
 
 namespace power_grid_model::benchmark {
 namespace {
-MathSolverDispatcher const& get_math_solver_dispatcher() {
-    static constexpr MathSolverDispatcher math_solver_dispatcher{math_solver::math_solver_tag<MathSolver>{}};
-    return math_solver_dispatcher;
-}
+using power_grid_model_cpp::DatasetConst;
+using power_grid_model_cpp::DatasetMutable;
+using power_grid_model_cpp::Logger;
+using power_grid_model_cpp::Model;
+using power_grid_model_cpp::Options;
+
+// accumulated timings per log event, mirroring the layout of the benchmark logger output
+using Report = std::map<LogEvent, double>;
+
+constexpr double system_frequency = 50.0;
 
 constexpr std::string to_string(LogEvent tag) {
     using enum LogEvent;
@@ -117,6 +128,142 @@ std::string make_key(LogEvent code) {
     return key;
 }
 
+// the benchmark logger emits one 'EVENT_CODE<TAB>VALUE' line per logged event
+void merge_logger_output(Report& report, std::string const& logger_output) {
+    std::istringstream stream{logger_output};
+    for (std::string line; std::getline(stream, line);) {
+        auto const separator = line.find('\t');
+        if (separator == std::string::npos) {
+            continue;
+        }
+        auto const code = static_cast<LogEvent>(std::stoi(line.substr(0, separator)));
+        report[code] += std::stod(line.substr(separator + 1));
+    }
+}
+
+void print_report(Report const& report) {
+    for (auto const& [key, val] : report) {
+        std::cout << make_key(key) << ": " << val << '\n';
+    }
+}
+
+// measures the events that the calculation core does not log itself
+class ScopedTimer {
+  public:
+    ScopedTimer(Report& report, LogEvent event) : report_{report}, event_{event} {}
+    ScopedTimer(ScopedTimer const&) = delete;
+    ScopedTimer(ScopedTimer&&) = delete;
+    ScopedTimer& operator=(ScopedTimer const&) = delete;
+    ScopedTimer& operator=(ScopedTimer&&) = delete;
+    ~ScopedTimer() {
+        report_[event_] += std::chrono::duration<double>{std::chrono::steady_clock::now() - start_}.count();
+    }
+
+  private:
+    Report& report_;
+    LogEvent event_;
+    std::chrono::steady_clock::time_point start_{std::chrono::steady_clock::now()};
+};
+
+template <typename OutputDataType> constexpr std::string_view output_dataset_name() {
+    if constexpr (std::same_as<OutputDataType, ShortCircuitOutputData>) {
+        return "sc_output";
+    } else if constexpr (std::same_as<OutputDataType, OutputData<symmetric_t>>) {
+        return "sym_output";
+    } else {
+        static_assert(std::same_as<OutputDataType, OutputData<asymmetric_t>>);
+        return "asym_output";
+    }
+}
+
+DatasetConst make_input_dataset(InputData const& input) {
+    DatasetConst dataset{"input", false, 1};
+    auto const add = [&dataset](std::string const& component, auto const& buffer) {
+        dataset.add_buffer(component, std::ssize(buffer), std::ssize(buffer), nullptr, buffer.data());
+    };
+    add("node", input.node);
+    add("transformer", input.transformer);
+    add("line", input.line);
+    add("source", input.source);
+    add("sym_load", input.sym_load);
+    add("asym_load", input.asym_load);
+    add("shunt", input.shunt);
+    add("sym_voltage_sensor", input.sym_voltage_sensor);
+    add("asym_voltage_sensor", input.asym_voltage_sensor);
+    add("sym_power_sensor", input.sym_power_sensor);
+    add("asym_power_sensor", input.asym_power_sensor);
+    add("fault", input.fault);
+    add("transformer_tap_regulator", input.transformer_tap_regulator);
+    return dataset;
+}
+
+template <typename OutputDataType> DatasetMutable make_output_dataset(OutputDataType& output) {
+    DatasetMutable dataset{std::string{output_dataset_name<OutputDataType>()}, true, output.batch_size};
+    auto const add = [&dataset, batch_size = output.batch_size](std::string const& component, auto& buffer) {
+        dataset.add_buffer(component, std::ssize(buffer) / batch_size, std::ssize(buffer), nullptr, buffer.data());
+    };
+    add("node", output.node);
+    add("transformer", output.transformer);
+    add("line", output.line);
+    add("source", output.source);
+    add("sym_load", output.sym_load);
+    add("asym_load", output.asym_load);
+    add("shunt", output.shunt);
+    return dataset;
+}
+
+DatasetConst make_update_dataset(BatchData const& batch_data) {
+    DatasetConst dataset{"update", true, batch_data.batch_size};
+    if (batch_data.batch_size == 0) {
+        return dataset;
+    }
+    auto const add = [&dataset, batch_size = batch_data.batch_size](std::string const& component, auto const& buffer) {
+        dataset.add_buffer(component, std::ssize(buffer) / batch_size, std::ssize(buffer), nullptr, buffer.data());
+    };
+    add("sym_load", batch_data.sym_load);
+    add("asym_load", batch_data.asym_load);
+    add("sym_power_sensor", batch_data.sym_power_sensor);
+    add("asym_power_sensor", batch_data.asym_power_sensor);
+    return dataset;
+}
+
+Idx to_tap_changing_strategy(OptimizerType optimizer_type, OptimizerStrategy optimizer_strategy) {
+    switch (optimizer_type) {
+    case OptimizerType::no_optimization:
+        return PGM_tap_changing_strategy_disabled;
+    case OptimizerType::automatic_tap_adjustment:
+        switch (optimizer_strategy) {
+        case OptimizerStrategy::any:
+            return PGM_tap_changing_strategy_any_valid_tap;
+        case OptimizerStrategy::global_minimum:
+            return PGM_tap_changing_strategy_min_voltage_tap;
+        case OptimizerStrategy::global_maximum:
+            return PGM_tap_changing_strategy_max_voltage_tap;
+        case OptimizerStrategy::fast_any:
+            return PGM_tap_changing_strategy_fast_any_tap;
+        default:
+            // the public API deliberately does not expose local_minimum/local_maximum
+            throw MissingCaseForEnumError{"to_tap_changing_strategy", optimizer_strategy};
+        }
+    default:
+        throw MissingCaseForEnumError{"to_tap_changing_strategy", optimizer_type};
+    }
+}
+
+Options to_api_options(MainModelOptions const& model_options) {
+    Options options{};
+    options.set_calculation_type(static_cast<Idx>(model_options.calculation_type));
+    options.set_calculation_method(static_cast<Idx>(model_options.calculation_method));
+    options.set_symmetric(static_cast<Idx>(model_options.calculation_symmetry));
+    options.set_err_tol(model_options.err_tol);
+    options.set_max_iter(model_options.max_iter);
+    options.set_threading(model_options.threading);
+    options.set_short_circuit_voltage_scaling(static_cast<Idx>(model_options.short_circuit_voltage_scaling));
+    options.set_tap_changing_strategy(
+        to_tap_changing_strategy(model_options.optimizer_type, model_options.optimizer_strategy));
+    return options;
+}
+
 auto get_benchmark_run_title(Option const& option, MainModelOptions const& model_options) {
     using namespace std::string_literals;
     auto const mv_ring_type = option.has_mv_ring ? "meshed grid"s : "radial grid"s;
@@ -148,14 +295,10 @@ auto get_benchmark_run_title(Option const& option, MainModelOptions const& model
 
 struct PowerGridBenchmark {
     static constexpr auto single_scenario = -1;
-    power_grid_model::common::logging::MultiThreadedCalculationInfo info{};
 
-    PowerGridBenchmark()
-        : main_model{std::make_unique<MainModel>(50.0, meta_data::meta_data_gen::meta_data,
-                                                 get_math_solver_dispatcher(), info)} {}
-
-    template <typename OutputDataType> void run_calculation(MainModelOptions model_options, Idx batch_size) noexcept {
-        if (!main_model) {
+    template <typename OutputDataType>
+    void run_calculation(MainModelOptions const& model_options, Idx batch_size) noexcept {
+        if (!model) {
             std::cout << "\nNo main model available: skipping benchmark.\n";
             return;
         }
@@ -166,7 +309,8 @@ struct PowerGridBenchmark {
 
         try {
             // calculate
-            main_model->calculate(model_options, output.get_dataset(), batch_data.get_dataset());
+            auto output_dataset = make_output_dataset(output);
+            model->calculate(to_api_options(model_options), output_dataset, make_update_dataset(batch_data));
         } catch (std::exception const& e) {
             std::cout << std::format("\nAn exception was raised during execution: {}\n", e.what());
         }
@@ -208,43 +352,52 @@ struct PowerGridBenchmark {
 
         {
             std::cout << "*****Run with initialization*****\n";
-            Timer const t_total{info, LogEvent::total};
+            Report report;
             {
-                Timer const t_build{info, LogEvent::build_model};
-                main_model =
-                    std::make_unique<MainModel>(50.0, input.get_dataset(), get_math_solver_dispatcher(), 0, info);
+                ScopedTimer const t_total{report, LogEvent::total};
+                {
+                    ScopedTimer const t_build{report, LogEvent::build_model};
+                    create_model(input);
+                }
+                run(single_scenario);
             }
-            run(single_scenario);
+            print_report(collect_report(std::move(report)));
         }
-        print_info(info);
-        info.clear();
         {
             std::cout << "\n*****Run without initialization*****\n";
-            Timer const t_total{info, LogEvent::total};
-            run(single_scenario);
+            Report report;
+            {
+                ScopedTimer const t_total{report, LogEvent::total};
+                run(single_scenario);
+            }
+            print_report(collect_report(std::move(report)));
         }
-        print_info(info);
-        info.clear();
-
         if (batch_size > 0) {
-            info.clear();
             std::cout << "\n*****Run with batch calculation*****\n";
-            Timer const t_total{info, LogEvent::total};
-            run(batch_size);
+            Report report;
+            {
+                ScopedTimer const t_total{report, LogEvent::total};
+                run(batch_size);
+            }
+            print_report(collect_report(std::move(report)));
         }
-        print_info(info);
-        info.clear();
 
         std::cout << "\n\n";
     }
 
-    static void print_info(MultiThreadedCalculationInfo const& info) {
-        for (auto const& [key, val] : info.report()) {
-            std::cout << make_key(key) << ": " << val << '\n';
-        }
+    void create_model(InputData const& input) {
+        model = std::make_unique<Model>(system_frequency, make_input_dataset(input));
+        model->add_logger(logger);
     }
 
-    std::unique_ptr<MainModel> main_model;
+    Report collect_report(Report report) {
+        merge_logger_output(report, logger.get_output());
+        logger.clear();
+        return report;
+    }
+
+    Logger logger{PGM_benchmark_logger};
+    std::unique_ptr<Model> model;
     FictionalGridGenerator generator;
 };
 } // namespace
@@ -397,20 +550,7 @@ int main(int /* argc */, char** /* argv */) {
                                .optimizer_type = automatic_tap_adjustment,
                                .optimizer_strategy = power_grid_model::OptimizerStrategy::global_maximum},
                               batch_size);
-    benchmarker.run_benchmark(option,
-                              {.calculation_type = power_flow,
-                               .calculation_symmetry = symmetric,
-                               .calculation_method = newton_raphson,
-                               .optimizer_type = automatic_tap_adjustment,
-                               .optimizer_strategy = power_grid_model::OptimizerStrategy::local_minimum},
-                              batch_size);
-    benchmarker.run_benchmark(option,
-                              {.calculation_type = power_flow,
-                               .calculation_symmetry = symmetric,
-                               .calculation_method = newton_raphson,
-                               .optimizer_type = automatic_tap_adjustment,
-                               .optimizer_strategy = power_grid_model::OptimizerStrategy::local_maximum},
-                              batch_size);
+    // TODO(mgovers): benchmark the local_minimum/local_maximum optimizer strategies once the public API exposes them.
 
     // with meshed ring
     option.has_mv_ring = true;
