@@ -13,7 +13,6 @@
 #include "power_grid_model_c/basics.h"
 #include "power_grid_model_c/logger.h"
 
-#include <power_grid_model/common/calculation_info.hpp>
 #include <power_grid_model/common/composite_logging.hpp>
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/common/text_logger.hpp>
@@ -61,7 +60,7 @@ extract_handle_logger(HandleLogger& handle_logger) { // NOSONAR(S4998) // utilit
 PGM_Logger* make_logger(PGM_Idx type) {
     using namespace power_grid_model::common::logging;
 
-    switch (type) {
+    switch (type) { // NOLINT(hicpp-multiway-paths-covered) // temporary while benchmark is scoped out
     case PGM_logger_type_info:
         return create<PGM_Logger>(std::make_shared<MultiThreadedTextLogger>());
     // TODO(mgovers): enable once we release the benchmark logger publicly
