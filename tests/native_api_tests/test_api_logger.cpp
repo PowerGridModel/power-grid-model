@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <format>
 #include <initializer_list>
 #include <memory>
 #include <string>
@@ -148,7 +149,7 @@ void check_tag_presence(std::string_view output, std::initializer_list<int> tags
     for (auto const tag : tags) {
         CAPTURE(tag);
         auto marker = std::format("Z] Tag:{}:", tag);
-        CHECK_MESSAGE((output.find(marker) != std::string::npos) == should_be_present, marker);
+        CHECK_MESSAGE(output.contains(marker) == should_be_present, marker);
     }
 }
 
