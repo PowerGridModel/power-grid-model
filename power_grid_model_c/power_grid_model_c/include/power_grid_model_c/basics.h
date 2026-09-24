@@ -271,6 +271,7 @@ enum PGM_LoggerType {
     // PGM_logger_type_warning = 2,  /**< reserved for future extension: logger that captures warning messages */
     PGM_logger_type_info = 3, /**< logger that captures timestamped text messages */
     // PGM_logger_type_debug = 4,    /**< reserved for future extension: logger that captures debug messages */
+    PGM_benchmark_logger = 5, /**< logger that captures timing information per calculation phase */
 };
 
 // NOLINTEND(performance-enum-size,cppcoreguidelines-use-enum-class)

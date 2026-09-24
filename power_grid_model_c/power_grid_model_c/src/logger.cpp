@@ -64,9 +64,8 @@ PGM_Logger* make_logger(PGM_Idx type) {
     switch (type) {
     case PGM_logger_type_info:
         return create<PGM_Logger>(std::make_shared<MultiThreadedTextLogger>());
-    // TODO(mgovers): enable once we release the benchmark logger publicly
-    // case PGM_benchmark_logger:
-    //     return create<PGM_Logger>(std::make_shared<MultiThreadedCalculationInfo>());
+    case PGM_benchmark_logger:
+        return create<PGM_Logger>(std::make_shared<MultiThreadedCalculationInfo>());
     default:
         throw power_grid_model::MissingCaseForEnumError{"make_logger", type};
     }
