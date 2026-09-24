@@ -338,8 +338,8 @@ TEST_CASE("Test ideal source short circuit power handling") {
                                           .rx_ratio = 0.1,
                                           .z01_ratio = 3.0};
 
-    Source ideal_source{ideal_source_input, un};
-    Source capped_source{capped_source_input, un};
+    const Source ideal_source{ideal_source_input, un};
+    const Source capped_source{capped_source_input, un};
 
     SUBCASE("Infinite sk is equivalent to ideal source cap") {
         auto const ideal_param = ideal_source.math_param<symmetric_t>();
@@ -364,7 +364,7 @@ TEST_CASE("Test ideal source short circuit power handling") {
                                           .rx_ratio = 0.1,
                                           .z01_ratio = 3.0};
 
-        Source above_cap_source{above_cap_input, un};
+        const Source above_cap_source{above_cap_input, un};
 
         DoubleComplex const above_cap_y =
             above_cap_source.math_param<symmetric_t>().template y_ref<symmetric_t>();
