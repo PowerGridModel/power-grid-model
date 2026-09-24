@@ -24,14 +24,15 @@
 #include <cstddef>
 #include <exception>
 #include <format>
-#include <iomanip>
-#include <iostream>
 #include <iterator>
 #include <map>
 #include <memory>
+#include <print>
 #include <sstream>
 #include <string>
-#include <type_traits>
+#include <utility>
+#include <xstring>
+#include <xutility>
 
 namespace power_grid_model::benchmark {
 namespace {
@@ -117,9 +118,7 @@ constexpr std::string to_string(LogEvent tag) {
 }
 
 std::string make_key(LogEvent code) {
-    std::stringstream ss;
-    ss << std::setw(4) << std::setfill('0') << static_cast<std::underlying_type_t<LogEvent>>(code) << ".";
-    auto key = ss.str();
+    auto key = std::format("{:04}.", std::to_underlying(code));
     for (size_t i = 0, n = key.length() - 1; i < n; ++i) {
         if (key[i] == '0') {
             break;
@@ -145,7 +144,7 @@ void merge_logger_output(Report& report, std::string const& logger_output) {
 
 void print_report(Report const& report) {
     for (auto const& [key, val] : report) {
-        std::cout << make_key(key) << ": " << val << '\n';
+        std::println("{}: {:g}", make_key(key), val);
     }
 }
 
@@ -339,20 +338,20 @@ struct PowerGridBenchmark {
     template <typename OutputDataType>
     void run_calculation(MainModelOptions const& model_options, Idx batch_size) noexcept {
         if (!model) {
-            std::cout << "\nNo main model available: skipping benchmark.\n";
+            std::println("\nNo main model available: skipping benchmark.");
             return;
         }
 
         auto output = generator.generate_output_data<OutputDataType>(batch_size);
         BatchData const batch_data = generator.generate_batch_input(batch_size, 0);
-        std::cout << "Number of nodes: " << generator.input_data().node.size() << '\n';
+        std::println("Number of nodes: {}", generator.input_data().node.size());
 
         try {
             // calculate
             auto output_dataset = make_output_dataset(output);
             model->calculate(to_api_options(model_options), output_dataset, make_update_dataset(batch_data));
         } catch (std::exception const& e) {
-            std::cout << std::format("\nAn exception was raised during execution: {}\n", e.what());
+            std::println("\nAn exception was raised during execution: {}", e.what());
         }
     }
 
@@ -362,7 +361,7 @@ struct PowerGridBenchmark {
         generator.generate_grid(option, 0);
         InputData const& input = generator.input_data();
 
-        std::cout << get_benchmark_run_title(option, model_options) << '\n';
+        std::println("{}", get_benchmark_run_title(option, model_options));
 
         auto const run = [this, &model_options](Idx batch_size_) {
             switch (model_options.calculation_type) {
@@ -391,7 +390,7 @@ struct PowerGridBenchmark {
         };
 
         {
-            std::cout << "*****Run with initialization*****\n";
+            std::println("*****Run with initialization*****");
             Report report;
             {
                 ScopedTimer const t_total{report, LogEvent::total};
@@ -404,7 +403,7 @@ struct PowerGridBenchmark {
             print_report(collect_report(std::move(report)));
         }
         {
-            std::cout << "\n*****Run without initialization*****\n";
+            std::println("\n*****Run without initialization*****");
             Report report;
             {
                 ScopedTimer const t_total{report, LogEvent::total};
@@ -413,7 +412,7 @@ struct PowerGridBenchmark {
             print_report(collect_report(std::move(report)));
         }
         if (batch_size > 0) {
-            std::cout << "\n*****Run with batch calculation*****\n";
+            std::println("\n*****Run with batch calculation*****");
             Report report;
             {
                 ScopedTimer const t_total{report, LogEvent::total};
@@ -422,7 +421,7 @@ struct PowerGridBenchmark {
             print_report(collect_report(std::move(report)));
         }
 
-        std::cout << "\n\n";
+        std::println("\n");
     }
 
     void create_model(InputData const& input) {
@@ -468,7 +467,7 @@ int main(int /* argc */, char** /* argv */) {
     power_grid_model::Idx constexpr batch_size = 1000;
 #endif
 
-    std::cout << "\n\n##### BENCHMARK POWER FLOW #####\n\n";
+    std::println("\n\n##### BENCHMARK POWER FLOW #####\n");
     option.has_measurements = false;
     option.has_fault = false;
     option.has_tap_changer = false;
@@ -536,7 +535,7 @@ int main(int /* argc */, char** /* argv */) {
     //                                    .calculation_method = iterative_current,
     //                                    .max_iter = 100});
 
-    std::cout << "\n\n##### BENCHMARK POWER FLOW WITH AUTOMATIC TAP CHANGER #####\n\n";
+    std::println("\n\n##### BENCHMARK POWER FLOW WITH AUTOMATIC TAP CHANGER #####\n");
     option.has_measurements = false;
     option.has_fault = false;
     option.has_tap_changer = true;
@@ -627,7 +626,7 @@ int main(int /* argc */, char** /* argv */) {
                                .optimizer_type = automatic_tap_adjustment},
                               batch_size);
 
-    std::cout << "\n\n##### BENCHMARK STATE ESTIMATION #####\n\n";
+    std::println("\n\n##### BENCHMARK STATE ESTIMATION #####\n");
     option.has_measurements = true;
     option.has_fault = false;
     option.has_tap_changer = false;
@@ -671,7 +670,7 @@ int main(int /* argc */, char** /* argv */) {
                                        .calculation_symmetry = asymmetric,
                                        .calculation_method = iterative_linear});
 
-    std::cout << "\n\n##### BENCHMARK SHORT CIRCUIT #####\n\n";
+    std::println("\n\n##### BENCHMARK SHORT CIRCUIT #####\n");
     option.has_measurements = false;
     option.has_fault = true;
     option.has_tap_changer = false;
