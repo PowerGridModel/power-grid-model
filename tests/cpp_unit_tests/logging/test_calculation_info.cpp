@@ -133,6 +133,24 @@ TEST_CASE("Test CalculationInfo") {
         CHECK(report.at(iterative_pf_solver_max_num_iter) == doctest::Approx(10.0));
         CHECK(report.at(max_num_iter) == doctest::Approx(5.0));
     }
+
+    SUBCASE("Lazy-logging is ignored") {
+        bool called = false;
+        auto const lazy_log = [&called] {
+            called = true;
+            return "called";
+        };
+        SUBCASE("Without event") {
+            info.log(lazy_log);
+            CHECK_FALSE(called);
+            CHECK(info.report().empty());
+        }
+        SUBCASE("With event") {
+            info.log(LogEvent::total, lazy_log);
+            CHECK_FALSE(called);
+            CHECK(info.report().empty());
+        }
+    }
 }
 
 TEST_CASE("Test MultiThreadedCalculationInfo") {

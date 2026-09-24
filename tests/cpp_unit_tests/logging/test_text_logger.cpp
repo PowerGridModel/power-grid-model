@@ -314,6 +314,27 @@ TEST_CASE("Test TextLogger") {
             CHECK(other_report.empty()); // report should be cleared after flush
         }
     }
+
+    SUBCASE("Lazy-logging is always executed") {
+        bool called = false;
+        auto const lazy_log = [&called] {
+            called = true;
+            return "called";
+        };
+
+        TextLogger txt_logger;
+
+        SUBCASE("Without event") {
+            txt_logger.log(lazy_log);
+            CHECK(called);
+            CHECK(txt_logger.report().contains("Tag:-1: called\n"));
+        }
+        SUBCASE("With event") {
+            txt_logger.log(LogEvent::total, lazy_log);
+            CHECK(called);
+            CHECK(txt_logger.report().contains("Tag:-1: called\n"));
+        }
+    }
 }
 TEST_CASE("Test MultiThreadedTextLogger") {
     using enum LogEvent;
