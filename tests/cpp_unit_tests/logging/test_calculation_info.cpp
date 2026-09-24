@@ -196,7 +196,24 @@ TEST_CASE("Test MultiThreadedCalculationInfo") {
         CHECK(report.at(iterative_pf_solver_max_num_iter) ==
               doctest::Approx(max_thread_value(arbitrary_n_threads + Idx{2}, Idx{5})));
         CHECK(report.at(max_num_iter) == doctest::Approx(3.0 * static_cast<double>(arbitrary_n_threads)));
-    }
+        }
+        SUBCASE("Direct logging: Lazy-logging is ignored") {
+            bool called = false;
+            auto const lazy_log = [&called] {
+                called = true;
+                return "called";
+            };
+            SUBCASE("Without event") {
+                multi_threaded_info.log(lazy_log);
+                CHECK_FALSE(called);
+                CHECK(multi_threaded_info.report().empty());
+            }
+            SUBCASE("With event") {
+                multi_threaded_info.log(LogEvent::total, lazy_log);
+                CHECK_FALSE(called);
+                CHECK(multi_threaded_info.report().empty());
+            }
+        }
 
     SUBCASE("Clear report") {
         auto clean_report = multi_threaded_info.report();

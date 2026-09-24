@@ -27,6 +27,10 @@ class CompositeChildLogger : public Logger {
     void log(LogEvent tag, double value) override { log_all(tag, value); }
     void log(LogEvent tag, Idx value) override { log_all(tag, value); }
 
+    [[nodiscard]] bool should_log(LogEvent tag) const override {
+        return std::ranges::any_of(children_, [tag](auto const& child) { return child->should_log(tag); });
+    }
+
   private:
     std::vector<std::unique_ptr<Logger>> children_;
 
@@ -86,6 +90,10 @@ class MultiThreadedCompositeLogger : public MultiThreadedLogger {
     void log(LogEvent tag, std::string_view message) override { log_all(tag, message); }
     void log(LogEvent tag, double value) override { log_all(tag, value); }
     void log(LogEvent tag, Idx value) override { log_all(tag, value); }
+
+    [[nodiscard]] bool should_log(LogEvent tag) const override {
+        return std::ranges::any_of(loggers_, [tag](auto const& logger) { return logger->should_log(tag); });
+    }
 
     using MultiThreadedLogger::log;
 
