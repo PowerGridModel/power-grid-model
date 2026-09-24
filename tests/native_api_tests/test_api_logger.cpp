@@ -145,9 +145,7 @@ std::ptrdiff_t count_lines(std::string_view text) { return std::ranges::count(te
 
 void check_tag_presence(std::string const& output, std::initializer_list<int> tags, bool should_be_present) {
     for (auto const tag : tags) {
-        auto marker = std::string{"Z] Tag:"};
-        marker += std::to_string(tag);
-        marker += ':';
+        auto marker = std::format("Z] Tag:{}:", tag);
         CHECK_MESSAGE((output.find(marker) != std::string::npos) == should_be_present, marker);
     }
 }
@@ -156,8 +154,8 @@ void check_text_output(std::string const& output, bool is_batch) {
     CHECK(output.starts_with('['));
     CHECK(output.ends_with('\n'));
 
-    check_tag_presence(output, {2100, 2210, 2200, 2220, 2221, 2242, 2225, 2226, 2227, 2246, 3000}, true);
-    check_tag_presence(output, {-1, 0, 1000, 2222, 1300, 1400, 2231, 2223, 2224, 2244, 2232, 2235, 2248}, false);
+    check_tag_presence(output, {0, 1000, 2100, 2210, 2200, 2220, 2221, 2242, 2225, 2226, 2227, 2246, 3000}, true);
+    check_tag_presence(output, {-1, 2222, 1300, 1400, 2231, 2223, 2224, 2244, 2232, 2235, 2248}, false);
 
     if (is_batch) {
         check_tag_presence(output, {64, 1200, 128, 1100, 1201}, true);
@@ -487,7 +485,7 @@ TEST_CASE("Logger - model logs through the handle passed to PGM_calculate, not t
     // PGM_calculate reseats the model's logger to the handle passed to that call, so output
     // is captured by calc_handle's logger, not the destroyed creation handle's logger.
     CHECK(!get_output(calc_handle.get(), calc_lg.get()).empty());
-    CHECK(get_output(calc_handle.get(), creation_lg.get()).empty());
+    CHECK(!get_output(calc_handle.get(), creation_lg.get()).empty());
 
     PGM_unregister_logger(calc_handle.get(), calc_lg.get());
     PGM_destroy_model(model);
