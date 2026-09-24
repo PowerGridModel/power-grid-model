@@ -143,7 +143,7 @@ auto get_output(PGM_Handle* h, PGM_Logger* l) {
 // exact text equality (individual lines carry independent millisecond timestamps).
 std::ptrdiff_t count_lines(std::string_view text) { return std::ranges::count(text, '\n'); }
 
-void check_tag_presence(std::string const& output, std::initializer_list<int> tags, bool should_be_present) {
+void check_tag_presence(std::string_view output, std::initializer_list<int> tags, bool should_be_present) {
     for (auto const tag : tags) {
         auto marker = std::string{"Z] Tag:"};
         marker += std::to_string(tag);
