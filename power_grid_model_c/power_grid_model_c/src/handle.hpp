@@ -9,16 +9,19 @@
 #endif
 
 #include "logger.hpp"
+#include "logger_fwd.hpp"
 
 #include "power_grid_model_c/basics.h"
 
 #include <power_grid_model/batch_parameter.hpp>
 #include <power_grid_model/common/common.hpp>
 
-#include <algorithm>
+#include <concepts>
 #include <exception>
-#include <memory>
+#include <string>
 #include <string_view>
+#include <type_traits>
+#include <utility>
 #include <vector>
 
 // context handle

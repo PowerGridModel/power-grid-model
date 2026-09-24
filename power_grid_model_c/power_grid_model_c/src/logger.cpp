@@ -42,7 +42,8 @@ using power_grid_model_c::HandleLogger;
 } // namespace
 
 namespace power_grid_model_c {
-[[nodiscard]] MultiThreadedLogger& get_logger(HandleLogger const& handle_logger) {
+[[nodiscard]] MultiThreadedLogger&
+get_logger(HandleLogger const& handle_logger) { // NOSONAR(S4998) // utility function for exactly this purpose
     return safe_ptr_get(handle_logger.get());
 }
 
@@ -52,7 +53,8 @@ namespace power_grid_model_c {
 } // namespace power_grid_model_c
 
 namespace {
-MultiThreadedCompositeLogger& extract_handle_logger(HandleLogger& handle_logger) {
+MultiThreadedCompositeLogger&
+extract_handle_logger(HandleLogger& handle_logger) { // NOSONAR(S4998) // utility function for exactly this purpose
     return dynamic_cast<MultiThreadedCompositeLogger&>(power_grid_model_c::get_logger(handle_logger));
 }
 
