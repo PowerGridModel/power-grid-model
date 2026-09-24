@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <format>
 #include <initializer_list>
 #include <memory>
 #include <string>
@@ -146,7 +147,7 @@ std::ptrdiff_t count_lines(std::string_view text) { return std::ranges::count(te
 void check_tag_presence(std::string const& output, std::initializer_list<int> tags, bool should_be_present) {
     for (auto const tag : tags) {
         auto marker = std::format("Z] Tag:{}:", tag);
-        CHECK_MESSAGE((output.find(marker) != std::string::npos) == should_be_present, marker);
+        CHECK_MESSAGE(output.contains(marker) == should_be_present, marker);
     }
 }
 
