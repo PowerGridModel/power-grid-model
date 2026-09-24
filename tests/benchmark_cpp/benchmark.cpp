@@ -17,7 +17,6 @@
 #include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/common/logging.hpp>
-#include <power_grid_model/main_model_fwd.hpp>
 
 #include <concepts>
 #include <cstddef>
@@ -44,6 +43,21 @@ using power_grid_model_cpp::Options;
 
 // accumulated timings per log event, mirroring the layout of the benchmark logger output
 using Report = std::map<LogEvent, double>;
+
+struct BenchmarkOptions {
+    static constexpr Idx sequential = -1;
+
+    PGM_CalculationType calculation_type{PGM_power_flow};
+    PGM_SymmetryType calculation_symmetry{PGM_symmetric};
+    PGM_CalculationMethod calculation_method{PGM_default_method};
+    PGM_TapChangingStrategy tap_changing_strategy{PGM_tap_changing_strategy_disabled};
+
+    double err_tol{1e-8};
+    Idx max_iter{20};
+    Idx threading{sequential};
+
+    PGM_ShortCircuitVoltageScaling short_circuit_voltage_scaling{PGM_short_circuit_voltage_scaling_maximum};
+};
 
 constexpr double system_frequency = 50.0;
 
@@ -247,63 +261,36 @@ DatasetConst make_update_dataset(BatchData const& batch_data) {
     return dataset;
 }
 
-Idx to_tap_changing_strategy(OptimizerType optimizer_type, OptimizerStrategy optimizer_strategy) {
-    switch (optimizer_type) {
-    case OptimizerType::no_optimization:
-        return PGM_tap_changing_strategy_disabled;
-    case OptimizerType::automatic_tap_adjustment:
-        switch (optimizer_strategy) {
-        case OptimizerStrategy::any:
-            return PGM_tap_changing_strategy_any_valid_tap;
-        case OptimizerStrategy::global_minimum:
-            return PGM_tap_changing_strategy_min_voltage_tap;
-        case OptimizerStrategy::global_maximum:
-            return PGM_tap_changing_strategy_max_voltage_tap;
-        case OptimizerStrategy::fast_any:
-            return PGM_tap_changing_strategy_fast_any_tap;
-        default:
-            // the public API deliberately does not expose local_minimum/local_maximum
-            throw MissingCaseForEnumError{"to_tap_changing_strategy", optimizer_strategy};
-        }
-    default:
-        throw MissingCaseForEnumError{"to_tap_changing_strategy", optimizer_type};
-    }
-}
-
-Options to_api_options(MainModelOptions const& model_options) {
+Options to_api_options(BenchmarkOptions const& benchmark_options) {
     Options options{};
-    options.set_calculation_type(static_cast<Idx>(model_options.calculation_type));
-    options.set_calculation_method(static_cast<Idx>(model_options.calculation_method));
-    options.set_symmetric(static_cast<Idx>(model_options.calculation_symmetry));
-    options.set_err_tol(model_options.err_tol);
-    options.set_max_iter(model_options.max_iter);
-    options.set_threading(model_options.threading);
-    options.set_short_circuit_voltage_scaling(static_cast<Idx>(model_options.short_circuit_voltage_scaling));
-    options.set_tap_changing_strategy(
-        to_tap_changing_strategy(model_options.optimizer_type, model_options.optimizer_strategy));
+    options.set_calculation_type(benchmark_options.calculation_type);
+    options.set_calculation_method(benchmark_options.calculation_method);
+    options.set_symmetric(benchmark_options.calculation_symmetry);
+    options.set_err_tol(benchmark_options.err_tol);
+    options.set_max_iter(benchmark_options.max_iter);
+    options.set_threading(benchmark_options.threading);
+    options.set_short_circuit_voltage_scaling(benchmark_options.short_circuit_voltage_scaling);
+    options.set_tap_changing_strategy(benchmark_options.tap_changing_strategy);
     return options;
 }
 
-auto get_benchmark_run_title(Option const& option, MainModelOptions const& model_options) {
+auto get_benchmark_run_title(Option const& option, BenchmarkOptions const& benchmark_options) {
     using namespace std::string_literals;
     auto const mv_ring_type = option.has_mv_ring ? "meshed grid"s : "radial grid"s;
-    auto const sym_type =
-        model_options.calculation_symmetry == CalculationSymmetry::symmetric ? "symmetric"s : "asymmetric"s;
-    auto const method = [calculation_method = model_options.calculation_method] {
-        using enum CalculationMethod;
-
+    auto const sym_type = benchmark_options.calculation_symmetry == PGM_symmetric ? "symmetric"s : "asymmetric"s;
+    auto const method = [calculation_method = benchmark_options.calculation_method] {
         switch (calculation_method) {
-        case newton_raphson:
+        case PGM_newton_raphson:
             return "Newton-Raphson method"s;
-        case linear:
+        case PGM_linear:
             return "Linear method"s;
-        case linear_current:
+        case PGM_linear_current:
             return "Linear current method"s;
-        case iterative_current:
+        case PGM_iterative_current:
             return "Iterative current method"s;
-        case iterative_linear:
+        case PGM_iterative_linear:
             return "Iterative linear method"s;
-        case iec60909:
+        case PGM_iec60909:
             return "IEC 60909 method"s;
         default:
             throw MissingCaseForEnumError{"get_benchmark_run_title", calculation_method};
@@ -317,7 +304,7 @@ struct PowerGridBenchmark {
     static constexpr auto single_scenario = -1;
 
     template <typename OutputDataType>
-    void run_calculation(MainModelOptions const& model_options, Idx batch_size) noexcept {
+    void run_calculation(BenchmarkOptions const& benchmark_options, Idx batch_size) noexcept {
         if (!model) {
             std::println("\nNo main model available: skipping benchmark.");
             return;
@@ -330,43 +317,41 @@ struct PowerGridBenchmark {
         try {
             // calculate
             auto output_dataset = make_output_dataset(output);
-            model->calculate(to_api_options(model_options), output_dataset, make_update_dataset(batch_data));
+            model->calculate(to_api_options(benchmark_options), output_dataset, make_update_dataset(batch_data));
         } catch (std::exception const& e) {
             std::println("\nAn exception was raised during execution: {}", e.what());
         }
     }
 
-    void run_benchmark(Option const& option, MainModelOptions const& model_options, Idx batch_size = single_scenario) {
-        using enum CalculationType;
-        using enum CalculationMethod;
+    void run_benchmark(Option const& option, BenchmarkOptions const& benchmark_options, Idx batch_size = single_scenario) {
         generator.generate_grid(option, 0);
         InputData const& input = generator.input_data();
 
-        std::println("{}", get_benchmark_run_title(option, model_options));
+        std::println("{}", get_benchmark_run_title(option, benchmark_options));
 
-        auto const run = [this, &model_options](Idx batch_size_) {
-            switch (model_options.calculation_type) {
-            case short_circuit:
-                run_calculation<ShortCircuitOutputData>(model_options, batch_size_);
+        auto const run = [this, &benchmark_options](Idx batch_size_) {
+            switch (benchmark_options.calculation_type) {
+            case PGM_short_circuit:
+                run_calculation<ShortCircuitOutputData>(benchmark_options, batch_size_);
                 break;
-            case power_flow:
+            case PGM_power_flow:
                 [[fallthrough]];
-            case state_estimation: {
-                switch (model_options.calculation_symmetry) {
-                case CalculationSymmetry::symmetric:
-                    run_calculation<OutputData<symmetric_t>>(model_options, batch_size_);
+            case PGM_state_estimation: {
+                switch (benchmark_options.calculation_symmetry) {
+                case PGM_symmetric:
+                    run_calculation<OutputData<symmetric_t>>(benchmark_options, batch_size_);
                     break;
-                case CalculationSymmetry::asymmetric:
-                    run_calculation<OutputData<asymmetric_t>>(model_options, batch_size_);
+                case PGM_asymmetric:
+                    run_calculation<OutputData<asymmetric_t>>(benchmark_options, batch_size_);
                     break;
                 default:
                     throw MissingCaseForEnumError{"run_benchmark<calculation_symmetry>",
-                                                  model_options.calculation_symmetry};
+                                                  benchmark_options.calculation_symmetry};
                 }
                 break;
             }
             default:
-                throw MissingCaseForEnumError{"run_benchmark<calculation_type>", model_options.calculation_type};
+                throw MissingCaseForEnumError{"run_benchmark<calculation_type>", benchmark_options.calculation_type};
             }
         };
 
@@ -441,64 +426,69 @@ int main(int /* argc */, char** /* argv */) {
     // radial
     option.has_mv_ring = false;
     option.has_lv_ring = false;
-    benchmarker.run_benchmark(
-        option,
-        {.calculation_type = power_flow, .calculation_symmetry = symmetric, .calculation_method = newton_raphson},
-        batch_size);
     benchmarker.run_benchmark(option,
-                              {.calculation_type = power_flow,
-                               .calculation_symmetry = symmetric,
-                               .calculation_method = newton_raphson,
+                              {.calculation_type = PGM_power_flow,
+                               .calculation_symmetry = PGM_symmetric,
+                               .calculation_method = PGM_newton_raphson},
+                              batch_size);
+    benchmarker.run_benchmark(option,
+                              {.calculation_type = PGM_power_flow,
+                               .calculation_symmetry = PGM_symmetric,
+                               .calculation_method = PGM_newton_raphson,
                                .threading = 6},
                               batch_size);
     benchmarker.run_benchmark(
-        option, {.calculation_type = power_flow, .calculation_symmetry = symmetric, .calculation_method = linear});
-    benchmarker.run_benchmark(
         option,
-        {.calculation_type = power_flow, .calculation_symmetry = symmetric, .calculation_method = linear_current});
-    benchmarker.run_benchmark(option, {.calculation_type = power_flow,
-                                       .calculation_symmetry = symmetric,
-                                       .calculation_method = iterative_current,
+        {.calculation_type = PGM_power_flow, .calculation_symmetry = PGM_symmetric, .calculation_method = PGM_linear});
+    benchmarker.run_benchmark(option, {.calculation_type = PGM_power_flow,
+                                       .calculation_symmetry = PGM_symmetric,
+                                       .calculation_method = PGM_linear_current});
+    benchmarker.run_benchmark(option, {.calculation_type = PGM_power_flow,
+                                       .calculation_symmetry = PGM_symmetric,
+                                       .calculation_method = PGM_iterative_current,
                                        .max_iter = 100});
+    benchmarker.run_benchmark(option, {.calculation_type = PGM_power_flow,
+                                       .calculation_symmetry = PGM_asymmetric,
+                                       .calculation_method = PGM_newton_raphson});
     benchmarker.run_benchmark(
         option,
-        {.calculation_type = power_flow, .calculation_symmetry = asymmetric, .calculation_method = newton_raphson});
-    benchmarker.run_benchmark(
-        option, {.calculation_type = power_flow, .calculation_symmetry = asymmetric, .calculation_method = linear});
-    benchmarker.run_benchmark(
-        option,
-        {.calculation_type = power_flow, .calculation_symmetry = asymmetric, .calculation_method = linear_current});
-    // benchmarker.run_benchmark(option, {.calculation_type = power_flow,
-    //                                    .calculation_symmetry = asymmetric,
-    //                                    .calculation_method = iterative_current,
+        {.calculation_type = PGM_power_flow, .calculation_symmetry = PGM_asymmetric, .calculation_method = PGM_linear});
+    benchmarker.run_benchmark(option, {.calculation_type = PGM_power_flow,
+                                       .calculation_symmetry = PGM_asymmetric,
+                                       .calculation_method = PGM_linear_current});
+    // benchmarker.run_benchmark(option, {.calculation_type = PGM_power_flow,
+    //                                    .calculation_symmetry = PGM_asymmetric,
+    //                                    .calculation_method = PGM_iterative_current,
     //                                    .max_iter = 100});
 
     // with meshed ring
     option.has_mv_ring = true;
     option.has_lv_ring = true;
+    benchmarker.run_benchmark(option, {.calculation_type = PGM_power_flow,
+                                       .calculation_symmetry = PGM_symmetric,
+                                       .calculation_method = PGM_newton_raphson});
     benchmarker.run_benchmark(
         option,
-        {.calculation_type = power_flow, .calculation_symmetry = symmetric, .calculation_method = newton_raphson});
-    benchmarker.run_benchmark(
-        option, {.calculation_type = power_flow, .calculation_symmetry = symmetric, .calculation_method = linear});
-    benchmarker.run_benchmark(
-        option,
-        {.calculation_type = power_flow, .calculation_symmetry = symmetric, .calculation_method = linear_current});
-    benchmarker.run_benchmark(option, {.calculation_type = power_flow,
-                                       .calculation_symmetry = symmetric,
-                                       .calculation_method = iterative_current,
+        {.calculation_type = PGM_power_flow, .calculation_symmetry = PGM_symmetric, .calculation_method = PGM_linear});
+    benchmarker.run_benchmark(option, {.calculation_type = PGM_power_flow,
+                                       .calculation_symmetry = PGM_symmetric,
+                                       .calculation_method = PGM_linear_current});
+    benchmarker.run_benchmark(option, {.calculation_type = PGM_power_flow,
+                                       .calculation_symmetry = PGM_symmetric,
+                                       .calculation_method = PGM_iterative_current,
                                        .max_iter = 100});
+    benchmarker.run_benchmark(option, {.calculation_type = PGM_power_flow,
+                                       .calculation_symmetry = PGM_asymmetric,
+                                       .calculation_method = PGM_newton_raphson});
     benchmarker.run_benchmark(
         option,
-        {.calculation_type = power_flow, .calculation_symmetry = asymmetric, .calculation_method = newton_raphson});
-    benchmarker.run_benchmark(
-        option, {.calculation_type = power_flow, .calculation_symmetry = asymmetric, .calculation_method = linear});
-    benchmarker.run_benchmark(
-        option,
-        {.calculation_type = power_flow, .calculation_symmetry = asymmetric, .calculation_method = linear_current});
-    // benchmarker.run_benchmark(option, {.calculation_type = power_flow,
-    //                                    .calculation_symmetry = asymmetric,
-    //                                    .calculation_method = iterative_current,
+        {.calculation_type = PGM_power_flow, .calculation_symmetry = PGM_asymmetric, .calculation_method = PGM_linear});
+    benchmarker.run_benchmark(option, {.calculation_type = PGM_power_flow,
+                                       .calculation_symmetry = PGM_asymmetric,
+                                       .calculation_method = PGM_linear_current});
+    // benchmarker.run_benchmark(option, {.calculation_type = PGM_power_flow,
+    //                                    .calculation_symmetry = PGM_asymmetric,
+    //                                    .calculation_method = PGM_iterative_current,
     //                                    .max_iter = 100});
 
     std::println("\n\n##### BENCHMARK POWER FLOW WITH AUTOMATIC TAP CHANGER #####\n");
@@ -510,86 +500,80 @@ int main(int /* argc */, char** /* argv */) {
     option.has_mv_ring = false;
     option.has_lv_ring = false;
     benchmarker.run_benchmark(option,
-                              {.calculation_type = power_flow,
-                               .calculation_symmetry = symmetric,
-                               .calculation_method = newton_raphson,
-                               .optimizer_type = automatic_tap_adjustment},
+                              {.calculation_type = PGM_power_flow,
+                               .calculation_symmetry = PGM_symmetric,
+                               .calculation_method = PGM_newton_raphson,
+                               .tap_changing_strategy = PGM_tap_changing_strategy_fast_any_tap},
                               batch_size);
     benchmarker.run_benchmark(option,
-                              {.calculation_type = power_flow,
-                               .calculation_symmetry = symmetric,
-                               .calculation_method = linear,
-                               .optimizer_type = automatic_tap_adjustment},
+                              {.calculation_type = PGM_power_flow,
+                               .calculation_symmetry = PGM_symmetric,
+                               .calculation_method = PGM_linear,
+                               .tap_changing_strategy = PGM_tap_changing_strategy_fast_any_tap},
                               batch_size);
     benchmarker.run_benchmark(option,
-                              {.calculation_type = power_flow,
-                               .calculation_symmetry = asymmetric,
-                               .calculation_method = linear,
-                               .optimizer_type = automatic_tap_adjustment},
+                              {.calculation_type = PGM_power_flow,
+                               .calculation_symmetry = PGM_asymmetric,
+                               .calculation_method = PGM_linear,
+                               .tap_changing_strategy = PGM_tap_changing_strategy_fast_any_tap},
                               batch_size);
     benchmarker.run_benchmark(option,
-                              {.calculation_type = power_flow,
-                               .calculation_symmetry = symmetric,
-                               .calculation_method = newton_raphson,
-                               .optimizer_type = automatic_tap_adjustment,
-                               .optimizer_strategy = power_grid_model::OptimizerStrategy::any},
+                              {.calculation_type = PGM_power_flow,
+                               .calculation_symmetry = PGM_symmetric,
+                               .calculation_method = PGM_newton_raphson,
+                               .tap_changing_strategy = PGM_tap_changing_strategy_any_valid_tap},
                               batch_size);
     benchmarker.run_benchmark(option,
-                              {.calculation_type = power_flow,
-                               .calculation_symmetry = symmetric,
-                               .calculation_method = newton_raphson,
-                               .optimizer_type = automatic_tap_adjustment,
-                               .optimizer_strategy = power_grid_model::OptimizerStrategy::fast_any},
+                              {.calculation_type = PGM_power_flow,
+                               .calculation_symmetry = PGM_symmetric,
+                               .calculation_method = PGM_newton_raphson,
+                               .tap_changing_strategy = PGM_tap_changing_strategy_fast_any_tap},
                               batch_size);
     benchmarker.run_benchmark(option,
-                              {.calculation_type = power_flow,
-                               .calculation_symmetry = symmetric,
-                               .calculation_method = newton_raphson,
-                               .optimizer_type = automatic_tap_adjustment,
-                               .optimizer_strategy = power_grid_model::OptimizerStrategy::global_minimum},
+                              {.calculation_type = PGM_power_flow,
+                               .calculation_symmetry = PGM_symmetric,
+                               .calculation_method = PGM_newton_raphson,
+                               .tap_changing_strategy = PGM_tap_changing_strategy_min_voltage_tap},
                               batch_size);
     benchmarker.run_benchmark(option,
-                              {.calculation_type = power_flow,
-                               .calculation_symmetry = symmetric,
-                               .calculation_method = newton_raphson,
-                               .optimizer_type = automatic_tap_adjustment,
-                               .optimizer_strategy = power_grid_model::OptimizerStrategy::global_maximum},
+                              {.calculation_type = PGM_power_flow,
+                               .calculation_symmetry = PGM_symmetric,
+                               .calculation_method = PGM_newton_raphson,
+                               .tap_changing_strategy = PGM_tap_changing_strategy_max_voltage_tap},
                               batch_size);
     benchmarker.run_benchmark(option, // TODO(mgovers): local_minimum is not exposed as a public API yet
-                              {.calculation_type = power_flow,
-                               .calculation_symmetry = symmetric,
-                               .calculation_method = newton_raphson,
-                               .optimizer_type = automatic_tap_adjustment,
-                               .optimizer_strategy = power_grid_model::OptimizerStrategy::local_minimum},
+                              {.calculation_type = PGM_power_flow,
+                               .calculation_symmetry = PGM_symmetric,
+                               .calculation_method = PGM_newton_raphson,
+                               .tap_changing_strategy = PGM_tap_changing_strategy_min_voltage_tap},
                               batch_size);
     benchmarker.run_benchmark(option, // TODO(mgovers): local_minimum is not exposed as a public API yet
-                              {.calculation_type = power_flow,
-                               .calculation_symmetry = symmetric,
-                               .calculation_method = newton_raphson,
-                               .optimizer_type = automatic_tap_adjustment,
-                               .optimizer_strategy = power_grid_model::OptimizerStrategy::local_maximum},
+                              {.calculation_type = PGM_power_flow,
+                               .calculation_symmetry = PGM_symmetric,
+                               .calculation_method = PGM_newton_raphson,
+                               .tap_changing_strategy = PGM_tap_changing_strategy_max_voltage_tap},
                               batch_size);
 
     // with meshed ring
     option.has_mv_ring = true;
     option.has_lv_ring = true;
     benchmarker.run_benchmark(option,
-                              {.calculation_type = power_flow,
-                               .calculation_symmetry = symmetric,
-                               .calculation_method = newton_raphson,
-                               .optimizer_type = automatic_tap_adjustment},
+                              {.calculation_type = PGM_power_flow,
+                               .calculation_symmetry = PGM_symmetric,
+                               .calculation_method = PGM_newton_raphson,
+                               .tap_changing_strategy = PGM_tap_changing_strategy_fast_any_tap},
                               batch_size);
     benchmarker.run_benchmark(option,
-                              {.calculation_type = power_flow,
-                               .calculation_symmetry = symmetric,
-                               .calculation_method = linear,
-                               .optimizer_type = automatic_tap_adjustment},
+                              {.calculation_type = PGM_power_flow,
+                               .calculation_symmetry = PGM_symmetric,
+                               .calculation_method = PGM_linear,
+                               .tap_changing_strategy = PGM_tap_changing_strategy_fast_any_tap},
                               batch_size);
     benchmarker.run_benchmark(option,
-                              {.calculation_type = power_flow,
-                               .calculation_symmetry = asymmetric,
-                               .calculation_method = linear,
-                               .optimizer_type = automatic_tap_adjustment},
+                              {.calculation_type = PGM_power_flow,
+                               .calculation_symmetry = PGM_asymmetric,
+                               .calculation_method = PGM_linear,
+                               .tap_changing_strategy = PGM_tap_changing_strategy_fast_any_tap},
                               batch_size);
 
     std::println("\n\n##### BENCHMARK STATE ESTIMATION #####\n");
@@ -600,41 +584,42 @@ int main(int /* argc */, char** /* argv */) {
     // radial
     option.has_mv_ring = false;
     option.has_lv_ring = false;
-    benchmarker.run_benchmark(
-        option,
-        {.calculation_type = state_estimation, .calculation_symmetry = symmetric, .calculation_method = newton_raphson},
-        batch_size);
     benchmarker.run_benchmark(option,
-                              {.calculation_type = state_estimation,
-                               .calculation_symmetry = symmetric,
-                               .calculation_method = newton_raphson,
+                              {.calculation_type = PGM_state_estimation,
+                               .calculation_symmetry = PGM_symmetric,
+                               .calculation_method = PGM_newton_raphson},
+                              batch_size);
+    benchmarker.run_benchmark(option,
+                              {.calculation_type = PGM_state_estimation,
+                               .calculation_symmetry = PGM_symmetric,
+                               .calculation_method = PGM_newton_raphson,
                                .threading = 6},
                               batch_size);
-    benchmarker.run_benchmark(option, {.calculation_type = state_estimation,
-                                       .calculation_symmetry = symmetric,
-                                       .calculation_method = iterative_linear});
-    // benchmarker.run_benchmark(option, {.calculation_type = state_estimation,
-    //                                    .calculation_symmetry = asymmetric,
-    //                                    .calculation_method = newton_raphson});
-    benchmarker.run_benchmark(option, {.calculation_type = state_estimation,
-                                       .calculation_symmetry = asymmetric,
-                                       .calculation_method = iterative_linear});
+    benchmarker.run_benchmark(option, {.calculation_type = PGM_state_estimation,
+                                       .calculation_symmetry = PGM_symmetric,
+                                       .calculation_method = PGM_iterative_linear});
+    // benchmarker.run_benchmark(option, {.calculation_type = PGM_state_estimation,
+    //                                    .calculation_symmetry = PGM_asymmetric,
+    //                                    .calculation_method = PGM_newton_raphson});
+    benchmarker.run_benchmark(option, {.calculation_type = PGM_state_estimation,
+                                       .calculation_symmetry = PGM_asymmetric,
+                                       .calculation_method = PGM_iterative_linear});
 
     // with meshed ring
     option.has_mv_ring = true;
     option.has_lv_ring = true;
-    benchmarker.run_benchmark(option, {.calculation_type = state_estimation,
-                                       .calculation_symmetry = symmetric,
-                                       .calculation_method = newton_raphson});
-    benchmarker.run_benchmark(option, {.calculation_type = state_estimation,
-                                       .calculation_symmetry = symmetric,
-                                       .calculation_method = iterative_linear});
-    // benchmarker.run_benchmark(option, {.calculation_type = state_estimation,
-    //                                    .calculation_symmetry = asymmetric,
-    //                                    .calculation_method = newton_raphson});
-    benchmarker.run_benchmark(option, {.calculation_type = state_estimation,
-                                       .calculation_symmetry = asymmetric,
-                                       .calculation_method = iterative_linear});
+    benchmarker.run_benchmark(option, {.calculation_type = PGM_state_estimation,
+                                       .calculation_symmetry = PGM_symmetric,
+                                       .calculation_method = PGM_newton_raphson});
+    benchmarker.run_benchmark(option, {.calculation_type = PGM_state_estimation,
+                                       .calculation_symmetry = PGM_symmetric,
+                                       .calculation_method = PGM_iterative_linear});
+    // benchmarker.run_benchmark(option, {.calculation_type = PGM_state_estimation,
+    //                                    .calculation_symmetry = PGM_asymmetric,
+    //                                    .calculation_method = PGM_newton_raphson});
+    benchmarker.run_benchmark(option, {.calculation_type = PGM_state_estimation,
+                                       .calculation_symmetry = PGM_asymmetric,
+                                       .calculation_method = PGM_iterative_linear});
 
     std::println("\n\n##### BENCHMARK SHORT CIRCUIT #####\n");
     option.has_measurements = false;
@@ -644,24 +629,27 @@ int main(int /* argc */, char** /* argv */) {
     // radial
     option.has_mv_ring = false;
     option.has_lv_ring = false;
-    benchmarker.run_benchmark(
-        option, {.calculation_type = short_circuit, .calculation_symmetry = symmetric, .calculation_method = iec60909},
-        batch_size);
     benchmarker.run_benchmark(option,
-                              {.calculation_type = short_circuit,
-                               .calculation_symmetry = symmetric,
-                               .calculation_method = iec60909,
+                              {.calculation_type = PGM_short_circuit,
+                               .calculation_symmetry = PGM_symmetric,
+                               .calculation_method = PGM_iec60909},
+                              batch_size);
+    benchmarker.run_benchmark(option,
+                              {.calculation_type = PGM_short_circuit,
+                               .calculation_symmetry = PGM_symmetric,
+                               .calculation_method = PGM_iec60909,
                                .threading = 6},
                               batch_size);
-    benchmarker.run_benchmark(
-        option, {.calculation_type = short_circuit, .calculation_symmetry = symmetric, .calculation_method = iec60909});
+    benchmarker.run_benchmark(option, {.calculation_type = PGM_short_circuit,
+                                       .calculation_symmetry = PGM_symmetric,
+                                       .calculation_method = PGM_iec60909});
 
     // with meshed ring
     option.has_mv_ring = true;
     option.has_lv_ring = true;
-    benchmarker.run_benchmark(
-        option,
-        {.calculation_type = short_circuit, .calculation_symmetry = asymmetric, .calculation_method = iec60909});
+    benchmarker.run_benchmark(option, {.calculation_type = PGM_short_circuit,
+                                       .calculation_symmetry = PGM_asymmetric,
+                                       .calculation_method = PGM_iec60909});
 
     return 0;
 }
