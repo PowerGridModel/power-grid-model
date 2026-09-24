@@ -19,7 +19,6 @@
 #include <power_grid_model/common/logging.hpp>
 #include <power_grid_model/main_model_fwd.hpp>
 
-#include <chrono>
 #include <concepts>
 #include <cstddef>
 #include <exception>
@@ -147,24 +146,6 @@ void print_report(Report const& report) {
         std::println("{}: {:g}", make_key(key), val);
     }
 }
-
-// measures the events that the calculation core does not log itself
-class ScopedTimer {
-  public:
-    ScopedTimer(Report& report, LogEvent event) : report_{report}, event_{event} {}
-    ScopedTimer(ScopedTimer const&) = delete;
-    ScopedTimer(ScopedTimer&&) = delete;
-    ScopedTimer& operator=(ScopedTimer const&) = delete;
-    ScopedTimer& operator=(ScopedTimer&&) = delete;
-    ~ScopedTimer() {
-        report_[event_] += std::chrono::duration<double>{std::chrono::steady_clock::now() - start_}.count();
-    }
-
-  private:
-    Report& report_;
-    LogEvent event_;
-    std::chrono::steady_clock::time_point start_{std::chrono::steady_clock::now()};
-};
 
 // the output components the fictional grid generator produces, per output dataset flavor
 struct OutputComponents {
@@ -391,45 +372,30 @@ struct PowerGridBenchmark {
 
         {
             std::println("*****Run with initialization*****");
-            Report report;
-            {
-                ScopedTimer const t_total{report, LogEvent::total};
-                {
-                    ScopedTimer const t_build{report, LogEvent::build_model};
-                    create_model(input);
-                }
-                run(single_scenario);
-            }
-            print_report(collect_report(std::move(report)));
+            create_model(input);
+            run(single_scenario);
+            print_report(collect_report());
         }
         {
             std::println("\n*****Run without initialization*****");
-            Report report;
-            {
-                ScopedTimer const t_total{report, LogEvent::total};
-                run(single_scenario);
-            }
-            print_report(collect_report(std::move(report)));
+            run(single_scenario);
+            print_report(collect_report());
         }
         if (batch_size > 0) {
             std::println("\n*****Run with batch calculation*****");
-            Report report;
-            {
-                ScopedTimer const t_total{report, LogEvent::total};
-                run(batch_size);
-            }
-            print_report(collect_report(std::move(report)));
+            run(batch_size);
+            print_report(collect_report());
         }
 
         std::println("\n");
     }
 
     void create_model(InputData const& input) {
-        model = std::make_unique<Model>(system_frequency, make_input_dataset(input));
-        model->add_logger(logger);
+        model = std::make_unique<Model>(system_frequency, make_input_dataset(input), logger);
     }
 
-    Report collect_report(Report report) {
+    Report collect_report() {
+        Report report;
         merge_logger_output(report, logger.get_output());
         logger.clear();
         return report;

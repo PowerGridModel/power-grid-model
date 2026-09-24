@@ -14,11 +14,18 @@
 
 #include "power_grid_model_c/model.h"
 
+#include <utility>
+#include <string>
+
 namespace power_grid_model_cpp {
 class Model {
   public:
     Model(double system_frequency, DatasetConst const& input_dataset)
         : model_{handle_.call_with(PGM_create_model, system_frequency, input_dataset.get())} {}
+    Model(double system_frequency, DatasetConst const& input_dataset, Logger& logger) {
+        handle_.register_logger(logger);
+        model_.reset(handle_.call_with(PGM_create_model, system_frequency, input_dataset.get()));
+    }
     Model(Model const& other) : model_{handle_.call_with(PGM_copy_model, other.get())} {}
     Model& operator=(Model const& other) {
         if (this != &other) {
