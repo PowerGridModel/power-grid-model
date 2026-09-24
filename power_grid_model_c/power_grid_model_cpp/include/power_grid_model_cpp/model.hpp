@@ -14,8 +14,8 @@
 
 #include "power_grid_model_c/model.h"
 
-#include <utility>
 #include <string>
+#include <utility>
 
 namespace power_grid_model_cpp {
 class Model {
