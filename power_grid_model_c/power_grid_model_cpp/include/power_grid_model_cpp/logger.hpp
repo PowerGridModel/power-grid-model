@@ -15,13 +15,13 @@
 
 namespace power_grid_model_cpp {
 // Opt-in diagnostic logger. Create a Logger, attach it to one or more Model instances via
-// Model::add_logger(), then read output with get_output().
+// Model::attach_logger(), then read output with get_output().
 //
 // Lifetime: the underlying logging implementation is shared with every Model/Handle this
-// logger is registered to (see Model::add_logger()). Destroying this wrapper while still
+// logger is registered to (see Model::attach_logger()). Destroying this wrapper while still
 // registered is safe: the implementation stays alive and keeps collecting output for those
 // registrations, but this specific Logger object can no longer be used to target that
-// registration individually. Use Model::remove_all_loggers() or destroy the Model to release it.
+// registration individually. Use Model::detach_all_loggers() or destroy the Model to release it.
 //
 // Concurrency: do not register, unregister, destroy, read, or clear a logger while a
 // calculation using it is in progress on any thread other than the calculation's own

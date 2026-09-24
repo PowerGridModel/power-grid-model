@@ -151,7 +151,7 @@ typedef void (*PGM_LogOutputCallback)(char const* data, PGM_Idx size, void* user
  * If you supply a NULL callback or if the internal logger encounters an error while retrieving the output, an error
  * will be raised. Use PGM_error_code() and PGM_error_message() to check the error.
  *
- * For #PGM_text_logger: delivers timestamped log lines.
+ * For #PGM_logger_type_info: delivers timestamped log lines.
  * For #PGM_benchmark_logger: delivers one line per logged event in the format
  *   EVENT_CODE<TAB>VALUE
  *
