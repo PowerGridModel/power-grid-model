@@ -10,7 +10,6 @@
 #include "logger_fwd.hpp"
 #include "math_solver.hpp"
 
-#pragma clang diagnostic push
 #include "options.hpp" // NOLINT(misc-include-cleaner)
 #include "safe_memory_handling.hpp"
 
