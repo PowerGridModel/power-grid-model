@@ -19,10 +19,13 @@ class Options {
     RawOptions* get() { return options_.get(); }
     RawOptions const* get() const { return options_.get(); }
 
+    void set_calculation_type(PGM_CalculationType type) { set_calculation_type(static_cast<Idx>(type)); }
     void set_calculation_type(Idx type) { handle_.call_with(PGM_set_calculation_type, get(), type); }
 
+    void set_calculation_method(PGM_CalculationMethod method) { set_calculation_method(static_cast<Idx>(method)); }
     void set_calculation_method(Idx method) { handle_.call_with(PGM_set_calculation_method, get(), method); }
 
+    void set_symmetric(PGM_SymmetryType sym) { set_symmetric(static_cast<Idx>(sym)); }
     void set_symmetric(Idx sym) { handle_.call_with(PGM_set_symmetric, get(), sym); }
 
     void set_err_tol(double err_tol) { handle_.call_with(PGM_set_err_tol, get(), err_tol); }
