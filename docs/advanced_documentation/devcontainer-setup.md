@@ -6,8 +6,13 @@ SPDX-License-Identifier: MPL-2.0
 
 # Development Container Setup Guide
 
-This document explains how you can use our development container (dev container) setup to contribute to the _Python_
-side of `power-grid-model`.
+This document explains how you can use our development container (dev container) setups to contribute to
+`power-grid-model`.
+There are two separately selectable configurations:
+
+* The default container (`.devcontainer/devcontainer.json`) for the _Python_ side of `power-grid-model`.
+* A dedicated container (`.devcontainer/cpp/devcontainer.json`) for _C++_ development (see
+  [C++ Development Container](#c-development-container)).
 
 ```{note}
 A [development container](https://containers.dev/) is a pre-configured
@@ -124,3 +129,55 @@ Note that the _Professional_ edition is required to have native development cont
 * Open the [welcome screen](https://www.jetbrains.com/help/pycharm/welcome-screen.html) of PyCharm.
 * Click `Remote Development`, choose `Dev Containers` and click the `Create Dev Containers` button.
 * Select your local path to the cloned repository and choose your container engine.
+
+## C++ Development Container
+
+The dedicated C++ container (`.devcontainer/cpp/devcontainer.json`) provides the Linux C++ toolchain for
+`power-grid-model`: `gcc-14`/`g++-14` plus `clang-18`, `CMake` (>= 3.23), `Ninja`, `gdb`, `clang-format`/`clang-tidy`,
+and the C++ dependencies from the [build guide](./build-guide.md) (`boost`, `eigen3`, `nlohmann-json`, `msgpack-cxx`,
+`doctest`).
+The Python container remains the default and is unchanged; combined Python/C++ and docs-building environments are
+out of scope.
+
+### Selecting the C++ container in VS Code
+
+* Install the [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+  extension and open the cloned `power-grid-model` folder.
+* Click the green `Remote Indicator` in the bottom-left corner or open the Command Palette
+  (`Ctrl+Shift+P` / `Cmd+Shift+P`), then select `Dev Containers: Reopen in Container`.
+* When prompted, pick the `power-grid-model (C++)` configuration (`.devcontainer/cpp/devcontainer.json`).
+
+### Configure and build (CMake preset)
+
+The container defaults to the existing `gcc-debug` CMake preset (`cmake.configurePreset`); use `clang-debug`
+instead if you want the Clang build.
+From a VS Code terminal inside the container, or any terminal with the environment set up:
+
+```shell
+cmake --preset gcc-debug
+cmake --build --preset gcc-debug
+```
+
+Alternatively, use the CMake Tools extension preset picker, or the shortcut `./build.sh -p gcc-debug`.
+
+### Run the C++ tests
+
+```shell
+ctest --preset gcc-debug --output-on-failure
+```
+
+The `doctest` suites are also discoverable in the VS Code Test Explorer via the Catch2 test adapter.
+
+### Debug a C++ test in the IDE
+
+* Build with a Debug preset as above so binaries carry symbols.
+* Set a breakpoint, then start the preconfigured `Debug validation test [Unix]` launch configuration
+  (`.vscode/launch.json`, `gdb`-based), or right-click an individual test in the Test Explorer and debug it.
+* The launch configuration resolves the test binary via `${command:cmake.buildDirectory}`
+  (e.g. `cpp_build/gcc-debug/bin/power_grid_model_validation_tests`).
+
+### Returning to the Python container
+
+Reopen the folder in the default container (`Dev Containers: Reopen in Container`, then pick the
+`power-grid-model` configuration), or `Dev Containers: Reopen Folder Locally` first and then reopen in the
+Python container.
