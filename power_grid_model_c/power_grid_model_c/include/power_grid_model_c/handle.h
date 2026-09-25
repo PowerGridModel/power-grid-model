@@ -21,7 +21,8 @@ extern "C" {
  * @brief Create a new handle.
  *
  * A handle object is needed to store error information.
- * If you run it in multi-threading at user side, each thread should have unique handle.
+ * If you run it in multi-threading at user side, each thread should have a unique handle.
+ * Usage of the logger across multiple user threads is not safe unless externally synchronized.
  * The handle should be destroyed by PGM_destroy_handle().
  *
  * @return A pointer to the created PGM_Handle. The instance must be freed by PGM_destroy_handle().

@@ -13,9 +13,9 @@
 #include "auxiliary/meta_data.hpp"
 #include "batch_parameter.hpp"
 #include "calculation_preparation.hpp"
-#include "common/calculation_info.hpp"
 #include "common/common.hpp"
 #include "common/logging.hpp"
+#include "common/multi_threaded_logging.hpp"
 #include "main_core/main_model_type.hpp"
 #include "main_model_fwd.hpp"
 #include "math_solver/math_solver_dispatch.hpp"
@@ -60,6 +60,7 @@ class MainModel {
             logger_ = other.logger_;
         }
     }
+    MainModel(MainModel other, MultiThreadedLogger& logger) : MainModel{std::move(other)} { logger_ = logger; }
     MainModel& operator=(MainModel const& other) {
         if (this != &other) {
             impl_.reset();
@@ -83,6 +84,12 @@ class MainModel {
     void get_indexer(std::string_view component_type, ID const* id_begin, Idx size, Idx* indexer_begin) const {
         impl().get_indexer(component_type, id_begin, size, indexer_begin);
     }
+
+    void set_logger(MultiThreadedLogger& logger) { logger_ = logger; }
+
+    bool logger_empty() const noexcept { return std::addressof(logger_.get()) == std::addressof(no_logger_); }
+
+    void reset_logger() noexcept { logger_ = no_logger_; }
 
     template <cache_type_c CacheType> void update_components(ConstDataset const& update_data) {
         impl().update_components<CacheType>(update_data.get_individual_scenario(0));

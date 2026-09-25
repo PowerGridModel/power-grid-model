@@ -8,28 +8,52 @@
 #define PGM_DLL_EXPORTS
 #endif
 
+#include "logger.hpp"
+#include "logger_fwd.hpp"
+
 #include "power_grid_model_c/basics.h"
 
 #include <power_grid_model/batch_parameter.hpp>
 #include <power_grid_model/common/common.hpp>
 
+#include <concepts>
 #include <exception>
+#include <string>
 #include <string_view>
+#include <type_traits>
+#include <utility>
+#include <vector>
 
 // context handle
 struct PGM_Handle {
-    power_grid_model::Idx err_code;
+    PGM_Handle();
+    ~PGM_Handle() noexcept;
+    PGM_Handle(PGM_Handle const&) = delete;
+    PGM_Handle& operator=(PGM_Handle const&) = delete;
+    PGM_Handle(PGM_Handle&&) noexcept;
+    PGM_Handle& operator=(PGM_Handle&&) noexcept;
+
+    power_grid_model::Idx err_code{PGM_no_error};
     std::string err_msg;
     power_grid_model::IdxVector failed_scenarios;
     std::vector<std::string> batch_errs;
     mutable std::vector<char const*> batch_errs_c_str;
     [[no_unique_address]] power_grid_model::BatchParameter batch_parameter;
+    // Loggers registered on this handle. Owned by the caller; the composite forwards to them.
+    // Survives clear_error. Do not modify while a calculation is in progress.
+    power_grid_model_c::HandleLogger logger{power_grid_model_c::make_handle_logger()};
 };
 
 namespace power_grid_model_c {
-constexpr void clear_error(PGM_Handle* handle) {
+inline void clear_error(PGM_Handle* handle) {
     if (handle != nullptr) {
-        *handle = PGM_Handle{};
+        // Intentionally reset only error-related fields; logger is preserved.
+        handle->err_code = {PGM_no_error};
+        handle->err_msg.clear();
+        handle->failed_scenarios.clear();
+        handle->batch_errs.clear();
+        handle->batch_errs_c_str.clear();
+        handle->batch_parameter = {};
     }
 }
 

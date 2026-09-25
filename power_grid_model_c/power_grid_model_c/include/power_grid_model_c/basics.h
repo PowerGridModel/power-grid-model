@@ -141,6 +141,17 @@ typedef struct PGM_WritableDataset PGM_WritableDataset;
  */
 typedef struct PGM_DatasetInfo PGM_DatasetInfo;
 
+/**
+ * @brief Opaque struct for a logger object.
+ *
+ * A logger captures diagnostic output (text or benchmark timings) produced during calculations.
+ * Loggers are created with PGM_create_logger(), registered to a handle with PGM_register_logger(),
+ * and must be destroyed with PGM_destroy_logger() after unregistering with PGM_unregister_logger().
+ * Do not register the same logger to handles that are used concurrently by different user threads unless synchronized
+ * externally.
+ */
+typedef struct PGM_Logger PGM_Logger;
+
 // NOLINTEND(modernize-use-using)
 
 // NOLINTBEGIN(performance-enum-size,cppcoreguidelines-use-enum-class)
@@ -246,6 +257,20 @@ enum PGM_TapChangingStrategy {
 enum PGM_ExperimentalFeatures {
     PGM_experimental_features_disabled = 0, /**< disable experimental features */
     PGM_experimental_features_enabled = 1,  /**< enable experimental features */
+};
+
+/**
+ * @brief Enumeration of logger types.
+ *
+ * Selects which kind of diagnostic output a logger captures.
+ *
+ */
+enum PGM_LoggerType {
+    // PGM_logger_type_critical = 0, // < reserved for future extension: logger that captures critical error messages
+    // PGM_logger_type_error = 1,    // < reserved for future extension: logger that captures error messages
+    // PGM_logger_type_warning = 2,  // < reserved for future extension: logger that captures warning messages
+    PGM_logger_type_info = 3, // < logger that captures timestamped text messages
+    // PGM_logger_type_debug = 4,    // < reserved for future extension: logger that captures debug messages
 };
 
 // NOLINTEND(performance-enum-size,cppcoreguidelines-use-enum-class)
