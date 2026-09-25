@@ -771,6 +771,53 @@ def test_validate_input_data_sym_calculation(input_data):
     assert NotBooleanError(CT.fault, AT.status, [32, 33]) in validation_errors
     assert InvalidIdError(CT.fault, AT.fault_object, [1, *list(range(32, 42))], [CT.node]) in validation_errors
 
+def test_validate_ideal_source_sk():
+    node = initialize_array(DatasetType.input, CT.node, 1)
+    node[AT.id] = [1]
+    node[AT.u_rated] = [10.5e3]
+
+    source = initialize_array(DatasetType.input, CT.source, 1)
+    source[AT.id] = [2]
+    source[AT.node] = [1]
+    source[AT.status] = [1]
+    source[AT.u_ref] = [1.0]
+    source[AT.sk] = [np.inf]
+    source[AT.rx_ratio] = [0.1]
+    source[AT.z01_ratio] = [1.0]
+
+    data = {
+        CT.node: node,
+        CT.source: source,
+    }
+
+    # Ideal source is supported for power flow.
+    validation_errors = validate_input_data(
+        data,
+        calculation_type=CalculationType.power_flow,
+    )
+    assert validation_errors is None
+
+    # Ideal source is supported for state estimation.
+    validation_errors = validate_input_data(
+        data,
+        calculation_type=CalculationType.state_estimation,
+    )
+    assert validation_errors is None
+
+    # Ideal source is not supported for short-circuit calculations.
+    validation_errors = validate_input_data(
+        data,
+        calculation_type=CalculationType.short_circuit,
+    )
+    assert validation_errors is not None
+
+    # Values above the ideal-source cap are also invalid for short circuit.
+    source[AT.sk] = [10e51]
+    validation_errors = validate_input_data(
+        data,
+        calculation_type=CalculationType.short_circuit,
+    )
+    assert validation_errors is not None
 
 def test_validate_three_winding_transformer(input_data):
     validation_errors = validate_input_data(input_data, symmetric=True)
