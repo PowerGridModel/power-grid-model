@@ -266,11 +266,11 @@ enum PGM_ExperimentalFeatures {
  *
  */
 enum PGM_LoggerType {
-    // PGM_logger_type_critical = 0, /**< reserved for future extension: logger that captures critical error messages */
-    // PGM_logger_type_error = 1,    /**< reserved for future extension: logger that captures error messages */
-    // PGM_logger_type_warning = 2,  /**< reserved for future extension: logger that captures warning messages */
-    PGM_logger_type_info = 3, /**< logger that captures timestamped text messages */
-    // PGM_logger_type_debug = 4,    /**< reserved for future extension: logger that captures debug messages */
+    // PGM_logger_type_critical = 0, // < reserved for future extension: logger that captures critical error messages
+    // PGM_logger_type_error = 1,    // < reserved for future extension: logger that captures error messages
+    // PGM_logger_type_warning = 2,  // < reserved for future extension: logger that captures warning messages
+    PGM_logger_type_info = 3, // < logger that captures timestamped text messages
+    // PGM_logger_type_debug = 4,    // < reserved for future extension: logger that captures debug messages
 };
 
 // NOLINTEND(performance-enum-size,cppcoreguidelines-use-enum-class)
