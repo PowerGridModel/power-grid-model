@@ -391,8 +391,6 @@ TEST_CASE("Test MultiThreadedTextLogger") {
                 return "called";
             };
 
-            MultiThreadedTextLogger multi_threaded_logger;
-
             SUBCASE("Without event") {
                 multi_threaded_logger.log(lazy_log);
                 CHECK(called);
