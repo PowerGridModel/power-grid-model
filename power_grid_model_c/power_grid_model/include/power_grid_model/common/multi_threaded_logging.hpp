@@ -73,6 +73,8 @@ class MultiThreadedLoggerImpl : public MultiThreadedLogger {
     void log(LogEvent tag, double value) override { log_.log(tag, value); }
     void log(LogEvent tag, Idx value) override { log_.log(tag, value); }
 
+    [[nodiscard]] bool should_log(LogEvent tag) const override { return log_.should_log(tag); }
+
     using MultiThreadedLogger::log;
 
     // Lock-safe overrides. Marked final so subclasses cannot bypass the lock; override

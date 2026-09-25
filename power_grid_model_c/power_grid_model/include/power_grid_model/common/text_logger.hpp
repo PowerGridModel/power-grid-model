@@ -60,6 +60,7 @@ class TextLogger : public Logger {
     void log(LogEvent tag, double value) override { log_impl(tag, std::to_string(value)); }
     void log(LogEvent tag, Idx value) override { log_impl(tag, std::to_string(value)); }
     void log(LogEvent tag, std::string_view message) override { log_impl(tag, message); }
+    [[nodiscard]] bool should_log(LogEvent /*tag*/) const override { return true; }
 
     using Logger::log;
 

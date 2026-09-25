@@ -86,6 +86,12 @@ void run_parallel_jobs(Idx n_threads, MultiThreadedTextLogger& logger, functor_c
 TEST_CASE("Test TextLogger") {
     using enum LogEvent;
 
+    SUBCASE("Should log") {
+        TextLogger txt_logger{};
+        CHECK(txt_logger.should_log(unknown));
+        CHECK(txt_logger.should_log(total));
+    }
+
     SUBCASE("No flush-handler") {
         TextLogger txt_logger{};
 
@@ -314,6 +320,27 @@ TEST_CASE("Test TextLogger") {
             CHECK(other_report.empty()); // report should be cleared after flush
         }
     }
+
+    SUBCASE("Lazy-logging is always executed") {
+        bool called = false;
+        auto const lazy_log = [&called] {
+            called = true;
+            return "called";
+        };
+
+        TextLogger txt_logger;
+
+        SUBCASE("Without event") {
+            txt_logger.log(lazy_log);
+            CHECK(called);
+            CHECK(txt_logger.report().contains("Tag:-1: called\n"));
+        }
+        SUBCASE("With event") {
+            txt_logger.log(LogEvent::total, lazy_log);
+            CHECK(called);
+            CHECK(txt_logger.report().contains("Tag:0: called\n"));
+        }
+    }
 }
 TEST_CASE("Test MultiThreadedTextLogger") {
     using enum LogEvent;
@@ -338,6 +365,11 @@ TEST_CASE("Test MultiThreadedTextLogger") {
             multi_threaded_report_checker_helper(arbitrary_n_threads, multi_threaded_logger.report());
         }
 
+        SUBCASE("Should log") {
+            CHECK(multi_threaded_logger.should_log(unknown));
+            CHECK(multi_threaded_logger.should_log(total));
+        }
+
         SUBCASE("Direct logging") {
             multi_threaded_logger.log(total, "");
             multi_threaded_logger.log(build_model, 1.0);
@@ -350,6 +382,25 @@ TEST_CASE("Test MultiThreadedTextLogger") {
 
             auto report = multi_threaded_logger.report();
             report_checker_helper(report);
+        }
+
+        SUBCASE("Direct logging: lazy-logging is always executed") {
+            bool called = false;
+            auto const lazy_log = [&called] {
+                called = true;
+                return "called";
+            };
+
+            SUBCASE("Without event") {
+                multi_threaded_logger.log(lazy_log);
+                CHECK(called);
+                CHECK(multi_threaded_logger.report().contains("Tag:-1: called\n"));
+            }
+            SUBCASE("With event") {
+                multi_threaded_logger.log(LogEvent::total, lazy_log);
+                CHECK(called);
+                CHECK(multi_threaded_logger.report().contains("Tag:0: called\n"));
+            }
         }
 
         SUBCASE("Clear report") {
