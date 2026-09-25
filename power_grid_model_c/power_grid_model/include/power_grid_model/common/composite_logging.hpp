@@ -4,11 +4,11 @@
 
 #pragma once
 
+#include "common.hpp"
 #include "logging.hpp"
 
 #include <algorithm>
 #include <memory>
-#include <ranges>
 #include <string_view>
 #include <vector>
 

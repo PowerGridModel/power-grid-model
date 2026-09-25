@@ -391,17 +391,17 @@ TEST_CASE("Test MultiThreadedTextLogger") {
                 return "called";
             };
 
-            TextLogger txt_logger;
+            MultiThreadedTextLogger multi_threaded_logger;
 
             SUBCASE("Without event") {
-                txt_logger.log(lazy_log);
+                multi_threaded_logger.log(lazy_log);
                 CHECK(called);
-                CHECK(txt_logger.report().contains("Tag:-1: called\n"));
+                CHECK(multi_threaded_logger.report().contains("Tag:-1: called\n"));
             }
             SUBCASE("With event") {
-                txt_logger.log(LogEvent::total, lazy_log);
+                multi_threaded_logger.log(LogEvent::total, lazy_log);
                 CHECK(called);
-                CHECK(txt_logger.report().contains("Tag:0: called\n"));
+                CHECK(multi_threaded_logger.report().contains("Tag:0: called\n"));
             }
         }
 
