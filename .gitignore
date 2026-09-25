@@ -520,3 +520,6 @@ docs/jupyter_execute/
 .vscode/
 
 wheelhouse/
+
+# sonar
+.sonarlint/
