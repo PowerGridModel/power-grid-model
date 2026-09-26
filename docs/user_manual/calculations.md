@@ -340,6 +340,9 @@ find the range of loading conditions that are relevant for your use case and the
 only use linear methods within this range for the specific grid configuration.
 
 Non convergence of newton raphson is a good signal of unpractical or unfeasible systems.
+In a meshed grid with much of the generation far from the source, it can also come from the start: try
+`power_flow_initialization=PowerFlowInitialization.flat` (see
+[Initialization](../algorithms/pf-algorithms.md#initialization)) before concluding that the system has no solution.
 This signal can be ignored when using linear methods.
 Similarly, having atleast some results from linear methods can aid in finding data errors or the reason
 for non convergence of newton raphson method.

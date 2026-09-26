@@ -109,6 +109,10 @@ enum class FaultPhase : IntS {
 
 enum class ShortCircuitVoltageScaling : IntS { minimum = 0, maximum = 1 };
 
+// Start of the Newton-Raphson power flow: a linear guess (loads and generators as constant admittances) or a
+// flat start (every bus at 1 p.u. with its topological phase shift, source buses at their reference voltage)
+enum class PowerFlowInitialization : IntS { linear = 0, flat = 1 };
+
 enum class CType : IntS { c_int32 = 0, c_int8 = 1, c_double = 2, c_double3 = 3 };
 
 enum class SerializationFormat : IntS { json = 0, msgpack = 1 };

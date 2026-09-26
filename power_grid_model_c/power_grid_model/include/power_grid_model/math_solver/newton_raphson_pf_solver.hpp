@@ -246,12 +246,8 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
           voltage_regulators_per_load_gen_{std::ref(topo.voltage_regulators_per_load_gen)},
           clamped_regulators_per_load_gen_(topo.load_gen_type.size(), RealValue<sym>{nan}) {}
 
-    // Initialize the unknown variable in polar form using a linear voltage guess solved in the real domain.
-    // This implementation reuses the class-level Jacobian matrix (data_jac_) and RHS vector (del_x_pq_)
-    // to eliminate temporary memory allocations.
-    // The complex system (G + jB)(Ur + jUi) = Ir + jIi is mapped to the real system:
-    // [[G, -B], [B, G]] [Ur, Ui]^T = [Ir, Ii]^T
-    // This mapping ensures that G aligns with the N/M sub-blocks as in the NR Jacobian.
+    // Initialize the unknown variable in polar form, from a linear voltage guess or a flat start
+    // (PowerFlowInput::initialization). Either way, PV buses then start at their reference magnitude.
     void initialize_derived_solver(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
                                    SolverOutput<sym>& output) {
         // Reset reused buffers to zero
@@ -265,6 +261,45 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         const bool has_usable_limits = set_bus_types_and_q_limits(input);
         limit_check_countdown_ = has_usable_limits ? limit_check_at_iteration : no_limit_check;
 
+        if (input.initialization == PowerFlowInitialization::flat) {
+            make_flat_start(input, output.u);
+        } else {
+            make_linear_start(y_bus, input, output.u);
+        }
+
+        set_reference_voltage_for_pv_buses(output.u);
+
+        // get magnitude and angle of start voltage
+        for (Idx i = 0; i != this->n_bus_; ++i) {
+            x_[i].v() = cabs(output.u[i]);
+            x_[i].theta() = arg(output.u[i]);
+        }
+    }
+
+    // Flat start: every bus at 1 p.u. with its topological phase shift, a bus with a source at that source's
+    // reference voltage (the mean if there are several). PV buses are set to their reference magnitude afterwards.
+    void make_flat_start(PowerFlowInput<sym> const& input, ComplexValueVector<sym>& u) const {
+        std::vector<double> const& phase_shift = this->phase_shift_.get();
+        for (auto const& [bus, sources] : enumerated_zip_sequence(this->sources_per_bus_.get())) {
+            if (sources.empty()) {
+                u[bus] = ComplexValue<sym>{std::exp(1.0i * phase_shift[bus])};
+                continue;
+            }
+            DoubleComplex u_ref{};
+            for (Idx const source : sources) {
+                u_ref += input.source[source];
+            }
+            u[bus] = ComplexValue<sym>{u_ref / static_cast<double>(std::ranges::size(sources))};
+        }
+    }
+
+    // Linear voltage guess solved in the real domain, with every load_gen as a constant admittance.
+    // This implementation reuses the class-level Jacobian matrix (data_jac_) and RHS vector (del_x_pq_)
+    // to eliminate temporary memory allocations.
+    // The complex system (G + jB)(Ur + jUi) = Ir + jIi is mapped to the real system:
+    // [[G, -B], [B, G]] [Ur, Ui]^T = [Ir, Ii]^T
+    // This mapping ensures that G aligns with the N/M sub-blocks as in the NR Jacobian.
+    void make_linear_start(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, ComplexValueVector<sym>& u) {
         // Map network admittance to real-domain system
         IdxVector const& map_lu_y_bus = y_bus.map_lu_y_bus();
         ComplexTensorVector<sym> const& ydata = y_bus.admittance();
@@ -290,16 +325,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         sparse_solver_.prefactorize_and_solve(data_jac_, perm_, del_x_pq_, del_x_pq_);
 
         for (Idx const i : std::views::iota(Idx{}, this->n_bus_)) {
-            output.u[i] =
-                ComplexValue<sym>{RealValue<sym>{del_x_pq_[i].u_real()}, RealValue<sym>{del_x_pq_[i].u_imag()}};
-        }
-
-        set_reference_voltage_for_pv_buses(output.u);
-
-        // get magnitude and angle of start voltage
-        for (Idx i = 0; i != this->n_bus_; ++i) {
-            x_[i].v() = cabs(output.u[i]);
-            x_[i].theta() = arg(output.u[i]);
+            u[i] = ComplexValue<sym>{RealValue<sym>{del_x_pq_[i].u_real()}, RealValue<sym>{del_x_pq_[i].u_imag()}};
         }
     }
 

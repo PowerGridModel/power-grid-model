@@ -44,6 +44,7 @@ class Options:
     threading = OptionSetter(get_pgc().set_threading)
     tap_changing_strategy = OptionSetter(get_pgc().set_tap_changing_strategy)
     short_circuit_voltage_scaling = OptionSetter(get_pgc().set_short_circuit_voltage_scaling)
+    power_flow_initialization = OptionSetter(get_pgc().set_power_flow_initialization)
     experimental_features = OptionSetter(get_pgc().set_experimental_features)
 
     @property

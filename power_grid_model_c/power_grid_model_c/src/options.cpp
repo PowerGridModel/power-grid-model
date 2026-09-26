@@ -50,6 +50,12 @@ void PGM_set_short_circuit_voltage_scaling(PGM_Handle* handle, PGM_Options* opt,
         safe_ptr_get(opt).short_circuit_voltage_scaling = short_circuit_voltage_scaling;
     });
 }
+void PGM_set_power_flow_initialization(PGM_Handle* handle, PGM_Options* opt,
+                                       PGM_Idx power_flow_initialization) noexcept {
+    call_with_catch(handle, [opt, power_flow_initialization] {
+        safe_ptr_get(opt).power_flow_initialization = power_flow_initialization;
+    });
+}
 void PGM_set_tap_changing_strategy(PGM_Handle* handle, PGM_Options* opt, PGM_Idx tap_changing_strategy) noexcept {
     call_with_catch(handle,
                     [opt, tap_changing_strategy] { safe_ptr_get(opt).tap_changing_strategy = tap_changing_strategy; });

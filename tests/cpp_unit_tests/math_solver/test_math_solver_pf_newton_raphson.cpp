@@ -127,6 +127,69 @@ TEST_CASE("Newton-Raphson PV - Q limit violation with switch to PQ") {
     }
 }
 
+TEST_CASE_TEMPLATE("Newton-Raphson flat start", sym, symmetric_t, asymmetric_t) {
+    using common::logging::NoLogger;
+
+    PFSolverTestGrid<sym> const grid;
+    auto const topo = grid.topo();
+    YBus<sym> const y_bus{topo, grid.param()};
+    NoLogger log;
+
+    PowerFlowInput<sym> pf_input = grid.pf_input();
+    pf_input.initialization = PowerFlowInitialization::flat;
+
+    NewtonRaphsonPFSolver<sym> solver{y_bus, topo};
+    SolverOutput<sym> const output = run_power_flow(solver, y_bus, pf_input, 1e-12, 20, log);
+    assert_output(output, grid.output_ref(), false, 1e-12);
+}
+
+TEST_CASE("Newton-Raphson flat start with a voltage regulator") {
+    using enum LoadGenType;
+
+    // Bus 0 (source, u = 1.02 at 10 degrees) ---branch--- Bus 1 (PV, regulated to u = 1.05)
+    MathModelTopology topo;
+    topo.slack_bus = 0;
+    topo.phase_shift = {0.0, 0.0};
+    topo.branch_bus_idx = {{0, 1}};
+    topo.sources_per_bus = {from_sparse, {0, 1, 1}};
+    topo.shunts_per_bus = {from_sparse, {0, 0, 0}};
+    topo.load_gens_per_bus = {from_sparse, {0, 0, 1}};
+    topo.load_gen_type = {const_pq};
+    topo.voltage_regulators_per_load_gen = {from_sparse, {0, 1}};
+
+    MathModelParam<symmetric_t> param;
+    constexpr DoubleComplex y{10.0, -20.0};
+    param.branch_param = {{y, -y, -y, y}};
+    param.shunt_param = {};
+    param.source_param = {{.y1 = 1e6, .y0 = 1e6}};
+
+    auto const input = [](PowerFlowInitialization initialization) {
+        return PowerFlowInput<symmetric_t>{
+            .source = {1.02 * std::exp(1.0i * deg_30 / 3.0)},
+            .s_injection = {0.5},
+            .voltage_regulator = {{.status = 1, .u_ref = 1.05, .q_min = nan, .q_max = nan, .generator_id = 42}},
+            .load_gen_status = {1},
+            .initialization = initialization};
+    };
+
+    YBus<symmetric_t> const y_bus{topo, param};
+    common::logging::NoLogger log;
+    constexpr bool cache_run = false;
+
+    NewtonRaphsonPFSolver<symmetric_t> linear_solver{y_bus, topo};
+    auto const linear =
+        linear_solver.run_power_flow(y_bus, input(PowerFlowInitialization::linear), 1e-12, 20, cache_run, log);
+    NewtonRaphsonPFSolver<symmetric_t> flat_solver{y_bus, topo};
+    auto const flat =
+        flat_solver.run_power_flow(y_bus, input(PowerFlowInitialization::flat), 1e-12, 20, cache_run, log);
+
+    CHECK(cabs(flat.u[1]) == doctest::Approx(1.05));
+    for (Idx bus = 0; bus != 2; ++bus) {
+        CHECK(cabs(flat.u[bus] - linear.u[bus]) < 1e-10);
+    }
+    CHECK(imag(flat.load_gen[0].s) == doctest::Approx(imag(linear.load_gen[0].s)));
+}
+
 TEST_CASE("Newton-Raphson PV - Q limit violation on parallel PV busses with switch to PQ") {
     using enum LoadGenType;
 

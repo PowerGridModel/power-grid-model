@@ -29,6 +29,7 @@ extern "C" {
  *   - max_iter: 20
  *   - threading: -1
  *   - short_circuit_voltage_scaling: PGM_short_circuit_voltage_scaling_maximum
+ *   - power_flow_initialization: PGM_power_flow_initialization_linear
  *   - experimental_features: PGM_experimental_features_disabled
  *
  * @param handle
@@ -112,6 +113,18 @@ PGM_API void PGM_set_threading(PGM_Handle* handle, PGM_Options* opt, PGM_Idx thr
  */
 PGM_API void PGM_set_short_circuit_voltage_scaling(PGM_Handle* handle, PGM_Options* opt,
                                                    PGM_Idx short_circuit_voltage_scaling) PGM_NOEXCEPT;
+
+/**
+ * @brief Specify how the Newton-Raphson power flow is initialized
+ *
+ * Only the Newton-Raphson power flow uses this option; other calculation methods ignore it.
+ *
+ * @param handle
+ * @param opt pointer to option instance
+ * @param power_flow_initialization See #PGM_PowerFlowInitialization
+ */
+PGM_API void PGM_set_power_flow_initialization(PGM_Handle* handle, PGM_Options* opt,
+                                               PGM_Idx power_flow_initialization) PGM_NOEXCEPT;
 
 /**
  * @brief Specify the tap changing strategy for power flow calculations
