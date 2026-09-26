@@ -219,6 +219,17 @@ enum PGM_ShortCircuitVoltageScaling {
 };
 
 /**
+ * @brief Enumeration of the Newton-Raphson power flow initializations.
+ *
+ */
+enum PGM_PowerFlowInitialization {
+    PGM_power_flow_initialization_linear = 0, /**< start from a linear voltage guess (loads and generators as
+                                                   constant admittances) */
+    PGM_power_flow_initialization_flat = 1,   /**< flat start: every bus at 1 p.u. with its phase shift, source buses
+                                                   at their reference voltage, PV buses at their reference magnitude */
+};
+
+/**
  * @brief Enumeration of tap changing strategies.
  *
  */

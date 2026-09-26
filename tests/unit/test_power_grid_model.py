@@ -16,6 +16,7 @@ from power_grid_model import (
     DatasetType as DT,
     LoadGenType,
     MeasuredTerminalType,
+    PowerFlowInitialization,
     PowerGridModel,
     initialize_array,
 )
@@ -155,6 +156,12 @@ def empty_model():
 
 def test_simple_power_flow(model: PowerGridModel, sym_output):
     result = model.calculate_power_flow()
+    compare_result(result, sym_output, rtol=0.0, atol=1e-8)
+
+
+@pytest.mark.parametrize("power_flow_initialization", [PowerFlowInitialization.flat, "flat", "linear"])
+def test_simple_power_flow_initialization(model: PowerGridModel, sym_output, power_flow_initialization):
+    result = model.calculate_power_flow(power_flow_initialization=power_flow_initialization)
     compare_result(result, sym_output, rtol=0.0, atol=1e-8)
 
 
