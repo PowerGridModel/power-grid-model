@@ -326,6 +326,10 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
+    def set_power_flow_initialization(self, opt: OptionsPtr, power_flow_initialization: int) -> None:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
     def set_experimental_features(self, opt: OptionsPtr, experimental_features: int) -> None:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
