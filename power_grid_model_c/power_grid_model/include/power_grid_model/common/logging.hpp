@@ -51,14 +51,23 @@ concept LazyLoggingFn = std::invocable<Fn> && std::convertible_to<std::invoke_re
 
 class Logger {
   public:
+    // Returns false only if the event is guaranteed to be discarded, so that callers can skip constructing
+    // potentially expensive messages. A false positive only costs performance; a false negative loses logs.
+    [[nodiscard]] virtual bool should_log(LogEvent /*tag*/) const { return true; }
+
     virtual void log(LogEvent tag) = 0;
     virtual void log(LogEvent tag, std::string_view message) = 0;
     virtual void log(LogEvent tag, double value) = 0;
     virtual void log(LogEvent tag, Idx value) = 0;
 
+    template <LazyLoggingFn Fn> void log(LogEvent tag, Fn fn) {
+        if (should_log(tag)) {
+            log(tag, std::invoke(fn));
+        }
+    }
+
     void log(std::string_view message) { log(LogEvent::unknown, message); }
-    template <LazyLoggingFn Fn> void log(LogEvent tag, Fn fn) { log(tag, std::invoke(fn)); }
-    template <LazyLoggingFn Fn> void log(Fn fn) { log(LogEvent::unknown, std::invoke(fn)); }
+    template <LazyLoggingFn Fn> void log(Fn fn) { log(LogEvent::unknown, fn); }
 
     Logger(Logger&&) noexcept = default;
     Logger& operator=(Logger&&) noexcept = default;
