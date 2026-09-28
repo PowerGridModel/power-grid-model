@@ -20,6 +20,14 @@ concept logger_scoped_module_c = requires(PGMModule& pgm_module, Logger& logger)
     { pgm_module.logger_empty() } noexcept;
 };
 
+/** Temporarily sets a logger on a module and resets it when this guard is destroyed.
+ * @tparam PGMModule The type of the module on which the logger will be set. Like Model, Dataset, etc.
+ * @tparam Logger The logger to set / reset on the module
+ *
+ * The module must not already have a logger set; otherwise construction throws
+ * `power_grid_model::UnreachableHit`.
+ * This guard ensures that the logger is properly reset all the time.
+ */
 template <typename PGMModule, typename Logger>
     requires logger_scoped_module_c<PGMModule, Logger>
 class ScopedModuleLogger {
