@@ -27,47 +27,55 @@ enum class LogEvent : int16_t {
 
     // application scope (tests/benchmark_cpp)
     total = 100,
+    build_model = 1000,
 
     // per-thread/per-scenario scope (job_dispatch.hpp)
-    total_single_calculation_in_thread = 1000,
-    total_batch_calculation_in_thread = 1010,
-    copy_model = 1020,
-    update_model = 1030,
-    restore_model = 1031, // sub-step of update_model
-    scenario_exception = 1040,
-    recover_from_bad = 1050,
+    total_single_calculation_in_thread = 1100,
+    total_batch_calculation_in_thread = 1200,
+    copy_model = 1220,
+    update_model = 1230,
+    restore_model = 1231, // sub-step of update_model
+    scenario_exception = 1240,
+    recover_from_bad = 1250,
 
-    // single calculation pipeline (main_model_impl.hpp)
-    build_model = 2000,
-    prepare = 2010,
-    math_calculation = 2020,
-    create_math_solver = 2021, // sub-step of math_calculation
-    math_solver = 2022,        // sub-step of math_calculation; wraps the solver run below
-    produce_output = 2030,
+    // calculation preparation
+    prepare = 2000,
 
-    // math solver run: one-shot steps (iterative_linear_se_solver.hpp, iterative_pf_solver.hpp,
-    // newton_raphson_se_solver.hpp)
-    initialize_calculation = 2100,
-    preprocess_measured_value = 2101,
-    prepare_matrix = 2102,
-    prepare_matrix_including_prefactorization = 2103,
-    prepare_matrices = 2104,
-    initialize_voltages = 2105,
-    calculate_rhs = 2106,
-    prepare_lhs_rhs = 2107,
-    solve_sparse_linear_equation = 2108,
-    solve_sparse_linear_equation_prefactorized = 2109,
-    calculate_math_result = 2110,
-    // 2111-2119 reserved for future one-shot solver steps
+    // solving
+    math_calculation = 3000,
+    create_math_solver = 3100,
+    math_solver = 3200,
+
+    // math solver run: initialization
+    solver_initialization = 3210,
+    initialize_calculation = 3211,
+    preprocess_measured_value = 3212,
+    initialize_voltages = 3213,
+
+    // math solver run: equation preparation
+    matrix_equation_preparation = 3230,
+    prepare_matrix = 3231,
+    prepare_matrix_including_prefactorization = 3232,
+    prepare_matrices = 3233,
+    calculate_rhs = 3234,
+    prepare_lhs_rhs = 3235,
+
+    // math solver run: equation solving
+    solve_equation = 3240,
+    solve_sparse_linear_equation = 3241,
+    solve_sparse_linear_equation_prefactorized = 3242,
 
     // math solver run: outer loop, one iteration of the solver's main loop
-    iterate_unknown = 2120,
-    max_num_iter = 2121,
-    iterative_pf_solver_max_num_iter = 2122,
-    // 2123-2139 reserved for future outer-loop steps
+    solver_iteration = 3250,
+    iterate_unknown = 3251,
+    max_num_iter = 3252,
+    iterative_pf_solver_max_num_iter = 3253,
 
-    // math solver run: inner loop, reserved for a loop nested inside iterate_unknown
-    // 2140-2159 reserved for future inner-loop steps
+    // math solver run: result calculation
+    calculate_math_result = 3290,
+
+    // output creationg
+    produce_output = 4000,
 };
 
 template <typename Fn>
