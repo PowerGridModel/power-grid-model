@@ -13,7 +13,7 @@
  *   2. Register it:       PGM_register_logger()
  *   3. Run calculations.
  *   4. Read output:       PGM_logger_get_output()
- *   5. Optionally clear:  PGM_logger_clear()
+ *   5. Optionally clear content: PGM_logger_clear_content()
  *   6. Unregister it:     PGM_unregister_logger()
  *   7. Destroy it:        PGM_destroy_logger()
  *
@@ -28,7 +28,7 @@
  *     handle itself is the only way to release it.
  *
  * Undefined behaviour:
- *   - Concurrently registering, unregistering, destroying, reading, or clearing a logger while
+ *   - Concurrently registering, unregistering, destroying, reading, or clearing logger content while
  *     a calculation using that same handle/logger is in progress. This applies to concurrent
  *     use from multiple user threads only; internal batch threads spawned by the calculation
  *     core are safe and expected.
@@ -175,12 +175,12 @@ PGM_API void PGM_logger_get_output(PGM_Handle* handle, PGM_Logger* logger, PGM_L
 PGM_API void PGM_unregister_all_loggers(PGM_Handle* handle);
 
 /**
- * @brief Clear the accumulated output of a logger.
+ * @brief Clear the accumulated content of a logger.
  *
  * @param handle The handle used to report errors.
- * @param logger The logger to clear.
+ * @param logger The logger whose content to clear.
  */
-PGM_API void PGM_logger_clear(PGM_Handle* handle, PGM_Logger* logger);
+PGM_API void PGM_logger_clear_content(PGM_Handle* handle, PGM_Logger* logger);
 
 #ifdef __cplusplus
 }

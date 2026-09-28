@@ -87,8 +87,8 @@ class MultiThreadedLogger : public Logger {
     // Default: no op / delivers an empty view
     virtual void get_output(std::function<void(std::string_view)> const& callback) const { callback({}); }
 
-    virtual void clear() {
-        // Clear accumulated output. Default: no-op.
+    virtual void clear_content() {
+        // Clear accumulated content. Default: no-op.
     }
 };
 

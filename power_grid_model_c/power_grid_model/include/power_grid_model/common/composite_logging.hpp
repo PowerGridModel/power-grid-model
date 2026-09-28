@@ -97,10 +97,10 @@ class MultiThreadedCompositeLogger : public MultiThreadedLogger {
 
     using MultiThreadedLogger::log;
 
-    // Fan out clear() to every registered logger.
-    void clear() override {
+    // Fan out clear_content() to every registered logger.
+    void clear_content() override {
         for (auto const& logger : loggers_) {
-            logger->clear();
+            logger->clear_content();
         }
     }
 

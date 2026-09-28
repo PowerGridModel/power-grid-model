@@ -23,7 +23,7 @@ namespace power_grid_model_cpp {
 // registrations, but this specific Logger object can no longer be used to target that
 // registration individually. Use Model::detach_all_loggers() or destroy the Model to release it.
 //
-// Concurrency: do not register, unregister, destroy, read, or clear a logger while a
+// Concurrency: do not register, unregister, destroy, read, or clear logger content while a
 // calculation using it is in progress on any thread other than the calculation's own
 // internal batch threads (which are always safe).
 class Logger {
@@ -51,7 +51,7 @@ class Logger {
         return output;
     }
 
-    void clear() { handle_.call_with(PGM_logger_clear, logger_.get()); }
+    void clear_content() { handle_.call_with(PGM_logger_clear_content, logger_.get()); }
 
   private:
     friend class Handle;

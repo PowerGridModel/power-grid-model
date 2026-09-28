@@ -94,7 +94,7 @@ class CalculationInfo : public Logger {
 
   public:
     Report report() const { return data_; }
-    void clear() { data_.clear(); }
+    void clear_content() { data_.clear(); }
 
     std::string string_report() const {
         std::ostringstream result;
@@ -126,7 +126,7 @@ class MultiThreadedCalculationInfo : public MultiThreadedLoggerImpl<CalculationI
 
   protected:
     std::string snapshot_thread_unsafe_impl() const override { return get().string_report(); }
-    void clear_thread_unsafe_impl() override { get().clear(); }
+    void clear_content_thread_unsafe_impl() override { get().clear_content(); }
 };
 } // namespace common::logging
 

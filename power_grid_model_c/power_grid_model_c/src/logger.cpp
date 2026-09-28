@@ -79,7 +79,7 @@ void logger_get_output(PGM_Logger const& pgm_logger, Callback callback, UserData
     });
 }
 
-void logger_clear(PGM_Logger const& pgm_logger) { pgm_logger.logger->clear(); }
+void logger_clear_content(PGM_Logger const& pgm_logger) { pgm_logger.logger->clear_content(); }
 } // namespace
 
 PGM_Logger* PGM_create_logger(PGM_Handle* handle, PGM_Idx logger_type) {
@@ -111,6 +111,6 @@ void PGM_logger_get_output(PGM_Handle* handle, PGM_Logger* logger, PGM_LogOutput
     });
 }
 
-void PGM_logger_clear(PGM_Handle* handle, PGM_Logger* logger) {
-    call_with_catch(handle, [logger] { logger_clear(safe_ptr_get(logger)); });
+void PGM_logger_clear_content(PGM_Handle* handle, PGM_Logger* logger) {
+    call_with_catch(handle, [logger] { logger_clear_content(safe_ptr_get(logger)); });
 }

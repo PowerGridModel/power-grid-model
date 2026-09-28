@@ -115,12 +115,12 @@ TEST_CASE("Test TextLogger") {
         }
 
         SUBCASE("Clear report") {
-            txt_logger.clear();
+            txt_logger.clear_content();
             auto clean_report = txt_logger.report();
             CHECK(clean_report.empty());
 
             logger_helper(txt_logger);
-            txt_logger.clear();
+            txt_logger.clear_content();
             clean_report = txt_logger.report();
             CHECK(clean_report.empty());
         }
@@ -417,7 +417,7 @@ TEST_CASE("Test MultiThreadedTextLogger") {
             CHECK(report.empty());
 
             run_parallel_jobs(arbitrary_n_threads, multi_threaded_logger, single_thread_job);
-            multi_threaded_logger.clear();
+            multi_threaded_logger.clear_content();
             report = multi_threaded_logger.report();
             CHECK(report.empty());
         }
