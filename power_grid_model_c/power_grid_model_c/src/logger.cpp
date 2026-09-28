@@ -13,6 +13,7 @@
 #include "power_grid_model_c/basics.h"
 #include "power_grid_model_c/logger.h"
 
+#include <power_grid_model/common/calculation_info.hpp>
 #include <power_grid_model/common/composite_logging.hpp>
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/common/text_logger.hpp>
