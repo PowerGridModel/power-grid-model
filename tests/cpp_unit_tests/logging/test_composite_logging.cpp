@@ -43,7 +43,7 @@ TEST_CASE("Test MultiThreadedCompositeLogger") {
 
         composite.log(LogEvent::total, Idx{1});
 
-        CHECK(logger->report().find("Tag:0") != std::string::npos);
+        CHECK(logger->report().contains("Tag:100"));
     }
 
     SUBCASE("Logging fans out to multiple registered loggers") {
@@ -67,9 +67,9 @@ TEST_CASE("Test MultiThreadedCompositeLogger") {
 
         // Only one entry should be logged, i.e. exactly one occurrence of the tag.
         auto const report = logger->report();
-        auto const first = report.find("Tag:0");
-        CHECK(first != std::string::npos);
-        CHECK(report.find("Tag:0", first + 1) == std::string::npos);
+        auto const first = report.find("Tag:100");
+        REQUIRE(first != std::string::npos);
+        CHECK(report.find("Tag:100", first + 1) == std::string::npos);
     }
 
     SUBCASE("Remove detaches a specific logger without affecting others") {
