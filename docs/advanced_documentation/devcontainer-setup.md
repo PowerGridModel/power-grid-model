@@ -132,10 +132,12 @@ Note that the _Professional_ edition is required to have native development cont
 
 ## C++ Development Container
 
-The dedicated C++ container (`.devcontainer/cpp/devcontainer.json`) provides the Linux C++ toolchain for
-`power-grid-model`: `gcc-14`/`g++-14` plus `clang-18`, `CMake` (>= 3.23), `Ninja`, `gdb`, `clang-format`/`clang-tidy`,
-and the C++ dependencies from the [build guide](./build-guide.md) (`boost`, `eigen3`, `nlohmann-json`, `msgpack-cxx`,
-`doctest`).
+The dedicated C++ container (`.devcontainer/cpp/devcontainer.json`) is based on Ubuntu 26.04 and provides the
+Linux C++ toolchain for `power-grid-model`: `gcc-14`/`g++-14` plus `clang-18`, `CMake` (>= 3.23), `Ninja`, `gdb`,
+`clang-format`/`clang-tidy`, and the C++ dependencies from the [build guide](./build-guide.md) (`boost`, `eigen3`,
+`nlohmann-json`, `msgpack-cxx`, `doctest`).
+Only the compiler versions are pinned to CI — the Linux CI jobs still run on Ubuntu 24.04, so the container OS
+intentionally differs from CI.
 The Python container remains the default and is unchanged; combined Python/C++ and docs-building environments are
 out of scope.
 
@@ -149,8 +151,10 @@ out of scope.
 
 ### Configure and build (CMake preset)
 
-The container defaults to the existing `gcc-debug` CMake preset (`cmake.configurePreset`); use `clang-debug`
-instead if you want the Clang build.
+No configure preset is pre-selected: `cmake.configurePreset` is not a setting the CMake Tools extension
+provides, so the container cannot activate `gcc-debug` for you on first open. In VS Code, open the Command
+Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`), run `CMake: Select Configure Preset`, and choose `gcc-debug`
+(`clang-debug` remains available as the Clang alternative).
 From a VS Code terminal inside the container, or any terminal with the environment set up:
 
 ```shell

@@ -30,9 +30,9 @@
         "tamasfe.even-better-toml"
       ],
       "settings": {
-        // Reuses the existing Debug preset from CMakePresets.json (gcc-debug).
-        // Switch to clang-debug via the CMake Tools preset picker if needed.
-        "cmake.configurePreset": "gcc-debug",
+        // NOTE: there is no supported setting that pre-selects a CMake configure
+        // preset. After the container is created, run `CMake: Select Configure
+        // Preset` in VS Code and choose `gcc-debug` (`clang-debug` works too).
         "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
         "editor.formatOnSave": true
       }

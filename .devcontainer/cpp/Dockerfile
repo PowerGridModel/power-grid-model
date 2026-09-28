@@ -3,9 +3,11 @@
 # SPDX-License-Identifier: MPL-2.0
 
 # Dedicated C++ development container for power-grid-model.
-# Matches the Linux CI toolchain (ubuntu-24.04, gcc-14, clang-18) and the
-# C++ dependencies listed in docs/advanced_documentation/build-guide.md.
-FROM mcr.microsoft.com/devcontainers/base:ubuntu-24.04
+# Ubuntu 26.04 ("resolute") base with the pinned toolchain (gcc-14, clang-18)
+# and the C++ dependencies listed in docs/advanced_documentation/build-guide.md.
+# NOTE: this intentionally does not match the Linux CI OS (ubuntu-24.04):
+# only the compiler versions are pinned to CI, not the distribution.
+FROM mcr.microsoft.com/devcontainers/base:resolute
 
 ENV DEBIAN_FRONTEND=noninteractive
 
