@@ -321,7 +321,8 @@ struct PowerGridBenchmark {
         }
     }
 
-    void run_benchmark(Option const& option, BenchmarkOptions const& benchmark_options, Idx batch_size = single_scenario) {
+    void run_benchmark(Option const& option, BenchmarkOptions const& benchmark_options,
+                       Idx batch_size = single_scenario) {
         generator.generate_grid(option, 0);
         InputData const& input = generator.input_data();
 
