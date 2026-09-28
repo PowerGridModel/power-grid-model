@@ -144,7 +144,9 @@ auto get_output(PGM_Handle* h, PGM_Logger* l) {
 std::ptrdiff_t count_lines(std::string_view text) { return std::ranges::count(text, '\n'); }
 
 void check_tag_presence(std::string_view output, std::initializer_list<int> tags, bool should_be_present) {
+    CAPTURE(should_be_present);
     for (auto const tag : tags) {
+        CAPTURE(tag);
         auto marker = std::string{"Z] Tag:"};
         marker += std::to_string(tag);
         marker += ':';
@@ -156,13 +158,14 @@ void check_text_output(std::string const& output, bool is_batch) {
     CHECK(output.starts_with('['));
     CHECK(output.ends_with('\n'));
 
-    check_tag_presence(output, {2100, 2210, 2200, 2220, 2221, 2242, 2225, 2226, 2227, 2246, 3000}, true);
-    check_tag_presence(output, {-1, 0, 1000, 2222, 1300, 1400, 2231, 2223, 2224, 2244, 2232, 2235, 2248}, false);
+    check_tag_presence(output, {2000, 3100, 3000, 3200, 3211, 3233, 3241, 3251, 3290, 3253, 4000}, true);
+    check_tag_presence(
+        output, {-1, 0, 1, 2, 3, 4, 0100, 1000, 3231, 1240, 1250, 3212, 3213, 3234, 3235, 3232, 3242, 3252}, false);
 
     if (is_batch) {
-        check_tag_presence(output, {64, 1200, 128, 1100, 1201}, true);
+        check_tag_presence(output, {1100, 1230, 1200, 1220, 1231}, true);
     } else {
-        check_tag_presence(output, {64, 1200, 128, 1100, 1201}, false);
+        check_tag_presence(output, {1100, 1230, 1200, 1220, 1231}, false);
     }
 }
 
