@@ -210,42 +210,40 @@ template <typename OutputDataType> OutputComponents output_components() {
     }
 }
 
+void add_component(DatasetMutable& dataset, PGM_MetaComponent const* component, auto const& buffer) {
+    auto const batch_size = dataset.is_batch() ? dataset.batch_size() : 1;
+    dataset.add_buffer(MetaData::component_name(component), std::ssize(buffer) / batch_size, std::ssize(buffer),
+                       nullptr, buffer.data());
+}
+
 DatasetConst make_input_dataset(InputData const& input) {
     DatasetConst dataset{MetaData::dataset_name(PGM_def_input), false, 1};
-    auto const add = [&dataset](PGM_MetaComponent const* component, auto const& buffer) {
-        dataset.add_buffer(MetaData::component_name(component), std::ssize(buffer), std::ssize(buffer), nullptr,
-                           buffer.data());
-    };
-    add(PGM_def_input_node, input.node);
-    add(PGM_def_input_transformer, input.transformer);
-    add(PGM_def_input_line, input.line);
-    add(PGM_def_input_source, input.source);
-    add(PGM_def_input_sym_load, input.sym_load);
-    add(PGM_def_input_asym_load, input.asym_load);
-    add(PGM_def_input_shunt, input.shunt);
-    add(PGM_def_input_sym_voltage_sensor, input.sym_voltage_sensor);
-    add(PGM_def_input_asym_voltage_sensor, input.asym_voltage_sensor);
-    add(PGM_def_input_sym_power_sensor, input.sym_power_sensor);
-    add(PGM_def_input_asym_power_sensor, input.asym_power_sensor);
-    add(PGM_def_input_fault, input.fault);
-    add(PGM_def_input_transformer_tap_regulator, input.transformer_tap_regulator);
+    add_component(dataset, PGM_def_input_node, input.node);
+    add_component(dataset, PGM_def_input_transformer, input.transformer);
+    add_component(dataset, PGM_def_input_line, input.line);
+    add_component(dataset, PGM_def_input_source, input.source);
+    add_component(dataset, PGM_def_input_sym_load, input.sym_load);
+    add_component(dataset, PGM_def_input_asym_load, input.asym_load);
+    add_component(dataset, PGM_def_input_shunt, input.shunt);
+    add_component(dataset, PGM_def_input_sym_voltage_sensor, input.sym_voltage_sensor);
+    add_component(dataset, PGM_def_input_asym_voltage_sensor, input.asym_voltage_sensor);
+    add_component(dataset, PGM_def_input_sym_power_sensor, input.sym_power_sensor);
+    add_component(dataset, PGM_def_input_asym_power_sensor, input.asym_power_sensor);
+    add_component(dataset, PGM_def_input_fault, input.fault);
+    add_component(dataset, PGM_def_input_transformer_tap_regulator, input.transformer_tap_regulator);
     return dataset;
 }
 
 template <typename OutputDataType> DatasetMutable make_output_dataset(OutputDataType& output) {
     auto const components = output_components<OutputDataType>();
     DatasetMutable dataset{MetaData::dataset_name(components.dataset), true, output.batch_size};
-    auto const add = [&dataset, batch_size = output.batch_size](PGM_MetaComponent const* component, auto& buffer) {
-        dataset.add_buffer(MetaData::component_name(component), std::ssize(buffer) / batch_size, std::ssize(buffer),
-                           nullptr, buffer.data());
-    };
-    add(components.node, output.node);
-    add(components.transformer, output.transformer);
-    add(components.line, output.line);
-    add(components.source, output.source);
-    add(components.sym_load, output.sym_load);
-    add(components.asym_load, output.asym_load);
-    add(components.shunt, output.shunt);
+    add_component(dataset, components.node, output.node);
+    add_component(dataset, components.transformer, output.transformer);
+    add_component(dataset, components.line, output.line);
+    add_component(dataset, components.source, output.source);
+    add_component(dataset, components.sym_load, output.sym_load);
+    add_component(dataset, components.asym_load, output.asym_load);
+    add_component(dataset, components.shunt, output.shunt);
     return dataset;
 }
 
@@ -254,15 +252,10 @@ DatasetConst make_update_dataset(BatchData const& batch_data) {
     if (batch_data.batch_size == 0) {
         return dataset;
     }
-    auto const add = [&dataset, batch_size = batch_data.batch_size](PGM_MetaComponent const* component,
-                                                                    auto const& buffer) {
-        dataset.add_buffer(MetaData::component_name(component), std::ssize(buffer) / batch_size, std::ssize(buffer),
-                           nullptr, buffer.data());
-    };
-    add(PGM_def_update_sym_load, batch_data.sym_load);
-    add(PGM_def_update_asym_load, batch_data.asym_load);
-    add(PGM_def_update_sym_power_sensor, batch_data.sym_power_sensor);
-    add(PGM_def_update_asym_power_sensor, batch_data.asym_power_sensor);
+    add_component(dataset, PGM_def_update_sym_load, batch_data.sym_load, batch_data.batch_size);
+    add_component(dataset, PGM_def_update_asym_load, batch_data.asym_load, batch_data.batch_size);
+    add_component(dataset, PGM_def_update_sym_power_sensor, batch_data.sym_power_sensor, batch_data.batch_size);
+    add_component(dataset, PGM_def_update_asym_power_sensor, batch_data.asym_power_sensor, batch_data.batch_size);
     return dataset;
 }
 
