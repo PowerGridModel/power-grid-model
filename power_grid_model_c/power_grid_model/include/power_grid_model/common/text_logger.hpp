@@ -93,9 +93,9 @@ class TextLogger : public Logger {
             try {
                 auto buffer = data_.str();
                 flush_handler_(std::move(buffer));
-            } catch (...) { // NOSONAR(S2738)
+            } catch (...) {      // NOSONAR(S2738)
                 clear_content(); // leave logger in valid state and discard report content
-                throw;      // rethrow to let caller handle it
+                throw;           // rethrow to let caller handle it
             }
         }
         clear_content(); // if no handler, discard log content
