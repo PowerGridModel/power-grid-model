@@ -401,6 +401,11 @@ inline auto& optimizer_strategy_mapping() {
         {"fast_any_tap", PGM_tap_changing_strategy_fast_any_tap}};
     return mapping;
 }
+inline auto& power_flow_initialization_mapping() {
+    static std::map<std::string, PGM_PowerFlowInitialization, std::less<>> const mapping{
+        {"linear", PGM_power_flow_initialization_linear}, {"flat", PGM_power_flow_initialization_flat}};
+    return mapping;
+}
 inline auto& experimental_features_mapping() {
     static std::map<std::string, PGM_ExperimentalFeatures, std::less<>> const mapping{
         {"disabled", PGM_experimental_features_disabled}, {"enabled", PGM_experimental_features_enabled}};
@@ -415,6 +420,7 @@ struct CaseParam {
     PGM_CalculationMethod calculation_method;
     PGM_ShortCircuitVoltageScaling short_circuit_voltage_scaling;
     PGM_TapChangingStrategy tap_changing_strategy;
+    PGM_PowerFlowInitialization power_flow_initialization;
     PGM_ExperimentalFeatures experimental_features;
     double err_tol = 1e-8;
     Idx max_iter = 20;
@@ -442,6 +448,7 @@ Options get_options(CaseParam const& param, Idx threading = -1) {
     options.set_threading(threading);
     options.set_short_circuit_voltage_scaling(param.short_circuit_voltage_scaling);
     options.set_tap_changing_strategy(param.tap_changing_strategy);
+    options.set_power_flow_initialization(param.power_flow_initialization);
     options.set_experimental_features(param.experimental_features);
     return options;
 }
@@ -505,6 +512,8 @@ std::optional<CaseParam> construct_case(std::filesystem::path const& case_dir, j
 
     std::string const tap_strategy_str = calculation_method_params.value("tap_changing_strategy", "disabled");
     param.tap_changing_strategy = optimizer_strategy_mapping().at(tap_strategy_str);
+    std::string const pf_initialization_str = calculation_method_params.value("power_flow_initialization", "linear");
+    param.power_flow_initialization = power_flow_initialization_mapping().at(pf_initialization_str);
     std::string const experimental_features_str = calculation_method_params.value("experimental_features", "disabled");
     param.experimental_features = experimental_features_mapping().at(experimental_features_str);
     param.case_name += sym ? "-sym"s : "-asym"s;

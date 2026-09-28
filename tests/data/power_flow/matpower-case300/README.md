@@ -4,15 +4,15 @@ SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridm
 SPDX-License-Identifier: MPL-2.0
 -->
 
-# Validation case: MATPOWER IEEE 300-bus system, Newton-Raphson divergence
+# Validation case: MATPOWER IEEE 300-bus system, flat and linear start
 
-This validation case shows a meshed transmission grid on which the Newton-Raphson power flow diverges
-(`IterationDiverge`), although the power flow has a solution: MATPOWER solves it from a flat start.
-Power Grid Model starts Newton-Raphson from a linear voltage guess, in which every load and generator is replaced by
-a constant admittance.
-On this grid, that guess lies outside the region where Newton-Raphson converges.
+This validation case shows the effect of the Newton-Raphson start on a meshed
+transmission grid.
+The two sub-cases hold the same grid and the same expected output:
 
-The case in `linear-start` is therefore marked as `xfail`.
+- `flat-start`: Newton-Raphson from a flat start converges to the expected solution.
+- `linear-start`: Newton-Raphson from the linear start diverges (`IterationDiverge`).
+  The case is marked as `xfail`.
 
 ## Source and scope
 
@@ -42,7 +42,7 @@ Node ids are the MATPOWER bus numbers (up to 9533).
 The other components have ids offset by 10000 (branches, numbered in MATPOWER order), 20000 (loads), 30000
 (generators), 40000 (voltage regulators), 50000 (shunts) and 60000 (source), plus the bus number.
 
-The divergence does not depend on the source strength: it also occurs with the default `sk = 1e10` VA.
+The linear start diverges independently of the source strength: it also diverges with the default `sk = 1e10` VA.
 
 ## Expected output
 
