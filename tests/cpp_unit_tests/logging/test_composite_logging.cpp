@@ -20,8 +20,8 @@ using LoggerPtr = std::shared_ptr<MultiThreadedTextLogger>;
 
 LoggerPtr make_text_logger() { return std::make_shared<MultiThreadedTextLogger>(); }
 
-// CalculationInfo only records numeric events, so its should_log is always false.
-std::shared_ptr<MultiThreadedCalculationInfo> make_silent_logger() {
+std::shared_ptr<MultiThreadedCalculationInfo> make_no_text_logger() {
+    // CalculationInfo only records numeric events, so its should_log method always returns false.
     return std::make_shared<MultiThreadedCalculationInfo>();
 }
 } // namespace
@@ -161,21 +161,21 @@ TEST_CASE("Test MultiThreadedCompositeLogger::should_log") {
     }
 
     SUBCASE("Single silent logger opts out") {
-        composite.add(make_silent_logger());
+        composite.add(make_no_text_logger());
         CHECK_FALSE(composite.should_log(LogEvent::unknown));
         CHECK_FALSE(composite.should_log(LogEvent::total));
     }
 
     SUBCASE("A single verbose logger among silent ones is enough") {
-        composite.add(make_silent_logger());
+        composite.add(make_no_text_logger());
         composite.add(make_text_logger());
-        composite.add(make_silent_logger());
+        composite.add(make_no_text_logger());
         CHECK(composite.should_log(LogEvent::total));
     }
 
     SUBCASE("Removing the only verbose logger opts the composite out") {
         auto verbose = make_text_logger();
-        composite.add(make_silent_logger());
+        composite.add(make_no_text_logger());
         composite.add(verbose);
         REQUIRE(composite.should_log(LogEvent::total));
 
@@ -192,7 +192,7 @@ TEST_CASE("Test MultiThreadedCompositeLogger::should_log") {
     }
 
     SUBCASE("Lazy messages are not evaluated when no logger opts in") {
-        composite.add(make_silent_logger());
+        composite.add(make_no_text_logger());
 
         Idx call_count{};
         composite.log(LogEvent::total, [&call_count] {
@@ -205,7 +205,7 @@ TEST_CASE("Test MultiThreadedCompositeLogger::should_log") {
 
     SUBCASE("Lazy messages are evaluated exactly once and fan out when a logger opts in") {
         auto verbose = make_text_logger();
-        composite.add(make_silent_logger());
+        composite.add(make_no_text_logger());
         composite.add(verbose);
 
         Idx call_count{};
@@ -237,14 +237,14 @@ TEST_CASE("Test CompositeChildLogger::should_log") {
     }
 
     SUBCASE("Child of a silent composite opts out") {
-        composite.add(make_silent_logger());
+        composite.add(make_no_text_logger());
 
         auto child = composite.create_child();
         CHECK_FALSE(child->should_log(LogEvent::total));
     }
 
     SUBCASE("Child opts in if any of its own children opts in") {
-        composite.add(make_silent_logger());
+        composite.add(make_no_text_logger());
         composite.add(make_text_logger());
 
         auto child = composite.create_child();
@@ -252,7 +252,7 @@ TEST_CASE("Test CompositeChildLogger::should_log") {
     }
 
     SUBCASE("Lazy messages on a child are not evaluated when no child logger opts in") {
-        composite.add(make_silent_logger());
+        composite.add(make_no_text_logger());
         auto child = composite.create_child();
 
         Idx call_count{};
@@ -266,7 +266,7 @@ TEST_CASE("Test CompositeChildLogger::should_log") {
 
     SUBCASE("Lazy messages on a child are evaluated once and fan out when a child logger opts in") {
         auto logger = make_text_logger();
-        composite.add(make_silent_logger());
+        composite.add(make_no_text_logger());
         composite.add(logger);
 
         Idx call_count{};

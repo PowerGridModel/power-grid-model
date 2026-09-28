@@ -87,7 +87,7 @@ TEST_CASE("Test TextLogger") {
     using enum LogEvent;
 
     SUBCASE("Should log") {
-        TextLogger txt_logger{};
+        TextLogger const txt_logger{};
         CHECK(txt_logger.should_log(unknown));
         CHECK(txt_logger.should_log(total));
     }
