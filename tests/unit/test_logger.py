@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+import gc
 import logging
 
 import pytest
@@ -15,6 +16,7 @@ from power_grid_model import (
     PowerGridModel,
     initialize_array,
 )
+from power_grid_model._core.power_grid_core import get_power_grid_core as get_pgc
 
 
 @pytest.fixture(name="logger_test_network")
@@ -100,6 +102,17 @@ def test_logger_unregisters_when_context_exits_with_exception(logger_test_networ
     assert captured_output
     logger_test_network.calculate_power_flow()
     assert logger.output == captured_output
+
+
+def test_logger_warns_when_destroyed_while_active():
+    try:
+        logger = Logger()
+        logger.__enter__()
+        with pytest.warns(ResourceWarning, match="destroyed inside an active"):
+            del logger
+            gc.collect()
+    finally:
+        get_pgc().unregister_all_loggers()
 
 
 def test_python_logger_flushes_each_line_at_configured_level(logger_test_network, caplog):
