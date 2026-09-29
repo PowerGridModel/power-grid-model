@@ -11,6 +11,7 @@ from collections.abc import Callable
 from ctypes import CDLL, CFUNCTYPE, POINTER, c_char, c_char_p, c_double, c_size_t, c_void_p
 from inspect import signature
 from itertools import chain
+from typing import Any
 
 from power_grid_model._core.index_integer import IdC, IdxC
 from power_grid_model._core.power_grid_model_c.get_pgm_dll_path import get_pgm_dll_path
@@ -614,7 +615,7 @@ class PowerGridCore:
         result: list[str] = []
 
         @_LogOutputCallbackType
-        def _cb(data: CharPtr, size: IdxC, _user_data: c_void_p) -> None:  # type: ignore[misc]
+        def _cb(data: Any, size: int, _user_data: c_void_p) -> None:
             if size > 0:
                 result.append(data[:size].decode())
 
@@ -628,7 +629,7 @@ class PowerGridCore:
         """
 
         @_LogOutputCallbackType
-        def _cb(data: CharPtr, size: IdxC, _user_data: c_void_p) -> None:  # type: ignore[misc]
+        def _cb(data: Any, size: int, _user_data: c_void_p) -> None:
             for line_bytes in data[:size].split(b"\n"):
                 if line_bytes:
                     line_callback(line_bytes.decode())
