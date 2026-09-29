@@ -11,7 +11,10 @@
 
 namespace power_grid_model {
 
-using Clock = std::chrono::high_resolution_clock;
+// high resolution clock is not guaranteed to be monotonic or steady, it's implementation dependent and it's usually an
+// alias for either system clock or steady clock. system clock is not guaranteed to be steady and may be adjusted
+// (unintentionally). steady clock is guaranteed to be monotonic and not subject to adjustments.
+using Clock = std::chrono::steady_clock;
 using Duration = std::chrono::duration<double>;
 
 class Timer {

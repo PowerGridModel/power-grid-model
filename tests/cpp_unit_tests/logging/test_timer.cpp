@@ -35,9 +35,6 @@ class MiniLogger : public common::logging::Logger {
 } // namespace
 
 TEST_CASE("Test Timer") {
-    static_assert(std::chrono::high_resolution_clock::is_steady);
-    static_assert(std::is_same_v<std::chrono::high_resolution_clock, std::chrono::steady_clock>);
-
     auto test_logger = MiniLogger{};
     auto report = test_logger.report();
     CHECK(report.size() == 0);
