@@ -122,12 +122,12 @@ class Logger:
         assert_no_error()
         return result
 
-    def clear(self) -> None:
+    def clear_content(self) -> None:
         """Clear the accumulated output.
 
         For :attr:`LoggerType.do_nothing` this is a no-op.
         """
-        get_pgc().logger_clear(self._logger_ptr)
+        get_pgc().logger_clear_content(self._logger_ptr)
         assert_no_error()
 
     def _flush_to_python_logger(self) -> None:
@@ -143,4 +143,4 @@ class Logger:
             self._logger_ptr,
             lambda line: self._python_logger.log(self._level, line),  # type: ignore[union-attr]
         )
-        self.clear()
+        self.clear_content()

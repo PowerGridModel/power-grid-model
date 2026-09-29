@@ -58,7 +58,7 @@ def test_logger_captures_and_preserves_output_until_cleared(logger_test_network)
     logger_test_network.calculate_power_flow()
     assert logger.output == captured_output
 
-    logger.clear()
+    logger.clear_content()
     assert logger.output == ""
 
     with logger:
