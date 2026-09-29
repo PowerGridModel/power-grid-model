@@ -37,6 +37,7 @@ __all__ = [
     "FaultPhase",
     "FaultType",
     "LoadGenType",
+    "LoggerType",
     "MeasuredTerminalType",
     "ShortCircuitVoltageScaling",
     "TapChangingStrategy",
