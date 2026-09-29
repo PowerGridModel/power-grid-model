@@ -105,13 +105,13 @@ TEST_CASE("Test MultiThreadedCompositeLogger") {
         CHECK(logger_b->report().empty());
     }
 
-    SUBCASE("clear() fans out to every registered logger") {
+    SUBCASE("clear_content() fans out to every registered logger") {
         auto logger = make_text_logger();
         composite.add(logger);
         composite.log(LogEvent::total, Idx{1});
         CHECK_FALSE(logger->report().empty());
 
-        composite.clear();
+        composite.clear_content();
         CHECK(logger->report().empty());
     }
 

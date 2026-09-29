@@ -81,12 +81,12 @@ TEST_CASE("Test CalculationInfo") {
     }
 
     SUBCASE("Clear report") {
-        info.clear();
+        info.clear_content();
         auto clean_report = info.report();
         CHECK(clean_report.empty());
 
         logger_helper(info);
-        info.clear();
+        info.clear_content();
         clean_report = info.report();
         CHECK(clean_report.empty());
     }
@@ -221,7 +221,7 @@ TEST_CASE("Test MultiThreadedCalculationInfo") {
         CHECK(clean_report.empty());
 
         run_parallel_jobs(arbitrary_n_threads, single_thread_job);
-        multi_threaded_info.clear();
+        multi_threaded_info.clear_content();
         clean_report = multi_threaded_info.report();
         CHECK(clean_report.empty());
     }
@@ -235,7 +235,7 @@ TEST_CASE("Test MultiThreadedCalculationInfo") {
         // invoking user code and that the callback receives a pre-clear snapshot.
         multi_threaded_info.get_output([&output, &multi_threaded_info](std::string_view snapshot) {
             output = snapshot;
-            multi_threaded_info.clear();
+            multi_threaded_info.clear_content();
         });
 
         CHECK(output == expected_output);
@@ -251,7 +251,7 @@ TEST_CASE("Test MultiThreadedCalculationInfo") {
         // invoking user code and that the callback receives a pre-clear snapshot.
         multi_threaded_info.get_output([&output, &multi_threaded_info](std::string_view snapshot) {
             output = snapshot;
-            multi_threaded_info.clear();
+            multi_threaded_info.clear_content();
         });
 
         CHECK(output == expected_output);

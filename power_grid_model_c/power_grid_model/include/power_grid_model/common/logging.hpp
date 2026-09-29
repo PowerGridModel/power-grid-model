@@ -79,15 +79,16 @@ class Logger {
     Logger& operator=(Logger const&) = default;
 };
 
-struct MultiThreadedLogger : public Logger {
-    virtual std::unique_ptr<Logger> create_child() = 0;
+class MultiThreadedLogger : public Logger {
+  public:
+    virtual std::unique_ptr<Logger> create_child() { return nullptr; };
 
     // The function is called exactly once with a string_view valid only for the duration of the call.
     // Default: no op / delivers an empty view
     virtual void get_output(std::function<void(std::string_view)> const& callback) const { callback({}); }
 
-    virtual void clear() {
-        // Clear accumulated output. Default: no-op.
+    virtual void clear_content() {
+        // Clear accumulated content. Default: no-op.
     }
 };
 
