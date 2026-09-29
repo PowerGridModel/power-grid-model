@@ -73,10 +73,12 @@ class MultiThreadedLoggerImpl : public MultiThreadedLogger {
     void log(LogEvent tag, double value) override { log_.log(tag, value); }
     void log(LogEvent tag, Idx value) override { log_.log(tag, value); }
 
+    [[nodiscard]] bool should_log(LogEvent tag) const override { return log_.should_log(tag); }
+
     using MultiThreadedLogger::log;
 
     // Lock-safe overrides. Marked final so subclasses cannot bypass the lock; override
-    // snapshot_thread_unsafe_impl / clear_thread_unsafe_impl instead to add type-specific behaviour.
+    // snapshot_thread_unsafe_impl / clear_content_thread_unsafe_impl instead to add type-specific behaviour.
     void get_output(std::function<void(std::string_view)> const& fn) const final {
         // Snapshot under the lock, then call fn without the lock so user callbacks
         // cannot re-enter logger APIs and deadlock on the non-recursive mutex.
@@ -86,9 +88,9 @@ class MultiThreadedLoggerImpl : public MultiThreadedLogger {
         }();
         fn(snapshot);
     }
-    void clear() final {
+    void clear_content() final {
         std::scoped_lock const lock{mutex_};
-        clear_thread_unsafe_impl();
+        clear_content_thread_unsafe_impl();
     }
 
   protected:
@@ -98,8 +100,8 @@ class MultiThreadedLoggerImpl : public MultiThreadedLogger {
             // The default logger has no state to snapshot; stateful loggers override this hook.
         };
     }
-    virtual void clear_thread_unsafe_impl() {
-        // The default logger has no state to clear; stateful loggers override this hook.
+    virtual void clear_content_thread_unsafe_impl() {
+        // The default logger has no content to clear; stateful loggers override this hook.
     }
 
   private:

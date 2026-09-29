@@ -12,6 +12,7 @@
 #include <doctest/doctest.h>
 
 #include <string>
+#include <string_view>
 #include <thread>
 #include <utility>
 #include <vector>
@@ -80,12 +81,12 @@ TEST_CASE("Test CalculationInfo") {
     }
 
     SUBCASE("Clear report") {
-        info.clear();
+        info.clear_content();
         auto clean_report = info.report();
         CHECK(clean_report.empty());
 
         logger_helper(info);
-        info.clear();
+        info.clear_content();
         clean_report = info.report();
         CHECK(clean_report.empty());
     }
@@ -133,6 +134,24 @@ TEST_CASE("Test CalculationInfo") {
         CHECK(report.at(iterative_pf_solver_max_num_iter) == doctest::Approx(10.0));
         CHECK(report.at(max_num_iter) == doctest::Approx(5.0));
     }
+
+    SUBCASE("Lazy-logging is ignored") {
+        bool called = false;
+        auto const lazy_log = [&called] {
+            called = true;
+            return "called";
+        };
+        SUBCASE("Without event") {
+            info.log(lazy_log);
+            CHECK_FALSE(called);
+            CHECK(info.report().empty());
+        }
+        SUBCASE("With event") {
+            info.log(LogEvent::total, lazy_log);
+            CHECK_FALSE(called);
+            CHECK(info.report().empty());
+        }
+    }
 }
 
 TEST_CASE("Test MultiThreadedCalculationInfo") {
@@ -179,13 +198,30 @@ TEST_CASE("Test MultiThreadedCalculationInfo") {
               doctest::Approx(max_thread_value(arbitrary_n_threads + Idx{2}, Idx{5})));
         CHECK(report.at(max_num_iter) == doctest::Approx(3.0 * static_cast<double>(arbitrary_n_threads)));
     }
+    SUBCASE("Direct logging: Lazy-logging is ignored") {
+        bool called = false;
+        auto const lazy_log = [&called] {
+            called = true;
+            return "called";
+        };
+        SUBCASE("Without event") {
+            multi_threaded_info.log(lazy_log);
+            CHECK_FALSE(called);
+            CHECK(multi_threaded_info.report().empty());
+        }
+        SUBCASE("With event") {
+            multi_threaded_info.log(LogEvent::total, lazy_log);
+            CHECK_FALSE(called);
+            CHECK(multi_threaded_info.report().empty());
+        }
+    }
 
     SUBCASE("Clear report") {
         auto clean_report = multi_threaded_info.report();
         CHECK(clean_report.empty());
 
         run_parallel_jobs(arbitrary_n_threads, single_thread_job);
-        multi_threaded_info.clear();
+        multi_threaded_info.clear_content();
         clean_report = multi_threaded_info.report();
         CHECK(clean_report.empty());
     }
@@ -199,7 +235,7 @@ TEST_CASE("Test MultiThreadedCalculationInfo") {
         // invoking user code and that the callback receives a pre-clear snapshot.
         multi_threaded_info.get_output([&output, &multi_threaded_info](std::string_view snapshot) {
             output = snapshot;
-            multi_threaded_info.clear();
+            multi_threaded_info.clear_content();
         });
 
         CHECK(output == expected_output);
@@ -215,7 +251,7 @@ TEST_CASE("Test MultiThreadedCalculationInfo") {
         // invoking user code and that the callback receives a pre-clear snapshot.
         multi_threaded_info.get_output([&output, &multi_threaded_info](std::string_view snapshot) {
             output = snapshot;
-            multi_threaded_info.clear();
+            multi_threaded_info.clear_content();
         });
 
         CHECK(output == expected_output);

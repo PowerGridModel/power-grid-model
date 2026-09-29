@@ -53,13 +53,14 @@ class TextLogger : public Logger {
         } catch (...) { // NOSONAR(S2738) // NOLINT
             // fallthrough to clear. log is ignored
         }
-        clear();
+        clear_content();
     };
 
     void log(LogEvent tag) override { log_impl(tag, ""); }
     void log(LogEvent tag, double value) override { log_impl(tag, std::to_string(value)); }
     void log(LogEvent tag, Idx value) override { log_impl(tag, std::to_string(value)); }
     void log(LogEvent tag, std::string_view message) override { log_impl(tag, message); }
+    [[nodiscard]] bool should_log(LogEvent /*tag*/) const override { return true; }
 
     using Logger::log;
 
@@ -80,7 +81,7 @@ class TextLogger : public Logger {
     }
 
   public:
-    void clear() {
+    void clear_content() {
         data_.str(""); // clear content
         data_.clear(); // reset error flags
     }
@@ -92,12 +93,12 @@ class TextLogger : public Logger {
             try {
                 auto buffer = data_.str();
                 flush_handler_(std::move(buffer));
-            } catch (...) { // NOSONAR(S2738)
-                clear();    // leave logger in valid state and throw away report
-                throw;      // rethrow to let caller handle it
+            } catch (...) {      // NOSONAR(S2738)
+                clear_content(); // leave logger in valid state and discard report content
+                throw;           // rethrow to let caller handle it
             }
         }
-        clear(); // if no handler, discard log
+        clear_content(); // if no handler, discard log content
     }
 
     TextLogger& merge_into(TextLogger& destination) const {
@@ -119,7 +120,7 @@ class MultiThreadedTextLogger : public MultiThreadedLoggerImpl<TextLogger> {
 
   protected:
     std::string snapshot_thread_unsafe_impl() const override { return get().report(); }
-    void clear_thread_unsafe_impl() override { get().clear(); }
+    void clear_content_thread_unsafe_impl() override { get().clear_content(); }
 };
 } // namespace common::logging
 

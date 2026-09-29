@@ -212,7 +212,7 @@ TEST_CASE("Logger - unregister stops subsequent output") {
     CHECK(PGM_error_code(g.get()) == PGM_no_error);
     CHECK(!get_output(g.get(), lg.get()).empty());
 
-    PGM_logger_clear(g.get(), lg.get());
+    PGM_logger_clear_content(g.get(), lg.get());
     PGM_unregister_logger(g.get(), lg.get());
     CHECK(PGM_error_code(g.get()) == PGM_no_error);
 
@@ -231,7 +231,7 @@ TEST_CASE("Logger - unregistering and registering again restores output without 
     std::string const first_output = get_output(g.get(), lg.get());
     CHECK(!first_output.empty());
 
-    PGM_logger_clear(g.get(), lg.get());
+    PGM_logger_clear_content(g.get(), lg.get());
     CHECK(PGM_error_code(g.get()) == PGM_no_error);
     PGM_unregister_logger(g.get(), lg.get());
     CHECK(PGM_error_code(g.get()) == PGM_no_error);
@@ -313,7 +313,7 @@ TEST_CASE("Logger - model calculations produce text output") {
 //     PGM_unregister_logger(g.get(), lg.get());
 // }
 
-TEST_CASE("Logger - text logger clear wipes output") {
+TEST_CASE("Logger - text logger clear_content wipes output") {
     HandleGuard const g;
     LoggerGuard const lg{g.get(), PGM_logger_type_info};
 
@@ -321,8 +321,8 @@ TEST_CASE("Logger - text logger clear wipes output") {
     run_calculate(g.get());
     CHECK(PGM_error_code(g.get()) == PGM_no_error);
 
-    // Clear and verify empty
-    PGM_logger_clear(g.get(), lg.get());
+    // Clear content and verify empty
+    PGM_logger_clear_content(g.get(), lg.get());
     CHECK(PGM_error_code(g.get()) == PGM_no_error);
     std::string const out = get_output(g.get(), lg.get());
     CHECK(out.empty());
@@ -503,7 +503,7 @@ TEST_CASE("CPP Logger - value construction / empty output before calculation") {
     CHECK(logger.get_output().empty());
 }
 
-TEST_CASE("CPP Logger - clear() empties output and keeps registration") {
+TEST_CASE("CPP Logger - clear_content() empties output and keeps registration") {
     auto model = make_cpp_model();
     power_grid_model_cpp::Logger logger{PGM_logger_type_info};
 
@@ -511,10 +511,10 @@ TEST_CASE("CPP Logger - clear() empties output and keeps registration") {
     run_calculate_cpp(model);
     CHECK(!logger.get_output().empty());
 
-    logger.clear();
+    logger.clear_content();
     CHECK(logger.get_output().empty());
 
-    logger.clear();
+    logger.clear_content();
     CHECK(logger.get_output().empty());
 
     // registration must still be active

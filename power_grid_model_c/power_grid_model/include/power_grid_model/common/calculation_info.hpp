@@ -13,7 +13,9 @@
 #include <map>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <type_traits>
+#include <utility>
 
 namespace power_grid_model {
 namespace common::logging {
@@ -37,8 +39,9 @@ class CalculationInfo : public Logger {
     void log(LogEvent tag, double value) override { log_impl(tag, value); }
     void log(LogEvent tag, Idx value) override { log_impl(tag, static_cast<double>(value)); }
     void log(std::string_view /*message*/) const { /* ignore all such events for now */ }
-    template <LazyLoggingFn Fn> void log(LogEvent /*tag*/, Fn /*fn*/) const { /*do nothing*/ }
-    template <LazyLoggingFn Fn> void log(Fn /*fn*/) const { /*do nothing*/ }
+    [[nodiscard]] bool should_log(LogEvent /*tag*/) const override {
+        return false; // only numeric events are recorded, so lazy messages are never needed
+    }
 
   private:
     Data data_;
@@ -91,7 +94,7 @@ class CalculationInfo : public Logger {
 
   public:
     Report report() const { return data_; }
-    void clear() { data_.clear(); }
+    void clear_content() { data_.clear(); }
 
     std::string string_report() const {
         std::ostringstream result;
@@ -123,7 +126,7 @@ class MultiThreadedCalculationInfo : public MultiThreadedLoggerImpl<CalculationI
 
   protected:
     std::string snapshot_thread_unsafe_impl() const override { return get().string_report(); }
-    void clear_thread_unsafe_impl() override { get().clear(); }
+    void clear_content_thread_unsafe_impl() override { get().clear_content(); }
 };
 } // namespace common::logging
 
