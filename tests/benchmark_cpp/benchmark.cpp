@@ -135,11 +135,11 @@ auto get_benchmark_run_title(Option const& option, MainModelOptions const& model
 
 struct PowerGridBenchmark {
     static constexpr auto single_scenario = -1;
-    power_grid_model::common::logging::MultiThreadedCalculationInfo info{};
+    power_grid_model::common::logging::MultiThreadedCalculationInfo log{};
 
     PowerGridBenchmark()
         : main_model{std::make_unique<MainModel>(50.0, meta_data::meta_data_gen::meta_data,
-                                                 get_math_solver_dispatcher(), info)} {}
+                                                 get_math_solver_dispatcher(), log)} {}
 
     template <typename OutputDataType> void run_calculation(MainModelOptions model_options, Idx batch_size) noexcept {
         if (!main_model) {
@@ -195,38 +195,38 @@ struct PowerGridBenchmark {
 
         {
             std::cout << "*****Run with initialization*****\n";
-            Timer const t_total{info, LogEvent::total};
+            Timer const t_total{log, LogEvent::total};
             {
-                Timer const t_build{info, LogEvent::build_model};
+                Timer const t_build{log, LogEvent::build_model};
                 main_model =
-                    std::make_unique<MainModel>(50.0, input.get_dataset(), get_math_solver_dispatcher(), 0, info);
+                    std::make_unique<MainModel>(50.0, input.get_dataset(), get_math_solver_dispatcher(), 0, log);
             }
             run(single_scenario);
         }
-        print_info(info);
-        info.clear();
+        print_info(log);
+        log.clear_content();
         {
             std::cout << "\n*****Run without initialization*****\n";
-            Timer const t_total{info, LogEvent::total};
+            Timer const t_total{log, LogEvent::total};
             run(single_scenario);
         }
-        print_info(info);
-        info.clear();
+        print_info(log);
+        log.clear_content();
 
         if (batch_size > 0) {
-            info.clear();
+            log.clear_content();
             std::cout << "\n*****Run with batch calculation*****\n";
-            Timer const t_total{info, LogEvent::total};
+            Timer const t_total{log, LogEvent::total};
             run(batch_size);
         }
-        print_info(info);
-        info.clear();
+        print_info(log);
+        log.clear_content();
 
         std::cout << "\n\n";
     }
 
-    static void print_info(MultiThreadedCalculationInfo const& info) {
-        for (auto const& [key, val] : info.report()) {
+    static void print_info(MultiThreadedCalculationInfo const& log) {
+        for (auto const& [key, val] : log.report()) {
             std::cout << make_key(key) << ": " << val << '\n';
         }
     }

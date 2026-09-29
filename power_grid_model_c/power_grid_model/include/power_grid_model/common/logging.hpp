@@ -15,34 +15,67 @@ namespace power_grid_model {
 namespace common::logging {
 enum class LogEvent : int16_t {
     unknown = -1,
-    total = 0000,       // TODO(mgovers): find other error code?
-    build_model = 1000, // TODO(mgovers): find other error code?
-    total_single_calculation_in_thread = 0100,
-    total_batch_calculation_in_thread = 0200,
-    copy_model = 1100,
-    update_model = 1200,
-    restore_model = 1201,
-    scenario_exception = 1300,
-    recover_from_bad = 1400,
-    prepare = 2100,
-    create_math_solver = 2210,
-    math_calculation = 2200,
-    math_solver = 2220,
-    initialize_calculation = 2221,
-    preprocess_measured_value = 2231, // TODO(mgovers): find other error code + make plural?
-    prepare_matrix = 2222,
-    prepare_matrix_including_prefactorization = 2232, // TODO(mgovers): find other error code
-    prepare_matrices = 2242,                          // TODO(mgovers): find other error code
-    initialize_voltages = 2223,
-    calculate_rhs = 2224,
-    prepare_lhs_rhs = 2244, // TODO(mgovers): find other error code
-    solve_sparse_linear_equation = 2225,
-    solve_sparse_linear_equation_prefactorized = 2235, // TODO(mgovers): find other error code
-    iterate_unknown = 2226,
-    calculate_math_result = 2227,
-    produce_output = 3000,
-    iterative_pf_solver_max_num_iter = 2246, // TODO(mgovers): find other error code
-    max_num_iter = 2248,                     // TODO(mgovers): find other error code
+    critical = 0,
+    error = 1,
+    warning = 2,
+    info = 3,
+    debug = 4,
+
+    // benchmark events, grouped into blocks with gaps left open, so a future addition (e.g. a
+    // loop nested inside an existing loop) can pick a free code from the relevant block below
+    // instead of hunting for one.
+
+    // application scope (tests/benchmark_cpp)
+    total = 100,
+    build_model = 1000,
+
+    // per-thread/per-scenario scope (job_dispatch.hpp)
+    total_single_calculation_in_thread = 1100,
+    total_batch_calculation_in_thread = 1200,
+    copy_model = 1220,
+    update_model = 1230,
+    restore_model = 1231, // sub-step of update_model
+    scenario_exception = 1240,
+    recover_from_bad = 1250,
+
+    // calculation preparation
+    prepare = 2000,
+
+    // solving
+    math_calculation = 3000,
+    create_math_solver = 3100,
+    math_solver = 3200,
+
+    // math solver run: initialization
+    solver_initialization = 3210,
+    initialize_calculation = 3211,
+    preprocess_measured_value = 3212,
+    initialize_voltages = 3213,
+
+    // math solver run: equation preparation
+    matrix_equation_preparation = 3230,
+    prepare_matrix = 3231,
+    prepare_matrix_including_prefactorization = 3232,
+    prepare_matrices = 3233,
+    calculate_rhs = 3234,
+    prepare_lhs_rhs = 3235,
+
+    // math solver run: equation solving
+    solve_equation = 3240,
+    solve_sparse_linear_equation = 3241,
+    solve_sparse_linear_equation_prefactorized = 3242,
+
+    // math solver run: outer loop, one iteration of the solver's main loop
+    solver_iteration = 3250,
+    iterate_unknown = 3251,
+    max_num_iter = 3252,
+    iterative_pf_solver_max_num_iter = 3253,
+
+    // math solver run: result calculation
+    calculate_math_result = 3290,
+
+    // output creationg
+    produce_output = 4000,
 };
 
 template <typename Fn>
