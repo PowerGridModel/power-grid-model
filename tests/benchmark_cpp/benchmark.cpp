@@ -3,7 +3,9 @@
 // SPDX-License-Identifier: MPL-2.0
 
 #include "fictional_grid_generator.hpp"
+#include "power_grid_model_cpp/basics.hpp"
 
+#include <functional>
 #include <power_grid_model_cpp/dataset.hpp>
 #include <power_grid_model_cpp/logger.hpp>
 #include <power_grid_model_cpp/meta_data.hpp>
@@ -151,19 +153,20 @@ void print_report(Report const& report) {
 // measures the events that the calculation core does not log itself
 class ScopedTimer {
   public:
-    ScopedTimer(Report& report, LogEvent event) : report_{report}, event_{event} {}
+    ScopedTimer(Report& report, LogEvent event)
+        : report_{std::ref(report)}, event_{event}, start_{std::chrono::steady_clock::now()} {}
     ScopedTimer(ScopedTimer const&) = delete;
     ScopedTimer(ScopedTimer&&) = delete;
     ScopedTimer& operator=(ScopedTimer const&) = delete;
     ScopedTimer& operator=(ScopedTimer&&) = delete;
     ~ScopedTimer() {
-        report_[event_] += std::chrono::duration<double>{std::chrono::steady_clock::now() - start_}.count();
+        report_.get()[event_] += std::chrono::duration<double>{std::chrono::steady_clock::now() - start_}.count();
     }
 
   private:
-    Report& report_;
-    LogEvent event_;
-    std::chrono::steady_clock::time_point start_{std::chrono::steady_clock::now()};
+    std::reference_wrapper<Report> report_;
+    LogEvent event_{LogEvent::unknown};
+    std::chrono::steady_clock::time_point start_;
 };
 
 // the output components the fictional grid generator produces, per output dataset flavor
@@ -210,8 +213,11 @@ template <typename OutputDataType> OutputComponents output_components() {
     }
 }
 
-void add_component(DatasetMutable& dataset, PGM_MetaComponent const* component, auto const& buffer) {
-    auto const batch_size = dataset.is_batch() ? dataset.batch_size() : 1;
+template <typename DatasetType, typename BufferType>
+    requires(std::same_as<DatasetType, DatasetConst> || std::same_as<DatasetType, DatasetMutable>)
+void add_component(DatasetType& dataset, PGM_MetaComponent const* component, BufferType& buffer) {
+    auto const& info = dataset.get_info();
+    auto const batch_size = info.is_batch() ? info.batch_size() : 1;
     dataset.add_buffer(MetaData::component_name(component), std::ssize(buffer) / batch_size, std::ssize(buffer),
                        nullptr, buffer.data());
 }
@@ -252,10 +258,10 @@ DatasetConst make_update_dataset(BatchData const& batch_data) {
     if (batch_data.batch_size == 0) {
         return dataset;
     }
-    add_component(dataset, PGM_def_update_sym_load, batch_data.sym_load, batch_data.batch_size);
-    add_component(dataset, PGM_def_update_asym_load, batch_data.asym_load, batch_data.batch_size);
-    add_component(dataset, PGM_def_update_sym_power_sensor, batch_data.sym_power_sensor, batch_data.batch_size);
-    add_component(dataset, PGM_def_update_asym_power_sensor, batch_data.asym_power_sensor, batch_data.batch_size);
+    add_component(dataset, PGM_def_update_sym_load, batch_data.sym_load);
+    add_component(dataset, PGM_def_update_asym_load, batch_data.asym_load);
+    add_component(dataset, PGM_def_update_sym_power_sensor, batch_data.sym_power_sensor);
+    add_component(dataset, PGM_def_update_asym_power_sensor, batch_data.asym_power_sensor);
     return dataset;
 }
 
@@ -419,7 +425,7 @@ struct PowerGridBenchmark {
 
     void create_model(InputData const& input) {
         model = std::make_unique<Model>(system_frequency, make_input_dataset(input));
-        model->add_logger(logger);
+        model->attach_logger(logger);
     }
 
     Report collect_report(Report report) {
