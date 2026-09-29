@@ -125,7 +125,8 @@ def test_logger_warns_when_destroyed_while_active():
     try:
         logger = Logger()
         logger.__enter__()
-        with pytest.warns(ResourceWarning, match="destroyed inside an active"):
+
+        with pytest.warns(ResourceWarning, match="destroyed inside an active"):  # noqa: PT031
             del logger
             gc.collect()
     finally:
