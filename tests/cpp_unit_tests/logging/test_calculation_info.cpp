@@ -142,14 +142,14 @@ TEST_CASE("Test CalculationInfo") {
             return "called";
         };
         SUBCASE("Without event") {
-            info.log(lazy_log);
+            log.log(lazy_log);
             CHECK_FALSE(called);
-            CHECK(info.report().empty());
+            CHECK(log.report().empty());
         }
         SUBCASE("With event") {
-            info.log(LogEvent::total, lazy_log);
+            log.log(LogEvent::total, lazy_log);
             CHECK_FALSE(called);
-            CHECK(info.report().empty());
+            CHECK(log.report().empty());
         }
     }
 }
@@ -205,14 +205,14 @@ TEST_CASE("Test MultiThreadedCalculationInfo") {
             return "called";
         };
         SUBCASE("Without event") {
-            multi_threaded_info.log(lazy_log);
+            multi_threaded_log.log(lazy_log);
             CHECK_FALSE(called);
-            CHECK(multi_threaded_info.report().empty());
+            CHECK(multi_threaded_log.report().empty());
         }
         SUBCASE("With event") {
-            multi_threaded_info.log(LogEvent::total, lazy_log);
+            multi_threaded_log.log(LogEvent::total, lazy_log);
             CHECK_FALSE(called);
-            CHECK(multi_threaded_info.report().empty());
+            CHECK(multi_threaded_log.report().empty());
         }
     }
 
@@ -279,7 +279,7 @@ TEST_CASE("Test MultiThreadedCalculationInfo") {
             CHECK(report.at(preprocess_measured_value) == doctest::Approx(1.0 * some_value_b));
             CHECK(report.at(iterative_pf_solver_max_num_iter) == doctest::Approx(max_thread_value(n_threads, Idx{7})));
             CHECK(report.at(max_num_iter) ==
-                  doctest::Approx(3.0 * some_value_a)); // the + 1 from the info doesn't contribute
+                  doctest::Approx(3.0 * some_value_a)); // the + 1 from the log doesn't contribute
         }
 
         SUBCASE("Report - Const getter") {
