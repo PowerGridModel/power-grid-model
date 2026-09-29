@@ -43,7 +43,7 @@ def make_logger_test_network():
 
 
 def test_logger_captures_and_preserves_output_until_cleared(logger_test_network):
-    logger = Logger(LoggerType.text)
+    logger = Logger(LoggerType.info)
 
     assert logger.output == ""
     with logger as entered_logger:
@@ -118,23 +118,10 @@ def test_python_logger_flushes_each_line_at_configured_level(logger_test_network
     assert logger.output == ""
 
 
-def test_flush_without_python_logger_leaves_output_available(logger_test_network):
-    logger = Logger()
-
-    with logger:
-        logger_test_network.calculate_power_flow()
-    captured_output = logger.output
-    assert captured_output
-
-    logger.flush_to_python_logger()
-    assert logger.output == captured_output
-
-
 def test_flushing_empty_output_emits_no_python_log_records(caplog):
     python_logger = logging.getLogger("power_grid_model.empty_logger_test")
     caplog.set_level(logging.DEBUG, logger=python_logger.name)
-    logger = Logger(python_logger=python_logger)
-
-    logger.flush_to_python_logger()
+    with Logger(python_logger=python_logger):
+        pass
 
     assert not [record for record in caplog.records if record.name == python_logger.name]

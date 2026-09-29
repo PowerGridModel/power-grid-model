@@ -11,25 +11,26 @@ default, so there is zero performance cost unless you register one.
 
 Basic usage::
 
-    with Logger() as log:
-        model.calculate(...)
-    print(log.output)
+    >>> with Logger() as log:
+    ...     model.calculate(...)
+    >>> print(log.output)
 
 Multiple loggers simultaneously::
 
-    with Logger(LoggerType.text) as text_log, Logger(LoggerType.benchmark) as bench_log:
-        model.calculate(...)
-    print(text_log.output)
-    print(bench_log.output)
+    >>> with Logger() as first_log, Logger() as second_log:
+    ...     model.calculate(...)
+    >>> print(first_log.output)
+    >>> print(second_log.output)
 
 Python logging module integration::
 
-    import logging
-    py_logger = logging.getLogger("power_grid_model")
+    >>> import logging
+    >>> py_logger = logging.getLogger("power_grid_model")
 
-    with Logger(python_logger=py_logger):
-        model.calculate(...)
-    # output is flushed to py_logger automatically on exit
+    >>> with Logger(python_logger=py_logger):
+    ...     model.calculate(...)
+
+Output is flushed to ``py_logger`` automatically on exit.
 
 Using the same logger from multiple user threads simultaneously is UB (internal batch
 threads spawned by the C core are safe). Destroying a logger while it is still
@@ -37,6 +38,7 @@ inside a ``with`` block triggers a :exc:`ResourceWarning`.
 """
 
 import logging as _logging
+import threading as _threading
 import warnings as _warnings
 
 from power_grid_model._core.enum import LoggerType
@@ -57,7 +59,7 @@ class Logger:
     cleared) automatically on ``__exit__``.
 
     Args:
-        logger_type: The type of logger to create. Defaults to :attr:`LoggerType.text`.
+        logger_type: The type of logger to create. Defaults to :attr:`LoggerType.info`.
         python_logger: An optional :class:`logging.Logger` to route output to on exit.
         level: The log level used when routing to *python_logger*. Defaults to
             :data:`logging.DEBUG`.
@@ -67,7 +69,7 @@ class Logger:
 
     def __init__(
         self,
-        logger_type: LoggerType = LoggerType.text,
+        logger_type: LoggerType = LoggerType.info,
         *,
         python_logger: _logging.Logger | None = None,
         level: int = _logging.DEBUG,
@@ -77,9 +79,12 @@ class Logger:
         self._python_logger = python_logger
         self._level = level
         self._active: bool = False
+        self._active_lock = _threading.Lock()
 
     def __del__(self) -> None:
-        if self._active:
+        with self._active_lock:
+            is_active = self._active
+        if is_active:
             _warnings.warn(
                 f"{self!r} is being destroyed inside an active 'with' block. "
                 "Ensure the 'with Logger()' block has exited before the logger is garbage-collected.",
@@ -92,23 +97,22 @@ class Logger:
     def __enter__(self) -> "Logger":
         get_pgc().register_logger(self._logger_ptr)
         assert_no_error()
-        self._active = True
+        with self._active_lock:
+            self._active = True
         return self
 
     def __exit__(self, *_: object) -> None:
-        self._active = False
+        with self._active_lock:
+            self._active = False
         get_pgc().unregister_logger(self._logger_ptr)
         assert_no_error()
-        self.flush_to_python_logger()
+        self._flush_to_python_logger()
 
     @property
     def output(self) -> str:
         """Current accumulated output of this logger.
 
-        For :attr:`LoggerType.text`: timestamped log lines, one per logged event or message.
-        For :attr:`LoggerType.benchmark`: one line per logged event,
-        format ``EVENT_CODE\\tVALUE``.
-        For :attr:`LoggerType.do_nothing`: always empty string.
+        For :attr:`LoggerType.info`: timestamped log lines, one per logged event or message.
 
         Accessible both inside and after the ``with`` block. The value is copied
         into Python on each access, so the returned string is independent of the
@@ -126,7 +130,7 @@ class Logger:
         get_pgc().logger_clear(self._logger_ptr)
         assert_no_error()
 
-    def flush_to_python_logger(self) -> None:
+    def _flush_to_python_logger(self) -> None:
         """Route accumulated output to the Python logger set at construction, then clear.
 
         Each non-empty line of :attr:`output` is emitted as a single log record at

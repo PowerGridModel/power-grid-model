@@ -303,9 +303,5 @@ class LoggerType(IntEnum):
     Output is non-conclusive and intended as debugging hints for advanced users.
     """
 
-    do_nothing = 0
-    """Logger that discards all output (no-op). Useful as a typed placeholder."""
-    text = 1
-    """Logger that captures timestamped text messages, including sparse-matrix hints."""
-    benchmark = 2
-    """Logger that captures timing information per calculation phase."""
+    info = 3
+    """Logger that captures timestamped text messages."""
