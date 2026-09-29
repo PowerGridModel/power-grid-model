@@ -87,6 +87,23 @@ def test_nested_loggers_capture_only_while_registered(logger_test_network):
         assert inner_logger.output == inner_output
 
 
+def test_reentering_logger_keeps_it_registered_until_outer_context_exits(logger_test_network):
+    logger = Logger()
+
+    with logger:
+        with logger:
+            logger_test_network.calculate_power_flow()
+        output_after_inner_exit = logger.output
+        assert output_after_inner_exit
+
+        logger_test_network.calculate_power_flow()
+        output_after_outer_scope = logger.output
+        assert output_after_outer_scope != output_after_inner_exit
+
+    logger_test_network.calculate_power_flow()
+    assert logger.output == output_after_outer_scope
+
+
 def test_logger_unregisters_when_context_exits_with_exception(logger_test_network):
     logger = Logger()
 

@@ -56,7 +56,7 @@ class Logger:
     ``with`` block and is accessible via :attr:`output`.
 
     If *python_logger* is supplied, accumulated output is flushed to it (and
-    cleared) automatically on ``__exit__``.
+    cleared) automatically when the outermost context exits.
 
     Args:
         logger_type: The type of logger to create. Defaults to :attr:`LoggerType.info`.
@@ -78,12 +78,12 @@ class Logger:
         assert_no_error()
         self._python_logger = python_logger
         self._level = level
-        self._active: bool = False
+        self._active_count: int = 0
         self._active_lock = _threading.Lock()
 
     def __del__(self) -> None:
         with self._active_lock:
-            is_active = self._active
+            is_active = self._active_count > 0
         if is_active:
             _warnings.warn(
                 f"{self!r} is being destroyed inside an active 'with' block. "
@@ -95,18 +95,24 @@ class Logger:
             get_pgc().destroy_logger(self._logger_ptr)
 
     def __enter__(self) -> "Logger":
-        get_pgc().register_logger(self._logger_ptr)
-        assert_no_error()
         with self._active_lock:
-            self._active = True
+            if self._active_count == 0:
+                get_pgc().register_logger(self._logger_ptr)
+                assert_no_error()
+            self._active_count += 1
         return self
 
     def __exit__(self, *_: object) -> None:
+        should_flush = False
         with self._active_lock:
-            self._active = False
-        get_pgc().unregister_logger(self._logger_ptr)
-        assert_no_error()
-        self._flush_to_python_logger()
+            if self._active_count > 0:
+                self._active_count -= 1
+                if self._active_count == 0:
+                    get_pgc().unregister_logger(self._logger_ptr)
+                    assert_no_error()
+                    should_flush = True
+        if should_flush:
+            self._flush_to_python_logger()
 
     @property
     def output(self) -> str:
@@ -135,7 +141,7 @@ class Logger:
 
         Each non-empty line of :attr:`output` is emitted as a single log record at
         the configured *level*. Does nothing if no Python logger was supplied.
-        Called automatically by ``__exit__``.
+        Called automatically when the outermost context exits.
         """
         if self._python_logger is None:
             return
