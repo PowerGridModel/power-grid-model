@@ -62,7 +62,7 @@ Logging is opt-in diagnostic output from calculations. Use an info logger to inv
 output provides debugging hints rather than conclusive results.
 
 The logger lifecycle is: create with `PGM_create_logger`, register with `PGM_register_logger`, run calculations, read
-the output with `PGM_logger_get_output`, optionally clear it with `PGM_logger_clear`, unregister with
+the output with `PGM_logger_get_output`, optionally clear it with `PGM_logger_clear_content`, unregister with
 `PGM_unregister_logger`, and destroy it with `PGM_destroy_logger`. The
 {{ "[logging example]({}/power_grid_model_c_example/logging.c)".format(gh_link_head_blob) }} demonstrates this flow.
 
