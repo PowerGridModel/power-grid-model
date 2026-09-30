@@ -347,7 +347,7 @@ TEST_CASE("Test TextLogger") {
         SUBCASE("With event") {
             txt_logger.log(LogEvent::total, lazy_log);
             CHECK(called);
-            CHECK(txt_logger.report().contains("Tag:0: called\n"));
+            CHECK(txt_logger.report().contains("Tag:100: called\n"));
         }
     }
 }
@@ -408,7 +408,7 @@ TEST_CASE("Test MultiThreadedTextLogger") {
             SUBCASE("With event") {
                 multi_threaded_logger.log(LogEvent::total, lazy_log);
                 CHECK(called);
-                CHECK(multi_threaded_logger.report().contains("Tag:0: called\n"));
+                CHECK(multi_threaded_logger.report().contains("Tag:100: called\n"));
             }
         }
 
