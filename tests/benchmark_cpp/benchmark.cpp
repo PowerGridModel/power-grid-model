@@ -430,7 +430,7 @@ struct PowerGridBenchmark {
 
     Report collect_report(Report report) {
         merge_logger_output(report, logger.get_output());
-        logger.clear();
+        logger.clear_content();
         return report;
     }
 
