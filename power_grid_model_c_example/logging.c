@@ -93,7 +93,7 @@ int main(int argc, char** argv) {
     // Unregister before destroying the caller-owned wrapper to release this handle's registration.
     PGM_unregister_logger(handle, logger);
     PGM_destroy_logger(logger);
-    
+
     PGM_destroy_options(options);
     PGM_destroy_dataset_mutable(output);
     PGM_destroy_buffer(node_output);
