@@ -116,6 +116,7 @@ examples/Asymmetric Calculation Example.ipynb
 examples/Transformer Examples.ipynb
 examples/Generic Branch Example.ipynb
 examples/Asymmetric Line.ipynb
+examples/Logging Example.ipynb
 ```
 
 ```{toctree}
