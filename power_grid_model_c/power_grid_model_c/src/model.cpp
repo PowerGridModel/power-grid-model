@@ -9,6 +9,7 @@
 #include "logger.hpp"
 #include "logger_fwd.hpp"
 #include "math_solver.hpp"
+
 #include "options.hpp" // NOLINT(misc-include-cleaner)
 #include "safe_memory_handling.hpp"
 
@@ -17,8 +18,11 @@
 
 #include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/counting_iterator.hpp>
 #include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/common/exception.hpp>
+#include <power_grid_model/common/logging.hpp>
+#include <power_grid_model/common/timer.hpp>
 #include <power_grid_model/main_model.hpp>
 #include <power_grid_model/main_model_fwd.hpp>
 
@@ -30,6 +34,7 @@
 #include <ranges>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace {
 using namespace power_grid_model;
@@ -54,6 +59,8 @@ PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency
                                      PGM_ConstDataset const* input_dataset) noexcept {
     return call_with_catch(handle, [system_frequency, input_dataset, handle] {
         auto& logger = get_logger(safe_ptr_get(handle).logger);
+        Timer const total_timer{logger, LogEvent::total};
+        Timer const initialization_timer{logger, LogEvent::build_model};
         auto model = std::unique_ptr<MainModel>{create<MainModel>(
             system_frequency, safe_ptr_get(cast_to_cpp(input_dataset)), get_math_solver_dispatcher(), 0, logger)};
         model->reset_logger();
@@ -366,8 +373,10 @@ void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options co
         handle,
         [handle, model, opt, output_dataset, batch_dataset] {
             auto& cpp_model = safe_ptr_get(cast_to_cpp(model));
+            auto& logger = get_logger(safe_ptr_get(handle).logger);
+            Timer const timer{logger, LogEvent::total};
             // Log to the handle passed to this call, not the handle the model was created with.
-            ScopedModuleLogger const logger_guard{cpp_model, get_logger(safe_ptr_get(handle).logger)};
+            ScopedModuleLogger const logger_guard{cpp_model, logger};
             calculate_impl(cpp_model, safe_ptr_get(opt), safe_ptr_get(cast_to_cpp(output_dataset)),
                            safe_ptr_maybe_nullptr(cast_to_cpp(batch_dataset)));
         },
