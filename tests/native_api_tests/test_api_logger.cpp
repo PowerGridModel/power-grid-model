@@ -158,8 +158,7 @@ void check_text_output(std::string const& output, bool is_batch) {
     CHECK(output.ends_with('\n'));
 
     check_tag_presence(output, {100, 1000, 2000, 3100, 3000, 3200, 3211, 3233, 3241, 3251, 3290, 3253, 4000}, true);
-    check_tag_presence(
-        output, {-1, 0, 1, 2, 3, 4, 3231, 1240, 1250, 3212, 3213, 3234, 3235, 3232, 3242, 3252}, false);
+    check_tag_presence(output, {-1, 0, 1, 2, 3, 4, 3231, 1240, 1250, 3212, 3213, 3234, 3235, 3232, 3242, 3252}, false);
 
     if (is_batch) {
         check_tag_presence(output, {1100, 1230, 1200, 1220, 1231}, true);
