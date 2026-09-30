@@ -305,3 +305,5 @@ class LoggerType(IntEnum):
 
     info = 3
     """Logger that captures timestamped text messages."""
+    benchmark = 5
+    """Logger that captures timing information per calculation phase."""
