@@ -13,6 +13,7 @@
 #include "power_grid_model_c/basics.h"
 #include "power_grid_model_c/logger.h"
 
+#include <power_grid_model/common/calculation_info.hpp>
 #include <power_grid_model/common/composite_logging.hpp>
 #include <power_grid_model/common/exception.hpp>
 #include <power_grid_model/common/text_logger.hpp>
@@ -63,9 +64,8 @@ PGM_Logger* make_logger(PGM_Idx type) {
     switch (type) { // NOLINT(hicpp-multiway-paths-covered) // temporary while benchmark is scoped out
     case PGM_logger_type_info:
         return create<PGM_Logger>(std::make_shared<MultiThreadedTextLogger>());
-    // TODO(mgovers): enable once we release the benchmark logger publicly
-    // case PGM_benchmark_logger:
-    //     return create<PGM_Logger>(std::make_shared<MultiThreadedCalculationInfo>());
+    case PGM_benchmark_logger:
+        return create<PGM_Logger>(std::make_shared<MultiThreadedCalculationInfo>());
     default:
         throw power_grid_model::MissingCaseForEnumError{"make_logger", type};
     }
