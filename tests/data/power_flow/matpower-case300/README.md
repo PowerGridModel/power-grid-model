@@ -6,7 +6,7 @@ SPDX-License-Identifier: MPL-2.0
 
 # Validation case: MATPOWER IEEE 300-bus system, flat start
 
-This validation case runs Newton-Raphson from a flat start (`power_flow_initialization` `flat`) on a meshed
+This validation case runs Newton-Raphson from a flat start (`calculation_initialization` `flat`) on a meshed
 transmission grid.
 From the default linear start, Newton-Raphson diverges on this case (`IterationDiverge`), independently of the
 source strength: it also diverges with the default `sk = 1e10` VA.

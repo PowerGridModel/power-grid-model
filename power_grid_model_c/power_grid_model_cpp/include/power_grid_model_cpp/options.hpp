@@ -35,8 +35,8 @@ class Options {
         handle_.call_with(PGM_set_short_circuit_voltage_scaling, get(), short_circuit_voltage_scaling);
     }
 
-    void set_power_flow_initialization(Idx power_flow_initialization) {
-        handle_.call_with(PGM_set_power_flow_initialization, get(), power_flow_initialization);
+    void set_calculation_initialization(Idx calculation_initialization) {
+        handle_.call_with(PGM_set_calculation_initialization, get(), calculation_initialization);
     }
 
     void set_tap_changing_strategy(Idx tap_changing_strategy) {

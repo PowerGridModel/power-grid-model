@@ -261,7 +261,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         const bool has_usable_limits = set_bus_types_and_q_limits(input);
         limit_check_countdown_ = has_usable_limits ? limit_check_at_iteration : no_limit_check;
 
-        if (input.initialization == PowerFlowInitialization::flat) {
+        if (input.initialization == CalculationInitialization::flat) {
             make_flat_start(input, output.u);
         } else {
             make_linear_start(y_bus, input, output.u);

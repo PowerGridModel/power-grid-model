@@ -230,14 +230,15 @@ enum PGM_ShortCircuitVoltageScaling {
 };
 
 /**
- * @brief Enumeration of the Newton-Raphson power flow initializations.
+ * @brief Enumeration of the calculation initializations.
  *
  */
-enum PGM_PowerFlowInitialization {
-    PGM_power_flow_initialization_linear = 0, /**< start from a linear voltage guess (loads and generators as
-                                                   constant admittances) */
-    PGM_power_flow_initialization_flat = 1,   /**< flat start: every bus at 1 p.u. with its phase shift, source buses
-                                                   at their reference voltage, PV buses at their reference magnitude */
+enum PGM_CalculationInitialization {
+    PGM_calculation_initialization_default = 0, /**< default initialization of the selected calculation method */
+    PGM_calculation_initialization_flat = 1,    /**< flat start: every bus at 1 p.u. with its phase shift, source buses
+                                                at their reference voltage, PV buses at their reference magnitude */
+    PGM_calculation_initialization_linear = 2,  /**< start from a linear voltage guess (loads and generators as
+                                                constant admittances) */
 };
 
 /**

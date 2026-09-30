@@ -36,7 +36,7 @@ calculation_function_arguments_map: dict[str, tuple[Callable, list[str]]] = {
             "output_component_types",
             "continue_on_batch_error",
             "tap_changing_strategy",
-            "power_flow_initialization",
+            "calculation_initialization",
             "experimental_features",
         ],
     ),

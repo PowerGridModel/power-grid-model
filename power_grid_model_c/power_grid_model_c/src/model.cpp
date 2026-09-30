@@ -184,8 +184,8 @@ constexpr auto get_short_circuit_voltage_scaling(PGM_Options const& opt) {
     return safe_enum<ShortCircuitVoltageScaling>(opt.short_circuit_voltage_scaling);
 }
 
-constexpr auto get_power_flow_initialization(PGM_Options const& opt) {
-    return safe_enum<PowerFlowInitialization>(opt.power_flow_initialization);
+constexpr auto get_calculation_initialization(PGM_Options const& opt) {
+    return safe_enum<CalculationInitialization>(opt.calculation_initialization);
 }
 
 constexpr auto extract_calculation_options(PGM_Options const& opt) {
@@ -198,7 +198,7 @@ constexpr auto extract_calculation_options(PGM_Options const& opt) {
                               .max_iter = opt.max_iter,
                               .threading = opt.threading,
                               .short_circuit_voltage_scaling = get_short_circuit_voltage_scaling(opt),
-                              .power_flow_initialization = get_power_flow_initialization(opt)};
+                              .calculation_initialization = get_calculation_initialization(opt)};
 }
 
 class BadCalculationRequest : public PowerGridError {

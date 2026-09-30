@@ -11,12 +11,12 @@ from power_grid_model import (
     AngleMeasurementType,
     AttributeType as AT,
     BranchSide,
+    CalculationInitialization,
     ComponentAttributeFilterOptions,
     ComponentType as CT,
     DatasetType as DT,
     LoadGenType,
     MeasuredTerminalType,
-    PowerFlowInitialization,
     PowerGridModel,
     initialize_array,
 )
@@ -159,9 +159,9 @@ def test_simple_power_flow(model: PowerGridModel, sym_output):
     compare_result(result, sym_output, rtol=0.0, atol=1e-8)
 
 
-@pytest.mark.parametrize("power_flow_initialization", [PowerFlowInitialization.flat, "flat", "linear"])
-def test_simple_power_flow_initialization(model: PowerGridModel, sym_output, power_flow_initialization):
-    result = model.calculate_power_flow(power_flow_initialization=power_flow_initialization)
+@pytest.mark.parametrize("calculation_initialization", [CalculationInitialization.flat, "flat", "linear", "default"])
+def test_simple_calculation_initialization(model: PowerGridModel, sym_output, calculation_initialization):
+    result = model.calculate_power_flow(calculation_initialization=calculation_initialization)
     compare_result(result, sym_output, rtol=0.0, atol=1e-8)
 
 

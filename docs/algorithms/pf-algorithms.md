@@ -129,10 +129,11 @@ For each iteration the following steps are executed:
 
 ### Initialization
 
-The start $x(0)$ is set by the `power_flow_initialization` option
-({py:class}`PowerFlowInitialization <power_grid_model.enum.PowerFlowInitialization>`):
+The start $x(0)$ is set by the `calculation_initialization` option
+({py:class}`CalculationInitialization <power_grid_model.enum.CalculationInitialization>`):
 
-- `linear` (default): a linear voltage guess.
+- `default`: the default initialization, which is `linear` for Newton-Raphson.
+- `linear`: a linear voltage guess.
   Every load and generator is replaced by the constant admittance $-\overline{S}$ at 1 p.u. (the specified reactive
   power of a regulated generator is left out), and the resulting linear network is solved once.
 - `flat`: every node at 1 p.u. with its topological phase shift, a node with a source at the source's reference

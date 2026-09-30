@@ -279,7 +279,7 @@ template <symmetry_tag sym_type> struct PowerFlowInput {
     ComplexValueVector<sym> s_injection; // Specified injection power of each load_gen
     std::vector<VoltageRegulatorCalcParam<sym>> voltage_regulator;
     IntSVector load_gen_status;
-    PowerFlowInitialization initialization{PowerFlowInitialization::linear}; // start of Newton-Raphson
+    CalculationInitialization initialization{CalculationInitialization::default_initialization};
 };
 
 template <symmetry_tag sym_type> struct StateEstimationInput {

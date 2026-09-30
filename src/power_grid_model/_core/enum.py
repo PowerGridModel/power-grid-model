@@ -118,17 +118,24 @@ class ShortCircuitVoltageScaling(IntEnum):
     maximum = 1
 
 
-class PowerFlowInitialization(IntEnum):
-    """Start of the Newton-Raphson power flow"""
+class CalculationInitialization(IntEnum):
+    """The way the calculation is initialized.
 
-    linear = 0
+    Only applicable if supported for the selected calculation type and method.
     """
-    Start from a linear voltage guess, with loads and generators as constant admittances (default).
+
+    default = 0
+    """
+    The default initialization of the selected calculation method (linear for Newton-Raphson).
     """
     flat = 1
     """
     Flat start: every node at 1 p.u. with its phase shift, source nodes at their reference voltage and voltage
     regulated nodes at their reference magnitude.
+    """
+    linear = 2
+    """
+    Start from a linear voltage guess, with loads and generators as constant admittances.
     """
 
 

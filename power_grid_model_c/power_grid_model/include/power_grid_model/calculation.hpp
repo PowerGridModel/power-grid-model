@@ -81,7 +81,7 @@ template <typename T, typename sym> struct Calculator;
 template <symmetry_tag sym> struct Calculator<power_flow_t, sym> {
     template <typename State>
     static auto preparer(State const& state, ComponentToMathCoupling& /*comp_coup*/, MainModelOptions const& options) {
-        return [&state, initialization = options.power_flow_initialization](Idx n_math_solvers) {
+        return [&state, initialization = options.calculation_initialization](Idx n_math_solvers) {
             auto input = main_core::prepare_power_flow_input<sym>(state, n_math_solvers);
             for (auto& math_input : input) {
                 math_input.initialization = initialization;

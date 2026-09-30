@@ -136,7 +136,7 @@ TEST_CASE_TEMPLATE("Newton-Raphson flat start", sym, symmetric_t, asymmetric_t) 
     NoLogger log;
 
     PowerFlowInput<sym> pf_input = grid.pf_input();
-    pf_input.initialization = PowerFlowInitialization::flat;
+    pf_input.initialization = CalculationInitialization::flat;
 
     NewtonRaphsonPFSolver<sym> solver{y_bus, topo};
     SolverOutput<sym> const output = run_power_flow(solver, y_bus, pf_input, 1e-12, 20, log);
@@ -163,7 +163,7 @@ TEST_CASE("Newton-Raphson flat start with a voltage regulator") {
     param.shunt_param = {};
     param.source_param = {{.y1 = 1e6, .y0 = 1e6}};
 
-    auto const input = [](PowerFlowInitialization initialization) {
+    auto const input = [](CalculationInitialization initialization) {
         return PowerFlowInput<symmetric_t>{
             .source = {1.02 * std::exp(1.0i * deg_30 / 3.0)},
             .s_injection = {0.5},
@@ -178,10 +178,10 @@ TEST_CASE("Newton-Raphson flat start with a voltage regulator") {
 
     NewtonRaphsonPFSolver<symmetric_t> linear_solver{y_bus, topo};
     auto const linear =
-        linear_solver.run_power_flow(y_bus, input(PowerFlowInitialization::linear), 1e-12, 20, cache_run, log);
+        linear_solver.run_power_flow(y_bus, input(CalculationInitialization::linear), 1e-12, 20, cache_run, log);
     NewtonRaphsonPFSolver<symmetric_t> flat_solver{y_bus, topo};
     auto const flat =
-        flat_solver.run_power_flow(y_bus, input(PowerFlowInitialization::flat), 1e-12, 20, cache_run, log);
+        flat_solver.run_power_flow(y_bus, input(CalculationInitialization::flat), 1e-12, 20, cache_run, log);
 
     CHECK(cabs(flat.u[1]) == doctest::Approx(1.05));
     for (Idx bus = 0; bus != 2; ++bus) {

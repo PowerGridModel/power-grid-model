@@ -32,7 +32,7 @@ struct MainModelOptions {
     Idx threading{sequential};
 
     ShortCircuitVoltageScaling short_circuit_voltage_scaling{ShortCircuitVoltageScaling::maximum};
-    PowerFlowInitialization power_flow_initialization{PowerFlowInitialization::linear};
+    CalculationInitialization calculation_initialization{CalculationInitialization::default_initialization};
 };
 
 } // namespace power_grid_model
