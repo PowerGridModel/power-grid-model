@@ -4,10 +4,12 @@ SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridm
 SPDX-License-Identifier: MPL-2.0
 -->
 
-# Validation case: MATPOWER IEEE 300-bus system, flat start
+# Validation case: MATPOWER IEEE 300-bus system, flat and average source start
 
-This validation case runs Newton-Raphson from a flat start (`calculation_initialization` `flat`) on a meshed
-transmission grid.
+These validation cases run Newton-Raphson on a meshed transmission grid from a flat start (`flat-start`,
+`calculation_initialization` `flat`) and from the average source voltage (`average-source-start`,
+`calculation_initialization` `average_source`).
+Both cases have the same input and expected output.
 From the default linear start, Newton-Raphson diverges on this case (`IterationDiverge`), independently of the
 source strength: it also diverges with the default `sk = 1e10` VA.
 

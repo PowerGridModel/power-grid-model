@@ -234,11 +234,15 @@ enum PGM_ShortCircuitVoltageScaling {
  *
  */
 enum PGM_CalculationInitialization {
-    PGM_calculation_initialization_default = 0, /**< default initialization of the selected calculation method */
-    PGM_calculation_initialization_flat = 1,    /**< flat start: every bus at 1 p.u. with its phase shift, source buses
-                                                at their reference voltage, PV buses at their reference magnitude */
-    PGM_calculation_initialization_linear = 2,  /**< start from a linear voltage guess (loads and generators as
-                                                constant admittances) */
+    /** default initialization of the selected calculation method */
+    PGM_calculation_initialization_default = 0,
+    /** flat start: every bus at 1 p.u. with the source angle and its phase shift, source buses at their reference
+     * voltage, PV buses at their reference magnitude */
+    PGM_calculation_initialization_flat = 1,
+    /** start from a linear voltage guess (loads and generators as constant admittances) */
+    PGM_calculation_initialization_linear = 2,
+    /** every bus at the average reference voltage of all sources with its phase shift */
+    PGM_calculation_initialization_average_source = 3,
 };
 
 /**

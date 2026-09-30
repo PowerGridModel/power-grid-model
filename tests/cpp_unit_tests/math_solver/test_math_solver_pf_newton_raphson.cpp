@@ -143,6 +143,22 @@ TEST_CASE_TEMPLATE("Newton-Raphson flat start", sym, symmetric_t, asymmetric_t) 
     assert_output(output, grid.output_ref(), false, 1e-12);
 }
 
+TEST_CASE_TEMPLATE("Newton-Raphson average source start", sym, symmetric_t, asymmetric_t) {
+    using common::logging::NoLogger;
+
+    PFSolverTestGrid<sym> const grid;
+    auto const topo = grid.topo();
+    YBus<sym> const y_bus{topo, grid.param()};
+    NoLogger log;
+
+    PowerFlowInput<sym> pf_input = grid.pf_input();
+    pf_input.initialization = CalculationInitialization::average_source;
+
+    NewtonRaphsonPFSolver<sym> solver{y_bus, topo};
+    SolverOutput<sym> const output = run_power_flow(solver, y_bus, pf_input, 1e-12, 20, log);
+    assert_output(output, grid.output_ref(), false, 1e-12);
+}
+
 TEST_CASE("Newton-Raphson flat start with a voltage regulator") {
     using enum LoadGenType;
 
@@ -183,11 +199,17 @@ TEST_CASE("Newton-Raphson flat start with a voltage regulator") {
     auto const flat =
         flat_solver.run_power_flow(y_bus, input(CalculationInitialization::flat), 1e-12, 20, cache_run, log);
 
-    CHECK(cabs(flat.u[1]) == doctest::Approx(1.05));
-    for (Idx bus = 0; bus != 2; ++bus) {
-        CHECK(cabs(flat.u[bus] - linear.u[bus]) < 1e-10);
+    NewtonRaphsonPFSolver<symmetric_t> average_source_solver{y_bus, topo};
+    auto const average_source = average_source_solver.run_power_flow(
+        y_bus, input(CalculationInitialization::average_source), 1e-12, 20, cache_run, log);
+
+    for (auto const& output : {flat, average_source}) {
+        CHECK(cabs(output.u[1]) == doctest::Approx(1.05));
+        for (Idx bus = 0; bus != 2; ++bus) {
+            CHECK(cabs(output.u[bus] - linear.u[bus]) < 1e-10);
+        }
+        CHECK(imag(output.load_gen[0].s) == doctest::Approx(imag(linear.load_gen[0].s)));
     }
-    CHECK(imag(flat.load_gen[0].s) == doctest::Approx(imag(linear.load_gen[0].s)));
 }
 
 TEST_CASE("Newton-Raphson PV - Q limit violation on parallel PV busses with switch to PQ") {

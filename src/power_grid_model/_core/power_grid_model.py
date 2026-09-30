@@ -655,8 +655,10 @@ class PowerGridModel:
 
                 - default: The default initialization of the calculation method (linear for Newton-Raphson).
                 - linear: Start from a linear voltage guess, with loads and generators as constant admittances.
-                - flat: Every node at 1 p.u. with its phase shift, source nodes at their reference voltage and
+                - flat: Every node at 1 p.u. with the source reference angle and its phase shift, source nodes at their reference voltage and
                   voltage regulated nodes at their reference magnitude.
+                - average_source: Every node at the average reference voltage of all sources with its phase shift,
+                  as in the iterative current power flow.
 
         Returns:
             Dictionary of results of all components.

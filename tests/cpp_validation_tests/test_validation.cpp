@@ -405,7 +405,8 @@ inline auto& calculation_initialization_mapping() {
     static std::map<std::string, PGM_CalculationInitialization, std::less<>> const mapping{
         {"default", PGM_calculation_initialization_default},
         {"linear", PGM_calculation_initialization_linear},
-        {"flat", PGM_calculation_initialization_flat}};
+        {"flat", PGM_calculation_initialization_flat},
+        {"average_source", PGM_calculation_initialization_average_source}};
     return mapping;
 }
 inline auto& experimental_features_mapping() {

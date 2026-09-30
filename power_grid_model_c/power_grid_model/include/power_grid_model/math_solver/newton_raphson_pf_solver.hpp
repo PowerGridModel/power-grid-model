@@ -261,10 +261,17 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         const bool has_usable_limits = set_bus_types_and_q_limits(input);
         limit_check_countdown_ = has_usable_limits ? limit_check_at_iteration : no_limit_check;
 
-        if (input.initialization == CalculationInitialization::flat) {
+        switch (input.initialization) {
+            using enum CalculationInitialization;
+        case flat:
             make_flat_start(input, output.u);
-        } else {
+            break;
+        case average_source:
+            this->make_average_source_start(input, output.u);
+            break;
+        default:
             make_linear_start(y_bus, input, output.u);
+            break;
         }
 
         set_reference_voltage_for_pv_buses(output.u);
@@ -276,13 +283,15 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         }
     }
 
-    // Flat start: every bus at 1 p.u. with its topological phase shift, a bus with a source at that source's
-    // reference voltage (the mean if there are several). PV buses are set to their reference magnitude afterwards.
+    // Flat start: every bus at 1 p.u. with the reference angle of the sources (the angle of their average voltage) plus
+    // its topological phase shift, a bus with a source at that source's reference voltage (the mean if there are
+    // several). PV buses are set to their reference magnitude afterwards.
     void make_flat_start(PowerFlowInput<sym> const& input, ComplexValueVector<sym>& u) const {
         std::vector<double> const& phase_shift = this->phase_shift_.get();
+        double const source_angle = arg(this->average_source_voltage(input));
         for (auto const& [bus, sources] : enumerated_zip_sequence(this->sources_per_bus_.get())) {
             if (sources.empty()) {
-                u[bus] = ComplexValue<sym>{std::exp(1.0i * phase_shift[bus])};
+                u[bus] = ComplexValue<sym>{std::exp(1.0i * (source_angle + phase_shift[bus]))};
                 continue;
             }
             DoubleComplex u_ref{};

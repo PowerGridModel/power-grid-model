@@ -136,10 +136,13 @@ The start $x(0)$ is set by the `calculation_initialization` option
 - `linear`: a linear voltage guess.
   Every load and generator is replaced by the constant admittance $-\overline{S}$ at 1 p.u. (the specified reactive
   power of a regulated generator is left out), and the resulting linear network is solved once.
-- `flat`: every node at 1 p.u. with its topological phase shift, a node with a source at the source's reference
+- `flat`: every node at 1 p.u. with the reference angle of the sources (`u_ref_angle`, the angle of their average
+  voltage if there are several) plus its topological phase shift, a node with a source at the source's reference
   voltage.
+- `average_source`: every node at the average reference voltage of all sources, with its topological phase shift.
+  This is the start of the [iterative current](#iterative-current-power-flow) power flow.
 
-In both cases, voltage regulated nodes then start at their reference magnitude `u_ref`, keeping the angle of the
+In all cases, voltage regulated nodes then start at their reference magnitude `u_ref`, keeping the angle of the
 start.
 
 The linear guess is a good start where load and generation are close to the source.

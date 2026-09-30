@@ -130,12 +130,17 @@ class CalculationInitialization(IntEnum):
     """
     flat = 1
     """
-    Flat start: every node at 1 p.u. with its phase shift, source nodes at their reference voltage and voltage
+    Flat start: every node at 1 p.u. with the source reference angle and its phase shift, source nodes at their reference voltage and voltage
     regulated nodes at their reference magnitude.
     """
     linear = 2
     """
     Start from a linear voltage guess, with loads and generators as constant admittances.
+    """
+    average_source = 3
+    """
+    Every node at the average reference voltage of all sources, with its phase shift. This is the start of the
+    iterative current power flow.
     """
 
 
