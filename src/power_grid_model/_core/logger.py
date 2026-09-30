@@ -118,8 +118,6 @@ class Logger:
     def output(self) -> str:
         """Current accumulated output of this logger.
 
-        For :attr:`LoggerType.info`: timestamped log lines, one per logged event or message.
-
         Accessible both inside and after the ``with`` block. The value is copied
         into Python on each access, so the returned string is independent of the
         logger's internal buffer.
@@ -129,10 +127,7 @@ class Logger:
         return result
 
     def clear_content(self) -> None:
-        """Clear the accumulated output.
-
-        For :attr:`LoggerType.do_nothing` this is a no-op.
-        """
+        """Clear the accumulated output."""
         get_pgc().logger_clear_content(self._logger_ptr)
         assert_no_error()
 
