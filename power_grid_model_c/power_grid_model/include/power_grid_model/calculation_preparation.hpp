@@ -255,7 +255,7 @@ inline void prepare_solvers(typename ModelType::MainModelState& state, SolverPre
     main_core::prepare_y_bus<sym, ModelType>(state, n_math_solvers, solver_context.math_state);
     if (n_math_solvers != std::ssize(solvers)) {
         assert(solvers.empty());
-        assert(n_math_solvers == static_cast<Idx>(main_core::get_y_bus<sym>(solver_context.math_state).size()));
+        assert(n_math_solvers == std::ssize(main_core::get_y_bus<sym>(solver_context.math_state)));
 
         solvers.clear();
         solvers.reserve(n_math_solvers);
@@ -263,10 +263,7 @@ inline void prepare_solvers(typename ModelType::MainModelState& state, SolverPre
                                [&solver_context](auto const& math_topo) {
                                    return MathSolverProxy<sym>{solver_context.math_solver_dispatcher, math_topo};
                                });
-        for (Idx const idx : IdxRange{n_math_solvers}) {
-            main_core::get_y_bus<sym>(solver_context.math_state)[idx].register_parameters_changed_callback(
-                [solver = std::ref(solvers[idx])](bool changed) { solver.get().get().parameters_changed(changed); });
-        }
+        main_core::MathState::link_solvers<sym>(main_core::get_y_bus<sym>(solver_context.math_state), solvers);
     } else if (!solvers_cache_status.template is_parameter_valid<sym>()) {
         if (solvers_cache_status.template is_symmetry_mode_conserved<sym>()) {
             main_core::update_y_bus(solver_context.math_state,

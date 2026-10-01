@@ -126,6 +126,15 @@
       "hidden": true
     },
     {
+      "name": "unix-thread-sanitizer",
+      "description": "ThreadSanitizer; mutually exclusive with AddressSanitizer, hence a separate preset family.",
+      "environment": {
+        "SANITIZER_FLAGS": "-fsanitize=thread -fno-sanitize-recover"
+      },
+      "inherits": "unix-base",
+      "hidden": true
+    },
+    {
       "name": "clang-tidy-windows-base",
       "cacheVariables": {
         "CMAKE_C_CLANG_TIDY": "clang-tidy.exe;--extra-arg=/EHsc",
@@ -200,6 +209,15 @@
       "hidden": true
     },
     {
+      "name": "clang-linux-tsan-base",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++"
+      },
+      "inherits": "unix-thread-sanitizer",
+      "hidden": true
+    },
+    {
       "name": "clang-debug",
       "inherits": ["debug", "clang-linux-base"]
     },
@@ -214,6 +232,14 @@
     {
       "name": "apple-clang-release",
       "inherits": ["relwithdebinfo", "apple-clang-base"]
+    },
+    {
+      "name": "clang-tsan-debug",
+      "inherits": ["debug", "clang-linux-tsan-base"]
+    },
+    {
+      "name": "clang-tsan-release",
+      "inherits": ["release", "clang-linux-tsan-base"]
     },
     {
       "name": "clang-tidy-debug",
@@ -477,6 +503,14 @@
     {
       "name": "ci-apple-clang-reproducible",
       "configurePreset": "ci-apple-clang-reproducible"
+    },
+    {
+      "name": "clang-tsan-debug",
+      "configurePreset": "clang-tsan-debug"
+    },
+    {
+      "name": "clang-tsan-release",
+      "configurePreset": "clang-tsan-release"
     }
   ],
   "testPresets": [
@@ -571,6 +605,20 @@
     {
       "name": "ci-clang-tidy-debug",
       "configurePreset": "ci-clang-tidy-debug"
+    },
+    {
+      "name": "clang-tsan-debug",
+      "configurePreset": "clang-tsan-debug",
+      "environment": {
+        "TSAN_OPTIONS": "halt_on_error=1"
+      }
+    },
+    {
+      "name": "clang-tsan-release",
+      "configurePreset": "clang-tsan-release",
+      "environment": {
+        "TSAN_OPTIONS": "halt_on_error=1"
+      }
     }
   ],
   "workflowPresets": [
@@ -690,6 +738,40 @@
         {
           "type": "test",
           "name": "clang-debug"
+        }
+      ]
+    },
+    {
+      "name": "clang-tsan-debug",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "clang-tsan-debug"
+        },
+        {
+          "type": "build",
+          "name": "clang-tsan-debug"
+        },
+        {
+          "type": "test",
+          "name": "clang-tsan-debug"
+        }
+      ]
+    },
+    {
+      "name": "clang-tsan-release",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "clang-tsan-release"
+        },
+        {
+          "type": "build",
+          "name": "clang-tsan-release"
+        },
+        {
+          "type": "test",
+          "name": "clang-tsan-release"
         }
       ]
     },

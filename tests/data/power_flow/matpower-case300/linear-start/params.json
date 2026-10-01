@@ -1,0 +1,9 @@
+{
+  "calculation_method": ["newton_raphson"],
+  "rtol": 1e-8,
+  "atol": 1e-8,
+  "xfail": {
+    "raises": "IterationDiverge",
+    "reason": "Newton-Raphson diverges from its linear start on this grid, although the power flow has a solution."
+  }
+}

@@ -59,7 +59,7 @@ code-generation = ["dataclasses_json", "jinja2"]
 
 doc = [
     "sphinx",
-    "breathe",
+    "breathe<5",
     "myst_nb",
     "sphinx_rtd_theme",
     "readthedocs-sphinx-search",

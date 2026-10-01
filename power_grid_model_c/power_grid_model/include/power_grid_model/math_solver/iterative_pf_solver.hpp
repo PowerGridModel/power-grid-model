@@ -32,8 +32,7 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
     friend DerivedSolver;
     SolverOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
                                      Idx max_iter, bool cache_run, Logger& log) {
-        // keep copy, as reference might break batching
-        auto derived_solver = static_cast<DerivedSolver&>(*this);
+        auto& derived_solver = static_cast<DerivedSolver&>(*this);
 
         // prepare
         SolverOutput<sym> output;

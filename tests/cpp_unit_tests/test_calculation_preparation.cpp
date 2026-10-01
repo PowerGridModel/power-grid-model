@@ -7,6 +7,7 @@
 #include <power_grid_model/all_components.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/main_core/main_model_type.hpp>
+#include <power_grid_model/main_core/math_state.hpp>
 #include <power_grid_model/math_solver/math_solver.hpp>
 #include <power_grid_model/math_solver/math_solver_dispatch.hpp>
 
@@ -79,10 +80,10 @@ TEST_CASE("Test SolverPreparationContext") {
         SolverPreparationContext const context{};
 
         CHECK(context.math_solver_dispatcher == nullptr);
-        CHECK(context.math_state.y_bus_vec_sym.empty());
-        CHECK(context.math_state.y_bus_vec_asym.empty());
-        CHECK(context.math_state.math_solvers_sym.empty());
-        CHECK(context.math_state.math_solvers_asym.empty());
+        CHECK(get_y_bus<symmetric_t>(context.math_state).empty());
+        CHECK(get_y_bus<asymmetric_t>(context.math_state).empty());
+        CHECK(get_solvers<symmetric_t>(context.math_state).empty());
+        CHECK(get_solvers<asymmetric_t>(context.math_state).empty());
     }
 
     SUBCASE("Dummy construction") {
@@ -90,10 +91,10 @@ TEST_CASE("Test SolverPreparationContext") {
         SolverPreparationContext const context{.math_state = {}, .math_solver_dispatcher = &dispatcher};
 
         CHECK(context.math_solver_dispatcher == &dispatcher);
-        CHECK(context.math_state.y_bus_vec_sym.empty());
-        CHECK(context.math_state.y_bus_vec_asym.empty());
-        CHECK(context.math_state.math_solvers_sym.empty());
-        CHECK(context.math_state.math_solvers_asym.empty());
+        CHECK(get_y_bus<symmetric_t>(context.math_state).empty());
+        CHECK(get_y_bus<asymmetric_t>(context.math_state).empty());
+        CHECK(get_solvers<symmetric_t>(context.math_state).empty());
+        CHECK(get_solvers<asymmetric_t>(context.math_state).empty());
     }
 }
 

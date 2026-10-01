@@ -32,5 +32,8 @@ jobs:
     with:
       target: "all"
 
+  thread-sanitizer:
+    uses: "./.github/workflows/thread-sanitizer.yml"
+
   citations:
     uses: "./.github/workflows/citations.yml"
