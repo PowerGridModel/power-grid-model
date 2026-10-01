@@ -15,6 +15,7 @@
 #include <power_grid_model/math_solver/newton_raphson_pf_solver.hpp>
 #include <power_grid_model/math_solver/y_bus.hpp>
 
+#include <cmath>
 #include <complex>
 
 TYPE_TO_STRING_AS("NewtonRaphsonPFSolver<symmetric_t>",

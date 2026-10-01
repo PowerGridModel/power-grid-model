@@ -130,8 +130,8 @@ class CalculationInitialization(IntEnum):
     """
     flat = 1
     """
-    Flat start: every node at 1 p.u. with the source reference angle and its phase shift, source nodes at their reference voltage and voltage
-    regulated nodes at their reference magnitude.
+    Flat start: every node at 1 p.u. with the source reference angle and its phase shift, source nodes at their
+    reference voltage and voltage regulated nodes at their reference magnitude.
     """
     linear = 2
     """
