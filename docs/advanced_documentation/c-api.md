@@ -59,7 +59,8 @@ If you are calling the C API in multiple threads, each thread should have its ow
 ## Logging
 
 Logging is opt-in diagnostic output from calculations. Use an info logger to investigate calculation behavior; its
-output provides debugging hints rather than conclusive results.
+output provides debugging hints rather than conclusive results. 
+Logging incurs a performance cost and its output may change between releases.
 
 The logger lifecycle is: create with `PGM_create_logger`, register with `PGM_register_logger`, run calculations, read
 the output with `PGM_logger_get_output`, optionally clear it with `PGM_logger_clear_content`, unregister with
