@@ -118,6 +118,32 @@ class ShortCircuitVoltageScaling(IntEnum):
     maximum = 1
 
 
+class CalculationInitialization(IntEnum):
+    """The way the calculation is initialized.
+
+    Only applicable if supported for the selected calculation type and method.
+    """
+
+    default = 0
+    """
+    The default initialization of the selected calculation method (linear for Newton-Raphson).
+    """
+    flat = 1
+    """
+    Flat start: every node at 1 p.u. with the source reference angle and its phase shift, source nodes at their
+    reference voltage and voltage regulated nodes at their reference magnitude.
+    """
+    linear = 2
+    """
+    Start from a linear voltage guess, with loads and generators as constant admittances.
+    """
+    average_source = 3
+    """
+    Every node at the average reference voltage of all sources, with its phase shift. This is the start of the
+    iterative current power flow.
+    """
+
+
 class _ExperimentalFeatures(IntEnum):
     """Experimental features"""
 
