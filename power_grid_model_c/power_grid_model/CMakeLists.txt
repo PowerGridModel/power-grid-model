@@ -17,9 +17,18 @@ if(Threads_FOUND)
     target_link_libraries(power_grid_model INTERFACE Threads::Threads)
 endif()
 
-target_include_directories(
+file(
+    GLOB_RECURSE pgm_public_headers
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp"
+)
+
+target_sources(
     power_grid_model
-    INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include"
+    INTERFACE
+        FILE_SET pgm_public_headers
+            TYPE HEADERS
+            BASE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/include/"
+            FILES "${pgm_public_headers}"
 )
 
 # only use MPL version of eigen
@@ -31,4 +40,9 @@ target_compile_options(
     INTERFACE
         "$<$<CXX_COMPILER_ID:Clang>:-Wno-unknown-attributes>"
         "$<$<CXX_COMPILER_ID:MSVC>:/bigobj>"
+)
+
+set_target_properties(
+    power_grid_model
+    PROPERTIES VERIFY_INTERFACE_HEADER_SETS TRUE
 )
