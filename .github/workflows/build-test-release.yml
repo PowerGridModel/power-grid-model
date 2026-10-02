@@ -20,7 +20,7 @@ concurrency:
 jobs:
   acquire-python-version-build-sdist:
     name: Build sdist and set version
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -50,7 +50,7 @@ jobs:
           path: ./wheelhouse/*.tar.gz
 
   build-cpp-test-linux:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     strategy:
       matrix:
         build-option: [debug, release]
@@ -165,10 +165,10 @@ jobs:
         platform: [linux-x64, linux-aarch64, macos-arm64, macos-x64, windows]
         include:
           - platform: linux-x64
-            os: ubuntu-24.04
+            os: ubuntu-26.04
             cibw_build: "*_x86_64"
           - platform: linux-aarch64
-            os: ubuntu-24.04-arm
+            os: ubuntu-26.04-arm
             cibw_build: "*_aarch64"
           - platform: macos-arm64
             os: macos-26
