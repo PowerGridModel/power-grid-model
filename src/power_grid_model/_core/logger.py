@@ -72,12 +72,12 @@ class Logger:
         logger_type: LoggerType = LoggerType.info,
         *,
         python_logger: _logging.Logger | None = None,
-        level: int = _logging.DEBUG,
+        python_logging_level: int = _logging.DEBUG,
     ) -> None:
         self._logger_ptr = get_pgc().create_logger(int(logger_type))
         assert_no_error()
         self._python_logger = python_logger
-        self._level = level
+        self._level = python_logging_level
         self._active_count: int = 0
         self._active_lock = _threading.Lock()
 

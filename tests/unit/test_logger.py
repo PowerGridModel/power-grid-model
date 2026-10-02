@@ -136,7 +136,7 @@ def test_logger_warns_when_destroyed_while_active():
 def test_python_logger_flushes_each_line_at_configured_level(logger_test_network, caplog):
     python_logger = logging.getLogger("power_grid_model.logger_test")
     caplog.set_level(logging.DEBUG, logger=python_logger.name)
-    logger = Logger(python_logger=python_logger, level=logging.WARNING)
+    logger = Logger(python_logger=python_logger, python_logging_level=logging.WARNING)
 
     with logger:
         logger_test_network.calculate_power_flow()
