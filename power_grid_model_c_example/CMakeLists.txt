@@ -11,6 +11,9 @@ target_link_libraries(
     PRIVATE power_grid_model_c
 )
 
+add_executable(power_grid_model_c_example_logging logging.c)
+target_link_libraries(power_grid_model_c_example_logging PRIVATE power_grid_model_c)
+
 add_test(
     PGMExample
     ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/power_grid_model_c_example
@@ -19,4 +22,9 @@ add_test(
 add_test(
     PGMExampleSerialization
     ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/power_grid_model_c_example_serialization
+)
+
+add_test(
+    PGMExampleLogging
+    ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/power_grid_model_c_example_logging
 )
