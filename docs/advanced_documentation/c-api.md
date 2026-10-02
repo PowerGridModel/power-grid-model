@@ -68,9 +68,13 @@ the output with `PGM_logger_get_output`, optionally clear it with `PGM_logger_cl
 {{ "[logging example]({}/power_grid_model_c_example/logging.c)".format(gh_link_head_blob) }} demonstrates this flow.
 
 `PGM_logger_get_output` delivers the output to its callback as a pointer and a byte count. The data is not
-null-terminated and is valid only for the callback, so use the supplied size rather than C string functions. Do not
+null-terminated and is valid only for the callback, so use the supplied size rather than C string functions. 
+
+```{warning}
+Do not
 register, unregister, destroy, read, or clear a logger while a calculation using it is in progress. Each user thread
 must use a separate handle, and a logger shared between user threads must be externally synchronized.
+```
 
 ## Calculation options
 
