@@ -16,6 +16,9 @@ add_library(
     "src/serialization.cpp"
     "src/dataset.cpp"
     "src/math_solver.cpp"
+    "src/validation.cpp"
+    "src/validation/input.cpp"
+    "src/validation/node.cpp"
 )
 
 target_include_directories(

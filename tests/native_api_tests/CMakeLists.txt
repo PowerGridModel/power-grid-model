@@ -13,9 +13,22 @@ set(PROJECT_SOURCES
     "test_api_utils.cpp"
     "test_api_model_multi_dimension.cpp"
     "test_api_dataset.cpp"
+    "test_api_validation.cpp"
 )
 
 add_executable(power_grid_model_api_tests ${PROJECT_SOURCES})
+
+target_sources(
+    power_grid_model_api_tests
+    PRIVATE "${PROJECT_SOURCE_DIR}/power_grid_model_c/power_grid_model_c/src/validation/node.cpp"
+)
+
+target_include_directories(
+    power_grid_model_api_tests
+    PRIVATE
+        "${PROJECT_SOURCE_DIR}/power_grid_model_c/power_grid_model_c/src"
+        "${PROJECT_SOURCE_DIR}/power_grid_model_c/power_grid_model/include"
+)
 
 target_compile_definitions(
     power_grid_model_api_tests
@@ -26,6 +39,7 @@ target_link_libraries(
     power_grid_model_api_tests
     PRIVATE
         power_grid_model_c
+        power_grid_model
         power_grid_model_cpp
         doctest::doctest
         nlohmann_json
