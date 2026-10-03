@@ -21,6 +21,7 @@ add_executable(
     "test_job_dispatch.cpp"
     "test_link_solver.cpp"
     "test_supernodes.cpp"
+    "test_validation.cpp"
 )
 
 target_link_libraries(
