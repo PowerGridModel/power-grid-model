@@ -7,7 +7,7 @@
 #include <utility>
 #include <vector>
 
-namespace power_grid_model_c::validation {
+namespace power_grid_model::validation {
 
 enum class Rule { missing_value, infinity, not_unique, not_greater_than_zero };
 
@@ -15,7 +15,7 @@ struct Issue {
     Rule rule;
     std::string_view component;
     std::string_view field;
-    std::vector<power_grid_model::ID> ids;
+    std::vector<ID> ids;
 
     friend bool operator==(Issue const&, Issue const&) = default;
 };
@@ -23,7 +23,7 @@ struct Issue {
 using Issues = std::vector<Issue>;
 
 inline void add_issue(Issues& issues, Rule rule, std::string_view component, std::string_view field,
-                      std::vector<power_grid_model::ID> ids) {
+                      std::vector<ID> ids) {
     if (ids.empty()) {
         return;
     }
@@ -31,4 +31,4 @@ inline void add_issue(Issues& issues, Rule rule, std::string_view component, std
     issues.push_back({.rule = rule, .component = component, .field = field, .ids = std::move(ids)});
 }
 
-} // namespace power_grid_model_c::validation
+} // namespace power_grid_model::validation

@@ -1,9 +1,9 @@
-#include "validation/node.hpp"
-#include "validation/rules.hpp"
-
-#include <power_grid_model/common/common.hpp>
 #include <power_grid_model/auxiliary/input.hpp>
 #include <power_grid_model/auxiliary/meta_data_gen.hpp>
+#include <power_grid_model/common/common.hpp>
+#include <power_grid_model/validation/issues.hpp>
+#include <power_grid_model/validation/node.hpp>
+#include <power_grid_model/validation/rules.hpp>
 #include <power_grid_model_c/dataset.h>
 #include <power_grid_model_c/handle.h>
 #include <power_grid_model_c/validation.h>
@@ -19,17 +19,27 @@
 namespace {
 using power_grid_model::ID;
 using power_grid_model::NodeInput;
-using power_grid_model_c::validation::Issue;
-using power_grid_model_c::validation::Issues;
-using power_grid_model_c::validation::Rule;
+using power_grid_model::validation::Issue;
+using power_grid_model::validation::Issues;
+using power_grid_model::validation::Rule;
 
 struct TestRecord {
     ID id;
     double value;
 };
 
+struct CopyTrackedRecord {
+    ID id;
+    double value;
+    inline static std::size_t copy_count{};
+
+    CopyTrackedRecord(ID record_id, double record_value) : id{record_id}, value{record_value} {}
+    CopyTrackedRecord(CopyTrackedRecord const& other) : id{other.id}, value{other.value} { ++copy_count; }
+};
+
 auto const test_id = [](TestRecord const& record) { return record.id; };
 auto const test_value = [](TestRecord const& record) { return record.value; };
+auto const copy_tracked_id = [](CopyTrackedRecord const& record) { return record.id; };
 
 using CHandle = std::unique_ptr<PGM_Handle, decltype(&PGM_destroy_handle)>;
 using ConstDataset = std::unique_ptr<PGM_ConstDataset, decltype(&PGM_destroy_dataset_const)>;
@@ -56,9 +66,8 @@ TEST_CASE("Node validation required fields") {
     std::array<TestRecord, 3> const records{{{na_IntID, nan}, {2, 1.0}, {3, nan}}};
     Issues issues;
 
-    power_grid_model_c::validation::rules::required<TestRecord>(records, "node", "id", test_id, test_id, issues);
-    power_grid_model_c::validation::rules::required<TestRecord>(records, "node", "u_rated", test_value, test_id,
-                                                                issues);
+    power_grid_model::validation::rules::required<TestRecord>(records, "node", "id", test_id, test_id, issues);
+    power_grid_model::validation::rules::required<TestRecord>(records, "node", "u_rated", test_value, test_id, issues);
 
     REQUIRE(issues.size() == 2);
     CHECK(issues[0].rule == Rule::missing_value);
@@ -80,9 +89,9 @@ TEST_CASE("Node validation finite and greater-than-zero rules") {
                                              {5, nan}}};
     Issues issues;
 
-    power_grid_model_c::validation::rules::finite<TestRecord>(records, "node", "u_rated", test_value, test_id, issues);
-    power_grid_model_c::validation::rules::greater_than_zero<TestRecord>(records, "node", "u_rated", test_value,
-                                                                         test_id, issues);
+    power_grid_model::validation::rules::finite<TestRecord>(records, "node", "u_rated", test_value, test_id, issues);
+    power_grid_model::validation::rules::greater_than_zero<TestRecord>(records, "node", "u_rated", test_value, test_id,
+                                                                       issues);
 
     REQUIRE(issues.size() == 2);
     CHECK(issues[0].rule == Rule::infinity);
@@ -97,12 +106,25 @@ TEST_CASE("Node validation uniqueness rule preserves duplicate multiplicity") {
     std::array<TestRecord, 5> const records{{{5, 1.0}, {5, 2.0}, {8, 3.0}, {8, 4.0}, {8, 5.0}}};
     Issues issues;
 
-    power_grid_model_c::validation::rules::unique<TestRecord>(records, "node", "id", test_id, test_id, issues);
+    power_grid_model::validation::rules::unique<TestRecord>(records, "node", "id", test_id, test_id, issues);
 
     REQUIRE(issues.size() == 1);
     CHECK(issues[0].rule == Rule::not_unique);
     std::vector<ID> const duplicate_ids{5, 5, 8, 8, 8};
     CHECK(issues[0].ids == duplicate_ids);
+}
+
+TEST_CASE("Node validation uniqueness does not copy row records") {
+    std::array<CopyTrackedRecord, 3> const records{{{5, 1.0}, {5, 2.0}, {8, 3.0}}};
+    CopyTrackedRecord::copy_count = 0;
+    Issues issues;
+
+    power_grid_model::validation::rules::unique<CopyTrackedRecord>(records, "node", "id", copy_tracked_id,
+                                                                   copy_tracked_id, issues);
+
+    CHECK(CopyTrackedRecord::copy_count == 0);
+    REQUIRE(issues.size() == 1);
+    CHECK(issues[0].ids == std::vector<ID>{5, 5});
 }
 
 TEST_CASE("Node validation composition supports row and columnar data") {
@@ -122,7 +144,7 @@ TEST_CASE("Node validation composition supports row and columnar data") {
                            records.data());
 
     Issues row_issues;
-    power_grid_model_c::validation::validate_node(row_dataset, row_issues);
+    power_grid_model::validation::validate_node(row_dataset, row_issues);
 
     REQUIRE(row_issues.size() == 5);
     CHECK(row_issues[0].rule == Rule::missing_value);
@@ -145,18 +167,18 @@ TEST_CASE("Node validation composition supports row and columnar data") {
     columnar_dataset.add_attribute_buffer("node", "u_rated", voltages.data());
 
     Issues columnar_issues;
-    power_grid_model_c::validation::validate_node(columnar_dataset, columnar_issues);
+    power_grid_model::validation::validate_node(columnar_dataset, columnar_issues);
     CHECK(columnar_issues == row_issues);
 
     ConstDataset absent_nodes{false, 1, "input", meta_data};
     Issues absent_issues;
-    power_grid_model_c::validation::validate_node(absent_nodes, absent_issues);
+    power_grid_model::validation::validate_node(absent_nodes, absent_issues);
     CHECK(absent_issues.empty());
 
     ConstDataset empty_nodes{false, 1, "input", meta_data};
     empty_nodes.add_buffer("node", 0, 0, nullptr, nullptr);
     Issues empty_issues;
-    power_grid_model_c::validation::validate_node(empty_nodes, empty_issues);
+    power_grid_model::validation::validate_node(empty_nodes, empty_issues);
     CHECK(empty_issues.empty());
 }
 

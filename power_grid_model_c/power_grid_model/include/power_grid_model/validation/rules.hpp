@@ -6,23 +6,25 @@
 
 #include <cmath>
 #include <concepts>
+#include <cstddef>
 #include <functional>
 #include <ranges>
+#include <string_view>
 #include <type_traits>
 #include <unordered_map>
 #include <vector>
 
-namespace power_grid_model_c::validation::rules {
+namespace power_grid_model::validation::rules {
 namespace detail {
 
 template <class Value> bool is_missing(Value const& value) {
     using ValueType = std::remove_cvref_t<Value>;
     if constexpr (std::floating_point<ValueType>) {
         return std::isnan(value);
-    } else if constexpr (std::same_as<ValueType, power_grid_model::ID>) {
-        return value == power_grid_model::na_IntID;
-    } else if constexpr (std::same_as<ValueType, power_grid_model::IntS>) {
-        return value == power_grid_model::na_IntS;
+    } else if constexpr (std::same_as<ValueType, ID>) {
+        return value == na_IntID;
+    } else if constexpr (std::same_as<ValueType, IntS>) {
+        return value == na_IntS;
     } else {
         return false;
     }
@@ -50,16 +52,26 @@ template <class Value> struct ValueEqual {
     }
 };
 
+template <class Record, class Element, class Func> void visit_record(Element const& element, Func&& func) {
+    if constexpr (std::same_as<std::remove_cvref_t<Element>, Record>) {
+        std::invoke(func, element);
+    } else {
+        Record const record = static_cast<Record>(element);
+        std::invoke(func, record);
+    }
+}
+
 // TODO (nitbharambe) think of optional ids and columnar data later
 template <class Record, std::ranges::input_range Range, class FieldAccessor, class IdAccessor, class Predicate>
-std::vector<power_grid_model::ID> find_ids(Range const& rows, FieldAccessor const& field_accessor,
-                                           IdAccessor const& id_accessor, Predicate const& predicate) {
-    std::vector<power_grid_model::ID> ids;
+std::vector<ID> find_ids(Range const& rows, FieldAccessor const& field_accessor, IdAccessor const& id_accessor,
+                         Predicate const& predicate) {
+    std::vector<ID> ids;
     for (auto const& value : rows) {
-        Record const record = static_cast<Record>(value);
-        if (std::invoke(predicate, std::invoke(field_accessor, record))) {
-            ids.push_back(std::invoke(id_accessor, record));
-        }
+        visit_record<Record>(value, [&](Record const& record) {
+            if (std::invoke(predicate, std::invoke(field_accessor, record))) {
+                ids.push_back(std::invoke(id_accessor, record));
+            }
+        });
     }
     return ids;
 }
@@ -90,8 +102,8 @@ void unique(Range const& rows, std::string_view component, std::string_view fiel
     using Value = std::remove_cvref_t<std::invoke_result_t<FieldAccessor, Record const&>>;
     std::unordered_map<Value, std::size_t, detail::ValueHash<Value>, detail::ValueEqual<Value>> counts;
     for (auto const& value : rows) {
-        Record const record = static_cast<Record>(value);
-        ++counts[std::invoke(field_accessor, record)];
+        detail::visit_record<Record>(value,
+                                     [&](Record const& record) { ++counts[std::invoke(field_accessor, record)]; });
     }
 
     auto const is_duplicate = [&counts](Value const& value) { return counts.at(value) > 1; };
@@ -107,4 +119,4 @@ void greater_than_zero(Range const& rows, std::string_view component, std::strin
               detail::find_ids<Record>(rows, field_accessor, id_accessor, is_not_positive));
 }
 
-} // namespace power_grid_model_c::validation::rules
+} // namespace power_grid_model::validation::rules

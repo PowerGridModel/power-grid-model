@@ -3,28 +3,27 @@
 #include "handle.hpp"
 #include "input_sanitization.hpp"
 #include "safe_memory_handling.hpp"
-#include "validation/issues.hpp"
-#include "validation/input.hpp"
 
 #include "power_grid_model_c/validation.h"
 
 #include <power_grid_model/common/exception.hpp>
+#include <power_grid_model/validation/input.hpp>
 
 #include <cstddef>
 #include <stdexcept>
 
 struct PGM_ValidationResult {
-    power_grid_model_c::validation::Issues issues;
+    power_grid_model::validation::Issues issues;
 };
 
 namespace {
 using power_grid_model::InvalidArguments;
+using power_grid_model::validation::Rule;
 using power_grid_model_c::call_with_catch;
 using power_grid_model_c::cast_to_cpp;
 using power_grid_model_c::create;
 using power_grid_model_c::destroy;
 using power_grid_model_c::safe_ptr_get;
-using power_grid_model_c::validation::Rule;
 
 enum PGM_ValidationIssueKind to_c_issue_kind(Rule rule) {
     switch (rule) {
@@ -44,7 +43,7 @@ enum PGM_ValidationIssueKind to_c_issue_kind(Rule rule) {
 PGM_ValidationResult* PGM_validate_input_data(PGM_Handle* handle, PGM_ConstDataset const* dataset) noexcept {
     return call_with_catch(handle, [dataset] {
         auto const& cpp_dataset = safe_ptr_get(cast_to_cpp(dataset));
-        return create<PGM_ValidationResult>(power_grid_model_c::validation::validate_input_dataset(cpp_dataset));
+        return create<PGM_ValidationResult>(power_grid_model::validation::validate_input_dataset(cpp_dataset));
     });
 }
 

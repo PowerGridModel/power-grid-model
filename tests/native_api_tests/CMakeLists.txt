@@ -18,11 +18,6 @@ set(PROJECT_SOURCES
 
 add_executable(power_grid_model_api_tests ${PROJECT_SOURCES})
 
-target_sources(
-    power_grid_model_api_tests
-    PRIVATE "${PROJECT_SOURCE_DIR}/power_grid_model_c/power_grid_model_c/src/validation/node.cpp"
-)
-
 target_include_directories(
     power_grid_model_api_tests
     PRIVATE
