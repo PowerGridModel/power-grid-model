@@ -28,7 +28,7 @@ template <class T, symmetry_tag sym, bool is_tensor, int n_sub_block>
 class Block : public block_trait<T, sym, is_tensor, n_sub_block>::ArrayType {
   public:
     using block_traits = block_trait<T, sym, is_tensor, n_sub_block>;
-    using ArrayType = typename block_traits::ArrayType;
+    using ArrayType = block_traits::ArrayType;
     using ArrayType::operator();
 
     // default zero

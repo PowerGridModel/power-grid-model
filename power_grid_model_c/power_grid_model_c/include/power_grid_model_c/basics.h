@@ -13,7 +13,7 @@
 
 // Generic helper definitions for shared library support
 // API_MACRO_BLOCK
-#if defined _WIN32
+#ifdef _WIN32
 #define PGM_HELPER_DLL_IMPORT __declspec(dllimport)
 #define PGM_HELPER_DLL_EXPORT __declspec(dllexport)
 #define PGM_HELPER_DLL_LOCAL
@@ -36,6 +36,14 @@
 #endif // PGM_DLL_EXPORTS
 #define PGM_LOCAL PGM_HELPER_DLL_LOCAL
 // API_MACRO_BLOCK
+
+// Function attributes for more restricted user interface
+#ifdef __cplusplus
+#define PGM_NOEXCEPT noexcept
+#else
+#define PGM_NOEXCEPT
+#endif
+// Function attributes for more restricted user interface
 
 // integers
 #ifdef __cplusplus
@@ -133,9 +141,20 @@ typedef struct PGM_WritableDataset PGM_WritableDataset;
  */
 typedef struct PGM_DatasetInfo PGM_DatasetInfo;
 
+/**
+ * @brief Opaque struct for a logger object.
+ *
+ * A logger captures diagnostic output (text or benchmark timings) produced during calculations.
+ * Loggers are created with PGM_create_logger(), registered to a handle with PGM_register_logger(),
+ * and must be destroyed with PGM_destroy_logger() after unregistering with PGM_unregister_logger().
+ * Do not register the same logger to handles that are used concurrently by different user threads unless synchronized
+ * externally.
+ */
+typedef struct PGM_Logger PGM_Logger;
+
 // NOLINTEND(modernize-use-using)
 
-// NOLINTBEGIN(performance-enum-size)
+// NOLINTBEGIN(performance-enum-size,cppcoreguidelines-use-enum-class)
 
 // enums
 /**
@@ -240,7 +259,22 @@ enum PGM_ExperimentalFeatures {
     PGM_experimental_features_enabled = 1,  /**< enable experimental features */
 };
 
-// NOLINTEND(performance-enum-size)
+/**
+ * @brief Enumeration of logger types.
+ *
+ * Selects which kind of diagnostic output a logger captures.
+ *
+ */
+enum PGM_LoggerType {
+    // PGM_logger_type_critical = 0, // < reserved for future extension: logger that captures critical error messages
+    // PGM_logger_type_error = 1,    // < reserved for future extension: logger that captures error messages
+    // PGM_logger_type_warning = 2,  // < reserved for future extension: logger that captures warning messages
+    PGM_logger_type_info = 3, // < logger that captures timestamped text messages
+    // PGM_logger_type_debug = 4,    // < reserved for future extension: logger that captures debug messages
+    PGM_benchmark_logger = 5, // < logger that captures timing information per calculation phase
+};
+
+// NOLINTEND(performance-enum-size,cppcoreguidelines-use-enum-class)
 
 #ifdef __cplusplus
 }

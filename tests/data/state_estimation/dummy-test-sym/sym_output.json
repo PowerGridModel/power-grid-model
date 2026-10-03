@@ -109,6 +109,22 @@
         "s": 1058399.5575690423,
         "pf": 1.0
       }
+    ],
+    "sym_voltage_sensor": [
+      {
+        "id": 101,
+        "u_residual": 0.0
+      },
+      {
+        "id": 201,
+        "u_residual": 0.0
+      }
+    ],
+    "asym_voltage_sensor": [
+      {
+        "id" : 301,
+        "u_residual": 0.0
+      }
     ]
   }
 }

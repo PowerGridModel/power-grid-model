@@ -80,13 +80,12 @@ TEST_CASE("Test line") {
         CHECK(branch.to_node() == 3);
         CHECK(branch.from_status() == true);
         CHECK(branch.to_status() == true);
-        CHECK(branch.branch_status() == true);
+        CHECK(branch.edge_status() == true);
         CHECK(branch.status(BranchSide::from) == branch.from_status());
         CHECK(branch.status(BranchSide::to) == branch.to_status());
         CHECK(branch.base_i_from() == doctest::Approx(base_i));
         CHECK(branch.base_i_to() == doctest::Approx(base_i));
         CHECK(branch.phase_shift() == 0.0);
-        CHECK(!branch.is_param_mutable());
     }
 
     SUBCASE("Symmetric parameters") {
@@ -257,13 +256,12 @@ TEST_CASE("Test line") {
 
         CHECK(branch_into_itself.from_status() == branch.from_status());
         CHECK(branch_into_itself.to_status() == branch.to_status());
-        CHECK(branch_into_itself.branch_status() == branch.branch_status());
+        CHECK(branch_into_itself.edge_status() == branch.edge_status());
         CHECK(branch_into_itself.status(BranchSide::from) == branch.status(BranchSide::from));
         CHECK(branch_into_itself.status(BranchSide::to) == branch.status(BranchSide::to));
         CHECK(branch_into_itself.base_i_from() == branch.base_i_from());
         CHECK(branch_into_itself.base_i_to() == branch.base_i_to());
         CHECK(branch_into_itself.phase_shift() == branch.phase_shift());
-        CHECK(branch_into_itself.is_param_mutable() == branch.is_param_mutable());
 
         SUBCASE("Symmetric parameters") {
             auto const params = branch_into_itself.calc_param<symmetric_t>();

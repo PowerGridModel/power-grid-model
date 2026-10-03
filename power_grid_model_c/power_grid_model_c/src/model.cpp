@@ -6,25 +6,35 @@
 #include "forward_declarations.hpp"
 #include "handle.hpp"
 #include "input_sanitization.hpp"
+#include "logger.hpp"
+#include "logger_fwd.hpp"
 #include "math_solver.hpp"
+
 #include "options.hpp" // NOLINT(misc-include-cleaner)
+#include "safe_memory_handling.hpp"
 
 #include "power_grid_model_c/basics.h"
 #include "power_grid_model_c/model.h"
+
+#include <power_grid_model/auxiliary/dataset.hpp>
+#include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/counting_iterator.hpp>
+#include <power_grid_model/common/enum.hpp>
+#include <power_grid_model/common/exception.hpp>
+#include <power_grid_model/common/logging.hpp>
+#include <power_grid_model/common/timer.hpp>
+#include <power_grid_model/main_model.hpp>
+#include <power_grid_model/main_model_fwd.hpp>
 
 #include <algorithm>
 #include <cassert>
 #include <concepts>
 #include <exception>
-#include <power_grid_model/auxiliary/dataset.hpp>
-#include <power_grid_model/common/common.hpp>
-#include <power_grid_model/common/enum.hpp>
-#include <power_grid_model/common/exception.hpp>
-#include <power_grid_model/main_model.hpp>
-#include <power_grid_model/main_model_fwd.hpp>
+#include <memory>
 #include <ranges>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace {
 using namespace power_grid_model;
@@ -32,42 +42,54 @@ using namespace power_grid_model;
 using power_grid_model_c::call_with_catch;
 using power_grid_model_c::cast_to_c;
 using power_grid_model_c::cast_to_cpp;
+using power_grid_model_c::create;
+using power_grid_model_c::destroy;
+using power_grid_model_c::get_logger;
 using power_grid_model_c::get_math_solver_dispatcher;
 using power_grid_model_c::safe_enum;
 using power_grid_model_c::safe_ptr;
 using power_grid_model_c::safe_ptr_get;
 using power_grid_model_c::safe_ptr_maybe_nullptr;
 using power_grid_model_c::safe_str_view;
+using power_grid_model_c::ScopedModuleLogger;
 } // namespace
 
 // create model
 PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency,
-                                     PGM_ConstDataset const* input_dataset) {
-    return call_with_catch(handle, [system_frequency, input_dataset] {
-        return cast_to_c(
-            new MainModel{// NOSONAR(S5025)
-                          system_frequency, safe_ptr_get(cast_to_cpp(input_dataset)), get_math_solver_dispatcher(), 0});
+                                     PGM_ConstDataset const* input_dataset) noexcept {
+    return call_with_catch(handle, [system_frequency, input_dataset, handle] {
+        auto& logger = get_logger(safe_ptr_get(handle).logger);
+        Timer const total_timer{logger, LogEvent::total};
+        Timer const initialization_timer{logger, LogEvent::build_model};
+        auto model = std::unique_ptr<MainModel>{create<MainModel>(
+            system_frequency, safe_ptr_get(cast_to_cpp(input_dataset)), get_math_solver_dispatcher(), 0, logger)};
+        model->reset_logger();
+        return cast_to_c(model.release());
     });
 }
 
 // update model
-void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_ConstDataset const* update_dataset) {
-    call_with_catch(handle, [model, update_dataset] {
-        safe_ptr_get(cast_to_cpp(model))
-            .update_components<permanent_update_t>(safe_ptr_get(cast_to_cpp(update_dataset)));
+void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_ConstDataset const* update_dataset) noexcept {
+    call_with_catch(handle, [handle, model, update_dataset] {
+        auto& cpp_model = safe_ptr_get(cast_to_cpp(model));
+        ScopedModuleLogger const logger_guard{cpp_model, get_logger(safe_ptr_get(handle).logger)};
+        cpp_model.update_components<permanent_update_t>(safe_ptr_get(cast_to_cpp(update_dataset)));
     });
 }
 
 // copy model
-PGM_PowerGridModel* PGM_copy_model(PGM_Handle* handle, PGM_PowerGridModel const* model) {
-    return call_with_catch(handle, [model] {
-        return cast_to_c(new MainModel{safe_ptr_get(cast_to_cpp(model))}); // NOSONAR(S5025)
+PGM_PowerGridModel* PGM_copy_model(PGM_Handle* handle, PGM_PowerGridModel const* model) noexcept {
+    return call_with_catch(handle, [model, handle] {
+        auto& logger = get_logger(safe_ptr_get(handle).logger);
+        auto copied_model = std::unique_ptr<MainModel>{create<MainModel>(safe_ptr_get(cast_to_cpp(model)), logger)};
+        copied_model->reset_logger();
+        return cast_to_c(copied_model.release());
     });
 }
 
 // get indexer
 void PGM_get_indexer(PGM_Handle* handle, PGM_PowerGridModel const* model, char const* component, PGM_Idx size,
-                     PGM_ID const* ids, PGM_Idx* indexer) {
+                     PGM_ID const* ids, PGM_Idx* indexer) noexcept {
     call_with_catch(handle, [model, component, size, ids, indexer] {
         safe_ptr_get(cast_to_cpp(model)).get_indexer(safe_str_view(component), safe_ptr(ids), size, safe_ptr(indexer));
     });
@@ -202,7 +224,7 @@ void calculate_single_batch_dimension_impl(MainModel& model, MainModel::Options 
 }
 
 struct BatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandler {
-    void operator()(PGM_Handle& handle) const {
+    void operator()(PGM_Handle& handle) const { // NOLINT(bugprone-derived-method-shadowing-base-method)
         std::exception_ptr const ex_ptr = std::current_exception();
         try {
             std::rethrow_exception(ex_ptr);
@@ -220,10 +242,10 @@ struct BatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandle
 
 constexpr BatchExceptionHandler batch_exception_handler{};
 
-template <typename T, std::ranges::input_range R>
+template <typename T, non_owning_view_c R>
     requires std::convertible_to<std::ranges::range_value_t<R>, T>
-void append_range(std::vector<T>& vec, R&& range) {
-    std::ranges::move(std::forward<R>(range), std::back_inserter(vec));
+void append_range(std::vector<T>& vec, R range) {
+    std::ranges::move(range, std::back_inserter(vec));
 }
 
 class MDBatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandler {
@@ -234,7 +256,7 @@ class MDBatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandl
         assert(stride_size_ > 0);
     }
 
-    void operator()(PGM_Handle& handle) const noexcept {
+    void operator()(PGM_Handle& handle) const noexcept { // NOLINT(bugprone-derived-method-shadowing-base-method)
         using namespace std::string_literals;
 
         std::exception_ptr const ex_ptr = std::current_exception();
@@ -247,7 +269,7 @@ class MDBatchExceptionHandler : public power_grid_model_c::DefaultExceptionHandl
                              return idx + scenario_offset;
                          }));
 
-            append_range(handle.batch_errs, ex.err_msgs());
+            append_range(handle.batch_errs, by_ref(ex.err_msgs()));
         } catch (std::exception const& ex) {
             handle_regular_error(handle, ex, PGM_batch_error);
             append_range(handle.failed_scenarios, IdxRange{stride_size_});
@@ -346,18 +368,20 @@ void calculate_impl(MainModel& model, PGM_Options const& options, MutableDataset
 
 // run calculation
 void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options const* opt,
-                   PGM_MutableDataset const* output_dataset, PGM_ConstDataset const* batch_dataset) {
+                   PGM_MutableDataset const* output_dataset, PGM_ConstDataset const* batch_dataset) noexcept {
     call_with_catch(
         handle,
-        [model, opt, output_dataset, batch_dataset] {
-            calculate_impl(safe_ptr_get(cast_to_cpp(model)), safe_ptr_get(opt),
-                           safe_ptr_get(cast_to_cpp(output_dataset)),
+        [handle, model, opt, output_dataset, batch_dataset] {
+            auto& cpp_model = safe_ptr_get(cast_to_cpp(model));
+            auto& logger = get_logger(safe_ptr_get(handle).logger);
+            Timer const timer{logger, LogEvent::total};
+            // Log to the handle passed to this call, not the handle the model was created with.
+            ScopedModuleLogger const logger_guard{cpp_model, logger};
+            calculate_impl(cpp_model, safe_ptr_get(opt), safe_ptr_get(cast_to_cpp(output_dataset)),
                            safe_ptr_maybe_nullptr(cast_to_cpp(batch_dataset)));
         },
         batch_exception_handler);
 }
 
 // destroy model
-void PGM_destroy_model(PGM_PowerGridModel* model) {
-    delete cast_to_cpp(model); // NOSONAR(S5025)
-}
+void PGM_destroy_model(PGM_PowerGridModel* model) noexcept { destroy(cast_to_cpp(model)); }

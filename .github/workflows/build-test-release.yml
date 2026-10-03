@@ -22,19 +22,18 @@ jobs:
     name: Build sdist and set version
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Install uv
-        uses: astral-sh/setup-uv@d31148d669074a8d0a63714ba94f3201e7020bc3 # v8.3.0
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
 
       - name: Set PyPI Version
-        uses: PowerGridModel/pgm-version-bump@00b541a2eeb64ac1537e3a531b50a3175313822d # v0.1.4
+        uses: PowerGridModel/pgm-version-bump@1ce256bfac45fbe070832712db500b3060c01c27 # v0.1.9
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build SDist
         run: |
-          cp PYPI_VERSION VERSION
           cat VERSION
           uv build --sdist --no-create-gitignore --out-dir wheelhouse .
 
@@ -66,7 +65,7 @@ jobs:
       HOMEBREW_FORCE_BREWED_CURL: 1
 
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install packages
         run: |
           sudo apt-get update
@@ -77,7 +76,7 @@ jobs:
           sudo ln -s /usr/bin/g++-14 /usr/local/bin/g++
 
       - name: Install uv
-        uses: astral-sh/setup-uv@d31148d669074a8d0a63714ba94f3201e7020bc3 # v8.3.0
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
 
       - name: Install pgm-build-deps
         run: |
@@ -98,10 +97,10 @@ jobs:
       PRESET: ${{ matrix.compiler }}-${{ matrix.build-option }}
 
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Install uv
-        uses: astral-sh/setup-uv@d31148d669074a8d0a63714ba94f3201e7020bc3 # v8.3.0
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
 
       - name: Install pgm-build-deps
         run: |
@@ -138,10 +137,10 @@ jobs:
   
     env:
       CMAKE_PREFIX_PATH: /usr/local
-      PRESET: ci-clang-${{ matrix.build-option }}
+      PRESET: ci-apple-clang-${{ matrix.build-option }}
 
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up XCode
         uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
@@ -149,7 +148,7 @@ jobs:
           xcode-version: latest-stable
 
       - name: Install uv
-        uses: astral-sh/setup-uv@d31148d669074a8d0a63714ba94f3201e7020bc3 # v8.3.0
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
 
       - name: Install pgm-build-deps
         run: |
@@ -184,7 +183,7 @@ jobs:
     needs: [acquire-python-version-build-sdist]
 
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
@@ -201,7 +200,7 @@ jobs:
           xcode-version: latest-stable
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@294735312765b09d24a2fbec22660ce817587d55 # v4.1.0
+        uses: pypa/cibuildwheel@e090b81e30c4d855ea63bf4b6e59204c09a101ae # v4.2.1
         # GitHub Actions specific build parameters
         env:
           # pass GitHub runner info into Linux container
@@ -235,9 +234,9 @@ jobs:
       run:
         shell: ${{ matrix.shell }}
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: conda-incubator/setup-miniconda@8ee1f361103df19b6f8c8655fd3967a8ecb162d5 # v4.0.1
+      - uses: conda-incubator/setup-miniconda@be893c923ea9cf1cf7cd510fbdde27c7e18cbdcb # v4.1.0
         with:
           miniforge-version: latest # use miniforge instead of miniconda
           activate-environment: conda-pgm-env

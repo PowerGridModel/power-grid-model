@@ -15,6 +15,7 @@
 #include "../component/branch.hpp"
 #include "../component/branch3.hpp"
 #include "../component/current_sensor.hpp"
+#include "../component/edge.hpp"
 #include "../component/fault.hpp"
 #include "../component/line.hpp"
 #include "../component/link.hpp"
@@ -46,9 +47,9 @@ constexpr std::array<Branch3Side, 3> const branch3_sides = {Branch3Side::side_1,
 // template to construct components
 // using forward interators
 // different selection based on component type
-template <std::derived_from<Base> Component, class ComponentContainer, std::ranges::viewable_range Inputs>
+template <std::derived_from<Base> Component, class ComponentContainer, non_owning_view_c Inputs>
     requires common::component_container_c<ComponentContainer, Component>
-inline void add_component(ComponentContainer& components, Inputs&& component_inputs, double system_frequency) {
+inline void add_component(ComponentContainer& components, Inputs component_inputs, double system_frequency) {
     using ComponentView =
         std::conditional_t<std::same_as<std::ranges::range_reference_t<Inputs>, typename Component::InputType const&>,
                            typename Component::InputType const&, typename Component::InputType>;
@@ -58,7 +59,7 @@ inline void add_component(ComponentContainer& components, Inputs&& component_inp
     std::vector<Idx2D> regulated_objects;
     // loop to add component
 
-    for (auto const& input_proxy : std::views::all(std::forward<Inputs>(component_inputs))) {
+    for (auto const& input_proxy : component_inputs) {
         ComponentView const input = [&input_proxy]() -> ComponentView { return input_proxy; }();
 
         ID const id = input.id;
@@ -74,6 +75,10 @@ inline void add_component(ComponentContainer& components, Inputs&& component_inp
             } else {
                 emplace_component<Component>(components, id, input, u1, u2);
             }
+        } else if constexpr (std::derived_from<Component, Edge>) {
+            double const u1 = get_component<Node>(components, input.from_node).u_rated();
+            double const u2 = get_component<Node>(components, input.to_node).u_rated();
+            emplace_component<Component>(components, id, input, u1, u2);
         } else if constexpr (std::derived_from<Component, Branch3>) {
             double const u1 = get_component<Node>(components, input.node_1).u_rated();
             double const u2 = get_component<Node>(components, input.node_2).u_rated();
@@ -239,6 +244,14 @@ inline void add_component(ComponentContainer& components, Inputs&& component_inp
         // There are duplicates
         throw DuplicativelyRegulatedObject{};
     }
+}
+
+// vector overload
+template <std::derived_from<Base> Component, class ComponentContainer>
+    requires common::component_container_c<ComponentContainer, Component>
+inline void add_component(ComponentContainer& components,
+                          std::vector<typename Component::InputType> const& component_inputs, double system_frequency) {
+    add_component<Component>(components, by_ref(component_inputs), system_frequency);
 }
 
 } // namespace power_grid_model::main_core

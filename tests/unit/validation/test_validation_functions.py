@@ -468,7 +468,7 @@ def test_validate_required_values_asym_calculation():
     assert MissingValueError(CT.shunt, AT.b0, [NaN]) in required_values_errors
 
 
-@pytest.mark.parametrize("fault_types", product(list(FaultType), list(FaultType)))
+@pytest.mark.parametrize("fault_types", list(product(list(FaultType), list(FaultType))))
 def test_validate_fault_sc_calculation(fault_types):
     line = initialize_array(DatasetType.input, CT.line, 1)
     shunt = initialize_array(DatasetType.input, CT.shunt, 1)

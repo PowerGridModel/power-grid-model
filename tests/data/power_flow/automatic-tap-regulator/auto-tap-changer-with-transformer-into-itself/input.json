@@ -1,0 +1,83 @@
+{
+  "version": "1.0",
+  "type": "input",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "node": [
+      {
+        "id": 1,
+        "u_rated": 10e3
+      }
+    ],
+    "transformer": [
+      {
+        "id": 2,
+        "from_node": 1,
+        "to_node": 1,
+        "from_status": 0,
+        "to_status": 0,
+        "u1": 10000,
+        "u2": 10000,
+        "sn": 1000000,
+        "uk": 0.06,
+        "pk": 8000,
+        "i0": 0.06314501772790513,
+        "p0": 6283.185307179587,
+        "i0_zero_sequence": 0.03203808448882848,
+        "p0_zero_sequence": 6283.185307179587,
+        "winding_from": 0,
+        "winding_to": 0,
+        "clock": 0,
+        "tap_side": 0,
+        "tap_pos": 1,
+        "tap_min": -10,
+        "tap_max": 10,
+        "tap_nom": 1,
+        "tap_size": 125,
+        "extra": "Transformer connected to itself on the load node (see readme)"
+      }
+    ],
+    "shunt": [
+      {
+        "id": 3,
+        "node": 1,
+        "status": 1,
+        "g1": 6.283185307179195e-5,
+        "b1": -6.283163889516885e-4,
+        "g0": 0,
+        "b0": 0,
+        "extra": "The shunt that mimics the transformer into itself on the load node and acts as a benchmark (see readme)"
+      }
+    ],
+    "source": [
+      {
+        "id": 4,
+        "node": 1,
+        "status": 1,
+        "u_ref": 1.05,
+        "sk": 1e12
+      }
+    ],
+    "sym_load": [
+      {
+        "id": 5,
+        "node": 1,
+        "status": 1,
+        "type": 1,
+        "p_specified": 6.0e5,
+        "q_specified": 3.0e5
+      }
+    ],
+    "transformer_tap_regulator": [
+      {
+        "id": 7,
+        "regulated_object": 2,
+        "status": 0,
+        "control_side": 1,
+        "u_set": 10500,
+        "u_band": 300
+      }
+    ]
+  }
+}

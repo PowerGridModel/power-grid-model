@@ -25,16 +25,15 @@ about the validation error, e.g. which object IDs are involved.
 
 ```py
 class ValidationError:
-    
     # Component(s): e.g. ComponentType.node or [ComponentType.node, ComponentType.line]
     component: ComponentType | list[ComponentType] | None = None
-    
-    # Field(s): e.g. AttributeType.id or [AttributeType.line_from, AttributeType.line_to] or 
+
+    # Field(s): e.g. AttributeType.id or [AttributeType.line_from, AttributeType.line_to] or
     # [(ComponentType.node, AttributeType.id), (ComponentType.line, AttributeType.id)]
     field: AttributeType | list[AttributeType] | list[tuple[ComponentType, AttributeType]] | None = None
 
     # IDs: e.g. [1, 2, 3] or [(ComponentType.node, 1), (ComponentType.line, 1)]
-    ids: list[int] | list[tuple[ComponentType, int]] | None = None    
+    ids: list[int] | list[tuple[ComponentType, int]] | None = None
 ```
 
 ## Validation functions

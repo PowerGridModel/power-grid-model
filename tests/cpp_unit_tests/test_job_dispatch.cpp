@@ -217,7 +217,7 @@ TEST_CASE("Test job dispatch logic") {
         std::vector<JobArguments> calls;
         std::mutex calls_mutex;
         auto single_job = [&calls, &calls_mutex](Idx start, Idx stride, Idx n_scenarios) {
-            std::lock_guard<std::mutex> const lock(calls_mutex);
+            std::scoped_lock<std::mutex> const lock(calls_mutex);
             calls.emplace_back(start, stride, n_scenarios);
         };
 

@@ -508,7 +508,7 @@ load_update = initialize_array(DatasetType.update, ComponentType.sym_load, (5, 1
 line_update = initialize_array(DatasetType.update, ComponentType.line, (3, 1))
 # (Fill line_update)
 
-product_update_data = [{ComponentType.line: load_update}, {ComponentType.sym_load: line_udpate }]
+product_update_data = [{ComponentType.line: load_update}, {ComponentType.sym_load: line_udpate}]
 ```
 
 ### Parallel Computing

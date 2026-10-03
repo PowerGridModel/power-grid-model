@@ -27,8 +27,8 @@ template <class StructType, class ValueType> struct trait_pointer_to_member<Valu
 // getter for meta attribute
 template <auto member_ptr, class MemberPtr = decltype(member_ptr)>
 constexpr MetaAttribute get_meta_attribute(size_t offset, char const* attribute_name) {
-    using ValueType = typename trait_pointer_to_member<MemberPtr>::value_type;
-    using StructType = typename trait_pointer_to_member<MemberPtr>::struct_type;
+    using ValueType = trait_pointer_to_member<MemberPtr>::value_type;
+    using StructType = trait_pointer_to_member<MemberPtr>::struct_type;
 
     return MetaAttribute{
         .name = attribute_name,

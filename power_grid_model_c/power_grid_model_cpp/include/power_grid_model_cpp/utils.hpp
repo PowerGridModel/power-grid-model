@@ -55,25 +55,24 @@ class UnsupportedPGM_CType : public PowerGridError {
 };
 
 template <class Functor, class... Args>
-decltype(auto) pgm_type_func_selector(enum PGM_CType type, Functor&& f, Args&&... args) {
+decltype(auto) pgm_type_func_selector(enum PGM_CType type, Functor f, Args&&... args) {
     switch (type) {
     case PGM_int32:
-        return std::forward<Functor>(f).template operator()<ID>(std::forward<Args>(args)...);
+        return f.template operator()<ID>(std::forward<Args>(args)...);
     case PGM_int8:
-        return std::forward<Functor>(f).template operator()<IntS>(std::forward<Args>(args)...);
+        return f.template operator()<IntS>(std::forward<Args>(args)...);
     case PGM_double:
-        return std::forward<Functor>(f).template operator()<double>(std::forward<Args>(args)...);
+        return f.template operator()<double>(std::forward<Args>(args)...);
     case PGM_double3:
-        return std::forward<Functor>(f).template operator()<std::array<double, 3>>(std::forward<Args>(args)...);
+        return f.template operator()<std::array<double, 3>>(std::forward<Args>(args)...);
     default:
         throw UnsupportedPGM_CType();
     }
 }
 
 template <class Functor, class... Args>
-decltype(auto) pgm_type_func_selector(MetaAttribute const* attribute, Functor&& f, Args&&... args) {
-    return pgm_type_func_selector(MetaData::attribute_ctype(attribute), std::forward<Functor>(f),
-                                  std::forward<Args>(args)...);
+decltype(auto) pgm_type_func_selector(MetaAttribute const* attribute, Functor f, Args&&... args) {
+    return pgm_type_func_selector(MetaData::attribute_ctype(attribute), f, std::forward<Args>(args)...);
 }
 
 } // namespace power_grid_model_cpp

@@ -68,6 +68,7 @@ template <class... T> class Container;
 template <class... GettableTypes, class... StorageableTypes>
 class Container<RetrievableTypes<GettableTypes...>, StorageableTypes...> {
   public:
+    using storageable_types = std::tuple<StorageableTypes...>;
     using gettable_types = std::tuple<GettableTypes...>;
 
     static constexpr size_t num_storageable = sizeof...(StorageableTypes);
@@ -369,6 +370,6 @@ template <class... TR, class... T> struct container_trait<ExtraRetrievableTypes<
 
 } // namespace container_impl
 
-template <class... T> using Container = typename container_impl::container_trait<T...>::type;
+template <class... T> using Container = container_impl::container_trait<T...>::type;
 
 } // namespace power_grid_model

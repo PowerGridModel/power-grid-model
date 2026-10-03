@@ -7,6 +7,7 @@ add_executable(
     "../test_entry_point.cpp"
     "test_all_components.cpp"
     "test_node.cpp"
+    "test_edge.cpp"
     "test_asym_line.cpp"
     "test_line.cpp"
     "test_generic_branch.cpp"

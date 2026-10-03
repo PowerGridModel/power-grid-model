@@ -12,7 +12,9 @@ SPDX-License-Identifier: MPL-2.0
 :align: right
 ```
 
-`power-grid-model` is a library for steady-state distribution power system analysis.
+`power-grid-model` is a library for steady-state distribution power system analysis, hosted by the
+Linux Foundation Energy (see also the
+[LF Energy landing page](https://lfenergy.org/projects/power-grid-model/)).
 It is distributed for Python and C.
 The core of the library is written in C++.
 Currently, it supports both symmetric and asymmetric calculations for the following calculation types:
@@ -86,7 +88,7 @@ user_manual/data-model
 user_manual/dataset-terminology
 user_manual/components
 user_manual/calculations
-user_manual/non-pgm-components
+user_manual/non-native-components
 user_manual/performance-guide
 user_manual/data-validator
 user_manual/model-validation
@@ -124,6 +126,7 @@ algorithms/tap-changing-algorithms
 algorithms/sc-algorithms
 algorithms/se-algorithms
 algorithms/lu-solver
+algorithms/dense-and-selective-inverse
 ```
 
 ```{toctree}
@@ -131,7 +134,7 @@ algorithms/lu-solver
 :maxdepth: 2
 advanced_documentation/native-data-interface
 advanced_documentation/build-guide
-working_with_containers/container-setup.md
+advanced_documentation/devcontainer-setup.md
 advanced_documentation/c-api
 advanced_documentation/high-level-design
 advanced_documentation/core-design

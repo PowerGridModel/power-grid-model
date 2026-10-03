@@ -26,7 +26,8 @@ using power_grid_model_cpp_test::load_dataset;
 using std::numbers::sqrt3;
 
 // input
-auto const complete_state_json = R"json({
+auto complete_state_json() {
+    return R"json({
   "version": "1.0",
   "type": "input",
   "is_batch": false,
@@ -43,12 +44,13 @@ auto const complete_state_json = R"json({
     ]
   }
 })json"s; // NOLINT(misc-include-cleaner) https://github.com/llvm/llvm-project/issues/98122
+}
 
 } // namespace
 
 TEST_CASE("API Model Multi-Dimension") {
     // model
-    auto const owning_input_dataset = load_dataset(complete_state_json);
+    auto const owning_input_dataset = load_dataset(complete_state_json());
     auto const& input_dataset = owning_input_dataset.dataset;
     Model model{50.0, input_dataset};
 

@@ -7,6 +7,7 @@ add_executable(
     "../test_entry_point.cpp"
     "test_main_core_output.cpp"
     "test_main_model_type.cpp"
+    "test_topological_node_output.cpp"
 )
 
 target_link_libraries(

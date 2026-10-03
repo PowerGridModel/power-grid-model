@@ -27,7 +27,7 @@ extern "C" {
  *     Returns NULL if errors occured (check the handle for error information).
  */
 PGM_API PGM_Deserializer* PGM_create_deserializer_from_binary_buffer(PGM_Handle* handle, char const* data, PGM_Idx size,
-                                                                     PGM_Idx serialization_format);
+                                                                     PGM_Idx serialization_format) PGM_NOEXCEPT;
 
 /**
  * @brief Create a deserializer from a null terminated C string.
@@ -37,9 +37,9 @@ PGM_API PGM_Deserializer* PGM_create_deserializer_from_binary_buffer(PGM_Handle*
  * @return A pointer to the deserializer instance. Should be freed by PGM_destroy_deserializer().
  *     Returns NULL if errors occured (check the handle for error information).
  */
-PGM_API PGM_Deserializer* PGM_create_deserializer_from_null_terminated_string(PGM_Handle* handle,
-                                                                              char const* data_string,
-                                                                              PGM_Idx serialization_format);
+PGM_API PGM_Deserializer*
+PGM_create_deserializer_from_null_terminated_string(PGM_Handle* handle, char const* data_string,
+                                                    PGM_Idx serialization_format) PGM_NOEXCEPT;
 
 /**
  * @brief Get the PGM_WritableDataset object from the deserializer.
@@ -50,7 +50,8 @@ PGM_API PGM_Deserializer* PGM_create_deserializer_from_null_terminated_string(PG
  *     Use PGM_writable_dataset_get_info() to get the information of the dataset.
  *     Use PGM_writable_dataset_set_buffer() to set buffer.
  */
-PGM_API PGM_WritableDataset* PGM_deserializer_get_dataset(PGM_Handle* handle, PGM_Deserializer* deserializer);
+PGM_API PGM_WritableDataset* PGM_deserializer_get_dataset(PGM_Handle* handle,
+                                                          PGM_Deserializer* deserializer) PGM_NOEXCEPT;
 
 /**
  * @brief Parse the dataset and write to the user-provided buffers.
@@ -59,14 +60,14 @@ PGM_API PGM_WritableDataset* PGM_deserializer_get_dataset(PGM_Handle* handle, PG
  * @param deserializer The pointer to the deserializer
  * @return No return value; check handle for error.
  */
-PGM_API void PGM_deserializer_parse_to_buffer(PGM_Handle* handle, PGM_Deserializer* deserializer);
+PGM_API void PGM_deserializer_parse_to_buffer(PGM_Handle* handle, PGM_Deserializer* deserializer) PGM_NOEXCEPT;
 
 /**
  * @brief Destory deserializer
  * @param deserializer pointer to deserializer
  * @return
  */
-PGM_API void PGM_destroy_deserializer(PGM_Deserializer* deserializer);
+PGM_API void PGM_destroy_deserializer(PGM_Deserializer* deserializer) PGM_NOEXCEPT;
 
 /**
  * @brief Create a serializer object based on input dataset, the buffers must be set in advance.
@@ -77,7 +78,7 @@ PGM_API void PGM_destroy_deserializer(PGM_Deserializer* deserializer);
  *     Returns NULL if errors occured (check the handle for error information).
  */
 PGM_API PGM_Serializer* PGM_create_serializer(PGM_Handle* handle, PGM_ConstDataset const* dataset,
-                                              PGM_Idx serialization_format);
+                                              PGM_Idx serialization_format) PGM_NOEXCEPT;
 
 /**
  * @brief Serialize the dataset into a binary buffer format.
@@ -89,7 +90,8 @@ PGM_API PGM_Serializer* PGM_create_serializer(PGM_Handle* handle, PGM_ConstDatas
  * @return No return value; check handle for error.
  */
 PGM_API void PGM_serializer_get_to_binary_buffer(PGM_Handle* handle, PGM_Serializer* serializer,
-                                                 PGM_Idx use_compact_list, char const** data, PGM_Idx* size);
+                                                 PGM_Idx use_compact_list, char const** data,
+                                                 PGM_Idx* size) PGM_NOEXCEPT;
 
 /**
  * @brief Serialize the dataset into a zero terminated C string.
@@ -102,14 +104,14 @@ PGM_API void PGM_serializer_get_to_binary_buffer(PGM_Handle* handle, PGM_Seriali
  *     Returns NULL if errors occured (check the handle for error information).
  */
 PGM_API char const* PGM_serializer_get_to_zero_terminated_string(PGM_Handle* handle, PGM_Serializer* serializer,
-                                                                 PGM_Idx use_compact_list, PGM_Idx indent);
+                                                                 PGM_Idx use_compact_list, PGM_Idx indent) PGM_NOEXCEPT;
 
 /**
  * @brief Destroy serializer.
  * @param serializer The pointer to the serializer.
  * @return
  */
-PGM_API void PGM_destroy_serializer(PGM_Serializer* serializer);
+PGM_API void PGM_destroy_serializer(PGM_Serializer* serializer) PGM_NOEXCEPT;
 
 #ifdef __cplusplus
 }

@@ -10,7 +10,7 @@ from power_grid_model._core.dataset_definitions import AttributeTypeVar, Compone
 from power_grid_model._core.enum import ComponentAttributeFilterOptions
 
 ComponentAttributeMappingDict = dict[
-    ComponentType, set[AttributeTypeVar] | list[AttributeTypeVar] | None | ComponentAttributeFilterOptions
+    ComponentType, set[AttributeTypeVar] | list[AttributeTypeVar] | ComponentAttributeFilterOptions | None
 ]
 
 ComponentAttributeMapping = (

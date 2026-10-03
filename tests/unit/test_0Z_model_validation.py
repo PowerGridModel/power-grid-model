@@ -116,6 +116,7 @@ def maybe_raises(params: dict):
     pytest_cases(get_batch_cases=False),
 )
 def test_single_validation(
+    *,
     case_id: str,
     case_path: Path,
     sym: bool,
@@ -169,6 +170,7 @@ def test_single_validation(
     pytest_cases(get_batch_cases=True),
 )
 def test_batch_validation(
+    *,
     case_id: str,
     case_path: Path,
     sym: bool,

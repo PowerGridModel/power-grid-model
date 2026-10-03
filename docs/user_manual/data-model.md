@@ -17,11 +17,12 @@ The hierarchy tree of the component types is shown below.
 ```{mermaid}
 graph LR
     base-->node
-    base-->branch
-      branch-->line
-      branch-->link
-      branch-->generic_branch
-      branch-->transformer      
+    base-->edge
+      edge-->link
+      edge-->branch
+        branch-->line
+        branch-->generic_branch
+        branch-->transformer      
     base-->branch3
       branch3-->three_winding_transformer
     base-->appliance
@@ -50,8 +51,8 @@ the {py:class}`power_grid_model.power_grid_meta_data`, see
 [Native Data Interface](../advanced_documentation/native-data-interface.md).
 ```
 
-There are four generic component types: `node`, `branch`, `branch3` and `appliance`.
-A `node` is similar to a vertex in a graph, a `branch` is similar to an edge in a graph and a `branch3` connects three
+There are five generic component types: `node`, `edge`, `branch`, `branch3` and `appliance`.
+A `node` is similar to a vertex in a graph, an `edge` is similar to an edge in a graph, a `branch` is an `edge` with finite admittance, and a `branch3` connects three
 nodes together.
 An `appliance` is a component that is connected (coupled) to a node, and it is seen as a user of this node.
 
@@ -60,12 +61,13 @@ The figure below shows a simple example:
 ```txt
 node_1 ---line_3 (branch)--- node_2 --------------three_winding_transformer_8 (branch3)------ node_6
  |                             |                                 |
-source_5 (appliance)       sym_load_4 (appliance)             node_7
+source_5 (appliance)       sym_load_4 (appliance)             node_7 ---link_9 (edge)--- node_10
 ```
 
 * There are four nodes (points/vertices) in the graph of this simple grid.
 * `node_1` and `node_2` are connected by `line_3` which is a branch (edge).
 * `node_2`, `node_6`, and `node_7` are connected by `three_winding_transformer_8`, which is a `branch3`.
+* `node_10` is connected by `link_9` which is an edge, but not a branch.
 * There are two appliances in the grid.
   `source_5` is coupled to `node_1` and `sym_load_4` is coupled to `node_2`.
 
@@ -103,5 +105,5 @@ The sign of active/reactive power of the {ref}`user_manual/components:Branch`, {
   *appliance/sensor*.
 * For generator reference direction, positive active/reactive power means the power flows *from the appliance/sensor to*
   *the node*.
-* For `branch` and `branch3` type of components, positive active/reactive power means the power flows *from the node to*
+* For `edge`, `branch` and `branch3` type of components, positive active/reactive power means the power flows *from the node to*
   *the branch*.

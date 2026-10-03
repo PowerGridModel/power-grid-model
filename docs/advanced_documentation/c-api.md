@@ -225,3 +225,15 @@ A writable dataset, instead, cannot be created by the user, but will be provided
 The user can then provide buffers to which the deserializer can write its data (and `indptr`).
 This allows the buffers to have lifetimes beyond the lifetime of the deserializer.
 This dataset type is only meant to be used for providing user buffers to the deserializer.
+
+## Known limitations
+
+The current serialization functionality has some limitations.
+
+### Memory limitations
+
+Hardware limitations and availability of free contiguous memory may result in, e.g., failing buffer allocation.
+Often, this will lead to a [`bad_alloc`](https://en.cppreference.com/cpp/memory/new/bad_alloc).
+Due to the nature of the issue, we consider this a [non-spurious edge case](./terminology.md#non-spurious-edge-cases).
+Wherever possible, the Power Grid Model catches and wraps such low-level exceptions.
+Regardlessly, caution is still adviced when handling large datasets.

@@ -390,6 +390,8 @@ def original_data() -> dict[CT, np.ndarray]:
     voltage_regulator[AT.regulated_object] = [20, 23, 25, 27, 200, 16, 18, 20]
     voltage_regulator[AT.status] = [1, 0, -1, 1, 1, 5, 0, 1]  # -1 and 5 are invalid boolean values
     voltage_regulator[AT.u_ref] = [1.02, 100, 100.0, 100.0, 1.0, np.inf, 0.0, 1.03]
+    voltage_regulator[AT.q_min] = [np.nan, np.nan, np.nan, np.nan, np.nan, 100.0, np.nan, 100.0]
+    voltage_regulator[AT.q_max] = [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, 100.0, -100.0]
 
     data = {
         CT.node: node,
@@ -1055,6 +1057,15 @@ def test_validate_input_data_voltage_regulator(input_data):
         in validation_errors
     )
     assert InvalidVoltageRegulationError(CT.voltage_regulator, AT.u_ref, [60, 67]) in validation_errors
+    assert (
+        NotGreaterOrEqualError(
+            CT.voltage_regulator,
+            AT.q_max,
+            [67],
+            f"{AT.q_min}",
+        )
+        in validation_errors
+    )
 
 
 def test_fault(input_data):

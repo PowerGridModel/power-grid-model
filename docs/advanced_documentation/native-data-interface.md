@@ -41,13 +41,14 @@ We specify the same attributes with the same data types and memory offset.
 
 ```python
 import numpy as np
+
 node_dtype = np.dtype(
     {
-        'names': [AttributeType.id, AttributeType.u_rated],
-        'formats': ['<i4', '<f8'],  # little endian in x86-64
-        'offsets': [0, 8],
-        'itemsize': 16,
-        'aligned': True
+        "names": [AttributeType.id, AttributeType.u_rated],
+        "formats": ["<i4", "<f8"],  # little endian in x86-64
+        "offsets": [0, 8],
+        "itemsize": 16,
+        "aligned": True,
     }
 )
 ```
@@ -140,7 +141,7 @@ unchanged (change not available).
 from power_grid_model import AttributeType, ComponentType, DatasetType, power_grid_meta_data
 import numpy as np
 
-line_update = np.empty(shape=1, dtype=power_grid_meta_data[DatasetType.update][ComponentType.line]['dtype'])
+line_update = np.empty(shape=1, dtype=power_grid_meta_data[DatasetType.update][ComponentType.line]["dtype"])
 # direct string access is supported as well:
 # line_update = np.empty(shape=1, dtype=power_grid_meta_data['update']['line']['dtype'])
 line_update[AttributeType.id] = [5]

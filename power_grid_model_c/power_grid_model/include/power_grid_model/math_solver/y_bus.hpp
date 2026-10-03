@@ -16,13 +16,11 @@
 #include <cassert>
 #include <concepts>
 #include <cstddef>
-#include <cstdint>
 #include <functional>
 #include <iterator>
 #include <memory>
 #include <numeric>
 #include <ranges>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -298,6 +296,46 @@ template <symmetry_tag sym> class YBus {
   public:
     using ParamChangedCallback = std::function<void(bool param_changed)>;
 
+  private:
+    // Parameter-change callbacks link this Y-bus to the solver(s) that consume its admittance. A single Y-bus may feed
+    // multiple solvers (e.g. when neither parameters nor topology changed, or when several solver types are run
+    // consecutively). The callbacks are deliberately dropped on copy so a copied Y-bus does not notify another
+    // instance's solvers; they are re-established afterwards (see main_core::MathState). Moving transfers them.
+    class ParameterChangeSubscribers {
+      public:
+        ParameterChangeSubscribers() = default;
+        ParameterChangeSubscribers(ParameterChangeSubscribers const& /*other*/) {
+            // Copy constructor drops the callbacks to avoid notifying solvers of another instance.
+        }
+        ParameterChangeSubscribers(ParameterChangeSubscribers&& other) noexcept
+            : callbacks_{std::move(other.callbacks_)} {}
+        ParameterChangeSubscribers& operator=(ParameterChangeSubscribers const& other) {
+            if (this != &other) {
+                // Copy assignment drops the callbacks to avoid notifying solvers of another instance.
+            }
+            callbacks_.clear();
+            return *this;
+        }
+        ParameterChangeSubscribers& operator=(ParameterChangeSubscribers&& other) noexcept {
+            if (this != &other) {
+                callbacks_ = std::move(other.callbacks_);
+            }
+            return *this;
+        };
+        ~ParameterChangeSubscribers() { callbacks_.clear(); };
+
+        void add(ParamChangedCallback callback) { callbacks_.push_back(std::move(callback)); }
+        void notify(bool param_changed) const {
+            for (auto const& callback : callbacks_) {
+                callback(param_changed);
+            }
+        }
+
+      private:
+        std::vector<ParamChangedCallback> callbacks_;
+    };
+
+  public:
     YBus(MathModelTopology const& topo, MathModelParam<sym> param,
          std::shared_ptr<YBusStructure const> const& y_bus_struct = {})
         : math_topology_{topo} {
@@ -391,13 +429,19 @@ template <symmetry_tag sym> class YBus {
             math_model_param_.source_param[idx_to_change] = params;
         }
 
+        // source admittance is not part of the y_bus admittance entries but is folded into the solver matrix,
+        // so a source change must be signalled explicitly (update_admittance_entries only covers branch/shunt)
+        if (!std::ranges::empty(math_model_param_incrmt.source_param_to_change)) {
+            parameters_changed(true);
+        }
+
         // process and update affected entries
-        update_admittance_entries(get_affected_admittance_entries(math_model_param_incrmt));
+        update_admittance_entries(by_ref(get_affected_admittance_entries(math_model_param_incrmt)));
     }
 
-    template <std::ranges::viewable_range Entries>
+    template <non_owning_view_c Entries>
         requires std::same_as<std::ranges::range_value_t<Entries>, Idx>
-    void update_admittance_entries(Entries&& y_bus_entries) {
+    void update_admittance_entries(Entries y_bus_entries) {
         assert(std::ssize(admittance_) == nnz());
 
         auto const& y_bus_element = y_bus_struct_->y_bus_element;
@@ -409,7 +453,7 @@ template <symmetry_tag sym> class YBus {
             parameters_changed(true);
         }
 
-        for (auto const entry : std::forward<Entries>(y_bus_entries)) {
+        for (auto const entry : y_bus_entries) {
             // start admittance accumulation with zero
             ComplexTensor<sym> entry_admittance{0.0};
             // loop over all entries of this position
@@ -513,6 +557,8 @@ template <symmetry_tag sym> class YBus {
                    output.i_f = dot(param.yff(), uf) + dot(param.yft(), ut);
                    output.i_t = dot(param.ytf(), uf) + dot(param.ytt(), ut);
 
+                   // TODO(mgovers): cleanup v2: branch solver output should always be in current domain; conversion to
+                   // power domain should be done in main_core/output.hpp
                    if constexpr (std::same_as<T, BranchSolverOutput<sym>>) {
                        // See "Shunt Injection Flow Calculation" in "State Estimation Alliander"
                        output.s_f = uf * conj(output.i_f);
@@ -536,6 +582,8 @@ template <symmetry_tag sym> class YBus {
                 // NOTE: the negative sign for injection direction!
                 shunt_flow[shunt].i = -dot(math_model_param_.shunt_param[shunt], u[bus]);
 
+                // TODO(mgovers): cleanup v2: appliance solver output should always be in current domain;
+                // conversion to power domain should be done in main_core/output.hpp
                 if constexpr (std::same_as<SolverOutputType, ApplianceSolverOutput<sym>>) {
                     // See "Branch/Shunt Power Flow" in "State Estimation Alliander"
                     shunt_flow[shunt].s = u[bus] * conj(shunt_flow[shunt].i);
@@ -545,25 +593,13 @@ template <symmetry_tag sym> class YBus {
         return shunt_flow;
     }
 
-    /// @brief register a new callback to signal a parameter change
-    /// @param callback the callback to register
-    /// @return the unique key referencing this callback (used for unregistering)
-    uint64_t register_parameters_changed_callback(ParamChangedCallback callback) {
-        static uint64_t num_added = 0;
-
-        auto const new_key = num_added;
-        ++num_added;
-
-        assert(!parameters_changed_callbacks_.contains(new_key));
-        parameters_changed_callbacks_.emplace_hint(parameters_changed_callbacks_.cend(), new_key, std::move(callback));
-        return new_key;
-    }
-
-    /// @brief unregister a callback to signal a parameter change
-    /// @param key the unique key referencing the callback (returned by register_parameters_changed_callback)
-    void unregister_parameters_changed_callback(uint64_t key) {
-        assert(parameters_changed_callbacks_.contains(key));
-        parameters_changed_callbacks_.erase(key);
+    /// @brief add a callback used to signal a parameter change to a solver linked to this Y-bus
+    ///
+    /// A Y-bus may be linked to more than one solver. The callbacks are not carried over when the Y-bus is copied, so
+    /// they must be (re-)established after every copy (see main_core::MathState).
+    /// @param callback the callback to invoke on a parameter change
+    void add_parameters_changed_callback(ParamChangedCallback callback) {
+        parameters_changed_callbacks_.add(std::move(callback));
     }
 
   private:
@@ -582,13 +618,9 @@ template <symmetry_tag sym> class YBus {
     std::vector<IdxVector> y_bus_entries_per_branch_;
     std::vector<IdxVector> y_bus_entries_per_shunt_;
 
-    std::unordered_map<uint64_t, ParamChangedCallback> parameters_changed_callbacks_;
+    ParameterChangeSubscribers parameters_changed_callbacks_;
 
-    void parameters_changed(bool param_changed) const {
-        std::ranges::for_each(parameters_changed_callbacks_, [param_changed](auto const& key_and_callback) {
-            key_and_callback.second(param_changed);
-        });
-    }
+    void parameters_changed(bool param_changed) const { parameters_changed_callbacks_.notify(param_changed); }
 };
 
 } // namespace math_solver

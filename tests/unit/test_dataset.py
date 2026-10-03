@@ -8,7 +8,7 @@ import pytest
 from power_grid_model._core.dataset_definitions import ComponentType as CT, DatasetType
 from power_grid_model._core.power_grid_dataset import CConstDataset
 from power_grid_model._core.power_grid_meta import power_grid_meta_data
-from power_grid_model.errors import PowerGridError
+from power_grid_model.errors import PowerGridDatasetError, PowerGridError
 
 SINGLE_DATASET_NDIM = 1
 
@@ -173,16 +173,42 @@ def test_const_dataset__mixed_batch_size(dataset_type):
         CConstDataset(data, dataset_type)
 
 
-@pytest.mark.parametrize("bad_indptr", [np.ndarray([0, 1]), np.ndarray([0, 3, 2]), np.ndarray([0, 1, 2, 3, 4])])
-def test_const_dataset__bad_sparse_data(dataset_type, bad_indptr):
+@pytest.mark.parametrize(
+    ("bad_indptr", "expected_exception", "expected_message"),
+    [
+        (np.array([0, 2]), ValueError, r"Dataset must have a consistent batch size across all components."),
+        (np.array([0, 1, 2, 2]), ValueError, r"Dataset must have a consistent batch size across all components."),
+        (
+            np.array([0, 0, 1]),
+            PowerGridDatasetError,
+            r"For a non-uniform buffer, indptr should begin with 0 and end with total_elements!",
+        ),
+        (
+            np.array([0, 0, 3]),
+            PowerGridDatasetError,
+            r"For a non-uniform buffer, indptr should begin with 0 and end with total_elements!",
+        ),
+        (np.array([0, 3, 2]), PowerGridDatasetError, r"For a non-uniform buffer, indptr should be non-decreasing!"),
+        (np.array([0, 1]), ValueError, r"Dataset must have a consistent batch size across all components."),
+        (np.array([0, 1, 2, 3]), ValueError, r"Dataset must have a consistent batch size across all components."),
+    ],
+)
+def test_const_dataset__bad_sparse_data(dataset_type, bad_indptr, expected_exception, expected_message):
     data = {
         CT.node: {
             "data": np.zeros(shape=2, dtype=power_grid_meta_data[dataset_type][CT.node]),
             "indptr": bad_indptr,
         },
+        CT.line: np.zeros(shape=(2, 0), dtype=power_grid_meta_data[dataset_type][CT.line]),
     }
-    with pytest.raises(TypeError):
+
+    with pytest.raises(expected_exception, match=expected_message):
         CConstDataset(data, dataset_type)
+
+    # regression test: check that error type and message are independent of the order of the components
+    reverse_order_data = dict(reversed(data.items()))
+    with pytest.raises(expected_exception, match=expected_message):
+        CConstDataset(reverse_order_data, dataset_type)
 
 
 @pytest.mark.parametrize(
