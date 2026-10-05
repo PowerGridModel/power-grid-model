@@ -138,7 +138,12 @@ struct CLIPostCallback {
 };
 
 CLIResult parse_cli_options(int argc, char** argv, ClIOptions& options) {
-    std::string const version_str = std::string("Power Grid Model CLI\n Version: ") + PGM_version();
+    std::stringstream version_stream;
+    version_stream << "Power Grid Model CLI\n";
+    version_stream << "WARNING: The Power Grid Model CLI is still experimental. ";
+    version_stream << "We offer no garantee on stability of CLI arguments!\n";
+    version_stream << "Version: " << PGM_version() << "\n";
+    std::string const version_str = version_stream.str();
     CLI::App app{version_str};
 
     CLI::Validator const existing_parent_dir_validator{
