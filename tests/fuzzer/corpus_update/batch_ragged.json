@@ -1,0 +1,129 @@
+{
+  "version": "1.0",
+  "type": "update",
+  "is_batch": true,
+  "attributes": {},
+  "data": [
+    {
+      "sym_load": [],
+      "asym_load": [],
+      "sym_gen": [],
+      "asym_gen": [],
+      "source": [],
+      "line": [],
+      "transformer": []
+    },
+    {
+      "sym_load": [
+        {
+          "id": 40,
+          "p_specified": 50000.0
+        }
+      ],
+      "asym_load": [
+        {
+          "id": 42,
+          "p_specified": [
+            5000.0,
+            1000.0,
+            0.0
+          ]
+        }
+      ],
+      "sym_gen": [
+        {
+          "id": 50,
+          "p_specified": 25000.0
+        }
+      ],
+      "asym_gen": [
+        {
+          "id": 51,
+          "p_specified": [
+            0.0,
+            1000.0,
+            0.0
+          ]
+        }
+      ],
+      "source": [
+        {
+          "id": 1,
+          "u_ref": 1.05
+        }
+      ],
+      "line": [
+        {
+          "id": 20,
+          "from_status": 0
+        }
+      ],
+      "transformer": [
+        {
+          "id": 30,
+          "tap_pos": 1
+        }
+      ]
+    },
+    {
+      "sym_load": [
+        {
+          "id": 40,
+          "p_specified": -25000.0
+        },
+        {
+          "id": 41,
+          "p_specified": -25000.0
+        }
+      ],
+      "asym_load": [
+        {
+          "id": 42,
+          "p_specified": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "sym_gen": [
+        {
+          "id": 50,
+          "p_specified": 0.0
+        }
+      ],
+      "asym_gen": [
+        {
+          "id": 51,
+          "p_specified": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "source": [
+        {
+          "id": 1,
+          "u_ref": 0.95
+        }
+      ],
+      "line": [
+        {
+          "id": 20,
+          "from_status": 1
+        },
+        {
+          "id": 21,
+          "from_status": 1
+        }
+      ],
+      "transformer": [
+        {
+          "id": 30,
+          "tap_pos": -1
+        }
+      ]
+    }
+  ]
+}
