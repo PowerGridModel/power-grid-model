@@ -12,6 +12,7 @@
 #include <string_view>
 #include <type_traits>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace power_grid_model::validation::rules {
@@ -117,6 +118,53 @@ void greater_than_zero(Range const& rows, std::string_view component, std::strin
     auto const is_not_positive = [](auto value) { return value <= 0; };
     add_issue(issues, Rule::not_greater_than_zero, component, field,
               detail::find_ids<Record>(rows, field_accessor, id_accessor, is_not_positive));
+}
+
+template <class Record, std::ranges::input_range Range, class FieldAccessor, class IdAccessor>
+void boolean(Range const& rows, std::string_view component, std::string_view field, FieldAccessor const& field_accessor,
+             IdAccessor const& id_accessor, Issues& issues) {
+    auto const is_not_boolean = [](auto value) { return value != 0 && value != 1; };
+    add_issue(issues, Rule::not_boolean, component, field,
+              detail::find_ids<Record>(rows, field_accessor, id_accessor, is_not_boolean));
+}
+
+template <class Record, std::ranges::input_range Range, class FirstAccessor, class SecondAccessor, class IdAccessor>
+void not_both_zero(Range const& rows, std::string_view component, std::string_view first_field,
+                   std::string_view second_field, FirstAccessor const& first_accessor,
+                   SecondAccessor const& second_accessor, IdAccessor const& id_accessor, Issues& issues) {
+    std::vector<ID> ids;
+    for (auto const& value : rows) {
+        detail::visit_record<Record>(value, [&](Record const& record) {
+            if (std::invoke(first_accessor, record) == 0 && std::invoke(second_accessor, record) == 0) {
+                ids.push_back(std::invoke(id_accessor, record));
+            }
+        });
+    }
+    add_multi_field_issue(issues, Rule::two_values_zero, component, {first_field, second_field}, std::move(ids));
+}
+
+template <class Record, std::ranges::input_range Range, class FieldAccessor, class IdAccessor>
+void valid_id_reference(Range const& rows, std::string_view component, std::string_view field,
+                        std::string_view reference_component, FieldAccessor const& field_accessor,
+                        IdAccessor const& id_accessor, std::unordered_set<ID> const& valid_ids, Issues& issues) {
+    auto const is_invalid_reference = [&valid_ids](ID id) { return !valid_ids.contains(id); };
+    add_reference_issue(issues, component, field, reference_component,
+                        detail::find_ids<Record>(rows, field_accessor, id_accessor, is_invalid_reference));
+}
+
+template <std::ranges::input_range NodeIds, std::ranges::input_range LineIds>
+void cross_unique(NodeIds const& node_ids, LineIds const& line_ids, Issues& issues) {
+    std::unordered_set<ID> nodes;
+    std::unordered_set<ID> lines;
+    for (ID id : node_ids) {
+        nodes.insert(id);
+    }
+    for (ID id : line_ids) {
+        if (nodes.contains(id)) {
+            lines.insert(id);
+        }
+    }
+    add_cross_component_unique_issue(issues, {lines.begin(), lines.end()}, "node", "line");
 }
 
 } // namespace power_grid_model::validation::rules

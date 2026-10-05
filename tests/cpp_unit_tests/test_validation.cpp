@@ -1,6 +1,7 @@
 #include <power_grid_model/auxiliary/input.hpp>
 #include <power_grid_model/auxiliary/meta_data_gen.hpp>
 #include <power_grid_model/common/common.hpp>
+#include <power_grid_model/validation/input.hpp>
 #include <power_grid_model/validation/issues.hpp>
 #include <power_grid_model/validation/node.hpp>
 #include <power_grid_model/validation/rules.hpp>
@@ -32,9 +33,25 @@ struct CopyTrackedRecord {
     CopyTrackedRecord(CopyTrackedRecord const& other) : id{other.id}, value{other.value} { ++copy_count; }
 };
 
+struct PairRecord {
+    ID id;
+    double first;
+    double second;
+};
+
+struct ReferenceRecord {
+    ID id;
+    ID reference;
+};
+
 auto const test_id = [](TestRecord const& record) { return record.id; };
 auto const test_value = [](TestRecord const& record) { return record.value; };
 auto const copy_tracked_id = [](CopyTrackedRecord const& record) { return record.id; };
+auto const pair_id = [](PairRecord const& record) { return record.id; };
+auto const pair_first = [](PairRecord const& record) { return record.first; };
+auto const pair_second = [](PairRecord const& record) { return record.second; };
+auto const reference_id = [](ReferenceRecord const& record) { return record.id; };
+auto const reference_value = [](ReferenceRecord const& record) { return record.reference; };
 } // namespace
 
 TEST_CASE("Node validation required fields") {
@@ -105,6 +122,51 @@ TEST_CASE("Node validation uniqueness does not copy row records") {
     CHECK(issues[0].ids == std::vector<ID>{5, 5});
 }
 
+TEST_CASE("Line validation boolean and two-fields-zero rules") {
+    using power_grid_model::IntS;
+    using power_grid_model::na_IntS;
+    using power_grid_model::nan;
+
+    std::array<TestRecord, 4> const statuses{{{1, 0.0}, {2, 1.0}, {3, -2.0}, {4, static_cast<double>(na_IntS)}}};
+    Issues issues;
+    auto const get_status = [](TestRecord const& record) { return static_cast<IntS>(record.value); };
+    power_grid_model::validation::rules::boolean<TestRecord>(statuses, "line", "from_status", get_status, test_id,
+                                                             issues);
+
+    std::array<PairRecord, 4> const impedances{{{1, 0.0, 0.0}, {2, 0.0, 1.0}, {3, 1.0, 0.0}, {4, nan, 0.0}}};
+    power_grid_model::validation::rules::not_both_zero<PairRecord>(impedances, "line", "r1", "x1", pair_first,
+                                                                   pair_second, pair_id, issues);
+
+    REQUIRE(issues.size() == 2);
+    CHECK(issues[0].rule == Rule::not_boolean);
+    CHECK(issues[0].ids == std::vector<ID>{3, 4});
+    CHECK(issues[1].rule == Rule::two_values_zero);
+    CHECK(issues[1].ids == std::vector<ID>{1});
+    CHECK(issues[1].fields ==
+          std::vector<power_grid_model::validation::FieldReference>{{"line", "r1"}, {"line", "x1"}});
+}
+
+TEST_CASE("Line validation node references and cross-component uniqueness") {
+    std::array<ReferenceRecord, 3> const lines{{{10, 1}, {11, 2}, {12, 3}}};
+    std::unordered_set<ID> const node_lookup{1, 2};
+    Issues issues;
+    power_grid_model::validation::rules::valid_id_reference<ReferenceRecord>(
+        lines, "line", "from_node", "node", reference_value, reference_id, node_lookup, issues);
+
+    std::array<ID, 3> const node_ids{1, 2, 3};
+    std::array<ID, 3> const line_ids{3, 4, 5};
+    power_grid_model::validation::rules::cross_unique(node_ids, line_ids, issues);
+
+    REQUIRE(issues.size() == 2);
+    CHECK(issues[0].rule == Rule::invalid_id_reference);
+    CHECK(issues[0].reference_component == "node");
+    CHECK(issues[0].ids == std::vector<ID>{12});
+    CHECK(issues[1].rule == Rule::cross_component_not_unique);
+    CHECK(issues[1].fields ==
+          std::vector<power_grid_model::validation::FieldReference>{{"node", "id"}, {"line", "id"}});
+    CHECK(issues[1].objects == std::vector<power_grid_model::validation::ObjectReference>{{"line", 3}, {"node", 3}});
+}
+
 TEST_CASE("Node validation composition supports row and columnar data") {
     using power_grid_model::ConstDataset;
     using power_grid_model::Idx;
@@ -158,4 +220,39 @@ TEST_CASE("Node validation composition supports row and columnar data") {
     Issues empty_issues;
     power_grid_model::validation::validate_node(empty_nodes, empty_issues);
     CHECK(empty_issues.empty());
+}
+
+TEST_CASE("Line validation applies symmetry-dependent required fields") {
+    using power_grid_model::ConstDataset;
+    using power_grid_model::LineInput;
+    using power_grid_model::NodeInput;
+    using power_grid_model::meta_data::meta_data_gen::meta_data;
+
+    std::array<NodeInput, 2> const nodes{{{1, 100.0}, {2, 100.0}}};
+    LineInput line{};
+    line.id = 3;
+    line.from_node = 1;
+    line.to_node = 2;
+    line.from_status = 1;
+    line.to_status = 1;
+    line.r1 = 0.1;
+    line.x1 = 0.2;
+    line.c1 = 0.3;
+    line.tan1 = 0.4;
+
+    ConstDataset dataset{false, 1, "input", meta_data};
+    dataset.add_buffer("node", static_cast<power_grid_model::Idx>(nodes.size()),
+                       static_cast<power_grid_model::Idx>(nodes.size()), nullptr, nodes.data());
+    dataset.add_buffer("line", 1, 1, nullptr, &line);
+
+    Issues symmetric_issues = power_grid_model::validation::validate_input_dataset(dataset, true);
+    CHECK(symmetric_issues.empty());
+
+    Issues asymmetric_issues = power_grid_model::validation::validate_input_dataset(dataset, false);
+    REQUIRE(asymmetric_issues.size() == 4);
+    CHECK(asymmetric_issues[0].rule == Rule::missing_value);
+    CHECK(asymmetric_issues[0].field == "r0");
+    CHECK(asymmetric_issues[1].field == "x0");
+    CHECK(asymmetric_issues[2].field == "c0");
+    CHECK(asymmetric_issues[3].field == "tan0");
 }
