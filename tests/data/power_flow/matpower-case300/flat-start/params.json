@@ -1,0 +1,6 @@
+{
+  "calculation_method": ["newton_raphson"],
+  "calculation_initialization": "flat",
+  "rtol": 1e-8,
+  "atol": 1e-8
+}
