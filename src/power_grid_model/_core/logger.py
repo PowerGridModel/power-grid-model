@@ -72,7 +72,7 @@ class Logger:
         logger_type: LoggerType = LoggerType.info,
         *,
         python_logger: _logging.Logger | None = None,
-        python_logging_level: int = _logging.DEBUG,
+        python_logging_level: int = _logging.INFO,
     ) -> None:
         self._logger_ptr = get_pgc().create_logger(int(logger_type))
         assert_no_error()
