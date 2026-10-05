@@ -145,6 +145,7 @@ CLIResult parse_cli_options(int argc, char** argv, ClIOptions& options) {
     version_stream << "Version: " << PGM_version() << "\n";
     std::string const version_str = version_stream.str();
     CLI::App app{version_str};
+    app.name("power-grid-model");
 
     CLI::Validator const existing_parent_dir_validator{
         [](std::string const& input) -> std::string {
