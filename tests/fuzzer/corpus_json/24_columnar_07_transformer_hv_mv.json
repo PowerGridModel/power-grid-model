@@ -1,0 +1,111 @@
+{
+  "version": "1.0",
+  "type": "input",
+  "is_batch": false,
+  "attributes": {
+    "node": [
+      "id",
+      "u_rated"
+    ],
+    "source": [
+      "id",
+      "node",
+      "status",
+      "u_ref",
+      "u_ref_angle",
+      "sk",
+      "rx_ratio",
+      "z01_ratio"
+    ],
+    "transformer": [
+      "id",
+      "from_node",
+      "to_node",
+      "from_status",
+      "to_status",
+      "u1",
+      "u2",
+      "sn",
+      "uk",
+      "pk",
+      "i0",
+      "p0",
+      "winding_from",
+      "winding_to",
+      "clock",
+      "tap_side",
+      "tap_pos",
+      "tap_min",
+      "tap_max",
+      "tap_nom",
+      "tap_size"
+    ],
+    "sym_load": [
+      "id",
+      "node",
+      "status",
+      "type",
+      "p_specified",
+      "q_specified"
+    ]
+  },
+  "data": {
+    "node": [
+      [
+        0,
+        110000.0
+      ],
+      [
+        1,
+        10000.0
+      ]
+    ],
+    "source": [
+      [
+        2,
+        0,
+        1,
+        1.0,
+        0.0,
+        500000000.0,
+        0.1,
+        1.0
+      ]
+    ],
+    "transformer": [
+      [
+        3,
+        0,
+        1,
+        1,
+        1,
+        110000.0,
+        10000.0,
+        40000000.0,
+        0.12,
+        100000.0,
+        0.01,
+        500.0,
+        2,
+        1,
+        11,
+        0,
+        0,
+        -10,
+        10,
+        0,
+        0.01
+      ]
+    ],
+    "sym_load": [
+      [
+        4,
+        1,
+        1,
+        0,
+        5000000.0,
+        2000000.0
+      ]
+    ]
+  }
+}

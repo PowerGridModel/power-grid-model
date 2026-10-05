@@ -51,8 +51,26 @@ if(NOT WIN32)
     find_package(Threads REQUIRED)
 endif()
 
+# fuzz harnesses (opt-in). Kept independent of PGM_ENABLE_DEV_BUILD so building
+# a harness only needs the C API target below — it does not pull in doctest or
+# the rest of the test tree. Defaults to the AFL++ engine; see tests/fuzzer.
+option(PGM_ENABLE_FUZZER "Build fuzz harnesses (AFL++ by default; see tests/fuzzer)" OFF)
+set(PGM_FUZZER_ENGINE "afl" CACHE STRING "Fuzzing engine for the harnesses: afl (default) or libfuzzer")
+set_property(CACHE PGM_FUZZER_ENGINE PROPERTY STRINGS afl libfuzzer)
+if(PGM_ENABLE_FUZZER AND PGM_FUZZER_ENGINE STREQUAL "libfuzzer")
+    # The code under test lives in the C API library, not in the harnesses, so
+    # libFuzzer's coverage instrumentation has to reach it too. It must be set
+    # before the library target is created. (AFL++ instruments through its
+    # compiler wrapper instead, so it needs nothing here.)
+    add_compile_options(-fsanitize=fuzzer-no-link)
+endif()
+
 # add C library
 add_subdirectory("power_grid_model_c")
+
+if(PGM_ENABLE_FUZZER)
+    add_subdirectory("tests/fuzzer")
+endif()
 
 # dev build
 if(${PGM_ENABLE_DEV_BUILD})

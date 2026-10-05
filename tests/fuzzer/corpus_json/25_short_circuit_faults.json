@@ -1,0 +1,169 @@
+{
+  "version": "1.0",
+  "type": "input",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "node": [
+      {
+        "id": 10,
+        "u_rated": 10500.0
+      },
+      {
+        "id": 11,
+        "u_rated": 10500.0
+      },
+      {
+        "id": 12,
+        "u_rated": 10500.0
+      },
+      {
+        "id": 13,
+        "u_rated": 10500.0
+      },
+      {
+        "id": 14,
+        "u_rated": 400.0
+      }
+    ],
+    "source": [
+      {
+        "id": 1,
+        "node": 10,
+        "status": 1,
+        "u_ref": 1.0,
+        "u_ref_angle": 0.0,
+        "sk": 1000000000.0,
+        "rx_ratio": 0.1,
+        "z01_ratio": 1.0
+      }
+    ],
+    "line": [
+      {
+        "id": 20,
+        "from_node": 10,
+        "to_node": 11,
+        "from_status": 1,
+        "to_status": 1,
+        "r1": 0.25,
+        "x1": 0.2,
+        "c1": 1e-08,
+        "tan1": 0.0,
+        "r0": 0.5,
+        "x0": 0.4,
+        "c0": 1e-08,
+        "tan0": 0.0,
+        "i_n": 1000.0
+      },
+      {
+        "id": 21,
+        "from_node": 11,
+        "to_node": 12,
+        "from_status": 1,
+        "to_status": 1,
+        "r1": 0.25,
+        "x1": 0.2,
+        "c1": 1e-08,
+        "tan1": 0.0,
+        "r0": 0.5,
+        "x0": 0.4,
+        "c0": 1e-08,
+        "tan0": 0.0,
+        "i_n": 1000.0
+      },
+      {
+        "id": 22,
+        "from_node": 12,
+        "to_node": 13,
+        "from_status": 1,
+        "to_status": 1,
+        "r1": 0.25,
+        "x1": 0.2,
+        "c1": 1e-08,
+        "tan1": 0.0,
+        "r0": 0.5,
+        "x0": 0.4,
+        "c0": 1e-08,
+        "tan0": 0.0,
+        "i_n": 1000.0
+      },
+      {
+        "id": 23,
+        "from_node": 13,
+        "to_node": 10,
+        "from_status": 1,
+        "to_status": 1,
+        "r1": 0.25,
+        "x1": 0.2,
+        "c1": 1e-08,
+        "tan1": 0.0,
+        "r0": 0.5,
+        "x0": 0.4,
+        "c0": 1e-08,
+        "tan0": 0.0,
+        "i_n": 1000.0
+      }
+    ],
+    "transformer": [
+      {
+        "id": 30,
+        "from_node": 13,
+        "to_node": 14,
+        "from_status": 1,
+        "to_status": 1,
+        "u1": 10500.0,
+        "u2": 400.0,
+        "sn": 1000000.0,
+        "uk": 0.06,
+        "pk": 1000.0,
+        "i0": 0.01,
+        "p0": 500.0,
+        "winding_from": 2,
+        "winding_to": 1,
+        "clock": 5,
+        "tap_side": 0,
+        "tap_pos": 0,
+        "tap_min": -5,
+        "tap_max": 5,
+        "tap_nom": 0,
+        "tap_size": 100.0
+      }
+    ],
+    "sym_load": [
+      {
+        "id": 40,
+        "node": 11,
+        "status": 1,
+        "type": 0,
+        "p_specified": 100000.0,
+        "q_specified": 20000.0
+      },
+      {
+        "id": 41,
+        "node": 14,
+        "status": 1,
+        "type": 1,
+        "p_specified": 20000.0,
+        "q_specified": 5000.0
+      }
+    ],
+    "fault": [
+      {
+        "id": 80,
+        "status": 1,
+        "fault_type": 0,
+        "fault_phase": 0,
+        "fault_object": 12,
+        "r_f": 0.1,
+        "x_f": 0.1
+      },
+      {
+        "id": 81,
+        "status": 0,
+        "fault_type": 1,
+        "fault_phase": 1,
+        "fault_object": 14
+      }
+    ]
+  }
+}
