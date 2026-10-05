@@ -6,3 +6,8 @@
 .wy-table-responsive table td, .wy-table-responsive table th {
     white-space: inherit;
 }
+
+.cli-help pre {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}

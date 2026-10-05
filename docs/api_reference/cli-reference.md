@@ -12,3 +12,8 @@ This is the CLI reference for the `power-grid-model`.
 
 See below the CLI Reference, you can also run `power-grid-model --help` to get them:
 
+```{literalinclude} cli-help.txt
+:language: text
+:class: cli-help
+```
+

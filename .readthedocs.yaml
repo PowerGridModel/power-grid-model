@@ -32,6 +32,8 @@ build:
       - find power_grid_model_c/power_grid_model_c/include -name *.h -exec sed -i -r "s/ PGM_NOEXCEPT//g" {} \;
       # build doxygen for C header
       - cd docs/doxygen && doxygen && cd ../..
+      # capture CLI help for the reference page
+      - UV_PROJECT_ENVIRONMENT="${READTHEDOCS_VIRTUALENV_PATH}" uv run power-grid-model --help > docs/api_reference/cli-help.txt
 
       # build class and package diagrams
       - pyreverse --no-standalone -o dot src/power_grid_model
