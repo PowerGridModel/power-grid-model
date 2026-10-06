@@ -419,8 +419,8 @@ constexpr auto output_result(Component const& current_sensor, MainModelState<Com
 
     auto const topological_index = get_topology_index<Branch>(state.components, obj_math_id);
     auto const branch_nodes = get_branch_nodes<Branch>(state, topological_index);
-    auto const node_from_math_id = get_math_id<Node>(state, branch_nodes[0]);
-    auto const node_to_math_id = get_math_id<Node>(state, branch_nodes[1]);
+    auto const node_from_math_id = get_user_node_math_id(state, branch_nodes[0]);
+    auto const node_to_math_id = get_user_node_math_id(state, branch_nodes[1]);
 
     switch (terminal_type) {
         using enum MeasuredTerminalType;
