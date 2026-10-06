@@ -63,7 +63,7 @@ extern "C" {
  * @return A pointer to the created logger, or NULL on error.
  *   Destroy with PGM_destroy_logger().
  */
-PGM_API PGM_Logger* PGM_create_logger(PGM_Handle* handle, PGM_Idx logger_type);
+PGM_API PGM_Logger* PGM_create_logger(PGM_Handle* handle, PGM_Idx logger_type) PGM_NOEXCEPT;
 
 /**
  * @brief Destroy a logger created by PGM_create_logger().
@@ -76,7 +76,7 @@ PGM_API PGM_Logger* PGM_create_logger(PGM_Handle* handle, PGM_Idx logger_type);
  *
  * @param logger The logger to destroy.
  */
-PGM_API void PGM_destroy_logger(PGM_Logger* logger);
+PGM_API void PGM_destroy_logger(PGM_Logger* logger) PGM_NOEXCEPT;
 
 /**
  * @brief Register a logger to a handle so it receives output from subsequent calculations.
@@ -90,7 +90,7 @@ PGM_API void PGM_destroy_logger(PGM_Logger* logger);
  * @param handle The handle to register to.
  * @param logger The logger to register.
  */
-PGM_API void PGM_register_logger(PGM_Handle* handle, PGM_Logger* logger);
+PGM_API void PGM_register_logger(PGM_Handle* handle, PGM_Logger* logger) PGM_NOEXCEPT;
 
 /**
  * @brief Unregister a logger from a handle.
@@ -100,7 +100,7 @@ PGM_API void PGM_register_logger(PGM_Handle* handle, PGM_Logger* logger);
  * @param handle The handle to unregister from.
  * @param logger The logger to unregister.
  */
-PGM_API void PGM_unregister_logger(PGM_Handle* handle, PGM_Logger* logger);
+PGM_API void PGM_unregister_logger(PGM_Handle* handle, PGM_Logger* logger) PGM_NOEXCEPT;
 
 /**
  * @brief Callback type for receiving logger output.
@@ -161,7 +161,7 @@ typedef void (*PGM_LogOutputCallback)(char const* data, PGM_Idx size, void* user
  * @param user_data  Passed through unchanged to @p callback.
  */
 PGM_API void PGM_logger_get_output(PGM_Handle* handle, PGM_Logger* logger, PGM_LogOutputCallback callback,
-                                   void* user_data);
+                                   void* user_data) PGM_NOEXCEPT;
 
 /**
  * @brief Unregister all loggers from a handle in one call.
@@ -172,7 +172,7 @@ PGM_API void PGM_logger_get_output(PGM_Handle* handle, PGM_Logger* logger, PGM_L
  *
  * @param handle The handle to clear all loggers from.
  */
-PGM_API void PGM_unregister_all_loggers(PGM_Handle* handle);
+PGM_API void PGM_unregister_all_loggers(PGM_Handle* handle) PGM_NOEXCEPT;
 
 /**
  * @brief Clear the accumulated content of a logger.
@@ -180,7 +180,7 @@ PGM_API void PGM_unregister_all_loggers(PGM_Handle* handle);
  * @param handle The handle used to report errors.
  * @param logger The logger whose content to clear.
  */
-PGM_API void PGM_logger_clear_content(PGM_Handle* handle, PGM_Logger* logger);
+PGM_API void PGM_logger_clear_content(PGM_Handle* handle, PGM_Logger* logger) PGM_NOEXCEPT;
 
 #ifdef __cplusplus
 }
