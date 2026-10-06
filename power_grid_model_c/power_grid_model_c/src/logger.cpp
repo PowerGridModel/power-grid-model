@@ -82,35 +82,35 @@ void logger_get_output(PGM_Logger const& pgm_logger, Callback callback, UserData
 void logger_clear_content(PGM_Logger const& pgm_logger) { pgm_logger.logger->clear_content(); }
 } // namespace
 
-PGM_Logger* PGM_create_logger(PGM_Handle* handle, PGM_Idx logger_type) {
+PGM_Logger* PGM_create_logger(PGM_Handle* handle, PGM_Idx logger_type) noexcept {
     return call_with_catch(handle, [logger_type] { return make_logger(logger_type); });
 }
 
-void PGM_destroy_logger(PGM_Logger* logger) { destroy(logger); }
+void PGM_destroy_logger(PGM_Logger* logger) noexcept { destroy(logger); }
 
-void PGM_register_logger(PGM_Handle* handle, PGM_Logger* logger) {
+void PGM_register_logger(PGM_Handle* handle, PGM_Logger* logger) noexcept {
     call_with_catch(handle, [handle, logger] {
         extract_handle_logger(safe_ptr_get(handle).logger).add(safe_ptr_get(logger).logger);
     });
 }
 
-void PGM_unregister_logger(PGM_Handle* handle, PGM_Logger* logger) {
+void PGM_unregister_logger(PGM_Handle* handle, PGM_Logger* logger) noexcept {
     call_with_catch(handle, [handle, logger] {
         extract_handle_logger(safe_ptr_get(handle).logger).remove(safe_ptr_get(logger).logger.get());
     });
 }
 
-void PGM_unregister_all_loggers(PGM_Handle* handle) {
+void PGM_unregister_all_loggers(PGM_Handle* handle) noexcept {
     call_with_catch(handle, [handle] { extract_handle_logger(safe_ptr_get(handle).logger).reset(); });
 }
 
 void PGM_logger_get_output(PGM_Handle* handle, PGM_Logger* logger, PGM_LogOutputCallback callback, // NOSONAR(S5205)
-                           void* user_data) {
+                           void* user_data) noexcept {
     call_with_catch(handle, [logger, callback, user_data] {
         logger_get_output(safe_ptr_get(logger), safe_ptr(callback), user_data);
     });
 }
 
-void PGM_logger_clear_content(PGM_Handle* handle, PGM_Logger* logger) {
+void PGM_logger_clear_content(PGM_Handle* handle, PGM_Logger* logger) noexcept {
     call_with_catch(handle, [logger] { logger_clear_content(safe_ptr_get(logger)); });
 }
