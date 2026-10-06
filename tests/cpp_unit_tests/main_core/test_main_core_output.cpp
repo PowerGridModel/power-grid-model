@@ -194,6 +194,11 @@ auto make_current_sensor_output_state() -> CurrentSensorOutputState {
     topology->branch3_node_idx = {{0, 1, 2}};
     state.comp_topo = std::move(topology);
 
+    auto reduced_topology = std::make_shared<ReducedTopology>();
+    reduced_topology->topo_node_coup.coupling.user_nodes_to_topo_nodes = {
+        {.group = 0, .pos = 0}, {.group = 1, .pos = 0}, {.group = 2, .pos = 0}};
+    state.reduced_topology = std::move(reduced_topology);
+
     auto coupling = std::make_shared<TopologicalComponentToMathCoupling>();
     coupling->branch = {{.group = 0, .pos = 0}};
     // The branch position is not consumed when the disconnected-terminal guard returns. Reusing position 0 makes

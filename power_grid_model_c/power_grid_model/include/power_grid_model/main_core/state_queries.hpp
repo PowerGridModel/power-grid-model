@@ -56,6 +56,14 @@ constexpr auto get_math_id(MainModelState<ComponentContainer> const& state, Idx 
     return state.topo_comp_coup->node[topology_sequence_idx];
 }
 
+template <class ComponentContainer>
+    requires model_component_state_c<MainModelState, ComponentContainer, Node>
+constexpr auto get_user_node_math_id(MainModelState<ComponentContainer> const& state, Idx user_node_idx) {
+    auto const topo_node_idx =
+        state.reduced_topology->topo_node_coup.coupling.user_nodes_to_topo_nodes[user_node_idx].group;
+    return get_math_id<Node>(state, topo_node_idx);
+}
+
 template <std::derived_from<Branch> ComponentType, class ComponentContainer>
     requires model_component_state_c<MainModelState, ComponentContainer, ComponentType>
 constexpr auto get_math_id(MainModelState<ComponentContainer> const& state, Idx topology_sequence_idx) {

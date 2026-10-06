@@ -1,0 +1,25 @@
+{
+  "version": "1.0",
+  "type": "sym_output",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "node": [
+      {"id": 1, "energized": 1, "u_pu": 1, "u": 10000, "u_angle": 0},
+      {"id": 2, "energized": 1, "u_pu": 0.99281699169443094, "u": 9928.1699169443091, "u_angle": 0.00055765870524694921},
+      {"id": 3, "energized": 1, "u_pu": 1, "u": 10000, "u_angle": 0}
+    ],
+    "line": [
+      {"id": 5, "energized": 1, "p_from": 157247.55401516432, "q_from": 107578.83972347138, "i_from": 11.000000000000057, "s_from": 190525.58883257749, "p_to": -156049.76114409618, "q_to": -137971.38727934429, "i_to": 12.113039782841097, "s_to": 208296.97948101955}
+    ],
+    "source": [
+      {"id": 6, "energized": 1, "p": 157247.55401516432, "q": 107578.83972347138, "i": 11.000000000000057, "s": 190525.58883257749, "pf": 0.82533561490968066}
+    ],
+    "sym_voltage_sensor": [
+      {"id": 8, "energized": 1, "u_residual": 0, "u_angle_residual": 0}
+    ],
+    "sym_current_sensor": [
+      {"id": 9, "energized": 1, "i_residual": 0, "i_angle_residual": 0}
+    ]
+  }
+}
