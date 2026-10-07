@@ -36,7 +36,7 @@ It automatically sets up the entire environment so you can start developing imme
 
 To build the library from source, you need to first prepare the compiler toolchains and the build dependencies.
 In this section a list of general requirements are given.
-After this section there are examples of setup in Linux (ubuntu 26.04), Windows 11, and macOS (Tahoe).
+After this section there are examples of setup in Linux (Ubuntu 26.04), Windows 11, and macOS (Tahoe).
 
 ### Architecture Support
 
@@ -245,9 +245,9 @@ Usage: ./build.sh -p <preset> [-c] [-e] [-i] [-t]
 
 To list the available presets, run `./build.sh -h`.
 
-## Example Setup for ubuntu 26.04 (in WSL or physical/virtual machine)
+## Example Setup for Ubuntu 26.04 (in WSL or physical/virtual machine)
 
-In this section an example is given for setup in ubuntu 26.04.
+In this section an example is given for setup in Ubuntu 26.04.
 You can use this example in Windows Subsystem for Linux (WSL), or in a physical/virtual machine.
 
 While you can use `apt`, setup via [Homebrew](https://brew.sh) has proved to be much simpler.
