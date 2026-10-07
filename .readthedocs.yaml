@@ -9,7 +9,7 @@ sphinx:
   configuration: docs/conf.py
 
 build:
-  os: "ubuntu-24.04"
+  os: "ubuntu-26.04"
   apt_packages:
     - graphviz
     - gcc-14
