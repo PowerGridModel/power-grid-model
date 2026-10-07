@@ -54,13 +54,13 @@ Below is a list of tested compilers:
 
 #### Linux
 
-* gcc >= 14.0:
-  * Version 14.x tested using the version in the `manylinux_2_28` container.
-  * Version 14.x tested using the `musllinux` build with custom compiler.
-  * Version 14.x tested in CI.
-* Clang >= 18.0:
-  * Version 18.x tested in CI.
-  * Version 18.x tested in CI with code quality checks.
+* gcc >= 15.0:
+  * Version 15.x tested using the version in the `manylinux_2_28` container.
+  * Version 15.x tested using the `musllinux` build with custom compiler.
+  * Version 15.x tested in CI.
+* Clang >= 21.0:
+  * Version 21.x tested in CI.
+  * Version 21.x tested in CI with code quality checks.
 
 ```{Admonition} Additional information
 Wheel builds for Linux are done inside containers using `cibuildwheel`:
@@ -72,10 +72,10 @@ These are handled automatically in CI. For local development, use your system's 
 
 #### Windows
 
-* MSVC >= 19.0:
-  * Latest release tested in CI (e.g. Visual Studio 2022, IDE or build tools).
-* Clang CL >= 19.0:
-  * Latest release tested in CI (e.g. Visual Studio 2022, IDE or build tools).
+* MSVC >= 19.5.*:
+  * Latest release tested in CI (e.g. Visual Studio 2026, IDE or build tools).
+* Clang CL >= 20.1.8:
+  * Latest release tested in CI (e.g. Visual Studio 2026, IDE or build tools).
 
 #### macOS
 
@@ -85,7 +85,7 @@ These are handled automatically in CI. For local development, use your system's 
 ```{note}
 Once your compiler of choice is installed, you need to define the environment variables `CC` and `CXX` to specify the
 compiler.
-For example `export CC=clang-18` and `export CXX=clang++-18` to select the `clang` compiler in Ubuntu.
+For example `export CC=clang-21` and `export CXX=clang++-21` to select the `clang` compiler in Ubuntu.
 ```
 
 ### Build System for CMake Project
@@ -263,7 +263,7 @@ At the time of writing, the set-up is done as follows:
 
 ```shell
 sudo apt update && sudo apt upgrade                     # make sure you're up to date
-sudo apt install build-essential gcc g++ clang-18 procps curl file git # install initial dependencies
+sudo apt install build-essential gcc g++ clang-21 procps curl file git # install initial dependencies
 ```
 
 Then install Homebrew using the setup recommendations in [Homebrew](https://brew.sh).
@@ -281,9 +281,9 @@ brew install \
 Append the following lines into the file `${HOME}/.bashrc` (required for `scikit-build` for the Python installation):
 
 ```shell
-export CXX=clang++  # or g++ or g++-14 or ...
-export CC=clang     # or gcc or gcc-14 or ...
-export LLVM_COV=llvm-cov-18      # only if you want to use one of the llvm features
+export CXX=clang++  # or g++ or g++-15 or ...
+export CC=clang     # or gcc or gcc-15 or ...
+export LLVM_COV=llvm-cov-21      # only if you want to use one of the llvm features
 export CLANG_TIDY=clang-tidy-18  # only if you want to use one of the clang-tidy presets
 ```
 
@@ -319,9 +319,9 @@ As a quick start, from the root of the repository:
 You need to install the MSVC compiler.
 You can either install the whole Visual Studio IDE or just the build tools.
 
-* [Visual Studio Build Tools](https://aka.ms/vs/17/release/vs_BuildTools.exe) (free)
+* [Visual Studio Build Tools](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2026) (free)
   * Select C++ build tools
-* Full [Visual Studio](https://visualstudio.microsoft.com/vs/) (All three versions are suitable.
+* Full [Visual Studio](https://visualstudio.microsoft.com/downloads/) (All three versions are suitable.
   Check the license!)
   * Select Desktop Development with C++
     * [Optional] Select `C++ Clang tools for Windows`

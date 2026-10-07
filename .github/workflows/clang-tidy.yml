@@ -53,9 +53,9 @@ jobs:
       - name: Install packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build clang-18 clang-tidy-18
-          sudo ln -s /usr/bin/clang-18 /usr/local/bin/clang
-          sudo ln -s /usr/bin/clang++-18 /usr/local/bin/clang++
+          sudo apt-get install -y ninja-build clang-21 clang-tidy-18
+          sudo ln -s /usr/bin/clang-21 /usr/local/bin/clang
+          sudo ln -s /usr/bin/clang++-21 /usr/local/bin/clang++
           sudo ln -s /usr/bin/clang-tidy-18 /usr/local/bin/clang-tidy
 
       - name: Install uv
