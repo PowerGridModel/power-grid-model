@@ -32,7 +32,7 @@ jobs:
 
       - name: Install most linters from uv
         run: |
-          CC=gcc-14 CXX=g++-14 uv sync --locked --group lint
+          CC=gcc-15 CXX=g++-15 uv sync --locked --group lint
 
       - name: Run mypy
         run: |

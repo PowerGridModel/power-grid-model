@@ -14,8 +14,8 @@ build:
     - graphviz
     - graphviz-tools
     - libgvplugin-neato-layout8
-    - gcc-14
-    - g++-14
+    - gcc-15
+    - g++-15
   tools:
     python: "3.14"
   jobs:
@@ -26,7 +26,7 @@ build:
     create_environment:
       - uv venv "${READTHEDOCS_VIRTUALENV_PATH}"
     install:
-      - CC=gcc-14 CXX=g++-14 UV_PROJECT_ENVIRONMENT="${READTHEDOCS_VIRTUALENV_PATH}" uv sync --locked --group doc
+      - CC=gcc-15 CXX=g++-15 UV_PROJECT_ENVIRONMENT="${READTHEDOCS_VIRTUALENV_PATH}" uv sync --locked --group doc
     post_install:
       # remove API DLL define in header
       - find power_grid_model_c/power_grid_model_c/include -name *.h -exec sed -i -r "s/#define PGM.*//g" {} \;
