@@ -100,6 +100,7 @@ user_manual/serialization
 :maxdepth: 2
 api_reference/python-api-reference
 api_reference/power-grid-model-c-api-reference
+api_reference/cli-reference
 ```
 
 ```{toctree}
