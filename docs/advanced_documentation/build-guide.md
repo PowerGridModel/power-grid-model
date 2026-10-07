@@ -85,7 +85,7 @@ These are handled automatically in CI. For local development, use your system's 
 ```{note}
 Once your compiler of choice is installed, you need to define the environment variables `CC` and `CXX` to specify the
 compiler.
-For example `export CC=clang-18` and `export CXX=clang++-18` to select the `clang` compiler in Ubuntu.
+For example `export CC=clang-21` and `export CXX=clang++-21` to select the `clang` compiler in Ubuntu.
 ```
 
 ### Build System for CMake Project
@@ -263,7 +263,7 @@ At the time of writing, the set-up is done as follows:
 
 ```shell
 sudo apt update && sudo apt upgrade                     # make sure you're up to date
-sudo apt install build-essential gcc g++ clang-18 procps curl file git # install initial dependencies
+sudo apt install build-essential gcc g++ clang-21 procps curl file git # install initial dependencies
 ```
 
 Then install Homebrew using the setup recommendations in [Homebrew](https://brew.sh).
