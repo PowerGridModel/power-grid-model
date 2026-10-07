@@ -72,9 +72,9 @@ These are handled automatically in CI. For local development, use your system's 
 
 #### Windows
 
-* MSVC >= 19.0:
+* MSVC >= 19.5.*:
   * Latest release tested in CI (e.g. Visual Studio 2026, IDE or build tools).
-* Clang CL >= 19.0:
+* Clang CL >= 20.1.8:
   * Latest release tested in CI (e.g. Visual Studio 2026, IDE or build tools).
 
 #### macOS
@@ -319,9 +319,9 @@ As a quick start, from the root of the repository:
 You need to install the MSVC compiler.
 You can either install the whole Visual Studio IDE or just the build tools.
 
-* [Visual Studio Build Tools](https://aka.ms/vs/17/release/vs_BuildTools.exe) (free)
+* [Visual Studio Build Tools](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2026) (free)
   * Select C++ build tools
-* Full [Visual Studio](https://visualstudio.microsoft.com/vs/) (All three versions are suitable.
+* Full [Visual Studio](https://visualstudio.microsoft.com/downloads/) (All three versions are suitable.
   Check the license!)
   * Select Desktop Development with C++
     * [Optional] Select `C++ Clang tools for Windows`
