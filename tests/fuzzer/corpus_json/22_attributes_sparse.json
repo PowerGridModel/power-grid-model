@@ -1,0 +1,37 @@
+{
+  "version": "1.0",
+  "type": "input",
+  "is_batch": false,
+  "attributes": {
+    "node": [
+      "id",
+      "u_rated"
+    ],
+    "source": [
+      "id",
+      "node",
+      "status",
+      "u_ref",
+      "sk",
+      "rx_ratio"
+    ]
+  },
+  "data": {
+    "node": [
+      [
+        0,
+        10000.0
+      ]
+    ],
+    "source": [
+      [
+        1,
+        0,
+        1,
+        1.0,
+        1000000.0,
+        0.1
+      ]
+    ]
+  }
+}

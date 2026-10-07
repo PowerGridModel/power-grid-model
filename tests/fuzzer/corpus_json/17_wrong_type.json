@@ -1,0 +1,14 @@
+{
+  "version": "1.0",
+  "type": "update",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "node": [
+      {
+        "id": 0,
+        "u_rated": 10000.0
+      }
+    ]
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "version": "1.0",
+  "type": "input",
+  "is_batch": false,
+  "attributes": {},
+  "data": {
+    "node": [
+      {
+        "id": 0,
+        "u_rated": 10000.0
+      },
+      {
+        "id": 1,
+        "u_rated": 10000.0
+      }
+    ],
+    "source": [
+      {
+        "id": 2,
+        "node": 0,
+        "status": 1,
+        "u_ref": 1.0,
+        "u_ref_angle": 0.0,
+        "sk": 1000000.0,
+        "rx_ratio": 0.1,
+        "z01_ratio": 1.0
+      }
+    ],
+    "line": [
+      {
+        "id": 3,
+        "from_node": 9999,
+        "to_node": 1,
+        "from_status": 1,
+        "to_status": 1,
+        "r1": 0.1,
+        "x1": 0.1,
+        "c1": 1e-09,
+        "tan1": 0.0,
+        "r0": 0.1,
+        "x0": 0.1,
+        "c0": 1e-09,
+        "tan0": 0.0,
+        "i_n": 400.0
+      }
+    ]
+  }
+}
