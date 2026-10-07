@@ -54,13 +54,13 @@ Below is a list of tested compilers:
 
 #### Linux
 
-* gcc >= 14.0:
-  * Version 14.x tested using the version in the `manylinux_2_28` container.
-  * Version 14.x tested using the `musllinux` build with custom compiler.
-  * Version 14.x tested in CI.
-* Clang >= 18.0:
-  * Version 18.x tested in CI.
-  * Version 18.x tested in CI with code quality checks.
+* gcc >= 15.0:
+  * Version 15.x tested using the version in the `manylinux_2_28` container.
+  * Version 15.x tested using the `musllinux` build with custom compiler.
+  * Version 15.x tested in CI.
+* Clang >= 21.0:
+  * Version 21.x tested in CI.
+  * Version 21.x tested in CI with code quality checks.
 
 ```{Admonition} Additional information
 Wheel builds for Linux are done inside containers using `cibuildwheel`:
@@ -73,9 +73,9 @@ These are handled automatically in CI. For local development, use your system's 
 #### Windows
 
 * MSVC >= 19.0:
-  * Latest release tested in CI (e.g. Visual Studio 2022, IDE or build tools).
+  * Latest release tested in CI (e.g. Visual Studio 2026, IDE or build tools).
 * Clang CL >= 19.0:
-  * Latest release tested in CI (e.g. Visual Studio 2022, IDE or build tools).
+  * Latest release tested in CI (e.g. Visual Studio 2026, IDE or build tools).
 
 #### macOS
 
@@ -283,7 +283,7 @@ Append the following lines into the file `${HOME}/.bashrc` (required for `scikit
 ```shell
 export CXX=clang++  # or g++ or g++-15 or ...
 export CC=clang     # or gcc or gcc-15 or ...
-export LLVM_COV=llvm-cov-18      # only if you want to use one of the llvm features
+export LLVM_COV=llvm-cov-21      # only if you want to use one of the llvm features
 export CLANG_TIDY=clang-tidy-18  # only if you want to use one of the clang-tidy presets
 ```
 

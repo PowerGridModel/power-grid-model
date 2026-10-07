@@ -25,7 +25,7 @@ jobs:
     env:
       BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory # Directory where build-wrapper output will be placed
       CMAKE_PREFIX_PATH: /home/linuxbrew/.linuxbrew
-      LLVM_COV: llvm-cov-18
+      LLVM_COV: llvm-cov-21
       HOMEBREW_FORCE_BREWED_CURL: 1
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
