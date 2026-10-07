@@ -12,6 +12,8 @@ build:
   os: "ubuntu-26.04"
   apt_packages:
     - graphviz
+    - graphviz-tools
+    - libgvplugin-neato-layout8
     - gcc-14
     - g++-14
   tools:
