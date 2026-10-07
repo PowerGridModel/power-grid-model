@@ -809,9 +809,9 @@ TEST_CASE_TEMPLATE_DEFINE("Test math solver - SE, measurements", SolverType, tes
         // NRSE solver
         CHECK(true);
     } else {
-        check_close(output.bus_injection[0] == output.branch[0].s_f);
-        check_close(output.bus_injection[0] == output.source[0].s);
-        check_close(output.bus_injection[1] == output.branch[0].s_t);
+        check_close(output.bus_injection[0], output.branch[0].s_f);
+        check_close(output.bus_injection[0], output.source[0].s);
+        check_close(output.bus_injection[1], output.branch[0].s_t);
         CHECK(real(output.bus_injection[1]) == doctest::Approx(real(load_gen_s)));
     }
 }
