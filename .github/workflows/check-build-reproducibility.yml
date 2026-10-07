@@ -19,7 +19,7 @@ jobs:
   check-power-grid-model-c-linux:
     strategy:
       matrix:
-        os: [ubuntu-latest, ubuntu-26.04-arm]
+        os: [ubuntu-26.04, ubuntu-26.04-arm]
         compiler: [gcc, clang]
 
     runs-on: ${{ matrix.os }}
