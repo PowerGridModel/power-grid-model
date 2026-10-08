@@ -40,6 +40,7 @@ from power_grid_model.validation.errors import (
     NotGreaterOrEqualError,
     NotGreaterThanError,
     NotIdenticalError,
+    NotLessOrEqualError,
     NotLessThanError,
     NotUniqueError,
     TwoValuesZeroError,
@@ -811,6 +812,8 @@ def test_validate_ideal_source_sk():
         calculation_type=CalculationType.short_circuit,
     )
     assert validation_errors is not None
+    assert InfinityError(CT.source, AT.sk, [2]) in validation_errors
+    assert NotLessOrEqualError(CT.source, AT.sk, [2], 10e50) in validation_errors
 
     # Values above the ideal-source cap are also invalid for short circuit.
     source[AT.sk] = [10e51]
@@ -819,6 +822,8 @@ def test_validate_ideal_source_sk():
         calculation_type=CalculationType.short_circuit,
     )
     assert validation_errors is not None
+    assert InfinityError(CT.source, AT.sk, [2]) not in validation_errors
+    assert NotLessOrEqualError(CT.source, AT.sk, [2], 10e50) in validation_errors
 
 
 def test_validate_three_winding_transformer(input_data):
