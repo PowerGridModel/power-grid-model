@@ -771,6 +771,7 @@ def test_validate_input_data_sym_calculation(input_data):
     assert NotBooleanError(CT.fault, AT.status, [32, 33]) in validation_errors
     assert InvalidIdError(CT.fault, AT.fault_object, [1, *list(range(32, 42))], [CT.node]) in validation_errors
 
+
 def test_validate_ideal_source_sk():
     node = initialize_array(DatasetType.input, CT.node, 1)
     node[AT.id] = [1]
@@ -818,6 +819,7 @@ def test_validate_ideal_source_sk():
         calculation_type=CalculationType.short_circuit,
     )
     assert validation_errors is not None
+
 
 def test_validate_three_winding_transformer(input_data):
     validation_errors = validate_input_data(input_data, symmetric=True)
