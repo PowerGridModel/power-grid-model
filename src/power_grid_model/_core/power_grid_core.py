@@ -122,6 +122,12 @@ class SerializerPtr(c_void_p):
     """
 
 
+class ValidationResultPtr(c_void_p):
+    """
+    Pointer to validation result
+    """
+
+
 def _load_core() -> CDLL:
     """
 
@@ -569,6 +575,27 @@ class PowerGridCore:
 
     @make_c_binding
     def destroy_serializer(self, serializer: SerializerPtr) -> None:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def validate_input_data(self, dataset: ConstDatasetPtr, symmetric: int) -> ValidationResultPtr:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def validation_result_passed(self, result: ValidationResultPtr) -> int:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def validation_result_get_json(
+        self,
+        result: ValidationResultPtr,
+        data: CharDoublePtr,  # type: ignore[valid-type]
+        size: IdxPtr,  # type: ignore[valid-type]
+    ) -> None:
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def destroy_validation_result(self, result: ValidationResultPtr) -> None:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
 
