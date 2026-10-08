@@ -677,7 +677,7 @@ The impedance is specified by convention as short circuit power.
 | `rx_ratio`    | `double`  | -                | R to X ratio                                       |    &#10060; default `0.1`    | &#10004; |    `>= 0`    |
 | `z01_ratio`   | `double`  | -                | zero-sequence to positive sequence impedance ratio |    &#10060; default `1.0`    | &#10004; |    `> 0`     |
 
-For an ideal source, set `sk` to `inf`. Internally, the ideal source is represented by a sufficiently large finite short circuit power to avoid numerical issues.
+For an ideal source, set `sk` to `inf`. Internally, the ideal source is represented by a sufficiently large finite short circuit power (`sk = 1e50 VA`) to avoid numerical issues.
 
 #### Electric Model
 
