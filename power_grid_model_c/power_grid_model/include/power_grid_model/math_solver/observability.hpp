@@ -16,6 +16,7 @@
 #include "../common/exception.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
@@ -23,6 +24,7 @@
 #include <iterator>
 #include <limits>
 #include <numeric>
+#include <queue>
 #include <span>
 #include <utility>
 #include <vector>
@@ -256,10 +258,377 @@ inline void complete_bidirectional_neighbourhood_info(std::vector<BusNeighbourho
     }
 }
 
+// Robust meshed observability check (work in progress).
+//
+// The greedy spanning-tree walk further below is order-dependent: whether it
+// succeeds can depend on the order in which neighbours happen to be stored. The
+// routines in this section build an order-independent replacement based on
+// matroid intersection: the graphic matroid of the network (the spanning-tree
+// / forest constraint) intersected with the transversal matroid of the
+// measurement-to-branch assignment (every tree branch needs a distinct
+// measurement).
+//
+// First we need to contract every branch that carries its own flow measurement. Such a
+// branch is always self-assignable, so its two end buses can be merged into a
+// single observable component without affecting the rest of the assignment. The
+// resulting partition is exactly the connected components of the branch-measured
+// subgraph and is therefore independent of bus or neighbour ordering.
+
+// A branch carries its own (native) flow measurement, regardless of whether it
+// has already been used by the spanning-tree construction.
+inline bool branch_has_native_measurement(ConnectivityStatus status) {
+    return status == ConnectivityStatus::branch_native_measurement_unused ||
+           status == ConnectivityStatus::branch_native_measurement_consumed;
+}
+
+// Disjoint-set (union-find) over bus indices, used to group buses into
+// observable components.
+class DisjointSet {
+  public:
+    explicit DisjointSet(Idx n) : parent_(static_cast<std::size_t>(n)), rank_(static_cast<std::size_t>(n), Idx{0}) {
+        std::iota(parent_.begin(), parent_.end(), Idx{0});
+    }
+
+    // Find the representative of x, applying path compression.
+    Idx find(Idx x) {
+        while (parent_[x] != x) {
+            parent_[x] = parent_[parent_[x]];
+            x = parent_[x];
+        }
+        return x;
+    }
+
+    // Unite the sets containing a and b. Returns true if they were distinct.
+    bool unite(Idx node_a, Idx node_b) {
+        Idx const root_a = find(node_a);
+        Idx const root_b = find(node_b);
+        if (root_a == root_b) {
+            return false;
+        }
+        // form union by rank
+        if (rank_[root_a] < rank_[root_b]) {
+            parent_[root_a] = root_b;
+        } else if (rank_[root_a] > rank_[root_b]) {
+            parent_[root_b] = root_a;
+        } else {
+            parent_[root_b] = root_a;
+            ++rank_[root_a];
+        }
+        return true;
+    }
+
+  private:
+    std::vector<Idx> parent_;
+    std::vector<Idx> rank_;
+};
+
+// Contract every branch that carries its own native flow measurement, merging
+// its two end buses. The resulting partition is the set of observable
+// components and is independent of bus or neighbour ordering.
+inline DisjointSet contract_branch_measured_edges(std::vector<BusNeighbourhoodInfo> const& neighbour_list) {
+    auto const n_bus = static_cast<Idx>(neighbour_list.size());
+    DisjointSet components{n_bus};
+    for (Idx bus = 0; bus < n_bus; ++bus) {
+        for (auto const& neighbour : neighbour_list[bus].direct_neighbours) {
+            if (branch_has_native_measurement(neighbour.status)) {
+                components.unite(bus, neighbour.bus);
+            }
+        }
+    }
+    return components;
+}
+
+// Count the number of distinct components in the disjoint set over [0, n_bus).
+inline Idx count_components(DisjointSet& components, Idx n_bus) {
+    Idx count = 0;
+    for (Idx bus = 0; bus < n_bus; ++bus) {
+        if (components.find(bus) == bus) {
+            ++count;
+        }
+    }
+    return count;
+}
+
+// An unmeasured branch that still connects two distinct observable components.
+// It can be added to the spanning tree only by consuming a nodal (injection)
+// measurement at one of its two end buses. Branches that carry their own flow
+// measurement do not appear here: they were already contracted into components.
+struct CandidateEdge {
+    Idx from_bus;       // original from-bus
+    Idx to_bus;         // original to-bus
+    Idx from_component; // compact component index of from_bus
+    Idx to_component;   // compact component index of to_bus
+};
+
+// The network reduced to its observable components. Branch-measured edges have
+// been contracted away, leaving the super-nodes (components), the unmeasured
+// branches that still join distinct components, and the buses that hold an
+// unused nodal measurement available for assignment.
+struct ContractedNetwork {
+    Idx n_components{};
+    std::vector<Idx> component_of_bus; // bus -> compact component index in [0, n_components)
+    std::vector<CandidateEdge> candidate_edges;
+    std::vector<std::uint8_t> bus_has_injection; // 1 if the bus has an unused nodal measurement
+};
+
+// Reduce the network to its observable components: compact the contracted
+// component representatives to dense indices, record per-bus injection
+// availability, and collect the unmeasured branches that join distinct
+// components. The result depends only on the graph and its measurements, not on
+// bus or neighbour ordering.
+inline ContractedNetwork build_contracted_network(std::vector<BusNeighbourhoodInfo> const& neighbour_list,
+                                                  DisjointSet& components) {
+    auto const n_bus = static_cast<Idx>(neighbour_list.size());
+    ContractedNetwork result;
+    result.component_of_bus.assign(static_cast<std::size_t>(n_bus), -1);
+    result.bus_has_injection.assign(static_cast<std::size_t>(n_bus), 0);
+
+    // Compact component representatives to dense indices [0, n_components).
+    std::vector<Idx> representative_to_compact(static_cast<std::size_t>(n_bus), -1);
+    for (Idx bus = 0; bus < n_bus; ++bus) {
+        Idx const representative = components.find(bus);
+        if (representative_to_compact[representative] == -1) {
+            representative_to_compact[representative] = result.n_components++;
+        }
+        result.component_of_bus[bus] = representative_to_compact[representative];
+        if (neighbour_list[bus].status == ConnectivityStatus::node_measured) {
+            result.bus_has_injection[bus] = 1;
+        }
+    }
+
+    // Collect candidate edges. The neighbour list is bidirectional, so each
+    // undirected branch is taken once (from the lower-indexed bus). Branches
+    // whose endpoints already share a component would be self-loops in the
+    // contracted graph and are dropped.
+    for (Idx bus = 0; bus < n_bus; ++bus) {
+        for (auto const& neighbour : neighbour_list[bus].direct_neighbours) {
+            if (bus >= neighbour.bus || branch_has_native_measurement(neighbour.status)) {
+                continue;
+            }
+            Idx const from_component = result.component_of_bus[bus];
+            Idx const to_component = result.component_of_bus[neighbour.bus];
+            if (from_component == to_component) {
+                continue;
+            }
+            result.candidate_edges.push_back({.from_bus = bus,
+                                              .to_bus = neighbour.bus,
+                                              .from_component = from_component,
+                                              .to_component = to_component});
+        }
+    }
+
+    return result;
+}
+
+// Graphic-matroid independence: do the given candidate edges form a forest over
+// the components?
+inline bool contracted_edges_form_forest(ContractedNetwork const& net, std::vector<Idx> const& edge_indices) {
+    DisjointSet components{net.n_components};
+    for (Idx const idx : edge_indices) {
+        auto const& edge = net.candidate_edges[idx];
+        if (!components.unite(edge.from_component, edge.to_component)) {
+            return false; // closing a cycle
+        }
+    }
+    return true;
+}
+
+// Transversal-matroid augmenting step: try to assign the given candidate edge to
+// an injection bus at one of its two endpoints, reassigning earlier edges along
+// an alternating path if necessary.
+inline bool assign_edge_to_injection(ContractedNetwork const& net, Idx edge_idx, std::vector<Idx>& bus_to_edge,
+                                     std::vector<std::uint8_t>& visited_bus) {
+    auto const& edge = net.candidate_edges[edge_idx];
+    std::array<Idx, 2> const endpoint_buses{edge.from_bus, edge.to_bus};
+    for (Idx const bus : endpoint_buses) {
+        if (net.bus_has_injection[bus] == 0 || visited_bus[bus] != 0) {
+            continue;
+        }
+        visited_bus[bus] = 1;
+        if (bus_to_edge[bus] == -1 || assign_edge_to_injection(net, bus_to_edge[bus], bus_to_edge, visited_bus)) {
+            bus_to_edge[bus] = edge_idx;
+            return true;
+        }
+    }
+    return false;
+}
+
+// Transversal-matroid independence: can every candidate edge be matched to a
+// distinct injection bus at one of its endpoints?
+inline bool contracted_edges_transversal_independent(ContractedNetwork const& net,
+                                                     std::vector<Idx> const& edge_indices) {
+    auto const n_bus = static_cast<Idx>(net.component_of_bus.size());
+    std::vector<Idx> bus_to_edge(static_cast<std::size_t>(n_bus), -1);
+    for (Idx const idx : edge_indices) {
+        std::vector<std::uint8_t> visited_bus(static_cast<std::size_t>(n_bus), 0);
+        if (!assign_edge_to_injection(net, idx, bus_to_edge, visited_bus)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// Build the edge-index set I, optionally adding one edge and removing one.
+inline std::vector<Idx> edge_set_with(std::vector<std::uint8_t> const& in_set, Idx n_edges, Idx add_edge,
+                                      Idx remove_edge) {
+    std::vector<Idx> result;
+    for (Idx e = 0; e < n_edges; ++e) {
+        if (e != remove_edge && (in_set[e] != 0 || e == add_edge)) {
+            result.push_back(e);
+        }
+    }
+    return result;
+}
+
+// Sources X1: edges that can extend the forest; sinks X2: edges that can extend
+// the injection assignment.
+struct ExchangeGraphSources {
+    std::vector<std::uint8_t> can_extend_forest;
+    std::vector<std::uint8_t> can_extend_assignment;
+};
+
+// Classify every edge not in I by whether adding it keeps a forest and/or a
+// valid injection assignment.
+inline ExchangeGraphSources classify_exchange_edges(ContractedNetwork const& net,
+                                                    std::vector<std::uint8_t> const& in_set, Idx n_edges) {
+    ExchangeGraphSources sources{.can_extend_forest = std::vector<std::uint8_t>(static_cast<std::size_t>(n_edges), 0),
+                                 .can_extend_assignment =
+                                     std::vector<std::uint8_t>(static_cast<std::size_t>(n_edges), 0)};
+    for (Idx x = 0; x < n_edges; ++x) {
+        if (in_set[x] != 0) {
+            continue;
+        }
+        sources.can_extend_forest[x] = contracted_edges_form_forest(net, edge_set_with(in_set, n_edges, x, -1)) ? 1 : 0;
+        sources.can_extend_assignment[x] =
+            contracted_edges_transversal_independent(net, edge_set_with(in_set, n_edges, x, -1)) ? 1 : 0;
+    }
+    return sources;
+}
+
+// Length-zero augmentation: directly add an edge independent in both matroids.
+// Returns true and updates in_set if such an edge exists.
+inline bool try_length_zero_augmentation(std::vector<std::uint8_t>& in_set, Idx n_edges,
+                                         ExchangeGraphSources const& sources) {
+    for (Idx x = 0; x < n_edges; ++x) {
+        if (in_set[x] == 0 && sources.can_extend_forest[x] != 0 && sources.can_extend_assignment[x] != 0) {
+            in_set[x] = 1;
+            return true;
+        }
+    }
+    return false;
+}
+
+// Breadth-first search for a shortest augmenting path from X1 to X2 in the
+// exchange graph. Arcs leaving an edge x not in I go to edges y in I such that
+// I - y + x stays assignable; arcs leaving an edge y in I go to edges x not in I
+// such that I - y + x stays a forest. Fills predecessor and returns the sink
+// edge index, or -1 if no augmenting path exists.
+inline Idx find_augmenting_sink(ContractedNetwork const& net, std::vector<std::uint8_t> const& in_set, Idx n_edges,
+                                ExchangeGraphSources const& sources, std::vector<Idx>& predecessor) {
+    std::vector<std::uint8_t> visited(static_cast<std::size_t>(n_edges), 0);
+    std::queue<Idx> bfs_queue;
+    for (Idx x = 0; x < n_edges; ++x) {
+        if (in_set[x] == 0 && sources.can_extend_forest[x] != 0) {
+            visited[x] = 1;
+            bfs_queue.push(x);
+        }
+    }
+
+    // Whether an arc current -> other exists in the exchange graph.
+    auto is_reachable = [&](Idx current, Idx other) {
+        if (in_set[current] == 0) {
+            return in_set[other] != 0 &&
+                   contracted_edges_transversal_independent(net, edge_set_with(in_set, n_edges, current, other));
+        }
+        return in_set[other] == 0 && contracted_edges_form_forest(net, edge_set_with(in_set, n_edges, other, current));
+    };
+
+    // An out-of-set edge that can extend the assignment and was actually reached
+    // (pure sources are already known not to be sinks) terminates the path.
+    auto is_sink = [&](Idx current) {
+        return in_set[current] == 0 && sources.can_extend_assignment[current] != 0 && predecessor[current] != -1;
+    };
+
+    while (!bfs_queue.empty()) {
+        Idx const current = bfs_queue.front();
+        bfs_queue.pop();
+        if (is_sink(current)) {
+            return current;
+        }
+        for (Idx other = 0; other < n_edges; ++other) {
+            if (visited[other] == 0 && is_reachable(current, other)) {
+                visited[other] = 1;
+                predecessor[other] = current;
+                bfs_queue.push(other);
+            }
+        }
+    }
+    return -1;
+}
+
+// Flip membership of every edge along the augmenting path ending at sink.
+inline void flip_augmenting_path(std::vector<std::uint8_t>& in_set, std::vector<Idx> const& predecessor, Idx sink) {
+    for (Idx node = sink; node != -1; node = predecessor[node]) {
+        in_set[node] = (in_set[node] == 0) ? std::uint8_t{1} : std::uint8_t{0};
+    }
+}
+
+// Try to enlarge the current common independent set I (candidate edges that
+// simultaneously form a forest over the components and can be matched to
+// distinct injection buses) by one element, using a shortest augmenting path in
+// the matroid-intersection exchange graph. Returns true and updates in_set on
+// success.
+inline bool grow_assignable_forest(ContractedNetwork const& net, std::vector<std::uint8_t>& in_set) {
+    auto const n_edges = static_cast<Idx>(net.candidate_edges.size());
+    ExchangeGraphSources const sources = classify_exchange_edges(net, in_set, n_edges);
+
+    // First try a direct (length-zero) augmentation.
+    if (try_length_zero_augmentation(in_set, n_edges, sources)) {
+        return true;
+    }
+
+    // Otherwise search for a shortest augmenting path and flip it.
+    std::vector<Idx> predecessor(static_cast<std::size_t>(n_edges), -1);
+    Idx const sink = find_augmenting_sink(net, in_set, n_edges, sources, predecessor);
+    if (sink == -1) {
+        return false;
+    }
+    flip_augmenting_path(in_set, predecessor, sink);
+    return true;
+}
+
+// Decide observability of the contracted network: does a spanning tree over the
+// components exist whose every edge can be assigned a distinct injection bus?
+inline bool is_contracted_network_observable(ContractedNetwork const& net) {
+    if (net.n_components <= 1) {
+        return true;
+    }
+    std::vector<std::uint8_t> in_set(net.candidate_edges.size(), 0);
+    Idx const target = net.n_components - 1;
+    Idx selected = 0;
+    while (selected < target && grow_assignable_forest(net, in_set)) {
+        ++selected;
+    }
+    return selected == target;
+}
+
+// Order-independent meshed observability check based on matroid intersection of
+// the network's graphic matroid and the measurement-assignment transversal
+// matroid.
+inline bool meshed_observable_matroid_intersection(std::vector<BusNeighbourhoodInfo> const& neighbour_list) {
+    auto components = contract_branch_measured_edges(neighbour_list);
+    auto const net = build_contracted_network(neighbour_list, components);
+    return is_contracted_network_observable(net);
+}
+
+// To be deprecated post matroid intersection implementation.
 inline void prepare_starting_nodes(std::vector<BusNeighbourhoodInfo> const& neighbour_list, Idx n_bus,
                                    std::vector<Idx>& starting_candidates) {
-    // First find a list of starting points. These are nodes without measurements and all edges connecting to it has no
-    // edge measurements.
+    // First collect nodes without nodal measurements and no measured incident edges.
+    // Then append nodes without nodal measurements that do have measured incident edges.
+    std::vector<Idx> secondary_candidates;
+    secondary_candidates.reserve(static_cast<std::size_t>(n_bus));
+
     for (Idx bus = 0; bus < n_bus; ++bus) {
         if (neighbour_list[bus].status == ConnectivityStatus::has_no_measurement) {
             bool all_neighbours_no_edge_measurement = true;
@@ -271,18 +640,13 @@ inline void prepare_starting_nodes(std::vector<BusNeighbourhoodInfo> const& neig
             }
             if (all_neighbours_no_edge_measurement) {
                 starting_candidates.push_back(bus);
+            } else {
+                secondary_candidates.push_back(bus);
             }
         }
     }
 
-    // If no such starting point, find nodes without measurements
-    if (starting_candidates.empty()) {
-        for (Idx bus = 0; bus < n_bus; ++bus) {
-            if (neighbour_list[bus].status == ConnectivityStatus::has_no_measurement) {
-                starting_candidates.push_back(bus);
-            }
-        }
-    }
+    starting_candidates.insert(starting_candidates.end(), secondary_candidates.begin(), secondary_candidates.end());
 
     // If no nodes without measurements, start from first node
     // (but network should be observable, so this is just a fallback)
@@ -300,6 +664,7 @@ struct StatusModification {
     ConnectivityStatus old_value; // original value before modification
 };
 
+// To be deprecated post matroid intersection implementation.
 // Context struct to hold shared state during spanning tree search
 struct SpanningTreeContext {
     std::vector<BusNeighbourhoodInfo>* neighbour_list;
@@ -319,6 +684,7 @@ struct SpanningTreeContext {
     }
 };
 
+// To be deprecated post matroid intersection implementation.
 // Helper function: Try to traverse edges with native measurements
 inline bool try_native_edge_measurements(SpanningTreeContext& ctx, bool& step_success) {
     if ((*ctx.visited)[ctx.current_bus] == std::to_underlying(BusVisited::NotVisited)) {
@@ -352,6 +718,7 @@ inline bool try_native_edge_measurements(SpanningTreeContext& ctx, bool& step_su
     return false;
 }
 
+// To be deprecated post matroid intersection implementation.
 // Helper function: Try to use downwind measurement
 inline bool try_downwind_measurement(SpanningTreeContext& ctx, bool& step_success, bool current_bus_no_measurement) {
     if (!current_bus_no_measurement && ctx.downwind) {
@@ -389,6 +756,7 @@ inline bool try_downwind_measurement(SpanningTreeContext& ctx, bool& step_succes
     return false;
 }
 
+// To be deprecated post matroid intersection implementation.
 // Helper function: Process a single edge during general connection rules
 inline bool process_edge(SpanningTreeContext& ctx, BusNeighbourhoodInfo::neighbour& neighbour,
                          ConnectivityStatus neighbour_status, ConnectivityStatus reverse_status, bool use_current_node,
@@ -425,6 +793,7 @@ inline bool process_edge(SpanningTreeContext& ctx, BusNeighbourhoodInfo::neighbo
     return true;
 }
 
+// To be deprecated post matroid intersection implementation.
 // Helper function: Try general connection rules
 inline bool try_general_connection_rules(SpanningTreeContext& ctx, bool& step_success,
                                          bool current_bus_no_measurement) {
@@ -450,6 +819,7 @@ inline bool try_general_connection_rules(SpanningTreeContext& ctx, bool& step_su
     return false;
 }
 
+// To be deprecated post matroid intersection implementation.
 // Helper function: Reassign nodal measurement between two connected nodes
 inline void reassign_nodal_measurement(SpanningTreeContext& ctx, Idx from_node, Idx to_node) {
     // no reassignment possible if reached via edge measurement
@@ -487,6 +857,7 @@ inline void reassign_nodal_measurement(SpanningTreeContext& ctx, Idx from_node, 
     }
 }
 
+// To be deprecated post matroid intersection implementation.
 // Helper function: Try backtracking
 inline bool try_backtrack(SpanningTreeContext& ctx, bool& step_success) {
     if (!ctx.edge_track->empty()) {
@@ -516,6 +887,7 @@ inline bool try_backtrack(SpanningTreeContext& ctx, bool& step_success) {
     return false;
 }
 
+// To be deprecated post matroid intersection implementation.
 inline bool find_spanning_tree_from_node_impl(Idx start_bus, Idx n_bus,
                                               std::vector<BusNeighbourhoodInfo>& neighbour_list,
                                               std::vector<StatusModification>& modifications,
@@ -581,6 +953,7 @@ inline bool find_spanning_tree_from_node_impl(Idx start_bus, Idx n_bus,
     return ctx.visited_count == n_bus;
 }
 
+// To be deprecated post matroid intersection implementation.
 // Backward-compatible overload for tests - makes a copy and creates modification tracker
 inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus,
                                          std::vector<BusNeighbourhoodInfo> const& neighbour_list) {
@@ -594,6 +967,7 @@ inline bool find_spanning_tree_from_node(Idx start_bus, Idx n_bus,
                                              edge_track_buffer);
 }
 
+// To be deprecated post matroid intersection implementation.
 inline bool sufficient_condition_meshed_without_voltage_phasor(std::vector<BusNeighbourhoodInfo>& neighbour_list) {
     auto const n_bus = static_cast<Idx>(neighbour_list.size());
     std::vector<Idx> starting_candidates;
@@ -626,6 +1000,7 @@ inline bool sufficient_condition_meshed_without_voltage_phasor(std::vector<BusNe
     throw NotObservableError{"Meshed observability check fail. Network unobservable.\n"};
 }
 
+// To be deprecated post matroid intersection implementation.
 // Backward-compatible overload for tests - makes a copy
 inline bool
 sufficient_condition_meshed_without_voltage_phasor(std::vector<BusNeighbourhoodInfo> const& neighbour_list) {
@@ -685,8 +1060,11 @@ inline ObservabilityResult observability_check(MeasuredValues<sym> const& measur
         is_sufficient_condition_met = detail::sufficient_condition_radial_with_voltage_phasor(
             y_bus_structure, observability_sensors, n_voltage_phasor_sensors);
     } else {
-        is_sufficient_condition_met =
-            detail::sufficient_condition_meshed_without_voltage_phasor(bus_neighbourhood_info);
+        // Order-independent meshed sufficient condition based on matroid intersection.
+        if (!detail::meshed_observable_matroid_intersection(bus_neighbourhood_info)) {
+            throw NotObservableError{"Meshed observability check fail. Network unobservable.\n"};
+        }
+        is_sufficient_condition_met = true;
     }
 
     return ObservabilityResult{.is_observable = is_necessary_condition_met && is_sufficient_condition_met,
