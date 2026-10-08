@@ -15,6 +15,7 @@
 
 #include <power_grid_model/batch_parameter.hpp>
 #include <power_grid_model/common/common.hpp>
+#include <power_grid_model/common/exception.hpp>
 
 #include <concepts>
 #include <exception>
@@ -60,13 +61,15 @@ inline void clear_error(PGM_Handle* handle) {
 struct DefaultExceptionHandler {
     void operator()(PGM_Handle& handle) const noexcept { handle_all_errors(handle, PGM_regular_error); }
 
-    static void handle_all_errors(PGM_Handle& handle, PGM_Idx error_code,
+    static void handle_all_errors(PGM_Handle& handle, PGM_Idx fallback_error_code,
                                   std::string_view extra_message = "") noexcept {
         std::exception_ptr const ex_ptr = std::current_exception();
         try {
             std::rethrow_exception(ex_ptr);
+        } catch (power_grid_model::PowerGridError const& ex) {
+            handle_regular_error(handle, ex, static_cast<PGM_Idx>(ex.error_code()), extra_message);
         } catch (std::exception const& ex) { // NOSONAR(S1181)
-            handle_regular_error(handle, ex, error_code, extra_message);
+            handle_regular_error(handle, ex, fallback_error_code, extra_message);
         } catch (...) { // NOSONAR(S2738)
             handle_unkown_error(handle);
         }
