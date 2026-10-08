@@ -366,10 +366,8 @@ TEST_CASE("Test ideal source short circuit power handling") {
 
         const Source above_cap_source{above_cap_input, un};
 
-        DoubleComplex const above_cap_y =
-            above_cap_source.math_param<symmetric_t>().template y_ref<symmetric_t>();
-        DoubleComplex const capped_y =
-            capped_source.math_param<symmetric_t>().template y_ref<symmetric_t>();
+        DoubleComplex const above_cap_y = above_cap_source.math_param<symmetric_t>().template y_ref<symmetric_t>();
+        DoubleComplex const capped_y = capped_source.math_param<symmetric_t>().template y_ref<symmetric_t>();
 
         CHECK(above_cap_y.real() == doctest::Approx(capped_y.real()));
         CHECK(above_cap_y.imag() == doctest::Approx(capped_y.imag()));
@@ -387,22 +385,19 @@ TEST_CASE("Test ideal source short circuit power handling") {
 
         Source updated_source{regular_source_input, un};
 
-        auto const changed =
-            updated_source.update(SourceUpdate{.id = 1,
-                                               .status = na_IntS,
-                                               .u_ref = nan,
-                                               .u_ref_angle = nan,
-                                               .sk = infinity,
-                                               .rx_ratio = nan,
-                                               .z01_ratio = nan});
+        auto const changed = updated_source.update(SourceUpdate{.id = 1,
+                                                                .status = na_IntS,
+                                                                .u_ref = nan,
+                                                                .u_ref_angle = nan,
+                                                                .sk = infinity,
+                                                                .rx_ratio = nan,
+                                                                .z01_ratio = nan});
 
         CHECK(!changed.topo);
         CHECK(changed.param);
 
-        DoubleComplex const updated_y =
-            updated_source.math_param<symmetric_t>().template y_ref<symmetric_t>();
-        DoubleComplex const capped_y =
-            capped_source.math_param<symmetric_t>().template y_ref<symmetric_t>();
+        DoubleComplex const updated_y = updated_source.math_param<symmetric_t>().template y_ref<symmetric_t>();
+        DoubleComplex const capped_y = capped_source.math_param<symmetric_t>().template y_ref<symmetric_t>();
 
         CHECK(std::isfinite(updated_y.real()));
         CHECK(std::isfinite(updated_y.imag()));
