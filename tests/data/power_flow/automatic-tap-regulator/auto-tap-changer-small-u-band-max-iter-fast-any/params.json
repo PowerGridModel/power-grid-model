@@ -2,9 +2,5 @@
   "calculation_method": "newton_raphson",
   "tap_changing_strategy": "fast_any_tap",
   "rtol": 1e-5,
-  "atol": 1e-5,
-  "raises": {
-    "raises": "MaxIterationReached",
-    "reason": "TapPositionOptimizer::binary_search"
-  }
+  "atol": 1e-5
 }
