@@ -11,7 +11,7 @@ from collections.abc import Sequence
 from ctypes import pointer
 from enum import IntEnum
 from math import prod
-from typing import Any, Literal, overload
+from typing import Any, Literal, cast, overload
 
 import numpy as np
 
@@ -401,7 +401,7 @@ class PowerGridModel:
 
         if state_requests is None:
             return output_data
-        states = build_model_states(state_output) if state_output else [None] * batch_size
+        states: list[ModelState | None] = build_model_states(state_output) if state_output else [None] * batch_size
         model_state = states if is_batch else states[0]
         return output_data, model_state
 
@@ -468,15 +468,18 @@ class PowerGridModel:
             threading=threading,
             experimental_features=experimental_features,
         )
-        return self._calculate_impl(
-            calculation_type=calculation_type,
-            symmetric=symmetric,
-            update_data=update_data,
-            output_component_types=output_component_types,
-            options=options,
-            continue_on_batch_error=continue_on_batch_error,
-            decode_error=decode_error,
-            experimental_features=experimental_features,
+        return cast(
+            Dataset,
+            self._calculate_impl(
+                calculation_type=calculation_type,
+                symmetric=symmetric,
+                update_data=update_data,
+                output_component_types=output_component_types,
+                options=options,
+                continue_on_batch_error=continue_on_batch_error,
+                decode_error=decode_error,
+                experimental_features=experimental_features,
+            ),
         )
 
     def _calculate_short_circuit(  # noqa: PLR0913
@@ -502,15 +505,18 @@ class PowerGridModel:
             short_circuit_voltage_scaling=short_circuit_voltage_scaling,
             experimental_features=experimental_features,
         )
-        return self._calculate_impl(
-            calculation_type=calculation_type,
-            symmetric=symmetric,
-            update_data=update_data,
-            output_component_types=output_component_types,
-            options=options,
-            continue_on_batch_error=continue_on_batch_error,
-            decode_error=decode_error,
-            experimental_features=experimental_features,
+        return cast(
+            Dataset,
+            self._calculate_impl(
+                calculation_type=calculation_type,
+                symmetric=symmetric,
+                update_data=update_data,
+                output_component_types=output_component_types,
+                options=options,
+                continue_on_batch_error=continue_on_batch_error,
+                decode_error=decode_error,
+                experimental_features=experimental_features,
+            ),
         )
 
     @overload
@@ -608,7 +614,16 @@ class PowerGridModel:
         self,
         *,
         get_model_state: bool | Sequence[StateOutputRequest],
-        **kwargs: Any,
+        symmetric: bool = True,
+        error_tolerance: float = 1e-8,
+        max_iterations: int = 20,
+        calculation_method: CalculationMethod | str = CalculationMethod.newton_raphson,
+        update_data: BatchDataset | list[BatchDataset] | None = None,
+        threading: int = -1,
+        output_component_types: ComponentAttributeMapping = None,
+        continue_on_batch_error: bool = False,
+        decode_error: bool = True,
+        tap_changing_strategy: TapChangingStrategy | str = TapChangingStrategy.disabled,
     ) -> Dataset | tuple[Dataset, ModelState | list[ModelState | None] | None]: ...
 
     def calculate_power_flow(  # noqa: PLR0913
@@ -690,9 +705,13 @@ class PowerGridModel:
                 You can still retrieve the errors and succeeded/failed scenarios via the batch_error.
             decode_error (bool, optional):
                 Decode error messages to their derived types if possible.
+            get_model_state (bool or sequence of StateOutputRequest, optional):
+                Request typed native solver state. True requests Y-bus and Jacobian for every scenario; a sequence
+                selects requested fields per flattened batch scenario. The sequence length must match the total
+                scenario count. False preserves the output-only return.
 
         Returns:
-            Dictionary of results of all components.
+            Dictionary of results of all components, or a tuple of (output, model state) when requested.
 
                 - key: Component type name to be updated in batch.
                 - value:

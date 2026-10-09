@@ -270,6 +270,22 @@ TEST_CASE("API Model") {
             CHECK(node_result_u_pu[0] == doctest::Approx(0.5));
             check_common_node_results();
         }
+
+          SUBCASE("Native model state") {
+            auto state_output = model.calculate_with_state(options, single_output_dataset, {{true, true}});
+            REQUIRE(state_output.scenario_count() == 1);
+            auto const scenario = state_output.scenario(0);
+            CHECK(scenario.has_state == 1);
+            CHECK(scenario.y_bus_requested == 1);
+            CHECK(scenario.jacobian_requested == 1);
+            REQUIRE(scenario.n_groups > 0);
+
+            auto const group = state_output.group(0, 0);
+            CHECK(group.has_y_bus == 1);
+            CHECK(group.has_jacobian == 1);
+            CHECK(group.y_bus_nnz > 0);
+            CHECK(group.jacobian_nnz > 0);
+          }
     }
 
     SUBCASE("Test get indexer") {

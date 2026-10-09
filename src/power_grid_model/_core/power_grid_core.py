@@ -187,6 +187,12 @@ class StateGroupViewC(Structure):
     ]
 
 
+StateOutputRequestPtr = POINTER(StateOutputRequestC)
+StateScenarioViewPtr = POINTER(StateScenarioViewC)
+StateGroupViewPtr = POINTER(StateGroupViewC)
+StateOutputPtrPtr = POINTER(StateOutputPtr)
+
+
 def _load_core() -> CDLL:
     """
 
@@ -216,9 +222,9 @@ _CDLL.PGM_calculate_with_state.argtypes = [
     OptionsPtr,
     MutableDatasetPtr,
     ConstDatasetPtr,
-    POINTER(StateOutputRequestC),
+    StateOutputRequestPtr,
     IdxC,
-    POINTER(StateOutputPtr),
+    StateOutputPtrPtr,
 ]
 _CDLL.PGM_calculate_with_state.restype = None
 
@@ -477,9 +483,9 @@ class PowerGridCore:
         opt: OptionsPtr,
         output_data: MutableDatasetPtr,  # type: ignore[valid-type]
         update_data: ConstDatasetPtr,  # type: ignore[valid-type]
-        requests: POINTER(StateOutputRequestC),
+        requests: StateOutputRequestPtr,  # type: ignore[valid-type]
         request_count: int,
-        state_output: POINTER(StateOutputPtr),
+        state_output: StateOutputPtrPtr,  # type: ignore[valid-type]
     ) -> None:
         pass  # pragma: no cover
 
@@ -489,13 +495,13 @@ class PowerGridCore:
 
     @make_c_binding
     def state_output_get_scenario(
-        self, state_output: StateOutputPtr, scenario_idx: int, view: POINTER(StateScenarioViewC)
+        self, state_output: StateOutputPtr, scenario_idx: int, view: StateScenarioViewPtr  # type: ignore[valid-type]
     ) -> None:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding
     def state_output_get_group(
-        self, state_output: StateOutputPtr, scenario_idx: int, group_idx: int, view: POINTER(StateGroupViewC)
+        self, state_output: StateOutputPtr, scenario_idx: int, group_idx: int, view: StateGroupViewPtr  # type: ignore[valid-type]
     ) -> None:  # type: ignore[empty-body]
         pass  # pragma: no cover
 

@@ -203,11 +203,13 @@ def test_power_flow_model_state_batch_requests(model: PowerGridModel, update_bat
     )
 
     assert isinstance(states, list)
-    assert len(states) == 2
-    assert states[0] is not None and states[0].y_bus_requested
+    assert len(states) == 2  # noqa: PLR2004
+    assert states[0] is not None
+    assert states[0].y_bus_requested
     assert states[0].groups[0].y_bus is not None
     assert states[0].groups[0].jacobian is None
-    assert states[1] is not None and states[1].jacobian_requested
+    assert states[1] is not None
+    assert states[1].jacobian_requested
     assert states[1].groups[0].y_bus is None
     assert states[1].groups[0].jacobian is not None
 
