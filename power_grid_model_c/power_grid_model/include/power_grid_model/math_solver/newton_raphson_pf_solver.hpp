@@ -390,9 +390,34 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         for (Idx i = 0; i != this->n_bus_; ++i) {
             auto& bus_output = output.bus[i];
             auto const& q_limit = bus_control_[i].q_limit;
-
             bus_output.q_limit_violated = q_limit.limit_violated;
         }
+    }
+
+    ModelStateJacobian get_last_jacobian_state(YBus<sym> const& y_bus) const {
+        ModelStateJacobian result{
+            .row_indptr_lu = y_bus.row_indptr_lu(),
+            .col_indices_lu = y_bus.col_indices_lu(),
+        };
+        constexpr Idx block_size = is_symmetric_v<sym> ? 1 : 9;
+        for (auto& block : result.blocks) {
+            block.reserve(static_cast<size_t>(std::ssize(data_jac_) * block_size));
+        }
+
+        constexpr Idx sub_size = is_symmetric_v<sym> ? 1 : 3;
+        for (Idx entry = 0; entry < static_cast<Idx>(std::ssize(data_jac_)); ++entry) {
+            for (Idx block = 0; block < 4; ++block) {
+                Idx const block_row = block / 2;
+                Idx const block_col = block % 2;
+                for (Idx row = 0; row < sub_size; ++row) {
+                    for (Idx col = 0; col < sub_size; ++col) {
+                        result.blocks[block].push_back(data_jac_[entry](block_row * sub_size + row,
+                                                                        block_col * sub_size + col));
+                    }
+                }
+            }
+        }
+        return result;
     }
 
   private:
