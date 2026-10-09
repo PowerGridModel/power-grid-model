@@ -1,34 +1,92 @@
 {
-  // Use IntelliSense to learn about possible attributes.
-  // Hover to view descriptions of existing attributes.
-  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  // Use IntelliSense to learn about possible attributes. 
+  // Hover to view descriptions of existing attributes. 
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387 
   "version": "0.2.0",
   "configurations": [
     {
       "name": "Debug validation test [Unix]",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${command:cmake.buildDirectory}/bin/power_grid_model_validation_tests",
-      "args": ["--test-case=Validation test single", "--subcase=power_flow/1os2msr-sym-newton_raphson"],
+      "program": "${command:cmake.launchTargetPath}",
+      "args": [
+        "--test-case=Validation test single - power flow",
+        "--subcase=power_flow/automatic-tap-regulator/achievable-voltage-above-band-fast-any-sym-newton_raphson"
+      ],
       "stopAtEntry": false,
-      "cwd": "${fileDirname}",
+      "cwd": "${workspaceFolder}",
       "environment": [],
       "externalConsole": false,
       "linux": {
-        "MIMode": "gdb"
+        "MIMode": "gdb",
+        "setupCommands": [
+          {
+            "description": "Enable pretty-printing for gdb",
+            "text": "-enable-pretty-printing",
+            "ignoreFailures": true
+          }
+        ]
       },
       "osx": {
-        "MIMode": "lldb"
+        "MIMode": "lldb",
+        "setupCommands": [
+          {
+            "description": "Force 8-bit integers to display as numbers",
+            "text": "-interpreter-exec console \"type format add --format decimal char \\\"signed char\\\" \\\"unsigned char\\\" \\\"int8_t\\\" \\\"uint8_t\\\"\"",
+            "ignoreFailures": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "Debug API test [Unix]",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${command:cmake.launchTargetPath}",
+      "args": [
+        "--test-case=API model - all updates"
+      ],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "linux": {
+        "MIMode": "gdb",
+        "setupCommands": [
+          {
+            "description": "Enable pretty-printing for gdb",
+            "text": "-enable-pretty-printing",
+            "ignoreFailures": true
+          }
+        ]
+      },
+      "osx": {
+        "MIMode": "lldb",
+        "setupCommands": [
+          {
+            "description": "Force 8-bit integers to display as numbers",
+            "text": "-interpreter-exec console \"type format add --format decimal char \\\"signed char\\\" \\\"unsigned char\\\" \\\"int8_t\\\" \\\"uint8_t\\\"\"",
+            "ignoreFailures": true
+          },
+          {
+            "description": "Enable pretty-printing for lldb",
+            "text": "settings set target.load-script-from-symbol-file true",
+            "ignoreFailures": true
+          }
+        ]
       }
     },
     {
       "name": "Debug validation test [Windows]",
       "type": "cppvsdbg",
       "request": "launch",
-      "program": "${command:cmake.buildDirectory}/bin/power_grid_model_validation_tests.exe",
-      "args": ["--test-case=Validation test single", "--subcase=power_flow/1os2msr-sym-newton_raphson"],
+      "program": "${command:cmake.launchTargetPath}",
+      "args": [
+        "--test-case=Validation test single",
+        "--subcase=power_flow/1os2msr-sym-newton_raphson"
+      ],
       "stopAtEntry": false,
-      "cwd": "${fileDirname}",
+      "cwd": "${workspaceFolder}",
       "environment": [],
       "console": "integratedTerminal"
     }
