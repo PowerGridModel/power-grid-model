@@ -7,7 +7,7 @@
 from ctypes import pointer
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 from numpy.typing import NDArray
@@ -56,7 +56,7 @@ class _NativeStateOutput:
 
 def _array(pointer, size: int, dtype: "DTypeLike", owner: _NativeStateOutput) -> NDArray:
     result = np.empty(0, dtype=dtype) if size == 0 else np.ctypeslib.as_array(pointer, shape=(size,))
-    result = result.view(_OwnedArray)
+    result = cast(_OwnedArray, result.view(_OwnedArray))
     result._state_owner = owner
     return result
 
