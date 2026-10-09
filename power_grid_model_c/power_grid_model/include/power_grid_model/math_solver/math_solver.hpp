@@ -44,6 +44,7 @@ template <symmetry_tag sym> class MathSolver : public MathSolverBase<sym> {
                                      CalculationMethod calculation_method, YBus<sym> const& y_bus) final {
         using enum CalculationMethod;
 
+        last_power_flow_used_newton_raphson_ = false;
         // set method to always linear if all load_gens have const_y
         calculation_method = all_const_y_ ? linear : calculation_method;
 
@@ -51,6 +52,7 @@ template <symmetry_tag sym> class MathSolver : public MathSolverBase<sym> {
         case default_method:
             [[fallthrough]]; // use Newton-Raphson by default
         case newton_raphson:
+            last_power_flow_used_newton_raphson_ = true;
             return run_power_flow_newton_raphson(input, err_tol, max_iter, log, y_bus);
         case linear:
             return run_power_flow_linear(input, err_tol, max_iter, log, y_bus);
@@ -111,6 +113,13 @@ template <symmetry_tag sym> class MathSolver : public MathSolverBase<sym> {
         }
     }
 
+    std::optional<ModelStateJacobian> get_last_jacobian_state(YBus<sym> const& y_bus) const final {
+        if (!last_power_flow_used_newton_raphson_ || !newton_raphson_pf_solver_) {
+            return std::nullopt;
+        }
+        return newton_raphson_pf_solver_->get_last_jacobian_state(y_bus);
+    }
+
   private:
     std::shared_ptr<MathModelTopology const> topo_ptr_;
     bool all_const_y_; // if all the load_gen is const element_admittance (impedance) type
@@ -120,6 +129,7 @@ template <symmetry_tag sym> class MathSolver : public MathSolverBase<sym> {
     std::optional<IterativeLinearSESolver<sym>> iterative_linear_se_solver_;
     std::optional<NewtonRaphsonSESolver<sym>> newton_raphson_se_solver_;
     std::optional<ShortCircuitSolver<sym>> iec60909_sc_solver_;
+    bool last_power_flow_used_newton_raphson_{false};
 
     SolverOutput<sym> run_power_flow_newton_raphson(PowerFlowInput<sym> const& input, double err_tol, Idx max_iter,
                                                     Logger& log, YBus<sym> const& y_bus) {

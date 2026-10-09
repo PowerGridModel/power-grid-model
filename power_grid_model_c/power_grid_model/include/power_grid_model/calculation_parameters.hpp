@@ -9,9 +9,11 @@
 #include "common/grouped_index_vector.hpp"
 #include "common/statistics.hpp"
 #include "common/three_phase_tensor.hpp"
+#include "calculation_state.hpp"
 
 #include <array>
 #include <concepts>
+#include <memory>
 #include <span>
 #include <vector>
 
@@ -340,6 +342,7 @@ template <symmetry_tag sym_type> struct SolverOutput {
     std::vector<ApplianceSolverOutput<sym>> shunt;
     std::vector<ApplianceSolverOutput<sym>> load_gen;
     std::vector<VoltageRegulatorSolverOutput> voltage_regulator;
+    std::shared_ptr<ModelStateGroup> model_state_group;
 };
 
 template <symmetry_tag sym_type> struct ShortCircuitSolverOutput {
@@ -403,6 +406,7 @@ template <typename T> struct MathOutput {
 
     SolverOutputType solver_output;
     OptimizerOutput optimizer_output;
+    std::optional<ModelStateOutput> model_state;
 };
 
 // component indices at physical model side

@@ -117,6 +117,18 @@ class MainModel {
         return JobDispatch::batch_calculation(adapter, result_data, update_data, options.threading, logger_.get());
     }
 
+    BatchParameter calculate_with_state(Options const& options, MutableDataset const& result_data,
+                                        ConstDataset const& update_data,
+                                        std::span<ModelStateRequest const> state_requests,
+                                        std::span<std::optional<ModelStateOutput>> state_outputs) {
+        Idx const n_scenarios = update_data.empty() ? 1 : update_data.batch_size();
+        if (std::ssize(state_requests) != n_scenarios || std::ssize(state_outputs) != n_scenarios) {
+            throw DatasetError{"Model state request count must match the calculation scenario count.\n"};
+        }
+        JobAdapter<Impl> adapter{std::ref(impl()), std::ref(options), state_requests, state_outputs};
+        return JobDispatch::batch_calculation(adapter, result_data, update_data, options.threading, logger_.get());
+    }
+
     void check_no_experimental_features_used(Options const& options, ConstDataset const* batch_dataset) const {
         impl().check_no_experimental_features_used(options, batch_dataset);
     }

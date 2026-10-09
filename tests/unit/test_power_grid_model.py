@@ -11,12 +11,14 @@ from power_grid_model import (
     AngleMeasurementType,
     AttributeType as AT,
     BranchSide,
+    CalculationMethod,
     ComponentAttributeFilterOptions,
     ComponentType as CT,
     DatasetType as DT,
     LoadGenType,
     MeasuredTerminalType,
     PowerGridModel,
+    StateOutputRequest,
     initialize_array,
 )
 from power_grid_model._core.utils import compatibility_convert_row_columnar_dataset
@@ -156,6 +158,63 @@ def empty_model():
 def test_simple_power_flow(model: PowerGridModel, sym_output):
     result = model.calculate_power_flow()
     compare_result(result, sym_output, rtol=0.0, atol=1e-8)
+
+
+def test_power_flow_model_state(model: PowerGridModel):
+    output_data, model_state = model.calculate_power_flow(get_model_state=True)
+
+    assert CT.node in output_data
+    assert model_state is not None
+    assert model_state.y_bus_requested
+    assert model_state.jacobian_requested
+    assert model_state.input_node_id.tolist() == [0]
+    assert len(model_state.groups) == 1
+    group = model_state.groups[0]
+    assert group.y_bus is not None
+    assert group.jacobian is not None
+    assert group.mapping.bus_user_id.tolist() == [0]
+    assert group.y_bus.row_indptr.shape == (group.mapping.n_bus + 1,)
+    assert group.y_bus.admittance_real.size > 0
+    assert group.jacobian.h.size == group.jacobian.n.size
+
+    admittance_real = group.y_bus.admittance_real
+    del model_state
+    assert np.isfinite(admittance_real).all()
+
+
+def test_linear_power_flow_model_state_has_no_jacobian(model: PowerGridModel):
+    _, model_state = model.calculate_power_flow(
+        calculation_method=CalculationMethod.linear,
+        get_model_state=[StateOutputRequest(y_bus=True, jacobian=True)],
+    )
+
+    assert model_state is not None
+    assert model_state.groups[0].y_bus is not None
+    assert model_state.groups[0].jacobian is None
+
+
+def test_power_flow_model_state_batch_requests(model: PowerGridModel, update_batch):
+    _, states = model.calculate_power_flow(
+        update_data=update_batch,
+        get_model_state=[
+            StateOutputRequest(y_bus=True),
+            StateOutputRequest(jacobian=True),
+        ],
+    )
+
+    assert isinstance(states, list)
+    assert len(states) == 2
+    assert states[0] is not None and states[0].y_bus_requested
+    assert states[0].groups[0].y_bus is not None
+    assert states[0].groups[0].jacobian is None
+    assert states[1] is not None and states[1].jacobian_requested
+    assert states[1].groups[0].y_bus is None
+    assert states[1].groups[0].jacobian is not None
+
+
+def test_power_flow_model_state_request_count_must_match_batch(model: PowerGridModel, update_batch):
+    with pytest.raises(ValueError, match="Expected 2 model state requests"):
+        model.calculate_power_flow(update_data=update_batch, get_model_state=[StateOutputRequest(y_bus=True)])
 
 
 def test_simple_permanent_update(model: PowerGridModel, update_batch, sym_output_batch):

@@ -6,6 +6,15 @@
 
 from power_grid_model._core.dataset_definitions import AttributeType, ComponentType, DatasetType
 from power_grid_model._core.logger import Logger
+from power_grid_model._core.model_state import (
+    ModelState,
+    ModelStateBusKind,
+    ModelStateGroup,
+    ModelStateGroupMapping,
+    ModelStateJacobian,
+    ModelStateYBus,
+    StateOutputRequest,
+)
 from power_grid_model._core.power_grid_core import pgm_version
 from power_grid_model._core.power_grid_meta import (
     attribute_dtype,
@@ -51,8 +60,15 @@ __all__ = [
     "Logger",
     "LoggerType",
     "MeasuredTerminalType",
+    "ModelState",
+    "ModelStateBusKind",
+    "ModelStateGroup",
+    "ModelStateGroupMapping",
+    "ModelStateJacobian",
+    "ModelStateYBus",
     "PowerGridModel",
     "ShortCircuitVoltageScaling",
+    "StateOutputRequest",
     "TapChangingStrategy",
     "WindingType",
     "__version__",

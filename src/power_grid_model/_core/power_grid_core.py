@@ -8,7 +8,7 @@ Loader for the dynamic library
 
 import threading
 from collections.abc import Callable
-from ctypes import CDLL, CFUNCTYPE, POINTER, c_char, c_char_p, c_double, c_size_t, c_void_p
+from ctypes import CDLL, CFUNCTYPE, POINTER, Structure, c_char, c_char_p, c_double, c_int8, c_size_t, c_void_p
 from inspect import signature
 from itertools import chain
 
@@ -132,6 +132,61 @@ class LoggerPtr(c_void_p):
     """
 
 
+class StateOutputPtr(c_void_p):
+    """Pointer to owned native state output."""
+
+
+class StateOutputRequestC(Structure):
+    _fields_ = [("y_bus", IdxC), ("jacobian", IdxC)]
+
+
+class StateScenarioViewC(Structure):
+    _fields_ = [
+        ("has_state", IdxC),
+        ("y_bus_requested", IdxC),
+        ("jacobian_requested", IdxC),
+        ("n_groups", IdxC),
+        ("n_input_nodes", IdxC),
+        ("input_node_group", IdxPtr),
+        ("input_node_bus", IdxPtr),
+        ("input_node_id", IDPtr),
+    ]
+
+
+DoublePtr = POINTER(c_double)
+Int8Ptr = POINTER(c_int8)
+
+
+class StateGroupViewC(Structure):
+    _fields_ = [
+        ("group", IdxC),
+        ("n_bus", IdxC),
+        ("is_symmetric", IdxC),
+        ("n_user_node_refs", IdxC),
+        ("bus_user_indptr", IdxPtr),
+        ("bus_user_sequence", IdxPtr),
+        ("bus_user_id", IDPtr),
+        ("bus_kind", Int8Ptr),
+        ("origin_branch3_id", IDPtr),
+        ("has_y_bus", IdxC),
+        ("y_bus_nnz", IdxC),
+        ("y_bus_row_indptr", IdxPtr),
+        ("y_bus_col_indices", IdxPtr),
+        ("admittance_real", DoublePtr),
+        ("admittance_imag", DoublePtr),
+        ("n_admittance_values", IdxC),
+        ("has_jacobian", IdxC),
+        ("jacobian_nnz", IdxC),
+        ("jacobian_row_indptr", IdxPtr),
+        ("jacobian_col_indices", IdxPtr),
+        ("jacobian_h", DoublePtr),
+        ("jacobian_n", DoublePtr),
+        ("jacobian_m", DoublePtr),
+        ("jacobian_l", DoublePtr),
+        ("n_jacobian_values", IdxC),
+    ]
+
+
 def _load_core() -> CDLL:
     """
 
@@ -155,6 +210,17 @@ _CDLL: CDLL = _load_core()
 # manual argtypes for functions that use callback parameters (not handled by make_c_binding)
 _CDLL.PGM_logger_get_output.argtypes = [HandlePtr, LoggerPtr, _LogOutputCallbackType, c_void_p]
 _CDLL.PGM_logger_get_output.restype = None
+_CDLL.PGM_calculate_with_state.argtypes = [
+    HandlePtr,
+    ModelPtr,
+    OptionsPtr,
+    MutableDatasetPtr,
+    ConstDatasetPtr,
+    POINTER(StateOutputRequestC),
+    IdxC,
+    POINTER(StateOutputPtr),
+]
+_CDLL.PGM_calculate_with_state.restype = None
 
 
 def make_c_binding(func: Callable):
@@ -402,6 +468,39 @@ class PowerGridCore:
         output_data: MutableDatasetPtr,  # type: ignore[valid-type]
         update_data: ConstDatasetPtr,  # type: ignore[valid-type]
     ) -> None:
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def calculate_with_state(  # noqa: PLR0913  # type: ignore[empty-body]
+        self,
+        model: ModelPtr,
+        opt: OptionsPtr,
+        output_data: MutableDatasetPtr,  # type: ignore[valid-type]
+        update_data: ConstDatasetPtr,  # type: ignore[valid-type]
+        requests: POINTER(StateOutputRequestC),
+        request_count: int,
+        state_output: POINTER(StateOutputPtr),
+    ) -> None:
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def state_output_scenario_count(self, state_output: StateOutputPtr) -> int:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def state_output_get_scenario(
+        self, state_output: StateOutputPtr, scenario_idx: int, view: POINTER(StateScenarioViewC)
+    ) -> None:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def state_output_get_group(
+        self, state_output: StateOutputPtr, scenario_idx: int, group_idx: int, view: POINTER(StateGroupViewC)
+    ) -> None:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def destroy_state_output(self, state_output: StateOutputPtr) -> None:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding

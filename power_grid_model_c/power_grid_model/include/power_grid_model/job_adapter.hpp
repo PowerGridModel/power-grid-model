@@ -29,8 +29,11 @@ template <class MainModel> class JobAdapter : public JobInterface {
     using ModelType = typename MainModel::ImplType;
 
     JobAdapter(std::reference_wrapper<MainModel> model_reference,
-               std::reference_wrapper<MainModelOptions const> options)
-        : model_reference_{model_reference}, options_{options} {}
+             std::reference_wrapper<MainModelOptions const> options,
+             std::span<ModelStateRequest const> state_requests = {},
+            std::span<std::optional<ModelStateOutput>> state_outputs = {})
+         : model_reference_{model_reference}, options_{options}, state_requests_{state_requests},
+        state_outputs_{state_outputs} {}
     JobAdapter(JobAdapter const& other)
         : model_copy_{std::make_unique<MainModel>(other.model_reference_.get())},
           model_reference_{std::ref(*model_copy_)},
@@ -38,7 +41,9 @@ template <class MainModel> class JobAdapter : public JobInterface {
           components_to_update_{other.components_to_update_},
           update_independence_{other.update_independence_},
           independence_flags_{other.independence_flags_},
-          all_scenarios_sequence_{other.all_scenarios_sequence_} {}
+          all_scenarios_sequence_{other.all_scenarios_sequence_},
+          state_requests_{other.state_requests_},
+          state_outputs_{other.state_outputs_} {}
     JobAdapter& operator=(JobAdapter const& other) {
         if (this != &other) {
             model_copy_ = std::make_unique<MainModel>(other.model_reference_.get());
@@ -48,6 +53,8 @@ template <class MainModel> class JobAdapter : public JobInterface {
             update_independence_ = other.update_independence_;
             independence_flags_ = other.independence_flags_;
             all_scenarios_sequence_ = other.all_scenarios_sequence_;
+            state_requests_ = other.state_requests_;
+            state_outputs_ = other.state_outputs_;
         }
         return *this;
     }
@@ -58,7 +65,9 @@ template <class MainModel> class JobAdapter : public JobInterface {
           components_to_update_{std::move(other.components_to_update_)},
           update_independence_{std::move(other.update_independence_)},
           independence_flags_{std::move(other.independence_flags_)},
-          all_scenarios_sequence_{std::move(other.all_scenarios_sequence_)} {}
+          all_scenarios_sequence_{std::move(other.all_scenarios_sequence_)},
+          state_requests_{other.state_requests_},
+          state_outputs_{other.state_outputs_} {}
     JobAdapter& operator=(JobAdapter&& other) noexcept {
         if (this != &other) {
             model_copy_ = std::move(other.model_copy_);
@@ -68,6 +77,8 @@ template <class MainModel> class JobAdapter : public JobInterface {
             update_independence_ = std::move(other.update_independence_);
             independence_flags_ = std::move(other.independence_flags_);
             all_scenarios_sequence_ = std::move(other.all_scenarios_sequence_);
+            state_requests_ = other.state_requests_;
+            state_outputs_ = other.state_outputs_;
         }
         return *this;
     }
@@ -84,12 +95,20 @@ template <class MainModel> class JobAdapter : public JobInterface {
     typename ModelType::UpdateIndependence update_independence_{};
     typename ModelType::ComponentFlags independence_flags_{};
     std::shared_ptr<typename ModelType::SequenceIdx> all_scenarios_sequence_;
+    std::span<ModelStateRequest const> state_requests_;
+    std::span<std::optional<ModelStateOutput>> state_outputs_;
     // current_scenario_sequence_cache_ is calculated per scenario, so it is excluded from the constructors.
     typename ModelType::SequenceIdx current_scenario_sequence_cache_{};
 
     void calculate_impl(MutableDataset const& result_data, Idx scenario_idx, Logger& logger) const {
+        ModelStateRequest const* state_request = state_requests_.empty() ? nullptr : &state_requests_[scenario_idx];
+        ModelStateOutput state_output;
         MainModel::calculator(options_.get(), model_reference_.get(), result_data.get_individual_scenario(scenario_idx),
-                              false, logger);
+                              false, logger, state_request,
+                              state_requests_.empty() ? nullptr : &state_output);
+        if (!state_requests_.empty() && (state_request->y_bus || state_request->jacobian)) {
+            state_outputs_[scenario_idx] = std::move(state_output);
+        }
     }
 
     void cache_calculate_impl(Logger& logger) const {

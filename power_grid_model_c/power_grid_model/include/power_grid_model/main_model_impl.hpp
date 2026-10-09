@@ -284,7 +284,8 @@ class MainModelImpl {
                  solver_output_type<std::invoke_result_t<
                      SolveFn, MathSolverType&, YBus const&,
                      typename std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>::const_reference>>
-    auto calculate_(PrepareInputFn&& prepare_input, SolveFn&& solve, Logger& logger) {
+    auto calculate_(PrepareInputFn&& prepare_input, SolveFn&& solve, Logger& logger,
+                    ModelStateRequest const& state_request) {
         using InputType = typename std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>::const_reference;
         using SolverOutputType = typename std::invoke_result_t<SolveFn, MathSolverType&, YBus const&, InputType>;
         using sym = typename SolverOutputType::sym;
@@ -305,36 +306,119 @@ class MainModelImpl {
             return prepare_input_(get_n_math_solvers<ModelType>(state_));
         }();
         // calculate
-        return [this, &logger, &input, solve_ = std::forward<SolveFn>(solve)] {
+        return [this, &logger, &input, &state_request, solve_ = std::forward<SolveFn>(solve)] {
+            (void)state_request;
             Timer const timer{logger, LogEvent::math_calculation};
             auto& solvers = main_core::get_solvers<sym>(solver_preparation_context_.math_state);
             auto& y_bus_vec = main_core::get_y_bus<sym>(solver_preparation_context_.math_state);
             std::vector<SolverOutputType> solver_output;
             solver_output.reserve(get_n_math_solvers<ModelType>(state_));
             for (Idx i = 0; i != get_n_math_solvers<ModelType>(state_); ++i) {
-                solver_output.emplace_back(solve_(solvers[i], y_bus_vec[i], input[i]));
+                SolverOutputType result = solve_(solvers[i], y_bus_vec[i], input[i]);
+                if constexpr (steady_state_solver_output_type<SolverOutputType>) {
+                    if (state_request.y_bus || state_request.jacobian) {
+                        auto group_state = std::make_shared<ModelStateGroup>();
+                        group_state->mapping = create_model_state_mapping<sym>(i, y_bus_vec[i].size());
+                        if (state_request.y_bus) {
+                            group_state->y_bus = create_y_bus_state(y_bus_vec[i]);
+                        }
+                        if (state_request.jacobian) {
+                            group_state->jacobian = solvers[i].get().get_last_jacobian_state(y_bus_vec[i]);
+                        }
+                        result.model_state_group = std::move(group_state);
+                    }
+                }
+                solver_output.emplace_back(std::move(result));
             }
             return solver_output;
         }();
     }
 
+    template <symmetry_tag sym> ModelStateGroupMapping create_model_state_mapping(Idx group, Idx n_bus) const {
+        ModelStateGroupMapping mapping{
+            .group = group,
+            .n_bus = n_bus,
+            .is_symmetric = is_symmetric_v<sym>,
+            .bus_user_indptr = IdxVector(static_cast<size_t>(n_bus + 1), 0),
+            .bus_kind = std::vector<ModelStateBusKind>(static_cast<size_t>(n_bus),
+                                                       ModelStateBusKind::synthetic_branch3),
+            .origin_branch3_id = std::vector<ID>(static_cast<size_t>(n_bus), static_cast<ID>(-1)),
+        };
+
+        auto const& node_coupling = state_.topo_comp_coup->node;
+        auto const nodes = state_.components.template citer<Node>();
+        std::vector<std::vector<std::pair<Idx, ID>>> user_nodes_per_bus(static_cast<size_t>(n_bus));
+        for (Idx user_sequence = 0; user_sequence < static_cast<Idx>(std::ranges::size(nodes)); ++user_sequence) {
+            Idx2D const math_idx = node_coupling[user_sequence];
+            if (math_idx.group == group) {
+                user_nodes_per_bus[math_idx.pos].emplace_back(user_sequence, nodes[user_sequence].id());
+                mapping.bus_kind[math_idx.pos] = ModelStateBusKind::input_node;
+            }
+        }
+
+        auto const branch3s = state_.components.template citer<Branch3>();
+        Idx const n_user_nodes = static_cast<Idx>(std::ranges::size(nodes));
+        for (Idx branch3_sequence = 0; branch3_sequence < static_cast<Idx>(std::ranges::size(branch3s));
+             ++branch3_sequence) {
+            Idx2D const math_idx = node_coupling[n_user_nodes + branch3_sequence];
+            if (math_idx.group == group && user_nodes_per_bus[math_idx.pos].empty()) {
+                mapping.origin_branch3_id[math_idx.pos] = branch3s[branch3_sequence].id();
+            }
+        }
+
+        for (Idx bus = 0; bus < n_bus; ++bus) {
+            auto const& user_nodes = user_nodes_per_bus[bus];
+            for (auto const& [sequence, id] : user_nodes) {
+                mapping.bus_user_sequence.push_back(sequence);
+                mapping.bus_user_id.push_back(id);
+            }
+            mapping.bus_user_indptr[bus + 1] = static_cast<Idx>(mapping.bus_user_sequence.size());
+        }
+        return mapping;
+    }
+
+    template <symmetry_tag sym> static ModelStateYBus create_y_bus_state(YBus<sym> const& y_bus) {
+        ModelStateYBus state{
+            .row_indptr = y_bus.row_indptr(),
+            .col_indices = y_bus.col_indices(),
+        };
+        auto const& admittance = y_bus.admittance();
+        constexpr Idx block_size = is_symmetric_v<sym> ? 1 : 9;
+        state.admittance_real.reserve(static_cast<size_t>(y_bus.nnz() * block_size));
+        state.admittance_imag.reserve(static_cast<size_t>(y_bus.nnz() * block_size));
+        for (Idx entry = 0; entry < y_bus.nnz(); ++entry) {
+            if constexpr (is_symmetric_v<sym>) {
+                state.admittance_real.push_back(admittance[entry].real());
+                state.admittance_imag.push_back(admittance[entry].imag());
+            } else {
+                for (Idx row = 0; row < 3; ++row) {
+                    for (Idx col = 0; col < 3; ++col) {
+                        state.admittance_real.push_back(admittance[entry](row, col).real());
+                        state.admittance_imag.push_back(admittance[entry](row, col).imag());
+                    }
+                }
+            }
+        }
+        return state;
+    }
+
     // Calculate with optimization, e.g., automatic tap changer
     template <calculation_type_tag calculation_type, symmetry_tag sym>
-    auto calculate_with_optimizer(Options const& options, Logger& logger) {
-        auto const get_calculator = [this, &options, &logger] {
+    auto calculate_with_optimizer(Options const& options, Logger& logger, ModelStateRequest const& state_request) {
+        auto const get_calculator = [this, &options, &logger, &state_request] {
             using Calc = Calculator<calculation_type, sym>;
 
             assert(options.optimizer_type == OptimizerType::no_optimization ||
                    (std::derived_from<calculation_type, power_flow_t>));
 
-            return [this, &mutable_comp_coup = state_.comp_coup, &options,
-                    &logger](MainModelState const& state, CalculationMethod calculation_method) {
+                return [this, &mutable_comp_coup = state_.comp_coup, &options, &logger,
+                    &state_request](MainModelState const& state, CalculationMethod calculation_method) {
                 (void)state; // to avoid unused-lambda-capture when in Release build
                 assert(&state == &state_);
 
                 return calculate_<MathSolverProxy<sym>, YBus<sym>>(Calc::preparer(state, mutable_comp_coup, options),
                                                                    Calc::solver(calculation_method, options, logger),
-                                                                   logger);
+                                                                   logger, state_request);
             };
         };
 
@@ -342,18 +426,46 @@ class MainModelImpl {
                                                 ? SearchMethod::linear_search
                                                 : SearchMethod::binary_search;
 
-        return optimizer::get_optimizer<MainModelState, ConstDataset>(
-                   options.optimizer_type, options.optimizer_strategy, get_calculator(),
-                   [this](ConstDataset const& update_data) {
-                       this->update_components<permanent_update_t>(update_data);
-                   },
-                   *meta_data_, search_method)
-            ->optimize(state_, options.calculation_method);
+        auto result = optimizer::get_optimizer<MainModelState, ConstDataset>(
+                          options.optimizer_type, options.optimizer_strategy, get_calculator(),
+                          [this](ConstDataset const& update_data) {
+                              this->update_components<permanent_update_t>(update_data);
+                          },
+                          *meta_data_, search_method)
+                          ->optimize(state_, options.calculation_method);
+        if constexpr (std::derived_from<calculation_type, power_flow_t>) {
+            if (state_request.y_bus || state_request.jacobian) {
+                ModelStateOutput model_state;
+                model_state.y_bus_requested = state_request.y_bus;
+                model_state.jacobian_requested = state_request.jacobian;
+                auto const nodes = state_.components.template citer<Node>();
+                auto const& node_coupling = state_.topo_comp_coup->node;
+                model_state.input_node_group.reserve(std::ranges::size(nodes));
+                model_state.input_node_bus.reserve(std::ranges::size(nodes));
+                model_state.input_node_id.reserve(std::ranges::size(nodes));
+                for (Idx sequence = 0; sequence < static_cast<Idx>(std::ranges::size(nodes)); ++sequence) {
+                    model_state.input_node_group.push_back(node_coupling[sequence].group);
+                    model_state.input_node_bus.push_back(node_coupling[sequence].pos);
+                    model_state.input_node_id.push_back(nodes[sequence].id());
+                }
+                for (auto& solver_output : result.solver_output) {
+                    if (solver_output.model_state_group) {
+                        model_state.groups.push_back(std::move(*solver_output.model_state_group));
+                        solver_output.model_state_group.reset();
+                    }
+                }
+                result.model_state = std::move(model_state);
+            }
+        }
+        return result;
     }
 
     // Single calculation, propagating the results to result_data
-    void calculate(Options options, MutableDataset const& result_data, Logger& logger) {
+    void calculate(Options options, MutableDataset const& result_data, Logger& logger,
+                   ModelStateRequest const* state_request = nullptr, ModelStateOutput* state_output = nullptr) {
         assert(construction_complete_);
+        ModelStateRequest const no_state_request{};
+        ModelStateRequest const& request = state_request != nullptr ? *state_request : no_state_request;
 
         if (options.calculation_type == CalculationType::short_circuit) {
             auto const faults = state_.components.template citer<Fault>();
@@ -373,21 +485,26 @@ class MainModelImpl {
             options.calculation_type, options.calculation_symmetry,
             []<calculation_type_tag calculation_type, symmetry_tag sym>(
                 MainModelImpl& main_model_, Options const& options_, MutableDataset const& result_data_,
-                Logger& logger) {
-                auto const math_output = main_model_.calculate_with_optimizer<calculation_type, sym>(options_, logger);
+                Logger& logger, ModelStateRequest const& state_request_, ModelStateOutput* state_output_) {
+                auto math_output = main_model_.calculate_with_optimizer<calculation_type, sym>(options_, logger,
+                                                                                               state_request_);
                 main_model_.output_result(math_output, result_data_, logger);
+                if (state_output_ != nullptr && math_output.model_state) {
+                    *state_output_ = std::move(*math_output.model_state);
+                }
             },
-            *this, options, result_data, logger);
+            *this, options, result_data, logger, request, state_output);
     }
 
   public:
     static auto calculator(Options const& options, MainModelImpl& model, MutableDataset const& target_data,
-                           bool cache_run, Logger& logger) {
+                           bool cache_run, Logger& logger, ModelStateRequest const* state_request = nullptr,
+                           ModelStateOutput* state_output = nullptr) {
         auto sub_opt = options; // copy
         sub_opt.err_tol = cache_run ? std::numeric_limits<double>::max() : options.err_tol;
         sub_opt.max_iter = cache_run ? 1 : options.max_iter;
 
-        model.calculate(sub_opt, target_data, logger);
+        model.calculate(sub_opt, target_data, logger, state_request, state_output);
     }
 
     auto const& state() const {

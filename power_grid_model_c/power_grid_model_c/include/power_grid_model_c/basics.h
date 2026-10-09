@@ -77,6 +77,9 @@ typedef struct PGM_Handle PGM_Handle;
  */
 typedef struct PGM_Options PGM_Options;
 
+/** @brief Opaque owner of native calculation-state output buffers. */
+typedef struct PGM_StateOutput PGM_StateOutput;
+
 /**
  * @brief Opaque struct for the attribute meta class.
  *
