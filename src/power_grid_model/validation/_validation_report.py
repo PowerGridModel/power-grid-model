@@ -13,10 +13,12 @@ from typing import Any, NoReturn
 from power_grid_model._core.dataset_definitions import AttributeType, ComponentType, DatasetType
 from power_grid_model._core.error_handling import assert_no_error
 from power_grid_model._core.index_integer import IdC, IdxC
-from power_grid_model._core.power_grid_core import CharPtr, get_power_grid_core
+from power_grid_model._core.options import Options
+from power_grid_model._core.power_grid_core import CharPtr, ConstDatasetPtr, get_power_grid_core
 from power_grid_model._core.power_grid_dataset import CConstDataset
 from power_grid_model.data_types import Dataset
 from power_grid_model.validation.errors import (
+    IdNotInDatasetError,
     InfinityError,
     InvalidIdError,
     MissingValueError,
@@ -159,6 +161,41 @@ def _as_object(value: Any, location: str) -> dict[str, Any]:
     return value
 
 
+def _decode_report_envelope(report_data: bytes) -> dict[str, Any]:
+    try:
+        report_text = report_data.decode("utf-8")
+    except UnicodeDecodeError as error:
+        raise ValueError("Validation report must be UTF-8.") from error
+
+    try:
+        raw_report = json.loads(report_text, parse_constant=_reject_json_constant)
+    except json.JSONDecodeError as error:
+        raise ValueError("Validation report is not valid JSON.") from error
+
+    report = _as_object(raw_report, "envelope")
+    version = report.get("schema_version")
+    if type(version) is not int or version != _SCHEMA_VERSION:
+        raise ValueError(f"Unsupported validation report schema version: {version!r}.")
+    return report
+
+
+_BATCH_ISSUE_KINDS = {"id_not_in_dataset", "invalid_update_id"}
+
+
+def _decode_issue_array(raw_issues: list[Any], location: str = "issue") -> list[ValidationError]:
+    errors: list[ValidationError] = []
+    for index, raw_issue in enumerate(raw_issues):
+        issue = _as_object(raw_issue, f"{location} at index {index}")
+        kind = issue.get("kind")
+        if not isinstance(kind, str):
+            raise ValueError(f"Validation report {location} at index {index} must have a string kind.")
+        if kind in _ISSUE_CONSTRUCTORS or kind in _BATCH_ISSUE_KINDS:
+            errors.append(_decode_known_issue(kind, issue))
+        else:
+            errors.append(_UnknownValidationError(issue))
+    return errors
+
+
 def _decode_ref_value_scalar(value: Any) -> int | float | str:
     if type(value) in {int, str}:
         return value
@@ -183,6 +220,48 @@ def _decode_ref_value(value: Any) -> int | float | str | tuple[int | float | str
     return _decode_ref_value_scalar(value)
 
 
+def _decode_batch_issue(
+    kind: str,
+    issue: dict[str, Any],
+    component: ComponentType,
+    field: AttributeType,
+    raw_ids: list[int] | None,
+) -> ValidationError:
+    if kind == "id_not_in_dataset":
+        raw_ref_dataset = _as_object(issue["details"], "issue 'id_not_in_dataset' details").get("ref_dataset")
+        if raw_ids is None or not isinstance(raw_ref_dataset, str):
+            raise ValueError("Validation issue 'id_not_in_dataset' requires IDs and a reference dataset.")
+        try:
+            ref_dataset = DatasetType(raw_ref_dataset)
+        except ValueError:
+            return _UnknownValidationError(issue)
+        return IdNotInDatasetError(component, raw_ids, ref_dataset)
+    if raw_ids is not None:
+        raise ValueError("Validation issue 'invalid_update_id' requires null IDs.")
+    return InvalidIdError(component, field, None)
+
+
+def _decode_known_issue_value(
+    issue: dict[str, Any],
+    component: ComponentType,
+    field: AttributeType,
+    raw_ids: list[int] | None,
+) -> ValidationError:
+    kind = issue["kind"]
+    details = _as_object(issue["details"], f"issue {kind!r} details")
+    if kind == "not_greater_than":
+        if "ref_value" not in details:
+            raise ValueError("Validation issue 'not_greater_than' requires details.ref_value.")
+        return _ISSUE_CONSTRUCTORS[kind](component, field, raw_ids, _decode_ref_value(details["ref_value"]))
+
+    extended_error = _decode_extended_issue(kind, issue, component, field, raw_ids)
+    if extended_error is not None:
+        return extended_error
+    if kind in _BATCH_ISSUE_KINDS:
+        return _decode_batch_issue(kind, issue, component, field, raw_ids)
+    return _ISSUE_CONSTRUCTORS[kind](component, field, raw_ids)
+
+
 def _decode_known_issue(kind: str, issue: dict[str, Any]) -> ValidationError:
     required = ("component", "field", "ids", "details")
     missing = [key for key in required if key not in issue]
@@ -192,7 +271,6 @@ def _decode_known_issue(kind: str, issue: dict[str, Any]) -> ValidationError:
     raw_component = issue["component"]
     raw_field = issue["field"]
     raw_ids = issue["ids"]
-    details = _as_object(issue["details"], f"issue {kind!r} details")
     if not isinstance(raw_component, str):
         raise ValueError(f"Validation issue {kind!r} component must be a string.")
     if not isinstance(raw_field, str):
@@ -202,87 +280,131 @@ def _decode_known_issue(kind: str, issue: dict[str, Any]) -> ValidationError:
     ):
         raise ValueError(f"Validation issue {kind!r} ids must be null or a non-empty array of signed IDs.")
 
-    ref_value = None
-    if kind == "not_greater_than":
-        if "ref_value" not in details:
-            raise ValueError("Validation issue 'not_greater_than' requires details.ref_value.")
-        ref_value = _decode_ref_value(details["ref_value"])
-
     try:
         component = ComponentType(raw_component)
         field = AttributeType(raw_field)
     except ValueError:
         return _UnknownValidationError(issue)
 
-    extended_error = _decode_extended_issue(kind, issue, component, field, raw_ids)
-    if extended_error is not None:
-        return extended_error
-
-    constructor = _ISSUE_CONSTRUCTORS[kind]
-    if kind == "not_greater_than":
-        return constructor(component, field, raw_ids, ref_value)
-    return constructor(component, field, raw_ids)
+    return _decode_known_issue_value(issue, component, field, raw_ids)
 
 
 def _decode_validation_report(report_data: bytes) -> list[ValidationError] | None:
     """Decode a v1 report into existing Python validation errors."""
-    try:
-        report_text = report_data.decode("utf-8")
-    except UnicodeDecodeError as error:
-        raise ValueError("Validation report must be UTF-8.") from error
-
-    try:
-        raw_report = json.loads(report_text, parse_constant=_reject_json_constant)
-    except json.JSONDecodeError as error:
-        raise ValueError("Validation report is not valid JSON.") from error
-
-    report = _as_object(raw_report, "envelope")
-    version = report.get("schema_version")
-    if type(version) is not int or version != _SCHEMA_VERSION:
-        raise ValueError(f"Unsupported validation report schema version: {version!r}.")
+    report = _decode_report_envelope(report_data)
     raw_issues = report.get("issues")
     if not isinstance(raw_issues, list):
         raise ValueError("Validation report issues must be a JSON array.")
-
-    errors: list[ValidationError] = []
-    for index, raw_issue in enumerate(raw_issues):
-        issue = _as_object(raw_issue, f"issue at index {index}")
-        kind = issue.get("kind")
-        if not isinstance(kind, str):
-            raise ValueError(f"Validation report issue at index {index} must have a string kind.")
-        if kind in _ISSUE_CONSTRUCTORS:
-            errors.append(_decode_known_issue(kind, issue))
-        else:
-            errors.append(_UnknownValidationError(issue))
-
-    return errors or None
+    return _decode_issue_array(raw_issues) or None
 
 
-def _validate_input_data_native(input_data: Dataset, symmetric: bool = True) -> list[ValidationError] | None:
+def _decode_batch_validation_report(report_data: bytes) -> dict[int, list[ValidationError]] | None:
+    """Decode a v1 scenario-grouped batch validation report."""
+    report = _decode_report_envelope(report_data)
+    if report.get("is_batch") is not True:
+        raise ValueError("Validation report is not a batch report.")
+    scenarios = report.get("data")
+    if not isinstance(scenarios, list):
+        raise ValueError("Batch validation report data must be a JSON array.")
+
+    batch_errors: dict[int, list[ValidationError]] = {}
+    for scenario_index, raw_scenario in enumerate(scenarios):
+        scenario = _as_object(raw_scenario, f"scenario at index {scenario_index}")
+        errors: list[ValidationError] = []
+        for component in scenario:
+            if component not in {"node", "line"}:
+                raise ValueError(f"Batch validation report contains unsupported component {component!r}.")
+        for component in ("node", "line"):
+            raw_issues = scenario.get(component, [])
+            if not isinstance(raw_issues, list):
+                raise ValueError(f"Batch validation report component {component!r} must contain an issue array.")
+            errors.extend(_decode_issue_array(raw_issues, f"scenario {scenario_index} component {component!r} issue"))
+        if errors:
+            batch_errors[scenario_index] = errors
+    return batch_errors or None
+
+
+def _native_validation_report(core: Any, result: Any) -> bytes | None:
+    assert_no_error()
+    if not result:
+        raise RuntimeError("Native validation returned no result without setting a handle error.")
+
+    passed = core.validation_result_passed(result)
+    assert_no_error()
+    if passed:
+        return None
+
+    report_data = CharPtr()
+    report_size = IdxC()
+    core.validation_result_get_json(result, byref(report_data), byref(report_size))
+    assert_no_error()
+    if not report_data or report_size.value < 0:
+        raise RuntimeError("Native validation returned an invalid JSON report buffer.")
+    raw_report = report_data[: report_size.value]
+    if not isinstance(raw_report, bytes):
+        raise RuntimeError("Native validation returned non-byte report data.")
+    return raw_report
+
+
+def _validate_input_data_native(input_data: Dataset, options: Options | None = None) -> list[ValidationError] | None:
     """Validate a supported input dataset using the experimental C API."""
     native_dataset = CConstDataset(data=input_data, dataset_type=DatasetType.input)
     core = get_power_grid_core()
-    result = core.validate_input_data(native_dataset.get_dataset_ptr(), int(symmetric))
+    options = options or Options()
+    result = core.validate_input_data(native_dataset.get_dataset_ptr(), options.opt)
     try:
-        assert_no_error()
-        if not result:
-            raise RuntimeError("Native input validation returned no result without setting a handle error.")
-
-        passed = core.validation_result_passed(result)
-        assert_no_error()
-        if passed:
-            return None
-
-        report_data = CharPtr()
-        report_size = IdxC()
-        core.validation_result_get_json(result, byref(report_data), byref(report_size))
-        assert_no_error()
-        if not report_data or report_size.value < 0:
-            raise RuntimeError("Native input validation returned an invalid JSON report buffer.")
-        raw_report = report_data[: report_size.value]
-        if not isinstance(raw_report, bytes):
-            raise RuntimeError("Native input validation returned non-byte report data.")
-        return _decode_validation_report(raw_report)
+        raw_report = _native_validation_report(core, result)
+        return None if raw_report is None else _decode_validation_report(raw_report)
     finally:
         if result:
             core.destroy_validation_result(result)
+
+
+def _create_empty_batch_update_dataset(core: Any) -> ConstDatasetPtr:
+    mutable_dataset = core.create_dataset_mutable(DatasetType.update.value, 1, 0)
+    const_dataset = ConstDatasetPtr()
+    try:
+        assert_no_error()
+        if not mutable_dataset:
+            raise RuntimeError("Native update dataset creation returned no dataset without setting a handle error.")
+        const_dataset = core.create_dataset_const_from_mutable(mutable_dataset)
+        assert_no_error()
+        if not const_dataset:
+            raise RuntimeError("Native update dataset conversion returned no dataset without setting a handle error.")
+        return const_dataset
+    except Exception:
+        if const_dataset:
+            core.destroy_dataset_const(const_dataset)
+        raise
+    finally:
+        if mutable_dataset:
+            core.destroy_dataset_mutable(mutable_dataset)
+
+
+def _validate_batch_data_native(
+    input_data: Dataset, update_data: Dataset, options: Options | None = None
+) -> dict[int, list[ValidationError]] | None:
+    """Validate node and line data against each update scenario using the experimental C API."""
+    native_input = CConstDataset(data=input_data, dataset_type=DatasetType.input)
+    core = get_power_grid_core()
+    options = options or Options()
+    empty_update_dataset = None
+    native_updates = None
+    try:
+        if update_data:
+            native_updates = CConstDataset(data=update_data, dataset_type=DatasetType.update)
+            update_dataset_pointer = native_updates.get_dataset_ptr()
+        else:
+            empty_update_dataset = _create_empty_batch_update_dataset(core)
+            update_dataset_pointer = empty_update_dataset
+
+        result = core.validate_batch_data(native_input.get_dataset_ptr(), update_dataset_pointer, options.opt)
+        try:
+            raw_report = _native_validation_report(core, result)
+            return None if raw_report is None else _decode_batch_validation_report(raw_report)
+        finally:
+            if result:
+                core.destroy_validation_result(result)
+    finally:
+        if empty_update_dataset:
+            core.destroy_dataset_const(empty_update_dataset)

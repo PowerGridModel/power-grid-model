@@ -20,11 +20,29 @@ typedef struct PGM_ValidationResult PGM_ValidationResult;
  *
  * Invalid model data is returned as findings and does not set a handle error. Invalid arguments and internal
  * failures return NULL and set the handle error. The returned result is caller-owned and independent of the input
- * dataset lifetime; release it with PGM_destroy_validation_result(). `symmetric` must be 0 or 1 and controls whether
- * the line zero-sequence fields (r0, x0, c0, tan0) are required. Only `node` and `line` components are supported.
+ * dataset lifetime; release it with PGM_destroy_validation_result(). The borrowed options object must be non-NULL and
+ * its `symmetric` setting must be 0 or 1. Symmetry controls whether the line zero-sequence fields (r0, x0, c0, tan0)
+ * are required. Only `node` and `line` components are supported.
  */
 PGM_API PGM_ValidationResult* PGM_validate_input_data(PGM_Handle* handle, PGM_ConstDataset const* dataset,
-                                                      PGM_Idx symmetric) PGM_NOEXCEPT;
+                                                      PGM_Options const* options) PGM_NOEXCEPT;
+
+/**
+ * @brief Validate node and line input data for each scenario in a batch update dataset.
+ *
+ * The input dataset must be non-batch and the update dataset must be batch. Each scenario is applied independently
+ * to a copy of the input data. Node updates validate IDs but do not change node values; line updates may change only
+ * `from_status` and `to_status`. Empty update scenarios validate the unchanged input. A batch with zero scenarios
+ * passes without validating input values. Only `node` and `line` components are supported.
+ *
+ * The returned result is caller-owned; release it with PGM_destroy_validation_result(). The borrowed options object
+ * must be non-NULL and its `symmetric` setting must be 0 or 1. Symmetry controls whether the line zero-sequence fields
+ * (r0, x0, c0, tan0) are required. Invalid model data is returned as findings; invalid arguments and internal failures
+ * return NULL and set the handle error.
+ */
+PGM_API PGM_ValidationResult* PGM_validate_batch_data(PGM_Handle* handle, PGM_ConstDataset const* input_dataset,
+                                                      PGM_ConstDataset const* update_dataset,
+                                                      PGM_Options const* options) PGM_NOEXCEPT;
 
 /**
  * @brief Return 1 if validation passed, or 0 if the result contains findings.
@@ -36,6 +54,10 @@ PGM_API PGM_Idx PGM_validation_result_passed(PGM_Handle* handle, PGM_ValidationR
 /**
  * @brief Return the complete validation report as compact UTF-8 JSON.
  *
+ * Input reports contain `schema_version` and a flat `issues` array. Batch reports contain `schema_version`,
+ * `is_batch: true`, and a `data` array with one component-grouped finding object per scenario, including empty objects
+ * for passing scenarios.
+ *
  * Both output pointers are required. Any non-null output is reset to NULL/0 before checking arguments. The bytes are
  * borrowed from the result, size excludes the terminating NUL, and the data remains valid until the result is
  * destroyed.
@@ -43,7 +65,7 @@ PGM_API PGM_Idx PGM_validation_result_passed(PGM_Handle* handle, PGM_ValidationR
 PGM_API void PGM_validation_result_get_json(PGM_Handle* handle, PGM_ValidationResult const* result, char const** data,
                                             PGM_Idx* size) PGM_NOEXCEPT;
 
-/** @brief Destroy a result returned by PGM_validate_input_data(). */
+/** @brief Destroy a result returned by a validation function. */
 PGM_API void PGM_destroy_validation_result(PGM_ValidationResult* result) PGM_NOEXCEPT;
 
 #ifdef __cplusplus

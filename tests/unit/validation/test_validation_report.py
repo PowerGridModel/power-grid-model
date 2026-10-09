@@ -9,6 +9,7 @@ import numpy as np
 import pytest
 
 from power_grid_model import AttributeType as AT, ComponentType as CT, DatasetType, initialize_array
+from power_grid_model._core.options import Options
 from power_grid_model._core.power_grid_core import (
     CharDoublePtr,
     CharPtr,
@@ -16,12 +17,18 @@ from power_grid_model._core.power_grid_core import (
     ValidationResultPtr,
     get_power_grid_core,
 )
+from power_grid_model._core.utils import compatibility_convert_row_columnar_dataset
+from power_grid_model.enum import ComponentAttributeFilterOptions
+from power_grid_model.validation import validate_batch_data
 from power_grid_model.validation._validation_report import (
+    _decode_batch_validation_report,
     _decode_validation_report,
     _UnknownValidationError,
+    _validate_batch_data_native,
     _validate_input_data_native,
 )
 from power_grid_model.validation.errors import (
+    IdNotInDatasetError,
     InfinityError,
     InvalidIdError,
     MissingValueError,
@@ -36,6 +43,10 @@ from power_grid_model.validation.errors import (
 
 def _make_report(*issues: dict[str, object], schema_version: object = 1) -> bytes:
     return json.dumps({"schema_version": schema_version, "issues": issues}).encode("utf-8")
+
+
+def _make_batch_report(*scenarios: dict[str, object], schema_version: object = 1) -> bytes:
+    return json.dumps({"schema_version": schema_version, "is_batch": True, "data": scenarios}).encode("utf-8")
 
 
 def _make_issue(kind: str, **attributes: object) -> dict[str, object]:
@@ -74,6 +85,28 @@ def test_decode_validation_report_maps_known_kinds(kind: str, error_type: type[V
 
 def test_decode_empty_report_returns_none():
     assert _decode_validation_report(_make_report()) is None
+
+
+def test_decode_batch_report_groups_errors_by_scenario_and_component():
+    boolean_issue = _make_issue("not_boolean", component="line", field="from_status", ids=[3])
+    invalid_id_issue = _make_issue("invalid_update_id", component="node", field="id", ids=None)
+    missing_id_issue = _make_issue(
+        "id_not_in_dataset", component="line", field="id", ids=[9], details={"ref_dataset": "update"}
+    )
+
+    errors = _decode_batch_validation_report(
+        _make_batch_report({"line": [boolean_issue]}, {}, {"node": [invalid_id_issue]}, {"line": [missing_id_issue]})
+    )
+
+    assert errors == {
+        0: [NotBooleanError(CT.line, AT.from_status, [3])],
+        2: [InvalidIdError(CT.node, AT.id, None)],
+        3: [IdNotInDatasetError(CT.line, [9], DatasetType.update)],
+    }
+
+
+def test_decode_zero_scenario_batch_report_returns_none():
+    assert _decode_batch_validation_report(_make_batch_report()) is None
 
 
 def test_decode_known_issue_ignores_additive_attributes_and_preserves_sentinel():
@@ -195,6 +228,24 @@ def _valid_node_dataset():
     return {CT.node: nodes}
 
 
+def _valid_node_line_dataset():
+    nodes = initialize_array(DatasetType.input, CT.node, 2)
+    nodes[AT.id] = [1, 2]
+    nodes[AT.u_rated] = 100.0
+    lines = initialize_array(DatasetType.input, CT.line, 1)
+    lines[AT.id] = [3]
+    lines[AT.from_node] = [1]
+    lines[AT.to_node] = [2]
+    lines[AT.from_status] = [1]
+    lines[AT.to_status] = [1]
+    lines[AT.r1] = [0.1]
+    lines[AT.x1] = [0.2]
+    lines[AT.c1] = [0.0]
+    lines[AT.tan1] = [0.0]
+    lines[AT.i_n] = [100.0]
+    return {CT.node: nodes, CT.line: lines}
+
+
 def _track_native_result_destruction(monkeypatch):
     core = get_power_grid_core()
     destroy_result = core.destroy_validation_result
@@ -222,23 +273,60 @@ def test_native_adapter_decodes_report_and_destroys_result(monkeypatch):
     core.clear_error()
 
 
-@pytest.mark.parametrize(("symmetric", "expected"), [(True, 1), (False, 0)])
-def test_native_adapter_passes_symmetry_to_core(monkeypatch, symmetric: bool, expected: int):
+@pytest.mark.parametrize("symmetric", [True, False])
+def test_native_adapter_passes_options_to_core(monkeypatch, symmetric: bool):
     core = get_power_grid_core()
     core.clear_error()
-    received_symmetry = []
+    options = Options()
+    options.symmetric = symmetric
+    received_options = []
 
-    def validate_input_data(_dataset, native_symmetric):
-        received_symmetry.append(native_symmetric)
+    def validate_input_data(_dataset, native_options):
+        received_options.append(native_options.value)
         return ValidationResultPtr(1)
 
     monkeypatch.setattr(core, "validate_input_data", validate_input_data)
     monkeypatch.setattr(core, "validation_result_passed", lambda _result: 1)
     monkeypatch.setattr(core, "destroy_validation_result", lambda _result: None)
 
-    assert _validate_input_data_native(_valid_node_dataset(), symmetric=symmetric) is None
-    assert received_symmetry == [expected]
+    assert _validate_input_data_native(_valid_node_dataset(), options=options) is None
+    assert received_options == [options.opt.value]
     core.clear_error()
+
+
+@pytest.mark.parametrize("update_format", ["row", "columnar", "sparse"])
+def test_native_batch_adapter_matches_python_node_line_validation(update_format: str):
+    input_data = _valid_node_line_dataset()
+    node_updates = initialize_array(DatasetType.update, CT.node, (3, 1))
+    node_updates[AT.id] = [[1], [1], [99]]
+    line_updates = initialize_array(DatasetType.update, CT.line, (3, 1))
+    line_updates[AT.id] = [[3], [3], [99]]
+    line_updates[AT.from_status] = [[2], [np.iinfo(np.int8).min], [np.iinfo(np.int8).min]]
+    update_data = {CT.node: node_updates, CT.line: line_updates}
+    if update_format == "columnar":
+        update_data = compatibility_convert_row_columnar_dataset(
+            update_data, ComponentAttributeFilterOptions.everything, DatasetType.update
+        )
+    elif update_format == "sparse":
+        sparse_nodes = initialize_array(DatasetType.update, CT.node, 2)
+        sparse_nodes[AT.id] = [1, 99]
+        sparse_lines = initialize_array(DatasetType.update, CT.line, 2)
+        sparse_lines[AT.id] = [3, 99]
+        sparse_lines[AT.from_status] = [2, np.iinfo(np.int8).min]
+        indptr = np.array([0, 1, 1, 2], dtype=np.int64)
+        update_data = {
+            CT.node: {"indptr": indptr, "data": sparse_nodes},
+            CT.line: {"indptr": indptr, "data": sparse_lines},
+        }
+
+    assert _validate_batch_data_native(input_data, update_data) == validate_batch_data(input_data, update_data)
+
+
+def test_native_batch_adapter_treats_empty_updates_as_zero_scenarios():
+    input_data = _valid_node_dataset()
+    input_data[CT.node][AT.u_rated] = [np.nan]
+
+    assert _validate_batch_data_native(input_data, {}) is None
 
 
 def test_native_adapter_destroys_result_when_getter_fails(monkeypatch):

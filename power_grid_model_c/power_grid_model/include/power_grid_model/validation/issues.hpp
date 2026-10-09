@@ -18,6 +18,8 @@ enum class Rule {
     not_boolean,
     two_values_zero,
     invalid_id_reference,
+    id_not_in_dataset,
+    invalid_update_id,
     cross_component_not_unique,
 };
 
@@ -48,6 +50,7 @@ struct Issue {
 };
 
 using Issues = std::vector<Issue>;
+using BatchIssues = std::vector<Issues>;
 
 inline void add_issue(Issues& issues, Rule rule, std::string_view component, std::string_view field,
                       std::vector<ID> ids) {
@@ -63,6 +66,35 @@ inline void add_issue(Issues& issues, Rule rule, std::string_view component, std
                 .objects = {},
                 .reference_component = {}};
     issue.fields.push_back({.component = component, .field = field});
+    for (ID id : issue.ids) {
+        issue.objects.push_back({.component = component, .id = id});
+    }
+    issues.push_back(std::move(issue));
+}
+
+inline void add_nullable_id_issue(Issues& issues, Rule rule, std::string_view component, std::vector<ID> ids) {
+    if (!ids.empty()) {
+        add_issue(issues, rule, component, "id", std::move(ids));
+        return;
+    }
+    Issue issue{.rule = rule,
+                .component = component,
+                .field = "id",
+                .ids = {},
+                .fields = {{.component = component, .field = "id"}},
+                .objects = {},
+                .reference_component = {}};
+    issues.push_back(std::move(issue));
+}
+
+inline void add_id_not_in_dataset_issue(Issues& issues, std::string_view component, std::vector<ID> ids) {
+    Issue issue{.rule = Rule::id_not_in_dataset,
+                .component = component,
+                .field = "id",
+                .ids = std::move(ids),
+                .fields = {{.component = component, .field = "id"}},
+                .objects = {},
+                .reference_component = {}};
     for (ID id : issue.ids) {
         issue.objects.push_back({.component = component, .id = id});
     }

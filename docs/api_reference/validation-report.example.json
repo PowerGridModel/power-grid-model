@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "is_batch": true,
+  "data": [
+    {
+      "line": [
+        {
+          "kind": "not_boolean",
+          "component": "line",
+          "field": "from_status",
+          "ids": [3],
+          "fields": [{"component": "line", "field": "from_status"}],
+          "objects": [{"component": "line", "id": 3}],
+          "reference_component": null,
+          "details": {}
+        }
+      ]
+    },
+    {
+      "line": [
+        {
+          "kind": "id_not_in_dataset",
+          "component": "line",
+          "field": "id",
+          "ids": [99],
+          "fields": [{"component": "line", "field": "id"}],
+          "objects": [{"component": "line", "id": 99}],
+          "reference_component": null,
+          "details": {"ref_dataset": "update"}
+        }
+      ]
+    },
+    {}
+  ]
+}

@@ -1,7 +1,9 @@
 #include <power_grid_model/auxiliary/input.hpp>
+#include <power_grid_model/auxiliary/update.hpp>
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model_c/dataset.h>
 #include <power_grid_model_c/handle.h>
+#include <power_grid_model_c/options.h>
 #include <power_grid_model_c/validation.h>
 
 #include <doctest/doctest.h>
@@ -15,9 +17,11 @@
 namespace {
 using CHandle = std::unique_ptr<PGM_Handle, decltype(&PGM_destroy_handle)>;
 using ConstDataset = std::unique_ptr<PGM_ConstDataset, decltype(&PGM_destroy_dataset_const)>;
+using COptions = std::unique_ptr<PGM_Options, decltype(&PGM_destroy_options)>;
 using ValidationResult = std::unique_ptr<PGM_ValidationResult, decltype(&PGM_destroy_validation_result)>;
 
 CHandle create_handle() { return {PGM_create_handle(), &PGM_destroy_handle}; }
+COptions create_options(PGM_Handle* handle) { return {PGM_create_options(handle), &PGM_destroy_options}; }
 
 ConstDataset create_dataset(PGM_Handle* handle, char const* type = "input", PGM_Idx is_batch = 0,
                             PGM_Idx batch_size = 1) {
@@ -25,7 +29,8 @@ ConstDataset create_dataset(PGM_Handle* handle, char const* type = "input", PGM_
 }
 
 void check_validation_failure(PGM_Handle* handle, PGM_ConstDataset const* dataset) {
-    ValidationResult result{PGM_validate_input_data(handle, dataset, 1), &PGM_destroy_validation_result};
+    auto options = create_options(handle);
+    ValidationResult result{PGM_validate_input_data(handle, dataset, options.get()), &PGM_destroy_validation_result};
     CHECK(result == nullptr);
     CHECK(PGM_error_code(handle) == PGM_regular_error);
 }
@@ -46,10 +51,11 @@ TEST_CASE("Node validation C API accepts valid and empty node data") {
 
     auto const handle = create_handle();
     REQUIRE(handle != nullptr);
+    auto const options = create_options(handle.get());
 
     auto absent_nodes = create_dataset(handle.get());
     REQUIRE(absent_nodes != nullptr);
-    ValidationResult absent_result{PGM_validate_input_data(handle.get(), absent_nodes.get(), 1),
+    ValidationResult absent_result{PGM_validate_input_data(handle.get(), absent_nodes.get(), options.get()),
                                    &PGM_destroy_validation_result};
     REQUIRE(absent_result != nullptr);
     CHECK(PGM_validation_result_passed(handle.get(), absent_result.get()) == 1);
@@ -63,7 +69,7 @@ TEST_CASE("Node validation C API accepts valid and empty node data") {
     REQUIRE(empty_nodes != nullptr);
     PGM_dataset_const_add_buffer(handle.get(), empty_nodes.get(), "node", 0, 0, nullptr, nullptr);
     REQUIRE(PGM_error_code(handle.get()) == PGM_no_error);
-    ValidationResult empty_result{PGM_validate_input_data(handle.get(), empty_nodes.get(), 1),
+    ValidationResult empty_result{PGM_validate_input_data(handle.get(), empty_nodes.get(), options.get()),
                                   &PGM_destroy_validation_result};
     REQUIRE(empty_result != nullptr);
     CHECK(PGM_validation_result_passed(handle.get(), empty_result.get()) == 1);
@@ -75,7 +81,7 @@ TEST_CASE("Node validation C API accepts valid and empty node data") {
     REQUIRE(valid_nodes != nullptr);
     PGM_dataset_const_add_buffer(handle.get(), valid_nodes.get(), "node", 1, 1, nullptr, nodes.data());
     REQUIRE(PGM_error_code(handle.get()) == PGM_no_error);
-    ValidationResult valid_result{PGM_validate_input_data(handle.get(), valid_nodes.get(), 1),
+    ValidationResult valid_result{PGM_validate_input_data(handle.get(), valid_nodes.get(), options.get()),
                                   &PGM_destroy_validation_result};
     REQUIRE(valid_result != nullptr);
     CHECK(PGM_validation_result_passed(handle.get(), valid_result.get()) == 1);
@@ -91,6 +97,7 @@ TEST_CASE("Node validation C API keeps findings alive and does not mutate input"
 
     auto const handle = create_handle();
     REQUIRE(handle != nullptr);
+    auto const options = create_options(handle.get());
 
     std::array<NodeInput, 5> nodes{{{na_IntID, nan},
                                     {4, std::numeric_limits<double>::infinity()},
@@ -104,7 +111,8 @@ TEST_CASE("Node validation C API keeps findings alive and does not mutate input"
                                  static_cast<PGM_Idx>(nodes.size()), nullptr, nodes.data());
     REQUIRE(PGM_error_code(handle.get()) == PGM_no_error);
 
-    ValidationResult result{PGM_validate_input_data(handle.get(), dataset.get(), 1), &PGM_destroy_validation_result};
+    ValidationResult result{PGM_validate_input_data(handle.get(), dataset.get(), options.get()),
+                            &PGM_destroy_validation_result};
     REQUIRE(result != nullptr);
     CHECK(PGM_validation_result_passed(handle.get(), result.get()) == 0);
     char const* report_data{};
@@ -152,6 +160,7 @@ TEST_CASE("Node validation C API keeps findings alive and does not mutate input"
 TEST_CASE("Node validation C API supports columnar buffers") {
     auto const handle = create_handle();
     REQUIRE(handle != nullptr);
+    auto const options = create_options(handle.get());
 
     std::array<PGM_ID, 3> const ids{1, 2, 3};
     std::array<double, 3> const voltages{std::numeric_limits<double>::infinity(),
@@ -163,7 +172,8 @@ TEST_CASE("Node validation C API supports columnar buffers") {
     PGM_dataset_const_add_attribute_buffer(handle.get(), dataset.get(), "node", "u_rated", voltages.data());
     REQUIRE(PGM_error_code(handle.get()) == PGM_no_error);
 
-    ValidationResult result{PGM_validate_input_data(handle.get(), dataset.get(), 1), &PGM_destroy_validation_result};
+    ValidationResult result{PGM_validate_input_data(handle.get(), dataset.get(), options.get()),
+                            &PGM_destroy_validation_result};
     REQUIRE(result != nullptr);
     auto const report = nlohmann::json::parse(get_validation_report(handle.get(), result.get()));
     auto const& issues = report.at("issues");
@@ -178,10 +188,12 @@ TEST_CASE("Node validation C API supports columnar buffers") {
 TEST_CASE("Node validation C API resets JSON outputs on errors") {
     auto const handle = create_handle();
     REQUIRE(handle != nullptr);
+    auto const options = create_options(handle.get());
 
     auto dataset = create_dataset(handle.get());
     REQUIRE(dataset != nullptr);
-    ValidationResult result{PGM_validate_input_data(handle.get(), dataset.get(), 1), &PGM_destroy_validation_result};
+    ValidationResult result{PGM_validate_input_data(handle.get(), dataset.get(), options.get()),
+                            &PGM_destroy_validation_result};
     REQUIRE(result != nullptr);
 
     char const* data = "stale";
@@ -211,6 +223,7 @@ TEST_CASE("Line validation C API selects symmetry and returns structured finding
 
     auto const handle = create_handle();
     REQUIRE(handle != nullptr);
+    auto options = create_options(handle.get());
 
     std::array<NodeInput, 2> const nodes{{{1, 100.0}, {2, 100.0}}};
     LineInput line{};
@@ -229,14 +242,16 @@ TEST_CASE("Line validation C API selects symmetry and returns structured finding
     PGM_dataset_const_add_buffer(handle.get(), dataset.get(), "line", 1, 1, nullptr, &line);
     REQUIRE(PGM_error_code(handle.get()) == PGM_no_error);
 
-    ValidationResult symmetric_result{PGM_validate_input_data(handle.get(), dataset.get(), 1),
+    ValidationResult symmetric_result{PGM_validate_input_data(handle.get(), dataset.get(), options.get()),
                                       &PGM_destroy_validation_result};
     REQUIRE(symmetric_result != nullptr);
     CHECK(PGM_validation_result_passed(handle.get(), symmetric_result.get()) == 0);
     auto const symmetric_report = nlohmann::json::parse(get_validation_report(handle.get(), symmetric_result.get()));
     CHECK(symmetric_report.at("issues").size() == 3);
 
-    ValidationResult asymmetric_result{PGM_validate_input_data(handle.get(), dataset.get(), 0),
+    PGM_set_symmetric(handle.get(), options.get(), 0);
+    REQUIRE(PGM_error_code(handle.get()) == PGM_no_error);
+    ValidationResult asymmetric_result{PGM_validate_input_data(handle.get(), dataset.get(), options.get()),
                                        &PGM_destroy_validation_result};
     REQUIRE(asymmetric_result != nullptr);
     CHECK(PGM_validation_result_passed(handle.get(), asymmetric_result.get()) == 0);
@@ -248,7 +263,9 @@ TEST_CASE("Line validation C API selects symmetry and returns structured finding
     line.r1 = 0.0;
     line.x1 = 0.0;
     line.i_n = -1.0;
-    ValidationResult invalid_result{PGM_validate_input_data(handle.get(), dataset.get(), 1),
+    PGM_set_symmetric(handle.get(), options.get(), 1);
+    REQUIRE(PGM_error_code(handle.get()) == PGM_no_error);
+    ValidationResult invalid_result{PGM_validate_input_data(handle.get(), dataset.get(), options.get()),
                                     &PGM_destroy_validation_result};
     REQUIRE(invalid_result != nullptr);
     CHECK(PGM_validation_result_passed(handle.get(), invalid_result.get()) == 0);
@@ -299,11 +316,20 @@ TEST_CASE("Line validation C API selects symmetry and returns structured finding
 TEST_CASE("Line validation C API rejects invalid symmetry argument") {
     auto const handle = create_handle();
     REQUIRE(handle != nullptr);
+    auto options = create_options(handle.get());
     auto dataset = create_dataset(handle.get());
     REQUIRE(dataset != nullptr);
 
-    ValidationResult result{PGM_validate_input_data(handle.get(), dataset.get(), 2), &PGM_destroy_validation_result};
+    PGM_set_symmetric(handle.get(), options.get(), 2);
+    REQUIRE(PGM_error_code(handle.get()) == PGM_no_error);
+    ValidationResult result{PGM_validate_input_data(handle.get(), dataset.get(), options.get()),
+                            &PGM_destroy_validation_result};
     CHECK(result == nullptr);
+    CHECK(PGM_error_code(handle.get()) == PGM_regular_error);
+
+    ValidationResult null_options_result{PGM_validate_input_data(handle.get(), dataset.get(), nullptr),
+                                         &PGM_destroy_validation_result};
+    CHECK(null_options_result == nullptr);
     CHECK(PGM_error_code(handle.get()) == PGM_regular_error);
 }
 
@@ -312,6 +338,7 @@ TEST_CASE("Line validation C API supports mixed row and columnar buffers") {
 
     auto const handle = create_handle();
     REQUIRE(handle != nullptr);
+    auto const options = create_options(handle.get());
 
     std::array<NodeInput, 2> const nodes{{{1, 100.0}, {2, 100.0}}};
     std::array<PGM_ID, 1> const ids{3};
@@ -347,7 +374,8 @@ TEST_CASE("Line validation C API supports mixed row and columnar buffers") {
     PGM_dataset_const_add_attribute_buffer(handle.get(), dataset.get(), "line", "i_n", i_n.data());
     REQUIRE(PGM_error_code(handle.get()) == PGM_no_error);
 
-    ValidationResult result{PGM_validate_input_data(handle.get(), dataset.get(), 1), &PGM_destroy_validation_result};
+    ValidationResult result{PGM_validate_input_data(handle.get(), dataset.get(), options.get()),
+                            &PGM_destroy_validation_result};
     REQUIRE(result != nullptr);
     CHECK(PGM_validation_result_passed(handle.get(), result.get()) == 1);
     auto const report = nlohmann::json::parse(get_validation_report(handle.get(), result.get()));
@@ -360,6 +388,7 @@ TEST_CASE("Line validation reports references when nodes are absent") {
 
     auto const handle = create_handle();
     REQUIRE(handle != nullptr);
+    auto const options = create_options(handle.get());
 
     LineInput line{};
     line.id = 3;
@@ -376,7 +405,8 @@ TEST_CASE("Line validation reports references when nodes are absent") {
     PGM_dataset_const_add_buffer(handle.get(), dataset.get(), "line", 1, 1, nullptr, &line);
     REQUIRE(PGM_error_code(handle.get()) == PGM_no_error);
 
-    ValidationResult result{PGM_validate_input_data(handle.get(), dataset.get(), 1), &PGM_destroy_validation_result};
+    ValidationResult result{PGM_validate_input_data(handle.get(), dataset.get(), options.get()),
+                            &PGM_destroy_validation_result};
     REQUIRE(result != nullptr);
     auto const report = nlohmann::json::parse(get_validation_report(handle.get(), result.get()));
     CHECK(report.at("issues").size() == 2);
@@ -412,4 +442,64 @@ TEST_CASE("Node validation C API rejects unsupported dataset shapes") {
     check_validation_failure(handle.get(), mixed_dataset.get());
 
     check_validation_failure(handle.get(), nullptr);
+}
+
+TEST_CASE("Batch validation C API reports scenario-grouped node and line findings") {
+    using power_grid_model::BaseUpdate;
+    using power_grid_model::BranchUpdate;
+    using power_grid_model::LineInput;
+    using power_grid_model::na_IntS;
+    using power_grid_model::NodeInput;
+
+    auto const handle = create_handle();
+    REQUIRE(handle != nullptr);
+    auto const options = create_options(handle.get());
+
+    std::array<NodeInput, 2> const nodes{{{1, 100.0}, {2, 100.0}}};
+    LineInput line{};
+    line.id = 3;
+    line.from_node = 1;
+    line.to_node = 2;
+    line.from_status = 1;
+    line.to_status = 1;
+    line.r1 = 0.1;
+    line.x1 = 0.2;
+    line.c1 = 0.0;
+    line.tan1 = 0.0;
+    line.i_n = 100.0;
+
+    auto input = create_dataset(handle.get());
+    REQUIRE(input != nullptr);
+    PGM_dataset_const_add_buffer(handle.get(), input.get(), "node", 2, 2, nullptr, nodes.data());
+    PGM_dataset_const_add_buffer(handle.get(), input.get(), "line", 1, 1, nullptr, &line);
+    REQUIRE(PGM_error_code(handle.get()) == PGM_no_error);
+
+    std::array<BaseUpdate, 3> const node_updates{{{1}, {1}, {99}}};
+    std::array<BranchUpdate, 3> const line_updates{{{3, 2, na_IntS}, {3, na_IntS, na_IntS}, {99, na_IntS, na_IntS}}};
+    auto updates = create_dataset(handle.get(), "update", 1, 3);
+    REQUIRE(updates != nullptr);
+    PGM_dataset_const_add_buffer(handle.get(), updates.get(), "node", 1, 3, nullptr, node_updates.data());
+    PGM_dataset_const_add_buffer(handle.get(), updates.get(), "line", 1, 3, nullptr, line_updates.data());
+    REQUIRE(PGM_error_code(handle.get()) == PGM_no_error);
+
+    ValidationResult result{PGM_validate_batch_data(handle.get(), input.get(), updates.get(), options.get()),
+                            &PGM_destroy_validation_result};
+    REQUIRE(result != nullptr);
+    CHECK(PGM_validation_result_passed(handle.get(), result.get()) == 0);
+    auto const report = nlohmann::json::parse(get_validation_report(handle.get(), result.get()));
+    CHECK(report.at("schema_version") == 1);
+    CHECK(report.at("is_batch") == true);
+    auto const& scenarios = report.at("data");
+    REQUIRE(scenarios.size() == 3);
+    REQUIRE(scenarios.at(0).at("line").size() == 1);
+    CHECK(scenarios.at(0).at("line").at(0).at("kind") == "not_boolean");
+    CHECK(scenarios.at(1).empty());
+    REQUIRE(scenarios.at(2).at("node").size() == 1);
+    CHECK(scenarios.at(2).at("node").at(0).at("kind") == "id_not_in_dataset");
+    REQUIRE(scenarios.at(2).at("line").size() == 1);
+    CHECK(scenarios.at(2).at("line").at(0).at("kind") == "id_not_in_dataset");
+    CHECK(scenarios.at(2).at("line").at(0).at("details").at("ref_dataset") == "update");
+    CHECK(scenarios.at(2).at("line").at(0).at("ids") == nlohmann::json::array({99}));
+    CHECK(line.from_status == 1);
+    CHECK(PGM_error_code(handle.get()) == PGM_no_error);
 }

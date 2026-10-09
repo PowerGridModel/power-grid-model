@@ -2,31 +2,65 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Power Grid Model experimental validation report",
   "type": "object",
-  "required": ["schema_version", "issues"],
+  "required": ["schema_version"],
   "properties": {
     "schema_version": {
       "type": "integer",
       "const": 1
     },
-    "issues": {
-      "type": "array",
-      "items": {
-        "oneOf": [
-          {"$ref": "#/$defs/missingValue"},
-          {"$ref": "#/$defs/infinity"},
-          {"$ref": "#/$defs/notUnique"},
-          {"$ref": "#/$defs/notGreaterThan"},
-          {"$ref": "#/$defs/notBoolean"},
-          {"$ref": "#/$defs/twoValuesZero"},
-          {"$ref": "#/$defs/invalidIdReference"},
-          {"$ref": "#/$defs/crossComponentNotUnique"},
-          {"$ref": "#/$defs/unknownIssue"}
-        ]
+    "is_batch": {"type": "boolean"}
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"is_batch": {"const": true}},
+        "required": ["is_batch"]
+      },
+      "then": {
+        "required": ["is_batch", "data"],
+        "properties": {
+          "is_batch": {"const": true},
+          "data": {
+            "type": "array",
+            "items": {"$ref": "#/$defs/scenario"}
+          }
+        }
+      },
+      "else": {
+        "required": ["issues"],
+        "properties": {"issues": {"$ref": "#/$defs/issues"}}
       }
     }
-  },
+  ],
   "additionalProperties": true,
   "$defs": {
+    "scenario": {
+      "type": "object",
+      "properties": {
+        "node": {"$ref": "#/$defs/issues"},
+        "line": {"$ref": "#/$defs/issues"}
+      },
+      "additionalProperties": false
+    },
+    "issues": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/issue"}
+    },
+    "issue": {
+      "oneOf": [
+        {"$ref": "#/$defs/missingValue"},
+        {"$ref": "#/$defs/infinity"},
+        {"$ref": "#/$defs/notUnique"},
+        {"$ref": "#/$defs/notGreaterThan"},
+        {"$ref": "#/$defs/notBoolean"},
+        {"$ref": "#/$defs/twoValuesZero"},
+        {"$ref": "#/$defs/invalidIdReference"},
+        {"$ref": "#/$defs/idNotInDataset"},
+        {"$ref": "#/$defs/invalidUpdateId"},
+        {"$ref": "#/$defs/crossComponentNotUnique"},
+        {"$ref": "#/$defs/unknownIssue"}
+      ]
+    },
     "knownIssue": {
       "type": "object",
       "required": ["kind", "component", "field", "ids", "details"],
@@ -146,6 +180,39 @@
         }
       ]
     },
+    "idNotInDataset": {
+      "allOf": [
+        {"$ref": "#/$defs/knownIssue"},
+        {
+          "properties": {
+            "kind": {"const": "id_not_in_dataset"},
+            "ids": {
+              "type": "array",
+              "minItems": 1,
+              "items": {"$ref": "#/$defs/id"}
+            },
+            "details": {
+              "type": "object",
+              "required": ["ref_dataset"],
+              "properties": {"ref_dataset": {"const": "update"}},
+              "additionalProperties": true
+            }
+          }
+        }
+      ]
+    },
+    "invalidUpdateId": {
+      "allOf": [
+        {"$ref": "#/$defs/knownIssue"},
+        {
+          "properties": {
+            "kind": {"const": "invalid_update_id"},
+            "field": {"const": "id"},
+            "ids": {"type": "null"}
+          }
+        }
+      ]
+    },
     "crossComponentNotUnique": {
       "allOf": [
         {"$ref": "#/$defs/knownIssue"},
@@ -183,6 +250,8 @@
               "not_boolean",
               "two_values_zero",
               "invalid_id_reference",
+              "id_not_in_dataset",
+              "invalid_update_id",
               "cross_component_not_unique"
             ]
           }

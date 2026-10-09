@@ -3,6 +3,7 @@
 #include "forward_declarations.hpp"
 #include "handle.hpp"
 #include "input_sanitization.hpp"
+#include "options.hpp"
 #include "safe_memory_handling.hpp"
 
 #include "power_grid_model_c/validation.h"
@@ -12,6 +13,7 @@
 
 #include <nlohmann/json.hpp>
 
+#include <algorithm>
 #include <stdexcept>
 #include <utility>
 
@@ -24,6 +26,14 @@ using power_grid_model_c::create;
 using power_grid_model_c::destroy;
 using power_grid_model_c::safe_ptr;
 using power_grid_model_c::safe_ptr_get;
+
+bool validation_symmetric(PGM_Options const* options) {
+    auto const& cpp_options = safe_ptr_get(options);
+    if (cpp_options.symmetric != 0 && cpp_options.symmetric != 1) {
+        throw InvalidArguments{"Validation options.symmetric must be 0 or 1.\n"};
+    }
+    return cpp_options.symmetric != 0;
+}
 
 char const* to_json_issue_kind(Rule rule) {
     switch (rule) {
@@ -41,6 +51,10 @@ char const* to_json_issue_kind(Rule rule) {
         return "two_values_zero";
     case Rule::invalid_id_reference:
         return "invalid_id_reference";
+    case Rule::id_not_in_dataset:
+        return "id_not_in_dataset";
+    case Rule::invalid_update_id:
+        return "invalid_update_id";
     case Rule::cross_component_not_unique:
         return "cross_component_not_unique";
     }
@@ -51,6 +65,8 @@ nlohmann::json to_json(power_grid_model::validation::Issue const& issue) {
     auto details = nlohmann::json::object();
     if (issue.rule == Rule::not_greater_than_zero) {
         details["ref_value"] = 0;
+    } else if (issue.rule == Rule::id_not_in_dataset) {
+        details["ref_dataset"] = "update";
     }
 
     auto fields = nlohmann::json::array();
@@ -89,28 +105,65 @@ std::string to_json_report(power_grid_model::validation::Issues const& issues) {
     }
     return report.dump(-1, ' ', false, nlohmann::json::error_handler_t::strict);
 }
+
+std::string to_json_report(power_grid_model::validation::BatchIssues const& scenarios) {
+    auto data = nlohmann::json::array();
+    for (auto const& issues : scenarios) {
+        auto scenario = nlohmann::json::object();
+        for (auto const& issue : issues) {
+            scenario[std::string{issue.component}].push_back(to_json(issue));
+        }
+        data.push_back(std::move(scenario));
+    }
+    auto report = nlohmann::json{{"schema_version", 1}, {"is_batch", true}, {"data", std::move(data)}};
+    return report.dump(-1, ' ', false, nlohmann::json::error_handler_t::strict);
+}
+
+bool all_scenarios_passed(power_grid_model::validation::BatchIssues const& scenarios) {
+    return std::ranges::all_of(scenarios,
+                               [](power_grid_model::validation::Issues const& issues) { return issues.empty(); });
+}
 } // namespace
 
 PGM_ValidationResult::PGM_ValidationResult(power_grid_model::validation::Issues source_issues)
     : passed_{source_issues.empty()}, issues_{std::move(source_issues)} {}
 
+PGM_ValidationResult::PGM_ValidationResult(power_grid_model::validation::BatchIssues source_scenarios)
+    : passed_{all_scenarios_passed(source_scenarios)}, is_batch_{true}, batch_issues_{std::move(source_scenarios)} {}
+
 std::string const& PGM_ValidationResult::get_json_report() const {
     std::call_once(json_report_once_, [this] {
-        json_report_ = to_json_report(issues_);
-        power_grid_model::validation::Issues{}.swap(issues_);
+        if (is_batch_) {
+            json_report_ = to_json_report(batch_issues_);
+            power_grid_model::validation::BatchIssues{}.swap(batch_issues_);
+        } else {
+            json_report_ = to_json_report(issues_);
+            power_grid_model::validation::Issues{}.swap(issues_);
+        }
     });
     return json_report_;
 }
 
 PGM_ValidationResult* PGM_validate_input_data(PGM_Handle* handle, PGM_ConstDataset const* dataset,
-                                              PGM_Idx symmetric) noexcept {
-    return call_with_catch(handle, [dataset, symmetric] {
-        if (symmetric != 0 && symmetric != 1) {
-            throw InvalidArguments{"PGM_validate_input_data expects symmetric to be 0 or 1.\n"};
-        }
+                                              PGM_Options const* options) noexcept {
+    return call_with_catch(handle, [dataset, options] {
+        bool const symmetric = validation_symmetric(options);
         auto const& cpp_dataset = safe_ptr_get(cast_to_cpp(dataset));
-        auto issues = power_grid_model::validation::validate_input_dataset(cpp_dataset, symmetric != 0);
+        auto issues = power_grid_model::validation::validate_input_dataset(cpp_dataset, symmetric);
         return create<PGM_ValidationResult>(std::move(issues));
+    });
+}
+
+PGM_ValidationResult* PGM_validate_batch_data(PGM_Handle* handle, PGM_ConstDataset const* input_dataset,
+                                              PGM_ConstDataset const* update_dataset,
+                                              PGM_Options const* options) noexcept {
+    return call_with_catch(handle, [input_dataset, update_dataset, options] {
+        bool const symmetric = validation_symmetric(options);
+        auto const& cpp_input_dataset = safe_ptr_get(cast_to_cpp(input_dataset));
+        auto const& cpp_update_dataset = safe_ptr_get(cast_to_cpp(update_dataset));
+        auto scenarios =
+            power_grid_model::validation::validate_batch_dataset(cpp_input_dataset, cpp_update_dataset, symmetric);
+        return create<PGM_ValidationResult>(std::move(scenarios));
     });
 }
 
