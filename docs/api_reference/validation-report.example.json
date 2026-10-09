@@ -1,35 +1,43 @@
 {
-  "schema_version": 1,
-  "is_batch": true,
-  "data": [
+  "schema_version": 2,
+  "validation_type": "batch",
+  "valid": false,
+  "results": [
     {
-      "line": [
+      "scenario": null,
+      "status": "passed",
+      "issues": []
+    },
+    {
+      "scenario": 0,
+      "status": "failed",
+      "issues": [
         {
           "kind": "not_boolean",
-          "component": "line",
-          "field": "from_status",
-          "ids": [3],
           "fields": [{"component": "line", "field": "from_status"}],
           "objects": [{"component": "line", "id": 3}],
-          "reference_component": null,
           "details": {}
         }
       ]
     },
     {
-      "line": [
+      "scenario": 1,
+      "status": "blocked",
+      "issues": [
         {
           "kind": "id_not_in_dataset",
-          "component": "line",
-          "field": "id",
-          "ids": [99],
           "fields": [{"component": "line", "field": "id"}],
-          "objects": [{"component": "line", "id": 99}],
-          "reference_component": null,
-          "details": {"ref_dataset": "update"}
+          "objects": [{"component": "line", "id": 99, "row": 0}],
+          "details": {
+            "reference": {"dataset": "input", "component": "line", "field": "id"}
+          }
         }
       ]
     },
-    {}
+    {
+      "scenario": 2,
+      "status": "passed",
+      "issues": []
+    }
   ]
 }

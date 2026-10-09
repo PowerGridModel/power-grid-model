@@ -1,18 +1,17 @@
 # Validation Reporting Interface Options
 
-The comparison below records the earlier goal of reconstructing Python validation errors from native findings.
-That goal is superseded: the new validator will return JSON, not Python exception objects, and the existing Python
-validator will be deprecated separately. See [the redesign proposal](#redesign-proposal) for the recommended architecture,
-review findings, and implementation plan. This document proposes changes; it does not describe an implemented revamp.
-The alternative interfaces below are historical design options, not a proposal to expose all of them simultaneously.
-Export macros and C++ linkage boilerplate are omitted for readability.
+This document compares earlier interface alternatives and records the architecture of the implemented experimental
+validator. The new interface returns JSON, not reconstructed Python exception objects. The existing Python validators
+retain their current behavior; any deprecation transition is separate. Alternative interfaces below are historical
+design options, not a proposal to expose all of them simultaneously. Export macros and C++ linkage boilerplate are
+omitted for readability.
 
-The current experimental [validation header](../../power_grid_model_c/power_grid_model_c/include/power_grid_model_c/validation.h)
-exposes input and batch validation, pass/fail, JSON retrieval, and result destruction.
-Both validation functions accept a borrowed, non-NULL `PGM_Options const*`. Node and line validation currently uses
-only its `symmetric` setting, which must be 0 or 1; the other calculation settings do not affect these validation rules.
-Other interfaces shown here are hypothetical. With equivalent options, no reporting alternative changes which model
-data is valid.
+The experimental [validation header](../../power_grid_model_c/power_grid_model_c/include/power_grid_model_c/validation.h)
+exposes input and batch validation, JSON retrieval, and result destruction. The Python package also exposes
+`validate_input_data_json` and `validate_batch_data_json`, which return report bytes. Both native validation functions
+accept a borrowed, non-NULL `PGM_Options const*`. Node and line validation currently uses only its `symmetric` setting,
+which must be 0 or 1; the other calculation settings do not affect these rules. Other interfaces shown here are
+historical alternatives. With equivalent options, no reporting alternative changes which model data is valid.
 
 ## Comparison
 
@@ -48,9 +47,6 @@ PGM_ValidationResult* PGM_validate_batch_data(
     PGM_ConstDataset const* input_dataset,
     PGM_ConstDataset const* update_dataset,
     PGM_Options const* options);
-
-PGM_Idx PGM_validation_result_passed(
-    PGM_Handle* handle, PGM_ValidationResult const* result);
 
 void PGM_destroy_validation_result(PGM_ValidationResult* result);
 ```
@@ -121,72 +117,83 @@ void PGM_validation_result_get_json(
     PGM_Idx* size);
 ```
 
-This getter exists in the current experimental interface. The output is borrowed UTF-8 JSON owned by the result.
-The consumer copies the bytes before destruction, parses JSON, and maps stable kind strings to its own error classes.
-Operational getter failures reset the outputs and set the handle error.
+This getter exists in the current experimental interface. Validation eagerly serializes a complete UTF-8 JSON report
+owned by the result. The consumer copies the bytes before destruction and parses JSON as needed. Operational getter
+failures reset the outputs and set the handle error.
 
 ```json
 {
-  "schema_version": 1,
-  "issues": [
-    {
-      "kind": "not_greater_than",
-      "component": "node",
-      "field": "u_rated",
-      "ids": [3, 14],
-      "details": {"ref_value": 0}
-    }
-  ]
+    "schema_version": 2,
+    "validation_type": "input",
+    "valid": false,
+    "results": [
+        {
+            "scenario": null,
+            "status": "failed",
+            "issues": [
+                {
+                    "kind": "not_greater_than",
+                    "fields": [{"component": "node", "field": "u_rated"}],
+                    "objects": [{"component": "node", "id": 3}],
+                    "details": {"ref_value": 0}
+                }
+            ]
+        }
+    ]
 }
 ```
 
-For a single-input report, an empty `issues` array means validation passed. The existing
-[JSON Schema](../api_reference/validation-report.schema.json) describes the current report.
-New attributes can be added without new C functions. Unknown kinds must be retained or explicitly rejected,
-not silently discarded. Nonfinite values and enum identifiers require explicit representations rather than
-nonstandard JSON tokens or Python-specific objects.
+The `results` array contains one input scope for input validation. Batch reports use the same envelope, with an input
+identity scope followed by one result per scenario. Findings are not grouped by component; each uses canonical `fields`,
+`objects`, and `details`. New attributes can be added without new C functions. Unknown kinds must be preserved or
+explicitly rejected, not silently discarded. Nonfinite values and enum identifiers require explicit representations
+rather than nonstandard JSON tokens or Python-specific objects.
 
-Batch validation uses a separate envelope. `data` preserves every zero-based scenario position, including passing
-scenarios, and groups findings by component. An empty scenario is `{}`; a batch with zero scenarios has an empty
-`data` array. The current batch validator supports node and line input/update components. Node updates check IDs but
-do not change values; line updates change only `from_status` and `to_status`. Each scenario is merged independently
-with the unchanged input dataset.
+Batch validation applies each scenario independently to a copy of the input. Node updates validate IDs but do not change
+node values; line updates may change only `from_status` and `to_status`. Empty update scenarios validate the unchanged
+input. A zero-scenario batch returns `results: []` and performs no input checks.
 
 ```json
 {
-    "schema_version": 1,
-    "is_batch": true,
-    "data": [
+    "schema_version": 2,
+    "validation_type": "batch",
+    "valid": false,
+    "results": [
+        {"scenario": null, "status": "passed", "issues": []},
         {
-            "line": [
+            "scenario": 0,
+            "status": "failed",
+            "issues": [
                 {
                     "kind": "not_boolean",
-                    "component": "line",
-                    "field": "from_status",
-                    "ids": [12],
+                    "fields": [{"component": "line", "field": "from_status"}],
+                    "objects": [{"component": "line", "id": 12}],
                     "details": {}
                 }
             ]
         },
         {
-            "line": [
+            "scenario": 1,
+            "status": "blocked",
+            "issues": [
                 {
                     "kind": "id_not_in_dataset",
-                    "component": "line",
-                    "field": "id",
-                    "ids": [99],
-                    "details": {"ref_dataset": "update"}
+                    "fields": [{"component": "line", "field": "id"}],
+                    "objects": [{"component": "line", "id": 99, "row": 0}],
+                    "details": {
+                        "reference": {"dataset": "input", "component": "line", "field": "id"}
+                    }
                 }
             ]
         },
-        {}
+        {"scenario": 2, "status": "passed", "issues": []}
     ]
 }
 ```
 
-`invalid_update_id` findings use `ids: null` when the update component is absent from the input or positional IDs
-cannot be matched by row count. `id_not_in_dataset` reports unknown update IDs in `ids`. Both kinds can be reconstructed
-as the corresponding Python batch validation errors.
+An `invalid_update_id` finding identifies missing or ambiguous update IDs with `objects` references and update rows.
+`id_not_in_dataset` reports explicit update IDs that are absent from input, including their update rows. In both cases,
+`details.reference` identifies the input component and ID being addressed.
 
 ## 3. Strings With Consumer-Defined Regexes
 
@@ -277,9 +284,10 @@ void PGM_destroy_logger(PGM_Logger* logger);
 
 The logger lifecycle and output operations already exist. The logged validation call, its options argument, and a
 dedicated validation-JSON logger type are proposed additions; existing text loggers do not supply this report format.
-The existing `PGM_validation_result_passed` operation also exists, but a standalone logged validation call would
-avoid requiring a result handle solely to read pass/fail. Return 1 for valid data and 0 for invalid data; check the
-handle to distinguish an operational failure. This alternative does not acquire a validation result.
+An earlier prototype included `PGM_validation_result_passed`; the implemented v2 interface removed it because the JSON
+envelope carries validity. A standalone logged validation call would avoid requiring a result handle solely to read
+pass/fail. Return 1 for valid data and 0 for invalid data; check the handle to distinguish an operational failure.
+This alternative does not acquire a validation result.
 
 The caller creates/registers a logger, clears or isolates its contents, validates, checks the handle, retrieves the
 report with `consume_validation_json` as the callback, then unregisters/destroys the logger.
@@ -337,13 +345,14 @@ void PGM_value_get_string(
     PGM_Handle* handle, PGM_Value const* value, char const** data, PGM_Idx* size);
 ```
 
-For single-input validation, the root exposes the same logical envelope as the JSON example: `schema_version` and
-`issues`. Batch validation uses `schema_version`, `is_batch`, and the scenario-indexed `data` array described above.
-Reading the reference value conceptually looks like this:
+The generic accessors in this historical alternative would expose the same v2 envelope as JSON. Reading the first
+input finding's reference value conceptually looks like this:
 
 ```text
 root      = get_value(result)
-issues    = get_property(root, "issues")
+results   = get_property(root, "results")
+scope     = get_array_item(results, 0)
+issues    = get_property(scope, "issues")
 issue     = get_array_item(issues, 0)
 details   = get_property(issue, "details")
 reference = get_property(details, "ref_value")
@@ -436,106 +445,43 @@ calculation-dependent rules. Deprecation does not imply that the native validato
 
 ### Current Architecture
 
-The current flow is:
+The implemented flow is:
 
 ```text
-ConstDataset -> input orchestration -> node/line composers -> reusable rules -> Issues
-Issues or BatchIssues -> PGM_ValidationResult -> lazy JSON serialization
-JSON -> private Python decoder -> existing ValidationError objects
+ConstDataset -> compile-time component dispatch -> composers and reusable rules
+    -> typed ValidationReport -> eager v2 JSON serialization
+    -> C-owned result bytes -> Python bytes
 ```
 
-Keep the useful separation between reusable rules, component composers, dataset traversal, and C error handling.
-The C wrapper already distinguishes data findings from operational failures through `call_with_catch`.
-The row/columnar traversal and scenario extraction already exist in `ConstDataset`; they do not need replacement.
+The C wrapper continues to distinguish invalid model data from operational failures through `call_with_catch`. Existing
+row/columnar traversal and scenario extraction remain in `ConstDataset`. The public exception-based Python validators
+are unchanged and do not route through this experimental native validator.
 
-### Review: Standards and Architectural Risks
+### Implementation Outcomes
 
-These are design judgements, not demonstrated violations of a documented repository coding standard.
+1. **Component dispatch is list-driven.** Input rules, identity checks, update collection, and merged-scenario
+    validation iterate a compile-time component list. The report schema and Python adapter do not enumerate supported
+    components. A test-only third composer exercises this extension path; production support currently includes node
+    and line.
+2. **The C result owns completed JSON.** Serialization happens during validation. The result retains an immutable
+    string for repeated borrowed reads; it has no mutable serialization state or separate pass/fail getter.
+3. **Issues use canonical references.** Every issue has `kind`, `fields`, `objects`, and `details`. Cross-component
+    issues do not select an arbitrary primary component, and object rows identify missing, ambiguous, or invalid
+    update targets where needed.
+4. **Batch reports make completeness explicit.** Input identity findings appear once, scenarios with invalid
+    addressing are `blocked`, and independently merged value checks are `failed` or `passed`. Zero-scenario batches
+    return no scopes and perform no input checks.
+5. **Python returns JSON bytes.** `validate_input_data_json` and `validate_batch_data_json` copy the native report
+    before destroying the result. The adapter does not parse JSON or construct `ValidationError` instances.
 
-1. **Component growth requires coordinated edits in unrelated layers.** `validate_input_dataset` and
-     `get_supported_components` repeat the node/line presence logic. `cross_unique` names both components directly.
-     Batch collection and merging repeat the same list, while the batch schema and Python decoder also hardcode it.
-     A third component therefore requires orchestration, update, reporting, schema, and decoding edits. Removing only
-     `has_node` and `has_line` would not address the underlying ownership problem.
-2. **The result handle owns a state machine rather than a finished result.** It stores `passed_`, `is_batch_`, two
-     alternative issue containers, a JSON string, and a mutable `once_flag`. Reading JSON serializes it and clears the
-     original issues. `call_once` makes that lazy operation safe against concurrent initialization; it is not itself
-     evidence of a race. However, JSON-only consumers do not need this lifecycle, delayed serialization failures, or
-     synchronization. Eager serialization trades some work on passing datasets for a much simpler contract.
-3. **The issue representation repeats the same information.** Most findings hold both `component`/`field`/`ids`
-     and `fields`/`objects`. Multi-field findings select a first field, and cross-component findings select a first
-     component, to fill singleton properties that are not authoritative. Batch serialization then groups cross-component
-     findings under that selected component. Keep one canonical representation instead of parallel projections.
-4. **Batch orchestration mixes multiple responsibilities.** Dataset eligibility, typed record collection, ID lookup,
-     update application, temporary dataset construction, and rule execution live in the input orchestrator. ID maps are
-     rebuilt per scenario and records copied per scenario. Copies are an acceptable initial implementation, but update
-     semantics belong with each component, not in an ever-growing central function.
+Operational failures such as invalid arguments, unsupported datasets, malformed buffers, allocation failures, and
+internal errors remain handle errors and ordinary binding exceptions. They must not produce a success-shaped or partial
+validation report.
 
-### Review: Requirements
+### Implemented JSON Contract
 
-1. **The Python adapter solves the abandoned goal.** `_validation_report.py` validates and decodes the JSON schema,
-     converts component and attribute enums, reconstructs exception objects, handles unknown exception kinds, and
-     maintains separate single/batch decoders. This duplicates the wire contract in Python. Its exception reconstruction
-     and parity tests should not be carried into the JSON-only interface.
-2. **The JSON contract unnecessarily branches by validation mode.** Input reports use `issues`; batches use
-     `is_batch` and component-grouped `data`. The batch schema is closed to components other than node and line.
-     Use one envelope and one issue shape. Grouping by component is a consumer presentation choice, not a wire format.
-3. **There is no implemented public deprecation transition.** The native helpers are private, and the existing
-     public Python validator remains independent. Deprecation needs an explicit replacement, coverage statement,
-     release policy, documentation changes, and tests; it should not silently change old return types.
-4. **Batch completeness must be explicit.** Invalid update IDs intentionally stop merged value validation, and
-     zero-scenario batches intentionally skip input-value validation. Existing Python batch validation also skips
-     merged value checks after an ID error. Do not report this as a new bug or accidentally promise complete input
-     validation. The new contract should distinguish a blocked scenario from a scenario that was fully checked.
-
-### Recommended Ownership
-
-Use this flow:
-
-```text
-ConstDataset + validation options
-    -> supported component dispatch + shared validation context
-    -> reusable rules + component composers + independent scenario validation
-    -> typed ValidationReport
-    -> one JSON serializer
-    -> immutable C-owned JSON bytes
-    -> Python bytes, copied before destroying the C result
-```
-
-- **Rules:** retain typed checks and issue aggregation. Do not make every rule manipulate JSON.
-- **Component dispatch:** one small compile-time list of supported component validators, initially node and line.
-    Each entry owns its input composer and update application. Reuse component names from existing component metadata.
-    Validate dataset coverage against this list and dispatch over it. Absent components produce empty ranges through
-    existing traversal. Do not add a plugin registry, callbacks, or presence flags for every component.
-- **Shared context:** build an ID index once per input, with component identity and row identity. It supports
-    reference membership, update lookup, and global uniqueness for any registered component. Within-component duplicate
-    multiplicity and cross-component duplicate reporting remain separate, intentional rule semantics. Do not silently
-    resolve an ambiguous update target using the first row inserted into a map.
-- **Scenario orchestration:** separate input validation from batch validation. Validate invariant identities once;
-    validate update addressing; apply each scenario independently to the unchanged input; then reuse input composers.
-    Initially retain simple typed copies. Reuse existing update machinery only if its behavior on invalid data is safe;
-    model construction/update logic must not be a prerequisite for validating an invalid model.
-- **Report:** use one `ValidationReport` containing scope results. Each scope has an optional scenario index, an
-    explicit outcome, and issues. This is a private typed representation, not another public getter interface.
-- **C result:** own only a completed `std::string` of JSON. Serialize inside the validation call before publishing
-    the handle. Remove the mutex, mutable state, raw issues, batch issue storage, and mode flag. Retain the opaque handle
-    solely for allocation ownership and borrowed-byte lifetime. Do not return pointers into the input or C error handle.
-- **Python:** a new JSON entry point returns UTF-8 `bytes` for both passing and failing validation. It prepares
-    datasets/options, checks native operational errors, copies the report bytes, and destroys the C result in `finally`.
-    Consumers can call `json.loads` themselves. No kind mapping, schema reimplementation, or `ValidationError` imports.
-
-The experimental C `passed` getter can be removed because the JSON envelope carries validity. A separate pass/fail
-operation would need a demonstrated consumer/performance requirement, not speculative retention. Keep validate,
-get-JSON, and destroy operations; the result handle still earns its place by providing clear memory ownership.
-
-"No exception objects" refers to data findings. Invalid pointers, unsupported datasets/options, malformed buffers,
-allocation failures, and internal failures remain operational errors on the C handle and ordinary binding exceptions.
-An operational failure must not produce a success-shaped or partial validation report.
-
-### Proposed JSON Contract
-
-This is a **proposed version 2**, not the currently implemented version 1. Changing the envelope and removing singleton
-issue properties are incompatible wire changes, even though the C interface is still experimental.
+This is the experimental version 2 contract. It replaces the incompatible version 1 envelope and removes redundant
+singleton issue properties.
 
 - The envelope always contains `schema_version`, `validation_type`, `valid`, and `results`.
 - `validation_type` is `input` or `batch`; it records the requested operation, not a second internal storage mode.
@@ -546,10 +492,10 @@ issue properties are incompatible wire changes, even though the C interface is s
 - `valid` is true exactly when every result is passed. It is a summary derived during serialization, not stored
     separately in the C result.
 - Input validation has exactly one `scenario: null` scope and runs the supported input rules.
-- Batch validation has an input scope for invariant ID checks, followed by one scope for every update scenario,
-    including passing or blocked scenarios. Do not copy invariant findings into every scenario.
-- In a zero-scenario batch the input scope still checks invariant IDs; no merged value checks run. Thus a passing
-    zero-scenario batch does not claim that all input values are valid. Use input validation to make that claim.
+- For a batch with one or more scenarios, results begin with one input identity scope, followed by one scope for every
+    update scenario, including passing or blocked scenarios. Do not copy invariant findings into every scenario.
+- A zero-scenario batch returns an empty `results` array and performs no input checks. `valid` is true for this empty
+    report, but this does not claim that input values are valid; use input validation to make that claim.
 - Issues contain only `kind`, canonical `fields`, canonical `objects`, and `details`. Cross-component findings use
     the same shape and need no arbitrary primary component. Reference targets and comparison values live in `details`.
 - Object IDs can be null for missing IDs; include a zero-based component row when IDs are missing or ambiguous.
@@ -560,7 +506,7 @@ issue properties are incompatible wire changes, even though the C interface is s
 - Keep issue order deterministic. Sort references where their order has no meaning, but retain intentional duplicate
     multiplicity and do not reorder update-ID findings without documenting that decision.
 
-Proposed input example:
+Input example:
 
 ```json
 {
@@ -584,7 +530,7 @@ Proposed input example:
 }
 ```
 
-Proposed batch example, with an unchanged valid input, an invalid line status, an unknown update ID, and a passing
+Batch example, with an unchanged valid input, an invalid line status, an unknown update ID, and a passing
 scenario:
 
 ```json
@@ -623,21 +569,14 @@ scenario:
 }
 ```
 
-For comparison, [the standalone current-output sample](../api_reference/validation-report.example.json) illustrates
-the complete **implemented version 1** batch shape, including the redundant singleton and reference properties
-emitted by today's serializer. It is an illustrative fixture, not output captured from a live validation call.
+The [standalone JSON sample](../api_reference/validation-report.example.json) shows the same version 2 shape in a
+separate fixture.
 
-### Implementation Plan
+### Follow-Up
 
-1. **Agree the JSON contract first.** Establish scope/status semantics, zero-scenario behavior, canonical issue
-     references, extension rules, and the version change. Add a version 2 schema and fixtures before changing the wire
-     producer. Keep the current version 1 schema accurate until that producer changes.
-2. **Simplify report ownership.** Introduce the typed report and one serializer; eagerly build the JSON in the C
-     validation call; make `PGM_ValidationResult` a string owner. Replace lazy-serialization tests with immutable buffer,
-     repeated read, dataset/result lifetime, passing-report, and operational-failure checks.
-3. **Centralize supported component dispatch and identity checks.** Remove presence flags and pair-specific global
-     ID rules. Verify that registering a third composer needs no report, schema, or binding change. Keep unsupported
-     components explicitly rejected rather than returning a partially checked success.
+The v2 contract, schema, native serializer, and JSON-byte Python entry points are implemented. Deprecating the existing
+Python validators remains a separate policy decision; they continue to behave as before, with no deprecation warnings
+or partial replacement claim.
 4. **Separate and tighten batch validation.** Move component update semantics out of the orchestrator, reuse input
      indexes, preserve scenario isolation, and emit blocked outcomes when addressing is invalid or ambiguous. Verify
      positional IDs, missing IDs, mixed IDs, unknown IDs, duplicate input IDs, empty components, empty scenarios, zero

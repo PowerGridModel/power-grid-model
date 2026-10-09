@@ -58,11 +58,15 @@ TEST_CASE("Node validation C API accepts valid and empty node data") {
     ValidationResult absent_result{PGM_validate_input_data(handle.get(), absent_nodes.get(), options.get()),
                                    &PGM_destroy_validation_result};
     REQUIRE(absent_result != nullptr);
-    CHECK(PGM_validation_result_passed(handle.get(), absent_result.get()) == 1);
     auto const absent_report = nlohmann::json::parse(get_validation_report(handle.get(), absent_result.get()));
-    CHECK(absent_report.at("schema_version") == 1);
-    CHECK(absent_report.at("issues").is_array());
-    CHECK(absent_report.at("issues").empty());
+    CHECK(absent_report.at("schema_version") == 2);
+    CHECK(absent_report.at("validation_type") == "input");
+    CHECK(absent_report.at("valid") == true);
+    REQUIRE(absent_report.at("results").size() == 1);
+    CHECK(absent_report.at("results").at(0).at("scenario").is_null());
+    CHECK(absent_report.at("results").at(0).at("status") == "passed");
+    CHECK(absent_report.at("results").at(0).at("issues").is_array());
+    CHECK(absent_report.at("results").at(0).at("issues").empty());
     CHECK(PGM_error_code(handle.get()) == PGM_no_error);
 
     auto empty_nodes = create_dataset(handle.get());
@@ -72,9 +76,9 @@ TEST_CASE("Node validation C API accepts valid and empty node data") {
     ValidationResult empty_result{PGM_validate_input_data(handle.get(), empty_nodes.get(), options.get()),
                                   &PGM_destroy_validation_result};
     REQUIRE(empty_result != nullptr);
-    CHECK(PGM_validation_result_passed(handle.get(), empty_result.get()) == 1);
     auto const empty_report = nlohmann::json::parse(get_validation_report(handle.get(), empty_result.get()));
-    CHECK(empty_report.at("issues").empty());
+    CHECK(empty_report.at("valid") == true);
+    CHECK(empty_report.at("results").at(0).at("issues").empty());
 
     std::array<NodeInput, 1> const nodes{{{1, 100.0}}};
     auto valid_nodes = create_dataset(handle.get());
@@ -84,9 +88,10 @@ TEST_CASE("Node validation C API accepts valid and empty node data") {
     ValidationResult valid_result{PGM_validate_input_data(handle.get(), valid_nodes.get(), options.get()),
                                   &PGM_destroy_validation_result};
     REQUIRE(valid_result != nullptr);
-    CHECK(PGM_validation_result_passed(handle.get(), valid_result.get()) == 1);
     auto const valid_report = nlohmann::json::parse(get_validation_report(handle.get(), valid_result.get()));
-    CHECK(valid_report.at("issues").empty());
+    CHECK(valid_report.at("valid") == true);
+    CHECK(valid_report.at("results").at(0).at("status") == "passed");
+    CHECK(valid_report.at("results").at(0).at("issues").empty());
     CHECK(PGM_error_code(handle.get()) == PGM_no_error);
 }
 
@@ -114,7 +119,6 @@ TEST_CASE("Node validation C API keeps findings alive and does not mutate input"
     ValidationResult result{PGM_validate_input_data(handle.get(), dataset.get(), options.get()),
                             &PGM_destroy_validation_result};
     REQUIRE(result != nullptr);
-    CHECK(PGM_validation_result_passed(handle.get(), result.get()) == 0);
     char const* report_data{};
     PGM_Idx report_size{};
     PGM_validation_result_get_json(handle.get(), result.get(), &report_data, &report_size);
@@ -123,7 +127,10 @@ TEST_CASE("Node validation C API keeps findings alive and does not mutate input"
     CHECK(PGM_error_code(handle.get()) == PGM_no_error);
     std::string const report_copy{report_data, static_cast<std::size_t>(report_size)};
     auto const report = nlohmann::json::parse(report_copy);
-    auto const& issues = report.at("issues");
+    CHECK(report.at("schema_version") == 2);
+    CHECK(report.at("validation_type") == "input");
+    CHECK(report.at("valid") == false);
+    auto const& issues = report.at("results").at(0).at("issues");
     REQUIRE(issues.size() == 5);
     CHECK(PGM_error_code(handle.get()) == PGM_no_error);
     for (std::size_t index{}; index < nodes.size(); ++index) {
@@ -136,7 +143,6 @@ TEST_CASE("Node validation C API keeps findings alive and does not mutate input"
     char const* repeated_report_data{};
     PGM_Idx repeated_report_size{};
     PGM_validation_result_get_json(handle.get(), result.get(), &repeated_report_data, &repeated_report_size);
-    CHECK(PGM_validation_result_passed(handle.get(), result.get()) == 0);
     CHECK(repeated_report_data == report_data);
     CHECK(repeated_report_size == report_size);
     CHECK(std::string{repeated_report_data, static_cast<std::size_t>(repeated_report_size)} == report_copy);
@@ -151,9 +157,13 @@ TEST_CASE("Node validation C API keeps findings alive and does not mutate input"
     CHECK(PGM_error_code(handle.get()) == PGM_no_error);
     auto const& infinity_issue = issues.at(2);
     CHECK(infinity_issue.at("kind") == "infinity");
-    CHECK(infinity_issue.at("component") == "node");
-    CHECK(infinity_issue.at("field") == "u_rated");
-    CHECK(infinity_issue.at("ids") == nlohmann::json::array({4, 4}));
+    CHECK(infinity_issue.at("fields").at(0).at("component") == "node");
+    CHECK(infinity_issue.at("fields").at(0).at("field") == "u_rated");
+    REQUIRE(infinity_issue.at("objects").size() == 2);
+    CHECK(infinity_issue.at("objects").at(0).at("id") == 4);
+    CHECK(infinity_issue.at("objects").at(0).at("row") == 1);
+    CHECK(infinity_issue.at("objects").at(1).at("id") == 4);
+    CHECK(infinity_issue.at("objects").at(1).at("row") == 2);
     CHECK(infinity_issue.at("details").is_object());
 }
 
@@ -176,13 +186,15 @@ TEST_CASE("Node validation C API supports columnar buffers") {
                             &PGM_destroy_validation_result};
     REQUIRE(result != nullptr);
     auto const report = nlohmann::json::parse(get_validation_report(handle.get(), result.get()));
-    auto const& issues = report.at("issues");
+    CHECK(report.at("valid") == false);
+    auto const& issues = report.at("results").at(0).at("issues");
     REQUIRE(issues.size() == 2);
     CHECK(issues.at(0).at("kind") == "infinity");
-    CHECK(issues.at(0).at("ids") == nlohmann::json::array({1, 2}));
+    CHECK(issues.at(0).at("objects").at(0).at("id") == 1);
+    CHECK(issues.at(0).at("objects").at(1).at("id") == 2);
     CHECK(issues.at(1).at("kind") == "not_greater_than");
     CHECK(issues.at(1).at("details").at("ref_value") == 0);
-    CHECK(issues.at(1).at("ids") == nlohmann::json::array({2}));
+    CHECK(issues.at(1).at("objects").at(0).at("id") == 2);
 }
 
 TEST_CASE("Node validation C API resets JSON outputs on errors") {
@@ -201,9 +213,6 @@ TEST_CASE("Node validation C API resets JSON outputs on errors") {
     PGM_validation_result_get_json(handle.get(), nullptr, &data, &size);
     CHECK(data == nullptr);
     CHECK(size == 0);
-    CHECK(PGM_error_code(handle.get()) == PGM_regular_error);
-
-    CHECK(PGM_validation_result_passed(handle.get(), nullptr) == 0);
     CHECK(PGM_error_code(handle.get()) == PGM_regular_error);
 
     size = 99;
@@ -245,18 +254,16 @@ TEST_CASE("Line validation C API selects symmetry and returns structured finding
     ValidationResult symmetric_result{PGM_validate_input_data(handle.get(), dataset.get(), options.get()),
                                       &PGM_destroy_validation_result};
     REQUIRE(symmetric_result != nullptr);
-    CHECK(PGM_validation_result_passed(handle.get(), symmetric_result.get()) == 0);
     auto const symmetric_report = nlohmann::json::parse(get_validation_report(handle.get(), symmetric_result.get()));
-    CHECK(symmetric_report.at("issues").size() == 3);
+    CHECK(symmetric_report.at("results").at(0).at("issues").size() == 3);
 
     PGM_set_symmetric(handle.get(), options.get(), 0);
     REQUIRE(PGM_error_code(handle.get()) == PGM_no_error);
     ValidationResult asymmetric_result{PGM_validate_input_data(handle.get(), dataset.get(), options.get()),
                                        &PGM_destroy_validation_result};
     REQUIRE(asymmetric_result != nullptr);
-    CHECK(PGM_validation_result_passed(handle.get(), asymmetric_result.get()) == 0);
     auto const asymmetric_report = nlohmann::json::parse(get_validation_report(handle.get(), asymmetric_result.get()));
-    CHECK(asymmetric_report.at("issues").size() == 7);
+    CHECK(asymmetric_report.at("results").at(0).at("issues").size() == 7);
 
     line.id = 1;
     line.to_node = 9;
@@ -268,12 +275,11 @@ TEST_CASE("Line validation C API selects symmetry and returns structured finding
     ValidationResult invalid_result{PGM_validate_input_data(handle.get(), dataset.get(), options.get()),
                                     &PGM_destroy_validation_result};
     REQUIRE(invalid_result != nullptr);
-    CHECK(PGM_validation_result_passed(handle.get(), invalid_result.get()) == 0);
     CHECK(PGM_error_code(handle.get()) == PGM_no_error);
 
     dataset.reset();
     auto const invalid_report = nlohmann::json::parse(get_validation_report(handle.get(), invalid_result.get()));
-    auto const& issues = invalid_report.at("issues");
+    auto const& issues = invalid_report.at("results").at(0).at("issues");
     REQUIRE(issues.size() == 5);
     auto const find_issue = [&issues](char const* kind) -> nlohmann::json const* {
         for (auto const& issue : issues) {
@@ -286,8 +292,8 @@ TEST_CASE("Line validation C API selects symmetry and returns structured finding
 
     auto const* reference_issue = find_issue("invalid_id_reference");
     REQUIRE(reference_issue != nullptr);
-    CHECK(reference_issue->at("reference_component") == "node");
-    CHECK(reference_issue->at("ids").size() == 1);
+    CHECK(reference_issue->at("details").at("reference").at("component") == "node");
+    CHECK(reference_issue->at("objects").size() == 1);
 
     auto const* boolean_issue = find_issue("not_boolean");
     REQUIRE(boolean_issue != nullptr);
@@ -300,7 +306,7 @@ TEST_CASE("Line validation C API selects symmetry and returns structured finding
 
     auto const* positive_issue = find_issue("not_greater_than");
     REQUIRE(positive_issue != nullptr);
-    CHECK(positive_issue->at("field") == "i_n");
+    CHECK(positive_issue->at("fields").at(0).at("field") == "i_n");
     CHECK(positive_issue->at("details").at("ref_value") == 0);
 
     auto const* cross_unique_issue = find_issue("cross_component_not_unique");
@@ -377,9 +383,9 @@ TEST_CASE("Line validation C API supports mixed row and columnar buffers") {
     ValidationResult result{PGM_validate_input_data(handle.get(), dataset.get(), options.get()),
                             &PGM_destroy_validation_result};
     REQUIRE(result != nullptr);
-    CHECK(PGM_validation_result_passed(handle.get(), result.get()) == 1);
     auto const report = nlohmann::json::parse(get_validation_report(handle.get(), result.get()));
-    CHECK(report.at("issues").empty());
+    CHECK(report.at("valid") == true);
+    CHECK(report.at("results").at(0).at("issues").empty());
     CHECK(PGM_error_code(handle.get()) == PGM_no_error);
 }
 
@@ -409,7 +415,7 @@ TEST_CASE("Line validation reports references when nodes are absent") {
                             &PGM_destroy_validation_result};
     REQUIRE(result != nullptr);
     auto const report = nlohmann::json::parse(get_validation_report(handle.get(), result.get()));
-    CHECK(report.at("issues").size() == 2);
+    CHECK(report.at("results").at(0).at("issues").size() == 2);
     CHECK(PGM_error_code(handle.get()) == PGM_no_error);
 }
 
@@ -485,21 +491,49 @@ TEST_CASE("Batch validation C API reports scenario-grouped node and line finding
     ValidationResult result{PGM_validate_batch_data(handle.get(), input.get(), updates.get(), options.get()),
                             &PGM_destroy_validation_result};
     REQUIRE(result != nullptr);
-    CHECK(PGM_validation_result_passed(handle.get(), result.get()) == 0);
     auto const report = nlohmann::json::parse(get_validation_report(handle.get(), result.get()));
-    CHECK(report.at("schema_version") == 1);
-    CHECK(report.at("is_batch") == true);
-    auto const& scenarios = report.at("data");
-    REQUIRE(scenarios.size() == 3);
-    REQUIRE(scenarios.at(0).at("line").size() == 1);
-    CHECK(scenarios.at(0).at("line").at(0).at("kind") == "not_boolean");
-    CHECK(scenarios.at(1).empty());
-    REQUIRE(scenarios.at(2).at("node").size() == 1);
-    CHECK(scenarios.at(2).at("node").at(0).at("kind") == "id_not_in_dataset");
-    REQUIRE(scenarios.at(2).at("line").size() == 1);
-    CHECK(scenarios.at(2).at("line").at(0).at("kind") == "id_not_in_dataset");
-    CHECK(scenarios.at(2).at("line").at(0).at("details").at("ref_dataset") == "update");
-    CHECK(scenarios.at(2).at("line").at(0).at("ids") == nlohmann::json::array({99}));
+    CHECK(report.at("schema_version") == 2);
+    CHECK(report.at("validation_type") == "batch");
+    CHECK(report.at("valid") == false);
+    auto const& results = report.at("results");
+    REQUIRE(results.size() == 4);
+    CHECK(results.at(0).at("scenario").is_null());
+    CHECK(results.at(0).at("status") == "passed");
+    CHECK(results.at(1).at("scenario") == 0);
+    CHECK(results.at(1).at("status") == "failed");
+    REQUIRE(results.at(1).at("issues").size() == 1);
+    CHECK(results.at(1).at("issues").at(0).at("kind") == "not_boolean");
+    CHECK(results.at(2).at("scenario") == 1);
+    CHECK(results.at(2).at("status") == "passed");
+    CHECK(results.at(2).at("issues").empty());
+    CHECK(results.at(3).at("scenario") == 2);
+    CHECK(results.at(3).at("status") == "blocked");
+    REQUIRE(results.at(3).at("issues").size() == 2);
+    CHECK(results.at(3).at("issues").at(0).at("kind") == "id_not_in_dataset");
+    CHECK(results.at(3).at("issues").at(1).at("kind") == "id_not_in_dataset");
+    CHECK(results.at(3).at("issues").at(1).at("details").at("reference").at("dataset") == "input");
+    CHECK(results.at(3).at("issues").at(1).at("objects").at(0).at("id") == 99);
+    CHECK(results.at(3).at("issues").at(1).at("objects").at(0).at("row") == 0);
     CHECK(line.from_status == 1);
+    CHECK(PGM_error_code(handle.get()) == PGM_no_error);
+}
+
+TEST_CASE("Batch validation C API returns an empty valid zero-scenario report") {
+    auto const handle = create_handle();
+    REQUIRE(handle != nullptr);
+    auto const options = create_options(handle.get());
+    auto const input = create_dataset(handle.get());
+    auto const updates = create_dataset(handle.get(), "update", 1, 0);
+    REQUIRE(input != nullptr);
+    REQUIRE(updates != nullptr);
+
+    ValidationResult result{PGM_validate_batch_data(handle.get(), input.get(), updates.get(), options.get()),
+                            &PGM_destroy_validation_result};
+    REQUIRE(result != nullptr);
+    auto const report = nlohmann::json::parse(get_validation_report(handle.get(), result.get()));
+    CHECK(report.at("schema_version") == 2);
+    CHECK(report.at("validation_type") == "batch");
+    CHECK(report.at("valid") == true);
+    CHECK(report.at("results").empty());
     CHECK(PGM_error_code(handle.get()) == PGM_no_error);
 }

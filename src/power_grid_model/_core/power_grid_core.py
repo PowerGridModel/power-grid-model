@@ -588,10 +588,6 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
-    def validation_result_passed(self, result: ValidationResultPtr) -> int:  # type: ignore[empty-body]
-        pass  # pragma: no cover
-
-    @make_c_binding
     def validation_result_get_json(
         self,
         result: ValidationResultPtr,

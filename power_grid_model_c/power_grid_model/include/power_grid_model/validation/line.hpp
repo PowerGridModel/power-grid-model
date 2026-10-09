@@ -2,6 +2,7 @@
 
 #include "issues.hpp"
 #include "rules.hpp"
+#include "context.hpp"
 
 #include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/auxiliary/meta_data.hpp>
@@ -67,5 +68,11 @@ inline void validate_line(ConstDataset const& dataset, bool symmetric, std::unor
         rules::greater_than_zero<Record>(rows, "line", "i_n", get_i_n, get_id, issues);
     });
 }
+
+template <> struct InputValidator<Line> {
+    static void validate(ConstDataset const& dataset, bool symmetric, ValidationContext const& context, Issues& issues) {
+        validate_line(dataset, symmetric, context.valid_ids("node"), issues);
+    }
+};
 
 } // namespace power_grid_model::validation

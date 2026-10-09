@@ -2,83 +2,108 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Power Grid Model experimental validation report",
   "type": "object",
-  "required": ["schema_version"],
+  "required": ["schema_version", "validation_type", "valid", "results"],
   "properties": {
     "schema_version": {
       "type": "integer",
-      "const": 1
+      "const": 2
     },
-    "is_batch": {"type": "boolean"}
+    "validation_type": {
+      "enum": ["input", "batch"]
+    },
+    "valid": {"type": "boolean"},
+    "results": {"type": "array"}
   },
+  "additionalProperties": true,
   "allOf": [
     {
       "if": {
-        "properties": {"is_batch": {"const": true}},
-        "required": ["is_batch"]
+        "properties": {"validation_type": {"const": "input"}},
+        "required": ["validation_type"]
       },
       "then": {
-        "required": ["is_batch", "data"],
         "properties": {
-          "is_batch": {"const": true},
-          "data": {
-            "type": "array",
-            "items": {"$ref": "#/$defs/scenario"}
+          "results": {
+            "minItems": 1,
+            "maxItems": 1,
+            "items": {"$ref": "#/$defs/inputResult"}
           }
         }
       },
       "else": {
-        "required": ["issues"],
-        "properties": {"issues": {"$ref": "#/$defs/issues"}}
+        "properties": {
+          "results": {
+            "oneOf": [
+              {"maxItems": 0},
+              {
+                "minItems": 2,
+                "prefixItems": [{"$ref": "#/$defs/inputResult"}],
+                "items": {"$ref": "#/$defs/scenarioResult"}
+              }
+            ]
+          }
+        }
       }
     }
   ],
-  "additionalProperties": true,
   "$defs": {
-    "scenario": {
+    "result": {
       "type": "object",
+      "required": ["scenario", "status", "issues"],
       "properties": {
-        "node": {"$ref": "#/$defs/issues"},
-        "line": {"$ref": "#/$defs/issues"}
+        "scenario": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "integer", "minimum": 0}
+          ]
+        },
+        "status": {"enum": ["passed", "failed", "blocked"]},
+        "issues": {"$ref": "#/$defs/issues"}
       },
-      "additionalProperties": false
+      "allOf": [
+        {
+          "if": {
+            "properties": {"status": {"const": "passed"}},
+            "required": ["status"]
+          },
+          "then": {
+            "properties": {"issues": {"maxItems": 0}}
+          }
+        }
+      ],
+      "additionalProperties": true
+    },
+    "inputResult": {
+      "allOf": [
+        {"$ref": "#/$defs/result"},
+        {
+          "properties": {
+            "scenario": {"type": "null"},
+            "status": {"enum": ["passed", "failed"]}
+          }
+        }
+      ]
+    },
+    "scenarioResult": {
+      "allOf": [
+        {"$ref": "#/$defs/result"},
+        {
+          "properties": {
+            "scenario": {"type": "integer", "minimum": 0},
+            "status": {"enum": ["passed", "failed", "blocked"]}
+          }
+        }
+      ]
     },
     "issues": {
       "type": "array",
       "items": {"$ref": "#/$defs/issue"}
     },
     "issue": {
-      "oneOf": [
-        {"$ref": "#/$defs/missingValue"},
-        {"$ref": "#/$defs/infinity"},
-        {"$ref": "#/$defs/notUnique"},
-        {"$ref": "#/$defs/notGreaterThan"},
-        {"$ref": "#/$defs/notBoolean"},
-        {"$ref": "#/$defs/twoValuesZero"},
-        {"$ref": "#/$defs/invalidIdReference"},
-        {"$ref": "#/$defs/idNotInDataset"},
-        {"$ref": "#/$defs/invalidUpdateId"},
-        {"$ref": "#/$defs/crossComponentNotUnique"},
-        {"$ref": "#/$defs/unknownIssue"}
-      ]
-    },
-    "knownIssue": {
       "type": "object",
-      "required": ["kind", "component", "field", "ids", "details"],
+      "required": ["kind", "fields", "objects", "details"],
       "properties": {
-        "kind": {"type": "string"},
-        "component": {"type": "string", "minLength": 1},
-        "field": {"type": "string", "minLength": 1},
-        "ids": {
-          "oneOf": [
-            {"type": "null"},
-            {
-              "type": "array",
-              "minItems": 1,
-              "items": {"$ref": "#/$defs/id"}
-            }
-          ]
-        },
-        "details": {"type": "object"},
+        "kind": {"type": "string", "minLength": 1},
         "fields": {
           "type": "array",
           "items": {"$ref": "#/$defs/fieldReference"}
@@ -87,182 +112,9 @@
           "type": "array",
           "items": {"$ref": "#/$defs/objectReference"}
         },
-        "reference_component": {
-          "oneOf": [
-            {"type": "null"},
-            {"type": "string", "minLength": 1}
-          ]
-        }
+        "details": {"type": "object"}
       },
       "additionalProperties": true
-    },
-    "missingValue": {
-      "allOf": [
-        {"$ref": "#/$defs/knownIssue"},
-        {
-          "properties": {
-            "kind": {"const": "missing_value"}
-          }
-        }
-      ]
-    },
-    "infinity": {
-      "allOf": [
-        {"$ref": "#/$defs/knownIssue"},
-        {
-          "properties": {
-            "kind": {"const": "infinity"}
-          }
-        }
-      ]
-    },
-    "notUnique": {
-      "allOf": [
-        {"$ref": "#/$defs/knownIssue"},
-        {
-          "properties": {
-            "kind": {"const": "not_unique"}
-          }
-        }
-      ]
-    },
-    "notGreaterThan": {
-      "allOf": [
-        {"$ref": "#/$defs/knownIssue"},
-        {
-          "properties": {
-            "kind": {"const": "not_greater_than"},
-            "details": {
-              "type": "object",
-              "required": ["ref_value"],
-              "properties": {"ref_value": {"$ref": "#/$defs/referenceValue"}},
-              "additionalProperties": true
-            }
-          }
-        }
-      ]
-    },
-    "notBoolean": {
-      "allOf": [
-        {"$ref": "#/$defs/knownIssue"},
-        {
-          "properties": {
-            "kind": {"const": "not_boolean"}
-          }
-        }
-      ]
-    },
-    "twoValuesZero": {
-      "allOf": [
-        {"$ref": "#/$defs/knownIssue"},
-        {
-          "required": ["fields"],
-          "properties": {
-            "kind": {"const": "two_values_zero"},
-            "fields": {
-              "type": "array",
-              "minItems": 2,
-              "items": {"$ref": "#/$defs/fieldReference"}
-            }
-          }
-        }
-      ]
-    },
-    "invalidIdReference": {
-      "allOf": [
-        {"$ref": "#/$defs/knownIssue"},
-        {
-          "required": ["reference_component"],
-          "properties": {
-            "kind": {"const": "invalid_id_reference"},
-            "reference_component": {"type": "string", "minLength": 1}
-          }
-        }
-      ]
-    },
-    "idNotInDataset": {
-      "allOf": [
-        {"$ref": "#/$defs/knownIssue"},
-        {
-          "properties": {
-            "kind": {"const": "id_not_in_dataset"},
-            "ids": {
-              "type": "array",
-              "minItems": 1,
-              "items": {"$ref": "#/$defs/id"}
-            },
-            "details": {
-              "type": "object",
-              "required": ["ref_dataset"],
-              "properties": {"ref_dataset": {"const": "update"}},
-              "additionalProperties": true
-            }
-          }
-        }
-      ]
-    },
-    "invalidUpdateId": {
-      "allOf": [
-        {"$ref": "#/$defs/knownIssue"},
-        {
-          "properties": {
-            "kind": {"const": "invalid_update_id"},
-            "field": {"const": "id"},
-            "ids": {"type": "null"}
-          }
-        }
-      ]
-    },
-    "crossComponentNotUnique": {
-      "allOf": [
-        {"$ref": "#/$defs/knownIssue"},
-        {
-          "required": ["fields", "objects"],
-          "properties": {
-            "kind": {"const": "cross_component_not_unique"},
-            "ids": {"type": "null"},
-            "fields": {
-              "type": "array",
-              "minItems": 2,
-              "items": {"$ref": "#/$defs/fieldReference"}
-            },
-            "objects": {
-              "type": "array",
-              "minItems": 2,
-              "items": {"$ref": "#/$defs/objectReference"}
-            }
-          }
-        }
-      ]
-    },
-    "unknownIssue": {
-      "type": "object",
-      "required": ["kind"],
-      "properties": {
-        "kind": {
-          "type": "string",
-          "not": {
-            "enum": [
-              "missing_value",
-              "infinity",
-              "not_unique",
-              "not_greater_than",
-              "not_boolean",
-              "two_values_zero",
-              "invalid_id_reference",
-              "id_not_in_dataset",
-              "invalid_update_id",
-              "cross_component_not_unique"
-            ]
-          }
-        }
-      },
-      "additionalProperties": true
-    },
-    "id": {
-      "type": "integer",
-      "minimum": -2147483648,
-      "maximum": 2147483647
     },
     "fieldReference": {
       "type": "object",
@@ -278,31 +130,20 @@
       "required": ["component", "id"],
       "properties": {
         "component": {"type": "string", "minLength": 1},
-        "id": {"$ref": "#/$defs/id"}
+        "id": {
+          "oneOf": [
+            {"type": "null"},
+            {"$ref": "#/$defs/id"}
+          ]
+        },
+        "row": {"type": "integer", "minimum": 0}
       },
       "additionalProperties": true
     },
-    "taggedFloat": {
-      "type": "object",
-      "required": ["type", "value"],
-      "properties": {
-        "type": {"const": "float"},
-        "value": {"enum": ["nan", "positive_infinity", "negative_infinity"]}
-      },
-      "additionalProperties": false
-    },
-    "referenceScalar": {
-      "oneOf": [
-        {"type": "number"},
-        {"type": "string"},
-        {"$ref": "#/$defs/taggedFloat"}
-      ]
-    },
-    "referenceValue": {
-      "oneOf": [
-        {"$ref": "#/$defs/referenceScalar"},
-        {"type": "array", "items": {"$ref": "#/$defs/referenceScalar"}}
-      ]
+    "id": {
+      "type": "integer",
+      "minimum": -2147483648,
+      "maximum": 2147483647
     }
   }
 }

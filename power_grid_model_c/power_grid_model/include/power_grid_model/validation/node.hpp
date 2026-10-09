@@ -2,6 +2,7 @@
 
 #include "issues.hpp"
 #include "rules.hpp"
+#include "context.hpp"
 
 #include <power_grid_model/auxiliary/dataset.hpp>
 #include <power_grid_model/auxiliary/meta_data.hpp>
@@ -23,5 +24,11 @@ inline void validate_node(ConstDataset const& dataset, Issues& issues) {
         rules::greater_than_zero<Record>(rows, "node", "u_rated", get_u_rated, get_id, issues);
     });
 }
+
+template <> struct InputValidator<Node> {
+    static void validate(ConstDataset const& dataset, bool, ValidationContext const&, Issues& issues) {
+        validate_node(dataset, issues);
+    }
+};
 
 } // namespace power_grid_model::validation
