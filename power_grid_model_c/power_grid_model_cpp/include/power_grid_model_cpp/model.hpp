@@ -40,14 +40,23 @@ class StateOutput {
                 handle_.call_with(PGM_state_output_get_group, output_.get(), scenario_idx, group_idx, &view);
                 return view;
         }
-        Idx jacobian_history_count(Idx scenario_idx, Idx group_idx) const {
-            return handle_.call_with(PGM_state_output_jacobian_history_count, output_.get(), scenario_idx,
+        Idx jacobians_count(Idx scenario_idx, Idx group_idx) const {
+            return handle_.call_with(PGM_state_output_jacobians_count, output_.get(), scenario_idx,
                          group_idx);
         }
-        PGM_StateJacobianView jacobian_at_iteration(Idx scenario_idx, Idx group_idx, Idx iteration_idx) const {
+        PGM_StateJacobianView jacobian(Idx scenario_idx, Idx group_idx, Idx jacobian_idx) const {
             PGM_StateJacobianView view{};
-            handle_.call_with(PGM_state_output_get_jacobian_history, output_.get(), scenario_idx, group_idx,
-                      iteration_idx, &view);
+            handle_.call_with(PGM_state_output_get_jacobian, output_.get(), scenario_idx, group_idx, jacobian_idx,
+                              &view);
+            return view;
+        }
+        Idx nodal_states_count(Idx scenario_idx, Idx group_idx) const {
+            return handle_.call_with(PGM_state_output_nodal_states_count, output_.get(), scenario_idx, group_idx);
+        }
+        PGM_StateNodalStateView nodal_state(Idx scenario_idx, Idx group_idx, Idx nodal_state_idx) const {
+            PGM_StateNodalStateView view{};
+            handle_.call_with(PGM_state_output_get_nodal_state, output_.get(), scenario_idx, group_idx,
+                              nodal_state_idx, &view);
             return view;
         }
 

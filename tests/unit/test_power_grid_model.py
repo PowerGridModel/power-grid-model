@@ -171,16 +171,19 @@ def test_power_flow_model_state(model: PowerGridModel):
     assert len(model_state.groups) == 1
     group = model_state.groups[0]
     assert group.y_bus is not None
-    assert group.jacobian is not None
-    assert group.jacobian_history
-    assert [jacobian.iteration for jacobian in group.jacobian_history] == list(
-        range(1, len(group.jacobian_history) + 1)
-    )
-    assert group.jacobian_history[-1] is group.jacobian
+    assert group.jacobians
+    assert [jacobian.iteration for jacobian in group.jacobians] == list(range(1, len(group.jacobians) + 1))
+    assert group.jacobian_structure is not None
+    assert group.jacobian_structure.row_indptr_lu.shape == (group.mapping.n_bus + 1,)
+    assert len(group.nodal_states) == len(group.jacobians)
+    assert [state.iteration for state in group.nodal_states] == [jac.iteration for jac in group.jacobians]
     assert group.mapping.bus_user_id.tolist() == [0]
     assert group.y_bus.row_indptr.shape == (group.mapping.n_bus + 1,)
     assert group.y_bus.admittance_real.size > 0
-    assert group.jacobian.h.size == group.jacobian.n.size
+    assert group.jacobians[-1].h.size == group.jacobians[-1].n.size
+    n_voltage_values = group.mapping.n_bus * (1 if group.mapping.is_symmetric else 3)
+    assert group.nodal_states[-1].voltage_magnitude.size == n_voltage_values
+    assert group.nodal_states[-1].voltage_angle.size == n_voltage_values
 
     admittance_real = group.y_bus.admittance_real
     del model_state
@@ -195,8 +198,9 @@ def test_linear_power_flow_model_state_has_no_jacobian(model: PowerGridModel):
 
     assert model_state is not None
     assert model_state.groups[0].y_bus is not None
-    assert model_state.groups[0].jacobian is None
-    assert model_state.groups[0].jacobian_history == ()
+    assert model_state.groups[0].jacobians == ()
+    assert model_state.groups[0].nodal_states == ()
+    assert model_state.groups[0].jacobian_structure is None
 
 
 def test_power_flow_model_state_batch_requests(model: PowerGridModel, update_batch):
@@ -213,13 +217,14 @@ def test_power_flow_model_state_batch_requests(model: PowerGridModel, update_bat
     assert states[0] is not None
     assert states[0].y_bus_requested
     assert states[0].groups[0].y_bus is not None
-    assert states[0].groups[0].jacobian is None
-    assert states[0].groups[0].jacobian_history == ()
+    assert states[0].groups[0].jacobians == ()
+    assert states[0].groups[0].nodal_states == ()
+    assert states[0].groups[0].jacobian_structure is None
     assert states[1] is not None
     assert states[1].jacobian_requested
     assert states[1].groups[0].y_bus is None
-    assert states[1].groups[0].jacobian is not None
-    assert states[1].groups[0].jacobian_history
+    assert states[1].groups[0].jacobians
+    assert states[1].groups[0].nodal_states
 
 
 def test_power_flow_model_state_request_count_must_match_batch(model: PowerGridModel, update_batch):

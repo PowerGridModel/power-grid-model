@@ -337,31 +337,17 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
 
     void set_jacobian_state_capture(bool capture) {
         capture_jacobian_state_ = capture;
-        jacobian_history_.clear();
+        jacobians_.clear();
+        nodal_states_.clear();
     }
 
     void copy_iteration_state_from(NewtonRaphsonPFSolver const& solver) {
-        jacobian_history_ = solver.jacobian_history_;
+        jacobians_ = solver.jacobians_;
+        nodal_states_ = solver.nodal_states_;
     }
 
-    std::optional<ModelStateJacobian> get_last_jacobian_state(YBus<sym> const& y_bus) const {
-        if (jacobian_history_.empty()) {
-            return std::nullopt;
-        }
-        auto result = jacobian_history_.back();
-        result.row_indptr_lu = y_bus.row_indptr_lu();
-        result.col_indices_lu = y_bus.col_indices_lu();
-        return result;
-    }
-
-    std::vector<ModelStateJacobian> get_jacobian_history(YBus<sym> const& y_bus) const {
-        auto result = jacobian_history_;
-        for (auto& jacobian : result) {
-            jacobian.row_indptr_lu = y_bus.row_indptr_lu();
-            jacobian.col_indices_lu = y_bus.col_indices_lu();
-        }
-        return result;
-    }
+    std::vector<ModelStateJacobian> get_jacobians() const { return jacobians_; }
+    std::vector<ModelStateNodalState> get_nodal_states() const { return nodal_states_; }
 
     void log_matrix(Logger& log, YBus<sym> const& y_bus, Idx iter) {
         if (capture_jacobian_state_) {
@@ -417,6 +403,22 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
     void capture_jacobian_state(Idx iteration) {
         ModelStateJacobian result;
         result.iteration = iteration;
+        ModelStateNodalState nodal_state;
+        nodal_state.iteration = iteration;
+        constexpr size_t phases_per_bus = is_symmetric_v<sym> ? 1 : 3;
+        nodal_state.voltage_magnitude.reserve(x_.size() * phases_per_bus);
+        nodal_state.voltage_angle.reserve(x_.size() * phases_per_bus);
+        for (auto& voltage : x_) {
+            if constexpr (is_symmetric_v<sym>) {
+                nodal_state.voltage_magnitude.push_back(voltage.v());
+                nodal_state.voltage_angle.push_back(voltage.theta());
+            } else {
+                for (Idx phase = 0; phase < 3; ++phase) {
+                    nodal_state.voltage_magnitude.push_back(voltage.v().coeff(phase));
+                    nodal_state.voltage_angle.push_back(voltage.theta().coeff(phase));
+                }
+            }
+        }
         constexpr Idx block_size = is_symmetric_v<sym> ? 1 : 9;
         for (auto& block : result.blocks) {
             block.clear();
@@ -436,14 +438,16 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
                 }
             }
         }
-        jacobian_history_.push_back(std::move(result));
+        jacobians_.push_back(std::move(result));
+        nodal_states_.push_back(std::move(nodal_state));
     }
 
   private:
     // data for jacobian
     std::vector<PFJacBlock<sym>> data_jac_;
     bool capture_jacobian_state_{};
-    std::vector<ModelStateJacobian> jacobian_history_;
+    std::vector<ModelStateJacobian> jacobians_;
+    std::vector<ModelStateNodalState> nodal_states_;
     // calculation data
     std::vector<PolarPhasor<sym>> x_; // unknown
     // this stores in different steps

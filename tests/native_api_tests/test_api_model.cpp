@@ -282,16 +282,23 @@ TEST_CASE("API Model") {
 
             auto const group = state_output.group(0, 0);
             CHECK(group.has_y_bus == 1);
-            CHECK(group.has_jacobian == 1);
+            CHECK(group.has_jacobians == 1);
             CHECK(group.y_bus_nnz > 0);
             CHECK(group.jacobian_nnz > 0);
-            auto const history_count = state_output.jacobian_history_count(0, 0);
-            REQUIRE(history_count > 0);
-            auto const first_jacobian = state_output.jacobian_at_iteration(0, 0, 0);
-            auto const last_jacobian = state_output.jacobian_at_iteration(0, 0, history_count - 1);
+            auto const jacobians_count = state_output.jacobians_count(0, 0);
+            REQUIRE(jacobians_count > 0);
+            CHECK(state_output.nodal_states_count(0, 0) == jacobians_count);
+            CHECK(group.n_nodal_states == jacobians_count);
+            auto const first_jacobian = state_output.jacobian(0, 0, 0);
+            auto const last_jacobian = state_output.jacobian(0, 0, jacobians_count - 1);
+            auto const last_nodal_state = state_output.nodal_state(0, 0, jacobians_count - 1);
             CHECK(first_jacobian.iteration == 1);
-            CHECK(last_jacobian.iteration == history_count);
-            CHECK(last_jacobian.jacobian_nnz == group.jacobian_nnz);
+            CHECK(last_jacobian.iteration == jacobians_count);
+            CHECK(last_jacobian.n_jacobian_values > 0);
+            CHECK(last_nodal_state.iteration == last_jacobian.iteration);
+            CHECK(last_nodal_state.n_voltage_values == group.n_bus * (group.is_symmetric ? 1 : 3));
+            CHECK(group.jacobian_row_indptr[0] == 0);
+            CHECK(group.jacobian_col_indices != nullptr);
           }
     }
 

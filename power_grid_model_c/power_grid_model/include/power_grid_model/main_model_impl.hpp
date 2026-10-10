@@ -323,9 +323,13 @@ class MainModelImpl {
                             group_state->y_bus = create_y_bus_state(y_bus_vec[i]);
                         }
                         if (state_request.jacobian) {
-                            group_state->jacobian_history = solvers[i].get().get_jacobian_history(y_bus_vec[i]);
-                            if (!group_state->jacobian_history.empty()) {
-                                group_state->jacobian = group_state->jacobian_history.back();
+                            group_state->jacobians = solvers[i].get().get_jacobians();
+                            group_state->nodal_states = solvers[i].get().get_nodal_states();
+                            if (!group_state->jacobians.empty()) {
+                                group_state->jacobian_structure = ModelStateJacobianStructure{
+                                    .row_indptr_lu = y_bus_vec[i].row_indptr_lu(),
+                                    .col_indices_lu = y_bus_vec[i].col_indices_lu(),
+                                };
                             }
                         }
                         result.model_state_group = std::move(group_state);

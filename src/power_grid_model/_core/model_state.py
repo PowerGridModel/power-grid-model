@@ -16,6 +16,7 @@ from power_grid_model._core.index_integer import IdNp, IdxNp
 from power_grid_model._core.power_grid_core import (
     StateGroupViewC,
     StateJacobianViewC,
+    StateNodalStateViewC,
     StateOutputPtr,
     StateScenarioViewC,
     get_power_grid_core,
@@ -71,9 +72,15 @@ class ModelStateYBus:
 
 
 @dataclass(frozen=True)
-class ModelStateJacobian:
+class ModelStateJacobianStructure:
+    """Shared Jacobian sparsity pattern in the solver group's bus ordering."""
+
     row_indptr_lu: NDArray[np.int64]
     col_indices_lu: NDArray[np.int64]
+
+
+@dataclass(frozen=True)
+class ModelStateJacobian:
     h: NDArray[np.float64]
     n: NDArray[np.float64]
     m: NDArray[np.float64]
@@ -81,15 +88,33 @@ class ModelStateJacobian:
     iteration: int = 0
 
 
-def _build_jacobian(view: StateGroupViewC | StateJacobianViewC, owner: _NativeStateOutput) -> ModelStateJacobian:
+@dataclass(frozen=True)
+class ModelStateNodalState:
+    """Per-iteration bus-major voltages; asymmetric groups contain three phases per bus."""
+
+    voltage_magnitude: NDArray[np.float64]
+    voltage_angle: NDArray[np.float64]
+    iteration: int
+
+
+def _build_jacobian(
+    view: StateJacobianViewC,
+    owner: _NativeStateOutput,
+) -> ModelStateJacobian:
     return ModelStateJacobian(
-        row_indptr_lu=_array(view.jacobian_row_indptr, view.n_bus + 1, IdxNp, owner),
-        col_indices_lu=_array(view.jacobian_col_indices, view.jacobian_nnz, IdxNp, owner),
         h=_array(view.jacobian_h, view.n_jacobian_values, np.float64, owner),
         n=_array(view.jacobian_n, view.n_jacobian_values, np.float64, owner),
         m=_array(view.jacobian_m, view.n_jacobian_values, np.float64, owner),
         l_block=_array(view.jacobian_l, view.n_jacobian_values, np.float64, owner),
-        iteration=getattr(view, "iteration", 0),
+        iteration=view.iteration,
+    )
+
+
+def _build_nodal_state(view: StateNodalStateViewC, owner: _NativeStateOutput) -> ModelStateNodalState:
+    return ModelStateNodalState(
+        voltage_magnitude=_array(view.voltage_magnitude, view.n_voltage_values, np.float64, owner),
+        voltage_angle=_array(view.voltage_angle, view.n_voltage_values, np.float64, owner),
+        iteration=view.iteration,
     )
 
 
@@ -109,8 +134,9 @@ class ModelStateGroupMapping:
 class ModelStateGroup:
     mapping: ModelStateGroupMapping
     y_bus: ModelStateYBus | None
-    jacobian: ModelStateJacobian | None
-    jacobian_history: tuple[ModelStateJacobian, ...] = ()
+    jacobian_structure: ModelStateJacobianStructure | None
+    jacobians: tuple[ModelStateJacobian, ...] = ()
+    nodal_states: tuple[ModelStateNodalState, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -155,24 +181,39 @@ def _build_scenario(owner: _NativeStateOutput, scenario_idx: int) -> ModelState 
                 admittance_real=_array(view.admittance_real, view.n_admittance_values, np.float64, owner),
                 admittance_imag=_array(view.admittance_imag, view.n_admittance_values, np.float64, owner),
             )
-        jacobian_history_items = []
-        history_count = pgc.state_output_jacobian_history_count(owner.pointer, scenario_idx, group_idx)
-        for iteration_idx in range(history_count):
-            jacobian_view = StateJacobianViewC()
-            pgc.state_output_get_jacobian_history(
-                owner.pointer, scenario_idx, group_idx, iteration_idx, pointer(jacobian_view)
+        jacobians: tuple[ModelStateJacobian, ...] = ()
+        nodal_states: tuple[ModelStateNodalState, ...] = ()
+        jacobian_structure = None
+        if view.has_jacobians:
+            jacobian_row_indptr = _array(view.jacobian_row_indptr, view.n_bus + 1, IdxNp, owner)
+            jacobian_col_indices = _array(view.jacobian_col_indices, view.jacobian_nnz, IdxNp, owner)
+            jacobian_structure = ModelStateJacobianStructure(
+                row_indptr_lu=jacobian_row_indptr,
+                col_indices_lu=jacobian_col_indices,
             )
-            jacobian_history_items.append(_build_jacobian(jacobian_view, owner))
-        jacobian_history = tuple(jacobian_history_items)
-        jacobian = None
-        if view.has_jacobian:
-            jacobian = jacobian_history[-1] if jacobian_history else _build_jacobian(view, owner)
+            jacobians_items = []
+            for jacobian_idx in range(view.n_jacobians):
+                jacobian_view = StateJacobianViewC()
+                pgc.state_output_get_jacobian(
+                    owner.pointer, scenario_idx, group_idx, jacobian_idx, pointer(jacobian_view)
+                )
+                jacobians_items.append(_build_jacobian(jacobian_view, owner))
+            jacobians = tuple(jacobians_items)
+        nodal_states_items = []
+        for nodal_state_idx in range(view.n_nodal_states):
+            nodal_state_view = StateNodalStateViewC()
+            pgc.state_output_get_nodal_state(
+                owner.pointer, scenario_idx, group_idx, nodal_state_idx, pointer(nodal_state_view)
+            )
+            nodal_states_items.append(_build_nodal_state(nodal_state_view, owner))
+        nodal_states = tuple(nodal_states_items)
         groups.append(
             ModelStateGroup(
                 mapping=mapping,
                 y_bus=y_bus,
-                jacobian=jacobian,
-                jacobian_history=jacobian_history,
+                jacobian_structure=jacobian_structure,
+                jacobians=jacobians,
+                nodal_states=nodal_states,
             )
         )
 

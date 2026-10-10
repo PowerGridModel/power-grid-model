@@ -114,18 +114,18 @@ template <symmetry_tag sym> class MathSolver : public MathSolverBase<sym> {
         }
     }
 
-    std::optional<ModelStateJacobian> get_last_jacobian_state(YBus<sym> const& y_bus) const final {
-        if (!last_power_flow_used_newton_raphson_ || !newton_raphson_pf_solver_) {
-            return std::nullopt;
-        }
-        return newton_raphson_pf_solver_->get_last_jacobian_state(y_bus);
-    }
-
-    std::vector<ModelStateJacobian> get_jacobian_history(YBus<sym> const& y_bus) const final {
+    std::vector<ModelStateJacobian> get_jacobians() const final {
         if (!last_power_flow_used_newton_raphson_ || !newton_raphson_pf_solver_) {
             return {};
         }
-        return newton_raphson_pf_solver_->get_jacobian_history(y_bus);
+        return newton_raphson_pf_solver_->get_jacobians();
+    }
+
+    std::vector<ModelStateNodalState> get_nodal_states() const final {
+        if (!last_power_flow_used_newton_raphson_ || !newton_raphson_pf_solver_) {
+            return {};
+        }
+        return newton_raphson_pf_solver_->get_nodal_states();
     }
 
   private:

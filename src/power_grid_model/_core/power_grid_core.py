@@ -175,10 +175,18 @@ class StateGroupViewC(Structure):
         ("admittance_real", DoublePtr),
         ("admittance_imag", DoublePtr),
         ("n_admittance_values", IdxC),
-        ("has_jacobian", IdxC),
+        ("has_jacobians", IdxC),
         ("jacobian_nnz", IdxC),
         ("jacobian_row_indptr", IdxPtr),
         ("jacobian_col_indices", IdxPtr),
+        ("n_jacobians", IdxC),
+        ("n_nodal_states", IdxC),
+    ]
+
+
+class StateJacobianViewC(Structure):
+    _fields_ = [
+        ("iteration", IdxC),
         ("jacobian_h", DoublePtr),
         ("jacobian_n", DoublePtr),
         ("jacobian_m", DoublePtr),
@@ -187,18 +195,12 @@ class StateGroupViewC(Structure):
     ]
 
 
-class StateJacobianViewC(Structure):
+class StateNodalStateViewC(Structure):
     _fields_ = [
         ("iteration", IdxC),
-        ("n_bus", IdxC),
-        ("jacobian_nnz", IdxC),
-        ("jacobian_row_indptr", IdxPtr),
-        ("jacobian_col_indices", IdxPtr),
-        ("jacobian_h", DoublePtr),
-        ("jacobian_n", DoublePtr),
-        ("jacobian_m", DoublePtr),
-        ("jacobian_l", DoublePtr),
-        ("n_jacobian_values", IdxC),
+        ("voltage_magnitude", DoublePtr),
+        ("voltage_angle", DoublePtr),
+        ("n_voltage_values", IdxC),
     ]
 
 
@@ -206,6 +208,7 @@ StateOutputRequestPtr = POINTER(StateOutputRequestC)
 StateScenarioViewPtr = POINTER(StateScenarioViewC)
 StateGroupViewPtr = POINTER(StateGroupViewC)
 StateJacobianViewPtr = POINTER(StateJacobianViewC)
+StateNodalStateViewPtr = POINTER(StateNodalStateViewC)
 StateOutputPtrPtr = POINTER(StateOutputPtr)
 
 
@@ -529,19 +532,32 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
-    def state_output_jacobian_history_count(
-        self, state_output: StateOutputPtr, scenario_idx: int, group_idx: int
-    ) -> int:  # type: ignore[empty-body]
+    def state_output_jacobians_count(self, state_output: StateOutputPtr, scenario_idx: int, group_idx: int) -> int:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding
-    def state_output_get_jacobian_history(
+    def state_output_get_jacobian(
         self,
         state_output: StateOutputPtr,
         scenario_idx: int,
         group_idx: int,
-        iteration_idx: int,
+        jacobian_idx: int,
         view: StateJacobianViewPtr,  # type: ignore[valid-type]
+    ) -> None:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def state_output_nodal_states_count(self, state_output: StateOutputPtr, scenario_idx: int, group_idx: int) -> int:
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def state_output_get_nodal_state(
+        self,
+        state_output: StateOutputPtr,
+        scenario_idx: int,
+        group_idx: int,
+        nodal_state_idx: int,
+        view: StateNodalStateViewPtr,  # type: ignore[valid-type]
     ) -> None:  # type: ignore[empty-body]
         pass  # pragma: no cover
 

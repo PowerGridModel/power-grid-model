@@ -35,10 +35,8 @@ template <symmetry_tag sym> class MathSolverBase {
     virtual SolverOutput<sym> run_state_estimation(StateEstimationInput<sym> const& input, double err_tol, Idx max_iter,
                                                    Logger& log, CalculationMethod calculation_method,
                                                    YBus<sym> const& y_bus) = 0;
-    virtual std::optional<ModelStateJacobian> get_last_jacobian_state(YBus<sym> const& /* y_bus */) const {
-      return std::nullopt;
-    }
-    virtual std::vector<ModelStateJacobian> get_jacobian_history(YBus<sym> const& /* y_bus */) const { return {}; }
+    virtual std::vector<ModelStateJacobian> get_jacobians() const { return {}; }
+    virtual std::vector<ModelStateNodalState> get_nodal_states() const { return {}; }
     virtual ShortCircuitSolverOutput<sym> run_short_circuit(ShortCircuitInput const& input, Logger& log,
                                                             CalculationMethod calculation_method,
                                                             YBus<sym> const& y_bus) = 0;

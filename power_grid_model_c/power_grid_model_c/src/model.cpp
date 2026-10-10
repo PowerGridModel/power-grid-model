@@ -499,54 +499,75 @@ void PGM_state_output_get_group(PGM_Handle* handle, PGM_StateOutput const* state
             output.admittance_imag = y_bus.admittance_imag.data();
             output.n_admittance_values = static_cast<PGM_Idx>(y_bus.admittance_real.size());
         }
-        if (group.jacobian.has_value()) {
-            auto const& jacobian = *group.jacobian;
-            output.has_jacobian = 1;
-            output.jacobian_nnz = static_cast<PGM_Idx>(jacobian.col_indices_lu.size());
-            output.jacobian_row_indptr = jacobian.row_indptr_lu.data();
-            output.jacobian_col_indices = jacobian.col_indices_lu.data();
-            output.jacobian_h = jacobian.blocks[0].data();
-            output.jacobian_n = jacobian.blocks[1].data();
-            output.jacobian_m = jacobian.blocks[2].data();
-            output.jacobian_l = jacobian.blocks[3].data();
-            output.n_jacobian_values = static_cast<PGM_Idx>(jacobian.blocks[0].size());
+        if (!group.jacobians.empty()) {
+            auto const& structure = *group.jacobian_structure;
+            output.has_jacobians = 1;
+            output.jacobian_nnz = static_cast<PGM_Idx>(structure.col_indices_lu.size());
+            output.jacobian_row_indptr = structure.row_indptr_lu.data();
+            output.jacobian_col_indices = structure.col_indices_lu.data();
+            output.n_jacobians = static_cast<PGM_Idx>(group.jacobians.size());
+            output.n_nodal_states = static_cast<PGM_Idx>(group.nodal_states.size());
         }
     });
 }
 
-PGM_Idx PGM_state_output_jacobian_history_count(PGM_Handle* handle, PGM_StateOutput const* state_output,
-                                               PGM_Idx scenario_idx, PGM_Idx group_idx) {
+PGM_Idx PGM_state_output_jacobians_count(PGM_Handle* handle, PGM_StateOutput const* state_output,
+                                         PGM_Idx scenario_idx, PGM_Idx group_idx) {
     return call_with_catch(handle, [state_output, scenario_idx, group_idx] {
         auto const& scenario = safe_ptr_get(state_output).scenarios.at(static_cast<size_t>(scenario_idx));
         if (!scenario.has_value()) {
             throw DatasetError{"No model state was requested for this scenario.\n"};
         }
-        return static_cast<PGM_Idx>(scenario->groups.at(static_cast<size_t>(group_idx)).jacobian_history.size());
+        return static_cast<PGM_Idx>(scenario->groups.at(static_cast<size_t>(group_idx)).jacobians.size());
     });
 }
 
-void PGM_state_output_get_jacobian_history(PGM_Handle* handle, PGM_StateOutput const* state_output,
-                                          PGM_Idx scenario_idx, PGM_Idx group_idx, PGM_Idx iteration_idx,
-                                          PGM_StateJacobianView* view) {
-    call_with_catch(handle, [state_output, scenario_idx, group_idx, iteration_idx, view] {
+void PGM_state_output_get_jacobian(PGM_Handle* handle, PGM_StateOutput const* state_output, PGM_Idx scenario_idx,
+                                   PGM_Idx group_idx, PGM_Idx jacobian_idx, PGM_StateJacobianView* view) {
+    call_with_catch(handle, [state_output, scenario_idx, group_idx, jacobian_idx, view] {
         auto const& scenario = safe_ptr_get(state_output).scenarios.at(static_cast<size_t>(scenario_idx));
         if (!scenario.has_value()) {
             throw DatasetError{"No model state was requested for this scenario.\n"};
         }
         auto const& group = scenario->groups.at(static_cast<size_t>(group_idx));
-        auto const& jacobian = group.jacobian_history.at(static_cast<size_t>(iteration_idx));
+        auto const& jacobian = group.jacobians.at(static_cast<size_t>(jacobian_idx));
         auto& output = safe_ptr_get(view);
         output = {};
         output.iteration = jacobian.iteration;
-        output.n_bus = group.mapping.n_bus;
-        output.jacobian_nnz = static_cast<PGM_Idx>(jacobian.col_indices_lu.size());
-        output.jacobian_row_indptr = jacobian.row_indptr_lu.data();
-        output.jacobian_col_indices = jacobian.col_indices_lu.data();
         output.jacobian_h = jacobian.blocks[0].data();
         output.jacobian_n = jacobian.blocks[1].data();
         output.jacobian_m = jacobian.blocks[2].data();
         output.jacobian_l = jacobian.blocks[3].data();
         output.n_jacobian_values = static_cast<PGM_Idx>(jacobian.blocks[0].size());
+    });
+}
+
+PGM_Idx PGM_state_output_nodal_states_count(PGM_Handle* handle, PGM_StateOutput const* state_output,
+                                           PGM_Idx scenario_idx, PGM_Idx group_idx) {
+    return call_with_catch(handle, [state_output, scenario_idx, group_idx] {
+        auto const& scenario = safe_ptr_get(state_output).scenarios.at(static_cast<size_t>(scenario_idx));
+        if (!scenario.has_value()) {
+            throw DatasetError{"No model state was requested for this scenario.\n"};
+        }
+        return static_cast<PGM_Idx>(scenario->groups.at(static_cast<size_t>(group_idx)).nodal_states.size());
+    });
+}
+
+void PGM_state_output_get_nodal_state(PGM_Handle* handle, PGM_StateOutput const* state_output, PGM_Idx scenario_idx,
+                                      PGM_Idx group_idx, PGM_Idx nodal_state_idx, PGM_StateNodalStateView* view) {
+    call_with_catch(handle, [state_output, scenario_idx, group_idx, nodal_state_idx, view] {
+        auto const& scenario = safe_ptr_get(state_output).scenarios.at(static_cast<size_t>(scenario_idx));
+        if (!scenario.has_value()) {
+            throw DatasetError{"No model state was requested for this scenario.\n"};
+        }
+        auto const& nodal_state = scenario->groups.at(static_cast<size_t>(group_idx))
+                                      .nodal_states.at(static_cast<size_t>(nodal_state_idx));
+        auto& output = safe_ptr_get(view);
+        output = {};
+        output.iteration = nodal_state.iteration;
+        output.voltage_magnitude = nodal_state.voltage_magnitude.data();
+        output.voltage_angle = nodal_state.voltage_angle.data();
+        output.n_voltage_values = static_cast<PGM_Idx>(nodal_state.voltage_magnitude.size());
     });
 }
 

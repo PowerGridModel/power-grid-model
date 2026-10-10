@@ -145,7 +145,11 @@ typedef struct PGM_StateScenarioView {
  * @brief Borrowed view of one group's sparse matrices and bus-to-input mapping.
  *
  * CSR/value arrays are NULL when the corresponding matrix is absent. Mapping
- * pointers are valid until the owning PGM_StateOutput is destroyed.
+ * pointers are valid until the owning PGM_StateOutput is destroyed. Jacobian
+ * CSR indices and nodal-state values use the group's internal bus ordering.
+ * Use the scenario input_node_id/group/bus arrays to map input node order to
+ * these values. The group mapping also lists user nodes per bus and identifies
+ * synthetic buses with their originating branch3 IDs.
  */
 typedef struct PGM_StateGroupView {
     PGM_Idx group;
@@ -164,15 +168,12 @@ typedef struct PGM_StateGroupView {
     double const* admittance_real;
     double const* admittance_imag;
     PGM_Idx n_admittance_values;
-    PGM_Idx has_jacobian;
+    PGM_Idx has_jacobians;
     PGM_Idx jacobian_nnz;
     PGM_Idx const* jacobian_row_indptr;
     PGM_Idx const* jacobian_col_indices;
-    double const* jacobian_h;
-    double const* jacobian_n;
-    double const* jacobian_m;
-    double const* jacobian_l;
-    PGM_Idx n_jacobian_values;
+    PGM_Idx n_jacobians;
+    PGM_Idx n_nodal_states;
 } PGM_StateGroupView;
 
 /**
@@ -183,16 +184,26 @@ typedef struct PGM_StateGroupView {
  */
 typedef struct PGM_StateJacobianView {
     PGM_Idx iteration;
-    PGM_Idx n_bus;
-    PGM_Idx jacobian_nnz;
-    PGM_Idx const* jacobian_row_indptr;
-    PGM_Idx const* jacobian_col_indices;
     double const* jacobian_h;
     double const* jacobian_n;
     double const* jacobian_m;
     double const* jacobian_l;
     PGM_Idx n_jacobian_values;
 } PGM_StateJacobianView;
+
+/**
+ * @brief Borrowed view of nodal voltages at one Newton-Raphson iteration.
+ *
+ * Iterations are numbered from one and align with the group's Jacobians.
+ * Values are bus-major; asymmetric groups store phases 1, 2, 3 for each bus.
+ * All pointers are valid until the owning PGM_StateOutput is destroyed.
+ */
+typedef struct PGM_StateNodalStateView {
+    PGM_Idx iteration;
+    double const* voltage_magnitude;
+    double const* voltage_angle;
+    PGM_Idx n_voltage_values;
+} PGM_StateNodalStateView;
 
 /**
  * @brief Calculate normally and return an owned native state result.
@@ -220,13 +231,22 @@ PGM_API void PGM_state_output_get_group(PGM_Handle* handle, PGM_StateOutput cons
                                         PGM_Idx group_idx, PGM_StateGroupView* view);
 
 /** @brief Get the number of captured Newton-Raphson Jacobians for one group. */
-PGM_API PGM_Idx PGM_state_output_jacobian_history_count(PGM_Handle* handle, PGM_StateOutput const* state_output,
-                                                        PGM_Idx scenario_idx, PGM_Idx group_idx);
+PGM_API PGM_Idx PGM_state_output_jacobians_count(PGM_Handle* handle, PGM_StateOutput const* state_output,
+                                                 PGM_Idx scenario_idx, PGM_Idx group_idx);
 
 /** @brief Get a borrowed view of one captured Newton-Raphson Jacobian. */
-PGM_API void PGM_state_output_get_jacobian_history(PGM_Handle* handle, PGM_StateOutput const* state_output,
-                                                   PGM_Idx scenario_idx, PGM_Idx group_idx, PGM_Idx iteration_idx,
-                                                   PGM_StateJacobianView* view);
+PGM_API void PGM_state_output_get_jacobian(PGM_Handle* handle, PGM_StateOutput const* state_output,
+                                           PGM_Idx scenario_idx, PGM_Idx group_idx, PGM_Idx jacobian_idx,
+                                           PGM_StateJacobianView* view);
+
+/** @brief Get the number of nodal state snapshots for one group. */
+PGM_API PGM_Idx PGM_state_output_nodal_states_count(PGM_Handle* handle, PGM_StateOutput const* state_output,
+                                                    PGM_Idx scenario_idx, PGM_Idx group_idx);
+
+/** @brief Get a borrowed view of one iteration's nodal voltages. */
+PGM_API void PGM_state_output_get_nodal_state(PGM_Handle* handle, PGM_StateOutput const* state_output,
+                                              PGM_Idx scenario_idx, PGM_Idx group_idx, PGM_Idx nodal_state_idx,
+                                              PGM_StateNodalStateView* view);
 
 /** @brief Destroy an owned state result and invalidate all its borrowed views. */
 PGM_API void PGM_destroy_state_output(PGM_StateOutput* state_output);
