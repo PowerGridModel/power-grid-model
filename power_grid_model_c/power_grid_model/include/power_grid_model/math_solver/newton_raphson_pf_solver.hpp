@@ -394,13 +394,46 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         }
     }
 
-    ModelStateJacobian get_last_jacobian_state(YBus<sym> const& y_bus) const {
-        ModelStateJacobian result{
-            .row_indptr_lu = y_bus.row_indptr_lu(),
-            .col_indices_lu = y_bus.col_indices_lu(),
-        };
+    void set_jacobian_state_capture(bool capture) {
+        capture_jacobian_state_ = capture;
+        jacobian_history_.clear();
+    }
+
+    void copy_iteration_state_from(NewtonRaphsonPFSolver const& solver) {
+        jacobian_history_ = solver.jacobian_history_;
+    }
+
+    std::optional<ModelStateJacobian> get_last_jacobian_state(YBus<sym> const& y_bus) const {
+        if (jacobian_history_.empty()) {
+            return std::nullopt;
+        }
+        auto result = jacobian_history_.back();
+        result.row_indptr_lu = y_bus.row_indptr_lu();
+        result.col_indices_lu = y_bus.col_indices_lu();
+        return result;
+    }
+
+    std::vector<ModelStateJacobian> get_jacobian_history(YBus<sym> const& y_bus) const {
+        auto result = jacobian_history_;
+        for (auto& jacobian : result) {
+            jacobian.row_indptr_lu = y_bus.row_indptr_lu();
+            jacobian.col_indices_lu = y_bus.col_indices_lu();
+        }
+        return result;
+    }
+
+    void log_matrix(Logger& /*log*/, YBus<sym> const& /*y_bus*/, Idx iter) {
+        if (capture_jacobian_state_) {
+            capture_jacobian_state(iter);
+        }
+    }
+
+    void capture_jacobian_state(Idx iteration) {
+        ModelStateJacobian result;
+        result.iteration = iteration;
         constexpr Idx block_size = is_symmetric_v<sym> ? 1 : 9;
         for (auto& block : result.blocks) {
+            block.clear();
             block.reserve(static_cast<size_t>(std::ssize(data_jac_) * block_size));
         }
 
@@ -417,12 +450,13 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
                 }
             }
         }
-        return result;
+        jacobian_history_.push_back(std::move(result));
     }
-
   private:
     // data for jacobian
     std::vector<PFJacBlock<sym>> data_jac_;
+    bool capture_jacobian_state_{};
+    std::vector<ModelStateJacobian> jacobian_history_;
     // calculation data
     std::vector<PolarPhasor<sym>> x_; // unknown
     // this stores in different steps

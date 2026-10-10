@@ -30,9 +30,13 @@ namespace power_grid_model::math_solver {
 template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
   public:
     friend DerivedSolver;
+        void log_matrix(Logger& /*log*/, YBus<sym> const& /*y_bus*/, Idx /*iter*/) {}
+        void copy_iteration_state_from(DerivedSolver const& /*solver*/) {}
+
     SolverOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
                                      Idx max_iter, bool cache_run, Logger& log) {
-        auto& derived_solver = static_cast<DerivedSolver&>(*this);
+        // get derived solver class
+        auto derived_solver = static_cast<DerivedSolver&>(*this);
 
         // prepare
         SolverOutput<sym> output;
@@ -60,6 +64,7 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
                 Timer const sub_timer{log, LogEvent::prepare_matrices};
                 derived_solver.prepare_matrix_and_rhs(y_bus, input, output.u);
             }
+            derived_solver.log_matrix(log, y_bus, num_iter);
             {
                 // Solve the linear equations
                 Timer const sub_timer{log, LogEvent::solve_sparse_linear_equation};
@@ -80,6 +85,7 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
             }
             calculate_result(y_bus, input, output);
         }
+        static_cast<DerivedSolver&>(*this).copy_iteration_state_from(derived_solver);
         // Manually stop timers to avoid "Max number of iterations" to be included in the timing.
         main_timer.stop();
 

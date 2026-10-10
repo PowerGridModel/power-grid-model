@@ -44,12 +44,14 @@ struct ModelStateJacobian {
     IdxVector row_indptr_lu;
     IdxVector col_indices_lu;
     std::array<std::vector<double>, 4> blocks; // H, N, M, L; flattened row-major per sparse entry.
+    Idx iteration{};
 };
 
 struct ModelStateGroup {
     ModelStateGroupMapping mapping;
     std::optional<ModelStateYBus> y_bus;
     std::optional<ModelStateJacobian> jacobian;
+    std::vector<ModelStateJacobian> jacobian_history;
 };
 
 struct ModelStateOutput {
