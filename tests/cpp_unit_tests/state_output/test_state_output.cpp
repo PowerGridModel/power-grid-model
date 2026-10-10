@@ -211,18 +211,43 @@ TEST_CASE("Test State output - Capture nodal states independently") {
     }
 }
 
+TEST_CASE("Test State output - Iterative current captures nodal states without Jacobians") {
+    MathSolverDispatcher const dispatcher{math_solver::math_solver_tag<math_solver::MathSolver>{}};
+    auto model = make_state_test_model(dispatcher);
+    auto options = MainModelOptions{};
+    options.calculation_method = CalculationMethod::iterative_current;
+    auto state_output = calculate_state(model, options, {.nodal_state = true});
+
+    REQUIRE(state_output.has_value());
+    CHECK_FALSE(state_output->jacobian_requested);
+    CHECK(state_output->nodal_state_requested);
+    REQUIRE(state_output->groups.size() == 1);
+    auto const& group = state_output->groups[0];
+    CHECK(group.jacobians.empty());
+    CHECK_FALSE(group.jacobian_structure.has_value());
+    REQUIRE(group.nodal_states.size() > 1);
+    for (size_t state_idx = 0; state_idx < group.nodal_states.size(); ++state_idx) {
+        auto const& nodal_state = group.nodal_states[state_idx];
+        CHECK(nodal_state.iteration == static_cast<Idx>(state_idx + 1));
+        REQUIRE(nodal_state.voltage_magnitude.size() == static_cast<size_t>(group.mapping.n_bus));
+        REQUIRE(nodal_state.voltage_angle.size() == static_cast<size_t>(group.mapping.n_bus));
+        CHECK(std::ranges::all_of(nodal_state.voltage_magnitude, [](double value) { return std::isfinite(value); }));
+        CHECK(std::ranges::all_of(nodal_state.voltage_angle, [](double value) { return std::isfinite(value); }));
+    }
+}
+
 TEST_CASE("Test State output - Linear method has no Jacobian") {
     MathSolverDispatcher const dispatcher{math_solver::math_solver_tag<math_solver::MathSolver>{}};
     auto model = make_state_test_model(dispatcher);
     auto options = MainModelOptions{};
     options.calculation_method = CalculationMethod::linear;
-    auto state_output = calculate_state(model, options, {.y_bus = true, .jacobian = true});
+    auto state_output = calculate_state(model, options, {.y_bus = true, .jacobian = true, .nodal_state = true});
 
     REQUIRE(state_output.has_value());
     REQUIRE(state_output->groups.size() == 1);
     CHECK(state_output->groups[0].y_bus.has_value());
     CHECK(state_output->groups[0].jacobians.empty());
-    CHECK(state_output->groups[0].nodal_states.empty());
+    CHECK(state_output->groups[0].nodal_states.empty()); // linear method has only one iteration
     CHECK_FALSE(state_output->groups[0].jacobian_structure.has_value());
 }
 

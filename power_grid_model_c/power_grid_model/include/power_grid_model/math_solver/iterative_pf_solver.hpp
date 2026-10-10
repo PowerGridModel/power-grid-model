@@ -13,6 +13,7 @@
 #include "y_bus.hpp"
 
 #include "../calculation_parameters.hpp"
+#include "../calculation_state.hpp"
 #include "../common/common.hpp"
 #include "../common/enum.hpp"
 #include "../common/exception.hpp"
@@ -30,8 +31,17 @@ namespace power_grid_model::math_solver {
 template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
   public:
     friend DerivedSolver;
-        void log_matrix(Logger& /*log*/, YBus<sym> const& /*y_bus*/, Idx /*iter*/) {}
-        void copy_iteration_state_from(DerivedSolver const& /*solver*/) {}
+    void log_matrix(Logger& /*log*/, YBus<sym> const& /*y_bus*/, Idx /*iter*/) {}
+    void copy_iteration_state_from(DerivedSolver const& solver) {
+        nodal_states_ = static_cast<IterativePFSolver const&>(solver).nodal_states_;
+    }
+
+    void set_nodal_state_capture(bool capture) {
+        capture_nodal_state_ = capture;
+        nodal_states_.clear();
+    }
+
+    std::vector<ModelStateNodalState> get_nodal_states() const { return nodal_states_; }
 
     SolverOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
                                      Idx max_iter, bool cache_run, Logger& log) {
@@ -75,6 +85,12 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
                 Timer const sub_timer{log, LogEvent::iterate_unknown};
                 max_dev = derived_solver.iterate_unknown(output.u, err_tol, cache_run);
             }
+            if (capture_nodal_state_) {
+                derived_solver.capture_iteration_nodal_state(output.u, num_iter);
+            }
+            log.log(LogEvent::iterate_unknown, [num_iter, max_dev] {
+                return std::format("Iteration {:3}: max voltage deviation = {:.6e} p.u.", num_iter, max_dev);
+            });
         }
 
         // calculate math result
@@ -123,11 +139,33 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
     }
 
   private:
+    void capture_iteration_nodal_state(ComplexValueVector<sym> const& voltage, Idx iteration) {
+        ModelStateNodalState state;
+        state.iteration = iteration;
+        constexpr size_t phases_per_bus = is_symmetric_v<sym> ? 1 : 3;
+        state.voltage_magnitude.reserve(voltage.size() * phases_per_bus);
+        state.voltage_angle.reserve(voltage.size() * phases_per_bus);
+        for (auto const& bus_voltage : voltage) {
+            if constexpr (is_symmetric_v<sym>) {
+                state.voltage_magnitude.push_back(cabs(bus_voltage));
+                state.voltage_angle.push_back(arg(bus_voltage));
+            } else {
+                for (Idx phase = 0; phase < 3; ++phase) {
+                    state.voltage_magnitude.push_back(cabs(bus_voltage.coeff(phase)));
+                    state.voltage_angle.push_back(arg(bus_voltage.coeff(phase)));
+                }
+            }
+        }
+        nodal_states_.push_back(std::move(state));
+    }
+
     Idx n_bus_;
     std::reference_wrapper<DoubleVector const> phase_shift_;
     std::reference_wrapper<SparseGroupedIdxVector const> load_gens_per_bus_;
     std::reference_wrapper<DenseGroupedIdxVector const> sources_per_bus_;
     std::reference_wrapper<std::vector<LoadGenType> const> load_gen_type_;
+    bool capture_nodal_state_{};
+    std::vector<ModelStateNodalState> nodal_states_;
     IterativePFSolver(YBus<sym> const& y_bus, MathModelTopology const& topo)
         : n_bus_{y_bus.size()},
           phase_shift_{std::cref(topo.phase_shift)},
