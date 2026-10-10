@@ -33,10 +33,11 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
     friend DerivedSolver;
     // Default no-op; derived solvers may override to emit their internal matrix state.
     void log_matrix(Logger& /*log*/, YBus<sym> const& /*y_bus*/, Idx /*iter*/) {}
+    void copy_iteration_state_from(DerivedSolver const& /*solver*/) {}
 
     SolverOutput<sym> run_power_flow(YBus<sym> const& y_bus, PowerFlowInput<sym> const& input, double err_tol,
                                      Idx max_iter, Logger& log) {
-        // get derived reference for derived solver class
+        // get derived solver class
         auto derived_solver = static_cast<DerivedSolver&>(*this);
 
         // prepare
@@ -88,6 +89,7 @@ template <symmetry_tag sym, typename DerivedSolver> class IterativePFSolver {
             Timer const sub_timer{log, LogEvent::calculate_math_result};
             calculate_result(y_bus, input, output);
         }
+        static_cast<DerivedSolver&>(*this).copy_iteration_state_from(derived_solver);
         // Manually stop timers to avoid "Max number of iterations" to be included in the timing.
         main_timer.stop();
 

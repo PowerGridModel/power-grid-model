@@ -40,6 +40,16 @@ class StateOutput {
                 handle_.call_with(PGM_state_output_get_group, output_.get(), scenario_idx, group_idx, &view);
                 return view;
         }
+        Idx jacobian_history_count(Idx scenario_idx, Idx group_idx) const {
+            return handle_.call_with(PGM_state_output_jacobian_history_count, output_.get(), scenario_idx,
+                         group_idx);
+        }
+        PGM_StateJacobianView jacobian_at_iteration(Idx scenario_idx, Idx group_idx, Idx iteration_idx) const {
+            PGM_StateJacobianView view{};
+            handle_.call_with(PGM_state_output_get_jacobian_history, output_.get(), scenario_idx, group_idx,
+                      iteration_idx, &view);
+            return view;
+        }
 
     private:
         friend class Model;

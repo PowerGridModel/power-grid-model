@@ -280,14 +280,15 @@ class MainModelImpl {
                  std::ranges::range<std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>> &&
                  std::invocable<
                      std::remove_cvref_t<SolveFn>, MathSolverType&, YBus const&,
-                     typename std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>::const_reference> &&
+                     typename std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>::const_reference,
+                     bool> &&
                  solver_output_type<std::invoke_result_t<
                      SolveFn, MathSolverType&, YBus const&,
-                     typename std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>::const_reference>>
+                     typename std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>::const_reference, bool>>
     auto calculate_(PrepareInputFn&& prepare_input, SolveFn&& solve, Logger& logger,
                     ModelStateRequest const& state_request) {
         using InputType = typename std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>::const_reference;
-        using SolverOutputType = typename std::invoke_result_t<SolveFn, MathSolverType&, YBus const&, InputType>;
+        using SolverOutputType = typename std::invoke_result_t<SolveFn, MathSolverType&, YBus const&, InputType, bool>;
         using sym = typename SolverOutputType::sym;
 
         assert(construction_complete_);
@@ -307,14 +308,13 @@ class MainModelImpl {
         }();
         // calculate
         return [this, &logger, &input, &state_request, solve_ = std::forward<SolveFn>(solve)] {
-            (void)state_request;
             Timer const timer{logger, LogEvent::math_calculation};
             auto& solvers = main_core::get_solvers<sym>(solver_preparation_context_.math_state);
             auto& y_bus_vec = main_core::get_y_bus<sym>(solver_preparation_context_.math_state);
             std::vector<SolverOutputType> solver_output;
             solver_output.reserve(get_n_math_solvers<ModelType>(state_));
             for (Idx i = 0; i != get_n_math_solvers<ModelType>(state_); ++i) {
-                SolverOutputType result = solve_(solvers[i], y_bus_vec[i], input[i]);
+                SolverOutputType result = solve_(solvers[i], y_bus_vec[i], input[i], state_request.jacobian);
                 if constexpr (steady_state_solver_output_type<SolverOutputType>) {
                     if (state_request.y_bus || state_request.jacobian) {
                         auto group_state = std::make_shared<ModelStateGroup>();
@@ -323,7 +323,10 @@ class MainModelImpl {
                             group_state->y_bus = create_y_bus_state(y_bus_vec[i]);
                         }
                         if (state_request.jacobian) {
-                            group_state->jacobian = solvers[i].get().get_last_jacobian_state(y_bus_vec[i]);
+                            group_state->jacobian_history = solvers[i].get().get_jacobian_history(y_bus_vec[i]);
+                            if (!group_state->jacobian_history.empty()) {
+                                group_state->jacobian = group_state->jacobian_history.back();
+                            }
                         }
                         result.model_state_group = std::move(group_state);
                     }

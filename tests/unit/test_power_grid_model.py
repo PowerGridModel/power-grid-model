@@ -172,6 +172,11 @@ def test_power_flow_model_state(model: PowerGridModel):
     group = model_state.groups[0]
     assert group.y_bus is not None
     assert group.jacobian is not None
+    assert group.jacobian_history
+    assert [jacobian.iteration for jacobian in group.jacobian_history] == list(
+        range(1, len(group.jacobian_history) + 1)
+    )
+    assert group.jacobian_history[-1] is group.jacobian
     assert group.mapping.bus_user_id.tolist() == [0]
     assert group.y_bus.row_indptr.shape == (group.mapping.n_bus + 1,)
     assert group.y_bus.admittance_real.size > 0
@@ -191,6 +196,7 @@ def test_linear_power_flow_model_state_has_no_jacobian(model: PowerGridModel):
     assert model_state is not None
     assert model_state.groups[0].y_bus is not None
     assert model_state.groups[0].jacobian is None
+    assert model_state.groups[0].jacobian_history == ()
 
 
 def test_power_flow_model_state_batch_requests(model: PowerGridModel, update_batch):
@@ -208,10 +214,12 @@ def test_power_flow_model_state_batch_requests(model: PowerGridModel, update_bat
     assert states[0].y_bus_requested
     assert states[0].groups[0].y_bus is not None
     assert states[0].groups[0].jacobian is None
+    assert states[0].groups[0].jacobian_history == ()
     assert states[1] is not None
     assert states[1].jacobian_requested
     assert states[1].groups[0].y_bus is None
     assert states[1].groups[0].jacobian is not None
+    assert states[1].groups[0].jacobian_history
 
 
 def test_power_flow_model_state_request_count_must_match_batch(model: PowerGridModel, update_batch):

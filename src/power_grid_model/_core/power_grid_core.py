@@ -187,9 +187,25 @@ class StateGroupViewC(Structure):
     ]
 
 
+class StateJacobianViewC(Structure):
+    _fields_ = [
+        ("iteration", IdxC),
+        ("n_bus", IdxC),
+        ("jacobian_nnz", IdxC),
+        ("jacobian_row_indptr", IdxPtr),
+        ("jacobian_col_indices", IdxPtr),
+        ("jacobian_h", DoublePtr),
+        ("jacobian_n", DoublePtr),
+        ("jacobian_m", DoublePtr),
+        ("jacobian_l", DoublePtr),
+        ("n_jacobian_values", IdxC),
+    ]
+
+
 StateOutputRequestPtr = POINTER(StateOutputRequestC)
 StateScenarioViewPtr = POINTER(StateScenarioViewC)
 StateGroupViewPtr = POINTER(StateGroupViewC)
+StateJacobianViewPtr = POINTER(StateJacobianViewC)
 StateOutputPtrPtr = POINTER(StateOutputPtr)
 
 
@@ -495,13 +511,37 @@ class PowerGridCore:
 
     @make_c_binding
     def state_output_get_scenario(
-        self, state_output: StateOutputPtr, scenario_idx: int, view: StateScenarioViewPtr  # type: ignore[valid-type]
+        self,
+        state_output: StateOutputPtr,
+        scenario_idx: int,
+        view: StateScenarioViewPtr,  # type: ignore[valid-type]
     ) -> None:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding
     def state_output_get_group(
-        self, state_output: StateOutputPtr, scenario_idx: int, group_idx: int, view: StateGroupViewPtr  # type: ignore[valid-type]
+        self,
+        state_output: StateOutputPtr,
+        scenario_idx: int,
+        group_idx: int,
+        view: StateGroupViewPtr,  # type: ignore[valid-type]
+    ) -> None:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def state_output_jacobian_history_count(
+        self, state_output: StateOutputPtr, scenario_idx: int, group_idx: int
+    ) -> int:  # type: ignore[empty-body]
+        pass  # pragma: no cover
+
+    @make_c_binding
+    def state_output_get_jacobian_history(
+        self,
+        state_output: StateOutputPtr,
+        scenario_idx: int,
+        group_idx: int,
+        iteration_idx: int,
+        view: StateJacobianViewPtr,  # type: ignore[valid-type]
     ) -> None:  # type: ignore[empty-body]
         pass  # pragma: no cover
 

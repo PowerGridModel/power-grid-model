@@ -335,44 +335,38 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         return max_dev;
     }
 
-    ModelStateJacobian get_last_jacobian_state(YBus<sym> const& y_bus) const {
-        ModelStateJacobian result{
-            .row_indptr_lu = y_bus.row_indptr_lu(),
-            .col_indices_lu = y_bus.col_indices_lu(),
-        };
-        constexpr Idx block_size = is_symmetric_v<sym> ? 1 : 9;
-        for (auto& block : result.blocks) {
-            block.reserve(static_cast<size_t>(std::ssize(data_jac_) * block_size));
-        }
+    void set_jacobian_state_capture(bool capture) {
+        capture_jacobian_state_ = capture;
+        jacobian_history_.clear();
+    }
 
-        constexpr Idx sub_size = is_symmetric_v<sym> ? 1 : 3;
-        for (Idx entry = 0; entry < static_cast<Idx>(std::ssize(data_jac_)); ++entry) {
-            for (Idx block = 0; block < 4; ++block) {
-                Idx const block_row = block / 2;
-                Idx const block_col = block % 2;
-                for (Idx row = 0; row < sub_size; ++row) {
-                    for (Idx col = 0; col < sub_size; ++col) {
-                        result.blocks[block].push_back(data_jac_[entry](block_row * sub_size + row,
-                                                                        block_col * sub_size + col));
-                    }
-                }
-            }
+    void copy_iteration_state_from(NewtonRaphsonPFSolver const& solver) {
+        jacobian_history_ = solver.jacobian_history_;
+    }
+
+    std::optional<ModelStateJacobian> get_last_jacobian_state(YBus<sym> const& y_bus) const {
+        if (jacobian_history_.empty()) {
+            return std::nullopt;
+        }
+        auto result = jacobian_history_.back();
+        result.row_indptr_lu = y_bus.row_indptr_lu();
+        result.col_indices_lu = y_bus.col_indices_lu();
+        return result;
+    }
+
+    std::vector<ModelStateJacobian> get_jacobian_history(YBus<sym> const& y_bus) const {
+        auto result = jacobian_history_;
+        for (auto& jacobian : result) {
+            jacobian.row_indptr_lu = y_bus.row_indptr_lu();
+            jacobian.col_indices_lu = y_bus.col_indices_lu();
         }
         return result;
     }
 
-    // Log the assembled Jacobian for the given iteration (lazy: zero cost when no text logger is active).
-    // Output format (newline-separated fields in a single log message):
-    //   iteration=K n_bus=N nnz_lu=M is_sym=S
-    //   row_indptr_lu=<LU row pointers, space-separated>
-    //   col_indices_lu=<LU column indices, space-separated>
-    //   jac_h=<H block values; 1 per entry (sym) or 9 row-major values per entry (asym)>
-    //   jac_n=<N block values; same layout>
-    //   jac_m=<M block values; same layout>
-    //   jac_l=<L block values; same layout>
-    // Row/column indices are the same internal bus indices used in the Y-bus log (bus_map applies).
-    // Fill-in entries (not present in Y-bus) appear as zeros in the assembled Jacobian.
     void log_matrix(Logger& log, YBus<sym> const& y_bus, Idx iter) {
+        if (capture_jacobian_state_) {
+            capture_jacobian_state(iter);
+        }
         log.log(LogEvent::jacobian, [this, &y_bus, iter]() -> std::string {
             Idx const n_bus = y_bus.size();
             Idx const nnz_lu = static_cast<Idx>(data_jac_.size());
@@ -395,10 +389,6 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
                 oss << col_idx[k];
             }
 
-            // Each PFJacBlock<sym> is a (2*sub_sz) x (2*sub_sz) array:
-            //   sub-block [0,0]=H  [0,1]=N
-            //             [1,0]=M  [1,1]=L
-            // For sym: sub_sz=1 (scalar); for asym: sub_sz=3 (3x3 real matrix).
             constexpr int sub_sz = is_symmetric_v<sym> ? 1 : 3;
             auto write_block = [&](std::string_view name, int block_row, int block_col) {
                 oss << '\n' << name << '=';
@@ -424,9 +414,36 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         });
     }
 
+    void capture_jacobian_state(Idx iteration) {
+        ModelStateJacobian result;
+        result.iteration = iteration;
+        constexpr Idx block_size = is_symmetric_v<sym> ? 1 : 9;
+        for (auto& block : result.blocks) {
+            block.clear();
+            block.reserve(static_cast<size_t>(std::ssize(data_jac_) * block_size));
+        }
+
+        constexpr Idx sub_size = is_symmetric_v<sym> ? 1 : 3;
+        for (Idx entry = 0; entry < static_cast<Idx>(std::ssize(data_jac_)); ++entry) {
+            for (Idx block = 0; block < 4; ++block) {
+                Idx const block_row = block / 2;
+                Idx const block_col = block % 2;
+                for (Idx row = 0; row < sub_size; ++row) {
+                    for (Idx col = 0; col < sub_size; ++col) {
+                        result.blocks[block].push_back(data_jac_[entry](block_row * sub_size + row,
+                                                                        block_col * sub_size + col));
+                    }
+                }
+            }
+        }
+        jacobian_history_.push_back(std::move(result));
+    }
+
   private:
     // data for jacobian
     std::vector<PFJacBlock<sym>> data_jac_;
+    bool capture_jacobian_state_{};
+    std::vector<ModelStateJacobian> jacobian_history_;
     // calculation data
     std::vector<PolarPhasor<sym>> x_; // unknown
     // this stores in different steps

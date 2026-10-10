@@ -514,6 +514,42 @@ void PGM_state_output_get_group(PGM_Handle* handle, PGM_StateOutput const* state
     });
 }
 
+PGM_Idx PGM_state_output_jacobian_history_count(PGM_Handle* handle, PGM_StateOutput const* state_output,
+                                               PGM_Idx scenario_idx, PGM_Idx group_idx) {
+    return call_with_catch(handle, [state_output, scenario_idx, group_idx] {
+        auto const& scenario = safe_ptr_get(state_output).scenarios.at(static_cast<size_t>(scenario_idx));
+        if (!scenario.has_value()) {
+            throw DatasetError{"No model state was requested for this scenario.\n"};
+        }
+        return static_cast<PGM_Idx>(scenario->groups.at(static_cast<size_t>(group_idx)).jacobian_history.size());
+    });
+}
+
+void PGM_state_output_get_jacobian_history(PGM_Handle* handle, PGM_StateOutput const* state_output,
+                                          PGM_Idx scenario_idx, PGM_Idx group_idx, PGM_Idx iteration_idx,
+                                          PGM_StateJacobianView* view) {
+    call_with_catch(handle, [state_output, scenario_idx, group_idx, iteration_idx, view] {
+        auto const& scenario = safe_ptr_get(state_output).scenarios.at(static_cast<size_t>(scenario_idx));
+        if (!scenario.has_value()) {
+            throw DatasetError{"No model state was requested for this scenario.\n"};
+        }
+        auto const& group = scenario->groups.at(static_cast<size_t>(group_idx));
+        auto const& jacobian = group.jacobian_history.at(static_cast<size_t>(iteration_idx));
+        auto& output = safe_ptr_get(view);
+        output = {};
+        output.iteration = jacobian.iteration;
+        output.n_bus = group.mapping.n_bus;
+        output.jacobian_nnz = static_cast<PGM_Idx>(jacobian.col_indices_lu.size());
+        output.jacobian_row_indptr = jacobian.row_indptr_lu.data();
+        output.jacobian_col_indices = jacobian.col_indices_lu.data();
+        output.jacobian_h = jacobian.blocks[0].data();
+        output.jacobian_n = jacobian.blocks[1].data();
+        output.jacobian_m = jacobian.blocks[2].data();
+        output.jacobian_l = jacobian.blocks[3].data();
+        output.n_jacobian_values = static_cast<PGM_Idx>(jacobian.blocks[0].size());
+    });
+}
+
 void PGM_destroy_state_output(PGM_StateOutput* state_output) {
     delete state_output;
 }

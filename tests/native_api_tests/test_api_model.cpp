@@ -285,6 +285,13 @@ TEST_CASE("API Model") {
             CHECK(group.has_jacobian == 1);
             CHECK(group.y_bus_nnz > 0);
             CHECK(group.jacobian_nnz > 0);
+            auto const history_count = state_output.jacobian_history_count(0, 0);
+            REQUIRE(history_count > 0);
+            auto const first_jacobian = state_output.jacobian_at_iteration(0, 0, 0);
+            auto const last_jacobian = state_output.jacobian_at_iteration(0, 0, history_count - 1);
+            CHECK(first_jacobian.iteration == 1);
+            CHECK(last_jacobian.iteration == history_count);
+            CHECK(last_jacobian.jacobian_nnz == group.jacobian_nnz);
           }
     }
 

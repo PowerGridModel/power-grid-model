@@ -176,6 +176,25 @@ typedef struct PGM_StateGroupView {
 } PGM_StateGroupView;
 
 /**
+ * @brief Borrowed view of one Jacobian assembled during a Newton-Raphson run.
+ *
+ * Iterations are numbered from one. All pointers are valid until the owning
+ * PGM_StateOutput is destroyed.
+ */
+typedef struct PGM_StateJacobianView {
+    PGM_Idx iteration;
+    PGM_Idx n_bus;
+    PGM_Idx jacobian_nnz;
+    PGM_Idx const* jacobian_row_indptr;
+    PGM_Idx const* jacobian_col_indices;
+    double const* jacobian_h;
+    double const* jacobian_n;
+    double const* jacobian_m;
+    double const* jacobian_l;
+    PGM_Idx n_jacobian_values;
+} PGM_StateJacobianView;
+
+/**
  * @brief Calculate normally and return an owned native state result.
  *
  * request_count must be one for a single calculation or equal the effective
@@ -199,6 +218,15 @@ PGM_API void PGM_state_output_get_scenario(PGM_Handle* handle, PGM_StateOutput c
 /** @brief Get a borrowed group view for one scenario. */
 PGM_API void PGM_state_output_get_group(PGM_Handle* handle, PGM_StateOutput const* state_output, PGM_Idx scenario_idx,
                                         PGM_Idx group_idx, PGM_StateGroupView* view);
+
+/** @brief Get the number of captured Newton-Raphson Jacobians for one group. */
+PGM_API PGM_Idx PGM_state_output_jacobian_history_count(PGM_Handle* handle, PGM_StateOutput const* state_output,
+                                                        PGM_Idx scenario_idx, PGM_Idx group_idx);
+
+/** @brief Get a borrowed view of one captured Newton-Raphson Jacobian. */
+PGM_API void PGM_state_output_get_jacobian_history(PGM_Handle* handle, PGM_StateOutput const* state_output,
+                                                   PGM_Idx scenario_idx, PGM_Idx group_idx, PGM_Idx iteration_idx,
+                                                   PGM_StateJacobianView* view);
 
 /** @brief Destroy an owned state result and invalidate all its borrowed views. */
 PGM_API void PGM_destroy_state_output(PGM_StateOutput* state_output);
