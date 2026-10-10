@@ -138,7 +138,7 @@ class StateOutputPtr(c_void_p):
 
 
 class StateOutputRequestC(Structure):
-    _fields_ = [("y_bus", IdxC), ("jacobian", IdxC)]
+    _fields_ = [("y_bus", IdxC), ("jacobian", IdxC), ("nodal_state", IdxC)]
 
 
 class StateScenarioViewC(Structure):
@@ -151,6 +151,7 @@ class StateScenarioViewC(Structure):
         ("input_node_group", IdxPtr),
         ("input_node_bus", IdxPtr),
         ("input_node_id", IDPtr),
+        ("nodal_state_requested", IdxC),
     ]
 
 

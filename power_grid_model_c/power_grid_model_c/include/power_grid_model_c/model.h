@@ -123,6 +123,7 @@ PGM_API void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Op
 typedef struct PGM_StateOutputRequest {
     PGM_Idx y_bus;
     PGM_Idx jacobian;
+    PGM_Idx nodal_state;
 } PGM_StateOutputRequest;
 
 /**
@@ -140,6 +141,7 @@ typedef struct PGM_StateScenarioView {
     PGM_Idx const* input_node_group;
     PGM_Idx const* input_node_bus;
     PGM_ID const* input_node_id;
+    PGM_Idx nodal_state_requested;
 } PGM_StateScenarioView;
 
 /**
@@ -215,8 +217,7 @@ typedef struct PGM_StateNodalStateView {
  * PGM_destroy_state_output(). The component output dataset remains caller-owned.
  */
 PGM_API void PGM_calculate_with_state(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Options const* opt,
-                                      PGM_MutableDataset const* output_dataset,
-                                      PGM_ConstDataset const* batch_dataset,
+                                      PGM_MutableDataset const* output_dataset, PGM_ConstDataset const* batch_dataset,
                                       PGM_StateOutputRequest const* requests, PGM_Idx request_count,
                                       PGM_StateOutput** state_output);
 

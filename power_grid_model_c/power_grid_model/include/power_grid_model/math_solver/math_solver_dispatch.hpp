@@ -31,7 +31,8 @@ template <symmetry_tag sym> class MathSolverBase {
 
     virtual SolverOutput<sym> run_power_flow(PowerFlowInput<sym> const& input, double err_tol, Idx max_iter,
                                              bool cache_run, Logger& log, CalculationMethod calculation_method,
-                                             YBus<sym> const& y_bus, bool capture_jacobian_state) = 0;
+                                             YBus<sym> const& y_bus, bool capture_jacobian_state,
+                                             bool capture_nodal_state) = 0;
     virtual SolverOutput<sym> run_state_estimation(StateEstimationInput<sym> const& input, double err_tol, Idx max_iter,
                                                    Logger& log, CalculationMethod calculation_method,
                                                    YBus<sym> const& y_bus) = 0;

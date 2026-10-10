@@ -212,8 +212,8 @@ inline void backward_substitution(ReducedEchelonForm& elimination_result) {
             // as these are the only ones that can be affected by the backward substitution
             for (auto const backward_col_idx : backward_substitution_free_right_cols(free_col_indices, pivot_col_idx)) {
                 if (auto const pivot_value = elimination_result.matrix.get_value(pivot_row_idx, backward_col_idx)) {
-                    elimination_result.matrix.add_to_value(
-                        static_cast<IntS>(-multiplier_value * *pivot_value), row_idx, backward_col_idx);
+                    elimination_result.matrix.add_to_value(static_cast<IntS>(-multiplier_value * *pivot_value), row_idx,
+                                                           backward_col_idx);
                 }
             }
             elimination_result.rhs[row_idx] -=

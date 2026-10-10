@@ -109,7 +109,7 @@ TEST_CASE("Test State output - Capture Newton-Raphson Jacobian") {
     model.set_logger(logger);
     auto options = MainModelOptions{};
     options.calculation_method = CalculationMethod::newton_raphson;
-    auto state_output = calculate_state(model, options, {.jacobian = true});
+    auto state_output = calculate_state(model, options, {.jacobian = true, .nodal_state = true});
 
     REQUIRE(state_output.has_value());
     REQUIRE(state_output->groups.size() == 1);
@@ -127,8 +127,8 @@ TEST_CASE("Test State output - Capture Newton-Raphson Jacobian") {
     while (record_start != std::string::npos) {
         auto const record_end = report.find("\n[", record_start + jacobian_tag.size());
         jacobian_logs.push_back(std::string_view{report}.substr(
-            record_start + jacobian_tag.size(), record_end == std::string::npos ? std::string::npos
-                                                                               : record_end - record_start - jacobian_tag.size()));
+            record_start + jacobian_tag.size(),
+            record_end == std::string::npos ? std::string::npos : record_end - record_start - jacobian_tag.size()));
         record_start = report.find(jacobian_tag, record_start + jacobian_tag.size());
     }
     REQUIRE_FALSE(jacobian_logs.empty());
@@ -175,16 +175,39 @@ TEST_CASE("Test State output - Capture Newton-Raphson Jacobian") {
         CHECK(std::ranges::all_of(jacobian.blocks[0], [](double value) { return std::isfinite(value); }));
         if (iteration_idx == 0) {
             check_logged_values(jacobian_log, "row_indptr_lu",
-                               std::vector<double>(group.jacobian_structure->row_indptr_lu.begin(),
-                                                   group.jacobian_structure->row_indptr_lu.end()));
+                                std::vector<double>(group.jacobian_structure->row_indptr_lu.begin(),
+                                                    group.jacobian_structure->row_indptr_lu.end()));
             check_logged_values(jacobian_log, "col_indices_lu",
-                               std::vector<double>(group.jacobian_structure->col_indices_lu.begin(),
-                                                   group.jacobian_structure->col_indices_lu.end()));
+                                std::vector<double>(group.jacobian_structure->col_indices_lu.begin(),
+                                                    group.jacobian_structure->col_indices_lu.end()));
         }
         check_logged_values(jacobian_log, "jac_h", jacobian.blocks[0]);
         check_logged_values(jacobian_log, "jac_n", jacobian.blocks[1]);
         check_logged_values(jacobian_log, "jac_m", jacobian.blocks[2]);
         check_logged_values(jacobian_log, "jac_l", jacobian.blocks[3]);
+    }
+}
+
+TEST_CASE("Test State output - Capture nodal states independently") {
+    MathSolverDispatcher const dispatcher{math_solver::math_solver_tag<math_solver::MathSolver>{}};
+    auto model = make_state_test_model(dispatcher);
+    auto options = MainModelOptions{};
+    options.calculation_method = CalculationMethod::newton_raphson;
+    auto state_output = calculate_state(model, options, {.nodal_state = true});
+
+    REQUIRE(state_output.has_value());
+    CHECK_FALSE(state_output->jacobian_requested);
+    CHECK(state_output->nodal_state_requested);
+    REQUIRE(state_output->groups.size() == 1);
+    auto const& group = state_output->groups[0];
+    CHECK(group.jacobians.empty());
+    CHECK_FALSE(group.jacobian_structure.has_value());
+    REQUIRE_FALSE(group.nodal_states.empty());
+    for (size_t state_idx = 0; state_idx < group.nodal_states.size(); ++state_idx) {
+        auto const& nodal_state = group.nodal_states[state_idx];
+        CHECK(nodal_state.iteration == static_cast<Idx>(state_idx + 1));
+        CHECK(nodal_state.voltage_magnitude.size() == static_cast<size_t>(group.mapping.n_bus));
+        CHECK(nodal_state.voltage_angle.size() == static_cast<size_t>(group.mapping.n_bus));
     }
 }
 
