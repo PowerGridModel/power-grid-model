@@ -335,8 +335,9 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         return max_dev;
     }
 
-    void set_jacobian_state_capture(bool capture) {
-        capture_jacobian_state_ = capture;
+    void set_iteration_state_capture(bool capture_jacobian, bool capture_nodal_state) {
+        capture_jacobian_state_ = capture_jacobian;
+        capture_nodal_state_ = capture_nodal_state;
         jacobians_.clear();
         nodal_states_.clear();
     }
@@ -353,6 +354,9 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         if (capture_jacobian_state_) {
             capture_jacobian_state(iter);
         }
+        if (capture_nodal_state_) {
+            capture_nodal_state(iter);
+        }
         log.log(LogEvent::jacobian, [this, &y_bus, iter]() -> std::string {
             Idx const n_bus = y_bus.size();
             Idx const nnz_lu = static_cast<Idx>(data_jac_.size());
@@ -365,13 +369,15 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
 
             oss << "\nrow_indptr_lu=";
             for (Idx i = 0; i <= n_bus; ++i) {
-                if (i > 0) oss << ' ';
+                if (i > 0)
+                    oss << ' ';
                 oss << indptr[i];
             }
 
             oss << "\ncol_indices_lu=";
             for (Idx k = 0; k < nnz_lu; ++k) {
-                if (k > 0) oss << ' ';
+                if (k > 0)
+                    oss << ' ';
                 oss << col_idx[k];
             }
 
@@ -381,10 +387,12 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
                 int const row_off = block_row * sub_sz;
                 int const col_off = block_col * sub_sz;
                 for (Idx k = 0; k < nnz_lu; ++k) {
-                    if (k > 0) oss << ' ';
+                    if (k > 0)
+                        oss << ' ';
                     for (int r = 0; r < sub_sz; ++r) {
                         for (int c = 0; c < sub_sz; ++c) {
-                            if (r > 0 || c > 0) oss << ' ';
+                            if (r > 0 || c > 0)
+                                oss << ' ';
                             oss << data_jac_[k](row_off + r, col_off + c);
                         }
                     }
@@ -403,6 +411,29 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
     void capture_jacobian_state(Idx iteration) {
         ModelStateJacobian result;
         result.iteration = iteration;
+        constexpr Idx block_size = is_symmetric_v<sym> ? 1 : 9;
+        for (auto& block : result.blocks) {
+            block.clear();
+            block.reserve(static_cast<size_t>(std::ssize(data_jac_) * block_size));
+        }
+
+        constexpr Idx sub_size = is_symmetric_v<sym> ? 1 : 3;
+        for (Idx entry = 0; entry < static_cast<Idx>(std::ssize(data_jac_)); ++entry) {
+            for (Idx block = 0; block < 4; ++block) {
+                Idx const block_row = block / 2;
+                Idx const block_col = block % 2;
+                for (Idx row = 0; row < sub_size; ++row) {
+                    for (Idx col = 0; col < sub_size; ++col) {
+                        result.blocks[block].push_back(
+                            data_jac_[entry](block_row * sub_size + row, block_col * sub_size + col));
+                    }
+                }
+            }
+        }
+        jacobians_.push_back(std::move(result));
+    }
+
+    void capture_nodal_state(Idx iteration) {
         ModelStateNodalState nodal_state;
         nodal_state.iteration = iteration;
         constexpr size_t phases_per_bus = is_symmetric_v<sym> ? 1 : 3;
@@ -419,26 +450,6 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
                 }
             }
         }
-        constexpr Idx block_size = is_symmetric_v<sym> ? 1 : 9;
-        for (auto& block : result.blocks) {
-            block.clear();
-            block.reserve(static_cast<size_t>(std::ssize(data_jac_) * block_size));
-        }
-
-        constexpr Idx sub_size = is_symmetric_v<sym> ? 1 : 3;
-        for (Idx entry = 0; entry < static_cast<Idx>(std::ssize(data_jac_)); ++entry) {
-            for (Idx block = 0; block < 4; ++block) {
-                Idx const block_row = block / 2;
-                Idx const block_col = block % 2;
-                for (Idx row = 0; row < sub_size; ++row) {
-                    for (Idx col = 0; col < sub_size; ++col) {
-                        result.blocks[block].push_back(data_jac_[entry](block_row * sub_size + row,
-                                                                        block_col * sub_size + col));
-                    }
-                }
-            }
-        }
-        jacobians_.push_back(std::move(result));
         nodal_states_.push_back(std::move(nodal_state));
     }
 
@@ -446,6 +457,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
     // data for jacobian
     std::vector<PFJacBlock<sym>> data_jac_;
     bool capture_jacobian_state_{};
+    bool capture_nodal_state_{};
     std::vector<ModelStateJacobian> jacobians_;
     std::vector<ModelStateNodalState> nodal_states_;
     // calculation data

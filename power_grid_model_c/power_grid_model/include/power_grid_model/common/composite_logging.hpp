@@ -20,10 +20,10 @@ class CompositeChildLogger : public Logger {
   public:
     explicit CompositeChildLogger(std::vector<std::unique_ptr<Logger>> children) : children_{std::move(children)} {}
 
-    void log(LogEvent tag) override                       { log_all(tag); }
+    void log(LogEvent tag) override { log_all(tag); }
     void log(LogEvent tag, std::string_view message) override { log_all(tag, message); }
-    void log(LogEvent tag, double value) override             { log_all(tag, value); }
-    void log(LogEvent tag, Idx value) override                { log_all(tag, value); }
+    void log(LogEvent tag, double value) override { log_all(tag, value); }
+    void log(LogEvent tag, Idx value) override { log_all(tag, value); }
 
     using Logger::log;
 
@@ -79,10 +79,10 @@ class MultiThreadedCompositeLogger : public MultiThreadedLogger {
         return std::make_unique<CompositeChildLogger>(std::move(child_loggers));
     }
 
-    void log(LogEvent tag) override                           { log_all(tag); }
+    void log(LogEvent tag) override { log_all(tag); }
     void log(LogEvent tag, std::string_view message) override { log_all(tag, message); }
-    void log(LogEvent tag, double value) override             { log_all(tag, value); }
-    void log(LogEvent tag, Idx value) override                { log_all(tag, value); }
+    void log(LogEvent tag, double value) override { log_all(tag, value); }
+    void log(LogEvent tag, Idx value) override { log_all(tag, value); }
 
     using MultiThreadedLogger::log;
 

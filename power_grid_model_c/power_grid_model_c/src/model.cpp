@@ -55,10 +55,9 @@ PGM_PowerGridModel* PGM_create_model(PGM_Handle* handle, double system_frequency
         // Bind the model to it so all models from this handle log to the same loggers.
         // The composite lives as long as the handle, satisfying MainModel's requirement that
         // its logger reference outlives it.
-        return cast_to_c(
-            new MainModel{// NOSONAR(S5025)
-                          system_frequency, safe_ptr_get(cast_to_cpp(input_dataset)),
-                          get_math_solver_dispatcher(), 0, safe_ptr_get(handle).composite_logger});
+        return cast_to_c(new MainModel{// NOSONAR(S5025)
+                                       system_frequency, safe_ptr_get(cast_to_cpp(input_dataset)),
+                                       get_math_solver_dispatcher(), 0, safe_ptr_get(handle).composite_logger});
     });
 }
 
@@ -73,7 +72,8 @@ void PGM_update_model(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_ConstDa
 // copy model
 PGM_PowerGridModel* PGM_copy_model(PGM_Handle* handle, PGM_PowerGridModel const* model) {
     return call_with_catch(handle, [handle, model] {
-        return cast_to_c(new MainModel{safe_ptr_get(cast_to_cpp(model)), safe_ptr_get(handle).composite_logger}); // NOSONAR(S5025)
+        return cast_to_c(
+            new MainModel{safe_ptr_get(cast_to_cpp(model)), safe_ptr_get(handle).composite_logger}); // NOSONAR(S5025)
     });
 }
 
@@ -311,7 +311,7 @@ void calculate_multi_dimensional_impl(MainModel& model, MainModel::Options const
     // for dimension < 2 (one-time or 1D batch), call implementation directly
     if (auto const batch_dimension = get_batch_dimension(batch_dataset); batch_dimension < 2) {
         calculate_single_batch_dimension_impl(model, options, output_dataset, batch_dataset, state_requests,
-                               state_outputs);
+                                              state_outputs);
         return;
     }
 
@@ -337,10 +337,10 @@ void calculate_multi_dimensional_impl(MainModel& model, MainModel::Options const
                                                        ? state_requests
                                                        : state_requests.subspan(static_cast<size_t>(i * stride_size),
                                                                                 static_cast<size_t>(stride_size));
-                auto const sliced_state_outputs = state_outputs.empty()
-                                                     ? state_outputs
-                                                     : state_outputs.subspan(static_cast<size_t>(i * stride_size),
-                                                                             static_cast<size_t>(stride_size));
+                auto const sliced_state_outputs =
+                    state_outputs.empty()
+                        ? state_outputs
+                        : state_outputs.subspan(static_cast<size_t>(i * stride_size), static_cast<size_t>(stride_size));
 
                 // create a model copy
                 MainModel local_model{model};
@@ -428,24 +428,24 @@ void PGM_calculate_with_state(PGM_Handle* handle, PGM_PowerGridModel* model, PGM
             converted_requests.reserve(static_cast<size_t>(request_count));
             for (Idx idx = 0; idx < request_count; ++idx) {
                 converted_requests.push_back({.y_bus = requests[idx].y_bus != 0,
-                                              .jacobian = requests[idx].jacobian != 0});
+                                              .jacobian = requests[idx].jacobian != 0,
+                                              .nodal_state = requests[idx].nodal_state != 0});
             }
             auto result = std::make_unique<PGM_StateOutput>();
             result->scenarios.resize(static_cast<size_t>(n_scenarios));
 
             auto& cpp_model = safe_ptr_get(cast_to_cpp(model));
             cpp_model.set_logger(safe_ptr_get(handle).composite_logger);
-            calculate_impl(cpp_model, safe_ptr_get(opt), safe_ptr_get(cast_to_cpp(output_dataset)),
-                           cpp_batch_dataset, converted_requests, result->scenarios);
+            calculate_impl(cpp_model, safe_ptr_get(opt), safe_ptr_get(cast_to_cpp(output_dataset)), cpp_batch_dataset,
+                           converted_requests, result->scenarios);
             safe_ptr_get(state_output) = result.release();
         },
         batch_exception_handler);
 }
 
 PGM_Idx PGM_state_output_scenario_count(PGM_Handle* handle, PGM_StateOutput const* state_output) {
-    return call_with_catch(handle, [state_output] {
-        return static_cast<PGM_Idx>(safe_ptr_get(state_output).scenarios.size());
-    });
+    return call_with_catch(
+        handle, [state_output] { return static_cast<PGM_Idx>(safe_ptr_get(state_output).scenarios.size()); });
 }
 
 void PGM_state_output_get_scenario(PGM_Handle* handle, PGM_StateOutput const* state_output, PGM_Idx scenario_idx,
@@ -461,6 +461,7 @@ void PGM_state_output_get_scenario(PGM_Handle* handle, PGM_StateOutput const* st
         output.has_state = 1;
         output.y_bus_requested = state.y_bus_requested;
         output.jacobian_requested = state.jacobian_requested;
+        output.nodal_state_requested = state.nodal_state_requested;
         output.n_groups = static_cast<PGM_Idx>(state.groups.size());
         output.n_input_nodes = static_cast<PGM_Idx>(state.input_node_id.size());
         output.input_node_group = state.input_node_group.data();
@@ -506,13 +507,13 @@ void PGM_state_output_get_group(PGM_Handle* handle, PGM_StateOutput const* state
             output.jacobian_row_indptr = structure.row_indptr_lu.data();
             output.jacobian_col_indices = structure.col_indices_lu.data();
             output.n_jacobians = static_cast<PGM_Idx>(group.jacobians.size());
-            output.n_nodal_states = static_cast<PGM_Idx>(group.nodal_states.size());
         }
+        output.n_nodal_states = static_cast<PGM_Idx>(group.nodal_states.size());
     });
 }
 
-PGM_Idx PGM_state_output_jacobians_count(PGM_Handle* handle, PGM_StateOutput const* state_output,
-                                         PGM_Idx scenario_idx, PGM_Idx group_idx) {
+PGM_Idx PGM_state_output_jacobians_count(PGM_Handle* handle, PGM_StateOutput const* state_output, PGM_Idx scenario_idx,
+                                         PGM_Idx group_idx) {
     return call_with_catch(handle, [state_output, scenario_idx, group_idx] {
         auto const& scenario = safe_ptr_get(state_output).scenarios.at(static_cast<size_t>(scenario_idx));
         if (!scenario.has_value()) {
@@ -543,7 +544,7 @@ void PGM_state_output_get_jacobian(PGM_Handle* handle, PGM_StateOutput const* st
 }
 
 PGM_Idx PGM_state_output_nodal_states_count(PGM_Handle* handle, PGM_StateOutput const* state_output,
-                                           PGM_Idx scenario_idx, PGM_Idx group_idx) {
+                                            PGM_Idx scenario_idx, PGM_Idx group_idx) {
     return call_with_catch(handle, [state_output, scenario_idx, group_idx] {
         auto const& scenario = safe_ptr_get(state_output).scenarios.at(static_cast<size_t>(scenario_idx));
         if (!scenario.has_value()) {
@@ -560,8 +561,8 @@ void PGM_state_output_get_nodal_state(PGM_Handle* handle, PGM_StateOutput const*
         if (!scenario.has_value()) {
             throw DatasetError{"No model state was requested for this scenario.\n"};
         }
-        auto const& nodal_state = scenario->groups.at(static_cast<size_t>(group_idx))
-                                      .nodal_states.at(static_cast<size_t>(nodal_state_idx));
+        auto const& nodal_state =
+            scenario->groups.at(static_cast<size_t>(group_idx)).nodal_states.at(static_cast<size_t>(nodal_state_idx));
         auto& output = safe_ptr_get(view);
         output = {};
         output.iteration = nodal_state.iteration;
@@ -571,9 +572,7 @@ void PGM_state_output_get_nodal_state(PGM_Handle* handle, PGM_StateOutput const*
     });
 }
 
-void PGM_destroy_state_output(PGM_StateOutput* state_output) {
-    delete state_output;
-}
+void PGM_destroy_state_output(PGM_StateOutput* state_output) { delete state_output; }
 
 // destroy model
 void PGM_destroy_model(PGM_PowerGridModel* model) {

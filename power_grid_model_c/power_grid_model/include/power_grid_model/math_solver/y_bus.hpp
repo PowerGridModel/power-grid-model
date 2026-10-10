@@ -623,27 +623,29 @@ void log_y_bus(Logger& logger, YBus<sym> const& y_bus, std::span<Idx2D const> no
         std::ostringstream oss;
 
         // Header
-        oss << "group=" << group << " n_bus=" << n_bus << " nnz=" << nnz
-            << " is_sym=" << (is_symmetric_v<sym> ? 1 : 0);
+        oss << "group=" << group << " n_bus=" << n_bus << " nnz=" << nnz << " is_sym=" << (is_symmetric_v<sym> ? 1 : 0);
 
         // Bus map: internal bus index -> user sequence index
         oss << "\nbus_map=";
         for (Idx i = 0; i < n_bus; ++i) {
-            if (i > 0) oss << ' ';
+            if (i > 0)
+                oss << ' ';
             oss << internal_to_user[i];
         }
 
         // CSR row_indptr
         oss << "\nrow_indptr=";
         for (Idx i = 0; i <= n_bus; ++i) {
-            if (i > 0) oss << ' ';
+            if (i > 0)
+                oss << ' ';
             oss << y_bus.row_indptr()[i];
         }
 
         // CSR col_indices
         oss << "\ncol_indices=";
         for (Idx i = 0; i < nnz; ++i) {
-            if (i > 0) oss << ' ';
+            if (i > 0)
+                oss << ' ';
             oss << y_bus.col_indices()[i];
         }
 
@@ -651,13 +653,15 @@ void log_y_bus(Logger& logger, YBus<sym> const& y_bus, std::span<Idx2D const> no
         auto const& adm = y_bus.admittance();
         oss << "\nadmittance_re=";
         for (Idx i = 0; i < nnz; ++i) {
-            if (i > 0) oss << ' ';
+            if (i > 0)
+                oss << ' ';
             if constexpr (is_symmetric_v<sym>) {
                 oss << adm[i].real();
             } else {
                 for (Idx r = 0; r < 3; ++r) {
                     for (Idx c = 0; c < 3; ++c) {
-                        if (r > 0 || c > 0) oss << ' ';
+                        if (r > 0 || c > 0)
+                            oss << ' ';
                         oss << adm[i](r, c).real();
                     }
                 }
@@ -665,13 +669,15 @@ void log_y_bus(Logger& logger, YBus<sym> const& y_bus, std::span<Idx2D const> no
         }
         oss << "\nadmittance_im=";
         for (Idx i = 0; i < nnz; ++i) {
-            if (i > 0) oss << ' ';
+            if (i > 0)
+                oss << ' ';
             if constexpr (is_symmetric_v<sym>) {
                 oss << adm[i].imag();
             } else {
                 for (Idx r = 0; r < 3; ++r) {
                     for (Idx c = 0; c < 3; ++c) {
-                        if (r > 0 || c > 0) oss << ' ';
+                        if (r > 0 || c > 0)
+                            oss << ' ';
                         oss << adm[i](r, c).imag();
                     }
                 }
@@ -684,7 +690,7 @@ void log_y_bus(Logger& logger, YBus<sym> const& y_bus, std::span<Idx2D const> no
 
 } // namespace math_solver
 
-using math_solver::YBus;
 using math_solver::log_y_bus;
+using math_solver::YBus;
 
 } // namespace power_grid_model

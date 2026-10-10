@@ -271,13 +271,14 @@ TEST_CASE("API Model") {
             check_common_node_results();
         }
 
-          SUBCASE("Native model state") {
-            auto state_output = model.calculate_with_state(options, single_output_dataset, {{true, true}});
+        SUBCASE("Native model state") {
+            auto state_output = model.calculate_with_state(options, single_output_dataset, {{true, true, true}});
             REQUIRE(state_output.scenario_count() == 1);
             auto const scenario = state_output.scenario(0);
             CHECK(scenario.has_state == 1);
             CHECK(scenario.y_bus_requested == 1);
             CHECK(scenario.jacobian_requested == 1);
+            CHECK(scenario.nodal_state_requested == 1);
             REQUIRE(scenario.n_groups > 0);
 
             auto const group = state_output.group(0, 0);
@@ -299,7 +300,7 @@ TEST_CASE("API Model") {
             CHECK(last_nodal_state.n_voltage_values == group.n_bus * (group.is_symmetric ? 1 : 3));
             CHECK(group.jacobian_row_indptr[0] == 0);
             CHECK(group.jacobian_col_indices != nullptr);
-          }
+        }
     }
 
     SUBCASE("Test get indexer") {

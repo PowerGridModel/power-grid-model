@@ -18,54 +18,53 @@
 
 namespace power_grid_model_cpp {
 struct StateOutputRequest {
-        bool y_bus{};
-        bool jacobian{};
+    bool y_bus{};
+    bool jacobian{};
+    bool nodal_state{};
 };
 
 class StateOutput {
-    public:
-        StateOutput(StateOutput&&) noexcept = default;
-        StateOutput& operator=(StateOutput&&) noexcept = default;
-        StateOutput(StateOutput const&) = delete;
-        StateOutput& operator=(StateOutput const&) = delete;
+  public:
+    StateOutput(StateOutput&&) noexcept = default;
+    StateOutput& operator=(StateOutput&&) noexcept = default;
+    StateOutput(StateOutput const&) = delete;
+    StateOutput& operator=(StateOutput const&) = delete;
 
-        Idx scenario_count() const { return handle_.call_with(PGM_state_output_scenario_count, output_.get()); }
-        PGM_StateScenarioView scenario(Idx scenario_idx) const {
-                PGM_StateScenarioView view{};
-                handle_.call_with(PGM_state_output_get_scenario, output_.get(), scenario_idx, &view);
-                return view;
-        }
-        PGM_StateGroupView group(Idx scenario_idx, Idx group_idx) const {
-                PGM_StateGroupView view{};
-                handle_.call_with(PGM_state_output_get_group, output_.get(), scenario_idx, group_idx, &view);
-                return view;
-        }
-        Idx jacobians_count(Idx scenario_idx, Idx group_idx) const {
-            return handle_.call_with(PGM_state_output_jacobians_count, output_.get(), scenario_idx,
-                         group_idx);
-        }
-        PGM_StateJacobianView jacobian(Idx scenario_idx, Idx group_idx, Idx jacobian_idx) const {
-            PGM_StateJacobianView view{};
-            handle_.call_with(PGM_state_output_get_jacobian, output_.get(), scenario_idx, group_idx, jacobian_idx,
-                              &view);
-            return view;
-        }
-        Idx nodal_states_count(Idx scenario_idx, Idx group_idx) const {
-            return handle_.call_with(PGM_state_output_nodal_states_count, output_.get(), scenario_idx, group_idx);
-        }
-        PGM_StateNodalStateView nodal_state(Idx scenario_idx, Idx group_idx, Idx nodal_state_idx) const {
-            PGM_StateNodalStateView view{};
-            handle_.call_with(PGM_state_output_get_nodal_state, output_.get(), scenario_idx, group_idx,
-                              nodal_state_idx, &view);
-            return view;
-        }
+    Idx scenario_count() const { return handle_.call_with(PGM_state_output_scenario_count, output_.get()); }
+    PGM_StateScenarioView scenario(Idx scenario_idx) const {
+        PGM_StateScenarioView view{};
+        handle_.call_with(PGM_state_output_get_scenario, output_.get(), scenario_idx, &view);
+        return view;
+    }
+    PGM_StateGroupView group(Idx scenario_idx, Idx group_idx) const {
+        PGM_StateGroupView view{};
+        handle_.call_with(PGM_state_output_get_group, output_.get(), scenario_idx, group_idx, &view);
+        return view;
+    }
+    Idx jacobians_count(Idx scenario_idx, Idx group_idx) const {
+        return handle_.call_with(PGM_state_output_jacobians_count, output_.get(), scenario_idx, group_idx);
+    }
+    PGM_StateJacobianView jacobian(Idx scenario_idx, Idx group_idx, Idx jacobian_idx) const {
+        PGM_StateJacobianView view{};
+        handle_.call_with(PGM_state_output_get_jacobian, output_.get(), scenario_idx, group_idx, jacobian_idx, &view);
+        return view;
+    }
+    Idx nodal_states_count(Idx scenario_idx, Idx group_idx) const {
+        return handle_.call_with(PGM_state_output_nodal_states_count, output_.get(), scenario_idx, group_idx);
+    }
+    PGM_StateNodalStateView nodal_state(Idx scenario_idx, Idx group_idx, Idx nodal_state_idx) const {
+        PGM_StateNodalStateView view{};
+        handle_.call_with(PGM_state_output_get_nodal_state, output_.get(), scenario_idx, group_idx, nodal_state_idx,
+                          &view);
+        return view;
+    }
 
-    private:
-        friend class Model;
-        explicit StateOutput(RawStateOutput* output) : output_{output} {}
+  private:
+    friend class Model;
+    explicit StateOutput(RawStateOutput* output) : output_{output} {}
 
-        Handle handle_{};
-        detail::UniquePtr<RawStateOutput, &PGM_destroy_state_output> output_;
+    Handle handle_{};
+    detail::UniquePtr<RawStateOutput, &PGM_destroy_state_output> output_;
 };
 
 class Model {
@@ -137,19 +136,20 @@ class Model {
     void remove_all_loggers() { handle_.unregister_all_loggers(); }
 
   private:
-        StateOutput calculate_with_state_impl(Options const& opt, DatasetMutable const& output_dataset,
-                                                                                    RawConstDataset const* batch_dataset,
-                                                                                    std::vector<StateOutputRequest> const& requests) {
-                std::vector<PGM_StateOutputRequest> raw_requests;
-                raw_requests.reserve(requests.size());
-                for (auto const& request : requests) {
-                    raw_requests.push_back({static_cast<Idx>(request.y_bus), static_cast<Idx>(request.jacobian)});
-                }
-                RawStateOutput* state_output{};
-                handle_.call_with(PGM_calculate_with_state, get(), opt.get(), output_dataset.get(), batch_dataset,
-                                                    raw_requests.data(), static_cast<Idx>(raw_requests.size()), &state_output);
-                return StateOutput{state_output};
+    StateOutput calculate_with_state_impl(Options const& opt, DatasetMutable const& output_dataset,
+                                          RawConstDataset const* batch_dataset,
+                                          std::vector<StateOutputRequest> const& requests) {
+        std::vector<PGM_StateOutputRequest> raw_requests;
+        raw_requests.reserve(requests.size());
+        for (auto const& request : requests) {
+            raw_requests.push_back({static_cast<Idx>(request.y_bus), static_cast<Idx>(request.jacobian),
+                                    static_cast<Idx>(request.nodal_state)});
         }
+        RawStateOutput* state_output{};
+        handle_.call_with(PGM_calculate_with_state, get(), opt.get(), output_dataset.get(), batch_dataset,
+                          raw_requests.data(), static_cast<Idx>(raw_requests.size()), &state_output);
+        return StateOutput{state_output};
+    }
 
     Handle handle_{};
     detail::UniquePtr<PowerGridModel, &PGM_destroy_model> model_;

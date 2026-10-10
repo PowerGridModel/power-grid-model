@@ -4,12 +4,12 @@
 
 #pragma once
 
+#include "calculation_state.hpp"
 #include "common/common.hpp"
 #include "common/enum.hpp"
 #include "common/grouped_index_vector.hpp"
 #include "common/statistics.hpp"
 #include "common/three_phase_tensor.hpp"
-#include "calculation_state.hpp"
 
 #include <array>
 #include <concepts>

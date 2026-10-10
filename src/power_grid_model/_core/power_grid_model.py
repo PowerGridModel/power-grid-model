@@ -71,7 +71,7 @@ def _prepare_state_requests(
     if request is False:
         return None
     if request is True:
-        return [StateOutputRequest(y_bus=True, jacobian=True) for _ in range(batch_size)]
+        return [StateOutputRequest(y_bus=True, jacobian=True, nodal_state=True) for _ in range(batch_size)]
     requests = list(request)
     if len(requests) != batch_size:
         raise ValueError(f"Expected {batch_size} model state requests, got {len(requests)}.")
@@ -381,7 +381,10 @@ class PowerGridModel:
             )
         else:
             raw_requests = (StateOutputRequestC * batch_size)(
-                *(StateOutputRequestC(request.y_bus, request.jacobian) for request in state_requests)
+                *(
+                    StateOutputRequestC(request.y_bus, request.jacobian, request.nodal_state)
+                    for request in state_requests
+                )
             )
             get_pgc().calculate_with_state(
                 self._model,

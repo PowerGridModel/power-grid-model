@@ -278,17 +278,18 @@ class MainModelImpl {
     template <typename MathSolverType, typename YBus, typename PrepareInputFn, typename SolveFn>
         requires std::invocable<std::remove_cvref_t<PrepareInputFn>, Idx /*n_math_solvers*/> &&
                  std::ranges::range<std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>> &&
-                 std::invocable<
-                     std::remove_cvref_t<SolveFn>, MathSolverType&, YBus const&,
-                     typename std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>::const_reference,
-                     bool> &&
+                 std::invocable<std::remove_cvref_t<SolveFn>, MathSolverType&, YBus const&,
+                                typename std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>::const_reference,
+                                bool, bool> &&
                  solver_output_type<std::invoke_result_t<
                      SolveFn, MathSolverType&, YBus const&,
-                     typename std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>::const_reference, bool>>
+                     typename std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>::const_reference, bool,
+                     bool>>
     auto calculate_(PrepareInputFn&& prepare_input, SolveFn&& solve, Logger& logger,
                     ModelStateRequest const& state_request) {
         using InputType = typename std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>::const_reference;
-        using SolverOutputType = typename std::invoke_result_t<SolveFn, MathSolverType&, YBus const&, InputType, bool>;
+        using SolverOutputType =
+            typename std::invoke_result_t<SolveFn, MathSolverType&, YBus const&, InputType, bool, bool>;
         using sym = typename SolverOutputType::sym;
 
         assert(construction_complete_);
@@ -314,9 +315,10 @@ class MainModelImpl {
             std::vector<SolverOutputType> solver_output;
             solver_output.reserve(get_n_math_solvers<ModelType>(state_));
             for (Idx i = 0; i != get_n_math_solvers<ModelType>(state_); ++i) {
-                SolverOutputType result = solve_(solvers[i], y_bus_vec[i], input[i], state_request.jacobian);
+                SolverOutputType result =
+                    solve_(solvers[i], y_bus_vec[i], input[i], state_request.jacobian, state_request.nodal_state);
                 if constexpr (steady_state_solver_output_type<SolverOutputType>) {
-                    if (state_request.y_bus || state_request.jacobian) {
+                    if (state_request.y_bus || state_request.jacobian || state_request.nodal_state) {
                         auto group_state = std::make_shared<ModelStateGroup>();
                         group_state->mapping = create_model_state_mapping<sym>(i, y_bus_vec[i].size());
                         if (state_request.y_bus) {
@@ -324,13 +326,15 @@ class MainModelImpl {
                         }
                         if (state_request.jacobian) {
                             group_state->jacobians = solvers[i].get().get_jacobians();
-                            group_state->nodal_states = solvers[i].get().get_nodal_states();
                             if (!group_state->jacobians.empty()) {
                                 group_state->jacobian_structure = ModelStateJacobianStructure{
                                     .row_indptr_lu = y_bus_vec[i].row_indptr_lu(),
                                     .col_indices_lu = y_bus_vec[i].col_indices_lu(),
                                 };
                             }
+                        }
+                        if (state_request.nodal_state) {
+                            group_state->nodal_states = solvers[i].get().get_nodal_states();
                         }
                         result.model_state_group = std::move(group_state);
                     }
@@ -347,8 +351,8 @@ class MainModelImpl {
             .n_bus = n_bus,
             .is_symmetric = is_symmetric_v<sym>,
             .bus_user_indptr = IdxVector(static_cast<size_t>(n_bus + 1), 0),
-            .bus_kind = std::vector<ModelStateBusKind>(static_cast<size_t>(n_bus),
-                                                       ModelStateBusKind::synthetic_branch3),
+            .bus_kind =
+                std::vector<ModelStateBusKind>(static_cast<size_t>(n_bus), ModelStateBusKind::synthetic_branch3),
             .origin_branch3_id = std::vector<ID>(static_cast<size_t>(n_bus), static_cast<ID>(-1)),
         };
 
@@ -418,7 +422,7 @@ class MainModelImpl {
             assert(options.optimizer_type == OptimizerType::no_optimization ||
                    (std::derived_from<calculation_type, power_flow_t>));
 
-                return [this, &mutable_comp_coup = state_.comp_coup, &options, &logger,
+            return [this, &mutable_comp_coup = state_.comp_coup, &options, &logger,
                     &state_request](MainModelState const& state, CalculationMethod calculation_method) {
                 (void)state; // to avoid unused-lambda-capture when in Release build
                 assert(&state == &state_);
@@ -433,18 +437,18 @@ class MainModelImpl {
                                                 ? SearchMethod::linear_search
                                                 : SearchMethod::binary_search;
 
-        auto result = optimizer::get_optimizer<MainModelState, ConstDataset>(
-                          options.optimizer_type, options.optimizer_strategy, get_calculator(),
-                          [this](ConstDataset const& update_data) {
-                              this->update_components<permanent_update_t>(update_data);
-                          },
-                          *meta_data_, search_method)
-                          ->optimize(state_, options.calculation_method);
+        auto result =
+            optimizer::get_optimizer<MainModelState, ConstDataset>(
+                options.optimizer_type, options.optimizer_strategy, get_calculator(),
+                [this](ConstDataset const& update_data) { this->update_components<permanent_update_t>(update_data); },
+                *meta_data_, search_method)
+                ->optimize(state_, options.calculation_method);
         if constexpr (std::derived_from<calculation_type, power_flow_t>) {
-            if (state_request.y_bus || state_request.jacobian) {
+            if (state_request.y_bus || state_request.jacobian || state_request.nodal_state) {
                 ModelStateOutput model_state;
                 model_state.y_bus_requested = state_request.y_bus;
                 model_state.jacobian_requested = state_request.jacobian;
+                model_state.nodal_state_requested = state_request.nodal_state;
                 auto const nodes = state_.components.template citer<Node>();
                 auto const& node_coupling = state_.topo_comp_coup->node;
                 model_state.input_node_group.reserve(std::ranges::size(nodes));
@@ -491,10 +495,10 @@ class MainModelImpl {
         calculation_type_symmetry_func_selector(
             options.calculation_type, options.calculation_symmetry,
             []<calculation_type_tag calculation_type, symmetry_tag sym>(
-                MainModelImpl& main_model_, Options const& options_, MutableDataset const& result_data_,
-                Logger& logger, ModelStateRequest const& state_request_, ModelStateOutput* state_output_) {
-                auto math_output = main_model_.calculate_with_optimizer<calculation_type, sym>(options_, logger,
-                                                                                               state_request_);
+                MainModelImpl& main_model_, Options const& options_, MutableDataset const& result_data_, Logger& logger,
+                ModelStateRequest const& state_request_, ModelStateOutput* state_output_) {
+                auto math_output =
+                    main_model_.calculate_with_optimizer<calculation_type, sym>(options_, logger, state_request_);
                 main_model_.output_result(math_output, result_data_, logger);
                 if (state_output_ != nullptr && math_output.model_state) {
                     *state_output_ = std::move(*math_output.model_state);

@@ -37,6 +37,7 @@ class ModelStateBusKind(IntEnum):
 class StateOutputRequest:
     y_bus: bool = False
     jacobian: bool = False
+    nodal_state: bool = False
 
 
 class _OwnedArray(np.ndarray):
@@ -143,6 +144,7 @@ class ModelStateGroup:
 class ModelState:
     y_bus_requested: bool
     jacobian_requested: bool
+    nodal_state_requested: bool
     input_node_group: NDArray[np.int64]
     input_node_bus: NDArray[np.int64]
     input_node_id: NDArray[np.int32]
@@ -220,6 +222,7 @@ def _build_scenario(owner: _NativeStateOutput, scenario_idx: int) -> ModelState 
     return ModelState(
         y_bus_requested=bool(scenario_view.y_bus_requested),
         jacobian_requested=bool(scenario_view.jacobian_requested),
+        nodal_state_requested=bool(scenario_view.nodal_state_requested),
         input_node_group=input_node_group,
         input_node_bus=input_node_bus,
         input_node_id=input_node_id,

@@ -29,11 +29,13 @@ template <class MainModel> class JobAdapter : public JobInterface {
     using ModelType = typename MainModel::ImplType;
 
     JobAdapter(std::reference_wrapper<MainModel> model_reference,
-             std::reference_wrapper<MainModelOptions const> options,
-             std::span<ModelStateRequest const> state_requests = {},
-            std::span<std::optional<ModelStateOutput>> state_outputs = {})
-         : model_reference_{model_reference}, options_{options}, state_requests_{state_requests},
-        state_outputs_{state_outputs} {}
+               std::reference_wrapper<MainModelOptions const> options,
+               std::span<ModelStateRequest const> state_requests = {},
+               std::span<std::optional<ModelStateOutput>> state_outputs = {})
+        : model_reference_{model_reference},
+          options_{options},
+          state_requests_{state_requests},
+          state_outputs_{state_outputs} {}
     JobAdapter(JobAdapter const& other)
         : model_copy_{std::make_unique<MainModel>(other.model_reference_.get())},
           model_reference_{std::ref(*model_copy_)},
@@ -104,9 +106,9 @@ template <class MainModel> class JobAdapter : public JobInterface {
         ModelStateRequest const* state_request = state_requests_.empty() ? nullptr : &state_requests_[scenario_idx];
         ModelStateOutput state_output;
         MainModel::calculator(options_.get(), model_reference_.get(), result_data.get_individual_scenario(scenario_idx),
-                              false, logger, state_request,
-                              state_requests_.empty() ? nullptr : &state_output);
-        if (!state_requests_.empty() && (state_request->y_bus || state_request->jacobian)) {
+                              false, logger, state_request, state_requests_.empty() ? nullptr : &state_output);
+        if (!state_requests_.empty() &&
+            (state_request->y_bus || state_request->jacobian || state_request->nodal_state)) {
             state_outputs_[scenario_idx] = std::move(state_output);
         }
     }

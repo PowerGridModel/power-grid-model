@@ -15,6 +15,7 @@ namespace power_grid_model {
 struct ModelStateRequest {
     bool y_bus{};
     bool jacobian{};
+    bool nodal_state{};
 };
 
 enum class ModelStateBusKind : IntS { input_node, synthetic_branch3 };
@@ -69,6 +70,7 @@ struct ModelStateGroup {
 struct ModelStateOutput {
     bool y_bus_requested{};
     bool jacobian_requested{};
+    bool nodal_state_requested{};
     // Forward mapping indexed by input node sequence. Disconnected nodes use {-1, -1}.
     IdxVector input_node_group;
     IdxVector input_node_bus;

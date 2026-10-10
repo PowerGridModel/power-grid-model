@@ -88,9 +88,9 @@ template <symmetry_tag sym> struct Calculator<power_flow_t, sym> {
     static auto solver(CalculationMethod calculation_method, MainModelOptions const& options, Logger& logger) {
         return [calculation_method, err_tol = options.err_tol, max_iter = options.max_iter,
                 &logger](MathSolverProxy<sym>& solver, YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
-                         bool capture_jacobian_state) {
+                         bool capture_jacobian_state, bool capture_nodal_state) {
             return solver.get().run_power_flow(input, err_tol, max_iter, logger, calculation_method, y_bus,
-                                               capture_jacobian_state);
+                                               capture_jacobian_state, capture_nodal_state);
         };
     }
 };
@@ -104,8 +104,8 @@ template <symmetry_tag sym> struct Calculator<state_estimation_t, sym> {
     }
     static auto solver(CalculationMethod calculation_method, MainModelOptions const& options, Logger& logger) {
         return [calculation_method, err_tol = options.err_tol, max_iter = options.max_iter,
-                &logger](MathSolverProxy<sym>& solver, YBus<sym> const& y_bus,
-                         StateEstimationInput<sym> const& input, bool /*capture_jacobian_state*/) {
+                &logger](MathSolverProxy<sym>& solver, YBus<sym> const& y_bus, StateEstimationInput<sym> const& input,
+                         bool /*capture_jacobian_state*/, bool /*capture_nodal_state*/) {
             return solver.get().run_state_estimation(input, err_tol, max_iter, logger, calculation_method, y_bus);
         };
     }
@@ -120,7 +120,8 @@ template <symmetry_tag sym> struct Calculator<short_circuit_t, sym> {
     }
     static auto solver(CalculationMethod calculation_method, MainModelOptions const& /*options*/, Logger& logger) {
         return [calculation_method, &logger](MathSolverProxy<sym>& solver, YBus<sym> const& y_bus,
-                             ShortCircuitInput const& input, bool /*capture_jacobian_state*/) {
+                                             ShortCircuitInput const& input, bool /*capture_jacobian_state*/,
+                                             bool /*capture_nodal_state*/) {
             return solver.get().run_short_circuit(input, logger, calculation_method, y_bus);
         };
     }

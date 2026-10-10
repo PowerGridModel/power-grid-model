@@ -42,7 +42,7 @@ template <symmetry_tag sym> class MathSolver : public MathSolverBase<sym> {
 
     SolverOutput<sym> run_power_flow(PowerFlowInput<sym> const& input, double err_tol, Idx max_iter, Logger& log,
                                      CalculationMethod calculation_method, YBus<sym> const& y_bus,
-                                     bool capture_jacobian_state) final {
+                                     bool capture_jacobian_state, bool capture_nodal_state) final {
         using enum CalculationMethod;
 
         last_power_flow_used_newton_raphson_ = false;
@@ -54,7 +54,8 @@ template <symmetry_tag sym> class MathSolver : public MathSolverBase<sym> {
             [[fallthrough]]; // use Newton-Raphson by default
         case newton_raphson:
             last_power_flow_used_newton_raphson_ = true;
-            return run_power_flow_newton_raphson(input, err_tol, max_iter, log, y_bus, capture_jacobian_state);
+            return run_power_flow_newton_raphson(input, err_tol, max_iter, log, y_bus, capture_jacobian_state,
+                                                 capture_nodal_state);
         case linear:
             return run_power_flow_linear(input, err_tol, max_iter, log, y_bus);
         case linear_current:
@@ -140,13 +141,13 @@ template <symmetry_tag sym> class MathSolver : public MathSolverBase<sym> {
     bool last_power_flow_used_newton_raphson_{false};
 
     SolverOutput<sym> run_power_flow_newton_raphson(PowerFlowInput<sym> const& input, double err_tol, Idx max_iter,
-                                                    Logger& log, YBus<sym> const& y_bus,
-                                                    bool capture_jacobian_state) {
+                                                    Logger& log, YBus<sym> const& y_bus, bool capture_jacobian_state,
+                                                    bool capture_nodal_state) {
         if (!newton_raphson_pf_solver_.has_value()) {
             Timer const timer{log, LogEvent::create_math_solver};
             newton_raphson_pf_solver_.emplace(y_bus, *topo_ptr_);
         }
-        newton_raphson_pf_solver_->set_jacobian_state_capture(capture_jacobian_state);
+        newton_raphson_pf_solver_->set_iteration_state_capture(capture_jacobian_state, capture_nodal_state);
         return newton_raphson_pf_solver_->run_power_flow(y_bus, input, err_tol, max_iter, log);
     }
 

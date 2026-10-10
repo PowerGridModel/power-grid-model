@@ -21,9 +21,7 @@ LoggerPtr make_text_logger() { return std::make_shared<MultiThreadedTextLogger>(
 TEST_CASE("Test MultiThreadedCompositeLogger") {
     MultiThreadedCompositeLogger composite;
 
-    SUBCASE("Empty composite has no output and is empty") {
-        CHECK(composite.empty());
-    }
+    SUBCASE("Empty composite has no output and is empty") { CHECK(composite.empty()); }
 
     SUBCASE("Adding a null logger is a no-op") {
         composite.add(nullptr);
