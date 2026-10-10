@@ -12,6 +12,8 @@ from power_grid_model._core.model_state import (
     ModelStateGroup,
     ModelStateGroupMapping,
     ModelStateJacobian,
+    ModelStateJacobianStructure,
+    ModelStateNodalState,
     ModelStateYBus,
     StateOutputRequest,
 )
@@ -67,6 +69,8 @@ __all__ = [
     "ModelStateGroup",
     "ModelStateGroupMapping",
     "ModelStateJacobian",
+    "ModelStateJacobianStructure",
+    "ModelStateNodalState",
     "ModelStateYBus",
     "PowerGridModel",
     "ShortCircuitVoltageScaling",

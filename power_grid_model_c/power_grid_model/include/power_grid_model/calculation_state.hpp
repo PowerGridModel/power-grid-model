@@ -41,17 +41,29 @@ struct ModelStateYBus {
 };
 
 struct ModelStateJacobian {
-    IdxVector row_indptr_lu;
-    IdxVector col_indices_lu;
     std::array<std::vector<double>, 4> blocks; // H, N, M, L; flattened row-major per sparse entry.
     Idx iteration{};
 };
 
+struct ModelStateNodalState {
+    std::vector<double> voltage_magnitude;
+    std::vector<double> voltage_angle;
+    Idx iteration{};
+};
+
+struct ModelStateJacobianStructure {
+    // Indices use the solver group's internal bus ordering, independently of user node IDs.
+    IdxVector row_indptr_lu;
+    IdxVector col_indices_lu;
+};
+
 struct ModelStateGroup {
+    // mapping translates the internal bus ordering to input node IDs and synthetic branch3 origins.
     ModelStateGroupMapping mapping;
     std::optional<ModelStateYBus> y_bus;
-    std::optional<ModelStateJacobian> jacobian;
-    std::vector<ModelStateJacobian> jacobian_history;
+    std::optional<ModelStateJacobianStructure> jacobian_structure;
+    std::vector<ModelStateJacobian> jacobians;
+    std::vector<ModelStateNodalState> nodal_states;
 };
 
 struct ModelStateOutput {

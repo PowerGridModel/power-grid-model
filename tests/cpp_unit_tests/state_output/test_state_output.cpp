@@ -99,8 +99,7 @@ TEST_CASE("Test State output - Capture Y-bus and input-node mapping") {
     REQUIRE(group.y_bus->admittance_real.size() == 1);
     CHECK(std::isfinite(group.y_bus->admittance_real[0]));
     CHECK(std::isfinite(group.y_bus->admittance_imag[0]));
-    CHECK_FALSE(group.jacobian.has_value());
-    CHECK(group.jacobian_history.empty());
+    CHECK(group.jacobians.empty());
 }
 
 TEST_CASE("Test State output - Capture Newton-Raphson Jacobian") {
@@ -116,12 +115,10 @@ TEST_CASE("Test State output - Capture Newton-Raphson Jacobian") {
     REQUIRE(state_output->groups.size() == 1);
     auto const& group = state_output->groups[0];
     CHECK_FALSE(group.y_bus.has_value());
-    REQUIRE(group.jacobian.has_value());
-    CHECK(group.jacobian->blocks[0].size() == group.jacobian->blocks[1].size());
-    CHECK(group.jacobian->blocks[0].size() == group.jacobian->blocks[2].size());
-    CHECK(group.jacobian->blocks[0].size() == group.jacobian->blocks[3].size());
-    CHECK(std::ranges::any_of(group.jacobian->blocks[0], [](double value) { return value != 0.0; }));
-    CHECK(std::ranges::all_of(group.jacobian->blocks[0], [](double value) { return std::isfinite(value); }));
+    REQUIRE_FALSE(group.jacobians.empty());
+    REQUIRE(group.jacobian_structure.has_value());
+    CHECK(group.jacobian_structure->row_indptr_lu.size() == static_cast<size_t>(group.mapping.n_bus + 1));
+    CHECK_FALSE(group.jacobian_structure->col_indices_lu.empty());
 
     auto const report = logger.report();
     constexpr std::string_view jacobian_tag{"Tag:4001: "};
@@ -136,7 +133,8 @@ TEST_CASE("Test State output - Capture Newton-Raphson Jacobian") {
     }
     REQUIRE_FALSE(jacobian_logs.empty());
     CHECK(jacobian_logs.size() > 1);
-    REQUIRE(group.jacobian_history.size() == jacobian_logs.size());
+    REQUIRE(group.jacobians.size() == jacobian_logs.size());
+    REQUIRE(group.nodal_states.size() == group.jacobians.size());
     auto parse_values = [](std::string_view jacobian_log, std::string_view field) {
         auto const field_start = jacobian_log.find(std::string{field} + "=");
         REQUIRE(field_start != std::string_view::npos);
@@ -159,13 +157,30 @@ TEST_CASE("Test State output - Capture Newton-Raphson Jacobian") {
         }
     };
     for (size_t iteration_idx = 0; iteration_idx < jacobian_logs.size(); ++iteration_idx) {
-        auto const& jacobian = group.jacobian_history[iteration_idx];
+        auto const& jacobian = group.jacobians[iteration_idx];
+        auto const& nodal_state = group.nodal_states[iteration_idx];
         auto const jacobian_log = jacobian_logs[iteration_idx];
         CHECK(jacobian.iteration == static_cast<Idx>(iteration_idx + 1));
-        check_logged_values(jacobian_log, "row_indptr_lu",
-                            std::vector<double>(jacobian.row_indptr_lu.begin(), jacobian.row_indptr_lu.end()));
-        check_logged_values(jacobian_log, "col_indices_lu",
-                            std::vector<double>(jacobian.col_indices_lu.begin(), jacobian.col_indices_lu.end()));
+        CHECK(nodal_state.iteration == jacobian.iteration);
+        auto const phases_per_bus = group.mapping.is_symmetric ? 1 : 3;
+        auto const n_voltage_values = static_cast<size_t>(group.mapping.n_bus * phases_per_bus);
+        CHECK(nodal_state.voltage_magnitude.size() == n_voltage_values);
+        CHECK(nodal_state.voltage_angle.size() == n_voltage_values);
+        CHECK(std::ranges::all_of(nodal_state.voltage_magnitude, [](double value) { return std::isfinite(value); }));
+        CHECK(std::ranges::all_of(nodal_state.voltage_angle, [](double value) { return std::isfinite(value); }));
+        CHECK(jacobian.blocks[0].size() == jacobian.blocks[1].size());
+        CHECK(jacobian.blocks[0].size() == jacobian.blocks[2].size());
+        CHECK(jacobian.blocks[0].size() == jacobian.blocks[3].size());
+        CHECK(std::ranges::any_of(jacobian.blocks[0], [](double value) { return value != 0.0; }));
+        CHECK(std::ranges::all_of(jacobian.blocks[0], [](double value) { return std::isfinite(value); }));
+        if (iteration_idx == 0) {
+            check_logged_values(jacobian_log, "row_indptr_lu",
+                               std::vector<double>(group.jacobian_structure->row_indptr_lu.begin(),
+                                                   group.jacobian_structure->row_indptr_lu.end()));
+            check_logged_values(jacobian_log, "col_indices_lu",
+                               std::vector<double>(group.jacobian_structure->col_indices_lu.begin(),
+                                                   group.jacobian_structure->col_indices_lu.end()));
+        }
         check_logged_values(jacobian_log, "jac_h", jacobian.blocks[0]);
         check_logged_values(jacobian_log, "jac_n", jacobian.blocks[1]);
         check_logged_values(jacobian_log, "jac_m", jacobian.blocks[2]);
@@ -183,8 +198,9 @@ TEST_CASE("Test State output - Linear method has no Jacobian") {
     REQUIRE(state_output.has_value());
     REQUIRE(state_output->groups.size() == 1);
     CHECK(state_output->groups[0].y_bus.has_value());
-    CHECK_FALSE(state_output->groups[0].jacobian.has_value());
-    CHECK(state_output->groups[0].jacobian_history.empty());
+    CHECK(state_output->groups[0].jacobians.empty());
+    CHECK(state_output->groups[0].nodal_states.empty());
+    CHECK_FALSE(state_output->groups[0].jacobian_structure.has_value());
 }
 
 TEST_CASE("Test State output - Unrequested model state is absent") {
