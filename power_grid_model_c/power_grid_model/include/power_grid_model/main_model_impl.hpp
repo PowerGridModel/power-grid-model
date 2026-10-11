@@ -354,6 +354,8 @@ class MainModelImpl {
             .n_bus = n_bus,
             .is_symmetric = is_symmetric_v<sym>,
             .bus_user_indptr = IdxVector(static_cast<size_t>(n_bus + 1), 0),
+            .bus_user_sequence = {},
+            .bus_user_id = {},
             .bus_kind =
                 std::vector<ModelStateBusKind>(static_cast<size_t>(n_bus), ModelStateBusKind::synthetic_branch3),
             .origin_branch3_id = std::vector<ID>(static_cast<size_t>(n_bus), static_cast<ID>(-1)),
@@ -395,6 +397,8 @@ class MainModelImpl {
         ModelStateYBus state{
             .row_indptr = y_bus.row_indptr(),
             .col_indices = y_bus.col_indices(),
+            .admittance_real = {},
+            .admittance_imag = {},
         };
         auto const& admittance = y_bus.admittance();
         constexpr Idx block_size = is_symmetric_v<sym> ? 1 : 9;
