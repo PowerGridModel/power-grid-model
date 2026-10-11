@@ -61,12 +61,11 @@ template <symmetry_tag sym> class MathSolver : public MathSolverBase<sym> {
             return run_power_flow_linear(input, err_tol, max_iter, log, y_bus);
         case linear_current:
             last_power_flow_used_iterative_current_ = true;
-            return run_power_flow_linear_current(input, err_tol, max_iter, cache_run, log, y_bus,
-                                                 capture_nodal_state);
+            return run_power_flow_linear_current(input, err_tol, max_iter, cache_run, log, y_bus, capture_nodal_state);
         case iterative_current:
             last_power_flow_used_iterative_current_ = true;
             return run_power_flow_iterative_current(input, err_tol, max_iter, cache_run, log, y_bus,
-                                                   capture_nodal_state);
+                                                    capture_nodal_state);
         default:
             throw InvalidCalculationMethod{};
         }
@@ -176,15 +175,15 @@ template <symmetry_tag sym> class MathSolver : public MathSolverBase<sym> {
             Timer const timer{log, LogEvent::create_math_solver};
             iterative_current_pf_solver_.emplace(y_bus, *topo_ptr_);
         }
-    iterative_current_pf_solver_->set_nodal_state_capture(capture_nodal_state);
-    return iterative_current_pf_solver_->run_power_flow(y_bus, input, err_tol, max_iter, cache_run, log);
+        iterative_current_pf_solver_->set_nodal_state_capture(capture_nodal_state);
+        return iterative_current_pf_solver_->run_power_flow(y_bus, input, err_tol, max_iter, cache_run, log);
     }
 
     SolverOutput<sym> run_power_flow_linear_current(PowerFlowInput<sym> const& input, double /* err_tol */,
                                                     Idx /* max_iter */, bool cache_run, Logger& log,
                                                     YBus<sym> const& y_bus, bool capture_nodal_state) {
         return run_power_flow_iterative_current(input, std::numeric_limits<double>::infinity(), 1, cache_run, log,
-                        y_bus, capture_nodal_state);
+                                                y_bus, capture_nodal_state);
     }
 
     SolverOutput<sym> run_state_estimation_iterative_linear(StateEstimationInput<sym> const& input, double err_tol,

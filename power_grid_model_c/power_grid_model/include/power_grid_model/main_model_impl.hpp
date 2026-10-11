@@ -298,7 +298,7 @@ class MainModelImpl {
         using InputType = typename std::invoke_result_t<PrepareInputFn, Idx /*n_math_solvers*/>::const_reference;
         using SolverOutputType =
             typename std::invoke_result_t<SolveFn, MathSolverType&, YBus const&, InputType, bool, bool>;
-    using sym = decode_symmetry_v<SolverOutputType>;
+        using sym = decode_symmetry_v<SolverOutputType>;
 
         assert(construction_complete_);
         // prepare
@@ -503,11 +503,10 @@ class MainModelImpl {
         calculation_type_symmetry_func_selector(
             options.calculation_type, options.calculation_symmetry,
             [cache_run]<calculation_type_tag calculation_type, symmetry_tag sym>(
-                MainModelImpl& main_model_, Options const& options_, MutableDataset const& result_data_,
-                Logger& logger, ModelStateRequest const& state_request_, ModelStateOutput* state_output_) {
+                MainModelImpl& main_model_, Options const& options_, MutableDataset const& result_data_, Logger& logger,
+                ModelStateRequest const& state_request_, ModelStateOutput* state_output_) {
                 auto math_output = main_model_.calculate_with_optimizer<calculation_type, sym>(options_, cache_run,
-                                                                                               logger,
-                                                                                               state_request_);
+                                                                                               logger, state_request_);
                 main_model_.output_result(math_output, result_data_, logger);
                 if (state_output_ != nullptr && math_output.model_state) {
                     *state_output_ = std::move(*math_output.model_state);
@@ -523,7 +522,7 @@ class MainModelImpl {
         auto sub_opt = options; // copy
         sub_opt.err_tol = cache_run ? std::numeric_limits<double>::max() : options.err_tol;
         sub_opt.max_iter = cache_run ? 1 : options.max_iter;
-    model.calculate(sub_opt, cache_run, target_data, logger, state_request, state_output);
+        model.calculate(sub_opt, cache_run, target_data, logger, state_request, state_output);
     }
 
     auto const& state() const {

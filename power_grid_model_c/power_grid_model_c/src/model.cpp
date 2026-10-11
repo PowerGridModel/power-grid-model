@@ -458,8 +458,8 @@ void PGM_calculate_with_state(PGM_Handle* handle, PGM_PowerGridModel* model, PGM
 
             auto& cpp_model = safe_ptr_get(cast_to_cpp(model));
             ScopedModuleLogger const logger_guard{cpp_model, get_logger(safe_ptr_get(handle).logger)};
-            calculate_impl(cpp_model, safe_ptr_get(opt), safe_ptr_get(cast_to_cpp(output_dataset)),
-                           cpp_batch_dataset, converted_requests, result->scenarios);
+            calculate_impl(cpp_model, safe_ptr_get(opt), safe_ptr_get(cast_to_cpp(output_dataset)), cpp_batch_dataset,
+                           converted_requests, result->scenarios);
             safe_ptr_get(state_output) = result.release();
         },
         batch_exception_handler);

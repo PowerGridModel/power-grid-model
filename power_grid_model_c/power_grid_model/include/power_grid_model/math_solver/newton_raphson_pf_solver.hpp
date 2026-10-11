@@ -462,6 +462,7 @@ class NewtonRaphsonPFSolver : public IterativePFSolver<sym_type, NewtonRaphsonPF
         }
         nodal_states_.push_back(std::move(nodal_state));
     }
+
   private:
     // data for jacobian
     std::vector<PFJacBlock<sym>> data_jac_;

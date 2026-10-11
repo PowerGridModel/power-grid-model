@@ -1043,8 +1043,8 @@ class TapPositionOptimizerImpl<std::tuple<TransformerTypes...>, StateCalculator,
 
         return {.solver_output = {std::move(solver_output)},
                 .optimizer_output = {std::move(transformer_tap_positions)},
-            .supernode_output = {},
-            .model_state = {}};
+                .supernode_output = {},
+                .model_state = {}};
     }
 
     auto iterate_with_fallback(State const& state,

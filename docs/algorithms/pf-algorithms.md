@@ -260,9 +260,7 @@ To request only selected state, pass a `StateOutputRequest` for each scenario in
 ```python
 from power_grid_model import StateOutputRequest
 
-output_data, model_state = model.calculate_power_flow(
-   get_model_state=[StateOutputRequest(nodal_state=True)]
-)
+output_data, model_state = model.calculate_power_flow(get_model_state=[StateOutputRequest(nodal_state=True)])
 ```
 
 The request flags select which data to capture, but not every method produces every kind of state. Newton-Raphson

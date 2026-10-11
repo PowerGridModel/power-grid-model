@@ -93,7 +93,7 @@ template <symmetry_tag sym> struct Calculator<power_flow_t, sym> {
                        Logger& logger) {
         return [calculation_method, err_tol = options.err_tol, max_iter = options.max_iter, &logger,
                 cache_run](MathSolverProxy<sym>& solver, YBus<sym> const& y_bus, PowerFlowInput<sym> const& input,
-                         bool capture_jacobian_state, bool capture_nodal_state) {
+                           bool capture_jacobian_state, bool capture_nodal_state) {
             return solver.get().run_power_flow(input, err_tol, max_iter, cache_run, logger, calculation_method, y_bus,
                                                capture_jacobian_state, capture_nodal_state);
         };
