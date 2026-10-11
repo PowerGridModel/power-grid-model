@@ -234,3 +234,39 @@ They are most accurate when the actual voltages are close to 1 p.u. and the erro
 level.
 When we approximate the load as impedance at 1 p.u., the voltage error has quadratic relation to the actual voltage.
 When it is approximated as a current at 1 p.u., the voltage error is only linearly dependent in comparison.
+
+## Retrieving calculation state
+
+`PowerGridModel.calculate_power_flow` can return solver state together with the usual result data. Set
+`get_model_state=True` to request the Y-bus, Jacobians, and nodal states:
+
+```python
+output_data, model_state = model.calculate_power_flow(get_model_state=True)
+
+group = model_state.groups[0]
+y_bus = group.y_bus
+jacobians = group.jacobians
+nodal_states = group.nodal_states
+```
+
+State is organized by solver group. The group mapping relates input node IDs to the solver's internal bus order. The
+Y-bus is stored in CSR form; its row pointers and column indices define the positions of its admittance values.
+`jacobian_structure` similarly provides the shared sparse pattern for the Jacobian blocks. Jacobians and nodal states
+are sequences indexed by iteration; nodal voltage arrays are bus-major, with three phase values per bus for asymmetric
+calculations.
+
+To request only selected state, pass a `StateOutputRequest` for each scenario instead of `True`:
+
+```python
+from power_grid_model import StateOutputRequest
+
+output_data, model_state = model.calculate_power_flow(
+   get_model_state=[StateOutputRequest(nodal_state=True)]
+)
+```
+
+The request flags select which data to capture, but not every method produces every kind of state. Newton-Raphson
+provides Jacobians and nodal states per iteration. Iterative Current provides nodal states but no Jacobians. The linear
+method has no iteration history, so Jacobians and nodal states are empty even when requested. For batch calculations,
+`model_state` contains one state (or `None` for a failed scenario) per flattened scenario, and the request sequence
+must have the same length.
