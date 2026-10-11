@@ -627,6 +627,23 @@ class PowerGridModel:
     def calculate_power_flow(
         self,
         *,
+        get_model_state: Literal[True] | Sequence[StateOutputRequest],
+        symmetric: bool = True,
+        error_tolerance: float = 1e-8,
+        max_iterations: int = 20,
+        calculation_method: CalculationMethod | str = CalculationMethod.newton_raphson,
+        update_data: None = None,
+        threading: int = -1,
+        output_component_types: ComponentAttributeMapping = None,
+        continue_on_batch_error: bool = False,
+        decode_error: bool = True,
+        tap_changing_strategy: TapChangingStrategy | str = TapChangingStrategy.disabled,
+        calculation_initialization: CalculationInitialization | str = CalculationInitialization.default,
+    ) -> tuple[Dataset, ModelState | None]: ...
+    @overload
+    def calculate_power_flow(
+        self,
+        *,
         get_model_state: bool | Sequence[StateOutputRequest],
         symmetric: bool = True,
         error_tolerance: float = 1e-8,

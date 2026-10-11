@@ -553,7 +553,7 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
-    def state_output_nodal_states_count(self, state_output: StateOutputPtr, scenario_idx: int, group_idx: int) -> int:
+    def state_output_nodal_states_count(self, state_output: StateOutputPtr, scenario_idx: int, group_idx: int) -> int:  # type: ignore[empty-body]
         pass  # pragma: no cover
 
     @make_c_binding
