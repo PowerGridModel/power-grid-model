@@ -31,6 +31,7 @@ class StateOutput {
     StateOutput& operator=(StateOutput&&) noexcept = default;
     StateOutput(StateOutput const&) = delete;
     StateOutput& operator=(StateOutput const&) = delete;
+    ~StateOutput() = default;
 
     Idx scenario_count() const { return handle_.call_with(PGM_state_output_scenario_count, output_.get()); }
     PGM_StateScenarioView scenario(Idx scenario_idx) const {

@@ -120,7 +120,7 @@ PGM_API void PGM_calculate(PGM_Handle* handle, PGM_PowerGridModel* model, PGM_Op
 /**
  * @brief Per-scenario request for optional native PF state output.
  */
-typedef struct PGM_StateOutputRequest {
+typedef struct PGM_StateOutputRequest { // NOLINT(modernize-use-using): part of the C API
     PGM_Idx y_bus;
     PGM_Idx jacobian;
     PGM_Idx nodal_state;
@@ -132,7 +132,7 @@ typedef struct PGM_StateOutputRequest {
  * All pointers are valid until the owning PGM_StateOutput is destroyed. A zero
  * availability flag means the corresponding pointer fields are NULL.
  */
-typedef struct PGM_StateScenarioView {
+typedef struct PGM_StateScenarioView { // NOLINT(modernize-use-using): part of the C API
     PGM_Idx has_state;
     PGM_Idx y_bus_requested;
     PGM_Idx jacobian_requested;
@@ -154,7 +154,7 @@ typedef struct PGM_StateScenarioView {
  * these values. The group mapping also lists user nodes per bus and identifies
  * synthetic buses with their originating branch3 IDs.
  */
-typedef struct PGM_StateGroupView {
+typedef struct PGM_StateGroupView { // NOLINT(modernize-use-using): part of the C API
     PGM_Idx group;
     PGM_Idx n_bus;
     PGM_Idx is_symmetric;
@@ -185,7 +185,7 @@ typedef struct PGM_StateGroupView {
  * Iterations are numbered from one. All pointers are valid until the owning
  * PGM_StateOutput is destroyed.
  */
-typedef struct PGM_StateJacobianView {
+typedef struct PGM_StateJacobianView { // NOLINT(modernize-use-using): part of the C API
     PGM_Idx iteration;
     double const* jacobian_h;
     double const* jacobian_n;
@@ -201,7 +201,7 @@ typedef struct PGM_StateJacobianView {
  * Values are bus-major; asymmetric groups store phases 1, 2, 3 for each bus.
  * All pointers are valid until the owning PGM_StateOutput is destroyed.
  */
-typedef struct PGM_StateNodalStateView {
+typedef struct PGM_StateNodalStateView { // NOLINT(modernize-use-using): part of the C API
     PGM_Idx iteration;
     double const* voltage_magnitude;
     double const* voltage_angle;
