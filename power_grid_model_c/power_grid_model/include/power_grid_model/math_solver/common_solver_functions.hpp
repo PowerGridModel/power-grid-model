@@ -168,10 +168,11 @@ template <symmetry_tag sym> struct RegulatorQState {
 };
 
 template <symmetry_tag sym>
-inline auto initialize_regulator_output_and_distribution(
-    PowerFlowInput<sym> const& input, SolverOutput<sym>& output, IdxRange const& load_gens,
-    std::map<Idx, Idx> const& loadgen_to_regulator,
-    std::vector<RegulatorQState<sym>>& regulator_state) -> std::tuple<int, ComplexValue<sym>> {
+inline auto initialize_regulator_output_and_distribution(PowerFlowInput<sym> const& input, SolverOutput<sym>& output,
+                                                         IdxRange const& load_gens,
+                                                         std::map<Idx, Idx> const& loadgen_to_regulator,
+                                                         std::vector<RegulatorQState<sym>>& regulator_state)
+    -> std::tuple<int, ComplexValue<sym>> {
 
     int num_regulating_gens = 0;
     ComplexValue<sym> s_load_gen_bus = ComplexValue<sym>{0.0};
