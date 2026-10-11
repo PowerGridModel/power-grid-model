@@ -502,7 +502,7 @@ class PowerGridCore:
         pass  # pragma: no cover
 
     @make_c_binding
-    def calculate_with_state(  # noqa: PLR0913  # type: ignore[empty-body]
+    def calculate_with_state(  # noqa: PLR0913, PLR0917  # type: ignore[empty-body]
         self,
         model: ModelPtr,
         opt: OptionsPtr,
