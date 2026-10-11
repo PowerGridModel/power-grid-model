@@ -7,8 +7,6 @@
 #include <power_grid_model/auxiliary/meta_data_gen.hpp>
 #include <power_grid_model/calculation_state.hpp>
 #include <power_grid_model/common/enum.hpp>
-#include <power_grid_model/common/multi_threaded_logging.hpp>
-#include <power_grid_model/common/text_logger.hpp>
 #include <power_grid_model/main_model.hpp>
 #include <power_grid_model/math_solver/math_solver.hpp>
 
@@ -17,8 +15,6 @@
 #include <array>
 #include <cmath>
 #include <optional>
-#include <sstream>
-#include <string>
 #include <vector>
 
 namespace power_grid_model {
@@ -105,8 +101,6 @@ TEST_CASE("Test State output - Capture Y-bus and input-node mapping") {
 TEST_CASE("Test State output - Capture Newton-Raphson Jacobian") {
     MathSolverDispatcher const dispatcher{math_solver::math_solver_tag<math_solver::MathSolver>{}};
     auto model = make_state_test_model(dispatcher);
-    MultiThreadedTextLogger logger;
-    model.set_logger(logger);
     auto options = MainModelOptions{};
     options.calculation_method = CalculationMethod::newton_raphson;
     auto state_output = calculate_state(model, options, {.jacobian = true, .nodal_state = true});
@@ -115,51 +109,22 @@ TEST_CASE("Test State output - Capture Newton-Raphson Jacobian") {
     REQUIRE(state_output->groups.size() == 1);
     auto const& group = state_output->groups[0];
     CHECK_FALSE(group.y_bus.has_value());
-    REQUIRE_FALSE(group.jacobians.empty());
+    constexpr std::array<std::array<double, 4>, 5> expected_jacobian_blocks{{
+        {0.00066666666666666664, 0.0, 0.0, 0.00055555555555555545},
+        {0.00053333333333333336, 0.0, 0.0, 0.00030222222222222217},
+        {0.00050196078431372548, 0.0, 0.0, 0.00025294886582083806},
+        {0.00050000762951094848, 0.0, 0.0, 0.00025001144438284152},
+        {0.00050000000011641535, 0.0, 0.0, 0.00025000000017462302},
+    }};
+    REQUIRE(group.mapping.n_bus == 1);
+    REQUIRE(group.jacobians.size() == expected_jacobian_blocks.size());
     REQUIRE(group.jacobian_structure.has_value());
-    CHECK(group.jacobian_structure->row_indptr_lu.size() == static_cast<size_t>(group.mapping.n_bus + 1));
-    CHECK_FALSE(group.jacobian_structure->col_indices_lu.empty());
-
-    auto const report = logger.report();
-    constexpr std::string_view jacobian_tag{"Tag:4001: "};
-    std::vector<std::string_view> jacobian_logs;
-    auto record_start = report.find(jacobian_tag);
-    while (record_start != std::string::npos) {
-        auto const record_end = report.find("\n[", record_start + jacobian_tag.size());
-        jacobian_logs.push_back(std::string_view{report}.substr(
-            record_start + jacobian_tag.size(),
-            record_end == std::string::npos ? std::string::npos : record_end - record_start - jacobian_tag.size()));
-        record_start = report.find(jacobian_tag, record_start + jacobian_tag.size());
-    }
-    REQUIRE_FALSE(jacobian_logs.empty());
-    CHECK(jacobian_logs.size() > 1);
-    REQUIRE(group.jacobians.size() == jacobian_logs.size());
+    CHECK(group.jacobian_structure->row_indptr_lu == IdxVector{0, 1});
+    CHECK(group.jacobian_structure->col_indices_lu == IdxVector{0});
     REQUIRE(group.nodal_states.size() == group.jacobians.size());
-    auto parse_values = [](std::string_view jacobian_log, std::string_view field) {
-        auto const field_start = jacobian_log.find(std::string{field} + "=");
-        REQUIRE(field_start != std::string_view::npos);
-        auto const value_start = field_start + field.size() + 1;
-        auto const line_end = jacobian_log.find('\n', value_start);
-        std::istringstream stream{std::string{jacobian_log.substr(value_start, line_end - value_start)}};
-        std::vector<double> values;
-        double value{};
-        while (stream >> value) {
-            values.push_back(value);
-        }
-        return values;
-    };
-    auto check_logged_values = [&parse_values](std::string_view jacobian_log, std::string_view field,
-                                               std::vector<double> const& expected) {
-        auto const logged = parse_values(jacobian_log, field);
-        REQUIRE(logged.size() == expected.size());
-        for (size_t i = 0; i < expected.size(); ++i) {
-            CHECK(logged[i] == doctest::Approx(expected[i]).epsilon(1e-5));
-        }
-    };
-    for (size_t iteration_idx = 0; iteration_idx < jacobian_logs.size(); ++iteration_idx) {
+    for (size_t iteration_idx = 0; iteration_idx < group.jacobians.size(); ++iteration_idx) {
         auto const& jacobian = group.jacobians[iteration_idx];
         auto const& nodal_state = group.nodal_states[iteration_idx];
-        auto const jacobian_log = jacobian_logs[iteration_idx];
         CHECK(jacobian.iteration == static_cast<Idx>(iteration_idx + 1));
         CHECK(nodal_state.iteration == jacobian.iteration);
         auto const phases_per_bus = group.mapping.is_symmetric ? 1 : 3;
@@ -172,19 +137,12 @@ TEST_CASE("Test State output - Capture Newton-Raphson Jacobian") {
         CHECK(jacobian.blocks[0].size() == jacobian.blocks[2].size());
         CHECK(jacobian.blocks[0].size() == jacobian.blocks[3].size());
         CHECK(std::ranges::any_of(jacobian.blocks[0], [](double value) { return value != 0.0; }));
-        CHECK(std::ranges::all_of(jacobian.blocks[0], [](double value) { return std::isfinite(value); }));
-        if (iteration_idx == 0) {
-            check_logged_values(jacobian_log, "row_indptr_lu",
-                                std::vector<double>(group.jacobian_structure->row_indptr_lu.begin(),
-                                                    group.jacobian_structure->row_indptr_lu.end()));
-            check_logged_values(jacobian_log, "col_indices_lu",
-                                std::vector<double>(group.jacobian_structure->col_indices_lu.begin(),
-                                                    group.jacobian_structure->col_indices_lu.end()));
+        for (size_t block_idx = 0; block_idx < jacobian.blocks.size(); ++block_idx) {
+            auto const& block = jacobian.blocks[block_idx];
+            REQUIRE(block.size() == 1);
+            CHECK(std::isfinite(block[0]));
+            CHECK(block[0] == doctest::Approx(expected_jacobian_blocks[iteration_idx][block_idx]).epsilon(1e-5));
         }
-        check_logged_values(jacobian_log, "jac_h", jacobian.blocks[0]);
-        check_logged_values(jacobian_log, "jac_n", jacobian.blocks[1]);
-        check_logged_values(jacobian_log, "jac_m", jacobian.blocks[2]);
-        check_logged_values(jacobian_log, "jac_l", jacobian.blocks[3]);
     }
 }
 
