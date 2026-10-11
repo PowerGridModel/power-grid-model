@@ -85,7 +85,7 @@ class ModelStateJacobian:
     h: NDArray[np.float64]
     n: NDArray[np.float64]
     m: NDArray[np.float64]
-    l_block: NDArray[np.float64]
+    l: NDArray[np.float64]  # noqa: E741
     iteration: int = 0
 
 
@@ -106,7 +106,7 @@ def _build_jacobian(
         h=_array(view.jacobian_h, view.n_jacobian_values, np.float64, owner),
         n=_array(view.jacobian_n, view.n_jacobian_values, np.float64, owner),
         m=_array(view.jacobian_m, view.n_jacobian_values, np.float64, owner),
-        l_block=_array(view.jacobian_l, view.n_jacobian_values, np.float64, owner),
+        l=_array(view.jacobian_l, view.n_jacobian_values, np.float64, owner),
         iteration=view.iteration,
     )
 

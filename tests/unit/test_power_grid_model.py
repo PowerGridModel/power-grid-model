@@ -191,6 +191,7 @@ def test_power_flow_model_state(model: PowerGridModel):
     assert group.y_bus.row_indptr.shape == (group.mapping.n_bus + 1,)
     assert group.y_bus.admittance_real.size > 0
     assert group.jacobians[-1].h.size == group.jacobians[-1].n.size
+    assert group.jacobians[-1].l.size == group.jacobians[-1].h.size
     n_voltage_values = group.mapping.n_bus * (1 if group.mapping.is_symmetric else 3)
     assert group.nodal_states[-1].voltage_magnitude.size == n_voltage_values
     assert group.nodal_states[-1].voltage_angle.size == n_voltage_values
