@@ -52,3 +52,21 @@ class DatasetMapData(DataClassJsonMixin):
 @dataclass
 class AllDatasetMapData(DataClassJsonMixin):
     all_datasets: list[DatasetMapData]
+
+
+@dataclass
+class ErrorCodeData(DataClassJsonMixin):
+    name: str
+    value: int
+
+
+@dataclass
+class ExceptionMappingData(DataClassJsonMixin):
+    exception: str
+    error_code: str
+
+
+@dataclass
+class ErrorCodeMetaData(DataClassJsonMixin):
+    error_codes: list[ErrorCodeData]
+    exception_mappings: list[ExceptionMappingData]

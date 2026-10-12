@@ -1,0 +1,27 @@
+// SPDX-FileCopyrightText: Contributors to the Power Grid Model project <powergridmodel@lfenergy.org>
+//
+// SPDX-License-Identifier: MPL-2.0
+
+// This header file is automatically generated. DO NOT modify it manually!
+
+// clang-format off
+#pragma once
+
+#include "../exception.hpp"
+
+#include <utility>
+{% autoescape false %}
+namespace power_grid_model::test {
+
+// The numeric error codes are public contract (e.g. read by the wrappers) and must never change.
+{% for error_code in error_codes -%}
+static_assert(std::to_underlying(PowerGridErrorCode::{{ error_code.name }}) == {{ error_code.value }});
+{% endfor %}
+// The error code that each exception reports is public contract as well.
+{% for mapping in exception_mappings -%}
+static_assert(detail::get_error_code<{{ mapping.exception }}>() == PowerGridErrorCode::{{ mapping.error_code }});
+{% endfor %}
+} // namespace power_grid_model::test
+
+// clang-format on
+{% endautoescape %}

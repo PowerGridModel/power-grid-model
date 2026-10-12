@@ -6,7 +6,7 @@ from copy import deepcopy
 from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader
-from meta_data import AllDatasetMapData, AttributeClass, DatasetMapData, DatasetMetaData
+from meta_data import AllDatasetMapData, AttributeClass, DatasetMapData, DatasetMetaData, ErrorCodeMetaData
 
 DATA_DIR = Path(__file__).parent / "data"
 TEMPLATE_DIR = Path(__file__).parent / "templates"
@@ -116,10 +116,23 @@ class CodeGenerator:
             template_path=template_path, output_path=output_path, all_map=all_map, all_attributes=sorted(all_attributes)
         )
 
+    def render_error_codes(self, template_path: Path, data_path: Path, output_path: Path):
+        with data_path.open() as data_file:
+            json_data = data_file.read()
+        error_code_data: ErrorCodeMetaData = ErrorCodeMetaData.schema().loads(json_data)
+
+        self.render_template(
+            template_path=template_path,
+            output_path=output_path,
+            error_codes=error_code_data.error_codes,
+            exception_mappings=error_code_data.exception_mappings,
+        )
+
     def code_gen(self):
         render_funcs = {
             "attribute_classes": self.render_attribute_classes,
             "dataset_class_maps": self.render_dataset_class_maps,
+            "error_codes": self.render_error_codes,
         }
 
         # render attribute classes

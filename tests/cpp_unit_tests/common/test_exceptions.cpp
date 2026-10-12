@@ -5,6 +5,7 @@
 #include <power_grid_model/common/common.hpp>
 #include <power_grid_model/common/enum.hpp>
 #include <power_grid_model/common/exception.hpp>
+#include <power_grid_model/common/static_asserts/error_codes.hpp> // NOLINT(misc-include-cleaner)
 
 #include <doctest/doctest.h>
 
@@ -335,85 +336,12 @@ TEST_CASE("Exceptions") {
     }
 }
 
-// The numeric error codes are public contract (e.g. read by the wrappers) and must never change.
-static_assert(std::to_underlying(PowerGridErrorCode::no_error) == 0);
-static_assert(std::to_underlying(PowerGridErrorCode::regular_error) == 1);
-static_assert(std::to_underlying(PowerGridErrorCode::batch_error) == 2);
-static_assert(std::to_underlying(PowerGridErrorCode::serialization_error) == 3);
-static_assert(std::to_underlying(PowerGridErrorCode::invalid_arguments) == 10);
-static_assert(std::to_underlying(PowerGridErrorCode::conflict_voltage) == 11);
-static_assert(std::to_underlying(PowerGridErrorCode::invalid_transformer_clock) == 12);
-static_assert(std::to_underlying(PowerGridErrorCode::sparse_matrix_error) == 13);
-static_assert(std::to_underlying(PowerGridErrorCode::missing_case_for_enum) == 14);
-static_assert(std::to_underlying(PowerGridErrorCode::conflict_id) == 15);
-static_assert(std::to_underlying(PowerGridErrorCode::id_not_found) == 16);
-static_assert(std::to_underlying(PowerGridErrorCode::id_wrong_type) == 17);
-static_assert(std::to_underlying(PowerGridErrorCode::dataset_error) == 18);
-static_assert(std::to_underlying(PowerGridErrorCode::invalid_measured_object) == 30);
-static_assert(std::to_underlying(PowerGridErrorCode::conflicting_angle_measurement_type) == 32);
-static_assert(std::to_underlying(PowerGridErrorCode::invalid_regulated_object) == 40);
-static_assert(std::to_underlying(PowerGridErrorCode::unsupported_regulator_combination) == 42);
-static_assert(std::to_underlying(PowerGridErrorCode::unsupported_load_gen_type_for_voltage_regulator) == 44);
-static_assert(std::to_underlying(PowerGridErrorCode::unsupported_voltage_regulator_source_combination) == 45);
-static_assert(std::to_underlying(PowerGridErrorCode::automatic_tap_calculation_error) == 46);
-static_assert(std::to_underlying(PowerGridErrorCode::automatic_tap_input_error) == 47);
-static_assert(std::to_underlying(PowerGridErrorCode::tap_search_strategy_incompatible) == 48);
-static_assert(std::to_underlying(PowerGridErrorCode::invalid_calculation_method) == 61);
-static_assert(std::to_underlying(PowerGridErrorCode::iteration_diverge) == 62);
-static_assert(std::to_underlying(PowerGridErrorCode::max_iteration_reached) == 63);
-static_assert(std::to_underlying(PowerGridErrorCode::not_observable) == 64);
-static_assert(std::to_underlying(PowerGridErrorCode::invalid_short_circuit_phase_or_type) == 82);
-static_assert(std::to_underlying(PowerGridErrorCode::not_implemented) == 100);
-static_assert(std::to_underlying(PowerGridErrorCode::unreachable_hit) == 101);
-
-template <class Exception, PowerGridErrorCode expected>
-constexpr bool maps_to_code = detail::get_error_code<Exception>() == expected;
-
-static_assert(maps_to_code<InvalidArguments, PowerGridErrorCode::invalid_arguments>);
-static_assert(maps_to_code<ExperimentalFeature, PowerGridErrorCode::invalid_arguments>);
-static_assert(maps_to_code<MissingCaseForEnumError, PowerGridErrorCode::missing_case_for_enum>);
-static_assert(maps_to_code<ConflictVoltage, PowerGridErrorCode::conflict_voltage>);
-static_assert(maps_to_code<InvalidTransformerClock, PowerGridErrorCode::invalid_transformer_clock>);
-static_assert(maps_to_code<SparseMatrixError, PowerGridErrorCode::sparse_matrix_error>);
-static_assert(maps_to_code<ConflictID, PowerGridErrorCode::conflict_id>);
-static_assert(maps_to_code<IDNotFound, PowerGridErrorCode::id_not_found>);
-static_assert(maps_to_code<Idx2DNotFound, PowerGridErrorCode::id_not_found>);
-static_assert(maps_to_code<IDWrongType, PowerGridErrorCode::id_wrong_type>);
-static_assert(maps_to_code<DatasetError, PowerGridErrorCode::dataset_error>);
-static_assert(maps_to_code<InvalidMeasuredObject, PowerGridErrorCode::invalid_measured_object>);
-static_assert(maps_to_code<InvalidMeasuredTerminalType, PowerGridErrorCode::invalid_measured_object>);
-static_assert(maps_to_code<ConflictingAngleMeasurementType, PowerGridErrorCode::conflicting_angle_measurement_type>);
-static_assert(maps_to_code<InvalidRegulatedObject, PowerGridErrorCode::invalid_regulated_object>);
-static_assert(maps_to_code<DuplicativelyRegulatedObject, PowerGridErrorCode::regular_error>);
-static_assert(
-    maps_to_code<UnsupportedRegulatorCombinationError, PowerGridErrorCode::unsupported_regulator_combination>);
-static_assert(maps_to_code<ConflictingVoltageRegulatorURef, PowerGridErrorCode::regular_error>);
-static_assert(maps_to_code<UnsupportedLoadGenTypeForVoltageRegulator,
-                           PowerGridErrorCode::unsupported_load_gen_type_for_voltage_regulator>);
-static_assert(maps_to_code<UnsupportedVoltageRegulatorSourceCombinationError,
-                           PowerGridErrorCode::unsupported_voltage_regulator_source_combination>);
-static_assert(maps_to_code<AutomaticTapCalculationError, PowerGridErrorCode::automatic_tap_calculation_error>);
-static_assert(maps_to_code<AutomaticTapInputError, PowerGridErrorCode::automatic_tap_input_error>);
-static_assert(maps_to_code<TapSearchStrategyIncompatibleError, PowerGridErrorCode::tap_search_strategy_incompatible>);
-static_assert(maps_to_code<CalculationError, PowerGridErrorCode::regular_error>);
-static_assert(maps_to_code<InvalidCalculationMethod, PowerGridErrorCode::invalid_calculation_method>);
-static_assert(maps_to_code<IterationDiverge, PowerGridErrorCode::iteration_diverge>);
-static_assert(maps_to_code<MaxIterationReached, PowerGridErrorCode::max_iteration_reached>);
-static_assert(maps_to_code<NotObservableError, PowerGridErrorCode::not_observable>);
-static_assert(maps_to_code<BatchCalculationError, PowerGridErrorCode::batch_error>);
-static_assert(maps_to_code<InvalidShortCircuitType, PowerGridErrorCode::invalid_short_circuit_phase_or_type>);
-static_assert(maps_to_code<InvalidShortCircuitPhases, PowerGridErrorCode::invalid_short_circuit_phase_or_type>);
-static_assert(maps_to_code<InvalidShortCircuitPhaseOrType, PowerGridErrorCode::invalid_short_circuit_phase_or_type>);
-static_assert(maps_to_code<SerializationError, PowerGridErrorCode::serialization_error>);
-static_assert(maps_to_code<NotImplementedError, PowerGridErrorCode::not_implemented>);
-static_assert(maps_to_code<UnreachableHit, PowerGridErrorCode::unreachable_hit>);
-
 class CustomError : public PowerGridError {
   public:
     CustomError() : PowerGridError{"custom"} {}
 };
 
-static_assert(maps_to_code<CustomError, PowerGridErrorCode::regular_error>);
+static_assert(detail::get_error_code<CustomError>() == PowerGridErrorCode::regular_error);
 
 template <class Exception> void check_error_code(Exception const& exception, PowerGridErrorCode const expected) {
     CHECK(exception.error_code() == expected);
