@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 
+from collections import Counter
 from copy import deepcopy
 from pathlib import Path
 
@@ -124,11 +125,19 @@ class CodeGenerator:
             {error_code.user_type for error_code in error_code_data.error_codes if error_code.user_type},
             key=str.lower,
         )
+        # a user type shared by several error codes (e.g. PowerGridError) cannot identify a single code
+        user_type_counts = Counter(error_code.user_type for error_code in error_code_data.error_codes)
+        named_error_codes = [
+            error_code
+            for error_code in error_code_data.error_codes
+            if error_code.user_type and user_type_counts[error_code.user_type] == 1
+        ]
 
         self.render_template(
             template_path=template_path,
             output_path=output_path,
             error_codes=error_code_data.error_codes,
+            named_error_codes=named_error_codes,
             exception_mappings=error_code_data.exception_mappings,
             user_types=user_types,
         )
