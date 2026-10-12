@@ -16,7 +16,9 @@ In this repository there are three builds:
   * A dynamic library (`.dll` on Windows, `.so` on Linux, or `.dylib` on macOS) with a stable pure C API/ABI which can
     be used by any application (enabled by default).
   * An install target that installs the package containing the dynamic library (enabled by default).
-  * Native C++ unit tests.
+  * A shared library that provides the command-line interface backend.
+  * A command-line interface executable.
+  * Native C++ unit tests, including tests for the command-line interface.
   * C API tests.
   * A performance benchmark program.
   * An example C program to call the shared library.
@@ -111,6 +113,7 @@ Manual installation is only required for standalone CMake builds.
 | [eigen3](https://eigen.tuxfamily.org/)                              | Installed automatically              | CMake needs to be able find `eigen3`        | header-only | [Mozilla Public License, version 2.0](https://www.mozilla.org/en-US/MPL/2.0/)                                |
 | [nlohmann-json](https://github.com/nlohmann/json)                   | Installed automatically              | CMake needs to be able find `nlohmann_json` | header-only | [MIT](https://github.com/nlohmann/json/blob/develop/LICENSE.MIT)                                             |
 | [msgpack-cxx](https://github.com/msgpack/msgpack-c/tree/cpp_master) | Installed automatically              | CMake needs to be able find `msgpack-cxx`   | header-only | [Boost Software License - Version 1.0](https://github.com/msgpack/msgpack-c/blob/cpp_master/LICENSE_1_0.txt) |
+| [CLI11](https://github.com/CLIUtils/CLI11)                          | Installed automatically              | CMake needs to be able find `CLI11`         | header-only | [BSD 3-Clause](https://github.com/CLIUtils/CLI11/blob/main/LICENSE)                                         |
 | [doctest](https://github.com/doctest/doctest)                       | None                                 | CMake needs to be able find `doctest`       | header-only | [MIT](https://github.com/doctest/doctest/blob/master/LICENSE.txt)                                            |
 <!-- pyml enable line-length-->
 
@@ -209,8 +212,11 @@ In the developer build the following build targets (directories) are enabled:
 
 * `power_grid_model_c`: a dynamic library (`.so` on Linux, `.dylib` on macOS, `.dll` on Windows) with stable pure
   C API/ABI which can be used by any application.
+* `power_grid_model_cli_backend`: a shared library that provides the command-line interface backend.
+* `power_grid_model_cli`: the command-line interface executable (`power-grid-model`).
 * `tests/cpp_unit_tests_*`: (including subdirectories) the different unit test targets for the C++ core using the
   `doctest` framework.
+* `tests/cpp_cli_tests`: the command-line interface test target using the `doctest` framework.
 * `tests/cpp_validation_tests`: the validation test target using the `doctest` framework.
 * `tests/native_api_tests`: the C API test target using the `doctest` framework.
 * `tests/benchmark_cpp`: the C++ benchmark target for performance measure.
@@ -275,7 +281,7 @@ The recommended way to get the [C++ packages](#c) and `uv` is via [Homebrew](htt
 ```shell
 brew install \
     gdb gcovr lcov lld cmake ninja \
-    boost eigen nlohmann-json msgpack-cxx doctest uv
+  boost eigen nlohmann-json msgpack-cxx cli11 doctest uv
 ```
 
 Append the following lines into the file `${HOME}/.bashrc` (required for `scikit-build` for the Python installation):
@@ -357,7 +363,7 @@ powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | ie
 The recommended way to get [C++ packages](#c) is via `conda`. Open a miniforge console.
 
 ```shell
-conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge libboost-headers eigen nlohmann_json msgpack-cxx doctest
+conda create --yes -p C:\conda_envs\cpp_pkgs -c conda-forge libboost-headers eigen nlohmann_json msgpack-cxx cli11 doctest
 ```
 
 ### Environment variables
